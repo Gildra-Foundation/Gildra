@@ -8,7 +8,12 @@
   min-height: calc(100dvh - var(--atlas-sticky-top, 0px) - var(--cookie-notice-space, 0px));
   overflow: clip;
   color: var(--atlas-text);
-  background: var(--atlas-bg);
+  /* The body stays solid, with depth: faint side glows of the scene's tint keep
+     the long middle of a page from reading as a flat black sheet. */
+  background:
+    radial-gradient(ellipse 55% 26% at 0% 46%, color-mix(in srgb, var(--atlas-frame-tint) 30%, transparent), transparent 72%),
+    radial-gradient(ellipse 55% 24% at 100% 72%, color-mix(in srgb, var(--atlas-frame-tint) 24%, transparent), transparent 72%),
+    var(--atlas-bg);
   font-family: var(--atlas-font-ui);
   isolation: isolate;
 }
@@ -89,6 +94,10 @@
 :global(:root:has(dialog[open])) .artLayer,
 :global(:root:has(dialog[open])) .artLayer *,
 :global(:root:has(dialog[open])) .embers::before,
+:global(:root:has(dialog[open])) .footMist::before,
+:global(:root:has(dialog[open])) .footMist::after,
+:global(:root:has(dialog[open])) .footSeal,
+:global(:root:has(dialog[open])) .footEmbers::before,
 :global(:root:has(dialog[open])) .embers::after {
   animation-play-state: paused;
 }
@@ -105,7 +114,8 @@
 }
 
 .embers::before,
-.embers::after {
+.embers::after,
+.footEmbers::before {
   position: absolute;
   inset: 0 0 -520px;
   content: "";
@@ -130,6 +140,90 @@
   animation-name: atlas-ember-rise-far, atlas-ember-sway, atlas-ember-in-far;
   animation-duration: 44s, 11s, 3.2s;
 }
+
+
+/* ── The horizon at the foot of the page ─────────────────────────────────
+   The solid body warms into the scene's light at the end of the page: a glow
+   on the horizon in the scene's tint and spark colour, mist drifting over it, a
+   seal of runes turning slowly behind the brand mark and sparks rising out of
+   it. No second painting — the body stays solid. It starts below the top
+   atmosphere, so a short page keeps one scene; on a long page it fills the last
+   ~900 px. CSS only; its movement is composited transforms. */
+.foot {
+  --atlas-foot-height: min(900px, 130vh);
+  position: absolute;
+  z-index: -1;
+  inset: max(min(880px, 110vh), calc(100% - var(--atlas-foot-height))) 0 0;
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, transparent, #000 45%);
+  /* Off screen its layers are neither painted nor animated. */
+  content-visibility: auto;
+}
+
+/* The horizon: the scene's colours rising from the bottom edge. */
+.foot::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    radial-gradient(ellipse 34% 26% at 50% 100%, color-mix(in srgb, var(--atlas-ember) 16%, transparent), transparent 78%),
+    radial-gradient(ellipse 80% 62% at 50% 100%, var(--atlas-frame-horizon, var(--atlas-frame-tint)), transparent 72%),
+    radial-gradient(ellipse 60% 40% at 18% 100%, color-mix(in srgb, var(--atlas-ember) 7%, transparent), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 82% 100%, color-mix(in srgb, var(--atlas-ember) 7%, transparent), transparent 70%);
+}
+
+.footMist,
+.footSeal,
+.footEmbers { position: absolute; z-index: 2; pointer-events: none; }
+
+/* Mist: two wide banks of light haze drifting in opposite directions. */
+.footMist { inset: 28% 0 0; overflow: hidden; }
+.footMist::before,
+.footMist::after {
+  position: absolute;
+  inset: 0 -40%;
+  content: "";
+  background:
+    radial-gradient(ellipse 22% 38% at 24% 62%, rgba(214, 226, 238, .09), transparent 72%),
+    radial-gradient(ellipse 26% 30% at 62% 74%, color-mix(in srgb, var(--atlas-frame-horizon, var(--atlas-frame-tint)) 70%, transparent), transparent 72%),
+    radial-gradient(ellipse 20% 34% at 86% 58%, rgba(214, 226, 238, .06), transparent 72%);
+  animation: atlas-mist-drift 46s var(--atlas-ease-ambient) infinite alternate;
+}
+.footMist::after {
+  inset: 12% -40% 0;
+  opacity: .8;
+  scale: -1 1;
+  animation-duration: 63s;
+  animation-direction: alternate-reverse;
+}
+
+/* The seal: a ring of runes and the Gildra diamond, half risen behind the brand
+   mark like a sun on the horizon; it turns once in four minutes. */
+.footSeal {
+  bottom: calc(min(780px, 120vw) * -.4);
+  left: 50%;
+  width: min(780px, 120vw);
+  aspect-ratio: 1;
+  margin-left: calc(min(780px, 120vw) * -.5);
+  background: radial-gradient(circle, var(--atlas-accent-strong) 0, var(--atlas-accent) 46%, color-mix(in srgb, var(--atlas-accent) 40%, transparent) 72%);
+  opacity: .2;
+  mask: var(--atlas-seal) center / contain no-repeat;
+  animation: atlas-seal-turn 240s linear infinite;
+}
+
+.footEmbers {
+  inset: 0;
+  overflow: hidden;
+  /* Sparks rise out of the horizon, not across the legal line. */
+  mask-image: linear-gradient(0deg, transparent 6%, #000 22%, transparent 72%);
+}
+
+/* Stills and reduced motion: the same horizon without drift, turn or embers. */
+.still .footMist::before,
+.still .footMist::after,
+.still .footSeal { animation: none; }
+.still .footEmbers { display: none; }
 
 .column {
   flex: 1 0 auto;
@@ -158,6 +252,24 @@
 }
 
 .legal p { max-width: 90ch; margin: 0; }
+
+/* The brand seal over the legal line: the crest between two engraved rules. */
+.legalBrand {
+  display: flex;
+  flex-basis: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: var(--atlas-space-4);
+  margin-bottom: var(--atlas-space-3);
+}
+.legalBrand::before,
+.legalBrand::after {
+  flex: 0 1 180px;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, var(--atlas-line));
+}
+.legalBrand::after { background: linear-gradient(90deg, var(--atlas-line), transparent); }
 .legal a { color: var(--atlas-accent); }
 .legal a:hover { color: var(--atlas-accent-strong); }
 .legalLinks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-5); }
@@ -216,6 +328,8 @@
 @keyframes atlas-ember-sway { from { translate: -6px 0; } to { translate: 8px 0; } }
 @keyframes atlas-ember-in { from { opacity: 0; } }
 @keyframes atlas-ember-in-far { from { opacity: 0; } to { opacity: .55; } }
+@keyframes atlas-mist-drift { from { transform: translate3d(-6%, 0, 0); } to { transform: translate3d(6%, 0, 0); } }
+@keyframes atlas-seal-turn { to { rotate: 1turn; } }
 
 /* Work surfaces and readers who asked for less motion get a still atmosphere. */
 .still .art,
@@ -226,12 +340,17 @@
 @media (prefers-reduced-motion: reduce) {
   .art,
   .artLayer,
-  .atmosphere::before { animation: none; }
-  .embers { display: none; }
+  .atmosphere::before,
+  .footMist::before,
+  .footMist::after,
+  .footSeal { animation: none; }
+  .embers,
+  .footEmbers { display: none; }
 }
 
 @media print {
-  .embers { display: none; }
+  .embers,
+  .foot { display: none; }
 }
 
 @media (max-width: 720px) {
@@ -239,6 +358,8 @@
   /* One layer of embers behind the full-width text on phones. */
   .embers { mask-image: radial-gradient(ellipse 80% 55% at 62% 26%, #000 20%, transparent 70%); }
   .embers::after { display: none; }
+  .foot { --atlas-foot-height: min(640px, 100vh); }
+  .footSeal { opacity: .16; }
   /* Text spans the full width on phones: an even veil instead of a left-to-right one. */
   .atmosphere::after,
   .deep .atmosphere::after {

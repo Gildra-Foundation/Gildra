@@ -307,7 +307,7 @@ paths:
             default: 20
         - in: query
           name: includeTotal
-          description: Include an exact or cached total. Search totals may require an additional count query.
+          description: Include an exact or cached total. A total whose count is not ready within about two seconds is left out while it is computed in the background.
           schema:
             type: boolean
             default: true
@@ -1566,6 +1566,7 @@ components:
         hasMore:
           type: boolean
         total:
+          description: Exact number of items in the listing, cached and recounted in the background (a count over a whole catalog type can be a few hours old). Until the first count of a large game-entity listing finishes, it is the database planner's estimate.
           type: integer
           format: int64
           minimum: 0

@@ -7,8 +7,8 @@ export type SectionNavItem = { id: string; label: string; href: string };
 
 export type SectionNavView = {
   items: SectionNavItem[];
-  seasonLabel: string;
-  seasonShort: string;
+  seasonLabel?: string;
+  seasonShort?: string;
   seasonHref: string;
   /** Fixed active item (no scrollspy), e.g. on /tier-lists. */
   active?: string;
@@ -56,10 +56,12 @@ export function SectionNav({ items, seasonLabel, seasonShort, seasonHref, active
   return (
     <nav className="secnav" aria-label="Sections">
       <div className="secnav-in">
-        <Link className="sn-season" href={seasonHref}>
-          <span className="sn-season-full">{seasonLabel}</span>
-          <span className="sn-season-sm">{seasonShort}</span>
-        </Link>
+        {seasonLabel ? (
+          <Link className="sn-season" href={seasonHref}>
+            <span className="sn-season-full">{seasonLabel}</span>
+            <span className="sn-season-sm">{seasonShort}</span>
+          </Link>
+        ) : null}
         {items.map((s) => {
           const on = current === s.id;
           return (

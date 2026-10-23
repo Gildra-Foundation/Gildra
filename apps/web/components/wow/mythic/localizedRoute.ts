@@ -1,5 +1,5 @@
 import "server-only";
-import type { DungeonRoute } from "./dungeonRoutes";
+import type { DungeonRoute } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { routeRoleDefaultsEn, routeTextEn } from "./routeStopsEn";
 
 /**

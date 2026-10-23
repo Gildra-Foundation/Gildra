@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
-
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { getAnalyticsOverview } from "@/lib/api/client";
+import { analyticsCopy } from "@/components/analytics/analyticsCopy";
 import styles from "@/components/analytics/analyticsPage.module.css";
 import "@/app/styles/tailwind-app.css";
 
@@ -10,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Azeroth live analytics — Gildra", description: "Live usage and realm telemetry for the Gildra Warcraft command center." };
 
 export default async function AnalyticsPage() {
-  const t = await getTranslations({ locale: "en", namespace: "Analytics" });
+  const copy = analyticsCopy.en;
   const data = await getAnalyticsOverview(24);
   return (
     <>
@@ -23,16 +22,16 @@ export default async function AnalyticsPage() {
             <img src="/assets/wow/mythic/ruby-depth-v3-light-fast.webp" width="1500" height="844" fetchPriority="high" decoding="async" alt="" />
           </picture>
           <p className={styles.eyebrow}>Azeroth intelligence · Gildra pulse</p>
-          <h1 className={styles.title}>{t("title")}</h1>
-          <p className={styles.subtitle}>{t("subtitle")}</p>
+          <h1 className={styles.title}>{copy.title}</h1>
+          <p className={styles.subtitle}>{copy.subtitle}</p>
           <span className={styles.ribbon}><i />Live realm telemetry</span>
         </header>
         <AnalyticsDashboard
           data={data}
           locale="en"
           copy={{
-            activity: t("activity"), empty: t("empty"), events: t("events"),
-            hours: t("hours", { hours: data.hours }), subscriptions: t("subscriptions"), users: t("users"),
+            activity: copy.activity, empty: copy.empty, events: copy.events,
+            hours: copy.hours(data.hours), subscriptions: copy.subscriptions, users: copy.users,
           }}
         />
       </main>

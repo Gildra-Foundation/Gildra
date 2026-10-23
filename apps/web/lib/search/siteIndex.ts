@@ -1,9 +1,11 @@
 import "server-only";
-import { dungeonRoutes, dungeonSlugs } from "@/components/wow/mythic/dungeonRoutes";
-import { getMidnightRaid, raidSlugs } from "@/components/wow/raid/midnightRaidData";
-import { contentManifest, midnightDelves, midnightLairEncounters, midnightClasses, midnightSpecializations } from "@gildra/game-data";
+import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
+import { getMidnightRaid, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
+import { contentManifest, midnightDelves, midnightLairEncounters } from "@gildra/game-data";
+import { midnightClasses, midnightSpecializations } from "@/lib/data/wow/specializations";
 import { getBoss } from "@/lib/lairs";
 import { routeSections, type RouteSection } from "@/lib/routes/registry";
+import type { Lang as Locale } from "@/lib/i18n-paths";
 
 /**
  * The quick-search index of the site (⌘K): every section, raid, boss, lair,
@@ -13,7 +15,6 @@ import { routeSections, type RouteSection } from "@/lib/routes/registry";
  * language's names so either spelling finds the entry.
  */
 export type SiteSearchEntry = { t: string; s: string; h: string; k?: string };
-type Locale = "en" | "ru";
 
 const label = {
   section: { en: "Section", ru: "Раздел" },

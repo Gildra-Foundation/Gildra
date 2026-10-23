@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Gildra-Foundation/Gildra/backend/internal/pagination"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -114,16 +115,10 @@ type ContentEntry struct {
 	LocaleFallback   bool            `json:"localeFallback"`
 }
 
-type Pagination struct {
-	NextCursor string `json:"nextCursor,omitempty"`
-	HasMore    bool   `json:"hasMore"`
-	Limit      int    `json:"limit"`
-}
+// Pagination and Page are the shared keyset page types.
+type Pagination = pagination.Info
 
-type Page[T any] struct {
-	Data       []T        `json:"data"`
-	Pagination Pagination `json:"pagination"`
-}
+type Page[T any] = pagination.Page[T]
 
 func NewService(postgres *pgxpool.Pool) *Service { return &Service{postgres: postgres} }
 
@@ -206,7 +201,7 @@ func (s *Service) ListChampions(ctx context.Context, params ListParams) (Page[Ch
 	if err := rows.Err(); err != nil {
 		return Page[ChampionSummary]{}, err
 	}
-	return makePage(items, params.Limit, func(value ChampionSummary) string { return value.Slug }), nil
+	return pagination.Make(items, params.Limit, func(value ChampionSummary) string { return value.Slug }), nil
 }
 
 func (s *Service) Champion(ctx context.Context, slug, locale string) (ChampionDetail, error) {
@@ -328,19 +323,7 @@ func (s *Service) ListContent(ctx context.Context, category string, params ListP
 	if err := rows.Err(); err != nil {
 		return Page[ContentEntry]{}, err
 	}
-	return makePage(items, params.Limit, func(value ContentEntry) string { return value.ExternalKey }), nil
-}
-
-func makePage[T any](items []T, limit int, key func(T) string) Page[T] {
-	hasMore := len(items) > limit
-	if hasMore {
-		items = items[:limit]
-	}
-	page := Page[T]{Data: items, Pagination: Pagination{HasMore: hasMore, Limit: limit}}
-	if hasMore && len(items) > 0 {
-		page.Pagination.NextCursor = base64.RawURLEncoding.EncodeToString([]byte(key(items[len(items)-1])))
-	}
-	return page
+	return pagination.Make(items, params.Limit, func(value ContentEntry) string { return value.ExternalKey }), nil
 }
 
 func decodeCursor(value string) (string, error) {

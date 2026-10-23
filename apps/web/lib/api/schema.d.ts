@@ -803,7 +803,10 @@ export interface components {
         CursorPage: {
             nextCursor?: string;
             hasMore: boolean;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Exact number of items in the listing, cached and recounted in the background (a count over a whole catalog type can be a few hours old). Until the first count of a large game-entity listing finishes, it is the database planner's estimate.
+             */
             total: number;
         };
         GameEntityPage: {
@@ -1108,7 +1111,7 @@ export interface operations {
                 /** @description Opaque cursor from the previous response. */
                 cursor?: string;
                 limit?: number;
-                /** @description Include an exact or cached total. Search totals may require an additional count query. */
+                /** @description Include an exact or cached total. A total whose count is not ready within about two seconds is left out while it is computed in the background. */
                 includeTotal?: boolean;
             };
             header?: never;

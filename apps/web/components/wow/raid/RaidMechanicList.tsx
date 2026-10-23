@@ -3,8 +3,8 @@ import { sourceSpellNames } from "@/lib/wow/sourceSpellNames";
 import Image from "next/image";
 import { CircleHelp, Crosshair, Footprints, Shield, Swords, Users } from "lucide-react";
 import { AtlasBadge, AtlasDisclosure } from "@/components/atlas";
-import type { RaidMechanic } from "./midnightRaidData";
-import type { VoidspireBossGuide, VoidspireMechanic, VoidspireMechanicTag } from "./voidspireMechanicGuide";
+import type { RaidMechanic } from "@/lib/data/wow/raid/midnightRaidData";
+import type { VoidspireBossGuide, VoidspireMechanic, VoidspireMechanicTag } from "@/lib/data/wow/raid/voidspireMechanicGuide";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import styles from "./raidGuide.module.css";
 

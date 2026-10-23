@@ -8,8 +8,6 @@ import { getTalentSpecTheme, talentSpecThemes } from "@/lib/talentSpecThemes";
 import { pairedAlternates } from "@/lib/seo/metadata";
 import { getTalentSpecStyles } from "@/lib/talentSpecStyles";
 
-export const dynamic = "force-dynamic";
-
 // Only the known specs exist: any other slug is a 404 before the loading screen streams.
 export const dynamicParams = false;
 export const generateStaticParams = () => talentSpecThemes.map(({ slug }) => ({ spec: slug }));

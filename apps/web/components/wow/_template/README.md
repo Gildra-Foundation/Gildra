@@ -4,8 +4,9 @@
 with the names replaced. A feature module is one section of the site (raids,
 lairs, delves…) and follows one contract:
 
-- **Public surface:** `index.ts` exports what routes use (the page component).
-  Routes in `app/(site)` and `app/ru` import from `@/components/wow/<name>`; other features never
+- **Public surface:** the page component (a one-line `index.ts` may re-export it).
+  Routes in `app/(site)` and `app/ru` import the page; never grow `index.ts` into a
+  barrel of client components — every importing route would ship all of them. Other features never
   import a feature's insides (ESLint `no-restricted-imports`) — shared pieces
   live in `components/wow/shared`, the kit in `components/atlas`.
 - **Page:** `<Name>Page` takes `locale: "en" | "ru"` and renders

@@ -6,7 +6,7 @@ import { ThemeScope } from "./valyro-ui/theme/ThemeScope";
 import "./valyro-ui/styles/tokens.css";
 import "./valyro-public-theme.css";
 import "./valyro-ui/styles/base.css";
-import "./valyro-ui/styles/motion.css";
+import "./valyro-public-motion.css";
 import bridge from "./valyroAtlasBridge.module.css";
 
 /** Keeps Valyro popovers in the site's token scope without mutating html theme. */

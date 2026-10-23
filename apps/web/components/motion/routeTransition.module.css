@@ -33,6 +33,9 @@
   transform: scale(.985);
   transition-delay: 120ms;
 }
+/* Behind the rune veil the page waits as it is (nothing to see, nothing to raster). */
+.frame[data-veiled] { transition: none; }
+.frame[data-veiled][data-route-state="leaving"] { opacity: 1; transform: none; }
 
 /* The portal ring: a spark that charges at the click and bursts across the screen
    when the next page arrives (RouteTransitionRuntime animates it). Idle: invisible,
@@ -55,6 +58,125 @@
     rgba(var(--site-accent-rgb), .4) 70%,
     transparent 76%);
   mix-blend-mode: screen;
+}
+
+/* The rune veil (RouteTransitionRuntime): one fixed layer that sweeps over the
+   page while the next one is fetched and sweeps on to uncover it. Its body is the
+   night of the site with a breath of the theme's accent; its two edges burn with
+   a line of light and a strip of runes. Idle: hidden, no layer. The runtime moves
+   it with transform only. */
+/* The veil passes under the top bar (it stays, with its rune and fuse) and is clipped by its port. */
+.veilPort {
+  position: fixed;
+  inset: var(--atlas-sticky-top, 64px) 0 0;
+  z-index: 118;
+  overflow: clip;
+  pointer-events: none;
+  /* The legacy atlas paints every direct child of the shell; the port must stay clear. */
+  background: transparent !important;
+}
+.veil {
+  position: absolute;
+  inset: 0;
+  /* Idle: not rendered at all, so neither its crest nor its masks are fetched until a hand-over. */
+  display: none;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 46% 42% at 50% 50%, rgba(var(--site-accent-rgb), .13), transparent 72%),
+    radial-gradient(ellipse 120% 80% at 50% 120%, rgba(var(--site-accent-rgb), .08), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--site-bg) 82%, #1a2330), var(--site-bg));
+}
+.veil[data-veil] { display: block; will-change: transform; }
+/* Covering (and covered) the veil blocks stray clicks on the page it hides. */
+.veil:is([data-veil="covering"], [data-veil="covered"]) { pointer-events: auto; cursor: progress; }
+
+/* The burning edges: a bright seam with a glow thrown ahead of the veil. */
+.veil::before,
+.veil::after {
+  position: absolute;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(var(--edge), transparent, rgba(var(--site-accent-rgb), .1) 55%, rgba(var(--site-accent-rgb), .55) 94%, var(--site-accent-strong) 99%, #fff);
+}
+.veil[data-axis="x"]::before,
+.veil[data-axis="x"]::after { top: 0; bottom: 0; width: 160px; }
+.veil[data-axis="x"]::before { --edge: 90deg; right: 100%; }
+.veil[data-axis="x"]::after { --edge: 270deg; left: 100%; }
+.veil[data-axis="y"]::before,
+.veil[data-axis="y"]::after { left: 0; right: 0; height: 160px; }
+.veil[data-axis="y"]::before { --edge: 180deg; bottom: 100%; }
+.veil[data-axis="y"]::after { --edge: 0deg; top: 100%; }
+
+/* Runes along the inside of each edge. */
+.veilRunes {
+  position: absolute;
+  background: linear-gradient(var(--site-accent-strong), var(--site-accent));
+  opacity: .9;
+  filter: drop-shadow(0 0 6px rgba(var(--site-accent-rgb), .9));
+}
+.veil[data-axis="x"] .veilRunes {
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  mask: var(--atlas-rune-strip) 0 0 / 28px 196px repeat-y;
+}
+.veil[data-axis="x"] .veilRunes[data-edge="start"] { left: 14px; }
+.veil[data-axis="x"] .veilRunes[data-edge="end"] { right: 14px; }
+/* CPU-composited machines (Valyro render tier): the veil dissolves in place — no burning seams. */
+.veil[data-tier="cpu"]::before,
+.veil[data-tier="cpu"]::after,
+.veil[data-tier="cpu"] .veilRunes { display: none; }
+
+/* A vertical sweep (between siblings) keeps the burning seams only. */
+.veil[data-axis="y"] .veilRunes { display: none; }
+
+/* The loading screen: a page that takes a moment shows the Gildra crest in a
+   slowly turning seal while the fuse burns over the top bar. */
+.veilCrest {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 220px;
+  height: 220px;
+  margin: -110px 0 0 -110px;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+.veilCrest::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: radial-gradient(circle, var(--site-accent-strong), var(--site-accent) 60%, transparent 72%);
+  mask: var(--atlas-seal) center / contain no-repeat;
+  opacity: .5;
+  animation: route-seal-turn 9s linear infinite;
+}
+.veilCrest :global(img) {
+  position: relative;
+  display: block;
+  width: 68px;
+  height: 88px;
+  filter: drop-shadow(0 0 18px rgba(var(--site-accent-rgb), .55));
+  animation: route-crest-breathe 1.6s ease-in-out infinite alternate;
+}
+.veil[data-waiting] .veilCrest { opacity: 1; transition-duration: 280ms; }
+.veil:not([data-waiting]) .veilCrest::before,
+.veil:not([data-waiting]) .veilCrest :global(img) { animation-play-state: paused; }
+
+@keyframes route-seal-turn { to { rotate: 1turn; } }
+@keyframes route-crest-breathe {
+  from { scale: .96; filter: drop-shadow(0 0 10px rgba(var(--site-accent-rgb), .35)); }
+  to { scale: 1.02; filter: drop-shadow(0 0 22px rgba(var(--site-accent-rgb), .7)); }
+}
+
+@media (max-width: 720px) {
+  .veil[data-axis="x"]::before,
+  .veil[data-axis="x"]::after { width: 96px; }
+  .veil[data-axis="x"] .veilRunes { width: 22px; mask-size: 22px 154px; }
+  .veil[data-axis="x"] .veilRunes[data-edge="start"] { left: 8px; }
+  .veil[data-axis="x"] .veilRunes[data-edge="end"] { right: 8px; }
 }
 
 /* A burning fuse over the top bar while the next page is on its way: a thin
@@ -114,7 +236,8 @@
 @media (prefers-reduced-motion: reduce) {
   .frame,
   .frame[data-route-state="leaving"] { transition: none; opacity: 1; transform: none; }
-  .portalRing { display: none; }
+  .portalRing,
+  .veilPort { display: none; }
   .system:is([data-route-state="leaving"], [data-route-state="loading"]) .progress {
     animation: none;
     opacity: 1;
@@ -238,7 +361,8 @@
 @keyframes light-reveal { from { clip-path: circle(100% at 50% 50%); } to { clip-path: circle(0 at 50% 50%); opacity: 0; } }
 @keyframes ember-release { to { opacity: 0; transform: translateY(-8vh) scale(1.04); clip-path: polygon(0 0, 100% 0, 100% 15%, 82% 5%, 65% 20%, 41% 3%, 22% 15%, 0 4%); } }
 html:global([data-page-transition]) .frame { opacity: 1; transition: none; }
-html:global([data-motion="reduced"]) .portalRing { display: none; }
+html:global([data-motion="reduced"]) .portalRing,
+html:global([data-motion="reduced"]) .veilPort { display: none; }
 html:global([data-motion="reduced"]) .frame[data-route-state="leaving"] { transform: none; }
 html:global([data-motion="reduced"]) .transition { display: none; }
 @media (prefers-reduced-motion: reduce) { .transition { display: none; } }

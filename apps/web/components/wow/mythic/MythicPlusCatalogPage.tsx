@@ -3,7 +3,7 @@ import { AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSe
 import { DungeonCardGrid } from "./DungeonCardGrid";
 import { MythicDataNotice } from "./MythicDataNotice";
 import { mythicVerification } from "./mythicVerification";
-import { dungeonSlugs } from "./dungeonRoutes";
+import { dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { trail } from "@/lib/routes/registry";
 
 type Season = "midnight-season-1" | "midnight-season-2";

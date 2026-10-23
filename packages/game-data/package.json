@@ -2,10 +2,11 @@
   "name": "@gildra/game-data",
   "version": "0.0.0",
   "private": true,
-  "description": "Verified World of Warcraft season data of Gildra: the content manifest, specializations, delves, lairs and The Venomous Abyss. Source-only TypeScript, compiled by the app (transpilePackages).",
+  "description": "Verified World of Warcraft season data of Gildra: the content manifest, delves, lairs and The Venomous Abyss. Source-only TypeScript, compiled by the app (transpilePackages).",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./content-manifest.json": "./src/content-manifest.json"
-  }
+  },
+  "sideEffects": false
 }

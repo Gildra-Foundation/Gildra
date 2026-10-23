@@ -110,18 +110,8 @@ type spellEnchantmentValue struct {
 	ItemLevelMax float64
 }
 
-func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity) error {
-	if entity == nil || entity.BuildID == nil {
-		return nil
-	}
-	// Items can carry effect blocks whose text belongs to a referenced spell
-	// (for example an on-use enchantment). Resolve those blocks too; without
-	// this branch the public item tooltip keeps raw `$s1`/`$d` tokens even when
-	// the spell's build-pinned values are available.
-	if entity.Type != "spell" && entity.Type != "talent" && entity.Type != "pvp_talent" && entity.Tooltip == nil {
-		return nil
-	}
-	if !entityHasDescriptionTemplates(entity) {
+func resolveEntityDescriptions(ctx context.Context, cache *spellValueCache, entity *Entity) error {
+	if !entityNeedsDescriptionValues(entity) {
 		return nil
 	}
 	if entity.RawDescription == "" {
@@ -133,22 +123,7 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 	// vice versa), and each locale can reference a different spell text.
 	valuesByLocale := make(map[string]map[int64]spellDescriptionValues, 2)
 	for _, locale := range []string{"en_US", "ru_RU"} {
-		raw := ""
-		if localized, ok := entity.Localizations[locale]; ok {
-			raw = localized.Description
-		}
-		if raw == "" && locale == entity.Locale {
-			raw = entity.Description
-		}
-		texts := []string{raw}
-		if locale == entity.Locale && entity.Tooltip != nil {
-			for _, block := range entity.Tooltip.Blocks {
-				if text, ok := block["text"].(string); ok {
-					texts = append(texts, text)
-				}
-			}
-		}
-		values, err := s.loadReferencedSpellDescriptionValues(ctx, entity.Product, locale, *entity.BuildID, currentSpellID, texts)
+		values, err := cache.loadReferenced(ctx, spellValueKey{entity.Product, locale, *entity.BuildID}, currentSpellID, descriptionTexts(entity, locale))
 		if err != nil {
 			return err
 		}
@@ -185,7 +160,7 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 			loaded := map[int64]spellDescriptionValues(nil)
 			var err error
 			if _, alreadyLoaded := values[blockSpellID]; !alreadyLoaded {
-				loaded, err = s.loadReferencedSpellDescriptionValues(ctx, entity.Product, entity.Locale, *entity.BuildID, blockSpellID, []string{raw})
+				loaded, err = cache.loadReferenced(ctx, spellValueKey{entity.Product, entity.Locale, *entity.BuildID}, blockSpellID, []string{raw})
 			}
 			if err != nil {
 				return err
@@ -205,6 +180,44 @@ func (s *Service) resolveEntityDescriptions(ctx context.Context, entity *Entity)
 		entity.Tooltip.PlainText = strings.ReplaceAll(entity.Tooltip.PlainText, raw, resolved)
 	}
 	return nil
+}
+
+// descriptionTexts returns the template texts resolved for one locale: the
+// stored localized description and, for the requested locale, the tooltip
+// block texts.
+func descriptionTexts(entity *Entity, locale string) []string {
+	raw := ""
+	if localized, ok := entity.Localizations[locale]; ok {
+		raw = localized.Description
+	}
+	if raw == "" && locale == entity.Locale {
+		raw = entity.Description
+	}
+	texts := []string{raw}
+	if locale == entity.Locale && entity.Tooltip != nil {
+		for _, block := range entity.Tooltip.Blocks {
+			if text, ok := block["text"].(string); ok {
+				texts = append(texts, text)
+			}
+		}
+	}
+	return texts
+}
+
+// entityNeedsDescriptionValues reports whether the entity has build-pinned
+// description templates that resolveEntityDescriptions would substitute.
+func entityNeedsDescriptionValues(entity *Entity) bool {
+	if entity == nil || entity.BuildID == nil {
+		return false
+	}
+	// Items can carry effect blocks whose text belongs to a referenced spell
+	// (for example an on-use enchantment). Resolve those blocks too; without
+	// this branch the public item tooltip keeps raw `$s1`/`$d` tokens even when
+	// the spell's build-pinned values are available.
+	if entity.Type != "spell" && entity.Type != "talent" && entity.Type != "pvp_talent" && entity.Tooltip == nil {
+		return false
+	}
+	return entityHasDescriptionTemplates(entity)
 }
 
 var descriptionTemplateToken = regexp.MustCompile(`\$(?:@spelldesc|[?A-Za-z{]|[0-9]+[A-Za-z])`)
@@ -236,30 +249,6 @@ func blockSpellIDOrDefault(blockSpellID, fallback int64) int64 {
 		return blockSpellID
 	}
 	return fallback
-}
-
-func (s *Service) loadReferencedSpellDescriptionValues(ctx context.Context, product, locale string, buildID, currentSpellID int64, texts []string) (map[int64]spellDescriptionValues, error) {
-	values := make(map[int64]spellDescriptionValues)
-	pending := referencedSpellIDs(texts, currentSpellID)
-	for depth := 0; depth < 4 && len(pending) > 0; depth++ {
-		loaded, err := s.loadSpellDescriptionValues(ctx, product, locale, buildID, pending)
-		if err != nil {
-			return nil, err
-		}
-		maps.Copy(values, loaded)
-		newTexts := make([]string, 0, len(loaded))
-		for _, value := range loaded {
-			newTexts = append(newTexts, value.Description)
-		}
-		candidates := referencedSpellIDs(newTexts, 0)
-		pending = pending[:0]
-		for _, id := range candidates {
-			if _, seen := values[id]; !seen {
-				pending = append(pending, id)
-			}
-		}
-	}
-	return values, nil
 }
 
 func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, locale string, buildID int64, ids []int64) (map[int64]spellDescriptionValues, error) {

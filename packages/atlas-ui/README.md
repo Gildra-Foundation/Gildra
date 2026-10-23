@@ -12,7 +12,10 @@ A workspace package (`packages/atlas-ui`, roadmap item 82): TypeScript and CSS
 modules compiled by the app (`transpilePackages`), no imports from the app
 (ESLint). The app imports it through `@/components/atlas`, which adds its
 `AtlasFrame` (scenes, legal line) and hands the kit the blurred placeholders of
-its paintings; deep imports use `@gildra/atlas-ui/<Component>`.
+its paintings; deep imports use `@gildra/atlas-ui/<Component>` (client components
+always do). `package.json` marks the kit side-effect free except its CSS, so a
+page bundles only the client islands it actually renders — keep modules free of
+import-time side effects.
 
 ## Rules
 
@@ -48,7 +51,7 @@ its paintings; deep imports use `@gildra/atlas-ui/<Component>`.
 
 | Component | Use for | Key props |
 | --- | --- | --- |
-| `AtlasFrameShell` (the app uses it as `AtlasFrame`) | Page wrapper (`artLayer`: a living layer over the scene that settles and drifts with the art, e.g. the Voidspire `VoidEye` shader; it also mounts `AtlasPointerLight`): atmosphere art behind the hero fading into the solid body, 1540 px column, slim legal footer with the "Less motion" switch (`AtlasMotionToggle`, lib/client/motionPreference.ts). Put the page's main artwork here, not in a framed box; every page gets a scene (`public/assets/wow/loading/*` for sections without their own art). The atmosphere is alive — the art settles in and drifts, the torchlight breathes, embers rise (CSS only, off under reduced motion); `still` turns it off on work surfaces | `art`, `artPosition`, `artShade` (`deep` for bright art), `tint`, `ember`, `glow`, `footer: {legal, links}`; the app's `AtlasFrame` (components/atlas) adds `scene` (lib/atlas/scenes.ts) and the legal line; `still`, `artLayer`, `as`, `lang`, `dataAttributes`, `footer` |
+| `AtlasFrameShell` (the app uses it as `AtlasFrame`) | Page wrapper (`artLayer`: a living layer over the scene that settles and drifts with the art, e.g. the Voidspire `VoidEye` shader; it also mounts `AtlasPointerLight`): atmosphere art behind the hero fading into the solid body, 1540 px column, slim legal footer with the "Less motion" switch (`AtlasMotionToggle`, lib/client/motionPreference.ts). Put the page's main artwork here, not in a framed box; every page gets a scene (`public/assets/wow/loading/*` for sections without their own art). The atmosphere is alive — the art settles in and drifts, the torchlight breathes, embers rise (CSS only, off under reduced motion); `still` turns it off on work surfaces. At the foot of the page the solid body warms into a horizon in the scene's colours — mist, a slowly turning seal of runes (`--atlas-seal`) behind the brand mark, rising sparks — CSS only and below the fold (`foot={false}` keeps it plain) | `art`, `artPosition`, `artShade` (`deep` for bright art), `tint`, `ember`, `horizon` (foot colour), `glow`, `foot`, `footer: {legal, links, brand}`; the app's `AtlasFrame` (components/atlas) adds `scene` (lib/atlas/scenes.ts) and the legal line; `still`, `artLayer`, `as`, `lang`, `dataAttributes`, `footer` |
 | `AtlasHero` | The page `h1` on the page artwork (open by default; `align="center"` for section hubs — a chapter title page with an ornament, counters below; detail pages stay left-aligned): eyebrow only for real context (season, kind · zone — never "World of Warcraft"), lede, counters as a quiet row. `emblem` only for an identity image (spec icon, item icon), never a decorative glyph | `title`, `eyebrow`, `lede`, `emblem`, `stats`, `breadcrumbs`, `actions`, `toolbar`, `aside`, `variant` |
 | `AtlasStats` | Row of headline counters (used inside the hero) | `items: {value, label}[]` |
 | `AtlasSection` | Titled block of the body (`h2`) | `id`, `title`, `eyebrow`, `description`, `aside`, `level` |
@@ -62,21 +65,24 @@ its paintings; deep imports use `@gildra/atlas-ui/<Component>`.
 | `AtlasCard` | Illustrated link card (raid, dungeon, boss); `layout="feature"` for the wide highlighted entry | `href`, `title`, `image`, `eyebrow`, `subtitle`, `description`, `meta`, `cta` (accessible name of the arrow), `artBadge`, `artCaption`, `accent`, `artRatio`. No numbering, no badge that repeats the section title, no caption that is the same on every card |
 | `AtlasPanel` | Framed surface; never nest panels | `tone: default \| raised \| highlight`, `padding` |
 | `AtlasMetaList` | Labelled facts grid (zone, group, reward) | `items: {label, value, icon}[]`, `columns` |
-| `AtlasBadge` | Short uppercase label | `tone: accent \| neutral \| positive \| negative \| info \| caution`, `icon` |
+| `AtlasBadge` | Short label on Valyro `Badge` (tones mapped to the atlas palette) | `tone: accent \| neutral \| positive \| negative \| info \| caution`, `icon` |
 | `AtlasButton` / `AtlasLinkButton` | Actions | `variant: primary \| secondary \| ghost`, `size`, `icon`, `iconAfter`, `external` |
-| `AtlasNotice` | Status line for drafts, fixtures, missing data | `title`, `tone: info \| caution`, `action` |
+| `AtlasNotice` | Status line for drafts, fixtures, missing data, on Valyro `Alert` (no live region; cautions are `role=note`) | `title`, `tone: info \| caution`, `action` |
 | `AtlasBreadcrumbs` | Trail (also built into the hero) | `items: {label, href}[]` |
 | `AtlasEmblem` | Seal with an icon | `shape: circle \| diamond \| square`, `size` |
 | `AtlasTable` | Data table on tokens: sticky header, numeric columns, row headers; `layout="cards"` turns each row into a labelled card on phones (short tables), `scroll` keeps a horizontal scroll | `columns: {key, header, label, cell, rowHeader, numeric}[]`, `rows`, `rowKey`, `label`, `caption`, `layout`, `maxWidth` |
 | `AtlasTabs` | Client: ARIA tabs (arrows, Home/End), panels kept in the page | `tabs`, `label`, `defaultTab`, `variant: underline \| segmented`, `onChange` |
-| `AtlasField` + `AtlasInput` / `AtlasSelect` / `AtlasCheckbox` / `AtlasRange` | Native form controls (work in plain GET forms and server components); `AtlasField` adds label, hint and error | `label`, `hint`, `error`, `htmlFor`; `AtlasInput icon` |
+| `AtlasField` + `AtlasInput` / `AtlasSelect` / `AtlasCheckbox` / `AtlasRange` | Form controls that work in plain GET forms and server components (`AtlasInput` is Valyro `TextInput`, `AtlasCheckbox` Valyro `Checkbox` on a native input); `AtlasField` adds label, hint and error | `label`, `hint`, `error`, `htmlFor`; `AtlasInput icon` |
+| `AtlasSwitch` | Client: on/off setting on Valyro `Switch` (native checkbox, `role=switch`) | Valyro `SwitchProps`: `checked`, `onCheckedChange`, `label`, `size` |
+| `AtlasSegmented` | Client: one of a few choices (filters, modes) on Valyro `SegmentedControl` (radio group, sliding thumb) | `options`, `value`, `onValueChange`, `size`, `aria-label` |
+| `AtlasTierBoard` | Client, Valyro Pro `TierList`: tier rows with portraits and role filter, "your order" drag mode (mouse, touch, keyboard), copy as text and JSON export; load it lazily | `items`, `tiers`, `roles`, `defaultValue`, `title`, `caption`, `locale` |
 | `AtlasTooltip` | Client: short hover/focus explanation tied by `aria-describedby` | `content`, `placement: top \| bottom`, `focusable` |
 | `AtlasEmpty` / `AtlasError` / `AtlasSkeleton` | Honest states: nothing yet (`role=status`), failure with a code (`role=alert`), loading with the torchlight sweep | `title`, children, `action`; `actions`, `code`; `variant: lines \| cards \| rows`, `count`, `label` |
-| `AtlasDialog` | Client modal on the native `<dialog>` (focus trap, Esc, focus return, backdrop click); `variant="sheet"` rises from the bottom on phones | `open`, `onClose`, `label`, `variant` |
-| `AtlasToast` | Client: short confirmation at the bottom of the screen (`role=status`), hides itself after `duration` | `message` (null hides), `onDone`, `tone: default \| negative`, `duration` |
-| `AtlasShareButton` | Client: "Share" for entity pages — the system share sheet on touch devices, otherwise copies the page link and confirms with `AtlasToast` | `title`, `locale` |
+| `AtlasDialog` | Client modal on Valyro `Dialog` (focus trap, scroll lock, Esc, focus return, backdrop click, no backdrop blur); a bottom sheet on phones, `variant="sheet"` up to 720px | `open`, `onClose`, `label`, `variant` |
+| `notify` (`@gildra/atlas-ui/toast`) | Short confirmation on the Valyro toast stack (bottom centre, `role=status`, swipe/F8); the toaster loads on the first call | `notify(message, { tone: default \| negative, locale })` |
+| `AtlasShareButton` | Client: "Share" for entity pages — the system share sheet on touch devices, otherwise copies the page link and confirms with `notify` | `title`, `locale` |
 | `AtlasArtGlow` | Client: living light on points of a scene painting (lava, crystals), placed with the cover-crop maths; AtlasFrame renders it from the scene registry `glow`; hidden under reduced or less motion | `imageSize`, `focus`, `points: {at, radius, color, tempo}[]` |
-| `AtlasPagination` | Paging of a list: quiet "previous", primary "next" / "show more", optional status; plain links (work without JS, the route runtime still animates) | `label`, `prev`, `next` (`href`, `label`, `attributes`), `status` |
+| `AtlasPagination` | Paging of a list: quiet "previous", primary "next" / "show more", optional status; Valyro buttons rendered as plain links (`asChild`: work without JS, the route runtime still animates) | `label`, `prev`, `next` (`href`, `label`, `attributes`), `status` |
 | `AtlasChart` | Horizontal bar chart in plain HTML (reads as a list, no library); bars scaled to the largest value, grow in on scroll; rows can link | `data: {key, label, value, display, href}[]`, `label`, `max`, `unit` |
 
 Helpers (`components/atlas/format.ts`): `formatAtlasDate(iso, locale)`, `formatSeason("Midnight Season 2", locale)`, `pluralRu(n, one, few, many)`.

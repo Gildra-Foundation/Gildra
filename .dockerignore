@@ -9,3 +9,8 @@ infra/certs
 **/.artifacts
 **/*.tsbuildinfo
 **/.next-*
+# Session worktrees and tooling (gigabytes in the main checkout), test output.
+.claude
+**/test-results
+**/playwright-report
+**/.turbo

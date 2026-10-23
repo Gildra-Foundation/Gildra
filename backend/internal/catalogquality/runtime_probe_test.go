@@ -33,7 +33,7 @@ func TestValidatePublicTemplatePayloadFindsRuntimeFallback(t *testing.T) {
 func TestValidatePublicTemplatePayloadAllowsExplicitEffectStatus(t *testing.T) {
 	got := ValidatePublicTemplatePayload(map[string]any{
 		"tooltip": map[string]any{
-			"text": "Restores a game-defined value health.",
+			"text":                "Restores a game-defined value health.",
 			"spell_target_status": "resolved",
 		},
 	})

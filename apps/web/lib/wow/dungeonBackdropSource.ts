@@ -1,4 +1,4 @@
-import type { DungeonRoute } from "@/components/wow/mythic/dungeonRoutes";
+import type { DungeonRoute } from "@/lib/data/wow/mythic/dungeonRoutes";
 
 export function dungeonBackdropSource(dungeon: Pick<DungeonRoute, "slug" | "backdropImage">) {
   if (dungeon.slug === "ruby-life-pools") return dungeon.backdropImage;

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
-
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { getAnalyticsOverview } from "@/lib/api/client";
+import { analyticsCopy } from "@/components/analytics/analyticsCopy";
 import styles from "@/components/analytics/analyticsPage.module.css";
 import "@/app/styles/tailwind-app.css";
 
@@ -10,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Живая аналитика Азерота — Gildra", description: "Живая телеметрия и активность командного центра World of Warcraft." };
 
 export default async function AnalyticsPageRu() {
-  const t = await getTranslations({ locale: "ru", namespace: "Analytics" });
+  const copy = analyticsCopy.ru;
   const data = await getAnalyticsOverview(24);
   return (
     <>
@@ -23,16 +22,16 @@ export default async function AnalyticsPageRu() {
             <img src="/assets/wow/mythic/ruby-depth-v3-light-fast.webp" width="1500" height="844" fetchPriority="high" decoding="async" alt="" />
           </picture>
           <p className={styles.eyebrow}>Аналитика Азерота · Активность Gildra</p>
-          <h1 className={styles.title}>{t("title")}</h1>
-          <p className={styles.subtitle}>{t("subtitle")}</p>
+          <h1 className={styles.title}>{copy.title}</h1>
+          <p className={styles.subtitle}>{copy.subtitle}</p>
           <span className={styles.ribbon}><i />Данные игрового мира в реальном времени</span>
         </header>
         <AnalyticsDashboard
           data={data}
           locale="ru"
           copy={{
-            activity: t("activity"), empty: t("empty"), events: t("events"),
-            hours: t("hours", { hours: data.hours }), subscriptions: t("subscriptions"), users: t("users"),
+            activity: copy.activity, empty: copy.empty, events: copy.events,
+            hours: copy.hours(data.hours), subscriptions: copy.subscriptions, users: copy.users,
           }}
         />
       </main>

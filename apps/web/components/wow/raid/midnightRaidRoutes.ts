@@ -1,4 +1,4 @@
-import type { RaidSlug } from "./midnightRaidData";
+import type { RaidSlug } from "@/lib/data/wow/raid/midnightRaidData";
 
 export type RouteText = { ru: string; en: string };
 export type RouteAction = "interrupt" | "move" | "defensive" | "dispel" | "focus" | "stop";

@@ -2,11 +2,11 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/auth"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
 
 const catalogSessionCookie = "gildra_admin_session"
@@ -45,11 +45,7 @@ func isPrivateCatalogPath(path string) bool {
 }
 
 func writeCatalogUnauthorized(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.Header().Set("Cache-Control", "private, no-store")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(http.StatusUnauthorized)
-	_ = json.NewEncoder(w).Encode(map[string]any{
+	httpjson.WriteProblem(w, http.StatusUnauthorized, httpjson.PrivateNoStore, map[string]any{
 		"type":   "https://api.gildra.net/errors/catalog-authentication-required",
 		"title":  "Catalog authentication required",
 		"status": http.StatusUnauthorized,

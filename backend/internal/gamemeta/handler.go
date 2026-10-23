@@ -2,11 +2,12 @@ package gamemeta
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
+
+	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
 
 type Store interface {
@@ -17,6 +18,9 @@ type Store interface {
 type Handler struct{ store Store }
 
 func NewHandler(store Store) *Handler { return &Handler{store: store} }
+
+// publicMetaCache lets the edge share published tier lists between visitors.
+const publicMetaCache = "public, max-age=300, s-maxage=900, stale-if-error=86400"
 
 func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/meta/wow/tier-list", h.wowTierList)
@@ -88,10 +92,7 @@ func (h *Handler) wowTierList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Cache-Control", "public, max-age=300, s-maxage=900, stale-if-error=86400")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	_ = json.NewEncoder(w).Encode(snapshot)
+	httpjson.Write(w, http.StatusOK, publicMetaCache, snapshot)
 }
 
 func (h *Handler) wowTierListContexts(w http.ResponseWriter, r *http.Request) {
@@ -109,19 +110,11 @@ func (h *Handler) wowTierListContexts(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, r, http.StatusServiceUnavailable, "meta_unavailable", "WoW meta contexts are temporarily unavailable")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Cache-Control", "public, max-age=300, s-maxage=900, stale-if-error=86400")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	_ = json.NewEncoder(w).Encode(map[string]any{"activity": activity, "contexts": contexts})
+	httpjson.Write(w, http.StatusOK, publicMetaCache, map[string]any{"activity": activity, "contexts": contexts})
 }
 
 func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, detail string) {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]any{
-		"type":  "https://api.gildra.net/errors/meta/" + code,
-		"title": http.StatusText(status), "status": status, "detail": detail, "instance": r.URL.Path,
+	httpjson.WriteProblem(w, status, httpjson.NoStore, httpjson.Problem{
+		Type: "https://api.gildra.net/errors/meta/" + code, Title: http.StatusText(status), Status: status, Detail: detail, Instance: r.URL.Path,
 	})
 }

@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -340,7 +341,7 @@ func (c *Client) getJSON(ctx context.Context, endpoint string, target any) error
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			if !retryableRequestError(err) || attempt == requestAttempts-1 {
+			if !RetryableNetworkError(err) || attempt == requestAttempts-1 {
 				return err
 			}
 			delay := min(time.Duration(1<<attempt)*time.Second, maxRetryDelay)
@@ -398,9 +399,25 @@ func (c *Client) getJSON(ctx context.Context, endpoint string, target any) error
 	return errors.New("Battle.net request retry loop exhausted")
 }
 
-func retryableRequestError(err error) bool {
+// RetryableNetworkError reports whether err is a network failure worth
+// retrying: a timeout or one of the conditions the deprecated
+// net.Error.Temporary used to report (reset or aborted connections, interrupted
+// calls, exhausted file descriptors, temporary DNS failures).
+func RetryableNetworkError(err error) bool {
 	var networkError net.Error
-	return errors.As(err, &networkError) && (networkError.Timeout() || networkError.Temporary())
+	if errors.As(err, &networkError) && networkError.Timeout() {
+		return true
+	}
+	var dnsError *net.DNSError
+	if errors.As(err, &dnsError) && dnsError.IsTemporary {
+		return true
+	}
+	for _, temporary := range []syscall.Errno{syscall.ECONNRESET, syscall.ECONNABORTED, syscall.EINTR, syscall.EMFILE, syscall.ENFILE} {
+		if errors.Is(err, temporary) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Client) getJSONOnce(ctx context.Context, endpoint string, target any) error {

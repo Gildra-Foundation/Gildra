@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import { Share2 } from "lucide-react";
 import { AtlasButton } from "./AtlasButton";
-import { AtlasToast } from "./AtlasToast";
 import { copyText } from "./clipboard";
+import { notify } from "./toast";
 
 const copy = {
   en: { share: "Share", copied: "Link copied", failed: "Could not copy the link" },
@@ -14,13 +13,10 @@ const copy = {
 /**
  * "Share" for entity pages (bosses, lairs, database entries): the system share
  * sheet on touch devices, otherwise the page link goes to the clipboard and a
- * toast confirms it. Shares the canonical URL without the hash.
+ * Valyro toast confirms it. Shares the canonical URL without the hash.
  */
 export function AtlasShareButton({ title, locale }: { title: string; locale: "en" | "ru" }) {
   const t = copy[locale];
-  const [toast, setToast] = useState<{ text: string; tone: "default" | "negative" } | null>(null);
-  const hide = useCallback(() => setToast(null), []);
-
   async function share() {
     const url = `${location.origin}${location.pathname}${location.search}`;
     if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
@@ -33,14 +29,11 @@ export function AtlasShareButton({ title, locale }: { title: string; locale: "en
     }
     try {
       await copyText(url);
-      setToast({ text: t.copied, tone: "default" });
+      notify(t.copied, { locale });
     } catch {
-      setToast({ text: t.failed, tone: "negative" });
+      notify(t.failed, { tone: "negative", locale });
     }
   }
 
-  return <>
-    <AtlasButton variant="ghost" icon={<Share2 aria-hidden="true" />} onClick={share}>{t.share}</AtlasButton>
-    <AtlasToast message={toast?.text ?? null} tone={toast?.tone} onDone={hide} />
-  </>;
+  return <AtlasButton variant="ghost" icon={<Share2 aria-hidden="true" />} onClick={share}>{t.share}</AtlasButton>;
 }

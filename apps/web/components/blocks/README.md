@@ -7,11 +7,11 @@ is the contract — read it before adding or changing UI.
 ```
 lib/blocks/          core: types.ts (BlockDef), page.ts (PageConfig), registry.ts, anchors.ts, metadata.ts, gallery.ts
 lib/pages/           definePage.tsx — one definition → { en, ru } route exports
-lib/games/           registry.ts (GAMES, prefixes, nav, footer, legal) · adapter.ts · <slug>/{assets,client,api,pages/*}
-lib/data/            DataSource contract + demo implementation (data/site.ts stays the demo dataset)
+lib/games/           registry.ts (GAMES, prefixes, nav, footer, legal) · <slug>/{assets,api,pages/*}
+lib/data/            server-side game data (wow.ts, season.ts, wow/{mythic,raid,specializations}) blocks load from
 lib/anchors.ts       ANCHORS — every #id used by nav, footer, search and blocks
 components/blocks/   shared/<name>/ · <game>/<name>/ · _template/ · BlockRenderer · Page
-components/layout/   PageShell (Icons + .app/.main + Reveal; the top bar is global, the legal line is AtlasFrame's), Container, Section
+components/layout/   PageShell (Icons + .app/.main + Reveal; the top bar is global, the legal line is AtlasFrame's), Container
 app/(site)/**/page.tsx  thin wrappers; app/ru/** mirrors them with `.ru`
 app/dev/blocks       gallery of every block at 1440/768/390 (dev only; GILDRA_DEV_GALLERY=1 in prod)
 ```
@@ -19,19 +19,20 @@ app/dev/blocks       gallery of every block at 1440/768/390 (dev only; GILDRA_DE
 ## Block anatomy
 
 ```
-components/blocks/wow/specBody/
-  SpecBody.tsx    component: (props + data + lang + game) → JSX. Owns its root element and its #id.
+components/blocks/<game|shared>/<name>/   (components/blocks/_template is the starting point)
+  <Name>.tsx      component: (props + data + lang + game) → JSX. Owns its root element and its #id.
   schema.ts       props (JSON-serialisable) and data types
-  data.ts         load(ctx, props) → data via ctx.source only
+  data.ts         load(ctx, props) → data, on the server, through lib/ data modules
   demo.ts         demo props + data for the gallery
-  index.ts        defineBlock({ type: "wow.specBody", Component, load, anchor, demo })
+  index.ts        defineBlock({ type: "<game>.<name>", Component, load, anchor, demo })
 ```
 
 Rules:
 
-- **The component is pure.** No `data/site.ts`, no `lib/api/*`, no `usePathname` for
-  language — `lang` and `game` arrive as props. Only `demo.ts`/`index.ts` may import
-  the demo dataset.
+- **The component is pure.** No data imports, no `lib/api/*`, no `usePathname` for
+  language — `lang`, `game` and `data` arrive as props. `load` reads real data through
+  lib/ (`@/lib/data/*`, `@/lib/platform/*`); `data/site.ts` is only the tier
+  workspace's labelled sample, never a stand-in for missing live data.
 - **Own your root.** A block renders its own `<section id=…>`; anchor targets use
   `ANCHORS.x` and the definition declares `anchor: { id, label }` (empty label =
   scroll target without a nav item). Props-derived anchors use `anchorOf(props)`.
@@ -113,8 +114,8 @@ and wrap it in `PageShell` — they do not need to become block pages.
    `GameDefinition` (`prefix: "/<slug>"`, `status: "beta"`, nav tasks, footer, legal,
    seo, optional `theme` overrides for `--gold`/`--blue`…).
 2. `components/Icons.tsx`: add `<symbol id="gm-<slug>">`.
-3. `lib/games/<slug>/client.ts`: adapter with a search index over real destinations
-   (register it in `lib/games/adapter.ts`); `assets.ts`/`api.ts` as needed.
+3. Add the game's real destinations to the site search index (`lib/search/siteIndex.ts`);
+   `lib/games/<slug>/assets.ts`/`api.ts` as needed.
 4. `lib/games/<slug>/pages/home.ts` with `definePage`, and blocks under
    `components/blocks/<slug>/`.
 5. `app/(site)/<slug>/page.tsx` + `app/ru/<slug>/page.tsx` wrappers.
@@ -125,7 +126,7 @@ registry automatically. URLs compose as `[/ru]` + `prefix` + path; never create
 `app/[game]` (a root catch-all segment would shadow the branded 404).
 
 Reference implementation: League of Legends — `lib/games/league-of-legends/`
-(`api.ts`, `client.ts`, `sitemap.ts`, `pages/{home,champion,content}.ts`) and
+(`api.ts`, `sitemap.ts`, `pages/{home,champion,content}.ts`) and
 `components/blocks/league-of-legends/*`. Its pages set `legacyLocaleQuery: true`,
 so old `?locale=ru_RU` links 308 to `/ru/…`. Wide game columns are a game block
 (`lol.main`), not `.section`; the game's ground colour comes from `theme` in the

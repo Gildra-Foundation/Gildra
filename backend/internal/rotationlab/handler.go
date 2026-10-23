@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
 
 type API interface {
@@ -63,19 +65,14 @@ func (h *Handler) simulate(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, http.StatusInternalServerError, "simulation_unavailable", "simulation is temporarily unavailable")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Cache-Control", "private, no-store")
 	if strings.HasPrefix(result.Engine, "SimulationCraft") {
 		w.Header().Set("X-Gildra-Engine", "simulationcraft")
 	} else {
 		w.Header().Set("X-Gildra-Engine", "mvp-fallback")
 	}
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(result)
+	httpjson.Write(w, http.StatusCreated, httpjson.PrivateNoStore, result)
 }
 
 func writeProblem(w http.ResponseWriter, status int, code, message string) {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{"code": code, "message": message})
+	httpjson.WriteProblem(w, status, "", map[string]string{"code": code, "message": message})
 }

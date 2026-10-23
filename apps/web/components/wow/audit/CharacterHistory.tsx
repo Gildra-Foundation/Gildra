@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, Check, Clock3, Copy, History, Link2, LoaderCircle, RefreshCw, Shield, ShieldCheck, Sparkles, Swords, Unlink } from "lucide-react";
 import type { CharacterRunRecord } from "@/lib/wow/characterRunHistory";
 import { BookEngraving } from "./BookEngraving";
 import { characterWorkspaceCopy, workspaceLocale, workspaceNumber, workspaceRunLabel, type WorkspaceLocale } from "./characterWorkspaceCopy";
 import styles from "./characterHistory.module.css";
+import { copyText } from "@gildra/atlas-ui/clipboard";
 
 function formatNumber(value: number, locale: WorkspaceLocale) { return workspaceNumber(locale, value); }
 
@@ -25,20 +26,30 @@ export function CharacterHistory({ characterSlug, specializationSlug, fingerprin
   const [notice, setNotice] = useState("");
   const query = new URLSearchParams({ character: characterSlug, specialization: specializationSlug, fingerprint }).toString();
 
+  // One history request at a time: a newer load (another character, a saved
+  // run) aborts the previous one, so a slow stale response cannot overwrite it.
+  const request = useRef<AbortController | null>(null);
   const load = useCallback(async () => {
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
     setState("loading");
     try {
-      const response = await fetch(`/api/wow/workspace/history?${query}`, { cache: "no-store" });
+      const response = await fetch(`/api/wow/workspace/history?${query}`, { cache: "no-store", signal: controller.signal });
       if (!response.ok) throw new Error("history_unavailable");
       const payload = await response.json() as { runs?: CharacterRunRecord[] };
+      if (controller.signal.aborted) return;
       setRuns(payload.runs ?? []);
       setState("ready");
     } catch {
-      setState("error");
+      if (!controller.signal.aborted) setState("error");
     }
   }, [query]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    return () => request.current?.abort();
+  }, [load]);
   useEffect(() => {
     const update = (event: Event) => {
       const detail = (event as CustomEvent<{ characterSlug?: string; specializationSlug?: string }>).detail;
@@ -55,7 +66,7 @@ export function CharacterHistory({ characterSlug, specializationSlug, fingerprin
       const payload = await response.json() as { id?: string; token?: string };
       if (!response.ok || !payload.id || !payload.token) throw new Error("share_unavailable");
       const url = `${window.location.origin}${localePrefix}/wow/shared/${payload.token}`;
-      await navigator.clipboard.writeText(url);
+      await copyText(url);
       setRuns((items) => items.map((item) => item.id === run.id ? { ...item, activeShareId: payload.id } : item));
       setNotice(t("Ссылка скопирована. Данные аккаунта и полный профиль персонажа в неё не входят."));
     } catch {

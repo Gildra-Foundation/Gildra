@@ -6,7 +6,7 @@ import {
 } from "@/components/atlas";
 import { DialogDemo } from "@/components/atlas/gallery/DialogDemo";
 import styles from "@/components/atlas/gallery/gallery.module.css";
-import { dungeonRoutes, dungeonSlugs } from "@/components/wow/mythic/dungeonRoutes";
+import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { atlasScenes } from "@/lib/atlas/scenes";
 import { assertGalleryEnabled } from "@/lib/blocks/gallery";
 

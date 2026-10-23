@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MythicRouteMap } from "@/components/wow/mythic/MythicRouteMap";
 import { getDungeonCombatIntel } from "@/components/wow/mythic/dungeonCombatIntel.server";
-import { dungeonRoutes, getDungeonRoute, getDungeonSelectorOptions, type DungeonSlug } from "@/components/wow/mythic/dungeonRoutes";
+import { dungeonRoutes, getDungeonRoute, getDungeonSelectorOptions, type DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { preloadDungeonBackdrop } from "@/lib/wow/dungeonBackdropPreload";
 
 export const dynamicParams = false;

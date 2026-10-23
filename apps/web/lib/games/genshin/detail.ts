@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { ApiLocale } from "@/lib/games/registry";
-import { apiInternalUrl } from "@/lib/env";
+import { internalApiFetch, readApiJson } from "@/lib/api/internal";
 
 export type GenshinEntityKind = "characters" | "weapons" | "artifact-sets";
 
@@ -51,15 +51,10 @@ export type GenshinEntityDetail = {
   sources?: GenshinDetailRecord[];
 };
 
-const apiURL = () => apiInternalUrl();
 
 export async function getGenshinEntityDetail(kind: GenshinEntityKind, slug: string, locale: ApiLocale) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
-  const response = await fetch(`${apiURL()}/genshin-impact/v1/${kind}/${encodeURIComponent(slug)}?locale=${locale}`, {
-    cache: "no-store",
-    signal: AbortSignal.timeout(10_000),
-  });
+  const response = await internalApiFetch(`/genshin-impact/v1/${kind}/${encodeURIComponent(slug)}?locale=${locale}`, { timeoutMs: 10_000, cache: "no-store" });
   if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`Genshin database request failed (${response.status})`);
-  return await response.json() as GenshinEntityDetail;
+  return readApiJson<GenshinEntityDetail>(response, "Genshin database");
 }

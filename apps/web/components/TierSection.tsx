@@ -1,6 +1,5 @@
 "use client";
 
-import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -61,7 +60,10 @@ function TierMark({ tier, copy, size = "md" }: { tier: string; copy: TierCopy; s
  * raid slices (fetched from the meta API); with the saved sample (`sampleRoles`
  * from the server) those controls are not rendered, the page notice explains why.
  */
-export function TierSection({ lang, intelligence, sample = false, sampleRoles, specPaths = [] }: { lang: Lang; intelligence: GameIntelligence; sample?: boolean; sampleRoles?: Record<TierRole, TierEntry[]>; specPaths?: string[] }) {
+/** Localized spec and class names by spec slug (built on the server from the talent spec themes). */
+export type TierSpecNames = Record<string, { specName: string; className: string }>;
+
+export function TierSection({ lang, intelligence, sample = false, sampleRoles, specPaths = [], specNames }: { lang: Lang; intelligence: GameIntelligence; sample?: boolean; sampleRoles?: Record<TierRole, TierEntry[]>; specPaths?: string[]; specNames: TierSpecNames }) {
   const copy = tierCopy[lang];
   const [activity, setActivity] = useState<TierActivity>("mythic_plus");
   const [role, setRole] = useState<TierRole>("dps");
@@ -100,9 +102,9 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   const baseRoles = suppliedRoles ?? (sample && activity === "mythic_plus" && sampleRoles ? sampleRoles : EMPTY_ROLES);
   const activeRoles = remoteRoles ?? baseRoles;
   const roleEntries = useMemo(() => (activeRoles[role] ?? []).map((entry) => {
-    const theme = getTalentSpecTheme(entry.specSlug) ?? getTalentSpecTheme(`${entry.specSlug}-${entry.classSlug}`);
-    return theme ? { ...entry, specName: lang === "ru" ? theme.specNameRu : theme.specName, className: lang === "ru" ? theme.classNameRu : theme.className } : entry;
-  }), [activeRoles, role, lang]);
+    const names = specNames[entry.specSlug] ?? specNames[`${entry.specSlug}-${entry.classSlug}`];
+    return names ? { ...entry, ...names } : entry;
+  }), [activeRoles, role, specNames]);
   const classes = useMemo(() => {
     const seen = new Map<string, string>();
     roleEntries.forEach((entry) => seen.set(entry.classSlug, entry.className));
