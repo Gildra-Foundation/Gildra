@@ -136,6 +136,7 @@ func run() error {
 		return err
 	}
 	catalogService := catalog.NewService(postgres)
+	catalogService.PersistTotals(redisClient)
 	publicationService := catalog.NewPublicationService(postgres, time.Minute)
 	server := httpapi.NewServer(analyticsService, catalogService, indexnow.NewQueue(riverClient, cfg.IndexNowHost))
 	restHandler := http.Handler(api.Handler(api.NewStrictHandler(server, nil)))
