@@ -233,7 +233,7 @@ export async function ArticlesIndexPage({ lang, filters }: { lang: Lang; filters
         <ArticleFilters lang={lang} filters={filters} types={types} base={base} counts={counts} />
         <p className={list.count} role="status">{t.count(matching.length)}</p>
         {shown.length ? (
-          <AtlasGrid min={360} fit>
+          <AtlasGrid min={360}>
             {shown.map((a, i) => <ArticleTeaser key={a.id} article={a} lang={lang} cover={coverUrl(a)} sizes={GRID_SIZES} priority={!lead && page === 1 && i === 0} />)}
           </AtlasGrid>
         ) : matching.length === 0 ? (
@@ -389,7 +389,7 @@ export function ArticleView({ article: a, lang, banner, related = [], preview = 
       {related.length ? (
         <section className={list.related} aria-labelledby="related-title">
           <h2 id="related-title">{t.more}</h2>
-          <AtlasGrid min={280} fit>
+          <AtlasGrid min={360}>
             {related.map((r) => <ArticleTeaser key={r.id} article={r} lang={lang} cover={coverUrl(r)} sizes={GRID_SIZES} />)}
           </AtlasGrid>
         </section>
