@@ -1,0 +1,30 @@
+/* atlas:strict — Valyro's pagination styles as links; atlas supplies the current page and the track. */
+.pages {
+  --ui-pagination-item-current-bg: var(--atlas-accent);
+  --ui-pagination-item-current-fg: var(--atlas-accent-ink);
+  --ui-pagination-item-current-shadow: none;
+  --ui-control-track-bg: var(--atlas-glass-fill);
+  --ui-nav-item-fg: var(--atlas-text-muted);
+  --ui-hover: var(--atlas-accent-wash);
+  --ui-active: var(--atlas-accent-wash-strong);
+  --ui-fg: var(--atlas-text-strong);
+  display: flex;
+  justify-content: center;
+  margin-block-start: var(--atlas-space-6);
+  font-family: var(--atlas-font-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.pages a {
+  text-decoration: none;
+}
+
+.pages a:focus-visible {
+  outline: 2px solid var(--atlas-accent-strong);
+  outline-offset: 2px;
+}
+
+.pages [aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+}
