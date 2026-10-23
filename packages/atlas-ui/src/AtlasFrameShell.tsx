@@ -3,7 +3,6 @@ import Image from "next/image";
 import clsx from "clsx";
 import { AtlasArtGlow, type ArtGlowPoint } from "./AtlasArtGlow";
 import { AtlasMotionToggle } from "./AtlasMotionToggle";
-import { AtlasPointerLight } from "./AtlasPointerLight";
 import { morphSceneProps } from "./morph";
 import { artPlaceholder } from "./placeholders";
 import styles from "./AtlasFrame.module.css";
@@ -98,7 +97,6 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
           <span className={styles.footEmbers} />
         </div>
       ) : null}
-      <AtlasPointerLight />
       <div className={styles.column}>
         {children}
         {footer ? (
