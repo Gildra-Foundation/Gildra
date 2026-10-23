@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -267,9 +268,7 @@ func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
 	)
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() (err error) {
-		total, err = s.totals.get(groupCtx, listTotalKey(params), func(ctx context.Context) (int64, error) {
-			return s.count(ctx, params)
-		})
+		total, err = s.listTotal(groupCtx, params)
 		return err
 	})
 	group.Go(func() (err error) {
@@ -634,10 +633,57 @@ func listTotalKey(params ListParams) string {
 		strings.TrimSpace(params.Category), normalizeLocale(params.Locale), strings.TrimSpace(params.Query)}, "\x00")
 }
 
+// listTotal resolves a List total without letting an exact count hold the
+// page: the exact count runs in the background (see totalCache), and until
+// it is ready the total is the planner's row estimate of the same query.
+// catalog_public_summary_stats is no substitute: it does not apply the
+// technical-name filter and over-counts spells by about 7%.
+func (s *Service) listTotal(ctx context.Context, params ListParams) (int64, error) {
+	if total, ok := s.totals.lookup(ctx, listTotalKey(params), totalCountWait, func(ctx context.Context) (int64, error) {
+		return s.count(ctx, params)
+	}); ok {
+		return total, nil
+	}
+	query, args := listMatchSQL(params)
+	return s.estimateRows(ctx, query, args...)
+}
+
+// estimateRows returns the planner's row estimate for query, planning it
+// without running it. The top node of a plain (non-aggregate) query carries
+// the whole estimate, a Gather included, unlike the per-worker nodes below.
+func (s *Service) estimateRows(ctx context.Context, query string, args ...any) (int64, error) {
+	var raw []byte
+	if err := s.postgres.QueryRow(ctx, "EXPLAIN (FORMAT JSON) "+query, args...).Scan(&raw); err != nil {
+		return 0, fmt.Errorf("estimate game entity count: %w", err)
+	}
+	return planRows(raw)
+}
+
+func planRows(raw []byte) (int64, error) {
+	var plans []struct {
+		Plan struct {
+			Rows *float64 `json:"Plan Rows"`
+		} `json:"Plan"`
+	}
+	if err := json.Unmarshal(raw, &plans); err != nil || len(plans) == 0 || plans[0].Plan.Rows == nil {
+		return 0, fmt.Errorf("decode row estimate: unexpected plan %.200q", raw)
+	}
+	return int64(math.Round(*plans[0].Plan.Rows)), nil
+}
+
 func (s *Service) count(ctx context.Context, params ListParams) (int64, error) {
+	query, args := listMatchSQL(params)
 	var total int64
+	if err := s.postgres.QueryRow(ctx, "SELECT count(*) FROM ("+query+") matched", args...).Scan(&total); err != nil {
+		return 0, fmt.Errorf("count game entities: %w", err)
+	}
+	return total, nil
+}
+
+// listMatchSQL selects one row per entity that List pages through.
+func listMatchSQL(params ListParams) (string, []any) {
 	if strings.TrimSpace(params.Query) == "" {
-		err := s.postgres.QueryRow(ctx, `
+		return `
 			WITH RECURSIVE selected_categories AS (
 				SELECT c.id FROM catalog_categories c
 				JOIN game_products selected_product ON selected_product.id=c.product_id
@@ -645,23 +691,19 @@ func (s *Service) count(ctx context.Context, params ListParams) (int64, error) {
 				UNION ALL
 				SELECT child.id FROM catalog_categories child JOIN selected_categories selected ON child.parent_id=selected.id
 			)
-			SELECT count(*) FROM game_entities e JOIN game_products p ON p.id=e.product_id
+			SELECT 1 FROM game_entities e JOIN game_products p ON p.id=e.product_id
 			JOIN game_entity_versions v ON v.id=e.published_version_id
 			LEFT JOIN game_entity_localizations l ON l.version_id=v.id AND l.locale=$4
 			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 			WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
-			  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
-			  `+publicCatalogUsabilityPredicate("e", "v")+`
+			  ` + publicCatalogDisplayNamePredicate("l", "fallback") + `
+			  ` + publicCatalogUsabilityPredicate("e", "v") + `
 			  AND ($1='' OR p.slug=$1) AND ($2='' OR e.entity_type=$2)
 			  AND ($3='' OR EXISTS(SELECT 1 FROM game_entity_categories ec
 				WHERE ec.version_id=e.published_version_id AND ec.category_id IN (SELECT id FROM selected_categories)))`,
-			strings.TrimSpace(params.Product), strings.TrimSpace(params.Type), strings.TrimSpace(params.Category), normalizeLocale(params.Locale)).Scan(&total)
-		if err != nil {
-			return 0, fmt.Errorf("count game entities: %w", err)
-		}
-		return total, nil
+			[]any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type), strings.TrimSpace(params.Category), normalizeLocale(params.Locale)}
 	}
-	err := s.postgres.QueryRow(ctx, `
+	return `
 		WITH RECURSIVE selected_categories AS (
 			SELECT c.id
 			FROM catalog_categories c
@@ -672,15 +714,15 @@ func (s *Service) count(ctx context.Context, params ListParams) (int64, error) {
 			SELECT child.id FROM catalog_categories child
 			JOIN selected_categories selected ON child.parent_id=selected.id
 		)
-		SELECT count(*)
+		SELECT 1
 		FROM game_entities e
 		JOIN game_products p ON p.id=e.product_id
 		LEFT JOIN game_entity_versions v ON v.id=e.published_version_id
 		LEFT JOIN game_entity_localizations l ON l.version_id=v.id AND l.locale=$3
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
-		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
-		  `+publicCatalogUsabilityPredicate("e", "v")+`
+		  ` + publicCatalogDisplayNamePredicate("l", "fallback") + `
+		  ` + publicCatalogUsabilityPredicate("e", "v") + `
 		  AND ($1='' OR p.slug=$1)
 		  AND ($2='' OR e.entity_type=$2)
 		  AND ($5='' OR EXISTS (
@@ -696,13 +738,9 @@ func (s *Service) count(ctx context.Context, params ListParams) (int64, error) {
 				OR fallback.search_document @@ websearch_to_tsquery('simple',$4)
 				OR fallback.name % $4
 			) END
-		  )`, strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
+		  )`, []any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
 		normalizeLocale(params.Locale), strings.TrimSpace(params.Query),
-		strings.TrimSpace(params.Category)).Scan(&total)
-	if err != nil {
-		return 0, fmt.Errorf("count game entities: %w", err)
-	}
-	return total, nil
+		strings.TrimSpace(params.Category)}
 }
 
 func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity, error) {

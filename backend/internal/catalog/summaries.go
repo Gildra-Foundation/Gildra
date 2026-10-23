@@ -184,16 +184,17 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	locale := normalizeLocale(params.Locale)
 	var total *int64
 	if params.IncludeTotal {
-		value, err := s.totals.get(ctx, summaryTotalKey(params, product, locale, datasetTotalCached), func(ctx context.Context) (int64, error) {
+		// A total that is not ready inside totalCountWait is left out: the
+		// field is optional and an exact count must not hold the page.
+		value, ok := s.totals.lookup(ctx, summaryTotalKey(params, product, locale, datasetTotalCached), totalCountWait, func(ctx context.Context) (int64, error) {
 			if datasetTotalCached {
 				return s.datasetSummaryCount(ctx, dataset, product, locale)
 			}
 			return s.summaryCount(ctx, params, product, locale)
 		})
-		if err != nil {
-			return SummaryPage{}, err
+		if ok {
+			total = &value
 		}
-		total = &value
 	}
 
 	query := strings.TrimSpace(params.Query)
