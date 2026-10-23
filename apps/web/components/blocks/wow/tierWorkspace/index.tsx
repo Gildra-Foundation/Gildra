@@ -1,6 +1,7 @@
 import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/blocks/types";
 import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components/atlas";
 import { TierSection } from "@/components/TierSection";
+import { TierBoard } from "./TierBoard";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
 import { midnightSpecializations } from "@gildra/game-data";
 import { tierCopy } from "./tierCopy";
@@ -41,6 +42,7 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntel
       />
       {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
       <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} />
+      {sample ? <TierBoard lang={lang} roles={sampleRoles} sample /> : mythic ? <TierBoard lang={lang} roles={mythic} sample={false} /> : null}
     </AtlasFrame>
   );
 }

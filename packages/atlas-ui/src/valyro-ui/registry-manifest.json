@@ -27,10 +27,12 @@
     "checkbox",
     "card",
     "switch",
-    "separator"
+    "separator",
+    "tier-list"
   ],
   "proComponents": [
-    "analytics-filter-bar"
+    "analytics-filter-bar",
+    "tier-list"
   ],
   "adaptations": {
     "charts/AnalyticsFilterBar.tsx": "Optional showCompare/showGranularity flags; hide unsupported analytics controls.",
@@ -758,6 +760,60 @@
       "path": "navigation/internal.tsx",
       "registrySha256": "0215f4d3825dd18fba983f8abd9722996085148ab763ee7567b941b2521a05af",
       "installedSha256": "0215f4d3825dd18fba983f8abd9722996085148ab763ee7567b941b2521a05af",
+      "adapted": false
+    },
+    {
+      "path": "agents/labels.ts",
+      "registrySha256": "b3fefeede6c2de88f436b419353a3e1a0f2e135b2604938f19dcc6d2a48c3bb8",
+      "installedSha256": "b3fefeede6c2de88f436b419353a3e1a0f2e135b2604938f19dcc6d2a48c3bb8",
+      "adapted": false
+    },
+    {
+      "path": "ai/useCopyToClipboard.ts",
+      "registrySha256": "abf21d0b9baf3b56cc4d25920ff843ce47cd0e8470777b88b88e27bf3becbd6d",
+      "installedSha256": "abf21d0b9baf3b56cc4d25920ff843ce47cd0e8470777b88b88e27bf3becbd6d",
+      "adapted": false
+    },
+    {
+      "path": "gaming/TierList.css",
+      "registrySha256": "bbb6f9de0efce14035bdb9d8166ec3f9c191b3101dae023ec1e66d7950c08666",
+      "installedSha256": "bbb6f9de0efce14035bdb9d8166ec3f9c191b3101dae023ec1e66d7950c08666",
+      "adapted": false
+    },
+    {
+      "path": "gaming/TierList.tsx",
+      "registrySha256": "ad9ff8eb8a2543dc1be456d3202ab0df17eef41276fea15c5e9840a878869da5",
+      "installedSha256": "ad9ff8eb8a2543dc1be456d3202ab0df17eef41276fea15c5e9840a878869da5",
+      "adapted": false
+    },
+    {
+      "path": "gaming/game.css",
+      "registrySha256": "d996d0a84b4dcd75232b159ca6580ed6bdf067d9ebdc6b596862798fc76e8998",
+      "installedSha256": "d996d0a84b4dcd75232b159ca6580ed6bdf067d9ebdc6b596862798fc76e8998",
+      "adapted": false
+    },
+    {
+      "path": "gaming/game.ts",
+      "registrySha256": "368f1319a12af805830259e9493a95051a3a14806b446be3d9e6c8c753e1fbe0",
+      "installedSha256": "368f1319a12af805830259e9493a95051a3a14806b446be3d9e6c8c753e1fbe0",
+      "adapted": false
+    },
+    {
+      "path": "gaming/picture.tsx",
+      "registrySha256": "d1dff72eac4a60a3e27cd77d006ca20c51223cb2399238178b3ed15ce9ced2db",
+      "installedSha256": "d1dff72eac4a60a3e27cd77d006ca20c51223cb2399238178b3ed15ce9ced2db",
+      "adapted": false
+    },
+    {
+      "path": "gaming/tier.ts",
+      "registrySha256": "75a27664441c1ed124cda918797cf5434040ecbaed94650243e845effe78be8b",
+      "installedSha256": "75a27664441c1ed124cda918797cf5434040ecbaed94650243e845effe78be8b",
+      "adapted": false
+    },
+    {
+      "path": "gaming/tone.ts",
+      "registrySha256": "a146b68c159ee55c123fe0fb5a64799ffedd37a8ec197b514bacc37f2e54096b",
+      "installedSha256": "a146b68c159ee55c123fe0fb5a64799ffedd37a8ec197b514bacc37f2e54096b",
       "adapted": false
     }
   ],
