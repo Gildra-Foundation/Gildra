@@ -168,7 +168,7 @@
   --atlas-press-scale: .97;             /* buttons and small controls */
   --atlas-press-scale-card: .99;        /* cards, tiles, path steps */
   /* Scroll reveal of cards and section flourishes (CSS scroll-driven, no JS) */
-  --atlas-reveal-shift: 26px;
+  --atlas-reveal-shift: 14px;          /* a short rise reads as settling, not jumping */
 
   color-scheme: dark;
   /* Alegreya defaults to old-style figures; counters and dates read better lining.
