@@ -28,7 +28,8 @@
     "card",
     "switch",
     "separator",
-    "tier-list"
+    "tier-list",
+    "page-transition"
   ],
   "proComponents": [
     "analytics-filter-bar",
@@ -814,6 +815,48 @@
       "path": "gaming/tone.ts",
       "registrySha256": "a146b68c159ee55c123fe0fb5a64799ffedd37a8ec197b514bacc37f2e54096b",
       "installedSha256": "a146b68c159ee55c123fe0fb5a64799ffedd37a8ec197b514bacc37f2e54096b",
+      "adapted": false
+    },
+    {
+      "path": "motion-kit/PageTransition.css",
+      "registrySha256": "58e87c48798672e7f47bccc4d2c8811fad2e05a34d9d8e882021b45c95a8ec82",
+      "installedSha256": "58e87c48798672e7f47bccc4d2c8811fad2e05a34d9d8e882021b45c95a8ec82",
+      "adapted": false
+    },
+    {
+      "path": "motion-kit/PageTransition.tsx",
+      "registrySha256": "957269d92a2d0a333c463c27b2775655997008af14f42015002a549f4bdb7ece",
+      "installedSha256": "957269d92a2d0a333c463c27b2775655997008af14f42015002a549f4bdb7ece",
+      "adapted": false
+    },
+    {
+      "path": "motion-kit/page-transitions.ts",
+      "registrySha256": "fe4dbfe8483acb80665cf05fd1a0c9f3d6234f386d58303d1acc3487ad2cf572",
+      "installedSha256": "fe4dbfe8483acb80665cf05fd1a0c9f3d6234f386d58303d1acc3487ad2cf572",
+      "adapted": false
+    },
+    {
+      "path": "motion-kit/preference.ts",
+      "registrySha256": "2b5d05d043b6d0078505f779bbd8bbe04b03da2f1a51b9a1123d41e6ec250a8e",
+      "installedSha256": "2b5d05d043b6d0078505f779bbd8bbe04b03da2f1a51b9a1123d41e6ec250a8e",
+      "adapted": false
+    },
+    {
+      "path": "motion-kit/profile.ts",
+      "registrySha256": "8f935224840dc0f364bc1ed69cd6c0408c128b09677ebb2122935e36375b1cf3",
+      "installedSha256": "8f935224840dc0f364bc1ed69cd6c0408c128b09677ebb2122935e36375b1cf3",
+      "adapted": false
+    },
+    {
+      "path": "motion-kit/render-tier.ts",
+      "registrySha256": "ffca8f6ed8059f4ae655d28ff34b53f1b50819a34d005a38cad78777ff0d6b9e",
+      "installedSha256": "ffca8f6ed8059f4ae655d28ff34b53f1b50819a34d005a38cad78777ff0d6b9e",
+      "adapted": false
+    },
+    {
+      "path": "motion-kit/view-transition.ts",
+      "registrySha256": "903221318b9fabb68553485a5ca23f166b3e777659a5ec5f8d92875a8ba15894",
+      "installedSha256": "903221318b9fabb68553485a5ca23f166b3e777659a5ec5f8d92875a8ba15894",
       "adapted": false
     }
   ],

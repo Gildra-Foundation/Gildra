@@ -13,13 +13,18 @@ async function open(options = {}) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, ...options });
   page.on("pageerror", (error) => errors.push(error.stack));
   await page.addInitScript(() => {
-    window.routeQA = { id: Math.random(), events: [], viewTransitions: 0, arrivals: 0 };
+    window.routeQA = { id: Math.random(), events: [], veil: [], viewTransitions: 0, arrivals: 0 };
     // The route runtime owns every hand-over: no document View Transition may start.
     const start = Document.prototype.startViewTransition;
     if (start) Document.prototype.startViewTransition = function (...args) { window.routeQA.viewTransitions += 1; return start.apply(this, args); };
     new MutationObserver(() => {
       if (document.querySelector("[data-route-arrived]")) window.routeQA.arrivals += 1;
     }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-route-arrived"] });
+    // The rune veil: every phase it passes through (covering → covered → revealing → gone).
+    new MutationObserver(() => {
+      const phase = document.querySelector("[data-route-veil]")?.getAttribute("data-veil") ?? "gone";
+      if (window.routeQA.veil.at(-1) !== phase) window.routeQA.veil.push(phase);
+    }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-veil"] });
     let last = "";
     new MutationObserver(() => {
       const state = document.querySelector("[data-book-route-frame]")?.getAttribute("data-route-state") ?? "none";
@@ -45,6 +50,8 @@ try {
   assert.equal(handOver.viewTransitions, 0, "Atlas pages hand over without a document View Transition");
   assert.ok(handOver.arrivals > 0, "The new page's hero must arrive as a cascade");
   assert.equal(await page.locator("[data-themed-transition][data-phase]").count(), 0, "Between atlas pages the character effect stays idle");
+  await page.waitForFunction(() => !document.querySelector("[data-route-veil]")?.hasAttribute("data-veil"));
+  assert.deepEqual((await page.evaluate(() => window.routeQA.veil)).slice(0, 3), ["covering", "covered", "revealing"], "A link closes the rune veil, then it sweeps on");
 
   // Query and hash changes on the same page do not transition.
   const before = (await states(page)).length;
@@ -80,17 +87,19 @@ try {
   await reduced.waitForURL(origin + "/ru/wow/lairs");
   await idle(reduced);
   assert.equal(await reduced.evaluate(() => document.querySelector("[data-book-route-frame]").getAnimations().length), 0);
+  assert.deepEqual(await reduced.evaluate(() => window.routeQA.veil), [], "Reduced motion navigates without the veil");
 
   // Narrow screen.
   const mobile = await open({ viewport: { width: 390, height: 844 } });
   await mobile.goto(origin + "/ru/wow", { waitUntil: "networkidle" });
-  await mobile.locator('a[href="/ru/wow/mythic-plus"]').first().click();
+  // Below 1180 px the realms live in the menu sheet: take the hub's own link.
+  await mobile.locator('main a[href="/ru/wow/mythic-plus"]').first().click();
   await mobile.waitForURL(origin + "/ru/wow/mythic-plus");
   await idle(mobile);
   assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
 
   assert.deepEqual(errors, []);
-  console.log("PASS route transition: shell kept, view transition + arrival cascade, leaving/progress, query+hash stable, slow route, history, reduced motion, mobile, no page errors.");
+  console.log("PASS route transition: shell kept, rune veil (cover → reveal), no document view transition + arrival cascade, leaving/progress, query+hash stable, slow route, history, reduced motion, mobile, no page errors.");
 } finally {
   await browser.close();
 }
