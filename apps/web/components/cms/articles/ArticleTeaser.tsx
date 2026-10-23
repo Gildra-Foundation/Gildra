@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { AtlasArticleCard } from "@gildra/atlas-ui/AtlasArticleCard";
 import type { PublicArticle } from "@/lib/cms/contract";
+import { isOptimizableCmsImage } from "@/lib/cms/images";
 import type { Lang } from "@/lib/i18n";
 import { articleHref } from "../paths";
 import { wowClassIcon, wowClassName } from "./model";
@@ -45,7 +46,7 @@ export function ArticleTeaser({ article: a, lang, cover, layout = "vertical", pr
       readingMinutes={a.readingTime && a.readingTime > 0 ? a.readingTime : undefined}
       headingLevel={headingLevel}
       image={cover ? (
-        <Image className="ui-article-card__img" src={cover} alt={a.cover?.alt ?? ""} fill sizes={sizes} priority={priority} />
+        <Image className="ui-article-card__img" src={cover} alt={a.cover?.alt ?? ""} fill sizes={sizes} priority={priority} unoptimized={!isOptimizableCmsImage(cover)} />
       ) : undefined}
     />
   );
