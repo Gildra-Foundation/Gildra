@@ -3,7 +3,7 @@ import config from "@payload-config";
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createLocalReq, getPayload, type Where } from "payload";
+import { getPayload, type Where } from "payload";
 
 import { selectionAllows, SITE_COOKIE, siteScopedCreate, writableSites } from "@/admin/siteChoice";
 import { importMap } from "../importMap";
@@ -24,8 +24,9 @@ export const generateMetadata = ({ params, searchParams }: Args): Promise<Metada
 async function seedContentLocale(language: "en" | "ru") {
   try {
     await storeContentLocale(language);
-  } catch {
+  } catch (error) {
     // The admin still opens in Payload's default content language.
+    console.error("content locale preference not stored", error);
   }
 }
 
@@ -33,11 +34,12 @@ async function storeContentLocale(language: "en" | "ru") {
   const payload = await getPayload({ config });
   const { user } = await payload.auth({ headers: await headers() });
   if (!user) return;
-  const where: Where = { and: [{ key: { equals: "locale" } }, { "user.value": { equals: user.id } }, { "user.relationTo": { equals: user.collection } }] };
+  const where: Where = { and: [{ key: { equals: "locale" } }, { "user.relationTo": { equals: user.collection } }, { "user.value": { equals: user.id } }] };
   const existing = await payload.count({ collection: "payload-preferences", where, overrideAccess: true });
   if (existing.totalDocs > 0) return;
-  await payload.create({ collection: "payload-preferences", overrideAccess: true,
-    data: { key: "locale", user: { relationTo: user.collection, value: user.id }, value: language } as never });
+  // Same record shape as Payload's own preference writes (upsertPreferences).
+  await payload.create({ collection: "payload-preferences", depth: 0, disableTransaction: true, user,
+    data: { key: "locale", user: { collection: user.collection, value: user.id }, value: language } as never });
 }
 
 export default async function Page({ params, searchParams }: Args) {
@@ -62,17 +64,11 @@ export default async function Page({ params, searchParams }: Args) {
       }
       if (collection === "guides") {
         // The article is created by the first input on this page, never by opening it.
-        redirect(`/admin/articles/new?locale=${language === "en" || language === "ru" ? language : lang}`);
+        redirect(`/admin/new-article?locale=${language === "en" || language === "ru" ? language : lang}`);
       }
-      if ((collection === "pages") && (language === "en" || language === "ru")) {
-        // Payload's autosave bootstrap drops the locale from its redirect.
-        // Create the same empty draft with normal access, then keep the chosen
-        // language when entering the native editor.
-        const req = await createLocalReq({ user, locale: language, req: { headers: new Headers(requestHeaders) } }, payload);
-        const doc = await payload.create({ collection, req, user, overrideAccess: false,
-          locale: language, fallbackLocale: false, draft: true, depth: 0,
-          data: { site: selected, _status: "draft" } as never });
-        redirect(`/admin/collections/${collection}/${doc.id}?locale=${language}`);
+      if (collection === "pages") {
+        // The page is chosen on this step; the document exists only after that choice.
+        redirect(`/admin/new-page?locale=${language === "en" || language === "ru" ? language : lang}`);
       }
     }
   }

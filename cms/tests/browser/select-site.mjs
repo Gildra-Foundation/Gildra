@@ -73,19 +73,19 @@ try {
     // Keyboard only: focus the Riftden choice and press Enter.
     await page.getByRole('button', { name: /on Riftden$/ }).focus();
     await page.keyboard.press('Enter');
-    await page.waitForURL(new RegExp(`/admin/collections/${collection}/\\d+$`));
-    await page.locator(`input[name="${field}"], #field-${field}`).first().waitFor();
+    // Choosing a site opens the "new" step; nothing is created until it is submitted.
+    const step = collection === 'guides' ? 'new-article' : 'new-page';
+    await page.waitForURL(new RegExp(`/admin/${step}`));
     const cookie = (await context.cookies()).find((c) => c.name === 'payload-tenant');
     assert.ok(cookie, 'site cookie set');
-    const id = page.url().split('/').pop();
-    const doc = await (await page.request.get(`${origin}/api/${collection}/${id}?draft=true&depth=1`, { headers: { 'sec-fetch-site': 'same-origin' } })).json();
-    assert.equal(doc.site?.slug, 'riftden');
-    ok(`${collection}: choosing Riftden with the keyboard opens a new draft bound to Riftden`);
+    const total = (await (await page.request.get(`${origin}/api/${collection}?draft=true&limit=1`, { headers: { 'sec-fetch-site': 'same-origin' } })).json()).totalDocs;
+    assert.equal(total, 0);
+    ok(`${collection}: choosing Riftden with the keyboard opens the ${step} step and creates no draft`);
 
-    // With a valid selection the native create opens directly.
+    // With a valid selection create goes straight to the same step.
     await page.goto(`${origin}/admin/collections/${collection}/create`);
-    await page.waitForURL(new RegExp(`/admin/collections/${collection}/\\d+$`));
-    ok(`${collection}: with a selected site, create opens the editor directly`);
+    await page.waitForURL(new RegExp(`/admin/${step}`));
+    ok(`${collection}: with a selected site, create opens the ${step} step directly`);
     await context.clearCookies({ name: 'payload-tenant' });
   }
 

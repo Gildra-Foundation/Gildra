@@ -15,6 +15,7 @@ export const PUBLISH_TRANSLATIONS: Record<string, Record<string, Record<string, 
       editLabel: "Редактировать",
     },
     fields: { addNewLabel: "Добавить" },
+    error: { notAllowedToPerformAction: "Недостаточно прав для этого действия. Публиковать и менять опубликованное могут редакторы и администраторы сайта — авторы сохраняют черновики." },
     version: {
       publishChanges: "Опубликовать RU и EN",
       publishIn: "Опубликовать только версию: {{locale}}",
@@ -29,6 +30,7 @@ export const PUBLISH_TRANSLATIONS: Record<string, Record<string, Record<string, 
   en: {
     general: { updatedSuccessfully: "Saved.", editLabel: "Edit" },
     fields: { addNewLabel: "Add new" },
+    error: { notAllowedToPerformAction: "You do not have permission for this action. Site editors and admins publish and change published content — authors save drafts." },
     version: {
       publishChanges: "Publish RU and EN",
       publishIn: "Publish only the {{locale}} version",
