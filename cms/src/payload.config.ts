@@ -35,6 +35,7 @@ import { csrfOrigins } from "./security/origin";
 import { jobsConfig } from "./jobs";
 import { migrations } from "./migrations";
 import { publicEndpoints } from "./public/endpoints";
+import { withEditorChrome } from "./components/editor/editorChrome";
 import { withWorkbenchList } from "./components/list/workbenchList";
 
 const filename = fileURLToPath(import.meta.url);
@@ -110,7 +111,9 @@ export default buildConfig({
   collections: [Sites, Admins, Media, Pages, Guides, Categories, Tags, SiteSettings, Members, MemberProfiles, AuditLog]
     .map(localizeCollection)
     // Pages, media, categories and tags list as Valyro workbenches (components/list); Payload keeps the query and data.
+    // Articles and pages get the sticky phone publish bar (components/editor/StickyPublish).
     .map(withWorkbenchList)
+    .map(withEditorChrome)
     .map((collection) => ({ ...collection, admin: { ...collection.admin, group: false as const } })),
   localization: {
     // Content languages; the labels name them in the switcher above every editor.

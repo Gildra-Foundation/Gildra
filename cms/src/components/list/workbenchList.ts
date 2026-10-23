@@ -25,3 +25,4 @@ export function withWorkbenchList<T extends CollectionConfig>(collection: T): T 
     },
   };
 }
+

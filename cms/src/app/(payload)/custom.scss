@@ -844,3 +844,49 @@ h1 { letter-spacing: var(--atlas-tracking-display); }
 
 // Valyro useFlip carries the active marker between actual navigation targets.
 .gd-nav__active-marker { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--atlas-accent); pointer-events: none; }
+
+// ---- Editor chrome (articles and pages) ------------------------------------
+// Publish: Payload's own button (components/editor/StickyPublish) in the atlas
+// amber — only Payload's button variables, scoped to our wrapper.
+.gd-publish .btn--style-primary {
+  --bg-color: var(--atlas-accent);
+  --color: var(--atlas-accent-ink);
+  --hover-bg: var(--atlas-accent-strong);
+  --hover-color: var(--atlas-accent-ink);
+}
+.gd-publish .btn--style-primary.btn--disabled {
+  --bg-color: var(--atlas-accent-wash-strong);
+  --color: var(--atlas-text-muted);
+  --hover-bg: var(--atlas-accent-wash-strong);
+  --hover-color: var(--atlas-text-muted);
+}
+
+// Phones: the publish button lives in a bar fixed to the bottom of the screen.
+.gd-publish--bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--atlas-space-3) var(--atlas-space-4) calc(var(--atlas-space-3) + env(safe-area-inset-bottom, 0px));
+  background: var(--atlas-surface);
+  border-top: 1px solid var(--atlas-line);
+  box-shadow: 0 -12px 30px color-mix(in srgb, var(--atlas-bg) 60%, transparent);
+}
+body:has(> .gd-publish--bar) { padding-bottom: 72px; }
+@media (max-width: 768px) {
+  .gd-publish--inline { display: none; }
+}
+
+// Status line: wraps instead of cutting the dates off. Payload has no variable
+// for this, so these few rules name its document-controls classes — the one
+// place the admin does; re-check them when Payload is upgraded.
+.doc-controls__wrapper { height: auto; min-height: var(--doc-controls-height); }
+.doc-controls__meta { flex-wrap: wrap; row-gap: 2px; }
+.doc-controls__value-wrap { overflow: visible; }
+.doc-controls__value { white-space: normal; overflow: visible; text-overflow: clip; }
+@media (max-width: 768px) {
+  .doc-controls__content { overflow: visible; padding-block: var(--atlas-space-3); }
+  .doc-controls__meta::after { display: none; }
+}
