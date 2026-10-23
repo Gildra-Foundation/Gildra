@@ -1,21 +1,32 @@
-/* The selected character owns site chrome; game data keeps its semantic colours. */
+/* The selected character owns site chrome; game data keeps its semantic colours.
+   "Frostforged" (2026-10): steel surfaces, near-white headings, the character's
+   colour as the one accent, crest gold as the second (brand, account); lines are
+   a neutral steel so the accent is kept for what is active. */
 :root {
-  --site-accent: #80cdef;
-  --site-accent-strong: #b7ecff;
-  --site-accent-ink: #05141f;
-  --site-accent-rgb: 128, 205, 239;
-  --site-bg: #050a10;
-  --site-surface: #090f17;
-  --site-raised: #101c28;
-  --site-text: #d2e0e9;
-  --site-muted: #a1b5c5;
-  --site-subtle: #849aab;
+  --site-accent: #7cc8ee;
+  --site-accent-strong: #b8e5fa;
+  --site-accent-ink: #031019;
+  --site-accent-rgb: 124, 200, 238;
+  --site-accent-2: #e2b25a;
+  --site-heading: #f2f6fa;
+  --site-line-rgb: 150, 190, 220;
+  --site-scrim-rgb: 7, 11, 16;
+  --site-bg: #070b10;
+  --site-surface: #0d131a;
+  --site-raised: #151d27;
+  --site-text: #d2dce5;
+  --site-muted: #a2b2c1;
+  --site-subtle: #8496a8;
 }
 html[data-site-theme="illidan"] {
   --site-accent: #c4a3f3;
   --site-accent-strong: #f4eaff;
   --site-accent-ink: #160d22;
   --site-accent-rgb: 196, 163, 243;
+  --site-accent-2: #e2b25a;
+  --site-heading: #f7f2ff;
+  --site-line-rgb: 185, 168, 220;
+  --site-scrim-rgb: 17, 13, 25;
   --site-bg: #110d19;
   --site-surface: #15101f;
   --site-raised: #251c32;
@@ -28,6 +39,10 @@ html[data-site-theme="garek"] {
   --site-accent-strong: #ebffec;
   --site-accent-ink: #08190c;
   --site-accent-rgb: 165, 219, 167;
+  --site-accent-2: #e2b25a;
+  --site-heading: #f1f9f2;
+  --site-line-rgb: 165, 205, 175;
+  --site-scrim-rgb: 10, 19, 15;
   --site-bg: #0a130f;
   --site-surface: #0d1913;
   --site-raised: #182a20;
@@ -40,6 +55,10 @@ html[data-site-theme="varok"] {
   --site-accent-strong: #fff1e3;
   --site-accent-ink: #211006;
   --site-accent-rgb: 240, 162, 143;
+  --site-accent-2: #e2b25a;
+  --site-heading: #fff4ee;
+  --site-line-rgb: 220, 178, 160;
+  --site-scrim-rgb: 24, 13, 12;
   --site-bg: #180d0c;
   --site-surface: #201210;
   --site-raised: #301b18;
@@ -52,25 +71,38 @@ html :is(.gildra-atlas, [data-atlas-scope]) {
   --atlas-bg: var(--site-bg);
   --atlas-surface: var(--site-surface);
   --atlas-surface-raised: var(--site-raised);
-  --atlas-surface-selected: rgba(var(--site-accent-rgb), .13);
-  --atlas-surface-sunken: var(--site-bg);
-  --atlas-scrim: rgba(3, 7, 11, .9);
+  --atlas-surface-selected: color-mix(in srgb, var(--site-accent) 8%, var(--site-surface));
+  --atlas-surface-sunken: color-mix(in srgb, var(--site-bg) 70%, black);
+  --atlas-scrim: rgba(var(--site-scrim-rgb), .92);
   --atlas-accent: var(--site-accent);
   --atlas-accent-strong: var(--site-accent-strong);
   --atlas-accent-ink: var(--site-accent-ink);
   --atlas-accent-wash: rgba(var(--site-accent-rgb), .09);
-  --atlas-accent-wash-strong: rgba(var(--site-accent-rgb), .17);
-  --atlas-accent-glow: rgba(var(--site-accent-rgb), .15);
-  --atlas-line: rgba(var(--site-accent-rgb), .36);
-  --atlas-line-soft: rgba(var(--site-accent-rgb), .2);
-  --atlas-line-strong: rgba(var(--site-accent-rgb), .68);
-  --atlas-text-strong: var(--site-accent-strong);
+  --atlas-accent-wash-strong: rgba(var(--site-accent-rgb), .16);
+  --atlas-accent-glow: rgba(var(--site-accent-rgb), .16);
+  --atlas-accent-2: var(--site-accent-2);
+  --atlas-line: rgba(var(--site-line-rgb), .24);
+  --atlas-line-soft: rgba(var(--site-line-rgb), .13);
+  --atlas-line-strong: rgba(var(--site-accent-rgb), .6);
+  --atlas-text-strong: var(--site-heading);
   --atlas-text: var(--site-text);
   --atlas-text-muted: var(--site-muted);
   --atlas-text-subtle: var(--site-subtle);
   --atlas-ember: var(--site-accent-strong);
   --atlas-ember-halo: rgba(var(--site-accent-rgb), .2);
   --atlas-shadow-panel: var(--atlas-glass-inset), var(--atlas-glass-depth);
+}
+/* More contrast on request: one step brighter text, firmer lines (the atlas
+   defaults' own block loses to the scope rule above). */
+@media (prefers-contrast: more) {
+  html :is(.gildra-atlas, [data-atlas-scope]) {
+    --atlas-text: color-mix(in srgb, var(--site-text) 55%, var(--site-heading));
+    --atlas-text-muted: var(--site-text);
+    --atlas-text-subtle: var(--site-muted);
+    --atlas-line: rgba(var(--site-line-rgb), .5);
+    --atlas-line-soft: rgba(var(--site-line-rgb), .32);
+    --atlas-line-strong: var(--site-accent);
+  }
 }
 /* The DOM snapshot effect owns the hand-over; do not stack atlas morphs on it. */
 html[data-page-transition]::view-transition-group(*),

@@ -9,8 +9,8 @@ export const itemQualityColors = {
   0: { name: "poor", frame: "#9d9d9d", text: "#9d9d9d" },
   1: { name: "common", frame: "#ffffff", text: "#ffffff" },
   2: { name: "uncommon", frame: "#1eff00", text: "#1eff00" },
-  3: { name: "rare", frame: "#0070dd", text: "#2183e1" },
-  4: { name: "epic", frame: "#a335ee", text: "#b153f1" },
+  3: { name: "rare", frame: "#0070dd", text: "#3590e6" },
+  4: { name: "epic", frame: "#a335ee", text: "#ba63f3" },
   5: { name: "legendary", frame: "#ff8000", text: "#ff8000" },
   6: { name: "artifact", frame: "#e6cc80", text: "#e6cc80" },
   7: { name: "heirloom", frame: "#00ccff", text: "#00ccff" },
@@ -23,5 +23,5 @@ export const classColors = {
 } as const;
 
 /** Atlas surfaces data text must read on (app/styles/atlas-theme.css). */
-export const atlasSurfaces = { bg: "#050607", surface: "#090a0b", raised: "#11110f", selected: "#1a160e" } as const;
-export const atlasTextStrong = "#f2e1c3";
+export const atlasSurfaces = { bg: "#070b10", surface: "#0d131a", raised: "#151d27", selected: "#16212b" } as const;
+export const atlasTextStrong = "#f2f6fa";
