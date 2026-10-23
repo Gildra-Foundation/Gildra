@@ -36,6 +36,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/indexnow"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/joberrors"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/league"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/mythicbuilds"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/platformhome"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/rotationlab"
 )
@@ -162,6 +163,7 @@ func run() error {
 	platformhome.NewHandler(platformhome.NewService(postgres)).Register(router)
 	rotationlab.NewHandler(rotationlab.NewService(postgres)).Register(router)
 	characterworkspace.NewHandler(characterworkspace.NewService(postgres), characterworkspace.NewBattleNetVerifier()).Register(router)
+	mythicbuilds.NewHandler(mythicbuilds.NewService(postgres), characterworkspace.NewBattleNetVerifier()).Register(router)
 	if cfg.CatalogMediaDirectory != "" {
 		genshinMediaHandler, genshinMediaErr := genshin.NewMediaHandler(cfg.CatalogMediaDirectory)
 		if genshinMediaErr != nil {
