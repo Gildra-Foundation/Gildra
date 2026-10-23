@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 	"time"
@@ -28,9 +29,17 @@ const (
 	// totalCountWait is how long a request waits for a total that is not
 	// cached yet. Narrow filters finish inside it; whole entity types do not.
 	totalCountWait = 2 * time.Second
-	// totalCountConcurrency bounds the database connections that background
-	// counts hold at once.
+	// totalCountConcurrency bounds the database connections that slow
+	// background counts hold at once.
 	totalCountConcurrency = 2
+	// totalQuickCountTimeout bounds the first count of a filter and every
+	// recount of one that finished within it. Such counts take their own
+	// slots, so minutes-long counts of whole entity types never starve the
+	// cheap ones (projection reads, narrow filters); a count that runs out of
+	// this time is marked slow and recounted on a slow slot.
+	totalQuickCountTimeout = 5 * time.Second
+	// totalQuickConcurrency bounds the connections that quick counts hold.
+	totalQuickConcurrency = 4
 	// totalCacheEntries bounds memory: totals are keyed by user-supplied
 	// filters and queries.
 	totalCacheEntries = 2048
@@ -41,6 +50,7 @@ type totalEntry struct {
 	counted  time.Time // zero until a count has finished
 	freshFor time.Duration
 	failedAt time.Time // when the last count failed, zero after a success
+	slow     bool      // the last count needed more than the quick timeout
 	running  chan struct{}
 }
 
@@ -49,21 +59,26 @@ type totalEntry struct {
 // published entity with both its localizations, which takes minutes on the
 // production catalog, so a request never waits longer than totalCountWait for
 // one: it gets the cached value (recounted in the background once it is
-// older than its fresh period) or nothing.
+// older than its fresh period) or nothing. Quick and slow counts have
+// separate slots (see totalQuickCountTimeout).
 type totalCache struct {
-	mu      sync.Mutex
-	now     func() time.Time
-	entries map[string]*totalEntry
-	slots   chan struct{}
-	timeout time.Duration
+	mu           sync.Mutex
+	now          func() time.Time
+	entries      map[string]*totalEntry
+	slots        chan struct{}
+	timeout      time.Duration
+	quick        chan struct{}
+	quickTimeout time.Duration
 }
 
 func newTotalCache() *totalCache {
 	return &totalCache{
-		now:     time.Now,
-		entries: make(map[string]*totalEntry),
-		slots:   make(chan struct{}, totalCountConcurrency),
-		timeout: totalCountTimeout,
+		now:          time.Now,
+		entries:      make(map[string]*totalEntry),
+		slots:        make(chan struct{}, totalCountConcurrency),
+		timeout:      totalCountTimeout,
+		quick:        make(chan struct{}, totalQuickConcurrency),
+		quickTimeout: totalQuickCountTimeout,
 	}
 }
 
@@ -109,8 +124,9 @@ func (c *totalCache) lookup(ctx context.Context, key string, wait time.Duration,
 }
 
 // startLocked starts a count for entry unless one is running, the last one
-// failed within totalFailureBackoff or every count slot is busy. It returns
-// the channel closed when the running count finishes, or nil.
+// failed within totalFailureBackoff or every slot of its kind (quick or slow)
+// is busy. It returns the channel closed when the running count finishes, or
+// nil.
 func (c *totalCache) startLocked(entry *totalEntry, now time.Time, count func(context.Context) (int64, error)) chan struct{} {
 	if entry.running != nil {
 		return entry.running
@@ -118,31 +134,43 @@ func (c *totalCache) startLocked(entry *totalEntry, now time.Time, count func(co
 	if !entry.failedAt.IsZero() && now.Sub(entry.failedAt) < totalFailureBackoff {
 		return nil
 	}
+	slow, slots, timeout := entry.slow, c.quick, c.quickTimeout
+	if slow {
+		slots, timeout = c.slots, c.timeout
+	}
 	select {
-	case c.slots <- struct{}{}:
+	case slots <- struct{}{}:
 	default:
 		return nil
 	}
 	done := make(chan struct{})
 	entry.running = done
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		started := c.now()
 		value, err := count(ctx)
+		escalate := err != nil && !slow && errors.Is(ctx.Err(), context.DeadlineExceeded)
 		cancel()
-		<-c.slots
+		<-slots
 		c.mu.Lock()
 		finished := c.now()
-		if err != nil {
-			entry.failedAt = finished
-		} else {
+		switch {
+		case err == nil:
 			entry.value, entry.counted, entry.failedAt = value, finished, time.Time{}
 			entry.freshFor = max(totalFreshTTL, totalRecountFactor*finished.Sub(started))
+			entry.slow = finished.Sub(started) >= c.quickTimeout
+		case escalate:
+			entry.slow = true
+		default:
+			entry.failedAt = finished
 		}
 		entry.running = nil
+		if escalate {
+			c.startLocked(entry, finished, count)
+		}
 		c.mu.Unlock()
 		close(done)
-		if err != nil {
+		if err != nil && !escalate {
 			slog.Warn("catalog total count failed", "error", err)
 		}
 	}()

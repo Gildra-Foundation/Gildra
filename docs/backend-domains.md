@@ -37,8 +37,10 @@ business rules.
 | `WORKER_DATABASE_MAX_CONNS` | `5` | Separate River pool (`application_name=gildra-worker`). |
 
 Catalog list totals never hold a page (`internal/catalog/totals.go`): exact
-counts run in the background (at most 2 at once, 10 min timeout), a request
-waits for one at most 2 s, and a finished count stays fresh for
+counts run in the background, a request waits for one at most 2 s. A count
+first runs on one of 4 quick slots with a 5 s timeout; one that runs out of it
+is marked slow and recounted on one of 2 slow slots (10 min timeout), so
+minutes-long counts never starve cheap ones. A finished count stays fresh for
 max(10 min, 100 × its duration) and is served up to 24 h while it is
 recounted; a failure backs off for a minute. Until the first count is ready
 `/v1/game/entities` reports the planner's estimate and `entity-summaries`
