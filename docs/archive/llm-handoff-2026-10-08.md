@@ -1,3 +1,5 @@
+<!-- ARCHIVE: working log of 2026-10-08..11, superseded by the 22 October 2026 direction (AGENTS.md, design.md). Do not read for current rules. -->
+
 # Состояние работы
 
 Дата: 2026-10-08.

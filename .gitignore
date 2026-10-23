@@ -12,9 +12,13 @@ __pycache__/
 .artifacts/
 .claude/*
 !.claude/launch.json
+!.claude/settings.json
+!.claude/hooks/
 !.claude/agents/
 .claude/agents/*
 !.claude/agents/design-review.md
+!.claude/agents/check-runner.md
+!.claude/agents/scout.md
 !.claude/commands/
 .claude/commands/*
 !.claude/commands/design-review-pro.md
