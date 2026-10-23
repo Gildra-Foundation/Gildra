@@ -8,9 +8,21 @@
      scroll frame, which weak GPUs drop frames on. */
   background: var(--atlas-bg);
   border-bottom: 1px solid var(--atlas-line-soft);
-  transition: box-shadow var(--atlas-duration-slow) var(--atlas-ease);
 }
-.toolbar[data-scrolled] { box-shadow: 0 12px 32px color-mix(in srgb, #000 55%, transparent); }
+/* The shadow under the bar is its own layer that only fades: transitioning
+   box-shadow repainted the full-width bar on every frame of the change. */
+.toolbar::after {
+  position: absolute;
+  z-index: -1;
+  inset: 100% 0 auto;
+  height: 32px;
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, #000 42%, transparent), transparent);
+  transition: opacity var(--atlas-duration-slow) var(--atlas-ease);
+}
+.toolbar[data-scrolled]::after { opacity: 1; }
 
 .skip {
   position: absolute;
@@ -60,9 +72,10 @@
   width: auto;
   height: 32px;
   filter: drop-shadow(0 0 5px var(--atlas-accent-glow)) drop-shadow(0 1px 1px color-mix(in srgb, #000 60%, transparent));
-  transition: translate var(--atlas-duration) var(--atlas-ease), filter var(--atlas-duration) var(--atlas-ease);
+  transition: translate var(--atlas-duration) var(--atlas-ease);
 }
 .sigil img { display: block; width: auto; height: 100%; }
+/* Only the lift moves; the brighter glow switches at once (an animated filter re-filters every frame). */
 .brand:hover .sigil { translate: 0 -1px; filter: drop-shadow(0 0 9px var(--atlas-accent-glow)) drop-shadow(0 0 2px var(--atlas-accent-2)); }
 
 /* The search is the masthead's centrepiece: a full field, not a pill. */
@@ -296,5 +309,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .panel, .sheet { animation: none; }
-  .tab::after, .tab svg, .toggle svg, .page, .pageGo, .picks .pickArt img, .sigil, .account { transition: none; }
+  .toolbar::after, .tab::after, .tab svg, .toggle svg, .page, .pageGo, .picks .pickArt img, .sigil, .account { transition: none; }
 }

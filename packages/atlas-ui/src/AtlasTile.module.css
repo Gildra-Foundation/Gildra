@@ -81,7 +81,6 @@
   border: 1px solid var(--atlas-line);
   border-radius: 50%;
   background: radial-gradient(circle, var(--atlas-accent-wash-strong), transparent 70%);
-  transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 
 .icon svg { width: 20px; height: 20px; }

@@ -186,7 +186,7 @@
   font-size: var(--atlas-text-body);
   font-weight: 700;
   text-decoration: none;
-  transition: background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration-fast) var(--atlas-ease);
+  transition: transform var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .button.button:hover,
