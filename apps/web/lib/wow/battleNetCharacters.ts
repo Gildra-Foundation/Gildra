@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 export const BATTLE_NET_REGIONS = ["eu", "us", "kr", "tw"] as const;
 export type BattleNetRegion = (typeof BATTLE_NET_REGIONS)[number];
 
@@ -48,8 +49,34 @@ export class BattleNetProfileError extends Error {
   }
 }
 
+// The roster, a character page and its API calls each ask Blizzard for the same
+// account list within seconds; a short per-token memory saves that round trip
+// (Blizzard answers the profile list in 0.3–1 s). Keyed by a token hash, so the
+// token itself is never kept, and a sign-in with a new token starts fresh.
+const ROSTER_TTL_MS = 60_000;
+const ROSTER_CACHE_LIMIT = 500;
+const rosterCache = new Map<string, { expires: number; characters: BattleNetCharacter[] }>();
+
+function rosterKey(accessToken: string, locale: string, onlyRegion?: BattleNetRegion) {
+  return `${createHash("sha256").update(accessToken).digest("base64url")}:${locale}:${onlyRegion ?? "*"}`;
+}
+
 export async function getBattleNetCharacters(accessToken: string, locale: "en" | "ru", onlyRegion?: BattleNetRegion, signal?: AbortSignal): Promise<BattleNetCharacter[]> {
   signal?.throwIfAborted();
+  const key = rosterKey(accessToken, locale, onlyRegion);
+  const cached = rosterCache.get(key);
+  if (cached && cached.expires > Date.now()) return [...cached.characters];
+  const characters = await fetchBattleNetCharacters(accessToken, locale, onlyRegion, signal);
+  if (rosterCache.size >= ROSTER_CACHE_LIMIT) {
+    const now = Date.now();
+    for (const [entry, value] of rosterCache) if (value.expires <= now) rosterCache.delete(entry);
+    if (rosterCache.size >= ROSTER_CACHE_LIMIT) rosterCache.delete(rosterCache.keys().next().value!);
+  }
+  rosterCache.set(key, { expires: Date.now() + ROSTER_TTL_MS, characters: [...characters] });
+  return characters;
+}
+
+async function fetchBattleNetCharacters(accessToken: string, locale: "en" | "ru", onlyRegion?: BattleNetRegion, signal?: AbortSignal): Promise<BattleNetCharacter[]> {
   const preferred = getBattleNetPreferredRegion();
   const regions: BattleNetRegion[] = onlyRegion
     ? [onlyRegion]
