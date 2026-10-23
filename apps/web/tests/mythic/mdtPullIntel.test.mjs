@@ -122,3 +122,60 @@ test('all authored pulls and Temple spawn groups remain complete in both languag
   }
  }
 });
+
+test('Russian NPC, spell and caster labels use official ID-bound names; English stays exact', () => {
+ for (const [slug, review] of Object.entries(catalogue)) {
+  for (const entry of review.enemies) {
+   const member = maps[slug].nodes.find(n => n.npcId === entry.npcId);
+   const ru = buildMdtPullIntel([member], [], intel({ reviewed: review }), 'ru');
+   const en = buildMdtPullIntel([member], [], intel({ reviewed: review }), 'en');
+   assert.equal(ru.enemies[0].name, entry.name.ru);
+   assert.equal(en.enemies[0].name, entry.name.en);
+   assert.deepEqual(ru.mechanics.map(a => a.name), entry.abilities.map(a => a.name.ru));
+   assert.deepEqual(en.mechanics.map(a => a.name), entry.abilities.map(a => a.name.en));
+   assert(ru.mechanics.every(a => a.source === entry.name.ru));
+   assert(en.mechanics.every(a => a.source === entry.name.en));
+   assert(!/[A-Za-z]/.test([ru.enemies[0].name, ru.enemies[0].note ?? '', ...ru.mechanics.flatMap(a => [a.name, a.source, a.response])].join(' ')), entry.name.en);
+   assert.deepEqual(ru.mechanics.map(a => [a.npcId, a.spellId, a.iconUrl, a.url]), en.mechanics.map(a => [a.npcId, a.spellId, a.iconUrl, a.url]));
+  }
+ }
+});
+
+const { parsePullRole, pullRoleTasks } = await import('../../components/wow/mythic/pullRole.ts');
+
+test('role preference accepts only explicit roles and safely resets corrupt stored values', () => {
+ for (const role of ['tank', 'healer', 'dps']) assert.equal(parsePullRole(role), role);
+ for (const value of [null, undefined, '', 'all', 'admin', '<script>', {}, 1]) assert.equal(parsePullRole(value), 'all');
+});
+
+test('personal assignments come before shared mechanics without borrowing another role', () => {
+ const data = { mechanics: [{ name: 'Shared', role: 'all' }, { name: 'Heal', role: 'healer' }, { name: 'Tank', role: 'tank' }, { name: 'Kick', role: 'dps' }], enemies: [{ note: 'Free the ally.' }], roleNotes: { tank: ['Mitigate.'], healer: [], dps: [] } };
+ const before = JSON.stringify(data);
+ const tasks = pullRoleTasks(data, 'tank');
+ assert.deepEqual(tasks.mechanics.map(a => a.name), ['Tank', 'Shared']);
+ assert.deepEqual(tasks.notes, ['Mitigate.', 'Free the ally.']);
+ assert.equal(JSON.stringify(data), before);
+});
+
+test('every dungeon pull retains all shared duties for each selected role', () => {
+ for (const [slug, data] of Object.entries(maps)) {
+  const byNode = new Map(data.nodes.map(n => [n.id, n]));
+  const groups = data.route.pulls.length ? data.route.pulls.map(ids => ids.map(id => byNode.get(id))) : [...Map.groupBy(data.nodes, n => `${n.floor}:${n.group}`).values()];
+  for (const members of groups) {
+   const result = buildMdtPullIntel(members, [], intel({ reviewed: catalogue[slug] }));
+   for (const role of ['tank', 'healer', 'dps']) {
+    const tasks = pullRoleTasks(result, role);
+    assert(tasks.mechanics.every(a => a.role === role || a.role === 'all'));
+    assert(result.mechanics.filter(a => a.role === 'all').every(a => tasks.mechanics.includes(a)));
+    assert(result.enemies.filter(e => e.note).every(e => tasks.notes.includes(e.note)));
+   }
+  }
+ }
+});
+
+test('compact personal preview reserves room for a shared mechanic', () => {
+ const mechanics = [...Array.from({ length: 4 }, (_, i) => ({ name: `Tank ${i}`, role: 'tank' })), { name: 'Group soak', role: 'all' }];
+ const result = pullRoleTasks({ mechanics, enemies: [], roleNotes: { tank: [], healer: [], dps: [] } }, 'tank');
+ assert.deepEqual(result.preview.map(a => a.name), ['Tank 0', 'Tank 1', 'Group soak']);
+ assert.equal(result.mechanics.length, 5);
+});

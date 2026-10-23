@@ -1,0 +1,2688 @@
+{
+  "patch": "12.1.5.70529",
+  "checkedAt": "2026-10-23",
+  "sources": [
+    "https://www.raidbots.com/static/data/live/talents.json",
+    "https://www.raidbots.com/static/data/live/metadata.json",
+    "https://news.blizzard.com/en-us/article/24244455/midnight-pre-expansion-content-update-notes"
+  ],
+  "specs": [
+    {
+      "id": 102,
+      "classId": 11,
+      "className": {
+        "ru": "Друид",
+        "en": "Druid"
+      },
+      "name": {
+        "ru": "Баланс",
+        "en": "Balance"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 78675,
+          "talentSpellId": 78675
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 5211,
+          "talentSpellId": 5211
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 2782,
+          "talentSpellId": 2782,
+          "effects": [
+            "curse",
+            "poison"
+          ]
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 2908,
+          "talentSpellId": 2908,
+          "effects": [
+            "enrage"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 22812
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "classId": 11,
+      "className": {
+        "ru": "Друид",
+        "en": "Druid"
+      },
+      "name": {
+        "ru": "Сила зверя",
+        "en": "Feral"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 106839,
+          "talentSpellId": 106839,
+          "note": {
+            "ru": "Требуется облик кошки или медведя.",
+            "en": "Requires Cat Form or Bear Form."
+          }
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 5211,
+          "talentSpellId": 5211
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 2782,
+          "talentSpellId": 2782,
+          "effects": [
+            "curse",
+            "poison"
+          ]
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 2908,
+          "talentSpellId": 2908,
+          "effects": [
+            "enrage"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 22812
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "classId": 11,
+      "className": {
+        "ru": "Друид",
+        "en": "Druid"
+      },
+      "name": {
+        "ru": "Страж",
+        "en": "Guardian"
+      },
+      "role": "tank",
+      "interrupt": [
+        {
+          "spellId": 106839,
+          "talentSpellId": 106839,
+          "note": {
+            "ru": "Требуется облик кошки или медведя.",
+            "en": "Requires Cat Form or Bear Form."
+          }
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 5211,
+          "talentSpellId": 5211
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 2782,
+          "talentSpellId": 2782,
+          "effects": [
+            "curse",
+            "poison"
+          ]
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 2908,
+          "talentSpellId": 2908,
+          "effects": [
+            "enrage"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 22812
+        }
+      ]
+    },
+    {
+      "id": 105,
+      "classId": 11,
+      "className": {
+        "ru": "Друид",
+        "en": "Druid"
+      },
+      "name": {
+        "ru": "Исцеление",
+        "en": "Restoration"
+      },
+      "role": "healer",
+      "interrupt": [],
+      "stop": [
+        {
+          "spellId": 5211,
+          "talentSpellId": 5211
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 88423,
+          "effects": [
+            "magic"
+          ],
+          "extraEffects": {
+            "effects": [
+              "curse",
+              "poison"
+            ],
+            "talentSpellId": 392378
+          }
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 2908,
+          "talentSpellId": 2908,
+          "effects": [
+            "enrage"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 22812
+        }
+      ]
+    },
+    {
+      "id": 1467,
+      "classId": 13,
+      "className": {
+        "ru": "Пробудитель",
+        "en": "Evoker"
+      },
+      "name": {
+        "ru": "Опустошение",
+        "en": "Devastation"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 351338,
+          "talentSpellId": 351338
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 357214,
+          "note": {
+            "ru": "Отбрасывание: только по восприимчивым целям; учитывайте положение мобов.",
+            "en": "Knockback: only on susceptible enemies; account for enemy positioning."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 365585,
+          "talentSpellId": 365585,
+          "effects": [
+            "poison"
+          ]
+        },
+        {
+          "spellId": 374251,
+          "talentSpellId": 374251,
+          "effects": [
+            "curse",
+            "poison",
+            "disease",
+            "bleed"
+          ]
+        }
+      ],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 363916,
+          "talentSpellId": 363916
+        }
+      ]
+    },
+    {
+      "id": 1468,
+      "classId": 13,
+      "className": {
+        "ru": "Пробудитель",
+        "en": "Evoker"
+      },
+      "name": {
+        "ru": "Хранитель",
+        "en": "Preservation"
+      },
+      "role": "healer",
+      "interrupt": [],
+      "stop": [
+        {
+          "spellId": 357214,
+          "note": {
+            "ru": "Отбрасывание: только по восприимчивым целям; учитывайте положение мобов.",
+            "en": "Knockback: only on susceptible enemies; account for enemy positioning."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 360823,
+          "effects": [
+            "magic",
+            "poison"
+          ]
+        },
+        {
+          "spellId": 374251,
+          "talentSpellId": 374251,
+          "effects": [
+            "curse",
+            "poison",
+            "disease",
+            "bleed"
+          ]
+        }
+      ],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 363916,
+          "talentSpellId": 363916
+        }
+      ]
+    },
+    {
+      "id": 1473,
+      "classId": 13,
+      "className": {
+        "ru": "Пробудитель",
+        "en": "Evoker"
+      },
+      "name": {
+        "ru": "Насыщатель",
+        "en": "Augmentation"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 351338,
+          "talentSpellId": 351338
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 357214,
+          "note": {
+            "ru": "Отбрасывание: только по восприимчивым целям; учитывайте положение мобов.",
+            "en": "Knockback: only on susceptible enemies; account for enemy positioning."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 365585,
+          "talentSpellId": 365585,
+          "effects": [
+            "poison"
+          ]
+        },
+        {
+          "spellId": 374251,
+          "talentSpellId": 374251,
+          "effects": [
+            "curse",
+            "poison",
+            "disease",
+            "bleed"
+          ]
+        }
+      ],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 363916
+        }
+      ]
+    },
+    {
+      "id": 256,
+      "classId": 5,
+      "className": {
+        "ru": "Жрец",
+        "en": "Priest"
+      },
+      "name": {
+        "ru": "Послушание",
+        "en": "Discipline"
+      },
+      "role": "healer",
+      "interrupt": [],
+      "stop": [
+        {
+          "spellId": 8122,
+          "talentSpellId": 8122,
+          "note": {
+            "ru": "Страх снимается уроном и не действует на невосприимчивых существ.",
+            "en": "Damage breaks fear; immune creatures are unaffected."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 527,
+          "effects": [
+            "magic"
+          ],
+          "extraEffects": {
+            "effects": [
+              "disease"
+            ],
+            "talentSpellId": 390632
+          }
+        },
+        {
+          "spellId": 32375,
+          "talentSpellId": 32375,
+          "effects": [
+            "magic"
+          ],
+          "note": {
+            "ru": "Групповое снятие магии; заранее согласуйте применение и расположение игроков.",
+            "en": "Area magic dispel; coordinate its use and player positioning."
+          }
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 528,
+          "talentSpellId": 528,
+          "effects": [
+            "magic"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 19236,
+          "talentSpellId": 19236,
+          "note": {
+            "ru": "Личное восстановление здоровья; не заменяет снижение урона.",
+            "en": "Personal health recovery; it does not replace damage reduction."
+          }
+        }
+      ]
+    },
+    {
+      "id": 257,
+      "classId": 5,
+      "className": {
+        "ru": "Жрец",
+        "en": "Priest"
+      },
+      "name": {
+        "ru": "Свет",
+        "en": "Holy"
+      },
+      "role": "healer",
+      "interrupt": [],
+      "stop": [
+        {
+          "spellId": 8122,
+          "talentSpellId": 8122,
+          "note": {
+            "ru": "Страх снимается уроном и не действует на невосприимчивых существ.",
+            "en": "Damage breaks fear; immune creatures are unaffected."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 527,
+          "effects": [
+            "magic"
+          ],
+          "extraEffects": {
+            "effects": [
+              "disease"
+            ],
+            "talentSpellId": 390632
+          }
+        },
+        {
+          "spellId": 32375,
+          "talentSpellId": 32375,
+          "effects": [
+            "magic"
+          ],
+          "note": {
+            "ru": "Групповое снятие магии; заранее согласуйте применение и расположение игроков.",
+            "en": "Area magic dispel; coordinate its use and player positioning."
+          }
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 528,
+          "talentSpellId": 528,
+          "effects": [
+            "magic"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 19236,
+          "talentSpellId": 19236,
+          "note": {
+            "ru": "Личное восстановление здоровья; не заменяет снижение урона.",
+            "en": "Personal health recovery; it does not replace damage reduction."
+          }
+        }
+      ]
+    },
+    {
+      "id": 258,
+      "classId": 5,
+      "className": {
+        "ru": "Жрец",
+        "en": "Priest"
+      },
+      "name": {
+        "ru": "Тьма",
+        "en": "Shadow"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 15487
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 8122,
+          "note": {
+            "ru": "Страх снимается уроном и не действует на невосприимчивых существ.",
+            "en": "Damage breaks fear; immune creatures are unaffected."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 213634,
+          "talentSpellId": 213634,
+          "effects": [
+            "disease"
+          ]
+        },
+        {
+          "spellId": 32375,
+          "talentSpellId": 32375,
+          "effects": [
+            "magic"
+          ],
+          "note": {
+            "ru": "Групповое снятие магии; заранее согласуйте применение и расположение игроков.",
+            "en": "Area magic dispel; coordinate its use and player positioning."
+          }
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 528,
+          "talentSpellId": 528,
+          "effects": [
+            "magic"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 47585
+        }
+      ]
+    },
+    {
+      "id": 250,
+      "classId": 6,
+      "className": {
+        "ru": "Рыцарь смерти",
+        "en": "Death Knight"
+      },
+      "name": {
+        "ru": "Кровь",
+        "en": "Blood"
+      },
+      "role": "tank",
+      "interrupt": [
+        {
+          "spellId": 47528,
+          "talentSpellId": 47528
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 221562,
+          "talentSpellId": 221562
+        }
+      ],
+      "dispel": [],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 48792,
+          "talentSpellId": 48792
+        }
+      ]
+    },
+    {
+      "id": 251,
+      "classId": 6,
+      "className": {
+        "ru": "Рыцарь смерти",
+        "en": "Death Knight"
+      },
+      "name": {
+        "ru": "Лёд",
+        "en": "Frost"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 47528,
+          "talentSpellId": 47528
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 221562,
+          "talentSpellId": 221562
+        }
+      ],
+      "dispel": [],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 48792
+        }
+      ]
+    },
+    {
+      "id": 252,
+      "classId": 6,
+      "className": {
+        "ru": "Рыцарь смерти",
+        "en": "Death Knight"
+      },
+      "name": {
+        "ru": "Нечестивость",
+        "en": "Unholy"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 47528,
+          "talentSpellId": 47528
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 221562,
+          "talentSpellId": 221562
+        }
+      ],
+      "dispel": [],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 48792,
+          "talentSpellId": 48792
+        }
+      ]
+    },
+    {
+      "id": 253,
+      "classId": 3,
+      "className": {
+        "ru": "Охотник",
+        "en": "Hunter"
+      },
+      "name": {
+        "ru": "Повелитель зверей",
+        "en": "Beast Mastery"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 147362,
+          "talentSpellId": 147362
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 19577,
+          "talentSpellId": 19577,
+          "note": {
+            "ru": "Для этой специализации используйте её вариант «Устрашения»; у БМ и «Выживания» требуется питомец.",
+            "en": "Use this specialization’s Intimidation variant; Beast Mastery and Survival require a pet."
+          }
+        }
+      ],
+      "dispel": [],
+      "purge": [
+        {
+          "spellId": 19801,
+          "talentSpellId": 19801,
+          "effects": [
+            "magic",
+            "enrage"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 264735
+        }
+      ]
+    },
+    {
+      "id": 254,
+      "classId": 3,
+      "className": {
+        "ru": "Охотник",
+        "en": "Hunter"
+      },
+      "name": {
+        "ru": "Стрельба",
+        "en": "Marksmanship"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 147362,
+          "talentSpellId": 147362
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 474421,
+          "talentSpellId": 474421,
+          "note": {
+            "ru": "Для этой специализации используйте её вариант «Устрашения»; у БМ и «Выживания» требуется питомец.",
+            "en": "Use this specialization’s Intimidation variant; Beast Mastery and Survival require a pet."
+          }
+        }
+      ],
+      "dispel": [],
+      "purge": [
+        {
+          "spellId": 19801,
+          "talentSpellId": 19801,
+          "effects": [
+            "magic",
+            "enrage"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 264735
+        }
+      ]
+    },
+    {
+      "id": 255,
+      "classId": 3,
+      "className": {
+        "ru": "Охотник",
+        "en": "Hunter"
+      },
+      "name": {
+        "ru": "Выживание",
+        "en": "Survival"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 187707,
+          "talentSpellId": 187707
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 19577,
+          "talentSpellId": 19577,
+          "note": {
+            "ru": "Для этой специализации используйте её вариант «Устрашения»; у БМ и «Выживания» требуется питомец.",
+            "en": "Use this specialization’s Intimidation variant; Beast Mastery and Survival require a pet."
+          }
+        }
+      ],
+      "dispel": [],
+      "purge": [
+        {
+          "spellId": 19801,
+          "talentSpellId": 19801,
+          "effects": [
+            "magic",
+            "enrage"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 264735
+        }
+      ]
+    },
+    {
+      "id": 259,
+      "classId": 4,
+      "className": {
+        "ru": "Разбойник",
+        "en": "Rogue"
+      },
+      "name": {
+        "ru": "Ликвидация",
+        "en": "Assassination"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 1766
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 408,
+          "note": {
+            "ru": "Требуются приёмы серии и восприимчивость цели к оглушению.",
+            "en": "Requires combo points and a target susceptible to stuns."
+          }
+        }
+      ],
+      "dispel": [],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 1966,
+          "note": {
+            "ru": "Только против урона по площади, на который действует «Уловка»; не для обычного прицельного удара.",
+            "en": "Only against area damage affected by Feint; not a regular targeted hit."
+          }
+        },
+        {
+          "spellId": 185311,
+          "note": {
+            "ru": "Восстанавливает здоровье; не заменяет снижение урона перед смертельным ударом.",
+            "en": "Restores health; it does not replace mitigation before a lethal hit."
+          }
+        }
+      ]
+    },
+    {
+      "id": 260,
+      "classId": 4,
+      "className": {
+        "ru": "Разбойник",
+        "en": "Rogue"
+      },
+      "name": {
+        "ru": "Головорез",
+        "en": "Outlaw"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 1766
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 408,
+          "note": {
+            "ru": "Требуются приёмы серии и восприимчивость цели к оглушению.",
+            "en": "Requires combo points and a target susceptible to stuns."
+          }
+        }
+      ],
+      "dispel": [],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 1966,
+          "note": {
+            "ru": "Только против урона по площади, на который действует «Уловка»; не для обычного прицельного удара.",
+            "en": "Only against area damage affected by Feint; not a regular targeted hit."
+          }
+        },
+        {
+          "spellId": 185311,
+          "note": {
+            "ru": "Восстанавливает здоровье; не заменяет снижение урона перед смертельным ударом.",
+            "en": "Restores health; it does not replace mitigation before a lethal hit."
+          }
+        }
+      ]
+    },
+    {
+      "id": 261,
+      "classId": 4,
+      "className": {
+        "ru": "Разбойник",
+        "en": "Rogue"
+      },
+      "name": {
+        "ru": "Скрытность",
+        "en": "Subtlety"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 1766
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 408,
+          "note": {
+            "ru": "Требуются приёмы серии и восприимчивость цели к оглушению.",
+            "en": "Requires combo points and a target susceptible to stuns."
+          }
+        }
+      ],
+      "dispel": [],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 1966,
+          "note": {
+            "ru": "Только против урона по площади, на который действует «Уловка»; не для обычного прицельного удара.",
+            "en": "Only against area damage affected by Feint; not a regular targeted hit."
+          }
+        },
+        {
+          "spellId": 185311,
+          "note": {
+            "ru": "Восстанавливает здоровье; не заменяет снижение урона перед смертельным ударом.",
+            "en": "Restores health; it does not replace mitigation before a lethal hit."
+          }
+        }
+      ]
+    },
+    {
+      "id": 262,
+      "classId": 7,
+      "className": {
+        "ru": "Шаман",
+        "en": "Shaman"
+      },
+      "name": {
+        "ru": "Стихии",
+        "en": "Elemental"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 57994,
+          "talentSpellId": 57994
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 192058,
+          "talentSpellId": 192058,
+          "note": {
+            "ru": "Оглушение с задержкой: ставьте заранее, а не в конце каста.",
+            "en": "Delayed stun: place it ahead of time, not at the end of a cast."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 51886,
+          "talentSpellId": 51886,
+          "effects": [
+            "curse"
+          ]
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 370,
+          "talentSpellId": 370,
+          "effects": [
+            "magic"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 108271,
+          "talentSpellId": 108271
+        }
+      ]
+    },
+    {
+      "id": 263,
+      "classId": 7,
+      "className": {
+        "ru": "Шаман",
+        "en": "Shaman"
+      },
+      "name": {
+        "ru": "Совершенствование",
+        "en": "Enhancement"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 57994,
+          "talentSpellId": 57994
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 192058,
+          "talentSpellId": 192058,
+          "note": {
+            "ru": "Оглушение с задержкой: ставьте заранее, а не в конце каста.",
+            "en": "Delayed stun: place it ahead of time, not at the end of a cast."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 51886,
+          "talentSpellId": 51886,
+          "effects": [
+            "curse"
+          ]
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 370,
+          "talentSpellId": 370,
+          "effects": [
+            "magic"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 108271,
+          "talentSpellId": 108271
+        }
+      ]
+    },
+    {
+      "id": 264,
+      "classId": 7,
+      "className": {
+        "ru": "Шаман",
+        "en": "Shaman"
+      },
+      "name": {
+        "ru": "Исцеление",
+        "en": "Restoration"
+      },
+      "role": "healer",
+      "interrupt": [
+        {
+          "spellId": 57994,
+          "talentSpellId": 57994
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 192058,
+          "talentSpellId": 192058,
+          "note": {
+            "ru": "Оглушение с задержкой: ставьте заранее, а не в конце каста.",
+            "en": "Delayed stun: place it ahead of time, not at the end of a cast."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 77130,
+          "effects": [
+            "magic"
+          ],
+          "extraEffects": {
+            "effects": [
+              "curse"
+            ],
+            "talentSpellId": 383016
+          }
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 370,
+          "talentSpellId": 370,
+          "effects": [
+            "magic"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 108271,
+          "talentSpellId": 108271
+        }
+      ]
+    },
+    {
+      "id": 65,
+      "classId": 2,
+      "className": {
+        "ru": "Паладин",
+        "en": "Paladin"
+      },
+      "name": {
+        "ru": "Свет",
+        "en": "Holy"
+      },
+      "role": "healer",
+      "interrupt": [],
+      "stop": [
+        {
+          "spellId": 853
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 4987,
+          "effects": [
+            "magic"
+          ],
+          "extraEffects": {
+            "effects": [
+              "disease",
+              "poison"
+            ],
+            "talentSpellId": 393024
+          }
+        },
+        {
+          "spellId": 1044,
+          "talentSpellId": 1044,
+          "note": {
+            "ru": "Снятие ограничения передвижения: подходит для этой механики, но не снимает произвольные магические эффекты.",
+            "en": "Movement-impairing removal: works for this mechanic, not arbitrary Magic effects."
+          },
+          "mechanicSpellIds": [
+            1305234,
+            1294569,
+            1238084,
+            1306763,
+            270499
+          ]
+        }
+      ],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 498
+        }
+      ]
+    },
+    {
+      "id": 66,
+      "classId": 2,
+      "className": {
+        "ru": "Паладин",
+        "en": "Paladin"
+      },
+      "name": {
+        "ru": "Защита",
+        "en": "Protection"
+      },
+      "role": "tank",
+      "interrupt": [
+        {
+          "spellId": 96231,
+          "talentSpellId": 96231
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 853
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 213644,
+          "talentSpellId": 213644,
+          "effects": [
+            "disease",
+            "poison"
+          ]
+        },
+        {
+          "spellId": 1044,
+          "talentSpellId": 1044,
+          "note": {
+            "ru": "Снятие ограничения передвижения: подходит для этой механики, но не снимает произвольные магические эффекты.",
+            "en": "Movement-impairing removal: works for this mechanic, not arbitrary Magic effects."
+          },
+          "mechanicSpellIds": [
+            1305234,
+            1294569,
+            1238084,
+            1306763,
+            270499
+          ]
+        }
+      ],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 31850,
+          "talentSpellId": 31850
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "classId": 2,
+      "className": {
+        "ru": "Паладин",
+        "en": "Paladin"
+      },
+      "name": {
+        "ru": "Воздаяние",
+        "en": "Retribution"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 96231,
+          "talentSpellId": 96231
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 853
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 213644,
+          "talentSpellId": 213644,
+          "effects": [
+            "disease",
+            "poison"
+          ]
+        },
+        {
+          "spellId": 1044,
+          "talentSpellId": 1044,
+          "note": {
+            "ru": "Снятие ограничения передвижения: подходит для этой механики, но не снимает произвольные магические эффекты.",
+            "en": "Movement-impairing removal: works for this mechanic, not arbitrary Magic effects."
+          },
+          "mechanicSpellIds": [
+            1305234,
+            1294569,
+            1238084,
+            1306763,
+            270499
+          ]
+        }
+      ],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 498
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "classId": 8,
+      "className": {
+        "ru": "Маг",
+        "en": "Mage"
+      },
+      "name": {
+        "ru": "Тайная магия",
+        "en": "Arcane"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 2139
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 31661,
+          "talentSpellId": 31661,
+          "note": {
+            "ru": "Дезориентация снимается уроном; не заменяет полноценное прерывание.",
+            "en": "Damage breaks the disorient; this does not replace an interrupt."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 475,
+          "talentSpellId": 475,
+          "effects": [
+            "curse"
+          ]
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 30449,
+          "talentSpellId": 30449,
+          "effects": [
+            "magic"
+          ],
+          "note": {
+            "ru": "Только если усиление можно похитить; не каждый снимаемый эффект можно украсть.",
+            "en": "Only if the buff is stealable; not every dispellable effect can be stolen."
+          }
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 235450
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "classId": 8,
+      "className": {
+        "ru": "Маг",
+        "en": "Mage"
+      },
+      "name": {
+        "ru": "Огонь",
+        "en": "Fire"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 2139
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 31661,
+          "talentSpellId": 31661,
+          "note": {
+            "ru": "Дезориентация снимается уроном; не заменяет полноценное прерывание.",
+            "en": "Damage breaks the disorient; this does not replace an interrupt."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 475,
+          "talentSpellId": 475,
+          "effects": [
+            "curse"
+          ]
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 30449,
+          "talentSpellId": 30449,
+          "effects": [
+            "magic"
+          ],
+          "note": {
+            "ru": "Только если усиление можно похитить; не каждый снимаемый эффект можно украсть.",
+            "en": "Only if the buff is stealable; not every dispellable effect can be stolen."
+          }
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 235313
+        }
+      ]
+    },
+    {
+      "id": 64,
+      "classId": 8,
+      "className": {
+        "ru": "Маг",
+        "en": "Mage"
+      },
+      "name": {
+        "ru": "Лёд",
+        "en": "Frost"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 2139
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 31661,
+          "talentSpellId": 31661,
+          "note": {
+            "ru": "Дезориентация снимается уроном; не заменяет полноценное прерывание.",
+            "en": "Damage breaks the disorient; this does not replace an interrupt."
+          }
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 475,
+          "talentSpellId": 475,
+          "effects": [
+            "curse"
+          ]
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 30449,
+          "talentSpellId": 30449,
+          "effects": [
+            "magic"
+          ],
+          "note": {
+            "ru": "Только если усиление можно похитить; не каждый снимаемый эффект можно украсть.",
+            "en": "Only if the buff is stealable; not every dispellable effect can be stolen."
+          }
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 11426
+        }
+      ]
+    },
+    {
+      "id": 71,
+      "classId": 1,
+      "className": {
+        "ru": "Воин",
+        "en": "Warrior"
+      },
+      "name": {
+        "ru": "Оружие",
+        "en": "Arms"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 6552
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 107570,
+          "talentSpellId": 107570
+        }
+      ],
+      "dispel": [],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 118038,
+          "talentSpellId": 118038
+        }
+      ]
+    },
+    {
+      "id": 72,
+      "classId": 1,
+      "className": {
+        "ru": "Воин",
+        "en": "Warrior"
+      },
+      "name": {
+        "ru": "Неистовство",
+        "en": "Fury"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 6552
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 107570,
+          "talentSpellId": 107570
+        }
+      ],
+      "dispel": [],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 184364,
+          "talentSpellId": 184364
+        }
+      ]
+    },
+    {
+      "id": 73,
+      "classId": 1,
+      "className": {
+        "ru": "Воин",
+        "en": "Warrior"
+      },
+      "name": {
+        "ru": "Защита",
+        "en": "Protection"
+      },
+      "role": "tank",
+      "interrupt": [
+        {
+          "spellId": 6552
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 107570,
+          "talentSpellId": 107570
+        }
+      ],
+      "dispel": [],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 871,
+          "talentSpellId": 871
+        }
+      ]
+    },
+    {
+      "id": 265,
+      "classId": 9,
+      "className": {
+        "ru": "Чернокнижник",
+        "en": "Warlock"
+      },
+      "name": {
+        "ru": "Колдовство",
+        "en": "Affliction"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 19647,
+          "note": {
+            "ru": "Нужен охотник Скверны либо соответствующая команда после жертвоприношения. С бесом это прерывание недоступно.",
+            "en": "Requires a Felhunter or the corresponding sacrificed-pet command. Not available with an Imp."
+          }
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 30283,
+          "talentSpellId": 30283
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 89808,
+          "effects": [
+            "magic"
+          ],
+          "note": {
+            "ru": "Требуется бес: выберите его заранее. При этом прерывание охотника Скверны недоступно.",
+            "en": "Requires an Imp selected ahead of time; the Felhunter interrupt is then unavailable."
+          }
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 19505,
+          "effects": [
+            "magic"
+          ],
+          "note": {
+            "ru": "Требуется охотник Скверны; со стражем Скверны или бесом недоступно.",
+            "en": "Requires a Felhunter; unavailable with a Felguard or Imp."
+          }
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 104773
+        }
+      ]
+    },
+    {
+      "id": 266,
+      "classId": 9,
+      "className": {
+        "ru": "Чернокнижник",
+        "en": "Warlock"
+      },
+      "name": {
+        "ru": "Демонология",
+        "en": "Demonology"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 89766,
+          "note": {
+            "ru": "Нужен призванный страж Скверны; его команда оглушает и прерывает каст.",
+            "en": "Requires a summoned Felguard; its command stuns and interrupts the cast."
+          }
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 30283,
+          "talentSpellId": 30283
+        }
+      ],
+      "dispel": [],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 104773
+        }
+      ]
+    },
+    {
+      "id": 267,
+      "classId": 9,
+      "className": {
+        "ru": "Чернокнижник",
+        "en": "Warlock"
+      },
+      "name": {
+        "ru": "Разрушение",
+        "en": "Destruction"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 19647,
+          "note": {
+            "ru": "Нужен охотник Скверны либо соответствующая команда после жертвоприношения. С бесом это прерывание недоступно.",
+            "en": "Requires a Felhunter or the corresponding sacrificed-pet command. Not available with an Imp."
+          }
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 30283,
+          "talentSpellId": 30283
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 89808,
+          "effects": [
+            "magic"
+          ],
+          "note": {
+            "ru": "Требуется бес: выберите его заранее. При этом прерывание охотника Скверны недоступно.",
+            "en": "Requires an Imp selected ahead of time; the Felhunter interrupt is then unavailable."
+          }
+        }
+      ],
+      "purge": [
+        {
+          "spellId": 19505,
+          "effects": [
+            "magic"
+          ],
+          "note": {
+            "ru": "Требуется охотник Скверны; со стражем Скверны или бесом недоступно.",
+            "en": "Requires a Felhunter; unavailable with a Felguard or Imp."
+          }
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 104773
+        }
+      ]
+    },
+    {
+      "id": 268,
+      "classId": 10,
+      "className": {
+        "ru": "Монах",
+        "en": "Monk"
+      },
+      "name": {
+        "ru": "Хмелевар",
+        "en": "Brewmaster"
+      },
+      "role": "tank",
+      "interrupt": [
+        {
+          "spellId": 116705,
+          "talentSpellId": 116705
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 119381
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 218164,
+          "talentSpellId": 218164,
+          "effects": [
+            "disease",
+            "poison"
+          ]
+        }
+      ],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 388917,
+          "talentSpellId": 388917
+        }
+      ]
+    },
+    {
+      "id": 269,
+      "classId": 10,
+      "className": {
+        "ru": "Монах",
+        "en": "Monk"
+      },
+      "name": {
+        "ru": "Танцующий с ветром",
+        "en": "Windwalker"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 116705,
+          "talentSpellId": 116705
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 119381
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 218164,
+          "talentSpellId": 218164,
+          "effects": [
+            "disease",
+            "poison"
+          ]
+        }
+      ],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 388917,
+          "talentSpellId": 388917
+        }
+      ]
+    },
+    {
+      "id": 270,
+      "classId": 10,
+      "className": {
+        "ru": "Монах",
+        "en": "Monk"
+      },
+      "name": {
+        "ru": "Ткач туманов",
+        "en": "Mistweaver"
+      },
+      "role": "healer",
+      "interrupt": [],
+      "stop": [
+        {
+          "spellId": 119381
+        }
+      ],
+      "dispel": [
+        {
+          "spellId": 115450,
+          "effects": [
+            "magic"
+          ],
+          "extraEffects": {
+            "effects": [
+              "disease",
+              "poison"
+            ],
+            "talentSpellId": 388874
+          }
+        }
+      ],
+      "purge": [],
+      "defend": [
+        {
+          "spellId": 388917,
+          "talentSpellId": 388917
+        }
+      ]
+    },
+    {
+      "id": 577,
+      "classId": 12,
+      "className": {
+        "ru": "Охотник на демонов",
+        "en": "Demon Hunter"
+      },
+      "name": {
+        "ru": "Истребление",
+        "en": "Havoc"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 183752
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 179057,
+          "talentSpellId": 179057
+        }
+      ],
+      "dispel": [],
+      "purge": [
+        {
+          "spellId": 278326,
+          "talentSpellId": 278326,
+          "effects": [
+            "magic"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 198589
+        }
+      ]
+    },
+    {
+      "id": 581,
+      "classId": 12,
+      "className": {
+        "ru": "Охотник на демонов",
+        "en": "Demon Hunter"
+      },
+      "name": {
+        "ru": "Месть",
+        "en": "Vengeance"
+      },
+      "role": "tank",
+      "interrupt": [
+        {
+          "spellId": 183752
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 179057,
+          "talentSpellId": 179057
+        }
+      ],
+      "dispel": [],
+      "purge": [
+        {
+          "spellId": 278326,
+          "talentSpellId": 278326,
+          "effects": [
+            "magic"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 204021,
+          "talentSpellId": 204021,
+          "note": {
+            "ru": "Примените к вражеской цели до опасного урона.",
+            "en": "Apply to an enemy target before dangerous damage."
+          }
+        }
+      ]
+    },
+    {
+      "id": 1480,
+      "classId": 12,
+      "className": {
+        "ru": "Охотник на демонов",
+        "en": "Demon Hunter"
+      },
+      "name": {
+        "ru": "Пожиратель",
+        "en": "Devourer"
+      },
+      "role": "dps",
+      "interrupt": [
+        {
+          "spellId": 183752
+        }
+      ],
+      "stop": [
+        {
+          "spellId": 1234195,
+          "talentSpellId": 1234195
+        }
+      ],
+      "dispel": [],
+      "purge": [
+        {
+          "spellId": 278326,
+          "talentSpellId": 278326,
+          "effects": [
+            "magic"
+          ]
+        }
+      ],
+      "defend": [
+        {
+          "spellId": 198589
+        }
+      ]
+    }
+  ],
+  "spells": {
+    "370": {
+      "id": 370,
+      "name": {
+        "ru": "Развеивание магии",
+        "en": "Purge"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_nature_purge.jpg",
+      "source": "https://www.wowhead.com/spell=370"
+    },
+    "408": {
+      "id": 408,
+      "name": {
+        "ru": "Удар по почкам",
+        "en": "Kidney Shot"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_rogue_kidneyshot.jpg",
+      "source": "https://www.wowhead.com/spell=408"
+    },
+    "475": {
+      "id": 475,
+      "name": {
+        "ru": "Снятие проклятия",
+        "en": "Remove Curse"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_nature_removecurse.jpg",
+      "source": "https://www.wowhead.com/spell=475"
+    },
+    "498": {
+      "id": 498,
+      "name": {
+        "ru": "Божественная защита",
+        "en": "Divine Protection"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_divineprotection.jpg",
+      "source": "https://www.wowhead.com/spell=498"
+    },
+    "527": {
+      "id": 527,
+      "name": {
+        "ru": "Очищение",
+        "en": "Purify"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_dispelmagic.jpg",
+      "source": "https://www.wowhead.com/spell=527"
+    },
+    "528": {
+      "id": 528,
+      "name": {
+        "ru": "Рассеивание заклинаний",
+        "en": "Dispel Magic"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_nature_nullifydisease.jpg",
+      "source": "https://www.wowhead.com/spell=528"
+    },
+    "853": {
+      "id": 853,
+      "name": {
+        "ru": "Молот правосудия",
+        "en": "Hammer of Justice"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_sealofmight.jpg",
+      "source": "https://www.wowhead.com/spell=853"
+    },
+    "871": {
+      "id": 871,
+      "name": {
+        "ru": "Глухая оборона",
+        "en": "Shield Wall"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_warrior_shieldwall.jpg",
+      "source": "https://www.wowhead.com/spell=871"
+    },
+    "1044": {
+      "id": 1044,
+      "name": {
+        "ru": "Благословенная свобода",
+        "en": "Blessing of Freedom"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_sealofvalor.jpg",
+      "source": "https://www.wowhead.com/spell=1044"
+    },
+    "1766": {
+      "id": 1766,
+      "name": {
+        "ru": "Пинок",
+        "en": "Kick"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_kick.jpg",
+      "source": "https://www.wowhead.com/spell=1766"
+    },
+    "1966": {
+      "id": 1966,
+      "name": {
+        "ru": "Уловка",
+        "en": "Feint"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_rogue_feint.jpg",
+      "source": "https://www.wowhead.com/spell=1966"
+    },
+    "2139": {
+      "id": 2139,
+      "name": {
+        "ru": "Антимагия",
+        "en": "Counterspell"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_frost_iceshock.jpg",
+      "source": "https://www.wowhead.com/spell=2139"
+    },
+    "2782": {
+      "id": 2782,
+      "name": {
+        "ru": "Снятие порчи",
+        "en": "Remove Corruption"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_removecurse.jpg",
+      "source": "https://www.wowhead.com/spell=2782"
+    },
+    "2908": {
+      "id": 2908,
+      "name": {
+        "ru": "Умиротворение",
+        "en": "Soothe"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_hunter_beastsoothe.jpg",
+      "source": "https://www.wowhead.com/spell=2908"
+    },
+    "4987": {
+      "id": 4987,
+      "name": {
+        "ru": "Очищение",
+        "en": "Cleanse"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_purify.jpg",
+      "source": "https://www.wowhead.com/spell=4987"
+    },
+    "5211": {
+      "id": 5211,
+      "name": {
+        "ru": "Мощное оглушение",
+        "en": "Mighty Bash"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_druid_bash.jpg",
+      "source": "https://www.wowhead.com/spell=5211"
+    },
+    "6552": {
+      "id": 6552,
+      "name": {
+        "ru": "Зуботычина",
+        "en": "Pummel"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/inv_gauntlets_04.jpg",
+      "source": "https://www.wowhead.com/spell=6552"
+    },
+    "8122": {
+      "id": 8122,
+      "name": {
+        "ru": "Ментальный крик",
+        "en": "Psychic Scream"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_shadow_psychicscream.jpg",
+      "source": "https://www.wowhead.com/spell=8122"
+    },
+    "11426": {
+      "id": 11426,
+      "name": {
+        "ru": "Ледяная преграда",
+        "en": "Ice Barrier"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_ice_lament.jpg",
+      "source": "https://www.wowhead.com/spell=11426"
+    },
+    "15487": {
+      "id": 15487,
+      "name": {
+        "ru": "Безмолвие",
+        "en": "Silence"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_priest_silence.jpg",
+      "source": "https://www.wowhead.com/spell=15487"
+    },
+    "19236": {
+      "id": 19236,
+      "name": {
+        "ru": "Молитва отчаяния",
+        "en": "Desperate Prayer"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_testoffaith.jpg",
+      "source": "https://www.wowhead.com/spell=19236"
+    },
+    "19505": {
+      "id": 19505,
+      "name": {
+        "ru": "Пожирание магии",
+        "en": "Devour Magic"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_nature_purge.jpg",
+      "source": "https://www.wowhead.com/spell=19505"
+    },
+    "19577": {
+      "id": 19577,
+      "name": {
+        "ru": "Устрашение",
+        "en": "Intimidation"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_devour.jpg",
+      "source": "https://www.wowhead.com/spell=19577"
+    },
+    "19647": {
+      "id": 19647,
+      "name": {
+        "ru": "Запрет чар",
+        "en": "Spell Lock"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_shadow_mindrot.jpg",
+      "source": "https://www.wowhead.com/spell=19647"
+    },
+    "19801": {
+      "id": 19801,
+      "name": {
+        "ru": "Усмиряющий выстрел",
+        "en": "Tranquilizing Shot"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_nature_drowsy.jpg",
+      "source": "https://www.wowhead.com/spell=19801"
+    },
+    "22812": {
+      "id": 22812,
+      "name": {
+        "ru": "Дубовая кожа",
+        "en": "Barkskin"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_nature_stoneclawtotem.jpg",
+      "source": "https://www.wowhead.com/spell=22812"
+    },
+    "30283": {
+      "id": 30283,
+      "name": {
+        "ru": "Неистовство Тьмы",
+        "en": "Shadowfury"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_warlock_shadowfurytga.jpg",
+      "source": "https://www.wowhead.com/spell=30283"
+    },
+    "30449": {
+      "id": 30449,
+      "name": {
+        "ru": "Чарокрад",
+        "en": "Spellsteal"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_arcane_arcane02.jpg",
+      "source": "https://www.wowhead.com/spell=30449"
+    },
+    "31661": {
+      "id": 31661,
+      "name": {
+        "ru": "Дыхание дракона",
+        "en": "Dragon's Breath"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/inv_misc_head_dragon_01.jpg",
+      "source": "https://www.wowhead.com/spell=31661"
+    },
+    "31850": {
+      "id": 31850,
+      "name": {
+        "ru": "Ревностный защитник",
+        "en": "Ardent Defender"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_ardentdefender.jpg",
+      "source": "https://www.wowhead.com/spell=31850"
+    },
+    "32375": {
+      "id": 32375,
+      "name": {
+        "ru": "Массовое рассеивание",
+        "en": "Mass Dispel"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_arcane_massdispel.jpg",
+      "source": "https://www.wowhead.com/spell=32375"
+    },
+    "47528": {
+      "id": 47528,
+      "name": {
+        "ru": "Заморозка разума",
+        "en": "Mind Freeze"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_deathknight_mindfreeze.jpg",
+      "source": "https://www.wowhead.com/spell=47528"
+    },
+    "47585": {
+      "id": 47585,
+      "name": {
+        "ru": "Слияние с Тьмой",
+        "en": "Dispersion"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_shadow_dispersion.jpg",
+      "source": "https://www.wowhead.com/spell=47585"
+    },
+    "48792": {
+      "id": 48792,
+      "name": {
+        "ru": "Незыблемость льда",
+        "en": "Icebound Fortitude"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_deathknight_iceboundfortitude.jpg",
+      "source": "https://www.wowhead.com/spell=48792"
+    },
+    "51886": {
+      "id": 51886,
+      "name": {
+        "ru": "Очищение духа",
+        "en": "Cleanse Spirit"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_shaman_cleansespirit.jpg",
+      "source": "https://www.wowhead.com/spell=51886"
+    },
+    "57994": {
+      "id": 57994,
+      "name": {
+        "ru": "Пронизывающий ветер",
+        "en": "Wind Shear"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_nature_cyclone.jpg",
+      "source": "https://www.wowhead.com/spell=57994"
+    },
+    "77130": {
+      "id": 77130,
+      "name": {
+        "ru": "Возрождение духа",
+        "en": "Purify Spirit"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_shaman_cleansespirit.jpg",
+      "source": "https://www.wowhead.com/spell=77130"
+    },
+    "78675": {
+      "id": 78675,
+      "name": {
+        "ru": "Столп солнечного света",
+        "en": "Solar Beam"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_vehicle_sonicshockwave.jpg",
+      "source": "https://www.wowhead.com/spell=78675"
+    },
+    "88423": {
+      "id": 88423,
+      "name": {
+        "ru": "Природный целитель",
+        "en": "Nature's Cure"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_shaman_cleansespirit.jpg",
+      "source": "https://www.wowhead.com/spell=88423"
+    },
+    "89766": {
+      "id": 89766,
+      "name": {
+        "ru": "Метание топора",
+        "en": "Axe Toss"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_warrior_titansgrip.jpg",
+      "source": "https://www.wowhead.com/spell=89766"
+    },
+    "89808": {
+      "id": 89808,
+      "name": {
+        "ru": "Опаляющая магия",
+        "en": "Singe Magic"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_fire_elementaldevastation.jpg",
+      "source": "https://www.wowhead.com/spell=89808"
+    },
+    "96231": {
+      "id": 96231,
+      "name": {
+        "ru": "Укор",
+        "en": "Rebuke"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_rebuke.jpg",
+      "source": "https://www.wowhead.com/spell=96231"
+    },
+    "104773": {
+      "id": 104773,
+      "name": {
+        "ru": "Твердая решимость",
+        "en": "Unending Resolve"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_shadow_demonictactics.jpg",
+      "source": "https://www.wowhead.com/spell=104773"
+    },
+    "106839": {
+      "id": 106839,
+      "name": {
+        "ru": "Лобовая атака",
+        "en": "Skull Bash"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/inv_bone_skull_04.jpg",
+      "source": "https://www.wowhead.com/spell=106839"
+    },
+    "107570": {
+      "id": 107570,
+      "name": {
+        "ru": "Удар громовержца",
+        "en": "Storm Bolt"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/warrior_talent_icon_stormbolt.jpg",
+      "source": "https://www.wowhead.com/spell=107570"
+    },
+    "108271": {
+      "id": 108271,
+      "name": {
+        "ru": "Астральный сдвиг",
+        "en": "Astral Shift"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_shaman_astralshift.jpg",
+      "source": "https://www.wowhead.com/spell=108271"
+    },
+    "115450": {
+      "id": 115450,
+      "name": {
+        "ru": "Детоксикация",
+        "en": "Detox"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_rogue_imrovedrecuperate.jpg",
+      "source": "https://www.wowhead.com/spell=115450"
+    },
+    "116705": {
+      "id": 116705,
+      "name": {
+        "ru": "Рука-копье",
+        "en": "Spear Hand Strike"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_monk_spearhand.jpg",
+      "source": "https://www.wowhead.com/spell=116705"
+    },
+    "118038": {
+      "id": 118038,
+      "name": {
+        "ru": "Бой насмерть",
+        "en": "Die by the Sword"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_warrior_challange.jpg",
+      "source": "https://www.wowhead.com/spell=118038"
+    },
+    "119381": {
+      "id": 119381,
+      "name": {
+        "ru": "Круговой удар ногой",
+        "en": "Leg Sweep"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_monk_legsweep.jpg",
+      "source": "https://www.wowhead.com/spell=119381"
+    },
+    "147362": {
+      "id": 147362,
+      "name": {
+        "ru": "Встречный выстрел",
+        "en": "Counter Shot"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/inv_ammo_arrow_03.jpg",
+      "source": "https://www.wowhead.com/spell=147362"
+    },
+    "179057": {
+      "id": 179057,
+      "name": {
+        "ru": "Кольцо Хаоса",
+        "en": "Chaos Nova"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_fire_felfirenova.jpg",
+      "source": "https://www.wowhead.com/spell=179057"
+    },
+    "183752": {
+      "id": 183752,
+      "name": {
+        "ru": "Прерывание",
+        "en": "Disrupt"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_demonhunter_consumemagic.jpg",
+      "source": "https://www.wowhead.com/spell=183752"
+    },
+    "184364": {
+      "id": 184364,
+      "name": {
+        "ru": "Безудержное восстановление",
+        "en": "Enraged Regeneration"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_warrior_focusedrage.jpg",
+      "source": "https://www.wowhead.com/spell=184364"
+    },
+    "185311": {
+      "id": 185311,
+      "name": {
+        "ru": "Алый фиал",
+        "en": "Crimson Vial"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_rogue_crimsonvial.jpg",
+      "source": "https://www.wowhead.com/spell=185311"
+    },
+    "187707": {
+      "id": 187707,
+      "name": {
+        "ru": "Намордник",
+        "en": "Muzzle"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_hunter_negate.jpg",
+      "source": "https://www.wowhead.com/spell=187707"
+    },
+    "192058": {
+      "id": 192058,
+      "name": {
+        "ru": "Тотем конденсации",
+        "en": "Capacitor Totem"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_nature_brilliance.jpg",
+      "source": "https://www.wowhead.com/spell=192058"
+    },
+    "198589": {
+      "id": 198589,
+      "name": {
+        "ru": "Затуманивание",
+        "en": "Blur"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_demonhunter_blur.jpg",
+      "source": "https://www.wowhead.com/spell=198589"
+    },
+    "204021": {
+      "id": 204021,
+      "name": {
+        "ru": "Огненное клеймо",
+        "en": "Fiery Brand"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_demonhunter_fierybrand.jpg",
+      "source": "https://www.wowhead.com/spell=204021"
+    },
+    "213634": {
+      "id": 213634,
+      "name": {
+        "ru": "Очищение от болезни",
+        "en": "Purify Disease"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_nullifydisease.jpg",
+      "source": "https://www.wowhead.com/spell=213634"
+    },
+    "213644": {
+      "id": 213644,
+      "name": {
+        "ru": "Очищение от токсинов",
+        "en": "Cleanse Toxins"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_renew.jpg",
+      "source": "https://www.wowhead.com/spell=213644"
+    },
+    "218164": {
+      "id": 218164,
+      "name": {
+        "ru": "Детоксикация",
+        "en": "Detox"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_rogue_imrovedrecuperate.jpg",
+      "source": "https://www.wowhead.com/spell=218164"
+    },
+    "221562": {
+      "id": 221562,
+      "name": {
+        "ru": "Асфиксия",
+        "en": "Asphyxiate"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_deathknight_asphixiate.jpg",
+      "source": "https://www.wowhead.com/spell=221562"
+    },
+    "235313": {
+      "id": 235313,
+      "name": {
+        "ru": "Пылающая преграда",
+        "en": "Blazing Barrier"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_mage_moltenarmor.jpg",
+      "source": "https://www.wowhead.com/spell=235313"
+    },
+    "235450": {
+      "id": 235450,
+      "name": {
+        "ru": "Призматический барьер",
+        "en": "Prismatic Barrier"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_magearmor.jpg",
+      "source": "https://www.wowhead.com/spell=235450"
+    },
+    "264735": {
+      "id": 264735,
+      "name": {
+        "ru": "Выживает сильнейший",
+        "en": "Survival of the Fittest"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_nature_spiritarmor.jpg",
+      "source": "https://www.wowhead.com/spell=264735"
+    },
+    "278326": {
+      "id": 278326,
+      "name": {
+        "ru": "Поглощение магии",
+        "en": "Consume Magic"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_misc_zandalari_council_soulswap.jpg",
+      "source": "https://www.wowhead.com/spell=278326"
+    },
+    "351338": {
+      "id": 351338,
+      "name": {
+        "ru": "Подавление",
+        "en": "Quell"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_evoker_quell.jpg",
+      "source": "https://www.wowhead.com/spell=351338"
+    },
+    "357214": {
+      "id": 357214,
+      "name": {
+        "ru": "Взмах крыльями",
+        "en": "Wing Buffet"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_racial_wingbuffet.jpg",
+      "source": "https://www.wowhead.com/spell=357214"
+    },
+    "360823": {
+      "id": 360823,
+      "name": {
+        "ru": "Натурализация",
+        "en": "Naturalize"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_evoker_fontofmagic_green.jpg",
+      "source": "https://www.wowhead.com/spell=360823"
+    },
+    "363916": {
+      "id": 363916,
+      "name": {
+        "ru": "Обсидиановая чешуя",
+        "en": "Obsidian Scales"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/inv_artifact_dragonscales.jpg",
+      "source": "https://www.wowhead.com/spell=363916"
+    },
+    "365585": {
+      "id": 365585,
+      "name": {
+        "ru": "Нейтрализация",
+        "en": "Expunge"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_evoker_fontofmagic_green.jpg",
+      "source": "https://www.wowhead.com/spell=365585"
+    },
+    "374251": {
+      "id": 374251,
+      "name": {
+        "ru": "Прижигающее пламя",
+        "en": "Cauterizing Flame"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_evoker_fontofmagic_red.jpg",
+      "source": "https://www.wowhead.com/spell=374251"
+    },
+    "383016": {
+      "id": 383016,
+      "name": {
+        "ru": "Улучшенное возрождение духа",
+        "en": "Improved Purify Spirit"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_shaman_cleansespirit.jpg",
+      "source": "https://www.wowhead.com/spell=383016"
+    },
+    "388874": {
+      "id": 388874,
+      "name": {
+        "ru": "Улучшенная детоксикация",
+        "en": "Improved Detox"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_rogue_imrovedrecuperate.jpg",
+      "source": "https://www.wowhead.com/spell=388874"
+    },
+    "388917": {
+      "id": 388917,
+      "name": {
+        "ru": "Укрепляющий отвар",
+        "en": "Fortifying Brew"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_monk_fortifyingale_new.jpg",
+      "source": "https://www.wowhead.com/spell=388917"
+    },
+    "390632": {
+      "id": 390632,
+      "name": {
+        "ru": "Улучшенное очищение",
+        "en": "Improved Purify"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_nullifydisease.jpg",
+      "source": "https://www.wowhead.com/spell=390632"
+    },
+    "392378": {
+      "id": 392378,
+      "name": {
+        "ru": "Улучшенный природный целитель",
+        "en": "Improved Nature's Cure"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/ability_shaman_cleansespirit.jpg",
+      "source": "https://www.wowhead.com/spell=392378"
+    },
+    "393024": {
+      "id": 393024,
+      "name": {
+        "ru": "Улучшенное очищение",
+        "en": "Improved Cleanse"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/spell_holy_purify.jpg",
+      "source": "https://www.wowhead.com/spell=393024"
+    },
+    "474421": {
+      "id": 474421,
+      "name": {
+        "ru": "Устрашение",
+        "en": "Intimidation"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/artifactability_survivalhunter_eaglesbite.jpg",
+      "source": "https://www.wowhead.com/spell=474421"
+    },
+    "1234195": {
+      "id": 1234195,
+      "name": {
+        "ru": "Выброс Бездны",
+        "en": "Void Nova"
+      },
+      "iconUrl": "/assets/wow/mythic/player-tools/inv_12_voiddh_ability_voidnova.jpg",
+      "source": "https://www.wowhead.com/spell=1234195"
+    }
+  },
+  "mechanicEffects": {
+    "1305234": "magic",
+    "392641": "magic",
+    "373693": "magic",
+    "381512": "magic",
+    "1294569": "magic",
+    "1217633": "magic",
+    "1228198": "magic",
+    "1239860": "magic",
+    "1235548": "magic",
+    "1238084": "magic",
+    "1250043": "magic",
+    "270499": "magic",
+    "1296052": "magic",
+    "1216590": "poison",
+    "1250937": "poison",
+    "1289265": "poison",
+    "1306763": "poison",
+    "1308148": "poison",
+    "1217973": "curse",
+    "1306338": "enrage",
+    "1216970": "enrage",
+    "1238053": "enrage",
+    "1246865": "enrage",
+    "1249661": "enrage",
+    "1310319": "enrage",
+    "1254826": "enrage",
+    "269976": "enrage",
+    "1297763": "enrage",
+    "373972": "magic",
+    "391031": "magic",
+    "1229433": "magic",
+    "269935": "magic",
+    "1296671": "magic",
+    "1293464": "magic"
+  }
+}
