@@ -4,7 +4,8 @@
 # with the time of every step printed at the end.
 #
 #   sudo infra/deploy/deploy-web-host.sh <label> [--ref <git-ref>] [--staging]
-#        [--image <local-image>] [--expect <path>:<text>] [--prune | --prune-dry-run]
+#        [--image <local-image>] [--expect <path>:<text>] [--current <image>]
+#        [--prune | --prune-dry-run]
 #
 # The image is built from the committed tree of <git-ref> (default HEAD), so
 # uncommitted or ignored files never reach production: a private build copy
@@ -14,7 +15,9 @@
 # The release itself keeps the safety of the earlier hand-made host scripts:
 #  * the shared deployment lock (/run/lock/gildra-deploy.lock), taken after the
 #    build so a slow build never blocks another deployment;
-#  * the running release must be healthy and pass smoke before it is replaced;
+#  * the running release must be healthy and pass smoke before it is replaced
+#    (and, with --current, still be the image the release was prepared over:
+#    a hotfix deployed meanwhile stops it instead of being overwritten);
 #  * the previous manifest stays as /opt/gildra/<label>-previous.env and the
 #    previous image is tagged gildra-web:rollback-before-<label>;
 #  * any failure after the switch restores the previous image and manifest.
@@ -29,7 +32,7 @@
 set -euo pipefail
 
 usage() {
-  sed -n '4,5p' "$0" | sed 's/^# \{0,1\}//' >&2
+  sed -n '6,8p' "$0" | sed 's/^# \{0,1\}//' >&2
   exit 64
 }
 
@@ -52,13 +55,14 @@ build_limits=${GILDRA_BUILD_LIMITS-CPUWeight=50 IOWeight=50 MemoryHigh=8G}
 label=${1:-}
 [[ $label =~ ^[0-9A-Za-z][0-9A-Za-z._-]{0,79}$ ]] || usage
 shift
-ref=HEAD image= staging=false expect=
+ref=HEAD image= staging=false expect= current=
 while [ "$#" -gt 0 ]; do
   case $1 in
     --ref) ref=${2:?--ref needs a value}; shift 2 ;;
     --image) image=${2:?--image needs a value}; shift 2 ;;
     --staging) staging=true; shift ;;
     --expect) expect=${2:?--expect needs <path>:<text>}; shift 2 ;;
+    --current) current=${2:?--current needs an image}; shift 2 ;;
     --prune) prune=1; shift ;;
     --prune-dry-run) prune=dry-run; shift ;;
     *) usage ;;
@@ -226,6 +230,8 @@ flock -w "$lock_wait" 9 || fail "another deployment held the lock for ${lock_wai
 step "check current release"
 previous=$(sed -n 's/^WEB_IMAGE=//p' "$manifest")
 [ -n "$previous" ] || fail "$manifest has no WEB_IMAGE"
+[ -z "$current" ] || [ "$previous" = "$current" ] ||
+  fail "the current release is $previous, not $current; carry its source over first"
 [ "$previous" != "$image" ] || fail "$image is already the current release"
 docker image inspect "$previous" >/dev/null || fail "the current image $previous is missing on this host"
 healthy "$previous" || fail "the running web container is not the healthy $previous"
