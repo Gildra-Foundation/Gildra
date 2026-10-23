@@ -2,7 +2,7 @@ import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { wowSourceName } from "@/lib/wow/sourceLocale";
 import { DungeonCardGrid } from "./DungeonCardGrid";
 import { MythicDataNotice } from "./MythicDataNotice";
-import { dungeonRoutes, dungeonSlugs } from "./dungeonRoutes";
+import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { mythicAtlasCopy } from "./mythicAtlasCopy";
 import { mythicVerification } from "./mythicVerification";
 import { verificationDate } from "./mythicVerificationCopy";

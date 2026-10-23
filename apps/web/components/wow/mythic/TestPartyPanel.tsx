@@ -4,10 +4,11 @@ import Image from "next/image";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Clock3, Copy, Crosshair, HeartPulse, LogIn, MapPin, Plus, RotateCcw, Shield, Sparkles, Sword, Trash2, Users, Zap } from "lucide-react";
 import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
-import type { RouteStop } from "./rubyLifePoolsData";
+import type { RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
 import { initialAssignments, partyMembers, positions, type PartyAssignment, type PartyMember, type PartyRole, type PartyTalent } from "./testPartyData";
 import { partyPositionLabel, partyRoleLabels, plainPartyText, testPartyCopy, type TestPartyCopy } from "./testPartyCopy";
 import styles from "./testPartyPanel.module.css";
+import { copyText } from "@gildra/atlas-ui/clipboard";
 
 type Locale = "en" | "ru";
 type TalentTreeFilter = "all" | "class" | "spec" | "hero";
@@ -106,7 +107,7 @@ export const TestPartyPanel = memo(function TestPartyPanel({
 
   const copyBuild = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(inspectedMember.buildCode);
+      await copyText(inspectedMember.buildCode);
       announce(copy.buildCopied);
     } catch {
       window.prompt(copy.copyBuildPrompt, inspectedMember.buildCode);

@@ -7,8 +7,8 @@ import { formatAtlasDate, pluralRu } from "@gildra/atlas-ui/format";
 import { midnightSpecializations, TALENT_SNAPSHOT } from "@/lib/data/wow";
 import styles from "./classCatalog.module.css";
 import { trail } from "@/lib/routes/registry";
+import type { Lang as Locale } from "@/lib/i18n-paths";
 
-type Locale = "en" | "ru";
 
 const copy = {
   ru: {

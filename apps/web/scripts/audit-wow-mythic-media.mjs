@@ -5,8 +5,8 @@ import process from "node:process";
 const root = process.cwd();
 const read = (file) => fs.readFile(path.join(root, file), "utf8");
 const [rubyRoutes, dungeonRoutes, rubyMediaSource, seasonAbilitySource, seasonEnemySource, sourceAuditSource, npcSourceAuditSource] = await Promise.all([
-  read("components/wow/mythic/rubyLifePoolsData.ts"),
-  read("components/wow/mythic/dungeonRoutes.ts"),
+  read("lib/data/wow/mythic/rubyLifePoolsData.ts"),
+  read("lib/data/wow/mythic/dungeonRoutes.ts"),
   read("components/wow/mythic/rubyLifePoolsMedia.ts"),
   read("components/wow/mythic/seasonTwoMedia.json"),
   read("components/wow/mythic/seasonTwoEnemyMedia.json"),

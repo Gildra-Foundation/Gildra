@@ -3,13 +3,13 @@ import { readingMinutes } from "@/lib/cms/richtext";
 import { atlasScenes } from "@/lib/atlas/scenes";
 import { atlasOgImage, type AtlasOgSpec } from "@/lib/og/atlasOg";
 import { articlesCopy } from "./articlesCopy";
+import type { Lang as Locale } from "@/lib/i18n-paths";
 
 /**
  * Link-preview cards of the articles (design.md rule 13): the articles scene
  * with the article's category, title, summary, date and reading time. A
  * missing or unavailable article falls back to the section card.
  */
-type Locale = "en" | "ru";
 
 const scene = { art: atlasScenes.articles.art, focus: atlasScenes.articles.og as [number, number] };
 const words = {

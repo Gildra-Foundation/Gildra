@@ -1,8 +1,9 @@
 /** Interface copy of the tier workspace (/tier-lists, /ru/tier-lists).
  *  Game names are resolved from the existing localized game catalog. */
 import type { TierRole } from "@/lib/platform/games/intelligence";
+import type { Lang } from "@/lib/i18n-paths";
 
-export type TierLocale = "ru" | "en";
+export type TierLocale = Lang;
 export type KeyRange = "all" | "high" | "middle" | "low";
 
 const ruPlural = (n: number, one: string, few: string, many: string) => {

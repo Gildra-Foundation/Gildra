@@ -17,6 +17,7 @@ import { getPerformanceTier, type PerformanceTier } from "@/lib/client/performan
 import { navigateTalentPage } from "@/lib/client/viewTransitionNavigation";
 import { heroPathName, talentCalculatorCopy, talentThemeNames, type TalentCalculatorCopy, type TalentCopyLang } from "@/components/talents/talentCalculatorCopy";
 import { lessMotion } from "@/lib/client/motionPreference";
+import { copyText as copyToClipboard } from "@gildra/atlas-ui/clipboard";
 
 // Interface copy for the whole calculator tree (tooltips render through a portal,
 // which keeps React context).
@@ -1586,20 +1587,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
   const undoReset = () => { if (!undoState) return; setRanks(new Map(undoState.ranks)); setChoices(new Map(undoState.choices)); setPvpSelections([...undoState.pvp]); setUndoState(null); showNotice(copy.buildRestored); };
   const copyText = async (value: string, success: string) => {
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(value);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = value;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        const copied = document.execCommand("copy");
-        textarea.remove();
-        if (!copied) throw new Error("Legacy clipboard fallback failed");
-      }
+      await copyToClipboard(value);
       showNotice(success);
     } catch {
       window.prompt(copy.copyManually, value);
@@ -1776,7 +1764,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
         {!compactLayout || mobileTree === "class" ? <TalentTreePanel lang={lang} style={rowStepStyle("class")} variant="class" eyebrow={copy.treeEyebrows.class} title={data.className} iconSrc={theme.classIconUrl} spent={rank("class")} budget={budgets.class} nodeCount={data.trees.class.nodes.length}><TalentTreeView tree={data.trees.class} ranks={treeRanks.class} choices={treeChoices.class} spentInTree={rank("class")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : null}
         {!compactLayout || mobileTree === "hero" ? mountedTrees.has("hero") ? <TalentTreePanel lang={lang} style={rowStepStyle("hero")} variant="hero" eyebrow={copy.treeEyebrows.hero} title={data.heroName} iconSrc={heroPanelIcon} secondary={<nav className="tc-hero-paths" aria-label={copy.heroPathsLabel}>{theme.heroPaths.map((hero) => {
           const href = `${localePrefix}/talents/${theme.slug}?hero=${hero.id}`;
-          return <Link key={hero.id} className={hero.id === data.heroSubtreeId ? "is-active" : undefined} href={href} prefetch={false} scroll={false} aria-current={hero.id === data.heroSubtreeId ? "page" : undefined} onClick={(event) => { navigateTalentPage(event, href, () => router.push(href, { scroll: false })); }}>{heroPathName(hero, lang)}</Link>;
+          return <Link key={hero.id} className={hero.id === data.heroSubtreeId ? "is-active" : undefined} href={href} prefetch={false} scroll={false} data-route-scroll="keep" aria-current={hero.id === data.heroSubtreeId ? "page" : undefined} onClick={(event) => { navigateTalentPage(event, href, () => router.push(href, { scroll: false })); }}>{heroPathName(hero, lang)}</Link>;
         })}</nav>} spent={rank("hero")} budget={budgets.hero} nodeCount={data.trees.hero.nodes.length}><TalentTreeView tree={data.trees.hero} ranks={treeRanks.hero} choices={treeChoices.hero} spentInTree={rank("hero")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : <TalentTreePanel lang={lang} style={rowStepStyle("hero")} variant="hero" eyebrow={copy.treeEyebrows.hero} title={data.heroName} spent={0} budget={budgets.hero} nodeCount={data.trees.hero.nodes.length} loading><div className="tc-skeleton-tree" /></TalentTreePanel> : null}
         {!compactLayout || mobileTree === "spec" ? mountedTrees.has("spec") ? <TalentTreePanel lang={lang} style={rowStepStyle("spec")} variant="spec" eyebrow={copy.treeEyebrows.spec} title={data.specName} iconSrc={specPanelIcon} spent={rank("spec")} budget={budgets.spec} nodeCount={data.trees.spec.nodes.length}><TalentTreeView tree={data.trees.spec} ranks={treeRanks.spec} choices={treeChoices.spec} spentInTree={rank("spec")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : <TalentTreePanel lang={lang} style={rowStepStyle("spec")} variant="spec" eyebrow={copy.treeEyebrows.spec} title={data.specName} spent={0} budget={budgets.spec} nodeCount={data.trees.spec.nodes.length} loading><div className="tc-skeleton-tree" /></TalentTreePanel> : null}
       </section>

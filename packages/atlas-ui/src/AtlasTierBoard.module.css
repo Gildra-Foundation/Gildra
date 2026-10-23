@@ -1,0 +1,30 @@
+/* atlas:strict — Valyro owns the board, drag and drop and export; atlas supplies the type. */
+.board {
+  font-family: var(--atlas-font-ui);
+}
+
+.board :global(.ui-tier-list__title) {
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-h3);
+  font-weight: var(--atlas-weight-display);
+  letter-spacing: 0;
+}
+
+.board :global(.ui-tier-list__caption) {
+  max-width: var(--atlas-measure);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+}
+
+/* Spec names are long ("Frost Death Knight"): two lines under the portrait instead of an ellipsis. */
+.board:global([data-names]) :global(.ui-tier-list__tile) { inline-size: 88px; }
+
+.board :global(.ui-tier-list__name) {
+  display: -webkit-box;
+  max-inline-size: 100%;
+  overflow: hidden;
+  white-space: normal;
+  text-align: center;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}

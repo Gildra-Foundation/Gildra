@@ -8,6 +8,7 @@ import { p, type Lang } from "@/lib/i18n-paths";
 import { gameDestinationForPath } from "@/lib/games/destinations";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
 import { LocaleSwitch } from "@/components/platform/locale/LocaleSwitch";
+import { GildraCrest } from "@/components/brand/GildraCrest";
 import { GameSwitcher } from "./GameSwitcher";
 import { barePathOf, currentRealm, navigationRealms, realmArt, type NavigationRealm } from "./navigationMap";
 import toolbarStyles from "./atlasToolbar.module.css";
@@ -24,14 +25,9 @@ const CLOSE_DELAY = 180;
 
 const word = (lang: Lang, value: { en: string; ru: string }) => value[lang];
 
-/** The Gildra sigil: a gilded diamond with its inner facet. Decorative. */
+/** The Gildra crest in the bar: the gilded helmet of the brand. Decorative (the link is labelled). */
 function Sigil() {
-  return <svg className={toolbarStyles.sigil} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-    <path d="M16 1.5 30.5 16 16 30.5 1.5 16Z" fill="none" stroke="currentColor" strokeWidth="1.4" />
-    <path d="M16 7.5 24.5 16 16 24.5 7.5 16Z" fill="currentColor" opacity=".22" />
-    <path d="M16 7.5V24.5M7.5 16H24.5" stroke="currentColor" strokeWidth="1" opacity=".7" />
-    <circle cx="16" cy="16" r="2.2" fill="currentColor" />
-  </svg>;
+  return <GildraCrest height={30} className={toolbarStyles.sigil} eager />;
 }
 
 /** The art panel a realm opens: its painting leads to the hub, the rest are its other pages. */

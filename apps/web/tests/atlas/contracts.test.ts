@@ -8,16 +8,16 @@ const contracts = JSON.parse(readFileSync(new URL("../../contracts/blocks.schema
 
 describe("block contracts", () => {
   it("cover the shared, WoW and League blocks", () => {
-    for (const type of ["container", "columns", "legal", "wow.specBody", "lol.hero"]) assert.ok(type in contracts.blocks, type);
+    for (const type of ["container", "columns", "legal", "wow.tierWorkspace", "lol.hero"]) assert.ok(type in contracts.blocks, type);
     assert.equal(contracts.blocks.columns.container, true);
-    assert.equal(contracts.blocks["wow.specBody"].container, false);
+    assert.equal(contracts.blocks["lol.championDetail"].container, false);
   });
   it("accept valid props and reject typos, wrong types and unknown fields", () => {
-    const spec = contracts.blocks["wow.specBody"].props;
-    assert.ok(matchesSchema({ slug: "fury-warrior" }, spec));
-    assert.ok(!matchesSchema({}, spec), "required slug");
-    assert.ok(!matchesSchema({ slug: 7 }, spec), "string slug");
-    assert.ok(!matchesSchema({ slug: "fury-warrior", colour: "red" }, spec), "no unknown props");
+    const champion = contracts.blocks["lol.championDetail"].props;
+    assert.ok(matchesSchema({ slug: "ahri" }, champion));
+    assert.ok(!matchesSchema({}, champion), "required slug");
+    assert.ok(!matchesSchema({ slug: 7 }, champion), "string slug");
+    assert.ok(!matchesSchema({ slug: "ahri", colour: "red" }, champion), "no unknown props");
     const slot = contracts.blocks.adSlot.props;
     assert.ok(matchesSchema({ variant: "rect" }, slot));
     assert.ok(!matchesSchema({ variant: "banner" }, slot), "enum");

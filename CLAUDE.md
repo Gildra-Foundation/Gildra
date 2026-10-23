@@ -3,6 +3,10 @@
 Gildra is a WoW gaming-intelligence product: **gaming product first → decision
 tool second → analytics dashboard third**. Production: https://gildra.net
 
+This file and `AGENTS.md` are already in context — never `cat` them again. Token
+economy (model/effort, quiet builds, reading map, brief template):
+[docs/llm/session-economy.md](docs/llm/session-economy.md).
+
 ## Stack & map
 
 - Next.js 16 App Router + React 19 + TypeScript, Go 1.26 API/River worker,
@@ -55,10 +59,14 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   `app/styles/*.css`, each legacy block's CSS next to the block. Class names are never renamed; block-level
   compaction uses `@container` (containers: `.section`, `.cards-row`); new UI
   uses Tailwind CSS and shadcn/ui on the same tokens without changing the
-  visual language.
-- Data: blocks read data only through `ctx.source` (`lib/data/source.ts`);
-  `data/site.ts` is the demo dataset behind it and the only source for
-  `demo.ts` files. Game icons/artwork resolve **only** through
+  visual language. **Valyro first:** a component Valyro has (MCP `valyro`,
+  `npm run valyro -- search …`) is installed with `npm run valyro:add -- <name>`
+  and used through an atlas adapter, not hand-written; snapshots, adaptations
+  and updates: [docs/llm/valyro-cli.md](docs/llm/valyro-cli.md).
+- Data: block `load` functions read server-side data through `lib/`
+  (`lib/data/*` — game data, the live season, M+ routes and raid guides —
+  and `lib/platform/*`); components receive it as props. `data/site.ts` is
+  only the tier workspace's labelled sample. Game icons/artwork resolve **only** through
   `lib/games/wow/assets.ts` (files in `public/assets/**`, hero/raid artwork
   `public/bg.jpg`). Never invent data, links or game assets.
 
@@ -68,8 +76,8 @@ tool second → analytics dashboard third**. Production: https://gildra.net
   `--bg` data body. No full-page fixed artwork.
 - Honest UI only: no `href="#"`; unimplemented things use `.soon`,
   `.dead-link`, `aria-disabled` states.
-- Full rules live in [design.md](design.md) — **read it before any UI/design
-  work** and follow the `gildra-design-director` skill workflow
+- Full rules live in [design.md](design.md) — **read it before UI/design work only**
+  (not for backend, CMS, deploy or data tasks) and follow the `gildra-design-director` skill workflow
   ([.claude/skills/gildra-design-director/SKILL.md](.claude/skills/gildra-design-director/SKILL.md)).
 
 ## Working on UI

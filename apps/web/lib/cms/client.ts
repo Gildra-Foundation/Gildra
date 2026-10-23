@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache as perRequest } from "react";
 import type { CmsLocale, PublicArticle, PublicArticleList, PublicPage } from "./contract";
 import { cmsConfig } from "./config";
 import { cmsTags } from "./revalidation";
@@ -21,19 +22,25 @@ async function cmsGet<T>(path: string, params: Record<string, string>, tags: str
   const config = cmsConfig();
   if (!config.enabled) return { status: "disabled" };
   const url = `${config.internalUrl}/api/public/${encodeURIComponent(config.site)}${path}?${new URLSearchParams(params)}`;
+  return requestCms(url, config.revalidateSeconds, tags.join("\n")) as Promise<CmsResult<T>>;
+}
+
+// The timeout signal opts every CMS fetch out of Next's request dedupe, so the
+// article read by generateMetadata and by the page is shared within a request.
+const requestCms = perRequest(async (url: string, revalidate: number, tags: string): Promise<CmsResult<unknown>> => {
   try {
     const response = await fetch(url, {
       headers: { accept: "application/json" },
-      next: { revalidate: config.revalidateSeconds, tags },
+      next: { revalidate, tags: tags.split("\n") },
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (response.status === 404) return { status: "not-found" };
     if (!response.ok) return { status: "error", reason: `http-${response.status}` };
-    return { status: "ok", data: (await response.json()) as T };
+    return { status: "ok", data: await response.json() };
   } catch (error) {
     return { status: "error", reason: (error as Error).name || "fetch-failed" };
   }
-}
+});
 
 export async function fetchArticles(locale: CmsLocale, page = 1, limit = 24): Promise<CmsResult<PublicArticleList>> {
   const { site } = cmsConfig();

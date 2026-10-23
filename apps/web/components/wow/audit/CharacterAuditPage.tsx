@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ComponentProps, type CSSProperties, type ReactNode, createContext, useContext, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { WarcraftTooltip as SharedWarcraftTooltip } from "./WarcraftTooltip";
 import dynamic from "next/dynamic";
 import {
@@ -41,13 +41,13 @@ import {
   type TalentScenarioId,
 } from "@/lib/wow/testCharacterTalentAudit";
 import { SpecSignatureFx } from "@/components/talents/spec-signature/SpecSignatureFx";
-import { AuctionGearOptimizer } from "./AuctionGearOptimizer";
-import { GearFarmPlanner } from "./GearFarmPlanner";
 import { DeferredMount } from "./DeferredMount";
 import { CharacterBookNavigation } from "./CharacterBookNavigation";
 import { CharacterBookChapter as CharacterChapter } from "./CharacterBookChapter";
 const CharacterTalentSimulator = dynamic(() => import("./CharacterTalentSimulator").then((module) => module.CharacterTalentSimulator));
 const CharacterGearOptimizer = dynamic(() => import("./CharacterGearOptimizer").then((module) => module.CharacterGearOptimizer));
+const GearFarmPlanner = dynamic(() => import("./GearFarmPlanner").then((module) => module.GearFarmPlanner));
+const AuctionGearOptimizer = dynamic(() => import("./AuctionGearOptimizer").then((module) => module.AuctionGearOptimizer));
 const CharacterHistory = dynamic(() => import("./CharacterHistory").then((module) => module.CharacterHistory));
 const CharacterLogAnalysis = dynamic(() => import("./CharacterLogAnalysis").then((module) => module.CharacterLogAnalysis));
 const RotationLabPage = dynamic(() => import("@/components/platform/rotation/RotationLabPage").then((module) => module.RotationLabPage));
@@ -60,6 +60,7 @@ import atlas from "./characterAtlasProfile.module.css";
 import armoryBook from "./characterArmorySpread.module.css";
 import type { Lang } from "@/lib/i18n";
 import { characterPageText, characterRoleLabel } from "./characterPageCopy";
+import { copyText } from "@gildra/atlas-ui/clipboard";
 
 const CharacterBookTheme = createContext(false);
 const CharacterPageLanguage = createContext<Lang>("ru");
@@ -70,6 +71,33 @@ const CharacterModelViewer = dynamic(
   () => import("./CharacterModelViewer").then((module) => module.CharacterModelViewer),
   { ssr: false, loading: ModelLoading },
 );
+
+/**
+ * The gear slot the reader points at, kept outside page state: hovering an item
+ * re-renders only the model viewer, not the talent, rotation and gear tools.
+ */
+function createSlotFocus() {
+  let slot: string | null = null;
+  const listeners = new Set<() => void>();
+  return {
+    get: () => slot,
+    set(next: string | null) {
+      if (next === slot) return;
+      slot = next;
+      for (const listener of listeners) listener();
+    },
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => { listeners.delete(listener); };
+    },
+  };
+}
+type SlotFocus = ReturnType<typeof createSlotFocus>;
+
+function FocusedModelViewer({ focus, ...props }: Omit<ComponentProps<typeof CharacterModelViewer>, "focusSlot"> & { focus: SlotFocus }) {
+  const focusSlot = useSyncExternalStore(focus.subscribe, focus.get, () => null);
+  return <CharacterModelViewer {...props} focusSlot={focusSlot} />;
+}
 
 const initialHistory = [
   { at: "5 мин назад", date: "17 мая 2025, 14:18", score: 87, delta: "+5" },
@@ -117,7 +145,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
   const [details, setDetails] = useState(true);
   const [talentScenario, setTalentScenario] = useState<TalentScenarioId>("mythic-plus");
   const [history, setHistory] = useState(() => dataMode === "fixture" ? initialHistory : []);
-  const [modelFocus, setModelFocus] = useState<string | null>(null);
+  const [modelFocus] = useState(createSlotFocus);
   const [rotationTalentLoadout, setRotationTalentLoadout] = useState(initialSnapshot.activeTalentLoadout ?? "");
   const [rotationSimulation, setRotationSimulation] = useState<RotationSimulationResult | null>(null);
   const [diagnostic, setDiagnostic] = useState<CharacterDiagnosticReport | null>(null);
@@ -262,27 +290,10 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
       return;
     }
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(window.location.href);
-      } else {
-        throw new Error("Clipboard API unavailable");
-      }
+      await copyText(window.location.href);
     } catch {
-      const fallback = document.createElement("textarea");
-      fallback.value = window.location.href;
-      fallback.setAttribute("readonly", "");
-      fallback.style.position = "fixed";
-      fallback.style.opacity = "0";
-      document.body.appendChild(fallback);
-      fallback.select();
-      try {
-        document.execCommand("copy");
-      } catch {
-        // The visual confirmation still provides deterministic feedback in
-        // restricted browsers where both clipboard mechanisms are blocked.
-      } finally {
-        fallback.remove();
-      }
+      // The visual confirmation still provides deterministic feedback in
+      // restricted browsers where both clipboard mechanisms are blocked.
     } finally {
       setShared(true);
       window.setTimeout(() => setShared(false), 1800);
@@ -377,10 +388,10 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
           <EquipmentStatStrip stats={snapshot.combatStats} />
           <div className={`${styles.panelMotion} ${styles.motionGear}`} aria-hidden="true"><i /><i /><i /><span /></div>
           <div className={`${styles.gearWorkbench} ${armoryBook.workbench}`}>
-            <div className={`${styles.gearList} ${styles.gearListLeft}`}>{equipment.left.map((item) => <GearItem key={item.slot} item={item} pinned={selectedGear?.slot === item.slot} hoverDisabled={selectedGear !== null && selectedGear.slot !== item.slot} onSelect={toggleGearPin} onHighlight={setModelFocus} />)}</div>
-            <CharacterModelViewer lang={lang} appearance={snapshot.appearance} focusSlot={modelFocus} characterName={snapshot.character.name} race={snapshot.character.race} specIcon={snapshot.specialization.iconUrl} accent={snapshot.specialization.accent} characterSlug={snapshot.slug} />
-            <div className={`${styles.gearList} ${styles.gearListRight}`}>{equipment.right.map((item) => <GearItem key={item.slot} item={item} pinned={selectedGear?.slot === item.slot} hoverDisabled={selectedGear !== null && selectedGear.slot !== item.slot} onSelect={toggleGearPin} onHighlight={setModelFocus} />)}</div>
-            {equipment.weapons.length ? <div className={`${styles.weaponPair} ${armoryBook.weapons}`} data-weapon-count={equipment.weapons.length} data-armory-weapon-row aria-label={lang === "ru" ? `Комплект оружия специализации «${snapshot.specialization.specName}»` : `Weapons for ${snapshot.specialization.specName}`}><span className={`${styles.weaponPairLabel} ${armoryBook.weaponTitle}`}>{snapshot.specialization.resourceLabel === "Ярость" ? <Flame /> : <Sparkles />} {tr("Оружие")}</span>{equipment.weapons.map((item) => <GearItem key={item.slot} item={item} pinned={selectedGear?.slot === item.slot} hoverDisabled={selectedGear !== null && selectedGear.slot !== item.slot} onSelect={toggleGearPin} onHighlight={setModelFocus} />)}</div> : null}
+            <div className={`${styles.gearList} ${styles.gearListLeft}`}>{equipment.left.map((item) => <GearItem key={item.slot} item={item} pinned={selectedGear?.slot === item.slot} hoverDisabled={selectedGear !== null && selectedGear.slot !== item.slot} onSelect={toggleGearPin} onHighlight={modelFocus.set} />)}</div>
+            <FocusedModelViewer lang={lang} appearance={snapshot.appearance} focus={modelFocus} characterName={snapshot.character.name} race={snapshot.character.race} specIcon={snapshot.specialization.iconUrl} accent={snapshot.specialization.accent} characterSlug={snapshot.slug} />
+            <div className={`${styles.gearList} ${styles.gearListRight}`}>{equipment.right.map((item) => <GearItem key={item.slot} item={item} pinned={selectedGear?.slot === item.slot} hoverDisabled={selectedGear !== null && selectedGear.slot !== item.slot} onSelect={toggleGearPin} onHighlight={modelFocus.set} />)}</div>
+            {equipment.weapons.length ? <div className={`${styles.weaponPair} ${armoryBook.weapons}`} data-weapon-count={equipment.weapons.length} data-armory-weapon-row aria-label={lang === "ru" ? `Комплект оружия специализации «${snapshot.specialization.specName}»` : `Weapons for ${snapshot.specialization.specName}`}><span className={`${styles.weaponPairLabel} ${armoryBook.weaponTitle}`}>{snapshot.specialization.resourceLabel === "Ярость" ? <Flame /> : <Sparkles />} {tr("Оружие")}</span>{equipment.weapons.map((item) => <GearItem key={item.slot} item={item} pinned={selectedGear?.slot === item.slot} hoverDisabled={selectedGear !== null && selectedGear.slot !== item.slot} onSelect={toggleGearPin} onHighlight={modelFocus.set} />)}</div> : null}
           </div>
         </section>
 

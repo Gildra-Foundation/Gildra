@@ -104,7 +104,7 @@ export function writeAuctionState(kind: Kind, id: string, expiresAt: number, dat
   if (!validId(id) || !Number.isFinite(expiresAt)) throw new Error("auction_storage_unavailable");
   const target = join(dir, `${kind}-${id}.bin`);
   try {
-    const count = readdirSync(dir).filter(name => name.startsWith(`${kind}-`) && name.endsWith(".bin")).length;
+    const count = readdirSync(/* turbopackIgnore: true */ dir).filter(name => name.startsWith(`${kind}-`) && name.endsWith(".bin")).length;
     const replacing = replaceId && replaceId !== id && validId(replaceId) && existsSync(join(dir, `${kind}-${replaceId}.bin`));
     if (!existsSync(target) && count >= limits[kind] && !(count === limits[kind] && replacing)) throw new Error();
     const rawHeader = Buffer.from(JSON.stringify({ version, simulationContract: simulationContract(kind), kind, id, expiresAt, metadata }));
@@ -227,14 +227,14 @@ export function listAuctionStateHeaders<M = Record<string, unknown>>(kind: Kind)
   const dir = directory();
   if (!dir) return [];
   let names: string[];
-  try { names = readdirSync(dir); } catch { throw new Error("auction_storage_unavailable"); }
+  try { names = readdirSync(/* turbopackIgnore: true */ dir); } catch { throw new Error("auction_storage_unavailable"); }
   const records: Array<AuctionStateHeader<M>> = [];
   for (const name of names) {
     if (!name.startsWith(`${kind}-`) || !name.endsWith(".bin")) continue;
     const id = name.slice(kind.length + 1, -4);
     if (!validId(id)) continue;
     let header: AuctionStateHeader | undefined, fd: number | undefined;
-    try { fd = openSync(join(dir, name), constants.O_RDONLY | constants.O_NOFOLLOW); header = readHeader(fd, kind, id).header; }
+    try { fd = openSync(/* turbopackIgnore: true */ join(/* turbopackIgnore: true */ dir, name), constants.O_RDONLY | constants.O_NOFOLLOW); header = readHeader(fd, kind, id).header; }
     catch (error) {
       if (ioFailure(error) && (error as NodeJS.ErrnoException).code !== "ENOENT") throw new Error("auction_storage_unavailable");
     }

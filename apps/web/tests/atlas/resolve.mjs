@@ -1,6 +1,6 @@
 // Test-only module resolution for `node --test`: the "@/..." alias of
-// tsconfig.json, extensionless relative imports (./file → ./file.ts) and JSON
-// imports without an import attribute.
+// tsconfig.json, extensionless relative imports (./file → ./file.ts), JSON
+// imports without an import attribute and the "server-only" marker.
 import { existsSync } from "node:fs";
 import { register } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -8,6 +8,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
 export async function resolve(specifier, context, nextResolve) {
+  // Next.js provides the build-time "server-only" marker; tests run as server code.
+  if (specifier === "server-only") return { url: "data:text/javascript,export {};", shortCircuit: true };
   // JSON modules imported the way the app does (no `with { type: "json" }`).
   const next = async (target, ctx) => {
     const result = await nextResolve(target, ctx);

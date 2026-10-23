@@ -3,8 +3,9 @@
 // and stay as delivered; only interface labels live here, RU and EN side by side.
 import type { TalentKind } from "@/lib/talentCalculatorData";
 import type { TalentSpecTheme } from "@/lib/talentSpecThemes";
+import type { Lang } from "@/lib/i18n-paths";
 
-export type TalentCopyLang = "ru" | "en";
+export type TalentCopyLang = Lang;
 
 const resourceLabelsEn: Record<string, string> = {
   "Астральная мощь": "Astral Power",

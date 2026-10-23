@@ -3,9 +3,9 @@ import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection } from "@/components/a
 import { RaidBattlePlan } from "./RaidBattlePlan";
 import { RaidMechanicList } from "./RaidMechanicList";
 import { EncounterSwitcher, RaidPager } from "./RaidNavigation";
-import type { RaidBoss, RaidDefinition } from "./midnightRaidData";
+import type { RaidBoss, RaidDefinition } from "@/lib/data/wow/raid/midnightRaidData";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
-import { getBossStrategy } from "./raidStrategy";
+import { getBossStrategy } from "@/lib/data/wow/raid/raidStrategy";
 import styles from "./raidGuide.module.css";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 import { getRaidReview } from "@/lib/data/raidReviews";

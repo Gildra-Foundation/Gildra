@@ -5,8 +5,6 @@ import { getRotationPreset } from "@/lib/platform/rotation/repository";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { pairedAlternates } from "@/lib/seo/metadata";
 
-export const dynamic = "force-dynamic";
-
 export async function generateMetadata({ params }: { params: Promise<{ spec: string }> }): Promise<Metadata> {
   const spec = (await params).spec;
   const theme = getTalentSpecTheme(spec);

@@ -6,7 +6,7 @@ import { AtlasCard, AtlasFrame, AtlasHero, AtlasSection } from "@/components/atl
 import { AtlasMorphPreload } from "@gildra/atlas-ui/AtlasMorphPreload";
 import { morphArtProps } from "@gildra/atlas-ui/morph";
 import { contentManifest } from "@/lib/data/wow";
-import { midnightRaids, raidSceneArt, raidSlugs } from "./midnightRaidData";
+import { midnightRaids, raidSceneArt, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
 import { raidAtlasCopy } from "./raidAtlasCopy";
 import { raidReviewCopy } from "./raidReviewCopy";
 import styles from "./raidAtlasPage.module.css";

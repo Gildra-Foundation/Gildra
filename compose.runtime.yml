@@ -116,6 +116,9 @@ services:
       timeout: 5s
       retries: 12
       start_period: 20s
+      # Probe every second while starting, so `compose up --wait` in a release
+      # returns as soon as the server answers instead of after the first 10 s.
+      start_interval: 1s
 
   # Shared CMS for gildra.net + riftden.com (shared-cms-20261011): admin at cms.gildra.net.
   cms:
