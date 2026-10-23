@@ -20,7 +20,7 @@ const COMPARE_KEY = "gd-compare-open";
 const COPY = {
   ru: {
     label: "Язык версии",
-    publication: "RU и EN публикуются и снимаются с публикации вместе. Автосохранение сохраняет только черновик.",
+    publication: "«Опубликовать RU и EN» выкладывает обе версии сразу; пункт «Опубликовать только версию…» в меню рядом — одну. Автосохранение сохраняет только черновик.",
     editing: "редактируете",
     complete: "заполнена",
     empty: "пусто",
@@ -39,7 +39,7 @@ const COPY = {
   },
   en: {
     label: "Language",
-    publication: "RU and EN are published and unpublished together. Autosave only saves a draft.",
+    publication: "“Publish RU and EN” puts both versions live at once; the “Publish only the … version” menu item next to it publishes one. Autosave only saves a draft.",
     editing: "editing",
     complete: "complete",
     empty: "empty",
