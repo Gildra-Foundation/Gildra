@@ -17,10 +17,11 @@ import {
   siteIDsWithRole,
   WRITE_ROLES,
 } from "../access/roles";
-import { LocalTime, SiteLink } from "./SiteLink";
+import { SiteLink } from "./SiteLink";
 
 import { AdminSurface } from "./AdminSurface";
 import { RecentEditsTable } from "./RecentEditsTable";
+import { UpcomingTable } from "./UpcomingTable";
 import { StatsCard } from "./valyro-ui/data-display/StatsCard";
 import { EmptyState } from "./valyro-ui/data-display/EmptyState";
 import { Badge } from "./valyro-ui/basic/Badge";
@@ -219,35 +220,12 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
           {upcoming.length === 0 ? (
             <EmptyState size="sm" title={t.upcomingEmpty} />
           ) : (
-            <table className="gd-table">
-              <thead>
-                <tr>
-                  <th>{t.colWhen}</th>
-                  <th>{t.colTitle}</th>
-                  <th>{t.colAction}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {upcoming.map((job) => (
-                  <tr key={String(job.id)}>
-                    <td>
-                      <LocalTime iso={job.when} lang={lang} />
-                    </td>
-                    <td>
-                      {job.docID !== null ? (
-                        <ScopedLink site={job.site} href={`/admin/collections/${job.collection}/${job.docID}?locale=${job.titleLocale}`}>
-                          {job.title || t.untitled}
-                        </ScopedLink>
-                      ) : (
-                        job.title || t.untitled
-                      )}
-                      {job.site !== null ? <span className="gd-kind">{siteName.get(String(job.site)) ?? ""}</span> : null}
-                    </td>
-                    <td>{job.action === "unpublish" ? t.actionUnpublish : t.actionPublish}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <UpcomingTable lang={lang} rows={upcoming.map((job) => ({
+              id: String(job.id), when: job.when, title: job.title, action: job.action,
+              href: job.docID !== null ? `/admin/collections/${job.collection}/${job.docID}?locale=${job.titleLocale}` : null,
+              siteID: job.site === null ? null : String(job.site),
+              siteName: job.site !== null ? (siteName.get(String(job.site)) ?? "") : "",
+            }))} />
           )}
         </section>
       </div>
@@ -272,18 +250,6 @@ export async function Dashboard({ payload, user, i18n, locale, visibleEntities }
       </nav>
     </Gutter>
     </AdminSurface>
-  );
-}
-
-function ScopedLink({ site, href, children }: { site: ID | null; href: string; children: React.ReactNode }) {
-  return site === null ? (
-    <Link href={href} prefetch={false}>
-      {children}
-    </Link>
-  ) : (
-    <SiteLink siteID={String(site)} href={href}>
-      {children}
-    </SiteLink>
   );
 }
 
