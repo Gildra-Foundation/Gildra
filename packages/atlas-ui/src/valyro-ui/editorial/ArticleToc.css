@@ -1,0 +1,125 @@
+.ui-article-toc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  min-width: 0;
+  font-size: var(--ui-text-sm);
+  text-align: start;
+}
+
+.ui-article-toc__title {
+  margin: 0;
+  color: var(--ui-fg-subtle);
+  font-size: var(--ui-text-xs);
+  font-weight: var(--ui-weight-semibold);
+  letter-spacing: var(--ui-label-tracking, 0.08em);
+  text-transform: var(--ui-label-transform, uppercase);
+}
+
+.ui-article-toc__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-inline-start: 1px solid var(--ui-divider);
+}
+
+.ui-article-toc__link {
+  position: relative;
+  display: block;
+  margin-inline-start: -1px;
+  padding-block: 5px;
+  padding-inline: var(--ui-space-3) var(--ui-space-2);
+  border-inline-start: 2px solid transparent;
+  color: var(--ui-fg-muted);
+  line-height: 1.4;
+  text-decoration: none;
+  transition:
+    color var(--ui-duration-fast) var(--ui-ease),
+    border-color var(--ui-duration-fast) var(--ui-ease);
+}
+
+/* Subsections differ by indent only: a smaller size made them harder to read than the text they point to. */
+.ui-article-toc__item[data-level='2'] .ui-article-toc__link {
+  padding-inline-start: var(--ui-space-6);
+}
+
+.ui-article-toc__item[data-level='3'] .ui-article-toc__link {
+  padding-inline-start: calc(var(--ui-space-6) + var(--ui-space-3));
+}
+
+.ui-article-toc__link:hover {
+  color: var(--ui-fg);
+}
+
+/* Marker and ink mark the current section; no weight change, which would re-wrap a long title as the
+   reader scrolls. */
+.ui-article-toc__link[aria-current] {
+  border-inline-start-color: var(--ui-primary);
+  color: var(--ui-action-fg);
+}
+
+.ui-article-toc__link:focus-visible {
+  border-radius: var(--ui-radius-xs);
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* ── Collapsible: the title is the toggle ── */
+.ui-article-toc__details {
+  padding-block: var(--ui-space-3);
+  border-block: 1px solid var(--ui-divider);
+}
+
+.ui-article-toc__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+  border-radius: var(--ui-radius-xs);
+  color: var(--ui-fg-subtle);
+  cursor: pointer;
+  list-style: none;
+}
+
+.ui-article-toc__summary::-webkit-details-marker {
+  display: none;
+}
+
+.ui-article-toc__summary:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.ui-article-toc__chevron {
+  flex: none;
+  transition: transform var(--ui-duration-fast) var(--ui-ease);
+}
+
+.ui-article-toc__details[open] .ui-article-toc__chevron {
+  transform: rotate(180deg);
+}
+
+.ui-article-toc__details[open] > .ui-article-toc__list {
+  margin-top: var(--ui-space-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-article-toc__chevron {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .ui-article-toc__link[aria-current] {
+    border-inline-start-color: Highlight;
+  }
+}
+
+/* Touch: the collapsed contents line is the only way in, so it gets a finger-high row. */
+@media (pointer: coarse) {
+  .ui-article-toc__summary {
+    min-height: 44px;
+  }
+}
