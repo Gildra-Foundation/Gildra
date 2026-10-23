@@ -232,5 +232,12 @@ func newPostgresPool(ctx context.Context, databaseURL, applicationName string, m
 	if poolConfig.ConnConfig.RuntimeParams["application_name"] == "" {
 		poolConfig.ConnConfig.RuntimeParams["application_name"] = applicationName
 	}
+	// The catalog projections cost past jit_above_cost, so Postgres compiled
+	// each page query with LLVM: 8.3 of 8.5 s for /v1/game/entities?limit=100,
+	// which executes in 54 ms (EXPLAIN ANALYZE on production, 2026-10-23).
+	// A database URL that sets jit explicitly still wins.
+	if poolConfig.ConnConfig.RuntimeParams["jit"] == "" {
+		poolConfig.ConnConfig.RuntimeParams["jit"] = "off"
+	}
 	return pgxpool.NewWithConfig(ctx, poolConfig)
 }
