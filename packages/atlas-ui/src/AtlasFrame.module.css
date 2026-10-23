@@ -28,14 +28,14 @@
   pointer-events: none;
 }
 
-/* Torchlight: the tinted glow over the artwork breathes unevenly, like a flame. */
+/* Torchlight: a tinted glow over the artwork. */
 .atmosphere::before {
   position: absolute;
   z-index: 1;
   inset: 0;
   content: "";
   background: radial-gradient(circle at 74% 8%, var(--atlas-frame-tint), transparent 34%);
-  animation: atlas-torch 9s var(--atlas-ease-ambient) infinite;
+  opacity: .9;
 }
 
 .atmosphere::after {
@@ -67,40 +67,22 @@
   object-fit: cover;
   object-position: var(--atlas-frame-art-position, center 18%);
   filter: saturate(.86) contrast(1.06) brightness(.92);
-  /* The scene settles in when the page arrives, then drifts slowly — a living painting. */
-  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
+  /* The framing the drifting scene used to rest at. */
+  scale: 1.035;
 }
 
 
-/* A living layer over the scene moves exactly like the art beneath it. */
+/* The scene and everything over it stand still: a full-size layer drifting,
+   breathing or sparking forever kept the compositor busy on every frame of a
+   scroll, which weak laptops and phones felt as lag (2026-10-23). */
 .artLayer {
   position: absolute;
   inset: 0;
-  animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
+  scale: 1.035;
 }
 
-/* The living layers rest while a dialog covers the page: its backdrop is then
-   painted once, not under moving layers (search typing went from ~490 to ~110 ms
-   per key on a desktop, 2026-10-13). The browser already stops them when
-   scrolled away. They keep running through a page hand-over: a
-   :root:active-view-transition pause cost the first new frame 40–110 ms on a
-   phone (a restyle right before the snapshot) and gained nothing measurable. */
-:global(:root:has(dialog[open])) .atmosphere::before,
-:global(:root:has(dialog[open])) .art,
-:global(:root:has(dialog[open])) .artLayer,
-:global(:root:has(dialog[open])) .artLayer *,
-:global(:root:has(dialog[open])) .embers::before,
-:global(:root:has(dialog[open])) .footMist::before,
-:global(:root:has(dialog[open])) .footMist::after,
-:global(:root:has(dialog[open])) .footSeal,
-:global(:root:has(dialog[open])) .footEmbers::before,
-:global(:root:has(dialog[open])) .embers::after {
-  animation-play-state: paused;
-}
-
-/* Embers: two parallax layers of sparks rising through the torchlight over the
-   artwork's focal area. Each layer is one repeating tile moved by exactly its
-   own height, so the loop never jumps. */
+/* Embers: two layers of sparks hanging in the torchlight over the artwork's
+   focal area, painted once. */
 .embers {
   position: absolute;
   z-index: 1;
@@ -124,7 +106,6 @@
     radial-gradient(circle at 40% 83%, var(--atlas-ember-halo), transparent 9px),
     radial-gradient(circle at 87% 11%, var(--atlas-ember) 0 .9px, transparent 1.6px);
   background-size: 380px 520px;
-  animation: atlas-ember-rise 26s linear infinite, atlas-ember-sway 7s var(--atlas-ease-ambient) infinite alternate, atlas-ember-in 2.4s ease-out both;
 }
 
 /* The far layer: smaller, slower, dimmer. */
@@ -133,8 +114,6 @@
   background-size: 560px 700px;
   background-position: 140px 90px;
   opacity: .55;
-  animation-name: atlas-ember-rise-far, atlas-ember-sway, atlas-ember-in-far;
-  animation-duration: 44s, 11s, 3.2s;
 }
 
 
@@ -184,18 +163,15 @@
     radial-gradient(ellipse 22% 38% at 24% 62%, rgba(214, 226, 238, .09), transparent 72%),
     radial-gradient(ellipse 26% 30% at 62% 74%, color-mix(in srgb, var(--atlas-frame-horizon, var(--atlas-frame-tint)) 70%, transparent), transparent 72%),
     radial-gradient(ellipse 20% 34% at 86% 58%, rgba(214, 226, 238, .06), transparent 72%);
-  animation: atlas-mist-drift 46s var(--atlas-ease-ambient) infinite alternate;
 }
 .footMist::after {
   inset: 12% -40% 0;
   opacity: .8;
   scale: -1 1;
-  animation-duration: 63s;
-  animation-direction: alternate-reverse;
 }
 
 /* The seal: a ring of runes and the Gildra diamond, half risen behind the brand
-   mark like a sun on the horizon; it turns once in four minutes. */
+   mark like a sun on the horizon. */
 .footSeal {
   bottom: calc(min(780px, 120vw) * -.4);
   left: 50%;
@@ -205,7 +181,6 @@
   background: radial-gradient(circle, var(--atlas-accent-strong) 0, var(--atlas-accent) 46%, color-mix(in srgb, var(--atlas-accent) 40%, transparent) 72%);
   opacity: .2;
   mask: var(--atlas-seal) center / contain no-repeat;
-  animation: atlas-seal-turn 240s linear infinite;
 }
 
 .footEmbers {
@@ -215,10 +190,7 @@
   mask-image: linear-gradient(0deg, transparent 6%, #000 22%, transparent 72%);
 }
 
-/* Stills and reduced motion: the same horizon without drift, turn or embers. */
-.still .footMist::before,
-.still .footMist::after,
-.still .footSeal { animation: none; }
+/* Stills and reduced motion: the same horizon without embers. */
 .still .footEmbers { display: none; }
 
 .column {
@@ -308,38 +280,10 @@
 .motionToggle[aria-pressed="true"] .motionSwitch { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); }
 .motionToggle[aria-pressed="true"] .motionSwitch::after { translate: 12px 0; background: var(--atlas-accent-strong); }
 
-@keyframes atlas-torch {
-  0%, 100% { opacity: .78; }
-  17% { opacity: 1; }
-  29% { opacity: .84; }
-  46% { opacity: .96; }
-  62% { opacity: .72; }
-  81% { opacity: 1; }
-}
-
-@keyframes atlas-art-settle { from { scale: 1.075; } to { scale: 1.035; } }
-@keyframes atlas-art-drift { to { translate: -1.1% .5%; } }
-@keyframes atlas-ember-rise { to { transform: translate3d(0, -520px, 0); } }
-@keyframes atlas-ember-rise-far { to { transform: translate3d(0, -700px, 0); } }
-@keyframes atlas-ember-sway { from { translate: -6px 0; } to { translate: 8px 0; } }
-@keyframes atlas-ember-in { from { opacity: 0; } }
-@keyframes atlas-ember-in-far { from { opacity: 0; } to { opacity: .55; } }
-@keyframes atlas-mist-drift { from { transform: translate3d(-6%, 0, 0); } to { transform: translate3d(6%, 0, 0); } }
-@keyframes atlas-seal-turn { to { rotate: 1turn; } }
-
-/* Work surfaces and readers who asked for less motion get a still atmosphere. */
-.still .art,
-.still .artLayer,
-.still .atmosphere::before { animation: none; }
+/* Work surfaces and readers who asked for less motion get no embers. */
 .still .embers { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .art,
-  .artLayer,
-  .atmosphere::before,
-  .footMist::before,
-  .footMist::after,
-  .footSeal { animation: none; }
   .embers,
   .footEmbers { display: none; }
 }

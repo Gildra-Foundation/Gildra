@@ -10,7 +10,7 @@ export type ArtGlowPoint = {
   radius: number;
   /** Colour of the light (any CSS colour). */
   color: string;
-  /** Seconds per breath (default 4). */
+  /** Unused since the glow stopped breathing; kept so scene data stays valid. */
   tempo?: number;
 };
 
@@ -51,7 +51,7 @@ export function AtlasArtGlow({ imageSize, focus, points }: { imageSize: readonly
   return (
     <div ref={layer} className={styles.layer} aria-hidden="true" data-motion-layer>
       {points.map((point, index) => (
-        <span key={index} data-glow className={styles.glow} style={{ "--glow-color": point.color, "--glow-tempo": `${point.tempo ?? 4}s`, animationDelay: `${index * -1.3}s` } as CSSProperties} />
+        <span key={index} data-glow className={styles.glow} style={{ "--glow-color": point.color } as CSSProperties} />
       ))}
     </div>
   );
