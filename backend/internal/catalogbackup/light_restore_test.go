@@ -6,6 +6,8 @@ import (
 	"crypto/ed25519"
 	"encoding/json"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -186,5 +188,72 @@ func TestOptionsRejectUnknownRestoreProof(t *testing.T) {
 	}
 	if err := options.Validate(); err == nil || !strings.Contains(err.Error(), "restore proof") {
 		t.Fatalf("Validate() = %v", err)
+	}
+}
+
+func TestLocalStoreAdoptLinksWithoutCopyAndRefusesOverwrite(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Chmod(root, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	store, err := NewLocalStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := filepath.Join(root, "gildra-postgres-1.dump.age")
+	if err := os.WriteFile(source, []byte("archive"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Adopt(context.Background(), "catalog/wow/2026/10/23/postgres-1.dump.age", source, 7); err != nil {
+		t.Fatal(err)
+	}
+	sourceInfo, _ := os.Stat(source)
+	targetInfo, err := os.Stat(filepath.Join(root, "catalog/wow/2026/10/23/postgres-1.dump.age"))
+	if err != nil || !os.SameFile(sourceInfo, targetInfo) {
+		t.Fatalf("adopted object is not a hard link of the source: %v", err)
+	}
+	if err := store.Adopt(context.Background(), "catalog/wow/2026/10/23/postgres-1.dump.age", source, 7); err == nil {
+		t.Fatal("adopt overwrote an existing object")
+	}
+	if err := store.Adopt(context.Background(), "catalog/wow/2026/10/23/other.dump.age", source, 8); err == nil {
+		t.Fatal("adopt accepted a size mismatch")
+	}
+}
+
+func TestRunnerPublishesLocalArchiveWithoutSecondCopy(t *testing.T) {
+	identity, err := age.GenerateX25519Identity()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	if err := os.Chmod(root, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	store, err := NewLocalStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := completeState(MinimumSchemaVersion, 3)
+	manifests := &memoryManifests{}
+	result, err := (Runner{Database: &fakeDatabase{source: state, restore: state, archive: []byte("custom archive")}, Store: store, Manifests: manifests}).Run(context.Background(), Options{
+		SourceDatabaseURL: "postgres://source/db", RestoreDatabaseURL: "postgres://restore/db",
+		Product: "wow", ObjectPrefix: "catalog", TempDirectory: root, Recipient: identity.Recipient(), Identity: identity,
+		SigningKey: ed25519.NewKeyFromSeed(bytes.Repeat([]byte{6}, ed25519.SeedSize)),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.RestoreVerified {
+		t.Fatalf("result = %#v", result)
+	}
+	var archives []os.DirEntry
+	entries, _ := os.ReadDir(root)
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), "gildra-postgres-") {
+			archives = append(archives, entry)
+		}
+	}
+	if len(archives) != 0 {
+		t.Fatalf("temporary archive was not removed from the volume root: %v", archives)
 	}
 }

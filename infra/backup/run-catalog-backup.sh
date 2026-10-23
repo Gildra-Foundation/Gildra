@@ -115,7 +115,7 @@ compose() {
 }
 
 # Refuse to start a backup the disk cannot hold: the dump is roughly a ninth
-# of the database, a light proof needs a few percent more for the schema and
+# of the database (it is published by hard link, not copied again), a light proof needs a few percent more for the schema and
 # small tables, a full proof needs another whole database, and a 5 GiB reserve
 # is always left for production.
 check_free_space() {
@@ -133,7 +133,8 @@ check_free_space() {
   reserve=$((5 * 1024 * 1024 * 1024))
   dump_bytes=$((database_bytes / 9))
   if [ "$restore_proof" = full ]; then
-    needed=$((dump_bytes + database_bytes + reserve))
+    # one extra dump covers an older catalog-backup that copies the archive
+    needed=$((2 * dump_bytes + database_bytes + reserve))
   else
     needed=$((dump_bytes + database_bytes / 16 + reserve))
   fi
