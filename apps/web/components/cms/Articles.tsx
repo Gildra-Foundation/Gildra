@@ -353,7 +353,7 @@ export function ArticleView({ article: a, lang, banner, related = [], preview = 
             {cover ? (
               <figure className={list.readingCover}>
                 <div className={list.readingCoverImage}>
-                  <Image src={cover} alt={a.cover?.alt ?? ""} fill priority sizes="(min-width: 1180px) 680px, (min-width: 900px) 62vw, 100vw" unoptimized={!isOptimizableCmsImage(cover)} />
+                  <Image src={cover} alt={a.cover?.alt ?? ""} fill loading="eager" fetchPriority="high" sizes="(min-width: 1180px) 680px, (min-width: 900px) 62vw, 100vw" unoptimized={!isOptimizableCmsImage(cover)} />
                 </div>
                 {a.cover?.caption ? <figcaption>{a.cover.caption}</figcaption> : null}
               </figure>

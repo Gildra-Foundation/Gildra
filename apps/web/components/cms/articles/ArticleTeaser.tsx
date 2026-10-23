@@ -46,7 +46,7 @@ export function ArticleTeaser({ article: a, lang, cover, layout = "vertical", pr
       readingMinutes={a.readingTime && a.readingTime > 0 ? a.readingTime : undefined}
       headingLevel={headingLevel}
       image={cover ? (
-        <Image className="ui-article-card__img" src={cover} alt={a.cover?.alt ?? ""} fill sizes={sizes} priority={priority} unoptimized={!isOptimizableCmsImage(cover)} />
+        <Image className="ui-article-card__img" src={cover} alt={a.cover?.alt ?? ""} fill sizes={sizes} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} unoptimized={!isOptimizableCmsImage(cover)} />
       ) : undefined}
     />
   );
