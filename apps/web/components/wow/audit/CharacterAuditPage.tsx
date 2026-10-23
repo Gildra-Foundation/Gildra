@@ -60,6 +60,7 @@ import atlas from "./characterAtlasProfile.module.css";
 import armoryBook from "./characterArmorySpread.module.css";
 import type { Lang } from "@/lib/i18n";
 import { characterPageText, characterRoleLabel } from "./characterPageCopy";
+import { copyText } from "@gildra/atlas-ui/clipboard";
 
 const CharacterBookTheme = createContext(false);
 const CharacterPageLanguage = createContext<Lang>("ru");
@@ -289,27 +290,10 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
       return;
     }
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(window.location.href);
-      } else {
-        throw new Error("Clipboard API unavailable");
-      }
+      await copyText(window.location.href);
     } catch {
-      const fallback = document.createElement("textarea");
-      fallback.value = window.location.href;
-      fallback.setAttribute("readonly", "");
-      fallback.style.position = "fixed";
-      fallback.style.opacity = "0";
-      document.body.appendChild(fallback);
-      fallback.select();
-      try {
-        document.execCommand("copy");
-      } catch {
-        // The visual confirmation still provides deterministic feedback in
-        // restricted browsers where both clipboard mechanisms are blocked.
-      } finally {
-        fallback.remove();
-      }
+      // The visual confirmation still provides deterministic feedback in
+      // restricted browsers where both clipboard mechanisms are blocked.
     } finally {
       setShared(true);
       window.setTimeout(() => setShared(false), 1800);

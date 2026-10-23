@@ -1,24 +1,21 @@
-.badge {
-  --badge-color: var(--atlas-text-muted);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+/* Valyro owns the badge; atlas maps each tone onto the Characters palette. */
+.badge:global(.ui-badge[data-tone]) { --_ink: var(--_c); }
+
+.badge:global(.ui-badge) {
   min-height: 22px;
+  height: auto;
   padding: 2px 9px;
-  color: var(--badge-color);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--badge-color) 13%, transparent);
+  font-family: var(--atlas-font-ui);
   font-size: var(--atlas-text-meta);
   font-weight: 600;
   line-height: 1.2;
-  white-space: nowrap;
 }
 
-.badge svg { width: 13px; height: 13px; flex: none; }
+.badge:global(.ui-badge[data-tone="neutral"]) { --_c: var(--atlas-text-muted); }
+.badge:global(.ui-badge[data-tone="accent"]) { --_c: var(--atlas-accent-strong); }
+.badge:global(.ui-badge[data-tone="positive"]) { --_c: var(--atlas-positive); }
+.badge:global(.ui-badge[data-tone="negative"]) { --_c: var(--atlas-negative); }
+.badge:global(.ui-badge[data-tone="info"]) { --_c: var(--atlas-info); }
+.badge:global(.ui-badge[data-tone="caution"]) { --_c: var(--atlas-caution); }
 
-.accent { --badge-color: var(--atlas-accent-strong); }
-.neutral { --badge-color: var(--atlas-text-muted); }
-.positive { --badge-color: var(--atlas-positive); }
-.negative { --badge-color: var(--atlas-negative); }
-.info { --badge-color: var(--atlas-info); }
-.caution { --badge-color: var(--atlas-caution); }
+.badge :global(.ui-badge__icon) svg { width: 13px; height: 13px; flex: none; }

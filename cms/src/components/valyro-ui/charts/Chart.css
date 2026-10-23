@@ -153,10 +153,11 @@
 
 /*
  * Ink for text on a coloured fill (treemap tiles, heatmap cells): black or white, whichever
- * contrasts more with the fill — at OKLCH lightness ≈ 0.57 both reach about 4.5:1. An element with
- * [data-ink] sets `--_ink-bg` to its fill mixed onto light-dark(#fff, #000), an opaque stand-in for
- * the card (which may be translucent); text reads `--_ink` / `--_ink-muted`. Without relative
- * colours the foreground colours stay.
+ * contrasts more with the fill — at WCAG luminance Y ≈ 0.179 (Y = 0.2126 R + 0.7152 G + 0.0722 B,
+ * linear) both reach 4.58:1, so the step there always picks one that passes AA (a lightness step,
+ * OKLab L ≈ 0.57, misjudged saturated greens). An element with [data-ink] sets `--_ink-bg` to its
+ * fill mixed onto light-dark(#fff, #000), an opaque stand-in for the card (which may be translucent);
+ * text reads `--_ink` / `--_ink-muted`. Without relative colours the foreground colours stay.
  */
 .ui-chart [data-ink] {
   --_ink: var(--ui-fg);
@@ -165,10 +166,11 @@
 
 /* A step, not a ramp: the factor is so large that a fill within a millionth of the threshold is
    the only one that could get a grey; every real fill gets pure black or pure white. */
-@supports (color: oklch(from light-dark(red, blue) l c h)) {
+@supports (color: color(from light-dark(red, blue) srgb-linear r g b)) {
   .ui-chart [data-ink] {
-    --_ink: oklch(from var(--_ink-bg) clamp(0, (0.57 - l) * 1000000, 1) 0 0);
-    --_ink-muted: oklch(from var(--_ink-bg) clamp(0, (0.57 - l) * 1000000, 1) 0 0 / 0.78);
+    --_ink-step: clamp(0, (0.1792 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 1000000, 1);
+    --_ink: color(from var(--_ink-bg) srgb-linear var(--_ink-step) var(--_ink-step) var(--_ink-step) / 1);
+    --_ink-muted: color(from var(--_ink-bg) srgb-linear var(--_ink-step) var(--_ink-step) var(--_ink-step) / 0.78);
   }
 }
 
@@ -272,7 +274,7 @@
 
 .ui-chart-tooltip__rows {
   display: grid;
-  gap: 4px;
+  gap: var(--ui-space-1);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -292,7 +294,7 @@
 }
 
 /* Tooltips that list fields of one datum (x, y, size…) have no summary row. */
-.ui-chart-tooltip--plain .ui-chart-tooltip__row:last-child:not(:first-child) {
+.ui-chart-tooltip:where([data-variant='plain']) .ui-chart-tooltip__row:last-child:not(:first-child) {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
@@ -408,6 +410,14 @@
 .ui-chart-legend__toggle:focus-visible {
   outline: none;
   box-shadow: var(--ui-focus-ring);
+}
+
+/* Touch: toggles are 44px rows (WCAG 2.5.5); wrapped rows sit 8px apart, so their targets never overlap. */
+@media (pointer: coarse) {
+  .ui-chart-legend__toggle {
+    min-height: 44px;
+    margin-block: 0;
+  }
 }
 
 .ui-chart-legend__item[data-hidden] .ui-chart-legend__swatch {
