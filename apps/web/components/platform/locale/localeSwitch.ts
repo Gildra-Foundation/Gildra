@@ -1,5 +1,3 @@
-import type { Lang } from "@/lib/i18n-paths";
-
 /**
  * EN ↔ RU is a full document load: the two languages are two root layouts, so
  * the App Router cannot swap them in place. The switch hands the reading
@@ -7,8 +5,6 @@ import type { Lang } from "@/lib/i18n-paths";
  * document (localeArrivalScript.ts) restores it before the first paint.
  */
 export const LOCALE_SWITCH_KEY = "gildra-locale-switch";
-/** id of the switch: the arriving document holds its first paint until it is parsed. */
-export const LOCALE_SWITCH_ID = "gildra-locale-switch";
 /** A stored position older than this belongs to an abandoned switch. */
 export const LOCALE_SWITCH_TTL_MS = 15000;
 
@@ -28,18 +24,6 @@ export type LocaleSwitchRecord = {
 };
 
 const MAX_DEPTH = 14;
-
-/** Pathname without the /ru prefix and trailing slash — one page identity across languages. */
-export const localeBarePath = (pathname: string) => pathname.replace(/^\/ru(?=\/|$)/, "").replace(/\/+$/, "") || "/";
-
-export const pathLang = (pathname: string): Lang => /^\/ru(?:\/|$)/.test(pathname) ? "ru" : "en";
-
-/** The language a navigation switches to, or null when it is not a pure language switch. */
-export function localeSwitchTarget(from: URL, to: URL): Lang | null {
-  if (from.origin !== to.origin || localeBarePath(from.pathname) !== localeBarePath(to.pathname)) return null;
-  const lang = pathLang(to.pathname);
-  return lang === pathLang(from.pathname) ? null : lang;
-}
 
 /** Artwork and atmosphere layers span the whole scene; only the page's own flow is a reading anchor. */
 function inFlow(element: Element) {
