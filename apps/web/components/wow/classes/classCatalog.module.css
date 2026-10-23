@@ -46,7 +46,6 @@
   pointer-events: none;
   opacity: 0;
   background: radial-gradient(280px circle at var(--spot-x, 50%) var(--spot-y, 40%), color-mix(in srgb, var(--class-color) 16%, transparent), transparent 70%);
-  mix-blend-mode: screen;
   transition: opacity .35s var(--atlas-ease);
 }
 

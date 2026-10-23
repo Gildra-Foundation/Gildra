@@ -8,7 +8,9 @@
   box-shadow: var(--atlas-shadow-card);
   content-visibility: auto;
   contain-intrinsic-size: auto 440px;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
+  /* Only the lift and the press move; colour and shadow switch at once, so a
+     hover never repaints the card frame by frame. */
+  transition: transform var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .card:hover,
@@ -18,8 +20,8 @@
   box-shadow: var(--atlas-shadow-lift);
 }
 
-/* Torchlight under the cursor (AtlasPointerLight writes --spot-x/--spot-y): a pool
-   of light in the entry's own colour and the stretch of the frame nearest the pointer. */
+/* Torchlight on the picked card: a pool of light in the entry's own colour and
+   the stretch of the frame above it. */
 .card::before {
   position: absolute;
   z-index: 2;
@@ -44,7 +46,6 @@
   pointer-events: none;
   opacity: 0;
   background: radial-gradient(280px circle at var(--spot-x, 50%) var(--spot-y, 40%), color-mix(in srgb, var(--atlas-card-accent, var(--atlas-accent-strong)) 16%, transparent), transparent 70%);
-  mix-blend-mode: screen;
   transition: opacity var(--atlas-duration-slow) var(--atlas-ease);
 }
 
@@ -55,18 +56,6 @@
   .card::after { content: ""; }
   .card:hover::before,
   .card:hover::after { opacity: 1; }
-}
-
-/* Portrait entries lean towards the pointer (data-tilt, --tilt-x/--tilt-y). */
-.card[data-tilt] {
-  transform: perspective(900px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg));
-  transition: border-color var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration-art) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
-}
-
-.card[data-tilt]:hover,
-.card[data-tilt]:focus-within {
-  transform: perspective(900px) translateY(-3px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg));
-  transition-duration: var(--atlas-duration), var(--atlas-duration-fast), var(--atlas-duration);
 }
 
 .link {
@@ -90,11 +79,11 @@
 .art > img {
   object-fit: cover;
   filter: saturate(.9) brightness(.86);
-  transition: transform var(--atlas-duration-art) var(--atlas-ease), filter var(--atlas-duration-slow) ease;
+  transition: transform var(--atlas-duration) var(--atlas-ease);
 }
 
 .card:hover .art > img,
-.card:focus-within .art > img { transform: scale(1.045); filter: saturate(1.08) brightness(1.02); }
+.card:focus-within .art > img { transform: scale(1.03); }
 
 .artEmpty {
   position: absolute;
@@ -104,8 +93,7 @@
 
 .shade { position: absolute; inset: 0; background: var(--atlas-art-shade); }
 
-/* Gilded corner brackets frame every picture; they open out and catch the light
-   when the card is picked. */
+/* Gilded corner brackets frame every picture; they brighten when the card is picked. */
 .art::before {
   position: absolute;
   z-index: 1;
@@ -114,27 +102,14 @@
   pointer-events: none;
   opacity: .28;
   background: var(--atlas-filigree);
-  transition: inset var(--atlas-duration-slow) var(--atlas-ease), opacity var(--atlas-duration-slow) var(--atlas-ease);
+  transition: opacity var(--atlas-duration) var(--atlas-ease);
 }
 
 .card:hover .art::before,
-.card:focus-within .art::before { inset: 6px; opacity: .95; filter: drop-shadow(0 0 4px var(--atlas-accent)); }
+.card:focus-within .art::before { opacity: .95; }
 
 .card:hover .title,
 .card:focus-within .title { color: var(--atlas-accent-strong); }
-
-/* Torchlight passing over the artwork when the card is picked. */
-.art::after {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background: linear-gradient(105deg, transparent 38%, var(--atlas-accent-wash-strong) 50%, transparent 62%);
-  translate: -110% 0;
-  pointer-events: none;
-}
-
-.card:hover .art::after,
-.card:focus-within .art::after { translate: 110% 0; transition: translate .9s var(--atlas-ease); }
 
 .artBadge { position: absolute; z-index: 2; top: 10px; right: 10px; }
 /* Over a bright painting the badge's light wash disappears: give it a solid dark base. */
@@ -280,10 +255,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .art::after { display: none; }
-  .card[data-tilt],
-  .card[data-tilt]:hover,
-  .card[data-tilt]:focus-within { transform: none; }
   .card,
   .art > img,
   .cta svg { transition: none; }
