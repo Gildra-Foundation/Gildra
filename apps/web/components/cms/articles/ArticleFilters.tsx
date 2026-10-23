@@ -11,21 +11,19 @@ import styles from "./articles.module.css";
 /**
  * Search, type and class filters as a GET form and plain links: every state
  * has its own URL, the server renders the result, no client JavaScript.
- * `layout="bar"` sits above a grid; `layout="rail"` is a sticky side column.
  */
-export function ArticleFilters({ lang, filters, types, base, layout = "bar", counts }: {
+export function ArticleFilters({ lang, filters, types, base, counts }: {
   lang: Lang;
   filters: Filters;
   types: Array<{ slug: string; title: string }>;
   base: string;
-  layout?: "bar" | "rail";
   /** Articles per type slug ("" = all), when the list knows them. */
   counts?: Record<string, number>;
 }) {
   const t = articlesCopy[lang];
   const href = (patch: Partial<Filters>) => articlesListHref(lang, filters, patch, base);
   return (
-    <div className={styles.filters} data-layout={layout}>
+    <div className={styles.filters} data-layout="bar">
       <form className={styles.search} action={base} method="get" role="search" aria-label={t.search}>
         {filters.type ? <input type="hidden" name="type" value={filters.type} /> : null}
         {filters.cls ? <input type="hidden" name="class" value={filters.cls} /> : null}
@@ -34,7 +32,6 @@ export function ArticleFilters({ lang, filters, types, base, layout = "bar", cou
       </form>
 
       <nav className={styles.typeNav} aria-label={t.type}>
-        {layout === "rail" ? <p className={styles.filterLabel}>{t.type}</p> : null}
         <ul>
           {[{ slug: "", title: t.allTypes }, ...types].map((type) => {
             const active = (filters.type ?? "") === type.slug;
@@ -51,7 +48,6 @@ export function ArticleFilters({ lang, filters, types, base, layout = "bar", cou
       </nav>
 
       <nav className={styles.classNav} aria-label={t.wowClass}>
-        {layout === "rail" ? <p className={styles.filterLabel}>{t.wowClass}</p> : null}
         <ul>
           <li>
             <Link href={href({ cls: null })} aria-current={!filters.cls ? "page" : undefined} className={styles.classAll}>{t.allClasses}</Link>
@@ -60,7 +56,7 @@ export function ArticleFilters({ lang, filters, types, base, layout = "bar", cou
             <li key={slug}>
               <Link href={href({ cls: slug })} aria-current={filters.cls === slug ? "page" : undefined} className={styles.classLink} title={name}>
                 <Image src={wowClassIcon(slug)} alt="" width={28} height={28} />
-                <span className={layout === "rail" ? undefined : styles.srOnly}>{name}</span>
+                <span className={styles.srOnly}>{name}</span>
               </Link>
             </li>
           ))}
