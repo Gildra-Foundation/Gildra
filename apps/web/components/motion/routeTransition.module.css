@@ -19,233 +19,43 @@
   --ph-bg: #080706;
   --ph-surface: #12100c;
 }
-
-/* Atlas portal hand-over (RouteTransitionRuntime, kind "page"): the leaving page
-   dims and recedes towards the touched point only if the next one takes a moment
-   (120 ms delay), so instant navigations never flicker; the new page opens out of
-   the same point with its hero cascade. */
-.frame {
-  transform-origin: var(--route-origin, 50% 30vh);
-  transition: opacity 220ms ease, transform 420ms cubic-bezier(.2, .8, .25, 1);
-}
+/* Page hand-over (RouteTransitionRuntime): the click navigates at once. If the
+   next page takes a moment (120 ms), the old one dims in place — opacity only,
+   so nothing is re-rastered — and the new one settles in with a short fade. */
+.frame { transition: opacity 160ms ease-out; }
 .frame[data-route-state="leaving"] {
-  opacity: .42;
-  transform: scale(.985);
+  opacity: .55;
   transition-delay: 120ms;
 }
-/* Behind the rune veil the page waits as it is (nothing to see, nothing to raster). */
-.frame[data-veiled] { transition: none; }
-.frame[data-veiled][data-route-state="leaving"] { opacity: 1; transform: none; }
-
-/* The portal ring: a spark that charges at the click and bursts across the screen
-   when the next page arrives (RouteTransitionRuntime animates it). Idle: invisible,
-   no layer work. */
-.portalRing {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  z-index: 119;
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0);
-  background: radial-gradient(circle,
-    rgba(var(--site-accent-rgb), .12) 0 52%,
-    rgba(var(--site-accent-rgb), .55) 62%,
-    var(--site-accent-strong) 66%,
-    rgba(var(--site-accent-rgb), .4) 70%,
-    transparent 76%);
-  mix-blend-mode: screen;
-}
-
-/* The rune veil (RouteTransitionRuntime): one fixed layer that sweeps over the
-   page while the next one is fetched and sweeps on to uncover it. Its body is the
-   night of the site with a breath of the theme's accent; its two edges burn with
-   a line of light and a strip of runes. Idle: hidden, no layer. The runtime moves
-   it with transform only. */
-/* The veil passes under the top bar (it stays, with its rune and fuse) and is clipped by its port. */
-.veilPort {
-  position: fixed;
-  inset: var(--atlas-sticky-top, 64px) 0 0;
-  z-index: 118;
-  overflow: clip;
-  pointer-events: none;
-  /* The legacy atlas paints every direct child of the shell; the port must stay clear. */
-  background: transparent !important;
-}
-.veil {
-  position: absolute;
-  inset: 0;
-  /* Idle: not rendered at all, so neither its crest nor its masks are fetched until a hand-over. */
-  display: none;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 46% 42% at 50% 50%, rgba(var(--site-accent-rgb), .13), transparent 72%),
-    radial-gradient(ellipse 120% 80% at 50% 120%, rgba(var(--site-accent-rgb), .08), transparent 60%),
-    linear-gradient(180deg, color-mix(in srgb, var(--site-bg) 82%, #1a2330), var(--site-bg));
-}
-.veil[data-veil] { display: block; will-change: transform; }
-/* Covering (and covered) the veil blocks stray clicks on the page it hides. */
-.veil:is([data-veil="covering"], [data-veil="covered"]) { pointer-events: auto; cursor: progress; }
-
-/* The burning edges: a bright seam with a glow thrown ahead of the veil. */
-.veil::before,
-.veil::after {
-  position: absolute;
-  content: "";
-  pointer-events: none;
-  background: linear-gradient(var(--edge), transparent, rgba(var(--site-accent-rgb), .1) 55%, rgba(var(--site-accent-rgb), .55) 94%, var(--site-accent-strong) 99%, #fff);
-}
-.veil[data-axis="x"]::before,
-.veil[data-axis="x"]::after { top: 0; bottom: 0; width: 160px; }
-.veil[data-axis="x"]::before { --edge: 90deg; right: 100%; }
-.veil[data-axis="x"]::after { --edge: 270deg; left: 100%; }
-.veil[data-axis="y"]::before,
-.veil[data-axis="y"]::after { left: 0; right: 0; height: 160px; }
-.veil[data-axis="y"]::before { --edge: 180deg; bottom: 100%; }
-.veil[data-axis="y"]::after { --edge: 0deg; top: 100%; }
-
-/* Runes along the inside of each edge. */
-.veilRunes {
-  position: absolute;
-  background: linear-gradient(var(--site-accent-strong), var(--site-accent));
-  opacity: .9;
-  filter: drop-shadow(0 0 6px rgba(var(--site-accent-rgb), .9));
-}
-.veil[data-axis="x"] .veilRunes {
-  top: 0;
-  bottom: 0;
-  width: 28px;
-  mask: var(--atlas-rune-strip) 0 0 / 28px 196px repeat-y;
-}
-.veil[data-axis="x"] .veilRunes[data-edge="start"] { left: 14px; }
-.veil[data-axis="x"] .veilRunes[data-edge="end"] { right: 14px; }
-/* CPU-composited machines (Valyro render tier): the veil dissolves in place — no burning seams. */
-.veil[data-tier="cpu"]::before,
-.veil[data-tier="cpu"]::after,
-.veil[data-tier="cpu"] .veilRunes { display: none; }
-
-/* A vertical sweep (between siblings) keeps the burning seams only. */
-.veil[data-axis="y"] .veilRunes { display: none; }
-
-/* The loading screen: a page that takes a moment shows the Gildra crest in a
-   slowly turning seal while the fuse burns over the top bar. */
-.veilCrest {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: grid;
-  width: 220px;
-  height: 220px;
-  margin: -110px 0 0 -110px;
-  place-items: center;
-  opacity: 0;
-  transition: opacity 160ms ease;
-}
-.veilCrest::before {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background: radial-gradient(circle, var(--site-accent-strong), var(--site-accent) 60%, transparent 72%);
-  mask: var(--atlas-seal) center / contain no-repeat;
-  opacity: .5;
-  animation: route-seal-turn 9s linear infinite;
-}
-.veilCrest :global(img) {
-  position: relative;
-  display: block;
-  width: 68px;
-  height: 88px;
-  filter: drop-shadow(0 0 18px rgba(var(--site-accent-rgb), .55));
-  animation: route-crest-breathe 1.6s ease-in-out infinite alternate;
-}
-.veil[data-waiting] .veilCrest { opacity: 1; transition-duration: 280ms; }
-.veil:not([data-waiting]) .veilCrest::before,
-.veil:not([data-waiting]) .veilCrest :global(img) { animation-play-state: paused; }
-
-@keyframes route-seal-turn { to { rotate: 1turn; } }
-@keyframes route-crest-breathe {
-  from { scale: .96; filter: drop-shadow(0 0 10px rgba(var(--site-accent-rgb), .35)); }
-  to { scale: 1.02; filter: drop-shadow(0 0 22px rgba(var(--site-accent-rgb), .7)); }
-}
-
-@media (max-width: 720px) {
-  .veil[data-axis="x"]::before,
-  .veil[data-axis="x"]::after { width: 96px; }
-  .veil[data-axis="x"] .veilRunes { width: 22px; mask-size: 22px 154px; }
-  .veil[data-axis="x"] .veilRunes[data-edge="start"] { left: 8px; }
-  .veil[data-axis="x"] .veilRunes[data-edge="end"] { right: 8px; }
-}
-
-/* A burning fuse over the top bar while the next page is on its way: a thin
-   amber line with a spark at its head. It appears after 150 ms, burns towards
-   85 % and is gone when the page is in. */
+/* A thin line over the top bar while the next page is on its way: it appears
+   after 150 ms, runs towards 85 % and is gone when the page is in. */
 .progress {
   position: fixed;
   inset: 0 0 auto;
   z-index: 120;
   height: 2px;
   pointer-events: none;
-  background: linear-gradient(90deg, rgba(240, 181, 90, .2), #f0b55a 60%, #ffe2a8);
-  box-shadow: 0 0 10px rgba(240, 181, 90, .55);
+  background: var(--site-accent);
   opacity: 0;
   transform: scaleX(0);
   transform-origin: left;
 }
-
 .system:is([data-route-state="leaving"], [data-route-state="loading"]) .progress {
   animation: route-progress 2.4s cubic-bezier(.1, .7, .3, 1) 150ms forwards;
 }
-
 @keyframes route-progress {
   0% { opacity: 1; transform: scaleX(0); }
   100% { opacity: 1; transform: scaleX(.85); }
 }
-
-/* The spark rides the head of the line: same timing, moved instead of scaled. */
-.spark {
-  position: fixed;
-  top: -3px;
-  left: -4px;
-  z-index: 121;
-  width: 8px;
-  height: 8px;
-  pointer-events: none;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff4d6 0 30%, #f0b55a 55%, transparent 72%);
-  box-shadow: 0 0 10px 3px rgba(240, 181, 90, .7), 0 0 22px 6px rgba(240, 120, 40, .35);
-  opacity: 0;
-}
-
-.system:is([data-route-state="leaving"], [data-route-state="loading"]) .spark {
-  animation: route-spark 2.4s cubic-bezier(.1, .7, .3, 1) 150ms forwards, route-spark-flicker .32s steps(2, jump-none) 150ms infinite alternate;
-}
-
-@keyframes route-spark {
-  0% { opacity: 1; transform: translateX(0); }
-  100% { opacity: 1; transform: translateX(85vw); }
-}
-
-@keyframes route-spark-flicker {
-  from { scale: 1; }
-  to { scale: 1.35; }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .frame,
-  .frame[data-route-state="leaving"] { transition: none; opacity: 1; transform: none; }
-  .portalRing,
-  .veilPort { display: none; }
+  .frame[data-route-state="leaving"] { transition: none; opacity: 1; }
   .system:is([data-route-state="leaving"], [data-route-state="loading"]) .progress {
     animation: none;
     opacity: 1;
     transform: scaleX(.6);
   }
-  .system:is([data-route-state="leaving"], [data-route-state="loading"]) .spark { animation: none; }
 }
-
 /* Document theme supplies the materials even outside an atlas page. */
 .system {
   --route-accent: var(--site-accent);
@@ -253,116 +63,4 @@
   --route-glow: rgba(var(--site-accent-rgb), .22);
   background: var(--site-bg);
 }
-.progress { background: var(--site-accent); box-shadow: 0 0 10px var(--site-accent); }
-.spark { background: var(--site-accent-strong); box-shadow: 0 0 14px var(--site-accent); }
-
-.transition {
-  position: fixed;
-  inset: 0;
-  z-index: 110;
-  overflow: clip;
-  isolation: isolate;
-  pointer-events: none;
-  perspective: 1400px;
-  /* The legacy atlas gives every direct shell child a background. Gaps between
-     fragments must expose the destination rather than that opaque surface. */
-  background: transparent !important;
-  /* No work or full-screen compositing layers while the site is idle. */
-  display: none;
-}
-.transition[data-phase] { display: block; }
-.piece {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: var(--site-bg);
-  transform-origin: 48% 46%;
-}
-.frozen, .frozen :global(*), .frozen :global(*::before), .frozen :global(*::after) {
-  animation: none !important;
-  transition: none !important;
-  caret-color: transparent !important;
-  view-transition-name: none !important;
-}
-.piece::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  animation: ice-freeze 340ms ease-out both;
-}
-.transition[data-effect="arthas"] .piece::after {
-  background-image: var(--ice-skin);
-  background-size: 100% 100%;
-  animation: none;
-}
-.transition[data-effect="arthas"]:is([data-phase="cracking"], [data-phase="shattering"]) .piece::after { opacity: 1; }
-.frost, .cracks {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.cracks {
-  fill: none;
-  stroke: #e7faff;
-  stroke-width: 1.25px;
-  stroke-linejoin: bevel;
-  opacity: 0;
-}
-.cracks .crackShadow { stroke: rgba(9, 42, 62, .8); stroke-width: 3.5px; }
-.cracks .hairline { stroke-width: .6px; opacity: .75; }
-.cracks .crackShadow.hairline { stroke-width: 1.5px; }
-.cracks path { stroke-dasharray: 100; stroke-dashoffset: 100; }
-.transition[data-phase="cracking"] .cracks { opacity: 1; }
-.transition[data-phase="cracking"] .cracks path { animation: ice-crack 200ms cubic-bezier(.15, .7, .25, 1) var(--crack-delay) both; }
-/* Fracture lines are baked into the skin at release and follow each shard. */
-.transition[data-phase="shattering"] .cracks { display: none; }
-.transition[data-phase="shattering"] .piece {
-  will-change: transform, opacity;
-  animation: ice-shatter 740ms cubic-bezier(.32, .03, .7, .45) var(--shard-delay, 0ms) both;
-}
-.chip {
-  position: absolute;
-  display: none;
-  width: var(--chip-size);
-  height: calc(var(--chip-size) * 1.8);
-  background: linear-gradient(130deg, #effcff, #9bcde4 45%, rgba(112, 179, 211, .5) 48%, #dcf6ff);
-  clip-path: polygon(18% 0, 100% 22%, 65% 100%, 0 62%);
-}
-.transition[data-phase="shattering"] .chip { display: block; animation: ice-chip 700ms cubic-bezier(.25, .05, .65, .4) both; }
-@keyframes ice-freeze { from { opacity: 0; } to { opacity: 1; } }
-@keyframes ice-crack { to { stroke-dashoffset: 0; } }
-@keyframes ice-shatter {
-  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) rotateX(0); }
-  16% { opacity: 1; }
-  55% { opacity: .9; }
-  100% { opacity: 0; transform: translate3d(var(--shard-x), var(--shard-y), 120px) rotate(var(--shard-turn)) rotateX(var(--shard-tilt, 0deg)); }
-}
-@keyframes ice-chip {
-  0% { opacity: 1; transform: translate(0, 0) rotate(0); }
-  100% { opacity: 0; transform: translate(var(--shard-x), var(--shard-y)) rotate(var(--shard-turn)); }
-}
-/* Illidan: a diagonal fel rift. Garek: a circle of light. Varok: burning embers. */
-.transition:not([data-effect="arthas"]) .piece::after {
-  background: radial-gradient(ellipse at 50% 65%, rgba(var(--site-accent-rgb), .08), rgba(var(--site-accent-rgb), .38));
-}
-.transition[data-effect="illidan"] .piece::after {
-  background: linear-gradient(112deg, transparent 30%, rgba(168, 239, 120, .7) 49%, rgba(232, 255, 203, .9) 50%, transparent 52%);
-}
-.transition[data-effect="illidan"][data-phase="shattering"] .piece { animation: fel-rift 620ms ease-in both; }
-.transition[data-effect="garek"][data-phase="shattering"] .piece { animation: light-reveal 620ms ease-in both; }
-.transition[data-effect="varok"] .piece::after {
-  background: radial-gradient(ellipse at 50% 100%, rgba(255, 110, 30, .6), transparent 75%), repeating-linear-gradient(120deg, transparent 0 80px, rgba(var(--site-accent-rgb), .6) 82px, transparent 85px 160px);
-}
-.transition[data-effect="varok"][data-phase="shattering"] .piece { animation: ember-release 620ms ease-in both; }
-@keyframes fel-rift { from { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } to { clip-path: polygon(100% 0, 100% 0, 65% 100%, 65% 100%); opacity: 0; } }
-@keyframes light-reveal { from { clip-path: circle(100% at 50% 50%); } to { clip-path: circle(0 at 50% 50%); opacity: 0; } }
-@keyframes ember-release { to { opacity: 0; transform: translateY(-8vh) scale(1.04); clip-path: polygon(0 0, 100% 0, 100% 15%, 82% 5%, 65% 20%, 41% 3%, 22% 15%, 0 4%); } }
-html:global([data-page-transition]) .frame { opacity: 1; transition: none; }
-html:global([data-motion="reduced"]) .portalRing,
-html:global([data-motion="reduced"]) .veilPort { display: none; }
-html:global([data-motion="reduced"]) .frame[data-route-state="leaving"] { transform: none; }
-html:global([data-motion="reduced"]) .transition { display: none; }
-@media (prefers-reduced-motion: reduce) { .transition { display: none; } }
+html:global([data-motion="reduced"]) .frame[data-route-state="leaving"] { opacity: 1; transition: none; }

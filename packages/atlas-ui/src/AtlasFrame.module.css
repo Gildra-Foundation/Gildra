@@ -71,10 +71,6 @@
   animation: atlas-art-settle 1.8s var(--atlas-ease) both, atlas-art-drift 40s var(--atlas-ease-ambient) 1.8s infinite alternate;
 }
 
-/* Arrived through a card's picture (morph): the art is already in place, so it only drifts. */
-:global([data-route-arrived]) .frame[data-morph] .art {
-  animation: atlas-art-drift 40s var(--atlas-ease-ambient) infinite alternate;
-}
 
 /* A living layer over the scene moves exactly like the art beneath it. */
 .artLayer {
