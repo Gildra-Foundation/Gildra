@@ -119,6 +119,8 @@
   --atlas-container: 1540px;
   --atlas-gutter: clamp(14px, 2.2vw, 26px);
   --atlas-radius: 2px;
+  /* Softer corners of the command bar: search field, menus, picks, controls. */
+  --atlas-radius-control: 10px;
   --atlas-control-height: 44px;
   /* Reading width: one comfortable line of body text, and of longer notes */
   --atlas-measure: 68ch;
