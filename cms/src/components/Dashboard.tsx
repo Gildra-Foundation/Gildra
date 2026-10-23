@@ -300,7 +300,14 @@ async function siteCounts(payload: Payload, user: TypedUser | null | undefined, 
       and: [
         onSite,
         { _status: { equals: "published" } },
-        { or: [{ "gameContext.lastReviewedAt": { less_than: staleBefore } }, { "gameContext.lastReviewedAt": { exists: false } }] },
+        // Never reviewed: count the age from the publication date; with neither date the age is unknown, so it counts.
+        {
+          or: [
+            { "gameContext.lastReviewedAt": { less_than: staleBefore } },
+            { and: [{ "gameContext.lastReviewedAt": { exists: false } }, { publishedAt: { less_than: staleBefore } }] },
+            { and: [{ "gameContext.lastReviewedAt": { exists: false } }, { publishedAt: { exists: false } }] },
+          ],
+        },
       ],
     }),
     canSeeQueue
@@ -362,7 +369,34 @@ async function recentEdits(payload: Payload, user: TypedUser | null | undefined,
     });
   };
   const [guides, pages] = await Promise.all([load("guides"), load("pages").catch(() => [])]);
-  return [...guides, ...pages].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, RECENT_LIMIT);
+  const recent = [...guides, ...pages].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, RECENT_LIMIT);
+  return markUnpublishedChanges(payload, user, recent);
+}
+
+/** A latest draft of a document that is live reads "draft"; tell it apart from a never-published draft. */
+async function markUnpublishedChanges(payload: Payload, user: TypedUser | null | undefined, items: RecentItem[]): Promise<RecentItem[]> {
+  const drafts = items.filter((item) => item.status !== "published");
+  const liveKeys = new Set<string>();
+  await Promise.all(
+    (["guides", "pages"] as const).map(async (collection) => {
+      const ids = drafts.filter((item) => item.collection === collection).map((item) => item.id);
+      if (ids.length === 0) return;
+      const { docs } = await payload
+        .find({
+          collection,
+          draft: false,
+          depth: 0,
+          pagination: false,
+          where: { and: [{ id: { in: ids } }, { _status: { equals: "published" } }] } as never,
+          select: { _status: true } as never,
+          overrideAccess: false,
+          user,
+        })
+        .catch(() => ({ docs: [] }));
+      for (const doc of docs as unknown as { id: ID }[]) liveKeys.add(`${collection}:${doc.id}`);
+    }),
+  );
+  return items.map((item) => (liveKeys.has(`${item.collection}:${item.id}`) ? { ...item, status: "changed" } : item));
 }
 
 async function upcomingJobs(

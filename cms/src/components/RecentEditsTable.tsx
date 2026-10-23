@@ -15,9 +15,16 @@ export type RecentEditRow = {
   href: string;
   siteID: string | null;
   siteName: string;
-  status: string;
+  /** "changed" is a published document with a newer draft that is not on the site. */
+  status: "published" | "draft" | "changed" | string;
   updatedAt: string;
 };
+
+const STATUS_COLOR: Record<string, "green" | "amber" | "blue"> = { published: "green", changed: "blue", draft: "amber" };
+
+function statusLabel(status: string, t: ReturnType<typeof adminText>): string {
+  return status === "published" ? t.statusPublished : status === "changed" ? t.statusChanged : t.statusDraft;
+}
 
 export function RecentEditsTable({ rows, lang }: { rows: RecentEditRow[]; lang: AdminLang }) {
   const t = adminText(lang);
@@ -28,8 +35,8 @@ export function RecentEditsTable({ rows, lang }: { rows: RecentEditRow[]; lang: 
     </> },
     { key: "siteName", header: t.colSite, sortable: true },
     { key: "status", header: t.colStatus, sortable: true,
-      accessor: (row) => row.status === "published" ? t.statusPublished : t.statusDraft,
-      cell: (row) => <Badge color={row.status === "published" ? "green" : "amber"}>{row.status === "published" ? t.statusPublished : t.statusDraft}</Badge> },
+      accessor: (row) => statusLabel(row.status, t),
+      cell: (row) => <Badge color={STATUS_COLOR[row.status] ?? "amber"}>{statusLabel(row.status, t)}</Badge> },
     { key: "updatedAt", header: t.colUpdated, sortable: true, align: "right", cell: (row) => <LocalTime iso={row.updatedAt} lang={lang} /> },
   ];
   return <DataTable data={rows} columns={columns} label={t.recent} searchable={rows.length > 0}
