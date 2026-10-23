@@ -101,6 +101,31 @@ func (s State) Validate() error {
 	return nil
 }
 
+// EqualExcept compares like Equal, but tables listed in skipped must be empty
+// in other instead of matching the source count.
+func (s State) EqualExcept(other State, skipped []string) error {
+	skippedSet := make(map[string]bool, len(skipped))
+	for _, table := range skipped {
+		skippedSet[table] = true
+		if count, ok := other.Counts[table]; !ok || count != 0 {
+			return fmt.Errorf("skipped table %s must be empty after light restore: restore=%d", table, count)
+		}
+	}
+	reduced := State{DatabaseVersion: other.DatabaseVersion, Counts: make(map[string]int64, len(other.Counts))}
+	source := State{DatabaseVersion: s.DatabaseVersion, Counts: make(map[string]int64, len(s.Counts))}
+	for table, count := range other.Counts {
+		if !skippedSet[table] {
+			reduced.Counts[table] = count
+		}
+	}
+	for table, count := range s.Counts {
+		if !skippedSet[table] {
+			source.Counts[table] = count
+		}
+	}
+	return source.Equal(reduced)
+}
+
 func (s State) Equal(other State) error {
 	if s.DatabaseVersion != other.DatabaseVersion {
 		return fmt.Errorf("database version mismatch: source=%d restore=%d", s.DatabaseVersion, other.DatabaseVersion)
@@ -130,6 +155,35 @@ func (s State) Equal(other State) error {
 type DatabaseOperator interface {
 	SnapshotAndDump(context.Context, string, io.Writer) (State, error)
 	RestoreAndInspect(context.Context, string, io.Reader) (State, error)
+}
+
+// Restore proof modes. "full" restores the whole archive into the isolated
+// restore database and compares every critical table count. "light" is for
+// hosts that cannot hold a second copy of the database: it still decrypts and
+// parses the whole archive, restores the schema and the data of small tables,
+// and proves the large tables are present but empty.
+const (
+	RestoreProofFull  = "full"
+	RestoreProofLight = "light"
+
+	// DefaultLightMaxTableRows is the largest critical-table row count whose
+	// data is restored in light mode.
+	DefaultLightMaxTableRows int64 = 20000
+)
+
+// LightRestoreReport describes what a light restore proved.
+type LightRestoreReport struct {
+	// RestoredTables had their data restored and counted against the source.
+	RestoredTables []string `json:"restoredTables"`
+	// SkippedDataTables were restored as empty tables (schema only).
+	SkippedDataTables []string `json:"skippedDataTables"`
+}
+
+// LightRestoreOperator is implemented by operators that can prove a backup
+// without a full restore. open must return a fresh decrypted stream of the
+// archive on every call because the proof reads it more than once.
+type LightRestoreOperator interface {
+	RestoreLightAndInspect(ctx context.Context, restoreURL string, open func() (io.ReadCloser, error), source State, maxTableRows int64) (State, LightRestoreReport, error)
 }
 
 type StoredObject struct {
@@ -179,9 +233,22 @@ type Options struct {
 	Recipient          age.Recipient
 	Identity           age.Identity
 	SigningKey         ed25519.PrivateKey
+	// RestoreProof is RestoreProofFull (default) or RestoreProofLight.
+	RestoreProof string
+	// LightMaxTableRows bounds which tables get data in light mode; zero
+	// means DefaultLightMaxTableRows.
+	LightMaxTableRows int64
 }
 
 func (o Options) Validate() error {
+	switch o.RestoreProof {
+	case "", RestoreProofFull, RestoreProofLight:
+	default:
+		return fmt.Errorf("restore proof must be %q or %q", RestoreProofFull, RestoreProofLight)
+	}
+	if o.LightMaxTableRows < 0 {
+		return errors.New("light restore row limit cannot be negative")
+	}
 	if strings.TrimSpace(o.SourceDatabaseURL) == "" {
 		return errors.New("source database URL is required")
 	}
@@ -279,6 +346,9 @@ type Evidence struct {
 	RestoreCompletedAt  time.Time `json:"restoreCompletedAt"`
 	RestoreDurationMS   int64     `json:"restoreDurationMs"`
 	VerificationVersion int       `json:"verificationVersion"`
+	// RestoreMode is empty for full restores (older evidence) or "light".
+	RestoreMode       string   `json:"restoreMode,omitempty"`
+	SkippedDataTables []string `json:"skippedDataTables,omitempty"`
 }
 
 type SignedEvidence struct {
@@ -298,6 +368,7 @@ type Result struct {
 	DatabaseVersion    int64     `json:"databaseVersion"`
 	RestoreDurationMS  int64     `json:"restoreDurationMs"`
 	SignerFingerprint  string    `json:"signerFingerprint"`
+	RestoreMode        string    `json:"restoreMode"`
 	RestoreVerified    bool      `json:"restoreVerified"`
 	SourceRestoreMatch bool      `json:"sourceRestoreMatch"`
 }
