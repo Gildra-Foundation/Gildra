@@ -10,6 +10,8 @@ import type { PullRole } from "./mdtPullIntel";
 import { maxBuildNameLength, type BuildSaveError, type BuildSaveResult } from "./savedTalentBuilds";
 import { useSavedTalentBuilds } from "./useSavedTalentBuilds";
 import { savedTalentBuildsCopy } from "./savedTalentBuildsCopy";
+import { ShareTalentBuild } from "./ShareTalentBuild";
+import { SharedTalentBuild } from "./SharedTalentBuild";
 import styles from "./mdtPullMap.module.css";
 
 type Locale = "ru" | "en";
@@ -70,6 +72,7 @@ export function SavedTalentBuilds({ locale, result, onProfileChange, onRoleChang
     setActionError(null); setMessage({ text: t.migrated, code: currentCode, scope: library.scope });
   }
   return <section className={styles.savedBuilds} aria-labelledby={`${id}-title`} data-testid="saved-talent-builds">
+    <SharedTalentBuild locale={locale} library={library} onProfileChange={onProfileChange} onRoleChange={onRoleChange} />
     <b id={`${id}-title`} tabIndex={-1}>{t.title}</b>
     {library.mode === "loading" && <p role="status">{t.checking}</p>}
     {library.mode === "guest" && <p>{t.guest} <a href={locale === "ru" ? "/ru/login" : "/login"}>{t.signIn}</a></p>}
@@ -82,6 +85,7 @@ export function SavedTalentBuilds({ locale, result, onProfileChange, onRoleChang
       <label htmlFor={id}>{t.label}</label>
       <div className={styles.savedBuildActions}><AtlasValyroSelect disabled={library.busy} native size="lg" placeholder={t.choose} id={id} aria-label={t.label} value={active?.id ?? ""} onValueChange={choose} options={entries.map(entry => ({ value: entry.id, label: `${entry.name} · ${entry.spec ? `${entry.spec.className[locale]} — ${entry.spec.name[locale]}` : t.outdated}` }))} />{active && <AtlasButton disabled={library.busy} variant="ghost" onClick={() => void remove(active.id)}>{t.remove}</AtlasButton>}</div>
       <p>{t.hint}</p>
+      {active?.decoded.ok && <ShareTalentBuild key={JSON.stringify([active.name, active.code])} locale={locale} build={active} />}
     </> : library.mode === "guest" || library.mode === "account" ? <p>{library.mode === "account" ? t.accountEmpty : t.empty}</p> : null}
     {result?.ok && <BuildNameForm key={JSON.stringify([library.scope, result.code, active?.id])} locale={locale} name={active?.name ?? ""} existing={Boolean(active)} disabled={library.mode === "loading" || library.mode === "error" || library.busy} onSave={async name => { const saved = await library.save(name, result.code); if (saved.ok) { setActionError(null); setFailure(null); setMessage({ text: saved.duplicate ? t.duplicate : active ? t.renamed : t.saved, code: currentCode, scope: library.scope }); focusPicker(); } return saved; }} />}
     {failed && <div role="alert" className={styles.buildFailure}><p><b>{failed.name}</b>: {t.unavailable}</p><AtlasButton disabled={library.busy} variant="ghost" onClick={() => void remove(failed.id)}>{t.remove}</AtlasButton></div>}

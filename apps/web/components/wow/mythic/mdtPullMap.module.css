@@ -85,3 +85,8 @@
 
 .buildOwner { overflow-wrap: anywhere; }
 .savedBuilds button { max-width: 100%; white-space: normal; }
+.buildShare, .sharedBuild { display: grid; gap: var(--atlas-space-2); min-width: 0; }
+.buildShare > button { justify-self: start; }
+.buildShare input { width: 100%; min-width: 0; min-height: 44px; }
+.sharedBuild { border: 1px solid var(--atlas-accent); padding: var(--atlas-space-3); border-radius: var(--atlas-radius); background: var(--atlas-surface-raised); scroll-margin-block: var(--atlas-space-6); }
+.sharedBuild:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }

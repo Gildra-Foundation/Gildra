@@ -1,5 +1,23 @@
 # Saved Mythic talent builds
 
+## Sharing a snapshot
+
+Choose a saved build and use Share build. The URL fragment contains only version1,
+the build name and canonical talent export. No owner/account/library ID or access
+credential is included. It is a copy: later source rename/deletion does not revoke
+or edit existing links. Fragments do not enter HTTP requests to the page server.
+Clipboard denial leaves a labelled read-only link for manual copy.
+
+Recipients can open and explicitly apply advice without signing in. Save to my
+account requires a verified session and an explicit click; the usual revision,
+account-switch, capacity and decoder guards remain. Sign-in returns to the complete
+same-origin shared URL, including its fragment; no auto-save follows login. An
+existing identical export is identified without renaming the recipient's build.
+Malformed/oversized/unknown-version/outdated payloads show an error and never alter
+the current import/library. Received names render as ordinary escaped React text.
+
+## Account library
+
 RU/EN My builds above every dungeon map, using the existing Atlas/Valyro Input,
 Button and native Select. Strict talent decoder and ability filtering unchanged.
 Up to20builds/account, names64UTF16units, exports4096ASCIIcharacters. Guest mode
