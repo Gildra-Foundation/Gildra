@@ -1,0 +1,128 @@
+/* Page block editor. Gildra admin tokens (--gd-*, --theme-*) on Valyro parts (--ui-*). */
+
+.gd-pageid { display: grid; gap: 6px; margin-bottom: var(--spacing-field, 24px); }
+.gd-pageid__hint { margin: 0; color: var(--gd-muted); font-size: 12px; }
+
+.gd-blocks { display: grid; gap: 12px; margin-bottom: var(--spacing-field, 24px); min-width: 0; container: gd-blocks / inline-size; }
+.gd-blocks__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gd-blocks__title { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+.gd-blocks__locale { color: var(--gd-muted); font-weight: 500; }
+
+.gd-blocklist { display: grid; gap: 10px; min-width: 0; }
+.gd-blocklist__items, .gd-blist__items { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+
+.gd-block {
+  position: relative;
+  border: 1px solid var(--gd-line);
+  border-radius: 10px;
+  background: var(--gd-card);
+  min-width: 0;
+}
+.gd-block[data-invalid] { border-color: color-mix(in srgb, var(--ui-red-9, #e5484d) 55%, var(--gd-line)); }
+.gd-block__bar {
+  position: absolute; inset: 0 0 auto 0; height: 0; z-index: 1;
+  display: flex; justify-content: space-between; pointer-events: none;
+}
+.gd-block__bar > * { pointer-events: auto; }
+.gd-block__bar .gd-handle { position: absolute; left: 6px; top: 12px; }
+.gd-block__status { position: absolute; right: 44px; top: 10px; display: flex; align-items: center; gap: 6px; }
+.gd-block__accordion > .ui-accordion__item { border: 0; }
+.gd-block__accordion > .ui-accordion__item > .ui-accordion__heading > .ui-accordion__trigger { padding: 12px 14px 12px 38px; min-height: 48px; }
+.gd-block__accordion > .ui-accordion__item > .ui-accordion__heading > .ui-accordion__trigger > .ui-accordion__title { display: flex; align-items: baseline; gap: 10px; min-width: 0; max-width: calc(100% - 150px); }
+.gd-block__name { font-weight: 600; font-size: 14px; }
+.gd-block__type, .gd-chooser__option code {
+  font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; padding: 1px 6px;
+  border: 1px solid var(--gd-line); border-radius: 5px; color: var(--gd-muted); white-space: nowrap;
+}
+.gd-block__body { display: grid; gap: 14px; padding: 0 14px 14px; min-width: 0; }
+.gd-block__hint { margin: 0; color: var(--gd-muted); font-size: 13px; }
+.gd-block__children { display: grid; gap: 8px; padding-left: 12px; border-left: 2px solid var(--gd-line); }
+
+.gd-handle { color: var(--gd-muted); }
+
+.gd-bform { display: grid; gap: 14px; min-width: 0; }
+.gd-bform__pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.gd-bfield { display: grid; gap: 6px; min-width: 0; }
+.gd-bfield__label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gd-muted); }
+.gd-bfield__optional { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.gd-bfield__hint { margin: 0; font-size: 12px; color: var(--gd-muted); }
+.gd-bfield__error { margin: 0; font-size: 13px; color: var(--ui-red-11, #ff8b8b); white-space: pre-line; }
+
+.gd-blist { display: grid; gap: 8px; }
+.gd-blist__row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 6px;
+  padding: 6px; border: 1px dashed var(--gd-line); border-radius: 8px; background: var(--theme-elevation-0);
+}
+.gd-blist__row .gd-handle { margin-top: 8px; }
+.gd-blist__body { min-width: 0; }
+
+.gd-legal-section .ui-accordion__item { border: 0; }
+.gd-legal-section .ui-accordion__trigger { padding: 8px 6px; }
+.gd-legal-section .ui-accordion__title { display: grid; gap: 2px; text-align: left; min-width: 0; }
+.gd-legal-section__title { font-weight: 600; font-size: 14px; }
+.gd-legal-section__excerpt {
+  color: var(--gd-muted); font-size: 13px; font-weight: 400;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.gd-legal-section[data-invalid] .gd-legal-section__title { color: var(--ui-red-11, #ff8b8b); }
+.gd-legal-section .ui-accordion__content { display: grid; gap: 12px; padding: 4px 6px 8px; }
+
+.gd-dashed {
+  width: 100%; justify-content: center; border: 1px dashed color-mix(in srgb, var(--gd-amber) 45%, var(--gd-line));
+  color: var(--gd-amber);
+}
+.gd-addblock { min-height: 44px; height: auto; padding-block: 8px; white-space: normal; text-align: center; }
+.gd-addblock * { white-space: normal; overflow: visible; text-overflow: clip; }
+.gd-addblock__types { color: var(--gd-muted); font-weight: 400; }
+
+.gd-chooser { display: grid; gap: 10px; padding: 12px; border: 1px dashed var(--gd-amber); border-radius: 10px; }
+.gd-chooser__title { margin: 0; font-weight: 600; }
+.gd-chooser__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.gd-chooser__option {
+  display: grid; gap: 4px; justify-items: start; align-content: start; text-align: left; padding: 10px 12px; cursor: pointer;
+  border: 1px solid var(--gd-line); border-radius: 8px; background: var(--gd-card); color: inherit; font: inherit;
+}
+.gd-chooser__option:hover, .gd-chooser__option:focus-visible { border-color: var(--gd-amber); outline: none; }
+.gd-chooser__name { font-weight: 600; }
+.gd-chooser__hint { color: var(--gd-muted); font-size: 12px; }
+
+.gd-pageside { display: grid; gap: 14px; font-size: 13px; }
+.gd-pageside section { display: grid; gap: 4px; }
+.gd-pageside p { margin: 0; }
+.gd-pageside__label { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gd-muted); }
+.gd-pageside__urls a { color: inherit; text-decoration: underline; text-decoration-color: var(--gd-line); text-underline-offset: 3px; }
+.gd-pageside__urls a:hover { text-decoration-color: var(--gd-amber); }
+.gd-pageside__warn { color: var(--gd-amber); }
+.gd-pageside__checks { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.gd-pageside__checks li { padding-left: 18px; position: relative; }
+.gd-pageside__checks li::before { position: absolute; left: 0; font-weight: 700; }
+.gd-pageside__checks li[data-state="ok"] { color: var(--ui-green-11, #7cc47f); }
+.gd-pageside__checks li[data-state="ok"]::before { content: "✓"; }
+.gd-pageside__checks li[data-state="warn"] { color: var(--gd-amber); }
+.gd-pageside__checks li[data-state="warn"]::before { content: "!"; }
+.gd-pageside__checks li[data-state="bad"] { color: var(--ui-red-11, #ff8b8b); }
+.gd-pageside__checks li[data-state="bad"]::before { content: "✕"; }
+.gd-json {
+  margin: 0; max-height: 60vh; overflow: auto; padding: 12px; border-radius: 8px;
+  background: var(--theme-elevation-0); font: 12px/1.5 var(--font-mono, ui-monospace, monospace); white-space: pre;
+}
+
+@container gd-blocks (max-width: 520px) {
+  .gd-block__accordion > .ui-accordion__item > .ui-accordion__heading > .ui-accordion__trigger { padding-top: 44px; }
+  .gd-block__status { right: 8px; }
+  .gd-block__accordion > .ui-accordion__item > .ui-accordion__heading > .ui-accordion__trigger > .ui-accordion__title { flex-wrap: wrap; max-width: none; }
+  .gd-addblock__types { display: block; }
+}
+
+.gd-cell-page { display: grid; gap: 2px; }
+.gd-cell-page small { color: var(--gd-muted); font-size: 12px; }
+.gd-cell-page code { font-size: 11px; }
+.gd-cell-blocks[data-state="ok"] { color: var(--ui-green-11, #7cc47f); }
+.gd-cell-blocks[data-state="bad"] { color: var(--ui-red-11, #ff8b8b); }
+.gd-cell-blocks[data-state="empty"] { color: var(--gd-muted); }
+
+/* Section accordions sit inside an open block accordion; Valyro's open-state rules are descendant
+   selectors, so restore the closed look of nested sections that are closed. */
+.gd-block .gd-legal-section .ui-accordion__item[data-state='closed'] .ui-accordion__chevron {
+  transform: var(--ui-accordion-chevron-transform);
+}

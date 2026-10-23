@@ -1,7 +1,12 @@
 import { WatchTenantCollection as WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { TenantField as TenantField_1d0591e3cf4f332c83a86da13a0de59a } from '@payloadcms/plugin-multi-tenant/client'
 import { LanguagesCell as LanguagesCell_53d85114ffcb12245bb9ddc91716ed08 } from '../../../components/list/LanguagesCell'
+import { SitePageCell as SitePageCell_ac84347516c1cb30246d4265206b7313 } from '../../../fields/blocksEditor/cells'
+import { BlocksStateCell as BlocksStateCell_ac84347516c1cb30246d4265206b7313 } from '../../../fields/blocksEditor/cells'
 import { LanguageBar as LanguageBar_f95e950030180a051ab4222c538995b9 } from '../../../components/editor/LanguageBar'
+import { PageIdField as PageIdField_e8835112b6695c43840512474ae73f57 } from '../../../fields/blocksEditor/PageIdField'
+import { BlocksEditor as BlocksEditor_a816869055e1e61024b99a737df20ae3 } from '../../../fields/blocksEditor/BlocksEditor'
+import { PageSidebar as PageSidebar_0a4bf062d9f3315c1d1e9df6e19db29f } from '../../../fields/blocksEditor/PageSidebar'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -50,7 +55,12 @@ export const importMap = {
   "@payloadcms/plugin-multi-tenant/client#WatchTenantCollection": WatchTenantCollection_1d0591e3cf4f332c83a86da13a0de59a,
   "@payloadcms/plugin-multi-tenant/client#TenantField": TenantField_1d0591e3cf4f332c83a86da13a0de59a,
   "/components/list/LanguagesCell#LanguagesCell": LanguagesCell_53d85114ffcb12245bb9ddc91716ed08,
+  "/fields/blocksEditor/cells#SitePageCell": SitePageCell_ac84347516c1cb30246d4265206b7313,
+  "/fields/blocksEditor/cells#BlocksStateCell": BlocksStateCell_ac84347516c1cb30246d4265206b7313,
   "/components/editor/LanguageBar#LanguageBar": LanguageBar_f95e950030180a051ab4222c538995b9,
+  "/fields/blocksEditor/PageIdField#PageIdField": PageIdField_e8835112b6695c43840512474ae73f57,
+  "/fields/blocksEditor/BlocksEditor#BlocksEditor": BlocksEditor_a816869055e1e61024b99a737df20ae3,
+  "/fields/blocksEditor/PageSidebar#PageSidebar": PageSidebar_0a4bf062d9f3315c1d1e9df6e19db29f,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
