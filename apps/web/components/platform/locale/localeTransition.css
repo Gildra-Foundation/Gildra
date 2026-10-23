@@ -1,37 +1,11 @@
-/* atlas:strict — cross-document hand-over of an EN ↔ RU switch.
-   Every document opts in, and its head script (localeArrivalScript.ts) skips
-   the transition for anything but a language switch, so other full loads stay
-   instant. Reduced motion never opts in; the site's own "less motion" choice
-   is skipped by the script and stilled in app/styles/motion-preference.css.
-   data-locale-switch on <html> names the target language for one transition. */
+/* atlas:strict — arrival of an EN ↔ RU switch. Each language is a full
+   document load; its head script (localeArrivalScript.ts) marks the arriving
+   document with data-locale-arrival for 700 ms, and only the content
+   brightens in place: the toolbar stays still, the switch's pill already moved
+   on the click. Opacity only, from the page's final layout, 160 ms; no
+   cross-document view transition (capturing both pages delayed the new
+   page's first paint). Less motion never sets the mark. */
 @media (prefers-reduced-motion: no-preference) {
-  @view-transition { navigation: auto; }
-}
-
-/* The toolbar stays still while the page under it changes language; the
-   active-language pill glides to the chosen side under the two labels (each
-   label is its own group, painted above the pill as on the page). */
-html[data-locale-switch] header:has([data-locale-switch-root]) { view-transition-name: gildra-locale-bar; }
-html[data-locale-switch] [data-locale-switch-pill] { view-transition-name: gildra-locale-pill; }
-html[data-locale-switch] [data-locale-switch-root] a[hreflang="en"] { view-transition-name: gildra-locale-en; }
-html[data-locale-switch] [data-locale-switch-root] a[hreflang="ru"] { view-transition-name: gildra-locale-ru; }
-
-::view-transition-group(gildra-locale-bar),
-::view-transition-group(gildra-locale-en),
-::view-transition-group(gildra-locale-ru) { animation-duration: .2s; }
-::view-transition-group(gildra-locale-pill) { animation-duration: .24s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
-
-/* The page: a short cross-fade under the still toolbar. Opacity only — no blur,
-   no slide over a full-screen layer — and the new page is in its final layout
-   from the first frame. */
-html[data-locale-switch]::view-transition-old(root),
-html[data-locale-switch]::view-transition-new(root) { mix-blend-mode: normal; }
-/* The old page holds still underneath, so the fade never dips through to the background. */
-html[data-locale-switch]::view-transition-old(root) { animation: none; }
-html[data-locale-switch]::view-transition-new(root) { animation: .16s ease-out both gildra-locale-in; }
-@keyframes gildra-locale-in { from { opacity: 0; } }
-/* Without cross-document view transitions: the content brightens in place. */
-@media (prefers-reduced-motion: no-preference) {
-  html[data-locale-fallback]:not([data-motion="reduced"]) #atlas-content { animation: gildra-locale-fade .16s ease-out both; }
+  html[data-locale-arrival]:not([data-motion="reduced"]) #atlas-content { animation: gildra-locale-fade .16s ease-out both; }
 }
 @keyframes gildra-locale-fade { from { opacity: .6; } }
