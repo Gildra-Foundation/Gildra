@@ -18,7 +18,7 @@ for(const site of ['gildra','riftden'])for(const role of ['owner','admin','edito
   }else{
    await p.locator('input[name=title]').waitFor();await p.waitForFunction(()=>{const el=document.querySelector('input[name=title]');return el&&Object.keys(el).some(k=>k.startsWith('__reactProps$'));});
    await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-   const publish=p.getByRole('button',{name:/^Publish( changes)?$/i});
+   const publish=p.getByRole('button',{name:/^Publish( changes| RU and EN)?$/i});
    if(role==='author'&&process.env.CMS_QA_ASSERT_PUBLISH_UI==='1')assert.equal(await publish.isEnabled().catch(()=>false),false,'Author has no active Publish control');
    if(['owner','admin','editor'].includes(role))assert.equal(await publish.count(),1);
    if(role==='author'&&site==='gildra'){
