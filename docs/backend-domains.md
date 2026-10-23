@@ -36,8 +36,15 @@ business rules.
 | `DATABASE_MAX_CONNS` | pgx default, max(4, CPUs) | API pool size (`application_name=gildra-api`). |
 | `WORKER_DATABASE_MAX_CONNS` | `5` | Separate River pool (`application_name=gildra-worker`). |
 
-Catalog list totals are cached per filter for one minute (2048 entries), and
-list descriptions/tooltip icons are loaded per page; the integration test
+Catalog list totals never hold a page (`internal/catalog/totals.go`): exact
+counts run in the background (at most 2 at once, 10 min timeout), a request
+waits for one at most 2 s, and a finished count stays fresh for
+max(10 min, 100 × its duration) and is served up to 24 h while it is
+recounted; a failure backs off for a minute. Until the first count is ready
+`/v1/game/entities` reports the planner's estimate and `entity-summaries`
+leaves `total` out. An exact count of every spell takes about 2.5 min on
+production (533,234 spells, two passes over the 23 GB localization table).
+List descriptions/tooltip icons are loaded per page; the integration test
 `TestCatalogListQueryCountDoesNotGrowWithPageSize` guards the query count.
 It runs in CI through Testcontainers, or locally against any server with
 `GILDRA_INTEGRATION_DATABASE_URL` (it creates and drops its own database).
