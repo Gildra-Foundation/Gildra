@@ -1,0 +1,153 @@
+.ui-editor-note {
+  --_tone: var(--ui-info-text);
+  --_edge: var(--ui-info);
+  --_fill: var(--ui-info-soft);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ui-space-3);
+  margin: 0;
+  position: relative;
+  /* Editorial (default): a note as a newspaper prints it, under a hairline, with the kind in small
+     capitals beside its date and the text in muted italics. `callout` is a tinted box with an icon. */
+  padding-block: var(--ui-space-3) 0;
+  border-top: 1px solid var(--ui-divider);
+  color: var(--ui-fg);
+  font-size: var(--ui-text-sm);
+  line-height: 1.5;
+  text-align: start;
+  overflow-wrap: break-word;
+}
+
+.ui-editor-note[data-kind='correction'] {
+  --_tone: var(--ui-warning-text);
+  --_edge: var(--ui-warning);
+  --_fill: var(--ui-warning-soft);
+}
+
+/* A clarification is neither news nor an error: a neutral tone, apart from the update's info hue. */
+.ui-editor-note[data-kind='clarification'] {
+  --_tone: var(--ui-fg);
+  --_edge: var(--ui-fg-subtle);
+  --_fill: var(--ui-surface-2);
+}
+
+.ui-editor-note[data-kind='disclosure'],
+.ui-editor-note[data-kind='sponsored'] {
+  --_tone: var(--ui-fg-muted);
+  --_edge: var(--ui-border-strong);
+  --_fill: var(--ui-surface-2);
+}
+
+.ui-editor-note__icon {
+  display: none;
+  margin-top: 2px;
+  color: var(--_tone);
+}
+
+.ui-editor-note__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ui-editor-note__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--ui-space-2);
+  margin: 0;
+}
+
+.ui-editor-note__title {
+  color: var(--_tone);
+  font-family: var(--ui-font-display, inherit);
+  /* Small capitals are x-height tall: a size up keeps the label above the date beside it. */
+  font-size: var(--ui-text-md);
+  font-weight: var(--ui-weight-semibold);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.05em;
+}
+
+.ui-editor-note__date {
+  color: var(--ui-fg-subtle);
+  font-size: var(--ui-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-editor-note__text {
+  color: var(--ui-fg-muted);
+  font-family: var(--ui-font-prose, inherit);
+  font-style: italic;
+}
+
+.ui-editor-note__text > :first-child {
+  margin-top: 0;
+}
+
+.ui-editor-note__text > :last-child {
+  margin-bottom: 0;
+}
+
+/* ── Callout: a tinted box with an edge rule and an icon ── */
+.ui-editor-note[data-variant='callout'] {
+  grid-template-columns: 16px minmax(0, 1fr);
+  overflow: hidden;
+  padding-block: var(--ui-space-3);
+  padding-inline: calc(var(--ui-space-4) + var(--ui-editorial-rule-width, 3px)) var(--ui-space-4);
+  border-top: 0;
+  border-radius: var(--ui-radius-sm);
+  background: var(--_fill);
+}
+
+.ui-editor-note[data-variant='callout']::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--ui-editorial-rule-width, 3px);
+  background: var(--_edge);
+}
+
+.ui-editor-note[data-variant='callout'] .ui-editor-note__icon {
+  display: block;
+}
+
+.ui-editor-note[data-variant='callout'] .ui-editor-note__title {
+  font-family: inherit;
+  font-size: inherit;
+  font-variant-caps: normal;
+  letter-spacing: normal;
+}
+
+.ui-editor-note[data-variant='callout'] .ui-editor-note__text {
+  color: var(--ui-fg);
+  font-family: inherit;
+  font-style: normal;
+}
+
+/* A note without text (a sponsorship mark) is a compact label in the line, not an empty box. */
+.ui-editor-note[data-bare] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  width: fit-content;
+  padding: 2px var(--ui-space-2);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-xs);
+}
+
+.ui-editor-note[data-variant='callout'][data-bare] {
+  padding-inline: var(--ui-space-2);
+  border-color: transparent;
+}
+
+.ui-editor-note[data-variant='callout'][data-bare]::before {
+  content: none;
+}
+
+@media (forced-colors: active) {
+  .ui-editor-note {
+    border: 1px solid CanvasText;
+  }
+}
