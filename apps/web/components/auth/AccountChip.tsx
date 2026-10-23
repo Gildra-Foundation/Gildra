@@ -2,7 +2,14 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { p, t, type Lang } from "@/lib/i18n";
+import { p, type Lang } from "@/lib/i18n-paths";
+
+// Own copy instead of t() from @/lib/i18n: this chip hydrates on every page,
+// and importing the shared dictionary put all of it in the global client chunk.
+const words = {
+  en: { checking: "Checking account…", signInWith: "Sign in with Battle.net", signIn: "Sign in", account: "Account", characters: "My characters" },
+  ru: { checking: "Проверяем аккаунт…", signInWith: "Войти через Battle.net", signIn: "Войти", account: "Аккаунт", characters: "Мои персонажи" },
+} as const;
 
 type Ready = { state: "ready"; connected: boolean; name: string | null };
 type Status = { state: "loading" } | Ready;
@@ -40,7 +47,7 @@ export function AccountChip({
   /** Decorative arrow/caret shown after the label (kept in every state for a stable width). */
   trailing?: ReactNode;
 }) {
-  const tt = t(lang);
+  const w = words[lang];
   const [status, setStatus] = useState<Status>({ state: "loading" });
 
   useEffect(() => {
@@ -69,7 +76,7 @@ export function AccountChip({
       <span className={`${className} user-pending`} aria-busy="true">
         {avatar}
         <span className={labelClassName} aria-hidden="true"><i className="user-skel" /></span>
-        <span className="sr-only">{tt("Checking account…")}</span>
+        <span className="sr-only">{w.checking}</span>
         {trailing}
       </span>
     );
@@ -77,21 +84,21 @@ export function AccountChip({
 
   if (!status.connected) {
     return (
-      <Link className={className} href={p(lang, "/login")} prefetch={false} aria-label={tt("Sign in with Battle.net")}>
+      <Link className={className} href={p(lang, "/login")} prefetch={false} aria-label={w.signInWith}>
         {avatar}
-        <span className={labelClassName}>{tt("Sign in")}</span>
+        <span className={labelClassName}>{w.signIn}</span>
         {trailing}
       </Link>
     );
   }
 
-  const label = status.name ?? tt("My characters");
+  const label = status.name ?? w.characters;
   return (
     <Link
       className={className}
       href={p(lang, "/wow/characters")}
       prefetch={false}
-      aria-label={status.name ? `${tt("Account")}: ${status.name}` : label}
+      aria-label={status.name ? `${w.account}: ${status.name}` : label}
       title={status.name ?? undefined}
     >
       {avatar}
