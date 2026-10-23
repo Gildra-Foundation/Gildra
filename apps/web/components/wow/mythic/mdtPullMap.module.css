@@ -1,5 +1,10 @@
 /* atlas:strict — static pull markers and permanent enemy summaries */
 .panel { min-width: 0; padding: var(--atlas-space-4); color: var(--atlas-text); font-size: var(--atlas-text-small); }
+/* The map replaces its loading skeleton: fade in rather than pop. */
+@media (prefers-reduced-motion: no-preference) {
+  .panel { animation: mdt-arrive var(--atlas-duration) var(--atlas-ease) both; }
+}
+@keyframes mdt-arrive { from { opacity: 0; } }
 .header { display: flex; align-items: start; justify-content: space-between; gap: var(--atlas-space-3); }
 .panel h3, .panel h4, .panel h5 { margin: 0; }
 .panel h3 { font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); }

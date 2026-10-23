@@ -49,7 +49,9 @@ import styles from "./mythicRouteMap.module.css";
 import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
 import { copyText } from "@gildra/atlas-ui/clipboard";
 
-const MdtPullMap = dynamic(() => import("./MdtPullMap"), { ssr: false, loading: () => <p role="status">MDT…</p> });
+// The map loads on the client only; its skeleton holds the place of the shortest
+// map (about 2100 px), so the step tools below it do not jump when it arrives.
+const MdtPullMap = dynamic(() => import("./MdtPullMap"), { ssr: false, loading: () => <div className={styles.mdtLoading} role="status"><span>MDT…</span></div> });
 
 const DeferredTestPartyPanel = dynamic(
   () => import("./TestPartyPanel").then((module) => module.TestPartyPanel),
