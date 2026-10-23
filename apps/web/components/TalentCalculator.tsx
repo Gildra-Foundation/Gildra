@@ -17,6 +17,7 @@ import { getPerformanceTier, type PerformanceTier } from "@/lib/client/performan
 import { navigateTalentPage } from "@/lib/client/viewTransitionNavigation";
 import { heroPathName, talentCalculatorCopy, talentThemeNames, type TalentCalculatorCopy, type TalentCopyLang } from "@/components/talents/talentCalculatorCopy";
 import { lessMotion } from "@/lib/client/motionPreference";
+import { copyText as copyToClipboard } from "@gildra/atlas-ui/clipboard";
 
 // Interface copy for the whole calculator tree (tooltips render through a portal,
 // which keeps React context).
@@ -1586,20 +1587,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
   const undoReset = () => { if (!undoState) return; setRanks(new Map(undoState.ranks)); setChoices(new Map(undoState.choices)); setPvpSelections([...undoState.pvp]); setUndoState(null); showNotice(copy.buildRestored); };
   const copyText = async (value: string, success: string) => {
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(value);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = value;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        const copied = document.execCommand("copy");
-        textarea.remove();
-        if (!copied) throw new Error("Legacy clipboard fallback failed");
-      }
+      await copyToClipboard(value);
       showNotice(success);
     } catch {
       window.prompt(copy.copyManually, value);

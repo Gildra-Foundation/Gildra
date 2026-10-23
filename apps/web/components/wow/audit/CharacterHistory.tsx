@@ -6,6 +6,7 @@ import type { CharacterRunRecord } from "@/lib/wow/characterRunHistory";
 import { BookEngraving } from "./BookEngraving";
 import { characterWorkspaceCopy, workspaceLocale, workspaceNumber, workspaceRunLabel, type WorkspaceLocale } from "./characterWorkspaceCopy";
 import styles from "./characterHistory.module.css";
+import { copyText } from "@gildra/atlas-ui/clipboard";
 
 function formatNumber(value: number, locale: WorkspaceLocale) { return workspaceNumber(locale, value); }
 
@@ -55,7 +56,7 @@ export function CharacterHistory({ characterSlug, specializationSlug, fingerprin
       const payload = await response.json() as { id?: string; token?: string };
       if (!response.ok || !payload.id || !payload.token) throw new Error("share_unavailable");
       const url = `${window.location.origin}${localePrefix}/wow/shared/${payload.token}`;
-      await navigator.clipboard.writeText(url);
+      await copyText(url);
       setRuns((items) => items.map((item) => item.id === run.id ? { ...item, activeShareId: payload.id } : item));
       setNotice(t("Ссылка скопирована. Данные аккаунта и полный профиль персонажа в неё не входят."));
     } catch {

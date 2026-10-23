@@ -29,7 +29,7 @@ export { AtlasField, AtlasInput, AtlasSelect, AtlasCheckbox, AtlasRange } from "
 export { AtlasTooltip } from "./AtlasTooltip";
 export { AtlasEmpty, AtlasError, AtlasSkeleton } from "./AtlasState";
 export { AtlasDialog } from "./AtlasDialog";
-export { AtlasToast } from "./AtlasToast";
+export { notify } from "./toast";
 export { AtlasShareButton } from "./AtlasShareButton";
 export { AtlasArtGlow, type ArtGlowPoint } from "./AtlasArtGlow";
 export { AtlasPagination } from "./AtlasPagination";

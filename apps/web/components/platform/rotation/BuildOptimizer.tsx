@@ -18,6 +18,7 @@ import type { AplSearchSpace } from "@/lib/platform/rotation/aplOptimizer";
 import { useCharacterWorkspaceDocument } from "@/lib/wow/useCharacterWorkspaceDocument";
 import { mergeRotationAbility, rotationComboName, rotationScenarioLabel } from "@/lib/platform/rotation/locale";
 import { buildOptimizerCopy } from "./buildOptimizerCopy";
+import { copyText } from "@gildra/atlas-ui/clipboard";
 
 type StoredStudio = { builds: RotationBuildProfile[]; combos: SavedRotationCombo[]; selectedBuildId?: string };
 type OptimizerScore = { candidateId: string; label: string; reason: string; mutation: "baseline" | "priority" | "threshold" | "state"; dps: number; rules: string[]; aplRules: RotationAplRule[]; result: RotationSimulationResult; verified?: boolean; verificationDelta?: number; meaningfulGain?: number };
@@ -321,7 +322,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
     const tag = encodeShareTag({ v: 1, spec: slug, name: comboLabel(combo), scenario: combo.scenario, targetCount: combo.targetCount, rules: combo.rules, aplRules: combo.aplRules, sequence: combo.sequence });
     setShareTag(tag);
     try {
-      await navigator.clipboard.writeText(tag);
+      await copyText(tag);
       setNotice(buildOptimizerCopy[lang].rotationTagCopiedSend);
     } catch {
       setNotice(buildOptimizerCopy[lang].theTagIsReady);
