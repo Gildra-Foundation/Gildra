@@ -83,9 +83,27 @@ Implementation notes:
 
 ### Localization and publication
 
-RU and EN are both editable. They **share one publication status**:
-`localizeStatus` is experimental in Payload 3.90.2 and is not enabled, so
-publishing publishes both locales. Missing RU text falls back to EN in reads.
+RU and EN are both editable. They **share one publication status** per
+document (`localizeStatus` is experimental in Payload 3.90.2 and is not
+enabled), and the publish control says so (`src/admin/publishCopy.ts`):
+
+- the primary button reads **"Опубликовать RU и EN" / "Publish RU and EN"** and
+  publishes both language versions at once;
+- the menu item next to it reads **"Опубликовать только версию: …"** and
+  publishes (Payload's `publishSpecificLocale`) only the version being edited;
+- toasts name the result: "Опубликовано", "Снято с публикации",
+  "Запланировано", "Сохранено" (drafts and other collections). A publishing
+  save of an article or page answers "Опубликовано" through a `beforeChange`
+  hook that renames Payload's stock "Updated successfully" for that request.
+- autosave only ever saves a draft.
+
+Missing RU text falls back to EN in reads. The editor's **content language**
+starts as the interface language (a `locale` preference is stored for a user on
+the first admin visit; the config default stays `en`). The native list search
+matches titles in both languages (`src/admin/localeSearch.ts`). A published
+document with a newer draft is shown as **"есть правки не на сайте"**
+(dashboard recent edits and the article workbench). **"Новая статья"** opens
+`/admin/articles/new`; the draft is created by the first submit, not on open.
 
 The article and page editors open with a **language bar**
 (`src/components/editor/LanguageBar.tsx`): both versions with how complete
