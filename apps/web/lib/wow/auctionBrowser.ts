@@ -1,3 +1,4 @@
+import type { AuctionItemDetails } from "./auctionItemDetails";
 /** Public auction browsing contracts. Prices are copper; a buyout is for the whole lot. */
 export const auctionRegions = ["eu", "us", "kr", "tw"] as const;
 export type AuctionRegion = typeof auctionRegions[number];
@@ -8,7 +9,7 @@ export type AuctionListing = {
   modifiers: { type: number; value: number }[];
 };
 export type AuctionResult = {
-  rows: (AuctionListing & { name: string | null })[]; total: number; page: number; pages: number;
+  rows: (AuctionListing & { name: string | null; item?: AuctionItemDetails | null })[]; total: number; page: number; pages: number;
   sourceUpdatedAt: string | null; fetchedAt: string; stale: boolean; connectedRealmId: number | null;
   market: AuctionQuery["market"]; searchTruncated: boolean;
 };

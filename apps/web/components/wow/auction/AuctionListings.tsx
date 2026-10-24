@@ -2,6 +2,7 @@
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { copperParts, type AuctionResult } from "@/lib/wow/auctionBrowser";
 import { auctionCopy } from "./auctionCopy";
+import { AuctionItem } from "./AuctionItem";
 import styles from "./auction.module.css";
 function Money({ value, lang }: { value: number | null; lang: "ru" | "en" }) {
   if (value === null) return <span>—</span>;
@@ -24,7 +25,7 @@ export function AuctionListings({ data, lang, onPage }: { data: AuctionResult; l
         <caption className={styles.visuallyHidden}>{c.title} — {c.results}: {data.total}</caption>
         <thead><tr><th scope="col">{c.item}</th><th scope="col">{c.quantity}</th><th scope="col">{c.unit}</th><th scope="col">{data.market === "realm" ? c.buyout : c.terms}</th></tr></thead>
         <tbody>{data.rows.map(row => <tr key={row.id}>
-          <td><a href={`https://www.wowhead.com/${lang === "ru" ? "ru/" : ""}item=${row.itemId}`} target="_blank" rel="noreferrer">{row.name ?? `ID ${row.itemId}`}</a>
+          <td><AuctionItem row={row} lang={lang} />
             {!row.name ? <span className={styles.secondary}>{c.metadata}</span> : null}
             <span className={styles.secondary}>ID {row.itemId}{row.petSpeciesId ? ` · ${c.pet} ${row.petSpeciesId}` : ""}</span>
             <details className={styles.details}><summary>{c.details}</summary><div>
