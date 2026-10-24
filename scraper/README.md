@@ -81,3 +81,25 @@ images, and the site is credited on every page that shows them.
   more than half of its weeks, and inserts a snapshot only when the content
   hash changed. Failed runs keep the last-known-good snapshot active; the API
   marks it `stale` after 36 hours without a successful check.
+
+`Tierlist — MythicStats` is collected by `parsers.mythicstats_tierlist` once a
+day (06:15 UTC). It reads the `/spec` tier list and the `/dps` performance
+table through the shared `parsers.mythicstats_client`: direct HTTPS first
+(one request per second, zero credits), paid providers only as a fallback.
+Only spec, tier, position, sample size and period are kept, with a link back
+to mythicstats.com.
+
+`Tierlist — u.gg` is collected by `parsers.ugg_tierlist` every twelve hours.
+u.gg renders its tier lists from public JSON on `stats2.u.gg`
+(`robots.txt` allows `*`, `Content-Signal: use=reference`), so the collector
+reads it directly: HEAD probes find the newest `v{N}` data build, then five
+files (Mythic+ all keys; raid all, normal, heroic and mythic) are fetched for
+dps, healer and tank — five requests and zero credits per run. Spec + hero
+talent rows collapse into one record per spec (best hero talent sets the tier
+and position; the split stays in `hero_talents`). A payload older than seven
+days fails closed, and `parsers.ugg_dataset_service` keeps the last-known-good
+snapshot when validation fails.
+
+Maxroll and Wowhead tier lists are not collected for the source tabs: their
+terms forbid automated collection (see the source review in the tier-list
+sources task) until written permission exists.

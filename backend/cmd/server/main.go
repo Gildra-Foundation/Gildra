@@ -113,6 +113,10 @@ func run() error {
 		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
 		cfg.DatasetWorkerURL,
 	))
+	river.AddWorker(workers, datasetrefresh.NewUggWorker(
+		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
+		cfg.DatasetWorkerURL,
+	))
 	river.AddWorker(workers, datasetrefresh.NewMythicPlusMetaWorker(
 		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
 		cfg.DatasetWorkerURL,
@@ -128,6 +132,7 @@ func run() error {
 			datasetrefresh.WowGGPeriodicJob(time.Now),
 			datasetrefresh.IcyVeinsPeriodicJob(time.Now),
 			datasetrefresh.MythicStatsPeriodicJob(time.Now),
+			datasetrefresh.UggPeriodicJob(time.Now),
 			datasetrefresh.MythicPlusMetaPeriodicJob(time.Now),
 		},
 		ErrorHandler: &joberrors.SentryHandler{},

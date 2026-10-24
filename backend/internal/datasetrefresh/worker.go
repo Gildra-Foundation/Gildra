@@ -21,6 +21,7 @@ const (
 	icyVeinsRefreshPath    = "/internal/v1/datasets/tierlist-icyveins/refresh"
 	mplusMetaRefreshPath   = "/internal/v1/datasets/mplus-meta-mythicstats/refresh"
 	mythicStatsRefreshPath = "/internal/v1/datasets/tierlist-mythicstats/refresh"
+	uggRefreshPath         = "/internal/v1/datasets/tierlist-ugg/refresh"
 )
 
 type RefreshArgs struct {
@@ -46,6 +47,12 @@ type MythicStatsRefreshArgs struct {
 }
 
 func (MythicStatsRefreshArgs) Kind() string { return "dataset_tierlist_mythicstats_refresh" }
+
+type UggRefreshArgs struct {
+	ScheduledFor string `json:"scheduled_for" river:"unique"`
+}
+
+func (UggRefreshArgs) Kind() string { return "dataset_tierlist_ugg_refresh" }
 
 type MythicPlusMetaRefreshArgs struct {
 	ScheduledFor string `json:"scheduled_for" river:"unique"`
@@ -83,6 +90,12 @@ type WowGGWorker struct {
 
 type MythicStatsWorker struct {
 	river.WorkerDefaults[MythicStatsRefreshArgs]
+	httpClient Client
+	endpoint   string
+}
+
+type UggWorker struct {
+	river.WorkerDefaults[UggRefreshArgs]
 	httpClient Client
 	endpoint   string
 }
@@ -134,6 +147,13 @@ func NewMythicStatsWorker(httpClient Client, baseURL string) *MythicStatsWorker 
 	}
 }
 
+func NewUggWorker(httpClient Client, baseURL string) *UggWorker {
+	return &UggWorker{
+		httpClient: httpClient,
+		endpoint:   strings.TrimRight(baseURL, "/") + uggRefreshPath,
+	}
+}
+
 func NewMythicPlusMetaWorker(httpClient Client, baseURL string) *MythicPlusMetaWorker {
 	return &MythicPlusMetaWorker{
 		httpClient: httpClient,
@@ -162,6 +182,10 @@ func (w *IcyVeinsWorker) Work(ctx context.Context, job *river.Job[IcyVeinsRefres
 }
 
 func (w *MythicStatsWorker) Work(ctx context.Context, job *river.Job[MythicStatsRefreshArgs]) error {
+	return requestRefresh(ctx, w.httpClient, w.endpoint, job.Args.ScheduledFor)
+}
+
+func (w *UggWorker) Work(ctx context.Context, job *river.Job[UggRefreshArgs]) error {
 	return requestRefresh(ctx, w.httpClient, w.endpoint, job.Args.ScheduledFor)
 }
 
@@ -314,6 +338,28 @@ func MythicStatsPeriodicJob(now func() time.Time) *river.PeriodicJob {
 		},
 		&river.PeriodicJobOpts{
 			ID:         "tierlist-mythicstats-daily",
+			RunOnStart: true,
+		},
+	)
+}
+
+// UggPeriodicJob refreshes u.gg every twelve hours; its public JSON is rebuilt
+// several times a day and costs no proxy credits.
+func UggPeriodicJob(now func() time.Time) *river.PeriodicJob {
+	return river.NewPeriodicJob(
+		IntervalSchedule{Interval: 12 * time.Hour},
+		func() (river.JobArgs, *river.InsertOpts) {
+			return UggRefreshArgs{ScheduledFor: now().UTC().Format(time.DateOnly)}, &river.InsertOpts{
+				Queue:       QueueName,
+				MaxAttempts: 6,
+				UniqueOpts: river.UniqueOpts{
+					ByArgs:   true,
+					ByPeriod: 12 * time.Hour,
+				},
+			}
+		},
+		&river.PeriodicJobOpts{
+			ID:         "tierlist-ugg-twelve-hour",
 			RunOnStart: true,
 		},
 	)

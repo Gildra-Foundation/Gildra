@@ -152,6 +152,28 @@ func TestMythicStatsWorkerRequestsPrivateRefreshEndpoint(t *testing.T) {
 	}
 }
 
+func TestUggWorkerRequestsPrivateRefreshEndpoint(t *testing.T) {
+	t.Parallel()
+	var path string
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		path = request.URL.Path
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"status":"succeeded"}`))
+	}))
+	defer server.Close()
+
+	worker := NewUggWorker(server.Client(), server.URL)
+	err := worker.Work(context.Background(), &river.Job[UggRefreshArgs]{
+		Args: UggRefreshArgs{ScheduledFor: "2026-10-24"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if path != uggRefreshPath {
+		t.Fatalf("unexpected request path: %s", path)
+	}
+}
+
 func TestWorkerRejectsFailedRefresh(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
