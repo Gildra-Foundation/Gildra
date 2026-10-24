@@ -15,14 +15,14 @@ export function epigraphTiming(text: string, start = 0) {
     }
     delays.push(at);
     // Deterministic small variations avoid a mechanical typewriter cadence.
-    at += /\s/u.test(letter) ? 65 : 42 + ((letter.codePointAt(0)! + index * 7) % 5) * 7;
+    at += Math.round((/\s/u.test(letter) ? 65 : 42 + ((letter.codePointAt(0)! + index * 7) % 5) * 7) * 1.2);
     dots = letter === "." ? dots + 1 : 0;
     const breath = letter === "," ? 420
       : letter === ";" || letter === ":" ? 650
       : letter === "—" || letter === "–" ? 500
-      : letter === "…" || dots > 1 ? 1250
-      : letter === "!" || letter === "?" ? 1050
-      : letter === "." ? 850 : 0;
+      : letter === "…" || dots > 1 ? 2200
+      : letter === "!" || letter === "?" ? 1800
+      : letter === "." ? 1600 : 0;
     pause = Math.max(pause, breath);
   }
   return { delays, finish: (delays.at(-1) ?? start) + inkDuration, pauseAfter: pause };
