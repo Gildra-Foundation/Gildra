@@ -84,3 +84,29 @@ Up/Down compatibility and account/concurrency tests are recorded with the releas
 
 SQL semantics: https://www.postgresql.org/docs/17/explicit-locking.html#ADVISORY-LOCKS
 https://www.postgresql.org/docs/17/indexes-partial.html
+
+
+## Editing a shared copy (2026-10-23)
+
+The shared tree opens read-only. **Edit a copy** starts a local draft with explicit
+add/remove rank and choice controls and a hero branch selector. Prerequisites and
+34 class / 34 specialization / 13 hero point budgets use the existing calculator
+contract; removing required nodes cascades to dependent selections. Changing hero
+branches clears the previous hero allocation and preserves class/spec talents.
+The dialog mounts the actual `CharacterTalentSimulator` from the character page
+in shared mode, with its existing `TalentTreePanel`, descriptions, node effects,
+rank/choice handling, pruning, budgets and `wowTalentLoadout` codec. There is no
+second tree renderer or rank editor. Character mode keeps its existing simulation,
+rotation and character build integrations; shared mode skips those character-only
+flows. The full existing calculator data is delivered by the public tree GET.
+Every edited export is checked by the strict decoder and exact tree projector. Closing cancels uncommitted changes. **Use changes**
+updates only the shared-card draft; applying it to pull advice is separate.
+
+**Save my version to account** uses the existing authenticated private library
+create path with a new ID. Original author IDs are never present in links or sent
+to update endpoints. A name defaults to the original name plus “my version”; users
+can change it. An existing identical code is reported without renaming its entry.
+No author record, original link, or public source snapshot is modified.
+Guest sign-in returns to a new immutable link containing the edited snapshot, so
+full OAuth navigation retains changes. Saving still requires an explicit action
+after login; account changes reset action status and retain the public draft.

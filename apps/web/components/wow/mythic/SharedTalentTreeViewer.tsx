@@ -1,105 +1,70 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasDialog } from "@gildra/atlas-ui/AtlasDialog";
-import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
-import { TalentDescription } from "@/components/talents/TalentDescription";
-import { ResilientImage } from "@/components/media/ResilientImage";
+import { AtlasValyroSelect } from "@gildra/atlas-ui/AtlasValyroSelect";
+import { TalentBuildCalculator } from "@/components/wow/shared/TalentBuildCalculator";
 import { getTalentSpecThemeById } from "@/lib/talentSpecThemes";
-import { projectSharedTalentTree, type SharedTalentTreeData, type ViewedTalentNode, type ViewedTalentTrees } from "@/lib/wow/sharedTalentTree";
-import type { TalentKind } from "@/lib/talentCalculatorData";
+import type { TalentCalculatorData } from "@/lib/talentCalculatorData";
+import { projectSharedTalentTree } from "@/lib/wow/sharedTalentTree";
+import { changeSharedHero } from "@/lib/wow/sharedBuildDraft";
 import { decodeMythicTalentTree } from "./mythicTalentImport";
 import { sharedTalentTreeCopy } from "./sharedTalentTreeCopy";
+import { sharedBuildDraftCopy } from "./sharedBuildDraftCopy";
 import styles from "./sharedTalentTree.module.css";
 
 type Locale = "ru" | "en";
-type Loaded = { state: "ready"; data: SharedTalentTreeData; trees: ViewedTalentTrees } | { state: "loading" | "failed" | "mismatch" };
-const kinds: TalentKind[] = ["class", "spec", "hero"];
-function nodeName(view: ViewedTalentNode) { return view.node.nodeType === "tiered" ? view.node.choices[0]?.name : view.node.choices[view.selection?.choiceIndex ?? 0]?.name; }
+type Loaded = { state: "ready"; data: TalentCalculatorData; initialCode: string; key: string } | { state: "loading" | "failed" | "mismatch" };
 
-function TalentInspection({ view, locale, id }: { view: ViewedTalentNode; locale: Locale; id: string }) {
-  const t = sharedTalentTreeCopy[locale], { node, selection } = view;
-  return <aside id={id} className={styles.inspection} aria-live="polite" data-testid="shared-talent-inspection">
-    <h3>{nodeName(view)}</h3><p><b>{selection ? t.selected : t.unselected}</b> · {t.rank} {selection?.rank ?? 0}/{node.maxRanks}{selection?.granted ? ` · ${t.granted}` : ""}</p>
-    {node.choices.map((choice, index) => {
-      const before = node.choices.slice(0, index).reduce((sum, entry) => sum + entry.maxRanks, 0);
-      const rank = node.nodeType === "tiered" ? Math.max(0, Math.min(choice.maxRanks, (selection?.rank ?? 0) - before)) : selection?.choiceIndex === index ? selection.rank : 0;
-      return <div className={styles.choice} key={choice.externalId} data-choice-selected={rank > 0}>
-        <b>{rank > 0 ? "✓ " : ""}{choice.name}{node.nodeType === "tiered" ? ` · ${t.rank} ${rank}/${choice.maxRanks}` : ""}</b>
-        <TalentDescription talent={choice} locale={locale} />
-      </div>;
-    })}
-  </aside>;
-}
-
-function TalentBranch({ views, locale }: { views: ViewedTalentNode[]; locale: Locale }) {
-  const t = sharedTalentTreeCopy[locale];
-  const [inspected, setInspected] = useState<number>();
-  const inspectionId = useId();
-  function inspect(nodeId: number, reveal = false) {
-    setInspected(nodeId);
-    if (reveal && window.matchMedia("(max-width: 800px)").matches) requestAnimationFrame(() => document.getElementById(inspectionId)?.scrollIntoView({ block: "nearest", behavior: "instant" }));
-  }
-  const current = views.find(view => view.node.nodeId === inspected) ?? views.find(view => view.selection) ?? views[0];
-  const height = Math.max(520, (Math.max(0, ...views.map(view => view.node.row)) + 1) * 68);
-  const byId = new Map(views.map(view => [view.node.nodeId, view]));
-  if (!current) return <p>{t.noTalents}</p>;
+function LoadedCalculator({ value, locale, editing, onChange, onHeroChange, onValidityChange }: { value: Extract<Loaded, { state: "ready" }>; locale: Locale; editing: boolean; onChange: (code: string) => void; onHeroChange: (hero: number) => void; onValidityChange: (valid: boolean) => void }) {
+  const theme = getTalentSpecThemeById(value.data.specId), [invalid, setInvalid] = useState(false);
+  if (!theme) return null;
   return <>
-    <div className={styles.branchLayout}>
-      <div><p className={styles.pan}>{t.pan}</p><div className={styles.viewport} role="region" aria-label={t.tree} tabIndex={0}>
-        <div className={styles.canvas} style={{ height }} data-testid="shared-talent-canvas">
-          <svg className={styles.edges} viewBox={`0 0 680 ${height}`} preserveAspectRatio="none" aria-hidden="true">{views.flatMap(view => view.node.nextNodeIds.map(id => {
-            const next = byId.get(id); if (!next) return null;
-            return <line key={`${view.node.nodeId}-${id}`} x1={view.node.x * 6.8} y1={view.node.y * height / 100} x2={next.node.x * 6.8} y2={next.node.y * height / 100} data-selected={Boolean(view.selection && next.selection)} />;
-          }))}</svg>
-          {views.map(view => {
-            const { node, selection } = view, choice = node.choices[selection?.choiceIndex ?? 0];
-            return <button type="button" key={node.nodeId} className={styles.node} style={{ left: `${node.x}%`, top: `${node.y}%` } as CSSProperties} onClick={() => inspect(node.nodeId, true)} onFocus={() => inspect(node.nodeId)} data-tree-node={node.nodeId} data-selected={Boolean(selection)} data-rank={selection?.rank ?? 0} data-choice={selection?.choiceIndex ?? 0} aria-current={current.node.nodeId === node.nodeId ? "true" : undefined} aria-label={`${nodeName(view)} · ${selection ? t.selected : t.unselected} · ${t.rank} ${selection?.rank ?? 0}/${node.maxRanks}`}>
-              <ResilientImage src={choice?.iconUrl} width={40} height={40} alt="" fallback={<span>◆</span>} /><span className={styles.rank}>{selection ? "✓ " : ""}{selection?.rank ?? 0}/{node.maxRanks}</span>
-            </button>;
-          })}
-        </div>
-      </div></div>
-      <TalentInspection id={inspectionId} view={current} locale={locale} />
+    {editing && <label className={styles.heroPicker}>{sharedBuildDraftCopy[locale].hero}<AtlasValyroSelect native value={String(value.data.heroSubtreeId)} aria-label={sharedBuildDraftCopy[locale].hero} options={theme.heroPaths.map(path => ({ value: String(path.id), label: locale === "ru" ? path.nameRu : path.name }))} onValueChange={value => { if (theme.heroPaths.some(path => path.id === Number(value))) onHeroChange(Number(value)); }} /></label>}
+    {invalid && <p role="alert">{sharedTalentTreeCopy[locale].mismatch}</p>}
+    <div className={styles.calculatorHost} style={{ "--spec-accent": theme.accent, "--spec-hot": theme.hot, "--spec-deep": theme.deep, "--spec-rgb": theme.accentRgb, "--spec-hot-rgb": theme.hotRgb, "--tc-accent": theme.accent, "--tc-hot": theme.hot, "--tc-deep": theme.deep, "--tc-accent-rgb": theme.accentRgb, "--tc-hot-rgb": theme.hotRgb, "--tc-ambient-rgb": theme.ambientRgb } as CSSProperties}>
+      <TalentBuildCalculator mode="shared" readOnly={!editing} data={value.data} specSlug={theme.slug} loadout={value.initialCode} localePrefix={locale === "ru" ? "/ru" : ""} onCandidateLoadoutChange={code => {
+        try { projectSharedTalentTree(value.data, code); setInvalid(false); onValidityChange(true); onChange(code); }
+        catch { setInvalid(true); onValidityChange(false); }
+      }} />
     </div>
-    <details className={styles.selectedList}><summary>{t.chosen} ({views.filter(view => view.selection).length})</summary><ul>{views.filter(view => view.selection).map(view => <li key={view.node.nodeId}><button type="button" onClick={() => inspect(view.node.nodeId, true)}>{nodeName(view)} · {view.selection?.rank}/{view.node.maxRanks}</button></li>)}</ul></details>
   </>;
 }
 
-function LoadedTree({ value, locale }: { value: Extract<Loaded, { state: "ready" }>; locale: Locale }) {
-  const t = sharedTalentTreeCopy[locale], [kind, setKind] = useState<TalentKind>("class");
-  const { data, trees } = value;
-  return <>
-    <AtlasSegmented aria-label={t.tree} value={kind} onValueChange={value => setKind(value as TalentKind)} options={kinds.map(key => ({ value: key, label: `${t[key]} · ${trees[key].filter(view => view.selection).reduce((sum, view) => sum + (view.selection?.granted ? 0 : view.selection?.rank ?? 0), 0)}` }))} />
-    <p>{kind === "hero" && trees.hero.length ? data.heroName : t[kind]}</p>
-    {kind === "hero" && !trees.hero.length ? <p>{t.noHero}</p> : <TalentBranch key={kind} views={trees[kind]} locale={locale} />}
-    <p className={styles.source}>{t.source}: <a href={data.source.url} target="_blank" rel="noreferrer">{data.source.label}</a> · {data.buildVersion}</p>
-  </>;
-}
-
-export function SharedTalentTreeViewer({ code, locale, onClose }: { code: string; locale: Locale; onClose: () => void }) {
-  const t = sharedTalentTreeCopy[locale], decoded = useMemo(() => decodeMythicTalentTree(code), [code]);
+export function SharedTalentTreeViewer({ code, locale, onClose, onCommit }: { code: string; locale: Locale; onClose: () => void; onCommit: (code: string) => void }) {
+  const t = sharedTalentTreeCopy[locale], edit = sharedBuildDraftCopy[locale];
+  const [valid, setValid] = useState(true);
+  const [draft, setDraft] = useState(code), [editing, setEditing] = useState(false), [requestedHero, setRequestedHero] = useState<number | null>(null), [reset, setReset] = useState(0);
+  const original = useMemo(() => decodeMythicTalentTree(code), [code]);
+  const draftRef = useRef(draft);
+  useEffect(() => { draftRef.current = draft; }, [draft]);
+  const theme = original.ok ? getTalentSpecThemeById(original.specId) : undefined;
+  const hero = requestedHero ?? (original.ok && original.heroSubtreeId ? original.heroSubtreeId : theme?.heroPaths[0].id);
+  const requestKey = original.ok ? `${original.specId}:${hero}:${locale}:${requestedHero !== null ? 1 : 0}:${reset}` : "invalid";
   const [loaded, setLoaded] = useState<Loaded>({ state: "loading" }), [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    const controller = new AbortController();
-    const spec = decoded.ok ? getTalentSpecThemeById(decoded.specId) : undefined;
-    if (!decoded.ok || !spec) return;
-    const hero = decoded.heroSubtreeId || spec.heroPaths[0].id;
+    const controller = new AbortController(), [spec, hero, lang, explicitHero] = requestKey.split(":");
+    if (!getTalentSpecThemeById(Number(spec))) return;
     const timer = window.setTimeout(() => { controller.abort(); setLoaded({ state: "failed" }); }, 25_000);
-    void fetch(`/api/wow/shared-talent-tree?${new URLSearchParams({ spec: String(decoded.specId), hero: String(hero), lang: locale })}`, { signal: controller.signal }).then(async response => {
+    void fetch(`/api/wow/shared-talent-tree?${new URLSearchParams({ spec, hero, lang })}`, { signal: controller.signal, cache: "no-store" }).then(async response => {
       if (!response.ok) throw new Error("Tree unavailable");
-      const data = await response.json() as SharedTalentTreeData;
+      const data = await response.json() as TalentCalculatorData;
       if (controller.signal.aborted) return;
-      try { setLoaded({ state: "ready", data, trees: projectSharedTalentTree(data, code) }); }
-      catch { setLoaded({ state: "mismatch" }); }
+      try {
+        const decoded = decodeMythicTalentTree(draftRef.current);
+        const next = decoded.ok && explicitHero === "1" && decoded.heroSubtreeId !== data.heroSubtreeId ? changeSharedHero(data, draftRef.current) : draftRef.current;
+        if (!Array.isArray(data.loadoutNodes)) throw new Error("Calculator metadata missing");
+        projectSharedTalentTree(data, next);
+        setValid(true); setDraft(next); setLoaded({ state: "ready", data, initialCode: next, key: requestKey });
+      } catch { setLoaded({ state: "mismatch" }); }
     }).catch(() => { if (!controller.signal.aborted) setLoaded({ state: "failed" }); }).finally(() => window.clearTimeout(timer));
     return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [code, decoded, locale, attempt]);
+  }, [requestKey, attempt]);
   return <AtlasDialog open onClose={onClose} label={t.title} className={styles.dialog} variant="sheet">
     <header className={styles.header}><h2>{t.title}</h2><AtlasButton variant="ghost" onClick={onClose}>{t.close}</AtlasButton></header>
-    <div className={styles.body} data-testid="shared-talent-tree"><p>{t.hint}</p>
-      {loaded.state === "loading" ? <p role="status">{t.loading}</p> : loaded.state === "ready" ? <LoadedTree value={loaded} locale={locale} /> : <div role="alert"><p>{loaded.state === "mismatch" ? t.mismatch : t.failed}</p><AtlasButton onClick={() => { setLoaded({ state: "loading" }); setAttempt(value => value + 1); }}>{t.retry}</AtlasButton></div>}
+    <div className={styles.body} data-testid="shared-talent-tree"><p>{editing ? edit.hint : t.hint}</p><div className={styles.editActions}>{!editing ? <AtlasButton onClick={() => setEditing(true)}>{edit.edit}</AtlasButton> : <><AtlasButton onClick={() => { onCommit(draft); onClose(); }} disabled={!valid || draft === code || loaded.state !== "ready" || loaded.key !== requestKey}>{edit.use}</AtlasButton><AtlasButton variant="ghost" onClick={() => { setDraft(code); setRequestedHero(null); setReset(value => value + 1); }}>{edit.reset}</AtlasButton></>}</div>
+      {loaded.state === "loading" || (loaded.state === "ready" && loaded.key !== requestKey) ? <p role="status">{t.loading}</p> : loaded.state === "ready" ? <LoadedCalculator key={requestKey} value={loaded} locale={locale} editing={editing} onChange={setDraft} onHeroChange={setRequestedHero} onValidityChange={setValid} /> : <div role="alert"><p>{loaded.state === "mismatch" ? t.mismatch : t.failed}</p><AtlasButton onClick={() => { setLoaded({ state: "loading" }); setAttempt(value => value + 1); }}>{t.retry}</AtlasButton></div>}
     </div>
   </AtlasDialog>;
 }
