@@ -58,7 +58,7 @@ export function SearchPage({
         actions={(
           <SearchRouteForm className={styles.searchForm} action={`${prefix}/search`} role="search">
             <Search className={styles.searchIcon} aria-hidden="true" />
-            <input id="platform-search-input" name="q" type="search" defaultValue={query} aria-label={t.inputLabel} placeholder={t.placeholder} autoComplete="off" autoFocus={!query} />
+            <input id="platform-search-input" name="q" type="search" defaultValue={query} aria-label={t.inputLabel} placeholder={t.placeholder} autoComplete="off" />
             {kind !== "all" ? <input type="hidden" name="type" value={kind} /> : null}
             {selectedGames.length < catalogGames.length ? selectedGames.map((game) => <input key={game} type="hidden" name="game" value={game} />) : null}
             {query
@@ -107,7 +107,7 @@ export function SearchPage({
           <Suspense fallback={<p className={styles.resultCount} aria-live="polite">{t.counting}</p>}>
             <SearchResultCount results={results} lang={lang} query={query} />
           </Suspense>
-          {results.map(({ gameId, result }) => (
+          {query && results.map(({ gameId, result }) => (
             <Suspense key={gameId} fallback={<SearchGameFallback gameId={gameId} lang={lang} />}>
               <SearchGameResults gameId={gameId} result={result} lang={lang} showGame={multiGame} />
             </Suspense>
@@ -181,6 +181,7 @@ async function SearchResultCount({
   lang: Lang;
   query: string;
 }) {
+  if (!query) return <p className={styles.resultCount}>{searchCopy[lang].startHint}</p>;
   const all = await Promise.all(results.map(({ result }) => result));
   const count = all.reduce((total, result) => total + result.items.length, 0);
   const unavailable = all.every((result) => result.unavailableGames.length > 0);

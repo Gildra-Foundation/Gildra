@@ -2,15 +2,14 @@ import type { ComponentProps } from "react";
 import Link from "next/link";
 import { AtlasFrameShell } from "@gildra/atlas-ui";
 import { atlasScenes, type AtlasScene, type AtlasSceneId } from "@/lib/atlas/scenes";
-import { GAMES } from "@/lib/games/registry";
-import { t } from "@/lib/i18n";
+import { atlasFooterCopy } from "./atlasFooterCopy";
 
 type ShellProps = ComponentProps<typeof AtlasFrameShell>;
 
 export type AtlasFrameProps = Omit<ShellProps, "footer" | "ember" | "glow"> & {
   /** Section scene from lib/atlas/scenes.ts (art, crop, shade, tint, sparks, living light); explicit props override it. */
   scene?: AtlasSceneId;
-  /** Slim legal line (Blizzard trademark notice, "What's new", privacy) under the content. */
+  /** Slim legal line (Blizzard trademark notice and privacy) under the content. */
   footer?: boolean;
 };
 
@@ -34,10 +33,9 @@ export function AtlasFrame({ scene, art, artPosition, artShade, tint, footer = t
       // The scene's living light only belongs to the scene's own painting.
       glow={art ? undefined : preset.glow}
       footer={footer ? {
-        legal: t(locale)(GAMES.wow.legal),
+        legal: atlasFooterCopy[locale].legal,
         links: <>
-          <Link href={locale === "ru" ? "/ru/wow/whats-new" : "/wow/whats-new"} prefetch={false}>{t(locale)("What's new")}</Link>
-          <Link href={locale === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(locale)("Privacy Policy")}</Link>
+          <Link href={locale === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{atlasFooterCopy[locale].privacy}</Link>
         </>,
       } : false}
     />

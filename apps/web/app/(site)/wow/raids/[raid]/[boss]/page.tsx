@@ -1,3 +1,4 @@
+import { isPublicationReady } from "@/lib/wow/publication";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RaidBossGuide } from "@/components/wow/raid/RaidBossGuide";
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${boss.nameEn} — Midnight Raid Guide — Gildra`,
     description: `${boss.nameEn} source-backed strategy draft for Midnight Season 1. Ability and loot coverage is not yet automatically complete.`,
     alternates: { canonical: path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
-    robots: { index: false, follow: true },
+    robots: { index: isPublicationReady(`/wow/raids/${raid.slug}/${boss.slug}`), follow: true },
   };
 }
 

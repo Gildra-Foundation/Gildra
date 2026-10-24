@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Metadata } from "next";
 import { auth, isBattleNetAuthConfigured } from "@/auth";
 import { CharacterRosterConnectedPage } from "@/components/wow/characters/CharacterRosterConnectedPage";
@@ -25,5 +26,5 @@ export default async function CharactersPage() {
   if (!session?.battleNetAccessToken) {
     return <CharacterRosterEntryPage locale="ru" accountName={accountName} apiError={apiError} />;
   }
-  return <CharacterRosterConnectedPage locale="ru" accountName={accountName} pendingRegions={[preferredRegion, ...remainingRegions]} />;
+  return <CharacterRosterConnectedPage key={createHash("sha256").update(session.user?.id ?? "").digest("hex")} locale="ru" accountName={accountName} pendingRegions={[preferredRegion, ...remainingRegions]} />;
 }

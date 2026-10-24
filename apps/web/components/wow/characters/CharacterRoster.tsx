@@ -48,13 +48,16 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
   const [loading, setLoading] = useState(pendingRegions.length > 0);
   const [query, setQuery] = useState("");
   const [classId, setClassId] = useState(0);
+  const [region, setRegion] = useState<string>("all");
+  const [failedRegions, setFailedRegions] = useState<RegionResult[]>([]);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     if (!pendingRegions.length) return;
     const controller = new AbortController();
     setLoading(true);
     setError(undefined);
-    fetch(`/api/wow/characters/roster?regions=${pendingRegions.join(",")}&locale=${locale}`, { cache: "no-store", signal: controller.signal })
+    fetch(`/api/wow/characters/roster?regions=${pendingRegions.join(",")}&locale=${locale}`, { cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]) })
       .then(async (response): Promise<RegionResult[]> => {
         const payload = await response.json() as { regions?: RegionResult[] };
         if (!response.ok) return [{ region: pendingRegions[0], characters: [], status: response.status }];
@@ -63,6 +66,7 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
       .catch((): RegionResult[] => [{ region: pendingRegions[0], characters: [], status: 503 }])
       .then((results) => {
         if (controller.signal.aborted) return;
+        setFailedRegions(results.filter(result => result.status !== 200));
         const received = results.flatMap((result) => result.characters);
         if (received.length) {
           const unique = new Map(received.map((character) => [`${character.region}:${character.accountId}:${character.id}`, character]));
@@ -74,7 +78,7 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [locale, localeCode, pendingRegions]);
+  }, [locale, localeCode, pendingRegions, retry]);
 
   const classes = useMemo(
     () => Array.from(new Map(characters.map((character) => [character.playableClass.id, character.playableClass.name])).entries())
@@ -85,9 +89,9 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
     const needle = query.trim().toLocaleLowerCase(localeCode);
     return characters.filter((character) => {
       const haystack = `${character.name} ${character.realm.name} ${character.playableClass.name} ${character.playableRace.name}`.toLocaleLowerCase(localeCode);
-      return (classId === 0 || character.playableClass.id === classId) && (!needle || haystack.includes(needle));
+      return (region === "all" || character.region === region) && (classId === 0 || character.playableClass.id === classId) && (!needle || haystack.includes(needle));
     });
-  }, [characters, classId, localeCode, query]);
+  }, [characters, classId, localeCode, query, region]);
 
   if (error && !characters.length) {
     const retry = error === "unavailable" || error === "rate-limited";
@@ -121,7 +125,7 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
     );
   }
 
-  const filtersActive = Boolean(query) || classId !== 0;
+  const filtersActive = Boolean(query) || classId !== 0 || region !== "all";
   const count = (filtersActive ? copy.countFiltered : copy.countAll).replace("{shown}", String(filtered.length)).replace("{total}", String(characters.length));
   const topLevel = characters.reduce((highest, character) => Math.max(highest, character.level), 0);
   const summary = characters.length ? [
@@ -139,8 +143,12 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
       </div>
       {summary.length ? <AtlasStats items={summary} label={copy.summaryLabel} className={styles.summary} /> : null}
 
+      {failedRegions.length > 0 && characters.length > 0 && <AtlasNotice title={locale === "ru" ? "Некоторые регионы недоступны" : "Some regions are unavailable"}>
+        {failedRegions.map(result => `${result.region.toUpperCase()}: ${copy.stateTitle[result.status === 429 ? "rate-limited" : result.status === 403 ? "forbidden" : result.status === 401 ? "expired" : "unavailable"]}`).join(", ")}. {locale === "ru" ? "Доступные персонажи показаны ниже." : "Available characters are shown below."} <button type="button" onClick={() => setRetry(value => value+1)}>{copy.retry}</button>
+      </AtlasNotice>}
       {characters.length ? (
         <div className={styles.filters}>
+          <label className={styles.field}><span>{locale === "ru" ? "Регион" : "Region"}</span><select value={region} onChange={event => setRegion(event.target.value)}><option value="all">{locale === "ru" ? "Все регионы" : "All regions"}</option>{pendingRegions.map(value => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label>
           <label className={styles.field}>
             <span>{copy.searchLabel}</span>
             <span className={styles.inputWrap}><Search aria-hidden="true" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} /></span>
@@ -181,7 +189,7 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
       ) : (
         <AtlasNotice
           title={loading ? copy.loadingRegions : copy.emptyTitle}
-          action={filtersActive ? <button type="button" data-folio-action="quiet" onClick={() => { setQuery(""); setClassId(0); }}>{copy.reset}</button> : undefined}
+          action={filtersActive ? <button type="button" data-folio-action="quiet" onClick={() => { setQuery(""); setClassId(0); setRegion("all"); }}>{copy.reset}</button> : undefined}
         >
           {loading ? copy.loadingText : filtersActive ? copy.noMatches : copy.emptyText}
         </AtlasNotice>

@@ -99,6 +99,17 @@ def validate_candidate(
     if contexts != EXPECTED_CONTEXTS:
         raise DatasetValidationError("candidate is missing an activity/role tier list")
 
+    expected_season = os.getenv("WOW_CURRENT_SEASON", "midnight-season-2")
+    for page in pages:
+        if page.get("season_id") != expected_season:
+            raise DatasetValidationError("rating belongs to an unknown or different season")
+        try:
+            stamp = datetime.fromisoformat(page["fetched_at"])
+            if stamp.tzinfo is None or (stamp - datetime.now(UTC)).total_seconds() > 300:
+                raise ValueError("invalid timestamp")
+        except (KeyError, TypeError, ValueError):
+            raise DatasetValidationError("rating has no valid source timestamp") from None
+
     records = _flatten(payload)
     if not 60 <= len(records) <= 120:
         raise DatasetValidationError(
@@ -266,15 +277,17 @@ def refresh_tierlist(
                         (dataset_id,),
                     )
                     previous_count: int | None = None
+                    previous_payload: dict[str, Any] | None = None
                     if current_snapshot_id:
                         cursor.execute(
-                            "SELECT record_count FROM dataset_snapshots WHERE id = %s",
+                            "SELECT record_count, payload FROM dataset_snapshots WHERE id = %s",
                             (current_snapshot_id,),
                         )
                         previous = cursor.fetchone()
                         previous_count = previous[0] if previous else None
+                        previous_payload = previous[1] if previous else None
 
-            payload = collect_tierlist_dataset()
+            payload = collect_tierlist_dataset(previous=previous_payload)
             records = validate_candidate(payload, previous_record_count=previous_count)
             snapshot_hash = _sha256(_semantic_payload(payload))
             snapshot_id: UUID | None = None

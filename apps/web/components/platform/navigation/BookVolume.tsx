@@ -5,21 +5,16 @@ import { usePathname, useRouter } from "next/navigation";
 import type { Lang } from "@/lib/i18n";
 import { PhysicalBookFrame, physicalBookMaterials } from "@/components/wow/audit/PhysicalBookFrame";
 import { bookArtworkSrc } from "./bookArtwork";
+import { mvpChapterIds, routeSections, chapterDescriptions } from "@/lib/routes/registry";
+import { OPEN_SITE_SEARCH } from "@/components/platform/search/siteSearchIndex";
 import styles from "./bookNavigation.module.css";
 
 type NavigationItem = { href: string; ru: string; en: string; detailRu: string; detailEn: string };
 
 // Same destinations, labels and grouping as the former WorkspaceNavigator.
-const primaryItems: NavigationItem[] = [
-  { href: "/", ru: "Игровой портал", en: "Game portal", detailRu: "Начало ваших приключений", detailEn: "Where your adventures begin" },
-  { href: "/wow/characters", ru: "Персонажи", en: "Characters", detailRu: "Герои, экипировка и прогресс", detailEn: "Heroes, equipment and progress" },
-  { href: "/tier-lists", ru: "Тир-листы", en: "Tier lists", detailRu: "Рейтинги специализаций для Mythic+ и рейдов", detailEn: "Specialization rankings for Mythic+ and raids" },
-  { href: "/wow/mythic-plus", ru: "Эпохальный+", en: "Mythic+", detailRu: "Подземелья и ключи", detailEn: "Dungeons and keystones" },
-  { href: "/wow/raids", ru: "Рейдовый журнал", en: "Raid journal", detailRu: "Рейды и их обитатели", detailEn: "Raids and their inhabitants" },
-  { href: "/wow/lairs", ru: "Логова и мировые боссы", en: "Lairs & world bosses", detailRu: "Испытания открытого мира", detailEn: "Challenges of the open world" },
-];
+const primaryItems: NavigationItem[] = mvpChapterIds.map(id => ({ href: routeSections[id].path, ru: routeSections[id].title.ru, en: routeSections[id].title.en, detailRu: chapterDescriptions[id].ru, detailEn: chapterDescriptions[id].en }));
 const utilityItems: NavigationItem[] = [
-  { href: "/search", ru: "Поиск по Азероту", en: "Search Azeroth", detailRu: "Найдите нужную страницу в хрониках Азерота", detailEn: "Find your next page in the chronicles of Azeroth" },
+  { href: "/search", ru: "Поиск по базе", en: "Search the database", detailRu: "Предметы, заклинания и задания", detailEn: "Items, spells and quests" },
 ];
 // WoW-only MVP: the former "Other worlds archive" (/genshin) entry is gone —
 // that route answers 404 (lib/mvp.ts).
@@ -110,7 +105,7 @@ export function BookVolume({ lang, active, titleId, onNavigate, closeButton, lay
         <p className={styles.runningTitle}>{ru ? "На полях хроник" : "In the margins"}</p>
         <h2>{ru ? "Путеводитель" : "Companion"}</h2>
         <span className={styles.ornament} aria-hidden="true" />
-        <nav className={styles.guide} aria-label={ru ? "Путеводитель" : "Companion"}>{links([...utilityItems, ...archiveItems])}</nav>
+        <nav className={styles.guide} aria-label={ru ? "Путеводитель" : "Companion"}><button type="button" className={styles.entry} onClick={() => { onNavigate?.(); requestAnimationFrame(() => window.dispatchEvent(new CustomEvent(OPEN_SITE_SEARCH))); }}><span className={styles.entryCopy}><span className={styles.entryLabel}>{ru ? "Найти раздел" : "Find a section"}</span><span className={styles.entryDetail}>{ru ? "Поиск по сайту" : "Site search"}</span></span></button>{links([...utilityItems, ...archiveItems])}</nav>
         <div className={styles.accountPlate}>
         <p className={styles.accountKicker}>{ru ? "Личная летопись" : "Your own chronicle"}</p>
         <h3 className={styles.accountHeading}>{ru ? "Ваши герои" : "Your heroes"}</h3>

@@ -19,6 +19,7 @@ const aliases: Record<string, string> = {
   Rush: sourceNames["Blazing Rush"], Imprint: sourceNames["Earthbound's Imprint"], Barrier: sourceNames["Stormcloud Barrier"],
   Cloudburst: sourceNames["Interrupting Cloudburst"], "Knot of Snakes": sourceNames["A Knot of Snakes"], Conduction: sourceNames["Imbued Conduction"],
   Xathuux: sourceNames["Xathuux the Annihilator"],
+  Draghar: sourceNames["Defier Draghar"], Ryvati: sourceNames["High Channeler Ryvati"],
   "Mirror Images": "зеркальные образы",
   "Lightblossom Trinity": `${sourceNpcNames[243028].ru}, ${sourceNpcNames[243030].ru} и ${sourceNpcNames[243029].ru}`,
   Lightblossom: "цветок",
@@ -35,7 +36,12 @@ const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const pattern = new RegExp(`(?<![A-Za-z])(?:${[...names.keys()].sort((a, b) => b.length - a.length).map(escape).join("|")})(?![A-Za-z])`, "g");
 
 /** Display-only route prose: keep English keys, IDs, saved routes and calculations intact. */
-export function wowRouteText(value: string, lang: Lang) {
+export function wowRouteText(value: string, lang: Lang, quoteNames = false) {
   if (lang === "en") return value === "Adderis и Aspix" ? "Adderis and Aspix" : value;
-  return value.replace(/[‘’]/g, "'").replace(pattern, (name) => names.get(name) ?? name);
+  return value.replace(/[‘’]/g, "'").replace(pattern, (name, offset: number, original: string) => {
+    const translated = names.get(name) ?? name;
+    // Quoted spell/NPC names retain their exact source form inside Russian prose.
+    return quoteNames && /^[А-ЯЁ]/.test(translated) && !/[«“"]/.test(original[offset - 1] ?? "")
+      ? `«${translated}»` : translated;
+  });
 }

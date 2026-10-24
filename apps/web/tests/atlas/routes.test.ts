@@ -22,8 +22,9 @@ describe("route registry", () => {
     const meta = sectionMetadata("lairs", "ru");
     assert.equal(meta.title, "Логова и мировые боссы Midnight Сезон 2 — Gildra");
     assert.deepEqual(meta.alternates, { canonical: "/ru/wow/lairs", languages: { en: "/wow/lairs", ru: "/ru/wow/lairs", "x-default": "/wow/lairs" } });
-    assert.deepEqual(meta.robots, { index: false, follow: true });
-    assert.equal(sectionMetadata("database", "en").robots, undefined);
+    assert.deepEqual(meta.robots, { index: true, follow: true });
+    assert.deepEqual(sectionMetadata("season2", "ru").robots, { index: false, follow: true });
+    assert.deepEqual(sectionMetadata("database", "en").robots, { index: true, follow: true });
   });
   it("builds breadcrumbs through the parents", () => {
     assert.deepEqual(trail("ru", "lairs"), [{ label: "World of Warcraft", href: "/ru/wow" }, { label: "Логова и мировые боссы" }]);

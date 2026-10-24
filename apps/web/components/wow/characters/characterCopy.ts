@@ -47,22 +47,22 @@ const en = {
   entry: {
     eyebrow: "Official Blizzard profile",
     title: "Account characters",
-    lede: "Sign in with Battle.net and your WoW characters load from the official profile: equipment, talents and combat tools for each hero.",
+    lede: "Sign in with Battle.net and your WoW characters load from the official profile: equipment, talents and saved builds for each hero.",
     panelTitle: "Connect your Battle.net account",
-    panelText: "Gildra never shows sample characters — only the ones on your account.",
+    panelText: "Choose your region and a character from your World of Warcraft account.",
     expiredTitle: "Battle.net session expired",
     expiredText: "Connect your account again to refresh access to your character list.",
     unlocksTitle: "Each hero opens with",
     unlocks: [
       ["Equipment", "Gear and item level from the official profile."],
       ["Talents", "The active build in the talent calculator."],
-      ["Combat tools", "Rotation and damage tools for the hero’s specialization."],
+      ["Build library", "Save and organize talent builds for your character."],
     ] as [string, string][],
   },
   roster: {
     eyebrowConnected: "Battle.net connected",
     title: "Account characters",
-    lede: "Choose a hero to open their equipment, talents and combat tools.",
+    lede: "Choose a hero to open their equipment, talents and saved builds.",
     signOut: "Sign out",
   },
   login: {
@@ -146,22 +146,22 @@ const ru: typeof en = {
   entry: {
     eyebrow: "Официальный профиль Blizzard",
     title: "Персонажи аккаунта",
-    lede: "Войдите через Battle.net — и персонажи WoW загрузятся из официального профиля: экипировка, таланты и боевые инструменты каждого героя.",
+    lede: "Войдите через Battle.net — и персонажи WoW загрузятся из официального профиля: экипировка, таланты и сохранённые билды каждого героя.",
     panelTitle: "Подключите аккаунт Battle.net",
-    panelText: "Gildra не показывает тестовых персонажей — только тех, что есть на вашем аккаунте.",
+    panelText: "Выберите регион и персонажа из своего аккаунта World of Warcraft.",
     expiredTitle: "Сессия Battle.net истекла",
     expiredText: "Подключите аккаунт заново, чтобы обновить доступ к списку персонажей.",
     unlocksTitle: "Для каждого героя откроются",
     unlocks: [
       ["Экипировка", "Снаряжение и уровень предметов из официального профиля."],
       ["Таланты", "Активная сборка в калькуляторе талантов."],
-      ["Боевые инструменты", "Ротация и расчёт урона для специализации героя."],
+      ["Библиотека билдов", "Сохраняйте и упорядочивайте таланты персонажа."],
     ],
   },
   roster: {
     eyebrowConnected: "Battle.net подключён",
     title: "Персонажи аккаунта",
-    lede: "Выберите героя, чтобы открыть его экипировку, таланты и боевые инструменты.",
+    lede: "Выберите героя, чтобы открыть его экипировку, таланты и сохранённые билды.",
     signOut: "Выйти",
   },
   login: {

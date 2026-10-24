@@ -12,8 +12,8 @@ const captureBrowserErrors = (target, bucket) => {
 captureBrowserErrors(page, errors);
 
 try {
-  const response = await page.goto(`${baseUrl}/talents`, { waitUntil: "domcontentloaded", timeout: 120_000 });
-  if (!response || response.status() !== 200) throw new Error(`Expected /talents to return 200, got ${response?.status() ?? "no response"}`);
+  const response = await page.goto(`${baseUrl}/ru/talents/fury-warrior`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+  if (!response || response.status() !== 200) throw new Error(`Expected /ru/talents/fury-warrior to return 200, got ${response?.status() ?? "no response"}`);
 
   const nodes = page.locator(".tc-node");
   await nodes.first().waitFor({ state: "attached", timeout: 120_000 });
@@ -92,14 +92,15 @@ try {
   const dependencyPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   captureBrowserErrors(dependencyPage, errors);
   const dependencyPayload = Buffer.from(JSON.stringify({ ranks: [["class-90343", 1]], choices: [] })).toString("base64url");
-  await dependencyPage.goto(`${baseUrl}/talents?loadout=${dependencyPayload}`, { waitUntil: "commit", timeout: 120_000 });
+  await dependencyPage.goto(`${baseUrl}/ru/talents/fury-warrior?hero=61&loadout=${dependencyPayload}`, { waitUntil: "commit", timeout: 120_000 });
   await dependencyPage.locator(".tc-node").first().waitFor({ state: "attached", timeout: 120_000 });
   await dependencyPage.locator('.talent-calculator[data-interactive="true"]').waitFor({ timeout: 30_000 });
+  await dependencyPage.locator(".tc-hero-panel .tc-node:not([aria-disabled='true'])").first().waitFor({ state: "attached" });
   const crossTreeDependency = { tested: true, passed: (await dependencyPage.locator(".tc-hero-panel .tc-node:not([aria-disabled='true'])").count()) >= 1, unlockedHeroNodes: await dependencyPage.locator(".tc-hero-panel .tc-node:not([aria-disabled='true'])").count() };
   await dependencyPage.close();
   const cascadePage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   captureBrowserErrors(cascadePage, errors);
-  await cascadePage.goto(`${baseUrl}/talents`, { waitUntil: "commit", timeout: 120_000 });
+  await cascadePage.goto(`${baseUrl}/ru/talents/fury-warrior`, { waitUntil: "commit", timeout: 120_000 });
   await cascadePage.locator(".tc-node").first().waitFor({ state: "attached", timeout: 120_000 });
   await cascadePage.locator('.talent-calculator[data-interactive="true"]').waitFor({ timeout: 30_000 });
   const parentNode = cascadePage.locator('[data-node-id="class-90343"]');
@@ -113,21 +114,21 @@ try {
   await childNode.click();
   await parentNode.click({ button: "right" });
   const cascadeChildLabel = await childNode.getAttribute("aria-label");
-  const cascadePassed = cascadeChildLabel?.includes("ранг 0 из") === true;
+  const cascadePassed = cascadeChildLabel?.includes("ранг 0/") === true;
   await cascadePage.close();
   const illegalPayload = Buffer.from(JSON.stringify({ v: 1, ranks: [["class-90344", 1]], choices: [] })).toString("base64url");
   const illegalPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   captureBrowserErrors(illegalPage, errors);
-  await illegalPage.goto(`${baseUrl}/talents?loadout=${illegalPayload}`, { waitUntil: "commit", timeout: 120_000 });
+  await illegalPage.goto(`${baseUrl}/ru/talents/fury-warrior?loadout=${illegalPayload}`, { waitUntil: "commit", timeout: 120_000 });
   await illegalPage.locator(".tc-node").first().waitFor({ state: "attached", timeout: 120_000 });
   await illegalPage.locator('.talent-calculator[data-interactive="true"]').waitFor({ timeout: 30_000 });
-  const illegalLoadoutPoints = await illegalPage.locator(".tc-total-points").innerText();
+  const illegalLoadoutPoints = await illegalPage.locator(".tc-save-copy small").innerText();
   const illegalLoadoutNotice = await illegalPage.locator(".tc-toast").innerText();
   await illegalPage.close();
 
   const persistedNode = page.locator('[data-node-id="class-90344"]');
   await persistedNode.click();
-  const selectedPoints = await page.locator(".tc-total-points").innerText();
+  const selectedPoints = await page.locator(".tc-save-copy small").innerText();
   await page.locator(".tc-use-rotation").click();
   const loadoutUrl = page.url();
   const encodedLoadout = new URL(loadoutUrl).searchParams.get("loadout");
@@ -136,20 +137,21 @@ try {
   await page.reload({ waitUntil: "commit", timeout: 120_000 });
   await page.locator(".tc-node").first().waitFor({ state: "attached", timeout: 120_000 });
   await page.locator('.talent-calculator[data-interactive="true"]').waitFor({ timeout: 30_000 });
-  const restoredPoints = await page.locator(".tc-total-points").innerText();
+  const restoredPoints = await page.locator(".tc-save-copy small").innerText();
   const restoredUrl = page.url();
   const restoredTooltipCount = await page.locator(".tc-tooltip").count();
   await page.locator(".tc-build-select").click();
   await page.getByRole("menuitem", { name: "Сброс" }).click();
-  const undoPoints = await page.locator(".tc-total-points").innerText();
+  const undoPoints = await page.locator(".tc-save-copy small").innerText();
   const undoButton = page.locator(".tc-toast").getByRole("button", { name: "Отменить" });
   const undoVisible = await undoButton.isVisible();
   await undoButton.click();
-  const undonePoints = await page.locator(".tc-total-points").innerText();
+  const undonePoints = await page.locator(".tc-save-copy small").innerText();
   const persistedNodeAfterReload = page.locator('[data-node-id="class-90344"]');
   await persistedNodeAfterReload.click({ button: "right" });
-  const resetPoints = await page.locator(".tc-total-points").innerText();
+  const resetPoints = await page.locator(".tc-save-copy small").innerText();
   await page.getByLabel("Поиск талантов").fill("нет такого таланта");
+  await page.locator(".tc-node.is-dimmed").first().waitFor({ state: "attached" });
   const dimmedNodes = await page.locator(".tc-node.is-dimmed").count();
   const dimmedEdges = await page.locator(".tc-lines line.is-dimmed").count();
   await page.locator(".tc-build-select").click();
@@ -164,7 +166,7 @@ try {
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const mobileErrors = [];
   captureBrowserErrors(mobile, mobileErrors);
-  await mobile.goto(`${baseUrl}/talents`, { waitUntil: "commit", timeout: 120_000 });
+  await mobile.goto(`${baseUrl}/ru/talents/fury-warrior`, { waitUntil: "commit", timeout: 120_000 });
   await mobile.locator(".tc-node").first().waitFor({ state: "attached", timeout: 120_000 });
   await mobile.locator('.talent-calculator[data-interactive="true"]').waitFor({ timeout: 30_000 });
   await mobile.waitForFunction(() => {
@@ -184,7 +186,7 @@ try {
   const mobileFocusRestored = await mobile.evaluate(() => document.activeElement?.matches("[data-pvp-slot]") === true);
   const narrow = await browser.newPage({ viewport: { width: 320, height: 844 } });
   captureBrowserErrors(narrow, mobileErrors);
-  await narrow.goto(`${baseUrl}/talents`, { waitUntil: "commit", timeout: 120_000 });
+  await narrow.goto(`${baseUrl}/ru/talents/fury-warrior`, { waitUntil: "commit", timeout: 120_000 });
   await narrow.locator(".tc-node").first().waitFor({ state: "attached", timeout: 120_000 });
   await narrow.locator('.talent-calculator[data-interactive="true"]').waitFor({ timeout: 30_000 });
   const narrowLayout = await narrow.evaluate(() => ({ documentOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth, headerOverflow: (document.querySelector(".tc-column-heads")?.scrollWidth ?? 0) > (document.querySelector(".tc-column-heads")?.clientWidth ?? 0) }));

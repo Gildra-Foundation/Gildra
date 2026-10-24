@@ -51,6 +51,8 @@ def candidate() -> dict:
             {
                 "activity": activity,
                 "role": role,
+                "season_id": "midnight-season-2",
+                "fetched_at": "2026-10-18T00:00:00+00:00",
                 "source_url": specs[0]["source_url"],
                 "spec_count": len(specs),
                 "tiers": [
@@ -71,6 +73,14 @@ def candidate() -> dict:
 class ValidateCandidateTest(unittest.TestCase):
     def test_accepts_complete_six_page_candidate(self) -> None:
         self.assertEqual(60, len(validate_candidate(candidate(), previous_record_count=70)))
+
+    def test_rejects_wrong_season_and_unknown_freshness(self) -> None:
+        for key, value in [("season_id", "midnight-season-1"), ("season_id", ""), ("fetched_at", ""), ("fetched_at", "2099-01-01T00:00:00Z")]:
+            with self.subTest(key=key, value=value):
+                payload = candidate()
+                payload["pages"][0][key] = value
+                with self.assertRaises(DatasetValidationError):
+                    validate_candidate(payload)
 
     def test_rejects_a_partial_context_set(self) -> None:
         payload = candidate()

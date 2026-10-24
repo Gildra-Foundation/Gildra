@@ -1,0 +1,116 @@
+# Persistent MVP review environment. Production is reachable only through the
+# catalog gateway's GET/HEAD allowlist; workspace writes use postgres-staging.
+name: gildra-staging
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+
+services:
+  postgres-staging:
+    image: postgres@sha256:8189a1f6e40904781fc9e2612687877791d21679866db58b1de996b31fc312e4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gildra_staging
+      POSTGRES_DB: gildra_staging
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets: [postgres_password]
+    volumes:
+      - mvp-postgres:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    networks: [staging]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    logging: *logging
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U gildra_staging -d gildra_staging"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api-staging:
+    image: ${STAGING_API_IMAGE:?STAGING_API_IMAGE required}
+    restart: unless-stopped
+    user: "65532:65532"
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    environment: {GILDRA_STAGING: "1"}
+    env_file: [./database.env]
+    networks:
+      staging: {aliases: [api]}
+    depends_on:
+      postgres-staging: {condition: service_healthy}
+    mem_limit: 256m
+    logging: *logging
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:8080/readyz]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  web-staging:
+    image: gildra-web@sha256:18090d52455e0ef6b661d78f20700e537d9ac5b2f0040be2f67319b34712480b
+    restart: unless-stopped
+    user: "1001:1001"
+    init: true
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /app/.next/cache:size=128m,mode=0750,uid=1001,gid=1001
+      - /app/.next/cache/images:size=256m,mode=0750,uid=1001,gid=1001
+    env_file: [./auth.env]
+    environment:
+      GILDRA_STAGING: "1"
+      API_INTERNAL_URL: http://api-staging:8080
+      CATALOG_ACCESS_MODE: public
+      CMS_INTERNAL_URL: https://cms.gildra.net
+      CMS_PUBLIC_URL: https://cms.gildra.net
+      CMS_SITE_SLUG: gildra
+      SITE_PUBLIC_ORIGIN: https://staging.gildra.net
+      AUTH_URL: https://staging.gildra.net
+      SENTRY_ENVIRONMENT: staging
+      SENTRY_TRACES_SAMPLE_RATE: "0"
+      ROTATION_ALLOW_MVP_FALLBACK: "false"
+    ports: ["127.0.0.1:3200:3000"]
+    networks: [staging]
+    depends_on:
+      api-staging: {condition: service_healthy}
+    mem_limit: 1g
+    logging: *logging
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/ru').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  edge-staging:
+    image: nginx@sha256:42a516af16b852e33b7682d5ef8acbd5d13fe08fecadc7ed98605ba5e3b26ab8
+    restart: unless-stopped
+    user: "101:101"
+    entrypoint: [nginx, -g, "daemon off;"]
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    security_opt: [no-new-privileges:true]
+    volumes: ["./edge.conf:/etc/nginx/nginx.conf:ro"]
+    networks:
+      staging: {}
+      gildra: {aliases: [mvp-staging-edge]}
+    depends_on:
+      web-staging: {condition: service_healthy}
+    mem_limit: 64m
+    logging: *logging
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:8080/robots.txt]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+networks:
+  staging: {}
+  gildra: {external: true, name: gildra_default}
+volumes:
+  mvp-postgres: {}
+secrets:
+  postgres_password: {file: ./postgres.password}

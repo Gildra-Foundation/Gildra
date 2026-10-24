@@ -1,4 +1,5 @@
 import "server-only";
+import { canBrowsePublication } from "@/lib/wow/publication";
 import { dungeonRoutes, dungeonSlugs } from "@/components/wow/mythic/dungeonRoutes";
 import { getMidnightRaid, raidSlugs } from "@/components/wow/raid/midnightRaidData";
 import { contentManifest, midnightDelves, midnightLairEncounters, midnightClasses, midnightSpecializations } from "@gildra/game-data";
@@ -44,8 +45,8 @@ function entries(locale: Locale): SiteSearchEntry[] {
   for (const slug of raidSlugs) {
     const raid = getMidnightRaid(slug);
     if (!raid) continue;
-    list.push({ t: raid.nameEn, s: label.raid[locale], h: `/wow/raids/${raid.slug}`, k: raid.nameRu });
-    for (const boss of raid.bosses) list.push({ t: boss.nameEn, s: `${label.boss[locale]} · ${raid.nameEn}`, h: `/wow/raids/${raid.slug}/${boss.slug}`, k: boss.nameRu });
+    list.push({ t: locale === "ru" ? raid.nameRu : raid.nameEn, s: label.raid[locale], h: `/wow/raids/${raid.slug}`, k: locale === "ru" ? raid.nameEn : raid.nameRu });
+    for (const boss of raid.bosses) list.push({ t: locale === "ru" ? boss.nameRu : boss.nameEn, s: `${label.boss[locale]} · ${locale === "ru" ? raid.nameRu : raid.nameEn}`, h: `/wow/raids/${raid.slug}/${boss.slug}`, k: locale === "ru" ? boss.nameEn : boss.nameRu });
   }
 
   const manifestRaids = contentManifest.instances as Manifest[];
@@ -53,9 +54,9 @@ function entries(locale: Locale): SiteSearchEntry[] {
   for (const raidSlug of ["venomous-abyss", "sporefall"]) {
     const raid = manifestRaids.find((entry) => entry.canonicalSlug === raidSlug);
     if (!raid?.names.en) continue;
-    list.push({ t: raid.names.en, s: label.raid[locale], h: `/wow/raids/${raidSlug}`, k: raid.names.ru ?? undefined });
+    list.push({ t: raid.names[locale] ?? raid.names.en, s: label.raid[locale], h: `/wow/raids/${raidSlug}`, k: raid.names[other] ?? undefined });
     for (const boss of manifestBosses.filter((entry) => entry.instance === raidSlug).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))) {
-      if (boss.names.en) list.push({ t: boss.names.en, s: `${label.boss[locale]} · ${raid.names.en}`, h: `/wow/raids/${raidSlug}/${boss.canonicalSlug}`, k: boss.names.ru ?? undefined });
+      if (boss.names.en) list.push({ t: boss.names[locale] ?? boss.names.en, s: `${label.boss[locale]} · ${raid.names[locale] ?? raid.names.en}`, h: `/wow/raids/${raidSlug}/${boss.canonicalSlug}`, k: boss.names[other] ?? undefined });
     }
   }
 
@@ -81,7 +82,7 @@ function entries(locale: Locale): SiteSearchEntry[] {
   }
 
   for (const delve of midnightDelves) list.push({ t: delve.name, s: label.delve[locale], h: `/wow/delves/${delve.slug}` });
-  return list;
+  return list.filter(entry => entry.h.startsWith("/talents/") || canBrowsePublication(entry.h));
 }
 
 export function siteSearchIndex() {

@@ -11,7 +11,7 @@ import {
   venomousRaidLocationSource,
   venomousRaidLootSource,
   venomousRaidOverviewSource,
-  venomousRaidVerifiedAt,
+  venomousRaidLootVerifiedAt,
 } from "./venomousAbyssIntel";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { venomousCopy } from "./venomousCopy";
@@ -133,7 +133,7 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
           {Object.entries(tierRewards).map(([slug, reward]) => <dd key={slug}><span>{bossName(slug)}</span>{wowSourceText(reward[locale], locale)}</dd>)}
         </dl>
         <p className={styles.footnote}>
-          {copy.dropChance} <a href={venomousRaidLootSource} target="_blank" rel="noreferrer">{copy.lootSource}<ExternalLink aria-hidden="true" /></a> · {copy.checked(venomousRaidVerifiedAt)}
+          {copy.dropChance} <a href={venomousRaidLootSource} target="_blank" rel="noreferrer">{copy.lootSource}<ExternalLink aria-hidden="true" /></a> · {copy.checked(venomousRaidLootVerifiedAt)}
         </p>
       </AtlasSection>
 

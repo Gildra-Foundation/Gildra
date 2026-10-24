@@ -1,23 +1,25 @@
+import { canBrowsePublication } from "@/lib/wow/publication";
 import Image from "next/image";
-import { ArrowRight, CalendarDays, Castle, Compass, KeyRound, Skull } from "lucide-react";
-import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasSection, AtlasTile, formatAtlasDate, pluralRu } from "@/components/atlas";
+import { ArrowRight, Castle, KeyRound, Skull } from "lucide-react";
+import { AtlasCard, AtlasDisclosure, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasSection, AtlasTile, formatAtlasDate, pluralRu } from "@/components/atlas";
 import { liveSeason } from "@/lib/data/wow";
 import type { Lang } from "@/lib/i18n";
 import { atlasScenes } from "@/lib/atlas/scenes";
-import { specIcon } from "@/lib/games/wow/assets";
+import { talentSpecClasses } from "@/lib/talentSpecThemes";
+import styles from "./wowHome.module.css";
 
 const copy = {
   ru: {
-    eyebrow: "Midnight",
-    title: "Ваш командный центр в Азероте",
-    lede: "Соберите персонажа, продумайте таланты и подготовьте маршрут — всё необходимое для следующего ключа в одном месте.",
+    eyebrow: "Midnight · Сезон 2",
+    title: "World of Warcraft",
+    lede: "Персонажи, таланты и руководства текущего сезона. Выберите, к чему готовитесь: подземелью, рейду или мировому боссу.",
     character: "Открыть персонажа",
     sections: "Разделы",
     mythic: "Эпохальный+", mythicText: "Маршруты, таймер и тактика",
     raids: "Рейды", raidsText: "Боссы, способности и тактика",
     lairs: "Логова и мировые боссы", lairsText: "Где найти, что делать, что падает",
     builds: "Калькулятор талантов",
-    buildsText: "Начните с одной из этих специализаций — остальные выбираются в меню калькулятора.",
+    buildsText: "Выберите класс и специализацию. Таланты можно распределить и отправить ссылкой без входа.",
     open: "Открыть таланты",
     tierLists: "Тир-листы", tierListsText: "Сила специализаций в ключах и рейдах",
     database: "База данных", databaseText: "Предметы, заклинания и задания",
@@ -34,16 +36,16 @@ const copy = {
     lairsNowText: "Где найти и что делать в бою",
   },
   en: {
-    eyebrow: "Midnight",
-    title: "Your command center in Azeroth",
-    lede: "Shape your character, plan talents and prepare a route — everything for the next key in one place.",
+    eyebrow: "Midnight · Season 2",
+    title: "World of Warcraft",
+    lede: "Characters, talents and current-season guides. Prepare for your next dungeon, raid or world boss.",
     character: "Open character",
     sections: "Sections",
     mythic: "Mythic+", mythicText: "Routes, timer and tactics",
     raids: "Raids", raidsText: "Bosses, abilities and strategy",
     lairs: "Lairs and world bosses", lairsText: "Where to find them, what to do, what drops",
     builds: "Talent calculator",
-    buildsText: "Start with one of these specializations — every other one is in the calculator's menu.",
+    buildsText: "Choose your class and specialization. Assign talents and share a build without signing in.",
     open: "Open talents",
     tierLists: "Tier lists", tierListsText: "Specialization strength in keys and raids",
     database: "Database", databaseText: "Items, spells and quests",
@@ -71,11 +73,6 @@ const sections = [
   { key: "database", href: "/database", art: atlasScenes.archive.art, position: "center 45%", inSeason: false },
 ] as const;
 
-const builds = [
-  { slug: "fury-warrior", ru: ["Неистовство", "Воин"], en: ["Fury", "Warrior"], image: specIcon("Fury Warrior") ?? "" },
-  { slug: "retribution-paladin", ru: ["Воздаяние", "Паладин"], en: ["Retribution", "Paladin"], image: specIcon("Retribution Paladin") ?? "" },
-  { slug: "arcane-mage", ru: ["Тайная магия", "Маг"], en: ["Arcane", "Mage"], image: specIcon("Arcane Mage") ?? "" },
-] as const;
 
 export function WowHome({ lang }: { lang: Lang }) {
   const locale = lang === "ru" ? "ru" : "en";
@@ -97,12 +94,10 @@ export function WowHome({ lang }: { lang: Lang }) {
         // Live in the game: the season's content straight from the verified manifest.
         <AtlasSection id="now" title={t.now} description={t.nowText(formatAtlasDate(season.verifiedAt, locale))}>
           <AtlasGrid min={250} fit>
-            <AtlasTile href={href("/wow/midnight/season-2")} icon={<CalendarDays aria-hidden="true" />} title={season.names[locale] ?? ""} text={t.patch(season.patch)} />
-            {season.raids.map((raid) => (
+            {season.raids.filter(raid => canBrowsePublication(raid.path ?? "/wow/raids")).map((raid) => (
               <AtlasTile key={raid.slug} href={href(raid.path ?? "/wow/raids")} icon={<Skull aria-hidden="true" />} title={raid.names[locale] ?? t.currentRaid} text={raid.bosses ? `${t.currentRaid} · ${t.bosses(raid.bosses)}` : t.currentRaid} />
             ))}
             <AtlasTile href={href("/wow/mythic-plus")} icon={<KeyRound aria-hidden="true" />} title={t.dungeons(season.dungeons)} text={t.dungeonsText} />
-            <AtlasTile href={href("/wow/delves")} icon={<Compass aria-hidden="true" />} title={t.delves(season.delves)} text={t.delvesText} />
             <AtlasTile href={href("/wow/lairs")} icon={<Castle aria-hidden="true" />} title={t.lairsNow(season.lairs, season.worldBosses)} text={t.lairsNowText} />
           </AtlasGrid>
         </AtlasSection>
@@ -126,12 +121,21 @@ export function WowHome({ lang }: { lang: Lang }) {
       </AtlasSection>
 
       <AtlasSection id="builds" title={t.builds} description={t.buildsText}>
-        <AtlasGrid min={260} fit>
-          {builds.map((build) => {
-            const [spec, className] = build[locale];
-            return <AtlasTile key={build.slug} href={href(`/talents/${build.slug}`)} icon={<Image src={build.image} alt="" width={44} height={44} />} title={spec} text={`${className} · ${t.open}`} />;
-          })}
-        </AtlasGrid>
+        <div className={styles.classes}>
+          {talentSpecClasses.map((group) => (
+            <AtlasDisclosure key={group.classKey} className={styles.classGroup} summary={locale === "ru" ? group.classNameRu : group.specs[0].className}>
+              <ul className={styles.specs}>
+                {group.specs.map((spec) => <li key={spec.slug}>
+                  <a href={href(`/talents/${spec.slug}`)}>
+                    <Image src={spec.iconUrl} alt="" width={28} height={28} />
+                    {locale === "ru" ? spec.specNameRu : spec.specName}
+                    <ArrowRight aria-hidden="true" size={16} />
+                  </a>
+                </li>)}
+              </ul>
+            </AtlasDisclosure>
+          ))}
+        </div>
       </AtlasSection>
     </AtlasFrame>
   );

@@ -401,7 +401,7 @@
 .talent-calculator[data-atlas-scope] .tc-search:focus-within { border-color: var(--atlas-accent); box-shadow: 0 0 0 1px var(--atlas-accent); }
 .talent-calculator[data-atlas-scope] .tc-search label { display: grid; place-items: center; }
 .talent-calculator[data-atlas-scope] .tc-search label svg { width: 16px; height: 16px; color: var(--atlas-accent); }
-.talent-calculator[data-atlas-scope] .tc-search input { color: var(--atlas-text-strong); font: 400 var(--atlas-text-small)/1.3 var(--atlas-font-ui); }
+.talent-calculator[data-atlas-scope] .tc-search input { min-height: var(--atlas-control-height); color: var(--atlas-text-strong); font: 400 var(--atlas-text-small)/1.3 var(--atlas-font-ui); }
 .talent-calculator[data-atlas-scope] .tc-search input::placeholder { color: var(--atlas-text-subtle); }
 .talent-calculator[data-atlas-scope] .tc-search-count { color: var(--atlas-accent-strong); font: 600 var(--atlas-text-meta)/1 var(--atlas-font-ui); font-variant-numeric: tabular-nums; }
 .talent-calculator[data-atlas-scope] .tc-search button { min-width: 28px; min-height: 28px; color: var(--atlas-text-muted); font-size: var(--atlas-text-title); }
@@ -637,7 +637,7 @@
   }
   .talent-calculator[data-atlas-scope] .tc-toolbar-primary { grid-column: 1 / -1; grid-row: 1; }
   .talent-calculator[data-atlas-scope] .tc-search { width: 100%; }
-  .talent-calculator[data-atlas-scope] .tc-pvp-group { grid-column: 1; grid-row: 2; width: auto; padding-left: 0; border-left: 0; }
+  .talent-calculator[data-atlas-scope] .tc-pvp-group { grid-column: 1; grid-row: 2; width: auto; min-width: 160px; padding: 6px 4px; border-left: 0; gap: var(--atlas-space-1); }
   .talent-calculator[data-atlas-scope] .tc-use-rotation { grid-column: 2; grid-row: 2; min-width: 0; height: var(--atlas-control-height); }
   .talent-calculator[data-atlas-scope] .tc-pvp-picker { top: calc(var(--atlas-sticky-top) + var(--atlas-space-2)); right: var(--atlas-space-2); bottom: var(--atlas-space-2); left: var(--atlas-space-2); max-height: none; }
 }

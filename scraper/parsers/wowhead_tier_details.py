@@ -8,6 +8,7 @@ import json
 import os
 import re
 import tempfile
+from html import unescape
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,23 @@ _GATHERER_RE = re.compile(
     r"WH\.Gatherer\.addData\((?P<type>\d+),\s*1,\s*(?P<data>\{.*?\})\);",
     re.DOTALL,
 )
+
+
+def tier_page_provenance(text: str) -> dict[str, str]:
+    """Read season/patch from the page's own heading, never from fetch time.
+
+    A generic Midnight headline cannot establish a season. Keep it unknown
+    instead of incorrectly promoting an old ranking when a new season starts.
+    """
+    headings = re.findall(r"<(?:title|h1)\b[^>]*>(.*?)</(?:title|h1)>", text, re.I | re.S)
+    heading = " ".join(unescape(re.sub(r"<[^>]*>", " ", part)) for part in headings)
+    season = re.search(r"\bMidnight\b.{0,60}?\bSeason\s+(\d+)\b", heading, re.I)
+    patch = re.search(r"\b(12\.\d+\.\d+)\b", heading)
+    return {
+        "source_title": " ".join(heading.split()),
+        "season_id": f"midnight-season-{season.group(1)}" if season else "",
+        "game_version": patch.group(1) if patch else "",
+    }
 _TIER_RE = re.compile(r"\[tier\](?P<body>.*?)\[/tier\]", re.DOTALL)
 _TIER_LABEL_RE = re.compile(
     r"\[tier-label[^\]]*\](?P<label>.*?)\[/tier-label\]", re.DOTALL
@@ -169,6 +187,7 @@ def parse_tier_page(
         )
     return {
         "source_url": source_url,
+        **tier_page_provenance(text),
         "activity": activity,
         "role": role,
         "spec_count": spec_count,
@@ -187,7 +206,7 @@ def _load_index_report(path: Path) -> list[dict[str, str]]:
     return links
 
 
-def collect_tierlist_dataset() -> dict[str, Any]:
+def collect_tierlist_dataset(previous: dict[str, Any] | None = None) -> dict[str, Any]:
     """Fetch the index and all six tier-list pages as one publishable candidate."""
     from .wowhead_tier_lists import DEFAULT_SOURCE_URL, extract_tier_list_links
 
@@ -213,16 +232,25 @@ def collect_tierlist_dataset() -> dict[str, Any]:
             min_body_bytes=5_000,
             stop_signatures=("Just a moment...", "cf-chl-"),
         )
-        body, fetch = fetch_with_fallback(link["url"], contract)
-        page = parse_tier_page(
-            body,
-            source_url=link["url"],
-            activity=link["activity"],
-            role=link["role"],
-        )
-        page["fetch"] = fetch
+        try:
+            body, fetch = fetch_with_fallback(link["url"], contract)
+            fetches.append(fetch)
+            page = parse_tier_page(body, source_url=link["url"], activity=link["activity"], role=link["role"])
+            if page["season_id"] != os.getenv("WOW_CURRENT_SEASON", "midnight-season-2"):
+                raise ValueError("rating season is missing or does not match the active season")
+            page["fetched_at"] = datetime.now(UTC).isoformat()
+            page["fetch"] = fetch
+        except Exception:
+            # Preserve only this rating, without refreshing its timestamp. A
+            # failed tank source must not discard a successful healer refresh.
+            page = next((dict(entry) for entry in (previous or {}).get("pages", [])
+                         if entry.get("activity") == link["activity"] and entry.get("role") == link["role"]
+                         and entry.get("season_id") == os.getenv("WOW_CURRENT_SEASON", "midnight-season-2")
+                         and entry.get("fetched_at") and entry.get("spec_count", 0) > 0), None)
+            if page is None:
+                raise
+            page["retained_after_failure"] = True
         pages.append(page)
-        fetches.append(fetch)
 
     all_specs = [
         spec for page in pages for tier in page["tiers"] for spec in tier["specs"]

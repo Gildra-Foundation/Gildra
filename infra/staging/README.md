@@ -1,4 +1,48 @@
-# Staging (roadmap 90)
+# Staging MVP — 2026-10-19
+
+The current review environment is **https://staging.gildra.net**. Its persistent
+project is `gildra-staging` in `/opt/gildra-staging`, using `compose.mvp.yml` and
+`mvp.env`. The deployed `compose.yml` / `current.env` also describe this MVP.
+
+```sh
+sudo docker compose --env-file /opt/gildra-staging/mvp.env \
+  -f /opt/gildra-staging/compose.mvp.yml ps
+```
+
+Web runs on the private staging network. The staging API uses the release's real
+metadata and workspace handlers with its own PostgreSQL volume. The gateway
+allows only GET/HEAD public catalog paths, strips credentials, and never forwards
+writes to production. An edge relay joins the public proxy network; the app/API
+and database do not. Only web port 3200 is published, on loopback.
+
+Images are immutable IDs. Staging has noindex/no-store and no analytics. Its web
+image was built with analytics disabled; it is not a production promotion image.
+The old web-only helper below must not be used for this environment.
+
+The live proxy contains the appended `public-server.conf` block, using the existing
+wildcard certificate and an official Cloudflare IP allowlist for the new HTTPS
+host. Keep this block when updating the production proxy configuration. No
+production application or database is deployed by this staging setup.
+
+`auth.env` (root, 0600) contains an independently generated AUTH_SECRET. Battle.net
+client fields remain empty until the owner confirms the additional redirect URI:
+`https://staging.gildra.net/api/auth/callback/battlenet`. Existing server-side
+Battle.net client keys can then be connected without sending secrets in chat;
+keep the original site's redirect URI and do not copy its AUTH_SECRET/cookies.
+Alternatively use a separately registered client. Detailed owner checklist:
+`docs/reports/mvp-release-20261019/staging-auth.md`.
+
+The six rankings were imported atomically from the verified 19 October snapshot;
+source fetch timestamps remain unchanged. There is no scheduled refresh on this
+review environment: the normal 36-hour stale indicator remains active.
+Only original metadata/workspace migrations are installed (see staging report).
+The current initial backup was restored and verified. Retain the volume during
+rollback; it will hold real private builds once OAuth is enabled.
+
+Evidence, page index, images, checks and rollback:
+`docs/reports/mvp-release-20261019/staging/`.
+
+## Legacy web-only environment (superseded by this MVP)
 
 A staging copy of gildra.net on the production host: the release candidate's web
 image as compose project `gildra-staging` (`/opt/gildra-staging`, this

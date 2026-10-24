@@ -173,6 +173,15 @@ func (s *Service) Put(ctx context.Context, subject string, scope Scope, input Wr
 	if found && current.MutationID == input.MutationID {
 		return current.Document, nil
 	}
+	if input.Kind == "talent-builds" && (!found || current.Revision == input.ExpectedRevision) {
+		var previous json.RawMessage
+		if found {
+			previous = current.Payload
+		}
+		if err := validateTalentUpdate(previous, input.Payload); err != nil {
+			return Document{}, err
+		}
+	}
 	if !found {
 		if input.ExpectedRevision != 0 {
 			return Document{}, ErrConflict

@@ -23,6 +23,8 @@ type Query struct {
 
 type Context struct {
 	Activity      string `json:"activity"`
+	Role          string `json:"role"`
+	SeasonID      string `json:"seasonId,omitempty"`
 	SelectionType string `json:"selectionType"`
 	SelectionID   string `json:"selectionId"`
 	SelectionName string `json:"selectionName"`
@@ -40,6 +42,9 @@ type Source struct {
 	Status      string     `json:"status"`
 	RecordCount int        `json:"recordCount"`
 	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
+	URL         string     `json:"url,omitempty"`
+	SeasonID    string     `json:"seasonId,omitempty"`
+	GameVersion string     `json:"gameVersion,omitempty"`
 }
 
 type Entry struct {
@@ -70,6 +75,8 @@ type Snapshot struct {
 	Sources     []Source  `json:"sources"`
 	Entries     []Entry   `json:"entries"`
 	Context     *Context  `json:"context,omitempty"`
+	SeasonID    string    `json:"seasonId,omitempty"`
+	GameVersion string    `json:"gameVersion,omitempty"`
 }
 
 type Service struct {
@@ -84,15 +91,19 @@ func NewService(db *pgxpool.Pool) *Service {
 func (s *Service) WoWTierListContexts(ctx context.Context, activity string) ([]Context, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT DISTINCT mode, selection_type, selection_id, selection_name,
-		       key_type, raid_difficulty, addon_key, addon_name, record_count
+		       key_type, raid_difficulty, addon_key, addon_name, c.record_count, c.role,
+		       COALESCE(page->>'season_id', '')
 		FROM datasets d
 		JOIN wowgg_tierlist_contexts c ON c.snapshot_id = d.current_snapshot_id
+		JOIN dataset_snapshots snapshot ON snapshot.id = d.current_snapshot_id
+		LEFT JOIN LATERAL (SELECT p AS page FROM jsonb_array_elements(snapshot.payload->'pages') p
+		  WHERE p->>'context_key'=c.context_key LIMIT 1) p ON true
 		WHERE d.slug = 'tierlist-wowgg'
 		  AND c.mode = $1
-		  AND c.role = 'dps'
+		  AND c.addon_key = 'midnight'
 		  AND c.record_count > 0
 		  AND (
-		    ($1 = 'mythic_plus' AND c.addon_key = 'midnight' AND c.key_type = 'all' AND c.selection_type IN ('all', 'dungeon'))
+		    ($1 = 'mythic_plus' AND c.addon_key = 'midnight' AND c.selection_type IN ('all', 'dungeon'))
 		    OR ($1 = 'raid' AND c.selection_type IN ('raid', 'boss'))
 		  )
 		ORDER BY addon_name, selection_type, selection_name, key_type, raid_difficulty`, activity)
@@ -105,7 +116,7 @@ func (s *Service) WoWTierListContexts(ctx context.Context, activity string) ([]C
 	for rows.Next() {
 		var item Context
 		if err := rows.Scan(&item.Activity, &item.SelectionType, &item.SelectionID,
-			&item.SelectionName, &item.KeyType, &item.Difficulty, &item.AddonKey, &item.AddonName, &item.RecordCount); err != nil {
+			&item.SelectionName, &item.KeyType, &item.Difficulty, &item.AddonKey, &item.AddonName, &item.RecordCount, &item.Role, &item.SeasonID); err != nil {
 			return nil, err
 		}
 		contexts = append(contexts, item)
@@ -114,12 +125,18 @@ func (s *Service) WoWTierListContexts(ctx context.Context, activity string) ([]C
 }
 
 func (s *Service) WoWTierList(ctx context.Context, query Query) (Snapshot, error) {
-	sources, updatedAt, err := s.sources(ctx)
+	if query.AddonKey == "" {
+		query.AddonKey = "midnight"
+	}
+	if query.SelectionType == "" || query.SelectionType == "all" {
+		query.SelectionType, query.SelectionID = "all", "all"
+	}
+	sources, updatedAt, err := s.sources(ctx, query)
 	if err != nil {
 		return Snapshot{}, err
 	}
 
-	if query.SelectionType != "" && query.SelectionType != "all" {
+	if query.SelectionType != "" && query.SelectionType != "all" || query.KeyType != "" && query.KeyType != "all" {
 		return s.contextTierList(ctx, query, sources, updatedAt)
 	}
 
@@ -140,6 +157,7 @@ func (s *Service) WoWTierList(ctx context.Context, query Query) (Snapshot, error
 			  AND c.role = $2
 			  AND c.selection_type = 'all'
 			  AND c.selection_id = 'all'
+			  AND c.addon_key = $4
 			  AND COALESCE(c.key_type, '') IN ('', 'all')
 			ORDER BY c.source_updated_at DESC
 			LIMIT 1
@@ -163,7 +181,7 @@ func (s *Service) WoWTierList(ctx context.Context, query Query) (Snapshot, error
 		LEFT JOIN metrics m ON m.class_slug = w.class_slug AND m.spec_slug = w.spec_slug
 		ORDER BY 1
 		LIMIT $3
-	`, query.Activity, query.Role, query.Limit)
+	`, query.Activity, query.Role, query.Limit, query.AddonKey)
 	if err != nil {
 		return Snapshot{}, err
 	}
@@ -191,10 +209,11 @@ func (s *Service) WoWTierList(ctx context.Context, query Query) (Snapshot, error
 		return Snapshot{}, ErrSnapshotNotFound
 	}
 
-	return Snapshot{
-		Game: "wow", Status: "live", Activity: query.Activity, Role: query.Role,
+	snapshot := Snapshot{
+		Game: "wow", Activity: query.Activity, Role: query.Role,
 		UpdatedAt: updatedAt, RecordCount: len(entries), Sources: sources, Entries: entries,
-	}, nil
+	}
+	return finishSnapshot(snapshot, s.now()), nil
 }
 
 func (s *Service) contextTierList(ctx context.Context, query Query, sources []Source, updatedAt time.Time) (Snapshot, error) {
@@ -267,29 +286,59 @@ func (s *Service) contextTierList(ctx context.Context, query Query, sources []So
 		return Snapshot{}, ErrSnapshotNotFound
 	}
 
-	return Snapshot{
-		Game: "wow", Status: "live", Activity: query.Activity, Role: query.Role,
+	snapshot := Snapshot{
+		Game: "wow", Activity: query.Activity, Role: query.Role,
 		UpdatedAt: updatedAt, RecordCount: len(entries), Sources: sources, Entries: entries,
 		Context: &Context{Activity: query.Activity, SelectionType: query.SelectionType,
 			SelectionID: query.SelectionID, SelectionName: selectionName, KeyType: keyType,
 			Difficulty: difficulty, AddonKey: query.AddonKey},
-	}, nil
+	}
+	return finishSnapshot(snapshot, s.now()), nil
 }
 
-func (s *Service) sources(ctx context.Context) ([]Source, time.Time, error) {
+func (s *Service) sources(ctx context.Context, query Query) ([]Source, time.Time, error) {
+	selectionType, selectionID := query.SelectionType, query.SelectionID
+	if selectionType == "" || selectionType == "all" {
+		selectionType, selectionID = "all", "all"
+	}
+	keyType, difficulty := query.KeyType, query.Difficulty
+	if query.Activity == "mythic_plus" && keyType == "" {
+		keyType = "all"
+	}
+	if query.Activity == "raid" && difficulty == "" {
+		difficulty = "raid_hero"
+	}
+	specific := selectionType != "all" || keyType != "" && keyType != "all"
 	rows, err := s.db.Query(ctx, `
-		SELECT d.slug, d.name, d.source_name, d.last_success_at,
-		       COALESCE(snapshot.record_count, 0)
+		SELECT d.slug, d.name, d.source_name,
+		       CASE WHEN d.slug='tierlist-wowgg' THEN c.source_updated_at
+		       ELSE COALESCE(NULLIF(page->>'fetched_at','')::timestamptz, snapshot.source_fetched_at) END,
+		       COALESCE((page->>'spec_count')::int, c.record_count, 0),
+		       COALESCE(page->>'source_url', c.source_url, ''),
+		       COALESCE(page->>'season_id', ''), COALESCE(page->>'game_version', '')
 		FROM datasets d
-		LEFT JOIN dataset_snapshots snapshot ON snapshot.id = d.current_snapshot_id
-		WHERE d.slug IN (
-			'tierlist-wowhead', 'tierlist-wowgg', 'tierlist-archon',
-			'tierlist-icyveins', 'tierlist-mythicstats'
-		)
-		ORDER BY CASE d.slug
-			WHEN 'tierlist-wowhead' THEN 0 WHEN 'tierlist-wowgg' THEN 1
-			WHEN 'tierlist-archon' THEN 2 WHEN 'tierlist-icyveins' THEN 3 ELSE 4 END
-	`)
+		JOIN dataset_snapshots snapshot ON snapshot.id = d.current_snapshot_id
+		LEFT JOIN LATERAL (
+			SELECT p AS page FROM jsonb_array_elements(snapshot.payload->'pages') p
+			WHERE (d.slug='tierlist-wowhead' AND p->>'activity'=$1 AND p->>'role'=$2)
+			OR (d.slug='tierlist-wowgg' AND p->>'mode'=$1 AND p->>'role'=$2
+			    AND p->>'addon_key'=$3 AND p->>'selection_type'=$4
+			    AND p->>'selection_id'=$5 AND p->>'key_type'=$6
+			    AND ($8=false OR p->>'raid_difficulty'=$7))
+			LIMIT 1
+		) p ON true
+		LEFT JOIN LATERAL (
+			SELECT * FROM wowgg_tierlist_contexts c
+			WHERE d.slug='tierlist-wowgg' AND c.snapshot_id=snapshot.id
+			AND c.mode=$1 AND c.role=$2 AND c.addon_key=$3
+			AND c.selection_type=$4 AND c.selection_id=$5
+			AND c.key_type=$6 AND ($8=false OR c.raid_difficulty=$7)
+			ORDER BY c.source_updated_at DESC LIMIT 1
+		) c ON true
+		WHERE (d.slug='tierlist-wowhead' AND $8=false AND page IS NOT NULL)
+		   OR (d.slug='tierlist-wowgg' AND c.record_count>0)
+		ORDER BY CASE d.slug WHEN 'tierlist-wowhead' THEN 0 ELSE 1 END
+	`, query.Activity, query.Role, query.AddonKey, selectionType, selectionID, keyType, difficulty, specific)
 	if err != nil {
 		return nil, time.Time{}, err
 	}
@@ -297,10 +346,10 @@ func (s *Service) sources(ctx context.Context) ([]Source, time.Time, error) {
 
 	now := s.now().UTC()
 	updatedAt := time.Time{}
-	sources := make([]Source, 0, 5)
+	sources := make([]Source, 0, 2)
 	for rows.Next() {
 		var source Source
-		if err := rows.Scan(&source.Slug, &source.Name, &source.Provider, &source.UpdatedAt, &source.RecordCount); err != nil {
+		if err := rows.Scan(&source.Slug, &source.Name, &source.Provider, &source.UpdatedAt, &source.RecordCount, &source.URL, &source.SeasonID, &source.GameVersion); err != nil {
 			return nil, time.Time{}, err
 		}
 		source.Status = "empty"
@@ -309,7 +358,7 @@ func (s *Service) sources(ctx context.Context) ([]Source, time.Time, error) {
 			if now.Sub(source.UpdatedAt.UTC()) > 36*time.Hour {
 				source.Status = "stale"
 			}
-			if source.UpdatedAt.After(updatedAt) {
+			if updatedAt.IsZero() || source.UpdatedAt.Before(updatedAt) {
 				updatedAt = source.UpdatedAt.UTC()
 			}
 		}
@@ -318,8 +367,53 @@ func (s *Service) sources(ctx context.Context) ([]Source, time.Time, error) {
 	if err := rows.Err(); err != nil {
 		return nil, time.Time{}, err
 	}
-	if updatedAt.IsZero() {
-		updatedAt = now
-	}
 	return sources, updatedAt, nil
+}
+
+// The response can only be as fresh as the data it actually contains. Never let
+// a refresh of an unrelated provider relabel an older ranking as live.
+func finishSnapshot(snapshot Snapshot, now time.Time) Snapshot {
+	snapshot.Status = "stale"
+	if len(snapshot.Sources) == 0 {
+		return snapshot
+	}
+	primary := snapshot.Sources[0]
+	snapshot.SeasonID, snapshot.GameVersion = primary.SeasonID, primary.GameVersion
+	hasMetrics := false
+	for _, entry := range snapshot.Entries {
+		hasMetrics = hasMetrics || entry.Score != nil || entry.AverageDPS != nil || entry.AverageHPS != nil || entry.Popularity != nil || entry.MaxKey != nil || entry.RankChange != nil
+	}
+	if primary.Slug == "tierlist-wowhead" {
+		// Extra metrics must have the same verified season. Unknown provenance is
+		// not a reason to combine two different populations.
+		compatible := len(snapshot.Sources) > 1 && primary.SeasonID != "" && snapshot.Sources[1].SeasonID == primary.SeasonID
+		if !compatible {
+			for i := range snapshot.Entries {
+				e := &snapshot.Entries[i]
+				e.Score, e.AverageDPS, e.AverageHPS, e.Popularity, e.MaxKey, e.RankChange = nil, nil, nil, nil, nil, nil
+			}
+			hasMetrics = false
+		}
+		if !hasMetrics {
+			snapshot.Sources = snapshot.Sources[:1]
+		}
+	}
+	snapshot.UpdatedAt = time.Time{}
+	snapshot.Status = "live"
+	for i := range snapshot.Sources {
+		source := &snapshot.Sources[i]
+		if source.UpdatedAt == nil || source.UpdatedAt.IsZero() || source.UpdatedAt.After(now.Add(5*time.Minute)) {
+			source.Status, snapshot.Status = "empty", "stale"
+			continue
+		}
+		if now.Sub(*source.UpdatedAt) > 36*time.Hour {
+			source.Status, snapshot.Status = "stale", "stale"
+		} else {
+			source.Status = "live"
+		}
+		if snapshot.UpdatedAt.IsZero() || source.UpdatedAt.Before(snapshot.UpdatedAt) {
+			snapshot.UpdatedAt = *source.UpdatedAt
+		}
+	}
+	return snapshot
 }

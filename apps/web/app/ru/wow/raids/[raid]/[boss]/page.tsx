@@ -1,3 +1,4 @@
+import { isPublicationReady } from "@/lib/wow/publication";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RaidBossGuide } from "@/components/wow/raid/RaidBossGuide";
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${boss.nameRu} — рейдовый гайд Midnight — Gildra`,
     description: `${boss.nameRu}: черновик тактики Midnight · Сезон 1 с источником. Данные способностей и добычи ещё не подтверждено автоматически.`,
     alternates: { canonical: path, languages: { en: enPath, ru: path, "x-default": enPath } },
-    robots: { index: false, follow: true },
+    robots: { index: isPublicationReady(`/wow/raids/${raid.slug}/${boss.slug}`), follow: true },
   };
 }
 

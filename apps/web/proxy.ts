@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isUnpublishedPath } from "@/lib/wow/publication";
 import { isHiddenForMvpPath } from "@/lib/mvp";
 import { runtimeFlags } from "@/lib/flags";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
@@ -17,7 +18,7 @@ export function proxy(request: NextRequest) {
   // Russian chrome on /ru/** URLs.
   // Dev galleries (/dev/blocks, /dev/atlas) exist only with GILDRA_DEV_GALLERY=1 in production.
   const devGalleryOff = !runtimeFlags().devGallery && /^\/dev(\/|$)/.test(request.nextUrl.pathname);
-  const response = devGalleryOff || isHiddenForMvpPath(request.nextUrl.pathname) || unknownTalentSpec(request.nextUrl.pathname)
+  const response = devGalleryOff || isUnpublishedPath(request.nextUrl.pathname) || isHiddenForMvpPath(request.nextUrl.pathname) || unknownTalentSpec(request.nextUrl.pathname)
     ? NextResponse.rewrite(Object.assign(request.nextUrl.clone(), { pathname: `${locale === "ru" ? "/ru" : ""}/_hidden-for-mvp/404` }), { request: { headers: requestHeaders } })
     : NextResponse.next({ request: { headers: requestHeaders } });
   return staging(response);

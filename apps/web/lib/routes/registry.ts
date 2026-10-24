@@ -20,6 +20,7 @@ export type RouteSection = {
 };
 
 export const routeSections = {
+  home: { path: "/", title: { en: "Gildra home", ru: "Главная Gildra" }, search: { keywords: "home главная оглавление книга" } },
   wow: { path: "/wow", title: { en: "World of Warcraft", ru: "World of Warcraft" }, scene: "wow", search: { en: "World of Warcraft hub", ru: "Центр World of Warcraft", keywords: "home главная хаб" } },
   raids: { path: "/wow/raids", parent: "wow", title: { en: "Raids", ru: "Рейды" }, scene: "raids", search: { en: "Raid journal", ru: "Рейдовый журнал", keywords: "raids рейды" } },
   mythicPlus: { path: "/wow/mythic-plus", parent: "wow", title: { en: "Mythic+", ru: "Эпохальный+" }, scene: "mythicPlus", search: { en: "Mythic+ atlas", ru: "Атлас Эпохальный+", keywords: "mythic plus keys ключи эпохальные" } },
@@ -63,3 +64,14 @@ export function trail(locale: Locale, id: SectionId, ...tail: Array<{ label: str
   });
   return [...crumbs, ...tail];
 }
+
+/** Public MVP chapters shared by the book, home navigation and search. */
+export const mvpChapterIds = ["home", "characters", "tierLists", "mythicPlus", "raids", "lairs"] as const satisfies readonly SectionId[];
+export const chapterDescriptions: Record<typeof mvpChapterIds[number], Words> = {
+ home: {ru: "Хроники Азерота и оглавление", en: "Chronicles of Azeroth and contents"},
+ characters: {ru: "Профиль и билды · вход через Battle.net", en: "Profile and builds · Battle.net sign-in"},
+ tierLists: {ru: "Специализации для ключей и рейдов", en: "Specializations for keys and raids"},
+ mythicPlus: {ru: "Подземелья, маршруты и задачи ролей", en: "Dungeons, routes and role assignments"},
+ raids: {ru: "Боссы и тактика Normal / Heroic", en: "Bosses and Normal / Heroic strategy"},
+ lairs: {ru: "Расположение, механики и награды", en: "Locations, mechanics and rewards"},
+};

@@ -424,7 +424,7 @@ export function floorLabel(label: string, locale: RouteLocale) {
 /** Route notes are written by players for players; this keeps the Russian notes free of raid slang. */
 export function plainLanguage(text: string, locale: RouteLocale = "ru") {
   if (locale === "en") return text;
-  return wowRouteText(text, locale)
+  return wowRouteText(text, locale, true)
     .replaceAll("Стакайте пак", "Соберите врагов вместе")
     .replaceAll("Стак у стены", "Соберитесь у стены")
     .replaceAll("треш", "обычные группы врагов")

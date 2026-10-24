@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth, isBattleNetAuthConfigured } from "@/auth";
 import { apiInternalUrl } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
@@ -23,8 +24,12 @@ function reply(body: unknown, status: number) {
 
 async function proxy(request: Request, context: { params: Promise<{ path?: string[] }> }) {
   if (request.method !== "GET" && !sameOrigin(request)) return reply({ code: "cross_site_blocked" }, 403);
-  const session = await auth();
+  const session = isBattleNetAuthConfigured ? await auth() : null;
   if (!session?.battleNetAccessToken) return reply({ code: "session_expired" }, 401);
+  const expectedOwner = request.headers.get("X-Workspace-Owner");
+  if (expectedOwner && (!session.user?.id || expectedOwner !== createHash("sha256").update(`battlenet:${session.user.id}`).digest("hex").slice(0, 32))) {
+    return reply({ code: "account_changed" }, 401);
+  }
   const { path = [] } = await context.params;
   const documentPath = path.length === 1 && allowedKinds.has(path[0]);
   const migrationPath = path.length === 1 && path[0] === "migrate";

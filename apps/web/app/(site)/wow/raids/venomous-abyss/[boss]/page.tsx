@@ -1,3 +1,4 @@
+import { isPublicationReady } from "@/lib/wow/publication";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { VenomousBossPage } from "@/components/wow/raid/VenomousBossPage";
@@ -17,12 +18,12 @@ export async function generateMetadata({ params }: { params: Promise<{ boss: str
   const bossName = lt(boss.name, "en");
   return {
     title: `${bossName} Raid Guide — Gildra`,
-    description: `${bossName} — The Venomous Abyss boss guide: abilities from the Adventure Guide, a draft strategy, phases and rewards by difficulty.`,
+    description: `${bossName} — The Venomous Abyss boss guide: abilities from the Adventure Guide, Normal and Heroic strategy, phases and rewards.`,
     alternates: {
       canonical: `/wow/raids/venomous-abyss/${slug}`,
       languages: { en: `/wow/raids/venomous-abyss/${slug}`, ru: `/ru/wow/raids/venomous-abyss/${slug}`, "x-default": `/wow/raids/venomous-abyss/${slug}` },
     },
-    robots: { index: false, follow: true },
+    robots: { index: isPublicationReady(`/wow/raids/venomous-abyss/${slug}`), follow: true },
   };
 }
 

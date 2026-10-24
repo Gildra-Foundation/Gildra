@@ -104,6 +104,10 @@ export function HomeBookStage({ lang, className, coverFace, children }: { lang: 
     }).finally(() => { loading.current = false; });
   }, [phase, coverPose]);
 
+  useEffect(() => {
+    window.addEventListener("gildra-open-home-book", open);
+    return () => window.removeEventListener("gildra-open-home-book", open);
+  }, [open]);
   return <HomeBookContext.Provider value={{ phase, cover, open }}>
     <main ref={hero} className={className} data-book-state={phase}>
       {children}

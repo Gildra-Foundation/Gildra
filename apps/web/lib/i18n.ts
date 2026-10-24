@@ -144,8 +144,8 @@ const RU: Record<string, string> = {
   Contact: "Контакты",
   Premium: "Премиум",
   "Go Premium": "Оформить Премиум",
-  "World of Warcraft® and all related artwork are trademarks or registered trademarks of Blizzard Entertainment, Inc. Gildra is an unofficial fan-made concept and is not affiliated with or endorsed by Blizzard Entertainment.":
-    "World of Warcraft® и все связанные материалы — товарные знаки или зарегистрированные товарные знаки Blizzard Entertainment, Inc. Gildra — неофициальный фанатский концепт, не аффилированный с Blizzard Entertainment и не одобренный ею.",
+  "World of Warcraft® and all related artwork are trademarks or registered trademarks of Blizzard Entertainment, Inc. Gildra is an unofficial fan site and is not affiliated with or endorsed by Blizzard Entertainment.":
+    "World of Warcraft® и все связанные материалы — товарные знаки или зарегистрированные товарные знаки Blizzard Entertainment, Inc. Gildra — неофициальный фанатский сайт, не аффилированный с Blizzard Entertainment и не одобренный ею.",
   "Privacy Policy": "Политика конфиденциальности",
   "What's new": "Что нового",
   // Database
@@ -400,6 +400,9 @@ const RU: Record<string, string> = {
   // Rotation Lab — lib/platform/rotation/rotationDictionary.ts (kept separate so lab client bundles skip this dictionary)
   ...ROTATION_RU,
   // WoW-only MVP: nav tasks, section links, footer tagline (lib/games/registry.ts)
+  "Open your character": "Открыть персонажа",
+  "Battle.net profiles and saved builds": "Профили Battle.net и сохранённые билды",
+  "Lairs and world bosses": "Логова и мировые боссы",
   "Choose a class": "Выбрать класс",
   "Push your key": "Пройти ключ",
   Characters: "Персонажи",

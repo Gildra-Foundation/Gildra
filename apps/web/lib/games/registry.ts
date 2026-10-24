@@ -79,11 +79,10 @@ export type GameDefinition = {
  *  page and has no sections. */
 const wowSections: SectionLink[] = [
   { label: "Characters", path: "/wow/characters" },
-  { label: "Dungeons", path: "/wow/dungeons" },
+  { label: "Tier Lists", path: "/tier-lists" },
   { label: "Mythic+", path: "/wow/mythic-plus" },
   { label: "Raids", path: "/wow/raids" },
-  { label: "Classes", path: "/wow/classes" },
-  { label: "Tier Lists", path: "/tier-lists" },
+  { label: "Lairs and world bosses", path: "/wow/lairs" },
   { label: "Database", path: "/database" },
 ];
 
@@ -107,10 +106,10 @@ const wow: GameDefinition = {
         icon: "#ic-star",
       },
       {
-        task: "Choose a class",
-        title: "Classes",
-        desc: "Classes, specializations and talents",
-        path: "/wow/classes",
+        task: "Open your character",
+        title: "Characters",
+        desc: "Battle.net profiles and saved builds",
+        path: "/wow/characters",
         icon: "#ic-sword",
       },
       {
@@ -148,7 +147,7 @@ const wow: GameDefinition = {
     ],
   },
   legal:
-    "World of Warcraft® and all related artwork are trademarks or registered trademarks of Blizzard Entertainment, Inc. Gildra is an unofficial fan-made concept and is not affiliated with or endorsed by Blizzard Entertainment.",
+    "World of Warcraft® and all related artwork are trademarks or registered trademarks of Blizzard Entertainment, Inc. Gildra is an unofficial fan site and is not affiliated with or endorsed by Blizzard Entertainment.",
   seo: {
     titleSuffix: "Gildra",
     defaultDescription:

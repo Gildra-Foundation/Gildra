@@ -3,7 +3,7 @@ import type { Lang } from "@/lib/i18n";
 /** Interface copy of /search and /ru/search. Record names and types come from the catalog. */
 export const searchCopy = {
   ru: {
-    title: "Поиск по архивам Азерота",
+    title: "Поиск по базе WoW",
     lede: "Предметы, заклинания, задания и существа из базы Gildra. Ищите по названию на русском или английском либо по игровому ID.",
     placeholder: "Предмет, заклинание, задание…",
     inputLabel: "Что найти",
@@ -18,7 +18,7 @@ export const searchCopy = {
     apply: "Применить",
     soon: "скоро",
     counting: "Считаем результаты…",
-    resultsFor: (count: number, query: string) => query ? `Показано ${count} ${plural(count, "запись", "записи", "записей")} по запросу «${query}».` : "Примеры записей из базы данных — введите название, чтобы найти нужное.",
+    resultsFor: (count: number, query: string) => query ? `Показано ${count} ${plural(count, "запись", "записи", "записей")} по запросу «${query}».` : "Введите название или игровой ID.",
     allInDatabase: "Все совпадения в базе данных",
     searching: (game: string) => `Ищем в ${game}…`,
     unavailable: "Каталог временно недоступен",
@@ -27,9 +27,10 @@ export const searchCopy = {
     itemLevel: "Уровень предмета",
     databaseLink: "Разделы и фильтры — в базе данных",
     results: "Результаты поиска",
+    startHint: "Введите название предмета, заклинания или другого объекта. Для поиска разделов и гайдов используйте «Поиск» в верхнем меню.",
   },
   en: {
-    title: "Search the Azeroth archives",
+    title: "Search the WoW database",
     lede: "Items, spells, quests, creatures and achievements from the Gildra database. Search by name in English or Russian — for example “Thunderfury”.",
     placeholder: "Item, spell or quest name…",
     inputLabel: "What to find",
@@ -44,7 +45,7 @@ export const searchCopy = {
     apply: "Apply",
     soon: "soon",
     counting: "Counting results…",
-    resultsFor: (count: number, query: string) => query ? `Showing ${count} ${count === 1 ? "record" : "records"} for “${query}”.` : "Sample records from the database — type a name to find what you need.",
+    resultsFor: (count: number, query: string) => query ? `Showing ${count} ${count === 1 ? "record" : "records"} for “${query}”.` : "Enter a name or game ID.",
     allInDatabase: "All matches in the database",
     searching: (game: string) => `Searching ${game}…`,
     unavailable: "Catalog temporarily unavailable",
@@ -53,6 +54,7 @@ export const searchCopy = {
     itemLevel: "Item level",
     databaseLink: "Sections and filters are in the database",
     results: "Search results",
+    startHint: "Enter an item, spell or other game object. To find site sections and guides, use Search in the top bar.",
   },
 } satisfies Record<Lang, Record<string, unknown>>;
 

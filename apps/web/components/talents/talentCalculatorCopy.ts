@@ -29,6 +29,13 @@ const roleLabelsEn: Record<TalentSpecTheme["role"], string> = {
 type NodeAriaInput = { names: string; tiered: boolean; selectedName?: string; rank: number; maxRanks: number; lockReason?: string };
 
 const ru = {
+    sharedTreeMismatch: "Ссылка использует другую версию дерева талантов. Код сохранён в ссылке; импортируйте обновлённый код из игры.",
+    buildLimit: "Лимит 12 билдов. Обновите существующий или удалите ненужный.",
+    savedTreeMismatch: "Этот билд использует другую версию дерева. Сохранённая запись не изменена.",
+    importTreeMismatch: "Другая версия дерева талантов. Обновите код в игре.",
+    backToCharacter: "К персонажу",
+    useCharacterBuild: "Использовать билд",
+    returnToAccount: "Вернуться к сохранению в аккаунте",
   apex: "Высший талант",
   locale: "ru-RU",
   treeLabels: { class: "Дерево класса", hero: "Путь героя", spec: "Специализация" } satisfies Record<TalentKind, string>,
@@ -68,7 +75,7 @@ const ru = {
   iconReplacement: "иконка-замена",
   maxRankShort: (ranks: number) => `Макс. ранг: ${ranks}`,
   nodeAria: ({ names, tiered, selectedName, rank, maxRanks, lockReason }: NodeAriaInput) =>
-    `${names}, ${tiered ? "последовательные ранги" : `выбранный вариант ${selectedName ?? "не выбран"}`}, ранг ${rank} из ${maxRanks}${lockReason ? `, недоступен: ${lockReason}` : ""}`,
+    `${names}, ${tiered ? "последовательные ранги" : `выбранный вариант ${selectedName ?? "не выбран"}`}, ранг ${rank}/${maxRanks}${lockReason ? `, недоступен: ${lockReason}` : ""}`,
   or: " или ",
   // PvP tooltip and picker
   localReplacement: "Локальная замена",
@@ -210,6 +217,13 @@ const ru = {
 export type TalentCalculatorCopy = typeof ru;
 
 const en: TalentCalculatorCopy = {
+    sharedTreeMismatch: "This link uses a different talent tree version. Its code is preserved in the link; import an updated code from the game.",
+    buildLimit: "12-build limit reached. Update a saved build or remove one.",
+    savedTreeMismatch: "This build uses a different tree version. The saved record is unchanged.",
+    importTreeMismatch: "Different talent tree version. Update the code in-game.",
+    backToCharacter: "Back to character",
+    useCharacterBuild: "Use build",
+    returnToAccount: "Return to account saving",
   apex: "Apex Talent",
   locale: "en-GB",
   treeLabels: { class: "Class tree", hero: "Hero path", spec: "Specialization" },
@@ -248,7 +262,7 @@ const en: TalentCalculatorCopy = {
   iconReplacement: "fallback icon",
   maxRankShort: (ranks) => `Max rank: ${ranks}`,
   nodeAria: ({ names, tiered, selectedName, rank, maxRanks, lockReason }) =>
-    `${names}, ${tiered ? "sequential ranks" : `selected choice ${selectedName ?? "none"}`}, rank ${rank} of ${maxRanks}${lockReason ? `, locked: ${lockReason}` : ""}`,
+    `${names}, ${tiered ? "sequential ranks" : `selected choice ${selectedName ?? "none"}`}, rank ${rank}/${maxRanks}${lockReason ? `, locked: ${lockReason}` : ""}`,
   or: " or ",
   localReplacement: "Local fallback",
   pvpScope: "Arena and battlegrounds",

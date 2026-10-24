@@ -36,7 +36,7 @@ export const raidGuideCopy = {
     dangers: "Чего избегать",
     arenaLabel: (phase: string) => `Схема арены: ${phase}`,
     arenaNorth: "Босс — вверху схемы",
-    zoneKinds: { safe: "безопасно", soak: "замачивание", danger: "опасно", wall: "стена" },
+    zoneKinds: { safe: "безопасно", soak: "принять урон", danger: "опасно", wall: "стена" },
     strategyPendingTitle: "Тактика готовится",
     strategyPendingText: "План боя и разбор механик появятся, когда мы проверим источники и сверим способности с игровыми данными.",
 
@@ -58,10 +58,10 @@ export const raidGuideCopy = {
     tags: {
       DODGE: "Уклонение",
       INTERRUPT: "Прерывание",
-      STOP: "Сбить каст",
+      STOP: "Остановить заклинание",
       PURGE: "Развеивание",
       DISPEL_MAGIC: "Снятие магии",
-      SOAK: "Замачивание",
+      SOAK: "Принять урон",
       SPREAD: "Разойтись",
       STACK: "Собраться",
       MOVE: "Перемещение",

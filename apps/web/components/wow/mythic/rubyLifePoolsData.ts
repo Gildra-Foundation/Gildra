@@ -67,11 +67,11 @@ export const initialStops: RouteStop[] = [
   },
   {
     id: 5, title: "Мелидрусса Хладообраз", subtitle: "Босс 1", x: 50, y: 54, floor: 1, kind: "boss", duration: 150, forces: 0, cumulative: 31.2,
-    summary: "Складывайте Hailbomb у края и двигайтесь по комнате одним направлением. На 66% и 33% разбивайте Ice Bulwark и убивайте whelps.",
+    summary: "Держитесь вместе, чтобы град оставлял лёд в одном месте, затем перемещайтесь по комнате. На 66% и 33% здоровья убейте дракончиков и разрушьте щит «Ice Bulwark», чтобы прекратить урон по группе.",
     enemies: [{ name: "Melidrussa Chillworn", count: 1, priority: "boss" }, { name: "Infused Whelp", count: 8, priority: "high" }],
     abilities: [{ name: "Frigid Shard", action: "Кик", target: "Ротация киков" }, { name: "Chillstorm", action: "Уклонение", target: "Цель механики" }, { name: "Frost Overload", action: "Фокус", target: "Вся группа" }, { name: "Cold Claws", action: "Диспел", target: "MysticHeals" }],
-    callouts: ["Hailbomb складывать у края.", "Цель Chillstorm выходит из группы.", "На 66%/33% весь урон в щит."],
-    tank: "Подберите whelps и поставьте их в босса для cleave.", healer: "Планируйте CD на Chillstorm и каждый Frost Overload.", dps: "Сохраните burst на Ice Bulwark; Frigid Shard кикается по ротации.",
+    callouts: ["С «Chillstorm» отойдите от союзников и сопротивляйтесь стягиванию.","На 66% и 33% здоровья сохраните усиления урона для щита."],
+    tank: "Соберите появившихся дракончиков рядом с боссом. Помогайте прерывать «Frigid Shard».", healer: "Используйте сильное лечение на «Chillstorm» и «Frost Overload»; снимайте «Cold Claws», пока эффект не накопился.", dps: "Прерывайте «Frigid Shard» по очереди. Быстро разрушайте «Ice Bulwark», нанося урон и дракончикам.",
   },
   {
     id: 6, title: "Перелёт на Ruby Overlook", subtitle: "Radiant Drake · переход", x: 56, y: 47, floor: 1, kind: "transition", duration: 30, forces: 0, cumulative: 31.2,
@@ -113,11 +113,11 @@ export const initialStops: RouteStop[] = [
   },
   {
     id: 11, title: "Кокия Огненное Копыто", subtitle: "Босс 2", x: 44, y: 39, floor: 2, kind: "boss", duration: 175, forces: 0, cumulative: 74.4, bloodlust: true,
-    summary: "Ведите босса по свободному краю площадки. Адда из Ritual of Blazebinding ставьте рядом с Кокией, быстро убивайте и выходите из Burnout.",
+    summary: "Цель «Ritual of Blazebinding» отходит от группы, оставляя место для атаки появившегося противника. Быстро убейте его; раскалённые валуны направляйте в сторону от следующей позиции группы.",
     enemies: [{ name: "Kokia Blazehoof", count: 1, priority: "boss" }, { name: "Blazebound Firestorm", count: 3, priority: "high" }],
     abilities: [{ name: "Ritual of Blazebinding", action: "Уклонение", target: "Цель механики" }, { name: "Blaze Volley", action: "Кик", target: "Ротация киков" }, { name: "Molten Boulder", action: "Уклонение", target: "Вся группа" }, { name: "Searing Blows", action: "Защита", target: "ArcanistVexis" }],
-    callouts: ["Bloodlust на старте.", "Адд появляется рядом с боссом.", "Blaze Volley всегда кикается; после смерти адда разойтись."],
-    tank: "Подведите босса к Firestorm для cleave, mitigation на Searing Blows.", healer: "Групповой CD на Inferno от каждого Firestorm.", dps: "Немедленно переключайтесь в адда и уходите от Burnout.",
+    callouts: ["Прерывайте каждое «Blaze Volley».","Не стойте рядом с гибнущим противником: после смерти он взрывается."],
+    tank: "Подведите босса к огненному противнику для одновременного урона. Используйте защиту на каждую серию «Searing Blows».", healer: "Подготовьте сильное лечение к «Inferno» от каждого призванного противника.", dps: "Сразу переключайтесь на призванного противника. Прерывайте «Blaze Volley» и выходите из взрыва «Burnout».",
   },
   {
     id: 12, title: "Спуск к храму", subtitle: "Storm Warrior pack", x: 37, y: 29, floor: 2, kind: "pull", duration: 75, forces: 8.5, cumulative: 82.9,
@@ -145,11 +145,11 @@ export const initialStops: RouteStop[] = [
   },
   {
     id: 15, title: "Киракка и Эркхарт", subtitle: "Финальный босс", x: 68, y: 13, floor: 2, kind: "boss", duration: 180, forces: 0, cumulative: 100,
-    summary: "Приоритет — Киракка. Inferno Spit выносите к краю, прекращайте касты перед Interrupting Cloudburst и быстро снимайте Stormslam с танка.",
+    summary: "Выносите огонь к краю и учитывайте направление ветра: он двигает игроков и лужи. На 50% здоровья одного из боссов начинается вторая фаза; сохраните для неё усиления урона и защиты, затем сначала добейте Киракку.",
     enemies: [{ name: "Kyrakka", count: 1, priority: "boss" }, { name: "Erkhart Stormvein", count: 1, priority: "boss" }],
-    abilities: [{ name: "Roaring Firebreath", action: "Уклонение", target: "Вся группа" }, { name: "Interrupting Cloudburst", action: "Стоп", target: "Все кастеры" }, { name: "Inferno Spit", action: "Уклонение", target: "Цель механики" }, { name: "Stormslam", action: "Диспел", target: "MysticHeals" }, { name: "Winds of Change", action: "Защита", target: "Вся группа" }],
-    callouts: ["Весь доступный урон в Киракку.", "Inferno Spit складывать у края.", "Прекратить касты перед Cloudburst.", "Stormslam диспелить сразу."],
-    tank: "Подводите Эркхарта к Киракке для cleave, прожимайтесь под Stormslam.", healer: "Снимайте Stormslam сразу и держите CD на вторую фазу.", dps: "Приоритет Киракка; остановите касты перед Cloudburst.",
+    abilities: [{ name: "Roaring Flamebreath", action: "Уклонение", target: "Вся группа" }, { name: "Interrupting Cloudburst", action: "Стоп", target: "Все кастеры" }, { name: "Inferno Spit", action: "Уклонение", target: "Цель механики" }, { name: "Stormslam", action: "Диспел", target: "MysticHeals" }, { name: "Winds of Change", action: "Защита", target: "Вся группа" }],
+    callouts: ["Уходите из фронтального дыхания Киракки.","Перед «Interrupting Cloudburst» прекратите чтение заклинаний.","Оставляйте огонь так, чтобы следующий ветер унёс его от группы."],
+    tank: "Держите Эркхарта рядом с приземлившейся Кираккой. Используйте защиту на «Stormslam».", healer: "Снимайте магический эффект «Stormslam» до следующего удара. Сохраните сильное лечение для второй фазы.", dps: "Во второй фазе сначала убейте Киракку. Прекращайте чтение заклинаний перед «Interrupting Cloudburst» и выходите с огненной меткой.",
   },
 ];
 

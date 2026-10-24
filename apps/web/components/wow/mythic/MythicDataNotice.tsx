@@ -1,5 +1,5 @@
-import { AtlasDisclosure } from "@gildra/atlas-ui/AtlasDisclosure";
 import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
+import { AtlasDisclosure } from "@gildra/atlas-ui/AtlasDisclosure";
 import { mythicVerification } from "./mythicVerification";
 import { mythicVerificationCopy, verificationDate } from "./mythicVerificationCopy";
 import styles from "./mythicAtlasPage.module.css";
@@ -14,7 +14,7 @@ export function MythicDataNotice({ locale, route = false }: { locale: "ru" | "en
   ];
   return (
     <div className={styles.verification}>
-      <AtlasNotice tone="caution" title={route ? copy.routeTitle : copy.catalogTitle}>{copy.draft}</AtlasNotice>
+      {route && <AtlasNotice tone="caution" title={locale === "ru" ? "Черновик маршрута" : "Draft route"}>{locale === "ru" ? "Изменения авторского маршрута не проверены." : "Custom route changes have not been verified."}</AtlasNotice>}
       <AtlasDisclosure summary={copy.summary}>
         <dl className={styles.sourceList}>
           {sources.map((source) => (
@@ -26,7 +26,7 @@ export function MythicDataNotice({ locale, route = false }: { locale: "ru" | "en
               </dd>
             </div>
           ))}
-          <div><dt>{copy.route}</dt><dd>{copy.unverified}</dd></div>
+          <div><dt>{copy.route}</dt><dd>{copy.reviewed}<span>{copy.checked}: <time dateTime={mythicVerification.route.checkedAt}>{verificationDate(mythicVerification.route.checkedAt, locale)}</time></span></dd></div>
         </dl>
         <p>{copy.scope}</p>
       </AtlasDisclosure>

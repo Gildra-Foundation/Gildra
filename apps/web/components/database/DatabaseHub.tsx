@@ -36,8 +36,9 @@ async function DatabaseCatalog({ lang, searchParams }: { lang: Lang; searchParam
   const facets = (Array.isArray(filters.facet) ? filters.facet : filters.facet ? [filters.facet] : []).filter(Boolean);
   const catalogParams = { locale, product, type: filters.type, query: filters.q, category: filters.category, facets, cursor: filters.cursor, minItemLevel: optionalNumber(filters.minLevel), maxItemLevel: optionalNumber(filters.maxLevel), minRequiredLevel: optionalNumber(filters.minRequiredLevel), maxRequiredLevel: optionalNumber(filters.maxRequiredLevel) };
   const catalogTotalParams = { ...catalogParams, cursor: undefined };
+  const browseRecords = Boolean(filters.q?.trim() || filters.type || filters.category || facets.length || filters.cursor || filters.minLevel || filters.maxLevel || filters.minRequiredLevel || filters.maxRequiredLevel);
   const [catalog, categories, entityTypes, products] = await Promise.all([
-    getCatalogPage({ ...catalogParams, includeTotal: false }),
+    browseRecords ? getCatalogPage({ ...catalogParams, includeTotal: false }) : Promise.resolve({ data: [], pagination: { hasMore: false } }),
     getCatalogCategories(locale, filters.type ?? "", product),
     getCatalogEntityTypes(locale, product),
     getCatalogProducts(),

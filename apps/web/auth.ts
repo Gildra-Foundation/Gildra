@@ -33,6 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, account }) {
       if (account?.provider === "battlenet") {
         token.battleNetAccessToken = account.access_token;
+        token.battleNetError = undefined;
         token.battleNetExpiresAt = typeof account.expires_at === "number" ? account.expires_at : undefined;
       }
       if (typeof token.battleNetExpiresAt === "number" && Date.now() >= token.battleNetExpiresAt * 1000) {
@@ -42,6 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     session({ session, token }) {
+      if (session.user && token.sub) session.user.id = token.sub;
       // This value is consumed only by server components. No client component
       // in Gildra requests or serializes the Auth.js session.
       session.battleNetAccessToken = typeof token.battleNetAccessToken === "string" ? token.battleNetAccessToken : undefined;

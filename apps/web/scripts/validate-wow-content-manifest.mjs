@@ -109,6 +109,23 @@ for (const [index, source] of (manifest.sources ?? []).entries()) {
   if (!validDate(source.verifiedAt)) violations.push({ collection: "sources", index, id: source.id ?? null, issue: "verifiedAt-invalid" });
 }
 
+// Public route policy is part of the content contract, not an independent menu list.
+const publicationPaths = new Set();
+for (const [index, entry] of (manifest.publication ?? []).entries()) {
+  const issue = (reason) => violations.push({ collection: "publication", index, id: entry.path, issue: reason });
+  if (!/^\/(?:[a-z0-9-]+\/?)*$/.test(entry.path ?? "") || publicationPaths.has(entry.path)) issue("path-invalid-or-duplicate");
+  publicationPaths.add(entry.path);
+  if (typeof entry.ready !== "boolean" || typeof entry.required !== "boolean") issue("publication-flags-invalid");
+  if (entry.ready && (!validDate(entry.verifiedAt) || Date.parse(entry.verifiedAt) > Date.now() + 300_000)) issue("review-date-invalid");
+  if (!Array.isArray(entry.sources) || entry.sources.some(url => !validUrl(url))) issue("sources-invalid");
+  if (entry.ready && entry.required && entry.path.split("/").length > 3) {
+    if (!entry.sources.length) issue("guide-sources-missing");
+    if (entry.review?.kind !== "editorial-source-review" || !["en", "ru"].every(locale => entry.review?.locales?.includes(locale))) issue("guide-review-incomplete");
+  }
+  if (args.has("release") && entry.required && !entry.ready) issue("required-guide-unpublished");
+}
+if (!publicationPaths.size) violations.push({ collection: "publication", issue: "publication-manifest-empty" });
+
 const difficultyRegistry = manifest.descriptionDifficultyRegistry;
 for (const field of completionContract.descriptionDifficultyRegistryFields ?? []) {
   if (!difficultyRegistry || !Object.hasOwn(difficultyRegistry, field)) {

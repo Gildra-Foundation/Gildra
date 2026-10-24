@@ -8,6 +8,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
 export async function resolve(specifier, context, nextResolve) {
+  // Next.js resolves this marker at build time; tests only exercise server helpers.
+  if (specifier === "server-only") return { url: "data:text/javascript,export {};", shortCircuit: true };
   // JSON modules imported the way the app does (no `with { type: "json" }`).
   const next = async (target, ctx) => {
     const result = await nextResolve(target, ctx);

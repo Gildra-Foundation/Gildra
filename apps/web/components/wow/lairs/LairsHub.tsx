@@ -1,15 +1,18 @@
+import { canBrowsePublication } from "@/lib/wow/publication";
 import { CalendarClock, Gem, MapPin, ShieldCheck, Skull, Swords, UsersRound } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasGrid, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasPanel, AtlasSection } from "@/components/atlas";
-import { midnightLairEncounters } from "@/lib/data/wow";
+import { contentManifest, midnightLairEncounters } from "@/lib/data/wow";
 import { getBoss, lairGuideLastVerifiedAt, lairGuideSourceUrl, type Boss } from "@/lib/lairs";
 import { lairsCopy, type LairsLocale } from "./lairsCopy";
 import styles from "./lairs.module.css";
+import { WeeklyWorldBoss } from "./WeeklyWorldBoss";
 import { trail } from "@/lib/routes/registry";
 
 export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
   const copy = lairsCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
   const bosses = midnightLairEncounters
+    .filter(encounter => canBrowsePublication(`/wow/lairs/${encounter.slug}`))
     .map((encounter) => ({ encounter, boss: getBoss(encounter.slug, locale) }))
     .filter((entry): entry is { encounter: typeof entry.encounter; boss: Boss } => Boolean(entry.boss));
   const lair = bosses.find(({ encounter }) => encounter.kind === "lair");
@@ -33,6 +36,8 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
           { value: lair?.encounter.patch ?? "12.1", label: copy.statPatch },
         ]}
       />
+
+      <WeeklyWorldBoss locale={locale} records={contentManifest.weeklyWorldBosses} bosses={worldBosses.map(({ boss }) => ({ slug: boss.slug, name: boss.name, zone: boss.zone }))} />
 
       {lair ? (
         <AtlasSection id="lair" title={copy.lairSection} description={copy.lairSectionText}>

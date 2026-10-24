@@ -144,3 +144,7 @@
 /* On a phone the book opens as a modal over the page, which stays as it is. */
 @media(max-width:820px){.hero:is([data-book-state="opening"],[data-book-state="open"],[data-book-state="held"]) :is(.copy,.bookHint){opacity:1;visibility:visible;transition:none}}
 @media(prefers-reduced-motion:reduce){.copy,.bookHint{transition:none!important}.cover:hover .coverLight,.cover:focus-visible .coverLight{background-position:130% 0,0 0}}
+
+/* Keep header links usable with touch at narrow widths. */
+.brand > a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}
+.language a{min-width:44px;justify-content:center}

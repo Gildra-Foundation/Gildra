@@ -1,9 +1,10 @@
 export type LocalizedRaidText = { en: string; ru: string };
 
 export const venomousRaidOverviewSource = "https://www.icy-veins.com/wow/venomous-abyss-raid-guide";
-export const venomousRaidLootSource = "https://www.icy-veins.com/wow/news/venomous-abysss-final-two-bosses-drop-gear-10-item-levels-past-max/";
+export const venomousRaidLootSource = "https://www.wowhead.com/guide/midnight/raids/the-venomous-abyss-rewards-gear-loot";
 export const venomousRaidLocationSource = "https://www.wowhead.com/guide/midnight/raids/the-venomous-abyss-overview-location-rewards-bosses";
 export const venomousRaidVerifiedAt = "2026-09-14";
+export const venomousRaidLootVerifiedAt = "2026-10-19";
 
 export const raidFinderWings = [
   { number: 1, dateEn: "August 18", dateRu: "18 августа", name: "The Soulcoilers", bosses: ["Nek'zali the Soulcoiler", "The Twin Fangs"] },

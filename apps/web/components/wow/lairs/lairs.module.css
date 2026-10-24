@@ -203,7 +203,7 @@
 .response strong { color: var(--atlas-accent-strong); font-weight: 650; }
 
 .abilityMeta { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-.abilityMeta a { color: var(--atlas-accent); }
+.abilityMeta a { color: var(--atlas-accent); text-decoration: underline; text-underline-offset: 3px; }
 
 .positionGrid {
   display: grid;

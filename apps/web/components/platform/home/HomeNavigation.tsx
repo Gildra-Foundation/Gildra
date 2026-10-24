@@ -3,15 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Lang } from "@/lib/i18n";
+import { mvpChapterIds, routeSections } from "@/lib/routes/registry";
 import styles from "./grimoireHome.module.css";
 
-const sections = [
-  { label: { en: "Characters", ru: "Персонажи" }, path: "/wow/characters" },
-  { label: { en: "Bosses", ru: "Боссы" }, path: "/lairs" },
-  { label: { en: "Mythic+", ru: "Эпохальный+" }, path: "/wow/mythic-plus" },
-  { label: { en: "Raids", ru: "Рейды" }, path: "/wow/raids" },
-  { label: { en: "Tier Lists", ru: "Тир-листы" }, path: "/tier-lists" },
-];
+const sections = mvpChapterIds.filter(id => id !== "home").map(id => ({ label: routeSections[id].title, path: routeSections[id].path }));
 type Highlight = { x: number; y: number; width: number; visible: boolean };
 
 export function HomeNavigation({ lang }: { lang: Lang }) {

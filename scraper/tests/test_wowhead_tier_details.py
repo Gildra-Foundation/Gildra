@@ -3,10 +3,16 @@ from __future__ import annotations
 import json
 import unittest
 
-from scraper.parsers.wowhead_tier_details import parse_tier_page
+from scraper.parsers.wowhead_tier_details import parse_tier_page, tier_page_provenance
 
 
 class ParseTierPageTest(unittest.TestCase):
+    def test_season_requires_evidence_in_page_heading(self) -> None:
+        self.assertEqual("midnight-season-2", tier_page_provenance("<title>DPS Rankings — Midnight Season 2 (12.1.5)</title>")["season_id"])
+        self.assertEqual("12.1.5", tier_page_provenance("<h1>Midnight Season 2 — 12.1.5</h1>")["game_version"])
+        self.assertEqual("", tier_page_provenance("<title>Midnight DPS Rankings</title><p>Season 2 navigation</p>")["season_id"])
+        self.assertEqual("", tier_page_provenance("<title>The War Within Season 2</title>")["season_id"])
+
     def test_extracts_tier_and_guide_link_without_guide_text(self) -> None:
         markup = """
         [tier-list=rows]

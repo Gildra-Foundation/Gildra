@@ -57,11 +57,12 @@ for (const viewport of viewports) {
     try {
       const next = await shoot(candidate, route, viewport, path.join(out, `${name}.candidate.png`));
       const baselineFile = baselineDir ? path.join(baselineDir, `${name}.png`) : null;
-      if (baselineFile && (update || !fs.existsSync(baselineFile))) {
+      if (baselineFile && update) {
         fs.copyFileSync(path.join(out, `${name}.candidate.png`), baselineFile);
         console.log(`${viewport.padEnd(7)} ${route}  baseline written`);
         continue;
       }
+      if (baselineFile && !fs.existsSync(baselineFile)) throw new Error(`Missing approved baseline: ${baselineFile}`);
       const before = baselineFile ? PNG.sync.read(fs.readFileSync(baselineFile)) : await shoot(reference, route, viewport, path.join(out, `${name}.reference.png`));
       if (before.width !== next.width || before.height !== next.height) throw new Error(`size ${before.width}×${before.height} vs ${next.width}×${next.height}`);
       const diff = new PNG({ width: next.width, height: next.height });
@@ -78,5 +79,5 @@ for (const viewport of viewports) {
   }
 }
 await browser.close();
-console.log(failed ? `visual:diff — ${failed} route(s) over ${max}% or failed; diffs in ${out}` : `visual:diff — every route within ${max}%`);
+console.log(failed ? `visual:diff — ${failed} route(s) over ${max}% or failed; diffs in ${out}` : update ? "visual:diff — baselines recorded; comparison still required" : `visual:diff — every route within ${max}%`);
 process.exit(failed ? 1 : 0);

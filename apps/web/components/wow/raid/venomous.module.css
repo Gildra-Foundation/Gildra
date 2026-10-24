@@ -16,7 +16,7 @@
   line-height: 1.6;
 }
 
-.footnote a { display: inline-flex; align-items: center; gap: 4px; color: var(--atlas-accent); text-decoration: none; }
+.footnote a { display: inline-flex; min-height: 44px; align-items: center; gap: 4px; color: var(--atlas-accent); text-decoration: none; }
 .footnote a:hover { color: var(--atlas-accent-strong); text-decoration: underline; }
 .footnote svg { width: 12px; height: 12px; }
 
@@ -267,6 +267,14 @@
   font-size: var(--atlas-text-title);
   font-weight: var(--atlas-weight-display);
   line-height: var(--atlas-leading-snug);
+}
+
+.ability h3 a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--atlas-control-height);
+  text-decoration: underline;
+  text-underline-offset: .18em;
 }
 
 .ability small,

@@ -21,9 +21,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
   const rawGames = Array.isArray(params.game) ? params.game : params.game ? [params.game] : [];
   const selectedGames = rawGames.filter(isCatalogGame).filter((id) => catalogGames.find((game) => game.id === id)?.available) as CatalogGameId[];
   const games = selectedGames.length ? selectedGames : catalogGames.filter((game) => game.available).map((game) => game.id);
-  const results = games.map((gameId) => ({
+  const results = (query ? games : []).map((gameId) => ({
     gameId,
-    result: searchCatalogGame({ gameId, kind, query, locale: "en_US", limitPerGame: query ? 12 : 4 }),
+    result: searchCatalogGame({ gameId, kind, query, locale: "en_US", limitPerGame: 12 }),
   }));
   return <SearchPage lang="en" query={query} kind={kind} selectedGames={games} results={results} />;
 }

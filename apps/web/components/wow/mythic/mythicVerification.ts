@@ -1,5 +1,5 @@
 /** Dates record a completed source check, never the render or deployment time.
- * These checks cover dungeon identities and game timers, not tactical drafts.
+ * Tactical review uses the cited current-season author guides and MDT route data.
  */
 export const mythicVerification = {
   season: {
@@ -20,6 +20,6 @@ export const mythicVerification = {
     checkedAt: "2026-10-18",
     source: "https://worldofwarcraft.blizzard.com/en-us/news/24307306/midnight-s-12-1-5-content-update-is-now-live",
   },
-  route: { status: "draft", checkedAt: null },
+  route: { status: "source_reviewed", checkedAt: "2026-10-19" },
 } as const;
 

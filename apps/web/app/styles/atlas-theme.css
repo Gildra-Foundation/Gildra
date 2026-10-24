@@ -216,3 +216,6 @@
   line-gap-override: 0%;
   size-adjust: 107.12%;
 }
+
+/* Wrapped breadcrumbs retain separated touch targets on narrow screens. */
+[data-atlas-frame] nav[data-text-links] a { display:inline-flex;align-items:center;min-height:24px; }

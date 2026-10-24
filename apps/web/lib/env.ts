@@ -35,7 +35,7 @@ export const serverEnvSchema: readonly Variable[] = [
   { key: "SENTRY_DSN", kind: "url", warnUnset: "server errors are not reported to GlitchTip" },
   { key: "NEXT_PUBLIC_SENTRY_DSN", kind: "url", warnUnset: "/monitoring refuses browser error reports" },
   { key: "SENTRY_TRACES_SAMPLE_RATE", kind: "rate", default: "0" },
-  { key: "WOW_META_API_ENABLED", kind: "bool", default: "false" },
+  { key: "WOW_META_API_ENABLED", kind: "bool", default: "true" },
   { key: "PLATFORM_HOME_API_ENABLED", kind: "bool", default: "false" },
 ];
 

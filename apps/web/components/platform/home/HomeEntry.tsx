@@ -11,7 +11,7 @@ import styles from "./homeEntry.module.css";
 
 export function HomeEntry({ lang }: { lang: Lang }) {
   const ru = lang === "ru";
-  const { started, entryReady, confirmSound } = useHomeScene();
+  const { started, entryReady, confirmSound, skipIntroduction } = useHomeScene();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [consent, setConsent] = useState<BrowserConsent>("declined");
   const [soundChoice, setSoundChoice] = useState<boolean | null>(null);
@@ -42,6 +42,10 @@ export function HomeEntry({ lang }: { lang: Lang }) {
     // The persistent sound control is the next useful action after entry.
     requestAnimationFrame(() => document.querySelector<HTMLButtonElement>("[data-home-music] button")?.focus({ preventScroll: true }));
   }
+  function openContents() {
+    saveBrowserConsent(consent); skipIntroduction(); setSettingsOpen(false);
+    requestAnimationFrame(() => window.dispatchEvent(new Event("gildra-open-home-book")));
+  }
   function closeSettings() {
     setSettingsOpen(false);
     requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true }));
@@ -60,7 +64,7 @@ export function HomeEntry({ lang }: { lang: Lang }) {
       {ru ? "Настройки файлов cookie" : "Cookie settings"}
     </button>}
     <dialog ref={dialog} className={styles.dialog} lang={lang} aria-labelledby="home-entry-title" aria-describedby={started ? undefined : "home-entry-description"} data-home-entry
-      onCancel={event => { event.preventDefault(); if (started) closeSettings(); }}>
+      onCancel={event => { event.preventDefault(); if (started) closeSettings(); else openContents(); }}>
       <div className={styles.topline}>
         <span>GILDRA <span aria-hidden="true"> / </span> {ru ? "ХРОНИКИ АЗЕРОТА" : "CHRONICLES OF AZEROTH"}</span>
         <nav className={styles.language} aria-label={ru ? "Язык сайта" : "Site language"}>
@@ -100,6 +104,7 @@ export function HomeEntry({ lang }: { lang: Lang }) {
           <button type="button" role="radio" aria-checked={soundChoice === false} tabIndex={soundChoice === false ? 0 : -1} className={styles.withoutSound} onClick={() => setSoundChoice(false)}><span data-entry-label>{ru ? "Без звука" : "Without sound"}</span></button>
         </EntryTextActions>
       </div>}
+      {!started && <EntryTextActions><button type="button" className={styles.withoutSound} onClick={openContents}><span data-entry-label>{ru ? "Сразу к оглавлению" : "Go straight to contents"}</span></button></EntryTextActions>}
       <div className={styles.confirm}>
         <EntryTextActions>
           <button type="button" className={styles.withSound} disabled={!started && soundChoice === null} onClick={() => {

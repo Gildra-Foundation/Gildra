@@ -6,7 +6,7 @@ export const mythicAtlasCopy = {
     eyebrow: "Midnight · Сезон 2",
     title: "Атлас Эпохальный+",
     breadcrumbsLabel: "Навигация",
-    lede: "Сравните таймеры и выберите подземелье. В маршруте — порядок боёв, группы врагов и назначения игроков.",
+    lede: "Выберите подземелье: вход, карта, маршрут, тактика боссов и задачи каждой роли. Таймер ключа указан на карточке.",
     statsLabel: "Сводка сезона",
     dungeons: "подземелий",
     bosses: "боссов",
@@ -28,7 +28,7 @@ export const mythicAtlasCopy = {
     eyebrow: "Midnight · Season 2",
     title: "Mythic+ atlas",
     breadcrumbsLabel: "Breadcrumbs",
-    lede: "Compare time limits and choose a dungeon. Each route outlines fight order, enemy groups and player assignments.",
+    lede: "Choose a dungeon for its entrance, map, route, boss strategy and role assignments. Each card shows the key time limit.",
     statsLabel: "Season summary",
     dungeons: "dungeons",
     bosses: "bosses",
@@ -57,4 +57,5 @@ export const dungeonLocationEn: Record<string, string> = {
   "Буря Бездны": "Voidstorm",
   "Зулдазар": "Zuldazar",
   "Вол'дун": "Vol'dun",
+  "Извилистый остров": "The Coiled Isle",
 };

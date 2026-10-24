@@ -5,7 +5,7 @@
 .controls button:focus-visible,.level input:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
 .level{display:grid;gap:2px;width:112px;min-width:0}
 .caption{font-size:10px;line-height:1.4;color:var(--muted);white-space:nowrap;text-shadow:0 1px 4px #000}
-.level input{appearance:none;-webkit-appearance:none;width:100%;height:24px;margin:0;cursor:pointer;background:transparent;color:var(--accent)}
+.level input{appearance:none;-webkit-appearance:none;width:100%;height:44px;margin:0;cursor:pointer;background:transparent;color:var(--accent)}
 .level input::-webkit-slider-runnable-track{height:2px;border-radius:1px;background:linear-gradient(to right,var(--accent) 0 var(--music-level),color-mix(in srgb,var(--paper) 22%,transparent) var(--music-level) 100%)}
 .level input::-moz-range-track{height:2px;border-radius:1px;background:color-mix(in srgb,var(--paper) 22%,transparent)}
 .level input::-moz-range-progress{height:2px;background:var(--accent)}

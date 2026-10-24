@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { pageOpenGraph, pairedAlternates } from "@/lib/seo/metadata";
 import { routeSections, type SectionId } from "./registry";
+import { publicationFor } from "@/lib/wow/publicationData";
 
 /**
  * Page metadata of the registry sections in both languages (roadmap item 75).
@@ -15,18 +16,18 @@ type SectionMeta = { en: Words; ru: Words; noindex?: true };
 
 const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   wow: {
-    en: { title: "World of Warcraft — Gildra", description: "World of Warcraft hub with source-tracked Midnight routes and explicit verification status." },
-    ru: { title: "World of Warcraft — хаб Gildra", description: "Хаб World of Warcraft с маршрутами Midnight, источниками и явным статусом проверки." },
+    en: { title: "World of Warcraft — Gildra", description: "Your World of Warcraft hub: characters, builds, rankings, dungeon routes and raid guides." },
+    ru: { title: "World of Warcraft — обзор Gildra", description: "Всё для World of Warcraft: персонажи, билды, рейтинги, маршруты подземелий и тактики рейдов." },
     noindex: true,
   },
   raids: {
-    en: { title: "World of Warcraft Raid Journal — Gildra", description: "Source-tracked Midnight raid routes and an archive inventory. Coverage is not declared complete." },
-    ru: { title: "Рейдовый журнал World of Warcraft — Gildra", description: "Маршруты рейдов Midnight с источниками и инвентаризация архива. Полнота покрытия не заявляется." },
+    en: { title: "World of Warcraft Raid Journal — Gildra", description: "Raid bosses, encounter strategies, role assignments and rewards." },
+    ru: { title: "Рейдовый журнал World of Warcraft — Gildra", description: "Боссы рейдов, тактики сражений, задачи ролей и награды." },
     noindex: true,
   },
   mythicPlus: {
-    en: { title: "Midnight Mythic+ — Gildra", description: "Choose a dungeon and open its route: pulls, bosses, timer, party composition and tactical assignments." },
-    ru: { title: "Эпохальный+ Midnight — Gildra", description: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения." },
+    en: { title: "Midnight Mythic+ — Gildra", description: "Dungeon walkthroughs with maps, boss strategies, role assignments and personal notes." },
+    ru: { title: "Эпохальный+ Midnight — Gildra", description: "Прохождение подземелий: карты, тактики боссов, задачи ролей и личные заметки." },
     noindex: true,
   },
   dungeons: {
@@ -72,11 +73,12 @@ export function sectionMetadata(id: SectionId, locale: Locale): Metadata {
   const path = routeSections[id].path;
   const words = meta[locale];
   const alternates = pairedAlternates(locale, path);
+  const publication = publicationFor(path);
   return {
     title: words.title,
     ...(words.description ? { description: words.description } : {}),
     alternates,
     openGraph: pageOpenGraph(locale, { title: words.title, description: words.description, path: String(alternates.canonical) }),
-    ...(meta.noindex ? { robots: { index: false, follow: true } } : {}),
+    ...((publication || meta.noindex) ? { robots: { index: publication?.ready === true, follow: true } } : {}),
   };
 }

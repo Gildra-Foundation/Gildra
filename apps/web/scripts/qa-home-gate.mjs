@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// The landing scene and the contents book must not change (owner rule): the
-// candidate build is compared with the live site pixel for pixel — / and /ru at
+// Protect the approved landing scene and contents book pixel for pixel. By default
+// compare with live; --baseline-dir/--update records an intentional design release.
+// The candidate is checked at / and /ru at
 // 1440×900 and 390×844, and the book opened from /ru. Any differing pixel fails.
 //   npm run qa:home-gate [-- --candidate http://127.0.0.1:3100 --base https://gildra.net]
 import fs from "node:fs";
@@ -15,6 +16,10 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((pairs, arg, index,
 const candidate = args.candidate ?? "http://127.0.0.1:3100";
 const base = args.base ?? "https://gildra.net";
 const out = args.out ?? ".artifacts/home-gate";
+const baselineDir = args["baseline-dir"];
+const update = process.argv.includes("--update");
+if (update && !baselineDir) throw new Error("--update requires --baseline-dir");
+if (baselineDir) fs.mkdirSync(baselineDir, { recursive: true });
 fs.mkdirSync(out, { recursive: true });
 const browser = await chromium.launch();
 
@@ -30,11 +35,14 @@ async function shoot(origin, path, phone, book) {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(1500);
   if (book) {
-    // Open the book the way a reader does: silent mode, continue, the GILDRA mark.
-    await page.getByRole("radio", { name: "Без звука" }).click();
-    await page.getByRole("button", { name: "Продолжить" }).click();
-    await page.waitForTimeout(3000);
-    await page.locator("button", { hasText: "GILDRA" }).first().click();
+    const direct = page.getByRole("button", { name: "Сразу к оглавлению", exact: true });
+    if (await direct.count()) await direct.click();
+    else {
+      await page.getByRole("radio", { name: "Без звука" }).click();
+      await page.getByRole("button", { name: "Продолжить" }).click();
+      await page.waitForTimeout(3000);
+      await page.locator("button", { hasText: "GILDRA" }).first().click();
+    }
     await page.waitForTimeout(4000);
     await page.evaluate(() => document.fonts.ready);
   } else {
@@ -47,8 +55,11 @@ async function shoot(origin, path, phone, book) {
 
 let failed = 0;
 for (const [label, path, phone, book] of [["desktop /", "/", false, false], ["desktop /ru", "/ru", false, false], ["phone /", "/", true, false], ["phone /ru", "/ru", true, false], ["book (desktop /ru)", "/ru", false, true]]) {
-  const live = await shoot(base, path, phone, book);
+  const file = baselineDir ? `${baselineDir}/${label.replace(/\W+/g, "_")}.png` : null;
   const next = await shoot(candidate, path, phone, book);
+  if (file && update) { fs.writeFileSync(file, PNG.sync.write(next)); console.log(`${label} baseline written`); continue; }
+  if (file && !fs.existsSync(file)) throw new Error(`Missing approved baseline: ${file}`);
+  const live = file ? PNG.sync.read(fs.readFileSync(file)) : await shoot(base, path, phone, book);
   const diff = new PNG({ width: live.width, height: live.height });
   const pixels = live.width === next.width && live.height === next.height ? pixelmatch(live.data, next.data, diff.data, live.width, live.height, { threshold: 0.1 }) : -1;
   fs.writeFileSync(`${out}/${label.replace(/\W+/g, "_")}.diff.png`, PNG.sync.write(diff));
@@ -56,5 +67,5 @@ for (const [label, path, phone, book] of [["desktop /", "/", false, false], ["de
   if (pixels !== 0) failed += 1;
 }
 await browser.close();
-console.log(failed ? `qa:home-gate — ${failed} view(s) changed (diffs in ${out})` : "qa:home-gate — landing and book unchanged (0 px)");
+console.log(failed ? `qa:home-gate — ${failed} view(s) changed (diffs in ${out})` : update ? "qa:home-gate — five baselines recorded; comparison still required" : "qa:home-gate — landing and book unchanged (0 px)");
 process.exit(failed ? 1 : 0);

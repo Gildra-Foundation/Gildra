@@ -71,6 +71,8 @@ export type TalentTree = {
 
 export type TalentCalculatorData = {
   specId: number;
+  treeHash?: string;
+  pointBudgets?: Record<TalentKind, number>;
   buildId: number;
   buildVersion: string;
   buildNumber: number;
@@ -80,6 +82,7 @@ export type TalentCalculatorData = {
   heroSubtreeId: number;
   heroSelectionNodeId: number;
   heroSelectionEntryIndex: number;
+  heroSelections?: Array<{ subtreeId: number; entryIndex: number }>;
   fullNodeOrder: number[];
   loadoutNodes: Array<{ nodeId: number; maxRanks: number; nodeType: TalentNodeType; freeNode: boolean; choiceEntryIds: number[] }>;
   heroIconUrl: string;
@@ -100,6 +103,8 @@ type RawNode = RecordValue & { id: number; type: TalentNodeType; entries: RawEnt
 type RawEntry = RecordValue & { id: number; name: string; type: string; maxRanks: number; index: number; spellId?: number; definitionId?: number; icon?: string };
 type Topology = {
   traitTreeId: number;
+  treeHash?: string;
+  pointBudgets?: Record<TalentKind, number>;
   classId: number;
   specId: number;
   className: string;
@@ -108,6 +113,7 @@ type Topology = {
   heroSubtreeId: number;
   heroSelectionNodeId: number;
   heroSelectionEntryIndex: number;
+  heroSelections: Array<{ subtreeId: number; entryIndex: number }>;
   fullNodeOrder: number[];
   heroName: string;
   buildId: number;
@@ -321,6 +327,16 @@ function rawNodes(value: unknown) {
   return Array.isArray(value) ? value.map(parseRawNode).filter((node): node is RawNode => node !== null) : [];
 }
 
+function treeVersionFields(record: RecordValue) {
+  const treeHash = typeof record.treeHash === "string" && /^[a-f\d]{32}$/i.test(record.treeHash) ? record.treeHash.toLowerCase() : undefined;
+  const levels = asRecord(record.pointLevels);
+  const kinds: TalentKind[] = ["class", "hero", "spec"];
+  const pointBudgets = levels && kinds.every(kind => Array.isArray(levels[kind]) && (levels[kind] as unknown[]).every(level => Number.isInteger(level) && Number(level) > 0))
+    ? Object.fromEntries(kinds.map(kind => [kind, (levels[kind] as number[]).filter(level => level <= 90).length])) as Record<TalentKind, number>
+    : undefined;
+  return { treeHash, pointBudgets };
+}
+
 function readTopology(entity: GameEntity | null, lang: TalentLang): Topology | null {
   const block = (entity?.tooltip?.blocks ?? []).find((item) => String(item.type ?? "") === "talent_tree_topology") as TooltipBlock | undefined;
   if (!block) return null;
@@ -330,11 +346,13 @@ function readTopology(entity: GameEntity | null, lang: TalentLang): Topology | n
   const provenance = (entity?.tooltip?.blocks ?? []).find((item) => String(item.type ?? "") === "provenance") as TooltipBlock | undefined;
   return {
     traitTreeId: asNumber(block.traitTreeId), classId: asNumber(block.classId), specId: asNumber(block.specId),
+    ...treeVersionFields(block),
     className: String(block.className ?? "Warrior"), specName: String(block.specName ?? "Fury"),
     nodes: { class: rawNodes(block.classNodes), hero: rawNodes(block.heroNodes), spec: rawNodes(block.specNodes) },
     heroSubtreeId,
     heroSelectionNodeId: subtreeRoot?.id ?? 0,
     heroSelectionEntryIndex: Math.max(0, subtreeEntries.findIndex((entry) => entry.id === hero?.id)),
+    heroSelections: subtreeEntries.map((entry, entryIndex) => ({ subtreeId: asNumber(entry.traitSubTreeId), entryIndex })),
     fullNodeOrder: asNumberArray(block.fullNodeOrder),
     heroName: talentCalculatorDataCopy[lang].slayer,
     buildId: asNumber(entity?.buildId, 1),
@@ -755,10 +773,12 @@ async function loadRaidbotsTalentData(theme: TalentSpecTheme = defaultTalentSpec
   const buildVersion = snapshot.buildVersion;
   const topology: Topology = {
     traitTreeId: asNumber(record.traitTreeId), classId: asNumber(record.classId), specId: requestedSpecId,
+    ...treeVersionFields(record),
     className: String(record.className ?? theme.className), specName: String(record.specName ?? theme.specName), nodes,
     heroSubtreeId: selectedHeroSubtreeId,
     heroSelectionNodeId: selector?.id ?? 0,
     heroSelectionEntryIndex: Math.max(0, selectorEntries.findIndex((entry) => entry.id === heroEntry?.id)),
+    heroSelections: selectorEntries.map((entry, entryIndex) => ({ subtreeId: asNumber(entry.traitSubTreeId), entryIndex })),
     fullNodeOrder: asNumberArray(record.fullNodeOrder),
     heroName: lang === "ru" ? selectedHeroTheme.nameRu : selectedHeroTheme.name,
     buildId: Number(buildVersion.split(".").at(-1)) || 1,
@@ -795,8 +815,10 @@ async function loadRaidbotsTalentData(theme: TalentSpecTheme = defaultTalentSpec
     .sort((a, b) => a.externalId - b.externalId);
   return {
     specId: requestedSpecId, buildId: topology.buildId, buildVersion, buildNumber: topology.buildNumber,
+    treeHash: topology.treeHash, pointBudgets: topology.pointBudgets,
     className: lang === "ru" ? theme.classNameRu : theme.className, specName: lang === "ru" ? theme.specNameRu : theme.specName, heroName: topology.heroName, heroSubtreeId: selectedHeroSubtreeId,
     heroSelectionNodeId: topology.heroSelectionNodeId, heroSelectionEntryIndex: topology.heroSelectionEntryIndex,
+    heroSelections: topology.heroSelections,
     fullNodeOrder: topology.fullNodeOrder, loadoutNodes: loadoutNodes(topology),
     heroIconUrl: "https://render.worldofwarcraft.com/us/icons/56/inv_ability_slayerwarrior_slayersdominance.jpg",
     trees, pvpTalents,
@@ -821,6 +843,7 @@ async function loadMidnightWarriorTalentData(lang: TalentLang): Promise<TalentCa
   // The catalog decides which build is current: the tree, its talents and PvP
   // talents only have to agree with each other (see the buildId checks above).
   if (!topology || topology.specId !== specId) throw new Error("The active catalog does not contain the verified Midnight Fury topology");
+  if (!topology.treeHash || !topology.pointBudgets) throw new Error("The active catalog does not publish talent tree version and point budgets");
   const [enrichedRaw, pvpRaw] = await Promise.all([
     mapWithConcurrency(summaries, 3, (summary) => enrich(summary, topology, locale)),
     mapWithConcurrency(pvpSummaries, 3, (summary) => enrichPvp(summary, topology, locale)),
@@ -862,10 +885,12 @@ async function loadMidnightWarriorTalentData(lang: TalentLang): Promise<TalentCa
   }
   return {
     specId: topology.specId,
+    treeHash: topology.treeHash, pointBudgets: topology.pointBudgets,
     buildId: topology.buildId, buildVersion: topology.buildVersion, buildNumber: topology.buildNumber,
     className: talentCalculatorDataCopy[lang].warrior, specName: talentCalculatorDataCopy[lang].fury, heroName: topology.heroName, heroSubtreeId: topology.heroSubtreeId,
     heroSelectionNodeId: topology.heroSelectionNodeId,
     heroSelectionEntryIndex: topology.heroSelectionEntryIndex,
+    heroSelections: topology.heroSelections,
     fullNodeOrder: topology.fullNodeOrder,
     loadoutNodes: loadoutNodes(topology),
     heroIconUrl: "https://render.worldofwarcraft.com/us/icons/56/inv_ability_slayerwarrior_slayersdominance.jpg", trees,
@@ -879,7 +904,9 @@ async function loadMidnightWarriorTalentData(lang: TalentLang): Promise<TalentCa
   };
 }
 
-const midnightWarriorTalentDataPromises = new Map<TalentLang, Promise<TalentCalculatorData>>();
+type TalentDataCacheEntry = { request: Promise<TalentCalculatorData>; expiresAt: number };
+const talentDataTtl = 300_000;
+const midnightWarriorTalentDataPromises = new Map<TalentLang, TalentDataCacheEntry>();
 
 function loadCatalogWithDeadline(lang: TalentLang, milliseconds = 15_000) {
   return new Promise<TalentCalculatorData>((resolve, reject) => {
@@ -893,20 +920,20 @@ function loadCatalogWithDeadline(lang: TalentLang, milliseconds = 15_000) {
 
 export function getMidnightWarriorTalentData(lang: TalentLang = "ru"): Promise<TalentCalculatorData> {
   const cached = midnightWarriorTalentDataPromises.get(lang);
-  if (cached) return cached;
+  if (cached && cached.expiresAt > Date.now()) return cached.request;
   const request = loadCatalogWithDeadline(lang)
     .catch(() => loadRaidbotsTalentData(defaultTalentSpecTheme, heroSubtreeId, lang))
     .catch((error) => {
-      midnightWarriorTalentDataPromises.delete(lang);
+      if (midnightWarriorTalentDataPromises.get(lang)?.request === request) midnightWarriorTalentDataPromises.delete(lang);
       throw error;
     });
-  midnightWarriorTalentDataPromises.set(lang, request);
+  midnightWarriorTalentDataPromises.set(lang, { request, expiresAt: Date.now() + talentDataTtl });
   return request;
 }
 
-const midnightTalentDataPromises = new Map<string, Promise<TalentCalculatorData>>();
+const midnightTalentDataPromises = new Map<string, TalentDataCacheEntry>();
 
-const talentPageDataPromises = new Map<string, Promise<TalentCalculatorData>>();
+const talentPageDataPromises = new Map<string, TalentDataCacheEntry>();
 
 /** Load page data without making the first render wait on dozens of tooltip requests. */
 export function getMidnightTalentPageData(specSlug: string, heroPathId?: number, lang: TalentLang = "ru"): Promise<TalentCalculatorData> {
@@ -917,24 +944,24 @@ export function getMidnightTalentPageData(specSlug: string, heroPathId?: number,
     : theme.specId === specId ? heroSubtreeId : theme.heroPaths[0].id;
   const cacheKey = `${lang}:${theme.slug}:${requestedHeroId}`;
   const cached = talentPageDataPromises.get(cacheKey);
-  if (cached) return cached;
+  if (cached && cached.expiresAt > Date.now()) return cached.request;
 
   const request = (async () => {
     // Preserve the verified catalog source for Fury Warrior when it is
     // available. Other trees use the public Raidbots snapshot as before.
     if (theme.specId === specId && requestedHeroId === heroSubtreeId) {
       try {
-        return await loadMidnightWarriorTalentData(lang);
+        return await loadCatalogWithDeadline(lang);
       } catch {
         // Fall back to the provenance-marked community snapshot below.
       }
     }
     return loadRaidbotsTalentData(theme, requestedHeroId, lang);
   })().catch((error) => {
-    talentPageDataPromises.delete(cacheKey);
+    if (talentPageDataPromises.get(cacheKey)?.request === request) talentPageDataPromises.delete(cacheKey);
     throw error;
   });
-  talentPageDataPromises.set(cacheKey, request);
+  talentPageDataPromises.set(cacheKey, { request, expiresAt: Date.now() + talentDataTtl });
   return request;
 }
 
@@ -947,11 +974,11 @@ export function getMidnightTalentData(specSlug: string, heroPathId?: number, lan
   if (theme.specId === specId && requestedHeroId === heroSubtreeId) return getMidnightWarriorTalentData(lang);
   const cacheKey = `${lang}:${theme.slug}:${requestedHeroId}`;
   const cached = midnightTalentDataPromises.get(cacheKey);
-  if (cached) return cached;
+  if (cached && cached.expiresAt > Date.now()) return cached.request;
   const request = loadRaidbotsTalentData(theme, requestedHeroId, lang).catch((error) => {
-    midnightTalentDataPromises.delete(cacheKey);
+    if (midnightTalentDataPromises.get(cacheKey)?.request === request) midnightTalentDataPromises.delete(cacheKey);
     throw error;
   });
-  midnightTalentDataPromises.set(cacheKey, request);
+  midnightTalentDataPromises.set(cacheKey, { request, expiresAt: Date.now() + talentDataTtl });
   return request;
 }

@@ -27,6 +27,7 @@ export type DungeonRoute = {
   description: string;
   guideUrl: string;
   mdtRouteUrl: string;
+  routeEvidence?: { source: string; sourceVersion: string; mapSource: string; verifiedAt: string; requiredForces: number; totalForces: number; adjusted: boolean };
   stops: RouteStop[];
 };
 
@@ -85,15 +86,15 @@ const altarOfFangs = buildStops([
     title: "Жертвенный подход", subtitle: "Primal Serpents + Harrowers", x: 50, y: 84, duration: 92, forces: 12,
     summary: "Начальный коридор проверяет ротацию прерываний и снятие яда. Соберите змей у первой колонны, не позволяя двум Piercing Hiss пройти одновременно.",
     enemies: [["Primal Serpent", 3, "high"], ["Twinfang Harrower", 2, "high"], ["Ravenous Descendant", 2, "medium"]],
-    abilities: [["Piercing Hiss", "Кик", "ShadowNova", "Primal Serpent"], ["Paralyzing Shots", "Диспел", "MysticHeals", "Twinfang Harrower"], ["Ravenous Claws", "Пурж", "MysticHeals", "Ravenous Descendant"]],
+    abilities: [["Piercing Hiss", "Кик", "ShadowNova", "Primal Serpent"], ["Paralyzing Shots", "Диспел", "MysticHeals", "Twinfang Harrower"], ["Ravenous", "Стоп", "MysticHeals", "Ravenous Descendant"]],
     callouts: ["Piercing Hiss прерываем по меткам.", "Paralyzing Shots снимаем сразу.", "Не стойте перед гарпунщиками."],
   },
   {
     title: "Голодные потомки", subtitle: "Ravenous Descendants", x: 43, y: 73, duration: 78, forces: 10,
     summary: "Потомки быстро разгоняют скорость атак. Короткое оглушение или отвод противника сбрасывает опасный темп и сохраняет защиту танка.",
     enemies: [["Ravenous Descendant", 3, "high"]],
-    abilities: [["Ravenous Claws", "Пурж", "MysticHeals", "Ravenous Descendant"], ["Blood Frenzy", "Стоп", "Ironclad", "Ravenous Descendant"]],
-    callouts: ["Оглушить потомка на разгоне атак.", "Не соединять два Blood Frenzy.", "После контроля добить отмеченную цель."],
+    abilities: [["Ravenous", "Стоп", "MysticHeals", "Ravenous Descendant"], ["Ravenous", "Стоп", "Ironclad", "Ravenous Descendant"]],
+    callouts: ["Оглушить потомка на разгоне атак.", "Не соединять несколько потомков с большим числом усилений.", "После контроля добить отмеченную цель."],
   },
   {
     title: "Двор тотемов", subtitle: "Активировать древние тотемы", x: 57, y: 64, duration: 88, forces: 11,
@@ -106,9 +107,9 @@ const altarOfFangs = buildStops([
     title: "Rav'i", subtitle: "Босс 1", x: 50, y: 54, kind: "boss", duration: 164, bloodlust: true,
     summary: "Уводите босса от Fresh Meat, разносите Triple Shot и проходите между волнами Regurgitate. Во время Ssscavenging закройте сферы и быстро снимите щит.",
     enemies: [["Rav'i", 1, "boss"]],
-    abilities: [["Ravenous Stomp", "Уклонение", "Вся группа", "Rav'i"], ["Triple Shot", "Защита", "Цели механики", "Rav'i"], ["Regurgitate", "Диспел", "MysticHeals", "Rav'i"], ["Ssscavenging", "Фокус", "Все DPS", "Rav'i"]],
+    abilities: [["Ravenous Stomp", "Защита", "Вся группа", "Rav'i"], ["Triple Shot", "Защита", "Цели механики", "Rav'i"], ["Regurgitate", "Уклонение", "MysticHeals", "Rav'i"], ["Ssscavenging", "Фокус", "Все DPS", "Rav'i"]],
     callouts: ["Уводить босса от кусков мяса.", "Triple Shot — разойтись.", "В щит отдать весь доступный урон."],
-    tank: "Переставляйте Rav'i после каждого Ravenous Stomp и не разворачивайте конус в группу.", healer: "Снимайте Regurgitate и поднимайте игроков до Triple Shot.", dps: "Сферы Ssscavenging закрываются сразу; щит босса — абсолютный приоритет.",
+    tank: "Ведите босса к свободной куче костей, вдали от мяса.", healer: "Снимайте болезнь после Regurgitate; готовьте лечение на Ravenous Stomp.", dps: "Закрывайте сферы и быстро разбивайте щит; разносите Triple Shot.",
   },
   {
     title: "Камеры мутации", subtitle: "High Evolutionists", x: 49, y: 44, duration: 102, forces: 14,
@@ -126,10 +127,14 @@ const altarOfFangs = buildStops([
   },
   {
     title: "The Writhing Coil", subtitle: "Босс 2", x: 50, y: 27, kind: "boss", duration: 178,
-    summary: "Toxic Atrophy произносится серией из трёх заклинаний. Уклоняйтесь от Burrowing Charge, а на Death Rattle все пять игроков должны выбежать из притягивания.",
+    summary: "Распределите три прерывания Toxic Atrophy. На Death Rattle каждый игрок отходит от босса и разрывает свою связь; затем соберите появившихся змей для общего урона.",
     enemies: [["The Writhing Coil", 1, "boss"]],
     abilities: [["Toxic Atrophy", "Кик", "Ротация киков", "The Writhing Coil"], ["Burrowing Charge", "Уклонение", "Вся группа", "The Writhing Coil"], ["Death Rattle", "Уклонение", "Вся группа", "The Writhing Coil"], ["Uncoil", "Фокус", "Все DPS", "The Writhing Coil"]],
-    callouts: ["Три Toxic Atrophy — три назначенных прерывания.", "На Death Rattle бегут все.", "В фазе Uncoil урон проходит по всем копиям."],
+    callouts: ["Три Toxic Atrophy — три назначенных прерывания.", "На Death Rattle бегут все.", "Урон по появившимся змеям передаётся боссу. Перед возвратом в центр выйдите с линий ударов."],
+
+    tank: "Уклоняйтесь от Burrowing Charge; готовьте защиту от удара хвостом.",
+    healer: "Готовьте лечение на синхронные выбросы яда и переходы между фазами.",
+    dps: "Распределите три Toxic Atrophy; разрушайте путы, затем уничтожайте копии.",
   },
   {
     title: "Вознесённый страж", subtitle: "Ascendant Serpent", x: 50, y: 19, kind: "miniboss", duration: 104, forces: 17,
@@ -143,14 +148,18 @@ const altarOfFangs = buildStops([
     summary: "Последние силы противника. Прерывайте Mass Envenom, разносите ядовитые линии и не заходите на алтарь, пока группа не восстановилась.",
     enemies: [["Ula'tek's Chosen", 3, "high"], ["Primal Serpent", 2, "medium"]],
     abilities: [["Mass Envenom", "Кик", "Ротация киков", "Ula'tek's Chosen"], ["Piercing Hiss", "Кик", "Windborne", "Primal Serpent"]],
-    callouts: ["Ровно 100% после группы.", "Перед боссом восстановить ресурсы."],
+    callouts: ["Проверьте счётчик сил противника перед последним боссом.", "Перед боссом восстановить ресурсы."],
   },
   {
     title: "Zul'jan", subtitle: "Финальный босс", x: 50, y: 7, kind: "boss", duration: 188, bloodlust: true,
     summary: "Заранее назначьте четыре позиции для Ritual of the Fang. Перехватывайте лучи, снимайте уровни Ritual Venom через Boneslicer и уклоняйтесь от возвращающихся глеф.",
     enemies: [["Zul'jan", 1, "boss"]],
     abilities: [["Ritual of the Fang", "Защита", "Вся группа", "Zul'jan"], ["Ritual Venom", "Защита", "Цели механики", "Zul'jan"], ["Boneslicer", "Уклонение", "Цель дебаффа", "Zul'jan"], ["Axegrinder", "Уклонение", "Вся группа", "Zul'jan"]],
-    callouts: ["Четыре луча перекрываются назначенными игроками.", "Boneslicer снимает все уровни яда.", "Учитывать обратный путь Axegrinder."],
+    callouts: ["Четыре луча перекрываются назначенными игроками.", "Снимайте Ritual Venom физическим уроном до истечения эффекта; после очистки выходите из оставленной лужи.", "Учитывать обратный путь Axegrinder."],
+
+    tank: "Защита на рубящий удар; держите босса вне луж.",
+    healer: "Поддержите принимающих лучи и игроков с Ritual Venom.",
+    dps: "Закрывайте назначенный луч; очищайте яд физическим уроном и выходите из луж.",
   },
 ]);
 
@@ -171,10 +180,14 @@ const murderRow = buildStops([
   },
   {
     title: "Kystia Manaheart", subtitle: "Босс 1", x: 38, y: 68, kind: "boss", duration: 170,
-    summary: "Прерывайте Felstorm у зеркальных образов и используйте окно Destabilized для сильного урона. Не тратьте основные способности до появления уязвимости.",
+    summary: "Сначала атакуйте дракончика: на 20% здоровья он снимает защиту Кистии. Уничтожайте зеркальные образы прерыванием или контролем; основные способности сохраните на Destabilized.",
     enemies: [["Kystia Manaheart", 1, "boss"]],
-    abilities: [["Felstorm", "Кик", "Ротация киков", "Mirror Images"], ["Fel Missiles", "Кик", "ShadowNova", "Kystia Manaheart"], ["Destabilized", "Фокус", "Все DPS", "Kystia Manaheart"]],
-    callouts: ["Прерывать именно зеркальные образы.", "Основной урон — в Destabilized.", "Образы собирать рядом с боссом."],
+    abilities: [["Mirror Images","Кик","Ротация прерываний","Kystia Manaheart"],["Destabilized","Фокус","Все DPS","Kystia Manaheart"],["Corroding Spittle","Диспел","Цель эффекта","Nibbles"],["Fel Spray","Уклонение","Вся группа","Nibbles"]],
+    callouts: ["Прерывать именно зеркальные образы.", "Основной урон — в Destabilized.", "Каждый образ исчезает после прерывания или контроля."],
+
+    tank: "Отверните дракончика от группы; при вращающемся дыхании выходите из зоны перед ним.",
+    healer: "Быстро снимайте магический эффект плевка. Подготовьте групповое лечение к Destabilized; при появлении образов помогайте с контролем.",
+    dps: "Доведите дракончика до снятия щита; прерывайте образы, затем используйте Destabilized.",
   },
   {
     title: "Склад контрабанды", subtitle: "Barrels + freight", x: 36, y: 55, duration: 112, forces: 12,
@@ -185,10 +198,14 @@ const murderRow = buildStops([
   },
   {
     title: "Zaen Bladesorrow", subtitle: "Босс 2", x: 42, y: 44, kind: "boss", duration: 184, bloodlust: true,
-    summary: "Первым Fire Bomb взорвите лишнюю бочку, вторую сохраните для Murder in a Row. Во время Killing Spree используйте групповую защиту и сильное лечение.",
+    summary: "Направляйте Fire Bomb в заражённый груз. На Murder in a Row каждый игрок прячется за отдельной бочкой до конца залпа.",
     enemies: [["Zaen Bladesorrow", 1, "boss"]],
     abilities: [["Killing Spree", "Защита", "Вся группа", "Zaen Bladesorrow"], ["Fire Bomb", "Уклонение", "Цели механики", "Zaen Bladesorrow"], ["Murder in a Row", "Уклонение", "Вся группа", "Zaen Bladesorrow"]],
-    callouts: ["Первая бомба взрывает лишнюю бочку.", "За второй бочкой прячемся от залпа.", "Групповая защита на Killing Spree."],
+    callouts: ["Проверьте доступное укрытие перед залпом.","Не стойте на линии огня."],
+
+    tank: "Сохраняйте бочку для каждого Murder in a Row.",
+    healer: "Готовьте лечение на Killing Spree; снимайте яд с танка.",
+    dps: "Fire Bomb направляйте в груз, но не уничтожайте нужное укрытие.",
   },
   {
     title: "Казармы гвардии", subtitle: "Wrathguards", x: 48, y: 58, duration: 112, forces: 14,
@@ -203,6 +220,10 @@ const murderRow = buildStops([
     enemies: [["Xathuux the Annihilator", 1, "boss"]],
     abilities: [["Legion Strike", "Уклонение", "ArcanistVexis", "Xathuux the Annihilator"], ["Axe Toss", "Фокус", "Все DPS", "Xathuux the Annihilator"], ["Demonic Rage", "Уклонение", "Вся группа", "Xathuux the Annihilator"]],
     callouts: ["Топоры ставить в ближней зоне.", "Босса вести по внешнему краю.", "Не пересекать след Demonic Rage."],
+
+    tank: "Legion Strike направляйте от союзников; оставляйте свободный край арены.",
+    healer: "Готовьте лечение и защиту на Demonic Rage.",
+    dps: "Ставьте Axe Toss рядом и уничтожайте топоры; расходите круги сокрушительного удара.",
   },
   {
     title: "Демонический квартал", subtitle: "Invokers + flayers", x: 57, y: 38, duration: 112, forces: 14,
@@ -223,14 +244,18 @@ const murderRow = buildStops([
     summary: "Последние силы противника стоят в двух волнах. Сохраните массовый контроль на вторую пару заклинателей и закончите бой с готовой групповой защитой.",
     enemies: [["Wrathguard Flayer", 3, "high"], ["Fel Invoker", 3, "high"], ["Furious Vilefiend", 4, "medium"]],
     abilities: [["Fel Rage", "Кик", "Ротация киков", "Wrathguard Flayer"], ["Health Funnel", "Кик", "ShadowNova", "Fel Invoker"], ["Vile Eruption", "Защита", "Вся группа", "Furious Vilefiend"]],
-    callouts: ["Разделить охрану на две волны.", "Вторая волна — массовый контроль.", "После боя должно быть 100%."],
+    callouts: ["Разделить охрану на две волны.", "Вторая волна — массовый контроль.", "Проверьте счётчик сил противника перед последним боссом."],
   },
   {
     title: "Lithiel Cinderfury", subtitle: "Финальный босс", x: 52, y: 8, kind: "boss", duration: 204, bloodlust: true,
-    summary: "Уводите призванного Infernal от группы, контролируйте Furious Vilefiend и собирайтесь ближе перед Fingers of Gul'dan. Malefic Wave безопасно пересекается через врата.",
+    summary: "Fingers of Gul’dan разносите, сохраняя появляющихся бесов рядом для общего урона. Через Malefic Wave проходите вратами после начала волны, проверив выход.",
     enemies: [["Lithiel Cinderfury", 1, "boss"], ["Furious Vilefiend", 2, "high"]],
     abilities: [["Chaos Bolt", "Кик", "Ротация киков", "Lithiel Cinderfury"], ["Summon Infernal", "Уклонение", "ArcanistVexis", "Lithiel Cinderfury"], ["Fingers of Gul'dan", "Уклонение", "Вся группа", "Lithiel Cinderfury"], ["Malefic Wave", "Защита", "Вся группа", "Lithiel Cinderfury"]],
     callouts: ["Vilefiend умирает до следующего кольца.", "Собраться перед Fingers of Gul'dan.", "Через Malefic Wave пройти вратами."],
+
+    tank: "Уводите Infernal от группы и врат.",
+    healer: "Восстановите группу перед Malefic Wave; следите за появлением противников.",
+    dps: "Прерывайте Chaos Bolt; убивайте Vilefiend и остальных противников.",
   },
 ]);
 
@@ -251,10 +276,14 @@ const denOfNalorakk = buildStops([
   },
   {
     title: "The Hoardmonger", subtitle: "Босс 1", x: 47, y: 57, kind: "boss", duration: 176, bloodlust: true,
-    summary: "Уклоняйтесь от Earthshatter Slam и закрывайте Spoiled Supplies. Грибы лучше собирать по краю, чтобы центр комнаты оставался свободным.",
+    summary: "На 90%, 70% и 40% босс берёт ближайшие припасы. Базовый порядок: мясо, кости, грибы. Закрывайте Spoiled Supplies и выходите из Earthshatter Slam.",
     enemies: [["The Hoardmonger", 1, "boss"]],
-    abilities: [["Ravenous Bellow", "Защита", "Вся группа", "The Hoardmonger"], ["Earthshatter Slam", "Уклонение", "Вся группа", "The Hoardmonger"], ["Spoiled Supplies", "Уклонение", "Цели механики", "The Hoardmonger"], ["Toxic Spores", "Диспел", "MysticHeals", "The Hoardmonger"]],
+    abilities: [["Ravenous Bellow","Защита","Вся группа","The Hoardmonger"],["Earthshatter Slam","Уклонение","Вся группа","The Hoardmonger"],["Spoiled Supplies","Защита","Цели механики","The Hoardmonger"],["Toxic Spores","Диспел","MysticHeals","The Hoardmonger"]],
     callouts: ["Грибы закрывать у внешнего края.", "Выйти из конуса Earthshatter Slam.", "Снять Toxic Spores после перемещения."],
+
+    tank: "Перед выбором припасов подводите босса к выбранным припасам.",
+    healer: "Снимайте Toxic Spores; готовьте лечение к усиленным атакам.",
+    dps: "Закрывайте Spoiled Supplies и уклоняйтесь от Earthshatter Slam.",
   },
   {
     title: "Мост ветров", subtitle: "Rising Winds", x: 54, y: 48, duration: 98, forces: 13,
@@ -272,10 +301,14 @@ const denOfNalorakk = buildStops([
   },
   {
     title: "Sentinel of Winter", subtitle: "Босс 2", x: 63, y: 27, kind: "boss", duration: 190,
-    summary: "Убивайте Fractured Shivercore в заранее выбранной точке. Во время Frozen Tempest держитесь в безопасном глазу, а Winter's Shroud обязательно прерывайте.",
+    summary: "Собирайтесь для появления смерчей, затем смещайтесь. Убивайте ядра и прерывайте Winter’s Shroud. Снежная куча защищает от отталкивания Frozen Tempest.",
     enemies: [["Sentinel of Winter", 1, "boss"], ["Fractured Shivercore", 2, "high"]],
-    abilities: [["Winter's Shroud", "Кик", "Ротация киков", "Sentinel of Winter"], ["Glacial Torment", "Диспел", "MysticHeals", "Sentinel of Winter"], ["Frozen Tempest", "Уклонение", "Вся группа", "Sentinel of Winter"], ["Rimeshatter", "Защита", "Цели механики", "Sentinel of Winter"]],
-    callouts: ["Ядра умирают в одной точке.", "На Frozen Tempest зайти внутрь глаза.", "Winter's Shroud не должен пройти."],
+    abilities: [["Winter's Shroud","Кик","Ротация киков","Fractured Shivercore"],["Glacial Torment","Диспел","MysticHeals","Sentinel of Winter"],["Frozen Tempest","Уклонение","Вся группа","Sentinel of Winter"],["Rimeshatter","Защита","Цели механики","Sentinel of Winter"]],
+    callouts: ["По льду персонаж скользит — двигайтесь заранее.","Каждый Rimeshatter принимает один игрок."],
+
+    tank: "Поставьте босса у снежной кучи к Frozen Tempest.",
+    healer: "Снимайте Glacial Torment; готовьте лечение на Frozen Tempest.",
+    dps: "Прерывайте Winter’s Shroud; после смерти ядра закройте Rimeshatter.",
   },
   {
     title: "Территория матриарха", subtitle: "Matriarch + beasttamers", x: 52, y: 34, duration: 116, forces: 14,
@@ -296,14 +329,18 @@ const denOfNalorakk = buildStops([
     summary: "Последние силы противника. Разнесите Arc Lightning по двум назначениям и не активируйте арену, пока лечение и защитные способности не готовы.",
     enemies: [["Stormbound Mystic", 3, "high"], ["Loyal Saberfang", 3, "medium"], ["Bonded Beasttamer", 2, "high"]],
     abilities: [["Arc Lightning", "Кик", "Ротация киков", "Stormbound Mystic"], ["Bestial Wrath", "Пурж", "MysticHeals", "Bonded Beasttamer"], ["Storm Rush", "Уклонение", "Вся группа", "Loyal Saberfang"]],
-    callouts: ["Два назначения на Arc Lightning.", "После боя должно быть 100%.", "Перед ареной восстановить ресурсы."],
+    callouts: ["Два назначения на Arc Lightning.", "Проверьте счётчик сил противника перед последним боссом.", "Перед ареной восстановить ресурсы."],
   },
   {
     title: "Nalorakk", subtitle: "Финальный босс", x: 49, y: 66, kind: "boss", duration: 205, bloodlust: true,
-    summary: "Echoing Maul размещайте у внешнего края. На Fury of the War God встаньте между Zul'jarra и медведями, а Forceful Slam разделите с танком.",
+    summary: "Во время серии ударов вся группа прячется за щитом Зул’джарры. Во время Fury of the War God перекрывайте путь бегущим к ней эхо.",
     enemies: [["Nalorakk", 1, "boss"], ["Echo of Nalorakk", 4, "high"]],
-    abilities: [["Echoing Maul", "Уклонение", "Цели механики", "Nalorakk"], ["Forceful Roar", "Уклонение", "Вся группа", "Nalorakk"], ["Forceful Slam", "Защита", "ArcanistVexis", "Nalorakk"], ["Fury of the War God", "Защита", "Вся группа", "Nalorakk"]],
+    abilities: [["Echoing Maul","Уклонение","Цели механики","Nalorakk"],["Forceful Slam","Защита","ArcanistVexis","Nalorakk"],["Fury of the War God","Защита","Вся группа","Nalorakk"],["Overwhelming Onslaught","Защита","Вся группа","Nalorakk"]],
     callouts: ["Echoing Maul — у края.", "Медведей перехватывают назначенные игроки.", "Forceful Slam делить с танком."],
+
+    tank: "Не стойте спиной к эху. После отбрасывания вернитесь на Forceful Slam.",
+    healer: "За щитом Зул’джарры подготовьте лечение трёх ударов.",
+    dps: "Ставьте Echoing Maul рядом с прежними эхо, не задевая союзников.",
   },
 ]);
 
@@ -328,6 +365,10 @@ const blindingVale = buildStops([
     enemies: [["Meittik", 1, "boss"], ["Lekshi", 1, "boss"], ["Kezkitt", 1, "boss"]],
     abilities: [["Thornblade", "Уклонение", "Цели механики", "Lekshi"], ["Fan Of Thorns", "Уклонение", "Вся группа", "Lekshi"], ["Lightsower Dash", "Уклонение", "Вся группа", "Lekshi"], ["Lightblossom Beam", "Защита", "Цели механики", "Kezkitt"]],
     callouts: ["Лучи перекрывать внутри цветка.", "После телепорта сразу выйти из Fan Of Thorns.", "Не пересекать линию рывка."],
+
+    tank: "Принимайте один луч в Lightblossom и следите за защитой.",
+    healer: "Лечите цели Thornblade, не сближая их с союзниками.",
+    dps: "Прерывайте световые стрелы; помогайте закрывать два остальных луча.",
   },
   {
     title: "Кровавые заросли", subtitle: "Sporeblight Belchers", x: 55, y: 65, duration: 112, forces: 13,
@@ -342,10 +383,14 @@ const blindingVale = buildStops([
     enemies: [["Ikuzz the Light Hunter", 1, "boss"], ["Bloodthorn Roots", 5, "high"]],
     abilities: [["Verdant Stomp", "Уклонение", "Вся группа", "Ikuzz the Light Hunter"], ["Bloodthorn Roots", "Фокус", "Все DPS", "Ikuzz the Light Hunter"], ["Bloodthirsty Gaze", "Уклонение", "Цель механики", "Ikuzz the Light Hunter"]],
     callouts: ["На корнях собраться вместе.", "Фиксация бежит от босса.", "После отбрасывания не попадать в заросли."],
+
+    tank: "Учитывайте отбрасывание Verdant Stomp и безопасный путь назад.",
+    healer: "Готовьте групповое лечение на рёв босса.",
+    dps: "Быстро ломайте Bloodthorn Roots; уводите преследующего босса через корни.",
   },
   {
     title: "Сияющий перевал", subtitle: "Petalwings + wardens", x: 62, y: 37, duration: 106, forces: 14,
-    summary: "Держитесь внутри тропы и не отбрасывайте врагов в соседние группы. Прерывайте Light Bolt Volley и сохраняйте контроль для Disorienting Screech.",
+    summary: "Держитесь внутри тропы и не отбрасывайте врагов в соседние группы. Прерывайте световые стрелы Volley и сохраняйте контроль для Disorienting Screech.",
     enemies: [["Lightfeather Petalwing", 3, "high"], ["Radiant Spellsower", 1, "medium"]],
     abilities: [["Disorienting Screech", "Стоп", "Ironclad", "Lightfeather Petalwing"], ["Light Bolt Volley", "Кик", "ShadowNova", "Radiant Spellsower"]],
     callouts: ["Screech остановить массовым контролем.", "Не срезать через соседнюю тропу."],
@@ -363,6 +408,10 @@ const blindingVale = buildStops([
     enemies: [["Lightwarden Ruia", 1, "boss"]],
     abilities: [["Warden's Wrath", "Кик", "Ротация киков", "Lightwarden Ruia"], ["Lightfire", "Уклонение", "Цели механики", "Lightwarden Ruia"], ["Grievous Thrash", "Защита", "MysticHeals", "Lightwarden Ruia"], ["Pulverizing Strikes", "Уклонение", "Цели механики", "Lightwarden Ruia"]],
     callouts: ["Цели конусов стоят, остальные отходят.", "Grievous Thrash снимается полным здоровьем.", "Warden's Wrath прерывать."],
+
+    tank: "В облике медведя защищайтесь от усиленных ударов когтями.",
+    healer: "Полностью вылечивайте Grievous Thrash.",
+    dps: "Прерывайте Warden’s Wrath; выносите Lightfire, не разворачивайте конусы.",
   },
   {
     title: "Цветущая низина", subtitle: "Final vale packs", x: 69, y: 31, duration: 116, forces: 16,
@@ -376,14 +425,18 @@ const blindingVale = buildStops([
     summary: "Последняя охрана перед финальной ареной. Прерывайте Lightspore Shot и закончите бой с готовыми защитными способностями.",
     enemies: [["Lightspawn Lasher", 3, "high"], ["Radiant Spellsower", 2, "high"]],
     abilities: [["Lightspore Shot", "Кик", "Ротация киков", "Lightspawn Lasher"], ["Light Bolt Volley", "Кик", "ShadowNova", "Radiant Spellsower"]],
-    callouts: ["Lightspore Shot — главное прерывание.", "После боя должно быть 100%.", "Перед ареной восстановить ресурсы."],
+    callouts: ["Lightspore Shot — главное прерывание.", "Проверьте счётчик сил противника перед последним боссом.", "Перед ареной восстановить ресурсы."],
   },
   {
     title: "Ziekket", subtitle: "Финальный босс", x: 88, y: 46, kind: "boss", duration: 196, bloodlust: true,
-    summary: "Закрывайте Lightbloom's Essence ради усиления, убивайте пробуждённых противников и направляйте Concentrated Lightbeam в их тела.",
+    summary: "Перехватывайте Lightbloom’s Essence до босса, распределяя урон между игроками. Убейте пробуждённых противников и уничтожьте их тела лучом Concentrated Lightbeam.",
     enemies: [["Ziekket", 1, "boss"], ["Lightspawn Lasher", 3, "high"]],
     abilities: [["Lightspore Shot", "Кик", "Ротация киков", "Ziekket"], ["Lightbloom's Essence", "Защита", "Цели механики", "Ziekket"], ["Awaken the Lightbloom", "Фокус", "Все DPS", "Ziekket"], ["Concentrated Lightbeam", "Уклонение", "Цель механики", "Ziekket"]],
     callouts: ["Сферы закрывать по назначению.", "Добавочных врагов быстро убить.", "Луч направить через их тела."],
+
+    tank: "Держите бой у края; направляйте световой луч через тела противников.",
+    healer: "Лечите постоянный урон; следите за игроками, собирающими сферы.",
+    dps: "Прерывайте Lightspore Shot; убивайте противников и перехватывайте сферы.",
   },
 ]);
 
@@ -406,8 +459,12 @@ const voidscarArena = buildStops([
     title: "Taz'Rah", subtitle: "Босс 1", x: 29, y: 31, kind: "boss", duration: 176,
     summary: "Разнесите линии Nether Dash и не пересекайте траектории других игроков. Dark Bloom создаёт сферы из каждой лужи — держите центр свободным.",
     enemies: [["Taz'Rah", 1, "boss"]],
-    abilities: [["Nether Dash", "Уклонение", "Вся группа", "Taz'Rah"], ["Dark Bloom", "Уклонение", "Цели механики", "Taz'Rah"]],
+    abilities: [["Nether Dash","Уклонение","Вся группа","Taz'Rah"],["Dark Bloom","Уклонение","Цели механики","Taz'Rah"],["Void Blast","Защита","Танк","Taz'Rah"]],
     callouts: ["Линии Dash раскладывать веером.", "Лужи Dark Bloom — у края.", "Не пересекать чужую линию."],
+
+    tank: "Защищайтесь от взрыва Бездны и не принимайте отбрасывание в лужу.",
+    healer: "Поддержите цели Nether Dash и танка перед взрывом Бездны.",
+    dps: "Разносите линии у края, затем обходите сферы Dark Bloom.",
   },
   {
     title: "Переход через арену", subtitle: "Screamers + voidscythes", x: 50, y: 52, duration: 110, forces: 15,
@@ -427,8 +484,12 @@ const voidscarArena = buildStops([
     title: "Atroxus", subtitle: "Босс 2", x: 72, y: 31, kind: "boss", duration: 184, bloodlust: true,
     summary: "Быстро уничтожайте Toxic Creeper после Monstrous Roar, уходите из Poison Splash и снимайте Mind-Numbing Poison только после безопасного перемещения.",
     enemies: [["Atroxus", 1, "boss"], ["Toxic Creeper", 1, "high"]],
-    abilities: [["Monstrous Roar", "Фокус", "Все DPS", "Atroxus"], ["Poison Splash", "Уклонение", "Вся группа", "Atroxus"], ["Mind-Numbing Poison", "Диспел", "MysticHeals", "Atroxus"]],
+    abilities: [["Monstrous Roar","Фокус","Все DPS","Atroxus"],["Poison Splash","Защита","Вся группа","Atroxus"],["Mind-Numbing Poison","Диспел","MysticHeals","Atroxus"],["Hulking Claw","Защита","Танк","Atroxus"],["Noxious Breath","Уклонение","Вся группа","Atroxus"]],
     callouts: ["Toxic Creeper — абсолютный приоритет.", "Лужи раскладывать у края.", "Яд снять после выхода из опасной зоны."],
+
+    tank: "Уводите Toxic Creeper от себя; сохраняйте защиту на удар массивной лапой.",
+    healer: "Лечите Poison Splash и снимайте Mind-Numbing Poison.",
+    dps: "Сразу убивайте Toxic Creeper; уклоняйтесь от ядовитого дыхания.",
   },
   {
     title: "Зверинец Бездны", subtitle: "Brutalizers", x: 66, y: 49, duration: 114, forces: 14,
@@ -449,14 +510,18 @@ const voidscarArena = buildStops([
     summary: "Последние силы противника. Не объединяйте две пары заклинателей и закончите бой с готовыми способностями перед Charonus.",
     enemies: [["Voidminder", 2, "high"], ["Agitated Voidscythe", 3, "high"], ["Dominated Brawler", 3, "medium"]],
     abilities: [["Mending Void", "Кик", "ShadowNova", "Voidminder"], ["Corrosive Essence", "Диспел", "MysticHeals", "Agitated Voidscythe"], ["Demoralizing Shout", "Кик", "Windborne", "Dominated Brawler"]],
-    callouts: ["Пары заклинателей брать отдельно.", "После боя должно быть 100%.", "Перед боссом восстановить ресурсы."],
+    callouts: ["Пары заклинателей брать отдельно.", "Проверьте счётчик сил противника перед последним боссом.", "Перед боссом восстановить ресурсы."],
   },
   {
     title: "Charonus", subtitle: "Финальный босс", x: 50, y: 12, kind: "boss", duration: 198, bloodlust: true,
-    summary: "Водите Gravitic Orbs в Unstable Singularity, расходите Cosmic Crash и двигайтесь вокруг босса во время Void Cascade.",
+    summary: "Уничтожайте сферы через Unstable Singularity. На Cosmic Crash разойдитесь; цель Void Cascade отходит от босса, остальные освобождают линию снарядов.",
     enemies: [["Charonus", 1, "boss"], ["Gravitic Orb", 3, "high"]],
-    abilities: [["Unstable Singularity", "Уклонение", "Вся группа", "Charonus"], ["Cosmic Crash", "Уклонение", "Цели механики", "Charonus"], ["Gravitic Orbs", "Уклонение", "Цели механики", "Charonus"], ["Void Cascade", "Уклонение", "Цель механики", "Charonus"]],
+    abilities: [["Unstable Singularity","Уклонение","Вся группа","Charonus"],["Cosmic Crash","Уклонение","Цели механики","Charonus"],["Gravitic Orbs","Уклонение","Цели механики","Charonus"],["Void Cascade","Уклонение","Цель механики","Charonus"],["Dark Waves","Защита","Танк","Charonus"]],
     callouts: ["Каждой сфере назначить свою сингулярность.", "Cosmic Crash — разойтись.", "Void Cascade вести по кругу."],
+
+    tank: "Направляйте тёмные волны от группы и используйте защиту.",
+    healer: "Лечите урон сингулярностей; поддержите преследуемых сферами игроков.",
+    dps: "Заведите свою Gravitic Orb в сингулярность, не касаясь её сами.",
   },
 ]);
 
@@ -479,8 +544,12 @@ const kingsRest = buildStops([
     title: "The Golden Serpent", subtitle: "Босс 1", x: 48, y: 48, kind: "boss", duration: 178, bloodlust: true,
     summary: "Складывайте Spit Gold рядом, но не перекрывайте путь. На Lucre's Call быстро уничтожайте Animated Gold и не направляйте хвост в группу.",
     enemies: [["The Golden Serpent", 1, "boss"], ["Animated Gold", 4, "high"]],
-    abilities: [["Spit Gold", "Уклонение", "Цели механики", "The Golden Serpent"], ["Lucre's Call", "Фокус", "Все DPS", "The Golden Serpent"], ["Serpentine Gust", "Уклонение", "Вся группа", "The Golden Serpent"]],
-    callouts: ["Spit Gold складывать рядом.", "Animated Gold быстро собрать и убить.", "Не стоять перед головой и хвостом."],
+    abilities: [["Spit Gold","Уклонение","Цели механики","The Golden Serpent"],["Lucre's Call","Фокус","Все DPS","The Golden Serpent"],["Serpentine Gust","Защита","Вся группа","The Golden Serpent"]],
+    callouts: ["Лужи Spit Gold складывайте компактно.","Не допускайте усиления босса сгустками."],
+
+    tank: "Держите босса так, чтобы группе был доступен путь к сгусткам золота.",
+    healer: "Готовьте групповое лечение на Serpentine Gust.",
+    dps: "Замедляйте и уничтожайте Animated Gold до контакта с боссом.",
   },
   {
     title: "Зал бальзамирования", subtitle: "Mummies + fluids", x: 47, y: 31, duration: 116, forces: 13,
@@ -498,10 +567,14 @@ const kingsRest = buildStops([
   },
   {
     title: "Mchimba the Embalmer", subtitle: "Босс 2", x: 58, y: 17, kind: "boss", duration: 182,
-    summary: "Игрок в гробу подаёт сигнал своей группе. Открывайте правильный саркофаг, уходите от Burn Corruption и не стойте в Drain Fluids.",
+    summary: "Узник трясёт саркофаг дополнительной кнопкой; союзники открывают его. Лужи Burn Corruption оставляйте вне проходов, а мумий быстро уничтожайте.",
     enemies: [["Mchimba the Embalmer", 1, "boss"]],
-    abilities: [["Entomb", "Фокус", "Все DPS", "Mchimba the Embalmer"], ["Burn Corruption", "Уклонение", "Вся группа", "Mchimba the Embalmer"], ["Drain Fluids", "Уклонение", "Цель механики", "Mchimba the Embalmer"]],
+    abilities: [["Entomb","Фокус","Все DPS","Mchimba the Embalmer"],["Burn Corruption","Уклонение","Вся группа","Mchimba the Embalmer"],["Drain Fluids","Защита","Цель эффекта","Mchimba the Embalmer"],["Wretched Discharge","Кик","Ротация прерываний","Half-Finished Mummy"]],
     callouts: ["Игрок в гробу пингует позицию.", "Открыть правильный саркофаг.", "Не пересекать лужи Burn Corruption."],
+
+    tank: "Подбирайте мумий и держите доступ к саркофагам свободным.",
+    healer: "После Drain Fluids поднимите здоровье цели выше 90%.",
+    dps: "Откройте трясущийся саркофаг; прерывайте Wretched Discharge у мумий.",
   },
   {
     title: "Зал почётных мёртвых", subtitle: "Queens + seneschals", x: 64, y: 44, duration: 126, forces: 14,
@@ -512,10 +585,14 @@ const kingsRest = buildStops([
   },
   {
     title: "Совет племён", subtitle: "Босс 3", x: 76, y: 49, kind: "boss", duration: 205,
-    summary: "Каждый член совета требует отдельной реакции: Poison Nova прерывается, тотемы уничтожаются сразу, а прыжки раскладываются по комнате.",
+    summary: "Разделяйте Barrel Through всей группой и уклоняйтесь от топоров. Способности побеждённых членов совета продолжаются: сохраняйте порядок действий до конца.",
     enemies: [["Zanazal the Wise", 1, "boss"], ["Aka'ali the Conqueror", 1, "boss"], ["Kula the Butcher", 1, "boss"], ["Explosive Totem", 2, "high"]],
-    abilities: [["Poison Nova", "Кик", "Ротация киков", "Zanazal the Wise"], ["Call of the Elements", "Фокус", "Все DPS", "Zanazal the Wise"], ["Debilitating Backhand", "Защита", "ArcanistVexis", "Aka'ali the Conqueror"], ["Barrel Through", "Уклонение", "Вся группа", "Kula the Butcher"]],
+    abilities: [["Poison Nova","Кик","Ротация киков","Zanazal the Wise"],["Call of the Elements","Фокус","Все DPS","Zanazal the Wise"],["Debilitating Backhand","Защита","ArcanistVexis","Aka'ali the Conqueror"],["Barrel Through","Защита","Вся группа","Aka'ali the Conqueror"]],
     callouts: ["Poison Nova не пропускать.", "Explosive Totem убивать первым.", "Backhand — сильная защита танка."],
+
+    tank: "После Debilitating Backhand отойдите или используйте сильную защиту.",
+    healer: "Лечите кровотечение от топора и групповой урон Arc Lightning.",
+    dps: "Прерывайте Poison Nova. Тотемы: взрывной, затем громовой, затем водный.",
   },
   {
     title: "Галерея завоевателей", subtitle: "Spectral guard", x: 69, y: 66, duration: 120, forces: 14,
@@ -536,14 +613,18 @@ const kingsRest = buildStops([
     summary: "Последняя охрана идёт волнами. Не спешите активировать финального босса и закончите зачистку ровно на 100%.",
     enemies: [["Royal Berserker", 3, "high"], ["Phantom Hex Priest", 2, "high"], ["Animated Guardian", 2, "medium"]],
     abilities: [["Blade Combo", "Защита", "ArcanistVexis", "Royal Berserker"], ["Hex", "Кик", "Ротация киков", "Phantom Hex Priest"]],
-    callouts: ["Волны активировать по очереди.", "После боя должно быть 100%.", "Перед Дазаром восстановить ресурсы."],
+    callouts: ["Волны активировать по очереди.", "Проверьте счётчик сил противника перед последним боссом.", "Перед Дазаром восстановить ресурсы."],
   },
   {
     title: "King Dazar", subtitle: "Финальный босс", x: 42, y: 81, kind: "boss", duration: 212, bloodlust: true,
     summary: "Уклоняйтесь от фронтальной Gilded Destruction, разносите Quaking Leap и используйте сильную защиту танка на Blade Combo.",
     enemies: [["King Dazar", 1, "boss"], ["Reban", 1, "high"], ["T'zala", 1, "high"]],
     abilities: [["Blade Combo", "Защита", "ArcanistVexis", "King Dazar"], ["Gilded Destruction", "Уклонение", "Вся группа", "King Dazar"], ["Quaking Leap", "Уклонение", "Цели механики", "King Dazar"], ["Deathly Roar", "Кик", "Ротация киков", "Reban"]],
-    callouts: ["Спирсы Gilded Destruction появляются на игроках.", "Quaking Leap — разойтись.", "Blade Combo — большая защита танка."],
+    callouts: ["Уклоняйтесь от пронзающих копий.","Не накладывайте Quaking Leap друг на друга.","Перед Blade Combo подготовьте защиту."],
+
+    tank: "Защита на Blade Combo; Gilded Destruction направляйте от союзников.",
+    healer: "Готовьте лечение на Quaking Leap и Gilded Destruction.",
+    dps: "Сначала убейте Reban; прерывайте Deathly Roar, разносите прыжки.",
   },
 ]);
 
@@ -557,10 +638,14 @@ const templeOfSethraliss = buildStops([
   },
   {
     title: "Adderis и Aspix", subtitle: "Босс 1", x: 58, y: 77, kind: "boss", duration: 194,
-    summary: "Бейте только босса без Storm Blessed. Tempest Winds складывайте у края, Gale Force переживайте ближе к центру, а Thunder and Lightning закрывайте группой.",
+    summary: "Бейте босса без Storm Blessed. На Gale Force разойдитесь, затем соберитесь для Thunder and Lightning. Tempest Winds выносите к краю.",
     enemies: [["Adderis", 1, "boss"], ["Aspix", 1, "boss"]],
     abilities: [["Tempest Winds", "Уклонение", "Цели механики", "Aspix"], ["Gale Force", "Уклонение", "Вся группа", "Aspix"], ["Thunder and Lightning", "Защита", "Вся группа", "Adderis"], ["Storm Blessed", "Фокус", "Все DPS", "Adderis и Aspix"]],
-    callouts: ["Менять цель вместе со Storm Blessed.", "Групповой удар закрывать вместе.", "Зоны молчания складывать у края."],
+    callouts: ["Иммунитет переходит при 40% здоровья.","Отбрасывание можно остановить стеной; не накладывайте линии друг на друга."],
+
+    tank: "Защищайтесь от перегрузки; оставьте место для общего удара.",
+    healer: "Восстановите группу после Gale Force перед общим ударом.",
+    dps: "Бейте босса без Storm Blessed; выносите Tempest Winds.",
   },
   {
     title: "Кладка Великой Матери", subtitle: "Vipers + riders", x: 45, y: 64, duration: 114, forces: 12,
@@ -571,10 +656,14 @@ const templeOfSethraliss = buildStops([
   },
   {
     title: "Merektha", subtitle: "Босс 2", x: 39, y: 51, kind: "boss", duration: 190, bloodlust: true,
-    summary: "Соберитесь перед A Knot of Snakes и освободите игрока массовым контролем. Непрерывно двигайтесь с Thunder Spit и уходите с линии Burrow.",
+    summary: "На Knot of Snakes сблизьтесь и освободите союзников массовым контролем. Thunder Spit выносите к краю; на Burrow уничтожайте змей и уклоняйтесь от рывков.",
     enemies: [["Merektha", 1, "boss"], ["A Knot of Snakes", 4, "high"]],
-    abilities: [["Poison Spit", "Кик", "Ротация киков", "Merektha"], ["A Knot of Snakes", "Стоп", "Ironclad", "Merektha"], ["Thunder Spit", "Уклонение", "Цель механики", "Merektha"], ["Burrow", "Уклонение", "Вся группа", "Merektha"]],
-    callouts: ["На Knot of Snakes собраться.", "Добавочных змей освободить массовым контролем.", "Burrow пересекает арену по прямой."],
+    abilities: [["Poison Spit","Кик","Ротация киков","Toxic Viper"],["A Knot of Snakes","Стоп","Ironclad","Merektha"],["Thunder Spit","Уклонение","Цель механики","Merektha"],["Burrow","Уклонение","Вся группа","Merektha"],["Lightning Bite","Защита","Танк","Merektha"],["Serpentstorm","Защита","Вся группа","Merektha"]],
+    callouts: ["Не оставляйте лужи на пути группы.","Не принимайте отбрасывание бури в лужу."],
+
+    tank: "Защита на электрический укус; собирайте змей во время Burrow.",
+    healer: "Готовьте лечение на бурю; снимайте яд с поражённых игроков.",
+    dps: "Прерывайте Poison Spit у змей; убейте всех, чтобы вернуть босса.",
   },
   {
     title: "Песчаные всадники", subtitle: "Rider gauntlet", x: 41, y: 39, duration: 118, forces: 13,
@@ -594,8 +683,12 @@ const templeOfSethraliss = buildStops([
     title: "Galvazzt", subtitle: "Босс 3", x: 43, y: 15, kind: "boss", duration: 188,
     summary: "Игроки по очереди перекрывают Lightning Spire. После нескольких уровней смените принимающего луч, а босса уводите из Induction.",
     enemies: [["Galvazzt", 1, "boss"], ["Lightning Spire", 4, "high"]],
-    abilities: [["Lightning Spire", "Защита", "Цели механики", "Galvazzt"], ["Induction", "Уклонение", "ArcanistVexis", "Galvazzt"], ["Galvanize", "Защита", "Вся группа", "Galvazzt"]],
-    callouts: ["Назначить порядок перекрытия лучей.", "Меняться после нескольких уровней.", "Босса уводить из Induction."],
+    abilities: [["Lightning Spire","Защита","Цели механики","Galvazzt"],["Induction","Уклонение","ArcanistVexis","Galvazzt"],["Consume Charge","Защита","Вся группа","Galvazzt"]],
+    callouts: ["Луч до босса не должен доходить.","При полной энергии босс поглощает заряд и наносит крайне опасный урон."],
+
+    tank: "Перемещайте босса из Induction, сохраняя доступ к шпилям.",
+    healer: "Лечите принимающих лучи; распределяйте сильные способности между волнами.",
+    dps: "Перехватывайте лучи Lightning Spire до босса; меняйтесь при опасном уроне.",
   },
   {
     title: "Око Сетралисс", subtitle: "Escort the eye", x: 55, y: 38, duration: 104, forces: 14,
@@ -616,14 +709,18 @@ const templeOfSethraliss = buildStops([
     summary: "Последняя группа требует массового контроля и сильной защиты. Flame Shock прерывается, а Corrupted Lifeforce оставляется для следующей фазы.",
     enemies: [["Twisted Hexxer", 3, "high"], ["Temple Disruptor", 2, "medium"]],
     abilities: [["Flame Shock", "Кик", "Ротация киков", "Twisted Hexxer"], ["Essence Disruption", "Стоп", "Ironclad", "Temple Disruptor"]],
-    callouts: ["Массовый контроль после сбора.", "После боя должно быть 100%.", "Перед аватаром восстановить ресурсы."],
+    callouts: ["Массовый контроль после сбора.", "Проверьте счётчик сил противника перед последним боссом.", "Перед аватаром восстановить ресурсы."],
   },
   {
     title: "Avatar of Sethraliss", subtitle: "Финальный босс", x: 78, y: 78, kind: "boss", duration: 208, bloodlust: true,
-    summary: "Атакующие закрывают Corrupted Lifeforce, Latent Hex раскладывается у края. Быстро уничтожайте Faithless Tormentor, не исцеляя босса под Defiling Taint.",
+    summary: "Сначала уничтожайте защитников и заклинателей. После убийства осквернителя открывается окно лечения аватара; помогайте лекарю контролем и убийством мучителей.",
     enemies: [["Avatar of Sethraliss", 1, "boss"], ["Faithless Tormentor", 5, "high"], ["Heart Guardian", 1, "high"]],
-    abilities: [["Corrupted Lifeforce", "Защита", "Все DPS", "Avatar of Sethraliss"], ["Latent Hex", "Уклонение", "Цели механики", "Avatar of Sethraliss"], ["Defiling Taint", "Кик", "Ротация киков", "Faithless Tormentor"]],
-    callouts: ["Фиолетовые зоны закрывают атакующие.", "Не лечить босса под Defiling Taint."],
+    abilities: [["Corrupted Lifeforce","Защита","Цели механики","Corrupted Guardian"],["Latent Hex","Уклонение","Цели механики","Twisted Hexxer"],["Flame Shock","Кик","Ротация прерываний","Twisted Hexxer"],["Vile Charge","Защита","Цель механики","Corrupted Guardian"]],
+    callouts: ["Latent Hex оставляйте у края.","Сферы Corrupted Lifeforce не должны взорваться."],
+
+    tank: "Подбирайте защитников; помогайте контролировать преследующих лекаря мучителей.",
+    healer: "После гибели осквернителя лечите аватара, избегая мучителей.",
+    dps: "Закрывайте Corrupted Lifeforce; прерывайте Flame Shock и уничтожайте мучителей.",
   },
 ]);
 
@@ -637,37 +734,37 @@ export const dungeonRoutes: Record<DungeonSlug, DungeonRoute> = {
   "altar-of-fangs": {
     slug: "altar-of-fangs", name: "Altar of Fangs", nameRu: "Алтарь Клыков", location: "Извилистый остров", timerSeconds: 30 * 60,
     mapImage: "/assets/wow/maps/altar.webp", backdropImage: "/assets/wow/mythic/backgrounds/altar.webp", floors: [{ id: 1, label: "Алтарь" }], accent: "#75b855", description: "Пройдите ритуальные залы, остановите мутации и сорвите финальный ритуал Зул'джана.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/altar-of-fangs-dungeon-overview-location-rewards", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/altar-of-fangs", stops: altarOfFangs,
+    guideUrl: "https://www.wowhead.com/guide/midnight/altar-of-fangs-dungeon-overview-location-rewards", mdtRouteUrl: "https://wago.io/qak6G3Uvs", stops: altarOfFangs,
   },
   "murder-row": {
     slug: "murder-row", name: "Murder Row", nameRu: "Закоулок душегубов", location: "Луносвет", timerSeconds: 34 * 60,
     mapImage: "/assets/wow/maps/murder.webp", backdropImage: "/assets/wow/mythic/backgrounds/murder.webp", floors: [{ id: 1, label: "Переулок" }], accent: "#c044d8", description: "Зачистите подпольный квартал Луносвета и остановите ритуал Литиэль Пепельной Ярости.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/murder-row-dungeon-overview-location-rewards", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/murder-row", stops: murderRow,
+    guideUrl: "https://www.wowhead.com/guide/midnight/murder-row-dungeon-overview-location-rewards", mdtRouteUrl: "https://wago.io/mWO70E5hA", stops: murderRow,
   },
   "den-of-nalorakk": {
     slug: "den-of-nalorakk", name: "Den of Nalorakk", nameRu: "Берлога Налоракка", location: "Зул'Аман", timerSeconds: 32 * 60,
     mapImage: "/assets/wow/maps/nalorakk.webp", backdropImage: "/assets/wow/mythic/backgrounds/nalorakk.webp", floors: [{ id: 1, label: "Сон" }], accent: "#69a9c7", description: "Соберите припасы, переживите вечную зиму и докажите силу перед лоа войны.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/den-of-nalorakk-dungeon-overview-location-rewards", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/den-of-nalorakk", stops: denOfNalorakk,
+    guideUrl: "https://www.wowhead.com/guide/midnight/den-of-nalorakk-dungeon-overview-location-rewards", mdtRouteUrl: "https://wago.io/b69_rKkRL", stops: denOfNalorakk,
   },
   "the-blinding-vale": {
     slug: "the-blinding-vale", name: "The Blinding Vale", nameRu: "Слепящая долина", location: "Харандар", timerSeconds: 30 * 60,
     mapImage: "/assets/wow/maps/blinding.webp", backdropImage: "/assets/wow/mythic/backgrounds/blinding.webp", floors: [{ id: 1, label: "Долина" }], accent: "#8ccf5a", description: "Проложите безопасный путь через Светоцвет и очистите долину от искажённых хранителей.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/the-blinding-vale-dungeon-overview-location-rewards", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/the-blinding-vale", stops: blindingVale,
+    guideUrl: "https://www.wowhead.com/guide/midnight/the-blinding-vale-dungeon-overview-location-rewards", mdtRouteUrl: "https://wago.io/HLI3Wq7sA", stops: blindingVale,
   },
   "voidscar-arena": {
     slug: "voidscar-arena", name: "Voidscar Arena", nameRu: "Арена Шрама Бездны", location: "Буря Бездны", timerSeconds: 30 * 60,
     mapImage: "/assets/wow/maps/voidscar.webp", backdropImage: "/assets/wow/mythic/backgrounds/voidscar.webp", floors: [{ id: 1, label: "Арена" }], accent: "#8d67dc", description: "Выберите усиление, победите чемпионов арены и подчините гравитацию в финальном бою.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/voidscar-arena-dungeon-overview-location-rewards", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/voidscar-arena", stops: voidscarArena,
+    guideUrl: "https://www.wowhead.com/guide/midnight/voidscar-arena-dungeon-overview-location-rewards", mdtRouteUrl: "https://wago.io/1s56kmJ_N", stops: voidscarArena,
   },
   "kings-rest": {
     slug: "kings-rest", name: "Kings' Rest", nameRu: "Гробница королей", location: "Зулдазар", timerSeconds: 33 * 60,
     mapImage: "/assets/wow/maps/kings.webp", backdropImage: "/assets/wow/mythic/backgrounds/kings.webp", floors: [{ id: 1, label: "Гробница" }], accent: "#d6aa4e", description: "Пройдите королевские залы, уничтожьте тени Зула и бросьте вызов первому королю.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/kings-rest", stops: kingsRest,
+    guideUrl: "https://www.wowhead.com/guide/midnight/kings-rest-dungeon-overview-mythic-plus", mdtRouteUrl: "https://wago.io/U22_Bys16", stops: kingsRest,
   },
   "temple-of-sethraliss": {
     slug: "temple-of-sethraliss", name: "Temple of Sethraliss", nameRu: "Храм Сетралисс", location: "Вол'дун", timerSeconds: 32 * 60,
     mapImage: "/assets/wow/maps/temple.webp", backdropImage: "/assets/wow/mythic/backgrounds/temple.webp", floors: [{ id: 1, label: "Храм" }], accent: "#55b9ce", description: "Верните Око Сетралисс, очистите храм и восстановите силы павшего аватара.",
-    guideUrl: "https://www.wowhead.com/guide/midnight/temple-of-sethraliss-dungeon-overview-mythic-plus", mdtRouteUrl: "https://keystone.guru/routes/midnight-season-2/temple-of-sethraliss", stops: templeOfSethraliss,
+    guideUrl: "https://www.wowhead.com/guide/midnight/temple-of-sethraliss-dungeon-overview-mythic-plus", mdtRouteUrl: "https://wago.io/1pqM1h0ez", stops: templeOfSethraliss,
   },
 };
 

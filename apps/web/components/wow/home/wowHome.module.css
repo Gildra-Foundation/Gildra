@@ -1,0 +1,9 @@
+/* atlas:strict — compact access to every supported specialization. */
+.classes { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:var(--atlas-space-3); align-items:start; }
+.classGroup { padding-inline:var(--atlas-space-4); border:1px solid var(--atlas-line); background:var(--atlas-surface); border-radius:var(--atlas-radius); }
+.classGroup > summary { display:flex; justify-content:space-between; width:100%; min-height:52px; font-size:var(--atlas-text-body); }
+.specs { margin:0; padding:0; list-style:none; }
+.specs a { display:flex; align-items:center; gap:var(--atlas-space-3); min-height:48px; color:var(--atlas-text-strong); text-decoration:none; }
+.specs a > svg { margin-inline-start:auto; color:var(--atlas-accent); }
+.specs a:hover { color:var(--atlas-accent); }
+.specs a:focus-visible { outline:2px solid var(--atlas-accent); outline-offset:3px; }

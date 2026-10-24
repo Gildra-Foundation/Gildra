@@ -1,9 +1,9 @@
 import "server-only";
 import type { Lang } from "@/lib/i18n";
 import type { PlatformGameId } from "@/lib/platform/home/types";
-import { getCatalogEntityTypes, getLibraryDatasets } from "@/lib/api/client";
 import { apiInternalUrl } from "@/lib/env";
 import { runtimeFlags } from "@/lib/flags";
+import { currentWowSeason, normalizeTierSnapshot } from "./tierSnapshot";
 import { intelligenceCopy } from "./intelligenceCopy";
 
 export type IntelligenceStatus = "live" | "degraded" | "unavailable";
@@ -30,6 +30,9 @@ export type IntelligenceSource = {
   status: "live" | "stale" | "empty";
   recordCount: number;
   updatedAt?: string;
+  url?: string;
+  seasonId?: string;
+  gameVersion?: string;
 };
 
 export type TierEntry = {
@@ -62,10 +65,13 @@ export type TierContext = {
   addonKey: string;
   addonName: string;
   recordCount: number;
+  seasonId?: string;
+  role?: TierRole;
 };
 
 export type TierActivityData = {
   roles: Record<TierRole, TierEntry[]>;
+  snapshots?: Partial<Record<TierRole, TierSnapshot>>;
 };
 
 export type GameIntelligence = {
@@ -128,10 +134,12 @@ type LeagueChampion = {
   assets?: { icon?: string };
 };
 
-type TierSnapshot = {
+export type TierSnapshot = {
   game: "wow";
-  status: "live";
-  activity: string;
+  status: "live" | "stale";
+  seasonId?: string;
+  gameVersion?: string;
+  activity: TierActivity;
   role: TierRole;
   updatedAt: string;
   recordCount: number;
@@ -171,48 +179,38 @@ function unavailable(gameId: PlatformGameId, lang: Lang, message?: string): Game
   };
 }
 
-async function wowIntelligence(lang: Lang): Promise<GameIntelligence> {
-  const locale = lang === "ru" ? "ru_RU" : "en_US";
-  const [dps, healer, tank, raidDps, raidHealer, raidTank, mythicContexts, raidContexts, entityTypes, datasets] = await Promise.all([
-    apiRequest<TierSnapshot>("/v1/meta/wow/tier-list?activity=mythic_plus&role=dps&limit=40"),
-    apiRequest<TierSnapshot>("/v1/meta/wow/tier-list?activity=mythic_plus&role=healer&limit=20"),
-    apiRequest<TierSnapshot>("/v1/meta/wow/tier-list?activity=mythic_plus&role=tank&limit=20"),
-    apiRequest<TierSnapshot>("/v1/meta/wow/tier-list?activity=raid&role=dps&limit=40"),
-    apiRequest<TierSnapshot>("/v1/meta/wow/tier-list?activity=raid&role=healer&limit=20"),
-    apiRequest<TierSnapshot>("/v1/meta/wow/tier-list?activity=raid&role=tank&limit=20"),
-    apiRequest<TierContextsResponse>("/v1/meta/wow/tier-list/contexts?activity=mythic_plus").then((value) => value.contexts).catch(() => []),
-    apiRequest<TierContextsResponse>("/v1/meta/wow/tier-list/contexts?activity=raid").then((value) => value.contexts).catch(() => []),
-    getCatalogEntityTypes(locale, "wow").catch(() => []),
-    getLibraryDatasets(locale, "wow").catch(() => []),
+async function wowIntelligence(_lang: Lang): Promise<GameIntelligence> {
+  const activities: TierActivity[] = ["mythic_plus", "raid"];
+  const roles: TierRole[] = ["dps", "healer", "tank"];
+  const combinations = activities.flatMap(activity => roles.map(role => ({ activity, role })));
+  const [results, contextResults] = await Promise.all([
+    Promise.allSettled(combinations.map(({ activity, role }) => apiRequest<TierSnapshot>(`/v1/meta/wow/tier-list?activity=${activity}&role=${role}&limit=40`))),
+    Promise.allSettled(activities.map(activity => apiRequest<TierContextsResponse>(`/v1/meta/wow/tier-list/contexts?activity=${activity}`))),
   ]);
-  const totalEntities = entityTypes.reduce((sum, type) => sum + (type.count ?? 0), 0);
-  const liveSources = dps.sources.filter((source) => source.status === "live").length;
+  const tierLists: Record<TierActivity, TierActivityData> = {
+    mythic_plus: { roles: { dps: [], healer: [], tank: [] }, snapshots: {} },
+    raid: { roles: { dps: [], healer: [], tank: [] }, snapshots: {} },
+  };
+  const snapshots: TierSnapshot[] = [];
+  results.forEach((result, index) => {
+    if (result.status !== "fulfilled") return;
+    const { activity, role } = combinations[index];
+    const snapshot = normalizeTierSnapshot(result.value, activity, role);
+    if (!snapshot) return;
+    tierLists[activity].roles[role] = snapshot.entries;
+    tierLists[activity].snapshots![role] = snapshot;
+    snapshots.push(snapshot);
+  });
+  const sources = [...new Map(snapshots.flatMap(snapshot => snapshot.sources).map(source => [source.slug, source])).values()];
+  const stamps = snapshots.map(s => Date.parse(s.updatedAt)).filter(Number.isFinite);
   return {
-    gameId: "wow",
-    status: "live",
-    mode: "tier-list",
-    version: datasets.find((item) => item.buildVersion)?.buildVersion ?? "live",
-    updatedAt: dps.updatedAt,
-    providerLabel: "Wowhead + wow.gg",
-    metrics: [
-      { label: intelligenceCopy[lang].specializations, value: entityTypes.find((type) => type.type === "specialization")?.count ?? dps.entries.length, href: `${lang === "ru" ? "/ru" : ""}/tier-lists` },
-      { label: intelligenceCopy[lang].libraryRecords, value: totalEntities, href: `${lang === "ru" ? "/ru" : ""}/library` },
-      { label: intelligenceCopy[lang].activeSources, value: liveSources },
-    ],
-    entities: datasets.filter((item) => item.entityCount > 0).slice(0, 5).map((item) => ({
-      id: item.slug,
-      name: item.name,
-      subtitle: `${item.entityCount.toLocaleString(intelligenceCopy[lang].numberLocale)} · ${item.freshness}`,
-      imageUrl: item.previewImageUrl,
-      href: `${lang === "ru" ? "/ru" : ""}/library/${item.slug}`,
-    })),
-    roles: { dps: dps.entries, healer: healer.entries, tank: tank.entries },
-    tierLists: {
-      mythic_plus: { roles: { dps: dps.entries, healer: healer.entries, tank: tank.entries } },
-      raid: { roles: { dps: raidDps.entries, healer: raidHealer.entries, tank: raidTank.entries } },
-    },
-    tierContexts: [...mythicContexts, ...raidContexts],
-    sources: dps.sources,
+    gameId: "wow", status: snapshots.length === 6 ? "live" : snapshots.length ? "degraded" : "unavailable",
+    mode: "tier-list", version: snapshots.find(s => s.gameVersion)?.gameVersion ?? "—",
+    updatedAt: new Date(stamps.length ? Math.min(...stamps) : 0).toISOString(),
+    providerLabel: sources.map(s => s.provider).join(" · "),
+    metrics: [], entities: [], roles: tierLists.mythic_plus.roles, tierLists, sources,
+    tierContexts: contextResults.flatMap(result => result.status === "fulfilled" ? result.value.contexts : [])
+      .filter(context => context.addonKey === "midnight" && context.seasonId === currentWowSeason),
   };
 }
 
@@ -276,8 +274,6 @@ async function leagueIntelligence(lang: Lang): Promise<GameIntelligence> {
 
 export async function getGameIntelligence(gameId: PlatformGameId, lang: Lang): Promise<GameIntelligence> {
   try {
-    // /v1/meta/wow is not in the currently deployed OpenAPI contract. Do not
-    // generate six known 404 requests and then present an ambiguous fallback.
     if (gameId === "wow" && !runtimeFlags().wowMetaApi) {
       return unavailable("wow", lang, intelligenceCopy[lang].theWowMetaApi);
     }

@@ -1,11 +1,13 @@
+import { publicationFor } from "@/lib/wow/publication";
+import { venomousActions } from "./venomousActions";
 import Image from "next/image";
 import { ExternalLink, Flame, HeartPulse, MapPin, Shield, Swords } from "lucide-react";
-import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasNotice, AtlasSection, AtlasTable } from "@/components/atlas";
-import { difficulties, type BossGuide, type VerifiedAbilityIdentity } from "@/lib/data/wow";
+import { AtlasFrame, AtlasHero, AtlasAnchorNav, AtlasLinkButton, AtlasMetaList, AtlasNotice, AtlasSection, AtlasTable, AtlasTabs } from "@/components/atlas";
+import { type BossGuide, type VerifiedAbilityIdentity } from "@/lib/data/wow";
 import { wowGuideText } from "@/lib/wow/sourceLocale";
 import { contentManifest } from "@/lib/data/wow";
 import { EncounterSwitcher, RaidPager } from "./RaidNavigation";
-import { lootBandIndexForBoss, raidLootBands, tierRewards, venomousRaidLootSource, venomousRaidVerifiedAt } from "./venomousAbyssIntel";
+import { lootBandIndexForBoss, raidLootBands, tierRewards, venomousRaidLootSource, venomousRaidLootVerifiedAt } from "./venomousAbyssIntel";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { venomousCopy } from "./venomousCopy";
 import guide from "./raidGuide.module.css";
@@ -24,8 +26,9 @@ function labelled(text: string) {
 /**
  * Boss page of The Venomous Abyss. Identity, journalAbilities and journalPhases
  * come from the verified Adventure Guide projection; everything with
- * strategyVerificationStatus "source_tracked" (summary, roles, timeline,
- * difficulty notes) is a third-party draft and is labelled as such.
+ * strategyVerificationStatus "source_tracked" uses cited author guides. The
+ * publication manifest records completed editorial review independently of
+ * exact-build spell-description verification. Unreviewed guides stay drafts.
  */
 export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bosses: BossGuide[]; locale: RaidLocale }) {
   const shared = raidGuideCopy[locale];
@@ -39,7 +42,9 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
   const withheld = boss.journalAbilities.filter((ability) => !ability.description);
   const lootBandIndex = lootBandIndexForBoss(boss.number);
   const tierReward = tierRewards[boss.slug];
-  const isDraft = boss.strategyVerificationStatus === "source_tracked";
+  const loot = contentManifest.loot.filter(item => item.encounterSource === boss.slug);
+  const publication = publicationFor(`/wow/raids/venomous-abyss/${boss.slug}`);
+  const isDraft = !publication?.ready;
 
   return (
     <AtlasFrame lang={locale} scene="venomousBoss">
@@ -48,11 +53,17 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
         breadcrumbsLabel={shared.breadcrumbsLabel}
         eyebrow={<>{raidName} · {shared.encounterOf(order + 1, bosses.length)}</>}
         title={boss.name[locale]}
-        lede={boss.identityDescription[locale]}
+        lede={wowGuideText(boss.summary[locale], locale)}
         actions={<AtlasShareButton title={`${boss.name[locale]} — ${raidName}`} locale={locale} />}
       />
 
+      {publication?.ready && <p className={styles.footnote}>{copy.checked(publication.verifiedAt!)} · {publication.sources.filter(url => /method.gg|icy-veins.com/.test(url)).map(url => <a key={url} href={url} target="_blank" rel="noreferrer">{new URL(url).hostname.replace("www.", "")}<ExternalLink aria-hidden="true" /></a>)}</p>}
       <EncounterSwitcher items={encounters} label={shared.encountersLabel} />
+      <AtlasAnchorNav label={copy.encounterContents} items={[
+        { href: "#plan", label: shared.planTitle }, { href: "#timeline", label: copy.timelineTitle },
+        { href: "#abilities", label: copy.abilitiesTitle }, { href: "#difficulty", label: copy.difficultyTitle },
+        { href: "#loot", label: copy.rewardTitle },
+      ]} />
 
       {isDraft ? (
         <AtlasSection>
@@ -67,7 +78,6 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
       ) : null}
 
       <AtlasSection id="plan" title={shared.planTitle} description={boss.type[locale]}>
-        <p className={styles.summary}>{wowGuideText((boss.slug === "nekzali-the-soulcoiler" ? boss.summary[locale].replace(/Nek[’']zali/g, boss.name[locale]) : boss.summary[locale]), locale)}</p>
         <div className={styles.roleGrid}>
           {(["tank", "healer", "dps"] as const).map((role) => {
             const RoleIcon = roleIcons[role];
@@ -88,8 +98,8 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
       <AtlasSection id="timeline" title={copy.timelineTitle} description={copy.timelineText}>
         <ol className={styles.timeline}>
           {boss.timeline.map((event, index) => (
-            <li key={`${event.marker === "INT" ? shared.tags.INTERRUPT : event.marker}-${index}`}>
-              <span className={styles.marker}>{event.marker === "INT" ? shared.tags.INTERRUPT : event.marker}</span>
+            <li key={`${event.marker === "INT" ? (copy.intermission) : event.marker}-${index}`}>
+              <span className={styles.marker}>{event.marker === "INT" ? (copy.intermission) : event.marker}</span>
               <span><strong>{wowGuideText(event.title[locale], locale)}</strong>{wowGuideText(event.detail[locale], locale)}</span>
             </li>
           ))}
@@ -101,20 +111,23 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
         </p>
       </AtlasSection>
 
-      <AtlasSection id="abilities" title={copy.abilitiesTitle} description={copy.abilitiesText(published.length, boss.journalAbilities.length)}>
+      <AtlasSection id="abilities" title={copy.abilitiesTitle} description={copy.abilitiesDescription}>
         <ul className={styles.abilities} data-testid="verified-ability-list">
           {published.map((ability) => <AbilityRow key={ability.spellId} ability={ability} locale={locale} />)}
         </ul>
         {withheld.length ? (
           <>
-            <h3 className={styles.subheading}>{copy.withheldTitle}</h3>
-            <ul className={styles.withheld}>
+            <h3 className={styles.subheading}>{copy.responseTitle}</h3>
+            <p className={styles.footnote}>{copy.editorialAdvice}</p>
+            <ul className={styles.abilities}>
               {withheld.map((ability) => (
-                <li key={ability.spellId} className={styles.chip} data-testid="verified-ability" data-spell-id={ability.spellId} data-description-status={ability.descriptionVerificationStatus}>
+                <li key={ability.spellId} className={styles.ability} data-testid="verified-ability" data-spell-id={ability.spellId} data-description-status={ability.descriptionVerificationStatus}>
                   <Image src={ability.iconUrl} alt="" width={32} height={32} />
-                  <span>
-                    <strong>{ability.name[locale]}</strong>
-                  </span>
+                  <div>
+                    <h3><a href={`https://www.wowhead.com/spell=${ability.spellId}`} target="_blank" rel="noreferrer">{ability.name[locale]}</a></h3>
+                    {locale === "ru" && <small>{ability.name.en}</small>}
+                    {venomousActions[ability.spellId] && <p>{venomousActions[ability.spellId][locale]}</p>}
+                  </div>
                   <small className={styles.srOnly} data-testid="withheld-ability-description">{copy.withheldDescription}</small>
                 </li>
               ))}
@@ -124,23 +137,30 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
       </AtlasSection>
 
       <AtlasSection id="difficulty" title={copy.difficultyTitle}>
-        <div className={styles.difficultyGrid}>
-          {difficulties.map((mode) => {
-            const detail = boss.difficulty[mode];
-            const comp = boss.composition[mode];
-            return (
-              <article key={mode} className={styles.difficulty}>
-                <span className={styles.difficultyName}>{copy.difficultyNames[mode]}</span>
-                <h3>{wowGuideText(detail.headline[locale], locale)}</h3>
-                <ul>{detail.changes.map((change) => <li key={change.en}>{wowGuideText(change[locale], locale)}</li>)}</ul>
-                <p className={styles.composition}><strong>{copy.composition(comp.tanks, comp.healers, comp.dps)}</strong>{wowGuideText(comp.note[locale], locale)}</p>
-              </article>
-            );
-          })}
-        </div>
+        <AtlasTabs label={copy.difficultyTitle} tabs={(["normal", "heroic"] as const).map(mode => ({
+          id: mode, label: copy.difficultyNames[mode], content: <article className={styles.difficulty}>
+            <h3>{wowGuideText(boss.difficulty[mode].headline[locale], locale)}</h3>
+            <ul>{boss.difficulty[mode].changes.map(change => <li key={change.en}>{wowGuideText(change[locale], locale)}</li>)}</ul>
+            <p className={styles.composition}><strong>{copy.composition(boss.composition[mode].tanks, boss.composition[mode].healers, boss.composition[mode].dps)}</strong>{wowGuideText(boss.composition[mode].note[locale], locale)}</p>
+          </article>
+        }))} />
       </AtlasSection>
 
       <AtlasSection id="loot" title={copy.rewardTitle} description={copy.rewardText}>
+        <AtlasTable
+          label={copy.bossDrops}
+          layout="cards"
+          rows={loot}
+          rowKey={item => String(item.itemId)}
+          columns={[
+            { key: "item", header: copy.item, rowHeader: true, cell: item => <a href={item.itemUrl} target="_blank" rel="noreferrer">{item.names[locale]}<ExternalLink size={14} aria-hidden="true" /></a> },
+            { key: "slot", header: copy.type, cell: item => item.slot[locale] },
+            { key: "normal", header: copy.difficultyNames.normal, numeric: true, cell: item => item.itemLevel?.normal ?? "—" },
+            { key: "heroic", header: copy.difficultyNames.heroic, numeric: true, cell: item => item.itemLevel?.heroic ?? "—" },
+            ...(loot.some(item => item.note[locale]) ? [{ key: "note", header: copy.note, cell: (item: (typeof loot)[number]) => item.note[locale] || "—" }] : []),
+          ]}
+        />
+        <p className={styles.footnote}>{copy.lootFootnote}</p>
         <div className={styles.lootGrid}>
           <AtlasTable
             label={copy.rewardText}
@@ -157,7 +177,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
           <div className={styles.lootNotes}>
             {tierReward ? <p className={styles.tier}><span>{copy.tierReward}</span><strong>{tierReward[locale]}</strong></p> : null}
             <p className={styles.footnote}>
-              {copy.rewardNote} <a href={venomousRaidLootSource} target="_blank" rel="noreferrer">{copy.source}<ExternalLink aria-hidden="true" /></a> · {copy.checked(venomousRaidVerifiedAt)}
+              {copy.rewardNote} <a href={venomousRaidLootSource} target="_blank" rel="noreferrer">{copy.source}<ExternalLink aria-hidden="true" /></a> · {copy.checked(venomousRaidLootVerifiedAt)}
             </p>
           </div>
         </div>

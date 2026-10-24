@@ -1,0 +1,25 @@
+/* atlas:strict — real character profile, equipment and saved builds. */
+.updated { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.equipment { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+.item { min-width: 0; border: 1px solid var(--atlas-line); background: var(--atlas-surface); }
+.item summary { display: flex; align-items: center; gap: var(--atlas-space-3); padding: var(--atlas-space-3); cursor: pointer; }
+.item summary span { flex: 1; min-width: 0; }
+.item small, .savedBuilds small { display: block; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.item strong { overflow-wrap: anywhere; }
+.item b { font-variant-numeric: tabular-nums; color: var(--atlas-accent); }
+.itemDetails { padding: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); }
+.itemDetails ul { margin: 0 0 var(--atlas-space-3); padding-left: var(--atlas-space-4); }
+.builds { display: grid; gap: var(--atlas-space-4); min-width: 0; }
+.code { box-sizing: border-box; width: 100%; resize: vertical; background: var(--atlas-surface); color: var(--atlas-text); border: 1px solid var(--atlas-line); padding: var(--atlas-space-3); font: var(--atlas-text-small) var(--atlas-font-mono); overflow-wrap: anywhere; }
+.actions { display: flex; gap: var(--atlas-space-3); flex-wrap: wrap; }
+.button { display: inline-flex; align-items: center; min-height: 44px; padding: var(--atlas-space-2) var(--atlas-space-4); border: 1px solid var(--atlas-line-strong); color: var(--atlas-accent); }
+.savedBuilds, .raidProgress { list-style: none; padding: 0; margin: 0; }
+.savedBuilds li, .raidProgress li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); padding-block: var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line-soft); }
+.savedBuilds li > div, .raidProgress li > strong { flex: 1; min-width: 160px; overflow-wrap: anywhere; }
+.item summary:focus-visible, .code:focus-visible, .button:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 3px; }
+@media (max-width: 767px) { .equipment { grid-template-columns: minmax(0, 1fr); } }
+
+.builds summary { display: flex; align-items: center; min-height: var(--atlas-control-height); cursor: pointer; }
+.builds summary::before { content: "▸"; margin-right: var(--atlas-space-2); }
+.builds details[open] > summary::before { content: "▾"; }
+.builds summary:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 3px; }

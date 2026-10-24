@@ -20,7 +20,7 @@ def main() -> int:
             "credits_spent": 0,
         }
     )
-    service.collect_tierlist_dataset = lambda: payload
+    service.collect_tierlist_dataset = lambda **kwargs: payload
     succeeded = service.refresh_tierlist(date(2026, 8, 21), trigger="seed")
     if succeeded.status != "succeeded" or not succeeded.snapshot_id:
         raise AssertionError(f"unexpected successful result: {succeeded}")
@@ -31,7 +31,7 @@ def main() -> int:
     broken["record_count"] = 50
     broken["fetched_at"] = datetime.now(UTC).isoformat()
     broken["credits_spent"] = 0
-    service.collect_tierlist_dataset = lambda: broken
+    service.collect_tierlist_dataset = lambda **kwargs: broken
     try:
         service.refresh_tierlist(date(2026, 8, 22), trigger="scheduled")
     except service.DatasetValidationError:

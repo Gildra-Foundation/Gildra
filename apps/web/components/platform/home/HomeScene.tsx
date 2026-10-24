@@ -13,7 +13,7 @@ type Status = "idle" | "loading" | "playing" | "blocked" | "error";
 type SoundState = ReturnType<typeof useSoundPreferences>;
 type Timeline = ReturnType<typeof useCinematicTimeline>;
 const SceneContext = createContext<(Pick<SoundState, "volume" | "enabled"> & Timeline & {
-  started: boolean; entryReady: boolean; confirmSound: (enabled: boolean) => void;
+  started: boolean; entryReady: boolean; confirmSound: (enabled: boolean) => void; skipIntroduction: () => void;
   cinematic: boolean; scene: HomeCinematicScene | null; status: Status; generation: string; toggle: () => void; changeVolume: (volume: number) => void;
 }) | null>(null);
 
@@ -27,11 +27,12 @@ export function HomeScene({ lang, children }: { lang: Lang; children: ReactNode 
   const [status, setStatus] = useState<Status>("idle");
   const [started, setStarted] = useState(false);
   const [entryReady, setEntryReady] = useState(false);
+  const [introSkipped, setIntroSkipped] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const hasPlayed = useRef(false);
   const isBackground = useRef(false);
   const requestedScene = getHomeCinematicScene(theme, lang);
-  const scene = reducedMotion ? null : requestedScene;
+  const scene = reducedMotion || introSkipped ? null : requestedScene;
   const cinematic = scene !== null;
   const generation = `${theme}:${lang}:${cinematic ? "scene" : "background"}`;
   const canHear = sound.enabled && sound.volume > 0;
@@ -133,7 +134,7 @@ export function HomeScene({ lang, children }: { lang: Lang; children: ReactNode 
     media.loop = true;
     if (canHear && !document.hidden) void media.play().catch(() => setStatus("blocked"));
   }
-  return <SceneContext.Provider value={{ started, entryReady, confirmSound, volume: sound.volume, enabled: sound.enabled, status, cinematic, scene, generation, toggle, changeVolume, ...timeline }}>
+  return <SceneContext.Provider value={{ started, entryReady, confirmSound, skipIntroduction: () => { setIntroSkipped(true); confirmSound(false); }, volume: sound.volume, enabled: sound.enabled, status, cinematic, scene, generation, toggle, changeVolume, ...timeline }}>
     <div style={{ display: "contents" }} data-home-scene data-scene-started={started} data-scene-phase={!started ? "waiting" : cinematic ? timeline.phase : "done"}>
       {children}
       <audio ref={audio} preload="none" data-scene-audio="music" data-scene-composite={composite ? "true" : undefined}

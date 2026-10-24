@@ -153,16 +153,17 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
           columns={[
             {
               key: "item", header: copy.item, rowHeader: true,
-              cell: (item) => (
+              cell: (item) => {
+                const icon = getLootIcon(item.name);
+                return (
                 <span className={styles.lootItem}>
-                  <Image src={getLootIcon(item.name)} alt="" width={36} height={36} />
+                  {icon ? <Image src={icon} alt="" width={36} height={36} /> : null}
                   {item.itemId ? <a href={`https://www.wowhead.com/item=${item.itemId}`} target="_blank" rel="noreferrer">{item.name}</a> : <span>{item.name}</span>}
                 </span>
-              ),
+              ); },
             },
             { key: "slot", header: copy.slot, cell: (item) => <span>{item.slot}<small className={styles.lootArmor}>{item.armor}</small></span> },
             { key: "stats", header: copy.stats, cell: (item) => item.stats },
-            { key: "priority", header: copy.priority, cell: (item) => item.priority },
           ]}
         />
         <p className={styles.footnote}>{copy.lootNote(boss.lastVerifiedAt ?? lairGuideLastVerifiedAt)}</p>

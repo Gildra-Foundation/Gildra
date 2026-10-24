@@ -1,3 +1,4 @@
+import { isPublicationReady } from "@/lib/wow/publication";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RaidOverview } from "@/components/wow/raid/RaidOverview";
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       canonical: `/wow/raids/${raid.slug}`,
       languages: { en: `/wow/raids/${raid.slug}`, ru: `/ru/wow/raids/${raid.slug}`, "x-default": `/wow/raids/${raid.slug}` },
     },
-    robots: { index: false, follow: true },
+    robots: { index: isPublicationReady(`/wow/raids/${raid.slug}`), follow: true },
   };
 }
 

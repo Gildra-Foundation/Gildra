@@ -101,7 +101,9 @@ const checkAsset = (src) => {
   if (!assetChecks.has(src)) {
     assetChecks.set(src, (async () => {
       try {
-        const response = await fetch(`${baseUrl}${src}`, { redirect: "manual", signal: AbortSignal.timeout(30_000) });
+        // Media IDs intentionally redirect to the verified Blizzard render URL.
+        // Check the final resource; page canonicals below still reject redirects.
+        const response = await fetch(`${baseUrl}${src}`, { redirect: "follow", signal: AbortSignal.timeout(30_000) });
         return response.ok ? null : response.status;
       } catch (error) {
         return error instanceof Error ? error.message : String(error);

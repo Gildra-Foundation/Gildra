@@ -1,8 +1,5 @@
 export const mythicVerificationCopy = {
   ru: {
-    catalogTitle: "Маршруты — черновики",
-    routeTitle: "Маршрут — черновик",
-    draft: "Порядок боёв, проценты сил противника, длительность этапов и назначения ещё не проверены в игре.",
     summary: "Источники и даты проверки",
     checked: "Проверено по источнику",
     season: "Состав сезона",
@@ -14,13 +11,10 @@ export const mythicVerificationCopy = {
     patch: "Версия игры на дату сверки",
     patchSource: "Blizzard · обновление 12.1.5",
     route: "Тактика маршрута",
-    unverified: "В игре не проверена. Даты проверки тактики пока нет.",
-    scope: "Ссылки подтверждают только указанные сведения. Они не подтверждают авторский маршрут или его расчётное время.",
+    reviewed: "Порядок прохождения и состав групп сверены с руководствами и маршрутами MDT. Ссылки на конкретный маршрут приведены в каждом гайде.",
+    scope: "Проверка выполнена по источникам. Маршруты не проходили отдельное тестирование нашей группой в игре; расчётное время прохождения не публикуется.",
   },
   en: {
-    catalogTitle: "These routes are drafts",
-    routeTitle: "This route is a draft",
-    draft: "Fight order, enemy forces, estimated step durations and assignments have not yet been verified in game.",
     summary: "Sources and verification dates",
     checked: "Checked against source",
     season: "Season dungeon pool",
@@ -32,8 +26,8 @@ export const mythicVerificationCopy = {
     patch: "Game version at the time of the check",
     patchSource: "Blizzard · Patch 12.1.5",
     route: "Route tactics",
-    unverified: "Not verified in game. No tactical verification date is available yet.",
-    scope: "These links support only the stated facts. They do not verify the authored route or its estimated duration.",
+    reviewed: "Progression and enemy groups were reviewed against guides and MDT routes. Each dungeon guide links to its route sources.",
+    scope: "This is a source review. Our team has not separately tested these routes in game; estimated completion times are not published.",
   },
 } as const;
 

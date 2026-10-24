@@ -34,7 +34,7 @@ import { flags } from "@/lib/flags";
 export const MVP_DEFERRED_PAGES_PUBLIC = flags.deferredPagesPublic;
 
 /** Language-less URL prefixes of the deferred pages (see above). */
-const DEFERRED_PATH_PREFIXES = ["/patches", "/compare", "/profile", "/diablo", "/genshin"] as const;
+const DEFERRED_PATH_PREFIXES = ["/patches", "/compare", "/profile", "/diablo", "/genshin", "/games", "/wow/rotation", "/wow/simulations", "/wow/optimizer"] as const;
 
 /** True for a URL (EN or /ru) that is hidden for the MVP: a deferred page or any
  *  page under the URL prefix of a game that is not in MVP_VISIBLE_GAMES. Used by

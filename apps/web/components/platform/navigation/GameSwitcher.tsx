@@ -44,7 +44,7 @@ export function GameSwitcher({ lang, pathname = "/", home = false }: { lang: Lan
     <nav id={id} className={styles.panel} aria-label={ru ? "Выбор игры" : "Game selection"}>
       <p className={styles.caption}>{ru ? "Игры Gildra" : "Gildra games"}</p>
       <ul>
-        {gameDestinations.map(game => <li key={game.id}>
+        {gameDestinations.filter(game => !game.soon).map(game => <li key={game.id}>
           <Link href={gameDestinationHref(game, lang)} prefetch={false} className={styles.choice} aria-current={game.id === current.id ? "page" : undefined}
             onClick={() => { if (root.current) root.current.open = false; }}>
             <Image src={game.icon} width={32} height={32} alt="" />

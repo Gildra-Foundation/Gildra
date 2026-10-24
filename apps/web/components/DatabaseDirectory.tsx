@@ -70,7 +70,7 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
   const showTaxonomy = !libraryDataset && categories.length > 0;
   const levelCount = [minItemLevel, maxItemLevel, minRequiredLevel, maxRequiredLevel].filter(Boolean).length;
   const activeFilters = facets.length + (itemFilters ? levelCount : 0);
-  const narrowed = Boolean(libraryDataset || selectedType || query.trim() || selectedCategory || activeFilters);
+  const narrowed = Boolean(libraryDataset || selectedType || query.trim() || selectedCategory || activeFilters || cursor);
   // A list narrowed to one record type does not repeat that type on every row.
   const oneType = Boolean(libraryDataset || selectedType) && new Set(catalog.data.map((entity) => entity.type)).size === 1;
   const foundCount = totalCount ?? (catalog.pagination.total !== undefined ? formatCount(catalog.pagination.total, lang) : "—");
@@ -170,7 +170,7 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
           <h2 className="sr-only">{copy.resultsLabel}</h2>
           {/* Text-search totals are not counted (too slow on common terms): the rows and paging answer instead. */}
           {narrowed && !query.trim() ? <p className={styles.resultsHead} aria-live="polite">{copy.found}: <b>{foundCount}</b></p> : null}
-          {catalog.data.length ? (
+          {!narrowed ? <p className={styles.browseHint}>{copy.browseHint}</p> : catalog.data.length ? (
             <ul className={styles.records} aria-label={copy.resultsLabel}>
               {catalog.data.map((entity) => (
                 <RecordRow key={entity.id} entity={entity} registeredType={typeRegistry.get(entity.type)} lang={lang} copy={copy} preview={preview} hideType={oneType}

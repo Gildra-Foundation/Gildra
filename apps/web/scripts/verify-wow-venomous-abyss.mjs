@@ -132,7 +132,7 @@ for (const forbidden of ["Strategy reviewed", "Тактика проверена
 check(bossPageSource.includes("source_tracked") && bossPageSource.includes("not verified"), "boss-page-source-tracked-disclosure-missing");
 check(bossPageSource.includes("journalAbilities") && bossPageSource.includes("Description will appear once verified"), "boss-page-verified-ability-disclosure-missing");
 check(bossPageSource.includes("journalPhases") && bossPageSource.includes("does not split this fight into phases"), "boss-page-verified-phase-disclosure-missing");
-check(raidPageSource.includes("content-manifest.json"), "raid-page-canonical-manifest-projection-missing");
+check(/import\s*\{[^}]*contentManifest[^}]*\}\s*from\s*[\'"]@\/lib\/data\/wow[\'"]/.test(raidPageSource) && raidPageSource.includes("contentManifest.instances.find") && raidPageSource.includes("contentManifest.encounters"), "raid-page-canonical-manifest-projection-missing");
 
 const onlineResults = [];
 if (online) {

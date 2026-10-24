@@ -1,6 +1,7 @@
 "use client";
 
 import { useReportWebVitals } from "next/web-vitals";
+import { isTrackedPage } from "@/lib/cms/tracking";
 
 type Plausible = (event: string, options?: { props?: Record<string, string> }) => void;
 
@@ -17,6 +18,8 @@ const bucket = (name: string, value: number) =>
 export function WebVitals() {
   useReportWebVitals((metric) => {
     if (!["LCP", "INP", "CLS", "FCP", "TTFB"].includes(metric.name)) return;
+    const domain = document.getElementById("plausible")?.getAttribute("data-domain");
+    if (!domain || !isTrackedPage(window.location.hostname, domain, window.location.pathname)) return;
     const plausible = (window as Window & { plausible?: Plausible }).plausible;
     if (typeof plausible !== "function") return;
     plausible("Web Vitals", {

@@ -1,13 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { auth, isBattleNetAuthConfigured } from "@/auth";
-import { CharacterAuditPage } from "@/components/wow/audit/CharacterAuditPage";
+import { createHash } from "node:crypto";
+import { CharacterProfileMvp } from "@/components/wow/characters/CharacterProfileMvp";
 import { CharacterProfileLoadError } from "@/components/wow/characters/CharacterProfileLoadError";
 import { BattleNetCharacterDataError, characterSlug, getBattleNetCharacterDetails } from "@/lib/wow/battleNetCharacterDetails";
 import { BattleNetProfileError, getBattleNetCharacters, isBattleNetRegion } from "@/lib/wow/battleNetCharacters";
-import { toCharacterAuditSnapshot } from "@/lib/wow/battleNetAuditSnapshot";
-import { getMidnightTalentData } from "@/lib/talentCalculatorData";
-import { getRotationPreset } from "@/lib/platform/rotation/repository";
-import { characterProfileFingerprint } from "@/lib/wow/characterProfileFingerprint";
 
 export const dynamic = "force-dynamic";
 type PageProps = { params: Promise<{ slug: string }> };
@@ -27,15 +24,12 @@ export default async function CharacterPage({ params }: PageProps) {
   const character = characters.find((item) => decodeURIComponent(characterSlug(item)).toLowerCase() === requested);
   if (!character) notFound();
   let details;
-  try { details = await getBattleNetCharacterDetails(session.battleNetAccessToken, character, "ru"); }
+  try { details = await getBattleNetCharacterDetails(session.battleNetAccessToken, character, "ru", true); }
   catch (error) {
     const code = error instanceof BattleNetCharacterDataError ? error.code === "expired" ? "expired" : error.code === "forbidden" ? "forbidden" : error.code === "rate_limited" ? "rate_limited" : error.code === "incomplete" ? "incomplete" : "unavailable" : "unavailable";
     return <CharacterProfileLoadError locale="ru" code={code} retryHref={`/ru/wow/characters/${rawSlug}`} />;
   }
-  const snapshot = toCharacterAuditSnapshot(details, "ru");
-  const [talentData, rotationPreset] = await Promise.all([
-    getMidnightTalentData(snapshot.specialization.slug, snapshot.activeHeroTalentTreeId, "ru").catch(() => null),
-    getRotationPreset(snapshot.specialization.slug, "ru").catch(() => null),
-  ]);
-  return <CharacterAuditPage initialSnapshot={snapshot} initialFingerprint={characterProfileFingerprint(snapshot)} localePrefix="/ru" dataMode="battle-net" talentData={talentData} rotationPreset={rotationPreset} />;
+  if (!session.user?.id) redirect("/ru/login");
+  const owner = createHash("sha256").update(`battlenet:${session.user.id}`).digest("hex").slice(0, 32);
+  return <CharacterProfileMvp details={details} owner={owner} lang="ru" />;
 }

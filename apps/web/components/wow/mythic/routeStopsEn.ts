@@ -65,11 +65,11 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Melidrussa Chillworn",
         subtitle: "Boss 1",
-        summary: "Drop Hailbombs at the edge and rotate around the room in one direction. At 66% and 33%, break Ice Bulwark and kill the whelps.",
-        callouts: ["Drop Hailbombs at the edge.", "The Chillstorm target moves out of the group.", "At 66%/33%, all damage into the shield."],
-        tank: "Pick up the whelps and stack them on the boss for cleave.",
-        healer: "Plan cooldowns for Chillstorm and every Frost Overload.",
-        dps: "Save burst for Ice Bulwark; interrupt Frigid Shard on a rotation.",
+        summary: "Bait Hailburst together, then move around the room. At 66% and 33% health, kill the whelps and break Ice Bulwark to stop Frost Overload.",
+        callouts: ["Move Chillstorm away from allies and resist its pull.","Save damage for the shields at 66% and 33% health."],
+        tank: "Gather the whelps near the boss and help interrupt Frigid Shard.",
+        healer: "Use healing cooldowns for Chillstorm and Frost Overload; dispel Cold Claws before it builds up.",
+        dps: "Rotate Frigid Shard interrupts. Break Ice Bulwark quickly while cleaving the whelps.",
       },
       {
         title: "Flight to Ruby Overlook",
@@ -119,11 +119,11 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Kokia Blazehoof",
         subtitle: "Boss 2",
-        summary: "Move the boss along the open edge of the platform. Bring the Ritual of Blazebinding add next to Kokia, kill it fast and get out of Burnout.",
-        callouts: ["Bloodlust on pull.", "The add spawns next to the boss.", "Always interrupt Blaze Volley; spread when the add dies."],
-        tank: "Drag the boss to the Firestorm for cleave; mitigation for Searing Blows.",
-        healer: "Group cooldown for the Inferno from each Firestorm.",
-        dps: "Swap to the add immediately and move away from Burnout.",
+        summary: "The Ritual of Blazebinding target moves clear of allies while keeping the spawned add accessible. Kill it quickly and bait Molten Boulder away from the group’s next position.",
+        callouts: ["Interrupt every Blaze Volley.","Move away before the add dies and explodes."],
+        tank: "Bring the boss near the Firestorm for cleave; use a defensive on each Searing Blows.",
+        healer: "Prepare healing cooldowns for Inferno from each summoned add.",
+        dps: "Focus the add, interrupt Blaze Volley and leave its Burnout explosion.",
       },
       {
         title: "Descent to the temple",
@@ -147,7 +147,7 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         title: "High Channeler Ryvati",
         subtitle: "Final mini-boss",
         summary: "The last percent of the route. Never let Shock Blast through, break Tempest Stormshield immediately, and the tank picks up the summoned Thundercloud.",
-        callouts: ["Shock Blast — interrupt at all costs.", "Break the shield immediately.", "You should be at exactly 100% after the kill."],
+        callouts: ["Shock Blast — interrupt at all costs.", "Break the shield immediately.", "Check enemy forces before the final boss."],
         tank: "Pick up the Thundercloud right after the Summon.",
         healer: "Group cooldown for Lightning Storm, purge Barrier.",
         dps: "Save damage for Tempest Stormshield and don't miss Shock Blast.",
@@ -155,11 +155,11 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Kyrakka and Erkhart",
         subtitle: "Final boss",
-        summary: "Kyrakka is the priority. Take Inferno Spit to the edge, stop casting before Interrupting Cloudburst and quickly dispel Stormslam from the tank.",
-        callouts: ["All available damage into Kyrakka.", "Drop Inferno Spit at the edge.", "Stop casting before Cloudburst.", "Dispel Stormslam immediately."],
-        tank: "Bring Erkhart to Kyrakka for cleave; press defensives for Stormslam.",
-        healer: "Dispel Stormslam immediately and hold a cooldown for the second phase.",
-        dps: "Kyrakka first; stop casting before Cloudburst.",
+        summary: "Drop fire at the edge and track the wind: it moves players and puddles. Phase two starts when either boss reaches 50% health; save damage and defensives, then finish Kyrakka first.",
+        callouts: ["Avoid Kyrakka’s frontal breath.","Stop casting before Interrupting Cloudburst.","Place fire so the next wind pushes it away from the party."],
+        tank: "Bring Erkhart near Kyrakka when she lands. Use defensives for Stormslam.",
+        healer: "Dispel the Stormslam magic debuff before the next hit. Save healing cooldowns for phase two.",
+        dps: "Finish Kyrakka first in phase two. Stop casting before Interrupting Cloudburst and move fire away from allies.",
       },
     ],
   },
@@ -192,9 +192,9 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         subtitle: "Boss 1",
         summary: "Move the boss away from Fresh Meat, spread for Triple Shot and walk between the Regurgitate waves. During Ssscavenging, soak the orbs and break the shield quickly.",
         callouts: ["Keep the boss away from the meat chunks.", "Triple Shot — spread out.", "Put all available damage into the shield."],
-        tank: "Reposition Rav'i after every Ravenous Stomp and don't turn the cone toward the group.",
-        healer: "Dispel Regurgitate and top players up before Triple Shot.",
-        dps: "Soak the Ssscavenging orbs right away; the boss shield is the absolute priority.",
+        tank: "Move the boss to a clear bone pile, away from meat.",
+        healer: "Cleanse disease after Regurgitate; prepare for Ravenous Stomp.",
+        dps: "Soak orbs and break the shield quickly; spread Triple Shot.",
       },
       {
         title: "Mutation Chambers",
@@ -211,9 +211,13 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "The Writhing Coil",
         subtitle: "Boss 2",
-        summary: "Toxic Atrophy is cast as a series of three. Dodge Burrowing Charge, and on Death Rattle all five players must run out of the pull-in.",
-        callouts: ["Three Toxic Atrophy casts — three assigned interrupts.", "Everyone runs on Death Rattle.", "During Uncoil, damage goes through to all copies."],
-      },
+        summary: "Assign all three Toxic Atrophy interrupts. On Death Rattle, each player runs away to break their tether, then gather the spawned snakes for cleave damage.",
+        callouts: ["Three Toxic Atrophy casts — three assigned interrupts.", "Everyone runs on Death Rattle.", "Damage to the spawned snakes is mirrored to the boss. Dodge their shockwave lines when they return to the centre."],
+
+    tank: "Avoid Burrowing Charge; prepare protection for Tail Scythe.",
+    healer: "Prepare healing for Synchronized Venom and phase transitions.",
+    dps: "Assign three Toxic Atrophy interrupts; break tethers, then kill copies.",
+  },
       {
         title: "Ascendant Guardian",
         subtitle: "Ascendant Serpent",
@@ -224,14 +228,18 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         title: "The Last Ritual",
         subtitle: "Ula'tek's Chosen",
         summary: "The last enemy forces. Interrupt Mass Envenom, spread the poison lines and don't step onto the altar until the group has recovered.",
-        callouts: ["Exactly 100% after this pack.", "Restore resources before the boss."],
+        callouts: ["Check enemy forces before the final boss.", "Restore resources before the boss."],
       },
       {
         title: "Zul'jan",
         subtitle: "Final boss",
         summary: "Assign four positions for Ritual of the Fang in advance. Intercept the beams, clear Ritual Venom stacks with Boneslicer and dodge the returning glaives.",
         callouts: ["Assigned players block the four beams.", "Boneslicer removes all poison stacks.", "Mind Axegrinder's return path."],
-      },
+
+    tank: "Defend against Chop Down; keep the boss out of pools.",
+    healer: "Support beam interceptors and Ritual Venom targets.",
+    dps: "Cover your assigned beam; clear venom with physical damage and leave pools.",
+  },
     ],
   },
 
@@ -255,9 +263,13 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Kystia Manaheart",
         subtitle: "Boss 1",
-        summary: "Interrupt Felstorm on the Mirror Images and use the Destabilized window for burst damage. Don't spend your major cooldowns before the vulnerability appears.",
-        callouts: ["Interrupt the Mirror Images specifically.", "Main damage goes into Destabilized.", "Gather the images next to the boss."],
-      },
+        summary: "Focus Nibbles until he becomes friendly at 20% health and exposes Kystia. Interrupt or crowd-control each Mirror Image to remove it; save damage cooldowns for Destabilized.",
+        callouts: ["Interrupt the Mirror Images specifically.", "Main damage goes into Destabilized.", "Each image disappears when interrupted or crowd-controlled."],
+
+    tank: "Face Nibbles away from the group and move out of the rotating Fel Spray.",
+    healer: "Dispel Corroding Spittle promptly. Prepare group healing for Destabilized and help crowd-control the images.",
+    dps: "Damage Nibbles to remove the shield; interrupt images, then exploit Destabilized.",
+  },
       {
         title: "Contraband Warehouse",
         subtitle: "Barrels + freight",
@@ -267,9 +279,13 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Zaen Bladesorrow",
         subtitle: "Boss 2",
-        summary: "Use the first Fire Bomb to blow up the spare barrel and save the second one for Murder in a Row. During Killing Spree use a group defensive and strong healing.",
-        callouts: ["The first bomb blows up the spare barrel.", "Hide behind the second barrel from the volley.", "Group defensive for Killing Spree."],
-      },
+        summary: "Aim Fire Bomb into Fel-Infused Freight. For Murder in a Row, each player hides behind a separate barrel until the volley ends.",
+        callouts: ["Check available cover before each volley.","Stay out of the firing line."],
+
+    tank: "Keep a barrel available for every Murder in a Row.",
+    healer: "Prepare for Killing Spree; cleanse the tank’s poison.",
+    dps: "Aim Fire Bomb into freight while preserving required cover.",
+  },
       {
         title: "Guard Barracks",
         subtitle: "Wrathguards",
@@ -281,7 +297,11 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         subtitle: "Boss 3",
         summary: "Place Axe Toss next to the boss, avoid Legion Strike and lead Xathuux along the outer edge during Demonic Rage.",
         callouts: ["Drop the axes in close.", "Lead the boss along the outer edge.", "Don't cross the Demonic Rage trail."],
-      },
+
+    tank: "Face Legion Strike away from allies; keep a clear arena edge.",
+    healer: "Prepare healing and protection for Demonic Rage.",
+    dps: "Place Axe Toss nearby and destroy axes; spread Infernal Crush.",
+  },
       {
         title: "Demonic Quarter",
         subtitle: "Invokers + flayers",
@@ -298,14 +318,18 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         title: "Lithiel's Landing",
         subtitle: "Last guard",
         summary: "The last enemy forces come in two waves. Save AoE crowd control for the second pair of casters and finish the fight with a group defensive ready.",
-        callouts: ["Split the guards into two waves.", "Second wave — AoE crowd control.", "You should be at 100% after the fight."],
+        callouts: ["Split the guards into two waves.", "Second wave — AoE crowd control.", "Check enemy forces before the final boss."],
       },
       {
         title: "Lithiel Cinderfury",
         subtitle: "Final boss",
-        summary: "Drag the summoned Infernal away from the group, crowd-control the Furious Vilefiend and stack up before Fingers of Gul'dan. Cross Malefic Wave safely through the gates.",
+        summary: "Spread Fingers of Gul’dan while keeping spawned imps close for cleave. Use the gates after Malefic Wave begins and check the exit first.",
         callouts: ["The Vilefiend dies before the next ring.", "Stack before Fingers of Gul'dan.", "Go through Malefic Wave via the gates."],
-      },
+
+    tank: "Move Infernal away from the group and gates.",
+    healer: "Recover before Malefic Wave; watch add spawns.",
+    dps: "Interrupt Chaos Bolt; destroy Vilefiend and other adds.",
+  },
     ],
   },
 
@@ -329,9 +353,13 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "The Hoardmonger",
         subtitle: "Boss 1",
-        summary: "Dodge Earthshatter Slam and soak Spoiled Supplies. Take the mushrooms along the edge so the center of the room stays clear.",
+        summary: "At 90%, 70% and 40%, the boss takes the nearest supplies. Use meat, bones, then mushrooms. Soak Spoiled Supplies and avoid Earthshatter Slam.",
         callouts: ["Soak the mushrooms at the outer edge.", "Get out of the Earthshatter Slam cone.", "Dispel Toxic Spores after moving."],
-      },
+
+    tank: "Before Resourceful, position the boss by the chosen supplies.",
+    healer: "Cleanse Toxic Spores; prepare for empowered attacks.",
+    dps: "Soak Spoiled Supplies and avoid Earthshatter Slam.",
+  },
       {
         title: "Bridge of Winds",
         subtitle: "Rising Winds",
@@ -347,9 +375,13 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Sentinel of Winter",
         subtitle: "Boss 2",
-        summary: "Kill Fractured Shivercores at a pre-chosen spot. During Frozen Tempest stay in the safe eye, and always interrupt Winter's Shroud.",
-        callouts: ["Cores die in one spot.", "On Frozen Tempest, move inside the eye.", "Winter's Shroud must not go through."],
-      },
+        summary: "Bait tornadoes together, then move. Kill cores and interrupt Winter’s Shroud. Use a snow pile to resist Frozen Tempest’s push.",
+        callouts: ["Ice makes movement slide; move early.","Assign one player to each Rimeshatter."],
+
+    tank: "Position the boss near a snow pile for Frozen Tempest.",
+    healer: "Dispel Glacial Torment; prepare healing for Frozen Tempest.",
+    dps: "Interrupt Winter’s Shroud; soak Rimeshatter after the core dies.",
+  },
       {
         title: "Matriarch's Territory",
         subtitle: "Matriarch + beasttamers",
@@ -366,14 +398,18 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         title: "Path of the Trial",
         subtitle: "Stormbound final packs",
         summary: "The last enemy forces. Split Arc Lightning between two assignments and don't activate the arena until healing and defensives are ready.",
-        callouts: ["Two assignments on Arc Lightning.", "You should be at 100% after the fight.", "Restore resources before the arena."],
+        callouts: ["Two assignments on Arc Lightning.", "Check enemy forces before the final boss.", "Restore resources before the arena."],
       },
       {
         title: "Nalorakk",
         subtitle: "Final boss",
-        summary: "Place Echoing Maul at the outer edge. On Fury of the War God stand between Zul'jarra and the bears, and share Forceful Slam with the tank.",
+        summary: "During Overwhelming Onslaught, everyone shelters behind Zul’jarra’s shield. During Fury of the War God, intercept echoes charging towards her.",
         callouts: ["Echoing Maul — at the edge.", "Assigned players intercept the bears.", "Share Forceful Slam with the tank."],
-      },
+
+    tank: "Keep echoes away from your back. Return for Forceful Slam after knockback.",
+    healer: "Prepare healing for three hits behind Zul’jarra’s shield.",
+    dps: "Place Echoing Maul near existing echoes without clipping allies.",
+  },
     ],
   },
 
@@ -399,7 +435,11 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         subtitle: "Boss 1",
         summary: "Spread before Thornblade, move away from Fan Of Thorns and don't stand in the path of Lightsower Dash. Players must block the beams in the Lightblossom.",
         callouts: ["Block the beams inside the flower.", "After the teleport, get out of Fan Of Thorns immediately.", "Don't cross the dash line."],
-      },
+
+    tank: "Take one Lightblossom beam and maintain protection.",
+    healer: "Heal Thornblade targets while keeping them apart.",
+    dps: "Interrupt Light Bolt; cover the other two beams.",
+  },
       {
         title: "Blood Thicket",
         subtitle: "Sporeblight Belchers",
@@ -411,7 +451,11 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         subtitle: "Boss 2",
         summary: "After Verdant Stomp, get back to the center quickly. On Bloodthorn Roots stack up for AoE damage, and the Bloodthirsty Gaze target runs from the boss.",
         callouts: ["Stack together on the roots.", "The fixated player runs from the boss.", "Don't land in the thicket after the knockback."],
-      },
+
+    tank: "Plan a safe return after Verdant Stomp’s knockback.",
+    healer: "Prepare group healing for Thorn Roar.",
+    dps: "Break Bloodthorn Roots; kite Bloodthirsty Gaze through roots.",
+  },
       {
         title: "Radiant Pass",
         subtitle: "Petalwings + wardens",
@@ -429,7 +473,11 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         subtitle: "Boss 3",
         summary: "Spread Lightfire, heal Grievous Thrash targets to full and stand still with the Pulverizing Strikes cones so the other players can move away.",
         callouts: ["Cone targets stand still, everyone else moves away.", "Grievous Thrash falls off at full health.", "Interrupt Warden's Wrath."],
-      },
+
+    tank: "In bear form, defend against Mangling Claws.",
+    healer: "Heal Grievous Thrash targets to full.",
+    dps: "Interrupt Warden’s Wrath; move Lightfire out and keep cone directions steady.",
+  },
       {
         title: "Blooming Hollow",
         subtitle: "Final vale packs",
@@ -440,14 +488,18 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         title: "Lightbloom Shore",
         subtitle: "Ziekket's sentries",
         summary: "The last guard before the final arena. Interrupt Lightspore Shot and finish the fight with defensives ready.",
-        callouts: ["Lightspore Shot is the main interrupt.", "You should be at 100% after the fight.", "Restore resources before the arena."],
+        callouts: ["Lightspore Shot is the main interrupt.", "Check enemy forces before the final boss.", "Restore resources before the arena."],
       },
       {
         title: "Ziekket",
         subtitle: "Final boss",
-        summary: "Soak Lightbloom's Essence for the buff, kill the awakened enemies and aim Concentrated Lightbeam into their bodies.",
+        summary: "Intercept Lightbloom’s Essence before the boss and share the damage. Kill awakened adds, then destroy their bodies with Concentrated Lightbeam.",
         callouts: ["Soak the orbs as assigned.", "Kill the adds quickly.", "Aim the beam through their bodies."],
-      },
+
+    tank: "Fight near the edge; aim Lightbeam through defeated adds.",
+    healer: "Cover sustained damage and watch players collecting orbs.",
+    dps: "Interrupt Lightspore Shot; kill adds and intercept orbs.",
+  },
     ],
   },
 
@@ -473,7 +525,11 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         subtitle: "Boss 1",
         summary: "Spread the Nether Dash lines and don't cross other players' paths. Dark Bloom spawns orbs from every puddle — keep the center clear.",
         callouts: ["Fan out the Dash lines.", "Dark Bloom puddles — at the edge.", "Don't cross someone else's line."],
-      },
+
+    tank: "Defend against Void Blast; keep the knockback path clear.",
+    healer: "Support Nether Dash targets and the tank before Void Blast.",
+    dps: "Spread lines near the edge, then dodge Dark Bloom orbs.",
+  },
       {
         title: "Crossing the Arena",
         subtitle: "Screamers + voidscythes",
@@ -491,7 +547,11 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         subtitle: "Boss 2",
         summary: "Kill the Toxic Creeper fast after Monstrous Roar, get out of Poison Splash and dispel Mind-Numbing Poison only after moving to safety.",
         callouts: ["Toxic Creeper is the absolute priority.", "Drop puddles at the edge.", "Dispel the poison after leaving the danger zone."],
-      },
+
+    tank: "Kite Toxic Creeper; keep protection ready for Hulking Claw.",
+    healer: "Heal Poison Splash and cleanse Mind-Numbing Poison.",
+    dps: "Kill Toxic Creeper immediately; dodge Noxious Breath.",
+  },
       {
         title: "Void Menagerie",
         subtitle: "Brutalizers",
@@ -508,14 +568,18 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         title: "Cosmic Threshold",
         subtitle: "Final arena guards",
         summary: "The last enemy forces. Don't combine the two pairs of casters, and finish the fight with cooldowns ready for Charonus.",
-        callouts: ["Pull the caster pairs separately.", "You should be at 100% after the fight.", "Restore resources before the boss."],
+        callouts: ["Pull the caster pairs separately.", "Check enemy forces before the final boss.", "Restore resources before the boss."],
       },
       {
         title: "Charonus",
         subtitle: "Final boss",
-        summary: "Lead Gravitic Orbs into Unstable Singularity, spread for Cosmic Crash and move around the boss during Void Cascade.",
+        summary: "Destroy orbs through Unstable Singularity. Spread for Cosmic Crash; the Void Cascade target moves away while others clear the projectile path.",
         callouts: ["Assign each orb its own singularity.", "Cosmic Crash — spread out.", "Kite Void Cascade in a circle."],
-      },
+
+    tank: "Face Dark Waves away from allies and use protection.",
+    healer: "Heal singularity damage and support orb targets.",
+    dps: "Kite your Gravitic Orb into a singularity without touching it.",
+  },
     ],
   },
 
@@ -540,8 +604,12 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         title: "The Golden Serpent",
         subtitle: "Boss 1",
         summary: "Drop Spit Gold close by, but don't block the path. On Lucre's Call kill the Animated Gold quickly, and don't point the tail at the group.",
-        callouts: ["Drop Spit Gold close by.", "Gather and kill the Animated Gold quickly.", "Don't stand at the head or the tail."],
-      },
+        callouts: ["Place Spit Gold pools close together.","Keep gold blobs from empowering the boss."],
+
+    tank: "Keep a clear path to the Animated Gold.",
+    healer: "Prepare group healing for Serpentine Gust.",
+    dps: "Slow and destroy Animated Gold before it reaches the boss.",
+  },
       {
         title: "Embalming Hall",
         subtitle: "Mummies + fluids",
@@ -557,9 +625,13 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Mchimba the Embalmer",
         subtitle: "Boss 2",
-        summary: "The player in the coffin signals the group. Open the correct sarcophagus, move away from Burn Corruption and don't stand in Drain Fluids.",
+        summary: "The trapped player shakes their sarcophagus with the extra action button; allies open it. Keep Burn Corruption pools out of paths and kill mummies promptly.",
         callouts: ["The player in the coffin pings their position.", "Open the correct sarcophagus.", "Don't cross the Burn Corruption puddles."],
-      },
+
+    tank: "Pick up mummies and keep sarcophagi accessible.",
+    healer: "After Drain Fluids, heal the target above 90%.",
+    dps: "Open the shaking sarcophagus; interrupt mummies’ Wretched Discharge.",
+  },
       {
         title: "Hall of the Honored Dead",
         subtitle: "Queens + seneschals",
@@ -569,9 +641,13 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Council of Tribes",
         subtitle: "Boss 3",
-        summary: "Each council member needs its own response: interrupt Poison Nova, destroy the totems immediately and spread the leaps around the room.",
+        summary: "Share Barrel Through and avoid the axes. Defeated council members keep contributing mechanics, so maintain assignments throughout.",
         callouts: ["Don't let Poison Nova through.", "Kill the Explosive Totem first.", "Backhand — strong tank defensive."],
-      },
+
+    tank: "Kite or use strong protection after Debilitating Backhand.",
+    healer: "Heal Severing Axe targets and Arc Lightning group damage.",
+    dps: "Interrupt Poison Nova. Totems: Explosive → Thundering → Torrent.",
+  },
       {
         title: "Gallery of Conquerors",
         subtitle: "Spectral guard",
@@ -587,15 +663,19 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Halls of Ash",
         subtitle: "Final royal guard",
-        summary: "The last guard comes in waves. Don't rush to activate the final boss, and finish the clear at exactly 100%.",
-        callouts: ["Activate the waves one at a time.", "You should be at 100% after the fight.", "Restore resources before Dazar."],
+        summary: "The last guard comes in waves. Don't rush to activate the final boss, and check enemy forces before entering the final arena.",
+        callouts: ["Activate the waves one at a time.", "Check enemy forces before the final boss.", "Restore resources before Dazar."],
       },
       {
         title: "King Dazar",
         subtitle: "Final boss",
         summary: "Dodge the Gilded Destruction frontal, spread for Quaking Leap and use a strong tank defensive for Blade Combo.",
-        callouts: ["Gilded Destruction spears spawn on players.", "Quaking Leap — spread out.", "Blade Combo — big tank defensive."],
-      },
+        callouts: ["Dodge Impaling Spear.","Keep Quaking Leap circles apart.","Prepare protection before Blade Combo."],
+
+    tank: "Defend against Blade Combo; face Gilded Destruction away from allies.",
+    healer: "Prepare healing for Quaking Leap and Gilded Destruction.",
+    dps: "Kill Reban first; interrupt Deathly Roar and spread for leaps.",
+  },
     ],
   },
 
@@ -613,9 +693,13 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Adderis and Aspix",
         subtitle: "Boss 1",
-        summary: "Only hit the boss without Storm Blessed. Drop Tempest Winds at the edge, survive Gale Force closer to the center, and soak Thunder and Lightning as a group.",
-        callouts: ["Swap targets as Storm Blessed swaps.", "Soak the group hit together.", "Drop the silence zones at the edge."],
-      },
+        summary: "Attack the boss without Storm Blessed. Spread for Gale Force, then regroup for Thunder and Lightning. Drop Tempest Winds at the edge.",
+        callouts: ["Immunity transfers at 40% health.","Use a wall against the knockback; keep player lines apart."],
+
+    tank: "Use protection during Overload; leave room for the group soak.",
+    healer: "Recover the group after Gale Force before the shared hit.",
+    dps: "Attack the boss without Storm Blessed; move Tempest Winds out.",
+  },
       {
         title: "The Great Mother's Clutch",
         subtitle: "Vipers + riders",
@@ -625,9 +709,13 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
       {
         title: "Merektha",
         subtitle: "Boss 2",
-        summary: "Stack before A Knot of Snakes and free the player with AoE crowd control. Keep moving with Thunder Spit and get out of the Burrow line.",
-        callouts: ["Stack for Knot of Snakes.", "Free the player from the extra snakes with AoE crowd control.", "Burrow crosses the arena in a straight line."],
-      },
+        summary: "Group for Knot of Snakes and free allies with crowd control. Drop Thunder Spit at the edge; during Burrow, kill the snakes and avoid charges.",
+        callouts: ["Keep pools out of the group’s path.","Avoid being pushed into pools by Serpentstorm."],
+
+    tank: "Defend against Lightning Bite; gather snakes during Burrow.",
+    healer: "Prepare for Serpentstorm; cleanse poison from affected players.",
+    dps: "Interrupt the snakes’ Poison Spit; defeat them to end Burrow.",
+  },
       {
         title: "Sand Riders",
         subtitle: "Rider gauntlet",
@@ -644,8 +732,12 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         title: "Galvazzt",
         subtitle: "Boss 3",
         summary: "Players take turns blocking the Lightning Spire. After a few stacks, swap the player taking the beam, and move the boss out of Induction.",
-        callouts: ["Assign the beam-blocking order.", "Swap after a few stacks.", "Move the boss out of Induction."],
-      },
+        callouts: ["Do not let beams reach the boss.","Full energy triggers dangerous Consume Charge damage."],
+
+    tank: "Move the boss out of Induction; keep the spires accessible.",
+    healer: "Heal beam interceptors; rotate cooldowns between waves.",
+    dps: "Intercept Lightning Spire beams before the boss; rotate when damage becomes dangerous.",
+  },
       {
         title: "Eye of Sethraliss",
         subtitle: "Escort the eye",
@@ -662,14 +754,18 @@ export const routeTextEn: Record<DungeonSlug, DungeonEn> = {
         title: "Avatar's Guardians",
         subtitle: "Final temple guards",
         summary: "The last pack needs AoE crowd control and strong defensives. Interrupt Flame Shock, and leave Corrupted Lifeforce for the next phase.",
-        callouts: ["AoE crowd control after gathering.", "You should be at 100% after the fight.", "Restore resources before the Avatar."],
+        callouts: ["AoE crowd control after gathering.", "Check enemy forces before the final boss.", "Restore resources before the Avatar."],
       },
       {
         title: "Avatar of Sethraliss",
         subtitle: "Final boss",
-        summary: "DPS soak Corrupted Lifeforce; drop Latent Hex at the edge. Kill the Faithless Tormentors quickly, and don't heal the boss under Defiling Taint.",
-        callouts: ["DPS soak the purple zones.", "Don't heal the boss under Defiling Taint."],
-      },
+        summary: "Defeat guardians and casters first. Essence Defiler’s death opens the Avatar healing window; help the healer by controlling and killing tormentors.",
+        callouts: ["Drop Latent Hex at the edge.","Collect Corrupted Lifeforce before it explodes."],
+
+    tank: "Pick up guardians; help control tormentors chasing the healer.",
+    healer: "After Essence Defiler dies, heal the Avatar while avoiding tormentors.",
+    dps: "Soak Corrupted Lifeforce; interrupt Flame Shock and destroy tormentors.",
+  },
     ],
   },
 };

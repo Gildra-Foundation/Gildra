@@ -1,3 +1,4 @@
+import { isGameVisible } from "@/lib/games/registry";
 import { isCmsEnabled } from "@/lib/cms/config";
 import { siteOrigin, xmlEscape, xmlResponse } from "@/lib/sitemap";
 
@@ -5,7 +6,8 @@ export const revalidate = 3600;
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const locations = [`${siteOrigin}/sitemaps/static`, `${siteOrigin}/sitemaps/league-of-legends`];
+  const locations = [`${siteOrigin}/sitemaps/static`];
+  if (isGameVisible("league-of-legends")) locations.push(`${siteOrigin}/sitemaps/league-of-legends`);
   if (isCmsEnabled()) locations.push(`${siteOrigin}/wow/articles/sitemap.xml`);
 
   const entries = locations.map((location) => `<sitemap><loc>${xmlEscape(location)}</loc></sitemap>`).join("");

@@ -1,21 +1,17 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { MythicRouteMap } from "@/components/wow/mythic/MythicRouteMap";
-import { getDungeonCombatIntel } from "@/components/wow/mythic/dungeonCombatIntel.server";
-import { dungeonRoutes, getDungeonRoute, getDungeonSelectorOptions, type DungeonSlug } from "@/components/wow/mythic/dungeonRoutes";
-import { localizedRoute } from "@/components/wow/mythic/localizedRoute";
-import { preloadDungeonBackdrop } from "@/lib/wow/dungeonBackdropPreload";
+import { notFound, permanentRedirect } from "next/navigation";
+import { dungeonSlugs } from "@/components/wow/mythic/dungeonRoutes";
 
 export const dynamicParams = false;
-export function generateStaticParams() { return Object.keys(dungeonRoutes).map((dungeon) => ({ dungeon })); }
-export async function generateMetadata({ params }: { params: Promise<{ dungeon: string }> }): Promise<Metadata> {
-  const dungeon = getDungeonRoute((await params).dungeon as DungeonSlug);
-  return dungeon ? { title: `${dungeon.name} — Midnight Dungeon — Gildra`, robots: { index: false, follow: true } } : {};
-}
-export default async function Page({ params }: { params: Promise<{ dungeon: string }> }) {
-  const slug = (await params).dungeon as DungeonSlug;
-  const dungeon = getDungeonRoute(slug);
-  if (!dungeon) notFound();
-  preloadDungeonBackdrop(dungeon);
-  return <MythicRouteMap key={dungeon.slug} locale="en" dungeon={localizedRoute(dungeon, "en")} dungeonOptions={getDungeonSelectorOptions()} combatIntel={getDungeonCombatIntel(dungeon)} />;
+export function generateStaticParams() { return dungeonSlugs.map(dungeon => ({ dungeon })); }
+export default async function Page({ params, searchParams }: {
+  params: Promise<{ dungeon: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { dungeon } = await params;
+  if (!dungeonSlugs.some(slug => slug === dungeon)) notFound();
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(await searchParams)) {
+    for (const item of Array.isArray(value) ? value : value === undefined ? [] : [value]) query.append(key, item);
+  }
+  permanentRedirect(`/wow/mythic-plus/midnight-season-2/${dungeon}${query.size ? `?${query}` : ""}`);
 }

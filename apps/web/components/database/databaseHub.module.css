@@ -442,3 +442,5 @@
   .search button { min-height: 44px; }
   .preview { width: 44px; height: 44px; }
 }
+
+.browseHint { margin-block:var(--atlas-space-5); color:var(--atlas-text-muted); font-size:var(--atlas-text-body); }

@@ -1,449 +1,146 @@
 "use client";
 
-import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import Image from "next/image";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Castle, ChevronDown, Search, Swords } from "lucide-react";
+import { Search, RotateCcw } from "lucide-react";
 import { SpecSlot } from "./SpecSlot";
-import { classIcon } from "@/lib/gameAssets";
+import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { p, type Lang } from "@/lib/i18n-paths";
-import { ANCHORS } from "@/lib/anchors";
-import type { GameIntelligence, TierActivity, TierContext, TierEntry, TierRole } from "@/lib/platform/games/intelligence";
-import { tierCopy, type KeyRange, type TierCopy } from "@/components/blocks/wow/tierWorkspace/tierCopy";
+import type { GameIntelligence, TierEntry, TierActivity, TierContext, TierRole, TierSnapshot } from "@/lib/platform/games/intelligence";
+import { normalizeTierSnapshot, currentWowSeason } from "@/lib/platform/games/tierSnapshot";
+import { tierCopy } from "@/components/blocks/wow/tierWorkspace/tierCopy";
 import styles from "@/components/blocks/wow/tierWorkspace/tierWorkspace.module.css";
-import { lessMotion } from "@/lib/client/motionPreference";
-import { tierSectionCopy } from "./tierSectionCopy";
 
-const CLASS_KEYS: Record<string, string> = {
-  "death-knight": "dk", "demon-hunter": "dh", evoker: "evoker", mage: "mage",
-  paladin: "pal", rogue: "rogue", druid: "druid", priest: "priest",
-  hunter: "hunter", shaman: "shaman", warlock: "lock", monk: "monk", warrior: "war",
-};
-const ROLES = ["dps", "healer", "tank"] as const;
-const ACTIVITIES = ["mythic_plus", "raid"] as const;
-const KEY_RANGES: KeyRange[] = ["all", "high", "middle", "low"];
-const EMPTY_ROLES: Record<TierRole, TierEntry[]> = { dps: [], healer: [], tank: [] };
-
-function classKey(slug: string) { return CLASS_KEYS[slug] ?? slug; }
-/** Class colour token — used only on spec identity (icon chip, class name). */
-function classStyle(slug: string) { return { "--class-color": `var(--c-${classKey(slug)}, var(--atlas-text-muted))` } as CSSProperties; }
-function fullSpecName(entry: TierEntry) { return `${entry.specName} ${entry.className}`; }
-function entryKey(entry: TierEntry) { return `${entry.role}:${entry.classSlug}:${entry.specSlug}`; }
-function contextKey(context: TierContext) { return `${context.selectionType}:${context.selectionId}:${context.addonKey}`; }
-function contextLabel(context: TierContext) { return context.addonKey === "midnight" ? context.selectionName : `${context.selectionName} · ${context.addonName}`; }
-function tierClass(tier: string) {
-  const letter = tier.charAt(0).toLowerCase();
-  return ["s", "a", "b", "c", "d"].includes(letter) ? letter : "b";
-}
-const isExternal = (href?: string) => Boolean(href && /^https?:\/\//.test(href));
-
-function compact(value: number | undefined, lang: Lang) {
-  if (value === undefined) return "—";
-  return new Intl.NumberFormat(tierSectionCopy[lang].numberLocale, {
-    notation: Math.abs(value) >= 10_000 ? "compact" : "standard", maximumFractionDigits: 1,
-  }).format(value);
+function entryTheme(e: TierEntry) { return getTalentSpecTheme(`${e.specSlug}-${e.classSlug}`) ?? getTalentSpecTheme(e.specSlug); }
+const roles: TierRole[] = ["dps", "healer", "tank"];
+const activities: TierActivity[] = ["mythic_plus", "raid"];
+const contextKey = (c: TierContext) => `${c.selectionType}:${c.selectionId}:${c.addonKey}`;
+type Filters = { activity: TierActivity; role: TierRole; cls: string; q: string; context: string; keyType: string; difficulty: string };
+const defaults: Filters = { activity: "mythic_plus", role: "dps", cls: "all", q: "", context: "all", keyType: "all", difficulty: "raid_hero" };
+function readFilters(): Filters {
+  const query = new URLSearchParams(window.location.search);
+  return { activity: query.get("activity") === "raid" ? "raid" : "mythic_plus",
+    role: roles.includes(query.get("role") as TierRole) ? query.get("role") as TierRole : "dps",
+    cls: query.get("class") ?? "all", q: (query.get("q") ?? "").slice(0, 100), context: query.get("context") ?? "all",
+    keyType: ["all", "high", "middle", "low"].includes(query.get("key") ?? "") ? query.get("key")! : "all",
+    difficulty: ["raid_hero", "raid_normal", "raid_myth"].includes(query.get("difficulty") ?? "") ? query.get("difficulty")! : "raid_hero" };
 }
 
-function Trend({ value, copy }: { value?: number; copy: TierCopy }) {
-  if (!value) return <span className={styles.trendFlat}><span aria-hidden="true">—</span><span className={styles.srOnly}>{copy.trendFlat}</span></span>;
-  const up = value > 0;
-  return <span className={up ? styles.trendUp : styles.trendDown}><span aria-hidden="true">{up ? "▲" : "▼"} {Math.abs(value)}</span><span className={styles.srOnly}>{up ? copy.trendUp(value) : copy.trendDown(-value)}</span></span>;
-}
-
-function TierMark({ tier, copy, size = "md" }: { tier: string; copy: TierCopy; size?: "md" | "sm" }) {
-  return <span className={size === "sm" ? `${styles.tierMark} ${styles.tierMarkSm}` : styles.tierMark} data-tier={tierClass(tier)}><span className={styles.srOnly}>{copy.tier} </span>{tier}</span>;
-}
-
-/**
- * Interactive tier table of /tier-lists: role tabs, class filter and search,
- * the ranked table and the spec card. With live data it also offers dungeon /
- * raid slices (fetched from the meta API); with the saved sample (`sampleRoles`
- * from the server) those controls are not rendered, the page notice explains why.
- */
-export function TierSection({ lang, intelligence, sample = false, sampleRoles, specPaths = [] }: { lang: Lang; intelligence: GameIntelligence; sample?: boolean; sampleRoles?: Record<TierRole, TierEntry[]>; specPaths?: string[] }) {
+export function TierSection({ lang, intelligence }: { lang: Lang; intelligence: GameIntelligence }) {
   const copy = tierCopy[lang];
-  const [activity, setActivity] = useState<TierActivity>("mythic_plus");
-  const [role, setRole] = useState<TierRole>("dps");
-  const [cls, setCls] = useState("all");
-  const [q, setQ] = useState("");
-  const [contextValue, setContextValue] = useState("all:all");
-  const [keyType, setKeyType] = useState<KeyRange>("all");
-  const [difficulty, setDifficulty] = useState("raid_hero");
-  const [remoteRoles, setRemoteRoles] = useState<Record<TierRole, TierEntry[]> | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState("");
-  const [selectedSlug, setSelectedSlug] = useState("");
-  const detailTitle = useRef<HTMLHeadingElement>(null);
-  const specPathSet = useMemo(() => new Set(specPaths), [specPaths]);
-
-  const contexts = useMemo(() => {
-    const unique = new Map<string, TierContext>();
-    for (const context of intelligence.tierContexts ?? []) {
-      if (context.activity !== activity || context.selectionType === "all") continue;
-      unique.set(contextKey(context), context);
-    }
-    return [...unique.values()].sort((a, b) => a.selectionName.localeCompare(b.selectionName, lang === "ru" ? "ru" : "en"));
-  }, [activity, intelligence.tierContexts, lang]);
-  const selectedContext = contexts.find((context) => contextKey(context) === contextValue);
-  /** The published "all dungeons" slice lets the key range work without picking a dungeon. */
-  const allContext = useMemo(() => (intelligence.tierContexts ?? []).find((context) => context.activity === activity && context.selectionType === "all"), [activity, intelligence.tierContexts]);
-  const queryContext = selectedContext ?? (activity === "mythic_plus" && keyType !== "all" ? allContext : undefined);
-  const keyRangeEnabled = !sample && activity === "mythic_plus" && Boolean(selectedContext || allContext);
-  const difficultyEnabled = !sample && activity === "raid" && Boolean(selectedContext);
-  const raidDifficulties = useMemo(() => {
-    if (!selectedContext || activity !== "raid") return ["raid_myth", "raid_hero", "raid_normal"];
-    return [...new Set((intelligence.tierContexts ?? []).filter((item) => item.activity === "raid" && contextKey(item) === contextKey(selectedContext) && item.difficulty).map((item) => item.difficulty as string))];
-  }, [activity, intelligence.tierContexts, selectedContext]);
-
-  const suppliedRoles = intelligence.tierLists?.[activity]?.roles ?? (activity === "mythic_plus" ? intelligence.roles : undefined);
-  const baseRoles = suppliedRoles ?? (sample && activity === "mythic_plus" && sampleRoles ? sampleRoles : EMPTY_ROLES);
-  const activeRoles = remoteRoles ?? baseRoles;
-  const roleEntries = useMemo(() => (activeRoles[role] ?? []).map((entry) => {
-    const theme = getTalentSpecTheme(entry.specSlug) ?? getTalentSpecTheme(`${entry.specSlug}-${entry.classSlug}`);
-    return theme ? { ...entry, specName: lang === "ru" ? theme.specNameRu : theme.specName, className: lang === "ru" ? theme.classNameRu : theme.className } : entry;
-  }), [activeRoles, role, lang]);
-  const classes = useMemo(() => {
-    const seen = new Map<string, string>();
-    roleEntries.forEach((entry) => seen.set(entry.classSlug, entry.className));
-    return [...seen].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [roleEntries]);
-  const filtered = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    return roleEntries.filter((entry) => (cls === "all" || entry.classSlug === cls)
-      && (!query || `${entry.specName} ${entry.className}`.toLowerCase().includes(query)));
-  }, [roleEntries, cls, q]);
-  const groups = useMemo(() => {
-    const result: { tier: string; rows: TierEntry[] }[] = [];
-    for (const entry of filtered) {
-      const group = result.find((item) => item.tier === entry.tier);
-      if (group) group.rows.push(entry); else result.push({ tier: entry.tier, rows: [entry] });
-    }
-    return result;
-  }, [filtered]);
-  const selected = roleEntries.find((entry) => entryKey(entry) === selectedSlug) ?? filtered[0] ?? roleEntries[0];
-  const maxScore = Math.max(...roleEntries.map((entry) => entry.score ?? 0), 1);
-  const rate = (entry: TierEntry) => (role === "healer" ? entry.averageHps : entry.averageDps);
-  const rateLabel = role === "healer" ? "HPS" : "DPS";
-  const hasScore = roleEntries.some((entry) => entry.score !== undefined);
-  const hasRate = roleEntries.some((entry) => rate(entry) !== undefined);
-  const hasKey = activity === "mythic_plus" && roleEntries.some((entry) => entry.maxKey);
-  const hasTrend = roleEntries.some((entry) => entry.rankChange !== undefined);
-  const scopeName = selectedContext ? contextLabel(selectedContext) : activity === "mythic_plus" ? copy.allDungeons : copy.allRaids;
-  const scopeDetail = activity === "mythic_plus"
-    ? (queryContext || keyType !== "all" ? copy.keys[keyType] : "")
-    : (selectedContext ? copy.difficulties[difficulty] ?? difficulty : "");
-  const updated = Date.parse(intelligence.updatedAt) > 0
-    ? new Intl.DateTimeFormat(tierSectionCopy[lang].dateLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(intelligence.updatedAt))
-    : "";
-  const number = new Intl.NumberFormat(tierSectionCopy[lang].numberLocale);
-
-  const specHref = (entry: TierEntry) => {
-    const match = [`${entry.classSlug}/${entry.specSlug}`, `${entry.classSlug}/${entry.specSlug}-${entry.classSlug}`].find((path) => specPathSet.has(path));
-    return match ? p(lang, `/wow/classes/${match}`) : undefined;
-  };
+  const ru = lang === "ru";
+  const [filters, setFilters] = useState<Filters>(defaults);
+  const [ready, setReady] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const [remote, setRemote] = useState<{ key: string; snapshot: TierSnapshot } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [selection, setSelection] = useState("");
+  const cached = useRef(new Map<string, TierSnapshot>());
+  const { activity, role, cls, q, keyType, difficulty } = filters;
+  const contexts = useMemo(() => (intelligence.tierContexts ?? []).filter(c => c.activity === activity && c.seasonId === currentWowSeason && (!c.role || c.role === role)), [intelligence.tierContexts, activity, role]);
+  const options = [...new Map(contexts.filter(c => c.selectionType !== "all").map(c => [contextKey(c), c])).values()];
+  const selectedContext = contexts.find(c => contextKey(c) === filters.context);
+  const base = !selectedContext && filters.context === "all" && keyType === "all";
+  const queryContext = selectedContext ?? contexts.find(c => c.selectionType === "all");
+  const query = new URLSearchParams({ activity, role, limit: "40" });
+  if (!base && queryContext) {
+    query.set("selectionType", queryContext.selectionType); query.set("selectionId", queryContext.selectionId); query.set("addon", queryContext.addonKey);
+    if (activity === "mythic_plus") query.set("keyType", keyType);
+    else query.set("difficulty", difficulty);
+  }
+  const requestKey = query.toString();
+  const initial = intelligence.tierLists?.[activity]?.snapshots?.[role];
+  const snapshot = remote?.key === requestKey ? remote.snapshot : base ? initial : undefined;
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("activity") !== "raid") return;
-    setActivity("raid");
-    setContextValue("all:all");
-    setRemoteRoles(null);
-    setSelectedSlug("");
-    setCls("all");
-    setQ("");
+    const restore = () => { setFilters(readFilters()); setSelection(""); };
+    restore(); setReady(true);
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
   }, []);
 
-  useEffect(() => {
-    if (!queryContext) {
-      setRemoteRoles(null);
-      setLoadError("");
-      return;
+  function update(patch: Partial<Filters>, replace = false) {
+    const next = { ...filters, ...patch };
+    setFilters(next); setSelection("");
+    const url = new URL(window.location.href);
+    for (const [key, value] of Object.entries(next)) {
+      const param = key === "cls" ? "class" : key === "keyType" ? "key" : key;
+      if (value === defaults[key as keyof Filters]) url.searchParams.delete(param); else url.searchParams.set(param, value);
     }
+    window.history[replace ? "replaceState" : "pushState"](window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }
 
+  useEffect(() => {
+    if (!ready) return;
+    setError("");
+    if (!base && !queryContext) { setLoading(false); setError(copy.unavailableView); return; }
+    if (base && initial && retry === 0) { setLoading(false); return; }
     const controller = new AbortController();
-    setIsLoading(true);
-    setLoadError("");
-    const paramsFor = (value: TierRole) => {
-      const params = new URLSearchParams({
-        activity,
-        role: value,
-        limit: "60",
-        selectionType: queryContext.selectionType,
-        selectionId: queryContext.selectionId,
-        addon: queryContext.addonKey,
-      });
-      if (activity === "mythic_plus") params.set("keyType", keyType);
-      if (activity === "raid") params.set("difficulty", difficulty);
-      return params;
-    };
-    Promise.all(ROLES.map(async (value) => {
-      const response = await fetch(`/v1/meta/wow/tier-list?${paramsFor(value)}`, { signal: controller.signal });
-      if (!response.ok) throw new Error(`tier list request failed (${response.status})`);
-      const snapshot = await response.json() as { entries: TierEntry[] };
-      return [value, snapshot.entries] as const;
-    })).then((items) => {
-      setRemoteRoles(Object.fromEntries(items) as Record<TierRole, TierEntry[]>);
-    }).catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      setRemoteRoles(null);
-      setLoadError(copy.loadError);
-    }).finally(() => {
-      if (!controller.signal.aborted) setIsLoading(false);
-    });
+    const previous = cached.current.get(requestKey);
+    if (previous) setRemote({ key: requestKey, snapshot: previous });
+    setLoading(true);
+    void fetch(`/v1/meta/wow/tier-list?${requestKey}`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]) }).then(async response => {
+      if (!response.ok) throw new Error("unavailable");
+      const value = normalizeTierSnapshot(await response.json(), activity, role);
+      if (!value) throw new Error("unverified");
+      if (controller.signal.aborted) return;
+      cached.current.set(requestKey, value); setRemote({ key: requestKey, snapshot: value });
+    }).catch(() => {
+      if (!controller.signal.aborted) setError(copy.refreshFailed);
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [activity, copy.loadError, difficulty, keyType, queryContext]);
+  }, [ready, requestKey, activity, role, base, queryContext, initial, retry, copy]);
 
-  const switchActivity = (value: TierActivity) => {
-    setActivity(value);
-    setContextValue("all:all");
-    setRemoteRoles(null);
-    setSelectedSlug("");
-    setCls("all");
-    setQ("");
-  };
+  const entries = snapshot?.entries ?? [];
+  const className = (e: TierEntry) => ru ? entryTheme(e)?.classNameRu ?? e.className : e.className;
+  const specName = (e: TierEntry) => ru ? entryTheme(e)?.specNameRu ?? e.specName : e.specName;
+  const classes = [...new Map(entries.map(e => [e.classSlug, className(e)])).entries()];
+  const visible = entries.filter(e => (cls === "all" || e.classSlug === cls) && `${e.specName} ${e.className} ${specName(e)} ${className(e)}`.toLocaleLowerCase().includes(q.trim().toLocaleLowerCase()));
+  const selected = visible.find(e => `${e.classSlug}:${e.specSlug}` === selection) ?? visible[0];
+  const hasScore = entries.some(e => e.score !== undefined);
+  const hasKey = activity === "mythic_plus" && entries.some(e => e.maxKey !== undefined);
+  const fmt = (value?: number) => value === undefined ? "—" : new Intl.NumberFormat(copy.numberLocale, { maximumFractionDigits: 1 }).format(value);
+  const specSlug = selected ? [selected.specSlug, `${selected.specSlug}-${selected.classSlug}`].find(slug => getTalentSpecTheme(slug)) : undefined;
+  const availableKeys = [...new Set(contexts.filter(c => contextKey(c) === contextKey(queryContext ?? { selectionType: "all", selectionId: "all", addonKey: "midnight" } as TierContext)).map(c => c.keyType).filter(Boolean))];
+  const availableDifficulties = [...new Set(contexts.filter(c => selectedContext && contextKey(c) === contextKey(selectedContext)).map(c => c.difficulty).filter(Boolean))];
 
-  const chooseRole = (value: TierRole) => {
-    setRole(value);
-    setCls("all");
-    setSelectedSlug("");
-  };
-
-  const chooseContext = (value: string) => {
-    setContextValue(value);
-    setSelectedSlug("");
-    if (activity !== "raid") return;
-    const next = contexts.find((item) => contextKey(item) === value);
-    if (!next) return;
-    const available = (intelligence.tierContexts ?? []).filter((item) => item.activity === "raid" && contextKey(item) === value && item.difficulty).map((item) => item.difficulty as string);
-    if (!available.includes(difficulty) && available[0]) setDifficulty(available[0]);
-  };
-
-  /** On one-column layouts the card sits under the table: bring it into view. */
-  const selectEntry = (entry: TierEntry) => {
-    setSelectedSlug(entryKey(entry));
-    if (!window.matchMedia("(max-width: 1199px)").matches) return;
-    window.requestAnimationFrame(() => {
-      const reduce = lessMotion();
-      document.getElementById("spec-detail")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
-      detailTitle.current?.focus({ preventScroll: true });
-    });
-  };
-
-  const contentOptions = (
-    <>
-      <option value="all:all">{activity === "mythic_plus" ? copy.allDungeons : copy.allRaids}</option>
-      {contexts.filter((item) => item.selectionType !== "boss").map((item) => <option key={contextKey(item)} value={contextKey(item)}>{contextLabel(item)}</option>)}
-      {activity === "raid" && contexts.some((item) => item.selectionType === "boss")
-        ? <optgroup label={copy.bosses}>{contexts.filter((item) => item.selectionType === "boss").map((item) => <option key={contextKey(item)} value={contextKey(item)}>{contextLabel(item)}</option>)}</optgroup>
-        : null}
-    </>
-  );
-  const controlsHint = sample ? ""
-    : activity === "mythic_plus" && !keyRangeEnabled ? copy.pickDungeonFirst
-      : activity === "raid" && !difficultyEnabled ? copy.pickRaidFirst : "";
-  // The sample has no slices and only Mythic+ DPS rows: controls that could only lead to an empty table are not rendered.
-  const showModes = !sample || Boolean(intelligence.tierLists?.raid);
-  const visibleRoles = sample ? ROLES.filter((value) => (activeRoles[value]?.length ?? 0) > 0) : [...ROLES];
-  const showRoleTabs = visibleRoles.length > 1;
-
-  const metrics = selected ? [
-    selected.score !== undefined ? { label: copy.score, value: compact(selected.score, lang) } : null,
-    selected.averageDps !== undefined ? { label: "DPS", value: compact(selected.averageDps, lang) } : null,
-    selected.averageHps !== undefined ? { label: "HPS", value: compact(selected.averageHps, lang) } : null,
-    activity === "mythic_plus" && selected.maxKey ? { label: copy.maxKey, value: `+${number.format(selected.maxKey)}` } : null,
-    activity === "raid" && selectedContext ? { label: copy.difficulty, value: copy.difficulties[difficulty] ?? difficulty } : null,
-    selected.rankChange !== undefined ? { label: copy.weeklyChange, value: <Trend value={selected.rankChange} copy={copy} /> } : null,
-    selected.popularity ? { label: copy.popularity, value: `${number.format(Number((selected.popularity * 100).toFixed(1)))}%` } : null,
-  ].filter((item): item is NonNullable<typeof item> => item !== null) : [];
-  const selectedGuide = selected?.guideUrl || (isExternal(selected?.sourceUrl) ? selected?.sourceUrl : undefined);
-  const selectedSpecPage = selected ? specHref(selected) : undefined;
-
-  return (
-    <div className={styles.workspace} id={ANCHORS.tierList}>
-      <section className={styles.main} id={ANCHORS.builds} aria-labelledby="tier-results-title">
-        <div className={styles.resultsHead}>
-          <div className={styles.resultsCopy}>
-            <h2 id="tier-results-title" className={styles.resultsTitle}>{activity === "mythic_plus" ? copy.resultsMythic : copy.resultsRaid}</h2>
-            <p className={styles.resultsMeta}>{scopeName}{scopeDetail ? ` · ${scopeDetail}` : ""}{showRoleTabs ? "" : ` · ${copy.roles[role]}`}</p>
-          </div>
-          {isLoading ? <span className={styles.count} aria-live="polite">{copy.updating}</span> : null}
-        </div>
-
-        {showModes ? (
-          <div className={styles.controls} role="group" aria-label={copy.controlsLabel}>
-            {showModes ? (
-              <div className={styles.field}>
-                <span className={styles.label} id="tier-mode-label">{copy.mode}</span>
-                <div className={styles.segmented} role="group" aria-labelledby="tier-mode-label">
-                  {ACTIVITIES.map((value) => (
-                    <button type="button" key={value} className={styles.segment} aria-pressed={activity === value} onClick={() => switchActivity(value)}>
-                      {value === "mythic_plus" ? <Swords aria-hidden="true" /> : <Castle aria-hidden="true" />}{copy.modes[value]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            {!sample ? (
-              <>
-                <div className={`${styles.field} ${styles.fieldGrow}`}>
-                  <label className={styles.label} htmlFor="tier-content">{copy.content}</label>
-                  <span className={styles.selectShell}>
-                    <select id="tier-content" className={styles.select} value={contextValue} onChange={(event) => chooseContext(event.target.value)} disabled={!contexts.length}>{contentOptions}</select>
-                    <ChevronDown aria-hidden="true" />
-                  </span>
-                </div>
-                {activity === "mythic_plus" ? (
-                  <div className={`${styles.field} ${styles.fieldWide}`}>
-                    <span className={styles.label} id="tier-key-label">{copy.keyRange}</span>
-                    <div className={`${styles.segmented} ${styles.segmentedFour}`} role="group" aria-labelledby="tier-key-label">
-                      {KEY_RANGES.map((value) => (
-                        <button type="button" key={value} className={styles.segment} aria-pressed={keyType === value} disabled={!keyRangeEnabled} onClick={() => setKeyType(value)}>{copy.keys[value]}</button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className={`${styles.field} ${styles.fieldWide}`}>
-                    <span className={styles.label} id="tier-difficulty-label">{copy.difficulty}</span>
-                    <div className={styles.segmented} role="group" aria-labelledby="tier-difficulty-label">
-                      {raidDifficulties.map((value) => (
-                        <button type="button" key={value} className={styles.segment} aria-pressed={difficultyEnabled && difficulty === value} disabled={!difficultyEnabled} onClick={() => setDifficulty(value)}>{copy.difficulties[value] ?? value}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : null}
-            {controlsHint ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
-          </div>
-        ) : null}
-
-        {showRoleTabs ? (
-          <div className={styles.roleTabs} role="group" aria-label={copy.role}>
-            {visibleRoles.map((value) => (
-              <button type="button" key={value} className={styles.roleTab} aria-pressed={role === value} onClick={() => chooseRole(value)}>
-                {copy.roles[value]}<span className={styles.roleCount}>{activeRoles[value]?.length ?? 0}</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        <div className={styles.filters}>
-          <span className={styles.searchShell}>
-            <Search aria-hidden="true" />
-            <input type="search" className={styles.search} placeholder={copy.searchPlaceholder} aria-label={copy.search} value={q} onChange={(event) => setQ(event.target.value)} />
-          </span>
-          {classes.length ? (
-            <div className={styles.chips} role="group" aria-label={copy.classFilter} data-scrollbox>
-              <button type="button" className={styles.chip} aria-pressed={cls === "all"} onClick={() => setCls("all")}>{copy.allClasses}</button>
-              {classes.map(([slug, name]) => {
-                const icon = classIcon(classKey(slug));
-                return (
-                  <button type="button" className={styles.chip} aria-pressed={cls === slug} onClick={() => setCls(slug)} key={slug} style={classStyle(slug)}>
-                    {icon ? <Image className={styles.chipIcon} src={icon} alt="" width={20} height={20} /> : null}{name}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-        </div>
-
-        {loadError ? <p className={styles.alert} role="status">{loadError}</p> : null}
-
-        <div className={styles.tableBox} aria-busy={isLoading} data-loading={isLoading || undefined} data-scrollbox>
-          {filtered.length ? (
-            <table className={styles.table}>
-              <caption className={styles.srOnly}>{copy.tableCaption(scopeName, copy.roles[role])}</caption>
-              <thead>
-                <tr>
-                  <th scope="col" className={styles.colTier}>{copy.tier}</th>
-                  <th scope="col">{copy.spec}</th>
-                  {hasScore ? <th scope="col" className={styles.num}>{copy.score}</th> : null}
-                  {hasRate ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{rateLabel}</th> : null}
-                  {hasKey ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{copy.maxKey}</th> : null}
-                  {hasTrend ? <th scope="col" className={styles.num}>{copy.trend}</th> : null}
-                </tr>
-              </thead>
-              {groups.map((group) => (
-                <tbody key={group.tier} className={styles.group} data-tier={tierClass(group.tier)}>
-                  {group.rows.map((entry, index) => {
-                    const isSelected = Boolean(selected && entryKey(selected) === entryKey(entry));
-                    return (
-                      <tr key={entryKey(entry)} className={isSelected ? styles.selectedRow : undefined}>
-                        {index === 0 ? <th scope="rowgroup" rowSpan={group.rows.length} className={styles.tierCell}><TierMark tier={group.tier} copy={copy} /></th> : null}
-                        <td className={styles.specCell}>
-                          <div className={styles.specInner}>
-                          <SpecSlot name={fullSpecName(entry)} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} />
-                          <button type="button" className={styles.specButton} style={classStyle(entry.classSlug)} aria-controls="spec-detail" aria-current={isSelected ? "true" : undefined} onClick={() => selectEntry(entry)}>
-                            <span className={styles.specName}>{entry.specName}</span>
-                            <span className={styles.className}>{entry.className}</span>
-                          </button>
-                          </div>
-                        </td>
-                        {hasScore ? (
-                          <td className={`${styles.num} ${styles.score}`}>
-                            {compact(entry.score, lang)}
-                            <span className={styles.scoreBar} aria-hidden="true"><i style={{ width: `${entry.score ? Math.max(5, entry.score / maxScore * 100) : 0}%` }} /></span>
-                          </td>
-                        ) : null}
-                        {hasRate ? <td className={`${styles.num} ${styles.secondary}`}>{compact(rate(entry), lang)}</td> : null}
-                        {hasKey ? <td className={`${styles.num} ${styles.secondary}`}>{entry.maxKey ? `+${number.format(entry.maxKey)}` : "—"}</td> : null}
-                        {hasTrend ? <td className={styles.num}><Trend value={entry.rankChange} copy={copy} /></td> : null}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              ))}
-            </table>
-          ) : (
-            <p className={styles.empty}>{sample && !roleEntries.length ? copy.emptySample : copy.empty}</p>
-          )}
-          {isLoading ? <div className={styles.loading} role="status"><span aria-hidden="true" /><b>{copy.loadingSlice}</b></div> : null}
-        </div>
-
-        {!sample && intelligence.sources.length ? (
-          <div className={styles.sources}>
-            <h3 className={styles.sourcesTitle}>{copy.sourceTitle}</h3>
-            <p>{queryContext ? copy.sourceSlice : copy.sourceOverall}</p>
-            <ul className={styles.sourceList}>
-              {intelligence.sources.map((source) => (
-                <li key={source.slug}>
-                  <span className={styles.sourceName}>{source.provider}</span>
-                  <span className={styles.sourceStatus} data-status={source.status}>{copy.sourceStatus[source.status] ?? source.status}</span>
-                  <span className={styles.sourceCount}>{copy.records(number.format(source.recordCount))}</span>
-                </li>
-              ))}
-            </ul>
-            {updated ? <p className={styles.updated}>{copy.updated}: <time dateTime={intelligence.updatedAt}>{updated} UTC</time></p> : null}
-          </div>
-        ) : null}
-      </section>
-
-      <aside className={styles.detail} id="spec-detail" aria-labelledby={selected ? "spec-detail-title" : undefined} aria-label={selected ? undefined : copy.detailLabel}>
-        <p className={styles.detailEyebrow}>{copy.detailLabel}</p>
-        {selected ? (
-          <>
-            <div className={styles.detailHead}>
-              <SpecSlot name={fullSpecName(selected)} cls={classKey(selected.classSlug)} classSlug={selected.classSlug} specSlug={selected.specSlug} size="lg" />
-              <div className={styles.detailName} style={classStyle(selected.classSlug)}>
-                <h2 id="spec-detail-title" ref={detailTitle} tabIndex={-1} className={styles.detailTitle}>{selected.specName} <span className={styles.className}>{selected.className}</span></h2>
-                <p className={styles.detailRank}><TierMark tier={selected.tier} copy={copy} size="sm" />{copy.rankLine(selected.rank, copy.roles[selected.role] ?? copy.roles[role])}</p>
-              </div>
-            </div>
-            {metrics.length ? (
-              <dl className={styles.metrics}>
-                {metrics.map((item) => <div key={item.label} className={styles.metric}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}
-              </dl>
-            ) : null}
-            {selectedGuide || selectedSpecPage ? (
-              <div className={styles.detailActions}>
-                {selectedGuide ? <a className={`${styles.action} ${styles.actionPrimary}`} href={selectedGuide} target="_blank" rel="noreferrer">{selected.guideUrl ? copy.openGuide : copy.openSource}<ArrowUpRight aria-hidden="true" /></a> : null}
-                {selectedSpecPage ? <Link className={selectedGuide ? styles.action : `${styles.action} ${styles.actionPrimary}`} href={selectedSpecPage}>{copy.specPage}</Link> : null}
-              </div>
-            ) : null}
-          </>
-        ) : <p className={styles.detailEmpty}>{sample ? copy.emptySample : copy.noRows}</p>}
-      </aside>
-
-    </div>
-  );
+  return <div className={styles.workspace}>
+    <section className={styles.main} aria-labelledby="tier-results-title">
+      <div className={styles.resultsHead}><h2 id="tier-results-title" className={styles.resultsTitle}>{activity === "mythic_plus" ? copy.resultsMythic : copy.resultsRaid}</h2></div>
+      <div className={styles.segmented} role="group" aria-label={copy.mode}>{activities.map(value => <button key={value} type="button" className={styles.segment} aria-pressed={activity === value} onClick={() => update({ activity: value, context: "all", keyType: "all", cls: "all" })}>{copy.modes[value]}</button>)}</div>
+      <div className={styles.roleTabs} role="group" aria-label={copy.role}>{roles.map(value => <button key={value} type="button" className={styles.roleTab} aria-pressed={role === value} onClick={() => update({ role: value, cls: "all", context: "all", keyType: "all" })}>{copy.roles[value]}</button>)}</div>
+      <div className={styles.filters}>
+        <label className={styles.searchShell}><Search aria-hidden="true" /><span className={styles.srOnly}>{copy.search}</span><input type="search" className={styles.search} placeholder={copy.searchPlaceholder} value={q} onChange={e => update({ q: e.target.value }, true)} /></label>
+        <label className={styles.field}><span className={styles.label}>{copy.classFilter}</span><select className={styles.select} value={cls} onChange={e => update({ cls: e.target.value })}><option value="all">{copy.allClasses}</option>{classes.map(([slug, name]) => <option key={slug} value={slug}>{name}</option>)}</select></label>
+        {options.length > 0 && <label className={styles.field}><span className={styles.label}>{copy.content}</span><select className={styles.select} value={filters.context} onChange={e => update({ context: e.target.value, keyType: "all" })}><option value="all">{activity === "mythic_plus" ? copy.allDungeons : copy.allRaids}</option>{options.map(c => <option key={contextKey(c)} value={contextKey(c)}>{c.selectionName}</option>)}</select></label>}
+        {availableKeys.length > 1 && <label className={styles.field}><span className={styles.label}>{copy.keyRange}</span><select className={styles.select} value={keyType} onChange={e => update({ keyType: e.target.value })}>{availableKeys.map(key => <option key={key} value={key}>{copy.keys[key as keyof typeof copy.keys]}</option>)}</select></label>}
+        {availableDifficulties.length > 0 && <label className={styles.field}><span className={styles.label}>{copy.difficulty}</span><select className={styles.select} value={difficulty} onChange={e => update({ difficulty: e.target.value })}>{availableDifficulties.map(value => <option key={value} value={value}>{copy.difficulties[value!]}</option>)}</select></label>}
+        <button type="button" className={styles.action} onClick={() => update(defaults)}><RotateCcw aria-hidden="true" />{copy.resetFilters}</button>
+      </div>
+      {error && <p className={styles.alert} role="alert">{error}</p>}
+      {snapshot && <p className={styles.resultsMeta}>{snapshot.seasonId === currentWowSeason ? (copy.currentSeason) : (copy.unconfirmedSeason)}{snapshot.status === "stale" ? (copy.updateNeeded) : ""}{snapshot.updatedAt && Number.isFinite(Date.parse(snapshot.updatedAt)) && <> · <time dateTime={snapshot.updatedAt}>{new Date(snapshot.updatedAt).toLocaleString(copy.dateLocale, {timeZone:"UTC"})} UTC</time></>}</p>}
+      <div className={styles.tableBox} aria-busy={loading} data-scrollbox>
+        {visible.length > 0 ? <table className={styles.table}>
+          <caption className={styles.srOnly}>{copy.tableCaption(copy.modes[activity], copy.roles[role])}</caption>
+          <thead><tr><th scope="col">{copy.tier}</th><th scope="col">{copy.spec}</th>{hasScore && <th scope="col" className={styles.num}>{copy.score}</th>}{hasKey && <th scope="col" className={styles.num}>{copy.maxKey}</th>}</tr></thead>
+          <tbody>{visible.map(entry => <tr key={`${entry.classSlug}:${entry.specSlug}`} className={selected === entry ? styles.selectedRow : undefined}>
+            <td><span className={styles.tierMark} data-tier={entry.tier[0].toLowerCase()}>{entry.tier}</span></td>
+            <th scope="row" className={styles.specCell}><button type="button" className={styles.specButton} aria-controls="spec-detail" aria-pressed={selected === entry} onClick={() => setSelection(`${entry.classSlug}:${entry.specSlug}`)}><span className={styles.specName}>{specName(entry)}</span><span className={styles.className}>{className(entry)}</span></button></th>
+            {hasScore && <td className={styles.num}>{fmt(entry.score)}</td>}{hasKey && <td className={styles.num}>{entry.maxKey === undefined ? "—" : `+${entry.maxKey}`}</td>}
+          </tr>)}</tbody>
+        </table> : <p className={styles.empty} role="status">{loading ? copy.loadingSlice : snapshot ? copy.empty : (copy.rankingUnavailable)}</p>}
+      </div>
+      <button type="button" className={styles.action} disabled={loading} onClick={() => setRetry(n => n + 1)}>{loading ? copy.updating : copy.refreshRanking}</button>
+      {snapshot && <details className={styles.sources}><summary className={styles.sourcesTitle}>{copy.methodologyTitle}</summary>
+        <p>{snapshot.context ? copy.sourceSlice : copy.methodology}</p>
+        <ul className={styles.sourceList}>{snapshot.sources.map(source => <li key={source.slug}><span className={styles.sourceName}>{source.provider}</span><span>{source.updatedAt && Number.isFinite(Date.parse(source.updatedAt)) ? new Date(source.updatedAt).toLocaleString(copy.dateLocale, { timeZone: "UTC" }) + " UTC" : "—"}</span>{source.url && <a href={source.url} target="_blank" rel="noreferrer">{copy.openSource}</a>}</li>)}</ul>
+      </details>}
+    </section>
+    {selected && <aside className={styles.detail} id="spec-detail" aria-labelledby="spec-detail-title"><p className={styles.detailEyebrow}>{copy.detailLabel}</p><div className={styles.detailHead}>
+      <SpecSlot name={`${selected.specName} ${selected.className}`} cls={selected.classSlug} classSlug={selected.classSlug} specSlug={selected.specSlug} size="lg" />
+      <div><h2 id="spec-detail-title" className={styles.detailTitle}>{specName(selected)}</h2><p>{className(selected)} · {copy.tier} {selected.tier}</p></div></div>
+      <div className={styles.detailActions}>{specSlug && <Link className={`${styles.action} ${styles.actionPrimary}`} href={p(lang, `/talents/${specSlug}`)} prefetch={false}>{copy.openTalents}</Link>}{selected.guideUrl && <a className={styles.action} href={selected.guideUrl} target="_blank" rel="noreferrer">{copy.openGuide}</a>}</div>
+    </aside>}
+  </div>;
 }

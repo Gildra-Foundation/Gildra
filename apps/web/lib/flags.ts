@@ -14,6 +14,8 @@
 export const flags = {
   /** Fixture pages without real data (/patches, /compare, /profile, /diablo, /genshin) go public. Games: MVP_VISIBLE_GAMES in lib/games/registry.ts. */
   deferredPagesPublic: false,
+  advancedCharacterTools: false,
+  customMythicRoutes: false,
 } as const;
 
 type Env = Partial<Record<string, string | undefined>>;
@@ -23,7 +25,7 @@ export function runtimeFlags(env: Env = process.env) {
     /** Dev galleries /dev/blocks and /dev/atlas: always in development, in production only with GILDRA_DEV_GALLERY=1. */
     devGallery: env.NODE_ENV !== "production" || env.GILDRA_DEV_GALLERY === "1",
     /** Live WoW meta (tier lists, popularity) from the Gildra API instead of the honest "not yet" state. */
-    wowMetaApi: env.WOW_META_API_ENABLED === "true",
+    wowMetaApi: env.WOW_META_API_ENABLED !== "false",
     /** Landing page data from the API instead of the built-in copy. */
     platformHomeApi: env.PLATFORM_HOME_API_ENABLED === "true",
     /** Catalog and library readable without an account. */

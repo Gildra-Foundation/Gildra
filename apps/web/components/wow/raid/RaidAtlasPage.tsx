@@ -1,7 +1,7 @@
-import { wowSourceName } from "@/lib/wow/sourceLocale";
+import { canBrowsePublication, isPublicationReady } from "@/lib/wow/publication";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Castle, Hourglass, Skull } from "lucide-react";
+import { ArrowRight, Skull } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { AtlasMorphPreload } from "@gildra/atlas-ui/AtlasMorphPreload";
 import { morphArtProps } from "@gildra/atlas-ui/morph";
@@ -31,18 +31,19 @@ const currentRaid = contentManifest.instances.find((entry) => entry.canonicalSlu
 const currentBosses = (contentManifest.encounters as ManifestIdentity[])
   .filter((entry) => entry.instance === "venomous-abyss")
   .sort((left, right) => (left.order ?? 0) - (right.order ?? 0));
-const sporefall = contentManifest.instances.find((entry) => entry.canonicalSlug === "sporefall") as ManifestIdentity | undefined;
-const rotmire = (contentManifest.encounters as ManifestIdentity[]).find((entry) => entry.instance === "sporefall");
+
 
 export function RaidAtlasPage({ locale }: { locale: Locale }) {
   const copy = raidAtlasCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
   const localized = (value: { en: string | null; ru: string | null }) => (locale === "ru" ? value.ru : value.en) ?? "";
-  const seasonOneBosses = raidSlugs.reduce((total, slug) => total + midnightRaids[slug].bosses.length, 0);
-  const publishedRaidCount = raidSlugs.length + 1 + (sporefall ? 1 : 0);
-  const publishedBossCount = seasonOneBosses + currentBosses.length + (rotmire ? 1 : 0);
+  const archiveSlugs = raidSlugs.filter(slug => isPublicationReady(`/wow/raids/${slug}`));
+  const seasonOneBosses = archiveSlugs.reduce((total, slug) => total + midnightRaids[slug].bosses.length, 0);
+  const showCurrent = canBrowsePublication("/wow/raids/venomous-abyss");
+  const publishedRaidCount = archiveSlugs.length + Number(showCurrent);
+  const publishedBossCount = seasonOneBosses + (showCurrent ? currentBosses.length : 0);
 
-  if (!currentRaid?.names.en || !currentRaid.names.ru || !currentRaid.descriptions.en || !currentRaid.descriptions.ru || currentBosses.length !== 8 || !sporefall?.names.en || !rotmire?.names.en) {
+  if (!currentRaid?.names.en || !currentRaid.names.ru || !currentRaid.descriptions.en || !currentRaid.descriptions.ru || currentBosses.length !== 8) {
     throw new Error("Raid atlas identity projection is incomplete");
   }
 
@@ -63,7 +64,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
         ]}
       />
 
-      <AtlasSection id="current" title={copy.currentTitle} description={copy.currentText}>
+      {showCurrent && <AtlasSection id="current" title={copy.currentTitle} description={copy.currentText}>
         <AtlasCard
           layout="feature"
           headingLevel={3}
@@ -74,11 +75,11 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
           meta={[{ icon: <Skull aria-hidden="true" />, label: copy.bossCount(currentBosses.length) }]}
           cta={copy.openRaid}
         />
-      </AtlasSection>
+      </AtlasSection>}
 
-      <AtlasSection id="archive" title={copy.archiveTitle} description={copy.archiveText}>
+      {archiveSlugs.length > 0 && <AtlasSection id="archive" title={copy.archiveTitle} description={copy.archiveText}>
         <div className={styles.archiveGrid}>
-          {raidSlugs.map((slug) => {
+          {archiveSlugs.map((slug) => {
             const raid = midnightRaids[slug];
             const name = locale === "ru" ? raid.nameRu : raid.nameEn;
             return (
@@ -108,24 +109,9 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
             );
           })}
 
-          <article className={styles.raid} data-testid="sporefall-identity-card">
-            <Link className={`${styles.raidArt} ${styles.raidArtEmpty}`} href={`${prefix}/wow/raids/sporefall`} tabIndex={-1} aria-hidden="true">
-              <Castle />
-            </Link>
-            <div className={styles.raidBody}>
-              <h3><Link href={`${prefix}/wow/raids/sporefall`}>{wowSourceName(sporefall.names.en!,  locale, sporefall.names.ru ?? undefined)}</Link></h3>
-              <p className={styles.pending}><Hourglass aria-hidden="true" /><span><strong>{copy.pendingTitle}.</strong> {copy.pendingText}</span></p>
-              <ol className={styles.encounters} aria-label={copy.bossesLabel}>
-                <li><Skull aria-hidden="true" /><Link href={`${prefix}/wow/raids/sporefall/rotmire`}>{wowSourceName(rotmire.names.en!,  locale, rotmire.names.ru ?? undefined)}</Link></li>
-              </ol>
-              <footer className={styles.raidFooter}>
-                <span><Skull aria-hidden="true" />{copy.bossCount(1)}</span>
-                {sporefall.sourceUrl ? <a href={sporefall.sourceUrl} target="_blank" rel="noreferrer">{copy.officialSource} ↗</a> : null}
-              </footer>
-            </div>
-          </article>
+
         </div>
-      </AtlasSection>
+      </AtlasSection>}
     </AtlasFrame>
   );
 }

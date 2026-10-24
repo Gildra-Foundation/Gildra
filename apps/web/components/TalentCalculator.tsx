@@ -9,7 +9,7 @@ import { createPortal } from "react-dom";
 import type { PvPTalent, TalentCalculatorData, TalentChoice, TalentNode, TalentTree, TalentKind } from "@/lib/talentCalculatorData";
 import type { TalentSpecTheme } from "@/lib/talentSpecThemes";
 import { pvpVisualTheme, talentVisualTheme } from "@/lib/talentVisualTheme";
-import { decodeWoWTalentLoadout, encodeWoWTalentLoadout, FURY_REFERENCE_LOADOUT, TALENT_HANDOFF_STORAGE_KEY, talentPointBudgets } from "@/lib/wowTalentLoadout";
+import { decodeWoWTalentLoadout, encodeWoWTalentLoadout, TALENT_HANDOFF_STORAGE_KEY, talentPointBudgets, talentLoadoutHeroId } from "@/lib/wowTalentLoadout";
 import { SpecMenu } from "@/components/talents/SpecMenuLazy";
 import { TalentTreePanel } from "@/components/talents/TalentTreePanel";
 import { TalentDescription } from "@/components/talents/TalentDescription";
@@ -34,7 +34,7 @@ type Notice = { message: string; persistent?: boolean } | null;
 type OpenTooltip = (node: TalentNode, target: HTMLButtonElement, immediate?: boolean, delayMs?: number) => void;
 type RootOpenTooltip = (node: TalentNode, target: HTMLButtonElement, treeKind: TalentKind, immediate?: boolean, delayMs?: number) => void;
 
-type SavedTalentBuild = { id: string; name: string; loadout: string; savedAt: string; buildVersion: string };
+type SavedTalentBuild = { id: string; name: string; loadout: string; savedAt: string; buildVersion: string; heroSubtreeId?: number };
 
 function sameSavedBuilds(left: SavedTalentBuild[], right: SavedTalentBuild[]) {
   return left.length === right.length && left.every((build, index) => {
@@ -44,7 +44,8 @@ function sameSavedBuilds(left: SavedTalentBuild[], right: SavedTalentBuild[]) {
       && build.name === candidate.name
       && build.loadout === candidate.loadout
       && build.savedAt === candidate.savedAt
-      && build.buildVersion === candidate.buildVersion;
+      && build.buildVersion === candidate.buildVersion
+      && build.heroSubtreeId === candidate.heroSubtreeId;
   });
 }
 
@@ -64,7 +65,7 @@ function readBuildLibrary(specSlug: string, defaultName: string): SavedTalentBui
   try {
     const raw = window.localStorage.getItem(buildLibraryKey(specSlug));
     const parsed = raw ? JSON.parse(raw) : null;
-    if (Array.isArray(parsed)) return parsed.filter((build): build is SavedTalentBuild => Boolean(build && typeof build.id === "string" && typeof build.name === "string" && typeof build.loadout === "string" && typeof build.savedAt === "string" && typeof build.buildVersion === "string")).slice(0, 24);
+    if (Array.isArray(parsed)) return parsed.filter((build): build is SavedTalentBuild => Boolean(build && typeof build.id === "string" && typeof build.name === "string" && typeof build.loadout === "string" && typeof build.savedAt === "string" && typeof build.buildVersion === "string"));
     if (specSlug !== "fury-warrior") return [];
     const legacyRaw = window.localStorage.getItem(TALENT_SAVED_BUILD_STORAGE_KEY);
     if (!legacyRaw) return [];
@@ -870,6 +871,7 @@ function decodeLoadout(value: string) {
   try {
     const padded = value.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (value.length % 4)) % 4);
     const parsed = JSON.parse(atob(padded)) as { v?: unknown; ranks?: unknown; choices?: unknown; pvp?: unknown };
+    if (!Array.isArray(parsed.ranks) || parsed.ranks.some(entry => !Array.isArray(entry) || typeof entry[0] !== "string" || !Number.isInteger(entry[1]) || entry[1] < 0)) return null;
     const ranks = new Map<string, number>();
     const choices = new Map<string, number>();
     if (Array.isArray(parsed.ranks)) parsed.ranks.forEach((entry) => { if (Array.isArray(entry) && typeof entry[0] === "string" && Number.isFinite(Number(entry[1]))) ranks.set(entry[0], Math.max(0, Number(entry[1]))); });
@@ -1013,15 +1015,15 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
   loadoutDataRef.current = data;
   const initialLoadout = useMemo<SanitizedLoadout>(() => {
     if (!data) return { ranks: new Map(), choices: new Map(), pvp: [null, null, null], adjusted: false };
+    if (searchParams.get("buildVersion") && searchParams.get("buildVersion") !== data.buildVersion) return { ranks: freeTalentRanks(data), choices: new Map(), pvp: [null, null, null], adjusted: false };
     const encoded = searchParams.get("loadout");
     const explicitImport = searchParams.get("import");
     const decoded = encoded ? decodeLoadout(encoded) : null;
-    const useReferenceBuild = isFury && searchParams.has("returnTo");
-    const imported = explicitImport ?? (useReferenceBuild ? FURY_REFERENCE_LOADOUT : "");
+    const imported = explicitImport ?? "";
     const wowDecoded = !encoded && imported ? decodeWoWTalentLoadout(data, imported) : null;
     const candidate = decoded ?? (wowDecoded ? { ...wowDecoded, pvp: [null, null, null] } : null);
     return candidate ? sanitizeLoadout(data, candidate) : { ranks: freeTalentRanks(data), choices: new Map(), pvp: [null, null, null], adjusted: false };
-  }, [data, isFury, searchParams]);
+  }, [data, searchParams]);
   const [ranks, setRanks] = useState<Map<string, number>>(() => new Map(initialLoadout.ranks));
   const [choices, setChoices] = useState<ChoiceState>(() => new Map(initialLoadout.choices));
   const ranksRef = useRef(ranks);
@@ -1129,7 +1131,8 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
   const defaultReturnTo = `${localePrefix}/wow/rotation/${theme.slug}`;
   const returnToValue = searchParams.get("returnTo") ?? defaultReturnTo;
   const expectedReturnTo = new RegExp(`^/(?:ru/)?wow/rotation/${theme.slug}$`);
-  const returnTo = expectedReturnTo.test(returnToValue) ? returnToValue : defaultReturnTo;
+  const characterFlow = /^\/(?:ru\/)?wow\/characters\/[a-z0-9%_-]+$/i.test(returnToValue);
+  const returnTo = characterFlow || expectedReturnTo.test(returnToValue) ? returnToValue : defaultReturnTo;
   const rotationFlow = searchParams.has("returnTo");
   const closePvpPicker = useCallback(() => {
     const slot = pvpPickerSlot;
@@ -1222,18 +1225,27 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
       const currentData = loadoutDataRef.current;
       if (!currentData) return;
       const params = new URLSearchParams(window.location.search);
+      if (params.get("buildVersion") && params.get("buildVersion") !== currentData.buildVersion) {
+        setNotice({ message: copy.sharedTreeMismatch, persistent: true });
+        setInvalidLoadout(true); return;
+      }
       const encoded = params.get("loadout");
       const explicitImport = params.get("import");
+      const importedHero = explicitImport ? talentLoadoutHeroId(currentData, explicitImport) : null;
+      if (importedHero && importedHero !== currentData.heroSubtreeId) {
+        params.set("hero", String(importedHero));
+        router.replace(`${window.location.pathname}?${params}`, { scroll: false });
+        return;
+      }
       let savedDecoded: ReturnType<typeof decodeLoadout> = null;
       const library = readBuildLibrary(theme.slug, defaultBuildName);
       setSavedBuilds((current) => sameSavedBuilds(current, library) ? current : library);
       const storedActiveId = readActiveBuildId(theme.slug);
       const storedBuild = library.find((build) => build.id === storedActiveId) ?? library[0] ?? null;
       if (!explicitImport) {
-        savedDecoded = storedBuild ? decodeLoadout(storedBuild.loadout) : null;
+        savedDecoded = storedBuild?.buildVersion === currentData.buildVersion ? decodeLoadout(storedBuild.loadout) : null;
       }
-      const useReferenceBuild = isFury && params.has("returnTo");
-      const imported = explicitImport ?? (useReferenceBuild ? FURY_REFERENCE_LOADOUT : "");
+      const imported = explicitImport ?? "";
       const decoded = encoded ? decodeLoadout(encoded) : null;
       const wowDecoded = !encoded && !savedDecoded && imported ? decodeWoWTalentLoadout(currentData, imported) : null;
       const invalidIncoming = Boolean((encoded && !decoded) || (explicitImport && !wowDecoded));
@@ -1259,7 +1271,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
     applyUrlLoadout();
     window.addEventListener("popstate", applyUrlLoadout);
     return () => window.removeEventListener("popstate", applyUrlLoadout);
-  }, [copy, dataLoadoutKey, defaultBuildName, isFury, names.spec, theme.slug]);
+  }, [copy, dataLoadoutKey, defaultBuildName, isFury, names.spec, theme.slug, router]);
 
   useEffect(() => {
     if (!loadoutOpen) return;
@@ -1608,14 +1620,15 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
     setLoadoutOpen(false);
   };
   const buildShareUrl = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.delete("import");
+    const url = new URL(window.location.pathname, window.location.origin);
+    url.searchParams.set("buildVersion", data.buildVersion);
+    url.searchParams.set("hero", String(data.heroSubtreeId));
     if (ranks.size > 0 || pvpSelections.some((id) => id !== null)) url.searchParams.set("loadout", encodeLoadout(ranks, choices, pvpSelections));
     else url.searchParams.delete("loadout");
     return url.toString();
   };
   const copyShareLink = async () => copyText(buildShareUrl(), copy.linkCopied);
-  const copyJson = async () => copyText(JSON.stringify({ v: 2, build: data.buildVersion, ranks: [...ranks.entries()], choices: [...choices.entries()], pvp: pvpSelections }, null, 2), copy.jsonCopied);
+  const copyJson = async () => copyText(JSON.stringify({ v: 2, build: data.buildVersion, specId: data.specId, heroSubtreeId: data.heroSubtreeId, ranks: [...ranks.entries()], choices: [...choices.entries()], pvp: pvpSelections }, null, 2), copy.jsonCopied);
   const persistBuilds = (builds: SavedTalentBuild[], activeId: string | null) => {
     try {
       window.localStorage.setItem(buildLibraryKey(theme.slug), JSON.stringify(builds));
@@ -1632,8 +1645,9 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
     const loadout = encodeLoadout(ranks, choices, pvpSelections);
     const targetId = !asCopy && activeBuildId && savedBuilds.some((build) => build.id === activeBuildId) ? activeBuildId : createBuildId(theme.slug);
     const targetName = asCopy ? `${name}${copy.copySuffix}`.slice(0, 48) : name.slice(0, 48);
-    const record: SavedTalentBuild = { id: targetId, name: targetName, loadout, savedAt: new Date().toISOString(), buildVersion: data.buildVersion };
-    const nextBuilds = [record, ...savedBuilds.filter((build) => build.id !== targetId)].slice(0, 24);
+    if (!savedBuilds.some(build => build.id === targetId) && savedBuilds.length >= 12) { showNotice(copy.buildLimit, true); return; }
+    const record: SavedTalentBuild = { id: targetId, name: targetName, loadout, savedAt: new Date().toISOString(), buildVersion: data.buildVersion, heroSubtreeId: data.heroSubtreeId };
+    const nextBuilds = [record, ...savedBuilds.filter((build) => build.id !== targetId)];
     if (!persistBuilds(nextBuilds, targetId)) return;
     const url = new URL(window.location.href);
     url.searchParams.delete("import");
@@ -1643,9 +1657,16 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
     showNotice(asCopy ? copy.copySaved : copy.buildSaved(targetName));
   };
   const loadSavedBuild = (build: SavedTalentBuild) => {
+    if (build.buildVersion !== data.buildVersion) { showNotice(copy.savedTreeMismatch, true); return; }
+    if (build.heroSubtreeId && build.heroSubtreeId !== data.heroSubtreeId && theme.heroPaths.some(hero => hero.id === build.heroSubtreeId)) {
+      const params = new URLSearchParams({ hero: String(build.heroSubtreeId), loadout: build.loadout, buildVersion: build.buildVersion });
+      if (rotationFlow) params.set("returnTo", returnTo);
+      router.push(`${localePrefix}/talents/${theme.slug}?${params}`, { scroll: false }); return;
+    }
     const decoded = decodeLoadout(build.loadout);
     if (!decoded) { showNotice(copy.savedBuildBroken, true); return; }
     const next = sanitizeLoadout(data, decoded);
+    if (next.adjusted) { showNotice(copy.savedBuildBroken, true); return; }
     setUndoState({ ranks: new Map(ranks), choices: new Map(choices), pvp: [...pvpSelections] });
     const signature = encodeLoadout(next.ranks, next.choices, next.pvp);
     setRanks(next.ranks); setChoices(next.choices); setPvpSelections(next.pvp); setBuildName(build.name); setActiveBuildId(build.id); setSavedSignature(signature); setInvalidLoadout(false);
@@ -1677,6 +1698,19 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
     let source = raw;
     try {
       const url = new URL(raw);
+      if (url.searchParams.get("buildVersion") && url.searchParams.get("buildVersion") !== data.buildVersion) {
+        setImportError(copy.importTreeMismatch); return;
+      }
+      const incomingSpec = url.pathname.match(/\/talents\/([^/]+)\/?$/)?.[1];
+      if (incomingSpec && incomingSpec !== theme.slug) { setImportError(copy.importUnknown); return; }
+      const incomingHero = Number(url.searchParams.get("hero"));
+      if (incomingHero && incomingHero !== data.heroSubtreeId) {
+        if (!theme.heroPaths.some(hero => hero.id === incomingHero)) { setImportError(copy.importUnknown); return; }
+        const params = new URLSearchParams({ hero: String(incomingHero), buildVersion: data.buildVersion });
+        for (const key of ["loadout", "import"]) if (url.searchParams.get(key)) params.set(key, url.searchParams.get(key)!);
+        if (rotationFlow) params.set("returnTo", returnTo);
+        router.push(`${localePrefix}/talents/${theme.slug}?${params}`, { scroll: false }); setImportOpen(false); return;
+      }
       const encoded = url.searchParams.get("loadout");
       const wowImport = url.searchParams.get("import");
       if (encoded) decoded = decodeLoadout(encoded);
@@ -1684,22 +1718,38 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
     } catch { /* Not a URL; continue with the compact, JSON and Blizzard formats. */ }
     if (!decoded) {
       try {
-        const parsed = JSON.parse(raw) as { loadout?: unknown; ranks?: unknown; choices?: unknown; pvp?: unknown };
+        const parsed = JSON.parse(raw) as { build?: string; specId?: number; heroSubtreeId?: number; loadout?: unknown; ranks?: unknown; choices?: unknown; pvp?: unknown };
+        if (parsed.build && parsed.build !== data.buildVersion || parsed.specId && parsed.specId !== data.specId) { setImportError(copy.importUnknown); return; }
         if (typeof parsed.loadout === "string") decoded = decodeLoadout(parsed.loadout);
         else if (Array.isArray(parsed.ranks)) decoded = {
           ranks: new Map(parsed.ranks.filter((entry): entry is [string, number] => Array.isArray(entry) && typeof entry[0] === "string" && Number.isFinite(Number(entry[1]))).map(([id, value]) => [id, Number(value)])),
           choices: new Map(Array.isArray(parsed.choices) ? parsed.choices.filter((entry): entry is [string, number] => Array.isArray(entry) && typeof entry[0] === "string" && Number.isFinite(Number(entry[1]))).map(([id, value]) => [id, Number(value)]) : []),
           pvp: Array.isArray(parsed.pvp) ? parsed.pvp.map((value) => value === null ? null : Number.isFinite(Number(value)) ? Number(value) : null).slice(0, 3) : [],
         };
+        if (decoded && parsed.heroSubtreeId && parsed.heroSubtreeId !== data.heroSubtreeId) {
+          if (!theme.heroPaths.some(hero => hero.id === parsed.heroSubtreeId)) { setImportError(copy.importUnknown); return; }
+          const params = new URLSearchParams({ hero: String(parsed.heroSubtreeId), buildVersion: data.buildVersion, loadout: encodeLoadout(decoded.ranks, decoded.choices, decoded.pvp) });
+          if (rotationFlow) params.set("returnTo", returnTo);
+          router.push(`${localePrefix}/talents/${theme.slug}?${params}`, { scroll: false }); setImportOpen(false); return;
+        }
       } catch { /* Not JSON; continue. */ }
     }
     decoded ??= decodeLoadout(source);
     if (!decoded) {
+      const importedHero = talentLoadoutHeroId(data, source);
+      if (importedHero && importedHero !== data.heroSubtreeId) {
+        const params = new URLSearchParams({ hero: String(importedHero), import: source, buildVersion: data.buildVersion });
+        if (rotationFlow) params.set("returnTo", returnTo);
+        setImportOpen(false);
+        router.push(`${localePrefix}/talents/${theme.slug}?${params}`, { scroll: false });
+        return;
+      }
       const wowDecoded = decodeWoWTalentLoadout(data, source);
       if (wowDecoded) decoded = { ...wowDecoded, pvp: [null, null, null] };
     }
     if (!decoded) { setImportError(copy.importUnknown); return; }
     const next = sanitizeLoadout(data, decoded);
+    if (next.adjusted) { setImportError(copy.importUnknown); return; }
     setUndoState({ ranks: new Map(ranks), choices: new Map(choices), pvp: [...pvpSelections] });
     setRanks(next.ranks); setChoices(next.choices); setPvpSelections(next.pvp); setInvalidLoadout(false); setBuildName(copy.importedBuildName(names.spec)); setActiveBuildId(null); setSavedSignature(null); setImportOpen(false); setImportError("");
     const loadout = encodeLoadout(next.ranks, next.choices, next.pvp);
@@ -1715,6 +1765,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
     const destination = new URL(returnTo, window.location.origin);
     destination.searchParams.set("talentLoadout", talentLoadout);
     destination.searchParams.set("talentBuildName", buildName.trim() || defaultBuildName);
+    destination.searchParams.set("talentBuildVersion", data.buildVersion);
     router.push(`${destination.pathname}${destination.search}`);
   };
 
@@ -1732,7 +1783,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
         <div className="tc-page-title">
           <span className="tc-fury-portrait tc-spec-icon"><Image src={theme.iconUrl} alt="" width={64} height={64} sizes="52px" quality={90} priority /></span>
           <div>
-            {rotationFlow ? <button className="tc-back-link" type="button" onClick={() => router.push(returnTo)}>{copy.backToRotation}</button> : null}
+            {rotationFlow ? <button className="tc-back-link" type="button" onClick={() => router.push(returnTo)}>{characterFlow ? (copy.backToCharacter) : copy.backToRotation}</button> : null}
             <h1>{copy.title(theme)}</h1>
             <span className="tc-build-version">
               {names.className} · Midnight {data.buildVersion} ·{" "}
@@ -1749,7 +1800,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
             <span className="tc-rage-meter" aria-hidden="true"><strong className="tc-rage-percent">{ragePercent}%</strong><progress value={spent} max={totalAvailable} /></span>
           </div>
           <div className="tc-loadout-menu" ref={loadoutMenuRef}>
-            <button ref={loadoutTriggerRef} className="tc-build-select" type="button" aria-label={copy.buildSelectAria(buildName)} aria-haspopup="menu" aria-controls="tc-loadout-menu" aria-expanded={loadoutOpen} onClick={() => setLoadoutOpen((open) => !open)}><span><small>{buildSaved ? copy.savedState : copy.unsavedState}</small><b>{buildName}</b></span><ChevronDown /></button>
+            <button ref={loadoutTriggerRef} className="tc-build-select" type="button" aria-haspopup="menu" aria-controls="tc-loadout-menu" aria-expanded={loadoutOpen} onClick={() => setLoadoutOpen((open) => !open)}><span><small>{buildSaved ? copy.savedState : copy.unsavedState}</small>{" "}<b>{buildName}</b></span><ChevronDown /></button>
             {loadoutOpen ? <div className="tc-loadout-popover" id="tc-loadout-menu" role="menu" aria-label={copy.libraryLabel}>
               <div className="tc-build-popover-head"><span><small>{copy.libraryTitle}</small><b>{copy.savedCount(savedBuilds.length)}</b></span><button type="button" role="menuitem" tabIndex={-1} onClick={createNewBuild}><Plus />{copy.newBuild}</button></div>
               <label className="tc-build-name"><span>{copy.buildNameLabel}</span><input value={buildName} maxLength={48} onChange={(event) => { setBuildName(event.target.value); setSavedSignature(null); }} /></label>
@@ -1775,7 +1826,9 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
       <section className="tc-workspace" data-mobile-tree={mobileTree}>
         {!compactLayout || mobileTree === "class" ? <TalentTreePanel lang={lang} style={rowStepStyle("class")} variant="class" eyebrow={copy.treeEyebrows.class} title={data.className} iconSrc={theme.classIconUrl} spent={rank("class")} budget={budgets.class} nodeCount={data.trees.class.nodes.length}><TalentTreeView tree={data.trees.class} ranks={treeRanks.class} choices={treeChoices.class} spentInTree={rank("class")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : null}
         {!compactLayout || mobileTree === "hero" ? mountedTrees.has("hero") ? <TalentTreePanel lang={lang} style={rowStepStyle("hero")} variant="hero" eyebrow={copy.treeEyebrows.hero} title={data.heroName} iconSrc={heroPanelIcon} secondary={<nav className="tc-hero-paths" aria-label={copy.heroPathsLabel}>{theme.heroPaths.map((hero) => {
-          const href = `${localePrefix}/talents/${theme.slug}?hero=${hero.id}`;
+          const params = new URLSearchParams({ hero: String(hero.id), buildVersion: data.buildVersion });
+          if (rotationFlow) params.set("returnTo", returnTo);
+          const href = `${localePrefix}/talents/${theme.slug}?${params}`;
           return <Link key={hero.id} className={hero.id === data.heroSubtreeId ? "is-active" : undefined} href={href} prefetch={false} scroll={false} aria-current={hero.id === data.heroSubtreeId ? "page" : undefined} onClick={(event) => { navigateTalentPage(event, href, () => router.push(href, { scroll: false })); }}>{heroPathName(hero, lang)}</Link>;
         })}</nav>} spent={rank("hero")} budget={budgets.hero} nodeCount={data.trees.hero.nodes.length}><TalentTreeView tree={data.trees.hero} ranks={treeRanks.hero} choices={treeChoices.hero} spentInTree={rank("hero")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : <TalentTreePanel lang={lang} style={rowStepStyle("hero")} variant="hero" eyebrow={copy.treeEyebrows.hero} title={data.heroName} spent={0} budget={budgets.hero} nodeCount={data.trees.hero.nodes.length} loading><div className="tc-skeleton-tree" /></TalentTreePanel> : null}
         {!compactLayout || mobileTree === "spec" ? mountedTrees.has("spec") ? <TalentTreePanel lang={lang} style={rowStepStyle("spec")} variant="spec" eyebrow={copy.treeEyebrows.spec} title={data.specName} iconSrc={specPanelIcon} spent={rank("spec")} budget={budgets.spec} nodeCount={data.trees.spec.nodes.length}><TalentTreeView tree={data.trees.spec} ranks={treeRanks.spec} choices={treeChoices.spec} spentInTree={rank("spec")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : <TalentTreePanel lang={lang} style={rowStepStyle("spec")} variant="spec" eyebrow={copy.treeEyebrows.spec} title={data.specName} spent={0} budget={budgets.spec} nodeCount={data.trees.spec.nodes.length} loading><div className="tc-skeleton-tree" /></TalentTreePanel> : null}
@@ -1821,7 +1874,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
             </button>;
           })}
         </div> : null}
-        <button type="button" className={`tc-use-rotation${buildSaved && !rotationFlow ? " is-saved" : ""}`} disabled={rotationFlow && !buildComplete} onClick={rotationFlow ? useInRotation : () => saveBuild(false)}><span className="tc-save-mark" aria-hidden="true">{buildSaved && !rotationFlow ? <Check /> : <Save />}</span><span className="tc-save-copy"><b>{rotationFlow ? (buildComplete ? copy.useInTrainer : copy.pointsLeft(missingPoints)) : buildSaved ? copy.buildIsSaved : activeBuildId ? copy.saveChanges : copy.saveBuildCta}</b><small>{rotationFlow ? (buildComplete ? copy.readyForSim : copy.spendAllPoints) : copy.saveMeta(spent, totalAvailable, savedBuilds.length)}</small></span></button>
+        <button type="button" className={`tc-use-rotation${buildSaved && !rotationFlow ? " is-saved" : ""}`} disabled={rotationFlow && !buildComplete} onClick={rotationFlow ? useInRotation : () => saveBuild(false)}><span className="tc-save-mark" aria-hidden="true">{buildSaved && !rotationFlow ? <Check /> : <Save />}</span><span className="tc-save-copy"><b>{rotationFlow ? (buildComplete ? characterFlow ? (copy.useCharacterBuild) : copy.useInTrainer : copy.pointsLeft(missingPoints)) : buildSaved ? copy.buildIsSaved : activeBuildId ? copy.saveChanges : copy.saveBuildCta}</b><small>{rotationFlow ? (buildComplete ? characterFlow ? (copy.returnToAccount) : copy.readyForSim : copy.spendAllPoints) : copy.saveMeta(spent, totalAvailable, savedBuilds.length)}</small></span></button>
         {notice ? <div className="tc-toast" role="status" aria-live="polite"><span>{notice.message}</span>{undoState ? <button type="button" onClick={undoReset}>{copy.undo}</button> : null}{notice.persistent ? <button type="button" aria-label={copy.closeNotice} onClick={() => setNotice(null)}>×</button> : null}</div> : null}
       </footer>
       {importOpen ? <div className="tc-import-backdrop" aria-hidden="true" onClick={closeImport} /> : null}

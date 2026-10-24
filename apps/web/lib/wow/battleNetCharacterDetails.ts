@@ -55,6 +55,8 @@ export type CharacterRecommendation = { tone: "critical" | "recommended" | "good
 export type BattleNetCharacterDetails = {
   character: BattleNetCharacter;
   activeSpec?: string;
+  unavailableSections?: Array<"equipment" | "statistics" | "talents" | "raids">;
+  availableProfileFields?: string[];
   averageItemLevel: number;
   equippedItemLevel: number;
   achievementPoints: number;
@@ -62,6 +64,7 @@ export type BattleNetCharacterDetails = {
   avatarUrl?: string;
   renderUrl?: string;
   mythicRating?: number;
+  raidProgress?: Array<{ id: number; name: string; difficulty: string; completed: number; total: number }>;
   stats: Array<{ key: string; label: string; value: string; rawValue: number }>;
   equipment: CharacterGearItem[];
   modelItems: Array<[slot: number, displayId: number]>;
@@ -92,7 +95,7 @@ export { characterSlug } from "./characterSlug.ts";
 async function api<T>(url: string, token: string, signal?: AbortSignal): Promise<T | null> {
   signal?.throwIfAborted();
   try {
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : undefined });
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000) });
     return response.ok ? await response.json() as T : null;
   } catch { signal?.throwIfAborted(); return null; }
 }
@@ -100,7 +103,7 @@ async function api<T>(url: string, token: string, signal?: AbortSignal): Promise
 async function requiredApi<T>(url: string, token: string, endpoint: string): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+    response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: AbortSignal.timeout(15_000) });
   } catch {
     throw new BattleNetCharacterDataError("unavailable", 503, endpoint);
   }
@@ -226,23 +229,24 @@ function recommendations(items: CharacterGearItem[], average: number, locale: "e
   return result;
 }
 
-export async function getBattleNetCharacterDetails(token: string, character: BattleNetCharacter, locale: "en" | "ru"): Promise<BattleNetCharacterDetails> {
+export async function getBattleNetCharacterDetails(token: string, character: BattleNetCharacter, locale: "en" | "ru", allowPartial = false): Promise<BattleNetCharacterDetails> {
   const region = character.region;
   const root = `https://${region}.api.blizzard.com/profile/wow/character/${character.realm.slug}/${encodeURIComponent(character.name.toLowerCase())}`;
   // Raw Blizzard profile JSON (profile, statistics, Mythic+) is read field by field below.
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const [profile, equipmentResponse, appearance, specializations, statistics, media, mythic] = await Promise.all([
+  const [profile, equipmentResponse, appearance, specializations, statistics, media, mythic, raids] = await Promise.all([
     requiredApi<any>(withLocale(root, region, locale), token, "profile"),
-    requiredApi<{ equipped_items?: RawItem[] }>(withLocale(`${root}/equipment`, region, locale), token, "equipment"),
+    allowPartial ? api<{ equipped_items?: RawItem[] }>(withLocale(`${root}/equipment`, region, locale), token) : requiredApi<{ equipped_items?: RawItem[] }>(withLocale(`${root}/equipment`, region, locale), token, "equipment"),
     api<RawAppearance>(withLocale(`${root}/appearance`, region, locale), token),
-    requiredApi<RawSpecializations>(withLocale(`${root}/specializations`, region, locale), token, "specializations"),
-    requiredApi<Record<string, any>>(withLocale(`${root}/statistics`, region, locale), token, "statistics"),
+    allowPartial ? api<RawSpecializations>(withLocale(`${root}/specializations`, region, locale), token) : requiredApi<RawSpecializations>(withLocale(`${root}/specializations`, region, locale), token, "specializations"),
+    allowPartial ? api<Record<string, any>>(withLocale(`${root}/statistics`, region, locale), token) : requiredApi<Record<string, any>>(withLocale(`${root}/statistics`, region, locale), token, "statistics"),
     api<{ assets?: Array<{ key?: string; value?: string }> }>(withLocale(`${root}/character-media`, region, locale), token),
     api<any>(withLocale(`${root}/mythic-keystone-profile`, region, locale), token),
+    api<{ expansions?: Array<{ instances?: Array<{ instance: { id: number; name: string }; modes?: Array<{ difficulty: { name: string }; progress: { completed_count: number; total_count: number } }> }> }> }>(withLocale(`${root}/encounters/raids`, region, locale), token),
   ]);
   /* eslint-enable @typescript-eslint/no-explicit-any */
   const rawItems = equipmentResponse?.equipped_items ?? [];
-  if (!profile?.id || !profile?.active_spec?.name || !rawItems.length || !specializations.active_specialization?.id) {
+  if (!profile?.id || (!allowPartial && (!profile?.active_spec?.name || !rawItems.length || !specializations?.active_specialization?.id))) {
     throw new BattleNetCharacterDataError("incomplete", 422, !rawItems.length ? "equipment" : "profile");
   }
   const customizations = (appearance?.customizations ?? []).flatMap((customization) => {
@@ -273,23 +277,32 @@ export async function getBattleNetCharacterDetails(token: string, character: Bat
   }));
   const equipment = await equipmentPromise;
   const stat = (key: string) => statistics?.[key];
-  const number = (key: string) => typeof stat(key) === "number" ? stat(key) : stat(key)?.effective ?? stat(key)?.value ?? 0;
-  const percent = (key: string) => stat(key)?.value ?? stat(key)?.rating_bonus ?? number(key);
+  const number = (key: string): number | undefined => {
+    const value = typeof stat(key) === "number" ? stat(key) : stat(key)?.effective ?? stat(key)?.value;
+    return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  };
+  const percent = (key: string): number | undefined => stat(key)?.value ?? stat(key)?.rating_bonus ?? number(key);
   const ru = locale === "ru";
-  const stats = [
-    ["strength", ru ? "Сила" : "Strength", number("strength")], ["agility", ru ? "Ловкость" : "Agility", number("agility")], ["intellect", ru ? "Интеллект" : "Intellect", number("intellect")], ["stamina", ru ? "Выносливость" : "Stamina", number("stamina")],
-  ].filter(([, , value]) => Number(value) > 0).map(([key, label, value]) => ({ key: String(key), label: String(label), value: Number(value).toLocaleString(locale === "ru" ? "ru-RU" : "en-US"), rawValue: Number(value) }));
-  stats.push(
-    { key: "crit", label: ru ? "Критический удар" : "Critical strike", value: `${Number(percent("melee_crit") || percent("spell_crit") || 0).toFixed(1)}%`, rawValue: Number(percent("melee_crit") || percent("spell_crit") || 0) },
-    { key: "haste", label: ru ? "Скорость" : "Haste", value: `${Number(percent("melee_haste") || percent("spell_haste") || 0).toFixed(1)}%`, rawValue: Number(percent("melee_haste") || percent("spell_haste") || 0) },
-    { key: "mastery", label: ru ? "Искусность" : "Mastery", value: `${Number(stat("mastery")?.value ?? stat("mastery")?.rating_bonus ?? 0).toFixed(1)}%`, rawValue: Number(stat("mastery")?.value ?? stat("mastery")?.rating_bonus ?? 0) },
-    { key: "versatility", label: ru ? "Универсальность" : "Versatility", value: `${Number(stat("versatility_damage_done_bonus") ?? 0).toFixed(1)}%`, rawValue: Number(stat("versatility_damage_done_bonus") ?? 0) },
-  );
+  const stats: BattleNetCharacterDetails["stats"] = [];
+  for (const [key, label] of [["strength", ru ? "Сила" : "Strength"], ["agility", ru ? "Ловкость" : "Agility"], ["intellect", ru ? "Интеллект" : "Intellect"], ["stamina", ru ? "Выносливость" : "Stamina"]]) {
+    const value = number(key);
+    if (value !== undefined) stats.push({key, label, rawValue: value, value: value.toLocaleString(ru ? "ru-RU" : "en-US")});
+  }
+  const secondary: Array<[string, string, number | undefined]> = [
+    ["crit", ru ? "Критический удар" : "Critical strike", percent("melee_crit") ?? percent("spell_crit")],
+    ["haste", ru ? "Скорость" : "Haste", percent("melee_haste") ?? percent("spell_haste")],
+    ["mastery", ru ? "Искусность" : "Mastery", percent("mastery")],
+    ["versatility", ru ? "Универсальность" : "Versatility", number("versatility_damage_done_bonus")],
+  ];
+  for (const [key,label,value] of secondary) if (typeof value === "number" && Number.isFinite(value)) stats.push({key,label,rawValue:value,value:`${value.toFixed(1)}%`});
   const averageItemLevel = Number(profile?.average_item_level ?? 0);
   return {
+    unavailableSections: [!equipmentResponse && "equipment", !statistics && "statistics", !specializations && "talents", !raids && "raids"].filter(Boolean) as BattleNetCharacterDetails["unavailableSections"],
+    availableProfileFields: Object.keys(profile),
     character, activeSpec: profile?.active_spec?.name, averageItemLevel, equippedItemLevel: Number(profile?.equipped_item_level ?? averageItemLevel), achievementPoints: Number(profile?.achievement_points ?? 0), lastLogin: profile?.last_login_timestamp,
     avatarUrl: media?.assets?.find((asset) => asset.key === "avatar")?.value, renderUrl: media?.assets?.find((asset) => asset.key === "main-raw" || asset.key === "main")?.value,
     mythicRating: mythic?.current_mythic_rating?.rating,
+    raidProgress: raids?.expansions?.flatMap(expansion => (expansion.instances ?? []).flatMap(instance => (instance.modes ?? []).map(mode => ({ id: instance.instance.id, name: instance.instance.name, difficulty: mode.difficulty.name, completed: mode.progress.completed_count, total: mode.progress.total_count })))),
     stats, equipment, modelItems: [], customizations, activeTalentLoadout,
     activeHeroTalentTreeId: specializations?.active_hero_talent_tree?.id,
     recommendations: recommendations(equipment, averageItemLevel, locale), updatedAt: new Date().toISOString(),

@@ -1,0 +1,1170 @@
+[
+  {
+    "enemy": "Primal Juggernaut",
+    "spell": "Excavating Blast",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Подготовьте лечение к Excavating Blast; контроль не действует.",
+    "en": "Prepare healing for Excavating Blast; this enemy cannot be controlled."
+  },
+  {
+    "enemy": "Primal Juggernaut",
+    "spell": "Crushing Smash",
+    "action": "Уклонение",
+    "role": "tank",
+    "ru": "Выходите из Crushing Smash.",
+    "en": "Move out of Crushing Smash."
+  },
+  {
+    "enemy": "Deepstone Earthshaper",
+    "spell": "Tectonic Strike",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита на Tectonic Strike.",
+    "en": "Use mitigation for Tectonic Strike."
+  },
+  {
+    "enemy": "Earthbound Guardian",
+    "spell": "Earthbound's Imprint",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Лечите цель Earthbound’s Imprint.",
+    "en": "Heal the Earthbound’s Imprint target."
+  },
+  {
+    "enemy": "Flashfrost Chillweaver",
+    "spell": "Ice Shield",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Ice Shield; оставшиеся прерывания — в Frostbolt.",
+    "en": "Interrupt Ice Shield; spare interrupts go to Frostbolt."
+  },
+  {
+    "enemy": "Infused Whelp",
+    "spell": "Cold Claws",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте Cold Claws до заморозки; помогает освобождение от замедлений.",
+    "en": "Remove Cold Claws before the freeze; freedom effects also help."
+  },
+  {
+    "enemy": "Defier Draghar",
+    "spell": "Steel Barrage",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита на весь Steel Barrage; группе нужно лечение.",
+    "en": "Mitigate the entire Steel Barrage; the party also needs healing."
+  },
+  {
+    "enemy": "Defier Draghar",
+    "spell": "Blazing Rush",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Встаньте у стены, затем уклонитесь от Blazing Rush.",
+    "en": "Bait Blazing Rush towards a wall, then dodge."
+  },
+  {
+    "enemy": "Primalist Cinderweaver",
+    "spell": "Cinderbolt",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Cinderbolt.",
+    "en": "Interrupt Cinderbolt."
+  },
+  {
+    "enemy": "Primalist Cinderweaver",
+    "spell": "Living Bomb",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте Living Bomb после выхода цели из группы.",
+    "en": "Dispel Living Bomb after its target leaves the group."
+  },
+  {
+    "enemy": "Blazebound Destroyer",
+    "spell": "Inferno",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Лечение на удар Inferno и последующий периодический урон.",
+    "en": "Prepare for the Inferno hit and its damage over time."
+  },
+  {
+    "enemy": "Blazebound Destroyer",
+    "spell": "Fiery Blast",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Fiery Blast; при смерти отойдите от Burnout.",
+    "en": "Interrupt Fiery Blast; move away from Burnout on death."
+  },
+  {
+    "enemy": "Ashseer Flamelasher",
+    "spell": "Flaming Barrage",
+    "action": "Стоп",
+    "role": "dps",
+    "ru": "Останавливайте Flaming Barrage контролем.",
+    "en": "Stop Flaming Barrage with crowd control."
+  },
+  {
+    "enemy": "Ashseer Flamelasher",
+    "spell": "Blaze of Glory",
+    "action": "Пурж",
+    "role": "healer",
+    "ru": "Рассейте Blaze of Glory после смерти противника.",
+    "en": "Purge Blaze of Glory after the enemy dies."
+  },
+  {
+    "enemy": "Flamegullet",
+    "spell": "Fire Maw",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита на Fire Maw; группа уклоняется от Flame Breath.",
+    "en": "Mitigate Fire Maw; everyone dodges Flame Breath."
+  },
+  {
+    "enemy": "Flamegullet",
+    "spell": "Molten Blood",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "На 50% здоровья дракона подготовьте групповое лечение.",
+    "en": "Prepare party healing at 50% dragon health."
+  },
+  {
+    "enemy": "Storm Warrior",
+    "spell": "Thunder Stomper",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Отойдите от Thunder Stomper.",
+    "en": "Move away from Thunder Stomper."
+  },
+  {
+    "enemy": "Primal Thundercloud",
+    "spell": "Stormcloud Barrier",
+    "action": "Пурж",
+    "role": "healer",
+    "ru": "Снимайте щиты по очереди: каждое облако взрывается.",
+    "en": "Purge barriers one at a time: each cloud explodes."
+  },
+  {
+    "enemy": "Tempest Channeler",
+    "spell": "Lightning Torrent",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Подготовьте лечение на Lightning Torrent.",
+    "en": "Prepare healing for Lightning Torrent."
+  },
+  {
+    "enemy": "Tempest Channeler",
+    "spell": "Thunder Blast",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Thunder Blast, подберите призванные облака.",
+    "en": "Interrupt Thunder Blast and collect summoned clouds."
+  },
+  {
+    "enemy": "High Channeler Ryvati",
+    "spell": "Tempest Stormshield",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Разбейте Tempest Stormshield до окончания действия.",
+    "en": "Break Tempest Stormshield before it expires."
+  },
+  {
+    "enemy": "Primal Serpent",
+    "spell": "Piercing Hiss",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Не пропускайте Piercing Hiss.",
+    "en": "Interrupt every Piercing Hiss."
+  },
+  {
+    "enemy": "Twinfang Harrower",
+    "spell": "Paralyzing Shots",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте магический Paralyzing Shots или используйте освобождение.",
+    "en": "Remove the magic Paralyzing Shots effect or use freedom."
+  },
+  {
+    "enemy": "Twinfang Harrower",
+    "spell": "Toxic Breath",
+    "action": "Уклонение",
+    "role": "tank",
+    "ru": "Отведите фронтальные атаки; противник не поддаётся контролю.",
+    "en": "Face frontal attacks away; Harrower is immune to crowd control."
+  },
+  {
+    "enemy": "Ravenous Descendant",
+    "spell": "Ravenous",
+    "action": "Стоп",
+    "role": "dps",
+    "ru": "Снимайте исступление или останавливайте противника контролем.",
+    "en": "Soothe the enrage or stop the enemy with crowd control."
+  },
+  {
+    "enemy": "Ritual Chieftain",
+    "spell": "Dismember",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита на Dismember.",
+    "en": "Mitigate Dismember."
+  },
+  {
+    "enemy": "Ritual Chieftain",
+    "spell": "Blood Sacrifice",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Снимите поглощение лечения от Blood Sacrifice.",
+    "en": "Heal through the Blood Sacrifice healing absorb."
+  },
+  {
+    "enemy": "High Evolutionist",
+    "spell": "Envenom",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Envenom; Evolve останавливайте контролем.",
+    "en": "Interrupt Envenom; stop Evolve with crowd control."
+  },
+  {
+    "enemy": "High Evolutionist",
+    "spell": "Envenom",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте прошедший яд Envenom.",
+    "en": "Dispel Envenom poison if its cast succeeds."
+  },
+  {
+    "enemy": "Ascendant Serpent",
+    "spell": "Noxious Spray",
+    "action": "Уклонение",
+    "role": "tank",
+    "ru": "Направляйте Noxious Spray от группы.",
+    "en": "Face Noxious Spray away from allies."
+  },
+  {
+    "enemy": "Ascendant Serpent",
+    "spell": "Infest",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Разнесите Infest, затем соберите появившихся противников.",
+    "en": "Spread for Infest, then gather the spawned enemies."
+  },
+  {
+    "enemy": "Ula'tek's Chosen",
+    "spell": "Mass Envenom",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Не пропускайте Mass Envenom.",
+    "en": "Interrupt every Mass Envenom."
+  },
+  {
+    "enemy": "Living Venom",
+    "spell": "Living Venom",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Убивайте существ по очереди, чтобы разнести урон от смерти.",
+    "en": "Stagger deaths to separate their damage bursts."
+  },
+  {
+    "enemy": "Keen-Eyed Striker",
+    "spell": "Scavenge",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Scavenge рядом с ягодами, чтобы сохранить подношение.",
+    "en": "Interrupt Scavenge near berries to preserve the offering."
+  },
+  {
+    "enemy": "Keen-Eyed Striker",
+    "spell": "Razor Dive",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Поддержите цель кровотечения Razor Dive.",
+    "en": "Heal the Razor Dive bleed target."
+  },
+  {
+    "enemy": "Thornclaw Gatherer",
+    "spell": "Shredding Claws",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "При высоких стаках Shredding Claws отступайте под защитой.",
+    "en": "Use mitigation and kite at high Shredding Claws stacks."
+  },
+  {
+    "enemy": "Earthwhisper Tender",
+    "spell": "Healing Breeze",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Healing Breeze; прошедшее усиление можно рассеять.",
+    "en": "Interrupt Healing Breeze; purge it if missed."
+  },
+  {
+    "enemy": "Spirit of Hunger",
+    "spell": "Starvation Effigy",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Сразу уничтожайте Starvation Effigy; дух не поддаётся контролю.",
+    "en": "Destroy Starvation Effigy immediately; the Spirit cannot be controlled."
+  },
+  {
+    "enemy": "Spirit of Hunger",
+    "spell": "Feast of Misery",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Лечение на Feast of Misery, снятие проклятий от тотема.",
+    "en": "Heal through Feast of Misery and remove the effigy’s curses."
+  },
+  {
+    "enemy": "Territorial Matriarch",
+    "spell": "Mother's Wrath",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "После гибели детёнышей нужна защита или снятие исступления.",
+    "en": "Use mitigation or soothe after cubs die."
+  },
+  {
+    "enemy": "Frostfang",
+    "spell": "Bloodrush",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Начало боя опаснее из-за Bloodrush.",
+    "en": "Use mitigation for Bloodrush at the start of combat."
+  },
+  {
+    "enemy": "Terra Rumbler",
+    "spell": "Rumbling Ward",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Разбейте Rumbling Ward, чтобы прекратить урон по группе.",
+    "en": "Break Rumbling Ward to stop party damage."
+  },
+  {
+    "enemy": "Frigid Mauler",
+    "spell": "Frigid Roar",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Не пропускайте Frigid Roar.",
+    "en": "Interrupt every Frigid Roar."
+  },
+  {
+    "enemy": "Glacial Revenant",
+    "spell": "Cryo Surge",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте Cryo Surge после разделения целей.",
+    "en": "Dispel Cryo Surge after targets spread."
+  },
+  {
+    "enemy": "Avatar of Determination",
+    "spell": "Glacial Tomb",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Разбейте ледяные оковы или освободитесь способностью; выйдите из Pulverize.",
+    "en": "Break the ice or use freedom; move out of Pulverize."
+  },
+  {
+    "enemy": "The Winter Squall",
+    "spell": "Harsh Winter",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Поддерживайте группу до смерти противника; после неё ветер прекращается.",
+    "en": "Sustain the party until this enemy dies and the wind stops."
+  },
+  {
+    "enemy": "Stormbound Mystic",
+    "spell": "Arc Lightning",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Arc Lightning важнее Lightning Bolt.",
+    "en": "Prioritize interrupting Arc Lightning over Lightning Bolt."
+  },
+  {
+    "enemy": "Ruthless Totemcaller",
+    "spell": "Magma Totem",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Сразу уничтожайте Magma Totem.",
+    "en": "Destroy Magma Totem immediately."
+  },
+  {
+    "enemy": "Grizzled Warbringer",
+    "spell": "Primal Echo",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Лечение на Primal Echo; уклоняйтесь от копий.",
+    "en": "Heal through Primal Echo; dodge spear circles."
+  },
+  {
+    "enemy": "Bonded Beasttamer",
+    "spell": "Bestial Wrath",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита или снятие исступления с хозяина и зверя.",
+    "en": "Mitigate or soothe the tamer and beast."
+  },
+  {
+    "enemy": "Loyal Saberfang",
+    "spell": "Shred Armor",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Следите за Shred Armor; при необходимости отступайте.",
+    "en": "Track Shred Armor and kite if necessary."
+  },
+  {
+    "enemy": "Loa Speaker Nanea",
+    "spell": "Volatile Totem",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Уничтожайте Volatile Totem; прерывайте Lightning Bolt.",
+    "en": "Destroy Volatile Totem; interrupt Lightning Bolt."
+  },
+  {
+    "enemy": "Loa Speaker Nanea",
+    "spell": "Earthquake",
+    "action": "Уклонение",
+    "role": "healer",
+    "ru": "Выносите Earthquake к старым лужам, освобождая центр.",
+    "en": "Place Earthquake near existing pools to preserve space."
+  },
+  {
+    "enemy": "Felonious Mage",
+    "spell": "Fel Missiles",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Fel Missiles; Fel Crazed можно рассеять.",
+    "en": "Interrupt Fel Missiles; Fel Crazed can be purged."
+  },
+  {
+    "enemy": "Felwyrm",
+    "spell": "Fel Infused",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Отойдите от взрыва умирающего дракончика.",
+    "en": "Move away from the dying wyrm’s explosion."
+  },
+  {
+    "enemy": "Bribed Guard",
+    "spell": "Shield Bash",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Следите за Shield Bash; Glaive Toss не должен задеть союзников.",
+    "en": "Track Shield Bash; keep allies clear of Glaive Toss."
+  },
+  {
+    "enemy": "Bribed Captain",
+    "spell": "Shield Bash",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Следите за Shield Bash; Glaive Toss не должен задеть союзников.",
+    "en": "Track Shield Bash; keep allies clear of Glaive Toss."
+  },
+  {
+    "enemy": "Bribed Captain",
+    "spell": "Deep Corruption",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Убейте капитана первым: он усиливает соседних противников.",
+    "en": "Kill the captain first: it empowers nearby enemies."
+  },
+  {
+    "enemy": "Seductive Sayaad",
+    "spell": "Seduction",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Seduction или применяйте контроль.",
+    "en": "Interrupt or crowd-control Seduction."
+  },
+  {
+    "enemy": "Street Sneak",
+    "spell": "Heartstop Poison",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте яд с танка.",
+    "en": "Remove the poison from the tank."
+  },
+  {
+    "enemy": "Massive Felwyrm",
+    "spell": "Corroding Spittle",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте магический Corroding Spittle; готовьте лечение на Over-Infused.",
+    "en": "Dispel Corroding Spittle; prepare healing for Over-Infused."
+  },
+  {
+    "enemy": "Massive Felwyrm",
+    "spell": "Over-Infused",
+    "action": "Уклонение",
+    "role": "tank",
+    "ru": "Подбирайте мелких дракончиков; отойдите перед смертью большого.",
+    "en": "Collect small wyrms; move away before the large one dies."
+  },
+  {
+    "enemy": "Warehouse Worker",
+    "spell": "Sharp Nail",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Поддержите цель кровотечения Sharp Nail.",
+    "en": "Heal the Sharp Nail bleed target."
+  },
+  {
+    "enemy": "Keen Taskmaster",
+    "spell": "Back To Work!",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Снимайте исступление с рабочих или применяйте защиту.",
+    "en": "Soothe workers or use mitigation."
+  },
+  {
+    "enemy": "Wrathguard Flayer",
+    "spell": "Fel Rage",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Не пропускайте Fel Rage.",
+    "en": "Interrupt Fel Rage."
+  },
+  {
+    "enemy": "Shivan Punisher",
+    "spell": "Demonic Frenzy",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Подготовьте групповое лечение на Demonic Frenzy.",
+    "en": "Prepare party healing for Demonic Frenzy."
+  },
+  {
+    "enemy": "Corrupted Warlock",
+    "spell": "Curse of Doom",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте Curse of Doom. Если снять нельзя, группа разделяет урон в круге; не допускайте смерти цели.",
+    "en": "Remove Curse of Doom. If it cannot be dispelled, share its circle as a group and keep the target alive."
+  },
+  {
+    "enemy": "Felmaster Lucsei",
+    "spell": "Blade Dance",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Заранее подготовьте лечение на Blade Dance.",
+    "en": "Prepare healing for Blade Dance."
+  },
+  {
+    "enemy": "Defiled Golem",
+    "spell": "Defiled Slam",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Подготовьте лечение к Defiled Slam; уклоняйтесь от линий Fel Beam.",
+    "en": "Prepare healing for Defiled Slam; dodge the Fel Beam lines."
+  },
+  {
+    "enemy": "Lasher",
+    "spell": "Spore Spines",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте Spore Spines с танка или используйте освобождение.",
+    "en": "Remove Spore Spines from the tank or use freedom."
+  },
+  {
+    "enemy": "Lightgorged Lasher",
+    "spell": "Lightbloom Pollination",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Разбейте щит Lightbloom Pollination.",
+    "en": "Break the Lightbloom Pollination shield."
+  },
+  {
+    "enemy": "Radiant Spellsower",
+    "spell": "Light Bolt Volley",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Light Bolt Volley; остановите Call the Grove контролем.",
+    "en": "Interrupt Light Bolt Volley; crowd-control Call the Grove."
+  },
+  {
+    "enemy": "Underbrush Stalker",
+    "spell": "Thornblade",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Поддержите цель Thornblade; используйте снятие кровотечения.",
+    "en": "Heal the Thornblade target; use a bleed removal if available."
+  },
+  {
+    "enemy": "Virid Grovekeeper",
+    "spell": "Earthrupture Strike",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита на Earthrupture Strike; оставьте лужу в стороне.",
+    "en": "Mitigate Earthrupture Strike and place its pool away from allies."
+  },
+  {
+    "enemy": "Virid Grovekeeper",
+    "spell": "Uproot",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Лечение на Uproot, учитывайте отбрасывание.",
+    "en": "Prepare healing for Uproot and its knockback."
+  },
+  {
+    "enemy": "Sporeblight Belcher",
+    "spell": "Spouting Floret",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Лечение на Spouting Floret; выходите из Belch Spores.",
+    "en": "Heal through Spouting Floret; dodge Belch Spores."
+  },
+  {
+    "enemy": "Thorny Saptor",
+    "spell": "Hunting Leap",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Уклонитесь от фронтальной атаки или остановите её контролем.",
+    "en": "Dodge the frontal channel or stop it with crowd control."
+  },
+  {
+    "enemy": "Lightfeather Petalwing",
+    "spell": "Disorienting Screech",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Не пропускайте Disorienting Screech.",
+    "en": "Interrupt every Disorienting Screech."
+  },
+  {
+    "enemy": "Leafy Grovecrawler",
+    "spell": "Seed Shot",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Свободные прерывания — в Seed Shot.",
+    "en": "Use spare interrupts on Seed Shot."
+  },
+  {
+    "enemy": "Overgrown Hydra",
+    "spell": "Lightmaw Beams",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Разнесите лучи, не направляйте их в союзников.",
+    "en": "Separate beams and keep them away from allies."
+  },
+  {
+    "enemy": "Spineshield Beetle",
+    "spell": "Spiny Shield",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Следите за отражённым уроном у атакующих жука.",
+    "en": "Watch reflected damage on players attacking the beetle."
+  },
+  {
+    "enemy": "Luminous Thornmaw",
+    "spell": "Grievous Gash",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Лечение и снятие кровотечения на Grievous Gash; уклоняйтесь от Solar Breath.",
+    "en": "Heal or remove Grievous Gash; dodge Solar Breath."
+  },
+  {
+    "enemy": "Potatoad Matriarch",
+    "spell": "Toxic Spew",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте яд Toxic Spew, поддерживайте остальные цели.",
+    "en": "Dispel Toxic Spew poison and heal remaining targets."
+  },
+  {
+    "enemy": "Potatoad Matriarch",
+    "spell": "Toadspawn",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Уничтожьте яйца до вылупления.",
+    "en": "Destroy eggs before they hatch."
+  },
+  {
+    "enemy": "Dominated Brawler",
+    "spell": "Demoralizing Shout",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Demoralizing Shout; снимайте исступление Bloodsurge.",
+    "en": "Interrupt Demoralizing Shout; soothe Bloodsurge."
+  },
+  {
+    "enemy": "Enthralled Shaman",
+    "spell": "Magma Totem",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Уничтожайте Magma Totem; свободные прерывания — в Lava Bolt.",
+    "en": "Destroy Magma Totem; spare interrupts go to Lava Bolt."
+  },
+  {
+    "enemy": "Brutal Overseer",
+    "spell": "Brutal Slams",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Разбейте щит Brutal Slams; убегайте от Macestorm.",
+    "en": "Break the Brutal Slams shield; run from Macestorm."
+  },
+  {
+    "enemy": "Aegyra the Unyielding",
+    "spell": "Champion's Spear",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Уничтожьте копьё, затем разойдитесь перед Savage Smash.",
+    "en": "Destroy the spear, then spread for Savage Smash."
+  },
+  {
+    "enemy": "Aegyra the Unyielding",
+    "spell": "Ferocious Leap",
+    "action": "Уклонение",
+    "role": "healer",
+    "ru": "Вынесите прыжок к краю и выйдите из следующего Earthsplitter.",
+    "en": "Place the leap near the edge, then dodge Earthsplitter."
+  },
+  {
+    "enemy": "Sycophantic Tarasek",
+    "spell": "Melt Armor",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте магический Melt Armor с танка.",
+    "en": "Dispel Melt Armor from the tank."
+  },
+  {
+    "enemy": "Longtooth Tuskarr",
+    "spell": "Bolster",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Снимайте исступление Bolster или используйте защиту.",
+    "en": "Soothe Bolster or use mitigation."
+  },
+  {
+    "enemy": "Chitigoth",
+    "spell": "Insidious Aura",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Лечение на Insidious Aura; обходите движущиеся рои.",
+    "en": "Heal through Insidious Aura; avoid moving swarms."
+  },
+  {
+    "enemy": "Raging Raptor",
+    "spell": "Feral Rage",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита или снятие исступления с усиленных противников.",
+    "en": "Use mitigation or soothe empowered enemies."
+  },
+  {
+    "enemy": "Protective Turtle",
+    "spell": "Shell Guard",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Держитесь подальше до окончания Shell Guard, затем атакуйте.",
+    "en": "Keep away during Shell Guard, then attack."
+  },
+  {
+    "enemy": "Brutok",
+    "spell": "Smashing Charge",
+    "action": "Уклонение",
+    "role": "tank",
+    "ru": "Направьте рывок к ближней стене и выйдите из линии; не водите врага по арене.",
+    "en": "Aim the charge at a nearby wall and dodge; minimize movement."
+  },
+  {
+    "enemy": "Angry Krolusk",
+    "spell": "Violent Sand",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Не пропускайте Violent Sand.",
+    "en": "Interrupt every Violent Sand."
+  },
+  {
+    "enemy": "Kilivore Screamer",
+    "spell": "Mass Shriek",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Не допускайте массового страха Mass Shriek.",
+    "en": "Interrupt Mass Shriek to prevent the party fear."
+  },
+  {
+    "enemy": "Savage Shredclaw",
+    "spell": "Shred Defense",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита на Shred Defense и последующие удары.",
+    "en": "Mitigate Shred Defense and subsequent attacks."
+  },
+  {
+    "enemy": "Agitated Voidscythe",
+    "spell": "Corrosive Essence",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте яд Corrosive Essence; остальные цели используют защиту.",
+    "en": "Dispel Corrosive Essence poison; remaining targets use defensives."
+  },
+  {
+    "enemy": "Agitated Voidscythe",
+    "spell": "Rip And Slice",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита или снятие кровотечения на Rip and Slice.",
+    "en": "Mitigate or remove the Rip and Slice bleed."
+  },
+  {
+    "enemy": "Devouring Brutalizer",
+    "spell": "Devour",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Убейте отмеченного противника до завершения Devour.",
+    "en": "Kill the targeted enemy before Devour finishes."
+  },
+  {
+    "enemy": "Devouring Brutalizer",
+    "spell": "Brutalize",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита на Brutalize; не стойте спиной к соседней группе.",
+    "en": "Mitigate Brutalize; avoid being knocked into another pack."
+  },
+  {
+    "enemy": "Devouring Brutalizer",
+    "spell": "Dreadbellow",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Подготовьте групповое лечение на Dreadbellow.",
+    "en": "Prepare party healing for Dreadbellow."
+  },
+  {
+    "enemy": "Voidminder",
+    "spell": "Mending Void",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прервите Mending Void обычным прерыванием или контролем.",
+    "en": "Interrupt or crowd-control Mending Void."
+  },
+  {
+    "enemy": "Sandswept Hunter",
+    "spell": "Arrow Barrage",
+    "action": "Стоп",
+    "role": "dps",
+    "ru": "Останавливайте Arrow Barrage контролем.",
+    "en": "Stop Arrow Barrage with crowd control."
+  },
+  {
+    "enemy": "Shrouded Fang",
+    "spell": "Poisoned Cheap Shot",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Poisoned Cheap Shot; учитывайте скрытых противников.",
+    "en": "Interrupt Poisoned Cheap Shot; watch for stealthed enemies."
+  },
+  {
+    "enemy": "Sandfury Stonefist",
+    "spell": "Ground Pound",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Уходите от Ground Pound.",
+    "en": "Move away from Ground Pound."
+  },
+  {
+    "enemy": "Barbed Krolusk",
+    "spell": "Serrated Charge",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Поддерживайте цель кровотечения Serrated Charge.",
+    "en": "Heal the Serrated Charge bleed target."
+  },
+  {
+    "enemy": "Faithless Subjugator",
+    "spell": "Addle Mind",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Addle Mind; прошедшее проклятие можно снять.",
+    "en": "Interrupt Addle Mind; remove its curse if missed."
+  },
+  {
+    "enemy": "Poisonous Viper",
+    "spell": "Cytotoxin",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте яд Cytotoxin.",
+    "en": "Dispel Cytotoxin poison."
+  },
+  {
+    "enemy": "Agitated Nimbus",
+    "spell": "Accumulate Charge",
+    "action": "Пурж",
+    "role": "healer",
+    "ru": "Рассейте Accumulate Charge до Release Charge.",
+    "en": "Purge Accumulate Charge before Release Charge."
+  },
+  {
+    "enemy": "Imbued Stormcaller",
+    "spell": "Imbued Conduction",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимите Imbued Conduction до истечения.",
+    "en": "Dispel Imbued Conduction before it expires."
+  },
+  {
+    "enemy": "Imbued Stormcaller",
+    "spell": "Lightning Bolt",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Lightning Bolt.",
+    "en": "Interrupt Lightning Bolt."
+  },
+  {
+    "enemy": "Orb Watcher",
+    "spell": "Venomous Slash",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита на Venomous Slash.",
+    "en": "Mitigate Venomous Slash."
+  },
+  {
+    "enemy": "Orb Watcher",
+    "spell": "Caustic Stomp",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Лечение на Caustic Stomp и последующий урон.",
+    "en": "Prepare for Caustic Stomp and its damage over time."
+  },
+  {
+    "enemy": "Temple Disruptor",
+    "spell": "Essence Disruption",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Essence Disruption.",
+    "en": "Interrupt Essence Disruption."
+  },
+  {
+    "enemy": "Twisted Hexxer",
+    "spell": "Flame Shock",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Flame Shock; выносите Latent Hex к краю.",
+    "en": "Interrupt Flame Shock; place Latent Hex at the edge."
+  },
+  {
+    "enemy": "Faithless Tormentor",
+    "spell": "Shadowlash",
+    "action": "Стоп",
+    "role": "dps",
+    "ru": "Защищайте лекаря от преследующих его мучителей контролем и уроном.",
+    "en": "Control and kill Tormentors chasing the healer."
+  },
+  {
+    "enemy": "King Timalji",
+    "spell": "Erupting Slam",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Разносите Erupting Slam; отойдите от Bladestorm.",
+    "en": "Spread for Erupting Slam; run from Bladestorm."
+  },
+  {
+    "enemy": "Queen Wasi",
+    "spell": "Bind Soul",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Bind Soul.",
+    "en": "Interrupt Bind Soul."
+  },
+  {
+    "enemy": "King A'akul",
+    "spell": "Mortal Bleed",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита на Mortal Bleed; лекарь поддерживает кровоточащие цели.",
+    "en": "Mitigate Mortal Bleed; heal bleeding targets."
+  },
+  {
+    "enemy": "Seneschal M'bara",
+    "spell": "Unholy Mending",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Unholy Mending или снимайте прошедшее усиление.",
+    "en": "Interrupt Unholy Mending or purge the resulting buff."
+  },
+  {
+    "enemy": "Guard Captain Atu",
+    "spell": "Captain's Bulwark",
+    "action": "Пурж",
+    "role": "healer",
+    "ru": "Рассейте защитный эффект с усиленных противников.",
+    "en": "Purge the protective effect from empowered enemies."
+  },
+  {
+    "enemy": "King Rahu'ai",
+    "spell": "Overload",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Отойдите перед Overload.",
+    "en": "Move away before Overload."
+  },
+  {
+    "enemy": "Queen Patlaa",
+    "spell": "Serpent Strike",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте яд Serpent Strike; используйте освобождение.",
+    "en": "Dispel Serpent Strike poison or use freedom."
+  },
+  {
+    "enemy": "Queen Patlaa",
+    "spell": "Bestial Berserk",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Снимайте исступление Bestial Berserk или применяйте защиту.",
+    "en": "Soothe Bestial Berserk or use mitigation."
+  },
+  {
+    "enemy": "Half-Finished Mummy",
+    "spell": "Wretched Discharge",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Wretched Discharge.",
+    "en": "Interrupt Wretched Discharge."
+  },
+  {
+    "enemy": "Shadow of Zul",
+    "spell": "Pool of Darkness",
+    "action": "Защита",
+    "role": "dps",
+    "ru": "Перекрывайте обе тёмные области; Dark Revelation выносите из группы.",
+    "en": "Soak both Pools of Darkness; move Dark Revelation out of the group."
+  },
+  {
+    "enemy": "Minion of Zul",
+    "spell": "Bound By Shadow",
+    "action": "Пурж",
+    "role": "dps",
+    "ru": "Рассейте щит — существо погибнет. Убегайте, если оно преследует вас.",
+    "en": "Purge the shield to kill the minion. Run if fixated."
+  },
+  {
+    "enemy": "Animated Guardian",
+    "spell": "Heavy Slams",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Лечение на Heavy Slams, особенно после 50% здоровья противника.",
+    "en": "Heal through Heavy Slams, especially below 50% enemy health."
+  },
+  {
+    "enemy": "Animated Guardian",
+    "spell": "Suppression Slam",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Держитесь рядом, чтобы быстрее выйти из фронтальной атаки.",
+    "en": "Stay close enough to sidestep the frontal attack."
+  },
+  {
+    "enemy": "Umbral Warrior",
+    "spell": "Shadow Slash",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Учитывайте мгновенные удары Shadow Slash.",
+    "en": "Account for instant Shadow Slash hits."
+  },
+  {
+    "enemy": "Risen Hexer",
+    "spell": "Hex Volley",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Hex Volley; свободные прерывания — в Shadowfrost Bolt.",
+    "en": "Interrupt Hex Volley; spare interrupts go to Shadowfrost Bolt."
+  },
+  {
+    "enemy": "Risen Hexer",
+    "spell": "Shadowfrost Bolt",
+    "action": "Диспел",
+    "role": "healer",
+    "ru": "Снимайте магический эффект или используйте освобождение.",
+    "en": "Dispel the magic effect or use freedom."
+  },
+  {
+    "enemy": "Shadow-Borne Champion",
+    "spell": "Vigilant Defense",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Зайдите за спину при появлении щита; уклоняйтесь от кругов.",
+    "en": "Move behind the shield and dodge ground circles."
+  },
+  {
+    "enemy": "Shadow-Borne Champion",
+    "spell": "Ancestral Fury",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Снимайте исступление или используйте защиту.",
+    "en": "Soothe the enrage or use mitigation."
+  },
+  {
+    "enemy": "Purification Construct",
+    "spell": "Purification Strike",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Подготовьте лечение на сочетание Purification Strike и Heavy Slams.",
+    "en": "Prepare healing for Purification Strike overlapping Heavy Slams."
+  },
+  {
+    "enemy": "Interment Construct",
+    "spell": "Entomb",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Открывайте трясущийся саркофаг; заключённый игрок использует дополнительную кнопку.",
+    "en": "Open the shaking coffin; the trapped player uses the extra action button."
+  },
+  {
+    "enemy": "Interment Construct",
+    "spell": "Heavy Slams",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Подготовьте групповое лечение.",
+    "en": "Prepare party healing."
+  },
+  {
+    "enemy": "Embalming Fluid",
+    "spell": "Embalming Fluid",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Уклоняйтесь от выбросов при смерти существ.",
+    "en": "Dodge the eruptions when enemies die."
+  },
+  {
+    "enemy": "Spectral Shaman",
+    "spell": "Healing Tide Totem",
+    "action": "Фокус",
+    "role": "dps",
+    "ru": "Сразу уничтожайте исцеляющий тотем.",
+    "en": "Destroy the healing totem immediately."
+  },
+  {
+    "enemy": "Phantom Hex Priest",
+    "spell": "Hex",
+    "action": "Кик",
+    "role": "dps",
+    "ru": "Прерывайте Hex; прошедшее проклятие можно снять.",
+    "en": "Interrupt Hex; remove the curse if missed."
+  },
+  {
+    "enemy": "Royal Berserker",
+    "spell": "Bloodthirsty Axe",
+    "action": "Защита",
+    "role": "healer",
+    "ru": "Поддержите обе цели кровотечения; уклоняйтесь от Violent Lunge.",
+    "en": "Heal both bleed targets; dodge Violent Lunge."
+  },
+  {
+    "enemy": "Ghostly Brute",
+    "spell": "Soul Crush",
+    "action": "Защита",
+    "role": "tank",
+    "ru": "Защита на Soul Crush; группа выходит из Seismic Upheaval.",
+    "en": "Mitigate Soul Crush; everyone avoids Seismic Upheaval."
+  },
+  {
+    "enemy": "Honored Raptor",
+    "spell": "Hunting Leap",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Уклоняйтесь от прыжка и следующей фронтальной атаки.",
+    "en": "Dodge the leap and its frontal attack."
+  },
+  {
+    "enemy": "Skeletal Hunting Raptor",
+    "spell": "Hunting Leap",
+    "action": "Уклонение",
+    "role": "dps",
+    "ru": "Уклоняйтесь от прыжка и следующей фронтальной атаки.",
+    "en": "Dodge the leap and its frontal attack."
+  }
+]
