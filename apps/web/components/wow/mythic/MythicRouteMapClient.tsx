@@ -38,6 +38,7 @@ import { AtlasBreadcrumbs } from "@gildra/atlas-ui/AtlasBreadcrumbs";
 import { MythicDataNotice } from "./MythicDataNotice";
 import { mythicVerificationCopy } from "./mythicVerificationCopy";
 import { DungeonSourceReview } from "./DungeonSourceReview";
+import { dungeonArtDirections, dungeonMapFrame, dungeonBackdropSmall } from "@/lib/wow/dungeonArtDirection";
 import { dungeonBackdropSource } from "@/lib/wow/dungeonBackdropSource";
 import { MythicRouteSelectors } from "./MythicRouteSelectors";
 import { AbilityIntelCard, EnemyIntelCard } from "./CombatIntelCard";
@@ -466,7 +467,7 @@ function RouteInteractionLayer({
               />
             </div>
           </div>
-          <div className={styles.mapViewport}>
+          <div className={styles.mapFrame} data-map-frame={`${dungeon.slug}-route-${floor}`} style={{ "--map-frame": `url("${dungeonMapFrame(dungeon.slug, "route", floor)}")` } as CSSProperties}><div className={styles.mapViewport}>
             <div className={styles.mapCanvas} ref={mapCanvasRef}>
               <Image key={dungeon.mapImage} src={dungeon.mapImage} width={1002} height={668} sizes="(max-width: 1023px) calc(100vw - 48px), (max-width: 1279px) calc(100vw - 80px), (max-width: 1540px) calc(100vw - 760px), 780px" alt={copy.mapAlt(dungeonName, floor)} />
               <svg className={styles.routeLine} data-testid="route-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline className={styles.routeGlow} points={routePoints} /><polyline className={styles.routePath} points={routePoints} /></svg>
@@ -479,6 +480,7 @@ function RouteInteractionLayer({
                 onSelect={selectStop}
               />)}
             </div>
+          </div>
           </div>
           <footer className={styles.mapFooter}>
             <div className={styles.mapLegend}><span><i className={styles.pull} /> {stopKindLabels[locale].pull}</span><span><i className={styles.miniboss} /> {stopKindLabels[locale].miniboss}</span><span><i className={styles.boss} /> {stopKindLabels[locale].boss}</span></div>
@@ -747,9 +749,13 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
       ref={pageRef}
       className={styles.page}
       data-dungeon={dungeon.slug}
-      style={{ "--dungeon-backdrop": `url("${dungeonBackdropSource(dungeon)}")` } as CSSProperties}
+      style={{ "--dungeon-accent": dungeonArtDirections[dungeon.slug].accent, "--dungeon-glow": dungeonArtDirections[dungeon.slug].glow } as CSSProperties}
     >
-      <div className={styles.backdrop} data-testid="dungeon-backdrop" aria-hidden="true" />
+      <div className={styles.backdrop} data-testid="dungeon-backdrop" aria-hidden="true"><div className={styles.backdropScene}>
+        {/* Decorative panorama stays behind every section; maps keep their original pixels. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className={styles.backdropImage} src={dungeonBackdropSource(dungeon)} srcSet={`${dungeonBackdropSmall(dungeon.slug)} 640w, ${dungeonBackdropSource(dungeon)} 1024w`} sizes="100vw" alt="" width={1024} height={1536} fetchPriority="high" decoding="async" />
+      </div></div>
       <div className={styles.column}>
         <div className={styles.crumbsRow}>
           <AtlasBreadcrumbs label={copy.breadcrumbsLabel} items={[{ label: copy.hub, href: `${localePrefix}/wow/mythic-plus` }, { label: dungeonName }]} />

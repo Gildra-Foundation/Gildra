@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { dungeonMapFrame, dungeonArtDirections } from "@/lib/wow/dungeonArtDirection";
+import { useMemo, type CSSProperties } from "react";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { AtlasValyroSelect } from "@gildra/atlas-ui/AtlasValyroSelect";
 import { usePlayerProfile } from "./usePlayerProfile";
@@ -18,7 +19,7 @@ import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { mdtPullMapCopy } from "./mdtPullMapCopy";
 import styles from "./mdtPullMap.module.css";
 
-export default function MdtPullMap({ locale, routeUrl, data, stops, combatIntel }: { slug: DungeonSlug; locale: "ru" | "en"; routeUrl: string; data: MdtDataset; stops: RouteStop[]; combatIntel: DungeonCombatIntel }) {
+export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combatIntel }: { slug: DungeonSlug; locale: "ru" | "en"; routeUrl: string; data: MdtDataset; stops: RouteStop[]; combatIntel: DungeonCombatIntel }) {
   const copy = mdtPullMapCopy[locale];
   const roles = pullRoleCopy[locale];
   const [selectedRole, setSelectedRole] = usePullRole();
@@ -62,9 +63,9 @@ export default function MdtPullMap({ locale, routeUrl, data, stops, combatIntel 
     <p className={styles.routeStatus} data-testid="mdt-route-status">{authored ? copy.matched(data.route.author, data.route.name) : copy.incompatible}</p>
     {pulls.length === 0 ? <p role="status">{copy.empty}</p> : <>
       <div className={styles.legend}><span><b>5</b> {copy.legend}</span><span>{authored ? copy.numberLegend : copy.groupLegend}</span></div>
-      {floors.map(floor => <figure className={styles.floor} key={floor}>
+      {floors.map(floor => <figure className={styles.floor} key={floor} data-map-frame={`${slug}-mdt-${floor}`} data-frame-motif={dungeonArtDirections[slug].motif}>
         {floors.length > 1 && <figcaption>{copy.floor} {floor}</figcaption>}
-        <div className={styles.viewport} tabIndex={0} role="region" aria-label={`${copy.mapLabel} · ${copy.floor} ${floor}`}>
+        <div className={styles.mapFrame} style={{ "--map-frame": `url("${dungeonMapFrame(slug, "mdt", floor)}")` } as CSSProperties}><div className={styles.viewport} tabIndex={0} role="region" aria-label={`${copy.mapLabel} · ${copy.floor} ${floor}`}>
           <div className={styles.map}>
             {/* Original MDT tiles and coordinates share the same 3:2 space. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -83,7 +84,7 @@ export default function MdtPullMap({ locale, routeUrl, data, stops, combatIntel 
               </button></MdtPullDetails>;
             })}
           </div>
-        </div>
+        </div></div>
       </figure>)}
       <p className={styles.mapHint}>{copy.mapHint}</p>
       <div className={styles.summary}><h4>{authored ? copy.composition : copy.groupComposition}</h4><span>{copy.totalForces}: <b>{forcesPercent(totalForces)}</b></span></div>
