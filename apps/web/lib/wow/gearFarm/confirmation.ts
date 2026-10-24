@@ -26,7 +26,12 @@ export async function confirmFarmImprovements(input: {
   onProgress?: (progress: FarmProgress) => void;
   limit?: number;
 }) {
-  const limit = Math.min(24, Math.max(1, input.limit ?? 24));
+  // Every proven reward is checked by default; reward discovery has its own
+  // bounded coverage. An explicit caller budget must remain visible as partial.
+  if (input.limit !== undefined && (!Number.isSafeInteger(input.limit) || input.limit < 1)) {
+    throw new Error("invalid_simulation_limit");
+  }
+  const limit = input.limit ?? input.options.length;
   const access = new Map(input.activities.map(activity => [activity.id, activity.access]));
   const options = [...input.options]
     .filter(option => access.get(option.activityId) === "level_condition_met")
@@ -48,9 +53,11 @@ export async function confirmFarmImprovements(input: {
     return variant.resolution.engine;
   }));
   if (metadataEngines.size !== 1) throw new Error("simulation_version_changed");
+  const validMeasurement = (result: GearPlanSimulation) => result.confidence === 95 &&
+    Number.isFinite(result.dps) && result.dps > 0 && Number.isFinite(result.dpsError) && result.dpsError >= 0 &&
+    Number.isSafeInteger(result.iterations) && result.iterations > 0 && result.engine.startsWith("SimulationCraft");
   const baseline = await input.simulate(prepare(), input.signal);
-  if (baseline.confidence !== 95 || !Number.isFinite(baseline.dpsError) || baseline.dpsError < 0 ||
-    !baseline.engine.startsWith("SimulationCraft")) throw new Error("invalid_simulation_result");
+  if (!validMeasurement(baseline)) throw new Error("invalid_simulation_result");
   if (!metadataEngines.has(baseline.engine)) throw new Error("simulation_version_changed");
   let simulations = 1;
   for (const option of selected) {
@@ -58,7 +65,7 @@ export async function confirmFarmImprovements(input: {
     input.onProgress?.({ phase: "simulating", completed: simulations, total: selected.length + 1 });
     const result = await input.simulate(prepare(option), input.signal);
     simulations++;
-    if (result.confidence !== 95 || !Number.isFinite(result.dpsError) || result.dpsError < 0) {
+    if (!validMeasurement(result)) {
       throw new Error("invalid_simulation_result");
     }
     if (result.engine !== baseline.engine) throw new Error("simulation_version_changed");
