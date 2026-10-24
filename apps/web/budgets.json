@@ -65,6 +65,16 @@
       "js": 804,
       "css": 354,
       "img": 128
+    },
+    "/wow/mythic-plus/meta": {
+      "js": 790,
+      "css": 421,
+      "img": 100
+    },
+    "/ru/wow/mythic-plus/meta": {
+      "js": 790,
+      "css": 421,
+      "img": 100
     }
   }
 }

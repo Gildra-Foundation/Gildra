@@ -37,6 +37,8 @@ const ROUTES = [
   { path: "/tier-lists", name: "tier-lists" },
   { path: "/specs/frost-death-knight", name: "spec" },
   { path: "/ru/specs/frost-death-knight", name: "spec-ru" },
+  { path: "/wow/mythic-plus/meta", name: "mplus-meta" },
+  { path: "/ru/wow/mythic-plus/meta", name: "mplus-meta-ru" },
   { path: "/privacy", name: "privacy" },
   { path: "/ru/privacy", name: "privacy-ru" },
   { path: "/league-of-legends", name: "lol" },

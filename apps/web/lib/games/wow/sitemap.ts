@@ -2,5 +2,6 @@
 export const staticPaths = (): string[] => [
   "/",
   "/database",
+  "/wow/mythic-plus/meta",
   "/privacy",
 ];
