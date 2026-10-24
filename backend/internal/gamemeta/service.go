@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -19,6 +20,7 @@ type Query struct {
 	KeyType       string
 	Difficulty    string
 	AddonKey      string
+	Source        string
 }
 
 type Context struct {
@@ -56,6 +58,7 @@ type Entry struct {
 	Popularity *float64 `json:"popularity,omitempty"`
 	MaxKey     *int16   `json:"maxKey,omitempty"`
 	RankChange *int16   `json:"rankChange,omitempty"`
+	Group      string   `json:"group,omitempty"`
 	GuideURL   string   `json:"guideUrl,omitempty"`
 	SourceURL  string   `json:"sourceUrl"`
 }
@@ -63,6 +66,7 @@ type Entry struct {
 type Snapshot struct {
 	Game        string    `json:"game"`
 	Status      string    `json:"status"`
+	Source      string    `json:"source,omitempty"`
 	Activity    string    `json:"activity"`
 	Role        string    `json:"role"`
 	UpdatedAt   time.Time `json:"updatedAt"`
@@ -114,6 +118,9 @@ func (s *Service) WoWTierListContexts(ctx context.Context, activity string) ([]C
 }
 
 func (s *Service) WoWTierList(ctx context.Context, query Query) (Snapshot, error) {
+	if query.Source != SourceGildra {
+		return s.sourceTierList(ctx, query)
+	}
 	sources, updatedAt, err := s.sources(ctx)
 	if err != nil {
 		return Snapshot{}, err
@@ -294,7 +301,10 @@ func (s *Service) sources(ctx context.Context) ([]Source, time.Time, error) {
 		return nil, time.Time{}, err
 	}
 	defer rows.Close()
+	return s.scanSources(rows)
+}
 
+func (s *Service) scanSources(rows pgx.Rows) ([]Source, time.Time, error) {
 	now := s.now().UTC()
 	updatedAt := time.Time{}
 	sources := make([]Source, 0, 5)

@@ -148,3 +148,34 @@ func TestMythicPlusMetaTurnsStaleAfterMissedRefreshes(t *testing.T) {
 		t.Fatalf("unchecked status = %q", got)
 	}
 }
+
+func TestWoWTierListAcceptsSourceTabs(t *testing.T) {
+	for _, test := range []struct{ target, source, difficulty string }{
+		{"/v1/meta/wow/tier-list?source=ugg&activity=raid&difficulty=mythic", SourceUgg, "mythic"},
+		{"/v1/meta/wow/tier-list?source=ugg&activity=raid", SourceUgg, ""},
+		{"/v1/meta/wow/tier-list?source=mythicstats&role=tank", SourceMythicStats, ""},
+	} {
+		store := &fakeStore{snapshot: Snapshot{Game: "wow", Status: "live", Entries: []Entry{{Rank: 1, Tier: "S"}}}}
+		mux := http.NewServeMux()
+		NewHandler(store).Register(mux)
+		response := httptest.NewRecorder()
+		mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, test.target, nil))
+		if response.Code != http.StatusOK {
+			t.Fatalf("%s: status = %d, want %d", test.target, response.Code, http.StatusOK)
+		}
+		if store.query.Source != test.source || store.query.Difficulty != test.difficulty {
+			t.Fatalf("%s: query = %#v", test.target, store.query)
+		}
+	}
+}
+
+func TestUggDifficultyDefaultsToTheSourcePageView(t *testing.T) {
+	for _, test := range []struct{ activity, difficulty, want string }{
+		{"raid", "", "heroic"}, {"raid", "raid_myth", "mythic"}, {"raid", "all", "all"},
+		{"mythic_plus", "", "all"},
+	} {
+		if got, ok := uggDifficulty(test.activity, test.difficulty); !ok || got != test.want {
+			t.Fatalf("uggDifficulty(%q, %q) = %q, %v", test.activity, test.difficulty, got, ok)
+		}
+	}
+}

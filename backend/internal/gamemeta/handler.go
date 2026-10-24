@@ -83,8 +83,23 @@ func (h *Handler) wowTierList(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, r, http.StatusBadRequest, "invalid_key_type", "keyType must be all, high, middle or low")
 		return
 	}
+	query.Source = r.URL.Query().Get("source")
+	if _, known := sourceDatasets[query.Source]; query.Source != SourceGildra && !known {
+		writeProblem(w, r, http.StatusBadRequest, "invalid_source", "source must be ugg or mythicstats")
+		return
+	}
+	if query.Source == SourceMythicStats && query.Activity != "mythic_plus" {
+		writeProblem(w, r, http.StatusBadRequest, "invalid_activity", "mythicstats only publishes a mythic_plus tier list")
+		return
+	}
+	if query.Source == SourceUgg {
+		if _, ok := uggDifficulty(query.Activity, query.Difficulty); !ok {
+			writeProblem(w, r, http.StatusBadRequest, "invalid_difficulty", "difficulty is not supported")
+			return
+		}
+	}
 	validDifficulty := map[string]bool{"": true, "raid_myth": true, "raid_hero": true, "raid_normal": true, "raid_n10": true, "raid_n25": true, "raid_h10": true, "raid_h25": true}
-	if !validDifficulty[query.Difficulty] {
+	if query.Source != SourceUgg && !validDifficulty[query.Difficulty] {
 		writeProblem(w, r, http.StatusBadRequest, "invalid_difficulty", "difficulty is not supported")
 		return
 	}
