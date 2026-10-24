@@ -90,3 +90,13 @@
 .buildShare input { width: 100%; min-width: 0; min-height: 44px; }
 .sharedBuild { border: 1px solid var(--atlas-accent); padding: var(--atlas-space-3); border-radius: var(--atlas-radius); background: var(--atlas-surface-raised); scroll-margin-block: var(--atlas-space-6); }
 .sharedBuild:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+
+/* Frames sit outside the unchanged map/marker coordinate plane. */
+.mapFrame { border: 22px solid transparent; border-image: var(--map-frame) 72 stretch; background: rgba(3, 6, 9, .78); box-shadow: 0 14px 40px rgba(0, 0, 0, .38); }
+.legend, .floor figcaption { background: var(--dungeon-glass-raised, var(--atlas-surface-raised)); border-color: color-mix(in srgb, var(--dungeon-accent, var(--atlas-accent)) 28%, var(--atlas-line)); }
+.legend { border-radius: 10px 10px 0 0; }
+.importPanel { background: linear-gradient(135deg, rgba(255, 255, 255, .045), transparent 58%), rgba(7, 12, 18, .62); border-color: color-mix(in srgb, var(--dungeon-accent, var(--atlas-accent)) 26%, var(--atlas-line)); border-radius: 12px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
+.viewport { border-color: rgba(0, 0, 0, .7); }
+@media (max-width: 720px) { .mapFrame { border-width: 14px; } }
+@media (prefers-reduced-transparency: reduce) { .importPanel, .legend, .floor figcaption { background: var(--atlas-surface-raised); } }
+@media (forced-colors: active) { .mapFrame { border: 2px solid CanvasText; border-image: none; } }
