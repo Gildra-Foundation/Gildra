@@ -3,6 +3,8 @@ import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components
 import { TierSection, type TierSpecNames } from "@/components/TierSection";
 import { TierBoard } from "./TierBoard";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
+import { getTierSourceSlices } from "@/lib/platform/games/tierSources";
+import type { TierSourceSlices } from "./tierSourceKeys";
 import { midnightSpecializations } from "@/lib/data/wow/specializations";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import type { Lang } from "@/lib/i18n-paths";
@@ -25,7 +27,10 @@ const specNames: Record<Lang, TierSpecNames> = {
  *  API is off, then the interactive table + spec card (client). Hero counters
  *  appear only with live data (the sample's size is in the notice). design.md:
  *  it lives only on /tier-lists and is never embedded elsewhere. */
-function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntelligence>) {
+/** Meta intelligence plus the external source slices the source tabs open on. */
+type TierWorkspaceData = GameIntelligence & { sourceSlices: TierSourceSlices };
+
+function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorkspaceData>) {
   const copy = tierCopy[lang];
   const sample = usesSample(data);
   const mythic = data.tierLists?.mythic_plus?.roles ?? data.roles;
@@ -49,15 +54,18 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, GameIntel
         stats={stats}
       />
       {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
-      <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} specNames={specNames[lang]} />
+      <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} specNames={specNames[lang]} sourceSlices={sample ? {} : data.sourceSlices} />
       {sample ? <TierBoard lang={lang} roles={sampleRoles} specNames={specNames[lang]} sample /> : mythic ? <TierBoard lang={lang} roles={mythic} specNames={specNames[lang]} sample={false} /> : null}
     </AtlasFrame>
   );
 }
 
-export const tierWorkspaceBlock = defineBlock<EmptyProps, GameIntelligence>({
+export const tierWorkspaceBlock = defineBlock<EmptyProps, TierWorkspaceData>({
   type: "wow.tierWorkspace",
   Component: TierWorkspace,
-  load: (ctx) => getGameIntelligence("wow", ctx.lang),
-  demo: { props: {}, data: { gameId: "wow", status: "unavailable", mode: "pending", version: "—", updatedAt: new Date(0).toISOString(), providerLabel: "Provider not connected", metrics: [], entities: [], sources: [], tierContexts: [] }, note: "Interactive workspace backed by the public meta API." },
+  load: async (ctx) => {
+    const [intelligence, sourceSlices] = await Promise.all([getGameIntelligence("wow", ctx.lang), getTierSourceSlices()]);
+    return { ...intelligence, sourceSlices };
+  },
+  demo: { props: {}, data: { gameId: "wow", status: "unavailable", mode: "pending", version: "—", updatedAt: new Date(0).toISOString(), providerLabel: "Provider not connected", metrics: [], entities: [], sources: [], tierContexts: [], sourceSlices: {} }, note: "Interactive workspace backed by the public meta API." },
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Castle, ChevronDown, Search, Swords } from "lucide-react";
@@ -13,6 +13,10 @@ import { tierCopy, type KeyRange, type TierCopy } from "@/components/blocks/wow/
 import styles from "@/components/blocks/wow/tierWorkspace/tierWorkspace.module.css";
 import { lessMotion } from "@/lib/client/motionPreference";
 import { tierSectionCopy } from "./tierSectionCopy";
+import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
+import { SOURCE_META, SourceBadge, SourceCompare, useSourceRoles } from "@/components/blocks/wow/tierWorkspace/TierSources";
+import { DEFAULT_SOURCE_DIFFICULTY, SOURCE_DIFFICULTIES, TIER_SOURCES, isTierSource, type ExternalTierSource, type TierSourceId, type TierSourceSlices } from "@/components/blocks/wow/tierWorkspace/tierSourceKeys";
+import { tierSourcesCopy } from "@/components/blocks/wow/tierWorkspace/tierSourcesCopy";
 
 const CLASS_KEYS: Record<string, string> = {
   "death-knight": "dk", "demon-hunter": "dh", evoker: "evoker", mage: "mage",
@@ -54,17 +58,24 @@ function TierMark({ tier, copy, size = "md" }: { tier: string; copy: TierCopy; s
   return <span className={size === "sm" ? `${styles.tierMark} ${styles.tierMarkSm}` : styles.tierMark} data-tier={tierClass(tier)}><span className={styles.srOnly}>{copy.tier} </span>{tier}</span>;
 }
 
-/**
- * Interactive tier table of /tier-lists: role tabs, class filter and search,
- * the ranked table and the spec card. With live data it also offers dungeon /
- * raid slices (fetched from the meta API); with the saved sample (`sampleRoles`
- * from the server) those controls are not rendered, the page notice explains why.
- */
 /** Localized spec and class names by spec slug (built on the server from the talent spec themes). */
 export type TierSpecNames = Record<string, { specName: string; className: string }>;
 
-export function TierSection({ lang, intelligence, sample = false, sampleRoles, specPaths = [], specNames }: { lang: Lang; intelligence: GameIntelligence; sample?: boolean; sampleRoles?: Record<TierRole, TierEntry[]>; specPaths?: string[]; specNames: TierSpecNames }) {
+/**
+ * Interactive tier table of /tier-lists: source tabs (Gildra, mythicstats.com,
+ * u.gg, Compare), role tabs, class filter and search, the ranked table and the
+ * spec card. With live data it also offers dungeon / raid slices (fetched from
+ * the meta API); with the saved sample (`sampleRoles` from the server) those
+ * controls and the source tabs are not rendered, the page notice explains why.
+ * Tab, mode, role and source raid difficulty are kept in the URL.
+ */
+export function TierSection({ lang, intelligence, sample = false, sampleRoles, specPaths = [], specNames, sourceSlices = {} }: { lang: Lang; intelligence: GameIntelligence; sample?: boolean; sampleRoles?: Record<TierRole, TierEntry[]>; specPaths?: string[]; specNames: TierSpecNames; sourceSlices?: TierSourceSlices }) {
   const copy = tierCopy[lang];
+  const sourceCopy = tierSourcesCopy[lang];
+  const [source, setSource] = useState<TierSourceId>("gildra");
+  const [view, setView] = useState<"list" | "compare">("list");
+  const [sourceDifficulty, setSourceDifficulty] = useState(DEFAULT_SOURCE_DIFFICULTY);
+  const [urlRead, setUrlRead] = useState(false);
   const [activity, setActivity] = useState<TierActivity>("mythic_plus");
   const [role, setRole] = useState<TierRole>("dps");
   const [cls, setCls] = useState("all");
@@ -91,7 +102,7 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   /** The published "all dungeons" slice lets the key range work without picking a dungeon. */
   const allContext = useMemo(() => (intelligence.tierContexts ?? []).find((context) => context.activity === activity && context.selectionType === "all"), [activity, intelligence.tierContexts]);
   const queryContext = selectedContext ?? (activity === "mythic_plus" && keyType !== "all" ? allContext : undefined);
-  const keyRangeEnabled = !sample && activity === "mythic_plus" && Boolean(selectedContext || allContext);
+  const keyRangeEnabled = !sample && source === "gildra" && activity === "mythic_plus" && Boolean(selectedContext || allContext);
   const difficultyEnabled = !sample && activity === "raid" && Boolean(selectedContext);
   const raidDifficulties = useMemo(() => {
     if (!selectedContext || activity !== "raid") return ["raid_myth", "raid_hero", "raid_normal"];
@@ -100,11 +111,18 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
 
   const suppliedRoles = intelligence.tierLists?.[activity]?.roles ?? (activity === "mythic_plus" ? intelligence.roles : undefined);
   const baseRoles = suppliedRoles ?? (sample && activity === "mythic_plus" && sampleRoles ? sampleRoles : EMPTY_ROLES);
-  const activeRoles = remoteRoles ?? baseRoles;
-  const roleEntries = useMemo(() => (activeRoles[role] ?? []).map((entry) => {
+  const external = source !== "gildra";
+  const needUgg = source === "ugg" || view === "compare";
+  const needStats = (source === "mythicstats" || view === "compare") && activity === "mythic_plus";
+  const ugg = useSourceRoles(needUgg ? "ugg" : "gildra", activity, sourceDifficulty, sourceSlices);
+  const stats = useSourceRoles(needStats ? "mythicstats" : "gildra", activity, sourceDifficulty, sourceSlices);
+  const sourceState = source === "ugg" ? ugg : source === "mythicstats" ? stats : null;
+  const activeRoles = sourceState ? sourceState.data?.roles ?? EMPTY_ROLES : remoteRoles ?? baseRoles;
+  const localize = useCallback((entries: TierEntry[] = []) => entries.map((entry) => {
     const names = specNames[entry.specSlug] ?? specNames[`${entry.specSlug}-${entry.classSlug}`];
     return names ? { ...entry, ...names } : entry;
-  }), [activeRoles, role, specNames]);
+  }), [specNames]);
+  const roleEntries = useMemo(() => localize(activeRoles[role]), [activeRoles, role, localize]);
   const classes = useMemo(() => {
     const seen = new Map<string, string>();
     roleEntries.forEach((entry) => seen.set(entry.classSlug, entry.className));
@@ -131,8 +149,10 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   const hasRate = roleEntries.some((entry) => rate(entry) !== undefined);
   const hasKey = activity === "mythic_plus" && roleEntries.some((entry) => entry.maxKey);
   const hasTrend = roleEntries.some((entry) => entry.rankChange !== undefined);
+  const hasPopularity = external && roleEntries.some((entry) => entry.popularity !== undefined);
   const scopeName = selectedContext ? contextLabel(selectedContext) : activity === "mythic_plus" ? copy.allDungeons : copy.allRaids;
-  const scopeDetail = activity === "mythic_plus"
+  const scopeDetail = external || view === "compare" ? (activity === "raid" ? (sourceDifficulty === "all" ? sourceCopy.allDifficulties : copy.difficulties[sourceDifficulty]) : "")
+    : activity === "mythic_plus"
     ? (queryContext || keyType !== "all" ? copy.keys[keyType] : "")
     : (selectedContext ? copy.difficulties[difficulty] ?? difficulty : "");
   const updated = Date.parse(intelligence.updatedAt) > 0
@@ -146,7 +166,16 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   };
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("activity") !== "raid") return;
+    const params = new URLSearchParams(window.location.search);
+    const sourceParam = params.get("source");
+    if (sourceParam === "compare") setView("compare");
+    else if (isTierSource(sourceParam)) setSource(sourceParam);
+    const roleParam = params.get("role");
+    if (roleParam === "healer" || roleParam === "tank") setRole(roleParam);
+    const difficultyParam = params.get("difficulty");
+    if (difficultyParam && SOURCE_DIFFICULTIES.includes(difficultyParam)) setSourceDifficulty(difficultyParam);
+    setUrlRead(true);
+    if (params.get("activity") !== "raid" || sourceParam === "mythicstats") return;
     setActivity("raid");
     setContextValue("all:all");
     setRemoteRoles(null);
@@ -155,8 +184,20 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     setQ("");
   }, []);
 
+  /** Tab, mode, role and source raid difficulty live in the URL so a view can be shared. */
   useEffect(() => {
-    if (!queryContext) {
+    if (!urlRead) return;
+    const url = new URL(window.location.href);
+    const set = (key: string, value: string, fallback: string) => { if (value === fallback) url.searchParams.delete(key); else url.searchParams.set(key, value); };
+    set("source", view === "compare" ? "compare" : source, "gildra");
+    set("activity", activity, "mythic_plus");
+    set("role", role, "dps");
+    set("difficulty", (external || view === "compare") && activity === "raid" ? sourceDifficulty : DEFAULT_SOURCE_DIFFICULTY, DEFAULT_SOURCE_DIFFICULTY);
+    if (url.href !== window.location.href) window.history.replaceState(window.history.state, "", url);
+  }, [urlRead, source, view, activity, role, sourceDifficulty, external]);
+
+  useEffect(() => {
+    if (!queryContext || source !== "gildra") {
       setRemoteRoles(null);
       setLoadError("");
       return;
@@ -193,7 +234,7 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
       if (!controller.signal.aborted) setIsLoading(false);
     });
     return () => controller.abort();
-  }, [activity, copy.loadError, difficulty, keyType, queryContext]);
+  }, [activity, copy.loadError, difficulty, keyType, queryContext, source]);
 
   const switchActivity = (value: TierActivity) => {
     setActivity(value);
@@ -202,6 +243,15 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     setSelectedSlug("");
     setCls("all");
     setQ("");
+  };
+
+  const chooseTab = (id: string) => {
+    if (id !== "compare" && !isTierSource(id)) return;
+    setView(id === "compare" ? "compare" : "list");
+    setSource(id === "compare" ? "gildra" : id);
+    setSelectedSlug("");
+    setCls("all");
+    if (id === "mythicstats" && activity === "raid") switchActivity("mythic_plus");
   };
 
   const chooseRole = (value: TierRole) => {
@@ -241,6 +291,8 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     </>
   );
   const controlsHint = sample ? ""
+    : source === "mythicstats" ? sourceCopy.noRaid
+    : external ? ""
     : activity === "mythic_plus" && !keyRangeEnabled ? copy.pickDungeonFirst
       : activity === "raid" && !difficultyEnabled ? copy.pickRaidFirst : "";
   // The sample has no slices and only Mythic+ DPS rows: controls that could only lead to an empty table are not rendered.
@@ -250,174 +302,237 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
 
   const metrics = selected ? [
     selected.score !== undefined ? { label: copy.score, value: compact(selected.score, lang) } : null,
-    selected.averageDps !== undefined ? { label: "DPS", value: compact(selected.averageDps, lang) } : null,
-    selected.averageHps !== undefined ? { label: "HPS", value: compact(selected.averageHps, lang) } : null,
+    selected.averageDps !== undefined && (role !== "healer" || selected.averageHps === undefined) ? { label: "DPS", value: compact(selected.averageDps, lang) } : null,
+    selected.averageHps !== undefined && (role === "healer" || selected.averageDps === undefined) ? { label: "HPS", value: compact(selected.averageHps, lang) } : null,
     activity === "mythic_plus" && selected.maxKey ? { label: copy.maxKey, value: `+${number.format(selected.maxKey)}` } : null,
     activity === "raid" && selectedContext ? { label: copy.difficulty, value: copy.difficulties[difficulty] ?? difficulty } : null,
     selected.rankChange !== undefined ? { label: copy.weeklyChange, value: <Trend value={selected.rankChange} copy={copy} /> } : null,
     selected.popularity ? { label: copy.popularity, value: `${number.format(Number((selected.popularity * 100).toFixed(1)))}%` } : null,
   ].filter((item): item is NonNullable<typeof item> => item !== null) : [];
   const selectedGuide = selected?.guideUrl || (isExternal(selected?.sourceUrl) ? selected?.sourceUrl : undefined);
+  const selectedGuideLabel = external ? sourceCopy.openOn(SOURCE_META[source as ExternalTierSource].site) : selected?.guideUrl ? copy.openGuide : copy.openSource;
   const selectedSpecPage = selected ? specHref(selected) : undefined;
+
+  const sourceLabel = (id: TierSourceId) => id === "gildra" ? "Gildra" : SOURCE_META[id].name;
+  const activeTab = view === "compare" ? "compare" : source;
+  const externalSource = external ? source as ExternalTierSource : null;
+  const badge = externalSource
+    ? <SourceBadge lang={lang} source={externalSource} activity={activity} role={role} difficulty={sourceDifficulty} updatedAt={sourceState?.data?.updatedAt} />
+    : null;
+  const busy = isLoading || Boolean(sourceState?.loading);
+
+  const head = (
+    <div className={styles.resultsHead}>
+      <div className={styles.resultsCopy}>
+        <h2 id="tier-results-title" className={styles.resultsTitle}>{view === "compare" ? sourceCopy.compareTitle : activity === "mythic_plus" ? copy.resultsMythic : copy.resultsRaid}</h2>
+        <p className={styles.resultsMeta}>{external ? `${sourceLabel(source)} · ` : ""}{scopeName}{scopeDetail ? ` · ${scopeDetail}` : ""}{showRoleTabs ? "" : ` · ${copy.roles[role]}`}</p>
+      </div>
+      {busy ? <span className={styles.count} aria-live="polite">{copy.updating}</span> : null}
+    </div>
+  );
+
+  const controls = showModes ? (
+    <div className={styles.controls} role="group" aria-label={copy.controlsLabel}>
+      <div className={styles.field}>
+        <span className={styles.label} id="tier-mode-label">{copy.mode}</span>
+        <div className={styles.segmented} role="group" aria-labelledby="tier-mode-label">
+          {ACTIVITIES.map((value) => {
+            const off = value === "raid" && source === "mythicstats" && view === "list";
+            return (
+              <button type="button" key={value} className={styles.segment} aria-pressed={activity === value} disabled={off} title={off ? sourceCopy.mythicPlusOnly : undefined} onClick={() => switchActivity(value)}>
+                {value === "mythic_plus" ? <Swords aria-hidden="true" /> : <Castle aria-hidden="true" />}{copy.modes[value]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      {!sample && !external && view === "list" ? (
+        <>
+          <div className={`${styles.field} ${styles.fieldGrow}`}>
+            <label className={styles.label} htmlFor="tier-content">{copy.content}</label>
+            <span className={styles.selectShell}>
+              <select id="tier-content" className={styles.select} value={contextValue} onChange={(event) => chooseContext(event.target.value)} disabled={!contexts.length}>{contentOptions}</select>
+              <ChevronDown aria-hidden="true" />
+            </span>
+          </div>
+          {activity === "mythic_plus" ? (
+            <div className={`${styles.field} ${styles.fieldWide}`}>
+              <span className={styles.label} id="tier-key-label">{copy.keyRange}</span>
+              <div className={`${styles.segmented} ${styles.segmentedFour}`} role="group" aria-labelledby="tier-key-label">
+                {KEY_RANGES.map((value) => (
+                  <button type="button" key={value} className={styles.segment} aria-pressed={keyType === value} disabled={!keyRangeEnabled} onClick={() => setKeyType(value)}>{copy.keys[value]}</button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className={`${styles.field} ${styles.fieldWide}`}>
+              <span className={styles.label} id="tier-difficulty-label">{copy.difficulty}</span>
+              <div className={styles.segmented} role="group" aria-labelledby="tier-difficulty-label">
+                {raidDifficulties.map((value) => (
+                  <button type="button" key={value} className={styles.segment} aria-pressed={difficultyEnabled && difficulty === value} disabled={!difficultyEnabled} onClick={() => setDifficulty(value)}>{copy.difficulties[value] ?? value}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      ) : null}
+      {(source === "ugg" || view === "compare") && activity === "raid" ? (
+        <div className={`${styles.field} ${styles.fieldWide}`}>
+          <span className={styles.label} id="tier-source-difficulty-label">{copy.difficulty}</span>
+          <div className={`${styles.segmented} ${styles.segmentedFour}`} role="group" aria-labelledby="tier-source-difficulty-label">
+            {SOURCE_DIFFICULTIES.map((value) => (
+              <button type="button" key={value} className={styles.segment} aria-pressed={sourceDifficulty === value} onClick={() => setSourceDifficulty(value)}>{value === "all" ? sourceCopy.allDifficulties : copy.difficulties[value]}</button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {controlsHint && view === "list" ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
+    </div>
+  ) : null;
+
+  const roleTabs = showRoleTabs ? (
+    <div className={styles.roleTabs} role="group" aria-label={copy.role}>
+      {visibleRoles.map((value) => (
+        <button type="button" key={value} className={styles.roleTab} aria-pressed={role === value} onClick={() => chooseRole(value)}>
+          {copy.roles[value]}{view === "list" ? <span className={styles.roleCount}>{activeRoles[value]?.length ?? 0}</span> : null}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
+  const list = (
+    <>
+      <div className={styles.filters}>
+        <span className={styles.searchShell}>
+          <Search aria-hidden="true" />
+          <input type="search" className={styles.search} placeholder={copy.searchPlaceholder} aria-label={copy.search} value={q} onChange={(event) => setQ(event.target.value)} />
+        </span>
+        {classes.length ? (
+          <div className={styles.chips} role="group" aria-label={copy.classFilter} data-scrollbox>
+            <button type="button" className={styles.chip} aria-pressed={cls === "all"} onClick={() => setCls("all")}>{copy.allClasses}</button>
+            {classes.map(([slug, name]) => {
+              const icon = classIcon(classKey(slug));
+              return (
+                <button type="button" className={styles.chip} aria-pressed={cls === slug} onClick={() => setCls(slug)} key={slug} style={classStyle(slug)}>
+                  {icon ? <Image className={styles.chipIcon} src={icon} alt="" width={20} height={20} /> : null}{name}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+
+      {loadError && !external ? <p className={styles.alert} role="status">{loadError}</p> : null}
+      {sourceState?.error ? <p className={styles.alert} role="status">{sourceCopy.loadError}</p> : null}
+
+      <div className={styles.tableBox} aria-busy={busy} data-loading={busy || undefined} data-scrollbox>
+        {filtered.length ? (
+          <table className={styles.table}>
+            <caption className={styles.srOnly}>{copy.tableCaption(scopeName, copy.roles[role])}</caption>
+            <thead>
+              <tr>
+                <th scope="col" className={styles.colTier}>{copy.tier}</th>
+                <th scope="col">{copy.spec}</th>
+                {hasScore ? <th scope="col" className={styles.num}>{copy.score}</th> : null}
+                {hasRate ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{rateLabel}</th> : null}
+                {hasKey ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{copy.maxKey}</th> : null}
+                {hasTrend ? <th scope="col" className={styles.num}>{copy.trend}</th> : null}
+                {hasPopularity ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{copy.popularity}</th> : null}
+              </tr>
+            </thead>
+            {groups.map((group) => (
+              <tbody key={group.tier} className={styles.group} data-tier={tierClass(group.tier)}>
+                {group.rows.map((entry, index) => {
+                  const isSelected = Boolean(selected && entryKey(selected) === entryKey(entry));
+                  return (
+                    <tr key={entryKey(entry)} className={isSelected ? styles.selectedRow : undefined}>
+                      {index === 0 ? <th scope="rowgroup" rowSpan={group.rows.length} className={styles.tierCell}><TierMark tier={group.tier} copy={copy} /></th> : null}
+                      <td className={styles.specCell}>
+                        <div className={styles.specInner}>
+                        <SpecSlot name={fullSpecName(entry)} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} />
+                        <button type="button" className={styles.specButton} style={classStyle(entry.classSlug)} aria-controls="spec-detail" aria-current={isSelected ? "true" : undefined} onClick={() => selectEntry(entry)}>
+                          <span className={styles.specName}>{entry.specName}</span>
+                          <span className={styles.className}>{entry.className}{entry.group && sourceCopy.group[entry.group] ? <span className={styles.groupTag}> · {sourceCopy.group[entry.group]}</span> : null}</span>
+                        </button>
+                        </div>
+                      </td>
+                      {hasScore ? (
+                        <td className={`${styles.num} ${styles.score}`}>
+                          {compact(entry.score, lang)}
+                          <span className={styles.scoreBar} aria-hidden="true"><i style={{ width: `${entry.score ? Math.max(5, entry.score / maxScore * 100) : 0}%` }} /></span>
+                        </td>
+                      ) : null}
+                      {hasRate ? <td className={`${styles.num} ${styles.secondary}`}>{compact(rate(entry), lang)}</td> : null}
+                      {hasKey ? <td className={`${styles.num} ${styles.secondary}`}>{entry.maxKey ? `+${number.format(entry.maxKey)}` : "—"}</td> : null}
+                      {hasTrend ? <td className={styles.num}><Trend value={entry.rankChange} copy={copy} /></td> : null}
+                      {hasPopularity ? <td className={`${styles.num} ${styles.secondary}`}>{entry.popularity ? `${number.format(Number((entry.popularity * 100).toFixed(1)))}%` : "—"}</td> : null}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            ))}
+          </table>
+        ) : busy ? null : (
+          <p className={styles.empty}>{sample && !roleEntries.length ? copy.emptySample : copy.empty}</p>
+        )}
+        {busy ? <div className={styles.loading} role="status"><span aria-hidden="true" /><b>{copy.loadingSlice}</b></div> : null}
+      </div>
+
+      {!external && !sample && intelligence.sources.length ? (
+        <div className={styles.sources}>
+          <h3 className={styles.sourcesTitle}>{copy.sourceTitle}</h3>
+          <p>{queryContext ? copy.sourceSlice : copy.sourceOverall}</p>
+          <ul className={styles.sourceList}>
+            {intelligence.sources.map((item) => (
+              <li key={item.slug}>
+                <span className={styles.sourceName}>{item.provider}</span>
+                <span className={styles.sourceStatus} data-status={item.status}>{copy.sourceStatus[item.status] ?? item.status}</span>
+                <span className={styles.sourceCount}>{copy.records(number.format(item.recordCount))}</span>
+              </li>
+            ))}
+          </ul>
+          {updated ? <p className={styles.updated}>{copy.updated}: <time dateTime={intelligence.updatedAt}>{updated} UTC</time></p> : null}
+        </div>
+      ) : null}
+    </>
+  );
+
+  const compareView = view === "compare" ? (
+    <SourceCompare
+      lang={lang}
+      activity={activity}
+      role={role}
+      classStyle={classStyle}
+      renderSpec={(entry) => <SpecSlot name={`${entry.specName} ${entry.className}`} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} />}
+      columns={[
+        { id: "gildra" as const, label: "Gildra", short: "Gildra", entries: localize(baseRoles[role]) },
+        ...(activity === "mythic_plus" ? [{ id: "mythicstats" as const, label: "mythicstats.com", short: "MS", entries: stats.data && localize(stats.data.roles[role]) }] : []),
+        { id: "ugg" as const, label: "u.gg", short: "u.gg", entries: ugg.data && localize(ugg.data.roles[role]) },
+      ]}
+    />
+  ) : null;
+
+  const body = (
+    <>
+      {head}
+      {badge}
+      {controls}
+      {roleTabs}
+      {view === "compare" ? compareView : list}
+    </>
+  );
+  const tabs = [
+    ...TIER_SOURCES.map((id) => ({ id, label: sourceLabel(id), count: id === "gildra" ? sourceCopy.gildraHint : id === "mythicstats" ? "M+" : undefined })),
+    { id: "compare", label: sourceCopy.compare },
+  ];
 
   return (
     <div className={styles.workspace} id={ANCHORS.tierList}>
       <section className={styles.main} id={ANCHORS.builds} aria-labelledby="tier-results-title">
-        <div className={styles.resultsHead}>
-          <div className={styles.resultsCopy}>
-            <h2 id="tier-results-title" className={styles.resultsTitle}>{activity === "mythic_plus" ? copy.resultsMythic : copy.resultsRaid}</h2>
-            <p className={styles.resultsMeta}>{scopeName}{scopeDetail ? ` · ${scopeDetail}` : ""}{showRoleTabs ? "" : ` · ${copy.roles[role]}`}</p>
-          </div>
-          {isLoading ? <span className={styles.count} aria-live="polite">{copy.updating}</span> : null}
-        </div>
-
-        {showModes ? (
-          <div className={styles.controls} role="group" aria-label={copy.controlsLabel}>
-            {showModes ? (
-              <div className={styles.field}>
-                <span className={styles.label} id="tier-mode-label">{copy.mode}</span>
-                <div className={styles.segmented} role="group" aria-labelledby="tier-mode-label">
-                  {ACTIVITIES.map((value) => (
-                    <button type="button" key={value} className={styles.segment} aria-pressed={activity === value} onClick={() => switchActivity(value)}>
-                      {value === "mythic_plus" ? <Swords aria-hidden="true" /> : <Castle aria-hidden="true" />}{copy.modes[value]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            {!sample ? (
-              <>
-                <div className={`${styles.field} ${styles.fieldGrow}`}>
-                  <label className={styles.label} htmlFor="tier-content">{copy.content}</label>
-                  <span className={styles.selectShell}>
-                    <select id="tier-content" className={styles.select} value={contextValue} onChange={(event) => chooseContext(event.target.value)} disabled={!contexts.length}>{contentOptions}</select>
-                    <ChevronDown aria-hidden="true" />
-                  </span>
-                </div>
-                {activity === "mythic_plus" ? (
-                  <div className={`${styles.field} ${styles.fieldWide}`}>
-                    <span className={styles.label} id="tier-key-label">{copy.keyRange}</span>
-                    <div className={`${styles.segmented} ${styles.segmentedFour}`} role="group" aria-labelledby="tier-key-label">
-                      {KEY_RANGES.map((value) => (
-                        <button type="button" key={value} className={styles.segment} aria-pressed={keyType === value} disabled={!keyRangeEnabled} onClick={() => setKeyType(value)}>{copy.keys[value]}</button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className={`${styles.field} ${styles.fieldWide}`}>
-                    <span className={styles.label} id="tier-difficulty-label">{copy.difficulty}</span>
-                    <div className={styles.segmented} role="group" aria-labelledby="tier-difficulty-label">
-                      {raidDifficulties.map((value) => (
-                        <button type="button" key={value} className={styles.segment} aria-pressed={difficultyEnabled && difficulty === value} disabled={!difficultyEnabled} onClick={() => setDifficulty(value)}>{copy.difficulties[value] ?? value}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : null}
-            {controlsHint ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
-          </div>
-        ) : null}
-
-        {showRoleTabs ? (
-          <div className={styles.roleTabs} role="group" aria-label={copy.role}>
-            {visibleRoles.map((value) => (
-              <button type="button" key={value} className={styles.roleTab} aria-pressed={role === value} onClick={() => chooseRole(value)}>
-                {copy.roles[value]}<span className={styles.roleCount}>{activeRoles[value]?.length ?? 0}</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        <div className={styles.filters}>
-          <span className={styles.searchShell}>
-            <Search aria-hidden="true" />
-            <input type="search" className={styles.search} placeholder={copy.searchPlaceholder} aria-label={copy.search} value={q} onChange={(event) => setQ(event.target.value)} />
-          </span>
-          {classes.length ? (
-            <div className={styles.chips} role="group" aria-label={copy.classFilter} data-scrollbox>
-              <button type="button" className={styles.chip} aria-pressed={cls === "all"} onClick={() => setCls("all")}>{copy.allClasses}</button>
-              {classes.map(([slug, name]) => {
-                const icon = classIcon(classKey(slug));
-                return (
-                  <button type="button" className={styles.chip} aria-pressed={cls === slug} onClick={() => setCls(slug)} key={slug} style={classStyle(slug)}>
-                    {icon ? <Image className={styles.chipIcon} src={icon} alt="" width={20} height={20} /> : null}{name}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-        </div>
-
-        {loadError ? <p className={styles.alert} role="status">{loadError}</p> : null}
-
-        <div className={styles.tableBox} aria-busy={isLoading} data-loading={isLoading || undefined} data-scrollbox>
-          {filtered.length ? (
-            <table className={styles.table}>
-              <caption className={styles.srOnly}>{copy.tableCaption(scopeName, copy.roles[role])}</caption>
-              <thead>
-                <tr>
-                  <th scope="col" className={styles.colTier}>{copy.tier}</th>
-                  <th scope="col">{copy.spec}</th>
-                  {hasScore ? <th scope="col" className={styles.num}>{copy.score}</th> : null}
-                  {hasRate ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{rateLabel}</th> : null}
-                  {hasKey ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{copy.maxKey}</th> : null}
-                  {hasTrend ? <th scope="col" className={styles.num}>{copy.trend}</th> : null}
-                </tr>
-              </thead>
-              {groups.map((group) => (
-                <tbody key={group.tier} className={styles.group} data-tier={tierClass(group.tier)}>
-                  {group.rows.map((entry, index) => {
-                    const isSelected = Boolean(selected && entryKey(selected) === entryKey(entry));
-                    return (
-                      <tr key={entryKey(entry)} className={isSelected ? styles.selectedRow : undefined}>
-                        {index === 0 ? <th scope="rowgroup" rowSpan={group.rows.length} className={styles.tierCell}><TierMark tier={group.tier} copy={copy} /></th> : null}
-                        <td className={styles.specCell}>
-                          <div className={styles.specInner}>
-                          <SpecSlot name={fullSpecName(entry)} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} />
-                          <button type="button" className={styles.specButton} style={classStyle(entry.classSlug)} aria-controls="spec-detail" aria-current={isSelected ? "true" : undefined} onClick={() => selectEntry(entry)}>
-                            <span className={styles.specName}>{entry.specName}</span>
-                            <span className={styles.className}>{entry.className}</span>
-                          </button>
-                          </div>
-                        </td>
-                        {hasScore ? (
-                          <td className={`${styles.num} ${styles.score}`}>
-                            {compact(entry.score, lang)}
-                            <span className={styles.scoreBar} aria-hidden="true"><i style={{ width: `${entry.score ? Math.max(5, entry.score / maxScore * 100) : 0}%` }} /></span>
-                          </td>
-                        ) : null}
-                        {hasRate ? <td className={`${styles.num} ${styles.secondary}`}>{compact(rate(entry), lang)}</td> : null}
-                        {hasKey ? <td className={`${styles.num} ${styles.secondary}`}>{entry.maxKey ? `+${number.format(entry.maxKey)}` : "—"}</td> : null}
-                        {hasTrend ? <td className={styles.num}><Trend value={entry.rankChange} copy={copy} /></td> : null}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              ))}
-            </table>
-          ) : (
-            <p className={styles.empty}>{sample && !roleEntries.length ? copy.emptySample : copy.empty}</p>
-          )}
-          {isLoading ? <div className={styles.loading} role="status"><span aria-hidden="true" /><b>{copy.loadingSlice}</b></div> : null}
-        </div>
-
-        {!sample && intelligence.sources.length ? (
-          <div className={styles.sources}>
-            <h3 className={styles.sourcesTitle}>{copy.sourceTitle}</h3>
-            <p>{queryContext ? copy.sourceSlice : copy.sourceOverall}</p>
-            <ul className={styles.sourceList}>
-              {intelligence.sources.map((source) => (
-                <li key={source.slug}>
-                  <span className={styles.sourceName}>{source.provider}</span>
-                  <span className={styles.sourceStatus} data-status={source.status}>{copy.sourceStatus[source.status] ?? source.status}</span>
-                  <span className={styles.sourceCount}>{copy.records(number.format(source.recordCount))}</span>
-                </li>
-              ))}
-            </ul>
-            {updated ? <p className={styles.updated}>{copy.updated}: <time dateTime={intelligence.updatedAt}>{updated} UTC</time></p> : null}
-          </div>
-        ) : null}
+        {!sample ? (
+          <AtlasTabs className={styles.sourceTabs} label={sourceCopy.tabsLabel} value={activeTab} onChange={chooseTab}
+            tabs={tabs.map((tab) => ({ ...tab, content: tab.id === activeTab ? <div className={styles.sourcePanel}>{body}</div> : null }))} />
+        ) : body}
       </section>
 
       <aside className={styles.detail} id="spec-detail" aria-labelledby={selected ? "spec-detail-title" : undefined} aria-label={selected ? undefined : copy.detailLabel}>
@@ -438,7 +553,7 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
             ) : null}
             {selectedGuide || selectedSpecPage ? (
               <div className={styles.detailActions}>
-                {selectedGuide ? <a className={`${styles.action} ${styles.actionPrimary}`} href={selectedGuide} target="_blank" rel="noreferrer">{selected.guideUrl ? copy.openGuide : copy.openSource}<ArrowUpRight aria-hidden="true" /></a> : null}
+                {selectedGuide ? <a className={`${styles.action} ${styles.actionPrimary}`} href={selectedGuide} target="_blank" rel="noreferrer">{selectedGuideLabel}<ArrowUpRight aria-hidden="true" /></a> : null}
                 {selectedSpecPage ? <Link className={selectedGuide ? styles.action : `${styles.action} ${styles.actionPrimary}`} href={selectedSpecPage}>{copy.specPage}</Link> : null}
               </div>
             ) : null}

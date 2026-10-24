@@ -641,3 +641,60 @@
 /* Mythic+ tier board below the table; the placeholder keeps its room until the board loads. */
 .board { margin-top: var(--atlas-space-7); }
 .boardPlaceholder { min-height: 520px; }
+
+/* ---------- Source tabs (Gildra, mythicstats.com, u.gg) ---------- */
+.sourceTabs { gap: var(--atlas-space-5); }
+.sourceTabs [role="tablist"] { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+.sourceTabs [role="tab"] { flex: none; font-size: var(--atlas-text-body); }
+.sourcePanel { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); animation: tier-source-in 200ms var(--atlas-ease) both; }
+@keyframes tier-source-in { from { opacity: 0; transform: translateY(4px); } }
+
+/* Provenance: who published this list, how fresh, and the way back to it. */
+.provenance {
+  display: grid;
+  gap: var(--atlas-space-1);
+  padding: var(--atlas-space-3) var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-soft);
+  border-left: 2px solid var(--atlas-accent);
+  background: var(--atlas-accent-wash);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+}
+.provenance p { margin: 0; }
+.provenanceLine { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--atlas-space-2); }
+.provenanceLine b { color: var(--atlas-text-strong); font-weight: 650; }
+.provenanceDot { width: 6px; height: 6px; border-radius: 50%; background: var(--atlas-positive); box-shadow: 0 0 8px var(--atlas-positive); }
+.provenanceLink { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: var(--atlas-accent-strong); font-weight: 600; text-decoration: none; }
+.provenanceLink:hover { text-decoration: underline; }
+.provenanceLink:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.provenanceLink svg { width: 14px; height: 14px; }
+.provenanceNote { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-body); }
+.groupTag { color: var(--atlas-text-subtle); }
+
+/* Comparison: spec rows × source tiers. */
+.compare { display: grid; gap: var(--atlas-space-3); }
+.compareHead { display: grid; gap: var(--atlas-space-1); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.compareHead p { margin: 0; }
+.compareTable td, .compareTable th { vertical-align: middle; }
+.compareCol { width: 120px; text-align: center; }
+.compareRank { width: 40px; color: var(--atlas-text-subtle); font-variant-numeric: tabular-nums; }
+.compareNone { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.agreeAll { color: var(--atlas-positive); font-size: var(--atlas-text-meta); font-weight: 600; }
+.agreeSome { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
+
+.compareShort { display: none; text-decoration: none; }
+
+@media (max-width: 720px) {
+  .provenanceLink { margin-left: 0; }
+  .sourceTabs [role="tablist"] { flex-wrap: wrap; overflow: visible; }
+  .sourceTabs [role="tab"] { padding: 0 var(--atlas-space-3); }
+  .sourceTabs [role="tab"] small { display: none; }
+  .compareRank, .compareLong, .compareAgree { display: none; }
+  .compareShort { display: inline; }
+  .compareCol { width: 52px; }
+  .compareTable th, .compareTable td { padding-inline: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sourcePanel { animation: none; }
+}

@@ -48,6 +48,8 @@ export type TierEntry = {
   rankChange?: number;
   guideUrl?: string;
   sourceUrl: string;
+  /** Source-specific sub-group, e.g. mythicstats.com's melee / ranged DPS lists. */
+  group?: string;
 };
 
 export type TierActivity = "mythic_plus" | "raid";
