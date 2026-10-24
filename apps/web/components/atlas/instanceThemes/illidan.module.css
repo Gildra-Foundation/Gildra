@@ -1,0 +1,107 @@
+/* Illidan's instance atlas: fel-lit obsidian, with arcane cuts in the metal. */
+:global(html[data-site-theme="illidan"]) .illidan {
+  --atlas-instance-fel: rgb(171 225 112);
+  --atlas-instance-fel-light: rgb(223 250 186);
+  --atlas-instance-arcane: rgb(190 151 235);
+  --atlas-instance-arcane-light: rgb(242 228 255);
+  --atlas-instance-obsidian: rgb(10 14 12);
+  --atlas-instance-art: url("/assets/wow/character-book/intro/illidan-home-background-v1.webp");
+  --atlas-instance-art-position: center 24%;
+  --atlas-bg: rgb(7 11 9);
+  --atlas-surface: var(--atlas-instance-obsidian);
+  --atlas-surface-raised: rgb(18 25 19);
+  --atlas-surface-sunken: rgb(6 9 7);
+  --atlas-surface-selected: rgb(40 49 31);
+  --atlas-accent: var(--atlas-instance-fel);
+  --atlas-accent-strong: var(--atlas-instance-fel-light);
+  --atlas-accent-ink: rgb(15 26 9);
+  --atlas-accent-wash: rgb(171 225 112 / .08);
+  --atlas-accent-wash-strong: rgb(171 225 112 / .16);
+  --atlas-accent-glow: rgb(135 216 65 / .13);
+  --atlas-line: rgb(171 225 112 / .31);
+  --atlas-line-soft: rgb(171 225 112 / .19);
+  --atlas-line-strong: rgb(190 235 143 / .66);
+  --atlas-text-strong: var(--atlas-instance-arcane-light);
+  --atlas-text: rgb(225 233 219);
+  --atlas-text-muted: rgb(183 196 174);
+  --atlas-text-subtle: rgb(163 181 152);
+  --atlas-frame-tint: rgb(132 215 66 / .22);
+  --atlas-ember: var(--atlas-instance-fel-light);
+  --atlas-ember-halo: rgb(140 231 69 / .23);
+  --atlas-instance-edge: rgb(124 162 90 / .7);
+  --atlas-instance-rim: rgb(202 223 178 / .48);
+  --atlas-instance-glow: rgb(126 213 63 / .18);
+  --atlas-instance-metal: rgb(38 47 33);
+  --atlas-instance-wash:
+    radial-gradient(ellipse at 0% 0%, rgb(129 206 65 / .05), transparent 54%),
+    radial-gradient(ellipse at 100% 100%, rgb(148 94 206 / .05), transparent 50%);
+  --atlas-instance-ornament:
+    linear-gradient(135deg, var(--atlas-instance-fel-light), var(--atlas-instance-metal) 16% 42%, var(--atlas-instance-obsidian) 50%, var(--atlas-instance-arcane) 92%, var(--atlas-instance-arcane-light));
+}
+
+/* The green edge belongs to the forged frame; the painting keeps its own colours. */
+:global(html[data-site-theme="illidan"]) .illidan :is([data-atlas-card], article:has(> a[href*="/wow/raids/"])) {
+  border-color: var(--atlas-instance-edge);
+  background:
+    linear-gradient(135deg, var(--atlas-instance-rim), transparent 18% 77%, rgb(190 151 235 / .37)) border-box,
+    repeating-linear-gradient(100deg, transparent 0 4px, rgb(171 225 112 / .04) 5px, transparent 6px 10px),
+    linear-gradient(131deg, rgb(89 104 72), var(--atlas-instance-metal) 5%, rgb(15 21 17) 16%, rgb(47 55 42) 49%, rgb(17 21 19) 53%, rgb(11 15 13) 84%, rgb(73 64 89));
+}
+
+:global(html[data-site-theme="illidan"]) .illidan :is([data-atlas-card], article:has(> a[href*="/wow/raids/"])):is(:hover, :focus-within) {
+  border-color: var(--atlas-instance-fel-light);
+  box-shadow:
+    inset 0 0 0 1px var(--atlas-instance-rim),
+    0 0 0 1px rgb(116 175 64 / .28),
+    0 0 24px var(--atlas-instance-glow),
+    0 18px 38px rgb(0 0 0 / .55);
+}
+
+:global(html[data-site-theme="illidan"]) .illidan [data-atlas-card] > a > div:first-child,
+:global(html[data-site-theme="illidan"]) .illidan article:has(> a[href*="/wow/raids/"]) > a:first-child {
+  box-shadow: inset 0 0 0 1px rgb(193 165 222 / .21);
+}
+
+:global(html[data-site-theme="illidan"]) .illidan [data-atlas-card] > a > div:last-child,
+:global(html[data-site-theme="illidan"]) .illidan article:has(> a[href*="/wow/raids/"]) > div:last-child {
+  background: var(--atlas-instance-wash), linear-gradient(135deg, rgb(13 19 13), rgb(12 13 18));
+  border-top: 1px solid rgb(139 191 96 / .26);
+}
+
+:global(html[data-site-theme="illidan"]) .illidan :is([data-atlas-card], article:has(> a[href*="/wow/raids/"])) h3 {
+  color: var(--atlas-instance-arcane-light);
+}
+
+:global(html[data-site-theme="illidan"]) .illidan :is([data-atlas-card], article:has(> a[href*="/wow/raids/"])) a:focus-visible {
+  outline: 2px solid var(--atlas-instance-fel-light);
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  :global(html[data-site-theme="illidan"]) .illidan {
+    --atlas-instance-art-position: 37% top;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :global(html[data-site-theme="illidan"]) .illidan {
+    --atlas-instance-edge: var(--atlas-instance-fel-light);
+    --atlas-instance-wash: linear-gradient(transparent, transparent);
+    --atlas-text-subtle: var(--atlas-text-muted);
+  }
+}
+
+@media (forced-colors: active) {
+  :global(html[data-site-theme="illidan"]) .illidan :is([data-atlas-card], article:has(> a[href*="/wow/raids/"])) {
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+
+  :global(html[data-site-theme="illidan"]) .illidan :is([data-atlas-card], article:has(> a[href*="/wow/raids/"])) h3 {
+    color: CanvasText;
+  }
+
+  :global(html[data-site-theme="illidan"]) .illidan :is([data-atlas-card], article:has(> a[href*="/wow/raids/"])) a:focus-visible {
+    outline-color: Highlight;
+  }
+}

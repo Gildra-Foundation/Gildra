@@ -14,6 +14,8 @@ export type AtlasFrameShellProps = {
   children: ReactNode;
   /** Decorative artwork behind the top of the page; it fades into the solid body. */
   art?: string;
+  /** Character-selected decorative scene, supplied through --atlas-instance-art by the app. */
+  themedArt?: boolean;
   /** Focal point of the artwork, CSS object-position (default "center 18%"). */
   artPosition?: string;
   /** "deep" darkens bright artwork (sunlit scenes, light portraits) so the hero text keeps its contrast. */
@@ -56,10 +58,12 @@ function objectFocus(position: string | undefined): [number, number] {
  * The app wraps it as `AtlasFrame` (components/atlas), which resolves section
  * scenes and supplies the legal line.
  */
-export function AtlasFrameShell({ children, art, artPosition, artShade = "default", tint, ember, glow, still = false, artLayer, morphKey, as: Element = "main", className, lang, id, dataAttributes, footer = false }: AtlasFrameShellProps) {
+export function AtlasFrameShell({ children, art, themedArt = false, artPosition, artShade = "default", tint, ember, glow, still = false, artLayer, morphKey, as: Element = "main", className, lang, id, dataAttributes, footer = false }: AtlasFrameShellProps) {
   const locale = lang === "ru" ? "ru" : "en";
   const layer = artLayer ?? (glow ? <AtlasArtGlow imageSize={glow.size} focus={objectFocus(artPosition)} points={glow.points} /> : null);
-  const picture = art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" {...artPlaceholder(art)} /> : null;
+  // CSS resolves the selected character before paint. Only that scene is fetched,
+  // with no hydration swap or hidden copies of the other character paintings.
+  const picture = themedArt ? <div className={`${styles.art} ${styles.themeArt}`} data-atlas-theme-art /> : art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" {...artPlaceholder(art)} /> : null;
   // Section sparks: the spark and its halo in the section's colour.
   const vars: Record<string, string | undefined> = { "--atlas-frame-tint": tint, "--atlas-frame-art-position": artPosition };
   if (ember) Object.assign(vars, { "--atlas-ember": ember, "--atlas-ember-halo": `color-mix(in srgb, ${ember} 24%, transparent)` });

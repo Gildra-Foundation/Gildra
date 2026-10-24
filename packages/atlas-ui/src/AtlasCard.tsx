@@ -62,7 +62,7 @@ export function AtlasCard({ href, title, image, artBadge, artCaption, eyebrow, s
     />
   ) : null;
   return (
-    <article className={clsx(styles.card, styles[layout], className)} style={style} data-spotlight data-tilt={tilt || undefined}>
+    <article className={clsx(styles.card, styles[layout], className)} style={style} data-atlas-card data-spotlight data-tilt={tilt || undefined}>
       <Link className={styles.link} href={href}>
         <div className={styles.art}>
           {picture ?? <span className={styles.artEmpty} aria-hidden="true" />}

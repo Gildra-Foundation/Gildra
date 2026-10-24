@@ -1,0 +1,98 @@
+/* Character materials for the raid and dungeon selection chapters. */
+.instance {
+  --atlas-instance-art: url("/assets/wow/character-book/intro/icecrown-home-background-v1.webp");
+  --atlas-instance-art-position: center 32%;
+  --atlas-frame-tint: var(--atlas-accent-glow);
+  --atlas-instance-metal: color-mix(in srgb, var(--atlas-surface-raised) 76%, var(--atlas-text-subtle));
+  --atlas-instance-edge: var(--atlas-line-strong);
+  --atlas-instance-rim: color-mix(in srgb, var(--atlas-accent-strong) 65%, transparent);
+  --atlas-instance-glow: var(--atlas-accent-glow);
+  --atlas-instance-wash: linear-gradient(115deg, var(--atlas-accent-wash), transparent 42%);
+  --atlas-instance-ornament: linear-gradient(135deg, var(--atlas-accent-strong), var(--atlas-instance-metal) 38%, var(--atlas-surface-sunken) 50%, var(--atlas-instance-rim) 75%, var(--atlas-instance-metal));
+}
+
+:global(html[data-site-theme="garek"]) .instance {
+  --atlas-instance-art: url("/assets/wow/character-book/intro/garek-home-background-v1.webp");
+  --atlas-instance-art-position: center 32%;
+}
+
+:global(html[data-site-theme="varok"]) .instance {
+  --atlas-instance-art: url("/assets/wow/character-book/intro/varok-home-background-v2.webp");
+  --atlas-instance-art-position: center 32%;
+}
+
+/* Silvered saronite: a cold bevel, steel bands, frost caught under the rim. */
+.instance :is(:global([data-atlas-card]), article:has(> a[href*="/wow/raids/"])) {
+  position: relative;
+  padding: 5px;
+  border: 1px solid var(--atlas-instance-edge);
+  background:
+    linear-gradient(135deg, var(--atlas-instance-rim), transparent 18% 77%, var(--atlas-instance-rim)) border-box,
+    repeating-linear-gradient(100deg, transparent 0 3px, var(--atlas-accent-wash) 4px, transparent 5px 9px),
+    linear-gradient(155deg, var(--atlas-instance-metal), var(--atlas-surface-sunken) 32% 70%, var(--atlas-instance-metal));
+  box-shadow: inset 0 1px var(--atlas-instance-rim), inset 0 -2px var(--atlas-surface-sunken), 0 0 0 1px var(--atlas-surface-sunken), 0 10px 26px color-mix(in srgb, var(--atlas-bg) 80%, transparent);
+}
+
+.instance :is(:global([data-atlas-card]), article:has(> a[href*="/wow/raids/"]))::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: -2px;
+  padding: 0;
+  pointer-events: none;
+  opacity: 1;
+  background: var(--atlas-instance-ornament);
+  mask:
+    linear-gradient(#000 0 0) left top / 24px 3px no-repeat,
+    linear-gradient(#000 0 0) left top / 3px 24px no-repeat,
+    linear-gradient(#000 0 0) right top / 24px 3px no-repeat,
+    linear-gradient(#000 0 0) right top / 3px 24px no-repeat,
+    linear-gradient(#000 0 0) left bottom / 24px 3px no-repeat,
+    linear-gradient(#000 0 0) left bottom / 3px 24px no-repeat,
+    linear-gradient(#000 0 0) right bottom / 24px 3px no-repeat,
+    linear-gradient(#000 0 0) right bottom / 3px 24px no-repeat;
+}
+
+.instance :is(:global([data-atlas-card]), article:has(> a[href*="/wow/raids/"]))::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 5px;
+  pointer-events: none;
+  opacity: 1;
+  background: var(--atlas-instance-wash);
+  box-shadow: inset 0 0 0 1px var(--atlas-line), inset 0 1px 16px var(--atlas-instance-glow);
+  mix-blend-mode: normal;
+}
+
+.instance :global([data-atlas-card]) > a {
+  background: var(--atlas-surface);
+}
+
+.instance :global([data-atlas-card]) > a > div:last-child,
+.instance article:has(> a[href*="/wow/raids/"]) > div:last-child {
+  background: var(--atlas-instance-wash), var(--atlas-surface);
+  border-top: 1px solid var(--atlas-line);
+}
+
+.instance :is(:global([data-atlas-card]), article:has(> a[href*="/wow/raids/"])):is(:hover, :focus-within) {
+  border-color: var(--atlas-accent-strong);
+  box-shadow: inset 0 1px var(--atlas-accent-strong), 0 0 0 1px var(--atlas-line), 0 0 24px var(--atlas-instance-glow), var(--atlas-shadow-lift);
+}
+
+.instance :global([data-atlas-card]) > a:focus-visible {
+  outline: 2px solid var(--atlas-accent-strong);
+  outline-offset: 7px;
+}
+
+@media (forced-colors: active) {
+  .instance :is(:global([data-atlas-card]), article:has(> a[href*="/wow/raids/"])) {
+    border: 2px solid CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+  .instance :is(:global([data-atlas-card]), article:has(> a[href*="/wow/raids/"]))::before,
+  .instance :is(:global([data-atlas-card]), article:has(> a[href*="/wow/raids/"]))::after {
+    display: none;
+  }
+}
