@@ -1,0 +1,153 @@
+/* The folio keeps its original 1536 × 1024 proportions at every size. */
+.book-viewport{grid-column:2;min-width:0;width:100%;margin:auto;overflow:visible}
+.book{position:relative;display:block;width:min(1040px,calc((100svh - 178px)*1.5),100%);height:auto!important;min-height:0!important;aspect-ratio:3/2;padding:0!important;margin:auto;transform-origin:0 0;isolation:isolate}
+.book::before{display:none!important}
+.book-artwork{position:absolute;inset:0;z-index:-1;width:100%;height:100%;object-fit:contain;filter:grayscale(.3) brightness(1.04);pointer-events:none;user-select:none}
+.left-page,.right-page{position:absolute;top:13%;bottom:14%;width:33%;height:auto!important;min-height:0;padding:0!important;background:none!important;overflow:hidden}
+.left-page{left:12%}.right-page{left:55%}
+.contents{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
+.left-page h2{font-size:27px}.left-page .divider{margin-bottom:7px}
+.chapter-link{font-size:13px;line-height:1.35;padding:7px 0}
+.story{font-size:17px;line-height:1.6;flex:1;min-height:0;padding-right:9px}
+.story h2{font-size:22px}.story h3{font-size:18px}
+.story h2,.story h3{hyphens:none}
+.page-controls{flex-shrink:0;margin:0;padding-top:7px}
+.reader-toolbar{flex-shrink:0;margin-bottom:12px;min-height:22px}
+.story:focus-visible{outline-offset:-2px}
+.phone-pager{display:none}
+.book-actions{grid-column:2;display:flex;justify-content:center;align-items:center;gap:26px;margin:8px auto 0}
+.hold-book{min-height:44px;padding:8px 14px;border:0;background:none;color:#f2dfb7;font:16px PTSerif,Georgia,serif;text-shadow:0 2px 8px #102236;cursor:pointer}
+.hold-book:hover{color:#ffedc9}
+.book-actions .close-book{margin:0}
+.held-book{display:none}
+.held-book[open]{display:block;width:min(1360px,calc(100vw - 32px),calc((100svh - 90px)*1.5));max-width:none;max-height:none;margin:auto;padding:0;border:0;background:transparent;overflow:visible}
+.held-book::backdrop{background:#06111dda;backdrop-filter:blur(5px)}
+.held-book .reader{display:block;width:100%;min-height:0;padding:0;margin:0}
+.held-book .book-viewport{width:100%}
+.held-book .book{width:100%;max-width:none}
+.held-book .story{font-size:20px;line-height:1.6}
+.held-book .story h2{font-size:26px}.held-book .story h3{font-size:21px}
+.held-book .chapter-link{font-size:15px;padding-block:9px}
+.held-book .hold-book{display:none}
+.page-snap{display:none}
+.cover{transform-origin:50% 50%;width:min(325px,calc((100svh - 240px)*.667));min-width:220px;will-change:auto}
+.cover img,.motion-cover img{width:100%;height:100%;display:block;object-fit:contain;filter:grayscale(.3) brightness(.96)}
+.cover-area{position:relative}
+.cover-title{inset:13% 13% auto}.cover-title strong{font-size:34px}
+.cover-hint{font-size:12px;color:#e8dcc3;text-shadow:0 2px 8px #102236}
+.intro{min-height:calc(100svh - 96px);padding-top:22px;padding-bottom:42px}
+.intro-copy{background:linear-gradient(120deg,#f6f0e5e0,#f2ead6ba);border-color:#c8b18348;box-shadow:0 14px 50px #15263c18}
+.phone-book{display:none}
+
+/* The front cover and its inside swing around the same physical spine. */
+.leaf-motion{position:absolute;z-index:5;inset:0 0 0 50%;width:50%;height:100%;perspective:2600px;perspective-origin:0 50%;pointer-events:none}
+.turning-leaf{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:0 50%;will-change:transform}
+.leaf-front,.leaf-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.motion-cover{position:relative;transform-origin:0 0}
+.leaf-back{transform:rotateY(180deg);background:url('assets/folio-binding-v1.webp') left top/200% 100% no-repeat;filter:grayscale(.3) brightness(1.04)}
+.leaf-shade{position:absolute;inset:0;opacity:0;background:linear-gradient(90deg,#100a04a0,#100a0440 65%,transparent);pointer-events:none}
+.leaf-back .leaf-shade{background:linear-gradient(270deg,#100a04a0,#100a0440 65%,transparent);mask:url('assets/folio-binding-v1.webp') left top/200% 100% no-repeat}
+body[data-book-state='opening'] .book,body[data-book-state='closing'] .book{will-change:transform;filter:none}
+body[data-book-state='opening'] .reader,body[data-book-state='closing'] .reader{pointer-events:none}
+.reader:not([hidden]){min-height:calc(100svh - 96px);align-content:center}
+.close-book{min-height:44px;padding:8px 18px;margin-top:8px}
+.phone-pager button{min-height:44px}
+
+@media(min-width:1200px){.intro{grid-template-columns:1fr .8fr;padding-left:27vw}.intro h1{font-size:clamp(40px,3.7vw,58px)}}
+@media(min-width:821px) and (max-width:1199px){.reader{display:block}.book-viewport{width:100%}.intro{padding-inline:6vw}.intro h1{font-size:46px}}
+@media(max-width:820px){
+  .intro{display:flex;flex-direction:column;min-height:calc(100svh - 120px);gap:24px;padding:24px 22px 36px;text-align:center}
+  .intro-copy{padding:18px 22px;max-width:460px}.intro h1{font-size:42px;margin:14px 0}.kicker{justify-content:center}.ornament{margin:auto;background-position:center}.subtitle{font-size:18px}
+  .cover{width:min(63vw,270px);min-width:0}.cover-title strong{font-size:29px}.cover-title small{font-size:7px}.cover-hint{color:#e3d8c0;text-shadow:0 2px 7px #142339}
+  .phone-book[open]{display:block;position:fixed;inset:0;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;border:0;background:transparent;overflow:hidden;color:var(--bright)}
+  .phone-book::backdrop{background:#071321e8;backdrop-filter:blur(4px)}
+  .phone-book .reader{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;width:100%;height:100%;min-height:0;padding:max(16px,env(safe-area-inset-top)) 0 max(12px,env(safe-area-inset-bottom));margin:0}
+  .phone-book .book-viewport{--page-width:min(calc(100vw - 12px),calc((100dvh - 116px)*.75),520px);flex:none;width:var(--page-width);padding:0;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;scroll-behavior:smooth}
+  .phone-book .book-viewport::-webkit-scrollbar{display:none}
+  .phone-book .book-viewport.moving{overflow:visible;scroll-snap-type:none;scroll-behavior:auto}
+  .phone-book .book{width:calc(var(--page-width)*2);max-width:none;aspect-ratio:3/2;background:none;border:0;box-shadow:none;border-radius:0}
+  .phone-book .left-page,.phone-book .right-page{display:flex;top:13%;bottom:14%;width:33%;padding:0!important;background:none!important}
+  .phone-book .left-page{left:12%}.phone-book .right-page{left:55%}
+  .phone-book .story{font-size:16px;line-height:1.55;padding:0 7px 14px 0}.phone-book .story h2{font-size:21px}.phone-book .story h3{font-size:17px}
+  .phone-book .chapter-link{font-size:13px;padding:7px 0}.phone-book .left-page h2{font-size:25px}.phone-book .page-label{font-size:8px}
+  .phone-book .reader-toolbar>span{font-size:11px}.phone-book .reader-toolbar button{display:block;font-family:Arial,sans-serif;padding:4px;min-width:30px;min-height:30px}
+  .phone-book .phone-pager{display:flex;align-items:center;justify-content:center;gap:24px;flex:none}
+  .phone-book .book-actions{flex:none;margin:0}
+  .phone-book .hold-book{display:none}
+  .phone-pager button{border:0;background:none;color:#ad9f87;padding:8px 10px;font:16px PTSerif,Georgia,serif;cursor:pointer}
+  .phone-pager button[aria-current='page']{color:#f1dfbb;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:7px}
+  .phone-book .close-book{margin:0;font-size:14px;min-height:40px}
+  .phone-book .page-snap{display:block;position:absolute;top:0;bottom:0;width:50%;scroll-snap-align:start;scroll-snap-stop:always;pointer-events:none}
+  .phone-book .leaf-motion{perspective:1500px}
+}
+@media(prefers-reduced-motion:reduce){.cover{transition:none}.phone-book .book-viewport{scroll-behavior:auto}.turning-leaf{will-change:auto}}
+/* The cover replaces the title panel; navigation and reading share the centre axis. */
+.header{position:relative}
+.topnav{position:absolute;left:50%;transform:translateX(-50%);margin:0;justify-content:center}
+.intro:not([hidden]){display:flex;justify-content:center;align-items:center;min-height:calc(100svh - 96px);padding:18px 24px 32px!important;gap:0}
+.cover-area{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cover{width:min(450px,calc((100svh - 205px)*.667));min-width:0;transform:rotateY(-8deg) rotateZ(-1deg)}
+.cover:hover{transform:rotateY(-3deg) rotateZ(0) translateY(-6px)}
+.cover-title strong{font-size:clamp(30px,3vw,44px)}
+.cover-title small{font-size:9px}
+.cover-hint{margin-top:22px;color:#eee0c5}
+.reader:not([hidden]){display:flex;flex-direction:column;align-items:center;justify-content:center;max-width:1440px;padding:8px 32px 20px;gap:0}
+.book-viewport{grid-column:auto;width:100%;margin:0 auto}
+.book{width:min(1080px,calc((100svh - 178px)*1.5),100%);margin:auto}
+.book-actions{grid-column:auto;margin:8px auto 0}
+.held-book .reader{display:block;min-height:0;padding:0}
+@media(min-width:821px) and (max-width:1199px){.brand>span{font-size:24px}.brand svg{width:40px;height:48px}.topnav{gap:22px}.topnav a{font-size:13px}}
+@media(max-width:820px){.header{flex-direction:column;justify-content:center;height:auto;min-height:106px;padding:14px 16px 8px;gap:10px}.topnav{position:static;transform:none;width:100%;gap:5px 17px;flex-wrap:wrap;justify-content:center}.topnav a{font-size:11px}.intro{min-height:calc(100svh - 106px);padding:20px 20px 30px!important}.cover{width:min(76vw,330px,calc((100svh - 190px)*.667))}.cover-title strong{font-size:32px}.cover-title small{font-size:7px}.cover-hint{font-size:11px;margin-top:18px}.phone-book .reader:not([hidden]){min-height:0;height:100%;padding:max(16px,env(safe-area-inset-top)) 0 max(12px,env(safe-area-inset-bottom));gap:8px}.phone-book .book-viewport{margin:auto}.phone-book .book{width:calc(var(--page-width)*2);max-width:none}}
+/* Small margin notes frame the existing artwork instead of adding more panels. */
+.intro{position:relative}
+.scene-eyebrow{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:18px;width:max-content;max-width:90%;font:10px/1.5 PTSerif,Georgia,serif;letter-spacing:.22em;color:#233a50;text-shadow:0 1px 8px #fff8}
+.scene-eyebrow>span{height:1px;width:45px;background:linear-gradient(90deg,transparent,#8263399c)}
+.scene-eyebrow>span:last-child{transform:scaleX(-1)}
+.scene-note{position:absolute;bottom:15%;max-width:230px;color:#f0e3ca;text-shadow:0 2px 10px #07192a,0 1px 3px #07192a}
+.scene-note-left{left:30px;text-align:left}
+.scene-note-right{right:30px;text-align:left}
+.note-kicker{display:block;font:9px/1.6 PTSerif,Georgia,serif;letter-spacing:.16em;color:#e0c79a}
+.scene-note p{font:22px/1.5 Georgia,serif;margin:14px 0 19px}
+.scene-note-right p{font-size:20px;font-style:italic;line-height:1.55}
+.note-rule{display:block;width:70px;height:1px;background:linear-gradient(90deg,#d4b980a6,transparent)}
+.note-meta{display:block;font:10px/1.7 PTSerif,Georgia,serif;color:#d3c5ad;max-width:190px}
+.cover-story-title{position:absolute;left:12%;right:12%;bottom:14%;color:#f3e3c4;text-align:center;font:25px/1.15 Kurale,Georgia,serif;text-shadow:0 2px 2px #261409,0 -1px 0 #ffe2b438;pointer-events:none}
+.cover-story-title strong{font:inherit;font-size:29px;display:block;margin-top:3px}
+.cover-story-title small{display:block;font:8px/1.4 PTSerif,Georgia,serif;letter-spacing:.17em;color:#d9bd86;margin-top:17px}
+.cover{filter:drop-shadow(18px 24px 24px #07132680)}
+.cover:hover{filter:drop-shadow(18px 24px 28px #07132690)}
+.cover-hint{font-style:italic;opacity:.88}
+@media(min-width:1600px){.scene-note-left{left:45px}.scene-note-right{right:45px}}
+@media(max-width:1100px){.scene-note{max-width:185px}.scene-note p{font-size:19px}.scene-note-right p{font-size:18px}.scene-note-left{left:22px}.scene-note-right{right:22px}.note-kicker{font-size:8px}.note-meta{font-size:9px}}
+@media(max-width:1000px){.scene-note{display:none}.scene-eyebrow{top:10px;font-size:8px;letter-spacing:.16em;gap:12px}.scene-eyebrow>span{width:27px}.intro:not([hidden]){padding-top:42px!important}.cover-story-title{font-size:22px}.cover-story-title strong{font-size:25px}.cover-story-title small{font-size:7px;margin-top:12px}}
+@media(max-width:820px){.scene-eyebrow{color:#e0d4bd;text-shadow:0 2px 8px #102236}.scene-eyebrow>span{background:linear-gradient(90deg,transparent,#d4b980)}.cover-story-title{font-size:21px}.cover-story-title strong{font-size:24px}}
+/* Live sunlight sits above the painted scene and below every book/control. */
+.sword-sun{position:fixed;z-index:0;pointer-events:none;mix-blend-mode:screen;opacity:.94;contain:strict}
+.intro,.reader{z-index:1}
+.solar-fallback{border-radius:50%;background:radial-gradient(circle,#fffde1 0 11%,#ffe5a8 15%,#ffbd595e 22%,#f58b303b 30%,transparent 54%);animation:solarBreathing 5s ease-in-out infinite}
+.solar-fallback::after{content:'';position:absolute;inset:31%;border:2px solid #ffde8a9c;border-radius:48% 52% 45% 55%;box-shadow:0 0 14px #ffd56ac9,inset 0 0 8px #fff4ad;animation:solarTurning 14s linear infinite}
+@keyframes solarBreathing{50%{opacity:.68;filter:brightness(1.18)}}
+@keyframes solarTurning{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.solar-fallback,.solar-fallback::after{animation:none}}
+.sword-sun{mix-blend-mode:normal;filter:drop-shadow(0 0 8px #ffd17438)}
+/* The animated core is composited with the photograph BEFORE .scene's blur. */
+.scene>.sword-sun{position:absolute;filter:none;opacity:.96;z-index:0}
+.solar-fallback{border-radius:43% 57% 49% 51%;background:radial-gradient(ellipse at 46% 48%,#fffbe8 0 10%,#ffe2a8 15%,#ffc05b70 22%,transparent 45%),radial-gradient(ellipse at 54% 56%,#ffc05290,transparent 44%)}
+@keyframes solarBreathing{30%{opacity:.73;border-radius:57% 43% 61% 39%}70%{opacity:.94;border-radius:38% 62% 44% 56%}}
+/* Quiet streams of Light rise behind the book, sharing the photograph's blur. */
+.rising-light{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;mix-blend-mode:screen}
+.rising-light>span{position:absolute;left:var(--x);bottom:-260px;height:var(--length);opacity:0;transform-origin:center top;animation:ascendingLight var(--duration) var(--delay) linear infinite;will-change:transform,opacity}
+.light-thread{width:3px;background:linear-gradient(180deg,#fff5d7d9,#f9d78b66 17%,#e8b86625 55%,transparent);box-shadow:0 0 8px #ffd88824}
+.light-thread::before{content:'';position:absolute;left:-3px;top:-3px;width:9px;height:9px;border-radius:50%;background:#fff1c8;box-shadow:0 0 10px #ffdd92cc,0 0 19px #e6bb6260}
+.rising-light>.light-wisp{width:45px;background:radial-gradient(ellipse at 50% 12%,#f7e3b48a,transparent 42%),linear-gradient(180deg,#f6dfa956,transparent);filter:blur(8px);border-radius:50%;animation-name:ascendingWisp;will-change:transform,opacity}
+@keyframes ascendingLight{0%{opacity:0;transform:translate3d(0,0,0) scaleY(.5)}14%{opacity:.72}43%{opacity:.9;transform:translate3d(var(--mid),-54svh,0) scaleY(1)}73%{opacity:.58}100%{opacity:0;transform:translate3d(var(--drift),calc(-100svh - 420px),0) scaleY(.7)}}
+@keyframes ascendingWisp{0%{opacity:0;transform:translate3d(0,0,0) scale(.8)}22%{opacity:.19}55%{opacity:.26;transform:translate3d(var(--mid),-55svh,0) scale(1)}100%{opacity:0;transform:translate3d(var(--drift),calc(-100svh - 440px),0) scale(.8)}}
+body[data-light-paused='true'] .rising-light>span{animation-play-state:paused}
+.solar-fallback{animation-duration:2.3s}.solar-fallback::after{animation-duration:6.4s}
+@media(max-width:820px){.light-thread:nth-child(2n){display:none}.light-wisp{display:none}}
+@media(prefers-reduced-motion:reduce){.rising-light>span{animation:none;opacity:0;will-change:auto}}
+
+.rising-light>.light-thread{bottom:-180px;height:calc(var(--length) + 26px)}
+
+/* Canon dialogue follows the same readable scale as the surrounding narrative. */
+.story blockquote{margin:1.15em .35em;padding:.1em .65em;border-left:1px solid #87612e66;font:italic 1em/1.65 Georgia,serif;color:#3b2a16;text-indent:0;overflow-wrap:break-word}

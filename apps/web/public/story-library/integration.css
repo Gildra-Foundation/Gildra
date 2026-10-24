@@ -1,0 +1,16 @@
+/* The application supplies the one shared toolbar. Keep the imported scene's
+   painted room and shelf coordinates intact below it. */
+html[data-library-still] { scroll-behavior: auto; }
+html[data-library-still] *, html[data-library-still] *::before, html[data-library-still] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.no-script { position: absolute; z-index: 8; top: 360px; width: 100%; text-align: center; }
+.no-script a { text-decoration: underline; }
+@media (prefers-reduced-transparency: reduce) {
+  .library-reading::backdrop, .phone-book::backdrop, .held-book::backdrop {
+    background: #101b25;
+    backdrop-filter: none;
+  }
+}
