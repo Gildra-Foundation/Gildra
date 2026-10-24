@@ -4,21 +4,15 @@ import { cookies } from "next/headers";
 import type { CSSProperties } from "react";
 import type { Lang } from "@/lib/i18n";
 import { HomeBookCover, HomeBookStage } from "./HomeBook";
-import { HomeNavigation } from "./HomeNavigation";
-import { GildraMark } from "./GildraMark";
 import { HomeTheme } from "./HomeTheme";
 import { HomeEpigraph } from "./HomeEpigraph";
-import { HomeMusic } from "./HomeMusic";
-import { HomeScene } from "./HomeScene";
-import { HomeEntry } from "./HomeEntry";
 import { ThemePicker } from "./ThemePicker";
-import { GameSwitcher } from "@/components/platform/navigation/GameSwitcher";
 import { homeThemeCookie, homeThemes, isHomeTheme } from "./homeThemes";
 import styles from "./grimoireHome.module.css";
 
 const coverSizes = "(max-width: 400px) 70vw, (max-width: 760px) 280px, (min-width: 1600px) 470px, 440px";
-const coverAvifSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v3-320.avif 320w, /assets/wow/character-book/intro/chronicle-cover-v3-640.avif 640w, /assets/wow/character-book/intro/chronicle-cover-v3-1024.avif 1024w";
-const coverWebpSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v3-320.webp 320w, /assets/wow/character-book/intro/chronicle-cover-v3-640.webp 640w, /assets/wow/character-book/intro/chronicle-cover-v3-1024.webp 1024w";
+const coverAvifSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v2-320.avif 320w, /assets/wow/character-book/intro/chronicle-cover-v2-640.avif 640w, /assets/wow/character-book/intro/chronicle-cover-v2-1024.avif 1024w";
+const coverWebpSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v2-320.webp 320w, /assets/wow/character-book/intro/chronicle-cover-v2-640.webp 640w, /assets/wow/character-book/intro/chronicle-cover-v2-1024.webp 1024w";
 
 // Kurale (headings, nav) and PT Serif (body) subsets the first screen renders
 // in. Discovered only through CSS they land ~1 s after the first paint on a
@@ -33,7 +27,7 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
   for (const font of firstScreenFonts[lang === "ru" ? "ru" : "en"]) {
     preload(`/assets/wow/fonts/${font}.woff2`, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
   }
-  preload("/assets/wow/character-book/intro/chronicle-cover-v3-640.avif", {
+  preload("/assets/wow/character-book/intro/chronicle-cover-v2-640.avif", {
     as: "image",
     type: "image/avif",
     imageSrcSet: coverAvifSrcSet,
@@ -47,20 +41,19 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
   const sceneArt = homeThemes.find((theme) => theme.id === initialTheme)?.art;
   if (sceneArt) preload(`/assets/wow/character-book/intro/${sceneArt}`, { as: "image", type: "image/webp", fetchPriority: "high" });
   const ru = lang === "ru";
-  const prefix = ru ? "/ru" : "";
   // The same cover art is the closed book and the leaf that swings open.
   const coverFace = <>
     <picture>
       <source type="image/avif" srcSet={coverAvifSrcSet} sizes={coverSizes} />
       <source type="image/webp" srcSet={coverWebpSrcSet} sizes={coverSizes} />
-      <img className={styles.coverImage} src="/assets/wow/character-book/intro/chronicle-cover-v3-640.webp" srcSet={coverWebpSrcSet} sizes={coverSizes} width={1024} height={1536} fetchPriority="high" loading="eager" decoding="async" alt="" draggable={false} />
+      <img className={styles.coverImage} src="/assets/wow/character-book/intro/chronicle-cover-v2-640.webp" srcSet={coverWebpSrcSet} sizes={coverSizes} width={1024} height={1536} fetchPriority="high" loading="eager" decoding="async" alt="" draggable={false} />
     </picture>
     <span className={styles.coverLight} aria-hidden="true" />
     <span className={styles.coverGems} aria-hidden="true"><i /><i /></span>
     <span className={styles.coverTitle} aria-hidden="true"><small>WORLD OF WARCRAFT</small><strong>GILDRA</strong><i /></span>
     <span className={styles.coverSubtitle} aria-hidden="true"><span>{ru ? <>Хроники<br />Азерота</> : <>Chronicles<br />of Azeroth</>}</span><small>{ru ? "ПУТЕВОДИТЕЛЬ ГЕРОЯ" : "A HERO’S COMPANION"}</small></span>
   </>;
-  return <HomeTheme initialTheme={initialTheme}><HomeScene lang={lang}>
+  return <HomeTheme initialTheme={initialTheme}>
     <div className={styles.snow} aria-hidden="true">
       {Array.from({ length: 28 }, (_, index) => <span key={index} style={{
         "--snow-x": `${(index * 37 + 7) % 100}%`,
@@ -71,20 +64,7 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
         "--snow-rest": `${(index * 23 + 11) % 96}svh`,
       } as CSSProperties} />)}
     </div>
-    <header className={styles.header}>
-      <div className={styles.brand}>
-        <Link href={prefix || "/"} aria-label={ru ? "Gildra — главная" : "Gildra home"}><GildraMark /></Link>
-        <GameSwitcher lang={lang} home />
-      </div>
-      <HomeNavigation lang={lang} />
-      <div className={styles.headerRight}>
-        <ThemePicker lang={lang} />
-        <nav className={styles.language} aria-label={ru ? "Язык" : "Language"}>
-          <Link href="/ru" aria-current={ru ? "page" : undefined}>RU</Link><span aria-hidden="true">/</span>
-          <Link href="/" aria-current={!ru ? "page" : undefined}>EN</Link>
-        </nav>
-      </div>
-    </header>
+    <div className={styles.appearance}><ThemePicker lang={lang} /></div>
     <HomeBookStage lang={lang} className={styles.hero} coverFace={coverFace}>
       <div className={styles.copy}>
         <HomeEpigraph lang={lang} />
@@ -95,13 +75,12 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
           {coverFace}
         </HomeBookCover>
         <p className={styles.bookHint}><span aria-hidden="true">✧</span>{ru ? "Коснитесь обложки, чтобы открыть" : "Touch the cover to turn the first page"}</p>
-        <HomeMusic lang={lang} />
       </div>
     </HomeBookStage>
     <footer className={styles.footer}>
       <span className={styles.footerMark} aria-hidden="true">✧</span>
       <span>{ru ? "ВАШЕ ПРИКЛЮЧЕНИЕ. ВАША КНИГА." : "YOUR ADVENTURE. YOUR BOOK."}</span>
-      <HomeEntry lang={lang} />
+      <Link href={ru ? "/ru/privacy" : "/privacy"}>{ru ? "Политика конфиденциальности" : "Privacy policy"}</Link>
     </footer>
-  </HomeScene></HomeTheme>;
+  </HomeTheme>;
 }
