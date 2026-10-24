@@ -137,7 +137,13 @@
 
 /* Opening the book on the page: the epigraph and hint step aside while the
    cover keeps its box, so the closing book lands exactly where it started. */
-.hero{position:relative}
+.page{min-height:calc(100svh - var(--atlas-sticky-top));display:flex;flex-direction:column}
+.appearance{position:relative;z-index:10;display:flex;justify-content:flex-end;width:100%;max-width:1380px;margin-inline:auto;padding:12px clamp(24px,5vw,70px) 0}
+.hero{position:relative;flex:1;width:100%;min-height:calc(100svh - var(--atlas-sticky-top) - 120px)}
+.footer{width:calc(100% - 48px)}
+.footer a{min-height:44px;display:inline-flex;align-items:center;color:inherit;text-decoration:underline;text-underline-offset:3px;letter-spacing:normal;font-size:11px}
+@media(max-width:760px){.appearance{padding-top:8px}.hero{min-height:0}.footer{width:auto}}
+@media(max-width:480px){.appearance .themeMenu{top:calc(var(--atlas-sticky-top) + 56px)}}
 .copy,.bookHint{transition:opacity 600ms ease 900ms,visibility 0s}
 .hero:is([data-book-state="opening"],[data-book-state="open"],[data-book-state="held"]) :is(.copy,.bookHint){opacity:0;visibility:hidden;transition:opacity 280ms ease,visibility 0s 280ms}
 .hero:not([data-book-state="closed"]) .cover{visibility:hidden}
