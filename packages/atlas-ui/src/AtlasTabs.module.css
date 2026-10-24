@@ -40,6 +40,8 @@
 .segmented .tab[aria-selected="true"] { color: var(--atlas-accent-ink); background: var(--atlas-accent); box-shadow: 0 0 14px var(--atlas-accent-glow); }
 .segmented .tab[aria-selected="true"] .count { color: var(--atlas-accent-ink); }
 
+/* A grid item: without this, wide content (a scrolling table) stretches the panel and the frame clips it. */
+.panel { min-width: 0; }
 .panel:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
 
 /* Phones: a 44 px touch target for every tab. */
