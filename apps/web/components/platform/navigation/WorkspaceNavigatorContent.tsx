@@ -3,7 +3,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalSto
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight, BarChart3, ChevronDown, KeyRound, Menu, ScrollText, Swords, UserRound, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, ChevronDown, KeyRound, Menu, ScrollText, Swords, UserRound, X, type LucideIcon } from "lucide-react";
 import { p, type Lang } from "@/lib/i18n-paths";
 import { gameDestinationForPath } from "@/lib/games/destinations";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
@@ -27,7 +27,7 @@ const CLOSE_DELAY = 180;
 
 const word = (lang: Lang, value: { en: string; ru: string }) => value[lang];
 
-const realmIcons: Record<string, LucideIcon> = { heroes: UserRound, mythic: KeyRound, raids: Swords, meta: BarChart3, chronicle: ScrollText };
+const realmIcons: Record<string, LucideIcon> = { heroes: UserRound, mythic: KeyRound, raids: Swords, meta: BarChart3, chronicle: ScrollText, stories: BookOpen };
 
 function RealmIcon({ id, size }: { id: string; size: number }) {
   const Icon = realmIcons[id];

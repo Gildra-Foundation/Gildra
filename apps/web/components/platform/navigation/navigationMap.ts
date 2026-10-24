@@ -1,7 +1,7 @@
 import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
 
 /**
- * The atlas map of the top bar: five realms, each a hub page with its real
+ * The atlas map of the top bar: each realm is a hub page with its real
  * sub-pages. Only pages that exist and render without a session are listed;
  * placeholders (gear, Prey) stay out until they have content. The painting of
  * a realm is its section's scene, so the menu shows the art the page opens with.
@@ -73,6 +73,15 @@ export const navigationRealms: readonly NavigationRealm[] = [
     links: [
       { href: "/wow/articles", label: { en: "Articles", ru: "Статьи" }, note: { en: "Guides and stories", ru: "Гайды и истории" } },
       { href: "/wow/whats-new", label: { en: "What's new", ru: "Что нового" }, note: { en: "Gildra updates", ru: "Обновления Gildra" } },
+    ],
+  },
+  {
+    id: "stories",
+    label: { en: "Story Library", ru: "Библиотека историй" },
+    lede: { en: "Books about the lives and journeys of Azeroth’s heroes.", ru: "Книги о судьбах и странствиях героев Азерота." },
+    scene: "library",
+    links: [
+      { href: "/wow/stories", label: { en: "Story Library", ru: "Библиотека историй" }, note: { en: "Books and character chronicles", ru: "Книги и хроники персонажей" } },
     ],
   },
 ];
