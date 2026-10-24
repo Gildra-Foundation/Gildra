@@ -1,94 +1,87 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties } from "react";
 import type { Lang } from "@/lib/i18n";
-import { useHomeScene } from "./HomeScene";
-import { CinematicEpigraph } from "./CinematicEpigraph";
-import { inkWords } from "./EpigraphInk";
+import { lessMotion, subscribeSiteMotion } from "@/lib/client/motionPreference";
+import { epigraphTiming, inkDuration } from "./epigraphTiming";
 import styles from "./grimoireHome.module.css";
 
-export function WrittenEpigraph(props: { lang: Lang; quote: string; author: string; extended: boolean }) {
-  const { cinematic } = useHomeScene();
-  return cinematic ? <CinematicEpigraph {...props} /> : <StandardWrittenEpigraph {...props} />;
+function InkWords({ text, delays }: { text: string; delays: number[] }) {
+  let index = 0;
+  return text.split(/(\s+)/u).map((word, wordIndex) => {
+    if (/^\s+$/u.test(word)) {
+      index += Array.from(word).length;
+      return <Fragment key={wordIndex}>{word}</Fragment>;
+    }
+    return <span className={styles.inkWord} key={wordIndex}>
+      {Array.from(word).map((letter, letterIndex) => <span className={styles.inkLetter} key={letterIndex}
+        style={{ "--ink-delay": `${delays[index++]}ms`, "--ink-duration": `${inkDuration}ms` } as CSSProperties}>{letter}</span>)}
+    </span>;
+  });
 }
 
-function StandardWrittenEpigraph({ quote, author, extended }: { quote: string; author: string; extended: boolean }) {
-  const { started } = useHomeScene();
-  const figureRef = useRef<HTMLElement>(null);
+/** Silent handwriting: the full layout and accessible text are present from the start. */
+export function WrittenEpigraph({ quote, author, extended }: { lang: Lang; quote: string; author: string; extended: boolean }) {
+  const figure = useRef<HTMLElement>(null);
   const [phase, setPhase] = useState<"waiting" | "writing" | "done">("waiting");
-  const quoteLength = Array.from(quote).length;
-  const quoteDuration = Math.min(5400, Math.max(2000, quoteLength * 38));
-  const quoteStep = quoteDuration / quoteLength;
-  // The last letter needs 180ms to finish its ink animation before the pause.
-  const quoteFinish = (quoteLength - 1) * quoteStep + 180;
-  const signatureStart = quoteFinish + 600;
-  const finish = signatureStart + Array.from(author).length * 70 + 180;
+  const writing = epigraphTiming(quote);
+  const signatureStart = writing.finish + Math.max(800, writing.pauseAfter);
+  const signature = epigraphTiming(author, signatureStart);
 
   useEffect(() => {
-    const figure = figureRef.current;
-    if (!figure) return;
-    if (!started) { setPhase("waiting"); return; }
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let cancelled = false;
-    let animationStarted = false;
+    let began = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let observer: IntersectionObserver | undefined;
-
-    const showImmediately = () => {
-      if (!reducedMotion.matches) return;
+    const media = matchMedia("(prefers-reduced-motion: reduce)");
+    const finish = () => {
+      if (!lessMotion()) return;
       cancelled = true;
       clearTimeout(timer);
       observer?.disconnect();
       setPhase("done");
     };
-    reducedMotion.addEventListener("change", showImmediately);
-
-    if (reducedMotion.matches) {
-      showImmediately();
-    } else {
-      // Keep the final text layout while waiting for the font and viewport.
-      const fontReady = document.fonts.load('400 32px "Gildra Preciosa"').catch(() => []);
-      const start = () => {
-        if (animationStarted || cancelled) return;
-        animationStarted = true;
-        observer?.disconnect();
-        void fontReady.then(() => {
+    const unsubscribe = subscribeSiteMotion(finish);
+    media.addEventListener("change", finish);
+    const font = document.fonts.load('400 32px "Gildra Preciosa"').catch(() => []);
+    const begin = () => {
+      if (began || cancelled) return;
+      began = true;
+      observer?.disconnect();
+      void font.then(() => {
+        if (cancelled) return;
+        timer = setTimeout(() => {
           if (cancelled) return;
-          // Match the spoken scenes: music first, then handwriting.
-          timer = setTimeout(() => {
-            if (cancelled) return;
-            setPhase("writing");
-            timer = setTimeout(() => setPhase("done"), finish);
-          }, 3000);
-        });
-      };
-      if ("IntersectionObserver" in window) {
-        observer = new IntersectionObserver(entries => {
-          if (entries.some(entry => entry.isIntersecting)) start();
-        }, { threshold: 0.15 });
-        observer.observe(figure);
-      } else {
-        start();
-      }
-    }
-
+          setPhase("writing");
+          timer = setTimeout(() => setPhase("done"), signature.finish);
+        }, 180);
+      });
+    };
+    if (lessMotion()) finish();
+    else if (figure.current && "IntersectionObserver" in window) {
+      observer = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) begin();
+      }, { threshold: 0.15 });
+      observer.observe(figure.current);
+    } else begin();
     return () => {
       cancelled = true;
       clearTimeout(timer);
       observer?.disconnect();
-      reducedMotion.removeEventListener("change", showImmediately);
+      unsubscribe();
+      media.removeEventListener("change", finish);
     };
-  }, [finish, started]);
+  }, [signature.finish]);
 
-  return <figure ref={figureRef} className={styles.epigraph} data-writing={phase}>
+  return <figure ref={figure} className={styles.epigraph} data-writing={phase}>
     <blockquote>
       <h1 className={`${styles.quoteText}${extended ? ` ${styles.longQuote}` : ""}`} aria-label={quote}>
-        <span aria-hidden="true">{inkWords(quote, 0, quoteStep)}</span>
+        <span aria-hidden="true"><InkWords text={quote} delays={writing.delays} /></span>
       </h1>
     </blockquote>
     <figcaption className={styles.quoteAuthor} style={{ "--signature-delay": `${signatureStart}ms` } as CSSProperties}>
       <span aria-hidden="true" />
-      <cite aria-label={author}><span aria-hidden="true">{inkWords(author, signatureStart, 70)}</span></cite>
+      <cite aria-label={author}><span aria-hidden="true"><InkWords text={author} delays={signature.delays} /></span></cite>
     </figcaption>
     <noscript><style>{`.${styles.epigraph}[data-writing="waiting"] .${styles.inkLetter},.${styles.epigraph}[data-writing="waiting"] .${styles.quoteAuthor}>span{opacity:1;clip-path:none}`}</style></noscript>
   </figure>;
