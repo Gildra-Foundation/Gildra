@@ -11,6 +11,7 @@ import type { PullRole } from "./mdtPullIntel";
 import type { BuildSaveError } from "./savedTalentBuilds";
 import type { useSavedTalentBuilds } from "./useSavedTalentBuilds";
 import styles from "./mdtPullMap.module.css";
+import { SharedTalentTreeButton } from "./SharedTalentTreeButton";
 
 type Props = { locale: "ru" | "en"; library: ReturnType<typeof useSavedTalentBuilds>; onProfileChange: (profile: PlayerProfile) => void; onRoleChange: (role: PullRole) => void };
 function subscribe(notify: () => void) { window.addEventListener("hashchange", notify); window.addEventListener("popstate", notify); return () => { window.removeEventListener("hashchange", notify); window.removeEventListener("popstate", notify); }; }
@@ -39,6 +40,7 @@ function SharedBuildActions({ locale, library, build, onProfileChange, onRoleCha
   }
   return <>
     <b className={styles.buildOwner}>{build.name}</b><p>{spec.className[locale]} · {spec.name[locale]}</p>
+    <SharedTalentTreeButton code={build.code} locale={locale} />
     <div className={styles.importActions}><AtlasButton variant="ghost" onClick={() => { onProfileChange({ classId: decoded.classId, specId: decoded.specId, talentString: decoded.code }); onRoleChange(spec.role); }}>{t.apply}</AtlasButton>
       {library.mode === "guest" ? <AtlasButton disabled={signingIn} onClick={() => void connect()}>{signingIn ? t.signingIn : t.signIn}</AtlasButton> : <AtlasButton disabled={library.mode !== "account" || library.busy || existing} onClick={() => void save()}>{existing ? t.existing : t.save}</AtlasButton>}
     </div>
