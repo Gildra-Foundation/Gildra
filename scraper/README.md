@@ -61,3 +61,23 @@ The candidate is published by `parsers.wowgg_dataset_service` only after the
 complete filter map, row counts, tier assignments, URLs, and regression bounds
 pass validation. Failed or partial runs leave the last-known-good snapshot
 active.
+
+`Mythic+ meta — MythicStats` (`mplus-meta-mythicstats`) is collected by
+`parsers.mythicstats_meta` every six hours. mythicstats.com allows all
+crawlers in `robots.txt` and publishes no terms forbidding reuse; only numbers
+are stored (weekly spec presence in the top 2000 keys, average key level, Gini
+coefficients, the latest week's affixes and sample size), never page text or
+images, and the site is credited on every page that shows them.
+
+- Seeds: `https://mythicstats.com/meta` and the newest
+  `https://mythicstats.com/period/<id>` listed there (2 requests per run, at
+  most 1 request per second, `parsers.mythicstats_client`).
+- Budget: direct HTTPS first, 0 credits per run in the normal case
+  (~240 requests a month). The paid provider chain is a fallback only when the
+  direct response is blocked or fails its HTML contract; a fallback run is
+  capped at 2 provider requests.
+- Publishing: `parsers.mythicstats_meta_dataset_service` validates seasons,
+  weeks, role counts, ranges and source URLs, rejects a candidate that lost
+  more than half of its weeks, and inserts a snapshot only when the content
+  hash changed. Failed runs keep the last-known-good snapshot active; the API
+  marks it `stale` after 36 hours without a successful check.

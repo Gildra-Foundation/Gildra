@@ -5,14 +5,20 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
 
 type fakeStore struct {
 	snapshot Snapshot
+	meta     MythicPlusMeta
 	err      error
 	query    Query
+}
+
+func (f *fakeStore) WoWMythicPlusMeta(_ context.Context) (MythicPlusMeta, error) {
+	return f.meta, f.err
 }
 
 func (f *fakeStore) WoWTierList(_ context.Context, query Query) (Snapshot, error) {
@@ -94,5 +100,51 @@ func TestWoWTierListContexts(t *testing.T) {
 	mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v1/meta/wow/tier-list/contexts?activity=mythic_plus", nil))
 	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+	}
+}
+
+func TestWoWMythicPlusMetaServesTheStoredPayload(t *testing.T) {
+	store := &fakeStore{meta: MythicPlusMeta{Game: "wow", Status: "live", Data: []byte(`{"schema_version":1,"seasons":[]}`)}}
+	mux := http.NewServeMux()
+	NewHandler(store).Register(mux)
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v1/meta/wow/mythic-plus/meta", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+	}
+	if body := response.Body.String(); !strings.Contains(body, `"data":{"schema_version":1,"seasons":[]}`) {
+		t.Fatalf("body = %s", body)
+	}
+	if response.Header().Get("Cache-Control") != publicMetaCache {
+		t.Fatalf("Cache-Control = %q", response.Header().Get("Cache-Control"))
+	}
+}
+
+func TestWoWMythicPlusMetaMapsMissingAndFailingSnapshots(t *testing.T) {
+	for _, test := range []struct {
+		err  error
+		want int
+	}{{ErrSnapshotNotFound, http.StatusNotFound}, {errors.New("database down"), http.StatusServiceUnavailable}} {
+		mux := http.NewServeMux()
+		NewHandler(&fakeStore{err: test.err}).Register(mux)
+		response := httptest.NewRecorder()
+		mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v1/meta/wow/mythic-plus/meta", nil))
+		if response.Code != test.want {
+			t.Fatalf("%v: status = %d, want %d", test.err, response.Code, test.want)
+		}
+	}
+}
+
+func TestMythicPlusMetaTurnsStaleAfterMissedRefreshes(t *testing.T) {
+	now := time.Date(2026, 10, 24, 12, 0, 0, 0, time.UTC)
+	fresh, old := now.Add(-7*time.Hour), now.Add(-37*time.Hour)
+	if got := mythicPlusMetaStatus(&fresh, now); got != "live" {
+		t.Fatalf("fresh status = %q", got)
+	}
+	if got := mythicPlusMetaStatus(&old, now); got != "stale" {
+		t.Fatalf("old status = %q", got)
+	}
+	if got := mythicPlusMetaStatus(nil, now); got != "stale" {
+		t.Fatalf("unchecked status = %q", got)
 	}
 }

@@ -108,6 +108,28 @@ func TestIcyVeinsWorkerRequestsPrivateRefreshEndpoint(t *testing.T) {
 	}
 }
 
+func TestMythicPlusMetaWorkerRequestsPrivateRefreshEndpoint(t *testing.T) {
+	t.Parallel()
+	var path string
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		path = request.URL.Path
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"status":"skipped"}`))
+	}))
+	defer server.Close()
+
+	worker := NewMythicPlusMetaWorker(server.Client(), server.URL)
+	err := worker.Work(context.Background(), &river.Job[MythicPlusMetaRefreshArgs]{
+		Args: MythicPlusMetaRefreshArgs{ScheduledFor: "2026-10-24"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if path != mplusMetaRefreshPath {
+		t.Fatalf("unexpected request path: %s", path)
+	}
+}
+
 func TestWorkerRejectsFailedRefresh(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
