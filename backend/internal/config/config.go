@@ -37,6 +37,7 @@ type Config struct {
 	CatalogAccessMode      string
 	CatalogRecoveryPolicy  string
 	CatalogMediaDirectory  string
+	GameContentCollectMode string
 }
 
 func Load() (Config, error) {
@@ -98,10 +99,14 @@ func Load() (Config, error) {
 		CatalogAccessMode:      envOr("CATALOG_ACCESS_MODE", "public"),
 		CatalogRecoveryPolicy:  recoveryPolicy,
 		CatalogMediaDirectory:  os.Getenv("CATALOG_MEDIA_DIRECTORY"),
+		GameContentCollectMode: envOr("GAME_CONTENT_COLLECTION_MODE", "off"),
 	}
 
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL is required")
+	}
+	if cfg.GameContentCollectMode != "off" && cfg.GameContentCollectMode != "collect_only" {
+		return Config{}, errors.New("GAME_CONTENT_COLLECTION_MODE must be off or collect_only")
 	}
 	if cfg.ClickHousePassword == "" {
 		return Config{}, errors.New("CLICKHOUSE_PASSWORD is required")

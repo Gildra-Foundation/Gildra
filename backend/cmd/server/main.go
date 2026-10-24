@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -30,6 +31,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/config"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/datasetrefresh"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/gamecontent"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/gamecontentcollect"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/gamemeta"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/genshin"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/graphqlapi"
@@ -102,17 +104,29 @@ func run() error {
 		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
 		cfg.DatasetWorkerURL,
 	))
+	queues := map[string]river.QueueConfig{
+		river.QueueDefault:       {MaxWorkers: 10},
+		datasetrefresh.QueueName: {MaxWorkers: 1},
+	}
+	periodicJobs := []*river.PeriodicJob{
+		datasetrefresh.PeriodicJob(time.Now),
+		datasetrefresh.ArchonPeriodicJob(time.Now),
+		datasetrefresh.WowGGPeriodicJob(time.Now),
+		datasetrefresh.IcyVeinsPeriodicJob(time.Now),
+	}
+	if cfg.GameContentCollectMode == "collect_only" {
+		collectionStore := gamecontentcollect.NewStore(postgres)
+		if err := collectionStore.Configure(ctx); err != nil {
+			return fmt.Errorf("configure game content collection: %w", err)
+		}
+		collector := gamecontentcollect.NewCollector(collectionStore, gamecontentcollect.NewHTTPSource())
+		river.AddWorker(workers, gamecontentcollect.NewWorker(collector))
+		queues[gamecontentcollect.QueueName] = river.QueueConfig{MaxWorkers: 1}
+		periodicJobs = append(periodicJobs, gamecontentcollect.PeriodicJobs(time.Now)...)
+	}
 	riverClient, err := river.NewClient(riverpgxv5.New(postgres), &river.Config{
-		Queues: map[string]river.QueueConfig{
-			river.QueueDefault:       {MaxWorkers: 10},
-			datasetrefresh.QueueName: {MaxWorkers: 1},
-		},
-		PeriodicJobs: []*river.PeriodicJob{
-			datasetrefresh.PeriodicJob(time.Now),
-			datasetrefresh.ArchonPeriodicJob(time.Now),
-			datasetrefresh.WowGGPeriodicJob(time.Now),
-			datasetrefresh.IcyVeinsPeriodicJob(time.Now),
-		},
+		Queues:       queues,
+		PeriodicJobs: periodicJobs,
 		ErrorHandler: &joberrors.SentryHandler{},
 		Workers:      workers,
 	})
