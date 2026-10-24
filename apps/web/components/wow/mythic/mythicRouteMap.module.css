@@ -18,7 +18,7 @@
 
 .backdrop { position: absolute; z-index: -1; inset: 0; pointer-events: none; }
 .backdropScene { position: sticky; top: 0; height: 100lvh; overflow: hidden; }
-.backdropImage { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 35%; }
+.backdropImage { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 35%; filter: contrast(.9) saturate(.88); }
 .backdropScene::after { position: absolute; inset: 0; content: ""; background: linear-gradient(90deg, rgba(3, 6, 10, .49), rgba(3, 6, 10, .22) 48%, rgba(3, 6, 10, .45)), linear-gradient(180deg, rgba(3, 6, 10, .22), rgba(3, 6, 10, .4)); }
 @supports (animation-timeline: scroll()) {
   @media (prefers-reduced-motion: no-preference) {
@@ -1228,13 +1228,13 @@
 /* Tempered smoked glass: polished edges, a restrained reflection and a dark readable core. */
 .page { --dungeon-glass: rgba(6, 11, 17, .76); --dungeon-glass-raised: rgba(12, 19, 27, .82); }
 .routeControls, .panel, .legacyDraft, .page [data-testid="dungeon-source-review"] {
-  border: 1px solid color-mix(in srgb, var(--dungeon-accent) 30%, var(--atlas-line));
-  border-top-color: color-mix(in srgb, var(--dungeon-accent) 52%, var(--atlas-text-strong) 18%);
+  border: 1px solid color-mix(in srgb, var(--dungeon-accent) 20%, var(--atlas-line));
+  border-top-color: color-mix(in srgb, var(--dungeon-accent) 28%, var(--atlas-line));
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, .055), transparent 32%, var(--dungeon-glow) 160%), var(--dungeon-glass);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .025), transparent 32%, var(--dungeon-glow) 160%), var(--dungeon-glass);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .09), inset 0 -1px 0 rgba(0, 0, 0, .6), 0 18px 48px rgba(0, 0, 0, .28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), inset 0 -1px 0 rgba(0, 0, 0, .4), 0 18px 48px rgba(0, 0, 0, .28);
   outline: none;
 }
 .page [data-testid="dungeon-source-review"] { padding: var(--atlas-space-4); }
