@@ -13,6 +13,7 @@ from typing import Any
 
 from .archon_dataset_service import refresh_tierlist_archon
 from .icyveins_dataset_service import refresh_tierlist_icyveins
+from .mythicstats_dataset_service import refresh_tierlist_mythicstats
 from .mythicstats_meta_dataset_service import refresh_mplus_meta_mythicstats
 from .wowgg_dataset_service import refresh_tierlist_wowgg
 from .wowhead_dataset_service import RefreshBusy, refresh_tierlist
@@ -48,6 +49,7 @@ class Handler(BaseHTTPRequestHandler):
             "/internal/v1/datasets/tierlist-archon/refresh": refresh_tierlist_archon,
             "/internal/v1/datasets/tierlist-wowgg/refresh": refresh_tierlist_wowgg,
             "/internal/v1/datasets/tierlist-icyveins/refresh": refresh_tierlist_icyveins,
+            "/internal/v1/datasets/tierlist-mythicstats/refresh": refresh_tierlist_mythicstats,
             "/internal/v1/datasets/mplus-meta-mythicstats/refresh": refresh_mplus_meta_mythicstats,
         }
         refresher = refreshers.get(self.path)
