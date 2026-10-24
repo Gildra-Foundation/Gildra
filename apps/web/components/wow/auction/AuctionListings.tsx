@@ -1,15 +1,11 @@
 "use client";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
-import { copperParts, type AuctionResult } from "@/lib/wow/auctionBrowser";
+import { type AuctionResult, type AuctionQuery } from "@/lib/wow/auctionBrowser";
 import { auctionCopy } from "./auctionCopy";
 import { AuctionItem } from "./AuctionItem";
+import { AuctionMoney as Money } from "./AuctionMoney";
 import styles from "./auction.module.css";
-function Money({ value, lang }: { value: number | null; lang: "ru" | "en" }) {
-  if (value === null) return <span>—</span>;
-  const c = auctionCopy[lang], parts = copperParts(value);
-  return <span className={styles.money}>{!Number.isInteger(value) ? "≈ " : ""}{parts.gold.toLocaleString(lang)} <span>{c.gold}</span> {parts.silver} <span>{c.silver}</span> {parts.copper} <span>{c.copper}</span></span>;
-}
-export function AuctionListings({ data, lang, onPage }: { data: AuctionResult; lang: "ru" | "en"; onPage: (page: number) => void }) {
+export function AuctionListings({ data, lang, onPage, query }: { data: AuctionResult; lang: "ru" | "en"; onPage: (page: number) => void; query: Pick<AuctionQuery, "region" | "realm"> }) {
   const c = auctionCopy[lang];
   const date = (value: string) => new Date(value).toLocaleString(c.dateLocale, { timeZoneName: "short" });
   return <section className={styles.results} aria-label={c.title}>
@@ -24,8 +20,8 @@ export function AuctionListings({ data, lang, onPage }: { data: AuctionResult; l
       <table className={styles.table}>
         <caption className={styles.visuallyHidden}>{c.title} — {c.results}: {data.total}</caption>
         <thead><tr><th scope="col">{c.item}</th><th scope="col">{c.quantity}</th><th scope="col">{c.unit}</th><th scope="col">{data.market === "realm" ? c.buyout : c.terms}</th></tr></thead>
-        <tbody>{data.rows.map(row => <tr key={row.id}>
-          <td><AuctionItem row={row} lang={lang} />
+        <tbody>{data.rows.map(row => <tr key={row.id} className={styles.lotRow}>
+          <td><AuctionItem row={row} lang={lang} region={query.region} realm={query.realm} market={data.market} />
             {!row.name ? <span className={styles.secondary}>{c.metadata}</span> : null}
             <span className={styles.secondary}>ID {row.itemId}{row.petSpeciesId ? ` · ${c.pet} ${row.petSpeciesId}` : ""}</span>
             <details className={styles.details}><summary>{c.details}</summary><div>

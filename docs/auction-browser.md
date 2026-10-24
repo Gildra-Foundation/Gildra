@@ -79,8 +79,36 @@ when provided. Click/tap opens the full details in the existing Valyro-based
 AtlasDialog with focus management, Escape and a link to Wowhead retaining bonuses.
 The Valyro AtlasTooltip respects reduced motion.
 
-The static Blizzard preview is not an arbitrary bonus/modifier resolver.
-Preview bonus/context/modifier identity is compared to the lot. A different
-variant is explicitly labelled as a base preview whose level/stats may differ.
-Caged pets show actual auction species/level instead of the cage item's stats.
-No SimulationCraft jobs or user profile requests are triggered by browsing.
+Exact combat properties are loaded lazily for the actual lot as described below.
+Caged pets show the auction species/level; cage item stats are not substituted.
+
+## Exact lot tooltips and WoW money/frame assets
+
+Combat previews are no longer displayed as auction-lot properties. On first
+hover, keyboard focus or tap, `action=tooltip` accepts only the auction ID and
+market identity. It retrieves the actual listing from the Blizzard snapshot;
+client-supplied item levels, stats, bonuses and modifiers are never accepted.
+
+Bonus-only items without context/scaling/crafting inputs use Wowhead's documented
+bonus tooltip contract without inventing a player or item level. Other variants
+use the existing native item resolver with the complete context/bonus/modifier
+identity. The resolved item level and crafted stats select the corresponding
+Wowhead tooltip; native level, requirements, stat values and weapon damage/speed
+are checked before that tooltip's text is displayed. If Wowhead is unavailable,
+verified native combat facts remain usable. Unknown bonuses, unsupported modifiers,
+missing weapon metadata and heirlooms requiring a viewer level fail visibly;
+base combat stats are never used as a fallback. No DPS simulation job or account
+write is submitted: the existing metadata resolver runs its bounded item probe.
+
+Tooltip work is lazy, shared by full variant identity for15minutes, limited to
+two active requests per process, and remains under the existing bounded cache.
+Native resolution is capped at8seconds and Wowhead at4seconds/256KB. Browser
+requests share promises in an80-entry cache. Foreign HTML is converted to text;
+no external script or HTML is mounted. NPC sell prices are removed; prices in
+the tooltip are the actual listing's quantity, unit, whole-lot buyout and bid.
+
+Money uses local original WoW gold/silver/copper icons with accessible text.
+Item slots and lot outlines use original WoW UI textures; source attribution is
+in public/assets/wow/ui-textures/auction/SOURCE.md. Rarity colours apply to item
+names and icon borders. Existing AtlasTooltip/AtlasDialog retain Escape,
+keyboard focus management, mobile scrolling and reduced motion behavior.

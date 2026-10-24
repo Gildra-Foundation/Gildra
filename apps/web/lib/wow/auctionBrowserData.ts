@@ -1,5 +1,7 @@
 import "server-only";
 import { auctionItemIcon, parseAuctionItemDetails, type AuctionItemDetails } from "./auctionItemDetails";
+import { resolveExactAuctionTooltip } from "./auctionExactTooltip";
+import { auctionVariantKey } from "./auctionItemVariant";
 import { auctionPage, parseAuctionListings, validAuctionRealm, type AuctionListing, type AuctionQuery, type AuctionRegion, type AuctionResult } from "./auctionBrowser";
 
 // All caches are process-local, bounded, and share in-flight requests. No user token is used.
@@ -147,4 +149,18 @@ export async function browseAuctions(query: AuctionQuery): Promise<AuctionResult
     sourceUpdatedAt: market.sourceUpdatedAt, fetchedAt: market.fetchedAt, connectedRealmId, market: query.market,
     stale: market.sourceUpdatedAt === null || Date.now() - Date.parse(market.sourceUpdatedAt) > 2 * 60 * 60_000,
     searchTruncated: matched.truncated };
+}
+let tooltipRequests = 0;
+export async function auctionLotTooltip(query: AuctionQuery, auctionId: number) {
+  const connectedId = query.market === "realm" ? await connectedRealm(query) : null;
+  const market = await snapshot(query, connectedId);
+  const row = market.rows.find(row => row.id === auctionId);
+  if (!row) throw new Error("listing_not_found");
+  const key = auctionVariantKey({ itemId: row.itemId, contextId: row.context, bonusIds: row.bonusIds, modifiers: row.modifiers });
+  return memo(`tooltip:${query.region}:${query.lang}:${key}`, 15 * 60_000, async () => {
+    if (tooltipRequests >= 2) throw new Error("market_busy");
+    tooltipRequests++;
+    try { return await resolveExactAuctionTooltip(row, await itemDetails(query.region, query.lang, row.itemId), query.lang); }
+    finally { tooltipRequests--; }
+  });
 }

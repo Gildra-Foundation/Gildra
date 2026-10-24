@@ -2,6 +2,7 @@ import type { AuctionListing } from "./auctionBrowser";
 
 /** Localized Blizzard preview. Variant identity stays separate from display facts. */
 export type AuctionItemDetails = {
+  itemClassId?: number; itemSubclassId?: number; inventoryType?: string; qualityId?: number;
   name: string | null; iconUrl: string | null; quality: string | null;
   itemLevel: string | null; slot: string | null; binding: string | null;
   requiredLevel: string | null; armor: string | null; stats: string[];
@@ -31,6 +32,8 @@ export function parseAuctionItemDetails(raw: unknown, itemId: number, iconUrl: s
   const modifiers = Array.isArray(preview.modifiers) ? preview.modifiers : [];
   const weapon = object(preview.weapon);
   return {
+    itemClassId: Number(object(item.item_class).id), itemSubclassId: Number(object(item.item_subclass).id),
+    inventoryType: String(object(item.inventory_type).type ?? ""), qualityId: Number(object(item.quality).type === "POOR" ? 0 : ({ COMMON: 1, UNCOMMON: 2, RARE: 3, EPIC: 4, LEGENDARY: 5, ARTIFACT: 6, HEIRLOOM: 7 } as Record<string, number>)[String(object(item.quality).type)]),
     name: text(item.name), iconUrl, quality: text(object(preview.quality ?? item.quality).name),
     itemLevel: display(preview.level), slot: text(object(preview.inventory_type ?? item.inventory_type).name),
     binding: text(object(preview.binding).name), requiredLevel: display(object(preview.requirements).level),
