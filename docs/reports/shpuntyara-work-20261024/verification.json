@@ -1,8 +1,8 @@
 {
-  "date_utc": "2026-10-24T12:48:26.605597+00:00",
+  "date_utc": "2026-10-24T12:54:23.647440+00:00",
   "original_master": "913e7ffc720d8f23abb5898d9ce380511ddf3b76",
-  "metadata_only_head": "e19cce3583f59a5973c32962815c799e4ba5df8d",
-  "recovered_source_head": "29cb2035184915fc1dbae600227d4b3ffee51fd3",
+  "metadata_only_head": "56891f0a9a26151e0dfeda3dec0e672c52b0f57d",
+  "recovered_source_head": "174f2a1bae801b9d19a442e3d884020828580139",
   "original_tree": "08079821f6c249b7a14a92b5bc054b0e9c70e927",
   "metadata_only_tree": "08079821f6c249b7a14a92b5bc054b0e9c70e927",
   "coauthor_added_to": [
@@ -12,99 +12,100 @@
     },
     {
       "original": "7b882daf4ba7b2168923a68c93109e7a27863375",
-      "rewritten": "5017b445cc4dc9a163ecf152194e47cde08ef07f"
+      "rewritten": "94ebc1e0dcc4fc1b55ee4b7335ec42007af3858a"
     },
     {
       "original": "525ad98bf817d6299d899cf5c471ec67344d935d",
-      "rewritten": "c57a78d0702fec4a3d5bfb313590c1b360fe4a51"
+      "rewritten": "10848afdbd24bdc414e913cafe3fe771b552380b"
     },
     {
       "original": "895abe6b551973fc59e9543184ef96880042fb23",
-      "rewritten": "ca8e8f4bfaf22d63522e1e2237646c0dd2c0e40e"
+      "rewritten": "412e54c405ede66af0f9a9bc45a6a32e356e5e55"
     },
     {
       "original": "b3be0f78f7bce125e74a8c6858ffb99328623b44",
-      "rewritten": "db0f0aad1d40e3284ba6c6a350a45cef171ecef2"
+      "rewritten": "00e92600031cbaf6e5fd4dd754b9f6d0482f2282"
     },
     {
       "original": "4a509f2912fc494674020913b238e7810fb3adef",
-      "rewritten": "8d6ccf946575155cdd187587f13542a2e84478fa"
+      "rewritten": "acf793f5dbaaf3debdce62d0d4b2f686c8aa6d57"
     },
     {
       "original": "a72873ff3a10a57bdfcffd6c4ed7abe7005ed2c4",
-      "rewritten": "a046fee9b1ca4bb1a7cac64d8b307fe48f5a2021"
+      "rewritten": "bf81e8f13dec4efcf874734bb7da699d363283a9"
     },
     {
       "original": "e4802150c3dba4a6ed2a28f3c2e17d989f2b004e",
-      "rewritten": "6bbd51e53905733023a6464b8236805e7900f249"
+      "rewritten": "5f0159d7c02be54dd3f8c8b687af3f22d07d4c7f"
     }
   ],
   "original_author_and_committer_retained_for_every_existing_commit": true,
+  "existing_coauthor_trailers_retained": true,
   "code_tree_retained_for_every_existing_commit": true,
   "new_task_commits": [
     {
       "topic": "home-book",
-      "commit": "3e7172b4cc46c7945d92f1005fba43c7759637b5",
+      "commit": "b82541b6ae4bcdd372af09c73893b68ca9aafb6c",
       "files": 4
     },
     {
       "topic": "shared-talent-tree",
-      "commit": "40d282d1fb26d490c5442235865e20e27cb9fbde",
+      "commit": "95c9dfda0917a34e439873ebdd1ec850acbc343e",
       "files": 11
     },
     {
       "topic": "home-writing",
-      "commit": "df497308697012ac500ecf27b5cd47412bd0dfd8",
+      "commit": "e5838e75938c4723321569cadf6ce5f13ded70aa",
       "files": 4
     },
     {
       "topic": "edit-shared-build-final",
-      "commit": "b052dba1e392d07cbb4224c16b2a85f81429f3fa",
+      "commit": "fe251591d1398f492d581f1d01901bc57cc5fc1b",
       "files": 11
     },
     {
       "topic": "home-slower",
-      "commit": "5e1883c087a40662f01096ff8a761c7e9193f7bb",
+      "commit": "3cc96651d4c83c99834a05483222746ac394038b",
       "files": 2
     },
     {
       "topic": "story-library",
-      "commit": "0414884d3a9720f8f1fe3c9a1a537293debba368",
+      "commit": "f8917ff216983acd42c1bcec8dd1b8bbaff7d33f",
       "files": 34
     },
     {
       "topic": "visible-calculator",
-      "commit": "78fb9a25bd17e10af6afa2ade5cb45b1e2908230",
+      "commit": "68990b77eb35536db6318b4acaa47dc116008396",
       "files": 5
     },
     {
       "topic": "dungeon-glass",
-      "commit": "ec04d1daff69e0b3d93f23672979bb48fe8607db",
+      "commit": "b7ebee5702322d7e75a93da0863ed41b4e755668",
       "files": 43
     },
     {
       "topic": "calm-art",
-      "commit": "e859d46331edde20cef21c68ea2701d3cf1d7b55",
+      "commit": "6c3a928f3c215c6b1e67e770f779c29828443f5f",
       "files": 19
     },
     {
       "topic": "hide-character-training",
-      "commit": "2ac33f8a6652d9a90d17777d5f31e935f0f3a106",
+      "commit": "1e10390ff2d8fa19e1ea93a285b3798d52d01d55",
       "files": 1
     },
     {
       "topic": "auction-effects",
-      "commit": "a5ea8c740ad4d893d800b939cec763ff6bec4972",
+      "commit": "7b68e791ceb8969800dd176909fa612ed9aefbc8",
       "files": 4
     },
     {
       "topic": "seamless-footer",
-      "commit": "6ade9ecc85a5b8c5abdfa279c264381f2a42ed68",
+      "commit": "6f07437da1e72f6578c95111aacbb4c3a5dc1ad2",
       "files": 2
     },
     {
       "topic": "hide-gear-comparison",
-      "commit": "29cb2035184915fc1dbae600227d4b3ffee51fd3",
+      "commit": "174f2a1bae801b9d19a442e3d884020828580139",
       "files": 1
     }
   ],
@@ -131,7 +132,11 @@
     },
     {
       "branch": "chore/shpuntyara-shared-memory-20261024",
-      "head": "dbaed1ba5a7c73a479ef54ec9e89f264c1339321"
+      "head": "602f54fd68f8da9af6b4b34b7d1661d124e26e55"
+    },
+    {
+      "branch": "feature/shpuntyara-auction-browser-20261024",
+      "head": "45e9032e25a807d0d117886f614d804758891d49"
     }
   ],
   "checks": {
@@ -145,7 +150,7 @@
     "route_mirrors": "passed",
     "memory_tests": 6,
     "git_diff_check": "passed (CRLF-aware for imported story assets)",
-    "high_confidence_credential_scan_files": 334,
+    "high_confidence_credential_scan_files": 352,
     "credential_findings": 0
   },
   "production_changed_by_this_recovery": false,
