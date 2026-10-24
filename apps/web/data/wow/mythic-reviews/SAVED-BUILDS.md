@@ -2,6 +2,18 @@
 
 ## Sharing a snapshot
 
+Shared builds include View talent tree: a lazy read-only viewer with class/spec/
+selected hero branches, links, selected-node marks, exact ranks and choice sides,
+localized descriptions/icons through the existing calculator source. The public
+tree endpoint accepts only bounded known spec/hero/language parameters, never an
+account or private export. Opening a tree changes no build or device preferences.
+The existing strict bitstream decoder has a detailed mode; its original public
+result/ability filtering is unchanged. Projection verifies full class node order,
+definitions, hero path and presence of every selected node. Known empty unselected
+catalog placeholders and trailing zero entries on single talents are ignored;
+choice indices remain exact. Source mismatch produces a visible error rather than
+showing an incorrect allocation. Network loading/retry/abort are bounded.
+
 Choose a saved build and use Share build. The URL fragment contains only version1,
 the build name and canonical talent export. No owner/account/library ID or access
 credential is included. It is a copy: later source rename/deletion does not revoke
