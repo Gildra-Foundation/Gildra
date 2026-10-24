@@ -21,6 +21,7 @@ export type RouteSection = {
 };
 
 export const routeSections = {
+  auction: { path: "/wow/auction", parent: "wow", title: { en: "Auction House", ru: "Аукцион" }, scene: "articles", search: { keywords: "auction house tools market prices аукцион инструменты рынок цены реагенты" } },
   wow: { path: "/wow", title: { en: "World of Warcraft", ru: "World of Warcraft" }, scene: "wow", search: { en: "World of Warcraft hub", ru: "Центр World of Warcraft", keywords: "home главная хаб" } },
   raids: { path: "/wow/raids", parent: "wow", title: { en: "Raids", ru: "Рейды" }, scene: "raids", search: { en: "Raid journal", ru: "Рейдовый журнал", keywords: "raids рейды" } },
   mythicPlus: { path: "/wow/mythic-plus", parent: "wow", title: { en: "Mythic+", ru: "Эпохальный+" }, scene: "mythicPlus", search: { en: "Mythic+ atlas", ru: "Атлас Эпохальный+", keywords: "mythic plus keys ключи эпохальные" } },
