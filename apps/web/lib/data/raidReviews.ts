@@ -19,9 +19,10 @@ export type ReviewedRaid = {
   summaryEn: string;
   bosses: ReviewedRaidBoss[];
 };
-export function getRaidReview(raidSlug: string): ReviewedRaid | undefined {
-  return (reviews as ReviewedRaid[]).find((review) => review.raidSlug === raidSlug);
+export function getRaidReview(raidSlug: string, published?: ReviewedRaid[]): ReviewedRaid | undefined {
+  return (published ?? reviews as ReviewedRaid[]).find((review) => review.raidSlug === raidSlug);
 }
-export function getReviewedSpellIdentities(encounterId?: number, raidSlug?: string, bossSlug?: string) {
-  return identities.abilities.filter((ability) => encounterId !== undefined ? ability.encounterId === encounterId : ability.raidSlug === raidSlug && ability.bossSlug === bossSlug);
+export type ReviewedSpellIdentity = typeof identities.abilities[number];
+export function getReviewedSpellIdentities(encounterId?: number, raidSlug?: string, bossSlug?: string, published?: ReviewedSpellIdentity[]) {
+  return (published ?? identities.abilities).filter((ability) => encounterId !== undefined ? ability.encounterId === encounterId : ability.raidSlug === raidSlug && ability.bossSlug === bossSlug);
 }

@@ -153,7 +153,7 @@ function formatTimer(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale, dungeonSlug, dungeonOptions, keyLevel, onKeyLevelChange }: { locale: RouteLocale; dungeonSlug: DungeonSlug; dungeonOptions: DungeonSelectorOption[]; keyLevel: number; onKeyLevelChange: (level: number) => void }) {
+export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale, dungeonSlug, dungeonOptions, keyLevel, onKeyLevelChange, seasonSlug = "midnight-season-2" }: { seasonSlug?: string; locale: RouteLocale; dungeonSlug: DungeonSlug; dungeonOptions: DungeonSelectorOption[]; keyLevel: number; onKeyLevelChange: (level: number) => void }) {
   const router = useRouter();
   const copy = mythicRouteCopy[locale];
   const [isNavigating, startNavigation] = useTransition();
@@ -168,7 +168,7 @@ export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale,
   function changeDungeon(slug: DungeonSlug) {
     if (slug === dungeonSlug) return;
     const localePrefix = locale === "ru" ? "/ru" : "";
-    startNavigation(() => router.push(`${localePrefix}/wow/mythic-plus/midnight-season-2/${slug}`));
+    startNavigation(() => router.push(`${localePrefix}/wow/mythic-plus/${seasonSlug}/${slug}`));
   }
 
   return (

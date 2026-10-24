@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RaidOverview } from "@/components/wow/raid/RaidOverview";
-import { getMidnightRaid, raidSlugs } from "@/components/wow/raid/midnightRaidData";
+import { raidSlugs } from "@/components/wow/raid/midnightRaidData";
+import { raidPageData } from "@/lib/data/gamecontent/pages";
+import { ContentStatus, ContentUnavailable } from "@/components/gamecontent/ContentState";
 
-// Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
-export const dynamicParams = false;
+// Known routes are prerendered; new published slugs resolve at runtime. Unknown entities remain 404.
+export const dynamicParams = true;
+export const revalidate = 60;
 
 type PageProps = { params: Promise<{ raid: string }> };
 
@@ -13,7 +16,8 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const raid = getMidnightRaid((await params).raid);
+  const data = await raidPageData((await params).raid).catch(() => null);
+  const raid = data?.raid;
   if (!raid) return {};
   return {
     title: `${raid.nameRu}: рейдовый журнал — Gildra`,
@@ -27,7 +31,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function RaidPage({ params }: PageProps) {
-  const raid = getMidnightRaid((await params).raid);
+  const data = await raidPageData((await params).raid).catch(() => null);
+  if (!data) return <ContentUnavailable locale="ru" />;
+  const { raid, published } = data;
   if (!raid) notFound();
-  return <RaidOverview raid={raid} locale="ru" />;
+  return <div data-game-content-release={published?.release.releaseId}><ContentStatus locale="ru" stale={published?.stale ?? false} /><RaidOverview raid={raid} locale="ru" content={published?.payload} /></div>;
 }

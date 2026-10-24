@@ -1,13 +1,13 @@
 import { AtlasDisclosure, AtlasSection } from "@/components/atlas";
 import { formatAtlasDate } from "@gildra/atlas-ui/format";
-import { getRaidReview } from "@/lib/data/raidReviews";
+import { getRaidReview, type ReviewedRaid } from "@/lib/data/raidReviews";
 import { raidReviewCopy } from "./raidReviewCopy";
 import styles from "./raidReview.module.css";
 
 /** Reviewed editorial advice; separate from guarded Adventure Guide descriptions. */
-export function RaidReviewNotes({ raidSlug, bossSlug, locale }: { raidSlug: string; bossSlug?: string; locale: "ru" | "en" }) {
+export function RaidReviewNotes({ raidSlug, bossSlug, locale, reviews }: { raidSlug: string; bossSlug?: string; locale: "ru" | "en"; reviews?: ReviewedRaid[] }) {
   const reviewCopy = raidReviewCopy[locale];
-  const review = getRaidReview(raidSlug);
+  const review = getRaidReview(raidSlug, reviews);
   if (!review) return null;
   const boss = bossSlug ? review.bosses.find((entry) => entry.slug === bossSlug) : undefined;
   if (bossSlug && !boss) return null;

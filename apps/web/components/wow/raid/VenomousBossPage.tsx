@@ -1,11 +1,12 @@
+import type { RaidPayload } from "@/lib/data/gamecontent/types";
 import Image from "next/image";
 import { ExternalLink, Flame, HeartPulse, MapPin, Shield, Swords } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasNotice, AtlasSection, AtlasTable } from "@/components/atlas";
-import { difficulties, type BossGuide, type VerifiedAbilityIdentity } from "@/lib/data/wow";
+import { difficulties as baselineDifficulties, type BossGuide, type VerifiedAbilityIdentity } from "@/lib/data/wow";
 import { wowGuideText } from "@/lib/wow/sourceLocale";
-import { contentManifest } from "@/lib/data/wow";
+import { contentManifest as baselineManifest } from "@/lib/data/wow";
 import { EncounterSwitcher, RaidPager } from "./RaidNavigation";
-import { lootBandIndexForBoss, raidLootBands, tierRewards, venomousRaidLootSource, venomousRaidVerifiedAt } from "./venomousAbyssIntel";
+import * as baselineIntel from "./venomousAbyssIntel";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { venomousCopy } from "./venomousCopy";
 import guide from "./raidGuide.module.css";
@@ -28,7 +29,11 @@ function labelled(text: string) {
  * strategyVerificationStatus "source_tracked" (summary, roles, timeline,
  * difficulty notes) is a third-party draft and is labelled as such.
  */
-export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bosses: BossGuide[]; locale: RaidLocale }) {
+export function VenomousBossPage({ boss, bosses, locale, content }: { boss: BossGuide; bosses: BossGuide[]; locale: RaidLocale; content?: RaidPayload }) {
+  const contentManifest = content?.manifest ?? baselineManifest;
+  const difficulties = content?.difficulties ?? baselineDifficulties;
+  const { raidLootBands, tierRewards, venomousRaidLootSource, venomousRaidVerifiedAt } = content?.venomousIntel ?? baselineIntel;
+  const { lootBandIndexForBoss } = baselineIntel;
   const shared = raidGuideCopy[locale];
   const raidName = contentManifest.instances.find((entry) => entry.canonicalSlug === "venomous-abyss")?.names[locale] ?? "";
   const copy = venomousCopy[locale];
@@ -55,7 +60,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
 
       <EncounterSwitcher items={encounters} label={shared.encountersLabel} />
 
-      <RaidReviewNotes raidSlug="venomous-abyss" bossSlug={boss.slug} locale={locale} />
+      <RaidReviewNotes raidSlug="venomous-abyss" bossSlug={boss.slug} locale={locale} reviews={content?.reviews} />
 
       {isDraft ? (
         <AtlasSection>

@@ -1,3 +1,4 @@
+import type { RaidPayload } from "@/lib/data/gamecontent/types";
 import { wowSourceName } from "@/lib/wow/sourceLocale";
 import Image from "next/image";
 import Link from "next/link";
@@ -5,8 +6,8 @@ import { ArrowRight, Skull } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { AtlasMorphPreload } from "@gildra/atlas-ui/AtlasMorphPreload";
 import { morphArtProps } from "@gildra/atlas-ui/morph";
-import { contentManifest } from "@/lib/data/wow";
-import { midnightRaids, raidSceneArt, raidSlugs } from "./midnightRaidData";
+import { contentManifest as baselineManifest } from "@/lib/data/wow";
+import { midnightRaids as baselineRaids, raidSceneArt, raidSlugs as baselineSlugs, type RaidDefinition } from "./midnightRaidData";
 import { raidAtlasCopy } from "./raidAtlasCopy";
 import { raidReviewCopy } from "./raidReviewCopy";
 import styles from "./raidAtlasPage.module.css";
@@ -22,29 +23,33 @@ type ManifestIdentity = {
   build: string | null;
   names: { en: string | null; ru: string | null };
   descriptions: { en: string | null; ru: string | null };
-  refs: { encounterId: number | null; journalId: number | null };
+  refs?: { encounterId: number | null; journalId: number | null };
   sourceUrl?: string;
   lastVerifiedAt?: string;
   verificationStatus?: string;
 };
 
-const currentRaid = contentManifest.instances.find((entry) => entry.canonicalSlug === "venomous-abyss") as ManifestIdentity | undefined;
-const currentBosses = (contentManifest.encounters as ManifestIdentity[])
-  .filter((entry) => entry.instance === "venomous-abyss")
-  .sort((left, right) => (left.order ?? 0) - (right.order ?? 0));
-const sporefall = contentManifest.instances.find((entry) => entry.canonicalSlug === "sporefall") as ManifestIdentity | undefined;
-const rotmire = (contentManifest.encounters as ManifestIdentity[]).find((entry) => entry.instance === "sporefall");
+export function RaidAtlasPage({ locale, content }: { locale: Locale; content?: RaidPayload }) {
+  const contentManifest = content?.manifest ?? baselineManifest;
+  const currentSlug = content?.catalog.currentRaidSlug ?? "venomous-abyss";
+  const midnightRaids: Record<string, RaidDefinition> = content?.legacyRaids ?? baselineRaids;
+  const raidSlugs = content ? content.catalog.entries.filter((entry) => entry.slug !== currentSlug && midnightRaids[entry.slug]).map((entry) => entry.slug) : baselineSlugs;
+  const currentRaid = contentManifest.instances.find((entry) => entry.canonicalSlug === currentSlug) as ManifestIdentity | undefined;
+  const currentBosses = (contentManifest.encounters as ManifestIdentity[])
+    .filter((entry) => entry.instance === currentSlug)
+    .sort((left, right) => (left.order ?? 0) - (right.order ?? 0));
+  const sporefall = contentManifest.instances.find((entry) => entry.canonicalSlug === "sporefall") as ManifestIdentity | undefined;
+  const rotmire = (contentManifest.encounters as ManifestIdentity[]).find((entry) => entry.instance === "sporefall");
 
-export function RaidAtlasPage({ locale }: { locale: Locale }) {
   const reviewCopy = raidReviewCopy[locale];
   const copy = raidAtlasCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
   const localized = (value: { en: string | null; ru: string | null }) => (locale === "ru" ? value.ru : value.en) ?? "";
   const seasonOneBosses = raidSlugs.reduce((total, slug) => total + midnightRaids[slug].bosses.length, 0);
-  const publishedRaidCount = raidSlugs.length + 1 + (sporefall ? 1 : 0);
-  const publishedBossCount = seasonOneBosses + currentBosses.length + (rotmire ? 1 : 0);
+  const publishedRaidCount = content?.catalog.entries.length ?? raidSlugs.length + 1 + (sporefall ? 1 : 0);
+  const publishedBossCount = content ? content.catalog.entries.reduce((total, raid) => total + raid.bosses.length, 0) : seasonOneBosses + currentBosses.length + (rotmire ? 1 : 0);
 
-  if (!currentRaid?.names.en || !currentRaid.names.ru || !currentRaid.descriptions.en || !currentRaid.descriptions.ru || currentBosses.length !== 8 || !sporefall?.names.en || !rotmire?.names.en) {
+  if (!currentRaid?.names.en || !currentRaid.names.ru || !currentRaid.descriptions.en || !currentRaid.descriptions.ru || currentBosses.length === 0 || !sporefall?.names.en || !rotmire?.names.en) {
     throw new Error("Raid atlas identity projection is incomplete");
   }
 
@@ -61,16 +66,16 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
         stats={[
           { value: publishedRaidCount, label: copy.raids },
           { value: publishedBossCount, label: copy.bosses },
-          { value: "S2", label: copy.season },
+          { value: content ? `S${content.catalog.season.number}` : "S2", label: copy.season },
         ]}
       />
 
-      <AtlasSection id="current" title={copy.currentTitle} description={copy.currentText}>
+      <AtlasSection id="current" title={copy.currentTitle} description={content?.catalog.season.names[locale] ?? copy.currentText}>
         <AtlasCard
           layout="feature"
           headingLevel={3}
-          href={`${prefix}/wow/raids/venomous-abyss`}
-          image={{ src: "/assets/wow/mythic/backgrounds/altar.webp", alt: "", priority: true }}
+          href={`${prefix}/wow/raids/${currentSlug}`}
+          image={{ src: content?.catalog.entries.find((entry) => entry.slug === currentSlug)?.artwork ?? "/assets/wow/mythic/backgrounds/altar.webp", alt: "", priority: true }}
           title={localized(currentRaid.names)}
           description={localized(currentRaid.descriptions)}
           meta={[{ icon: <Skull aria-hidden="true" />, label: copy.bossCount(currentBosses.length) }]}
@@ -78,7 +83,7 @@ export function RaidAtlasPage({ locale }: { locale: Locale }) {
         />
       </AtlasSection>
 
-      <AtlasSection id="archive" title={copy.archiveTitle} description={copy.archiveText}>
+      <AtlasSection id="archive" title={copy.archiveTitle} description={content ? content.manifest.seasons.filter((entry) => entry.canonicalSlug !== content.catalog.season.slug).map((entry) => entry.names[locale]).join(" · ") : copy.archiveText}>
         <div className={styles.archiveGrid}>
           {raidSlugs.map((slug) => {
             const raid = midnightRaids[slug];

@@ -1,3 +1,4 @@
+import type { RaidPayload } from "@/lib/data/gamecontent/types";
 import { Hourglass, ListChecks } from "lucide-react";
 import { AtlasCard, AtlasFrame, AtlasHero, AtlasNotice, AtlasPath, AtlasSection } from "@/components/atlas";
 import type { RaidBoss, RaidDefinition } from "./midnightRaidData";
@@ -12,17 +13,17 @@ import { RaidReviewNotes } from "./RaidReviewNotes";
 import { trail } from "@/lib/routes/registry";
 
 /** Raid page of a Midnight Season 1 raid: what the raid is and its encounters. */
-export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: RaidLocale }) {
+export function RaidOverview({ raid, locale, content }: { raid: RaidDefinition; locale: RaidLocale; content?: RaidPayload }) {
   const copy = raidGuideCopy[locale];
-  const reviewed = Boolean(getRaidReview(raid.slug));
+  const reviewed = Boolean(getRaidReview(raid.slug, content?.reviews));
   const raidName = locale === "ru" ? raid.nameRu : raid.nameEn;
   const bossName = (entry: RaidBoss) => locale === "ru" ? entry.nameRu : entry.nameEn;
   const prefix = locale === "ru" ? "/ru" : "";
   const raidHref = `${prefix}/wow/raids/${raid.slug}`;
-  const published = isRaidStrategyPublished(raid);
+  const published = content ? raid.bosses.some((boss) => Boolean(content.strategies[boss.slug])) : isRaidStrategyPublished(raid);
   const single = raid.bosses.length === 1;
   const mechanicsMeta = (boss: RaidBoss) => {
-    const guide = getBossStrategy(raid, boss)?.guide;
+    const guide = (content ? content.strategies[boss.slug] : getBossStrategy(raid, boss))?.guide;
     return guide ? [{ icon: <ListChecks aria-hidden="true" />, label: copy.mechanicCount(guide.mechanics.length) }] : undefined;
   };
 
@@ -39,13 +40,13 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
       <AtlasHero
         breadcrumbs={trail(locale, "raids", { label: raidName })}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        eyebrow={<>{copy.season(1)} · {locale === "ru" ? raid.locationRu : raid.locationEn}</>}
+        eyebrow={<>{content ? content.manifest.seasons.find((entry) => entry.canonicalSlug === content.catalog.entries.find((entry) => entry.slug === raid.slug)?.season)?.names[locale] : copy.season(1)} · {locale === "ru" ? raid.locationRu : raid.locationEn}</>}
         title={raidName}
         lede={locale === "ru" ? raid.descriptionRu : raid.descriptionEn}
         actions={<AtlasShareButton title={raidName} locale={locale} />}
       />
 
-      <RaidReviewNotes raidSlug={raid.slug} locale={locale} />
+      <RaidReviewNotes raidSlug={raid.slug} locale={locale} reviews={content?.reviews} />
 
       <AtlasSection id="bosses" title={copy.bossesTitle} description={published || reviewed ? copy.bossesText : copy.bossesTextPending}>
         <div className={styles.stack}>

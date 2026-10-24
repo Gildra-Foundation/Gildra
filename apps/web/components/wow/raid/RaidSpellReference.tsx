@@ -1,13 +1,13 @@
 import Image from "next/image";
 import { AtlasDisclosure, AtlasSection } from "@/components/atlas";
-import { getReviewedSpellIdentities } from "@/lib/data/raidReviews";
+import { getReviewedSpellIdentities, type ReviewedSpellIdentity } from "@/lib/data/raidReviews";
 import { raidReviewCopy } from "./raidReviewCopy";
 import styles from "./raidReview.module.css";
 
 /** Identity and official artwork only: unresolved journal descriptions stay withheld. */
-export function RaidSpellReference({ encounterId, raidSlug, bossSlug, exclude, locale }: { encounterId?: number; raidSlug?: string; bossSlug?: string; exclude: number[]; locale: "ru" | "en" }) {
+export function RaidSpellReference({ encounterId, raidSlug, bossSlug, exclude, locale, identities }: { encounterId?: number; raidSlug?: string; bossSlug?: string; exclude: number[]; locale: "ru" | "en"; identities?: ReviewedSpellIdentity[] }) {
   const reviewCopy = raidReviewCopy[locale];
-  const abilities = getReviewedSpellIdentities(encounterId, raidSlug, bossSlug).filter((ability) => !exclude.includes(ability.spellId));
+  const abilities = getReviewedSpellIdentities(encounterId, raidSlug, bossSlug, identities).filter((ability) => !exclude.includes(ability.spellId));
   if (!abilities.length) return null;
   return (
     <AtlasSection id="spell-reference" title={reviewCopy.referenceTitle} description={reviewCopy.referenceText}>

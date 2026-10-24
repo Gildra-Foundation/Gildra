@@ -1,18 +1,9 @@
+import type { RaidPayload } from "@/lib/data/gamecontent/types";
 import { wowSourceName, wowSourceText } from "@/lib/wow/sourceLocale";
 import { Castle, ExternalLink, Layers, MapPin } from "lucide-react";
 import { AtlasDisclosure, AtlasFrame, AtlasGrid, AtlasHero, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTable, AtlasTile } from "@/components/atlas";
-import { contentManifest, venomousAbyss } from "@/lib/data/wow";
-import {
-  gloryAchievements,
-  headlineRewards,
-  raidFinderWings,
-  raidLootBands,
-  tierRewards,
-  venomousRaidLocationSource,
-  venomousRaidLootSource,
-  venomousRaidOverviewSource,
-  venomousRaidVerifiedAt,
-} from "./venomousAbyssIntel";
+import { contentManifest as baselineManifest, venomousAbyss as baselineBosses } from "@/lib/data/wow";
+import * as baselineIntel from "./venomousAbyssIntel";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { venomousCopy } from "./venomousCopy";
 import styles from "./venomous.module.css";
@@ -29,6 +20,10 @@ type ManifestIdentity = {
   descriptions: { en: string | null; ru: string | null };
 };
 
+export function VenomousAbyssPage({ locale, content }: { locale: RaidLocale; content?: RaidPayload }) {
+  const contentManifest = content?.manifest ?? baselineManifest;
+  const venomousAbyss = content?.venomousBosses ?? baselineBosses;
+  const { gloryAchievements, headlineRewards, raidFinderWings, raidLootBands, tierRewards, venomousRaidLocationSource, venomousRaidLootSource, venomousRaidOverviewSource, venomousRaidVerifiedAt } = content?.venomousIntel ?? baselineIntel;
 // Raid and encounter identity come from the canonical content manifest (server only).
 const raid = contentManifest.instances.find((entry) => entry.canonicalSlug === "venomous-abyss") as ManifestIdentity | undefined;
 const bosses = (contentManifest.encounters as ManifestIdentity[])
@@ -40,11 +35,11 @@ const waypoints = [
   { code: "/way #2509 47.2 21.7", source: "Wowhead", href: venomousRaidLocationSource },
 ];
 
-export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
+
   const shared = raidGuideCopy[locale];
   const copy = venomousCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
-  if (!raid?.names.en || !raid.descriptions.en || !raid.descriptions.ru || !raid.patch || bosses.length !== 8) {
+  if (!raid?.names.en || !raid.descriptions.en || !raid.descriptions.ru || !raid.patch || bosses.length !== (content?.catalog.entries.find((entry) => entry.slug === "venomous-abyss")?.bosses.length ?? baselineBosses.length)) {
     throw new Error("Verified Venomous Abyss identity projection is incomplete");
   }
   const bossName = (slug: string) => bosses.find((boss) => boss.canonicalSlug === slug)?.names[locale] ?? "";
@@ -61,7 +56,7 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
         stats={[{ value: bosses.length, label: copy.bossesStat(bosses.length) }, { value: raid.patch, label: copy.patchStat }]}
       />
 
-      <RaidReviewNotes raidSlug="venomous-abyss" locale={locale} />
+      <RaidReviewNotes raidSlug="venomous-abyss" locale={locale} reviews={content?.reviews} />
 
       <AtlasSection id="bosses" title={copy.bossesTitle} description={copy.bossesText}>
         <AtlasGrid min={320} gap="sm" as="ol" className={styles.bossGrid}>

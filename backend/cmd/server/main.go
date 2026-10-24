@@ -29,6 +29,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/characterworkspace"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/config"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/datasetrefresh"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/gamecontent"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/gamemeta"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/genshin"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/graphqlapi"
@@ -151,6 +152,7 @@ func run() error {
 	adminpanel.New(authService, analyticsService, postgres, clickhouseConn, redisClient, cfg.CatalogRecoveryPolicy).Register(router)
 	genshin.NewHandler(genshin.NewService(postgres)).Register(router)
 	gamemeta.NewHandler(gamemeta.NewService(postgres)).Register(router)
+	gamecontent.NewHandler(gamecontent.NewStore(postgres)).Register(router)
 	league.NewHandler(league.NewService(postgres)).Register(router)
 	platformhome.NewHandler(platformhome.NewService(postgres)).Register(router)
 	rotationlab.NewHandler(rotationlab.NewService(postgres)).Register(router)

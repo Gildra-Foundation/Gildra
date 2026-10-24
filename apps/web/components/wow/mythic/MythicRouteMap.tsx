@@ -1,5 +1,7 @@
 "use client";
 
+import type { MythicVerification } from "@/lib/data/gamecontent/types";
+
 import { wowSourceName } from "@/lib/wow/sourceLocale";
 import { wowRouteText } from "@/lib/wow/routeSourceLocale";
 import Image from "next/image";
@@ -506,7 +508,7 @@ function RouteInteractionLayer({
   </CompletedTimeContext.Provider>;
 }
 
-export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }: { locale: RouteLocale; dungeon: DungeonRoute; dungeonOptions: DungeonSelectorOption[]; combatIntel: DungeonCombatIntel }) {
+export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel, verification, seasonSlug }: { locale: RouteLocale; dungeon: DungeonRoute; dungeonOptions: DungeonSelectorOption[]; combatIntel: DungeonCombatIntel; verification?: MythicVerification; seasonSlug?: string }) {
   const copy = mythicRouteCopy[locale];
   const initialStops = dungeon.stops;
   const storageKey = `gildra:mythic:${dungeon.slug}:v3`;
@@ -756,7 +758,7 @@ export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }:
           </div>
           <div className={styles.routeControls} role="group" aria-label={copy.controlsLabel}>
             <div className={styles.selectorRow}>
-              <MythicRouteSelectors locale={locale} dungeonSlug={dungeon.slug} dungeonOptions={dungeonOptions} keyLevel={keyLevel} onKeyLevelChange={setKeyLevel} />
+              <MythicRouteSelectors seasonSlug={seasonSlug} locale={locale} dungeonSlug={dungeon.slug} dungeonOptions={dungeonOptions} keyLevel={keyLevel} onKeyLevelChange={setKeyLevel} />
             </div>
 
           </div>
@@ -766,7 +768,7 @@ export function MythicRouteMap({ locale, dungeon, dungeonOptions, combatIntel }:
         <div className={styles.panel}><MdtPullMap key={dungeon.slug} slug={dungeon.slug} locale={locale} routeUrl={dungeon.mdtRouteUrl} data={combatIntel.mdt} /></div>
         <details className={styles.legacyDraft}>
           <summary>{mythicVerificationCopy[locale].legacyEditor}</summary>
-        <MythicDataNotice locale={locale} route />
+        <MythicDataNotice locale={locale} route verification={verification} />
             <div className={styles.buttonRow}>
               <RouteEditToggle pageRef={pageRef} copy={copy} />
               <button type="button" className={styles.toolButton} onClick={shareRoute}><Share2 aria-hidden="true" /> {copy.share}</button>
