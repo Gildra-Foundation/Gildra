@@ -62,6 +62,9 @@ import type { Lang } from "@/lib/i18n";
 import { characterPageText, characterRoleLabel } from "./characterPageCopy";
 import { copyText } from "@gildra/atlas-ui/clipboard";
 
+// Keep unfinished rotation and training tools off character pages until ready.
+const characterRotationTrainingEnabled = false;
+
 const CharacterBookTheme = createContext(false);
 const CharacterPageLanguage = createContext<Lang>("ru");
 const useCharacterText = () => characterPageText(useContext(CharacterPageLanguage));
@@ -342,7 +345,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
     >
       <div className={atlas.content}>
       <div className={atlas.manuscript}>
-      {dataMode === "battle-net" ? <CharacterBookNavigation characterName={snapshot.character.name} hasRotation={Boolean(resolvedRotationPreset)} lang={lang} /> : null}
+      {dataMode === "battle-net" ? <CharacterBookNavigation characterName={snapshot.character.name} hasRotation={characterRotationTrainingEnabled && Boolean(resolvedRotationPreset)} lang={lang} /> : null}
 
       <section className={styles.hero} data-character-identity>
 
@@ -427,7 +430,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
 
         <DeferredMount minHeight={620}><CharacterTalentSimulator data={talentData} characterSlug={snapshot.slug} specSlug={snapshot.specialization.slug} loadout={snapshot.activeTalentLoadout} baseStats={snapshot.combatStats} scenario={talentScenario} onScenarioChange={selectTalentScenario} onCandidateLoadoutChange={syncRotationTalentLoadout} dataMode={dataMode} localePrefix={localePrefix} snapshotKey={snapshotKey} /></DeferredMount>
 
-        {resolvedRotationPreset ? <>
+        {characterRotationTrainingEnabled && resolvedRotationPreset ? <>
           {dataMode === "battle-net" ? <CharacterChapter id="chapter-rotation" index="03" eyebrow={tr("Боевая практика")} title={tr("Ротация и тренировка")} description={tr("Настройте панель умений и проверьте ротацию на своём билде.")} icon={<Zap />} /> : null}
           <section className={styles.rotationEmbed} id="audit-rotation" aria-label={localePrefix === "/ru" ? "Тренер ротации персонажа" : "Character rotation trainer"}>
 
