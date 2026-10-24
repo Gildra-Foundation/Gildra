@@ -11,6 +11,9 @@ export const maxTalentStringLength = 4096;
 export type TalentImportError = "invalid" | "version" | "spec" | "tree";
 export type ImportedTalents = { ok: true; code: string; classId: number; specId: number; selectedSpellIds: number[]; hashChecked: boolean };
 export type TalentImportResult = ImportedTalents | { ok: false; error: TalentImportError };
+export type ImportedTalentNode = { nodeId: number; rank: number; choiceIndex: number; granted: boolean };
+export type ImportedTalentTree = ImportedTalents & { heroSubtreeId: number; nodes: ImportedTalentNode[] };
+export type TalentTreeImportResult = ImportedTalentTree | { ok: false; error: TalentImportError };
 export type TalentSpellSelection = ReadonlySet<number> | undefined;
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -46,7 +49,11 @@ function spellsAtRank(node: ImportNode, rank: number, choice: number) {
 }
 
 /** Decode the Blizzard bitstream against the current complete class order, never guessed spell positions. */
-export function decodeMythicTalentImport(raw: string): TalentImportResult {
+export function decodeMythicTalentImport(raw: string): TalentImportResult { return decodeTalents(raw, false); }
+export function decodeMythicTalentTree(raw: string): TalentTreeImportResult { return decodeTalents(raw, true); }
+function decodeTalents(raw: string, details: true): TalentTreeImportResult;
+function decodeTalents(raw: string, details: false): TalentImportResult;
+function decodeTalents(raw: string, details: boolean): TalentTreeImportResult | TalentImportResult {
   try {
     if (!raw || raw.length > maxTalentStringLength) return { ok: false, error: "invalid" };
     const code = raw.replace(/\s+/g, "").replace(/=+$/, "");
@@ -94,6 +101,14 @@ export function decodeMythicTalentImport(raw: string): TalentImportResult {
     }
     // Automatically granted class/spec abilities remain available at Mythic+ level.
     for (const node of spec.nodes) if (node[3] && node[2] !== 2 && (!node[4] || node[4] === hero)) for (const spell of spellsAtRank(node, 1, 0)) spells.add(spell);
-    return { ok: true, code: code.slice(0, canonicalLength), classId: spec.classId, specId, selectedSpellIds: [...spells].sort((a, b) => a - b), hashChecked };
+    const result: ImportedTalents = { ok: true, code: code.slice(0, canonicalLength), classId: spec.classId, specId, selectedSpellIds: [...spells].sort((a, b) => a - b), hashChecked };
+    if (!details) return result;
+    const selections = new Map<number, ImportedTalentNode>();
+    for (const { node, rank, choice } of selected) {
+      if (node[2] === 2 || (node[4] && node[4] !== hero)) continue;
+      selections.set(node[0], { nodeId: node[0], rank, choiceIndex: choice, granted: Boolean(node[3]) });
+    }
+    for (const node of spec.nodes) if (node[3] && node[2] !== 2 && (!node[4] || node[4] === hero) && !selections.has(node[0])) selections.set(node[0], { nodeId: node[0], rank: 1, choiceIndex: 0, granted: true });
+    return { ...result, heroSubtreeId: hero, nodes: [...selections.values()] };
   } catch { return { ok: false, error: "invalid" }; }
 }

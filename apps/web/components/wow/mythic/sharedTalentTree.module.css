@@ -1,0 +1,17 @@
+/* atlas:strict — shared build dialog hosting the existing character talent calculator. */
+.dialog:global(.ui-dialog) { width: min(1120px, calc(100vw - 2 * var(--atlas-gutter))); max-height: 90vh; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); padding: var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line); }
+.header h2 { font: 400 var(--atlas-text-h3)/1.2 var(--atlas-font-display); margin: 0; }
+.header button { min-height: 44px; white-space: normal; }
+.body { display: grid; gap: var(--atlas-space-3); overflow: auto; padding: var(--atlas-space-3); max-height: 75vh; min-width: 0; }
+.body p { font-size: var(--atlas-text-small); line-height: 1.6; margin: 0; color: var(--atlas-text-muted); }
+.editActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin-block: var(--atlas-space-2); }
+.editActions button { min-height: 44px; white-space: normal; }
+.heroPicker { display: grid; gap: var(--atlas-space-2); font-size: var(--atlas-text-small); }
+.heroPicker select { min-height: 44px; max-width: 100%; }
+
+.calculatorHost { container: auditPage / inline-size; min-width: 0; }
+
+.specPicker { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: var(--atlas-space-3); }
+.specPicker label { display: grid; gap: var(--atlas-space-2); min-width: 0; }
+.specPicker select { min-height: 44px; max-width: 100%; }
