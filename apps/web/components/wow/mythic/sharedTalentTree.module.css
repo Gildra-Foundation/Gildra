@@ -11,3 +11,7 @@
 .heroPicker select { min-height: 44px; max-width: 100%; }
 
 .calculatorHost { container: auditPage / inline-size; min-width: 0; }
+
+.specPicker { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: var(--atlas-space-3); }
+.specPicker label { display: grid; gap: var(--atlas-space-2); min-width: 0; }
+.specPicker select { min-height: 44px; max-width: 100%; }
