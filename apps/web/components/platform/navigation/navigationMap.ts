@@ -39,6 +39,7 @@ export const navigationRealms: readonly NavigationRealm[] = [
     also: ["/wow/mythic"],
     links: [
       { href: "/wow/mythic-plus", label: { en: "Mythic+ atlas", ru: "Атлас Mythic+" }, note: { en: "Timers and routes", ru: "Таймеры и маршруты" } },
+      { href: "/wow/mythic-plus/meta", label: { en: "Mythic+ meta", ru: "Мета Mythic+" }, note: { en: "Top specs of the week", ru: "Лучшие спеки недели" } },
       { href: "/wow/dungeons", label: { en: "Dungeons", ru: "Подземелья" }, note: { en: "Every Midnight dungeon", ru: "Все подземелья Midnight" } },
       { href: "/wow/delves", label: { en: "Delves", ru: "Вылазки" }, note: { en: "Midnight delves", ru: "Вылазки Midnight" } },
     ],

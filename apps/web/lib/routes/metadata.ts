@@ -29,6 +29,10 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     ru: { title: "Эпохальный+ Midnight — Gildra", description: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения." },
     noindex: true,
   },
+  mythicPlusMeta: {
+    en: { title: "Mythic+ Meta: Top Specs This Week — Gildra", description: "Which specializations appear in the top 2000 Mythic+ keys of the week, by role, with week-on-week change and the season trend. Data from mythicstats.com." },
+    ru: { title: "Мета Mythic+: лучшие специализации недели — Gildra", description: "Какие специализации встречаются в топ-2000 ключей Mythic+ этой недели — по ролям, с изменением к прошлой неделе и динамикой сезона. Данные mythicstats.com." },
+  },
   dungeons: {
     en: { title: "Midnight Dungeons — Gildra", description: "Dungeons of the current season: route, bosses, timer and strategy for each." },
     ru: { title: "Подземелья Midnight — Gildra", description: "Подземелья текущего сезона: маршрут, боссы, таймер и тактика для каждого." },

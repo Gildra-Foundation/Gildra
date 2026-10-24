@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	QueueName           = "datasets"
-	refreshPath         = "/internal/v1/datasets/tierlist-wowhead/refresh"
-	archonRefreshPath   = "/internal/v1/datasets/tierlist-archon/refresh"
-	wowGGRefreshPath    = "/internal/v1/datasets/tierlist-wowgg/refresh"
-	icyVeinsRefreshPath = "/internal/v1/datasets/tierlist-icyveins/refresh"
+	QueueName            = "datasets"
+	refreshPath          = "/internal/v1/datasets/tierlist-wowhead/refresh"
+	archonRefreshPath    = "/internal/v1/datasets/tierlist-archon/refresh"
+	wowGGRefreshPath     = "/internal/v1/datasets/tierlist-wowgg/refresh"
+	icyVeinsRefreshPath  = "/internal/v1/datasets/tierlist-icyveins/refresh"
+	mplusMetaRefreshPath = "/internal/v1/datasets/mplus-meta-mythicstats/refresh"
 )
 
 type RefreshArgs struct {
@@ -38,6 +39,12 @@ type WowGGRefreshArgs struct {
 }
 
 func (WowGGRefreshArgs) Kind() string { return "dataset_tierlist_wowgg_refresh" }
+
+type MythicPlusMetaRefreshArgs struct {
+	ScheduledFor string `json:"scheduled_for" river:"unique"`
+}
+
+func (MythicPlusMetaRefreshArgs) Kind() string { return "dataset_mplus_meta_mythicstats_refresh" }
 
 type IcyVeinsRefreshArgs struct {
 	ScheduledFor string `json:"scheduled_for" river:"unique"`
@@ -63,6 +70,12 @@ type ArchonWorker struct {
 
 type WowGGWorker struct {
 	river.WorkerDefaults[WowGGRefreshArgs]
+	httpClient Client
+	endpoint   string
+}
+
+type MythicPlusMetaWorker struct {
+	river.WorkerDefaults[MythicPlusMetaRefreshArgs]
 	httpClient Client
 	endpoint   string
 }
@@ -101,6 +114,13 @@ func NewIcyVeinsWorker(httpClient Client, baseURL string) *IcyVeinsWorker {
 	}
 }
 
+func NewMythicPlusMetaWorker(httpClient Client, baseURL string) *MythicPlusMetaWorker {
+	return &MythicPlusMetaWorker{
+		httpClient: httpClient,
+		endpoint:   strings.TrimRight(baseURL, "/") + mplusMetaRefreshPath,
+	}
+}
+
 func HTTPClient(timeout time.Duration) *http.Client {
 	return &http.Client{Timeout: timeout}
 }
@@ -118,6 +138,10 @@ func (w *WowGGWorker) Work(ctx context.Context, job *river.Job[WowGGRefreshArgs]
 }
 
 func (w *IcyVeinsWorker) Work(ctx context.Context, job *river.Job[IcyVeinsRefreshArgs]) error {
+	return requestRefresh(ctx, w.httpClient, w.endpoint, job.Args.ScheduledFor)
+}
+
+func (w *MythicPlusMetaWorker) Work(ctx context.Context, job *river.Job[MythicPlusMetaRefreshArgs]) error {
 	return requestRefresh(ctx, w.httpClient, w.endpoint, job.Args.ScheduledFor)
 }
 
@@ -246,6 +270,29 @@ func IcyVeinsPeriodicJob(now func() time.Time) *river.PeriodicJob {
 		},
 		&river.PeriodicJobOpts{
 			ID:         "tierlist-icyveins-daily",
+			RunOnStart: true,
+		},
+	)
+}
+
+// MythicPlusMetaPeriodicJob refreshes the mythicstats.com weekly meta every six
+// hours; the collector keys runs by six-hour slot, so a retry inside the same
+// slot reuses the run and an unchanged page publishes no new snapshot.
+func MythicPlusMetaPeriodicJob(now func() time.Time) *river.PeriodicJob {
+	return river.NewPeriodicJob(
+		IntervalSchedule{Interval: 6 * time.Hour},
+		func() (river.JobArgs, *river.InsertOpts) {
+			return MythicPlusMetaRefreshArgs{ScheduledFor: now().UTC().Format(time.DateOnly)}, &river.InsertOpts{
+				Queue:       QueueName,
+				MaxAttempts: 4,
+				UniqueOpts: river.UniqueOpts{
+					ByArgs:   true,
+					ByPeriod: 6 * time.Hour,
+				},
+			}
+		},
+		&river.PeriodicJobOpts{
+			ID:         "mplus-meta-mythicstats-six-hour",
 			RunOnStart: true,
 		},
 	)

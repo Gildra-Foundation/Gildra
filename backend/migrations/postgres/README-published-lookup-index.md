@@ -1,11 +1,10 @@
-# Proposed Postgres migrations (not applied)
+# Published-entity lookup index (00174) and an unused index removed (00175)
 
-Files here are reviewed proposals, **outside** `migrations/postgres` on
-purpose: the API entrypoint applies every pending migration there, so a
-proposal moves into that folder (same number, unchanged) only after the owner
-approves it, and is then applied through the migration-only operation of
-`migrations/postgres/README-spell-misc-text-index.md` (Goose, `NO TRANSACTION`,
-bounded `lock_timeout`, backup and disk checks, one index build at a time).
+Approved by the owner on 2026-10-23 and applied on production the same day
+through the migration-only operation of `README-spell-misc-text-index.md`
+(Goose v3.27.1 from the API image, `NO TRANSACTION`, bounded `lock_timeout`,
+disk and long-transaction checks, one index build at a time). Production
+rollback is a new forward migration, never Goose `down`.
 
 | File | Change | Size on disk | Build | Effect on writes |
 |---|---|---|---|---|

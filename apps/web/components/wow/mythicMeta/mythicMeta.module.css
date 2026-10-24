@@ -1,0 +1,308 @@
+/* atlas:strict — Mythic+ meta (/wow/mythic-plus/meta): layout of the role leaders, role tables and diversity rows.
+   Amber is chrome; class colours (--class-color) only on spec identity; trend colours only on the change figures. */
+
+.page { font-variant-numeric: lining-nums; }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.narrowOnly { display: none; }
+
+.affixes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--atlas-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Spec identity: octagon icon, English spec name, class name in its colour. */
+.identity {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  min-width: 0;
+}
+
+.octagon {
+  --size: 40px;
+  flex: none;
+  display: block;
+  inline-size: var(--size);
+  block-size: var(--size);
+  padding: 2px;
+  clip-path: polygon(28% 0, 72% 0, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0 72%, 0 28%);
+  background: color-mix(in srgb, var(--class-color, var(--atlas-line)) 70%, var(--atlas-surface));
+}
+
+.octagon img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  clip-path: inherit;
+}
+
+.identity[data-size="sm"] .octagon { --size: 28px; }
+.identity[data-size="lg"] .octagon { --size: 64px; }
+
+.identityText {
+  display: grid;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.specName {
+  overflow: hidden;
+  color: var(--atlas-text-strong);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identity[data-size="lg"] .specName {
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+}
+
+.className {
+  color: color-mix(in srgb, var(--class-color, var(--atlas-text-muted)) 62%, var(--atlas-text-strong));
+  font-size: var(--atlas-text-meta);
+}
+
+.delta {
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-meta);
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+
+.delta[data-trend="up"] { color: var(--atlas-positive); }
+.delta[data-trend="down"] { color: var(--atlas-negative); }
+.delta[data-trend="new"] { color: var(--atlas-info); text-transform: uppercase; letter-spacing: var(--atlas-tracking-label); font-size: var(--atlas-text-label); }
+
+.sparkline {
+  display: block;
+  overflow: visible;
+}
+
+.sparkline polyline {
+  fill: none;
+  stroke: var(--atlas-accent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.sparkline circle { fill: var(--atlas-accent-strong); }
+
+.bar {
+  display: block;
+  inline-size: 100%;
+  block-size: 6px;
+  border-radius: 999px;
+  background: var(--atlas-line-soft);
+  overflow: hidden;
+}
+
+.bar > span {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--atlas-accent), var(--atlas-accent-strong));
+  transform-origin: left center;
+  animation: grow var(--atlas-duration-slow, 240ms) var(--atlas-ease, ease-out) both;
+}
+
+@keyframes grow { from { transform: scaleX(0); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bar > span { animation: none; }
+}
+
+.roleTitle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--atlas-space-2);
+  margin: 0 0 var(--atlas-space-3);
+  color: var(--atlas-accent);
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-label);
+  font-weight: 700;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+
+/* Leaders by role. */
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--atlas-space-4);
+}
+
+.podiumRole { min-width: 0; }
+
+.podiumList {
+  display: grid;
+  gap: var(--atlas-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.podiumItem {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  padding: var(--atlas-space-2) 0;
+  border-block-end: 1px solid var(--atlas-line-soft);
+}
+
+.podiumItem:last-child { border-block-end: 0; }
+
+.podiumItem[data-first] {
+  padding-block: var(--atlas-space-3);
+}
+
+.podiumRank {
+  color: var(--atlas-text-subtle);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+  font-variant-numeric: lining-nums;
+}
+
+.podiumItem[data-first] .podiumRank { color: var(--atlas-accent-strong); }
+
+.podiumValue {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.podiumValue b {
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.podiumItem[data-first] .podiumValue b { font-size: var(--atlas-text-h3); }
+
+.presenceCell {
+  display: grid;
+  grid-template-columns: minmax(80px, 180px) 6ch;
+  align-items: center;
+  gap: var(--atlas-space-3);
+}
+
+.presenceCell b {
+  white-space: nowrap;
+  color: var(--atlas-text-strong);
+  font-variant-numeric: tabular-nums lining-nums;
+  text-align: end;
+}
+
+/* Diversity rows. */
+.gini {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--atlas-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.giniItem {
+  display: grid;
+  gap: var(--atlas-space-2);
+  padding: var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface);
+}
+
+.giniLabel {
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-label);
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+
+.giniValue {
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-h3);
+  font-variant-numeric: lining-nums;
+}
+
+.giniScale {
+  position: relative;
+  display: block;
+  block-size: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--atlas-positive), var(--atlas-caution), var(--atlas-negative));
+  opacity: .7;
+}
+
+.giniScale span {
+  position: absolute;
+  inset-block: -4px;
+  inline-size: 3px;
+  margin-inline-start: -1px;
+  border-radius: 2px;
+  background: var(--atlas-text-strong);
+}
+
+.giniBefore {
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-meta);
+}
+
+/* Source and attribution. */
+.source { display: grid; gap: var(--atlas-space-2); }
+
+.sourceLine {
+  margin: 0;
+  color: var(--atlas-text);
+}
+
+.sourceLine a { color: var(--atlas-accent); }
+
+.sourceNote {
+  max-inline-size: var(--atlas-measure);
+  margin: 0;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+}
+
+@media (max-width: 1100px) {
+  .gini { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
+  .podium { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .seasonCol { display: none; }
+}
+
+/* Phones: the table keeps rank, spec, share and change; the season line and the bar give way. */
+@media (max-width: 520px) {
+  .gini { grid-template-columns: 1fr; }
+  .presenceCell .bar { display: none; }
+  .wideOnly { display: none; }
+  .narrowOnly { display: inline; }
+  .specName { white-space: normal; }
+  /* The rank keeps its figure but gives its padding to the spec names (Assassination, Marksmanship fit whole). */
+  .page .rankCol { padding-inline: var(--atlas-space-2) 0; }
+  .presenceCell { grid-template-columns: 6ch; }
+}

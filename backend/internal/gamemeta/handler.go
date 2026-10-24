@@ -13,6 +13,7 @@ import (
 type Store interface {
 	WoWTierList(context.Context, Query) (Snapshot, error)
 	WoWTierListContexts(context.Context, string) ([]Context, error)
+	WoWMythicPlusMeta(context.Context) (MythicPlusMeta, error)
 }
 
 type Handler struct{ store Store }
@@ -25,6 +26,21 @@ const publicMetaCache = "public, max-age=300, s-maxage=900, stale-if-error=86400
 func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/meta/wow/tier-list", h.wowTierList)
 	mux.HandleFunc("GET /v1/meta/wow/tier-list/contexts", h.wowTierListContexts)
+	mux.HandleFunc("GET /v1/meta/wow/mythic-plus/meta", h.wowMythicPlusMeta)
+}
+
+func (h *Handler) wowMythicPlusMeta(w http.ResponseWriter, r *http.Request) {
+	meta, err := h.store.WoWMythicPlusMeta(r.Context())
+	if errors.Is(err, ErrSnapshotNotFound) {
+		writeProblem(w, r, http.StatusNotFound, "snapshot_not_found", "no published Mythic+ meta snapshot is available")
+		return
+	}
+	if err != nil {
+		slog.Error("read public WoW Mythic+ meta", "error", err)
+		writeProblem(w, r, http.StatusServiceUnavailable, "meta_unavailable", "Mythic+ meta data is temporarily unavailable")
+		return
+	}
+	httpjson.Write(w, http.StatusOK, publicMetaCache, meta)
 }
 
 func (h *Handler) wowTierList(w http.ResponseWriter, r *http.Request) {

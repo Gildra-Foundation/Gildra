@@ -76,11 +76,13 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
   // the tapped card's picture, so it lands on exactly what the page shows.
   const atmosphere = (
     <div className={styles.atmosphere} aria-hidden="true" {...(morphKey ? morphSceneProps(morphKey) : {})}>
-      {/* Decorative, but it is the largest paint of every route that has it: fetch it at high priority. */}
-      {picture}
-      {layer ? <div className={styles.artLayer}>{layer}</div> : null}
-      {/* Torchlight over the artwork: a breathing glow and a few rising embers (CSS only). */}
-      <span className={styles.embers} />
+      <div className={styles.scene}>
+        {/* Decorative, but it is the largest paint of every route that has it: fetch it at high priority. */}
+        {picture}
+        {layer ? <div className={styles.artLayer}>{layer}</div> : null}
+        {/* Torchlight over the artwork and a few suspended embers (CSS only). */}
+        <span className={styles.embers} />
+      </div>
     </div>
   );
   return (

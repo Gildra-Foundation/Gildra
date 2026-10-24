@@ -45,7 +45,6 @@ import { DeferredMount } from "./DeferredMount";
 import { CharacterBookNavigation } from "./CharacterBookNavigation";
 import { CharacterBookChapter as CharacterChapter } from "./CharacterBookChapter";
 const CharacterTalentSimulator = dynamic(() => import("./CharacterTalentSimulator").then((module) => module.CharacterTalentSimulator));
-const CharacterGearOptimizer = dynamic(() => import("./CharacterGearOptimizer").then((module) => module.CharacterGearOptimizer));
 const GearFarmPlanner = dynamic(() => import("./GearFarmPlanner").then((module) => module.GearFarmPlanner));
 const AuctionGearOptimizer = dynamic(() => import("./AuctionGearOptimizer").then((module) => module.AuctionGearOptimizer));
 const CharacterHistory = dynamic(() => import("./CharacterHistory").then((module) => module.CharacterHistory));
@@ -61,6 +60,9 @@ import armoryBook from "./characterArmorySpread.module.css";
 import type { Lang } from "@/lib/i18n";
 import { characterPageText, characterRoleLabel } from "./characterPageCopy";
 import { copyText } from "@gildra/atlas-ui/clipboard";
+
+// Keep unfinished rotation and training tools off character pages until ready.
+const characterRotationTrainingEnabled = false;
 
 const CharacterBookTheme = createContext(false);
 const CharacterPageLanguage = createContext<Lang>("ru");
@@ -342,7 +344,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
     >
       <div className={atlas.content}>
       <div className={atlas.manuscript}>
-      {dataMode === "battle-net" ? <CharacterBookNavigation characterName={snapshot.character.name} hasRotation={Boolean(resolvedRotationPreset)} lang={lang} /> : null}
+      {dataMode === "battle-net" ? <CharacterBookNavigation characterName={snapshot.character.name} hasRotation={characterRotationTrainingEnabled && Boolean(resolvedRotationPreset)} lang={lang} /> : null}
 
       <section className={styles.hero} data-character-identity>
 
@@ -398,7 +400,6 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
         {dataMode === "battle-net" ? <DeferredMount minHeight={420}>
           <GearFarmPlanner key={`farm:${snapshotKey}`} characterSlug={snapshot.slug} snapshotKey={snapshotKey} localePrefix={localePrefix} />
           <AuctionGearOptimizer key={`auction:${snapshotKey}`} characterSlug={snapshot.slug} snapshotKey={snapshotKey} specializationSlug={snapshot.specialization.slug} localePrefix={localePrefix} />
-          <CharacterGearOptimizer key={`gear:${snapshotKey}`} localePrefix={localePrefix} characterSlug={snapshot.slug} specializationSlug={snapshot.specialization.slug} gear={snapshot.gear} snapshotKey={snapshotKey} />
         </DeferredMount> : null}
 
         {talentAudit ? <><section className={styles.plan} id="audit-actions">
@@ -427,7 +428,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
 
         <DeferredMount minHeight={620}><CharacterTalentSimulator data={talentData} characterSlug={snapshot.slug} specSlug={snapshot.specialization.slug} loadout={snapshot.activeTalentLoadout} baseStats={snapshot.combatStats} scenario={talentScenario} onScenarioChange={selectTalentScenario} onCandidateLoadoutChange={syncRotationTalentLoadout} dataMode={dataMode} localePrefix={localePrefix} snapshotKey={snapshotKey} /></DeferredMount>
 
-        {resolvedRotationPreset ? <>
+        {characterRotationTrainingEnabled && resolvedRotationPreset ? <>
           {dataMode === "battle-net" ? <CharacterChapter id="chapter-rotation" index="03" eyebrow={tr("Боевая практика")} title={tr("Ротация и тренировка")} description={tr("Настройте панель умений и проверьте ротацию на своём билде.")} icon={<Zap />} /> : null}
           <section className={styles.rotationEmbed} id="audit-rotation" aria-label={localePrefix === "/ru" ? "Тренер ротации персонажа" : "Character rotation trainer"}>
 
