@@ -1,5 +1,7 @@
 "use client";
 
+import { DungeonTalentCalculatorButton } from "./DungeonTalentCalculatorButton";
+
 import { routeText, sourceName, type WowNameTable } from "@/lib/wow/wowNameTable";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -764,6 +766,7 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
             <p className={styles.description}><strong>{copy.goal}</strong> {copy.goalText(dungeon.description, bossCount)}</p>
           </div>
           <div className={styles.routeControls} role="group" aria-label={copy.controlsLabel}>
+            <DungeonTalentCalculatorButton locale={locale} />
             <div className={styles.selectorRow}>
               <MythicRouteSelectors locale={locale} dungeonSlug={dungeon.slug} dungeonOptions={dungeonOptions} keyLevel={keyLevel} onKeyLevelChange={setKeyLevel} />
             </div>

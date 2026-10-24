@@ -1,0 +1,4 @@
+export const dungeonCalculatorCopy = {
+  ru: { title: "Калькулятор талантов", close: "Закрыть калькулятор", choose: "Выберите класс и специализацию. Импортировать билд или открывать специальную ссылку не нужно.", openTree: "Открыть дерево талантов", apply: "Применить к подсказкам", reset: "Вернуть исходный билд", chooseSpec: "Изменить класс / спек", hint: "Настройте таланты и нажмите «Применить к подсказкам». Затем билд можно сохранить в «Мои билды»." },
+  en: { title: "Talent calculator", close: "Close calculator", choose: "Choose your class and specialization. No build import or shared link is needed.", openTree: "Open talent tree", apply: "Apply to pull advice", reset: "Restore starting build", chooseSpec: "Change class / spec", hint: "Choose your talents and apply them to pull advice. You can then save the build in My builds." },
+} as const;
