@@ -87,7 +87,7 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
     </AtlasPanel>
     <div ref={resultRef} tabIndex={-1} className={styles.resultFocus} aria-busy={busy}>
       {busy ? <><p role="status">{c.loading}</p><AtlasSkeleton variant="rows" count={6} label={c.loading} /></> : error ? <AtlasPanel><div role="alert"><h2>{c.title}</h2><p>{message(error, lang)}</p></div><AtlasButton onClick={() => void load()}>{c.retry}</AtlasButton></AtlasPanel>
-        : data ? <AtlasPanel padding="none"><AuctionListings data={data} lang={lang} onPage={page => void load(filters, page, true)} /></AtlasPanel>
+        : data ? <AtlasPanel padding="none"><AuctionListings data={data} lang={lang} query={filters} onPage={page => void load(filters, page, true)} /></AtlasPanel>
           : <AtlasPanel><h2>{c.ready}</h2><p>{c.start}</p></AtlasPanel>}
     </div>
     <p className={styles.hint}>{c.note} <a href="https://develop.battle.net/documentation/world-of-warcraft/game-data-apis" target="_blank" rel="noreferrer">{c.source}</a></p>

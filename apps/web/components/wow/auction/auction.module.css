@@ -8,14 +8,15 @@
 .summary { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3) var(--atlas-space-6); padding: var(--atlas-space-5); font-size: var(--atlas-text-meta); color: var(--atlas-text-muted); }
 .summary strong { color: var(--atlas-text); }
 .tableScroll { max-width: 100%; overflow: auto; }
-.table { width: 100%; border-collapse: collapse; text-align: left; font-size: var(--atlas-text-meta); }
+.table { width: 100%; border-collapse: separate; border-spacing: 0 var(--atlas-space-2); text-align: left; font-size: var(--atlas-text-meta); }
 .table th { color: var(--atlas-text-muted); font-weight: 600; white-space: nowrap; }
 .table th, .table td { padding: var(--atlas-space-4) var(--atlas-space-5); border-bottom: 1px solid var(--atlas-line); vertical-align: top; }
 .table td:first-child { min-width: 14rem; }
 .table td:nth-child(n+2) { font-variant-numeric: tabular-nums; }
 .secondary { display: block; margin-top: var(--atlas-space-1); }
-.money { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.money > span { color: var(--atlas-text-muted); }
+.money { display: inline-flex; gap: var(--atlas-space-2); white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--atlas-text); }
+.coin { display: inline-flex; align-items: center; gap: var(--atlas-space-1); }
+.coin img { display: inline-block; flex-shrink: 0; image-rendering: auto; }
 .details { margin-top: var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-label); }
 .details summary { cursor: pointer; min-height: 1.5rem; }
 .details > div { display: grid; gap: var(--atlas-space-1); overflow-wrap: anywhere; }
@@ -27,11 +28,14 @@
 .itemTrigger { display: inline-flex; gap: var(--atlas-space-3); align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--atlas-accent); font: inherit; text-align: left; cursor: pointer; }
 .itemTrigger:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: var(--atlas-space-1); }
 .itemTrigger:hover > span:last-child { text-decoration: underline; text-underline-offset: .2em; }
-.itemIcon { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border: 1px solid var(--atlas-line); background: var(--atlas-surface-raised); overflow: hidden; }
+.itemIcon { position: relative; display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border: 1px solid var(--auction-quality, var(--atlas-line)); background: var(--atlas-surface-raised); box-shadow: inset 0 0 0 1px var(--atlas-line); }
+.itemIcon::after { content: ""; position: absolute; inset: -10px; pointer-events: none; background: url("/assets/wow/ui-textures/character/action-button-border.png") center / 100% 100% no-repeat; opacity: .7; }
+.itemIcon::after { z-index: 0; }
+.itemIcon > img, .itemIcon > svg { position: relative; z-index: 1; }
 .itemIcon img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .itemPreview { max-height: min(24rem, 55dvh); overflow: auto; font-size: var(--atlas-text-meta); }
 .itemFacts { display: grid; gap: var(--atlas-space-2); color: var(--atlas-text); line-height: 1.6; overflow-wrap: anywhere; }
-.itemFacts strong { color: var(--atlas-accent); font-size: var(--atlas-text-body); }
+.itemFacts strong { color: var(--auction-quality-text, var(--atlas-accent)); font-size: var(--atlas-text-body); }
 .itemFacts p, .itemFacts ul { margin: 0; }
 .itemFacts ul { padding-inline-start: var(--atlas-space-4); }
 .itemFacts small { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); }
@@ -40,6 +44,18 @@
 .itemDialogContent { padding: var(--atlas-space-5); max-height: 72dvh; overflow: auto; }
 .itemActions { display: flex; justify-content: space-between; align-items: center; gap: var(--atlas-space-4); margin-top: var(--atlas-space-5); }
 .itemActions a { color: var(--atlas-accent); font-size: var(--atlas-text-meta); }
+.itemTrigger { color: var(--auction-quality-text, var(--atlas-accent)); }
+.itemLevel { display: block; margin-top: var(--atlas-space-1); color: var(--atlas-text-muted); font-size: var(--atlas-text-label); }
+.lotRow td { border-style: solid; border-width: 5px 0; border-image: url("/assets/wow/ui-textures/auction/item-name-frame.png") 6 stretch; background: var(--atlas-surface); }
+.lotRow td:first-child { border-inline-start-width: 6px; }
+.lotRow td:last-child { border-inline-end-width: 6px; }
+.lotRow:hover td { background: var(--atlas-surface-raised); }
+.tooltipPrices { display: grid; gap: var(--atlas-space-2); padding-block-start: var(--atlas-space-3); margin: var(--atlas-space-3) 0 0; border-top: 1px solid var(--atlas-line); }
+.tooltipPrices > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-2); }
+.tooltipPrices dt { color: var(--atlas-text-muted); }
+.tooltipPrices dd { margin: 0; }
+.wowLines { display: grid; gap: var(--atlas-space-1); }
+.wowLines [data-stat] { color: var(--auction-quality-text, var(--atlas-accent)); }
 @media (max-width: 1024px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 540px) {
   .filters { grid-template-columns: minmax(0, 1fr); }
