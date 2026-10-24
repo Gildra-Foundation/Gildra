@@ -1,31 +1,13 @@
-/* atlas:strict — read-only shared talent tree using the current calculator data. */
+/* atlas:strict — shared build dialog hosting the existing character talent calculator. */
 .dialog:global(.ui-dialog) { width: min(1120px, calc(100vw - 2 * var(--atlas-gutter))); max-height: 90vh; }
 .header { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); padding: var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line); }
 .header h2 { font: 400 var(--atlas-text-h3)/1.2 var(--atlas-font-display); margin: 0; }
 .header button { min-height: 44px; white-space: normal; }
 .body { display: grid; gap: var(--atlas-space-3); overflow: auto; padding: var(--atlas-space-3); max-height: 75vh; min-width: 0; }
 .body p { font-size: var(--atlas-text-small); line-height: 1.6; margin: 0; color: var(--atlas-text-muted); }
-.branchLayout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); gap: var(--atlas-space-3); min-width: 0; }
-.branchLayout > div { min-width: 0; }
-.viewport { overflow: auto; max-height: 52vh; border: 1px solid var(--atlas-line); background: var(--atlas-bg); }
-.canvas { position: relative; width: 680px; min-width: 680px; }
-.edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.edges line { stroke: var(--atlas-line); stroke-width: 2; }
-.edges line[data-selected="true"] { stroke: var(--atlas-accent); }
-.node { position: absolute; transform: translate(-50%, -50%); width: 46px; height: 46px; padding: 1px; border: 2px solid var(--atlas-line); border-radius: var(--atlas-radius); color: var(--atlas-text-strong); background: var(--atlas-surface); cursor: pointer; }
-.node img { display: block; width: 40px; height: 40px; filter: grayscale(1); opacity: .5; }
-.node[data-selected="true"] { border-color: var(--atlas-accent-strong); }
-.node[data-selected="true"] img { filter: none; opacity: 1; }
-.node[aria-current="true"] { outline: 2px solid var(--atlas-text-strong); outline-offset: 3px; }
-.rank { position: absolute; top: calc(100% - 2px); left: 50%; transform: translateX(-50%); white-space: nowrap; background: var(--atlas-bg); color: var(--atlas-text-strong); padding: 0 2px; font: 600 var(--atlas-text-label)/1.3 var(--atlas-font-ui); }
-.inspection { min-width: 0; padding: var(--atlas-space-3); border: 1px solid var(--atlas-line); background: var(--atlas-surface); max-height: 52vh; overflow: auto; }
-.inspection h3 { margin: 0 0 var(--atlas-space-2); font: 400 var(--atlas-text-h3)/1.2 var(--atlas-font-display); overflow-wrap: anywhere; }
-.choice { padding-top: var(--atlas-space-3); }
-.choice b { font-size: var(--atlas-text-small); }
-.choice[data-choice-selected="true"] b { color: var(--atlas-accent-strong); }
-.selectedList { border-top: 1px solid var(--atlas-line); padding-top: var(--atlas-space-2); }
-.selectedList summary, .selectedList button { min-height: 44px; cursor: pointer; }
-.selectedList button { border: 0; background: none; color: var(--atlas-text); text-align: left; font: inherit; font-size: var(--atlas-text-small); }
-.source a { color: var(--atlas-accent-strong); }
-.node:focus-visible, .selectedList button:focus-visible, .selectedList summary:focus-visible, .viewport:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
-@media (max-width: 800px) { .branchLayout { grid-template-columns: minmax(0, 1fr); } .inspection { max-height: 200px; } .body { max-height: 74vh; } }
+.editActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin-block: var(--atlas-space-2); }
+.editActions button { min-height: 44px; white-space: normal; }
+.heroPicker { display: grid; gap: var(--atlas-space-2); font-size: var(--atlas-text-small); }
+.heroPicker select { min-height: 44px; max-width: 100%; }
+
+.calculatorHost { container: auditPage / inline-size; min-width: 0; }
