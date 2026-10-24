@@ -45,7 +45,6 @@ import { DeferredMount } from "./DeferredMount";
 import { CharacterBookNavigation } from "./CharacterBookNavigation";
 import { CharacterBookChapter as CharacterChapter } from "./CharacterBookChapter";
 const CharacterTalentSimulator = dynamic(() => import("./CharacterTalentSimulator").then((module) => module.CharacterTalentSimulator));
-const CharacterGearOptimizer = dynamic(() => import("./CharacterGearOptimizer").then((module) => module.CharacterGearOptimizer));
 const GearFarmPlanner = dynamic(() => import("./GearFarmPlanner").then((module) => module.GearFarmPlanner));
 const AuctionGearOptimizer = dynamic(() => import("./AuctionGearOptimizer").then((module) => module.AuctionGearOptimizer));
 const CharacterHistory = dynamic(() => import("./CharacterHistory").then((module) => module.CharacterHistory));
@@ -401,7 +400,6 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
         {dataMode === "battle-net" ? <DeferredMount minHeight={420}>
           <GearFarmPlanner key={`farm:${snapshotKey}`} characterSlug={snapshot.slug} snapshotKey={snapshotKey} localePrefix={localePrefix} />
           <AuctionGearOptimizer key={`auction:${snapshotKey}`} characterSlug={snapshot.slug} snapshotKey={snapshotKey} specializationSlug={snapshot.specialization.slug} localePrefix={localePrefix} />
-          <CharacterGearOptimizer key={`gear:${snapshotKey}`} localePrefix={localePrefix} characterSlug={snapshot.slug} specializationSlug={snapshot.specialization.slug} gear={snapshot.gear} snapshotKey={snapshotKey} />
         </DeferredMount> : null}
 
         {talentAudit ? <><section className={styles.plan} id="audit-actions">
