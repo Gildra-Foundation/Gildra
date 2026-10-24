@@ -3,6 +3,7 @@
 import type { Lang } from "@/lib/i18n";
 import { useHomeTheme } from "./HomeTheme";
 import { homeThemes, type HomeThemeId } from "./homeThemes";
+import { WrittenEpigraph } from "./WrittenEpigraph";
 import styles from "./grimoireHome.module.css";
 
 const epigraphs = {
@@ -38,9 +39,6 @@ export function HomeEpigraph({ lang }: { lang: Lang }) {
 
   return <>
     <p className={styles.eyebrow}><span aria-hidden="true" />{ru ? "ХРОНИКИ АЗЕРОТА" : "CHRONICLES OF AZEROTH"} / {(ru ? hero.ru : hero.en).toUpperCase()}</p>
-    <figure className={styles.epigraph}>
-      <blockquote><h1 className={`${styles.quoteText}${theme !== "garek" ? ` ${styles.longQuote}` : ""}`}>{quote}</h1></blockquote>
-      <figcaption className={styles.quoteAuthor}><span aria-hidden="true" /><cite>{author}</cite></figcaption>
-    </figure>
+    <WrittenEpigraph key={`${theme}:${lang}`} lang={lang} quote={quote} author={author} extended={theme !== "garek"} />
   </>;
 }
