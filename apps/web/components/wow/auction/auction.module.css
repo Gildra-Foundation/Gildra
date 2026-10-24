@@ -1,0 +1,34 @@
+/* atlas:strict — auction layouts use shared fields, buttons and glass panels. */
+.browser { display: grid; gap: var(--atlas-space-6); min-width: 0; }
+.filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-4); align-items: end; }
+.search { grid-column: span 2; }
+.hint, .secondary { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: 1.6; }
+.hint { margin-block: var(--atlas-space-4) 0; }
+.hint a, .table a { color: var(--atlas-accent); text-underline-offset: .2em; }
+.summary { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3) var(--atlas-space-6); padding: var(--atlas-space-5); font-size: var(--atlas-text-meta); color: var(--atlas-text-muted); }
+.summary strong { color: var(--atlas-text); }
+.tableScroll { max-width: 100%; overflow: auto; }
+.table { width: 100%; border-collapse: collapse; text-align: left; font-size: var(--atlas-text-meta); }
+.table th { color: var(--atlas-text-muted); font-weight: 600; white-space: nowrap; }
+.table th, .table td { padding: var(--atlas-space-4) var(--atlas-space-5); border-bottom: 1px solid var(--atlas-line); vertical-align: top; }
+.table td:first-child { min-width: 14rem; }
+.table td:nth-child(n+2) { font-variant-numeric: tabular-nums; }
+.secondary { display: block; margin-top: var(--atlas-space-1); }
+.money { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.money > span { color: var(--atlas-text-muted); }
+.details { margin-top: var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-label); }
+.details summary { cursor: pointer; min-height: 1.5rem; }
+.details > div { display: grid; gap: var(--atlas-space-1); overflow-wrap: anywhere; }
+.warning, .error { padding: var(--atlas-space-4); border-inline-start: 2px solid var(--atlas-accent); background: var(--atlas-accent-wash); }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); padding: var(--atlas-space-5); font-size: var(--atlas-text-meta); }
+.empty { padding: var(--atlas-space-6); }
+.resultFocus { min-width: 0; outline-offset: var(--atlas-space-2); }
+.visuallyHidden { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+@media (max-width: 1024px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) {
+  .filters { grid-template-columns: minmax(0, 1fr); }
+  .search { grid-column: auto; }
+  .summary { flex-direction: column; }
+  .table th, .table td { padding: var(--atlas-space-3); }
+  .pagination { padding: var(--atlas-space-3); flex-wrap: wrap; }
+}

@@ -85,6 +85,15 @@ export const navigationRealms: readonly NavigationRealm[] = [
       { href: "/wow/stories", label: { en: "Story Library", ru: "Библиотека историй" }, note: { en: "Books and character chronicles", ru: "Книги и хроники персонажей" } },
     ],
   },
+  {
+    id: "tools",
+    label: { en: "Tools", ru: "Инструменты" },
+    lede: { en: "Useful tools for your adventures in Azeroth.", ru: "Полезные инструменты для приключений в Азероте." },
+    scene: "articles",
+    links: [
+      { href: "/wow/auction", label: { en: "Auction House", ru: "Аукцион" }, note: { en: "Browse realm auctions and regional commodities", ru: "Лоты серверов и региональный рынок реагентов" } },
+    ],
+  },
 ];
 
 export const realmArt = (realm: NavigationRealm) => atlasScenes[realm.scene];
