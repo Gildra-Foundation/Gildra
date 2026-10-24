@@ -24,6 +24,22 @@
 .empty { padding: var(--atlas-space-6); }
 .resultFocus { min-width: 0; outline-offset: var(--atlas-space-2); }
 .visuallyHidden { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+.itemTrigger { display: inline-flex; gap: var(--atlas-space-3); align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--atlas-accent); font: inherit; text-align: left; cursor: pointer; }
+.itemTrigger:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: var(--atlas-space-1); }
+.itemTrigger:hover > span:last-child { text-decoration: underline; text-underline-offset: .2em; }
+.itemIcon { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border: 1px solid var(--atlas-line); background: var(--atlas-surface-raised); overflow: hidden; }
+.itemIcon img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.itemPreview { max-height: min(24rem, 55dvh); overflow: auto; font-size: var(--atlas-text-meta); }
+.itemFacts { display: grid; gap: var(--atlas-space-2); color: var(--atlas-text); line-height: 1.6; overflow-wrap: anywhere; }
+.itemFacts strong { color: var(--atlas-accent); font-size: var(--atlas-text-body); }
+.itemFacts p, .itemFacts ul { margin: 0; }
+.itemFacts ul { padding-inline-start: var(--atlas-space-4); }
+.itemFacts small { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); }
+.variantNote { color: var(--atlas-text-muted); border-inline-start: 2px solid var(--atlas-accent); padding-inline-start: var(--atlas-space-3); }
+.itemDialog { max-width: min(32rem, calc(100vw - 2rem)); }
+.itemDialogContent { padding: var(--atlas-space-5); max-height: 72dvh; overflow: auto; }
+.itemActions { display: flex; justify-content: space-between; align-items: center; gap: var(--atlas-space-4); margin-top: var(--atlas-space-5); }
+.itemActions a { color: var(--atlas-accent); font-size: var(--atlas-text-meta); }
 @media (max-width: 1024px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 540px) {
   .filters { grid-template-columns: minmax(0, 1fr); }

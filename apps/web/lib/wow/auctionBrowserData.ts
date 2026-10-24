@@ -1,4 +1,5 @@
 import "server-only";
+import { auctionItemIcon, parseAuctionItemDetails, type AuctionItemDetails } from "./auctionItemDetails";
 import { auctionPage, parseAuctionListings, validAuctionRealm, type AuctionListing, type AuctionQuery, type AuctionRegion, type AuctionResult } from "./auctionBrowser";
 
 // All caches are process-local, bounded, and share in-flight requests. No user token is used.
@@ -119,12 +120,14 @@ async function matchingItems(query: AuctionQuery): Promise<{ ids?: Set<number>; 
   });
   return { ids: new Set(result.ids), truncated: result.truncated };
 }
-async function itemName(region: AuctionRegion, lang: "ru" | "en", id: number): Promise<string | null> {
-  return memo(`item:${region}:${lang}:${id}`, 24 * 60 * 60_000, async () => {
-    const response = await blizzard(region, `/data/wow/item/${id}`, "static", new URLSearchParams({ locale: lang === "ru" ? "ru_RU" : "en_US" }), 3000);
-    if (response.status === 404) { await response.body?.cancel(); return null; }
-    const payload = await readJSON(response) as { name?: string };
-    return typeof payload.name === "string" ? payload.name : null;
+async function itemDetails(region: AuctionRegion, lang: "ru" | "en", id: number): Promise<AuctionItemDetails> {
+  return memo(`item-details:${region}:${lang}:${id}`, 24 * 60 * 60_000, async () => {
+    const params = new URLSearchParams({ locale: lang === "ru" ? "ru_RU" : "en_US" });
+    const [payload, icon] = await Promise.all([
+      blizzard(region, `/data/wow/item/${id}`, "static", params, 3000).then(r => readJSON(r)),
+      memo(`item-icon:${region}:${id}`, 24 * 60 * 60_000, async () => auctionItemIcon(await readJSON(await blizzard(region, `/data/wow/media/item/${id}`, "static", new URLSearchParams(), 3000)))).catch(() => null),
+    ]);
+    return parseAuctionItemDetails(payload, id, icon);
   });
 }
 export async function browseAuctions(query: AuctionQuery): Promise<AuctionResult> {
@@ -132,15 +135,15 @@ export async function browseAuctions(query: AuctionQuery): Promise<AuctionResult
   const [market, matched] = await Promise.all([snapshot(query, connectedRealmId), matchingItems(query)]);
   const page = auctionPage(market.rows, query, matched.ids);
   const namesDeadline = Date.now() + 6000;
-  const names = new Map<number, string | null>(), ids = [...new Set(page.rows.map(row => row.itemId))];
+  const items = new Map<number, AuctionItemDetails | null>(), ids = [...new Set(page.rows.map(row => row.itemId))];
   // Four workers keep the first page bounded instead of making one request per market item.
   await Promise.all(Array.from({ length: Math.min(4, ids.length) }, async () => {
     while (Date.now() < namesDeadline) {
       const id = ids.pop(); if (id === undefined) break;
-      try { names.set(id, await itemName(query.region, query.lang, id)); } catch { names.set(id, null); }
+      try { items.set(id, await itemDetails(query.region, query.lang, id)); } catch { items.set(id, null); }
     }
   }));
-  return { ...page, rows: page.rows.map(row => ({ ...row, name: names.get(row.itemId) ?? null })),
+  return { ...page, rows: page.rows.map(row => ({ ...row, name: items.get(row.itemId)?.name ?? null, item: items.get(row.itemId) ?? null })),
     sourceUpdatedAt: market.sourceUpdatedAt, fetchedAt: market.fetchedAt, connectedRealmId, market: query.market,
     stale: market.sourceUpdatedAt === null || Date.now() - Date.parse(market.sourceUpdatedAt) > 2 * 60 * 60_000,
     searchTruncated: matched.truncated };

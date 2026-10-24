@@ -64,3 +64,23 @@ Browser checks should cover RU/EN desktop/mobile, keyboard menus, submitted URL,
 paging, cancellation when market changes, loading, empty, stale, API and realm
 errors, retries and reduced motion. Actual live-data access must also be checked
 with the deployment environment's existing server credentials before publishing.
+
+## Item icons and descriptions
+
+The same bounded four-worker metadata pass loads localized item previews and
+Blizzard icon media in parallel (3-second per-request timeout, 6-second page
+budget). Metadata failures leave listings visible with a package placeholder.
+Media is restricted to HTTPS render.worldofwarcraft.com; credentials stay on
+the server. The existing 1600-entry cache also bounds item/media results.
+
+Hover or keyboard focus on an item shows its Blizzard level, binding, slot,
+requirements, armor, localized stats, weapon parameters, effects and description
+when provided. Click/tap opens the full details in the existing Valyro-based
+AtlasDialog with focus management, Escape and a link to Wowhead retaining bonuses.
+The Valyro AtlasTooltip respects reduced motion.
+
+The static Blizzard preview is not an arbitrary bonus/modifier resolver.
+Preview bonus/context/modifier identity is compared to the lot. A different
+variant is explicitly labelled as a base preview whose level/stats may differ.
+Caged pets show actual auction species/level instead of the cage item's stats.
+No SimulationCraft jobs or user profile requests are triggered by browsing.
