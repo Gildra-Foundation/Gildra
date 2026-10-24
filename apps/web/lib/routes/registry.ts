@@ -36,6 +36,7 @@ export const routeSections = {
   whatsNew: { path: "/wow/whats-new", parent: "wow", title: { en: "What's new", ru: "Что нового" }, scene: "articles", search: { keywords: "changelog news updates обновления новости изменения" } },
   database: { path: "/database", title: { en: "Database", ru: "База данных" }, scene: "archive", search: { keywords: "items spells quests предметы заклинания задания" } },
   library: { path: "/library", title: { en: "Library", ru: "Библиотека" }, scene: "library", search: { keywords: "datasets наборы данных" } },
+  stories: { path: "/wow/stories", parent: "wow", title: { en: "Story Library", ru: "Библиотека историй" }, scene: "library", search: { keywords: "lore books Azeroth Anduin Wrynn истории книги хроники Азерот Андуин Ринн" } },
 } as const satisfies Record<string, RouteSection>;
 
 export type SectionId = keyof typeof routeSections;
