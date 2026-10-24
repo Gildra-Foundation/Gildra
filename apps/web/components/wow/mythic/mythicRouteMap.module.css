@@ -1,6 +1,6 @@
 /* atlas:strict — Mythic+ route planner (route map, step list, details, timeline). Layout only; colours, fonts and sizes come from the atlas tokens. */
 
-/* ---------- Page frame: dungeon artwork fading into the solid body ---------- */
+/* ---------- Page frame: continuous dungeon environment ---------- */
 .page {
   position: relative;
   min-height: 100dvh;
@@ -16,23 +16,16 @@
 .page :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 .page svg { flex: none; }
 
-.backdrop {
-  position: absolute;
-  z-index: -1;
-  inset: 0 0 auto;
-  height: min(860px, 110vh);
-  pointer-events: none;
-  background: var(--dungeon-backdrop) center 38% / cover no-repeat;
+.backdrop { position: absolute; z-index: -1; inset: 0; pointer-events: none; }
+.backdropScene { position: sticky; top: 0; height: 100lvh; overflow: hidden; }
+.backdropImage { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 35%; }
+.backdropScene::after { position: absolute; inset: 0; content: ""; background: linear-gradient(90deg, rgba(3, 6, 10, .49), rgba(3, 6, 10, .22) 48%, rgba(3, 6, 10, .45)), linear-gradient(180deg, rgba(3, 6, 10, .22), rgba(3, 6, 10, .4)); }
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .backdropImage { height: auto; min-height: 150lvh; animation: dungeon-descent 1s linear both; animation-timeline: scroll(root block); }
+  }
 }
-
-.backdrop::after {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background:
-    linear-gradient(90deg, rgba(4, 5, 6, .94), rgba(4, 5, 6, .55) 55%, rgba(4, 5, 6, .8)),
-    linear-gradient(180deg, rgba(5, 6, 7, .35), var(--atlas-bg) 94%);
-}
+@keyframes dungeon-descent { from { transform: translateY(0); } to { transform: translateY(min(0px, calc(100lvh - 100%))); } }
 
 .column {
   display: grid;
@@ -1175,12 +1168,6 @@
   .mapPanel[data-expanded] { inset: calc(var(--atlas-sticky-top) + 4px) 4px 4px; }
 }
 
-@media (max-width: 780px) {
-  .page[data-dungeon="ruby-life-pools"] .backdrop {
-    background-image: url("/assets/wow/mythic/ruby-depth-v3-mobile-optimized.webp");
-  }
-}
-
 .mdtLoading {
   min-height: 2100px;
   padding: 22px 24px;
@@ -1237,3 +1224,22 @@
 .legacyDraft > summary { min-height: 44px; cursor: pointer; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
 .legacyDraft > summary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .legacyDraft[open] > summary { margin-bottom: var(--atlas-space-3); }
+
+/* Tempered smoked glass: polished edges, a restrained reflection and a dark readable core. */
+.page { --dungeon-glass: rgba(6, 11, 17, .76); --dungeon-glass-raised: rgba(12, 19, 27, .82); }
+.routeControls, .panel, .legacyDraft, .page [data-testid="dungeon-source-review"] {
+  border: 1px solid color-mix(in srgb, var(--dungeon-accent) 30%, var(--atlas-line));
+  border-top-color: color-mix(in srgb, var(--dungeon-accent) 52%, var(--atlas-text-strong) 18%);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .055), transparent 32%, var(--dungeon-glow) 160%), var(--dungeon-glass);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .09), inset 0 -1px 0 rgba(0, 0, 0, .6), 0 18px 48px rgba(0, 0, 0, .28);
+  outline: none;
+}
+.page [data-testid="dungeon-source-review"] { padding: var(--atlas-space-4); }
+.mapFrame { border: 20px solid transparent; border-image: var(--map-frame) 72 stretch; background: rgba(3, 6, 9, .7); }
+.mapFrame .mapViewport { border: 1px solid var(--atlas-line); }
+@media (max-width: 720px) { .mapFrame { border-width: 14px; } .routeControls, .panel, .legacyDraft, .page [data-testid="dungeon-source-review"] { border-radius: 13px; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); } }
+@media (prefers-reduced-transparency: reduce) { .routeControls, .panel, .legacyDraft, .page [data-testid="dungeon-source-review"] { background: var(--atlas-surface); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+@media (forced-colors: active) { .backdrop { display: none; } .mapFrame { border: 2px solid CanvasText; border-image: none; } }
