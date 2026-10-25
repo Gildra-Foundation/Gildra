@@ -1,0 +1,270 @@
+/* atlas:strict — the hub reuses each dungeon's measured frame and genuine Valyro ArticleCard. */
+
+.hubGrid {
+  gap: var(--atlas-space-5) var(--atlas-space-4);
+}
+
+.hubCard:global(.ui-article-card[data-layout="vertical"]) {
+  gap: 0;
+  padding: var(--atlas-space-2);
+  border: 1px solid var(--atlas-glass-edge);
+  border-radius: 18px;
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
+  box-shadow: var(--atlas-glass-inset), var(--atlas-shadow-card);
+  transition: transform var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+}
+
+.hubCard :global(.ui-article-card__media) {
+  aspect-ratio: 3 / 2;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+}
+
+.frameCanvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+}
+
+.artWindow {
+  position: absolute;
+  inset: var(--frame-top) var(--frame-right) var(--frame-bottom) var(--frame-left);
+  overflow: hidden;
+  border-radius: var(--frame-window-radius);
+  background: var(--atlas-surface-sunken);
+}
+
+.sceneImage {
+  object-fit: cover;
+  transition: transform var(--atlas-duration-slow) var(--atlas-ease);
+}
+
+.artShade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--atlas-art-shade);
+  opacity: .24;
+}
+
+.frameImage {
+  z-index: 1;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.timer {
+  position: absolute;
+  right: var(--atlas-space-3);
+  bottom: var(--atlas-space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  padding: var(--atlas-space-2) var(--atlas-space-3);
+  border: 1px solid var(--atlas-glass-edge);
+  border-radius: 10px;
+  background: var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
+  color: var(--atlas-text-strong);
+  box-shadow: var(--atlas-glass-inset);
+  font-size: var(--atlas-text-body);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.timer svg {
+  width: 16px;
+  height: 16px;
+  color: var(--hub-card-accent, var(--atlas-accent));
+}
+
+.hubCard :global(.ui-article-card__body) {
+  flex: 1;
+  gap: var(--atlas-space-2);
+  padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-3);
+}
+
+.location {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  color: var(--atlas-text-muted);
+  line-height: var(--atlas-leading-snug);
+}
+
+.location svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  color: var(--hub-card-accent, var(--atlas-accent));
+}
+
+.hubCard :global(.ui-article-card__title) {
+  text-wrap: balance;
+}
+
+.hubCard :global(.ui-article-card__link) {
+  text-decoration: none;
+}
+
+.hubCard :global(.ui-article-card__link)::after {
+  z-index: 2;
+  border-radius: 18px;
+}
+
+.hubCard :global(.ui-article-card__excerpt) {
+  display: block;
+  overflow: visible;
+  margin-top: auto;
+  padding-top: var(--atlas-space-3);
+  -webkit-line-clamp: unset;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--atlas-space-2) var(--atlas-space-3);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-meta);
+}
+
+.facts > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-1);
+  white-space: nowrap;
+}
+
+.facts svg {
+  width: 14px;
+  height: 14px;
+  color: var(--hub-card-accent, var(--atlas-accent));
+}
+
+.openRoute {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-3);
+  margin-top: var(--atlas-space-3);
+  padding-top: var(--atlas-space-3);
+  border-top: 1px solid var(--atlas-line-soft);
+  color: var(--atlas-accent);
+  font-size: var(--atlas-text-small);
+  font-weight: 550;
+}
+
+.openRoute svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  transition: transform var(--atlas-duration) var(--atlas-ease);
+}
+
+.hubCard:focus-within {
+  border-color: var(--atlas-accent-strong);
+}
+
+.hubCard :global(.ui-article-card__link):focus-visible::after {
+  outline: 2px solid var(--atlas-accent-strong);
+  outline-offset: 4px;
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hubCard:global(.ui-article-card[data-linked]):hover {
+    border-color: color-mix(in srgb, var(--hub-card-accent, var(--atlas-accent)) 65%, var(--atlas-glass-edge));
+    background: var(--atlas-glass-sheen), var(--atlas-glass-raised);
+    box-shadow: var(--atlas-glass-inset), var(--atlas-shadow-lift);
+    transform: translateY(-4px);
+  }
+
+  .hubCard:hover .sceneImage {
+    transform: scale(1.035);
+  }
+
+  .hubCard:hover .openRoute svg {
+    transform: translate(2px, -2px);
+  }
+}
+
+.hubCard:active {
+  transform: translateY(-1px) scale(var(--atlas-press-scale-card));
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hubCard:global(.ui-article-card),
+  .sceneImage,
+  .openRoute svg {
+    transition: none;
+  }
+
+  .hubCard:global(.ui-article-card):is(:hover, :active),
+  .hubCard:hover .sceneImage,
+  .hubCard:hover .openRoute svg {
+    transform: none;
+  }
+}
+
+:global([data-motion="reduced"]) .hubCard:global(.ui-article-card),
+:global([data-motion="reduced"]) .sceneImage,
+:global([data-motion="reduced"]) .openRoute svg {
+  transition: none;
+}
+
+:global([data-motion="reduced"]) .hubCard:global(.ui-article-card):is(:hover, :active),
+:global([data-motion="reduced"]) .hubCard:hover .sceneImage,
+:global([data-motion="reduced"]) .hubCard:hover .openRoute svg {
+  transform: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .hubCard:global(.ui-article-card[data-layout="vertical"]),
+  .timer {
+    background: var(--atlas-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .hubCard:global(.ui-article-card[data-layout="vertical"]),
+  .timer {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .frameImage,
+  .artShade {
+    display: none;
+  }
+
+  .artWindow {
+    border: 1px solid CanvasText;
+  }
+
+  .hubCard :global(.ui-article-card__link):focus-visible::after {
+    outline-color: Highlight;
+  }
+}

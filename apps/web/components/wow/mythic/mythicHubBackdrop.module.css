@@ -1,0 +1,119 @@
+/* atlas:strict — one calm gateway painting with a sparse, decorative atmosphere. */
+
+.backdrop {
+  --hub-cold-light: color-mix(in srgb, var(--atlas-info) 72%, var(--atlas-accent) 28%);
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.continuation {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 65% 36% at 100% 23%, color-mix(in srgb, var(--hub-cold-light) 10%, transparent), transparent 76%),
+    radial-gradient(ellipse 55% 28% at 0% 72%, color-mix(in srgb, var(--atlas-accent) 6%, transparent), transparent 76%);
+}
+
+.scene {
+  position: absolute;
+  inset: 0 0 auto;
+  height: clamp(660px, 60vw, 1040px);
+  overflow: hidden;
+}
+
+.scene picture,
+.scene img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scene img {
+  object-fit: cover;
+  object-position: 64% top;
+}
+
+.scene::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 87%, transparent), color-mix(in srgb, var(--atlas-bg) 62%, transparent) 34%, transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 12%, transparent), transparent 36%, color-mix(in srgb, var(--atlas-bg) 38%, transparent) 64%, var(--atlas-bg) 100%);
+}
+
+.portalLight {
+  position: absolute;
+  left: 70%;
+  top: 34%;
+  width: 9%;
+  height: 25%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, var(--hub-cold-light), transparent 70%);
+  opacity: .13;
+  animation: portalLight 7s ease-in-out infinite alternate;
+}
+
+.motes {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  overflow: hidden;
+}
+
+.motes i {
+  position: absolute;
+  left: var(--mote-x);
+  top: var(--mote-y);
+  width: var(--mote-size);
+  height: var(--mote-size);
+  border-radius: 50%;
+  background: var(--atlas-text-strong);
+  box-shadow: 0 0 5px var(--hub-cold-light);
+  animation: moteDrift var(--mote-duration) var(--mote-delay) linear infinite;
+}
+
+.motes i:nth-child(3n) {
+  background: var(--atlas-accent);
+  box-shadow: 0 0 5px var(--atlas-accent);
+}
+
+.backdrop[data-paused] :is(.portalLight, .motes i) { animation-play-state: paused; }
+
+@keyframes portalLight {
+  from { opacity: .08; transform: scale(.96); }
+  to { opacity: .2; transform: scale(1.04); }
+}
+
+@keyframes moteDrift {
+  0% { opacity: 0; transform: translate3d(0, 35px, 0); }
+  22%, 72% { opacity: .55; }
+  100% { opacity: 0; transform: translate3d(-28px, -115px, 0); }
+}
+
+@media (max-width: 1023px) and (min-width: 768px) {
+  .scene { height: 760px; }
+  .scene img { object-position: 66% top; }
+}
+
+@media (max-width: 767px) {
+  .scene { height: 900px; }
+  .scene img { object-position: center top; }
+  .scene::after {
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 68%, transparent), color-mix(in srgb, var(--atlas-bg) 23%, transparent)),
+      linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 12%, transparent), transparent 33%, color-mix(in srgb, var(--atlas-bg) 48%, transparent) 64%, var(--atlas-bg) 100%);
+  }
+  .portalLight { left: 30%; top: 22%; width: 38%; }
+  .motes i:nth-child(even) { display: none; }
+}
+
+:global(html[data-motion="reduced"]) :is(.portalLight, .motes) { display: none; }
+@media (prefers-reduced-motion: reduce) { .portalLight, .motes { display: none; } }
+@media (prefers-reduced-transparency: reduce) { .portalLight, .motes, .continuation { display: none; } }
+@media (prefers-contrast: more) { .scene { opacity: .45; } }
+@media (forced-colors: active) { .backdrop { display: none; } }

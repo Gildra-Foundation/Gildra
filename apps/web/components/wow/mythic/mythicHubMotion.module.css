@@ -1,0 +1,22 @@
+/* atlas:strict — progressive motion; server content always starts fully visible. */
+
+.motion {
+  --hub-enter-duration: var(--atlas-duration-enter);
+  --hub-enter-stagger: var(--atlas-stagger);
+}
+
+/* JS cancels running entrances as preferences change. These also make a
+   direct preference attribute change take effect before its event runs. */
+:global(html[data-motion="reduced"]) .motion :global([data-hub-motion-item]),
+:global([data-ui-motion="reduce"]) .motion :global([data-hub-motion-item]),
+.motion:global([data-ui-motion="reduce"]) :global([data-hub-motion-item]) {
+  opacity: 1 !important;
+  translate: none !important;
+}
+
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .motion :global([data-hub-motion-item]) {
+    opacity: 1 !important;
+    translate: none !important;
+  }
+}
