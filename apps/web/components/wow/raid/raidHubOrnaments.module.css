@@ -1,9 +1,8 @@
-/* atlas:strict — actual painted cutouts grow once in the reserved footer garden. */
+/* atlas:strict — cutouts take root on the tablet's lower rail and grow upward. */
 
 .ornaments {
-  --raid-ornament-width: 132px;
+  --raid-ornament-width: 96px;
   --raid-ornament-height: 112px;
-  --raid-ornament-bottom: 8px;
   position: absolute;
   z-index: 2;
   inset: 0;
@@ -13,18 +12,19 @@
 
 .piece {
   position: absolute;
-  bottom: var(--raid-ornament-bottom);
-  width: var(--raid-ornament-width);
+  /* Measured alpha padding keeps the painted base on the rail at every size. */
+  --raid-piece-width: var(--raid-ornament-width);
+  bottom: calc(-1 * var(--raid-piece-width) * var(--raid-root-padding));
+  width: var(--raid-piece-width);
   height: var(--raid-ornament-height);
 }
 
-.left { left: 12px; }
-.right { right: 12px; }
+.left { left: -8px; }
+.right { right: -8px; }
 .buds {
-  left: min(25%, 112px);
-  width: calc(var(--raid-ornament-width) * .64);
+  left: 68px;
+  --raid-piece-width: calc(var(--raid-ornament-width) * .64);
   height: calc(var(--raid-ornament-height) * .7);
-  bottom: calc(var(--raid-ornament-bottom) - 2px);
 }
 
 .growth,
@@ -32,12 +32,13 @@
   display: block;
   width: 100%;
   height: 100%;
-  transform-origin: 50% 100%;
+  transform-origin: 50% calc(100% - var(--raid-piece-width) * var(--raid-root-padding));
 }
 
 .asset {
   object-fit: contain;
   object-position: center bottom;
+  filter: contrast(.84) saturate(.82) brightness(.91);
 }
 
 /* Before scripting or without it, every piece is already fully grown. Only a
@@ -84,32 +85,32 @@
 }
 
 @keyframes sporeGrow {
-  0% { opacity: 0; transform: translateY(14px) scale(.7, .04) rotate(-5deg); }
+  0% { opacity: 0; transform: scale(.7, .04) rotate(-5deg); }
   28% { opacity: 1; }
   75% { transform: translateY(-2px) scale(1.03, 1.08) rotate(1deg); }
   100% { opacity: 1; transform: none; }
 }
 @keyframes vineCurl {
-  0% { opacity: 0; transform: translateY(8px) scale(.55, .8) rotate(-28deg); }
+  0% { opacity: 0; transform: scale(.55, .04) rotate(-14deg); }
   34% { opacity: 1; }
   78% { transform: rotate(3deg) scale(1.02); }
   100% { opacity: 1; transform: none; }
 }
 @keyframes crystalReveal {
-  0% { opacity: 0; transform: translateY(12px) scale(.92); }
+  0% { opacity: 0; transform: scale(.92, .04); }
   48% { opacity: .8; transform: translateY(0) scale(1.02); }
   70% { opacity: 1; }
   82% { opacity: .86; }
   100% { opacity: 1; transform: none; }
 }
 @keyframes leafUnfold {
-  0% { opacity: 0; transform: translateY(8px) scale(.08, .72) rotate(20deg); }
+  0% { opacity: 0; transform: scale(.08, .04) rotate(12deg); }
   30% { opacity: 1; }
   76% { transform: scale(1.04, 1.02) rotate(-3deg); }
   100% { opacity: 1; transform: none; }
 }
 @keyframes featherReveal {
-  0% { opacity: 0; transform: translate(9px, 8px) rotate(26deg) scale(.86); }
+  0% { opacity: 0; transform: rotate(12deg) scale(.86, .04); }
   55% { opacity: 1; transform: translateY(-3px) rotate(-4deg); }
   100% { opacity: 1; transform: none; }
 }
@@ -135,10 +136,10 @@
 }
 
 @media (max-width: 700px) {
-  .ornaments { --raid-ornament-width: 84px; --raid-ornament-height: 80px; }
+  .ornaments { --raid-ornament-width: 72px; --raid-ornament-height: 80px; }
   .left { left: 0; }
   .right { right: 0; }
-  .buds { left: 25%; }
+  .buds { left: 54px; }
 }
 
 /* These overrides also defeat the scripting preparation rule, so a preference

@@ -11,17 +11,18 @@ type Ornament = {
   anchor: "left" | "right" | "buds";
   duration: number;
   delay: number;
+  rootPadding: number;
 };
 
 const ornaments: Record<RaidHubSlug, readonly Ornament[]> = {
-  "venomous-abyss": [{ name: "jade-vine", width: 384, height: 375, theme: "jade", anchor: "left", duration: 1600, delay: 400 }],
-  "the-voidspire": [{ name: "void-crystals", width: 384, height: 387, theme: "void", anchor: "right", duration: 1200, delay: 400 }],
-  "the-dreamrift": [{ name: "dream-shoot", width: 384, height: 382, theme: "dream", anchor: "left", duration: 1800, delay: 400 }],
-  "march-on-queldanas": [{ name: "sun-feather", width: 384, height: 410, theme: "sun", anchor: "right", duration: 1500, delay: 400 }],
+  "venomous-abyss": [{ name: "jade-vine", rootPadding: 18, width: 384, height: 375, theme: "jade", anchor: "left", duration: 1600, delay: 400 }],
+  "the-voidspire": [{ name: "void-crystals", rootPadding: 23, width: 384, height: 387, theme: "void", anchor: "right", duration: 1200, delay: 400 }],
+  "the-dreamrift": [{ name: "dream-shoot", rootPadding: 18, width: 384, height: 382, theme: "dream", anchor: "left", duration: 1800, delay: 400 }],
+  "march-on-queldanas": [{ name: "sun-feather", rootPadding: 17, width: 384, height: 410, theme: "sun", anchor: "right", duration: 1500, delay: 400 }],
   sporefall: [
-    { name: "spore-tall", width: 384, height: 372, theme: "spore", anchor: "left", duration: 1600, delay: 400 },
-    { name: "spore-shelf", width: 384, height: 382, theme: "spore", anchor: "right", duration: 1500, delay: 650 },
-    { name: "spore-buds", width: 384, height: 381, theme: "spore", anchor: "buds", duration: 1400, delay: 900 },
+    { name: "spore-tall", rootPadding: 19, width: 384, height: 372, theme: "spore", anchor: "left", duration: 1600, delay: 400 },
+    { name: "spore-shelf", rootPadding: 51, width: 384, height: 382, theme: "spore", anchor: "right", duration: 1500, delay: 650 },
+    { name: "spore-buds", rootPadding: 34, width: 384, height: 381, theme: "spore", anchor: "buds", duration: 1400, delay: 900 },
   ],
 };
 
@@ -33,7 +34,7 @@ export function RaidHubOrnaments({ slug }: { slug: RaidHubSlug }) {
       key={ornament.name}
       className={`${styles.piece} ${styles[ornament.theme]} ${styles[ornament.anchor]}`}
       data-raid-ornament-piece={ornament.name}
-      style={{ "--growth-duration": `${ornament.duration}ms`, "--growth-delay": `${ornament.delay}ms` } as CSSProperties}
+      style={{ "--growth-duration": `${ornament.duration}ms`, "--growth-delay": `${ornament.delay}ms`, "--raid-root-padding": ornament.rootPadding / ornament.width } as CSSProperties}
     >
       <span className={styles.growth} data-growth={ornament.theme}>
         <Image

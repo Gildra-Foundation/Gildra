@@ -88,9 +88,9 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
               </AtlasLinkButton>
               {raid.sourceUrl ? <a className={styles.source} href={raid.sourceUrl} target="_blank" rel="noreferrer">{copy.officialSource}<ArrowUpRight aria-hidden="true" /></a> : null}
             </footer>
+            <RaidHubOrnaments slug={raid.slug} />
           </div>
           {raid.sceneArt ? <AtlasMorphPreload art={raid.sceneArt} /> : null}
-          <RaidHubOrnaments slug={raid.slug} />
         </article>
       </Card>;
     })}

@@ -15,7 +15,11 @@
 .actions .heroAction:global(.ui-button) {
   --raid-action-light: var(--atlas-positive);
   --raid-action-slice: 40 128 29 156 fill;
-  --raid-action-border: 19.25px 61.59px 13.95px 75.07px;
+  --raid-action-top: 19.25px;
+  --raid-action-right: 61.59px;
+  --raid-action-bottom: 13.95px;
+  --raid-action-left: 75.07px;
+  --raid-action-border: var(--raid-action-top) var(--raid-action-right) var(--raid-action-bottom) var(--raid-action-left);
   --_fg: var(--atlas-text-strong);
   --_bg: var(--atlas-bg);
   --_bg-hover: var(--atlas-bg);
@@ -27,9 +31,6 @@
   border-style: solid;
   border-color: transparent;
   border-width: var(--raid-action-border);
-  border-image-source: var(--raid-action-art);
-  border-image-slice: var(--raid-action-slice);
-  border-image-width: 1;
   border-radius: 4px;
   background: var(--atlas-bg);
   background-clip: padding-box;
@@ -45,13 +46,23 @@
   --raid-action-light: var(--atlas-positive);
   --raid-action-art: url("/assets/wow/raids/hub/controls/buttons/the-dreamrift.webp");
   --raid-action-slice: 48 190 39 190 fill;
-  --raid-action-border: 20.48px 81.07px 16.64px 81.07px;
+  --raid-action-top: 20.48px;
+  --raid-action-right: 81.07px;
+  --raid-action-bottom: 16.64px;
+  --raid-action-left: 81.07px;
 }
 .heroAction::before,
 .heroAction::after { position: absolute; pointer-events: none; content: ""; z-index: 0; }
 .heroAction::before {
-  inset: 0;
+  inset: calc(-1 * var(--raid-action-top)) calc(-1 * var(--raid-action-right)) calc(-1 * var(--raid-action-bottom)) calc(-1 * var(--raid-action-left));
+  border: solid transparent;
+  border-width: var(--raid-action-border);
+  border-image-source: var(--raid-action-art);
+  border-image-slice: var(--raid-action-slice);
+  border-image-width: 1;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--atlas-bg) 82%, transparent) 18%, color-mix(in srgb, var(--atlas-bg) 82%, transparent) 82%, transparent);
+  background-clip: padding-box;
+  filter: contrast(.88) saturate(.84) brightness(.92);
   box-shadow: inset 0 2px 7px color-mix(in srgb, var(--atlas-bg) 65%, transparent);
 }
 .heroAction::after {
