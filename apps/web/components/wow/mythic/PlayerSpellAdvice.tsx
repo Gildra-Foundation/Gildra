@@ -15,7 +15,7 @@ export function PlayerSpellAdvice({ spec, mechanic, locale, selectedSpells, comp
   return <div className={`${styles.playerAdvice} ${compact ? styles.compactAdvice : ""}`} data-testid="player-spell-advice" data-action={kind} data-effect={effect}>
     <b>{kind === "defend" ? t.personal : t.tools}{effect && (kind === "dispel" || kind === "purge") ? ` · ${t.effects[effect]}` : ""}</b>
     {options.length ? <ul>{options.map(option => <li key={option.spell.id} data-player-spell={option.spell.id}>
-      <a className={styles.playerSpell} href={option.spell.source} target="_blank" rel="noreferrer"><ResilientImage src={option.spell.iconUrl} width={28} height={28} alt="" loading="lazy" /><span>{option.spell.name[locale]} ↗</span></a>
+      <a className={styles.playerSpell} href={option.spell.source} target="_blank" rel="noreferrer"><ResilientImage data-combat-icon="spell" src={option.spell.iconUrl} width={28} height={28} alt="" loading="lazy" /><span>{option.spell.name[locale]} ↗</span></a>
       {option.talents.map(talent => <small key={talent.id}>{selectedSpells ? t.selectedTalent : t.talent}: {talent.name[locale]}</small>)}
       {option.note && <small>{option.note[locale]}</small>}
     </li>)}</ul> : <p data-testid="player-spell-unavailable">{missing}</p>}

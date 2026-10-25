@@ -140,6 +140,25 @@
 .panel[data-dungeon-map="ruby-life-pools"] .pullStrip li { flex: 1 0 auto; }
 .panel[data-dungeon-map="ruby-life-pools"] .pullStrip button { min-width: 72px; width: 100%; border-radius: 5px; background: var(--ruby-dark-glass); }
 .panel[data-dungeon-map="ruby-life-pools"] .pullStrip [aria-pressed="true"] { background: var(--ruby-selection); border-color: var(--ruby-selection-edge); box-shadow: inset 0 0 0 1px var(--ruby-selection-edge), 0 0 12px var(--atlas-accent-glow); color: var(--atlas-text-strong); }
+.panel[data-dungeon-map="ruby-life-pools"] .pullStrip { position: relative; isolation: isolate; padding: 6px 4px 12px; }
+.panel[data-dungeon-map="ruby-life-pools"] .pullStrip button { position: relative; z-index: 1; min-height: 66px; overflow: hidden; background: color-mix(in srgb, var(--ruby-dark-glass) 28%, transparent); border-top-color: var(--atlas-line-strong); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 3px 8px var(--atlas-bg); }
+.panel[data-dungeon-map="ruby-life-pools"] .pullStrip button::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(115deg, transparent 15%, var(--atlas-line-soft) 48%, transparent 76%); opacity: 0; transform: translateX(-100%); transition: opacity .2s var(--atlas-ease), transform .5s var(--atlas-ease); pointer-events: none; }
+.panel[data-dungeon-map="ruby-life-pools"] .pullStrip:has([data-choice-highlight="selected"]) [aria-pressed="true"] { background: transparent; border-color: transparent; box-shadow: none; }
+.pullHighlights { position: absolute; inset: 0; pointer-events: none; list-style: none; }
+.selectionHighlight, .hoverHighlight { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 6px; pointer-events: none; transition: transform .42s var(--ui-spring-snappy, var(--atlas-ease)), width .42s var(--ui-spring-snappy, var(--atlas-ease)), height .24s var(--atlas-ease), opacity .18s var(--atlas-ease); }
+.selectionHighlight { background: var(--ruby-selection); border: 1px solid var(--ruby-selection-edge); box-shadow: inset 0 1px 0 var(--atlas-text-muted), inset 0 -3px 8px var(--atlas-accent-wash-strong), 0 0 18px var(--atlas-accent-glow); }
+.hoverHighlight { background: linear-gradient(145deg, var(--atlas-line-soft), transparent 70%); border: 1px solid var(--ruby-gold); box-shadow: inset 0 1px 0 var(--atlas-line-strong), 0 0 16px var(--atlas-accent-glow); }
+.hoverHighlight[data-visible="false"] { opacity: 0; }
+.panel[data-dungeon-map="ruby-life-pools"] .rolePicker :global(.ui-segmented-control__thumb) { border: 1px solid var(--ruby-selection-edge); box-shadow: inset 0 1px 0 var(--atlas-text-muted), inset 0 -3px 8px var(--atlas-accent-wash-strong), 0 0 18px var(--atlas-accent-glow); }
+.panel[data-dungeon-map="ruby-life-pools"] .rolePicker :global(.ui-segmented-control__item) { transition: color .2s var(--atlas-ease), background-color .2s var(--atlas-ease), box-shadow .2s var(--atlas-ease); }
+.panel[data-dungeon-map="ruby-life-pools"] .rolePicker :global(.ui-segmented-control__item):is(:hover, :focus-visible) { color: var(--atlas-text-strong); background: var(--atlas-line-soft); box-shadow: inset 0 1px 0 var(--atlas-line-strong); }
+@media (hover: hover) and (pointer: fine) {
+  .panel[data-dungeon-map="ruby-life-pools"] .pullStrip button:hover::before { opacity: 1; transform: translateX(100%); }
+}
+:global(html[data-motion="reduced"]) :is(.selectionHighlight, .hoverHighlight) { transition: none; }
+@media (prefers-reduced-motion: reduce) { .selectionHighlight, .hoverHighlight { transition: none; } .panel[data-dungeon-map="ruby-life-pools"] .pullStrip button::before { display: none; } }
+:global(html[data-motion="reduced"]) .panel[data-dungeon-map="ruby-life-pools"] .pullStrip button::before { display: none; }
+@media (forced-colors: active) { .selectionHighlight { background: Highlight; border: 2px solid Highlight; } .hoverHighlight { border-color: CanvasText; } }
 .panel[data-dungeon-map="ruby-life-pools"] .workspace { grid-template-columns: minmax(0, 1fr) minmax(300px, 320px); gap: var(--atlas-space-3); }
 .panel[data-dungeon-map="ruby-life-pools"] .mapFrame { position: relative; border: 0; padding: 60px 28px 26px; background: transparent; border-radius: 14px; isolation: isolate; }
 .panel[data-dungeon-map="ruby-life-pools"] .viewport { max-height: none; border-radius: 14px; scrollbar-color: var(--atlas-line-strong) var(--atlas-bg); }

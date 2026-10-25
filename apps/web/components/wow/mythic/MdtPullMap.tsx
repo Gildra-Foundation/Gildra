@@ -6,6 +6,7 @@ import { dungeonMapFrame, dungeonArtDirections } from "@/lib/wow/dungeonArtDirec
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight, Skull } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { AtlasChoiceHighlight } from "@gildra/atlas-ui/AtlasChoiceHighlight";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { AtlasValyroSelect } from "@gildra/atlas-ui/AtlasValyroSelect";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
@@ -33,6 +34,10 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
   const [selectedRole, setSelectedRole] = usePullRole();
   const [profile, setProfile] = usePlayerProfile();
   const [selected, setSelected] = useState(0);
+  const [preview, setPreview] = useState<number | null>(null);
+  const pullStrip = useRef<HTMLOListElement>(null);
+  const [pullList, setPullList] = useState<HTMLOListElement | null>(null);
+  const attachPullStrip = useCallback((node: HTMLOListElement | null) => { pullStrip.current = node; setPullList(node); }, []);
   const root = useRef<HTMLElement>(null), builds = useRef<HTMLDetailsElement>(null);
   const ruby = slug === "ruby-life-pools";
   const specTheme = talentSpecThemes.find(spec => spec.specId === profile.specId && spec.classId === profile.classId);
@@ -74,7 +79,7 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
   return <section ref={root} className={styles.panel} data-dungeon-map={slug} data-testid="mdt-map" aria-label={copy.mapLabel}>
     <header className={styles.header}><h3>{authored ? t.route : t.groups}</h3><a className={styles.routeLink} href={data.route.url || routeUrl} target="_blank" rel="noreferrer">{copy.authoredRoute}</a></header>
     <div className={styles.playerBar}>
-      <div className={styles.rolePicker} data-testid="pull-role-picker"><AtlasSegmented aria-label={roles.label} size="lg" fullWidth value={activeRole} onValueChange={value => { setProfile({ ...profile, specId: null }); setSelectedRole(value); }} options={(["all", "tank", "healer", "dps"] as const).map(value => ({ value, label: roles[value] }))} /></div>
+      <div className={styles.rolePicker} data-testid="pull-role-picker"><AtlasSegmented aria-label={roles.label} animation={ruby ? "spring" : undefined} size="lg" fullWidth value={activeRole} onValueChange={value => { setProfile({ ...profile, specId: null }); setSelectedRole(value); }} options={(["all", "tank", "healer", "dps"] as const).map(value => ({ value, label: roles[value] }))} /></div>
       <div className={styles.profileFields} data-testid="pull-player-picker">
         <label><span>{playerCopy.classLabel}</span>{ruby && classTheme && <ResilientImage className={styles.pickerIcon} src={classTheme.classIconUrl} width={30} height={30} alt="" />}<AtlasValyroSelect native size="lg" placeholder={playerCopy.noClass} aria-label={playerCopy.classLabel} value={profile.classId?.toString() ?? ""} onValueChange={value => setProfile({ classId: Number(value) || null, specId: null })} options={[{ value: "", label: playerCopy.noClass }, ...playerClasses.map(entry => ({ value: String(entry.id), label: entry.name[locale] }))]} /></label>
         <label><span>{playerCopy.specLabel}</span>{ruby && specTheme && <ResilientImage className={styles.pickerIcon} src={specTheme.iconUrl} width={30} height={30} alt="" />}<AtlasValyroSelect native size="lg" placeholder={profile.classId ? playerCopy.noSpec : playerCopy.selectClass} aria-label={playerCopy.specLabel} disabled={!profile.classId} value={profile.specId?.toString() ?? ""} onValueChange={value => { const spec = playerSpecs.find(entry => entry.id === Number(value) && entry.classId === profile.classId); setProfile({ classId: profile.classId, specId: spec?.id ?? null }); if (spec) setSelectedRole(spec.role); }} options={[{ value: "", label: profile.classId ? playerCopy.noSpec : playerCopy.selectClass }, ...playerSpecs.filter(entry => entry.classId === profile.classId).map(entry => ({ value: String(entry.id), label: entry.name[locale] }))]} /></label>
@@ -84,9 +89,16 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
     {!authored && <p className={styles.routeStatus} data-testid="mdt-route-status">{t.unverified} · {copy.incompatible}</p>}
     {!members ? <p role="status">{copy.empty}</p> : <>
       <nav className={styles.pullNav} aria-label={authored ? t.poolList : t.groupList}>
-        <ol className={styles.pullStrip} data-pull-strip>{pulls.map((group, index) => <li key={group.map(node => node.id).join(",")}><button type="button" data-pull-choice={index} aria-pressed={active === index} aria-controls="pull-selected-panel" onClick={() => selectPull(index, true)} aria-label={`${label} ${index + 1}: ${copy.enemyCount(group.length)}`}>
+        <ol ref={ruby ? attachPullStrip : undefined} className={styles.pullStrip} data-pull-strip
+          onPointerOver={ruby ? event => { if (event.pointerType === "mouse") { const choice = (event.target as HTMLElement).closest<HTMLElement>("[data-pull-choice]"); if (choice) setPreview(Number(choice.dataset.pullChoice)); } } : undefined}
+          onPointerLeave={ruby ? () => setPreview(null) : undefined}
+          onFocusCapture={ruby ? event => { const choice = (event.target as HTMLElement).closest<HTMLElement>("[data-pull-choice]"); if (choice?.matches(":focus-visible")) setPreview(Number(choice.dataset.pullChoice)); } : undefined}
+          onBlurCapture={ruby ? event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPreview(null); } : undefined}>{pulls.map((group, index) => <li key={group.map(node => node.id).join(",")}><button type="button" data-pull-choice={index} aria-pressed={active === index} aria-controls="pull-selected-panel" onClick={() => selectPull(index, true)} aria-label={`${label} ${index + 1}: ${copy.enemyCount(group.length)}`}>
           <b>{index + 1}</b><span>{group.every(node => node.boss) ? <><Skull size={14} aria-hidden="true" /> {t.boss}</> : copy.enemyCount(group.length)}</span>
-        </button></li>)}</ol>
+        </button></li>)}{ruby && pullList && <li className={styles.pullHighlights} role="presentation" aria-hidden="true">
+          <AtlasChoiceHighlight listRef={pullStrip} activeKey={active} selector={`[data-pull-choice="${active}"]`} name="selected" className={styles.selectionHighlight} />
+          <AtlasChoiceHighlight listRef={pullStrip} activeKey={preview ?? active} selector={`[data-pull-choice="${preview ?? active}"]`} name="hover" visible={preview !== null} className={styles.hoverHighlight} />
+        </li>}</ol>
       </nav>
       <div className={styles.workspace}>
         <div className={styles.maps}>{floors.map(floor => <figure className={styles.floor} key={floor} data-map-frame={`${slug}-mdt-${floor}`} data-frame-motif={dungeonArtDirections[slug].motif}>

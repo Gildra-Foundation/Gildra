@@ -35,7 +35,7 @@ export function PullActionPanel({ ruby, title, intel, locale, role, spec, spells
         return rows.length > 0 && <section className={styles.actionGroup} key={action} data-action-group={action}>
           <h6><Icon size={18} aria-hidden="true" />{t.action[action]}</h6>
           <ul>{rows.map(ability => <li key={`${ability.npcId ?? ability.source}:${ability.spellId ?? ability.name}`}>
-            <div className={styles.castIdentity}><ResilientImage src={ability.iconUrl} width={32} height={32} alt="" loading="lazy" /><div><b>{ability.name}</b><small>{ability.source}{role === "all" ? ` · ${t[ability.role]}` : ""}</small></div></div>
+            <div className={styles.castIdentity}><ResilientImage data-combat-icon="spell" src={ability.iconUrl} width={32} height={32} alt="" loading="lazy" /><div><b>{ability.name}</b><small>{ability.source}{role === "all" ? ` · ${t[ability.role]}` : ""}</small></div></div>
             {ability.response && <p>{ability.response}</p>}
             {spec && <PlayerSpellAdvice compact spec={spec} mechanic={ability} locale={locale} selectedSpells={spells} />}
           </li>)}</ul>
