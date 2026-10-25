@@ -94,6 +94,8 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     const unique = new Map<string, TierContext>();
     for (const context of intelligence.tierContexts ?? []) {
       if (context.activity !== activity || context.selectionType === "all") continue;
+      // The API names dungeons, raids and bosses in Russian only; the English page leaves them out.
+      if (lang !== "ru" && /[\u0400-\u04FF]/.test(context.selectionName)) continue;
       unique.set(contextKey(context), context);
     }
     return [...unique.values()].sort((a, b) => a.selectionName.localeCompare(b.selectionName, lang === "ru" ? "ru" : "en"));

@@ -259,6 +259,8 @@ services:
     environment:
       API_INTERNAL_URL: http://api:8080
       CATALOG_ACCESS_MODE: ${CATALOG_ACCESS_MODE:-public}
+      # Live WoW tier lists from the API; off shows the labelled sample (lib/flags.ts).
+      WOW_META_API_ENABLED: ${WOW_META_API_ENABLED:-false}
       CMS_INTERNAL_URL: ${CMS_INTERNAL_URL:-http://cms:3001}
       INDEXNOW_KEY: ${INDEXNOW_KEY}
       NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}

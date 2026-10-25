@@ -167,6 +167,9 @@ function unavailable(gameId: PlatformGameId, lang: Lang, message?: string): Game
   };
 }
 
+/** The tier list covers the current expansion only; the API also keeps Classic raids. */
+const CURRENT_WOW_ADDON = "midnight";
+
 async function wowIntelligence(lang: Lang): Promise<GameIntelligence> {
   const locale = lang === "ru" ? "ru_RU" : "en_US";
   const [dps, healer, tank, raidDps, raidHealer, raidTank, mythicContexts, raidContexts, entityTypes, datasets] = await Promise.all([
@@ -207,7 +210,7 @@ async function wowIntelligence(lang: Lang): Promise<GameIntelligence> {
       mythic_plus: { roles: { dps: dps.entries, healer: healer.entries, tank: tank.entries } },
       raid: { roles: { dps: raidDps.entries, healer: raidHealer.entries, tank: raidTank.entries } },
     },
-    tierContexts: [...mythicContexts, ...raidContexts],
+    tierContexts: [...mythicContexts, ...raidContexts].filter((context) => context.addonKey === CURRENT_WOW_ADDON),
     sources: dps.sources,
   };
 }

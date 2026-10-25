@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/blocks/types";
 import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components/atlas";
 import { TierSection, type TierSpecNames } from "@/components/TierSection";
@@ -64,6 +65,9 @@ export const tierWorkspaceBlock = defineBlock<EmptyProps, TierWorkspaceData>({
   type: "wow.tierWorkspace",
   Component: TierWorkspace,
   load: async (ctx) => {
+    // Rendered per request: WOW_META_API_ENABLED is a runtime switch, and a
+    // prerendered page would keep the build's sample until the next release.
+    await connection();
     const [intelligence, sourceSlices] = await Promise.all([getGameIntelligence("wow", ctx.lang), getTierSourceSlices()]);
     return { ...intelligence, sourceSlices };
   },
