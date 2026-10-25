@@ -39,81 +39,43 @@
   font-size: var(--atlas-text-small);
 }
 
-.compareLink {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  color: var(--atlas-accent);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
 
-.sourceList a,
-.timerProvenance a {
-  color: var(--atlas-accent);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+.page { --atlas-frame-tint: var(--atlas-info-wash, var(--atlas-accent-glow)); }
+.hero { min-height: 490px; padding-bottom: var(--atlas-space-5); }
+.heroHeader { max-width: 58%; }
+.heroHeader h1 { max-width: 15ch; }
+.heroHeader p { max-width: 48ch; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+.actions :global(.ui-button) { min-height: 48px; border-radius: 12px; box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 4px 12px var(--atlas-bg); }
+.seasonFacts { max-width: 500px; margin-top: var(--atlas-space-5); }
+.seasonFacts :global(.ui-stats-card) { background: transparent; box-shadow: none; border: 0; padding-block: var(--atlas-space-2); }
+.dungeons { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+.timerSection { margin-top: var(--atlas-space-6); }
+.metaLink { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-4); padding: var(--atlas-space-4) var(--atlas-space-5); margin-top: var(--atlas-space-6); border: 1px solid var(--atlas-line); border-radius: 16px; background: var(--atlas-glass-sheen), var(--atlas-glass-fill); backdrop-filter: var(--atlas-glass-filter); }
+.metaLink > span { display: grid; gap: var(--atlas-space-1); }
+.metaLink strong { font: 600 var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); color: var(--atlas-text-strong); }
+.metaLink > span > span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.page .metaLink :global(.ui-button) { min-height: 46px; border-radius: 12px; transition: transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease); }
+.page .metaLink :global(.ui-button):is(:hover, :focus-visible) { box-shadow: inset 0 1px 0 var(--atlas-line-strong), 0 4px 16px var(--atlas-accent-glow); }
+.page .sourceNote :global(.ui-alert) { --ui-alert-radius: 16px; --ui-alert-bg: var(--atlas-glass-fill); border-radius: 16px; box-shadow: var(--atlas-shadow-panel); }
+.sourceNote { margin-top: var(--atlas-space-6); }
+.sourceList a { color: var(--atlas-accent); text-decoration: underline; text-underline-offset: .2em; }
+.sourceList a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+@media (max-width: 1023px) {
+  .hero { min-height: 470px; }
+  .heroHeader { max-width: 78%; }
 }
-
-.timerProvenance {
-  margin: 0 0 var(--atlas-space-3);
+@media (max-width: 600px) {
+  .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
+  .heroHeader { max-width: 100%; }
+  .heroHeader h1 { max-width: 15ch; }
+  .actions { gap: var(--atlas-space-2); }
+  .actions :global(.ui-button) { flex: 1 1 180px; }
+  .seasonFacts { margin-top: var(--atlas-space-4); }
+  .metaLink { align-items: flex-start; flex-direction: column; padding: var(--atlas-space-4); }
 }
-
-.timerTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--atlas-text-body);
-  font-family: var(--atlas-font-ui);
-}
-
-.timerTable th,
-.timerTable td {
-  border-bottom: 1px solid var(--atlas-line-soft);
-  padding: var(--atlas-space-2) var(--atlas-space-3);
-  text-align: left;
-}
-
-.timerTable thead th {
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-meta);
-}
-
-.timerTable tbody th {
-  padding-block: 0;
-  font-weight: 400;
-}
-
-.timerTable a {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding-block: var(--atlas-space-2);
-  color: var(--atlas-text-strong);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-
-.timerTable td,
-.timerTable thead th:last-child {
-  width: 1%;
-  text-align: right;
-  white-space: nowrap;
-  color: var(--atlas-accent);
-  font-variant-numeric: tabular-nums;
-}
-
-.timerTable tr:focus-within {
-  background: var(--atlas-surface-selected);
-}
-
-.compareLink:focus-visible,
-.verification a:focus-visible,
-.timerProvenance a:focus-visible,
-.timerTable a:focus-visible {
-  outline: 2px solid var(--atlas-accent);
-  outline-offset: 3px;
-}
-
-.timers {
-  scroll-margin-top: var(--atlas-sticky-top);
-}
+@media (prefers-reduced-transparency: reduce) { .metaLink { background: var(--atlas-surface); backdrop-filter: none; } }
+@media (forced-colors: active) { .metaLink { border: 1px solid CanvasText; background: Canvas; } }
+@media (hover: hover) and (pointer: fine) { .page .metaLink :global(.ui-button):hover { transform: translateY(-2px); } }
+:global(html[data-motion="reduced"]) .page .metaLink :global(.ui-button) { transform: none; transition: none; }
+@media (prefers-reduced-motion: reduce) { .page .metaLink :global(.ui-button) { transform: none; transition: none; } }
