@@ -70,3 +70,6 @@
 .compactAdvice li { margin: var(--atlas-space-1) 0; }
 .compactAdvice .playerSpell { font-size: var(--atlas-text-meta); }
 .compactAdvice p, .compactAdvice small { font-size: var(--atlas-text-meta); }
+
+/* Touch uses the persistent action panel and explicit full-briefing dialog. */
+@media (hover: none) and (pointer: coarse) { .tooltip { display: none; } }

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import type { DungeonSelectorOption, DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { mythicRouteCopy, type RouteLocale } from "./mythicRouteCopy";
 import { useRouteNames } from "./routeNames";
+import { dungeonBackdropSmall } from "@/lib/wow/dungeonArtDirection";
 import styles from "./mythicRouteSelectors.module.css";
 
 type SelectorOption<T extends string | number> = {
@@ -169,7 +170,7 @@ export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale,
     value: route.slug,
     title: sourceName(names, route.name, locale, route.nameRu),
     subtitle: copy.dungeonSubtitle({ name: sourceName(names, route.name, locale, route.nameRu), nameRu: sourceName(names, route.name, locale, route.nameRu), timer: formatTimer(route.timerSeconds) }),
-    artwork: dungeonSlug === "ruby-life-pools" && route.slug === "ruby-life-pools" ? "/assets/wow/mythic/ruby-sanctuary/sanctuary-768.webp" : route.backdropImage,
+    artwork: dungeonBackdropSmall(route.slug),
   }));
   const keyOptions: SelectorOption<number>[] = keyLevels.map((level) => ({ value: level, title: `+${level}`, subtitle: copy.keyOptions[level] }));
 
@@ -181,8 +182,8 @@ export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale,
 
   return (
     <>
-      <WowSelector label={copy.dungeonLabel} value={dungeonSlug} options={options} onChange={changeDungeon} icon={<Map />} className={`${styles.dungeonSelector} ${dungeonSlug === "ruby-life-pools" ? styles.rubySelector : ""}`} busy={isNavigating} loadingLabel={copy.loading} keyboardHint={copy.keyboardHint} />
-      <WowSelector label={copy.difficultyLabel} value={keyLevel} options={keyOptions} onChange={onKeyLevelChange} icon={<Gem />} className={`${styles.keySelector} ${dungeonSlug === "ruby-life-pools" ? styles.rubySelector : ""}`} loadingLabel={copy.loading} keyboardHint={copy.keyboardHint} />
+      <WowSelector label={copy.dungeonLabel} value={dungeonSlug} options={options} onChange={changeDungeon} icon={<Map />} className={`${styles.dungeonSelector} ${styles.rubySelector}`} busy={isNavigating} loadingLabel={copy.loading} keyboardHint={copy.keyboardHint} />
+      <WowSelector label={copy.difficultyLabel} value={keyLevel} options={keyOptions} onChange={onKeyLevelChange} icon={<Gem />} className={`${styles.keySelector} ${styles.rubySelector}`} loadingLabel={copy.loading} keyboardHint={copy.keyboardHint} />
     </>
   );
 });

@@ -1245,51 +1245,51 @@
 @media (forced-colors: active) { .backdrop { display: none; } .mapFrame { border: 2px solid CanvasText; border-image: none; } }
 
 /* Ruby Life Pools: approved sanctuary artwork, warm glass and ruby controls. */
-.page[data-dungeon="ruby-life-pools"] .backdropImage { height: 100%; min-height: 0; object-position: center top; filter: blur(1.2px) saturate(.85) contrast(.92) brightness(1.04); animation: none; transform: scale(1.012); }
-.page[data-dungeon="ruby-life-pools"] .backdropScene::after { background: linear-gradient(90deg, rgba(9, 8, 14, .29), rgba(9, 8, 14, .06) 52%, rgba(9, 8, 14, .2)), linear-gradient(180deg, rgba(9, 8, 14, .03), rgba(9, 8, 14, .12) 34%, rgba(9, 8, 14, .2)); }
-.page[data-dungeon="ruby-life-pools"] .column { gap: var(--atlas-space-4); padding-top: var(--atlas-space-5); }
-.page[data-dungeon="ruby-life-pools"] .intro { min-height: 208px; padding-block: var(--atlas-space-4); }
-.page[data-dungeon="ruby-life-pools"] .titleRow h1 { font-size: calc(var(--atlas-text-h2) * 1.55); text-shadow: 0 2px 8px rgba(0, 0, 0, .9); }
-.page[data-dungeon="ruby-life-pools"] .eyebrow { color: var(--atlas-text); text-shadow: 0 1px 4px var(--atlas-bg); }
-.page[data-dungeon="ruby-life-pools"] .description { max-width: 66ch; font-size: var(--atlas-text-meta); color: var(--atlas-text); text-shadow: 0 1px 4px var(--atlas-bg); }
-.page[data-dungeon="ruby-life-pools"] .keyTag { background: var(--ruby-selection); border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
-.page[data-dungeon="ruby-life-pools"] .routeControls { position: relative; z-index: 5; width: min(470px, 34vw); border-radius: 16px; }
-.page[data-dungeon="ruby-life-pools"] .routeControls > * { min-width: 0; }
-.page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]) { width: 100%; border-color: var(--ruby-selection-edge); background: var(--ruby-selection); color: var(--atlas-text-strong); border-radius: var(--atlas-radius); box-shadow: inset 0 1px 0 rgba(255, 236, 208, .15); }
-.page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]) { transition: transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease); }
-.page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]):is(:hover, :focus-visible) { border-color: var(--atlas-text-muted); box-shadow: inset 0 1px 0 var(--atlas-text-muted), 0 6px 28px var(--atlas-accent-glow), 0 0 12px var(--atlas-accent-soft); }
-.page[data-dungeon="ruby-life-pools"] .selectorRow { grid-template-columns: minmax(0, 1fr) 160px; }
-.page[data-dungeon="ruby-life-pools"] .panel { border-color: var(--ruby-gold); border-radius: 18px; }
-.page[data-dungeon="ruby-life-pools"] .legacyDraft,
-.page[data-dungeon="ruby-life-pools"] :global([data-testid="dungeon-source-review"]) { border-radius: 12px; padding: var(--atlas-space-3) var(--atlas-space-4); margin: 0; }
-.page[data-dungeon="ruby-life-pools"] :global([data-testid="dungeon-source-review"]) > summary { min-height: 44px; cursor: pointer; display: list-item; align-content: center; }
-.page[data-dungeon="ruby-life-pools"] .mdtLoading { min-height: 940px; }
+.page[data-dungeon] .backdropImage { height: 100%; min-height: 0; object-position: center top; filter: blur(1.2px) saturate(.85) contrast(.92) brightness(1.04); animation: none; transform: scale(1.012); }
+.page[data-dungeon] .backdropScene::after { background: linear-gradient(90deg, rgba(9, 8, 14, .29), rgba(9, 8, 14, .06) 52%, rgba(9, 8, 14, .2)), linear-gradient(180deg, rgba(9, 8, 14, .03), rgba(9, 8, 14, .12) 34%, rgba(9, 8, 14, .2)); }
+.page[data-dungeon] .column { gap: var(--atlas-space-4); padding-top: var(--atlas-space-5); }
+.page[data-dungeon] .intro { min-height: 208px; padding-block: var(--atlas-space-4); }
+.page[data-dungeon] .titleRow h1 { font-size: calc(var(--atlas-text-h2) * 1.55); text-shadow: 0 2px 8px rgba(0, 0, 0, .9); }
+.page[data-dungeon] .eyebrow { color: var(--atlas-text); text-shadow: 0 1px 4px var(--atlas-bg); }
+.page[data-dungeon] .description { max-width: 66ch; font-size: var(--atlas-text-meta); color: var(--atlas-text); text-shadow: 0 1px 4px var(--atlas-bg); }
+.page[data-dungeon] .keyTag { background: var(--ruby-selection); border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
+.page[data-dungeon] .routeControls { position: relative; z-index: 5; width: min(470px, 34vw); border-radius: 16px; }
+.page[data-dungeon] .routeControls > * { min-width: 0; }
+.page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]) { width: 100%; border-color: var(--ruby-selection-edge); background: var(--ruby-selection); color: var(--atlas-text-strong); border-radius: var(--atlas-radius); box-shadow: inset 0 1px 0 rgba(255, 236, 208, .15); }
+.page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]) { transition: transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease); }
+.page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]):is(:hover, :focus-visible) { border-color: var(--atlas-text-muted); box-shadow: inset 0 1px 0 var(--atlas-text-muted), 0 6px 28px var(--atlas-accent-glow), 0 0 12px var(--atlas-accent-soft); }
+.page[data-dungeon] .selectorRow { grid-template-columns: minmax(0, 1fr) 160px; }
+.page[data-dungeon] .panel { border-color: var(--ruby-gold); border-radius: 18px; }
+.page[data-dungeon] .legacyDraft,
+.page[data-dungeon] :global([data-testid="dungeon-source-review"]) { border-radius: 12px; padding: var(--atlas-space-3) var(--atlas-space-4); margin: 0; }
+.page[data-dungeon] :global([data-testid="dungeon-source-review"]) > summary { min-height: 44px; cursor: pointer; display: list-item; align-content: center; }
+.page[data-dungeon] .mdtLoading { min-height: 940px; }
 @media (max-width: 1100px) {
-  .page[data-dungeon="ruby-life-pools"] .intro { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: var(--atlas-space-4); }
-  .page[data-dungeon="ruby-life-pools"] .routeControls { width: 100%; }
-  .page[data-dungeon="ruby-life-pools"] .titleRow h1 { font-size: calc(var(--atlas-text-h2) * 1.25); }
-  .page[data-dungeon="ruby-life-pools"] .selectorRow { grid-template-columns: minmax(0, 1fr) 124px; }
+  .page[data-dungeon] .intro { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: var(--atlas-space-4); }
+  .page[data-dungeon] .routeControls { width: 100%; }
+  .page[data-dungeon] .titleRow h1 { font-size: calc(var(--atlas-text-h2) * 1.25); }
+  .page[data-dungeon] .selectorRow { grid-template-columns: minmax(0, 1fr) 124px; }
 }
 @media (max-width: 767px) {
-  .page[data-dungeon="ruby-life-pools"] .intro { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); padding-top: var(--atlas-space-4); }
-  .page[data-dungeon="ruby-life-pools"] .titleRow h1 { font-size: calc(var(--atlas-text-h2) * 1.15); }
-  .page[data-dungeon="ruby-life-pools"] .routeControls { max-width: none; }
-  .page[data-dungeon="ruby-life-pools"] .selectorRow { grid-template-columns: minmax(0, 1fr) 124px; }
-  .page[data-dungeon="ruby-life-pools"] .backdropImage { object-position: center top; }
-  .page[data-dungeon="ruby-life-pools"] .column { gap: var(--atlas-space-3); }
+  .page[data-dungeon] .intro { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); padding-top: var(--atlas-space-4); }
+  .page[data-dungeon] .titleRow h1 { font-size: calc(var(--atlas-text-h2) * 1.15); }
+  .page[data-dungeon] .routeControls { max-width: none; }
+  .page[data-dungeon] .selectorRow { grid-template-columns: minmax(0, 1fr) 124px; }
+  .page[data-dungeon] .backdropImage { object-position: center top; }
+  .page[data-dungeon] .column { gap: var(--atlas-space-3); }
 }
-@media (max-width: 560px) { .page[data-dungeon="ruby-life-pools"] .selectorRow { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .page[data-dungeon] .selectorRow { grid-template-columns: minmax(0, 1fr); } }
 @media (hover: hover) and (pointer: fine) {
-  .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]):hover { transform: translateY(-3px); }
-  .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]):active { transform: translateY(0) scale(.99); }
+  .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]):hover { transform: translateY(-3px); }
+  .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]):active { transform: translateY(0) scale(.99); }
 }
-:global(html[data-motion="reduced"]) .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]) { transform: none; transition: none; }
-@media (prefers-reduced-motion: reduce) { .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]):is(:hover, :focus-visible, :active) { transform: none; transition: none; } }
-@media (prefers-reduced-transparency: reduce) { .page[data-dungeon="ruby-life-pools"] .backdropImage { filter: none; } }
-@media (forced-colors: active) { .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]) { background: ButtonFace; color: ButtonText; border-color: ButtonText; } }
+:global(html[data-motion="reduced"]) .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]) { transform: none; transition: none; }
+@media (prefers-reduced-motion: reduce) { .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]):is(:hover, :focus-visible, :active) { transform: none; transition: none; } }
+@media (prefers-reduced-transparency: reduce) { .page[data-dungeon] .backdropImage { filter: none; } }
+@media (forced-colors: active) { .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]) { background: ButtonFace; color: ButtonText; border-color: ButtonText; } }
 
-.page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]) { position: relative; overflow: hidden; }
-.page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"])::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 20%, var(--atlas-line-strong) 50%, transparent 80%); opacity: 0; transform: translateX(-140%); transition: transform .65s var(--atlas-ease), opacity .2s var(--atlas-ease); }
-@media (hover: hover) and (pointer: fine) { .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]):hover::after { opacity: .65; transform: translateX(140%); } }
-:global(html[data-motion="reduced"]) .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"])::after { display: none; }
-@media (prefers-reduced-motion: reduce) { .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"])::after { display: none; } }
+.page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]) { position: relative; overflow: hidden; }
+.page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"])::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 20%, var(--atlas-line-strong) 50%, transparent 80%); opacity: 0; transform: translateX(-140%); transition: transform .65s var(--atlas-ease), opacity .2s var(--atlas-ease); }
+@media (hover: hover) and (pointer: fine) { .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]):hover::after { opacity: .65; transform: translateX(140%); } }
+:global(html[data-motion="reduced"]) .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"])::after { display: none; }
+@media (prefers-reduced-motion: reduce) { .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"])::after { display: none; } }

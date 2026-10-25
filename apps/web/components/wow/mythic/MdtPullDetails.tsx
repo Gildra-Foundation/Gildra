@@ -11,7 +11,6 @@ import { PlayerSpellAdvice } from "./PlayerSpellAdvice";
 import type { TalentSpellSelection } from "./mythicTalentImport";
 import type { PlayerSpec } from "./playerTools";
 import styles from "./mdtPullDetails.module.css";
-import rubyTheme from "./rubySanctuaryTheme.module.css";
 
 const copy = {
   ru: {
@@ -82,12 +81,12 @@ function PullBriefing({ intel, locale, selectedRole, selectedSpec, selectedSpell
 }
 
 /** Reuse Valyro's hover/focus and collision handling; touch opens the same briefing in a native dialog. */
-export function MdtPullDetails({ title, intel, locale, selectedRole, selectedSpec, selectedSpells, children, onSelect, ruby = false }: { title: string; intel: PullIntel; locale: "ru" | "en"; selectedRole: PullRoleSelection; selectedSpec?: PlayerSpec; selectedSpells?: TalentSpellSelection; children: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>; onSelect?: () => void; ruby?: boolean }) {
+export function MdtPullDetails({ title, intel, locale, selectedRole, selectedSpec, selectedSpells, children, onSelect, themeClassName = "" }: { title: string; intel: PullIntel; locale: "ru" | "en"; selectedRole: PullRoleSelection; selectedSpec?: PlayerSpec; selectedSpells?: TalentSpellSelection; children: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>; onSelect?: () => void; themeClassName?: string }) {
   const [open, setOpen] = useState(false);
   return <>
-    <Tooltip disabled={open} placement="right" animation="fade" delay={180} className={`${bridge.scope} ${styles.tooltip} ${ruby ? rubyTheme.rubyTheme : ""}`} content={<><h3 className={styles.title}>{title}</h3><PullBriefing intel={intel} locale={locale} selectedRole={selectedRole} selectedSpec={selectedSpec} selectedSpells={selectedSpells} showHint={!onSelect} /></>}>
+    <Tooltip disabled={open} placement="right" animation="fade" delay={180} className={`${bridge.scope} ${styles.tooltip} ${themeClassName}`} content={<><h3 className={styles.title}>{title}</h3><PullBriefing intel={intel} locale={locale} selectedRole={selectedRole} selectedSpec={selectedSpec} selectedSpells={selectedSpells} showHint={!onSelect} /></>}>
       {cloneElement(children, { onClick: onSelect ?? (() => setOpen(true)), "aria-haspopup": onSelect ? undefined : "dialog", "aria-expanded": onSelect ? undefined : open })}
     </Tooltip>
-    <AtlasDialog className={`${styles.glassDialog} ${ruby ? rubyTheme.rubyTheme : ""}`} open={open} onClose={() => setOpen(false)} label={title} variant="sheet"><div className={styles.dialogContent}><header className={styles.dialogHeader}><h3>{title}</h3><button type="button" onClick={() => setOpen(false)}>{copy[locale].close}</button></header><div className={styles.dialogBody} data-testid="pull-briefing-scroll" tabIndex={0} role="region" aria-label={title}><PullBriefing intel={intel} locale={locale} selectedRole={selectedRole} selectedSpec={selectedSpec} selectedSpells={selectedSpells} full /></div></div></AtlasDialog>
+    <AtlasDialog className={`${styles.glassDialog} ${themeClassName}`} open={open} onClose={() => setOpen(false)} label={title} variant="sheet"><div className={styles.dialogContent}><header className={styles.dialogHeader}><h3>{title}</h3><button type="button" onClick={() => setOpen(false)}>{copy[locale].close}</button></header><div className={styles.dialogBody} data-testid="pull-briefing-scroll" tabIndex={0} role="region" aria-label={title}><PullBriefing intel={intel} locale={locale} selectedRole={selectedRole} selectedSpec={selectedSpec} selectedSpells={selectedSpells} full /></div></div></AtlasDialog>
   </>;
 }
