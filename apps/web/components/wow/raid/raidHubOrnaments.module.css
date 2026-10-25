@@ -14,13 +14,14 @@
   position: absolute;
   /* Measured alpha padding keeps the painted base on the rail at every size. */
   --raid-piece-width: var(--raid-ornament-width);
-  bottom: calc(-1 * var(--raid-piece-width) * var(--raid-root-padding));
+  bottom: calc(5px - var(--raid-piece-width) * var(--raid-root-padding));
   width: var(--raid-piece-width);
   height: var(--raid-ornament-height);
 }
 
 .left { left: -8px; }
 .right { right: -8px; }
+.sun.right { right: 4px; }
 .buds {
   left: 68px;
   --raid-piece-width: calc(var(--raid-ornament-width) * .64);
