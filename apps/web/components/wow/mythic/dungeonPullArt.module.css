@@ -56,6 +56,9 @@
   border: 10px solid transparent; border-image: var(--pull-panel-image) var(--pull-panel-slice) fill stretch;
   filter: contrast(.88) saturate(.76); opacity: .8;
 }
+@media (max-width: 767px) {
+  .surface.surface[data-dungeon-map] :global([data-testid="pull-selected-panel"]) { position: relative; top: auto; }
+}
 
 /* The 42/44px map hitboxes, offsets, map artwork and frame are all retained. */
 .surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index]) {
