@@ -1,436 +1,134 @@
-/* atlas:strict — genuine Valyro Card composition, original measured raid frames, and atlas glass. */
+/* atlas:strict — whole-card raid themes on genuine Valyro Card and Button. */
 .current,
-.archive {
-  display: grid;
-  min-width: 0;
-  gap: var(--atlas-space-5);
-}
-
-.archive {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
+.archive { display: grid; min-width: 0; gap: var(--atlas-space-5); }
+.archive { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 .card:global(.ui-card[data-variant="outline"]) {
+  --raid-card-light: color-mix(in srgb, var(--raid-card-accent) 67%, var(--atlas-text-strong));
+  --raid-card-base: color-mix(in srgb, var(--raid-card-accent) 16%, var(--atlas-bg));
+  --raid-card-line: color-mix(in srgb, var(--raid-card-accent) 34%, transparent);
+  --raid-card-row: color-mix(in srgb, var(--raid-card-accent) 8%, var(--atlas-bg));
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   gap: 0;
   padding: var(--atlas-space-2);
   overflow: visible;
-  border: 1px solid var(--atlas-glass-edge);
-  border-radius: 20px;
-  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
-  -webkit-backdrop-filter: var(--atlas-glass-filter);
-  backdrop-filter: var(--atlas-glass-filter);
-  box-shadow: var(--atlas-glass-inset), var(--atlas-shadow-card);
+  border: 1px solid var(--raid-card-line);
+  border-radius: 18px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--raid-card-accent) 9%, transparent), transparent 54%), color-mix(in srgb, var(--raid-card-base) 94%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--raid-card-accent) 22%, transparent), var(--atlas-glass-depth);
   color: var(--atlas-text);
   font-family: var(--atlas-font-ui);
-  transition: transform var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+  transition: border-color var(--atlas-duration) var(--ui-spring-smooth), box-shadow var(--atlas-duration) var(--ui-spring-smooth);
 }
 
-.content {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.card.featured:global(.ui-card[data-variant="outline"]) {
-  padding: var(--atlas-space-3);
-}
-
-.featured .content {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-  align-items: center;
-  gap: var(--atlas-space-2);
-}
-
-.artLink {
-  display: block;
-  min-width: 0;
-  border-radius: 12px;
-}
-
-.frameCanvas {
-  position: relative;
-  isolation: isolate;
-  width: 100%;
-  aspect-ratio: 3 / 2;
-}
-
-.artWindow {
-  position: absolute;
-  inset: var(--raid-frame-top) var(--raid-frame-right) var(--raid-frame-bottom) var(--raid-frame-left);
-  overflow: hidden;
-  border-radius: var(--raid-frame-radius);
-  background: var(--atlas-surface-sunken);
-}
-
-.sceneImage {
-  object-fit: cover;
-  transition: transform var(--atlas-duration-slow) var(--atlas-ease);
-}
-
-.artShade {
+.atmosphere { position: absolute; z-index: -1; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.atmosphere::before,
+.atmosphere::after {
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  background: var(--atlas-art-shade);
-  opacity: .16;
+  content: "";
+  opacity: .28;
+  animation: raid-breath calc(var(--atlas-duration-slow) * 60) var(--atlas-ease-ambient) infinite alternate;
+  animation-play-state: paused;
 }
+.atmosphere::before { background: radial-gradient(ellipse at 85% 5%, color-mix(in srgb, var(--raid-card-accent) 24%, transparent), transparent 58%); }
+.atmosphere::after { inset: 18% -4% -4%; background: radial-gradient(ellipse at 15% 88%, color-mix(in srgb, var(--raid-card-accent) 15%, transparent), transparent 60%); animation-name: raid-drift; animation-duration: calc(var(--atlas-duration-slow) * 80); }
+.card[data-raid-card-theme="void"] .atmosphere::after { background: radial-gradient(ellipse at 84% 30%, transparent 29%, color-mix(in srgb, var(--raid-card-accent) 15%, transparent) 46%, transparent 64%); }
+.card[data-raid-card-theme="dream"] .atmosphere::after { background: radial-gradient(ellipse at 20% 20%, color-mix(in srgb, var(--raid-card-accent) 17%, transparent), transparent 40%), radial-gradient(ellipse at 80% 80%, color-mix(in srgb, var(--raid-card-accent) 13%, transparent), transparent 48%); }
+.card[data-raid-card-theme="sun"] .atmosphere::after { background: linear-gradient(110deg, transparent 12%, color-mix(in srgb, var(--raid-card-accent) 11%, transparent) 35%, transparent 62%); }
+.card[data-raid-card-theme="spore"] .atmosphere::after { background: radial-gradient(ellipse at 9% 85%, color-mix(in srgb, var(--raid-card-accent) 23%, transparent), transparent 52%); }
+.card[data-raid-card-active] .atmosphere::before,
+.card[data-raid-card-active] .atmosphere::after { animation-play-state: running; }
+.card:focus-within .atmosphere::before,
+.card:focus-within .atmosphere::after,
+.card:active .atmosphere::before,
+.card:active .atmosphere::after { animation-play-state: paused; }
+@keyframes raid-breath { from { opacity: .22; } to { opacity: .46; } }
+@keyframes raid-drift { from { opacity: .25; transform: translate3d(-3px, 5px, 0); } to { opacity: .43; transform: translate3d(5px, -5px, 0); } }
 
-.frameImage {
-  z-index: 1;
-  pointer-events: none;
-  object-fit: contain;
-  user-select: none;
-}
-
-.body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-  padding: var(--atlas-space-2) var(--atlas-space-4) var(--atlas-space-3);
-}
-
-.featured .body {
-  padding: var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-2);
-}
-
-.kicker {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--atlas-space-2) var(--atlas-space-4);
-  margin-bottom: var(--atlas-space-2);
-  color: var(--atlas-text-subtle);
-  font-size: var(--atlas-text-meta);
-  line-height: var(--atlas-leading-snug);
-}
-
-.location,
-.count {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--atlas-space-1);
-}
-
-.location svg,
-.count svg {
-  flex: none;
-  width: 14px;
-  height: 14px;
-  color: var(--raid-card-accent, var(--atlas-accent));
-}
-
-.title {
-  margin: 0;
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-h3);
-  font-weight: var(--atlas-weight-display);
-  line-height: var(--atlas-leading-snug);
-  text-wrap: balance;
-}
-
-.featured .title {
-  font-size: var(--atlas-text-h2);
-}
-
-.title a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.count {
-  align-self: flex-start;
-  margin-top: var(--atlas-space-2);
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-small);
-}
-
-.description {
-  display: -webkit-box;
-  margin: var(--atlas-space-3) 0 0;
-  overflow: hidden;
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-small);
-  line-height: var(--atlas-leading-relaxed);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.featured .description,
-.reviewed {
-  display: block;
-  overflow: visible;
-  -webkit-line-clamp: unset;
-}
-
-.encounters {
-  margin-top: var(--atlas-space-4);
-  padding-top: var(--atlas-space-3);
-  border-top: 1px solid var(--atlas-line-soft);
-}
-
-.bossesLabel {
-  margin: 0 0 var(--atlas-space-2);
-  color: var(--atlas-text-subtle);
-  font-size: var(--atlas-text-meta);
-}
-
-.bosses {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--atlas-space-1) var(--atlas-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.bosses li {
-  min-width: 0;
-}
-
-.bosses a {
-  display: flex;
-  align-items: center;
-  gap: var(--atlas-space-2);
-  min-height: 44px;
-  padding: var(--atlas-space-1) 0;
-  border-radius: 6px;
-  color: var(--atlas-text);
-  font-size: var(--atlas-text-small);
-  line-height: var(--atlas-leading-snug);
-  text-decoration: none;
-}
-
-.bosses a span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.portrait {
-  flex: none;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--atlas-line-soft);
-  border-radius: 7px;
-  object-fit: cover;
-}
-
-.bossIcon {
-  flex: none;
-  width: 15px;
-  height: 15px;
-  color: var(--raid-card-accent, var(--atlas-accent));
-}
-
-.footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--atlas-space-2) var(--atlas-space-4);
-  margin-top: auto;
-  padding-top: var(--atlas-space-4);
-}
-
-.openRaid,
-.source {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--atlas-space-3);
-  min-height: 44px;
-  color: var(--atlas-accent);
-  font-size: var(--atlas-text-small);
-  text-decoration: none;
-}
-
-.openRaid {
-  flex: 1;
-  font-weight: 600;
-}
-
-.source {
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-meta);
-}
-
-.openRaid svg,
-.source svg {
-  flex: none;
-  width: 17px;
-  height: 17px;
-  transition: transform var(--atlas-duration) var(--atlas-ease);
-}
-
-.card a:focus-visible {
-  outline: 2px solid var(--atlas-accent-strong);
-  outline-offset: 4px;
-}
-
-.card a {
-  scroll-margin-block: calc(var(--atlas-sticky-top) + var(--atlas-space-4));
-}
-
-.card:focus-within {
-  border-color: var(--atlas-accent-strong);
-}
-
-.card:focus-within .sceneImage {
-  transform: scale(1.025);
-}
+.content { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.card.featured:global(.ui-card[data-variant="outline"]) { padding: var(--atlas-space-3); }
+.featured .content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: center; gap: var(--atlas-space-3); }
+.artLink { display: block; min-width: 0; border-radius: 12px; }
+.frameCanvas { position: relative; isolation: isolate; width: 100%; aspect-ratio: 3 / 2; }
+.artWindow { position: absolute; inset: var(--raid-frame-top) var(--raid-frame-right) var(--raid-frame-bottom) var(--raid-frame-left); overflow: hidden; clip-path: var(--raid-frame-clip, inset(0 round var(--raid-frame-radius))); border-radius: 0; background: var(--raid-card-base); }
+.sceneLayer { position: absolute; inset: 0; transform-origin: center; }
+.sceneImage { object-fit: cover; transition: transform var(--atlas-duration-art) var(--ui-spring-smooth); }
+.artShade { position: absolute; inset: 0; pointer-events: none; background: var(--atlas-art-shade); opacity: .12; }
+.frameImage { z-index: 1; pointer-events: none; object-fit: contain; user-select: none; filter: blur(.45px); }
+.body { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4); }
+.featured .body { padding: var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-2); }
+.location { display: flex; align-items: center; gap: var(--atlas-space-2); margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
+.location svg { flex: none; width: 14px; height: 14px; color: var(--raid-card-light); }
+.title { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); text-wrap: balance; }
+.featured .title { font-size: var(--atlas-text-h2); }
+.title a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: none; }
+.count { display: inline-flex; align-self: flex-start; align-items: center; gap: var(--atlas-space-2); margin-top: var(--atlas-space-2); color: var(--raid-card-light); font-size: var(--atlas-text-small); }
+.count svg { width: 15px; height: 15px; }
+.description { margin: var(--atlas-space-3) 0 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-relaxed); }
+.encounters { margin-top: var(--atlas-space-4); padding-top: var(--atlas-space-3); border-top: 1px solid var(--raid-card-line); }
+.bossesLabel { margin: 0 0 var(--atlas-space-2); color: var(--raid-card-light); font-size: var(--atlas-text-meta); }
+.bosses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.bosses li { min-width: 0; }
+.bosses a { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; padding: var(--atlas-space-2) var(--atlas-space-3); border: 1px solid color-mix(in srgb, var(--raid-card-accent) 16%, transparent); border-radius: 9px; background: color-mix(in srgb, var(--raid-card-row) 84%, transparent); color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); text-decoration: none; transition: background-color var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast) var(--atlas-ease); }
+.bosses a span { min-width: 0; overflow-wrap: anywhere; }
+.portrait { flex: none; width: 32px; height: 32px; border: 1px solid var(--raid-card-line); border-radius: 7px; object-fit: cover; }
+.footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-3); margin-top: auto; padding-top: var(--atlas-space-4); }
+.card .openRaid:global(.ui-button[data-variant="secondary"]) { --ui-button-secondary-bg: color-mix(in srgb, var(--raid-card-accent) 17%, var(--raid-card-base)); --ui-button-secondary-bg-hover: color-mix(in srgb, var(--raid-card-accent) 26%, var(--raid-card-base)); --ui-button-secondary-bg-active: color-mix(in srgb, var(--raid-card-accent) 32%, var(--raid-card-base)); --ui-button-secondary-fg: var(--raid-card-light); --ui-button-secondary-field: var(--raid-card-line); --ui-focus-ring: 0 0 0 3px var(--atlas-bg), 0 0 0 5px var(--raid-card-light); flex: 1 1 160px; justify-content: space-between; min-height: 44px; border-radius: 10px; padding: var(--atlas-space-3) var(--atlas-space-4); }
+.source { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-decoration: none; }
+.source svg { flex: none; width: 16px; height: 16px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.card a:focus-visible { outline: 2px solid var(--raid-card-light); outline-offset: 3px; }
+.card a { scroll-margin-block: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
+.card:focus-within { border-color: var(--raid-card-light); }
+.card:focus-within .sceneImage { transform: scale(1.018); }
 
 @media (hover: hover) and (pointer: fine) {
-  .card:global(.ui-card):hover {
-    border-color: color-mix(in srgb, var(--raid-card-accent, var(--atlas-accent)) 65%, var(--atlas-glass-edge));
-    box-shadow: var(--atlas-glass-inset), var(--atlas-shadow-lift);
-    transform: translateY(-4px);
-  }
-
-  .card:hover .sceneImage {
-    transform: scale(1.035);
-  }
-
+  .card:hover .atmosphere::before,
+  .card:hover .atmosphere::after { animation-play-state: paused; }
+  .card:global(.ui-card):hover { border-color: color-mix(in srgb, var(--raid-card-accent) 68%, transparent); box-shadow: inset 0 1px 0 var(--raid-card-line), var(--atlas-glass-depth), 0 0 24px color-mix(in srgb, var(--raid-card-accent) 9%, transparent); }
+  .card:hover .sceneImage { transform: scale(1.025); }
   .title a:hover,
-  .bosses a:hover,
-  .source:hover {
-    color: var(--atlas-accent-strong);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  .openRaid:hover svg,
-  .openRaid:focus-visible svg {
-    transform: translate(2px, -2px);
-  }
+  .source:hover { color: var(--raid-card-light); text-decoration: underline; text-underline-offset: 3px; }
+  .bosses a:hover { border-color: var(--raid-card-line); background: color-mix(in srgb, var(--raid-card-accent) 16%, var(--raid-card-row)); }
 }
+@media (max-width: 1100px) { .bosses { grid-template-columns: minmax(0, 1fr); } .featured .bosses { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 850px) { .featured .content { grid-template-columns: minmax(0, 1fr); } .card.featured:global(.ui-card[data-variant="outline"]) { padding: var(--atlas-space-2); } .featured .body { padding: var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4); } }
+@media (max-width: 700px) { .archive { grid-template-columns: minmax(0, 1fr); } .body,
+  .featured .body { padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-3); } .featured .title { font-size: var(--atlas-text-h3); } }
+@media (max-width: 520px) { .featured .bosses { grid-template-columns: minmax(0, 1fr); } }
 
-.openRaid:active {
-  transform: scale(var(--atlas-press-scale));
-}
-
-@media (max-width: 1100px) {
-  .bosses {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .featured .bosses {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 850px) {
-  .featured .content {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .card.featured:global(.ui-card[data-variant="outline"]) {
-    padding: var(--atlas-space-2);
-  }
-
-  .featured .body {
-    padding: var(--atlas-space-2) var(--atlas-space-4) var(--atlas-space-3);
-  }
-}
-
-@media (max-width: 700px) {
-  .archive {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .card:global(.ui-card[data-variant="outline"]) {
-    border-radius: 16px;
-  }
-
-  .body,
-  .featured .body {
-    padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-3);
-  }
-
-  .featured .title {
-    font-size: var(--atlas-text-h3);
-  }
-}
-
-@media (max-width: 520px) {
-  .featured .bosses {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .card:global(.ui-card),
-  .sceneImage,
-  .openRaid,
-  .openRaid svg,
-  .source svg {
-    transition: none;
-  }
-
-  .card:global(.ui-card):hover,
-  .card:focus-within .sceneImage,
-  .card:hover .sceneImage,
-  .openRaid:active,
-  .openRaid:hover svg,
-  .openRaid:focus-visible svg {
-    transform: none;
-  }
-}
-
-:global([data-motion="reduced"]) .card:global(.ui-card),
+:global([data-motion="reduced"]) .atmosphere,
+:global([data-transparency="reduced"]) .atmosphere,
+:global([data-ui-motion="reduce"]) .atmosphere { display: none; }
+:global([data-motion="reduced"]) .card *,
+:global([data-transparency="reduced"]) .card *,
+:global([data-ui-motion="reduce"]) .card * { transition: none !important; }
 :global([data-motion="reduced"]) .sceneImage,
-:global([data-motion="reduced"]) .openRaid,
-:global([data-motion="reduced"]) .openRaid svg,
-:global([data-motion="reduced"]) .source svg {
-  transition: none;
+:global([data-transparency="reduced"]) .sceneImage,
+:global([data-ui-motion="reduce"]) .sceneImage { transform: none !important; }
+:global([data-motion="reduced"]) .openRaid:global(.ui-button):active,
+:global([data-transparency="reduced"]) .openRaid:global(.ui-button):active,
+:global([data-ui-motion="reduce"]) .openRaid:global(.ui-button):active { transform: none !important; }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active), print {
+  .atmosphere { display: none; }
+  .card:global(.ui-card), .card * { transition: none !important; }
+  .sceneImage { transform: none !important; }
+  .openRaid:global(.ui-button):active { transform: none !important; }
 }
-
-:global([data-motion="reduced"]) .card:global(.ui-card):hover,
-:global([data-motion="reduced"]) .card:focus-within .sceneImage,
-:global([data-motion="reduced"]) .card:hover .sceneImage,
-:global([data-motion="reduced"]) .openRaid:active,
-:global([data-motion="reduced"]) .openRaid:hover svg,
-:global([data-motion="reduced"]) .openRaid:focus-visible svg {
-  transform: none;
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .card:global(.ui-card[data-variant="outline"]) {
-    background: var(--atlas-surface);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-}
-
+@media (prefers-reduced-transparency: reduce) { .card:global(.ui-card[data-variant="outline"]) { background: var(--raid-card-base); } .bosses a { background: var(--raid-card-row); } }
+:global([data-transparency="reduced"]) .card:global(.ui-card[data-variant="outline"]) { background: var(--raid-card-base); }
+:global([data-transparency="reduced"]) .bosses a { background: var(--raid-card-row); }
 @media (forced-colors: active) {
-  .card:global(.ui-card[data-variant="outline"]) {
-    border: 1px solid CanvasText;
-    background: Canvas;
-    color: CanvasText;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
-  }
-
-  .frameImage,
-  .artShade {
-    display: none;
-  }
-
-  .artWindow,
-  .encounters {
-    border: 1px solid CanvasText;
-  }
-
-  .card a {
-    color: LinkText;
-  }
-
-  .card a:focus-visible {
-    outline-color: Highlight;
-  }
+  .card:global(.ui-card[data-variant="outline"]) { border: 1px solid CanvasText; background: Canvas; color: CanvasText; box-shadow: none; }
+  .frameImage, .artShade { display: none; }
+  .artWindow { clip-path: none; border: 1px solid CanvasText; }
+  .encounters, .bosses a { border-color: CanvasText; }
+  .bosses a { background: Canvas; }
+  .card a, .count, .bossesLabel { color: LinkText; }
+  .card .openRaid:global(.ui-button[data-variant="secondary"]) { --ui-button-secondary-bg: Canvas; --ui-button-secondary-bg-hover: Canvas; --ui-button-secondary-fg: LinkText; --ui-button-secondary-field: CanvasText; }
+  .card a:focus-visible { outline-color: Highlight; }
 }

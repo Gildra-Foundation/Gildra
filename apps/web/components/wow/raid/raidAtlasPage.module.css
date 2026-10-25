@@ -1,5 +1,12 @@
 /* atlas:strict — raid hub layout over its own quiet illustrated vault. */
-.page { --atlas-frame-tint: var(--atlas-positive-wash, var(--atlas-accent-glow)); }
+.page {
+  --atlas-accent: var(--atlas-positive);
+  --atlas-accent-strong: color-mix(in srgb, var(--atlas-positive) 70%, var(--atlas-text-strong));
+  --atlas-accent-wash: color-mix(in srgb, var(--atlas-positive) 9%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--atlas-positive) 16%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--atlas-positive) 16%, transparent);
+  --atlas-frame-tint: var(--atlas-accent-glow);
+}
 .hero { min-height: 490px; padding-bottom: var(--atlas-space-5); }
 .heroHeader { max-width: 58%; }
 .heroHeader h1 { max-width: 15ch; }

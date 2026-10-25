@@ -1,7 +1,8 @@
-/* atlas:strict — the raid vault fades into one page, with a sparse jade atmosphere. */
+/* atlas:strict — the vault descends into a painted ravine, with a sparse jade atmosphere. */
 
 .backdrop {
   --raid-vault-light: color-mix(in srgb, var(--atlas-positive) 78%, var(--atlas-info) 22%);
+  --raid-scene-height: clamp(660px, 61vw, 1000px);
   position: absolute;
   z-index: -1;
   inset: 0;
@@ -11,17 +12,40 @@
 
 .continuation {
   position: absolute;
+  inset: calc(var(--raid-scene-height) * .57) 0 0;
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, transparent, #000 260px);
+}
+
+.continuation::after {
+  position: absolute;
   inset: 0;
+  content: "";
   background:
-    radial-gradient(ellipse 64% 34% at 100% 23%, color-mix(in srgb, var(--raid-vault-light) 9%, transparent), transparent 76%),
-    radial-gradient(ellipse 54% 27% at 0% 68%, color-mix(in srgb, var(--atlas-accent) 5%, transparent), transparent 76%);
+    radial-gradient(ellipse 70% 30% at 72% 35%, color-mix(in srgb, var(--raid-vault-light) 10%, transparent), transparent 80%),
+    linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 65%, transparent), color-mix(in srgb, var(--atlas-bg) 47%, transparent) 48%, color-mix(in srgb, var(--atlas-bg) 61%, transparent)),
+    linear-gradient(180deg, transparent 68%, color-mix(in srgb, var(--atlas-bg) 28%, transparent));
+}
+
+.continuation picture,
+.continuation img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.continuation img {
+  object-fit: cover;
+  object-position: center top;
+  filter: blur(2.5px);
 }
 
 .scene {
   position: absolute;
   inset: 0 0 auto;
-  height: clamp(660px, 61vw, 1000px);
+  height: var(--raid-scene-height);
   overflow: hidden;
+  mask-image: linear-gradient(180deg, #000 65%, transparent);
 }
 
 .scene picture,
@@ -34,6 +58,7 @@
 .scene img {
   object-fit: cover;
   object-position: 68% top;
+  filter: blur(2px);
 }
 
 .scene::after {
@@ -59,11 +84,32 @@
   animation: vaultBreath 9s ease-in-out infinite alternate;
 }
 
-.motes {
+.motes,
+.atmosphere {
   position: absolute;
   z-index: 2;
   inset: 0;
   overflow: hidden;
+}
+
+.atmosphere i {
+  position: absolute;
+  left: -10%;
+  top: 18%;
+  width: 120%;
+  height: clamp(480px, 35%, 900px);
+  border-radius: 50%;
+  background: radial-gradient(ellipse closest-side, var(--raid-vault-light), transparent);
+  opacity: .055;
+  animation: mistDrift 27s ease-in-out infinite alternate;
+}
+
+.atmosphere i:nth-child(2) {
+  top: 64%;
+  left: 3%;
+  width: 110%;
+  animation-delay: -13s;
+  animation-duration: 33s;
 }
 
 .motes i {
@@ -83,7 +129,7 @@
   box-shadow: 0 0 5px var(--atlas-accent-2);
 }
 
-.backdrop[data-paused] :is(.vaultLight, .motes i) { animation-play-state: paused; }
+.backdrop[data-paused] :is(.vaultLight, .motes i, .atmosphere i) { animation-play-state: paused; }
 
 @keyframes vaultBreath {
   from { opacity: .07; transform: scale(.97); }
@@ -96,14 +142,19 @@
   100% { opacity: 0; transform: translate3d(-22px, -104px, 0); }
 }
 
+@keyframes mistDrift {
+  from { opacity: .035; transform: translate3d(-18px, 8px, 0); }
+  to { opacity: .075; transform: translate3d(18px, -8px, 0); }
+}
+
 @media (max-width: 1023px) and (min-width: 768px) {
-  .scene { height: 760px; }
+  .backdrop { --raid-scene-height: 760px; }
   .scene img { object-position: center top; }
   .vaultLight { left: 55%; top: 32%; width: 20%; }
 }
 
 @media (max-width: 767px) {
-  .scene { height: 900px; }
+  .backdrop { --raid-scene-height: 900px; }
   .scene img { object-position: center top; }
   .scene::after {
     background:
@@ -114,9 +165,13 @@
   .motes i:nth-child(even) { display: none; }
 }
 
-:global(html[data-motion="reduced"]) :is(.vaultLight, .motes) { display: none; }
-:global(html[data-transparency="reduced"]) :is(.vaultLight, .motes, .continuation) { display: none; }
-@media (prefers-reduced-motion: reduce) { .vaultLight, .motes { display: none; } }
-@media (prefers-reduced-transparency: reduce) { .vaultLight, .motes, .continuation { display: none; } }
-@media (prefers-contrast: more) { .scene { opacity: .45; } }
+:global(html[data-motion="reduced"]) :is(.vaultLight, .motes, .atmosphere) { display: none; }
+:global(html[data-transparency="reduced"]) :is(.vaultLight, .motes, .atmosphere) { display: none; }
+:global(html[data-transparency="reduced"]) :is(.scene img, .continuation img) { filter: none; }
+@media (prefers-reduced-motion: reduce) { .vaultLight, .motes, .atmosphere { display: none; } }
+@media (prefers-reduced-transparency: reduce) {
+  .vaultLight, .motes, .atmosphere { display: none; }
+  .scene img, .continuation img { filter: none; }
+}
+@media (prefers-contrast: more) { .scene, .continuation { opacity: .45; } }
 @media (forced-colors: active) { .backdrop { display: none; } }
