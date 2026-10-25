@@ -54,6 +54,12 @@ function WowSelector<T extends string | number>({ label, value, options, onChang
   }, [open, selectedIndex]);
 
   function openFromKeyboard(event: KeyboardEvent<HTMLButtonElement>) {
+    // Escape can arrive before the opening frame moves focus into the menu.
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setOpen(false);
+      return;
+    }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     event.preventDefault();
     setOpen(true);
