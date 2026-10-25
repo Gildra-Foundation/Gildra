@@ -1,19 +1,17 @@
 "use client";
 
 import { ResilientImage } from "@/components/media/ResilientImage";
-import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { dungeonArtDirections, dungeonFrameArtwork } from "@/lib/wow/dungeonArtDirection";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Skull } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasChoiceHighlight } from "@gildra/atlas-ui/AtlasChoiceHighlight";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
-import { AtlasValyroSelect } from "@gildra/atlas-ui/AtlasValyroSelect";
+import { PlayerProfilePicker } from "./PlayerProfilePicker";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { usePlayerProfile } from "./usePlayerProfile";
-import { playerClasses, playerSpecs, talentsForProfile } from "./playerTools";
+import { playerSpecs, talentsForProfile } from "./playerTools";
 import { TalentImportPanel } from "./TalentImportPanel";
-import { playerToolsCopy } from "./playerToolsCopy";
 import { usePullRole } from "./usePullRole";
 import { pullRoleCopy } from "./pullRoleCopy";
 import type { MdtDataset } from "@/lib/data/wow/mythicReview.types";
@@ -32,7 +30,7 @@ import { dungeonThemeClass } from "./dungeonTheme";
 import styles from "./mdtPullMap.module.css";
 
 export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combatIntel }: { slug: DungeonSlug; locale: "ru" | "en"; routeUrl: string; data: MdtDataset; stops: RouteStop[]; combatIntel: DungeonCombatIntel }) {
-  const copy = mdtPullMapCopy[locale], t = pullWorkspaceCopy[locale], roles = pullRoleCopy[locale], playerCopy = playerToolsCopy[locale];
+  const copy = mdtPullMapCopy[locale], t = pullWorkspaceCopy[locale], roles = pullRoleCopy[locale];
   const [selectedRole, setSelectedRole] = usePullRole();
   const [profile, setProfile] = usePlayerProfile();
   const [selected, setSelected] = useState(0);
@@ -42,8 +40,6 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
   const attachPullStrip = useCallback((node: HTMLOListElement | null) => { pullStrip.current = node; setPullList(node); }, []);
   const root = useRef<HTMLElement>(null), builds = useRef<HTMLDetailsElement>(null);
   const themeClassName = dungeonThemeClass(slug);
-  const specTheme = talentSpecThemes.find(spec => spec.specId === profile.specId && spec.classId === profile.classId);
-  const classTheme = talentSpecThemes.find(spec => spec.classId === profile.classId);
   const selectedSpec = playerSpecs.find(spec => spec.id === profile.specId && spec.classId === profile.classId);
   const activeRole = selectedSpec?.role ?? selectedRole;
   const talents = useMemo(() => talentsForProfile({ classId: profile.classId, specId: profile.specId, talentString: profile.talentString }), [profile.classId, profile.specId, profile.talentString]);
@@ -82,10 +78,7 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
     <header className={styles.header}><h3>{authored ? t.route : t.groups}</h3><a className={styles.routeLink} href={data.route.url || routeUrl} target="_blank" rel="noreferrer">{copy.authoredRoute}</a></header>
     <div className={styles.playerBar}>
       <div className={styles.rolePicker} data-testid="pull-role-picker"><AtlasSegmented aria-label={roles.label} animation="spring" size="lg" fullWidth value={activeRole} onValueChange={value => { setProfile({ ...profile, specId: null }); setSelectedRole(value); }} options={(["all", "tank", "healer", "dps"] as const).map(value => ({ value, label: roles[value] }))} /></div>
-      <div className={styles.profileFields} data-testid="pull-player-picker">
-        <label><span>{playerCopy.classLabel}</span>{classTheme && <ResilientImage className={styles.pickerIcon} src={classTheme.classIconUrl} width={30} height={30} alt="" />}<AtlasValyroSelect native size="lg" placeholder={playerCopy.noClass} aria-label={playerCopy.classLabel} value={profile.classId?.toString() ?? ""} onValueChange={value => setProfile({ classId: Number(value) || null, specId: null })} options={[{ value: "", label: playerCopy.noClass }, ...playerClasses.map(entry => ({ value: String(entry.id), label: entry.name[locale] }))]} /></label>
-        <label><span>{playerCopy.specLabel}</span>{specTheme && <ResilientImage className={styles.pickerIcon} src={specTheme.iconUrl} width={30} height={30} alt="" />}<AtlasValyroSelect native size="lg" placeholder={profile.classId ? playerCopy.noSpec : playerCopy.selectClass} aria-label={playerCopy.specLabel} disabled={!profile.classId} value={profile.specId?.toString() ?? ""} onValueChange={value => { const spec = playerSpecs.find(entry => entry.id === Number(value) && entry.classId === profile.classId); setProfile({ classId: profile.classId, specId: spec?.id ?? null }); if (spec) setSelectedRole(spec.role); }} options={[{ value: "", label: profile.classId ? playerCopy.noSpec : playerCopy.selectClass }, ...playerSpecs.filter(entry => entry.classId === profile.classId).map(entry => ({ value: String(entry.id), label: entry.name[locale] }))]} /></label>
-      </div>
+      <PlayerProfilePicker locale={locale} themeClassName={themeClassName} profile={profile} onProfileChange={setProfile} onRoleChange={setSelectedRole} />
       <details ref={builds} className={styles.buildDisclosure}><summary>{t.build}<span>{talents.selection ? t.imported : t.options}</span></summary><TalentImportPanel locale={locale} profile={profile} result={talents.result} onProfileChange={setProfile} onRoleChange={setSelectedRole} /></details>
     </div>
     {!authored && <p className={styles.routeStatus} data-testid="mdt-route-status">{t.unverified} · {copy.incompatible}</p>}
