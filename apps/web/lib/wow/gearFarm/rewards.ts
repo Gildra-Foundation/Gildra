@@ -180,7 +180,7 @@ function statBudgetSlot(metadata: ResolvedAuctionVariant) {
   if ([2, 11, 16, 9].includes(metadata.inventoryType)) return 2;
   return [14, 22, 23].includes(metadata.inventoryType) ? 3 : -1;
 }
-function independentlyMatchesStats(entity: CatalogGearEntity, metadata: ResolvedAuctionVariant) {
+export function independentlyMatchesStats(entity: CatalogGearEntity, metadata: ResolvedAuctionVariant) {
   const slot = statBudgetSlot(metadata);
   const budget = tables.RandPropPoints.find((row) => row.ID === metadata.itemLevel);
   const prefix = [4, 5].includes(metadata.quality) ? "EpicF" : [3, 7].includes(metadata.quality) ? "SuperiorF" : "GoodF";
@@ -196,7 +196,16 @@ function independentlyMatchesStats(entity: CatalogGearEntity, metadata: Resolved
       const values = allocations.get(type) ?? new Set(); values.add(allocation); allocations.set(type, values);
     }
   }
-  if (!allocations.size) return false;
+  if (!allocations.size) {
+    // Absence of catalog data is not proof of a statless reward. Explicit empty
+    // stat lists plus the independently verified native/Blizzard control allow
+    // proc-only trinkets to reach DPS comparison without inventing static stats.
+    const entries = (entity.tooltip?.blocks ?? []).filter(block => block.type === "item_variants")
+      .flatMap(block => Array.isArray(block.entries) ? block.entries : []);
+    return metadata.itemClassId === 4 && metadata.inventoryType === 12 && entries.length > 0 &&
+      entries.every(entry => Array.isArray(entry.stats) && entry.stats.length === 0) &&
+      Object.values(metadata.stats).every(value => value === 0);
+  }
   for (const [type, values] of allocations) {
     if (values.size !== 1 || !statKeys[type]) return false;
     const factor = type === 7 ? multiplier("StaminaMultByILvl") : [32, 36, 40, 49].includes(type) ? multiplier("CombatRatingsMultByILvl") : 1;
@@ -300,6 +309,8 @@ export async function resolveFarmRewards(input: {
     } catch { searchLimited = true; continue; }
     Object.assign(probe.target, { verification: "variant_verified", itemLevel: actual.itemLevel, requiredLevel: actual.requiredLevel,
       quality: actual.quality, stats: { ...actual.stats },
+      weapon: variant.resolution?.weapon,
+      effects: variant.resolution?.effects, effectsVerified: variant.resolution?.effectsVerified === true,
       bonusIds: [...probe.offer.bonusIds], contextId: probe.offer.contextId, modifiers: [...probe.offer.modifiers],
       evidence: { build: data.staticBuild, sourceHash, contextPickerId: probe.pickerId, treeIds: probe.treeIds } });
     options.push({ activityId: probe.activity.id, target: probe.target, candidate, variantKey: variant.key });

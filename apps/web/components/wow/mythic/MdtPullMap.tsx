@@ -1,110 +1,129 @@
 "use client";
 
-import { dungeonMapFrame, dungeonArtDirections } from "@/lib/wow/dungeonArtDirection";
-import { useMemo, type CSSProperties } from "react";
+import { ResilientImage } from "@/components/media/ResilientImage";
+import { dungeonArtDirections, dungeonFrameArtwork } from "@/lib/wow/dungeonArtDirection";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Skull } from "lucide-react";
+import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { AtlasChoiceHighlight } from "@gildra/atlas-ui/AtlasChoiceHighlight";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
-import { AtlasValyroSelect } from "@gildra/atlas-ui/AtlasValyroSelect";
+import { PlayerProfilePicker } from "./PlayerProfilePicker";
+import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { usePlayerProfile } from "./usePlayerProfile";
-import { playerClasses, playerSpecs, talentsForProfile } from "./playerTools";
+import { playerSpecs, talentsForProfile } from "./playerTools";
 import { TalentImportPanel } from "./TalentImportPanel";
-import { playerToolsCopy } from "./playerToolsCopy";
 import { usePullRole } from "./usePullRole";
 import { pullRoleCopy } from "./pullRoleCopy";
-import type { MdtNode, MdtDataset } from "@/lib/data/wow/mythicReview.types";
+import type { MdtDataset } from "@/lib/data/wow/mythicReview.types";
 import type { RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
 import type { DungeonCombatIntel } from "./dungeonCombatIntel.types";
 import { buildMdtPullIntel } from "./mdtPullIntel";
 import { MdtPullDetails } from "./MdtPullDetails";
+import { DungeonSourceReview } from "./DungeonSourceReview";
+import { PullActionPanel } from "./PullActionPanel";
+import { pullMapModel, pullPosition } from "./pullMapModel";
 import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { mdtPullMapCopy } from "./mdtPullMapCopy";
+import { pullWorkspaceCopy } from "./pullWorkspaceCopy";
+import { dungeonMapFrameLayout } from "./dungeonMapFrameLayout";
+import { dungeonThemeClass } from "./dungeonTheme";
 import styles from "./mdtPullMap.module.css";
 
 export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combatIntel }: { slug: DungeonSlug; locale: "ru" | "en"; routeUrl: string; data: MdtDataset; stops: RouteStop[]; combatIntel: DungeonCombatIntel }) {
-  const copy = mdtPullMapCopy[locale];
-  const roles = pullRoleCopy[locale];
+  const copy = mdtPullMapCopy[locale], t = pullWorkspaceCopy[locale], roles = pullRoleCopy[locale];
   const [selectedRole, setSelectedRole] = usePullRole();
   const [profile, setProfile] = usePlayerProfile();
-  const playerCopy = playerToolsCopy[locale];
+  const [selected, setSelected] = useState(0);
+  const [preview, setPreview] = useState<number | null>(null);
+  const pullStrip = useRef<HTMLOListElement>(null);
+  const [pullList, setPullList] = useState<HTMLOListElement | null>(null);
+  const attachPullStrip = useCallback((node: HTMLOListElement | null) => { pullStrip.current = node; setPullList(node); }, []);
+  const root = useRef<HTMLElement>(null), builds = useRef<HTMLDetailsElement>(null);
+  const themeClassName = dungeonThemeClass(slug);
   const selectedSpec = playerSpecs.find(spec => spec.id === profile.specId && spec.classId === profile.classId);
   const activeRole = selectedSpec?.role ?? selectedRole;
   const talents = useMemo(() => talentsForProfile({ classId: profile.classId, specId: profile.specId, talentString: profile.talentString }), [profile.classId, profile.specId, profile.talentString]);
-  const authored = data.route.status === "dataset-matched" && data.route.pulls.length > 0;
-  const nodesById = new Map(data.nodes.map(node => [node.id, node]));
-  // An incompatible import must never be presented as an authored route.
-  const spawnGroups = new Map<string, MdtNode[]>();
-  if (!authored) for (const node of data.nodes) {
-    const key = `${node.floor}:${node.group}`;
-    spawnGroups.set(key, [...(spawnGroups.get(key) ?? []), node]);
-  }
-  const pulls = (authored
-    ? data.route.pulls.map(ids => ids.flatMap(id => nodesById.has(id) ? [nodesById.get(id)!] : []))
-    : [...spawnGroups.values()]).filter(members => members.length > 0);
-  const floors = [...new Set(data.nodes.map(node => node.floor))].sort((a, b) => a - b);
-  const uniqueMembers = new Map(pulls.flat().map(node => [node.id, node]));
-  const totalForces = [...uniqueMembers.values()].reduce((sum, node) => sum + node.forces, 0);
-  const forcesPercent = (forces: number) => data.total > 0 ? `${(forces / data.total * 100).toFixed(2)}%` : "—";
+  const { authored, pulls, floors } = useMemo(() => pullMapModel(data), [data]);
+  const pullIntel = useMemo(() => pulls.map(members => buildMdtPullIntel(members, stops, combatIntel, locale)), [pulls, stops, combatIntel, locale]);
   const label = authored ? copy.pull : copy.group;
-  const pullIntel = pulls.map(members => buildMdtPullIntel(members, stops, combatIntel, locale));
-
-  return <section className={styles.panel} data-testid="mdt-map" aria-label={copy.mapLabel}>
-    <header className={styles.header}>
-      <div><h3>{copy.title}</h3><p className={styles.intro}>{copy.instructions}</p></div>
-      <a className={styles.routeLink} href={data.route.url || routeUrl} target="_blank" rel="noreferrer">{copy.authoredRoute}</a>
-    </header>
-    <TalentImportPanel locale={locale} profile={profile} result={talents.result} onProfileChange={setProfile} onRoleChange={setSelectedRole} />
-    <div className={styles.profilePicker} data-testid="pull-player-picker">
-      <div className={styles.profileFields}>
-        <label><span>{playerCopy.classLabel}</span><AtlasValyroSelect native size="lg" aria-label={playerCopy.classLabel} value={profile.classId?.toString() ?? ""} onValueChange={value => setProfile({ classId: Number(value) || null, specId: null })} options={[{ value: "", label: playerCopy.noClass }, ...playerClasses.map(entry => ({ value: String(entry.id), label: entry.name[locale] }))]} /></label>
-        <label><span>{playerCopy.specLabel}</span><AtlasValyroSelect native size="lg" aria-label={playerCopy.specLabel} disabled={!profile.classId} value={profile.specId?.toString() ?? ""} onValueChange={value => { const spec = playerSpecs.find(entry => entry.id === Number(value) && entry.classId === profile.classId); setProfile({ classId: profile.classId, specId: spec?.id ?? null }); if (spec) setSelectedRole(spec.role); }} options={[{ value: "", label: profile.classId ? playerCopy.noSpec : playerCopy.selectClass }, ...playerSpecs.filter(entry => entry.classId === profile.classId).map(entry => ({ value: String(entry.id), label: entry.name[locale] }))]} /></label>
-      </div>
-      <p>{playerCopy.hint}</p>
+  const active = Math.min(selected, Math.max(0, pulls.length - 1));
+  const members = pulls[active];
+  const title = `${label} ${active + 1}`;
+  const forcesPercent = (forces: number) => data.total > 0 ? `${(forces / data.total * 100).toFixed(1)}%` : "—";
+  useEffect(() => {
+    const revealBuild = () => { if (window.location.hash.startsWith("#mythic-build=") && builds.current) builds.current.open = true; };
+    revealBuild(); window.addEventListener("hashchange", revealBuild);
+    return () => window.removeEventListener("hashchange", revealBuild);
+  }, []);
+  const revealMarker = useCallback((index: number, animate = false) => {
+    const marker = root.current?.querySelector<HTMLElement>(`[data-testid="mdt-pull-marker"][data-pull-index="${index}"]`);
+    const viewport = marker?.closest<HTMLElement>("[data-map-viewport]");
+    if (marker && viewport) viewport.scrollTo({ left: marker.offsetLeft - viewport.clientWidth / 2, top: marker.offsetTop - viewport.clientHeight / 2, behavior: animate && !lessMotion() ? "smooth" : "instant" });
+  }, []);
+  useEffect(() => {
+    // On a phone the initial camera must show the initially selected pull too.
+    const frame = requestAnimationFrame(() => revealMarker(0));
+    return () => cancelAnimationFrame(frame);
+  }, [revealMarker]);
+  function selectPull(index: number, reveal = false) {
+    setSelected(index);
+    requestAnimationFrame(() => {
+      if (reveal) revealMarker(index, true);
+      const choice = root.current?.querySelector<HTMLElement>(`[data-pull-choice="${index}"]`);
+      const strip = choice?.closest<HTMLElement>("[data-pull-strip]");
+      if (choice && strip) strip.scrollTo({ left: strip.scrollLeft + choice.getBoundingClientRect().left - strip.getBoundingClientRect().left - strip.clientWidth / 2 + choice.clientWidth / 2, behavior: !lessMotion() ? "smooth" : "instant" });
+    });
+  }
+  return <section ref={root} className={styles.panel} data-dungeon-map={slug} data-testid="mdt-map" aria-label={copy.mapLabel}>
+    <header className={styles.header}><h3>{authored ? t.route : t.groups}</h3><a className={styles.routeLink} href={data.route.url || routeUrl} target="_blank" rel="noreferrer">{copy.authoredRoute}</a></header>
+    <div className={styles.playerBar}>
+      <div className={styles.rolePicker} data-testid="pull-role-picker"><AtlasSegmented aria-label={roles.label} animation="spring" size="lg" fullWidth value={activeRole} onValueChange={value => { setProfile({ ...profile, specId: null }); setSelectedRole(value); }} options={(["all", "tank", "healer", "dps"] as const).map(value => ({ value, label: roles[value] }))} /></div>
+      <PlayerProfilePicker locale={locale} themeClassName={themeClassName} profile={profile} onProfileChange={setProfile} onRoleChange={setSelectedRole} />
+      <details ref={builds} className={styles.buildDisclosure}><summary>{t.build}<span>{talents.selection ? t.imported : t.options}</span></summary><TalentImportPanel locale={locale} profile={profile} result={talents.result} onProfileChange={setProfile} onRoleChange={setSelectedRole} /></details>
     </div>
-    <div className={styles.rolePicker} data-testid="pull-role-picker"><span className={styles.roleLabel}>{roles.label}</span><AtlasSegmented aria-label={roles.label} size="lg" fullWidth value={activeRole} onValueChange={value => { setProfile({ ...profile, specId: null }); setSelectedRole(value); }} options={(["all", "tank", "healer", "dps"] as const).map(value => ({ value, label: roles[value] }))} /><p>{roles.hint}</p></div>
-    <p className={styles.routeStatus} data-testid="mdt-route-status">{authored ? copy.matched(data.route.author, data.route.name) : copy.incompatible}</p>
-    {pulls.length === 0 ? <p role="status">{copy.empty}</p> : <>
-      <div className={styles.legend}><span><b>5</b> {copy.legend}</span><span>{authored ? copy.numberLegend : copy.groupLegend}</span></div>
-      {floors.map(floor => <figure className={styles.floor} key={floor} data-map-frame={`${slug}-mdt-${floor}`} data-frame-motif={dungeonArtDirections[slug].motif}>
-        {floors.length > 1 && <figcaption>{copy.floor} {floor}</figcaption>}
-        <div className={styles.mapFrame} style={{ "--map-frame": `url("${dungeonMapFrame(slug, "mdt", floor)}")` } as CSSProperties}><div className={styles.viewport} tabIndex={0} role="region" aria-label={`${copy.mapLabel} · ${copy.floor} ${floor}`}>
-          <div className={styles.map}>
-            {/* Original MDT tiles and coordinates share the same 3:2 space. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={data.image} alt={copy.mapAlt} width={1680} height={1120} />
-            {pulls.map((members, index) => {
-              const local = members.filter(node => node.floor === floor);
-              if (!local.length) return null;
-              const x = local.reduce((sum, node) => sum + node.x, 0) / local.length;
-              const y = local.reduce((sum, node) => sum + node.y, 0) / local.length;
-              const bossOnly = local.every(node => node.boss);
-              return <MdtPullDetails key={members.map(node => node.id).join(",")} title={`${label} ${index + 1} · ${copy.enemyCount(members.length)}`} intel={pullIntel[index]} locale={locale} selectedRole={activeRole} selectedSpec={selectedSpec} selectedSpells={talents.selection}><button type="button" className={styles.marker} data-testid="mdt-pull-marker" data-boss={bossOnly || undefined}
-                style={{ left: `${x}%`, top: `${y}%` }}
-                aria-label={`${label} ${index + 1}: ${copy.enemyCount(local.length)}${bossOnly ? ` · ${copy.boss}` : ""}`}>
-                <span className={styles.markerNumber} aria-hidden="true">№{index + 1}</span>
-                <strong aria-hidden="true">{local.length}</strong>
-              </button></MdtPullDetails>;
-            })}
-          </div>
-        </div></div>
-      </figure>)}
-      <p className={styles.mapHint}>{copy.mapHint}</p>
-      <div className={styles.summary}><h4>{authored ? copy.composition : copy.groupComposition}</h4><span>{copy.totalForces}: <b>{forcesPercent(totalForces)}</b></span></div>
-      <ol className={styles.pulls}>{pulls.map((members, index) => {
-        const enemies = new Map<string, number>();
-        for (const enemy of pullIntel[index].enemies) enemies.set(enemy.name, (enemies.get(enemy.name) ?? 0) + enemy.count);
-        const forces = members.reduce((sum, node) => sum + node.forces, 0);
-        return <li className={styles.pull} key={members.map(node => node.id).join(",")}>
-          <span className={styles.pullNumber} aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-          <div className={styles.pullBody}>
-            <div className={styles.pullHeading}><h5>{label} {index + 1}</h5><span>{copy.enemyCount(members.length)} · {forcesPercent(forces)}</span></div>
-            <p>{[...enemies].map(([name, count]) => `${count} × ${name}`).join(" · ")}</p>
-          </div>
-        </li>;
-      })}</ol>
+    {!authored && <p className={styles.routeStatus} data-testid="mdt-route-status">{t.unverified} · {copy.incompatible}</p>}
+    {!members ? <p role="status">{copy.empty}</p> : <>
+      <nav className={styles.pullNav} aria-label={authored ? t.poolList : t.groupList}>
+        <ol ref={attachPullStrip} className={styles.pullStrip} data-pull-strip
+          onPointerOver={event => { if (event.pointerType === "mouse") { const choice = (event.target as HTMLElement).closest<HTMLElement>("[data-pull-choice]"); if (choice) setPreview(Number(choice.dataset.pullChoice)); } }}
+          onPointerLeave={() => setPreview(null)}
+          onFocusCapture={event => { const choice = (event.target as HTMLElement).closest<HTMLElement>("[data-pull-choice]"); if (choice?.matches(":focus-visible")) setPreview(Number(choice.dataset.pullChoice)); }}
+          onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPreview(null); }}>{pulls.map((group, index) => <li key={group.map(node => node.id).join(",")}><button type="button" data-pull-choice={index} aria-pressed={active === index} aria-controls="pull-selected-panel" onClick={() => selectPull(index, true)} aria-label={`${label} ${index + 1}: ${copy.enemyCount(group.length)}`}>
+          <b>{index + 1}</b><span>{group.every(node => node.boss) ? <><Skull size={14} aria-hidden="true" /> {t.boss}</> : copy.enemyCount(group.length)}</span>
+        </button></li>)}{pullList && <li className={styles.pullHighlights} role="presentation" aria-hidden="true">
+          <AtlasChoiceHighlight listRef={pullStrip} activeKey={active} selector={`[data-pull-choice="${active}"]`} name="selected" className={styles.selectionHighlight} />
+          <AtlasChoiceHighlight listRef={pullStrip} activeKey={preview ?? active} selector={`[data-pull-choice="${preview ?? active}"]`} name="hover" visible={preview !== null} className={styles.hoverHighlight} />
+        </li>}</ol>
+      </nav>
+      <div className={styles.workspace}>
+        <div className={styles.maps}>{floors.map(floor => <figure className={styles.floor} key={floor} data-map-frame={`${slug}-mdt-${floor}`} data-frame-motif={dungeonArtDirections[slug].motif}>
+          {floors.length > 1 && <figcaption>{copy.floor} {floor}</figcaption>}
+          <div className={styles.mapFrame} style={dungeonMapFrameLayout(slug)}>{<ResilientImage className={styles.frameArtwork} src={dungeonFrameArtwork(slug)} width={1536} height={1024} alt="" aria-hidden="true" />}<div className={styles.viewport} data-map-viewport tabIndex={0} role="region" aria-label={`${copy.mapLabel} · ${copy.floor} ${floor}`}>
+            <div className={styles.map}>
+              {/* Keep original MDT pixels and marker coordinates in the same 3:2 plane. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={data.image} alt={copy.mapAlt} width={1680} height={1120} />
+              {pulls.map((group, index) => {
+                const position = pullPosition(group, floor);
+                if (!position) return null;
+                return <MdtPullDetails themeClassName={themeClassName} key={group.map(node => node.id).join(",")} onSelect={() => selectPull(index)} title={`${label} ${index + 1} · ${copy.enemyCount(group.length)}`} intel={pullIntel[index]} locale={locale} selectedRole={activeRole} selectedSpec={selectedSpec} selectedSpells={talents.selection}>
+                  <button type="button" className={styles.marker} data-testid="mdt-pull-marker" data-pull-index={index} data-boss={position.boss || undefined} aria-pressed={active === index} aria-controls="pull-selected-panel" style={{ left: `${position.x}%`, top: `${position.y}%` }} aria-label={`${label} ${index + 1}: ${copy.enemyCount(position.count)}${position.boss ? ` · ${copy.boss}` : ""}`}>
+                    <strong aria-hidden="true">{index + 1}</strong><span className={styles.markerCount} aria-hidden="true">{position.boss ? <Skull size={13} /> : `×${position.count}`}</span>
+                  </button>
+                </MdtPullDetails>;
+              })}
+            </div>
+          </div></div>
+        </figure>)}</div>
+        <aside id="pull-selected-panel" className={styles.selectedPanel} data-testid="pull-selected-panel" aria-label={title}>
+          <header className={styles.selectedHeader}>
+            <div className={styles.selectedIdentity}><b className={styles.selectedNumber} aria-hidden="true">{active + 1}</b><div><h4 aria-live="polite" aria-atomic="true">{title}</h4><span>{copy.enemyCount(members.length)} · {t.forces} {forcesPercent(members.reduce((sum, node) => sum + node.forces, 0))}</span></div></div>
+            <div className={styles.pullArrows}><AtlasButton size="sm" variant="ghost" disabled={active === 0} aria-label={`${t.previous} ${label.toLocaleLowerCase(locale)}`} onClick={() => selectPull(active - 1, true)}><ChevronLeft size={20} aria-hidden="true" /></AtlasButton><AtlasButton size="sm" variant="ghost" disabled={active === pulls.length - 1} aria-label={`${t.next} ${label.toLocaleLowerCase(locale)}`} onClick={() => selectPull(active + 1, true)}><ChevronRight size={20} aria-hidden="true" /></AtlasButton></div>
+          </header>
+          <div className={styles.selectedBody} key={active}><PullActionPanel themeClassName={themeClassName} title={title} intel={pullIntel[active]} locale={locale} role={activeRole} spec={selectedSpec} spells={talents.selection} /></div>
+        </aside>
+      </div>
     </>}
-    <details className={styles.details}><summary>{copy.details}</summary>
-      <p>{copy.notice}</p><p>{copy.forcesNotice}</p>
-      {data.route.notes.length > 0 && <><h4>{copy.authorNotes}</h4><ul>{data.route.notes.map(note => <li key={note.en}>{note[locale]}</li>)}</ul></>}
-      <p className={styles.source}><a href={data.source} target="_blank" rel="noreferrer">{copy.source}</a> · <time dateTime={data.checkedAt}>{data.checkedAt}</time></p>
-    </details>
+    <details className={styles.details}><summary>{t.sourcesNotes}</summary><p>{authored ? copy.matched(data.route.author, data.route.name) : copy.incompatible}</p><p>{copy.notice}</p><p>{copy.forcesNotice}</p>{data.route.notes.length > 0 && <><h4>{copy.authorNotes}</h4><ul>{data.route.notes.map(note => <li key={note.en}>{note[locale]}</li>)}</ul></>}{<DungeonSourceReview review={combatIntel.review} locale={locale} />}<p className={styles.source}><a href={data.source} target="_blank" rel="noreferrer">{copy.source}</a> · <time dateTime={data.checkedAt}>{data.checkedAt}</time></p></details>
   </section>;
 }

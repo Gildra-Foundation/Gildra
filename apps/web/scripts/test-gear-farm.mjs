@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {farmRules,endgameFarmRules,farmAccess,normalLootMask} from '../lib/wow/gearFarm/rules.ts';
-import {farmCandidate,farmPrimaryCompatible,sourceTargets,sortFarmActivities} from '../lib/wow/gearFarm/planner.ts';
+import {farmCandidate,sourceTargets,sortFarmActivities} from '../lib/wow/gearFarm/planner.ts';
 import {enqueueGearFarmJob,getGearFarmJob,cancelGearFarmJob} from '../lib/wow/gearFarm/jobs.ts';
 const spire=farmRules.find(r=>r.slug==='windrunner-spire');
 assert.equal(farmAccess(spire,81,120),'level_condition_met');
@@ -18,16 +18,19 @@ const plate=entity(251098),cloth=entity(10,4,1),intellect=entity(11,4,0,'TRINKET
 const activity={...spire,access:'level_condition_met',targets:[],lootItemsChecked:1,variantsUnverified:0};
 assert(farmCandidate(plate,{...context,slotType:'HEAD',currentItemLevel:102},source,[]));
 assert.equal(farmCandidate(cloth,{...context,slotType:'HEAD',currentItemLevel:102},source,[]),null);
-assert.equal(farmPrimaryCompatible(intellect,1,72),false);assert(farmPrimaryCompatible(entity(12,4,0,'TRINKET',72),1,72));
-assert(farmPrimaryCompatible(entity(13,4,0,'TRINKET',71),1,72));
-assert.equal(farmPrimaryCompatible(entity(14,4,0,'TRINKET',49),1,72),false,'Statless trinkets require effect/spec evidence');
-assert.equal(farmPrimaryCompatible(entity(14,4,0,12,49),1,72),false);
+// Equip-compatible trinkets must reach exact reward/DPS checks, even without
+// a primary stat. Static stats alone cannot prove the value of a proc.
+for (const stat of [73, 72, 71, 49]) {
+ const candidates=sourceTargets({loot:[{entity:entity(14,4,0,'TRINKET',stat),encounterId:source.id,encounterName:source.name,difficultyMask:-1}],activity,equipment:[{slotType:'TRINKET_1',itemId:99,itemLevel:200}],loadout:[],context});
+ assert.equal(candidates.length,1);
+ assert.equal(candidates[0].verification,'scaling_unverified');
+}
 const equipment=[{slotType:'HEAD',itemId:1,itemLevel:102},{slotType:'HANDS',itemId:2,itemLevel:120}];
 const targets=sourceTargets({loot:[{entity:plate,encounterId:2658,encounterName:source.name,difficultyMask:-1},{entity:entity(2,4,4,'HANDS'),encounterId:2655,encounterName:'Emberdawn',difficultyMask:-1}],activity,equipment,loadout:[],context});
 assert.equal(targets.length,2);assert.equal(targets[0].slotType,'HEAD');assert(targets.every(t=>t.itemLevel===undefined && t.requiredLevel===undefined && t.deltaDps===undefined && t.verification==='scaling_unverified'),'Catalog base108 is not an obtainable level81 reward');
 const unique=entity(55,4,0,'FINGER',49);unique.tooltip.blocks.push({type:'unique_equipped'});
 assert.equal(farmCandidate(unique,{...context,slotType:'FINGER_2',currentItemLevel:102},source,[{slotType:'FINGER_1',itemId:55,inventoryType:11,itemSubclassId:0,uniqueEquipped:true}]),null);
-const restricted=entity(56);restricted.tooltip.blocks.find(b=>b.type==='item_requirements').required_skill_id=123;
+const restricted=entity(56);const requirements=restricted.tooltip.blocks.find(b=>b.type==='item_requirements');assert(requirements);requirements.required_skill_id=123;
 assert.equal(farmCandidate(restricted,{...context,slotType:'HEAD',currentItemLevel:102},source,[]),null);
 assert.equal(sortFarmActivities([{...activity,id:'unknown',access:'unlock_unverified',targets},{...activity,id:'available',targets:[]}])[0].id,'available');
 let release;const pending=new Promise(r=>{release=r});
@@ -56,7 +59,7 @@ cancelGearFarmJob('queue-blocker', blocker.id);
 releaseBlocker();
 await new Promise(resolve => setTimeout(resolve, 20));
 assert.equal(cancelledTasksRun, 0, 'Cancelled jobs must never start a simulation');
-console.log(JSON.stringify({status:'passed',checks:['official alternative unlocks','hard vs recommended gear','difficulty evidence','Fury primary/armor compatibility','current weak-slot priority','unverified scaling never becomes gain','unique/skill requirements','private job ownership and cancellation']}));
+console.log(JSON.stringify({status:'passed',checks:['official alternative unlocks','hard vs recommended gear','difficulty evidence','armor compatibility and effect-bearing trinkets','current weak-slot priority','unverified scaling never becomes gain','unique/skill requirements','private job ownership and cancellation']}));
 
 // Simulation fixtures exercise evidence gates and comparison behavior only.
 // Real loot generation and live DPS are verified separately by the QA runner.

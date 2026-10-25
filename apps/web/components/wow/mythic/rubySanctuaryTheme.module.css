@@ -1,0 +1,51 @@
+/* atlas:strict — Ruby Life Pools palette, scoped to this dungeon and its portals. */
+.rubyTheme.rubyTheme {
+  --atlas-bg: var(--atlas-ruby-bg);
+  --atlas-surface: var(--atlas-ruby-surface);
+  --atlas-surface-raised: var(--atlas-ruby-raised);
+  --atlas-surface-sunken: var(--atlas-ruby-sunken);
+  --atlas-surface-selected: var(--atlas-ruby-selected);
+  --atlas-text: var(--atlas-ruby-text);
+  --atlas-text-strong: var(--atlas-ruby-strong);
+  --atlas-text-muted: var(--atlas-ruby-muted);
+  --atlas-text-subtle: var(--atlas-ruby-subtle);
+  --atlas-accent: var(--atlas-ruby-accent);
+  --atlas-accent-strong: var(--atlas-ruby-accent-strong);
+  --atlas-accent-soft: rgba(162, 44, 60, .24);
+  --atlas-accent-wash: rgba(150, 43, 58, .14);
+  --atlas-accent-wash-strong: rgba(150, 43, 58, .26);
+  --atlas-accent-glow: rgba(190, 52, 65, .22);
+  --atlas-line: rgba(192, 154, 105, .32);
+  --atlas-line-soft: rgba(192, 154, 105, .18);
+  --atlas-line-strong: rgba(214, 173, 117, .62);
+  --dungeon-glass: rgba(15, 13, 19, .88);
+  --dungeon-glass-raised: rgba(18, 15, 22, .94);
+  --ruby-selection: linear-gradient(150deg, var(--atlas-ruby-red-light), var(--atlas-ruby-red-deep));
+  --ruby-selection-edge: var(--atlas-ruby-selection-edge);
+  --ruby-gold: var(--atlas-ruby-gold);
+  --ruby-dark-glass: rgba(13, 12, 18, .94);
+}
+
+.rubyTheme.rubyTheme :global(img[data-combat-icon="spell"][src]) { padding: 2px; border: 2px solid var(--ruby-gold); border-top-color: var(--atlas-text-muted); border-bottom-color: var(--atlas-accent-strong); border-radius: 5px; background: var(--atlas-surface-sunken); outline: 1px solid var(--atlas-line-soft); outline-offset: 1px; box-shadow: 0 2px 5px var(--atlas-bg); }
+.rubyTheme.rubyTheme :global([data-testid="player-spell-advice"]) a { width: 100%; gap: var(--atlas-space-3); padding: 6px var(--atlas-space-2); border: 1px solid var(--atlas-line); border-top-color: var(--atlas-line-strong); border-radius: 6px; background: linear-gradient(145deg, var(--atlas-line-soft), transparent 75%), var(--ruby-dark-glass); color: var(--atlas-text); text-decoration: none; box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 3px 6px var(--atlas-bg); transition: border-color .2s var(--atlas-ease), background-color .2s var(--atlas-ease), box-shadow .2s var(--atlas-ease), transform .24s var(--ui-ease-spring, var(--atlas-ease)); }
+.rubyTheme.rubyTheme :global([data-testid="player-spell-advice"]) a img { width: 34px; height: 34px; }
+.rubyTheme.rubyTheme :global([data-testid="player-spell-advice"]) a span { min-width: 0; overflow-wrap: anywhere; }
+.rubyTheme.rubyTheme :global([data-testid="player-spell-advice"]) a:is(:hover, :focus-visible) { border-color: var(--ruby-gold); color: var(--atlas-text-strong); box-shadow: inset 0 1px 0 var(--atlas-line-strong), 0 0 16px var(--atlas-accent-glow); }
+.rubyTheme.rubyTheme :global(.ui-button) { border-top-color: var(--atlas-line-strong); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 3px 8px var(--atlas-bg); transition: transform .24s var(--ui-ease-spring, var(--atlas-ease)), box-shadow .24s var(--atlas-ease), border-color .2s var(--atlas-ease), background-color .2s var(--atlas-ease); }
+.rubyTheme.rubyTheme :global(.ui-button):is(:hover, :focus-visible):not(:disabled) { border-color: var(--ruby-gold); box-shadow: inset 0 1px 0 var(--atlas-line-strong), 0 5px 20px var(--atlas-accent-glow); }
+@media (hover: hover) and (pointer: fine) {
+  .rubyTheme.rubyTheme :global([data-testid="player-spell-advice"]) a:hover { transform: translateY(-2px); }
+  .rubyTheme.rubyTheme :global(.ui-button):hover:not(:disabled) { transform: translateY(-2px); }
+  .rubyTheme.rubyTheme :global(.ui-button):active:not(:disabled) { transform: translateY(0) scale(.98); }
+}
+:global(html[data-motion="reduced"]) .rubyTheme.rubyTheme :is(:global(.ui-button), :global([data-testid="player-spell-advice"]) a) { transform: none; transition: none; }
+@media (prefers-reduced-motion: reduce) { .rubyTheme.rubyTheme :is(:global(.ui-button), :global([data-testid="player-spell-advice"]) a):is(:hover, :active, :focus-visible) { transform: none; transition: none; } }
+:global(html[data-motion="reduced"]) .rubyTheme.rubyTheme :global(.ui-button):is(:hover, :active, :focus-visible):not(:disabled),
+:global(html[data-motion="reduced"]) .rubyTheme.rubyTheme :global([data-testid="player-spell-advice"]) a:is(:hover, :focus-visible) { transform: none; transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rubyTheme.rubyTheme :global(.ui-button):is(:hover, :active, :focus-visible):not(:disabled),
+  .rubyTheme.rubyTheme :global([data-testid="player-spell-advice"]) a:is(:hover, :focus-visible) { transform: none; transition: none; }
+}
+
+.rubyTheme.rubyTheme :global(.ui-button) { border-radius: var(--atlas-radius-control); }
+.rubyTheme.rubyTheme :global([data-testid="player-spell-advice"]) a { border-radius: 10px; }

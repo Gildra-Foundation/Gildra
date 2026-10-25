@@ -45,6 +45,10 @@
 
 .dungeonSelector { width: 100%; min-width: 0; }
 .keySelector { width: 196px; }
+.rubySelector.keySelector { width: 100%; }
+.rubySelector .selectorTrigger { width: 100%; min-width: 0; transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease); }
+.rubySelector .selectorTrigger:hover,
+.rubySelector[data-open] .selectorTrigger { border-color: var(--atlas-line-strong); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 0 16px var(--atlas-accent-wash); }
 
 .triggerArtwork,
 .optionArtwork,
@@ -210,3 +214,16 @@
   .chevron { transition: none; }
   .loadingIcon { animation: none; }
 }
+
+/* Ruby's glass creates a containing block: keep menus anchored to their trigger. */
+.rubySelector .selectorMenu { left: auto; right: 0; max-width: calc(100vw - 32px); }
+@media (max-width: 560px) {
+  .rubySelector .selectorMenu { position: absolute; inset: calc(100% + 8px) 0 auto; width: 100%; max-height: min(58dvh, 420px); }
+}
+
+/* All dungeon selectors use the same rounded, raised glass controls. */
+.rubySelector .selectorTrigger { border-radius: 12px; box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 4px 12px var(--atlas-bg); }
+.rubySelector .selectorMenu { border-radius: 16px; }
+.rubySelector .selectorOption { border-radius: 10px; }
+.rubySelector .triggerArtwork, .rubySelector .triggerGem { border-radius: 8px; }
+.rubySelector .selectorTrigger:active { box-shadow: inset 0 2px 6px var(--atlas-bg); }

@@ -1,0 +1,12 @@
+/* atlas:strict — decorative Ruby weather, behind all content and map pixels. */
+.weather { z-index: 1; position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.bloom { position: absolute; inset: -3%; background: radial-gradient(ellipse at 38% 16%, var(--atlas-text-strong), transparent 44%), radial-gradient(ellipse at 78% 42%, var(--ruby-gold), transparent 42%); opacity: .1; mix-blend-mode: screen; }
+.rain { position: absolute; inset: 0; opacity: .42; }
+.rain i { position: absolute; top: -140px; left: var(--rain-left); width: 1px; height: var(--rain-length); background: linear-gradient(transparent, var(--atlas-text-strong)); animation: sanctuaryRain var(--rain-duration) var(--rain-delay) linear infinite; }
+.weather[data-paused] .rain i { animation-play-state: paused; }
+@keyframes sanctuaryRain { from { transform: translate3d(0, 0, 0) rotate(9deg); } to { transform: translate3d(-16lvh, calc(100lvh + 280px), 0) rotate(9deg); } }
+@media (max-width: 767px) { .rain { opacity: .32; } .rain i:nth-child(even) { display: none; } .bloom { opacity: .08; } }
+:global(html[data-motion="reduced"]) .rain { display: none; }
+@media (prefers-reduced-motion: reduce) { .rain { display: none; } }
+@media (prefers-reduced-transparency: reduce) { .weather { display: none; } }
+@media (forced-colors: active) { .weather { display: none; } }

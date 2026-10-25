@@ -1,0 +1,162 @@
+/* atlas:strict — location palettes share the approved glass, controls and motion. */
+.altar-of-fangs.altar-of-fangs.altar-of-fangs {
+  --atlas-ruby-bg: var(--atlas-dungeon-altar-bg);
+  --atlas-ruby-surface: var(--atlas-dungeon-altar-surface);
+  --atlas-ruby-raised: var(--atlas-dungeon-altar-raised);
+  --atlas-ruby-sunken: var(--atlas-dungeon-altar-sunken);
+  --atlas-ruby-selected: var(--atlas-dungeon-altar-selected);
+  --atlas-ruby-accent: var(--atlas-dungeon-altar-accent);
+  --atlas-ruby-accent-strong: var(--atlas-dungeon-altar-accent-strong);
+  --atlas-ruby-red-light: var(--atlas-dungeon-altar-red-light);
+  --atlas-ruby-red-deep: var(--atlas-dungeon-altar-red-deep);
+  --atlas-ruby-selection-edge: var(--atlas-dungeon-altar-selection-edge);
+  --atlas-ruby-gold: var(--atlas-dungeon-altar-gold);
+  --atlas-accent-soft: color-mix(in srgb, var(--atlas-ruby-red-light) 32%, transparent);
+  --atlas-accent-wash: color-mix(in srgb, var(--atlas-ruby-red-light) 16%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--atlas-ruby-red-light) 30%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--atlas-ruby-accent) 24%, transparent);
+  --atlas-line: color-mix(in srgb, var(--atlas-ruby-gold) 44%, transparent);
+  --atlas-line-soft: color-mix(in srgb, var(--atlas-ruby-gold) 22%, transparent);
+  --atlas-line-strong: color-mix(in srgb, var(--atlas-ruby-gold) 72%, transparent);
+  --dungeon-glass: color-mix(in srgb, var(--atlas-ruby-bg) 88%, transparent);
+  --dungeon-glass-raised: color-mix(in srgb, var(--atlas-ruby-surface) 94%, transparent);
+  --ruby-dark-glass: color-mix(in srgb, var(--atlas-ruby-sunken) 94%, transparent);
+}
+.murder-row.murder-row.murder-row {
+  --atlas-ruby-bg: var(--atlas-dungeon-murder-bg);
+  --atlas-ruby-surface: var(--atlas-dungeon-murder-surface);
+  --atlas-ruby-raised: var(--atlas-dungeon-murder-raised);
+  --atlas-ruby-sunken: var(--atlas-dungeon-murder-sunken);
+  --atlas-ruby-selected: var(--atlas-dungeon-murder-selected);
+  --atlas-ruby-accent: var(--atlas-dungeon-murder-accent);
+  --atlas-ruby-accent-strong: var(--atlas-dungeon-murder-accent-strong);
+  --atlas-ruby-red-light: var(--atlas-dungeon-murder-red-light);
+  --atlas-ruby-red-deep: var(--atlas-dungeon-murder-red-deep);
+  --atlas-ruby-selection-edge: var(--atlas-dungeon-murder-selection-edge);
+  --atlas-ruby-gold: var(--atlas-dungeon-murder-gold);
+  --atlas-accent-soft: color-mix(in srgb, var(--atlas-ruby-red-light) 32%, transparent);
+  --atlas-accent-wash: color-mix(in srgb, var(--atlas-ruby-red-light) 16%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--atlas-ruby-red-light) 30%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--atlas-ruby-accent) 24%, transparent);
+  --atlas-line: color-mix(in srgb, var(--atlas-ruby-gold) 44%, transparent);
+  --atlas-line-soft: color-mix(in srgb, var(--atlas-ruby-gold) 22%, transparent);
+  --atlas-line-strong: color-mix(in srgb, var(--atlas-ruby-gold) 72%, transparent);
+  --dungeon-glass: color-mix(in srgb, var(--atlas-ruby-bg) 88%, transparent);
+  --dungeon-glass-raised: color-mix(in srgb, var(--atlas-ruby-surface) 94%, transparent);
+  --ruby-dark-glass: color-mix(in srgb, var(--atlas-ruby-sunken) 94%, transparent);
+}
+.den-of-nalorakk.den-of-nalorakk.den-of-nalorakk {
+  --atlas-ruby-bg: var(--atlas-dungeon-nalorakk-bg);
+  --atlas-ruby-surface: var(--atlas-dungeon-nalorakk-surface);
+  --atlas-ruby-raised: var(--atlas-dungeon-nalorakk-raised);
+  --atlas-ruby-sunken: var(--atlas-dungeon-nalorakk-sunken);
+  --atlas-ruby-selected: var(--atlas-dungeon-nalorakk-selected);
+  --atlas-ruby-accent: var(--atlas-dungeon-nalorakk-accent);
+  --atlas-ruby-accent-strong: var(--atlas-dungeon-nalorakk-accent-strong);
+  --atlas-ruby-red-light: var(--atlas-dungeon-nalorakk-red-light);
+  --atlas-ruby-red-deep: var(--atlas-dungeon-nalorakk-red-deep);
+  --atlas-ruby-selection-edge: var(--atlas-dungeon-nalorakk-selection-edge);
+  --atlas-ruby-gold: var(--atlas-dungeon-nalorakk-gold);
+  --atlas-accent-soft: color-mix(in srgb, var(--atlas-ruby-red-light) 32%, transparent);
+  --atlas-accent-wash: color-mix(in srgb, var(--atlas-ruby-red-light) 16%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--atlas-ruby-red-light) 30%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--atlas-ruby-accent) 24%, transparent);
+  --atlas-line: color-mix(in srgb, var(--atlas-ruby-gold) 44%, transparent);
+  --atlas-line-soft: color-mix(in srgb, var(--atlas-ruby-gold) 22%, transparent);
+  --atlas-line-strong: color-mix(in srgb, var(--atlas-ruby-gold) 72%, transparent);
+  --dungeon-glass: color-mix(in srgb, var(--atlas-ruby-bg) 88%, transparent);
+  --dungeon-glass-raised: color-mix(in srgb, var(--atlas-ruby-surface) 94%, transparent);
+  --ruby-dark-glass: color-mix(in srgb, var(--atlas-ruby-sunken) 94%, transparent);
+}
+.the-blinding-vale.the-blinding-vale.the-blinding-vale {
+  --atlas-ruby-bg: var(--atlas-dungeon-vale-bg);
+  --atlas-ruby-surface: var(--atlas-dungeon-vale-surface);
+  --atlas-ruby-raised: var(--atlas-dungeon-vale-raised);
+  --atlas-ruby-sunken: var(--atlas-dungeon-vale-sunken);
+  --atlas-ruby-selected: var(--atlas-dungeon-vale-selected);
+  --atlas-ruby-accent: var(--atlas-dungeon-vale-accent);
+  --atlas-ruby-accent-strong: var(--atlas-dungeon-vale-accent-strong);
+  --atlas-ruby-red-light: var(--atlas-dungeon-vale-red-light);
+  --atlas-ruby-red-deep: var(--atlas-dungeon-vale-red-deep);
+  --atlas-ruby-selection-edge: var(--atlas-dungeon-vale-selection-edge);
+  --atlas-ruby-gold: var(--atlas-dungeon-vale-gold);
+  --atlas-accent-soft: color-mix(in srgb, var(--atlas-ruby-red-light) 32%, transparent);
+  --atlas-accent-wash: color-mix(in srgb, var(--atlas-ruby-red-light) 16%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--atlas-ruby-red-light) 30%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--atlas-ruby-accent) 24%, transparent);
+  --atlas-line: color-mix(in srgb, var(--atlas-ruby-gold) 44%, transparent);
+  --atlas-line-soft: color-mix(in srgb, var(--atlas-ruby-gold) 22%, transparent);
+  --atlas-line-strong: color-mix(in srgb, var(--atlas-ruby-gold) 72%, transparent);
+  --dungeon-glass: color-mix(in srgb, var(--atlas-ruby-bg) 88%, transparent);
+  --dungeon-glass-raised: color-mix(in srgb, var(--atlas-ruby-surface) 94%, transparent);
+  --ruby-dark-glass: color-mix(in srgb, var(--atlas-ruby-sunken) 94%, transparent);
+}
+.voidscar-arena.voidscar-arena.voidscar-arena {
+  --atlas-ruby-bg: var(--atlas-dungeon-void-bg);
+  --atlas-ruby-surface: var(--atlas-dungeon-void-surface);
+  --atlas-ruby-raised: var(--atlas-dungeon-void-raised);
+  --atlas-ruby-sunken: var(--atlas-dungeon-void-sunken);
+  --atlas-ruby-selected: var(--atlas-dungeon-void-selected);
+  --atlas-ruby-accent: var(--atlas-dungeon-void-accent);
+  --atlas-ruby-accent-strong: var(--atlas-dungeon-void-accent-strong);
+  --atlas-ruby-red-light: var(--atlas-dungeon-void-red-light);
+  --atlas-ruby-red-deep: var(--atlas-dungeon-void-red-deep);
+  --atlas-ruby-selection-edge: var(--atlas-dungeon-void-selection-edge);
+  --atlas-ruby-gold: var(--atlas-dungeon-void-gold);
+  --atlas-accent-soft: color-mix(in srgb, var(--atlas-ruby-red-light) 32%, transparent);
+  --atlas-accent-wash: color-mix(in srgb, var(--atlas-ruby-red-light) 16%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--atlas-ruby-red-light) 30%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--atlas-ruby-accent) 24%, transparent);
+  --atlas-line: color-mix(in srgb, var(--atlas-ruby-gold) 44%, transparent);
+  --atlas-line-soft: color-mix(in srgb, var(--atlas-ruby-gold) 22%, transparent);
+  --atlas-line-strong: color-mix(in srgb, var(--atlas-ruby-gold) 72%, transparent);
+  --dungeon-glass: color-mix(in srgb, var(--atlas-ruby-bg) 88%, transparent);
+  --dungeon-glass-raised: color-mix(in srgb, var(--atlas-ruby-surface) 94%, transparent);
+  --ruby-dark-glass: color-mix(in srgb, var(--atlas-ruby-sunken) 94%, transparent);
+}
+.kings-rest.kings-rest.kings-rest {
+  --atlas-ruby-bg: var(--atlas-dungeon-kings-bg);
+  --atlas-ruby-surface: var(--atlas-dungeon-kings-surface);
+  --atlas-ruby-raised: var(--atlas-dungeon-kings-raised);
+  --atlas-ruby-sunken: var(--atlas-dungeon-kings-sunken);
+  --atlas-ruby-selected: var(--atlas-dungeon-kings-selected);
+  --atlas-ruby-accent: var(--atlas-dungeon-kings-accent);
+  --atlas-ruby-accent-strong: var(--atlas-dungeon-kings-accent-strong);
+  --atlas-ruby-red-light: var(--atlas-dungeon-kings-red-light);
+  --atlas-ruby-red-deep: var(--atlas-dungeon-kings-red-deep);
+  --atlas-ruby-selection-edge: var(--atlas-dungeon-kings-selection-edge);
+  --atlas-ruby-gold: var(--atlas-dungeon-kings-gold);
+  --atlas-accent-soft: color-mix(in srgb, var(--atlas-ruby-red-light) 32%, transparent);
+  --atlas-accent-wash: color-mix(in srgb, var(--atlas-ruby-red-light) 16%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--atlas-ruby-red-light) 30%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--atlas-ruby-accent) 24%, transparent);
+  --atlas-line: color-mix(in srgb, var(--atlas-ruby-gold) 44%, transparent);
+  --atlas-line-soft: color-mix(in srgb, var(--atlas-ruby-gold) 22%, transparent);
+  --atlas-line-strong: color-mix(in srgb, var(--atlas-ruby-gold) 72%, transparent);
+  --dungeon-glass: color-mix(in srgb, var(--atlas-ruby-bg) 88%, transparent);
+  --dungeon-glass-raised: color-mix(in srgb, var(--atlas-ruby-surface) 94%, transparent);
+  --ruby-dark-glass: color-mix(in srgb, var(--atlas-ruby-sunken) 94%, transparent);
+}
+.temple-of-sethraliss.temple-of-sethraliss.temple-of-sethraliss {
+  --atlas-ruby-bg: var(--atlas-dungeon-temple-bg);
+  --atlas-ruby-surface: var(--atlas-dungeon-temple-surface);
+  --atlas-ruby-raised: var(--atlas-dungeon-temple-raised);
+  --atlas-ruby-sunken: var(--atlas-dungeon-temple-sunken);
+  --atlas-ruby-selected: var(--atlas-dungeon-temple-selected);
+  --atlas-ruby-accent: var(--atlas-dungeon-temple-accent);
+  --atlas-ruby-accent-strong: var(--atlas-dungeon-temple-accent-strong);
+  --atlas-ruby-red-light: var(--atlas-dungeon-temple-red-light);
+  --atlas-ruby-red-deep: var(--atlas-dungeon-temple-red-deep);
+  --atlas-ruby-selection-edge: var(--atlas-dungeon-temple-selection-edge);
+  --atlas-ruby-gold: var(--atlas-dungeon-temple-gold);
+  --atlas-accent-soft: color-mix(in srgb, var(--atlas-ruby-red-light) 32%, transparent);
+  --atlas-accent-wash: color-mix(in srgb, var(--atlas-ruby-red-light) 16%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--atlas-ruby-red-light) 30%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--atlas-ruby-accent) 24%, transparent);
+  --atlas-line: color-mix(in srgb, var(--atlas-ruby-gold) 44%, transparent);
+  --atlas-line-soft: color-mix(in srgb, var(--atlas-ruby-gold) 22%, transparent);
+  --atlas-line-strong: color-mix(in srgb, var(--atlas-ruby-gold) 72%, transparent);
+  --dungeon-glass: color-mix(in srgb, var(--atlas-ruby-bg) 88%, transparent);
+  --dungeon-glass-raised: color-mix(in srgb, var(--atlas-ruby-surface) 94%, transparent);
+  --ruby-dark-glass: color-mix(in srgb, var(--atlas-ruby-sunken) 94%, transparent);
+}
