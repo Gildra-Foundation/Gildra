@@ -1,0 +1,147 @@
+[
+  {
+    "slug": "venomous-abyss",
+    "url": "/assets/wow/raids/hub/controls/buttons/venomous-abyss.webp",
+    "nativeDimensions": {
+      "width": 2172,
+      "height": 724
+    },
+    "width": 768,
+    "height": 133,
+    "bytes": 25892,
+    "recommendedSlice": {
+      "top": 40,
+      "right": 128,
+      "bottom": 29,
+      "left": 156
+    },
+    "borderImageSlice": "40 128 29 156 fill",
+    "recommendedWidthAt64px": {
+      "top": 19.25,
+      "right": 61.59,
+      "bottom": 13.95,
+      "left": 75.07
+    },
+    "faceCenterYPercent": 54.132,
+    "centerStretch": {
+      "left": 156,
+      "right": 640
+    }
+  },
+  {
+    "slug": "the-voidspire",
+    "url": "/assets/wow/raids/hub/controls/buttons/the-voidspire.webp",
+    "nativeDimensions": {
+      "width": 2172,
+      "height": 724
+    },
+    "width": 768,
+    "height": 163,
+    "bytes": 25742,
+    "recommendedSlice": {
+      "top": 54,
+      "right": 192,
+      "bottom": 48,
+      "left": 192
+    },
+    "borderImageSlice": "54 192 48 192 fill",
+    "recommendedWidthAt64px": {
+      "top": 21.2,
+      "right": 75.39,
+      "bottom": 18.85,
+      "left": 75.39
+    },
+    "faceCenterYPercent": 51.762,
+    "centerStretch": {
+      "left": 192,
+      "right": 576
+    }
+  },
+  {
+    "slug": "the-dreamrift",
+    "url": "/assets/wow/raids/hub/controls/buttons/the-dreamrift.webp",
+    "nativeDimensions": {
+      "width": 2172,
+      "height": 724
+    },
+    "width": 768,
+    "height": 150,
+    "bytes": 36664,
+    "recommendedSlice": {
+      "top": 48,
+      "right": 190,
+      "bottom": 39,
+      "left": 190
+    },
+    "borderImageSlice": "48 190 39 190 fill",
+    "recommendedWidthAt64px": {
+      "top": 20.48,
+      "right": 81.07,
+      "bottom": 16.64,
+      "left": 81.07
+    },
+    "faceCenterYPercent": 52.878,
+    "centerStretch": {
+      "left": 190,
+      "right": 578
+    }
+  },
+  {
+    "slug": "march-on-queldanas",
+    "url": "/assets/wow/raids/hub/controls/buttons/march-on-queldanas.webp",
+    "nativeDimensions": {
+      "width": 2172,
+      "height": 724
+    },
+    "width": 768,
+    "height": 150,
+    "bytes": 27566,
+    "recommendedSlice": {
+      "top": 51,
+      "right": 156,
+      "bottom": 36,
+      "left": 156
+    },
+    "borderImageSlice": "51 156 36 156 fill",
+    "recommendedWidthAt64px": {
+      "top": 21.76,
+      "right": 66.56,
+      "bottom": 15.36,
+      "left": 66.56
+    },
+    "faceCenterYPercent": 54.893,
+    "centerStretch": {
+      "left": 156,
+      "right": 612
+    }
+  },
+  {
+    "slug": "sporefall",
+    "url": "/assets/wow/raids/hub/controls/buttons/sporefall.webp",
+    "nativeDimensions": {
+      "width": 2176,
+      "height": 722
+    },
+    "width": 768,
+    "height": 138,
+    "bytes": 40562,
+    "recommendedSlice": {
+      "top": 29,
+      "right": 146,
+      "bottom": 36,
+      "left": 146
+    },
+    "borderImageSlice": "29 146 36 146 fill",
+    "recommendedWidthAt64px": {
+      "top": 13.45,
+      "right": 67.71,
+      "bottom": 16.7,
+      "left": 67.71
+    },
+    "faceCenterYPercent": 47.251,
+    "centerStretch": {
+      "left": 146,
+      "right": 622
+    }
+  }
+]

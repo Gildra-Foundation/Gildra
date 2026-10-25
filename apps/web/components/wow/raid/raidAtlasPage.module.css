@@ -12,7 +12,85 @@
 .heroHeader h1 { max-width: 15ch; }
 .heroHeader p { max-width: 48ch; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
-.actions :global(.ui-button) { min-height: 48px; border-radius: 12px; box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 4px 12px var(--atlas-bg); }
+.actions .heroAction:global(.ui-button) {
+  --raid-action-light: var(--atlas-positive);
+  --raid-action-slice: 40 128 29 156 fill;
+  --raid-action-border: 19.25px 61.59px 13.95px 75.07px;
+  --_fg: var(--atlas-text-strong);
+  --_bg: var(--atlas-bg);
+  --_bg-hover: var(--atlas-bg);
+  --_bg-active: var(--atlas-bg);
+  isolation: isolate;
+  min-height: 64px;
+  min-width: min(100%, 300px);
+  padding: 2px 8px;
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--raid-action-border);
+  border-image-source: var(--raid-action-art);
+  border-image-slice: var(--raid-action-slice);
+  border-image-width: 1;
+  border-radius: 4px;
+  background: var(--atlas-bg);
+  background-clip: padding-box;
+  color: var(--atlas-text-strong);
+  box-shadow: 0 7px 16px color-mix(in srgb, var(--atlas-bg) 70%, transparent);
+  font-size: var(--atlas-text-body);
+  font-weight: var(--ui-weight-semibold, 600);
+  text-shadow: 0 1px 3px var(--atlas-bg), 0 2px 8px var(--atlas-bg);
+  transition: transform calc(var(--ui-duration-slow) * 1.36) var(--ui-spring-snappy), box-shadow var(--ui-duration-fast) var(--ui-ease);
+}
+.currentAction { --raid-action-art: url("/assets/wow/raids/hub/controls/buttons/venomous-abyss.webp"); }
+.actions .archiveAction:global(.ui-button) {
+  --raid-action-light: var(--atlas-positive);
+  --raid-action-art: url("/assets/wow/raids/hub/controls/buttons/the-dreamrift.webp");
+  --raid-action-slice: 48 190 39 190 fill;
+  --raid-action-border: 20.48px 81.07px 16.64px 81.07px;
+}
+.heroAction::before,
+.heroAction::after { position: absolute; pointer-events: none; content: ""; z-index: 0; }
+.heroAction::before {
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--atlas-bg) 82%, transparent) 18%, color-mix(in srgb, var(--atlas-bg) 82%, transparent) 82%, transparent);
+  box-shadow: inset 0 2px 7px color-mix(in srgb, var(--atlas-bg) 65%, transparent);
+}
+.heroAction::after {
+  inset: 0;
+  background: linear-gradient(115deg, transparent 32%, color-mix(in srgb, var(--atlas-text-strong) 16%, transparent) 47%, transparent 63%);
+  opacity: 0;
+  transition: opacity var(--ui-duration-fast) var(--ui-ease);
+}
+.heroAction :global(.ui-button__label),
+.heroAction :global(.ui-button__icon) { position: relative; z-index: 1; }
+.actions .heroAction :global(.ui-button__label) { min-width: 0; }
+.actions .heroAction :global(.ui-button__icon) { width: 20px; height: 20px; flex: 0 0 20px; }
+.actions .heroAction svg { width: 20px; height: 20px; }
+.actions .heroAction:global(.ui-button):focus-visible { outline: 2px solid var(--atlas-text-strong); outline-offset: 5px; }
+@media (hover: hover) and (pointer: fine) {
+  .actions .heroAction:global(.ui-button):hover { color: var(--atlas-text-strong); box-shadow: 0 8px 20px color-mix(in srgb, var(--atlas-bg) 70%, transparent), 0 0 17px color-mix(in srgb, var(--raid-action-light) 13%, transparent); }
+  .heroAction:hover::after { opacity: 1; }
+}
+.actions .heroAction:global(.ui-button):active { transform: translateY(1px) scale(.98); box-shadow: 0 2px 6px var(--atlas-bg); }
+:global([data-ui-motion="reduce"]) .actions .heroAction:global(.ui-button),
+:global(html[data-motion="reduced"]) .actions .heroAction:global(.ui-button),
+.actions .heroAction:global(.ui-button[data-ui-motion="reduce"]) { transform: none; transition: none; }
+:global([data-ui-motion="reduce"]) .heroAction::after,
+:global(html[data-motion="reduced"]) .heroAction::after { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .actions .heroAction:global(.ui-button) { transform: none; transition: none; }
+  .heroAction::after { transition: none; }
+}
+:global(html[data-transparency="reduced"]) .heroAction::before { background: var(--atlas-bg); }
+:global(html[data-transparency="reduced"]) .heroAction::after { display: none; }
+@media (prefers-reduced-transparency: reduce) {
+  .heroAction::before { background: var(--atlas-bg); }
+  .heroAction::after { display: none; }
+}
+@media (forced-colors: active) {
+  .actions .heroAction:global(.ui-button) { border-image: none; border: 2px solid ButtonText; color: ButtonText; background: ButtonFace; box-shadow: none; text-shadow: none; }
+  .heroAction::before, .heroAction::after { display: none; }
+  .actions .heroAction:global(.ui-button):focus-visible { outline-color: Highlight; }
+}
 .seasonFacts { max-width: 500px; margin-top: var(--atlas-space-5); }
 .seasonFacts :global(.ui-stats-card) { border: 0; padding-block: var(--atlas-space-2); background: transparent; box-shadow: none; }
 .current > section,
@@ -27,5 +105,6 @@
   .heroHeader { max-width: 100%; }
   .actions { gap: var(--atlas-space-2); }
   .actions :global(.ui-button) { flex: 1 1 180px; }
+  .actions .heroAction:global(.ui-button) { flex: 1 1 100%; width: 100%; }
   .seasonFacts { margin-top: var(--atlas-space-4); }
 }

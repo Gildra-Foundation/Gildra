@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties } from "react";
+import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import styles from "./raidHubBackdrop.module.css";
 
 // Stable seeds keep the server painting and hydrated atmosphere identical.
@@ -12,15 +13,65 @@ const motes = Array.from({ length: 18 }, (_, index) => ({
   size: index % 5 === 0 ? 3 : 2,
 }));
 
+const rain = Array.from({ length: 16 }, (_, index) => ({
+  x: 3 + (index * 23.71) % 96,
+  delay: -((index * .783) % 5),
+  duration: 3.8 + (index % 5) * .35,
+  length: 30 + (index % 4) * 10,
+}));
+
 /** The approved vault and its painted ravine continue below the hub's real HTML. */
 export function RaidHubBackdrop() {
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const syncVisibility = () => root.current?.toggleAttribute("data-paused", document.hidden);
-    syncVisibility();
-    document.addEventListener("visibilitychange", syncVisibility);
-    return () => document.removeEventListener("visibilitychange", syncVisibility);
+    const element = root.current;
+    if (!element) return;
+    let disposed = false;
+    let visible = false;
+    let sceneVisible = false;
+    const scene = element.querySelector("[data-raid-hub-scene]");
+    const preferences = [
+      window.matchMedia("(prefers-reduced-motion: reduce)"),
+      window.matchMedia("(prefers-reduced-transparency: reduce)"),
+      window.matchMedia("(forced-colors: active)"),
+    ];
+    const syncAtmosphere = () => {
+      if (disposed) return;
+      const reduced = lessMotion() || preferences.some(query => query.matches)
+        || !!element.closest('[data-ui-motion="reduce"], [data-transparency="reduced"]');
+      const active = visible && !document.hidden && !reduced;
+      element.toggleAttribute("data-atmosphere-active", active);
+      element.toggleAttribute("data-bloom-active", active && sceneVisible);
+      element.toggleAttribute("data-paused", !active);
+    };
+    const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.target === element) visible = entry.isIntersecting;
+        if (entry.target === scene) sceneVisible = entry.isIntersecting;
+      }
+      syncAtmosphere();
+    });
+    observer?.observe(element);
+    if (scene) observer?.observe(scene);
+    const attributes = new MutationObserver(syncAtmosphere);
+    attributes.observe(document.documentElement, {
+      attributes: true, subtree: true,
+      attributeFilter: ["data-motion", "data-ui-motion", "data-transparency"],
+    });
+    for (const query of preferences) query.addEventListener("change", syncAtmosphere);
+    document.addEventListener("visibilitychange", syncAtmosphere);
+    syncAtmosphere();
+    return () => {
+      disposed = true;
+      observer?.disconnect();
+      attributes.disconnect();
+      for (const query of preferences) query.removeEventListener("change", syncAtmosphere);
+      document.removeEventListener("visibilitychange", syncAtmosphere);
+      element.removeAttribute("data-atmosphere-active");
+      element.removeAttribute("data-bloom-active");
+      element.removeAttribute("data-paused");
+    };
   }, []);
 
   return (
@@ -39,7 +90,14 @@ export function RaidHubBackdrop() {
           {/* The browser selects one finished crop; there is no duplicate art preload. */}
           <img src="/assets/wow/raids/hub/vault.webp" width="1672" height="941" alt="" loading="eager" fetchPriority="high" decoding="async" />
         </picture>
-        <div className={styles.vaultLight} data-raid-vault-light />
+        <div className={styles.vaultLight} data-raid-vault-light data-raid-vault-bloom="jade" />
+        <div className={styles.warmLight} data-raid-vault-bloom="amber" />
+      </div>
+      <div className={styles.rain} data-raid-hub-rain>
+        {rain.map((drop, index) => <i key={index} style={{
+          "--rain-x": `${drop.x}%`, "--rain-delay": `${drop.delay}s`,
+          "--rain-duration": `${drop.duration}s`, "--rain-length": `${drop.length}px`,
+        } as CSSProperties} />)}
       </div>
       <div className={styles.atmosphere} data-raid-hub-mist><i /><i /></div>
       <div className={styles.motes} data-raid-hub-motes>

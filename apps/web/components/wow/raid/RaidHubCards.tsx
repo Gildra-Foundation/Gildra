@@ -13,6 +13,7 @@ import { raidHubEntries, type RaidHubLocale } from "./raidHubData";
 import { raidHubFrameArtwork, raidHubFrameLayout } from "./raidHubFrames";
 import { raidCardThemes } from "./raidCardThemes";
 import { RaidHubOrnaments } from "./RaidHubOrnaments";
+import { raidHubControlLayout } from "./raidHubControls";
 import styles from "./raidHubCards.module.css";
 
 /** Valyro's composable Card retains real lists and independent boss links in every raid. */
@@ -26,13 +27,13 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
       const featured = section === "current";
       const theme = raidCardThemes[raid.slug];
       const description = raid.slug === "sporefall" ? raidReviewCopy[locale].sporefallCard : featured ? raid.descriptions?.[locale] : undefined;
-      const sizes = featured ? "(max-width: 850px) 100vw, 50vw" : "(max-width: 700px) 100vw, 50vw";
+      const sizes = featured ? "(max-width: 1100px) 100vw, 50vw" : "(max-width: 700px) 100vw, 50vw";
       return <Card
         key={raid.slug}
         padding="none"
         variant="outline"
         className={`${bridge.scope} ${styles.card} ${featured ? styles.featured : ""}`}
-        style={{ ...raidHubFrameLayout(raid.slug), "--raid-card-accent": theme.accent,
+        style={{ ...raidHubFrameLayout(raid.slug), ...raidHubControlLayout(raid.slug), "--raid-card-accent": theme.accent,
           // The Quel'Danas source has a 64px transparent top and 2px bottom.
           // Crop the real painted area independently of hover/entrance motion.
           "--raid-scene-zoom": raid.slug === "march-on-queldanas" ? "1.10" : "1",
@@ -65,7 +66,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
               <Image src={raidHubFrameArtwork(raid.slug)} alt="" fill sizes={sizes} className={styles.frameImage} aria-hidden="true" />
             </div>
           </Link>
-          <div className={styles.body}>
+          <div className={styles.body} data-raid-material-panel={raid.slug}>
             {raid.location ? <p className={styles.location}><MapPin aria-hidden="true" />{raid.location[locale]}</p> : null}
             <h3 className={styles.title} id={`raid-hub-${raid.slug}`}><Link href={href}>{name}</Link></h3>
             <span className={styles.count}><Skull aria-hidden="true" />{copy.bossCount(raid.bosses.length)}</span>
@@ -82,7 +83,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
               </ol>
             </div>
             <footer className={styles.footer}>
-              <AtlasLinkButton className={styles.openRaid} href={href} iconAfter={<ArrowUpRight aria-hidden="true" />}>
+              <AtlasLinkButton className={styles.openRaid} href={href}>
                 {copy.openRaid}<span className={styles.srOnly}>: {name}</span>
               </AtlasLinkButton>
               {raid.sourceUrl ? <a className={styles.source} href={raid.sourceUrl} target="_blank" rel="noreferrer">{copy.officialSource}<ArrowUpRight aria-hidden="true" /></a> : null}

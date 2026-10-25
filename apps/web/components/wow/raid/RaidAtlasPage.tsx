@@ -20,8 +20,8 @@ export function RaidAtlasPage({ locale }: { locale: "ru" | "en" }) {
         breadcrumbs={trail(locale, "raids")} breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow} title={copy.title} lede={copy.hubLede}
         actions={<div className={styles.actions} data-raid-hub-actions>
-          <AtlasLinkButton href="#current" variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{copy.currentTitle}</AtlasLinkButton>
-          <AtlasLinkButton href="#archive" icon={<Archive aria-hidden="true" />}>{copy.browseArchive}</AtlasLinkButton>
+          <AtlasLinkButton className={`${styles.heroAction} ${styles.currentAction}`} href="#current" variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{copy.currentTitle}</AtlasLinkButton>
+          <AtlasLinkButton className={`${styles.heroAction} ${styles.archiveAction}`} href="#archive" icon={<Archive aria-hidden="true" />}>{copy.browseArchive}</AtlasLinkButton>
         </div>} />
       <div className={styles.seasonFacts}>
         <AtlasStats label={copy.statsLabel} items={[
