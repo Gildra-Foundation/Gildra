@@ -282,3 +282,22 @@
     --atlas-glass-filter: none;
   }
 }
+
+/* Ruby Life Pools sanctuary palette; consumed only by the scoped dungeon theme. */
+:root {
+  --atlas-ruby-bg: #100f14;
+  --atlas-ruby-surface: #17141b;
+  --atlas-ruby-raised: #1b171e;
+  --atlas-ruby-sunken: #0c0d11;
+  --atlas-ruby-selected: #35202b;
+  --atlas-ruby-text: #e8e2d9;
+  --atlas-ruby-strong: #fff0d7;
+  --atlas-ruby-muted: #bcb6bd;
+  --atlas-ruby-subtle: #a29ca5;
+  --atlas-ruby-accent: #df9872;
+  --atlas-ruby-accent-strong: #f1b88b;
+  --atlas-ruby-red-light: #9a2c3d;
+  --atlas-ruby-red-deep: #4b1422;
+  --atlas-ruby-selection-edge: #ed9c78;
+  --atlas-ruby-gold: #c99a58;
+}

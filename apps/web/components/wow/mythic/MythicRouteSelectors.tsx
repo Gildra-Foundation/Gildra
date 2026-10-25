@@ -163,7 +163,7 @@ export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale,
     value: route.slug,
     title: sourceName(names, route.name, locale, route.nameRu),
     subtitle: copy.dungeonSubtitle({ name: sourceName(names, route.name, locale, route.nameRu), nameRu: sourceName(names, route.name, locale, route.nameRu), timer: formatTimer(route.timerSeconds) }),
-    artwork: route.backdropImage,
+    artwork: dungeonSlug === "ruby-life-pools" && route.slug === "ruby-life-pools" ? "/assets/wow/mythic/ruby-sanctuary/sanctuary-768.webp" : route.backdropImage,
   }));
   const keyOptions: SelectorOption<number>[] = keyLevels.map((level) => ({ value: level, title: `+${level}`, subtitle: copy.keyOptions[level] }));
 

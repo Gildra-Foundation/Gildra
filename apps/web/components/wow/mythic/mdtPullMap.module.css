@@ -120,3 +120,53 @@
 .buildShare input { width: 100%; min-width: 0; min-height: 44px; }
 .sharedBuild { border: 1px solid var(--atlas-accent); padding: var(--atlas-space-3); border-radius: var(--atlas-radius); background: var(--atlas-surface-raised); scroll-margin-block: var(--atlas-space-6); }
 .sharedBuild:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+
+/* Decorative frame is outside the unchanged map coordinate plane and ignores input. */
+.pickerIcon { position: absolute; left: var(--atlas-space-2); bottom: 8px; z-index: 1; border: 1px solid var(--atlas-line-strong); border-radius: 3px; pointer-events: none; }
+.frameArtwork { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.panel[data-dungeon-map="ruby-life-pools"] { padding: var(--atlas-space-4); }
+.panel[data-dungeon-map="ruby-life-pools"] .header { margin-bottom: var(--atlas-space-4); }
+.panel[data-dungeon-map="ruby-life-pools"] .header h3 { font-size: var(--atlas-text-h2); color: var(--atlas-text-strong); }
+.panel[data-dungeon-map="ruby-life-pools"] .playerBar { grid-template-columns: minmax(280px, 1.15fr) minmax(320px, 1.25fr) minmax(180px, .5fr); gap: var(--atlas-space-4); margin-bottom: var(--atlas-space-3); }
+.panel[data-dungeon-map="ruby-life-pools"] .profileFields label { position: relative; }
+.panel[data-dungeon-map="ruby-life-pools"] .profileFields label:has(.pickerIcon) select { padding-left: 46px; }
+.panel[data-dungeon-map="ruby-life-pools"] .profileFields select { border-radius: var(--atlas-radius); }
+.panel[data-dungeon-map="ruby-life-pools"] .rolePicker :global(.ui-segmented-control) { border-radius: var(--atlas-radius); background: var(--ruby-dark-glass); border: 1px solid var(--atlas-line); }
+.panel[data-dungeon-map="ruby-life-pools"] .rolePicker :global(.ui-segmented-control__thumb) { border-radius: var(--atlas-radius); background: var(--ruby-selection); box-shadow: inset 0 0 0 1px var(--ruby-selection-edge), inset 0 2px 7px rgba(244, 164, 123, .14); }
+.panel[data-dungeon-map="ruby-life-pools"] .rolePicker :global(.ui-segmented-control__item[data-active]) { color: var(--atlas-text-strong); }
+.panel[data-dungeon-map="ruby-life-pools"] .buildDisclosure > summary { border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); color: var(--atlas-text); background: var(--ruby-dark-glass); }
+.panel[data-dungeon-map="ruby-life-pools"] .buildDisclosure > summary span { font-size: var(--atlas-text-label); }
+.panel[data-dungeon-map="ruby-life-pools"] .pullStrip { gap: var(--atlas-space-2); padding-inline: 0; padding-bottom: var(--atlas-space-3); }
+.panel[data-dungeon-map="ruby-life-pools"] .pullStrip li { flex: 1 0 auto; }
+.panel[data-dungeon-map="ruby-life-pools"] .pullStrip button { min-width: 72px; width: 100%; border-radius: 5px; background: var(--ruby-dark-glass); }
+.panel[data-dungeon-map="ruby-life-pools"] .pullStrip [aria-pressed="true"] { background: var(--ruby-selection); border-color: var(--ruby-selection-edge); box-shadow: inset 0 0 0 1px var(--ruby-selection-edge), 0 0 12px var(--atlas-accent-glow); color: var(--atlas-text-strong); }
+.panel[data-dungeon-map="ruby-life-pools"] .workspace { grid-template-columns: minmax(0, 1fr) minmax(300px, 320px); gap: var(--atlas-space-3); }
+.panel[data-dungeon-map="ruby-life-pools"] .mapFrame { position: relative; border: 0; padding: 60px 28px 26px; background: transparent; border-radius: 14px; isolation: isolate; }
+.panel[data-dungeon-map="ruby-life-pools"] .viewport { max-height: none; border-radius: 14px; scrollbar-color: var(--atlas-line-strong) var(--atlas-bg); }
+.panel[data-dungeon-map="ruby-life-pools"] .map { min-width: 760px; }
+.panel[data-dungeon-map="ruby-life-pools"] .marker { width: 42px; height: 42px; color: var(--atlas-text-strong); background: var(--ruby-dark-glass); border-color: var(--atlas-text-muted); }
+.panel[data-dungeon-map="ruby-life-pools"] .marker[aria-pressed="true"] { background: var(--ruby-selection); border-color: var(--atlas-text-strong); box-shadow: 0 0 14px rgba(199, 51, 66, .4); outline-color: var(--atlas-accent-soft); color: var(--atlas-text-strong); }
+.panel[data-dungeon-map="ruby-life-pools"] .markerCount { background: var(--ruby-dark-glass); color: var(--atlas-text); }
+.panel[data-dungeon-map="ruby-life-pools"] .selectedPanel { border-radius: 9px; border-color: var(--ruby-gold); background: linear-gradient(145deg, rgba(111, 37, 49, .1), transparent 40%), var(--dungeon-glass-raised); }
+.panel[data-dungeon-map="ruby-life-pools"] .selectedNumber { background: var(--ruby-selection); border: 1px solid var(--ruby-selection-edge); color: var(--atlas-text-strong); }
+.panel[data-dungeon-map="ruby-life-pools"] .selectedHeader { padding: var(--atlas-space-3); }
+.panel[data-dungeon-map="ruby-life-pools"] .selectedBody { max-height: min(720px, calc(100dvh - 220px)); }
+.panel[data-dungeon-map="ruby-life-pools"] .composition li > img { border: 1px solid var(--atlas-line); background: var(--atlas-surface-sunken); border-radius: 3px; }
+.panel[data-dungeon-map="ruby-life-pools"] .castIdentity > img { width: 40px; height: 40px; border: 1px solid var(--atlas-line); border-radius: 3px; }
+.panel[data-dungeon-map="ruby-life-pools"] .actionGroup p { font-size: var(--atlas-text-meta); }
+.panel[data-dungeon-map="ruby-life-pools"] .briefingButton { border-top: 1px solid var(--atlas-line); padding-top: var(--atlas-space-3); border-radius: 0; }
+@media (max-width: 1200px) { .panel[data-dungeon-map="ruby-life-pools"] .playerBar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .panel[data-dungeon-map="ruby-life-pools"] .buildDisclosure { grid-column: 1 / -1; } .panel[data-dungeon-map="ruby-life-pools"] .buildDisclosure > summary { width: fit-content; } }
+@media (max-width: 767px) {
+  .panel[data-dungeon-map="ruby-life-pools"] { padding: var(--atlas-space-3); }
+  .panel[data-dungeon-map="ruby-life-pools"] .playerBar { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-2); }
+  .panel[data-dungeon-map="ruby-life-pools"] .workspace { grid-template-columns: minmax(0, 1fr); }
+  .panel[data-dungeon-map="ruby-life-pools"] .mapFrame { padding: 38px 18px 20px; }
+  .panel[data-dungeon-map="ruby-life-pools"] .viewport { height: 300px; border-radius: 9px; }
+  .panel[data-dungeon-map="ruby-life-pools"] .selectedBody { max-height: none; }
+  .panel[data-dungeon-map="ruby-life-pools"] .marker { width: 44px; height: 44px; }
+}
+@media (forced-colors: active) {
+  .frameArtwork { display: none; }
+  .panel[data-dungeon-map="ruby-life-pools"] .mapFrame { border: 2px solid CanvasText; padding: var(--atlas-space-2); }
+  .panel[data-dungeon-map="ruby-life-pools"] .marker[aria-pressed="true"], .panel[data-dungeon-map="ruby-life-pools"] .pullStrip [aria-pressed="true"] { background: Highlight; color: HighlightText; }
+}

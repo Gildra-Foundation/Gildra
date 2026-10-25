@@ -34,7 +34,7 @@ function LoadedCalculator({ value, locale, editing, onChange, onHeroChange, onVa
   </>;
 }
 
-export function SharedTalentTreeViewer({ code, locale, onClose, onCommit, initialSpecId, standalone = false, onChooseSpec }: { initialSpecId?: number; standalone?: boolean; onChooseSpec?: () => void; code: string; locale: Locale; onClose: () => void; onCommit: (code: string) => void }) {
+export function SharedTalentTreeViewer({ code, locale, onClose, onCommit, initialSpecId, standalone = false, onChooseSpec, themeClassName }: { themeClassName?: string; initialSpecId?: number; standalone?: boolean; onChooseSpec?: () => void; code: string; locale: Locale; onClose: () => void; onCommit: (code: string) => void }) {
   const t = sharedTalentTreeCopy[locale], edit = sharedBuildDraftCopy[locale], calculator = dungeonCalculatorCopy[locale];
   const [valid, setValid] = useState(true);
   const [draft, setDraft] = useState(code), [editing, setEditing] = useState(standalone), [requestedHero, setRequestedHero] = useState<number | null>(null), [reset, setReset] = useState(0);
@@ -65,7 +65,7 @@ export function SharedTalentTreeViewer({ code, locale, onClose, onCommit, initia
     }).catch(() => { if (!controller.signal.aborted) setLoaded({ state: "failed" }); }).finally(() => window.clearTimeout(timer));
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [requestKey, attempt]);
-  return <AtlasDialog open onClose={onClose} label={standalone ? calculator.title : t.title} className={styles.dialog} variant="sheet">
+  return <AtlasDialog open onClose={onClose} label={standalone ? calculator.title : t.title} className={`${styles.dialog} ${themeClassName ?? ""}`} variant="sheet">
     <header className={styles.header}><h2>{standalone ? calculator.title : t.title}</h2><AtlasButton variant="ghost" onClick={onClose}>{standalone ? calculator.close : t.close}</AtlasButton></header>
     <div className={styles.body} data-testid="shared-talent-tree"><p>{standalone ? calculator.hint : editing ? edit.hint : t.hint}</p><div className={styles.editActions}>{onChooseSpec && <AtlasButton variant="ghost" onClick={onChooseSpec}>{calculator.chooseSpec}</AtlasButton>}{!editing ? <AtlasButton onClick={() => setEditing(true)}>{edit.edit}</AtlasButton> : <><AtlasButton onClick={() => { onCommit(draft); onClose(); }} disabled={!valid || draft === code || loaded.state !== "ready" || loaded.key !== requestKey}>{standalone ? calculator.apply : edit.use}</AtlasButton><AtlasButton variant="ghost" onClick={() => { setDraft(code); setRequestedHero(null); setReset(value => value + 1); }}>{standalone ? calculator.reset : edit.reset}</AtlasButton></>}</div>
       {loaded.state === "loading" || (loaded.state === "ready" && loaded.key !== requestKey) ? <p role="status">{t.loading}</p> : loaded.state === "ready" ? <LoadedCalculator key={requestKey} value={loaded} locale={locale} editing={editing} onChange={setDraft} onHeroChange={setRequestedHero} onValidityChange={setValid} /> : <div role="alert"><p>{loaded.state === "mismatch" ? t.mismatch : t.failed}</p><AtlasButton onClick={() => { setLoaded({ state: "loading" }); setAttempt(value => value + 1); }}>{t.retry}</AtlasButton></div>}

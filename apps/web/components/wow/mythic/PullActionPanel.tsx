@@ -13,8 +13,8 @@ import styles from "./mdtPullMap.module.css";
 const icons = { "Кик": Ban, "Стоп": Hand, "Диспел": Sparkles, "Пурж": Sparkles, "Фокус": Crosshair, "Уклонение": Footprints, "Защита": Shield };
 const actionOrder: PullMechanic["action"][] = ["Кик", "Стоп", "Диспел", "Пурж", "Фокус", "Уклонение", "Защита"];
 
-type Props = { title: string; intel: PullIntel; locale: "ru" | "en"; role: PullRoleSelection; spec?: PlayerSpec; spells?: TalentSpellSelection };
-export function PullActionPanel({ title, intel, locale, role, spec, spells }: Props) {
+type Props = { ruby?: boolean; title: string; intel: PullIntel; locale: "ru" | "en"; role: PullRoleSelection; spec?: PlayerSpec; spells?: TalentSpellSelection };
+export function PullActionPanel({ ruby, title, intel, locale, role, spec, spells }: Props) {
   const t = pullWorkspaceCopy[locale];
   const personal = role === "all" ? null : pullRoleTasks(intel, role, spec, spells);
   const mechanics = personal?.mechanics ?? intel.mechanics;
@@ -44,6 +44,6 @@ export function PullActionPanel({ title, intel, locale, role, spec, spells }: Pr
       {!mechanics.length && !notes.length && <p className={styles.emptyActions}>{intel.checkedAt ? t.noActions : t.missing}</p>}
       {notes.length > 0 && <ul className={styles.eventNotes}>{notes.map(note => <li key={note}>{note}</li>)}</ul>}
     </section>
-    <MdtPullDetails title={title} intel={intel} locale={locale} selectedRole={role} selectedSpec={spec} selectedSpells={spells}><AtlasButton className={styles.briefingButton} variant="ghost">{t.details} ↗</AtlasButton></MdtPullDetails>
+    <MdtPullDetails ruby={ruby} title={title} intel={intel} locale={locale} selectedRole={role} selectedSpec={spec} selectedSpells={spells}><AtlasButton className={styles.briefingButton} variant="ghost">{t.details} ↗</AtlasButton></MdtPullDetails>
   </>;
 }

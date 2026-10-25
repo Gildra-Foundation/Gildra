@@ -1,0 +1,27 @@
+/* atlas:strict — Ruby Life Pools palette, scoped to this dungeon and its portals. */
+.rubyTheme.rubyTheme {
+  --atlas-bg: var(--atlas-ruby-bg);
+  --atlas-surface: var(--atlas-ruby-surface);
+  --atlas-surface-raised: var(--atlas-ruby-raised);
+  --atlas-surface-sunken: var(--atlas-ruby-sunken);
+  --atlas-surface-selected: var(--atlas-ruby-selected);
+  --atlas-text: var(--atlas-ruby-text);
+  --atlas-text-strong: var(--atlas-ruby-strong);
+  --atlas-text-muted: var(--atlas-ruby-muted);
+  --atlas-text-subtle: var(--atlas-ruby-subtle);
+  --atlas-accent: var(--atlas-ruby-accent);
+  --atlas-accent-strong: var(--atlas-ruby-accent-strong);
+  --atlas-accent-soft: rgba(162, 44, 60, .24);
+  --atlas-accent-wash: rgba(150, 43, 58, .14);
+  --atlas-accent-wash-strong: rgba(150, 43, 58, .26);
+  --atlas-accent-glow: rgba(190, 52, 65, .22);
+  --atlas-line: rgba(192, 154, 105, .32);
+  --atlas-line-soft: rgba(192, 154, 105, .18);
+  --atlas-line-strong: rgba(214, 173, 117, .62);
+  --dungeon-glass: rgba(15, 13, 19, .88);
+  --dungeon-glass-raised: rgba(18, 15, 22, .94);
+  --ruby-selection: linear-gradient(150deg, var(--atlas-ruby-red-light), var(--atlas-ruby-red-deep));
+  --ruby-selection-edge: var(--atlas-ruby-selection-edge);
+  --ruby-gold: var(--atlas-ruby-gold);
+  --ruby-dark-glass: rgba(13, 12, 18, .94);
+}

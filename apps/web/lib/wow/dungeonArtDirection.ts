@@ -2,7 +2,7 @@ import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 
 /** Materials echo each existing dungeon environment; map artwork is never modified. */
 export const dungeonArtDirections: Record<DungeonSlug, { accent: string; glow: string; motif: string }> = {
-  "ruby-life-pools": { accent: "#da8159", glow: "rgba(232, 80, 35, .13)", motif: "ruby-obsidian" },
+  "ruby-life-pools": { accent: "#b95b60", glow: "rgba(176, 46, 63, .12)", motif: "ruby-sanctuary" },
   "altar-of-fangs": { accent: "#a6bf69", glow: "rgba(137, 186, 55, .12)", motif: "ritual-fangs" },
   "murder-row": { accent: "#ca8aa9", glow: "rgba(177, 83, 159, .12)", motif: "elven-filigree" },
   "den-of-nalorakk": { accent: "#83b7bf", glow: "rgba(74, 159, 179, .12)", motif: "bear-stone" },
@@ -15,5 +15,6 @@ export function dungeonMapFrame(slug: DungeonSlug, kind: "mdt" | "route", floor:
   return `/assets/wow/mythic/frames/${slug}-${kind}-${floor}.svg`;
 }
 export function dungeonBackdropSmall(slug: DungeonSlug) {
+  if (slug === "ruby-life-pools") return "/assets/wow/mythic/ruby-sanctuary/sanctuary-768.webp";
   return `/assets/wow/mythic/panoramas/${slug}-calm-640.webp`;
 }

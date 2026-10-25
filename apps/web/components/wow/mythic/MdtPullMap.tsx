@@ -1,5 +1,7 @@
 "use client";
 
+import { ResilientImage } from "@/components/media/ResilientImage";
+import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { dungeonMapFrame, dungeonArtDirections } from "@/lib/wow/dungeonArtDirection";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight, Skull } from "lucide-react";
@@ -17,6 +19,7 @@ import type { RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
 import type { DungeonCombatIntel } from "./dungeonCombatIntel.types";
 import { buildMdtPullIntel } from "./mdtPullIntel";
 import { MdtPullDetails } from "./MdtPullDetails";
+import { DungeonSourceReview } from "./DungeonSourceReview";
 import { PullActionPanel } from "./PullActionPanel";
 import { pullMapModel, pullPosition } from "./pullMapModel";
 import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
@@ -30,6 +33,9 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
   const [profile, setProfile] = usePlayerProfile();
   const [selected, setSelected] = useState(0);
   const root = useRef<HTMLElement>(null), builds = useRef<HTMLDetailsElement>(null);
+  const ruby = slug === "ruby-life-pools";
+  const specTheme = talentSpecThemes.find(spec => spec.specId === profile.specId && spec.classId === profile.classId);
+  const classTheme = talentSpecThemes.find(spec => spec.classId === profile.classId);
   const selectedSpec = playerSpecs.find(spec => spec.id === profile.specId && spec.classId === profile.classId);
   const activeRole = selectedSpec?.role ?? selectedRole;
   const talents = useMemo(() => talentsForProfile({ classId: profile.classId, specId: profile.specId, talentString: profile.talentString }), [profile.classId, profile.specId, profile.talentString]);
@@ -64,13 +70,13 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
       if (choice && strip) strip.scrollTo({ left: strip.scrollLeft + choice.getBoundingClientRect().left - strip.getBoundingClientRect().left - strip.clientWidth / 2 + choice.clientWidth / 2, behavior: "instant" });
     });
   }
-  return <section ref={root} className={styles.panel} data-testid="mdt-map" aria-label={copy.mapLabel}>
+  return <section ref={root} className={styles.panel} data-dungeon-map={slug} data-testid="mdt-map" aria-label={copy.mapLabel}>
     <header className={styles.header}><h3>{authored ? t.route : t.groups}</h3><a className={styles.routeLink} href={data.route.url || routeUrl} target="_blank" rel="noreferrer">{copy.authoredRoute}</a></header>
     <div className={styles.playerBar}>
       <div className={styles.rolePicker} data-testid="pull-role-picker"><AtlasSegmented aria-label={roles.label} size="lg" fullWidth value={activeRole} onValueChange={value => { setProfile({ ...profile, specId: null }); setSelectedRole(value); }} options={(["all", "tank", "healer", "dps"] as const).map(value => ({ value, label: roles[value] }))} /></div>
       <div className={styles.profileFields} data-testid="pull-player-picker">
-        <label><span>{playerCopy.classLabel}</span><AtlasValyroSelect native size="lg" placeholder={playerCopy.noClass} aria-label={playerCopy.classLabel} value={profile.classId?.toString() ?? ""} onValueChange={value => setProfile({ classId: Number(value) || null, specId: null })} options={[{ value: "", label: playerCopy.noClass }, ...playerClasses.map(entry => ({ value: String(entry.id), label: entry.name[locale] }))]} /></label>
-        <label><span>{playerCopy.specLabel}</span><AtlasValyroSelect native size="lg" placeholder={profile.classId ? playerCopy.noSpec : playerCopy.selectClass} aria-label={playerCopy.specLabel} disabled={!profile.classId} value={profile.specId?.toString() ?? ""} onValueChange={value => { const spec = playerSpecs.find(entry => entry.id === Number(value) && entry.classId === profile.classId); setProfile({ classId: profile.classId, specId: spec?.id ?? null }); if (spec) setSelectedRole(spec.role); }} options={[{ value: "", label: profile.classId ? playerCopy.noSpec : playerCopy.selectClass }, ...playerSpecs.filter(entry => entry.classId === profile.classId).map(entry => ({ value: String(entry.id), label: entry.name[locale] }))]} /></label>
+        <label><span>{playerCopy.classLabel}</span>{ruby && classTheme && <ResilientImage className={styles.pickerIcon} src={classTheme.classIconUrl} width={30} height={30} alt="" />}<AtlasValyroSelect native size="lg" placeholder={playerCopy.noClass} aria-label={playerCopy.classLabel} value={profile.classId?.toString() ?? ""} onValueChange={value => setProfile({ classId: Number(value) || null, specId: null })} options={[{ value: "", label: playerCopy.noClass }, ...playerClasses.map(entry => ({ value: String(entry.id), label: entry.name[locale] }))]} /></label>
+        <label><span>{playerCopy.specLabel}</span>{ruby && specTheme && <ResilientImage className={styles.pickerIcon} src={specTheme.iconUrl} width={30} height={30} alt="" />}<AtlasValyroSelect native size="lg" placeholder={profile.classId ? playerCopy.noSpec : playerCopy.selectClass} aria-label={playerCopy.specLabel} disabled={!profile.classId} value={profile.specId?.toString() ?? ""} onValueChange={value => { const spec = playerSpecs.find(entry => entry.id === Number(value) && entry.classId === profile.classId); setProfile({ classId: profile.classId, specId: spec?.id ?? null }); if (spec) setSelectedRole(spec.role); }} options={[{ value: "", label: profile.classId ? playerCopy.noSpec : playerCopy.selectClass }, ...playerSpecs.filter(entry => entry.classId === profile.classId).map(entry => ({ value: String(entry.id), label: entry.name[locale] }))]} /></label>
       </div>
       <details ref={builds} className={styles.buildDisclosure}><summary>{t.build}<span>{talents.selection ? t.imported : t.options}</span></summary><TalentImportPanel locale={locale} profile={profile} result={talents.result} onProfileChange={setProfile} onRoleChange={setSelectedRole} /></details>
     </div>
@@ -84,7 +90,7 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
       <div className={styles.workspace}>
         <div className={styles.maps}>{floors.map(floor => <figure className={styles.floor} key={floor} data-map-frame={`${slug}-mdt-${floor}`} data-frame-motif={dungeonArtDirections[slug].motif}>
           {floors.length > 1 && <figcaption>{copy.floor} {floor}</figcaption>}
-          <div className={styles.mapFrame} style={{ "--map-frame": `url("${dungeonMapFrame(slug, "mdt", floor)}")` } as CSSProperties}><div className={styles.viewport} data-map-viewport tabIndex={0} role="region" aria-label={`${copy.mapLabel} · ${copy.floor} ${floor}`}>
+          <div className={styles.mapFrame} style={{ "--map-frame": `url("${dungeonMapFrame(slug, "mdt", floor)}")` } as CSSProperties}>{ruby && <ResilientImage className={styles.frameArtwork} src="/assets/wow/mythic/ruby-sanctuary/map-frame.webp" width={1536} height={1024} alt="" aria-hidden="true" />}<div className={styles.viewport} data-map-viewport tabIndex={0} role="region" aria-label={`${copy.mapLabel} · ${copy.floor} ${floor}`}>
             <div className={styles.map}>
               {/* Keep original MDT pixels and marker coordinates in the same 3:2 plane. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -92,7 +98,7 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
               {pulls.map((group, index) => {
                 const position = pullPosition(group, floor);
                 if (!position) return null;
-                return <MdtPullDetails key={group.map(node => node.id).join(",")} onSelect={() => selectPull(index)} title={`${label} ${index + 1} · ${copy.enemyCount(group.length)}`} intel={pullIntel[index]} locale={locale} selectedRole={activeRole} selectedSpec={selectedSpec} selectedSpells={talents.selection}>
+                return <MdtPullDetails ruby={ruby} key={group.map(node => node.id).join(",")} onSelect={() => selectPull(index)} title={`${label} ${index + 1} · ${copy.enemyCount(group.length)}`} intel={pullIntel[index]} locale={locale} selectedRole={activeRole} selectedSpec={selectedSpec} selectedSpells={talents.selection}>
                   <button type="button" className={styles.marker} data-testid="mdt-pull-marker" data-pull-index={index} data-boss={position.boss || undefined} aria-pressed={active === index} aria-controls="pull-selected-panel" style={{ left: `${position.x}%`, top: `${position.y}%` }} aria-label={`${label} ${index + 1}: ${copy.enemyCount(position.count)}${position.boss ? ` · ${copy.boss}` : ""}`}>
                     <strong aria-hidden="true">{index + 1}</strong><span className={styles.markerCount} aria-hidden="true">{position.boss ? <Skull size={13} /> : `×${position.count}`}</span>
                   </button>
@@ -106,10 +112,10 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
             <div className={styles.selectedIdentity}><b className={styles.selectedNumber} aria-hidden="true">{active + 1}</b><div><h4 aria-live="polite" aria-atomic="true">{title}</h4><span>{copy.enemyCount(members.length)} · {t.forces} {forcesPercent(members.reduce((sum, node) => sum + node.forces, 0))}</span></div></div>
             <div className={styles.pullArrows}><AtlasButton size="sm" variant="ghost" disabled={active === 0} aria-label={`${t.previous} ${label.toLocaleLowerCase(locale)}`} onClick={() => selectPull(active - 1, true)}><ChevronLeft size={20} aria-hidden="true" /></AtlasButton><AtlasButton size="sm" variant="ghost" disabled={active === pulls.length - 1} aria-label={`${t.next} ${label.toLocaleLowerCase(locale)}`} onClick={() => selectPull(active + 1, true)}><ChevronRight size={20} aria-hidden="true" /></AtlasButton></div>
           </header>
-          <div className={styles.selectedBody} key={active}><PullActionPanel title={title} intel={pullIntel[active]} locale={locale} role={activeRole} spec={selectedSpec} spells={talents.selection} /></div>
+          <div className={styles.selectedBody} key={active}><PullActionPanel ruby={ruby} title={title} intel={pullIntel[active]} locale={locale} role={activeRole} spec={selectedSpec} spells={talents.selection} /></div>
         </aside>
       </div>
     </>}
-    <details className={styles.details}><summary>{copy.details}</summary><p>{authored ? copy.matched(data.route.author, data.route.name) : copy.incompatible}</p><p>{copy.notice}</p><p>{copy.forcesNotice}</p>{data.route.notes.length > 0 && <><h4>{copy.authorNotes}</h4><ul>{data.route.notes.map(note => <li key={note.en}>{note[locale]}</li>)}</ul></>}<p className={styles.source}><a href={data.source} target="_blank" rel="noreferrer">{copy.source}</a> · <time dateTime={data.checkedAt}>{data.checkedAt}</time></p></details>
+    <details className={styles.details}><summary>{ruby ? t.sourcesNotes : copy.details}</summary><p>{authored ? copy.matched(data.route.author, data.route.name) : copy.incompatible}</p><p>{copy.notice}</p><p>{copy.forcesNotice}</p>{data.route.notes.length > 0 && <><h4>{copy.authorNotes}</h4><ul>{data.route.notes.map(note => <li key={note.en}>{note[locale]}</li>)}</ul></>}{ruby && <DungeonSourceReview review={combatIntel.review} locale={locale} />}<p className={styles.source}><a href={data.source} target="_blank" rel="noreferrer">{copy.source}</a> · <time dateTime={data.checkedAt}>{data.checkedAt}</time></p></details>
   </section>;
 }
