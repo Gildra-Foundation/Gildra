@@ -60,7 +60,7 @@ export function PlayerProfilePicker({ locale, themeClassName, profile, onProfile
       <div className={styles.field}>
         <label htmlFor={`${id}-spec`}>{copy.specLabel}</label>
         <AtlasValyroSelect id={`${id}-spec`} className={styles.trigger} size="lg" aria-label={copy.specLabel}
-          placeholder={copy.selectClass} disabled={!profile.classId}
+          placeholder={profile.classId ? copy.noSpec : copy.selectClass} disabled={!profile.classId}
           value={profile.specId?.toString() ?? ""} options={profile.classId ? specOptions : []}
           onValueChange={value => {
             const spec = playerSpecs.find(entry => entry.id === Number(value) && entry.classId === profile.classId);
