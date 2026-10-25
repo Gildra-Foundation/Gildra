@@ -44,12 +44,52 @@ export function RaidHubMotion() {
     const decodedScenes = new WeakSet<HTMLElement>();
     const revealedScenes = new WeakSet<HTMLElement>();
     const imageCleanups: (() => void)[] = [];
+    const ornamentPieces = Array.from(root.querySelectorAll<HTMLElement>("[data-raid-ornament-piece]"));
+    const visibleOrnaments = new Set<HTMLElement>();
     let disposed = false;
+
+    // A cutout starts growing after its own image decodes, so slow connections
+    // get the same arrival as a cached page. CSS keeps no-JS/reduced views static.
+    for (const piece of ornamentPieces) {
+      const image = piece.querySelector<HTMLImageElement>("img");
+      if (!image) continue;
+      const growth = piece.querySelector<HTMLElement>("[data-growth]");
+      const grown = (event: AnimationEvent) => {
+        if (event.target === growth) piece.dataset.raidOrnamentGrown = "";
+      };
+      growth?.addEventListener("animationend", grown);
+      imageCleanups.push(() => growth?.removeEventListener("animationend", grown));
+      const ready = () => {
+        if (disposed || image.naturalWidth === 0) return;
+        const decoded = typeof image.decode === "function" ? image.decode() : Promise.resolve();
+        void decoded.catch(() => {}).then(() => {
+          if (!disposed) piece.dataset.raidOrnamentReady = "";
+        });
+      };
+      image.addEventListener("load", ready, { once: true });
+      imageCleanups.push(() => image.removeEventListener("load", ready));
+      if (image.complete) ready();
+    }
 
     const syncAtmosphere = () => {
       if (disposed) return;
       for (const card of cards) card.toggleAttribute("data-raid-card-active", !document.hidden && !reduced(card) && visibleCards.has(card));
+      for (const piece of ornamentPieces) piece.toggleAttribute("data-raid-ornament-active", !document.hidden && !reduced(piece) && visibleOrnaments.has(piece));
     };
+    // Footer details arrive when the detail itself enters the viewport, rather
+    // than growing unseen while the painting at the top of its raid is visible.
+    const ornamentObserver = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!(entry.target instanceof HTMLElement)) continue;
+        if (entry.isIntersecting) {
+          visibleOrnaments.add(entry.target);
+          entry.target.dataset.raidOrnamentRevealed = "true";
+          if (reduced(entry.target)) entry.target.dataset.raidOrnamentGrown = "";
+        } else visibleOrnaments.delete(entry.target);
+      }
+      syncAtmosphere();
+    }, { threshold: .18, rootMargin: "0px 0px -12px 0px" });
+    if (!ornamentObserver) root.dataset.raidOrnamentsStatic = "";
     const atmosphereObserver = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (!(entry.target instanceof HTMLElement)) continue;
@@ -166,12 +206,16 @@ export function RaidHubMotion() {
         else arrive(target);
       }
       for (const card of cards) atmosphereObserver?.observe(card);
+      for (const piece of ornamentPieces) ornamentObserver?.observe(piece);
     });
 
     const stopScenes = () => { settleAll(); for (const card of visibleCards) revealedScenes.add(card); };
     const stopForPreference = () => {
       for (const element of running.keys()) if (reduced(element)) settle(element);
       for (const card of visibleCards) if (reduced(card)) revealedScenes.add(card);
+      for (const piece of ornamentPieces) {
+        if (reduced(piece) && piece.dataset.raidOrnamentRevealed) piece.dataset.raidOrnamentGrown = "";
+      }
       syncAtmosphere();
     };
     const stopForVisibility = () => { if (document.hidden) stopScenes(); syncAtmosphere(); };
@@ -184,6 +228,10 @@ export function RaidHubMotion() {
         revealedScenes.add(card);
         const scene = scenes.get(card);
         if (scene) settle(scene);
+        for (const piece of card.querySelectorAll<HTMLElement>("[data-raid-ornament-piece]")) {
+          piece.dataset.raidOrnamentSettled = "";
+          piece.dataset.raidOrnamentGrown = "";
+        }
       }
     };
     const unsubscribe = subscribeSiteMotion(stopForPreference);
@@ -203,7 +251,16 @@ export function RaidHubMotion() {
       disposed = true;
       observer?.disconnect();
       atmosphereObserver?.disconnect();
+      ornamentObserver?.disconnect();
       imageCleanups.forEach((cleanup) => cleanup());
+      ornamentPieces.forEach((piece) => {
+        delete piece.dataset.raidOrnamentReady;
+        delete piece.dataset.raidOrnamentRevealed;
+        delete piece.dataset.raidOrnamentActive;
+        delete piece.dataset.raidOrnamentGrown;
+        delete piece.dataset.raidOrnamentSettled;
+      });
+      delete root.dataset.raidOrnamentsStatic;
       attributes?.disconnect();
       unsubscribe();
       preferences.forEach((query) => query.removeEventListener("change", stopForPreference));

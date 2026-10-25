@@ -1,6 +1,6 @@
-/* atlas:strict — whole-card raid themes on genuine Valyro Card and Button. */
+/* atlas:strict — framed raid paintings and themed ornaments, without rectangular card shells. */
 .current,
-.archive { display: grid; min-width: 0; gap: var(--atlas-space-5); }
+.archive { display: grid; min-width: 0; gap: var(--atlas-space-7) var(--atlas-space-6); }
 .archive { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 .card:global(.ui-card[data-variant="outline"]) {
@@ -13,18 +13,19 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: var(--atlas-space-2);
+  align-self: start;
+  padding: 0;
   overflow: visible;
-  border: 1px solid var(--raid-card-line);
-  border-radius: 18px;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--raid-card-accent) 9%, transparent), transparent 54%), color-mix(in srgb, var(--raid-card-base) 94%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--raid-card-accent) 22%, transparent), var(--atlas-glass-depth);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   color: var(--atlas-text);
   font-family: var(--atlas-font-ui);
-  transition: border-color var(--atlas-duration) var(--ui-spring-smooth), box-shadow var(--atlas-duration) var(--ui-spring-smooth);
+
 }
 
-.atmosphere { position: absolute; z-index: -1; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.atmosphere { position: absolute; z-index: -1; inset: 16% 0 4%; overflow: hidden; border-radius: 50%; pointer-events: none; mask-image: radial-gradient(ellipse, #000 12%, transparent 72%); }
 .atmosphere::before,
 .atmosphere::after {
   position: absolute;
@@ -49,18 +50,21 @@
 @keyframes raid-breath { from { opacity: .22; } to { opacity: .46; } }
 @keyframes raid-drift { from { opacity: .25; transform: translate3d(-3px, 5px, 0); } to { opacity: .43; transform: translate3d(5px, -5px, 0); } }
 
-.content { display: flex; flex: 1; flex-direction: column; min-width: 0; }
-.card.featured:global(.ui-card[data-variant="outline"]) { padding: var(--atlas-space-3); }
+.content { position: relative; display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.card.featured:global(.ui-card[data-variant="outline"]) { padding: 0; }
 .featured .content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: center; gap: var(--atlas-space-3); }
 .artLink { display: block; min-width: 0; border-radius: 12px; }
 .frameCanvas { position: relative; isolation: isolate; width: 100%; aspect-ratio: 3 / 2; }
 .artWindow { position: absolute; inset: var(--raid-frame-top) var(--raid-frame-right) var(--raid-frame-bottom) var(--raid-frame-left); overflow: hidden; clip-path: var(--raid-frame-clip, inset(0 round var(--raid-frame-radius))); border-radius: 0; background: var(--raid-card-base); }
 .sceneLayer { position: absolute; inset: 0; transform-origin: center; }
+/* Static source-padding crop stays in reduced-motion mode; it is not an effect. */
+.sceneCrop { position: absolute; inset: 0; transform-origin: center bottom; transform: translateY(var(--raid-scene-offset)) scale(var(--raid-scene-zoom)); }
 .sceneImage { object-fit: cover; transition: transform var(--atlas-duration-art) var(--ui-spring-smooth); }
 .artShade { position: absolute; inset: 0; pointer-events: none; background: var(--atlas-art-shade); opacity: .12; }
-.frameImage { z-index: 1; pointer-events: none; object-fit: contain; user-select: none; filter: blur(.45px); }
-.body { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4); }
-.featured .body { padding: var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-2); }
+.frameImage { z-index: 1; pointer-events: none; object-fit: contain; user-select: none;  }
+.body { position: relative; isolation: isolate; display: flex; flex: 1; flex-direction: column; min-width: 0; padding: var(--atlas-space-3) var(--atlas-space-5) 128px; }
+.body::before { position: absolute; z-index: -1; inset: -8px 0 0; content: ""; pointer-events: none; background: color-mix(in srgb, var(--atlas-bg) 86%, transparent); mask-image: linear-gradient(180deg, transparent, #000 24px, #000 calc(100% - 48px), transparent), linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent); mask-composite: intersect; }
+.featured .body { padding: var(--atlas-space-4) var(--atlas-space-5) 128px; }
 .location { display: flex; align-items: center; gap: var(--atlas-space-2); margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
 .location svg { flex: none; width: 14px; height: 14px; color: var(--raid-card-light); }
 .title { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); text-wrap: balance; }
@@ -76,7 +80,7 @@
 .bosses a { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; padding: var(--atlas-space-2) var(--atlas-space-3); border: 1px solid color-mix(in srgb, var(--raid-card-accent) 16%, transparent); border-radius: 9px; background: color-mix(in srgb, var(--raid-card-row) 84%, transparent); color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); text-decoration: none; transition: background-color var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast) var(--atlas-ease); }
 .bosses a span { min-width: 0; overflow-wrap: anywhere; }
 .portrait { flex: none; width: 32px; height: 32px; border: 1px solid var(--raid-card-line); border-radius: 7px; object-fit: cover; }
-.footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-3); margin-top: auto; padding-top: var(--atlas-space-4); }
+.footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-3); margin-top: var(--atlas-space-3); padding-top: var(--atlas-space-3); }
 .card .openRaid:global(.ui-button[data-variant="secondary"]) { --ui-button-secondary-bg: color-mix(in srgb, var(--raid-card-accent) 17%, var(--raid-card-base)); --ui-button-secondary-bg-hover: color-mix(in srgb, var(--raid-card-accent) 26%, var(--raid-card-base)); --ui-button-secondary-bg-active: color-mix(in srgb, var(--raid-card-accent) 32%, var(--raid-card-base)); --ui-button-secondary-fg: var(--raid-card-light); --ui-button-secondary-field: var(--raid-card-line); --ui-focus-ring: 0 0 0 3px var(--atlas-bg), 0 0 0 5px var(--raid-card-light); flex: 1 1 160px; justify-content: space-between; min-height: 44px; border-radius: 10px; padding: var(--atlas-space-3) var(--atlas-space-4); }
 .source { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-decoration: none; }
 .source svg { flex: none; width: 16px; height: 16px; }
@@ -89,16 +93,16 @@
 @media (hover: hover) and (pointer: fine) {
   .card:hover .atmosphere::before,
   .card:hover .atmosphere::after { animation-play-state: paused; }
-  .card:global(.ui-card):hover { border-color: color-mix(in srgb, var(--raid-card-accent) 68%, transparent); box-shadow: inset 0 1px 0 var(--raid-card-line), var(--atlas-glass-depth), 0 0 24px color-mix(in srgb, var(--raid-card-accent) 9%, transparent); }
+
   .card:hover .sceneImage { transform: scale(1.025); }
   .title a:hover,
   .source:hover { color: var(--raid-card-light); text-decoration: underline; text-underline-offset: 3px; }
   .bosses a:hover { border-color: var(--raid-card-line); background: color-mix(in srgb, var(--raid-card-accent) 16%, var(--raid-card-row)); }
 }
 @media (max-width: 1100px) { .bosses { grid-template-columns: minmax(0, 1fr); } .featured .bosses { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 850px) { .featured .content { grid-template-columns: minmax(0, 1fr); } .card.featured:global(.ui-card[data-variant="outline"]) { padding: var(--atlas-space-2); } .featured .body { padding: var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4); } }
+@media (max-width: 850px) { .featured .content { grid-template-columns: minmax(0, 1fr); } .card.featured:global(.ui-card[data-variant="outline"]) { padding: 0; } .featured .body { padding: var(--atlas-space-3) var(--atlas-space-5) 128px; } }
 @media (max-width: 700px) { .archive { grid-template-columns: minmax(0, 1fr); } .body,
-  .featured .body { padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-3); } .featured .title { font-size: var(--atlas-text-h3); } }
+  .featured .body { padding: var(--atlas-space-3) var(--atlas-space-4) 96px; } .featured .title { font-size: var(--atlas-text-h3); } }
 @media (max-width: 520px) { .featured .bosses { grid-template-columns: minmax(0, 1fr); } }
 
 :global([data-motion="reduced"]) .atmosphere,
@@ -119,12 +123,12 @@
   .sceneImage { transform: none !important; }
   .openRaid:global(.ui-button):active { transform: none !important; }
 }
-@media (prefers-reduced-transparency: reduce) { .card:global(.ui-card[data-variant="outline"]) { background: var(--raid-card-base); } .bosses a { background: var(--raid-card-row); } }
-:global([data-transparency="reduced"]) .card:global(.ui-card[data-variant="outline"]) { background: var(--raid-card-base); }
+@media (prefers-reduced-transparency: reduce) { .body::before { background: var(--atlas-bg); mask-image: none; } .bosses a { background: var(--raid-card-row); } }
+:global([data-transparency="reduced"]) .body::before { background: var(--atlas-bg); mask-image: none; }
 :global([data-transparency="reduced"]) .bosses a { background: var(--raid-card-row); }
 @media (forced-colors: active) {
   .card:global(.ui-card[data-variant="outline"]) { border: 1px solid CanvasText; background: Canvas; color: CanvasText; box-shadow: none; }
-  .frameImage, .artShade { display: none; }
+  .frameImage, .artShade, .body::before { display: none; }
   .artWindow { clip-path: none; border: 1px solid CanvasText; }
   .encounters, .bosses a { border-color: CanvasText; }
   .bosses a { background: Canvas; }

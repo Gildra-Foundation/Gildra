@@ -1,0 +1,164 @@
+/* atlas:strict — actual painted cutouts grow once in the reserved footer garden. */
+
+.ornaments {
+  --raid-ornament-width: 132px;
+  --raid-ornament-height: 112px;
+  --raid-ornament-bottom: 8px;
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.piece {
+  position: absolute;
+  bottom: var(--raid-ornament-bottom);
+  width: var(--raid-ornament-width);
+  height: var(--raid-ornament-height);
+}
+
+.left { left: 12px; }
+.right { right: 12px; }
+.buds {
+  left: min(25%, 112px);
+  width: calc(var(--raid-ornament-width) * .64);
+  height: calc(var(--raid-ornament-height) * .7);
+  bottom: calc(var(--raid-ornament-bottom) - 2px);
+}
+
+.growth,
+.asset {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 100%;
+}
+
+.asset {
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+/* Before scripting or without it, every piece is already fully grown. Only a
+ * scripting-capable browser with normal preferences prepares the entrance. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) and (prefers-reduced-transparency: no-preference) {
+  .growth {
+    opacity: 0;
+    animation-duration: var(--growth-duration);
+    animation-delay: var(--growth-delay);
+    animation-timing-function: var(--atlas-ease);
+    animation-iteration-count: 1;
+    animation-fill-mode: both;
+    animation-play-state: paused;
+  }
+
+  .piece[data-raid-ornament-ready][data-raid-ornament-revealed="true"].spore .growth { animation-name: sporeGrow; }
+  .piece[data-raid-ornament-ready][data-raid-ornament-revealed="true"].jade .growth { animation-name: vineCurl; }
+  .piece[data-raid-ornament-ready][data-raid-ornament-revealed="true"].void .growth { animation-name: crystalReveal; }
+  .piece[data-raid-ornament-ready][data-raid-ornament-revealed="true"].dream .growth { animation-name: leafUnfold; }
+  .piece[data-raid-ornament-ready][data-raid-ornament-revealed="true"].sun .growth { animation-name: featherReveal; }
+
+  .asset {
+    animation-duration: 7s;
+    animation-delay: calc(var(--growth-duration) + var(--growth-delay));
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+    animation-play-state: paused;
+  }
+  .spore .asset { animation-name: capBreathe; }
+  .jade .asset { animation-name: vineSway; animation-duration: 8s; }
+  .void .asset { animation-name: crystalGlint; animation-duration: 6s; }
+  .dream .asset { animation-name: leafSway; animation-duration: 8s; }
+  .sun .asset { animation-name: featherDrift; animation-duration: 9s; }
+
+  .piece[data-raid-ornament-active] .growth,
+  .piece[data-raid-ornament-active] .asset { animation-play-state: running; }
+
+  :global([data-hub-raid-card]:focus-within) .asset { animation-play-state: paused; }
+}
+
+@media (scripting: enabled) and (hover: hover) and (pointer: fine) {
+  :global([data-hub-raid-card]:hover) .asset { animation-play-state: paused; }
+}
+
+@keyframes sporeGrow {
+  0% { opacity: 0; transform: translateY(14px) scale(.7, .04) rotate(-5deg); }
+  28% { opacity: 1; }
+  75% { transform: translateY(-2px) scale(1.03, 1.08) rotate(1deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes vineCurl {
+  0% { opacity: 0; transform: translateY(8px) scale(.55, .8) rotate(-28deg); }
+  34% { opacity: 1; }
+  78% { transform: rotate(3deg) scale(1.02); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes crystalReveal {
+  0% { opacity: 0; transform: translateY(12px) scale(.92); }
+  48% { opacity: .8; transform: translateY(0) scale(1.02); }
+  70% { opacity: 1; }
+  82% { opacity: .86; }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes leafUnfold {
+  0% { opacity: 0; transform: translateY(8px) scale(.08, .72) rotate(20deg); }
+  30% { opacity: 1; }
+  76% { transform: scale(1.04, 1.02) rotate(-3deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes featherReveal {
+  0% { opacity: 0; transform: translate(9px, 8px) rotate(26deg) scale(.86); }
+  55% { opacity: 1; transform: translateY(-3px) rotate(-4deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes capBreathe {
+  from { transform: none; }
+  to { transform: translateY(-1px) scale(1.012, 1.025); }
+}
+@keyframes vineSway {
+  from { transform: rotate(-1deg); }
+  to { transform: rotate(1.5deg); }
+}
+@keyframes crystalGlint {
+  0%, 30% { opacity: .88; transform: none; }
+  62%, 100% { opacity: 1; transform: translateY(-1px); }
+}
+@keyframes leafSway {
+  from { transform: rotate(-1.5deg); }
+  to { transform: rotate(1.5deg) translateY(-1px); }
+}
+@keyframes featherDrift {
+  from { transform: rotate(-1deg); }
+  to { transform: rotate(2deg) translateY(-2px); }
+}
+
+@media (max-width: 700px) {
+  .ornaments { --raid-ornament-width: 84px; --raid-ornament-height: 80px; }
+  .left { left: 0; }
+  .right { right: 0; }
+  .buds { left: 25%; }
+}
+
+/* These overrides also defeat the scripting preparation rule, so a preference
+ * change, no-IO fallback, or no-JS visit always leaves complete static cutouts. */
+.piece[data-raid-ornament-grown] .growth,
+.piece[data-raid-ornament-settled] .growth {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+:global([data-raid-ornaments-static]) :is(.growth, .asset),
+:global([data-motion="reduced"]) :is(.growth, .asset),
+:global([data-ui-motion="reduce"]) :is(.growth, .asset),
+:global([data-transparency="reduced"]) :is(.growth, .asset) {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (scripting: none), print {
+  .growth, .asset { animation: none !important; opacity: 1 !important; transform: none !important; }
+}
+@media (forced-colors: active) { .ornaments { display: none; } }

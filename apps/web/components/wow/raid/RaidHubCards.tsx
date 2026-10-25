@@ -12,6 +12,7 @@ import { raidReviewCopy } from "./raidReviewCopy";
 import { raidHubEntries, type RaidHubLocale } from "./raidHubData";
 import { raidHubFrameArtwork, raidHubFrameLayout } from "./raidHubFrames";
 import { raidCardThemes } from "./raidCardThemes";
+import { RaidHubOrnaments } from "./RaidHubOrnaments";
 import styles from "./raidHubCards.module.css";
 
 /** Valyro's composable Card retains real lists and independent boss links in every raid. */
@@ -31,7 +32,12 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
         padding="none"
         variant="outline"
         className={`${bridge.scope} ${styles.card} ${featured ? styles.featured : ""}`}
-        style={{ ...raidHubFrameLayout(raid.slug), "--raid-card-accent": theme.accent } as CSSProperties}
+        style={{ ...raidHubFrameLayout(raid.slug), "--raid-card-accent": theme.accent,
+          // The Quel'Danas source has a 64px transparent top and 2px bottom.
+          // Crop the real painted area independently of hover/entrance motion.
+          "--raid-scene-zoom": raid.slug === "march-on-queldanas" ? "1.10" : "1",
+          "--raid-scene-offset": raid.slug === "march-on-queldanas" ? ".35%" : "0%",
+        } as CSSProperties}
         data-hub-raid-card={raid.slug}
         data-raid-card-theme={theme.atmosphere}
         data-testid={raid.slug === "sporefall" ? "sporefall-identity-card" : undefined}
@@ -42,6 +48,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
             <div className={styles.frameCanvas}>
               <div className={styles.artWindow} data-hub-raid-art>
                 <div className={styles.sceneLayer} data-raid-card-scene>
+                  <div className={styles.sceneCrop} data-raid-scene-crop>
                   <Image
                     src={raid.artwork}
                     alt=""
@@ -51,6 +58,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
                     data-raid-card-image
                     {...(raid.sceneArt ? morphArtProps(href) : {})}
                   />
+                  </div>
                 </div>
                 <span className={styles.artShade} aria-hidden="true" />
               </div>
@@ -81,6 +89,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
             </footer>
           </div>
           {raid.sceneArt ? <AtlasMorphPreload art={raid.sceneArt} /> : null}
+          <RaidHubOrnaments slug={raid.slug} />
         </article>
       </Card>;
     })}
