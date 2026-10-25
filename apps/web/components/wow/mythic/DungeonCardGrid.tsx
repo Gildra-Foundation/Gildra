@@ -6,7 +6,7 @@ import { wowSourceName } from "@/lib/wow/sourceLocale";
 import { ArrowUpRight, Clock3, MapPin, Route, Skull } from "lucide-react";
 import { AtlasBadge, AtlasCard, AtlasGrid } from "@/components/atlas";
 import { Card } from "@gildra/atlas-ui/valyro-ui/data-display/Card";
-import { AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
+import { MythicHubLinkButton as AtlasLinkButton } from "./hub/MythicHubLinkButton";
 import bridge from "@gildra/atlas-ui/valyroAtlasBridge.module.css";
 import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { dungeonBackdropSmall, dungeonFrameArtwork } from "@/lib/wow/dungeonArtDirection";

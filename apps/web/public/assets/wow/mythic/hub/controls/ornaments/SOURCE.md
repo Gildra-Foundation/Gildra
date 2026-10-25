@@ -138,4 +138,3 @@ Scene/backdrop: actual transparent RGBA everywhere outside the one subject. No f
 Constraints: no text, no letters, no numbers, no UI, no characters or faces, no border. Make one clean production cutout.
 Avoid: grain, noise, microdetails, engraved veins, tiny particles, sharp white highlights, dramatic contrast, shiny photoreal rendering, repeating patterns, detached small decorations, collage, checkerboard painted into pixels.
 ```
-

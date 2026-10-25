@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUpRight, Clock3 } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
-import { AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
+import { MythicHubLinkButton as AtlasLinkButton } from "./hub/MythicHubLinkButton";
 import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { DungeonCardGrid } from "./DungeonCardGrid";
 import { MythicDataNotice } from "./MythicDataNotice";
