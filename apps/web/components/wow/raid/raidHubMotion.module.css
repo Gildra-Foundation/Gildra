@@ -1,0 +1,21 @@
+/* atlas:strict — progressive motion; server content always starts fully visible. */
+
+.motion {
+  --raid-hub-enter-duration: var(--atlas-duration-enter);
+  --raid-hub-enter-stagger: var(--atlas-stagger);
+}
+
+/* Cancel through JS and settle immediately through CSS as a preference changes. */
+:global(html[data-motion="reduced"]) .motion :global([data-raid-hub-motion-item]),
+:global([data-ui-motion="reduce"]) .motion :global([data-raid-hub-motion-item]),
+.motion:global([data-ui-motion="reduce"]) :global([data-raid-hub-motion-item]) {
+  opacity: 1 !important;
+  translate: none !important;
+}
+
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active), print {
+  .motion :global([data-raid-hub-motion-item]) {
+    opacity: 1 !important;
+    translate: none !important;
+  }
+}

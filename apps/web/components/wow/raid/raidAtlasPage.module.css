@@ -1,166 +1,24 @@
-/* atlas:strict — Raid journal hub, layout only; colours, fonts and sizes come from the atlas tokens. */
-
-.archiveGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-  gap: var(--atlas-space-3);
+/* atlas:strict — raid hub layout over its own quiet illustrated vault. */
+.page { --atlas-frame-tint: var(--atlas-positive-wash, var(--atlas-accent-glow)); }
+.hero { min-height: 490px; padding-bottom: var(--atlas-space-5); }
+.heroHeader { max-width: 58%; }
+.heroHeader h1 { max-width: 15ch; }
+.heroHeader p { max-width: 48ch; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+.actions :global(.ui-button) { min-height: 48px; border-radius: 12px; box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 4px 12px var(--atlas-bg); }
+.seasonFacts { max-width: 500px; margin-top: var(--atlas-space-5); }
+.seasonFacts :global(.ui-stats-card) { border: 0; padding-block: var(--atlas-space-2); background: transparent; box-shadow: none; }
+.current > section,
+.archive > section { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+.archive { margin-top: var(--atlas-space-6); }
+@media (max-width: 1023px) {
+  .hero { min-height: 470px; }
+  .heroHeader { max-width: 78%; }
 }
-
-.raid {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  min-width: 0;
-  border: 1px solid var(--atlas-line);
-  outline: 1px solid #020303;
-  background: var(--atlas-surface);
-  box-shadow: var(--atlas-shadow-card);
-}
-
-.raid:hover,
-.raid:focus-within { border-color: var(--atlas-accent); box-shadow: var(--atlas-shadow-lift); }
-
-.raidArt {
-  position: relative;
-  display: block;
-  aspect-ratio: 16 / 8.4;
-  overflow: hidden;
-  border-bottom: 1px solid var(--atlas-line);
-  background: var(--atlas-surface-sunken);
-}
-
-.raidArt > img {
-  object-fit: cover;
-  filter: saturate(.9) brightness(.88);
-  transition: transform var(--atlas-duration-art) var(--atlas-ease);
-}
-
-.raid:hover .raidArt > img { transform: scale(1.035); }
-
-.raidArtEmpty {
-  display: grid;
-  place-items: center;
-  color: var(--atlas-text-subtle);
-  background: radial-gradient(circle at 50% 45%, var(--atlas-accent-wash-strong), transparent 30%), linear-gradient(145deg, var(--atlas-surface-raised), var(--atlas-surface-sunken));
-}
-
-.raidArtEmpty > svg { width: 56px; height: 56px; opacity: .7; }
-
-.shade { position: absolute; inset: 0; background: var(--atlas-art-shade); }
-
-.raidBody {
-  display: flex;
-  flex-direction: column;
-  gap: var(--atlas-space-2);
-  min-width: 0;
-  padding: var(--atlas-space-4);
-}
-
-.raidBody h3 {
-  margin: 0;
-  font-family: var(--atlas-font-display);
-  font-size: clamp(1.25rem, 1.05rem + .55vw, 1.5rem);
-  font-weight: var(--atlas-weight-display);
-  line-height: 1.1;
-}
-
-.raidBody h3 a { position: relative; color: var(--atlas-text-strong); text-decoration: none; }
-/* 44 px hit area around the title line (the art above leads to the same raid). */
-.raidBody h3 a::after { content: ""; position: absolute; inset: -9px 0; }
-.raidBody h3 a:hover { color: var(--atlas-accent-strong); }
-
-.pending {
-  display: flex;
-  gap: 10px;
-  margin: 0;
-  padding: var(--atlas-space-3);
-  color: var(--atlas-text-muted);
-  border-left: 2px solid var(--atlas-caution);
-  background: var(--atlas-accent-wash);
-  font-size: var(--atlas-text-small);
-  line-height: 1.5;
-}
-
-.pending svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--atlas-caution); }
-.pending strong { color: var(--atlas-text-strong); }
-
-.encounters {
-  display: grid;
-  gap: 2px;
-  margin: var(--atlas-space-1) 0 0;
-  padding: var(--atlas-space-2) 0;
-  border-top: 1px solid var(--atlas-line-soft);
-  list-style: none;
-}
-
-.encounters li {
-  position: relative;
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  min-height: 34px;
-}
-
-.encounters img { border: 1px solid var(--atlas-line); object-fit: cover; }
-.encounters li > svg { width: 18px; height: 18px; margin-inline: 5px; color: var(--atlas-text-subtle); }
-
-.encounters a {
-  overflow: hidden;
-  color: var(--atlas-text);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-body);
-  text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.encounters a:hover { color: var(--atlas-accent-strong); text-decoration: underline; }
-/* The whole row (portrait included) is the boss link's target. */
-.encounters a::after { content: ""; position: absolute; inset: 0; }
-
-.raidFooter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--atlas-space-2);
-  margin-top: auto;
-  padding-top: var(--atlas-space-3);
-  border-top: 1px solid var(--atlas-line-soft);
-  color: var(--atlas-text-subtle);
-  font-size: var(--atlas-text-meta);
-}
-
-.raidFooter span { display: inline-flex; align-items: center; gap: 6px; }
-.raidFooter svg { width: 14px; height: 14px; color: var(--atlas-accent); }
-
-.raidFooter a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  /* A 44 px target that does not make the footer taller. */
-  min-width: 44px;
-  min-height: 44px;
-  margin-block: -14px;
-  color: var(--atlas-accent-strong);
-  font-weight: 650;
-  letter-spacing: .08em;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.raidFooter a:hover svg { transform: translateX(3px); }
-.raidFooter a svg { transition: transform var(--atlas-duration) var(--atlas-ease); color: inherit; }
-
-@media (prefers-reduced-motion: reduce) {
-  .raid,
-  .raidArt > img,
-  .raidFooter a svg { transition: none; }
-  .raid:hover .raidArt > img { transform: none; }
-}
-
-/* Phones: 44 px boss rows. */
-@media (max-width: 720px) {
-  .encounters li { min-height: 44px; }
+@media (max-width: 600px) {
+  .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
+  .heroHeader { max-width: 100%; }
+  .actions { gap: var(--atlas-space-2); }
+  .actions :global(.ui-button) { flex: 1 1 180px; }
+  .seasonFacts { margin-top: var(--atlas-space-4); }
 }

@@ -1,0 +1,122 @@
+/* atlas:strict — the raid vault fades into one page, with a sparse jade atmosphere. */
+
+.backdrop {
+  --raid-vault-light: color-mix(in srgb, var(--atlas-positive) 78%, var(--atlas-info) 22%);
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.continuation {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 64% 34% at 100% 23%, color-mix(in srgb, var(--raid-vault-light) 9%, transparent), transparent 76%),
+    radial-gradient(ellipse 54% 27% at 0% 68%, color-mix(in srgb, var(--atlas-accent) 5%, transparent), transparent 76%);
+}
+
+.scene {
+  position: absolute;
+  inset: 0 0 auto;
+  height: clamp(660px, 61vw, 1000px);
+  overflow: hidden;
+}
+
+.scene picture,
+.scene img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scene img {
+  object-fit: cover;
+  object-position: 68% top;
+}
+
+.scene::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 87%, transparent), color-mix(in srgb, var(--atlas-bg) 61%, transparent) 34%, transparent 72%),
+    linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 13%, transparent), transparent 34%, color-mix(in srgb, var(--atlas-bg) 38%, transparent) 64%, var(--atlas-bg) 100%);
+}
+
+.vaultLight {
+  position: absolute;
+  z-index: 2;
+  left: 73%;
+  top: 34%;
+  width: 10%;
+  height: 30%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, var(--raid-vault-light), transparent 70%);
+  opacity: .12;
+  animation: vaultBreath 9s ease-in-out infinite alternate;
+}
+
+.motes {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  overflow: hidden;
+}
+
+.motes i {
+  position: absolute;
+  left: var(--mote-x);
+  top: var(--mote-y);
+  width: var(--mote-size);
+  height: var(--mote-size);
+  border-radius: 50%;
+  background: var(--raid-vault-light);
+  box-shadow: 0 0 6px var(--raid-vault-light);
+  animation: moteDrift var(--mote-duration) var(--mote-delay) linear infinite;
+}
+
+.motes i:nth-child(4n) {
+  background: var(--atlas-accent-2);
+  box-shadow: 0 0 5px var(--atlas-accent-2);
+}
+
+.backdrop[data-paused] :is(.vaultLight, .motes i) { animation-play-state: paused; }
+
+@keyframes vaultBreath {
+  from { opacity: .07; transform: scale(.97); }
+  to { opacity: .17; transform: scale(1.04); }
+}
+
+@keyframes moteDrift {
+  0% { opacity: 0; transform: translate3d(0, 24px, 0); }
+  24%, 68% { opacity: .5; }
+  100% { opacity: 0; transform: translate3d(-22px, -104px, 0); }
+}
+
+@media (max-width: 1023px) and (min-width: 768px) {
+  .scene { height: 760px; }
+  .scene img { object-position: center top; }
+  .vaultLight { left: 55%; top: 32%; width: 20%; }
+}
+
+@media (max-width: 767px) {
+  .scene { height: 900px; }
+  .scene img { object-position: center top; }
+  .scene::after {
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 66%, transparent), color-mix(in srgb, var(--atlas-bg) 22%, transparent)),
+      linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 17%, transparent), transparent 34%, color-mix(in srgb, var(--atlas-bg) 48%, transparent) 64%, var(--atlas-bg) 100%);
+  }
+  .vaultLight { left: 28%; top: 33%; width: 37%; }
+  .motes i:nth-child(even) { display: none; }
+}
+
+:global(html[data-motion="reduced"]) :is(.vaultLight, .motes) { display: none; }
+:global(html[data-transparency="reduced"]) :is(.vaultLight, .motes, .continuation) { display: none; }
+@media (prefers-reduced-motion: reduce) { .vaultLight, .motes { display: none; } }
+@media (prefers-reduced-transparency: reduce) { .vaultLight, .motes, .continuation { display: none; } }
+@media (prefers-contrast: more) { .scene { opacity: .45; } }
+@media (forced-colors: active) { .backdrop { display: none; } }
