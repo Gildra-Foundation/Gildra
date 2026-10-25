@@ -175,8 +175,8 @@ export const MythicRouteSelectors = memo(function MythicRouteSelectors({ locale,
 
   return (
     <>
-      <WowSelector label={copy.dungeonLabel} value={dungeonSlug} options={options} onChange={changeDungeon} icon={<Map />} className={styles.dungeonSelector} busy={isNavigating} loadingLabel={copy.loading} keyboardHint={copy.keyboardHint} />
-      <WowSelector label={copy.difficultyLabel} value={keyLevel} options={keyOptions} onChange={onKeyLevelChange} icon={<Gem />} className={styles.keySelector} loadingLabel={copy.loading} keyboardHint={copy.keyboardHint} />
+      <WowSelector label={copy.dungeonLabel} value={dungeonSlug} options={options} onChange={changeDungeon} icon={<Map />} className={`${styles.dungeonSelector} ${dungeonSlug === "ruby-life-pools" ? styles.rubySelector : ""}`} busy={isNavigating} loadingLabel={copy.loading} keyboardHint={copy.keyboardHint} />
+      <WowSelector label={copy.difficultyLabel} value={keyLevel} options={keyOptions} onChange={onKeyLevelChange} icon={<Gem />} className={`${styles.keySelector} ${dungeonSlug === "ruby-life-pools" ? styles.rubySelector : ""}`} loadingLabel={copy.loading} keyboardHint={copy.keyboardHint} />
     </>
   );
 });

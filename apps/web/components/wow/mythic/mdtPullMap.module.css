@@ -155,6 +155,29 @@
 .panel[data-dungeon-map="ruby-life-pools"] .castIdentity > img { width: 40px; height: 40px; border: 1px solid var(--atlas-line); border-radius: 3px; }
 .panel[data-dungeon-map="ruby-life-pools"] .actionGroup p { font-size: var(--atlas-text-meta); }
 .panel[data-dungeon-map="ruby-life-pools"] .briefingButton { border-top: 1px solid var(--atlas-line); padding-top: var(--atlas-space-3); border-radius: 0; }
+.panel[data-dungeon-map="ruby-life-pools"] :is(.pullStrip button, .marker, .pullArrows button, .buildDisclosure > summary, .briefingButton) { transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration) var(--atlas-ease); }
+.panel[data-dungeon-map="ruby-life-pools"] :is(.pullStrip button, .pullArrows button, .buildDisclosure > summary, .briefingButton):is(:hover, :focus-visible) { border-color: var(--atlas-line-strong); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 0 16px var(--atlas-accent-wash); }
+.panel[data-dungeon-map="ruby-life-pools"] .marker[aria-pressed="true"]::after { content: ""; position: absolute; inset: -7px; border: 1px solid var(--ruby-selection-edge); border-radius: 50%; pointer-events: none; animation: rubyPullRing .48s var(--atlas-ease) both; }
+.panel[data-dungeon-map="ruby-life-pools"] .selectedBody { animation: rubyPullReveal .22s var(--atlas-ease) both; }
+@keyframes rubyPullRing { from { opacity: .75; transform: scale(.9); } to { opacity: 0; transform: scale(1.45); } }
+@keyframes rubyPullReveal { from { opacity: .65; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (hover: hover) and (pointer: fine) {
+  .panel[data-dungeon-map="ruby-life-pools"] .marker:hover { transform: translate(-50%, -50%) scale(1.06); box-shadow: 0 0 18px var(--atlas-accent-glow); }
+  .panel[data-dungeon-map="ruby-life-pools"] .pullStrip button:hover { transform: translateY(-2px); }
+  .panel[data-dungeon-map="ruby-life-pools"] .pullStrip button:active { transform: translateY(0) scale(.98); }
+}
+:global(html[data-motion="reduced"]) .panel[data-dungeon-map="ruby-life-pools"] .selectedBody,
+:global(html[data-motion="reduced"]) .panel[data-dungeon-map="ruby-life-pools"] .marker[aria-pressed="true"]::after { animation: none; }
+:global(html[data-motion="reduced"]) .panel[data-dungeon-map="ruby-life-pools"] :is(.pullStrip button, .marker, .pullArrows button, .buildDisclosure > summary, .briefingButton) { transition: none; }
+:global(html[data-motion="reduced"]) .panel[data-dungeon-map="ruby-life-pools"] .pullStrip button { transform: none; }
+:global(html[data-motion="reduced"]) .panel[data-dungeon-map="ruby-life-pools"] .marker { transform: translate(-50%, -50%); }
+@media (prefers-reduced-motion: reduce) {
+  .panel[data-dungeon-map="ruby-life-pools"] .selectedBody,
+  .panel[data-dungeon-map="ruby-life-pools"] .marker[aria-pressed="true"]::after { animation: none; }
+  .panel[data-dungeon-map="ruby-life-pools"] :is(.pullStrip button, .marker, .pullArrows button, .buildDisclosure > summary, .briefingButton) { transition: none; }
+  .panel[data-dungeon-map="ruby-life-pools"] .pullStrip button:is(:hover, :active) { transform: none; }
+  .panel[data-dungeon-map="ruby-life-pools"] .marker[aria-pressed] { transform: translate(-50%, -50%); }
+}
 @media (max-width: 1200px) { .panel[data-dungeon-map="ruby-life-pools"] .playerBar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .panel[data-dungeon-map="ruby-life-pools"] .buildDisclosure { grid-column: 1 / -1; } .panel[data-dungeon-map="ruby-life-pools"] .buildDisclosure > summary { width: fit-content; } }
 @media (max-width: 767px) {
   .panel[data-dungeon-map="ruby-life-pools"] { padding: var(--atlas-space-3); }

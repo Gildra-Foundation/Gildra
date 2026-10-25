@@ -1245,7 +1245,7 @@
 @media (forced-colors: active) { .backdrop { display: none; } .mapFrame { border: 2px solid CanvasText; border-image: none; } }
 
 /* Ruby Life Pools: approved sanctuary artwork, warm glass and ruby controls. */
-.page[data-dungeon="ruby-life-pools"] .backdropImage { height: 100%; min-height: 0; object-position: center top; filter: saturate(.85) contrast(.92); animation: none; transform: none; }
+.page[data-dungeon="ruby-life-pools"] .backdropImage { height: 100%; min-height: 0; object-position: center top; filter: blur(1.2px) saturate(.85) contrast(.92) brightness(1.04); animation: none; transform: scale(1.012); }
 .page[data-dungeon="ruby-life-pools"] .backdropScene::after { background: linear-gradient(90deg, rgba(9, 8, 14, .29), rgba(9, 8, 14, .06) 52%, rgba(9, 8, 14, .2)), linear-gradient(180deg, rgba(9, 8, 14, .03), rgba(9, 8, 14, .12) 34%, rgba(9, 8, 14, .2)); }
 .page[data-dungeon="ruby-life-pools"] .column { gap: var(--atlas-space-4); padding-top: var(--atlas-space-5); }
 .page[data-dungeon="ruby-life-pools"] .intro { min-height: 208px; padding-block: var(--atlas-space-4); }
@@ -1253,8 +1253,11 @@
 .page[data-dungeon="ruby-life-pools"] .eyebrow { color: var(--atlas-text); text-shadow: 0 1px 4px var(--atlas-bg); }
 .page[data-dungeon="ruby-life-pools"] .description { max-width: 66ch; font-size: var(--atlas-text-meta); color: var(--atlas-text); text-shadow: 0 1px 4px var(--atlas-bg); }
 .page[data-dungeon="ruby-life-pools"] .keyTag { background: var(--ruby-selection); border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
-.page[data-dungeon="ruby-life-pools"] .routeControls { width: min(470px, 34vw); border-radius: 16px; }
+.page[data-dungeon="ruby-life-pools"] .routeControls { position: relative; z-index: 5; width: min(470px, 34vw); border-radius: 16px; }
+.page[data-dungeon="ruby-life-pools"] .routeControls > * { min-width: 0; }
 .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]) { width: 100%; border-color: var(--ruby-selection-edge); background: var(--ruby-selection); color: var(--atlas-text-strong); border-radius: var(--atlas-radius); box-shadow: inset 0 1px 0 rgba(255, 236, 208, .15); }
+.page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]) { transition: transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease); }
+.page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]):is(:hover, :focus-visible) { border-color: var(--atlas-text-muted); box-shadow: inset 0 1px 0 var(--atlas-line-strong), 0 4px 24px var(--atlas-accent-glow); }
 .page[data-dungeon="ruby-life-pools"] .selectorRow { grid-template-columns: minmax(0, 1fr) 160px; }
 .page[data-dungeon="ruby-life-pools"] .panel { border-color: var(--ruby-gold); border-radius: 18px; }
 .page[data-dungeon="ruby-life-pools"] .legacyDraft,
@@ -1275,5 +1278,12 @@
   .page[data-dungeon="ruby-life-pools"] .backdropImage { object-position: center top; }
   .page[data-dungeon="ruby-life-pools"] .column { gap: var(--atlas-space-3); }
 }
-@media (max-width: 380px) { .page[data-dungeon="ruby-life-pools"] .selectorRow { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .page[data-dungeon="ruby-life-pools"] .selectorRow { grid-template-columns: minmax(0, 1fr); } }
+@media (hover: hover) and (pointer: fine) {
+  .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]):hover { transform: translateY(-1px); }
+  .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]):active { transform: translateY(0) scale(.99); }
+}
+:global(html[data-motion="reduced"]) .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]) { transform: none; transition: none; }
+@media (prefers-reduced-motion: reduce) { .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]):is(:hover, :focus-visible, :active) { transform: none; transition: none; } }
+@media (prefers-reduced-transparency: reduce) { .page[data-dungeon="ruby-life-pools"] .backdropImage { filter: none; } }
 @media (forced-colors: active) { .page[data-dungeon="ruby-life-pools"] .routeControls :global([data-testid="dungeon-talent-calculator"]) { background: ButtonFace; color: ButtonText; border-color: ButtonText; } }

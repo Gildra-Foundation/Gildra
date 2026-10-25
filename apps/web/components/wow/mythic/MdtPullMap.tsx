@@ -3,11 +3,12 @@
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { dungeonMapFrame, dungeonArtDirections } from "@/lib/wow/dungeonArtDirection";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight, Skull } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { AtlasValyroSelect } from "@gildra/atlas-ui/AtlasValyroSelect";
+import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { usePlayerProfile } from "./usePlayerProfile";
 import { playerClasses, playerSpecs, talentsForProfile } from "./playerTools";
 import { TalentImportPanel } from "./TalentImportPanel";
@@ -51,23 +52,23 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
     revealBuild(); window.addEventListener("hashchange", revealBuild);
     return () => window.removeEventListener("hashchange", revealBuild);
   }, []);
-  function revealMarker(index: number) {
+  const revealMarker = useCallback((index: number, animate = false) => {
     const marker = root.current?.querySelector<HTMLElement>(`[data-testid="mdt-pull-marker"][data-pull-index="${index}"]`);
     const viewport = marker?.closest<HTMLElement>("[data-map-viewport]");
-    if (marker && viewport) viewport.scrollTo({ left: marker.offsetLeft - viewport.clientWidth / 2, top: marker.offsetTop - viewport.clientHeight / 2, behavior: "instant" });
-  }
+    if (marker && viewport) viewport.scrollTo({ left: marker.offsetLeft - viewport.clientWidth / 2, top: marker.offsetTop - viewport.clientHeight / 2, behavior: animate && ruby && !lessMotion() ? "smooth" : "instant" });
+  }, [ruby]);
   useEffect(() => {
     // On a phone the initial camera must show the initially selected pull too.
     const frame = requestAnimationFrame(() => revealMarker(0));
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [revealMarker]);
   function selectPull(index: number, reveal = false) {
     setSelected(index);
     requestAnimationFrame(() => {
-      if (reveal) revealMarker(index);
+      if (reveal) revealMarker(index, true);
       const choice = root.current?.querySelector<HTMLElement>(`[data-pull-choice="${index}"]`);
       const strip = choice?.closest<HTMLElement>("[data-pull-strip]");
-      if (choice && strip) strip.scrollTo({ left: strip.scrollLeft + choice.getBoundingClientRect().left - strip.getBoundingClientRect().left - strip.clientWidth / 2 + choice.clientWidth / 2, behavior: "instant" });
+      if (choice && strip) strip.scrollTo({ left: strip.scrollLeft + choice.getBoundingClientRect().left - strip.getBoundingClientRect().left - strip.clientWidth / 2 + choice.clientWidth / 2, behavior: ruby && !lessMotion() ? "smooth" : "instant" });
     });
   }
   return <section ref={root} className={styles.panel} data-dungeon-map={slug} data-testid="mdt-map" aria-label={copy.mapLabel}>

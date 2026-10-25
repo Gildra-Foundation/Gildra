@@ -1,6 +1,8 @@
 "use client";
 
 import { RubySanctuaryFooter } from "./RubySanctuaryFooter";
+import { RubySanctuaryWeather } from "./RubySanctuaryWeather";
+import { rubySanctuaryCopy } from "./rubySanctuaryCopy";
 import { DungeonTalentCalculatorButton } from "./DungeonTalentCalculatorButton";
 
 import { routeText, sourceName, type WowNameTable } from "@/lib/wow/wowNameTable";
@@ -759,6 +761,7 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className={styles.backdropImage} src={dungeonBackdropSource(dungeon)} srcSet={dungeon.slug === "ruby-life-pools" ? `${dungeonBackdropSmall(dungeon.slug)} 768w, ${dungeonBackdropSource(dungeon)} 1448w` : `${dungeonBackdropSmall(dungeon.slug)} 640w, ${dungeonBackdropSource(dungeon)} 1024w`} sizes="100vw" alt="" width={dungeon.slug === "ruby-life-pools" ? 1448 : 1024} height={dungeon.slug === "ruby-life-pools" ? 1086 : 1536} fetchPriority="high" decoding="async" />
         </picture>
+        {dungeon.slug === "ruby-life-pools" && <RubySanctuaryWeather />}
       </div></div>
       <div className={styles.column}>
         <div className={styles.crumbsRow}>
@@ -768,7 +771,7 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
 
         <section className={styles.intro} aria-labelledby="route-title">
           <div className={styles.introIdentity}>
-            <p className={styles.eyebrow}>{copy.eyebrow(dungeon.location)}</p>
+            <p className={styles.eyebrow}>{dungeon.slug === "ruby-life-pools" ? rubySanctuaryCopy[locale].eyebrow : copy.eyebrow(dungeon.location)}</p>
             <div className={styles.titleRow}>
               <h1 id="route-title">{dungeonName}</h1>
               <span className={styles.keyTag} aria-label={`${copy.keyLevelLabel} +${keyLevel}`}>+{keyLevel}</span>
@@ -786,7 +789,7 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
 
         <div className={styles.panel}><MdtPullMap key={dungeon.slug} slug={dungeon.slug} locale={locale} routeUrl={dungeon.mdtRouteUrl} data={combatIntel.mdt} stops={dungeon.stops} combatIntel={combatIntel} /></div>
         {dungeon.slug !== "ruby-life-pools" && <DungeonSourceReview review={combatIntel.review} locale={locale} />}
-        <details className={styles.legacyDraft}>
+        {dungeon.slug !== "ruby-life-pools" && <details className={styles.legacyDraft}>
           <summary>{mythicVerificationCopy[locale].legacyEditor}</summary>
         <MythicDataNotice locale={locale} route />
             <div className={styles.buttonRow}>
@@ -835,7 +838,7 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
           onUndo={undoRoute}
           onRedo={redoRoute}
         />
-        </details>
+        </details>}
         {dungeon.slug === "ruby-life-pools" && <RubySanctuaryFooter locale={locale} />}
       </div>
 
