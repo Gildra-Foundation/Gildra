@@ -1,0 +1,134 @@
+{
+  "mode": "built-in image_gen",
+  "encoding": "Alpha bounds threshold10; proportional224px height,8px transparent gutter; WebPquality88/alpha100; no visual restyling",
+  "entries": {
+    "ruby-life-pools": {
+      "path": "/assets/wow/mythic/hub/controls/timers/ruby-life-pools.webp",
+      "width": 229,
+      "height": 240,
+      "bytes": 24198,
+      "sha256": "b57305a9befcd1e12d28cec822b71f894505d3d395aabe7dc5b0c5699c545e25",
+      "sourceSHA256": "fe8d310cf94b23b50364b1bc77c6154fd1be97353766784c01688e52b43e93e9",
+      "nativeWidth": 1182,
+      "nativeHeight": 1330,
+      "alphaBounds": [
+        14,
+        16,
+        1166,
+        1225
+      ]
+    },
+    "altar-of-fangs": {
+      "path": "/assets/wow/mythic/hub/controls/timers/altar-of-fangs.webp",
+      "width": 158,
+      "height": 240,
+      "bytes": 18074,
+      "sha256": "a7f21b474e0b77fd46106889dba46a006321466e35faef18874f8dda87f2d6af",
+      "sourceSHA256": "e7433b9b1baa4d54cdaa688f98f4ac4ca1009efeee06eee64dd61beffb3b455f",
+      "nativeWidth": 1176,
+      "nativeHeight": 1337,
+      "alphaBounds": [
+        203,
+        59,
+        971,
+        1273
+      ]
+    },
+    "murder-row": {
+      "path": "/assets/wow/mythic/hub/controls/timers/murder-row.webp",
+      "width": 139,
+      "height": 240,
+      "bytes": 17300,
+      "sha256": "9dca15ef28430e6d4395737c63a66e79a496b9a5cc87b6376b1f9c31cde0641a",
+      "sourceSHA256": "f2a5cfcde034bc3ee80d57c99d21f034f682f387e9b936de5c6b5d527cc263fc",
+      "nativeWidth": 1174,
+      "nativeHeight": 1340,
+      "alphaBounds": [
+        247,
+        24,
+        918,
+        1242
+      ]
+    },
+    "den-of-nalorakk": {
+      "path": "/assets/wow/mythic/hub/controls/timers/den-of-nalorakk.webp",
+      "width": 207,
+      "height": 240,
+      "bytes": 22372,
+      "sha256": "1b03117f8a0f3bb06c2e20b83c80334913b0409c42fc9e353acfd388ebb9d9d8",
+      "sourceSHA256": "d3acd3b4b29a7d3fd9cae971307bcb6c8fe17994b60667fea7522170e1b10584",
+      "nativeWidth": 1176,
+      "nativeHeight": 1337,
+      "alphaBounds": [
+        119,
+        92,
+        1057,
+        1195
+      ]
+    },
+    "the-blinding-vale": {
+      "path": "/assets/wow/mythic/hub/controls/timers/the-blinding-vale.webp",
+      "width": 140,
+      "height": 240,
+      "bytes": 17254,
+      "sha256": "7f22b23879df38627c185acd1d699f338b1f54704a51b4767f8ed457330640ac",
+      "sourceSHA256": "d34117cbc32f335448ef492cf394e98eb3c5ace6726b8467f7c27a22dd46af6c",
+      "nativeWidth": 1176,
+      "nativeHeight": 1337,
+      "alphaBounds": [
+        272,
+        44,
+        951,
+        1276
+      ]
+    },
+    "voidscar-arena": {
+      "path": "/assets/wow/mythic/hub/controls/timers/voidscar-arena.webp",
+      "width": 155,
+      "height": 240,
+      "bytes": 16408,
+      "sha256": "0eb545e5edfe366a6d7d28e78bd41e2dff58b2c09121b63e0b512e917f96e02c",
+      "sourceSHA256": "da38679e02680c611b93993ce6cea1bd0b2763ecbae3ef965b28d6093cba5a6b",
+      "nativeWidth": 1073,
+      "nativeHeight": 1466,
+      "alphaBounds": [
+        110,
+        33,
+        962,
+        1405
+      ]
+    },
+    "kings-rest": {
+      "path": "/assets/wow/mythic/hub/controls/timers/kings-rest.webp",
+      "width": 153,
+      "height": 240,
+      "bytes": 18486,
+      "sha256": "4fac58e55b4b7680b9363be0ec815b5ad981008c14b416c00dd5d022efc76992",
+      "sourceSHA256": "5452c99f32822cea0898d97c9208adc8e392f057b00083ee63280677b6959297",
+      "nativeWidth": 1177,
+      "nativeHeight": 1336,
+      "alphaBounds": [
+        209,
+        34,
+        968,
+        1280
+      ]
+    },
+    "temple-of-sethraliss": {
+      "path": "/assets/wow/mythic/hub/controls/timers/temple-of-sethraliss.webp",
+      "width": 151,
+      "height": 240,
+      "bytes": 18292,
+      "sha256": "ac8391e27f0175817e909dbd2213ec85f7228ece5c593de16b1d17409cd7e305",
+      "sourceSHA256": "ae701e60a79d8ea6fa6fdfef792c70f02d62f6ec999af53a744eb0bc356be1ca",
+      "nativeWidth": 1174,
+      "nativeHeight": 1339,
+      "alphaBounds": [
+        211,
+        34,
+        964,
+        1287
+      ]
+    }
+  }
+}
