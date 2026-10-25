@@ -46,3 +46,6 @@
   .rubyTheme.rubyTheme :global(.ui-button):is(:hover, :active, :focus-visible):not(:disabled),
   .rubyTheme.rubyTheme :global([data-testid="player-spell-advice"]) a:is(:hover, :focus-visible) { transform: none; transition: none; }
 }
+
+.rubyTheme.rubyTheme :global(.ui-button) { border-radius: var(--atlas-radius-control); }
+.rubyTheme.rubyTheme :global([data-testid="player-spell-advice"]) a { border-radius: 10px; }

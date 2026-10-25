@@ -213,15 +213,38 @@
   .panel[data-dungeon-map] .marker[aria-pressed="true"], .panel[data-dungeon-map] .pullStrip [aria-pressed="true"] { background: Highlight; color: HighlightText; }
 }
 
-/* Match the new frames' transparent aperture; the original map stays fully inside it. */
-.panel[data-dungeon-map]:not([data-dungeon-map="ruby-life-pools"]) .mapFrame { padding: 9.5% 5.2% 9.2%; }
+/* The viewport and painted aperture share one box on every screen size. */
+.panel[data-dungeon-map] .mapFrame { padding: 0; aspect-ratio: var(--frame-aspect); }
+.panel[data-dungeon-map] .frameArtwork { object-fit: fill; }
+.panel[data-dungeon-map] .viewport { position: absolute; inset: var(--frame-top) var(--frame-right) var(--frame-bottom) var(--frame-left); height: auto; max-height: none; border-radius: var(--frame-window-radius); }
 @media (max-width: 1100px) {
-  .panel[data-dungeon-map]:not([data-dungeon-map="ruby-life-pools"]) .workspace { grid-template-columns: minmax(0, 1fr); }
-  .panel[data-dungeon-map]:not([data-dungeon-map="ruby-life-pools"]) .selectedBody { max-height: none; }
+  .panel[data-dungeon-map] .workspace { grid-template-columns: minmax(0, 1fr); }
+  .panel[data-dungeon-map] .selectedBody { max-height: none; }
 }
 @media (max-width: 767px) {
-  .panel[data-dungeon-map]:not([data-dungeon-map="ruby-life-pools"]) .mapFrame { padding: 52px 18px 46px; }
+  .panel[data-dungeon-map] .mapFrame { height: calc(300px / var(--frame-window-height)); aspect-ratio: auto; }
 }
 @media (forced-colors: active) {
-  .panel[data-dungeon-map]:not([data-dungeon-map="ruby-life-pools"]) .mapFrame { padding: var(--atlas-space-2); }
+  .panel[data-dungeon-map] .mapFrame { height: auto; aspect-ratio: auto; border: 2px solid CanvasText; padding: var(--atlas-space-2); }
+  .panel[data-dungeon-map] .viewport { position: relative; inset: auto; border-radius: 0; }
 }
+
+/* Rounded command controls retain the existing Valyro selection and native fields. */
+.panel[data-dungeon-map] .rolePicker :global(.ui-segmented-control) { padding: 5px; border-radius: 16px; box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 5px 18px var(--atlas-bg); }
+.panel[data-dungeon-map] .rolePicker :global(.ui-segmented-control__thumb) { border-radius: 11px; }
+.panel[data-dungeon-map] .rolePicker :global(.ui-segmented-control__item) { border-radius: 11px; }
+.panel[data-dungeon-map] .pickerIcon { border-radius: 7px; }
+.panel[data-dungeon-map] .buildDisclosure > summary { border-radius: 12px; border-top-color: var(--atlas-line-strong); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 4px 12px var(--atlas-bg); }
+.panel[data-dungeon-map] .buildDisclosure[open] > summary { border-color: var(--ruby-selection-edge); background: var(--atlas-surface-selected); }
+.panel[data-dungeon-map] .pullStrip button { border-radius: 12px; }
+.selectionHighlight, .hoverHighlight { border-radius: 12px; }
+@media (prefers-reduced-motion: reduce) { .panel[data-dungeon-map] .profileFields select { transition: none; } }
+:global(html[data-motion="reduced"]) .panel[data-dungeon-map] .profileFields select { transition: none; }
+
+/* Native Valyro fields paint their outer edge on the wrapper, not the select. */
+.panel[data-dungeon-map] .profileFields :global(.ui-field.ui-select) { border-radius: 12px; border-top-color: var(--atlas-line-strong); background: var(--ruby-dark-glass); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 4px 12px var(--atlas-bg); transition: border-color .2s var(--atlas-ease), box-shadow .2s var(--atlas-ease); }
+.panel[data-dungeon-map] .profileFields :global(.ui-field.ui-select):is(:hover, :focus-within) { border-color: var(--ruby-selection-edge); box-shadow: inset 0 1px 0 var(--atlas-line-strong), 0 0 18px var(--atlas-accent-glow); }
+.panel[data-dungeon-map] .profileFields select { border: 0; border-radius: inherit; background: transparent; box-shadow: none; }
+.panel[data-dungeon-map] .profileFields select:is(:hover, :focus-visible) { border-color: transparent; box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .panel[data-dungeon-map] .profileFields :global(.ui-field.ui-select) { transition: none; } }
+:global(html[data-motion="reduced"]) .panel[data-dungeon-map] .profileFields :global(.ui-field.ui-select) { transition: none; }

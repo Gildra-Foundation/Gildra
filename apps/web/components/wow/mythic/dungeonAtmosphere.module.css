@@ -1,25 +1,35 @@
 /* atlas:strict — restrained location weather, below all content. */
-.atmosphere { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.atmosphere { z-index: 1; position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .bloom { position: absolute; inset: 0; opacity: .09; background: radial-gradient(ellipse at 65% 20%, var(--atlas-accent-strong), transparent 48%); mix-blend-mode: screen; }
-.mist { position: absolute; left: -8%; right: -8%; bottom: 2%; height: 26%; opacity: .12; background: radial-gradient(ellipse at 22% 65%, var(--atlas-accent), transparent 55%), radial-gradient(ellipse at 78% 40%, var(--atlas-accent), transparent 50%); filter: blur(26px); animation: mistDrift 36s ease-in-out infinite alternate; }
-.particles { position: absolute; inset: 0; opacity: .3; }
+.mist { position: absolute; left: -8%; right: -8%; top: 18%; height: 34%; opacity: .16; background: radial-gradient(ellipse at 22% 65%, var(--atlas-accent), transparent 55%), radial-gradient(ellipse at 78% 40%, var(--atlas-accent), transparent 50%); filter: blur(26px); animation: mistDrift 36s ease-in-out infinite alternate; }
+.particles { position: absolute; inset: 0; opacity: .62; }
 .particles i { position: absolute; left: var(--particle-x); top: var(--particle-y); width: var(--particle-size); height: var(--particle-size); border-radius: 50%; background: var(--atlas-accent-strong); animation: motes var(--particle-duration) var(--particle-delay) linear infinite; }
 .atmosphere[data-atmosphere="mist"] .particles { display: none; }
-.atmosphere[data-atmosphere="mist"] .mist { height: 38%; opacity: .18; }
-.atmosphere[data-atmosphere="rain"] .particles i { top: -80px; width: 1px; height: 66px; border-radius: 0; background: linear-gradient(transparent, var(--atlas-text-muted)); animation: rain 2.8s var(--particle-delay) linear infinite; }
+.atmosphere[data-atmosphere="mist"] .mist { height: 48%; top: 8%; opacity: .3; }
+.atmosphere[data-atmosphere="rain"] .particles i { top: -80px; width: 1px; height: 66px; border-radius: 0; background: linear-gradient(transparent, var(--atlas-text-strong)); animation: rain 2.8s var(--particle-delay) linear infinite; }
 .atmosphere[data-atmosphere="snow"] .particles i { top: -8px; background: var(--atlas-text-strong); animation-name: snow; }
-.atmosphere[data-atmosphere="pollen"] .particles { opacity: .38; }
-.atmosphere[data-atmosphere="void"] .particles i { width: 3px; height: 5px; border-radius: 0; box-shadow: 0 0 6px var(--atlas-accent); }
-.atmosphere[data-atmosphere="souls"] .particles i { width: 2px; height: 9px; background: var(--atlas-info); opacity: .6; box-shadow: 0 0 9px var(--atlas-info); }
-.atmosphere[data-atmosphere="sand"] .particles i { width: 5px; height: 1px; animation-name: sand; }
+.atmosphere[data-atmosphere="pollen"] .particles { opacity: .82; }
+.atmosphere[data-atmosphere="void"] .particles i { width: 4px; height: 7px; border-radius: 0; box-shadow: 0 0 6px var(--atlas-accent); }
+.atmosphere[data-atmosphere="souls"] .particles i { width: 3px; height: 19px; background: var(--atlas-info); opacity: .8; box-shadow: 0 0 9px var(--atlas-info); }
+.atmosphere[data-atmosphere="sand"] .particles i { width: 7px; height: 2px; animation-name: sand; }
 .atmosphere[data-paused] :is(.mist, .particles i) { animation-play-state: paused; }
 @keyframes mistDrift { from { transform: translate3d(-2%, 0, 0); } to { transform: translate3d(3%, -3%, 0); } }
-@keyframes motes { 0% { opacity: 0; transform: translate3d(0, 60px, 0); } 20%, 75% { opacity: .7; } 100% { opacity: 0; transform: translate3d(55px, -160px, 0); } }
+@keyframes motes { 0% { opacity: 0; transform: translate3d(0, 60px, 0); } 20%, 75% { opacity: .9; } 100% { opacity: 0; transform: translate3d(55px, -160px, 0); } }
 @keyframes rain { to { transform: translate3d(-12lvh, calc(100lvh + 160px), 0); } }
 @keyframes snow { from { transform: translate3d(0, -15px, 0); } to { transform: translate3d(50px, calc(100lvh + 30px), 0); } }
-@keyframes sand { 0% { opacity: 0; transform: translate3d(-100px, 10px, 0); } 20%, 75% { opacity: .7; } 100% { opacity: 0; transform: translate3d(240px, -35px, 0); } }
-@media (max-width: 767px) { .particles i:nth-child(even) { display: none; } .mist { opacity: .08; } }
+@keyframes sand { 0% { opacity: 0; transform: translate3d(-100px, 10px, 0); } 20%, 75% { opacity: .9; } 100% { opacity: 0; transform: translate3d(240px, -35px, 0); } }
+@media (max-width: 767px) { .particles i:nth-child(even) { display: none; } .mist { opacity: .14; } }
 :global(html[data-motion="reduced"]) :is(.particles, .mist) { display: none; }
 @media (prefers-reduced-motion: reduce) { .particles, .mist { display: none; } }
 @media (prefers-reduced-transparency: reduce) { .atmosphere { display: none; } }
 @media (forced-colors: active) { .atmosphere { display: none; } }
+
+.atmosphere[data-atmosphere="pollen"] .particles i { background: var(--atlas-text-strong); box-shadow: 0 0 7px var(--ruby-gold), 0 0 2px var(--atlas-text-strong); }
+.atmosphere[data-atmosphere="pollen"] .particles i:nth-child(3n) { width: 6px; height: 4px; opacity: .55; filter: blur(.6px); }
+.atmosphere[data-atmosphere="snow"] .particles i { box-shadow: 0 0 3px var(--atlas-text-muted); }
+.atmosphere[data-atmosphere="souls"] .particles i { background: linear-gradient(transparent, var(--atlas-info), transparent); border-radius: 50%; }
+.atmosphere[data-atmosphere="souls"] .particles i:nth-child(3n) { width: 2px; height: 2px; background: var(--ruby-gold); box-shadow: 0 0 5px var(--ruby-gold); }
+.atmosphere[data-atmosphere="sand"] .particles i { background: var(--ruby-gold); }
+.atmosphere[data-atmosphere="sand"] .mist { background: radial-gradient(ellipse at 25% 60%, var(--ruby-gold), transparent 60%); opacity: .19; }
+.atmosphere[data-atmosphere="void"] .mist { opacity: .2; }
+@media (prefers-reduced-transparency: reduce) { .atmosphere { display: none; } }

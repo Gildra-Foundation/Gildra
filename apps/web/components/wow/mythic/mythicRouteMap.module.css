@@ -1293,3 +1293,6 @@
 @media (hover: hover) and (pointer: fine) { .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]):hover::after { opacity: .65; transform: translateX(140%); } }
 :global(html[data-motion="reduced"]) .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"])::after { display: none; }
 @media (prefers-reduced-motion: reduce) { .page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"])::after { display: none; } }
+
+.page[data-dungeon] .routeControls :global([data-testid="dungeon-talent-calculator"]) { border-radius: 13px; min-height: 48px; }
+.page[data-dungeon] .routeControls { border-radius: 20px; }
