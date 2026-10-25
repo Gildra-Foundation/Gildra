@@ -780,8 +780,8 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
           </div>
         </section>
 
-        <DungeonSourceReview review={combatIntel.review} locale={locale} />
         <div className={styles.panel}><MdtPullMap key={dungeon.slug} slug={dungeon.slug} locale={locale} routeUrl={dungeon.mdtRouteUrl} data={combatIntel.mdt} stops={dungeon.stops} combatIntel={combatIntel} /></div>
+        <DungeonSourceReview review={combatIntel.review} locale={locale} />
         <details className={styles.legacyDraft}>
           <summary>{mythicVerificationCopy[locale].legacyEditor}</summary>
         <MythicDataNotice locale={locale} route />
