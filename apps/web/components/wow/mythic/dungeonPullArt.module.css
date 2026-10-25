@@ -1,132 +1,144 @@
 /* atlas:strict — painted dungeon materials; the original map plane is unchanged. */
-.surface { --pull-art-light: color-mix(in srgb, var(--atlas-accent) 55%, var(--atlas-text-strong)); }
+.surface.surface { --pull-art-light: color-mix(in srgb, var(--atlas-accent) 55%, var(--atlas-text-strong)); }
 
 /* All painting lives in non-interactive layers, leaving native controls and Valyro motion intact. */
-.surface[data-dungeon-map] :global(.ui-button:not([data-pull-art-control="icon"])),
-.surface :global([data-testid="dungeon-talent-calculator"]) {
+.surface.surface[data-dungeon-map] :global(.ui-button:not([data-pull-art-control="icon"])),
+.surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"]) {
   position: relative; isolation: isolate; min-height: 56px; border: 0; border-radius: 12px;
   padding: var(--pull-button-pad-top) var(--pull-button-inset) var(--pull-button-pad-bottom);
   background: transparent; box-shadow: none; color: var(--atlas-text-strong);
   white-space: normal; word-break: normal; overflow-wrap: normal; text-wrap: pretty;
   transition: transform 220ms var(--atlas-ease), filter 220ms var(--atlas-ease);
 }
-.surface[data-dungeon-map] :global(.ui-button:not([data-pull-art-control="icon"]))::before,
-.surface :global([data-testid="dungeon-talent-calculator"])::before {
+.surface.surface[data-dungeon-map] :global(.ui-button:not([data-pull-art-control="icon"]))::before,
+.surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"])::before {
   position: absolute; z-index: -1; inset: 0; pointer-events: none; content: "";
   border-style: solid; border-color: transparent; border-width: var(--pull-button-width);
   border-image: var(--pull-button-image) var(--pull-button-slice) fill stretch;
   filter: contrast(.88) saturate(.8); transition: filter 220ms var(--atlas-ease);
 }
-.surface[data-dungeon-map] :global(.ui-button__label),
-.surface :global([data-testid="dungeon-talent-calculator"] .ui-button__label) { position: relative; text-shadow: 0 1px 3px var(--atlas-bg); }
+.surface.surface[data-dungeon-map] :global(.ui-button__label),
+.surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"] .ui-button__label) { position: relative; text-shadow: 0 1px 3px var(--atlas-bg); }
 
-.surface :global([data-pull-art-control="material"]),
-.surface :global([data-testid="pull-player-picker"] button[role="combobox"]),
-.surface :global(button[aria-haspopup="listbox"]:not([role="combobox"])),
-.surface[data-dungeon-map] :global([data-pull-choice]) {
+.surface.surface :global([data-pull-art-control="material"]),
+.surface.surface :global([data-testid="pull-player-picker"] button[role="combobox"]),
+.surface.surface :global(button[aria-haspopup="listbox"]:not([role="combobox"])),
+.surface.surface[data-dungeon-map] :global([data-pull-choice]) {
   position: relative; isolation: isolate; border-color: transparent; background: var(--atlas-surface-sunken); color: var(--atlas-text-strong);
 }
-.surface :global([data-pull-art-control="material"])::before,
-.surface :global([data-testid="pull-player-picker"] button[role="combobox"])::before,
-.surface :global(button[aria-haspopup="listbox"]:not([role="combobox"]))::before,
-.surface[data-dungeon-map] :global([data-pull-choice])::before {
+.surface.surface :global([data-pull-art-control="material"])::before,
+.surface.surface :global([data-testid="pull-player-picker"] button[role="combobox"])::before,
+.surface.surface :global(button[aria-haspopup="listbox"]:not([role="combobox"]))::before,
+.surface.surface[data-dungeon-map] :global([data-pull-choice])::before {
   position: absolute; z-index: -1; inset: -1px; border: 8px solid transparent;
   border-image: var(--pull-panel-image) var(--pull-panel-slice) fill stretch;
   pointer-events: none; content: ""; filter: contrast(.88) saturate(.76); opacity: .78;
   transition: opacity 220ms var(--atlas-ease), filter 220ms var(--atlas-ease);
 }
-.surface :global([data-testid="pull-role-picker"] .ui-segmented-control) { background: var(--atlas-surface-sunken); }
-.surface :global([data-testid="pull-role-picker"] .ui-segmented-control__thumb) {
+.surface.surface :global([data-testid="pull-role-picker"] .ui-segmented-control) { background: var(--atlas-surface-sunken); }
+.surface.surface :global([data-testid="pull-role-picker"] .ui-segmented-control__thumb) {
   border: 6px solid transparent; border-image: var(--pull-panel-image) var(--pull-panel-slice) fill stretch;
   background: var(--atlas-accent-soft); box-shadow: 0 0 12px var(--atlas-accent-glow);
 }
-.surface :global([data-testid="pull-role-picker"] .ui-segmented-control__label) { position: relative; z-index: 1; }
-.surface[data-dungeon-map] :global([data-pull-choice][aria-pressed="true"]) { border-color: var(--pull-art-light); color: var(--atlas-text-strong); box-shadow: inset 0 -2px var(--pull-art-light), 0 0 10px var(--atlas-accent-glow); }
-.surface[data-dungeon-map] :global([data-pull-choice][aria-pressed="true"])::before { opacity: 1; }
-.surface[data-dungeon-map] :global([data-pull-choice] > span) { color: var(--atlas-text-muted); }
+.surface.surface :global([data-testid="pull-role-picker"] .ui-segmented-control__label) { position: relative; z-index: 1; }
+.surface.surface[data-dungeon-map] :global([data-pull-choice][aria-pressed="true"]) { border-color: var(--pull-art-light); color: var(--atlas-text-strong); box-shadow: inset 0 -2px var(--pull-art-light), 0 0 10px var(--atlas-accent-glow); }
+.surface.surface[data-dungeon-map] :global([data-pull-choice][aria-pressed="true"])::before { opacity: 1; }
+.surface.surface[data-dungeon-map] :global([data-pull-choice] > span) { color: var(--atlas-text-muted); }
+.surface.surface[data-dungeon-map] :global([data-pull-choice] > b) {
+  display: grid; place-items: center; min-width: 30px; height: 30px;
+  background: var(--pull-marker-image) center / contain no-repeat;
+  color: var(--atlas-text-strong); text-shadow: 0 1px 3px var(--atlas-bg);
+  font-size: var(--atlas-text-title); line-height: 1;
+}
+.surface.surface[data-dungeon-map] :global([data-testid="pull-selected-panel"]) { isolation: isolate; border-color: transparent; }
+.surface.surface[data-dungeon-map] :global([data-testid="pull-selected-panel"])::before {
+  position: absolute; z-index: -1; inset: -1px; pointer-events: none; content: "";
+  border: 10px solid transparent; border-image: var(--pull-panel-image) var(--pull-panel-slice) fill stretch;
+  filter: contrast(.88) saturate(.76); opacity: .8;
+}
 
 /* The 42/44px map hitboxes, offsets, map artwork and frame are all retained. */
-.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index]) {
+.surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index]) {
   isolation: isolate; border-color: transparent; background: var(--atlas-surface-sunken); color: var(--atlas-text-strong);
   box-shadow: none; transform: translate(-50%, -50%); text-shadow: 0 1px 3px var(--atlas-bg), 0 0 4px var(--atlas-bg);
 }
-.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index])::before {
+.surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index])::before {
   position: absolute; z-index: -1; inset: -2px; content: ""; pointer-events: none;
   background: var(--pull-marker-image) center / contain no-repeat; filter: contrast(.9) saturate(.8);
   transition: filter 240ms var(--atlas-ease), transform 240ms var(--atlas-ease);
 }
-.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-boss])::before { inset: -4px; }
-.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][aria-pressed="true"]) { outline-color: var(--pull-art-light); outline-width: 2px; }
-.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][aria-pressed="true"])::before { filter: contrast(.95) saturate(.9) drop-shadow(0 0 6px var(--atlas-accent-glow)); animation: medallionSelect 480ms var(--atlas-ease) both; }
-.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"] > strong) { position: relative; color: var(--atlas-text-strong); }
-.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"] > span) { color: var(--atlas-text-strong); background: var(--atlas-surface-sunken); }
-.surface[data-dungeon-map] :global([data-pull-art-emblem]) {
+.surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-boss])::before { inset: -4px; }
+.surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][aria-pressed="true"]) { outline-color: var(--pull-art-light); outline-width: 2px; }
+.surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][aria-pressed="true"])::before { filter: contrast(.95) saturate(.9) drop-shadow(0 0 6px var(--atlas-accent-glow)); animation: medallionSelect 480ms var(--atlas-ease) both; }
+.surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"] > strong) { position: relative; color: var(--atlas-text-strong); }
+.surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"] > span) { color: var(--atlas-text-strong); background: var(--atlas-surface-sunken); }
+.surface.surface[data-dungeon-map] :global([data-pull-art-emblem]) {
   border-color: transparent; background: var(--pull-marker-image) center / contain no-repeat var(--atlas-surface-sunken);
   color: var(--atlas-text-strong); text-shadow: 0 1px 3px var(--atlas-bg);
 }
-.surface[data-dungeon-map] :global(.ui-button[data-pull-art-control="icon"]) {
+.surface.surface[data-dungeon-map] :global(.ui-button[data-pull-art-control="icon"]) {
   position: relative; isolation: isolate; padding-inline: var(--atlas-space-1); border: 0; border-radius: 50%;
   background: transparent; color: var(--atlas-text-strong); box-shadow: none;
 }
-.surface[data-dungeon-map] :global(.ui-button[data-pull-art-control="icon"])::before {
+.surface.surface[data-dungeon-map] :global(.ui-button[data-pull-art-control="icon"])::before {
   position: absolute; z-index: -1; inset: 0; content: ""; pointer-events: none;
   background: var(--pull-marker-image) center / contain no-repeat; filter: contrast(.9) saturate(.8);
 }
-.surface[data-dungeon-map] :global(.ui-button[data-pull-art-control="icon"]:disabled) { opacity: .4; }
+.surface.surface[data-dungeon-map] :global(.ui-button[data-pull-art-control="icon"]:disabled) { opacity: .4; }
 
 .spellFrame {
   position: relative; display: inline-block; flex: 0 0 var(--pull-icon-size); width: var(--pull-icon-size); height: var(--pull-icon-size);
   vertical-align: middle; isolation: isolate;
 }
 .spellFrame::before { position: absolute; inset: var(--pull-skill-top) var(--pull-skill-right) var(--pull-skill-bottom) var(--pull-skill-left); border-radius: 3px; background: var(--atlas-surface-sunken); content: ""; }
-.spellFrame :global(img[data-combat-icon="spell"]) {
+.surface.surface .spellFrame.spellFrame :global(img[data-combat-icon="spell"]) {
   position: absolute; inset: var(--pull-skill-top) var(--pull-skill-right) var(--pull-skill-bottom) var(--pull-skill-left);
   width: calc(100% - var(--pull-skill-left) - var(--pull-skill-right)); height: calc(100% - var(--pull-skill-top) - var(--pull-skill-bottom));
-  object-fit: cover; border: 0; border-radius: 3px; clip-path: var(--pull-skill-clip);
+  object-fit: cover; padding: 0; border: 0; border-radius: 3px; outline: 0; box-shadow: none; background: transparent; clip-path: var(--pull-skill-clip);
 }
 .spellFrame::after { position: absolute; inset: 0; pointer-events: none; background: var(--pull-skill-image) center / contain no-repeat; filter: contrast(.9) saturate(.8); content: ""; }
-.surface :global(a:focus-visible) .spellFrame::after { animation: frameLight 600ms var(--atlas-ease) both; }
+.surface.surface :global(a:focus-visible) .spellFrame::after { animation: frameLight 600ms var(--atlas-ease) both; }
 
-.surface :global([data-pull-art-control]:focus-visible),
-.surface[data-dungeon-map] :global(.ui-button:focus-visible),
-.surface :global([data-testid="dungeon-talent-calculator"]:focus-visible) { outline: 2px solid var(--pull-art-light); outline-offset: 3px; }
-.surface :global([data-pull-art-control]:focus-visible)::before,
-.surface[data-dungeon-map] :global(.ui-button:focus-visible)::before,
-.surface :global([data-testid="dungeon-talent-calculator"]:focus-visible)::before { animation: frameLight 600ms var(--atlas-ease) both; }
+.surface.surface :global([data-pull-art-control]:focus-visible),
+.surface.surface[data-dungeon-map] :global(.ui-button:focus-visible),
+.surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"]:focus-visible) { outline: 2px solid var(--pull-art-light); outline-offset: 3px; }
+.surface.surface :global([data-pull-art-control]:focus-visible)::before,
+.surface.surface[data-dungeon-map] :global(.ui-button:focus-visible)::before,
+.surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"]:focus-visible)::before { animation: frameLight 600ms var(--atlas-ease) both; }
 @media (hover: hover) and (pointer: fine) {
-  .surface[data-dungeon-map] :global(.ui-button:enabled:hover), .surface :global([data-testid="dungeon-talent-calculator"]:hover) { transform: translateY(-2px); }
-  .surface[data-dungeon-map] :global(.ui-button:enabled:hover)::before, .surface :global([data-testid="dungeon-talent-calculator"]:hover)::before { animation: frameLight 600ms var(--atlas-ease) both; }
-  .surface :global([data-pull-art-control="material"]:hover)::before,
-  .surface :global([data-testid="pull-player-picker"] button[role="combobox"]:enabled:hover)::before,
-  .surface :global(button[aria-haspopup="listbox"]:hover)::before,
-  .surface[data-dungeon-map] :global([data-pull-choice]:hover)::before { opacity: 1; }
-  .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index]:hover) { transform: translate(-50%, -50%); }
-  .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index]:hover)::before { transform: translateY(-1px); filter: contrast(.95) saturate(.9) drop-shadow(0 0 5px var(--atlas-accent-glow)); }
-  .surface :global(a:hover) .spellFrame::after { animation: frameLight 600ms var(--atlas-ease) both; }
+  .surface.surface[data-dungeon-map] :global(.ui-button:enabled:hover), .surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"]:hover) { transform: translateY(-2px); }
+  .surface.surface[data-dungeon-map] :global(.ui-button:enabled:hover)::before, .surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"]:hover)::before { animation: frameLight 600ms var(--atlas-ease) both; }
+  .surface.surface :global([data-pull-art-control="material"]:hover)::before,
+  .surface.surface :global([data-testid="pull-player-picker"] button[role="combobox"]:enabled:hover)::before,
+  .surface.surface :global(button[aria-haspopup="listbox"]:hover)::before,
+  .surface.surface[data-dungeon-map] :global([data-pull-choice]:hover)::before { opacity: 1; }
+  .surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index]:hover) { transform: translate(-50%, -50%); }
+  .surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index]:hover)::before { transform: translateY(-1px); filter: contrast(.95) saturate(.9) drop-shadow(0 0 5px var(--atlas-accent-glow)); }
+  .surface.surface :global(a:hover) .spellFrame::after { animation: frameLight 600ms var(--atlas-ease) both; }
 }
-.surface[data-dungeon-map] :global(.ui-button:enabled:active), .surface :global([data-testid="dungeon-talent-calculator"]:active) { transform: translateY(1px); }
+.surface.surface[data-dungeon-map] :global(.ui-button:enabled:active), .surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"]:active) { transform: translateY(1px); }
 @keyframes frameLight { from, to { filter: contrast(.88) saturate(.8); } 45% { filter: contrast(.93) saturate(.88) brightness(1.12) drop-shadow(0 0 5px var(--atlas-accent-glow)); } }
 @keyframes medallionSelect { from { transform: scale(.92); } 60% { transform: scale(1.04); } to { transform: scale(1); } }
 
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
-  .surface :global(button), .surface :global(summary), .surface :global(button)::before, .surface :global(summary)::before, .spellFrame::after { transition: none !important; animation: none !important; }
-  .surface[data-dungeon-map] :global(.ui-button:is(:hover, :active)), .surface :global([data-testid="dungeon-talent-calculator"]:is(:hover, :active)), .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"])::before { transform: none !important; }
+  .surface.surface :global(button), .surface.surface :global(summary), .surface.surface :global(button)::before, .surface.surface :global(summary)::before, .spellFrame::after { transition: none !important; animation: none !important; }
+  .surface.surface[data-dungeon-map] :global(.ui-button:is(:hover, :active)), .surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"]:is(:hover, :active)), .surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"])::before { transform: none !important; }
 }
-:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface :global(button),
-:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface :global(summary),
-:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface :global(button)::before,
-:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface :global(summary)::before,
-:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface .spellFrame::after { transition: none !important; animation: none !important; }
-:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface[data-dungeon-map] :global(.ui-button:is(:hover, :active)),
-:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface :global([data-testid="dungeon-talent-calculator"]:is(:hover, :active)),
-:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"])::before { transform: none !important; }
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface :global(button),
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface :global(summary),
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface :global(button)::before,
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface :global(summary)::before,
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface .spellFrame::after { transition: none !important; animation: none !important; }
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface[data-dungeon-map] :global(.ui-button:is(:hover, :active)),
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"]:is(:hover, :active)),
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"])::before { transform: none !important; }
 @media (forced-colors: active) {
-  .surface :global(button)::before, .surface :global(summary)::before, .spellFrame::after { display: none !important; }
-  .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"]),
-  .surface[data-dungeon-map] :global(.ui-button), .surface :global([data-testid="dungeon-talent-calculator"]),
-  .surface :global([data-pull-art-control="material"]) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
-  .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][aria-pressed="true"]) { outline: 3px solid Highlight; }
-  .surface :global([data-testid="pull-role-picker"] .ui-segmented-control__thumb) { border: 1px solid Highlight; border-image: none; background: Highlight; }
+  .surface.surface :global(button)::before, .surface.surface :global(summary)::before, .spellFrame::after { display: none !important; }
+  .surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"]),
+  .surface.surface[data-dungeon-map] :global(.ui-button), .surface.surface[data-dungeon] :global(button[data-testid="dungeon-talent-calculator"]),
+  .surface.surface :global([data-pull-art-control="material"]) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
+  .surface.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][aria-pressed="true"]) { outline: 3px solid Highlight; }
+  .surface.surface :global([data-testid="pull-role-picker"] .ui-segmented-control__thumb) { border: 1px solid Highlight; border-image: none; background: Highlight; }
   .spellFrame { border: 1px solid CanvasText; }
 }
 
