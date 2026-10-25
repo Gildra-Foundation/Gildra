@@ -1,0 +1,253 @@
+{
+  "mode": "built-in imagegen generate",
+  "entries": {
+    "ruby-life-pools": {
+      "path": "/assets/wow/mythic/hub/controls/buttons/ruby-life-pools.webp",
+      "width": 768,
+      "height": 132,
+      "slices": [
+        31,
+        128,
+        17,
+        128
+      ],
+      "bytes": 21784,
+      "sha256": "cd88d2678c1665a35ed7ace66c26767bdf98d44f7a93411e1b19d1c7a12a46d7",
+      "native": "/home/debian/gildra-mythic-material-release-20261025/asset-sources/buttons/native/ruby-life-pools.png",
+      "crop": {
+        "left": 10,
+        "top": 161,
+        "width": 2152,
+        "height": 369
+      },
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "nativeSha256": "6abe4c811d819b0366beccccfadf61341981f99907e23ec053b9471fbb0fb29d",
+      "centerRailRows": {
+        "first": 19,
+        "last": 120,
+        "faceTop": 26,
+        "faceBottom": 119
+      }
+    },
+    "altar-of-fangs": {
+      "path": "/assets/wow/mythic/hub/controls/buttons/altar-of-fangs.webp",
+      "width": 768,
+      "height": 145,
+      "slices": [
+        21,
+        152,
+        19,
+        152
+      ],
+      "bytes": 25502,
+      "sha256": "07e651119eeea74fbc3a313a9c52780a851e05366cadeeda89e508724d21806d",
+      "native": "/home/debian/gildra-mythic-material-release-20261025/asset-sources/buttons/native/altar-of-fangs.png",
+      "crop": {
+        "left": 12,
+        "top": 148,
+        "width": 2149,
+        "height": 405
+      },
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "nativeSha256": "f1c08b29f22505e5094b585f26fb63bf40fb98bac4abaf6f11bf482b3eb03e78",
+      "centerRailRows": {
+        "first": 15,
+        "last": 131,
+        "faceTop": 16,
+        "faceBottom": 130
+      }
+    },
+    "murder-row": {
+      "path": "/assets/wow/mythic/hub/controls/buttons/murder-row.webp",
+      "width": 768,
+      "height": 130,
+      "slices": [
+        35,
+        136,
+        36,
+        136
+      ],
+      "bytes": 19050,
+      "sha256": "45e0beab66532987947cdc88390c7aaa6a9a9db408330e88f1a3863145b30a8c",
+      "native": "/home/debian/gildra-mythic-material-release-20261025/asset-sources/buttons/native/murder-row.png",
+      "crop": {
+        "left": 0,
+        "top": 173,
+        "width": 2172,
+        "height": 369
+      },
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "nativeSha256": "9e41e3f9d4a7ce46da810f3ea1d4cc71d8c4beefd6d038b78207f540f7d32292",
+      "centerRailRows": {
+        "first": 21,
+        "last": 107,
+        "faceTop": 30,
+        "faceBottom": 98
+      }
+    },
+    "den-of-nalorakk": {
+      "path": "/assets/wow/mythic/hub/controls/buttons/den-of-nalorakk.webp",
+      "width": 768,
+      "height": 125,
+      "slices": [
+        29,
+        152,
+        20,
+        152
+      ],
+      "bytes": 22434,
+      "sha256": "a7614459885cfc6fb9682dbcaeb17bb2141d7ce520c6bf6e37740604cad52fb7",
+      "native": "/home/debian/gildra-mythic-material-release-20261025/asset-sources/buttons/native/den-of-nalorakk.png",
+      "crop": {
+        "left": 14,
+        "top": 177,
+        "width": 2146,
+        "height": 348
+      },
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "nativeSha256": "4b7fe1d8e4d6416b7a9a29924c819442322bdebe8220630f4839dac64033fc78",
+      "centerRailRows": {
+        "first": 15,
+        "last": 110,
+        "faceTop": 24,
+        "faceBottom": 109
+      }
+    },
+    "the-blinding-vale": {
+      "path": "/assets/wow/mythic/hub/controls/buttons/the-blinding-vale.webp",
+      "width": 768,
+      "height": 143,
+      "slices": [
+        37,
+        160,
+        25,
+        160
+      ],
+      "bytes": 27950,
+      "sha256": "c7a6b5f6cbf24744a32b84220d2f2cb23da04db95344f0ba2d4412a25d51c916",
+      "native": "/home/debian/gildra-mythic-material-release-20261025/asset-sources/buttons/native/the-blinding-vale.png",
+      "crop": {
+        "left": 28,
+        "top": 156,
+        "width": 2117,
+        "height": 395
+      },
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "nativeSha256": "c3fee3114568f8c34d7ebd5baf0d32a479d7affc98b1c237eaad74d4e09072d4",
+      "centerRailRows": {
+        "first": 22,
+        "last": 123,
+        "faceTop": 32,
+        "faceBottom": 122
+      }
+    },
+    "voidscar-arena": {
+      "path": "/assets/wow/mythic/hub/controls/buttons/voidscar-arena.webp",
+      "width": 768,
+      "height": 140,
+      "slices": [
+        29,
+        160,
+        30,
+        160
+      ],
+      "bytes": 20752,
+      "sha256": "93e0f3567c364c2e48d245882e8e27e8045b0475e4f6885e12297460b0c58436",
+      "native": "/home/debian/gildra-mythic-material-release-20261025/asset-sources/buttons/native/voidscar-arena.png",
+      "crop": {
+        "left": 0,
+        "top": 164,
+        "width": 2172,
+        "height": 396
+      },
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "nativeSha256": "fd9da6eb716273b71865fbc9351dae7c114a252df5546cc7277d0bcd414d3013",
+      "centerRailRows": {
+        "first": 23,
+        "last": 115,
+        "faceTop": 24,
+        "faceBottom": 114
+      }
+    },
+    "kings-rest": {
+      "path": "/assets/wow/mythic/hub/controls/buttons/kings-rest.webp",
+      "width": 768,
+      "height": 121,
+      "slices": [
+        23,
+        136,
+        20,
+        136
+      ],
+      "bytes": 20120,
+      "sha256": "8a3f04e6d214242dabf86f3dc2e3e79564a11b6f6312a6c59118a1c2bc292e50",
+      "native": "/home/debian/gildra-mythic-material-release-20261025/asset-sources/buttons/native/kings-rest.png",
+      "crop": {
+        "left": 0,
+        "top": 191,
+        "width": 2172,
+        "height": 343
+      },
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "nativeSha256": "163bcbbf1226d905a767c7bd8bbf5db030ceff3328d74c09282d0976bd3e13b8",
+      "centerRailRows": {
+        "first": 9,
+        "last": 106,
+        "faceTop": 18,
+        "faceBottom": 105
+      }
+    },
+    "temple-of-sethraliss": {
+      "path": "/assets/wow/mythic/hub/controls/buttons/temple-of-sethraliss.webp",
+      "width": 768,
+      "height": 130,
+      "slices": [
+        39,
+        128,
+        16,
+        128
+      ],
+      "bytes": 20428,
+      "sha256": "fe85233e52c42d26d5e5d19caeb1eabebf1a3d7cb942b1ad2166a31699548a41",
+      "native": "/home/debian/gildra-mythic-material-release-20261025/asset-sources/buttons/native/temple-of-sethraliss.png",
+      "crop": {
+        "left": 19,
+        "top": 176,
+        "width": 2134,
+        "height": 361
+      },
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "nativeSha256": "41fd6cb146f3ec3768ad0c264014dabd6b00531ba38ba43dbae9b3fa8f7bba59",
+      "centerRailRows": {
+        "first": 23,
+        "last": 119,
+        "faceTop": 34,
+        "faceBottom": 118
+      }
+    }
+  }
+}

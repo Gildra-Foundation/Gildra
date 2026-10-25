@@ -5,18 +5,23 @@
   --hub-enter-stagger: var(--atlas-stagger);
 }
 
-/* JS cancels running entrances as preferences change. These also make a
-   direct preference attribute change take effect before its event runs. */
+/* Cancel through JS and settle immediately through CSS as a preference changes. */
 :global(html[data-motion="reduced"]) .motion :global([data-hub-motion-item]),
+:global([data-transparency="reduced"]) .motion :global([data-hub-motion-item]),
 :global([data-ui-motion="reduce"]) .motion :global([data-hub-motion-item]),
-.motion:global([data-ui-motion="reduce"]) :global([data-hub-motion-item]) {
+.motion:global([data-ui-motion="reduce"]) :global([data-hub-motion-item]),
+.motion:global([data-transparency="reduced"]) :global([data-hub-motion-item]),
+.motion :global([data-ui-motion="reduce"][data-hub-motion-item]),
+.motion :global([data-ui-motion="reduce"]) :global([data-hub-motion-item]) {
   opacity: 1 !important;
   translate: none !important;
+  scale: none !important;
 }
 
-@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active), print {
   .motion :global([data-hub-motion-item]) {
     opacity: 1 !important;
     translate: none !important;
+    scale: none !important;
   }
 }

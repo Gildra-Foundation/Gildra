@@ -5,18 +5,23 @@ import { lessMotion, subscribeSiteMotion } from "@gildra/atlas-ui/motionPreferen
 import styles from "./mythicHubMotion.module.css";
 
 const revealSelector = "[data-hub-reveal], [data-hub-dungeon-card], [data-mythic-hub-timers]";
+const heroSelector = 'h1, p, [role="list"], [data-hub-actions]';
 
 function milliseconds(value: string, fallback: number) {
   const match = /^(\d*\.?\d+)\s*(ms|s)$/.exec(value.trim());
   return match ? Number(match[1]) * (match[2] === "s" ? 1000 : 1) : fallback;
 }
 
-/** Visible server content gets one quiet arrival. Nothing waits for hydration,
- * scrolling never renders React, and card hover keeps its own transform. */
+/** One quiet arrival over readable server content. The route frame and each
+ * card's hover transform remain independent; scrolling never renders React. */
 export function MythicHubMotion() {
   useEffect(() => {
     const root = document.querySelector<HTMLElement>("[data-mythic-hub]");
-    if (!root || typeof HTMLElement.prototype.animate !== "function") return;
+    if (!root) return;
+    if (typeof HTMLElement.prototype.animate !== "function") {
+      root.dataset.mythicHubOrnamentsStatic = "";
+      return () => { delete root.dataset.mythicHubOrnamentsStatic; };
+    }
 
     root.classList.add(styles.motion);
     root.dataset.hubMotion = "ready";
@@ -25,10 +30,10 @@ export function MythicHubMotion() {
       window.matchMedia("(prefers-reduced-transparency: reduce)"),
       window.matchMedia("(forced-colors: active)"),
     ];
-    const reduced = () => lessMotion() || preferences.some((query) => query.matches)
-      || !!root.closest('[data-ui-motion="reduce"]');
+    const reduced = (element: Element = root) => lessMotion() || preferences.some((query) => query.matches)
+      || !!element.closest('[data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"]');
     const style = getComputedStyle(root);
-    // Genuine installed Valyro smooth spring, exposed by AtlasValyroScope.
+    // The genuine installed Valyro smooth spring is supplied by AtlasValyroScope.
     const spring = style.getPropertyValue("--ui-spring-smooth").trim();
     const easing = spring && CSS.supports("animation-timing-function", spring)
       ? spring : style.getPropertyValue("--atlas-ease").trim() || "ease-out";
@@ -37,48 +42,155 @@ export function MythicHubMotion() {
     const running = new Map<HTMLElement, Animation>();
     const marked = new Set<HTMLElement>();
     const seen = new WeakSet<HTMLElement>();
+    const cards = Array.from(root.querySelectorAll<HTMLElement>("[data-hub-dungeon-card]"));
+    const visibleCards = new Set<HTMLElement>();
+    const visibleScenes = new Set<HTMLElement>();
+    const scenes = new Map<HTMLElement, HTMLElement>();
+    const decodedScenes = new WeakSet<HTMLElement>();
+    const revealedScenes = new WeakSet<HTMLElement>();
+    const imageCleanups: (() => void)[] = [];
+    const ornamentPieces = Array.from(root.querySelectorAll<HTMLElement>("[data-mythic-hub-ornament-piece]"));
+    const visibleOrnaments = new Set<HTMLElement>();
     let disposed = false;
+
+    // A cutout starts growing after its own image decodes, so slow connections
+    // get the same arrival as a cached page. CSS keeps no-JS/reduced views static.
+    for (const piece of ornamentPieces) {
+      const image = piece.querySelector<HTMLImageElement>("img");
+      if (!image) continue;
+      const growth = piece.querySelector<HTMLElement>("[data-growth]");
+      const grown = (event: AnimationEvent) => {
+        if (event.target === growth) piece.dataset.mythicHubOrnamentGrown = "";
+      };
+      growth?.addEventListener("animationend", grown);
+      imageCleanups.push(() => growth?.removeEventListener("animationend", grown));
+      const ready = () => {
+        if (disposed || image.naturalWidth === 0) return;
+        const decoded = typeof image.decode === "function" ? image.decode() : Promise.resolve();
+        void decoded.catch(() => {}).then(() => {
+          if (!disposed) piece.dataset.mythicHubOrnamentReady = "";
+        });
+      };
+      image.addEventListener("load", ready, { once: true });
+      imageCleanups.push(() => image.removeEventListener("load", ready));
+      if (image.complete) ready();
+    }
+
+    const syncAtmosphere = () => {
+      if (disposed) return;
+      for (const card of cards) card.toggleAttribute("data-mythic-card-active", !document.hidden && !reduced(card) && visibleCards.has(card));
+      for (const piece of ornamentPieces) piece.toggleAttribute("data-mythic-hub-ornament-active", !document.hidden && !reduced(piece) && visibleOrnaments.has(piece));
+    };
+    // Rail ornaments arrive when the detail itself enters the viewport, rather
+    // than growing unseen while the painting at the top of its dungeon is visible.
+    const ornamentObserver = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!(entry.target instanceof HTMLElement)) continue;
+        if (entry.isIntersecting) {
+          visibleOrnaments.add(entry.target);
+          entry.target.dataset.mythicHubOrnamentRevealed = "true";
+          if (reduced(entry.target)) entry.target.dataset.mythicHubOrnamentGrown = "";
+        } else visibleOrnaments.delete(entry.target);
+      }
+      syncAtmosphere();
+    }, { threshold: .18, rootMargin: "0px 0px -12px 0px" });
+    if (!ornamentObserver) root.dataset.mythicHubOrnamentsStatic = "";
+    const atmosphereObserver = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!(entry.target instanceof HTMLElement)) continue;
+        if (entry.target.hasAttribute("data-hub-dungeon-scene")) {
+          const card = entry.target.closest<HTMLElement>("[data-hub-dungeon-card]");
+          if (!card) continue;
+          if (entry.isIntersecting) visibleScenes.add(card);
+          else { visibleScenes.delete(card); settle(entry.target); }
+          continue;
+        }
+        if (entry.isIntersecting) visibleCards.add(entry.target);
+        else {
+          visibleCards.delete(entry.target);
+          const scene = scenes.get(entry.target);
+          if (scene) settle(scene);
+        }
+      }
+      syncAtmosphere();
+      for (const card of visibleCards) revealScene(card);
+    });
 
     const settle = (element: HTMLElement) => {
       const animation = running.get(element);
       running.delete(element);
       animation?.cancel();
-      element.dataset.hubRevealed = "true";
     };
     const settleAll = () => {
       for (const element of running.keys()) settle(element);
     };
+    // Art settles only after the card finishes entering, and only after its real
+    // image decodes. Both layers remain readable from the first server paint.
+    function revealScene(card: HTMLElement) {
+      const layer = scenes.get(card);
+      if (disposed || !layer || revealedScenes.has(card) || !decodedScenes.has(card)
+        || !seen.has(card) || running.has(card) || !visibleCards.has(card) || !visibleScenes.has(card)) return;
+      // A tall card's footer can be visible after its picture has left the
+      // viewport. Decode microtasks can also run before the next IO delivery.
+      const box = layer.getBoundingClientRect();
+      if (box.width <= 0 || box.height <= 0 || box.bottom <= 0 || box.top >= window.innerHeight
+        || box.right <= 0 || box.left >= window.innerWidth) return;
+      revealedScenes.add(card);
+      if (reduced(card) || document.hidden || card.contains(document.activeElement) || card.matches(":hover")) return;
+      layer.dataset.hubMotionItem = "";
+      marked.add(layer);
+      try {
+        const animation = layer.animate([
+          { opacity: .94, scale: "1.025" },
+          { opacity: 1, scale: "1" },
+        ], { duration: Math.min(duration, 540), easing, fill: "backwards" });
+        running.set(layer, animation);
+        animation.onfinish = () => settle(layer);
+      } catch { settle(layer); }
+    }
+    for (const card of cards) {
+      const layer = card.querySelector<HTMLElement>("[data-hub-dungeon-scene]");
+      const image = card.querySelector<HTMLImageElement>("[data-hub-dungeon-image]");
+      if (!layer || !image) continue;
+      scenes.set(card, layer);
+      const ready = () => {
+        if (disposed || image.naturalWidth === 0) return;
+        const decoded = typeof image.decode === "function" ? image.decode() : Promise.resolve();
+        void decoded.catch(() => {}).then(() => {
+          if (disposed) return;
+          decodedScenes.add(card);
+          revealScene(card);
+        });
+      };
+      image.addEventListener("load", ready, { once: true });
+      imageCleanups.push(() => image.removeEventListener("load", ready));
+      if (image.complete) ready();
+    }
     const arrive = (element: HTMLElement, delay = 0, distance = 14) => {
       if (disposed || seen.has(element)) return;
       seen.add(element);
       marked.add(element);
       element.dataset.hubMotionItem = "";
       element.dataset.hubRevealed = "true";
-      if (reduced() || document.hidden || element.contains(document.activeElement)) return;
-      const animation = element.animate([
-        { opacity: .86, translate: `0 ${distance}px` },
-        { opacity: 1, translate: "0 0px" },
-      ], { duration, delay, easing, fill: "backwards" });
-      running.set(element, animation);
-      animation.onfinish = () => settle(element);
-    };
-
-    // One hero cascade, including its facts as a group. The page frame belongs
-    // to the global route transition; it never receives a second entrance.
-    const hero = root.querySelector<HTMLElement>("[data-hub-hero]");
-    if (hero) {
-      const box = hero.getBoundingClientRect();
-      if (box.bottom > 0 && box.top < window.innerHeight) {
-        hero.querySelectorAll<HTMLElement>('h1, p, [role="list"], [data-hub-actions]')
-          .forEach((element, index) => arrive(element, Math.min(index, 3) * stagger, element.tagName === "H1" ? 16 : 10));
+      if (reduced(element) || document.hidden || element.contains(document.activeElement)) return;
+      try {
+        const animation = element.animate([
+          { opacity: .86, translate: `0 ${distance}px` },
+          { opacity: 1, translate: "0 0px" },
+        ], { duration, delay, easing, fill: "backwards" });
+        running.set(element, animation);
+        animation.onfinish = () => { settle(element); revealScene(element); };
+      } catch {
+        // Unsupported Web Animation details leave the original content visible.
+        settle(element);
       }
-    }
+    };
 
     const targets = new Set<HTMLElement>();
     root.querySelectorAll<HTMLElement>(revealSelector).forEach((element) => {
       if (element.closest("[data-hub-hero]")) return;
-      // A section heading can enter alongside its cards; never move a whole
-      // section and each of its children at the same time.
+      // Move a section's heading alongside its cards, never the section and its
+      // children together. Header descriptions share the heading's arrival.
       if (element.hasAttribute("data-hub-reveal") && element.querySelector(revealSelector)) {
         const heading = element.querySelector<HTMLElement>("h2, h3");
         if (heading?.parentElement) targets.add(heading.parentElement);
@@ -89,20 +201,68 @@ export function MythicHubMotion() {
       for (const entry of entries) {
         if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue;
         observer?.unobserve(entry.target);
-        // Neighbours share a small stagger; an entire grid never queues up.
         arrive(entry.target, Math.min(visibleIndex++, 2) * stagger);
       }
     }, { threshold: .08, rootMargin: "0px 0px -28px 0px" });
-    for (const target of targets) observer?.observe(target);
 
-    const stopForPreference = () => { if (reduced()) settleAll(); };
-    const stopForVisibility = () => { if (document.hidden) settleAll(); };
+    // Deferring one microtask lets Strict Mode clean up its trial setup before
+    // an entrance begins. There are no timers or animation frames to leak.
+    queueMicrotask(() => {
+      if (disposed) return;
+      const hero = root.querySelector<HTMLElement>("[data-hub-hero]");
+      if (hero) {
+        const box = hero.getBoundingClientRect();
+        if (box.bottom > 0 && box.top < window.innerHeight) {
+          const groups = Array.from(hero.querySelectorAll<HTMLElement>(heroSelector));
+          groups.filter((element) => !groups.some((other) => other !== element && other.contains(element)))
+            .forEach((element, index) => arrive(element, Math.min(index, 3) * stagger, element.tagName === "H1" ? 16 : 10));
+        }
+      }
+      for (const target of targets) {
+        if (observer) observer.observe(target);
+        else arrive(target);
+      }
+      for (const card of cards) {
+        atmosphereObserver?.observe(card);
+        const scene = scenes.get(card);
+        if (scene) atmosphereObserver?.observe(scene);
+      }
+      for (const piece of ornamentPieces) ornamentObserver?.observe(piece);
+    });
+
+    const stopScenes = () => { settleAll(); for (const card of visibleCards) revealedScenes.add(card); };
+    const stopForPreference = () => {
+      for (const element of running.keys()) if (reduced(element)) settle(element);
+      for (const card of visibleCards) if (reduced(card)) revealedScenes.add(card);
+      for (const piece of ornamentPieces) {
+        if (reduced(piece) && piece.dataset.mythicHubOrnamentRevealed) piece.dataset.mythicHubOrnamentGrown = "";
+      }
+      syncAtmosphere();
+    };
+    const stopForVisibility = () => { if (document.hidden) stopScenes(); syncAtmosphere(); };
     const stopForInteraction = (event: Event) => {
       const element = event.target instanceof Element
         ? event.target.closest<HTMLElement>("[data-hub-motion-item]") : null;
       if (element && root.contains(element)) settle(element);
+      const card = event.target instanceof Element ? event.target.closest<HTMLElement>("[data-hub-dungeon-card]") : null;
+      if (card && root.contains(card)) {
+        revealedScenes.add(card);
+        const scene = scenes.get(card);
+        if (scene) settle(scene);
+        for (const piece of card.querySelectorAll<HTMLElement>("[data-mythic-hub-ornament-piece]")) {
+          piece.dataset.mythicHubOrnamentSettled = "";
+          piece.dataset.mythicHubOrnamentGrown = "";
+        }
+      }
     };
     const unsubscribe = subscribeSiteMotion(stopForPreference);
+    const attributes = typeof MutationObserver === "undefined" ? null : new MutationObserver(stopForPreference);
+    // Local Valyro scopes and the site's transparency choice can change independently.
+    const preferenceAttributes = ["data-motion", "data-ui-motion", "data-transparency"];
+    attributes?.observe(root, { attributes: true, subtree: true, attributeFilter: preferenceAttributes });
+    for (let parent = root.parentElement; parent; parent = parent.parentElement) {
+      attributes?.observe(parent, { attributes: true, attributeFilter: preferenceAttributes });
+    }
     preferences.forEach((query) => query.addEventListener("change", stopForPreference));
     document.addEventListener("visibilitychange", stopForVisibility);
     root.addEventListener("focusin", stopForInteraction);
@@ -111,6 +271,18 @@ export function MythicHubMotion() {
     return () => {
       disposed = true;
       observer?.disconnect();
+      atmosphereObserver?.disconnect();
+      ornamentObserver?.disconnect();
+      imageCleanups.forEach((cleanup) => cleanup());
+      ornamentPieces.forEach((piece) => {
+        delete piece.dataset.mythicHubOrnamentReady;
+        delete piece.dataset.mythicHubOrnamentRevealed;
+        delete piece.dataset.mythicHubOrnamentActive;
+        delete piece.dataset.mythicHubOrnamentGrown;
+        delete piece.dataset.mythicHubOrnamentSettled;
+      });
+      delete root.dataset.mythicHubOrnamentsStatic;
+      attributes?.disconnect();
       unsubscribe();
       preferences.forEach((query) => query.removeEventListener("change", stopForPreference));
       document.removeEventListener("visibilitychange", stopForVisibility);
@@ -123,6 +295,7 @@ export function MythicHubMotion() {
       }
       root.classList.remove(styles.motion);
       delete root.dataset.hubMotion;
+      for (const card of cards) card.removeAttribute("data-mythic-card-active");
     };
   }, []);
 

@@ -1,0 +1,173 @@
+/* atlas:strict — individual cutouts grow upward from the painted lower rail. */
+
+.ornaments {
+  --mythic-ornament-width: 96px;
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.piece {
+  --mythic-piece-width: var(--mythic-ornament-width);
+  position: absolute;
+  bottom: calc(var(--mythic-panel-rail-inset, 5px) - var(--mythic-piece-width) * var(--mythic-root-padding));
+  width: var(--mythic-piece-width);
+  height: calc(var(--mythic-piece-width) * var(--mythic-ornament-ratio));
+}
+
+.left { left: -28px; }
+.right { right: -28px; }
+
+.growth,
+.asset {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: var(--mythic-root-x) calc(100% - var(--mythic-piece-width) * var(--mythic-root-padding));
+}
+
+.asset {
+  object-fit: contain;
+  filter: contrast(.9) saturate(.86) brightness(.94);
+}
+
+/* No-JS and preference fallbacks show the complete static ornament. In a
+   normal scripting context each decoded piece has one finite growth, followed
+   by a small independent ambient motion which pauses outside its viewport. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) and (prefers-reduced-transparency: no-preference) {
+  .growth {
+    opacity: 0;
+    animation-duration: var(--growth-duration);
+    animation-delay: var(--growth-delay);
+    animation-timing-function: var(--ui-spring-smooth, var(--atlas-ease));
+    animation-iteration-count: 1;
+    animation-fill-mode: both;
+    animation-play-state: paused;
+  }
+
+  .piece[data-mythic-hub-ornament-ready][data-mythic-hub-ornament-revealed="true"].ruby .growth { animation-name: rubyRise; }
+  .piece[data-mythic-hub-ornament-ready][data-mythic-hub-ornament-revealed="true"].fangs .growth { animation-name: ritualCurl; }
+  .piece[data-mythic-hub-ornament-ready][data-mythic-hub-ornament-revealed="true"].arcane .growth { animation-name: lilyUnfold; }
+  .piece[data-mythic-hub-ornament-ready][data-mythic-hub-ornament-revealed="true"].frost .growth { animation-name: fernUnfurl; }
+  .piece[data-mythic-hub-ornament-ready][data-mythic-hub-ornament-revealed="true"].pollen .growth { animation-name: blossomOpen; }
+  .piece[data-mythic-hub-ornament-ready][data-mythic-hub-ornament-revealed="true"].void .growth { animation-name: crystalRise; }
+  .piece[data-mythic-hub-ornament-ready][data-mythic-hub-ornament-revealed="true"].royal .growth { animation-name: lotusEmerge; }
+  .piece[data-mythic-hub-ornament-ready][data-mythic-hub-ornament-revealed="true"].serpent .growth { animation-name: papyrusUncoil; }
+
+  .asset {
+    animation-duration: 8s;
+    animation-delay: calc(var(--growth-duration) + var(--growth-delay));
+    animation-timing-function: var(--atlas-ease-ambient);
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+    animation-play-state: paused;
+  }
+  .ruby .asset { animation-name: rubySway; }
+  .fangs .asset { animation-name: vineBreathe; animation-duration: 9s; }
+  .arcane .asset { animation-name: lilySway; animation-duration: 8.5s; }
+  .frost .asset { animation-name: fernSway; animation-duration: 9s; }
+  .pollen .asset { animation-name: pollenBreathe; animation-duration: 7s; }
+  .void .asset { animation-name: crystalGlint; animation-duration: 6s; }
+  .royal .asset { animation-name: lotusSway; animation-duration: 9.5s; }
+  .serpent .asset { animation-name: papyrusSway; animation-duration: 10s; }
+
+  .piece[data-mythic-hub-ornament-active] .growth,
+  .piece[data-mythic-hub-ornament-active] .asset { animation-play-state: running; }
+
+  :global([data-hub-dungeon-card]:focus-within) .asset { animation-play-state: paused; }
+}
+
+@media (scripting: enabled) and (hover: hover) and (pointer: fine) {
+  :global([data-hub-dungeon-card]:hover) .asset { animation-play-state: paused; }
+}
+
+@keyframes rubyRise {
+  0% { opacity: 0; transform: scale(.38, .04) rotate(-5deg); }
+  28% { opacity: 1; }
+  75% { transform: scale(1.03, 1.04) rotate(1deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes ritualCurl {
+  0% { opacity: 0; transform: scale(.4, .04) rotate(-12deg); }
+  34% { opacity: 1; }
+  78% { transform: scale(1.02) rotate(2deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes lilyUnfold {
+  0% { opacity: 0; transform: scale(.08, .04) rotate(8deg); }
+  30% { opacity: 1; }
+  76% { transform: scale(1.03, 1.02) rotate(-1deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes fernUnfurl {
+  0% { opacity: 0; transform: scale(.55, .04) rotate(-4deg); }
+  32% { opacity: 1; }
+  74% { transform: scale(1.02, 1.05) rotate(2deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes blossomOpen {
+  0% { opacity: 0; transform: scale(.15, .04); }
+  30% { opacity: 1; }
+  72% { transform: scale(1.05, 1.04); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes crystalRise {
+  0% { opacity: 0; transform: scale(.92, .04); }
+  46% { opacity: .8; transform: scale(1.01); }
+  74% { opacity: 1; }
+  84% { opacity: .9; }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes lotusEmerge {
+  0% { opacity: 0; transform: scale(.3, .04) rotate(2deg); }
+  36% { opacity: 1; }
+  78% { transform: scale(1.02) rotate(-1deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes papyrusUncoil {
+  0% { opacity: 0; transform: scale(.3, .04) rotate(-10deg); }
+  32% { opacity: 1; }
+  80% { transform: scale(1.01) rotate(1deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes rubySway { from { transform: rotate(-.7deg); } to { transform: rotate(1.1deg); } }
+@keyframes vineBreathe { from { transform: scale(.995); } to { transform: rotate(.6deg) scale(1.008); } }
+@keyframes lilySway { from { transform: rotate(-.6deg); } to { transform: rotate(1deg); } }
+@keyframes fernSway { from { transform: rotate(-.8deg); } to { transform: rotate(1.1deg); } }
+@keyframes pollenBreathe { from { opacity: .9; transform: none; } to { opacity: 1; transform: scale(1.01); } }
+@keyframes crystalGlint { 0%, 30% { opacity: .88; } 65%, 100% { opacity: 1; } }
+@keyframes lotusSway { from { transform: rotate(-.5deg); } to { transform: rotate(.7deg); } }
+@keyframes papyrusSway { from { transform: rotate(-.8deg); } to { transform: rotate(1.3deg); } }
+
+@media (max-width: 700px) {
+  .ornaments { --mythic-ornament-width: 72px; }
+  .left { left: -20px; }
+  .right { right: -20px; }
+  .piece[data-mythic-hub-ornament-piece="den-of-nalorakk"].right { right: -16px; }
+}
+
+.piece[data-mythic-hub-ornament-grown] .growth,
+.piece[data-mythic-hub-ornament-settled] .growth {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.piece[data-mythic-hub-ornament-settled] .asset {
+  animation-play-state: paused !important;
+}
+
+:global([data-mythic-hub-ornaments-static]) :is(.growth, .asset),
+:global([data-motion="reduced"]) :is(.growth, .asset),
+:global([data-ui-motion="reduce"]) :is(.growth, .asset),
+:global([data-transparency="reduced"]) :is(.growth, .asset) {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (scripting: none), print {
+  .growth, .asset { animation: none !important; opacity: 1 !important; transform: none !important; }
+}
+@media (forced-colors: active) { .ornaments { display: none; } }

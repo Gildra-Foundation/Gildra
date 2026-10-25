@@ -46,17 +46,73 @@
 .heroHeader h1 { max-width: 15ch; }
 .heroHeader p { max-width: 48ch; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
-.actions :global(.ui-button) { min-height: 48px; border-radius: 12px; box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 4px 12px var(--atlas-bg); }
+.actionSlot { display: flex; min-width: 0; max-width: 100%; }
+.metaAction { display: flex; min-width: 0; max-width: 100%; }
+.page .assetButton:global(.ui-button) {
+  --_bg: transparent;
+  --_bg-hover: transparent;
+  --_bg-active: transparent;
+  --_fg: var(--atlas-text-strong);
+  position: relative;
+  isolation: isolate;
+  justify-content: center;
+  min-height: 68px;
+  min-width: min(100%, 320px);
+  padding: var(--mythic-button-pad-top) var(--mythic-button-inset) var(--mythic-button-pad-bottom);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--atlas-text-strong);
+  box-shadow: none;
+  font-size: var(--atlas-text-small);
+  line-height: var(--atlas-leading-snug);
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  transition: transform var(--atlas-duration-fast) var(--ui-spring-smooth);
+}
+.assetButton::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 20px solid transparent;
+  border-image-source: var(--mythic-button-image);
+  border-image-slice: var(--mythic-button-slice) fill;
+  border-width: var(--mythic-button-width);
+  border-image-width: 1;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--atlas-bg);
+  background-clip: padding-box;
+  content: "";
+  pointer-events: none;
+}
+.assetButton::after {
+  position: absolute;
+  z-index: 0;
+  inset: var(--mythic-button-top) var(--mythic-button-right) var(--mythic-button-bottom) var(--mythic-button-left);
+  border-radius: 40%;
+  background: linear-gradient(110deg, transparent, color-mix(in srgb, var(--atlas-text-strong) 15%, transparent), transparent);
+  opacity: 0;
+  content: "";
+  pointer-events: none;
+}
+.assetButton :global(.ui-button__label), .assetButton :global(.ui-button__icon) { position: relative; z-index: 1; min-width: 0; }
+.assetButton :global(.ui-button__label) { white-space: normal; text-align: center; }
+.assetButton :global(.ui-button__icon), .assetButton svg { flex: none; width: 18px; height: 18px; }
+.page .assetButton:global(.ui-button):focus-visible { outline: 2px solid var(--atlas-text-strong); outline-offset: 4px; }
+.page .assetButton:global(.ui-button):active { transform: translateY(1px) scale(.98); }
+@media (hover: hover) and (pointer: fine) {
+  .page .assetButton:global(.ui-button):hover { transform: translateY(-2px); }
+  .assetButton:hover::after { animation: assetGlint 900ms var(--atlas-ease) both; }
+}
+@keyframes assetGlint { from { opacity: 0; transform: translateX(-12px); } 45% { opacity: .8; } to { opacity: 0; transform: translateX(12px); } }
 .seasonFacts { max-width: 500px; margin-top: var(--atlas-space-5); }
 .seasonFacts :global(.ui-stats-card) { background: transparent; box-shadow: none; border: 0; padding-block: var(--atlas-space-2); }
 .dungeons { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
 .timerSection { margin-top: var(--atlas-space-6); }
-.metaLink { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-4); padding: var(--atlas-space-4) var(--atlas-space-5); margin-top: var(--atlas-space-6); border: 1px solid var(--atlas-line); border-radius: 16px; background: var(--atlas-glass-sheen), var(--atlas-glass-fill); backdrop-filter: var(--atlas-glass-filter); }
+.metaLink { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-4); padding: 36px 40px; margin-top: var(--atlas-space-6); }
+.metaLink::before { position: absolute; z-index: -1; inset: 0; border: 24px solid transparent; border-image-source: var(--mythic-panel-image); border-image-slice: var(--mythic-panel-slice) fill; border-width: var(--mythic-panel-width); border-image-width: 1; background: var(--atlas-bg); background-clip: padding-box; filter: contrast(.88) saturate(.84) brightness(.92); content: ""; pointer-events: none; }
 .metaLink > span { display: grid; gap: var(--atlas-space-1); }
 .metaLink strong { font: 600 var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); color: var(--atlas-text-strong); }
 .metaLink > span > span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
-.page .metaLink :global(.ui-button) { min-height: 46px; border-radius: 12px; transition: transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease); }
-.page .metaLink :global(.ui-button):is(:hover, :focus-visible) { box-shadow: inset 0 1px 0 var(--atlas-line-strong), 0 4px 16px var(--atlas-accent-glow); }
 .page .sourceNote :global(.ui-alert) { --ui-alert-radius: 16px; --ui-alert-bg: var(--atlas-glass-fill); border-radius: 16px; box-shadow: var(--atlas-shadow-panel); }
 .sourceNote { margin-top: var(--atlas-space-6); }
 .sourceList a { color: var(--atlas-accent); text-decoration: underline; text-underline-offset: .2em; }
@@ -70,12 +126,33 @@
   .heroHeader { max-width: 100%; }
   .heroHeader h1 { max-width: 15ch; }
   .actions { gap: var(--atlas-space-2); }
-  .actions :global(.ui-button) { flex: 1 1 180px; }
+  .actionSlot { flex: 1 1 100%; width: 100%; }
+  .actions .assetButton:global(.ui-button) { width: 100%; }
   .seasonFacts { margin-top: var(--atlas-space-4); }
-  .metaLink { align-items: flex-start; flex-direction: column; padding: var(--atlas-space-4); }
+  .metaLink { align-items: stretch; flex-direction: column; padding: 28px 20px; }
+  .metaLink::before { border-width: var(--mythic-panel-width-mobile); }
+  .metaLink .assetButton:global(.ui-button) { width: 100%; }
+  .metaAction :global(.ui-button__icon) { display: none; }
 }
 @media (prefers-reduced-transparency: reduce) { .metaLink { background: var(--atlas-surface); backdrop-filter: none; } }
+@media (max-width: 360px) {
+  .metaAction { width: calc(100% + 12px); max-width: none; margin-inline: -6px; }
+}
 @media (forced-colors: active) { .metaLink { border: 1px solid CanvasText; background: Canvas; } }
 @media (hover: hover) and (pointer: fine) { .page .metaLink :global(.ui-button):hover { transform: translateY(-2px); } }
 :global(html[data-motion="reduced"]) .page .metaLink :global(.ui-button) { transform: none; transition: none; }
 @media (prefers-reduced-motion: reduce) { .page .metaLink :global(.ui-button) { transform: none; transition: none; } }
+:global([data-motion="reduced"]) .page .assetButton:global(.ui-button),
+:global([data-ui-motion="reduce"]) .page .assetButton:global(.ui-button),
+:global([data-transparency="reduced"]) .page .assetButton:global(.ui-button) { transform: none; transition: none; }
+:global([data-motion="reduced"]) .assetButton::after,
+:global([data-ui-motion="reduce"]) .assetButton::after,
+:global([data-transparency="reduced"]) .assetButton::after { animation: none; opacity: 0; }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .page .assetButton:global(.ui-button) { transform: none; transition: none; }
+  .assetButton::after { animation: none; opacity: 0; }
+}
+@media (forced-colors: active) {
+  .page .assetButton:global(.ui-button) { border: 2px solid ButtonText; background: ButtonFace; color: ButtonText; box-shadow: none; text-shadow: none; }
+  .assetButton::before, .assetButton::after, .metaLink::before { display: none; }
+}

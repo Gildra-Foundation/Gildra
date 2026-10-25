@@ -1,270 +1,181 @@
-/* atlas:strict — the hub reuses each dungeon's measured frame and genuine Valyro ArticleCard. */
-
+/* atlas:strict — original dungeon paintings above real, individually painted material tablets. */
 .hubGrid {
-  gap: var(--atlas-space-5) var(--atlas-space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--atlas-space-7) var(--atlas-space-6);
 }
 
-.hubCard:global(.ui-article-card[data-layout="vertical"]) {
+.hubCard:global(.ui-card[data-variant="outline"]) {
+  --mythic-card-light: color-mix(in srgb, var(--hub-card-accent) 65%, var(--atlas-text-strong));
+  --mythic-card-base: color-mix(in srgb, var(--hub-card-accent) 15%, var(--atlas-bg));
+  --mythic-card-line: color-mix(in srgb, var(--hub-card-accent) 30%, transparent);
+  position: relative;
+  isolation: isolate;
   gap: 0;
-  padding: var(--atlas-space-2);
-  border: 1px solid var(--atlas-glass-edge);
-  border-radius: 18px;
-  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
-  -webkit-backdrop-filter: var(--atlas-glass-filter);
-  backdrop-filter: var(--atlas-glass-filter);
-  box-shadow: var(--atlas-glass-inset), var(--atlas-shadow-card);
-  transition: transform var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
-}
-
-.hubCard :global(.ui-article-card__media) {
-  aspect-ratio: 3 / 2;
+  align-self: start;
+  padding: 0;
   overflow: visible;
+  border: 0;
   border-radius: 0;
   background: transparent;
+  box-shadow: none;
+  color: var(--atlas-text);
+  font-family: var(--atlas-font-ui);
 }
 
-.frameCanvas {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  isolation: isolate;
-}
-
+.content { position: relative; display: flex; flex-direction: column; min-width: 0; }
+.artLink { display: block; min-width: 0; border-radius: 12px; }
+.frameCanvas { position: relative; isolation: isolate; width: 100%; aspect-ratio: 3 / 2; }
 .artWindow {
   position: absolute;
   inset: var(--frame-top) var(--frame-right) var(--frame-bottom) var(--frame-left);
   overflow: hidden;
-  border-radius: var(--frame-window-radius);
-  background: var(--atlas-surface-sunken);
+  clip-path: var(--mythic-frame-clip);
+  background: var(--mythic-card-base);
 }
+.sceneLayer { position: absolute; inset: 0; transform-origin: center; }
+.sceneImage { object-fit: cover; filter: contrast(.94) saturate(.9); transition: transform var(--atlas-duration-art) var(--ui-spring-smooth); }
+.artShade { position: absolute; inset: 0; pointer-events: none; background: var(--atlas-art-shade); opacity: .12; }
+.frameImage { z-index: 1; object-fit: contain; pointer-events: none; user-select: none; filter: contrast(.88) saturate(.84) brightness(.95); }
 
-.sceneImage {
-  object-fit: cover;
-  transition: transform var(--atlas-duration-slow) var(--atlas-ease);
-}
-
-.artShade {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--atlas-art-shade);
-  opacity: .24;
-}
-
-.frameImage {
-  z-index: 1;
-  object-fit: contain;
-  pointer-events: none;
-  user-select: none;
-}
-
-.timer {
-  position: absolute;
-  right: var(--atlas-space-3);
-  bottom: var(--atlas-space-3);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--atlas-space-2);
-  padding: var(--atlas-space-2) var(--atlas-space-3);
-  border: 1px solid var(--atlas-glass-edge);
-  border-radius: 10px;
-  background: var(--atlas-glass-fill);
-  -webkit-backdrop-filter: var(--atlas-glass-filter);
-  backdrop-filter: var(--atlas-glass-filter);
-  color: var(--atlas-text-strong);
-  box-shadow: var(--atlas-glass-inset);
-  font-size: var(--atlas-text-body);
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.timer svg {
-  width: 16px;
-  height: 16px;
-  color: var(--hub-card-accent, var(--atlas-accent));
-}
-
-.hubCard :global(.ui-article-card__body) {
-  flex: 1;
-  gap: var(--atlas-space-2);
-  padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-3);
-}
-
-.location {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--atlas-space-2);
-  color: var(--atlas-text-muted);
-  line-height: var(--atlas-leading-snug);
-}
-
-.location svg {
-  flex: none;
-  width: 13px;
-  height: 13px;
-  color: var(--hub-card-accent, var(--atlas-accent));
-}
-
-.hubCard :global(.ui-article-card__title) {
-  text-wrap: balance;
-}
-
-.hubCard :global(.ui-article-card__link) {
-  text-decoration: none;
-}
-
-.hubCard :global(.ui-article-card__link)::after {
-  z-index: 2;
-  border-radius: 18px;
-}
-
-.hubCard :global(.ui-article-card__excerpt) {
-  display: block;
+.body {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: -8px 12px 0;
+  padding: 32px 40px 36px;
   overflow: visible;
-  margin-top: auto;
-  padding-top: var(--atlas-space-3);
-  -webkit-line-clamp: unset;
 }
-
-.facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--atlas-space-2) var(--atlas-space-3);
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-meta);
+.body::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  border: 28px solid transparent;
+  border-image-source: var(--mythic-panel-image);
+  border-image-slice: var(--mythic-panel-slice) fill;
+  border-width: var(--mythic-panel-width);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--mythic-card-base);
+  background-clip: padding-box;
 }
+.location { display: flex; align-items: center; gap: var(--atlas-space-2); margin: 0 0 var(--atlas-space-2); color: var(--mythic-card-light); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
+.location svg { flex: none; width: 14px; height: 14px; }
+.title { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); text-wrap: balance; }
+.title a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: none; }
+.facts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-4); margin-top: var(--atlas-space-2); color: var(--mythic-card-light); font-size: var(--atlas-text-small); }
+.facts > span { display: inline-flex; align-items: center; gap: var(--atlas-space-2); white-space: nowrap; }
+.facts svg { flex: none; width: 15px; height: 15px; }
+.timer { font-size: var(--atlas-text-body); font-weight: 650; font-variant-numeric: tabular-nums; }
+.description { margin: var(--atlas-space-3) 0 0; color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-relaxed); text-wrap: pretty; }
+.footer { display: flex; flex-direction: column; align-items: stretch; gap: var(--atlas-space-2); margin-top: var(--atlas-space-4); }
 
-.facts > span {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--atlas-space-1);
-  white-space: nowrap;
-}
-
-.facts svg {
-  width: 14px;
-  height: 14px;
-  color: var(--hub-card-accent, var(--atlas-accent));
-}
-
-.openRoute {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--atlas-space-3);
-  margin-top: var(--atlas-space-3);
-  padding-top: var(--atlas-space-3);
-  border-top: 1px solid var(--atlas-line-soft);
-  color: var(--atlas-accent);
+.hubCard .openRoute:global(.ui-button[data-variant="secondary"]) {
+  --ui-button-secondary-bg: transparent;
+  --ui-button-secondary-bg-hover: transparent;
+  --ui-button-secondary-bg-active: transparent;
+  --ui-button-secondary-fg: var(--atlas-text-strong);
+  --ui-button-secondary-field: transparent;
+  --ui-focus-ring: 0 0 0 3px var(--atlas-bg), 0 0 0 5px var(--mythic-card-light);
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  justify-content: center;
+  min-height: 68px;
+  border: 0;
+  border-radius: 6px;
+  padding: var(--mythic-button-pad-top) var(--mythic-button-inset) var(--mythic-button-pad-bottom);
+  color: var(--atlas-text-strong);
   font-size: var(--atlas-text-small);
-  font-weight: 550;
-}
-
-.openRoute svg {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  transition: transform var(--atlas-duration) var(--atlas-ease);
-}
-
-.hubCard:focus-within {
-  border-color: var(--atlas-accent-strong);
-}
-
-.hubCard :global(.ui-article-card__link):focus-visible::after {
-  outline: 2px solid var(--atlas-accent-strong);
-  outline-offset: 4px;
+  text-shadow: 0 1px 3px var(--atlas-bg);
   box-shadow: none;
+  transition: transform var(--atlas-duration-fast) var(--ui-spring-smooth);
 }
+.openRoute::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 20px solid transparent;
+  border-image-source: var(--mythic-button-image);
+  border-image-slice: var(--mythic-button-slice) fill;
+  border-width: var(--mythic-button-width);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--mythic-card-base);
+  background-clip: padding-box;
+  content: "";
+  pointer-events: none;
+}
+.openRoute::after {
+  position: absolute;
+  z-index: 0;
+  inset: var(--mythic-button-top) var(--mythic-button-right) var(--mythic-button-bottom) var(--mythic-button-left);
+  overflow: hidden;
+  border-radius: 35%;
+  background: radial-gradient(ellipse at 15% 50%, color-mix(in srgb, var(--hub-card-accent) 34%, transparent), transparent 65%);
+  opacity: 0;
+  content: "";
+  pointer-events: none;
+}
+.openRoute :global(.ui-button__label),
+.openRoute :global(.ui-button__icon) { position: relative; z-index: 1; }
+.hubCard[data-mythic-card-theme="void"] .openRoute::after { background: radial-gradient(ellipse at 75% 50%, color-mix(in srgb, var(--hub-card-accent) 36%, transparent), transparent 58%); }
+.hubCard[data-mythic-card-theme="bloom"] .openRoute::after { background: radial-gradient(ellipse at 25% 85%, color-mix(in srgb, var(--hub-card-accent) 32%, transparent), transparent 65%); }
+.hubCard[data-mythic-card-theme="serpent"] .openRoute::after { background: linear-gradient(110deg, transparent 15%, color-mix(in srgb, var(--hub-card-accent) 29%, transparent), transparent 75%); }
+.hubCard[data-mythic-card-theme="frost"] .openRoute::after { background: linear-gradient(105deg, transparent 10%, color-mix(in srgb, var(--hub-card-accent) 32%, transparent), transparent 80%); }
+.source { display: inline-flex; align-self: center; align-items: center; justify-content: center; gap: var(--atlas-space-2); min-height: 44px; color: var(--atlas-text); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); text-decoration: none; }
+.source svg { flex: none; width: 16px; height: 16px; }
+.hubCard a:focus-visible { outline: 2px solid var(--mythic-card-light); outline-offset: 3px; }
+.hubCard a { scroll-margin-block: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
+.openRoute:focus-visible::after { animation: materialPulse 900ms var(--atlas-ease) both; }
+.hubCard:focus-within .sceneImage { transform: scale(1.018); }
 
 @media (hover: hover) and (pointer: fine) {
-  .hubCard:global(.ui-article-card[data-linked]):hover {
-    border-color: color-mix(in srgb, var(--hub-card-accent, var(--atlas-accent)) 65%, var(--atlas-glass-edge));
-    background: var(--atlas-glass-sheen), var(--atlas-glass-raised);
-    box-shadow: var(--atlas-glass-inset), var(--atlas-shadow-lift);
-    transform: translateY(-4px);
-  }
-
-  .hubCard:hover .sceneImage {
-    transform: scale(1.035);
-  }
-
-  .hubCard:hover .openRoute svg {
-    transform: translate(2px, -2px);
-  }
+  .hubCard:hover .sceneImage { transform: scale(1.025); }
+  .title a:hover, .source:hover { color: var(--mythic-card-light); text-decoration: underline; text-underline-offset: 3px; }
+  .hubCard .openRoute:global(.ui-button):hover { transform: translateY(-2px); }
+  .openRoute:hover::after { animation: materialSweep 900ms var(--atlas-ease) both; }
+  .hubCard[data-mythic-card-theme="void"] .openRoute:hover::after { animation-name: materialPulse; }
+  .hubCard[data-mythic-card-theme="bloom"] .openRoute:hover::after,
+  .hubCard[data-mythic-card-theme="fangs"] .openRoute:hover::after { animation-name: materialRise; }
+  .hubCard[data-mythic-card-theme="royal"] .openRoute:hover::after,
+  .hubCard[data-mythic-card-theme="serpent"] .openRoute:hover::after { animation-name: materialSun; }
 }
+.hubCard .openRoute:global(.ui-button):active { transform: translateY(1px) scale(var(--atlas-press-scale)); }
+@keyframes materialSweep { from { opacity: 0; transform: translateX(-10px); } 45% { opacity: .7; } to { opacity: 0; transform: translateX(16px); } }
+@keyframes materialPulse { from { opacity: 0; transform: scale(.85); } 45% { opacity: .65; } to { opacity: 0; transform: scale(1.07); } }
+@keyframes materialRise { from { opacity: 0; transform: translateY(5px); } 45% { opacity: .6; } to { opacity: 0; transform: translateY(-5px); } }
+@keyframes materialSun { from { opacity: 0; transform: translateX(-15%); } 45% { opacity: .65; } to { opacity: 0; transform: translateX(15%); } }
 
-.hubCard:active {
-  transform: translateY(-1px) scale(var(--atlas-press-scale-card));
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@media (max-width: 900px) { .hubGrid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 700px) {
+  .hubGrid { gap: var(--atlas-space-7); }
+  .body { margin-inline: 0; padding: 28px 28px 32px; --mythic-panel-rail-inset: var(--mythic-panel-rail-inset-mobile); }
+  .body::before { border-width: var(--mythic-panel-width-mobile); }
+  .facts { gap: var(--atlas-space-2) var(--atlas-space-3); }
 }
-
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
+@media (max-width: 360px) { .body { padding-inline: 20px; } }
 @media (prefers-reduced-motion: reduce) {
-  .hubCard:global(.ui-article-card),
-  .sceneImage,
-  .openRoute svg {
-    transition: none;
-  }
-
-  .hubCard:global(.ui-article-card):is(:hover, :active),
-  .hubCard:hover .sceneImage,
-  .hubCard:hover .openRoute svg {
-    transform: none;
-  }
+  .sceneImage, .hubCard .openRoute:global(.ui-button), .openRoute::after { animation: none !important; transition: none !important; transform: none !important; }
 }
-
-:global([data-motion="reduced"]) .hubCard:global(.ui-article-card),
-:global([data-motion="reduced"]) .sceneImage,
-:global([data-motion="reduced"]) .openRoute svg {
-  transition: none;
-}
-
-:global([data-motion="reduced"]) .hubCard:global(.ui-article-card):is(:hover, :active),
-:global([data-motion="reduced"]) .hubCard:hover .sceneImage,
-:global([data-motion="reduced"]) .hubCard:hover .openRoute svg {
-  transform: none;
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .hubCard:global(.ui-article-card[data-layout="vertical"]),
-  .timer {
-    background: var(--atlas-surface);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-}
-
+:global([data-motion="reduced"]) .hubCard .sceneImage,
+:global([data-motion="reduced"]) .hubCard .openRoute:global(.ui-button),
+:global([data-motion="reduced"]) .hubCard .openRoute::after,
+:global([data-ui-motion="reduce"]) .hubCard .sceneImage,
+:global([data-ui-motion="reduce"]) .hubCard .openRoute:global(.ui-button),
+:global([data-ui-motion="reduce"]) .hubCard .openRoute::after { animation: none !important; transition: none !important; transform: none !important; }
+@media (prefers-reduced-transparency: reduce) { .artShade, .openRoute::after { display: none; } }
 @media (forced-colors: active) {
-  .hubCard:global(.ui-article-card[data-layout="vertical"]),
-  .timer {
-    border: 1px solid CanvasText;
-    background: Canvas;
-    color: CanvasText;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
-  }
-
-  .frameImage,
-  .artShade {
-    display: none;
-  }
-
-  .artWindow {
-    border: 1px solid CanvasText;
-  }
-
-  .hubCard :global(.ui-article-card__link):focus-visible::after {
-    outline-color: Highlight;
-  }
+  .frameImage, .artShade, .body::before, .openRoute::before, .openRoute::after { display: none; }
+  .artWindow { clip-path: none; border: 1px solid CanvasText; background: Canvas; }
+  .body { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .hubCard .openRoute:global(.ui-button[data-variant="secondary"]) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
+  .hubCard a:focus-visible { outline-color: Highlight; }
 }

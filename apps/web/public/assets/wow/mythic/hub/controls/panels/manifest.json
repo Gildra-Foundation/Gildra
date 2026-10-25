@@ -1,0 +1,116 @@
+{
+  "entries": {
+    "ruby-life-pools": {
+      "path": "/assets/wow/mythic/hub/controls/panels/ruby-life-pools.webp",
+      "width": 768,
+      "height": 959,
+      "slices": [
+        160,
+        152,
+        160,
+        152
+      ],
+      "railInset": 26,
+      "bytes": 92906,
+      "sha256": "18ab01afdf52e1650b415e22f7d261da45a5fd7ae7280fe10d3c6c08c7fd67c7"
+    },
+    "altar-of-fangs": {
+      "path": "/assets/wow/mythic/hub/controls/panels/altar-of-fangs.webp",
+      "width": 768,
+      "height": 967,
+      "slices": [
+        160,
+        152,
+        160,
+        152
+      ],
+      "railInset": 29,
+      "bytes": 72204,
+      "sha256": "0af3943a0e178af2fbd6f50f57c7da745fce090c1ee302e9cef5305e559b9a0f"
+    },
+    "murder-row": {
+      "path": "/assets/wow/mythic/hub/controls/panels/murder-row.webp",
+      "width": 768,
+      "height": 958,
+      "slices": [
+        168,
+        152,
+        168,
+        152
+      ],
+      "railInset": 37,
+      "bytes": 68956,
+      "sha256": "191f816ea7431d15bd565355fe08be19a47f6195732b35c99e5a7911f24683ec"
+    },
+    "den-of-nalorakk": {
+      "path": "/assets/wow/mythic/hub/controls/panels/den-of-nalorakk.webp",
+      "width": 768,
+      "height": 964,
+      "slices": [
+        160,
+        160,
+        160,
+        160
+      ],
+      "railInset": 32,
+      "bytes": 64244,
+      "sha256": "305f79f0cf8c038ef640990f4e94aaf57a3552520449c16af75c4cf433de105b"
+    },
+    "the-blinding-vale": {
+      "path": "/assets/wow/mythic/hub/controls/panels/the-blinding-vale.webp",
+      "width": 768,
+      "height": 954,
+      "slices": [
+        160,
+        152,
+        160,
+        152
+      ],
+      "railInset": 29,
+      "bytes": 97580,
+      "sha256": "a38b0be9eec0fd7d0ec867159e47c1bd8d7f3e36db4495f50274a91b27a120dd"
+    },
+    "voidscar-arena": {
+      "path": "/assets/wow/mythic/hub/controls/panels/voidscar-arena.webp",
+      "width": 768,
+      "height": 954,
+      "slices": [
+        160,
+        152,
+        160,
+        152
+      ],
+      "railInset": 40,
+      "bytes": 79084,
+      "sha256": "8738b668ad8856ab0b32f563d3c4e1a213e42676ed87a7d5a73572f81583f2bb"
+    },
+    "kings-rest": {
+      "path": "/assets/wow/mythic/hub/controls/panels/kings-rest.webp",
+      "width": 768,
+      "height": 942,
+      "slices": [
+        160,
+        160,
+        160,
+        160
+      ],
+      "railInset": 39,
+      "bytes": 46416,
+      "sha256": "8cb82815e2f8e283ae54b016605b60f7cc07db4a41a31ab107b03c1e213332c5"
+    },
+    "temple-of-sethraliss": {
+      "path": "/assets/wow/mythic/hub/controls/panels/temple-of-sethraliss.webp",
+      "width": 768,
+      "height": 962,
+      "slices": [
+        160,
+        152,
+        160,
+        152
+      ],
+      "railInset": 30,
+      "bytes": 45020,
+      "sha256": "3f422a09d8945c8ff687099356c23a60a9f45ba9d584283e6f4a7453aecee754"
+    }
+  }
+}

@@ -1,13 +1,18 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { routeSummary } from "@/lib/data/wow/mythicReviewSummary";
 import { wowSourceName } from "@/lib/wow/sourceLocale";
 import { ArrowUpRight, Clock3, MapPin, Route, Skull } from "lucide-react";
 import { AtlasBadge, AtlasCard, AtlasGrid } from "@/components/atlas";
-import { AtlasArticleCard } from "@gildra/atlas-ui/AtlasArticleCard";
+import { Card } from "@gildra/atlas-ui/valyro-ui/data-display/Card";
+import { AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
+import bridge from "@gildra/atlas-ui/valyroAtlasBridge.module.css";
 import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
-import { dungeonArtDirections, dungeonBackdropSmall, dungeonFrameArtwork } from "@/lib/wow/dungeonArtDirection";
-import { dungeonMapFrameLayout } from "./dungeonMapFrameLayout";
+import { dungeonBackdropSmall, dungeonFrameArtwork } from "@/lib/wow/dungeonArtDirection";
+import { mythicHubThemes, mythicHubMaterialCopy, mythicHubFrameLayout } from "./hub/mythicHubThemes";
+import { mythicHubControlLayout } from "./hub/mythicHubControls";
+import { MythicHubOrnaments } from "./hub/MythicHubOrnaments";
 import { dungeonLocationEn, mythicAtlasCopy } from "./mythicAtlasCopy";
 import { formatHubTimer } from "./mythicHubTimers";
 import cardStyles from "./dungeonCardGrid.module.css";
@@ -19,58 +24,69 @@ export function DungeonCardGrid({ locale, hrefBase, priority = true, variant = "
   const copy = mythicAtlasCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
   return (
-    <AtlasGrid min={variant === "hub" ? 320 : 290} fit className={variant === "hub" ? cardStyles.hubGrid : undefined}>
+    <AtlasGrid min={290} fit className={variant === "hub" ? cardStyles.hubGrid : undefined}>
       {dungeonSlugs.map((slug, index) => {
         const dungeon = dungeonRoutes[slug];
         const bosses = dungeon.stops.filter((stop) => stop.kind === "boss");
         const location = locale === "ru" ? dungeon.location : dungeonLocationEn[dungeon.location];
         const href = `${prefix}${hrefBase}/${slug}`;
         if (variant === "hub") {
-          const direction = dungeonArtDirections[slug];
-          const pulls = routeSummary[slug].pulls;
-          return <AtlasArticleCard
+          const theme = mythicHubThemes[slug];
+          const materialCopy = mythicHubMaterialCopy[locale];
+          const matched = routeSummary[slug].status === "dataset-matched";
+          const name = wowSourceName(dungeon.name, locale, dungeon.nameRu);
+          const sizes = "(max-width: 900px) 100vw, 50vw";
+          return <Card
             key={slug}
-            locale={locale}
-            href={href}
-            className={cardStyles.hubCard}
+            padding="none"
+            variant="outline"
+            className={`${bridge.scope} ${cardStyles.hubCard}`}
             data-hub-dungeon-card={slug}
-            style={{ ...dungeonMapFrameLayout(slug), "--hub-card-accent": direction.accent } as CSSProperties}
-            image={<div className={cardStyles.frameCanvas}>
-              <div className={cardStyles.artWindow} data-hub-card-art>
-                <Image
-                  src={dungeonBackdropSmall(slug)}
-                  alt=""
-                  fill
-                  sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 25vw"
-                  priority={priority && index < 2}
-                  className={cardStyles.sceneImage}
-                />
-                <span className={cardStyles.artShade} aria-hidden="true" />
-                <span className={cardStyles.timer} data-hub-card-timer>
-                  <Clock3 aria-hidden="true" />
-                  <span className={cardStyles.srOnly}>{copy.timer}: </span>
-                  <time dateTime={`PT${dungeon.timerSeconds}S`}>{formatHubTimer(dungeon.timerSeconds)}</time>
-                </span>
+            data-mythic-card-theme={theme.motif}
+            style={{ ...mythicHubFrameLayout(slug), ...mythicHubControlLayout(slug) } as CSSProperties}
+          >
+            <article className={cardStyles.content} aria-labelledby={`mythic-hub-${slug}`}>
+              <Link className={cardStyles.artLink} href={href} tabIndex={-1} aria-hidden="true">
+                <div className={cardStyles.frameCanvas}>
+                  <div className={cardStyles.artWindow} data-hub-card-art>
+                    <div className={cardStyles.sceneLayer} data-hub-dungeon-scene>
+                      <Image
+                        src={dungeonBackdropSmall(slug)}
+                        alt=""
+                        fill
+                        sizes={sizes}
+                        priority={priority && index < 2}
+                        className={cardStyles.sceneImage}
+                        data-hub-dungeon-image
+                      />
+                    </div>
+                    <span className={cardStyles.artShade} aria-hidden="true" />
+                  </div>
+                  <Image src={dungeonFrameArtwork(slug)} alt="" fill sizes={sizes} className={cardStyles.frameImage} aria-hidden="true" />
+                </div>
+              </Link>
+              <div className={cardStyles.body} data-mythic-material-panel={slug}>
+                {location ? <p className={cardStyles.location}><MapPin aria-hidden="true" />{location}</p> : null}
+                <h3 className={cardStyles.title} id={`mythic-hub-${slug}`}><Link href={href}>{name}</Link></h3>
+                <div className={cardStyles.facts}>
+                  <span className={cardStyles.timer} data-hub-card-timer>
+                    <Clock3 aria-hidden="true" /><span className={cardStyles.srOnly}>{copy.timer}: </span>
+                    <time dateTime={`PT${dungeon.timerSeconds}S`}>{formatHubTimer(dungeon.timerSeconds)}</time>
+                  </span>
+                  <span><Skull aria-hidden="true" />{copy.bossCount(bosses.length)}</span>
+                  {matched ? <span><Route aria-hidden="true" />{copy.stops(routeSummary[slug].pulls)}</span> : null}
+                </div>
+                <p className={cardStyles.description}>{theme.description[locale]}</p>
+                <footer className={cardStyles.footer}>
+                  <AtlasLinkButton className={cardStyles.openRoute} href={href} prefetch={false}>
+                    {copy.open}<span className={cardStyles.srOnly}>: {name}</span>
+                  </AtlasLinkButton>
+                  <a className={cardStyles.source} href={dungeon.guideUrl} target="_blank" rel="noreferrer">{materialCopy.source}<ArrowUpRight aria-hidden="true" /></a>
+                </footer>
+                <MythicHubOrnaments slug={slug} />
               </div>
-              <Image
-                src={dungeonFrameArtwork(slug)}
-                alt=""
-                fill
-                sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 25vw"
-                className={cardStyles.frameImage}
-                aria-hidden="true"
-              />
-            </div>}
-            kicker={location ? <span className={cardStyles.location}><MapPin aria-hidden="true" />{location}</span> : "Mythic+"}
-            title={wowSourceName(dungeon.name, locale, dungeon.nameRu)}
-            excerpt={<>
-              <span className={cardStyles.facts}>
-                <span><Skull aria-hidden="true" />{copy.bossCount(bosses.length)}</span>
-                {routeSummary[slug].status === "dataset-matched" ? <span><Route aria-hidden="true" />{copy.stops(pulls)}</span> : null}
-              </span>
-              <span className={cardStyles.openRoute}>{copy.open}<ArrowUpRight aria-hidden="true" /></span>
-            </>}
-          />;
+            </article>
+          </Card>;
         }
         return (
           <AtlasCard
