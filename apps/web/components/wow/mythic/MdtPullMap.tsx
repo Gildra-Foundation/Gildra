@@ -27,6 +27,7 @@ import { mdtPullMapCopy } from "./mdtPullMapCopy";
 import { pullWorkspaceCopy } from "./pullWorkspaceCopy";
 import { dungeonMapFrameLayout } from "./dungeonMapFrameLayout";
 import { dungeonThemeClass } from "./dungeonTheme";
+import { dungeonPullArtClass } from "./dungeonPullArt";
 import styles from "./mdtPullMap.module.css";
 
 export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combatIntel }: { slug: DungeonSlug; locale: "ru" | "en"; routeUrl: string; data: MdtDataset; stops: RouteStop[]; combatIntel: DungeonCombatIntel }) {
@@ -39,7 +40,7 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
   const [pullList, setPullList] = useState<HTMLOListElement | null>(null);
   const attachPullStrip = useCallback((node: HTMLOListElement | null) => { pullStrip.current = node; setPullList(node); }, []);
   const root = useRef<HTMLElement>(null), builds = useRef<HTMLDetailsElement>(null);
-  const themeClassName = dungeonThemeClass(slug);
+  const themeClassName = `${dungeonThemeClass(slug)} ${dungeonPullArtClass(slug)}`;
   const selectedSpec = playerSpecs.find(spec => spec.id === profile.specId && spec.classId === profile.classId);
   const activeRole = selectedSpec?.role ?? selectedRole;
   const talents = useMemo(() => talentsForProfile({ classId: profile.classId, specId: profile.specId, talentString: profile.talentString }), [profile.classId, profile.specId, profile.talentString]);
@@ -74,12 +75,12 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
       if (choice && strip) strip.scrollTo({ left: strip.scrollLeft + choice.getBoundingClientRect().left - strip.getBoundingClientRect().left - strip.clientWidth / 2 + choice.clientWidth / 2, behavior: !lessMotion() ? "smooth" : "instant" });
     });
   }
-  return <section ref={root} className={styles.panel} data-dungeon-map={slug} data-testid="mdt-map" aria-label={copy.mapLabel}>
+  return <section ref={root} className={`${styles.panel} ${dungeonPullArtClass(slug)}`} data-dungeon-map={slug} data-testid="mdt-map" aria-label={copy.mapLabel}>
     <header className={styles.header}><h3>{authored ? t.route : t.groups}</h3><a className={styles.routeLink} href={data.route.url || routeUrl} target="_blank" rel="noreferrer">{copy.authoredRoute}</a></header>
     <div className={styles.playerBar}>
       <div className={styles.rolePicker} data-testid="pull-role-picker"><AtlasSegmented aria-label={roles.label} animation="spring" size="lg" fullWidth value={activeRole} onValueChange={value => { setProfile({ ...profile, specId: null }); setSelectedRole(value); }} options={(["all", "tank", "healer", "dps"] as const).map(value => ({ value, label: roles[value] }))} /></div>
       <PlayerProfilePicker locale={locale} themeClassName={themeClassName} profile={profile} onProfileChange={setProfile} onRoleChange={setSelectedRole} />
-      <details ref={builds} className={styles.buildDisclosure}><summary>{t.build}<span>{talents.selection ? t.imported : t.options}</span></summary><TalentImportPanel locale={locale} profile={profile} result={talents.result} onProfileChange={setProfile} onRoleChange={setSelectedRole} /></details>
+      <details ref={builds} className={styles.buildDisclosure}><summary data-pull-art-control="material">{t.build}<span>{talents.selection ? t.imported : t.options}</span></summary><TalentImportPanel locale={locale} profile={profile} result={talents.result} onProfileChange={setProfile} onRoleChange={setSelectedRole} /></details>
     </div>
     {!authored && <p className={styles.routeStatus} data-testid="mdt-route-status">{t.unverified} · {copy.incompatible}</p>}
     {!members ? <p role="status">{copy.empty}</p> : <>
@@ -117,8 +118,8 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
         </figure>)}</div>
         <aside id="pull-selected-panel" className={styles.selectedPanel} data-testid="pull-selected-panel" aria-label={title}>
           <header className={styles.selectedHeader}>
-            <div className={styles.selectedIdentity}><b className={styles.selectedNumber} aria-hidden="true">{active + 1}</b><div><h4 aria-live="polite" aria-atomic="true">{title}</h4><span>{copy.enemyCount(members.length)} · {t.forces} {forcesPercent(members.reduce((sum, node) => sum + node.forces, 0))}</span></div></div>
-            <div className={styles.pullArrows}><AtlasButton size="sm" variant="ghost" disabled={active === 0} aria-label={`${t.previous} ${label.toLocaleLowerCase(locale)}`} onClick={() => selectPull(active - 1, true)}><ChevronLeft size={20} aria-hidden="true" /></AtlasButton><AtlasButton size="sm" variant="ghost" disabled={active === pulls.length - 1} aria-label={`${t.next} ${label.toLocaleLowerCase(locale)}`} onClick={() => selectPull(active + 1, true)}><ChevronRight size={20} aria-hidden="true" /></AtlasButton></div>
+            <div className={styles.selectedIdentity}><b className={styles.selectedNumber} data-pull-art-emblem aria-hidden="true">{active + 1}</b><div><h4 aria-live="polite" aria-atomic="true">{title}</h4><span>{copy.enemyCount(members.length)} · {t.forces} {forcesPercent(members.reduce((sum, node) => sum + node.forces, 0))}</span></div></div>
+            <div className={styles.pullArrows}><AtlasButton data-pull-art-control="icon" size="sm" variant="ghost" disabled={active === 0} aria-label={`${t.previous} ${label.toLocaleLowerCase(locale)}`} onClick={() => selectPull(active - 1, true)}><ChevronLeft size={20} aria-hidden="true" /></AtlasButton><AtlasButton data-pull-art-control="icon" size="sm" variant="ghost" disabled={active === pulls.length - 1} aria-label={`${t.next} ${label.toLocaleLowerCase(locale)}`} onClick={() => selectPull(active + 1, true)}><ChevronRight size={20} aria-hidden="true" /></AtlasButton></div>
           </header>
           <div className={styles.selectedBody} key={active}><PullActionPanel themeClassName={themeClassName} title={title} intel={pullIntel[active]} locale={locale} role={activeRole} spec={selectedSpec} spells={talents.selection} /></div>
         </aside>

@@ -1,6 +1,7 @@
 import { Ban, Shield, Crosshair, Footprints, Sparkles, Hand } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { ResilientImage } from "@/components/media/ResilientImage";
+import { DungeonSpellIcon } from "./DungeonSpellIcon";
 import type { PullIntel, PullMechanic } from "./mdtPullIntel";
 import type { PlayerSpec } from "./playerTools";
 import type { TalentSpellSelection } from "./mythicTalentImport";
@@ -35,7 +36,7 @@ export function PullActionPanel({ themeClassName, title, intel, locale, role, sp
         return rows.length > 0 && <section className={styles.actionGroup} key={action} data-action-group={action}>
           <h6><Icon size={18} aria-hidden="true" />{t.action[action]}</h6>
           <ul>{rows.map(ability => <li key={`${ability.npcId ?? ability.source}:${ability.spellId ?? ability.name}`}>
-            <div className={styles.castIdentity}><ResilientImage data-combat-icon="spell" src={ability.iconUrl} width={32} height={32} alt="" loading="lazy" /><div><b>{ability.name}</b><small>{ability.source}{role === "all" ? ` · ${t[ability.role]}` : ""}</small></div></div>
+            <div className={styles.castIdentity}><DungeonSpellIcon data-combat-icon="spell" src={ability.iconUrl} width={32} height={32} alt="" loading="lazy" /><div><b>{ability.name}</b><small>{ability.source}{role === "all" ? ` · ${t[ability.role]}` : ""}</small></div></div>
             {ability.response && <p>{ability.response}</p>}
             {spec && <PlayerSpellAdvice compact spec={spec} mechanic={ability} locale={locale} selectedSpells={spells} />}
           </li>)}</ul>

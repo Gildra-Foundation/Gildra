@@ -1,0 +1,234 @@
+{
+  "mode": "built-in image_gen; sixteen distinct generate calls; actual alpha preserved",
+  "delivery": "alpha-bounds trim, proportional contain, transparent gutter, WebP quality88 alpha100; no repainting",
+  "entries": {
+    "markers": {
+      "ruby-life-pools": {
+        "path": "/assets/wow/mythic/pull-art/markers/ruby-life-pools.webp",
+        "width": 144,
+        "height": 144,
+        "bytes": 8282,
+        "sha256": "e0db25b4c6f8d3e4ecabdd3970e9ea60e3d9a0005340329686f948946fd4df9e",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/markers/ruby-life-pools.png",
+        "nativeSha256": "6cfb322e70f8154c07206a50edfc07069fdb8008e4e5fdc2959c0719f1626393"
+      },
+      "altar-of-fangs": {
+        "path": "/assets/wow/mythic/pull-art/markers/altar-of-fangs.webp",
+        "width": 144,
+        "height": 144,
+        "bytes": 8328,
+        "sha256": "1ef2eab7cbea87d86d8d55b6ed06317362ba42dcc8babe4c5f5399c7e7fce7d7",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/markers/altar-of-fangs.png",
+        "nativeSha256": "959d28b930828c93479d8bebd81ed1b6ec597ea0c9a620e504331f3e3d200931"
+      },
+      "murder-row": {
+        "path": "/assets/wow/mythic/pull-art/markers/murder-row.webp",
+        "width": 144,
+        "height": 144,
+        "bytes": 8416,
+        "sha256": "850849e700a62e0efac90ff0a04bed45b4b42818508a5b1e85290048a02dfc6c",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/markers/murder-row.png",
+        "nativeSha256": "f6e5b043c97cf082ab4bbec08029f76ba29c61cb3da899d53df5a08440366f0b"
+      },
+      "den-of-nalorakk": {
+        "path": "/assets/wow/mythic/pull-art/markers/den-of-nalorakk.webp",
+        "width": 144,
+        "height": 144,
+        "bytes": 7646,
+        "sha256": "6e8a79028b97c4c908a7acaf4897f1eef6622e5ec4d0eb642b24072db7e922fa",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/markers/den-of-nalorakk.png",
+        "nativeSha256": "4cdf97c07afac39f0b7db1537ee25339097450c1cbb1d1d36142667093f28e4d"
+      },
+      "the-blinding-vale": {
+        "path": "/assets/wow/mythic/pull-art/markers/the-blinding-vale.webp",
+        "width": 144,
+        "height": 144,
+        "bytes": 8598,
+        "sha256": "571b6eafc65cf8383981bdc795a6533c22e9eb82fb02a01170f31780c65dc209",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/markers/the-blinding-vale.png",
+        "nativeSha256": "9c70f812721f8e5beb8f501af3a1c1179a15c7735f1eea5b1ad7f5bccd495c78"
+      },
+      "voidscar-arena": {
+        "path": "/assets/wow/mythic/pull-art/markers/voidscar-arena.webp",
+        "width": 144,
+        "height": 144,
+        "bytes": 6850,
+        "sha256": "5a37842d6940e920c84a3694465623c8fb413b983cc99b622d5df62b602e1f51",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/markers/voidscar-arena.png",
+        "nativeSha256": "8f34ac33f65f8659e9a4b7c314565caf8fdd898cd5a7a58b694019d8953b8356"
+      },
+      "kings-rest": {
+        "path": "/assets/wow/mythic/pull-art/markers/kings-rest.webp",
+        "width": 144,
+        "height": 144,
+        "bytes": 8520,
+        "sha256": "f5c4f2e2fb88f83cee0e442b8e62fbaca60122a88070caa42bf69a09badd02c5",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/markers/kings-rest.png",
+        "nativeSha256": "f2348284706894c9f0c1648e8b18dedfd7639297657556723fc9b5c93495da50"
+      },
+      "temple-of-sethraliss": {
+        "path": "/assets/wow/mythic/pull-art/markers/temple-of-sethraliss.webp",
+        "width": 144,
+        "height": 144,
+        "bytes": 8270,
+        "sha256": "cfc569352c6986f4a108181287f03d6bfe4103fa9b1f60aae1967630b99a1f77",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/markers/temple-of-sethraliss.png",
+        "nativeSha256": "4c215c060f7dd10d9367d5fbf75d1cd30c032444020608386821825f421e7032"
+      }
+    },
+    "skills": {
+      "ruby-life-pools": {
+        "path": "/assets/wow/mythic/pull-art/skills/ruby-life-pools.webp",
+        "width": 256,
+        "height": 256,
+        "bytes": 22044,
+        "sha256": "29117a97dfb4c2166ed691dc79b85f628fc29f8aa3b41b4d37c080ae7efc08f3",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/skills/ruby-life-pools.png",
+        "nativeSha256": "182a6f35d6fe32b481904243af6dc2527db31889dec8d0b98c083e35a71a2201",
+        "window": {
+          "bounds": {
+            "left": 50,
+            "top": 52,
+            "right": 206,
+            "bottom": 203
+          },
+          "transparentWindowPixels": 22047,
+          "clip": "polygon(9.615% 1.325%, 5.128% 3.311%, 3.205% 5.298%, 0.641% 11.921%, 0.641% 87.417%, 1.282% 90.728%, 3.205% 94.040%, 5.128% 96.026%, 9.615% 98.013%, 90.385% 98.013%, 94.872% 96.026%, 97.436% 93.377%, 99.359% 88.742%, 99.359% 10.596%, 97.436% 5.960%, 94.872% 3.311%, 90.385% 1.325%)"
+        }
+      },
+      "altar-of-fangs": {
+        "path": "/assets/wow/mythic/pull-art/skills/altar-of-fangs.webp",
+        "width": 256,
+        "height": 256,
+        "bytes": 22576,
+        "sha256": "b5af86c6820d3ad83cfd426c6b599d1701c8695ba44df8450fc09d1a828a1003",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/skills/altar-of-fangs.png",
+        "nativeSha256": "df7c1f534e7ad8508d8832afae5b1aa7ca0cf0f1022f1e45634e3bf409a72f84",
+        "window": {
+          "bounds": {
+            "left": 47,
+            "top": 54,
+            "right": 208,
+            "bottom": 210
+          },
+          "transparentWindowPixels": 22857,
+          "clip": "polygon(9.938% 1.282%, 6.832% 2.564%, 2.484% 6.410%, 0.621% 11.538%, 0.621% 79.487%, 1.242% 82.692%, 3.106% 87.179%, 6.211% 91.026%, 6.832% 93.590%, 8.696% 94.872%, 14.286% 97.436%, 29.814% 98.077%, 68.944% 98.077%, 85.714% 97.436%, 90.062% 95.513%, 93.168% 93.590%, 93.168% 91.667%, 96.894% 87.179%, 98.758% 82.051%, 98.758% 53.205%, 99.379% 52.564%, 99.379% 47.436%, 98.758% 46.795%, 98.758% 33.333%, 99.379% 32.692%, 98.758% 15.385%, 99.379% 13.462%, 98.758% 12.821%, 98.758% 8.974%, 97.516% 6.410%, 95.031% 3.846%, 90.062% 1.282%)"
+        }
+      },
+      "murder-row": {
+        "path": "/assets/wow/mythic/pull-art/skills/murder-row.webp",
+        "width": 256,
+        "height": 256,
+        "bytes": 23238,
+        "sha256": "84acfadc10576a4abf510552c75b53ec04db3e647f3d38fff6ba305b3813e526",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/skills/murder-row.png",
+        "nativeSha256": "d63c0aec4c9b574d129e67166362391bfc0ff23d52f8e4298cec190a584505e9",
+        "window": {
+          "bounds": {
+            "left": 51,
+            "top": 48,
+            "right": 205,
+            "bottom": 206
+          },
+          "transparentWindowPixels": 22804,
+          "clip": "polygon(9.091% 1.266%, 5.195% 3.165%, 2.597% 5.696%, 0.649% 10.127%, 0.649% 89.241%, 2.597% 93.671%, 5.195% 96.203%, 9.740% 98.101%, 90.260% 98.101%, 94.805% 96.203%, 98.052% 93.038%, 99.351% 89.241%, 99.351% 10.127%, 97.403% 5.696%, 94.156% 2.532%, 90.909% 1.266%)"
+        }
+      },
+      "den-of-nalorakk": {
+        "path": "/assets/wow/mythic/pull-art/skills/den-of-nalorakk.webp",
+        "width": 256,
+        "height": 256,
+        "bytes": 21892,
+        "sha256": "4cd720319955232c6b0b9495d34921996d00818f5040984163336c1dc627bbfa",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/skills/den-of-nalorakk.png",
+        "nativeSha256": "0567dbc708bf6c69f6af141d9967ff1adf3cd6584ab0a01af679c047a2376c9d",
+        "window": {
+          "bounds": {
+            "left": 46,
+            "top": 61,
+            "right": 210,
+            "bottom": 218
+          },
+          "transparentWindowPixels": 24177,
+          "clip": "polygon(9.146% 1.274%, 4.878% 3.185%, 3.049% 5.096%, 0.610% 11.465%, 0.610% 87.898%, 2.439% 93.631%, 4.878% 96.178%, 9.756% 98.089%, 89.634% 98.089%, 92.683% 97.452%, 96.951% 94.268%, 98.780% 91.083%, 98.780% 87.898%, 99.390% 87.261%, 99.390% 77.070%, 98.780% 76.433%, 98.780% 72.611%, 99.390% 71.975%, 99.390% 12.102%, 96.951% 5.096%, 95.122% 3.185%, 90.854% 1.274%)"
+        }
+      },
+      "the-blinding-vale": {
+        "path": "/assets/wow/mythic/pull-art/skills/the-blinding-vale.webp",
+        "width": 256,
+        "height": 256,
+        "bytes": 19372,
+        "sha256": "87cb42b361501d75184bd09980cec427786ea43a6adbfa25afecc85f7f8b7780",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/skills/the-blinding-vale.png",
+        "nativeSha256": "cad16bafebc28729454ed2481694597314c32496da967dc9b01654cabe248ded",
+        "window": {
+          "bounds": {
+            "left": 40,
+            "top": 46,
+            "right": 215,
+            "bottom": 218
+          },
+          "transparentWindowPixels": 26710,
+          "clip": "polygon(30.857% 1.163%, 29.143% 1.744%, 21.143% 9.884%, 17.714% 12.209%, 13.714% 13.953%, 4.571% 16.279%, 1.714% 19.186%, 0.571% 23.256%, 0.571% 41.279%, 3.429% 48.256%, 3.429% 56.977%, 2.286% 61.047%, 0.571% 63.953%, 0.571% 87.791%, 1.143% 88.372%, 1.143% 91.279%, 2.857% 94.767%, 5.714% 97.093%, 9.143% 98.256%, 73.714% 98.256%, 78.286% 96.512%, 82.286% 91.860%, 88.000% 87.209%, 98.857% 81.395%, 98.857% 76.744%, 99.429% 76.163%, 99.429% 28.488%, 98.857% 27.907%, 99.429% 27.326%, 98.857% 24.419%, 99.429% 23.837%, 99.429% 20.349%, 98.857% 19.767%, 99.429% 15.116%, 98.857% 14.535%, 98.857% 8.721%, 97.714% 5.814%, 94.857% 2.907%, 90.857% 1.163%)"
+        }
+      },
+      "voidscar-arena": {
+        "path": "/assets/wow/mythic/pull-art/skills/voidscar-arena.webp",
+        "width": 256,
+        "height": 256,
+        "bytes": 16680,
+        "sha256": "6f6f22d478b3ce6d8ac020976dd699867d68796e0c9028e62b3345312d5434a6",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/skills/voidscar-arena.png",
+        "nativeSha256": "2c6882636d0f90c629b09ece613a918d7f48f670492ac29fec4c4107cd3ca114",
+        "window": {
+          "bounds": {
+            "left": 47,
+            "top": 50,
+            "right": 209,
+            "bottom": 206
+          },
+          "transparentWindowPixels": 23631,
+          "clip": "polygon(38.889% 1.282%, 8.025% 1.923%, 3.704% 3.205%, 1.235% 5.769%, 0.617% 7.692%, 0.617% 91.667%, 1.852% 94.231%, 4.938% 97.436%, 6.790% 98.077%, 93.210% 98.077%, 97.531% 94.872%, 99.383% 90.385%, 99.383% 8.974%, 98.765% 7.051%, 96.914% 3.846%, 91.358% 1.923%, 61.111% 1.282%)"
+        }
+      },
+      "kings-rest": {
+        "path": "/assets/wow/mythic/pull-art/skills/kings-rest.webp",
+        "width": 256,
+        "height": 256,
+        "bytes": 20728,
+        "sha256": "751557ba8559ff2cbbc9a2eaf910c706f2802852499e42aab11082f4c397aa78",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/skills/kings-rest.png",
+        "nativeSha256": "b9e60b40e4d916a40b6a9ec77935f269d21ec0709d1efe7e7a9076d0e9cd0346",
+        "window": {
+          "bounds": {
+            "left": 48,
+            "top": 53,
+            "right": 208,
+            "bottom": 205
+          },
+          "transparentWindowPixels": 22795,
+          "clip": "polygon(9.375% 1.316%, 5.000% 3.289%, 2.500% 5.921%, 0.625% 10.526%, 0.625% 88.816%, 1.875% 92.105%, 6.250% 96.711%, 9.375% 98.026%, 90.625% 98.026%, 93.750% 96.711%, 97.500% 92.763%, 99.375% 87.500%, 99.375% 11.184%, 96.875% 5.263%, 93.750% 2.632%, 90.625% 1.316%)"
+        }
+      },
+      "temple-of-sethraliss": {
+        "path": "/assets/wow/mythic/pull-art/skills/temple-of-sethraliss.webp",
+        "width": 256,
+        "height": 256,
+        "bytes": 22830,
+        "sha256": "6d27f9243508c72b0b26a0f7ee9183fbe24bcad7e99f03c610c3245b9f23eb7b",
+        "native": "/home/debian/gildra-pull-assets-release-20261025/native/skills/temple-of-sethraliss.png",
+        "nativeSha256": "d5ee48c6d190e1edc4f73e7ecef45dcad614b19b5b060b5bee5eceaf4b75387a",
+        "window": {
+          "bounds": {
+            "left": 50,
+            "top": 52,
+            "right": 206,
+            "bottom": 204
+          },
+          "transparentWindowPixels": 22305,
+          "clip": "polygon(8.333% 1.316%, 3.205% 3.947%, 0.641% 8.553%, 0.641% 90.789%, 1.923% 94.079%, 3.846% 96.053%, 8.333% 98.026%, 91.667% 98.026%, 96.154% 96.053%, 98.077% 94.079%, 99.359% 90.789%, 99.359% 8.553%, 96.795% 3.947%, 91.667% 1.316%)"
+        }
+      }
+    }
+  }
+}

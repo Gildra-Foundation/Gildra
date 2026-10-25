@@ -1,0 +1,205 @@
+/* atlas:strict — painted dungeon materials; the original map plane is unchanged. */
+.surface { --pull-art-light: color-mix(in srgb, var(--atlas-accent) 55%, var(--atlas-text-strong)); }
+
+/* All painting lives in non-interactive layers, leaving native controls and Valyro motion intact. */
+.surface[data-dungeon-map] :global(.ui-button:not([data-pull-art-control="icon"])),
+.surface :global([data-testid="dungeon-talent-calculator"]) {
+  position: relative; isolation: isolate; min-height: 56px; border: 0; border-radius: 12px;
+  padding: var(--pull-button-pad-top) var(--pull-button-inset) var(--pull-button-pad-bottom);
+  background: transparent; box-shadow: none; color: var(--atlas-text-strong);
+  white-space: normal; word-break: normal; overflow-wrap: normal; text-wrap: pretty;
+  transition: transform 220ms var(--atlas-ease), filter 220ms var(--atlas-ease);
+}
+.surface[data-dungeon-map] :global(.ui-button:not([data-pull-art-control="icon"]))::before,
+.surface :global([data-testid="dungeon-talent-calculator"])::before {
+  position: absolute; z-index: -1; inset: 0; pointer-events: none; content: "";
+  border-style: solid; border-color: transparent; border-width: var(--pull-button-width);
+  border-image: var(--pull-button-image) var(--pull-button-slice) fill stretch;
+  filter: contrast(.88) saturate(.8); transition: filter 220ms var(--atlas-ease);
+}
+.surface[data-dungeon-map] :global(.ui-button__label),
+.surface :global([data-testid="dungeon-talent-calculator"] .ui-button__label) { position: relative; text-shadow: 0 1px 3px var(--atlas-bg); }
+
+.surface :global([data-pull-art-control="material"]),
+.surface :global([data-testid="pull-player-picker"] button[role="combobox"]),
+.surface :global(button[aria-haspopup="listbox"]:not([role="combobox"])),
+.surface[data-dungeon-map] :global([data-pull-choice]) {
+  position: relative; isolation: isolate; border-color: transparent; background: var(--atlas-surface-sunken); color: var(--atlas-text-strong);
+}
+.surface :global([data-pull-art-control="material"])::before,
+.surface :global([data-testid="pull-player-picker"] button[role="combobox"])::before,
+.surface :global(button[aria-haspopup="listbox"]:not([role="combobox"]))::before,
+.surface[data-dungeon-map] :global([data-pull-choice])::before {
+  position: absolute; z-index: -1; inset: -1px; border: 8px solid transparent;
+  border-image: var(--pull-panel-image) var(--pull-panel-slice) fill stretch;
+  pointer-events: none; content: ""; filter: contrast(.88) saturate(.76); opacity: .78;
+  transition: opacity 220ms var(--atlas-ease), filter 220ms var(--atlas-ease);
+}
+.surface :global([data-testid="pull-role-picker"] .ui-segmented-control) { background: var(--atlas-surface-sunken); }
+.surface :global([data-testid="pull-role-picker"] .ui-segmented-control__thumb) {
+  border: 6px solid transparent; border-image: var(--pull-panel-image) var(--pull-panel-slice) fill stretch;
+  background: var(--atlas-accent-soft); box-shadow: 0 0 12px var(--atlas-accent-glow);
+}
+.surface :global([data-testid="pull-role-picker"] .ui-segmented-control__label) { position: relative; z-index: 1; }
+.surface[data-dungeon-map] :global([data-pull-choice][aria-pressed="true"]) { border-color: var(--pull-art-light); color: var(--atlas-text-strong); box-shadow: inset 0 -2px var(--pull-art-light), 0 0 10px var(--atlas-accent-glow); }
+.surface[data-dungeon-map] :global([data-pull-choice][aria-pressed="true"])::before { opacity: 1; }
+.surface[data-dungeon-map] :global([data-pull-choice] > span) { color: var(--atlas-text-muted); }
+
+/* The 42/44px map hitboxes, offsets, map artwork and frame are all retained. */
+.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index]) {
+  isolation: isolate; border-color: transparent; background: var(--atlas-surface-sunken); color: var(--atlas-text-strong);
+  box-shadow: none; transform: translate(-50%, -50%); text-shadow: 0 1px 3px var(--atlas-bg), 0 0 4px var(--atlas-bg);
+}
+.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index])::before {
+  position: absolute; z-index: -1; inset: -2px; content: ""; pointer-events: none;
+  background: var(--pull-marker-image) center / contain no-repeat; filter: contrast(.9) saturate(.8);
+  transition: filter 240ms var(--atlas-ease), transform 240ms var(--atlas-ease);
+}
+.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-boss])::before { inset: -4px; }
+.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][aria-pressed="true"]) { outline-color: var(--pull-art-light); outline-width: 2px; }
+.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][aria-pressed="true"])::before { filter: contrast(.95) saturate(.9) drop-shadow(0 0 6px var(--atlas-accent-glow)); animation: medallionSelect 480ms var(--atlas-ease) both; }
+.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"] > strong) { position: relative; color: var(--atlas-text-strong); }
+.surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"] > span) { color: var(--atlas-text-strong); background: var(--atlas-surface-sunken); }
+.surface[data-dungeon-map] :global([data-pull-art-emblem]) {
+  border-color: transparent; background: var(--pull-marker-image) center / contain no-repeat var(--atlas-surface-sunken);
+  color: var(--atlas-text-strong); text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.surface[data-dungeon-map] :global(.ui-button[data-pull-art-control="icon"]) {
+  position: relative; isolation: isolate; padding-inline: var(--atlas-space-1); border: 0; border-radius: 50%;
+  background: transparent; color: var(--atlas-text-strong); box-shadow: none;
+}
+.surface[data-dungeon-map] :global(.ui-button[data-pull-art-control="icon"])::before {
+  position: absolute; z-index: -1; inset: 0; content: ""; pointer-events: none;
+  background: var(--pull-marker-image) center / contain no-repeat; filter: contrast(.9) saturate(.8);
+}
+.surface[data-dungeon-map] :global(.ui-button[data-pull-art-control="icon"]:disabled) { opacity: .4; }
+
+.spellFrame {
+  position: relative; display: inline-block; flex: 0 0 var(--pull-icon-size); width: var(--pull-icon-size); height: var(--pull-icon-size);
+  vertical-align: middle; isolation: isolate;
+}
+.spellFrame::before { position: absolute; inset: var(--pull-skill-top) var(--pull-skill-right) var(--pull-skill-bottom) var(--pull-skill-left); border-radius: 3px; background: var(--atlas-surface-sunken); content: ""; }
+.spellFrame :global(img[data-combat-icon="spell"]) {
+  position: absolute; inset: var(--pull-skill-top) var(--pull-skill-right) var(--pull-skill-bottom) var(--pull-skill-left);
+  width: calc(100% - var(--pull-skill-left) - var(--pull-skill-right)); height: calc(100% - var(--pull-skill-top) - var(--pull-skill-bottom));
+  object-fit: cover; border: 0; border-radius: 3px; clip-path: var(--pull-skill-clip);
+}
+.spellFrame::after { position: absolute; inset: 0; pointer-events: none; background: var(--pull-skill-image) center / contain no-repeat; filter: contrast(.9) saturate(.8); content: ""; }
+.surface :global(a:focus-visible) .spellFrame::after { animation: frameLight 600ms var(--atlas-ease) both; }
+
+.surface :global([data-pull-art-control]:focus-visible),
+.surface[data-dungeon-map] :global(.ui-button:focus-visible),
+.surface :global([data-testid="dungeon-talent-calculator"]:focus-visible) { outline: 2px solid var(--pull-art-light); outline-offset: 3px; }
+.surface :global([data-pull-art-control]:focus-visible)::before,
+.surface[data-dungeon-map] :global(.ui-button:focus-visible)::before,
+.surface :global([data-testid="dungeon-talent-calculator"]:focus-visible)::before { animation: frameLight 600ms var(--atlas-ease) both; }
+@media (hover: hover) and (pointer: fine) {
+  .surface[data-dungeon-map] :global(.ui-button:enabled:hover), .surface :global([data-testid="dungeon-talent-calculator"]:hover) { transform: translateY(-2px); }
+  .surface[data-dungeon-map] :global(.ui-button:enabled:hover)::before, .surface :global([data-testid="dungeon-talent-calculator"]:hover)::before { animation: frameLight 600ms var(--atlas-ease) both; }
+  .surface :global([data-pull-art-control="material"]:hover)::before,
+  .surface :global([data-testid="pull-player-picker"] button[role="combobox"]:enabled:hover)::before,
+  .surface :global(button[aria-haspopup="listbox"]:hover)::before,
+  .surface[data-dungeon-map] :global([data-pull-choice]:hover)::before { opacity: 1; }
+  .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index]:hover) { transform: translate(-50%, -50%); }
+  .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][data-pull-index]:hover)::before { transform: translateY(-1px); filter: contrast(.95) saturate(.9) drop-shadow(0 0 5px var(--atlas-accent-glow)); }
+  .surface :global(a:hover) .spellFrame::after { animation: frameLight 600ms var(--atlas-ease) both; }
+}
+.surface[data-dungeon-map] :global(.ui-button:enabled:active), .surface :global([data-testid="dungeon-talent-calculator"]:active) { transform: translateY(1px); }
+@keyframes frameLight { from, to { filter: contrast(.88) saturate(.8); } 45% { filter: contrast(.93) saturate(.88) brightness(1.12) drop-shadow(0 0 5px var(--atlas-accent-glow)); } }
+@keyframes medallionSelect { from { transform: scale(.92); } 60% { transform: scale(1.04); } to { transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .surface :global(button), .surface :global(summary), .surface :global(button)::before, .surface :global(summary)::before, .spellFrame::after { transition: none !important; animation: none !important; }
+  .surface[data-dungeon-map] :global(.ui-button:is(:hover, :active)), .surface :global([data-testid="dungeon-talent-calculator"]:is(:hover, :active)), .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"])::before { transform: none !important; }
+}
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface :global(button),
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface :global(summary),
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface :global(button)::before,
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface :global(summary)::before,
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface .spellFrame::after { transition: none !important; animation: none !important; }
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface[data-dungeon-map] :global(.ui-button:is(:hover, :active)),
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface :global([data-testid="dungeon-talent-calculator"]:is(:hover, :active)),
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"])::before { transform: none !important; }
+@media (forced-colors: active) {
+  .surface :global(button)::before, .surface :global(summary)::before, .spellFrame::after { display: none !important; }
+  .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"]),
+  .surface[data-dungeon-map] :global(.ui-button), .surface :global([data-testid="dungeon-talent-calculator"]),
+  .surface :global([data-pull-art-control="material"]) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
+  .surface[data-dungeon-map] :global(button[data-testid="mdt-pull-marker"][aria-pressed="true"]) { outline: 3px solid Highlight; }
+  .surface :global([data-testid="pull-role-picker"] .ui-segmented-control__thumb) { border: 1px solid Highlight; border-image: none; background: Highlight; }
+  .spellFrame { border: 1px solid CanvasText; }
+}
+
+/* Native asset geometry. */
+.ruby-life-pools {
+  --pull-marker-image: url("/assets/wow/mythic/pull-art/markers/ruby-life-pools.webp");
+  --pull-skill-image: url("/assets/wow/mythic/pull-art/skills/ruby-life-pools.webp");
+  --pull-skill-top: 20.3125%; --pull-skill-right: 19.5313%; --pull-skill-bottom: 20.7031%; --pull-skill-left: 19.5313%;
+  --pull-skill-clip: polygon(9.615% 1.325%, 5.128% 3.311%, 3.205% 5.298%, 0.641% 11.921%, 0.641% 87.417%, 1.282% 90.728%, 3.205% 94.040%, 5.128% 96.026%, 9.615% 98.013%, 90.385% 98.013%, 94.872% 96.026%, 97.436% 93.377%, 99.359% 88.742%, 99.359% 10.596%, 97.436% 5.960%, 94.872% 3.311%, 90.385% 1.325%);
+  --pull-button-image: url("/assets/wow/mythic/hub/controls/buttons/ruby-life-pools.webp"); --pull-button-slice: 31 128 17 128; --pull-button-width: 13.152px 54.303px 7.212px 54.303px;
+  --pull-button-pad-top: 16.545px; --pull-button-pad-bottom: 10.606px; --pull-button-inset: 60.242px;
+  --pull-panel-image: url("/assets/wow/mythic/hub/controls/panels/ruby-life-pools.webp"); --pull-panel-slice: 160 152 160 152;
+}
+.altar-of-fangs {
+  --pull-marker-image: url("/assets/wow/mythic/pull-art/markers/altar-of-fangs.webp");
+  --pull-skill-image: url("/assets/wow/mythic/pull-art/skills/altar-of-fangs.webp");
+  --pull-skill-top: 21.0938%; --pull-skill-right: 18.7500%; --pull-skill-bottom: 17.9688%; --pull-skill-left: 18.3594%;
+  --pull-skill-clip: polygon(9.938% 1.282%, 6.832% 2.564%, 2.484% 6.410%, 0.621% 11.538%, 0.621% 79.487%, 1.242% 82.692%, 3.106% 87.179%, 6.211% 91.026%, 6.832% 93.590%, 8.696% 94.872%, 14.286% 97.436%, 29.814% 98.077%, 68.944% 98.077%, 85.714% 97.436%, 90.062% 95.513%, 93.168% 93.590%, 93.168% 91.667%, 96.894% 87.179%, 98.758% 82.051%, 98.758% 53.205%, 99.379% 52.564%, 99.379% 47.436%, 98.758% 46.795%, 98.758% 33.333%, 99.379% 32.692%, 98.758% 15.385%, 99.379% 13.462%, 98.758% 12.821%, 98.758% 8.974%, 97.516% 6.410%, 95.031% 3.846%, 90.062% 1.282%);
+  --pull-button-image: url("/assets/wow/mythic/hub/controls/buttons/altar-of-fangs.webp"); --pull-button-slice: 21 152 19 152; --pull-button-width: 8.110px 58.703px 7.338px 58.703px;
+  --pull-button-pad-top: 11.200px; --pull-button-pad-bottom: 10.428px; --pull-button-inset: 64.110px;
+  --pull-panel-image: url("/assets/wow/mythic/hub/controls/panels/altar-of-fangs.webp"); --pull-panel-slice: 160 152 160 152;
+}
+.murder-row {
+  --pull-marker-image: url("/assets/wow/mythic/pull-art/markers/murder-row.webp");
+  --pull-skill-image: url("/assets/wow/mythic/pull-art/skills/murder-row.webp");
+  --pull-skill-top: 18.7500%; --pull-skill-right: 19.9219%; --pull-skill-bottom: 19.5313%; --pull-skill-left: 19.9219%;
+  --pull-skill-clip: polygon(9.091% 1.266%, 5.195% 3.165%, 2.597% 5.696%, 0.649% 10.127%, 0.649% 89.241%, 2.597% 93.671%, 5.195% 96.203%, 9.740% 98.101%, 90.260% 98.101%, 94.805% 96.203%, 98.052% 93.038%, 99.351% 89.241%, 99.351% 10.127%, 97.403% 5.696%, 94.156% 2.532%, 90.909% 1.266%);
+  --pull-button-image: url("/assets/wow/mythic/hub/controls/buttons/murder-row.webp"); --pull-button-slice: 35 136 36 136; --pull-button-width: 15.077px 58.585px 15.508px 58.585px;
+  --pull-button-pad-top: 18.523px; --pull-button-pad-bottom: 18.954px; --pull-button-inset: 64.615px;
+  --pull-panel-image: url("/assets/wow/mythic/hub/controls/panels/murder-row.webp"); --pull-panel-slice: 168 152 168 152;
+}
+.den-of-nalorakk {
+  --pull-marker-image: url("/assets/wow/mythic/pull-art/markers/den-of-nalorakk.webp");
+  --pull-skill-image: url("/assets/wow/mythic/pull-art/skills/den-of-nalorakk.webp");
+  --pull-skill-top: 23.8281%; --pull-skill-right: 17.9688%; --pull-skill-bottom: 14.8438%; --pull-skill-left: 17.9688%;
+  --pull-skill-clip: polygon(9.146% 1.274%, 4.878% 3.185%, 3.049% 5.096%, 0.610% 11.465%, 0.610% 87.898%, 2.439% 93.631%, 4.878% 96.178%, 9.756% 98.089%, 89.634% 98.089%, 92.683% 97.452%, 96.951% 94.268%, 98.780% 91.083%, 98.780% 87.898%, 99.390% 87.261%, 99.390% 77.070%, 98.780% 76.433%, 98.780% 72.611%, 99.390% 71.975%, 99.390% 12.102%, 96.951% 5.096%, 95.122% 3.185%, 90.854% 1.274%);
+  --pull-button-image: url("/assets/wow/mythic/hub/controls/buttons/den-of-nalorakk.webp"); --pull-button-slice: 29 152 20 152; --pull-button-width: 12.992px 68.096px 8.960px 68.096px;
+  --pull-button-pad-top: 16.576px; --pull-button-pad-bottom: 12.544px; --pull-button-inset: 74.368px;
+  --pull-panel-image: url("/assets/wow/mythic/hub/controls/panels/den-of-nalorakk.webp"); --pull-panel-slice: 160 160 160 160;
+}
+.the-blinding-vale {
+  --pull-marker-image: url("/assets/wow/mythic/pull-art/markers/the-blinding-vale.webp");
+  --pull-skill-image: url("/assets/wow/mythic/pull-art/skills/the-blinding-vale.webp");
+  --pull-skill-top: 17.9688%; --pull-skill-right: 16.0156%; --pull-skill-bottom: 14.8438%; --pull-skill-left: 15.6250%;
+  --pull-skill-clip: polygon(30.857% 1.163%, 29.143% 1.744%, 21.143% 9.884%, 17.714% 12.209%, 13.714% 13.953%, 4.571% 16.279%, 1.714% 19.186%, 0.571% 23.256%, 0.571% 41.279%, 3.429% 48.256%, 3.429% 56.977%, 2.286% 61.047%, 0.571% 63.953%, 0.571% 87.791%, 1.143% 88.372%, 1.143% 91.279%, 2.857% 94.767%, 5.714% 97.093%, 9.143% 98.256%, 73.714% 98.256%, 78.286% 96.512%, 82.286% 91.860%, 88.000% 87.209%, 98.857% 81.395%, 98.857% 76.744%, 99.429% 76.163%, 99.429% 28.488%, 98.857% 27.907%, 99.429% 27.326%, 98.857% 24.419%, 99.429% 23.837%, 99.429% 20.349%, 98.857% 19.767%, 99.429% 15.116%, 98.857% 14.535%, 98.857% 8.721%, 97.714% 5.814%, 94.857% 2.907%, 90.857% 1.163%);
+  --pull-button-image: url("/assets/wow/mythic/hub/controls/buttons/the-blinding-vale.webp"); --pull-button-slice: 37 160 25 160; --pull-button-width: 14.490px 62.657px 9.790px 62.657px;
+  --pull-button-pad-top: 17.622px; --pull-button-pad-bottom: 12.923px; --pull-button-inset: 68.140px;
+  --pull-panel-image: url("/assets/wow/mythic/hub/controls/panels/the-blinding-vale.webp"); --pull-panel-slice: 160 152 160 152;
+}
+.voidscar-arena {
+  --pull-marker-image: url("/assets/wow/mythic/pull-art/markers/voidscar-arena.webp");
+  --pull-skill-image: url("/assets/wow/mythic/pull-art/skills/voidscar-arena.webp");
+  --pull-skill-top: 19.5313%; --pull-skill-right: 18.3594%; --pull-skill-bottom: 19.5313%; --pull-skill-left: 18.3594%;
+  --pull-skill-clip: polygon(38.889% 1.282%, 8.025% 1.923%, 3.704% 3.205%, 1.235% 5.769%, 0.617% 7.692%, 0.617% 91.667%, 1.852% 94.231%, 4.938% 97.436%, 6.790% 98.077%, 93.210% 98.077%, 97.531% 94.872%, 99.383% 90.385%, 99.383% 8.974%, 98.765% 7.051%, 96.914% 3.846%, 91.358% 1.923%, 61.111% 1.282%);
+  --pull-button-image: url("/assets/wow/mythic/hub/controls/buttons/voidscar-arena.webp"); --pull-button-slice: 29 160 30 160; --pull-button-width: 11.600px 64.000px 12.000px 64.000px;
+  --pull-button-pad-top: 14.800px; --pull-button-pad-bottom: 15.200px; --pull-button-inset: 69.600px;
+  --pull-panel-image: url("/assets/wow/mythic/hub/controls/panels/voidscar-arena.webp"); --pull-panel-slice: 160 152 160 152;
+}
+.kings-rest {
+  --pull-marker-image: url("/assets/wow/mythic/pull-art/markers/kings-rest.webp");
+  --pull-skill-image: url("/assets/wow/mythic/pull-art/skills/kings-rest.webp");
+  --pull-skill-top: 20.7031%; --pull-skill-right: 18.7500%; --pull-skill-bottom: 19.9219%; --pull-skill-left: 18.7500%;
+  --pull-skill-clip: polygon(9.375% 1.316%, 5.000% 3.289%, 2.500% 5.921%, 0.625% 10.526%, 0.625% 88.816%, 1.875% 92.105%, 6.250% 96.711%, 9.375% 98.026%, 90.625% 98.026%, 93.750% 96.711%, 97.500% 92.763%, 99.375% 87.500%, 99.375% 11.184%, 96.875% 5.263%, 93.750% 2.632%, 90.625% 1.316%);
+  --pull-button-image: url("/assets/wow/mythic/hub/controls/buttons/kings-rest.webp"); --pull-button-slice: 23 136 20 136; --pull-button-width: 10.645px 62.942px 9.256px 62.942px;
+  --pull-button-pad-top: 14.347px; --pull-button-pad-bottom: 12.959px; --pull-button-inset: 69.421px;
+  --pull-panel-image: url("/assets/wow/mythic/hub/controls/panels/kings-rest.webp"); --pull-panel-slice: 160 160 160 160;
+}
+.temple-of-sethraliss {
+  --pull-marker-image: url("/assets/wow/mythic/pull-art/markers/temple-of-sethraliss.webp");
+  --pull-skill-image: url("/assets/wow/mythic/pull-art/skills/temple-of-sethraliss.webp");
+  --pull-skill-top: 20.3125%; --pull-skill-right: 19.5313%; --pull-skill-bottom: 20.3125%; --pull-skill-left: 19.5313%;
+  --pull-skill-clip: polygon(8.333% 1.316%, 3.205% 3.947%, 0.641% 8.553%, 0.641% 90.789%, 1.923% 94.079%, 3.846% 96.053%, 8.333% 98.026%, 91.667% 98.026%, 96.154% 96.053%, 98.077% 94.079%, 99.359% 90.789%, 99.359% 8.553%, 96.795% 3.947%, 91.667% 1.316%);
+  --pull-button-image: url("/assets/wow/mythic/hub/controls/buttons/temple-of-sethraliss.webp"); --pull-button-slice: 39 128 16 128; --pull-button-width: 16.800px 55.138px 6.892px 55.138px;
+  --pull-button-pad-top: 20.246px; --pull-button-pad-bottom: 10.338px; --pull-button-inset: 61.169px;
+  --pull-panel-image: url("/assets/wow/mythic/hub/controls/panels/temple-of-sethraliss.webp"); --pull-panel-slice: 160 152 160 152;
+}

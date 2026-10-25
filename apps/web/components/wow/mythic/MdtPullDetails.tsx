@@ -1,6 +1,7 @@
 "use client";
 
 import { ResilientImage } from "@/components/media/ResilientImage";
+import { DungeonSpellIcon } from "./DungeonSpellIcon";
 import { AtlasDialog } from "@gildra/atlas-ui/AtlasDialog";
 import { Tooltip } from "@gildra/atlas-ui/valyro-ui/basic/Tooltip";
 import bridge from "@gildra/atlas-ui/valyroAtlasBridge.module.css";
@@ -40,7 +41,7 @@ function PersonalBriefing({ intel, locale, role, full, selectedSpec, selectedSpe
   const personal = pullRoleTasks(intel, role, selectedSpec, selectedSpells);
   return <section className={styles.personal} data-testid="pull-personal-tasks" data-role={role}><h4>{t.yourTasks} · {selectedSpec ? `${selectedSpec.className[locale]} · ${selectedSpec.name[locale]}` : t[role]}</h4>
       {personal.mechanics.length > 0 && <ul className={styles.personalTasks}>{(full ? personal.mechanics : personal.preview).map(ability => <li key={`${ability.npcId ?? ability.source}:${ability.name}`} data-task-role={ability.role}>
-        <div className={styles.abilityIdentity}><ResilientImage className={styles.spellIcon} data-combat-icon="spell" src={ability.iconUrl} alt="" width={36} height={36} loading="lazy" /><div><b>{ability.name}</b><span className={styles.taskSource}>{ability.source}</span>{ability.role === "all" && <small>{t.common}</small>}</div></div><p>{ability.response ?? t.actions[ability.action]}</p>{selectedSpec && <PlayerSpellAdvice spec={selectedSpec} mechanic={ability} locale={locale} selectedSpells={selectedSpells} />}
+        <div className={styles.abilityIdentity}><DungeonSpellIcon data-combat-icon="spell" src={ability.iconUrl} alt="" width={36} height={36} loading="lazy" /><div><b>{ability.name}</b><span className={styles.taskSource}>{ability.source}</span>{ability.role === "all" && <small>{t.common}</small>}</div></div><p>{ability.response ?? t.actions[ability.action]}</p>{selectedSpec && <PlayerSpellAdvice spec={selectedSpec} mechanic={ability} locale={locale} selectedSpells={selectedSpells} />}
       </li>)}</ul>}
       {(full ? personal.notes : personal.notes.slice(0, 1)).map(note => <p key={note}>{note}</p>)}
       {!personal.mechanics.length && !personal.notes.length && <p><small>{t.general}:</small> {t[`${role}Default`]}</p>}
@@ -60,7 +61,7 @@ function PullBriefing({ intel, locale, selectedRole, selectedSpec, selectedSpell
       {!enemy.covered && <small>{t.uncovered}</small>}{enemy.note && <p className={styles.eventNote}>{enemy.note}</p>}
     </li>)}</ul></section>
     <section><h4>{t.casts}</h4>{intel.mechanics.length ? <ul className={styles.mechanics}>{intel.mechanics.slice(0, full ? undefined : 3).map(ability => <li key={`${ability.npcId ?? ability.source}:${ability.name}`}>
-      <div className={styles.abilityIdentity}><ResilientImage className={styles.spellIcon} data-combat-icon="spell" src={ability.iconUrl} alt="" width={36} height={36} loading="lazy" data-testid="pull-spell-image" /><div><b>{ability.name}</b><span>{ability.source}</span></div></div>
+      <div className={styles.abilityIdentity}><DungeonSpellIcon data-combat-icon="spell" src={ability.iconUrl} alt="" width={36} height={36} loading="lazy" data-testid="pull-spell-image" /><div><b>{ability.name}</b><span>{ability.source}</span></div></div>
       <p className={styles.action}>{t.actions[ability.action]} · {t[ability.role]}</p>
       {ability.response && <p className={styles.response}>{ability.response}</p>}
       {full && ability.url && <div className={styles.abilitySources}><a href={ability.url} target="_blank" rel="noreferrer">{t.spell} #{ability.spellId} ↗</a>{ability.guideUrl && <a href={ability.guideUrl} target="_blank" rel="noreferrer">{t.guide} ↗</a>}</div>}
@@ -87,6 +88,6 @@ export function MdtPullDetails({ title, intel, locale, selectedRole, selectedSpe
     <Tooltip disabled={open} placement="right" animation="fade" delay={180} className={`${bridge.scope} ${styles.tooltip} ${themeClassName}`} content={<><h3 className={styles.title}>{title}</h3><PullBriefing intel={intel} locale={locale} selectedRole={selectedRole} selectedSpec={selectedSpec} selectedSpells={selectedSpells} showHint={!onSelect} /></>}>
       {cloneElement(children, { onClick: onSelect ?? (() => setOpen(true)), "aria-haspopup": onSelect ? undefined : "dialog", "aria-expanded": onSelect ? undefined : open })}
     </Tooltip>
-    <AtlasDialog className={`${styles.glassDialog} ${themeClassName}`} open={open} onClose={() => setOpen(false)} label={title} variant="sheet"><div className={styles.dialogContent}><header className={styles.dialogHeader}><h3>{title}</h3><button type="button" onClick={() => setOpen(false)}>{copy[locale].close}</button></header><div className={styles.dialogBody} data-testid="pull-briefing-scroll" tabIndex={0} role="region" aria-label={title}><PullBriefing intel={intel} locale={locale} selectedRole={selectedRole} selectedSpec={selectedSpec} selectedSpells={selectedSpells} full /></div></div></AtlasDialog>
+    <AtlasDialog className={`${styles.glassDialog} ${themeClassName}`} open={open} onClose={() => setOpen(false)} label={title} variant="sheet"><div className={styles.dialogContent}><header className={styles.dialogHeader}><h3>{title}</h3><button data-pull-art-control="material" type="button" onClick={() => setOpen(false)}>{copy[locale].close}</button></header><div className={styles.dialogBody} data-testid="pull-briefing-scroll" tabIndex={0} role="region" aria-label={title}><PullBriefing intel={intel} locale={locale} selectedRole={selectedRole} selectedSpec={selectedSpec} selectedSpells={selectedSpells} full /></div></div></AtlasDialog>
   </>;
 }

@@ -16,6 +16,7 @@ import { mythicRouteCopy, type RouteLocale } from "./mythicRouteCopy";
 import type { DungeonCombatIntel } from "./dungeonCombatIntel.types";
 import { RouteNamesContext, useRouteNameTable } from "./routeNames";
 import { dungeonThemeClass } from "./dungeonTheme";
+import { dungeonPullArtClass } from "./dungeonPullArt";
 import styles from "./mythicRouteMap.module.css";
 
 const MdtPullMap = dynamic(() => import("./MdtPullMap"), { ssr: false, loading: () => <div className={styles.mdtLoading} role="status"><span>MDT…</span></div> });
@@ -27,7 +28,7 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
   const dungeonName = sourceName(names, dungeon.name, locale, dungeon.nameRu);
   const bossCount = dungeon.stops.filter(stop => stop.kind === "boss").length;
   const [keyLevel, setKeyLevel] = useState(12);
-  const themeClassName = dungeonThemeClass(dungeon.slug);
+  const themeClassName = `${dungeonThemeClass(dungeon.slug)} ${dungeonPullArtClass(dungeon.slug)}`;
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
     try {
