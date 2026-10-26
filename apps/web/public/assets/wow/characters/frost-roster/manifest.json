@@ -1,0 +1,127 @@
+{
+  "generatedAt": "2026-10-26T13:42:41.093Z",
+  "method": "Built-in image_gen, true transparent background. Native alpha retained; only bounds trim, proportional resize, transparent padding and WebP encoding.",
+  "entries": {
+    "card": {
+      "path": "/assets/wow/characters/frost-roster/card.webp",
+      "width": 960,
+      "height": 403,
+      "bytes": 26526,
+      "sha256": "c2f56cc4548db6d36e6ac060d45b8861264420536fbe33302fb5bff6a88d28da",
+      "native": "/home/debian/gildra-character-frost-release-20261026/asset-sources/card-native.png",
+      "nativeSha256": "c1f13d22bec3e0ffaad5a898fe0c527c8b2d79a5327e63a949281e75a5d35ebc",
+      "nativeDimensions": {
+        "width": 1774,
+        "height": 887
+      },
+      "crop": {
+        "left": 155,
+        "top": 139,
+        "width": 1467,
+        "height": 601
+      },
+      "centreAlpha": {
+        "min": 253,
+        "max": 254
+      },
+      "slices": [
+        104,
+        104,
+        104,
+        104
+      ],
+      "railInset": 26,
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "prompt": "/home/debian/gildra-character-frost-release-20261026/asset-sources/card-prompt.txt",
+      "promptSha256": "8050774c1f50b48197dffe5f1fbdbcfc6f0ded72a72a3a9bcd15e7119996daf2",
+      "geometryNote": "All four corner caps are enclosed inside 104px corner slices; measured packer proposal [37,94,80,93] was increased after review. Use border-image slices 104 fill, and border widths 104 × targetscale."
+    },
+    "portraitRing": {
+      "path": "/assets/wow/characters/frost-roster/portrait-ring.webp",
+      "width": 192,
+      "height": 192,
+      "bytes": 8474,
+      "sha256": "2d86780a3463003518166317c07880c239a4b0c36fdd346dc61cd4fe13f777c7",
+      "native": "/home/debian/gildra-character-frost-release-20261026/asset-sources/portrait-ring-native.png",
+      "nativeSha256": "980781df570d05a3361e1c226e7411c6d6e3895708407c394167f2e483b984f2",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "crop": {
+        "left": 105,
+        "top": 111,
+        "width": 1045,
+        "height": 1028
+      },
+      "centreAlpha": {
+        "min": 0,
+        "max": 255
+      },
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "prompt": "/home/debian/gildra-character-frost-release-20261026/asset-sources/portrait-ring-prompt.txt",
+      "promptSha256": "5e9502b16193383f627ded7f3a8bac87677dab8ffcd6dc0ec590769457769a37",
+      "aperture": {
+        "center": [
+          96,
+          95
+        ],
+        "radius": 55,
+        "clearRadius": 40,
+        "boundaryRadiusMin": 40.5,
+        "boundaryRadiusMax": 52.25,
+        "coverRadius": 55,
+        "css": {
+          "left": 21.354166666666664,
+          "top": 20.833333333333336,
+          "right": 21.354166666666664,
+          "bottom": 21.875,
+          "borderRadius": "50%"
+        },
+        "note": "The aperture is a near-circle with four inward steel diamond tips. Place circular official class icon behind artwork at coverRadius; inner lip and tips cover the 2px bleed. The clearRadius is fully alpha-transparent. Do not stretch the ring."
+      }
+    },
+    "heraldry": {
+      "path": "/assets/wow/characters/frost-roster/heraldry.webp",
+      "width": 256,
+      "height": 256,
+      "bytes": 19574,
+      "sha256": "33f5ee45480ffdc27c337f7f29df45f713c840e20e54ea5ce69434f1b7ff98e4",
+      "native": "/home/debian/gildra-character-frost-release-20261026/asset-sources/heraldry-native.png",
+      "nativeSha256": "6eaa547cb1199eef3760f1c39749e7dcda011991fe19b04cd2d9f7cbbb50585e",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "crop": {
+        "left": 161,
+        "top": 127,
+        "width": 933,
+        "height": 917
+      },
+      "centreAlpha": {
+        "min": 0,
+        "max": 255
+      },
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "prompt": "/home/debian/gildra-character-frost-release-20261026/asset-sources/heraldry-prompt.txt",
+      "promptSha256": "1d92db8bcb85e97522474283e7ec3f5d7b6db1aad2494c5b489491bdaea524d3"
+    }
+  },
+  "totalBytes": 54574
+}
