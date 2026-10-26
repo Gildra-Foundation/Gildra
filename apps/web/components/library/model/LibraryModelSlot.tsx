@@ -33,7 +33,7 @@ export async function LibraryModelSlot({ dataset, externalId, name, lang }: Prop
   const fallbackImage = subject.kind === "mount"
     ? `https://render.worldofwarcraft.com/us/npcs/zoom/creature-display-${subject.displays[0]}.jpg`
     : undefined;
-  // A player mannequin is 32–36 MB on first view (cached afterwards): load it on request.
+  // A player mannequin is ~18 MB gzipped on first view (cached afterwards): load it on request.
   const heavy = subject.kind === "set";
   const loadHint = heavy ? libraryModelCopy[lang].setLoadHint : undefined;
   return <LibraryModelViewer subject={subject} name={name} lang={lang} fallbackImage={fallbackImage} autoLoad={!heavy} loadHint={loadHint} />;
