@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-26",
+  "provider": "Blizzard spell icons served by Wowhead/Zamimg; unchanged original JPEG files",
+  "entries": [
+    {
+      "spellId": 1248449,
+      "npcId": 240437,
+      "name": "Aura of Wrath",
+      "record": "https://www.wowhead.com/spell=1248449",
+      "iconSource": "https://wow.zamimg.com/images/wow/icons/large/spell_holy_sealofwrath.jpg",
+      "path": "1248449.jpg"
+    },
+    {
+      "spellId": 1248451,
+      "npcId": 240438,
+      "name": "Aura of Peace",
+      "record": "https://www.wowhead.com/spell=1248451",
+      "iconSource": "https://wow.zamimg.com/images/wow/icons/large/spell_holy_silence.jpg",
+      "path": "1248451.jpg"
+    }
+  ]
+}

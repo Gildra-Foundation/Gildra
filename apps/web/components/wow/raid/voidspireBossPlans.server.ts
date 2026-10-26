@@ -17,6 +17,7 @@ const npcRecords: Record<string, RouteText> = records.npcs;
 const tankMechanics = new Set(["blackening-wounds", "shadowclaw-slam", "destabilizing-strikes", "twilight-bond-rakfang", "judgment-combo"]);
 const stopMechanics = new Set(["pitch-bulwark", "shadow-fracture"]);
 const bossNpcs = new Set([240435, 240434, 240432, 242056, 244552, 240431, 240437, 240438, 240430, 245113]);
+const vanguardAuras: Record<string, number> = { bellamy: 1246162, venel: 1248449, senn: 1248451 };
 
 const responses: Record<string, RouteText> = {
   "pitch-bulwark": text("Прерывайте Непроницаемый оплот у защитников и аннигиляторов, не накладывая кики друг на друга.", "Interrupt Stalwart and Annihilator Pitch Bulwark casts without overlapping kicks."),
@@ -60,13 +61,13 @@ function mechanicAction(mechanic: VoidspireMechanic): RaidPullAbility["action"] 
   return "focus";
 }
 
-function projectMechanic(mechanic: VoidspireMechanic): RaidPullAbility {
+function projectMechanic(mechanic: VoidspireMechanic, phaseId: string): RaidPullAbility {
   if (!mechanic.spell) throw new Error(`Missing source spell: ${mechanic.id}`);
-  const spellId = castIds[mechanic.spell.id] ?? mechanic.spell.id;
+  const auraId = mechanic.id === "boss-auras" ? vanguardAuras[phaseId] : undefined;
+  const spellId = auraId ?? castIds[mechanic.spell.id] ?? mechanic.spell.id;
   const record = spellRecords[spellId];
   if (!record) throw new Error(`Missing checked spell record: ${spellId}`);
-  const combined = mechanic.preserveName || /\s(?:and|\/)\s|→/.test(mechanic.name.en) || mechanic.id === "boss-auras";
-  return { spellId, name: combined ? mechanic.name : record.name, icon: mechanic.spell.icon,
+  return { spellId, name: record.name, icon: auraId ? `/assets/wow/raids/reviewed-mechanics/${auraId}.jpg` : mechanic.spell.icon,
     roles: mechanicRoles(mechanic.id), action: mechanicAction(mechanic),
     response: responses[mechanic.id] ?? mechanic.action, heroic: heroicNotes[mechanic.id] };
 }
@@ -88,7 +89,7 @@ export function getVoidspireBossPlan(boss: RaidBoss): RaidPullPlan {
     abilities: phase.mechanicIds.map(id => {
       const mechanic = mechanics.get(id);
       if (!mechanic) throw new Error(`Missing reviewed mechanic: ${boss.slug}/${id}`);
-      return projectMechanic(mechanic);
+      return projectMechanic(mechanic, phase.id);
     }),
   }));
   return localizePlan({

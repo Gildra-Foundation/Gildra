@@ -3,6 +3,7 @@ import test from "node:test";
 import { existsSync } from "node:fs";
 import { getMidnightRaid } from "../../lib/data/wow/raid/midnightRaidData";
 import { getVoidspireBossPlan } from "../../components/wow/raid/voidspireBossPlans.server";
+import records from "../../components/wow/raid/voidspireBossRecords.json" with { type: "json" };
 
 const bosses = getMidnightRaid("the-voidspire")!.bosses;
 
@@ -32,6 +33,7 @@ test("six complete bilingual encounters have official arenas and role tasks at e
       assert.equal(new Set(pull.abilities.map(a => a.spellId)).size, pull.abilities.length);
       for (const ability of pull.abilities) {
         assert.ok(ability.spellId && ability.response?.ru && ability.response.en && ability.roles.length);
+        assert.deepEqual(ability.name, (records.spells as Record<string, { name: { ru: string; en: string } }>)[ability.spellId].name);
         assert.ok(ability.icon && existsSync(new URL(`../../public${ability.icon}`, import.meta.url)));
       }
       const diagram = plan.encounter!.diagrams[pull.id];
@@ -65,4 +67,8 @@ test("actual encounter casts are linked and Heroic changes do not overwrite the 
   const walls = plans[1].pulls[1].abilities.find(a => a.spellId === 1259184)!;
   assert.ok(walls.heroic?.en.includes("Two explosions"));
   assert.ok(!walls.response?.en.includes("Two explosions"));
+  const council = plans[4];
+  for (const [phase, spellId] of [["bellamy", 1246162], ["venel", 1248449], ["senn", 1248451]] as const) {
+    assert.ok(council.pulls.find(p => p.id.endsWith(phase))!.abilities.some(a => a.spellId === spellId));
+  }
 });

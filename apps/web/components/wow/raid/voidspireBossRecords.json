@@ -280,6 +280,20 @@
         "ru": "Серебряный шквал"
       },
       "icon": "ability_shootwand"
+    },
+    "1248449": {
+      "name": {
+        "en": "Aura of Wrath",
+        "ru": "Аура гнева"
+      },
+      "icon": "spell_holy_sealofwrath"
+    },
+    "1248451": {
+      "name": {
+        "en": "Aura of Peace",
+        "ru": "Аура мира"
+      },
+      "icon": "spell_holy_silence"
     }
   },
   "npcs": {
