@@ -13,6 +13,8 @@ import type { CSSProperties } from "react";
 import { RaidPullMap } from "./RaidPullMap";
 import { RaidPullBriefing } from "./RaidPullBriefing";
 import { raidPullCopy } from "./raidPullCopy";
+import { RaidPlannerPullPosition, RaidPlannerTextMark } from "./VoidspirePlannerArt";
+import { voidspirePlannerClass, voidspirePlannerLayout } from "./voidspirePlannerLayout";
 import type { RaidPullPlan, RaidPullRole } from "./raidPullTypes";
 import styles from "./raidPulls.module.css";
 
@@ -43,19 +45,19 @@ export function RaidPullWorkspace({ plan, locale }: { plan: RaidPullPlan; locale
     if (reveal && window.matchMedia("(max-width: 900px)").matches) panel.current?.scrollIntoView({ block: "start", behavior: lessMotion() ? "instant" : "smooth" });
   }
   const slug = plan.slug as RaidHubSlug;
-  return <div className={styles.workspace} data-raid-pulls={plan.slug} style={{ ...raidHubControlLayout(slug), "--raid-card-accent": raidCardThemes[slug].accent } as CSSProperties}>
-    <div className={styles.toolbar}><span>{t.role}</span><AtlasSegmented aria-label={t.role} value={role} onValueChange={(value) => setRole(value as RaidPullRole | "all")}
+  return <div className={`${styles.workspace} ${voidspirePlannerClass(plan.slug)}`} data-raid-pulls={plan.slug} style={{ ...raidHubControlLayout(slug), ...voidspirePlannerLayout(plan.slug), "--raid-card-accent": raidCardThemes[slug].accent } as CSSProperties}>
+    <div className={styles.toolbar} data-raid-role-toolbar><span>{t.role}</span><AtlasSegmented aria-label={t.role} value={role} onValueChange={(value) => setRole(value as RaidPullRole | "all")}
       options={(["all", "tank", "healer", "dps"] as const).map((value) => ({ value, label: t[value] }))} /></div>
-    <nav className={styles.pullNav} aria-label={t.list}><ol ref={strip} className={styles.pullStrip}>{plan.pulls.map((item, index) => <li key={item.id}><button type="button"
+    <nav className={styles.pullNav} data-raid-pull-navigation aria-label={t.list}><ol ref={strip} className={styles.pullStrip}>{plan.pulls.map((item, index) => <li key={item.id}><button type="button"
       data-raid-pull-choice={index} aria-pressed={active === index} aria-controls={`raid-pull-${plan.slug}`} onClick={() => select(index, true)}>
-      <b>{index + 1}</b><span><small>{t[item.kind]}</small>{item.title[locale]}</span></button></li>)}</ol></nav>
+      <b>{index + 1}</b><span><small>{t[item.kind]}</small>{item.title[locale]}</span></button></li>)}</ol><RaidPlannerPullPosition slug={plan.slug} label={t.pull} current={active + 1} total={plan.pulls.length} /></nav>
     {plan.atlas?.progression && <p className={styles.coverage}>{plan.atlas.progression.note[locale]}</p>}
-    <div className={styles.columns}>
+    <div className={styles.columns} data-raid-columns>
       <RaidPullMap plan={plan} active={active} locale={locale} onSelect={select} />
       <div ref={panel} className={styles.selected} id={`raid-pull-${plan.slug}`} data-raid-selected={pull.id}>
-        <header className={styles.selectedHeader}><div><small>{t.pull} {active + 1} / {plan.pulls.length}{pull.area && <> · {pull.area[locale]}</>}</small><h3>{pull.title[locale]}</h3></div>
-          <div className={styles.pager}><AtlasButton size="sm" aria-label={t.previous} disabled={active === 0} onClick={() => select(active - 1)}><ChevronLeft aria-hidden="true" /></AtlasButton>
-            <AtlasButton size="sm" aria-label={t.next} disabled={active === plan.pulls.length - 1} onClick={() => select(active + 1)}><ChevronRight aria-hidden="true" /></AtlasButton></div></header>
+        <header className={styles.selectedHeader} data-raid-selected-header><div><small>{t.pull} {active + 1} / {plan.pulls.length}{pull.area && <> · {pull.area[locale]}</>}</small><h3>{pull.title[locale]}</h3></div>
+          <div className={styles.pager} data-raid-pager><AtlasButton size="sm" aria-label={t.previous} disabled={active === 0} onClick={() => select(active - 1)}><RaidPlannerTextMark slug={plan.slug} text="‹" fallback={<ChevronLeft aria-hidden="true" />} /></AtlasButton>
+            <AtlasButton size="sm" aria-label={t.next} disabled={active === plan.pulls.length - 1} onClick={() => select(active + 1)}><RaidPlannerTextMark slug={plan.slug} text="›" fallback={<ChevronRight aria-hidden="true" />} /></AtlasButton></div></header>
         <span className={styles.srOnly} role="status" aria-live="polite">{t.pull} {active + 1}: {pull.title[locale]}</span>
         {plan.coverage === "route-draft" && <p className={styles.draftNote} role="note">{t.routeDraft}</p>}
         <RaidPullBriefing pull={pull} locale={locale} role={role} slug={plan.slug} />

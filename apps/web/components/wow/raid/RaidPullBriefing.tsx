@@ -6,6 +6,8 @@ import { raidPullCopy } from "./raidPullCopy";
 import type { RaidPull, RaidPullRole } from "./raidPullTypes";
 import styles from "./raidPulls.module.css";
 import art from "./raidBriefingArt.module.css";
+import { RaidPlannerIcon } from "./VoidspirePlannerArt";
+import { voidspireBossLinkClass } from "./voidspirePlannerLayout";
 
 const roleIcons = { tank: Shield, healer: HeartPulse, dps: Swords };
 const roles: RaidPullRole[] = ["tank", "healer", "dps"];
@@ -15,20 +17,20 @@ export function RaidPullBriefing({ pull, locale, role, slug }: { pull: RaidPull;
   const text = (value: { ru: string; en: string }) => value[locale];
   const abilities = pull.abilities.filter((ability) => role === "all" || ability.roles.includes(role));
   return <div className={`${styles.briefing} ${art.briefingArt}`} data-raid-briefing="" data-role={role}>
-    <section className={`${styles.call} ${art.command}`}>
-      <h4 className={art.sectionHeading}><Crosshair size={16} aria-hidden="true" />{t.call}</h4>
+    <section className={`${styles.call} ${art.command}`} data-raid-command>
+      <h4 className={art.sectionHeading}><RaidPlannerIcon slug={slug} kind="command" fallback={<Crosshair size={16} aria-hidden="true" />} />{t.call}</h4>
       <p>{text(pull.call)}</p>
     </section>
 
     <section>
       <h4 className={art.sectionHeading}>{t.enemies}</h4>
-      {pull.enemies.length ? <ul className={`${styles.enemies} ${art.enemies}`}>
+      {pull.enemies.length ? <ul className={`${styles.enemies} ${art.enemies}`} data-raid-enemies>
         {pull.enemies.map((enemy) => <li key={enemy.npcId ?? enemy.name.en}>
           <div className={`${styles.enemyIdentity} ${art.enemyIdentity}`}>
-            <span className={art.enemyPortrait} aria-hidden="true">
+            <span className={art.enemyPortrait} data-raid-enemy-art aria-hidden="true">
               {enemy.artwork
                 ? <Image src={enemy.artwork} alt="" width={44} height={44} />
-                : <Crosshair size={22} aria-hidden="true" />}
+                : <RaidPlannerIcon slug={slug} kind="command" fallback={<Crosshair size={22} aria-hidden="true" />} />}
             </span>
             <div className={art.enemyName}>
               <strong>{enemy.count !== undefined && <span>{enemy.count} × </span>}{text(enemy.name)}</strong>
@@ -49,7 +51,7 @@ export function RaidPullBriefing({ pull, locale, role, slug }: { pull: RaidPull;
         {roles.filter((item) => role === "all" || item === role).map((item) => {
           const Icon = roleIcons[item];
           return <article key={item} data-raid-role-tasks={item}>
-            <h5><span className={art.roleBadge}><Icon size={18} aria-hidden="true" /></span>{t[item]}</h5>
+            <h5><span className={art.roleBadge} data-raid-role-badge><RaidPlannerIcon slug={slug} kind="command" fallback={<Icon size={18} aria-hidden="true" />} /></span>{t[item]}</h5>
             <ul>{pull.roles[item].map((task) => <li key={task.en}>{text(task)}</li>)}</ul>
           </article>;
         })}
@@ -62,7 +64,7 @@ export function RaidPullBriefing({ pull, locale, role, slug }: { pull: RaidPull;
       {abilities.length ? <ul className={`${styles.abilities} ${art.abilities}`}>
         {abilities.map((ability) => <li key={ability.spellId ?? ability.name.en}>
           <div className={`${styles.abilityTitle} ${art.abilityTitle}`}>
-            {ability.icon && <span className={art.spellFrame} aria-hidden="true">
+            {ability.icon && <span className={art.spellFrame} data-raid-spell-art aria-hidden="true">
               <Image src={ability.icon} alt="" width={40} height={40} />
             </span>}
             <div className={art.abilityName}>
@@ -85,13 +87,13 @@ export function RaidPullBriefing({ pull, locale, role, slug }: { pull: RaidPull;
       <ol className={styles.steps}>{pull.steps.map((step) => <li key={step.en}>{text(step)}</li>)}</ol>
     </AtlasDisclosure>}
     {pull.direction && <section className={art.route}>
-      <h4 className={art.sectionHeading}><Route size={16} aria-hidden="true" />{t.route}</h4>
+      <h4 className={art.sectionHeading}><RaidPlannerIcon slug={slug} kind="map" fallback={<Route size={16} aria-hidden="true" />} />{t.route}</h4>
       <p>{text(pull.direction)}</p>
     </section>}
     {pull.next && <section className={`${styles.onward} ${art.onward}`}>
       <h4 className={art.sectionHeading}>{t.onward}</h4><p>{text(pull.next)}</p>
     </section>}
-    {pull.bossSlug && <AtlasLinkButton className={art.openBoss} href={`${locale === "ru" ? "/ru" : ""}/wow/raids/${slug}/${pull.bossSlug}`} iconAfter={<ArrowUpRight size={18} aria-hidden="true" />}>
+    {pull.bossSlug && <AtlasLinkButton className={`${art.openBoss} ${voidspireBossLinkClass(slug)}`} href={`${locale === "ru" ? "/ru" : ""}/wow/raids/${slug}/${pull.bossSlug}`} icon={slug === "the-voidspire" ? <RaidPlannerIcon slug={slug} kind="arena" /> : undefined} iconAfter={slug === "the-voidspire" ? undefined : <ArrowUpRight size={18} aria-hidden="true" />}>
       {t.openBoss}
     </AtlasLinkButton>}
   </div>;

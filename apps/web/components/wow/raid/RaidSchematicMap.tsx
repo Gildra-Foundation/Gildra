@@ -15,7 +15,7 @@ const bossPosition = (boss: RaidPullPlan["bosses"][number]) => ({ x: Math.min(90
 export function RaidSchematicMap({ plan, active, locale, onSelect, background }: { plan: RaidPullPlan; active: number; locale: "ru" | "en"; onSelect: (index: number, reveal?: boolean) => void; background: "grid" | "art" }) {
   const t = raidPullCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
-  return <figure className={styles.mapFigure} style={{ position: "static" }}>
+  return <figure className={styles.mapFigure} style={{ position: "static" }} data-raid-schematic>
     <figcaption><span>{t.map}</span><small>{t.schematic}</small></figcaption>
     <div className={styles.mapViewport} role="group" aria-label={`${t.map}: ${plan.name[locale]}`}>
       <div className={styles.mapPlane} data-raid-map-plane data-background={background}>

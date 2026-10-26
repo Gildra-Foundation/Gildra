@@ -8,6 +8,7 @@ import type { RaidPullPlan } from "./raidPullTypes";
 import { RaidSchematicMap } from "./RaidSchematicMap";
 import { RaidCartography } from "./RaidCartography";
 import { raidMapCopy } from "./raidMapCopy";
+import { RaidPlannerIcon } from "./VoidspirePlannerArt";
 import { backgroundKey, mapBackground, readMapPreference, saveMapPreference, subscribeMapPreferences, type RaidMapBackground } from "./raidMapPreferences";
 import styles from "./raidMap.module.css";
 
@@ -42,17 +43,17 @@ export function RaidPullMap({ plan, active, locale, onSelect }: { plan: RaidPull
     if (index >= 0) onSelect(index, reveal);
   }
   return <section className={styles.studio} data-raid-map-studio data-background={background} aria-label={t.background}>
-    <div className={styles.backgrounds}><AtlasSegmented className={styles.materialModes} aria-label={t.background} value={background}
+    <div className={styles.backgrounds}><AtlasSegmented className={styles.materialModes} data-raid-map-modes aria-label={t.background} value={background}
       onValueChange={value => saveMapPreference(backgroundKey, value)}
-      options={(["map", "arena", "grid", "art"] as const).map(value => ({ value, label: t[value], disabled: !atlas && (value === "map" || value === "arena") }))} /></div>
+      options={(["map", "arena", "grid", "art"] as const).map(value => ({ value, label: t[value], icon: plan.slug === "the-voidspire" ? <RaidPlannerIcon slug={plan.slug} kind={value} /> : undefined, disabled: !atlas && (value === "map" || value === "arena") }))} /></div>
     {(background === "grid" || background === "art") ? <RaidSchematicMap plan={plan} active={active} locale={locale} onSelect={onSelect} background={background} /> : image && <>
-      <div className={styles.selectors}>
-        {background === "map" ? <div className={styles.field}><span><Layers size={15} aria-hidden="true" />{t.floor}</span><AtlasValyroSelect aria-label={t.floor} className={styles.assetSelect}
+      <div className={styles.selectors} data-raid-map-fields>
+        {background === "map" ? <div className={styles.field}><span><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Layers size={15} aria-hidden="true" />} />{t.floor}</span><AtlasValyroSelect aria-label={t.floor} className={styles.assetSelect} data-raid-map-select
           value={floor?.id} options={atlas!.floors.map(f => ({ value: f.id, label: f.name[locale] }))}
           onValueChange={id => setFloorChoice({ pull: pull.id, id })} /></div> : <>
-          <div className={styles.field}><span><Skull size={15} aria-hidden="true" />{t.boss}</span><AtlasValyroSelect aria-label={t.boss} className={styles.assetSelect} value={arenaBoss}
+          <div className={styles.field}><span><RaidPlannerIcon slug={plan.slug} kind="arena" fallback={<Skull size={15} aria-hidden="true" />} />{t.boss}</span><AtlasValyroSelect aria-label={t.boss} className={styles.assetSelect} data-raid-map-select value={arenaBoss}
             options={bosses.filter(b => atlas?.arenas[b.slug]?.length).map(b => ({ value: b.slug, label: b.name[locale] }))} onValueChange={selectBoss} /></div>
-          {variants.length > 1 && <div className={styles.field}><span>{t.variant}</span><AtlasValyroSelect aria-label={t.variant} className={styles.assetSelect} value={arena?.id}
+          {variants.length > 1 && <div className={styles.field}><span>{t.variant}</span><AtlasValyroSelect aria-label={t.variant} className={styles.assetSelect} data-raid-map-select value={arena?.id}
             options={variants.map(v => ({ value: v.id, label: v.name[locale] }))} onValueChange={variant => setArenaChoice({ pull: pull.id, boss: arenaBoss, variant })} /></div>}
         </>}
       </div>
@@ -60,7 +61,7 @@ export function RaidPullMap({ plan, active, locale, onSelect }: { plan: RaidPull
         pins={pins} bosses={bosses} activeBoss={background === "arena" ? arenaBoss : defaultBoss}
         links={progression?.links ?? []} locale={locale} onSelectBoss={selectBoss} />
     </>}
-    {progression && <div className={styles.progression}><h4><Route size={17} aria-hidden="true" />{t.sequence}</h4><p>{progression.note[locale]}</p>
+    {progression && <div className={styles.progression} data-raid-map-progression><h4><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Route size={17} aria-hidden="true" />} />{t.sequence}</h4><p>{progression.note[locale]}</p>
       <ol className={styles.bossRail}>{bosses.map((boss, i) => <li key={boss.slug}><button type="button" className={styles.railChoice} aria-pressed={defaultBoss === boss.slug} onClick={() => selectBoss(boss.slug, true)}><b>{i + 1}</b><span>{boss.name[locale]}</span></button></li>)}</ol>
       {progression.lieutenants.length > 0 && <details className={styles.lieutenants}><summary>{t.lieutenants} · {progression.lieutenants.length}</summary><ul>{progression.lieutenants.map(npc => <li key={npc.npcId}><a href={`https://www.wowhead.com/npc=${npc.npcId}`} target="_blank" rel="noreferrer">{npc.name[locale]}<ArrowUpRight size={12} aria-hidden="true" /></a><span>{npc.note[locale]}</span></li>)}</ul></details>}
     </div>}

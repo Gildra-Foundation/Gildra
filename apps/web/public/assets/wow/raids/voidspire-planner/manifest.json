@@ -1,0 +1,854 @@
+{
+  "version": 1,
+  "slug": "the-voidspire",
+  "createdAt": "2026-10-26T13:50:13.057Z",
+  "type": "original-decorative-game-interface-materials",
+  "mode": "11 separate built-in image_gen calls with genuine transparent_background:true; originals retained outside public",
+  "postprocess": "only trim, proportional resize, transparent padding and WebP encoding; no retouch, recolour, alpha repair or background removal",
+  "entries": {
+    "plaque": {
+      "path": "/assets/wow/raids/voidspire-planner/plaque.webp",
+      "width": 768,
+      "height": 207,
+      "bytes": 33992,
+      "sha256": "ad6215bd131e2d8326bab2dd3fa8a5352ed14be753d174a27c6d1804b7ee49c0",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/plaque.png",
+      "nativeSha256": "a8654fb9a94d496caeb8f5211f6bc9cef5e7c8e847554dc478171b662cde6637",
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/plaque.txt",
+      "promptSha256": "b0e8fd6d8bbb73cad9c057436836da5dcb6cdf53e0ce67a0fe3667fbd7e0ec1e",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "skill button: trim alpha>8, resize752w proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "crop": {
+        "left": 6,
+        "top": 82,
+        "width": 2162,
+        "height": 548
+      },
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 253,
+        "zeroFraction": 0.3356418578904992,
+        "bounds": {
+          "left": 8,
+          "top": 8,
+          "width": 752,
+          "height": 191
+        }
+      },
+      "geometry": {
+        "mode": "nine-slice",
+        "fill": true,
+        "slicesOrder": "top,right,bottom,left",
+        "measuredProposal": [
+          53,
+          165,
+          38,
+          165
+        ],
+        "textWindowPercent": {
+          "left": 20,
+          "top": 28,
+          "right": 80,
+          "bottom": 72
+        },
+        "recommendedHeight": 64
+      },
+      "slices": [
+        53,
+        165,
+        38,
+        165
+      ]
+    },
+    "card": {
+      "path": "/assets/wow/raids/voidspire-planner/card.webp",
+      "width": 768,
+      "height": 307,
+      "bytes": 52752,
+      "sha256": "2f164f8c6a588160b7831acd00829cfd97eb63863deee6f35b72b13f3867c900",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/card.png",
+      "nativeSha256": "ea6ac5c9879a5464c22840edd603044297c836805a16aa09b07fcba32c0f5824",
+      "nativeDimensions": {
+        "width": 1983,
+        "height": 793
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/card.txt",
+      "promptSha256": "4747d88eef544e2dcb8d6fb11146e95676f3a602119ff8c993b5be8298730a69",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "whole native canvas proportional resize768w, no trim,WebPq88 alpha100 effort6",
+      "crop": null,
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 253,
+        "zeroFraction": 0.3358441910966341,
+        "bounds": {
+          "left": 1,
+          "top": 9,
+          "width": 766,
+          "height": 292
+        }
+      },
+      "geometry": {
+        "mode": "whole-contain",
+        "aspectRatio": [
+          1983,
+          793
+        ],
+        "numberCentrePercent": {
+          "x": 18.5,
+          "y": 49.5
+        },
+        "textWindowPercent": {
+          "left": 35,
+          "top": 28,
+          "right": 91,
+          "bottom": 71
+        },
+        "stretch": false
+      }
+    },
+    "medallion": {
+      "path": "/assets/wow/raids/voidspire-planner/medallion.webp",
+      "width": 192,
+      "height": 192,
+      "bytes": 12802,
+      "sha256": "a2d408a5ebf2b15ad7df508e637f151c8fb690badc551149fca06c41c72ab00c",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/medallion.png",
+      "nativeSha256": "99d7120648519c8722eba3514692eb0eb5acbfc0353c9d0141478534f90a5ca0",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/medallion.txt",
+      "promptSha256": "ad9fcd231e6714af6808c24bf12c6f8d614ea421679474efa31309581ba39689",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "crop": {
+        "left": 2,
+        "top": 2,
+        "width": 1250,
+        "height": 1249
+      },
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 253,
+        "zeroFraction": 0.4522569444444444,
+        "bounds": {
+          "left": 8,
+          "top": 8,
+          "width": 176,
+          "height": 176
+        }
+      },
+      "geometry": {
+        "mode": "whole-contain",
+        "numberCentrePercent": {
+          "x": 50,
+          "y": 50
+        },
+        "textWindowPercent": {
+          "left": 30,
+          "top": 30,
+          "right": 70,
+          "bottom": 70
+        },
+        "padding": 8,
+        "stretch": false
+      }
+    },
+    "panel": {
+      "path": "/assets/wow/raids/voidspire-planner/panel.webp",
+      "width": 960,
+      "height": 640,
+      "bytes": 95088,
+      "sha256": "c5bbafc6c0b180e0d96337618995a525e75fc26fe3713e92e19c7c038316f499",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/panel-heavy.png",
+      "nativeSha256": "eaff923da332c7b682ac77c35152ab58508c88cb36c66a30f7f611c8af89da66",
+      "nativeDimensions": {
+        "width": 1536,
+        "height": 1024
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/panel-heavy.txt",
+      "promptSha256": "6189f92c11faacb025a3cce63b49ead2979db60658eb7e174915488de6fbfd66",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "skill frame: no trim,960\u00d7640 proportional,WebPq88 alpha100 effort6",
+      "crop": null,
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 0,
+        "zeroFraction": 0.6342122395833333,
+        "bounds": {
+          "left": 24,
+          "top": 31,
+          "width": 913,
+          "height": 573
+        }
+      },
+      "geometry": {
+        "mode": "nine-slice",
+        "fill": false,
+        "slicesOrder": "top,right,bottom,left",
+        "nativeSlices": [
+          264,
+          280,
+          280,
+          280
+        ],
+        "sliceScale": 0.625,
+        "sourceWindowPercent": {
+          "left": 13.671875,
+          "top": 20.01953125,
+          "right": 86.39322916666666,
+          "bottom": 78.22265625
+        },
+        "nativeSafeWindowAlphaAtMost8": {
+          "left": 210,
+          "top": 205,
+          "width": 1117,
+          "height": 596
+        },
+        "recommendedCssScale": 0.34285714285714286,
+        "recommendedCssScaleMobile": 0.22857142857142856,
+        "recommendedCssBorders": [
+          60,
+          60,
+          60,
+          60
+        ],
+        "recommendedCssBordersMobile": [
+          40,
+          40,
+          40,
+          40
+        ],
+        "nativeRailProfiles": {
+          "topSolidAlpha8": [
+            80,
+            201
+          ],
+          "bottomSolidAlpha8": [
+            802,
+            932
+          ],
+          "leftMiddleWithCrystalAlpha8": [
+            42,
+            184
+          ],
+          "rightMiddleWithCrystalAlpha8": [
+            1352,
+            1494
+          ],
+          "leftStraightAlpha128": [
+            66,
+            183
+          ],
+          "rightStraightAlpha128": [
+            1353,
+            1470
+          ]
+        },
+        "notes": "Transparent open centre with original faint alpha1\u20138 residual preserved; no fill. Measured chunky corner cuts; proof verifies the straight rail stretch."
+      },
+      "slices": [
+        165,
+        175,
+        175,
+        175
+      ],
+      "window": {
+        "sourceSize": {
+          "width": 960,
+          "height": 640
+        },
+        "bounds": {
+          "left": 111,
+          "top": 122,
+          "right": 849,
+          "bottom": 506
+        },
+        "polygon": [
+          [
+            130,
+            122
+          ],
+          [
+            130,
+            126
+          ],
+          [
+            121,
+            133
+          ],
+          [
+            122,
+            152
+          ],
+          [
+            112,
+            153
+          ],
+          [
+            112,
+            168
+          ],
+          [
+            111,
+            169
+          ],
+          [
+            111,
+            248
+          ],
+          [
+            112,
+            249
+          ],
+          [
+            112,
+            258
+          ],
+          [
+            111,
+            259
+          ],
+          [
+            111,
+            271
+          ],
+          [
+            112,
+            272
+          ],
+          [
+            112,
+            304
+          ],
+          [
+            111,
+            305
+          ],
+          [
+            111,
+            422
+          ],
+          [
+            112,
+            423
+          ],
+          [
+            112,
+            429
+          ],
+          [
+            111,
+            430
+          ],
+          [
+            111,
+            465
+          ],
+          [
+            112,
+            469
+          ],
+          [
+            111,
+            470
+          ],
+          [
+            111,
+            476
+          ],
+          [
+            112,
+            478
+          ],
+          [
+            123,
+            479
+          ],
+          [
+            123,
+            487
+          ],
+          [
+            121,
+            495
+          ],
+          [
+            129,
+            501
+          ],
+          [
+            129,
+            506
+          ],
+          [
+            831,
+            506
+          ],
+          [
+            831,
+            501
+          ],
+          [
+            839,
+            495
+          ],
+          [
+            838,
+            479
+          ],
+          [
+            849,
+            478
+          ],
+          [
+            849,
+            153
+          ],
+          [
+            839,
+            152
+          ],
+          [
+            838,
+            151
+          ],
+          [
+            840,
+            133
+          ],
+          [
+            831,
+            126
+          ],
+          [
+            831,
+            122
+          ]
+        ],
+        "clip": "polygon(2.575% 0.000%, 2.575% 1.042%, 1.355% 2.865%, 1.491% 7.813%, 0.136% 8.073%, 0.136% 11.979%, 0.000% 12.240%, 0.000% 32.813%, 0.136% 33.073%, 0.136% 35.417%, 0.000% 35.677%, 0.000% 38.802%, 0.136% 39.063%, 0.136% 47.396%, 0.000% 47.656%, 0.000% 78.125%, 0.136% 78.385%, 0.136% 79.948%, 0.000% 80.208%, 0.000% 89.323%, 0.136% 90.365%, 0.000% 90.625%, 0.000% 92.188%, 0.136% 92.708%, 1.626% 92.969%, 1.626% 95.052%, 1.355% 97.135%, 2.439% 98.698%, 2.439% 100.000%, 97.561% 100.000%, 97.561% 98.698%, 98.645% 97.135%, 98.509% 92.969%, 100.000% 92.708%, 100.000% 8.073%, 98.645% 7.813%, 98.509% 7.552%, 98.780% 2.865%, 97.561% 1.042%, 97.561% 0.000%)",
+        "css": {
+          "--frame-top": "19.063%",
+          "--frame-right": "11.563%",
+          "--frame-bottom": "20.938%",
+          "--frame-left": "11.563%",
+          "--frame-clip": "polygon(2.575% 0.000%, 2.575% 1.042%, 1.355% 2.865%, 1.491% 7.813%, 0.136% 8.073%, 0.136% 11.979%, 0.000% 12.240%, 0.000% 32.813%, 0.136% 33.073%, 0.136% 35.417%, 0.000% 35.677%, 0.000% 38.802%, 0.136% 39.063%, 0.136% 47.396%, 0.000% 47.656%, 0.000% 78.125%, 0.136% 78.385%, 0.136% 79.948%, 0.000% 80.208%, 0.000% 89.323%, 0.136% 90.365%, 0.000% 90.625%, 0.000% 92.188%, 0.136% 92.708%, 1.626% 92.969%, 1.626% 95.052%, 1.355% 97.135%, 2.439% 98.698%, 2.439% 100.000%, 97.561% 100.000%, 97.561% 98.698%, 98.645% 97.135%, 98.509% 92.969%, 100.000% 92.708%, 100.000% 8.073%, 98.645% 7.813%, 98.509% 7.552%, 98.780% 2.865%, 97.561% 1.042%, 97.561% 0.000%)"
+        }
+      }
+    },
+    "map": {
+      "path": "/assets/wow/raids/voidspire-planner/icons/map.webp",
+      "width": 192,
+      "height": 192,
+      "bytes": 14078,
+      "sha256": "6bd9b505985f38f827ff2e96c4d070d8c4c30faa1ca72a3815ee0664ddb62f8d",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/icons/map.png",
+      "nativeSha256": "2580afc76810f8c6f4a4bab439c9f1ae9fa842208dce65d961cf5fe485f97d95",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/icons/map.txt",
+      "promptSha256": "f1e4bbf991b422e1cd9f4c1d32c741e508b1256bf36c920cecc2bc2c6444c55e",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "crop": {
+        "left": 19,
+        "top": 130,
+        "width": 1210,
+        "height": 1023
+      },
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 253,
+        "zeroFraction": 0.5290798611111112,
+        "bounds": {
+          "left": 8,
+          "top": 21,
+          "width": 176,
+          "height": 149
+        }
+      },
+      "geometry": {
+        "mode": "whole-contain",
+        "padding": 8,
+        "stretch": false
+      }
+    },
+    "arena": {
+      "path": "/assets/wow/raids/voidspire-planner/icons/arena.webp",
+      "width": 192,
+      "height": 192,
+      "bytes": 12576,
+      "sha256": "58cbe3d9bd4dd28931e9a343f4c752087cec5d95561ea5d9f00e9f05a404a159",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/icons/arena.png",
+      "nativeSha256": "897e55d84ccfe9e70161ddcc1925f021e863a9d46cac262a81cf84bf946e8909",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/icons/arena.txt",
+      "promptSha256": "30d12cee92dc74454e905e6994d8b745b84a9aeda7bf0e497d0979b4b83f427a",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "crop": {
+        "left": 29,
+        "top": 128,
+        "width": 1196,
+        "height": 997
+      },
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 253,
+        "zeroFraction": 0.5312771267361112,
+        "bounds": {
+          "left": 8,
+          "top": 22,
+          "width": 176,
+          "height": 147
+        }
+      },
+      "geometry": {
+        "mode": "whole-contain",
+        "padding": 8,
+        "stretch": false
+      }
+    },
+    "grid": {
+      "path": "/assets/wow/raids/voidspire-planner/icons/grid.webp",
+      "width": 192,
+      "height": 192,
+      "bytes": 14968,
+      "sha256": "bf98baf462f8a915d225ba9b5e97ab284d75eeff3b2f556bdc5c62fed1c14415",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/icons/grid.png",
+      "nativeSha256": "34546bff918c65fdea55d6fa51a82fa7b6b5d4b9c41a6ea53e95ebcfe545e67a",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/icons/grid.txt",
+      "promptSha256": "12a273e58fc20dab8d9f26438c71ee54226e086038d845b92b691be8005952f1",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "crop": {
+        "left": 57,
+        "top": 78,
+        "width": 1139,
+        "height": 1112
+      },
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 253,
+        "zeroFraction": 0.2759331597222222,
+        "bounds": {
+          "left": 8,
+          "top": 10,
+          "width": 176,
+          "height": 172
+        }
+      },
+      "geometry": {
+        "mode": "whole-contain",
+        "padding": 8,
+        "stretch": false
+      }
+    },
+    "art": {
+      "path": "/assets/wow/raids/voidspire-planner/icons/art.webp",
+      "width": 192,
+      "height": 192,
+      "bytes": 9998,
+      "sha256": "42a4e154d209395864fea79086db3707b89e2388c74863fdfdb8f14038b9d655",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/icons/art.png",
+      "nativeSha256": "8bb91e354a9ea40826217ece9d816fb7b34c05b8dde3b275b0c8cb1667533ae2",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/icons/art.txt",
+      "promptSha256": "e26f27ed551007f93b94537f010ecc6170cc85b7dd9ff18c1d32207e97d75229",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "crop": {
+        "left": 293,
+        "top": 26,
+        "width": 700,
+        "height": 1193
+      },
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 252,
+        "zeroFraction": 0.6723904079861112,
+        "bounds": {
+          "left": 44,
+          "top": 8,
+          "width": 103,
+          "height": 176
+        }
+      },
+      "geometry": {
+        "mode": "whole-contain",
+        "padding": 8,
+        "stretch": false
+      }
+    },
+    "command": {
+      "path": "/assets/wow/raids/voidspire-planner/icons/command.webp",
+      "width": 192,
+      "height": 192,
+      "bytes": 11492,
+      "sha256": "56dbbe28e337aa2b067a8e3166073d3c34e4e1d86900c74bcfd33549f7a8ad7b",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/icons/command.png",
+      "nativeSha256": "e30247822efde558f7bc24164528a5921f59897e1e8c35a19670c7f52ce0e254",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/icons/command.txt",
+      "promptSha256": "83df740f83426c59ea6ae533ffd7b6d653f7ca590eeb64793194ba1f77dc8778",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "crop": {
+        "left": 51,
+        "top": 13,
+        "width": 1152,
+        "height": 1206
+      },
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 252,
+        "zeroFraction": 0.5908745659722222,
+        "bounds": {
+          "left": 12,
+          "top": 8,
+          "width": 168,
+          "height": 176
+        }
+      },
+      "geometry": {
+        "mode": "whole-contain",
+        "padding": 8,
+        "stretch": false
+      }
+    },
+    "sketch": {
+      "path": "/assets/wow/raids/voidspire-planner/icons/sketch.webp",
+      "width": 192,
+      "height": 192,
+      "bytes": 14272,
+      "sha256": "7d2caac958788083876996e81081f1d8b60fef5ca6930dd6466563d2febac38f",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/icons/sketch.png",
+      "nativeSha256": "11c3985f6c50a3f3937543b6ea0803e9674d6ce2d0fcf29f606f7c01df1d60e9",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/icons/sketch.txt",
+      "promptSha256": "0d17d0ba1b14f9e3bb7f35117e14330a367c1bea59a5c320b2b479ba2b994d73",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "crop": {
+        "left": 39,
+        "top": 30,
+        "width": 1176,
+        "height": 1194
+      },
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 253,
+        "zeroFraction": 0.5489908854166666,
+        "bounds": {
+          "left": 9,
+          "top": 8,
+          "width": 173,
+          "height": 176
+        }
+      },
+      "geometry": {
+        "mode": "whole-contain",
+        "padding": 8,
+        "stretch": false
+      }
+    },
+    "zoom": {
+      "path": "/assets/wow/raids/voidspire-planner/icons/zoom.webp",
+      "width": 192,
+      "height": 192,
+      "bytes": 11528,
+      "sha256": "2800ed726835dd9037315f0610239353e9986712ff5ad6e71c0ff56d948aec9f",
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/icons/zoom.png",
+      "nativeSha256": "2c9a7cbe1e1599b2b926569e958c238f3b57d74e5da1fda95cdc0b29401f34d0",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "prompt": "/home/debian/gildra-voidspire-materials-20261026/prompts/icons/zoom.txt",
+      "promptSha256": "1e554b06a9266227f385e0b6164301dc813f0364235c6452254fe7a46fb81ceb",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "crop": {
+        "left": 32,
+        "top": 14,
+        "width": 1197,
+        "height": 1194
+      },
+      "alpha": {
+        "hasAlpha": true,
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "range": [
+          0,
+          255
+        ],
+        "centre": 253,
+        "zeroFraction": 0.6311306423611112,
+        "bounds": {
+          "left": 8,
+          "top": 8,
+          "width": 176,
+          "height": 176
+        }
+      },
+      "geometry": {
+        "mode": "whole-contain",
+        "padding": 8,
+        "stretch": false
+      }
+    }
+  },
+  "supersededNativePanels": [
+    {
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/panel.png",
+      "nativeSha256": "38bbc2c18ae83a719aedcd814546c1c2aa9e130e2fdea1f0e74e0a525aceca1f",
+      "reason": "earlier central-crest candidate; unused",
+      "delivered": false
+    },
+    {
+      "native": "/home/debian/gildra-voidspire-materials-20261026/native/panel-rails.png",
+      "nativeSha256": "6da717b5d9f5a48253ed92f1bb204550eafd19f62e4ad5f2d8022165f5ec8293",
+      "reason": "rails too thin at intended CSS size; superseded by panel-heavy",
+      "delivered": false
+    }
+  ]
+}

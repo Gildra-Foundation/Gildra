@@ -8,6 +8,7 @@ import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import type { RaidMapImage, RaidMapPin, RaidPullPlan } from "./raidPullTypes";
 import type { RaidProgression } from "./raidProgression";
 import { raidMapCopy } from "./raidMapCopy";
+import { RaidPlannerIcon, RaidPlannerTextMark } from "./VoidspirePlannerArt";
 import { readMapPreference, saveMapPreference, sketchPoints, subscribeMapPreferences } from "./raidMapPreferences";
 import styles from "./raidMap.module.css";
 
@@ -56,8 +57,8 @@ function CartographyFooter({ background, hasPins, planSlug, activeBoss, locale, 
   return <div className={styles.mapFooter}><span>{background === "arena" ? t.arenaHint : hasPins ? t.approximate : t.emptyFloor}</span>
     {background === "arena" && <Link href={`${prefix}/wow/raids/${planSlug}/${activeBoss}`}>{t.tactics}<ArrowUpRight size={14} aria-hidden="true" /></Link>}
     {count > 0 && <div className={styles.sketchTools}><span>{t.own} · {count}</span>
-      <AtlasButton className={styles.tool} size="sm" aria-label={t.undo} onClick={onUndo}><Undo2 size={16} aria-hidden="true" /></AtlasButton>
-      <AtlasButton className={styles.tool} size="sm" aria-label={t.clear} onClick={onClear}><Trash2 size={16} aria-hidden="true" /></AtlasButton>
+      <AtlasButton className={styles.tool} size="sm" data-raid-tool="undo" aria-label={t.undo} onClick={onUndo}><RaidPlannerTextMark slug={planSlug} text="↶" fallback={<Undo2 size={16} aria-hidden="true" />} /></AtlasButton>
+      <AtlasButton className={styles.tool} size="sm" data-raid-tool="clear" aria-label={t.clear} onClick={onClear}><RaidPlannerTextMark slug={planSlug} text="×" fallback={<Trash2 size={16} aria-hidden="true" />} /></AtlasButton>
     </div>}
   </div>;
 }
@@ -88,15 +89,15 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
     setCursor(point => ({ x: bounded(point.x + x), y: bounded(point.y + y) }));
   }
 
-  return <figure className={styles.figure}>
-    <figcaption className={styles.caption}><div><span>{background === "arena" ? selectedBoss?.name[locale] : plan.name[locale]}</span><small>{image.name[locale]}</small></div><Map size={20} aria-hidden="true" /></figcaption>
-    <div className={styles.tools}>
-      <div><AtlasButton className={styles.tool} size="sm" aria-label={t.zoomOut} disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - .5))}><ZoomOut size={17} aria-hidden="true" /></AtlasButton>
-        <AtlasButton className={styles.tool} size="sm" onClick={() => setZoom(1)} aria-label={t.fit}><Maximize size={15} aria-hidden="true" /><span>{Math.round(zoom * 100)}%</span></AtlasButton>
-        <AtlasButton className={styles.tool} size="sm" aria-label={t.zoomIn} disabled={zoom >= 3} onClick={() => setZoom(value => Math.min(3, value + .5))}><ZoomIn size={17} aria-hidden="true" /></AtlasButton></div>
-      <div><AtlasButton className={styles.tool} size="sm" aria-label={t.gridOverlay} aria-pressed={showGrid} onClick={() => setShowGrid(value => !value)}><Grid2X2 size={17} aria-hidden="true" /></AtlasButton>
-        {background === "map" && <AtlasButton className={styles.tool} size="sm" aria-pressed={showRoute} onClick={() => setShowRoute(value => !value)}><Route size={17} aria-hidden="true" /><span>{t.route}</span></AtlasButton>}
-        <AtlasButton className={styles.tool} size="sm" aria-pressed={editing} onClick={() => setEditing(value => !value)}>{editing ? <Check size={17} aria-hidden="true" /> : <Pencil size={17} aria-hidden="true" />}<span>{editing ? t.cancel : t.draw}</span></AtlasButton></div>
+  return <figure className={styles.figure} data-raid-cartography>
+    <figcaption className={styles.caption} data-raid-map-caption><div><span>{background === "arena" ? selectedBoss?.name[locale] : plan.name[locale]}</span><small>{image.name[locale]}</small></div><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Map size={20} aria-hidden="true" />} /></figcaption>
+    <div className={styles.tools} data-raid-map-tools>
+      <div><AtlasButton className={styles.tool} size="sm" data-raid-tool="zoom-out" aria-label={t.zoomOut} disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - .5))}><RaidPlannerIcon slug={plan.slug} kind="zoom" mark="−" fallback={<ZoomOut size={17} aria-hidden="true" />} /></AtlasButton>
+        <AtlasButton className={styles.tool} size="sm" data-raid-tool="fit" onClick={() => setZoom(1)} aria-label={t.fit}><RaidPlannerTextMark slug={plan.slug} text={`${Math.round(zoom * 100)}%`} compact fallback={<><Maximize size={15} aria-hidden="true" /><span>{Math.round(zoom * 100)}%</span></>} /></AtlasButton>
+        <AtlasButton className={styles.tool} size="sm" data-raid-tool="zoom-in" aria-label={t.zoomIn} disabled={zoom >= 3} onClick={() => setZoom(value => Math.min(3, value + .5))}><RaidPlannerIcon slug={plan.slug} kind="zoom" mark="+" fallback={<ZoomIn size={17} aria-hidden="true" />} /></AtlasButton></div>
+      <div><AtlasButton className={styles.tool} size="sm" data-raid-tool="grid" aria-label={t.gridOverlay} aria-pressed={showGrid} onClick={() => setShowGrid(value => !value)}><RaidPlannerIcon slug={plan.slug} kind="grid" fallback={<Grid2X2 size={17} aria-hidden="true" />} /></AtlasButton>
+        {background === "map" && <AtlasButton className={styles.tool} size="sm" data-raid-tool="route" aria-pressed={showRoute} onClick={() => setShowRoute(value => !value)}><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Route size={17} aria-hidden="true" />} /><span>{t.route}</span></AtlasButton>}
+        <AtlasButton className={styles.tool} size="sm" data-raid-tool="sketch" aria-pressed={editing} onClick={() => setEditing(value => !value)}><RaidPlannerIcon slug={plan.slug} kind="sketch" mark={editing ? "✓" : undefined} fallback={editing ? <Check size={17} aria-hidden="true" /> : <Pencil size={17} aria-hidden="true" />} /><span>{editing ? t.cancel : t.draw}</span></AtlasButton></div>
     </div>
     <div className={styles.viewport} tabIndex={0} role="group" aria-label={t.pan} data-raid-map-viewport>
       <div className={styles.canvas} style={{ "--map-zoom": zoom, aspectRatio: `${image.width} / ${image.height}` } as CSSProperties} data-raid-map-canvas data-grid={showGrid} data-editing={editing}>
