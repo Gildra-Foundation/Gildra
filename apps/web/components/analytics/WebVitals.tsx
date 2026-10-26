@@ -1,7 +1,7 @@
 "use client";
 
 import { useReportWebVitals } from "next/web-vitals";
-import { isTrackedPage } from "@/lib/cms/tracking";
+import { isTrackedPage } from "@/lib/analytics/tracking";
 
 type Plausible = (event: string, options?: { props?: Record<string, string> }) => void;
 

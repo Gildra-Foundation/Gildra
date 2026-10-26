@@ -22,7 +22,6 @@ const exempt = {
   "components/platform/games/": "Genshin and Diablo hubs — hidden for the WoW MVP",
   "components/platform/compare/": "fixture page — hidden for the WoW MVP",
   "components/analytics/": "analytics product skin",
-  "components/cms/reader.module.css": "reader account pages skin",
   "components/motion/routeTransition.module.css": "global route chrome, rendered outside the atlas scope",
   "components/blueprints/": "legacy blueprint skin — to be moved onto tokens (roadmap wave 3)",
   "components/platform/shared/platformAtmosphere.module.css": "atmosphere of the hidden fixture pages",

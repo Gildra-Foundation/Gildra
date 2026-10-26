@@ -28,7 +28,7 @@ RUN --mount=type=cache,id=gildra-web-tsc,target=/tsc,sharing=locked \
  && touch /typecheck.ok
 
 FROM source AS builder
-# Public Plausible tracker settings (lib/cms/plausible.ts). Static pages are
+# Public Plausible tracker settings (lib/analytics/plausible.ts). Static pages are
 # prerendered here, so the tracker needs them at build time as well as at
 # runtime (compose.runtime.yml). Pass empty values to build without it.
 ARG PLAUSIBLE_SCRIPT_URL=https://gildra.net/stats/js/script.js

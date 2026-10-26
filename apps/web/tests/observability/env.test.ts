@@ -6,7 +6,7 @@ import { apiInternalUrl, checkServerEnv } from "../../lib/env.ts";
 describe("server environment", () => {
   it("accepts the production shape and names switched-off features", () => {
     const { errors, warnings } = checkServerEnv({
-      API_INTERNAL_URL: "http://api:8080", CMS_INTERNAL_URL: "http://cms:3001", CATALOG_ACCESS_MODE: "public",
+      API_INTERNAL_URL: "http://api:8080", CATALOG_ACCESS_MODE: "public",
       INDEXNOW_KEY: "0123456789abcdef", BATTLENET_REGION: "EU", SENTRY_TRACES_SAMPLE_RATE: "0",
       BATTLENET_CLIENT_ID: "id",
     });

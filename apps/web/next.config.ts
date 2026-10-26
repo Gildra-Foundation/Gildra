@@ -1,7 +1,6 @@
 import path from "node:path";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
-import { CMS_IMAGE_ORIGINS, CMS_IMAGE_PATH } from "./lib/cms/images";
 
 const monorepoRoot = path.join(process.cwd(), "../..");
 
@@ -70,8 +69,6 @@ const nextConfig: NextConfig = {
     // Least-recently-used variants are evicted past this size, so the image
     // cache can never fill /app/.next/cache (a 128 MB tmpfs in production).
     maximumDiskCacheSize: 96 * 1024 * 1024,
-    // Article covers from the CMS upload path only (lib/cms/images.ts).
-    remotePatterns: CMS_IMAGE_ORIGINS.map((origin) => new URL(`${origin}${CMS_IMAGE_PATH}**`)),
   },
   experimental: {
     // Group CSS by what each route imports instead of merging every page's
@@ -109,18 +106,12 @@ const nextConfig: NextConfig = {
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
       { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
     ];
-    // Only the CMS live preview (cms.gildra.net) may frame the article preview.
     const sameOriginFrames = [
       { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
     ];
     return [
-      { source: "/", headers: [...security, ...sameOriginFrames] },
-      { source: "/:path((?!cms-preview|ru/cms-preview).*)", headers: [...security, ...sameOriginFrames] },
-      ...["/cms-preview/:path*", "/ru/cms-preview/:path*"].map((source) => ({
-        source,
-        headers: [...security, { key: "Content-Security-Policy", value: "frame-ancestors 'self' https://cms.gildra.net" }],
-      })),
+      { source: "/:path*", headers: [...security, ...sameOriginFrames] },
     ];
   },
   async redirects() {

@@ -15,7 +15,7 @@ fs.mkdirSync(directory, { recursive: true });
 const routes = [
   "/", "/ru", "/wow", "/ru/wow", "/wow/mythic-plus", "/wow/mythic-plus/midnight-season-2/murder-row",
   "/wow/raids", "/wow/raids/march-on-queldanas", "/tier-lists", "/ru/tier-lists", "/wow/characters",
-  "/database", "/wow/articles",
+  "/database",
 ].filter((route) => !only || only.has(route));
 const transitions = [
   { from: "/wow", link: 'a[href="/wow/raids"]', to: "/wow/raids" },

@@ -32,7 +32,6 @@ export const routeSections = {
   delves: { path: "/wow/delves", parent: "wow", title: { en: "Delves", ru: "Вылазки" }, scene: "delves" },
   tierLists: { path: "/tier-lists", parent: "wow", title: { en: "Tier lists", ru: "Тир-листы" }, scene: "tierLists", search: { keywords: "tier list рейтинг" } },
   characters: { path: "/wow/characters", parent: "wow", title: { en: "Characters", ru: "Персонажи" }, search: { keywords: "battle.net armory оружейная" } },
-  articles: { path: "/wow/articles", parent: "wow", title: { en: "Articles", ru: "Статьи" }, scene: "articles", search: { keywords: "guides гайды" } },
   gear: { path: "/wow/gear", parent: "wow", title: { en: "Gear", ru: "Экипировка" } },
   season2: { path: "/wow/midnight/season-2", parent: "wow", title: { en: "Midnight Season 2", ru: "Midnight · Сезон 2" } },
   whatsNew: { path: "/wow/whats-new", parent: "wow", title: { en: "What's new", ru: "Что нового" }, scene: "articles", search: { keywords: "changelog news updates обновления новости изменения" } },

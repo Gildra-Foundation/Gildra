@@ -1,9 +1,7 @@
 .git
 .github
 **/.next
-cms/.next
 **/node_modules
-cms/node_modules
 .env
 infra/certs
 **/.artifacts

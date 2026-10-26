@@ -38,7 +38,7 @@ const config = [
   ...nextTs,
   {
     ignores: [
-      "**/.next*/**", "**/node_modules/**", "**/.artifacts/**", "cms/**", "backend/**", "scraper/**", "apps/web/public/**",
+      "**/.next*/**", "**/node_modules/**", "**/.artifacts/**", "backend/**", "scraper/**", "apps/web/public/**",
       "**/next-env.d.ts", "**/*.gen.*",
     ],
   },

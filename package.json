@@ -2,7 +2,7 @@
   "name": "gildra",
   "version": "1.0.0",
   "private": true,
-  "description": "Gildra monorepo: apps/web (Next.js site), packages/* (shared code); services live in backend/, cms/, scraper/.",
+  "description": "Gildra monorepo: apps/web (Next.js site), packages/* (shared code); services live in backend/, scraper/.",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -119,9 +119,7 @@
     "qa:release": "npm run qa:release -w @gildra/web --",
     "budgets": "npm run budgets -w @gildra/web --",
     "art:placeholders": "npm run art:placeholders -w @gildra/web --",
-    "test:cms": "npm run test:cms -w @gildra/web --",
-    "test:cms:revalidate-e2e": "npm run test:cms:revalidate-e2e -w @gildra/web --",
-    "test:cms:readers-e2e": "npm run test:cms:readers-e2e -w @gildra/web --",
+    "test:analytics": "npm run test:analytics -w @gildra/web --",
     "lint": "eslint apps/web packages"
   }
 }

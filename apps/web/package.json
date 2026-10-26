@@ -103,9 +103,7 @@
     "qa:release": "node scripts/qa-release.mjs",
     "budgets": "node scripts/check-route-budgets.mjs",
     "art:placeholders": "node scripts/generate-art-placeholders.mjs",
-    "test:cms": "node --experimental-strip-types --no-warnings --test tests/cms/*.test.ts",
-    "test:cms:revalidate-e2e": "node tests/cms/revalidate-e2e.mjs",
-    "test:cms:readers-e2e": "node --experimental-strip-types --no-warnings tests/cms/readers-e2e.mjs",
+    "test:analytics": "node --experimental-strip-types --no-warnings --test tests/analytics/*.test.ts",
     "lint": "eslint .",
     "test:auction-reliability": "node scripts/test-auction-reliability.mjs",
     "qa:auction-reliability-ui": "node scripts/qa-auction-reliability-ui.mjs"

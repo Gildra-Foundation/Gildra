@@ -68,11 +68,10 @@ export const navigationRealms: readonly NavigationRealm[] = [
   },
   {
     id: "chronicle",
-    label: { en: "Articles", ru: "Статьи" },
-    lede: { en: "Guides and stories from Azeroth, and what changed on Gildra.", ru: "Гайды и истории Азерота, а также новое на Gildra." },
+    label: { en: "What's new", ru: "Что нового" },
+    lede: { en: "What changed on Gildra.", ru: "Новое на Gildra." },
     scene: "articles",
     links: [
-      { href: "/wow/articles", label: { en: "Articles", ru: "Статьи" }, note: { en: "Guides and stories", ru: "Гайды и истории" } },
       { href: "/wow/whats-new", label: { en: "What's new", ru: "Что нового" }, note: { en: "Gildra updates", ru: "Обновления Gildra" } },
     ],
   },

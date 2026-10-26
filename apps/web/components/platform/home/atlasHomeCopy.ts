@@ -12,7 +12,7 @@ export const atlasHomeCopy = {
       { id: "mythicPlus", title: "Mythic+", description: "Dungeons, routes and keystones." },
       { id: "raids", title: "Raids", description: "Boss encounters and raid guides." },
       { id: "tierLists", title: "Tier lists", description: "Compare classes and specializations." },
-      { id: "articles", title: "Articles", description: "Guides and stories from Azeroth." },
+      { id: "whatsNew", title: "What's new", description: "What changed on Gildra." },
     ],
   },
   ru: {
@@ -28,7 +28,7 @@ export const atlasHomeCopy = {
       { id: "mythicPlus", title: "Эпохальный+", description: "Подземелья, маршруты и ключи." },
       { id: "raids", title: "Рейды", description: "Боссы и тактики сражений." },
       { id: "tierLists", title: "Тир-листы", description: "Сравнение классов и специализаций." },
-      { id: "articles", title: "Статьи", description: "Руководства и истории Азерота." },
+      { id: "whatsNew", title: "Что нового", description: "Новое на Gildra." },
     ],
   },
 } as const;
