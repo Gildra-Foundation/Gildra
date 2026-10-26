@@ -64,6 +64,23 @@ func (s *Service) Index(ctx context.Context) (*Index, error) {
 	return s.index, nil
 }
 
+// Warm loads the index in the background after delay, so the first visitor
+// does not wait for it. It is a no-op once the index is loaded or loading.
+func (s *Service) Warm(ctx context.Context, delay time.Duration) {
+	go func() {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(delay):
+		}
+		s.mu.Lock()
+		if s.index == nil && s.loading == nil {
+			s.startLoadLocked()
+		}
+		s.mu.Unlock()
+	}()
+}
+
 func (s *Service) startLoadLocked() {
 	done := make(chan struct{})
 	s.loading = done

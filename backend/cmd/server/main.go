@@ -179,7 +179,9 @@ func run() error {
 	league.NewHandler(league.NewService(postgres)).Register(router)
 	platformhome.NewHandler(platformhome.NewService(postgres)).Register(router)
 	rotationlab.NewHandler(rotationlab.NewService(postgres)).Register(router)
-	transmog.NewHandler(transmog.NewService(postgres)).Register(router)
+	transmogService := transmog.NewService(postgres)
+	transmogService.Warm(ctx, 15*time.Second)
+	transmog.NewHandler(transmogService).Register(router)
 	characterworkspace.NewHandler(characterworkspace.NewService(postgres), characterworkspace.NewBattleNetVerifier()).Register(router)
 	mythicbuilds.NewHandler(mythicbuilds.NewService(postgres), characterworkspace.NewBattleNetVerifier()).Register(router)
 	if cfg.CatalogMediaDirectory != "" {
