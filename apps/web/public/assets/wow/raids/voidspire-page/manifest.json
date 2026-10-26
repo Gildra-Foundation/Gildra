@@ -5,11 +5,11 @@
   "kind": "decorative-environment-downward-outpaint",
   "entries": {
     "sceneExtended": {
-      "path": "/assets/wow/raids/voidspire-page/scene-extended.webp",
-      "width": 887,
-      "height": 1774,
-      "bytes": 204048,
-      "sha256": "881d314d67a7c2c7ff9123485498ed2e27ee301221f64525d11a260c13793b5f",
+      "path": "/assets/wow/raids/voidspire-page/scene-extended-4x.webp",
+      "width": 3548,
+      "height": 7096,
+      "bytes": 1355528,
+      "sha256": "fadab171d6a804906e1b77cc034dc018034749c3a9e99c6475aebc1a1bae429f",
       "opaque": true,
       "native": "/home/debian/gildra-voidspire-readability-20261026/native/scene-extended.png",
       "nativeSha256": "cfc644a8e1badfa8447e7e26597a24733a89d53166602a6e81952b5e8279cfae",
@@ -27,7 +27,7 @@
         "height": 734
       },
       "mode": "built-in image_gen.imagegen edit, transparent_background:false, downward outpaint",
-      "recipe": "native887×1774 dimensions preserved; WebPq84 effort6; no upscaling, crop, manual composite, painting, recolour or alpha edit",
+      "recipe": "Native PNG resized exactly 4x using deterministic bicubic interpolation; WebP q90 effort6. No generation, sharpening, contrast/colour adjustment, denoise, crop or composite.",
       "geometry": {
         "aspectRatio": [
           1,
@@ -36,8 +36,8 @@
         "originalTopBand": {
           "top": 0,
           "left": 0,
-          "width": 887,
-          "height": 339.09270833333335,
+          "width": 3548,
+          "height": 1356.3708333333334,
           "heightFraction": 0.19114583333333332,
           "note": "Approximate preserved composition, not byte-identical pixels; generator reinterpreted fine details."
         },
@@ -51,8 +51,8 @@
             0.05693348365276212
           ],
           "deliveryPixels": [
-            535,
-            101
+            2140,
+            404
           ],
           "source": "Local decorative anchor measured by dark-pupil/cyan-ring contrast, visually corroborated; not gameplay coordinates"
         },
@@ -60,8 +60,23 @@
           0.5,
           0.05734375
         ],
-        "originalEyeRadiusScaled": 8.315625,
+        "originalEyeRadiusScaled": 33.2625,
         "rendering": "Proportional contain/cover only. Background integration owns sizing; do not vertically stretch or tile the canvas."
+      },
+      "upscale": {
+        "checkedAt": "2026-10-26T18:06:45.108Z",
+        "factor": 4,
+        "algorithm": "bicubic interpolation (sharp/libvips)",
+        "sourceSha256": "cfc644a8e1badfa8447e7e26597a24733a89d53166602a6e81952b5e8279cfae",
+        "colourCheck": {
+          "meanAbsoluteError": 1.4935658793538298,
+          "meanChannelDrift": [
+            -0.19209259642919332,
+            0.2040808674464805,
+            -0.19893640954333483
+          ],
+          "pixels": 1573538
+        }
       }
     }
   }

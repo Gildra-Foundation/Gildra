@@ -74,7 +74,7 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange }: Workspac
     <nav className={styles.pullNav} data-raid-pull-navigation aria-label={t.list}><ol ref={strip} className={styles.pullStrip}>{plan.pulls.map((item, index) => <li key={item.id}><button type="button"
       data-raid-pull-choice={index} aria-pressed={active === index} aria-controls={`raid-pull-${plan.slug}`} onClick={() => select(index, true)}>
       <b>{index + 1}</b><span><small>{t[item.kind]}</small>{savedRole ? <span data-raid-pull-title>{item.title[locale]}</span> : item.title[locale]}</span></button></li>)}</ol><RaidPlannerPullPosition slug={plan.slug} label={t.pull} current={active + 1} total={plan.pulls.length} /></nav>
-    {plan.atlas?.progression && <p className={styles.coverage}>{plan.atlas.progression.note[locale]}</p>}
+    {!savedRole && plan.atlas?.progression && <p className={styles.coverage}>{plan.atlas.progression.note[locale]}</p>}
     <div className={styles.columns} data-raid-columns>
       <RaidPullMap plan={plan} active={active} locale={locale} onSelect={select} />
       <div ref={panel} className={styles.selected} id={`raid-pull-${plan.slug}`} data-raid-selected={pull.id}>
@@ -82,10 +82,10 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange }: Workspac
           <div className={styles.pager} data-raid-pager><AtlasButton size="sm" aria-label={t.previous} disabled={active === 0} onClick={() => select(active - 1)}><RaidPlannerTextMark slug={plan.slug} text="‹" fallback={<ChevronLeft aria-hidden="true" />} /></AtlasButton>
             <AtlasButton size="sm" aria-label={t.next} disabled={active === plan.pulls.length - 1} onClick={() => select(active + 1)}><RaidPlannerTextMark slug={plan.slug} text="›" fallback={<ChevronRight aria-hidden="true" />} /></AtlasButton></div></header>
         <span className={styles.srOnly} role="status" aria-live="polite">{t.pull} {active + 1}: {pull.title[locale]}</span>
-        {plan.coverage === "route-draft" && <p className={styles.draftNote} role="note">{t.routeDraft}</p>}
+        {plan.coverage === "route-draft" && !savedRole && <p className={styles.draftNote} role="note">{t.routeDraft}</p>}
         <RaidPullBriefing pull={pull} locale={locale} role={role} slug={plan.slug} />
       </div>
     </div>
-    <AtlasDisclosure summary={t.sources}><p>{t.interruptNote}</p><p>{plan.coverage === "route-draft" ? t.routeDraft : t.encounterCoverage}</p><p>{plan.note[locale]}</p><ul className={styles.sources}>{[...plan.sources, ...(plan.atlas?.sources ?? []), ...(plan.atlas?.progression?.sources ?? [])].filter((source, i, entries) => entries.findIndex(s => s.url === source.url) === i).map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}</ul></AtlasDisclosure>
+    <AtlasDisclosure summary={t.sources}>{savedRole ? <p>{t.reviewedTrash}</p> : <><p>{t.interruptNote}</p><p>{plan.coverage === "route-draft" ? t.routeDraft : t.encounterCoverage}</p><p>{plan.note[locale]}</p></>}<ul className={styles.sources}>{[...plan.sources, ...(plan.atlas?.sources ?? []), ...(plan.atlas?.progression?.sources ?? [])].filter((source, i, entries) => entries.findIndex(s => s.url === source.url) === i).map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}</ul></AtlasDisclosure>
   </div>;
 }

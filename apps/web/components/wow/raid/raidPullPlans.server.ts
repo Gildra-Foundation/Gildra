@@ -47,14 +47,14 @@ const draftCasters: Record<number, number> = {
 function trashPull(pull: RaidRoutePull, bossSlug?: string): RaidPull {
   const abilities: RaidPullAbility[] = pull.abilities.map((ability) => ({
     ...ability, roles: actionRoles[ability.action],
-    caster: pull.enemies.find((enemy) => enemy.npcId === draftCasters[ability.spellId])?.name,
+    caster: pull.enemies.find((enemy) => enemy.npcId === (ability.casterNpcId ?? draftCasters[ability.spellId]))?.name,
   }));
   return {
     ...pull, kind: pull.enemies.length ? "trash" : "rally", bossSlug,
-    roles: !pull.enemies.length ? rallyRoles : Object.fromEntries(allRoles.map((role) => [role, [
+    roles: pull.roles ?? (!pull.enemies.length ? rallyRoles : Object.fromEntries(allRoles.map((role) => [role, [
       ...generalRoles[role],
       ...abilities.filter((ability) => ability.roles.includes(role) && ability.response).map((ability) => ability.response!),
-    ]])) as RaidPull["roles"],
+    ]])) as RaidPull["roles"]),
     abilities,
   };
 }
@@ -78,7 +78,9 @@ export function getRaidPullPlan(slug: string): RaidPullPlan | undefined {
     return localizePlan({
       slug, name: hub.names, artwork: hub.artwork, atlas, routePath: route.routePath, entrance: route.entrance,
       coverage: "route-draft", note: route.note,
-      sources: [{ title: new URL(route.source).hostname, url: route.source }],
+      sources: [{ title: new URL(route.source).hostname, url: route.source }, ...(slug === "the-voidspire" ? [
+        { title: "Wowhead — NPC and spell records · 26 Oct 2026", url: "https://www.wowhead.com/zone=16340/the-voidspire" },
+      ] : [])],
       pulls: route.pulls.map((pull) => trashPull(pull, midnight.bosses[pull.destinationBoss]?.slug)),
       bosses: route.bosses.map((node) => {
         const boss = midnight.bosses[node.bossIndex];

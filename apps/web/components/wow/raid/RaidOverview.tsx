@@ -16,17 +16,8 @@ import { RaidPullSection } from "./RaidPullSection";
 /** Raid page of a Midnight Season 1 raid: what the raid is and its encounters. */
 export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: RaidLocale }) {
   const copy = raidGuideCopy[locale];
-  const reviewed = Boolean(getRaidReview(raid.slug));
   const raidName = locale === "ru" ? raid.nameRu : raid.nameEn;
-  const bossName = (entry: RaidBoss) => locale === "ru" ? entry.nameRu : entry.nameEn;
-  const prefix = locale === "ru" ? "/ru" : "";
-  const raidHref = `${prefix}/wow/raids/${raid.slug}`;
-  const published = isRaidStrategyPublished(raid);
-  const single = raid.bosses.length === 1;
-  const mechanicsMeta = (boss: RaidBoss) => {
-    const guide = getBossStrategy(raid, boss)?.guide;
-    return guide ? [{ icon: <ListChecks aria-hidden="true" />, label: copy.mechanicCount(guide.mechanics.length) }] : undefined;
-  };
+  const planner = raid.slug === "the-voidspire";
 
   return (
     <AtlasFrame
@@ -48,9 +39,23 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
       />
 
       <RaidPullSection slug={raid.slug} locale={locale} />
-      <RaidReviewNotes raidSlug={raid.slug} locale={locale} />
+      {!planner && <><RaidReviewNotes raidSlug={raid.slug} locale={locale} /><RaidBossCatalog raid={raid} locale={locale} /></>}
+    </AtlasFrame>
+  );
+}
 
-      <AtlasSection id="bosses" title={copy.bossesTitle} description={published || reviewed ? copy.bossesText : copy.bossesTextPending}>
+function RaidBossCatalog({ raid, locale }: { raid: RaidDefinition; locale: RaidLocale }) {
+  const copy = raidGuideCopy[locale];
+  const reviewed = Boolean(getRaidReview(raid.slug));
+  const published = isRaidStrategyPublished(raid);
+  const single = raid.bosses.length === 1;
+  const raidHref = `${locale === "ru" ? "/ru" : ""}/wow/raids/${raid.slug}`;
+  const bossName = (entry: RaidBoss) => locale === "ru" ? entry.nameRu : entry.nameEn;
+  const mechanicsMeta = (boss: RaidBoss) => {
+    const guide = getBossStrategy(raid, boss)?.guide;
+    return guide ? [{ icon: <ListChecks aria-hidden="true" />, label: copy.mechanicCount(guide.mechanics.length) }] : undefined;
+  };
+  return <AtlasSection id="bosses" title={copy.bossesTitle} description={published || reviewed ? copy.bossesText : copy.bossesTextPending}>
         <div className={styles.stack}>
           {published || reviewed ? null : <AtlasNotice tone="caution" icon={<Hourglass />} title={copy.strategyPendingTitle}>{copy.strategyPendingText}</AtlasNotice>}
           {single ? (
@@ -80,7 +85,5 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
             />
           )}
         </div>
-      </AtlasSection>
-    </AtlasFrame>
-  );
+      </AtlasSection>;
 }

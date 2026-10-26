@@ -45,7 +45,20 @@ test("interrupt briefing names the correct source mob and keeps role assignment"
   assert.equal(interrupt.action, "interrupt");
   assert.ok(interrupt.roles.includes("dps"));
   assert.ok(!interrupt.roles.includes("healer"));
-  assert.ok(pull.roles.dps.some((task) => task.en.includes("Melee takes the first")));
+  assert.ok(pull.roles.dps.every((task) => !pull.abilities.some((ability) => ability.response?.en === task.en)));
+});
+
+test("reviewed Voidspire omits invented counts, duplicate steps and the unsupported final pack", () => {
+  const plan = getRaidPullPlan("the-voidspire")!;
+  assert.ok(plan.pulls.flatMap((pull) => pull.enemies).every((enemy) => enemy.count === undefined));
+  assert.ok(plan.pulls.every((pull) => pull.steps.length === 0));
+  assert.equal(plan.pulls.at(-1)?.kind, "rally");
+  assert.equal(plan.pulls.at(-1)?.abilities.length, 0);
+  assert.ok(plan.pulls.flatMap((pull) => pull.abilities).every((ability) => ability.caster));
+  assert.ok(!plan.pulls.flatMap((pull) => pull.abilities).some((ability) => ability.spellId === 1274846));
+  const crush = plan.pulls[0].abilities.find((ability) => ability.spellId === 1230690)!;
+  assert.equal(crush.action, "defensive");
+  assert.ok(crush.response && !crush.response.en.includes("six yards"));
 });
 
 test("Dreamrift rally does not manufacture trash or combat tasks", () => {

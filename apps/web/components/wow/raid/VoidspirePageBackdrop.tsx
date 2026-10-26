@@ -10,7 +10,7 @@ export function VoidspirePageBackdrop() {
   return <div className={styles.backdrop} data-voidspire-page-art aria-hidden="true">
     <div className={styles.viewport}>
       <div className={styles.painting} data-voidspire-page-painting>
-        <Image src={scene.path} alt="" fill sizes="100vw" quality={75} priority draggable={false} className={styles.image} />
+        <Image src={scene.path} alt="" fill sizes="100vw" quality={90} priority draggable={false} className={styles.image} />
         <VoidEye imageSize={[scene.width, scene.height]} focus={[0.5, 0]} eye={[eyeX, eyeY]} eyeRadius={scene.geometry.originalEyeRadiusScaled} />
       </div>
       <div className={styles.veil} />

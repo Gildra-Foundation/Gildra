@@ -63,7 +63,7 @@ export function RaidPullMap({ plan, active, locale, onSelect }: { plan: RaidPull
     </>}
     {progression && <div className={styles.progression} data-raid-map-progression><h4><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Route size={17} aria-hidden="true" />} />{t.sequence}</h4><p>{progression.note[locale]}</p>
       <ol className={styles.bossRail}>{bosses.map((boss, i) => <li key={boss.slug}><button type="button" className={styles.railChoice} aria-pressed={defaultBoss === boss.slug} onClick={() => selectBoss(boss.slug, true)}><b>{i + 1}</b><span>{boss.name[locale]}</span></button></li>)}</ol>
-      {progression.lieutenants.length > 0 && <details className={styles.lieutenants}><summary>{t.lieutenants} · {progression.lieutenants.length}</summary><ul>{progression.lieutenants.map(npc => <li key={npc.npcId}><a href={`https://www.wowhead.com/npc=${npc.npcId}`} target="_blank" rel="noreferrer">{npc.name[locale]}<ArrowUpRight size={12} aria-hidden="true" /></a><span>{npc.note[locale]}</span></li>)}</ul></details>}
+      {plan.slug !== "the-voidspire" && progression.lieutenants.length > 0 && <details className={styles.lieutenants}><summary>{t.lieutenants} · {progression.lieutenants.length}</summary><ul>{progression.lieutenants.map(npc => <li key={npc.npcId}><a href={`https://www.wowhead.com/npc=${npc.npcId}`} target="_blank" rel="noreferrer">{npc.name[locale]}<ArrowUpRight size={12} aria-hidden="true" /></a><span>{npc.note[locale]}</span></li>)}</ul></details>}
     </div>}
     <p className={styles.attribution}><span>{t.sources} · © Blizzard Entertainment</span><a href="https://raidplan.io" target="_blank" rel="noreferrer">RaidPlan<ArrowUpRight size={12} aria-hidden="true" /></a></p>
   </section>;
