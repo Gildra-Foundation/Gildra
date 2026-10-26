@@ -38,6 +38,27 @@
   animation: mist-drift 26s ease-in-out infinite alternate paused;
 }
 
+.wind {
+  position: absolute;
+  inset: 12% -25% 28%;
+  background: radial-gradient(ellipse at 45% 65%, color-mix(in srgb, var(--frost-light) 13%, transparent), transparent 55%);
+  opacity: .35;
+  transform: rotate(-16deg);
+  animation: frost-wind 19s ease-in-out infinite alternate paused;
+}
+.windFar { inset: 40% -35% 0; animation-duration: 29s; animation-delay: -13s; }
+.shard {
+  position: absolute;
+  top: -20px;
+  left: var(--snow-x);
+  width: var(--snow-size);
+  height: calc(var(--snow-size) * 1.8);
+  clip-path: polygon(50% 0, 85% 44%, 50% 100%, 15% 55%);
+  background: linear-gradient(110deg, transparent, var(--frost-light), transparent);
+  opacity: .4;
+  animation: ice-drift var(--snow-duration) var(--snow-delay) linear infinite paused;
+}
+
 /* Higher specificity replaces the shared glass surface only on the entry card. */
 .page .card.card {
   position: relative;
@@ -227,9 +248,15 @@
 
 :global([data-frost-active="true"]) .snow,
 :global([data-frost-active="true"]) .mist,
+:global([data-frost-active="true"]) .wind,
+:global([data-frost-active="true"]) .shard,
 :global([data-frost-active="true"]) .card::after,
 :global([data-frost-active="true"]) .crest::after { animation-play-state: running; }
+:global([data-frost-active="true"]) .crest img { animation: crest-float 8s ease-in-out infinite alternate; }
 @keyframes snowfall { from { transform: translate3d(0, -20px, 0); } to { transform: translate3d(var(--snow-drift), 1100px, 0); } }
+@keyframes ice-drift { from { transform: translate3d(0, -20px, 0) rotate(0); } to { transform: translate3d(var(--snow-drift), 1100px, 0) rotate(220deg); } }
+@keyframes frost-wind { from { transform: translate3d(-6%, 3%, 0) rotate(-16deg); opacity: .25; } to { transform: translate3d(6%, -3%, 0) rotate(-10deg); opacity: .7; } }
+@keyframes crest-float { from { transform: translateY(1px) rotate(-.4deg); } to { transform: translateY(-4px) rotate(.4deg); } }
 @keyframes mist-drift { from { transform: translateX(-3%); opacity: .4; } to { transform: translateX(3%); opacity: .8; } }
 @keyframes frost-breath { from { opacity: .3; } to { opacity: .85; } }
 @keyframes blade-sweep { from { background-position: 100% 0; } to { background-position: 0% 0; } }
@@ -242,6 +269,7 @@
   .card :global([data-folio-action]:not([data-folio-action="quiet"]))::before { border-width: var(--frost-button-width-mobile); }
   .card::before { border-width: var(--frost-panel-width-mobile); }
   .snow:nth-child(n + 29) { display: none; }
+  .shard:nth-of-type(n + 58) { display: none; }
   .crest { width: 224px; top: -18px; }
   .page .card .unlocks li { grid-template-columns: 32px minmax(0, 1fr); gap: var(--atlas-space-2); }
   .materialIcon { width: 32px; height: 32px; }
@@ -253,11 +281,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .snow, .mist, .card::after, .crest::after { display: none; }
+  .snow, .mist, .wind, .shard, .card::after, .crest::after { display: none; }
+  .crest img { animation: none !important; transform: none !important; }
   .page .card :global([data-folio-action]), .card :global([data-folio-action])::before, .card :global([data-folio-action])::after { animation: none !important; transition: none !important; transform: none !important; }
 }
-:global([data-motion="reduced"]) :is(.snow, .mist),
-:global([data-ui-motion="reduce"]) :is(.snow, .mist),
+:global([data-motion="reduced"]) :is(.snow, .mist, .wind, .shard),
+:global([data-ui-motion="reduce"]) :is(.snow, .mist, .wind, .shard),
 :global([data-motion="reduced"]) .card::after,
 :global([data-ui-motion="reduce"]) .card::after,
 :global([data-motion="reduced"]) .crest::after,
@@ -269,6 +298,7 @@
 :global([data-motion="reduced"]) .card :global([data-folio-action])::after,
 :global([data-ui-motion="reduce"]) .card :global([data-folio-action])::after { animation: none !important; transition: none !important; transform: none !important; }
 :global([data-frost-active="false"]) .card :global([data-folio-action]),
+:global([data-frost-active="false"]) .crest img,
 :global([data-frost-active="false"]) .card :global([data-folio-action])::before,
 :global([data-frost-active="false"]) .card :global([data-folio-action])::after { animation: none !important; transition: none !important; transform: none !important; }
 @media (prefers-reduced-transparency: reduce) { .atmosphere, .card::after, .crest::after, .card :global([data-folio-action])::after { display: none; } }

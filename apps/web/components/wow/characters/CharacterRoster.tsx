@@ -152,14 +152,16 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
         <div className={`${styles.filters} ${frost.filters}`}>
           <label className={styles.field}>
             <span>{copy.searchLabel}</span>
-            <span className={styles.inputWrap}><Search aria-hidden="true" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} /></span>
+            <span className={`${styles.inputWrap} ${frost.control}`} data-frost-control="search"><Search aria-hidden="true" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} /></span>
           </label>
           <label className={styles.field}>
             <span>{copy.classLabel}</span>
+            <span className={`${frost.control} ${frost.selectControl}`} data-frost-control="class">
             <select value={classId} onChange={(event) => setClassId(Number(event.target.value))}>
               <option value={0}>{copy.allClasses}</option>
               {classes.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
             </select>
+            </span>
           </label>
         </div>
       ) : null}

@@ -65,25 +65,51 @@
 .page .filters label { color: var(--roster-ink); }
 .page .filters :global(input), .page .filters :global(select) { color: var(--atlas-text-strong); }
 .page .filters :global(input)::placeholder { color: var(--atlas-text-muted); }
-.page .filters :global(select), .page .filters label > span:has(input) {
+.page .filters .control {
   position: relative;
-  min-height: 88px;
-  padding-inline: var(--atlas-space-5);
-  border: 12px solid transparent;
+  isolation: isolate;
+  min-height: 94px;
+  padding: 35px 62px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.control::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border: solid transparent;
   border-image-source: var(--roster-card-image);
   border-image-slice: var(--roster-card-slice) fill;
   border-image-width: 1;
   border-width: var(--roster-card-width-control);
-  border-radius: 0;
   background: var(--atlas-bg);
   background-clip: padding-box;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  transition: filter var(--atlas-duration-fast) var(--atlas-ease);
+}
+.page .filters .selectControl { display: flex; padding: 0; }
+.page.page .filters .control :is(input, select),
+.page.page .filters .control :is(input, select):is(:hover, :focus, :focus-visible, :active) {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
+  outline: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
-.page .filters label > span:has(input) { padding-inline: var(--atlas-space-2); }
-.page .filters :global(select) { padding-inline: var(--atlas-space-3); }
-.page .filters label > span:has(input):focus-within, .page .filters :global(select):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.page .filters .selectControl select { min-height: 94px; padding: 35px 66px; }
+/* Focus illuminates only the illustrated silhouette, including its icy tips. */
+.control:focus-within::before {
+  filter: contrast(.95) saturate(1) brightness(1.3) drop-shadow(0 0 4px var(--atlas-info));
+}
 
 /* Individual heroes: official class icon inside an illustrated steel ring. */
 .page .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--atlas-space-6); }
@@ -243,6 +269,21 @@
 .page .skeleton .classMark { background: color-mix(in srgb, var(--atlas-info) 8%, var(--atlas-bg)); border-radius: 50%; }
 
 @keyframes frost-arrive { from { opacity: 0; translate: 0 10px; } }
+@keyframes heraldry-float { from { transform: translateY(2px) rotate(-.6deg); } to { transform: translateY(-4px) rotate(.6deg); } }
+@keyframes ledger-light { from { opacity: .2; transform: translateX(-3%); } to { opacity: .65; transform: translateX(3%); } }
+@keyframes ring-awaken { from { transform: scale(.97); opacity: .65; } to { transform: scale(1.035); opacity: 1; } }
+:global([data-frost-active="true"]) .heraldry { animation: heraldry-float 7s ease-in-out infinite alternate; }
+.summary::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 34px 54px;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--atlas-info) 22%, transparent), transparent 65%);
+  opacity: .2;
+}
+:global([data-frost-active="true"]) .summary::after { animation: ledger-light 8s ease-in-out infinite alternate; }
+:global([data-frost-active="true"]) .card:is(:hover, :focus-within) .classMark::after { animation: ring-awaken 1.8s ease-in-out infinite alternate; }
 :global([data-frost-active="true"]) .grid:not([aria-hidden]) .card {
   animation: frost-arrive .45s var(--atlas-ease) both;
   animation-delay: calc(var(--roster-index, 0) * 35ms);
@@ -278,11 +319,15 @@
 
 /* All CSS movement honours the same preference owner as the snow. */
 @media (prefers-reduced-motion: reduce) {
+  .heraldry, .summary::after, .control::before { animation: none !important; transition: none !important; transform: none !important; }
   .page .card, .page .card *, .page .card::before, .page .card::after,
   .signOut :global(button), .signOut :global(button)::before,
   .state :global([data-folio-action]), .state :global([data-folio-action])::before { animation: none !important; transition: none !important; transform: none !important; translate: none !important; }
 }
 :global([data-frost-active="false"]) .page .card,
+:global([data-frost-active="false"]) .heraldry,
+:global([data-frost-active="false"]) .summary::after,
+:global([data-frost-active="false"]) .control::before,
 :global([data-frost-active="false"]) .card,
 :global([data-frost-active="false"]) .card *,
 :global([data-frost-active="false"]) .card *::after,
@@ -292,13 +337,14 @@
 :global([data-frost-active="false"]) .signOut :global(button)::before,
 :global([data-frost-active="false"]) .state :global([data-folio-action]),
 :global([data-frost-active="false"]) .state :global([data-folio-action])::before { animation: none !important; transition: none !important; transform: none !important; translate: none !important; }
-@media (prefers-reduced-transparency: reduce) { .card::after { display: none; } }
-:global([data-transparency="reduced"]) .card::after { display: none; }
+@media (prefers-reduced-transparency: reduce) { .card::after, .summary::after { display: none; } }
+:global([data-transparency="reduced"]) :is(.card, .summary)::after { display: none; }
 @media (forced-colors: active) {
-  .card::before, .card::after, .summary::before, .state::before, .empty::before, .heraldry, .emptyHeraldry, .page .roster .classMark::after,
+  .control::before, .card::before, .card::after, .summary::before, .summary::after, .state::before, .empty::before, .heraldry, .emptyHeraldry, .page .roster .classMark::after,
   .signOut :global(button)::before, .state :global([data-folio-action])::before { display: none; }
   .page .card.card, .page .summary.summary, .page .state.state, .page .empty { border: 1px solid CanvasText; background: Canvas; box-shadow: none; }
-  .page .filters :global(select), .page .filters label > span:has(input) { border: 1px solid ButtonText; border-image: none; background: Canvas; }
+  .page .filters .control { border: 1px solid ButtonText; background: Canvas; }
+  .page .filters .control:focus-within { outline: 2px solid Highlight; outline-offset: 3px; }
   .page .hero h1, .page .connection, .page .sectionTitle h2, .page .card a, .page .card p, .page .card .level, .page .statLabel { color: CanvasText; text-shadow: none; }
   .page.page .signOut :global([data-folio-action]),
   .page.page .signOut :global([data-folio-action]:is(:hover, :focus-visible, :active)),

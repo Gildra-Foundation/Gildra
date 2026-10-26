@@ -12,6 +12,14 @@ const snow = Array.from({ length: 48 }, (_, index) => ({
   "--snow-drift": `${40 + (index * 17) % 120}px`,
 }) as CSSProperties);
 
+const shards = Array.from({ length: 12 }, (_, index) => ({
+  "--snow-x": `${(index * 31.73 + 7) % 100}%`,
+  "--snow-delay": `${-((index * 4.217) % 24)}s`,
+  "--snow-duration": `${20 + (index * 2.13) % 14}s`,
+  "--snow-size": `${7 + index % 4 * 2}px`,
+  "--snow-drift": `${100 + index % 5 * 35}px`,
+}) as CSSProperties);
+
 /** CSS owns the weather; JS only pauses it when hidden or motion is reduced. */
 export function FrostLoginAtmosphere() {
   const root = useRef<HTMLDivElement>(null);
@@ -48,6 +56,9 @@ export function FrostLoginAtmosphere() {
   }, []);
   return <div ref={root} className={styles.atmosphere} aria-hidden="true">
     <span className={styles.mist} />
+    <span className={styles.wind} />
+    <span className={`${styles.wind} ${styles.windFar}`} />
     {snow.map((style, index) => <i key={index} className={styles.snow} style={style} />)}
+    {shards.map((style, index) => <i key={`ice-${index}`} className={styles.shard} style={style} />)}
   </div>;
 }
