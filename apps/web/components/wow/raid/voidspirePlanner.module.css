@@ -24,7 +24,7 @@
 
 /* Whole painted tiles retain their own silhouette, crest and measured text face. */
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-navigation]) > ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-3); overflow: visible; padding: var(--atlas-space-1); scrollbar-width: none; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-navigation]) li { min-width: 0; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-navigation]) li { min-width: 0; container-type: inline-size; container-name: voidspire-pull-card; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-choice]) {
   position: relative; display: block; width: 100%; height: auto; min-height: 0;
   aspect-ratio: var(--void-card-aspect); padding: 0; border: 0; border-radius: 0;
@@ -112,6 +112,10 @@
 .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-pull-choice]), :global([data-raid-tool]), :global([data-raid-pager] button), :global([data-raid-map-modes] [role="radio"]), :global([data-raid-map-select]), .bossLink):active:not(:disabled) { transform: translateY(1px) scale(.985); }
 @keyframes voidspireChoose { from { transform: scale(.985); } 60% { transform: scale(1.01); } to { transform: scale(1); } }
 
+@container voidspire-pull-card (max-width: 330px) {
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-choice]) > span { gap: 0; font-size: var(--atlas-text-body); line-height: 1.05; }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-choice]) small { line-height: 1; }
+}
 @container voidspire-mode-card (max-width: 220px) {
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-modes] .ui-segmented-control__label) { font-size: var(--atlas-text-small); }
 }
@@ -139,8 +143,6 @@
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-navigation]) > ol { display: flex; gap: var(--atlas-space-2); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-padding-inline: var(--atlas-space-2); scrollbar-width: none; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-navigation]) > ol::-webkit-scrollbar { display: none; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-navigation]) li { flex: 0 0 min(280px, calc(100% - 24px)); scroll-snap-align: center; }
-  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-choice]) > span { gap: 0; font-size: var(--atlas-text-body); line-height: 1.05; }
-  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-choice]) small { line-height: 1; }
   .pullPosition { display: block; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-selected-header]) { flex-wrap: wrap; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) > div { justify-content: flex-start; }
