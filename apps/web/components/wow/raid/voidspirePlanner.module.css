@@ -131,6 +131,17 @@
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-progression]) h4 { gap: var(--atlas-space-2); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-progression]) .glyph { width: 32px; height: 32px; }
 
+/* Fill the measured opening beneath the rails, including the transparent part
+   of each nine-slice border. One pixel overlaps the antialiased inner edge. */
+.surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-cartography]), :global([data-raid-schematic]) > div) { --void-frame-edge: var(--void-panel-edge); --void-frame-opening: var(--void-panel-opening); position: relative; isolation: isolate; overflow: visible; border-image: none; background: var(--atlas-bg); background-clip: padding-box; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-selected]) { --void-frame-edge: var(--void-briefing-edge); --void-frame-opening: var(--void-briefing-opening); }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-progression]) { --void-frame-edge: var(--void-panel-edge-mobile); --void-frame-opening: var(--void-panel-opening-mobile); }
+.surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-cartography]), :global([data-raid-schematic]) > div)::before,
+.surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-selected]), :global([data-raid-map-progression]))::after { content: ""; position: absolute; z-index: -2; inset: -1px; clip-path: var(--void-frame-opening); background: var(--void-panel-fill-color, var(--atlas-bg)); pointer-events: none; }
+.surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-cartography]), :global([data-raid-schematic]) > div)::before { inset: calc(-1 * var(--void-frame-edge) - 1px); }
+.surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-cartography]), :global([data-raid-schematic]) > div)::after { content: ""; position: absolute; z-index: -1; inset: calc(-1 * var(--void-frame-edge)); border: var(--void-frame-edge) solid transparent; border-image-source: var(--void-panel-image); border-image-slice: var(--void-panel-slice); border-image-width: 1; pointer-events: none; }
+.surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-selected]), :global([data-raid-map-progression]))::after { filter: contrast(.88) saturate(.84) brightness(.92); }
+
 .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-pull-choice]), :global([data-raid-tool]), :global([data-raid-pager] button), :global([data-raid-map-modes] [role="radio"]), :global([data-raid-map-select]), .bossLink):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 @media (hover: hover) and (pointer: fine) {
   .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-pull-choice]), :global([data-raid-tool]), :global([data-raid-pager] button), :global([data-raid-map-modes] [role="radio"]), :global([data-raid-map-select]), .bossLink):hover:not(:disabled) { transform: translateY(-2px); }
@@ -169,6 +180,8 @@
 @media (max-width: 900px) { .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-columns]) { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 700px) {
   .surface.surface[data-raid-pulls="the-voidspire"] { --void-content-inset: var(--atlas-space-6); --void-reading-size: var(--atlas-text-lead); }
+  .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-cartography]), :global([data-raid-schematic]) > div) { --void-frame-edge: var(--void-panel-edge-mobile); --void-frame-opening: var(--void-panel-opening-mobile); }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-selected]) { --void-frame-edge: var(--void-briefing-edge-mobile); --void-frame-opening: var(--void-briefing-opening-mobile); }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pager]) .textMark { translate: 0 -.09em; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="undo"]) .textMark { translate: .03em .15em; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-cartography]), .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-schematic]) > div { border-width: var(--void-panel-width-mobile); }
@@ -196,8 +209,12 @@
 :global(:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-pull-choice]), :global([data-raid-tool]), :global([data-raid-pager] button), :global([data-raid-map-modes] [role="radio"]), :global([data-raid-map-select]), .bossLink),
 :global(:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-pull-choice]), :global([data-raid-tool]), :global([data-raid-pager] button), :global([data-raid-map-modes] [role="radio"]), :global([data-raid-map-select]), .bossLink)::before { animation: none !important; transition: none !important; transform: none !important; }
 @media (prefers-reduced-transparency: reduce) { .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-selected])::before, .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-progression])::before { background: var(--atlas-surface); background-clip: padding-box; } }
+@media (prefers-reduced-transparency: reduce) { .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-selected]), :global([data-raid-map-progression])) { --void-panel-fill-color: var(--atlas-surface); } }
+:global([data-transparency="reduced"]) .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-selected]), :global([data-raid-map-progression])) { --void-panel-fill-color: var(--atlas-surface); }
 :global([data-transparency="reduced"]) .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-selected])::before, :global([data-transparency="reduced"]) .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-progression])::before { background: var(--atlas-surface); background-clip: padding-box; }
 @media (forced-colors: active) {
+  .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-cartography]), :global([data-raid-selected]), :global([data-raid-map-progression]), :global([data-raid-schematic]) > div)::before,
+  .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-cartography]), :global([data-raid-selected]), :global([data-raid-map-progression]), :global([data-raid-schematic]) > div)::after { display: none; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control) { border-color: ButtonText; background: Canvas; box-shadow: none; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control__thumb) { border-color: Highlight; background: Highlight; box-shadow: none; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control__item[data-active]) { color: HighlightText; }

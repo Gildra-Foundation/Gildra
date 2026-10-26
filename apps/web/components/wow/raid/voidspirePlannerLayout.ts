@@ -12,6 +12,20 @@ export function voidspireBossLinkClass(slug: string): string {
 
 const scaledWidths = (slices: readonly number[], scale: number) => slices.map(value => `${(value * scale).toFixed(2)}px`).join(" ");
 
+/** Map the measured opening through the same fixed corners as border-image. */
+function windowCoordinate(value: number, size: number, leading: number, trailing: number, edge: number): string {
+  if (value <= leading) return `${(edge * value / leading).toFixed(6)}px`;
+  if (value >= size - trailing) return `calc(100% - ${(edge * (size - value) / trailing).toFixed(6)}px)`;
+  const fraction = (value - leading) / (size - leading - trailing);
+  const offset = edge * (1 - 2 * fraction);
+  return `calc(${(fraction * 100).toFixed(6)}% ${offset < 0 ? "-" : "+"} ${Math.abs(offset).toFixed(6)}px)`;
+}
+
+const panel = manifest.entries.panel;
+const [top, right, bottom, left] = panel.slices;
+const panelOpening = (edge: number) => `polygon(${panel.window.polygon.map(([x, y]) => `${windowCoordinate(x, panel.width, left, right, edge)} ${windowCoordinate(y, panel.height, top, bottom, edge)}`).join(", ")})`;
+const panelOpenings = { desktop: panelOpening(60), mobile: panelOpening(40), briefing: panelOpening(52), briefingMobile: panelOpening(36) };
+
 /** Native cut points come from the delivered art, never estimated CSS apertures. */
 export function voidspirePlannerLayout(slug: string): CSSProperties {
   if (slug !== "the-voidspire") return {};
@@ -27,7 +41,15 @@ export function voidspirePlannerLayout(slug: string): CSSProperties {
     "--void-panel-slice": panel.slices.join(" "),
     "--void-panel-width": scaledWidths(panel.geometry.recommendedCssBorders, 1),
     "--void-panel-width-mobile": scaledWidths(panel.geometry.recommendedCssBordersMobile, 1),
+    "--void-panel-edge": `${panel.geometry.recommendedCssBorders[0]}px`,
+    "--void-panel-edge-mobile": `${panel.geometry.recommendedCssBordersMobile[0]}px`,
+    "--void-panel-opening": panelOpenings.desktop,
+    "--void-panel-opening-mobile": panelOpenings.mobile,
+    "--void-briefing-opening": panelOpenings.briefing,
+    "--void-briefing-opening-mobile": panelOpenings.briefingMobile,
     "--void-briefing-width": scaledWidths(panel.geometry.recommendedCssBorders, 52 / 60),
     "--void-briefing-width-mobile": scaledWidths(panel.geometry.recommendedCssBordersMobile, 36 / 40),
+    "--void-briefing-edge": "52px",
+    "--void-briefing-edge-mobile": "36px",
   } as CSSProperties;
 }
