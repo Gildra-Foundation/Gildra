@@ -5,3 +5,4 @@
  * remote desktops, software WebGL, two cores or 2 GB of memory or less).
  */
 export { knownRenderTier, resolveRenderTier, warmRenderTier, type PageTransitionTierSetting } from "./valyro-ui/motion-kit/render-tier";
+export { pageTransitionSpec } from "./valyro-ui/motion-kit/page-transitions";

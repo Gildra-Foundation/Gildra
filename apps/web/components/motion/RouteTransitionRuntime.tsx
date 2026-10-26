@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { preconnect } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
-import { isBookPagePath, isCharacterAuthRedirect, routeTransitionKind } from "./routeTransitionPolicy";
+import { isBookPagePath, isCharacterAuthRedirect, routeTransitionKind, voidspireReadySelector } from "./routeTransitionPolicy";
 import { RouteThemeController } from "./RouteThemeController";
 import styles from "./routeTransition.module.css";
 import { lessMotion } from "@/lib/client/motionPreference";
+import { knownRenderTier, pageTransitionSpec, warmRenderTier } from "@gildra/atlas-ui/motionTier";
 
 /**
  * Persistent navigation shell and the single owner of page hand-overs
@@ -68,6 +69,10 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [state, setState] = useState<RouteState>("idle");
 
+  useEffect(() => {
+    if (routePath.startsWith("/wow/raids/the-voidspire")) warmRenderTier();
+  }, [routePath]);
+
   const settle = useCallback(() => {
     clearTimeout(watchdog.current);
     setState("idle");
@@ -81,12 +86,22 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     if (!frame) return;
     frame.getAnimations().forEach((animation) => animation.cancel());
     if (lessMotion()) return;
+    // Reuse the installed Valyro choreography for the raid's sibling pages.
+    // Navigation starts immediately; only the committed page moves, and the
+    // persistent header stays outside the animated frame.
+    if (voidspireReadySelector(committedPath.current)) {
+      const spec = pageTransitionSpec("rise", { tier: knownRenderTier() ?? "cpu" });
+      frame.animate(spec.enter.keyframes, { duration: spec.duration, easing: spec.enter.easing });
+      return;
+    }
     frame.animate([{ opacity: .6 }, { opacity: 1 }], ENTER);
   }, []);
 
   /** A route with loading.tsx first commits its skeleton; wait for the real page. */
   const enterWhenLoaded = useCallback(() => {
-    if (frameRef.current?.querySelector("[data-book-route-loading]")) setState("loading");
+    const frame = frameRef.current;
+    const raid = voidspireReadySelector(expectedPath.current);
+    if (frame?.querySelector("[data-book-route-loading]") || (raid && !frame?.querySelector(raid))) setState("loading");
     else enter();
   }, [enter]);
 
@@ -116,7 +131,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (state !== "loading" || !frameRef.current) return;
     const observer = new MutationObserver(enterWhenLoaded);
-    observer.observe(frameRef.current, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-book-route-loading"] });
+    observer.observe(frameRef.current, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-book-route-loading", "data-raid-boss-planner", "data-raid-pulls"] });
     return () => observer.disconnect();
   }, [state, enterWhenLoaded]);
 

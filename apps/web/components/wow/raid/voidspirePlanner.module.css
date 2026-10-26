@@ -4,13 +4,7 @@
   --void-card-image: url("/assets/wow/raids/voidspire-planner/card.webp");
   --void-medallion-image: url("/assets/wow/raids/voidspire-planner/medallion.webp");
   --void-panel-image: url("/assets/wow/raids/voidspire-planner/panel.webp");
-  --void-card-number-x: 19%;
-  --void-card-number-y: 47.2%;
-  --void-card-face-left: 35%;
-  --void-card-face-right: 10.4%;
-  --void-card-face-top: 25.7%;
-  --void-card-face-bottom: 31.6%;
-  --void-content-inset: var(--atlas-space-7);
+  --void-content-inset: calc(var(--void-briefing-edge) * .77 + var(--atlas-space-2));
   --void-reading-size: var(--atlas-text-title);
   --void-section-size: calc(var(--atlas-text-lead) * 1.5);
   gap: var(--atlas-space-5);
@@ -18,7 +12,7 @@
 
 .glyph { position: relative; display: inline-grid; flex: none; place-items: center; width: 36px; height: 36px; vertical-align: middle; pointer-events: none; }
 .glyph > img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
-.glyphMark { position: absolute; right: -3px; bottom: -3px; display: grid; place-items: center; min-width: 20px; height: 20px; border-radius: 50%; background: var(--atlas-bg); color: var(--atlas-text-strong); font: 700 var(--atlas-text-body) / 1 var(--atlas-font-ui); text-shadow: 0 1px 2px var(--atlas-bg); }
+.glyphMark { position: absolute; right: 0; bottom: 0; display: grid; place-items: center; min-width: 16px; height: 16px; border-radius: 50%; background: var(--atlas-bg); color: var(--atlas-text-strong); font: 700 var(--atlas-text-label) / 1 var(--atlas-font-ui); text-shadow: 0 1px 2px var(--atlas-bg); }
 .glyph[data-voidspire-glyph="zoom"] { translate: 11.5% 15.1%; }
 .glyph[data-voidspire-glyph="zoom"] .glyphMark { left: 38.5%; top: 34.9%; right: auto; bottom: auto; min-width: 0; width: 1em; height: 1em; border-radius: 0; background: transparent; font-size: var(--atlas-text-title); transform: translate(-50%, -50%) translateY(-.05em); }
 .textMark { display: inline-block; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h2); font-weight: 600; line-height: 1; translate: 0 -.045em; text-shadow: 0 1px 3px var(--atlas-bg); }
@@ -60,7 +54,7 @@
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-modes] [role="radio"])::before { inset: 0; border: 0; border-image: none; background: var(--void-card-image) center / contain no-repeat; filter: contrast(.88) saturate(.84) brightness(.92); transition: filter var(--atlas-duration-fast) var(--atlas-ease); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-modes] [role="radio"][aria-checked="true"]) { color: var(--atlas-text-strong); box-shadow: none; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-modes] [role="radio"][aria-checked="true"])::before { filter: contrast(.88) saturate(.92) brightness(1.08); }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-modes] .ui-segmented-control__icon) { position: absolute; left: var(--void-card-number-x); top: var(--void-card-number-y); width: clamp(28px, 18cqi, 64px); height: clamp(28px, 18cqi, 64px); margin: 0; transform: translate(-50%, -50%); }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-modes] .ui-segmented-control__icon) { position: absolute; left: var(--void-card-number-x); top: var(--void-card-number-y); width: min(18cqi, 64px); height: min(18cqi, 64px); margin: 0; transform: translate(-50%, -50%); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-modes]) .glyph { width: 100%; height: 100%; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-modes] .ui-segmented-control__label) { position: absolute; inset: var(--void-card-face-top) var(--void-card-face-right) var(--void-card-face-bottom) var(--void-card-face-left); display: block; align-content: center; min-width: 0; overflow: visible; text-overflow: clip; font-size: var(--atlas-text-title); font-weight: 600; line-height: var(--atlas-leading-snug); letter-spacing: normal; text-wrap: balance; }
 
@@ -68,7 +62,7 @@
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-fields]) { gap: var(--atlas-space-4); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-fields]) > div > span { gap: var(--atlas-space-2); color: var(--raid-pull-light); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-fields]) .glyph { width: 28px; height: 28px; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-select]) { min-height: 72px; padding: var(--atlas-space-5) var(--void-plaque-inset); border-radius: 0; font-size: var(--atlas-text-lead); }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-select]) { min-height: 72px; padding: var(--void-plaque-pad-top) var(--void-plaque-inset) var(--void-plaque-pad-bottom); border-radius: 0; font-size: var(--atlas-text-lead); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-select])::before { inset: 0; width: auto; height: auto; translate: none; border-image-source: var(--void-plaque-image); border-image-slice: var(--void-plaque-slice) fill; border-width: var(--void-plaque-width); background: var(--atlas-bg); background-clip: padding-box; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-select] .ui-select__value) { padding-inline: var(--atlas-space-5); overflow: visible; text-overflow: clip; text-align: center; white-space: normal; word-break: normal; overflow-wrap: normal; text-wrap: pretty; transform: translateY(calc(-2px - .05em)); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-select] .ui-select__chevron) { position: absolute; right: var(--void-plaque-inset); top: calc(50% - 14px); flex: none; width: 24px; height: 24px; color: var(--atlas-text-strong); }
@@ -97,32 +91,36 @@
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-command]) { padding-bottom: var(--atlas-space-4); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-command]) h4 { gap: var(--atlas-space-3); font-size: var(--void-section-size); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-command]) .glyph { width: 48px; height: 48px; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-enemy-art]), .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-spell-art]) { width: 64px; height: 64px; background: var(--void-medallion-image) center / contain no-repeat; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-enemy-art]), .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-spell-art]) { width: 80px; height: 80px; background: var(--void-medallion-image) center / contain no-repeat; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-enemy-art])::after, .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-spell-art])::after, .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-badge])::after { display: none; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-enemy-art]) > img { width: 44px; height: 44px; object-fit: contain; border-radius: 50%; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-enemy-art]) > .glyph { width: 52px; height: 52px; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-enemy-art]) > img { width: 40%; height: 40%; object-fit: cover; border-radius: 50%; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-enemy-art]) > .glyph { width: 100%; height: 100%; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-enemy-art]):has(> .glyph) { background: none; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-spell-art]) > img { width: 40%; height: 40%; object-fit: cover; border-radius: 50%; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-badge]) { width: 40px; height: 40px; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-badge]) .glyph { width: 40px; height: 40px; }
 
 /* Round tools have live marks above a dimensional medallion, never compressed endcaps. */
-.surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-tool]), :global([data-raid-pager] button)) { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 56px; min-width: 56px; height: 56px; min-height: 56px; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; color: var(--atlas-text-strong); transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
+.surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-tool]), :global([data-raid-pager] button)) { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 64px; min-width: 64px; height: 64px; min-height: 64px; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; color: var(--atlas-text-strong); transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
 .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-tool]), :global([data-raid-pager] button))::before { inset: 0; height: auto; translate: none; border: 0; border-image: none; background: var(--void-medallion-image) center / contain no-repeat; filter: contrast(.88) saturate(.84) brightness(.92); transition: filter var(--atlas-duration-fast) var(--atlas-ease); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool][aria-pressed="true"])::before { filter: contrast(.88) saturate(.92) brightness(1.08); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool]):disabled, .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pager] button):disabled { opacity: .42; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; justify-items: center; gap: var(--atlas-space-3); padding-bottom: var(--atlas-space-4); }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) > div { display: contents; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="route"]), .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="sketch"]) { display: block; grid-column: span 2; width: 100%; max-width: 240px; min-width: 0; min-height: 0; height: auto; aspect-ratio: var(--void-card-aspect); padding: 0; border-radius: 0; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: stretch; gap: var(--atlas-space-4); padding-bottom: var(--atlas-space-4); }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; justify-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) > div:first-child { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="grid"])::before { background: none; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="grid"]) .glyph { width: 56px; height: 56px; }
+.surface.surface[data-raid-pulls="the-voidspire"] :where(:global([data-raid-tool]), :global([data-raid-pager] button)) .textMark { font-size: var(--atlas-text-lead); translate: none; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="fit"]) .textMark { font-size: var(--atlas-text-meta); letter-spacing: normal; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools] button[data-raid-tool]:not([data-raid-tool="route"]):not([data-raid-tool="sketch"])) { width: 72px; min-width: 72px; height: 72px; min-height: 72px; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pager] button) { width: 48px; min-width: 48px; height: 48px; min-height: 48px; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="route"]), .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="sketch"]) { display: block; width: 100%; max-width: 280px; min-width: 0; min-height: 0; height: auto; aspect-ratio: var(--void-card-aspect); padding: 0; border-radius: 0; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="route"])::before, .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="sketch"])::before { border: 0; border-image: none; background: var(--void-card-image) center / contain no-repeat; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="route"] .ui-button__label), .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="sketch"] .ui-button__label) { position: absolute; inset: 0; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="route"] .ui-button__label) > .glyph, .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="sketch"] .ui-button__label) > .glyph { position: absolute; left: var(--void-card-number-x); top: var(--void-card-number-y); transform: translate(-50%, -50%); width: 32px; height: 32px; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="route"] .ui-button__label) > span:not(.glyph), .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="sketch"] .ui-button__label) > span:not(.glyph) { position: absolute; inset: var(--void-card-face-top) var(--void-card-face-right) var(--void-card-face-bottom) var(--void-card-face-left); display: grid; place-items: center; font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); text-wrap: balance; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool] .ui-button__label) { display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-2); font-size: var(--atlas-text-small); }
-/* These font glyphs have distinct ink bearings inside the same medallion. */
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pager]) .textMark { translate: 0 -.11em; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="fit"]) .textMark { translate: 0 .01em; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="undo"]) .textMark { translate: .03em .13em; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="clear"]) .textMark { translate: .015em -.085em; }
-.surface.surface[data-raid-pulls="the-voidspire"] .bossLink:global(.ui-button[data-variant="secondary"]) { display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-3); width: 100%; min-height: 80px; height: auto; aspect-ratio: auto; padding: var(--atlas-space-5) var(--void-plaque-inset); border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.surface.surface[data-raid-pulls="the-voidspire"] .bossLink:global(.ui-button[data-variant="secondary"]) { display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-3); width: 100%; min-height: 80px; height: auto; aspect-ratio: auto; padding: var(--void-plaque-pad-top) var(--void-plaque-inset) var(--void-plaque-pad-bottom); border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .surface.surface[data-raid-pulls="the-voidspire"] .bossLink::before { inset: 0; border: 20px solid transparent; border-image-source: var(--void-plaque-image); border-image-slice: var(--void-plaque-slice) fill; border-width: var(--void-plaque-width); background: var(--atlas-bg); background-clip: padding-box; }
 .surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__icon) { position: relative; inset: auto; transform: none; translate: 0 -2px; }
 .surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__label) { position: relative; inset: auto; display: block; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-snug); text-wrap: balance; translate: 0 -2px; }
@@ -150,7 +148,7 @@
 .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-pull-choice]), :global([data-raid-tool]), :global([data-raid-pager] button), :global([data-raid-map-modes] [role="radio"]), :global([data-raid-map-select]), .bossLink):active:not(:disabled) { transform: translateY(1px) scale(.985); }
 @keyframes voidspireChoose { from { transform: scale(.985); } 60% { transform: scale(1.01); } to { transform: scale(1); } }
 
-@container voidspire-pull-card (max-width: 330px) {
+@container voidspire-pull-card (max-width: 400px) {
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-choice]) > span { gap: 0; font-size: var(--atlas-text-body); line-height: 1; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-choice]) small { line-height: 1; }
 }
@@ -169,17 +167,20 @@
   .surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__icon) { position: absolute; left: var(--void-card-number-x); top: var(--void-card-number-y); transform: translate(-50%, -50%); translate: none; }
   .surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__label) { position: absolute; inset: var(--void-card-face-top) var(--void-card-face-right) var(--void-card-face-bottom) var(--void-card-face-left); display: grid; place-items: center; font-size: var(--atlas-text-small); translate: none; }
 }
+@container voidspire-cartography (max-width: 400px) {
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) > div:last-child { grid-template-columns: minmax(0, 1fr); }
+}
 @container voidspire-cartography (max-width: 360px) {
-  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) { gap: var(--atlas-space-1); }
-  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools] button[data-raid-tool]:not([data-raid-tool="route"]):not([data-raid-tool="sketch"])) { width: 48px; min-width: 48px; height: 48px; min-height: 48px; }
-  .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="route"]), .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="sketch"]) { grid-column: span 4; width: 100%; max-width: 240px; }
-  .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="route"] .ui-button__label) > span:not(.glyph), .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="sketch"] .ui-button__label) > span:not(.glyph) { font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) > div:first-child { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container voidspire-planner (max-width: 340px) {
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-modes] .ui-segmented-control__viewport) { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 1200px) { .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-navigation]) > ol { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-navigation]) > ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-columns]) { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 700px) {
-  .surface.surface[data-raid-pulls="the-voidspire"] { --void-content-inset: var(--atlas-space-6); --void-reading-size: var(--atlas-text-lead); }
+  .surface.surface[data-raid-pulls="the-voidspire"] { --void-content-inset: calc(var(--void-briefing-edge-mobile) * .77 + var(--atlas-space-2)); --void-reading-size: var(--atlas-text-lead); }
   .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-cartography]), :global([data-raid-schematic]) > div) { --void-frame-edge: var(--void-panel-edge-mobile); --void-frame-opening: var(--void-panel-opening-mobile); }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-selected]) { --void-frame-edge: var(--void-briefing-edge-mobile); --void-frame-opening: var(--void-briefing-opening-mobile); }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pager]) .textMark { translate: 0 -.09em; }

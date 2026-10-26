@@ -17,7 +17,7 @@ Superseded native panel variants are retained and are **not delivered**: `/home/
 - Full exact prompt: `/home/debian/gildra-voidspire-materials-20261026/prompts/plaque.txt`, SHA-256 `b0e8fd6d8bbb73cad9c057436836da5dcb6cdf53e0ce67a0fe3667fbd7e0ec1e`.
 - Delivery: `/assets/wow/raids/voidspire-planner/plaque.webp`, 768×207, 33992 bytes, SHA-256 `ad6215bd131e2d8326bab2dd3fa8a5352ed14be753d174a27c6d1804b7ee49c0`.
 - Recipe: skill button: trim alpha>8, resize752w proportional,8px transparent padding,WebPq88 alpha100 effort6.
-- Geometry: `{"mode":"nine-slice","fill":true,"slicesOrder":"top,right,bottom,left","measuredProposal":[53,165,38,165],"textWindowPercent":{"left":20,"top":28,"right":80,"bottom":72},"recommendedHeight":64}`; slices T/R/B/L `53,165,38,165`.
+- Geometry: `{"mode":"nine-slice","fill":true,"slicesOrder":"top,right,bottom,left","measuredProposal":[60,165,66,165],"textWindowPercent":{"left":20,"top":29,"right":80,"bottom":68},"recommendedHeight":64,"alignmentReview":"2026-10-26: keep both horizontal rails inside fixed slices; stretch only the dark face, not the lower rail."}`; slices T/R/B/L `60,165,66,165`.
 
 ## card
 
@@ -26,7 +26,7 @@ Superseded native panel variants are retained and are **not delivered**: `/home/
 - Full exact prompt: `/home/debian/gildra-voidspire-materials-20261026/prompts/card.txt`, SHA-256 `4747d88eef544e2dcb8d6fb11146e95676f3a602119ff8c993b5be8298730a69`.
 - Delivery: `/assets/wow/raids/voidspire-planner/card.webp`, 768×307, 52752 bytes, SHA-256 `2f164f8c6a588160b7831acd00829cfd97eb63863deee6f35b72b13f3867c900`.
 - Recipe: whole native canvas proportional resize768w, no trim,WebPq88 alpha100 effort6.
-- Geometry: `{"mode":"whole-contain","aspectRatio":[1983,793],"numberCentrePercent":{"x":18.5,"y":49.5},"textWindowPercent":{"left":35,"top":28,"right":91,"bottom":71},"stretch":false}`.
+- Geometry: `{"mode":"whole-contain","aspectRatio":[1983,793],"numberCentrePercent":{"x":19,"y":47.2},"textWindowPercent":{"left":35,"top":25.7,"right":89.6,"bottom":68.4},"stretch":false,"alignmentReview":"Measured on delivered768x307raster; replaces pre-crop proposal. All labels and symbols consume these native apertures."}`.
 
 ## medallion
 
@@ -108,3 +108,5 @@ Superseded native panel variants are retained and are **not delivered**: `/home/
 - Delivery: `/assets/wow/raids/voidspire-planner/icons/zoom.webp`, 192×192, 11528 bytes, SHA-256 `2800ed726835dd9037315f0610239353e9986712ff5ad6e71c0ff56d948aec9f`.
 - Recipe: trim alpha>8, fit176×176 proportional,8px transparent padding,WebPq88 alpha100 effort6.
 - Geometry: `{"mode":"whole-contain","padding":8,"stretch":false}`.
+
+Alignment review, 26 October 2026: plaque rails stay in fixed slices and every live card label consumes the same native aperture metadata. Image bytes, colours, contrast and SHA-256 values above are unchanged.

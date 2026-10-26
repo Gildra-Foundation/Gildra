@@ -23,7 +23,7 @@ export function RaidBossDiagram({ plan, active, locale, role, background }: { pl
         {diagram.zones.map((zone, index) => <span key={`${zone.label.en}:${zone.x}:${zone.y}:${zone.rotate ?? 0}`} className={styles.zone} data-kind={zone.kind} aria-hidden="true" style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%`, rotate: zone.rotate ? `${zone.rotate}deg` : undefined } as CSSProperties}><b>{index + 1}</b></span>)}
         {markers.map((marker) => {
           const Icon = markerIcons[marker.kind];
-          return <span key={`${marker.kind}:${marker.x}:${marker.y}:${marker.label.en}`} className={styles.marker} data-kind={marker.kind} style={{ left: `${marker.x}%`, top: `${marker.y}%` }}><span><Icon size={22} aria-hidden="true" /></span><b>{marker.label[locale]}</b></span>;
+          return <span key={`${marker.kind}:${marker.x}:${marker.y}:${marker.label.en}`} className={styles.marker} data-kind={marker.kind} style={{ "--marker-x": `${marker.x}%`, "--marker-y": `${marker.y}%` } as CSSProperties}><span><Icon size={22} aria-hidden="true" /></span><b>{marker.label[locale]}</b></span>;
         })}
       </div>
     </div>

@@ -49,3 +49,10 @@ export function isBookPagePath(pathname: string) {
 export function bookLocale(pathname: string): "ru" | "en" {
   return /^\/ru(?:\/|$)/.test(pathname) ? "ru" : "en";
 }
+
+/** Wait for the requested encounter, including streamed sibling navigations. */
+export function voidspireReadySelector(pathname: string): string | null {
+  const match = /^\/(?:ru\/)?wow\/raids\/the-voidspire(?:\/(imperator-averzian|vorasius|fallen-king-salhadaar|vaelgor-ezzorak|lightblinded-vanguard|crown-of-the-cosmos))?\/?$/.exec(pathname);
+  if (!match) return null;
+  return match[1] ? `[data-raid-boss-planner="${match[1]}"]` : '[data-raid-pulls="the-voidspire"]:not([data-raid-boss-planner])';
+}

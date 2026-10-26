@@ -55,23 +55,24 @@
         "fill": true,
         "slicesOrder": "top,right,bottom,left",
         "measuredProposal": [
-          53,
+          60,
           165,
-          38,
+          66,
           165
         ],
         "textWindowPercent": {
           "left": 20,
-          "top": 28,
+          "top": 29,
           "right": 80,
-          "bottom": 72
+          "bottom": 68
         },
-        "recommendedHeight": 64
+        "recommendedHeight": 64,
+        "alignmentReview": "2026-10-26: keep both horizontal rails inside fixed slices; stretch only the dark face, not the lower rail."
       },
       "slices": [
-        53,
+        60,
         165,
-        38,
+        66,
         165
       ]
     },
@@ -121,16 +122,17 @@
           793
         ],
         "numberCentrePercent": {
-          "x": 18.5,
-          "y": 49.5
+          "x": 19,
+          "y": 47.2
         },
         "textWindowPercent": {
           "left": 35,
-          "top": 28,
-          "right": 91,
-          "bottom": 71
+          "top": 25.7,
+          "right": 89.6,
+          "bottom": 68.4
         },
-        "stretch": false
+        "stretch": false,
+        "alignmentReview": "Measured on delivered768x307raster; replaces pre-crop proposal. All labels and symbols consume these native apertures."
       }
     },
     "medallion": {
@@ -149,7 +151,7 @@
       "promptSha256": "ad9fcd231e6714af6808c24bf12c6f8d614ea421679474efa31309581ba39689",
       "tool": "image_gen.imagegen",
       "transparent_background": true,
-      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "recipe": "trim alpha>8, fit176×176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
       "crop": {
         "left": 2,
         "top": 2,
@@ -209,7 +211,7 @@
       "promptSha256": "6189f92c11faacb025a3cce63b49ead2979db60658eb7e174915488de6fbfd66",
       "tool": "image_gen.imagegen",
       "transparent_background": true,
-      "recipe": "skill frame: no trim,960\u00d7640 proportional,WebPq88 alpha100 effort6",
+      "recipe": "skill frame: no trim,960×640 proportional,WebPq88 alpha100 effort6",
       "crop": null,
       "alpha": {
         "hasAlpha": true,
@@ -295,7 +297,7 @@
             1470
           ]
         },
-        "notes": "Transparent open centre with original faint alpha1\u20138 residual preserved; no fill. Measured chunky corner cuts; proof verifies the straight rail stretch."
+        "notes": "Transparent open centre with original faint alpha1–8 residual preserved; no fill. Measured chunky corner cuts; proof verifies the straight rail stretch."
       },
       "slices": [
         165,
@@ -502,7 +504,7 @@
       "promptSha256": "f1e4bbf991b422e1cd9f4c1d32c741e508b1256bf36c920cecc2bc2c6444c55e",
       "tool": "image_gen.imagegen",
       "transparent_background": true,
-      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "recipe": "trim alpha>8, fit176×176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
       "crop": {
         "left": 19,
         "top": 130,
@@ -552,7 +554,7 @@
       "promptSha256": "30d12cee92dc74454e905e6994d8b745b84a9aeda7bf0e497d0979b4b83f427a",
       "tool": "image_gen.imagegen",
       "transparent_background": true,
-      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "recipe": "trim alpha>8, fit176×176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
       "crop": {
         "left": 29,
         "top": 128,
@@ -602,7 +604,7 @@
       "promptSha256": "12a273e58fc20dab8d9f26438c71ee54226e086038d845b92b691be8005952f1",
       "tool": "image_gen.imagegen",
       "transparent_background": true,
-      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "recipe": "trim alpha>8, fit176×176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
       "crop": {
         "left": 57,
         "top": 78,
@@ -652,7 +654,7 @@
       "promptSha256": "e26f27ed551007f93b94537f010ecc6170cc85b7dd9ff18c1d32207e97d75229",
       "tool": "image_gen.imagegen",
       "transparent_background": true,
-      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "recipe": "trim alpha>8, fit176×176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
       "crop": {
         "left": 293,
         "top": 26,
@@ -702,7 +704,7 @@
       "promptSha256": "83df740f83426c59ea6ae533ffd7b6d653f7ca590eeb64793194ba1f77dc8778",
       "tool": "image_gen.imagegen",
       "transparent_background": true,
-      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "recipe": "trim alpha>8, fit176×176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
       "crop": {
         "left": 51,
         "top": 13,
@@ -752,7 +754,7 @@
       "promptSha256": "0d17d0ba1b14f9e3bb7f35117e14330a367c1bea59a5c320b2b479ba2b994d73",
       "tool": "image_gen.imagegen",
       "transparent_background": true,
-      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "recipe": "trim alpha>8, fit176×176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
       "crop": {
         "left": 39,
         "top": 30,
@@ -802,7 +804,7 @@
       "promptSha256": "1e554b06a9266227f385e0b6164301dc813f0364235c6452254fe7a46fb81ceb",
       "tool": "image_gen.imagegen",
       "transparent_background": true,
-      "recipe": "trim alpha>8, fit176\u00d7176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
+      "recipe": "trim alpha>8, fit176×176 proportional,8px transparent padding,WebPq88 alpha100 effort6",
       "crop": {
         "left": 32,
         "top": 14,
