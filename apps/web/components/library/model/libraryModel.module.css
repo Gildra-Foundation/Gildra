@@ -94,6 +94,7 @@
 
 .button:hover { border-color: var(--atlas-line-strong); background: var(--atlas-surface-selected); }
 .button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.button:disabled { cursor: progress; opacity: 0.6; }
 .button[aria-pressed="true"] { border-color: var(--atlas-accent); color: var(--atlas-accent-strong); }
 .wide { font-size: var(--atlas-text-small); }
 

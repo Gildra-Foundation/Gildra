@@ -72,11 +72,14 @@ export function LibraryModelViewer({ subject, name, lang, fallbackImage, control
   const [requested, setRequested] = useState(autoLoad);
   const [progress, setProgress] = useState(0);
   const [coarse, setCoarse] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const dragRef = useRef<{ x: number; id: number } | null>(null);
   const subjectKey = JSON.stringify(subject);
 
   useEffect(() => {
     setCoarse(window.matchMedia("(pointer: coarse)").matches);
+    // A click on the server-rendered button before hydration would be lost.
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -266,7 +269,7 @@ export function LibraryModelViewer({ subject, name, lang, fallbackImage, control
           {status === "loading" ? <><i className={styles.spinner} aria-hidden="true" />{text.loading}{progress > 0 && progress < 100 ? ` ${progress}%` : null}</> : null}
           {status === "idle" && requested ? text.idle : null}
           {status === "idle" && !requested ? (
-            <button type="button" className={`${styles.button} ${styles.load}`} data-model-load onClick={() => setRequested(true)}>
+            <button type="button" className={`${styles.button} ${styles.load}`} data-model-load disabled={!hydrated} onClick={() => setRequested(true)}>
               <span>{text.load}</span>
               {loadHint ? <small>{loadHint}</small> : null}
             </button>
