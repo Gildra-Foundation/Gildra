@@ -26,11 +26,11 @@ type Snapshot = { looks: Looks; hidden: TransmogSlot[] };
 const STARTER_SET = 3871;
 const apiLocale = (lang: Lang) => (lang === "ru" ? "ru_RU" : "en_US");
 
-/** Approximate first download of a mannequin (skeleton + model + textures), MB. */
+/** Approximate first download of a mannequin (skeleton + model + textures, gzip), MB. */
 function mannequinWeight(race: TransmogRace, gender: TransmogGender) {
-  if (race === "troll") return gender === "m" ? 52 : 42;
-  if (race === "goblin" && gender === "f") return 44;
-  return 34;
+  if (race === "troll") return gender === "m" ? 27 : 22;
+  if (race === "goblin" && gender === "f") return 23;
+  return 18;
 }
 
 /** Viewer slot of a look in a doll slot: weapons follow the hand, the rest their inventory type. */
