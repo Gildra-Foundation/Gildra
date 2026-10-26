@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 type fixedStore struct{ index *Index }
@@ -131,5 +132,25 @@ func TestResolveAndValidation(t *testing.T) {
 	next := get(t, handler, "/v1/wow/transmog/appearances?slot=head&limit=1&cursor="+page["nextCursor"].(string), http.StatusOK)
 	if next["data"].([]any)[0].(map[string]any)["appearanceId"].(float64) != 1 || next["nextCursor"] != nil {
 		t.Fatalf("second page = %v", next)
+	}
+}
+
+type loadingStore struct{}
+
+func (loadingStore) Index(ctx context.Context) (*Index, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+func TestSlowFirstLoadAnswersRetryLater(t *testing.T) {
+	previous := indexWait
+	indexWait = 20 * time.Millisecond
+	defer func() { indexWait = previous }()
+	mux := http.NewServeMux()
+	NewHandler(loadingStore{}).Register(mux)
+	recorder := httptest.NewRecorder()
+	mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/v1/wow/transmog/sets", nil))
+	if recorder.Code != http.StatusServiceUnavailable || recorder.Header().Get("Retry-After") == "" {
+		t.Fatalf("loading index: status %d, Retry-After %q", recorder.Code, recorder.Header().Get("Retry-After"))
 	}
 }

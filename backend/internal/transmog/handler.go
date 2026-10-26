@@ -2,10 +2,12 @@ package transmog
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
@@ -60,13 +62,25 @@ func pageParams(w http.ResponseWriter, r *http.Request) (offset, limit int, ok b
 	return offset, limit, true
 }
 
+// indexWait bounds how long a request waits for the first load, below the
+// API request deadline; the load itself continues in the background.
+var indexWait = 12 * time.Second
+
 func (h *Handler) index(w http.ResponseWriter, r *http.Request) (*Index, bool) {
-	index, err := h.store.Index(r.Context())
+	ctx, cancel := context.WithTimeout(r.Context(), indexWait)
+	defer cancel()
+	index, err := h.store.Index(ctx)
 	if err != nil {
-		if r.Context().Err() == nil {
-			slog.Error("load transmog index", "error", err)
-			writeProblem(w, r, http.StatusServiceUnavailable, "transmog_unavailable", "transmog data is temporarily unavailable")
+		if r.Context().Err() != nil {
+			return nil, false
 		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			w.Header().Set("Retry-After", "10")
+			writeProblem(w, r, http.StatusServiceUnavailable, "transmog_loading", "transmog data is loading, retry shortly")
+			return nil, false
+		}
+		slog.Error("load transmog index", "error", err)
+		writeProblem(w, r, http.StatusServiceUnavailable, "transmog_unavailable", "transmog data is temporarily unavailable")
 		return nil, false
 	}
 	return index, true
