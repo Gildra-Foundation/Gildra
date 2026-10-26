@@ -1,0 +1,92 @@
+/* atlas:strict — real raid cartography, painted controls and an optional planning grid. */
+.studio { position: sticky; top: calc(var(--atlas-sticky-top) + var(--atlas-space-3)); display: grid; align-content: start; gap: var(--atlas-space-3); min-width: 0; }
+.backgrounds { min-width: 0; }
+.materialModes.materialModes { width: 100%; height: auto; min-height: 48px; background: transparent; box-shadow: none; }
+.materialModes :global(.ui-segmented-control__thumb) { display: none; }
+.materialModes :global(.ui-segmented-control__viewport) { padding: 0; gap: var(--atlas-space-1); }
+.materialModes :global([role="radio"]) { position: relative; isolation: isolate; min-height: 48px; padding: var(--atlas-space-2) var(--atlas-space-3); color: var(--atlas-text-muted); text-shadow: 0 1px 3px var(--atlas-bg); }
+.materialModes :global([role="radio"])::before, .tool.tool::before, .assetSelect.assetSelect::before { position: absolute; z-index: -1; inset: 0; width: auto; height: auto; translate: none; border: 16px solid transparent; border-image-source: var(--raid-button-image); border-image-slice: var(--raid-button-slice) fill; border-width: var(--raid-row-width); border-image-width: 1; filter: contrast(.88) saturate(.84) brightness(.92); background: var(--raid-pull-base); background-clip: padding-box; pointer-events: none; content: ""; }
+.materialModes :global([role="radio"][aria-checked="true"]) { color: var(--raid-pull-light); box-shadow: inset 0 -2px var(--raid-pull-light); }
+.materialModes :global([role="radio"]):hover { color: var(--atlas-text-strong); }
+.selectors { display: flex; align-items: end; flex-wrap: wrap; gap: var(--atlas-space-3); min-width: 0; }
+.field { flex: 1 1 160px; min-width: 0; display: grid; gap: var(--atlas-space-1); }
+.field > span { display: flex; align-items: center; gap: var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.assetSelect.assetSelect { position: relative; isolation: isolate; width: 100%; min-width: 0; min-height: 48px; height: auto; padding: var(--atlas-space-3) var(--raid-row-inset); border: 0; background: transparent; color: var(--atlas-text-strong); font-size: var(--atlas-text-small); text-shadow: 0 1px 3px var(--atlas-bg); }
+.assetSelect.assetSelect::after { pointer-events: none; }
+.figure { min-width: 0; margin: 0; border: 24px solid transparent; border-image-source: var(--raid-panel-image); border-image-slice: var(--raid-panel-slice) fill; border-width: var(--raid-panel-width); border-image-width: 1; background: var(--raid-pull-base); background-clip: padding-box; }
+.caption { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); padding: var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-3); color: var(--raid-pull-light); }
+.caption > div { display: grid; gap: var(--atlas-space-1); min-width: 0; }
+.caption span { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); }
+.caption small { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.tools { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--atlas-space-2); padding-bottom: var(--atlas-space-2); }
+.tools > div { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1); }
+.tool.tool { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; gap: var(--atlas-space-1); min-width: 44px; min-height: 44px; padding: var(--atlas-space-2) var(--atlas-space-3); border: 1px solid transparent; background: transparent; color: var(--atlas-text-strong); font-size: var(--atlas-text-meta); text-shadow: 0 1px 3px var(--atlas-bg); transition: transform var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast); }
+.tool.tool[aria-pressed="true"] { color: var(--raid-pull-light); border-color: var(--raid-pull-light); }
+.tool.tool:disabled { opacity: .45; }
+.tool.tool:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--raid-pull-light); }
+.tool.tool:active:not(:disabled) { transform: translateY(1px); }
+.viewport { max-width: 100%; overflow: auto; border: 1px solid var(--atlas-line); background: var(--atlas-bg); overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--raid-pull-light) var(--atlas-bg); }
+.canvas { position: relative; isolation: isolate; width: calc(100% * var(--map-zoom)); overflow: hidden; }
+.cartography { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; }
+.gridLayer { position: absolute; z-index: -1; inset: 0; opacity: 0; pointer-events: none; background-image: linear-gradient(var(--atlas-line) 1px, transparent 1px), linear-gradient(90deg, var(--atlas-line) 1px, transparent 1px); background-size: 10% 10%; transition: opacity var(--atlas-duration-fast); }
+.canvas[data-grid="true"] .gridLayer { opacity: .9; }
+.canvas[data-editing="true"] { cursor: crosshair; }
+.routeLayer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.encounterRoute { fill: none; stroke: var(--atlas-accent-strong); stroke-width: .65; stroke-dasharray: 1.2 1; stroke-linecap: round; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
+.ownRoute { fill: none; stroke: var(--raid-pull-light); stroke-width: .8; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
+.bossPin { position: absolute; display: grid; place-items: center; width: 44px; height: 44px; padding: 2px; transform: translate(-50%, -50%); border: 2px solid var(--raid-pull-light); border-radius: 50%; background: var(--atlas-bg); color: var(--atlas-text-strong); box-shadow: 0 2px 8px var(--atlas-bg); cursor: pointer; }
+.bossPin img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.bossPin b { position: absolute; right: -5px; bottom: -5px; display: grid; place-items: center; min-width: 21px; min-height: 21px; padding: 2px; border: 1px solid var(--raid-pull-light); border-radius: 50%; background: var(--atlas-bg); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
+.bossPin[aria-pressed="true"] { outline: 3px solid var(--atlas-accent-strong); outline-offset: 4px; }
+.bossPin:hover { box-shadow: 0 0 0 5px color-mix(in srgb, var(--raid-card-accent) 28%, transparent), 0 2px 8px var(--atlas-bg); }
+.sketchPoint { position: absolute; display: grid; place-items: center; width: 22px; height: 22px; transform: translate(-50%, -50%); border: 1px solid var(--atlas-bg); border-radius: 50%; background: var(--raid-pull-light); color: var(--atlas-bg); font-size: var(--atlas-text-meta); font-weight: 700; pointer-events: none; }
+.drawCursor { position: absolute; width: 24px; height: 24px; border: 1px dashed var(--atlas-text-strong); transform: translate(-50%, -50%); border-radius: 50%; opacity: 0; pointer-events: none; }
+.canvas:focus-visible .drawCursor { opacity: 1; }
+.mapFooter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2); padding-top: var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-body); }
+.mapFooter > span { flex: 1 1 200px; }
+.mapFooter > a { display: inline-flex; align-items: center; min-height: 44px; color: var(--raid-pull-light); }
+.sketchTools { display: flex; align-items: center; flex-wrap: wrap; gap: var(--atlas-space-1); }
+.drawHelp { margin: var(--atlas-space-2) 0 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.progression { min-width: 0; padding: var(--atlas-space-4); border: 1px solid var(--atlas-line-soft); background: var(--atlas-glass-sheen), var(--atlas-glass-fill); }
+.progression h4 { display: flex; align-items: center; gap: var(--atlas-space-2); margin: 0 0 var(--atlas-space-2); color: var(--raid-pull-light); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); }
+.progression > p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.bossRail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-1); margin: var(--atlas-space-3) 0 0; padding: 0; list-style: none; }
+.bossRail li { min-width: 0; }
+.railChoice { display: flex; align-items: center; gap: var(--atlas-space-2); width: 100%; height: 100%; min-height: 44px; padding: var(--atlas-space-2); border: 1px solid transparent; background: transparent; color: var(--atlas-text-muted); font: inherit; font-size: var(--atlas-text-meta); cursor: pointer; text-align: left; }
+.railChoice b { flex: 0 0 24px; display: grid; place-items: center; min-height: 24px; border: 1px solid var(--atlas-line); border-radius: 50%; color: var(--raid-pull-light); }
+.railChoice[aria-pressed="true"] { border-color: var(--raid-pull-light); background: var(--raid-pull-base); color: var(--atlas-text-strong); }
+.lieutenants { margin-top: var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.lieutenants summary { min-height: 44px; align-content: center; cursor: pointer; color: var(--raid-pull-light); }
+.lieutenants ul { display: grid; gap: var(--atlas-space-2); margin: var(--atlas-space-2) 0 0; padding-left: var(--atlas-space-4); }
+.lieutenants li > a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: var(--atlas-text-strong); }
+.lieutenants li > span { display: block; }
+.attribution { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2); margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.attribution a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: var(--atlas-text-muted); }
+.studio button:focus-visible, .studio a:focus-visible, .viewport:focus-visible, .canvas:focus-visible { outline: 3px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (prefers-reduced-motion: no-preference) { .cartography { animation: unfold var(--atlas-duration-art) var(--atlas-ease) both; } .bossPin[aria-pressed="true"]::after { position: absolute; inset: -9px; border: 1px solid var(--raid-pull-light); border-radius: 50%; content: ""; pointer-events: none; animation: beacon 1.6s var(--atlas-ease) 2; } }
+@keyframes unfold { from { opacity: .4; } to { opacity: 1; } }
+@keyframes beacon { from { opacity: .8; transform: scale(.85); } to { opacity: 0; transform: scale(1.2); } }
+@media (max-width: 1100px) { .tool.tool { padding-inline: var(--atlas-space-2); } }
+@media (max-width: 900px) { .studio { position: static; } }
+@media (max-width: 700px) { .figure { border-width: var(--raid-panel-width-mobile); } }
+@media (max-width: 480px) { .tools { flex-direction: column; } .tools > div { justify-content: space-between; } .materialModes :global([role="radio"]) { padding-inline: var(--atlas-space-2); font-size: var(--atlas-text-meta); } .bossPin { width: 36px; height: 36px; } .bossPin::before { position: absolute; inset: -4px; content: ""; } .bossRail { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) { .cartography, .bossPin::after { animation: none; } .tool.tool, .gridLayer { transition: none; } .progression { background: var(--atlas-surface); } }
+:global([data-motion="reduced"]) .cartography, :global([data-motion="reduced"]) .bossPin::after, :global([data-transparency="reduced"]) .cartography, :global([data-transparency="reduced"]) .bossPin::after { animation: none; }
+:global([data-transparency="reduced"]) .progression { background: var(--atlas-surface); }
+@media (forced-colors: active) { .materialModes :global([role="radio"])::before, .tool.tool::before, .assetSelect.assetSelect::before, .cartography, .gridLayer, .bossPin img { display: none; } .figure { border: 1px solid CanvasText; border-image: none; background: Canvas; } .viewport, .progression { background: Canvas; border-color: CanvasText; } .materialModes :global([role="radio"]), .tool.tool, .assetSelect.assetSelect, .bossPin, .sketchPoint { background: ButtonFace; color: ButtonText; border: 1px solid ButtonText; } .bossPin[aria-pressed="true"], .railChoice[aria-pressed="true"] { outline-color: Highlight; } .encounterRoute, .ownRoute { stroke: CanvasText; filter: none; } .cartography, .bossPin::after { animation: none; } }
+:global([data-ui-motion="reduce"]) .cartography, :global([data-ui-motion="reduce"]) .bossPin::after { animation: none; }
+:global([data-motion="reduced"]) .tool.tool:hover, :global([data-motion="reduced"]) .tool.tool:active, :global([data-ui-motion="reduce"]) .tool.tool:hover, :global([data-ui-motion="reduce"]) .tool.tool:active, :global([data-transparency="reduced"]) .tool.tool:hover, :global([data-transparency="reduced"]) .tool.tool:active { transform: none; }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) { .tool.tool:hover, .tool.tool:active { transform: none; } }
+/* Small map tools use the panel's measured corners; long button endcaps need more width. */
+.tool.tool::before { border-image-source: var(--raid-panel-image); border-image-slice: var(--raid-panel-slice) fill; border-width: var(--raid-panel-compact-width); }
+.viewport { max-height: min(65vh, 650px); }
+/* Explicit nonnegative layers keep cartography above the viewport's opaque surface. */
+.cartography { z-index: 0; }
+.gridLayer { z-index: 1; }
+.routeLayer { z-index: 2; }
+.bossPin, .sketchPoint, .drawCursor { z-index: 3; }
+.drawCapture { position: absolute; z-index: 4; inset: 0; display: block; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; cursor: crosshair; touch-action: manipulation; }
+.drawCursor { z-index: 5; }
+.canvas:has(.drawCapture:focus-visible) .drawCursor { opacity: 1; }
+@media (max-width: 480px) { .selectors .field { flex-basis: 100%; } }

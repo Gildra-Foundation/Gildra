@@ -6,7 +6,9 @@ import { getMidnightRaid } from "@/lib/data/wow/raid/midnightRaidData";
 import { wowGuideText } from "@/lib/wow/sourceLocale";
 import { getMidnightRaidRoute, type RaidRoutePull, type RouteAction, type RouteText } from "./midnightRaidRoutes";
 import { raidHubEntries } from "./raidHubData";
-import type { RaidPull, RaidPullAbility, RaidPullPlan, RaidPullRole } from "./raidPullTypes";
+import mapManifest from "../../../public/assets/wow/raids/maps/manifest.json";
+import { getRaidProgression } from "./raidProgression";
+import type { RaidMapAtlas, RaidPull, RaidPullAbility, RaidPullPlan, RaidPullRole } from "./raidPullTypes";
 
 const tx = (ru: string, en: string): RouteText => ({ ru, en });
 // Translate the small serializable projection on the server. The full name
@@ -39,7 +41,7 @@ const draftCasters: Record<number, number> = {
   1228330: 240548, 1230690: 240549, 1228345: 240545,
   1258624: 240864, 1236560: 240864, 1258621: 240864,
   1251405: 240831, 1236497: 252067, 1258656: 252067, 1255702: 251239,
-  1270212: 256598, 1247054: 256598, 1247056: 256598, 1282010: 259918, 1274846: 259918,
+  1270212: 256598, 1247054: 256598, 1247056: 256598, 1282010: 259918,
 };
 
 function trashPull(pull: RaidRoutePull, bossSlug?: string): RaidPull {
@@ -69,11 +71,12 @@ const encounterAdds: Record<string, string[]> = {
 export function getRaidPullPlan(slug: string): RaidPullPlan | undefined {
   const hub = raidHubEntries.find((entry) => entry.slug === slug);
   if (!hub) return undefined;
+  const atlas = { ...(mapManifest.raids as Record<string, RaidMapAtlas>)[slug], progression: getRaidProgression(slug) };
   const midnight = getMidnightRaid(slug);
   if (midnight) {
     const route = getMidnightRaidRoute(midnight.slug);
     return localizePlan({
-      slug, name: hub.names, artwork: hub.artwork, routePath: route.routePath, entrance: route.entrance,
+      slug, name: hub.names, artwork: hub.artwork, atlas, routePath: route.routePath, entrance: route.entrance,
       coverage: "route-draft", note: route.note,
       sources: [{ title: new URL(route.source).hostname, url: route.source }],
       pulls: route.pulls.map((pull) => trashPull(pull, midnight.bosses[pull.destinationBoss]?.slug)),
@@ -117,7 +120,7 @@ export function getRaidPullPlan(slug: string): RaidPullPlan | undefined {
     };
   });
   return localizePlan({
-    slug, name: hub.names, artwork: hub.artwork, entrance: { x: 50, y: 95 },
+    slug, name: hub.names, artwork: hub.artwork, atlas, entrance: { x: 50, y: 95 },
     routePath: `M 50 95 ${pulls.map((pull) => `L ${pull.x} ${pull.y}`).join(" ")}`,
     pulls, bosses: [], coverage: "encounters",
     note: tx("Порядок встреч показан по каталогу рейда. Линия соединяет бои на схеме и не задаёт путь по этажам.", "Encounters follow the raid catalog order. The line connects fights on a schematic; it does not describe a path through floors."),

@@ -21,6 +21,7 @@ export function raidHubControlLayout(slug: RaidHubSlug): CSSProperties {
     "--raid-panel-slice": panels[slug].join(" "),
     "--raid-panel-width": widths(panels[slug], .18),
     "--raid-panel-width-mobile": widths(panels[slug], .14),
+    "--raid-panel-compact-width": widths(panels[slug], .055),
     "--raid-button-image": `url("${button.url}")`,
     "--raid-button-slice": values.join(" "),
     "--raid-button-width": widths(values, 68 / button.height),

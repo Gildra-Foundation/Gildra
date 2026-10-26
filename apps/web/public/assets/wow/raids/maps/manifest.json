@@ -1,0 +1,1216 @@
+{
+  "checkedAt": "2026-10-26T11:01:57.513915+00:00",
+  "raids": {
+    "the-voidspire": {
+      "floors": [
+        {
+          "id": "16340-0",
+          "name": {
+            "ru": "Шпиль Бездны",
+            "en": "Voidspire"
+          },
+          "src": "/assets/wow/raids/maps/floors/the-voidspire/16340-0.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "fallen-king-salhadaar",
+              "x": 65.6,
+              "y": 76.4,
+              "sourceURL": "https://www.wowhead.com/zone=16340/the-voidspire",
+              "npcId": 240432,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Fallen-King Salhadaar"
+            },
+            {
+              "bossSlug": "vorasius",
+              "x": 42.5,
+              "y": 35.2,
+              "sourceURL": "https://www.wowhead.com/zone=16340/the-voidspire",
+              "npcId": 240434,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Vorasius"
+            },
+            {
+              "bossSlug": "imperator-averzian",
+              "x": 39.8,
+              "y": 68.5,
+              "sourceURL": "https://www.wowhead.com/zone=16340/the-voidspire",
+              "npcId": 240435,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Imperator Averzian"
+            },
+            {
+              "bossSlug": "vaelgor-ezzorak",
+              "x": 55.4,
+              "y": 46,
+              "sourceURL": "https://www.wowhead.com/zone=16340/the-voidspire",
+              "npcId": 242056,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Vaelgor"
+            },
+            {
+              "bossSlug": "lightblinded-vanguard",
+              "x": 75.8,
+              "y": 17.3,
+              "sourceURL": "https://www.wowhead.com/zone=16340/the-voidspire",
+              "npcId": 250589,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "War Chaplain Senn"
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16340-0.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16340/the-voidspire",
+          "sha256": "6ab18ad1ac7fe4a0f1a9ee75af9b36a8d039476d6d772ba2f25082e5832b37ad",
+          "nativeSha256": "4128f7147638af2f4d53ce3e5c9fea94982e8ed3364afb37d0d890018fd9a909",
+          "bytes": 124528
+        },
+        {
+          "id": "16340-1",
+          "name": {
+            "ru": "Корона космоса",
+            "en": "Crown of the Cosmos"
+          },
+          "src": "/assets/wow/raids/maps/floors/the-voidspire/16340-1.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "crown-of-the-cosmos",
+              "x": 47.2,
+              "y": 51.3,
+              "sourceURL": "https://www.wowhead.com/zone=16340/the-voidspire",
+              "npcId": 244761,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Alleria Windrunner"
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16340-1.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16340/the-voidspire",
+          "sha256": "3416690923bdfff79e2531c65f523268c570f8edc388f89d66ea27d08aa34709",
+          "nativeSha256": "e3182711114694ac46e17db6caba7279be3dbd64bbdfebc1508feff237621bf2",
+          "bytes": 112394
+        }
+      ],
+      "arenas": {
+        "imperator-averzian": [
+          {
+            "id": "main",
+            "name": {
+              "ru": "Арена",
+              "en": "Arena"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/01.averzian-main.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/01.averzian-main.jpg",
+            "sha256": "b8e7dac5700a3cdaa29ba197d92c6b07f4c37cd1a4cc5b95ccd7e18f6963d9d8",
+            "raidPlanBossId": "01.averzian",
+            "dungeonEncounterId": 3176,
+            "primary": true,
+            "nativeSha256": "eea2f827ac3b35638af16a1a28ed72c2af48fdcf74e78500284b52db188deacd",
+            "bytes": 210176
+          },
+          {
+            "id": "alt",
+            "name": {
+              "ru": "Другой ракурс",
+              "en": "Alt"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/01.averzian-alt.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/01.averzian-alt.jpg",
+            "sha256": "d98c0b08f93b885a0ae28e5bf02885472ad24a4886462b35ed2da5a20d245bbd",
+            "raidPlanBossId": "01.averzian",
+            "dungeonEncounterId": 3176,
+            "primary": false,
+            "nativeSha256": "aeeaf409eb2e943075fb0c0df27bb3f0822b6a3e6fff5e63c1f9ed1fa9e728cf",
+            "bytes": 207354
+          }
+        ],
+        "vorasius": [
+          {
+            "id": "main",
+            "name": {
+              "ru": "Арена",
+              "en": "Arena"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/02.vorasius-main.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/02.vorasius-main.jpg",
+            "sha256": "2ddc680c336a375ff989e34877e0c6233a3fe693812f616ec99478c2bf151165",
+            "raidPlanBossId": "02.vorasius",
+            "dungeonEncounterId": 3177,
+            "primary": true,
+            "nativeSha256": "858106d537d25dbc20bb2ebd0baa1d0377b8beaf56568c584cf690150ca8c874",
+            "bytes": 124726
+          },
+          {
+            "id": "alt",
+            "name": {
+              "ru": "Другой ракурс",
+              "en": "Alt"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/02.vorasius-alt.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/02.vorasius-alt.jpg",
+            "sha256": "7faa7d3395480a49e15ecb2072eaadba3a4784e57c61cef91578293ba26e795c",
+            "raidPlanBossId": "02.vorasius",
+            "dungeonEncounterId": 3177,
+            "primary": false,
+            "nativeSha256": "c660dcca83e32663c869a6f1a24eb7d67a62d7d459f653de7dd1f9f358a88b8b",
+            "bytes": 134036
+          }
+        ],
+        "fallen-king-salhadaar": [
+          {
+            "id": "main",
+            "name": {
+              "ru": "Арена",
+              "en": "Arena"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/03.salhadaar-main.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/03.salhadaar-main.jpg",
+            "sha256": "db4d20a07f9434d21ba8478f47bcaf78ad45053b18de20f78f94c7ee4fa76b78",
+            "raidPlanBossId": "03.salhadaar",
+            "dungeonEncounterId": 3179,
+            "primary": true,
+            "nativeSha256": "2f9694a87d23ab27c681bd5a31b311277f31583be005694e836493624bef83f6",
+            "bytes": 173074
+          },
+          {
+            "id": "alt",
+            "name": {
+              "ru": "Другой ракурс",
+              "en": "Alt"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/03.salhadaar-alt.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/03.salhadaar-alt.jpg",
+            "sha256": "b46189ea337e1f294dc11c3a521fdc54291f20a7ddd88df89d2f3c226ed314e2",
+            "raidPlanBossId": "03.salhadaar",
+            "dungeonEncounterId": 3179,
+            "primary": false,
+            "nativeSha256": "96cbe62b163ba0f7e93fdc75e4acf122d84fdf3ac2f183e1744c919d225587aa",
+            "bytes": 181550
+          }
+        ],
+        "vaelgor-ezzorak": [
+          {
+            "id": "main",
+            "name": {
+              "ru": "Арена",
+              "en": "Arena"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/04.dragons-main.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/04.dragons-main.jpg",
+            "sha256": "26e43b83d463b73688a04fd120b8436418798e5d2f6178dfd7c07b2d0672cb56",
+            "raidPlanBossId": "04.dragons",
+            "dungeonEncounterId": 3178,
+            "primary": true,
+            "nativeSha256": "bae53b9dece8b9213052836642690e0851c8c10f0f6c47ed640f3504cf5c99b8",
+            "bytes": 138652
+          },
+          {
+            "id": "alt",
+            "name": {
+              "ru": "Другой ракурс",
+              "en": "Alt"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/04.dragons-alt.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/04.dragons-alt.jpg",
+            "sha256": "b89bfb8623ef4f360c96b16f00e40b2409c3bb859055776a9006ecde9064d724",
+            "raidPlanBossId": "04.dragons",
+            "dungeonEncounterId": 3178,
+            "primary": false,
+            "nativeSha256": "e516a1cdfd5a02f65caf8a3629b10628f27c91e403c0414f57840b3f7fac28d7",
+            "bytes": 115438
+          }
+        ],
+        "lightblinded-vanguard": [
+          {
+            "id": "main",
+            "name": {
+              "ru": "Арена",
+              "en": "Arena"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/05.vanguard-main.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/05.vanguard-main.jpg",
+            "sha256": "5a04dcc30d2e834e40e2e9dbd515fa114530f3840f6eb2aee17b491f4083df50",
+            "raidPlanBossId": "05.vanguard",
+            "dungeonEncounterId": 3180,
+            "primary": true,
+            "nativeSha256": "85852b878e4c6b6282c363afc2e73bdd50675fbf51796a0c64e24844311779e4",
+            "bytes": 148710
+          },
+          {
+            "id": "alt",
+            "name": {
+              "ru": "Другой ракурс",
+              "en": "Alt"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/05.vanguard-alt.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/05.vanguard-alt.jpg",
+            "sha256": "35c2231ddc4dcc632182146e5438be73e097542f9f01e0c2085791f530f09532",
+            "raidPlanBossId": "05.vanguard",
+            "dungeonEncounterId": 3180,
+            "primary": false,
+            "nativeSha256": "083763c346e3588c3b44aac9bafb4afcbe48fe367167dc57b530fd9a7cb80b16",
+            "bytes": 132814
+          }
+        ],
+        "crown-of-the-cosmos": [
+          {
+            "id": "main",
+            "name": {
+              "ru": "Арена",
+              "en": "Arena"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-voidspire/06.crown-main.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.voidspire/map/06.crown-main.jpg",
+            "sha256": "8b8389220151908dbc3167994da3bdc75d335fce92c847d26e565ac4e22d558f",
+            "raidPlanBossId": "06.crown",
+            "dungeonEncounterId": 3181,
+            "primary": true,
+            "nativeSha256": "8c55864f4f2c5f239caab24f7c0894e65d42d0fde5a82a919ef542c295d7b5f9",
+            "bytes": 104990
+          }
+        ]
+      },
+      "sources": [
+        {
+          "title": "RaidPlan.io encounter backgrounds",
+          "url": "https://raidplan.io/plan/create?raid=wow.midnight.voidspire"
+        },
+        {
+          "title": "Wowhead game map and boss locations",
+          "url": "https://www.wowhead.com/zone=16340/the-voidspire"
+        },
+        {
+          "title": "RaidPlan.io attribution",
+          "url": "https://raidplan.io/about"
+        }
+      ]
+    },
+    "the-dreamrift": {
+      "floors": [
+        {
+          "id": "16531-0",
+          "name": {
+            "ru": "Провал снов",
+            "en": "The Dreamrift"
+          },
+          "src": "/assets/wow/raids/maps/floors/the-dreamrift/16531-0.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16531-0.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16531/the-dreamrift",
+          "sha256": "626ae63c6c7f34b77c5531588bd646eadf8b8dcf30854f97423c11b9e1403d90",
+          "nativeSha256": "6f27ae8280cccb1e3dec5b750e5aeaf246ad5277b298ea8c7b275bc015d335b5",
+          "bytes": 123762
+        },
+        {
+          "id": "16531-1",
+          "name": {
+            "ru": "Логово Неприснившегося",
+            "en": "Den of the Undreamt"
+          },
+          "src": "/assets/wow/raids/maps/floors/the-dreamrift/16531-1.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "chimaerus",
+              "x": 51.3,
+              "y": 57.6,
+              "sourceURL": "https://www.wowhead.com/zone=16531/the-dreamrift",
+              "npcId": 256116,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Chimaerus"
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16531-1.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16531/the-dreamrift",
+          "sha256": "c4b464055aee35ce1346f507175c28bdded33be263907d0133a8f1b72076ce37",
+          "nativeSha256": "3cd802504108d6df0b3cca90d854edb2388261b2b725f8b910b21e3def41fccc",
+          "bytes": 98664
+        }
+      ],
+      "arenas": {
+        "chimaerus": [
+          {
+            "id": "main",
+            "name": {
+              "ru": "Платформа",
+              "en": "Platform"
+            },
+            "src": "/assets/wow/raids/maps/arenas/the-dreamrift/01.chimaerus-main.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.dreamrift/map/01.chimaerus-main.jpg",
+            "sha256": "2cab40e0750305fa3a452c2d3153de304eb73bfb15dc1e43eff1806b2ba7184a",
+            "raidPlanBossId": "01.chimaerus",
+            "dungeonEncounterId": 3306,
+            "primary": true,
+            "nativeSha256": "f608a30ad1166b6b358524e4731fd7d355568e0b1c325d86c4801fe0eccb41d8",
+            "bytes": 128946
+          }
+        ]
+      },
+      "sources": [
+        {
+          "title": "RaidPlan.io encounter backgrounds",
+          "url": "https://raidplan.io/plan/create?raid=wow.midnight.dreamrift"
+        },
+        {
+          "title": "Wowhead game map and boss locations",
+          "url": "https://www.wowhead.com/zone=16531/the-dreamrift"
+        },
+        {
+          "title": "RaidPlan.io attribution",
+          "url": "https://raidplan.io/about"
+        }
+      ]
+    },
+    "march-on-queldanas": {
+      "floors": [
+        {
+          "id": "16342-0",
+          "name": {
+            "ru": "Марш на Кель’Данас",
+            "en": "March on Quel'Danas"
+          },
+          "src": "/assets/wow/raids/maps/floors/march-on-queldanas/16342-0.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "beloren",
+              "x": 51,
+              "y": 30.1,
+              "sourceURL": "https://www.wowhead.com/zone=16342/isle-of-queldanas",
+              "npcId": 240387,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Belo'ren"
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16342-0.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16342/isle-of-queldanas",
+          "sha256": "47b4a726bcbfe5fec34b4908de63442a526cadb84d9d384d9d3b0c6854a80892",
+          "nativeSha256": "c6f39d7649d2305c537ec8cde46eb43f35bd861cbea19c87ccde8ae829c23b73",
+          "bytes": 144032
+        },
+        {
+          "id": "16342-1",
+          "name": {
+            "ru": "Темный Колодец",
+            "en": "The Darkwell"
+          },
+          "src": "/assets/wow/raids/maps/floors/march-on-queldanas/16342-1.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "midnight-falls",
+              "x": 51,
+              "y": 44,
+              "sourceURL": "https://www.wowhead.com/zone=16342/isle-of-queldanas",
+              "npcId": 240391,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "L'ura"
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16342-1.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16342/isle-of-queldanas",
+          "sha256": "1d7c0e6e7daba6e053b2bce1513a5f34c4d08418d0da43cef22b618d4724355b",
+          "nativeSha256": "ab55c96264b3f034d9926edbc854b0388df0eba2c2870054589bd4bade89314e",
+          "bytes": 113658
+        }
+      ],
+      "arenas": {
+        "beloren": [
+          {
+            "id": "full",
+            "name": {
+              "ru": "Весь зал",
+              "en": "Full Room"
+            },
+            "src": "/assets/wow/raids/maps/arenas/march-on-queldanas/01.beloren-full.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.marchonqueldanas/map/01.beloren-full.jpg",
+            "sha256": "aca80152dca589b65aaf0a60833cfbd28478cb451b114c5518c8d06e06f6b6b5",
+            "raidPlanBossId": "01.beloren",
+            "dungeonEncounterId": 3182,
+            "primary": true,
+            "nativeSha256": "49990b1ff564567508c184c70481048a7240cb371e79ec1db499bbff6c70047e",
+            "bytes": 175350
+          },
+          {
+            "id": "center",
+            "name": {
+              "ru": "Центр",
+              "en": "Center"
+            },
+            "src": "/assets/wow/raids/maps/arenas/march-on-queldanas/01.beloren-center.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.marchonqueldanas/map/01.beloren-center.jpg",
+            "sha256": "b4a62d826473115ce78b2f8a24ed28c1747afe2dc62bb0fcf4d0422219fa8a20",
+            "raidPlanBossId": "01.beloren",
+            "dungeonEncounterId": 3182,
+            "primary": false,
+            "nativeSha256": "dbc2e76facda8f464e6d3aa8794feb673524773751f7a972856dfb3ecac19d9e",
+            "bytes": 157584
+          },
+          {
+            "id": "top",
+            "name": {
+              "ru": "Верхняя часть",
+              "en": "Top"
+            },
+            "src": "/assets/wow/raids/maps/arenas/march-on-queldanas/01.beloren-top.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.marchonqueldanas/map/01.beloren-top.jpg",
+            "sha256": "1ee641021c351baaebf29093221a57dbe100cdd75b845b4225b5998b114544d1",
+            "raidPlanBossId": "01.beloren",
+            "dungeonEncounterId": 3182,
+            "primary": false,
+            "nativeSha256": "943662e7ee919a6accb54e7f9d78586adc405f8af1f34ec76c1055375a68b11c",
+            "bytes": 135752
+          }
+        ],
+        "midnight-falls": [
+          {
+            "id": "main",
+            "name": {
+              "ru": "Арена",
+              "en": "Arena"
+            },
+            "src": "/assets/wow/raids/maps/arenas/march-on-queldanas/02.midnightfalls-main.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.marchonqueldanas/map/02.midnightfalls-main.jpg",
+            "sha256": "14e0c343b72511ffb465f541d632f4b783c20ad33c1ac24597f150a07c862405",
+            "raidPlanBossId": "02.midnightfalls",
+            "dungeonEncounterId": 3183,
+            "primary": true,
+            "nativeSha256": "7cf2fe3b3435db7185248a668bf9f5aa8285c5e5736ba3f93ee8d179f2694292",
+            "bytes": 108586
+          }
+        ]
+      },
+      "sources": [
+        {
+          "title": "RaidPlan.io encounter backgrounds",
+          "url": "https://raidplan.io/plan/create?raid=wow.midnight.marchonqueldanas"
+        },
+        {
+          "title": "Wowhead game map and boss locations",
+          "url": "https://www.wowhead.com/zone=16342/isle-of-queldanas"
+        },
+        {
+          "title": "RaidPlan.io attribution",
+          "url": "https://raidplan.io/about"
+        }
+      ]
+    },
+    "venomous-abyss": {
+      "floors": [
+        {
+          "id": "16915-0",
+          "name": {
+            "ru": "Колодец душителей душ",
+            "en": "The Soulcoil Well"
+          },
+          "src": "/assets/wow/raids/maps/floors/venomous-abyss/16915-0.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "nekzali-the-soulcoiler",
+              "x": 48.5,
+              "y": 50.2,
+              "sourceURL": "https://www.wowhead.com/npc=259927",
+              "npcId": 259927,
+              "coordinateKind": "observedNpcSample",
+              "coordinateSamples": [
+                [
+                  48.5,
+                  50.2
+                ],
+                [
+                  48.8,
+                  48.3
+                ],
+                [
+                  49,
+                  51.5
+                ],
+                [
+                  49.9,
+                  51.9
+                ],
+                [
+                  50,
+                  50.1
+                ],
+                [
+                  50,
+                  51
+                ],
+                [
+                  50,
+                  82.6
+                ],
+                [
+                  50.8,
+                  51.4
+                ],
+                [
+                  50.9,
+                  48.7
+                ],
+                [
+                  51.2,
+                  50.3
+                ]
+              ]
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16915-0.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+          "sha256": "ea5bd665c5f8f605a1e42da1fe3d1bcb7957c0d1339e0cd461a7876f1a1627b7",
+          "nativeSha256": "6429686a71beb9254158a7650a71ca76d3e1551ed3af18394e2184ba61eb642a",
+          "bytes": 108506
+        },
+        {
+          "id": "16915-1",
+          "name": {
+            "ru": "Яма клыков",
+            "en": "Pit of Fangs"
+          },
+          "src": "/assets/wow/raids/maps/floors/venomous-abyss/16915-1.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "the-twin-fangs",
+              "x": 50.2,
+              "y": 57.2,
+              "sourceURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+              "npcId": 257361,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Vexhul"
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16915-1.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+          "sha256": "5b5b3c9260623a50bc9ada60510d89a72193e94374757d25c7742e3ce342fce3",
+          "nativeSha256": "1669cb151ab8b4d40c7951a2ed743149c500dbad57d491120d42f8ff6b7c3582",
+          "bytes": 107458
+        },
+        {
+          "id": "16915-2",
+          "name": {
+            "ru": "Скверная крипта",
+            "en": "The Vile Crypt"
+          },
+          "src": "/assets/wow/raids/maps/floors/venomous-abyss/16915-2.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "entombed-sentinels",
+              "x": 51.9,
+              "y": 27.5,
+              "sourceURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+              "npcId": 258557,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Breath of Ula'tek"
+            },
+            {
+              "bossSlug": "vashnik-the-malignant",
+              "x": 45.1,
+              "y": 71.6,
+              "sourceURL": "https://www.wowhead.com/npc=259181/vashnik",
+              "npcId": 259181,
+              "coordinateKind": "observedNpcSample",
+              "coordinateSamples": [
+                [
+                  45.1,
+                  71.6
+                ],
+                [
+                  45.1,
+                  71.7
+                ],
+                [
+                  48.4,
+                  69.4
+                ],
+                [
+                  48.9,
+                  69.5
+                ],
+                [
+                  49.3,
+                  69.1
+                ]
+              ]
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16915-2.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+          "sha256": "27458c02cc2774cae6177fe97feb8d6d759e687dc38d1a6a803dd2fc0def1da1",
+          "nativeSha256": "243091fc42a4ae0e63e7600d3445584f76b9592236faa791425cbe5cfd554685",
+          "bytes": 119180
+        },
+        {
+          "id": "16915-3",
+          "name": {
+            "ru": "Склеп душителей душ",
+            "en": "Crypt of the Soulcoilers"
+          },
+          "src": "/assets/wow/raids/maps/floors/venomous-abyss/16915-3.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "sszorak",
+              "x": 54.5,
+              "y": 72.3,
+              "sourceURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+              "npcId": 257347,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Sszorak"
+            },
+            {
+              "bossSlug": "the-lost-explorers",
+              "x": 49.2,
+              "y": 31.8,
+              "sourceURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+              "npcId": 267077,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Mor'zahi"
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16915-3.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+          "sha256": "a52f86e5f8565796b58be796d5cb99e6a36a99f932ffa2a418d158c4e9e29196",
+          "nativeSha256": "4f0f09d56dc73d14adc6eadd77bb87dc394794ffb083812d85c67b4c043ff801",
+          "bytes": 111266
+        },
+        {
+          "id": "16915-4",
+          "name": {
+            "ru": "Спиральный алтарь",
+            "en": "The Coiled Altar"
+          },
+          "src": "/assets/wow/raids/maps/floors/venomous-abyss/16915-4.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "the-coiled-altar",
+              "x": 50,
+              "y": 77.2,
+              "sourceURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+              "npcId": 259447,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Zul'jan"
+            },
+            {
+              "bossSlug": "ulatek",
+              "x": 50.1,
+              "y": 26.3,
+              "sourceURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+              "npcId": 268956,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Ula'tek"
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16915-4.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16915/the-venomous-abyss",
+          "sha256": "47a9fefcb6c3968ac21a2280ce2348062d6234a0ca0210207f55483d375db379",
+          "nativeSha256": "0b12d21c67f660d4646858917ab597118899a9b78d9dbb4a35da5dc557d2e7a7",
+          "bytes": 108390
+        }
+      ],
+      "arenas": {
+        "nekzali-the-soulcoiler": [
+          {
+            "id": "ort-v105",
+            "name": {
+              "ru": "Арена",
+              "en": "Arena"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/01.nakzali-ort-v105.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/01.nakzali-ort-v105.jpg",
+            "sha256": "12a3ae494bcd0033a397106a82567a99bfa733e133d8066eaa8f5bda67725df8",
+            "raidPlanBossId": "01.nakzali",
+            "dungeonEncounterId": 3470,
+            "primary": true,
+            "yards": 105,
+            "world": {
+              "mapId": 3004,
+              "x": 206.971,
+              "y": 0.15,
+              "yaw": 0,
+              "height": 105
+            },
+            "nativeSha256": "4f2e7b513fbf0a608fa72b25be3d985faced4fc0bdf4cb1e9f4c840f9641b2af",
+            "bytes": 124844
+          }
+        ],
+        "entombed-sentinels": [
+          {
+            "id": "ort-v108",
+            "name": {
+              "ru": "Арена",
+              "en": "Arena"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/02.sentinels-ort-v108.webp",
+            "width": 1600,
+            "height": 895,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/02.sentinels-ort-v108.jpg",
+            "sha256": "ffe9cf97f50c8e1e01be17cefcce0e01a4adb555ce550ba22a736d80a1f15b04",
+            "raidPlanBossId": "02.sentinels",
+            "dungeonEncounterId": 3445,
+            "primary": true,
+            "yards": 108,
+            "world": {
+              "mapId": 3004,
+              "x": 710.7,
+              "y": -365.93,
+              "yaw": 60,
+              "height": 108
+            },
+            "nativeSha256": "be0f341fcd96780d440784815e0c983c45a3fc6c46f0ece7898eeee478c48d37",
+            "bytes": 116516
+          }
+        ],
+        "vashnik-the-malignant": [
+          {
+            "id": "ort-enter-v180",
+            "name": {
+              "ru": "Вертикально",
+              "en": "Vertical"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/03.vashnik-ort-enter-v180.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/03.vashnik-ort-enter-v180.jpg",
+            "sha256": "8358b2f84be8cfe8d9431e7e4a54abbc12a4094e26583e645cab3d6c09b87bb6",
+            "raidPlanBossId": "03.vashnik",
+            "dungeonEncounterId": 3455,
+            "primary": true,
+            "yards": 180,
+            "world": {
+              "mapId": 3004,
+              "x": 452.308,
+              "y": -272.233,
+              "yaw": 60,
+              "height": 180
+            },
+            "nativeSha256": "ec71c3ce6f7eaf674865c3ede4274c7c5c6c86cbd66170b15866214ad22e7a04",
+            "bytes": 99080
+          },
+          {
+            "id": "ort-horz-v146",
+            "name": {
+              "ru": "Горизонтально",
+              "en": "Horizontal"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/03.vashnik-ort-horz-v146.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/03.vashnik-ort-horz-v146.jpg",
+            "sha256": "8fd399f25fd26941703437c5934809c89511378722301bf7fc67f94118accab1",
+            "raidPlanBossId": "03.vashnik",
+            "dungeonEncounterId": 3455,
+            "primary": false,
+            "yards": 146,
+            "world": {
+              "mapId": 3004,
+              "x": 452.308,
+              "y": -272.233,
+              "yaw": 150.187,
+              "height": 146
+            },
+            "nativeSha256": "f81e9a14f952aed851dc843e2678e81b91a4a8fdc769935dba4a94ef74235176",
+            "bytes": 122006
+          }
+        ],
+        "the-lost-explorers": [
+          {
+            "id": "ort-v112",
+            "name": {
+              "ru": "Платформа",
+              "en": "Platform"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/04.lostexplorers-ort-v112.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/04.lostexplorers-ort-v112.jpg",
+            "sha256": "2a1bcedfe9cbb3ab7ffbd3f43cea1250cf43122489dfca3114df946ecc31ddec",
+            "raidPlanBossId": "04.lostexplorers",
+            "dungeonEncounterId": 3497,
+            "primary": true,
+            "yards": 112,
+            "world": {
+              "mapId": 3004,
+              "x": 698.554,
+              "y": 470.159,
+              "yaw": -180,
+              "height": 112
+            },
+            "nativeSha256": "0077a56363e45ce437bdbe4a55b6e1e589763d24eaf797816b19478b7f292470",
+            "bytes": 90364
+          }
+        ],
+        "sszorak": [
+          {
+            "id": "ort-v122",
+            "name": {
+              "ru": "Платформа",
+              "en": "Platform"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/05.sszorak-ort-v122.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/05.sszorak-ort-v122.jpg",
+            "sha256": "f07f3e7b2089d6a5e2112990d8b656b620352f93460e25110868fc80e41ac709",
+            "raidPlanBossId": "05.sszorak",
+            "dungeonEncounterId": 3420,
+            "primary": true,
+            "yards": 122,
+            "world": {
+              "mapId": 3004,
+              "x": 386.995,
+              "y": 407.825,
+              "yaw": -60,
+              "height": 122
+            },
+            "nativeSha256": "a2d950efc095e12dc8d2e86a8be7a5ae38bf20beb5dbd38e1bf53fefdf322f7c",
+            "bytes": 145566
+          }
+        ],
+        "the-twin-fangs": [
+          {
+            "id": "ort-v140",
+            "name": {
+              "ru": "Платформа",
+              "en": "Platform"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/06.twinfangs-ort-v140.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/06.twinfangs-ort-v140.jpg",
+            "sha256": "b898e2ac17ecb81d72680ea0e3638ae925fa3b8af8761d531c1537f049078d99",
+            "raidPlanBossId": "06.twinfangs",
+            "dungeonEncounterId": 3421,
+            "primary": true,
+            "yards": 140,
+            "world": {
+              "mapId": 3004,
+              "x": 625.147,
+              "y": 0,
+              "yaw": 0,
+              "height": 140
+            },
+            "nativeSha256": "aa51fadb39ec63238e7584d9117ba25255ece8d0fa3fc3059eae96a336545a1f",
+            "bytes": 149592
+          }
+        ],
+        "the-coiled-altar": [
+          {
+            "id": "ort-v108",
+            "name": {
+              "ru": "Платформа",
+              "en": "Platform"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/07.bargained-ort-v108.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/07.bargained-ort-v108.jpg",
+            "sha256": "632f2f29cf11f1384f9bd3a971301521172e1305d9c6b3ab3c42e858b377b64f",
+            "raidPlanBossId": "07.bargained",
+            "dungeonEncounterId": 3429,
+            "primary": true,
+            "yards": 108,
+            "world": {
+              "mapId": 3004,
+              "x": 1157.357,
+              "y": 0,
+              "yaw": 0,
+              "height": 108
+            },
+            "nativeSha256": "7e83eaac6c44ee32afa2d17b9e0ca0893a5d8d6ab7fc023b27f474fae94c4c55",
+            "bytes": 88930
+          }
+        ],
+        "ulatek": [
+          {
+            "id": "ort-platform-v85",
+            "name": {
+              "ru": "Платформа",
+              "en": "Platform"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/08.ulatek-ort-platform-v85.webp",
+            "width": 1600,
+            "height": 895,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/08.ulatek-ort-platform-v85.jpg",
+            "sha256": "406d41ba701d48d7e25cb3571d793cc67e396b680ed43e539dc7dc1bb460243b",
+            "raidPlanBossId": "08.ulatek",
+            "dungeonEncounterId": 3492,
+            "primary": true,
+            "yards": 85,
+            "world": {
+              "mapId": 3004,
+              "x": 1553.67,
+              "y": 0,
+              "yaw": -0.215,
+              "height": 85
+            },
+            "nativeSha256": "92d623d6adb330df784a9ab9a289ecc5dfdd6a83d2fd1e84243fae9fb9f835ad",
+            "bytes": 141868
+          },
+          {
+            "id": "ort-broken-v85",
+            "name": {
+              "ru": "Разрушенная платформа",
+              "en": "Broken"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/08.ulatek-ort-broken-v85.webp",
+            "width": 1600,
+            "height": 895,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/08.ulatek-ort-broken-v85.jpg",
+            "sha256": "3b05ecd10c2f505e419f0e5ed871012e1e1cfd55e5def8a9ed8f11ed5d93bfa7",
+            "raidPlanBossId": "08.ulatek",
+            "dungeonEncounterId": 3492,
+            "primary": false,
+            "yards": 85,
+            "world": {
+              "mapId": 3004,
+              "x": 1553.67,
+              "y": 0,
+              "yaw": -0.215,
+              "height": 85
+            },
+            "nativeSha256": "c8c66107fd40e8ebd1ae6aa50df582586d1992e15a77e333c4d46f46270a8e84",
+            "bytes": 153570
+          },
+          {
+            "id": "ort-left-v140",
+            "name": {
+              "ru": "Левая сторона",
+              "en": "Left"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/08.ulatek-ort-left-v140.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/08.ulatek-ort-left-v140.jpg",
+            "sha256": "777952bbbc747a55ff4239d1f49bc32b2ae9555c7f2bc79da528c853708b7bef",
+            "raidPlanBossId": "08.ulatek",
+            "dungeonEncounterId": 3492,
+            "primary": false,
+            "yards": 140,
+            "world": {
+              "mapId": 3004,
+              "x": 1553.671,
+              "y": 92.33,
+              "yaw": 90,
+              "height": 140
+            },
+            "nativeSha256": "edc776f7a330da0fd1d42b8bbb1c0fa93c7adc673424de647647dacb70a9e36d",
+            "bytes": 119556
+          },
+          {
+            "id": "ort-right-v140",
+            "name": {
+              "ru": "Правая сторона",
+              "en": "Right"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/08.ulatek-ort-right-v140.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/08.ulatek-ort-right-v140.jpg",
+            "sha256": "61b27c698be6faa9969cc7eb30ed5616dc01f74b7ff0f8191bdcf074e25c1dca",
+            "raidPlanBossId": "08.ulatek",
+            "dungeonEncounterId": 3492,
+            "primary": false,
+            "yards": 140,
+            "world": {
+              "mapId": 3004,
+              "x": 1553.67,
+              "y": -92.33,
+              "yaw": -90,
+              "height": 140
+            },
+            "nativeSha256": "f9fb9c72b6bc7eb4ae38f8b97c1699b6e4107ed7e07c1bc0ddd06f41988c5c5d",
+            "bytes": 116712
+          },
+          {
+            "id": "ort-full-v185",
+            "name": {
+              "ru": "Весь зал",
+              "en": "Full Room"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/08.ulatek-ort-full-v185.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/08.ulatek-ort-full-v185.jpg",
+            "sha256": "042d0cdc933ffafa2109ad372a94666a354cc98f5857b91123a66e7a18899368",
+            "raidPlanBossId": "08.ulatek",
+            "dungeonEncounterId": 3492,
+            "primary": false,
+            "yards": 185,
+            "world": {
+              "mapId": 3004,
+              "x": 1553.751,
+              "y": 0,
+              "yaw": 0,
+              "height": 185
+            },
+            "nativeSha256": "a92d80cd53563f19f2fa9f07eca6c86a2d1763928bcb437439ded31ee2789a5e",
+            "bytes": 141236
+          },
+          {
+            "id": "ort-fullbreak-v185",
+            "name": {
+              "ru": "Весь зал — разрушенный",
+              "en": "Full Room (Broken)"
+            },
+            "src": "/assets/wow/raids/maps/arenas/venomous-abyss/08.ulatek-ort-fullbreak-v185.webp",
+            "width": 1600,
+            "height": 896,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.venomabyss/map/08.ulatek-ort-fullbreak-v185.jpg",
+            "sha256": "b69dd2ddd5f0fde5c166cbfb080e65378e25b6db9acd2804f96a8b31eb9f2424",
+            "raidPlanBossId": "08.ulatek",
+            "dungeonEncounterId": 3492,
+            "primary": false,
+            "yards": 185,
+            "world": {
+              "mapId": 3004,
+              "x": 1553.751,
+              "y": 0,
+              "yaw": 0,
+              "height": 185
+            },
+            "nativeSha256": "ee663e155bd692c782ce2673c925bc6f795072ba249cac51a3d7b4cf3d660d54",
+            "bytes": 148794
+          }
+        ]
+      },
+      "sources": [
+        {
+          "title": "RaidPlan.io encounter backgrounds",
+          "url": "https://raidplan.io/plan/create?raid=wow.midnight.venomabyss"
+        },
+        {
+          "title": "Wowhead game map and boss locations",
+          "url": "https://www.wowhead.com/zone=16915/the-venomous-abyss"
+        },
+        {
+          "title": "RaidPlan.io attribution",
+          "url": "https://raidplan.io/about"
+        }
+      ]
+    },
+    "sporefall": {
+      "floors": [
+        {
+          "id": "16279-0",
+          "name": {
+            "ru": "Споропад",
+            "en": "Sporefall"
+          },
+          "src": "/assets/wow/raids/maps/floors/sporefall/16279.webp",
+          "width": 1024,
+          "height": 683,
+          "pins": [
+            {
+              "bossSlug": "rotmire",
+              "x": 72.4,
+              "y": 74.4,
+              "sourceURL": "https://www.wowhead.com/zone=16279/sporefall",
+              "npcId": 254176,
+              "coordinateKind": "observedNpcSample",
+              "sourceName": "Rotmire"
+            }
+          ],
+          "sourceURL": "https://wow.zamimg.com/images/wow/maps/enus/original/16279.jpg",
+          "sourcePageURL": "https://www.wowhead.com/zone=16279/sporefall",
+          "sha256": "924635fd70634b7baa12438223bb358797fc971eeb82bc9811f87e187d1486f6",
+          "nativeSha256": "aab3c1914db5da64a1150b1e0e61e9c0cb0c5a9ea9080e04af92737f7afa6fd3",
+          "bytes": 109058
+        }
+      ],
+      "arenas": {
+        "rotmire": [
+          {
+            "id": "main",
+            "name": {
+              "ru": "Арена",
+              "en": "Arena"
+            },
+            "src": "/assets/wow/raids/maps/arenas/sporefall/01.rotmire-main.webp",
+            "width": 1394,
+            "height": 784,
+            "sourceURL": "https://cdn.raidplan.io/raid/wow.sporefall/map/01.rotmire-main.jpg",
+            "sha256": "7d0111f5544f7cca8125494f870e15fdc67abfa19feb9c2aa50cf979674c0be8",
+            "raidPlanBossId": "01.rotmire",
+            "dungeonEncounterId": 3159,
+            "primary": true,
+            "nativeSha256": "51833c6776b7dea9ba5727f08454d6caaf4cbc02eb29bf153ae0cbb0dc179f50",
+            "bytes": 112786
+          }
+        ]
+      },
+      "sources": [
+        {
+          "title": "RaidPlan.io encounter backgrounds",
+          "url": "https://raidplan.io/plan/create?raid=wow.midnight.sporefall"
+        },
+        {
+          "title": "Wowhead game map and boss locations",
+          "url": "https://www.wowhead.com/zone=16279/sporefall"
+        },
+        {
+          "title": "RaidPlan.io attribution",
+          "url": "https://raidplan.io/about"
+        }
+      ]
+    }
+  },
+  "provenance": {
+    "floorProvider": "Wowhead game cartography",
+    "arenaProvider": "RaidPlan.io",
+    "raidplanCatalogUrl": "https://raidplan.io/api/catalog/bosses?raids=wow.midnight.voidspire,wow.midnight.dreamrift,wow.midnight.marchonqueldanas,wow.midnight.venomabyss,wow.midnight.sporefall",
+    "attributionUrl": "https://raidplan.io/about",
+    "copyright": "World of Warcraft artwork © Blizzard Entertainment. Arena captures provided by RaidPlan.io.",
+    "routePrecision": "Boss pin connections describe encounter progression, not surveyed trash routes or exact corridors.",
+    "npcPositions": "Wowhead coordinate samples are observed NPC locations; multi-spawn NPCs retain all samples in pin provenance."
+  }
+}

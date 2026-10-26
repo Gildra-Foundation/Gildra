@@ -1,0 +1,26 @@
+export const raidMapCopy = {
+  ru: {
+    background: "Фон карты", map: "Карта рейда", arena: "Арена", grid: "Сетка", art: "Атмосфера",
+    floor: "Этаж", boss: "Босс", variant: "Вид арены", fit: "Вписать", zoomIn: "Приблизить", zoomOut: "Отдалить",
+    route: "Маршрут", draw: "Наметить путь", drawing: "Добавляйте точки на карте", undo: "Убрать последнюю точку", clear: "Очистить свой путь",
+    own: "Ваш путь", ownHint: "Точки сохраняются только в этом браузере. Щёлкните по карте или коснитесь её, чтобы добавить точку.",
+    cancel: "Закончить", keyboard: "С клавиатуры: стрелки — прицел, Enter — точка, Escape — закончить.", gridOverlay: "Сетка поверх карты", sequence: "Порядок прохождения", lieutenants: "По дороге",
+    observed: "Позиции по игровому справочнику", approximate: "Линии показывают связи между боями, а не точный путь по коридорам.",
+    arenaHint: "Вид сверху на выбранную арену. Для пути между боссами выберите карту рейда.",
+    emptyFloor: "На этом этаже нет отмеченных боссов. Выберите следующий этаж или наметьте свой путь.",
+    pan: "Карту можно прокручивать и увеличивать", sources: "Карты: Wowhead · арены: RaidPlan", link: "Открыть RaidPlan", tactics: "Тактика выбранного босса",
+    transition: "Переход на другой этаж", point: "Точка", saved: "Путь сохранён в браузере", noStorage: "Путь доступен до закрытия страницы",
+  },
+  en: {
+    background: "Map background", map: "Raid map", arena: "Arena", grid: "Grid", art: "Atmosphere",
+    floor: "Floor", boss: "Boss", variant: "Arena view", fit: "Fit", zoomIn: "Zoom in", zoomOut: "Zoom out",
+    route: "Route", draw: "Sketch a path", drawing: "Add points on the map", undo: "Remove last point", clear: "Clear your path",
+    own: "Your path", ownHint: "Points stay in this browser only. Click or tap the map to add a point.",
+    cancel: "Finish", keyboard: "Keyboard: arrows move the cursor, Enter adds a point, Escape finishes.", gridOverlay: "Grid overlay", sequence: "Progression", lieutenants: "Along the way",
+    observed: "Positions from game reference data", approximate: "Lines show encounter connections, not exact walkable corridors.",
+    arenaHint: "Top-down view of the selected arena. Choose the raid map for progression between bosses.",
+    emptyFloor: "No bosses are marked on this floor. Choose another floor or sketch your own path.",
+    pan: "You can scroll and zoom the map", sources: "Maps: Wowhead · arenas: RaidPlan", link: "Open RaidPlan", tactics: "Selected boss strategy",
+    transition: "Transition to another floor", point: "Point", saved: "Path saved in this browser", noStorage: "Path stays until this page closes",
+  },
+} as const;

@@ -1,6 +1,15 @@
 import type { RouteText, RouteAction } from "./midnightRaidRoutes";
+import type { RaidProgression } from "./raidProgression";
 
 export type RaidPullRole = "tank" | "healer" | "dps";
+export type RaidMapImage = { id: string; name: RouteText; src: string; width: number; height: number; sourceURL?: string };
+export type RaidMapPin = { bossSlug: string; x: number; y: number; coordinateKind?: string };
+export type RaidMapAtlas = {
+  floors: (RaidMapImage & { pins: RaidMapPin[] })[];
+  arenas: Record<string, RaidMapImage[]>;
+  sources: { title: string; url: string }[];
+  progression?: RaidProgression;
+};
 export type RaidPullEnemy = {
   name: RouteText;
   count?: number;
@@ -39,6 +48,7 @@ export type RaidPullPlan = {
   slug: string;
   name: RouteText;
   artwork: string;
+  atlas?: RaidMapAtlas;
   routePath: string;
   entrance: { x: number; y: number };
   pulls: RaidPull[];

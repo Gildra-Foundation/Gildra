@@ -1,0 +1,160 @@
+/* atlas:strict — one painted raid tablet, quiet divisions and genuine combat art. */
+.briefingArt.briefingArt {
+  position: relative;
+  isolation: isolate;
+  gap: var(--atlas-space-5);
+  padding: var(--atlas-space-5) var(--atlas-space-6) var(--atlas-space-6);
+  color: var(--atlas-text);
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.briefingArt::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 28px solid transparent;
+  border-image-source: var(--raid-panel-image);
+  border-image-slice: var(--raid-panel-slice) fill;
+  border-width: var(--raid-panel-width);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  background: var(--raid-pull-base);
+  background-clip: padding-box;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  content: "";
+  pointer-events: none;
+}
+
+.briefingArt .sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  margin-bottom: var(--atlas-space-3);
+  color: var(--raid-pull-light);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+  line-height: var(--atlas-leading-snug);
+}
+
+.sectionHeading > svg { flex: none; }
+.briefingArt .command { padding: 0 0 var(--atlas-space-4); border: 0; border-bottom: 1px solid var(--atlas-line); }
+.command > p { color: var(--atlas-text-strong); text-wrap: pretty; }
+.briefingArt .enemies, .briefingArt .abilities { gap: var(--atlas-space-4); }
+.briefingArt .enemies > li, .briefingArt .abilities > li { padding-bottom: var(--atlas-space-4); border-color: var(--atlas-line-soft); }
+.briefingArt .enemies > li:last-child, .briefingArt .abilities > li:last-child { padding-bottom: 0; border-bottom: 0; }
+.briefingArt .enemyIdentity { flex-wrap: nowrap; align-items: center; gap: var(--atlas-space-3); }
+.enemyName { display: grid; min-width: 0; gap: var(--atlas-space-1); }
+.enemyName > strong { font-size: var(--atlas-text-body); line-height: var(--atlas-leading-snug); }
+.enemyName > strong > span { color: var(--raid-pull-light); font-variant-numeric: tabular-nums lining-nums; }
+.briefingArt .enemyName > small { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.briefingArt .enemyName > small[data-priority="critical"] { color: var(--raid-pull-light); }
+
+/* The raid's measured panel corners are nine-sliced without their center.
+   They frame original images; no spell or creature artwork is manufactured. */
+.enemyPortrait, .spellFrame, .roleBadge { position: relative; isolation: isolate; display: grid; flex: none; place-items: center; color: var(--raid-pull-light); }
+.enemyPortrait, .spellFrame { width: 52px; height: 52px; }
+.roleBadge { width: 36px; height: 36px; }
+.enemyPortrait::after, .spellFrame::after, .roleBadge::after {
+  position: absolute;
+  inset: 0;
+  border: var(--atlas-space-2) solid transparent;
+  border-image: var(--raid-panel-image) var(--raid-panel-slice) stretch;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  content: "";
+  pointer-events: none;
+}
+.roleBadge::after { border-width: var(--atlas-space-1); }
+.enemyPortrait > img { width: 44px; height: 44px; object-fit: cover; border-radius: var(--atlas-radius-control); }
+.spellFrame > img { width: 40px; height: 40px; object-fit: cover; border-radius: var(--atlas-radius-control); }
+.enemyPortrait > img, .spellFrame > img { display: block; background: var(--atlas-surface-sunken); }
+
+.briefingArt .roleTasks { gap: var(--atlas-space-3); }
+.roleTasks > article { min-width: 0; }
+.roleTasks > article + article { padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line-soft); }
+.briefingArt .roleTasks h5 { gap: var(--atlas-space-2); margin-bottom: var(--atlas-space-1); color: var(--raid-pull-light); }
+.roleTasks ul { font-size: var(--atlas-text-small); }
+.roleTasks li::marker { color: var(--raid-pull-light); }
+.briefingArt .roleTasks li + li { margin-top: var(--atlas-space-1); }
+.briefingArt .movement { margin-top: var(--atlas-space-3); padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line-soft); }
+.briefingArt .abilityTitle { align-items: center; gap: var(--atlas-space-2); }
+.briefingArt .abilityName { flex: 1 1 140px; min-width: 0; gap: var(--atlas-space-1); }
+.abilityName > strong { font-size: var(--atlas-text-body); line-height: var(--atlas-leading-snug); }
+.abilityName > small { line-height: var(--atlas-leading-snug); }
+.briefingArt .action { width: 100%; margin-top: var(--atlas-space-1); color: var(--raid-pull-light); font-size: var(--atlas-text-small); }
+.briefingArt .response { padding-left: var(--atlas-space-3); border-left: 2px solid var(--raid-pull-light); }
+.abilities > li > p { font-size: var(--atlas-text-small); }
+.briefingArt .sourceLink { min-height: 44px; margin-top: 0; color: var(--atlas-text-muted); text-decoration-color: var(--atlas-line-strong); text-underline-offset: 3px; }
+.sourceLink > svg { flex: none; }
+.briefingArt .actionOrder { margin: 0; padding: var(--atlas-space-2) 0; border: 0; border-top: 1px solid var(--atlas-line-soft); border-bottom: 1px solid var(--atlas-line-soft); border-radius: 0; background: transparent; box-shadow: none; }
+.actionOrder > summary { min-height: 44px; padding-inline: 0; color: var(--raid-pull-light); }
+.actionOrder > div { padding-inline: 0; }
+.briefingArt .route, .briefingArt .onward { padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line-soft); font-size: var(--atlas-text-small); }
+
+.briefingArt .openBoss:global(.ui-button[data-variant="secondary"]) {
+  --ui-button-secondary-bg: transparent;
+  --ui-button-secondary-bg-hover: transparent;
+  --ui-button-secondary-bg-active: transparent;
+  --ui-button-secondary-field: transparent;
+  --ui-button-secondary-fg: var(--atlas-text-strong);
+  position: relative;
+  isolation: isolate;
+  justify-content: center;
+  min-height: 68px;
+  padding: var(--raid-button-pad-top) var(--raid-button-inset) var(--raid-button-pad-bottom);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--atlas-text-strong);
+  font-size: var(--atlas-text-small);
+  white-space: normal;
+  text-align: center;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  transition: transform var(--atlas-duration-fast) var(--atlas-ease);
+}
+.openBoss::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 20px solid transparent;
+  border-image: var(--raid-button-image) var(--raid-button-slice) fill stretch;
+  border-width: var(--raid-button-width);
+  background: var(--raid-pull-base);
+  background-clip: padding-box;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  content: "";
+  pointer-events: none;
+}
+.openBoss :global(.ui-button__label) { min-width: 0; }
+.briefingArt a:focus-visible, .briefingArt summary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) {
+  .sourceLink:hover { color: var(--raid-pull-light); }
+  .briefingArt .openBoss:global(.ui-button[data-variant="secondary"]):hover { transform: translateY(-2px); }
+}
+.briefingArt .openBoss:global(.ui-button[data-variant="secondary"]):active { transform: translateY(1px); }
+@media (max-width: 700px) {
+  .briefingArt.briefingArt { padding: var(--atlas-space-5) var(--atlas-space-5) var(--atlas-space-6); }
+  .briefingArt::before { border-width: var(--raid-panel-width-mobile); }
+}
+@media (max-width: 360px) {
+  .briefingArt.briefingArt { padding-inline: var(--atlas-space-4); }
+  .briefingArt .openBoss:global(.ui-button[data-variant="secondary"]) { padding-inline: var(--raid-pull-chip-inset); }
+}
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .briefingArt .openBoss:global(.ui-button) { transition: none; transform: none !important; }
+}
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .briefingArt .openBoss:global(.ui-button) { transition: none; transform: none !important; }
+@media (prefers-reduced-transparency: reduce) {
+  .briefingArt { background: var(--atlas-surface); }
+  .briefingArt::before { background: var(--atlas-surface); }
+}
+:global([data-transparency="reduced"]) .briefingArt { background: var(--atlas-surface); }
+:global([data-transparency="reduced"]) .briefingArt::before { background: var(--atlas-surface); }
+@media (forced-colors: active) {
+  .briefingArt::before, .enemyPortrait::after, .spellFrame::after, .roleBadge::after, .openBoss::before { display: none; }
+  .briefingArt.briefingArt { border: 1px solid CanvasText; background: Canvas; color: CanvasText; text-shadow: none; }
+  .briefingArt .sectionHeading, .briefingArt .action, .briefingArt .roleTasks h5, .briefingArt .sourceLink { color: CanvasText; }
+  .enemyPortrait, .spellFrame, .roleBadge { border: 1px solid CanvasText; color: CanvasText; }
+  .briefingArt .openBoss:global(.ui-button[data-variant="secondary"]) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; transition: none; transform: none !important; }
+}

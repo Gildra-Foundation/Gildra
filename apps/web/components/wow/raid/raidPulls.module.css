@@ -84,3 +84,21 @@
 :global([data-transparency="reduced"]) .selected { background: var(--atlas-surface); }
 :global([data-transparency="reduced"]) .mapArt { display: none; }
 @media (forced-colors: active) { .pullStrip button::before, .selectedHeader::before, .mapArt { display: none; } .mapViewport { border: 1px solid CanvasText; border-image: none; background: Canvas; } .mapMarker, .bossMarker, .pullStrip button { color: ButtonText; background: ButtonFace; border-color: ButtonText; } .mapMarker[aria-pressed="true"], .pullStrip button[aria-pressed="true"] { outline: 3px solid Highlight; } .routeLine, .bossBranch, .corridor { stroke: CanvasText; } .room { fill: Canvas; stroke: CanvasText; } }
+/* The original schematic remains an explicit background choice. */
+.mapPlane[data-background="grid"] { background-image: linear-gradient(var(--atlas-line) 1px, transparent 1px), linear-gradient(90deg, var(--atlas-line) 1px, transparent 1px), linear-gradient(var(--atlas-line-soft) 1px, transparent 1px), linear-gradient(90deg, var(--atlas-line-soft) 1px, transparent 1px); background-size: 25% 25%, 25% 25%, 5% 5%, 5% 5%; }
+.mapPlane[data-background="grid"] .mapArt { display: none; }
+.mapPlane[data-background="grid"]::after { background: radial-gradient(ellipse at center, transparent 35%, var(--atlas-bg)); }
+.selected { border: 0; background: transparent; box-shadow: none; }
+.selectedHeader { border: 1px solid var(--atlas-line); border-bottom: 0; background: var(--atlas-surface); }
+.selectedHeader::before { display: none; }
+.draftNote { margin: 0; padding: var(--atlas-space-3) var(--atlas-space-5); border-inline: 1px solid var(--atlas-line); background: var(--atlas-surface); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-body); }
+.pager button { position: relative; isolation: isolate; border: 0; background: transparent; }
+.pager button::before { position: absolute; z-index: -1; inset: 0; height: auto; translate: none; content: ""; border: 16px solid transparent; border-image-source: var(--raid-button-image); border-image-slice: var(--raid-button-slice) fill; border-width: var(--raid-row-width); border-image-width: 1; background: var(--raid-pull-base); background-clip: padding-box; filter: contrast(.88) saturate(.84) brightness(.92); pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) { .routeLine { animation: routeReveal 1.2s var(--atlas-ease) both; } .mapMarker[aria-pressed="true"] { animation: markerReveal .4s var(--atlas-ease) both; } }
+@keyframes routeReveal { from { stroke-dashoffset: 12; opacity: .2; } to { stroke-dashoffset: 0; opacity: .75; } }
+@keyframes markerReveal { from { box-shadow: 0 0 0 10px color-mix(in srgb, var(--raid-card-accent) 25%, transparent); } to { box-shadow: var(--atlas-shadow-panel); } }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) { .routeLine, .mapMarker[aria-pressed="true"] { animation: none; } }
+:global([data-motion="reduced"]) .routeLine, :global([data-motion="reduced"]) .mapMarker[aria-pressed="true"], :global([data-transparency="reduced"]) .routeLine, :global([data-transparency="reduced"]) .mapMarker[aria-pressed="true"] { animation: none; }
+@media (forced-colors: active) { .pager button::before { display: none; } .mapPlane[data-background="grid"] { background-image: none; } .draftNote, .selectedHeader { background: Canvas; color: CanvasText; border-color: CanvasText; } }
+:global([data-ui-motion="reduce"]) .routeLine, :global([data-ui-motion="reduce"]) .mapMarker[aria-pressed="true"] { animation: none; }
+.pager button::before { border-image-source: var(--raid-panel-image); border-image-slice: var(--raid-panel-slice) fill; border-width: var(--raid-panel-compact-width); }
