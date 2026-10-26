@@ -8,3 +8,5 @@ export { Checkbox, type CheckboxProps } from "./valyro-ui/forms/Checkbox";
 export { Separator, type SeparatorProps } from "./valyro-ui/basic/Separator";
 export { TextInput, type TextInputProps } from "./valyro-ui/forms/TextInput";
 export { ModalLayer, type ModalLayerProps } from "./valyro-ui/primitives/ModalLayer";
+export { Floating } from "./valyro-ui/primitives/Floating";
+export { useSelect } from "./valyro-ui/forms/useSelect";

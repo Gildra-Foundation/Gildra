@@ -15,6 +15,7 @@ import { BattleNetConnectPanel } from "./BattleNetConnectPanel";
 import { FrostLoginIcon } from "./FrostLoginIcon";
 import { FrostLoginCrest } from "./FrostLoginCrest";
 import { characterFrostArt } from "./characterFrostAssets";
+import { CharacterClassPicker } from "./CharacterClassPicker";
 import type { RosterCopy } from "./characterCopy";
 import styles from "./characterRosterPage.module.css";
 import frost from "./characterFrost.module.css";
@@ -96,6 +97,7 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
       .sort((a, b) => a[1].localeCompare(b[1], localeCode)),
     [characters, localeCode],
   );
+  const classChoices = useMemo(() => classes.map(([id, name]) => ({ id, name, icon: classIcon(classIcons[id] ?? "") })), [classes]);
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase(localeCode);
     return characters.filter((character) => {
@@ -154,15 +156,7 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
             <span>{copy.searchLabel}</span>
             <span className={`${styles.inputWrap} ${frost.control}`} data-frost-control="search"><Search aria-hidden="true" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} /></span>
           </label>
-          <label className={styles.field}>
-            <span>{copy.classLabel}</span>
-            <span className={`${frost.control} ${frost.selectControl}`} data-frost-control="class">
-            <select value={classId} onChange={(event) => setClassId(Number(event.target.value))}>
-              <option value={0}>{copy.allClasses}</option>
-              {classes.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-            </select>
-            </span>
-          </label>
+          <CharacterClassPicker className={styles.field} label={copy.classLabel} allLabel={copy.allClasses} choices={classChoices} value={classId} onChange={setClassId} locale={localeCode} />
         </div>
       ) : null}
 

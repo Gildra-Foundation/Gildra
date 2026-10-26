@@ -111,6 +111,72 @@
   filter: contrast(.95) saturate(1) brightness(1.3) drop-shadow(0 0 4px var(--atlas-info));
 }
 
+/* The opened class list is the same painted ice and steel as its trigger. */
+.page.page .filters .classTrigger,
+.page.page .filters .classTrigger:is(:hover, :focus, :focus-visible, :active) {
+  display: flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  width: 100%;
+  min-width: 0;
+  min-height: 104px;
+  padding: 32px 58px;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--atlas-text-strong);
+  font: inherit;
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-small);
+  font-weight: var(--atlas-weight-display);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+.pickerValue { flex: 1; min-width: 0; overflow-wrap: anywhere; text-align: start; line-height: 1.3; }
+.pickerIcon { position: relative; display: block; flex: none; width: 36px; height: 36px; pointer-events: none; }
+.pickerIcon img { position: absolute; left: var(--roster-portrait-left); top: var(--roster-portrait-top); width: var(--roster-portrait-size); height: var(--roster-portrait-size); border-radius: 50%; object-fit: cover; }
+.pickerIcon::after { content: ""; position: absolute; inset: 0; background: var(--roster-portrait-image) center / contain no-repeat; filter: contrast(.88) saturate(.84) brightness(.95); }
+.classChevron { width: 14px; height: 14px; flex: none; color: var(--roster-ink, var(--atlas-text-strong)); transition: rotate var(--atlas-duration-fast) var(--atlas-ease); }
+.classChevron[data-open] { rotate: 180deg; }
+.classMenu {
+  --roster-ink: color-mix(in srgb, var(--atlas-text-strong) 80%, var(--atlas-info));
+  isolation: isolate;
+  width: min(420px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  padding: 42px 56px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--atlas-text-strong);
+  box-shadow: none;
+}
+.classMenu::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border: solid transparent;
+  border-width: var(--roster-card-width-control);
+  border-image-source: var(--roster-card-image);
+  border-image-slice: var(--roster-card-slice) fill;
+  border-image-width: 1;
+  background: var(--atlas-bg);
+  background-clip: padding-box;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+}
+.classMenu[data-state="closed"] { visibility: hidden; pointer-events: none; }
+.classOptions { max-height: min(420px, max(56px, calc(var(--ui-available-height, 70dvh) - 84px))); overflow-y: auto; overscroll-behavior: contain; scrollbar-color: var(--atlas-line-strong) var(--atlas-bg); scrollbar-width: thin; outline: none; }
+.classOption { display: grid; grid-template-columns: 36px minmax(0, 1fr) 16px; align-items: center; gap: var(--atlas-space-2); min-height: 56px; padding: var(--atlas-space-2); border-bottom: 1px solid var(--atlas-line-soft); color: var(--atlas-text-strong); background: transparent; font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); line-height: 1.25; letter-spacing: 0; text-transform: none; cursor: pointer; }
+.classOption > span { min-width: 0; overflow-wrap: anywhere; }
+.classOption[data-highlighted="true"] { background: color-mix(in srgb, var(--atlas-info) 18%, var(--atlas-bg)); box-shadow: inset 2px 0 var(--atlas-info); }
+.classOption[aria-selected="true"] { background: color-mix(in srgb, var(--atlas-info) 10%, var(--atlas-bg)); }
+.classCheck { width: 16px; height: 16px; color: var(--atlas-info); opacity: 0; }
+.classOption[aria-selected="true"] .classCheck { opacity: 1; }
+
 /* Individual heroes: official class icon inside an illustrated steel ring. */
 .page .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--atlas-space-6); }
 .page .card.card {
@@ -319,12 +385,14 @@
 
 /* All CSS movement honours the same preference owner as the snow. */
 @media (prefers-reduced-motion: reduce) {
+  .classChevron { transition: none; }
   .heraldry, .summary::after, .control::before { animation: none !important; transition: none !important; transform: none !important; }
   .page .card, .page .card *, .page .card::before, .page .card::after,
   .signOut :global(button), .signOut :global(button)::before,
   .state :global([data-folio-action]), .state :global([data-folio-action])::before { animation: none !important; transition: none !important; transform: none !important; translate: none !important; }
 }
 :global([data-frost-active="false"]) .page .card,
+:global([data-frost-active="false"]) .classChevron,
 :global([data-frost-active="false"]) .heraldry,
 :global([data-frost-active="false"]) .summary::after,
 :global([data-frost-active="false"]) .control::before,
@@ -340,6 +408,11 @@
 @media (prefers-reduced-transparency: reduce) { .card::after, .summary::after { display: none; } }
 :global([data-transparency="reduced"]) :is(.card, .summary)::after { display: none; }
 @media (forced-colors: active) {
+  .classMenu::before, .pickerIcon::after { display: none; }
+  .classMenu { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .classOption { border-color: CanvasText; color: CanvasText; }
+  .classOption[data-highlighted="true"] { outline: 2px solid Highlight; outline-offset: -2px; box-shadow: none; }
+  .classOption[aria-selected="true"] .classCheck { color: CanvasText; }
   .control::before, .card::before, .card::after, .summary::before, .summary::after, .state::before, .empty::before, .heraldry, .emptyHeraldry, .page .roster .classMark::after,
   .signOut :global(button)::before, .state :global([data-folio-action])::before { display: none; }
   .page .card.card, .page .summary.summary, .page .state.state, .page .empty { border: 1px solid CanvasText; background: Canvas; box-shadow: none; }
