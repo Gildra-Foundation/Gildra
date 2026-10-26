@@ -513,60 +513,8 @@ func (c *Cache) fetchOfficialIcons(
 		go func() {
 			defer workers.Done()
 			for candidate := range jobs {
-				sourceURL, err := officialIconURL(candidate.Name)
-				if err != nil {
-					select {
-					case results <- iconFetchResult{Candidate: candidate, Err: err}:
-					case <-ctx.Done():
-						return
-					}
-					continue
-				}
-				key, mimeType, size, hash, err := c.fetch(ctx, sourceURL)
 				outcome := iconFetchResult{Candidate: candidate}
-				if err == nil {
-					outcome.Icon = cachedIcon{
-						iconCandidate:  candidate,
-						Source:         "blizzard_api",
-						AssetKey:       "official_render_56",
-						ArtifactKey:    "icons/56/" + candidate.Name + ".jpg",
-						SourceURL:      sourceURL,
-						SourceSize:     size,
-						SourceHash:     hash,
-						CacheKey:       key,
-						CachedMIMEType: mimeType,
-						CachedSize:     size,
-						CachedHash:     hash,
-						Width:          56,
-						Height:         56,
-						Conversion:     "identity",
-					}
-				} else {
-					fetchErrors := []error{fmt.Errorf("official render: %w", err)}
-					// The filename mirror is backed by the imported DB2 icon mapping and
-					// responds quickly to the official CDN's systematic 403. Try it
-					// before Wago CASC: the latter is useful as a byte-level fallback,
-					// but a slow CASC gateway must not serialize thousands of icons.
-					if outcome.Icon.Source == "" {
-						fallback, fallbackErr := c.fetchZamimgIcon(ctx, candidate)
-						if fallbackErr == nil {
-							outcome.Icon = fallback
-						} else {
-							fetchErrors = append(fetchErrors, fmt.Errorf("name fallback: %w", fallbackErr))
-						}
-					}
-					if outcome.Icon.Source == "" && candidate.FileDataID != nil {
-						fallback, fallbackErr := c.fetchWagoCASCIcon(ctx, candidate, product, buildVersion)
-						if fallbackErr == nil {
-							outcome.Icon = fallback
-						} else {
-							fetchErrors = append(fetchErrors, fmt.Errorf("Wago CASC fallback: %w", fallbackErr))
-						}
-					}
-					if outcome.Icon.Source == "" {
-						outcome.Err = errors.Join(fetchErrors...)
-					}
-				}
+				outcome.Icon, outcome.Err = c.fetchIcon(ctx, candidate, product, buildVersion)
 				select {
 				case results <- outcome:
 				case <-ctx.Done():
@@ -590,6 +538,52 @@ func (c *Cache) fetchOfficialIcons(
 		close(results)
 	}()
 	return results
+}
+
+// fetchIcon resolves one build-proven icon through the official render, the
+// filename mirror and finally the build-pinned CASC bytes.
+func (c *Cache) fetchIcon(ctx context.Context, candidate iconCandidate, product, buildVersion string) (cachedIcon, error) {
+	sourceURL, err := officialIconURL(candidate.Name)
+	if err != nil {
+		return cachedIcon{}, err
+	}
+	key, mimeType, size, hash, err := c.fetch(ctx, sourceURL)
+	if err == nil {
+		return cachedIcon{
+			iconCandidate:  candidate,
+			Source:         "blizzard_api",
+			AssetKey:       "official_render_56",
+			ArtifactKey:    "icons/56/" + candidate.Name + ".jpg",
+			SourceURL:      sourceURL,
+			SourceSize:     size,
+			SourceHash:     hash,
+			CacheKey:       key,
+			CachedMIMEType: mimeType,
+			CachedSize:     size,
+			CachedHash:     hash,
+			Width:          56,
+			Height:         56,
+			Conversion:     "identity",
+		}, nil
+	}
+	fetchErrors := []error{fmt.Errorf("official render: %w", err)}
+	// The filename mirror is backed by the imported DB2 icon mapping and
+	// responds quickly to the official CDN's systematic 403. Try it before
+	// Wago CASC: the latter is useful as a byte-level fallback, but a slow
+	// CASC gateway must not serialize thousands of icons.
+	fallback, fallbackErr := c.fetchZamimgIcon(ctx, candidate)
+	if fallbackErr == nil {
+		return fallback, nil
+	}
+	fetchErrors = append(fetchErrors, fmt.Errorf("name fallback: %w", fallbackErr))
+	if candidate.FileDataID != nil {
+		fallback, fallbackErr = c.fetchWagoCASCIcon(ctx, candidate, product, buildVersion)
+		if fallbackErr == nil {
+			return fallback, nil
+		}
+		fetchErrors = append(fetchErrors, fmt.Errorf("Wago CASC fallback: %w", fallbackErr))
+	}
+	return cachedIcon{}, errors.Join(fetchErrors...)
 }
 
 func (c *Cache) fetchWagoCASCIcon(
@@ -686,6 +680,8 @@ func (c *Cache) downloadWagoCASC(ctx context.Context, sourceURL string) ([]byte,
 	// cache worker so the build-pinned fallback remains usable when Blizzard's
 	// render endpoint is unavailable from the production network.
 	request.Header.Set("User-Agent", wagoCASCUserAgent)
+	c.wagoMu.Lock()
+	defer c.wagoMu.Unlock()
 	response, err := c.client.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("download BLP2: %w", err)
