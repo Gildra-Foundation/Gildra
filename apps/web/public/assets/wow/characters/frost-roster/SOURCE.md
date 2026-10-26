@@ -31,3 +31,7 @@ Native PNGs, full exact prompts, geometry radii and reviewed cyan/dark/small-siz
 - Final corners alpha0; all complete silhouettes have transparent exterior padding. Ring center is transparent, card center opaque. No text, logos, painted checkerboard or clipped edges.
 - Reviewed `asset-sources/proof/final-assets-proof.png`: dark and cyan backgrounds, magenta icon disk behind ring, 78px ring and96px heraldry, live HTML cards400×180/.22 and320×180/.17.
 - Three WebPs total54,574 bytes. Exact dimensions, hashes, source coordinates and aperture CSS are in `manifest.json`.
+
+## Ornate Frostmourne revision — 2026-10-26
+
+Owner requested substantially heavier, extravagant cursed-steel frames. The card entry now uses `card-ornate.webp`, generated with builtin image_gen and native alpha. Only trim/proportional resize/padding/WebP encoding; no retouch or recoloring. Native, exact prompt, measurements and proofs: `/home/debian/gildra-frost-ornate-release-20261026/asset-sources/card`. SHA256 `f680bae121d17f217280cec11d8c9198324c8574ec97b9df1276473a9a0dacd7`. Earlier delivered artwork remains as historical source; active paths are in manifest.json.

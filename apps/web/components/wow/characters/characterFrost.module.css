@@ -13,7 +13,7 @@
 }
 .sectionTitle { display: flex; align-items: center; gap: var(--atlas-space-4); min-width: 0; }
 .page .sectionTitle h2 { font-size: var(--atlas-text-h2); color: var(--roster-ink); }
-.heraldry { width: 72px; height: 72px; object-fit: contain; flex: none; pointer-events: none; filter: contrast(.9) saturate(.86) brightness(.94); }
+.heraldry { width: 104px; height: 104px; object-fit: contain; flex: none; pointer-events: none; filter: contrast(.9) saturate(.86) brightness(.94); }
 
 /* One engraved account ledger, containing Valyro's real counters. */
 .page .summary.summary {
@@ -23,8 +23,8 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
   gap: 0;
-  padding: var(--atlas-space-5) var(--atlas-space-6);
-  margin-bottom: var(--atlas-space-5);
+  padding: 64px 76px;
+  margin-bottom: var(--atlas-space-6);
   border: 0;
   background: transparent;
 }
@@ -67,7 +67,7 @@
 .page .filters :global(input)::placeholder { color: var(--atlas-text-muted); }
 .page .filters :global(select), .page .filters label > span:has(input) {
   position: relative;
-  min-height: 56px;
+  min-height: 88px;
   padding-inline: var(--atlas-space-5);
   border: 12px solid transparent;
   border-image-source: var(--roster-card-image);
@@ -86,15 +86,15 @@
 .page .filters label > span:has(input):focus-within, .page .filters :global(select):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 
 /* Individual heroes: official class icon inside an illustrated steel ring. */
-.page .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-5); }
+.page .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--atlas-space-6); }
 .page .card.card {
   position: relative;
   isolation: isolate;
-  grid-template-columns: 84px minmax(0, 1fr) auto;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
   grid-template-areas: "mark copy level" "mark armory arrow";
   gap: var(--atlas-space-3);
-  min-height: 180px;
-  padding: 32px 28px;
+  min-height: 300px;
+  padding: 72px 76px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -107,7 +107,7 @@
   content: "";
   position: absolute;
   z-index: -1;
-  inset: 22px;
+  inset: 52px;
   pointer-events: none;
   border-left: 2px solid color-mix(in srgb, var(--class-color) 70%, transparent);
   background: linear-gradient(110deg, transparent 20%, color-mix(in srgb, var(--atlas-info) 8%, transparent) 50%, transparent 80%);
@@ -134,8 +134,8 @@
 }
 .page .roster .classMark {
   position: relative;
-  width: 84px;
-  height: 84px;
+  width: 96px;
+  height: 96px;
   overflow: visible;
   border: 0;
   border-radius: 0;
@@ -171,7 +171,7 @@
 .page.page .signOut :global([data-folio-action]:is(:hover, :focus-visible, :active)) {
   position: relative;
   isolation: isolate;
-  min-height: 56px;
+  min-height: 80px;
   height: auto;
   padding: 14px var(--roster-action-inset);
   border: 0;
@@ -201,6 +201,7 @@
   filter: contrast(.88) saturate(.84) brightness(.92);
   transition: filter var(--atlas-duration-fast) var(--atlas-ease);
 }
+.page.page .state.state :global([data-folio-action]:not([data-folio-action="quiet"])) { min-height: 104px; }
 .signOut :global(button):focus-visible, .state :global([data-folio-action]):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
 .signOut :global(button):active, .state :global([data-folio-action]):active { transform: translateY(1px) scale(.98); }
 @media (hover: hover) and (pointer: fine) {
@@ -212,7 +213,7 @@
   position: relative;
   isolation: isolate;
   margin-top: var(--atlas-space-6);
-  padding: 48px 44px 36px;
+  padding: 112px 96px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -236,7 +237,7 @@
   filter: contrast(.88) saturate(.84) brightness(.92);
 }
 .page .state :global([data-battlenet-eyebrow]) { color: var(--roster-ink); }
-.empty { display: flex; align-items: center; gap: var(--atlas-space-5); margin-top: 0; padding: 36px; }
+.empty { display: flex; align-items: center; gap: var(--atlas-space-5); margin-top: 0; padding: 76px; }
 .emptyHeraldry { width: 96px; height: 96px; object-fit: contain; flex: none; pointer-events: none; }
 .empty > :last-child { flex: 1; min-width: 0; border: 0; background: transparent; box-shadow: none; }
 .page .skeleton .classMark { background: color-mix(in srgb, var(--atlas-info) 8%, var(--atlas-bg)); border-radius: 50%; }
@@ -247,31 +248,29 @@
   animation-delay: calc(var(--roster-index, 0) * 35ms);
 }
 
-@media (max-width: 1100px) { .page .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) {
   .page .grid { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); }
-  .page .summary.summary { padding: var(--atlas-space-5) var(--atlas-space-3); }
-  .page .summary :global([role="listitem"]) { padding-inline: var(--atlas-space-2); }
+  .page .summary.summary { grid-template-columns: minmax(0, 1fr); padding: 60px 52px; }
+  .page .summary :global([role="listitem"]) { flex-direction: row-reverse; align-items: center; justify-content: space-between; gap: var(--atlas-space-2); padding: var(--atlas-space-3) 0; }
+  .page .summary :global([role="listitem"]) + :global([role="listitem"]) { border-left: 0; border-top: 1px solid color-mix(in srgb, var(--atlas-info) 22%, transparent); }
   .page .summary :global(.ui-stats-card__value) { font-size: var(--atlas-text-h2); }
-  .statLabel { flex-direction: column; align-items: flex-start; gap: var(--atlas-space-1); }
+  .statLabel { flex-direction: row; align-items: center; gap: var(--atlas-space-2); }
   .statLabel :global([data-frost-icon]) { width: 24px; height: 24px; }
-  .heraldry { width: 60px; height: 60px; }
+  .heraldry { width: 88px; height: 88px; }
   .sectionTitle { gap: var(--atlas-space-2); }
   .page .sectionTitle h2 { font-size: var(--atlas-text-h3); }
-  .page .card.card { grid-template-columns: 72px minmax(0, 1fr) auto; padding: 28px 24px; min-height: 172px; }
+  .page .card.card { grid-template-columns: 72px minmax(0, 1fr); grid-template-areas: "mark copy" "level armory"; padding: 64px 60px; min-height: 300px; }
+  .page .card > svg { display: none; }
   .card::before { border-width: var(--roster-card-width-mobile); }
   .page .roster .classMark { width: 72px; height: 72px; }
-  .page .state.state { padding: 48px 28px 32px; }
+  .page .state.state { padding: 76px 64px; }
   .state::before { border-width: var(--frost-panel-width-mobile); }
-  .empty { align-items: flex-start; padding: 28px; gap: var(--atlas-space-3); }
+  .empty { align-items: flex-start; padding: 64px 60px; gap: var(--atlas-space-3); }
   .emptyHeraldry { width: 60px; height: 60px; }
 }
 @media (max-width: 360px) {
-  .page .summary.summary { grid-template-columns: minmax(0, 1fr); }
-  .page .summary :global([role="listitem"]) { flex-direction: row-reverse; align-items: center; justify-content: space-between; padding-block: var(--atlas-space-3); }
-  .page .summary :global([role="listitem"]) + :global([role="listitem"]) { border-left: 0; border-top: 1px solid color-mix(in srgb, var(--atlas-info) 22%, transparent); }
-  .statLabel { flex-direction: row; align-items: center; gap: var(--atlas-space-2); }
-  .page .card.card { grid-template-columns: 58px minmax(0, 1fr) auto; padding-inline: 20px; gap: var(--atlas-space-2); }
+  .page .summary :global([role="listitem"]) { padding-inline: 0; }
+  .page .card.card { grid-template-columns: 58px minmax(0, 1fr); gap: var(--atlas-space-2); }
   .page .roster .classMark { width: 58px; height: 58px; }
   .page .card h3 { font-size: var(--atlas-text-title); }
   .empty { flex-direction: column; }

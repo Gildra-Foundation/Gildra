@@ -1,63 +1,119 @@
 {
   "entries": {
     "panel": {
-      "path": "/assets/wow/characters/frost-login/panel.webp",
-      "width": 768,
-      "height": 1018,
-      "bytes": 82506,
-      "sha256": "4be459e0c7288e92f6ac2769b2b9e57365450429f08e180bc188f6ed8cc3db5e",
-      "native": "/home/debian/gildra-frost-login-release-20261026/asset-sources/panel-native.png",
-      "nativeSha256": "a0bd87e494a15fa96cf8fbfd019f6af9e586c2b3a3631c2cb7512b5ddaae5fb5",
+      "path": "/assets/wow/characters/frost-login/panel-ornate.webp",
+      "width": 640,
+      "height": 846,
+      "bytes": 95976,
+      "sha256": "f287d51fc0e3894cd63f829c7186c66434f7af7256981b0f3e5ec7ab6082fdb9",
+      "native": "/home/debian/gildra-frost-ornate-release-20261026/asset-sources/panel/panel-native.png",
+      "nativeSha256": "6b79349581afdbb070ba1ab88268d7decbeeaecbddd6db4a222749adb068519a",
       "nativeDimensions": {
-        "width": 1122,
-        "height": 1402
+        "width": 1086,
+        "height": 1448
       },
       "crop": {
-        "left": 45,
-        "top": 13,
-        "width": 1033,
-        "height": 1376
+        "left": 4,
+        "top": 5,
+        "width": 1080,
+        "height": 1437
       },
       "centreAlpha": {
-        "min": 252,
+        "min": 251,
         "max": 254
       },
       "slices": [
-        195,
-        201,
-        206,
-        200
+        381,
+        240,
+        380,
+        239
       ],
-      "railInset": 70
+      "railInset": 111,
+      "nativeCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "deliveryCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sampleAlpha": {
+        "0,0": 0,
+        "639,0": 0,
+        "0,845": 0,
+        "639,845": 0,
+        "320,423": 252,
+        "320,60": 0,
+        "20,423": 0,
+        "320,790": 0
+      },
+      "contentInsets": [
+        166,
+        154,
+        166,
+        154
+      ],
+      "recommendedScale": {
+        "desktop": {
+          "referenceWidth": 440,
+          "scale": 0.53,
+          "physicalSideMetalWidthApprox": 45,
+          "textPadding": [
+            88,
+            82,
+            88,
+            82
+          ]
+        },
+        "mobile": {
+          "referenceWidth": 320,
+          "scale": 0.41,
+          "textPadding": [
+            69,
+            64,
+            69,
+            64
+          ]
+        }
+      },
+      "proof": "/home/debian/gildra-frost-ornate-release-20261026/asset-sources/panel/panel-proof.png",
+      "generator": "builtin image_gen",
+      "transparentBackground": true,
+      "prompt": "/home/debian/gildra-frost-ornate-release-20261026/asset-sources/panel/prompt.txt"
     },
     "button": {
-      "path": "/assets/wow/characters/frost-login/button.webp",
-      "width": 768,
-      "height": 146,
-      "bytes": 25028,
-      "sha256": "e8b0b3d1a3d1611d6881dade139d6c43692a17dbcd757a2dcba8b1215f3dd813",
-      "native": "/home/debian/gildra-frost-login-release-20261026/asset-sources/button-native.png",
-      "nativeSha256": "ca71efad56233b74aad657fadbeec2e46bcbd29c0b6fae29e1b80c759ab43986",
+      "path": "/assets/wow/characters/frost-login/button-ornate.webp",
+      "width": 960,
+      "height": 332,
+      "bytes": 75222,
+      "sha256": "10f9fe89aea5d46109d265c2b2b1d2a6770ca98a26d03aadada25f16c0403c96",
+      "native": "/home/debian/gildra-frost-ornate-release-20261026/asset-sources/button/button-ornate-native-v2.png",
+      "nativeSha256": "57d01df76962e2b166bd2a87ce774707b4e6e0ae7f25420864a006b82d837809",
       "nativeDimensions": {
-        "width": 2172,
-        "height": 724
+        "width": 2120,
+        "height": 742
       },
       "crop": {
-        "left": 17,
-        "top": 178,
-        "width": 2139,
-        "height": 371
+        "left": 22,
+        "top": 23,
+        "width": 2078,
+        "height": 696
       },
       "centreAlpha": {
-        "min": 252,
-        "max": 254
+        "min": 247,
+        "max": 255
       },
       "slices": [
-        38,
-        156,
-        42,
-        156
-      ]
+        126,
+        341,
+        111,
+        341
+      ],
+      "quality": 86
     },
     "crest": {
       "path": "/assets/wow/characters/frost-login/crest.webp",
@@ -82,5 +138,6 @@
         "max": 255
       }
     }
-  }
+  },
+  "updatedAt": "2026-10-26"
 }

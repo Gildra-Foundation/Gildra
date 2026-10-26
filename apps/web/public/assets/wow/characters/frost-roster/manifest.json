@@ -3,43 +3,47 @@
   "method": "Built-in image_gen, true transparent background. Native alpha retained; only bounds trim, proportional resize, transparent padding and WebP encoding.",
   "entries": {
     "card": {
-      "path": "/assets/wow/characters/frost-roster/card.webp",
+      "path": "/assets/wow/characters/frost-roster/card-ornate.webp",
       "width": 960,
-      "height": 403,
-      "bytes": 26526,
-      "sha256": "c2f56cc4548db6d36e6ac060d45b8861264420536fbe33302fb5bff6a88d28da",
-      "native": "/home/debian/gildra-character-frost-release-20261026/asset-sources/card-native.png",
-      "nativeSha256": "c1f13d22bec3e0ffaad5a898fe0c527c8b2d79a5327e63a949281e75a5d35ebc",
+      "height": 509,
+      "bytes": 95630,
+      "sha256": "f680bae121d17f217280cec11d8c9198324c8574ec97b9df1276473a9a0dacd7",
+      "native": "/home/debian/gildra-frost-ornate-release-20261026/asset-sources/card/card-native.png",
+      "nativeSha256": "c3d1bd391dab0a71862c9969ffdaa13290fed29a228ac0f71584615bfaf33918",
       "nativeDimensions": {
         "width": 1774,
         "height": 887
       },
       "crop": {
-        "left": 155,
-        "top": 139,
-        "width": 1467,
-        "height": 601
+        "left": 139,
+        "top": 54,
+        "width": 1497,
+        "height": 769
       },
       "centreAlpha": {
-        "min": 253,
+        "min": 252,
         "max": 254
       },
       "slices": [
-        104,
-        104,
-        104,
-        104
+        232,
+        360,
+        232,
+        360
       ],
-      "railInset": 26,
-      "cornerAlpha": [
-        0,
-        0,
-        0,
-        0
-      ],
-      "prompt": "/home/debian/gildra-character-frost-release-20261026/asset-sources/card-prompt.txt",
-      "promptSha256": "8050774c1f50b48197dffe5f1fbdbcfc6f0ded72a72a3a9bcd15e7119996daf2",
-      "geometryNote": "All four corner caps are enclosed inside 104px corner slices; measured packer proposal [37,94,80,93] was increased after review. Use border-image slices 104 fill, and border widths 104 × targetscale."
+      "railInset": 111,
+      "alphaPadding": {
+        "top": 16,
+        "right": 16,
+        "bottom": 16,
+        "left": 16
+      },
+      "minimumTextInsetsSource": {
+        "top": 180,
+        "right": 208,
+        "bottom": 180,
+        "left": 208
+      },
+      "recipe": "pack-asset.cjs cutout width960 height960, same alpha crop/resize/pad; direct native re-encode quality80 alpha100 effort6"
     },
     "portraitRing": {
       "path": "/assets/wow/characters/frost-roster/portrait-ring.webp",
@@ -123,5 +127,6 @@
       "promptSha256": "1d92db8bcb85e97522474283e7ec3f5d7b6db1aad2494c5b489491bdaea524d3"
     }
   },
-  "totalBytes": 54574
+  "totalBytes": 54574,
+  "updatedAt": "2026-10-26"
 }

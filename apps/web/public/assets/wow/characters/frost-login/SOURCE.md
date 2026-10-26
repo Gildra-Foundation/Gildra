@@ -28,3 +28,11 @@ Proofs over dark and cyan backgrounds and at different nine-slice sizes are in
 
 The follow-up `icons/` directory contains four matching ice/steel interface
 ornaments; see its own `SOURCE.md` and manifest for their provenance and proofs.
+
+## Ornate Frostmourne revision — 2026-10-26
+
+Owner requested substantially heavier, extravagant cursed-steel frames. The panel entry now uses `panel-ornate.webp`, generated with builtin image_gen and native alpha. Only trim/proportional resize/padding/WebP encoding; no retouch or recoloring. Native, exact prompt, measurements and proofs: `/home/debian/gildra-frost-ornate-release-20261026/asset-sources/panel`. SHA256 `f287d51fc0e3894cd63f829c7186c66434f7af7256981b0f3e5ec7ab6082fdb9`. Earlier delivered artwork remains as historical source; active paths are in manifest.json.
+
+## Ornate Frostmourne revision — 2026-10-26
+
+Owner requested substantially heavier, extravagant cursed-steel frames. The button entry now uses `button-ornate.webp`, generated with builtin image_gen and native alpha. Only trim/proportional resize/padding/WebP encoding; no retouch or recoloring. Native, exact prompt, measurements and proofs: `/home/debian/gildra-frost-ornate-release-20261026/asset-sources/button`. SHA256 `10f9fe89aea5d46109d265c2b2b1d2a6770ca98a26d03aadada25f16c0403c96`. Earlier delivered artwork remains as historical source; active paths are in manifest.json.

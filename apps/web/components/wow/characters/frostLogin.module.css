@@ -42,10 +42,10 @@
 .page .card.card {
   position: relative;
   isolation: isolate;
-  width: min(100%, 470px);
+  width: min(100%, 560px);
   max-width: 100%;
-  margin-top: 24px;
-  padding: 62px 40px 44px;
+  margin-top: 36px;
+  padding: 112px 96px 104px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -86,9 +86,9 @@
 
 .crest {
   position: absolute;
-  top: -26px;
+  top: -18px;
   left: 50%;
-  width: 220px;
+  width: 256px;
   max-width: 65%;
   line-height: 0;
   translate: -50% 0;
@@ -163,17 +163,17 @@
   align-items: center;
   justify-content: center;
   gap: var(--atlas-space-2);
-  min-height: 68px;
+  min-height: 112px;
   width: 100%;
   height: auto;
-  padding: 18px var(--frost-button-inset) 20px;
+  padding: 26px var(--frost-button-inset) 28px;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: var(--atlas-text-strong);
   box-shadow: none;
   font-size: var(--atlas-text-small);
-  line-height: 1.35;
+  line-height: 1.2;
   text-align: center;
   text-shadow: 0 1px 3px var(--atlas-bg);
   transition: transform var(--atlas-duration-fast) var(--atlas-ease);
@@ -236,16 +236,18 @@
 
 @media (max-width: 1100px) { .page .card.card { width: min(100%, 560px); } }
 @media (max-width: 700px) {
-  .page .card.card { margin-top: 28px; padding: 54px 28px 36px; }
+  .page .card.card { margin-top: 36px; padding: 76px 64px; }
+  .page .card .connectPanel form { width: calc(100% + 112px); margin-inline: -56px; }
+  .page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"])) { padding-inline: var(--frost-button-inset-mobile); }
+  .card :global([data-folio-action]:not([data-folio-action="quiet"]))::before { border-width: var(--frost-button-width-mobile); }
   .card::before { border-width: var(--frost-panel-width-mobile); }
   .snow:nth-child(n + 29) { display: none; }
-  .crest { width: 195px; top: -24px; }
+  .crest { width: 224px; top: -18px; }
   .page .card .unlocks li { grid-template-columns: 32px minmax(0, 1fr); gap: var(--atlas-space-2); }
   .materialIcon { width: 32px; height: 32px; }
   .compactIcon { width: 26px; height: 26px; }
 }
 @media (max-width: 360px) {
-  .page .card.card { padding-inline: 24px; }
   .page .card .unlocks li { grid-template-columns: 28px minmax(0, 1fr); }
   .materialIcon:not(.compactIcon) { width: 28px; height: 28px; }
 }
