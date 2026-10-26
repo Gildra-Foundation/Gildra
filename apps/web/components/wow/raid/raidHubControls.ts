@@ -31,5 +31,9 @@ export function raidHubControlLayout(slug: RaidHubSlug): CSSProperties {
     "--raid-row-width": widths(values, 56 / button.height),
     "--raid-button-inset": `${(Math.max(slice.left, slice.right) * 68 / button.height + 8).toFixed(2)}px`,
     "--raid-row-inset": `${(Math.max(slice.left, slice.right) * 56 / button.height + 8).toFixed(2)}px`,
+    "--raid-pull-chip-width": widths(values, .18),
+    "--raid-pull-chip-inset": `${(Math.max(slice.left, slice.right) * .18 + 8).toFixed(2)}px`,
+    "--raid-pull-chip-pad-top": `${(slice.top * .18 + 6).toFixed(2)}px`,
+    "--raid-pull-chip-pad-bottom": `${(slice.bottom * .18 + 6).toFixed(2)}px`,
   } as CSSProperties;
 }

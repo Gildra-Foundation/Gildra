@@ -1,0 +1,59 @@
+{
+  "verifiedAt": "2026-10-26 09:30:23 UTC",
+  "base": "f19ccbe794f49d4ec4f21597c5899df10a99fae9",
+  "patchSha256": "81e60fc6363136cc4ffbcdc43aa23629646d3555b0ed59111cf5482e795e32f6",
+  "files": [
+    {
+      "path": "apps/web/components/wow/raid/RaidOverview.tsx",
+      "sha256": "e72e80bcb9f51c584b1cdb2993b76cc584024d848c6f9b0a1748882564608f1c"
+    },
+    {
+      "path": "apps/web/components/wow/raid/RaidPullBriefing.tsx",
+      "sha256": "608d4ee3fff08ee3c5cab3e56433b7fb71ef83a3d6555f8a274ed830e0936bdb"
+    },
+    {
+      "path": "apps/web/components/wow/raid/RaidPullMap.tsx",
+      "sha256": "f49dfcce876e1e042a566a844b889c01d2e4ebb88296b6468b723b6b48e06e53"
+    },
+    {
+      "path": "apps/web/components/wow/raid/RaidPullSection.tsx",
+      "sha256": "b99812834a390805d0d45134afaadaee6126a2c8ec0f064212567acb354736ff"
+    },
+    {
+      "path": "apps/web/components/wow/raid/RaidPullWorkspace.tsx",
+      "sha256": "ce5c2ec11df4a01efb5e9bc3b5a9c0a1cdb716596549daf66257128a50da694f"
+    },
+    {
+      "path": "apps/web/components/wow/raid/SporefallPage.tsx",
+      "sha256": "f6e6fa2edc2590f19c1e56f5259149498b9cc5f99eafd02a706f7afc2c6dada0"
+    },
+    {
+      "path": "apps/web/components/wow/raid/VenomousAbyssPage.tsx",
+      "sha256": "ddf4bb588b130c37a47ae69b696800b8f28bf2962fcc24f26ad5fba84e0c3ccd"
+    },
+    {
+      "path": "apps/web/components/wow/raid/raidHubControls.ts",
+      "sha256": "a5000692f93c610274ce6664f6f2e6ec944bd055c25fede8ab18df0555fb363d"
+    },
+    {
+      "path": "apps/web/components/wow/raid/raidPullCopy.ts",
+      "sha256": "193a0e09ae18c97d9cc11dc7e1b522dfcb838a89b4a9efc0fdcc4a3e7b961c23"
+    },
+    {
+      "path": "apps/web/components/wow/raid/raidPullPlans.server.ts",
+      "sha256": "2e0bcdf9807bd54ac8dc072d59f37c9c5091eb8eb0d4c374b1c5a9ad92d86107"
+    },
+    {
+      "path": "apps/web/components/wow/raid/raidPullTypes.ts",
+      "sha256": "6bcf46f26dbfea2408549693567ef1bc2c78f23f75be9cc953a0a1eb2ea37bb3"
+    },
+    {
+      "path": "apps/web/components/wow/raid/raidPulls.module.css",
+      "sha256": "b74b56852a84931ddb15e9aee62b34beca7e0fcfe1b3069de45afc22e60ed7dd"
+    },
+    {
+      "path": "apps/web/tests/raid/raid-pull-plans.test.ts",
+      "sha256": "8b7634c6b90136a85004eb7b3366cf82ef084d60528b86f44c2d92228603af01"
+    }
+  ]
+}

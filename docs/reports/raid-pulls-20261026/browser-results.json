@@ -1,0 +1,318 @@
+{
+  "base": "http://127.0.0.1:3317",
+  "results": [
+    {
+      "slug": "the-voidspire",
+      "locale": "ru",
+      "width": 1440,
+      "pulls": 7,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "voidspire-01"
+    },
+    {
+      "slug": "the-dreamrift",
+      "locale": "ru",
+      "width": 1440,
+      "pulls": 1,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "dreamrift-01"
+    },
+    {
+      "slug": "march-on-queldanas",
+      "locale": "ru",
+      "width": 1440,
+      "pulls": 3,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "queldanas-01"
+    },
+    {
+      "slug": "venomous-abyss",
+      "locale": "ru",
+      "width": 1440,
+      "pulls": 8,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "venomous-abyss-nekzali-the-soulcoiler"
+    },
+    {
+      "slug": "sporefall",
+      "locale": "ru",
+      "width": 1440,
+      "pulls": 1,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "sporefall-rotmire"
+    },
+    {
+      "slug": "the-voidspire",
+      "locale": "en",
+      "width": 1440,
+      "pulls": 7,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "voidspire-01"
+    },
+    {
+      "slug": "the-dreamrift",
+      "locale": "en",
+      "width": 1440,
+      "pulls": 1,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "dreamrift-01"
+    },
+    {
+      "slug": "march-on-queldanas",
+      "locale": "en",
+      "width": 1440,
+      "pulls": 3,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "queldanas-01"
+    },
+    {
+      "slug": "venomous-abyss",
+      "locale": "en",
+      "width": 1440,
+      "pulls": 8,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "venomous-abyss-nekzali-the-soulcoiler"
+    },
+    {
+      "slug": "sporefall",
+      "locale": "en",
+      "width": 1440,
+      "pulls": 1,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "sporefall-rotmire"
+    },
+    {
+      "slug": "the-voidspire",
+      "locale": "ru",
+      "width": 390,
+      "pulls": 7,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "voidspire-01"
+    },
+    {
+      "slug": "the-dreamrift",
+      "locale": "ru",
+      "width": 390,
+      "pulls": 1,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "dreamrift-01"
+    },
+    {
+      "slug": "march-on-queldanas",
+      "locale": "ru",
+      "width": 390,
+      "pulls": 3,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "queldanas-01"
+    },
+    {
+      "slug": "venomous-abyss",
+      "locale": "ru",
+      "width": 390,
+      "pulls": 8,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "venomous-abyss-nekzali-the-soulcoiler"
+    },
+    {
+      "slug": "sporefall",
+      "locale": "ru",
+      "width": 390,
+      "pulls": 1,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "sporefall-rotmire"
+    },
+    {
+      "slug": "the-voidspire",
+      "locale": "en",
+      "width": 390,
+      "pulls": 7,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "voidspire-01"
+    },
+    {
+      "slug": "the-dreamrift",
+      "locale": "en",
+      "width": 390,
+      "pulls": 1,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "dreamrift-01"
+    },
+    {
+      "slug": "march-on-queldanas",
+      "locale": "en",
+      "width": 390,
+      "pulls": 3,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "queldanas-01"
+    },
+    {
+      "slug": "venomous-abyss",
+      "locale": "en",
+      "width": 390,
+      "pulls": 8,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "venomous-abyss-nekzali-the-soulcoiler"
+    },
+    {
+      "slug": "sporefall",
+      "locale": "en",
+      "width": 390,
+      "pulls": 1,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      },
+      "errors": [],
+      "initial": "sporefall-rotmire"
+    },
+    {
+      "width": 320,
+      "keyboard": true,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      }
+    },
+    {
+      "width": 768,
+      "keyboard": true,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      }
+    },
+    {
+      "width": 1024,
+      "keyboard": true,
+      "geometry": {
+        "overflow": 0,
+        "clipped": false,
+        "overlap": false
+      }
+    },
+    {
+      "themes": [
+        {
+          "theme": "arthas",
+          "chrome": "#7cc8ee",
+          "material": "#b39ade"
+        },
+        {
+          "theme": "illidan",
+          "chrome": "#c4a3f3",
+          "material": "#b39ade"
+        },
+        {
+          "theme": "garek",
+          "chrome": "#a5dba7",
+          "material": "#b39ade"
+        },
+        {
+          "theme": "varok",
+          "chrome": "#f0a28f",
+          "material": "#b39ade"
+        }
+      ],
+      "forcedColors": true,
+      "reducedTransparency": true
+    }
+  ]
+}

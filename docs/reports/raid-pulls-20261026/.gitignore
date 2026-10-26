@@ -1,0 +1,5 @@
+*.log
+*.png
+!preview-desktop.png
+!mobile-map-final.png
+raid-pulls.patch

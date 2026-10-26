@@ -7,6 +7,7 @@ import { RaidSpellReference } from "./RaidSpellReference";
 import { RaidReviewNotes } from "./RaidReviewNotes";
 import { raidReviewCopy } from "./raidReviewCopy";
 import styles from "./raidGuide.module.css";
+import { RaidPullSection } from "./RaidPullSection";
 
 type ManifestIdentity = { canonicalSlug: string; instance?: string; patch?: string; names: { en: string | null; ru: string | null }; sourceUrl?: string; lastVerifiedAt?: string };
 
@@ -36,6 +37,7 @@ export function SporefallPage({ locale, view }: { locale: RaidLocale; view: "rai
         title={isRaid ? wowSourceName(raid.names.en, locale, raid.names.ru ?? undefined) : wowSourceName(boss.names.en, locale, boss.names.ru ?? undefined)}
         lede={reviewCopy.sporefallLede}
       />
+      {isRaid && <RaidPullSection slug="sporefall" locale={locale} />}
       <RaidReviewNotes raidSlug="sporefall" bossSlug={isRaid ? undefined : boss.canonicalSlug} locale={locale} />
       {isRaid ? <AtlasSection>
         <div className={styles.stack}>

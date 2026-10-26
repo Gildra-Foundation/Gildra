@@ -10,6 +10,7 @@ import { raidSceneArt } from "@/lib/data/wow/raid/midnightRaidData";
 import { getRaidReview } from "@/lib/data/raidReviews";
 import { RaidReviewNotes } from "./RaidReviewNotes";
 import { trail } from "@/lib/routes/registry";
+import { RaidPullSection } from "./RaidPullSection";
 
 /** Raid page of a Midnight Season 1 raid: what the raid is and its encounters. */
 export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: RaidLocale }) {
@@ -45,6 +46,7 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
         actions={<AtlasShareButton title={raidName} locale={locale} />}
       />
 
+      <RaidPullSection slug={raid.slug} locale={locale} />
       <RaidReviewNotes raidSlug={raid.slug} locale={locale} />
 
       <AtlasSection id="bosses" title={copy.bossesTitle} description={published || reviewed ? copy.bossesText : copy.bossesTextPending}>

@@ -18,6 +18,7 @@ import { venomousCopy } from "./venomousCopy";
 import styles from "./venomous.module.css";
 import { RaidReviewNotes } from "./RaidReviewNotes";
 import { trail } from "@/lib/routes/registry";
+import { RaidPullSection } from "./RaidPullSection";
 
 type ManifestIdentity = {
   canonicalSlug: string;
@@ -61,6 +62,7 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
         stats={[{ value: bosses.length, label: copy.bossesStat(bosses.length) }, { value: raid.patch, label: copy.patchStat }]}
       />
 
+      <RaidPullSection slug="venomous-abyss" locale={locale} />
       <RaidReviewNotes raidSlug="venomous-abyss" locale={locale} />
 
       <AtlasSection id="bosses" title={copy.bossesTitle} description={copy.bossesText}>
