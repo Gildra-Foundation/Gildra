@@ -24,9 +24,6 @@ jobs:
           - name: api
             context: ./backend
             file: ./backend/Dockerfile
-          - name: cms
-            context: ./cms
-            file: ./cms/Dockerfile
           - name: scraper
             context: ./scraper
             file: ./scraper/Dockerfile

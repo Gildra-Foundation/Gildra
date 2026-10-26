@@ -4,7 +4,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { ADAPTATIONS, TARGETS, adapt, checkTarget, loadTarget, planSync, sha256, toLf, unadapt } from "./valyro.mjs";
 
-test("both Valyro snapshots match their manifests and valyro.json", () => {
+test("the Valyro snapshot matches its manifest and valyro.json", () => {
   for (const name of Object.keys(TARGETS)) assert.deepEqual(checkTarget(loadTarget(name)), [], name);
 });
 
@@ -25,8 +25,8 @@ test("codified adaptations reproduce the recorded registry and installed hashes"
 });
 
 test("an adaptation whose anchor disappeared upstream needs a manual merge", () => {
-  assert.equal(adapt(".x { color: red; }\n", ADAPTATIONS.cms["styles/themes/vercel.css"]), null);
-  assert.equal(adapt(":root { --a: 1; }\n", ADAPTATIONS.cms["styles/themes/vercel.css"]), ".gd-valyro { --a: 1; }\n");
+  assert.equal(adapt(".x { color: red; }\n", ADAPTATIONS.atlas["styles/themes/vercel.css"]), null);
+  assert.equal(adapt(":root { --a: 1; }\n", ADAPTATIONS.atlas["styles/themes/vercel.css"]), ".gd-valyro { --a: 1; }\n");
   assert.equal(toLf("a\r\nb\rc\n"), "a\nb\nc\n");
 });
 
@@ -50,7 +50,7 @@ test("sync plan keeps adaptations and classifies every staged file", () => {
     ["basic/Stray.tsx", "stray\n"],
   ]);
   const local = new Map([...staged.keys()].map(rel => [rel, rel === "basic/New.tsx" ? null : "local\n"]));
-  const { actions, removed } = planSync({ staged, local, manifest, rules: ADAPTATIONS.cms });
+  const { actions, removed } = planSync({ staged, local, manifest, rules: ADAPTATIONS.atlas });
   const kinds = Object.fromEntries(actions.map(action => [action.path, action.kind]));
   assert.deepEqual(kinds, {
     "basic/Same.tsx": "same",

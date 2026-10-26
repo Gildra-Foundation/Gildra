@@ -1,1 +1,1 @@
-CREATE DATABASE gildra_cms;
+-- No additional databases.

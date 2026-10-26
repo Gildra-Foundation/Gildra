@@ -15,12 +15,3 @@ scheduled host units. Runs on the production host as the compose project `glitch
 
 Start / upgrade: `cd /opt/glitchtip && sudo docker compose pull && sudo docker compose up -d`
 (migrations run on start). Retention: 30 days (`GLITCHTIP_RETENTION_DAYS`).
-
-## CMS (cms.gildra.net)
-
-Create a project `gildra-cms` in organization `gildra`, put its internal DSN
-(`http://<key>@glitchtip:8000/<id>`) into the production `.env` as `SENTRY_CMS_DSN`.
-`compose.runtime.yml` passes it to `cms` and `cms-jobs` as `SENTRY_DSN`; empty = reporting off.
-Reported: 5xx request errors, Next render errors, jobs-worker crashes and every failed
-`payload-jobs` row (e.g. `revalidateSite`, once per worker process). Set a GlitchTip alert rule
-"new issue → email/Telegram" for the project. Cookies, headers and request bodies are stripped.

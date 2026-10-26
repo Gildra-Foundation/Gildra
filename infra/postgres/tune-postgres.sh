@@ -8,10 +8,10 @@
 # Under the shared deployment lock it backs up postgresql.conf / .auto.conf,
 # times a few database searches through the API, sets the values with ALTER
 # SYSTEM (postgresql.auto.conf), checkpoints and restarts the container, then
-# checks every service that talks to the database (api, cms, cms-jobs,
-# scraper-worker, web) and times the same searches again. If Postgres does not
-# come back with the new values or the API cannot read the catalog, the
-# settings are reset and Postgres restarted once more. Everything is logged to
+# checks every service that talks to the database (api, scraper-worker, web)
+# and times the same searches again. If Postgres does not come back with the
+# new values or the API cannot read the catalog, the settings are reset and
+# Postgres restarted once more. Everything is logged to
 # /opt/gildra/backups/postgres-tune-<label>/run.log.
 set -euo pipefail
 
@@ -48,9 +48,6 @@ postgres_ready() {
 }
 api_reads_catalog() {
   curl -fsS -o /dev/null --max-time 30 "http://$(ip_of gildra-api-1):8080/v1/game/entity-summaries?product=wow&locale=en_US&limit=3&q=helm"
-}
-cms_reads_pages() {
-  curl -fsS -o /dev/null --max-time 15 "http://$(ip_of gildra-cms-1):3001/api/pages?limit=1&depth=0"
 }
 scraper_healthy() {
   curl -fsS -o /dev/null --max-time 5 "http://$(ip_of gildra-scraper-worker-1):8081/healthz"
@@ -94,11 +91,6 @@ check_dependant() {
   if wait_for 120 "$check"; then log "$name ok after restart"; return 0; fi
   log "$name still failing"
   return 1
-}
-
-cms_jobs_running() {
-  [ "$(docker inspect gildra-cms-jobs-1 --format '{{.State.Running}}')" = true ] &&
-    ! docker logs --since 60s gildra-cms-jobs-1 2>&1 | grep -qiE 'ECONNREFUSED|Connection terminated|terminating connection|57P01'
 }
 
 revert() {
@@ -154,8 +146,6 @@ if ! wait_for 120 api_reads_catalog; then
 fi
 log "api ok"
 failed=0
-check_dependant cms gildra-cms-1 cms_reads_pages || failed=1
-check_dependant cms-jobs gildra-cms-jobs-1 cms_jobs_running || failed=1
 check_dependant scraper gildra-scraper-worker-1 scraper_healthy || failed=1
 check_dependant web gildra-web-1 web_serves_database || failed=1
 
@@ -163,6 +153,6 @@ log "searches after (cold buffers):"
 time_searches
 log "searches after (second pass):"
 time_searches
-docker ps --format '{{.Names}} {{.Status}}' | grep -E '^gildra-(postgres|api|cms|cms-jobs|scraper-worker|web)-1 ' | sed 's/^/  /'
+docker ps --format '{{.Names}} {{.Status}}' | grep -E '^gildra-(postgres|api|scraper-worker|web)-1 ' | sed 's/^/  /'
 [ "$failed" = 0 ] && log "done" || log "done, but a dependant needs attention (see above)"
 exit "$failed"

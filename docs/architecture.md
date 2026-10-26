@@ -2,13 +2,12 @@
 
 Go backend domains, their dependency rules and the test that enforces them: [backend-domains.md](backend-domains.md).
 
-Gildra is deployed as one modular monolith: one repository and one OVHcloud deployment, with isolated processes for the public site, API/worker and CMS.
+Gildra is deployed as one modular monolith: one repository and one OVHcloud deployment, with isolated processes for the public site and API/worker.
 
 ```text
 Visitors -> Cloudflare -> nginx on OVHcloud
                          |-- gildra.net ------> Next.js web
-                         |-- gildra.net/api --> Go API + River workers
-                         `-- cms.gildra.net --> Payload CMS
+                         `-- gildra.net/api --> Go API + River workers
 
 Sources -> Go importers + Python scrapers -> PostgreSQL catalog
 
@@ -27,7 +26,6 @@ One repository, npm workspaces for the JavaScript side:
 | `packages/atlas-ui/` | atlas kit (`@gildra/atlas-ui`, TS source, no app imports) | transpiled by the site (`transpilePackages`) |
 | `packages/game-data/` | game data + content manifest (`@gildra/game-data`) | same |
 | `backend/` | Go API, River workers, importers, migrations | `backend/Dockerfile` |
-| `cms/` | Payload CMS (own lockfile) | `cms/Dockerfile` |
 | `scraper/` | Python scrapers | `scraper/Dockerfile` |
 | `infra/`, `deploy/`, `compose*.yml` | host deployment | — |
 
@@ -65,23 +63,17 @@ Every public page is built the same way (roadmap items 71–80):
   in `lib/flags.ts`.
 
 Two deliberate exceptions keep their own shape: **block pages** (`definePage` in
-`lib/games/<slug>/pages`, CMS can override their block list — `/tier-lists`,
+`lib/games/<slug>/pages` — `/tier-lists`,
 `/privacy`, League of Legends) and **workbenches** (database, search, API
 console, rotation lab), which are client-heavy tools on the same kit and tokens.
 
-### CMS boundary and block contracts (roadmap item 85)
+### Block contracts (roadmap item 85)
 
-The CMS (Payload, `cms/`) owns editorial content only: articles, readers, site
-design previews and, for block pages, the *order and props* of blocks in a
-page's `blocks` JSON. Everything else — block code, data loading, routes,
-game data — stays in the web app. The contract between the two is
-`contracts/blocks.schema.json`: the JSON Schema of every block's props,
+`contracts/blocks.schema.json` is the JSON Schema of every block's props,
 generated from the block types (`npm run blocks:contracts`, checked for
-freshness in CI). The web app accepts a CMS override only if every block's
-type exists and its props match the contract (`lib/blocks/contracts.ts` in
-`lib/cms/pages.ts`); anything else falls back to the TypeScript page, so an
-editor's typo never breaks a page. The CMS can validate the same file before
-publishing.
+freshness in CI); `lib/blocks/contracts.ts` checks props against it. Block
+pages are defined only in TypeScript: the Payload CMS that could override their
+block list was removed on 26 October 2026, and there is no editorial CMS.
 
 ## Ownership
 
@@ -94,7 +86,6 @@ publishing.
 - `backend/migrations/postgres`: Goose migrations for the versioned catalog,
   source provenance, relationship graph, users, subscriptions and River jobs.
 - `backend/migrations/clickhouse`: Goose migrations for event storage and hourly aggregate materialized views.
-- `cms`: Payload CMS with localized pages and guides, media and draft publishing.
 - `compose.yml`: local/full stack.
 - `compose.prod.yml`: OVHcloud origin TLS and immutable GHCR images.
 
@@ -106,9 +97,7 @@ PostgreSQL is the source of truth for versioned catalog entities, normalized
 facts and relationships, source documents, publication state, accounts,
 subscriptions and durable River jobs. Quest rewards are stored as catalog
 entities and linked through normalized `rewards` relationships, so the same
-data powers tooltip cards and graph navigation. Payload uses a separate
-`gildra_cms` database on the same PostgreSQL instance, so its schema lifecycle
-cannot collide with application migrations.
+data powers tooltip cards and graph navigation.
 
 ClickHouse stores append-only events in monthly partitions with a 13-month TTL. Its ordering key is optimized for overview queries, and an incremental materialized view maintains hourly event and visitor states. Redis caches overview responses briefly and is never a source of truth.
 

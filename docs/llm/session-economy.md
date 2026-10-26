@@ -41,7 +41,7 @@ Not the problem: permission prompts (all sessions run `bypassPermissions`), MCP 
 | Task | Model | Effort |
 | --- | --- | --- |
 | Visual design, motion, new page concepts, architecture, hard debugging, security review | Opus | high (xhigh only for architecture) |
-| Implementing a specified change, refactor, tests, CMS/backend feature work, docs, release prep/ops | Sonnet | medium |
+| Implementing a specified change, refactor, tests, backend feature work, docs, release prep/ops | Sonnet | medium |
 | Search/triage, log reading, mechanical edits, format/rename sweeps, running checks | Haiku (or `scout`/`check-runner`) | low |
 | Design audit/review | `design-review` agent (Sonnet) | — |
 

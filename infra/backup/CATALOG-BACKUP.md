@@ -26,7 +26,7 @@ Settings (systemd drop-in or environment):
   build that contains the proof modes) without touching `API_IMAGE` of the release.
   On the production host it is `gildra-catalog-backup:light-<commit>`, built as
   `FROM <API_IMAGE>` with the new `catalog-backup` binary copied over; the name is
-  deliberately outside `gildra-(web|api|cms|...)` so `prune-host-images.sh` keeps
+  deliberately outside `gildra-(web|api|scraper)` so `prune-host-images.sh` keeps
   it. Once a regular API release contains this build, remove the drop-in
   `/etc/systemd/system/gildra-catalog-backup.service.d/light-proof.conf`.
 - `CATALOG_BACKUP_LIGHT_MAX_TABLE_ROWS` (default 20000) and `CATALOG_BACKUP_LIGHT_MAX_TABLE_BYTES` (default 64 MiB)

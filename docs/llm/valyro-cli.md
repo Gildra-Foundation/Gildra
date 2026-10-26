@@ -2,17 +2,16 @@
 
 New UI is built from genuine [Valyro](https://valyro.xyz) components, installed as
 source through the pinned `valyro-cli` and used through the shared adapters
-(`packages/atlas-ui/src/Atlas*.tsx` on the site, `AdminSurface` in the CMS). Do not
-hand-write a component Valyro already has, and do not paste Valyro source by hand.
+(`packages/atlas-ui/src/Atlas*.tsx`). Do not hand-write a component Valyro already
+has, and do not paste Valyro source by hand.
 
 ## Where things live
 
 | Target | `valyro.json` | Sources | Adapters / consumers |
 | --- | --- | --- | --- |
 | `atlas` (public site) | `packages/atlas-ui/valyro.json` | `packages/atlas-ui/src/valyro-ui/` | `packages/atlas-ui/src/Atlas*.tsx`, `valyroAtlasBridge.module.css`, generated `valyro-public-theme.css` |
-| `cms` | `cms/valyro.json` | `cms/src/components/valyro-ui/` | `cms/src/components/AdminSurface*` and the CMS screens |
 
-Each sources folder has a `registry-manifest.json`: the installed components, every
+The sources folder has a `registry-manifest.json`: the installed components, every
 file's registry and installed SHA-256, which files are `adapted`, and why. The CLI
 version is pinned in `package.json` scripts, `scripts/valyro.mjs` (`CLI`) and
 `.mcp.json`; change all three together.
@@ -32,11 +31,9 @@ Ignore the install command MCP's `get_install_command` returns; use the wrapper 
 
 ```sh
 npm run valyro:add -- tabs dialog                 # into packages/atlas-ui (default)
-npm run valyro:add -- tabs --target cms           # into cms
 npm run valyro:add -- tabs --target all --dry-run # plan only
 npm run valyro:drift                              # what changed in the registry since the snapshot (online)
 npm run valyro:update -- --dry-run                # plan an update of every recorded component
-npm run valyro:update -- --target cms
 npm run valyro:check                              # offline: snapshot == manifest, adaptations, public theme
 ```
 
@@ -51,7 +48,7 @@ registry's CRLF endings to LF, and then copies into the target:
   re-applied to the new upstream; if an anchor is gone the Gildra file is kept and the
   wrapper prints a `diff -u` against the staged upstream for a manual merge;
 - missing npm packages are printed, never installed: add them deliberately
-  (`npm install -w @gildra/web …` or in `cms/`), they change lockfiles;
+  (`npm install -w @gildra/web …`), they change lockfiles;
 - for `atlas` it regenerates `valyro-public-theme.css` (`npm run valyro:generate`).
 
 Never run bare `npx valyro-cli add` in this repo: it writes CRLF files, skips the
@@ -113,6 +110,6 @@ The scripts need Node 22 with `npm`/`npx` on `PATH` (CI and the Dockerfiles use
 22.23.2). On the shared server `/opt/gildra` is not readable for every user; use a
 personal install such as `~/.local/node22` linked into `~/.local/bin`.
 
-On the shared server, run heavy commands (build, typecheck, lint, full tests, CMS build,
+On the shared server, run heavy commands (build, typecheck, lint, full tests,
 Playwright screenshots) through `/home/zulut/bin/gildra-heavy <command>` — at most two at a
 time across all sessions, at low priority — and stop dev servers right after use.

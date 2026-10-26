@@ -2,7 +2,7 @@
   <img src="public/brand/helmet.png" alt="Gildra helmet mark" width="88" />
   <h1>Gildra</h1>
   <p><strong>Gaming intelligence for World of Warcraft — rankings, verified catalog data, and source-aware tooltips.</strong></p>
-  <p>English and Russian · Next.js · Go · PostgreSQL · ClickHouse · Redis · Payload CMS</p>
+  <p>English and Russian · Next.js · Go · PostgreSQL · ClickHouse · Redis</p>
 </div>
 
 Gildra is a production-oriented portfolio project built as a modular monolith.
@@ -11,7 +11,7 @@ provenance, relationship graphs, automated ingestion, analytics, and a
 hardened container delivery pipeline.
 
 The repository is intentionally broader than a UI demo: it contains the public
-website, API and background workers, CMS, data importers, database migrations,
+website, API and background workers, data importers, database migrations,
 scrapers, operational configuration, and tests in one reviewable codebase.
 
 ## Product preview
@@ -40,7 +40,6 @@ scrapers, operational configuration, and tests in one reviewable codebase.
   endpoints, Sentry hooks, and IndexNow delivery.
 - PostgreSQL for catalog and application state, ClickHouse for product
   analytics, and Redis for short-lived caches.
-- Payload CMS with its own PostgreSQL database and migration lifecycle.
 - Reproducible scraper image with explicit provider budgets, preflight checks,
   regression bounds, and snapshot safety tests.
 - Docker Compose deployment with health checks, immutable production images,
@@ -58,7 +57,6 @@ flowchart LR
 
     Proxy --> Web[Next.js web]
     Proxy --> API[Go API + River workers]
-    Proxy --> CMS[Payload CMS]
 
     Sources[Battle.net · DB2/Wago · tier sources] --> Ingestion[Go importers + Python scrapers]
     Ingestion --> Postgres[(PostgreSQL)]
@@ -67,7 +65,6 @@ flowchart LR
     API --> Postgres
     API --> ClickHouse[(ClickHouse)]
     API --> Redis[(Redis)]
-    CMS --> CMSDB[(PostgreSQL · CMS database)]
 
     CI[GitHub Actions] --> Registry[GHCR images + attestations]
     Registry --> Proxy
@@ -86,7 +83,6 @@ details.
 | `apps/web/` | Public Next.js site (`app/`, `components/`, `lib/`, `scripts/`, `tests/`) and API client — npm workspace `@gildra/web` |
 | `packages/` | Shared npm workspaces: `@gildra/atlas-ui` (atlas kit), `@gildra/game-data` (game data) |
 | `backend/` | Go API, workers, importers, GraphQL, and database migrations |
-| `cms/` | Payload CMS application and CMS migrations |
 | `scraper/` | Source profiles, parsers, publication services, and tests |
 | `infra/` | nginx, PostgreSQL initialization, and scheduled refresh units |
 | `.github/workflows/` | Continuous integration and controlled deployment |
@@ -94,7 +90,7 @@ details.
 
 The root `package.json` is the npm workspace root: `npm ci` installs everything,
 and every web script runs from the root (`npm run build` → `npm run build -w @gildra/web`).
-Services (`backend/`, `cms/`, `scraper/`) keep their own build contexts.
+Services (`backend/`, `scraper/`) keep their own build contexts.
 
 ## Run locally
 
@@ -137,15 +133,6 @@ npm run generate:api
 npm run dev
 ```
 
-### CMS
-
-```powershell
-Set-Location cms
-npm ci
-npm run build
-npm run dev
-```
-
 ## Verification
 
 The main checks mirror the CI workflow:
@@ -157,13 +144,8 @@ npm run generate:api
 npm run typecheck
 npm run build
 
-# CMS
-Set-Location cms
-npm ci
-npm run build
-
 # Go API and migrations
-Set-Location ..\backend
+Set-Location backend
 go generate ./...
 go tool goose -dir migrations/postgres validate
 go tool goose -dir migrations/clickhouse validate

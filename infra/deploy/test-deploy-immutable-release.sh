@@ -21,10 +21,8 @@ old_cms=ghcr.io/gildra-foundation/gildra-cms@sha256:cccccccccccccccccccccccccccc
 old_scraper=ghcr.io/gildra-foundation/gildra-scraper@sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 new_web=ghcr.io/gildra-foundation/gildra-web@sha256:1111111111111111111111111111111111111111111111111111111111111111
 new_api=ghcr.io/gildra-foundation/gildra-api@sha256:2222222222222222222222222222222222222222222222222222222222222222
-new_cms=ghcr.io/gildra-foundation/gildra-cms@sha256:3333333333333333333333333333333333333333333333333333333333333333
 new_scraper=ghcr.io/gildra-foundation/gildra-scraper@sha256:4444444444444444444444444444444444444444444444444444444444444444
 new_rotation_worker=ghcr.io/gildra-foundation/gildra-rotation-sim-worker@sha256:5555555555555555555555555555555555555555555555555555555555555555
-new_cms_jobs=ghcr.io/gildra-foundation/gildra-cms-jobs@sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 
 for file in .env compose.yml compose.prod.yml compose.runtime.yml; do
   : > "$deployment_directory/$file"
@@ -52,6 +50,8 @@ chmod +x "$deployment_directory/infra/backup/run-catalog-backup.sh"
   printf 'CATALOG_RECOVERY_POLICY=verified_same_host\n'
 } > "$deployment_directory/.env"
 
+# A manifest from before the CMS was removed still carries CMS_IMAGE; the
+# deployment and its rollback must ignore it.
 {
   printf 'WEB_IMAGE=%s\n' "$old_web"
   printf 'API_IMAGE=%s\n' "$old_api"
@@ -59,12 +59,10 @@ chmod +x "$deployment_directory/infra/backup/run-catalog-backup.sh"
   printf 'SCRAPER_IMAGE=%s\n' "$old_scraper"
 } > "$deployment_directory/current-release.env"
 
-for service in web api catalog-backup cms cms-jobs scraper scraper-worker; do
+for service in web api catalog-backup scraper scraper-worker; do
   case $service in
     web) image=$old_web ;;
     api|catalog-backup) image=$old_api ;;
-    cms) image=$old_cms ;;
-    cms-jobs) image=gildra-cms-jobs:legacy ;;
     scraper|scraper-worker) image=$old_scraper ;;
   esac
   printf '%s\n' "$image" > "$state_directory/$service.image"
@@ -104,17 +102,8 @@ if [ "$1" = image ] && [ "$2" = inspect ]; then
     sha256:2222222222222222222222222222222222222222222222222222222222222222)
       printf 'gildra-api:legacy\n'
       ;;
-    sha256:3333333333333333333333333333333333333333333333333333333333333333)
-      printf 'gildra-cms:legacy\n'
-      ;;
     sha256:4444444444444444444444444444444444444444444444444444444444444444)
       printf 'gildra-scraper:legacy\n'
-      ;;
-    sha256:5555555555555555555555555555555555555555555555555555555555555555)
-      printf 'unrelated:latest\ngildra-cms:shared-jobs\ngildra-cms-jobs:legacy\n'
-      ;;
-    sha256:6666666666666666666666666666666666666666666666666666666666666666)
-      printf 'gildra-cms:shared-jobs\n'
       ;;
     *) exit 1 ;;
   esac
@@ -136,12 +125,10 @@ while [ "$#" -gt 0 ]; do
       count=$(cat "$TEST_STATE_DIR/up-count")
       count=$((count + 1))
       printf '%s\n' "$count" > "$TEST_STATE_DIR/up-count"
-      for service in web api catalog-backup cms cms-jobs scraper scraper-worker rotation-sim-worker; do
+      for service in web api catalog-backup scraper scraper-worker rotation-sim-worker; do
         case $service in
           web) image=$WEB_IMAGE ;;
           api|catalog-backup) image=$API_IMAGE ;;
-          cms) image=$CMS_IMAGE ;;
-          cms-jobs) image=$CMS_JOBS_IMAGE ;;
           scraper|scraper-worker) image=$SCRAPER_IMAGE ;;
           rotation-sim-worker) image=$ROTATION_WORKER_IMAGE ;;
         esac
@@ -201,8 +188,6 @@ if PATH="$fake_bin:$PATH" \
   GILDRA_DEPLOY_LOCK_FILE=$test_directory/deploy.lock \
   WEB_IMAGE=$new_web \
   API_IMAGE=$new_api \
-  CMS_IMAGE=$new_cms \
-  CMS_JOBS_IMAGE=$new_cms_jobs \
   SCRAPER_IMAGE=$new_scraper \
   ROTATION_WORKER_IMAGE=$new_rotation_worker \
   GILDRA_SOURCE_REVISION=1111111111111111111111111111111111111111 \
@@ -219,13 +204,10 @@ fi
 }
 [ "$(cat "$state_directory/web.image")" = "$old_web" ]
 [ "$(cat "$state_directory/api.image")" = "$old_api" ]
-[ "$(cat "$state_directory/cms.image")" = "$old_cms" ]
 [ "$(cat "$state_directory/scraper.image")" = "$old_scraper" ]
 # The previous release predates the rotation worker: its manifest has no entry
 # for it, so a rollback keeps the worker of the failed release running.
 [ "$(cat "$state_directory/rotation-sim-worker.image")" = "$new_rotation_worker" ]
-# The same holds for the CMS jobs worker, which joined the contract later still.
-[ "$(cat "$state_directory/cms-jobs.image")" = "$new_cms_jobs" ]
 grep -q "WEB_IMAGE=$old_web" "$deployment_directory/current-release.env"
 if grep -q '^ROTATION_WORKER_IMAGE=' "$deployment_directory/current-release.env"; then
   printf 'test: rollback must restore the previous manifest exactly, which has no rotation worker entry\n' >&2
@@ -291,22 +273,9 @@ rollback_disarm_line=$(grep -n '^rollback_armed=false$' "$deployment_script" | t
 
 printf 'test: failed release restored and verified the previous immutable images\n'
 
-# A release contract without the CMS jobs worker image must be refused: the
-# manifest it writes is what compose reads, and a missing entry silently ran
-# the compose default (an old worker) after every full release.
-if PATH="$fake_bin:$PATH" \
-  WEB_IMAGE=$new_web API_IMAGE=$new_api CMS_IMAGE=$new_cms SCRAPER_IMAGE=$new_scraper \
-  ROTATION_WORKER_IMAGE=$new_rotation_worker \
-  GILDRA_SOURCE_REVISION=1111111111111111111111111111111111111111 \
-  GILDRA_RELEASE_ID=test-release GILDRA_ROLLBACK_COMPATIBLE=true \
-  "$deployment_script" --validate-only >/dev/null 2>&1; then
-  printf 'test: a release without CMS_JOBS_IMAGE must fail validation\n' >&2
-  exit 1
-fi
-
 # A release contract without the rotation worker image must be refused.
 if PATH="$fake_bin:$PATH" \
-  WEB_IMAGE=$new_web API_IMAGE=$new_api CMS_IMAGE=$new_cms CMS_JOBS_IMAGE=$new_cms_jobs SCRAPER_IMAGE=$new_scraper \
+  WEB_IMAGE=$new_web API_IMAGE=$new_api SCRAPER_IMAGE=$new_scraper \
   GILDRA_SOURCE_REVISION=1111111111111111111111111111111111111111 \
   GILDRA_RELEASE_ID=test-release GILDRA_ROLLBACK_COMPATIBLE=true \
   "$deployment_script" --validate-only >/dev/null 2>&1; then
@@ -314,7 +283,7 @@ if PATH="$fake_bin:$PATH" \
   exit 1
 fi
 if PATH="$fake_bin:$PATH" \
-  WEB_IMAGE=$new_web API_IMAGE=$new_api CMS_IMAGE=$new_cms CMS_JOBS_IMAGE=$new_cms_jobs SCRAPER_IMAGE=$new_scraper \
+  WEB_IMAGE=$new_web API_IMAGE=$new_api SCRAPER_IMAGE=$new_scraper \
   ROTATION_WORKER_IMAGE=gildra-rotation-sim-worker:latest \
   GILDRA_SOURCE_REVISION=1111111111111111111111111111111111111111 \
   GILDRA_RELEASE_ID=test-release GILDRA_ROLLBACK_COMPATIBLE=true \
@@ -333,9 +302,6 @@ deploy_success() {
     GILDRA_DEPLOY_LOCK_FILE=$test_directory/deploy.lock \
     WEB_IMAGE=$new_web \
     API_IMAGE=$new_api \
-    CMS_IMAGE=$new_cms \
-    CMS_JOBS_IMAGE=$new_cms_jobs \
-  CMS_JOBS_IMAGE=$new_cms_jobs \
     SCRAPER_IMAGE=$new_scraper \
     ROTATION_WORKER_IMAGE=$new_rotation_worker \
     GILDRA_SOURCE_REVISION=2222222222222222222222222222222222222222 \
@@ -352,8 +318,10 @@ deploy_success || {
 [ "$(cat "$state_directory/up-count")" -eq $((up_before + 1)) ]
 [ "$(cat "$state_directory/rotation-sim-worker.image")" = "$new_rotation_worker" ]
 grep -q "^ROTATION_WORKER_IMAGE=$new_rotation_worker$" "$deployment_directory/current-release.env"
-grep -q "^CMS_JOBS_IMAGE=$new_cms_jobs$" "$deployment_directory/current-release.env"
-[ "$(cat "$state_directory/cms-jobs.image")" = "$new_cms_jobs" ]
+if grep -q '^CMS_IMAGE=' "$deployment_directory/current-release.env"; then
+  printf 'test: a new release manifest must not carry the removed CMS image\n' >&2
+  exit 1
+fi
 grep -q 'immutable release is running and verified' "$test_directory/deploy-ok.log"
 deploy_success || {
   cat "$test_directory/deploy-ok.log" >&2
@@ -370,7 +338,6 @@ printf 'test: rotation worker joins the immutable release contract\n'
 # being deployed. After the upgrade it must use the new release's image.
 next_web=ghcr.io/gildra-foundation/gildra-web@sha256:6666666666666666666666666666666666666666666666666666666666666666
 next_api=ghcr.io/gildra-foundation/gildra-api@sha256:7777777777777777777777777777777777777777777777777777777777777777
-next_cms=ghcr.io/gildra-foundation/gildra-cms@sha256:8888888888888888888888888888888888888888888888888888888888888888
 next_scraper=ghcr.io/gildra-foundation/gildra-scraper@sha256:9999999999999999999999999999999999999999999999999999999999999999
 next_worker=ghcr.io/gildra-foundation/gildra-rotation-sim-worker@sha256:abababababababababababababababababababababababababababababababab
 rm -f "$state_directory/backup-calls.log"
@@ -382,7 +349,7 @@ PATH="$fake_bin:$PATH" \
   GILDRA_HEARTBEAT_SECONDS=1 \
   GILDRA_DEPLOY_DIR=$deployment_directory \
   GILDRA_DEPLOY_LOCK_FILE=$test_directory/deploy.lock \
-  WEB_IMAGE=$next_web API_IMAGE=$next_api CMS_IMAGE=$next_cms CMS_JOBS_IMAGE=$new_cms_jobs SCRAPER_IMAGE=$next_scraper \
+  WEB_IMAGE=$next_web API_IMAGE=$next_api SCRAPER_IMAGE=$next_scraper \
   ROTATION_WORKER_IMAGE=$next_worker \
   GILDRA_SOURCE_REVISION=3333333333333333333333333333333333333333 \
   GILDRA_RELEASE_ID=test-release-stale \
@@ -427,7 +394,7 @@ if PATH="$fake_bin:$PATH" \
   TEST_BACKUP_FAIL=1 \
   GILDRA_DEPLOY_DIR=$deployment_directory \
   GILDRA_DEPLOY_LOCK_FILE=$test_directory/deploy.lock \
-  WEB_IMAGE=$third_web API_IMAGE=$next_api CMS_IMAGE=$next_cms CMS_JOBS_IMAGE=$new_cms_jobs SCRAPER_IMAGE=$next_scraper \
+  WEB_IMAGE=$third_web API_IMAGE=$next_api SCRAPER_IMAGE=$next_scraper \
   ROTATION_WORKER_IMAGE=$next_worker \
   GILDRA_SOURCE_REVISION=4444444444444444444444444444444444444444 \
   GILDRA_RELEASE_ID=test-release-failing-backup \
@@ -468,49 +435,25 @@ bootstrap_manifest=$test_directory/legacy-release.env
 {
   printf 'WEB_IMAGE=sha256:1111111111111111111111111111111111111111111111111111111111111111\n'
   printf 'API_IMAGE=sha256:2222222222222222222222222222222222222222222222222222222222222222\n'
-  printf 'CMS_IMAGE=sha256:3333333333333333333333333333333333333333333333333333333333333333\n'
   printf 'SCRAPER_IMAGE=sha256:4444444444444444444444444444444444444444444444444444444444444444\n'
 } > "$bootstrap_manifest"
 cp "$bootstrap_manifest" "$test_directory/legacy-original.env"
 PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
 grep -q '^WEB_IMAGE=gildra-web:legacy$' "$bootstrap_manifest"
 grep -q '^API_IMAGE=gildra-api:legacy$' "$bootstrap_manifest"
-grep -q '^CMS_IMAGE=gildra-cms:legacy$' "$bootstrap_manifest"
 grep -q '^SCRAPER_IMAGE=gildra-scraper:legacy$' "$bootstrap_manifest"
-[ "$(grep -c '^CMS_JOBS_IMAGE=' "$bootstrap_manifest" || true)" -eq 0 ]
-
-# Only the worker needs normalization here: the no-op guard must include it.
-printf 'CMS_JOBS_IMAGE=sha256:5555555555555555555555555555555555555555555555555555555555555555\n' >> "$bootstrap_manifest"
-PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
-grep -q '^CMS_JOBS_IMAGE=gildra-cms-jobs:legacy$' "$bootstrap_manifest"
 [ "$(stat -c '%a' "$bootstrap_manifest")" = 600 ]
 cp "$bootstrap_manifest" "$test_directory/normalized.env"
 PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
 cmp "$bootstrap_manifest" "$test_directory/normalized.env"
 
-# Shared legacy images remain usable when no dedicated jobs tag exists.
-sed 's/^CMS_JOBS_IMAGE=.*/CMS_JOBS_IMAGE=sha256:6666666666666666666666666666666666666666666666666666666666666666/' "$test_directory/normalized.env" > "$bootstrap_manifest"
-PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" >/dev/null
-grep -q '^CMS_JOBS_IMAGE=gildra-cms:shared-jobs$' "$bootstrap_manifest"
-
-# An unresolvable worker cannot partially rewrite the other legacy images.
-cp "$test_directory/legacy-original.env" "$bootstrap_manifest"
-printf 'CMS_JOBS_IMAGE=sha256:9999999999999999999999999999999999999999999999999999999999999999\n' >> "$bootstrap_manifest"
+# An unresolvable image cannot partially rewrite the other legacy images.
+sed 's/^SCRAPER_IMAGE=.*/SCRAPER_IMAGE=sha256:9999999999999999999999999999999999999999999999999999999999999999/' "$test_directory/legacy-original.env" > "$bootstrap_manifest"
 cp "$bootstrap_manifest" "$test_directory/unmappable.env"
 if PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" > "$test_directory/unmappable.log" 2>&1; then
-  printf 'test: an unmappable CMS jobs image must fail normalization\n' >&2
+  printf 'test: an unmappable legacy image must fail normalization\n' >&2
   exit 1
 fi
 grep -q 'could not map legacy image id' "$test_directory/unmappable.log"
 cmp "$bootstrap_manifest" "$test_directory/unmappable.env"
-
-cp "$test_directory/normalized.env" "$bootstrap_manifest"
-printf 'CMS_JOBS_IMAGE=gildra-cms:other-jobs\n' >> "$bootstrap_manifest"
-cp "$bootstrap_manifest" "$test_directory/duplicate.env"
-if PATH="$fake_bin:$PATH" TEST_STATE_DIR="$state_directory" "$bootstrap_manifest_script" "$bootstrap_manifest" > "$test_directory/duplicate.log" 2>&1; then
-  printf 'test: duplicate CMS jobs image entries must fail normalization\n' >&2
-  exit 1
-fi
-grep -q 'at most one CMS_JOBS_IMAGE entry' "$test_directory/duplicate.log"
-cmp "$bootstrap_manifest" "$test_directory/duplicate.env"
-printf 'test: optional CMS jobs legacy images normalize atomically and reject duplicates\n'
+printf 'test: legacy release manifest images normalize atomically and stay stable\n'

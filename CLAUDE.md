@@ -10,11 +10,11 @@ economy (model/effort, quiet builds, reading map, brief template):
 ## Stack & map
 
 - Next.js 16 App Router + React 19 + TypeScript, Go 1.26 API/River worker,
-  Payload CMS, PostgreSQL, ClickHouse and Redis.
+  PostgreSQL, ClickHouse and Redis.
 - **Monorepo (npm workspaces):** the site is `apps/web/` (`@gildra/web`) —
   every web path below (`app/`, `components/`, `lib/`, `scripts/` …) is
   relative to it; shared code is in `packages/` (`@gildra/atlas-ui` kit,
-  `@gildra/game-data`); services keep their own builds (`backend/`, `cms/`,
+  `@gildra/game-data`); services keep their own builds (`backend/`,
   `scraper/`). Run npm scripts from the repo root (they pass through to the
   web workspace); ESLint config is the root `eslint.config.mjs`.
 - **Pages are configs of blocks.** Page definitions live in
@@ -29,9 +29,6 @@ economy (model/effort, quiet builds, reading map, brief template):
   the legal line is `AtlasFrame`'s footer — pages render no header/footer. The full contract, plus
   "add a block / page / game" recipes, is in
   [components/blocks/README.md](apps/web/components/blocks/README.md) — read it before UI work.
-- CMS: a published Payload `pages` document with `slug` = page id and a
-  `blocks` JSON overrides that page's block list (`lib/cms/pages.ts`,
-  validated against the registry, fails open to the TS config).
 - Games: `lib/games/registry.ts` is the single source of game identity, URL
   prefix (WoW = site root, others `/<slug>/`), nav tasks, footer and legal
   text. Never add `app/[game]`.
@@ -77,7 +74,7 @@ economy (model/effort, quiet builds, reading map, brief template):
 - Honest UI only: no `href="#"`; unimplemented things use `.soon`,
   `.dead-link`, `aria-disabled` states.
 - Full rules live in [design.md](design.md) — **read it before UI/design work only**
-  (not for backend, CMS, deploy or data tasks) and follow the `gildra-design-director` skill workflow
+  (not for backend, deploy or data tasks) and follow the `gildra-design-director` skill workflow
   ([.claude/skills/gildra-design-director/SKILL.md](.claude/skills/gildra-design-director/SKILL.md)).
 
 ## Working on UI
@@ -94,7 +91,7 @@ economy (model/effort, quiet builds, reading map, brief template):
 
 ## Checks & permissions
 
-- Project checks: `npm run typecheck && npm run build`, CMS build in `cms/`,
+- Project checks: `npm run typecheck && npm run build`
   and `go vet ./... && go test ./...` in `backend/`. Dev: `npm run dev`; prod-like: `npm run start`;
   screenshots: `npm run design:capture -- --deterministic`, pixel gate:
   `npm run design:compare <baseline> <run>` (0 px + no overflow on `/`, `/ru`,

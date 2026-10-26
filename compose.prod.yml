@@ -9,8 +9,6 @@ services:
     image: ${API_IMAGE}
   web:
     image: ${WEB_IMAGE}
-  cms:
-    image: ${CMS_IMAGE}
   scraper:
     image: ${SCRAPER_IMAGE:-gildra-scraper:local}
   scraper-worker:

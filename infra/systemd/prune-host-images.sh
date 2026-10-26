@@ -26,7 +26,7 @@ keep=$(
 )
 
 removed=0
-docker images --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' | grep -E '^gildra-(web|api|cms|cms-jobs|scraper):' |
+docker images --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' | grep -E '^gildra-(web|api|scraper):' |
 while read -r image created_date created_time _; do
   printf '%s\n' "$keep" | grep -qx "$image" && continue
   age_hours=$(( (now - $(date -d "$created_date $created_time" +%s)) / 3600 ))

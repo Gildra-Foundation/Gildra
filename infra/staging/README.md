@@ -2,7 +2,7 @@
 
 A staging copy of gildra.net on the production host: the release candidate's web
 image as compose project `gildra-staging` (`/opt/gildra-staging`, this
-`compose.yml`), reading the production API and CMS on `gildra_default`. It is
+`compose.yml`), reading the production API on `gildra_default`. It is
 reachable at **http://127.0.0.1:3200** on the host (SSH tunnel:
 `ssh -L 3200:127.0.0.1:3200 <host>`).
 
@@ -18,9 +18,8 @@ Release flow for the web:
 What differs from production: `GILDRA_STAGING=1` (noindex, no analytics, a
 staging badge, once the web app reads it), `SENTRY_ENVIRONMENT=staging`, no
 `AUTH_SECRET` (Battle.net callbacks point at production, so sign-in is off),
-no IndexNow key or CMS revalidate secret. Plausible does not count staging
-visits: the tracker posts to `/stats/api/event` on the staging origin, which
-does not exist there.
+no IndexNow key. Plausible does not count staging visits: the tracker posts to
+`/stats/api/event` on the staging origin, which does not exist there.
 
 Public address (needs a Cloudflare DNS record `staging.gildra.net` → this host;
 the origin certificate is already `*.gildra.net`): add a server block to

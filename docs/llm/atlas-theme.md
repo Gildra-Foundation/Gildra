@@ -72,7 +72,6 @@ backward compatible — many pages use them. Update the table in `packages/atlas
 | Top bar (book contents, EN/RU, GILDRA) | `components/platform/navigation/WorkspaceNavigatorContent.tsx`, `atlasToolbar.module.css` |
 | 404 | `components/layout/NotFoundPage.tsx` (used by `app/(site)/not-found.tsx`, `app/ru/not-found.tsx`, `app/global-not-found.tsx`) + `NotFoundCopy.tsx` |
 | Raid guides | `components/wow/raid/RaidBossGuide.tsx`, `RaidMechanicList.tsx`, `raidGuideCopy.ts` |
-| Articles (shared CMS) | `components/cms/Articles.tsx`, `cms.module.css` |
 | Legacy skin for old pages | `app/styles/atlas-pages.css`, `app/styles/wow-skin.css` |
 | Lairs and world bosses (reference) | `components/wow/lairs/` |
 | Raids hub, Mythic+ hub, WoW hub | `components/wow/raid/RaidAtlasPage.tsx`, `components/wow/mythic/MythicAtlasPage.tsx`, `components/wow/home/WowHome.tsx` |

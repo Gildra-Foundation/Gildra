@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Gildra wrapper around the pinned valyro-cli. Registry sources are installed into a scratch
- * project first, then copied into packages/atlas-ui or cms with LF endings, the recorded Gildra
+ * project first, then copied into packages/atlas-ui with LF endings, the recorded Gildra
  * adaptations re-applied and registry-manifest.json updated. Adapted files are never replaced
  * by pristine registry source.
  *
@@ -10,7 +10,7 @@
  *   node scripts/valyro.mjs add <name...> [--target t] [--update] [--dry-run]
  *   node scripts/valyro.mjs update [--target t] [--dry-run]
  *
- * Targets: atlas (default for add), cms, all (default for check/drift/update).
+ * Targets: atlas (default for add), all (default for check/drift/update).
  */
 import fs from "node:fs";
 import os from "node:os";
@@ -25,7 +25,6 @@ const project = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 
 export const TARGETS = {
   atlas: { root: "packages/atlas-ui", consumer: "apps/web/package.json", workspace: "@gildra/web" },
-  cms: { root: "cms", consumer: "cms/package.json", workspace: null },
 };
 /** Gildra files inside an install dir that are not registry source. */
 const LOCAL_FILES = new Set(["README.md", "registry-manifest.json"]);
@@ -45,11 +44,6 @@ export const ADAPTATIONS = {
     ...SCOPE,
     "styles/base.css": { ...SCOPE["styles/base.css"], trimTrailingBlank: true },
     "styles/motion.css": { pairs: [[":root", ".gildra-atlas,\n[data-atlas-scope]"]] },
-  },
-  cms: {
-    ...SCOPE,
-    // Upstream keeps no highlight when results arrive after an empty list; Enter then ran nothing in the CMS palette.
-    "forms/useCombobox.ts": { pairs: [["    const previous = highlighted.current;\n    if (previous === undefined) return;\n", "    const previous = highlighted.current;\n    // Gildra: results that arrive after an empty list (async search) still get the first highlight.\n    if (previous === undefined) {\n      if (autoHighlight) setActiveIndex(firstEnabledIndex(flat));\n      return;\n    }\n"]] },
   },
 };
 
@@ -83,7 +77,7 @@ function walk(dir, base = dir) {
 
 export function loadTarget(name, cwd = project) {
   const spec = TARGETS[name];
-  if (!spec) throw new Error(`Unknown target "${name}" (atlas, cms, all)`);
+  if (!spec) throw new Error(`Unknown target "${name}" (atlas, all)`);
   const root = path.join(cwd, spec.root);
   const config = JSON.parse(fs.readFileSync(path.join(root, "valyro.json"), "utf8"));
   const installDir = path.join(root, config.installDir);
@@ -332,7 +326,7 @@ function main([command, ...argv]) {
     return 0;
   }
   if (command === "add") {
-    if (!opts.names.length) throw new Error("Usage: npm run valyro:add -- <name...> [--target atlas|cms|all] [--update] [--dry-run]");
+    if (!opts.names.length) throw new Error("Usage: npm run valyro:add -- <name...> [--target atlas|all] [--update] [--dry-run]");
     targetsOf(opts.target, "atlas").forEach(name => sync(loadTarget(name), opts.names, opts));
     return 0;
   }
@@ -345,7 +339,7 @@ function main([command, ...argv]) {
     }
     return 0;
   }
-  console.error("Usage: node scripts/valyro.mjs check | drift | add <name...> | update  [--target atlas|cms|all] [--update] [--dry-run]");
+  console.error("Usage: node scripts/valyro.mjs check | drift | add <name...> | update  [--target atlas|all] [--update] [--dry-run]");
   return 1;
 }
 

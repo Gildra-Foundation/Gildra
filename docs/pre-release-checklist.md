@@ -9,12 +9,12 @@ require the protected `production` environment and its approval policy.
   untracked files enter the release.
 - The revision is an immutable commit on the protected `master` branch.
 - External GitHub Actions are pinned to reviewed full commit SHAs.
-- CI succeeds for frontend, CMS, backend race tests, integration tests and the
+- CI succeeds for frontend, backend race tests, integration tests and the
   scraper image.
 
 ## 2. Dependencies and secrets
 
-- `npm audit --omit=dev --audit-level=high` passes in the root and `cms`.
+- `npm audit --omit=dev --audit-level=high` passes in the root.
 - Pinned `govulncheck` reports no reachable Go vulnerabilities.
 - Secret scanning covers tracked and newly added files. `.env`, `.env.local`,
   build output, screenshots and `.codex-local` remain ignored.
@@ -63,7 +63,7 @@ require the protected `production` environment and its approval policy.
   ```
 
 - Do not deploy `compose.prod.yml` by itself; it is an overlay.
-- Confirm API, web, CMS, nginx and scraper healthchecks, read-only filesystems
+- Confirm API, web, nginx and scraper healthchecks, read-only filesystems
   where supported, `no-new-privileges` and digest-pinned infrastructure images.
 
 ## 5. Deployment verification

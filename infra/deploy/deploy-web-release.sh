@@ -4,7 +4,7 @@
 # This is the fast path for front-end only changes. It touches nothing but the
 # web container (and reloads nginx so it resolves the new container address):
 # no migrations, no recovery backup, no catalog gates. Anything that changes the
-# API, database schema, CMS, scraper, worker, compose files or infrastructure
+# API, database schema, scraper, worker, compose files or infrastructure
 # must go through deploy-immutable-release.sh instead; the workflow decides.
 #
 # Safety properties:

@@ -20,9 +20,6 @@ jobs:
       - name: Validate operations scripts
         run: |
           sh -n infra/backup/run-catalog-backup.sh
-          sh -n infra/backup/run-cms-backup.sh
-          sh -n infra/backup/restore-cms-backup.sh
-          sh -n infra/backup/test-cms-backup.sh
           sh -n infra/backup/test-backup-secret-references.sh
           sh -n infra/backup/test-run-catalog-backup.sh
           sh -n infra/deploy/deploy-immutable-release.sh
@@ -38,8 +35,6 @@ jobs:
           sh -n infra/backup/test-prune-catalog-backups.sh
       - name: Verify backup wrapper evidence
         run: infra/backup/test-run-catalog-backup.sh
-      - name: Verify CMS backup rotation and restore rehearsal
-        run: infra/backup/test-cms-backup.sh
       - name: Verify backup secret references
         run: infra/backup/test-backup-secret-references.sh
       - name: Verify hourly media icon seeding contract
@@ -54,8 +49,6 @@ jobs:
         env:
           WEB_IMAGE: ghcr.io/gildra-foundation/gildra-web@sha256:0000000000000000000000000000000000000000000000000000000000000000
           API_IMAGE: ghcr.io/gildra-foundation/gildra-api@sha256:1111111111111111111111111111111111111111111111111111111111111111
-          CMS_IMAGE: ghcr.io/gildra-foundation/gildra-cms@sha256:2222222222222222222222222222222222222222222222222222222222222222
-          CMS_JOBS_IMAGE: ghcr.io/gildra-foundation/gildra-cms-jobs@sha256:5555555555555555555555555555555555555555555555555555555555555555
           SCRAPER_IMAGE: ghcr.io/gildra-foundation/gildra-scraper@sha256:3333333333333333333333333333333333333333333333333333333333333333
           ROTATION_WORKER_IMAGE: ghcr.io/gildra-foundation/gildra-rotation-sim-worker@sha256:4444444444444444444444444444444444444444444444444444444444444444
           GILDRA_SOURCE_REVISION: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -96,24 +89,6 @@ jobs:
       # Lighthouse (roadmap item 95): accessibility and layout shift are gates, speed is a warning
       # (CI runners are noisy); budgets in lighthouserc.json, reports as an artifact.
       - run: npx --yes @lhci/cli@0.15.1 autorun
-
-  cms:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: cms
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
-        with:
-          node-version: 22.23.2
-          cache: npm
-          cache-dependency-path: cms/package-lock.json
-      - run: npm ci
-      - run: npm run build
-        env:
-          PAYLOAD_SECRET: ci-build-secret
-          PAYLOAD_DATABASE_URL: postgres://ci:ci@localhost/ci
 
   backend:
     runs-on: ubuntu-latest

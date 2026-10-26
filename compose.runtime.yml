@@ -99,12 +99,8 @@ services:
         target: /var/lib/gildra/auction-state
         bind:
           create_host_path: false
-    # Shared CMS (/wow/articles, signed cache refresh) and the first-party Plausible
-    # tracker; read by web builds that include the shared-cms integration.
+    # First-party Plausible tracker.
     environment:
-      CMS_SITE_SLUG: gildra
-      CMS_PUBLIC_URL: https://cms.gildra.net
-      CMS_REVALIDATE_SECRET: ${CMS_REVALIDATE_SECRET_GILDRA:-}
       SITE_PUBLIC_ORIGIN: https://gildra.net
       PLAUSIBLE_SCRIPT_URL: https://gildra.net/stats/js/script.js
       PLAUSIBLE_API_URL: /stats/api/event
@@ -119,62 +115,6 @@ services:
       # Probe every second while starting, so `compose up --wait` in a release
       # returns as soon as the server answers instead of after the first 10 s.
       start_interval: 1s
-
-  # Shared CMS for gildra.net + riftden.com (shared-cms-20261011): admin at cms.gildra.net.
-  cms:
-    init: true
-    read_only: true
-    tmpfs:
-      - /tmp:size=64m,mode=1777
-      - /app/.next/cache:size=64m,mode=0750,uid=1001,gid=1001
-    security_opt:
-      - no-new-privileges:true
-    environment: &cms-shared-env
-      CMS_JOBS_AUTORUN: "false"
-      CMS_REVALIDATE_SECRET_GILDRA: ${CMS_REVALIDATE_SECRET_GILDRA:-}
-      CMS_REVALIDATE_SECRET_RIFTDEN: ${CMS_REVALIDATE_SECRET_RIFTDEN:-}
-      PLAUSIBLE_URL: http://plausible:8000
-      PLAUSIBLE_API_KEY: ${PLAUSIBLE_API_KEY:-}
-      # Sites whose frontend renders draft previews itself (/preview, /cms-preview).
-      CMS_SITE_PREVIEW: ${CMS_SITE_PREVIEW:-}
-      # Reader e-mail stays off until the host mail relay is fully live (PTR).
-      EMAIL_TRANSPORT: disabled
-      EMAIL_FROM_NAME: Gildra Network
-      # Error reporting to GlitchTip (project gildra-cms); off while the DSN is empty.
-      SENTRY_DSN: ${SENTRY_CMS_DSN:-}
-      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
-    networks:
-      default: {}
-      content:
-        aliases: [cms]
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
-      interval: 10s
-      timeout: 5s
-      retries: 18
-      start_period: 60s
-
-  # The only jobs runner: scheduled publishing and signed cache invalidation of the sites.
-  cms-jobs:
-    image: ${CMS_JOBS_IMAGE:-gildra-cms-jobs:shared-cms-20261011}
-    restart: unless-stopped
-    init: true
-    read_only: true
-    tmpfs:
-      - /tmp:size=64m,mode=1777
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      <<: *cms-shared-env
-      PAYLOAD_DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra_cms?sslmode=disable
-      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
-      PAYLOAD_PUBLIC_URL: https://cms.gildra.net
-      CMS_JOBS_INTERVAL_SECONDS: "30"
-    networks:
-      default: {}
-      content: {}
-    depends_on:
-      cms: { condition: service_healthy }
 
   rotation-sim-worker:
     user: "65532:65532"

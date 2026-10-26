@@ -2,7 +2,7 @@
 
 ## Перед каждой выкаткой веба
 
-1. Собрать образ из чистого `git worktree` и поставить его на staging: `sudo sh infra/deploy/deploy-web-staging.sh <образ>` (http://127.0.0.1:3200, читает боевые API и CMS, помечен плашкой «Staging»). Для быстрых итераций можно и локальную сборку.
+1. Собрать образ из чистого `git worktree` и поставить его на staging: `sudo sh infra/deploy/deploy-web-staging.sh <образ>` (http://127.0.0.1:3200, читает боевой API, помечен плашкой «Staging»). Для быстрых итераций можно и локальную сборку.
 2. `npm run qa:release -- --candidate http://127.0.0.1:3200` — ворота против живого сайта, отчёт в `.artifacts/release-gate/<время>/report.md`:
    - главная и книга — 0 px (`qa:home-gate`, правило владельца);
    - внутренние страницы против живого сайта (`visual:diff`, порог `--max`);

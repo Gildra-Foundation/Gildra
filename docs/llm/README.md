@@ -9,7 +9,6 @@ file with `grep -rn` / `Grep`, then read ranges (`grep -n '^#' FILE`, then `sed 
 | New block / page / game | `apps/web/components/blocks/README.md` | design docs unless visual |
 | Valyro components | `docs/llm/valyro-cli.md` | — |
 | Backend / API / DB | `docs/architecture.md`, `docs/backend-domains.md`, `docs/catalog-*.md` for the touched domain | all design docs |
-| CMS (Payload) | `cms/` README/`VALYRO.md`, the `payload` skill | design docs beyond tokens |
 | Deploy / release | `docs/deploy-ovh.md`, `docs/pre-release-checklist.md`, latest section of `HANDOFF.md`, tail of `docs/releases.md` (`sed -n '1,60p'`) | everything else |
 | Auction / gear / talents | the matching `docs/auction-*.md` / `docs/gear-farm-planner.md` plan + its `docs/reports/*` | other plans |
 

@@ -1,5 +1,5 @@
 # Staging copy of gildra.net (roadmap 90): the release candidate's web image on
-# the production host, reading the production API and CMS. A separate compose
+# the production host, reading the production API. A separate compose
 # project, so a full release's `--remove-orphans` never touches it.
 #   UI/QA: http://127.0.0.1:3200 on the host (SSH tunnel from outside); once
 #   staging.gildra.net has a DNS record, nginx serves it there behind basic auth.
@@ -23,9 +23,6 @@ services:
       GILDRA_STAGING: "1"
       API_INTERNAL_URL: http://api:8080
       CATALOG_ACCESS_MODE: public
-      CMS_INTERNAL_URL: http://cms:3001
-      CMS_SITE_SLUG: gildra
-      CMS_PUBLIC_URL: https://cms.gildra.net
       SITE_PUBLIC_ORIGIN: https://staging.gildra.net
       # No AUTH_SECRET: Battle.net callbacks point at production, so sign-in is
       # reported as not configured here.

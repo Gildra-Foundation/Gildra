@@ -33,14 +33,6 @@ jobs:
           - name: api
             context: ./backend
             file: ./backend/Dockerfile
-          - name: cms
-            context: ./cms
-            file: ./cms/Dockerfile
-          # Same source, the `jobs` stage: the only runner of scheduled CMS jobs.
-          - name: cms-jobs
-            context: ./cms
-            file: ./cms/Dockerfile
-            target: jobs
           - name: scraper
             context: ./scraper
             file: ./scraper/Dockerfile
@@ -108,13 +100,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for name in web api cms cms-jobs scraper rotation-sim-worker; do
+          for name in web api scraper rotation-sim-worker; do
             ref="$IMAGE_PREFIX-$name:$IMAGE_SHA"
             digest="$(docker buildx imagetools inspect "$ref" --format '{{json .Manifest.Digest}}' | tr -d '"')"
             printf '%s\n' "$digest" | grep -Eq '^sha256:[0-9a-f]{64}$'
             case "$name" in
               rotation-sim-worker) key=ROTATION_WORKER_IMAGE ;;
-              cms-jobs) key=CMS_JOBS_IMAGE ;;
               *) key="$(printf '%s_IMAGE' "$name" | tr '[:lower:]' '[:upper:]')" ;;
             esac
             printf '%s=%s\n' "$key" "$IMAGE_PREFIX-$name@$digest" >> "$GITHUB_OUTPUT"
@@ -123,8 +114,6 @@ jobs:
         env:
           WEB_IMAGE: ${{ steps.images.outputs.WEB_IMAGE }}
           API_IMAGE: ${{ steps.images.outputs.API_IMAGE }}
-          CMS_IMAGE: ${{ steps.images.outputs.CMS_IMAGE }}
-          CMS_JOBS_IMAGE: ${{ steps.images.outputs.CMS_JOBS_IMAGE }}
           SCRAPER_IMAGE: ${{ steps.images.outputs.SCRAPER_IMAGE }}
           ROTATION_WORKER_IMAGE: ${{ steps.images.outputs.ROTATION_WORKER_IMAGE }}
           GILDRA_SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
@@ -156,8 +145,8 @@ jobs:
           # Front-end only release: every file changed since the last FULL release
           # (the SOURCE_REVISION in the production manifest) is web code, docs or
           # the deployment tooling (it is uploaded with every release and restarts
-          # nothing). Anything else (backend, migrations, CMS, scraper, compose,
-          # nginx, backup and systemd files) takes the full immutable-release
+          # nothing). Anything else (backend, migrations, scraper, compose, nginx,
+          # backup and systemd files) takes the full immutable-release
           # path with its backup and catalog gates.
           web_only='^(apps/web|packages|app|components|lib|public|data|types|messages|i18n|docs|tasks|scripts)/|^(package\.json|package-lock\.json|eslint\.config\.mjs|next\.config\.ts|tsconfig\.json|proxy\.ts|auth\.ts|instrumentation(-client)?\.ts|sentry\.(edge|server)\.config\.ts|postcss\.config\.mjs|components\.json|Dockerfile|\.dockerignore|\.env\.example|CLAUDE\.md|AGENTS\.md|README\.md|CONTEXT\.md|brand\.md|design(-qa)?\.md)$|^\.github/|^infra/deploy/'
           mode=full
@@ -225,15 +214,13 @@ jobs:
           OVH_USER: ${{ secrets.OVH_USER }}
           WEB_IMAGE: ${{ steps.images.outputs.WEB_IMAGE }}
           API_IMAGE: ${{ steps.images.outputs.API_IMAGE }}
-          CMS_IMAGE: ${{ steps.images.outputs.CMS_IMAGE }}
-          CMS_JOBS_IMAGE: ${{ steps.images.outputs.CMS_JOBS_IMAGE }}
           SCRAPER_IMAGE: ${{ steps.images.outputs.SCRAPER_IMAGE }}
           ROTATION_WORKER_IMAGE: ${{ steps.images.outputs.ROTATION_WORKER_IMAGE }}
           GILDRA_SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
           GILDRA_RELEASE_ID: ${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.head_sha }}
         run: |
           ssh "$OVH_USER@$OVH_HOST" \
-            "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' CMS_IMAGE='$CMS_IMAGE' CMS_JOBS_IMAGE='$CMS_JOBS_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' ROTATION_WORKER_IMAGE='$ROTATION_WORKER_IMAGE' GILDRA_SOURCE_REVISION='$GILDRA_SOURCE_REVISION' GILDRA_RELEASE_ID='$GILDRA_RELEASE_ID' GILDRA_ROLLBACK_COMPATIBLE=true /opt/gildra/infra/deploy/deploy-immutable-release.sh"
+            "sudo env WEB_IMAGE='$WEB_IMAGE' API_IMAGE='$API_IMAGE' SCRAPER_IMAGE='$SCRAPER_IMAGE' ROTATION_WORKER_IMAGE='$ROTATION_WORKER_IMAGE' GILDRA_SOURCE_REVISION='$GILDRA_SOURCE_REVISION' GILDRA_RELEASE_ID='$GILDRA_RELEASE_ID' GILDRA_ROLLBACK_COMPATIBLE=true /opt/gildra/infra/deploy/deploy-immutable-release.sh"
       - name: Deploy web image
         if: steps.mode.outputs.mode == 'web'
         env:
