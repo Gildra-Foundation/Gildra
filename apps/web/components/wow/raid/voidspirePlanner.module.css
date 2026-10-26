@@ -31,6 +31,17 @@
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-columns]) { grid-template-columns: minmax(0, .9fr) minmax(0, 1.25fr); }
 
 /* Whole painted tiles retain their own silhouette, crest and measured text face. */
+@media (max-width: 600px) {
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control__viewport) { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); overflow: visible; mask-image: none; }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] [role="radio"]) { min-width: 0; width: 100%; padding-inline: var(--atlas-space-2); font-size: var(--atlas-text-body); }
+}
+@media (max-width: 380px) {
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control__viewport) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control__thumb) { display: none; }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] [role="radio"]) { border: 1px solid transparent; }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] [role="radio"][aria-checked="true"]) { border-color: var(--atlas-accent); background: var(--atlas-accent-wash-strong); box-shadow: inset 0 1px 0 var(--atlas-line-soft), inset 0 -3px 8px var(--atlas-accent-wash-strong); }
+}
+
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-navigation]) > ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-3); overflow: visible; padding: var(--atlas-space-1); scrollbar-width: none; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-navigation]) li { min-width: 0; container-type: inline-size; container-name: voidspire-pull-card; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pull-choice]) {
@@ -214,6 +225,7 @@
 :global([data-transparency="reduced"]) .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-selected]), :global([data-raid-map-progression])) { --void-panel-fill-color: var(--atlas-surface); }
 :global([data-transparency="reduced"]) .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-selected])::before, :global([data-transparency="reduced"]) .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-progression])::before { background: var(--atlas-surface); background-clip: padding-box; }
 @media (forced-colors: active) {
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] [role="radio"][aria-checked="true"]) { background: Highlight; border-color: Highlight; color: HighlightText; }
   .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-cartography]), :global([data-raid-selected]), :global([data-raid-map-progression]), :global([data-raid-schematic]) > div)::before,
   .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-cartography]), :global([data-raid-selected]), :global([data-raid-map-progression]), :global([data-raid-schematic]) > div)::after { display: none; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control) { border-color: ButtonText; background: Canvas; box-shadow: none; }
