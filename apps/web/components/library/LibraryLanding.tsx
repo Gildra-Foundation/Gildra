@@ -1,8 +1,12 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
-import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection, AtlasTile } from "@/components/atlas";
+import { Search } from "lucide-react";
+import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
-import type { CatalogProduct, LibraryDataset } from "@/lib/api/client";
+import type { CatalogProduct, CatalogRecord, LibraryDataset } from "@/lib/api/client";
+import { itemQualityColors } from "@/lib/atlas/dataPalette";
+import { LIBRARY_FEATURED } from "@/lib/library/featured";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
 import { libraryCopy, libraryGroupText } from "@/components/library/libraryCopy";
 import styles from "./library.module.css";
@@ -12,6 +16,8 @@ type Props = {
   lang: "en" | "ru";
   datasets: LibraryDataset[];
   products: CatalogProduct[];
+  /** A few records with icons per featured dataset (the plate strips). */
+  samples: Record<string, CatalogRecord[]>;
   selectedProduct: string;
   unavailable?: boolean;
 };
@@ -45,7 +51,7 @@ function distinctRecordCount(datasets: LibraryDataset[]): number | null {
  * shown edition, then the datasets grouped by area. A card states coverage only
  * where it is incomplete, and a state badge only for datasets that do not apply.
  */
-export function LibraryLanding({ lang, datasets, products, selectedProduct, unavailable = false }: Props) {
+export function LibraryLanding({ lang, datasets, products, samples, selectedProduct, unavailable = false }: Props) {
   const copy = libraryCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
   const formatter = new Intl.NumberFormat(libraryLandingCopy[lang].numberLocale);
@@ -72,8 +78,11 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct, unav
       : state === "refreshing" ? { tone: "info" as const, title: copy.refreshingTitle, text: copy.refreshingText }
         : { tone: "info" as const, title: copy.freshTitle, text: "" };
 
+  const featured = LIBRARY_FEATURED.map((slug) => datasets.find((dataset) => dataset.slug === slug)).filter((dataset): dataset is LibraryDataset => Boolean(dataset && dataset.entityCount > 0));
+  const datasetHref = (dataset: LibraryDataset) => `${prefix}/library/${encodeURIComponent(dataset.slug)}${productQuery}`;
+
   return (
-    <AtlasFrame as="div" lang={lang} scene="library" dataAttributes={{ "data-library-root": true }}>
+    <AtlasFrame as="div" lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
       <AtlasHero
         title={copy.title}
         lede={copy.lede}
@@ -82,6 +91,16 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct, unav
           ...(total === null ? [] : [{ value: formatter.format(total), label: copy.statRecords }]),
           { value: formatter.format(datasets.length), label: copy.statDatasets },
         ]}
+        actions={unavailable ? undefined : (
+          // The whole catalog is searchable on /database; a plain GET form works without JavaScript.
+          <form className={styles.search} role="search" action={`${prefix}/database`} method="get">
+            <label className="sr-only" htmlFor="library-search">{copy.searchLabel}</label>
+            <Search className={styles.searchIcon} aria-hidden="true" />
+            <input id="library-search" name="q" type="search" placeholder={copy.searchPlaceholder} autoComplete="off" required maxLength={200} />
+            {selectedProduct !== "wow" ? <input type="hidden" name="product" value={selectedProduct} /> : null}
+            <button type="submit">{copy.searchSubmit}</button>
+          </form>
+        )}
       />
 
       {unavailable ? <LibraryUnavailable lang={lang} /> : (
@@ -99,12 +118,42 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct, unav
             {notice.text ? `${notice.text} ` : ""}{checkedText}
           </AtlasNotice>
 
-          <AtlasSection id="datasets" title={copy.datasetsTitle} description={copy.datasetsText}>
+          {featured.length ? (
+            <AtlasSection id="featured" title={copy.featuredTitle} description={copy.featuredText}>
+              <ul className={styles.featured}>
+                {featured.map((dataset) => (
+                  <li key={dataset.slug} className={styles.plate}>
+                    <span className={styles.plateIcon} aria-hidden="true">
+                      {/* The dataset preview, or the icon of its first sample record when the catalog has not chosen one yet. */}
+                      <ResilientImage src={dataset.previewImageUrl || samples[dataset.slug]?.[0]?.iconUrl} alt="" width={58} height={58} loading="lazy" fallback={<CatalogGlyph symbol={dataset.iconSymbol} />} />
+                    </span>
+                    <h3><Link href={datasetHref(dataset)} prefetch={false} className={styles.plateLink}>{dataset.name}</Link></h3>
+                    <p className={styles.plateText}>{dataset.description}</p>
+                    <p className={styles.plateCount}><b>{formatter.format(dataset.entityCount)}</b> {copy.statRecords}</p>
+                    {samples[dataset.slug]?.length ? (
+                      <span className={styles.strip} aria-hidden="true">
+                        {samples[dataset.slug].map((record) => {
+                          const colour = record.quality !== undefined ? itemQualityColors[record.quality as keyof typeof itemQualityColors] : undefined;
+                          return (
+                            <span key={record.id} style={colour ? { "--record-quality": colour.frame } as CSSProperties : undefined}>
+                              <ResilientImage src={record.iconUrl} alt="" width={32} height={32} loading="lazy" fallback={null} />
+                            </span>
+                          );
+                        })}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </AtlasSection>
+          ) : null}
+
+          <AtlasSection id="datasets" title={copy.datasetsTitle} description={copy.datasetsText(datasets.length)}>
             <div className={styles.groups}>
               {groups.map(([group, entries]) => (
                 <section key={group} className={styles.group} aria-labelledby={`library-group-${group}`}>
                   <h3 id={`library-group-${group}`}>{libraryGroupText[group]?.[lang] ?? group}</h3>
-                  <ul className={styles.grid}>
+                  <ul className={styles.list}>
                     {entries.map((dataset) => {
                       const gaps = dataset.applicability === "applicable" ? [
                         { label: copy.coverage.text, value: coveredPercent(dataset.verifiedLocalizedCount, dataset.entityCount) },
@@ -113,22 +162,20 @@ export function LibraryLanding({ lang, datasets, products, selectedProduct, unav
                       ].filter((entry) => entry.value < 100) : [];
                       const badge = dataset.applicability === "pending_source" ? copy.pendingSource : dataset.applicability === "not_applicable" ? copy.notApplicable : null;
                       return (
-                        <li key={dataset.slug}>
-                          <AtlasTile
-                            href={`${prefix}/library/${encodeURIComponent(dataset.slug)}${productQuery}`}
-                            icon={<ResilientImage src={dataset.previewImageUrl} alt="" width={44} height={44} loading="lazy" fallback={<CatalogGlyph symbol={dataset.iconSymbol} />} />}
-                            title={dataset.name}
-                            text={(
-                              <>
-                                <span className={styles.description}>{dataset.description}</span>
-                                <span className={styles.facts}>
-                                  <b>{copy.records(formatter.format(dataset.entityCount))}</b>
-                                  {badge ? <span className={styles.state} title={dataset.applicabilityReason || undefined}>{badge}</span> : null}
-                                  {gaps.length ? <span className={styles.gaps} aria-label={copy.coverageLabel}>{gaps.map((gap) => `${gap.label} ${gap.value}%`).join(" · ")}</span> : null}
-                                </span>
-                              </>
-                            )}
-                          />
+                        <li key={dataset.slug} className={styles.row}>
+                          <span className={styles.rowIcon} aria-hidden="true">
+                            <ResilientImage src={dataset.previewImageUrl} alt="" width={36} height={36} loading="lazy" fallback={<CatalogGlyph symbol={dataset.iconSymbol} />} />
+                          </span>
+                          <span className={styles.rowBody}>
+                            <Link href={datasetHref(dataset)} prefetch={false} className={styles.rowLink}>{dataset.name}</Link>
+                            {badge || gaps.length ? (
+                              <span className={styles.rowNote}>
+                                {badge ? <span className={styles.state} title={dataset.applicabilityReason || undefined}>{badge}</span> : null}
+                                {gaps.length ? <span className={styles.gaps} aria-label={copy.coverageLabel}>{gaps.map((gap) => `${gap.label} ${gap.value}%`).join(" · ")}</span> : null}
+                              </span>
+                            ) : null}
+                          </span>
+                          <b className={styles.rowCount}>{formatter.format(dataset.entityCount)}</b>
                         </li>
                       );
                     })}

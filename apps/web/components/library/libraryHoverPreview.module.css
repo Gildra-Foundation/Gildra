@@ -1,0 +1,28 @@
+/* atlas:strict — hover preview of the in-game tooltip beside a library card (mouse only). */
+
+.popover {
+  position: fixed;
+  z-index: 60;
+  width: min(420px, calc(100vw - 24px));
+  pointer-events: none;
+  animation: appear var(--atlas-duration-fast) var(--atlas-ease) both;
+}
+
+/* The legacy tooltip starts hidden (it was a hover child of rows); here it is shown as soon as it is mounted. */
+.popover > :global(.db-wow-tooltip) { position: relative; inset: auto; width: 100%; max-width: 100%; opacity: 1; visibility: visible; transform: none; }
+
+.loading {
+  width: auto;
+  padding: var(--atlas-space-2) var(--atlas-space-3);
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-muted);
+  background: var(--atlas-surface-sunken);
+  font-size: var(--atlas-text-meta);
+}
+
+@keyframes appear { from { opacity: 0; transform: translateY(4px); } }
+
+@media (prefers-reduced-motion: reduce) { .popover { animation: none; } }
+:global([data-motion="reduced"]) .popover,
+:global([data-ui-motion="reduce"]) .popover { animation: none; }

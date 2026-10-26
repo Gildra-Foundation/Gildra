@@ -2,6 +2,7 @@ import { catalogLocaleView } from "@/lib/catalogLocale";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EntityDetailPage } from "@/components/database/EntityDetailPage";
+import { LibraryModelSlot } from "@/components/library/model/LibraryModelSlot";
 import { getCatalogEntity, getCatalogEntityComparison, getCatalogEntityQuality, getCatalogEntityTypes, getCatalogEntityVersions, getCatalogRelationships, getLibraryDatasets } from "@/lib/api/client";
 import { catalogReadable, requireCatalogSession } from "@/lib/library/server";
 
@@ -33,7 +34,8 @@ export default async function Page({ params, searchParams }: Props) {
   ]);
   const dataset = datasets.find((entry) => entry.slug === datasetSlug);
   if (!entity || !dataset || entity.type !== type || entity.type !== dataset.entityType || entity.product !== product) notFound();
-  return <EntityDetailPage entity={entity} entityType={entityTypes.find((entry) => entry.type === entity.type)} relationships={relationships} quality={quality} versions={versions} comparison={comparison} selectedFromBuildId={fromBuildId} selectedToBuildId={toBuildId} lang="ru" libraryDataset={{ slug: dataset.slug, name: dataset.name }} />;
+  const model = await LibraryModelSlot({ dataset: dataset.slug, type: entity.type, id: entity.id, externalId: entity.externalId, name: entity.name || String(entity.externalId), lang: "ru" });
+  return <EntityDetailPage entity={entity} entityType={entityTypes.find((entry) => entry.type === entity.type)} relationships={relationships} quality={quality} versions={versions} comparison={comparison} selectedFromBuildId={fromBuildId} selectedToBuildId={toBuildId} lang="ru" libraryDataset={{ slug: dataset.slug, name: dataset.name }} model={model} />;
 }
 
 function optionalBuildID(value?: string) { const parsed = Number(value); return value && Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined; }

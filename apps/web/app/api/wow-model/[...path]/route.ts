@@ -15,18 +15,25 @@ export async function GET(
   }
 
   let upstream: Response;
+  // Time out waiting for headers only: a 10–19 MB model body takes longer than
+  // that on a slow phone, and aborting mid-stream truncates the file.
+  const headersTimeout = new AbortController();
+  const timer = setTimeout(() => headersTimeout.abort(), 20_000);
   try {
     upstream = await fetch(new URL(path, MODEL_ORIGIN), {
       headers: { "User-Agent": "Gildra character model viewer" },
       cache: "no-store",
-      signal: AbortSignal.timeout(20_000),
+      signal: AbortSignal.any([headersTimeout.signal, request.signal]),
     });
   } catch {
+    clearTimeout(timer);
     return NextResponse.json(
       { message: "Model asset service is temporarily unavailable" },
       { status: 502, headers: { "Cache-Control": "no-store" } },
     );
   }
+
+  clearTimeout(timer);
 
   if (!upstream.ok || !upstream.body) {
     return NextResponse.json(

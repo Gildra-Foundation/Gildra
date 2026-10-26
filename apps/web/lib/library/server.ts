@@ -1,7 +1,8 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
+import { LIBRARY_FEATURED } from "@/lib/library/featured";
+import { getCatalogPage, getCatalogProducts, getLibraryDatasets, type CatalogRecord } from "@/lib/api/client";
 import { runtimeFlags } from "@/lib/flags";
 
 /**
@@ -36,16 +37,25 @@ export async function requireCatalogSession(path: string) {
   redirect(`/api-console?next=${encodeURIComponent(next)}`);
 }
 
+
+/** A few records with icons per featured dataset (cached like any catalog page); a failed read leaves the strip out. */
+async function featuredSamples(locale: "en_US" | "ru_RU", product: string, slugs: string[]) {
+  const pages = await Promise.all(slugs.map((dataset) => getCatalogPage({ locale, product, dataset, limit: 12, timeoutMs: 4000 })
+    .then((page) => page.data.filter((record) => record.iconUrl).slice(0, 5)).catch(() => [] as CatalogRecord[])));
+  return Object.fromEntries(slugs.map((slug, index) => [slug, pages[index]])) as Record<string, CatalogRecord[]>;
+}
+
 export async function getLibraryLandingData(locale: "en_US" | "ru_RU", product: string) {
   try {
     const [datasets, products] = await Promise.all([getLibraryDatasets(locale, product), getCatalogProducts()]);
-    return { datasets, products, unavailable: false as const };
+    const featured = LIBRARY_FEATURED.filter((slug) => datasets.some((dataset) => dataset.slug === slug && dataset.entityCount > 0));
+    return { datasets, products, samples: await featuredSamples(locale, product, featured), unavailable: false as const };
   } catch (error) {
     // A blocked publication policy or a temporary upstream failure must not
     // turn the server-rendered library into a generic 500 page. The detailed
     // error stays in server logs; the browser receives a stable, actionable
     // state without exposing internal URLs or policy internals.
     console.error("library landing data unavailable", error);
-    return { datasets: [], products: [], unavailable: true as const };
+    return { datasets: [], products: [], samples: {} as Record<string, CatalogRecord[]>, unavailable: true as const };
   }
 }

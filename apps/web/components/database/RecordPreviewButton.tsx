@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from "react";
 import { Eye } from "lucide-react";
 import type { CatalogRecord } from "@/lib/api/client";
 import { trackCatalogEvent } from "@/lib/catalogAnalytics";
+import { withVariantQuality } from "@/lib/library/recordQuality";
 
 const loadTooltip = () => import("@/components/database/DatabaseEntityTooltip").then((module) => module.EntityTooltip);
 const EntityTooltip = dynamic(loadTooltip, {
@@ -20,8 +21,10 @@ type Labels = { label: string; loading: string; error: string; retry: string };
  * demand and opens it as a dialog. The dialog module loads only on hover,
  * focus or click, so rows cost no tooltip code until someone asks for one.
  */
-export function RecordPreviewButton({ id, externalId, type, lang, iconSymbol, labels, className, errorClassName }: {
+export function RecordPreviewButton({ id, externalId, type, lang, iconSymbol, iconUrl, labels, className, errorClassName }: {
   id: string; externalId: number; type: string; lang: "en" | "ru"; iconSymbol?: string; labels: Labels; className?: string; errorClassName?: string;
+  /** Icon of the row: the record endpoint carries no media URL, so the tooltip borrows it. */
+  iconUrl?: string | null;
 }) {
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
   const [entity, setEntity] = useState<CatalogRecord | null>(null);
@@ -39,7 +42,8 @@ export function RecordPreviewButton({ id, externalId, type, lang, iconSymbol, la
     try {
       const response = await fetch(`/api/catalog/entities/${id}?locale=${lang === "ru" ? "ru_RU" : "en_US"}`);
       if (!response.ok) throw new Error(String(response.status));
-      const detail = catalogLocaleView(await response.json() as CatalogRecord, lang);
+      const record = await response.json() as CatalogRecord;
+      const detail = withVariantQuality(catalogLocaleView({ ...record, iconUrl: record.iconUrl || iconUrl || undefined }, lang));
       if (!detail.tooltip) throw new Error("no tooltip");
       loaded.current = detail;
       setEntity(detail);

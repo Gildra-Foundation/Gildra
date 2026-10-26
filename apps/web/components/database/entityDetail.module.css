@@ -1,15 +1,55 @@
 /* atlas:strict — catalog record page (/database/<type>/<id>/<slug>, /library/…): hero icon and facts, tooltip stage, relations, record-data disclosures. Layout only, atlas tokens. */
 
 /* ---------- Hero ---------- */
-.heroIcon {
-  display: grid;
-  width: 46px;
-  height: 46px;
-  place-items: center;
-  overflow: hidden;
+/* Title row: the record's icon in its item-quality frame (data colour), then the name in that colour. */
+.heroTitle {
+  --record-quality: var(--atlas-line-strong);
+  --record-quality-text: inherit;
+  display: flex;
+  align-items: center;
+  gap: clamp(var(--atlas-space-3), 2vw, var(--atlas-space-5));
 }
 
-.heroIcon img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.heroName { min-width: 0; color: var(--record-quality-text); overflow-wrap: anywhere; text-wrap: balance; }
+
+.heroIcon {
+  display: grid;
+  flex: none;
+  width: clamp(64px, 3.2rem + 3vw, 104px);
+  aspect-ratio: 1;
+  place-items: center;
+  padding: 4px;
+  border-radius: var(--atlas-radius);
+  background: linear-gradient(160deg, var(--record-quality), color-mix(in srgb, var(--record-quality) 35%, var(--atlas-bg)));
+  box-shadow: 0 0 0 1px var(--atlas-bg), 0 10px 28px color-mix(in srgb, var(--atlas-bg) 70%, transparent);
+}
+
+.heroIcon > * { width: 100%; height: 100%; }
+.heroIcon img { display: block; border-radius: 1px; object-fit: cover; background: var(--atlas-surface-sunken); }
+.heroIcon > :not(img) { display: grid; place-items: center; background: var(--atlas-surface-sunken); color: var(--atlas-text-subtle); }
+
+.qualityValue { color: var(--record-quality-text); }
+
+/* "Where to get it": one quiet panel under the lede with up to three sources from the tooltip data. */
+.acquisition {
+  display: grid;
+  gap: 2px;
+  max-width: 68ch;
+  padding: var(--atlas-space-3) var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-soft);
+  border-left: 2px solid var(--atlas-accent-2);
+  background: color-mix(in srgb, var(--atlas-surface) 80%, transparent);
+}
+
+.acquisition > span {
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+
+.acquisition ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); }
 
 .glyph {
   width: 26px;
@@ -38,6 +78,41 @@
 }
 
 .facts { min-width: 240px; background: var(--atlas-surface-sunken); }
+
+/* ---------- Tooltip (+ 3D model) ---------- */
+/* With a model: tooltip left, the viewer right. The viewer owns its canvas background and the
+   top-left / bottom-right corners for its own controls, so the frame here is only a hairline. */
+.tooltipWithModel {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(320px, 440px);
+  justify-content: space-between;
+  align-items: start;
+  gap: var(--atlas-space-6);
+}
+
+.model { display: grid; gap: var(--atlas-space-2); margin: 0; }
+
+.model figcaption {
+  color: var(--atlas-accent);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+
+.modelStage {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-sunken);
+}
+
+@media (max-width: 900px) {
+  .tooltipWithModel { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-5); }
+  .modelStage { aspect-ratio: 1; }
+}
 
 /* ---------- Tooltip ---------- */
 .tooltipStage {

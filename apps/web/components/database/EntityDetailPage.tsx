@@ -1,5 +1,5 @@
 import { catalogLocaleView } from "@/lib/catalogLocale";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { AtlasFrame, AtlasHero, AtlasMetaList, AtlasNotice, AtlasSection, AtlasTable } from "@/components/atlas";
 import { AtlasDisclosure } from "@/components/atlas";
 import { formatAtlasDate } from "@gildra/atlas-ui/format";
@@ -7,16 +7,20 @@ import { PageShell } from "@/components/layout/PageShell";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph, TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
-import { TooltipBody, tooltipClassName } from "@/components/database/TooltipContent";
+import { acquisitionLabel, TooltipBody, tooltipClassName } from "@/components/database/TooltipContent";
+import { itemQualityColors } from "@/lib/atlas/dataPalette";
+import { withVariantQuality } from "@/lib/library/recordQuality";
 import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
 import { entityDetailCopy, mediaKindLabels, qualityCheckCopy, relationAttributeLabels, relationLabels, rewardTypeLabels, type EntityDetailCopy } from "@/components/database/entityDetailCopy";
-import type { CatalogEntityComparison, CatalogEntityQuality, CatalogEntityType, CatalogEntityVersion, CatalogRelationship, GameEntity } from "@/lib/api/client";
+import { getCatalogPage, type CatalogEntityComparison, type CatalogEntityQuality, type CatalogEntityType, type CatalogEntityVersion, type CatalogRelationship, type GameEntity } from "@/lib/api/client";
 import { formatQuestText } from "@/lib/gameText";
 import type { Lang } from "@/lib/i18n";
 import styles from "./entityDetail.module.css";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 
-type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships: CatalogRelationship[]; quality: CatalogEntityQuality | null; versions: CatalogEntityVersion[]; comparison: CatalogEntityComparison | null; selectedFromBuildId?: number; selectedToBuildId?: number; lang: Lang; libraryDataset?: { slug: string; name: string } };
+type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships: CatalogRelationship[]; quality: CatalogEntityQuality | null; versions: CatalogEntityVersion[]; comparison: CatalogEntityComparison | null; selectedFromBuildId?: number; selectedToBuildId?: number; lang: Lang; libraryDataset?: { slug: string; name: string };
+  /** 3D model of the record (library mounts and transmog sets); the tooltip section gets a second column for it. */
+  model?: ReactNode };
 
 function versionLabel(version: CatalogEntityVersion) { return version.buildVersion || `#${version.buildNumber}`; }
 function displayValue(value: unknown, copy: EntityDetailCopy) {
@@ -43,6 +47,38 @@ function relationshipAttributes(attributes: Record<string, unknown>, lang: Lang,
     });
 }
 
+/**
+ * The record endpoint names the icon but carries no media URL; the summary of
+ * the same record has it. One indexed ID lookup (cached like the page) fills
+ * the hero and tooltip icon; on any failure the type glyph stays.
+ */
+async function withSummaryIcon(entity: GameEntity, lang: Lang): Promise<GameEntity> {
+  if (entity.iconUrl || !entity.iconName) return entity;
+  try {
+    const page = await getCatalogPage({ externalIds: [entity.externalId], type: entity.type, product: entity.product, locale: lang === "ru" ? "ru_RU" : "en_US", limit: 100, timeoutMs: 4000 });
+    const iconUrl = page.data.find((record) => record.id === entity.id)?.iconUrl;
+    return iconUrl ? { ...entity, iconUrl } : entity;
+  } catch {
+    return entity;
+  }
+}
+
+/** Item facts the hero shows as counters, read from the tooltip blocks (the record endpoint has no item fields of its own). */
+function itemFacts(entity: GameEntity) {
+  const blocks = entity.tooltip?.blocks ?? [];
+  const block = (type: string) => blocks.find((entry) => String(entry.type ?? "") === type);
+  const number = (value: unknown) => (typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined);
+  const variants = block("item_variants")?.entries;
+  const base = Array.isArray(variants) ? (variants as Record<string, unknown>[]).find((variant) => variant.key === "base") ?? (variants[0] as Record<string, unknown> | undefined) : undefined;
+  const quality = typeof entity.quality === "number" ? entity.quality : typeof base?.quality === "number" ? base.quality : undefined;
+  return {
+    itemLevel: number(block("item_level")?.value) ?? number(base?.item_level),
+    requiredLevel: number(block("required_level")?.value),
+    quality: quality !== undefined && quality in itemQualityColors ? quality as keyof typeof itemQualityColors : undefined,
+    acquisition: blocks.filter((entry) => String(entry.type ?? "") === "acquisition"),
+  };
+}
+
 /** Folded block of the record page (kit AtlasDisclosure, framed): a title and a short fact on the summary line. */
 function Disclosure({ title, meta, open, children }: { title: ReactNode; meta?: ReactNode; open?: boolean; children: ReactNode }) {
   return (
@@ -59,8 +95,8 @@ function Disclosure({ title, meta, open, children }: { title: ReactNode; meta?: 
  * "record data" section whose secondary details stay collapsed. Server-only:
  * the tooltip markup renders here, no tooltip code ships to the browser.
  */
-export function EntityDetailPage({ entity, entityType, relationships, quality, versions, comparison, selectedFromBuildId, selectedToBuildId, lang, libraryDataset }: Props) {
-  entity = catalogLocaleView(entity, lang);
+export async function EntityDetailPage({ entity, entityType, relationships, quality, versions, comparison, selectedFromBuildId, selectedToBuildId, lang, libraryDataset, model }: Props) {
+  entity = await withSummaryIcon(catalogLocaleView(entity, lang), lang);
   const copy = entityDetailCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
   const builds = Array.from(new Map(versions.map((version) => [version.buildId, version])).values());
@@ -80,6 +116,11 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
     : [{ label: copy.database, href: `${prefix}/database` }, { label: entityType?.label ?? typeLabel, href: `${prefix}/database?type=${encodeURIComponent(entity.type)}` }, { label: displayName }];
   const buildFact = quality ? `${quality.buildVersion} · ${quality.buildNumber}` : entity.buildId ? String(entity.buildId) : null;
   const comparing = Boolean(selectedFromBuildId || selectedToBuildId);
+  const facts = itemFacts(entity);
+  const qualityColour = facts.quality !== undefined ? itemQualityColors[facts.quality] : undefined;
+  const heroStyle = qualityColour ? { "--record-quality": qualityColour.frame, "--record-quality-text": qualityColour.text } as CSSProperties : undefined;
+  const acquisition = Array.from(new Set(facts.acquisition.map((block) => acquisitionLabel(block, lang))));
+  const tooltipEntity = withVariantQuality(entity);
 
   return (
     <PageShell lang={lang}>
@@ -87,21 +128,32 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
         <AtlasHero
           breadcrumbs={breadcrumbs}
           breadcrumbsLabel={copy.breadcrumbsLabel}
-          emblem={(
-            <span className={styles.heroIcon}>
-              <ResilientImage src={entity.iconUrl} alt="" fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
+          eyebrow={typeLabel}
+          title={(
+            <span className={styles.heroTitle} style={heroStyle} data-quality={qualityColour ? facts.quality : undefined}>
+              {/* The record's own icon in its quality frame: identity, not decoration, so it stays on phones too. */}
+              <span className={styles.heroIcon} aria-hidden="true">
+                <ResilientImage src={entity.iconUrl} alt="" width={96} height={96} fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
+              </span>
+              <span className={styles.heroName}>{displayName}</span>
             </span>
           )}
-          emblemShape="square"
-          eyebrow={typeLabel}
-          title={displayName}
           lede={description ? <span className={styles.lede}>{description}</span> : undefined}
           actions={<>
+            {acquisition.length ? (
+              <div className={styles.acquisition}>
+                <span>{copy.acquisition}</span>
+                <ul>{acquisition.slice(0, 3).map((line) => <li key={line}>{line}</li>)}</ul>
+              </div>
+            ) : null}
             {unresolvedDescription ? <p className={styles.warning} role="status">{copy.unresolved}</p> : null}
             <AtlasShareButton title={String(displayName)} locale={lang === "ru" ? "ru" : "en"} />
           </>}
           aside={(
             <AtlasMetaList columns={1} className={styles.facts} items={[
+              ...(facts.itemLevel ? [{ label: copy.itemLevel, value: facts.itemLevel }] : []),
+              ...(facts.requiredLevel ? [{ label: copy.requiredLevel, value: facts.requiredLevel }] : []),
+              ...(qualityColour && facts.quality !== undefined ? [{ label: copy.quality, value: <span className={styles.qualityValue} style={heroStyle}>{copy.qualityNames[facts.quality]}</span> }] : []),
               { label: copy.gameId, value: entity.externalId },
               ...(buildFact ? [{ label: copy.build, value: buildFact }] : []),
               { label: copy.updated, value: formatAtlasDate(entity.updatedAt, lang) },
@@ -110,15 +162,23 @@ export function EntityDetailPage({ entity, entityType, relationships, quality, v
         />
 
         <AtlasSection id="tooltip" title={copy.tooltipTitle} description={copy.tooltipText}>
-          {entity.tooltip ? (
-            <div className={styles.tooltipStage}>
-              <div data-atlas-scope className={tooltipClassName(entity, "page")} role="region" aria-labelledby={`tooltip-name-${entity.id}`}>
-                <TooltipBody entity={entity} lang={lang} iconSymbol={iconSymbol} />
+          <div className={model ? styles.tooltipWithModel : undefined}>
+            {entity.tooltip ? (
+              <div className={styles.tooltipStage}>
+                <div data-atlas-scope className={tooltipClassName(tooltipEntity, "page")} role="region" aria-labelledby={`tooltip-name-${entity.id}`}>
+                  <TooltipBody entity={tooltipEntity} lang={lang} iconSymbol={iconSymbol} />
+                </div>
               </div>
-            </div>
-          ) : (
-            <AtlasNotice title={copy.tooltipMissingTitle}>{copy.tooltipMissingText}</AtlasNotice>
-          )}
+            ) : (
+              <AtlasNotice title={copy.tooltipMissingTitle}>{copy.tooltipMissingText}</AtlasNotice>
+            )}
+            {model ? (
+              <figure className={styles.model}>
+                <figcaption>{copy.modelTitle}</figcaption>
+                <div className={styles.modelStage}>{model}</div>
+              </figure>
+            ) : null}
+          </div>
         </AtlasSection>
 
         {relationships.length ? (

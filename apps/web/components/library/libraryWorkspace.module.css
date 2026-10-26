@@ -1,0 +1,77 @@
+/* atlas:strict — library additions to the catalog workspace: one-click category rails and the card / tray grids. */
+
+.rail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--atlas-space-2);
+  min-width: 0;
+}
+
+.railLabel {
+  color: var(--atlas-accent);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+
+.railChips { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); min-width: 0; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  min-height: 40px;
+  padding: 0 var(--atlas-space-4);
+  border: 1px solid var(--atlas-line);
+  border-radius: 999px;
+  color: var(--atlas-text);
+  background: color-mix(in srgb, var(--atlas-surface) 70%, transparent);
+  font-size: var(--atlas-text-small);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+}
+
+.chip b { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
+.chip:hover { border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
+.chip[aria-current="true"] { border-color: var(--atlas-accent); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash-strong); }
+.chip[aria-current="true"] b { color: var(--atlas-accent-strong); }
+.chip:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+.cards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: var(--atlas-space-3); }
+.tray { grid-template-columns: repeat(auto-fill, minmax(min(100%, 208px), 1fr)); gap: var(--atlas-space-3); }
+
+.fallback {
+  justify-self: start;
+  padding: 0 5px;
+  border: 1px solid var(--atlas-line-soft);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-label);
+  font-style: normal;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  /* Each rail is one scrollable row on phones instead of a wall of wrapped chips. */
+  .railChips {
+    flex-wrap: nowrap;
+    margin-inline: calc(var(--atlas-space-3) * -1);
+    padding: 0 var(--atlas-space-3) 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .chip { flex: none; min-height: 44px; }
+  .cards { grid-template-columns: minmax(0, 1fr); }
+  .tray { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+}
+
+@media (prefers-reduced-motion: reduce) { .chip { transition: none; } }
+
+@media (forced-colors: active) {
+  .chip { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
+  .chip[aria-current="true"] { border-width: 2px; }
+}

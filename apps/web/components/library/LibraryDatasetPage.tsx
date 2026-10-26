@@ -6,6 +6,8 @@ import { CatalogTotal } from "@/components/database/CatalogTotal";
 import { PageShell } from "@/components/layout/PageShell";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
 import { libraryCopy } from "@/components/library/libraryCopy";
+import { formatCount } from "@/components/database/databaseCopy";
+import { libraryCardLayout, libraryRails } from "@/components/library/libraryRails";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
 import { requireCatalogSession } from "@/lib/library/server";
 
@@ -46,10 +48,16 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
     console.error("library dataset unavailable", error);
     return unavailable;
   }
+  const productName = products.find((entry) => entry.slug === product)?.name ?? copy.defaultProduct;
+  // "12.1.0.69587" → "12.1.0": the patch a player recognises; the full build stays on record pages.
+  const patch = dataset.buildVersion?.split(".").slice(0, 3).join(".");
   return (
     <PageShell lang={lang}>
-      <AtlasFrame as="div" lang={lang} scene="library" dataAttributes={{ "data-library-root": true }}>
+      <AtlasFrame as="div" lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
         <AtlasHero
+          eyebrow={patch ? `${productName} · ${patch}` : productName}
+          statsLabel={copy.statsLabel}
+          stats={dataset.entityCount ? [{ value: formatCount(dataset.entityCount, lang), label: copy.statRecords }] : undefined}
           breadcrumbs={[{ label: copy.library, href: `${prefix}/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}` }, { label: dataset.name }]}
           breadcrumbsLabel={copy.breadcrumbsLabel}
           title={dataset.name}
@@ -71,7 +79,7 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
           maxItemLevel={filters.maxLevel ?? ""}
           minRequiredLevel={filters.minRequiredLevel ?? ""}
           maxRequiredLevel={filters.maxRequiredLevel ?? ""}
-          libraryDataset={{ slug: dataset.slug }}
+          libraryDataset={{ slug: dataset.slug, layout: libraryCardLayout(dataset.slug), rails: libraryRails(dataset.slug, categories, lang) }}
         />
       </AtlasFrame>
     </PageShell>

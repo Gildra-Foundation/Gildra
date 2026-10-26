@@ -1,0 +1,120 @@
+/* atlas:strict — library 3D model viewer: fills the slot the page frames; no frame, background or title of its own. */
+
+.viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.viewer:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
+
+.host,
+.host > * {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.host canvas { display: block; width: 100% !important; height: 100% !important; }
+
+/* The upstream viewer paints a light-grey progress layer while it loads: keep
+   the canvas invisible (but laid out, so it sizes itself) until the model is ready. */
+.host { opacity: 0; transition: opacity var(--atlas-duration-enter) var(--atlas-ease); }
+.viewer[data-model-state="ready"] .host { opacity: 1; }
+
+.viewer[data-model-state="ready"] .host { cursor: grab; }
+.viewer[data-model-state="ready"] .host:active { cursor: grabbing; }
+
+.fallbackImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+.status {
+  position: absolute;
+  inset: auto var(--atlas-space-3) var(--atlas-space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--atlas-space-2);
+  margin: 0;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  text-align: center;
+}
+
+.viewer[data-model-state="idle"] .status,
+.viewer[data-model-state="loading"] .status { inset: 0; }
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--atlas-line);
+  border-top-color: var(--atlas-accent);
+  border-radius: 50%;
+  animation: spin var(--atlas-duration-slow) linear infinite;
+}
+
+.controls,
+.options {
+  position: absolute;
+  display: flex;
+  gap: var(--atlas-space-1);
+}
+
+.controls { right: var(--atlas-space-2); bottom: var(--atlas-space-2); }
+.options .button { font-size: var(--atlas-text-small); font-weight: 600; }
+.options { left: var(--atlas-space-2); top: var(--atlas-space-2); }
+
+.button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--atlas-space-2);
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius-control);
+  background: var(--atlas-surface-raised);
+  color: var(--atlas-text-strong);
+  font: inherit;
+  font-size: var(--atlas-text-body);
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
+}
+
+.button:hover { border-color: var(--atlas-line-strong); background: var(--atlas-surface-selected); }
+.button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.button[aria-pressed="true"] { border-color: var(--atlas-accent); color: var(--atlas-accent-strong); }
+.wide { font-size: var(--atlas-text-small); }
+
+.load {
+  gap: var(--atlas-space-1);
+  padding: var(--atlas-space-2) var(--atlas-space-4);
+  font-size: var(--atlas-text-small);
+  font-weight: 600;
+}
+
+.load small { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-weight: 400; }
+
+.touchShield { position: absolute; inset: 0; touch-action: pan-y; }
+
+@keyframes spin { to { transform: rotate(1turn); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+  .button,
+  .host { transition: none; }
+}
+
+:global(html[data-motion="reduced"]) .spinner { animation: none; }
+:global(html[data-motion="reduced"]) .host { transition: none; }

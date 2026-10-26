@@ -456,7 +456,8 @@ function statName(id: number, lang: Lang) {
   return names[id]?.[lang === "ru" ? 1 : 0] ?? `${tooltipContentCopy[lang].stat} #${id}`;
 }
 
-function acquisitionLabel(block: Record<string, unknown>, lang: Lang) {
+/** "Dropped by: Vexie — Liberation of Undermine" line of an acquisition block (tooltip and record hero). */
+export function acquisitionLabel(block: Record<string, unknown>, lang: Lang) {
   const sourceType = String(block.source_type ?? "");
   const name = String(block.name ?? "");
   const location = String(block.location ?? "");

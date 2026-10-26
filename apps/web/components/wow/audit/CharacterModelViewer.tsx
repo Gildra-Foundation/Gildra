@@ -1,10 +1,10 @@
 "use client";
 
-import $ from "jquery";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { CharacterAppearanceProfile } from "@/lib/wow/characterAudit";
 import styles from "./characterAuditPage.module.css";
 import type { Lang } from "@/lib/i18n";
+import { configureZamViewerGlobals, createZamViewer, loadZamViewerScript, ZAM_CONTENT_PATH, ZAM_MODEL_TYPE, type WowViewer } from "@/lib/wow/zamModelViewer";
 
 type ViewerProps = {
   lang?: Lang;
@@ -16,63 +16,7 @@ type ViewerProps = {
   accent: string;
   characterSlug: string;
 };
-type WowRenderer = {
-  distance: number;
-  zenith: number;
-  azimuth: number;
-  actors?: unknown[];
-  downloads?: Record<string, unknown>;
-  progressShown?: boolean;
-};
-type WowViewer = { renderer: WowRenderer | null; destroy?: () => void };
-type WowViewerConstructor = new (options: Record<string, unknown>) => WowViewer;
 type WowCustomization = { Options: Array<{ Id: number; Choices: Array<{ Id: number }> }> };
-
-declare global {
-  interface Window {
-    $: JQueryStatic;
-    jQuery: JQueryStatic;
-    WH?: Record<string, unknown>;
-    ZamModelViewer?: WowViewerConstructor;
-  }
-}
-
-const VIEWER_SCRIPT = "https://wow.zamimg.com/modelviewer/live/viewer/viewer.min.js";
-const CONTENT_PATH = "/api/wow-model/";
-let viewerScriptPromise: Promise<void> | null = null;
-
-function loadViewerScript() {
-  if (window.ZamModelViewer) return Promise.resolve();
-  if (viewerScriptPromise) return viewerScriptPromise;
-  viewerScriptPromise = new Promise<void>((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${VIEWER_SCRIPT}"]`);
-    if (existing) {
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error("viewer script unavailable")), { once: true });
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = VIEWER_SCRIPT;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("viewer script unavailable"));
-    document.head.appendChild(script);
-  });
-  viewerScriptPromise.catch(() => { viewerScriptPromise = null; });
-  return viewerScriptPromise;
-}
-
-function configureViewerGlobals() {
-  window.$ = $;
-  window.jQuery = $;
-  window.WH = {
-    ...(window.WH ?? {}),
-    debug: () => undefined,
-    defaultAnimation: "Stand",
-    WebP: { getImageExtension: () => ".webp" },
-    Wow: { Item: {} },
-  };
-}
 
 export function CharacterModelViewer({ appearance, focusSlot, characterName, race, specIcon, accent, characterSlug, lang = "ru" }: ViewerProps) {
   const ru = lang === "ru";
@@ -111,7 +55,7 @@ export function CharacterModelViewer({ appearance, focusSlot, characterName, rac
     setStatus("loading");
 
     const boot = async () => {
-      configureViewerGlobals();
+      configureZamViewerGlobals();
       let modelItems = appearance.modelItems;
       if (imported) {
         const response = await fetch(`/api/wow/characters/${encodeURIComponent(characterSlug)}/model-items?locale=${lang}`, { cache: "no-store" });
@@ -119,7 +63,7 @@ export function CharacterModelViewer({ appearance, focusSlot, characterName, rac
         const payload = await response.json() as { modelItems?: Array<[number, number]> };
         modelItems = payload.modelItems ?? [];
       }
-      const customizationResponse = await fetch(`${CONTENT_PATH}meta/charactercustomization/${appearance.modelId}.json`);
+      const customizationResponse = await fetch(`${ZAM_CONTENT_PATH}meta/charactercustomization/${appearance.modelId}.json`);
       if (!customizationResponse.ok) throw new Error("character customization unavailable");
       const customization = await customizationResponse.json() as WowCustomization;
       const availableChoices = new Map(customization.Options.map((option) => [
@@ -135,15 +79,12 @@ export function CharacterModelViewer({ appearance, focusSlot, characterName, rac
             .filter((option) => option.Choices.length > 0)
             .map((option) => ({ optionId: option.Id, choiceId: option.Choices[0].Id }));
 
-      await loadViewerScript();
+      await loadZamViewerScript();
       if (cancelled || !hostRef.current || !window.ZamModelViewer) return;
-      const viewer = new window.ZamModelViewer({
-        type: 2,
-        contentPath: CONTENT_PATH,
-        container: $(hostRef.current),
+      const viewer = createZamViewer(hostRef.current, {
         aspect: 1,
         hd: true,
-        models: { id: appearance.modelId, type: 16 },
+        models: { id: appearance.modelId, type: ZAM_MODEL_TYPE.character },
         charCustomization: { options },
         items: modelItems.map((item) => [...item]),
       });

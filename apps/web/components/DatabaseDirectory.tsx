@@ -9,7 +9,12 @@ import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
 import { RecordPreviewButton } from "@/components/database/RecordPreviewButton";
 import { databaseCopy, FACET_LABELS, formatCount, GROUP_LABELS, highlightLabel, previewCopy, type DatabaseCopy } from "@/components/database/databaseCopy";
 import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
+import { LibraryHoverPreview } from "@/components/library/LibraryHoverPreview";
+import { LibraryRecordCard, type LibraryCardLayout } from "@/components/library/LibraryRecordCard";
+import { libraryCardCopy } from "@/components/library/libraryCardCopy";
+import type { LibraryRail } from "@/components/library/libraryRails";
 import styles from "@/components/database/databaseHub.module.css";
+import libraryStyles from "@/components/library/libraryWorkspace.module.css";
 import { AtlasPagination } from "@gildra/atlas-ui/AtlasPagination";
 
 const FACET_ORDER = ["class", "specialization", "race", "profession", "equipment_slot", "armor_type", "weapon_type", "item_class"];
@@ -50,8 +55,8 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
   lang?: Lang; catalog: CatalogPage; categories: CatalogCategory[]; entityTypes: CatalogEntityType[]; products: CatalogProduct[];
   totalCount?: ReactNode;
   query?: string; selectedProduct?: string; selectedType?: string; selectedCategory?: string; selectedFacets?: string[]; cursor?: string; minItemLevel?: string; maxItemLevel?: string; minRequiredLevel?: string; maxRequiredLevel?: string;
-  /** Library dataset mode: the dataset (in the path) is the filter, so no sections or category tree. */
-  libraryDataset?: { slug: string };
+  /** Library dataset mode: the dataset (in the path) is the filter, so no sections or category tree; records are cards, common categories are one-click rails. */
+  libraryDataset?: { slug: string; layout?: LibraryCardLayout; rails?: LibraryRail[] };
 }) {
   const copy = databaseCopy[lang];
   const ru = lang === "ru";
@@ -67,7 +72,10 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
   const typeRegistry = new Map(entityTypes.map((type) => [type.type, type]));
   const groups = libraryDataset ? [] : groupTypes(entityTypes, selectedType);
   const activeGroup = groups.find((group) => group.types.some((entry) => entry.type === selectedType));
-  const facetGroups = groupFacets(categories);
+  const rails = libraryDataset?.rails ?? [];
+  const railPaths = new Set(rails.flatMap((rail) => rail.categories.map((category) => category.path)));
+  // Facets offered as rails are not repeated in the folded filter form.
+  const facetGroups = groupFacets(categories).filter(([, entries]) => !entries.every((entry) => railPaths.has(entry.path)));
   const showTaxonomy = !libraryDataset && categories.length > 0;
   const levelCount = [minItemLevel, maxItemLevel, minRequiredLevel, maxRequiredLevel].filter(Boolean).length;
   const activeFilters = facets.length + (itemFilters ? levelCount : 0);
@@ -109,6 +117,25 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
           </form>
         ) : null}
       </div>
+
+      {rails.map((rail) => {
+        const selected = rail.categories.find((category) => facets.includes(category.path));
+        const others = facets.filter((facet) => !rail.categories.some((category) => category.path === facet));
+        return (
+          <nav key={rail.id} className={libraryStyles.rail} aria-label={rail.label}>
+            <span className={libraryStyles.railLabel} aria-hidden="true">{rail.label}</span>
+            <div className={libraryStyles.railChips}>
+              <a className={libraryStyles.chip} href={href({ facets: others, cursor: "" })} data-catalog-nav aria-current={!selected ? "true" : undefined}>{copy.any}</a>
+              {rail.categories.map((category) => (
+                <a key={category.id} className={libraryStyles.chip} href={href({ facets: category === selected ? others : [...others, category.path], cursor: "" })} data-catalog-nav
+                  aria-current={category === selected ? "true" : undefined} data-track="catalog_category_selected" data-track-props={JSON.stringify({ category: category.path })}>
+                  {category.name}<b>{formatCount(category.count, lang)}</b>
+                </a>
+              ))}
+            </div>
+          </nav>
+        );
+      })}
 
       {groups.length ? (
         <nav className={styles.sections} aria-label={copy.sectionsLabel}>
@@ -171,7 +198,17 @@ export function DatabaseDirectory({ lang = "en", catalog, categories, entityType
           <h2 className="sr-only">{copy.resultsLabel}</h2>
           {/* Text-search totals are not counted (too slow on common terms): the rows and paging answer instead. */}
           {narrowed && !query.trim() ? <p className={styles.resultsHead} aria-live="polite">{copy.found}: <b>{foundCount}</b></p> : null}
-          {catalog.data.length ? (
+          {catalog.data.length && libraryDataset ? (
+            <>
+              <ul className={libraryDataset.layout === "tray" ? `${styles.records} ${libraryStyles.tray}` : `${styles.records} ${libraryStyles.cards}`} aria-label={copy.resultsLabel}>
+                {catalog.data.map((entity) => (
+                  <LibraryCard key={entity.id} entity={entity} registeredType={typeRegistry.get(entity.type)} lang={lang} copy={copy} preview={preview} layout={libraryDataset.layout ?? "cards"}
+                    href={`${base}/${encodeURIComponent(entity.type)}/${entity.id}/${encodeURIComponent(entity.slug || String(entity.externalId))}${selectedProduct === "wow" ? "" : `?product=${encodeURIComponent(selectedProduct)}`}`} />
+                ))}
+              </ul>
+              <LibraryHoverPreview rootId={RESULTS_ID} lang={lang} iconSymbol={typeRegistry.get(selectedType)?.iconSymbol} loadingLabel={libraryCardCopy[lang].hoverLoading} />
+            </>
+          ) : catalog.data.length ? (
             <ul className={styles.records} aria-label={copy.resultsLabel}>
               {catalog.data.map((entity) => (
                 <RecordRow key={entity.id} entity={entity} registeredType={typeRegistry.get(entity.type)} lang={lang} copy={copy} preview={preview} hideType={oneType}
@@ -217,7 +254,39 @@ function RecordRow({ entity, registeredType, href, lang, copy, preview, hideType
       quality={entity.quality}
       meta={meta}
       track={{ event: "catalog_detail_opened", props: { id: entity.externalId, type: entity.type } }}
-      action={<RecordPreviewButton id={entity.id} externalId={entity.externalId} type={entity.type} lang={lang} iconSymbol={registeredType?.iconSymbol}
+      action={<RecordPreviewButton id={entity.id} externalId={entity.externalId} type={entity.type} lang={lang} iconSymbol={registeredType?.iconSymbol} iconUrl={entity.iconUrl}
+        labels={{ label: copy.previewLabel(name), ...preview }} className={styles.preview} errorClassName={styles.previewError} />}
+    />
+  );
+}
+
+function LibraryCard({ entity, registeredType, href, lang, copy, preview, layout }: {
+  entity: CatalogRecord; registeredType?: CatalogEntityType; href: string; lang: Lang; copy: DatabaseCopy; preview: ReturnType<typeof previewCopy>; layout: LibraryCardLayout;
+}) {
+  const cardCopy = libraryCardCopy[lang];
+  const typeLabel = entityTypeLabel(entity.type, lang, registeredType?.label);
+  const name = catalogLocaleView(entity, lang).name || `${typeLabel} #${entity.externalId}`;
+  const highlight = (key: string) => entity.highlights?.find((entry) => entry.key === key)?.value;
+  const required = highlight("required_level")?.match(/\d+/)?.[0];
+  // Highlights the card already shows in its own places are not repeated in the facts line.
+  const rest = (entity.highlights ?? []).filter((entry) => entry.key !== "required_level" && entry.key !== "inventory_type").map((entry) => highlightLabel(entry.key, entry.value, lang));
+  return (
+    <LibraryRecordCard
+      id={entity.id}
+      href={href}
+      name={name}
+      lang={lang}
+      layout={layout}
+      iconUrl={entity.iconUrl}
+      iconSymbol={registeredType?.iconSymbol}
+      quality={entity.quality}
+      itemLevel={entity.itemLevel}
+      slot={highlight("inventory_type")}
+      description={layout === "tray" ? entity.description || undefined : undefined}
+      facts={[required ? cardCopy.requiredLevel(required) : null, ...rest, `${copy.gameId}\u00a0${entity.externalId}`].filter((fact): fact is string => Boolean(fact))}
+      badge={entity.localeFallback ? <em className={libraryStyles.fallback} title={copy.englishOnlyTitle}>{copy.englishOnly}</em> : null}
+      track={{ event: "catalog_detail_opened", props: { id: entity.externalId, type: entity.type } }}
+      action={<RecordPreviewButton id={entity.id} externalId={entity.externalId} type={entity.type} lang={lang} iconSymbol={registeredType?.iconSymbol} iconUrl={entity.iconUrl}
         labels={{ label: copy.previewLabel(name), ...preview }} className={styles.preview} errorClassName={styles.previewError} />}
     />
   );
