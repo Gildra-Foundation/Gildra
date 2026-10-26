@@ -29,7 +29,7 @@
 /* Match the Mythic role control and its saved preference without spec-only tools. */
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-toolbar]) { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; gap: var(--atlas-space-3); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker]) { width: 100%; max-width: 720px; min-width: 0; }
-.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control) { padding: 5px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); background: var(--atlas-surface); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 5px 18px var(--atlas-bg); }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control) { height: auto; padding: 5px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); background: var(--atlas-surface); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 5px 18px var(--atlas-bg); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control__thumb) { border: 1px solid var(--atlas-accent); border-radius: var(--atlas-radius-control); background: var(--atlas-accent-wash-strong); box-shadow: inset 0 1px 0 var(--atlas-text-muted), inset 0 -3px 8px var(--atlas-accent-wash-strong), 0 0 18px var(--atlas-accent-glow); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control__item) { min-height: 48px; border-radius: var(--atlas-radius-control); font-size: var(--atlas-text-lead); }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-role-picker] .ui-segmented-control__item[data-active]) { color: var(--atlas-text-strong); }
@@ -117,10 +117,15 @@
 .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="route"] .ui-button__label) > .glyph, .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="sketch"] .ui-button__label) > .glyph { position: absolute; left: var(--void-card-number-x); top: var(--void-card-number-y); transform: translate(-50%, -50%); width: 32px; height: 32px; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="route"] .ui-button__label) > span:not(.glyph), .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool="sketch"] .ui-button__label) > span:not(.glyph) { position: absolute; inset: var(--void-card-face-top) var(--void-card-face-right) var(--void-card-face-bottom) var(--void-card-face-left); display: grid; place-items: center; font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); text-wrap: balance; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool] .ui-button__label) { display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-2); font-size: var(--atlas-text-small); }
-.surface.surface[data-raid-pulls="the-voidspire"] .bossLink:global(.ui-button[data-variant="secondary"]) { display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-3); width: 100%; min-height: 80px; height: auto; aspect-ratio: auto; padding: var(--void-plaque-pad-top) var(--void-plaque-inset) var(--void-plaque-pad-bottom); border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+/* These font glyphs have distinct ink bearings inside the same medallion. */
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pager]) .textMark { translate: 0 -.11em; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="fit"]) .textMark { translate: 0 .01em; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="undo"]) .textMark { translate: .03em .13em; }
+.surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="clear"]) .textMark { translate: .015em -.085em; }
+.surface.surface[data-raid-pulls="the-voidspire"] .bossLink:global(.ui-button[data-variant="secondary"]) { display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-3); width: 100%; min-height: 80px; height: auto; aspect-ratio: auto; padding: var(--atlas-space-5) var(--void-plaque-inset); border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .surface.surface[data-raid-pulls="the-voidspire"] .bossLink::before { inset: 0; border: 20px solid transparent; border-image-source: var(--void-plaque-image); border-image-slice: var(--void-plaque-slice) fill; border-width: var(--void-plaque-width); background: var(--atlas-bg); background-clip: padding-box; }
-.surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__icon) { position: relative; inset: auto; transform: none; }
-.surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__label) { position: relative; inset: auto; display: block; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-snug); text-wrap: balance; }
+.surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__icon) { position: relative; inset: auto; transform: none; translate: 0 -2px; }
+.surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__label) { position: relative; inset: auto; display: block; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-snug); text-wrap: balance; translate: 0 -2px; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-progression]) { position: relative; isolation: isolate; padding: 40px; border: 0; background: transparent; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-progression])::before { position: absolute; z-index: -1; inset: 0; content: ""; border: 24px solid transparent; border-image-source: var(--void-panel-image); border-image-slice: var(--void-panel-slice) fill; border-width: var(--void-panel-width-mobile); background: var(--atlas-bg); background-clip: padding-box; filter: contrast(.88) saturate(.84) brightness(.92); pointer-events: none; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-progression]) h4 { gap: var(--atlas-space-2); }
@@ -150,8 +155,8 @@
 @container voidspire-briefing (max-width: 280px) {
   .surface.surface[data-raid-pulls="the-voidspire"] .bossLink:global(.ui-button[data-variant="secondary"]) { display: block; min-height: 0; aspect-ratio: var(--void-card-aspect); padding: 0; }
   .surface.surface[data-raid-pulls="the-voidspire"] .bossLink::before { border: 0; border-image: none; background: var(--void-card-image) center / contain no-repeat; }
-  .surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__icon) { position: absolute; left: var(--void-card-number-x); top: var(--void-card-number-y); transform: translate(-50%, -50%); }
-  .surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__label) { position: absolute; inset: var(--void-card-face-top) var(--void-card-face-right) var(--void-card-face-bottom) var(--void-card-face-left); display: grid; place-items: center; font-size: var(--atlas-text-small); }
+  .surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__icon) { position: absolute; left: var(--void-card-number-x); top: var(--void-card-number-y); transform: translate(-50%, -50%); translate: none; }
+  .surface.surface[data-raid-pulls="the-voidspire"] .bossLink :global(.ui-button__label) { position: absolute; inset: var(--void-card-face-top) var(--void-card-face-right) var(--void-card-face-bottom) var(--void-card-face-left); display: grid; place-items: center; font-size: var(--atlas-text-small); translate: none; }
 }
 @container voidspire-cartography (max-width: 360px) {
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) { gap: var(--atlas-space-1); }
@@ -164,6 +169,8 @@
 @media (max-width: 900px) { .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-columns]) { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 700px) {
   .surface.surface[data-raid-pulls="the-voidspire"] { --void-content-inset: var(--atlas-space-6); --void-reading-size: var(--atlas-text-lead); }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-pager]) .textMark { translate: 0 -.09em; }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="undo"]) .textMark { translate: .03em .15em; }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-cartography]), .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-schematic]) > div { border-width: var(--void-panel-width-mobile); }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-selected])::before { border-width: var(--void-briefing-width-mobile); }
   .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-selected-header]) h3 { font-size: var(--void-section-size); }
