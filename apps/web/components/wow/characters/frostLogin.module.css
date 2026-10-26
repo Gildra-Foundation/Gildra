@@ -1,0 +1,278 @@
+/* atlas:strict — frost steel materials around live account content. */
+.page {
+  --frost-light: color-mix(in srgb, var(--atlas-info) 60%, var(--atlas-text-strong));
+  --frost-shadow: var(--atlas-bg);
+  --frost-label: color-mix(in srgb, var(--atlas-text-strong) 76%, var(--atlas-info));
+}
+
+.hero { position: relative; }
+
+.atmosphere {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, #000 65%, transparent 100%);
+}
+
+.snow {
+  position: absolute;
+  top: -12px;
+  left: var(--snow-x);
+  width: var(--snow-size);
+  height: var(--snow-size);
+  border-radius: 50%;
+  background: var(--frost-light);
+  opacity: .5;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--frost-light) 40%, transparent);
+  animation: snowfall var(--snow-duration) var(--snow-delay) linear infinite paused;
+}
+.snow:nth-child(7n) { filter: blur(.7px); opacity: .28; }
+.snow:nth-child(3n) { opacity: .65; }
+
+.mist {
+  position: absolute;
+  inset: 20% -12% -8%;
+  background: radial-gradient(ellipse at 70% 65%, color-mix(in srgb, var(--atlas-info) 12%, transparent), transparent 60%);
+  animation: mist-drift 26s ease-in-out infinite alternate paused;
+}
+
+/* Higher specificity replaces the shared glass surface only on the entry card. */
+.page .card.card {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 470px);
+  max-width: 100%;
+  margin-top: 24px;
+  padding: 62px 40px 44px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 30px solid transparent;
+  border-image-source: var(--frost-panel-image);
+  border-image-slice: var(--frost-panel-slice) fill;
+  border-image-width: 1;
+  border-width: var(--frost-panel-width);
+  background: var(--atlas-bg);
+  background-clip: padding-box;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  pointer-events: none;
+}
+
+/* A low spectral light stays inside the steel rails. */
+.card::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 10px;
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--frost-light) 13%, transparent), transparent 45%);
+  opacity: .45;
+  pointer-events: none;
+  animation: frost-breath 7s ease-in-out infinite alternate paused;
+}
+
+.crest {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  width: 220px;
+  max-width: 65%;
+  line-height: 0;
+  translate: -50% 0;
+  pointer-events: none;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+}
+.crest img { display: block; width: 100%; height: auto; }
+.crest::after {
+  content: "";
+  position: absolute;
+  inset: 30% 35%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--frost-light) 20%, transparent), transparent 70%);
+  animation: frost-breath 5.5s ease-in-out infinite alternate paused;
+}
+
+.silverLabel,
+.page .card .connectPanel :global([data-battlenet-eyebrow]) {
+  color: var(--frost-label);
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.silverLabel { min-width: 0; max-width: calc(100% - 30px); }
+
+.page .card .connectPanel :global([data-battlenet-eyebrow]) {
+  gap: var(--atlas-space-2);
+  letter-spacing: .14em;
+  line-height: 1.5;
+}
+
+.page .card .connectPanel :global([data-battlenet-note]) {
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--atlas-text-muted);
+}
+.securityCopy { min-width: 0; padding-top: 2px; }
+
+.materialIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  line-height: 0;
+  pointer-events: none;
+}
+.materialIcon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+}
+.compactIcon { width: 26px; height: 26px; }
+
+.page .card .unlocks { border-color: color-mix(in srgb, var(--atlas-info) 24%, transparent); }
+.page .card .unlocks h3 { color: var(--frost-label); letter-spacing: .16em; }
+.page .card .unlocks ul { gap: var(--atlas-space-4); }
+.page .card .unlocks li { grid-template-columns: 40px minmax(0, 1fr); align-items: start; }
+.page .card .unlocks strong {
+  margin-bottom: 2px;
+  color: var(--frost-label);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-body);
+  font-weight: var(--atlas-weight-display);
+  line-height: var(--atlas-leading-snug);
+}
+
+.page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"])) {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--atlas-space-2);
+  min-height: 68px;
+  width: 100%;
+  height: auto;
+  padding: 18px var(--frost-button-inset) 20px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--atlas-text-strong);
+  box-shadow: none;
+  font-size: var(--atlas-text-small);
+  line-height: 1.35;
+  text-align: center;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  transition: transform var(--atlas-duration-fast) var(--atlas-ease);
+}
+.card :global([data-folio-action]:not([data-folio-action="quiet"]))::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  height: auto;
+  translate: none;
+  border: 20px solid transparent;
+  border-image-source: var(--frost-button-image);
+  border-image-slice: var(--frost-button-slice) fill;
+  border-image-width: 1;
+  border-width: var(--frost-button-width);
+  background: var(--atlas-bg);
+  background-clip: padding-box;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  pointer-events: none;
+  transition: filter var(--atlas-duration-fast) var(--atlas-ease);
+}
+.card :global([data-folio-action]:not([data-folio-action="quiet"]))::after {
+  content: "";
+  position: absolute;
+  inset: 12px 20px;
+  border-radius: 12px;
+  background: linear-gradient(110deg, transparent 30%, color-mix(in srgb, var(--frost-light) 20%, transparent) 49%, transparent 66%);
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.page .card :global([data-folio-action]:not([data-folio-action="quiet"]):focus-visible) {
+  outline: 2px solid var(--atlas-accent-strong);
+  outline-offset: 4px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"]):hover) { transform: translateY(-2px); }
+  .card :global([data-folio-action]:not([data-folio-action="quiet"]):hover)::before { filter: contrast(.9) saturate(.9) brightness(1.14); }
+}
+.card :global([data-folio-action]:not([data-folio-action="quiet"])):is(:hover, :focus-visible)::after { opacity: 1; animation: blade-sweep .9s var(--atlas-ease) both; }
+.page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"]):active) { transform: translateY(1px) scale(.98); }
+.card :global([data-folio-action] svg) { flex: none; width: 16px; height: 16px; }
+
+:global([data-frost-active="true"]) .snow,
+:global([data-frost-active="true"]) .mist,
+:global([data-frost-active="true"]) .card::after,
+:global([data-frost-active="true"]) .crest::after { animation-play-state: running; }
+@keyframes snowfall { from { transform: translate3d(0, -20px, 0); } to { transform: translate3d(var(--snow-drift), 1100px, 0); } }
+@keyframes mist-drift { from { transform: translateX(-3%); opacity: .4; } to { transform: translateX(3%); opacity: .8; } }
+@keyframes frost-breath { from { opacity: .3; } to { opacity: .85; } }
+@keyframes blade-sweep { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+
+@media (max-width: 1100px) { .page .card.card { width: min(100%, 560px); } }
+@media (max-width: 700px) {
+  .page .card.card { margin-top: 28px; padding: 54px 28px 36px; }
+  .card::before { border-width: var(--frost-panel-width-mobile); }
+  .snow:nth-child(n + 29) { display: none; }
+  .crest { width: 195px; top: -24px; }
+  .page .card .unlocks li { grid-template-columns: 32px minmax(0, 1fr); gap: var(--atlas-space-2); }
+  .materialIcon { width: 32px; height: 32px; }
+  .compactIcon { width: 26px; height: 26px; }
+}
+@media (max-width: 360px) {
+  .page .card.card { padding-inline: 24px; }
+  .page .card .unlocks li { grid-template-columns: 28px minmax(0, 1fr); }
+  .materialIcon:not(.compactIcon) { width: 28px; height: 28px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snow, .mist, .card::after, .crest::after { display: none; }
+  .page .card :global([data-folio-action]), .card :global([data-folio-action])::before, .card :global([data-folio-action])::after { animation: none !important; transition: none !important; transform: none !important; }
+}
+:global([data-motion="reduced"]) :is(.snow, .mist),
+:global([data-ui-motion="reduce"]) :is(.snow, .mist),
+:global([data-motion="reduced"]) .card::after,
+:global([data-ui-motion="reduce"]) .card::after,
+:global([data-motion="reduced"]) .crest::after,
+:global([data-ui-motion="reduce"]) .crest::after { display: none; }
+:global([data-motion="reduced"]) .card :global([data-folio-action]),
+:global([data-ui-motion="reduce"]) .card :global([data-folio-action]),
+:global([data-motion="reduced"]) .card :global([data-folio-action])::before,
+:global([data-ui-motion="reduce"]) .card :global([data-folio-action])::before,
+:global([data-motion="reduced"]) .card :global([data-folio-action])::after,
+:global([data-ui-motion="reduce"]) .card :global([data-folio-action])::after { animation: none !important; transition: none !important; transform: none !important; }
+:global([data-frost-active="false"]) .card :global([data-folio-action]),
+:global([data-frost-active="false"]) .card :global([data-folio-action])::before,
+:global([data-frost-active="false"]) .card :global([data-folio-action])::after { animation: none !important; transition: none !important; transform: none !important; }
+@media (prefers-reduced-transparency: reduce) { .atmosphere, .card::after, .crest::after, .card :global([data-folio-action])::after { display: none; } }
+:global([data-transparency="reduced"]) .atmosphere,
+:global([data-transparency="reduced"]) .card::after,
+:global([data-transparency="reduced"]) .crest::after,
+:global([data-transparency="reduced"]) .card :global([data-folio-action])::after { display: none; }
+@media (forced-colors: active) {
+  .materialIcon { display: none; }
+  .page .card .unlocks li { grid-template-columns: minmax(0, 1fr); }
+  .silverLabel, .page .card .connectPanel :global([data-battlenet-eyebrow]), .page .card .connectPanel :global([data-battlenet-note]), .page .card .unlocks h3, .page .card .unlocks strong { color: CanvasText; text-shadow: none; }
+  .atmosphere, .crest, .card::before, .card::after, .card :global([data-folio-action])::before, .card :global([data-folio-action])::after { display: none; }
+  .page .card.card { border: 1px solid CanvasText; background: Canvas; }
+  .page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"])) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
+}

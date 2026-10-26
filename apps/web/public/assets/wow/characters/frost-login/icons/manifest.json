@@ -1,0 +1,96 @@
+{
+  "entries": {
+    "lock": {
+      "path": "/assets/wow/characters/frost-login/icons/lock.webp",
+      "width": 144,
+      "height": 144,
+      "bytes": 10870,
+      "sha256": "7faacd7a519a73b6b583b2f7ee57a065982f46444d53270f212aeab721e3835e",
+      "native": "/home/debian/gildra-frost-login-release-20261026/details-r2/asset-sources/lock-native.png",
+      "nativeSha256": "5b4573e5d92b3baeadb642aa50c17d4a453b5226176e6b13ce4496820e989e0d",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "crop": {
+        "left": 187,
+        "top": 107,
+        "width": 880,
+        "height": 1042
+      },
+      "centreAlpha": {
+        "min": 0,
+        "max": 255
+      }
+    },
+    "equipment": {
+      "path": "/assets/wow/characters/frost-login/icons/equipment.webp",
+      "width": 144,
+      "height": 144,
+      "bytes": 8160,
+      "sha256": "b766e34b8a15cca786bed674f94d81aff16db9ddda33d0392bcc356eb937a3ed",
+      "native": "/home/debian/gildra-frost-login-release-20261026/details-r2/asset-sources/equipment-native.png",
+      "nativeSha256": "96e62367b8b57eaa132ed4ef85be69f58e030bc8f1dfad9c01c7a9509d3d95b8",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "crop": {
+        "left": 105,
+        "top": 58,
+        "width": 1044,
+        "height": 1138
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      }
+    },
+    "talents": {
+      "path": "/assets/wow/characters/frost-login/icons/talents.webp",
+      "width": 144,
+      "height": 144,
+      "bytes": 11528,
+      "sha256": "fdfe2a0afd8b82e56a5a3f61981e646d4d5acf7647b757030fdcfa8e832d9623",
+      "native": "/home/debian/gildra-frost-login-release-20261026/details-r2/asset-sources/talents-native.png",
+      "nativeSha256": "65b06266b5a045e0b2232d9e253b81b8025d5dd2c8747a157a37212768293434",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "crop": {
+        "left": 186,
+        "top": 82,
+        "width": 923,
+        "height": 1099
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 253
+      }
+    },
+    "combat": {
+      "path": "/assets/wow/characters/frost-login/icons/combat.webp",
+      "width": 144,
+      "height": 144,
+      "bytes": 10960,
+      "sha256": "3f0fbe85b065191b8c9e065ddad9bbfcc8950784ff5ca4f2ddd994745d72cddd",
+      "native": "/home/debian/gildra-frost-login-release-20261026/details-r2/asset-sources/combat-native.png",
+      "nativeSha256": "2186ae2d0061273445aa9845b19ab4e9fa12f85bb5bde8d65a4d2312b773b14b",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "crop": {
+        "left": 32,
+        "top": 47,
+        "width": 1191,
+        "height": 1138
+      },
+      "centreAlpha": {
+        "min": 0,
+        "max": 255
+      }
+    }
+  }
+}

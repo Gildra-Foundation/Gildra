@@ -1,0 +1,86 @@
+{
+  "entries": {
+    "panel": {
+      "path": "/assets/wow/characters/frost-login/panel.webp",
+      "width": 768,
+      "height": 1018,
+      "bytes": 82506,
+      "sha256": "4be459e0c7288e92f6ac2769b2b9e57365450429f08e180bc188f6ed8cc3db5e",
+      "native": "/home/debian/gildra-frost-login-release-20261026/asset-sources/panel-native.png",
+      "nativeSha256": "a0bd87e494a15fa96cf8fbfd019f6af9e586c2b3a3631c2cb7512b5ddaae5fb5",
+      "nativeDimensions": {
+        "width": 1122,
+        "height": 1402
+      },
+      "crop": {
+        "left": 45,
+        "top": 13,
+        "width": 1033,
+        "height": 1376
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      },
+      "slices": [
+        195,
+        201,
+        206,
+        200
+      ],
+      "railInset": 70
+    },
+    "button": {
+      "path": "/assets/wow/characters/frost-login/button.webp",
+      "width": 768,
+      "height": 146,
+      "bytes": 25028,
+      "sha256": "e8b0b3d1a3d1611d6881dade139d6c43692a17dbcd757a2dcba8b1215f3dd813",
+      "native": "/home/debian/gildra-frost-login-release-20261026/asset-sources/button-native.png",
+      "nativeSha256": "ca71efad56233b74aad657fadbeec2e46bcbd29c0b6fae29e1b80c759ab43986",
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "crop": {
+        "left": 17,
+        "top": 178,
+        "width": 2139,
+        "height": 371
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      },
+      "slices": [
+        38,
+        156,
+        42,
+        156
+      ]
+    },
+    "crest": {
+      "path": "/assets/wow/characters/frost-login/crest.webp",
+      "width": 384,
+      "height": 128,
+      "bytes": 13538,
+      "sha256": "0e7c6e6be8417282dad902cc6284ff604a46e5e631ac0b99386937e65852ba9f",
+      "native": "/home/debian/gildra-frost-login-release-20261026/asset-sources/crest-native.png",
+      "nativeSha256": "cbe0a4f8983c25200e03a56878c0087ea44926675e7af88656f9906c0de818c2",
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "crop": {
+        "left": 9,
+        "top": 35,
+        "width": 2156,
+        "height": 591
+      },
+      "centreAlpha": {
+        "min": 0,
+        "max": 255
+      }
+    }
+  }
+}
