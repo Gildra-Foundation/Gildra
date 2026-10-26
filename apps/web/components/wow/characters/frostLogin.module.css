@@ -178,6 +178,12 @@
   text-shadow: 0 1px 3px var(--atlas-bg);
   transition: transform var(--atlas-duration-fast) var(--atlas-ease);
 }
+/* Keep the illustrated action above the shared panel's interactive colors. */
+.page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"]):is(:hover, :focus-visible, :active)) {
+  background: transparent;
+  color: var(--atlas-text-strong);
+  box-shadow: none;
+}
 .card :global([data-folio-action]:not([data-folio-action="quiet"]))::before {
   content: "";
   position: absolute;
@@ -274,5 +280,6 @@
   .silverLabel, .page .card .connectPanel :global([data-battlenet-eyebrow]), .page .card .connectPanel :global([data-battlenet-note]), .page .card .unlocks h3, .page .card .unlocks strong { color: CanvasText; text-shadow: none; }
   .atmosphere, .crest, .card::before, .card::after, .card :global([data-folio-action])::before, .card :global([data-folio-action])::after { display: none; }
   .page .card.card { border: 1px solid CanvasText; background: Canvas; }
-  .page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"])) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
+  .page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"])),
+  .page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"]):is(:hover, :focus-visible, :active)) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
 }
