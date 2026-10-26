@@ -1,5 +1,6 @@
 export const raidBossPlannerCopy = {
   ru: {
+    arenaHint: "Вид сверху выбранной арены.",
     title: "План боя", description: "Выберите этап боя: слева — арена и схема, справа — противники, механики и задачи вашей роли.",
     phase: "Этап", phases: "Этапы боя", previous: "Предыдущий этап", next: "Следующий этап", command: "Команда рейду", enemies: "Противники этапа",
     difficulty: "Сложность", normal: "Нормальная", heroic: "Героическая", heroicNote: "Героическая сложность",
@@ -9,6 +10,7 @@ export const raidBossPlannerCopy = {
     safe: "Свободное место", danger: "Опасность", soak: "Разделить урон", wall: "Преграда", variantMain: "Основной вид", variantAlt: "Другой ракурс",
   },
   en: {
+    arenaHint: "Top-down view of the selected arena.",
     title: "Battle plan", description: "Select a stage: the arena and schematic are on the left; enemies, mechanics and your role's tasks are on the right.",
     phase: "Stage", phases: "Encounter stages", previous: "Previous stage", next: "Next stage", command: "Raid call", enemies: "Stage enemies",
     difficulty: "Difficulty", normal: "Normal", heroic: "Heroic", heroicNote: "Heroic difficulty",

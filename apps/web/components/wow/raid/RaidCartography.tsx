@@ -8,12 +8,13 @@ import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import type { RaidMapImage, RaidMapPin, RaidPullPlan } from "./raidPullTypes";
 import type { RaidProgression } from "./raidProgression";
 import { raidMapCopy } from "./raidMapCopy";
+import { raidBossPlannerCopy } from "./raidBossPlannerCopy";
 import { RaidPlannerIcon, RaidPlannerTextMark } from "./VoidspirePlannerArt";
 import { readMapPreference, saveMapPreference, sketchPoints, subscribeMapPreferences } from "./raidMapPreferences";
 import styles from "./raidMap.module.css";
 
 type CartographyProps = {
-  plan: Pick<RaidPullPlan, "slug" | "name">;
+  plan: Pick<RaidPullPlan, "slug" | "name" | "encounter">;
   image: RaidMapImage;
   background: "map" | "arena";
   pins: RaidMapPin[];
@@ -49,14 +50,14 @@ function drawWithKeyboard(event: KeyboardEvent<HTMLButtonElement>, cursor: Curso
   } else if (event.key === "Escape") finish();
 }
 
-function CartographyFooter({ background, hasPins, planSlug, activeBoss, locale, count, onUndo, onClear }: {
+function CartographyFooter({ background, hasPins, planSlug, activeBoss, locale, count, onUndo, onClear, encounter }: {
   background: "map" | "arena"; hasPins: boolean; planSlug: string; activeBoss: string; locale: "ru" | "en";
-  count: number; onUndo: () => void; onClear: () => void;
+  count: number; onUndo: () => void; onClear: () => void; encounter: boolean;
 }) {
   const t = raidMapCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
-  return <div className={styles.mapFooter}><span>{background === "arena" ? t.arenaHint : hasPins ? t.approximate : t.emptyFloor}</span>
-    {background === "arena" && <Link href={`${prefix}/wow/raids/${planSlug}/${activeBoss}`}>{t.tactics}<ArrowUpRight size={14} aria-hidden="true" /></Link>}
+  return <div className={styles.mapFooter}><span>{background === "arena" ? encounter ? raidBossPlannerCopy[locale].arenaHint : t.arenaHint : hasPins ? t.approximate : t.emptyFloor}</span>
+    {background === "arena" && !encounter && <Link href={`${prefix}/wow/raids/${planSlug}/${activeBoss}`}>{t.tactics}<ArrowUpRight size={14} aria-hidden="true" /></Link>}
     {count > 0 && <div className={styles.sketchTools}><span>{t.own} · {count}</span>
       <AtlasButton className={styles.tool} size="sm" data-raid-tool="undo" aria-label={t.undo} onClick={onUndo}><RaidPlannerTextMark slug={planSlug} text="↶" fallback={<Undo2 size={16} aria-hidden="true" />} /></AtlasButton>
       <AtlasButton className={styles.tool} size="sm" data-raid-tool="clear" aria-label={t.clear} onClick={onClear}><RaidPlannerTextMark slug={planSlug} text="×" fallback={<Trash2 size={16} aria-hidden="true" />} /></AtlasButton>
@@ -123,7 +124,7 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
         {editing && <span className={styles.drawCursor} style={{ left: `${cursor.x}%`, top: `${cursor.y}%` }} aria-hidden="true" />}
       </div>
     </div>
-    <CartographyFooter background={background} hasPins={pins.length > 0} planSlug={plan.slug} activeBoss={activeBoss} locale={locale} count={points.length}
+    <CartographyFooter background={background} hasPins={pins.length > 0} planSlug={plan.slug} activeBoss={activeBoss} locale={locale} count={points.length} encounter={Boolean(plan.encounter)}
       onUndo={() => saveMapPreference(key, JSON.stringify(points.slice(0, -1)))} onClear={() => saveMapPreference(key, "[]")} />
     {editing && <p id={helpId} className={styles.drawHelp}>{t.ownHint} {t.keyboard}</p>}
     <span role="status" className={styles.srOnly}>{editing ? `${t.drawing}. ${t.point}: ${points.length}` : ""}</span>
