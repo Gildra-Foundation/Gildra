@@ -115,7 +115,7 @@ func TestExternalIDsRejectsAmbiguousBatchFilters(t *testing.T) {
 	if err := validateExternalIDs(SummaryParams{ExternalIDs: []int64{1, 9999}, Limit: 100}); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(summaryFastQuery, "$11") {
+	if strings.Contains(summaryFastQuery, "external_id=ANY") {
 		t.Fatal("ordinary queries must retain their existing parameter and index path")
 	}
 }

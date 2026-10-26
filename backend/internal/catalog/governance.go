@@ -144,14 +144,13 @@ func (s *Service) RefreshReadModels(ctx context.Context, productID *int16) error
 	if _, err := s.postgres.Exec(ctx, `SELECT refresh_catalog_public_summary_stats($1)`, productID); err != nil {
 		return fmt.Errorf("refresh public catalog summary stats: %w", err)
 	}
-	if _, err := s.postgres.Exec(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
-		return fmt.Errorf("refresh catalog library datasets: %w", err)
-	}
+	// Library image counts only count media from published sources, so the
+	// dependency registry is refreshed first and the library once.
 	if _, err := s.postgres.Exec(ctx, `SELECT refresh_catalog_published_source_dependencies()`); err != nil {
 		return fmt.Errorf("refresh published source dependencies: %w", err)
 	}
-	if _, err := s.postgres.Exec(ctx, `SELECT refresh_catalog_library_media_coverage($1)`, productID); err != nil {
-		return fmt.Errorf("refresh catalog library media coverage: %w", err)
+	if _, err := s.postgres.Exec(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
+		return fmt.Errorf("refresh catalog library datasets: %w", err)
 	}
 	if _, err := s.postgres.Exec(ctx, `SELECT refresh_catalog_library_media_previews($1)`, productID); err != nil {
 		return fmt.Errorf("refresh catalog library media previews: %w", err)
