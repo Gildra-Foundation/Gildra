@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -24,7 +25,8 @@ func main() {
 
 func run() error {
 	var databaseURL, root, publicBase, environment, accessMode, product, expansion string
-	var limit, seedIconLimit int
+	var derivedMode, derivedGroups, derivedEntitiesOut string
+	var limit, seedIconLimit, derivedLimit int
 	var confirm, skipMediaCache bool
 	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
 	flag.StringVar(&root, "directory", os.Getenv("CATALOG_MEDIA_DIRECTORY"), "absolute local media cache directory")
@@ -37,6 +39,10 @@ func run() error {
 	flag.IntVar(&seedIconLimit, "seed-icon-limit", 0, "download and link this many missing official icons before the normal cache run")
 	flag.BoolVar(&skipMediaCache, "skip-media-cache", false, "seed official icons without processing other remote media")
 	flag.BoolVar(&confirm, "confirm", false, "download eligible assets")
+	flag.StringVar(&derivedMode, "derived-mode", "", "derived media for records without an icon: plan (read-only), verify (download and link in a rolled-back transaction) or apply (requires -confirm)")
+	flag.StringVar(&derivedGroups, "derived-groups", "default", "comma-separated derived media groups, default or all")
+	flag.IntVar(&derivedLimit, "derived-limit", 1000, "maximum unique derived assets downloaded per run")
+	flag.StringVar(&derivedEntitiesOut, "derived-entities-out", "", "optional JSON file receiving planned or linked entity IDs by group")
 	flag.Parse()
 	if databaseURL == "" {
 		databaseURL = os.Getenv("DATABASE_URL")
@@ -44,8 +50,8 @@ func run() error {
 	if databaseURL == "" || root == "" {
 		return errors.New("DATABASE_URL and CATALOG_MEDIA_DIRECTORY are required")
 	}
-	if skipMediaCache && seedIconLimit == 0 {
-		return errors.New("skip-media-cache requires a positive seed-icon-limit")
+	if skipMediaCache && seedIconLimit == 0 && derivedMode != catalogmedia.DerivedModeApply {
+		return errors.New("skip-media-cache requires a positive seed-icon-limit or -derived-mode=apply")
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -61,6 +67,31 @@ func run() error {
 		return err
 	}
 	defer cache.Close() //nolint:errcheck
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	var derivedResult *catalogmedia.DerivedMediaResult
+	if derivedMode != "" && (derivedMode != catalogmedia.DerivedModeApply || confirm) {
+		derived, err := cache.SeedDerivedMedia(ctx, catalogmedia.DerivedMediaOptions{
+			Product: product, Environment: environment, Groups: strings.Split(derivedGroups, ","),
+			Limit: derivedLimit, Mode: derivedMode,
+		})
+		if err != nil {
+			return err
+		}
+		if derivedEntitiesOut != "" {
+			encoded, err := json.Marshal(derived.Entities)
+			if err != nil {
+				return err
+			}
+			if err := os.WriteFile(derivedEntitiesOut, encoded, 0o640); err != nil {
+				return err
+			}
+		}
+		if derivedMode != catalogmedia.DerivedModeApply {
+			return encoder.Encode(map[string]any{"derived": derived})
+		}
+		derivedResult = &derived
+	}
 	if !confirm {
 		return json.NewEncoder(os.Stdout).Encode(map[string]any{"dry_run": true, "environment": environment, "access_mode": accessMode, "limit": limit, "seed_icon_limit": seedIconLimit, "skip_media_cache": skipMediaCache})
 	}
@@ -73,16 +104,14 @@ func run() error {
 			return err
 		}
 	}
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "  ")
 	if skipMediaCache {
-		return encoder.Encode(map[string]any{"icons": iconResult})
+		return encoder.Encode(map[string]any{"icons": iconResult, "derived": derivedResult})
 	}
 	result, err := cache.RunWithAccessMode(ctx, environment, limit, accessMode)
 	if err != nil {
 		return err
 	}
-	return encoder.Encode(map[string]any{"icons": iconResult, "media": result})
+	return encoder.Encode(map[string]any{"icons": iconResult, "derived": derivedResult, "media": result})
 }
 
 func envOr(key, fallback string) string {

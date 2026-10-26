@@ -193,6 +193,30 @@ catalog-media-cache \
   -confirm
 ```
 
+Records without an icon mapping of their own get a derived image through
+`-derived-mode`: the item appearance icon (items, transmog sets), the
+`JournalEncounterCreature` portrait (encounters; import that DB2 table first),
+the `JournalInstance` button (instances), the source spell icon (mounts), the
+`SpellMisc` icon (spells) and the official creature-display render (NPCs).
+`-derived-groups all` adds the optional map → journal instance button and
+quest reward package → first reward item icon. The mode only targets entities
+with no cached or remote media, so it never competes with the retry queue
+above; each link stores the DB2 rows that prove it in `attributes.evidence`.
+An NPC render that is only the empty backdrop (invisible trigger models) is
+rejected so the next display slot is tried; other renders are cropped to a
+square around the model for the 48 px library cards.
+
+```bash
+# Read-only counts per group.
+catalog-media-cache -derived-mode plan -derived-groups default
+# Download into a scratch -directory and link in a rolled-back transaction;
+# reports how many entities the public API would then show with an image.
+catalog-media-cache -directory /tmp/media-verify -derived-mode verify -derived-limit 500
+# Commit under the shared media cache lock.
+catalog-media-cache -environment production -derived-mode apply \
+  -derived-limit 20000 -skip-media-cache -confirm
+```
+
 The downloader accepts HTTPS only, refuses private and special-purpose
 addresses, disables proxy inheritance, limits each file to 32 MiB and accepts
 only JPEG, PNG, WebP or GIF after inspecting the actual bytes. Objects are
