@@ -21,6 +21,7 @@ export type RouteSection = {
 };
 
 export const routeSections = {
+  transmog: { path: "/wow/transmog", parent: "wow", title: { en: "Transmog Studio", ru: "Трансмогрификация" }, scene: "articles", search: { keywords: "transmog transmogrification outfit appearance sets dressing room screenshot трансмогрификация трансмог образ облик наборы примерочная скриншот" } },
   auction: { path: "/wow/auction", parent: "wow", title: { en: "Auction House", ru: "Аукцион" }, scene: "articles", search: { keywords: "auction house tools market prices аукцион инструменты рынок цены реагенты" } },
   wow: { path: "/wow", title: { en: "World of Warcraft", ru: "World of Warcraft" }, scene: "wow", search: { en: "World of Warcraft hub", ru: "Центр World of Warcraft", keywords: "home главная хаб" } },
   raids: { path: "/wow/raids", parent: "wow", title: { en: "Raids", ru: "Рейды" }, scene: "raids", search: { en: "Raid journal", ru: "Рейдовый журнал", keywords: "raids рейды" } },

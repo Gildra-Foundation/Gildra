@@ -1,0 +1,205 @@
+/* atlas:strict — transmog studio: paper doll, 3D stage in the export frame, picker panel. */
+.studio {
+  display: grid; gap: var(--atlas-space-4); min-width: 0;
+  padding: var(--atlas-space-5); border: 1px solid var(--atlas-line-strong); border-radius: var(--atlas-radius-control);
+  background: linear-gradient(180deg, var(--atlas-surface), var(--atlas-bg));
+}
+.visuallyHidden { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); }
+.toolbarField { min-width: 11rem; }
+.toolbarSpacer { flex: 1 1 auto; }
+.segmented { display: inline-flex; gap: var(--atlas-space-1); padding: 3px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-surface-sunken); }
+.segmented button {
+  min-width: 44px; min-height: 38px; border: 0; border-radius: calc(var(--atlas-radius-control) - 3px); background: transparent;
+  color: var(--atlas-text-muted); font: inherit; font-size: var(--atlas-text-title); cursor: pointer;
+}
+.segmented button[aria-pressed="true"] { background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); box-shadow: inset 0 0 0 1px var(--atlas-line-strong); }
+.segmented button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
+.notice { min-height: 1.2em; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.notice:empty { display: none; }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 420px); gap: var(--atlas-space-5); align-items: start; }
+.doll { display: grid; grid-template-columns: 64px minmax(0, 620px) 64px; justify-content: center; gap: var(--atlas-space-4); align-items: start; min-width: 0; }
+.dollColumn { display: grid; gap: var(--atlas-space-3); }
+.stageColumn { display: grid; justify-items: center; gap: var(--atlas-space-3); min-width: 0; }
+
+.slot {
+  position: relative; display: grid; place-items: center; width: 64px; height: 64px; padding: 0; overflow: hidden;
+  border: 1px solid var(--transmog-quality, var(--atlas-line)); border-radius: var(--atlas-radius-control);
+  background: var(--atlas-surface-sunken); color: var(--atlas-text-subtle); cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--atlas-bg);
+}
+.slot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.slot[aria-pressed="true"] { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.slot:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.slot[data-hidden] img { opacity: .3; filter: grayscale(1); }
+.slotEmpty { padding: 2px; font-size: var(--atlas-text-label); line-height: 1.15; text-align: center; overflow-wrap: normal; word-break: normal; hyphens: none; }
+.slotHidden {
+  position: absolute; inset: auto 0 2px; color: var(--atlas-text); font-size: var(--atlas-text-label); text-align: center;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.slotCompact { flex: 0 0 52px; width: 52px; height: 52px; }
+.slotStrip { display: none; }
+.weaponRow { display: flex; gap: var(--atlas-space-3); justify-content: center; }
+.cameraRow { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); justify-content: center; }
+.cameraRow[hidden] { display: none; }
+.iconButton { min-width: 44px; min-height: 44px; padding-inline: 0; justify-content: center; }
+.iconButton svg { width: 18px; height: 18px; }
+.exportLabel { display: grid; gap: 1px; line-height: 1.15; text-align: left; }
+.exportLabel small { font-size: var(--atlas-text-label); font-weight: 500; opacity: .85; font-variant-numeric: tabular-nums; }
+
+/* Stage = the export frame. Its children scale with container units, so the preview
+   caption matches the exported one at any width. */
+.stage {
+  position: relative; isolation: isolate; width: 100%; max-width: 620px; max-height: 76vh; overflow: hidden;
+  container-type: size; border-radius: var(--atlas-radius); box-shadow: 0 0 0 1px var(--atlas-line);
+  background: repeating-conic-gradient(var(--atlas-surface-raised) 0 25%, var(--atlas-surface-sunken) 0 50%) 0 0 / 18px 18px;
+}
+.stage:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.stageBackground { position: absolute; inset: 0; z-index: -2; background-size: cover; background-repeat: no-repeat; }
+.stageVignette { position: absolute; inset: 0; z-index: -1; background: radial-gradient(75% 60% at 50% 55%, transparent 30%, color-mix(in srgb, var(--atlas-bg) 55%, transparent)); pointer-events: none; }
+.stageShadow {
+  position: absolute; left: 50%; bottom: 7%; width: 34%; height: 5%; z-index: 0; transform: translateX(-50%); pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, #000 calc(var(--stage-shadow, .6) * 75%), transparent), transparent);
+}
+.stageHost { position: absolute !important; inset: 0; height: auto !important; z-index: 1; overflow: hidden; filter: brightness(var(--stage-brightness, 1)) contrast(var(--stage-contrast, 1)); }
+.stageHost canvas { display: block; width: 100% !important; height: 100% !important; }
+.touchShield { display: none; position: absolute; inset: 0; z-index: 2; touch-action: pan-y; }
+@media (pointer: coarse) { .touchShield { display: block; } }
+.frameTag {
+  position: absolute; top: var(--atlas-space-3); left: var(--atlas-space-3); z-index: 3; padding: 3px var(--atlas-space-2);
+  border: 1px solid var(--atlas-line); border-radius: 6px; background: color-mix(in srgb, var(--atlas-bg) 78%, transparent);
+  color: var(--atlas-text-muted); font-size: var(--atlas-text-label); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; pointer-events: none;
+}
+.caption { position: absolute; left: 5.93cqmin; right: 26cqmin; bottom: 5.93cqmin; z-index: 3; display: grid; gap: .6cqmin; pointer-events: none; }
+.captionSubtitle {
+  color: var(--atlas-accent-2); font: 600 2.04cqmin var(--atlas-font-ui); letter-spacing: .28cqmin; text-transform: uppercase;
+  text-shadow: 0 1px 3px var(--atlas-bg); overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.captionTitle {
+  color: var(--atlas-text-strong); font: 600 5.93cqmin/1.05 var(--atlas-font-display); text-shadow: 0 2px 10px var(--atlas-bg);
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.mark {
+  position: absolute; right: 5.93cqmin; bottom: 5.93cqmin; z-index: 3; color: color-mix(in srgb, var(--atlas-text-strong) 78%, transparent);
+  font: 600 1.67cqmin var(--atlas-font-ui); letter-spacing: .23cqmin; text-shadow: 0 1px 4px var(--atlas-bg); pointer-events: none;
+}
+.stageOverlay {
+  position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; padding: var(--atlas-space-5); text-align: center;
+  background: color-mix(in srgb, var(--atlas-bg) 38%, transparent);
+}
+.loadBox { display: grid; justify-items: center; gap: var(--atlas-space-2); max-width: 30ch; }
+.loadHint {
+  margin: 0; padding: var(--atlas-space-1) var(--atlas-space-3); border-radius: 6px;
+  background: color-mix(in srgb, var(--atlas-bg) 80%, transparent); color: var(--atlas-text); font-size: var(--atlas-text-meta);
+}
+.stageStatus {
+  display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--atlas-space-2); max-width: 32ch; margin: 0;
+  padding: var(--atlas-space-3) var(--atlas-space-4); border-radius: var(--atlas-radius-control);
+  background: color-mix(in srgb, var(--atlas-bg) 82%, transparent); color: var(--atlas-text); font-size: var(--atlas-text-small);
+}
+.spinner { width: 14px; height: 14px; border: 2px solid var(--atlas-line); border-top-color: var(--atlas-accent); border-radius: 50%; animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(1turn); } }
+
+.panel {
+  min-width: 0; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-surface);
+  position: sticky; top: calc(var(--atlas-sticky-top) + var(--atlas-space-3));
+}
+.tabs { min-width: 0; }
+.pickerBody { display: grid; gap: var(--atlas-space-3); padding: var(--atlas-space-4); align-content: start; min-width: 0; }
+.slotHeader { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.slotHeaderIcon {
+  flex: 0 0 44px; width: 44px; height: 44px; overflow: hidden; border: 1px solid var(--transmog-quality, var(--atlas-line));
+  border-radius: 8px; background: var(--atlas-surface-sunken);
+}
+.slotHeaderIcon img { display: block; width: 100%; height: 100%; }
+.slotTitle { margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.1 var(--atlas-font-display); }
+.slotNow { margin: 2px 0 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); overflow-wrap: anywhere; }
+.slotActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); }
+.searchLabel { display: block; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1); }
+.chip {
+  min-height: 32px; padding: 0 var(--atlas-space-3); border: 1px solid var(--atlas-line); border-radius: 999px; background: var(--atlas-surface-sunken);
+  color: var(--atlas-text-muted); font: inherit; font-size: var(--atlas-text-meta); cursor: pointer;
+}
+.chip[aria-pressed="true"] { border-color: var(--atlas-line-strong); background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); }
+.chip:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
+@media (pointer: coarse) { .chip { min-height: 44px; } }
+.resultCount, .hint { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.results {
+  display: grid; gap: 2px; max-height: 520px; margin: 0; padding: 0 2px 0 0; overflow: auto; list-style: none;
+  mask-image: linear-gradient(180deg, #000 calc(100% - 24px), transparent);
+}
+.result {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); width: 100%; min-height: 52px;
+  padding: var(--atlas-space-1) var(--atlas-space-2); border: 0; border-radius: 8px; background: transparent; color: var(--atlas-text);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.result:hover { background: var(--atlas-accent-wash); }
+.result[aria-pressed="true"] { background: var(--atlas-accent-wash-strong); }
+.result:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
+.resultIcon { width: 40px; height: 40px; overflow: hidden; border: 1px solid var(--transmog-quality, var(--atlas-line)); border-radius: 6px; background: var(--atlas-surface-sunken); }
+.resultIcon img { display: block; width: 100%; height: 100%; }
+.resultText { display: grid; min-width: 0; }
+.resultName { color: var(--transmog-quality-text, var(--atlas-text-strong)); font-size: var(--atlas-text-small); font-weight: 600; line-height: var(--atlas-leading-snug); overflow-wrap: anywhere; }
+.resultMeta { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.wornTag { padding: 2px var(--atlas-space-2); border: 1px solid var(--atlas-line); border-radius: 6px; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); white-space: nowrap; }
+.setFilters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 11rem); gap: var(--atlas-space-2); }
+
+.group { display: grid; gap: var(--atlas-space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+.groupLabel { padding: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-weight: 600; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.field { display: grid; gap: var(--atlas-space-2); }
+.formats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--atlas-space-1); }
+.formatButton {
+  display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 76px; padding: var(--atlas-space-1);
+  border: 1px solid var(--atlas-line); border-radius: 8px; background: var(--atlas-surface-sunken); color: var(--atlas-text-muted);
+  font: inherit; font-size: var(--atlas-text-meta); line-height: 1.15; cursor: pointer;
+}
+.formatButton[aria-pressed="true"] { border-color: var(--atlas-line-strong); background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); }
+.formatButton:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
+.formatShape { width: var(--format-w); height: var(--format-h); border: 1.5px solid currentColor; border-radius: 2px; }
+.formatNote { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); text-align: center; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: var(--atlas-space-2); }
+.swatch {
+  aspect-ratio: 1; min-height: 44px; padding: 0; border: 1px solid var(--atlas-line); border-radius: 8px; background-size: cover; cursor: pointer;
+}
+.swatch[data-kind="transparent"] { background: repeating-conic-gradient(var(--atlas-surface-raised) 0 25%, var(--atlas-surface-sunken) 0 50%) 0 0 / 12px 12px; }
+.swatch[aria-pressed="true"] { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.swatch:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.rangeRow { display: grid; grid-template-columns: minmax(7rem, auto) minmax(0, 1fr); align-items: center; gap: var(--atlas-space-3); min-height: 44px; font-size: var(--atlas-text-small); }
+.twoColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+.checkRow { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; font-size: var(--atlas-text-small); cursor: pointer; }
+.checkRow input { width: 18px; height: 18px; accent-color: var(--atlas-accent); }
+.exportRow { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: var(--atlas-space-2); align-items: center; }
+
+.sources { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.sources summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--atlas-text-muted); }
+.sources p { max-width: var(--atlas-measure-wide); margin: 0; line-height: var(--atlas-leading-body); }
+
+@media (max-width: 1100px) {
+  .workspace { grid-template-columns: 1fr; }
+  .panel { position: static; }
+  .stage { max-height: none; }
+}
+@media (max-width: 700px) {
+  .studio { padding: var(--atlas-space-3); }
+  .doll { grid-template-columns: minmax(0, 1fr); }
+  .dollColumn, .weaponRow { display: none; }
+  .slotStrip { display: flex; gap: var(--atlas-space-2); width: 100%; overflow-x: auto; padding-bottom: var(--atlas-space-1); scroll-snap-type: x proximity; }
+  .slotStrip > * { scroll-snap-align: start; }
+  .toolbarField { flex: 1 1 9rem; min-width: 0; }
+  .toolbarSpacer { display: none; }
+  .formats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .twoColumns, .setFilters { grid-template-columns: 1fr; }
+  .exportRow { grid-template-columns: 1fr 1fr; }
+  .exportRow > :last-child { grid-column: 1 / -1; }
+  .results { max-height: 420px; }
+}
+
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+:global([data-motion="reduced"]) .spinner, :global([data-ui-motion="reduce"]) .spinner { animation: none; }
+@media (forced-colors: active) {
+  .slot, .result, .chip, .formatButton, .swatch, .stage { border: 1px solid CanvasText; }
+  .slot[aria-pressed="true"], .result[aria-pressed="true"], .chip[aria-pressed="true"], .formatButton[aria-pressed="true"], .swatch[aria-pressed="true"] { outline: 2px solid Highlight; }
+}

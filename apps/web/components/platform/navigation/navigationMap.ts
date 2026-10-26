@@ -91,6 +91,7 @@ export const navigationRealms: readonly NavigationRealm[] = [
     scene: "articles",
     links: [
       { href: "/wow/auction", label: { en: "Auction House", ru: "Аукцион" }, note: { en: "Browse realm auctions and regional commodities", ru: "Лоты серверов и региональный рынок реагентов" } },
+      { href: "/wow/transmog", label: { en: "Transmog Studio", ru: "Трансмогрификация" }, note: { en: "Build outfits and export pictures for social media", ru: "Образы из любых обликов и картинки для соцсетей" } },
     ],
   },
 ];
