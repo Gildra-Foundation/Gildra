@@ -22,6 +22,7 @@ type CartographyProps = {
   links: RaidProgression["links"];
   locale: "ru" | "en";
   onSelectBoss: (slug: string, reveal?: boolean) => void;
+  sketchScope?: string;
 };
 
 const serverSketch = () => "[]";
@@ -63,7 +64,7 @@ function CartographyFooter({ background, hasPins, planSlug, activeBoss, locale, 
   </div>;
 }
 
-export function RaidCartography({ plan, image, background, pins, bosses, activeBoss, links, locale, onSelectBoss }: CartographyProps) {
+export function RaidCartography({ plan, image, background, pins, bosses, activeBoss, links, locale, onSelectBoss, sketchScope }: CartographyProps) {
   const t = raidMapCopy[locale];
   const helpId = useId();
   const [zoom, setZoom] = useState(1);
@@ -71,7 +72,7 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
   const [showGrid, setShowGrid] = useState(false);
   const [editing, setEditing] = useState(false);
   const [cursor, setCursor] = useState({ x: 50, y: 50 });
-  const key = `gildra:raid-sketch:v1:${plan.slug}:${background}:${image.id}`;
+  const key = `gildra:raid-sketch:v1:${plan.slug}:${background}:${image.id}${sketchScope ? `:${sketchScope}` : ""}`;
   const storedSketch = useSyncExternalStore(subscribeMapPreferences, () => readMapPreference(key, "[]"), serverSketch);
   const points = useMemo(() => sketchPoints(storedSketch), [storedSketch]);
   const selectedBoss = bosses.find(boss => boss.slug === activeBoss);

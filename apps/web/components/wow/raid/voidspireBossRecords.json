@@ -1,0 +1,343 @@
+{
+  "checkedAt": "2026-10-26",
+  "spells": {
+    "1249262": {
+      "name": {
+        "en": "Umbral Collapse",
+        "ru": "Темный коллапс"
+      },
+      "icon": "spell_arcane_arcanetorrent"
+    },
+    "1265540": {
+      "name": {
+        "en": "Blackening Wounds",
+        "ru": "Чернеющие раны"
+      },
+      "icon": "spell_arcane_arcanepotency_nightborne"
+    },
+    "1255702": {
+      "name": {
+        "en": "Pitch Bulwark",
+        "ru": "Непроницаемый оплот"
+      },
+      "icon": "spell_arcane_arcaneresilience"
+    },
+    "1258883": {
+      "name": {
+        "en": "Void Fall",
+        "ru": "Обрушение Бездны"
+      },
+      "icon": "inv_nullstone_void"
+    },
+    "1284786": {
+      "name": {
+        "en": "Shadow Phalanx",
+        "ru": "Теневой строй"
+      },
+      "icon": "inv_soulbarrier"
+    },
+    "1273067": {
+      "name": {
+        "en": "Aftershock",
+        "ru": "Повторный толчок"
+      },
+      "icon": "spell_nature_earthquake"
+    },
+    "1259184": {
+      "name": {
+        "en": "Blisterburst",
+        "ru": "Обжигающий взрыв"
+      },
+      "icon": "ability_argus_soulburst"
+    },
+    "1243453": {
+      "name": {
+        "en": "Void Convergence",
+        "ru": "Слияние Бездны"
+      },
+      "icon": "inv_112_raiddimensius_gravity"
+    },
+    "1254088": {
+      "name": {
+        "en": "Shadow Fracture",
+        "ru": "Раскол Тьмы"
+      },
+      "icon": "inv_netherportal"
+    },
+    "1253032": {
+      "name": {
+        "en": "Shattering Twilight",
+        "ru": "Раскалывающийся сумрак"
+      },
+      "icon": "inv_mace_2h_etherealking_d_01"
+    },
+    "1260835": {
+      "name": {
+        "en": "Despotic Command",
+        "ru": "Деспотичный приказ"
+      },
+      "icon": "inv_cosmicvoid_debuff"
+    },
+    "1271577": {
+      "name": {
+        "en": "Destabilizing Strikes",
+        "ru": "Дестабилизирующие удары"
+      },
+      "icon": "spell_shadow_twistedfaith"
+    },
+    "1246175": {
+      "name": {
+        "en": "Entropic Unraveling",
+        "ru": "Энтропическое расплетение"
+      },
+      "icon": "inv_112_etherealwraps_empowered_blue"
+    },
+    "1244221": {
+      "name": {
+        "en": "Dread Breath",
+        "ru": "Жуткое дыхание"
+      },
+      "icon": "ability_rogue_envelopingshadows"
+    },
+    "1262623": {
+      "name": {
+        "en": "Nullbeam",
+        "ru": "Нуль-луч"
+      },
+      "icon": "ability_ironmaidens_convulsiveshadows"
+    },
+    "1245391": {
+      "name": {
+        "en": "Gloom",
+        "ru": "Мрак"
+      },
+      "icon": "inv_cosmicvoid_nova"
+    },
+    "1245058": {
+      "name": {
+        "en": "Void Howl",
+        "ru": "Вой Бездны"
+      },
+      "icon": "inv_cosmicvoid_orb"
+    },
+    "1245645": {
+      "name": {
+        "en": "Rakfang",
+        "ru": "Клык Эззорака"
+      },
+      "icon": "inv_misc_rubysanctum4"
+    },
+    "1248847": {
+      "name": {
+        "en": "Radiant Barrier",
+        "ru": "Сияющий барьер"
+      },
+      "icon": "spell_holy_blessedresillience"
+    },
+    "1246485": {
+      "name": {
+        "en": "Avenger's Shield",
+        "ru": "Щит мстителя"
+      },
+      "icon": "spell_holy_avengersshield"
+    },
+    "1248674": {
+      "name": {
+        "en": "Sacred Shield",
+        "ru": "Священный щит"
+      },
+      "icon": "ability_paladin_blessedmending"
+    },
+    "1246384": {
+      "name": {
+        "en": "Divine Shield",
+        "ru": "Божественный щит"
+      },
+      "icon": "spell_holy_divineshield"
+    },
+    "1246162": {
+      "name": {
+        "en": "Aura of Devotion",
+        "ru": "Аура благочестия"
+      },
+      "icon": "spell_holy_devotionaura"
+    },
+    "1248644": {
+      "name": {
+        "en": "Divine Toll",
+        "ru": "Божественный благовест"
+      },
+      "icon": "inv_ability_paladin_divinetoll"
+    },
+    "1248983": {
+      "name": {
+        "en": "Execution Sentence",
+        "ru": "Смертный приговор"
+      },
+      "icon": "spell_paladin_executionsentence"
+    },
+    "1248721": {
+      "name": {
+        "en": "Tyr's Wrath",
+        "ru": "Гнев Тира"
+      },
+      "icon": "inv_ability_holyfire_debuff"
+    },
+    "1246736": {
+      "name": {
+        "en": "Judgment",
+        "ru": "Правосудие"
+      },
+      "icon": "ability_paladin_judgementred"
+    },
+    "1232467": {
+      "name": {
+        "en": "Grasp of Emptiness",
+        "ru": "Хватка пустоты"
+      },
+      "icon": "inv_shadowelementalmount"
+    },
+    "1233819": {
+      "name": {
+        "en": "Void Expulsion",
+        "ru": "Выброс Бездны"
+      },
+      "icon": "inv_nullstone_void"
+    },
+    "1241520": {
+      "name": {
+        "en": "Corrupting Essence",
+        "ru": "Оскверняющая сущность"
+      },
+      "icon": "inv_elemental_primal_shadow"
+    },
+    "1233865": {
+      "name": {
+        "en": "Null Corona",
+        "ru": "Нуль-венец"
+      },
+      "icon": "inv_cosmicvoid_groundsate"
+    },
+    "1233602": {
+      "name": {
+        "en": "Silverstrike Arrow",
+        "ru": "Серебряная стрела"
+      },
+      "icon": "inv_ammo_arrow_03"
+    },
+    "1237729": {
+      "name": {
+        "en": "Silverstrike Ricochet",
+        "ru": "Серебряный рикошет"
+      },
+      "icon": "inv_ammo_arrow_02"
+    },
+    "1237040": {
+      "name": {
+        "en": "Voidstalker Sting",
+        "ru": "Укус прыгуаны Бездны"
+      },
+      "icon": "ability_ironmaidens_convulsiveshadows"
+    },
+    "1239080": {
+      "name": {
+        "en": "Aspect of the End",
+        "ru": "Дух гибели"
+      },
+      "icon": "spell_warlock_demonsoul"
+    },
+    "1260712": {
+      "name": {
+        "en": "Oblivion's Wrath",
+        "ru": "Гнев забвения"
+      },
+      "icon": "spell_priest_void-blast"
+    },
+    "1260052": {
+      "name": {
+        "en": "Primordial Roar",
+        "ru": "Первобытный рев"
+      },
+      "icon": "spell_fire_twilightflamebreath"
+    },
+    "1241692": {
+      "name": {
+        "en": "Shadowclaw Slam",
+        "ru": "Теневое сокрушение"
+      },
+      "icon": "inv_misc_rylakclaw"
+    },
+    "1256855": {
+      "name": {
+        "en": "Void Breath",
+        "ru": "Дыхание Бездны"
+      },
+      "icon": "inv_cosmicvoid_missile"
+    },
+    "1235617": {
+      "name": {
+        "en": "Silverstrike Barrage",
+        "ru": "Серебряный шквал"
+      },
+      "icon": "ability_shootwand"
+    }
+  },
+  "npcs": {
+    "240435": {
+      "en": "Imperator Averzian",
+      "ru": "Император Аверзиан"
+    },
+    "240434": {
+      "en": "Vorasius",
+      "ru": "Ненасытникус"
+    },
+    "240432": {
+      "en": "Fallen-King Salhadaar",
+      "ru": "Павший король Салхадаар"
+    },
+    "242056": {
+      "en": "Vaelgor",
+      "ru": "Ваэлгор"
+    },
+    "244552": {
+      "en": "Ezzorak",
+      "ru": "Эззорак"
+    },
+    "240431": {
+      "en": "General Amias Bellamy",
+      "ru": "Генерал Амиас Беллами"
+    },
+    "240437": {
+      "en": "Commander Venel Lightblood",
+      "ru": "Командир Венел Светлая Кровь"
+    },
+    "240438": {
+      "en": "War Chaplain Senn",
+      "ru": "Боевой капеллан Сенн"
+    },
+    "240430": {
+      "en": "Alleria Windrunner",
+      "ru": "Аллерия Ветрокрылая"
+    },
+    "245113": {
+      "en": "Rift Simulacrum",
+      "ru": "Симулякр разлома"
+    },
+    "252918": {
+      "en": "Abyssal Voidshaper",
+      "ru": "Пустотный ваятель Бездны"
+    },
+    "251239": {
+      "en": "Shadowguard Stalwart",
+      "ru": "Стойкий защитник из Темной Стражи"
+    },
+    "256757": {
+      "en": "Voidbound Annihilator",
+      "ru": "Скованный Бездной аннигилятор"
+    },
+    "251791": {
+      "en": "Fractured Image",
+      "ru": "Расколотый образ"
+    }
+  }
+}

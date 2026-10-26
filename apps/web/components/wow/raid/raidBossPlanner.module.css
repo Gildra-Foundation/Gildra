@@ -1,0 +1,41 @@
+/* atlas:strict — existing Voidspire materials and readable encounter diagrams. */
+.shell { min-width: 0; }
+.encounters.encounters { margin-block: var(--atlas-space-4) var(--atlas-space-6); }
+.encounters.encounters ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+.encounters.encounters li { max-width: none; min-width: 0; }
+.encounters.encounters a { position: relative; isolation: isolate; min-height: 100px; padding: var(--atlas-space-5) var(--atlas-space-6); border: 0; background: transparent; box-shadow: none; text-shadow: 0 1px 3px var(--atlas-bg); }
+.encounters a::before, .pager a::before { position: absolute; z-index: -1; inset: 0; content: ""; pointer-events: none; border: var(--atlas-space-4) solid transparent; border-image-source: url("/assets/wow/raids/voidspire-planner/plaque.webp"); border-image-slice: var(--void-plaque-slice) fill; border-width: var(--void-plaque-width); filter: contrast(.88) saturate(.84) brightness(.92); }
+.encounters.encounters a[aria-current="page"] { color: var(--atlas-accent-strong); box-shadow: none; }
+.encounters a[aria-current="page"]::before { filter: contrast(.88) saturate(.92) brightness(1.08); }
+.encounters a, .pager a { transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
+.encounters a::before, .pager a::before { transition: filter var(--atlas-duration-fast) var(--atlas-ease); }
+.encounters.encounters a:hover, .pager.pager a:hover { background: transparent; transform: translateY(-2px); }
+.encounters a:hover::before, .pager a:hover::before { filter: contrast(.88) saturate(.9) brightness(1.04); }
+.encounters.encounters img { width: 48px; height: 48px; border: var(--atlas-space-1) solid transparent; border-image: url("/assets/wow/raids/voidspire-planner/panel.webp") var(--void-panel-slice) stretch; }
+.encounters a > span:last-child { font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); line-height: var(--atlas-leading-snug); }
+.pager.pager a { position: relative; isolation: isolate; min-height: 88px; padding: var(--atlas-space-4) var(--atlas-space-6); border: 0; background: transparent; text-shadow: 0 1px 3px var(--atlas-bg); }
+.pager.pager a:hover { background: transparent; }
+.diagram.diagram { position: static; }
+.diagramPlane { position: relative; isolation: isolate; width: 100%; min-height: 500px; overflow: hidden; background-color: var(--atlas-surface-sunken); background-image: linear-gradient(var(--atlas-line-soft) 1px, transparent 1px), linear-gradient(90deg, var(--atlas-line-soft) 1px, transparent 1px); background-size: 10% 10%; }
+.diagramPlane[data-layout="grid"] { background-size: 33.333% 33.333%; }
+.diagramArt { z-index: -1; object-fit: cover; opacity: .3; }
+.zone { --zone-color: var(--atlas-negative); position: absolute; border: 2px solid var(--zone-color); background: color-mix(in srgb, var(--zone-color) 18%, transparent); }
+.zone[data-kind="safe"] { --zone-color: var(--atlas-positive); }
+.zone[data-kind="soak"] { --zone-color: var(--atlas-info); }
+.zone[data-kind="wall"] { --zone-color: var(--atlas-text-subtle); border-style: dashed; }
+.zone > b { position: absolute; top: var(--atlas-space-1); left: var(--atlas-space-1); display: grid; place-items: center; width: 24px; height: 24px; background: var(--atlas-bg); color: var(--zone-color); font-size: var(--atlas-text-meta); }
+.marker { position: absolute; z-index: 2; display: grid; justify-items: center; gap: var(--atlas-space-1); width: 112px; max-width: 28%; translate: -50% -50%; color: var(--atlas-text-strong); text-align: center; }
+.marker > span { display: grid; place-items: center; width: 52px; height: 52px; background: url("/assets/wow/raids/voidspire-planner/medallion.webp") center / contain no-repeat; }
+.marker > b { max-width: 100%; padding: var(--atlas-space-1); background: var(--atlas-scrim); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); overflow-wrap: anywhere; text-shadow: 0 1px 3px var(--atlas-bg); }
+.diagramKey { display: grid; gap: var(--atlas-space-2); margin: var(--atlas-space-4) 0; padding: 0 var(--atlas-space-5); list-style: none; font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.diagramKey li { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--atlas-space-2); }
+.diagramKey b { color: var(--atlas-accent-strong); }
+.diagramKey small { color: var(--atlas-text-muted); font-size: inherit; }
+.difficulty { display: grid; justify-items: start; gap: var(--atlas-space-2); min-width: 0; }
+.difficulty > span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+@media (max-width: 900px) { .encounters.encounters ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .encounters.encounters ol { display: flex; flex-wrap: nowrap; overflow-x: auto; padding-block: var(--atlas-space-2); } .encounters.encounters li { flex: 0 0 min(300px, 88vw); } .encounters.encounters a { min-height: 88px; } .diagramPlane { min-height: 390px; } .marker > span { width: 40px; height: 40px; } .marker > b { font-size: var(--atlas-text-meta); } .diagramKey { padding-inline: var(--atlas-space-2); } .difficulty { justify-items: stretch; } }
+@media (forced-colors: active) { .encounters a::before, .pager a::before, .diagramArt { display: none; } .encounters.encounters a, .pager.pager a { background: Canvas; color: LinkText; border: 1px solid LinkText; } .marker > span { background: Canvas; border: 1px solid CanvasText; } .marker > b, .diagramPlane { background: Canvas; color: CanvasText; } .zone { border-color: CanvasText; background: Canvas; } .zone > b { background: Canvas; color: CanvasText; } }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) { .encounters.encounters a, .pager.pager a, .encounters a::before, .pager a::before { transition: none; transform: none; } }
+:global([data-motion="reduced"]) .encounters a, :global([data-ui-motion="reduce"]) .encounters a, :global([data-transparency="reduced"]) .encounters a, :global([data-motion="reduced"]) .pager a, :global([data-ui-motion="reduce"]) .pager a, :global([data-transparency="reduced"]) .pager a { transition: none; transform: none; }
+:global([data-motion="reduced"]) .encounters a::before, :global([data-ui-motion="reduce"]) .encounters a::before, :global([data-transparency="reduced"]) .encounters a::before, :global([data-motion="reduced"]) .pager a::before, :global([data-ui-motion="reduce"]) .pager a::before, :global([data-transparency="reduced"]) .pager a::before { transition: none; }

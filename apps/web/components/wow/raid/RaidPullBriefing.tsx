@@ -8,21 +8,22 @@ import styles from "./raidPulls.module.css";
 import art from "./raidBriefingArt.module.css";
 import { RaidPlannerIcon } from "./VoidspirePlannerArt";
 import { voidspireBossLinkClass } from "./voidspirePlannerLayout";
+import { raidBossPlannerCopy } from "./raidBossPlannerCopy";
 
 const roleIcons = { tank: Shield, healer: HeartPulse, dps: Swords };
 const roles: RaidPullRole[] = ["tank", "healer", "dps"];
 
-export function RaidPullBriefing({ pull, locale, role, slug }: { pull: RaidPull; locale: "ru" | "en"; role: RaidPullRole | "all"; slug: string }) {
+export function RaidPullBriefing({ pull, locale, role, slug, encounter = false, difficulty = "normal" }: { pull: RaidPull; locale: "ru" | "en"; role: RaidPullRole | "all"; slug: string; encounter?: boolean; difficulty?: "normal" | "heroic" }) {
   const t = raidPullCopy[locale];
   const compact = slug === "the-voidspire";
   const text = (value: { ru: string; en: string }) => value[locale];
   return <div className={`${styles.briefing} ${art.briefingArt}`} data-raid-briefing="" data-role={role}>
     <section className={`${styles.call} ${art.command}`} data-raid-command>
-      <h4 className={art.sectionHeading}><RaidPlannerIcon slug={slug} kind="command" fallback={<Crosshair size={16} aria-hidden="true" />} />{t.call}</h4>
+      <h4 className={art.sectionHeading}><RaidPlannerIcon slug={slug} kind="command" fallback={<Crosshair size={16} aria-hidden="true" />} />{encounter ? raidBossPlannerCopy[locale].command : t.call}</h4>
       <p>{text(pull.call)}</p>
     </section>
 
-    <RaidPullEnemies pull={pull} locale={locale} slug={slug} compact={compact} />
+    <RaidPullEnemies pull={pull} locale={locale} slug={slug} compact={compact} encounter={encounter} />
 
     <section>
       <h4 className={art.sectionHeading}>{t.tasks}</h4>
@@ -38,7 +39,7 @@ export function RaidPullBriefing({ pull, locale, role, slug }: { pull: RaidPull;
       {!compact && <p className={`${styles.muted} ${art.movement}`}>{t.movement}</p>}
     </section>
 
-    <RaidPullAbilities pull={pull} locale={locale} role={role} compact={compact} />
+    <RaidPullAbilities pull={pull} locale={locale} role={role} compact={compact} difficulty={difficulty} />
 
     {pull.steps.length > 0 && <AtlasDisclosure className={art.actionOrder} summary={t.plan}>
       <ol className={styles.steps}>{pull.steps.map((step) => <li key={step.en}>{text(step)}</li>)}</ol>
@@ -50,18 +51,18 @@ export function RaidPullBriefing({ pull, locale, role, slug }: { pull: RaidPull;
     {pull.next && (!compact || !pull.bossSlug) && <section className={`${styles.onward} ${art.onward}`}>
       <h4 className={art.sectionHeading}>{t.onward}</h4><p>{text(pull.next)}</p>
     </section>}
-    {pull.bossSlug && <AtlasLinkButton className={`${art.openBoss} ${voidspireBossLinkClass(slug)}`} href={`${locale === "ru" ? "/ru" : ""}/wow/raids/${slug}/${pull.bossSlug}`} icon={slug === "the-voidspire" ? <RaidPlannerIcon slug={slug} kind="arena" /> : undefined} iconAfter={slug === "the-voidspire" ? undefined : <ArrowUpRight size={18} aria-hidden="true" />}>
+    {pull.bossSlug && !encounter && <AtlasLinkButton className={`${art.openBoss} ${voidspireBossLinkClass(slug)}`} href={`${locale === "ru" ? "/ru" : ""}/wow/raids/${slug}/${pull.bossSlug}`} icon={slug === "the-voidspire" ? <RaidPlannerIcon slug={slug} kind="arena" /> : undefined} iconAfter={slug === "the-voidspire" ? undefined : <ArrowUpRight size={18} aria-hidden="true" />}>
       {t.openBoss}
     </AtlasLinkButton>}
   </div>;
 }
 
-function RaidPullEnemies({ pull, locale, slug, compact }: { pull: RaidPull; locale: "ru" | "en"; slug: string; compact: boolean }) {
+function RaidPullEnemies({ pull, locale, slug, compact, encounter }: { pull: RaidPull; locale: "ru" | "en"; slug: string; compact: boolean; encounter: boolean }) {
   const t = raidPullCopy[locale];
   const text = (value: { ru: string; en: string }) => value[locale];
   return <>
     {(!compact || pull.enemies.length > 0) && <section>
-      <h4 className={art.sectionHeading}>{t.enemies}</h4>
+      <h4 className={art.sectionHeading}>{encounter ? raidBossPlannerCopy[locale].enemies : t.enemies}</h4>
       {pull.enemies.length ? <ul className={`${styles.enemies} ${art.enemies}`} data-raid-enemies>
         {pull.enemies.map((enemy) => <li key={enemy.npcId ?? enemy.name.en}>
           <div className={`${styles.enemyIdentity} ${art.enemyIdentity}`}>
@@ -85,10 +86,10 @@ function RaidPullEnemies({ pull, locale, slug, compact }: { pull: RaidPull; loca
   </>;
 }
 
-function RaidPullAbilities({ pull, locale, role, compact }: { pull: RaidPull; locale: "ru" | "en"; role: RaidPullRole | "all"; compact: boolean }) {
+function RaidPullAbilities({ pull, locale, role, compact, difficulty }: { pull: RaidPull; locale: "ru" | "en"; role: RaidPullRole | "all"; compact: boolean; difficulty: "normal" | "heroic" }) {
   const t = raidPullCopy[locale];
   const text = (value: { ru: string; en: string }) => value[locale];
-  const abilities = pull.abilities.filter((ability) => role === "all" || ability.roles.includes(role));
+  const abilities = pull.abilities.filter((ability) => (difficulty === "heroic" || !ability.heroicOnly) && (role === "all" || ability.roles.includes(role)));
   return <>
     {(!compact || abilities.length > 0) && <section>
       <h4 className={art.sectionHeading}>{t.abilities}</h4>
@@ -106,6 +107,7 @@ function RaidPullAbilities({ pull, locale, role, compact }: { pull: RaidPull; lo
           </div>
           {ability.effect && <p>{text(ability.effect)}</p>}
           {ability.response && <p className={`${styles.response} ${art.response}`}>{text(ability.response)}</p>}
+          {difficulty === "heroic" && ability.heroic && <p className={`${styles.response} ${art.response}`} data-raid-heroic-note><b>{raidBossPlannerCopy[locale].heroicNote}: </b>{text(ability.heroic)}</p>}
           {ability.action && (!compact || role === "all" && ability.roles.length < 3) && <p className={styles.assignment}>{t.assignments}: {ability.roles.length === 3 ? t.shared : ability.roles.map((item) => t[item]).join(" · ")}</p>}
           {!compact && ability.spellId && <a className={`${styles.sourceLink} ${art.sourceLink}`} href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}spell=${ability.spellId}`} target="_blank" rel="noreferrer">
             {text(ability.name)} <ExternalLink size={12} aria-hidden="true" />

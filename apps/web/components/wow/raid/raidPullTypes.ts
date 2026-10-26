@@ -27,6 +27,13 @@ export type RaidPullAbility = {
   roles: RaidPullRole[];
   effect?: RouteText;
   response?: RouteText;
+  heroic?: RouteText;
+  heroicOnly?: boolean;
+};
+export type RaidEncounterDiagram = {
+  layout: "circle" | "grid" | "lane" | "split" | "ring";
+  markers: { kind: "boss" | "add" | "objective" | RaidPullRole | "group"; x: number; y: number; label: RouteText }[];
+  zones: { kind: "danger" | "safe" | "soak" | "wall"; x: number; y: number; width: number; height: number; label: RouteText; rotate?: number }[];
 };
 export type RaidPull = {
   id: string;
@@ -45,6 +52,7 @@ export type RaidPull = {
   roles: Record<RaidPullRole, RouteText[]>;
 };
 export type RaidPullPlan = {
+  encounter?: { bossSlug: string; summary: RouteText; diagrams: Record<string, RaidEncounterDiagram> };
   slug: string;
   name: RouteText;
   artwork: string;

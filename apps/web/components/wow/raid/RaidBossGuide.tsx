@@ -12,9 +12,14 @@ import { getRaidReview } from "@/lib/data/raidReviews";
 import { RaidReviewNotes } from "./RaidReviewNotes";
 import { RaidSpellReference } from "./RaidSpellReference";
 import { trail } from "@/lib/routes/registry";
+import { VoidspireBossGuide } from "./VoidspireBossGuide";
 
 /** Boss guide of a Midnight Season 1 raid: header, encounter switcher, battle plan, one mechanics list. */
 export function RaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; boss: RaidBoss; locale: RaidLocale }) {
+  return raid.slug === "the-voidspire" ? <VoidspireBossGuide raid={raid} boss={boss} locale={locale} /> : <ClassicRaidBossGuide raid={raid} boss={boss} locale={locale} />;
+}
+
+function ClassicRaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; boss: RaidBoss; locale: RaidLocale }) {
   const copy = raidGuideCopy[locale];
   const reviewed = Boolean(getRaidReview(raid.slug));
   const raidName = locale === "ru" ? raid.nameRu : raid.nameEn;

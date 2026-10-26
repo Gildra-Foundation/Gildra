@@ -13,7 +13,7 @@ import type { RaidMapAtlas, RaidPull, RaidPullAbility, RaidPullPlan, RaidPullRol
 const tx = (ru: string, en: string): RouteText => ({ ru, en });
 // Translate the small serializable projection on the server. The full name
 // dictionary must never enter the interactive map's browser bundle.
-function localizePlan<T>(value: T): T {
+export function localizePlan<T>(value: T): T {
   if (Array.isArray(value)) return value.map(localizePlan) as T;
   if (!value || typeof value !== "object") return value;
   const fields = value as Record<string, unknown>;
