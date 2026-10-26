@@ -6,6 +6,7 @@ import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { AtlasDisclosure } from "@gildra/atlas-ui/AtlasDisclosure";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
+import { usePullRolePreference, pullRoleCopy } from "../shared/usePullRolePreference";
 import { raidHubControlLayout } from "./raidHubControls";
 import { raidCardThemes } from "./raidCardThemes";
 import type { RaidHubSlug } from "./raidHubData";
@@ -26,12 +27,30 @@ function subscribeHash(callback: () => void) {
 const readHash = () => window.location.hash;
 const serverHash = () => "";
 
-export function RaidPullWorkspace({ plan, locale }: { plan: RaidPullPlan; locale: "ru" | "en" }) {
+type WorkspaceProps = { plan: RaidPullPlan; locale: "ru" | "en" };
+type RoleSelection = RaidPullRole | "all";
+
+export function RaidPullWorkspace(props: WorkspaceProps) {
+  return props.plan.slug === "the-voidspire" ? <VoidspirePullWorkspace {...props} /> : <LocalRoleWorkspace {...props} />;
+}
+
+function VoidspirePullWorkspace(props: WorkspaceProps) {
+  const { role, selectRole } = usePullRolePreference();
+  return <RaidPullWorkspaceContent {...props} role={role} onRoleChange={selectRole} />;
+}
+
+function LocalRoleWorkspace(props: WorkspaceProps) {
+  const [role, setRole] = useState<RoleSelection>("all");
+  return <RaidPullWorkspaceContent {...props} role={role} onRoleChange={(value) => setRole(value as RoleSelection)} />;
+}
+
+function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange }: WorkspaceProps & { role: RoleSelection; onRoleChange: (value: string) => void }) {
   const t = raidPullCopy[locale];
+  const roleCopy = pullRoleCopy[locale];
+  const savedRole = plan.slug === "the-voidspire";
   const hash = useSyncExternalStore(subscribeHash, readHash, serverHash);
   const active = Math.max(0, plan.pulls.findIndex((pull) => hash === `#raid-pull=${pull.id}`));
   const pull = plan.pulls[active];
-  const [role, setRole] = useState<RaidPullRole | "all">("all");
   const panel = useRef<HTMLDivElement>(null);
   const strip = useRef<HTMLOListElement>(null);
   function select(index: number, reveal = false) {
@@ -46,11 +65,15 @@ export function RaidPullWorkspace({ plan, locale }: { plan: RaidPullPlan; locale
   }
   const slug = plan.slug as RaidHubSlug;
   return <div className={`${styles.workspace} ${voidspirePlannerClass(plan.slug)}`} data-raid-pulls={plan.slug} style={{ ...raidHubControlLayout(slug), ...voidspirePlannerLayout(plan.slug), "--raid-card-accent": raidCardThemes[slug].accent } as CSSProperties}>
-    <div className={styles.toolbar} data-raid-role-toolbar><span>{t.role}</span><AtlasSegmented aria-label={t.role} value={role} onValueChange={(value) => setRole(value as RaidPullRole | "all")}
-      options={(["all", "tank", "healer", "dps"] as const).map((value) => ({ value, label: t[value] }))} /></div>
+    {savedRole ? <div className={styles.toolbar} data-raid-role-toolbar>
+      <div data-raid-role-picker data-testid="pull-role-picker"><AtlasSegmented aria-label={roleCopy.label} aria-describedby="voidspire-role-hint" animation="spring" size="lg" fullWidth value={role} onValueChange={onRoleChange}
+        options={(["all", "tank", "healer", "dps"] as const).map((value) => ({ value, label: roleCopy[value] }))} /></div>
+      <p id="voidspire-role-hint" data-raid-role-hint>{roleCopy.hint}</p>
+    </div> : <div className={styles.toolbar} data-raid-role-toolbar><span>{t.role}</span><AtlasSegmented aria-label={t.role} value={role} onValueChange={onRoleChange}
+      options={(["all", "tank", "healer", "dps"] as const).map((value) => ({ value, label: t[value] }))} /></div>}
     <nav className={styles.pullNav} data-raid-pull-navigation aria-label={t.list}><ol ref={strip} className={styles.pullStrip}>{plan.pulls.map((item, index) => <li key={item.id}><button type="button"
       data-raid-pull-choice={index} aria-pressed={active === index} aria-controls={`raid-pull-${plan.slug}`} onClick={() => select(index, true)}>
-      <b>{index + 1}</b><span><small>{t[item.kind]}</small>{item.title[locale]}</span></button></li>)}</ol><RaidPlannerPullPosition slug={plan.slug} label={t.pull} current={active + 1} total={plan.pulls.length} /></nav>
+      <b>{index + 1}</b><span><small>{t[item.kind]}</small>{savedRole ? <span data-raid-pull-title>{item.title[locale]}</span> : item.title[locale]}</span></button></li>)}</ol><RaidPlannerPullPosition slug={plan.slug} label={t.pull} current={active + 1} total={plan.pulls.length} /></nav>
     {plan.atlas?.progression && <p className={styles.coverage}>{plan.atlas.progression.note[locale]}</p>}
     <div className={styles.columns} data-raid-columns>
       <RaidPullMap plan={plan} active={active} locale={locale} onSelect={select} />

@@ -11,7 +11,7 @@ export function RaidPlannerIcon({ slug, kind, fallback, mark }: { slug: string; 
   if (slug !== "the-voidspire") return fallback;
   return <span className={styles.glyph} data-voidspire-glyph={kind} aria-hidden="true">
     <Image src={manifest.entries[kind].path} alt="" width={64} height={64} draggable={false} />
-    {mark && <span className={styles.glyphMark}>{mark}</span>}
+    {mark && <span className={styles.glyphMark} data-voidspire-live-mark={kind}>{mark}</span>}
     <span className={styles.forcedGlyph}>{mark ?? forcedGlyphs[kind]}</span>
   </span>;
 }

@@ -9,11 +9,9 @@ import { AtlasChoiceHighlight } from "@gildra/atlas-ui/AtlasChoiceHighlight";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { PlayerProfilePicker } from "./PlayerProfilePicker";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
-import { usePlayerProfile } from "./usePlayerProfile";
+import { usePullRolePreference, pullRoleCopy } from "../shared/usePullRolePreference";
 import { playerSpecs, talentsForProfile } from "./playerTools";
 import { TalentImportPanel } from "./TalentImportPanel";
-import { usePullRole } from "./usePullRole";
-import { pullRoleCopy } from "./pullRoleCopy";
 import type { MdtDataset } from "@/lib/data/wow/mythicReview.types";
 import type { RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
 import type { DungeonCombatIntel } from "./dungeonCombatIntel.types";
@@ -32,8 +30,7 @@ import styles from "./mdtPullMap.module.css";
 
 export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combatIntel }: { slug: DungeonSlug; locale: "ru" | "en"; routeUrl: string; data: MdtDataset; stops: RouteStop[]; combatIntel: DungeonCombatIntel }) {
   const copy = mdtPullMapCopy[locale], t = pullWorkspaceCopy[locale], roles = pullRoleCopy[locale];
-  const [selectedRole, setSelectedRole] = usePullRole();
-  const [profile, setProfile] = usePlayerProfile();
+  const { role: selectedRole, profile, setProfile, selectRole, setRole: setSelectedRole } = usePullRolePreference();
   const [selected, setSelected] = useState(0);
   const [preview, setPreview] = useState<number | null>(null);
   const pullStrip = useRef<HTMLOListElement>(null);
@@ -78,7 +75,7 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
   return <section ref={root} className={`${styles.panel} ${dungeonPullArtClass(slug)}`} data-dungeon-map={slug} data-testid="mdt-map" aria-label={copy.mapLabel}>
     <header className={styles.header}><h3>{authored ? t.route : t.groups}</h3><a className={styles.routeLink} href={data.route.url || routeUrl} target="_blank" rel="noreferrer">{copy.authoredRoute}</a></header>
     <div className={styles.playerBar}>
-      <div className={styles.rolePicker} data-testid="pull-role-picker"><AtlasSegmented aria-label={roles.label} animation="spring" size="lg" fullWidth value={activeRole} onValueChange={value => { setProfile({ ...profile, specId: null }); setSelectedRole(value); }} options={(["all", "tank", "healer", "dps"] as const).map(value => ({ value, label: roles[value] }))} /></div>
+      <div className={styles.rolePicker} data-testid="pull-role-picker"><AtlasSegmented aria-label={roles.label} animation="spring" size="lg" fullWidth value={activeRole} onValueChange={selectRole} options={(["all", "tank", "healer", "dps"] as const).map(value => ({ value, label: roles[value] }))} /></div>
       <PlayerProfilePicker locale={locale} themeClassName={themeClassName} profile={profile} onProfileChange={setProfile} onRoleChange={setSelectedRole} />
       <details ref={builds} className={styles.buildDisclosure}><summary data-pull-art-control="material">{t.build}<span>{talents.selection ? t.imported : t.options}</span></summary><TalentImportPanel locale={locale} profile={profile} result={talents.result} onProfileChange={setProfile} onRoleChange={setSelectedRole} /></details>
     </div>

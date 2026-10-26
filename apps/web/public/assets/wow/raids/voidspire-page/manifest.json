@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "slug": "the-voidspire",
+  "createdAt": "2026-10-26T15:20:18.475Z",
+  "kind": "decorative-environment-downward-outpaint",
+  "entries": {
+    "sceneExtended": {
+      "path": "/assets/wow/raids/voidspire-page/scene-extended.webp",
+      "width": 887,
+      "height": 1774,
+      "bytes": 204048,
+      "sha256": "881d314d67a7c2c7ff9123485498ed2e27ee301221f64525d11a260c13793b5f",
+      "opaque": true,
+      "native": "/home/debian/gildra-voidspire-readability-20261026/native/scene-extended.png",
+      "nativeSha256": "cfc644a8e1badfa8447e7e26597a24733a89d53166602a6e81952b5e8279cfae",
+      "nativeDimensions": {
+        "width": 887,
+        "height": 1774
+      },
+      "generatedSource": "/home/debian/.codex/generated_images/01a17779-35bb-7ed2-901f-1475e1d73bcc/exec-dfc22e18-384b-41e5-8e64-8a4330373a77.png",
+      "prompt": "/home/debian/gildra-voidspire-readability-20261026/prompts/scene-extended.txt",
+      "promptSha256": "9fe6e72f7367ff104b0e478cb3c1d9c3d3866e8473360e0b12e580944323c5d3",
+      "input": "/home/debian/Gildra-voidspire-materials-20261026/apps/web/public/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp",
+      "inputSha256": "5d06ad30fa5e42cd77b6f5a541426115cb53e23f76c266fbc3cb316545979c6c",
+      "inputDimensions": {
+        "width": 1920,
+        "height": 734
+      },
+      "mode": "built-in image_gen.imagegen edit, transparent_background:false, downward outpaint",
+      "recipe": "native887×1774 dimensions preserved; WebPq84 effort6; no upscaling, crop, manual composite, painting, recolour or alpha edit",
+      "geometry": {
+        "aspectRatio": [
+          1,
+          2
+        ],
+        "originalTopBand": {
+          "top": 0,
+          "left": 0,
+          "width": 887,
+          "height": 339.09270833333335,
+          "heightFraction": 0.19114583333333332,
+          "note": "Approximate preserved composition, not byte-identical pixels; generator reinterpreted fine details."
+        },
+        "eye": {
+          "nativePixels": [
+            535,
+            101
+          ],
+          "normalized": [
+            0.6031567080045096,
+            0.05693348365276212
+          ],
+          "deliveryPixels": [
+            535,
+            101
+          ],
+          "source": "Local decorative anchor measured by dark-pupil/cyan-ring contrast, visually corroborated; not gameplay coordinates"
+        },
+        "suggestedHeroFocus": [
+          0.5,
+          0.05734375
+        ],
+        "originalEyeRadiusScaled": 8.315625,
+        "rendering": "Proportional contain/cover only. Background integration owns sizing; do not vertically stretch or tile the canvas."
+      }
+    }
+  }
+}

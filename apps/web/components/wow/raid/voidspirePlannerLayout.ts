@@ -27,5 +27,7 @@ export function voidspirePlannerLayout(slug: string): CSSProperties {
     "--void-panel-slice": panel.slices.join(" "),
     "--void-panel-width": scaledWidths(panel.geometry.recommendedCssBorders, 1),
     "--void-panel-width-mobile": scaledWidths(panel.geometry.recommendedCssBordersMobile, 1),
+    "--void-briefing-width": scaledWidths(panel.geometry.recommendedCssBorders, 52 / 60),
+    "--void-briefing-width-mobile": scaledWidths(panel.geometry.recommendedCssBordersMobile, 36 / 40),
   } as CSSProperties;
 }

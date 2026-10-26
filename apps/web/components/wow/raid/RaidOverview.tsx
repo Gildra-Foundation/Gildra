@@ -4,7 +4,8 @@ import type { RaidBoss, RaidDefinition } from "@/lib/data/wow/raid/midnightRaidD
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { getBossStrategy, isRaidStrategyPublished } from "@/lib/data/wow/raid/raidStrategy";
 import styles from "./raidGuide.module.css";
-import { VoidEye } from "./VoidEye";
+import { VoidspirePageBackdrop } from "./VoidspirePageBackdrop";
+import backdrop from "./voidspirePageBackdrop.module.css";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 import { raidSceneArt } from "@/lib/data/wow/raid/midnightRaidData";
 import { getRaidReview } from "@/lib/data/raidReviews";
@@ -30,13 +31,13 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
   return (
     <AtlasFrame
       lang={locale}
+      className={raid.slug === "the-voidspire" ? backdrop.page : undefined}
       morphKey={`/wow/raids/${raid.slug}`}
-      art={raidSceneArt(raid)}
+      art={raid.slug === "the-voidspire" ? undefined : raidSceneArt(raid)}
       artPosition="center 30%"
       tint={`${raid.accent}2e`}
-      // The Voidspire's eye is alive: a shader of our own over the painting's void.
-      artLayer={raid.slug === "the-voidspire" ? <VoidEye imageSize={[1920, 734]} focus={[0.5, 0.3]} eye={[0.601, 0.2956]} eyeRadius={18} /> : undefined}
     >
+      {raid.slug === "the-voidspire" && <VoidspirePageBackdrop />}
       <AtlasHero
         breadcrumbs={trail(locale, "raids", { label: raidName })}
         breadcrumbsLabel={copy.breadcrumbsLabel}
