@@ -39,6 +39,7 @@ import (
 	"github.com/Gildra-Foundation/Gildra/backend/internal/mythicbuilds"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/platformhome"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/rotationlab"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/transmog"
 )
 
 func main() {
@@ -178,6 +179,7 @@ func run() error {
 	league.NewHandler(league.NewService(postgres)).Register(router)
 	platformhome.NewHandler(platformhome.NewService(postgres)).Register(router)
 	rotationlab.NewHandler(rotationlab.NewService(postgres)).Register(router)
+	transmog.NewHandler(transmog.NewService(postgres)).Register(router)
 	characterworkspace.NewHandler(characterworkspace.NewService(postgres), characterworkspace.NewBattleNetVerifier()).Register(router)
 	mythicbuilds.NewHandler(mythicbuilds.NewService(postgres), characterworkspace.NewBattleNetVerifier()).Register(router)
 	if cfg.CatalogMediaDirectory != "" {
