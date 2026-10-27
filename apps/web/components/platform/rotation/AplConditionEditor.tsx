@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import type { RotationAplCondition, RotationAplOptions, RotationAplRule, RotationAbility } from "@/lib/platform/rotation/types";
 import type { Lang } from "@/lib/i18n";
 import { rotationLabelKey, rotationResourceLabel } from "@/lib/platform/rotation/locale";
+import { gameTokenName } from "@/lib/platform/rotation/abilityNames";
 import styles from "./rotationLab.module.css";
 import { aplConditionEditorCopy } from "./aplConditionEditorCopy";
 
@@ -19,8 +20,8 @@ function newCondition(type: ConditionType, options: RotationAplOptions): Rotatio
 
 export function conditionSummary(condition: RotationAplCondition, lang: Lang, abilities: Map<string, RotationAbility>, labels: Record<string, string> = {}) {
   if (condition.type === "resource") return `${rotationResourceLabel(condition.resource, lang)}: ${condition.operator === "gte" ? "≥" : "≤"} ${condition.value}`;
-  if (condition.type === "buff") return `${labels[rotationLabelKey(condition.aura)] ?? condition.aura}: ${condition.state === "up" ? aplConditionEditorCopy[lang].active : aplConditionEditorCopy[lang].inactive}`;
-  if (condition.type === "cooldown") return `${abilities.get(condition.abilityId)?.name ?? condition.abilityId}: ${condition.state === "ready" ? aplConditionEditorCopy[lang].ready : aplConditionEditorCopy[lang].onCooldown}`;
+  if (condition.type === "buff") return `${labels[rotationLabelKey(condition.aura)] ?? gameTokenName(condition.aura)}: ${condition.state === "up" ? aplConditionEditorCopy[lang].active : aplConditionEditorCopy[lang].inactive}`;
+  if (condition.type === "cooldown") return `${abilities.get(condition.abilityId)?.name ?? gameTokenName(condition.abilityId)}: ${condition.state === "ready" ? aplConditionEditorCopy[lang].ready : aplConditionEditorCopy[lang].onCooldown}`;
   if (condition.type === "targets") return `${aplConditionEditorCopy[lang].targets} ${condition.operator === "gte" ? "≥" : "≤"} ${condition.value}`;
   return `${aplConditionEditorCopy[lang].targetHealth} ≤ ${condition.value}%`;
 }

@@ -1723,7 +1723,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
             {rotationFlow ? <button className="tc-back-link" type="button" onClick={() => router.push(returnTo)}>{copy.backToRotation}</button> : null}
             <h1>{copy.title(theme)}</h1>
             <span className="tc-build-version">
-              {names.className} · Midnight {data.buildVersion} ·{" "}
+              {names.className} · {names.role} ·{" "}
               <a href={data.source.url} target="_blank" rel="noreferrer" title={`${sourceLabel} · ${snapshotTime} UTC`}>{sourceLabel}</a>{" "}
               {copy.snapshotOn(snapshotDate)}
             </span>
@@ -1733,11 +1733,11 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
           <SpecMenu current={theme} localePrefix={localePrefix} lang={lang} />
           <div className="tc-points-badge" data-resource-state={spent === 0 ? "empty" : spent === totalAvailable ? "complete" : "active"} style={{ "--tc-rage-level": `${ragePercent}%` } as CSSProperties} role="img" aria-label={copy.pointsAria(spent, totalAvailable, ragePercent)}>
             <span className="tc-rage-emblem" aria-hidden="true"><ResourceGlyph motif={theme.motif} /><i /></span>
-            <span className="tc-rage-copy" aria-hidden="true"><small>{names.resource}</small><b>{spent}<i> / {totalAvailable}</i></b></span>
+            <span className="tc-rage-copy" aria-hidden="true"><small>{copy.pointsTitle}</small><b>{spent}<i> / {totalAvailable}</i></b></span>
             <span className="tc-rage-meter" aria-hidden="true"><strong className="tc-rage-percent">{ragePercent}%</strong><progress value={spent} max={totalAvailable} /></span>
           </div>
           <div className="tc-loadout-menu" ref={loadoutMenuRef}>
-            <button ref={loadoutTriggerRef} className="tc-build-select" type="button" aria-label={copy.buildSelectAria(buildName)} aria-haspopup="menu" aria-controls="tc-loadout-menu" aria-expanded={loadoutOpen} onClick={() => setLoadoutOpen((open) => !open)}><span><small>{buildSaved ? copy.savedState : copy.unsavedState}</small><b>{buildName}</b></span><ChevronDown /></button>
+            <button ref={loadoutTriggerRef} className="tc-build-select" type="button" aria-label={copy.buildSelectAria(buildName)} aria-haspopup="menu" aria-controls="tc-loadout-menu" aria-expanded={loadoutOpen} onClick={() => setLoadoutOpen((open) => !open)}><span><small>{buildSaved ? copy.savedState : activeBuildId || spent > 0 ? copy.unsavedState : copy.buildTitle}</small><b>{buildName}</b></span><ChevronDown /></button>
             {loadoutOpen ? <div className="tc-loadout-popover" id="tc-loadout-menu" role="menu" aria-label={copy.libraryLabel}>
               <div className="tc-build-popover-head"><span><small>{copy.libraryTitle}</small><b>{copy.savedCount(savedBuilds.length)}</b></span><button type="button" role="menuitem" tabIndex={-1} onClick={createNewBuild}><Plus />{copy.newBuild}</button></div>
               <label className="tc-build-name"><span>{copy.buildNameLabel}</span><input value={buildName} maxLength={48} onChange={(event) => { setBuildName(event.target.value); setSavedSignature(null); }} /></label>
@@ -1809,7 +1809,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
             </button>;
           })}
         </div> : null}
-        <button type="button" className={`tc-use-rotation${buildSaved && !rotationFlow ? " is-saved" : ""}`} disabled={rotationFlow && !buildComplete} onClick={rotationFlow ? useInRotation : () => saveBuild(false)}><span className="tc-save-mark" aria-hidden="true">{buildSaved && !rotationFlow ? <Check /> : <Save />}</span><span className="tc-save-copy"><b>{rotationFlow ? (buildComplete ? copy.useInTrainer : copy.pointsLeft(missingPoints)) : buildSaved ? copy.buildIsSaved : activeBuildId ? copy.saveChanges : copy.saveBuildCta}</b><small>{rotationFlow ? (buildComplete ? copy.readyForSim : copy.spendAllPoints) : copy.saveMeta(spent, totalAvailable, savedBuilds.length)}</small></span></button>
+        <button type="button" className={`tc-use-rotation${buildSaved && !rotationFlow ? " is-saved" : ""}`} disabled={rotationFlow && !buildComplete} onClick={rotationFlow ? useInRotation : () => saveBuild(false)}><span className="tc-save-mark" aria-hidden="true">{buildSaved && !rotationFlow ? <Check /> : <Save />}</span><span className="tc-save-copy"><b>{rotationFlow ? (buildComplete ? copy.useInTrainer : copy.pointsLeft(missingPoints)) : buildSaved ? copy.buildIsSaved : activeBuildId ? copy.saveChanges : copy.saveBuildCta}</b>{rotationFlow ? <small>{buildComplete ? copy.readyForSim : copy.spendAllPoints}</small> : savedBuilds.length ? <small>{copy.saveMeta(savedBuilds.length)}</small> : null}</span></button>
         {notice ? <div className="tc-toast" role="status" aria-live="polite"><span>{notice.message}</span>{undoState ? <button type="button" onClick={undoReset}>{copy.undo}</button> : null}{notice.persistent ? <button type="button" aria-label={copy.closeNotice} onClick={() => setNotice(null)}>×</button> : null}</div> : null}
       </footer>
       {importOpen ? <div className="tc-import-backdrop" aria-hidden="true" onClick={closeImport} /> : null}

@@ -97,7 +97,6 @@ const englishCopy = {
   "Сравнить DPS": "Compare DPS",
   "Уже получен": "Already owned",
   "Отметить полученным": "Mark as owned",
-  "Показываем только проверенные предметы.": "Only verified items are shown.",
   "Отсутствующий источник или неподходящий сезон исключают вещь из списка.": "Items without a source or from an ineligible season are excluded.",
   "Как отбираются варианты": "How items are selected",
   "Нужны источник получения, текущий сезон и игровые варианты предмета.": "Items require an acquisition source, the current season, and in-game variants.",
@@ -182,11 +181,8 @@ const englishCopy = {
   "На главную World of Warcraft": "World of Warcraft home",
   "Результат расчёта": "Simulation result",
   "Сценарий": "Scenario",
-  "Движок": "Engine",
-  "проверенный прогон": "verified run",
-  "Дата": "Date",
-  "Безопасная общая сводка": "Secure shared summary",
-  "Здесь нет OAuth-токена, Battle.net ID, имени персонажа, списка предметов или исходного armory payload.": "This summary contains no OAuth token, Battle.net ID, character name, item list, or original Armory payload."
+  "Точность": "Precision",
+  "Дата": "Date"
 } as const;
 
 export function characterWorkspaceCopy(locale: WorkspaceLocale) {

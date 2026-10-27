@@ -27,7 +27,7 @@ type TalentTreePanelProps = {
   style?: CSSProperties;
 };
 
-export function TalentTreePanel({ lang = "ru", appearance = "atlas", specSlug, variant, eyebrow, title, iconSrc, secondary, spent, budget, nodeCount, loading = false, children, scene, style }: TalentTreePanelProps) {
+export function TalentTreePanel({ lang = "ru", appearance = "atlas", specSlug, variant, eyebrow, title, iconSrc, secondary, spent, budget, loading = false, children, scene, style }: TalentTreePanelProps) {
   const Icon = panelIcons[variant];
   const manuscript = appearance === "manuscript";
   return <article className={`tc-panel tc-${variant}-panel ${styles.panel}${manuscript ? ` ${styles.manuscript}` : ""}${appearance === "atlas" ? ` ${styles.atlas}` : ""}`} data-panel-variant={variant} data-panel-appearance={appearance} data-loading={loading || undefined} style={style}>
@@ -44,9 +44,9 @@ export function TalentTreePanel({ lang = "ru", appearance = "atlas", specSlug, v
         <div className={styles.heading}><small>{eyebrow}</small><h2>{title}</h2></div>
       </div>
       {secondary ? <div className={styles.secondary}>{secondary}</div> : null}
-      <span className={styles.counter} aria-label={loading ? talentTreePanelCopy[lang].loadingTalentTree : lang === "ru" ? `${spent} из ${budget} очков, ${nodeCount} узлов` : `${spent} of ${budget} points, ${nodeCount} nodes`}>
+      <span className={styles.counter} aria-label={loading ? talentTreePanelCopy[lang].loadingTalentTree : lang === "ru" ? `${spent} из ${budget} очков` : `${spent} of ${budget} points`}>
         <strong><b>{loading ? "—" : spent}</b><i>/</i>{loading ? "—" : budget}</strong>
-        <small>{loading ? talentTreePanelCopy[lang].loading : `${nodeCount} ${talentTreePanelCopy[lang].nodes}`}</small>
+        <small>{loading ? talentTreePanelCopy[lang].loading : talentTreePanelCopy[lang].points}</small>
       </span>
       {manuscript ? <span className={styles.manuscriptRule} aria-hidden="true"><Image src="/assets/wow/character-book/talent-divider-v1.png" alt="" width={2079} height={756} sizes="(max-width: 768px) 760px, 1200px" draggable={false} /></span> : null}
     </header>

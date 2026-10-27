@@ -1,43 +1,40 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
-import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasSection } from "@/components/atlas";
-import { formatAtlasDate, pluralRu } from "@gildra/atlas-ui/format";
+import { ArrowUpRight } from "lucide-react";
+import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
+import { pluralRu } from "@gildra/atlas-ui/format";
+import { MaterialPlaque, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
+import { CHARACTERS_KIT as KIT } from "@/lib/wow/charactersKit";
 import { midnightSpecializations, TALENT_SNAPSHOT } from "@/lib/data/wow";
 import styles from "./classCatalog.module.css";
 import { trail } from "@/lib/routes/registry";
 import type { Lang as Locale } from "@/lib/i18n-paths";
 
-
 const copy = {
   ru: {
     breadcrumbs: "Навигация",
-    wow: "World of Warcraft",
+    eyebrow: "Midnight · Сезон 2",
     title: "Классы и специализации",
-    lede: "Все классы Midnight. Выберите специализацию, чтобы открыть её дерево талантов; гайды по классам появятся позже.",
+    lede: "Все классы Midnight. Выберите специализацию, чтобы открыть её дерево талантов.",
     statsLabel: "Классы и специализации",
     classes: (count: number) => pluralRu(count, "класс", "класса", "классов"),
     specs: (count: number) => pluralRu(count, "специализация", "специализации", "специализаций"),
     section: "Выберите специализацию",
     specsOf: (name: string) => `Специализации: ${name}`,
-    openTalents: "дерево талантов",
-    source: "Снимок талантов Raidbots",
-    note: (build: string, date: string) => `Деревья талантов — снимок данных Raidbots, сборка ${build}, ${date}`,
+    source: "Деревья талантов — Raidbots",
   },
   en: {
     breadcrumbs: "Breadcrumbs",
-    wow: "World of Warcraft",
+    eyebrow: "Midnight · Season 2",
     title: "Classes and specializations",
-    lede: "Every Midnight class. Pick a specialization to open its talent tree; class guides will follow.",
+    lede: "Every Midnight class. Pick a specialization to open its talent tree.",
     statsLabel: "Classes and specializations",
     classes: (count: number) => (count === 1 ? "class" : "classes"),
     specs: (count: number) => (count === 1 ? "specialization" : "specializations"),
     section: "Pick a specialization",
     specsOf: (name: string) => `${name} specializations`,
-    openTalents: "talent tree",
-    source: "Raidbots talent snapshot",
-    note: (build: string, date: string) => `Talent trees come from the Raidbots data snapshot, build ${build}, ${date}.`,
+    source: "Talent trees from Raidbots",
   },
 } as const;
 
@@ -47,7 +44,7 @@ const classColorKey: Record<string, string> = {
   druid: "druid", priest: "priest", hunter: "hunter", shaman: "shaman", warlock: "lock", monk: "monk", warrior: "war",
 };
 
-/** Every playable class in the game's own order, each with its specializations and talent links. */
+/** Every playable class in the game's own order, each on a painted plaque with its specializations. */
 export function ClassCatalogPage({ locale }: { locale: Locale }) {
   const text = copy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
@@ -58,9 +55,9 @@ export function ClassCatalogPage({ locale }: { locale: Locale }) {
   return (
     <AtlasFrame lang={locale} scene="classes">
       <AtlasHero
-        align="center"
         breadcrumbs={trail(locale, "classes")}
         breadcrumbsLabel={text.breadcrumbs}
+        eyebrow={text.eyebrow}
         title={text.title}
         lede={text.lede}
         statsLabel={text.statsLabel}
@@ -75,34 +72,36 @@ export function ClassCatalogPage({ locale }: { locale: Locale }) {
           {classes.map((specs) => {
             const first = specs[0];
             const name = locale === "ru" ? first.classNameRu : first.className;
-            const style = { "--class-color": `var(--c-${classColorKey[first.classKey]}, var(--atlas-accent))`, scrollMarginTop: "calc(var(--atlas-sticky-top) + var(--atlas-space-4))" } as CSSProperties;
+            const style = { "--class-color": `var(--c-${classColorKey[first.classKey]}, var(--atlas-accent))` } as CSSProperties;
             return (
-              <li key={first.classSlug} id={first.classSlug} className={styles.classRow} style={style} data-spotlight>
-                <Image className={styles.classIcon} src={first.classIconUrl} alt="" width={52} height={52} />
-                <div className={styles.classBody}>
-                  <h3 className={styles.className}>{name}</h3>
-                  <ul className={styles.specs} aria-label={text.specsOf(name)}>
-                    {specs.map((spec) => (
-                      <li key={spec.slug}>
-                        <Link className={styles.spec} href={`${prefix}/talents/${spec.slug}`}>
-                          <Image src={spec.iconUrl} alt="" width={32} height={32} />
-                          <span>
-                            <strong>{locale === "ru" ? spec.specNameRu : spec.specName}</strong>
-                            <small>{locale === "ru" ? spec.roleRu : roleEn[spec.role]}</small>
-                            <span className={styles.srOnly}> — {text.openTalents}</span>
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+              <MaterialPlaque as="li" kit={KIT} key={first.classSlug} id={first.classSlug} className={styles.classCard} style={style} aria-labelledby={`${first.classSlug}-name`}>
+                <div className={styles.classHead}>
+                  <span className={materialStyles.iconFrame} style={materialIconFrameStyle(KIT, 56)}>
+                    <Image src={first.classIconUrl} alt="" width={56} height={56} />
+                  </span>
+                  <h3 id={`${first.classSlug}-name`} className={styles.className}>{name}</h3>
                 </div>
-              </li>
+                <ul className={styles.specs} aria-label={text.specsOf(name)}>
+                  {specs.map((spec) => (
+                    <li key={spec.slug}>
+                      <Link className={styles.spec} href={`${prefix}/talents/${spec.slug}`}>
+                        <Image src={spec.iconUrl} alt="" width={32} height={32} />
+                        <span>
+                          <strong>{locale === "ru" ? spec.specNameRu : spec.specName}</strong>
+                          <small>{locale === "ru" ? spec.roleRu : roleEn[spec.role]}</small>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </MaterialPlaque>
             );
           })}
         </ul>
         <p className={styles.note}>
-          {text.note(TALENT_SNAPSHOT.build, formatAtlasDate(TALENT_SNAPSHOT.observedAt, locale))}{" "}
-          <AtlasLinkButton href={TALENT_SNAPSHOT.sourceUrl} external variant="ghost" size="sm" iconAfter={<ExternalLink aria-hidden="true" />}>{text.source}</AtlasLinkButton>
+          <a href={TALENT_SNAPSHOT.sourceUrl} target="_blank" rel="noopener noreferrer">
+            {text.source}<ArrowUpRight aria-hidden="true" />
+          </a>
         </p>
       </AtlasSection>
     </AtlasFrame>

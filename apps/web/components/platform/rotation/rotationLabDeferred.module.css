@@ -16,8 +16,6 @@
 .iconButton,.ruleMove button{width:44px;height:44px;border-radius:var(--lab-radius-sm)}
 .ruleMove{height:44px;flex-direction:row;position:relative}
 .ruleMove button{position:absolute;width:26px;height:44px}.ruleMove button:first-child{left:0}.ruleMove button:last-child{right:0}
-.rulesStatus{min-height:44px;margin:7px;padding:0 10px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid color-mix(in srgb, var(--atlas-positive) 28%, transparent);border-radius:var(--lab-radius-sm);background:color-mix(in srgb, var(--atlas-positive) 8%, transparent);color:var(--atlas-positive);font-size:12px;text-align:center}
-.rulesStatus svg{width:16px}
 .timelineScrollHint{display:none}
 .timelineScroller{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-color:var(--atlas-line) var(--atlas-line-soft);scrollbar-width:thin}
 .timelineViewport{min-width:0}

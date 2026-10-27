@@ -41,7 +41,7 @@ export const rotationTrainerCopy = {
     trainingEstimate: "ОЦЕНКА ТРЕНИРОВКИ",
     accuracyAndPaceRelative: "только точность и темп относительно SimC",
     readyToGo: "Всё готово",
-    pressStartTrainingWait: "Нажми «Начать тренировку», дождись 3–2–1 и жми только светящуюся способность. Следующий скилл появится сам — ресетить ничего не нужно.",
+    pressStartTrainingWait: "Нажмите «Начать тренировку», дождитесь 3–2–1 и нажимайте только подсвеченную способность. Следующая появится сама.",
     noSimcBenchmarkNo: "Нет SimC-бенчмарка — DPS не придумываем",
     unitMs: "мс",
     resetResult: "Сбросить результат",

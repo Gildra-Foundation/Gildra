@@ -187,22 +187,18 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
     {
       label: tr("Таланты"),
       value: snapshot.activeTalentLoadout ? tr("Загружены") : tr("Нет данных"),
-      detail: tr("Источник: Battle.net Specializations API. Это статус импорта, а не оценка силы билда."),
     },
     {
       label: tr("Предметов"),
       value: String(snapshot.gear.length),
-      detail: tr("Источник: Battle.net Equipment API. Показано число импортированных предметов, а не рейтинг качества."),
     },
     {
       label: tr("Чары"),
       value: String(enchantedItems),
-      detail: tr("Источник: enchantments в Battle.net Equipment API. Это число распознанных чар, а не процент оптимальности."),
     },
     {
       label: tr("Сокеты"),
       value: sockets.length ? `${filledSockets} ${lang === "ru" ? "из" : "of"} ${sockets.length}` : tr("Нет сокетов"),
-      detail: tr("Источник: sockets в Battle.net Equipment API. Показана заполненность доступных сокетов, а не рейтинг персонажа."),
     },
   ];
 
@@ -348,7 +344,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
 
       <section className={styles.hero} data-character-identity>
 
-        {dataMode === "battle-net" ? <div className={styles.connectionDock}><div className={styles.importedBanner}><ShieldCheck />{tr("Battle.net подключён")} <span>{tr("Персонаж и экипировка импортированы")}</span><button data-folio-action="quiet" type="button" disabled={diagnosticBusy} onClick={() => void runDiagnostic()}><ClipboardCheck />{diagnosticBusy ? tr("Проверяем функции…") : tr("Проверить функции")}</button></div>{refreshState.status !== "idle" ? <section className={styles.refreshNotice} data-status={refreshState.status} role={refreshState.status === "error" ? "alert" : "status"} aria-live="polite"><span>{refreshState.status === "success" ? <Check /> : <AlertTriangle />}<b>{refreshState.status === "success" ? tr("Данные обновлены") : tr("Обновление не завершено")}</b><small>{refreshState.message}</small></span>{refreshState.status === "error" ? refreshState.code === "session_expired" || refreshState.code === "access_forbidden" ? <a href={`${localePrefix}/login`}>{tr("Переподключить Battle.net")}</a> : refreshState.code === "character_not_found" ? <a href={`${localePrefix}/wow/characters`}>{tr("К списку персонажей")}</a> : <button data-folio-action type="button" onClick={() => void refreshCharacter()} disabled={running}>{running ? tr("Обновляем…") : tr("Повторить")}</button> : null}</section> : null}{diagnostic ? <section className={styles.characterDiagnostic} aria-live="polite"><header><b>{diagnostic.status === "passed" ? tr("Все подключённые функции работают") : tr("Диагностика нашла проблему")}</b>{diagnostic.reportId ? <code>#{diagnostic.reportId}</code> : null}</header>{diagnostic.checks?.length ? <ul>{diagnostic.checks.map((check) => <li key={check.id} data-status={check.status}><i>{check.status === "pass" ? "✓" : check.status === "skip" ? "—" : "!"}</i><span><b>{check.label}</b><small>{check.detail}</small></span></li>)}</ul> : <p>{diagnostic.message ?? tr("Неизвестная ошибка")}</p>}</section> : null}</div> : null}
+        {dataMode === "battle-net" ? <div className={styles.connectionDock}><div className={styles.importedBanner}><ShieldCheck />{tr("Battle.net подключён")} <span>{tr("Персонаж и экипировка импортированы")}</span></div>{refreshState.status !== "idle" ? <section className={styles.refreshNotice} data-status={refreshState.status} role={refreshState.status === "error" ? "alert" : "status"} aria-live="polite"><span>{refreshState.status === "success" ? <Check /> : <AlertTriangle />}<b>{refreshState.status === "success" ? tr("Данные обновлены") : tr("Обновление не завершено")}</b><small>{refreshState.message}</small></span>{refreshState.status === "error" ? refreshState.code === "session_expired" || refreshState.code === "access_forbidden" ? <a href={`${localePrefix}/wow/characters`}>{tr("Переподключить Battle.net")}</a> : refreshState.code === "character_not_found" ? <a href={`${localePrefix}/wow/characters`}>{tr("К списку персонажей")}</a> : <button data-folio-action type="button" onClick={() => void refreshCharacter()} disabled={running}>{running ? tr("Обновляем…") : tr("Повторить")}</button> : null}</section> : null}<details className={styles.diagnosticDetails}><summary>{tr("Если что-то не работает")}</summary><button data-folio-action="quiet" type="button" disabled={diagnosticBusy} onClick={() => void runDiagnostic()}><ClipboardCheck />{diagnosticBusy ? tr("Проверяем функции…") : tr("Проверить функции")}</button>{diagnostic ? <section className={styles.characterDiagnostic} aria-live="polite"><header><b>{diagnostic.status === "passed" ? tr("Все подключённые функции работают") : tr("Диагностика нашла проблему")}</b>{diagnostic.reportId ? <code>#{diagnostic.reportId}</code> : null}</header>{diagnostic.checks?.length ? <ul>{diagnostic.checks.map((check) => <li key={check.id} data-status={check.status}><i>{check.status === "pass" ? "✓" : check.status === "skip" ? "—" : "!"}</i><span><b>{check.label}</b><small>{check.detail}</small></span></li>)}</ul> : <p>{diagnostic.message ?? tr("Неизвестная ошибка")}</p>}</section> : null}</details></div> : null}
         <div className={styles.specAtmosphere} aria-hidden="true"><SpecSignatureFx specSlug={theme.slug} /></div>
         <div className={atlas.identity} data-book-identity={dataMode === "battle-net" || undefined}>
         <div className={styles.avatar}><img src={snapshot.specialization.iconUrl} alt="" /></div>
@@ -373,8 +369,8 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
           <div className={`${styles.realProfileStatus} ${atlas.status}`} role="status" aria-label={tr("Статус реальных данных Battle.net")} title={tr("Персонаж импортирован из Battle.net; общая оценка не назначается без симуляции.")}><ShieldCheck /><b>Battle.net</b><span>{tr("Профиль персонажа")}</span></div>
           <div className={`${styles.scoreTiles} ${styles.realProfileEvidence} ${atlas.evidence}`}>{realProfileEvidence.map((entry) => <EvidenceTile key={entry.label} {...entry} />)}</div>
         </> : snapshot.scores ? <>
-          <div className={styles.score}><b>{score}<small>/100</small></b><span>Сильно,<br />{issues.length} {issues.length === 1 ? "проблема" : "проблем"}</span></div>
-          <div className={styles.scoreTiles}><ScoreTile label={tr("Таланты")} value={String(snapshot.scores.talents)} good={snapshot.scores.talents >= 88} /><ScoreTile label="Шмот" value={String(snapshot.scores.gear)} good={snapshot.scores.gear >= 88} /><ScoreTile label={tr("Чары")} value={String(snapshot.scores.enchants)} bad={snapshot.scores.enchants < 78} /><ScoreTile label="Камни" value={String(snapshot.scores.gems)} good={snapshot.scores.gems >= 88} /></div>
+          <div className={styles.score}><b>{score}<small>/100</small></b><span>{tr("Сильно")},<br />{issues.length} {tr(issues.length === 1 ? "проблема" : "проблем")}</span></div>
+          <div className={styles.scoreTiles}><ScoreTile label={tr("Таланты")} value={String(snapshot.scores.talents)} good={snapshot.scores.talents >= 88} /><ScoreTile label={tr("Шмот")} value={String(snapshot.scores.gear)} good={snapshot.scores.gear >= 88} /><ScoreTile label={tr("Чары")} value={String(snapshot.scores.enchants)} bad={snapshot.scores.enchants < 78} /><ScoreTile label={tr("Камни")} value={String(snapshot.scores.gems)} good={snapshot.scores.gems >= 88} /></div>
         </> : null}
       </section>
 
@@ -404,12 +400,12 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
 
         {talentAudit ? <><section className={styles.plan} id="audit-actions">
           <div className={`${styles.panelMotion} ${styles.motionPlan}`} aria-hidden="true"><i /><i /><i /><span /></div>
-          <h2>План действий <HelpTip title="Как устроен приоритет">Сначала показаны исправления с самым высоким влиянием на профиль специализации «{theme.specNameRu}» в режиме «{talentAudit.scenario.label}». Значение справа — предварительная оценка прироста.</HelpTip></h2>
-          <IssueGroup title="Критично" issues={critical} onFix={fix} metricLabel={talentAudit.metricLabel} />
-          <IssueGroup title="Рекомендуется" issues={recommended} onFix={fix} metricLabel={talentAudit.metricLabel} />
-          <IssueGroup title="Опционально" issues={optional} onFix={fix} metricLabel={talentAudit.metricLabel} />
-          {!issues.length ? <div className={styles.clearPlan}><Check /> Все проблемы исправлены. Аудит готов.</div> : null}
-          <footer>Потенциальный прирост после исправлений <b>+{displayedGain.toFixed(1)}% {talentAudit.metricLabel}</b></footer>
+          <h2>{tr("План действий")} <HelpTip title={tr("Как устроен приоритет")}>{tr("Сначала показаны исправления с самым высоким влиянием на профиль специализации. Значение справа — предварительная оценка прироста.")}</HelpTip></h2>
+          <IssueGroup title={tr("Критично")} issues={critical} onFix={fix} metricLabel={talentAudit.metricLabel} />
+          <IssueGroup title={tr("Рекомендуется")} issues={recommended} onFix={fix} metricLabel={talentAudit.metricLabel} />
+          <IssueGroup title={tr("Опционально")} issues={optional} onFix={fix} metricLabel={talentAudit.metricLabel} />
+          {!issues.length ? <div className={styles.clearPlan}><Check /> {tr("Все проблемы исправлены. Аудит готов.")}</div> : null}
+          <footer>{tr("Потенциальный прирост после исправлений")} <b>+{displayedGain.toFixed(1)}% {talentAudit.metricLabel}</b></footer>
         </section>
 
         <aside className={styles.right}>
@@ -417,7 +413,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
           <section className={styles.talent} id="audit-talents">
             <h2>Аудит талантов · {talentAudit.scenario.shortLabel} <HelpTip title="Сравнение талантов">Текущий набор сравнивается с рекомендуемым билдом специализации «{snapshot.specialization.specName}» для режима «{talentAudit.scenario.label}».</HelpTip><button aria-pressed={details} onClick={() => setDetails((value) => !value)} type="button">{details ? "Скрыть детали" : "Полное дерево"}<ChevronRight /></button></h2>
             <div className={styles.talentIdentity}><img src={theme.iconUrl} alt="" /><span><small>{theme.roleRu} · {theme.heroPaths[0].nameRu}</small><b>{theme.fantasy}</b></span></div>
-            <div className={styles.talentTrees}><TalentTree label="Сейчас · 2 проблемы" nodes={talentAudit.current} /><ChevronRight /><TalentTree label="Рекомендуется" nodes={talentAudit.recommended} /></div>
+            <div className={styles.talentTrees}><TalentTree label={tr("Сейчас")} nodes={talentAudit.current} /><ChevronRight /><TalentTree label={tr("Рекомендуется")} nodes={talentAudit.recommended} /></div>
             {details ? <div className={styles.keyChanges}><b>Ключевые изменения · {snapshot.specialization.specName}</b>{talentAudit.changes.map((change) => <span key={`${change.from}-${change.to}`}>{change.from} <ChevronRight /> {change.to} <em>+{change.gain.toFixed(1)}% {talentAudit.metricLabel}</em></span>)}</div> : null}
           </section>
           <StatBalance primaryStat={snapshot.specialization.primaryStatLabel} priority={talentAudit.statPriority} />
@@ -464,7 +460,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
         </section></> : null}
       </div>
 
-      <footer className={`${atlas.footer}`}><div><ShieldCheck /><span>{tr("Держите персонажа в форме — повторяйте аудит после еженедельного сундука.")}</span></div><span>{dataMode === "battle-net" ? tr("Экипировка Battle.net API") : snapshot.source === "catalog" ? tr("Предметы из каталога") : tr("Тестовый набор предметов")} · {snapshot.updatedAt} <RefreshCw /></span></footer>
+      <footer className={`${atlas.footer}`}><div><ShieldCheck /><span>{tr("Держите персонажа в форме — повторяйте аудит после еженедельного сундука.")}</span></div><span>{dataMode === "battle-net" ? "Battle.net" : snapshot.source === "catalog" ? tr("Предметы из каталога") : tr("Тестовый набор предметов")} · {snapshot.updatedAt} <RefreshCw /></span></footer>
       </div>
       </div>
     </main>
@@ -474,7 +470,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
 
 function Metric({ label, value, className = "" }: { label: string; value: string; className?: string }) { return <div className={`${styles.metric} ${className}`}><small>{label}</small><b>{value}</b></div>; }
 function ScoreTile({ label, value, good, bad }: { label: string; value: string; good?: boolean; bad?: boolean }) { return <div className={good ? styles.tileGood : bad ? styles.tileBad : ""}><b>{value}</b><small>{label}</small></div>; }
-function EvidenceTile({ label, value, detail }: { label: string; value: string; detail: string }) { return <div title={detail} aria-label={`${label}: ${value}. ${detail}`}><b>{value}</b><small>{label}</small></div>; }
+function EvidenceTile({ label, value }: { label: string; value: string }) { return <div aria-label={`${label}: ${value}`}><b>{value}</b><small>{label}</small></div>; }
 
 function EquipmentStatStrip({ stats }: { stats?: CharacterAuditSnapshot["combatStats"] }) {
   const lang = useContext(CharacterPageLanguage);

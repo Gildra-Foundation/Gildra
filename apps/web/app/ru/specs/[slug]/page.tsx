@@ -1,26 +1,12 @@
 import { notFound, permanentRedirect } from "next/navigation";
+import { midnightSpecializations } from "@/lib/data/wow";
 
-// Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
+// Legacy spec addresses: every specialization opens its talent calculator.
 export const dynamicParams = false;
+export const generateStaticParams = () => midnightSpecializations.map(({ slug }) => ({ slug }));
 
-const redirects: Record<string, string> = {
-  "frost-death-knight": "/ru/wow/classes/death-knight/frost-death-knight",
-  "arcane-mage": "/ru/wow/classes/mage/arcane-mage",
-  "augmentation-evoker": "/ru/wow/classes/evoker/augmentation-evoker",
-  "retribution-paladin": "/ru/wow/classes/paladin/retribution-paladin",
-  "outlaw-rogue": "/ru/wow/classes/rogue/outlaw-rogue",
-  "balance-druid": "/ru/wow/classes/druid/balance-druid",
-  "shadow-priest": "/ru/wow/classes/priest/shadow-priest",
-  "marksmanship-hunter": "/ru/wow/classes/hunter/marksmanship-hunter",
-  "elemental-shaman": "/ru/wow/classes/shaman/elemental-shaman",
-  "affliction-warlock": "/ru/wow/classes/warlock/affliction-warlock",
-};
-
-export const generateStaticParams = () => Object.keys(redirects).map((slug) => ({ slug }));
-
-export default async function LegacySpecRedirectRu({ params }: { params: Promise<{ slug: string }> }) {
+export default async function LegacySpecRedirect({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const destination = redirects[slug];
-  if (!destination) notFound();
-  permanentRedirect(destination);
+  if (!midnightSpecializations.some((spec) => spec.slug === slug)) notFound();
+  permanentRedirect(`/ru/talents/${slug}`);
 }

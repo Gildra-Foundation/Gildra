@@ -47,7 +47,6 @@
 .modes button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 .modes svg { width: 16px; height: 16px; }
 
-.meta { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 
 /* ---------- Sections ---------- */
 .section { margin-top: var(--atlas-space-6); }
@@ -86,12 +85,10 @@
 .actions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); }
 
 /* ---------- Build and encounter form ---------- */
+/* The form sits on one painted plaque of the Characters kit (MaterialPlaque); its groups are glass-free columns. */
 .forge {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(220px, .62fr);
-  border: 1px solid var(--atlas-line);
-  background: var(--atlas-surface);
-  box-shadow: var(--atlas-shadow-card);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(240px, .62fr);
 }
 
 .group {
@@ -100,22 +97,24 @@
   gap: var(--atlas-space-3);
   min-width: 0;
   margin: 0;
-  padding: var(--atlas-space-5);
+  padding: var(--atlas-space-1) var(--atlas-space-5);
   border: 0;
 }
+.group:first-child { padding-left: 0; }
 
-.group + .group { border-left: 1px solid var(--atlas-line-soft); }
+.group + .group { border-left: 1px solid var(--material-line, var(--atlas-line-soft)); }
 
 .group legend {
   float: left;
   width: 100%;
   margin-bottom: var(--atlas-space-1);
   padding: 0;
-  color: var(--atlas-accent);
+  color: var(--material-light, var(--atlas-accent));
   font-size: var(--atlas-text-label);
   font-weight: 650;
   letter-spacing: var(--atlas-tracking-label);
   text-transform: uppercase;
+  text-shadow: 0 1px 3px var(--atlas-bg);
 }
 
 .field { display: grid; gap: 6px; min-width: 0; }
@@ -175,9 +174,8 @@
   display: grid;
   align-content: center;
   gap: var(--atlas-space-3);
-  padding: var(--atlas-space-5);
-  border-left: 1px solid var(--atlas-line-soft);
-  background: linear-gradient(160deg, var(--atlas-accent-wash), transparent 70%);
+  padding: var(--atlas-space-1) 0 var(--atlas-space-1) var(--atlas-space-5);
+  border-left: 1px solid var(--material-line, var(--atlas-line-soft));
 }
 
 .run > button { width: 100%; }
@@ -251,7 +249,8 @@
 /* ---------- Narrow screens ---------- */
 @media (max-width: 1100px) {
   .forge { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .run { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--atlas-line-soft); }
+  .group:nth-child(2) { padding-right: 0; }
+  .run { grid-column: 1 / -1; margin-top: var(--atlas-space-4); padding: var(--atlas-space-4) 0 0; border-left: 0; border-top: 1px solid var(--material-line, var(--atlas-line-soft)); }
 }
 
 @media (max-width: 960px) {
@@ -260,9 +259,9 @@
 
 @media (max-width: 760px) {
   .forge { grid-template-columns: minmax(0, 1fr); }
-  .group { padding: var(--atlas-space-4); }
-  .group + .group { border-left: 0; border-top: 1px solid var(--atlas-line-soft); }
-  .run { padding: var(--atlas-space-4); }
+  .group { padding: var(--atlas-space-4) 0; }
+  .group:first-child { padding-top: 0; }
+  .group + .group { border-left: 0; border-top: 1px solid var(--material-line, var(--atlas-line-soft)); }
   .modes { width: 100%; }
   .modes button { flex: 1; justify-content: center; padding-inline: var(--atlas-space-3); }
   .sectionHeader .actions { width: 100%; }

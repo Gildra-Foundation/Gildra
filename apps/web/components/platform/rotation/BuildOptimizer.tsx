@@ -11,6 +11,8 @@ import styles from "./rotationLab.module.css";
 import shell from "./rotationLabShell.module.css";
 import { AtlasButton, AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
+import { MaterialButton, MaterialPlaque } from "@/components/wow/shared/materialAtlas";
+import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
 import { FURY_REFERENCE_LOADOUT, TALENT_HANDOFF_STORAGE_KEY } from "@/lib/wowTalentLoadout";
 import { characterStorageScope, withCharacterContext } from "@/lib/platform/rotation/characterRequestContext";
 import { validateAplRules } from "@/lib/platform/rotation/apl";
@@ -82,7 +84,7 @@ function validStudio(value: unknown): StoredStudio {
   return { builds, combos, selectedBuildId: typeof parsed.selectedBuildId === "string" ? parsed.selectedBuildId : undefined };
 }
 
-export function BuildOptimizer({ slug, specialization, lang, abilities, scenario, fightLength, targets, rules, aplRules, characterSlug, dataMode, connectedTalentLoadout, embedded = false, currentResult, resultMatchesCurrent, sectionTitle, sectionText, onScenarioChange, onFightLengthChange, onTargetsChange, onTalentLoadoutChange, onOptimized, onUseCombo }: {
+export function BuildOptimizer({ slug, specialization, lang, abilities, scenario, fightLength, targets, rules, aplRules, characterSlug, dataMode, connectedTalentLoadout, embedded = false, currentResult, resultMatchesCurrent, sectionTitle, sectionText, onScenarioChange, onFightLengthChange, onTargetsChange, onTalentLoadoutChange, onOptimized, onUseCombo, onSimulate, simulateLabel, simulating = false }: {
   slug: string;
   specialization: string;
   lang: Lang;
@@ -106,6 +108,10 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
   onTalentLoadoutChange: (loadout: string) => void;
   onOptimized: (result: RotationSimulationResult, combo: SavedRotationCombo) => void;
   onUseCombo: (combo: SavedRotationCombo) => void;
+  /** The one main action of the form: simulate the current build, encounter and priority. */
+  onSimulate?: () => void;
+  simulateLabel?: string;
+  simulating?: boolean;
 }) {
   const ru = lang === "ru";
   const baselineBuild = useMemo(() => {
@@ -408,7 +414,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
         <div><h2 id="build-studio-title">{sectionTitle}</h2><p>{sectionText}</p></div>
       </header>
 
-      <div className={shell.forge} data-atlas-ui>
+      <MaterialPlaque kit={CHARACTERS_KIT} className={shell.forge} data-atlas-ui>
         <fieldset className={shell.group}>
           <legend>{buildOptimizerCopy[lang].build}</legend>
           <label className={shell.field}><span>{buildOptimizerCopy[lang].talentLoadout}</span><select value={selectedBuildId} disabled={optimizing || buildEditor !== null} onChange={(event) => { setSelectedBuildId(event.target.value); setScores([]); setReadyComboId(null); setError(""); }}>{builds.map((build) => <option key={build.id} value={build.id}>{build.name}</option>)}</select></label>
@@ -448,11 +454,12 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
         </fieldset>
 
         <div className={shell.run} data-busy={optimizing || undefined}>
-          <AtlasButton variant="primary" icon={<Zap aria-hidden="true" />} onClick={() => void optimize()} disabled={optimizing || buildEditor !== null}>{optimizing ? (ru ? `Вариант ${optimizerStep} из ${optimizerTotal}…` : `Variant ${optimizerStep} of ${optimizerTotal}…`) : buildOptimizerCopy[lang].findBestCombo}</AtlasButton>
+          {onSimulate ? <MaterialButton kit={CHARACTERS_KIT} fit="block" variant="primary" icon={<Play aria-hidden="true" />} onClick={onSimulate} disabled={simulating || optimizing || buildEditor !== null}>{simulateLabel}</MaterialButton> : null}
+          <AtlasButton icon={<Zap aria-hidden="true" />} onClick={() => void optimize()} disabled={optimizing || buildEditor !== null}>{optimizing ? (ru ? `Вариант ${optimizerStep} из ${optimizerTotal}…` : `Variant ${optimizerStep} of ${optimizerTotal}…`) : buildOptimizerCopy[lang].findBestCombo}</AtlasButton>
           {optimizing ? <div className={shell.progress} data-value role="progressbar" aria-label={buildOptimizerCopy[lang].findingTheBestCombo} aria-valuemin={0} aria-valuemax={optimizerTotal} aria-valuenow={optimizerStep} style={{ "--progress": `${optimizerTotal ? (optimizerStep / optimizerTotal) * 100 : 0}%` } as CSSProperties}><span /></div> : null}
           <p className={shell.runNote}>{scenarioName} · {Math.floor(fightLength / 60)}:{String(fightLength % 60).padStart(2, "0")} · {selectedBuild?.name}</p>
         </div>
-      </div>
+      </MaterialPlaque>
 
       {(notice || error || workspace.message || workspace.syncState === "saving") ? <div className={shell.stack} data-atlas-ui role={error ? "alert" : "status"}><AtlasNotice tone={error ? "caution" : "info"}>{error || notice || workspace.message || buildOptimizerCopy[lang].savingToAccount}</AtlasNotice></div> : null}
 

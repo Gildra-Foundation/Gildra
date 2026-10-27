@@ -3,11 +3,11 @@ export const talentTreePanelCopy = {
   en: {
     loadingTalentTree: "Loading talent tree",
     loading: "loading",
-    nodes: "nodes",
+    points: "points",
   },
   ru: {
     loadingTalentTree: "Данные дерева загружаются",
     loading: "загрузка",
-    nodes: "узлов",
+    points: "очков",
   },
 };

@@ -3422,8 +3422,17 @@
   .gearWorkbench .modelViewport { min-height: 418px; }
   .paperDollTitle { width: min(270px, 74%); }
 }
-.importedBanner { grid-column: 1 / -1; min-height: 34px; padding: 7px 12px; display: flex; align-items: center; gap: 8px; color: #88c99d; border: 1px solid rgba(91,190,124,.28); background: rgba(58,145,88,.07); font-size: 10px; }
-.importedBanner svg { width: 15px; }.importedBanner span { margin-left: auto; color: #827b70; }
+/* Import status: one quiet line; the diagnostics live in a closed <details> under it. */
+.importedBanner { grid-column: 1 / -1; min-height: 28px; padding: 0; display: flex; align-items: center; gap: 8px; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.importedBanner svg { width: 15px; color: var(--atlas-positive); }.importedBanner span { color: var(--atlas-text-subtle); }
+.importedBanner span::before { content: "·"; margin-right: 8px; }
+.diagnosticDetails { grid-column: 1 / -1; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.diagnosticDetails summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; width: fit-content; }
+.diagnosticDetails summary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.diagnosticDetails[open] { display: grid; gap: 8px; }
+.diagnosticDetails > button { justify-self: start; min-height: 44px; padding: 5px 12px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--atlas-line); color: var(--atlas-text); background: transparent; font: inherit; cursor: pointer; }
+.diagnosticDetails > button:disabled { opacity: .58; cursor: wait; }
+.diagnosticDetails > button svg { width: 15px; }
 .importedBanner button { min-height: 28px; padding: 5px 9px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(91,190,124,.34); color: #a7d8b5; background: rgba(91,190,124,.08); font: inherit; cursor: pointer; }
 .importedBanner button:disabled { opacity: .58; cursor: wait; }
 .refreshNotice { grid-column: 1 / -1; min-height: 48px; padding: 8px 12px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(211, 153, 67, .34); background: rgba(111, 67, 21, .12); }
@@ -3442,7 +3451,7 @@
 .characterDiagnostic li > i { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; color: #8ed5a2; background: rgba(77,174,105,.13); font-style: normal; }.characterDiagnostic li[data-status="fail"] > i { color: #ff967d; background: rgba(214,74,42,.14); }
 .characterDiagnostic li span { min-width: 0; display: grid; gap: 2px; }.characterDiagnostic li b { color: #d7d2c8; font-size: 9px; }.characterDiagnostic li small { color: #827d74; font-size: 8px; overflow-wrap: anywhere; }
 .characterDiagnostic p { margin: 8px 0 0; color: #dc8a75; font-size: 10px; }
-@media(max-width:700px){.importedBanner{align-items:flex-start;flex-wrap:wrap}.importedBanner span{width:100%;margin-left:23px}.characterDiagnostic ul{grid-template-columns:1fr}}
+@media(max-width:700px){.importedBanner{align-items:flex-start;flex-wrap:wrap}.characterDiagnostic ul{grid-template-columns:1fr}}
 
 /* Build Lab: scenario-first talent guidance for players who do not know the tree yet. */
 .talentLab {

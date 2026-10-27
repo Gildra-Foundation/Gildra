@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, ChevronDown, ChevronUp, GripVertical, Plus, RotateCcw, X } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical, Plus, RotateCcw, X } from "lucide-react";
 import type { RotationAbility, RotationAplOptions, RotationAplRule } from "@/lib/platform/rotation/types";
 import type { Lang } from "@/lib/i18n";
 import { rotationT as t } from "@/lib/platform/rotation/rotationDictionary";
@@ -12,12 +12,13 @@ import deferredLabStyles from "./rotationLabDeferred.module.css";
 import shell from "./rotationLabShell.module.css";
 import { priorityEditorCopy } from "./priorityEditorCopy";
 
-export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceLabel, lang, wide = false, onChange, onAplChange, onReset, interactionsDisabled = false }: {
+export function PriorityEditor({ abilities, rules, aplRules, aplOptions, lang, wide = false, onChange, onAplChange, onReset, interactionsDisabled = false }: {
   abilities: RotationAbility[];
   rules: string[];
   aplRules: RotationAplRule[];
   aplOptions: RotationAplOptions;
-  sourceLabel: string;
+  /** Kept for callers; the source is not printed on the list. */
+  sourceLabel?: string;
   defaults: string[];
   lang: Lang;
   /** Full-width list (two columns on desktop) while there is no timeline beside it. */
@@ -50,7 +51,7 @@ export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceL
   return (
     <aside className={styles.priorityPanel} aria-labelledby="priority-rules-title">
       <header className={styles.panelHeader}>
-        <div><h2 id="priority-rules-title">{tr("Priority rules")}</h2><small>{sourceLabel} · {tr("Drag to reorder")}</small></div>
+        <div><h2 id="priority-rules-title">{tr("Priority rules")}</h2><small>{tr("Drag to reorder")}</small></div>
         <button className={deferredLabStyles.iconButton} onClick={onReset} disabled={interactionsDisabled} aria-label={tr("Reset priority rules")} title={tr("Reset priority rules")}><RotateCcw /></button>
       </header>
       <ol className={`${styles.ruleList} ${wide ? shell.ruleListWide : ""}`}>
@@ -70,7 +71,7 @@ export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceL
             >
               <GripVertical aria-hidden="true" />
               <AbilityIcon ability={ability} size="sm" />
-              <span><b>{ability.name}</b><small>{aplRule?.conditions.length ? aplRule.conditions.map((condition) => conditionSummary(condition, lang, byId, aplOptions.labels)).join(" · ") : priorityEditorCopy[lang].wheneverTheAbilityIs}</small><button type="button" className={styles.conditionToggle} aria-expanded={editingRule === id} onClick={() => setEditingRule((current) => current === id ? null : id)}>{priorityEditorCopy[lang].editConditions}</button></span>
+              <span><b>{ability.name}</b>{aplRule?.conditions.length ? <small>{aplRule.conditions.map((condition) => conditionSummary(condition, lang, byId, aplOptions.labels)).join(" · ")}</small> : null}<button type="button" className={styles.conditionToggle} aria-expanded={editingRule === id} onClick={() => setEditingRule((current) => current === id ? null : id)}>{priorityEditorCopy[lang].editConditions}</button></span>
               <span className={deferredLabStyles.ruleMove}>
                 <button onClick={() => move(index, index - 1)} disabled={interactionsDisabled || index === 0} aria-label={`${tr("Move up")}: ${ability.name}`}><ChevronUp /></button>
                 <button onClick={() => move(index, index + 1)} disabled={interactionsDisabled || index === rules.length - 1} aria-label={`${tr("Move down")}: ${ability.name}`}><ChevronDown /></button>
@@ -83,9 +84,7 @@ export function PriorityEditor({ abilities, rules, aplRules, aplOptions, sourceL
       </ol>
       {missing.length ? (
         <div className={styles.priorityAdd}><select aria-label={priorityEditorCopy[lang].abilityToAdd} value={selectedMissing?.id ?? ""} disabled={interactionsDisabled || rules.length >= 10} onChange={(event) => setAbilityToAdd(event.target.value)}>{missing.map((ability) => <option key={ability.id} value={ability.id}>{ability.name}</option>)}</select><button className={styles.addRule} disabled={interactionsDisabled || rules.length >= 10 || !selectedMissing} onClick={() => selectedMissing && onChange([...rules, selectedMissing.id])}><Plus /> {tr("Add rule")}</button></div>
-      ) : (
-        <div className={deferredLabStyles.rulesStatus} role="status"><CheckCircle2 /> {tr("All priority rules are active")}</div>
-      )}
+      ) : null}
     </aside>
   );
 }

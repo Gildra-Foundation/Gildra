@@ -17,5 +17,5 @@ export default async function Page({ params, searchParams }: { params: Promise<{
   const query = await searchParams;
   const theme = getTalentSpecTheme(spec);
   if (!theme) notFound();
-  return <RotationLabRoute locale="ru" theme={theme} preset={getRotationPreset(spec, "ru")} characterSlug={query.character?.slice(0, 240)} dataMode={query.mode === "fixture" ? "fixture" : "battle-net"} />;
+  return <RotationLabRoute locale="ru" theme={theme} preset={getRotationPreset(spec, "ru")} characterSlug={query.character?.slice(0, 240)} dataMode={query.mode === "fixture" && process.env.NODE_ENV !== "production" ? "fixture" : "battle-net"} />;
 }

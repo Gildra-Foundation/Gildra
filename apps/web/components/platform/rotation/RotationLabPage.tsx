@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { BarChart3, ChevronDown, Dumbbell, Info, Play, RotateCcw } from "lucide-react";
+import { BarChart3, ChevronDown, Dumbbell, Info, RotateCcw } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
 import type { Lang } from "@/lib/i18n";
@@ -348,7 +348,6 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
           <button type="button" aria-pressed={labMode === "simulation"} aria-controls="lab-simulation-panel" onClick={() => setLabMode("simulation")}><BarChart3 aria-hidden="true" />{copy.modeSimulation}</button>
           <button type="button" aria-pressed={labMode === "training"} aria-controls="lab-training-panel" onClick={() => setLabMode("training")}><Dumbbell aria-hidden="true" />{copy.modeTraining}</button>
         </div>
-        {!embedded ? <p className={shell.meta}>{copy.meta(preset.patch, preset.character.itemLevel)}</p> : null}
       </div>
 
       {labMode === "training" ? (
@@ -373,14 +372,13 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
           /></BookFoldout>
         </section>
       ) : <div id="lab-simulation-panel">
-        <BuildOptimizer slug={preset.slug} specialization={specLabel} lang={lang} abilities={displayAbilities} scenario={scenario} fightLength={fightLength} targets={targets} rules={rules} aplRules={aplRules} characterSlug={characterSlug} dataMode={dataMode} connectedTalentLoadout={connectedTalentLoadout} embedded={embedded} currentResult={result} resultMatchesCurrent={!isDirty} sectionTitle={copy.buildTitle} sectionText={copy.buildText} onScenarioChange={chooseScenario} onFightLengthChange={setFightLength} onTargetsChange={setTargets} onTalentLoadoutChange={setActiveTalentLoadout} onOptimized={acceptOptimized} onUseCombo={useCombo} />
+        <BuildOptimizer slug={preset.slug} specialization={specLabel} lang={lang} abilities={displayAbilities} scenario={scenario} fightLength={fightLength} targets={targets} rules={rules} aplRules={aplRules} characterSlug={characterSlug} dataMode={dataMode} connectedTalentLoadout={connectedTalentLoadout} embedded={embedded} currentResult={result} resultMatchesCurrent={!isDirty} sectionTitle={copy.buildTitle} sectionText={copy.buildText} onScenarioChange={chooseScenario} onFightLengthChange={setFightLength} onTargetsChange={setTargets} onTalentLoadoutChange={setActiveTalentLoadout} onOptimized={acceptOptimized} onUseCombo={useCombo} onSimulate={() => void run()} simulateLabel={simulateLabel} simulating={status === "running"} />
 
         <section id="rotation-advanced-analysis" className={`${shell.section} ${connectedEmbed ? motion.chapter : ""}`} aria-labelledby="rotation-panel-title">
           <header className={shell.sectionHeader} data-atlas-ui>
             <div><h2 id="rotation-panel-title">{copy.panelTitle}</h2><p>{copy.panelText}</p></div>
             <div id="rotation-simulation-controls" className={shell.actions}>
               <AtlasButton icon={<RotateCcw aria-hidden="true" />} onClick={() => reset()} disabled={status === "running"}>{tr("Reset")}</AtlasButton>
-              <AtlasButton variant="primary" icon={<Play aria-hidden="true" />} onClick={() => void run()} disabled={status === "running"}>{simulateLabel}</AtlasButton>
             </div>
           </header>
           {status === "running" && <div className={shell.progress} role="progressbar" aria-label={tr("Simulation progress")} aria-valuetext={tr("SimulationCraft is calculating your result")}><span /></div>}
@@ -392,7 +390,6 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
           <div className={shell.stack} data-atlas-ui>
             {error ? <AtlasNotice tone="caution" title={tr("Simulation unavailable")} action={<AtlasButton size="sm" onClick={() => void run()}>{tr("Try again")}</AtlasButton>}>{simulationErrorMessage(error, tr, lang)}</AtlasNotice> : null}
             {isDirty ? <AtlasNotice title={tr("Changes not simulated")} action={<AtlasButton size="sm" onClick={() => void run()} disabled={status === "running"}>{tr("Simulate changes")}</AtlasButton>}>{tr("The result below belongs to the previous settings.")}</AtlasNotice> : null}
-            {!displayResult && status !== "running" && !error ? <AtlasNotice title={copy.resultEmptyTitle}>{copy.resultEmptyText}</AtlasNotice> : null}
             {!displayResult && status === "running" ? <AtlasNotice title={tr("SimulationCraft is calculating your result")} /> : null}
           </div>
 
