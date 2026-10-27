@@ -155,7 +155,7 @@
 .heroHeader p { max-width: 52ch; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
 .actionSlot, .sourceAction { display: flex; min-width: 0; max-width: 100%; }
-.weekFacts { display: grid; gap: var(--atlas-space-4); max-width: 860px; margin-top: var(--atlas-space-5); }
+.weekFacts { display: grid; gap: var(--atlas-space-4); max-width: 1040px; margin-top: var(--atlas-space-5); }
 .weekFacts :global(.ui-stats-card) { background: transparent; box-shadow: none; border: 0; padding-block: var(--atlas-space-2); }
 .affixes { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
 .affixes li {
