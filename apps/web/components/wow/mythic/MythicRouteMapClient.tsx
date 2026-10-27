@@ -1,13 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { AtlasBreadcrumbs } from "@gildra/atlas-ui/AtlasBreadcrumbs";
 import { sourceName, type WowNameTable } from "@/lib/wow/wowNameTable";
 import type { DungeonRoute, DungeonSelectorOption } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { dungeonArtDirections, dungeonBackdropSmall, dungeonBackdropMobile, dungeonAtmospheres } from "@/lib/wow/dungeonArtDirection";
 import { dungeonBackdropSource } from "@/lib/wow/dungeonBackdropSource";
-import { RubySanctuaryFooter } from "./RubySanctuaryFooter";
 import { RubySanctuaryWeather } from "./RubySanctuaryWeather";
 import { DungeonAtmosphere } from "./DungeonAtmosphere";
 import { DungeonTalentCalculatorButton } from "./DungeonTalentCalculatorButton";
@@ -22,7 +21,8 @@ import styles from "./mythicRouteMap.module.css";
 const MdtPullMap = dynamic(() => import("./MdtPullMap"), { ssr: false, loading: () => <div className={styles.mdtLoading} role="status"><span>MDT…</span></div> });
 const locations = { "ruby-life-pools": "Dragon Isles", "altar-of-fangs": "The Coiled Isle", "murder-row": "Silvermoon", "den-of-nalorakk": "Zul'Aman", "the-blinding-vale": "Harandar", "voidscar-arena": "Voidstorm", "kings-rest": "Zuldazar", "temple-of-sethraliss": "Vol'dun" };
 
-export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIntel, names: pageNames }: { locale: RouteLocale; dungeon: DungeonRoute; dungeonOptions: DungeonSelectorOption[]; combatIntel: DungeonCombatIntel; names: WowNameTable }) {
+/** `footer` is the site's legal footer, rendered on the server (it reads the site dictionary). */
+export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIntel, names: pageNames, footer }: { locale: RouteLocale; dungeon: DungeonRoute; dungeonOptions: DungeonSelectorOption[]; combatIntel: DungeonCombatIntel; names: WowNameTable; footer?: ReactNode }) {
   const copy = mythicRouteCopy[locale], localePrefix = locale === "ru" ? "/ru" : "";
   const names = useRouteNameTable(locale, pageNames, dungeon.stops, dungeon.stops);
   const dungeonName = sourceName(names, dungeon.name, locale, dungeon.nameRu);
@@ -78,7 +78,7 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
         </section>
 
         <div className={styles.panel}><MdtPullMap key={dungeon.slug} slug={dungeon.slug} locale={locale} routeUrl={dungeon.mdtRouteUrl} data={combatIntel.mdt} stops={dungeon.stops} combatIntel={combatIntel} /></div>
-        <RubySanctuaryFooter locale={locale} />
+        {footer}
       </div>
 
     </main>

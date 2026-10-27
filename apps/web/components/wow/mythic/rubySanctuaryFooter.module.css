@@ -1,8 +1,0 @@
-/* atlas:strict — approved Ruby concept footer, composed from shared brand/navigation. */
-.footer { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3) var(--atlas-space-6); padding: var(--atlas-space-3) var(--atlas-space-4); border: 1px solid var(--atlas-line); border-radius: 12px; background: var(--dungeon-glass); }
-.brand { display: inline-flex; flex-shrink: 0; align-items: center; gap: var(--atlas-space-3); color: var(--atlas-text-strong); font: 600 var(--atlas-text-title)/1 var(--atlas-font-display); letter-spacing: .15em; text-decoration: none; }
-.footer nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--atlas-space-5); }
-.footer nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-decoration: none; }
-.footer nav a:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: .2em; }
-.footer a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
-@media (max-width: 767px) { .footer nav { gap: 0 var(--atlas-space-4); } }
