@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ArrowRight, Search } from "lucide-react";
-import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { MaterialButton } from "@/components/wow/shared/material/MaterialButton";
 import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
 import { loadIndex, openSiteSearch } from "@/components/platform/search/siteSearchIndex";
 import { searchIndex, type SiteSearchHit } from "@/components/platform/search/siteSearchMatch";
@@ -52,7 +52,7 @@ export function NotFoundSuggestions() {
 
   if (!path) return null;
   const prefix = ru ? "/ru" : "";
-  const search = <AtlasButton variant="secondary" icon={<Search aria-hidden="true" />} onClick={() => openSiteSearch(last)}>{text.search}</AtlasButton>;
+  const search = <MaterialButton kit="den-of-nalorakk" fit="stack" icon={<Search aria-hidden="true" />} onClick={() => openSiteSearch(last)}>{text.search}</MaterialButton>;
   // Without matches (or while the index loads) only the search action, never an empty heading.
   if (!hits?.length) return <div className={styles.searchOnly}>{search}</div>;
   return (
