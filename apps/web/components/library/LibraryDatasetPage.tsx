@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
-import { DatabaseDirectory } from "@/components/DatabaseDirectory";
+import { LibraryWorkspace } from "@/components/library/LibraryWorkspace";
 import { CatalogTotal } from "@/components/database/CatalogTotal";
 import { PageShell } from "@/components/layout/PageShell";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
-import { libraryCopy } from "@/components/library/libraryCopy";
+import { libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/library/libraryCopy";
 import { formatCount } from "@/components/database/databaseCopy";
 import { libraryCardLayout, libraryRails } from "@/components/library/libraryRails";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
@@ -16,9 +16,8 @@ export type LibraryDatasetFilters = { q?: string; product?: string; facet?: stri
 function optionalNumber(value?: string) { const parsed = Number(value); return value && Number.isFinite(parsed) ? parsed : undefined; }
 
 /**
- * /library/<dataset> and the RU mirror: the dataset's heading (with a trail back
- * to the library) above the shared catalog workspace. The dataset is the
- * filter, so the workspace shows no sections or category tree here.
+ * /library/<dataset> and the RU mirror: the dataset's heading (trail back to the
+ * library, the dataset's area as eyebrow, one counter) above its workspace.
  */
 export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" | "ru"; slug: string; filters: LibraryDatasetFilters }) {
   const copy = libraryCopy[lang];
@@ -48,38 +47,34 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
     console.error("library dataset unavailable", error);
     return unavailable;
   }
-  const productName = products.find((entry) => entry.slug === product)?.name ?? copy.defaultProduct;
-  // "12.1.0.69587" → "12.1.0": the patch a player recognises; the full build stays on record pages.
-  const patch = dataset.buildVersion?.split(".").slice(0, 3).join(".");
+  const levels = { minLevel: filters.minLevel ?? "", maxLevel: filters.maxLevel ?? "", minRequiredLevel: filters.minRequiredLevel ?? "", maxRequiredLevel: filters.maxRequiredLevel ?? "" };
   return (
     <PageShell lang={lang}>
       <AtlasFrame as="div" lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
         <AtlasHero
-          eyebrow={patch ? `${productName} · ${patch}` : productName}
+          eyebrow={libraryGroupText[dataset.group]?.[lang]}
           statsLabel={copy.statsLabel}
           stats={dataset.entityCount ? [{ value: formatCount(dataset.entityCount, lang), label: copy.statRecords }] : undefined}
-          breadcrumbs={[{ label: copy.library, href: `${prefix}/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}` }, { label: dataset.name }]}
+          breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.library, href: `${prefix}/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}` }, { label: dataset.name }]}
           breadcrumbsLabel={copy.breadcrumbsLabel}
           title={dataset.name}
-          lede={dataset.description || undefined}
+          lede={libraryDatasetLine(dataset, lang) || undefined}
         />
-        <DatabaseDirectory
+        <LibraryWorkspace
           lang={lang}
+          dataset={dataset}
           totalCount={<Suspense fallback="…"><CatalogTotal params={{ ...catalogParams, cursor: undefined }} /></Suspense>}
           catalog={catalog}
           categories={categories}
-          entityTypes={entityTypes}
+          entityType={entityTypes.find((entry) => entry.type === dataset.entityType)}
           products={products}
           query={filters.q ?? ""}
           selectedProduct={product}
-          selectedType={dataset.entityType}
           selectedFacets={facets}
           cursor={filters.cursor ?? ""}
-          minItemLevel={filters.minLevel ?? ""}
-          maxItemLevel={filters.maxLevel ?? ""}
-          minRequiredLevel={filters.minRequiredLevel ?? ""}
-          maxRequiredLevel={filters.maxRequiredLevel ?? ""}
-          libraryDataset={{ slug: dataset.slug, layout: libraryCardLayout(dataset.slug), rails: libraryRails(dataset.slug, categories, lang) }}
+          levels={levels}
+          layout={libraryCardLayout(dataset.slug)}
+          rails={libraryRails(dataset.slug, categories, lang)}
         />
       </AtlasFrame>
     </PageShell>

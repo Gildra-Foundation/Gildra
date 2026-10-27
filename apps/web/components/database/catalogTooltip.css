@@ -1,0 +1,90 @@
+/* In-game tooltip of a catalog record (components/database/TooltipContent): the record page, the hover preview of
+   library cards and the preview dialog. Global class names because the markup is shared by server and client code.
+   Chrome is the atlas glass (tokens); the game's own colours stay only on game data: quality, item level, effects.
+   Imported by the components that render the tooltip — no route layout loads it. */
+.db-tooltip-stats{margin-top:5px;color:var(--atlas-text-strong)}
+.db-tooltip-stats>div{display:flex;justify-content:space-between;gap:14px}
+.db-tooltip-stats small{color:var(--atlas-text-subtle);font-size:11px;font-variant-numeric:tabular-nums}
+.db-tooltip-acquisition{margin-top:7px;color:#ffd100}
+.db-tooltip-price{margin-top:5px;display:grid;color:var(--atlas-text)}
+.db-tooltip-set{color:#ffd100}
+.db-tooltip-ownership,.db-tooltip-talent-info{margin-top:7px;color:var(--atlas-text)}
+.db-tooltip-ownership>b{display:block;margin-bottom:4px;color:var(--atlas-text-strong);font-size:11px;text-transform:uppercase;letter-spacing:.035em}
+.db-tooltip-owner-paths{display:grid;gap:4px}.db-tooltip-owner-path{display:flex;align-items:center;gap:4px;min-width:0}.db-tooltip-owner-arrow{color:var(--atlas-text-subtle)}
+.db-tooltip-owner-specs{display:flex;flex-wrap:wrap;gap:3px;min-width:0}.db-tooltip-owner-badge{display:inline-flex;align-items:center;gap:4px;min-width:0;padding:2px 5px 2px 2px;border:1px solid var(--atlas-line-soft);border-radius:var(--atlas-radius);background:var(--atlas-surface-sunken);color:var(--atlas-text)}
+.db-tooltip-owner-path>.db-tooltip-owner-badge{flex:0 0 auto}
+.db-tooltip-owner-badge img{width:18px;height:18px;border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);object-fit:cover}.db-tooltip-owner-badge span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.db-tooltip-talent-link{margin-top:6px;color:#7fff7f}
+.db-tooltip-related-inline{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.db-tooltip-recipe-info{display:grid;gap:5px;margin-top:6px;padding-top:6px;border-top:1px solid var(--atlas-line-soft)}
+
+.db-wow-tooltip{
+  position:absolute;z-index:30;top:calc(100% + 5px);left:10px;display:grid;grid-template-columns:58px minmax(260px,340px);align-items:start;gap:6px;
+  width:max-content;max-width:min(420px,calc(100vw - 40px));color:var(--atlas-text-strong);font:500 var(--atlas-text-small)/1.4 var(--atlas-font-ui);
+  letter-spacing:0;opacity:0;visibility:hidden;transform:translateY(-3px);pointer-events:none;text-align:left;
+  transition:opacity .1s ease,transform .1s ease,visibility .1s;filter:drop-shadow(0 7px 12px var(--atlas-bg));
+}
+
+.db-tooltip-icon{display:grid;width:58px;height:58px;padding:2px;border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);background:var(--atlas-surface-sunken)}
+.db-tooltip-icon img{width:100%;height:100%;border:2px solid var(--record-quality,var(--atlas-line-strong));object-fit:cover}.db-tooltip-icon .i{width:28px;height:28px;margin:auto;color:var(--atlas-text-subtle)}
+.db-tooltip-panel{min-height:58px;padding:var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4);border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);background:var(--atlas-glass-fill,var(--atlas-surface));box-shadow:var(--atlas-glass-depth,none);font-weight:400;color:var(--atlas-text)}
+.db-wow-tooltip.is-expanded{position:fixed;z-index:95;top:70px;right:20px;left:auto;max-height:calc(100vh - 90px);opacity:1;visibility:visible;transform:none;pointer-events:auto}
+.db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:calc(100vh - 90px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.db-tooltip-close{position:absolute;z-index:2;top:5px;right:5px;width:28px;height:28px;border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);background:var(--atlas-surface-raised);color:var(--atlas-text-strong);font:500 20px/1 var(--atlas-font-ui);cursor:pointer}.db-tooltip-close:hover{border-color:var(--atlas-accent);color:var(--atlas-accent-strong)}.db-tooltip-close:focus-visible{outline:2px solid var(--atlas-accent-strong);outline-offset:2px}.db-wow-tooltip.is-expanded .db-tooltip-panel{padding-inline-end:38px}
+.db-tooltip-name{margin-bottom:var(--atlas-space-1);font:var(--atlas-weight-display) var(--atlas-text-title)/1.2 var(--atlas-font-display);color:var(--atlas-text-strong)}
+.db-wow-tooltip.quality-2 .db-tooltip-name{color:#1eff00}.db-wow-tooltip.quality-2 .db-tooltip-icon img{border-color:#1eff00}
+.db-wow-tooltip.quality-3 .db-tooltip-name{color:#0070dd}.db-wow-tooltip.quality-3 .db-tooltip-icon img{border-color:#0070dd}
+.db-wow-tooltip.quality-4 .db-tooltip-name{color:#a335ee}.db-wow-tooltip.quality-4 .db-tooltip-icon img{border-color:#a335ee}
+.db-wow-tooltip.quality-5 .db-tooltip-name{color:#ff8000}.db-wow-tooltip.quality-5 .db-tooltip-icon img{border-color:#ff8000}
+.db-wow-tooltip.quality-6 .db-tooltip-name{color:#e6cc80}.db-wow-tooltip.quality-6 .db-tooltip-icon img{border-color:#e6cc80}
+.db-tooltip-level{color:#ffd100}.db-tooltip-muted,.db-tooltip-subtext{color:var(--atlas-text-muted)}.db-tooltip-socket{color:#57d7ff}.db-tooltip-crafted,.db-tooltip-effect{color:#1eff00}
+.db-tooltip-mechanic{color:var(--atlas-text-strong);font-weight:500}
+.db-tooltip-spell-description{margin-top:5px;color:var(--atlas-text-strong);font-weight:500}.db-tooltip-description{margin-top:14px;color:#ffd100;font-style:normal}
+.db-tooltip-inline-ability{display:inline-flex;align-items:center;gap:3px;margin:0 2px;color:var(--atlas-accent);text-decoration:none;vertical-align:-3px}.db-tooltip-inline-ability:hover{color:var(--atlas-accent-strong);text-decoration:underline;text-underline-offset:2px}.db-tooltip-inline-ability:focus-visible{outline:1px solid var(--atlas-accent-strong);outline-offset:2px}.db-tooltip-inline-ability img{width:17px;height:17px;border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);object-fit:cover}
+.db-tooltip-requirements,.db-tooltip-effect-meta,.db-tooltip-quest-info,.db-tooltip-creature-info,.db-tooltip-profession-info{margin-top:6px;color:var(--atlas-text)}
+.db-tooltip-variants{display:grid;gap:7px;margin-top:7px;padding-top:7px;border-top:1px solid var(--atlas-line-soft);color:var(--atlas-text)}
+.db-tooltip-variants>details{padding:6px 8px;border:1px solid var(--atlas-line-soft);background:var(--atlas-surface-sunken)}
+.db-tooltip-variants summary{cursor:pointer;color:var(--atlas-accent);font-weight:600}
+.db-tooltip-variants details>small{display:block;margin-top:6px;overflow:hidden;text-overflow:ellipsis;color:var(--atlas-text-subtle);font-size:11px}
+.db-tooltip-related{display:grid;gap:2px;margin-top:5px}.db-tooltip-related>b{color:var(--atlas-text-strong)}.db-tooltip-related>span{display:block;padding-inline-start:7px;color:var(--atlas-text)}
+.db-tooltip-loot-tables{display:grid;gap:7px;margin-top:8px;padding-top:8px;border-top:1px solid var(--atlas-line-soft)}.db-tooltip-loot-tables>b{color:var(--atlas-text-strong)}
+.db-tooltip-loot-tables section{display:grid;gap:3px}.db-tooltip-loot-tables header{display:flex;align-items:center;justify-content:space-between;color:var(--atlas-text-strong)}.db-tooltip-loot-tables header small{color:var(--atlas-text-subtle);font-size:11px}
+.db-tooltip-loot-tables a,.db-tooltip-loot-unresolved{display:flex;align-items:center;gap:7px;padding:5px 6px;border:1px solid var(--atlas-line-soft);background:var(--atlas-surface-sunken);color:var(--atlas-text);text-decoration:none}.db-tooltip-loot-tables a:hover,.db-tooltip-loot-tables a:focus-visible{border-color:var(--atlas-accent);background:var(--atlas-surface-raised);outline:none}
+.db-tooltip-loot-tables img,.db-loot-icon-fallback{width:28px;height:28px;flex:0 0 28px;border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);object-fit:cover}.db-loot-icon-fallback{display:grid;place-items:center;color:var(--atlas-text-subtle)}.db-tooltip-loot-tables a>span,.db-tooltip-loot-unresolved>span{display:grid;min-width:0}.db-tooltip-loot-tables strong{overflow:hidden;text-overflow:ellipsis;color:var(--atlas-text-strong);white-space:nowrap}.db-tooltip-loot-tables small{color:var(--atlas-text-subtle)}
+.db-tooltip-rewards{gap:4px}.db-tooltip-reward-group{display:grid;gap:3px}.db-tooltip-reward-group>em{margin-top:2px;color:var(--atlas-text-subtle);font-size:11px;font-style:normal;text-transform:uppercase;letter-spacing:.04em}.db-tooltip-reward{display:flex!important;align-items:center;gap:6px;min-width:0;padding:3px!important;border:1px solid var(--atlas-line-soft);border-radius:var(--atlas-radius);background:var(--atlas-surface-sunken);color:var(--atlas-text);text-decoration:none}.db-tooltip-reward:hover{border-color:var(--atlas-line-strong);background:var(--atlas-surface-raised)}.db-tooltip-reward:focus-visible{outline:1px solid var(--atlas-accent-strong);outline-offset:2px}.db-tooltip-reward img,.db-tooltip-reward-marker{flex:0 0 auto;width:28px;height:28px;border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);object-fit:cover}.db-tooltip-reward-marker{display:grid;place-items:center;color:var(--atlas-text-subtle)}.db-tooltip-reward>span:last-child{display:grid;min-width:0}.db-tooltip-reward strong{overflow:hidden;color:var(--atlas-text-strong);font-size:11px;text-overflow:ellipsis;white-space:nowrap}.db-tooltip-reward strong.quality-2{color:#1eff00}.db-tooltip-reward strong.quality-3{color:#0070dd}.db-tooltip-reward strong.quality-4{color:#a335ee}.db-tooltip-reward strong.quality-5{color:#ff8000}.db-tooltip-reward strong.quality-6{color:#e6cc80}.db-tooltip-reward small{color:var(--atlas-text-subtle);font-size:11px;font-variant-numeric:tabular-nums}
+.db-tooltip-spell-effects{display:grid;gap:3px;margin-top:7px;padding-top:5px;border-top:1px solid var(--atlas-line-soft);color:var(--atlas-text)}.db-tooltip-spell-effects>b{color:var(--atlas-text-strong)}.db-tooltip-spell-effects>div{display:flex;flex-wrap:wrap;gap:3px 8px}.db-tooltip-spell-effects>div>span:first-child{color:var(--atlas-text-subtle);font-variant-numeric:tabular-nums}
+.db-tooltip-talent-spells{display:grid;gap:6px;margin-top:7px;padding-top:6px;border-top:1px solid var(--atlas-line-soft)}.db-tooltip-talent-spells>b{color:var(--atlas-text-strong)}.db-tooltip-talent-spell{display:grid;gap:2px}.db-tooltip-talent-spell .db-tooltip-spell-effects{margin:0 0 0 22px;padding-top:3px;border-top:0}
+
+@media (max-width:720px){
+	.db-wow-tooltip.is-expanded{position:fixed;inset:64px 12px 12px;grid-template-columns:44px minmax(0,1fr);width:auto;max-width:none;max-height:none}
+	.db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:calc(100vh - 76px)}
+  .db-wow-tooltip.is-expanded .db-tooltip-icon{width:44px;height:44px}
+  
+}
+
+.db-tooltip-backdrop{position:fixed;z-index:94;inset:0;background:color-mix(in srgb,var(--atlas-bg) 76%,transparent);backdrop-filter:blur(2px)}
+.db-tooltip-loading{position:fixed;z-index:95;top:50%;left:50%;display:grid;grid-template-columns:20px 1fr;align-items:center;gap:12px;width:min(320px,calc(100vw - 32px));min-height:64px;padding:14px;transform:translate(-50%,-50%);border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);background:var(--atlas-surface);box-shadow:0 18px 28px var(--atlas-bg);pointer-events:none}
+.db-tooltip-loading>span{width:18px;height:18px;border:2px solid var(--atlas-line);border-top-color:var(--atlas-accent);border-radius:50%;animation:db-tooltip-spin .8s linear infinite}
+.db-tooltip-loading::after{content:"";height:8px;border-radius:2px;background:linear-gradient(90deg,var(--atlas-surface-raised) 55%,var(--atlas-line) 70%,var(--atlas-surface-raised) 85%);background-size:220% 100%;animation:db-tooltip-shimmer 1.2s linear infinite}
+@keyframes db-tooltip-spin{to{transform:rotate(360deg)}}
+@keyframes db-tooltip-shimmer{to{background-position:-220% 0}}
+@media(prefers-reduced-motion:reduce){.db-tooltip-loading>span,.db-tooltip-loading::after{animation:none}}
+.db-wow-tooltip.is-expanded{top:50%;left:50%;right:auto;max-height:min(760px,calc(100vh - 48px));transform:translate(-50%,-50%);filter:drop-shadow(0 18px 28px var(--atlas-bg))}
+.db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:min(760px,calc(100vh - 48px))}
+.db-wow-tooltip.is-detail-page{position:relative;inset:auto;display:grid;width:100%;max-width:100%;grid-template-columns:58px minmax(0,1fr);gap:var(--atlas-space-3);opacity:1;visibility:visible;transform:none;pointer-events:auto;filter:none}
+
+@media (max-width:720px){
+  .db-wow-tooltip.is-expanded{inset:64px 10px 10px;width:auto;max-width:none;max-height:none;transform:none;grid-template-columns:44px minmax(0,1fr)}
+  .db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:calc(100vh - 74px)}
+  .db-wow-tooltip.is-detail-page{grid-template-columns:44px minmax(0,1fr)}
+  .db-wow-tooltip.is-detail-page .db-tooltip-icon{width:44px;height:44px}
+}
+
+
+/* The icon frame takes the record's quality colour; it wins over the old gold frame of app/styles/wow-skin.css. */
+:root .db-wow-tooltip .db-tooltip-icon{border-color:var(--atlas-line);background:var(--atlas-surface-sunken);box-shadow:none}
+.db-wow-tooltip.quality-0 .db-tooltip-icon img{border-color:#9d9d9d}.db-wow-tooltip.quality-7 .db-tooltip-name{color:#00ccff}.db-wow-tooltip.quality-7 .db-tooltip-icon img{border-color:#00ccff}
+.db-wow-tooltip.quality-3 .db-tooltip-name{color:#3590e6}.db-wow-tooltip.quality-4 .db-tooltip-name{color:#ba63f3}
+
+@media (forced-colors:active){.db-tooltip-panel,.db-tooltip-icon{border:1px solid CanvasText;background:Canvas;color:CanvasText}}
+/* The dialog floats over the page: an opaque face. */
+.db-wow-tooltip.is-expanded .db-tooltip-panel{background:var(--atlas-surface-raised)}

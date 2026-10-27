@@ -4,22 +4,32 @@
 .searchForm {
   display: flex;
   flex: 1 1 100%;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--atlas-space-3);
   min-width: 0;
-  max-width: 760px;
-  min-height: 56px;
+  max-width: 820px;
+}
+
+.searchField {
+  display: flex;
+  flex: 1 1 320px;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  min-width: 0;
+  min-height: 60px;
   padding: 0 6px 0 var(--atlas-space-4);
   border: 1px solid var(--atlas-line);
   border-radius: var(--atlas-radius);
-  background: var(--atlas-surface-sunken);
+  background: color-mix(in srgb, var(--atlas-surface-sunken) 88%, transparent);
+  box-shadow: var(--atlas-glass-depth);
   transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 
-.searchForm:focus-within { border-color: var(--atlas-accent); box-shadow: 0 0 0 1px var(--atlas-accent), 0 0 22px var(--atlas-accent-glow); }
+.searchField:focus-within { border-color: var(--atlas-accent); box-shadow: 0 0 0 1px var(--atlas-accent), 0 0 22px var(--atlas-accent-glow); }
 .searchIcon { width: 18px; height: 18px; flex: none; color: var(--atlas-accent); }
 
-.searchForm input {
+.searchField input {
   flex: 1;
   width: 0;
   min-width: 0;
@@ -32,12 +42,12 @@
   font-size: var(--atlas-text-lead);
 }
 
-.searchForm input::placeholder { color: var(--atlas-text-subtle); }
+.searchField input::placeholder { color: var(--atlas-text-subtle); }
 /* The whole field shows focus (border + glow); no second ring inside it. */
-.searchForm input[type="search"]:focus-visible { outline: none; }
-.searchForm input::-webkit-search-cancel-button { display: none; }
+.searchField input[type="search"]:focus-visible { outline: none; }
+.searchField input::-webkit-search-cancel-button { display: none; }
 
-.searchForm kbd {
+.searchField kbd {
   display: grid;
   width: 24px;
   height: 24px;
@@ -61,21 +71,6 @@
 
 .clearQuery svg { width: 16px; height: 16px; }
 .clearQuery:hover { color: var(--atlas-accent-strong); }
-
-.searchForm button {
-  min-height: 44px;
-  padding: 0 22px;
-  border: 1px solid var(--atlas-accent);
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-accent-ink);
-  background: linear-gradient(180deg, var(--atlas-accent-strong), var(--atlas-accent));
-  font-family: var(--atlas-font-ui);
-  font-size: var(--atlas-text-small);
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.searchForm button:hover { background: var(--atlas-accent-strong); }
 
 /* ---------- Kind tabs ---------- */
 .bar {
@@ -222,7 +217,7 @@
 
 .empty p { max-width: 52ch; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
 
-:is(.kindTabs a, .databaseLink, .clearQuery, .searchForm button, .games button):focus-visible {
+:is(.kindTabs a, .databaseLink, .clearQuery, .games button):focus-visible {
   outline: 2px solid var(--atlas-accent-strong);
   outline-offset: 2px;
 }
@@ -245,10 +240,9 @@
 }
 
 @media (max-width: 760px) {
-  .searchForm { min-height: 52px; padding-left: var(--atlas-space-3); gap: var(--atlas-space-2); }
-  .searchForm input { height: 48px; font-size: var(--atlas-text-lead); }
-  .searchForm button { padding: 0 14px; }
-  .searchForm kbd { display: none; }
+  .searchField { flex-basis: 100%; min-height: 52px; padding-left: var(--atlas-space-3); gap: var(--atlas-space-2); }
+  .searchField input { height: 48px; font-size: var(--atlas-text-lead); }
+  .searchField kbd { display: none; }
   .results { min-height: max(40svh, 320px); }
   .databaseLink { border-bottom: 0; }
   .kindTabs { max-width: 100%; overflow-x: auto; }
@@ -257,5 +251,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .searchForm { transition: none; }
+  .searchField { transition: none; }
 }

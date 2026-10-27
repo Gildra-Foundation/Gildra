@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Lang } from "@/lib/i18n";
 import { tooltipRelationsCopy } from "./tooltipRelationsCopy";
+import { libraryRecordPath } from "@/lib/library/recordPath";
 
 export function TooltipOwners({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
 	const specs = entries.filter((entry) => String(entry.owner_type ?? "") === "specialization" && String(entry.name ?? ""));
@@ -50,8 +51,7 @@ export function RichDescription({ text, mentions, lang }: { text: string; mentio
 		if (selectedIndex > offset) parts.push(text.slice(offset, selectedIndex));
 		const label = text.slice(selectedIndex, selectedIndex + String(selected.text).length);
 		const icon = verifiedMediaURL(String(selected.icon_url ?? ""));
-		const localePrefix = lang === "ru" ? "/ru" : "";
-		parts.push(<a className="db-tooltip-inline-ability" href={`${localePrefix}/database/${encodeURIComponent(String(selected.entity_type ?? "spell"))}/${encodeURIComponent(String(selected.entity_id ?? ""))}/${encodeURIComponent(String(selected.external_id ?? "record"))}`} key={`${String(selected.entity_id)}-${selectedIndex}`}>
+		parts.push(<a className="db-tooltip-inline-ability" href={libraryRecordPath(lang, String(selected.entity_type ?? "spell"), String(selected.entity_id ?? ""), String(selected.external_id ?? "record"))} key={`${String(selected.entity_id)}-${selectedIndex}`}>
 			{icon ? <img src={icon} alt="" loading="lazy" /> : null}<span>{label}</span>
 		</a>);
 		offset = selectedIndex + label.length;

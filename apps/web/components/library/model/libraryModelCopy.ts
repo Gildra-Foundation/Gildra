@@ -19,7 +19,6 @@ export const libraryModelCopy = {
     femaleShort: "♀ Жен.",
     variant: (index: number, total: number) => `Вариант ${index} из ${total}`,
     mannequin: "Манекен",
-    setLoadHint: "первый просмотр — около 18 МБ",
   },
   en: {
     label: (name: string) => `3D model: ${name}. Drag to rotate; arrow keys rotate and zoom.`,
@@ -40,6 +39,5 @@ export const libraryModelCopy = {
     femaleShort: "♀ Female",
     variant: (index: number, total: number) => `Variant ${index} of ${total}`,
     mannequin: "Mannequin",
-    setLoadHint: "first view is about 18 MB",
   },
 } as const;

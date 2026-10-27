@@ -5,8 +5,9 @@ import { RichDescription, TooltipOwners, verifiedMediaURL } from "@/components/d
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
 import type { CatalogRecord } from "@/lib/api/client";
-import { formatAtlasDate } from "@gildra/atlas-ui/format";
+import { libraryRecordPath } from "@/lib/library/recordPath";
 import { tooltipContentCopy } from "./tooltipContentCopy";
+import "./catalogTooltip.css";
 
 const PLAYABLE_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 // Blizzard DB2 descriptions can contain value placeholders that are only
@@ -39,7 +40,14 @@ export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: 
 	const seenAcquisition = new Set<string>();
 	const descriptionMentions = tooltip.blocks.find((block) => String(block.type ?? "") === "description_mentions")?.entries;
 	const mentions = Array.isArray(descriptionMentions) ? descriptionMentions as Record<string, unknown>[] : [];
+	// The same words often come twice (item subtitle and quoted description, "Season 14 Elite"): the first one stays.
+	const seenText = new Set<string>();
 	const blocks = tooltip.blocks.filter((block) => {
+		if (["description", "name_description", "subtext"].includes(String(block.type ?? "")) && typeof block.text === "string" && block.text.trim()) {
+			const key = block.text.trim().toLocaleLowerCase();
+			if (seenText.has(key)) return false;
+			seenText.add(key);
+		}
 		if (String(block.type ?? "") === "description") {
 			const text = String(block.text ?? "");
 			if ((entity.type === "spell" || entity.type === "talent") && !text.trim()) return false;
@@ -103,7 +111,6 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
 	if (type === "quest_info") return <QuestInfo block={block} lang={lang} />;
 	if (type === "quest_reward_package") return <QuestRewardPackage block={block} lang={lang} />;
 	if (type === "creature_info") return <CreatureInfo block={block} lang={lang} />;
-	if (type === "provenance") return <TooltipProvenance block={block} lang={lang} />;
 	if (type === "spell_effects" && Array.isArray(block.entries)) return <SpellEffects entries={block.entries as Record<string, unknown>[]} lang={lang} />;
   if (type === "unique_equipped") return <div>{tooltipContentCopy[lang].uniqueEquipped}</div>;
 	  if (type === "use" || type === "equip") { const text = safeTooltipText(block.text, lang); return text ? <div className="db-tooltip-effect">{text}</div> : null; }
@@ -208,7 +215,6 @@ function QuestInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang
 
 function QuestRewardPackage({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
 	const items = Array.isArray(block.items) ? block.items as Record<string, unknown>[] : [];
-	const prefix = lang === "ru" ? "/ru" : "";
 	return <div className="db-tooltip-quest-info">
 		<div><b>{tooltipContentCopy[lang].package}:</b> #{String(block.package_id ?? "—")}</div>
 		<div className="db-tooltip-muted">{tooltipContentCopy[lang].anItemSetFrom}</div>
@@ -222,7 +228,7 @@ function QuestRewardPackage({ block, lang }: { block: Record<string, unknown>; l
 				const quantity = Number(item.quantity ?? 0);
 				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong>{label}</strong><small>{quantity > 0 ? `×${quantity.toLocaleString(tooltipContentCopy[lang].numberLocale)}` : ""}</small></span></>;
 				return entityID
-					? <Link className="db-tooltip-reward" href={`${prefix}/database/item/${encodeURIComponent(entityID)}/${encodeURIComponent(String(externalID || "item"))}`} key={`${externalID}-${index}`}>{content}</Link>
+					? <Link className="db-tooltip-reward" href={libraryRecordPath(lang, "item", entityID, externalID || "item")} key={`${externalID}-${index}`}>{content}</Link>
 					: <span className="db-tooltip-reward" key={`${externalID}-${index}`}>{content}</span>;
 			})}</div>
 		</div> : <div className="db-tooltip-muted">{tooltipContentCopy[lang].thePackageHasNo}</div>}
@@ -245,7 +251,7 @@ function QuestRewards({ rewards, lang }: { rewards: Record<string, unknown>[]; l
 		const details = [questRewardAmount(type, amount, lang), Boolean(reward.choice) ? tooltipContentCopy[lang].choice : ""].filter(Boolean).join(" · ");
 		const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong className={`quality-${quality}`}>{label}</strong>{details ? <small>{details}</small> : null}</span></>;
 		return entityID
-			? <Link className="db-tooltip-reward" href={`${lang === "ru" ? "/ru" : ""}/database/${encodeURIComponent(entityType)}/${encodeURIComponent(entityID)}/${encodeURIComponent(slug)}`} key={`${type}-${externalID}-${index}`}>{content}</Link>
+			? <Link className="db-tooltip-reward" href={libraryRecordPath(lang, entityType, entityID, slug)} key={`${type}-${externalID}-${index}`}>{content}</Link>
 			: <span className="db-tooltip-reward" key={`${type}-${externalID}-${index}`}>{content}</span>;
 	};
 	return <div className="db-tooltip-related db-tooltip-rewards">
@@ -306,7 +312,6 @@ function CreatureInfo({ block, lang }: { block: Record<string, unknown>; lang: L
 }
 
 function LootTables({ tables, lang }: { tables: Record<string, unknown>[]; lang: Lang }) {
-	const prefix = lang === "ru" ? "/ru" : "";
 	const kindLabels: Record<string, [string, string]> = {
 		creature: ["Loot", "Добыча"], pickpocket: ["Pickpocket", "Карманная кража"],
 		skinning: ["Skinning", "Снятие шкур"], vendor: ["Vendor inventory", "Товары продавца"],
@@ -325,16 +330,10 @@ function LootTables({ tables, lang }: { tables: Record<string, unknown>[]; lang:
 				const max = hasQuantity ? Number(entry.max_quantity) : 0;
 				const quantity = !hasQuantity || (min === 1 && max === 1) ? "" : min === max ? ` ×${min}` : ` ×${min}–${max}`;
 				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-loot-icon-fallback" aria-hidden="true">◇</span>}<span><strong>{String(entry.name || `Item #${String(entry.item_external_id)}`)}{quantity}</strong><small>{chance || tooltipContentCopy[lang].dropChanceUnknown}</small></span></>;
-				return entry.item_entity_id ? <a key={`${String(table.id)}-${String(entry.index)}`} href={`${prefix}/database/item/${encodeURIComponent(String(entry.item_entity_id))}/${encodeURIComponent(String(entry.item_external_id))}`}>{content}</a> : <span className="db-tooltip-loot-unresolved" key={`${String(table.id)}-${String(entry.index)}`}>{content}</span>;
+				return entry.item_entity_id ? <a key={`${String(table.id)}-${String(entry.index)}`} href={libraryRecordPath(lang, "item", String(entry.item_entity_id), String(entry.item_external_id))}>{content}</a> : <span className="db-tooltip-loot-unresolved" key={`${String(table.id)}-${String(entry.index)}`}>{content}</span>;
 			})}
 		</section>;
 	})}</div>;
-}
-
-function TooltipProvenance({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
-	const sourceURL = String(block.source_url ?? "");
-	const updated = block.updated_at ? new Date(String(block.updated_at)) : null;
-	return <div className="db-tooltip-provenance"><span>{tooltipContentCopy[lang].build}: {String(block.build || block.build_number || "—")}</span>{updated && !Number.isNaN(updated.valueOf()) ? <span>{tooltipContentCopy[lang].updated}: {formatAtlasDate(String(block.updated_at), lang)}</span> : null}{sourceURL ? <a href={sourceURL} target="_blank" rel="noreferrer">{tooltipContentCopy[lang].dataSource} ↗</a> : null}</div>;
 }
 
 function SpellEffects({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
@@ -371,13 +370,12 @@ function TalentSpells({ entries, lang }: { entries: Record<string, unknown>[]; l
 		replaces: ["Replaces", "Заменяет"],
 		modifies: ["Modifies", "Изменяет"],
 	};
-	const localePrefix = lang === "ru" ? "/ru" : "";
 	return <div className="db-tooltip-talent-spells"><b>{tooltipContentCopy[lang].relatedSpellsAndEffects}</b>{entries.map((entry) => {
 		const relation = String(entry.relationship ?? "grants");
 		const icon = verifiedMediaURL(String(entry.icon_url ?? ""));
 		const effects = Array.isArray(entry.effects) ? entry.effects as Record<string, unknown>[] : [];
 		return <div className="db-tooltip-talent-spell" key={`${relation}-${String(entry.entity_id)}`}>
-			<a className="db-tooltip-owner-badge" href={`${localePrefix}/database/spell/${encodeURIComponent(String(entry.entity_id ?? ""))}/${encodeURIComponent(String(entry.external_id ?? "spell"))}`}>
+			<a className="db-tooltip-owner-badge" href={libraryRecordPath(lang, "spell", String(entry.entity_id ?? ""), String(entry.external_id ?? "spell"))}>
 				{icon ? <img src={icon} alt="" loading="lazy" /> : null}<span>{relationLabels[relation]?.[lang === "ru" ? 1 : 0] ?? relation}: {String(entry.name || `Spell #${String(entry.external_id)}`)}</span>
 			</a>
 			<SpellEffects entries={effects} lang={lang} />

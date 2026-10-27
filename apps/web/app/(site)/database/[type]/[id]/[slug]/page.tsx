@@ -1,9 +1,8 @@
 // routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
-import { EntityRoute, entityMetadata, type EntityRouteParams, type EntityRouteSearch } from "@/components/database/entityRoute";
+import { redirectDatabaseRecord } from "@/components/database/databaseRedirect";
 
-type Props = { params: EntityRouteParams; searchParams?: EntityRouteSearch };
+type Props = { params: Promise<{ type: string; id: string; slug: string }> };
 
-export const generateMetadata = ({ params }: Props) => entityMetadata(params, "en");
-export default function Page({ params, searchParams }: Props) {
-  return <EntityRoute params={params} searchParams={searchParams} lang="en" />;
+export default async function Page({ params }: Props) {
+  return redirectDatabaseRecord("en", params);
 }

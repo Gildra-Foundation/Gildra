@@ -8,8 +8,9 @@
   animation: appear var(--atlas-duration-fast) var(--atlas-ease) both;
 }
 
-/* The legacy tooltip starts hidden (it was a hover child of rows); here it is shown as soon as it is mounted. */
+/* The tooltip starts hidden (it was a hover child of rows); here it is shown as soon as it is mounted, on an opaque face over the cards. */
 .popover > :global(.db-wow-tooltip) { position: relative; inset: auto; width: 100%; max-width: 100%; opacity: 1; visibility: visible; transform: none; }
+.popover :global(.db-tooltip-panel) { background: var(--atlas-surface-raised); box-shadow: var(--atlas-shadow-card); }
 
 .loading {
   width: auto;

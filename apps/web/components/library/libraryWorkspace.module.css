@@ -1,77 +1,265 @@
-/* atlas:strict — library additions to the catalog workspace: one-click category rails and the card / tray grids. */
+/* atlas:strict — workspace of /library/<dataset>: one glass toolbar (search + filter selects + levels), applied-filter chips, the card / tray grids, preview button, paging. Layout only, atlas tokens. */
 
-.rail {
+/* ---------- Workspace (glass, design.md §0: catalogs stay on glass) ---------- */
+.workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--atlas-space-2);
+  gap: var(--atlas-space-4);
   min-width: 0;
+  margin-top: var(--atlas-space-5);
 }
 
-.railLabel {
-  color: var(--atlas-accent);
-  font-size: var(--atlas-text-label);
+.toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  align-items: end;
+  gap: var(--atlas-space-3);
+  padding: var(--atlas-space-4);
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-glass-fill, var(--atlas-surface));
+  box-shadow: var(--atlas-glass-depth, var(--atlas-shadow-card));
+}
+
+.search {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 6px 0 var(--atlas-space-4);
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-sunken);
+  transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+}
+
+.search:focus-within { border-color: var(--atlas-accent); box-shadow: 0 0 0 1px var(--atlas-accent), 0 0 18px var(--atlas-accent-glow); }
+.searchIcon { width: 16px; height: 16px; flex: none; color: var(--atlas-accent); }
+
+.search input {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-lead);
+}
+
+.search input::placeholder { color: var(--atlas-text-subtle); }
+/* The whole field shows focus (border + glow); no second ring inside it. */
+.search input[type="search"]:focus-visible { outline: none; }
+
+.submit,
+.apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--atlas-accent);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-accent-ink);
+  background: linear-gradient(180deg, var(--atlas-accent-strong), var(--atlas-accent));
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-small);
   font-weight: 650;
+  cursor: pointer;
+}
+
+.submit:hover,
+.apply:hover { background: var(--atlas-accent-strong); }
+
+.field { min-width: 0; }
+
+/* Item-level bounds: folded until used, the whole toolbar width. */
+.levels {
+  grid-column: 1 / -1;
+  border: 1px solid var(--atlas-line-soft);
+  background: var(--atlas-surface-sunken);
+}
+
+.levels > summary { display: flex; min-height: 44px; padding: 0 var(--atlas-space-4); color: var(--atlas-text); }
+.levels > summary > span:first-child { display: flex; flex: 1; align-items: center; gap: var(--atlas-space-2); }
+.levels > summary b { color: var(--atlas-accent-strong); font-weight: 600; }
+.levels > summary:hover { color: var(--atlas-text-strong); }
+.levels > div { padding: 0 var(--atlas-space-4) var(--atlas-space-4); }
+
+.levelGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  align-items: end;
+  gap: var(--atlas-space-3);
+}
+
+/* ---------- Applied filters ---------- */
+.applied { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); }
+
+.found {
+  margin: 0;
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-label);
+  font-weight: 600;
   letter-spacing: var(--atlas-tracking-label);
   text-transform: uppercase;
 }
 
-.railChips { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); min-width: 0; }
+.found b { color: var(--atlas-accent-strong); font-variant-numeric: lining-nums tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
 
 .chip {
   display: inline-flex;
   align-items: center;
   gap: var(--atlas-space-2);
-  min-height: 40px;
-  padding: 0 var(--atlas-space-4);
-  border: 1px solid var(--atlas-line);
+  min-height: 36px;
+  padding: 0 var(--atlas-space-3);
+  border: 1px solid var(--atlas-accent);
   border-radius: 999px;
-  color: var(--atlas-text);
-  background: color-mix(in srgb, var(--atlas-surface) 70%, transparent);
+  color: var(--atlas-accent-strong);
+  background: var(--atlas-accent-wash);
   font-size: var(--atlas-text-small);
   font-weight: 600;
   text-decoration: none;
-  white-space: nowrap;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
 }
 
-.chip b { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
-.chip:hover { border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
-.chip[aria-current="true"] { border-color: var(--atlas-accent); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash-strong); }
-.chip[aria-current="true"] b { color: var(--atlas-accent-strong); }
-.chip:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.chip svg { width: 14px; height: 14px; }
+.chip:hover { background: var(--atlas-accent-wash-strong); }
+
+.reset {
+  color: var(--atlas-accent);
+  font-size: var(--atlas-text-small);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.reset:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Records ---------- */
+.results {
+  display: grid;
+  align-content: start;
+  gap: var(--atlas-space-3);
+  min-width: 0;
+  scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-3));
+}
+
+.records {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transition: opacity var(--atlas-duration) var(--atlas-ease);
+}
 
 .cards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: var(--atlas-space-3); }
 .tray { grid-template-columns: repeat(auto-fill, minmax(min(100%, 208px), 1fr)); gap: var(--atlas-space-3); }
 
-.fallback {
-  justify-self: start;
-  padding: 0 5px;
-  border: 1px solid var(--atlas-line-soft);
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-label);
-  font-style: normal;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+/* CatalogBehavior marks the workspace while the next view loads. */
+.workspace[data-pending] .records,
+.workspace[data-pending] .empty { opacity: .55; }
+
+/* Tooltip preview: a small icon button in the card corner (keyboard and touch way to the tooltip). */
+.preview {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-subtle);
+  background: transparent;
+  cursor: pointer;
 }
 
+.preview svg { width: 18px; height: 18px; }
+.preview:hover,
+.preview[aria-expanded="true"] { border-color: var(--atlas-line); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
+.preview[data-state="loading"] { color: var(--atlas-accent); animation: pulse 1s ease-in-out infinite alternate; }
+.preview[data-state="error"] { color: var(--atlas-negative); }
+
+@keyframes pulse { to { opacity: .35; } }
+
+.previewError {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 6px);
+  right: 0;
+  width: max-content;
+  max-width: 260px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--atlas-negative);
+  color: var(--atlas-text);
+  background: var(--atlas-surface-sunken);
+  font-size: var(--atlas-text-small);
+  box-shadow: var(--atlas-shadow-card);
+}
+
+.previewError button {
+  margin-inline-start: 6px;
+  padding: 0;
+  border: 0;
+  color: var(--atlas-accent);
+  background: transparent;
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-small);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.empty {
+  display: grid;
+  gap: 6px;
+  padding: var(--atlas-space-6) var(--atlas-space-5);
+  border: 1px dashed var(--atlas-line-soft);
+  text-align: center;
+}
+
+.empty h3 {
+  margin: 0;
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-h3);
+  font-weight: var(--atlas-weight-display);
+}
+
+.empty p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); }
+
+:is(.submit, .apply, .chip, .reset, .preview):focus-visible {
+  outline: 2px solid var(--atlas-accent-strong);
+  outline-offset: 2px;
+}
+
+/* ---------- Responsive ---------- */
 @media (max-width: 760px) {
-  /* Each rail is one scrollable row on phones instead of a wall of wrapped chips. */
-  .railChips {
-    flex-wrap: nowrap;
-    margin-inline: calc(var(--atlas-space-3) * -1);
-    padding: 0 var(--atlas-space-3) 4px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-  }
-  .chip { flex: none; min-height: 44px; }
+  .toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: var(--atlas-space-3); }
+  .search { padding-left: var(--atlas-space-3); }
   .cards { grid-template-columns: minmax(0, 1fr); }
   .tray { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+  .levelGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .levels > summary,
+  .levels > div { padding-inline: var(--atlas-space-3); }
+  .previewError { max-width: min(260px, 70vw); }
+  .submit,
+  .apply,
+  .chip { min-height: 44px; }
+  .preview { width: 44px; height: 44px; }
 }
 
-@media (prefers-reduced-motion: reduce) { .chip { transition: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .records,
+  .search { transition: none; }
+  .preview[data-state="loading"] { animation: none; }
+}
 
 @media (forced-colors: active) {
+  .toolbar,
+  .search { border: 1px solid CanvasText; background: Canvas; }
   .chip { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
-  .chip[aria-current="true"] { border-width: 2px; }
 }

@@ -1,4 +1,4 @@
-/* atlas:strict — /library and /library/<dataset>: hero search, edition switch, freshness notice, featured plates and grouped dataset rows. Layout only, atlas tokens. */
+/* atlas:strict — /library: hero search (glass field + painted button), edition switch, featured datasets on the library plaque, grouped dataset rows, freshness line. Layout only, atlas tokens. */
 
 .editions {
   display: flex;
@@ -28,32 +28,40 @@
 .notice { margin-top: var(--atlas-space-4); }
 .unavailable { margin-top: var(--atlas-space-5); }
 
-.gaps { color: var(--atlas-text-subtle); }
-.state { color: var(--atlas-caution); font-weight: 600; }
+.freshness { margin: var(--atlas-space-4) 0 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 
 @media (max-width: 720px) {
   .editions { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .editions a { flex: none; padding: 0 var(--atlas-space-3); }
 }
 
-/* ---------- Hero search (whole catalog, /database) ---------- */
+/* ---------- Hero search (whole library → /search) ---------- */
 .search {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--atlas-space-3);
-  width: min(100%, 720px);
+  width: min(100%, 760px);
+}
+
+.searchField {
+  display: flex;
+  flex: 1 1 320px;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  min-width: 0;
   min-height: 60px;
-  padding: 0 6px 0 var(--atlas-space-4);
+  padding: 0 var(--atlas-space-4);
   border: 1px solid var(--atlas-line);
   border-radius: var(--atlas-radius);
   background: color-mix(in srgb, var(--atlas-surface-sunken) 88%, transparent);
   box-shadow: var(--atlas-glass-depth);
 }
 
-.search:focus-within { border-color: var(--atlas-accent); box-shadow: 0 0 0 1px var(--atlas-accent), var(--atlas-glow); }
+.searchField:focus-within { border-color: var(--atlas-accent); box-shadow: 0 0 0 1px var(--atlas-accent), var(--atlas-glow); }
 .searchIcon { width: 18px; height: 18px; flex: none; color: var(--atlas-accent); }
 
-.search input {
+.searchField input {
   flex: 1;
   width: 0;
   min-width: 0;
@@ -66,88 +74,51 @@
   font-size: var(--atlas-text-lead);
 }
 
-.search input::placeholder { color: var(--atlas-text-subtle); }
+.searchField input::placeholder { color: var(--atlas-text-subtle); }
 
-.search button {
-  min-height: 44px;
-  padding: 0 var(--atlas-space-5);
-  border: 1px solid var(--atlas-accent);
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-accent-ink);
-  background: linear-gradient(180deg, var(--atlas-accent-strong), var(--atlas-accent));
-  font-family: var(--atlas-font-ui);
-  font-size: var(--atlas-text-small);
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.search button:hover { background: var(--atlas-accent-strong); }
-.search button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-
-/* ---------- Featured plates: the dataset icon, its size and a strip of real record icons ---------- */
+/* ---------- Featured datasets: the library plaque, the dataset icon in the kit frame, a strip of real record icons ---------- */
 .featured {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
-  gap: var(--atlas-space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: var(--atlas-space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.plate {
-  position: relative;
+.featured > .plate {
   display: grid;
   align-content: start;
   gap: var(--atlas-space-2);
-  min-height: 236px;
-  padding: var(--atlas-space-5) var(--atlas-space-5) var(--atlas-space-4);
-  border: 1px solid var(--atlas-line);
-  border-radius: var(--atlas-radius);
-  background:
-    radial-gradient(90% 70% at 85% 0, color-mix(in srgb, var(--atlas-accent-2) 12%, transparent), transparent 60%),
-    linear-gradient(180deg, var(--atlas-surface-raised), var(--atlas-surface));
-  box-shadow: var(--atlas-shadow-card);
-  transition: border-color var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration) var(--atlas-ease);
+  min-height: 260px;
+  padding: 30px 30px 32px;
+  transition: transform var(--atlas-duration) var(--atlas-ease);
 }
 
-.plate:hover,
-.plate:focus-within { border-color: color-mix(in srgb, var(--atlas-accent-2) 55%, var(--atlas-line)); }
 .plate:hover { transform: translateY(-2px); }
-
-.plateIcon {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  place-items: center;
-  padding: 3px;
-  border-radius: var(--atlas-radius);
-  background: linear-gradient(160deg, var(--atlas-accent-2), color-mix(in srgb, var(--atlas-accent-2) 30%, var(--atlas-bg)));
-  box-shadow: 0 0 0 1px var(--atlas-bg), 0 8px 20px color-mix(in srgb, var(--atlas-bg) 60%, transparent);
-  color: var(--atlas-text-subtle);
-}
-
-.plateIcon img { display: block; width: 58px; height: 58px; border-radius: 1px; object-fit: cover; background: var(--atlas-surface-sunken); }
+.plateIcon { color: var(--atlas-text-subtle); }
 .plateIcon svg { width: 26px; height: 26px; }
 
-.plate h3 {
+.plateTitle {
   margin: var(--atlas-space-1) 0 0;
   font-family: var(--atlas-font-display);
   font-size: var(--atlas-text-h3);
   font-weight: var(--atlas-weight-display);
   line-height: var(--atlas-leading-snug);
+  text-shadow: 0 1px 3px var(--atlas-bg);
 }
 
 .plateLink { color: var(--atlas-text-strong); text-decoration: none; }
 .plateLink::after { content: ""; position: absolute; inset: 0; }
 .plate:hover .plateLink { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .plateLink:focus-visible { outline: none; }
-.plateLink:focus-visible::after { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
+.plateLink:focus-visible::after { outline: 2px solid var(--material-light); outline-offset: -6px; }
 
-.plateText { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: 1.45; }
+.plateText { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: 1.45; text-shadow: 0 1px 3px var(--atlas-bg); }
 .plateCount { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 
 .plateCount b {
-  color: var(--atlas-accent-2);
+  color: var(--material-light);
   font-family: var(--atlas-font-display);
   font-size: var(--atlas-text-title);
   font-weight: var(--atlas-weight-display);
@@ -225,20 +196,17 @@
 
 .rowIcon img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .rowIcon svg { width: 18px; height: 18px; }
-.rowBody { display: grid; min-width: 0; }
 .rowLink { overflow: hidden; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
 .rowLink::after { content: ""; position: absolute; inset: 0; }
 .row:hover .rowLink { text-decoration: underline; text-underline-offset: 3px; }
 .rowLink:focus-visible { outline: none; }
 .rowLink:focus-visible::after { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
-.rowNote { display: flex; flex-wrap: wrap; gap: 0 var(--atlas-space-2); font-size: var(--atlas-text-meta); }
 .rowCount { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
 
 @media (max-width: 720px) {
-  .search { min-height: 52px; padding-left: var(--atlas-space-3); }
-  .search input { height: 48px; font-size: var(--atlas-text-body); }
-  .search button { padding: 0 var(--atlas-space-4); }
-  .plate { min-height: 0; padding: var(--atlas-space-4); }
+  .searchField { flex-basis: 100%; min-height: 52px; padding-inline: var(--atlas-space-3); }
+  .searchField input { height: 48px; font-size: var(--atlas-text-body); }
+  .featured > .plate { min-height: 0; padding: 28px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -253,9 +221,8 @@
 :global([data-ui-motion="reduce"]) .plate:hover { transform: none; }
 
 @media (forced-colors: active) {
-  .plate,
-  .group { border: 1px solid CanvasText; background: Canvas; }
-  .plateIcon,
+  .group,
+  .searchField { border: 1px solid CanvasText; background: Canvas; }
   .strip > span,
   .rowIcon { box-shadow: none; border: 1px solid CanvasText; }
 }

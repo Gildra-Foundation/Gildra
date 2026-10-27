@@ -7,7 +7,7 @@ import { catalogGames, isCatalogGame, type CatalogGameId, type SearchKind } from
 // Result pages are endless query variants: kept out of the index, links still followed.
 export const metadata: Metadata = {
   title: "Поиск — Gildra",
-  description: "Поиск по опубликованным игровым каталогам Gildra.",
+  description: "Поиск по библиотеке World of Warcraft на Gildra: предметы, заклинания, задания, NPC и коллекции.",
   alternates: pairedAlternates("ru", "/search"),
   robots: { index: false, follow: true },
 };
@@ -21,9 +21,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
   const rawGames = Array.isArray(params.game) ? params.game : params.game ? [params.game] : [];
   const selectedGames = rawGames.filter(isCatalogGame).filter((id) => catalogGames.find((game) => game.id === id)?.available) as CatalogGameId[];
   const games = selectedGames.length ? selectedGames : catalogGames.filter((game) => game.available).map((game) => game.id);
-  const results = games.map((gameId) => ({
+  // Without a query the page shows an empty state, not sample records.
+  const results = !query ? [] : games.map((gameId) => ({
     gameId,
-    result: searchCatalogGame({ gameId, kind, query, locale: "ru_RU", limitPerGame: query ? 12 : 4 }),
+    result: searchCatalogGame({ gameId, kind, query, locale: "ru_RU", limitPerGame: 24 }),
   }));
   return <SearchPage lang="ru" query={query} kind={kind} selectedGames={games} results={results} />;
 }

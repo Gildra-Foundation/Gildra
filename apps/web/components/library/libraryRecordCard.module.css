@@ -7,7 +7,7 @@
   position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: "icon head level" "icon foot foot";
+  grid-template-areas: "icon head head" "icon foot foot";
   align-items: start;
   gap: var(--atlas-space-1) var(--atlas-space-4);
   min-width: 0;
@@ -114,26 +114,6 @@
 
 .card:not([data-quality]) .quality { color: var(--atlas-text-subtle); }
 
-.level { grid-area: level; display: grid; justify-items: end; margin: 0; text-align: right; }
-
-.level b {
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-stat);
-  font-weight: var(--atlas-weight-display);
-  font-variant-numeric: lining-nums tabular-nums;
-  line-height: 1;
-}
-
-.level span {
-  margin-top: 4px;
-  color: var(--atlas-text-subtle);
-  font-size: var(--atlas-text-label);
-  font-weight: 650;
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
 
 .foot {
   grid-area: foot;
@@ -200,7 +180,6 @@
   .icon > :not(img) { width: 46px; height: 46px; }
   .icon > :not(img) { padding: 12px; }
   .name { font-size: var(--atlas-text-lead); }
-  .level b { font-size: var(--atlas-text-h3); }
   .tray { min-height: 200px; padding: var(--atlas-space-4) var(--atlas-space-2) var(--atlas-space-2); }
   .tray .icon { width: 64px; height: 64px; }
   .tray .icon img,
@@ -208,12 +187,9 @@
   .tray .name { font-size: var(--atlas-text-body); }
 }
 
-/* Narrow phones: the item level joins the text column, so names keep the full width. */
+/* Narrow phones: names keep the full width of the text column. */
 @media (max-width: 480px) {
-  .card:not(.tray) { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "icon head" "icon level" "icon foot"; }
-  .card:not(.tray) .level { display: flex; align-items: baseline; justify-items: start; gap: var(--atlas-space-2); margin-top: 2px; text-align: left; }
-  .card:not(.tray) .level b { font-size: var(--atlas-text-title); }
-  .card:not(.tray) .level span { margin-top: 0; }
+  .card:not(.tray) { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "icon head" "icon foot"; }
   .card:not(.tray) .foot { margin-top: var(--atlas-space-1); }
 }
 

@@ -2,7 +2,6 @@ import "server-only";
 import type { ReactNode } from "react";
 import modelIndex from "./modelIndex.json";
 import { LibraryModelViewer, type LibraryModelSubject } from "./LibraryModelViewer";
-import { libraryModelCopy } from "./libraryModelCopy";
 
 type Props = { dataset: string; type: string; id: string; externalId: number; name: string; lang: "en" | "ru" };
 
@@ -33,8 +32,6 @@ export async function LibraryModelSlot({ dataset, externalId, name, lang }: Prop
   const fallbackImage = subject.kind === "mount"
     ? `https://render.worldofwarcraft.com/us/npcs/zoom/creature-display-${subject.displays[0]}.jpg`
     : undefined;
-  // A player mannequin is ~18 MB gzipped on first view (cached afterwards): load it on request.
-  const heavy = subject.kind === "set";
-  const loadHint = heavy ? libraryModelCopy[lang].setLoadHint : undefined;
-  return <LibraryModelViewer subject={subject} name={name} lang={lang} fallbackImage={fallbackImage} autoLoad={!heavy} loadHint={loadHint} />;
+  // A player mannequin is heavy on first view (cached afterwards): it loads on request, without a download-size note.
+  return <LibraryModelViewer subject={subject} name={name} lang={lang} fallbackImage={fallbackImage} autoLoad={subject.kind !== "set"} />;
 }

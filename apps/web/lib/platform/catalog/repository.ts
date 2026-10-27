@@ -2,6 +2,7 @@ import { catalogLocaleView } from "@/lib/catalogLocale";
 import { entityTypeLabel } from "./entityTypeLabel";
 import "server-only";
 import { getCatalogPage } from "@/lib/api/client";
+import { libraryRecordPath } from "@/lib/library/recordPath";
 import type { ApiLocale } from "@/lib/games/registry";
 import {
   catalogGames,
@@ -73,9 +74,9 @@ function leagueAttributes(payload: Record<string, unknown> | undefined) {
 }
 
 async function wowItems(query: string, locale: ApiLocale, limit: number): Promise<PlatformCatalogItem[]> {
-  const prefix = locale === "ru_RU" ? "/ru" : "";
   const page = await getCatalogPage({ locale, product: "wow", type: "item", query, limit, includeTotal: false, timeoutMs: catalogLookupTimeoutMs });
-  page.data = page.data.map((item) => catalogLocaleView(item, locale === "ru_RU" ? "ru" : "en"));
+  // An English-only record keeps its English name (game names stay English) instead of "Spell #id".
+  page.data = page.data.map((item) => { const view = catalogLocaleView(item, locale === "ru_RU" ? "ru" : "en"); return { ...view, name: view.name || item.name }; });
   return page.data.map((item) => {
     const attributes: Record<string, string | number> = {};
     if (item.itemLevel !== undefined) attributes["Item Level"] = item.itemLevel;
@@ -87,7 +88,7 @@ async function wowItems(query: string, locale: ApiLocale, limit: number): Promis
       name: item.name || `${locale === "ru_RU" ? "Предмет" : "Item"} #${item.externalId}`,
       // No synthetic English filler: the search UI labels the record type itself.
       description: compactText(item.description, ""),
-      iconUrl: item.iconUrl, href: `${prefix}/database/${item.type}/${item.id}/${item.slug || item.externalId}`,
+      iconUrl: item.iconUrl, href: libraryRecordPath(locale === "ru_RU" ? "ru" : "en", item.type, item.id, item.slug || item.externalId, item.product),
       meta: ["World of Warcraft", item.itemLevel ? `Item level ${item.itemLevel}` : `ID ${item.externalId}`],
       attributes,
     };
@@ -184,15 +185,15 @@ async function leagueChampions(query: string, locale: ApiLocale, limit: number):
 async function searchOneGame(gameId: CatalogGameId, kind: SearchKind, query: string, locale: ApiLocale, limit: number) {
   if (gameId === "diablo") throw new Error("Diablo catalog is not available");
   if (gameId === "wow") {
-    const prefix = locale === "ru_RU" ? "/ru" : "";
     if (kind === "characters") return [];
     if (kind === "items") return wowItems(query, locale, limit);
     const page = await getCatalogPage({ locale, product: "wow", query, limit, includeTotal: false, timeoutMs: catalogLookupTimeoutMs });
-    page.data = page.data.map((item) => catalogLocaleView(item, locale === "ru_RU" ? "ru" : "en"));
+    // An English-only record keeps its English name (game names stay English) instead of "Spell #id".
+  page.data = page.data.map((item) => { const view = catalogLocaleView(item, locale === "ru_RU" ? "ru" : "en"); return { ...view, name: view.name || item.name }; });
     return page.data.map((item): PlatformCatalogItem => ({
       id: `wow:${item.id}`, gameId: "wow", kind: item.type === "item" ? "items" : "entities", entityType: item.type,
       name: item.name || `${entityTypeLabel(item.type, locale === "ru_RU" ? "ru" : "en")} #${item.externalId}`, description: compactText(item.description, ""),
-      iconUrl: item.iconUrl, href: `${prefix}/database/${item.type}/${item.id}/${item.slug || item.externalId}`,
+      iconUrl: item.iconUrl, href: libraryRecordPath(locale === "ru_RU" ? "ru" : "en", item.type, item.id, item.slug || item.externalId, item.product),
       meta: ["World of Warcraft"],
       attributes: { ...(item.quality !== undefined ? { Quality: item.quality } : {}), ...(item.itemLevel ? { "Item Level": item.itemLevel } : {}) },
     }));

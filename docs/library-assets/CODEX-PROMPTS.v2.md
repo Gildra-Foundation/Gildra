@@ -7,7 +7,7 @@
 1. Для каждого ассета — **три** отдельных вызова `image_gen.imagegen` с одним и тем же промптом и параметрами из таблицы; `transparent_background: true` для всех, кроме сцены. Размер не передаётся — пропорция уже в промпте.
 2. Кандидатов скопировать из `/home/debian/.codex/generated_images/<сессия>/` в `/home/debian/gildra-library-assets-20261027/asset-sources/<type>s/library-candidate-{1,2,3}.png`.
 3. Выбрать скриптом: `$NODE $QA --repo $REPO --type <type> --in …-candidate-1.png --in …-2.png --in …-3.png` — первый без FAIL; переименовать в `<kit>-native.png`, рядом `<kit>-prompt.txt` (промпт как есть) и `<kit>-qa.json` (`--json`). Все три FAIL — ещё раунд, мелкий дефект удачного — edit-режим (`prompt-templates.md`, «Правка удачного кандидата»).
-4. Порядок: **панель → кнопка → рамка иконки → орнамент → сцена**. Панель утверждается первой: она Input image 1 для остальных.
+4. Порядок: **панель → кнопка → рамка иконки → орнамент → рамка 3D**. Панель утверждается первой: она Input image 1 для остальных.
 5. Упаковка — команда под ассетом; открыть proof (голубой фон). Ретушь, перекраска, вырезание фона — запрещены.
 
 Акцент сайта `#c8a46a` — `accent-check.cjs` pass (light #d7c19c, 9.07/11.27). Оттенок в 3° от march-on-queldanas, поэтому материал явно другой: дерево + бронза + голубой кристалл, без бархата, золотой филиграни и перьев феникса.
@@ -158,6 +158,41 @@ $NODE $PACK --repo $REPO --type ornament --in $SRC/ornaments/library-quill-nativ
 
 ---
 
+## 5. Рамка 3D-модели (прозрачное окно) — `library-model` / `frame`
+
+Добавлено 2026-10-27 сессией области E (страница записи с 3D: маунты, комплекты трансмогрификации). До этой рамки 3D стоит в табличке кита den-of-nalorakk (`components/library/libraryKit.ts`).
+
+| | |
+| --- | --- |
+| Где на сайте | рамка вокруг 3D-модели на странице записи (`/library/mounts/…`, `/library/transmog-sets/…`); окно — квадрат, в нём живой canvas |
+| Холст (выход) | квадрат 1:1 → 1254×1254 |
+| Итог | 1024×1024 WebP + измеренное окно (`pack-asset.cjs --type frame`), < 120 КБ |
+| Native | `$SRC/frames/library-model-native.png` |
+| referenced_image_paths | 1. `$SRC/panels/library-native.png` (утверждённая панель)<br>2. `/home/debian/Gildra-library-unify-20261027/apps/web/public/assets/wow/mythic/ruby-sanctuary/map-frame.webp` |
+| transparent_background | true |
+
+```text
+ASSET: one empty square picture frame in the Library material, for the Gildra World of Warcraft fan site, the World of Warcraft Library pages. Isolated object on a real transparent background (alpha).
+USE: laid over a live 3D model viewer; the model shows through the window, the viewer's small controls sit inside the lower part of the window.
+CANVAS: square 1:1 canvas; the frame's outer edge sits 3% inside the canvas on every side.
+GEOMETRY: four connected beams of even width (about 6% of the canvas), the bottom beam complete and plain. One single small crest at the top centre that stays above 12% of the canvas height, paired small brass book-corner caps in the four corners. The window spans x 10–90%, y 13–90%, nearly square with softly rounded inner corners and a clean continuous inner edge. The window and the outside are fully transparent.
+[KIT] Materials and palette: dark oiled walnut wood rails, aged warm bronze fittings, brass book-corner caps, one small cool arcane-blue crystal in each corner clasp, deep ink-blue face; the quiet archive of a mage library, bookbinding elegance. Palette anchors: face #0b1220, metal #5a4228, highlight #d9b98a, accent #6fa8d8.
+[STYLE] Hand-painted fantasy game interface art in the World of Warcraft tradition: painted texture over clean sculpted forms, matte materials, three clear value steps on every bevel (lit top plane, mid face, shadowed underside), crisp readable silhouette, clean painted edge highlights, broad confident brush strokes visible only at large scale. Few large forms; ornament concentrated at corners and end caps; calm surfaces in between. Restrained saturation, low-to-moderate contrast, colour harmony limited to the kit palette. Original design, not a copy of any existing game asset.
+[LIGHT] Straight-on orthographic front view, no perspective tilt, perfectly level. One soft key light from the upper left (10 o'clock) with a warm tint, a faint cool fill from the lower right; top bevels catch a thin warm highlight, lower bevels fall into a soft cool shadow. No cast shadow, glow, smoke or particles outside the object.
+DISPLAY: shown 320–720 px wide; beams and crest must read at 320 px.
+REFERENCES: Input image 1: the approved Library panel — use ONLY for palette, material and finish. Input image 2: finished frame of another kit — use ONLY for construction and window shape, not its colours or motifs.
+[EXCLUDE] No text, letters, numbers, runes that read as writing, logos, faction emblems, watermarks, signatures. No people, faces or creatures. No photorealism, no 3D render look, no glossy plastic, no neon glow, no lens flare. No grain, speckle noise, scratches, cracks, marble veins or dense engraving. No checkerboard, no background colour, no floor, no cast shadow. Only one object.
+```
+
+```bash
+$NODE $QA --repo $REPO --type frame --in $SRC/frames/library-model-candidate-1.png --in $SRC/frames/library-model-candidate-2.png --in $SRC/frames/library-model-candidate-3.png
+$NODE $PACK --repo $REPO --type frame --in $SRC/frames/library-model-native.png \
+  --out /assets/wow/library/controls/frames/library-model.webp \
+  --manifest $REPO/apps/web/public/assets/wow/library/controls/frames/manifest.json --proof $PROOF
+```
+
+---
+
 ## После генерации (Claude-сессия страницы)
 
 - Проверить proof и срезы 9-slice (`gildra-wow-material-design/assets.md` §5.1), поправить `slices` в манифесте.
@@ -165,3 +200,4 @@ $NODE $PACK --repo $REPO --type ornament --in $SRC/ornaments/library-quill-nativ
 - Подключить: панель/кнопки через тот же контракт, что `components/wow/shared/materialAtlas` (переменные `--mythic-panel-*`, `--mythic-button-*`), рамку иконки — как `auctionIconFrameStyle()`; орнамент — `MythicHubOrnaments`.
 - Сцену не генерируем: фон библиотеки — существующий `/assets/wow/loading/archive.webp`.
 - Проверка 1440/390 RU/EN, 4 темы, reduced motion/transparency, forced colors; контакт-лист кита.
+- Кит `library` в общий тип `MaterialKit` (`components/wow/shared/material/materialKit.ts`) добавляет область A (общий файл); затем в `components/library/libraryKit.ts` заменить `den-of-nalorakk` на `library`, рамку 3D подключить в `components/database/entityDetail.module.css` (`.model`/`.modelStage`) по измеренному окну.

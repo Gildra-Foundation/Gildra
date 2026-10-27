@@ -1,9 +1,8 @@
 // Generated from app/(site)/database/[type]/[id]/[slug]/page.tsx by npm run routes:mirror — edit the English page.
-import { EntityRoute, entityMetadata, type EntityRouteParams, type EntityRouteSearch } from "@/components/database/entityRoute";
+import { redirectDatabaseRecord } from "@/components/database/databaseRedirect";
 
-type Props = { params: EntityRouteParams; searchParams?: EntityRouteSearch };
+type Props = { params: Promise<{ type: string; id: string; slug: string }> };
 
-export const generateMetadata = ({ params }: Props) => entityMetadata(params, "ru");
-export default function Page({ params, searchParams }: Props) {
-  return <EntityRoute params={params} searchParams={searchParams} lang="ru" />;
+export default async function Page({ params }: Props) {
+  return redirectDatabaseRecord("ru", params);
 }

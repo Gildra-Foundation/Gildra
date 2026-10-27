@@ -2,7 +2,7 @@ import type { CatalogCategory } from "@/lib/api/client";
 import type { Lang } from "@/lib/i18n-paths";
 import type { LibraryCardLayout } from "@/components/library/LibraryRecordCard";
 
-/** One row of one-click filters on a dataset page: categories of the dataset's record type picked by a rule. */
+/** One filter (a select) of a dataset page: categories of the dataset's record type picked by a rule. */
 export type LibraryRail = { id: string; label: string; categories: CatalogCategory[] };
 
 type RailRule = { id: string; label: Record<Lang, string>; pick: (category: CatalogCategory) => boolean; limit?: number };
@@ -34,12 +34,12 @@ export function libraryCardLayout(slug: string): LibraryCardLayout {
   return TRAY.has(slug) ? "tray" : "cards";
 }
 
-/** Filter rows of a dataset page, largest categories first; empty rows are left out. */
+/** Filters of a dataset page, largest categories first; a filter with one choice is left out. */
 export function libraryRails(slug: string, categories: CatalogCategory[], lang: Lang): LibraryRail[] {
   return (RULES[slug] ?? []).map((rule) => ({
     id: rule.id,
     label: rule.label[lang],
     categories: categories.filter((category) => category.count > 0 && rule.pick(category))
-      .sort((a, b) => b.count - a.count || a.sortOrder - b.sortOrder).slice(0, rule.limit ?? 16),
+      .sort((a, b) => b.count - a.count || a.sortOrder - b.sortOrder).slice(0, rule.limit ?? 80),
   })).filter((rail) => rail.categories.length > 1);
 }
