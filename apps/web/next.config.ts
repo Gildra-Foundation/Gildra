@@ -129,8 +129,9 @@ const nextConfig: NextConfig = {
         { source: `/ru/wow/lairs/${slug}`, destination: `/ru/wow/${destination}`, permanent: true },
       ]),
       ...legacyWowSpecRedirects.flatMap(([slug, destination]) => [
-        { source: `/specs/${slug}`, destination: `/wow/classes/${destination}`, permanent: true },
-        { source: `/ru/specs/${slug}`, destination: `/ru/wow/classes/${destination}`, permanent: true },
+        // Straight to the talent tree: /wow/classes/<class>/<spec> itself redirects there (area B).
+        { source: `/specs/${slug}`, destination: `/talents/${destination.split("/")[1]}`, permanent: true },
+        { source: `/ru/specs/${slug}`, destination: `/ru/talents/${destination.split("/")[1]}`, permanent: true },
       ]),
     ];
   },

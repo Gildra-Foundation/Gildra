@@ -15,18 +15,18 @@ type SectionMeta = { en: Words; ru: Words; noindex?: true };
 
 const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   wow: {
-    en: { title: "World of Warcraft — Gildra", description: "World of Warcraft hub with source-tracked Midnight routes and explicit verification status." },
-    ru: { title: "World of Warcraft — хаб Gildra", description: "Хаб World of Warcraft с маршрутами Midnight, источниками и явным статусом проверки." },
+    en: { title: "World of Warcraft — Gildra", description: "Your World of Warcraft command center: Mythic+ routes, raid bosses, tier lists, the game library and tools." },
+    ru: { title: "World of Warcraft — хаб Gildra", description: "Ваш командный центр World of Warcraft: маршруты Mythic+, боссы рейдов, тир-листы, библиотека игры и инструменты." },
     noindex: true,
   },
   raids: {
-    en: { title: "World of Warcraft Raid Journal — Gildra", description: "Source-tracked Midnight raid routes and an archive inventory. Coverage is not declared complete." },
-    ru: { title: "Рейдовый журнал World of Warcraft — Gildra", description: "Маршруты рейдов Midnight с источниками и инвентаризация архива. Полнота покрытия не заявляется." },
+    en: { title: "World of Warcraft Raid Journal — Gildra", description: "Midnight raids: bosses, their abilities and what every role does in the fight." },
+    ru: { title: "Рейдовый журнал World of Warcraft — Gildra", description: "Рейды Midnight: боссы, их способности и задачи каждой роли в бою." },
     noindex: true,
   },
   mythicPlus: {
     en: { title: "Midnight Mythic+ — Gildra", description: "Choose a dungeon and open its route: pulls, bosses, timer, party composition and tactical assignments." },
-    ru: { title: "Эпохальный+ Midnight — Gildra", description: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения." },
+    ru: { title: "Mythic+ Midnight — Gildra", description: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения." },
     noindex: true,
   },
   mythicPlusMeta: {
@@ -44,23 +44,23 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     noindex: true,
   },
   classes: {
-    en: { title: "WoW Classes and Specializations — Gildra", description: "Every Midnight class and specialization with a link to its talent tree from the Raidbots data snapshot." },
-    ru: { title: "Классы и специализации WoW — Gildra", description: "Все классы и специализации Midnight со ссылками на деревья талантов из снимка данных Raidbots." },
+    en: { title: "WoW Classes and Specializations — Gildra", description: "Every Midnight class and specialization with its talent tree." },
+    ru: { title: "Классы и специализации WoW — Gildra", description: "Все классы и специализации Midnight с деревьями талантов." },
     noindex: true,
   },
   delves: {
-    en: { title: "Midnight Delves — Gildra", description: "Delves of both Midnight seasons. Strategy and rewards will appear once verified." },
-    ru: { title: "Вылазки Midnight — Gildra", description: "Вылазки обоих сезонов Midnight. Тактика и награды появятся после проверки." },
+    en: { title: "Midnight Delves — Gildra", description: "Delves of Midnight: where they are and what awaits inside." },
+    ru: { title: "Вылазки Midnight — Gildra", description: "Вылазки Midnight: где они и что ждёт внутри." },
     noindex: true,
   },
   season2: {
-    en: { title: "WoW Midnight Season 2 Guide — Gildra", description: "Midnight Season 2 source-tracked overview. Unverified item levels and rewards are not treated as authoritative." },
-    ru: { title: "WoW Midnight Сезон 2 — гайд Gildra", description: "Обзор Midnight Сезон 2 с отслеживаемыми источниками. Непроверенные уровни предметов и награды не считаются достоверными." },
+    en: { title: "WoW Midnight Season 2 Guide — Gildra", description: "What Midnight Season 2 brings: Mythic+ dungeons, raids, delves and more." },
+    ru: { title: "WoW Midnight Сезон 2 — гайд Gildra", description: "Что принёс Midnight Сезон 2: подземелья Mythic+, рейды, вылазки и другое." },
     noindex: true,
   },
   whatsNew: {
-    en: { title: "What's new — Gildra", description: "What changed on Gildra for players, newest first. Data updates of the season are announced on their own pages." },
-    ru: { title: "Что нового — Gildra", description: "Что изменилось на Gildra для игроков, сначала свежее. Обновления данных сезона объявляются на их страницах." },
+    en: { title: "What's new — Gildra", description: "What changed on Gildra for players, newest first." },
+    ru: { title: "Что нового — Gildra", description: "Что изменилось на Gildra для игроков, сначала свежее." },
     noindex: true,
   },
   database: {

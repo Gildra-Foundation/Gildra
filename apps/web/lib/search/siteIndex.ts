@@ -1,7 +1,7 @@
 import "server-only";
 import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { getMidnightRaid, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
-import { contentManifest, midnightDelves, midnightLairEncounters } from "@gildra/game-data";
+import { contentManifest, midnightLairEncounters } from "@gildra/game-data";
 import { midnightClasses, midnightSpecializations } from "@/lib/data/wow/specializations";
 import { getBoss } from "@/lib/lairs";
 import { routeSections, type RouteSection } from "@/lib/routes/registry";
@@ -25,7 +25,6 @@ const label = {
   dungeon: { en: "Mythic+ dungeon", ru: "Подземелье M+" },
   class: { en: "Class", ru: "Класс" },
   talents: { en: "Talent tree", ru: "Дерево талантов" },
-  delve: { en: "Delve", ru: "Вылазка" },
 } as const;
 
 // Sections come from the route registry (lib/routes/registry.ts).
@@ -72,7 +71,7 @@ function entries(locale: Locale): SiteSearchEntry[] {
     list.push({ t: locale === "ru" ? dungeon.nameRu : dungeon.name, s: label.dungeon[locale], h: `/wow/mythic-plus/midnight-season-2/${slug}`, k: locale === "ru" ? dungeon.name : dungeon.nameRu });
   }
 
-  for (const entry of midnightClasses) list.push({ t: locale === "ru" ? entry.nameRu : entry.nameEn, s: label.class[locale], h: `/wow/classes/${entry.slug}`, k: locale === "ru" ? entry.nameEn : entry.nameRu });
+  for (const entry of midnightClasses) list.push({ t: locale === "ru" ? entry.nameRu : entry.nameEn, s: label.class[locale], h: `/wow/classes#${entry.slug}`, k: locale === "ru" ? entry.nameEn : entry.nameRu });
   for (const spec of midnightSpecializations) {
     list.push({
       t: locale === "ru" ? `${spec.specNameRu} · ${spec.classNameRu}` : `${spec.specName} ${spec.className}`,
@@ -82,7 +81,6 @@ function entries(locale: Locale): SiteSearchEntry[] {
     });
   }
 
-  for (const delve of midnightDelves) list.push({ t: delve.name, s: label.delve[locale], h: `/wow/delves/${delve.slug}` });
   return list;
 }
 

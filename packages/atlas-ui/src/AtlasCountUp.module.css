@@ -1,5 +1,6 @@
-/* The final value holds the box (and is what screen readers read); the live count sits on top of it. */
+/* The final value holds the box as CSS content (not page text); the live count on top is what everyone reads. */
 .count { display: inline-grid; }
 .count > * { grid-area: 1 / 1; }
 .final { color: transparent; text-shadow: none; }
+.final::before { content: attr(data-value); }
 .live { pointer-events: none; }

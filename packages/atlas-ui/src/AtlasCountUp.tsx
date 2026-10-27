@@ -5,7 +5,7 @@ import { useSpringValue } from "./valyro-ui/primitives/useSpringValue";
 import styles from "./AtlasCountUp.module.css";
 import { lessMotion, subscribeSiteMotion } from "./motionPreference";
 
-/** Actual values are present in server HTML and accessible text. Valyro springs
+/** Actual values are present in server HTML and accessible text (once: the box-holder is CSS content). Valyro springs
  * subsequent metric updates without React renders per animation frame. */
 export function AtlasCountUp({ value }: { value: number }) {
   const live = useRef<HTMLSpanElement>(null);
@@ -24,8 +24,9 @@ export function AtlasCountUp({ value }: { value: number }) {
 
   return (
     <span className={styles.count}>
-      <span className={styles.final}>{value}</span>
-      <span ref={live} className={styles.live} aria-hidden="true">{value}</span>
+      {/* The final value only holds the box (CSS content, so the page text reads the number once). */}
+      <span className={styles.final} data-value={value} aria-hidden="true" />
+      <span ref={live} className={styles.live}>{value}</span>
     </span>
   );
 }
