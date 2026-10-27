@@ -5,7 +5,7 @@
  * packages/atlas-ui/README.md. No app imports (ESLint): the app adapts the kit
  * in components/atlas (AtlasFrame with scenes and the legal line).
  */
-export { AtlasFrameShell, type AtlasFrameShellProps, type AtlasGlow } from "./AtlasFrameShell";
+export { AtlasFrameFooter, AtlasFrameShell, type AtlasFrameShellProps, type AtlasGlow } from "./AtlasFrameShell";
 export { AtlasHero } from "./AtlasHero";
 export { AtlasStats, type AtlasStat } from "./AtlasStats";
 export { AtlasSection } from "./AtlasSection";

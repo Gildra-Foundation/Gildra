@@ -1,7 +1,7 @@
 /** Game-relative static paths listed in /sitemaps/static (both locales). */
 export const staticPaths = (): string[] => [
   "/",
-  "/database",
+  "/library",
   "/wow/mythic-plus/meta",
   "/privacy",
 ];

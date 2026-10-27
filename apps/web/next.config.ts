@@ -122,6 +122,8 @@ const nextConfig: NextConfig = {
       { source: "/ru/wow/mythic", destination: "/ru/wow/mythic-plus", permanent: true },
       { source: "/wow/mythic/:dungeon", destination: "/wow/mythic-plus/midnight-season-2/:dungeon", permanent: true },
       { source: "/ru/wow/mythic/:dungeon", destination: "/ru/wow/mythic-plus/midnight-season-2/:dungeon", permanent: true },
+      // The story library is Russian-only (lib/routes/registry.ts `only`).
+      { source: "/wow/stories", destination: "/ru/wow/stories", permanent: true },
       ...misplacedWowBossRedirects.flatMap(([slug, destination]) => [
         { source: `/wow/lairs/${slug}`, destination: `/wow/${destination}`, permanent: true },
         { source: `/ru/wow/lairs/${slug}`, destination: `/ru/wow/${destination}`, permanent: true },

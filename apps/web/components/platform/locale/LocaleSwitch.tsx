@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { altPath, type Lang } from "@/lib/i18n-paths";
+import { singleLanguagePaths } from "@/lib/routes/registry";
 import { saveLocaleSwitch } from "./localeSwitch";
 import { localeSwitchCopy } from "./localeSwitchCopy";
 import styles from "./localeSwitch.module.css";
@@ -53,6 +54,8 @@ export function LocaleSwitch({ path, lang }: { path: string; lang: Lang }) {
     window.location.assign(destination);
   };
 
+  // A section in one language has no other language to switch to.
+  if (singleLanguagePaths.has(altPath(path, "en").replace(/\/$/, "") || "/")) return null;
   const shown = pending ?? lang;
   return <nav ref={root} className={styles.switch} data-locale-switch-root data-active={shown}
     aria-label={localeSwitchCopy[lang].label} aria-busy={pending ? true : undefined}>

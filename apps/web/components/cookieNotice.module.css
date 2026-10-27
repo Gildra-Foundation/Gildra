@@ -1,25 +1,29 @@
 /* atlas:strict — the one cookie notice of the inner pages. */
+/* A slim bar along the bottom edge on every screen: a floating card covered
+   the left column of the pages (hero text, first cards, forms) on desktops. */
 .notice {
   position: fixed;
-  left: max(var(--atlas-gutter), env(safe-area-inset-left));
-  bottom: max(var(--atlas-space-4), env(safe-area-inset-bottom));
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 90;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--atlas-space-3) var(--atlas-space-5);
-  width: min(640px, calc(100vw - 2 * var(--atlas-gutter)));
-  padding: var(--atlas-space-3) var(--atlas-space-4);
+  justify-content: center;
+  gap: var(--atlas-space-3) var(--atlas-space-6);
+  padding: var(--atlas-space-3) max(var(--atlas-gutter), env(safe-area-inset-right)) max(var(--atlas-space-3), env(safe-area-inset-bottom)) max(var(--atlas-gutter), env(safe-area-inset-left));
   color: var(--atlas-text);
-  border: 1px solid var(--atlas-line);
+  border-top: 1px solid var(--atlas-line);
   background: var(--atlas-surface-raised);
-  box-shadow: var(--atlas-shadow-panel);
+  box-shadow: 0 -14px 32px color-mix(in srgb, #000 50%, transparent);
   font-family: var(--atlas-font-ui);
   animation: cookie-in .3s var(--atlas-ease) both;
 }
 
 .text {
-  flex: 1 1 280px;
+  flex: 0 1 auto;
+  max-width: var(--atlas-measure-wide);
   min-width: 0;
   margin: 0;
   color: var(--atlas-text-muted);
@@ -32,20 +36,9 @@
 
 .actions { display: flex; flex: 0 0 auto; gap: var(--atlas-space-4); }
 
-/* Phones: a slim bar flush with the bottom edge — two or three lines of text and
-   one row of 44 px buttons (≈110–125 px instead of ≈170 px). */
+/* Phones: two or three lines of text and one row of 44 px buttons. */
 @media (max-width: 560px) {
-  .notice {
-    right: 0;
-    bottom: 0;
-    left: 0;
-    gap: var(--atlas-space-2) var(--atlas-space-3);
-    width: auto;
-    padding: 10px max(var(--atlas-gutter), env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(var(--atlas-gutter), env(safe-area-inset-left));
-    border-width: 1px 0 0;
-    box-shadow: 0 -14px 32px rgba(0, 0, 0, .5);
-  }
-
+  .notice { gap: var(--atlas-space-2) var(--atlas-space-3); padding-block: 10px max(10px, env(safe-area-inset-bottom)); }
   .text { flex-basis: 100%; font-size: var(--atlas-text-meta); line-height: 1.45; }
 }
 

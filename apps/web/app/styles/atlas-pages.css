@@ -119,3 +119,8 @@ body:has(.workspace-content[data-atlas-theme="dark"]) {
   overflow-wrap: break-word;
   text-wrap: pretty;
 }
+
+/* The home scene reserves the cookie notice's space itself, inside its painting:
+   a band of page colour under the scene read as an empty strip. */
+.workspace-content.gildra-atlas:has([data-grimoire-home]) { padding-bottom: 0; }
+.workspace-content.gildra-atlas [data-grimoire-home] { padding-bottom: var(--cookie-notice-space, 0px); }

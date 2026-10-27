@@ -1,4 +1,5 @@
 import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
+import type { Lang } from "@/lib/i18n-paths";
 
 /**
  * The atlas map of the top bar: each realm is a hub page with its real
@@ -17,6 +18,8 @@ export type NavigationRealm = {
   /** Other path prefixes that belong to this realm (detail pages, tools). */
   also?: readonly string[];
   links: readonly [NavigationLink, ...NavigationLink[]];
+  /** Languages the realm exists in (all when absent). */
+  langs?: readonly Lang[];
 };
 
 export const navigationRealms: readonly NavigationRealm[] = [
@@ -36,11 +39,11 @@ export const navigationRealms: readonly NavigationRealm[] = [
     label: { en: "Mythic+", ru: "Mythic+" },
     lede: { en: "Key timers, dungeon routes and the weekly meta.", ru: "Таймеры ключей, маршруты подземелий и мета недели." },
     scene: "mythicPlus",
-    also: ["/wow/mythic"],
+    also: ["/wow/mythic", "/wow/dungeons", "/wow/mythic-plus/seasons"],
     links: [
       { href: "/wow/mythic-plus", label: { en: "Mythic+ atlas", ru: "Атлас Mythic+" }, note: { en: "Timers and routes", ru: "Таймеры и маршруты" } },
       { href: "/wow/mythic-plus/meta", label: { en: "Mythic+ meta", ru: "Мета Mythic+" }, note: { en: "Top specs of the week", ru: "Лучшие спеки недели" } },
-      { href: "/wow/dungeons", label: { en: "Dungeons", ru: "Подземелья" }, note: { en: "Every Midnight dungeon", ru: "Все подземелья Midnight" } },
+      { href: "/wow/mythic-plus#dungeons", label: { en: "Dungeons", ru: "Подземелья" }, note: { en: "Every dungeon of the season", ru: "Все подземелья сезона" } },
       { href: "/wow/delves", label: { en: "Delves", ru: "Вылазки" }, note: { en: "Midnight delves", ru: "Вылазки Midnight" } },
     ],
   },
@@ -60,11 +63,10 @@ export const navigationRealms: readonly NavigationRealm[] = [
     label: { en: "Tier lists", ru: "Тир-листы" },
     lede: { en: "Compare specializations, then look up any item or spell.", ru: "Сравнение специализаций — и любой предмет или заклинание в библиотеке." },
     scene: "tierLists",
-    also: ["/specs"],
+    also: ["/specs", "/database"],
     links: [
       { href: "/tier-lists", label: { en: "Tier lists", ru: "Тир-листы" }, note: { en: "Specialization rankings", ru: "Рейтинг специализаций" } },
       { href: "/library", label: { en: "Library", ru: "Библиотека" }, note: { en: "Items, spells, mounts and more", ru: "Предметы, заклинания, транспорт и другое" } },
-      { href: "/database", label: { en: "Database", ru: "База данных" }, note: { en: "Spells, items and NPCs", ru: "Заклинания, предметы и NPC" } },
     ],
   },
   {
@@ -81,6 +83,8 @@ export const navigationRealms: readonly NavigationRealm[] = [
     label: { en: "Story Library", ru: "Библиотека историй" },
     lede: { en: "Books about the lives and journeys of Azeroth’s heroes.", ru: "Книги о судьбах и странствиях героев Азерота." },
     scene: "library",
+    // The manuscript is Russian; the English URL redirects (lib/routes/registry.ts `only`).
+    langs: ["ru"],
     links: [
       { href: "/wow/stories", label: { en: "Story Library", ru: "Библиотека историй" }, note: { en: "Books and character chronicles", ru: "Книги и хроники персонажей" } },
     ],
@@ -96,6 +100,9 @@ export const navigationRealms: readonly NavigationRealm[] = [
     ],
   },
 ];
+
+/** The realms of the bar in a language. */
+export const realmsFor = (lang: Lang) => navigationRealms.filter(realm => !realm.langs || realm.langs.includes(lang));
 
 export const realmArt = (realm: NavigationRealm) => atlasScenes[realm.scene];
 

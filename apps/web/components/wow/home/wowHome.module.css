@@ -1,0 +1,21 @@
+/* atlas:strict — the WoW hub: hero on the left over the scene, "picture + plaque" cards, one talents plaque. */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--atlas-space-7) var(--atlas-space-6);
+}
+
+.talents {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-4) var(--atlas-space-6);
+  margin-top: var(--atlas-section-gap, var(--atlas-space-8));
+}
+.talents > div { flex: 1 1 28rem; min-width: 0; }
+.talents h2 { margin-bottom: var(--atlas-space-2); }
+
+@media (max-width: 1199px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .cards { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-7); } }

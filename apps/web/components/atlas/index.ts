@@ -11,4 +11,4 @@
 import "@/lib/atlas/placeholders";
 
 export * from "@gildra/atlas-ui";
-export { AtlasFrame, type AtlasFrameProps } from "./AtlasFrame";
+export { AtlasFrame, AtlasLegalFooter, type AtlasFrameProps } from "./AtlasFrame";

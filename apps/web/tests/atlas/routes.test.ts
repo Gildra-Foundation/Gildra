@@ -12,8 +12,9 @@ describe("route registry", () => {
   for (const [id, section] of Object.entries(sections)) {
     it(`${id}: page exists in both languages, parent and scene are known`, () => {
       const dir = section.path === "/" ? "" : section.path;
-      assert.ok(existsSync(new URL(`../../app/(site)${dir}/page.tsx`, import.meta.url)), `app/(site)${dir}/page.tsx`);
-      assert.ok(existsSync(new URL(`../../app/ru${dir}/page.tsx`, import.meta.url)), `app/ru${dir}/page.tsx`);
+      // A single-language section keeps only its own tree (the other URL redirects in next.config.ts).
+      if (section.only !== "ru") assert.ok(existsSync(new URL(`../../app/(site)${dir}/page.tsx`, import.meta.url)), `app/(site)${dir}/page.tsx`);
+      if (section.only !== "en") assert.ok(existsSync(new URL(`../../app/ru${dir}/page.tsx`, import.meta.url)), `app/ru${dir}/page.tsx`);
       if (section.parent) assert.ok(section.parent in sections, `parent ${section.parent}`);
       if (section.scene) assert.ok(section.scene in atlasScenes, `scene ${section.scene}`);
     });

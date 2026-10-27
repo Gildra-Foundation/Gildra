@@ -2,7 +2,8 @@ import Link from "next/link";
 import { preload } from "react-dom";
 import { cookies } from "next/headers";
 import type { CSSProperties } from "react";
-import type { Lang } from "@/lib/i18n";
+import { t, type Lang } from "@/lib/i18n";
+import { atlasLegal } from "@/components/atlas/AtlasFrame";
 import { HomeBookCover, HomeBookStage } from "./HomeBook";
 import { HomeTheme } from "./HomeTheme";
 import { HomeEpigraph } from "./HomeEpigraph";
@@ -67,6 +68,7 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
     <div className={styles.appearance}><ThemePicker lang={lang} /></div>
     <HomeBookStage lang={lang} className={styles.hero} coverFace={coverFace}>
       <div className={styles.copy}>
+        <h1 className={styles.srOnly}>{ru ? "Gildra — хроники Азерота: путеводитель героя World of Warcraft" : "Gildra — Chronicles of Azeroth: a World of Warcraft hero’s companion"}</h1>
         <HomeEpigraph lang={lang} />
       </div>
       <div className={styles.bookScene}>
@@ -77,10 +79,13 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
         <p className={styles.bookHint}><span aria-hidden="true">✧</span>{ru ? "Коснитесь обложки, чтобы открыть" : "Touch the cover to turn the first page"}</p>
       </div>
     </HomeBookStage>
+    {/* The site's one legal line (the same as every atlas page's footer) in the grimoire's type. */}
     <footer className={styles.footer}>
-      <span className={styles.footerMark} aria-hidden="true">✧</span>
-      <span>{ru ? "ВАШЕ ПРИКЛЮЧЕНИЕ. ВАША КНИГА." : "YOUR ADVENTURE. YOUR BOOK."}</span>
-      <Link href={ru ? "/ru/privacy" : "/privacy"}>{ru ? "Политика конфиденциальности" : "Privacy policy"}</Link>
+      <p>{atlasLegal(ru ? "ru" : "en")}</p>
+      <nav aria-label={ru ? "Документы" : "Documents"}>
+        <Link href={ru ? "/ru/wow/whats-new" : "/wow/whats-new"} prefetch={false}>{t(lang)("What's new")}</Link>
+        <Link href={ru ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(lang)("Privacy Policy")}</Link>
+      </nav>
     </footer>
   </HomeTheme>;
 }

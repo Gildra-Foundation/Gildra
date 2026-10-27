@@ -139,7 +139,39 @@
   pointer-events: none;
 }
 
+/* ---------- Picture in the kit's frame (design.md §4.3) ---------- */
+.frame { position: relative; isolation: isolate; width: 100%; aspect-ratio: 3 / 2; }
+.frameWindow {
+  position: absolute;
+  inset: var(--frame-top) var(--frame-right) var(--frame-bottom) var(--frame-left);
+  overflow: hidden;
+  clip-path: var(--mythic-frame-clip);
+  background: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 15%, var(--atlas-bg));
+}
+.frameScene { object-fit: cover; filter: contrast(.94) saturate(.9); transition: transform var(--atlas-duration-art) var(--atlas-ease); }
+.frameArt { z-index: 1; object-fit: contain; pointer-events: none; user-select: none; filter: contrast(.88) saturate(.84) brightness(.95); }
+
+/* ---------- "Picture + plaque" card (design.md §3.2) ---------- */
+.card { position: relative; display: flex; flex-direction: column; min-width: 0; color: var(--atlas-text); }
+.cardArt { display: block; min-width: 0; border-radius: 12px; }
+.cardBody { display: flex; flex: 1; flex-direction: column; gap: var(--atlas-space-3); margin: -8px 12px 0; padding: 32px 40px 36px; }
+.cardBody > :last-child { margin-top: auto; padding-top: var(--atlas-space-2); }
+.cardEyebrow { margin: 0; color: var(--material-light); font-size: var(--atlas-text-meta); font-weight: 650; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 1px 3px var(--atlas-bg); }
+.cardTitle { margin: 0; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.cardTitle a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text-strong); text-decoration: none; }
+.cardTitle a:hover { color: var(--material-light); }
+.card a:focus-visible { outline: 2px solid var(--material-light); outline-offset: 3px; }
+.card .plaqueText { flex: 1; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (hover: hover) and (pointer: fine) { .card:hover .frameScene { transform: scale(1.025); } }
+.card:focus-within .frameScene { transform: scale(1.018); }
+@media (max-width: 760px) { .cardBody { margin-inline: 0; padding: 28px 28px 32px; } }
+@media (max-width: 360px) { .cardBody { padding-inline: 20px; } }
+
 /* ---------- Preferences (design.md §5) ---------- */
+@media (prefers-reduced-motion: reduce) { .frameScene { transition: none; transform: none !important; } }
+:global([data-motion="reduced"]) .frameScene,
+:global([data-ui-motion="reduce"]) .frameScene { transition: none; transform: none !important; }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
   .slot .button:global(.ui-button) { transform: none; transition: none; }
   .button::after { animation: none; opacity: 0; }
@@ -151,7 +183,8 @@
 :global([data-ui-motion="reduce"]) .button::after,
 :global([data-transparency="reduced"]) .button::after { animation: none; opacity: 0; }
 @media (forced-colors: active) {
-  .plaque::before, .button::before, .button::after, .iconFrame::after { display: none; }
+  .plaque::before, .button::before, .button::after, .iconFrame::after, .frameArt { display: none; }
+  .frameWindow { clip-path: none; border: 1px solid CanvasText; background: Canvas; }
   .plaque { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
   .slot .button:global(.ui-button) { border: 2px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
   .iconFrame::before { border: 1px solid CanvasText; }

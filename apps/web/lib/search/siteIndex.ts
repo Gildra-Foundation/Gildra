@@ -30,6 +30,7 @@ const label = {
 
 // Sections come from the route registry (lib/routes/registry.ts).
 const sections = Object.values(routeSections as Record<string, RouteSection>).map((section) => ({
+  only: section.only,
   h: section.path,
   en: section.search?.en ?? section.title.en,
   ru: section.search?.ru ?? section.title.ru,
@@ -40,7 +41,7 @@ type Manifest = { canonicalSlug: string; instance?: string; order?: number; name
 
 function entries(locale: Locale): SiteSearchEntry[] {
   const other: Locale = locale === "ru" ? "en" : "ru";
-  const list: SiteSearchEntry[] = sections.map((section) => ({ t: section[locale], s: label.section[locale], h: section.h, k: [section[other], section.k].filter(Boolean).join(" ") }));
+  const list: SiteSearchEntry[] = sections.filter((section) => !section.only || section.only === locale).map((section) => ({ t: section[locale], s: label.section[locale], h: section.h, k: [section[other], section.k].filter(Boolean).join(" ") }));
 
   for (const slug of raidSlugs) {
     const raid = getMidnightRaid(slug);

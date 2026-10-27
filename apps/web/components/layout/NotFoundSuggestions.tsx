@@ -39,7 +39,7 @@ export function NotFoundSuggestions() {
       if (!alive) return;
       const entries = index[ru ? "ru" : "en"];
       // The last segment first, then each of its words, then every word of the path.
-      const tries = [last, ...last.split(" "), ...all.split(" ")].filter((word, position, list) => word.length > 2 && list.indexOf(word) === position && !/^(wow|ru)$/.test(word));
+      const tries = [last, ...last.split(" "), ...all.split(" ")].filter((word, position, list) => word.length > 3 && list.indexOf(word) === position && !/^(wow|ru)$/.test(word));
       const found = new Map<string, SiteSearchHit>();
       for (const query of tries) {
         for (const hit of searchIndex(entries, query, 6)) if (!found.has(hit.h)) found.set(hit.h, hit);

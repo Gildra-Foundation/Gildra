@@ -5,13 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, BarChart3, BookOpen, Wrench, ChevronDown, KeyRound, Menu, ScrollText, Swords, UserRound, X, type LucideIcon } from "lucide-react";
 import { p, type Lang } from "@/lib/i18n-paths";
-import { gameDestinationForPath } from "@/lib/games/destinations";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
 import { LocaleSwitch } from "@/components/platform/locale/LocaleSwitch";
 import { AccountChip } from "@/components/auth/AccountChip";
 import { GildraCrest } from "@/components/brand/GildraCrest";
-import { GameSwitcher } from "./GameSwitcher";
-import { barePathOf, currentRealm, navigationRealms, type NavigationRealm } from "./navigationMap";
+import { barePathOf, currentRealm, realmsFor, type NavigationRealm } from "./navigationMap";
 import type { NavigationPicks } from "./navigationPicks";
 import toolbarStyles from "./atlasToolbar.module.css";
 
@@ -133,7 +131,7 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
       toggle?.focus();
     }}>
     <ul ref={list}>
-      {navigationRealms.map(realm => {
+      {realmsFor(lang).map(realm => {
         const hub = realm.links[0];
         const isOpen = openRealm === realm.id;
         const label = word(lang, realm.label);
@@ -209,7 +207,7 @@ function MenuSheet({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
     {open && <nav id={id} className={toolbarStyles.sheet} data-sheet aria-label={ru ? "Все разделы" : "All sections"}
       onBlur={event => { if (!root.current?.contains(event.relatedTarget)) close(); }}>
       <Account lang={lang} />
-      {navigationRealms.map(realm => <section key={realm.id} className={toolbarStyles.sheetRealm} data-current={realm.id === currentId || undefined}>
+      {realmsFor(lang).map(realm => <section key={realm.id} className={toolbarStyles.sheetRealm} data-current={realm.id === currentId || undefined}>
         <RealmMenu realm={realm} picks={picks} lang={lang} barePath={barePath} onNavigate={close} compact />
       </section>)}
     </nav>}
@@ -242,7 +240,6 @@ export function WorkspaceNavigatorContent({ picks }: { picks: NavigationPicks })
   const livePath = useSyncExternalStore(noSubscribe, () => pathname, () => renderedPath(pathname));
   const ru = /^\/ru(?:\/|$)/.test(livePath);
   const lang: Lang = ru ? "ru" : "en";
-  const comingSoon = gameDestinationForPath(livePath).soon;
   const scrolled = useScrolled();
 
   return <header className={toolbarStyles.toolbar} data-atlas-scope data-toolbar-path={livePath} data-scrolled={scrolled || undefined}>
@@ -260,10 +257,9 @@ export function WorkspaceNavigatorContent({ picks }: { picks: NavigationPicks })
         aria-current={barePathOf(livePath) === "/" ? "page" : undefined} aria-label={ru ? "Gildra — главная" : "Gildra — home"}>
         <GildraCrest height={32} className={toolbarStyles.sigil} eager /><span>GILDRA</span>
       </Link>
-      <div className={toolbarStyles.search}>{!comingSoon && <SiteSearch lang={lang} />}</div>
+      <div className={toolbarStyles.search}><SiteSearch lang={lang} /></div>
       <div className={toolbarStyles.end}>
         <LocaleSwitch path={livePath} lang={lang} />
-        <GameSwitcher key={livePath} lang={lang} pathname={livePath} brandless />
         <span className={toolbarStyles.accountSlot}><Account lang={lang} /></span>
         <MenuSheet path={livePath} lang={lang} picks={picks} />
       </div>

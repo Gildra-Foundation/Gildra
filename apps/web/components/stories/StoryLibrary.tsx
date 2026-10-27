@@ -1,30 +1,26 @@
 import type { Metadata } from "next";
-import type { Lang } from "@/lib/i18n-paths";
-import { storyLibraryCopy } from "./storyLibraryCopy";
+import { AtlasLegalFooter } from "@/components/atlas";
+import { storyLibraryCopy as copy } from "./storyLibraryCopy";
 import styles from "./storyLibrary.module.css";
 
-export function storyLibraryMetadata(lang: Lang): Metadata {
-  const copy = storyLibraryCopy[lang];
+export function storyLibraryMetadata(): Metadata {
   return {
     title: copy.title,
     description: copy.description,
-    alternates: {
-      canonical: lang === "ru" ? "/ru/wow/stories" : "/wow/stories",
-      languages: { en: "/wow/stories", ru: "/ru/wow/stories", "x-default": "/wow/stories" },
-    },
+    // The manuscript exists only in Russian (lib/routes/registry.ts `only`); the English URL redirects here.
+    alternates: { canonical: "/ru/wow/stories" },
   };
 }
 
 /** The supplied book uses document scroll, native dialogs and a 3D cover mesh.
  * A local reading frame preserves that renderer without leaking its global
  * styles or scroll locks into the shared toolbar and other application pages.
+ * The page's heading and the site's legal line stay in this document.
  */
-export function StoryLibrary({ lang }: { lang: Lang }) {
-  const copy = storyLibraryCopy[lang];
-  return <main id="main-content" className={styles.library} aria-label={copy.label}>
-    <iframe className={styles.room}
-      src={lang === "ru" ? "/story-library/index.html" : "/story-library/en.html"}
-      title={copy.frameTitle}
-    />
+export function StoryLibrary() {
+  return <main id="main-content" className={styles.library} lang="ru">
+    <h1 className={styles.srOnly}>{copy.heading}</h1>
+    <iframe className={styles.room} src="/story-library/index.html" title={copy.frameTitle} />
+    <div className={styles.footer}><AtlasLegalFooter lang="ru" /></div>
   </main>;
 }

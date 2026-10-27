@@ -224,6 +224,11 @@
   .gildra-atlas,
   [data-atlas-scope] { --atlas-sticky-top: 101px; }
 }
+/* Phones have no tab strip under the bar (one 56 px row + rule). */
+@media (max-width: 767px) {
+  .gildra-atlas,
+  [data-atlas-scope] { --atlas-sticky-top: 57px; }
+}
 
 /* Links of the atlas wear the theme accent. Without this a link that sets no
    colour of its own fell back to the legacy rule `a { color: var(--blue-2) }`

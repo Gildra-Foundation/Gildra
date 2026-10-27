@@ -3,7 +3,10 @@ import type { LegalProps } from "@/components/blocks/shared/legal";
 
 const EN: LegalProps = {
   title: "Privacy Policy",
-  updated: "Last updated: October 23, 2026",
+  lede: "What Gildra stores in your browser and which data the site collects.",
+  updated: "2026-10-23",
+  updatedLabel: "Updated",
+  crumbs: [{ label: "Gildra", href: "/" }, { label: "Privacy" }],
   sections: [
     {
       heading: "What we store in your browser",
@@ -17,17 +20,16 @@ const EN: LegalProps = {
       heading: "What we do not do",
       text: "Gildra does not run advertising trackers and does not sell or share data with third parties. An account is not required. If you choose to sign in with Battle.net, a session cookie keeps you signed in and Gildra requests your World of Warcraft profile from Blizzard to show your characters; your password is entered only on Blizzard's site. If you decline cookies, only the technically necessary storage described above is used.",
     },
-    {
-      heading: "Contact",
-      text: "Questions about this policy — open an issue in the project repository or reach out to the team.",
-    },
   ],
-  backLabel: "← Back to Gildra",
+  backLabel: "Back to Gildra",
 };
 
 const RU: LegalProps = {
   title: "Политика конфиденциальности",
-  updated: "Обновлено: 23 октября 2026",
+  lede: "Что Gildra хранит в вашем браузере и какие данные собирает сайт.",
+  updated: "2026-10-23",
+  updatedLabel: "Обновлено",
+  crumbs: [{ label: "Gildra", href: "/" }, { label: "Конфиденциальность" }],
   sections: [
     {
       heading: "Что мы храним в вашем браузере",
@@ -41,12 +43,8 @@ const RU: LegalProps = {
       heading: "Чего мы не делаем",
       text: "Gildra не использует рекламные трекеры, не продаёт и не передаёт данные третьим лицам. Аккаунт не обязателен. Если вы входите через Battle.net, сессионный cookie сохраняет вход, а Gildra запрашивает у Blizzard профиль World of Warcraft, чтобы показать ваших персонажей; пароль вводится только на сайте Blizzard. Если вы отклонили файлы cookie, используется только технически необходимое хранилище, описанное выше.",
     },
-    {
-      heading: "Контакты",
-      text: "Вопросы по этой политике — откройте обращение в репозитории проекта или свяжитесь с командой.",
-    },
   ],
-  backLabel: "← Назад на Gildra",
+  backLabel: "Назад на Gildra",
 };
 
 /** Site-wide policy page; rendered with the WoW chrome. */

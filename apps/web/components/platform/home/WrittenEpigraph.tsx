@@ -75,13 +75,15 @@ export function WrittenEpigraph({ quote, author, extended }: { lang: Lang; quote
 
   return <figure ref={figure} className={styles.epigraph} data-writing={phase}>
     <blockquote>
-      <h1 className={`${styles.quoteText}${extended ? ` ${styles.longQuote}` : ""}`} aria-label={quote}>
+      {/* The quote is read whole at once; the hand only writes its picture. */}
+      <p className={`${styles.quoteText}${extended ? ` ${styles.longQuote}` : ""}`}>
+        <span className={styles.srOnly}>{quote}</span>
         <span aria-hidden="true"><InkWords text={quote} delays={writing.delays} /></span>
-      </h1>
+      </p>
     </blockquote>
     <figcaption className={styles.quoteAuthor} style={{ "--signature-delay": `${signatureStart}ms` } as CSSProperties}>
       <span aria-hidden="true" />
-      <cite aria-label={author}><span aria-hidden="true"><InkWords text={author} delays={signature.delays} /></span></cite>
+      <cite><span className={styles.srOnly}>{author}</span><span aria-hidden="true"><InkWords text={author} delays={signature.delays} /></span></cite>
     </figcaption>
     <noscript><style>{`.${styles.epigraph}[data-writing="waiting"] .${styles.inkLetter},.${styles.epigraph}[data-writing="waiting"] .${styles.quoteAuthor}>span{opacity:1;clip-path:none}`}</style></noscript>
   </figure>;

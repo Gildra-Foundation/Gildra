@@ -8,7 +8,6 @@ import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { getBoss } from "@/lib/lairs";
 import { getTalentSpecTheme, talentSpecThemes } from "@/lib/talentSpecThemes";
 import { atlasOgImage, type AtlasOgSpec } from "./atlasOg";
-import { upcomingGame } from "@/lib/games/destinations";
 import type { Lang as Locale } from "@/lib/i18n-paths";
 
 /**
@@ -49,11 +48,6 @@ const hubs = {
 
 const kinds = {
   ...hubs,
-
-  upcomingGame: (locale: Locale, { game: id }: Params): Spec => {
-    const game = upcomingGame(id);
-    return { art: game?.art ?? atlasScenes.archive.art, title: game?.name ?? "Gildra", eyebrow: "Coming soon", subtitle: ru(locale) ? "Новая глава Gildra уже в работе." : "A new chapter of Gildra is on its way." };
-  },
 
   raid: (locale: Locale, { raid: slug }: Params): Spec => {
     const raid = getMidnightRaid(slug);

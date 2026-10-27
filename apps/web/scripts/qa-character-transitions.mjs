@@ -49,7 +49,6 @@ try {
     });
     await page.waitForTimeout(700);
     await page.evaluate(y => window.scrollTo(0, y), scroll);
-    await page.locator("header [data-game-switcher] summary").click();
     const label = `${locale}-${width}-${scroll}`;
     await page.screenshot({ path: path.join(output, `${label}-before.png`) });
     // Keep the inert DOM around after the real route commits, including on a
@@ -67,7 +66,7 @@ try {
         const r = el.getBoundingClientRect();
         return { i, tag: el.tagName, x: r.x, y: r.y, w: r.width, h: r.height };
       });
-      const anchor = document.querySelector(`header [data-game-switcher] a[href="${home}"]`);
+      const anchor = document.querySelector(`header a[href="${home}"]`);
       if (!anchor) throw Error("Missing Gildra home choice");
       const start = performance.now(); anchor.click();
       return { before, clickMs: performance.now() - start, nodes: document.querySelector("[data-transition-snapshot]")?.querySelectorAll("*").length };

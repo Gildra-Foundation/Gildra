@@ -56,6 +56,20 @@ function objectFocus(position: string | undefined): [number, number] {
   return [part(x), part(y)];
 }
 
+/** The frame's legal line (brand, notice, motion switch, links); pages outside the frame (a full-bleed reader) reuse it. */
+export function AtlasFrameFooter({ locale, brand, legal, links }: { locale: "en" | "ru"; legal: ReactNode; links: ReactNode; brand?: ReactNode }) {
+  return (
+    <footer className={styles.legal} data-text-links>
+      {brand ? <div className={styles.legalBrand}>{brand}</div> : null}
+      <p>{legal}</p>
+      <div className={styles.legalLinks}>
+        <AtlasMotionToggle locale={locale} />
+        {links}
+      </div>
+    </footer>
+  );
+}
+
 /**
  * Page frame of every inner atlas route: atmosphere artwork, solid body and the
  * 1540 px content column. Pages compose AtlasHero / AtlasSection inside it.
@@ -101,16 +115,7 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
       ) : null}
       <div className={styles.column}>
         {children}
-        {footer ? (
-          <footer className={styles.legal} data-text-links>
-            {footer.brand ? <div className={styles.legalBrand}>{footer.brand}</div> : null}
-            <p>{footer.legal}</p>
-            <div className={styles.legalLinks}>
-              <AtlasMotionToggle locale={locale} />
-              {footer.links}
-            </div>
-          </footer>
-        ) : null}
+        {footer ? <AtlasFrameFooter locale={locale} {...footer} /> : null}
       </div>
     </Element>
   );

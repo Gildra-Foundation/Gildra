@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
-import { dungeonArtDirections } from "@/lib/wow/dungeonArtDirection";
+import { dungeonArtDirections, dungeonFrameArtwork } from "@/lib/wow/dungeonArtDirection";
 import { mythicHubButtonLayout, mythicHubControlLayout } from "@/components/wow/mythic/hub/mythicHubControls";
+import { mythicHubFrameLayout } from "@/components/wow/mythic/hub/mythicHubThemes";
 import pullArt from "../../../../public/assets/wow/mythic/pull-art/manifest.json";
 
 /**
@@ -35,3 +36,11 @@ export function materialIconFrameStyle(kit: MaterialKit, size = 52): CSSProperti
     "--material-frame-clip": skill.window.clip,
   } as CSSProperties;
 }
+
+/** The kit's painted picture frame (3:2) and its measured window (design.md §4.3). */
+export function materialFrameStyle(kit: MaterialKit): CSSProperties {
+  return { ...mythicHubFrameLayout(kit), "--material-accent": dungeonArtDirections[kit].accent } as CSSProperties;
+}
+
+/** The frame's transparent-window artwork. */
+export const materialFrameArtwork = (kit: MaterialKit) => dungeonFrameArtwork(kit);

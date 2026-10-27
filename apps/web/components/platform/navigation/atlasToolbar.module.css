@@ -1,5 +1,5 @@
 /* atlas:strict — shared command bar: brand, search, language, game and account on top;
-   five section tabs with their menus below (one sheet with every menu on phones). */
+   the section tabs with their menus below (on phones only the sheet with every menu). */
 .toolbar {
   position: sticky;
   top: 0;
@@ -285,7 +285,7 @@
   .menuButton:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; }
   .menuButton[aria-expanded="true"] { border-color: var(--atlas-accent); }
   /* The tab strip stays visible and scrolls sideways. */
-  .tabs > ul { overflow-x: auto; scrollbar-width: none; padding-inline: 6px; mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+  .tabs > ul { overflow-x: auto; scrollbar-width: none; padding-inline: 6px; mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 28px), transparent); }
   .tabs > ul::-webkit-scrollbar { display: none; }
   .tab { height: 44px; padding-inline: 10px; font-size: var(--atlas-text-small); }
   .tab::after { right: 10px; left: 10px; }
@@ -305,6 +305,10 @@
   }
   .sheet > .account { justify-self: start; }
   .sheetRealm { padding-bottom: var(--atlas-space-5); border-bottom: 1px solid var(--atlas-line-soft); }
+}
+/* Phones: one navigation — the menu sheet; the tab strip would only repeat it. */
+@media (max-width: 767px) {
+  .tabs { display: none; }
 }
 @media (max-width: 420px) { .brand > span { display: none; } }
 

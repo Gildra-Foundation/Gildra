@@ -1,2 +1,0 @@
-/* atlas:strict — one quiet announcement, using the shared atlas hero. */
-.page { min-height: calc(100svh - var(--atlas-sticky-top)); display: grid; align-items: center; }

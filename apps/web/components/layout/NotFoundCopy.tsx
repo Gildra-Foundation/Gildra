@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MaterialLinkButton } from "@/components/wow/shared/material/MaterialButton";
 import type { Lang as Locale } from "@/lib/i18n-paths";
@@ -48,5 +49,23 @@ export function NotFoundActions({ locale }: { locale?: Locale }) {
   return <>
     <MaterialLinkButton kit="den-of-nalorakk" fit="stack" variant="primary" href={`${prefix}/wow`} iconAfter={<ArrowRight aria-hidden="true" />}>{text.hub}</MaterialLinkButton>
     <MaterialLinkButton kit="den-of-nalorakk" fit="stack" href={`${prefix}/wow/mythic-plus`}>{text.mythic}</MaterialLinkButton>
+  </>;
+}
+
+type Words = { en: string; ru: string };
+
+/** A string the server knows in both languages; the 404 shows the URL's. */
+export function NotFoundText({ en, ru }: Words) {
+  const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
+  return <>{ruUrl ? ru : en}</>;
+}
+
+export function NotFoundFooterLinks({ whatsNew, privacy }: { whatsNew: Words; privacy: Words }) {
+  const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
+  const lang = ruUrl ? "ru" : "en";
+  const prefix = ruUrl ? "/ru" : "";
+  return <>
+    <Link href={`${prefix}/wow/whats-new`} prefetch={false}>{whatsNew[lang]}</Link>
+    <Link href={`${prefix}/privacy`} prefetch={false}>{privacy[lang]}</Link>
   </>;
 }

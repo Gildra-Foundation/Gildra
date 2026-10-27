@@ -1,13 +1,21 @@
+/* atlas:strict — the story reader fills the screen under the bar; the legal line follows below it. */
 .library {
-  height: calc(100dvh - var(--atlas-sticky-top, 107px) - var(--cookie-notice-space, 0px));
-  min-height: 260px;
   background: var(--atlas-bg);
 }
 
 .room {
   display: block;
   width: 100%;
-  height: 100%;
+  height: calc(100dvh - var(--atlas-sticky-top, 107px) - var(--cookie-notice-space, 0px));
+  min-height: 260px;
   border: 0;
   color-scheme: dark;
 }
+
+.footer {
+  width: min(100%, var(--atlas-container));
+  margin: 0 auto;
+  padding: 0 var(--atlas-gutter);
+}
+
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

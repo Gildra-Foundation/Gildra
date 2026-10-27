@@ -4,6 +4,7 @@
  * The pieces stay where the hub keeps them; feature modules reach them only through this door.
  *
  * New pages use the generic pieces (`MaterialPlaque`, `MaterialLinkButton`, `MaterialButton`,
+ * `MaterialCard` / `MaterialFrame` — a scene in the kit's frame with a plaque — and
  * `materialIconFrameStyle`) instead of copying the plaque and button CSS of another page.
  */
 export { MythicHubBackdrop } from "@/components/wow/mythic/MythicHubBackdrop";
@@ -13,4 +14,5 @@ export { MythicHubOrnaments } from "@/components/wow/mythic/hub/MythicHubOrnamen
 export { mythicHubButtonLayout, mythicHubControlLayout } from "@/components/wow/mythic/hub/mythicHubControls";
 export { MaterialPlaque, materialStyles } from "./material/MaterialPlaque";
 export { MaterialButton, MaterialLinkButton } from "./material/MaterialButton";
-export { materialButtonStyle, materialIconFrameStyle, materialPlaqueStyle, type MaterialKit } from "./material/materialKit";
+export { MaterialCard, MaterialFrame } from "./material/MaterialCard";
+export { materialButtonStyle, materialFrameArtwork, materialFrameStyle, materialIconFrameStyle, materialPlaqueStyle, type MaterialKit } from "./material/materialKit";
