@@ -149,6 +149,9 @@ func TestRecoveryPolicyAllowsSameHostOnlyWhenExplicit(t *testing.T) {
 	if pattern != `^(file|s3|r2|swift)://` || key != "verified_restore_proof" {
 		t.Fatalf("unexpected same-host recovery settings: pattern=%q key=%q", pattern, key)
 	}
+	if _, key, _, err := RecoveryPolicySettings(RecoveryPolicyOwnerWaived); err != nil || key != "recovery_waived" {
+		t.Fatalf("owner waiver must be explicit and reported separately: key=%q err=%v", key, err)
+	}
 	if _, _, _, err := RecoveryPolicySettings("local"); err == nil {
 		t.Fatal("unknown recovery policy must fail closed")
 	}
