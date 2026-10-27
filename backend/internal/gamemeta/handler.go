@@ -12,7 +12,7 @@ import (
 
 type Store interface {
 	WoWTierList(context.Context, Query) (Snapshot, error)
-	WoWTierListContexts(context.Context, string) ([]Context, error)
+	WoWTierListContexts(ctx context.Context, activity, locale string) ([]Context, error)
 	WoWMythicPlusMeta(context.Context) (MythicPlusMeta, error)
 }
 
@@ -135,13 +135,22 @@ func (h *Handler) wowTierListContexts(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, r, http.StatusBadRequest, "invalid_activity", "activity must be mythic_plus or raid")
 		return
 	}
-	contexts, err := h.store.WoWTierListContexts(r.Context(), activity)
+	// wow.gg names dungeons, raids and bosses in Russian; en_US swaps in the game's own English names.
+	locale := r.URL.Query().Get("locale")
+	if locale == "" {
+		locale = SourceLocale
+	}
+	if locale != SourceLocale && locale != "en_US" {
+		writeProblem(w, r, http.StatusBadRequest, "invalid_locale", "locale must be ru_RU or en_US")
+		return
+	}
+	contexts, err := h.store.WoWTierListContexts(r.Context(), activity, locale)
 	if err != nil {
 		slog.Error("read public WoW tier-list contexts", "error", err)
 		writeProblem(w, r, http.StatusServiceUnavailable, "meta_unavailable", "WoW meta contexts are temporarily unavailable")
 		return
 	}
-	httpjson.Write(w, http.StatusOK, publicMetaCache, map[string]any{"activity": activity, "contexts": contexts})
+	httpjson.Write(w, http.StatusOK, publicMetaCache, map[string]any{"activity": activity, "locale": locale, "contexts": contexts})
 }
 
 func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, detail string) {

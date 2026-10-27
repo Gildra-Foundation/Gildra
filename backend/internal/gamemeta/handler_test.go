@@ -15,6 +15,7 @@ type fakeStore struct {
 	meta     MythicPlusMeta
 	err      error
 	query    Query
+	locale   string
 }
 
 func (f *fakeStore) WoWMythicPlusMeta(_ context.Context) (MythicPlusMeta, error) {
@@ -26,7 +27,8 @@ func (f *fakeStore) WoWTierList(_ context.Context, query Query) (Snapshot, error
 	return f.snapshot, f.err
 }
 
-func (f *fakeStore) WoWTierListContexts(_ context.Context, _ string) ([]Context, error) {
+func (f *fakeStore) WoWTierListContexts(_ context.Context, _, locale string) ([]Context, error) {
+	f.locale = locale
 	return []Context{{Activity: "mythic_plus", SelectionType: "all", SelectionID: "all", SelectionName: "All dungeons", AddonKey: "midnight", AddonName: "Midnight"}}, f.err
 }
 
@@ -94,12 +96,55 @@ func TestWoWTierListAcceptsSpecificContext(t *testing.T) {
 }
 
 func TestWoWTierListContexts(t *testing.T) {
+	for _, test := range []struct{ query, locale string }{{"", SourceLocale}, {"&locale=ru_RU", SourceLocale}, {"&locale=en_US", "en_US"}} {
+		store := &fakeStore{}
+		mux := http.NewServeMux()
+		NewHandler(store).Register(mux)
+		response := httptest.NewRecorder()
+		mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v1/meta/wow/tier-list/contexts?activity=mythic_plus"+test.query, nil))
+		if response.Code != http.StatusOK {
+			t.Fatalf("%q: status = %d, want %d", test.query, response.Code, http.StatusOK)
+		}
+		if store.locale != test.locale {
+			t.Fatalf("%q: locale = %q, want %q", test.query, store.locale, test.locale)
+		}
+	}
+}
+
+func TestWoWTierListContextsRejectsUnknownLocales(t *testing.T) {
 	mux := http.NewServeMux()
 	NewHandler(&fakeStore{}).Register(mux)
 	response := httptest.NewRecorder()
-	mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v1/meta/wow/tier-list/contexts?activity=mythic_plus", nil))
-	if response.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+	mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/v1/meta/wow/tier-list/contexts?locale=de_DE", nil))
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
+	}
+}
+
+func TestLocalizeContextsRenamesKnownJournalNames(t *testing.T) {
+	contexts := []Context{
+		{SelectionType: "all", SelectionName: "Все подземелья"},
+		{SelectionType: "dungeon", SelectionName: "Закоулок душегубов"},
+		{SelectionType: "raid", SelectionName: "Отравленная бездна"},
+		{SelectionType: "boss", SelectionName: "Ссзорак"},
+		{SelectionType: "boss", SelectionName: "Кит'икс"},
+		// A boss that shares a dungeon's name must not take the dungeon's translation.
+		{SelectionType: "boss", SelectionName: "Закоулок душегубов"},
+	}
+	names := map[journalName]string{
+		{kind: "instance", ru: "Закоулок душегубов"}: "Murder Row",
+		{kind: "instance", ru: "Отравленная бездна"}: "The Venomous Abyss",
+		{kind: "encounter", ru: "Ссзорак"}:           "Sszorak",
+	}
+	got := localizeContexts(contexts, names)
+	want := []string{"Все подземелья", "Murder Row", "The Venomous Abyss", "Sszorak", "Кит'икс", "Закоулок душегубов"}
+	for index, item := range got {
+		if item.SelectionName != want[index] {
+			t.Fatalf("context %d = %q, want %q", index, item.SelectionName, want[index])
+		}
+	}
+	if contexts[1].SelectionName != "Закоулок душегубов" {
+		t.Fatal("localizeContexts changed its input")
 	}
 }
 

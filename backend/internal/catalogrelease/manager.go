@@ -377,6 +377,11 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_public_summary_stats($1)`, productID); err != nil {
 			return fmt.Errorf("refresh published catalog summary stats: %w", err)
 		}
+		// Library image counts only count media from published sources, so the
+		// dependency registry is refreshed first and the library once.
+		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_published_source_dependencies()`); err != nil {
+			return fmt.Errorf("refresh published source dependencies: %w", err)
+		}
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_datasets($1)`, productID); err != nil {
 			return fmt.Errorf("refresh published library datasets: %w", err)
 		}
@@ -384,12 +389,6 @@ func (m *Manager) Publish(ctx context.Context, releaseID uuid.UUID) error {
 			if _, err := tx.Exec(ctx, `SELECT assert_catalog_ui_map_read_model($1,$2)`, productID, *buildID); err != nil {
 				return fmt.Errorf("verify published ui_map read model: %w", err)
 			}
-		}
-		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_published_source_dependencies()`); err != nil {
-			return fmt.Errorf("refresh published source dependencies: %w", err)
-		}
-		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_media_coverage($1)`, productID); err != nil {
-			return fmt.Errorf("refresh published library media coverage: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_library_media_previews($1)`, productID); err != nil {
 			return fmt.Errorf("refresh published library media previews: %w", err)

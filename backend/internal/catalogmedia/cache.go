@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,6 +27,9 @@ type Cache struct {
 	root       *os.Root
 	publicBase string
 	client     *http.Client
+	// wagoMu keeps CASC downloads to one stream even when several media
+	// seeders fetch other sources in parallel.
+	wagoMu sync.Mutex
 }
 
 type Result struct {

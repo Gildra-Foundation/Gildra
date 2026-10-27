@@ -39,22 +39,26 @@ type CardSummary struct {
 }
 
 type SummaryParams struct {
-	ExternalIDs      []int64
-	Product          string
-	Type             string
-	Locale           string
-	Query            string
-	Dataset          string
-	Category         string
-	Facets           []string
-	ItemClassID      *int
-	MinItemLevel     *int
-	MaxItemLevel     *int
-	MinRequiredLevel *int
-	MaxRequiredLevel *int
-	Cursor           string
-	Limit            int
-	IncludeTotal     bool
+	ExternalIDs []int64
+	Product     string
+	Type        string
+	Locale      string
+	Query       string
+	Dataset     string
+	Category    string
+	Facets      []string
+	ItemClassID *int
+	// ItemSubclassIDs and ExcludedItemSubclassIDs narrow ItemClassID; they
+	// come only from a public dataset definition (nil means no restriction).
+	ItemSubclassIDs         []int32
+	ExcludedItemSubclassIDs []int32
+	MinItemLevel            *int
+	MaxItemLevel            *int
+	MinRequiredLevel        *int
+	MaxRequiredLevel        *int
+	Cursor                  string
+	Limit                   int
+	IncludeTotal            bool
 }
 
 type SummaryPage struct {
@@ -101,6 +105,8 @@ var summaryFastQuery = `
 		AND ($8::int IS NULL OR item.required_level >= $8)
 		AND ($9::int IS NULL OR item.required_level <= $9)
 		AND ($10::int IS NULL OR item.item_class_id=$10)
+		AND ($11::int[] IS NULL OR item.item_subclass_id=ANY($11::int[]))
+		AND (item.item_subclass_id IS NULL OR item.item_subclass_id<>ALL(COALESCE($12::int[],'{}')))
 		AND entity.id>$3
 	ORDER BY entity.id LIMIT $5`
 
@@ -129,10 +135,12 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		}
 		var datasetType, datasetCategory string
 		var datasetItemClass *int
+		var datasetSubclasses, datasetExcludedSubclasses []int32
 		err := s.postgres.QueryRow(ctx, `
-			SELECT entity_type,category_path,item_class_id
+			SELECT entity_type,category_path,item_class_id,item_subclass_ids,excluded_item_subclass_ids
 			FROM catalog_library_dataset_definitions
-			WHERE slug=$1 AND is_public`, dataset).Scan(&datasetType, &datasetCategory, &datasetItemClass)
+			WHERE slug=$1 AND is_public`, dataset).Scan(&datasetType, &datasetCategory, &datasetItemClass,
+			&datasetSubclasses, &datasetExcludedSubclasses)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return SummaryPage{}, invalidRequest("dataset is not public")
 		}
@@ -149,6 +157,8 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		params.Dataset = dataset
 		if datasetItemClass != nil {
 			params.ItemClassID = datasetItemClass
+			params.ItemSubclassIDs = datasetSubclasses
+			params.ExcludedItemSubclassIDs = datasetExcludedSubclasses
 		} else if datasetCategory != "" {
 			params.Facets = append(params.Facets, datasetCategory)
 		}
@@ -174,13 +184,10 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if product == "" {
 		product = "wow"
 	}
-	// Dataset totals are maintained by a projection that historically included
-	// raw client rows. Any WoW product may now have build-pinned quality rows, so
-	// use the exact public-summary query for WoW products until every dataset
-	// projection carries the same eligibility dimension.
-	if datasetTotalCached && strings.HasPrefix(product, "wow") {
-		datasetTotalCached = false
-	}
+	// An unfiltered dataset total is read from catalog_library_dataset_stats:
+	// since migration 00177 that projection applies the same membership,
+	// display-name and usability predicates as this query, and an exact count
+	// of a whole item class does not finish inside totalCountWait.
 	locale := normalizeLocale(params.Locale)
 	var total *int64
 	if params.IncludeTotal {
@@ -188,7 +195,10 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		// field is optional and an exact count must not hold the page.
 		value, ok := s.totals.lookup(ctx, summaryTotalKey(params, product, locale, datasetTotalCached), totalCountWait, func(ctx context.Context) (int64, error) {
 			if datasetTotalCached {
-				return s.datasetSummaryCount(ctx, dataset, product, locale)
+				total, cached, err := s.datasetSummaryCount(ctx, dataset, product, locale)
+				if err != nil || cached {
+					return total, err
+				}
 			}
 			return s.summaryCount(ctx, params, product, locale)
 		})
@@ -240,6 +250,8 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 				AND ($10::int IS NULL OR item.required_level >= $10)
 				AND ($11::int IS NULL OR item.required_level <= $11)
 				AND ($13::int IS NULL OR item.item_class_id=$13)
+				AND ($14::int[] IS NULL OR item.item_subclass_id=ANY($14::int[]))
+				AND (item.item_subclass_id IS NULL OR item.item_subclass_id<>ALL(COALESCE($15::int[],'{}')))
 				AND ($5='' OR search_match.rank>0)
 				AND (($5='' AND entity.id>$3) OR ($5<>'' AND ($12::int IS NULL OR search_match.rank<$12 OR (search_match.rank=$12 AND entity.id>$3))))
 			ORDER BY ` + summaryOrderBy(query) + ` LIMIT $6
@@ -275,7 +287,8 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		ORDER BY ` + summaryPageOrderBy(query)
 	queryArgs := []any{product, strings.TrimSpace(params.Type), cursorID, locale,
 		query, params.Limit + 1, filterPaths, params.MinItemLevel, params.MaxItemLevel,
-		params.MinRequiredLevel, params.MaxRequiredLevel, cursorRank, params.ItemClassID}
+		params.MinRequiredLevel, params.MaxRequiredLevel, cursorRank, params.ItemClassID,
+		params.ItemSubclassIDs, params.ExcludedItemSubclassIDs}
 	entities := make([]CardSummary, 0, params.Limit+1)
 	scan := func(rows pgx.Rows) error {
 		defer rows.Close()
@@ -301,9 +314,10 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if query == "" && len(filterPaths) == 0 {
 		queryText := summaryFastQuery
 		args := []any{product, strings.TrimSpace(params.Type), cursorID, locale,
-			params.Limit + 1, params.MinItemLevel, params.MaxItemLevel, params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID}
+			params.Limit + 1, params.MinItemLevel, params.MaxItemLevel, params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID,
+			params.ItemSubclassIDs, params.ExcludedItemSubclassIDs}
 		if len(params.ExternalIDs) > 0 {
-			queryText = strings.Replace(queryText, "AND entity.id>$3", "AND entity.external_id=ANY($11::bigint[]) AND entity.id>$3", 1)
+			queryText = strings.Replace(queryText, "AND entity.id>$3", "AND entity.external_id=ANY($13::bigint[]) AND entity.id>$3", 1)
 			args = append(args, params.ExternalIDs)
 		}
 		rows, queryErr := s.postgres.Query(ctx, queryText, args...)
@@ -369,19 +383,22 @@ func cardSummaryIDs(entities []CardSummary) []uuid.UUID {
 	return ids
 }
 
-func (s *Service) datasetSummaryCount(ctx context.Context, dataset, product, locale string) (int64, error) {
-	var total int64
-	err := s.postgres.QueryRow(ctx, `
-		SELECT COALESCE(stats.entity_count,0)
+// datasetSummaryCount reads a dataset total from the library projection. It
+// reports cached=false when the projection has no row yet or predates the
+// dataset definition, so the caller counts exactly instead of serving a stale
+// denominator.
+func (s *Service) datasetSummaryCount(ctx context.Context, dataset, product, locale string) (total int64, cached bool, err error) {
+	err = s.postgres.QueryRow(ctx, `
+		SELECT COALESCE(stats.entity_count,0),COALESCE(stats.refreshed_at>=definition.updated_at,false)
 		FROM catalog_library_dataset_definitions definition
 		JOIN game_products product ON product.slug=$2
 		LEFT JOIN catalog_library_dataset_stats stats
 			ON stats.dataset_slug=definition.slug AND stats.product_id=product.id AND stats.locale=$3
-		WHERE definition.slug=$1 AND definition.is_public`, dataset, product, locale).Scan(&total)
+		WHERE definition.slug=$1 AND definition.is_public`, dataset, product, locale).Scan(&total, &cached)
 	if err != nil {
-		return 0, fmt.Errorf("read cached dataset summary count: %w", err)
+		return 0, false, fmt.Errorf("read cached dataset summary count: %w", err)
 	}
-	return total, nil
+	return total, cached, nil
 }
 
 // summaryTotalKey identifies the effective filters (after dataset
@@ -397,7 +414,19 @@ func summaryTotalKey(params SummaryParams, product, locale string, datasetTotal 
 		strings.TrimSpace(params.Type), strings.TrimSpace(params.Dataset), strings.TrimSpace(params.Query),
 		strings.TrimSpace(params.Category), strings.Join(params.Facets, "\x01"),
 		optional(params.ItemClassID), optional(params.MinItemLevel), optional(params.MaxItemLevel),
-		optional(params.MinRequiredLevel), optional(params.MaxRequiredLevel)}, "\x00")
+		optional(params.MinRequiredLevel), optional(params.MaxRequiredLevel),
+		subclassKey(params.ItemSubclassIDs), subclassKey(params.ExcludedItemSubclassIDs)}, "\x00")
+}
+
+func subclassKey(ids []int32) string {
+	if ids == nil {
+		return "-"
+	}
+	parts := make([]string, len(ids))
+	for index, id := range ids {
+		parts[index] = strconv.Itoa(int(id))
+	}
+	return "[" + strings.Join(parts, ",") + "]"
 }
 
 func (s *Service) summaryCount(ctx context.Context, params SummaryParams, product, locale string) (int64, error) {
@@ -473,8 +502,11 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 			AND ($7::int IS NULL OR item.required_level >= $7)
 			AND ($8::int IS NULL OR item.required_level <= $8)
 			AND ($9::int IS NULL OR item.item_class_id=$9)
+			AND ($11::int[] IS NULL OR item.item_subclass_id=ANY($11::int[]))
+			AND (item.item_subclass_id IS NULL OR item.item_subclass_id<>ALL(COALESCE($12::int[],'{}')))
 			AND ($3='' OR search.version_id IS NOT NULL)`, product, entityType, query, filterPaths, params.MinItemLevel, params.MaxItemLevel,
-			params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID, locale).Scan(&total)
+			params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID, locale,
+			params.ItemSubclassIDs, params.ExcludedItemSubclassIDs).Scan(&total)
 	})
 	if err != nil {
 		return 0, fmt.Errorf("count game entity summaries: %w", err)

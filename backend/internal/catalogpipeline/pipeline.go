@@ -207,6 +207,10 @@ func normalizeOptions(options Options) (Options, error) {
 		if strings.TrimSpace(options.RecoveryPolicy) == "" {
 			options.RecoveryPolicy = catalogquality.RecoveryPolicyOffHost
 		}
+		if strings.TrimSpace(strings.ToLower(options.RecoveryPolicy)) == catalogquality.RecoveryPolicyOwnerWaived &&
+			strings.TrimSpace(options.Trigger) != "manual" {
+			return Options{}, errors.New("the owner_waived recovery policy is only accepted for a manual run")
+		}
 		if !isStandardProfile {
 			return Options{}, errors.New("production catalog imports require a standard product foundation profile")
 		}
@@ -711,6 +715,14 @@ func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product, r
 	storagePattern, _, _, settingsErr := catalogquality.RecoveryPolicySettings(recoveryPolicy)
 	if settingsErr != nil {
 		return r.failStage(ctx, runID, "recovery-gate", "recovery_policy_invalid", settingsErr)
+	}
+	if strings.TrimSpace(strings.ToLower(recoveryPolicy)) == catalogquality.RecoveryPolicyOwnerWaived {
+		// Recorded on the stage so the run shows it started without a backup.
+		counters := map[string]any{"recovery_policy": catalogquality.RecoveryPolicyOwnerWaived, "backup_waived": true}
+		if _, err := r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`, runID, "recovery-gate", jsonObject(counters)); err != nil {
+			return fmt.Errorf("record waived recovery gate: %w", err)
+		}
+		return nil
 	}
 	// A postgres backup dumps the whole database (pg_dump without table filters),
 	// so a verified one covers every edition: Classic, Classic Era and Hardcore

@@ -33,6 +33,9 @@ type Result struct {
 	VariantStats   int64 `json:"variantStats,omitempty"`
 	VariantEffects int64 `json:"variantEffects,omitempty"`
 	Descriptions   int64 `json:"descriptions,omitempty"`
+	// CrossProductRemoved and PublishedMirrored report alignClassifiedCategories.
+	CrossProductRemoved int64 `json:"crossProductRemoved,omitempty"`
+	PublishedMirrored   int64 `json:"publishedMirrored,omitempty"`
 }
 
 type Indexer struct {
@@ -78,6 +81,10 @@ func (i *Indexer) rebuild(ctx context.Context, includeTooltips bool) (Result, er
 				return fmt.Errorf("classify %s %s: %w", definition.EntityType, definition.Path, err)
 			}
 			result.Assignments += written
+		}
+		result.CrossProductRemoved, result.PublishedMirrored, err = alignClassifiedCategories(ctx, tx, productID, "")
+		if err != nil {
+			return err
 		}
 		if includeTooltips {
 			carried, err := carryForwardOfficialLocalizations(ctx, tx)

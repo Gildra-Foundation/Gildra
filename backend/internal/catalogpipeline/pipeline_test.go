@@ -295,6 +295,28 @@ func TestProductionSameHostRecoveryRequiresExplicitKnownPolicy(t *testing.T) {
 	}
 }
 
+func TestOwnerWaivedRecoveryIsOnlyAcceptedForManualRuns(t *testing.T) {
+	base := Options{
+		Mode: "apply", PublicationEnvironment: "production", Product: "wow",
+		Profile: ProfileRetailFoundation, BuildVersion: "12.1.5.70575",
+		MaxRecords: 0, ConfirmFullImport: true, RecoveryPolicy: "owner_waived",
+	}
+	for _, trigger := range []string{"schedule", "retry", ""} {
+		base.Trigger = trigger
+		if _, err := BuildPlan(base); err == nil || !strings.Contains(err.Error(), "only accepted for a manual run") {
+			t.Fatalf("trigger %q: expected owner_waived rejection, got %v", trigger, err)
+		}
+	}
+	base.Trigger = "manual"
+	plan, err := BuildPlan(base)
+	if err != nil {
+		t.Fatalf("manual owner_waived run should be accepted: %v", err)
+	}
+	if len(plan) == 0 || plan[0].Key != "recovery-gate" {
+		t.Fatalf("waived runs keep the recovery-gate stage for the audit trail: %#v", plan)
+	}
+}
+
 func TestApplyPlanWrapsImportersInAtomicReleaseStages(t *testing.T) {
 	plan, err := BuildPlan(Options{
 		Mode: "apply", PublicationEnvironment: "development", Product: "wow",

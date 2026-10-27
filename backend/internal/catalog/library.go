@@ -25,7 +25,9 @@ func (s *Service) DatasetContainsEntity(ctx context.Context, dataset string, ent
 			WHERE definition.slug=$1 AND definition.is_public AND entity.deleted_at IS NULL
 				AND (
 					(definition.category_path='' AND definition.item_class_id IS NULL)
-					OR (definition.item_class_id IS NOT NULL AND item.item_class_id=definition.item_class_id)
+					OR (definition.item_class_id IS NOT NULL AND item.item_class_id=definition.item_class_id
+						AND (definition.item_subclass_ids IS NULL OR item.item_subclass_id=ANY(definition.item_subclass_ids))
+						AND (item.item_subclass_id IS NULL OR item.item_subclass_id<>ALL(definition.excluded_item_subclass_ids)))
 					OR (definition.item_class_id IS NULL AND definition.category_path<>'' AND EXISTS (
 						SELECT 1 FROM game_entity_categories assignment
 						JOIN catalog_categories category ON category.id=assignment.category_id

@@ -47,6 +47,10 @@ func (i *Indexer) rebuildItems(ctx context.Context, includeTooltips bool) (Resul
 			}
 			result.Assignments += written
 		}
+		result.CrossProductRemoved, result.PublishedMirrored, err = alignClassifiedCategories(ctx, tx, productID, "item")
+		if err != nil {
+			return err
+		}
 		result.Variants, result.VariantStats, result.VariantEffects, err = rebuildBaseItemVariants(ctx, tx)
 		if err != nil {
 			return err
@@ -253,12 +257,17 @@ func itemTaxonomyDefinitions(ctx context.Context, tx pgx.Tx) ([]Definition, erro
 }
 
 func classifyItem(ctx context.Context, tx pgx.Tx, categoryID int64, facet string, attributes map[string]any) (pgconnCommandTag, error) {
+	// Classify both the latest imported version (exposed by the next
+	// publication) and the published one, each by its own item facts, and only
+	// items of the category's product.
 	base := categoryInsertPrefix + `
-		SELECT e.latest_version_id, $1::bigint, 'gildra_classifier'
+		SELECT target.version_id, $1::bigint, 'gildra_classifier'
 		FROM game_entities e
-		JOIN game_entity_versions v ON v.id=e.latest_version_id
-		JOIN catalog_items ci ON ci.version_id=e.latest_version_id
-		WHERE e.entity_type='item' AND e.deleted_at IS NULL `
+		CROSS JOIN LATERAL (VALUES (e.latest_version_id),(NULLIF(e.published_version_id,e.latest_version_id))) target(version_id)
+		JOIN game_entity_versions v ON v.id=target.version_id
+		JOIN catalog_items ci ON ci.version_id=target.version_id
+		WHERE e.entity_type='item' AND e.deleted_at IS NULL
+		  AND e.product_id=(SELECT product_id FROM catalog_categories WHERE id=$1) `
 	switch facet {
 	case "item_class":
 		return tx.Exec(ctx, base+`
@@ -287,14 +296,15 @@ func classifyItem(ctx context.Context, tx pgx.Tx, categoryID int64, facet string
 	case "catalog_status":
 		return tx.Exec(ctx, `
 			INSERT INTO game_entity_categories(version_id,category_id,source,confidence)
-			SELECT e.latest_version_id,$1,'gildra_classifier',1
+			SELECT target.version_id,$1,'gildra_classifier',1
 			FROM game_entities e
 			JOIN game_products p ON p.id=e.product_id
-			WHERE p.slug='wow' AND e.entity_type='item' AND e.deleted_at IS NULL AND e.latest_version_id IS NOT NULL
+			CROSS JOIN LATERAL (VALUES (e.latest_version_id),(NULLIF(e.published_version_id,e.latest_version_id))) target(version_id)
+			WHERE p.slug='wow' AND e.entity_type='item' AND e.deleted_at IS NULL AND target.version_id IS NOT NULL
 			  AND NOT EXISTS (
 				SELECT 1 FROM game_entity_categories existing
 				JOIN catalog_categories category ON category.id=existing.category_id
-				WHERE existing.version_id=e.latest_version_id AND category.entity_type='item'
+				WHERE existing.version_id=target.version_id AND category.entity_type='item'
 				  AND category.facet<>'catalog_status'
 			  )
 			ON CONFLICT(version_id,category_id) DO NOTHING`, categoryID)

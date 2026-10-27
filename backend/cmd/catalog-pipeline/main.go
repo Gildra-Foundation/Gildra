@@ -47,7 +47,7 @@ func run() (catalogpipeline.Result, error) {
 	flag.StringVar(&binaryDirectory, "bin-dir", "", "directory containing importer executables")
 	flag.StringVar(&publicationEnvironment, "publication-environment", "production", "development, staging, or production")
 	flag.StringVar(&catalogAccessMode, "access-mode", envOr("CATALOG_ACCESS_MODE", "public"), "public or private")
-	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host or verified_same_host")
+	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host, verified_same_host, or owner_waived (manual runs only: no backup evidence, the owner accepts that a failed release cannot be restored)")
 	flag.IntVar(&maxRecords, "max-records", 0, "records per source dataset; 0 imports all")
 	flag.BoolVar(&confirmFullImport, "confirm-full-import", false, "confirm an unbounded production import")
 	flag.BoolVar(&forceRebuild, "force-rebuild", false, "rebuild and publish an already published build (explicit repair operation)")

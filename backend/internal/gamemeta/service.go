@@ -85,7 +85,10 @@ func NewService(db *pgxpool.Pool) *Service {
 	return &Service{db: db, now: time.Now}
 }
 
-func (s *Service) WoWTierListContexts(ctx context.Context, activity string) ([]Context, error) {
+// SourceLocale is the language wow.gg publishes context names in.
+const SourceLocale = "ru_RU"
+
+func (s *Service) WoWTierListContexts(ctx context.Context, activity, locale string) ([]Context, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT DISTINCT mode, selection_type, selection_id, selection_name,
 		       key_type, raid_difficulty, addon_key, addon_name, record_count
@@ -114,7 +117,95 @@ func (s *Service) WoWTierListContexts(ctx context.Context, activity string) ([]C
 		}
 		contexts = append(contexts, item)
 	}
-	return contexts, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if locale == SourceLocale {
+		return contexts, nil
+	}
+	names, err := s.journalNames(ctx, contexts, locale)
+	if err != nil {
+		return nil, err
+	}
+	return localizeContexts(contexts, names), nil
+}
+
+// journalName keys a translated name by the source's Russian name: wow.gg's
+// selection ids are not Journal ids, but its names are the Journal's own.
+type journalName struct {
+	kind string // "instance" for dungeons and raids, "encounter" for bosses
+	ru   string
+}
+
+func journalKind(selectionType string) string {
+	switch selectionType {
+	case "dungeon", "raid":
+		return "instance"
+	case "boss":
+		return "encounter"
+	}
+	return ""
+}
+
+// journalNames reads the catalog's Journal names (imported from the game's
+// DB2 tables) for the contexts' Russian names, newest build first.
+func (s *Service) journalNames(ctx context.Context, contexts []Context, locale string) (map[journalName]string, error) {
+	var instances, encounters []string
+	for _, item := range contexts {
+		switch journalKind(item.SelectionType) {
+		case "instance":
+			instances = append(instances, item.SelectionName)
+		case "encounter":
+			encounters = append(encounters, item.SelectionName)
+		}
+	}
+	names := make(map[journalName]string)
+	if len(instances) == 0 && len(encounters) == 0 {
+		return names, nil
+	}
+	rows, err := s.db.Query(ctx, `
+		SELECT DISTINCT ON (kind, source_name) kind, source_name, name
+		FROM (
+		  SELECT 'instance' AS kind, source.name AS source_name, target.name, source.build_id
+		  FROM catalog_journal_instance_localizations source
+		  JOIN catalog_journal_instance_localizations target
+		    ON target.build_id = source.build_id AND target.journal_instance_id = source.journal_instance_id AND target.locale = $3
+		  WHERE source.locale = $4 AND source.name = ANY($1)
+		  UNION ALL
+		  SELECT 'encounter', source.name, target.name, source.build_id
+		  FROM catalog_journal_encounter_localizations source
+		  JOIN catalog_journal_encounter_localizations target
+		    ON target.build_id = source.build_id AND target.journal_encounter_id = source.journal_encounter_id AND target.locale = $3
+		  WHERE source.locale = $4 AND source.name = ANY($2)
+		) journal
+		WHERE name <> ''
+		ORDER BY kind, source_name, build_id DESC`, instances, encounters, locale, SourceLocale)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var key journalName
+		var name string
+		if err := rows.Scan(&key.kind, &key.ru, &name); err != nil {
+			return nil, err
+		}
+		names[key] = name
+	}
+	return names, rows.Err()
+}
+
+// localizeContexts renames the contexts the catalog knows; the rest keep the
+// source's name, so a caller can tell them apart and leave them out.
+func localizeContexts(contexts []Context, names map[journalName]string) []Context {
+	localized := make([]Context, len(contexts))
+	for index, item := range contexts {
+		if name, ok := names[journalName{kind: journalKind(item.SelectionType), ru: item.SelectionName}]; ok {
+			item.SelectionName = name
+		}
+		localized[index] = item
+	}
+	return localized
 }
 
 func (s *Service) WoWTierList(ctx context.Context, query Query) (Snapshot, error) {

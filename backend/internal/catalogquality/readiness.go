@@ -16,6 +16,11 @@ const (
 	ScopeProduction                = "production"
 	RecoveryPolicyOffHost          = "off_host"
 	RecoveryPolicyVerifiedSameHost = "verified_same_host"
+	// RecoveryPolicyOwnerWaived lets one manual production run start and
+	// publish without backup evidence because the owner accepted that a failed
+	// release cannot be restored. Scheduled runs refuse it (catalogpipeline),
+	// and readiness reports it as a warning instead of a passed proof.
+	RecoveryPolicyOwnerWaived = "owner_waived"
 )
 
 type ReadinessCheck struct {
@@ -450,6 +455,10 @@ func EvaluateReadinessWithRecoveryPolicy(
 	// 2026-09-02: every registered source is public and credited on the site.
 	// A postgres backup is a dump of the whole database, so it protects every
 	// product; the manifest's product only names the run that took it.
+	if strings.TrimSpace(strings.ToLower(recoveryPolicy)) == RecoveryPolicyOwnerWaived {
+		report.warn(recoveryKey, ScopeProduction, 1, recoveryMessage)
+		return report, nil
+	}
 	var verifiedBackups int64
 	if err := db.QueryRow(ctx, `
 		SELECT count(*) FROM catalog_backup_manifests manifest
@@ -475,6 +484,8 @@ func RecoveryPolicySettings(policy string) (storagePattern, checkKey, message st
 		return `^(s3|r2|swift)://`, "off_host_restore_proof", "recent verified off-host backup and restore proof", nil
 	case RecoveryPolicyVerifiedSameHost:
 		return `^(file|s3|r2|swift)://`, "verified_restore_proof", "recent verified backup and exact restore proof; same-host storage accepts host-loss risk", nil
+	case RecoveryPolicyOwnerWaived:
+		return "", "recovery_waived", "owner waived the backup and restore proof for this manual run; a failed release cannot be restored", nil
 	default:
 		return "", "", "", fmt.Errorf("unsupported recovery policy %q", policy)
 	}
