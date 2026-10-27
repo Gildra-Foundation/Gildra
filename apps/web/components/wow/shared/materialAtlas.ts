@@ -15,4 +15,4 @@ export { mythicHubButtonLayout, mythicHubControlLayout } from "@/components/wow/
 export { MaterialPlaque, materialStyles } from "./material/MaterialPlaque";
 export { MaterialButton, MaterialLinkButton } from "./material/MaterialButton";
 export { MaterialCard, MaterialFrame } from "./material/MaterialCard";
-export { materialButtonStyle, materialFrameArtwork, materialFrameStyle, materialIconFrameStyle, materialPlaqueStyle, type MaterialKit } from "./material/materialKit";
+export { materialButtonStyle, materialFrameArtwork, materialFrameStyle, materialIconFrameStyle, materialPlaqueStyle, type AnyMaterialKit, type MaterialIconKit, type MaterialKit, type RaidMaterialKit } from "./material/materialKit";

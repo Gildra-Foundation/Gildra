@@ -3,11 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MaterialLinkButton } from "./MaterialButton";
-import { materialFrameArtwork, materialFrameStyle, materialPlaqueStyle, type MaterialKit } from "./materialKit";
+import { materialFrameArtwork, materialFrameStyle, materialPlaqueStyle, type AnyMaterialKit } from "./materialKit";
 import styles from "./material.module.css";
 
 type FrameProps = {
-  kit: MaterialKit;
+  kit: AnyMaterialKit;
   /** Scene painted inside the frame's window (decor: alt=""). */
   src: string;
   /** object-position of the scene. */

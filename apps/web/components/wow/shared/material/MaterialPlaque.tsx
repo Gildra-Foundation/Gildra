@@ -1,10 +1,10 @@
 import type { CSSProperties, ElementType, HTMLAttributes, ReactNode } from "react";
 import clsx from "clsx";
-import { materialPlaqueStyle, type MaterialKit } from "./materialKit";
+import { materialPlaqueStyle, type AnyMaterialKit } from "./materialKit";
 import styles from "./material.module.css";
 
 type Props = Omit<HTMLAttributes<HTMLElement>, "style"> & {
-  kit: MaterialKit;
+  kit: AnyMaterialKit;
   children: ReactNode;
   /** Element of the plaque: a section with its own heading, a div inside one, a form… */
   as?: ElementType;

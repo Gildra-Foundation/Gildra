@@ -79,12 +79,11 @@ export type GameDefinition = {
  *  page and has no sections. */
 const wowSections: SectionLink[] = [
   { label: "Characters", path: "/wow/characters" },
-  { label: "Dungeons", path: "/wow/dungeons" },
   { label: "Mythic+", path: "/wow/mythic-plus" },
   { label: "Raids", path: "/wow/raids" },
   { label: "Classes", path: "/wow/classes" },
   { label: "Tier Lists", path: "/tier-lists" },
-  { label: "Database", path: "/database" },
+  { label: "Library", path: "/library" },
 ];
 
 const wow: GameDefinition = {
