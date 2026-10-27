@@ -1,0 +1,70 @@
+/* atlas:strict — the specialization scene behind the talent calculator's command bar (design.md §4.5) and the
+   painted heads of the three tree panels (§4.2, kit of the Characters section). Decor only: aria-hidden, no events. */
+:global(.talent-calculator[data-atlas-scope]) .bar:global(.tc-commandbar) {
+  position: relative;
+  isolation: isolate;
+  background: var(--atlas-bg);
+}
+:global(.talent-calculator[data-atlas-scope]) .bar:global(.tc-commandbar) > :not(.scene) { position: relative; z-index: 1; }
+
+.scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.scene::before {
+  position: absolute;
+  inset: 0;
+  background: url("/assets/wow/loading/talents-wow.webp") center 38% / cover no-repeat;
+  filter: contrast(.94) saturate(.9);
+  opacity: .9;
+  content: "";
+}
+/* The left half stays dark under the title, the art shows on the right behind the controls. */
+.scene::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, var(--atlas-bg) 0%, color-mix(in srgb, var(--atlas-bg) 60%, transparent) 34%, color-mix(in srgb, var(--atlas-bg) 18%, transparent) 100%),
+    linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--atlas-bg) 70%, transparent));
+  content: "";
+}
+
+/* Tree panel heads on the painted plaque; the tree itself stays on glass. */
+:global(.talent-calculator[data-atlas-scope]) .plaqueHead :global(.tc-panel) > header {
+  isolation: isolate;
+  background: transparent !important;
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
+}
+:global(.talent-calculator[data-atlas-scope]) .plaqueHead :global(.tc-panel) > header::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  height: auto;
+  border: 20px solid transparent;
+  border-image-source: var(--mythic-panel-image);
+  border-image-slice: var(--mythic-panel-slice) fill;
+  border-width: var(--mythic-panel-width-mobile);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 12%, var(--atlas-bg));
+  background-clip: padding-box;
+  box-shadow: none;
+  opacity: 1;
+  content: "";
+  pointer-events: none;
+}
+:global(.talent-calculator[data-atlas-scope]) .plaqueHead :global(.tc-panel) > header :is(h2, strong, small) { text-shadow: 0 1px 3px var(--atlas-bg); }
+
+@media (prefers-reduced-transparency: reduce) { .scene { display: none; } }
+:global([data-transparency="reduced"]) .scene { display: none; }
+@media (forced-colors: active) {
+  .scene { display: none; }
+  :global(.talent-calculator[data-atlas-scope]) .plaqueHead :global(.tc-panel) > header::before { display: none; }
+  :global(.talent-calculator[data-atlas-scope]) .plaqueHead :global(.tc-panel) > header { border: 1px solid CanvasText !important; }
+}

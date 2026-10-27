@@ -12,6 +12,9 @@ import { pvpVisualTheme, talentVisualTheme } from "@/lib/talentVisualTheme";
 import { decodeWoWTalentLoadout, encodeWoWTalentLoadout, FURY_REFERENCE_LOADOUT, TALENT_HANDOFF_STORAGE_KEY, talentPointBudgets } from "@/lib/wowTalentLoadout";
 import { SpecMenu } from "@/components/talents/SpecMenuLazy";
 import { TalentTreePanel } from "@/components/talents/TalentTreePanel";
+import talentScene from "@/components/talents/talentAtlasScene.module.css";
+import { materialPlaqueStyle } from "@/components/wow/shared/materialAtlas";
+import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
 import { TalentDescription } from "@/components/talents/TalentDescription";
 import { getPerformanceTier, type PerformanceTier } from "@/lib/client/performanceTier";
 import { navigateTalentPage } from "@/lib/client/viewTransitionNavigation";
@@ -1716,7 +1719,8 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
   return (
     <TalentCopyContext.Provider value={copy}><TalentLangContext.Provider value={lang}>
     <main ref={calculatorRef} className={`talent-calculator${rotationFlow ? " is-rotation-flow" : ""}`} lang={lang} data-atlas-scope="" data-spec={theme.slug} data-hero={data.heroSubtreeId} data-spec-motif={theme.motif} data-performance={performanceTier} data-page-active="true">
-      <section className="tc-commandbar" aria-label={copy.toolbarLabel}>
+      <section className={`tc-commandbar ${talentScene.bar}`} aria-label={copy.toolbarLabel}>
+        <span className={talentScene.scene} aria-hidden="true" />
         <div className="tc-page-title">
           <span className="tc-fury-portrait tc-spec-icon"><Image src={theme.iconUrl} alt="" width={64} height={64} sizes="52px" quality={90} priority /></span>
           <div>
@@ -1760,7 +1764,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
       <div className="tc-mobile-tree-switcher" role="group" aria-label={copy.treeSwitcher}>
         {([["class", data.className], ["hero", data.heroName], ["spec", data.specName]] as const).map(([kind, name]) => <button key={kind} type="button" aria-label={`${copy.treeTabs[kind]}: ${name}`} aria-pressed={mobileTree === kind} onClick={() => setMobileTree(kind)}>{copy.treeTabs[kind]}</button>)}
       </div>
-      <section className="tc-workspace" data-mobile-tree={mobileTree}>
+      <section className={`tc-workspace ${talentScene.plaqueHead}`} data-mobile-tree={mobileTree} style={materialPlaqueStyle(CHARACTERS_KIT)}>
         {!compactLayout || mobileTree === "class" ? <TalentTreePanel lang={lang} style={rowStepStyle("class")} variant="class" eyebrow={copy.treeEyebrows.class} title={data.className} iconSrc={theme.classIconUrl} spent={rank("class")} budget={budgets.class} nodeCount={data.trees.class.nodes.length}><TalentTreeView tree={data.trees.class} ranks={treeRanks.class} choices={treeChoices.class} spentInTree={rank("class")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : null}
         {!compactLayout || mobileTree === "hero" ? mountedTrees.has("hero") ? <TalentTreePanel lang={lang} style={rowStepStyle("hero")} variant="hero" eyebrow={copy.treeEyebrows.hero} title={data.heroName} iconSrc={heroPanelIcon} secondary={<nav className="tc-hero-paths" aria-label={copy.heroPathsLabel}>{theme.heroPaths.map((hero) => {
           const href = `${localePrefix}/talents/${theme.slug}?hero=${hero.id}`;
