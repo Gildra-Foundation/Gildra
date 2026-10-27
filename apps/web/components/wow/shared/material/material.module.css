@@ -150,6 +150,8 @@
 }
 .frameScene { object-fit: cover; filter: contrast(.94) saturate(.9); transition: transform var(--atlas-duration-art) var(--atlas-ease); }
 .frameArt { z-index: 1; object-fit: contain; pointer-events: none; user-select: none; filter: contrast(.88) saturate(.84) brightness(.95); }
+/* Live content (3D, maps) fills the window and keeps its own pointer events; the frame art stays above it. */
+.frame[data-live] .frameWindow > * { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 /* ---------- "Picture + plaque" card (design.md §3.2) ---------- */
 .card { position: relative; display: flex; flex-direction: column; min-width: 0; color: var(--atlas-text); }

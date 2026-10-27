@@ -10,19 +10,25 @@ type FrameProps = {
   kit: AnyMaterialKit;
   /** Scene painted inside the frame's window (decor: alt=""). */
   src: string;
+  children?: never;
   /** object-position of the scene. */
   position?: string;
   sizes?: string;
   priority?: boolean;
 };
 
-/** A scene inside the kit's painted frame, clipped to the frame's measured window (design.md §4.3). */
-export function MaterialFrame({ kit, src, position, sizes = "(max-width: 900px) 100vw, 50vw", priority = false }: FrameProps) {
-  return <div className={styles.frame} style={materialFrameStyle(kit)} aria-hidden="true">
+/** Live content in the frame's window (a 3D slot, a map): the page keeps its own accessibility. */
+type LiveFrameProps = { kit: AnyMaterialKit; children: ReactNode; sizes?: string; src?: never; position?: never; priority?: never };
+
+/** A scene — or live content — inside the kit's painted frame, clipped to the frame's measured window (design.md §4.3). */
+export function MaterialFrame(props: FrameProps | LiveFrameProps) {
+  const { kit, sizes = "(max-width: 900px) 100vw, 50vw" } = props;
+  const live = props.children !== undefined;
+  return <div className={styles.frame} style={materialFrameStyle(kit)} aria-hidden={live ? undefined : true} data-live={live || undefined}>
     <div className={styles.frameWindow}>
-      <Image src={src} alt="" fill sizes={sizes} priority={priority} className={styles.frameScene} style={position ? { objectPosition: position } : undefined} />
+      {live ? props.children : <Image src={props.src!} alt="" fill sizes={sizes} priority={props.priority ?? false} className={styles.frameScene} style={props.position ? { objectPosition: props.position } : undefined} />}
     </div>
-    <Image src={materialFrameArtwork(kit)} alt="" fill sizes={sizes} className={styles.frameArt} />
+    <Image src={materialFrameArtwork(kit)} alt="" fill sizes={sizes} className={styles.frameArt} aria-hidden="true" />
   </div>;
 }
 
