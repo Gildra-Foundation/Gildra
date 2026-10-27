@@ -1,73 +1,71 @@
-/* atlas:strict — delve index: names on dotted leaders, like the index of an atlas. */
-.index {
+/* atlas:strict — delve atlas: the current season's delves on one painted plaque (design.md §4.2),
+   the first season as a quiet index of names; one source line at the foot. */
+.plaque { max-width: 980px; }
+
+.current {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: 2px var(--atlas-space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--atlas-space-4) var(--atlas-space-6);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.entry {
+.current li {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--atlas-space-3);
   min-height: var(--atlas-control-height);
-  padding: 10px 2px;
-  color: var(--atlas-text);
-  text-decoration: none;
+  margin: 0;
 }
 
-.name {
+/* A kit-lit gem before each current delve. */
+.current li::before {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  rotate: 45deg;
+  background: var(--material-light);
+  box-shadow: 0 0 0 1px var(--atlas-bg);
+  content: "";
+}
+
+.index {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 0 var(--atlas-space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.index li {
+  display: flex;
+  align-items: center;
+  min-height: var(--atlas-control-height);
+  border-bottom: 1px solid var(--atlas-line-soft);
+  color: var(--atlas-text);
   font-family: var(--atlas-font-display);
   font-size: var(--atlas-text-title);
   font-weight: var(--atlas-weight-display);
-  transition: color var(--atlas-duration) var(--atlas-ease);
 }
 
-.leader {
-  flex: 1;
-  min-width: 24px;
-  border-bottom: 1px dotted var(--atlas-line);
-  translate: 0 -4px;
-  transition: border-color var(--atlas-duration) var(--atlas-ease);
+.source {
+  margin: var(--atlas-space-7) 0 0;
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-meta);
 }
 
-.arrow {
-  flex: none;
-  align-self: center;
-  width: 16px;
-  height: 16px;
+.source a {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
   color: var(--atlas-accent);
-  transition: translate var(--atlas-duration) var(--atlas-ease);
 }
 
-.entry:hover .name,
-.entry:focus-visible .name { color: var(--atlas-accent-strong); }
-.entry:hover .leader,
-.entry:focus-visible .leader { border-bottom-color: var(--atlas-accent); }
-.entry:hover .arrow,
-.entry:focus-visible .arrow { translate: 4px 0; }
-.entry:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.source svg { width: 12px; height: 12px; }
 
-/* The current season: larger names, each marked with an ember. */
-.current .name { font-size: var(--atlas-text-h3); color: var(--atlas-text-strong); }
-
-.current .entry::before {
-  flex: none;
-  align-self: center;
-  width: 7px;
-  height: 7px;
-  content: "";
-  border-radius: 50%;
-  background: var(--atlas-accent-strong);
-  box-shadow: 0 0 10px var(--atlas-accent-strong);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .name,
-  .leader,
-  .arrow { transition: none; }
-  .entry:hover .arrow,
-  .entry:focus-visible .arrow { translate: none; }
+@media (forced-colors: active) {
+  .current li::before { background: CanvasText; box-shadow: none; }
 }

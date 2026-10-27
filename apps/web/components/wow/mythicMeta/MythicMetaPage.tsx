@@ -218,7 +218,6 @@ function SourcePlaque({ copy, fetchedAt, url, hubHref }: { copy: MythicMetaCopy;
           {copy.source} <a href={url} rel="noreferrer">mythicstats.com</a>
           {" · "}{copy.updated} <time dateTime={fetchedAt}>{dateTime(fetchedAt, copy)}</time>
         </span>
-        <span className={styles.sourceNote}>{copy.sourceNote}</span>
         <a className={styles.hubLink} href={hubHref}><ArrowLeft aria-hidden="true" />{copy.backToHub}</a>
       </span>
       <span className={styles.sourceAction} style={mythicHubButtonLayout("the-blinding-vale")}>

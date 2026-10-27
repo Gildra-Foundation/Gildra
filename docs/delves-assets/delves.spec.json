@@ -1,0 +1,17 @@
+{
+ "title": "Вылазки", "kit": "delves", "kit_name": "Delves expedition", "pages": "`/wow/delves`, `/ru/wow/delves`",
+ "page": "the Delves page",
+ "material": "blackened riveted iron of a miner's lantern cage, rough grey cave-stone corner blocks, small warm candle-wax amber glass at the caps, deep charcoal-umber face; an expedition into the deep",
+ "anchors": {"face": "#15110c", "metal": "#4b4640", "highlight": "#d8b47a", "accent": "#c98a3c"},
+ "site_accent": "#c9a46e",
+ "accent_note": "`accent-check.cjs` pass с предупреждением: оттенок в 5° от march-on-queldanas — материал явно другой (чернёное железо фонаря и пещерный камень, без бархата, золота и перьев).",
+ "task_dir": "/home/debian/gildra-mythic-design-20261027", "repo": "/home/debian/Gildra-mythic-design-20261027",
+ "public_dir": "/assets/wow/delves",
+ "assets": [
+  {"type": "panel", "title": "Материальная панель (9-slice)", "where": "табличка «Сезон 2» со списком вылазок; позже — карточки вылазок", "holds": "delve names, short facts and a button", "palette_ref_role": "World of Warcraft dungeon loading painting", "refs": ["/home/debian/Gildra-mythic-design-20261027/apps/web/public/assets/wow/loading/dungeon.webp", "$REF/panels-den-of-nalorakk.webp"]},
+  {"type": "button", "title": "Кнопка (9-slice)", "where": "«Вылазки сезона» в герое, позже «Открыть вылазку»", "caps": "each cap is a small iron lantern bracket holding one warm amber candle-glass bead, set on a rough stone block", "refs": ["{PANEL}", "$REF/buttons-den-of-nalorakk.webp"]},
+  {"type": "ornament", "title": "Орнамент из нижней рейки", "where": "вырастает из рейки таблички «Сезон 2»", "subject": "a cluster of three dripping wax candles on a short iron spike with a coil of rope", "refs": ["{PANEL}", "$REF/ornaments-ruby-life-pools.webp"]},
+  {"type": "scene", "name": "hub", "title": "Сцена героя (непрозрачная)", "where": "фон героя `/wow/delves` (сейчас `loading/dungeon.webp`)", "scene": "an original mouth of a deep cave delve in the Midnight lands: a rough stone tunnel descending into darkness, an expedition camp at the threshold with an iron lantern on a pole, rope ladders and wooden supports, a faint warm glow far below at the focal point.", "mood": "warm candle and lantern amber against cool deep grey-blue cave shadow", "refs": ["$REF/hub-gateway.webp"]}
+ ],
+ "after": ["`MaterialKit` + манифесты `/assets/wow/delves/controls/*` — заявка в область A (общие `materialKit.ts`/`materialAtlas.ts`); затем `DelveCatalogPage.tsx`: `kit` с `altar-of-fangs` на `delves`, сцена героя `hub.webp` (`art`/`<picture>`).", "Картины карточек вылазок сезона 2 (`the-ring-of-glory`, `gnarldor-isle`, `venomfall-deeps`) и рамка картины — только по официальному арту Blizzard (шаблон 10 `prompt-templates.md`); официальных кадров вылазок на диске нет — нужны от владельца. До них карточки не строятся, список остаётся на табличке.", "`SOURCE.md` в каждой папке `/assets/wow/delves/controls/*` и `/assets/wow/delves/` по `gildra-wow-material-design/assets.md` §8.", "Проверка 1440/390 RU/EN, 4 темы, reduced motion/transparency, forced colors."]
+}

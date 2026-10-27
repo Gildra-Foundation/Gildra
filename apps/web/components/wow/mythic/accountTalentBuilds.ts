@@ -25,7 +25,9 @@ export class AccountTalentBuildStore {
   private refreshPending = false;
   private request: typeof fetch;
   private changed: () => void;
-  constructor(request: typeof fetch, changed: () => void = () => {}) { this.request = request; this.changed = changed; }
+  private signedIn?: () => Promise<boolean>;
+  /** `signedIn` lets a guest skip the account request (and its 401) altogether. */
+  constructor(request: typeof fetch, changed: () => void = () => {}, signedIn?: () => Promise<boolean>) { this.request = request; this.changed = changed; this.signedIn = signedIn; }
   snapshot = () => this.state;
   serverSnapshot = () => initial;
   subscribe = (notify: () => void) => { this.listeners.add(notify); return () => { this.listeners.delete(notify); }; };
@@ -36,6 +38,7 @@ export class AccountTalentBuildStore {
     const epoch = ++this.epoch;
     this.publish({ ...initial });
     try {
+      if (this.signedIn && !(await this.signedIn())) { if (epoch === this.epoch) this.publish({ ...initial, mode: "guest" }); return; }
       const response = await this.request("/api/wow/mythic-builds", { cache: "no-store", credentials: "same-origin", signal: AbortSignal.timeout(12_000) });
       // Read every reply, the guest 401 too: an unread body keeps the request
       // open until the timeout signal aborts it.

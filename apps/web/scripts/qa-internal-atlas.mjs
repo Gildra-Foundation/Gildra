@@ -9,7 +9,7 @@ const engine = process.env.ATLAS_BROWSER || "brave";
 const baseURL = process.env.ATLAS_URL || "http://127.0.0.1:3118";
 const output = path.resolve(process.env.ATLAS_OUTPUT_DIR || "work/atlas-qa");
 const widths = (process.env.ATLAS_WIDTHS || "320,768,1440").split(",").map(Number);
-const routes = (process.env.ATLAS_ROUTES || "/ru/wow/characters,/wow/characters,/ru/login,/login,/ru/wow,/wow,/ru/tier-lists,/tier-lists,/ru/database,/database,/ru/search,/ru/analytics,/ru/privacy,/ru/wow/dungeons,/ru/wow/delves,/ru/wow/classes,/ru/wow/gear,/ru/wow/midnight/season-2,/ru/wow/mythic-plus,/ru/wow/raids,/ru/wow/lairs,/ru/talents/fury-warrior,/ru/wow/rotation/fury-warrior").split(",");
+const routes = (process.env.ATLAS_ROUTES || "/ru/wow/characters,/wow/characters,/ru/login,/login,/ru/wow,/wow,/ru/tier-lists,/tier-lists,/ru/database,/database,/ru/search,/ru/analytics,/ru/privacy,/ru/wow/delves,/ru/wow/classes,/ru/wow/gear,/ru/wow/midnight/season-2,/ru/wow/mythic-plus,/ru/wow/raids,/ru/wow/lairs,/ru/talents/fury-warrior,/ru/wow/rotation/fury-warrior").split(",");
 fs.mkdirSync(output, { recursive: true });
 const browser = engine === "webkit"
   ? await webkit.launch({ headless: true })

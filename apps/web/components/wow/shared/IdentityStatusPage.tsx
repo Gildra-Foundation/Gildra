@@ -1,30 +1,25 @@
 import Image from "next/image";
-import { ArrowRight, ExternalLink, Hourglass } from "lucide-react";
-import { AtlasFrame, AtlasHero, AtlasLinkButton, AtlasNotice, AtlasSection } from "@/components/atlas";
-import { formatAtlasDate, formatSeason } from "@gildra/atlas-ui/format";
+import { ArrowRight, ExternalLink } from "lucide-react";
+import { AtlasFrame, AtlasHero, AtlasLinkButton } from "@/components/atlas";
 import type { Lang as Locale } from "@/lib/i18n-paths";
 
 type IdentityLink = { href: string; label: string };
 
 const copy = {
-  ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", noticeTitle: "Раздел в подготовке", patch: "Патч", verified: "проверено", source: "Источник" },
-  en: { breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", noticeTitle: "Section in preparation", patch: "Patch", verified: "verified", source: "Source" },
+  ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", source: "Источник" },
+  en: { breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", source: "Source" },
 } as const;
 
-/** Honest placeholder for a section whose details are not published yet. */
+/** Short identity page of a section whose details are not published yet: hero, actions and one source link. */
 export function IdentityStatusPage({
   locale,
   eyebrow,
   title,
   summary,
-  patch,
-  season,
   sourceUrl,
   sourceLabel,
-  lastVerifiedAt,
   links = [],
   parent,
-  notice,
   art,
   artPosition,
   tint,
@@ -34,16 +29,17 @@ export function IdentityStatusPage({
   eyebrow: string;
   title: string;
   summary: string;
-  patch: string;
-  season: string;
+  /** @deprecated Patch, season and check date are internal facts; they are no longer shown. */
+  patch?: string;
+  /** @deprecated See `patch`. */
+  season?: string;
   sourceUrl: string;
   sourceLabel: string;
-  lastVerifiedAt: string;
+  /** @deprecated See `patch`. */
+  lastVerifiedAt?: string;
   links?: IdentityLink[];
   /** Section the page belongs to, shown in the breadcrumbs (path without the /ru prefix). */
   parent?: IdentityLink;
-  /** Extra status sentence shown before the confirmed facts. */
-  notice?: string;
   /** Page artwork behind the hero (a project illustration that fits the section). */
   art?: string;
   artPosition?: string;
@@ -70,13 +66,6 @@ export function IdentityStatusPage({
           <AtlasLinkButton href={sourceUrl} external variant="ghost" iconAfter={<ExternalLink aria-hidden="true" />}>{text.source}: {sourceLabel}</AtlasLinkButton>
         </>}
       />
-      {/* One status line: what is confirmed and when; the lede already says what will come. */}
-      <AtlasSection>
-        <AtlasNotice tone="caution" icon={<Hourglass />} title={text.noticeTitle}>
-          {notice ? <>{notice} </> : null}
-          {text.patch} {patch} · {formatSeason(season, locale)} · {text.verified} {formatAtlasDate(lastVerifiedAt, locale)}
-        </AtlasNotice>
-      </AtlasSection>
     </AtlasFrame>
   );
 }

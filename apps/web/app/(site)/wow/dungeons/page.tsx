@@ -1,6 +1,4 @@
-// routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
-import { DungeonCatalogPage } from "@/components/wow/mythic/DungeonCatalogPage";
-import { sectionMetadata } from "@/lib/routes/metadata";
+import { permanentRedirect } from "next/navigation";
 
-export const metadata = sectionMetadata("dungeons", "en");
-export default function Page() { return <DungeonCatalogPage locale="en" />; }
+/** The dungeon list lives on the Mythic+ hub. */
+export default function Page() { permanentRedirect("/wow/mythic-plus#dungeons"); }

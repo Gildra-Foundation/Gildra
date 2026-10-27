@@ -1,0 +1,6 @@
+/* atlas:strict — Season 2 overview: painted tiles of the Mythic+ hub (PaintedCard) and one source line. */
+.tile { min-width: 0; scroll-margin-top: var(--atlas-sticky-top); }
+
+.source { margin: var(--atlas-space-7) 0 0; font-size: var(--atlas-text-meta); }
+.source a { display: inline-flex; align-items: center; gap: 2px; min-height: 44px; color: var(--atlas-accent); }
+.source svg { width: 12px; height: 12px; }

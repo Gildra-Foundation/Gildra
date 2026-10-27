@@ -38,7 +38,7 @@ export function MythicAtlasPage({ locale }: { locale: "ru" | "en" }) {
     </div>
     <div className={styles.dungeons} data-hub-reveal>
       <AtlasSection id="dungeons" title={copy.listTitle} description={copy.chooseDescription}>
-        <DungeonCardGrid locale={locale} hrefBase="/wow/mythic-plus/midnight-season-2" priority={false} variant="hub" />
+        <DungeonCardGrid locale={locale} hrefBase="/wow/mythic-plus/midnight-season-2" priority={false} />
       </AtlasSection>
     </div>
     <div className={styles.timerSection} data-hub-reveal><MythicHubTimers locale={locale} /></div>

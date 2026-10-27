@@ -291,7 +291,6 @@
 .sourceText { display: grid; gap: var(--atlas-space-2); min-width: 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); text-shadow: 0 1px 3px var(--atlas-bg); }
 .sourceText strong { color: var(--atlas-text-strong); font: 600 var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); }
 .sourceText a { color: var(--meta-kit-light); text-underline-offset: .2em; }
-.sourceNote { max-width: var(--atlas-measure); color: var(--atlas-text-muted); }
 .hubLink { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; width: fit-content; font-size: var(--atlas-text-meta); }
 .hubLink svg { width: 14px; height: 14px; }
 .sourceText a:focus-visible { outline: 2px solid var(--meta-kit-light); outline-offset: 3px; }

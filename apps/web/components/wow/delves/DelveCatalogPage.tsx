@@ -1,53 +1,51 @@
 import { wowSourceName, wowSourceNameLang } from "@/lib/wow/sourceLocale";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import clsx from "clsx";
+import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
+import { MaterialLinkButton, MaterialPlaque, materialStyles, type MaterialKit } from "@/components/wow/shared/materialAtlas";
 import { midnightDelves } from "@/lib/data/wow";
-import styles from "./delveCatalog.module.css";
 import { trail } from "@/lib/routes/registry";
+import { delveCatalogCopy } from "./delveCatalogCopy";
+import styles from "./delveCatalog.module.css";
 
-const copy = {
-  ru: { breadcrumbs: "Навигация", wow: "World of Warcraft", title: "Вылазки Midnight", lede: "Вылазки обоих сезонов Midnight. Тактика и награды появятся после проверки.", season2: "Сезон 2 · патч 12.1", season1: "Сезон 1 · патч 12.0", current: "Текущий сезон", delves: "вылазок" },
-  en: { breadcrumbs: "Breadcrumbs", wow: "World of Warcraft", title: "Midnight Delves", lede: "Delves of both Midnight seasons. Strategy and rewards will appear once verified.", season2: "Season 2 · patch 12.1", season1: "Season 1 · patch 12.0", current: "Current season", delves: "delves" },
-} as const;
+/** Delves have no kit of their own yet: they wear the mossy stone and old bronze of Altar of Fangs. */
+const kit: MaterialKit = "altar-of-fangs";
 
+/** The delve atlas: the current season on a painted plaque, the first season as a quiet index. */
 export function DelveCatalogPage({ locale }: { locale: "en" | "ru" }) {
-  const text = copy[locale];
-  const prefix = locale === "ru" ? "/ru" : "";
-  const seasons = [
-    { id: "midnight-season-2", title: text.season2, note: text.current },
-    { id: "midnight-season-1", title: text.season1 },
-  ] as const;
+  const text = delveCatalogCopy[locale];
+  const current = midnightDelves.filter((delve) => delve.season === "midnight-season-2");
+  const archive = midnightDelves.filter((delve) => delve.season === "midnight-season-1");
+  const name = (value: string) => <span lang={wowSourceNameLang(value, locale)}>{wowSourceName(value, locale)}</span>;
   return (
     <AtlasFrame lang={locale} scene="delves">
       <AtlasHero
         breadcrumbs={trail(locale, "delves")}
         breadcrumbsLabel={text.breadcrumbs}
+        eyebrow={text.eyebrow}
         title={text.title}
         lede={text.lede}
-        stats={[{ value: midnightDelves.length, label: text.delves }]}
+        actions={<MaterialLinkButton kit={kit} fit="stack" href="#season-2" variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{text.choose}</MaterialLinkButton>}
+        statsLabel={text.statsLabel}
+        stats={[{ value: current.length, label: text.season2Count }, { value: archive.length, label: text.season1Count }]}
       />
-      {/* An atlas index: names on dotted leaders, the current season set larger. */}
-      {seasons.map((season) => {
-        const delves = midnightDelves.filter((delve) => delve.season === season.id);
-        const current = "note" in season;
-        return (
-          <AtlasSection key={season.id} id={season.id} title={season.title} description={current ? season.note : undefined}>
-            <ol className={clsx(styles.index, current && styles.current)}>
-              {delves.map((delve) => (
-                <li key={delve.id}>
-                  <Link className={styles.entry} href={`${prefix}/wow/delves/${delve.slug}`}>
-                    <span className={styles.name} lang={wowSourceNameLang(delve.name, locale)}>{wowSourceName(delve.name, locale)}</span>
-                    <span className={styles.leader} aria-hidden="true" />
-                    <ArrowRight className={styles.arrow} aria-hidden="true" />
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          </AtlasSection>
-        );
-      })}
+      <AtlasSection id="season-2" title={text.season2} description={text.season2Text}>
+        <MaterialPlaque kit={kit} className={styles.plaque}>
+          <ol className={styles.current}>
+            {current.map((delve) => <li key={delve.id} className={materialStyles.title}>{name(delve.name)}</li>)}
+          </ol>
+        </MaterialPlaque>
+      </AtlasSection>
+      <AtlasSection id="season-1" title={text.season1}>
+        <ol className={styles.index}>
+          {archive.map((delve) => <li key={delve.id}>{name(delve.name)}</li>)}
+        </ol>
+      </AtlasSection>
+      <p className={styles.source}>
+        {text.source}:{" "}
+        <a href={current[0]?.sourceUrl} target="_blank" rel="noreferrer">{text.season2Source}<ArrowUpRight aria-hidden="true" /></a>
+        {" · "}
+        <a href={archive[0]?.sourceUrl} target="_blank" rel="noreferrer">{text.season1Source}<ArrowUpRight aria-hidden="true" /></a>
+      </p>
     </AtlasFrame>
   );
 }

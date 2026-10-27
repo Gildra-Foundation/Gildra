@@ -1,8 +1,11 @@
 // Generated from app/(site)/wow/midnight/season-2/page.tsx by npm run routes:mirror — edit the English page.
-import { SeasonTwoHub } from "@/components/wow/season2/SeasonTwoHub";
+import type { Metadata } from "next";
+import { SeasonTwoHub } from "@/components/wow/mythic/SeasonTwoHub";
+import { seasonTwoHubCopy } from "@/components/wow/mythic/seasonTwoHubCopy";
 import { sectionMetadata } from "@/lib/routes/metadata";
 
-export const metadata = sectionMetadata("season2", "ru");
+const base = sectionMetadata("season2", "ru"), description = seasonTwoHubCopy["ru"].metaDescription;
+export const metadata: Metadata = { ...base, description, openGraph: { ...base.openGraph, description } };
 
 export default function Page() {
   return <SeasonTwoHub locale="ru" />;

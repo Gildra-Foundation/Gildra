@@ -3,10 +3,8 @@ import { pluralRu } from "@gildra/atlas-ui/format";
 /** Interface copy of the Mythic+ hub. Dungeon, boss and zone names are game terms. */
 export const mythicAtlasCopy = {
   ru: {
-    mdtChecked: "Маршрут MDT · по источнику",
-    importUpdate: "Импорт требует обновления",
     eyebrow: "Midnight · Сезон 2",
-    title: "Атлас Эпохальный+",
+    title: "Атлас Mythic+",
     breadcrumbsLabel: "Навигация",
     lede: "Сравните таймеры и выберите подземелье. В маршруте — реальные группы мобов MDT, порядок пуллов и механики со ссылками.",
     statsLabel: "Сводка сезона",
@@ -26,15 +24,11 @@ export const mythicAtlasCopy = {
     metaDescription: "Специализации и составы групп в мете Mythic+.",
     metaAction: "Посмотреть мету",
     dungeon: "Подземелье",
-    draft: "Маршрут — черновик",
-    stops: (count: number) => `${count} ${pluralRu(count, "этап", "этапа", "этапов")} маршрута`,
     bossCount: (count: number) => `${count} ${pluralRu(count, "босс", "босса", "боссов")}`,
     open: "Открыть маршрут",
     timer: "Таймер",
   },
   en: {
-    mdtChecked: "MDT route · source checked",
-    importUpdate: "Import needs an update",
     eyebrow: "Midnight · Season 2",
     title: "Mythic+ atlas",
     breadcrumbsLabel: "Breadcrumbs",
@@ -56,8 +50,6 @@ export const mythicAtlasCopy = {
     metaDescription: "Explore specializations and party compositions in the Mythic+ meta.",
     metaAction: "Explore the meta",
     dungeon: "Dungeon",
-    draft: "Draft route",
-    stops: (count: number) => `${count} route ${count === 1 ? "step" : "steps"}`,
     bossCount: (count: number) => `${count} ${count === 1 ? "boss" : "bosses"}`,
     open: "Open route",
     timer: "Timer",
@@ -67,6 +59,7 @@ export const mythicAtlasCopy = {
 /** English names of the zones stored in Russian in dungeonRoutes.ts. */
 export const dungeonLocationEn: Record<string, string> = {
   "Драконьи острова": "Dragon Isles",
+  "Извилистый остров": "The Coiled Isle",
   "Луносвет": "Silvermoon City",
   "Зул'Аман": "Zul'Aman",
   "Харандар": "Harandar",

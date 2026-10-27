@@ -4,7 +4,15 @@ import { useEffect, useSyncExternalStore } from "react";
 import { AccountTalentBuildStore } from "./accountTalentBuilds";
 
 let channel: BroadcastChannel | undefined;
-const account = new AccountTalentBuildStore((...args) => fetch(...args), () => channel?.postMessage("changed"));
+/** The account chip's status endpoint answers guests with 200, so a guest never asks for account builds. */
+async function signedIn() {
+  try {
+    const response = await fetch("/api/auth/status", { cache: "no-store", credentials: "same-origin", signal: AbortSignal.timeout(12_000) });
+    const body: unknown = await response.json().catch(() => null);
+    return !response.ok || (body as { connected?: unknown } | null)?.connected === true;
+  } catch { return true; }
+}
+const account = new AccountTalentBuildStore((...args) => fetch(...args), () => channel?.postMessage("changed"), signedIn);
 let mounts = 0;
 let cleanup: (() => void) | undefined;
 function start() {
