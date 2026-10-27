@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 /** Renderer state the Wowhead viewer exposes; camera fields are read and written live. */
 export type WowRenderer = {
   distance: number;
@@ -12,8 +14,8 @@ type WowViewerConstructor = new (options: Record<string, unknown>) => WowViewer;
 
 declare global {
   interface Window {
-    $: unknown;
-    jQuery: unknown;
+    $: JQueryStatic;
+    jQuery: JQueryStatic;
     WH?: Record<string, unknown>;
     ZamModelViewer?: WowViewerConstructor;
   }
@@ -48,17 +50,11 @@ export function loadZamViewerScript() {
   return viewerScriptPromise;
 }
 
-let jqueryPromise: Promise<unknown> | null = null;
-
-/** jQuery is the viewer's dependency only, so it loads with the viewer, not with the page. */
-function loadJquery() {
-  jqueryPromise ??= import("jquery").then((module) => module.default);
-  jqueryPromise.catch(() => { jqueryPromise = null; });
-  return jqueryPromise;
-}
-
+/**
+ * A dynamic import("jquery") was tried and reverted: the production chunk loader
+ * held the boot for ~10 s, and jQuery already ships in the studio's chunk.
+ */
 export async function configureZamViewerGlobals() {
-  const $ = await loadJquery();
   window.$ = $;
   window.jQuery = $;
   window.WH = {
@@ -72,8 +68,6 @@ export async function configureZamViewerGlobals() {
 
 export function createZamViewer(container: HTMLElement, options: Record<string, unknown>) {
   if (!window.ZamModelViewer) throw new Error("viewer script not loaded");
-  const $ = window.jQuery as ((element: HTMLElement) => unknown) | undefined;
-  if (!$) throw new Error("viewer globals not configured");
   return new window.ZamModelViewer({ type: 2, contentPath: ZAM_CONTENT_PATH, container: $(container), ...options });
 }
 

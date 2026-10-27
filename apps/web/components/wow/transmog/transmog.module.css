@@ -237,7 +237,11 @@
 @media (max-width: 1280px) { .toolText { display: none; } .downloadButton .toolText { display: inline; } }
 @media (max-width: 700px) {
   /* Phone: the stage and the slot strip stay on screen while the list scrolls beneath. */
-  .studio { --stage-h: min(44dvh, 120vw); }
+  .studio { --stage-h: min(40dvh, 120vw); }
+  /* Keep rows that get focus or a tap clear of the sticky stage. */
+  .result { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--stage-h) + 96px); }
+  /* While typing a search, the keyboard needs the room: the stage scrolls away. */
+  .studio:has(input[type="search"]:focus) .stageColumn { position: relative; top: auto; }
   .hero p { display: none; }
   /* The stage column must sit in the tall workspace, not in the doll row, to stay sticky. */
   .doll { display: contents; }
