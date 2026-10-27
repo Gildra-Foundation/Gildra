@@ -35,8 +35,8 @@
       "url": "https://www.icy-veins.com/wow/crown-of-the-cosmos-raid-guide"
     }
   ],
-  "summaryRu": "Шпиль Бездны — рейд первого сезона Midnight в Буре Бездны, шесть сражений. Это материал сезона 1: актуальные числовые значения и добыча требуют проверки выбранной сложности.",
-  "summaryEn": "The Voidspire is a six-encounter Midnight Season 1 raid in Voidstorm. This is Season 1 reference content; numerical tuning and rewards require difficulty-specific verification.",
+  "summaryRu": "Шесть боссов в Буре Бездны. После Аверзиана зачистите оба крыла в любом порядке: Ненасытникус слева, Салхадаар справа. Затем драконы, Авангард и Корона космоса.",
+  "summaryEn": "Six bosses in Voidstorm. After Averzian, clear both wings in either order: Vorasius on the left and Salhadaar on the right. Then the dragons, Vanguard and Crown of the Cosmos.",
   "bosses": [
     {
       "slug": "imperator-averzian",
@@ -101,7 +101,7 @@
       "summaryEn": "Separate the dragons, coordinate soaks, and preserve clean arena space.",
       "tipsRu": [
         "Dread Breath направляйте от группы.",
-        "На Heroic чередуйте группы Gloom из-за дебаффа повторного замачивания.",
+        "На героической сложности чередуйте группы Gloom из-за дебаффа повторного замачивания.",
         "На 100 энергии входите в Radiant Barrier и убивайте адда; с Shadowmark отходите от центра группы."
       ],
       "tipsEn": [

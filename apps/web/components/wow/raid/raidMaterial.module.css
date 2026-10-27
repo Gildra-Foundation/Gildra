@@ -1,0 +1,17 @@
+/* atlas:strict — re-applies a raid kit's measured button geometry over the shared material button
+   (components/wow/shared/material). No painted CSS of its own: only the geometry variables move. */
+.scope { display: contents; }
+.button {
+  --mythic-button-image: var(--raid-kit-button-image);
+  --mythic-button-slice: var(--raid-kit-button-slice);
+  --mythic-button-width: var(--raid-kit-button-width);
+  --mythic-button-top: var(--raid-kit-button-top);
+  --mythic-button-right: var(--raid-kit-button-right);
+  --mythic-button-bottom: var(--raid-kit-button-bottom);
+  --mythic-button-left: var(--raid-kit-button-left);
+  --mythic-button-pad-top: var(--raid-kit-button-pad-top);
+  --mythic-button-pad-bottom: var(--raid-kit-button-pad-bottom);
+  --mythic-button-inset: var(--raid-kit-button-inset);
+}
+/* The 56 px list chip: the shared button keeps 68 px, so the row height is restated at higher specificity. */
+.scope .row.button:global(.ui-button) { min-height: 56px; }

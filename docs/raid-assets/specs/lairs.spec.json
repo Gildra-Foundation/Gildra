@@ -1,0 +1,71 @@
+{
+ "title": "Логова и мировые боссы",
+ "kit": "lairs",
+ "kit_name": "Lairs",
+ "pages": "`/wow/lairs`, `/wow/lairs/[slug]`",
+ "page": "the Lairs and world bosses pages",
+ "material": "barnacle-crusted sea-green bronze rails, nacre mother-of-pearl shell caps at the corners, deep kelp-dark teal face; a tidal grotto, wet and luminous only at the edges",
+ "anchors": {
+  "face": "#08161a",
+  "metal": "#3f6a5c",
+  "highlight": "#d8e6d0",
+  "accent": "#5aa7c8"
+ },
+ "site_accent": "#5aa7c8",
+ "accent_note": "`accent-check.cjs` pass; оттенок в 10° от den-of-nalorakk — поэтому материал другой: бронза с ракушками и перламутр вместо сланцевого камня и медвежьих когтей.",
+ "task_dir": "/home/debian/gildra-raids-design-20261027",
+ "repo": "/home/debian/Gildra-raids-design-20261027",
+ "public_dir": "/assets/wow/lairs",
+ "assets": [
+  {
+   "type": "panel",
+   "title": "Материальная панель (9-slice)",
+   "where": "таблички карточек логова и мировых боссов, «Награды и расписание», способности, сложности, добыча",
+   "holds": "boss facts, ability lists and loot tables",
+   "palette_ref_role": "Nymrissa Wavecaller official artwork",
+   "refs": [
+    "/home/debian/Gildra-raids-design-20261027/apps/web/public/assets/wow/lairs/bosses/nymrissa.jpg",
+    "$REF/panels-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "button",
+   "title": "Кнопка (9-slice)",
+   "where": "«Логово сезона», «Мировые боссы», «Открыть гайд», «Гайд»",
+   "caps": "two nacre shell caps, the left one slightly larger",
+   "refs": [
+    "{PANEL}",
+    "$REF/buttons-ruby-life-pools.webp"
+   ]
+  },
+  {
+   "type": "skill",
+   "name": "lairs-skill",
+   "title": "Рамка навыка",
+   "where": "иконки способностей на страницах логова и мировых боссов",
+   "icon": "a boss ability icon",
+   "corners": "four small nacre shell caps",
+   "size": "44–56 px",
+   "refs": [
+    "{PANEL}",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  },
+  {
+   "type": "scene",
+   "name": "lairs-scene",
+   "title": "Сцена героя",
+   "where": "фон героя /wow/lairs (сейчас — портрет Nymrissa)",
+   "scene": "a flooded tidal grotto beneath the Coiled Isle: luminous blue water falling in thin threads on the right, wet barnacled stone arches, a calm dark pool on the left half for headline text",
+   "refs": [
+    "$REF/hub-gateway.webp"
+   ],
+   "mood": "cold luminous blue water light, quiet and deep"
+  }
+ ],
+ "after": [
+  "Рамка картины (frame) билдером не поддерживается: для карточек логова пока рамка Venomous Abyss (`RaidFramedArt`); свою — по `prompt-templates.md` «Рамка картины».",
+  "Подключить: `kit` в `components/wow/raid/lairs/LairsHub.tsx` и `LairBossGuide.tsx` — новый кит через тот же контракт `--mythic-panel-*`/`--mythic-button-*` (см. `raidMaterial.tsx`).",
+  "Проверка 1440/390 RU/EN, 4 темы, reduced motion/transparency, forced colors."
+ ]
+}

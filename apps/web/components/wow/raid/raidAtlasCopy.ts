@@ -19,7 +19,6 @@ export const raidAtlasCopy = {
     openRaid: "Открыть рейд",
     pendingTitle: "Подробности позже",
     pendingText: "Название рейда и босса подтверждены. Описание, портреты и тактика появятся после проверки данных.",
-    officialSource: "Анонс Blizzard",
     bossesLabel: "Боссы",
   },
   en: {
@@ -41,7 +40,6 @@ export const raidAtlasCopy = {
     openRaid: "Open raid",
     pendingTitle: "Details coming later",
     pendingText: "The raid and boss names are confirmed. Description, portraits and strategy will appear once the data is verified.",
-    officialSource: "Blizzard announcement",
     bossesLabel: "Bosses",
   },
 } as const;

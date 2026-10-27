@@ -44,7 +44,7 @@ export const raidGuideCopy = {
     // Mechanics
     mechanicsTitle: "Механики",
     mechanicsText: "Кто отвечает и что делать. Где стоять, когда, цена ошибки и отличия сложностей — в «Подробнее».",
-    mechanicsJournalText: "Способности с подтверждённым описанием из журнала приключений.",
+    mechanicsJournalText: "Способности босса из журнала приключений.",
     who: "Кто",
     doThis: "Что делать",
     more: "Подробнее",
@@ -120,7 +120,7 @@ export const raidGuideCopy = {
 
     mechanicsTitle: "Mechanics",
     mechanicsText: "Who handles it and what to do. Positioning, timing, the cost of failure and difficulty notes are under “More”.",
-    mechanicsJournalText: "Abilities with a verified Adventure Guide description.",
+    mechanicsJournalText: "The boss's abilities from the Adventure Guide.",
     who: "Who",
     doThis: "Do this",
     more: "More",

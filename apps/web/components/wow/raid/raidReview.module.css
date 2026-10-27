@@ -11,3 +11,5 @@
 .spells li { display: flex; gap: var(--atlas-space-3); align-items: center; min-width: 0; padding: var(--atlas-space-3); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); background: var(--atlas-surface); }
 .spells img { flex-shrink: 0; border-radius: var(--atlas-radius); }
 .spells a { font-size: var(--atlas-text-body); overflow-wrap: anywhere; }
+.summary { max-width: var(--atlas-measure); font-size: var(--atlas-text-lead); }
+.sourcesDisclosure { margin-top: var(--atlas-space-3); }

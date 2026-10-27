@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const path = `/wow/raids/${raid.slug}/${boss.slug}`;
   return {
     title: `${boss.nameEn} — Midnight Raid Guide — Gildra`,
-    description: `${boss.nameEn} source-backed strategy draft for Midnight Season 1. Ability and loot coverage is not yet automatically complete.`,
+    description: `${boss.nameEn} — Midnight Season 1 raid boss: battle plan, mechanics and abilities.`,
     alternates: { canonical: path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
     robots: { index: false, follow: true },
   };

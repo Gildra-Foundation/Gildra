@@ -23,7 +23,6 @@ export type RaidHubEntry = {
   /** Only existing matching destination scenes participate in the art morph. */
   sceneArt?: string;
   accent: string;
-  sourceUrl?: string;
   bosses: { slug: string; names: Localized; artwork?: string }[];
 };
 
@@ -76,9 +75,9 @@ export const raidHubEntries: RaidHubEntry[] = [
     slug: "sporefall",
     section: "archive",
     names: localizedIdentity(sporefall.names, sporefall.canonicalSlug),
+    location: { en: "Harandar", ru: "Харандар" },
     artwork: "/assets/wow/raids/hub/sporefall.webp",
     accent: "#c9a56e",
-    sourceUrl: sporefall.sourceUrl,
     bosses: [{
       slug: rotmire.canonicalSlug,
       names: localizedIdentity(rotmire.names, rotmire.canonicalSlug),

@@ -1,0 +1,84 @@
+/* atlas:strict — layout of the raid and lair pages around the shared painted material
+   (raidMaterial.tsx → components/wow/shared/material). Colours come from the atlas tokens and the kit light. */
+
+/* ---------- Page and hero over the raid scene (design.md §3.1, §4.5) ---------- */
+.page { position: relative; }
+.hero { min-height: 470px; }
+.hero h1 { max-width: 15ch; }
+.hero p { max-width: 48ch; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+@media (max-width: 767px) { .hero { min-height: 0; } }
+
+/* ---------- Boss chips ---------- */
+.bossChips { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+.bossChips > li { display: flex; min-width: 0; }
+.bossChip:global(.ui-button) { justify-content: flex-start; gap: var(--atlas-space-3); text-align: start; }
+.bossChip :global(.ui-button__label) { text-align: start; }
+.bossChips .bossChip :global(.ui-button__icon) { flex: none; width: 32px; height: 32px; }
+.bossPortrait { display: block; width: 32px; height: 32px; border: 1px solid var(--atlas-line); border-radius: 7px; object-fit: cover; }
+.bossOrder { display: inline-grid; place-items: center; width: 32px; height: 32px; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-body) / 1 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; }
+
+/* ---------- Plaques ---------- */
+.plaqueGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-5); align-items: stretch; }
+.plaqueGrid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: var(--atlas-space-4); }
+.plaqueStack { display: grid; gap: var(--atlas-space-5); }
+.plaqueLabel { margin: 0 0 var(--atlas-space-2); color: var(--material-light); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: .12em; text-transform: uppercase; text-shadow: 0 1px 3px var(--atlas-bg); }
+.plaque h3 { margin: 0 0 var(--atlas-space-3); color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.plaque p, .plaque li { color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); text-shadow: 0 1px 3px var(--atlas-bg); }
+.plaque ul:not([class]) { display: grid; gap: var(--atlas-space-2); margin: 0; padding-left: var(--atlas-space-5); }
+.plaque p { margin: 0; }
+.plaque p + p, .plaque ul + p { margin-top: var(--atlas-space-3); }
+.facts { display: grid; gap: var(--atlas-space-3); margin: 0; }
+.facts > div { display: grid; gap: 2px; padding-bottom: var(--atlas-space-3); border-bottom: 1px solid var(--material-line); }
+.facts > div:last-child { padding-bottom: 0; border-bottom: 0; }
+.facts dt { color: var(--material-light); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: .12em; text-transform: uppercase; }
+.facts dd { margin: 0; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); text-shadow: 0 1px 3px var(--atlas-bg); }
+.rows { display: grid; margin: 0; padding: 0; list-style: none; }
+.rows > li { display: grid; gap: 2px; padding: var(--atlas-space-3) 0; border-bottom: 1px solid var(--material-line); }
+.rows > li:first-child { padding-top: 0; }
+.rows > li:last-child { padding-bottom: 0; border-bottom: 0; }
+.rows small { color: var(--material-light); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.rows strong { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.rows span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.meta { margin: var(--atlas-space-3) 0 0; color: var(--material-light); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums lining-nums; }
+.quiet { margin-top: var(--atlas-space-4); color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.quiet a { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--atlas-accent); text-decoration: none; }
+.quiet a:hover { text-decoration: underline; }
+.quiet svg { width: 12px; height: 12px; }
+.plaque table { background: transparent; }
+.plaque .subheading { margin: var(--atlas-space-5) 0 var(--atlas-space-3); }
+.tokens { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: var(--atlas-space-2) var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.plaque .tokens > li { display: grid; gap: 2px; font-size: var(--atlas-text-small); }
+.tokens > li > span { color: var(--material-light); font-size: var(--atlas-text-meta); }
+.waypoint { margin-top: var(--atlas-space-4); }
+.plaqueAfter { margin-top: var(--atlas-space-5); }
+.sourceList { display: grid; gap: var(--atlas-space-2); margin: var(--atlas-space-2) 0 0; padding-inline-start: var(--atlas-space-5); overflow-wrap: anywhere; }
+.sourceList a { color: var(--atlas-accent); text-underline-offset: .2em; }
+
+
+/* ---------- Abilities in painted skill frames (design.md §4.6) ---------- */
+.abilities { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--atlas-space-4) var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.ability { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: var(--atlas-space-3); }
+.ability h3 { margin: var(--atlas-space-1) 0 var(--atlas-space-1); font-size: var(--atlas-text-title); }
+.ability p { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.abilityNames { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: var(--atlas-space-3) var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.abilities + .abilityNames { margin-top: var(--atlas-space-5); padding-top: var(--atlas-space-4); border-top: 1px solid var(--material-line); }
+.abilityNames a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: var(--atlas-text-strong); text-decoration: none; text-shadow: 0 1px 3px var(--atlas-bg); }
+.abilityNames a:hover { color: var(--material-light); text-decoration: underline; text-underline-offset: 3px; }
+.abilityNames a svg { flex: none; width: 12px; height: 12px; color: var(--atlas-text-muted); }
+.abilityNames > li { display: flex; align-items: center; gap: var(--atlas-space-2); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); }
+
+/* ---------- Roles ---------- */
+.roleGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-4); }
+.roleTitle { display: flex; align-items: center; gap: var(--atlas-space-2); }
+.roleTitle svg { flex: none; width: 18px; height: 18px; color: var(--material-light); }
+.lead { max-width: var(--atlas-measure); margin: 0 0 var(--atlas-space-5); color: var(--atlas-text); font-size: var(--atlas-text-lead); line-height: var(--atlas-leading-body); }
+.timeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.timeline > li { display: grid; align-content: start; gap: var(--atlas-space-1); }
+.timeline b { color: var(--material-light); font-size: var(--atlas-text-label); letter-spacing: .12em; text-transform: uppercase; }
+.timeline strong { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.timeline span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+
+@media (max-width: 1000px) { .roleGrid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .plaqueGrid { grid-template-columns: minmax(0, 1fr); } }
+@media (forced-colors: active) { .bossPortrait { border-color: CanvasText; } .facts > div, .rows > li, .abilityNames { border-color: CanvasText; } }

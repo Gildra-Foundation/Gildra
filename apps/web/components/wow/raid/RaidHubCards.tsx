@@ -1,14 +1,13 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, MapPin, Skull } from "lucide-react";
+import { MapPin, Skull } from "lucide-react";
 import { Card } from "@gildra/atlas-ui/valyro-ui/data-display/Card";
 import { AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasMorphPreload } from "@gildra/atlas-ui/AtlasMorphPreload";
 import { morphArtProps } from "@gildra/atlas-ui/morph";
 import bridge from "@gildra/atlas-ui/valyroAtlasBridge.module.css";
 import { raidAtlasCopy } from "./raidAtlasCopy";
-import { raidReviewCopy } from "./raidReviewCopy";
 import { raidHubEntries, type RaidHubLocale } from "./raidHubData";
 import { raidHubFrameArtwork, raidHubFrameLayout } from "./raidHubFrames";
 import { raidCardThemes } from "./raidCardThemes";
@@ -26,7 +25,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
       const name = raid.names[locale];
       const featured = section === "current";
       const theme = raidCardThemes[raid.slug];
-      const description = raid.slug === "sporefall" ? raidReviewCopy[locale].sporefallCard : featured ? raid.descriptions?.[locale] : undefined;
+      const description = featured ? raid.descriptions?.[locale] : undefined;
       const sizes = featured ? "(max-width: 1100px) 100vw, 50vw" : "(max-width: 700px) 100vw, 50vw";
       return <Card
         key={raid.slug}
@@ -86,7 +85,6 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
               <AtlasLinkButton className={styles.openRaid} href={href}>
                 {copy.openRaid}<span className={styles.srOnly}>: {name}</span>
               </AtlasLinkButton>
-              {raid.sourceUrl ? <a className={styles.source} href={raid.sourceUrl} target="_blank" rel="noreferrer">{copy.officialSource}<ArrowUpRight aria-hidden="true" /></a> : null}
             </footer>
             <RaidHubOrnaments slug={raid.slug} />
           </div>

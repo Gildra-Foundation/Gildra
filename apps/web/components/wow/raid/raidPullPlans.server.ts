@@ -103,11 +103,17 @@ export function getRaidPullPlan(slug: string): RaidPullPlan | undefined {
     if (!guide) for (const identity of getReviewedSpellIdentities(undefined, slug, boss.slug)) {
       abilities.push({ spellId: identity.spellId, name: tx(identity.nameRu, identity.nameEn), icon: identity.iconUrl, roles: allRoles });
     }
-    const roleTips = guide?.roles ?? {
-      tank: tips.filter((_, i) => i === 3 || i === 4),
-      healer: tips.filter((_, i) => i === 1 || i === 6),
-      dps: tips.filter((_, i) => i === 0 || i === 1 || i === 4 || i === 5),
+    // Each reviewed tip goes to one role, and the role heading replaces a "Tanks:" / "Healers:" lead-in.
+    const roleTip = (i: number) => {
+      const tip = tips[i];
+      const lead = (text: string, prefix: RegExp) => { const rest = text.replace(prefix, ""); return rest.charAt(0).toLocaleUpperCase() + rest.slice(1); };
+      return tip && tx(lead(tip.ru, /^(Танки|Целители|Лекари): /), lead(tip.en, /^(Tanks|Healers): /));
     };
+    const roleTips = guide?.roles ?? {
+      tank: [3].map(roleTip).filter(Boolean),
+      healer: [1, 6].map(roleTip).filter(Boolean),
+      dps: [0, 4, 5].map(roleTip).filter(Boolean),
+    } as RaidPull["roles"];
     return {
       id: `${slug}-${boss.slug}`, kind: "boss", title: boss.names,
       x: hub.bosses.length === 1 ? 50 : index % 2 === 0 ? 34 : 66,

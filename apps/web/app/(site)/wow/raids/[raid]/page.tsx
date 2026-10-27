@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!raid) return {};
   return {
     title: `${raid.nameEn} Raid Guide — Gildra`,
-    description: `${raid.bosses.length} Midnight Season 1 encounters in a source-backed strategy draft. Entity-level verification is still in progress.`,
+    description: `${raid.nameEn}, Midnight Season 1 raid: pulls on the map, ${raid.bosses.length} bosses and what to know.`,
     alternates: {
       canonical: `/wow/raids/${raid.slug}`,
       languages: { en: `/wow/raids/${raid.slug}`, ru: `/ru/wow/raids/${raid.slug}`, "x-default": `/wow/raids/${raid.slug}` },

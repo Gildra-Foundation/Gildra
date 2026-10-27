@@ -1,0 +1,49 @@
+{
+ "title": "Рейд Sporefall",
+ "kit": "sporefall",
+ "kit_name": "Sporefall",
+ "pages": "`/wow/raids/sporefall`",
+ "page": "the Sporefall raid pages",
+ "material": "umber wood, moss, amber mushroom caps",
+ "anchors": {
+  "face": "#331e10",
+  "metal": "#8b5a0e",
+  "highlight": "#f0d69a",
+  "accent": "#c98a2a"
+ },
+ "site_accent": "#caa078",
+ "accent_note": "Живой рейдовый кит; hex приглушены по style-bible §5 для новых рейдовых ассетов.",
+ "task_dir": "/home/debian/gildra-raids-design-20261027",
+ "repo": "/home/debian/Gildra-raids-design-20261027",
+ "public_dir": "/assets/wow/raids/hub",
+ "assets": [
+  {
+   "type": "skill",
+   "name": "sporefall-skill",
+   "title": "Рамка навыка Sporefall",
+   "where": "иконки способностей на страницах рейда Sporefall и его боссов (сейчас — ближайший кит M+ через raidIconFrameStyle)",
+   "icon": "a boss ability icon",
+   "corners": "a tiny amber mushroom cap in each corner",
+   "size": "44–56 px",
+   "refs": [
+    "/home/debian/Gildra-raids-design-20261027/apps/web/public/assets/wow/raids/hub/controls/panels/sporefall.webp",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  },
+  {
+   "type": "scene",
+   "name": "sporefall-scene",
+   "title": "Сцена героя Sporefall",
+   "where": "фон героя /wow/raids/sporefall и /wow/raids/sporefall/rotmire (сейчас — карточная картина 960×640)",
+   "scene": "a vast fungal marsh in Harandar at dusk: giant amber-capped mushrooms and mossy roots on the right, a dark sunken raid entrance under the largest cap, drifting faint spores; the left half calm and dark for headline text",
+   "refs": [
+    "/home/debian/Gildra-raids-design-20261027/apps/web/public/assets/wow/raids/hub/sporefall.webp"
+   ],
+   "mood": "warm amber dusk light through spores, humid and still"
+  }
+ ],
+ "after": [
+  "Подключить рамку: в `components/wow/raid/raidMaterial.tsx` `raidIconFrameStyle()` брать рамку рейда из нового манифеста вместо ближайшего кита M+.",
+  "Сцену — `art` в `SporefallPage.tsx` (и мобильный кроп)."
+ ]
+}

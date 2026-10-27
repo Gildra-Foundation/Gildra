@@ -1,0 +1,38 @@
+{
+ "title": "Рейд March on Quel'Danas",
+ "kit": "march-on-queldanas",
+ "kit_name": "March on Quel'Danas",
+ "pages": "`/wow/raids/march-on-queldanas`",
+ "page": "the March on Quel'Danas raid pages",
+ "material": "crimson velvet face, sun-gold, phoenix-feather caps",
+ "anchors": {
+  "face": "#1a0a0c",
+  "metal": "#c06d1e",
+  "highlight": "#f0d69a",
+  "accent": "#c86a28"
+ },
+ "site_accent": "#e1bd73",
+ "accent_note": "Живой рейдовый кит; hex приглушены по style-bible §5 для новых рейдовых ассетов.",
+ "task_dir": "/home/debian/gildra-raids-design-20261027",
+ "repo": "/home/debian/Gildra-raids-design-20261027",
+ "public_dir": "/assets/wow/raids/hub",
+ "assets": [
+  {
+   "type": "skill",
+   "name": "march-on-queldanas-skill",
+   "title": "Рамка навыка March on Quel'Danas",
+   "where": "иконки способностей на страницах рейда March on Quel'Danas и его боссов (сейчас — ближайший кит M+ через raidIconFrameStyle)",
+   "icon": "a boss ability icon",
+   "corners": "a small phoenix-feather tip at each corner",
+   "size": "44–56 px",
+   "refs": [
+    "/home/debian/Gildra-raids-design-20261027/apps/web/public/assets/wow/raids/hub/controls/panels/march-on-queldanas.webp",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  }
+ ],
+ "after": [
+  "Подключить рамку: в `components/wow/raid/raidMaterial.tsx` `raidIconFrameStyle()` брать рамку рейда из нового манифеста вместо ближайшего кита M+.",
+  "Проверка 1440/390 RU/EN, 4 темы, forced colors."
+ ]
+}

@@ -46,8 +46,8 @@ const progression: Record<string, RaidProgression> = {
   "the-voidspire": {
     links: links("imperator-averzian", [["vorasius"], ["fallen-king-salhadaar"]], ["vaelgor-ezzorak", "lightblinded-vanguard", "crown-of-the-cosmos"]),
     note: text(
-      "После Аверзиана зачистите оба крыла в любом порядке: Ненасытникус слева, Салхадаар справа. Затем продолжайте к драконам, Авангарду и Короне космоса. Линии показывают порядок боёв; путь между ними выбирайте по этажу.",
-      "After Averzian, clear both wings in either order: Vorasius on the left and Salhadaar on the right. Then continue to the dragons, Vanguard and Crown of the Cosmos. Lines show encounter progression; use the selected floor to navigate between them.",
+      "После Аверзиана зачистите оба крыла в любом порядке: Ненасытникус слева, Салхадаар справа. Затем продолжайте к драконам, Авангарду и Короне космоса.",
+      "After Averzian, clear both wings in either order: Vorasius on the left and Salhadaar on the right. Then continue to the dragons, Vanguard and Crown of the Cosmos.",
     ),
     lieutenants: [
       { npcId: 240864, name: text("Блинки", "Blinky"), beforeBoss: "vorasius", afterBoss: "imperator-averzian", note: text("Патруль у лестницы левого крыла.", "Patrol by the left-wing stairs.") },
@@ -60,7 +60,7 @@ const progression: Record<string, RaidProgression> = {
   },
   "march-on-queldanas": {
     links: links("beloren", [], ["midnight-falls"]),
-    note: text("Сначала Бело’рен, затем Торжество Полуночи через Тёмный Колодец. Смена этажа не обозначает прямой коридор между маркерами.", "Defeat Belo'ren, then continue through the Darkwell to Midnight Falls. A floor transition does not imply a straight corridor between markers."),
+    note: text("Сначала Бело’рен, затем Торжество Полуночи через Тёмный Колодец.", "Defeat Belo'ren, then continue through the Darkwell to Midnight Falls."),
     lieutenants: [
       { npcId: 250802, name: text("Разрушитель Бездны Троггар", "Voidbreaker Throggar"), beforeBoss: "beloren", note: text("Двор перед Бело’реном; убийство босса для доступа не требуется.", "Courtyard before Belo'ren; no boss kill is required to reach him.") },
       { npcId: 250803, name: text("Гладий Моринас", "Gladius Morinas"), afterBoss: "beloren", beforeBoss: "midnight-falls", note: text("Охраняет вход в Тёмный Колодец после Бело’рена.", "Guards the Darkwell entrance after Belo'ren.") },

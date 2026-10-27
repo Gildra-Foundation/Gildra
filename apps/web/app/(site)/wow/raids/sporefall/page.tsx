@@ -4,7 +4,7 @@ import { SporefallPage } from "@/components/wow/raid/SporefallPage";
 const path = "/wow/raids/sporefall";
 export const metadata: Metadata = {
   title: "Sporefall — Midnight Raid — Gildra",
-  description: "Verified identity page for the one-encounter Sporefall raid and Rotmire. Strategy and entity details remain withheld.",
+  description: "Sporefall, the one-boss Midnight Season 1 raid in Harandar: the pull on the map, Rotmire and what to know.",
   alternates: { canonical: path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
   robots: { index: false, follow: true },
 };

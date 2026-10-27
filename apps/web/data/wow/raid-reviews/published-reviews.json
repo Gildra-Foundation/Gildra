@@ -2,8 +2,8 @@
   {
     "raidSlug": "the-voidspire",
     "reviewedAt": "2026-10-21T20:15:06Z",
-    "summaryRu": "Шпиль Бездны — рейд первого сезона Midnight в Буре Бездны, шесть сражений. Это материал сезона 1: актуальные числовые значения и добыча требуют проверки выбранной сложности.",
-    "summaryEn": "The Voidspire is a six-encounter Midnight Season 1 raid in Voidstorm. This is Season 1 reference content; numerical tuning and rewards require difficulty-specific verification.",
+    "summaryRu": "Шесть боссов в Буре Бездны. После Аверзиана зачистите оба крыла в любом порядке: Ненасытникус слева, Салхадаар справа. Затем драконы, Авангард и Корона космоса.",
+    "summaryEn": "Six bosses in Voidstorm. After Averzian, clear both wings in either order: Vorasius on the left and Salhadaar on the right. Then the dragons, Vanguard and Crown of the Cosmos.",
     "sources": [
       {
         "title": "Blizzard: Midnight Season 1 schedule",
@@ -108,7 +108,7 @@
         "summaryEn": "Separate the dragons, coordinate soaks, and preserve clean arena space.",
         "tipsRu": [
           "Dread Breath направляйте от группы.",
-          "На Heroic чередуйте группы Gloom из-за дебаффа повторного замачивания.",
+          "На героической сложности чередуйте группы Gloom из-за дебаффа повторного замачивания.",
           "На 100 энергии входите в Radiant Barrier и убивайте адда; с Shadowmark отходите от центра группы."
         ],
         "tipsEn": [
@@ -170,8 +170,8 @@
   {
     "raidSlug": "the-dreamrift",
     "reviewedAt": "2026-10-21T20:14:34Z",
-    "summaryRu": "Провал Снов — рейд первого сезона Midnight с одним боссом, Химерием. Проверены разделение на Альн и реальность, приоритет порождений и отличия Heroic/Mythic. Сейчас идет второй сезон: сезонные достижения первого сезона уже недоступны.",
-    "summaryEn": "The Dreamrift is a one-boss raid from Midnight Season 1. The realm split, manifestation priorities, and Heroic/Mythic differences were reviewed. Season 2 is now live; Season 1 time-limited achievements are no longer available.",
+    "summaryRu": "Провал Снов — рейд первого сезона Midnight с одним боссом, Химерием: бой в двух мирах, Альне и реальности, с порождениями, которых добивают по очереди. Сейчас идёт второй сезон: сезонные достижения первого сезона уже недоступны.",
+    "summaryEn": "The Dreamrift is a one-boss raid from Midnight Season 1: Chimaerus is fought across two realms, Aln and Reality, with manifestations finished in turn. Season 2 is now live; Season 1 time-limited achievements are no longer available.",
     "sources": [
       {
         "title": "Blizzard: Midnight Season 1 schedule",
@@ -205,16 +205,16 @@
     "bosses": [
       {
         "slug": "chimaerus",
-        "summaryRu": "Два слоя, щиты порождений в Альн и их добивание в реальности. Переходка проверяет движение и прерывания; Heroic добавляет очистку луж через миазмы, Mythic — дистанцию между слоями и обмен игроков.",
+        "summaryRu": "Два слоя, щиты порождений в Альн и их добивание в реальности. Переходка проверяет движение и прерывания; на героической сложности добавляется очистка луж через миазмы, на эпохальной — дистанция между слоями и обмен игроков.",
         "summaryEn": "Break manifestation shields in Aln, then finish them in Reality. Intermission tests movement and interrupts; Heroic adds miasma pool clearing, while Mythic adds cross-realm spacing and player swaps.",
         "tipsRu": [
-          "Normal / Heroic / Mythic: назначьте две группы с танком и лекарями; группа поглощения Alndust Upheaval уходит в Альн, вторая убивает появившиеся в реальности порождения.",
+          "На всех сложностях: назначьте две группы с танком и лекарями; группа поглощения Alndust Upheaval уходит в Альн, вторая убивает появившиеся в реальности порождения.",
           "В Альн сначала разбейте щит Colossal Horror. Haunting Essence прерывайте на Fearsome Cry; держите порождения вдали от босса.",
           "Наверху немедленно переключайтесь на порождения: Insatiable поглощает дошедших до босса. Добейте оставшихся до окончания Consume и приземления Ravenous Dive.",
           "Танк разворачивает Rending Tear от рейда и учитывает отбрасывание; во время Corrupted Devastation все уходят с линий пролета.",
-          "Heroic / Mythic: Consuming Miasma снимайте отдельно от рейда, охватив кругом существующие лужи. Вставать в саму лужу не нужно; на Heroic приземление больше не очищает площадку.",
-          "Mythic: Dissonance требует дистанции 8 м от игроков другого слоя. Для Rift Madness назначьте замены лекаря и бойца; подходите к жертвам для обмена только после подъема и ужаса.",
-          "Mythic: поглотите дополнительный Alndust Upheaval перед переходкой; разделение на слои сохраняется. На переходке назначьте прерывания быстрых Fearsome Cry."
+          "Героическая и эпохальная сложности: Consuming Miasma снимайте отдельно от рейда, охватив кругом существующие лужи. Вставать в саму лужу не нужно; на героической сложности приземление больше не очищает площадку.",
+          "Эпохальная сложность: Dissonance требует дистанции 8 м от игроков другого слоя. Для Rift Madness назначьте замены лекаря и бойца; подходите к жертвам для обмена только после подъема и ужаса.",
+          "Эпохальная сложность: поглотите дополнительный Alndust Upheaval перед переходкой; разделение на слои сохраняется. На переходке назначьте прерывания быстрых Fearsome Cry."
         ],
         "tipsEn": [
           "Normal / Heroic / Mythic: assign two teams with a tank and healers; the Alndust Upheaval team enters Aln while the other team kills manifestations appearing in Reality.",
@@ -245,8 +245,8 @@
   {
     "raidSlug": "march-on-queldanas",
     "reviewedAt": "2026-10-21T20:14:27.900567Z",
-    "summaryRu": "Два босса Midnight, сезон 1: Бело’рен и Торжество Полуночи (Л’ура). Доступны поиск рейда, обычная, героическая, эпохальная сложности и сюжетный режим. Это рейд предыдущего сезона: сезон 2 уже начался. Ниже — проверенные советы для обычной и героической сложности; эпохальные отличия отмечены отдельно.",
-    "summaryEn": "Two Midnight Season 1 encounters: Belo’ren and Midnight Falls (L’ura). Raid Finder, Normal, Heroic, Mythic and Story Mode are available. This is a previous-season raid: Season 2 has started. The reviewed tips cover Normal and Heroic, with Mythic differences explicitly marked.",
+    "summaryRu": "Два босса Midnight, сезон 1: Бело’рен и Торжество Полуночи (Л’ура). Доступны поиск рейда, обычная, героическая, эпохальная сложности и сюжетный режим. Это рейд предыдущего сезона: сезон 2 уже начался. Советы ниже — для обычной и героической сложности; эпохальные отличия отмечены отдельно.",
+    "summaryEn": "Two Midnight Season 1 encounters: Belo’ren and Midnight Falls (L’ura). Raid Finder, Normal, Heroic, Mythic and Story Mode are available. This is a previous-season raid: Season 2 has started. The tips cover Normal and Heroic, with Mythic differences marked.",
     "sources": [
       {
         "title": "Blizzard: Midnight raid overview and schedule",
@@ -357,8 +357,8 @@
   {
     "raidSlug": "venomous-abyss",
     "reviewedAt": "2026-10-21T20:17:18Z",
-    "summaryRu": "Отравленная бездна — восемь боссов второго сезона Midnight. Проверены все встречи, 37 настоящих иконок и изменения Blizzard до 20 октября. Уточнены механики Ссзорака, Спирального алтаря и Ула’тек. Эпохальная добыча двух финальных боссов — 344; диковинка для обмена на комплект имеет отдельное правило.",
-    "summaryEn": "The Venomous Abyss contains eight Midnight Season 2 encounters. All encounters, 37 authentic icons, and Blizzard changes through October 20 were reviewed. Sszorak, Coiled Altar, and Ula’tek guidance includes recent fixes. Final two Mythic bosses drop item level 344; the tier Curio follows a separate rule.",
+    "summaryRu": "Отравленная бездна — восемь боссов второго сезона Midnight. Эпохальная добыча двух финальных боссов — 344; диковинка для обмена на комплект имеет отдельное правило.",
+    "summaryEn": "The Venomous Abyss contains eight Midnight Season 2 encounters. Final two Mythic bosses drop item level 344; the tier Curio follows a separate rule.",
     "sources": [
       {
         "title": "Blizzard: Venomous Abyss encounters and regional unlock schedule",
@@ -416,7 +416,7 @@
         "tipsRu": [
           "Назначьте два лагеря; сохраняйте расстояние между боссами не менее 40 м.",
           "Перед Vitriolic Stasis выравнивайте здоровье: отстающий босс восстанавливает его до значения второго.",
-          "Приоритет — Venom Coagulation; наступайте на Toxic Droplets. Heroic: уклоняйтесь от возвращающегося Living Venom.",
+          "Приоритет — Venom Coagulation; наступайте на Toxic Droplets. Героическая сложность: уклоняйтесь от возвращающегося Living Venom.",
           "После переходки лагеря остаются на местах, танки обмениваются боссами; Blighted Blood снимайте быстро."
         ],
         "tipsEn": [
@@ -477,12 +477,12 @@
       {
         "slug": "sszorak",
         "summaryRu": "Цисты страхуют рейд от ветра; направления считываются заранее. Учтены сентябрьские и октябрьские исправления.",
-        "summaryEn": "Cysts protect the raid from wind pushes; read directions in advance. September and October changes are included.",
+        "summaryEn": "Cysts protect the raid from wind pushes; read directions in advance.",
         "tipsRu": [
           "По ветрам разметьте точки Venomous Surge; оставляйте по одной цисте напротив нужного тоннеля.",
-          "Ravage разворачивайте от рейда; Mutilate поглощайте группой. Heroic: чередуйте две группы.",
+          "Ravage разворачивайте от рейда; Mutilate поглощайте группой. Героическая сложность: чередуйте две группы.",
           "Raging Crosswinds: найдите партнера с противоположным направлением; в переходке используйте подготовленные цисты.",
-          "Heroic: Caustic Claws больше не оставляет Caustic Residue. Mythic: с 13 октября набор до 100 ярости занимает на 5 секунд дольше."
+          "Героическая сложность: Caustic Claws больше не оставляет Caustic Residue. Эпохальная сложность: с 13 октября набор до 100 ярости занимает на 5 секунд дольше."
         ],
         "tipsEn": [
           "Mark Venomous Surge positions from wind directions; place one cyst opposite each required tunnel.",
@@ -512,7 +512,7 @@
         "tipsRu": [
           "Боссы не делят здоровье; готовьте одновременное убийство. Танки сохраняют мили-дистанцию и меняются после Stone Breaker.",
           "Caustic Globule собирают игроки с малым числом стаков; не ловите соседние сферы случайно.",
-          "Ravenous Feast снимает стаки Eternal Venom. На Heroic достижение 10 стаков смертельно."
+          "Ravenous Feast снимает стаки Eternal Venom. На героической сложности достижение 10 стаков смертельно."
         ],
         "tipsEn": [
           "The bosses do not share health; plan simultaneous kills. Tanks maintain melee range and swap after Stone Breaker.",
@@ -528,12 +528,12 @@
       },
       {
         "slug": "the-coiled-altar",
-        "summaryRu": "Управляйте сбором яда и призраками. Mythic обновлен по хотфиксу 13 октября; достижение исправлено 16 октября.",
-        "summaryEn": "Control venom collection and ghosts. Mythic reflects October 13 tuning; the achievement received an October 16 fix.",
+        "summaryRu": "Управляйте сбором яда и призраками.",
+        "summaryEn": "Control venom collection and ghosts.",
         "tipsRu": [
-          "Собирайте Coalesced Venom под Sever вне путей Axegrinder; танк меняется после конуса. Heroic: согласуйте число одновременных взрывов с лекарями.",
+          "Собирайте Coalesced Venom под Sever вне путей Axegrinder; танк меняется после конуса. Героическая сложность: согласуйте число одновременных взрывов с лекарями.",
           "Снимайте щиты Dreadmarch; фиксированный игрок смотрит на призрака, удерживая его под Soul Sever.",
-          "Mythic: теперь 8 начальных сфер, 4 Virulent Mutations, радиус Mutation/Mutagenic Venom — 6 м; Dreadmarch выбирает 3 игроков.",
+          "Эпохальная сложность: теперь 8 начальных сфер, 4 Virulent Mutations, радиус Mutation/Mutagenic Venom — 6 м; Dreadmarch выбирает 3 игроков.",
           "Watch Out Behind You теперь исправлено для групп больше 20 игроков. Это не отменяет условия достижения."
         ],
         "tipsEn": [
@@ -556,12 +556,12 @@
       {
         "slug": "ulatek",
         "summaryRu": "Контролируйте яйца, заранее разделитесь для коридоров и двигайтесь до разрушения платформ. Учтено ослабление 6 октября.",
-        "summaryEn": "Control eggs, preassign corridor teams, and move before platforms collapse. October 6 tuning is included.",
+        "summaryEn": "Control eggs, preassign corridor teams, and move before platforms collapse.",
         "tipsRu": [
-          "Доставляйте яйца в Spectral Coils, избегая Caustic Waves; Heroic: чередуйте назначенные группы поглощения.",
+          "Доставляйте яйца в Spectral Coils, избегая Caustic Waves; Героическая сложность: чередуйте назначенные группы поглощения.",
           "В коридорах убейте Warden; разрывайте Grasping Fangs парами после спадания эффекта. В котел сначала сдавайте малые яйца, затем Doomscale Egg.",
           "На финальной фазе прерывайте Shriekers, разводите Volatile Purge и уходите до Circling Prey.",
-          "С 6 октября для Serpent’s Bite достаточно максимум трех поглощающих на каждую цель независимо от размера рейда; Mythic: хвост дает 3 волны вместо 7."
+          "С 6 октября для Serpent’s Bite достаточно максимум трех поглощающих на каждую цель независимо от размера рейда; Эпохальная сложность: хвост дает 3 волны вместо 7."
         ],
         "tipsEn": [
           "Carry eggs into Spectral Coils and avoid Caustic Waves; Heroic: alternate assigned soak teams.",
@@ -585,7 +585,7 @@
   {
     "raidSlug": "sporefall",
     "reviewedAt": "2026-10-21T20:17:45Z",
-    "summaryRu": "Споропад — дополнительный рейд первого сезона Midnight, добавленный в 12.0.7: один босс, Гнилотоп, в Харандаре. Для входа нужен 90-й уровень; в поиске рейдов — уровень предметов 240. Доступны LFR, Normal, Heroic и Mythic, причем Mythic допускает 15–25 игроков. Сейчас идет второй сезон, поэтому этот рейд относится к прежнему сезону. За четыре еженедельных Delicious Sporesnack можно получить Luminous Sporeglider: одна закуска в неделю на учетную запись за победу на любой сложности.",
+    "summaryRu": "Споропад — дополнительный рейд первого сезона Midnight, добавленный в 12.0.7: один босс, Гнилотоп, в Харандаре. Для входа нужен 90-й уровень; в поиске рейдов — уровень предметов 240. Доступны поиск рейда, обычная, героическая и эпохальная сложности; на эпохальной — от 15 до 25 игроков. Сейчас идет второй сезон, поэтому этот рейд относится к прежнему сезону. За четыре еженедельных Delicious Sporesnack можно получить Luminous Sporeglider: одна закуска в неделю на учетную запись за победу на любой сложности.",
     "summaryEn": "Sporefall is the bonus Midnight Season 1 raid added in 12.0.7: one boss, Rotmire, in Harandar. Entry requires level 90; Raid Finder requires item level 240. LFR, Normal, Heroic and Mythic are available, with Mythic supporting 15–25 players. Season 2 is now live, so this is previous-season content. Collect four weekly Delicious Sporesnacks for the Luminous Sporeglider: one snack per week per account from a kill on any difficulty.",
     "sources": [
       {
@@ -615,8 +615,8 @@
           "«Плеснецвет»: добивайте живых прислужников до применения, затем быстро убивайте появившиеся на трупах грибы. Целители готовят защиту от общего урона и последующего периодического урона.",
           "«Гнойные лианы»: отходите к краю арены, не задевая союзников своим кругом; после окончания эффекта обходите оставшуюся область.",
           "Танки: меняйтесь после каждого «Гнилостного кулака»; готовьте снижение урона к удару и подбрасыванию.",
-          "Heroic/Mythic: назначьте прерывания «Выброса яда» Sporecap и перемещайте босса к этому неподвижному прислужнику.",
-          "Mythic: выделите раздельные места для трупов Shroomling и Fungling, дальше 10 м друг от друга. «Перекрестное удобрение» создает Doom Shroom, если разные типы оказываются слишком близко.",
+          "Героическая и эпохальная сложности: назначьте прерывания «Выброса яда» Sporecap и перемещайте босса к этому неподвижному прислужнику.",
+          "Эпохальная сложность: выделите раздельные места для трупов Shroomling и Fungling, дальше 10 м друг от друга. «Перекрестное удобрение» создает Doom Shroom, если разные типы оказываются слишком близко.",
           "Целители: учитывайте накапливающиеся «Гнойные пустулы» — урон по всему рейду растет с продолжительностью боя."
         ],
         "tipsEn": [

@@ -71,7 +71,7 @@ function ClassicRaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
         </AtlasSection>
       ) : null}
 
-      <RaidSpellReference encounterId={boss.encounterId} exclude={[...boss.mechanics.map((ability) => ability.spellId), ...(strategy?.guide?.mechanics.flatMap((mechanic) => mechanic.spell ? [mechanic.spell.id] : []) ?? [])]} locale={locale} />
+      <RaidSpellReference raid={raid.slug} encounterId={boss.encounterId} exclude={[...boss.mechanics.map((ability) => ability.spellId), ...(strategy?.guide?.mechanics.flatMap((mechanic) => mechanic.spell ? [mechanic.spell.id] : []) ?? [])]} locale={locale} />
 
       <RaidPager label={copy.pagerLabel} back={{ href: raidHref, label: copy.allBosses(raidName) }} next={encounters[order + 1]} nextLabel={copy.nextBoss} />
     </AtlasFrame>

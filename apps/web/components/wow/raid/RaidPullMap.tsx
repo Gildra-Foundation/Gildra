@@ -67,7 +67,7 @@ function RaidMapFields({ plan, locale, background, view, onFloor, onBoss, onVari
   const bossCopy = raidBossPlannerCopy[locale];
   const atlas = plan.atlas;
   const { bosses, arenaBoss, variants, arena, floor } = view;
-  if (plan.encounter && background === "map" && atlas!.floors.length < 2) return null;
+  if (background === "map" && atlas!.floors.length < 2) return null;
   if (plan.encounter && background === "arena" && variants.length < 2) return null;
   return (
       <div className={styles.selectors} data-raid-map-fields>
@@ -87,7 +87,7 @@ function RaidMapProgression({ plan, locale, bosses, defaultBoss, selectBoss }: {
   const t = raidMapCopy[locale];
   const progression = plan.atlas?.progression;
   return <>
-    {progression && <div className={styles.progression} data-raid-map-progression><h4><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Route size={17} aria-hidden="true" />} />{t.sequence}</h4><p>{progression.note[locale]}</p>
+    {progression && bosses.length > 1 && <div className={styles.progression} data-raid-map-progression><h4><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Route size={17} aria-hidden="true" />} />{t.sequence}</h4>{progression.note[locale] ? <p>{progression.note[locale]}</p> : null}
       <ol className={styles.bossRail}>{bosses.map((boss, i) => <li key={boss.slug}><button type="button" className={styles.railChoice} aria-pressed={defaultBoss === boss.slug} onClick={() => selectBoss(boss.slug, true)}><b>{i + 1}</b><span>{boss.name[locale]}</span></button></li>)}</ol>
       {plan.slug !== "the-voidspire" && progression.lieutenants.length > 0 && <details className={styles.lieutenants}><summary>{t.lieutenants} · {progression.lieutenants.length}</summary><ul>{progression.lieutenants.map(npc => <li key={npc.npcId}><a href={`https://www.wowhead.com/npc=${npc.npcId}`} target="_blank" rel="noreferrer">{npc.name[locale]}<ArrowUpRight size={12} aria-hidden="true" /></a><span>{npc.note[locale]}</span></li>)}</ul></details>}
     </div>}

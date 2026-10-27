@@ -36,7 +36,6 @@ export function RaidPullBriefing({ pull, locale, role, slug, encounter = false, 
           </article>;
         })}
       </div>
-      {!compact && <p className={`${styles.muted} ${art.movement}`}>{t.movement}</p>}
     </section>
 
     <RaidPullAbilities pull={pull} locale={locale} role={role} compact={compact} difficulty={difficulty} />
@@ -72,14 +71,11 @@ function RaidPullEnemies({ pull, locale, slug, compact, encounter }: { pull: Rai
                 : <RaidPlannerIcon slug={slug} kind="command" fallback={<Crosshair size={22} aria-hidden="true" />} />}
             </span>
             <div className={art.enemyName}>
-              <strong>{enemy.count !== undefined && <span>{enemy.count} × </span>}{compact && enemy.npcId ? <a href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}npc=${enemy.npcId}`} target="_blank" rel="noreferrer">{text(enemy.name)} <ExternalLink size={12} aria-hidden="true" /></a> : text(enemy.name)}</strong>
+              <strong>{enemy.count !== undefined && <span>{enemy.count} × </span>}{enemy.npcId ? <a href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}npc=${enemy.npcId}`} target="_blank" rel="noreferrer">{text(enemy.name)} <ExternalLink size={12} aria-hidden="true" /></a> : text(enemy.name)}</strong>
               <small data-priority={enemy.priority}>{t[enemy.priority]}</small>
             </div>
           </div>
           {enemy.note && <p>{text(enemy.note)}</p>}
-          {!compact && enemy.npcId && <a className={`${styles.sourceLink} ${art.sourceLink}`} href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}npc=${enemy.npcId}`} target="_blank" rel="noreferrer">
-            {text(enemy.name)} <ExternalLink size={12} aria-hidden="true" />
-          </a>}
         </li>)}
       </ul> : <p className={styles.muted}>{t.noEnemies}</p>}
     </section>}
@@ -100,7 +96,7 @@ function RaidPullAbilities({ pull, locale, role, compact, difficulty }: { pull: 
               <Image src={ability.icon} alt="" width={40} height={40} />
             </span>}
             <div className={art.abilityName}>
-              <strong>{compact && ability.spellId ? <a href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}spell=${ability.spellId}`} target="_blank" rel="noreferrer">{text(ability.name)} <ExternalLink size={12} aria-hidden="true" /></a> : text(ability.name)}</strong>
+              <strong>{ability.spellId ? <a href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}spell=${ability.spellId}`} target="_blank" rel="noreferrer">{text(ability.name)} <ExternalLink size={12} aria-hidden="true" /></a> : text(ability.name)}</strong>
               {ability.caster && <small>{text(ability.caster)}</small>}
             </div>
             {ability.action && <b className={`${styles.action} ${art.action}`} data-action={ability.action}>{t.actions[ability.action]}</b>}
@@ -109,9 +105,6 @@ function RaidPullAbilities({ pull, locale, role, compact, difficulty }: { pull: 
           {ability.response && <p className={`${styles.response} ${art.response}`}>{text(ability.response)}</p>}
           {difficulty === "heroic" && ability.heroic && <p className={`${styles.response} ${art.response}`} data-raid-heroic-note><b>{raidBossPlannerCopy[locale].heroicNote}: </b>{text(ability.heroic)}</p>}
           {ability.action && (!compact || role === "all" && ability.roles.length < 3) && <p className={styles.assignment}>{t.assignments}: {ability.roles.length === 3 ? t.shared : ability.roles.map((item) => t[item]).join(" · ")}</p>}
-          {!compact && ability.spellId && <a className={`${styles.sourceLink} ${art.sourceLink}`} href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}spell=${ability.spellId}`} target="_blank" rel="noreferrer">
-            {text(ability.name)} <ExternalLink size={12} aria-hidden="true" />
-          </a>}
         </li>)}
       </ul> : <p className={styles.muted}>{pull.abilities.length ? t.noRoleAbilities : t.noAbilities}</p>}
     </section>}

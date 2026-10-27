@@ -1,0 +1,38 @@
+{
+ "title": "Рейд The Dreamrift",
+ "kit": "the-dreamrift",
+ "kit_name": "The Dreamrift",
+ "pages": "`/wow/raids/the-dreamrift`",
+ "page": "the The Dreamrift raid pages",
+ "material": "ivory heartwood, green vines, pale dream-light",
+ "anchors": {
+  "face": "#162c15",
+  "metal": "#bea36b",
+  "highlight": "#f0e6c8",
+  "accent": "#8a9238"
+ },
+ "site_accent": "#8fc8a6",
+ "accent_note": "Живой рейдовый кит; hex приглушены по style-bible §5 для новых рейдовых ассетов.",
+ "task_dir": "/home/debian/gildra-raids-design-20261027",
+ "repo": "/home/debian/Gildra-raids-design-20261027",
+ "public_dir": "/assets/wow/raids/hub",
+ "assets": [
+  {
+   "type": "skill",
+   "name": "the-dreamrift-skill",
+   "title": "Рамка навыка The Dreamrift",
+   "where": "иконки способностей на страницах рейда The Dreamrift и его боссов (сейчас — ближайший кит M+ через raidIconFrameStyle)",
+   "icon": "a boss ability icon",
+   "corners": "a short curled vine leaf in each corner",
+   "size": "44–56 px",
+   "refs": [
+    "/home/debian/Gildra-raids-design-20261027/apps/web/public/assets/wow/raids/hub/controls/panels/the-dreamrift.webp",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  }
+ ],
+ "after": [
+  "Подключить рамку: в `components/wow/raid/raidMaterial.tsx` `raidIconFrameStyle()` брать рамку рейда из нового манифеста вместо ближайшего кита M+.",
+  "Проверка 1440/390 RU/EN, 4 темы, forced colors."
+ ]
+}

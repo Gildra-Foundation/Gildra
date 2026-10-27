@@ -1,0 +1,38 @@
+{
+ "title": "Рейд The Venomous Abyss",
+ "kit": "venomous-abyss",
+ "kit_name": "The Venomous Abyss",
+ "pages": "`/wow/raids/venomous-abyss`",
+ "page": "the The Venomous Abyss raid pages",
+ "material": "jade-green stone, old bronze, cobra-hood caps, poison channels kept as thin lines",
+ "anchors": {
+  "face": "#08281a",
+  "metal": "#80551a",
+  "highlight": "#f0d69a",
+  "accent": "#c99a3a"
+ },
+ "site_accent": "#74c8a8",
+ "accent_note": "Живой рейдовый кит; hex приглушены по style-bible §5 для новых рейдовых ассетов.",
+ "task_dir": "/home/debian/gildra-raids-design-20261027",
+ "repo": "/home/debian/Gildra-raids-design-20261027",
+ "public_dir": "/assets/wow/raids/hub",
+ "assets": [
+  {
+   "type": "skill",
+   "name": "venomous-abyss-skill",
+   "title": "Рамка навыка The Venomous Abyss",
+   "where": "иконки способностей на страницах рейда The Venomous Abyss и его боссов (сейчас — ближайший кит M+ через raidIconFrameStyle)",
+   "icon": "a boss ability icon",
+   "corners": "two small cobra-hood caps at the top corners, plain bronze at the bottom corners",
+   "size": "44–56 px",
+   "refs": [
+    "/home/debian/Gildra-raids-design-20261027/apps/web/public/assets/wow/raids/hub/controls/panels/venomous-abyss.webp",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  }
+ ],
+ "after": [
+  "Подключить рамку: в `components/wow/raid/raidMaterial.tsx` `raidIconFrameStyle()` брать рамку рейда из нового манифеста вместо ближайшего кита M+.",
+  "Проверка 1440/390 RU/EN, 4 темы, forced colors."
+ ]
+}

@@ -52,7 +52,6 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange }: Workspac
   const encounter = Boolean(plan.encounter);
   const label = encounter ? bossCopy.phase : t.pull;
   const [difficulty, setDifficulty] = useState<"normal" | "heroic">("normal");
-  const savedRole = plan.slug === "the-voidspire";
   const hash = useSyncExternalStore(subscribeHash, readHash, serverHash);
   const active = Math.max(0, plan.pulls.findIndex((pull) => hash === `#raid-pull=${pull.id}`));
   const pull = plan.pulls[active];
@@ -73,7 +72,6 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange }: Workspac
     <RaidWorkspaceRoleToolbar plan={plan} locale={locale} role={role} onRoleChange={onRoleChange} />
     {encounter && <div className={bossStyles.difficulty} data-raid-boss-difficulty><span>{bossCopy.difficulty}</span><AtlasSegmented aria-label={bossCopy.difficulty} animation="spring" value={difficulty} onValueChange={value => setDifficulty(value as "normal" | "heroic")} options={(["normal", "heroic"] as const).map(value => ({ value, label: bossCopy[value] }))} /></div>}
     <RaidWorkspaceNavigation plan={plan} locale={locale} active={active} strip={strip} select={select} />
-    {!savedRole && plan.atlas?.progression && <p className={styles.coverage}>{plan.atlas.progression.note[locale]}</p>}
     <div className={styles.columns} data-raid-columns>
       <RaidPullMap plan={plan} active={active} locale={locale} onSelect={select} role={role} />
       <div ref={panel} className={styles.selected} id={`raid-pull-${plan.slug}`} data-raid-selected={pull.id}>
@@ -81,7 +79,6 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange }: Workspac
           <div className={styles.pager} data-raid-pager><AtlasButton size="sm" aria-label={encounter ? bossCopy.previous : t.previous} disabled={active === 0} onClick={() => select(active - 1)}><RaidPlannerTextMark slug={plan.slug} text="‹" fallback={<ChevronLeft aria-hidden="true" />} /></AtlasButton>
             <AtlasButton size="sm" aria-label={encounter ? bossCopy.next : t.next} disabled={active === plan.pulls.length - 1} onClick={() => select(active + 1)}><RaidPlannerTextMark slug={plan.slug} text="›" fallback={<ChevronRight aria-hidden="true" />} /></AtlasButton></div></header>
         <span className={styles.srOnly} role="status" aria-live="polite">{label} {active + 1}: {pull.title[locale]}</span>
-        {plan.coverage === "route-draft" && !savedRole && <p className={styles.draftNote} role="note">{t.routeDraft}</p>}
         <RaidPullBriefing pull={pull} locale={locale} role={role} slug={plan.slug} encounter={encounter} difficulty={difficulty} />
       </div>
     </div>
@@ -96,7 +93,7 @@ function RaidWorkspaceRoleToolbar({ plan, locale, role, onRoleChange }: Workspac
   return <>
     {savedRole ? <div className={styles.toolbar} data-raid-role-toolbar>
       <div data-raid-role-picker data-testid="pull-role-picker"><AtlasSegmented aria-label={roleCopy.label} aria-describedby="voidspire-role-hint" animation="spring" size="lg" fullWidth value={role} onValueChange={onRoleChange}
-        options={(["all", "tank", "healer", "dps"] as const).map((value) => ({ value, label: roleCopy[value] }))} /></div>
+        options={(["all", "tank", "healer", "dps"] as const).map((value) => ({ value, label: t[value] }))} /></div>
       <p id="voidspire-role-hint" data-raid-role-hint>{roleCopy.hint}</p>
     </div> : <div className={styles.toolbar} data-raid-role-toolbar><span>{t.role}</span><AtlasSegmented aria-label={t.role} value={role} onValueChange={onRoleChange}
       options={(["all", "tank", "healer", "dps"] as const).map((value) => ({ value, label: t[value] }))} /></div>}

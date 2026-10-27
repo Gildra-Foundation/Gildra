@@ -6,8 +6,8 @@ export const venomousRaidLocationSource = "https://www.wowhead.com/guide/midnigh
 export const venomousRaidVerifiedAt = "2026-09-14";
 
 export const raidFinderWings = [
-  { number: 1, dateEn: "August 18", dateRu: "18 августа", name: "The Soulcoilers", bosses: ["Nek'zali the Soulcoiler", "The Twin Fangs"] },
-  { number: 2, dateEn: "August 25", dateRu: "25 августа", name: "The Essence of Venom", bosses: ["Entombed Sentinels", "Vashnik the Malignant"] },
+  { number: 1, dateEn: "August 18", dateRu: "18 августа", name: "The Soulcoilers", nameRu: "Душители душ", bosses: ["Nek'zali the Soulcoiler", "The Twin Fangs"] },
+  { number: 2, dateEn: "August 25", dateRu: "25 августа", name: "The Essence of Venom", nameRu: "Сущность яда", bosses: ["Entombed Sentinels", "Vashnik the Malignant"] },
   { number: 3, dateEn: "September 1", dateRu: "1 сентября", name: "The Serpent Warren", bosses: ["The Lost Explorers", "Sszorak"] },
   { number: 4, dateEn: "September 8", dateRu: "8 сентября", name: "The Tomb of Ula'tek", bosses: ["The Coiled Altar", "Ula'tek"] },
 ] as const;

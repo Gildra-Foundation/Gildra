@@ -8,7 +8,7 @@ export const dynamicParams = false;
 const path = "/wow/raids/sporefall/rotmire";
 export const metadata: Metadata = {
   title: "Rotmire — Sporefall — Gildra",
-  description: "Verified identity page for Rotmire in Sporefall. Strategy, abilities, IDs, icons, and loot are pending verification.",
+  description: "Rotmire, the boss of Sporefall: what to do before the pull, role tasks and abilities.",
   alternates: { canonical: path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
   robots: { index: false, follow: true },
 };

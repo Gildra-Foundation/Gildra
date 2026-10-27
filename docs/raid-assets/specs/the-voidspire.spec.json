@@ -1,0 +1,38 @@
+{
+ "title": "Рейд The Voidspire",
+ "kit": "the-voidspire",
+ "kit_name": "The Voidspire",
+ "pages": "`/wow/raids/the-voidspire`",
+ "page": "the The Voidspire raid pages",
+ "material": "obsidian black metal, violet void rifts as thin seams, small crystal shards",
+ "anchors": {
+  "face": "#190e34",
+  "metal": "#471e98",
+  "highlight": "#d9a8f0",
+  "accent": "#7a2fc4"
+ },
+ "site_accent": "#b39ade",
+ "accent_note": "Живой рейдовый кит; hex приглушены по style-bible §5 для новых рейдовых ассетов.",
+ "task_dir": "/home/debian/gildra-raids-design-20261027",
+ "repo": "/home/debian/Gildra-raids-design-20261027",
+ "public_dir": "/assets/wow/raids/hub",
+ "assets": [
+  {
+   "type": "skill",
+   "name": "the-voidspire-skill",
+   "title": "Рамка навыка The Voidspire",
+   "where": "иконки способностей на страницах рейда The Voidspire и его боссов (сейчас — ближайший кит M+ через raidIconFrameStyle)",
+   "icon": "a boss ability icon",
+   "corners": "one small crystal shard in each corner",
+   "size": "44–56 px",
+   "refs": [
+    "/home/debian/Gildra-raids-design-20261027/apps/web/public/assets/wow/raids/hub/controls/panels/the-voidspire.webp",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  }
+ ],
+ "after": [
+  "Подключить рамку: в `components/wow/raid/raidMaterial.tsx` `raidIconFrameStyle()` брать рамку рейда из нового манифеста вместо ближайшего кита M+.",
+  "Проверка 1440/390 RU/EN, 4 темы, forced colors."
+ ]
+}

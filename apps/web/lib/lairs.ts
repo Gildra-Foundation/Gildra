@@ -530,7 +530,7 @@ export function getBoss(slug: string, locale: "ru" | "en" = "ru") {
     ...boss, name: wowSourceName(boss.name, locale), zone: text(boss.zone), summary: text(boss.summary),
     composition: { ...boss.composition, size: label(boss.composition.size) },
     farm: { ...boss.farm, waypoint: text(boss.farm.waypoint), access: label(boss.farm.access), best: label(boss.farm.best) },
-    difficulties: boss.difficulties.map((entry) => ({ ...entry, name: label(entry.name), reward: label(entry.reward), note: text(entry.note) })),
+    difficulties: boss.difficulties.map((entry) => ({ ...entry, name: labels[entry.name] ?? label(entry.name), reward: label(entry.reward), note: text(entry.note) })),
     mechanics: boss.mechanics.map((entry) => ({ ...entry, name: wowSourceName(entry.name, locale), castBy: entry.castBy ? text(entry.castBy) : undefined, description: text(entry.description), response: text(entry.response) })),
     loot: boss.loot.map((entry) => ({ ...entry, name: wowSourceName(entry.name, locale) })),
     positioning: boss.positioning?.map((entry) => ({ ...entry, text: text(entry.text) })),

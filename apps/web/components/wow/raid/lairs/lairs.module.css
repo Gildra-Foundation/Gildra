@@ -320,3 +320,36 @@
 /* Ability names link to Wowhead: a 44 px hit area around the heading line. */
 .ability h3 a { position: relative; }
 .ability h3 a::after { content: ""; position: absolute; inset: -8px 0; }
+
+/* ---------- Hub on the borrowed Coiled Isle kit: framed paintings + painted plaques ---------- */
+.feature { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: center; gap: var(--atlas-space-3); }
+.featureBody, .worldBody { display: flex; flex-direction: column; gap: var(--atlas-space-2); }
+.worldBody { flex: 1; margin: -8px 12px 0; }
+.worldGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-6) var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.worldGrid > li { display: flex; min-width: 0; }
+.worldCard { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.location { display: flex; align-items: center; gap: var(--atlas-space-2); color: var(--material-light); font-size: var(--atlas-text-meta); text-shadow: 0 1px 3px var(--atlas-bg); }
+.location svg { flex: none; width: 14px; height: 14px; }
+.featureBody .cardTitle, .worldBody .cardTitle { margin: 0; }
+.cardTitle a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text-strong); text-decoration: none; }
+.cardTitle a:hover { color: var(--material-light); text-decoration: underline; text-underline-offset: 3px; }
+.featureBody .cardTitle { font-size: var(--atlas-text-h2); }
+.featureBody .subtitle, .worldBody .subtitle { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.metaIcon { display: inline-block; width: 15px; height: 15px; margin-inline-end: var(--atlas-space-1); vertical-align: -2px; }
+.cardAction { margin-top: auto; padding-top: var(--atlas-space-3); }
+.featureBody .difficultyStrip { border-color: var(--material-line); background: var(--material-line); }
+.featureBody .difficultyStrip li { background: var(--material-base); }
+.featureBody .difficultyStrip span { color: var(--material-light); }
+@media (max-width: 1100px) { .feature { grid-template-columns: minmax(0, 1fr); gap: 0; } .featureBody { margin: -8px 12px 0; } .worldGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .worldGrid { grid-template-columns: minmax(0, 1fr); } .featureBody, .worldBody { margin-inline: 0; } .featureBody .cardTitle { font-size: var(--atlas-text-h3); } }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.framedMap { display: grid; gap: var(--atlas-space-2); min-width: 0; margin: 0; }
+.framedMap figcaption { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.difficultyFacts { margin-top: var(--atlas-space-3); }
+/* Ability rows sit on the painted plaque: transparent rows split by the kit line. */
+.abilityList > .ability { grid-template-columns: 56px minmax(0, 1fr); padding: var(--atlas-space-4) 0; border: 0; border-bottom: 1px solid var(--material-line); background: transparent; }
+.abilityList > .ability:first-child { padding-top: 0; }
+.abilityList > .ability:last-child { padding-bottom: 0; border-bottom: 0; }
+.abilityList > .ability:target { border-bottom-color: var(--material-light); }
+.abilityList .abilityHead h3 { text-shadow: 0 1px 3px var(--atlas-bg); }
+@media (forced-colors: active) { .abilityList > .ability { border-color: CanvasText; } }

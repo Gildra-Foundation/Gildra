@@ -77,11 +77,13 @@
 .roleTasks ul { font-size: var(--atlas-text-small); }
 .roleTasks li::marker { color: var(--raid-pull-light); }
 .briefingArt .roleTasks li + li { margin-top: var(--atlas-space-1); }
-.briefingArt .movement { margin-top: var(--atlas-space-3); padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line-soft); }
 .briefingArt .abilityTitle { align-items: center; gap: var(--atlas-space-2); }
 .briefingArt .abilityName { flex: 1 1 140px; min-width: 0; gap: var(--atlas-space-1); }
 .abilityName > strong { font-size: var(--atlas-text-body); line-height: var(--atlas-leading-snug); }
 .abilityName > small { line-height: var(--atlas-leading-snug); }
+/* The name is the source link (Wowhead ↗): one name, one link, no second caption row. */
+.enemyName > strong a, .abilityName > strong a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 28px; color: inherit; text-decoration: underline; text-decoration-color: var(--atlas-line-strong); text-underline-offset: 3px; }
+.enemyName > strong a > svg, .abilityName > strong a > svg { flex: none; color: var(--atlas-text-muted); }
 .briefingArt .action { width: 100%; margin-top: var(--atlas-space-1); color: var(--raid-pull-light); font-size: var(--atlas-text-small); }
 .briefingArt .response { padding-left: var(--atlas-space-3); border-left: 2px solid var(--raid-pull-light); }
 .abilities > li > p { font-size: var(--atlas-text-small); }

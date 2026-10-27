@@ -1,8 +1,12 @@
 import { wowGuideText } from "@/lib/wow/sourceLocale";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CalendarClock, Crown, ExternalLink, Gem, MapPin, Shield, Swords, UsersRound } from "lucide-react";
-import { AtlasAnchorNav, AtlasBadge, AtlasFrame, AtlasHero, AtlasLinkButton, AtlasMetaList, AtlasPanel, AtlasSection, AtlasTable, type AtlasBadgeTone } from "@/components/atlas";
+import { ArrowRight, Crown, ExternalLink, Shield, Swords, UsersRound } from "lucide-react";
+import { AtlasAnchorNav, AtlasBadge, AtlasFrame, AtlasHero, AtlasMetaList, AtlasSection, AtlasTable, type AtlasBadgeTone } from "@/components/atlas";
+import { formatAtlasDate } from "@gildra/atlas-ui/format";
+import { RaidFramedArt } from "../RaidFramedArt";
+import { RaidPlaque, raidIconFrameStyle, raidMaterialStyles } from "../raidMaterial";
+import page from "../raidPage.module.css";
 import { getLootIcon, lairGuideLastVerifiedAt, type Boss, type Mechanic } from "@/lib/lairs";
 import { CopyWaypointButton } from "./CopyWaypointButton";
 import { lairsCopy, mechanicActions, type LairsLocale } from "./lairsCopy";
@@ -12,6 +16,10 @@ import { trail } from "@/lib/routes/registry";
 
 const toneByMechanic: Record<Mechanic["tone"], AtlasBadgeTone> = { danger: "negative", frost: "info", control: "caution", tank: "neutral" };
 const difficultyIcons = [UsersRound, Shield, Swords, Crown];
+
+/** Lairs wear the Coiled Isle kit of The Venomous Abyss until they get their own. */
+const kit = "venomous-abyss" as const;
+const capital = (text: string) => text.charAt(0).toLocaleUpperCase() + text.slice(1);
 
 function spellAnchor(name: string) {
   return `spell-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
@@ -45,7 +53,6 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
         actions={<>
           {boss.farm.waypoint ? <CopyWaypointButton waypoint={boss.farm.waypoint} labels={{ label: copy.copyWaypoint, copied: copy.copied, failed: copy.copyFailed }} /> : null}
           <AtlasShareButton title={boss.name} locale={locale} />
-          {boss.sourceUrl ? <AtlasLinkButton variant="ghost" href={boss.sourceUrl} external iconAfter={<ExternalLink aria-hidden="true" />}>{copy.strategySource}</AtlasLinkButton> : null}
         </>}
       />
 
@@ -53,22 +60,23 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
 
       <AtlasSection id="where" title={copy.whereTitle}>
         <div className={styles.whereGrid}>
-          <figure className={styles.map}>
-            <Image src={boss.map} alt={copy.mapAlt(boss.zone)} fill sizes="(max-width: 900px) 100vw, 60vw" />
-            <figcaption><MapPin aria-hidden="true" />{boss.zone} · {boss.coordinates}</figcaption>
+          <figure className={styles.framedMap} role="img" aria-label={copy.mapAlt(boss.zone)}>
+            <RaidFramedArt raid={kit} src={boss.map} fit="contain" sizes="(max-width: 900px) 100vw, 60vw" />
+            <figcaption>{boss.zone} · {boss.coordinates}</figcaption>
           </figure>
-          <AtlasPanel padding="none">
-            <AtlasMetaList columns={1} className={styles.flushList} items={[
-              { icon: <MapPin />, label: copy.access, value: boss.farm.access },
-              { icon: <CalendarClock />, label: copy.reset, value: boss.reset },
-              { icon: <Gem />, label: copy.lockout, value: boss.farm.lockout },
-              { icon: <Crown />, label: copy.bestReward, value: boss.farm.best },
-            ]} />
-          </AtlasPanel>
+          <RaidPlaque raid={kit} className={page.plaque}>
+            <dl className={page.facts}>
+              <div><dt>{copy.access}</dt><dd>{boss.farm.access}</dd></div>
+              <div><dt>{copy.reset}</dt><dd>{boss.reset}</dd></div>
+              <div><dt>{copy.lockout}</dt><dd>{boss.farm.lockout}</dd></div>
+              <div><dt>{copy.bestReward}</dt><dd>{boss.farm.best}</dd></div>
+            </dl>
+          </RaidPlaque>
         </div>
       </AtlasSection>
 
       <AtlasSection id="abilities" title={copy.abilitiesTitle} description={copy.abilitiesText}>
+        <RaidPlaque raid={kit} className={page.plaque}>
         <ol className={styles.abilityList}>
           {boss.mechanics.map((mechanic) => {
             const tags = mechanic.tags ?? [mechanic.action];
@@ -77,7 +85,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
             const source = mechanic.sourceUrl && mechanic.sourceUrl !== boss.sourceUrl ? mechanic.sourceUrl : null;
             return (
               <li key={mechanic.name} id={spellAnchor(mechanic.name)} className={styles.ability}>
-                <Image className={styles.abilityIcon} src={mechanic.icon} alt="" width={52} height={52} />
+                <span className={raidMaterialStyles.iconFrame} style={raidIconFrameStyle(kit, 56)}><Image src={mechanic.icon} alt="" width={56} height={56} /></span>
                 <div className={styles.abilityBody}>
                   <div className={styles.abilityHead}>
                     <h3>{mechanic.spellId ? <a href={`https://www.wowhead.com/spell=${mechanic.spellId}`} target="_blank" rel="noreferrer">{mechanic.name}</a> : mechanic.name}</h3>
@@ -100,16 +108,17 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
             );
           })}
         </ol>
+        </RaidPlaque>
       </AtlasSection>
 
       {positioning.length ? (
         <AtlasSection id="positioning" title={copy.positioningTitle}>
           <div className={styles.positionGrid}>
             {positioning.map((item) => (
-              <AtlasPanel key={item.label} tone="raised" as="article" className={styles.position}>
+              <RaidPlaque raid={kit} key={item.label} as="article" className={page.plaque}>
                 <h3>{item.label}</h3>
                 <p>{item.text}</p>
-              </AtlasPanel>
+              </RaidPlaque>
             ))}
           </div>
         </AtlasSection>
@@ -121,15 +130,14 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
           {boss.difficulties.map((difficulty, index) => {
             const Icon = difficultyIcons[index] ?? Shield;
             return (
-              <AtlasPanel key={difficulty.name} as="article" tone={index === boss.difficulties.length - 1 && boss.difficulties.length > 1 ? "highlight" : "default"} className={styles.difficulty}>
-                <span className={styles.difficultyIcon} aria-hidden="true"><Icon /></span>
-                <h3>{difficulty.name}</h3>
+              <RaidPlaque raid={kit} key={difficulty.name} as="article" className={page.plaque}>
+                <h3 className={page.roleTitle}><Icon aria-hidden="true" />{capital(difficulty.name)}</h3>
                 <p>{difficulty.note}</p>
-                <dl>
+                <dl className={`${page.facts} ${styles.difficultyFacts}`}>
                   <div><dt>{copy.group}</dt><dd>{difficulty.group}</dd></div>
                   <div><dt>{copy.reward}</dt><dd>{difficulty.reward}</dd></div>
                 </dl>
-              </AtlasPanel>
+              </RaidPlaque>
             );
           })}
         </div>
@@ -144,6 +152,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
       ) : null}
 
       <AtlasSection id="loot" title={copy.lootTitle}>
+        <RaidPlaque raid={kit} className={page.plaque}>
         <AtlasTable
           label={copy.lootTitle}
           layout="cards"
@@ -165,7 +174,11 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
             { key: "priority", header: copy.priority, cell: (item) => item.priority },
           ]}
         />
-        <p className={styles.footnote}>{copy.lootNote(boss.lastVerifiedAt ?? lairGuideLastVerifiedAt)}</p>
+        </RaidPlaque>
+        <p className={page.quiet}>
+          {boss.sourceUrl ? <><a href={boss.sourceUrl} target="_blank" rel="noreferrer">{copy.strategySource}<ExternalLink aria-hidden="true" /></a> · </> : null}
+          {copy.updated(formatAtlasDate(boss.lastVerifiedAt ?? lairGuideLastVerifiedAt, locale))}
+        </p>
       </AtlasSection>
 
       <nav className={styles.pager} aria-label={copy.section}>

@@ -1,7 +1,7 @@
 import { wowSourceName } from "@/lib/wow/sourceLocale";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { LairBossGuide } from "@/components/wow/lairs/LairBossGuide";
+import { LairBossGuide } from "@/components/wow/raid/lairs/LairBossGuide";
 import { getMidnightLairEncounter, midnightLairEncounters } from "@/lib/data/wow";
 import { getBoss } from "@/lib/lairs";
 

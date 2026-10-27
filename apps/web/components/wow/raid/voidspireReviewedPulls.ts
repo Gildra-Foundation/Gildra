@@ -70,7 +70,7 @@ export const voidspireReviewedPulls: RaidRoutePull[] = [
         text("Не дублируйте назначенные прерывания и рассеивание.", "Avoid overlapping assigned interrupts and offensive dispels.")
       ]
     },
-    direction: text("Зачистите входную часть рейда. Точки обычных врагов на сетке условные.", "Clear the entrance area. Ordinary-enemy positions on the grid are schematic."),
+    direction: text("Зачистите входную часть рейда.", "Clear the entrance area."),
     steps: [],
     next: text("Далее — Император Аверзиан.", "Next: Imperator Averzian.")
   },

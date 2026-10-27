@@ -1,5 +1,5 @@
 import type { MechanicTag } from "@/lib/lairs";
-import { formatAtlasDate as formatDate, pluralRu } from "@gildra/atlas-ui/format";
+import { pluralRu } from "@gildra/atlas-ui/format";
 
 /**
  * Interface copy of the Lairs and world bosses section. Game terms (boss,
@@ -17,9 +17,7 @@ export const lairsCopy = {
     statsLabel: "Сводка сезона",
     statLair: "логово",
     statWorld: "мировых босса",
-    statPatch: "патч",
     lairSection: "Логово сезона",
-    lairSectionText: "Отдельный инстанс с четырьмя уровнями сложности.",
     worldSection: "Мировые боссы",
     lairBadge: "Логово",
     worldBadge: "Мировой босс",
@@ -34,8 +32,6 @@ export const lairsCopy = {
     reset: "Сброс",
     bestReward: "Лучшая награда",
     group: "Группа",
-    sources: "Источники",
-    sourcesText: (date: string) => `Состав сезона — анонс Blizzard; тактика, карты и добыча — гайд Icy Veins. Проверено ${formatDate(date, "ru")}`,
     blizzard: "Анонс Blizzard",
     icyVeins: "Гайд Icy Veins",
     // Boss guide
@@ -69,13 +65,13 @@ export const lairsCopy = {
     slot: "Слот",
     stats: "Характеристики",
     priority: "Ценность",
-    lootNote: (date: string) => `Шанс выпадения Blizzard не публикует. Список предметов проверен ${formatDate(date, "ru")}`,
     nextBoss: "Следующий босс",
     allBosses: "Все логова и боссы",
     copyWaypoint: "Скопировать координаты",
     copied: "Скопировано",
     copyFailed: "Не удалось скопировать",
-    strategySource: "Источник тактики",
+    strategySource: "Тактика и добыча — Icy Veins",
+    updated: (date: string) => `обновлено ${date}`,
   },
   en: {
     breadcrumbsLabel: "Breadcrumbs",
@@ -87,9 +83,7 @@ export const lairsCopy = {
     statsLabel: "Season summary",
     statLair: "lair",
     statWorld: "world bosses",
-    statPatch: "patch",
     lairSection: "Lair of the season",
-    lairSectionText: "A dedicated instance with four difficulty levels.",
     worldSection: "World bosses",
     lairBadge: "Lair",
     worldBadge: "World boss",
@@ -104,8 +98,6 @@ export const lairsCopy = {
     reset: "Reset",
     bestReward: "Best reward",
     group: "Group",
-    sources: "Sources",
-    sourcesText: (date: string) => `Season roster — Blizzard announcement; strategy, maps and loot — Icy Veins guide. Verified ${formatDate(date, "en")}.`,
     blizzard: "Blizzard announcement",
     icyVeins: "Icy Veins guide",
     lairType: "Lair",
@@ -138,13 +130,13 @@ export const lairsCopy = {
     slot: "Slot",
     stats: "Stats",
     priority: "Value",
-    lootNote: (date: string) => `Blizzard does not publish drop chances. Item list verified ${formatDate(date, "en")}.`,
     nextBoss: "Next boss",
     allBosses: "All lairs and bosses",
     copyWaypoint: "Copy coordinates",
     copied: "Copied",
     copyFailed: "Copy failed",
-    strategySource: "Strategy source",
+    strategySource: "Strategy and loot — Icy Veins",
+    updated: (date: string) => `updated ${date}`,
   },
 } as const;
 

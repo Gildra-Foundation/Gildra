@@ -1,5 +1,5 @@
 // routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
-import { LairsHub } from "@/components/wow/lairs/LairsHub";
+import { LairsHub } from "@/components/wow/raid/lairs/LairsHub";
 import { sectionMetadata } from "@/lib/routes/metadata";
 
 export const metadata = sectionMetadata("lairs", "en");

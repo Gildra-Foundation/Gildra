@@ -56,7 +56,7 @@ function CartographyFooter({ background, hasPins, planSlug, activeBoss, locale, 
 }) {
   const t = raidMapCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
-  return <div className={styles.mapFooter}><span>{background === "arena" ? encounter ? raidBossPlannerCopy[locale].arenaHint : t.arenaHint : hasPins ? t.approximate : t.emptyFloor}</span>
+  return <div className={styles.mapFooter}>{background === "arena" || !hasPins ? <span>{background === "arena" ? encounter ? raidBossPlannerCopy[locale].arenaHint : t.arenaHint : t.emptyFloor}</span> : null}
     {background === "arena" && !encounter && <Link href={`${prefix}/wow/raids/${planSlug}/${activeBoss}`}>{t.tactics}<ArrowUpRight size={14} aria-hidden="true" /></Link>}
     {count > 0 && <div className={styles.sketchTools}><span>{t.own} · {count}</span>
       <AtlasButton className={styles.tool} size="sm" data-raid-tool="undo" aria-label={t.undo} onClick={onUndo}><RaidPlannerTextMark slug={planSlug} text="↶" fallback={<Undo2 size={16} aria-hidden="true" />} /></AtlasButton>
@@ -114,7 +114,7 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
   }
 
   return <figure className={styles.figure} data-raid-cartography>
-    <figcaption className={styles.caption} data-raid-map-caption><div><span>{background === "arena" ? selectedBoss?.name[locale] : plan.name[locale]}</span><small>{image.name[locale]}</small></div><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Map size={20} aria-hidden="true" />} /></figcaption>
+    <figcaption className={styles.caption} data-raid-map-caption><div><span>{background === "arena" ? selectedBoss?.name[locale] : plan.name[locale]}</span>{image.name[locale] && !plan.name[locale].endsWith(image.name[locale]) ? <small>{image.name[locale]}</small> : null}</div><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Map size={20} aria-hidden="true" />} /></figcaption>
     <CartographyTools planSlug={plan.slug} locale={locale} background={background} zoom={zoom} showGrid={showGrid} showRoute={showRoute} editing={editing}
       onZoom={setZoom} onGrid={() => setShowGrid(value => !value)} onRoute={() => setShowRoute(value => !value)} onEdit={() => setEditing(value => !value)} />
     <div className={styles.viewport} tabIndex={0} role="group" aria-label={t.pan} data-raid-map-viewport>

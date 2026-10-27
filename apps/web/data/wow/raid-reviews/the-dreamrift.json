@@ -31,21 +31,21 @@
       "url": "https://www.method.gg/guides/the-dreamrift/chimaerus-the-undreamt-god"
     }
   ],
-  "summaryRu": "Провал Снов — рейд первого сезона Midnight с одним боссом, Химерием. Проверены разделение на Альн и реальность, приоритет порождений и отличия Heroic/Mythic. Сейчас идет второй сезон: сезонные достижения первого сезона уже недоступны.",
-  "summaryEn": "The Dreamrift is a one-boss raid from Midnight Season 1. The realm split, manifestation priorities, and Heroic/Mythic differences were reviewed. Season 2 is now live; Season 1 time-limited achievements are no longer available.",
+  "summaryRu": "Провал Снов — рейд первого сезона Midnight с одним боссом, Химерием: бой в двух мирах, Альне и реальности, с порождениями, которых добивают по очереди. Сейчас идёт второй сезон: сезонные достижения первого сезона уже недоступны.",
+  "summaryEn": "The Dreamrift is a one-boss raid from Midnight Season 1: Chimaerus is fought across two realms, Aln and Reality, with manifestations finished in turn. Season 2 is now live; Season 1 time-limited achievements are no longer available.",
   "bosses": [
     {
       "slug": "chimaerus",
-      "summaryRu": "Два слоя, щиты порождений в Альн и их добивание в реальности. Переходка проверяет движение и прерывания; Heroic добавляет очистку луж через миазмы, Mythic — дистанцию между слоями и обмен игроков.",
+      "summaryRu": "Два слоя, щиты порождений в Альн и их добивание в реальности. Переходка проверяет движение и прерывания; на героической сложности добавляется очистка луж через миазмы, на эпохальной — дистанция между слоями и обмен игроков.",
       "summaryEn": "Break manifestation shields in Aln, then finish them in Reality. Intermission tests movement and interrupts; Heroic adds miasma pool clearing, while Mythic adds cross-realm spacing and player swaps.",
       "tipsRu": [
-        "Normal / Heroic / Mythic: назначьте две группы с танком и лекарями; группа поглощения Alndust Upheaval уходит в Альн, вторая убивает появившиеся в реальности порождения.",
+        "На всех сложностях: назначьте две группы с танком и лекарями; группа поглощения Alndust Upheaval уходит в Альн, вторая убивает появившиеся в реальности порождения.",
         "В Альн сначала разбейте щит Colossal Horror. Haunting Essence прерывайте на Fearsome Cry; держите порождения вдали от босса.",
         "Наверху немедленно переключайтесь на порождения: Insatiable поглощает дошедших до босса. Добейте оставшихся до окончания Consume и приземления Ravenous Dive.",
         "Танк разворачивает Rending Tear от рейда и учитывает отбрасывание; во время Corrupted Devastation все уходят с линий пролета.",
-        "Heroic / Mythic: Consuming Miasma снимайте отдельно от рейда, охватив кругом существующие лужи. Вставать в саму лужу не нужно; на Heroic приземление больше не очищает площадку.",
-        "Mythic: Dissonance требует дистанции 8 м от игроков другого слоя. Для Rift Madness назначьте замены лекаря и бойца; подходите к жертвам для обмена только после подъема и ужаса.",
-        "Mythic: поглотите дополнительный Alndust Upheaval перед переходкой; разделение на слои сохраняется. На переходке назначьте прерывания быстрых Fearsome Cry."
+        "Героическая и эпохальная сложности: Consuming Miasma снимайте отдельно от рейда, охватив кругом существующие лужи. Вставать в саму лужу не нужно; на героической сложности приземление больше не очищает площадку.",
+        "Эпохальная сложность: Dissonance требует дистанции 8 м от игроков другого слоя. Для Rift Madness назначьте замены лекаря и бойца; подходите к жертвам для обмена только после подъема и ужаса.",
+        "Эпохальная сложность: поглотите дополнительный Alndust Upheaval перед переходкой; разделение на слои сохраняется. На переходке назначьте прерывания быстрых Fearsome Cry."
       ],
       "tipsEn": [
         "Normal / Heroic / Mythic: assign two teams with a tank and healers; the Alndust Upheaval team enters Aln while the other team kills manifestations appearing in Reality.",

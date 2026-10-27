@@ -242,3 +242,13 @@
   .surface.surface[data-raid-pulls="the-voidspire"] .forcedGlyph { display: inline; color: ButtonText; font-size: var(--atlas-text-title); }
   .surface.surface[data-raid-pulls="the-voidspire"] .textMark { color: ButtonText; text-shadow: none; }
 }
+
+/* Phones (≤ 480 px): the map panel stays compact — the four zoom/grid medallions share one row. */
+@media (max-width: 480px) {
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) { gap: var(--atlas-space-2); padding-bottom: var(--atlas-space-2); }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) > div { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools]) > div:first-child { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-map-tools] button[data-raid-tool]:not([data-raid-tool="route"]):not([data-raid-tool="sketch"])) { width: 52px; min-width: 52px; height: 52px; min-height: 52px; }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-tool="grid"]) .glyph { width: 40px; height: 40px; }
+  .surface.surface[data-raid-pulls="the-voidspire"] :global(button[data-raid-tool] .ui-button__label) { font-size: var(--atlas-text-meta); }
+}

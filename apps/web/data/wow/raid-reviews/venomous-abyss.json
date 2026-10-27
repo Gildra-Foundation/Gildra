@@ -27,8 +27,8 @@
       "url": "https://www.icy-veins.com/wow/venomous-abyss-raid-guide"
     }
   ],
-  "summaryRu": "Отравленная бездна — восемь боссов второго сезона Midnight. Проверены все встречи, 37 настоящих иконок и изменения Blizzard до 20 октября. Уточнены механики Ссзорака, Спирального алтаря и Ула’тек. Эпохальная добыча двух финальных боссов — 344; диковинка для обмена на комплект имеет отдельное правило.",
-  "summaryEn": "The Venomous Abyss contains eight Midnight Season 2 encounters. All encounters, 37 authentic icons, and Blizzard changes through October 20 were reviewed. Sszorak, Coiled Altar, and Ula’tek guidance includes recent fixes. Final two Mythic bosses drop item level 344; the tier Curio follows a separate rule.",
+  "summaryRu": "Отравленная бездна — восемь боссов второго сезона Midnight. Эпохальная добыча двух финальных боссов — 344; диковинка для обмена на комплект имеет отдельное правило.",
+  "summaryEn": "The Venomous Abyss contains eight Midnight Season 2 encounters. Final two Mythic bosses drop item level 344; the tier Curio follows a separate rule.",
   "bosses": [
     {
       "slug": "nekzali-the-soulcoiler",
@@ -158,7 +158,7 @@
       "tipsRu": [
         "Назначьте два лагеря; сохраняйте расстояние между боссами не менее 40 м.",
         "Перед Vitriolic Stasis выравнивайте здоровье: отстающий босс восстанавливает его до значения второго.",
-        "Приоритет — Venom Coagulation; наступайте на Toxic Droplets. Heroic: уклоняйтесь от возвращающегося Living Venom.",
+        "Приоритет — Venom Coagulation; наступайте на Toxic Droplets. Героическая сложность: уклоняйтесь от возвращающегося Living Venom.",
         "После переходки лагеря остаются на местах, танки обмениваются боссами; Blighted Blood снимайте быстро."
       ],
       "tipsEn": [
@@ -337,12 +337,12 @@
     {
       "slug": "sszorak",
       "summaryRu": "Цисты страхуют рейд от ветра; направления считываются заранее. Учтены сентябрьские и октябрьские исправления.",
-      "summaryEn": "Cysts protect the raid from wind pushes; read directions in advance. September and October changes are included.",
+      "summaryEn": "Cysts protect the raid from wind pushes; read directions in advance.",
       "tipsRu": [
         "По ветрам разметьте точки Venomous Surge; оставляйте по одной цисте напротив нужного тоннеля.",
-        "Ravage разворачивайте от рейда; Mutilate поглощайте группой. Heroic: чередуйте две группы.",
+        "Ravage разворачивайте от рейда; Mutilate поглощайте группой. Героическая сложность: чередуйте две группы.",
         "Raging Crosswinds: найдите партнера с противоположным направлением; в переходке используйте подготовленные цисты.",
-        "Heroic: Caustic Claws больше не оставляет Caustic Residue. Mythic: с 13 октября набор до 100 ярости занимает на 5 секунд дольше."
+        "Героическая сложность: Caustic Claws больше не оставляет Caustic Residue. Эпохальная сложность: с 13 октября набор до 100 ярости занимает на 5 секунд дольше."
       ],
       "tipsEn": [
         "Mark Venomous Surge positions from wind directions; place one cyst opposite each required tunnel.",
@@ -438,7 +438,7 @@
       "tipsRu": [
         "Боссы не делят здоровье; готовьте одновременное убийство. Танки сохраняют мили-дистанцию и меняются после Stone Breaker.",
         "Caustic Globule собирают игроки с малым числом стаков; не ловите соседние сферы случайно.",
-        "Ravenous Feast снимает стаки Eternal Venom. На Heroic достижение 10 стаков смертельно."
+        "Ravenous Feast снимает стаки Eternal Venom. На героической сложности достижение 10 стаков смертельно."
       ],
       "tipsEn": [
         "The bosses do not share health; plan simultaneous kills. Tanks maintain melee range and swap after Stone Breaker.",
@@ -584,12 +584,12 @@
     },
     {
       "slug": "the-coiled-altar",
-      "summaryRu": "Управляйте сбором яда и призраками. Mythic обновлен по хотфиксу 13 октября; достижение исправлено 16 октября.",
-      "summaryEn": "Control venom collection and ghosts. Mythic reflects October 13 tuning; the achievement received an October 16 fix.",
+      "summaryRu": "Управляйте сбором яда и призраками.",
+      "summaryEn": "Control venom collection and ghosts.",
       "tipsRu": [
-        "Собирайте Coalesced Venom под Sever вне путей Axegrinder; танк меняется после конуса. Heroic: согласуйте число одновременных взрывов с лекарями.",
+        "Собирайте Coalesced Venom под Sever вне путей Axegrinder; танк меняется после конуса. Героическая сложность: согласуйте число одновременных взрывов с лекарями.",
         "Снимайте щиты Dreadmarch; фиксированный игрок смотрит на призрака, удерживая его под Soul Sever.",
-        "Mythic: теперь 8 начальных сфер, 4 Virulent Mutations, радиус Mutation/Mutagenic Venom — 6 м; Dreadmarch выбирает 3 игроков.",
+        "Эпохальная сложность: теперь 8 начальных сфер, 4 Virulent Mutations, радиус Mutation/Mutagenic Venom — 6 м; Dreadmarch выбирает 3 игроков.",
         "Watch Out Behind You теперь исправлено для групп больше 20 игроков. Это не отменяет условия достижения."
       ],
       "tipsEn": [
@@ -694,12 +694,12 @@
     {
       "slug": "ulatek",
       "summaryRu": "Контролируйте яйца, заранее разделитесь для коридоров и двигайтесь до разрушения платформ. Учтено ослабление 6 октября.",
-      "summaryEn": "Control eggs, preassign corridor teams, and move before platforms collapse. October 6 tuning is included.",
+      "summaryEn": "Control eggs, preassign corridor teams, and move before platforms collapse.",
       "tipsRu": [
-        "Доставляйте яйца в Spectral Coils, избегая Caustic Waves; Heroic: чередуйте назначенные группы поглощения.",
+        "Доставляйте яйца в Spectral Coils, избегая Caustic Waves; Героическая сложность: чередуйте назначенные группы поглощения.",
         "В коридорах убейте Warden; разрывайте Grasping Fangs парами после спадания эффекта. В котел сначала сдавайте малые яйца, затем Doomscale Egg.",
         "На финальной фазе прерывайте Shriekers, разводите Volatile Purge и уходите до Circling Prey.",
-        "С 6 октября для Serpent’s Bite достаточно максимум трех поглощающих на каждую цель независимо от размера рейда; Mythic: хвост дает 3 волны вместо 7."
+        "С 6 октября для Serpent’s Bite достаточно максимум трех поглощающих на каждую цель независимо от размера рейда; Эпохальная сложность: хвост дает 3 волны вместо 7."
       ],
       "tipsEn": [
         "Carry eggs into Spectral Coils and avoid Caustic Waves; Heroic: alternate assigned soak teams.",
