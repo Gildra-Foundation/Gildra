@@ -4,6 +4,7 @@ import { pairedAlternates, pageOpenGraph } from "@/lib/seo/metadata";
 import { trail, trailLabel } from "@/lib/routes/registry";
 import { TransmogStudio } from "./TransmogStudio";
 import { transmogCopy } from "./transmogCopy";
+import styles from "./transmog.module.css";
 
 export function transmogMetadata(lang: "ru" | "en"): Metadata {
   const c = transmogCopy[lang];
@@ -14,7 +15,7 @@ export function transmogMetadata(lang: "ru" | "en"): Metadata {
 export function TransmogPage({ lang }: { lang: "ru" | "en" }) {
   const c = transmogCopy[lang];
   return <AtlasFrame scene="articles" lang={lang}>
-    <AtlasHero title={c.title} eyebrow={c.eyebrow} lede={c.lede} breadcrumbs={trail(lang, "transmog")} breadcrumbsLabel={trailLabel(lang)} />
+    <AtlasHero className={styles.hero} title={c.title} lede={c.lede} breadcrumbs={trail(lang, "transmog")} breadcrumbsLabel={trailLabel(lang)} />
     <TransmogStudio lang={lang} />
     <noscript>{c.noJS}</noscript>
   </AtlasFrame>;

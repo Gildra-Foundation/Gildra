@@ -1,9 +1,35 @@
+import { Readable } from "node:stream";
+import { constants, createBrotliCompress } from "node:zlib";
 import { NextRequest, NextResponse } from "next/server";
 
 const MODEL_ORIGIN = "https://wow.zamimg.com/modelviewer/live/";
 const SAFE_PATH = /^[a-zA-Z0-9._/-]+$/;
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+/**
+ * Model binaries (.m2/.skel/.skin/.anim/.bone) are served brotli-compressed:
+ * the mannequin's skeleton and body go from 14.6 MB (gzip) to about 11 MB.
+ * Cloudflare caches the compressed answer, so each file is compressed once
+ * per edge; nginx leaves already-encoded answers alone.
+ */
+const BINARY = /\.(m2|skel|skin|anim|bone|sk3)$/;
+const BROTLI_MIN_BYTES = 64 * 1024;
+
+function brotliStream(body: ReadableStream<Uint8Array>, size: number) {
+  const compressor = createBrotliCompress({
+    params: {
+      [constants.BROTLI_PARAM_QUALITY]: 6,
+      [constants.BROTLI_PARAM_LGWIN]: 24,
+      [constants.BROTLI_PARAM_MODE]: constants.BROTLI_MODE_GENERIC,
+      ...(size ? { [constants.BROTLI_PARAM_SIZE_HINT]: size } : {}),
+    },
+  });
+  const source = Readable.fromWeb(body as import("node:stream/web").ReadableStream<Uint8Array>);
+  source.on("error", (error) => compressor.destroy(error));
+  return Readable.toWeb(source.pipe(compressor)) as ReadableStream<Uint8Array>;
+}
 
 export async function GET(
   request: NextRequest,
@@ -49,6 +75,13 @@ export async function GET(
     : "public, max-age=604800, stale-while-revalidate=2592000");
   headers.set("X-Content-Type-Options", "nosniff");
   const contentLength = upstream.headers.get("Content-Length");
+  const size = Number(contentLength ?? 0);
+  const acceptsBrotli = /\bbr\b/.test(request.headers.get("accept-encoding") ?? "");
+  headers.set("Vary", "Accept-Encoding");
+  if (acceptsBrotli && BINARY.test(path) && !upstream.headers.get("Content-Encoding") && (!size || size >= BROTLI_MIN_BYTES)) {
+    headers.set("Content-Encoding", "br");
+    return new NextResponse(brotliStream(upstream.body, size), { status: 200, headers });
+  }
   if (contentLength) headers.set("Content-Length", contentLength);
   return new NextResponse(upstream.body, { status: 200, headers });
 }

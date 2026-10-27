@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, type CSSProperties, type Ref } from "react";
 import {
-  createZamViewer, loadZamViewerScript, prepareZamViewer, waitForZamViewer, webglAvailable, ZAM_CONTENT_PATH, ZAM_MODEL_TYPE, type WowViewer,
+  createZamViewer, loadZamViewerScript, prepareZamViewer, waitForZamQuiet, waitForZamViewer, webglAvailable, ZAM_CONTENT_PATH, ZAM_MODEL_TYPE, type WowViewer,
 } from "@/lib/wow/zamModelViewer";
 import type { BackgroundDef } from "@/lib/wow/transmog/model";
 import { captureViewer, clearViewerSlots, pauseViewer, resizeViewer, setViewerBackground, setViewerItems, setViewerPose, type ViewerItem } from "@/lib/wow/transmog/viewer";
@@ -50,7 +50,11 @@ type Props = {
   contrast: number;
   shadow: number;
   label: string;
+  /** Picture of this outfit shown until the 3D model is ready (same camera and frame). */
+  poster?: string | null;
   onStatus: (status: StageStatus, progress: number) => void;
+  /** True while swapped items are still downloading, false once the model is quiet. */
+  onBusy?: (busy: boolean) => void;
   children?: React.ReactNode;
 };
 
@@ -59,7 +63,7 @@ type Props = {
  * background. The mannequin loads once per race/body; items, pose and frame
  * changes are applied to the live model without reloading it.
  */
-export function TransmogStage({ ref, requested, modelId, items, pose, paused, aspect, background, brightness, contrast, shadow, label, onStatus, children }: Props) {
+export function TransmogStage({ ref, requested, modelId, items, pose, paused, aspect, background, brightness, contrast, shadow, label, poster, onStatus, onBusy, children }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<WowViewer | null>(null);
@@ -69,8 +73,11 @@ export function TransmogStage({ ref, requested, modelId, items, pose, paused, as
   const capturingRef = useRef(false);
   const [status, setStatus] = useState<StageStatus>("idle");
   const [attempt, setAttempt] = useState(0);
-  const dragRef = useRef<{ x: number; y: number; id: number } | null>(null);
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef(0);
+  const onBusyRef = useRef(onBusy);
   useEffect(() => { itemsRef.current = items; }, [items]);
+  useEffect(() => { onBusyRef.current = onBusy; }, [onBusy]);
 
   const report = useCallback((next: StageStatus, progress = 0) => {
     setStatus(next);
@@ -90,7 +97,7 @@ export function TransmogStage({ ref, requested, modelId, items, pose, paused, as
     host.replaceChildren();
     report("loading");
     const boot = async () => {
-      prepareZamViewer();
+      await prepareZamViewer();
       const charOptions = await defaultCustomization(modelId);
       await loadZamViewerScript();
       if (cancelled || !hostRef.current) return;
@@ -140,6 +147,12 @@ export function TransmogStage({ ref, requested, modelId, items, pose, paused, as
     if (removed.length) clearViewerSlots(viewer, removed);
     if (changed.length) setViewerItems(viewer, changed);
     appliedRef.current = new Map(items);
+    // A newer change cancels the wait of the previous one, so every change ends with busy(false).
+    if (!changed.length) { onBusyRef.current?.(false); return; }
+    let cancelled = false;
+    onBusyRef.current?.(true);
+    void waitForZamQuiet({ isCancelled: () => cancelled }).then(() => { if (!cancelled) onBusyRef.current?.(false); });
+    return () => { cancelled = true; };
   }, [items, status]);
 
   useEffect(() => {
@@ -245,19 +258,33 @@ export function TransmogStage({ ref, requested, modelId, items, pose, paused, as
     action();
   };
 
-  // Touch: vertical swipes scroll the page, horizontal drags turn the model.
+  // Touch: vertical swipes scroll the page, horizontal drags turn the model, two fingers zoom.
+  const spread = () => {
+    const [a, b] = [...pointersRef.current.values()];
+    return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+  };
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse") return;
-    dragRef.current = { x: event.clientX, y: event.clientY, id: event.pointerId };
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    pinchRef.current = spread();
   };
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
+    const previous = pointersRef.current.get(event.pointerId);
     const renderer = viewerRef.current?.renderer;
-    if (!drag || drag.id !== event.pointerId || !renderer) return;
-    renderer.azimuth -= ((event.clientX - drag.x) / Math.max(1, event.currentTarget.clientWidth)) * Math.PI * 2;
-    drag.x = event.clientX;
+    if (!previous || !renderer) return;
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pointersRef.current.size >= 2) {
+      const now = spread();
+      if (pinchRef.current && now) zoom(pinchRef.current / now);
+      pinchRef.current = now;
+      return;
+    }
+    renderer.azimuth -= ((event.clientX - previous.x) / Math.max(1, event.currentTarget.clientWidth)) * Math.PI * 2;
   };
-  const endDrag = () => { dragRef.current = null; };
+  const endDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    pointersRef.current.delete(event.pointerId);
+    pinchRef.current = spread();
+  };
 
   const backgroundStyle: CSSProperties = background.kind === "color" ? { background: background.color }
     : background.kind === "gradient" ? { background: `linear-gradient(${background.angle}deg, ${background.stops[0]}, ${background.stops[1]})` }
@@ -279,7 +306,8 @@ export function TransmogStage({ ref, requested, modelId, items, pose, paused, as
       <div className={styles.stageBackground} style={backgroundStyle} aria-hidden="true" />
       {background.kind === "scene" ? <div className={styles.stageVignette} aria-hidden="true" /> : null}
       <div className={styles.stageShadow} aria-hidden="true" />
-      <div ref={hostRef} className={styles.stageHost} aria-hidden="true" />
+      {poster ? <img className={styles.poster} src={poster} alt="" aria-hidden="true" fetchPriority="high" decoding="async" data-poster-hidden={status === "ready" || undefined} /> : null}
+      <div ref={hostRef} className={styles.stageHost} aria-hidden="true" data-host-ready={status === "ready" || undefined} />
       {status === "ready" ? (
         <div className={styles.touchShield} aria-hidden="true" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} />
       ) : null}

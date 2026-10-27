@@ -97,12 +97,12 @@ export type BackgroundDef =
   | { id: string; kind: "transparent" }
   | { id: string; kind: "color"; color: string }
   | { id: string; kind: "gradient"; stops: [string, string]; angle: number }
-  | { id: string; kind: "scene"; src: string; position: string };
+  | { id: string; kind: "scene"; src: string; position: string; thumb: string };
 
 /**
  * Backgrounds. Colors and gradients are export pixels, not interface colors,
  * so they live here as data. Scenes are the site's own paintings, served from
- * this origin so the export canvas stays clean.
+ * this origin so the export canvas stays clean; `thumb` is a 112 px swatch.
  */
 export const backgrounds: BackgroundDef[] = [
   { id: "transparent", kind: "transparent" },
@@ -113,15 +113,15 @@ export const backgrounds: BackgroundDef[] = [
   { id: "dawn", kind: "gradient", stops: ["#f0b56a", "#3a1f2b"], angle: 170 },
   { id: "frost", kind: "gradient", stops: ["#7cc8ee", "#0b1a2a"], angle: 165 },
   { id: "fel", kind: "gradient", stops: ["#7fbf4a", "#0c140a"], angle: 165 },
-  { id: "vault", kind: "scene", src: "/assets/wow/raids/hub/vault.webp", position: "62% 50%" },
-  { id: "sanctuary", kind: "scene", src: "/assets/wow/mythic/ruby-sanctuary/sanctuary.webp", position: "50% 50%" },
-  { id: "voidscar", kind: "scene", src: "/assets/wow/mythic/backgrounds/voidscar.webp", position: "55% 50%" },
-  { id: "nalorakk", kind: "scene", src: "/assets/wow/mythic/backgrounds/nalorakk.webp", position: "50% 50%" },
-  { id: "kings", kind: "scene", src: "/assets/wow/mythic/backgrounds/kings.webp", position: "50% 50%" },
-  { id: "blinding", kind: "scene", src: "/assets/wow/mythic/backgrounds/blinding.webp", position: "50% 50%" },
-  { id: "city", kind: "scene", src: "/assets/wow/loading/city-4k.webp", position: "50% 50%" },
-  { id: "archive", kind: "scene", src: "/assets/wow/loading/archive-4k.webp", position: "50% 50%" },
-  { id: "tools", kind: "scene", src: "/assets/wow/loading/tools-4k.webp", position: "50% 50%" },
+  { id: "vault", kind: "scene", src: "/assets/wow/raids/hub/vault.webp", position: "62% 50%", thumb: "/assets/wow/transmog/swatches/vault.webp" },
+  { id: "sanctuary", kind: "scene", src: "/assets/wow/mythic/ruby-sanctuary/sanctuary.webp", position: "50% 50%", thumb: "/assets/wow/transmog/swatches/sanctuary.webp" },
+  { id: "voidscar", kind: "scene", src: "/assets/wow/mythic/backgrounds/voidscar.webp", position: "55% 50%", thumb: "/assets/wow/transmog/swatches/voidscar.webp" },
+  { id: "nalorakk", kind: "scene", src: "/assets/wow/mythic/backgrounds/nalorakk.webp", position: "50% 50%", thumb: "/assets/wow/transmog/swatches/nalorakk.webp" },
+  { id: "kings", kind: "scene", src: "/assets/wow/mythic/backgrounds/kings.webp", position: "50% 50%", thumb: "/assets/wow/transmog/swatches/kings.webp" },
+  { id: "blinding", kind: "scene", src: "/assets/wow/mythic/backgrounds/blinding.webp", position: "50% 50%", thumb: "/assets/wow/transmog/swatches/blinding.webp" },
+  { id: "city", kind: "scene", src: "/assets/wow/loading/city-4k.webp", position: "50% 50%", thumb: "/assets/wow/transmog/swatches/city.webp" },
+  { id: "archive", kind: "scene", src: "/assets/wow/loading/archive-4k.webp", position: "50% 50%", thumb: "/assets/wow/transmog/swatches/archive.webp" },
+  { id: "tools", kind: "scene", src: "/assets/wow/loading/tools-4k.webp", position: "50% 50%", thumb: "/assets/wow/transmog/swatches/tools.webp" },
 ];
 export const background = (id: string) => backgrounds.find((entry) => entry.id === id) ?? backgrounds[8];
 

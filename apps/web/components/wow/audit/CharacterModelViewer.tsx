@@ -55,7 +55,7 @@ export function CharacterModelViewer({ appearance, focusSlot, characterName, rac
     setStatus("loading");
 
     const boot = async () => {
-      configureZamViewerGlobals();
+      await configureZamViewerGlobals();
       let modelItems = appearance.modelItems;
       if (imported) {
         const response = await fetch(`/api/wow/characters/${encodeURIComponent(characterSlug)}/model-items?locale=${lang}`, { cache: "no-store" });

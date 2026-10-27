@@ -27,12 +27,15 @@ type Copy = {
   rotateLeft: string; rotateRight: string; zoomIn: string; zoomOut: string; resetCamera: string; pause: string; play: string;
   stage: (name: string) => string; frameLabel: (label: string, size: string) => string; transparent: string; sources: string; sourcesBody: string;
   slotButton: (slot: string, item: string | null, hidden: boolean) => string;
+  searchItemsIn: (slot: string) => string; armorFilter: string; hoverTip: string; trying: (name: string) => string;
+  loadingPart: (percent: number, mb: number) => string; slowNetwork: (mb: number) => string; previewNote: string;
+  downloadShort: string; downloadWait: string; keys: string; camera: string; weapons: string;
 };
 
 export const transmogCopy: Record<"ru" | "en", Copy> = {
   ru: {
     title: "Трансмогрификация", eyebrow: "World of Warcraft · Инструменты",
-    lede: "Соберите образ из любых обликов и наборов, примерьте на нужную расу и сделайте кадр для соцсетей — с прозрачным фоном, цветом или сценой.",
+    lede: "Соберите образ из любых обликов и наборов, примерьте на нужную расу и скачайте кадр для соцсетей — на прозрачном фоне, цвете или сцене.",
     noJS: "Для студии трансмогрификации включите JavaScript.",
     slots: { head: "Голова", shoulder: "Плечи", back: "Спина", chest: "Грудь", shirt: "Рубашка", tabard: "Гербовая накидка", wrist: "Запястья", hands: "Кисти рук", waist: "Пояс", legs: "Ноги", feet: "Ступни", "main-hand": "Правая рука", "off-hand": "Левая рука" },
     slotShort: { tabard: "Накидка", "main-hand": "Пр. рука", "off-hand": "Лев. рука", hands: "Руки" },
@@ -64,6 +67,13 @@ export const transmogCopy: Record<"ru" | "en", Copy> = {
     stage: (name) => `Образ на 3D-манекене: ${name}`, frameLabel: (label, size) => `${label} · ${size}`, transparent: "прозрачный фон",
     sources: "Откуда данные", sourcesBody: "Облики и наборы — из таблиц игры (ItemModifiedAppearance, ItemAppearance, TransmogSet) опубликованной сборки каталога Gildra. 3D — просмотрщик моделей Wowhead, файлы идут через gildra.net. Модели и текстуры — собственность Blizzard Entertainment.",
     slotButton: (slot, item, hidden) => `${slot}: ${item ?? "пусто"}${hidden ? ", скрыт" : ""}`,
+    searchItemsIn: (slot) => `${slot}: название облика`, armorFilter: "Тип брони",
+    hoverTip: "Наведите — примерка, клик — надеть", trying: (name) => `Примерка: ${name}`,
+    loadingPart: (percent, mb) => `Загружаем 3D-манекен · ${percent > 0 && percent < 100 ? `${percent} % из ~${mb} МБ` : `~${mb} МБ`}`,
+    slowNetwork: (mb) => `Включена экономия трафика: 3D-манекен (~${mb} МБ) загрузится по кнопке`,
+    previewNote: "Превью образа", downloadShort: "Скачать", downloadWait: "Скачать можно после загрузки 3D",
+    keys: "Клавиши: / — поиск, [ ] — слот, Z — отменить, H — скрыть слот, ← → — поворот",
+    camera: "Камера", weapons: "Оружие",
   },
   en: {
     title: "Transmog Studio", eyebrow: "World of Warcraft · Tools",
@@ -99,6 +109,13 @@ export const transmogCopy: Record<"ru" | "en", Copy> = {
     stage: (name) => `Outfit on a 3D mannequin: ${name}`, frameLabel: (label, size) => `${label} · ${size}`, transparent: "transparent background",
     sources: "Where the data comes from", sourcesBody: "Appearances and sets come from the game tables (ItemModifiedAppearance, ItemAppearance, TransmogSet) of Gildra's published catalog build. 3D uses the Wowhead model viewer; files are served through gildra.net. Models and textures belong to Blizzard Entertainment.",
     slotButton: (slot, item, hidden) => `${slot}: ${item ?? "empty"}${hidden ? ", hidden" : ""}`,
+    searchItemsIn: (slot) => `${slot}: appearance name`, armorFilter: "Armor type",
+    hoverTip: "Hover to try on, click to wear", trying: (name) => `Trying on: ${name}`,
+    loadingPart: (percent, mb) => `Loading the 3D mannequin · ${percent > 0 && percent < 100 ? `${percent}% of ~${mb} MB` : `~${mb} MB`}`,
+    slowNetwork: (mb) => `Data saver is on: the 3D mannequin (~${mb} MB) loads on request`,
+    previewNote: "Outfit preview", downloadShort: "Download", downloadWait: "Download is available once 3D has loaded",
+    keys: "Keys: / search, [ ] slot, Z undo, H hide slot, ← → rotate",
+    camera: "Camera", weapons: "Weapons",
   },
 };
 

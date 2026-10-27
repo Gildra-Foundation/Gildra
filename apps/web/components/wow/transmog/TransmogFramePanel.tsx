@@ -26,7 +26,7 @@ export type FrameSettings = {
 function swatchStyle(entry: BackgroundDef): CSSProperties {
   if (entry.kind === "color") return { background: entry.color };
   if (entry.kind === "gradient") return { background: `linear-gradient(${entry.angle}deg, ${entry.stops[0]}, ${entry.stops[1]})` };
-  if (entry.kind === "scene") return { backgroundImage: `url(${entry.src})`, backgroundPosition: entry.position };
+  if (entry.kind === "scene") return { backgroundImage: `url(${entry.thumb})` };
   return {};
 }
 

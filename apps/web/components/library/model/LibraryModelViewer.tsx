@@ -115,7 +115,7 @@ export function LibraryModelViewer({ subject, name, lang, fallbackImage, control
     const parsed = JSON.parse(subjectKey) as LibraryModelSubject;
 
     const boot = async () => {
-      prepareZamViewer();
+      await prepareZamViewer();
       let options: Record<string, unknown>;
       if (parsed.kind === "mount") {
         const displayId = parsed.displays[variant] ?? parsed.displays[0];

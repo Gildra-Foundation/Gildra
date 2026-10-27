@@ -1,5 +1,3 @@
-import $ from "jquery";
-
 /** Renderer state the Wowhead viewer exposes; camera fields are read and written live. */
 export type WowRenderer = {
   distance: number;
@@ -14,8 +12,8 @@ type WowViewerConstructor = new (options: Record<string, unknown>) => WowViewer;
 
 declare global {
   interface Window {
-    $: JQueryStatic;
-    jQuery: JQueryStatic;
+    $: unknown;
+    jQuery: unknown;
     WH?: Record<string, unknown>;
     ZamModelViewer?: WowViewerConstructor;
   }
@@ -50,7 +48,17 @@ export function loadZamViewerScript() {
   return viewerScriptPromise;
 }
 
-export function configureZamViewerGlobals() {
+let jqueryPromise: Promise<unknown> | null = null;
+
+/** jQuery is the viewer's dependency only, so it loads with the viewer, not with the page. */
+function loadJquery() {
+  jqueryPromise ??= import("jquery").then((module) => module.default);
+  jqueryPromise.catch(() => { jqueryPromise = null; });
+  return jqueryPromise;
+}
+
+export async function configureZamViewerGlobals() {
+  const $ = await loadJquery();
   window.$ = $;
   window.jQuery = $;
   window.WH = {
@@ -64,12 +72,39 @@ export function configureZamViewerGlobals() {
 
 export function createZamViewer(container: HTMLElement, options: Record<string, unknown>) {
   if (!window.ZamModelViewer) throw new Error("viewer script not loaded");
+  const $ = window.jQuery as ((element: HTMLElement) => unknown) | undefined;
+  if (!$) throw new Error("viewer globals not configured");
   return new window.ZamModelViewer({ type: 2, contentPath: ZAM_CONTENT_PATH, container: $(container), ...options });
 }
 
 type DownloadEntry = { loaded?: number; total?: number };
 type RequestTracker = { pending: Map<string, number>; lastActivity: number };
 let requestTracker: RequestTracker | null = null;
+
+/**
+ * The mannequin's skeleton and body (10–20 MB each) outgrow the HTTP cache of
+ * many browsers (phones above all) and were downloaded again on every visit.
+ * They are kept in Cache Storage instead; the newest few stay.
+ */
+const BIG_MODEL = /\/(skel\/\d+\.skel|m2\/\d+\.m2)$/;
+const MODEL_CACHE = "gildra-wow-model-v1";
+const MODEL_CACHE_ENTRIES = 12;
+const BIG_BYTES = 1_500_000;
+
+async function cachedModel(url: string, fetcher: () => Promise<Response>): Promise<Response> {
+  const cache = await caches.open(MODEL_CACHE);
+  const hit = await cache.match(url);
+  if (hit) return hit;
+  const response = await fetcher();
+  const size = Number(response.headers.get("Content-Length") ?? 0);
+  if (response.ok && (!size || size >= BIG_BYTES)) {
+    void cache.put(url, response.clone()).then(async () => {
+      const keys = await cache.keys();
+      for (const stale of keys.slice(0, Math.max(0, keys.length - MODEL_CACHE_ENTRIES))) await cache.delete(stale);
+    }).catch(() => undefined);
+  }
+  return response;
+}
 
 /**
  * Counts model-asset requests in flight. The viewer loads `.m2`/`.skel` with
@@ -90,7 +125,13 @@ function trackZamRequests() {
   };
   const nativeFetch = window.fetch.bind(window);
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
-    try { begin(typeof input === "string" ? input : input instanceof URL ? input.href : input.url); } catch { /* not a URL we track */ }
+    let href = "";
+    try { href = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url, window.location.href).href; } catch { /* not a URL we track */ }
+    if (href && BIG_MODEL.test(href) && typeof caches !== "undefined" && (!init?.method || init.method === "GET")) {
+      // A cache hit has no Resource Timing entry, so it is counted only when it goes to the network.
+      return cachedModel(href, () => { begin(href); return nativeFetch(input, init); }).catch(() => { begin(href); return nativeFetch(input, init); });
+    }
+    try { if (href) begin(href); } catch { /* not a URL we track */ }
     return nativeFetch(input, init);
   };
   const nativeOpen = XMLHttpRequest.prototype.open as (this: XMLHttpRequest, ...args: unknown[]) => void;
@@ -111,9 +152,29 @@ function trackZamRequests() {
 }
 
 /** Call before creating a viewer so its first requests are counted. */
-export function prepareZamViewer() {
-  configureZamViewerGlobals();
+export async function prepareZamViewer() {
   trackZamRequests();
+  await configureZamViewerGlobals();
+}
+
+/** Model-asset requests in flight right now (items being swapped in). */
+export function zamRequestsInFlight() {
+  return requestTracker?.pending.size ?? 0;
+}
+
+/** Resolves once no model asset has been in flight for `quietMs` (or after `capMs`). */
+export function waitForZamQuiet({ quietMs = 400, capMs = 120_000, isCancelled }: { quietMs?: number; capMs?: number; isCancelled?: () => boolean } = {}) {
+  const tracker = trackZamRequests();
+  return new Promise<void>((resolve) => {
+    const startedAt = Date.now();
+    const tick = () => {
+      if (isCancelled?.()) return resolve();
+      const now = Date.now();
+      if ((tracker.pending.size === 0 && now - tracker.lastActivity >= quietMs) || now - startedAt > capMs) return resolve();
+      window.setTimeout(tick, 120);
+    };
+    window.setTimeout(tick, 120);
+  });
 }
 
 /**
