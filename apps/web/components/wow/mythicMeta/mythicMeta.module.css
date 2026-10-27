@@ -1,7 +1,9 @@
-/* atlas:strict — Mythic+ meta (/wow/mythic-plus/meta): layout of the role leaders, role tables and diversity rows.
-   Amber is chrome; class colours (--class-color) only on spec identity; trend colours only on the change figures. */
+/* atlas:strict — Mythic+ meta (/wow/mythic-plus/meta) in the material atlas of the Mythic+ hub:
+   painted plaques and buttons of the dungeon kit around live HTML numbers.
+   Shell colour is the theme accent; a plaque's light comes from its kit (--meta-kit-accent);
+   class colours (--class-color) only on spec identity; trend colours only on the change figures. */
 
-.page { font-variant-numeric: lining-nums; }
+.page { --atlas-frame-tint: var(--atlas-info-wash, var(--atlas-accent-glow)); font-variant-numeric: lining-nums; }
 
 .srOnly {
   position: absolute;
@@ -14,14 +16,6 @@
 
 .narrowOnly { display: none; }
 
-.affixes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--atlas-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
 
 /* Spec identity: octagon icon, English spec name, class name in its colour. */
 .identity {
@@ -127,182 +121,236 @@
   .bar > span { animation: none; }
 }
 
+/* Kit colours, derived from one accent exactly like the hub cards. */
+.rolePlaque, .tablePlaque, .giniItem, .sourcePlaque, .statePlaque {
+  --meta-kit-light: color-mix(in srgb, var(--meta-kit-accent, var(--atlas-accent)) 65%, var(--atlas-text-strong));
+  --meta-kit-base: color-mix(in srgb, var(--meta-kit-accent, var(--atlas-accent)) 15%, var(--atlas-bg));
+  --meta-kit-line: color-mix(in srgb, var(--meta-kit-accent, var(--atlas-accent)) 30%, transparent);
+}
+
+/* One 9-slice recipe for every plaque (design.md §4.2). */
+.rolePlaque, .tablePlaque, .giniItem, .sourcePlaque, .statePlaque { position: relative; isolation: isolate; min-width: 0; }
+.rolePlaque::before, .tablePlaque::before, .giniItem::before, .sourcePlaque::before, .statePlaque::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 28px solid transparent;
+  border-image-source: var(--mythic-panel-image);
+  border-image-slice: var(--mythic-panel-slice) fill;
+  border-width: var(--mythic-panel-width);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--meta-kit-base);
+  background-clip: padding-box;
+  content: "";
+  pointer-events: none;
+}
+.giniItem::before { border-width: var(--mythic-panel-width-mobile); }
+
+/* Hero: the hub's gateway, eyebrow, title, two painted buttons, the week in numbers. */
+.hero { min-height: 470px; padding-bottom: var(--atlas-space-5); }
+.heroHeader { max-width: 58%; }
+.heroHeader h1 { max-width: 15ch; }
+.heroHeader p { max-width: 52ch; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+.actionSlot, .sourceAction { display: flex; min-width: 0; max-width: 100%; }
+.weekFacts { display: grid; gap: var(--atlas-space-4); max-width: 860px; margin-top: var(--atlas-space-5); }
+.weekFacts :global(.ui-stats-card) { background: transparent; box-shadow: none; border: 0; padding-block: var(--atlas-space-2); }
+.affixes { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.affixes li {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--atlas-space-3);
+  border: 1px solid var(--atlas-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--atlas-bg) 70%, transparent);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-meta);
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+
+/* Painted button (design.md §4.1), the same contract as the hub. */
+.page .assetButton:global(.ui-button) {
+  --_bg: transparent;
+  --_bg-hover: transparent;
+  --_bg-active: transparent;
+  --_fg: var(--atlas-text-strong);
+  position: relative;
+  isolation: isolate;
+  justify-content: center;
+  min-height: 68px;
+  min-width: min(100%, 300px);
+  padding: var(--mythic-button-pad-top) var(--mythic-button-inset) var(--mythic-button-pad-bottom);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--atlas-text-strong);
+  box-shadow: none;
+  font-size: var(--atlas-text-small);
+  line-height: var(--atlas-leading-snug);
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  transition: transform var(--atlas-duration-fast) var(--ui-spring-smooth);
+}
+.assetButton::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 20px solid transparent;
+  border-image-source: var(--mythic-button-image);
+  border-image-slice: var(--mythic-button-slice) fill;
+  border-width: var(--mythic-button-width);
+  border-image-width: 1;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--atlas-bg);
+  background-clip: padding-box;
+  content: "";
+  pointer-events: none;
+}
+.assetButton::after {
+  position: absolute;
+  z-index: 0;
+  inset: var(--mythic-button-top) var(--mythic-button-right) var(--mythic-button-bottom) var(--mythic-button-left);
+  border-radius: 40%;
+  background: linear-gradient(110deg, transparent, color-mix(in srgb, var(--atlas-text-strong) 15%, transparent), transparent);
+  opacity: 0;
+  content: "";
+  pointer-events: none;
+}
+.assetButton :global(.ui-button__label), .assetButton :global(.ui-button__icon) { position: relative; z-index: 1; min-width: 0; }
+.assetButton :global(.ui-button__label) { white-space: normal; text-align: center; }
+.assetButton :global(.ui-button__icon), .assetButton svg { flex: none; width: 18px; height: 18px; }
+.page .assetButton:global(.ui-button):focus-visible { outline: 2px solid var(--atlas-text-strong); outline-offset: 4px; }
+.page .assetButton:global(.ui-button):active { transform: translateY(1px) scale(.98); }
+@media (hover: hover) and (pointer: fine) {
+  .page .assetButton:global(.ui-button):hover { transform: translateY(-2px); }
+  .assetButton:hover::after { animation: assetGlint 900ms var(--atlas-ease) both; }
+}
+@keyframes assetGlint { from { opacity: 0; transform: translateX(-12px); } 45% { opacity: .8; } to { opacity: 0; transform: translateX(12px); } }
+
+.section { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+
+/* Leaders by role: three plaques, one dungeon material per role. */
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-7); }
+.rolePlaque { padding: 32px 36px 40px; }
 .roleTitle {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--atlas-space-2);
-  margin: 0 0 var(--atlas-space-3);
-  color: var(--atlas-accent);
+  margin: 0 0 var(--atlas-space-4);
+  color: var(--meta-kit-light);
   font-family: var(--atlas-font-ui);
   font-size: var(--atlas-text-label);
   font-weight: 700;
   letter-spacing: var(--atlas-tracking-label);
   text-transform: uppercase;
+  text-shadow: 0 1px 3px var(--atlas-bg);
 }
-
-/* Leaders by role. */
-.podium {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--atlas-space-4);
-}
-
-.podiumRole { min-width: 0; }
-
-.podiumList {
-  display: grid;
-  gap: var(--atlas-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.podiumItem {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--atlas-space-3);
-  padding: var(--atlas-space-2) 0;
-  border-block-end: 1px solid var(--atlas-line-soft);
-}
-
+.roleTitle svg { width: 16px; height: 16px; }
+.podiumList { display: grid; gap: var(--atlas-space-1); margin: 0; padding: 0; list-style: none; }
+.leader, .podiumItem { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); }
+.leader { grid-template-rows: auto 5px; row-gap: var(--atlas-space-3); padding-block: var(--atlas-space-2) var(--atlas-space-4); margin-bottom: var(--atlas-space-2); border-block-end: 1px solid var(--meta-kit-line); }
+.podiumItem { padding-block: var(--atlas-space-2); border-block-end: 1px solid var(--atlas-line-soft); }
 .podiumItem:last-child { border-block-end: 0; }
+.podiumRank { color: var(--atlas-text-subtle); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-variant-numeric: lining-nums; text-align: center; }
+.leader .podiumRank { color: var(--meta-kit-light); font-size: var(--atlas-text-h3); }
+.podiumValue, .leaderValue { display: grid; justify-items: end; gap: 2px; }
+.podiumValue b, .leaderValue b { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
+.leaderValue b { color: var(--meta-kit-light); font-size: var(--atlas-text-h2); line-height: 1; }
+.leaderTrack { grid-column: 1 / -1; height: 5px; overflow: hidden; border-radius: 3px; background: var(--atlas-surface-sunken); box-shadow: inset 0 0 0 1px var(--atlas-line-soft); }
+.leaderTrack span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--meta-kit-accent) 44%, var(--atlas-surface-sunken)), var(--meta-kit-accent)); }
 
-.podiumItem[data-first] {
-  padding-block: var(--atlas-space-3);
-}
+/* Every specialization: one Voidscar plaque around the tabs and the table. */
+.tablePlaque { padding: 32px 36px 36px; }
+/* No glass over painted material (design.md §9): the kit table sits straight on the plaque face. */
+.page .metaTable { border: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+.page .metaTable thead th { border-bottom: 1px solid var(--meta-kit-line); background: transparent; color: var(--meta-kit-light); }
+.tableTint { --meta-bar: var(--meta-role-accent, var(--atlas-accent)); margin-top: var(--atlas-space-4); }
+.tableTint .bar > span { background: linear-gradient(90deg, color-mix(in srgb, var(--meta-bar) 44%, var(--atlas-surface-sunken)), var(--meta-bar)); }
+.tableTint .sparkline polyline { stroke: color-mix(in srgb, var(--meta-bar) 65%, var(--atlas-text-strong)); }
+.tableTint .sparkline circle { fill: color-mix(in srgb, var(--meta-bar) 65%, var(--atlas-text-strong)); }
 
-.podiumRank {
-  color: var(--atlas-text-subtle);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-title);
-  font-variant-numeric: lining-nums;
-}
+.presenceCell { display: grid; grid-template-columns: minmax(80px, 200px) 6ch; align-items: center; gap: var(--atlas-space-3); }
+.presenceCell b { white-space: nowrap; color: var(--atlas-text-strong); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
 
-.podiumItem[data-first] .podiumRank { color: var(--atlas-accent-strong); }
+/* Diversity: four small plaques, each in its role material. */
+.gini { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.giniItem { display: grid; gap: var(--atlas-space-2); padding: 26px 28px 28px; }
+.giniLabel { color: var(--meta-kit-light); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; text-shadow: 0 1px 3px var(--atlas-bg); }
+.giniValue { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h2); line-height: 1; font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
+.giniScale { position: relative; display: block; block-size: 5px; margin-block: var(--atlas-space-2); border-radius: 3px; background: linear-gradient(90deg, var(--atlas-positive), var(--atlas-caution), var(--atlas-negative)); opacity: .75; }
+.giniScale span { position: absolute; inset-block: -4px; inline-size: 3px; margin-inline-start: -1px; border-radius: 2px; background: var(--atlas-text-strong); }
+.giniFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2); }
+.giniFoot .sparkline polyline { stroke: var(--meta-kit-light); }
+.giniFoot .sparkline circle { fill: var(--meta-kit-light); }
+.giniBefore { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
 
-.podiumValue {
-  display: grid;
-  justify-items: end;
-  gap: 2px;
-}
-
-.podiumValue b {
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-title);
-  font-variant-numeric: lining-nums tabular-nums;
-}
-
-.podiumItem[data-first] .podiumValue b { font-size: var(--atlas-text-h3); }
-
-.presenceCell {
-  display: grid;
-  grid-template-columns: minmax(80px, 180px) 6ch;
-  align-items: center;
-  gap: var(--atlas-space-3);
-}
-
-.presenceCell b {
-  white-space: nowrap;
-  color: var(--atlas-text-strong);
-  font-variant-numeric: tabular-nums lining-nums;
-  text-align: end;
-}
-
-/* Diversity rows. */
-.gini {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--atlas-space-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.giniItem {
-  display: grid;
-  gap: var(--atlas-space-2);
-  padding: var(--atlas-space-4);
-  border: 1px solid var(--atlas-line-soft);
-  border-radius: var(--atlas-radius);
-  background: var(--atlas-surface);
-}
-
-.giniLabel {
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-label);
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
-}
-
-.giniValue {
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-h3);
-  font-variant-numeric: lining-nums;
-}
-
-.giniScale {
-  position: relative;
-  display: block;
-  block-size: 4px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--atlas-positive), var(--atlas-caution), var(--atlas-negative));
-  opacity: .7;
-}
-
-.giniScale span {
-  position: absolute;
-  inset-block: -4px;
-  inline-size: 3px;
-  margin-inline-start: -1px;
-  border-radius: 2px;
-  background: var(--atlas-text-strong);
-}
-
-.giniBefore {
-  color: var(--atlas-text-subtle);
-  font-size: var(--atlas-text-meta);
-}
-
-/* Source and attribution. */
-.source { display: grid; gap: var(--atlas-space-2); }
-
-.sourceLine {
-  margin: 0;
-  color: var(--atlas-text);
-}
-
-.sourceLine a { color: var(--atlas-accent); }
-
-.sourceNote {
-  max-inline-size: var(--atlas-measure);
-  margin: 0;
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-small);
-}
+/* About the data: the hub's CTA plaque. */
+.sourcePlaque { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-5); margin-top: var(--atlas-section-gap); padding: 36px 40px; scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+.sourceText { display: grid; gap: var(--atlas-space-2); min-width: 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); text-shadow: 0 1px 3px var(--atlas-bg); }
+.sourceText strong { color: var(--atlas-text-strong); font: 600 var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); }
+.sourceText a { color: var(--meta-kit-light); text-underline-offset: .2em; }
+.sourceNote { max-width: var(--atlas-measure); color: var(--atlas-text-muted); }
+.hubLink { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; width: fit-content; font-size: var(--atlas-text-meta); }
+.hubLink svg { width: 14px; height: 14px; }
+.sourceText a:focus-visible { outline: 2px solid var(--meta-kit-light); outline-offset: 3px; }
+.statePlaque { padding: 32px 40px; }
 
 @media (max-width: 1100px) {
+  .podium { gap: var(--atlas-space-5); }
+  .rolePlaque { padding: 28px 28px 36px; }
   .gini { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
-@media (max-width: 860px) {
-  .podium { grid-template-columns: 1fr; }
+@media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
+@media (max-width: 900px) { .podium { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-6); } }
+@media (max-width: 700px) {
+  .rolePlaque, .tablePlaque, .sourcePlaque, .statePlaque { padding: 28px; }
+  .tablePlaque { padding-inline: 18px; }
+  .rolePlaque::before, .tablePlaque::before, .sourcePlaque::before, .statePlaque::before { border-width: var(--mythic-panel-width-mobile); }
+  .rolePlaque { --mythic-panel-rail-inset: var(--mythic-panel-rail-inset-mobile); }
 }
-
-@media (max-width: 640px) {
-  .seasonCol { display: none; }
+@media (max-width: 640px) { .seasonCol { display: none; } }
+@media (max-width: 600px) {
+  .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
+  .heroHeader { max-width: 100%; }
+  .actions { gap: var(--atlas-space-2); }
+  .actionSlot { flex: 1 1 100%; width: 100%; }
+  .actions .assetButton:global(.ui-button), .sourcePlaque .assetButton:global(.ui-button) { width: 100%; }
+  .sourcePlaque { align-items: stretch; flex-direction: column; padding: 28px 20px; }
+  .sourceAction :global(.ui-button__icon) { display: none; }
 }
-
 /* Phones: the table keeps rank, spec, share and change; the season line and the bar give way. */
 @media (max-width: 520px) {
-  .gini { grid-template-columns: 1fr; }
+  .gini { grid-template-columns: minmax(0, 1fr); }
   .presenceCell .bar { display: none; }
   .wideOnly { display: none; }
   .narrowOnly { display: inline; }
   .specName { white-space: normal; }
-  /* The rank keeps its figure but gives its padding to the spec names (Assassination, Marksmanship fit whole). */
   .page .rankCol { padding-inline: var(--atlas-space-2) 0; }
+  .tablePlaque { padding: 24px 12px 20px; }
+  .page .metaTable th, .page .metaTable td { padding-inline: var(--atlas-space-2); }
   .presenceCell { grid-template-columns: 6ch; }
+}
+@media (max-width: 360px) { .rolePlaque, .giniItem { padding-inline: 20px; } }
+
+/* Motion and preference fallbacks (design.md §5). */
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .page .assetButton:global(.ui-button) { transform: none; transition: none; }
+  .assetButton::after { animation: none; opacity: 0; }
+}
+:global([data-motion="reduced"]) .page .assetButton:global(.ui-button),
+:global([data-ui-motion="reduce"]) .page .assetButton:global(.ui-button),
+:global([data-transparency="reduced"]) .page .assetButton:global(.ui-button) { transform: none; transition: none; }
+:global([data-motion="reduced"]) .assetButton::after,
+:global([data-ui-motion="reduce"]) .assetButton::after,
+:global([data-transparency="reduced"]) .assetButton::after { animation: none; opacity: 0; }
+:global([data-motion="reduced"]) .bar > span, :global([data-ui-motion="reduce"]) .bar > span { animation: none; }
+@media (forced-colors: active) {
+  .rolePlaque::before, .tablePlaque::before, .giniItem::before, .sourcePlaque::before, .statePlaque::before, .assetButton::before, .assetButton::after { display: none; }
+  .rolePlaque, .tablePlaque, .giniItem, .sourcePlaque, .statePlaque { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .page .assetButton:global(.ui-button) { border: 2px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
+  .leaderTrack, .giniScale { border: 1px solid CanvasText; background: Canvas; }
+  .leaderTrack span { background: Highlight; }
+  .affixes li { border-color: CanvasText; color: CanvasText; background: Canvas; }
 }

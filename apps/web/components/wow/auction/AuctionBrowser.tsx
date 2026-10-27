@@ -3,11 +3,11 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { useSearchParams } from "next/navigation";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasField, AtlasInput, AtlasSelect } from "@gildra/atlas-ui/AtlasField";
-import { AtlasPanel } from "@gildra/atlas-ui/AtlasPanel";
 import { AtlasSkeleton } from "@gildra/atlas-ui/AtlasState";
 import { auctionRegions, validAuctionRealm, type AuctionRegion, type AuctionResult } from "@/lib/wow/auctionBrowser";
 import { auctionCopy } from "./auctionCopy";
 import { AuctionListings } from "./AuctionListings";
+import { auctionButtonStyle, auctionIconFrameStyle, auctionPlaqueStyle } from "./auctionKit";
 import styles from "./auction.module.css";
 const emptyFilters = { region: "eu" as AuctionRegion, realm: "", market: "realm", q: "", sort: "price" };
 type Filters = typeof emptyFilters;
@@ -69,8 +69,10 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
   }, [filters, searchParams, load]);
   const submit = (event: FormEvent) => { event.preventDefault(); void load(); };
   const visibleRealms = realms.filter(r => r.slug === filters.realm || `${r.name} ${r.slug}`.toLocaleLowerCase(lang).includes(realmFilter.toLocaleLowerCase(lang)));
-  return <div className={styles.browser}>
-    <AtlasPanel>
+  const plaque = auctionPlaqueStyle();
+  return <div className={styles.browser} style={auctionIconFrameStyle()}>
+    <section id="auction-search" className={`${styles.plaque} ${styles.searchPlaque}`} style={plaque} aria-labelledby="auction-search-title">
+      <h2 id="auction-search-title" className={styles.plaqueTitle}>{c.searchTitle}</h2>
       <form className={styles.filters} onSubmit={submit}>
         <AtlasField htmlFor="auction-region" label={c.region}><AtlasSelect id="auction-region" value={filters.region} onChange={e => change("region", e.target.value as AuctionRegion)}>{auctionRegions.map(region => <option key={region} value={region}>{region.toUpperCase()}</option>)}</AtlasSelect></AtlasField>
         <AtlasField htmlFor="auction-market" label={c.market}><AtlasSelect id="auction-market" value={filters.market} onChange={e => change("market", e.target.value)}><option value="realm">{c.realmMarket}</option><option value="commodities">{c.commodities}</option></AtlasSelect></AtlasField>
@@ -80,16 +82,17 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
         </> : null}
         <AtlasField htmlFor="auction-item" label={c.search} className={styles.search}><AtlasInput id="auction-item" value={filters.q} type="search" maxLength={100} placeholder={c.placeholder} onChange={e => change("q", e.target.value)} /></AtlasField>
         <AtlasField htmlFor="auction-sort" label={c.sort}><AtlasSelect id="auction-sort" value={filters.sort} onChange={e => change("sort", e.target.value)}><option value="price">{c.price}</option><option value="quantity">{c.quantitySort}</option></AtlasSelect></AtlasField>
-        <AtlasButton type="submit" variant="primary" disabled={busy || (filters.market === "realm" && !filters.realm)}>{busy ? c.loading : c.submit}</AtlasButton>
+        <span className={styles.submitSlot} style={auctionButtonStyle()}><AtlasButton className={styles.assetButton} type="submit" variant="primary" disabled={busy || (filters.market === "realm" && !filters.realm)}>{busy ? c.loading : c.submit}</AtlasButton></span>
       </form>
       {filters.market === "realm" && !["ready", "loading"].includes(realmState) ? <div className={styles.error} role="alert"><p>{message(realmState, lang)}</p><AtlasButton onClick={() => { setRealmState("loading"); setRealmAttempt(n => n + 1); }}>{c.retry}</AtlasButton></div> : null}
       <p className={styles.hint}>{c.regionNote}</p>
-    </AtlasPanel>
+    </section>
     <div ref={resultRef} tabIndex={-1} className={styles.resultFocus} aria-busy={busy}>
-      {busy ? <><p role="status">{c.loading}</p><AtlasSkeleton variant="rows" count={6} label={c.loading} /></> : error ? <AtlasPanel><div role="alert"><h2>{c.title}</h2><p>{message(error, lang)}</p></div><AtlasButton onClick={() => void load()}>{c.retry}</AtlasButton></AtlasPanel>
-        : data ? <AtlasPanel padding="none"><AuctionListings data={data} lang={lang} query={filters} onPage={page => void load(filters, page, true)} /></AtlasPanel>
-          : <AtlasPanel><h2>{c.ready}</h2><p>{c.start}</p></AtlasPanel>}
+      {busy ? <div className={styles.plaque} style={plaque}><p role="status" className={styles.stateText}>{c.loading}</p><AtlasSkeleton variant="rows" count={6} label={c.loading} /></div>
+        : error ? <div className={styles.plaque} style={plaque}><div role="alert"><h2 className={styles.plaqueTitle}>{c.title}</h2><p className={styles.stateText}>{message(error, lang)}</p></div><span className={styles.stateAction} style={auctionButtonStyle()}><AtlasButton className={styles.assetButton} onClick={() => void load()}>{c.retry}</AtlasButton></span></div>
+        : data ? <div className={`${styles.plaque} ${styles.resultsPlaque}`} style={plaque}><AuctionListings data={data} lang={lang} query={filters} onPage={page => void load(filters, page, true)} /></div>
+          : <div className={`${styles.plaque} ${styles.readyPlaque}`} style={plaque}><h2 className={styles.plaqueTitle}>{c.ready}</h2><p className={styles.stateText}>{c.start}</p></div>}
     </div>
-    <p className={styles.hint}>{c.note} <a href="https://develop.battle.net/documentation/world-of-warcraft/game-data-apis" target="_blank" rel="noreferrer">{c.source}</a></p>
+    <p className={styles.note}>{c.note} <a href="https://develop.battle.net/documentation/world-of-warcraft/game-data-apis" target="_blank" rel="noreferrer">{c.source}</a></p>
   </div>;
 }

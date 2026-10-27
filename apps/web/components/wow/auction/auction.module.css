@@ -1,38 +1,178 @@
-/* atlas:strict — auction layouts use shared fields, buttons and glass panels. */
+/* atlas:strict — Auction House in the material atlas of the Mythic+ hub: painted plaques, buttons and
+   icon frames of one kit (auctionKit.ts) around live HTML fields, names and prices.
+   Shell colour is the theme accent; plaque light comes from the kit accent; item names keep their quality colour. */
+
+.page { --atlas-frame-tint: var(--atlas-info-wash, var(--atlas-accent-glow)); }
+
+/* Scene behind the hero (design.md §4.5). */
+.backdrop { --auction-scene-height: clamp(560px, 52vw, 900px); position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; }
+.scene { position: absolute; inset: 0 0 auto; height: var(--auction-scene-height); overflow: hidden; mask-image: linear-gradient(180deg, #000 60%, transparent); }
+.scene img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 62% 30%; filter: contrast(.94) saturate(.9) blur(1px); }
+.scene::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 88%, transparent), color-mix(in srgb, var(--atlas-bg) 62%, transparent) 36%, color-mix(in srgb, var(--atlas-bg) 18%, transparent) 74%),
+    linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 18%, transparent), transparent 34%, color-mix(in srgb, var(--atlas-bg) 45%, transparent) 66%, var(--atlas-bg) 100%);
+}
+
+.hero { min-height: 400px; padding-bottom: var(--atlas-space-5); }
+.heroHeader { max-width: 58%; }
+.heroHeader h1 { max-width: 15ch; }
+.heroHeader p { max-width: 48ch; }
+.actionSlot, .submitSlot, .pageSlot, .stateAction { display: flex; min-width: 0; max-width: 100%; }
+
+/* Kit colours, derived from one accent like the hub cards. */
+.plaque {
+  --auction-kit-light: color-mix(in srgb, var(--auction-kit-accent, var(--atlas-accent)) 65%, var(--atlas-text-strong));
+  --auction-kit-base: color-mix(in srgb, var(--auction-kit-accent, var(--atlas-accent)) 12%, var(--atlas-bg));
+  --auction-kit-line: color-mix(in srgb, var(--auction-kit-accent, var(--atlas-accent)) 28%, transparent);
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  padding: 36px 40px 40px;
+  color: var(--atlas-text);
+}
+.plaque::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 28px solid transparent;
+  border-image-source: var(--mythic-panel-image);
+  border-image-slice: var(--mythic-panel-slice) fill;
+  border-width: var(--mythic-panel-width);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--auction-kit-base);
+  background-clip: padding-box;
+  content: "";
+  pointer-events: none;
+}
+.plaqueTitle { margin: 0 0 var(--atlas-space-4); color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.stateText { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+.stateAction { margin-top: var(--atlas-space-4); }
+.readyPlaque { display: grid; justify-items: start; }
+
 .browser { display: grid; gap: var(--atlas-space-6); min-width: 0; }
+.searchPlaque { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
 .filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-4); align-items: end; }
 .search { grid-column: span 2; }
-.hint, .secondary { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: 1.6; }
+.submitSlot { align-self: end; }
+.submitSlot .assetButton:global(.ui-button) { width: 100%; min-width: 0; }
+.hint, .secondary, .note { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: 1.6; }
 .hint { margin-block: var(--atlas-space-4) 0; }
-.hint a, .table a { color: var(--atlas-accent); text-underline-offset: .2em; }
-.summary { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3) var(--atlas-space-6); padding: var(--atlas-space-5); font-size: var(--atlas-text-meta); color: var(--atlas-text-muted); }
-.summary strong { color: var(--atlas-text); }
+.note { margin: 0; padding-inline: var(--atlas-space-2); color: var(--atlas-text-subtle); }
+.note a, .table a { color: var(--atlas-accent); text-underline-offset: .2em; }
+
+/* Painted button (design.md §4.1), the same contract as the hub. */
+.page .assetButton:global(.ui-button) {
+  --_bg: transparent;
+  --_bg-hover: transparent;
+  --_bg-active: transparent;
+  --_fg: var(--atlas-text-strong);
+  position: relative;
+  isolation: isolate;
+  justify-content: center;
+  min-height: 68px;
+  min-width: min(100%, 240px);
+  padding: var(--mythic-button-pad-top) var(--mythic-button-inset) var(--mythic-button-pad-bottom);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--atlas-text-strong);
+  box-shadow: none;
+  font-size: var(--atlas-text-small);
+  line-height: var(--atlas-leading-snug);
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  transition: transform var(--atlas-duration-fast) var(--ui-spring-smooth);
+}
+.assetButton::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 20px solid transparent;
+  border-image-source: var(--mythic-button-image);
+  border-image-slice: var(--mythic-button-slice) fill;
+  border-width: var(--mythic-button-width);
+  border-image-width: 1;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--atlas-bg);
+  background-clip: padding-box;
+  content: "";
+  pointer-events: none;
+}
+.assetButton::after {
+  position: absolute;
+  z-index: 0;
+  inset: var(--mythic-button-top) var(--mythic-button-right) var(--mythic-button-bottom) var(--mythic-button-left);
+  border-radius: 40%;
+  background: linear-gradient(110deg, transparent, color-mix(in srgb, var(--atlas-text-strong) 15%, transparent), transparent);
+  opacity: 0;
+  content: "";
+  pointer-events: none;
+}
+.assetButton :global(.ui-button__label), .assetButton :global(.ui-button__icon) { position: relative; z-index: 1; min-width: 0; }
+.assetButton :global(.ui-button__label) { white-space: normal; text-align: center; }
+.assetButton :global(.ui-button__icon), .assetButton svg { flex: none; width: 18px; height: 18px; }
+.page .assetButton:global(.ui-button):focus-visible { outline: 2px solid var(--atlas-text-strong); outline-offset: 4px; }
+.page .assetButton:global(.ui-button):active { transform: translateY(1px) scale(.98); }
+.page .assetButton:global(.ui-button):disabled { opacity: .55; transform: none; }
+@media (hover: hover) and (pointer: fine) {
+  .page .assetButton:global(.ui-button):not(:disabled):hover { transform: translateY(-2px); }
+  .assetButton:not(:disabled):hover::after { animation: assetGlint 900ms var(--atlas-ease) both; }
+}
+@keyframes assetGlint { from { opacity: 0; transform: translateX(-12px); } 45% { opacity: .8; } to { opacity: 0; transform: translateX(12px); } }
+
+/* Results: summary, then compact lot rows on the plaque face. */
+.resultsPlaque { padding: 32px 36px 32px; }
+.summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-2) var(--atlas-space-6); padding: 0 var(--atlas-space-2) var(--atlas-space-4); border-bottom: 1px solid var(--auction-kit-line); font-size: var(--atlas-text-meta); color: var(--atlas-text-muted); }
+.summary strong { display: inline-flex; align-items: baseline; gap: var(--atlas-space-2); color: var(--atlas-text); font-weight: 400; }
+.summaryCount { color: var(--auction-kit-light); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h2); line-height: 1; font-variant-numeric: tabular-nums lining-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
+.summaryLabel { font-size: var(--atlas-text-label); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
 .tableScroll { max-width: 100%; overflow: auto; }
-.table { width: 100%; border-collapse: separate; border-spacing: 0 var(--atlas-space-2); text-align: left; font-size: var(--atlas-text-meta); }
-.table th { color: var(--atlas-text-muted); font-weight: 600; white-space: nowrap; }
-.table th, .table td { padding: var(--atlas-space-4) var(--atlas-space-5); border-bottom: 1px solid var(--atlas-line); vertical-align: top; }
-.table td:first-child { min-width: 14rem; }
-.table td:nth-child(n+2) { font-variant-numeric: tabular-nums; }
-.secondary { display: block; margin-top: var(--atlas-space-1); }
-.money { display: inline-flex; gap: var(--atlas-space-2); white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--atlas-text); }
+.tableScroll:focus-visible { outline: 2px solid var(--auction-kit-light); outline-offset: 2px; }
+.table { width: 100%; border-collapse: collapse; text-align: left; font-size: var(--atlas-text-small); }
+.table th { padding: var(--atlas-space-3) var(--atlas-space-4); color: var(--auction-kit-light); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; white-space: nowrap; }
+.table td { padding: var(--atlas-space-3) var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); vertical-align: middle; }
+.table td:first-child { min-width: 16rem; }
+.table td:nth-child(n+2) { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lotRow { transition: background-color var(--atlas-duration-fast) var(--atlas-ease); }
+.lotRow:hover { background: color-mix(in srgb, var(--auction-kit-accent, var(--atlas-accent)) 7%, transparent); }
+.secondary { display: block; }
+.itemMeta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--atlas-space-4); margin-top: calc(var(--atlas-space-2) * -1); padding-inline-start: 64px; }
+.itemMeta .secondary { font-size: var(--atlas-text-label); color: var(--atlas-text-subtle); }
+.itemMeta .details[open] { flex-basis: 100%; }
+.money { display: inline-flex; gap: var(--atlas-space-2); white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--atlas-text-strong); }
 .coin { display: inline-flex; align-items: center; gap: var(--atlas-space-1); }
 .coin img { display: inline-block; flex-shrink: 0; image-rendering: auto; }
-.details { margin-top: var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-label); }
-.details summary { cursor: pointer; min-height: 1.5rem; }
-.details > div { display: grid; gap: var(--atlas-space-1); overflow-wrap: anywhere; }
-.warning, .error { padding: var(--atlas-space-4); border-inline-start: 2px solid var(--atlas-accent); background: var(--atlas-accent-wash); }
-.pagination { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); padding: var(--atlas-space-5); font-size: var(--atlas-text-meta); }
-.empty { padding: var(--atlas-space-6); }
+.details { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); }
+.details summary { display: inline-flex; align-items: center; min-height: 24px; cursor: pointer; }
+.details summary:focus-visible { outline: 2px solid var(--auction-kit-light); outline-offset: 2px; }
+.details > div { display: grid; gap: var(--atlas-space-1); padding-block: var(--atlas-space-1); overflow-wrap: anywhere; }
+.warning, .error { margin: var(--atlas-space-4) 0 0; padding: var(--atlas-space-3) var(--atlas-space-4); border-inline-start: 2px solid var(--auction-kit-light, var(--atlas-accent)); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent); color: var(--atlas-text); font-size: var(--atlas-text-small); }
+.error { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); }
+.error p { margin: 0; }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); padding: var(--atlas-space-4) 0 0; border-top: 1px solid var(--auction-kit-line); font-size: var(--atlas-text-meta); }
+.pagination .assetButton:global(.ui-button) { min-width: 180px; }
+.pageCount { color: var(--atlas-text-muted); font-variant-numeric: tabular-nums; }
+.empty { padding: var(--atlas-space-6) var(--atlas-space-2); }
+.empty h2 { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); }
+.empty p { margin: 0; color: var(--atlas-text-muted); }
 .resultFocus { min-width: 0; outline-offset: var(--atlas-space-2); }
 .visuallyHidden { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
-.itemTrigger { display: inline-flex; gap: var(--atlas-space-3); align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--atlas-accent); font: inherit; text-align: left; cursor: pointer; }
-.itemTrigger:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: var(--atlas-space-1); }
+
+/* Item: icon inside the kit's painted ability frame, name in its quality colour. */
+.itemTrigger { display: inline-flex; gap: var(--atlas-space-3); align-items: center; min-height: 56px; padding: 0; border: 0; background: transparent; color: var(--auction-quality-text, var(--atlas-accent)); font: inherit; font-weight: 600; text-align: left; cursor: pointer; text-shadow: 0 1px 3px var(--atlas-bg); }
+.itemTrigger:focus-visible { outline: 2px solid var(--auction-kit-light, var(--atlas-accent)); outline-offset: var(--atlas-space-1); }
 .itemTrigger:hover > span:last-child { text-decoration: underline; text-underline-offset: .2em; }
-.itemIcon { position: relative; display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border: 1px solid var(--auction-quality, var(--atlas-line)); background: var(--atlas-surface-raised); box-shadow: inset 0 0 0 1px var(--atlas-line); }
-.itemIcon::after { content: ""; position: absolute; inset: -10px; pointer-events: none; background: url("/assets/wow/ui-textures/character/action-button-border.png") center / 100% 100% no-repeat; opacity: .7; }
-.itemIcon::after { z-index: 0; }
-.itemIcon > img, .itemIcon > svg { position: relative; z-index: 1; }
-.itemIcon img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.itemIcon { position: relative; display: block; flex: 0 0 52px; width: 52px; height: 52px; }
+.itemIcon::before { position: absolute; inset: var(--auction-frame-top) var(--auction-frame-right) var(--auction-frame-bottom) var(--auction-frame-left); border-radius: 3px; background: var(--atlas-surface-sunken); box-shadow: inset 0 0 0 1px var(--auction-quality, var(--atlas-line)); content: ""; }
+.itemIcon > img, .itemIcon > svg { position: absolute; z-index: 1; inset: var(--auction-frame-top) var(--auction-frame-right) var(--auction-frame-bottom) var(--auction-frame-left); width: calc(100% - var(--auction-frame-left) - var(--auction-frame-right)); height: calc(100% - var(--auction-frame-top) - var(--auction-frame-bottom)); clip-path: var(--auction-frame-clip); }
+.itemIcon > img { display: block; object-fit: cover; }
+.itemIcon > svg { padding: 6px; color: var(--atlas-text-muted); }
+.itemIcon::after { position: absolute; z-index: 2; inset: 0; background: var(--auction-frame-image) center / contain no-repeat; filter: contrast(.9) saturate(.8); content: ""; pointer-events: none; }
 .itemPreview { max-height: min(24rem, 55dvh); overflow: auto; font-size: var(--atlas-text-meta); }
 .itemFacts { display: grid; gap: var(--atlas-space-2); color: var(--atlas-text); line-height: 1.6; overflow-wrap: anywhere; }
 .itemFacts strong { color: var(--auction-quality-text, var(--atlas-accent)); font-size: var(--atlas-text-body); }
@@ -42,25 +182,61 @@
 .variantNote { color: var(--atlas-text-muted); border-inline-start: 2px solid var(--atlas-accent); padding-inline-start: var(--atlas-space-3); }
 .itemDialog { max-width: min(32rem, calc(100vw - 2rem)); }
 .itemDialogContent { padding: var(--atlas-space-5); max-height: 72dvh; overflow: auto; }
-.itemActions { display: flex; justify-content: space-between; align-items: center; gap: var(--atlas-space-4); margin-top: var(--atlas-space-5); }
+.itemActions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--atlas-space-4); margin-top: var(--atlas-space-5); }
 .itemActions a { color: var(--atlas-accent); font-size: var(--atlas-text-meta); }
-.itemTrigger { color: var(--auction-quality-text, var(--atlas-accent)); }
-.itemLevel { display: block; margin-top: var(--atlas-space-1); color: var(--atlas-text-muted); font-size: var(--atlas-text-label); }
-.lotRow td { border-style: solid; border-width: 5px 0; border-image: url("/assets/wow/ui-textures/auction/item-name-frame.png") 6 stretch; background: var(--atlas-surface); }
-.lotRow td:first-child { border-inline-start-width: 6px; }
-.lotRow td:last-child { border-inline-end-width: 6px; }
-.lotRow:hover td { background: var(--atlas-surface-raised); }
+.itemLevel { display: block; margin-top: var(--atlas-space-1); color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-weight: 400; }
 .tooltipPrices { display: grid; gap: var(--atlas-space-2); padding-block-start: var(--atlas-space-3); margin: var(--atlas-space-3) 0 0; border-top: 1px solid var(--atlas-line); }
 .tooltipPrices > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-2); }
 .tooltipPrices dt { color: var(--atlas-text-muted); }
 .tooltipPrices dd { margin: 0; }
 .wowLines { display: grid; gap: var(--atlas-space-1); }
 .wowLines [data-stat] { color: var(--auction-quality-text, var(--atlas-accent)); }
-@media (max-width: 1024px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 540px) {
+
+@media (max-width: 1100px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
+/* Narrow screens: every lot is a small card — item on top, then quantity / unit / buyout with their labels. */
+@media (max-width: 760px) {
+  .plaque { padding: 28px; }
+  .resultsPlaque { padding: 24px 20px; }
+  .plaque::before { border-width: var(--mythic-panel-width-mobile); }
+  .table thead { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+  .table, .table tbody, .table tr, .table td { display: block; }
+  .table td:first-child { min-width: 0; }
+  .table .lotRow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-1) var(--atlas-space-3); padding: var(--atlas-space-3) var(--atlas-space-1); border-top: 1px solid var(--atlas-line-soft); }
+  .table td { padding: 0; border: 0; white-space: normal; }
+  .table td.itemCell { grid-column: 1 / -1; }
+  .table td[data-label]::before { display: block; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; content: attr(data-label); }
+  .money { flex-wrap: wrap; gap: var(--atlas-space-1) var(--atlas-space-2); }
+}
+@media (max-width: 600px) {
+  .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
+  .heroHeader { max-width: 100%; }
+  .actionSlot { flex: 1 1 100%; width: 100%; }
+  .actionSlot .assetButton:global(.ui-button) { width: 100%; }
   .filters { grid-template-columns: minmax(0, 1fr); }
   .search { grid-column: auto; }
-  .summary { flex-direction: column; }
-  .table th, .table td { padding: var(--atlas-space-3); }
-  .pagination { padding: var(--atlas-space-3); flex-wrap: wrap; }
+  .pagination { flex-wrap: wrap; }
+  .pageCount { order: -1; flex: 1 1 100%; text-align: center; }
+  .pageSlot { flex: 1 1 0; }
+  .pagination .assetButton:global(.ui-button) { width: 100%; min-width: 0; }
+}
+@media (max-width: 360px) { .plaque { padding-inline: 20px; } .table .lotRow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Motion and preference fallbacks (design.md §5). */
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .page .assetButton:global(.ui-button), .lotRow { transform: none; transition: none; }
+  .assetButton::after { animation: none; opacity: 0; }
+}
+:global([data-motion="reduced"]) .page .assetButton:global(.ui-button),
+:global([data-ui-motion="reduce"]) .page .assetButton:global(.ui-button),
+:global([data-transparency="reduced"]) .page .assetButton:global(.ui-button) { transform: none; transition: none; }
+:global([data-motion="reduced"]) .assetButton::after,
+:global([data-ui-motion="reduce"]) .assetButton::after,
+:global([data-transparency="reduced"]) .assetButton::after { animation: none; opacity: 0; }
+@media (forced-colors: active) {
+  .plaque::before, .assetButton::before, .assetButton::after, .itemIcon::after, .scene { display: none; }
+  .plaque { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .page .assetButton:global(.ui-button) { border: 2px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
+  .itemIcon::before { border: 1px solid CanvasText; }
+  .itemTrigger { color: LinkText; }
 }

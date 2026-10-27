@@ -7,6 +7,6 @@ export function AuctionMoney({ value, lang }: { value: number | null; lang: "ru"
   const c = auctionCopy[lang], parts = copperParts(value);
   const coins = [["gold", parts.gold, c.goldFull], ["silver", parts.silver, c.silverFull], ["copper", parts.copper, c.copperFull]] as const;
   return <span className={styles.money} aria-label={`${!Number.isInteger(value) ? c.approximately : ""} ${parts.gold} ${c.goldFull}, ${parts.silver} ${c.silverFull}, ${parts.copper} ${c.copperFull}`}>
-    {!Number.isInteger(value) ? "≈ " : ""}{coins.map(([coin, count, label]) => <span key={coin} className={styles.coin} aria-hidden="true">{count.toLocaleString(lang)}<Image src={`/assets/wow/ui-textures/auction/${coin}.png`} width={13} height={13} alt="" title={label} unoptimized /></span>)}
+    {!Number.isInteger(value) ? "≈ " : ""}{coins.filter(([coin, count], index) => count > 0 || coin === "copper" || coins.slice(0, index).some(([, before]) => before > 0)).map(([coin, count, label]) => <span key={coin} className={styles.coin} aria-hidden="true">{count.toLocaleString(lang)}<Image src={`/assets/wow/ui-textures/auction/${coin}.png`} width={13} height={13} alt="" title={label} unoptimized /></span>)}
   </span>;
 }
