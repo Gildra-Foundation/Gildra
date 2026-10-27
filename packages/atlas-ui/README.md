@@ -21,10 +21,14 @@ import-time side effects.
 
 1. **Tokens only.** Page and component CSS uses `var(--atlas-*)`. No hex colours,
    no font names, no raw `px` font sizes. `npm run atlas:check` fails otherwise.
-2. **One amber.** Chrome (borders, links, buttons, eyebrows, counters) is amber.
-   Class, role, item-quality and status colours are allowed only on the data they
-   describe; an entry's illustration colour goes into `accent` (it tints only the
-   eyebrow icon and the hover glow).
+2. **One accent.** Chrome (borders, links, buttons, eyebrows, counters) wears the
+   theme accent `--atlas-accent` (the reader's site theme; ice `#7cc8ee` by default —
+   the old amber is gone). Painted kits (plaques, painted buttons, frames) keep their
+   own material; class, role, item-quality and status colours are allowed only on the
+   data they describe; an entry's illustration colour goes into `accent` (it tints only
+   the eyebrow icon and the hover glow). The whole-site style guide is the skill
+   `gildra-wow-material-design` (`~/.claude/skills/…/design.md`); the painted pieces
+   for any page are `components/wow/shared/materialAtlas.ts`.
 3. **Readable sizes.** The smallest text is `--atlas-text-label` (11 px, uppercase
    labels). Body copy is `--atlas-text-body` (15 px), meta text `--atlas-text-meta` (12 px).
 4. **Honest data.** Counters and badges show only real numbers. Fixtures and drafts

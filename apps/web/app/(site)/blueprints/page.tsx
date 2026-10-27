@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { hiddenForMvp } from "@/lib/mvp";
 import { getImageProps } from "next/image";
 import { preload } from "react-dom";
 import { BlueprintGallery } from "@/components/blueprints/BlueprintGallery";
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function BlueprintsPage() {
+  hiddenForMvp();
   preload("/assets/wow/mythic/ruby-depth-v3-light-fast.webp", {
     as: "image",
     type: "image/webp",

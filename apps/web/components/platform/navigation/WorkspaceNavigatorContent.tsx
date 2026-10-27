@@ -137,11 +137,15 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
         const hub = realm.links[0];
         const isOpen = openRealm === realm.id;
         const label = word(lang, realm.label);
+        // A realm of one page with no quick picks is a plain tab: a menu would only repeat it.
+        const single = realm.links.length === 1 && !picks[realm.id];
+        const link = <Link href={p(lang, hub.href)} prefetch={false} className={toolbarStyles.tab} onClick={close}
+          aria-current={barePath === hub.href ? "page" : current?.realm.id === realm.id ? "true" : undefined}>
+          <RealmIcon id={realm.id} size={17} />{label}
+        </Link>;
+        if (single) return <li key={realm.id} data-realm={realm.id} data-single>{link}</li>;
         return <li key={realm.id} data-realm={realm.id} data-open={isOpen || undefined} {...hover(realm.id)}>
-          <Link href={p(lang, hub.href)} prefetch={false} className={toolbarStyles.tab} onClick={close}
-            aria-current={barePath === hub.href ? "page" : current?.realm.id === realm.id ? "true" : undefined}>
-            <RealmIcon id={realm.id} size={17} />{label}
-          </Link>
+          {link}
           <button type="button" className={toolbarStyles.toggle} aria-expanded={isOpen} aria-controls={`${id}-${realm.id}`}
             aria-label={ru ? `${label}: все страницы раздела` : `${label}: all pages`}
             onClick={() => (isOpen ? close() : show(realm.id))}>

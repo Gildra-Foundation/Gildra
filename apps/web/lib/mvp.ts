@@ -10,8 +10,8 @@
  *  - `MVP_DEFERRED_PAGES_PUBLIC` (below): pages that belong to no visible game —
  *    the cross-game pages still running on fixture data (/patches, /compare,
  *    /profile/*, the /diablo and /genshin hubs, which show invented patches,
- *    ratings and a made-up profile) and /genshin/** (Genshin has no registry
- *    entry). They answer 404 until real data replaces the fixtures. Call
+ *    ratings and a made-up profile, the /blueprints mock-ups and /analytics)
+ *    and /genshin/** (Genshin has no registry entry). They answer 404 until real data replaces the fixtures. Call
  *    `hiddenForMvp()` without a slug at the top of such a page.
  *
  * Two layers, same list of pages:
@@ -34,7 +34,9 @@ import { flags } from "@/lib/flags";
 export const MVP_DEFERRED_PAGES_PUBLIC = flags.deferredPagesPublic;
 
 /** Language-less URL prefixes of the deferred pages (see above). */
-const DEFERRED_PATH_PREFIXES = ["/patches", "/compare", "/profile", "/diablo", "/genshin"] as const;
+// /blueprints (mock-up gallery with invented numbers, including screens of hidden games) and /analytics
+// (site telemetry dressed as "realm telemetry") joined 2026-10-27: both are fixtures, not pages for players.
+const DEFERRED_PATH_PREFIXES = ["/patches", "/compare", "/profile", "/diablo", "/genshin", "/blueprints", "/analytics"] as const;
 
 /** True for a URL (EN or /ru) that is hidden for the MVP: a deferred page or any
  *  page under the URL prefix of a game that is not in MVP_VISIBLE_GAMES. Used by

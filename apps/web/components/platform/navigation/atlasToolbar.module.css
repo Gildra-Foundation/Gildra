@@ -121,6 +121,7 @@
 .tabs { position: relative; border-top: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); }
 .tabs > ul { display: flex; gap: 2px; width: min(100%, var(--atlas-container)); margin: 0 auto; padding: 0 var(--atlas-gutter); list-style: none; }
 .tabs > ul > li { display: flex; align-items: center; }
+.tabs > ul > li[data-single] > .tab { padding-right: 24px; }
 .tab {
   position: relative;
   display: inline-flex;

@@ -1,0 +1,158 @@
+/* atlas:strict — the painted material of one kit around live HTML (gildra-wow-material-design design.md §0, §4):
+   a nine-slice plaque, a nine-slice button and an icon frame. Geometry comes from the kit manifests
+   (materialKit.ts); colours from the kit accent (data) and the atlas tokens (shell). Shared by every area. */
+
+/* ---------- Plaque (design.md §4.2) ---------- */
+.plaque {
+  --material-light: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 65%, var(--atlas-text-strong));
+  --material-base: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 12%, var(--atlas-bg));
+  --material-line: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 28%, transparent);
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  padding: 36px 40px 40px;
+  color: var(--atlas-text);
+}
+.plaque::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 28px solid transparent;
+  border-image-source: var(--mythic-panel-image);
+  border-image-slice: var(--mythic-panel-slice) fill;
+  border-width: var(--mythic-panel-width);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--material-base);
+  background-clip: padding-box;
+  content: "";
+  pointer-events: none;
+}
+.plaqueTitle {
+  margin: 0 0 var(--atlas-space-4);
+  color: var(--atlas-text-strong);
+  font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display);
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.plaqueText { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+
+@media (max-width: 760px) {
+  .plaque { padding: 28px; }
+  .plaque::before { border-width: var(--mythic-panel-width-mobile); }
+}
+@media (max-width: 360px) { .plaque { padding-inline: 20px; } }
+
+/* ---------- Painted button (design.md §4.1) ---------- */
+.slot { display: inline-flex; min-width: 0; max-width: 100%; }
+.slot .button:global(.ui-button) {
+  --_bg: transparent;
+  --_bg-hover: transparent;
+  --_bg-active: transparent;
+  --_fg: var(--atlas-text-strong);
+  position: relative;
+  isolation: isolate;
+  justify-content: center;
+  min-height: 68px;
+  min-width: min(100%, 240px);
+  padding: var(--mythic-button-pad-top) var(--mythic-button-inset) var(--mythic-button-pad-bottom);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--atlas-text-strong);
+  box-shadow: none;
+  font-size: var(--atlas-text-small);
+  line-height: var(--atlas-leading-snug);
+  text-decoration: none;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  transition: transform var(--atlas-duration-fast) var(--atlas-ease);
+}
+.slot[data-block] { display: flex; width: 100%; }
+.slot[data-block] .button:global(.ui-button) { width: 100%; }
+.button::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 20px solid transparent;
+  border-image-source: var(--mythic-button-image);
+  border-image-slice: var(--mythic-button-slice) fill;
+  border-width: var(--mythic-button-width);
+  border-image-width: 1;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--atlas-bg);
+  background-clip: padding-box;
+  content: "";
+  pointer-events: none;
+}
+.button::after {
+  position: absolute;
+  z-index: 0;
+  inset: var(--mythic-button-top) var(--mythic-button-right) var(--mythic-button-bottom) var(--mythic-button-left);
+  border-radius: 40%;
+  background: linear-gradient(110deg, transparent, color-mix(in srgb, var(--atlas-text-strong) 15%, transparent), transparent);
+  opacity: 0;
+  content: "";
+  pointer-events: none;
+}
+.button :global(.ui-button__label), .button :global(.ui-button__icon) { position: relative; z-index: 1; min-width: 0; }
+.button :global(.ui-button__label) { white-space: normal; text-align: center; }
+.button :global(.ui-button__icon), .button svg { flex: none; width: 18px; height: 18px; }
+.slot .button:global(.ui-button):focus-visible { outline: 2px solid var(--atlas-text-strong); outline-offset: 4px; }
+.slot .button:global(.ui-button):active { transform: translateY(1px) scale(.98); }
+.slot .button:global(.ui-button):disabled { opacity: .55; transform: none; }
+@media (hover: hover) and (pointer: fine) {
+  .slot .button:global(.ui-button):not(:disabled):hover { color: var(--atlas-text-strong); transform: translateY(-2px); }
+  .button:not(:disabled):hover::after { animation: materialGlint 900ms var(--atlas-ease) both; }
+}
+@keyframes materialGlint { from { opacity: 0; transform: translateX(-12px); } 45% { opacity: .8; } to { opacity: 0; transform: translateX(12px); } }
+@media (max-width: 600px) {
+  .slot[data-stack] { flex: 1 1 100%; width: 100%; }
+  .slot[data-stack] .button:global(.ui-button) { width: 100%; }
+}
+
+/* ---------- Icon frame (game icon inside the kit's painted square frame) ---------- */
+.iconFrame { position: relative; display: block; flex: none; width: var(--material-icon-size, 52px); height: var(--material-icon-size, 52px); }
+.iconFrame::before {
+  position: absolute;
+  inset: var(--material-frame-top) var(--material-frame-right) var(--material-frame-bottom) var(--material-frame-left);
+  border-radius: 3px;
+  background: var(--atlas-surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--material-icon-edge, var(--atlas-line));
+  content: "";
+}
+.iconFrame > img, .iconFrame > svg {
+  position: absolute;
+  z-index: 1;
+  inset: var(--material-frame-top) var(--material-frame-right) var(--material-frame-bottom) var(--material-frame-left);
+  width: calc(100% - var(--material-frame-left) - var(--material-frame-right));
+  height: calc(100% - var(--material-frame-top) - var(--material-frame-bottom));
+  clip-path: var(--material-frame-clip);
+}
+.iconFrame > img { display: block; object-fit: cover; }
+.iconFrame::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background: var(--material-frame-image) center / contain no-repeat;
+  filter: contrast(.9) saturate(.8);
+  content: "";
+  pointer-events: none;
+}
+
+/* ---------- Preferences (design.md §5) ---------- */
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .slot .button:global(.ui-button) { transform: none; transition: none; }
+  .button::after { animation: none; opacity: 0; }
+}
+:global([data-motion="reduced"]) .slot .button:global(.ui-button),
+:global([data-ui-motion="reduce"]) .slot .button:global(.ui-button),
+:global([data-transparency="reduced"]) .slot .button:global(.ui-button) { transform: none; transition: none; }
+:global([data-motion="reduced"]) .button::after,
+:global([data-ui-motion="reduce"]) .button::after,
+:global([data-transparency="reduced"]) .button::after { animation: none; opacity: 0; }
+@media (forced-colors: active) {
+  .plaque::before, .button::before, .button::after, .iconFrame::after { display: none; }
+  .plaque { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .slot .button:global(.ui-button) { border: 2px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
+  .iconFrame::before { border: 1px solid CanvasText; }
+}

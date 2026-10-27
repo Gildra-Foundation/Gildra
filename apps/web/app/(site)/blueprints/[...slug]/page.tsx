@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { hiddenForMvp } from "@/lib/mvp";
 import { notFound } from "next/navigation";
 import { BlueprintViewer } from "@/components/blueprints/BlueprintViewer";
 import { blueprints, getBlueprint, getBlueprintsForGame } from "@/components/blueprints/catalog";
@@ -26,6 +27,7 @@ export async function generateMetadata({ params }: BlueprintPageProps): Promise<
 }
 
 export default async function BlueprintPage({ params }: BlueprintPageProps) {
+  hiddenForMvp();
   const { slug } = await params;
   const blueprint = getBlueprint(slug.join("/"));
   if (!blueprint) notFound();

@@ -12,7 +12,8 @@ export const notFoundMetadata: Metadata = {
  *  (unmatched URLs) the language comes from the URL (see NotFoundCopy). */
 export function NotFoundPage({ locale }: { locale?: "en" | "ru" }) {
   return (
-    <AtlasFrame footer={false} scene="lost">
+    // The legal footer needs the language: the 404 of unmatched URLs learns it only from the URL after hydration.
+    <AtlasFrame footer={Boolean(locale)} lang={locale} scene="lost">
       <AtlasHero
         eyebrow="404"
         title={<NotFoundTitle locale={locale} />}

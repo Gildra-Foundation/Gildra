@@ -41,8 +41,9 @@ export function navigationPicks(): NavigationPicks {
       const iconKey = classKey ? iconKeyOf(classKey) : undefined;
       const image = iconKey ? classIcon(iconKey) : null;
       if (!image) return [];
-      return [{ href: `/wow/classes/${entry.slug}`, label: { en: entry.nameEn, ru: entry.nameRu }, image, tint: classColors[entry.slug as keyof typeof classColors] }];
+      // The roster card on /wow/classes (the per-class pages are placeholders).
+      return [{ href: `/wow/classes#${entry.slug}`, label: { en: entry.nameEn, ru: entry.nameRu }, image, tint: classColors[entry.slug as keyof typeof classColors] }];
     }),
   };
-  return { heroes: classes, mythic: dungeons, raids, meta: classes };
+  return { heroes: classes, mythic: dungeons, raids };
 }

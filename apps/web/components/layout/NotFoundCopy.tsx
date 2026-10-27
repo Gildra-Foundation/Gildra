@@ -1,10 +1,8 @@
 "use client";
 
-import clsx from "clsx";
-import Link from "next/link";
 import { useEffect, useSyncExternalStore } from "react";
 import { ArrowRight } from "lucide-react";
-import buttonStyles from "@gildra/atlas-ui/AtlasButton.module.css";
+import { MaterialLinkButton } from "@/components/wow/shared/material/MaterialButton";
 import type { Lang as Locale } from "@/lib/i18n-paths";
 
 const copy = {
@@ -12,13 +10,13 @@ const copy = {
     title: "This page fell in battle",
     lede: "The route was moved or no longer exists. The World of Warcraft hub lists every section that is live today.",
     hub: "Open the WoW hub",
-    mythic: "Mythic+ routes",
+    mythic: "Mythic+ atlas",
   },
   ru: {
     title: "Эта страница пала в бою",
     lede: "Похоже, маршрут перенесён или больше не существует. Все разделы, которые работают сегодня, собраны в центре World of Warcraft.",
     hub: "Открыть центр WoW",
-    mythic: "Маршруты Эпохальный+",
+    mythic: "Атлас Mythic+",
   },
 };
 
@@ -48,7 +46,7 @@ export function NotFoundLede({ locale }: { locale?: Locale }) {
 export function NotFoundActions({ locale }: { locale?: Locale }) {
   const { text, prefix } = useNotFoundCopy(locale);
   return <>
-    <Link className={clsx(buttonStyles.button, buttonStyles.primary)} href={`${prefix}/wow`}><span>{text.hub}</span><ArrowRight aria-hidden="true" /></Link>
-    <Link className={buttonStyles.button} href={`${prefix}/wow/mythic-plus`}><span>{text.mythic}</span></Link>
+    <MaterialLinkButton kit="den-of-nalorakk" fit="stack" variant="primary" href={`${prefix}/wow`} iconAfter={<ArrowRight aria-hidden="true" />}>{text.hub}</MaterialLinkButton>
+    <MaterialLinkButton kit="den-of-nalorakk" fit="stack" href={`${prefix}/wow/mythic-plus`}>{text.mythic}</MaterialLinkButton>
   </>;
 }

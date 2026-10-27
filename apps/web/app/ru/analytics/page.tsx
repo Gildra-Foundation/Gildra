@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { hiddenForMvp } from "@/lib/mvp";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { getAnalyticsOverview } from "@/lib/api/client";
 import { analyticsCopy } from "@/components/analytics/analyticsCopy";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Живая аналитика Азерота — Gildra", description: "Живая телеметрия и активность командного центра World of Warcraft." };
 
 export default async function AnalyticsPageRu() {
+  hiddenForMvp();
   const copy = analyticsCopy.ru;
   const data = await getAnalyticsOverview(24);
   return (

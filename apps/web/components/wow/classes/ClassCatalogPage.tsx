@@ -75,9 +75,9 @@ export function ClassCatalogPage({ locale }: { locale: Locale }) {
           {classes.map((specs) => {
             const first = specs[0];
             const name = locale === "ru" ? first.classNameRu : first.className;
-            const style = { "--class-color": `var(--c-${classColorKey[first.classKey]}, var(--atlas-accent))` } as CSSProperties;
+            const style = { "--class-color": `var(--c-${classColorKey[first.classKey]}, var(--atlas-accent))`, scrollMarginTop: "calc(var(--atlas-sticky-top) + var(--atlas-space-4))" } as CSSProperties;
             return (
-              <li key={first.classSlug} className={styles.classRow} style={style} data-spotlight>
+              <li key={first.classSlug} id={first.classSlug} className={styles.classRow} style={style} data-spotlight>
                 <Image className={styles.classIcon} src={first.classIconUrl} alt="" width={52} height={52} />
                 <div className={styles.classBody}>
                   <h3 className={styles.className}>{name}</h3>

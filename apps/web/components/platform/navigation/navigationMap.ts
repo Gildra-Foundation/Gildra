@@ -27,14 +27,14 @@ export const navigationRealms: readonly NavigationRealm[] = [
     scene: "wow",
     also: ["/talents", "/wow/rotation", "/wow/shared"],
     links: [
-      { href: "/wow/characters", label: { en: "My characters", ru: "Мои персонажи" }, note: { en: "Official Blizzard profile", ru: "Официальный профиль Blizzard" } },
+      { href: "/wow/characters", label: { en: "My characters", ru: "Мои персонажи" }, note: { en: "Gear, talents and tools of your heroes", ru: "Экипировка, таланты и инструменты героев" } },
       { href: "/wow/classes", label: { en: "Classes and specs", ru: "Классы и специализации" }, note: { en: "Talent trees of every spec", ru: "Деревья талантов всех специализаций" } },
     ],
   },
   {
     id: "mythic",
     label: { en: "Mythic+", ru: "Mythic+" },
-    lede: { en: "Key timers, MDT routes and sourced mechanics for the season.", ru: "Таймеры ключей, маршруты MDT и механики сезона по источникам." },
+    lede: { en: "Key timers, dungeon routes and the weekly meta.", ru: "Таймеры ключей, маршруты подземелий и мета недели." },
     scene: "mythicPlus",
     also: ["/wow/mythic"],
     links: [
@@ -58,11 +58,12 @@ export const navigationRealms: readonly NavigationRealm[] = [
   {
     id: "meta",
     label: { en: "Tier lists", ru: "Тир-листы" },
-    lede: { en: "Compare classes and specializations, then look up the details.", ru: "Сравнение классов и специализаций — и подробности в базе." },
+    lede: { en: "Compare specializations, then look up any item or spell.", ru: "Сравнение специализаций — и любой предмет или заклинание в библиотеке." },
     scene: "tierLists",
-    also: ["/specs", "/library"],
+    also: ["/specs"],
     links: [
       { href: "/tier-lists", label: { en: "Tier lists", ru: "Тир-листы" }, note: { en: "Specialization rankings", ru: "Рейтинг специализаций" } },
+      { href: "/library", label: { en: "Library", ru: "Библиотека" }, note: { en: "Items, spells, mounts and more", ru: "Предметы, заклинания, транспорт и другое" } },
       { href: "/database", label: { en: "Database", ru: "База данных" }, note: { en: "Spells, items and NPCs", ru: "Заклинания, предметы и NPC" } },
     ],
   },
