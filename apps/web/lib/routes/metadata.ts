@@ -63,10 +63,6 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     ru: { title: "Что нового — Gildra", description: "Что изменилось на Gildra для игроков, сначала свежее." },
     noindex: true,
   },
-  database: {
-    en: { title: "World of Warcraft Database — Gildra", description: "Browse Gildra's structured World of Warcraft catalog: items, spells, quests, creatures, maps and game systems." },
-    ru: { title: "База данных World of Warcraft — Gildra", description: "Структурированный каталог World of Warcraft: предметы, заклинания, задания, существа, карты и игровые системы." },
-  },
 };
 
 /** Title, description, canonical + hreflang and robots of a section page. */

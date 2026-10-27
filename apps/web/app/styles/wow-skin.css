@@ -126,12 +126,6 @@ html[data-route-theme="wow"] .bcard {
 html[data-route-theme="wow"] .route-section { padding-top: 26px; }
 
 /* In-game tooltip icon frame (catalog preview dialog and record pages). */
-html[data-route-theme="wow"] .db-tooltip-icon {
-  border-color: #8a5d27;
-  background: radial-gradient(circle at 50% 35%, #35200d, #090705 70%);
-  box-shadow: 0 0 0 1px #050403, inset 0 0 18px rgba(210, 137, 37, .12);
-}
-
 @media (max-width: 900px) {
   html[data-route-theme="wow"] body { background-size: auto, auto, 1500px auto; }
   html[data-route-theme="wow"] .talent-calculator .tc-pvp-group {
