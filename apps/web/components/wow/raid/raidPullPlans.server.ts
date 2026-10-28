@@ -43,10 +43,13 @@ const draftCasters: Record<number, number> = {
   1251405: 240831, 1236497: 252067, 1258656: 252067, 1255702: 251239,
   1270212: 256598, 1247054: 256598, 1247056: 256598, 1282010: 259918,
 };
+// Existing official trash icons, checked and stored with midnight/SOURCE.md.
+const trashSpellIcons = new Set([1228330, 1228345, 1230690, 1236497, 1236560, 1247054, 1247056, 1251405, 1255702, 1258601, 1258621, 1258624, 1258656, 1270212, 1272971, 1274846, 1281453, 1281525, 1281528, 1281532, 1281728, 1282010, 1282201, 1283465]);
 
 function trashPull(pull: RaidRoutePull, bossSlug?: string): RaidPull {
   const abilities: RaidPullAbility[] = pull.abilities.map((ability) => ({
     ...ability, roles: actionRoles[ability.action],
+    icon: trashSpellIcons.has(ability.spellId) ? `/assets/wow/raids/midnight/trash-spells/${ability.spellId}.jpg` : undefined,
     caster: pull.enemies.find((enemy) => enemy.npcId === (ability.casterNpcId ?? draftCasters[ability.spellId]))?.name,
   }));
   return {

@@ -1,0 +1,96 @@
+/* atlas:strict — owner-requested purple glass for pull and player controls. */
+.surface, .menuTheme {
+  --void-glass-accent: var(--atlas-dungeon-void-accent);
+  --void-glass-light: var(--atlas-dungeon-void-accent-strong);
+  --void-glass-line: color-mix(in srgb, var(--void-glass-accent) 36%, transparent);
+  --void-glass-base: color-mix(in srgb, var(--atlas-dungeon-void-surface) 88%, transparent);
+  --void-glass-selected: color-mix(in srgb, var(--atlas-dungeon-void-selected) 94%, transparent);
+  --ruby-dark-glass: var(--void-glass-base);
+  --ruby-selection: var(--void-glass-selected);
+  --ruby-selection-edge: var(--atlas-dungeon-void-selection-edge);
+  --dungeon-glass-raised: var(--atlas-dungeon-void-raised);
+}
+.surface.surface.surface :global([data-raid-role-toolbar]) { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: end; gap: var(--atlas-space-3) var(--atlas-space-5); }
+.roleField { display: grid; min-width: 0; gap: var(--atlas-space-1); }
+.fieldLabel { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.surface.surface :global([data-raid-role-hint]) { grid-column: 1 / -1; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.surface.surface :global([data-raid-role-picker]) { min-width: 0; width: 100%; }
+.surface.surface :is(:global([data-raid-role-picker]), :global([data-raid-boss-difficulty])) :global(.ui-segmented-control) {
+  height: auto; padding: 0; border: 1px solid var(--void-glass-line); border-top-color: color-mix(in srgb, var(--void-glass-accent) 56%, transparent); border-radius: 16px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--void-glass-accent) 9%, transparent), transparent 60%), var(--void-glass-base);
+  box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 6px 18px color-mix(in srgb, var(--atlas-bg) 40%, transparent); backdrop-filter: blur(16px);
+}
+.surface.surface :is(:global([data-raid-role-picker]), :global([data-raid-boss-difficulty])) :global(.ui-segmented-control__viewport) { padding: 5px; gap: var(--atlas-space-1); }
+.surface.surface :is(:global([data-raid-role-picker]), :global([data-raid-boss-difficulty])) :global(.ui-segmented-control__thumb) {
+  top: 5px; bottom: 5px; border: 1px solid var(--void-glass-accent); border-radius: 11px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--void-glass-accent) 24%, transparent), transparent), var(--void-glass-selected);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--void-glass-light) 28%, transparent), inset 0 -2px 4px var(--atlas-dungeon-void-sunken);
+}
+.surface.surface :is(:global([data-raid-role-picker]), :global([data-raid-boss-difficulty])) :global([role="radio"]) { min-width: 0; min-height: 48px; border-radius: 11px; padding-inline: var(--atlas-space-3); font-size: var(--atlas-text-body); font-weight: 600; color: var(--atlas-text-muted); }
+.surface.surface :is(:global([data-raid-role-picker]), :global([data-raid-boss-difficulty])) :global([role="radio"][aria-checked="true"]) { color: var(--atlas-text-strong); }
+.surface.surface :global([data-testid="pull-player-picker"] .ui-select) { min-width: 0; min-height: 60px; border-color: var(--void-glass-line); border-top-color: color-mix(in srgb, var(--void-glass-accent) 55%, transparent); border-radius: 16px; background: linear-gradient(150deg, color-mix(in srgb, var(--void-glass-accent) 10%, transparent), transparent 65%), var(--void-glass-base); backdrop-filter: blur(16px); }
+.surface.surface :global([data-testid="pull-player-picker"] .ui-select):is(:hover, :focus-visible, [data-open]):not(:disabled) { border-color: var(--void-glass-accent); box-shadow: inset 0 1px 0 var(--void-glass-line), 0 4px 18px color-mix(in srgb, var(--atlas-bg) 40%, transparent); }
+.surface.surface :global([data-testid="pull-player-picker"] .ui-select):disabled { opacity: .55; }
+.surface.surface :global([data-raid-pull-navigation]) > ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch; gap: var(--atlas-space-3); overflow: visible; padding: var(--atlas-space-1); }
+.surface.surface :global([data-raid-pull-navigation]) li { min-width: 0; }
+.surface.surface :global([data-raid-pull-choice]) {
+  position: relative; isolation: isolate; display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: var(--atlas-space-3); width: 100%; height: 100%; min-height: 104px; overflow: hidden;
+  padding: var(--atlas-space-4); border: 1px solid var(--void-glass-line); border-top-color: color-mix(in srgb, var(--void-glass-accent) 55%, transparent); border-radius: 18px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--void-glass-accent) 12%, transparent), transparent 62%), var(--void-glass-base);
+  color: var(--atlas-text); text-shadow: none; text-align: left; backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 8px 20px color-mix(in srgb, var(--atlas-bg) 35%, transparent);
+  transition: transform .22s var(--atlas-ease), border-color .22s var(--atlas-ease), box-shadow .22s var(--atlas-ease), background-color .22s var(--atlas-ease);
+}
+.surface.surface :global([data-raid-pull-choice])::before { content: none; }
+.surface.surface :global([data-raid-pull-choice])::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(110deg, transparent 25%, color-mix(in srgb, var(--void-glass-light) 13%, transparent) 50%, transparent 75%); transform: translateX(-110%); }
+.surface.surface :global([data-raid-pull-choice]) > b { display: grid; place-items: center; width: 40px; height: 44px; border: 1px solid var(--void-glass-line); border-radius: 12px; background: color-mix(in srgb, var(--void-glass-accent) 10%, transparent); color: var(--void-glass-light); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); line-height: 1; font-variant-numeric: tabular-nums; }
+.surface.surface :global([data-raid-pull-choice]) > span { display: grid; min-width: 0; gap: var(--atlas-space-1); font-size: var(--atlas-text-body); font-weight: 650; line-height: var(--atlas-leading-snug); overflow-wrap: anywhere; text-wrap: pretty; }
+.surface.surface :global([data-raid-pull-choice]) small { color: var(--void-glass-accent); font-size: var(--atlas-text-meta); font-weight: 500; line-height: var(--atlas-leading-snug); }
+.surface.surface :global([data-raid-pull-choice][aria-pressed="true"]) { border-color: var(--void-glass-accent); background-color: var(--void-glass-selected); color: var(--atlas-text-strong); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--void-glass-light) 35%, transparent), inset 0 -2px 0 var(--void-glass-line), 0 8px 20px color-mix(in srgb, var(--atlas-bg) 40%, transparent); }
+.surface.surface :global([data-raid-pull-choice][aria-pressed="true"])::after { animation: glassPass .6s var(--atlas-ease) both; }
+.surface.surface :global([data-raid-pull-choice][aria-pressed="true"]) > b { background: color-mix(in srgb, var(--void-glass-accent) 22%, transparent); border-color: var(--void-glass-accent); color: var(--atlas-text-strong); }
+.surface.surface :is(:global([data-raid-pull-choice]), :global([data-raid-role-picker] [role="radio"]), :global([data-raid-boss-difficulty] [role="radio"]), :global([data-testid="pull-player-picker"] .ui-select)):focus-visible { outline: 2px solid var(--void-glass-light); outline-offset: 3px; }
+.surface.surface :global([data-raid-selected-spec]) { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); font-weight: 500; }
+@media (hover: hover) and (pointer: fine) {
+  .surface.surface :global([data-raid-pull-choice]):hover { transform: translateY(-3px); border-color: var(--void-glass-accent); box-shadow: inset 0 1px 0 var(--void-glass-line), 0 12px 24px color-mix(in srgb, var(--atlas-bg) 55%, transparent); }
+  .surface.surface :global([data-raid-pull-choice]):hover::after { animation: glassPass .7s var(--atlas-ease) both; }
+}
+.surface.surface :global([data-raid-pull-choice]):active { transform: translateY(1px) scale(.985); }
+.menuTheme.menuTheme.menuTheme.menuTheme { --ui-elevated: var(--atlas-dungeon-void-raised); --ui-menu-highlight-bg: var(--void-glass-selected); --ui-menu-highlight-fg: var(--atlas-text-strong); --ui-menu-highlight-icon-fg: var(--void-glass-light); --ui-accent: var(--void-glass-accent); --ui-accent-fg: var(--atlas-text-strong); }
+.menuTheme.menuTheme :global(.ui-listbox__popover) { border-color: var(--void-glass-line); }
+.menuTheme.menuTheme :global(.ui-listbox__check) { color: var(--void-glass-light); }
+@keyframes glassPass { from { transform: translateX(-110%); } to { transform: translateX(110%); } }
+@media (max-width: 1200px) { .surface.surface :global([data-raid-pull-navigation]) > ol { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1000px) { .surface.surface.surface :global([data-raid-role-toolbar]) { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .surface.surface :global([data-raid-pull-navigation]) > ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .surface.surface :global([data-testid="pull-player-picker"]) { grid-template-columns: minmax(0, 1fr); }
+  .surface.surface :global([data-raid-role-picker] .ui-segmented-control__viewport) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; mask-image: none; }
+  .surface.surface :global([data-raid-role-picker] .ui-segmented-control__thumb) { display: none; }
+  .surface.surface :global([data-raid-role-picker] [role="radio"]) { border: 1px solid transparent; }
+  .surface.surface :global([data-raid-role-picker] [role="radio"][aria-checked="true"]) { border-color: var(--void-glass-accent); background: var(--void-glass-selected); box-shadow: inset 0 1px 0 var(--void-glass-line); }
+}
+@media (max-width: 480px) { .surface.surface :global([data-raid-pull-navigation]) > ol { grid-template-columns: minmax(0, 1fr); } .surface.surface :global([data-raid-pull-choice]) { min-height: 84px; } }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .surface.surface button, .surface.surface button::after { animation: none !important; transition: none !important; transform: none !important; }
+}
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface button, :global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface button::after { animation: none !important; transition: none !important; transform: none !important; }
+@media (prefers-reduced-transparency: reduce) {
+  .surface, .menuTheme { --void-glass-base: var(--atlas-dungeon-void-surface); --void-glass-selected: var(--atlas-dungeon-void-selected); }
+  .surface.surface :is(button, :global(.ui-segmented-control)) { backdrop-filter: none; }
+  .surface.surface :global([data-raid-pull-choice])::after { display: none; }
+}
+:global([data-transparency="reduced"]) :is(.surface, .menuTheme) { --void-glass-base: var(--atlas-dungeon-void-surface); --void-glass-selected: var(--atlas-dungeon-void-selected); }
+:global([data-transparency="reduced"]) .surface.surface :is(button, :global(.ui-segmented-control)) { backdrop-filter: none; }
+:global([data-transparency="reduced"]) .surface.surface :global([data-raid-pull-choice])::after { display: none; }
+@media (forced-colors: active) {
+  .surface.surface :is(:global([data-raid-pull-choice]), :global([data-testid="pull-player-picker"] .ui-select), :global(.ui-segmented-control), :global([data-raid-pull-choice]) > b) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; box-shadow: none; backdrop-filter: none; }
+  .surface.surface :global([data-raid-pull-choice])::after { display: none; }
+  .surface.surface :is(:global([data-raid-pull-choice][aria-pressed="true"]), :global([role="radio"][aria-checked="true"]), :global(.ui-segmented-control__thumb)) { background: Highlight; border-color: Highlight; color: HighlightText; }
+  .surface.surface :global([data-raid-pull-choice][aria-pressed="true"]) > b { background: Highlight; border-color: HighlightText; color: HighlightText; }
+  .surface.surface :global([data-raid-pull-choice]) small { color: inherit; }
+}
+
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) { .surface.surface :global(.ui-segmented-control__thumb) { animation: none !important; transition: none !important; } }
+:global(html:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .surface.surface :global(.ui-segmented-control__thumb) { animation: none !important; transition: none !important; }
+.surface.surface :global([data-raid-role-picker] .ui-segmented-control__viewport:not(:has(> .ui-segmented-control__thumb)) [aria-checked="true"]) { background: var(--void-glass-selected); box-shadow: inset 0 0 0 1px var(--void-glass-line); }

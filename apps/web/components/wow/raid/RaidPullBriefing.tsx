@@ -9,18 +9,19 @@ import art from "./raidBriefingArt.module.css";
 import { RaidPlannerIcon } from "./VoidspirePlannerArt";
 import { voidspireBossLinkClass } from "./voidspirePlannerLayout";
 import { raidBossPlannerCopy } from "./raidBossPlannerCopy";
+import { RaidAbilityText } from "./RaidAbilityText";
 
 const roleIcons = { tank: Shield, healer: HeartPulse, dps: Swords };
 const roles: RaidPullRole[] = ["tank", "healer", "dps"];
 
-export function RaidPullBriefing({ pull, locale, role, slug, encounter = false, difficulty = "normal" }: { pull: RaidPull; locale: "ru" | "en"; role: RaidPullRole | "all"; slug: string; encounter?: boolean; difficulty?: "normal" | "heroic" }) {
+export function RaidPullBriefing({ pull, locale, role, slug, encounter = false, difficulty = "normal", spec }: { pull: RaidPull; locale: "ru" | "en"; role: RaidPullRole | "all"; slug: string; encounter?: boolean; difficulty?: "normal" | "heroic"; spec?: { className: { ru: string; en: string }; name: { ru: string; en: string } } }) {
   const t = raidPullCopy[locale];
   const compact = slug === "the-voidspire";
   const text = (value: { ru: string; en: string }) => value[locale];
   return <div className={`${styles.briefing} ${art.briefingArt}`} data-raid-briefing="" data-role={role}>
     <section className={`${styles.call} ${art.command}`} data-raid-command>
       <h4 className={art.sectionHeading}><RaidPlannerIcon slug={slug} kind="command" fallback={<Crosshair size={16} aria-hidden="true" />} />{encounter ? raidBossPlannerCopy[locale].command : t.call}</h4>
-      <p>{text(pull.call)}</p>
+      <p><RaidAbilityText value={text(pull.call)} abilities={pull.abilities} locale={locale} /></p>
     </section>
 
     <RaidPullEnemies pull={pull} locale={locale} slug={slug} compact={compact} encounter={encounter} />
@@ -31,8 +32,8 @@ export function RaidPullBriefing({ pull, locale, role, slug, encounter = false, 
         {roles.filter((item) => role === "all" || item === role).map((item) => {
           const Icon = roleIcons[item];
           return <article key={item} data-raid-role-tasks={item}>
-            <h5><span className={art.roleBadge} data-raid-role-badge><RaidPlannerIcon slug={slug} kind="command" fallback={<Icon size={18} aria-hidden="true" />} /></span>{t[item]}</h5>
-            <ul>{pull.roles[item].map((task) => <li key={task.en}>{text(task)}</li>)}</ul>
+            <h5><span className={art.roleBadge} data-raid-role-badge><RaidPlannerIcon slug={slug} kind="command" fallback={<Icon size={18} aria-hidden="true" />} /></span>{t[item]}{spec && <span data-raid-selected-spec> · {spec.className[locale]} · {spec.name[locale]}</span>}</h5>
+            <ul>{pull.roles[item].map((task) => <li key={task.en}><RaidAbilityText value={text(task)} abilities={pull.abilities} locale={locale} /></li>)}</ul>
           </article>;
         })}
       </div>
@@ -41,7 +42,7 @@ export function RaidPullBriefing({ pull, locale, role, slug, encounter = false, 
     <RaidPullAbilities pull={pull} locale={locale} role={role} compact={compact} difficulty={difficulty} />
 
     {pull.steps.length > 0 && <AtlasDisclosure className={art.actionOrder} summary={t.plan}>
-      <ol className={styles.steps}>{pull.steps.map((step) => <li key={step.en}>{text(step)}</li>)}</ol>
+      <ol className={styles.steps}>{pull.steps.map((step) => <li key={step.en}><RaidAbilityText value={text(step)} abilities={pull.abilities} locale={locale} /></li>)}</ol>
     </AtlasDisclosure>}
     {pull.direction && <section className={art.route}>
       <h4 className={art.sectionHeading}><RaidPlannerIcon slug={slug} kind="map" fallback={<Route size={16} aria-hidden="true" />} />{t.route}</h4>
@@ -101,9 +102,9 @@ function RaidPullAbilities({ pull, locale, role, compact, difficulty }: { pull: 
             </div>
             {ability.action && <b className={`${styles.action} ${art.action}`} data-action={ability.action}>{t.actions[ability.action]}</b>}
           </div>
-          {ability.effect && <p>{text(ability.effect)}</p>}
-          {ability.response && <p className={`${styles.response} ${art.response}`}>{text(ability.response)}</p>}
-          {difficulty === "heroic" && ability.heroic && <p className={`${styles.response} ${art.response}`} data-raid-heroic-note><b>{raidBossPlannerCopy[locale].heroicNote}: </b>{text(ability.heroic)}</p>}
+          {ability.effect && <p><RaidAbilityText value={text(ability.effect)} abilities={abilities} locale={locale} /></p>}
+          {ability.response && <p className={`${styles.response} ${art.response}`}><RaidAbilityText value={text(ability.response)} abilities={abilities} locale={locale} /></p>}
+          {difficulty === "heroic" && ability.heroic && <p className={`${styles.response} ${art.response}`} data-raid-heroic-note><b>{raidBossPlannerCopy[locale].heroicNote}: </b><RaidAbilityText value={text(ability.heroic)} abilities={abilities} locale={locale} /></p>}
           {ability.action && (!compact || role === "all" && ability.roles.length < 3) && <p className={styles.assignment}>{t.assignments}: {ability.roles.length === 3 ? t.shared : ability.roles.map((item) => t[item]).join(" · ")}</p>}
         </li>)}
       </ul> : <p className={styles.muted}>{pull.abilities.length ? t.noRoleAbilities : t.noAbilities}</p>}

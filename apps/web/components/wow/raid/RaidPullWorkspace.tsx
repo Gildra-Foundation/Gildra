@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore, type RefObject } from "react";
+import { useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { AtlasDisclosure } from "@gildra/atlas-ui/AtlasDisclosure";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { usePullRolePreference, pullRoleCopy } from "../shared/usePullRolePreference";
+import { PlayerProfilePicker } from "../shared/PlayerProfilePicker";
 import { raidHubControlLayout } from "./raidHubControls";
 import { raidCardThemes } from "./raidCardThemes";
 import type { RaidHubSlug } from "./raidHubData";
@@ -20,6 +21,7 @@ import type { RaidPullPlan, RaidPullRole } from "./raidPullTypes";
 import styles from "./raidPulls.module.css";
 import bossStyles from "./raidBossPlanner.module.css";
 import { raidBossPlannerCopy } from "./raidBossPlannerCopy";
+import glass from "./voidspireGlass.module.css";
 
 function subscribeHash(callback: () => void) {
   window.addEventListener("hashchange", callback);
@@ -37,8 +39,10 @@ export function RaidPullWorkspace(props: WorkspaceProps) {
 }
 
 function VoidspirePullWorkspace(props: WorkspaceProps) {
-  const { role, selectRole } = usePullRolePreference();
-  return <RaidPullWorkspaceContent {...props} role={role} onRoleChange={selectRole} />;
+  const { role, profile, spec, setProfile, selectRole, setRole } = usePullRolePreference();
+  return <RaidPullWorkspaceContent {...props} role={spec?.role ?? role} onRoleChange={selectRole} spec={spec}
+    playerPicker={<PlayerProfilePicker locale={props.locale} themeClassName={glass.menuTheme} profile={profile}
+      onProfileChange={setProfile} onRoleChange={setRole} />} />;
 }
 
 function LocalRoleWorkspace(props: WorkspaceProps) {
@@ -46,7 +50,7 @@ function LocalRoleWorkspace(props: WorkspaceProps) {
   return <RaidPullWorkspaceContent {...props} role={role} onRoleChange={(value) => setRole(value as RoleSelection)} />;
 }
 
-function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange }: WorkspaceProps & { role: RoleSelection; onRoleChange: (value: string) => void }) {
+function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange, playerPicker, spec }: WorkspaceProps & { role: RoleSelection; onRoleChange: (value: string) => void; playerPicker?: ReactNode; spec?: NonNullable<ReturnType<typeof usePullRolePreference>["spec"]> }) {
   const t = raidPullCopy[locale];
   const bossCopy = raidBossPlannerCopy[locale];
   const encounter = Boolean(plan.encounter);
@@ -68,8 +72,8 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange }: Workspac
     if (reveal && window.matchMedia("(max-width: 900px)").matches) panel.current?.scrollIntoView({ block: "start", behavior: lessMotion() ? "instant" : "smooth" });
   }
   const slug = plan.slug as RaidHubSlug;
-  return <div className={`${styles.workspace} ${voidspirePlannerClass(plan.slug)}`} data-raid-pulls={plan.slug} data-raid-boss-planner={plan.encounter?.bossSlug} data-difficulty={encounter ? difficulty : undefined} style={{ ...raidHubControlLayout(slug), ...voidspirePlannerLayout(plan.slug), "--raid-card-accent": raidCardThemes[slug].accent } as CSSProperties}>
-    <RaidWorkspaceRoleToolbar plan={plan} locale={locale} role={role} onRoleChange={onRoleChange} />
+  return <div className={`${styles.workspace} ${voidspirePlannerClass(plan.slug)} ${plan.slug === "the-voidspire" ? glass.surface : ""}`} data-raid-pulls={plan.slug} data-raid-boss-planner={plan.encounter?.bossSlug} data-difficulty={encounter ? difficulty : undefined} style={{ ...raidHubControlLayout(slug), ...voidspirePlannerLayout(plan.slug), "--raid-card-accent": raidCardThemes[slug].accent } as CSSProperties}>
+    <RaidWorkspaceRoleToolbar plan={plan} locale={locale} role={role} onRoleChange={onRoleChange} playerPicker={playerPicker} />
     {encounter && <div className={bossStyles.difficulty} data-raid-boss-difficulty><span>{bossCopy.difficulty}</span><AtlasSegmented aria-label={bossCopy.difficulty} animation="spring" value={difficulty} onValueChange={value => setDifficulty(value as "normal" | "heroic")} options={(["normal", "heroic"] as const).map(value => ({ value, label: bossCopy[value] }))} /></div>}
     <RaidWorkspaceNavigation plan={plan} locale={locale} active={active} strip={strip} select={select} />
     <div className={styles.columns} data-raid-columns>
@@ -79,21 +83,23 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange }: Workspac
           <div className={styles.pager} data-raid-pager><AtlasButton size="sm" aria-label={encounter ? bossCopy.previous : t.previous} disabled={active === 0} onClick={() => select(active - 1)}><RaidPlannerTextMark slug={plan.slug} text="‹" fallback={<ChevronLeft aria-hidden="true" />} /></AtlasButton>
             <AtlasButton size="sm" aria-label={encounter ? bossCopy.next : t.next} disabled={active === plan.pulls.length - 1} onClick={() => select(active + 1)}><RaidPlannerTextMark slug={plan.slug} text="›" fallback={<ChevronRight aria-hidden="true" />} /></AtlasButton></div></header>
         <span className={styles.srOnly} role="status" aria-live="polite">{label} {active + 1}: {pull.title[locale]}</span>
-        <RaidPullBriefing pull={pull} locale={locale} role={role} slug={plan.slug} encounter={encounter} difficulty={difficulty} />
+        <RaidPullBriefing pull={pull} locale={locale} role={role} slug={plan.slug} encounter={encounter} difficulty={difficulty} spec={spec} />
       </div>
     </div>
     <RaidWorkspaceSources plan={plan} locale={locale} />
   </div>;
 }
 
-function RaidWorkspaceRoleToolbar({ plan, locale, role, onRoleChange }: WorkspaceProps & { role: RoleSelection; onRoleChange: (value: string) => void }) {
+function RaidWorkspaceRoleToolbar({ plan, locale, role, onRoleChange, playerPicker }: WorkspaceProps & { role: RoleSelection; onRoleChange: (value: string) => void; playerPicker?: ReactNode }) {
   const t = raidPullCopy[locale];
   const roleCopy = pullRoleCopy[locale];
   const savedRole = plan.slug === "the-voidspire";
   return <>
     {savedRole ? <div className={styles.toolbar} data-raid-role-toolbar>
+      <div className={glass.roleField}><span className={glass.fieldLabel}>{roleCopy.label}</span>
       <div data-raid-role-picker data-testid="pull-role-picker"><AtlasSegmented aria-label={roleCopy.label} aria-describedby="voidspire-role-hint" animation="spring" size="lg" fullWidth value={role} onValueChange={onRoleChange}
-        options={(["all", "tank", "healer", "dps"] as const).map((value) => ({ value, label: t[value] }))} /></div>
+        options={(["all", "tank", "healer", "dps"] as const).map((value) => ({ value, label: t[value] }))} /></div></div>
+      {playerPicker}
       <p id="voidspire-role-hint" data-raid-role-hint>{roleCopy.hint}</p>
     </div> : <div className={styles.toolbar} data-raid-role-toolbar><span>{t.role}</span><AtlasSegmented aria-label={t.role} value={role} onValueChange={onRoleChange}
       options={(["all", "tank", "healer", "dps"] as const).map((value) => ({ value, label: t[value] }))} /></div>}

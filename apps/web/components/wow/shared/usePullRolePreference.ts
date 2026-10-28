@@ -1,6 +1,7 @@
 "use client";
 
 import { usePullRole } from "../mythic/usePullRole";
+import { playerSpecs } from "../mythic/playerTools";
 import { usePlayerProfile } from "../mythic/usePlayerProfile";
 
 export { pullRoleCopy } from "../mythic/pullRoleCopy";
@@ -13,5 +14,6 @@ export function usePullRolePreference() {
     setProfile({ ...profile, specId: null });
     setRole(value);
   };
-  return { role, profile, setProfile, selectRole, setRole };
+  const spec = playerSpecs.find(item => item.id === profile.specId && item.classId === profile.classId);
+  return { role, profile, spec, setProfile, selectRole, setRole };
 }
