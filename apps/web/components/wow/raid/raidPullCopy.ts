@@ -1,5 +1,6 @@
 export const raidPullCopy = {
   ru: {
+    overviewTitle: "Пулы", mapAndArenas: "Карта и арены",
     reviewedTrash: "NPC и способности сверены 26.10.2026. Состав и численность конкретных пачек не установлены; точки обычных врагов на сетке условные. Прерывания распределяет рейд-лидер с учётом доступных способностей игроков.",
     title: "Пулы на карте", description: "Выберите пул: посмотрите состав, опасные способности и действия своей роли до начала боя.",
     map: "Схема рейда", schematic: "Схема, без игрового масштаба", entrance: "Вход", pull: "Пул", boss: "Босс", rally: "Сбор", trash: "Зачистка",
@@ -16,6 +17,7 @@ export const raidPullCopy = {
     actions: { interrupt: "Прервать", stop: "Остановить контролем", dispel: "Снять усиление / эффект", move: "Выйти из опасной зоны", defensive: "Подготовить защиту", focus: "Сменить цель" },
   },
   en: {
+    overviewTitle: "Pulls", mapAndArenas: "Map and arenas",
     reviewedTrash: "NPC and spell records checked on 26 Oct 2026. Exact pack composition and size are not established; ordinary-enemy grid positions are schematic. The raid leader assigns interrupts to players with suitable abilities.",
     title: "Pulls on the map", description: "Select a pull to see its enemies, dangerous abilities and your role's tasks before combat.",
     map: "Raid schematic", schematic: "Schematic, not to in-game scale", entrance: "Entrance", pull: "Pull", boss: "Boss", rally: "Rally", trash: "Trash",

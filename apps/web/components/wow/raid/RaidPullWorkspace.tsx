@@ -22,6 +22,7 @@ import styles from "./raidPulls.module.css";
 import bossStyles from "./raidBossPlanner.module.css";
 import { raidBossPlannerCopy } from "./raidBossPlannerCopy";
 import glass from "./voidspireGlass.module.css";
+import { VoidspirePullOverview } from "./VoidspirePullOverview";
 
 function subscribeHash(callback: () => void) {
   window.addEventListener("hashchange", callback);
@@ -72,6 +73,7 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange, playerPick
     if (reveal && window.matchMedia("(max-width: 900px)").matches) panel.current?.scrollIntoView({ block: "start", behavior: lessMotion() ? "instant" : "smooth" });
   }
   const slug = plan.slug as RaidHubSlug;
+  if (plan.slug === "the-voidspire" && !encounter) return <VoidspirePullOverview plan={plan} locale={locale} active={active} select={select} panel={panel} role={role} onRoleChange={onRoleChange} playerPicker={playerPicker} spec={spec} sources={<RaidWorkspaceSources plan={plan} locale={locale} />} />;
   return <div className={`${styles.workspace} ${voidspirePlannerClass(plan.slug)} ${plan.slug === "the-voidspire" ? glass.surface : ""}`} data-raid-pulls={plan.slug} data-raid-boss-planner={plan.encounter?.bossSlug} data-difficulty={encounter ? difficulty : undefined} style={{ ...raidHubControlLayout(slug), ...voidspirePlannerLayout(plan.slug), "--raid-card-accent": raidCardThemes[slug].accent } as CSSProperties}>
     <RaidWorkspaceRoleToolbar plan={plan} locale={locale} role={role} onRoleChange={onRoleChange} playerPicker={playerPicker} />
     {encounter && <div className={bossStyles.difficulty} data-raid-boss-difficulty><span>{bossCopy.difficulty}</span><AtlasSegmented aria-label={bossCopy.difficulty} animation="spring" value={difficulty} onValueChange={value => setDifficulty(value as "normal" | "heroic")} options={(["normal", "heroic"] as const).map(value => ({ value, label: bossCopy[value] }))} /></div>}

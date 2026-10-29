@@ -1,0 +1,42 @@
+/* atlas:strict — one route and one selected pull, with secondary tools folded. */
+.workspace { --raid-pull-light: color-mix(in srgb, var(--raid-card-accent) 67%, var(--atlas-text-strong)); --raid-pull-base: color-mix(in srgb, var(--raid-card-accent) 16%, var(--atlas-bg)); display: grid; grid-template-columns: minmax(200px, .7fr) minmax(0, 2fr); gap: var(--atlas-space-5); align-items: start; color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+.navigation { position: sticky; top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
+.navigation ol, .enemies { margin: 0; padding: 0; list-style: none; }
+.navigation ol { display: grid; gap: var(--atlas-space-1); }
+.navigation button { display: flex; align-items: center; gap: var(--atlas-space-3); width: 100%; min-height: 60px; padding: var(--atlas-space-3); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); background: var(--atlas-glass-fill); color: var(--atlas-text); text-align: left; font: 600 var(--atlas-text-small) / var(--atlas-leading-snug) var(--atlas-font-ui); cursor: pointer; }
+.navigation button b { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--atlas-line); font-variant-numeric: tabular-nums; }
+.navigation button[aria-pressed="true"] { border-color: var(--atlas-accent); background: var(--atlas-surface-selected); color: var(--atlas-text-strong); }
+.navigation button[aria-pressed="true"] b { background: var(--atlas-accent); border-color: var(--atlas-accent); color: var(--atlas-accent-ink); }
+.navigation button:hover { background: var(--atlas-surface-raised); }
+.navigation button:focus-visible, .workspace a:focus-visible { outline: 3px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.content { display: grid; gap: var(--atlas-space-3); min-width: 0; }
+.selected { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-3)); min-width: 0; }
+.plaque { padding: var(--atlas-space-5) var(--atlas-space-6); overflow-wrap: anywhere; }
+.heading small { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.heading h3 { margin: var(--atlas-space-1) 0 var(--atlas-space-3); color: var(--atlas-text-strong); font: 600 var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.call { margin: 0 0 var(--atlas-space-4); color: var(--atlas-text-strong); }
+.enemies { display: grid; }
+.enemies > li { padding: var(--atlas-space-3) 0; border-top: 1px solid var(--atlas-line); }
+.enemyHeading { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); }
+.enemyHeading > a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: var(--atlas-text-strong); font-weight: 650; }
+.enemyHeading small { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.enemyHeading [data-priority="critical"] { color: var(--atlas-caution); }
+.ability { margin-bottom: var(--atlas-space-2); font-size: var(--atlas-text-small); }
+.abilityTitle { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); }
+.abilityTitle img { flex: none; border-radius: var(--atlas-radius); }
+.abilityTitle a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text-muted); }
+.abilityTitle b { color: var(--atlas-accent); font-size: var(--atlas-text-small); }
+.ability p { margin: 0; }
+.direction { margin: var(--atlas-space-3) 0 0; padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.boss { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; margin-bottom: var(--atlas-space-2); color: var(--atlas-accent); font-weight: 600; }
+.filters { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3); min-width: 0; }
+.filters > * { min-width: 0; max-width: 100%; }
+.roles section h4 { margin: 0; font-size: var(--atlas-text-body); color: var(--atlas-text-strong); }
+.roles section ul { margin: var(--atlas-space-2) 0 0; padding-left: var(--atlas-space-4); }
+.map > summary { font-size: var(--atlas-text-body); }
+.map :global([data-raid-map-studio]) { position: static; }
+.map :global([data-raid-map-tools]) { gap: var(--atlas-space-2); }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; gap: var(--atlas-space-4); } .navigation { position: static; } .navigation ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } .navigation button { gap: var(--atlas-space-2); padding: var(--atlas-space-2); } .plaque { padding: var(--atlas-space-4) var(--atlas-space-5); } }
+@media (max-width: 360px) { .plaque { padding-inline: var(--atlas-space-4); } }
+@media (forced-colors: active) { .navigation button { background: ButtonFace; color: ButtonText; border-color: ButtonText; } .navigation button[aria-pressed="true"] { outline: 2px solid Highlight; background: Canvas; color: CanvasText; } .navigation button[aria-pressed="true"] b { background: Highlight; color: HighlightText; } }

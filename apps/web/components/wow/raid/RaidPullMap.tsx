@@ -30,7 +30,7 @@ function resolveRaidMapView(plan: RaidPullPlan, pull: RaidPullPlan["pulls"][numb
   return { bosses, defaultBoss, arenaBoss, variants, arena, floor, image: background === "arena" ? arena : floor, pins: background === "map" ? floor?.pins ?? [] : [] };
 }
 
-export function RaidPullMap({ plan, active, locale, onSelect, role = "all" }: { plan: RaidPullPlan; active: number; locale: "ru" | "en"; onSelect: (index: number, reveal?: boolean) => void; role?: RaidPullRole | "all" }) {
+export function RaidPullMap({ plan, active, locale, onSelect, role = "all", simplified = false }: { plan: RaidPullPlan; active: number; locale: "ru" | "en"; onSelect: (index: number, reveal?: boolean) => void; role?: RaidPullRole | "all"; simplified?: boolean }) {
   const t = raidMapCopy[locale];
   const bossCopy = raidBossPlannerCopy[locale];
   const atlas = plan.atlas;
@@ -45,28 +45,28 @@ export function RaidPullMap({ plan, active, locale, onSelect, role = "all" }: { 
   const { bosses, defaultBoss, arenaBoss, variants, arena, floor, image, pins } = resolveRaidMapView(plan, pull, floorChoice, arenaChoice, background);
   const progression = atlas?.progression;
   const groupedArena = background === "arena" && plan.slug === "the-voidspire" && !plan.encounter;
-  const fields = <RaidMapFields plan={plan} locale={locale} background={background === "arena" ? "arena" : "map"} active={active}
+  const fields = <RaidMapFields plan={plan} locale={locale} background={background === "arena" ? "arena" : "map"} active={active} simplified={simplified}
     view={{ bosses, defaultBoss, arenaBoss, variants, arena, floor, image, pins }} onFloor={id => setFloorChoice({ pull: selectionId, id })}
     onBoss={boss => setArenaChoice({ pull: selectionId, boss, variant: "" })} onPull={index => onSelect(index)}
     onVariant={variant => setArenaChoice({ pull: selectionId, boss: arenaBoss, variant })} />;
   return <section className={styles.studio} data-raid-map-studio data-background={background} aria-label={t.background}>
-    <div className={styles.backgrounds}><AtlasSegmented className={styles.materialModes} data-raid-map-modes aria-label={t.background} value={background}
+    <div className={styles.backgrounds}><AtlasSegmented className={simplified ? undefined : styles.materialModes} data-raid-map-modes aria-label={t.background} value={background}
       onValueChange={value => saveMapPreference(preferenceKey, value)}
-      options={(["map", "arena", "grid", "art"] as const).map(value => ({ value, label: plan.encounter && (value === "grid" || value === "art") ? bossCopy[value] : t[value], icon: plan.slug === "the-voidspire" ? <RaidPlannerIcon slug={plan.slug} kind={value} /> : undefined, disabled: !atlas && (value === "map" || value === "arena") }))} /></div>
+      options={(["map", "arena", "grid", "art"] as const).map(value => ({ value, label: plan.encounter && (value === "grid" || value === "art") ? bossCopy[value] : t[value], icon: !simplified && plan.slug === "the-voidspire" ? <RaidPlannerIcon slug={plan.slug} kind={value} /> : undefined, disabled: !atlas && (value === "map" || value === "arena") }))} /></div>
     {(background === "grid" || background === "art") ? (plan.encounter ? <RaidBossDiagram plan={plan} active={active} locale={locale} role={role} background={background} /> : <RaidSchematicMap plan={plan} active={active} locale={locale} onSelect={onSelect} background={background} />) : image && <>
       {!groupedArena && fields}
       <RaidCartography key={`${background}:${groupedArena ? "pull-selector" : image.src}${plan.encounter ? `:${pull.id}` : ""}`} plan={plan} image={image} background={background}
         pins={pins} bosses={bosses} activeBoss={background === "arena" ? arenaBoss : defaultBoss}
-        activePull={active} onSelectPull={onSelect}
+        activePull={active} onSelectPull={onSelect} simplified={simplified}
         links={progression?.links ?? []} locale={locale} controls={groupedArena ? fields : undefined} sketchScope={plan.encounter ? pull.id : undefined} />
     </>}
-    <RaidPullRouteList plan={plan} active={active} locale={locale} onSelect={onSelect} />
-    <RaidMapProgression plan={plan} locale={locale} bosses={bosses} defaultBoss={defaultBoss} />
+    {!simplified && <RaidPullRouteList plan={plan} active={active} locale={locale} onSelect={onSelect} />}
+    {!simplified && <RaidMapProgression plan={plan} locale={locale} bosses={bosses} defaultBoss={defaultBoss} />}
     <p className={styles.attribution}><span>{t.sources} · © Blizzard Entertainment</span><a href="https://raidplan.io" target="_blank" rel="noreferrer">RaidPlan<ArrowUpRight size={12} aria-hidden="true" /></a></p>
   </section>;
 }
 
-function RaidMapFields({ plan, locale, background, active, view, onFloor, onBoss, onPull, onVariant }: { plan: RaidPullPlan; locale: "ru" | "en"; background: "map" | "arena"; active: number; view: ReturnType<typeof resolveRaidMapView>; onFloor: (id: string) => void; onBoss: (slug: string) => void; onPull: (index: number) => void; onVariant: (id: string) => void }) {
+function RaidMapFields({ plan, locale, background, active, view, onFloor, onBoss, onPull, onVariant, simplified }: { plan: RaidPullPlan; locale: "ru" | "en"; background: "map" | "arena"; active: number; view: ReturnType<typeof resolveRaidMapView>; onFloor: (id: string) => void; onBoss: (slug: string) => void; onPull: (index: number) => void; onVariant: (id: string) => void; simplified: boolean }) {
   const t = raidMapCopy[locale];
   const bossCopy = raidBossPlannerCopy[locale];
   const atlas = plan.atlas;
@@ -80,7 +80,7 @@ function RaidMapFields({ plan, locale, background, active, view, onFloor, onBoss
         {background === "map" ? <div className={styles.field}><span><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Layers size={15} aria-hidden="true" />} />{t.floor}</span><AtlasValyroSelect aria-label={t.floor} className={styles.assetSelect} data-raid-map-select
           value={floor?.id} options={atlas!.floors.map(f => ({ value: f.id, label: f.name[locale] }))}
           onValueChange={id => onFloor(id)} /></div> : <>
-          {groupedArena && <div className={styles.field}><span>{copy.arenaSelect}</span><AtlasValyroSelect aria-label={copy.arenaSelect} className={styles.assetSelect} data-raid-arena-pull-select
+          {groupedArena && !simplified && <div className={styles.field}><span>{copy.arenaSelect}</span><AtlasValyroSelect aria-label={copy.arenaSelect} className={styles.assetSelect} data-raid-arena-pull-select
             value={plan.pulls[active].id} options={plan.pulls.map((pull, index) => ({ value: pull.id, label: `${copy.pull} ${index + 1} · ${pull.title[locale]}` }))}
             onValueChange={id => { const index = plan.pulls.findIndex(pull => pull.id === id); if (index >= 0) onPull(index); }} /></div>}
           {!plan.encounter && !groupedArena && <div className={styles.field}><span><RaidPlannerIcon slug={plan.slug} kind="arena" fallback={<Skull size={15} aria-hidden="true" />} />{t.boss}</span><AtlasValyroSelect aria-label={t.boss} className={styles.assetSelect} data-raid-map-select value={arenaBoss}

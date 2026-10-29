@@ -7,5 +7,5 @@ export function RaidPullSection({ slug, locale }: { slug: string; locale: "ru" |
   const plan = getRaidPullPlan(slug);
   if (!plan?.pulls.length) return null;
   const t = raidPullCopy[locale];
-  return <AtlasSection id="pulls" title={t.title} description={t.description}><RaidPullWorkspace plan={plan} locale={locale} /></AtlasSection>;
+  return <AtlasSection id="pulls" title={slug === "the-voidspire" ? t.overviewTitle : t.title} description={slug === "the-voidspire" ? undefined : t.description}><RaidPullWorkspace plan={plan} locale={locale} /></AtlasSection>;
 }

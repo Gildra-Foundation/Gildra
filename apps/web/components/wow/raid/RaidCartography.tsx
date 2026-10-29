@@ -30,6 +30,7 @@ type CartographyProps = {
   sketchScope?: string;
   activePull: number;
   onSelectPull: (index: number, reveal?: boolean) => void;
+  simplified?: boolean;
 };
 
 const serverSketch = () => "[]";
@@ -56,14 +57,15 @@ function drawWithKeyboard(event: KeyboardEvent<HTMLButtonElement>, cursor: Curso
   } else if (event.key === "Escape") finish();
 }
 
-function CartographyFooter({ background, hasPins, planSlug, activeBoss, locale, count, onUndo, onClear, encounter }: {
+function CartographyFooter({ background, hasPins, planSlug, activeBoss, locale, count, onUndo, onClear, encounter, simplified }: {
   background: "map" | "arena"; hasPins: boolean; planSlug: string; activeBoss: string; locale: "ru" | "en";
   count: number; onUndo: () => void; onClear: () => void; encounter: boolean;
+  simplified?: boolean;
 }) {
   const t = raidMapCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
-  return <div className={styles.mapFooter}>{background === "arena" || !hasPins ? <span>{background === "arena" ? encounter ? raidBossPlannerCopy[locale].arenaHint : t.arenaHint : t.emptyFloor}</span> : null}
-    {background === "arena" && !encounter && <Link href={`${prefix}/wow/raids/${planSlug}/${activeBoss}`}>{t.tactics}<ArrowUpRight size={14} aria-hidden="true" /></Link>}
+  return <div className={styles.mapFooter}>{!simplified && (background === "arena" || !hasPins) ? <span>{background === "arena" ? encounter ? raidBossPlannerCopy[locale].arenaHint : t.arenaHint : t.emptyFloor}</span> : null}
+    {!simplified && background === "arena" && !encounter && <Link href={`${prefix}/wow/raids/${planSlug}/${activeBoss}`}>{t.tactics}<ArrowUpRight size={14} aria-hidden="true" /></Link>}
     {count > 0 && <div className={styles.sketchTools}><span>{t.own} · {count}</span>
       <AtlasButton className={styles.tool} size="sm" data-raid-tool="undo" aria-label={t.undo} onClick={onUndo}><RaidPlannerTextMark slug={planSlug} text="↶" fallback={<Undo2 size={16} aria-hidden="true" />} /></AtlasButton>
       <AtlasButton className={styles.tool} size="sm" data-raid-tool="clear" aria-label={t.clear} onClick={onClear}><RaidPlannerTextMark slug={planSlug} text="×" fallback={<Trash2 size={16} aria-hidden="true" />} /></AtlasButton>
@@ -93,7 +95,7 @@ function CartographyTools({ planSlug, locale, background, zoom, showGrid, showRo
     </div>;
 }
 
-export function RaidCartography({ plan, image, background, pins, bosses, activeBoss, links, locale, controls, sketchScope, activePull, onSelectPull }: CartographyProps) {
+export function RaidCartography({ plan, image, background, pins, bosses, activeBoss, links, locale, controls, sketchScope, activePull, onSelectPull, simplified = false }: CartographyProps) {
   const t = raidMapCopy[locale];
   const helpId = useId();
   const viewport = useRef<HTMLDivElement>(null);
@@ -135,10 +137,10 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
   return <figure className={styles.figure} data-raid-cartography>
     <figcaption className={styles.caption} data-raid-map-caption><div><span>{groupedArena ? pull.title[locale] : background === "arena" ? selectedBoss?.name[locale] : plan.name[locale]}</span>{groupedArena && <small>{routeCopy.beforeBoss}{selectedBoss?.name[locale]}</small>}{image.name[locale] && !plan.name[locale].endsWith(image.name[locale]) ? <small>{image.name[locale]}</small> : null}</div><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Map size={20} aria-hidden="true" />} /></figcaption>
     {controls}
-    {groupedArena && <RaidArenaRoster pull={pull} locale={locale} />}
+    {groupedArena && !simplified && <RaidArenaRoster pull={pull} locale={locale} />}
     <CartographyTools planSlug={plan.slug} locale={locale} background={background} zoom={zoom} showGrid={showGrid} showRoute={showRoute} editing={editing}
       onZoom={setZoom} onGrid={() => setShowGrid(value => !value)} onRoute={() => setShowRoute(value => !value)} onEdit={() => setEditing(value => !value)} />
-    {pullRoute && <p className={styles.pullRouteHint} data-raid-pull-map-hint>{routeCopy.mapHint}</p>}
+    {pullRoute && !simplified && <p className={styles.pullRouteHint} data-raid-pull-map-hint>{routeCopy.mapHint}</p>}
     <div ref={viewport} className={styles.viewport} tabIndex={0} role="group" aria-label={t.pan} data-raid-map-viewport>
       <div className={styles.canvas} style={{ "--map-zoom": zoom, aspectRatio: `${image.width} / ${image.height}` } as CSSProperties} data-raid-map-canvas data-grid={showGrid} data-editing={editing} data-pull-route={Boolean(pullRoute)}>
         <Image key={image.src} className={styles.cartography} src={image.src} alt={background === "arena" ? `${t.arena}: ${selectedBoss?.name[locale] ?? ""}` : `${t.map}: ${image.name[locale]}`} width={image.width} height={image.height} sizes="(max-width: 900px) 100vw, 800px" unoptimized draggable={false} data-raid-official-map />
@@ -160,8 +162,8 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
         {editing && <span className={styles.drawCursor} style={{ left: `${cursor.x}%`, top: `${cursor.y}%` }} aria-hidden="true" />}
       </div>
     </div>
-    {groupedArena && <RaidArenaActions pull={pull} locale={locale} />}
-    <CartographyFooter background={background} hasPins={pins.length > 0} planSlug={plan.slug} activeBoss={activeBoss} locale={locale} count={points.length} encounter={Boolean(plan.encounter)}
+    {groupedArena && !simplified && <RaidArenaActions pull={pull} locale={locale} />}
+    <CartographyFooter background={background} hasPins={pins.length > 0} planSlug={plan.slug} activeBoss={activeBoss} locale={locale} count={points.length} encounter={Boolean(plan.encounter)} simplified={simplified}
       onUndo={() => saveMapPreference(key, JSON.stringify(points.slice(0, -1)))} onClear={() => saveMapPreference(key, "[]")} />
     {editing && <p id={helpId} className={styles.drawHelp}>{t.ownHint} {t.keyboard}</p>}
     <span role="status" className={styles.srOnly}>{editing ? `${t.drawing}. ${t.point}: ${points.length}` : ""}</span>

@@ -31,7 +31,7 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={<>{copy.season(1)} · {locale === "ru" ? raid.locationRu : raid.locationEn}</>}
         title={raidName}
-        lede={locale === "ru" ? raid.descriptionRu : raid.descriptionEn}
+        lede={raid.slug === "the-voidspire" ? undefined : locale === "ru" ? raid.descriptionRu : raid.descriptionEn}
         actions={<AtlasShareButton title={raidName} locale={locale} />}
       />
 
@@ -43,7 +43,7 @@ export function RaidOverview({ raid, locale }: { raid: RaidDefinition; locale: R
           artwork: boss.artwork,
         }))} />
       </AtlasSection>
-      <RaidReviewNotes raidSlug={raid.slug} locale={locale} />
+      {raid.slug !== "the-voidspire" && <RaidReviewNotes raidSlug={raid.slug} locale={locale} />}
     </AtlasFrame>
   );
 }
