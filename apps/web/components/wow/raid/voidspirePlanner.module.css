@@ -71,6 +71,8 @@
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-enemy-art]) > .glyph { width: 100%; height: 100%; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-enemy-art]):has(> .glyph) { background: none; }
 .surface.surface[data-raid-pulls="the-voidspire"] :global([data-raid-spell-art]) > img { width: 40%; height: 40%; object-fit: cover; border-radius: 50%; }
+/* The round medallion already frames these icons. */
+.surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-enemy-art]), :global([data-raid-spell-art]), :global([data-raid-role-badge]))::after { display: none; }
 
 /* Round tools have live marks above a dimensional medallion, never compressed endcaps. */
 .surface.surface[data-raid-pulls="the-voidspire"] :is(:global([data-raid-tool]), :global([data-raid-pager] button)) { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 64px; min-width: 64px; height: 64px; min-height: 64px; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; color: var(--atlas-text-strong); transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
