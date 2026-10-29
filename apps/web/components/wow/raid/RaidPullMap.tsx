@@ -55,7 +55,7 @@ export function RaidPullMap({ plan, active, locale, onSelect, role = "all" }: { 
       options={(["map", "arena", "grid", "art"] as const).map(value => ({ value, label: plan.encounter && (value === "grid" || value === "art") ? bossCopy[value] : t[value], icon: plan.slug === "the-voidspire" ? <RaidPlannerIcon slug={plan.slug} kind={value} /> : undefined, disabled: !atlas && (value === "map" || value === "arena") }))} /></div>
     {(background === "grid" || background === "art") ? (plan.encounter ? <RaidBossDiagram plan={plan} active={active} locale={locale} role={role} background={background} /> : <RaidSchematicMap plan={plan} active={active} locale={locale} onSelect={onSelect} background={background} />) : image && <>
       {!groupedArena && fields}
-      <RaidCartography key={`${background}:${image.src}${plan.encounter ? `:${pull.id}` : ""}`} plan={plan} image={image} background={background}
+      <RaidCartography key={`${background}:${groupedArena ? "pull-selector" : image.src}${plan.encounter ? `:${pull.id}` : ""}`} plan={plan} image={image} background={background}
         pins={pins} bosses={bosses} activeBoss={background === "arena" ? arenaBoss : defaultBoss}
         activePull={active} onSelectPull={onSelect}
         links={progression?.links ?? []} locale={locale} controls={groupedArena ? fields : undefined} sketchScope={plan.encounter ? pull.id : undefined} />
