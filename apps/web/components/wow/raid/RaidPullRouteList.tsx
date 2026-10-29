@@ -23,7 +23,7 @@ export function RaidPullRouteList({ plan, active, locale, onSelect }: {
       const bossStop = boss && (!nextPull || nextPull.bossSlug !== pull.bossSlug);
       return <li key={pull.id} data-raid-route-pull={pull.id} data-active={active === index}>
         <AtlasButton variant="ghost" className={styles.choice} aria-pressed={active === index} aria-controls={`raid-pull-${plan.slug}`} onClick={() => onSelect(index, true)}>
-          <b>{index + 1}</b><span><strong>{pull.title[locale]}</strong><small>{pull.kind === "rally" ? (copy.rally) : pull.enemies.map(enemy => enemy.name[locale]).join(" · ")}</small></span>
+          <b className={styles.number}>{index + 1}</b><span className={styles.identity}><strong>{pull.title[locale]}</strong><small>{pull.kind === "rally" ? (copy.rally) : pull.enemies.map(enemy => enemy.name[locale]).join(" · ")}</small></span>
         </AtlasButton>
         <div className={styles.orders}>
           {pull.kind !== "rally" && <p data-raid-route-kicks><b>{t.actions.interrupt}: </b>{kicks.length ? kicks.map(ability => `${ability.caster?.[locale]} — ${ability.name[locale]}`).join("; ") : (copy.noKick)}</p>}
