@@ -89,19 +89,14 @@
 .bossPin, .sketchPoint, .drawCursor { z-index: 3; }
 .drawCapture { position: absolute; z-index: 4; inset: 0; display: block; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; cursor: crosshair; touch-action: manipulation; }
 .drawCursor { z-index: 5; }
-.enemyControls { display: grid; gap: var(--atlas-space-2); margin-bottom: var(--atlas-space-3); }
-.enemyFields { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); }
-.enemyFields > :last-child { flex: 1 1 180px; min-width: 0; }
-.enemyControls p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-body); }
-.enemyControls a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: var(--raid-pull-light); }
-.enemyLayer { position: absolute; z-index: 3; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.enemyLayer circle { fill: var(--raid-pull-light); stroke: var(--atlas-bg); stroke-width: 1; cursor: pointer; pointer-events: auto; }
-.enemyLayer g[data-active="true"] circle { r: 4; fill: var(--atlas-accent-strong); stroke: var(--atlas-text-strong); }
-.enemyLayer g[data-muted="true"] { opacity: .2; }
-.enemyLayer circle:hover { r: 6; stroke: var(--atlas-text-strong); }
-.bossPin { z-index: 4; }
-.drawCapture { z-index: 5; }
-.drawCursor { z-index: 6; }
-@media (forced-colors: active) { .enemyLayer circle { fill: ButtonText; stroke: Canvas; } .enemyLayer g[data-active="true"] circle { fill: Highlight; stroke: HighlightText; } }
-.canvas:has(.drawCapture:focus-visible) .drawCursor { opacity: 1; }
-@media (max-width: 480px) { .selectors .field { flex-basis: 100%; } }
+/* Pull locations are authored gathering points, with full-size touch targets. */
+.pullRouteHint { margin: 0 0 var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.canvas[data-pull-route="true"] { min-width: 480px; }
+.pullRouteLine { fill: none; stroke: var(--raid-pull-light); stroke-width: .65; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
+.pullPin { position: absolute; z-index: 3; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; transform: translate(-50%, -50%); border: 2px solid var(--raid-pull-light); border-radius: 50%; background: var(--atlas-surface); color: var(--atlas-text-strong); font: 700 var(--atlas-text-title) var(--atlas-font-ui); cursor: pointer; }
+.pullPin[aria-pressed="true"] { background: var(--raid-pull-light); color: var(--atlas-bg); outline: 2px solid var(--atlas-text-strong); outline-offset: 2px; }
+.pullPin:hover, .pullPin:focus-visible { outline: 3px solid var(--atlas-accent); outline-offset: 3px; }
+@media (forced-colors: active) { .pullPin { color: ButtonText; background: ButtonFace; border-color: ButtonText; } .pullPin[aria-pressed="true"] { outline-color: Highlight; } .pullRouteLine { stroke: CanvasText; } }
+
+.canvas[data-pull-route="true"] .bossPin { width: 32px; height: 32px; }
+.canvas[data-pull-route="true"] .bossPin b { display: none; }

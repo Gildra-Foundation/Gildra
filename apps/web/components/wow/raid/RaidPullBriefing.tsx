@@ -26,6 +26,8 @@ export function RaidPullBriefing({ pull, locale, role, slug, encounter = false, 
 
     <RaidPullEnemies pull={pull} locale={locale} slug={slug} compact={compact} encounter={encounter} />
 
+    {!encounter && compact && <RaidPullAbilities pull={pull} locale={locale} role="all" compact={compact} difficulty={difficulty} />}
+
     <section>
       <h4 className={art.sectionHeading}>{t.tasks}</h4>
       <div className={`${styles.roleTasks} ${art.roleTasks}`}>
@@ -39,7 +41,7 @@ export function RaidPullBriefing({ pull, locale, role, slug, encounter = false, 
       </div>
     </section>
 
-    <RaidPullAbilities pull={pull} locale={locale} role={role} compact={compact} difficulty={difficulty} />
+    {(encounter || !compact) && <RaidPullAbilities pull={pull} locale={locale} role={role} compact={compact} difficulty={difficulty} />}
 
     {pull.steps.length > 0 && <AtlasDisclosure className={art.actionOrder} summary={t.plan}>
       <ol className={styles.steps}>{pull.steps.map((step) => <li key={step.en}><RaidAbilityText value={text(step)} abilities={pull.abilities} locale={locale} /></li>)}</ol>
@@ -48,7 +50,7 @@ export function RaidPullBriefing({ pull, locale, role, slug, encounter = false, 
       <h4 className={art.sectionHeading}><RaidPlannerIcon slug={slug} kind="map" fallback={<Route size={16} aria-hidden="true" />} />{t.route}</h4>
       <p>{text(pull.direction)}</p>
     </section>}
-    {pull.next && (!compact || !pull.bossSlug) && <section className={`${styles.onward} ${art.onward}`}>
+    {pull.next && <section className={`${styles.onward} ${art.onward}`}>
       <h4 className={art.sectionHeading}>{t.onward}</h4><p>{text(pull.next)}</p>
     </section>}
     {pull.bossSlug && !encounter && <AtlasLinkButton className={`${art.openBoss} ${voidspireBossLinkClass(slug)}`} href={`${locale === "ru" ? "/ru" : ""}/wow/raids/${slug}/${pull.bossSlug}`} icon={slug === "the-voidspire" ? <RaidPlannerIcon slug={slug} kind="arena" /> : undefined} iconAfter={slug === "the-voidspire" ? undefined : <ArrowUpRight size={18} aria-hidden="true" />}>

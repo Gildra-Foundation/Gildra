@@ -7,7 +7,6 @@ import { wowGuideText } from "@/lib/wow/sourceLocale";
 import { getMidnightRaidRoute, type RaidRoutePull, type RouteAction, type RouteText } from "./midnightRaidRoutes";
 import { raidHubEntries } from "./raidHubData";
 import mapManifest from "../../../public/assets/wow/raids/maps/manifest.json";
-import voidspireEnemies from "../../../data/wow/raid-enemies/the-voidspire.json";
 import { getRaidProgression } from "./raidProgression";
 import type { RaidMapAtlas, RaidPull, RaidPullAbility, RaidPullPlan, RaidPullRole } from "./raidPullTypes";
 
@@ -76,13 +75,7 @@ export function getRaidPullPlan(slug: string): RaidPullPlan | undefined {
   const hub = raidHubEntries.find((entry) => entry.slug === slug);
   if (!hub) return undefined;
   const sourceAtlas = (mapManifest.raids as Record<string, RaidMapAtlas>)[slug];
-  const atlas = { ...sourceAtlas, progression: getRaidProgression(slug), floors: sourceAtlas.floors.map(floor => ({
-    ...floor,
-    enemies: slug === "the-voidspire" ? voidspireEnemies.npcs.flatMap(npc => {
-      const points = npc.points.filter(point => point.floorId === floor.id).map(({ x, y }) => ({ x, y }));
-      return points.length ? [{ npcId: npc.npcId, name: npc.name, sourceURL: npc.sourceURL, points }] : [];
-    }) : undefined,
-  })) };
+  const atlas = { ...sourceAtlas, progression: getRaidProgression(slug) };
   const midnight = getMidnightRaid(slug);
   if (midnight) {
     const route = getMidnightRaidRoute(midnight.slug);

@@ -12,7 +12,7 @@ export const voidspireReviewedPulls: RaidRoutePull[] = [
     x: 50,
     y: 86,
     destinationBoss: 0,
-    title: text("Входные отряды", "Entrance enemies"),
+    title: text("Входные паки", "Entrance packs"),
     area: text("Перед Аверзианом", "Before Averzian"),
     danger: "medium",
     call: text("Сначала уберите дальнего заклинателя; не подтягивайте следующую группу до сбора текущей.", "Focus the ranged caster first; gather the current group before pulling more."),
@@ -70,7 +70,7 @@ export const voidspireReviewedPulls: RaidRoutePull[] = [
         text("Не дублируйте назначенные прерывания и рассеивание.", "Avoid overlapping assigned interrupts and offensive dispels.")
       ]
     },
-    direction: text("Зачистите входную часть рейда.", "Clear the entrance area."),
+    direction: text("От входа двигайтесь к Аверзиану. Берите входные паки по одному: зовущего собирайте с ближайшими духами, уничтожителя не добавляйте к ещё живому паку.", "Advance from the entrance to Averzian. Clear entrance packs one at a time: gather a Caller with nearby Wraiths and keep the Obliterator out of an unfinished pull."),
     steps: [],
     next: text("Далее — Император Аверзиан.", "Next: Imperator Averzian.")
   },
@@ -128,7 +128,7 @@ export const voidspireReviewedPulls: RaidRoutePull[] = [
         text("Сохраняйте доступ к цели после телепорта, не цепляя соседних врагов.", "Stay in reach after teleports without pulling nearby enemies.")
       ]
     },
-    direction: text("После Аверзиана — площадка у лестницы левого крыла.", "After Averzian: the platform by the left-wing stairs."),
+    direction: text("После Аверзиана идите в левое крыло. Остановитесь на площадке за верхом лестницы и дождитесь патруля Мигуна; соседние паки не добавляйте.", "After Averzian, take the left wing. Stop on the platform behind the top of the stairs and wait for Blinky’s patrol; keep nearby packs separate."),
     steps: [],
     next: text("Продолжайте к Мракозарии.", "Continue to Voidlight Everdawn.")
   },
@@ -170,7 +170,7 @@ export const voidspireReviewedPulls: RaidRoutePull[] = [
         text("Сочетайте урон по лейтенанту с быстрым уничтожением призывов.", "Damage the lieutenant while quickly clearing summons.")
       ]
     },
-    direction: text("Левое крыло, снаружи у Ненасытникуса.", "Left wing, outside near Vorasius."),
+    direction: text("От Мигуна продолжайте по левому крылу на внешнюю площадку. Убейте Мракозарию с призывами, затем Ненасытникуса. Вернитесь через центр к правой лестнице.", "Continue from Blinky along the left wing to the outside platform. Defeat Everdawn and her summons, then Vorasius. Return through the center to the right-hand stairs."),
     steps: [],
     next: text("Далее — Ненасытникус.", "Next: Vorasius.")
   },
@@ -220,7 +220,7 @@ export const voidspireReviewedPulls: RaidRoutePull[] = [
         text("Сохраняйте место для выхода из дыхания и для меток.", "Preserve room to leave the breath and separate debuffs.")
       ]
     },
-    direction: text("После Аверзиана — площадка наверху лестницы правого крыла.", "After Averzian: the platform atop the right-wing stairs."),
+    direction: text("После Ненасытникуса вернитесь в центр и поднимитесь по правой лестнице. Возьмите Дозорного на верхней площадке отдельно, затем идите к Салхадаару.", "After Vorasius, return to the center and climb the right-hand stairs. Pull the Watcher separately on the upper platform, then continue to Salhadaar."),
     steps: [],
     next: text("Далее — Павший король Салхадаар.", "Next: Fallen-King Salhadaar.")
   },
@@ -270,7 +270,7 @@ export const voidspireReviewedPulls: RaidRoutePull[] = [
         text("Атакуйте с безопасной стороны, сохраняя проход между линиями.", "Attack from a safe side and keep a lane through the ruptures.")
       ]
     },
-    direction: text("Вернитесь в центр после зачистки обоих крыльев.", "Return to the center after clearing both wings."),
+    direction: text("После Ненасытникуса и Салхадаара вернитесь к центральной лестнице. Дождитесь снятия отражающего щита на героической и выше, убейте Слауроса, затем идите к драконам.", "After Vorasius and Salhadaar, return to the central stairs. On Heroic and above, wait for the reflecting shield to drop; defeat Slauros, then proceed to the dragons."),
     steps: [],
     next: text("Далее — Ваэлгор и Эззорак.", "Next: Vaelgor and Ezzorak.")
   },
@@ -283,7 +283,7 @@ export const voidspireReviewedPulls: RaidRoutePull[] = [
     title: text("Небесный исполин", "Celestial Behemoth"),
     area: text("После Ваэлгора и Эззорака", "After Vaelgor and Ezzorak"),
     danger: "medium",
-    call: text("Следите за стаками Космического вливания и уроном Небесной зоны.", "Watch Cosmic Injection stacks and Celestial Zone damage."),
+    call: text("Мелких медуз зачистите до исполина. На исполине следите за стаками Космического вливания и уроном Небесной зоны.", "Clear the small jellyfish before the Behemoth. On the Behemoth, watch Cosmic Injection stacks and Celestial Zone damage."),
     enemies: [
       {
         npcId: 252070,
@@ -320,7 +320,7 @@ export const voidspireReviewedPulls: RaidRoutePull[] = [
         text("Следите за уроном Небесной зоны при выборе позиции.", "Watch Celestial Zone damage when choosing your position.")
       ]
     },
-    direction: text("Поднимитесь после драконов; исполин патрулирует кольцо.", "Climb after the dragons; the Behemoth patrols the ring."),
+    direction: text("После драконов поднимитесь на кольцо. Сначала зачистите охраняющих его мелких медуз, затем дождитесь исполина на свободном участке и возьмите его отдельно. Далее — Авангард.", "After the dragons, climb to the ring. Clear the guarding small jellyfish first, then wait for the Behemoth in cleared space and pull it separately. Continue to the Vanguard."),
     steps: [],
     next: text("Далее — Ослеплённый авангард.", "Next: Lightblinded Vanguard.")
   },

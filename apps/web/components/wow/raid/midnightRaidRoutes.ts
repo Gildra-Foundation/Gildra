@@ -86,7 +86,7 @@ const enemy = (
 export const midnightRaidRoutes: Record<RaidSlug, RaidRouteGuide> = {
   "the-voidspire": {
     raid: "the-voidspire",
-    routePath: "M 50 94 L 50 84 L 50 73 L 50 64 L 31 57 L 20 46 L 31 57 L 50 64 L 69 57 L 80 46 L 69 57 L 50 64 L 50 48 L 50 37 L 50 24 L 50 9",
+    routePath: "M 50 95 L 50 86 L 50 75 L 50 67 L 29 65 L 24 48 L 19 43 L 24 48 L 29 65 L 50 67 L 69 57 L 81 43 L 69 57 L 50 57 L 50 39 L 50 31 L 50 21 L 50 15 L 50 7",
     alternatePaths: ["M 50 64 L 31 57 L 20 46", "M 50 64 L 69 57 L 80 46"],
     entrance: { x: 50, y: 95 },
     bosses: [

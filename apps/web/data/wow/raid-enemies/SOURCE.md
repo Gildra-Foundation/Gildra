@@ -40,3 +40,17 @@ The raid NPC is [252070](https://www.wowhead.com/npc=252070), with Cosmic Inject
 The published selected abilities for all eight trash NPC records were checked against each record’s spell list on 29 October 2026; all current bindings were present. Evidence: `/home/debian/gildra-voidspire-mob-map-20261029/source-review.json`.
 
 Lieutenant identity and progression reference: [Wowhead lieutenant guide](https://www.wowhead.com/news/all-lieutenant-enemies-that-drop-boes-in-midnight-season-1-raids-381260).
+
+## Grouped route — 29 October 2026
+
+The observation layer is no longer shipped to the planner. Individual observations
+are retained here only as source evidence, never clustered into claimed fixed packs.
+The planner uses the reviewed named-enemy groups and a recommended left-wing,
+right-wing, central-stairs order. Map markers are authored gathering callouts,
+not measured NPC spawn locations. Arena callouts use an explicitly labelled
+schematic plane, separate from floor coordinates. The seventh stop is a rally.
+Entrance instructions apply to successive packs and explicitly avoid merging the
+whole entrance. Small jellyfish before the Behemoth are documented in the
+lieutenant article; their count, NPC identities and spells are not established.
+
+https://www.wowhead.com/news/all-lieutenant-enemies-that-drop-boes-in-midnight-season-1-raids-381260

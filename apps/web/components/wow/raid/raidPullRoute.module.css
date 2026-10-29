@@ -1,0 +1,20 @@
+/* atlas:strict — grouped pulls, shared with every map background. */
+.route { min-width: 0; padding: var(--atlas-space-4); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-glass-sheen), var(--atlas-glass-fill); }
+.route h4 { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-strong); font: 600 var(--atlas-text-title) var(--atlas-font-display); }
+.route > p { margin: 0 0 var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.route ol { margin: 0; padding: 0; list-style: none; }
+.route li { padding: var(--atlas-space-3) 0; border-top: 1px solid var(--atlas-line-soft); }
+.route li[data-active="true"] { border-left: 2px solid var(--raid-pull-light); padding-left: var(--atlas-space-3); }
+.choice.choice { display: flex; align-items: center; justify-content: flex-start; gap: var(--atlas-space-3); width: 100%; min-height: 44px; height: auto; padding: var(--atlas-space-2); color: var(--atlas-text); text-align: left; white-space: normal; }
+.choice > b { display: grid; place-items: center; flex: 0 0 32px; height: 32px; border: 1px solid var(--raid-pull-light); border-radius: 50%; color: var(--raid-pull-light); }
+.choice > span { display: grid; min-width: 0; gap: var(--atlas-space-1); overflow-wrap: anywhere; }
+.choice strong { color: var(--atlas-text-strong); }
+.choice small { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.orders { padding: 0 var(--atlas-space-2); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); overflow-wrap: anywhere; }
+.orders p { margin: var(--atlas-space-2) 0 0; }
+.orders b { color: var(--raid-pull-light); }
+.direction { color: var(--atlas-text-muted); }
+.stop { padding-top: var(--atlas-space-2); }
+.route > .note { margin: var(--atlas-space-4) 0 0; }
+.choice:focus-visible { outline: 3px solid var(--atlas-accent); outline-offset: 2px; }
+@media (forced-colors: active) { .route { background: Canvas; border-color: CanvasText; } .choice > b { border-color: ButtonText; color: ButtonText; } .route li[data-active="true"] { border-color: Highlight; } }
