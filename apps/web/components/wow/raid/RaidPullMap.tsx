@@ -27,6 +27,11 @@ function resolveRaidMapView(plan: RaidPullPlan, pull: RaidPullPlan["pulls"][numb
   return { bosses, defaultBoss, arenaBoss, variants, arena, floor, image: background === "arena" ? arena : floor, pins: background === "map" ? floor?.pins ?? [] : [] };
 }
 
+function selectEnemyPull(plan: RaidPullPlan, npcId: number, onSelect: (index: number) => void) {
+  const index = plan.pulls.findIndex(pull => pull.enemies.some(enemy => enemy.npcId === npcId));
+  if (index >= 0) onSelect(index);
+}
+
 export function RaidPullMap({ plan, active, locale, onSelect, role = "all" }: { plan: RaidPullPlan; active: number; locale: "ru" | "en"; onSelect: (index: number, reveal?: boolean) => void; role?: RaidPullRole | "all" }) {
   const t = raidMapCopy[locale];
   const bossCopy = raidBossPlannerCopy[locale];
@@ -53,8 +58,10 @@ export function RaidPullMap({ plan, active, locale, onSelect, role = "all" }: { 
       options={(["map", "arena", "grid", "art"] as const).map(value => ({ value, label: plan.encounter && (value === "grid" || value === "art") ? bossCopy[value] : t[value], icon: plan.slug === "the-voidspire" ? <RaidPlannerIcon slug={plan.slug} kind={value} /> : undefined, disabled: !atlas && (value === "map" || value === "arena") }))} /></div>
     {(background === "grid" || background === "art") ? (plan.encounter ? <RaidBossDiagram plan={plan} active={active} locale={locale} role={role} background={background} /> : <RaidSchematicMap plan={plan} active={active} locale={locale} onSelect={onSelect} background={background} />) : image && <>
       <RaidMapFields plan={plan} locale={locale} background={background} view={{ bosses, defaultBoss, arenaBoss, variants, arena, floor, image, pins }} onFloor={id => setFloorChoice({ pull: selectionId, id })} onBoss={selectBoss} onVariant={variant => setArenaChoice({ pull: selectionId, boss: arenaBoss, variant })} />
-      <RaidCartography key={`${background}:${image.id}:${pull.id}`} plan={plan} image={image} background={background}
+      <RaidCartography key={`${background}:${image.id}${plan.encounter ? `:${pull.id}` : ""}`} plan={plan} image={image} background={background}
         pins={pins} bosses={bosses} activeBoss={background === "arena" ? arenaBoss : defaultBoss}
+        enemies={background === "map" ? floor?.enemies : undefined} activeNpcIds={pull.enemies.flatMap(enemy => enemy.npcId ? [enemy.npcId] : [])}
+        onSelectEnemy={npcId => selectEnemyPull(plan, npcId, onSelect)}
         links={progression?.links ?? []} locale={locale} onSelectBoss={selectBoss} sketchScope={plan.encounter ? pull.id : undefined} />
     </>}
     <RaidMapProgression plan={plan} locale={locale} bosses={bosses} defaultBoss={defaultBoss} selectBoss={selectBoss} />

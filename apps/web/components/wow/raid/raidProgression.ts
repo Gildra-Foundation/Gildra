@@ -54,7 +54,7 @@ const progression: Record<string, RaidProgression> = {
       { npcId: 240831, name: text("Мракозария Вечный Рассвет", "Voidlight Everdawn"), beforeBoss: "vorasius", afterBoss: "imperator-averzian", note: text("На площадке Ненасытникуса.", "On Vorasius's platform.") },
       { npcId: 252067, name: text("Страж террасы", "Terrace Watcher"), beforeBoss: "fallen-king-salhadaar", afterBoss: "imperator-averzian", note: text("Верх лестницы правого крыла.", "At the top of the right-wing stairs.") },
       { npcId: 252066, name: text("Гладий Слаурос", "Gladius Slauros"), afterBoss: "imperator-averzian", beforeBoss: "vaelgor-ezzorak", note: text("Центральная лестница. На героической и эпохальной сложности сначала убейте Ненасытникуса и Павшего короля Салхадаара: «Сила в тенях» отражает урон.", "Central stairs. On Heroic and Mythic, defeat Vorasius and Fallen-King Salhadaar first: Strength in Shadows reflects damage.") },
-      { npcId: 256598, name: text("Небесный исполин", "Celestial Behemoth"), afterBoss: "vaelgor-ezzorak", beforeBoss: "lightblinded-vanguard", note: text("Патруль кольца после драконов.", "Ring patrol after the dragons.") },
+      { npcId: 252070, name: text("Небесный исполин", "Celestial Behemoth"), afterBoss: "vaelgor-ezzorak", beforeBoss: "lightblinded-vanguard", note: text("Патруль кольца после драконов.", "Ring patrol after the dragons.") },
     ],
     sources: [seasonOneSource, lieutenantSource, { title: "Wowhead — The Voidspire overview (4 Jun 2026)", url: "https://www.wowhead.com/guide/midnight/raids/the-voidspire-overview-location-rewards-bosses" }],
   },

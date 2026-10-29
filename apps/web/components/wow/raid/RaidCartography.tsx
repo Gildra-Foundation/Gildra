@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useId, useMemo, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
 import { ArrowUpRight, Check, Grid2X2, Map, Maximize, Pencil, Route, Skull, Trash2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
-import type { RaidMapImage, RaidMapPin, RaidPullPlan } from "./raidPullTypes";
+import type { RaidMapEnemy, RaidMapImage, RaidMapPin, RaidPullPlan } from "./raidPullTypes";
+import { RaidMapEnemyControls, RaidMapEnemyLayer } from "./RaidMapEnemies";
 import type { RaidProgression } from "./raidProgression";
 import { raidMapCopy } from "./raidMapCopy";
 import { raidBossPlannerCopy } from "./raidBossPlannerCopy";
@@ -24,9 +25,14 @@ type CartographyProps = {
   locale: "ru" | "en";
   onSelectBoss: (slug: string, reveal?: boolean) => void;
   sketchScope?: string;
+  enemies?: RaidMapEnemy[];
+  activeNpcIds?: number[];
+  onSelectEnemy?: (npcId: number) => void;
 };
 
 const serverSketch = () => "[]";
+const emptyEnemies: RaidMapEnemy[] = [];
+const emptyNpcIds: number[] = [];
 const bounded = (value: number) => Math.max(0, Math.min(100, value));
 type Cursor = { x: number; y: number };
 type AppendPoint = (x: number, y: number) => void;
@@ -87,13 +93,15 @@ function CartographyTools({ planSlug, locale, background, zoom, showGrid, showRo
     </div>;
 }
 
-export function RaidCartography({ plan, image, background, pins, bosses, activeBoss, links, locale, onSelectBoss, sketchScope }: CartographyProps) {
+export function RaidCartography({ plan, image, background, pins, bosses, activeBoss, links, locale, onSelectBoss, sketchScope, enemies = emptyEnemies, activeNpcIds = emptyNpcIds, onSelectEnemy }: CartographyProps) {
   const t = raidMapCopy[locale];
   const helpId = useId();
   const [zoom, setZoom] = useState(1);
   const [showRoute, setShowRoute] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [showEnemies, setShowEnemies] = useState(true);
+  const [selectedEnemy, setSelectedEnemy] = useState("all");
   const [cursor, setCursor] = useState({ x: 50, y: 50 });
   const key = `gildra:raid-sketch:v1:${plan.slug}:${background}:${image.id}${sketchScope ? `:${sketchScope}` : ""}`;
   const storedSketch = useSyncExternalStore(subscribeMapPreferences, () => readMapPreference(key, "[]"), serverSketch);
@@ -112,11 +120,17 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
   function moveCursor(x: number, y: number) {
     setCursor(point => ({ x: bounded(point.x + x), y: bounded(point.y + y) }));
   }
+  function selectEnemy(npcId: string) {
+    setSelectedEnemy(npcId);
+    setShowEnemies(true);
+    if (npcId !== "all") onSelectEnemy?.(Number(npcId));
+  }
 
   return <figure className={styles.figure} data-raid-cartography>
     <figcaption className={styles.caption} data-raid-map-caption><div><span>{background === "arena" ? selectedBoss?.name[locale] : plan.name[locale]}</span>{image.name[locale] && !plan.name[locale].endsWith(image.name[locale]) ? <small>{image.name[locale]}</small> : null}</div><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Map size={20} aria-hidden="true" />} /></figcaption>
     <CartographyTools planSlug={plan.slug} locale={locale} background={background} zoom={zoom} showGrid={showGrid} showRoute={showRoute} editing={editing}
       onZoom={setZoom} onGrid={() => setShowGrid(value => !value)} onRoute={() => setShowRoute(value => !value)} onEdit={() => setEditing(value => !value)} />
+    <RaidMapEnemyControls enemies={enemies} selected={selectedEnemy} locale={locale} onSelect={selectEnemy} visible={showEnemies} onToggle={() => setShowEnemies(value => !value)} />
     <div className={styles.viewport} tabIndex={0} role="group" aria-label={t.pan} data-raid-map-viewport>
       <div className={styles.canvas} style={{ "--map-zoom": zoom, aspectRatio: `${image.width} / ${image.height}` } as CSSProperties} data-raid-map-canvas data-grid={showGrid} data-editing={editing}>
         <Image key={image.src} className={styles.cartography} src={image.src} alt={background === "arena" ? `${t.arena}: ${selectedBoss?.name[locale] ?? ""}` : `${t.map}: ${image.name[locale]}`} width={image.width} height={image.height} sizes="(max-width: 900px) 100vw, 800px" unoptimized draggable={false} data-raid-official-map />
@@ -125,6 +139,7 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
           {showRoute && connections.map(({ a, b, id }) => <path className={styles.encounterRoute} key={id} d={`M ${a.x} ${a.y} L ${b.x} ${b.y}`} />)}
           {points.length > 1 && <polyline className={styles.ownRoute} points={points.map(point => `${point.x},${point.y}`).join(" ")} />}
         </svg>
+        <RaidMapEnemyLayer enemies={enemies} selected={selectedEnemy} locale={locale} onSelect={selectEnemy} activeNpcIds={activeNpcIds} visible={showEnemies} />
         {pins.map(pin => {
           const boss = bosses.find(candidate => candidate.slug === pin.bossSlug);
           if (!boss) return null;

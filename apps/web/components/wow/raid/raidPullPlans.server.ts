@@ -7,6 +7,7 @@ import { wowGuideText } from "@/lib/wow/sourceLocale";
 import { getMidnightRaidRoute, type RaidRoutePull, type RouteAction, type RouteText } from "./midnightRaidRoutes";
 import { raidHubEntries } from "./raidHubData";
 import mapManifest from "../../../public/assets/wow/raids/maps/manifest.json";
+import voidspireEnemies from "../../../data/wow/raid-enemies/the-voidspire.json";
 import { getRaidProgression } from "./raidProgression";
 import type { RaidMapAtlas, RaidPull, RaidPullAbility, RaidPullPlan, RaidPullRole } from "./raidPullTypes";
 
@@ -41,10 +42,10 @@ const draftCasters: Record<number, number> = {
   1228330: 240548, 1230690: 240549, 1228345: 240545,
   1258624: 240864, 1236560: 240864, 1258621: 240864,
   1251405: 240831, 1236497: 252067, 1258656: 252067, 1255702: 251239,
-  1270212: 256598, 1247054: 256598, 1247056: 256598, 1282010: 259918,
+  1259291: 252070, 1259328: 252070, 1282010: 259918,
 };
 // Existing official trash icons, checked and stored with midnight/SOURCE.md.
-const trashSpellIcons = new Set([1228330, 1228345, 1230690, 1236497, 1236560, 1247054, 1247056, 1251405, 1255702, 1258601, 1258621, 1258624, 1258656, 1270212, 1272971, 1274846, 1281453, 1281525, 1281528, 1281532, 1281728, 1282010, 1282201, 1283465]);
+const trashSpellIcons = new Set([1228330, 1228345, 1230690, 1236497, 1236560, 1247054, 1247056, 1251405, 1255702, 1258601, 1258621, 1258624, 1258656, 1259291, 1259328, 1270212, 1272971, 1274846, 1281453, 1281525, 1281528, 1281532, 1281728, 1282010, 1282201, 1283465]);
 
 function trashPull(pull: RaidRoutePull, bossSlug?: string): RaidPull {
   const abilities: RaidPullAbility[] = pull.abilities.map((ability) => ({
@@ -74,7 +75,14 @@ const encounterAdds: Record<string, string[]> = {
 export function getRaidPullPlan(slug: string): RaidPullPlan | undefined {
   const hub = raidHubEntries.find((entry) => entry.slug === slug);
   if (!hub) return undefined;
-  const atlas = { ...(mapManifest.raids as Record<string, RaidMapAtlas>)[slug], progression: getRaidProgression(slug) };
+  const sourceAtlas = (mapManifest.raids as Record<string, RaidMapAtlas>)[slug];
+  const atlas = { ...sourceAtlas, progression: getRaidProgression(slug), floors: sourceAtlas.floors.map(floor => ({
+    ...floor,
+    enemies: slug === "the-voidspire" ? voidspireEnemies.npcs.flatMap(npc => {
+      const points = npc.points.filter(point => point.floorId === floor.id).map(({ x, y }) => ({ x, y }));
+      return points.length ? [{ npcId: npc.npcId, name: npc.name, sourceURL: npc.sourceURL, points }] : [];
+    }) : undefined,
+  })) };
   const midnight = getMidnightRaid(slug);
   if (midnight) {
     const route = getMidnightRaidRoute(midnight.slug);

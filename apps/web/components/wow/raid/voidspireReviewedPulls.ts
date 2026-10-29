@@ -283,49 +283,41 @@ export const voidspireReviewedPulls: RaidRoutePull[] = [
     title: text("Небесный исполин", "Celestial Behemoth"),
     area: text("После Ваэлгора и Эззорака", "After Vaelgor and Ezzorak"),
     danger: "medium",
-    call: text("Учитывайте отбрасывание и не стойте спиной к краю.", "Plan for knockbacks and keep your back away from the edge."),
+    call: text("Следите за стаками Космического вливания и уроном Небесной зоны.", "Watch Cosmic Injection stacks and Celestial Zone damage."),
     enemies: [
       {
-        npcId: 256598,
+        npcId: 252070,
         name: text("Небесный исполин", "Celestial Behemoth"),
         priority: "critical"
       }
     ],
     abilities: [
       {
-        spellId: 1270212,
-        casterNpcId: 256598,
-        name: text("Мрачный выброс", "Umbral Ejection"),
-        action: "move",
-        effect: text("Космический выброс поражает и отбрасывает игроков в поле зрения.", "A Cosmic ejection hits and knocks back players in line of sight."),
-        response: text("Перед выбросом используйте доступное укрытие, разрывающее видимость.", "Break line of sight behind available cover before the ejection.")
-      },
-      {
-        spellId: 1247054,
-        casterNpcId: 256598,
-        name: text("Вспышка молнии", "Lightning Surge"),
-        action: "move",
-        effect: text("Урон от сил природы в радиусе 8 м.", "Nature damage within 8 yards."),
-        response: text("Отойдите из области вспышки.", "Move out of the surge area.")
-      },
-      {
-        spellId: 1247056,
-        casterNpcId: 256598,
-        name: text("Электрические щупальца", "Shocking Tendrils"),
+        spellId: 1259291,
+        casterNpcId: 252070,
+        name: text("Космическое вливание", "Cosmic Injection"),
         action: "defensive",
-        effect: text("Щупальца добавляют урон от сил природы к атакам.", "Tendrils add Nature damage to attacks."),
-        response: text("Активная цель готовит защиту; лекарь следит за входящими ударами.", "The active target prepares mitigation; healers watch incoming attacks.")
+        effect: text("Наносит космический урон и снижает все характеристики цели. Эффект суммируется.", "Deals Cosmic damage and reduces all of the target’s stats. The effect stacks."),
+        response: text("Следите за стаками снижения характеристик и поддерживайте поражённую цель.", "Track the stat-reduction stacks and support the affected target.")
+      },
+      {
+        spellId: 1259328,
+        casterNpcId: 252070,
+        name: text("Небесная зона", "Celestial Zone"),
+        action: "move",
+        effect: text("Зона наносит периодический космический урон и повышает скорость всех существ внутри.", "The zone deals periodic Cosmic damage and increases the haste of all units inside."),
+        response: text("Учитывайте входящий урон при выборе позиции в зоне; не затягивайте туда соседние группы.", "Account for incoming damage when positioning in the zone; avoid bringing nearby groups into it.")
       }
     ],
     roles: {
       tank: [
-        text("Ставьте исполина там, где группе доступно укрытие.", "Keep the Behemoth where the group can reach cover.")
+        text("Следите за стаками снижения характеристик от Космического вливания.", "Track the stat-reduction stacks from Cosmic Injection.")
       ],
       healer: [
-        text("Поддерживайте танка между космическими выбросами.", "Support the tank between ejections.")
+        text("Поддерживайте цель Космического вливания и игроков в Небесной зоне.", "Support the Cosmic Injection target and players in Celestial Zone.")
       ],
       dps: [
-        text("Восстанавливайте урон только после занятия безопасной позиции.", "Resume damage after reaching a safe position.")
+        text("Следите за уроном Небесной зоны при выборе позиции.", "Watch Celestial Zone damage when choosing your position.")
       ]
     },
     direction: text("Поднимитесь после драконов; исполин патрулирует кольцо.", "Climb after the dragons; the Behemoth patrols the ring."),

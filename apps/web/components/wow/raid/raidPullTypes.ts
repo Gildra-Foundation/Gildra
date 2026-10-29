@@ -4,8 +4,14 @@ import type { RaidProgression } from "./raidProgression";
 export type RaidPullRole = "tank" | "healer" | "dps";
 export type RaidMapImage = { id: string; name: RouteText; src: string; width: number; height: number; sourceURL?: string };
 export type RaidMapPin = { bossSlug: string; x: number; y: number; coordinateKind?: string };
+export type RaidMapEnemy = {
+  npcId: number;
+  name: RouteText;
+  sourceURL: string;
+  points: { x: number; y: number }[];
+};
 export type RaidMapAtlas = {
-  floors: (RaidMapImage & { pins: RaidMapPin[] })[];
+  floors: (RaidMapImage & { pins: RaidMapPin[]; enemies?: RaidMapEnemy[] })[];
   arenas: Record<string, RaidMapImage[]>;
   sources: { title: string; url: string }[];
   progression?: RaidProgression;
