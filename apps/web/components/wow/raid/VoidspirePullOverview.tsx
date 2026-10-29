@@ -82,10 +82,8 @@ function PullEnemies({ pull, locale }: { pull: RaidPull; locale: "ru" | "en" }) 
 
 function EncounterMechanics({ pull, locale, difficulty }: { pull: RaidPull; locale: "ru" | "en"; difficulty: "normal" | "heroic" }) {
   const t = raidPullCopy[locale];
-  const multipleBosses = pull.enemies.filter(enemy => enemy.priority === "boss").length > 1;
-  const adds = pull.enemies.filter(enemy => multipleBosses || enemy.priority !== "boss");
   return <>
-    {adds.length > 0 && <section className={styles.adds} data-raid-boss-adds><h4>{multipleBosses ? raidBossPlannerCopy[locale].enemies : raidBossPlannerCopy[locale].add}</h4><ul>{adds.map(enemy => <li key={enemy.npcId ?? enemy.name.en}>{enemy.npcId ? <a href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}npc=${enemy.npcId}`} target="_blank" rel="noreferrer">{enemy.name[locale]}</a> : enemy.name[locale]}</li>)}</ul></section>}
+    {pull.enemies.length > 0 && <section className={styles.adds} data-raid-boss-adds><h4>{raidBossPlannerCopy[locale].enemies}</h4><ul>{pull.enemies.map(enemy => <li key={enemy.npcId ?? enemy.name.en}>{enemy.npcId ? <a href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}npc=${enemy.npcId}`} target="_blank" rel="noreferrer">{enemy.name[locale]}</a> : enemy.name[locale]}</li>)}</ul></section>}
     <ul className={styles.mechanics} aria-label={t.abilities}>{pull.abilities.filter(ability => difficulty === "heroic" || !ability.heroicOnly).map(ability => <li key={ability.spellId ?? ability.name.en}><PullAbility ability={ability} pull={pull} locale={locale} difficulty={difficulty} encounter /></li>)}</ul>
   </>;
 }
