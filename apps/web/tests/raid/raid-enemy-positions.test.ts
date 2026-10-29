@@ -12,12 +12,9 @@ test("recommended groups replace individual observations and remain floor scoped
   assert.deepEqual(ground.markers.map(point => point.index), [0, 1, 2, 3, 4, 5]);
   assert.deepEqual(crown.markers.map(point => point.index), [6]);
   assert.equal(ground.schematic, false);
-  const arena = raidPullRouteModel(plan, "arena", "main")!;
-  assert.equal(arena.schematic, true);
-  assert.deepEqual(arena.markers.map(point => point.index), plan.pulls.map((_, index) => index));
-  assert.notDeepEqual(arena.markers[0], ground.markers[0]);
+  assert.equal(raidPullRouteModel(plan, "arena", "main"), undefined);
   assert.ok(ground.path.includes("39.8 68.5") && ground.path.includes("65.6 76.4"));
-  for (const point of [...ground.markers, ...crown.markers, ...arena.markers]) {
+  for (const point of [...ground.markers, ...crown.markers]) {
     assert.ok(point.x > 0 && point.x < 100 && point.y > 0 && point.y < 100);
   }
 });

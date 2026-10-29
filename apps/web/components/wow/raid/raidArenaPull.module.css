@@ -1,0 +1,20 @@
+/* atlas:strict — the selected pull belongs to the arena's own material panel. */
+.roster, .actions { min-width: 0; padding: var(--atlas-space-3) 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); overflow-wrap: anywhere; }
+.roster h4, .actions h4 { margin: 0 0 var(--atlas-space-2); color: var(--raid-pull-light); font: 600 var(--atlas-text-title) var(--atlas-font-display); }
+.roster p, .actions p { margin: 0; }
+.roster ul { display: grid; gap: var(--atlas-space-1); margin: 0; padding: 0; list-style: none; }
+.roster li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); padding: var(--atlas-space-2); border-left: 2px solid var(--atlas-line); background: var(--atlas-glass-fill); }
+.roster li:has([data-priority="critical"]) { border-color: var(--raid-pull-light); }
+.roster img { flex-shrink: 0; border-radius: 50%; }
+.identity { flex: 1 1 130px; min-width: 0; color: var(--atlas-text-strong); }
+.identity a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: inherit; }
+.identity svg { flex-shrink: 0; }
+.roster small { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.roster [data-priority="critical"] { color: var(--raid-pull-light); }
+.actions dl { display: grid; gap: var(--atlas-space-3); margin: var(--atlas-space-3) 0 0; }
+.actions dt { display: flex; align-items: center; flex-wrap: wrap; gap: var(--atlas-space-1); color: var(--atlas-text-strong); }
+.actions dt img { flex-shrink: 0; }
+.actions b { color: var(--raid-pull-light); }
+.actions dd { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text-muted); }
+.identity a:focus-visible { outline: 3px solid var(--atlas-accent); outline-offset: 2px; }
+@media (forced-colors: active) { .roster li { background: Canvas; border-color: CanvasText; } .roster li:has([data-priority="critical"]) { border-color: Highlight; } }

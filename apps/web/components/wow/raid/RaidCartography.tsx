@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useId, useMemo, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
+import { useEffect, useRef, useId, useMemo, useState, useSyncExternalStore, type ReactNode, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
 import { ArrowUpRight, Check, Grid2X2, Map, Maximize, Pencil, Route, Skull, Trash2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { AtlasTooltip } from "@gildra/atlas-ui/AtlasTooltip";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import type { RaidMapImage, RaidMapPin, RaidPullPlan } from "./raidPullTypes";
+import { RaidArenaRoster, RaidArenaActions } from "./RaidArenaPullPanel";
 import { raidPullRouteCopy } from "./raidPullRouteCopy";
 import { raidPullRouteModel } from "./raidPullRouteModel";
 import type { RaidProgression } from "./raidProgression";
@@ -25,7 +26,7 @@ type CartographyProps = {
   activeBoss: string;
   links: RaidProgression["links"];
   locale: "ru" | "en";
-  onSelectBoss: (slug: string, reveal?: boolean) => void;
+  controls?: ReactNode;
   sketchScope?: string;
   activePull: number;
   onSelectPull: (index: number, reveal?: boolean) => void;
@@ -92,7 +93,7 @@ function CartographyTools({ planSlug, locale, background, zoom, showGrid, showRo
     </div>;
 }
 
-export function RaidCartography({ plan, image, background, pins, bosses, activeBoss, links, locale, onSelectBoss, sketchScope, activePull, onSelectPull }: CartographyProps) {
+export function RaidCartography({ plan, image, background, pins, bosses, activeBoss, links, locale, controls, sketchScope, activePull, onSelectPull }: CartographyProps) {
   const t = raidMapCopy[locale];
   const helpId = useId();
   const viewport = useRef<HTMLDivElement>(null);
@@ -103,9 +104,11 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
   const routeCopy = raidPullRouteCopy[locale];
   const pullRoute = raidPullRouteModel(plan, background, image.id);
   const [cursor, setCursor] = useState({ x: 50, y: 50 });
-  const key = `gildra:raid-sketch:v1:${plan.slug}:${background}:${image.id}${sketchScope ? `:${sketchScope}` : ""}`;
+  const key = `gildra:raid-sketch:v1:${plan.slug}:${background}:${background === "arena" ? `${activeBoss}:` : ""}${image.id}${sketchScope ? `:${sketchScope}` : ""}`;
   const storedSketch = useSyncExternalStore(subscribeMapPreferences, () => readMapPreference(key, "[]"), serverSketch);
   const points = useMemo(() => sketchPoints(storedSketch), [storedSketch]);
+  const groupedArena = background === "arena" && plan.slug === "the-voidspire" && !plan.encounter;
+  const pull = plan.pulls[activePull];
   const selectedBoss = bosses.find(boss => boss.slug === activeBoss);
   const connections = links.flatMap(link => {
     const a = pins.find(pin => pin.bossSlug === link.from);
@@ -130,10 +133,12 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
     setCursor(point => ({ x: bounded(point.x + x), y: bounded(point.y + y) }));
   }
   return <figure className={styles.figure} data-raid-cartography>
-    <figcaption className={styles.caption} data-raid-map-caption><div><span>{background === "arena" ? selectedBoss?.name[locale] : plan.name[locale]}</span>{image.name[locale] && !plan.name[locale].endsWith(image.name[locale]) ? <small>{image.name[locale]}</small> : null}</div><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Map size={20} aria-hidden="true" />} /></figcaption>
+    <figcaption className={styles.caption} data-raid-map-caption><div><span>{groupedArena ? pull.title[locale] : background === "arena" ? selectedBoss?.name[locale] : plan.name[locale]}</span>{groupedArena && <small>{routeCopy.beforeBoss}{selectedBoss?.name[locale]}</small>}{image.name[locale] && !plan.name[locale].endsWith(image.name[locale]) ? <small>{image.name[locale]}</small> : null}</div><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Map size={20} aria-hidden="true" />} /></figcaption>
+    {controls}
+    {groupedArena && <RaidArenaRoster pull={pull} locale={locale} />}
     <CartographyTools planSlug={plan.slug} locale={locale} background={background} zoom={zoom} showGrid={showGrid} showRoute={showRoute} editing={editing}
       onZoom={setZoom} onGrid={() => setShowGrid(value => !value)} onRoute={() => setShowRoute(value => !value)} onEdit={() => setEditing(value => !value)} />
-    {pullRoute && <p className={styles.pullRouteHint} data-raid-pull-map-hint>{pullRoute.schematic ? routeCopy.arenaHint : routeCopy.mapHint}</p>}
+    {pullRoute && <p className={styles.pullRouteHint} data-raid-pull-map-hint>{routeCopy.mapHint}</p>}
     <div ref={viewport} className={styles.viewport} tabIndex={0} role="group" aria-label={t.pan} data-raid-map-viewport>
       <div className={styles.canvas} style={{ "--map-zoom": zoom, aspectRatio: `${image.width} / ${image.height}` } as CSSProperties} data-raid-map-canvas data-grid={showGrid} data-editing={editing} data-pull-route={Boolean(pullRoute)}>
         <Image key={image.src} className={styles.cartography} src={image.src} alt={background === "arena" ? `${t.arena}: ${selectedBoss?.name[locale] ?? ""}` : `${t.map}: ${image.name[locale]}`} width={image.width} height={image.height} sizes="(max-width: 900px) 100vw, 800px" unoptimized draggable={false} data-raid-official-map />
@@ -148,13 +153,14 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
           aria-label={`${routeCopy.pull} ${point.index + 1}: ${plan.pulls[point.index].title[locale]}`}
           aria-pressed={activePull === point.index} aria-controls={`raid-pull-${plan.slug}`}
           title={plan.pulls[point.index].call[locale]} onClick={() => onSelectPull(point.index, true)}>{point.index + 1}</button></AtlasTooltip>)}
-        <CartographyBossPins pins={pins} bosses={bosses} activeBoss={activeBoss} locale={locale} onSelectBoss={onSelectBoss} />
+        <CartographyBossPins pins={pins} bosses={bosses} activeBoss={activeBoss} locale={locale} planSlug={plan.slug} />
         {points.map((point, index) => <span key={`${index}-${point.x}-${point.y}`} className={styles.sketchPoint} style={{ left: `${point.x}%`, top: `${point.y}%` }} data-raid-sketch-point aria-hidden="true">{index + 1}</span>)}
         {editing && <button type="button" className={styles.drawCapture} data-raid-sketch-editor aria-label={t.drawing} aria-describedby={helpId}
           onClick={event => drawAtPointer(event, cursor, append)} onKeyDown={event => drawWithKeyboard(event, cursor, moveCursor, append, () => setEditing(false))} />}
         {editing && <span className={styles.drawCursor} style={{ left: `${cursor.x}%`, top: `${cursor.y}%` }} aria-hidden="true" />}
       </div>
     </div>
+    {groupedArena && <RaidArenaActions pull={pull} locale={locale} />}
     <CartographyFooter background={background} hasPins={pins.length > 0} planSlug={plan.slug} activeBoss={activeBoss} locale={locale} count={points.length} encounter={Boolean(plan.encounter)}
       onUndo={() => saveMapPreference(key, JSON.stringify(points.slice(0, -1)))} onClear={() => saveMapPreference(key, "[]")} />
     {editing && <p id={helpId} className={styles.drawHelp}>{t.ownHint} {t.keyboard}</p>}
@@ -162,17 +168,17 @@ export function RaidCartography({ plan, image, background, pins, bosses, activeB
   </figure>;
 }
 
-function CartographyBossPins({ pins, bosses, activeBoss, locale, onSelectBoss }: Pick<CartographyProps, "pins" | "bosses" | "activeBoss" | "locale" | "onSelectBoss">) {
+function CartographyBossPins({ pins, bosses, activeBoss, locale, planSlug }: Pick<CartographyProps, "pins" | "bosses" | "activeBoss" | "locale"> & { planSlug: string }) {
   const t = raidMapCopy[locale];
   return <>
 {pins.map(pin => {
           const boss = bosses.find(candidate => candidate.slug === pin.bossSlug);
           if (!boss) return null;
           const index = bosses.indexOf(boss);
-          return <button type="button" className={styles.bossPin} key={pin.bossSlug} style={{ left: `${pin.x}%`, top: `${pin.y}%` }} data-raid-boss-pin={pin.bossSlug}
-            aria-label={`${t.boss} ${index + 1}: ${boss.name[locale]}`} aria-pressed={activeBoss === pin.bossSlug} onClick={() => onSelectBoss(pin.bossSlug, true)} title={boss.name[locale]}>
+          return <Link className={styles.bossPin} key={pin.bossSlug} style={{ left: `${pin.x}%`, top: `${pin.y}%` }} data-raid-boss-pin={pin.bossSlug}
+            aria-label={`${t.boss} ${index + 1}: ${boss.name[locale]}`} data-active={activeBoss === pin.bossSlug} href={`${locale === "ru" ? "/ru" : ""}/wow/raids/${planSlug}/${pin.bossSlug}`} title={boss.name[locale]}>
             {boss.artwork ? <Image src={boss.artwork} alt="" width={40} height={40} unoptimized /> : <Skull size={22} aria-hidden="true" />}<b>{index + 1}</b>
-          </button>;
+          </Link>;
         })}
   </>;
 }

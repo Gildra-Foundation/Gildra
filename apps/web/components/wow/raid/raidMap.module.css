@@ -37,7 +37,7 @@
 .bossPin { position: absolute; display: grid; place-items: center; width: 44px; height: 44px; padding: 2px; transform: translate(-50%, -50%); border: 2px solid var(--raid-pull-light); border-radius: 50%; background: var(--atlas-bg); color: var(--atlas-text-strong); box-shadow: 0 2px 8px var(--atlas-bg); cursor: pointer; }
 .bossPin img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 .bossPin b { position: absolute; right: -5px; bottom: -5px; display: grid; place-items: center; min-width: 21px; min-height: 21px; padding: 2px; border: 1px solid var(--raid-pull-light); border-radius: 50%; background: var(--atlas-bg); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
-.bossPin[aria-pressed="true"] { outline: 3px solid var(--atlas-accent-strong); outline-offset: 4px; }
+.bossPin[data-active="true"] { outline: 3px solid var(--atlas-accent-strong); outline-offset: 4px; }
 .bossPin:hover { box-shadow: 0 0 0 5px color-mix(in srgb, var(--raid-card-accent) 28%, transparent), 0 2px 8px var(--atlas-bg); }
 .sketchPoint { position: absolute; display: grid; place-items: center; width: 22px; height: 22px; transform: translate(-50%, -50%); border: 1px solid var(--atlas-bg); border-radius: 50%; background: var(--raid-pull-light); color: var(--atlas-bg); font-size: var(--atlas-text-meta); font-weight: 700; pointer-events: none; }
 .drawCursor { position: absolute; width: 24px; height: 24px; border: 1px dashed var(--atlas-text-strong); transform: translate(-50%, -50%); border-radius: 50%; opacity: 0; pointer-events: none; }
@@ -54,7 +54,7 @@
 .bossRail li { min-width: 0; }
 .railChoice { display: flex; align-items: center; gap: var(--atlas-space-2); width: 100%; height: 100%; min-height: 44px; padding: var(--atlas-space-2); border: 1px solid transparent; background: transparent; color: var(--atlas-text-muted); font: inherit; font-size: var(--atlas-text-meta); cursor: pointer; text-align: left; }
 .railChoice b { flex: 0 0 24px; display: grid; place-items: center; min-height: 24px; border: 1px solid var(--atlas-line); border-radius: 50%; color: var(--raid-pull-light); }
-.railChoice[aria-pressed="true"] { border-color: var(--raid-pull-light); background: var(--raid-pull-base); color: var(--atlas-text-strong); }
+.railChoice[data-active="true"] { border-color: var(--raid-pull-light); background: var(--raid-pull-base); color: var(--atlas-text-strong); }
 .lieutenants { margin-top: var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
 .lieutenants summary { min-height: 44px; align-content: center; cursor: pointer; color: var(--raid-pull-light); }
 .lieutenants ul { display: grid; gap: var(--atlas-space-2); margin: var(--atlas-space-2) 0 0; padding-left: var(--atlas-space-4); }
@@ -64,7 +64,7 @@
 .attribution a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: var(--atlas-text-muted); }
 .studio button:focus-visible, .studio a:focus-visible, .viewport:focus-visible, .canvas:focus-visible { outline: 3px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@media (prefers-reduced-motion: no-preference) { .cartography { animation: unfold var(--atlas-duration-art) var(--atlas-ease) both; } .bossPin[aria-pressed="true"]::after { position: absolute; inset: -9px; border: 1px solid var(--raid-pull-light); border-radius: 50%; content: ""; pointer-events: none; animation: beacon 1.6s var(--atlas-ease) 2; } }
+@media (prefers-reduced-motion: no-preference) { .cartography { animation: unfold var(--atlas-duration-art) var(--atlas-ease) both; } .bossPin[data-active="true"]::after { position: absolute; inset: -9px; border: 1px solid var(--raid-pull-light); border-radius: 50%; content: ""; pointer-events: none; animation: beacon 1.6s var(--atlas-ease) 2; } }
 @keyframes unfold { from { opacity: .4; } to { opacity: 1; } }
 @keyframes beacon { from { opacity: .8; transform: scale(.85); } to { opacity: 0; transform: scale(1.2); } }
 @media (max-width: 1100px) { .tool.tool { padding-inline: var(--atlas-space-2); } }
@@ -72,10 +72,10 @@
 @media (max-width: 700px) { .figure { border-width: var(--raid-panel-width-mobile); } }
 @media (max-width: 480px) { .tools { flex-direction: column; } .tools > div { justify-content: space-between; } .materialModes :global([role="radio"]) { padding-inline: var(--atlas-space-2); font-size: var(--atlas-text-meta); } .bossPin { width: 36px; height: 36px; } .bossPin::before { position: absolute; inset: -4px; content: ""; } .bossRail { grid-template-columns: minmax(0, 1fr); } }
 /* Match the selected-state animation selector so OS preferences win the cascade. */
-@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) { .cartography, .bossPin[aria-pressed="true"]::after { animation: none; } .tool.tool, .gridLayer { transition: none; } .progression { background: var(--atlas-surface); } }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) { .cartography, .bossPin[data-active="true"]::after { animation: none; } .tool.tool, .gridLayer { transition: none; } .progression { background: var(--atlas-surface); } }
 :global([data-motion="reduced"]) .cartography, :global([data-motion="reduced"]) .bossPin::after, :global([data-transparency="reduced"]) .cartography, :global([data-transparency="reduced"]) .bossPin::after { animation: none; }
 :global([data-transparency="reduced"]) .progression { background: var(--atlas-surface); }
-@media (forced-colors: active) { .materialModes :global([role="radio"])::before, .tool.tool::before, .assetSelect.assetSelect::before, .cartography, .gridLayer, .bossPin img { display: none; } .figure { border: 1px solid CanvasText; border-image: none; background: Canvas; } .viewport, .progression { background: Canvas; border-color: CanvasText; } .materialModes :global([role="radio"]), .tool.tool, .assetSelect.assetSelect, .bossPin, .sketchPoint { background: ButtonFace; color: ButtonText; border: 1px solid ButtonText; } .bossPin[aria-pressed="true"], .railChoice[aria-pressed="true"] { outline-color: Highlight; } .encounterRoute, .ownRoute { stroke: CanvasText; filter: none; } .cartography, .bossPin[aria-pressed="true"]::after { animation: none; } }
+@media (forced-colors: active) { .materialModes :global([role="radio"])::before, .tool.tool::before, .assetSelect.assetSelect::before, .cartography, .gridLayer, .bossPin img { display: none; } .figure { border: 1px solid CanvasText; border-image: none; background: Canvas; } .viewport, .progression { background: Canvas; border-color: CanvasText; } .materialModes :global([role="radio"]), .tool.tool, .assetSelect.assetSelect, .bossPin, .sketchPoint { background: ButtonFace; color: ButtonText; border: 1px solid ButtonText; } .bossPin[data-active="true"], .railChoice[data-active="true"] { outline-color: Highlight; } .encounterRoute, .ownRoute { stroke: CanvasText; filter: none; } .cartography, .bossPin[data-active="true"]::after { animation: none; } }
 :global([data-ui-motion="reduce"]) .cartography, :global([data-ui-motion="reduce"]) .bossPin::after { animation: none; }
 :global([data-motion="reduced"]) .tool.tool:hover, :global([data-motion="reduced"]) .tool.tool:active, :global([data-ui-motion="reduce"]) .tool.tool:hover, :global([data-ui-motion="reduce"]) .tool.tool:active, :global([data-transparency="reduced"]) .tool.tool:hover, :global([data-transparency="reduced"]) .tool.tool:active { transform: none; }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) { .tool.tool:hover:not(:disabled), .tool.tool:active:not(:disabled) { transform: none; } }
@@ -100,3 +100,18 @@
 
 .canvas[data-pull-route="true"] .bossPin { width: 32px; height: 32px; }
 .canvas[data-pull-route="true"] .bossPin b { display: none; }
+
+.bossPin, .railChoice { text-decoration: none; }
+.bossPin:focus-visible, .railChoice:focus-visible { outline: 3px solid var(--atlas-accent); outline-offset: 3px; }
+.railChoice > span { flex: 1; }
+
+/* Compact glass choices fit within the arena's existing painted frame. */
+.arenaFields { align-items: stretch; gap: var(--atlas-space-2); margin-bottom: var(--atlas-space-2); }
+.arenaFields .field { flex-basis: 100%; }
+.arenaFields .assetSelect.assetSelect { min-height: 48px; padding: var(--atlas-space-3); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-glass-sheen), var(--atlas-glass-fill); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); text-shadow: none; }
+.arenaFields .assetSelect.assetSelect::before { display: none; }
+.arenaFields .assetSelect:hover { border-color: var(--raid-pull-light); }
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) { .arenaFields .assetSelect.assetSelect { background: var(--atlas-surface); } }
+:global([data-transparency="reduced"]) .arenaFields .assetSelect.assetSelect { background: var(--atlas-surface); }
+
+@media (forced-colors: active) { .arenaFields .assetSelect.assetSelect { background: ButtonFace; color: ButtonText; border-color: ButtonText; } }

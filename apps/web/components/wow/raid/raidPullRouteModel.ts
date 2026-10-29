@@ -1,7 +1,7 @@
 import type { RaidPullPlan } from "./raidPullTypes";
 
 // Authored gathering points for the recommended pull order, not NPC spawns.
-// Patrols move; the schematic and arena use their own coordinate plane.
+// Patrols move. Arena composition is shown in a separate pull panel.
 const gatheringPoints = [
   { floor: "16340-0", x: 34, y: 79 },
   { floor: "16340-0", x: 39, y: 54 },
@@ -19,16 +19,15 @@ const floorPaths: Record<string, string> = {
 };
 
 export function raidPullRouteModel(plan: RaidPullPlan, background: "map" | "arena", imageId: string) {
-  if (plan.slug !== "the-voidspire" || plan.encounter) return undefined;
+  if (plan.slug !== "the-voidspire" || plan.encounter || background !== "map") return undefined;
   const markers = plan.pulls.flatMap((pull, index) => {
     const point = gatheringPoints[index];
-    if (!point || background === "map" && point.floor !== imageId) return [];
-    // Spread the schematic markers over the wide arena image for clear targets.
-    return [{ index, x: background === "map" ? point.x : 12 + index * 12.5, y: background === "map" ? point.y : index % 2 ? 62 : 35 }];
+    if (!point || point.floor !== imageId) return [];
+    return [{ index, x: point.x, y: point.y }];
   });
   return {
     markers,
-    path: background === "map" ? floorPaths[imageId] ?? "" : markers.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" "),
-    schematic: background === "arena",
+    path: floorPaths[imageId] ?? "",
+    schematic: false,
   };
 }

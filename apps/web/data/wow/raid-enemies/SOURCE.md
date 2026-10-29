@@ -54,3 +54,14 @@ whole entrance. Small jellyfish before the Behemoth are documented in the
 lieutenant article; their count, NPC identities and spells are not established.
 
 https://www.wowhead.com/news/all-lieutenant-enemies-that-drop-boes-in-midnight-season-1-raids-381260
+
+## Boss and arena selection correction — 29 October 2026
+
+Boss portraits and the progression rail open the corresponding boss strategy.
+They no longer select the first trash stage sharing that boss as a destination.
+The Voidspire arena has its own named pull selector, NPC roster with priorities,
+and reviewed spell responses inside the arena frame. The previous seven generic
+route markers are removed from boss arena art; no NPC coordinates are inferred.
+Map gathering callouts, the global route list and all original provenance remain.
+Arena sketches are scoped by boss, preventing unrelated arenas from sharing a
+`main`/`alt` sketch key.
