@@ -14,6 +14,23 @@
 .plaque { padding: var(--atlas-space-5) var(--atlas-space-6); overflow-wrap: anywhere; }
 .heading small { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
 .heading h3 { margin: var(--atlas-space-1) 0 var(--atlas-space-3); color: var(--atlas-text-strong); font: 600 var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.difficulty { margin-bottom: var(--atlas-space-4); }
+.mechanics { display: grid; gap: var(--atlas-space-3); list-style: none; padding: 0; margin: 0 0 var(--atlas-space-4); }
+.mechanics > li { padding-block: var(--atlas-space-2); border-top: 1px solid var(--atlas-line); }
+.mechanics .ability { font-size: var(--atlas-text-body); }
+.mechanics .abilityTitle a { color: var(--atlas-text-strong); font-weight: 650; }
+.abilityTitle small { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.ability .heroic { margin-top: var(--atlas-space-2); color: var(--atlas-text-muted); }
+.adds { padding-block: var(--atlas-space-2); font-size: var(--atlas-text-small); }
+.adds h4 { margin: 0; font-size: var(--atlas-text-small); color: var(--atlas-text-muted); }
+.adds ul { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3); list-style: none; padding: 0; margin: 0; }
+.adds a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text); }
+.bossNavigation { display: grid; gap: var(--atlas-space-2); margin-top: var(--atlas-space-5); }
+.bossNavigation > a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-accent); font-size: var(--atlas-text-small); }
+.bossNavigation nav ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-2); list-style: none; margin: 0; padding: 0; }
+.bossNavigation nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text); font-size: var(--atlas-text-small); }
+.bossNavigation nav a[aria-current="page"] { color: var(--atlas-accent); font-weight: 650; }
+.bossNavigation a:focus-visible { outline: 3px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .call { margin: 0 0 var(--atlas-space-4); color: var(--atlas-text-strong); }
 .enemies { display: grid; }
 .enemies > li { padding: var(--atlas-space-3) 0; border-top: 1px solid var(--atlas-line); }
@@ -37,6 +54,6 @@
 .map :global([data-raid-map-studio]) { position: static; }
 .map :global([data-raid-map-tools]) { gap: var(--atlas-space-2); }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; gap: var(--atlas-space-4); } .navigation { position: static; } .navigation ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } .navigation button { gap: var(--atlas-space-2); padding: var(--atlas-space-2); } .plaque { padding: var(--atlas-space-4) var(--atlas-space-5); } }
+@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; gap: var(--atlas-space-4); } .navigation { position: static; } .navigation ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } .navigation button { gap: var(--atlas-space-2); padding: var(--atlas-space-2); } .plaque { padding: var(--atlas-space-4) var(--atlas-space-5); } .bossNavigation nav ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 360px) { .plaque { padding-inline: var(--atlas-space-4); } }
 @media (forced-colors: active) { .navigation button { background: ButtonFace; color: ButtonText; border-color: ButtonText; } .navigation button[aria-pressed="true"] { outline: 2px solid Highlight; background: Canvas; color: CanvasText; } .navigation button[aria-pressed="true"] b { background: Highlight; color: HighlightText; } }
