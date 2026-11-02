@@ -22,6 +22,7 @@ import styles from "./raidPulls.module.css";
 import bossStyles from "./raidBossPlanner.module.css";
 import { raidBossPlannerCopy } from "./raidBossPlannerCopy";
 import glass from "./voidspireGlass.module.css";
+import { guideSpecs } from './voidspireGuideCounters';
 import { VoidspirePullOverview } from "./VoidspirePullOverview";
 
 function subscribeHash(callback: () => void) {
@@ -32,7 +33,7 @@ function subscribeHash(callback: () => void) {
 const readHash = () => window.location.hash;
 const serverHash = () => "";
 
-type WorkspaceProps = { plan: RaidPullPlan; locale: "ru" | "en" };
+type WorkspaceProps = { plan: RaidPullPlan; locale: "ru" | "en"; guideSpecId?: number; guideSpecPicker?: ReactNode; onGuideSpecChange?: (id: number) => void };
 type RoleSelection = RaidPullRole | "all";
 
 export function RaidPullWorkspace(props: WorkspaceProps) {
@@ -41,6 +42,11 @@ export function RaidPullWorkspace(props: WorkspaceProps) {
 
 function VoidspirePullWorkspace(props: WorkspaceProps) {
   const { role, profile, spec, setProfile, selectRole, setRole } = usePullRolePreference();
+  if (props.guideSpecId !== undefined) {
+    const selected = guideSpecs.find(item => item.id === props.guideSpecId);
+    return <RaidPullWorkspaceContent {...props} role={selected?.role ?? role} spec={selected} playerPicker={props.guideSpecPicker}
+      onRoleChange={value => { props.onGuideSpecChange?.(0); setRole(value); }} />;
+  }
   return <RaidPullWorkspaceContent {...props} role={spec?.role ?? role} onRoleChange={selectRole} spec={spec}
     playerPicker={<PlayerProfilePicker locale={props.locale} themeClassName={glass.menuTheme} profile={profile}
       onProfileChange={setProfile} onRoleChange={setRole} />} />;
@@ -51,7 +57,7 @@ function LocalRoleWorkspace(props: WorkspaceProps) {
   return <RaidPullWorkspaceContent {...props} role={role} onRoleChange={(value) => setRole(value as RoleSelection)} />;
 }
 
-function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange, playerPicker, spec }: WorkspaceProps & { role: RoleSelection; onRoleChange: (value: string) => void; playerPicker?: ReactNode; spec?: NonNullable<ReturnType<typeof usePullRolePreference>["spec"]> }) {
+function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange, playerPicker, spec }: WorkspaceProps & { role: RoleSelection; onRoleChange: (value: string) => void; playerPicker?: ReactNode; spec?: Pick<NonNullable<ReturnType<typeof usePullRolePreference>["spec"]>, "id" | "className" | "name"> }) {
   const t = raidPullCopy[locale];
   const bossCopy = raidBossPlannerCopy[locale];
   const encounter = Boolean(plan.encounter);

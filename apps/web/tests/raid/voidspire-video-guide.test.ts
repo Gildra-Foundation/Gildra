@@ -48,3 +48,48 @@ test('map and pull boss links remain in the raid document in both locales', () =
     assert.equal(raidBossGuideHref('the-dreamrift', 'chimaerus', locale), `${prefix}/wow/raids/the-dreamrift/chimaerus`);
   }
 });
+
+test('every specialization has a position role, including ranged Devourer and melee Survival', async () => {
+  const {guideRole, guideSpecs} = await import('../../components/wow/raid/voidspireGuideCounters');
+  assert.equal(guideSpecs.length, 40);
+  assert.equal(guideRole(0), undefined);
+  assert.equal(guideRole(1480), 'ranged');
+  assert.equal(guideRole(255), 'melee');
+  assert.equal(guideRole(1467), 'ranged');
+  assert.equal(guideRole(65), 'healer');
+  assert.equal(guideRole(66), 'tank');
+  for (const spec of guideSpecs) assert.ok(['tank','healer','melee','ranged'].includes(guideRole(spec.id)!));
+});
+test('every boss covers all four roles and role actions reference actual mechanics', async () => {
+  const {voidspireRolePositions, voidspireRoleActions} = await import('../../lib/data/wow/raid/voidspireRoleTactics');
+  for (const boss of voidspireVideoGuides) {
+    for (const role of ['tank','healer','melee','ranged'] as const) {
+      assert.ok(voidspireRolePositions[boss.slug][role].ru);
+      assert.ok(voidspireRolePositions[boss.slug][role].en);
+    }
+    for (const id of Object.keys(voidspireRoleActions[boss.slug])) assert.ok(boss.mechanics.some(m => m.id === id));
+  }
+});
+test('every kick names the caster and correct interruptible cast, not the summon or shield', async () => {
+  const {voidspireInterruptTargets: targets} = await import('../../lib/data/wow/raid/voidspireInterruptTargets');
+  for (const boss of voidspireVideoGuides) for (const mechanic of boss.mechanics) {
+    if (mechanic.counters?.includes('interrupt')) {
+      const target = targets[boss.slug][mechanic.id];
+      assert.ok(target.enemies.length && target.timing.ru && target.timing.en);
+    }
+  }
+  assert.equal(targets['vaelgor-ezzorak'].adds.spellId, 1245175);
+  assert.equal(targets['lightblinded-vanguard'].shield.spellId, 1258514);
+  assert.equal(targets['fallen-king-salhadaar'].images.spellId, 1254088);
+  const salhadaar = voidspireVideoGuides.find(b => b.slug === 'fallen-king-salhadaar')!;
+  assert.equal(salhadaar.mechanics.find(m => m.id === 'marks')!.spellId, 1260835);
+});
+
+
+test('tank-only mitigation advice is scoped to tanks, without hiding shared survival mechanics', () => {
+  const boss = (slug: string) => voidspireVideoGuides.find(item => item.slug === slug)!;
+  for (const [slug, id] of [['imperator-averzian','wounds'], ['vorasius','tank'], ['fallen-king-salhadaar','swap'], ['vaelgor-ezzorak','swap'], ['lightblinded-vanguard','judgment']]) {
+    assert.deepEqual(boss(slug).mechanics.find(m => m.id === id)!.counterRoles, ['tank']);
+  }
+  assert.equal(boss('vaelgor-ezzorak').mechanics.find(m => m.id === 'gloom')!.counterRoles, undefined);
+});

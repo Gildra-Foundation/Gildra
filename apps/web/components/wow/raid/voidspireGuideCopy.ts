@@ -1,5 +1,6 @@
 export const voidspireGuideCopy = {
   ru: {
+    close:'Закрыть', target:'Цель кика', cast:'Каст', yourAction:'Ваше действие', yourKick:'Ваш кик', spellSource:'Игровая база', roles:{tank:'Танк',healer:'Целитель',melee:'Ближний бой',ranged:'Дальний бой'}, evokerRange:'Держитесь в радиусе своих заклинаний: дальняя позиция не означает максимальную дистанцию от группы.',
     season:'Midnight · Сезон 1', bosses:'Боссы', trash:'Пулы между боссами', normal:'Обычный', heroic:'Героический', difficulty:'Сложность',
     spec:'Специализация', examples:'Примеры для рейда', sequence:'Ход боя', positioning:'Расстановка',
     mechanics:'Механика → что делать', source:'Видеоразбор', talent:'талант', noTool:{interrupt:'Прерывание — другому игроку.',stun:'Оглушение — другому игроку.',magic:'Снятие магии — целителю.',defend:'Защиту согласуйте с целителем.',aoe:'Защиту согласуйте с целителем.'},
@@ -8,6 +9,7 @@ export const voidspireGuideCopy = {
     kinds:{interrupt:'Прервать',stun:'Оглушить аддов',magic:'Снять магию',defend:'Личная защита',aoe:'Защита от АоЕ'},
   },
   en: {
+    close:'Close', target:'Interrupt target', cast:'Cast', yourAction:'Your action', yourKick:'Your interrupt', spellSource:'Game database', roles:{tank:'Tank',healer:'Healer',melee:'Melee',ranged:'Ranged'}, evokerRange:'Stay within your spells’ range: a ranged position does not mean maximum distance from the group.',
     season:'Midnight · Season 1', bosses:'Bosses', trash:'Trash pulls', normal:'Normal', heroic:'Heroic', difficulty:'Difficulty',
     spec:'Specialization', examples:'Raid examples', sequence:'Fight flow', positioning:'Positioning',
     mechanics:'Mechanic → response', source:'Video guide', talent:'talent', noTool:{interrupt:'Assign the interrupt to another player.',stun:'Assign the stun to another player.',magic:'Assign the magic dispel to a healer.',defend:'Coordinate protection with a healer.',aoe:'Coordinate protection with a healer.'},

@@ -7,7 +7,8 @@ import { AtlasSegmented } from '@gildra/atlas-ui/AtlasSegmented';
 import { AtlasField, AtlasSelect } from '@gildra/atlas-ui/AtlasField';
 import { AtlasDisclosure } from '@gildra/atlas-ui/AtlasDisclosure';
 import { voidspireVideoGuides } from '@/lib/data/wow/raid/voidspireVideoGuide';
-import { guideSpecs } from './voidspireGuideCounters';
+import { voidspireRolePositions } from '@/lib/data/wow/raid/voidspireRoleTactics';
+import { guideRole, guideSpecs } from './voidspireGuideCounters';
 import { guideHash, readGuideSelection, type GuideSelection } from './voidspireGuideState';
 import { voidspireGuideCopy } from './voidspireGuideCopy';
 import { VoidspireGuideMechanics } from './VoidspireGuideMechanics';
@@ -30,11 +31,15 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
   const selection = readGuideSelection(hash);
   const t = voidspireGuideCopy[locale];
   const guide = voidspireVideoGuides.find(item => item.slug === selection.boss) ?? voidspireVideoGuides[0];
+  const role = guideRole(selection.specId);
+  const position = role ? voidspireRolePositions[guide.slug]?.[role] : undefined;
   const boss = bosses.find(item => item.slug === guide.slug)!;
   const select = (update: Partial<GuideSelection>) => {
     const next = { ...selection, ...update };
     if (voidspireVideoGuides.find(item => item.slug === next.boss)?.heroicOnly) next.difficulty = 'heroic';
-    window.history.pushState(window.history.state, '', guideHash(next));
+    const pull = new URLSearchParams(window.location.hash.slice(1)).get('raid-pull');
+    const nextHash = guideHash(next) + (next.boss === 'trash' && selection.boss === 'trash' && pull ? `&raid-pull=${encodeURIComponent(pull)}` : '');
+    window.history.pushState(window.history.state, '', nextHash);
     window.dispatchEvent(new HashChangeEvent('hashchange'));
   };
   const openBossLink = (event: MouseEvent<HTMLDivElement>) => {
@@ -49,6 +54,12 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
     event.currentTarget.querySelector<HTMLButtonElement>(`[data-tab="${slug}"]`)?.focus({preventScroll:true});
     event.currentTarget.scrollIntoView({block:'start', behavior:'instant'});
   };
+  const specPicker = <AtlasField label={t.spec} htmlFor="guide-spec"><AtlasSelect id="guide-spec" value={selection.specId} onChange={event => select({specId:Number(event.target.value)})}>
+        <option value={0}>{t.examples}</option>
+        {[...new Set(guideSpecs.map(spec => spec.classId))].map(classId => <optgroup key={classId} label={guideSpecs.find(spec => spec.classId === classId)!.className[locale]}>
+          {guideSpecs.filter(spec => spec.classId === classId).map(spec => <option key={spec.id} value={spec.id}>{spec.className[locale]} · {spec.name[locale]}</option>)}
+        </optgroup>)}
+      </AtlasSelect></AtlasField>;
   const content = <RaidPlaque raid="the-voidspire" className={styles.plaque}>
     <header className={styles.bossHeader}>
       <div><p className={styles.eyebrow}>{String(bosses.indexOf(boss) + 1).padStart(2, '0')} / 06{guide.heroicOnly ? ` · ${t.scope}` : ''}</p>
@@ -58,18 +69,13 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
     </header>
     <div className={styles.toolbar}>
       {!guide.heroicOnly && <AtlasField label={t.difficulty}><AtlasSegmented aria-label={t.difficulty} value={selection.difficulty} onValueChange={value => select({ difficulty: value as GuideSelection['difficulty'] })} options={['normal','heroic'].map(value => ({ value, label: t[value as 'normal' | 'heroic'] }))} /></AtlasField>}
-      <AtlasField label={t.spec} htmlFor="guide-spec"><AtlasSelect id="guide-spec" value={selection.specId} onChange={event => select({specId:Number(event.target.value)})}>
-        <option value={0}>{t.examples}</option>
-        {[...new Set(guideSpecs.map(spec => spec.classId))].map(classId => <optgroup key={classId} label={guideSpecs.find(spec => spec.classId === classId)!.className[locale]}>
-          {guideSpecs.filter(spec => spec.classId === classId).map(spec => <option key={spec.id} value={spec.id}>{spec.className[locale]} · {spec.name[locale]}</option>)}
-        </optgroup>)}
-      </AtlasSelect></AtlasField>
+      {specPicker}
     </div>
     <div className={styles.plan}>
       <section className={styles.flow} aria-labelledby="guide-flow-title"><h3 id="guide-flow-title">{t.sequence}</h3><ol>{guide.phases.map((phase, index) => <li key={phase.en}><span aria-hidden="true">{index+1}</span><p>{phase[locale]}</p></li>)}</ol></section>
-      <section className={styles.positioning} aria-labelledby="guide-position-title"><h3 id="guide-position-title">{t.positioning}</h3><p>{guide.positioning[locale]}</p></section>
+      <section className={styles.positioning} aria-labelledby="guide-position-title"><h3 id="guide-position-title">{t.positioning}{role && <small className={styles.roleLabel}>{t.roles[role]}</small>}</h3><p data-role-position={role ?? 'all'}>{(position ?? guide.positioning)[locale]}</p>{guideSpecs.find(spec => spec.id === selection.specId)?.classId === 13 && <p className={styles.rangeNote}>{t.evokerRange}</p>}</section>
     </div>
-    <VoidspireGuideMechanics guide={guide} locale={locale} difficulty={selection.difficulty} specId={selection.specId} />
+    <VoidspireGuideMechanics key={`${guide.slug}:${selection.specId}`} guide={guide} locale={locale} difficulty={selection.difficulty} specId={selection.specId} />
     <footer className={styles.sources}>
       <a href={`https://www.youtube.com/watch?v=${guide.video}`} target="_blank" rel="noreferrer">{t.source} · {guide.author} ↗</a>
       <AtlasDisclosure summary={t.sources}><p>{t.provenance}</p><ol>{guide.mechanics.map(mechanic => <li key={mechanic.id}><a href={`https://www.youtube.com/watch?v=${guide.video}&t=${mechanic.at}s`} target="_blank" rel="noreferrer">{Math.floor(mechanic.at/60)}:{String(mechanic.at%60).padStart(2,'0')} · {mechanic.name[locale]}</a></li>)}</ol></AtlasDisclosure>
@@ -78,7 +84,7 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
   return <div className={styles.guide} onClickCapture={openBossLink} data-voidspire-guide data-guide-boss={selection.boss} data-difficulty={selection.difficulty}>
     <AtlasTabs className={styles.bossTabs} label={t.bosses} value={selection.boss} onChange={slug => select({boss:slug})} tabs={[
       ...bosses.map((item,index) => ({id:item.slug,label:<span className={styles.bossChoice}><Image src={item.artwork} width={52} height={52} alt="" /><span><small>{String(index+1).padStart(2,'0')}</small>{locale === 'ru' ? item.nameRu : item.nameEn}</span></span>,content:selection.boss === item.slug ? content : null})),
-      ...(pulls ? [{id:'trash',label:<span className={styles.trashChoice}>{t.trash}</span>,content:selection.boss === 'trash' ? <RaidPullWorkspace plan={pulls} locale={locale} /> : null}] : []),
+      ...(pulls ? [{id:'trash',label:<span className={styles.trashChoice}>{t.trash}</span>,content:selection.boss === 'trash' ? <RaidPullWorkspace plan={pulls} locale={locale} guideSpecId={selection.specId} guideSpecPicker={specPicker} onGuideSpecChange={specId => select({specId})} /> : null}] : []),
     ]} />
   </div>;
 }

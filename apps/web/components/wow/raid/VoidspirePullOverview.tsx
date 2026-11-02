@@ -11,6 +11,8 @@ import { RaidPlaque } from "./raidMaterial";
 import { raidHubControlLayout } from "./raidHubControls";
 import { raidCardThemes } from "./raidCardThemes";
 import { RaidPullMap } from "./RaidPullMap";
+import { VoidspireGuideHint } from './VoidspireGuideHint';
+import { GuideCounterAdvice } from './VoidspireGuideMechanics';
 import { RaidAbilityText } from "./RaidAbilityText";
 import { raidPullCopy } from "./raidPullCopy";
 import { raidBossPlannerCopy } from "./raidBossPlannerCopy";
@@ -24,7 +26,7 @@ type Props = {
   role: RaidPullRole | "all"; onRoleChange: (role: string) => void;
   playerPicker?: ReactNode; sources: ReactNode;
   difficulty: "normal" | "heroic"; onDifficultyChange: (value: "normal" | "heroic") => void;
-  spec?: { className: { ru: string; en: string }; name: { ru: string; en: string } };
+  spec?: { id?: number; className: { ru: string; en: string }; name: { ru: string; en: string } };
 };
 
 export function VoidspirePullOverview({ plan, locale, active, select, panel, role, onRoleChange, playerPicker, sources, spec, difficulty, onDifficultyChange }: Props) {
@@ -50,7 +52,7 @@ export function VoidspirePullOverview({ plan, locale, active, select, panel, rol
           {encounter && <div className={styles.difficulty} data-raid-boss-difficulty><AtlasSegmented aria-label={bossCopy.difficulty} value={difficulty} onValueChange={value => onDifficultyChange(value as "normal" | "heroic")} options={(["normal", "heroic"] as const).map(value => ({ value, label: bossCopy[value] }))} /></div>}
           <span className={styles.srOnly} role="status" aria-live="polite">{label} {active + 1}: {pull.title[locale]}</span>
           <p className={styles.call} data-raid-command><RaidAbilityText value={pull.call[locale]} abilities={pull.abilities} locale={locale} /></p>
-          {encounter ? <EncounterMechanics pull={pull} locale={locale} difficulty={difficulty} /> : <PullEnemies pull={pull} locale={locale} />}
+          {encounter ? <EncounterMechanics pull={pull} locale={locale} difficulty={difficulty} /> : <PullEnemies pull={pull} locale={locale} specId={spec?.id ?? 0} />}
           {pull.direction && <p className={styles.direction} data-raid-pull-direction>{pull.direction[locale]}</p>}
           {boss && !encounter && <Link className={styles.boss} data-raid-boss-link={boss.slug} href={raidBossGuideHref(plan.slug, boss.slug, locale)}>{boss.name[locale]}<ArrowUpRight size={16} aria-hidden="true" /></Link>}
           <AtlasDisclosure summary={t.tasks} className={styles.roles}>
@@ -71,12 +73,14 @@ export function VoidspirePullOverview({ plan, locale, active, select, panel, rol
   </div>;
 }
 
-function PullEnemies({ pull, locale }: { pull: RaidPull; locale: "ru" | "en" }) {
+function PullEnemies({ pull, locale, specId }: { pull: RaidPull; locale: "ru" | "en"; specId: number }) {
   const t = raidPullCopy[locale];
   const prefix = locale === "ru" ? "ru/" : "";
   return <ul className={styles.enemies} data-raid-enemies>{pull.enemies.map(enemy => <li key={enemy.npcId ?? enemy.name.en} data-raid-enemy={enemy.npcId}>
-    <div className={styles.enemyHeading}><a href={`https://www.wowhead.com/${prefix}npc=${enemy.npcId}`} target="_blank" rel="noreferrer">{enemy.count !== undefined && `${enemy.count} × `}{enemy.name[locale]}<ArrowUpRight size={12} aria-hidden="true" /></a><small data-priority={enemy.priority}>{t[enemy.priority]}</small></div>
-    {pull.abilities.filter(ability => ability.caster?.en === enemy.name.en).map(ability => <PullAbility key={ability.spellId ?? ability.name.en} ability={ability} pull={pull} locale={locale} />)}
+    <div className={styles.enemyHeading}><VoidspireGuideHint title={enemy.name[locale]} locale={locale} source={enemy.npcId ? `https://www.wowhead.com/${prefix}npc=${enemy.npcId}` : undefined} detail={<>
+      {enemy.note && <p>{enemy.note[locale]}</p>}{pull.abilities.filter(ability => ability.caster?.en === enemy.name.en).map(ability => <p key={ability.name.en}><b>{ability.name[locale]}: </b>{(ability.response ?? ability.effect)?.[locale]}</p>)}
+    </>}>{enemy.count !== undefined && `${enemy.count} × `}{enemy.name[locale]}</VoidspireGuideHint><small data-priority={enemy.priority}>{t[enemy.priority]}</small></div>
+    {pull.abilities.filter(ability => ability.caster?.en === enemy.name.en).map(ability => <PullAbility key={ability.spellId ?? ability.name.en} ability={ability} pull={pull} locale={locale} specId={specId} />)}
   </li>)}</ul>;
 }
 
@@ -88,15 +92,19 @@ function EncounterMechanics({ pull, locale, difficulty }: { pull: RaidPull; loca
   </>;
 }
 
-function PullAbility({ ability, pull, locale, difficulty = "normal", encounter = false }: { ability: RaidPullAbility; pull: RaidPull; locale: "ru" | "en"; difficulty?: "normal" | "heroic"; encounter?: boolean }) {
+function PullAbility({ ability, pull, locale, difficulty = "normal", encounter = false, specId = 0 }: { specId?: number; ability: RaidPullAbility; pull: RaidPull; locale: "ru" | "en"; difficulty?: "normal" | "heroic"; encounter?: boolean }) {
   const t = raidPullCopy[locale];
   return <div className={styles.ability} data-raid-ability={ability.spellId}>
     <div className={styles.abilityTitle}>{ability.icon && <Image src={ability.icon} alt="" width={24} height={24} />}
-      <a href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}spell=${ability.spellId}`} target="_blank" rel="noreferrer">{ability.name[locale]}</a>
+      <VoidspireGuideHint title={ability.name[locale]} locale={locale} source={ability.spellId ? `https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}spell=${ability.spellId}` : undefined} detail={<>{ability.caster && <p><b>{ability.caster[locale]}</b></p>}{ability.effect && <p>{ability.effect[locale]}</p>}{ability.response && <p>{ability.response[locale]}</p>}</>} />
       {ability.action && !encounter && <b data-action={ability.action}>{t.actions[ability.action]}</b>}
       {encounter && ability.roles.length < 3 && <small>{ability.roles.map(role => t[role]).join(" · ")}</small>}
     </div>
     {ability.response && <p><RaidAbilityText value={ability.response[locale]} abilities={pull.abilities} locale={locale} /></p>}
+    {ability.action === 'interrupt' && ability.caster && ability.spellId && <GuideCounterAdvice locale={locale} specId={specId} mechanic={{counters:['interrupt']}} target={{
+      enemies:[{name:ability.caster, detail:ability.response ?? ability.caster}], spellId:ability.spellId, cast:ability.name,
+      consequence:ability.effect ?? ability.name, timing:ability.response ?? ability.name,
+    }} />}
     {difficulty === "heroic" && ability.heroic && <p className={styles.heroic} data-raid-heroic-note><b>{raidBossPlannerCopy[locale].heroicNote}: </b><RaidAbilityText value={ability.heroic[locale]} abilities={pull.abilities} locale={locale} /></p>}
   </div>;
 }

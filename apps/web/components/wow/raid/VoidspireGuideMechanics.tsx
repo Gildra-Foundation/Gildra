@@ -1,6 +1,9 @@
 import Image from 'next/image';
 import type { GuideMechanic, VideoBossGuide } from '@/lib/data/wow/raid/voidspireVideoGuide';
-import { guideCounters } from './voidspireGuideCounters';
+import { voidspireRoleActions } from '@/lib/data/wow/raid/voidspireRoleTactics';
+import { voidspireInterruptTargets, type InterruptTarget } from '@/lib/data/wow/raid/voidspireInterruptTargets';
+import { VoidspireGuideHint } from './VoidspireGuideHint';
+import { guideCounters, guideRole } from './voidspireGuideCounters';
 import { voidspireGuideCopy } from './voidspireGuideCopy';
 import records from './voidspireBossRecords.json';
 import styles from './voidspireGuide.module.css';
@@ -8,36 +11,58 @@ import styles from './voidspireGuide.module.css';
 type Props = { guide: VideoBossGuide; locale: 'ru' | 'en'; difficulty: 'normal' | 'heroic'; specId: number };
 export function VoidspireGuideMechanics({ guide, locale, difficulty, specId }: Props) {
   const t = voidspireGuideCopy[locale];
+  const role = guideRole(specId);
   return <section className={styles.mechanics} aria-labelledby="guide-mechanics-title">
     <h3 id="guide-mechanics-title">{t.mechanics}</h3>
-    <ol className={styles.rows}>{guide.mechanics.map(mechanic => <li key={mechanic.id} data-guide-mechanic={mechanic.id}>
+    <ol className={styles.rows}>{guide.mechanics.map(mechanic => {
+      const target = voidspireInterruptTargets[guide.slug]?.[mechanic.id];
+      const action = role ? voidspireRoleActions[guide.slug]?.[mechanic.id]?.[role] : undefined;
+      return <li key={mechanic.id} data-guide-mechanic={mechanic.id}>
       <div className={styles.signal}>
         <div className={styles.spellHeading}>
           {mechanic.spellId && String(mechanic.spellId) in records.spells && <Image src={`/assets/wow/raids/reviewed-mechanics/${mechanic.spellId}.jpg`} width={30} height={30} alt="" />}
           <h4>{mechanic.name[locale]}</h4>
         </div>
         <p>{mechanic.trigger[locale]}</p>
+        {target && <InterruptIdentity target={target} locale={locale} />}
       </div>
       <div className={styles.response}>
         <p>{mechanic.response[locale]}</p>
+        {action && <p className={styles.roleAction} data-role-action={role}><b>{t.roles[role!]}: </b>{action[locale]}</p>}
         {difficulty === 'heroic' && mechanic.heroic && <p className={styles.heroic} data-heroic-note><b>{t.heroicNote}: </b>{mechanic.heroic[locale]}</p>}
-        <CounterAdvice mechanic={mechanic} locale={locale} specId={specId} />
+        <GuideCounterAdvice mechanic={mechanic} locale={locale} specId={specId} target={target} />
       </div>
-    </li>)}</ol>
+    </li>; })}</ol>
   </section>;
 }
-function CounterAdvice({ mechanic, locale, specId }: { mechanic: GuideMechanic; locale: 'ru' | 'en'; specId: number }) {
+export function GuideCounterAdvice({ mechanic, locale, specId, target }: { target?: InterruptTarget; mechanic: Pick<GuideMechanic, 'counters' | 'counterRoles'>; locale: 'ru' | 'en'; specId: number }) {
   const t = voidspireGuideCopy[locale];
+  const role = guideRole(specId);
+  if (role && mechanic.counterRoles && !mechanic.counterRoles.includes(role)) return null;
   const groups = mechanic.counters?.map(kind => ({ kind, tools: guideCounters(kind, specId) })) ?? [];
   if (!groups.length) return null;
   if (groups.every(group => !group.tools.length)) return <p className={styles.noTool}>{t.noTool[groups[0].kind]}</p>;
-  return <div className={styles.counters}>{groups.filter(group => group.tools.length).map(({kind, tools}) => <div className={styles.counterGroup} key={kind} data-counter-kind={kind}>
-    <span>{t.kinds[kind]}</span>
+  return <div className={styles.counters}>{groups.map(({kind, tools}) => <div className={styles.counterGroup} key={kind} data-counter-kind={kind}>
+    <span>{kind === 'interrupt' && specId ? t.yourKick : t.kinds[kind]}</span>
+    {!tools.length && <p className={styles.noTool}>{t.noTool[kind]}</p>}
     <ul>{tools.map(({spell, talent, note}) => <li key={spell.id}>
-      <a href={`https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}spell=${spell.id}`} target="_blank" rel="noreferrer" data-player-spell={spell.id}>
+      {kind === 'interrupt' && target ? <VoidspireGuideHint title={spell.name[locale]} locale={locale} spellId={spell.id} source={`https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}spell=${spell.id}`} detail={<>
+        <p><b>{t.target}: </b>{target.enemies.map(enemy => enemy.name[locale]).join(' / ')}</p>
+        <p><b>{t.cast}: </b>{target.cast[locale]}</p><p>{target.timing[locale]}</p>
+        {talent && <p>{t.talent}</p>}{note && <p>{note[locale]}</p>}
+      </>}><Image src={spell.iconUrl} width={22} height={22} alt="" />{spell.name[locale]}{talent && <small>· {t.talent}</small>}</VoidspireGuideHint> : <a href={`https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}spell=${spell.id}`} target="_blank" rel="noreferrer" data-player-spell={spell.id}>
         <Image src={spell.iconUrl} width={22} height={22} alt="" />{spell.name[locale]}{talent && <small>· {t.talent}</small>}
-      </a>
+      </a>}
       {note && <small className={styles.toolNote}>{note[locale]}</small>}
     </li>)}</ul>
   </div>)}</div>;
+}
+
+function InterruptIdentity({ target, locale }: { target: InterruptTarget; locale: 'ru' | 'en' }) {
+  const t = voidspireGuideCopy[locale];
+  const prefix = `https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}`;
+  return <dl className={styles.interruptIdentity} data-interrupt-cast={target.spellId}>
+    <div><dt>{t.target}</dt><dd>{target.enemies.map(enemy => <VoidspireGuideHint key={enemy.name.en} title={enemy.name[locale]} detail={<p>{enemy.detail[locale]}</p>} source={enemy.npcId ? `${prefix}npc=${enemy.npcId}` : undefined} locale={locale} />)}</dd></div>
+    <div><dt>{t.cast}</dt><dd><VoidspireGuideHint title={target.cast[locale]} detail={<><p>{target.consequence[locale]}</p><p>{target.timing[locale]}</p></>} source={`${prefix}spell=${target.spellId}`} locale={locale} /></dd></div>
+  </dl>;
 }

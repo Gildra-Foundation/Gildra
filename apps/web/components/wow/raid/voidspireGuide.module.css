@@ -77,3 +77,22 @@
   .bossTabs > :global([role="tablist"]) > button[aria-selected="true"] { outline: 2px solid Highlight; }
   .response > .heroic { border-color: Highlight; }
 }
+
+.roleLabel { display: block; margin-top: var(--atlas-space-2); color: var(--atlas-accent); font: 500 var(--atlas-text-small)/var(--atlas-leading-normal) var(--atlas-font-ui); }
+.response > .roleAction { margin-top: var(--atlas-space-3); padding-left: var(--atlas-space-3); border-left: 2px solid var(--atlas-accent); }
+.positioning > .rangeNote { margin-top: var(--atlas-space-3); font-size: var(--atlas-text-small); color: var(--atlas-text-muted); }
+.interruptIdentity { margin: var(--atlas-space-3) 0 0; font-size: var(--atlas-text-small); }
+.interruptIdentity dt { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.interruptIdentity dd { display: grid; justify-items: start; margin: 0; }
+.hintTrigger { display: inline-flex; align-items: center; flex-wrap: wrap; gap: var(--atlas-space-2); min-height: 44px; max-width: 100%; padding: var(--atlas-space-1) 0; border: 0; background: transparent; color: var(--atlas-text-strong); font: inherit; text-align: left; text-decoration: underline dotted; text-underline-offset: .2em; cursor: help; }
+.hintTrigger:hover { color: var(--atlas-accent); }
+.hintTrigger:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.counterGroup .hintTrigger { font-size: var(--atlas-text-small); }
+.hintText p { margin: var(--atlas-space-2) 0 0; }
+.hintDialog:global(.ui-dialog) { width: min(520px, calc(100vw - 2 * var(--atlas-gutter))); }
+.hintContent { padding: var(--atlas-space-5); overflow-y: auto; font-size: var(--atlas-text-body); }
+.hintContent header { display: flex; align-items: start; gap: var(--atlas-space-4); justify-content: space-between; }
+.hintContent h3 { margin: 0; color: var(--atlas-text-strong); font-size: var(--atlas-text-h3); }
+.hintContent button { min-height: 44px; padding: var(--atlas-space-2); border: 1px solid var(--atlas-line); background: var(--atlas-surface); color: var(--atlas-text); font: inherit; cursor: pointer; }
+.hintContent a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-accent); }
+.hintContent :is(button, a):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }

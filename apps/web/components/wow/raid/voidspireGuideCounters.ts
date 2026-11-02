@@ -1,9 +1,10 @@
 import data from '@/lib/data/wow/mythicPlayerTools';
+import type { GuideRole } from '@/lib/data/wow/raid/voidspireRoleTactics';
 import type { CounterKind } from '@/lib/data/wow/raid/voidspireVideoGuide';
 
 type Spell = { id: number; name: { ru: string; en: string }; iconUrl: string; source: string };
 type Option = { spellId: number; talentSpellId?: number; effects?: string[]; note?: { ru: string; en: string } };
-type Spec = { id: number; classId: number; className: { ru: string; en: string }; name: { ru: string; en: string } } & Record<'interrupt' | 'stop' | 'dispel' | 'defend', Option[]>;
+type Spec = { role: 'tank' | 'healer' | 'dps'; id: number; classId: number; className: { ru: string; en: string }; name: { ru: string; en: string } } & Record<'interrupt' | 'stop' | 'dispel' | 'defend', Option[]>;
 export const guideSpecs = data.specs as Spec[];
 const spells = data.spells as Record<string, Spell>;
 // Stuns only, and only on rows explicitly describing controllable adds. No blanket boss CC.
@@ -23,4 +24,12 @@ export function guideCounters(kind: CounterKind, specId: number) {
     if (kind === 'defend' && option.spellId === 1966) return false;
     return true;
   }).flatMap(option => spells[option.spellId] ? [{ spell: spells[option.spellId], talent: Boolean(option.talentSpellId), note: option.note }] : []);
+}
+
+const rangedSpecs = new Set([62, 63, 64, 102, 253, 254, 258, 262, 265, 266, 267, 1467, 1473, 1480]);
+export function guideRole(specId: number): GuideRole | undefined {
+  const spec = guideSpecs.find(item => item.id === specId);
+  if (!spec) return undefined;
+  if (spec.role !== 'dps') return spec.role;
+  return rangedSpecs.has(specId) ? 'ranged' : 'melee';
 }
