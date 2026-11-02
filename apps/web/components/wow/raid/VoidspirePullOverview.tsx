@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { raidBossGuideHref } from "./raidBossGuideHref";
 import type { CSSProperties, ReactNode, RefObject } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { AtlasDisclosure } from "@gildra/atlas-ui/AtlasDisclosure";
@@ -32,7 +33,6 @@ export function VoidspirePullOverview({ plan, locale, active, select, panel, rol
   const encounter = Boolean(plan.encounter);
   const label = encounter ? bossCopy.phase : t.pull;
   const pull = plan.pulls[active];
-  const prefix = locale === "ru" ? "/ru" : "";
   const boss = plan.bosses.find(item => item.slug === pull.bossSlug);
   return <div className={styles.workspace} data-raid-pulls={plan.slug} data-raid-overview="simple" data-raid-boss-planner={plan.encounter?.bossSlug} data-difficulty={encounter ? difficulty : undefined} style={{ ...raidHubControlLayout("the-voidspire"), "--raid-card-accent": raidCardThemes["the-voidspire"].accent } as CSSProperties}>
     <nav className={styles.navigation} aria-label={encounter ? bossCopy.phases : t.list} data-raid-pull-navigation>
@@ -52,7 +52,7 @@ export function VoidspirePullOverview({ plan, locale, active, select, panel, rol
           <p className={styles.call} data-raid-command><RaidAbilityText value={pull.call[locale]} abilities={pull.abilities} locale={locale} /></p>
           {encounter ? <EncounterMechanics pull={pull} locale={locale} difficulty={difficulty} /> : <PullEnemies pull={pull} locale={locale} />}
           {pull.direction && <p className={styles.direction} data-raid-pull-direction>{pull.direction[locale]}</p>}
-          {boss && !encounter && <Link className={styles.boss} data-raid-boss-link={boss.slug} href={`${prefix}/wow/raids/${plan.slug}/${boss.slug}`}>{boss.name[locale]}<ArrowUpRight size={16} aria-hidden="true" /></Link>}
+          {boss && !encounter && <Link className={styles.boss} data-raid-boss-link={boss.slug} href={raidBossGuideHref(plan.slug, boss.slug, locale)}>{boss.name[locale]}<ArrowUpRight size={16} aria-hidden="true" /></Link>}
           <AtlasDisclosure summary={t.tasks} className={styles.roles}>
             <div className={styles.filters} data-raid-role-toolbar>
               <AtlasSegmented aria-label={t.role} value={role} onValueChange={onRoleChange} options={(["all", "tank", "healer", "dps"] as const).map(value => ({ value, label: t[value] }))} />

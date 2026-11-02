@@ -58,14 +58,17 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange, playerPick
   const label = encounter ? bossCopy.phase : t.pull;
   const [difficulty, setDifficulty] = useState<"normal" | "heroic">("normal");
   const hash = useSyncExternalStore(subscribeHash, readHash, serverHash);
-  const active = Math.max(0, plan.pulls.findIndex((pull) => hash === `#raid-pull=${pull.id}`));
+  const selectedPull = new URLSearchParams(hash.replace(/^#/, "")).get("raid-pull");
+  const active = Math.max(0, plan.pulls.findIndex((pull) => selectedPull === pull.id));
   const pull = plan.pulls[active];
   const panel = useRef<HTMLDivElement>(null);
   const strip = useRef<HTMLOListElement>(null);
   function select(index: number, reveal = false) {
     if (index < 0 || index >= plan.pulls.length) return;
     const url = new URL(window.location.href);
-    url.hash = `raid-pull=${plan.pulls[index].id}`;
+    const params = new URLSearchParams(url.hash.replace(/^#/, ""));
+    params.set("raid-pull", plan.pulls[index].id);
+    url.hash = params.toString();
     window.history.replaceState(window.history.state, "", url);
     window.dispatchEvent(new HashChangeEvent("hashchange"));
     const choice = strip.current?.querySelector<HTMLElement>(`[data-raid-pull-choice="${index}"]`);

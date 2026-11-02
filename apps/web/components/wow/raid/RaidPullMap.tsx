@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { raidBossGuideHref } from "./raidBossGuideHref";
 import { useState, useSyncExternalStore } from "react";
 import { ArrowUpRight, Layers, Route, Skull } from "lucide-react";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
@@ -95,10 +96,9 @@ function RaidMapFields({ plan, locale, background, active, view, onFloor, onBoss
 function RaidMapProgression({ plan, locale, bosses, defaultBoss }: { plan: RaidPullPlan; locale: "ru" | "en"; bosses: RaidPullPlan["bosses"]; defaultBoss: string }) {
   const t = raidMapCopy[locale];
   const progression = plan.atlas?.progression;
-  const prefix = locale === "ru" ? "/ru" : "";
   return <>
     {progression && bosses.length > 1 && <div className={styles.progression} data-raid-map-progression><h4><RaidPlannerIcon slug={plan.slug} kind="map" fallback={<Route size={17} aria-hidden="true" />} />{t.sequence}</h4>{progression.note[locale] ? <p>{progression.note[locale]}</p> : null}
-      <ol className={styles.bossRail}>{bosses.map((boss, i) => <li key={boss.slug}><Link className={styles.railChoice} data-active={defaultBoss === boss.slug} data-raid-boss-link={boss.slug} href={`${prefix}/wow/raids/${plan.slug}/${boss.slug}`} aria-label={`${t.tactics}: ${boss.name[locale]}`}><b>{i + 1}</b><span>{boss.name[locale]}</span><ArrowUpRight size={12} aria-hidden="true" /></Link></li>)}</ol>
+      <ol className={styles.bossRail}>{bosses.map((boss, i) => <li key={boss.slug}><Link className={styles.railChoice} data-active={defaultBoss === boss.slug} data-raid-boss-link={boss.slug} href={raidBossGuideHref(plan.slug, boss.slug, locale)} aria-label={`${t.tactics}: ${boss.name[locale]}`}><b>{i + 1}</b><span>{boss.name[locale]}</span><ArrowUpRight size={12} aria-hidden="true" /></Link></li>)}</ol>
       {plan.slug !== "the-voidspire" && progression.lieutenants.length > 0 && <details className={styles.lieutenants}><summary>{t.lieutenants} · {progression.lieutenants.length}</summary><ul>{progression.lieutenants.map(npc => <li key={npc.npcId}><a href={`https://www.wowhead.com/npc=${npc.npcId}`} target="_blank" rel="noreferrer">{npc.name[locale]}<ArrowUpRight size={12} aria-hidden="true" /></a><span>{npc.note[locale]}</span></li>)}</ul></details>}
     </div>}
   </>;

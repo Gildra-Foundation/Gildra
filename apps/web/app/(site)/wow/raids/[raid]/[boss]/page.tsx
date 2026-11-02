@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { RaidBossGuide } from "@/components/wow/raid/RaidBossGuide";
 import { getMidnightRaid, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
 
@@ -34,5 +34,6 @@ export default async function Page({ params }: PageProps) {
   const raid = getMidnightRaid(raidSlug);
   const boss = raid?.bosses.find((entry) => entry.slug === bossSlug);
   if (!raid || !boss) notFound();
+  if (raid.slug === "the-voidspire") permanentRedirect(`/wow/raids/the-voidspire#boss=${boss.slug}`);
   return <RaidBossGuide raid={raid} boss={boss} locale="en" />;
 }

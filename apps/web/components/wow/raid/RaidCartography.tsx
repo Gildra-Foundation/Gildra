@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { raidBossGuideHref } from "./raidBossGuideHref";
 import { useEffect, useRef, useId, useMemo, useState, useSyncExternalStore, type ReactNode, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
 import { ArrowUpRight, Check, Grid2X2, Map, Maximize, Pencil, Route, Skull, Trash2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { AtlasTooltip } from "@gildra/atlas-ui/AtlasTooltip";
@@ -63,9 +64,8 @@ function CartographyFooter({ background, hasPins, planSlug, activeBoss, locale, 
   simplified?: boolean;
 }) {
   const t = raidMapCopy[locale];
-  const prefix = locale === "ru" ? "/ru" : "";
   return <div className={styles.mapFooter}>{!simplified && (background === "arena" || !hasPins) ? <span>{background === "arena" ? encounter ? raidBossPlannerCopy[locale].arenaHint : t.arenaHint : t.emptyFloor}</span> : null}
-    {!simplified && background === "arena" && !encounter && <Link href={`${prefix}/wow/raids/${planSlug}/${activeBoss}`}>{t.tactics}<ArrowUpRight size={14} aria-hidden="true" /></Link>}
+    {!simplified && background === "arena" && !encounter && <Link href={raidBossGuideHref(planSlug, activeBoss, locale)}>{t.tactics}<ArrowUpRight size={14} aria-hidden="true" /></Link>}
     {count > 0 && <div className={styles.sketchTools}><span>{t.own} · {count}</span>
       <AtlasButton className={styles.tool} size="sm" data-raid-tool="undo" aria-label={t.undo} onClick={onUndo}><RaidPlannerTextMark slug={planSlug} text="↶" fallback={<Undo2 size={16} aria-hidden="true" />} /></AtlasButton>
       <AtlasButton className={styles.tool} size="sm" data-raid-tool="clear" aria-label={t.clear} onClick={onClear}><RaidPlannerTextMark slug={planSlug} text="×" fallback={<Trash2 size={16} aria-hidden="true" />} /></AtlasButton>
@@ -178,7 +178,7 @@ function CartographyBossPins({ pins, bosses, activeBoss, locale, planSlug }: Pic
           if (!boss) return null;
           const index = bosses.indexOf(boss);
           return <Link className={styles.bossPin} key={pin.bossSlug} style={{ left: `${pin.x}%`, top: `${pin.y}%` }} data-raid-boss-pin={pin.bossSlug}
-            aria-label={`${t.boss} ${index + 1}: ${boss.name[locale]}`} data-active={activeBoss === pin.bossSlug} href={`${locale === "ru" ? "/ru" : ""}/wow/raids/${planSlug}/${pin.bossSlug}`} title={boss.name[locale]}>
+            aria-label={`${t.boss} ${index + 1}: ${boss.name[locale]}`} data-active={activeBoss === pin.bossSlug} href={raidBossGuideHref(planSlug, pin.bossSlug, locale)} title={boss.name[locale]}>
             {boss.artwork ? <Image src={boss.artwork} alt="" width={40} height={40} unoptimized /> : <Skull size={22} aria-hidden="true" />}<b>{index + 1}</b>
           </Link>;
         })}
