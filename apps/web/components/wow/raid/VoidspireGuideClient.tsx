@@ -4,13 +4,14 @@ import Image from 'next/image';
 import { useSyncExternalStore, type MouseEvent } from 'react';
 import { AtlasTabs } from '@gildra/atlas-ui/AtlasTabs';
 import { AtlasSegmented } from '@gildra/atlas-ui/AtlasSegmented';
-import { AtlasField, AtlasSelect } from '@gildra/atlas-ui/AtlasField';
+import { AtlasField } from '@gildra/atlas-ui/AtlasField';
 import { AtlasDisclosure } from '@gildra/atlas-ui/AtlasDisclosure';
 import { voidspireVideoGuides } from '@/lib/data/wow/raid/voidspireVideoGuide';
 import { voidspireRolePositions } from '@/lib/data/wow/raid/voidspireRoleTactics';
 import { guideRole, guideSpecs } from './voidspireGuideCounters';
 import { guideHash, readGuideSelection, type GuideSelection } from './voidspireGuideState';
 import { voidspireGuideCopy } from './voidspireGuideCopy';
+import { VoidspireSpecPicker } from './VoidspireSpecPicker';
 import { VoidspireGuideMechanics } from './VoidspireGuideMechanics';
 import { RaidPlaque } from './raidMaterial';
 import { RaidPullWorkspace } from './RaidPullWorkspace';
@@ -54,12 +55,7 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
     event.currentTarget.querySelector<HTMLButtonElement>(`[data-tab="${slug}"]`)?.focus({preventScroll:true});
     event.currentTarget.scrollIntoView({block:'start', behavior:'instant'});
   };
-  const specPicker = <AtlasField label={t.spec} htmlFor="guide-spec"><AtlasSelect id="guide-spec" value={selection.specId} onChange={event => select({specId:Number(event.target.value)})}>
-        <option value={0}>{t.examples}</option>
-        {[...new Set(guideSpecs.map(spec => spec.classId))].map(classId => <optgroup key={classId} label={guideSpecs.find(spec => spec.classId === classId)!.className[locale]}>
-          {guideSpecs.filter(spec => spec.classId === classId).map(spec => <option key={spec.id} value={spec.id}>{spec.className[locale]} · {spec.name[locale]}</option>)}
-        </optgroup>)}
-      </AtlasSelect></AtlasField>;
+  const specPicker = <VoidspireSpecPicker locale={locale} value={selection.specId} onChange={specId => select({specId})} />;
   const content = <RaidPlaque raid="the-voidspire" className={styles.plaque}>
     <header className={styles.bossHeader}>
       <div><p className={styles.eyebrow}>{String(bosses.indexOf(boss) + 1).padStart(2, '0')} / 06{guide.heroicOnly ? ` · ${t.scope}` : ''}</p>
@@ -72,8 +68,8 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
       {specPicker}
     </div>
     <div className={styles.plan}>
-      <section className={styles.flow} aria-labelledby="guide-flow-title"><h3 id="guide-flow-title">{t.sequence}</h3><ol>{guide.phases.map((phase, index) => <li key={phase.en}><span aria-hidden="true">{index+1}</span><p>{phase[locale]}</p></li>)}</ol></section>
-      <section className={styles.positioning} aria-labelledby="guide-position-title"><h3 id="guide-position-title">{t.positioning}{role && <small className={styles.roleLabel}>{t.roles[role]}</small>}</h3><p data-role-position={role ?? 'all'}>{(position ?? guide.positioning)[locale]}</p>{guideSpecs.find(spec => spec.id === selection.specId)?.classId === 13 && <p className={styles.rangeNote}>{t.evokerRange}</p>}</section>
+      <section className={styles.flow} aria-labelledby="guide-flow-title"><h3 id="guide-flow-title">{t.sequence}</h3><ol>{guide.phases.map((phase, index) => <li key={phase.en}><span aria-hidden="true">{index+1}</span><div><h4>{phase.title[locale]}</h4><p>{phase[locale]}</p></div></li>)}</ol></section>
+      <section className={styles.positioning} aria-labelledby="guide-position-title"><Image className={styles.positionOrnament} src="/assets/wow/raids/hub/stylized/ornaments/void-crystals.webp" width={64} height={64} alt="" aria-hidden="true" /><h3 id="guide-position-title">{t.positioning}{role && <small className={styles.roleLabel}>{t.roles[role]}</small>}</h3><p data-role-position={role ?? 'all'}>{(position ?? guide.positioning)[locale]}</p>{guideSpecs.find(spec => spec.id === selection.specId)?.classId === 13 && <p className={styles.rangeNote}>{t.evokerRange}</p>}</section>
     </div>
     <VoidspireGuideMechanics key={`${guide.slug}:${selection.specId}`} guide={guide} locale={locale} difficulty={selection.difficulty} specId={selection.specId} />
     <footer className={styles.sources}>

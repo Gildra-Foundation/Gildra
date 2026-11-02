@@ -93,3 +93,15 @@ test('tank-only mitigation advice is scoped to tanks, without hiding shared surv
   }
   assert.equal(boss('vaelgor-ezzorak').mechanics.find(m => m.id === 'gloom')!.counterRoles, undefined);
 });
+
+test('all forty spec portraits resolve to distinct existing game assets', async () => {
+  const { guideSpecs } = await import('../../components/wow/raid/voidspireGuideCounters');
+  const { voidspireSpecIcon } = await import('../../components/wow/raid/voidspireSpecIcons');
+  const { existsSync } = await import('node:fs');
+  const icons = guideSpecs.map(spec => voidspireSpecIcon(spec.id));
+  assert.equal(new Set(icons).size, 40);
+  for (const icon of icons) {
+    assert.ok(icon?.startsWith('/assets/specs/'), `Expected specialization portrait: ${icon}`);
+    assert.ok(existsSync(new URL(`../../public${icon}`, import.meta.url)));
+  }
+});

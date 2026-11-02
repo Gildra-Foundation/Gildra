@@ -96,3 +96,28 @@
 .hintContent button { min-height: 44px; padding: var(--atlas-space-2); border: 1px solid var(--atlas-line); background: var(--atlas-surface); color: var(--atlas-text); font: inherit; cursor: pointer; }
 .hintContent a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-accent); }
 .hintContent :is(button, a):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+
+/* A short battle sequence with a quiet, single raid ornament. */
+.flow li { align-items: start; gap: var(--atlas-space-4); }
+.flow li > span { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--atlas-line-strong); border-radius: 50%; background: var(--atlas-surface-sunken); font-size: var(--atlas-text-body); }
+.flow li > div { min-width: 0; padding-bottom: var(--atlas-space-3); }
+.flow h4 { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 650; }
+.flow p { color: var(--atlas-text-muted); max-width: 65ch; }
+.positioning { position: relative; }
+.positioning h3 { padding-right: 64px; min-height: 48px; }
+.positionOrnament { position: absolute; top: 0; right: 0; width: 56px; height: 56px; object-fit: contain; pointer-events: none; filter: saturate(.68) brightness(.84); }
+.spellHeading { align-items: start; }
+.signal .spellName { font-size: var(--atlas-text-meta); margin-top: var(--atlas-space-2); }
+.response { max-width: 70ch; }
+.specField { display: grid; gap: var(--atlas-space-2); width: min(100%, 400px); }
+.specField > label { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.specField > label > span { color: var(--atlas-accent); }
+.specTrigger.specTrigger { width: 100%; min-height: 52px; background: var(--atlas-surface-sunken); border-color: var(--atlas-line-strong); }
+.specIcon { flex: none; border-radius: 50%; object-fit: cover; }
+.specMenu.specMenu { --ui-elevated: var(--atlas-surface-raised); --ui-menu-item-h: 48px; --ui-menu-highlight-bg: var(--atlas-surface-selected); --ui-menu-highlight-fg: var(--atlas-text-strong); }
+.specMenu :global(.ui-listbox) { max-height: min(400px, 52dvh); scrollbar-width: thin; }
+.specMenu :global(.ui-listbox__option) { min-height: 48px; gap: var(--atlas-space-3); }
+.specMenu :global(.ui-menu-label) { color: var(--atlas-accent); border-top: 1px solid var(--atlas-line); padding-block: var(--atlas-space-3); }
+.specMenu :global(.ui-listbox__description) { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+@media (max-width: 700px) { .specField { width: 100%; } .flow li { gap: var(--atlas-space-3); } .positioning { padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line); } .positionOrnament { top: var(--atlas-space-4); } }
+@media (forced-colors: active) { .positionOrnament { display: none; } .flow li > span { border-color: CanvasText; } .specTrigger.specTrigger { border: 1px solid ButtonText; background: ButtonFace; } }

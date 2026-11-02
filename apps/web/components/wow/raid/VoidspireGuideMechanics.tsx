@@ -21,9 +21,8 @@ export function VoidspireGuideMechanics({ guide, locale, difficulty, specId }: P
       <div className={styles.signal}>
         <div className={styles.spellHeading}>
           {mechanic.spellId && String(mechanic.spellId) in records.spells && <Image src={`/assets/wow/raids/reviewed-mechanics/${mechanic.spellId}.jpg`} width={30} height={30} alt="" />}
-          <h4>{mechanic.name[locale]}</h4>
+          <div><h4>{mechanic.trigger[locale]}</h4><p className={styles.spellName}>{mechanic.name[locale]}</p></div>
         </div>
-        <p>{mechanic.trigger[locale]}</p>
         {target && <InterruptIdentity target={target} locale={locale} />}
       </div>
       <div className={styles.response}>
