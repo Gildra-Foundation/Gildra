@@ -8,6 +8,8 @@ import { AtlasField } from '@gildra/atlas-ui/AtlasField';
 import { AtlasDisclosure } from '@gildra/atlas-ui/AtlasDisclosure';
 import { voidspireVideoGuides } from '@/lib/data/wow/raid/voidspireVideoGuide';
 import { voidspireBeginnerGuides, roleBasics as voidspireRoleBasics, voidspireFactSources } from '@/lib/data/wow/raid/voidspireBeginnerGuide';
+import { raidHubControlLayout } from './raidHubControls';
+import { VoidspireGuideMotion } from './VoidspireGuideMotion';
 import { VoidspireBattleDiagram } from './VoidspireBattleDiagram';
 import { voidspireRolePositions } from '@/lib/data/wow/raid/voidspireRoleTactics';
 import { guideRole, guideSpecs } from './voidspireGuideCounters';
@@ -82,7 +84,7 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
     row?.scrollIntoView({block:'start', behavior:'instant'});
   };
   const content = <article className={styles.encounter}>
-    <RaidPlaque raid="the-voidspire" className={styles.plaque}>
+    <RaidPlaque raid="the-voidspire" className={styles.plaque} data-guide-reveal>
       <header className={styles.bossHeader}>
         <Image className={styles.bossArt} src={boss.artwork} width={320} height={190} sizes="(max-width: 700px) 88px, 190px" alt="" />
         <div><p className={styles.eyebrow}>{String(bosses.indexOf(boss) + 1).padStart(2, '0')} / 06{guide.heroicOnly ? ` · ${t.scope}` : ''}</p>
@@ -95,7 +97,7 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
       </nav>
     </RaidPlaque>
     <div className={styles.briefing}>
-      <section className={styles.positioning} aria-labelledby="guide-position-title">
+      <RaidPlaque as="section" raid="the-voidspire" className={`${styles.materialPanel} ${styles.positioning}`} aria-labelledby="guide-position-title" data-guide-reveal>
         <div className={styles.toolbar}>
           {specPicker}
           {!guide.heroicOnly && <AtlasField label={t.difficulty}><AtlasSegmented aria-label={t.difficulty} value={selection.difficulty} onValueChange={value => select({ difficulty: value as GuideSelection['difficulty'] })} options={['normal','heroic'].map(value => ({ value, label: t[value as 'normal' | 'heroic'] }))} /></AtlasField>}
@@ -104,19 +106,20 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
         <h3 id="guide-position-title">{t.positioning}{role && <small className={styles.roleLabel}>{t.roles[role]}</small>}</h3>
         <p data-role-position={role ?? 'all'}>{(position ?? beginner.startingPosition)[locale]}</p>
         {guideSpecs.find(spec => spec.id === selection.specId)?.classId === 13 && <p className={styles.rangeNote}>{t.evokerRange}</p>}
-      </section>
+      </RaidPlaque>
       <VoidspireBattleDiagram slug={guide.slug} locale={locale} artwork={boss.artwork} />
     </div>
-    <div className={styles.flow}>
+    <RaidPlaque raid="the-voidspire" className={`${styles.materialPanel} ${styles.flow}`}>
       <AtlasDisclosure summary={t.flowDetails}><ol>{guide.phases.map((phase, index) => <li key={phase.en}><span aria-hidden="true">{index+1}</span><div><h4>{phase.title[locale]}</h4><p>{phase[locale]}</p></div></li>)}</ol></AtlasDisclosure>
-    </div>
+    </RaidPlaque>
     <VoidspireGuideMechanics key={`${guide.slug}:${selection.specId}`} guide={guide} locale={locale} difficulty={selection.difficulty} specId={selection.specId} />
     <footer className={styles.sources}>
       <a href={`https://www.youtube.com/watch?v=${guide.video}`} target="_blank" rel="noreferrer">{t.source} · {guide.author} ↗</a>
       <AtlasDisclosure summary={t.sources}><p>{t.provenance}</p><ul>{voidspireFactSources.map(source => <li key={source.href}><a href={source.href} target="_blank" rel="noreferrer">{source.label[locale]} ↗</a></li>)}</ul><ol>{guide.mechanics.map(mechanic => <li key={mechanic.id}><a href={`https://www.youtube.com/watch?v=${guide.video}&t=${mechanic.at}s`} target="_blank" rel="noreferrer">{Math.floor(mechanic.at/60)}:{String(mechanic.at%60).padStart(2,'0')} · {mechanic.name[locale]}</a></li>)}</ol></AtlasDisclosure>
     </footer>
   </article>;
-  return <div ref={guideRef} className={styles.guide} onClickCapture={openBossLink} data-voidspire-guide data-guide-boss={selection.boss} data-difficulty={selection.difficulty}>
+  return <div ref={guideRef} className={styles.guide} style={raidHubControlLayout('the-voidspire')} onClickCapture={openBossLink} data-voidspire-guide data-guide-boss={selection.boss} data-difficulty={selection.difficulty}>
+    <VoidspireGuideMotion encounter={selection.boss} />
     <AtlasTabs orientation={wide ? 'vertical' : 'horizontal'} className={styles.bossTabs} label={t.bosses} value={selection.boss} onChange={slug => select({boss:slug})} tabs={[
       ...bosses.map((item,index) => ({id:item.slug,label:<span className={styles.bossChoice}><Image src={item.artwork} width={52} height={52} alt="" /><span><small>{String(index+1).padStart(2,'0')}</small>{locale === 'ru' ? item.nameRu : item.nameEn}</span></span>,content:selection.boss === item.slug ? content : null})),
       ...(pulls ? [{id:'trash',label:<span className={styles.trashChoice}>{t.trash}</span>,content:selection.boss === 'trash' ? <RaidPullWorkspace plan={pulls} locale={locale} guideSpecId={selection.specId} guideSpecPicker={specPicker} onGuideSpecChange={specId => select({specId})} /> : null}] : []),

@@ -4,6 +4,7 @@ import { voidspireBeginnerTerms } from '@/lib/data/wow/raid/voidspireBeginnerGui
 import type { GuideMechanic, VideoBossGuide } from '@/lib/data/wow/raid/voidspireVideoGuide';
 import { voidspireRoleActions } from '@/lib/data/wow/raid/voidspireRoleTactics';
 import { voidspireInterruptTargets, type InterruptTarget } from '@/lib/data/wow/raid/voidspireInterruptTargets';
+import { RaidPlaque } from './raidMaterial';
 import { VoidspireGuideHint } from './VoidspireGuideHint';
 import { guideCounters, guideRole } from './voidspireGuideCounters';
 import { voidspireGuideCopy } from './voidspireGuideCopy';
@@ -14,7 +15,7 @@ type Props = { guide: VideoBossGuide; locale: 'ru' | 'en'; difficulty: 'normal' 
 export function VoidspireGuideMechanics({ guide, locale, difficulty, specId }: Props) {
   const t = voidspireGuideCopy[locale];
   const role = guideRole(specId);
-  return <section className={styles.mechanics} aria-labelledby="guide-mechanics-title">
+  return <RaidPlaque as="section" raid="the-voidspire" className={`${styles.materialPanel} ${styles.mechanics}`} aria-labelledby="guide-mechanics-title">
     <h3 id="guide-mechanics-title">{t.mechanics}</h3>
     <div className={styles.mechanicHead} aria-hidden="true"><span>{t.signal}</span><span>{t.response}</span></div>
     <ol className={styles.rows}>{guide.mechanics.map(mechanic => {
@@ -35,7 +36,7 @@ export function VoidspireGuideMechanics({ guide, locale, difficulty, specId }: P
         <GuideCounterAdvice mechanic={mechanic} locale={locale} specId={specId} target={target} />
       </div>
     </li>; })}</ol>
-  </section>;
+  </RaidPlaque>;
 }
 export function GuideCounterAdvice({ mechanic, locale, specId, target }: { target?: InterruptTarget; mechanic: Pick<GuideMechanic, 'counters' | 'counterRoles'>; locale: 'ru' | 'en'; specId: number }) {
   const t = voidspireGuideCopy[locale];

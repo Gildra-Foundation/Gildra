@@ -155,17 +155,71 @@
 .hintContent a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-accent); }
 .hintContent :is(button, a):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 
-.specField { display: grid; gap: var(--atlas-space-2); width: min(100%, 400px); }
-.specField > label { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
-.specField > label > span { color: var(--atlas-accent); }
-.specTrigger.specTrigger { width: 100%; min-height: 52px; background: var(--atlas-surface-sunken); border-color: var(--atlas-line-strong); }
-.specIcon { flex: none; border-radius: 50%; object-fit: cover; }
-.specMenu.specMenu { --ui-elevated: var(--atlas-surface-raised); --ui-menu-item-h: 48px; --ui-menu-highlight-bg: var(--atlas-surface-selected); --ui-menu-highlight-fg: var(--atlas-text-strong); }
-.specMenu :global(.ui-listbox) { max-height: min(400px, 52dvh); scrollbar-width: thin; }
-.specMenu :global(.ui-listbox__option) { min-height: 48px; gap: var(--atlas-space-3); }
-.specMenu :global(.ui-menu-label) { color: var(--atlas-accent); border-top: 1px solid var(--atlas-line); padding-block: var(--atlas-space-3); }
-.specMenu :global(.ui-listbox__description) { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
-@media (max-width: 700px) { .specField { width: 100%; } }
-@media (forced-colors: active) { .specTrigger.specTrigger { border: 1px solid ButtonText; background: ButtonFace; } }
-
 .counterGroup > span > .hintTrigger { min-height: 32px; color: var(--atlas-accent); font-size: var(--atlas-text-meta); }
+
+/* Voidspire's painted nine-slice frame leaves the live title and controls clear. */
+.bossTabs > :global([role="tablist"]) > button {
+  position: relative;
+  isolation: isolate;
+  border: 0;
+  border-radius: 0;
+  padding: var(--atlas-space-4) var(--atlas-space-5);
+  background: transparent;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  transition: transform var(--atlas-duration-fast) var(--atlas-ease), color var(--atlas-duration-fast) var(--atlas-ease);
+}
+.bossTabs > :global([role="tablist"]) > button::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  border: solid transparent;
+  border-image-source: var(--raid-panel-image);
+  border-image-slice: var(--raid-panel-slice);
+  border-width: var(--raid-panel-width-mobile);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  background: var(--atlas-surface-sunken);
+  background-clip: padding-box;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+}
+.bossTabs > :global([role="tablist"]) > button::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: var(--atlas-space-3);
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent, var(--atlas-accent-wash), transparent);
+  opacity: 0;
+}
+.bossTabs > :global([role="tablist"]) > button[aria-selected="true"] { background: transparent; color: var(--atlas-text-strong); }
+.bossTabs > :global([role="tablist"]) > button[aria-selected="true"]::before { background-color: var(--atlas-surface-selected); }
+.bossTabs > :global([role="tablist"]) > button:focus-visible { outline-offset: var(--atlas-space-1); }
+.bossTabs > :global([role="tablist"]) > button > :global([data-flip-id]) { inset-inline: var(--atlas-space-5); bottom: var(--atlas-space-2); }
+.materialPanel.materialPanel { border: 0; border-radius: 0; background: transparent; padding: var(--atlas-space-5); }
+.materialPanel.materialPanel::before { border-image-slice: var(--mythic-panel-slice); background-color: var(--material-base); }
+.materialPanel.flow { padding-block: var(--atlas-space-2); }
+.materialPanel h3 { text-shadow: 0 1px 3px var(--atlas-bg); }
+@media (hover: hover) and (pointer: fine) {
+  .guide[data-guide-motion="ready"] .bossTabs > :global([role="tablist"]) > button:hover { transform: translateY(-1px); color: var(--atlas-text-strong); }
+  .guide[data-guide-motion="ready"] .bossTabs > :global([role="tablist"]) > button:hover::after { animation: voidspireFrameGlint calc(var(--atlas-duration-slow) * 1.5) var(--atlas-ease) both; }
+}
+@keyframes voidspireFrameGlint { from { opacity: 0; transform: translateX(-6px); } 45% { opacity: 1; } to { opacity: 0; transform: translateX(6px); } }
+@media (max-width: 700px) {
+  .bossTabs > :global([role="tablist"]) > button { padding: var(--atlas-space-3) var(--atlas-space-4); flex-basis: 200px; }
+  .materialPanel.materialPanel { padding: var(--atlas-space-5); }
+  .materialPanel.flow { padding-block: var(--atlas-space-2); }
+}
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .bossTabs > :global([role="tablist"]) > button { transform: none !important; transition: none; }
+  .bossTabs > :global([role="tablist"]) > button::after { animation: none !important; opacity: 0; }
+}
+:global(:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .bossTabs > :global([role="tablist"]) > button { transform: none !important; transition: none; }
+:global(:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .bossTabs > :global([role="tablist"]) > button::after { animation: none !important; opacity: 0; }
+@media (forced-colors: active) {
+  .bossTabs > :global([role="tablist"]) > button { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
+  .bossTabs > :global([role="tablist"]) > button[aria-selected="true"] { background: ButtonFace; color: ButtonText; }
+  .bossTabs > :global([role="tablist"]) > button::before, .bossTabs > :global([role="tablist"]) > button::after { display: none; }
+  .materialPanel.materialPanel { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+}

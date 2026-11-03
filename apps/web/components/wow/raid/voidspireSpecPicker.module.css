@@ -1,0 +1,58 @@
+/* atlas:strict — two class/spec controls in the measured Voidspire panel frame. */
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3); flex: 1 1 100%; width: 100%; min-width: 0; }
+.field { display: grid; align-content: start; gap: var(--atlas-space-2); min-width: 0; }
+.field > label { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.field > label > span { color: var(--atlas-accent); }
+.field .trigger:global(.ui-select) {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 68px;
+  height: auto;
+  padding: var(--atlas-space-3) var(--atlas-space-5);
+  gap: var(--atlas-space-2);
+  border: 0;
+  border-radius: var(--atlas-radius-control);
+  background: transparent;
+  color: var(--atlas-text-strong);
+  box-shadow: none;
+  font-size: var(--atlas-text-small);
+  line-height: var(--atlas-leading-snug);
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.trigger::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  height: auto;
+  translate: none;
+  border: solid transparent;
+  border-width: var(--raid-panel-width-mobile);
+  border-image-source: var(--raid-panel-image);
+  border-image-slice: var(--raid-panel-slice);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  background: var(--atlas-surface-sunken);
+  background-clip: padding-box;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  content: '';
+  pointer-events: none;
+}
+.trigger :global(.ui-select__value) { white-space: normal; overflow-wrap: anywhere; }
+.trigger :global(.ui-select__icon) { flex: none; width: 30px; height: 30px; }
+.trigger :global(.ui-select__chevron) { color: var(--atlas-text-muted); }
+.field .trigger:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.field .trigger:disabled { opacity: .6; }
+.icon { display: block; flex: none; width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+.menu.menu { --ui-elevated: var(--atlas-surface-raised); --ui-menu-item-h: 48px; --ui-menu-highlight-bg: var(--atlas-surface-selected); --ui-menu-highlight-fg: var(--atlas-text-strong); }
+.menu :global(.ui-listbox) { max-height: min(400px, 52dvh); scrollbar-width: thin; }
+.menu :global(.ui-listbox__option) { min-height: 48px; gap: var(--atlas-space-3); }
+.menu :global(.ui-listbox__description) { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.menu :global(.ui-menu-item__icon) { width: 30px; height: 30px; }
+@media (max-width: 600px) { .fields { grid-template-columns: minmax(0, 1fr); } }
+@media (forced-colors: active) {
+  .trigger::before { display: none; }
+  .field .trigger:global(.ui-select) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
+  .field .trigger:disabled { opacity: 1; color: GrayText; border-color: GrayText; }
+  .field .trigger:focus-visible { outline-color: Highlight; }
+}
