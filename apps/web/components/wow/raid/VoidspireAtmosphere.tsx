@@ -5,7 +5,7 @@ import { lessMotion, subscribeSiteMotion } from '@gildra/atlas-ui/motionPreferen
 import styles from './voidspirePageBackdrop.module.css';
 
 // Stable positions render identically on the server and the client.
-const motes = Array.from({ length: 12 }, (_, index) => ({
+const motes = Array.from({ length: 24 }, (_, index) => ({
   x: 5 + (index * 23.7) % 90,
   y: 8 + (index * 31.3) % 84,
   duration: 14 + index % 5 * 3,

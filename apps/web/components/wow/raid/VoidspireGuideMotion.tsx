@@ -8,7 +8,7 @@ function milliseconds(value: string, fallback: number) {
   return match ? Number(match[1]) * (match[2] === 's' ? 1000 : 1) : fallback;
 }
 
-/** A short Valyro-spring arrival when the encounter changes. Content is never hidden. */
+/** A brief illumination when the encounter changes. Content and hit areas stay still. */
 export function VoidspireGuideMotion({ encounter }: { encounter: string }) {
   useEffect(() => {
     const root = document.querySelector<HTMLElement>('[data-voidspire-guide]');
@@ -34,7 +34,7 @@ export function VoidspireGuideMotion({ encounter }: { encounter: string }) {
       const reveal = (element: HTMLElement, index = 0) => {
         if (reduced() || element.contains(document.activeElement)) return;
         try {
-          const animation = element.animate([{ opacity: .65, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { duration, delay: Math.min(index, 2) * stagger, easing, fill: 'backwards' });
+          const animation = element.animate([{ opacity: .65 }, { opacity: 1 }], { duration, delay: Math.min(index, 2) * stagger, easing, fill: 'backwards' });
           animation.id = 'voidspire-arrive';
           running.push(animation);
         } catch {

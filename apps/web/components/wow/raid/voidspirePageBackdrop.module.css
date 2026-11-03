@@ -6,7 +6,7 @@
 .image { object-fit: cover; object-position: center top; }
 .veil { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 72%, transparent), color-mix(in srgb, var(--atlas-bg) 38%, transparent) 48%, color-mix(in srgb, var(--atlas-bg) 58%, transparent)), linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 20%, transparent), color-mix(in srgb, var(--atlas-bg) 50%, transparent) 65%); }
 
-/* Two soft banks of violet mist and sparse motes; only transform/opacity move. */
+/* Two soft banks of violet mist and scattered motes; only transform/opacity move. */
 .atmosphere { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .mist {
   position: absolute;
@@ -45,7 +45,7 @@
 }
 @keyframes descend { from { transform: translateY(0); } to { transform: translateY(calc(100dvh - 100%)); } }
 
-@media (max-width: 700px) { .veil { background: color-mix(in srgb, var(--atlas-bg) 60%, transparent); } .motes i:nth-child(n+7) { display: none; } .mist { opacity: .3; } .farMist { opacity: .18; } }
+@media (max-width: 700px) { .veil { background: color-mix(in srgb, var(--atlas-bg) 60%, transparent); } .motes i:nth-child(n+13) { display: none; } .mist { opacity: .3; } .farMist { opacity: .18; } }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
   .painting { animation: none !important; transform: none !important; will-change: auto; }
   .atmosphere { display: none; }
