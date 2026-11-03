@@ -37,6 +37,13 @@ function subscribeWide(callback: () => void) {
 }
 const wideSnapshot = () => window.matchMedia('(min-width: 1100px)').matches;
 
+function SelectionSapphires() {
+  return <span className={styles.sapphires} data-guide-sapphires aria-hidden="true">
+    <span data-sapphire-side="left"><i data-sapphire /><i data-sapphire /><i data-sapphire /></span>
+    <span data-sapphire-side="right"><i data-sapphire /><i data-sapphire /><i data-sapphire /></span>
+  </span>;
+}
+
 export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]; locale: 'ru' | 'en'; pulls: RaidPullPlan | null }) {
   const wide = useSyncExternalStore(subscribeWide, wideSnapshot, () => false);
   const guideRef = useRef<HTMLDivElement>(null);
@@ -121,8 +128,8 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
   return <div ref={guideRef} className={styles.guide} style={raidHubControlLayout('the-voidspire')} onClickCapture={openBossLink} data-voidspire-guide data-guide-boss={selection.boss} data-difficulty={selection.difficulty}>
     <VoidspireGuideMotion encounter={selection.boss} />
     <AtlasTabs orientation={wide ? 'vertical' : 'horizontal'} className={styles.bossTabs} label={t.bosses} value={selection.boss} onChange={slug => select({boss:slug})} tabs={[
-      ...bosses.map((item,index) => ({id:item.slug,label:<span className={styles.bossChoice}><Image src={item.artwork} width={52} height={52} alt="" /><span><small>{String(index+1).padStart(2,'0')}</small>{locale === 'ru' ? item.nameRu : item.nameEn}</span></span>,content:selection.boss === item.slug ? content : null})),
-      ...(pulls ? [{id:'trash',label:<span className={styles.trashChoice}>{t.trash}</span>,content:selection.boss === 'trash' ? <RaidPullWorkspace plan={pulls} locale={locale} guideSpecId={selection.specId} guideSpecPicker={specPicker} onGuideSpecChange={specId => select({specId})} /> : null}] : []),
+      ...bosses.map((item,index) => ({id:item.slug,label:<><SelectionSapphires /><span className={styles.bossChoice}><Image src={item.artwork} width={52} height={52} alt="" /><span><small>{String(index+1).padStart(2,'0')}</small>{locale === 'ru' ? item.nameRu : item.nameEn}</span></span></>,content:selection.boss === item.slug ? content : null})),
+      ...(pulls ? [{id:'trash',label:<><SelectionSapphires /><span className={styles.trashChoice}>{t.trash}</span></>,content:selection.boss === 'trash' ? <RaidPullWorkspace plan={pulls} locale={locale} guideSpecId={selection.specId} guideSpecPicker={specPicker} onGuideSpecChange={specId => select({specId})} /> : null}] : []),
     ]} />
   </div>;
 }

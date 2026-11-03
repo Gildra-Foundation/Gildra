@@ -213,7 +213,7 @@
   box-shadow: var(--atlas-shadow-card), inset 0 0 22px color-mix(in srgb, var(--atlas-dungeon-void-accent) 20%, transparent), inset 0 0 0 1px var(--atlas-dungeon-void-accent);
 }
 .bossTabs > :global([role="tablist"]) > button:focus-visible { outline-offset: var(--atlas-space-1); }
-.bossTabs > :global([role="tablist"]) > button > :global([data-flip-id]) { inset-inline: var(--atlas-space-5); bottom: 14px; }
+.bossTabs > :global([role="tablist"]) > button > :global([data-flip-id]) { display: none; }
 .bossChoice img { box-shadow: 0 2px 8px var(--atlas-bg); }
 .materialPanel.materialPanel, .plaque.plaque { border: 0; border-radius: var(--atlas-radius-control); background: transparent; padding: var(--atlas-space-6); }
 .materialPanel.materialPanel::before, .plaque.plaque::before { --frame-x: 23.184px; --frame-y: 28.152px; border-image-width: var(--frame-y) var(--frame-x); border-image-slice: var(--mythic-panel-slice); border-width: 28.152px 23.184px; background: transparent; background-clip: padding-box; }
@@ -284,10 +284,6 @@
 }
 
 /* Void light stays inside the rounded glass; the painted frame never casts a box. */
-.guide[data-guide-motion="ready"] .bossTabs > [role="tablist"] > button[aria-selected="true"]::after { animation: voidspireFrameAwaken calc(var(--atlas-duration-slow) * 1.6) var(--atlas-ease); }
-@keyframes voidspireFrameAwaken {
-  45% { box-shadow: var(--atlas-shadow-card), inset 0 0 28px color-mix(in srgb, var(--atlas-dungeon-void-accent-strong) 48%, transparent), inset 0 0 0 1px var(--atlas-dungeon-void-accent-strong); }
-}
 @media (hover: hover) and (pointer: fine) {
   .guide[data-guide-motion="ready"] .bossTabs > [role="tablist"] > button:hover::after { box-shadow: var(--atlas-shadow-card), inset 0 0 20px color-mix(in srgb, var(--atlas-dungeon-void-accent) 24%, transparent), inset 0 0 0 1px var(--atlas-dungeon-void-accent); }
 }
@@ -295,4 +291,45 @@
 .guide[data-guide-motion="static"] .bossTabs > [role="tablist"] > button::after { animation: none; transition: none; }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
   .guide .bossTabs > [role="tablist"] > button::after { animation: none; transition: none; }
+}
+
+/* Persistent facets reverse smoothly when selection changes during a transition. */
+.sapphires { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.sapphires > span { position: absolute; top: 50%; width: 12px; height: 54px; transform: translateY(-50%); }
+.sapphires > [data-sapphire-side="left"] { left: 3px; --sapphire-offset: -4px; }
+.sapphires > [data-sapphire-side="right"] { right: 3px; --sapphire-offset: 4px; }
+.sapphires > span::before {
+  content: ""; position: absolute; inset: -8px -10px; opacity: 0;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--atlas-info) 38%, transparent), transparent 70%);
+  transition: opacity var(--atlas-duration-slow) var(--atlas-ease);
+}
+.sapphires i {
+  position: absolute; left: 2px; width: 8px; height: 16px; opacity: 0;
+  clip-path: polygon(50% 0, 90% 25%, 100% 60%, 50% 100%, 0 60%, 10% 25%);
+  background: conic-gradient(from 45deg at 50% 42%, var(--atlas-dungeon-nalorakk-red-deep) 0deg 90deg, var(--atlas-info) 90deg 180deg, var(--atlas-dungeon-nalorakk-accent-strong) 180deg 225deg, var(--atlas-info) 225deg 270deg, var(--atlas-dungeon-void-red-deep) 270deg);
+  transform: translateX(var(--sapphire-offset)) scale(.55);
+  transition: opacity var(--atlas-duration-fast) var(--atlas-ease), transform var(--atlas-duration-slow) var(--atlas-ease);
+}
+.sapphires i::after {
+  content: ""; position: absolute; inset: 1px 3px 5px;
+  background: linear-gradient(var(--atlas-dungeon-nalorakk-accent-strong), transparent);
+  clip-path: polygon(50% 0, 100% 40%, 50% 100%, 0 40%); opacity: .7;
+}
+.sapphires i:nth-child(1) { top: 1px; --sapphire-delay: 50ms; }
+.sapphires i:nth-child(2) { top: 16px; left: 0; width: 12px; height: 24px; --sapphire-delay: 0ms; }
+.sapphires i:nth-child(3) { top: 37px; --sapphire-delay: 100ms; }
+.bossTabs > [role="tablist"] > button[aria-selected="true"] .sapphires i {
+  opacity: 1; transform: none;
+  transition-duration: calc(var(--atlas-duration-slow) * 1.7);
+  transition-delay: var(--sapphire-delay);
+}
+.bossTabs > [role="tablist"] > button[aria-selected="true"] .sapphires > span::before { opacity: 1; }
+.guide[data-guide-motion="static"] .sapphires i,
+.guide[data-guide-motion="static"] .sapphires > span::before { transition: none !important; }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .guide .sapphires i, .guide .sapphires > span::before { transition: none !important; }
+}
+@media (forced-colors: active) {
+  .sapphires { display: none; }
+  .bossTabs > [role="tablist"] > button[aria-selected="true"] { outline: 2px solid Highlight; outline-offset: -5px; }
 }
