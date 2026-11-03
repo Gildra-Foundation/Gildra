@@ -1,6 +1,7 @@
 import Image from "next/image";
 import manifest from "../../../public/assets/wow/raids/voidspire-page/manifest.json";
 import { VoidEye } from "./VoidEye";
+import { VoidspireAtmosphere } from "./VoidspireAtmosphere";
 import styles from "./voidspirePageBackdrop.module.css";
 
 /** One continuous environment painting, separate from the raid's playable maps. */
@@ -14,6 +15,7 @@ export function VoidspirePageBackdrop() {
         <VoidEye imageSize={[scene.width, scene.height]} focus={[0.5, 0]} eye={[eyeX, eyeY]} eyeRadius={scene.geometry.originalEyeRadiusScaled} />
       </div>
       <div className={styles.veil} />
+      <VoidspireAtmosphere />
     </div>
   </div>;
 }

@@ -103,7 +103,7 @@
 .diagramAura > small { font-size: var(--atlas-text-meta); color: var(--atlas-text-muted); }
 .sentinelsDiagram { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--atlas-space-3); }
 @media (min-width: 1100px) {
-  .bossTabs { grid-template-columns: 212px minmax(0,1fr); align-items: start; }
+  .bossTabs { grid-template-columns: 248px minmax(0,1fr); align-items: start; }
   .bossTabs > :global([role="tablist"]) { position: sticky; top: calc(var(--atlas-sticky-top) + var(--atlas-space-3)); display: grid; gap: var(--atlas-space-2); overflow: visible; }
   .bossTabs > :global([role="tablist"]) > button { min-height: 80px; }
   .bossTabs > :global([role="tablist"]) > button:last-child { margin-top: var(--atlas-space-3); min-height: 52px; }
@@ -157,7 +157,7 @@
 
 .counterGroup > span > .hintTrigger { min-height: 32px; color: var(--atlas-accent); font-size: var(--atlas-text-meta); }
 
-/* Thin painted edges sit above inset glass, so the scenery remains visible. */
+/* Preserve the native 136:112 corner proportions over inset glass. */
 .guide {
   --guide-glass: color-mix(in srgb, var(--atlas-bg) 78%, transparent);
   --guide-sheen: linear-gradient(135deg, color-mix(in srgb, var(--atlas-accent) 9%, transparent), transparent 55%);
@@ -170,7 +170,8 @@
   isolation: isolate;
   border: 0;
   border-radius: var(--atlas-radius-control);
-  padding: var(--atlas-space-4);
+  min-height: 88px;
+  padding: var(--atlas-space-5);
   background: transparent;
   text-shadow: 0 1px 3px var(--atlas-bg);
   transition: transform var(--guide-release) var(--guide-spring), color var(--atlas-duration-fast) var(--atlas-ease);
@@ -181,10 +182,13 @@
   z-index: -1;
   inset: 0;
   pointer-events: none;
-  border: 7px solid transparent;
+  border: solid transparent;
+  --frame-x: 17.92px;
+  --frame-y: 21.76px;
+  border-width: var(--frame-y) var(--frame-x);
   border-image-source: var(--raid-panel-image);
   border-image-slice: var(--raid-panel-slice);
-  border-image-width: 1;
+  border-image-width: var(--frame-y) var(--frame-x);
   border-image-repeat: stretch;
   background: transparent;
   background-clip: padding-box;
@@ -194,7 +198,7 @@
   content: "";
   position: absolute;
   z-index: -2;
-  inset: 4px;
+  inset: 8px 7px;
   border: 1px solid var(--atlas-glass-edge);
   border-radius: var(--atlas-radius-control);
   pointer-events: none;
@@ -211,13 +215,23 @@
 .bossTabs > :global([role="tablist"]) > button:focus-visible { outline-offset: var(--atlas-space-1); }
 .bossTabs > :global([role="tablist"]) > button > :global([data-flip-id]) { inset-inline: var(--atlas-space-4); bottom: var(--atlas-space-2); }
 .bossChoice img { box-shadow: 0 2px 8px var(--atlas-bg); transition: transform var(--guide-release) var(--guide-spring); }
-.materialPanel.materialPanel, .plaque.plaque { border: 0; border-radius: var(--atlas-radius-control); background: transparent; padding: var(--atlas-space-5); }
-.materialPanel.materialPanel::before, .plaque.plaque::before { border-image-slice: var(--mythic-panel-slice); border-width: 9px; background: transparent; background-clip: padding-box; }
+.materialPanel.materialPanel, .plaque.plaque { border: 0; border-radius: var(--atlas-radius-control); background: transparent; padding: var(--atlas-space-6); }
+.materialPanel.materialPanel::before, .plaque.plaque::before { --frame-x: 20.16px; --frame-y: 24.48px; border-image-width: var(--frame-y) var(--frame-x); border-image-slice: var(--mythic-panel-slice); border-width: 24.48px 20.16px; background: transparent; background-clip: padding-box; }
+.bossTabs > [role="tablist"] > button::before, .materialPanel.materialPanel::before, .plaque.plaque::before {
+  /* Keep painted corners intact; fade only the source asset's inner face. */
+  mask:
+    linear-gradient(#000, #000) top left / var(--frame-x) var(--frame-y) no-repeat,
+    linear-gradient(#000, #000) top right / var(--frame-x) var(--frame-y) no-repeat,
+    linear-gradient(#000, #000) bottom left / var(--frame-x) var(--frame-y) no-repeat,
+    linear-gradient(#000, #000) bottom right / var(--frame-x) var(--frame-y) no-repeat,
+    linear-gradient(to right, #000 7px, transparent var(--frame-x), transparent calc(100% - var(--frame-x)), #000 calc(100% - 7px)),
+    linear-gradient(to bottom, #000 8px, transparent var(--frame-y), transparent calc(100% - var(--frame-y)), #000 calc(100% - 8px));
+}
 .materialPanel.materialPanel::after, .plaque.plaque::after {
   content: "";
   position: absolute;
   z-index: -2;
-  inset: 5px;
+  inset: 9px 8px;
   border: 1px solid var(--atlas-glass-edge);
   border-radius: var(--atlas-radius-control);
   background: var(--guide-sheen), var(--guide-glass);
@@ -227,7 +241,7 @@
   transition: box-shadow var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
 }
 .materialPanel:focus-within::after { border-color: var(--atlas-accent); }
-.materialPanel.flow { padding-block: var(--atlas-space-2); }
+.materialPanel.flow { padding-block: var(--atlas-space-4); }
 .materialPanel h3 { text-shadow: 0 1px 3px var(--atlas-bg); }
 .flow details { border: 0; }
 .flow summary { display: flex; width: 100%; min-height: 48px; justify-content: space-between; color: var(--atlas-text-strong); }
@@ -246,9 +260,9 @@
   .guide[data-guide-motion="ready"] .priorities a:hover > span:last-child { transform: translateY(3px); }
 }
 @media (max-width: 700px) {
-  .bossTabs > :global([role="tablist"]) > button { padding: var(--atlas-space-3) var(--atlas-space-4); flex-basis: 200px; }
-  .materialPanel.materialPanel, .plaque.plaque { padding: var(--atlas-space-5); }
-  .materialPanel.flow { padding-block: var(--atlas-space-2); }
+  .bossTabs > :global([role="tablist"]) > button { padding: var(--atlas-space-5); flex-basis: 232px; }
+  .materialPanel.materialPanel, .plaque.plaque { padding: var(--atlas-space-6); }
+  .materialPanel.flow { padding-block: var(--atlas-space-4); }
 }
 /* Glass and movement both have opaque/static preference fallbacks. */
 @media (prefers-reduced-transparency: reduce) {
