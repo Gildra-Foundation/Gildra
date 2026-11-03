@@ -1,4 +1,6 @@
 import Image from 'next/image';
+import { AtlasDisclosure } from '@gildra/atlas-ui/AtlasDisclosure';
+import { voidspireBeginnerTerms } from '@/lib/data/wow/raid/voidspireBeginnerGuide';
 import type { GuideMechanic, VideoBossGuide } from '@/lib/data/wow/raid/voidspireVideoGuide';
 import { voidspireRoleActions } from '@/lib/data/wow/raid/voidspireRoleTactics';
 import { voidspireInterruptTargets, type InterruptTarget } from '@/lib/data/wow/raid/voidspireInterruptTargets';
@@ -14,10 +16,11 @@ export function VoidspireGuideMechanics({ guide, locale, difficulty, specId }: P
   const role = guideRole(specId);
   return <section className={styles.mechanics} aria-labelledby="guide-mechanics-title">
     <h3 id="guide-mechanics-title">{t.mechanics}</h3>
+    <div className={styles.mechanicHead} aria-hidden="true"><span>{t.signal}</span><span>{t.response}</span></div>
     <ol className={styles.rows}>{guide.mechanics.map(mechanic => {
       const target = voidspireInterruptTargets[guide.slug]?.[mechanic.id];
       const action = role ? voidspireRoleActions[guide.slug]?.[mechanic.id]?.[role] : undefined;
-      return <li key={mechanic.id} data-guide-mechanic={mechanic.id}>
+      return <li key={mechanic.id} id={`guide-mechanic-${mechanic.id}`} tabIndex={-1} data-guide-mechanic={mechanic.id}>
       <div className={styles.signal}>
         <div className={styles.spellHeading}>
           {mechanic.spellId && String(mechanic.spellId) in records.spells && <Image src={`/assets/wow/raids/reviewed-mechanics/${mechanic.spellId}.jpg`} width={30} height={30} alt="" />}
@@ -25,7 +28,7 @@ export function VoidspireGuideMechanics({ guide, locale, difficulty, specId }: P
         </div>
         {target && <InterruptIdentity target={target} locale={locale} />}
       </div>
-      <div className={styles.response}>
+      <div className={styles.response}><span className={styles.mobileResponseLabel}>{t.response}</span>
         <p>{mechanic.response[locale]}</p>
         {action && <p className={styles.roleAction} data-role-action={role}><b>{t.roles[role!]}: </b>{action[locale]}</p>}
         {difficulty === 'heroic' && mechanic.heroic && <p className={styles.heroic} data-heroic-note><b>{t.heroicNote}: </b>{mechanic.heroic[locale]}</p>}
@@ -41,8 +44,8 @@ export function GuideCounterAdvice({ mechanic, locale, specId, target }: { targe
   const groups = mechanic.counters?.map(kind => ({ kind, tools: guideCounters(kind, specId) })) ?? [];
   if (!groups.length) return null;
   if (groups.every(group => !group.tools.length)) return <p className={styles.noTool}>{t.noTool[groups[0].kind]}</p>;
-  return <div className={styles.counters}>{groups.map(({kind, tools}) => <div className={styles.counterGroup} key={kind} data-counter-kind={kind}>
-    <span>{kind === 'interrupt' && specId ? t.yourKick : t.kinds[kind]}</span>
+  const advice = <div className={styles.counters}>{groups.map(({kind, tools}) => <div className={styles.counterGroup} key={kind} data-counter-kind={kind}>
+    <span>{kind === 'interrupt' || kind === 'defend' || kind === 'aoe' ? <VoidspireGuideHint title={kind === 'interrupt' && specId ? t.yourKick : t.kinds[kind]} locale={locale} detail={<p>{voidspireBeginnerTerms[kind === 'interrupt' ? 'interrupt' : 'defensive'].detail[locale]}</p>} /> : t.kinds[kind]}</span>
     {!tools.length && <p className={styles.noTool}>{t.noTool[kind]}</p>}
     <ul>{tools.map(({spell, talent, note}) => <li key={spell.id}>
       {kind === 'interrupt' && target ? <VoidspireGuideHint title={spell.name[locale]} locale={locale} spellId={spell.id} source={`https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}spell=${spell.id}`} detail={<>
@@ -55,6 +58,7 @@ export function GuideCounterAdvice({ mechanic, locale, specId, target }: { targe
       {note && <small className={styles.toolNote}>{note[locale]}</small>}
     </li>)}</ul>
   </div>)}</div>;
+  return specId ? advice : <AtlasDisclosure summary={t.raidAbilities}>{advice}</AtlasDisclosure>;
 }
 
 function InterruptIdentity({ target, locale }: { target: InterruptTarget; locale: 'ru' | 'en' }) {

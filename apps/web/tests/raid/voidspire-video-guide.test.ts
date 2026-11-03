@@ -4,6 +4,20 @@ import { readGuideSelection, guideHash } from '../../components/wow/raid/voidspi
 import { guideCounters } from '../../components/wow/raid/voidspireGuideCounters';
 import { raidBossGuideHref } from '../../components/wow/raid/raidBossGuideHref';
 import { voidspireVideoGuides } from '../../lib/data/wow/raid/voidspireVideoGuide';
+import { voidspireBeginnerGuides } from '../../lib/data/wow/raid/voidspireBeginnerGuide';
+
+test('beginner shortcuts resolve to the selected encounter without changing its role or difficulty', () => {
+  for (const boss of voidspireVideoGuides) {
+    const briefing = voidspireBeginnerGuides[boss.slug];
+    assert.ok(briefing, boss.slug);
+    const selection = {boss:boss.slug, difficulty:'heroic' as const, specId:66};
+    assert.equal(new Set(briefing.priorities.map(item => item.mechanicId)).size, 3);
+    for (const priority of briefing.priorities) {
+      assert.ok(boss.mechanics.some(mechanic => mechanic.id === priority.mechanicId), `${boss.slug}/${priority.mechanicId}`);
+      assert.deepEqual(readGuideSelection(`${guideHash(selection)}&mechanic=${priority.mechanicId}`), selection);
+    }
+  }
+});
 
 test('boss deep links never select a trash pull; malformed state safely falls back', () => {
   for (const boss of voidspireVideoGuides) {

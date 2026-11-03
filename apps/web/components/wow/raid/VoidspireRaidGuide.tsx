@@ -7,13 +7,14 @@ import { VoidspireGuideClient } from './VoidspireGuideClient';
 import { getRaidPullPlan } from './raidPullPlans.server';
 import { voidspireGuideCopy } from './voidspireGuideCopy';
 import backdrop from './voidspirePageBackdrop.module.css';
+import styles from './voidspireGuide.module.css';
 
 export function VoidspireRaidGuide({ raid, locale }: { raid: RaidDefinition; locale: 'ru' | 'en' }) {
   const name = locale === 'ru' ? raid.nameRu : raid.nameEn;
   const bosses = raid.bosses.map(({slug, nameRu, nameEn, artwork}) => ({slug, nameRu, nameEn, artwork}));
   return <AtlasFrame lang={locale} className={backdrop.page} morphKey="/wow/raids/the-voidspire" tint={`${raid.accent}2e`}>
     <VoidspirePageBackdrop />
-    <AtlasHero breadcrumbs={trail(locale, 'raids', { label:name })} title={name} eyebrow={voidspireGuideCopy[locale].season} actions={<AtlasShareButton title={name} locale={locale} />} />
-    <AtlasSection id="encounters"><VoidspireGuideClient bosses={bosses} locale={locale} pulls={getRaidPullPlan(raid.slug) ?? null} /></AtlasSection>
+    <AtlasHero className={styles.pageHero} breadcrumbs={trail(locale, 'raids', { label:name })} title={name} eyebrow={voidspireGuideCopy[locale].season} toolbar={<AtlasShareButton title={name} locale={locale} />} />
+    <AtlasSection id="encounters" className={styles.encountersSection}><VoidspireGuideClient bosses={bosses} locale={locale} pulls={getRaidPullPlan(raid.slug) ?? null} /></AtlasSection>
   </AtlasFrame>;
 }

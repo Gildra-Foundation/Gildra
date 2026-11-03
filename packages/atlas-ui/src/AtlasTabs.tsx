@@ -14,7 +14,7 @@ export type AtlasTab = { id: string; label: ReactNode; content: ReactNode; count
  * tab list follows the ARIA pattern: arrows / Home / End move and select,
  * one tab stop. `segmented` is the compact pill group for two–four options.
  */
-export function AtlasTabs({ tabs, label, defaultTab, value, variant = "underline", className, onChange }: {
+export function AtlasTabs({ tabs, label, defaultTab, value, variant = "underline", orientation = "horizontal", className, onChange }: {
   tabs: AtlasTab[];
   /** Accessible name of the tab list. */
   label: string;
@@ -22,6 +22,8 @@ export function AtlasTabs({ tabs, label, defaultTab, value, variant = "underline
   /** Controlled selection: the parent owns the active tab (with onChange). */
   value?: string;
   variant?: "underline" | "segmented";
+  /** Match the visible tab-list layout; vertical lists use Up/Down arrows. */
+  orientation?: "horizontal" | "vertical";
   className?: string;
   onChange?: (id: string) => void;
 }) {
@@ -48,8 +50,10 @@ export function AtlasTabs({ tabs, label, defaultTab, value, variant = "underline
   };
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const index = tabs.findIndex((tab) => tab.id === active);
-    const target = event.key === "ArrowRight" ? (index + 1) % tabs.length
-      : event.key === "ArrowLeft" ? (index - 1 + tabs.length) % tabs.length
+    const nextKey = orientation === "vertical" ? "ArrowDown" : "ArrowRight";
+    const previousKey = orientation === "vertical" ? "ArrowUp" : "ArrowLeft";
+    const target = event.key === nextKey ? (index + 1) % tabs.length
+      : event.key === previousKey ? (index - 1 + tabs.length) % tabs.length
         : event.key === "Home" ? 0
           : event.key === "End" ? tabs.length - 1
             : -1;
@@ -60,7 +64,7 @@ export function AtlasTabs({ tabs, label, defaultTab, value, variant = "underline
 
   return (
     <div className={clsx(styles.tabs, styles[variant], className)}>
-      <div ref={listRef} className={styles.list} role="tablist" aria-label={label} onKeyDown={onKeyDown}>
+      <div ref={listRef} className={styles.list} role="tablist" aria-label={label} aria-orientation={orientation} onKeyDown={onKeyDown}>
         {tabs.map((tab) => {
           const selected = tab.id === active;
           return (
