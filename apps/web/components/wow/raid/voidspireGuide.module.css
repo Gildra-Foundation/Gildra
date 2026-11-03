@@ -157,16 +157,23 @@
 
 .counterGroup > span > .hintTrigger { min-height: 32px; color: var(--atlas-accent); font-size: var(--atlas-text-meta); }
 
-/* Voidspire's painted nine-slice frame leaves the live title and controls clear. */
+/* Thin painted edges sit above inset glass, so the scenery remains visible. */
+.guide {
+  --guide-glass: color-mix(in srgb, var(--atlas-bg) 78%, transparent);
+  --guide-sheen: linear-gradient(135deg, color-mix(in srgb, var(--atlas-accent) 9%, transparent), transparent 55%);
+  --guide-spring: var(--ui-spring-snappy, var(--atlas-ease));
+  --guide-release: calc(var(--atlas-duration-slow) * 1.36);
+}
+.bossTabs > :global([role="tablist"]) { padding: var(--atlas-space-2); gap: var(--atlas-space-3); }
 .bossTabs > :global([role="tablist"]) > button {
   position: relative;
   isolation: isolate;
   border: 0;
-  border-radius: 0;
-  padding: var(--atlas-space-4) var(--atlas-space-5);
+  border-radius: var(--atlas-radius-control);
+  padding: var(--atlas-space-4);
   background: transparent;
   text-shadow: 0 1px 3px var(--atlas-bg);
-  transition: transform var(--atlas-duration-fast) var(--atlas-ease), color var(--atlas-duration-fast) var(--atlas-ease);
+  transition: transform var(--guide-release) var(--guide-spring), color var(--atlas-duration-fast) var(--atlas-ease);
 }
 .bossTabs > :global([role="tablist"]) > button::before {
   content: "";
@@ -174,52 +181,90 @@
   z-index: -1;
   inset: 0;
   pointer-events: none;
-  border: solid transparent;
+  border: 7px solid transparent;
   border-image-source: var(--raid-panel-image);
   border-image-slice: var(--raid-panel-slice);
-  border-width: var(--raid-panel-width-mobile);
   border-image-width: 1;
   border-image-repeat: stretch;
-  background: var(--atlas-surface-sunken);
+  background: transparent;
   background-clip: padding-box;
   filter: contrast(.88) saturate(.84) brightness(.92);
 }
 .bossTabs > :global([role="tablist"]) > button::after {
   content: "";
   position: absolute;
-  z-index: -1;
-  inset: var(--atlas-space-3);
+  z-index: -2;
+  inset: 4px;
+  border: 1px solid var(--atlas-glass-edge);
+  border-radius: var(--atlas-radius-control);
   pointer-events: none;
-  background: linear-gradient(110deg, transparent, var(--atlas-accent-wash), transparent);
-  opacity: 0;
+  background: var(--guide-sheen), var(--guide-glass);
+  backdrop-filter: var(--atlas-glass-filter);
+  box-shadow: var(--atlas-shadow-card), inset 0 1px 0 var(--atlas-line-strong);
+  transition: background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 .bossTabs > :global([role="tablist"]) > button[aria-selected="true"] { background: transparent; color: var(--atlas-text-strong); }
-.bossTabs > :global([role="tablist"]) > button[aria-selected="true"]::before { background-color: var(--atlas-surface-selected); }
+.bossTabs > :global([role="tablist"]) > button[aria-selected="true"]::after {
+  background-color: color-mix(in srgb, var(--atlas-accent) 18%, var(--guide-glass));
+  box-shadow: var(--atlas-shadow-card), inset 0 0 22px var(--atlas-accent-wash), inset 0 0 0 1px var(--atlas-accent);
+}
 .bossTabs > :global([role="tablist"]) > button:focus-visible { outline-offset: var(--atlas-space-1); }
-.bossTabs > :global([role="tablist"]) > button > :global([data-flip-id]) { inset-inline: var(--atlas-space-5); bottom: var(--atlas-space-2); }
-.materialPanel.materialPanel { border: 0; border-radius: 0; background: transparent; padding: var(--atlas-space-5); }
-.materialPanel.materialPanel::before { border-image-slice: var(--mythic-panel-slice); background-color: var(--material-base); }
+.bossTabs > :global([role="tablist"]) > button > :global([data-flip-id]) { inset-inline: var(--atlas-space-4); bottom: var(--atlas-space-2); }
+.bossChoice img { box-shadow: 0 2px 8px var(--atlas-bg); transition: transform var(--guide-release) var(--guide-spring); }
+.materialPanel.materialPanel, .plaque.plaque { border: 0; border-radius: var(--atlas-radius-control); background: transparent; padding: var(--atlas-space-5); }
+.materialPanel.materialPanel::before, .plaque.plaque::before { border-image-slice: var(--mythic-panel-slice); border-width: 9px; background: transparent; background-clip: padding-box; }
+.materialPanel.materialPanel::after, .plaque.plaque::after {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: 5px;
+  border: 1px solid var(--atlas-glass-edge);
+  border-radius: var(--atlas-radius-control);
+  background: var(--guide-sheen), var(--guide-glass);
+  backdrop-filter: var(--atlas-glass-filter);
+  box-shadow: var(--atlas-shadow-panel), inset 0 1px 0 var(--atlas-line-strong);
+  pointer-events: none;
+  transition: box-shadow var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
+}
+.materialPanel:focus-within::after { border-color: var(--atlas-accent); }
 .materialPanel.flow { padding-block: var(--atlas-space-2); }
 .materialPanel h3 { text-shadow: 0 1px 3px var(--atlas-bg); }
+.flow details { border: 0; }
+.flow summary { display: flex; width: 100%; min-height: 48px; justify-content: space-between; color: var(--atlas-text-strong); }
+.guide :is(summary, .priorities a, .hintTrigger, :global(.ui-segmented-control__item)) { transition: color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease), transform var(--guide-release) var(--guide-spring); }
+.guide summary > svg, .priorities a > span:last-child { transition: transform var(--guide-release) var(--guide-spring); }
+.guide[data-guide-motion="ready"] :is(summary, .priorities a, .hintTrigger):active { transform: translateY(1px); }
+.guide[data-guide-motion="ready"] :global(.ui-segmented-control__item):is(:active, [data-guide-pressed]) { transform: scale(.97); transition-duration: var(--atlas-duration-fast); }
+.guide[data-guide-motion="ready"] .bossTabs > :global([role="tablist"]) > button:is(:active, [data-guide-pressed]) { transform: translateY(1px) scale(.97); transition-duration: var(--atlas-duration-fast); }
+.guide details[open] > summary + div { animation: voidspireDetailReveal var(--guide-release) var(--guide-spring); }
+@keyframes voidspireDetailReveal { from { opacity: .6; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 @media (hover: hover) and (pointer: fine) {
-  .guide[data-guide-motion="ready"] .bossTabs > :global([role="tablist"]) > button:hover { transform: translateY(-1px); color: var(--atlas-text-strong); }
-  .guide[data-guide-motion="ready"] .bossTabs > :global([role="tablist"]) > button:hover::after { animation: voidspireFrameGlint calc(var(--atlas-duration-slow) * 1.5) var(--atlas-ease) both; }
+  .guide[data-guide-motion="ready"] .bossTabs > :global([role="tablist"]) > button:hover:not(:active):not([data-guide-pressed]) { transform: translateY(-3px); color: var(--atlas-text-strong); }
+  .bossTabs > :global([role="tablist"]) > button:hover::after { background-color: color-mix(in srgb, var(--atlas-accent) 12%, var(--guide-glass)); box-shadow: var(--atlas-shadow-lift), inset 0 1px 0 var(--atlas-accent); }
+  .guide[data-guide-motion="ready"] .bossTabs > :global([role="tablist"]) > button:hover .bossChoice img { transform: scale(1.08); }
+  .materialPanel:hover::after, .plaque:hover::after { box-shadow: var(--atlas-shadow-lift), inset 0 1px 0 var(--atlas-line-strong); border-color: var(--atlas-line-strong); }
+  .guide[data-guide-motion="ready"] .priorities a:hover > span:last-child { transform: translateY(3px); }
 }
-@keyframes voidspireFrameGlint { from { opacity: 0; transform: translateX(-6px); } 45% { opacity: 1; } to { opacity: 0; transform: translateX(6px); } }
 @media (max-width: 700px) {
   .bossTabs > :global([role="tablist"]) > button { padding: var(--atlas-space-3) var(--atlas-space-4); flex-basis: 200px; }
-  .materialPanel.materialPanel { padding: var(--atlas-space-5); }
+  .materialPanel.materialPanel, .plaque.plaque { padding: var(--atlas-space-5); }
   .materialPanel.flow { padding-block: var(--atlas-space-2); }
 }
-@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
-  .bossTabs > :global([role="tablist"]) > button { transform: none !important; transition: none; }
-  .bossTabs > :global([role="tablist"]) > button::after { animation: none !important; opacity: 0; }
+/* Glass and movement both have opaque/static preference fallbacks. */
+@media (prefers-reduced-transparency: reduce) {
+  .guide { --guide-glass: var(--atlas-bg); --atlas-glass-filter: none; }
 }
-:global(:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .bossTabs > :global([role="tablist"]) > button { transform: none !important; transition: none; }
-:global(:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .bossTabs > :global([role="tablist"]) > button::after { animation: none !important; opacity: 0; }
+:global([data-transparency="reduced"]) .guide { --guide-glass: var(--atlas-bg); --atlas-glass-filter: none; }
+.guide[data-guide-motion="static"] :is(button, summary, a, img, svg, [data-guide-pressed]), .guide[data-guide-motion="static"] .priorities a > span { transition: none !important; }
+.guide[data-guide-motion="static"] .bossTabs > :global([role="tablist"]) > button::after, .guide[data-guide-motion="static"] :is(.materialPanel, .plaque)::after { transition: none; }
+.guide[data-guide-motion="static"] details[open] > summary + div { animation: none; }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .guide :is(button, summary, a, img, svg) { transition: none !important; }
+  .guide details[open] > summary + div { animation: none; }
+  .bossTabs > :global([role="tablist"]) > button::after, :is(.materialPanel, .plaque)::after { transition: none; }
+}
 @media (forced-colors: active) {
-  .bossTabs > :global([role="tablist"]) > button { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
+  .bossTabs > :global([role="tablist"]) > button, .materialPanel.materialPanel, .plaque.plaque { border: 1px solid CanvasText; background: Canvas; color: CanvasText; text-shadow: none; }
   .bossTabs > :global([role="tablist"]) > button[aria-selected="true"] { background: ButtonFace; color: ButtonText; }
-  .bossTabs > :global([role="tablist"]) > button::before, .bossTabs > :global([role="tablist"]) > button::after { display: none; }
-  .materialPanel.materialPanel { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .bossTabs > :global([role="tablist"]) > button::before, .bossTabs > :global([role="tablist"]) > button::after, .materialPanel::after, .plaque::after { display: none; }
 }

@@ -109,7 +109,7 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
       </RaidPlaque>
       <VoidspireBattleDiagram slug={guide.slug} locale={locale} artwork={boss.artwork} />
     </div>
-    <RaidPlaque raid="the-voidspire" className={`${styles.materialPanel} ${styles.flow}`}>
+    <RaidPlaque raid="the-voidspire" className={`${styles.materialPanel} ${styles.flow}`} data-guide-reveal>
       <AtlasDisclosure summary={t.flowDetails}><ol>{guide.phases.map((phase, index) => <li key={phase.en}><span aria-hidden="true">{index+1}</span><div><h4>{phase.title[locale]}</h4><p>{phase[locale]}</p></div></li>)}</ol></AtlasDisclosure>
     </RaidPlaque>
     <VoidspireGuideMechanics key={`${guide.slug}:${selection.specId}`} guide={guide} locale={locale} difficulty={selection.difficulty} specId={selection.specId} />

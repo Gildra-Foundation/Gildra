@@ -15,7 +15,7 @@ type Props = { guide: VideoBossGuide; locale: 'ru' | 'en'; difficulty: 'normal' 
 export function VoidspireGuideMechanics({ guide, locale, difficulty, specId }: Props) {
   const t = voidspireGuideCopy[locale];
   const role = guideRole(specId);
-  return <RaidPlaque as="section" raid="the-voidspire" className={`${styles.materialPanel} ${styles.mechanics}`} aria-labelledby="guide-mechanics-title">
+  return <RaidPlaque as="section" raid="the-voidspire" className={`${styles.materialPanel} ${styles.mechanics}`} aria-labelledby="guide-mechanics-title" data-guide-reveal>
     <h3 id="guide-mechanics-title">{t.mechanics}</h3>
     <div className={styles.mechanicHead} aria-hidden="true"><span>{t.signal}</span><span>{t.response}</span></div>
     <ol className={styles.rows}>{guide.mechanics.map(mechanic => {
