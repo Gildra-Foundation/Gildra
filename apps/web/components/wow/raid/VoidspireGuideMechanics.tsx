@@ -66,7 +66,7 @@ function InterruptIdentity({ target, locale }: { target: InterruptTarget; locale
   const t = voidspireGuideCopy[locale];
   const prefix = `https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}`;
   return <dl className={styles.interruptIdentity} data-interrupt-cast={target.spellId}>
-    <div><dt>{t.target}</dt><dd>{target.enemies.map(enemy => <VoidspireGuideHint key={enemy.name.en} title={enemy.name[locale]} detail={<p>{enemy.detail[locale]}</p>} source={enemy.npcId ? `${prefix}npc=${enemy.npcId}` : undefined} locale={locale} />)}</dd></div>
+    <div><dt>{t.target}</dt><dd>{target.enemies.map(enemy => <VoidspireGuideHint key={enemy.name.en} title={enemy.name[locale]} portrait={enemy.artwork} portraitPosition={enemy.artworkPosition} detail={<><p className={styles.hintCast}><span>{t.cast}</span><strong>{target.cast[locale]}</strong></p><p>{enemy.detail[locale]}</p></>} source={enemy.npcId ? `${prefix}npc=${enemy.npcId}` : undefined} locale={locale} />)}</dd></div>
     <div><dt>{t.cast}</dt><dd><VoidspireGuideHint title={target.cast[locale]} detail={<><p>{target.consequence[locale]}</p><p>{target.timing[locale]}</p></>} source={`${prefix}spell=${target.spellId}`} locale={locale} /></dd></div>
   </dl>;
 }

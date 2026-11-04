@@ -333,3 +333,40 @@
   .sapphires { display: none; }
   .bossTabs > [role="tablist"] > button[aria-selected="true"] { outline: 2px solid Highlight; outline-offset: -5px; }
 }
+
+/* Enemy identity cards share the same portrait and hierarchy on hover and touch. */
+.enemyHintTooltip:global(.ui-tooltip) {
+  width: min(360px, calc(100vw - 24px)); max-width: min(360px, calc(100vw - 24px));
+  padding: var(--atlas-space-4);
+  border: 1px solid color-mix(in srgb, var(--atlas-dungeon-void-accent) 55%, var(--atlas-line));
+  border-radius: var(--atlas-radius-control);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--atlas-dungeon-void-accent) 10%, transparent), transparent 65%), var(--atlas-surface-raised);
+  box-shadow: var(--atlas-shadow-panel), inset 0 1px 0 var(--atlas-line-strong);
+  color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body);
+}
+.enemyHintHeading { display: flex; align-items: center; gap: var(--atlas-space-4); min-width: 0; }
+.enemyHintHeading > :is(strong, h3) { min-width: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); line-height: var(--atlas-leading-snug); overflow-wrap: anywhere; }
+.enemyHintPortrait {
+  display: grid; place-items: center; flex: 0 0 112px; width: 112px; height: 128px; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--atlas-dungeon-void-accent) 55%, var(--atlas-line));
+  border-radius: var(--atlas-radius-control);
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--atlas-dungeon-void-accent) 22%, transparent), transparent 75%), var(--atlas-surface-sunken);
+  box-shadow: inset 0 0 20px var(--atlas-bg), 0 3px 12px color-mix(in srgb, var(--atlas-bg) 60%, transparent);
+}
+.enemyHintScene { height: 112px; }
+.enemyHintPortrait img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.hintCast { display: grid; gap: var(--atlas-space-1); padding: var(--atlas-space-3) 0; border-block: 1px solid var(--atlas-line); }
+.hintText .hintCast { margin-top: var(--atlas-space-4); }
+.hintCast > span { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.hintCast > strong { color: var(--atlas-text-strong); }
+.enemyHintContent { background: linear-gradient(135deg, color-mix(in srgb, var(--atlas-dungeon-void-accent) 8%, transparent), transparent 65%), var(--atlas-surface-raised); }
+.enemyHintContent > header { align-items: start; }
+.enemyHintContent > header > button { flex-shrink: 0; border-radius: var(--atlas-radius-control); }
+@media (max-width: 420px) {
+  .enemyHintContent > header { flex-wrap: wrap-reverse; }
+  .enemyHintContent > header > button { margin-left: auto; }
+  .enemyHintContent .enemyHintHeading { width: 100%; }
+}
+@media (forced-colors: active) {
+  .enemyHintTooltip:global(.ui-tooltip), .enemyHintContent, .enemyHintPortrait { background: Canvas; color: CanvasText; border-color: CanvasText; box-shadow: none; }
+}
