@@ -1,6 +1,7 @@
 /* atlas:strict — Battle.net sign-in card of the account pages; colours, fonts and sizes come from the atlas tokens. */
 .panel {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--atlas-space-3);
   min-width: 0;
 }
@@ -39,6 +40,8 @@
 
 .actions {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: var(--atlas-space-2);
   margin-top: var(--atlas-space-2);
 }

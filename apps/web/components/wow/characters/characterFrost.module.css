@@ -182,8 +182,8 @@
 .page .card.card {
   position: relative;
   isolation: isolate;
-  grid-template-columns: 96px minmax(0, 1fr) auto;
-  grid-template-areas: "mark copy level" "mark armory arrow";
+  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-areas: "mark copy" "level armory";
   gap: var(--atlas-space-3);
   min-height: 300px;
   padding: 72px 76px;
@@ -210,7 +210,8 @@
 .card:hover::before, .card:focus-within::before { filter: contrast(.9) saturate(.9) brightness(1.1); }
 .card:hover::after, .card:focus-within::after { opacity: .8; }
 .page .card:has(h3 a:focus-visible) { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
-.page .card h3 { font-size: var(--atlas-text-h3); line-height: var(--atlas-leading-snug); }
+.page .card h3 { font-size: var(--atlas-text-h3); line-height: var(--atlas-leading-snug); hyphens: none; }
+.page .card > svg { display: none; }
 .page .card h3 a { color: var(--atlas-text-strong); }
 .page .card p { color: var(--atlas-text-muted); }
 .page .card .level {
@@ -226,8 +227,8 @@
 }
 .page .roster .classMark {
   position: relative;
-  width: 96px;
-  height: 96px;
+  width: 72px;
+  height: 72px;
   overflow: visible;
   border: 0;
   border-radius: 0;
@@ -357,7 +358,7 @@
 
 @media (max-width: 700px) {
   .page .grid { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); }
-  .page .summary.summary { grid-template-columns: minmax(0, 1fr); padding: 60px 52px; }
+  .page .summary.summary { grid-template-columns: minmax(0, 1fr); padding: 60px; }
   .page .summary :global([role="listitem"]) { flex-direction: row-reverse; align-items: center; justify-content: space-between; gap: var(--atlas-space-2); padding: var(--atlas-space-3) 0; }
   .page .summary :global([role="listitem"]) + :global([role="listitem"]) { border-left: 0; border-top: 1px solid color-mix(in srgb, var(--atlas-info) 22%, transparent); }
   .page .summary :global(.ui-stats-card__value) { font-size: var(--atlas-text-h2); }
@@ -367,20 +368,31 @@
   .sectionTitle { gap: var(--atlas-space-2); }
   .page .sectionTitle h2 { font-size: var(--atlas-text-h3); }
   .page .card.card { grid-template-columns: 72px minmax(0, 1fr); grid-template-areas: "mark copy" "level armory"; padding: 64px 60px; min-height: 300px; }
-  .page .card > svg { display: none; }
   .card::before { border-width: var(--roster-card-width-mobile); }
   .page .roster .classMark { width: 72px; height: 72px; }
   .page .state.state { padding: 76px 64px; }
+  .page .state :global(form),
+  .page .state :global(a[data-folio-action]) { width: calc(100% + 112px); margin-inline: -56px; }
   .state::before { border-width: var(--frost-panel-width-mobile); }
   .empty { align-items: flex-start; padding: 64px 60px; gap: var(--atlas-space-3); }
   .emptyHeraldry { width: 60px; height: 60px; }
 }
 @media (max-width: 360px) {
   .page .summary :global([role="listitem"]) { padding-inline: 0; }
-  .page .card.card { grid-template-columns: 58px minmax(0, 1fr); gap: var(--atlas-space-2); }
+  .statLabel :global([data-frost-icon]) { display: none; }
+  .page .card.card { gap: var(--atlas-space-2); }
   .page .roster .classMark { width: 58px; height: 58px; }
   .page .card h3 { font-size: var(--atlas-text-title); }
   .empty { flex-direction: column; }
+}
+
+/* Keep names in the full inner window instead of a sliver beside the portrait. */
+@media (max-width: 480px) {
+  .page .card.card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "mark level" "copy copy" "armory armory";
+  }
+  .page .card .level { justify-self: end; align-self: center; }
 }
 
 /* All CSS movement honours the same preference owner as the snow. */
