@@ -131,3 +131,13 @@ Constraints: genuine transparent alpha ONLY outside the physical panel. OPAQUE f
 Material/theme: Sporefall supporting text tablet. Filled center is a quiet deep warm UMBER/BROWN wooden face, not black, formed as one broad smooth continuous wood plane with almost no grain. Thin dark-brown rootwood rails, a little broad SAGE/MOSS-GREEN edging, and two tiny warm AMBER mushroom shelves tucked into the lower-left and upper-right rail corners. Keep mushrooms small and out of text space. No dense moss, leaves, knots, cracks or root tangles. Match the reference wood/moss/amber identity in a quiet practical text panel.
 
 
+
+## the-unbinding-of-kithix (2026-11-04)
+
+- Original decorative game-style panel; built-in image_gen generate, transparent_background:true. No official screenshot was copied. Sharp only alpha-trimmed, proportionally downscaled and encoded; no repainting, recoloring, alpha repair or compositing.
+- Three independent native candidates inspected; candidate3 selected for enclosed lime corner accents, calm face and clean symmetric construction. All three have no QA FAIL. The edge-energy softness WARN (winner3.45) is accepted: broad painted bevels stay crisp and legible at the actual panel scale; no fine noisy detail. Candidate2 scored slightly higher mechanically but its exposed lime corners were less restrained.
+- Native: `/home/debian/gildra-kithix-art-20261104/asset-sources/panels/the-unbinding-of-kithix-native.png`; SHA-256 `946c22d9fa802a23bc908f35119c340431c3e03923f35011bdd4701d8cdbc636`; native1122×1402.
+- Exact prompt, input-reference roles and QA: `/home/debian/gildra-kithix-art-20261104/asset-sources/panels/` (prompt retained outside public).
+- Delivery: pack-asset.cjs panel recipe: alpha>8 crop1099×1341 at11,31; width752 plus8px transparent padding; WebP q82/alpha100/effort6. Final768×934,63708bytes; SHA-256 `942b3e109bcb63e43fdd6f76f279e1b918e97525e0a4996bd8c480ba698db55d`.
+- Geometry: slices top/right/bottom/left207/201/209/202; railInset53; face alpha252–253. The measured slices preserve whole corner caps.
+- Proof reviewed: dark/cyan backgrounds and nine-slice panels380×220,560×320,300×420 at .18/.14 scale. No halo, clipped corner, stretched ornament or cyan leak. Proof and full pack report retained in the task folder.

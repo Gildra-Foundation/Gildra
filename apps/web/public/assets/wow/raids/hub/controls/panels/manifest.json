@@ -1,0 +1,34 @@
+{
+  "entries": {
+    "the-unbinding-of-kithix": {
+      "path": "/assets/wow/raids/hub/controls/panels/the-unbinding-of-kithix.webp",
+      "width": 768,
+      "height": 934,
+      "bytes": 63708,
+      "sha256": "942b3e109bcb63e43fdd6f76f279e1b918e97525e0a4996bd8c480ba698db55d",
+      "native": "/home/debian/gildra-kithix-art-20261104/asset-sources/panels/the-unbinding-of-kithix-native.png",
+      "nativeSha256": "946c22d9fa802a23bc908f35119c340431c3e03923f35011bdd4701d8cdbc636",
+      "nativeDimensions": {
+        "width": 1122,
+        "height": 1402
+      },
+      "crop": {
+        "left": 11,
+        "top": 31,
+        "width": 1099,
+        "height": 1341
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 253
+      },
+      "slices": [
+        207,
+        201,
+        209,
+        202
+      ],
+      "railInset": 53
+    }
+  }
+}

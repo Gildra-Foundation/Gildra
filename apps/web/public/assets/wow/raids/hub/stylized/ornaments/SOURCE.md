@@ -170,3 +170,12 @@ Composition: square approximately1024x1024, one complete isolated feather center
 Constraints: genuine transparent alpha outside object. No background/scenery/groundplane/castshadow, glow cloud, flame or particles, checkerboard painting, UI/letters/logos/watermark, fullbird, face, eyes, gem arrays, extra objects or rectangular frame.
 
 
+
+## kithix-roots (2026-11-04)
+
+- Original decorative game-style root sprout, built-in image_gen transparent generation; approved Kithix panel supplied for painted finish and palette. Three candidates reviewed; candidate2 selected for clean upward silhouette and few large forms.
+- Native `/home/debian/gildra-kithix-art-20261104/asset-sources/ornaments/kithix-roots-native.png`1254×1254; SHA-256 `45b9782fc9f4cbe065d142a5d41f7b868697065222a130b1f37021739bc23ff0`. Exact prompt, all natives and QA retained outside public at `/home/debian/gildra-kithix-art-20261104/asset-sources/ornaments/`.
+- QA exception: all three requested square canvases trigger the legacy portrait ornament aspect heuristic0.6–0.9. Accepted because existing raid ornaments and this consumer use near-square sprites. Edge-energy3.52 softness WARN accepted after visual review: broad painted branches remain readable, with no microdetail. Exterior/corners/haze tests clean.
+- Sharp only alpha-trimmed1132×1075 at49,107, proportionally resized to360px width and added12px transparent padding; WebP q82/alpha100/effort6. No repainting, recoloring, alpha repair or compositing.
+- Final384×366,18066bytes; SHA-256 `ae514489be8e8bbeeb36fe934ac4f95af9985b703c025d8be25f299cd5daedcb`. rootPadding12,rootX222; alpha bounds left12,top12,width360,height342.
+- Final dark/cyan proof reviewed: no halo, clipped branch or painted backdrop. Shape suitable for approximately96px display; no central text or gameplay data.

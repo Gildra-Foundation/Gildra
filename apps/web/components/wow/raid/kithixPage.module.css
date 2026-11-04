@@ -1,0 +1,14 @@
+/* atlas:strict — Kith'ix's large stone corners leave room for readable live text. */
+.page .plaque { padding: 48px; }
+.page .button::after { display: none; }
+.page .button::before { transition: filter var(--atlas-duration-art) var(--atlas-ease); }
+@media (hover: hover) and (pointer: fine) {
+  .page .button:hover::before { filter: contrast(.88) saturate(.84) brightness(1.08); }
+}
+@media (max-width: 760px) { .page .plaque { padding: 38px; } }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .page .button::before { transition: none; filter: contrast(.88) saturate(.84) brightness(.92); }
+}
+:global([data-motion="reduced"]) .page .button::before,
+:global([data-ui-motion="reduce"]) .page .button::before,
+:global([data-transparency="reduced"]) .page .button::before { transition: none; filter: contrast(.88) saturate(.84) brightness(.92); }

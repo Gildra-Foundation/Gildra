@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { materialButtonStyle, materialFrameArtwork, materialFrameStyle, materialPlaqueStyle } from "../../components/wow/shared/material/materialKit.ts";
 
-const raids = ["venomous-abyss", "the-voidspire", "the-dreamrift", "march-on-queldanas", "sporefall"] as const;
+const raids = ["the-unbinding-of-kithix", "venomous-abyss", "the-voidspire", "the-dreamrift", "march-on-queldanas", "sporefall"] as const;
 const plaqueVars = ["--mythic-panel-image", "--mythic-panel-slice", "--mythic-panel-width", "--mythic-panel-width-mobile", "--material-accent"];
 const buttonVars = ["--mythic-button-image", "--mythic-button-slice", "--mythic-button-width", "--mythic-button-top", "--mythic-button-left", "--mythic-button-pad-top", "--mythic-button-pad-bottom", "--mythic-button-inset"];
 const frameVars = ["--frame-top", "--frame-right", "--frame-bottom", "--frame-left", "--mythic-frame-clip"];

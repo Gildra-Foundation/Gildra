@@ -143,5 +143,47 @@
       "left": 146,
       "right": 622
     }
+  },
+{
+  "width": 768,
+  "height": 137,
+  "bytes": 13602,
+  "sha256": "0d7a129b74ff95fa88750ac3db059bfad395ae5248613e684c62c3cc80fde726",
+  "native": "/home/debian/gildra-kithix-art-20261104/asset-sources/buttons/the-unbinding-of-kithix-native.png",
+  "nativeSha256": "8dee156a3987bf2e4cbee200dcfb34f30a1b2e65a85cf39e8fce767b70a61c5f",
+  "nativeDimensions": {
+    "width": 2172,
+    "height": 724
+  },
+  "crop": {
+    "left": 58,
+    "top": 190,
+    "width": 2055,
+    "height": 332
+  },
+  "centreAlpha": {
+    "min": 252,
+    "max": 254
+  },
+  "slug": "the-unbinding-of-kithix",
+  "url": "/assets/wow/raids/hub/controls/buttons/the-unbinding-of-kithix.webp",
+  "recommendedSlice": {
+    "top": 50,
+    "right": 152,
+    "bottom": 42,
+    "left": 153
+  },
+  "borderImageSlice": "50 152 42 153 fill",
+  "recommendedWidthAt64px": {
+    "top": 23.36,
+    "right": 71.01,
+    "bottom": 19.62,
+    "left": 71.47
+  },
+  "faceCenterYPercent": 52.92,
+  "centerStretch": {
+    "left": 153,
+    "right": 616
   }
+}
 ]

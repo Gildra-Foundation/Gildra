@@ -17,6 +17,7 @@ import styles from "./raidMaterial.module.css";
  * raid names its closest one until the raid skill frames are generated (docs/raid-assets/CODEX-PROMPTS.v2.md).
  */
 const skillFrameKit: Record<RaidHubSlug, MaterialIconKit> = {
+  "the-unbinding-of-kithix": "voidscar-arena",
   "venomous-abyss": "temple-of-sethraliss",
   "the-voidspire": "voidscar-arena",
   "the-dreamrift": "the-blinding-vale",

@@ -4,6 +4,7 @@ import type { RaidHubSlug } from "./raidHubData";
 
 // Measured native cut points keep the painted corners intact at every width.
 const panels: Record<RaidHubSlug, readonly number[]> = {
+  "the-unbinding-of-kithix": [207, 201, 209, 202],
   "venomous-abyss": [168, 144, 144, 144],
   "the-voidspire": [136, 112, 136, 112],
   "the-dreamrift": [160, 128, 160, 128],

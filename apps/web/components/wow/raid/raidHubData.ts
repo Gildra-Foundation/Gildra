@@ -3,7 +3,7 @@ import { contentManifest } from "@/lib/data/wow";
 import { midnightRaids, raidSceneArt, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
 
 export type RaidHubLocale = "ru" | "en";
-export type RaidHubSlug = "venomous-abyss" | "the-voidspire" | "the-dreamrift" | "march-on-queldanas" | "sporefall";
+export type RaidHubSlug = "venomous-abyss" | "the-voidspire" | "the-dreamrift" | "march-on-queldanas" | "sporefall" | "the-unbinding-of-kithix";
 type Localized = { en: string; ru: string };
 type ManifestIdentity = {
   canonicalSlug: string;
@@ -15,7 +15,7 @@ type ManifestIdentity = {
 };
 
 export type RaidHubEntry = {
-  slug: RaidHubSlug | "the-unbinding-of-kithix";
+  slug: RaidHubSlug;
   /** Reuse a complete painted kit independently of the raid identity. */
   material: RaidHubSlug;
   content: "guide" | "overview";
@@ -48,7 +48,7 @@ if (!current || currentBosses.length !== 8 || !sporefall || !rotmire) {
 }
 
 export const raidHubEntries: RaidHubEntry[] = [
-  { ...kithixRaid, material: "venomous-abyss", section: "current", content: "overview" },
+  { ...kithixRaid, material: "the-unbinding-of-kithix", section: "current", content: "overview" },
   {
     slug: "venomous-abyss",
     material: "venomous-abyss",

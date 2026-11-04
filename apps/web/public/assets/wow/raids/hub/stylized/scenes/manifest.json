@@ -1,0 +1,40 @@
+{
+  "entries": {
+    "the-unbinding-of-kithix": {
+      "path": "/assets/wow/raids/hub/stylized/scenes/the-unbinding-of-kithix.webp",
+      "width": 1672,
+      "height": 941,
+      "bytes": 59802,
+      "sha256": "fa73622f6414561076f6d835201f1e7b1a171af572780e60dec42c83042be9b0",
+      "native": "/home/debian/gildra-kithix-art-20261104/asset-sources/scenes/the-unbinding-of-kithix-native.png",
+      "nativeSha256": "8ccd9187c28176fbcfe67106077fd0fed61160bb8e4fb61d482f196b1594d408",
+      "nativeDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "crop": null,
+      "variants": [
+        {
+          "path": "/assets/wow/raids/hub/stylized/scenes/the-unbinding-of-kithix-768.webp",
+          "width": 768,
+          "bytes": 20572,
+          "sha256": "40185700ab48097154093ce7341bf186e841950416f5fad78e9e37998aea9f8e"
+        }
+      ]
+    },
+    "the-unbinding-of-kithix-mobile": {
+      "path": "/assets/wow/raids/hub/stylized/scenes/the-unbinding-of-kithix-mobile.webp",
+      "width": 600,
+      "height": 900,
+      "bytes": 21156,
+      "sha256": "dd7e8f374949b0af1d3465e3a71dab5cbd111e175f6cecac5a900686dca145dc",
+      "native": "/home/debian/gildra-kithix-art-20261104/asset-sources/scenes/the-unbinding-of-kithix-native.png",
+      "nativeSha256": "8ccd9187c28176fbcfe67106077fd0fed61160bb8e4fb61d482f196b1594d408",
+      "nativeDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "crop": null
+    }
+  }
+}
