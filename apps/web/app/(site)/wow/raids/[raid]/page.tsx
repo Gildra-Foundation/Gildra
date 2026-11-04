@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { DreamriftPage } from "@/components/wow/raid/DreamriftPage";
 import { RaidOverview } from "@/components/wow/raid/RaidOverview";
 import { getMidnightRaid, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
 
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!raid) return {};
   return {
     title: `${raid.nameEn} Raid Guide — Gildra`,
-    description: `${raid.nameEn}, Midnight Season 1 raid: pulls on the map, ${raid.bosses.length} bosses and what to know.`,
+    description: raid.slug === "the-dreamrift" ? "Chimaerus Normal and Heroic guide: realm groups, positioning, minions and abilities for your specialization." : `${raid.nameEn}, Midnight Season 1 raid: pulls on the map, ${raid.bosses.length} bosses and what to know.`,
     alternates: {
       canonical: `/wow/raids/${raid.slug}`,
       languages: { en: `/wow/raids/${raid.slug}`, ru: `/ru/wow/raids/${raid.slug}`, "x-default": `/wow/raids/${raid.slug}` },
@@ -29,5 +30,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function RaidPage({ params }: PageProps) {
   const raid = getMidnightRaid((await params).raid);
   if (!raid) notFound();
+  if (raid.slug === "the-dreamrift") return <DreamriftPage locale="en" />;
   return <RaidOverview raid={raid} locale="en" />;
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { DreamriftPage } from "@/components/wow/raid/DreamriftPage";
 import { RaidOverview } from "@/components/wow/raid/RaidOverview";
 import { getMidnightRaid, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
 
@@ -16,8 +17,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const raid = getMidnightRaid((await params).raid);
   if (!raid) return {};
   return {
-    title: `${raid.nameRu}: рейдовый журнал — Gildra`,
-    description: `${raid.nameRu}, рейд Midnight · Сезон 1: пулы на карте, боссы (${raid.bosses.length}) и что важно знать.`,
+    title: raid.slug === "the-dreamrift" ? "Провал снов: гайд по Химерию — Gildra" : `${raid.nameRu}: рейдовый журнал — Gildra`,
+    description: raid.slug === "the-dreamrift" ? "Химерий на обычной и героической сложности: смена миров и групп, позиционирование, прислужники и способности вашей специализации." : `${raid.nameRu}, рейд Midnight · Сезон 1: пулы на карте, боссы (${raid.bosses.length}) и что важно знать.`,
     alternates: {
       canonical: `/ru/wow/raids/${raid.slug}`,
       languages: { en: `/wow/raids/${raid.slug}`, ru: `/ru/wow/raids/${raid.slug}`, "x-default": `/wow/raids/${raid.slug}` },
@@ -29,5 +30,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function RaidPage({ params }: PageProps) {
   const raid = getMidnightRaid((await params).raid);
   if (!raid) notFound();
+  if (raid.slug === "the-dreamrift") return <DreamriftPage locale="ru" />;
   return <RaidOverview raid={raid} locale="ru" />;
 }

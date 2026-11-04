@@ -35,5 +35,6 @@ export default async function Page({ params }: PageProps) {
   const boss = raid?.bosses.find((entry) => entry.slug === bossSlug);
   if (!raid || !boss) notFound();
   if (raid.slug === "the-voidspire") permanentRedirect(`/wow/raids/the-voidspire#boss=${boss.slug}`);
+  if (raid.slug === "the-dreamrift") permanentRedirect(`/wow/raids/the-dreamrift#boss=${boss.slug}`);
   return <RaidBossGuide raid={raid} boss={boss} locale="en" />;
 }

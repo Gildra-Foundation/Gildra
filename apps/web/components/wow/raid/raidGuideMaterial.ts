@@ -15,6 +15,15 @@ export function raidGuideMaterial(raid: RaidHubSlug): CSSProperties {
       '--guide-portrait-frame-y': '20.4px',
       '--guide-picker-frame-x': '23.552px',
       '--guide-picker-frame-y': '25.024px',
+    } : raid === 'the-dreamrift' ? {
+      '--guide-accent': 'var(--atlas-dungeon-vale-accent)',
+      '--guide-accent-strong': 'var(--atlas-dungeon-vale-accent-strong)',
+      '--guide-hint-frame-x': '26.496px',
+      '--guide-hint-frame-y': '33.12px',
+      '--guide-portrait-frame-x': '19.2px',
+      '--guide-portrait-frame-y': '24px',
+      '--guide-picker-frame-x': '23.552px',
+      '--guide-picker-frame-y': '29.44px',
     } : {}),
   } as CSSProperties;
 }
