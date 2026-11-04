@@ -49,11 +49,11 @@ export function GuideCounterAdvice({ mechanic, locale, specId, target }: { targe
     <span>{kind === 'interrupt' || kind === 'defend' || kind === 'aoe' ? <VoidspireGuideHint title={kind === 'interrupt' && specId ? t.yourKick : t.kinds[kind]} locale={locale} detail={<p>{voidspireBeginnerTerms[kind === 'interrupt' ? 'interrupt' : 'defensive'].detail[locale]}</p>} /> : t.kinds[kind]}</span>
     {!tools.length && <p className={styles.noTool}>{t.noTool[kind]}</p>}
     <ul>{tools.map(({spell, talent, note}) => <li key={spell.id}>
-      {kind === 'interrupt' && target ? <VoidspireGuideHint title={spell.name[locale]} locale={locale} spellId={spell.id} source={`https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}spell=${spell.id}`} detail={<>
+      {kind === 'interrupt' && target ? <VoidspireGuideHint title={spell.name[locale]} locale={locale} spellId={spell.id} source={`https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}spell=${spell.id}`} detail={<div className={styles.hintFacts}>
         <p><b>{t.target}: </b>{target.enemies.map(enemy => enemy.name[locale]).join(' / ')}</p>
-        <p><b>{t.cast}: </b>{target.cast[locale]}</p><p>{target.timing[locale]}</p>
+        <p className={styles.hintCast}><span>{t.cast}</span><strong>{target.cast[locale]}</strong></p><div className={styles.hintAction}><strong>{t.whenToInterrupt}</strong><p>{target.timing[locale]}</p></div>
         {talent && <p>{t.talent}</p>}{note && <p>{note[locale]}</p>}
-      </>}><Image src={spell.iconUrl} width={22} height={22} alt="" />{spell.name[locale]}{talent && <small>· {t.talent}</small>}</VoidspireGuideHint> : <a href={`https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}spell=${spell.id}`} target="_blank" rel="noreferrer" data-player-spell={spell.id}>
+      </div>}><Image src={spell.iconUrl} width={22} height={22} alt="" />{spell.name[locale]}{talent && <small>· {t.talent}</small>}</VoidspireGuideHint> : <a href={`https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}spell=${spell.id}`} target="_blank" rel="noreferrer" data-player-spell={spell.id}>
         <Image src={spell.iconUrl} width={22} height={22} alt="" />{spell.name[locale]}{talent && <small>· {t.talent}</small>}
       </a>}
       {note && <small className={styles.toolNote}>{note[locale]}</small>}
@@ -66,7 +66,7 @@ function InterruptIdentity({ target, locale }: { target: InterruptTarget; locale
   const t = voidspireGuideCopy[locale];
   const prefix = `https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}`;
   return <dl className={styles.interruptIdentity} data-interrupt-cast={target.spellId}>
-    <div><dt>{t.target}</dt><dd>{target.enemies.map(enemy => <VoidspireGuideHint key={enemy.name.en} title={enemy.name[locale]} portrait={enemy.artwork} portraitPosition={enemy.artworkPosition} detail={<><p className={styles.hintCast}><span>{t.cast}</span><strong>{target.cast[locale]}</strong></p><p>{enemy.detail[locale]}</p></>} source={enemy.npcId ? `${prefix}npc=${enemy.npcId}` : undefined} locale={locale} />)}</dd></div>
-    <div><dt>{t.cast}</dt><dd><VoidspireGuideHint title={target.cast[locale]} detail={<><p>{target.consequence[locale]}</p><p>{target.timing[locale]}</p></>} source={`${prefix}spell=${target.spellId}`} locale={locale} /></dd></div>
+    <div><dt>{t.target}</dt><dd>{target.enemies.map(enemy => <VoidspireGuideHint key={enemy.name.en} title={enemy.name[locale]} portrait={enemy.artwork} portraitPosition={enemy.artworkPosition} detail={<><div className={styles.hintFacts}><p>{enemy.detail[locale]}</p><p className={styles.hintCast}><span>{t.cast}</span><strong>{target.cast[locale]}</strong></p><div className={styles.hintAction}><strong>{t.whenToInterrupt}</strong><p>{target.timing[locale]}</p></div></div></>} source={enemy.npcId ? `${prefix}npc=${enemy.npcId}` : undefined} locale={locale} />)}</dd></div>
+    <div><dt>{t.cast}</dt><dd><VoidspireGuideHint title={target.cast[locale]} detail={<div className={styles.hintFacts}><div><strong>{t.castDanger}</strong><p>{target.consequence[locale]}</p></div><div className={styles.hintAction}><strong>{t.whenToInterrupt}</strong><p>{target.timing[locale]}</p></div></div>} source={`${prefix}spell=${target.spellId}`} locale={locale} /></dd></div>
   </dl>;
 }

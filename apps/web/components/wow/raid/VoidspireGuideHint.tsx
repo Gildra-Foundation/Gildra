@@ -7,6 +7,7 @@ import { AtlasDialog } from '@gildra/atlas-ui/AtlasDialog';
 import bridge from '@gildra/atlas-ui/valyroAtlasBridge.module.css';
 import { voidspireGuideCopy } from './voidspireGuideCopy';
 import styles from './voidspireGuide.module.css';
+import { raidHubControlLayout } from './raidHubControls';
 
 /** Hover/focus uses Valyro; pressing opens the same text with touch, Escape and focus-return support. */
 export function VoidspireGuideHint({ title, children, detail, source, locale, spellId, portrait, portraitPosition }: {
@@ -14,19 +15,20 @@ export function VoidspireGuideHint({ title, children, detail, source, locale, sp
 }) {
   const [open, setOpen] = useState(false);
   const t = voidspireGuideCopy[locale];
-  const heading = (dialog = false) => <div className={portrait ? styles.enemyHintHeading : undefined}>
-    {portrait && <span className={`${styles.enemyHintPortrait} ${portraitPosition ? styles.enemyHintScene : ''}`}><Image src={portrait} width={112} height={112} alt="" unoptimized={!!portraitPosition} style={portraitPosition ? { objectFit: 'none', objectPosition: portraitPosition } : undefined} data-enemy-portrait /></span>}
+  const material = raidHubControlLayout('the-voidspire');
+  const heading = (dialog = false) => <div className={`${styles.hintHeading} ${portrait ? styles.enemyHintHeading : ''}`}>
+    {portrait && <span className={`${styles.enemyHintPortrait} ${portraitPosition ? styles.enemyHintScene : ''}`}><span className={styles.enemyHintImage}><Image src={portrait} width={112} height={112} alt="" unoptimized={!!portraitPosition} style={portraitPosition ? { objectFit: 'none', objectPosition: portraitPosition } : undefined} data-enemy-portrait /></span></span>}
     {dialog ? <h3>{title}</h3> : <strong>{title}</strong>}
   </div>;
   return <>
-    <Tooltip disabled={open} content={<>{heading()}<div className={styles.hintText}>{detail}</div></>} delay={180} animation="fade" className={`${bridge.scope} ${portrait ? styles.enemyHintTooltip : ''}`} data-enemy-hint={portrait ? title : undefined}>
+    <Tooltip disabled={open} content={<div className={styles.hintSurface} style={material} data-guide-hint-surface>{heading()}<div className={styles.hintText}>{detail}</div></div>} delay={180} animation="fade" className={`${bridge.scope} ${styles.hintTooltip}`} data-guide-hint data-enemy-hint={portrait ? title : undefined}>
       <button type="button" className={styles.hintTrigger} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)} data-player-spell={spellId} data-enemy-hint-trigger={portrait ? title : undefined}>{children ?? title}</button>
     </Tooltip>
     <AtlasDialog open={open} onClose={() => setOpen(false)} label={title} className={styles.hintDialog}>
-      <div className={`${styles.hintContent} ${portrait ? styles.enemyHintContent : ''}`} data-enemy-hint={portrait ? title : undefined}>
-        <header>{heading(true)}<button type="button" onClick={() => setOpen(false)}>{t.close}</button></header>
-        <div>{detail}</div>
-        {source && <a href={source} target="_blank" rel="noreferrer">{t.spellSource} ↗</a>}
+      <div className={`${styles.hintSurface} ${styles.hintContent}`} style={material} data-guide-hint-surface data-enemy-hint={portrait ? title : undefined}>
+        <header>{heading(true)}</header>
+        <div className={styles.hintText}>{detail}</div>
+        <footer className={styles.hintFooter}>{source && <a href={source} target="_blank" rel="noreferrer">{t.spellSource} ↗</a>}<button type="button" onClick={() => setOpen(false)}>{t.close}</button></footer>
       </div>
     </AtlasDialog>
   </>;

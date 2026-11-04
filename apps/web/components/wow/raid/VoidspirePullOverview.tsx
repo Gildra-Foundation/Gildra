@@ -14,6 +14,7 @@ import { RaidPullMap } from "./RaidPullMap";
 import { VoidspireGuideHint } from './VoidspireGuideHint';
 import { GuideCounterAdvice } from './VoidspireGuideMechanics';
 import { RaidAbilityText } from "./RaidAbilityText";
+import { voidspireGuideCopy } from './voidspireGuideCopy';
 import { raidPullCopy } from "./raidPullCopy";
 import { raidBossPlannerCopy } from "./raidBossPlannerCopy";
 import type { RaidPull, RaidPullAbility, RaidPullPlan, RaidPullRole } from "./raidPullTypes";
@@ -30,7 +31,7 @@ type Props = {
 };
 
 export function VoidspirePullOverview({ plan, locale, active, select, panel, role, onRoleChange, playerPicker, sources, spec, difficulty, onDifficultyChange }: Props) {
-  const t = raidPullCopy[locale];
+  const t = { ...raidPullCopy[locale], ...voidspireGuideCopy[locale].pulls };
   const bossCopy = raidBossPlannerCopy[locale];
   const encounter = Boolean(plan.encounter);
   const label = encounter ? bossCopy.phase : t.pull;
@@ -74,7 +75,7 @@ export function VoidspirePullOverview({ plan, locale, active, select, panel, rol
 }
 
 function PullEnemies({ pull, locale, specId }: { pull: RaidPull; locale: "ru" | "en"; specId: number }) {
-  const t = raidPullCopy[locale];
+  const t = { ...raidPullCopy[locale], ...voidspireGuideCopy[locale].pulls };
   const prefix = locale === "ru" ? "ru/" : "";
   return <ul className={styles.enemies} data-raid-enemies>{pull.enemies.map(enemy => <li key={enemy.npcId ?? enemy.name.en} data-raid-enemy={enemy.npcId}>
     <div className={styles.enemyHeading}><VoidspireGuideHint title={enemy.name[locale]} locale={locale} source={enemy.npcId ? `https://www.wowhead.com/${prefix}npc=${enemy.npcId}` : undefined} detail={<>
@@ -85,7 +86,7 @@ function PullEnemies({ pull, locale, specId }: { pull: RaidPull; locale: "ru" | 
 }
 
 function EncounterMechanics({ pull, locale, difficulty }: { pull: RaidPull; locale: "ru" | "en"; difficulty: "normal" | "heroic" }) {
-  const t = raidPullCopy[locale];
+  const t = { ...raidPullCopy[locale], ...voidspireGuideCopy[locale].pulls };
   return <>
     {pull.enemies.length > 0 && <section className={styles.adds} data-raid-boss-adds><h4>{raidBossPlannerCopy[locale].enemies}</h4><ul>{pull.enemies.map(enemy => <li key={enemy.npcId ?? enemy.name.en}>{enemy.npcId ? <a href={`https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}npc=${enemy.npcId}`} target="_blank" rel="noreferrer">{enemy.name[locale]}</a> : enemy.name[locale]}</li>)}</ul></section>}
     <ul className={styles.mechanics} aria-label={t.abilities}>{pull.abilities.filter(ability => difficulty === "heroic" || !ability.heroicOnly).map(ability => <li key={ability.spellId ?? ability.name.en}><PullAbility ability={ability} pull={pull} locale={locale} difficulty={difficulty} encounter /></li>)}</ul>
@@ -93,7 +94,7 @@ function EncounterMechanics({ pull, locale, difficulty }: { pull: RaidPull; loca
 }
 
 function PullAbility({ ability, pull, locale, difficulty = "normal", encounter = false, specId = 0 }: { specId?: number; ability: RaidPullAbility; pull: RaidPull; locale: "ru" | "en"; difficulty?: "normal" | "heroic"; encounter?: boolean }) {
-  const t = raidPullCopy[locale];
+  const t = { ...raidPullCopy[locale], ...voidspireGuideCopy[locale].pulls };
   return <div className={styles.ability} data-raid-ability={ability.spellId}>
     <div className={styles.abilityTitle}>{ability.icon && <Image src={ability.icon} alt="" width={24} height={24} />}
       <VoidspireGuideHint title={ability.name[locale]} locale={locale} source={ability.spellId ? `https://www.wowhead.com/${locale === "ru" ? "ru/" : ""}spell=${ability.spellId}` : undefined} detail={<>{ability.caster && <p><b>{ability.caster[locale]}</b></p>}{ability.effect && <p>{ability.effect[locale]}</p>}{ability.response && <p>{ability.response[locale]}</p>}</>} />
