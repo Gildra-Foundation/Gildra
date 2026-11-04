@@ -24,7 +24,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
       const href = `${prefix}/wow/raids/${raid.slug}`;
       const name = raid.names[locale];
       const featured = section === "current";
-      const theme = raidCardThemes[raid.slug];
+      const theme = raidCardThemes[raid.material];
       const description = featured ? raid.descriptions?.[locale] : undefined;
       const sizes = featured ? "(max-width: 1100px) 100vw, 50vw" : "(max-width: 700px) 100vw, 50vw";
       return <Card
@@ -32,7 +32,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
         padding="none"
         variant="outline"
         className={`${bridge.scope} ${styles.card} ${featured ? styles.featured : ""}`}
-        style={{ ...raidHubFrameLayout(raid.slug), ...raidHubControlLayout(raid.slug), "--raid-card-accent": theme.accent,
+        style={{ ...raidHubFrameLayout(raid.material), ...raidHubControlLayout(raid.material), "--raid-card-accent": theme.accent,
           // The Quel'Danas source has a 64px transparent top and 2px bottom.
           // Crop the real painted area independently of hover/entrance motion.
           "--raid-scene-zoom": raid.slug === "march-on-queldanas" ? "1.10" : "1",
@@ -62,7 +62,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
                 </div>
                 <span className={styles.artShade} aria-hidden="true" />
               </div>
-              <Image src={raidHubFrameArtwork(raid.slug)} alt="" fill sizes={sizes} className={styles.frameImage} aria-hidden="true" />
+              <Image src={raidHubFrameArtwork(raid.material)} alt="" fill sizes={sizes} className={styles.frameImage} aria-hidden="true" />
             </div>
           </Link>
           <div className={styles.body} data-raid-material-panel={raid.slug}>
@@ -74,7 +74,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
               <p className={styles.bossesLabel}>{copy.bossesLabel}</p>
               <ol className={styles.bosses} aria-label={copy.bossesLabel}>
                 {raid.bosses.map((boss) => <li key={boss.slug}>
-                  <Link href={`${href}/${boss.slug}`} data-hub-boss-link={`${raid.slug}/${boss.slug}`}>
+                  <Link href={boss.anchor ? `${href}#${boss.anchor}` : `${href}/${boss.slug}`} data-hub-boss-link={`${raid.slug}/${boss.slug}`}>
                     {boss.artwork ? <Image src={boss.artwork} alt="" width={32} height={32} className={styles.portrait} /> : null}
                     <span>{boss.names[locale]}</span>
                   </Link>
@@ -86,7 +86,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
                 {copy.openRaid}<span className={styles.srOnly}>: {name}</span>
               </AtlasLinkButton>
             </footer>
-            <RaidHubOrnaments slug={raid.slug} />
+            <RaidHubOrnaments slug={raid.material} />
           </div>
           {raid.sceneArt ? <AtlasMorphPreload art={raid.sceneArt} /> : null}
         </article>

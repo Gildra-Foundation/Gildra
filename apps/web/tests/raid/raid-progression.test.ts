@@ -4,7 +4,7 @@ import { getRaidProgression } from "../../components/wow/raid/raidProgression";
 import { raidHubEntries } from "../../components/wow/raid/raidHubData";
 
 test("progression references real bosses and covers each raid without cycles", () => {
-  for (const raid of raidHubEntries) {
+  for (const raid of raidHubEntries.filter((entry) => entry.content === "guide")) {
     const plan = getRaidProgression(raid.slug)!;
     assert.ok(plan, raid.slug);
     const bosses = new Set(raid.bosses.map((boss) => boss.slug));

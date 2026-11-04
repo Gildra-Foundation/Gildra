@@ -1,3 +1,4 @@
+import { kithixRaid } from "./kithixRaidData";
 import { contentManifest } from "@/lib/data/wow";
 import { midnightRaids, raidSceneArt, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
 
@@ -14,7 +15,10 @@ type ManifestIdentity = {
 };
 
 export type RaidHubEntry = {
-  slug: RaidHubSlug;
+  slug: RaidHubSlug | "the-unbinding-of-kithix";
+  /** Reuse a complete painted kit independently of the raid identity. */
+  material: RaidHubSlug;
+  content: "guide" | "overview";
   section: "current" | "archive";
   names: Localized;
   descriptions?: Localized;
@@ -23,7 +27,7 @@ export type RaidHubEntry = {
   /** Only existing matching destination scenes participate in the art morph. */
   sceneArt?: string;
   accent: string;
-  bosses: { slug: string; names: Localized; artwork?: string }[];
+  bosses: { slug: string; names: Localized; artwork?: string; anchor?: string }[];
 };
 
 function localizedIdentity(value: ManifestIdentity["names"], label: string): Localized {
@@ -44,8 +48,11 @@ if (!current || currentBosses.length !== 8 || !sporefall || !rotmire) {
 }
 
 export const raidHubEntries: RaidHubEntry[] = [
+  { ...kithixRaid, material: "venomous-abyss", section: "current", content: "overview" },
   {
     slug: "venomous-abyss",
+    material: "venomous-abyss",
+    content: "guide",
     section: "current",
     names: localizedIdentity(current.names, current.canonicalSlug),
     descriptions: localizedIdentity(current.descriptions, current.canonicalSlug),
@@ -57,6 +64,8 @@ export const raidHubEntries: RaidHubEntry[] = [
     const raid = midnightRaids[slug];
     return {
       slug,
+      material: slug,
+      content: "guide",
       section: "archive",
       names: { en: raid.nameEn, ru: raid.nameRu },
       descriptions: { en: raid.descriptionEn, ru: raid.descriptionRu },
@@ -73,6 +82,8 @@ export const raidHubEntries: RaidHubEntry[] = [
   }),
   {
     slug: "sporefall",
+    material: "sporefall",
+    content: "guide",
     section: "archive",
     names: localizedIdentity(sporefall.names, sporefall.canonicalSlug),
     location: { en: "Harandar", ru: "Харандар" },

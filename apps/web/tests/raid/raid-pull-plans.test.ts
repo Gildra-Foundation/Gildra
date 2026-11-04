@@ -4,8 +4,8 @@ import { getRaidPullPlan } from "../../components/wow/raid/raidPullPlans.server"
 import { raidHubEntries } from "../../components/wow/raid/raidHubData";
 import { midnightRaidRoutes } from "../../components/wow/raid/midnightRaidRoutes";
 
-test("every published raid has a usable bilingual plan and existing boss destinations", () => {
-  for (const raid of raidHubEntries) {
+test("every published raid guide has a usable bilingual plan and existing boss destinations", () => {
+  for (const raid of raidHubEntries.filter((entry) => entry.content === "guide")) {
     const plan = getRaidPullPlan(raid.slug)!;
     assert.ok(plan?.pulls.length, raid.slug);
     assert.ok(plan.name.en && plan.name.ru);
