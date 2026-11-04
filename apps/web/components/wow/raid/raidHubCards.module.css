@@ -79,12 +79,13 @@
 .bossesLabel { margin: 0 0 var(--atlas-space-2); color: var(--raid-card-light); font-size: var(--atlas-text-meta); }
 .bosses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
 .bosses li { min-width: 0; }
+.bosses li:only-child { grid-column: 1 / -1; }
 .bosses a { position: relative; isolation: isolate; display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 56px; padding: var(--raid-row-pad-top) var(--raid-row-inset) var(--raid-row-pad-bottom); border: 0; border-radius: 6px; background: transparent; color: var(--atlas-text-strong); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); text-decoration: none; text-shadow: 0 1px 2px var(--atlas-bg); transition: transform var(--atlas-duration-fast) var(--ui-spring-smooth), filter var(--atlas-duration-fast) var(--atlas-ease); }
 .bosses a::before { position: absolute; z-index: -1; inset: 0; border: 18px solid transparent; border-image-source: var(--raid-button-image); border-image-slice: var(--raid-button-slice, 64 144 64 144) fill; border-width: var(--raid-row-width); border-image-width: 1; filter: contrast(.88) saturate(.84) brightness(.92); background: var(--raid-card-base); background-clip: padding-box; content: ""; pointer-events: none; }
-.bosses a span { min-width: 0; overflow-wrap: anywhere; }
+.bosses a span { min-width: 0; overflow-wrap: anywhere; hyphens: none; }
 .portrait { flex: none; width: 32px; height: 32px; border: 1px solid var(--raid-card-line); border-radius: 7px; object-fit: cover; }
 .footer { display: flex; flex-direction: column; align-items: stretch; gap: var(--atlas-space-2) var(--atlas-space-3); margin-top: var(--atlas-space-3); padding-top: var(--atlas-space-3); }
-.card .openRaid:global(.ui-button[data-variant="secondary"]) { --ui-button-secondary-bg: transparent; --ui-button-secondary-bg-hover: transparent; --ui-button-secondary-bg-active: transparent; --ui-button-secondary-fg: var(--atlas-text-strong); --ui-button-secondary-field: transparent; --ui-focus-ring: 0 0 0 3px var(--atlas-bg), 0 0 0 5px var(--raid-card-light); position: relative; isolation: isolate; flex: 0 0 auto; width: 100%; justify-content: center; min-height: 68px; border: 0; border-radius: 6px; padding: var(--raid-button-pad-top) var(--raid-button-inset) var(--raid-button-pad-bottom); color: var(--atlas-text-strong); text-shadow: 0 1px 3px var(--atlas-bg); box-shadow: none; transition: transform var(--atlas-duration-fast) var(--ui-spring-smooth), filter var(--atlas-duration-fast) var(--atlas-ease); }
+.card .openRaid:global(.ui-button[data-variant="secondary"]) { --ui-button-secondary-bg: transparent; --ui-button-secondary-bg-hover: transparent; --ui-button-secondary-bg-active: transparent; --ui-button-secondary-fg: var(--atlas-text-strong); --ui-button-secondary-field: transparent; --ui-focus-ring: 0 0 0 3px var(--atlas-bg), 0 0 0 5px var(--raid-card-light); position: relative; isolation: isolate; flex: 0 0 auto; width: 100%; justify-content: center; min-height: 68px; border: 0; border-radius: 6px; padding: var(--raid-button-pad-top) var(--raid-button-inset) var(--raid-button-pad-bottom); color: var(--atlas-text-strong); text-shadow: 0 1px 3px var(--atlas-bg); background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; transition: transform var(--atlas-duration-fast) var(--ui-spring-smooth), filter var(--atlas-duration-fast) var(--atlas-ease); }
 .openRaid::before { position: absolute; z-index: -1; inset: 0; border: 20px solid transparent; border-image-source: var(--raid-button-image); border-image-slice: var(--raid-button-slice, 64 144 64 144) fill; border-width: var(--raid-button-width); border-image-width: 1; filter: contrast(.88) saturate(.84) brightness(.92); background: var(--raid-card-base); background-clip: padding-box; content: ""; pointer-events: none; }
 .openRaid::after { position: absolute; z-index: 0; inset: 12px 26px; border-radius: 40%; background: radial-gradient(ellipse at 15% 50%, color-mix(in srgb, var(--raid-card-accent) 48%, transparent), transparent 60%); opacity: 0; content: ""; pointer-events: none; }
 .openRaid :global(.ui-button__label), .openRaid :global(.ui-button__icon) { position: relative; z-index: 1; }
@@ -126,6 +127,13 @@
 @media (max-width: 700px) { .archive { grid-template-columns: minmax(0, 1fr); } .body,
   .featured .body { margin-inline: 0; padding: 28px 24px 32px; } .body::before { border-width: var(--raid-panel-width-mobile); } .card .openRaid:global(.ui-button[data-variant="secondary"]) { min-height: 68px; } .featured .title { font-size: var(--atlas-text-h3); } }
 @media (max-width: 520px) { .featured .bosses { grid-template-columns: minmax(0, 1fr); } }
+/* Give long boss names room on the narrowest phones. Nine-slice corners scale
+ * together; the artwork stays whole and decorative portraits yield to the text. */
+@media (max-width: 360px) {
+  .bosses .portrait { display: none; }
+  .bosses a { padding-inline: calc(var(--raid-row-inset) * .75); }
+  .bosses a::before { border-image-width: .75; }
+}
 
 :global([data-motion="reduced"]) .atmosphere,
 :global([data-transparency="reduced"]) .atmosphere,
@@ -148,9 +156,9 @@
   .openRaid::after { animation: none !important; opacity: 0; }
   .bosses a, .card .openRaid:global(.ui-button) { transform: none !important; filter: none !important; }
 }
-@media (prefers-reduced-transparency: reduce) { .body::before { background: var(--atlas-bg); mask-image: none; } .bosses a { background: var(--raid-card-row); } }
-:global([data-transparency="reduced"]) .body::before { background: var(--atlas-bg); mask-image: none; }
-:global([data-transparency="reduced"]) .bosses a { background: var(--raid-card-row); }
+@media (prefers-reduced-transparency: reduce) { .body::before { background: var(--atlas-bg); background-clip: padding-box; mask-image: none; } .bosses a::before { background: var(--raid-card-row); background-clip: padding-box; } }
+:global([data-transparency="reduced"]) .body::before { background: var(--atlas-bg); background-clip: padding-box; mask-image: none; }
+:global([data-transparency="reduced"]) .bosses a::before { background: var(--raid-card-row); background-clip: padding-box; }
 @media (forced-colors: active) {
   .card:global(.ui-card[data-variant="outline"]) { border: 1px solid CanvasText; background: Canvas; color: CanvasText; box-shadow: none; }
   .frameImage, .artShade, .body::before, .bosses a::before, .openRaid::before, .openRaid::after { display: none; }

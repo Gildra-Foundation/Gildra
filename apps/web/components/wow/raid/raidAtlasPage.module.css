@@ -13,7 +13,6 @@
 .heroHeader p { max-width: 48ch; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
 .actions .heroAction:global(.ui-button) {
-  --raid-action-light: var(--atlas-positive);
   --raid-action-slice: 40 128 29 156 fill;
   --raid-action-top: 19.25px;
   --raid-action-right: 61.59px;
@@ -21,9 +20,9 @@
   --raid-action-left: 75.07px;
   --raid-action-border: var(--raid-action-top) var(--raid-action-right) var(--raid-action-bottom) var(--raid-action-left);
   --_fg: var(--atlas-text-strong);
-  --_bg: var(--atlas-bg);
-  --_bg-hover: var(--atlas-bg);
-  --_bg-active: var(--atlas-bg);
+  --_bg: transparent;
+  --_bg-hover: transparent;
+  --_bg-active: transparent;
   isolation: isolate;
   min-height: 64px;
   min-width: min(100%, 300px);
@@ -32,18 +31,19 @@
   border-color: transparent;
   border-width: var(--raid-action-border);
   border-radius: 4px;
-  background: var(--atlas-bg);
-  background-clip: padding-box;
+  background: transparent;
+  /* The painted alpha, not the rectangular button box, defines the surface. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   color: var(--atlas-text-strong);
-  box-shadow: 0 7px 16px color-mix(in srgb, var(--atlas-bg) 70%, transparent);
+  box-shadow: none;
   font-size: var(--atlas-text-body);
   font-weight: var(--ui-weight-semibold, 600);
   text-shadow: 0 1px 3px var(--atlas-bg), 0 2px 8px var(--atlas-bg);
-  transition: transform calc(var(--ui-duration-slow) * 1.36) var(--ui-spring-snappy), box-shadow var(--ui-duration-fast) var(--ui-ease);
+  transition: transform var(--ui-duration-fast) var(--ui-ease);
 }
 .currentAction { --raid-action-art: url("/assets/wow/raids/hub/controls/buttons/venomous-abyss.webp"); }
 .actions .archiveAction:global(.ui-button) {
-  --raid-action-light: var(--atlas-positive);
   --raid-action-art: url("/assets/wow/raids/hub/controls/buttons/the-dreamrift.webp");
   --raid-action-slice: 48 190 39 190 fill;
   --raid-action-top: 20.48px;
@@ -62,8 +62,7 @@
   border-image-width: 1;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--atlas-bg) 82%, transparent) 18%, color-mix(in srgb, var(--atlas-bg) 82%, transparent) 82%, transparent);
   background-clip: padding-box;
-  filter: contrast(.88) saturate(.84) brightness(.92);
-  box-shadow: inset 0 2px 7px color-mix(in srgb, var(--atlas-bg) 65%, transparent);
+  filter: contrast(.88) saturate(.84) brightness(.92) drop-shadow(0 4px 5px color-mix(in srgb, var(--atlas-bg) 70%, transparent));
 }
 .heroAction::after {
   inset: 0;
@@ -78,23 +77,24 @@
 .actions .heroAction svg { width: 20px; height: 20px; }
 .actions .heroAction:global(.ui-button):focus-visible { outline: 2px solid var(--atlas-text-strong); outline-offset: 5px; }
 @media (hover: hover) and (pointer: fine) {
-  .actions .heroAction:global(.ui-button):hover { color: var(--atlas-text-strong); box-shadow: 0 8px 20px color-mix(in srgb, var(--atlas-bg) 70%, transparent), 0 0 17px color-mix(in srgb, var(--raid-action-light) 13%, transparent); }
+  .actions .heroAction:global(.ui-button):hover { color: var(--atlas-text-strong); }
   .heroAction:hover::after { opacity: 1; }
 }
-.actions .heroAction:global(.ui-button):active { transform: translateY(1px) scale(.98); box-shadow: 0 2px 6px var(--atlas-bg); }
+.actions .heroAction:global(.ui-button):active { transform: translateY(1px); }
 :global([data-ui-motion="reduce"]) .actions .heroAction:global(.ui-button),
 :global(html[data-motion="reduced"]) .actions .heroAction:global(.ui-button),
+:global([data-transparency="reduced"]) .actions .heroAction:global(.ui-button),
 .actions .heroAction:global(.ui-button[data-ui-motion="reduce"]) { transform: none; transition: none; }
 :global([data-ui-motion="reduce"]) .heroAction::after,
 :global(html[data-motion="reduced"]) .heroAction::after { transition: none; }
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
   .actions .heroAction:global(.ui-button) { transform: none; transition: none; }
   .heroAction::after { transition: none; }
 }
-:global(html[data-transparency="reduced"]) .heroAction::before { background: var(--atlas-bg); }
-:global(html[data-transparency="reduced"]) .heroAction::after { display: none; }
+:global([data-transparency="reduced"]) .heroAction::before { background: var(--atlas-bg); background-clip: padding-box; }
+:global([data-transparency="reduced"]) .heroAction::after { display: none; }
 @media (prefers-reduced-transparency: reduce) {
-  .heroAction::before { background: var(--atlas-bg); }
+  .heroAction::before { background: var(--atlas-bg); background-clip: padding-box; }
   .heroAction::after { display: none; }
 }
 @media (forced-colors: active) {
