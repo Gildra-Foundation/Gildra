@@ -1,12 +1,11 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useSyncExternalStore, type MouseEvent } from 'react';
+import { useSyncExternalStore, type MouseEvent } from 'react';
 import { ArrowDown, Leaf } from 'lucide-react';
 import { AtlasDisclosure } from '@gildra/atlas-ui/AtlasDisclosure';
 import { AtlasField } from '@gildra/atlas-ui/AtlasField';
 import { AtlasSegmented } from '@gildra/atlas-ui/AtlasSegmented';
-import { lessMotion, subscribeSiteMotion } from '@gildra/atlas-ui/motionPreference';
 import { sporefallGuide } from '@/lib/data/wow/raid/sporefallGuide';
 import { roleBasics, voidspireBeginnerTerms } from '@/lib/data/wow/raid/voidspireBeginnerGuide';
 import type { CounterKind } from '@/lib/data/wow/raid/voidspireVideoGuide';
@@ -30,7 +29,6 @@ const snapshot = () => window.location.hash;
 const serverSnapshot = () => '';
 
 export function SporefallGuideClient({locale}: {locale: Locale}) {
-  const root = useRef<HTMLDivElement>(null);
   const hash = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const query = new URLSearchParams(hash.slice(1));
   const specId = guideSpecs.some(spec => spec.id === Number(query.get('spec'))) ? Number(query.get('spec')) : 0;
@@ -47,25 +45,9 @@ export function SporefallGuideClient({locale}: {locale: Locale}) {
     event.preventDefault(); const target = document.getElementById(`sporefall-${id}`);
     target?.focus({preventScroll:true}); target?.scrollIntoView({behavior:'instant',block:'start'});
   };
-  useEffect(() => {
-    const element = root.current;
-    if (!element) return;
-    const media = ['(prefers-reduced-motion: reduce)','(prefers-reduced-transparency: reduce)','(forced-colors: active)'].map(value => window.matchMedia(value));
-    const sync = () => {
-      const reduced = lessMotion() || media.some(item => item.matches) || !!element.closest('[data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"]');
-      element.dataset.sporeMotion = reduced ? 'static' : 'ready';
-      if (reduced) element.querySelectorAll('[data-flip-id]').forEach(node => node.getAnimations().filter(animation => animation.id === 'ui-flip').forEach(animation => animation.cancel()));
-    };
-    sync();
-    const unsubscribe = subscribeSiteMotion(sync), observer = new MutationObserver(sync);
-    for(let node: HTMLElement | null = element; node; node = node.parentElement) observer.observe(node,{attributes:true,attributeFilter:['data-motion','data-ui-motion','data-transparency']});
-    media.forEach(item => item.addEventListener('change',sync));
-    return () => { unsubscribe(); observer.disconnect(); media.forEach(item => item.removeEventListener('change',sync)); };
-  }, []);
   const adds = guide.adds.filter(add => heroic || !add.heroicOnly);
-  return <div className={styles.guide} style={raidGuideMaterial('sporefall')} ref={root} data-sporefall-guide data-difficulty={difficulty} data-spec={specId}>
+  return <div className={styles.guide} style={raidGuideMaterial('sporefall')} data-sporefall-guide data-difficulty={difficulty} data-spec={specId}>
     <RaidPlaque raid="sporefall" className={`${styles.panel} ${styles.intro}`}>
-      <span className={styles.spores} aria-hidden="true">{Array.from({length:8}, (_,index) => <i key={index} />)}</span>
       <header className={styles.bossHeader}><Image src="/assets/wow/raids/sporefall/rotmire-journal.png" width={128} height={64} alt="" /><div><p className={styles.eyebrow}>{copy.scope}</p><h2>{guide.name[locale]}</h2><p className={styles.goal}>{guide.goal[locale]}</p></div></header>
       <nav className={styles.priorities} aria-label={t.priorities}>{guide.priorities.map((priority,index) => <a key={priority.id} href={`#boss=rotmire&spec=${specId}&difficulty=${difficulty}&mechanic=${priority.id}`} onClick={event => jump(event,priority.id)}><span>{index+1}</span><strong>{priority.title[locale]}</strong><ArrowDown aria-hidden="true" /></a>)}</nav>
     </RaidPlaque>
@@ -86,7 +68,7 @@ export function SporefallGuideClient({locale}: {locale: Locale}) {
       <header>{add.portrait && <Image src={add.portrait} width={96} height={112} alt="" />}<div>{add.heroicOnly && <p className={styles.eyebrow}>{t.heroic}</p>}<h3><VoidspireGuideHint raid="sporefall" locale={locale} title={add.name[locale]} portrait={add.portrait} source={`https://www.wowhead.com/${ru ? 'ru/' : ''}npc=${add.npcId}`} detail={<div className={styles.hintFacts}><p>{add.description[locale]}</p><p><strong>{t.response}: </strong>{add.action[locale]}</p>{add.cast && <><p><strong>{t.cast}: </strong>{add.cast.name[locale]}</p><p>{add.cast.action[locale]}</p></>}</div>} /></h3></div></header>
       <p>{add.description[locale]}</p><p className={styles.personalAction}>{add.action[locale]}</p>{add.cast && <div className={styles.enemyCast}><span>{t.cast}</span><VoidspireGuideHint raid="sporefall" locale={locale} title={add.cast.name[locale]} source={`https://www.wowhead.com/${ru ? 'ru/' : ''}spell=${add.cast.spellId}`} detail={<div className={styles.hintFacts}><p>{add.cast.description[locale]}</p><p>{add.cast.action[locale]}</p></div>} /><p>{add.cast.action[locale]}</p>{specId > 0 && <CounterTools locale={locale} specId={specId} kinds={['interrupt']} />}</div>}<p className={styles.death}><Leaf aria-hidden="true" />{add.death[locale]}</p>
     </RaidPlaque>)}</div></section>
-    <footer className={styles.sources}><AtlasDisclosure summary={t.sources}><ul>{guide.sources.map(source => <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a></li>)}</ul></AtlasDisclosure></footer>
+    <RaidPlaque as="footer" raid="sporefall" className={`${styles.panel} ${styles.sources}`}><AtlasDisclosure summary={t.sources}><ul>{guide.sources.map(source => <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a></li>)}</ul></AtlasDisclosure></RaidPlaque>
   </div>;
 }
 

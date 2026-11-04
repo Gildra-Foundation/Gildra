@@ -1,0 +1,26 @@
+{
+  "entries": {
+    "scene": {
+      "path": "/assets/wow/raids/sporefall/scene.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 356284,
+      "sha256": "ff35707ad41c8063d7f697f20e9e0f36b3fdf5e8fb28ff281610595b826fdb2e",
+      "native": "/home/debian/gildra-sporefall-glass-20261104/asset-sources/sporefall-enhanced-native.png",
+      "nativeSha256": "e1f1aa0deb6776e19c531fae4760ce9f0cae2932bb32cf1a63c2fbce9138f4c1",
+      "nativeDimensions": {
+        "width": 1536,
+        "height": 1024
+      },
+      "crop": null,
+      "variants": [
+        {
+          "path": "/assets/wow/raids/sporefall/scene-768.webp",
+          "width": 768,
+          "bytes": 109164,
+          "sha256": "6471b9808da13d916ac41d8f6fd9ea608c0dc3c913a501e4e8fd865776f6cbda"
+        }
+      ]
+    }
+  }
+}
