@@ -84,11 +84,11 @@
 :global([data-ui-motion="reduce"]) .actions .heroAction:global(.ui-button),
 :global(html[data-motion="reduced"]) .actions .heroAction:global(.ui-button),
 :global([data-transparency="reduced"]) .actions .heroAction:global(.ui-button),
-.actions .heroAction:global(.ui-button[data-ui-motion="reduce"]) { transform: none; transition: none; }
+.actions .heroAction:global(.ui-button[data-ui-motion="reduce"]) { transform: none !important; transition: none; }
 :global([data-ui-motion="reduce"]) .heroAction::after,
 :global(html[data-motion="reduced"]) .heroAction::after { transition: none; }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
-  .actions .heroAction:global(.ui-button) { transform: none; transition: none; }
+  .actions .heroAction:global(.ui-button) { transform: none !important; transition: none; }
   .heroAction::after { transition: none; }
 }
 :global([data-transparency="reduced"]) .heroAction::before { background: var(--atlas-bg); background-clip: padding-box; }
