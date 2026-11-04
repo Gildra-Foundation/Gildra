@@ -141,3 +141,14 @@ Material/theme: Sporefall supporting text tablet. Filled center is a quiet deep 
 - Delivery: pack-asset.cjs panel recipe: alpha>8 crop1099×1341 at11,31; width752 plus8px transparent padding; WebP q82/alpha100/effort6. Final768×934,63708bytes; SHA-256 `942b3e109bcb63e43fdd6f76f279e1b918e97525e0a4996bd8c480ba698db55d`.
 - Geometry: slices top/right/bottom/left207/201/209/202; railInset53; face alpha252–253. The measured slices preserve whole corner caps.
 - Proof reviewed: dark/cyan backgrounds and nine-slice panels380×220,560×320,300×420 at .18/.14 scale. No halo, clipped corner, stretched ornament or cyan leak. Proof and full pack report retained in the task folder.
+
+## Kithix organic revision (2026-11-04)
+
+- Original decorative painted interface asset, built-in image_gen generate with transparent_background:true. Four-type kit replaces rigid gold/stone construction with dark wine/charcoal chitin, crimson lobes, thick tendrils and sparse burnt-coral nodules. Actual Kithix loading image used only for organic motif/palette; no scene raster changed.
+- Candidate2 selected: lower corner nodules and coiled upper corner are calmer than other two candidates. Automated slices482/344/482/323 rejected as overbroad; manual256/256/256/240 preserves complete corner motifs.
+- Native `/home/debian/gildra-kithix-organic-20261104/asset-sources/panels/kithix-organic-native.png`; SHA-256 `fc9fd05af4d689eff61be6f70f56065a4ec6394682345626907e019bc7bf791a`. Three candidate natives, exact prompt and QA are preserved outside public in `/home/debian/gildra-kithix-organic-20261104/asset-sources/panels/`.
+- QA no FAIL. Accepted warnings: soft: edge energy 3.4 < 4: looks blurred/upscaled ("мыло"). These reflect broad matte painted planes or intentionally varied asymmetric corners; display-size proof reviewed.
+- Delivery `/assets/wow/raids/hub/controls/panels/kithix-organic.webp`: 768×967, 69228 bytes, SHA-256 `36c80f1b3db444b8f2155c24a80302698fddfa674cd741c804a54b56cfbbdeb0`. Geometry: slices [256, 256, 256, 240], railInset 73.
+- Sharp only crops transparent exterior where applicable, proportionally resizes and encodes; no repainting, recoloring, compositing or alpha repair. Previous Kithix files retained unchanged.
+- Cyan proof and live-text nine-slice/transparent aperture coverage reviewed. Full proof/report saved outside public in `/home/debian/gildra-kithix-organic-20261104/proofs/`.
+- Site accent #d28a91 verified by root (light/base8.51, light/bg10.3). Similar hue to Ruby Life Pools but distinct organic chitin construction rather than gold/stone.

@@ -67,7 +67,7 @@
  * slices preserve its corner ornaments while the center grows with the copy. */
 .body::before { position: absolute; z-index: -1; inset: 0; content: ""; pointer-events: none; border: 28px solid transparent; border-image-source: var(--raid-panel-image); border-image-slice: var(--raid-panel-slice, 96 72 96 72) fill; border-width: var(--raid-panel-width); border-image-width: 1; border-image-repeat: stretch; filter: contrast(.9) saturate(.84) brightness(.9); background: var(--raid-card-base); background-clip: padding-box; }
 .featured .body { margin: 0; padding: 36px 36px 40px; }
-.card[data-hub-raid-card="the-unbinding-of-kithix"] .body { padding: 44px; }
+.card[data-hub-raid-card="the-unbinding-of-kithix"] .body { padding: 56px; }
 .card[data-hub-raid-card="the-unbinding-of-kithix"] .openRaid::after { display: none; }
 .location { display: flex; align-items: center; gap: var(--atlas-space-2); margin: 0 0 var(--atlas-space-2); color: var(--raid-card-light); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
 .location svg { flex: none; width: 14px; height: 14px; color: var(--raid-card-light); }
@@ -130,7 +130,7 @@
   .featured .body { margin-inline: 0; padding: 28px 24px 32px; } .body::before { border-width: var(--raid-panel-width-mobile); } .card .openRaid:global(.ui-button[data-variant="secondary"]) { min-height: 68px; } .featured .title { font-size: var(--atlas-text-h3); } }
 @media (max-width: 520px) { .featured .bosses { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 700px) {
-  .card[data-hub-raid-card="the-unbinding-of-kithix"] .body { padding: 34px; }
+  .card[data-hub-raid-card="the-unbinding-of-kithix"] .body { padding: 44px; }
   .card[data-hub-raid-card="the-unbinding-of-kithix"] .openRaid:global(.ui-button) { padding-inline: calc(var(--raid-button-inset) * .75); }
   .card[data-hub-raid-card="the-unbinding-of-kithix"] .openRaid::before { border-image-width: .75; }
 }

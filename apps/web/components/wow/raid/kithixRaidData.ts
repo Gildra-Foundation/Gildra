@@ -11,7 +11,7 @@ export const kithixRaid = {
   },
   location: { en: "Beneath the Venomous Abyss", ru: "Под Отравленной бездной" },
   artwork: "/assets/wow/raids/hub/stylized/scenes/kithix-loading-screen.webp",
-  accent: "#b5bd7e",
+  accent: "#d28a91",
   bosses: [{ slug: "kithix", anchor: "kithix", names: { en: "Kith’ix", ru: "К’тикс" } }],
 };
 

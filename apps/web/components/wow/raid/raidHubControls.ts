@@ -1,10 +1,11 @@
 import type { CSSProperties } from "react";
 import buttons from "../../../public/assets/wow/raids/hub/controls/buttons/manifest.json";
+import panelAssets from "../../../public/assets/wow/raids/hub/controls/panels/manifest.json";
 import type { RaidHubSlug } from "./raidHubData";
 
 // Measured native cut points keep the painted corners intact at every width.
 const panels: Record<RaidHubSlug, readonly number[]> = {
-  "the-unbinding-of-kithix": [207, 201, 209, 202],
+  "the-unbinding-of-kithix": panelAssets.entries["the-unbinding-of-kithix"].slices,
   "venomous-abyss": [168, 144, 144, 144],
   "the-voidspire": [136, 112, 136, 112],
   "the-dreamrift": [160, 128, 160, 128],
@@ -17,8 +18,9 @@ export function raidHubControlLayout(slug: RaidHubSlug): CSSProperties {
   const button = buttons.find(asset => asset.slug === slug)!;
   const slice = button.recommendedSlice;
   const values = [slice.top, slice.right, slice.bottom, slice.left];
+  const panelPath = slug === "the-unbinding-of-kithix" ? panelAssets.entries[slug].path : `/assets/wow/raids/hub/controls/panels/${slug}.webp`;
   return {
-    "--raid-panel-image": `url("/assets/wow/raids/hub/controls/panels/${slug}.webp")`,
+    "--raid-panel-image": `url("${panelPath}")`,
     "--raid-panel-slice": panels[slug].join(" "),
     "--raid-panel-width": widths(panels[slug], .18),
     "--raid-panel-width-mobile": widths(panels[slug], .14),

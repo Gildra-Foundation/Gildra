@@ -89,3 +89,14 @@ Exact edit prompt:
 - Native low alpha is preserved, not cleaned: alpha0=863073pixels; alpha1=67809; alpha2–8=10605; alpha9–16=1130; alpha17–199=7323; alpha200–255=622924. QA hazeShare5.85%,window max1,corners0. Faint alpha1 noise extends away from the frame (distance report in task proofs); actual cyan preview is visually clean, with no visible glow or cast background.
 - Sharp only resized to960×640 and WebP q88/alpha100/effort6; no recoloring, repainting, alpha changes or compositing. Final56608bytes; SHA-256 `bae77a1c1d902d20cd45cd2a373ac07fc78a9c731c7001245b83f53fd3df3002`. Center alpha0–1.
 - Aperture bounds left116,top151,right844,bottom527; full43point polygon and CSS in manifest and external `aperture.json`. Coverage proof at280/420/640px reviewed: closed window, no cyan gap inside rim, no magenta leak outside. Native cyan comparison and final proof retained at `/home/debian/gildra-kithix-art-20261104/proofs/frames/`.
+
+## Kithix organic revision (2026-11-04)
+
+- Original decorative painted interface asset, built-in image_gen generate with transparent_background:true. Four-type kit replaces rigid gold/stone construction with dark wine/charcoal chitin, crimson lobes, thick tendrils and sparse burnt-coral nodules. Actual Kithix loading image used only for organic motif/palette; no scene raster changed.
+- Candidate1 selected: full margins, balanced outline and restrained crest. Other candidates nearly touch canvas or are less balanced.
+- Native `/home/debian/gildra-kithix-organic-20261104/asset-sources/frames/kithix-organic-native.png`; SHA-256 `f95de1192481ea8409e14d5102d4100b3f0e634f2197ca6f691ca7cc8070e6b8`. Three candidate natives, exact prompt and QA are preserved outside public in `/home/debian/gildra-kithix-organic-20261104/asset-sources/frames/`.
+- QA no FAIL. Accepted warnings: symmetry: left/right silhouette overlap 72%. These reflect broad matte painted planes or intentionally varied asymmetric corners; display-size proof reviewed.
+- Delivery `/assets/wow/raids/hub/stylized/frames/kithix-organic.webp`: 960×640, 77800 bytes, SHA-256 `66778f288909b2a403c62af6b336f58889f06d8d0c4ad6174d1e458c8019cddc`. Geometry: aperture bounds {'left': 86, 'top': 113, 'right': 860, 'bottom': 578}; full polygon in manifest.
+- Sharp only crops transparent exterior where applicable, proportionally resizes and encodes; no repainting, recoloring, compositing or alpha repair. Previous Kithix files retained unchanged.
+- Cyan proof and live-text nine-slice/transparent aperture coverage reviewed. Full proof/report saved outside public in `/home/debian/gildra-kithix-organic-20261104/proofs/`.
+- Site accent #d28a91 verified by root (light/base8.51, light/bg10.3). Similar hue to Ruby Life Pools but distinct organic chitin construction rather than gold/stone.

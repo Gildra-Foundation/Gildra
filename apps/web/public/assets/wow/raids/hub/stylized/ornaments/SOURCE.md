@@ -179,3 +179,12 @@ Constraints: genuine transparent alpha outside object. No background/scenery/gro
 - Sharp only alpha-trimmed1132×1075 at49,107, proportionally resized to360px width and added12px transparent padding; WebP q82/alpha100/effort6. No repainting, recoloring, alpha repair or compositing.
 - Final384×366,18066bytes; SHA-256 `ae514489be8e8bbeeb36fe934ac4f95af9985b703c025d8be25f299cd5daedcb`. rootPadding12,rootX222; alpha bounds left12,top12,width360,height342.
 - Final dark/cyan proof reviewed: no halo, clipped branch or painted backdrop. Shape suitable for approximately96px display; no central text or gameplay data.
+
+## Kithix organic revision (2026-11-04)
+
+- Original decorative organic growth, built-in image_gen generate with transparent_background:true. Three independent portrait candidates passed QA without warnings; candidate3 selected for broad legible coiled tendrils and compact lobed base.
+- Approved organic panel used only for palette/finish. Motifs derive from actual Kithix loading illustration: alien organic crimson tendrils, dark chitin and burnt-coral nodules. Original loading scene unchanged.
+- Native `/home/debian/gildra-kithix-organic-20261104/asset-sources/ornaments/kithix-organic-roots-native.png`,1086×1448; SHA-256 `3ba8569d425b699a718046dba6ee082a50678577435d307b3b29311ae1fa8163`. Exact prompt, QA and all natives outside public at `/home/debian/gildra-kithix-organic-20261104/asset-sources/ornaments/`.
+- Final `/assets/wow/raids/hub/stylized/ornaments/kithix-organic-roots.webp`,384×547,34658bytes,SHA-256 `26aecb51175a6de2266fb61002221a3b23d65190ffc3ebf27a466a9503a7fbec`. Geometry rootPadding12,rootX198,alphaBounds left12/top12/width360/height523.
+- Sharp only alpha-trims948×1378 at44,42, downscales to360px width, adds12px transparent margins and encodes WebP q82/alpha100/effort6. No repainting, recoloring, compositing or alpha repair.
+- Final cyan/dark proof reviewed: complete silhouette, clear separate broad coils, no halo/backdrop. Display approximately96px wide. Prior ornament bytes retained.

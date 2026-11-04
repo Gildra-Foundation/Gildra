@@ -31,6 +31,38 @@
       "rootPadding": 12,
       "rootX": 222,
       "proof": "/home/debian/gildra-kithix-art-20261104/proofs/ornaments/kithix-roots-ornament-proof.png"
+    },
+    "kithix-organic-roots": {
+      "path": "/assets/wow/raids/hub/stylized/ornaments/kithix-organic-roots.webp",
+      "width": 384,
+      "height": 547,
+      "bytes": 34658,
+      "sha256": "26aecb51175a6de2266fb61002221a3b23d65190ffc3ebf27a466a9503a7fbec",
+      "native": "/home/debian/gildra-kithix-organic-20261104/asset-sources/ornaments/kithix-organic-roots-native.png",
+      "nativeSha256": "3ba8569d425b699a718046dba6ee082a50678577435d307b3b29311ae1fa8163",
+      "nativeDimensions": {
+        "width": 1086,
+        "height": 1448
+      },
+      "crop": {
+        "left": 44,
+        "top": 42,
+        "width": 948,
+        "height": 1378
+      },
+      "centreAlpha": {
+        "min": 0,
+        "max": 255
+      },
+      "alphaBounds": {
+        "left": 12,
+        "top": 12,
+        "width": 360,
+        "height": 523
+      },
+      "rootPadding": 12,
+      "rootX": 198,
+      "proof": "/home/debian/gildra-kithix-organic-20261104/proofs/kithix-organic-roots-ornament-proof.png"
     }
   }
 }

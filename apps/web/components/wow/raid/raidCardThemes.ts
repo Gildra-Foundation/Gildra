@@ -2,7 +2,7 @@ import type { RaidHubSlug } from "./raidHubData";
 
 /** Presentation colours only; identities and encounters stay in raidHubData. */
 export const raidCardThemes: Record<RaidHubSlug, { accent: string; atmosphere: string }> = {
-  "the-unbinding-of-kithix": { accent: "#b5bd7e", atmosphere: "void" },
+  "the-unbinding-of-kithix": { accent: "#d28a91", atmosphere: "void" },
   "venomous-abyss": { accent: "#74c8a8", atmosphere: "jade" },
   "the-voidspire": { accent: "#b39ade", atmosphere: "void" },
   "the-dreamrift": { accent: "#8fc8a6", atmosphere: "dream" },

@@ -15,7 +15,7 @@ type Ornament = {
 };
 
 const ornaments: Record<RaidHubSlug, readonly Ornament[]> = {
-  "the-unbinding-of-kithix": [{ name: "kithix-roots", rootPadding: 12, width: 384, height: 366, theme: "void", anchor: "right", duration: 1600, delay: 400 }],
+  "the-unbinding-of-kithix": [{ name: "kithix-organic-roots", rootPadding: 12, width: 384, height: 547, theme: "void", anchor: "right", duration: 1600, delay: 400 }],
   "venomous-abyss": [{ name: "jade-vine", rootPadding: 18, width: 384, height: 375, theme: "jade", anchor: "left", duration: 1600, delay: 400 }],
   "the-voidspire": [{ name: "void-crystals", rootPadding: 23, width: 384, height: 387, theme: "void", anchor: "right", duration: 1200, delay: 400 }],
   "the-dreamrift": [{ name: "dream-shoot", rootPadding: 18, width: 384, height: 382, theme: "dream", anchor: "left", duration: 1800, delay: 400 }],
