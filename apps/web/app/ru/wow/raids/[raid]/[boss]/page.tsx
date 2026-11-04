@@ -37,5 +37,6 @@ export default async function Page({ params }: PageProps) {
   if (!raid || !boss) notFound();
   if (raid.slug === "the-voidspire") permanentRedirect(`/ru/wow/raids/the-voidspire#boss=${boss.slug}`);
   if (raid.slug === "the-dreamrift") permanentRedirect(`/ru/wow/raids/the-dreamrift#boss=${boss.slug}`);
+  if (raid.slug === "march-on-queldanas") permanentRedirect(`/ru/wow/raids/march-on-queldanas#boss=${boss.slug}`);
   return <RaidBossGuide raid={raid} boss={boss} locale="ru" />;
 }
