@@ -7,15 +7,16 @@ import { AtlasDialog } from '@gildra/atlas-ui/AtlasDialog';
 import bridge from '@gildra/atlas-ui/valyroAtlasBridge.module.css';
 import { voidspireGuideCopy } from './voidspireGuideCopy';
 import styles from './voidspireGuide.module.css';
-import { raidHubControlLayout } from './raidHubControls';
+import { raidGuideMaterial } from './raidGuideMaterial';
+import type { RaidHubSlug } from './raidHubData';
 
 /** Hover/focus uses Valyro; pressing opens the same text with touch, Escape and focus-return support. */
-export function VoidspireGuideHint({ title, children, detail, source, locale, spellId, portrait, portraitPosition }: {
-  title: string; children?: ReactNode; detail: ReactNode; source?: string; locale: 'ru' | 'en'; spellId?: number; portrait?: string; portraitPosition?: string;
+export function VoidspireGuideHint({ title, children, detail, source, locale, spellId, portrait, portraitPosition, raid = 'the-voidspire' }: {
+  raid?: RaidHubSlug; title: string; children?: ReactNode; detail: ReactNode; source?: string; locale: 'ru' | 'en'; spellId?: number; portrait?: string; portraitPosition?: string;
 }) {
   const [open, setOpen] = useState(false);
   const t = voidspireGuideCopy[locale];
-  const material = raidHubControlLayout('the-voidspire');
+  const material = raidGuideMaterial(raid);
   const heading = (dialog = false) => <div className={`${styles.hintHeading} ${portrait ? styles.enemyHintHeading : ''}`}>
     {portrait && <span className={`${styles.enemyHintPortrait} ${portraitPosition ? styles.enemyHintScene : ''}`}><span className={styles.enemyHintImage}><Image src={portrait} width={112} height={112} alt="" unoptimized={!!portraitPosition} style={portraitPosition ? { objectFit: 'none', objectPosition: portraitPosition } : undefined} data-enemy-portrait /></span></span>}
     {dialog ? <h3>{title}</h3> : <strong>{title}</strong>}

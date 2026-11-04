@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { SporefallPage } from "@/components/wow/raid/SporefallPage";
+import { notFound, permanentRedirect } from "next/navigation";
 
 // Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
 export const dynamicParams = false;
@@ -15,5 +14,5 @@ export const metadata: Metadata = {
 export function generateStaticParams() { return [{ boss: "rotmire" }]; }
 export default async function Page({ params }: { params: Promise<{ boss: string }> }) {
   if ((await params).boss !== "rotmire") notFound();
-  return <SporefallPage locale="en" view="boss" />;
+  permanentRedirect("/wow/raids/sporefall#boss=rotmire");
 }

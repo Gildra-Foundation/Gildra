@@ -7,19 +7,20 @@ import { UsersRound } from 'lucide-react';
 import { AtlasValyroSelect } from '@gildra/atlas-ui/AtlasValyroSelect';
 import { AtlasValyroScope } from '@gildra/atlas-ui/AtlasValyroScope';
 import { PortalContainerContext, useIsClient } from '@gildra/atlas-ui/valyro-ui/primitives/Portal';
-import { raidHubControlLayout } from './raidHubControls';
+import { raidGuideMaterial } from './raidGuideMaterial';
+import type { RaidHubSlug } from './raidHubData';
 import { guideRole, guideSpecs } from './voidspireGuideCounters';
 import { voidspireSpecIcon } from './voidspireSpecIcons';
 import { voidspireGuideCopy } from './voidspireGuideCopy';
 import { guideClassForSpec, guideSpecForClass, voidspireClasses, voidspirePickerCopy } from './voidspirePickerState';
 import styles from './voidspireSpecPicker.module.css';
 
-const material = raidHubControlLayout('the-voidspire');
 
 /** Separate class and spec listboxes retain the kit's keyboard, touch and focus behaviour. */
-export function VoidspireSpecPicker({ value, onChange, locale }: {
-  value: number; onChange: (value: number) => void; locale: 'ru' | 'en';
+export function VoidspireSpecPicker({ value, onChange, locale, raid = 'the-voidspire' }: {
+  raid?: RaidHubSlug; value: number; onChange: (value: number) => void; locale: 'ru' | 'en';
 }) {
+  const material = raidGuideMaterial(raid);
   const t = voidspireGuideCopy[locale], copy = voidspirePickerCopy[locale];
   const isClient = useIsClient();
   const [container, setContainer] = useState<HTMLDivElement | null>(null);

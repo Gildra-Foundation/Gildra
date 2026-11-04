@@ -3,11 +3,11 @@ import { SporefallPage } from "@/components/wow/raid/SporefallPage";
 
 const path = "/wow/raids/sporefall";
 export const metadata: Metadata = {
-  title: "Sporefall — Midnight Raid — Gildra",
-  description: "Sporefall, the one-boss Midnight Season 1 raid in Harandar: the pull on the map, Rotmire and what to know.",
+  title: "Sporefall: Rotmire Raid Guide — Gildra",
+  description: "A clear Normal and Heroic Rotmire guide: role positioning, minion priorities, interrupts and abilities for your class.",
   alternates: { canonical: path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
   robots: { index: false, follow: true },
 };
 export default function Page() {
-  return <SporefallPage locale="en" view="raid" />;
+  return <SporefallPage locale="en" />;
 }

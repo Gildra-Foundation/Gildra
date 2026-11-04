@@ -31,8 +31,8 @@
   height: auto;
   translate: none;
   border: solid transparent;
-  --frame-x: 20.608px;
-  --frame-y: 25.024px;
+  --frame-x: var(--guide-picker-frame-x, 20.608px);
+  --frame-y: var(--guide-picker-frame-y, 25.024px);
   border-width: var(--frame-y) var(--frame-x);
   border-image-source: var(--raid-panel-image);
   border-image-slice: var(--raid-panel-slice);
@@ -66,7 +66,7 @@
   transition: background-color var(--ui-duration-fast) var(--ui-ease), box-shadow var(--ui-duration-fast) var(--ui-ease);
   pointer-events: none;
 }
-.field .trigger:global([data-open])::after { background-color: color-mix(in srgb, var(--atlas-dungeon-void-accent) 18%, transparent); border-color: var(--atlas-dungeon-void-accent); }
+.field .trigger:global([data-open])::after { background-color: color-mix(in srgb, var(--guide-accent, var(--atlas-dungeon-void-accent)) 18%, transparent); border-color: var(--guide-accent, var(--atlas-dungeon-void-accent)); }
 .field .trigger:not(:disabled):is(:active, [data-guide-pressed])::after { background-color: var(--atlas-accent-wash-strong); }
 .trigger :global(.ui-select__value) { white-space: normal; overflow-wrap: anywhere; }
 .trigger :global(.ui-select__icon) { flex: none; width: 30px; height: 30px; }
@@ -90,7 +90,7 @@
 .menu :global(.ui-listbox__description) { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
 .menu :global(.ui-menu-item__icon) { width: 30px; height: 30px; }
 @media (hover: hover) and (pointer: fine) {
-  .field .trigger:not(:disabled):not(:active):not([data-guide-pressed]):hover::after { background-color: color-mix(in srgb, var(--atlas-dungeon-void-accent) 18%, transparent); border-color: var(--atlas-dungeon-void-accent); }
+  .field .trigger:not(:disabled):not(:active):not([data-guide-pressed]):hover::after { background-color: color-mix(in srgb, var(--guide-accent, var(--atlas-dungeon-void-accent)) 18%, transparent); border-color: var(--guide-accent, var(--atlas-dungeon-void-accent)); }
   .field .trigger:not(:disabled):not(:active):not([data-guide-pressed]):hover::after { border-color: var(--atlas-accent); box-shadow: var(--atlas-glass-inset), 0 8px 18px color-mix(in srgb, var(--atlas-bg) 62%, transparent); }
 }
 @media (max-width: 600px) { .fields { grid-template-columns: minmax(0, 1fr); } }
@@ -119,9 +119,9 @@
   45% { box-shadow: var(--atlas-glass-inset), inset 0 0 24px color-mix(in srgb, var(--atlas-dungeon-void-accent-strong) 48%, transparent), inset 0 0 0 1px var(--atlas-dungeon-void-accent-strong); }
 }
 @media (hover: hover) and (pointer: fine) {
-  .field .trigger:not(:disabled):hover::after { box-shadow: var(--atlas-glass-inset), inset 0 0 18px color-mix(in srgb, var(--atlas-dungeon-void-accent) 24%, transparent); }
+  .field .trigger:not(:disabled):hover::after { box-shadow: var(--atlas-glass-inset), inset 0 0 18px color-mix(in srgb, var(--guide-accent, var(--atlas-dungeon-void-accent)) 24%, transparent); }
 }
-.field .trigger:focus-visible::after { box-shadow: var(--atlas-glass-inset), inset 0 0 18px color-mix(in srgb, var(--atlas-dungeon-void-accent) 24%, transparent); }
+.field .trigger:focus-visible::after { box-shadow: var(--atlas-glass-inset), inset 0 0 18px color-mix(in srgb, var(--guide-accent, var(--atlas-dungeon-void-accent)) 24%, transparent); }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
   .field .trigger::after { animation: none; transition: none; }
 }
