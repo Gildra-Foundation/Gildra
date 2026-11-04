@@ -111,7 +111,7 @@
 .bossTabs [role="tab"][aria-selected="true"]::after { background: linear-gradient(120deg,color-mix(in srgb,var(--venom-accent) 16%,transparent),transparent 80%),color-mix(in srgb,var(--atlas-bg) 88%,transparent); box-shadow: var(--atlas-shadow-panel),inset 0 0 20px color-mix(in srgb,var(--venom-accent) 15%,transparent); }
 .guide[data-guide-motion="ready"] .bossTabs [role="tab"][aria-selected="true"]::after { animation: venomSelect calc(var(--ui-duration-slow) * 1.36) var(--ui-ease); }
 @keyframes venomSelect { 45% { box-shadow: var(--atlas-shadow-panel), inset 0 0 26px color-mix(in srgb,var(--venom-light) 36%,transparent); } }
-.bossTabs [role="tab"] [data-flip-id] { left: 24px; right: 24px; bottom: 13px; height: 2px; background: var(--venom-light); border-radius: var(--atlas-radius); }
+.bossTabs [role="tab"] [data-flip-id] { display: none; }
 .bossTabs [role="tabpanel"]:not([hidden]) { display: block; }
 .bossTabLabel { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
 .bossTabLabel img { width: 36px; height: 36px; flex: 0 0 36px; object-fit: contain; border-radius: var(--atlas-radius-control); }
@@ -136,7 +136,6 @@
   .bossTabLabel { gap: var(--atlas-space-2); }
   .bossTabLabel img { width: 30px; height: 36px; flex-basis: 30px; }
   .bossTabLabel small { font-size: var(--atlas-text-meta); }
-  .bossTabs [role="tab"] [data-flip-id] { left: 24px; right: 24px; bottom: 12px; }
 }
 @media (min-width:1101px) and (max-width:1280px) { .briefing { grid-template-columns: minmax(0,1fr); } }
 
