@@ -1,40 +1,59 @@
 {
   "entries": {
     "the-unbinding-of-kithix": {
-      "path": "/assets/wow/raids/hub/stylized/scenes/the-unbinding-of-kithix.webp",
-      "width": 1672,
-      "height": 941,
-      "bytes": 59802,
-      "sha256": "fa73622f6414561076f6d835201f1e7b1a171af572780e60dec42c83042be9b0",
-      "native": "/home/debian/gildra-kithix-art-20261104/asset-sources/scenes/the-unbinding-of-kithix-native.png",
-      "nativeSha256": "8ccd9187c28176fbcfe67106077fd0fed61160bb8e4fb61d482f196b1594d408",
+      "path": "/assets/wow/raids/hub/stylized/scenes/kithix-loading-screen.webp",
+      "width": 2400,
+      "height": 921,
+      "bytes": 189176,
+      "sha256": "1e681b8c391c400039810b4c1ef26897fb720fc85f179fbaaa94bc8f59ee4bff",
+      "sourceUrl": "https://wow.zamimg.com/uploads/blog/images/55125-the-unbinding-of-kithix-raid-loading-screen-datamined-in-patch-12-1-5.png",
+      "native": "/home/debian/gildra-kithix-art-20261104/references/kithix-loading.png",
+      "nativeSha256": "c29b9b96f64b95e9a5f5a8e8520ebe55a0299982c275e6cc42ac0e95ed310ea3",
       "nativeDimensions": {
-        "width": 1672,
-        "height": 941
+        "width": 2992,
+        "height": 1684
       },
-      "crop": null,
+      "crop": {
+        "left": 1,
+        "top": 268,
+        "width": 2990,
+        "height": 1148
+      },
+      "processing": "Original loading screen; transparent outer margins cropped; resize and WebP encoding only. No repainting or recoloring.",
       "variants": [
         {
-          "path": "/assets/wow/raids/hub/stylized/scenes/the-unbinding-of-kithix-768.webp",
+          "path": "/assets/wow/raids/hub/stylized/scenes/kithix-loading-screen-768.webp",
           "width": 768,
-          "bytes": 20572,
-          "sha256": "40185700ab48097154093ce7341bf186e841950416f5fad78e9e37998aea9f8e"
+          "height": 295,
+          "bytes": 29778,
+          "sha256": "891790eafba03b5e50d63ed7a7022a4d5d92c8ede8923c957726d6c96b3836ab"
         }
       ]
     },
     "the-unbinding-of-kithix-mobile": {
-      "path": "/assets/wow/raids/hub/stylized/scenes/the-unbinding-of-kithix-mobile.webp",
+      "path": "/assets/wow/raids/hub/stylized/scenes/kithix-loading-screen-mobile.webp",
       "width": 600,
       "height": 900,
-      "bytes": 21156,
-      "sha256": "dd7e8f374949b0af1d3465e3a71dab5cbd111e175f6cecac5a900686dca145dc",
-      "native": "/home/debian/gildra-kithix-art-20261104/asset-sources/scenes/the-unbinding-of-kithix-native.png",
-      "nativeSha256": "8ccd9187c28176fbcfe67106077fd0fed61160bb8e4fb61d482f196b1594d408",
+      "bytes": 51136,
+      "sha256": "ba9090a51157af8a2ef185da8d996f95200b8c09aa0581ba4ed71c162000dd7f",
+      "sourceUrl": "https://wow.zamimg.com/uploads/blog/images/55125-the-unbinding-of-kithix-raid-loading-screen-datamined-in-patch-12-1-5.png",
+      "native": "/home/debian/gildra-kithix-art-20261104/references/kithix-loading.png",
+      "nativeSha256": "c29b9b96f64b95e9a5f5a8e8520ebe55a0299982c275e6cc42ac0e95ed310ea3",
       "nativeDimensions": {
-        "width": 1672,
-        "height": 941
+        "width": 2992,
+        "height": 1684
       },
-      "crop": null
+      "crop": {
+        "left": 1,
+        "top": 268,
+        "width": 2990,
+        "height": 1148
+      },
+      "processing": "Original loading screen; transparent outer margins cropped; resize and WebP encoding only. No repainting or recoloring.",
+      "resize": {
+        "fit": "cover",
+        "position": "centre"
+      }
     }
   }
 }

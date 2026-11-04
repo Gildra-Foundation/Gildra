@@ -1,6 +1,6 @@
 /** Blizzard's 12.1.5 announcement; overview only, no encounter strategy inferred.
  * The Russian title is an editorial translation of the English raid name.
- * The original decorative kit and simplified scene follow the raid loading-screen reference.
+ * The scene is the original raid loading screen; the decorative kit is custom.
  */
 export const kithixRaid = {
   slug: "the-unbinding-of-kithix" as const,
@@ -10,7 +10,7 @@ export const kithixRaid = {
     ru: "Под Отравленной бездной К’тикс освобождается от древних оков. Вместе с леди Лиадрин вам предстоит сразиться с генералом к’тракси в рейде на одного босса.",
   },
   location: { en: "Beneath the Venomous Abyss", ru: "Под Отравленной бездной" },
-  artwork: "/assets/wow/raids/hub/stylized/scenes/the-unbinding-of-kithix.webp",
+  artwork: "/assets/wow/raids/hub/stylized/scenes/kithix-loading-screen.webp",
   accent: "#b5bd7e",
   bosses: [{ slug: "kithix", anchor: "kithix", names: { en: "Kith’ix", ru: "К’тикс" } }],
 };
