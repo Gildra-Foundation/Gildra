@@ -342,7 +342,7 @@
 .hintDialog.hintDialog :global(.ui-dialog__body) { padding: 0; overflow: visible; }
 .hintSurface {
   --hint-glass: color-mix(in srgb, var(--atlas-bg) 94%, transparent);
-  --frame-x: var(--guide-hint-frame-x, 23.184px); --frame-y: var(--guide-hint-frame-y, 28.152px);
+  --frame-x: var(--guide-hint-frame-x, 23.184px); --frame-y: var(--guide-hint-frame-y, 28.152px); --frame-bottom: var(--guide-hint-frame-bottom, var(--frame-y));
   position: relative; isolation: isolate; display: grid; gap: var(--atlas-space-4);
   min-width: 0; max-height: calc(100dvh - 48px); padding: 28px;
   color: var(--atlas-text); font: 400 var(--atlas-text-body)/var(--atlas-leading-body) var(--atlas-font-ui);
@@ -350,17 +350,17 @@
 }
 .hintSurface::before, .enemyHintPortrait::before {
   content: ''; position: absolute; z-index: -1; inset: 0; pointer-events: none;
-  border: solid transparent; border-width: var(--frame-y) var(--frame-x);
+  border: solid transparent; border-width: var(--frame-y) var(--frame-x) var(--frame-bottom);
   border-image-source: var(--raid-panel-image); border-image-slice: var(--raid-panel-slice);
-  border-image-width: var(--frame-y) var(--frame-x); border-image-repeat: stretch;
+  border-image-width: var(--frame-y) var(--frame-x) var(--frame-bottom); border-image-repeat: stretch;
   filter: contrast(.88) saturate(.84) brightness(.92);
   mask:
     radial-gradient(ellipse var(--frame-x) var(--frame-y) at top left, #000 60%, transparent 100%),
     radial-gradient(ellipse var(--frame-x) var(--frame-y) at top right, #000 60%, transparent 100%),
-    radial-gradient(ellipse var(--frame-x) var(--frame-y) at bottom left, #000 60%, transparent 100%),
-    radial-gradient(ellipse var(--frame-x) var(--frame-y) at bottom right, #000 60%, transparent 100%),
+    radial-gradient(ellipse var(--frame-x) var(--frame-bottom) at bottom left, #000 60%, transparent 100%),
+    radial-gradient(ellipse var(--frame-x) var(--frame-bottom) at bottom right, #000 60%, transparent 100%),
     linear-gradient(to right, #000 8px, transparent var(--frame-x), transparent calc(100% - var(--frame-x)), #000 calc(100% - 8px)),
-    linear-gradient(to bottom, #000 9px, transparent var(--frame-y), transparent calc(100% - var(--frame-y)), #000 calc(100% - 9px));
+    linear-gradient(to bottom, #000 9px, transparent var(--frame-y), transparent calc(100% - var(--frame-bottom)), #000 calc(100% - 9px));
 }
 .hintSurface::after {
   content: ''; position: absolute; z-index: -2; inset: 11px 10px; pointer-events: none;
@@ -374,7 +374,7 @@
 .hintHeading > :is(strong, h3) { display: block; min-width: 0; margin: 0; color: var(--atlas-text-strong); font: 600 var(--atlas-text-title)/var(--atlas-leading-snug) var(--atlas-font-display); overflow-wrap: anywhere; hyphens: none; }
 .enemyHintHeading { display: flex; align-items: center; gap: var(--atlas-space-4); }
 .enemyHintPortrait {
-  --frame-x: var(--guide-portrait-frame-x, 16.8px); --frame-y: var(--guide-portrait-frame-y, 20.4px);
+  --frame-x: var(--guide-portrait-frame-x, 16.8px); --frame-y: var(--guide-portrait-frame-y, 20.4px); --frame-bottom: var(--guide-portrait-frame-bottom, var(--frame-y));
   position: relative; isolation: isolate; display: grid; place-items: center;
   flex: 0 0 112px; width: 112px; height: 128px;
   background: radial-gradient(ellipse at center, color-mix(in srgb, var(--guide-accent, var(--atlas-dungeon-void-accent)) 18%, transparent), transparent 70%);

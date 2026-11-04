@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { VenomousBossPage } from "@/components/wow/raid/VenomousBossPage";
+import { notFound, permanentRedirect } from "next/navigation";
 import { bossBySlug, lt, venomousAbyss } from "@/lib/data/wow";
 
 // Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
@@ -30,5 +29,5 @@ export default async function Page({ params }: { params: Promise<{ boss: string 
   const { boss: slug } = await params;
   const boss = bossBySlug(slug);
   if (!boss) notFound();
-  return <VenomousBossPage boss={boss} bosses={venomousAbyss} locale="ru" />;
+  permanentRedirect(`/ru/wow/raids/venomous-abyss#boss=${boss.slug}`);
 }

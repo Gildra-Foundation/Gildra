@@ -33,10 +33,11 @@
   border: solid transparent;
   --frame-x: var(--guide-picker-frame-x, 20.608px);
   --frame-y: var(--guide-picker-frame-y, 25.024px);
-  border-width: var(--frame-y) var(--frame-x);
+  --frame-bottom: var(--guide-picker-frame-bottom, var(--frame-y));
+  border-width: var(--frame-y) var(--frame-x) var(--frame-bottom);
   border-image-source: var(--raid-panel-image);
   border-image-slice: var(--raid-panel-slice);
-  border-image-width: var(--frame-y) var(--frame-x);
+  border-image-width: var(--frame-y) var(--frame-x) var(--frame-bottom);
   border-image-repeat: stretch;
   background: transparent;
   background-clip: padding-box;
@@ -49,10 +50,10 @@
   mask:
     radial-gradient(ellipse var(--frame-x) var(--frame-y) at top left, #000 60%, transparent 100%),
     radial-gradient(ellipse var(--frame-x) var(--frame-y) at top right, #000 60%, transparent 100%),
-    radial-gradient(ellipse var(--frame-x) var(--frame-y) at bottom left, #000 60%, transparent 100%),
-    radial-gradient(ellipse var(--frame-x) var(--frame-y) at bottom right, #000 60%, transparent 100%),
+    radial-gradient(ellipse var(--frame-x) var(--frame-bottom) at bottom left, #000 60%, transparent 100%),
+    radial-gradient(ellipse var(--frame-x) var(--frame-bottom) at bottom right, #000 60%, transparent 100%),
     linear-gradient(to right, #000 8px, transparent var(--frame-x), transparent calc(100% - var(--frame-x)), #000 calc(100% - 8px)),
-    linear-gradient(to bottom, #000 9px, transparent var(--frame-y), transparent calc(100% - var(--frame-y)), #000 calc(100% - 9px));
+    linear-gradient(to bottom, #000 9px, transparent var(--frame-y), transparent calc(100% - var(--frame-bottom)), #000 calc(100% - 9px));
 }
 .trigger::after {
   content: '';

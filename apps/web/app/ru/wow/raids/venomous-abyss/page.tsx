@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { VenomousAbyssPage } from "@/components/wow/raid/VenomousAbyssPage";
+import { VenomousGuidePage } from "@/components/wow/raid/VenomousGuidePage";
 
 export const metadata: Metadata = {
   title: "Отравленная бездна — рейдовый гайд Gildra",
-  description: "Отравленная бездна, рейд Midnight · Сезон 2: пулы на карте, восемь боссов, крылья поиска рейда, добыча и награды.",
+  description: "Все восемь боссов Отравленной бездны: понятный порядок боя, задачи вашей специализации, прислужники и прерывания на обычной и героической сложности.",
   alternates: {
     canonical: "/ru/wow/raids/venomous-abyss",
     languages: { en: "/wow/raids/venomous-abyss", ru: "/ru/wow/raids/venomous-abyss", "x-default": "/wow/raids/venomous-abyss" },
@@ -12,5 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <VenomousAbyssPage locale="ru" />;
+  return <VenomousGuidePage locale="ru" />;
 }

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { VenomousAbyssPage } from "@/components/wow/raid/VenomousAbyssPage";
+import { VenomousGuidePage } from "@/components/wow/raid/VenomousGuidePage";
 
 export const metadata: Metadata = {
   title: "The Venomous Abyss Raid Guide — Gildra",
-  description: "The Venomous Abyss, Midnight Season 2 raid: pulls on the map, eight bosses, Raid Finder wings, loot and rewards.",
+  description: "All eight Venomous Abyss bosses: encounter flow, positioning, adds and responses for your specialization on Normal and Heroic.",
   alternates: {
     canonical: "/wow/raids/venomous-abyss",
     languages: { en: "/wow/raids/venomous-abyss", ru: "/ru/wow/raids/venomous-abyss", "x-default": "/wow/raids/venomous-abyss" },
@@ -12,5 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <VenomousAbyssPage locale="en" />;
+  return <VenomousGuidePage locale="en" />;
 }
