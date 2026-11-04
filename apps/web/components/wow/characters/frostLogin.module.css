@@ -92,18 +92,8 @@
   pointer-events: none;
 }
 
-/* A low spectral light stays inside the steel rails. */
-.card::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 10px;
-  border-radius: 24px;
-  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--frost-light) 13%, transparent), transparent 45%);
-  opacity: .45;
-  pointer-events: none;
-  animation: frost-breath 7s ease-in-out infinite alternate paused;
-}
+/* Light is painted on the asset itself, never on a rectangular overlay. */
+.card::after { content: none; }
 
 .crest {
   position: absolute;
@@ -114,17 +104,9 @@
   line-height: 0;
   translate: -50% 0;
   pointer-events: none;
-  filter: contrast(.88) saturate(.84) brightness(.92);
 }
-.crest img { display: block; width: 100%; height: auto; }
-.crest::after {
-  content: "";
-  position: absolute;
-  inset: 30% 35%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, color-mix(in srgb, var(--frost-light) 20%, transparent), transparent 70%);
-  animation: frost-breath 5.5s ease-in-out infinite alternate paused;
-}
+.crest img { display: block; width: 100%; height: auto; filter: contrast(.88) saturate(.84) brightness(.92); }
+.crest::after { content: none; }
 
 .silverLabel,
 .page .card .connectPanel :global([data-battlenet-eyebrow]) {
@@ -221,29 +203,19 @@
   background-clip: padding-box;
   filter: contrast(.88) saturate(.84) brightness(.92);
   pointer-events: none;
-  transition: filter var(--atlas-duration-fast) var(--atlas-ease);
+  transition: filter var(--atlas-duration-art) var(--atlas-ease);
 }
-.card :global([data-folio-action]:not([data-folio-action="quiet"]))::after {
-  content: "";
-  position: absolute;
-  inset: 12px 20px;
-  border-radius: 12px;
-  background: linear-gradient(110deg, transparent 30%, color-mix(in srgb, var(--frost-light) 20%, transparent) 49%, transparent 66%);
-  background-size: 300% 100%;
-  background-position: 100% 0;
-  opacity: 0;
-  pointer-events: none;
-}
+.card :global([data-folio-action]:not([data-folio-action="quiet"]))::after { content: none; }
 .page .card :global([data-folio-action]:not([data-folio-action="quiet"]):focus-visible) {
   outline: 2px solid var(--atlas-accent-strong);
   outline-offset: 4px;
 }
 @media (hover: hover) and (pointer: fine) {
   .page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"]):hover) { transform: translateY(-2px); }
-  .card :global([data-folio-action]:not([data-folio-action="quiet"]):hover)::before { filter: contrast(.9) saturate(.9) brightness(1.14); }
+  .card :global([data-folio-action]:not([data-folio-action="quiet"]):hover)::before { filter: contrast(.9) saturate(.9) brightness(1.14) drop-shadow(0 0 4px color-mix(in srgb, var(--frost-light) 30%, transparent)); }
 }
-.card :global([data-folio-action]:not([data-folio-action="quiet"])):is(:hover, :focus-visible)::after { opacity: 1; animation: blade-sweep .9s var(--atlas-ease) both; }
-.page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"]):active) { transform: translateY(1px) scale(.98); }
+.card :global([data-folio-action]:not([data-folio-action="quiet"]):focus-visible)::before { filter: contrast(.9) saturate(.9) brightness(1.14) drop-shadow(0 0 4px color-mix(in srgb, var(--frost-light) 30%, transparent)); }
+.page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"]):active) { transform: translateY(1px); }
 .card :global([data-folio-action] svg) { flex: none; width: 16px; height: 16px; }
 
 :global([data-frost-active="true"]) .snow,
@@ -256,10 +228,9 @@
 @keyframes snowfall { from { transform: translate3d(0, -20px, 0); } to { transform: translate3d(var(--snow-drift), 1100px, 0); } }
 @keyframes ice-drift { from { transform: translate3d(0, -20px, 0) rotate(0); } to { transform: translate3d(var(--snow-drift), 1100px, 0) rotate(220deg); } }
 @keyframes frost-wind { from { transform: translate3d(-6%, 3%, 0) rotate(-16deg); opacity: .25; } to { transform: translate3d(6%, -3%, 0) rotate(-10deg); opacity: .7; } }
-@keyframes crest-float { from { transform: translateY(1px) rotate(-.4deg); } to { transform: translateY(-4px) rotate(.4deg); } }
+@keyframes crest-float { from { transform: translateY(1px) rotate(-.4deg); filter: contrast(.88) saturate(.84) brightness(.92); } to { transform: translateY(-4px) rotate(.4deg); filter: contrast(.88) saturate(.84) brightness(1.06) drop-shadow(0 0 3px color-mix(in srgb, var(--frost-light) 24%, transparent)); } }
 @keyframes mist-drift { from { transform: translateX(-3%); opacity: .4; } to { transform: translateX(3%); opacity: .8; } }
 @keyframes frost-breath { from { opacity: .3; } to { opacity: .85; } }
-@keyframes blade-sweep { from { background-position: 100% 0; } to { background-position: 0% 0; } }
 
 @media (max-width: 1100px) { .page .card.card { width: min(100%, 560px); } }
 @media (max-width: 700px) {
@@ -315,3 +286,5 @@
   .page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"])),
   .page.page .card.card :global([data-folio-action]:not([data-folio-action="quiet"]):is(:hover, :focus-visible, :active)) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
 }
+
+:global([data-frost-active="false"]) .card :global([data-folio-action])::before { filter: contrast(.88) saturate(.84) brightness(.92) !important; }
