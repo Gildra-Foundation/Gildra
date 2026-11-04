@@ -1,6 +1,6 @@
 import { classColors } from "@/lib/atlas/dataPalette";
 import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
-import { midnightRaids, raidSceneArt, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
+import { raidHubEntries } from "@/components/wow/raid/raidHubData";
 import { midnightSpecializations, midnightClasses } from "@/lib/data/wow/specializations";
 import { CLASS_ICONS, classIcon } from "@/lib/games/wow/assets";
 
@@ -28,10 +28,11 @@ export function navigationPicks(): NavigationPicks {
   const raids: NavigationPickGroup = {
     kind: "art",
     title: { en: "Midnight raids", ru: "Рейды Midnight" },
-    picks: raidSlugs.map(slug => {
-      const raid = midnightRaids[slug];
-      return { href: `/wow/raids/${slug}`, label: { en: raid.nameEn, ru: raid.nameRu }, image: raidSceneArt(raid) };
-    }),
+    picks: raidHubEntries.map(raid => ({
+      href: `/wow/raids/${raid.slug}`,
+      label: raid.names,
+      image: raid.sceneArt ?? raid.artwork,
+    })),
   };
   const classes: NavigationPickGroup = {
     kind: "class",
