@@ -11,23 +11,21 @@ export type RosterCopy = {
   searchPlaceholder: string;
   classLabel: string;
   allClasses: string;
-  rosterTitle: string;
   /** "{total}" and "{shown}" are replaced on the client. */
-  countAll: string;
   countFiltered: string;
+  sortLabel: string;
+  sortLevel: string;
+  sortName: string;
   loadingRegions: string;
   emptyTitle: string;
   emptyText: string;
   noMatches: string;
   reset: string;
-  openProfile: string;
   armory: string;
   level: string;
   stateTitle: Record<"expired" | "forbidden" | "rate-limited" | "unavailable", string>;
   stateText: Record<"expired" | "forbidden" | "rate-limited" | "unavailable", string>;
   retry: string;
-
-
 };
 
 const en = {
@@ -69,15 +67,15 @@ const en = {
     searchPlaceholder: "Name, realm or class…",
     classLabel: "Class",
     allClasses: "All classes",
-    rosterTitle: "Your heroes",
-    countAll: "{total} characters",
-    countFiltered: "{shown} of {total} characters",
+    countFiltered: "{shown} of {total}",
+    sortLabel: "Sort",
+    sortLevel: "Level",
+    sortName: "Name",
     loadingRegions: "Checking Battle.net regions…",
     emptyTitle: "No characters found",
     emptyText: "No World of Warcraft characters are available to this Battle.net account in EU, US, KR or TW.",
     noMatches: "No characters match the selected filters.",
     reset: "Reset filters",
-    openProfile: "Open profile",
     armory: "Armory",
     level: "Level",
     stateTitle: {
@@ -135,15 +133,15 @@ const ru: typeof en = {
     searchPlaceholder: "Имя, сервер или класс…",
     classLabel: "Класс",
     allClasses: "Все классы",
-    rosterTitle: "Ваши герои",
-    countAll: "Персонажей: {total}",
-    countFiltered: "Показано {shown} из {total}",
+    countFiltered: "{shown} из {total}",
+    sortLabel: "Сортировка",
+    sortLevel: "Уровень",
+    sortName: "Имя",
     loadingRegions: "Проверяем регионы Battle.net…",
     emptyTitle: "Персонажи не найдены",
     emptyText: "На этом аккаунте Battle.net нет персонажей WoW в регионах EU, US, KR и TW.",
     noMatches: "По выбранным фильтрам персонажи не найдены.",
     reset: "Сбросить фильтры",
-    openProfile: "Открыть профиль",
     armory: "Арсенал",
     level: "Уровень",
     stateTitle: {
