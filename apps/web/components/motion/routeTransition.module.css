@@ -20,7 +20,7 @@
   --ph-surface: #12100c;
 }
 /* Page hand-over (RouteTransitionRuntime): the click navigates at once and the
-   old page stays still until the new one fades in (160 ms, opacity only). */
+   old page stays still until the new one replaces it in one frame (no fade). */
 /* A thin line over the top bar while the next page is on its way: it appears
    after 150 ms, runs towards 85 % and is gone when the page is in. */
 .progress {

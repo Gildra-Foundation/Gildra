@@ -3,23 +3,24 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { preconnect } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
-import { isBookPagePath, isCharacterAuthRedirect, routeTransitionKind, voidspireReadySelector } from "./routeTransitionPolicy";
+import { isBookPagePath, isCharacterAuthRedirect, routeTransitionKind } from "./routeTransitionPolicy";
+import { warmRouteArt } from "./routeArt";
 import { RouteThemeController } from "./RouteThemeController";
 import styles from "./routeTransition.module.css";
-import { lessMotion } from "@/lib/client/motionPreference";
-import { knownRenderTier, pageTransitionSpec, warmRenderTier } from "@gildra/atlas-ui/motionTier";
 
 /**
  * Persistent navigation shell and the single owner of page hand-overs
  * (routeTransitionKind). A click navigates at once — nothing waits for an
  * animation. While the next page is on its way a thin line runs over the top bar;
- * the old page stays as it is. The new page then fades in briefly (opacity only:
- * no slide, so the page is never re-rastered as it moves). The top bar never
- * moves: it lives outside this frame.
+ * the old page stays as it is, then the new one replaces it in a single frame.
+ * No fade: an opacity animation over the whole page frame made the browser
+ * composite one page-sized layer for every frame of the hand-over and showed
+ * the bare background through the page (a dark flash on every click). Link
+ * intent also preloads the destination hub's painting (routeArt.ts), so the new
+ * page does not land on an empty background. The top bar lives outside this frame.
  */
 type RouteState = "idle" | "leaving" | "loading";
 
-const ENTER: KeyframeAnimationOptions = { duration: 160, easing: "ease-out" };
 /** Give up on a navigation that never commits (aborted, offline). */
 const WATCHDOG_MS = 12000;
 // In development, prefetching a route can make Next compile it before the
@@ -69,41 +70,16 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [state, setState] = useState<RouteState>("idle");
 
-  useEffect(() => {
-    if (routePath.startsWith("/wow/raids/the-voidspire")) warmRenderTier();
-  }, [routePath]);
-
   const settle = useCallback(() => {
     clearTimeout(watchdog.current);
     setState("idle");
   }, []);
 
-  /** The new page is in place: let it settle in (unless the reader asked for less motion). */
-  const enter = useCallback(() => {
-    clearTimeout(watchdog.current);
-    setState("idle");
-    const frame = frameRef.current;
-    if (!frame) return;
-    frame.getAnimations().forEach((animation) => animation.cancel());
-    if (lessMotion()) return;
-    // Reuse the installed Valyro choreography for the raid's sibling pages.
-    // Navigation starts immediately; only the committed page moves, and the
-    // persistent header stays outside the animated frame.
-    if (voidspireReadySelector(committedPath.current)) {
-      const spec = pageTransitionSpec("rise", { tier: knownRenderTier() ?? "cpu" });
-      frame.animate(spec.enter.keyframes, { duration: spec.duration, easing: spec.enter.easing });
-      return;
-    }
-    frame.animate([{ opacity: .6 }, { opacity: 1 }], ENTER);
-  }, []);
-
-  /** A route with loading.tsx first commits its skeleton; wait for the real page. */
+  /** A loading.tsx skeleton marked data-book-route-loading commits first; the line runs on until the real page is in. */
   const enterWhenLoaded = useCallback(() => {
-    const frame = frameRef.current;
-    const raid = voidspireReadySelector(expectedPath.current);
-    if (frame?.querySelector("[data-book-route-loading]") || (raid && !frame?.querySelector(raid))) setState("loading");
-    else enter();
-  }, [enter]);
+    if (frameRef.current?.querySelector("[data-book-route-loading]")) setState("loading");
+    else settle();
+  }, [settle]);
 
   const begin = useCallback((destination: string) => {
     if (routeTransitionKind(committedPath.current, destination) === "still") {
@@ -131,7 +107,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (state !== "loading" || !frameRef.current) return;
     const observer = new MutationObserver(enterWhenLoaded);
-    observer.observe(frameRef.current, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-book-route-loading", "data-raid-boss-planner", "data-raid-pulls"] });
+    observer.observe(frameRef.current, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-book-route-loading"] });
     return () => observer.disconnect();
   }, [state, enterWhenLoaded]);
 
@@ -167,6 +143,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
         quietPath.current = destination.pathname;
         settle();
       } else if (destination && destination.pathname + destination.search !== window.location.pathname + window.location.search) {
+        warmRouteArt(destination.pathname);
         begin(destination.pathname);
       }
     };
@@ -185,7 +162,10 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       const destination = destinationFromTarget(event.target);
       if (!destination || routeTransitionKind(committedPath.current, destination.pathname) === "still") return;
       clearTimeout(prefetchTimer);
-      prefetchTimer = setTimeout(() => router.prefetch(destination.pathname + destination.search), event.type === "focusin" ? 0 : 100);
+      prefetchTimer = setTimeout(() => {
+        router.prefetch(destination.pathname + destination.search);
+        warmRouteArt(destination.pathname);
+      }, event.type === "focusin" ? 0 : 100);
     };
     const cancelWarm = (event: PointerEvent) => {
       const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
