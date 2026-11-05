@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
+import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { LibraryWorkspace } from "@/components/library/LibraryWorkspace";
 import { CatalogTotal } from "@/components/database/CatalogTotal";
 import { PageShell } from "@/components/layout/PageShell";
@@ -10,6 +11,7 @@ import { formatCount } from "@/components/database/databaseCopy";
 import { libraryCardLayout, libraryRails } from "@/components/library/libraryRails";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
 import { requireCatalogSession } from "@/lib/library/server";
+import styles from "./library.module.css";
 
 export type LibraryDatasetFilters = { q?: string; product?: string; facet?: string | string[]; cursor?: string; minLevel?: string; maxLevel?: string; minRequiredLevel?: string; maxRequiredLevel?: string };
 
@@ -17,7 +19,8 @@ function optionalNumber(value?: string) { const parsed = Number(value); return v
 
 /**
  * /library/<dataset> and the RU mirror: the dataset's heading (trail back to the
- * library, the dataset's area as eyebrow, one counter) above its workspace.
+ * library, the dataset's area as eyebrow, the counter under the copy as on the
+ * reference hubs) above its workspace.
  */
 export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" | "ru"; slug: string; filters: LibraryDatasetFilters }) {
   const copy = libraryCopy[lang];
@@ -53,13 +56,17 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
       <AtlasFrame as="div" lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
         <AtlasHero
           eyebrow={libraryGroupText[dataset.group]?.[lang]}
-          statsLabel={copy.statsLabel}
-          stats={dataset.entityCount ? [{ value: formatCount(dataset.entityCount, lang), label: copy.statRecords }] : undefined}
+          className={styles.hero}
           breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.library, href: `${prefix}/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}` }, { label: dataset.name }]}
           breadcrumbsLabel={copy.breadcrumbsLabel}
           title={dataset.name}
           lede={libraryDatasetLine(dataset, lang) || undefined}
         />
+        {dataset.entityCount ? (
+          <div className={styles.heroFacts}>
+            <AtlasStats label={copy.statsLabel} items={[{ value: formatCount(dataset.entityCount, lang), label: copy.statRecords }]} />
+          </div>
+        ) : null}
         <LibraryWorkspace
           lang={lang}
           dataset={dataset}

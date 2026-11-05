@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { catalogLocaleView } from "@/lib/catalogLocale";
-import { Search, X } from "lucide-react";
+import { ArrowRight, Search, X } from "lucide-react";
 import type { Lang } from "@/lib/i18n-paths";
 import type { CatalogCategory, CatalogEntityType, CatalogPage, CatalogProduct, CatalogRecord } from "@/lib/api/client";
 import { AtlasDisclosure, AtlasField, AtlasInput, AtlasSelect } from "@/components/atlas";
@@ -12,8 +12,10 @@ import { LibraryHoverPreview } from "@/components/library/LibraryHoverPreview";
 import { LibraryRecordCard, type LibraryCardLayout } from "@/components/library/LibraryRecordCard";
 import { libraryCardCopy } from "@/components/library/libraryCardCopy";
 import type { LibraryRail } from "@/components/library/libraryRails";
+import { MaterialButton, MaterialPlaque } from "@/components/wow/shared/materialAtlas";
+import { libraryKit } from "@/components/library/libraryKit";
 import styles from "./libraryWorkspace.module.css";
-import { AtlasPagination } from "@gildra/atlas-ui/AtlasPagination";
+import { LibraryPager } from "@/components/library/LibraryPager";
 
 const FACET_ORDER = ["class", "specialization", "race", "profession", "equipment_slot", "armor_type", "weapon_type", "item_class"];
 const ROOT_ID = "catalog-workspace";
@@ -43,9 +45,10 @@ type Filter = { id: string; label: string; categories: CatalogCategory[] };
 
 /**
  * Records of one library dataset (gildra-wow-material-design §3.7, §3.10): one
- * glass toolbar — name search and every filter as a select (they submit on
- * change), item-level bounds folded away — the applied filters as chips with
- * one reset, then the cards and paging. Server-rendered links and GET forms;
+ * form on the library plaque (like the auction form) — labelled name search
+ * with the painted button, every filter as a select (they submit on change),
+ * item-level bounds folded away — the applied filters as chips with
+ * one reset, then the cards and painted paging. Server-rendered links and GET forms;
  * CatalogBehavior upgrades them to soft navigation, LibraryHoverPreview shows
  * the in-game tooltip on hover.
  */
@@ -85,59 +88,60 @@ export function LibraryWorkspace({ lang, dataset, catalog, categories, entityTyp
     <section id={ROOT_ID} className={styles.workspace} aria-label={dataset.name}>
       <CatalogBehavior rootId={ROOT_ID} lang={lang} zeroResults={zeroResults} />
 
-      <form className={styles.toolbar} role="search" action={base} method="get" data-catalog-form data-track="catalog_search_submitted" data-track-props={JSON.stringify({ type: dataset.entityType })}>
-        <div className={styles.search}>
-          <label className="sr-only" htmlFor="library-dataset-search">{copy.searchLabel(dataset.name)}</label>
-          <Search className={styles.searchIcon} aria-hidden="true" />
-          <input key={query} id="library-dataset-search" name="q" type="search" defaultValue={query} placeholder={copy.searchPlaceholder} autoComplete="off" maxLength={200} />
-          <button type="submit" className={styles.submit}>{copy.searchSubmit}</button>
-        </div>
-        {hidden({ product: selectedProduct })}
-        {products.length > 1 ? (
-          <AtlasField label={copy.gameVersion} htmlFor="library-product" className={styles.field}>
-            <AtlasSelect id="library-product" name="product" defaultValue={selectedProduct} data-autosubmit key={selectedProduct}>
-              {products.map((product) => <option key={product.slug} value={product.slug}>{product.name}</option>)}
-            </AtlasSelect>
-          </AtlasField>
+      <MaterialPlaque kit={libraryKit} className={styles.plaque}>
+        <form className={styles.toolbar} role="search" action={base} method="get" data-catalog-form data-track="catalog_search_submitted" data-track-props={JSON.stringify({ type: dataset.entityType })}>
+          <div className={styles.search}>
+            <AtlasField label={copy.searchLabel(dataset.name)} htmlFor="library-dataset-search" className={styles.searchField}>
+              <AtlasInput key={query} id="library-dataset-search" name="q" type="search" icon={<Search />} defaultValue={query} placeholder={copy.searchPlaceholder} autoComplete="off" maxLength={200} />
+            </AtlasField>
+            <MaterialButton kit={libraryKit} fit="stack" type="submit" variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{copy.searchSubmit}</MaterialButton>
+          </div>
+          {hidden({ product: selectedProduct })}
+          {products.length > 1 ? (
+            <AtlasField label={copy.gameVersion} htmlFor="library-product" className={styles.field}>
+              <AtlasSelect id="library-product" name="product" defaultValue={selectedProduct} data-autosubmit key={selectedProduct}>
+                {products.map((product) => <option key={product.slug} value={product.slug}>{product.name}</option>)}
+              </AtlasSelect>
+            </AtlasField>
+          ) : null}
+          {filters.map((filter) => (
+            <AtlasField key={filter.id} label={filter.label} htmlFor={`library-filter-${filter.id}`} className={styles.field}>
+              <AtlasSelect id={`library-filter-${filter.id}`} name="facet" defaultValue={selectedCategory(filter)?.path ?? ""} data-autosubmit key={`${filter.id}:${facets.join(",")}`}>
+                <option value="">{copy.any}</option>
+                {filter.categories.map((category) => <option key={category.id} value={category.path}>{categoryName(category, lang)} · {formatCount(category.count, lang)}</option>)}
+              </AtlasSelect>
+            </AtlasField>
+          ))}
+          {/* Facets chosen by URL that no select offers stay applied. */}
+          {facets.filter((facet) => !known.has(facet)).map((facet) => <input key={facet} type="hidden" name="facet" value={facet} />)}
+          {items ? (
+            <AtlasDisclosure className={styles.levels} open={levelCount > 0 || undefined} summary={<>{copy.levelsTitle}{levelCount ? <b>{levelCount}</b> : null}</>}>
+              <div className={styles.levelGrid}>
+                <AtlasField label={copy.itemLevelFrom} htmlFor="filter-minLevel"><AtlasInput id="filter-minLevel" name="minLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={levels.minLevel} /></AtlasField>
+                <AtlasField label={copy.itemLevelTo} htmlFor="filter-maxLevel"><AtlasInput id="filter-maxLevel" name="maxLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={levels.maxLevel} /></AtlasField>
+                <AtlasField label={copy.charLevelFrom} htmlFor="filter-minRequiredLevel"><AtlasInput id="filter-minRequiredLevel" name="minRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={levels.minRequiredLevel} /></AtlasField>
+                <AtlasField label={copy.charLevelTo} htmlFor="filter-maxRequiredLevel"><AtlasInput id="filter-maxRequiredLevel" name="maxRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={levels.maxRequiredLevel} /></AtlasField>
+                <MaterialButton kit={libraryKit} fit="stack" type="submit">{copy.apply}</MaterialButton>
+              </div>
+            </AtlasDisclosure>
+          ) : null}
+        </form>
+        {narrowed ? (
+          <div className={styles.applied} aria-live="polite">
+            {query.trim() ? null : <p className={styles.found}>{copy.found}: <b>{totalCount ?? "—"}</b></p>}
+            <ul className={styles.chips} aria-label={copy.appliedLabel}>
+              {query.trim() ? <li><a className={styles.chip} href={link({ q: "" })} data-catalog-nav>«{query.trim()}»<X aria-hidden="true" /><span className="sr-only">{copy.remove}</span></a></li> : null}
+              {facets.map((facet) => (
+                <li key={facet}><a className={styles.chip} href={link({ facets: facets.filter((entry) => entry !== facet) })} data-catalog-nav>
+                  {known.get(facet) ? categoryName(known.get(facet)!, lang) : facet.split("/").pop()}<X aria-hidden="true" /><span className="sr-only">{copy.remove}</span>
+                </a></li>
+              ))}
+              {levelCount ? <li><a className={styles.chip} href={link({ minLevel: "", maxLevel: "", minRequiredLevel: "", maxRequiredLevel: "" })} data-catalog-nav>{copy.levelsTitle}<X aria-hidden="true" /><span className="sr-only">{copy.remove}</span></a></li> : null}
+            </ul>
+            <a className={styles.reset} href={href(base, { product: selectedProduct, q: "", cursor: "", facets: [], minLevel: "", maxLevel: "", minRequiredLevel: "", maxRequiredLevel: "" })} data-catalog-nav>{copy.reset}</a>
+          </div>
         ) : null}
-        {filters.map((filter) => (
-          <AtlasField key={filter.id} label={filter.label} htmlFor={`library-filter-${filter.id}`} className={styles.field}>
-            <AtlasSelect id={`library-filter-${filter.id}`} name="facet" defaultValue={selectedCategory(filter)?.path ?? ""} data-autosubmit key={`${filter.id}:${facets.join(",")}`}>
-              <option value="">{copy.any}</option>
-              {filter.categories.map((category) => <option key={category.id} value={category.path}>{categoryName(category, lang)} · {formatCount(category.count, lang)}</option>)}
-            </AtlasSelect>
-          </AtlasField>
-        ))}
-        {/* Facets chosen by URL that no select offers stay applied. */}
-        {facets.filter((facet) => !known.has(facet)).map((facet) => <input key={facet} type="hidden" name="facet" value={facet} />)}
-        {items ? (
-          <AtlasDisclosure className={styles.levels} open={levelCount > 0 || undefined} summary={<>{copy.levelsTitle}{levelCount ? <b>{levelCount}</b> : null}</>}>
-            <div className={styles.levelGrid}>
-              <AtlasField label={copy.itemLevelFrom} htmlFor="filter-minLevel"><AtlasInput id="filter-minLevel" name="minLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={levels.minLevel} /></AtlasField>
-              <AtlasField label={copy.itemLevelTo} htmlFor="filter-maxLevel"><AtlasInput id="filter-maxLevel" name="maxLevel" type="number" min="0" max="9999" inputMode="numeric" defaultValue={levels.maxLevel} /></AtlasField>
-              <AtlasField label={copy.charLevelFrom} htmlFor="filter-minRequiredLevel"><AtlasInput id="filter-minRequiredLevel" name="minRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={levels.minRequiredLevel} /></AtlasField>
-              <AtlasField label={copy.charLevelTo} htmlFor="filter-maxRequiredLevel"><AtlasInput id="filter-maxRequiredLevel" name="maxRequiredLevel" type="number" min="0" max="999" inputMode="numeric" defaultValue={levels.maxRequiredLevel} /></AtlasField>
-              <button type="submit" className={styles.apply}>{copy.apply}</button>
-            </div>
-          </AtlasDisclosure>
-        ) : null}
-      </form>
-
-      {narrowed ? (
-        <div className={styles.applied} aria-live="polite">
-          {query.trim() ? null : <p className={styles.found}>{copy.found}: <b>{totalCount ?? "—"}</b></p>}
-          <ul className={styles.chips} aria-label={copy.appliedLabel}>
-            {query.trim() ? <li><a className={styles.chip} href={link({ q: "" })} data-catalog-nav>«{query.trim()}»<X aria-hidden="true" /><span className="sr-only">{copy.remove}</span></a></li> : null}
-            {facets.map((facet) => (
-              <li key={facet}><a className={styles.chip} href={link({ facets: facets.filter((entry) => entry !== facet) })} data-catalog-nav>
-                {known.get(facet) ? categoryName(known.get(facet)!, lang) : facet.split("/").pop()}<X aria-hidden="true" /><span className="sr-only">{copy.remove}</span>
-              </a></li>
-            ))}
-            {levelCount ? <li><a className={styles.chip} href={link({ minLevel: "", maxLevel: "", minRequiredLevel: "", maxRequiredLevel: "" })} data-catalog-nav>{copy.levelsTitle}<X aria-hidden="true" /><span className="sr-only">{copy.remove}</span></a></li> : null}
-          </ul>
-          <a className={styles.reset} href={href(base, { product: selectedProduct, q: "", cursor: "", facets: [], minLevel: "", maxLevel: "", minRequiredLevel: "", maxRequiredLevel: "" })} data-catalog-nav>{copy.reset}</a>
-        </div>
-      ) : null}
+      </MaterialPlaque>
 
       <div className={styles.results} id={RESULTS_ID}>
         {/* Record names are h3: the outline stays h1 → h2 → h3 for screen readers. */}
@@ -159,7 +163,7 @@ export function LibraryWorkspace({ lang, dataset, catalog, categories, entityTyp
           </div>
         )}
         {cursor || (catalog.pagination.hasMore && catalog.pagination.nextCursor) ? (
-          <AtlasPagination
+          <LibraryPager
             label={copy.pagesLabel}
             prev={cursor ? { href: link({ cursor: "" }), label: copy.back, attributes: { "data-history-back": true } } : undefined}
             next={catalog.pagination.hasMore && catalog.pagination.nextCursor ? { href: link({ cursor: catalog.pagination.nextCursor }), label: copy.next, attributes: { "data-catalog-nav": true, "data-scroll-to": RESULTS_ID } } : undefined}

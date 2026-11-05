@@ -6,3 +6,6 @@ import type { MaterialKit } from "@/components/wow/shared/materialAtlas";
  * One place to switch when the library kit is generated.
  */
 export const libraryKit: MaterialKit = "den-of-nalorakk";
+
+/** Second painted button of a hero pair (the reference pairs two kits): Voidscar Arena's violet void-metal. */
+export const librarySecondKit: MaterialKit = "voidscar-arena";

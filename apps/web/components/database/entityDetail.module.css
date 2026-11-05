@@ -1,32 +1,26 @@
-/* atlas:strict — library record page (/library/<dataset>/<type>/<id>/<slug>): hero icon and facts, the tooltip beside the 3D plaque or the relations. Layout only, atlas tokens. */
+/* atlas:strict — library record page (/library/<dataset>/<type>/<id>/<slug>): hero icon in the kit frame and facts on the plaque, the tooltip beside the 3D plaque or the relations. Layout only, atlas tokens. */
 
 /* ---------- Hero ---------- */
-/* Title row: the record's icon in its item-quality frame (data colour), then the name in that colour. */
+/* Title row: the record's icon in the library kit's frame (the quality colours the frame's inner edge), then the name
+   in the hero's own colour — the quality is a fact on the plaque, not the colour of the whole heading. */
 .heroTitle {
   --record-quality: var(--atlas-line-strong);
-  --record-quality-text: inherit;
+  --record-quality-text: var(--atlas-text-strong);
   display: flex;
   align-items: center;
   gap: clamp(var(--atlas-space-3), 2vw, var(--atlas-space-5));
 }
 
-.heroName { min-width: 0; color: var(--record-quality-text); overflow-wrap: anywhere; text-wrap: balance; }
+.heroName { min-width: 0; overflow-wrap: anywhere; text-wrap: balance; }
 
-.heroIcon {
-  display: grid;
-  flex: none;
-  width: clamp(64px, 3.2rem + 3vw, 104px);
-  aspect-ratio: 1;
-  place-items: center;
-  padding: 4px;
-  border-radius: var(--atlas-radius);
-  background: linear-gradient(160deg, var(--record-quality), color-mix(in srgb, var(--record-quality) 35%, var(--atlas-bg)));
-  box-shadow: 0 0 0 1px var(--atlas-bg), 0 10px 28px color-mix(in srgb, var(--atlas-bg) 70%, transparent);
+.heroTitle .heroIcon {
+  --material-icon-edge: var(--record-quality);
+  width: clamp(72px, 3.4rem + 3.4vw, 112px);
+  height: clamp(72px, 3.4rem + 3.4vw, 112px);
+  color: var(--atlas-text-subtle);
 }
 
-.heroIcon > * { width: 100%; height: 100%; }
-.heroIcon img { display: block; border-radius: 1px; object-fit: cover; background: var(--atlas-surface-sunken); }
-.heroIcon > :not(img) { display: grid; place-items: center; background: var(--atlas-surface-sunken); color: var(--atlas-text-subtle); }
+.heroTitle .heroIcon > svg { padding: 24%; }
 
 .qualityValue { color: var(--record-quality-text); }
 
@@ -56,7 +50,9 @@
   line-height: 1.5;
 }
 
-.facts { min-width: 240px; background: var(--atlas-surface-sunken); }
+.factsPlaque { min-width: 280px; padding: 28px 30px 30px; }
+.facts { border-color: var(--material-line); background: transparent; }
+.facts > * { border-color: var(--material-line); }
 
 /* ---------- Tooltip beside the model or the relations ---------- */
 /* One column by default; with a model or relations the tooltip takes the left part and the other block the right. */
@@ -158,7 +154,8 @@
 }
 
 @media (max-width: 720px) {
-  .facts { min-width: 0; }
+  .factsPlaque { min-width: 0; }
+  .factsPlaque .facts { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
   .model { padding: 20px; }
   .disclosure > summary,
   .disclosure > div { padding-inline: var(--atlas-space-3); }

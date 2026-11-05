@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight, Search, X } from "lucide-react";
 import { AtlasEmpty, AtlasFrame, AtlasHero } from "@/components/atlas";
-import { MaterialButton } from "@/components/wow/shared/materialAtlas";
+import { MaterialButton, MaterialPlaque } from "@/components/wow/shared/materialAtlas";
 import { libraryKit } from "@/components/library/libraryKit";
 import { TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
@@ -30,8 +30,8 @@ function supportsCharacters(games: CatalogGameId[]) {
 
 /**
  * /search and /ru/search — the library-wide search: hero like the library's
- * (trail, eyebrow, glass field, painted button), kind tabs with a quiet link
- * to the library, and the result rows (shared CatalogRecordRow). Without a
+ * (trail, eyebrow, title), the form on the library plaque (labelled field,
+ * painted button, kind tabs with a quiet link to the library), and the result rows (shared CatalogRecordRow). Without a
  * query there are no rows, only an empty state. Server-rendered; the only
  * client code is the soft-navigating form and the "/" shortcut.
  */
@@ -61,34 +61,37 @@ export function SearchPage({
         eyebrow={t.eyebrow}
         title={t.title}
         lede={t.lede}
-        actions={(
-          <SearchRouteForm className={styles.searchForm} action={`${prefix}/search`} role="search">
-            <span className={styles.searchField}>
+      />
+
+      {/* The search form on the library plaque (like the auction form): labelled field, painted button, then the kind tabs. */}
+      <MaterialPlaque kit={libraryKit} as="section" className={styles.plaque} aria-label={t.inputLabel}>
+        <SearchRouteForm className={styles.searchForm} action={`${prefix}/search`} role="search">
+          <label className={styles.fieldLabel} htmlFor="platform-search-input">{t.inputLabel}</label>
+          <span className={styles.searchField}>
             <Search className={styles.searchIcon} aria-hidden="true" />
-            <input id="platform-search-input" name="q" type="search" defaultValue={query} aria-label={t.inputLabel} placeholder={t.placeholder} autoComplete="off" autoFocus={!query} />
+            <input id="platform-search-input" name="q" type="search" defaultValue={query} placeholder={t.placeholder} autoComplete="off" autoFocus={!query} />
             {kind !== "all" ? <input type="hidden" name="type" value={kind} /> : null}
             {selectedGames.length < catalogGames.length ? selectedGames.map((game) => <input key={game} type="hidden" name="game" value={game} />) : null}
             {query
               ? <Link className={styles.clearQuery} href={searchHref(lang, "", kind, selectedGames)} aria-label={t.clearQuery}><X aria-hidden="true" /></Link>
               : <kbd title={t.shortcut} aria-label={t.shortcut}>/</kbd>}
-            </span>
-            <MaterialButton kit={libraryKit} fit="stack" type="submit" iconAfter={<ArrowRight aria-hidden="true" />}>{t.submit}</MaterialButton>
-          </SearchRouteForm>
-        )}
-      />
+          </span>
+          <MaterialButton kit={libraryKit} fit="stack" type="submit" variant="primary" className={styles.submit} iconAfter={<ArrowRight aria-hidden="true" />}>{t.submit}</MaterialButton>
+        </SearchRouteForm>
 
-      <div className={styles.bar}>
-        <nav className={styles.kindTabs} aria-label={t.kindsLabel}>
-          {kinds.map((value) => (
-            <Link aria-current={kind === value ? "page" : undefined} href={searchHref(lang, query, value, selectedGames)} key={value}>
-              {value === "all" ? t.all : value === "characters" ? t.characters : t.items}
-            </Link>
-          ))}
-        </nav>
-        <Link className={styles.databaseLink} href={`${prefix}/library`} prefetch={false}>
-          {t.libraryLink} <span aria-hidden="true">→</span>
-        </Link>
-      </div>
+        <div className={styles.bar}>
+          <nav className={styles.kindTabs} aria-label={t.kindsLabel}>
+            {kinds.map((value) => (
+              <Link aria-current={kind === value ? "page" : undefined} href={searchHref(lang, query, value, selectedGames)} key={value}>
+                {value === "all" ? t.all : value === "characters" ? t.characters : t.items}
+              </Link>
+            ))}
+          </nav>
+          <Link className={styles.databaseLink} href={`${prefix}/library`} prefetch={false}>
+            {t.libraryLink} <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+      </MaterialPlaque>
 
       <div className={multiGame ? `${styles.layout} ${styles.withGames}` : styles.layout}>
         {multiGame ? (

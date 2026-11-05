@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
+import { materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
+import { libraryKit } from "@/components/library/libraryKit";
 import styles from "./catalogRecordRow.module.css";
 
 export type CatalogRecordRowProps = {
@@ -25,7 +27,7 @@ export type CatalogRecordRowProps = {
 };
 
 /**
- * One catalog record: icon, type, name (the whole row is the link) and a
+ * One catalog record: icon in the library kit's frame (quality on its edge), type, name (the whole row is the link) and a
  * single line of facts. Shared by /database, /library/<dataset> and /search.
  */
 export function CatalogRecordRow({ href, name, typeLabel, iconUrl, iconSymbol = "#ic-gem", quality, description, meta = [], action, track }: CatalogRecordRowProps) {
@@ -33,7 +35,7 @@ export function CatalogRecordRow({ href, name, typeLabel, iconUrl, iconSymbol = 
   const facts = meta.filter((entry) => entry !== null && entry !== undefined && entry !== "");
   return (
     <li className={styles.row} data-quality={qualityColor ? quality : undefined} style={qualityColor ? { "--record-quality": qualityColor.frame, "--record-quality-text": qualityColor.text } as CSSProperties : undefined}>
-      <span className={styles.icon} aria-hidden="true">
+      <span className={`${materialStyles.iconFrame} ${styles.icon}`} style={materialIconFrameStyle(libraryKit, 56)} aria-hidden="true">
         <ResilientImage src={iconUrl} alt="" width={48} height={48} loading="lazy" fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
       </span>
       <div className={styles.body}>

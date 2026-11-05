@@ -1,17 +1,18 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import { ArrowRight, Search } from "lucide-react";
-import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
+import { ArrowDown, ArrowRight, LibraryBig, Search } from "lucide-react";
+import { AtlasField, AtlasFrame, AtlasHero, AtlasInput, AtlasNotice, AtlasSection } from "@/components/atlas";
+import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { formatAtlasDate } from "@gildra/atlas-ui/format";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
-import { MaterialButton, MaterialPlaque, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
+import { MaterialButton, MaterialLinkButton, MaterialPlaque, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
 import type { CatalogProduct, CatalogRecord, LibraryDataset } from "@/lib/api/client";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { LIBRARY_FEATURED } from "@/lib/library/featured";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
 import { LIBRARY_HIDDEN_DATASETS, libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/library/libraryCopy";
-import { libraryKit } from "@/components/library/libraryKit";
+import { libraryKit, librarySecondKit } from "@/components/library/libraryKit";
 import styles from "./library.module.css";
 import { libraryLandingCopy } from "./libraryLandingCopy";
 
@@ -44,9 +45,11 @@ function distinctRecordCount(datasets: LibraryDataset[]): number | null {
 }
 
 /**
- * /library and /ru/library (gildra-wow-material-design §3.7): hero with the
- * library search, edition switch, the featured datasets on painted plaques,
- * then every dataset grouped by area on glass. One quiet line says when the
+ * /library and /ru/library (gildra-wow-material-design §3.7, reference
+ * docs/design/reference): hero with two painted buttons and the counters, the
+ * library search and edition switch on the library plaque (like the auction
+ * form), the featured datasets on painted plaques, then every dataset grouped
+ * by area on glass with the kit's icon frames. One quiet line says when the
  * data was updated; a notice appears only when the data really lags (stale or
  * failed update), never while a refresh simply runs.
  */
@@ -71,44 +74,54 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
     : states.includes("stale") ? { title: copy.staleTitle, text: copy.staleText } : null;
 
   const featured = LIBRARY_FEATURED.map((slug) => datasets.find((dataset) => dataset.slug === slug)).filter((dataset): dataset is LibraryDataset => Boolean(dataset));
+  const rowFrame = materialIconFrameStyle(libraryKit, 44);
   const datasetHref = (dataset: LibraryDataset) => `${prefix}/library/${encodeURIComponent(dataset.slug)}${productQuery}`;
 
   return (
     <AtlasFrame as="div" lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
       <AtlasHero
+        className={styles.hero}
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.library }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow}
         title={copy.title}
         lede={copy.lede}
-        statsLabel={copy.statsLabel}
-        stats={unavailable ? undefined : [
-          ...(total === null ? [] : [{ value: formatter.format(total), label: copy.statRecords }]),
-          { value: formatter.format(datasets.length), label: copy.statDatasets },
-        ]}
         actions={unavailable ? undefined : (
-          // The whole library is searched on /search; a plain GET form works without JavaScript.
-          <form className={styles.search} role="search" action={`${prefix}/search`} method="get">
-            <span className={styles.searchField}>
-              <label className="sr-only" htmlFor="library-search">{copy.searchLabel}</label>
-              <Search className={styles.searchIcon} aria-hidden="true" />
-              <input id="library-search" name="q" type="search" placeholder={copy.searchPlaceholder} autoComplete="off" required maxLength={200} />
-            </span>
-            <MaterialButton kit={libraryKit} fit="stack" type="submit" iconAfter={<ArrowRight aria-hidden="true" />}>{copy.searchSubmit}</MaterialButton>
-          </form>
+          <div className={styles.actions}>
+            <MaterialLinkButton kit={libraryKit} fit="stack" href="#library-search" variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{copy.findRecord}</MaterialLinkButton>
+            <MaterialLinkButton kit={librarySecondKit} fit="stack" href="#datasets" icon={<LibraryBig aria-hidden="true" />}>{copy.allSections}</MaterialLinkButton>
+          </div>
         )}
       />
+      {unavailable ? null : (
+        <div className={styles.heroFacts}>
+          <AtlasStats label={copy.statsLabel} items={[
+            ...(total === null ? [] : [{ value: formatter.format(total), label: copy.statRecords }]),
+            { value: formatter.format(datasets.length), label: copy.statDatasets },
+          ]} />
+        </div>
+      )}
 
       {unavailable ? <LibraryUnavailable lang={lang} /> : (
         <>
-          {products.length > 1 ? (
-            <nav className={styles.editions} aria-label={copy.editions}>
-              {products.map((entry) => (
-                <Link key={entry.slug} href={`${prefix}/library${entry.slug === "wow" ? "" : `?product=${encodeURIComponent(entry.slug)}`}`} prefetch={false}
-                  aria-current={entry.slug === selectedProduct ? "page" : undefined}>{entry.name}</Link>
-              ))}
-            </nav>
-          ) : null}
+          {/* The whole library is searched on /search; a plain GET form works without JavaScript. */}
+          <MaterialPlaque kit={libraryKit} as="section" id="library-search" className={styles.searchPlaque} aria-labelledby="library-search-title">
+            <h2 id="library-search-title" className={materialStyles.title}>{copy.searchTitle}</h2>
+            <form className={styles.search} role="search" action={`${prefix}/search`} method="get">
+              <AtlasField label={copy.searchFieldLabel} htmlFor="library-search-input" className={styles.searchField}>
+                <AtlasInput id="library-search-input" name="q" type="search" icon={<Search />} placeholder={copy.searchPlaceholder} autoComplete="off" required maxLength={200} />
+              </AtlasField>
+              <MaterialButton kit={libraryKit} fit="stack" type="submit" variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{copy.searchSubmit}</MaterialButton>
+            </form>
+            {products.length > 1 ? (
+              <nav className={styles.editions} aria-label={copy.editions}>
+                {products.map((entry) => (
+                  <Link key={entry.slug} href={`${prefix}/library${entry.slug === "wow" ? "" : `?product=${encodeURIComponent(entry.slug)}`}`} prefetch={false}
+                    aria-current={entry.slug === selectedProduct ? "page" : undefined}>{entry.name}</Link>
+                ))}
+              </nav>
+            ) : null}
+          </MaterialPlaque>
 
           {notice ? <AtlasNotice tone="caution" title={notice.title} className={styles.notice}>{notice.text}</AtlasNotice> : null}
 
@@ -150,8 +163,8 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
                   <ul className={styles.list}>
                     {entries.map((dataset) => (
                       <li key={dataset.slug} className={styles.row}>
-                        <span className={styles.rowIcon} aria-hidden="true">
-                          <ResilientImage src={dataset.previewImageUrl} alt="" width={36} height={36} loading="lazy" fallback={<CatalogGlyph symbol={dataset.iconSymbol} />} />
+                        <span className={`${materialStyles.iconFrame} ${styles.rowIcon}`} style={rowFrame} aria-hidden="true">
+                          <ResilientImage src={dataset.previewImageUrl} alt="" width={40} height={40} loading="lazy" fallback={<CatalogGlyph symbol={dataset.iconSymbol} />} />
                         </span>
                         <Link href={datasetHref(dataset)} prefetch={false} className={styles.rowLink}>{dataset.name}</Link>
                         <b className={styles.rowCount}>{formatter.format(dataset.entityCount)}</b>

@@ -1,10 +1,10 @@
-/* atlas:strict — one catalog record row (database, library datasets, search): icon, type, name link, facts, corner action. */
+/* atlas:strict — one catalog record row (record relations, search): icon in the library kit frame, type, name link, facts, corner action. */
 
 .row {
   --record-quality: var(--atlas-line);
   position: relative;
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--atlas-space-3);
   min-height: 76px;
@@ -18,26 +18,11 @@
 .row:hover,
 .row:focus-within { border-color: var(--atlas-line); background: var(--atlas-surface-selected); }
 
-.icon {
-  position: relative;
-  display: grid;
-  width: 48px;
-  height: 48px;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid var(--atlas-line-soft);
-  border-radius: var(--atlas-radius);
-  background: var(--atlas-surface-sunken);
-}
-
-/* Items keep their in-game quality frame (data colour). */
-.row[data-quality] .icon { border-color: var(--record-quality); }
-.icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.icon { --material-icon-edge: var(--record-quality); color: var(--atlas-text-subtle); }
+.icon > svg { padding: 24%; }
 
 /* Missing catalog icon: the record type's glyph, quiet. */
 .glyph {
-  width: 20px;
-  height: 20px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.5;
@@ -115,8 +100,8 @@
 .action { position: relative; z-index: 1; align-self: start; }
 
 @media (max-width: 760px) {
-  .row { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; min-height: 68px; padding: 10px; }
-  .icon { width: 44px; height: 44px; }
+  .row { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 10px; min-height: 68px; padding: 10px; }
+  .row .icon { width: 48px; height: 48px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

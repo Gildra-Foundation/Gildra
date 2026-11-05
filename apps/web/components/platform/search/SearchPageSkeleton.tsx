@@ -1,5 +1,7 @@
 import { AtlasFrame, AtlasHero, AtlasSkeleton } from "@/components/atlas";
 import type { Lang } from "@/lib/i18n";
+import { MaterialPlaque } from "@/components/wow/shared/materialAtlas";
+import { libraryKit } from "@/components/library/libraryKit";
 import { searchCopy } from "./searchCopy";
 import styles from "./searchPage.module.css";
 
@@ -11,8 +13,8 @@ export function SearchPageSkeleton({ lang }: { lang: Lang }) {
       <AtlasHero
         title={t.title}
         lede={t.lede}
-        actions={<div className={styles.skeletonSearch} aria-hidden="true" />}
       />
+      <MaterialPlaque kit={libraryKit} className={styles.plaque} aria-hidden="true"><div className={styles.skeletonSearch} /></MaterialPlaque>
       <AtlasSkeleton variant="rows" count={5} label={t.counting} className={styles.skeleton} />
     </AtlasFrame>
   );

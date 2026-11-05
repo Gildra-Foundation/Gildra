@@ -40,40 +40,21 @@
 .card:hover { transform: translateY(-2px); }
 
 .icon {
+  --material-icon-edge: var(--record-quality);
   grid-area: icon;
-  position: relative;
-  display: grid;
-  width: 60px;
-  height: 60px;
-  place-items: center;
-  padding: 3px;
-  border-radius: var(--atlas-radius);
-  background: linear-gradient(160deg, var(--record-quality), color-mix(in srgb, var(--record-quality) 35%, var(--atlas-bg)));
-  box-shadow: 0 0 0 1px var(--atlas-bg), 0 6px 18px color-mix(in srgb, var(--atlas-bg) 60%, transparent);
-}
-
-.icon img {
-  display: block;
-  width: 54px;
-  height: 54px;
-  border-radius: 1px;
-  background: var(--atlas-surface-sunken);
-  object-fit: cover;
+  color: var(--atlas-text-subtle);
 }
 
 .glyph {
-  width: 22px;
-  height: 22px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  color: var(--atlas-text-subtle);
 }
 
-/* Missing icon: the glyph sits on a quiet sunken square inside the frame. */
-.icon > :not(img) { width: 54px; height: 54px; padding: 16px; background: var(--atlas-surface-sunken); }
+/* Missing icon: the type glyph sits small in the frame window. */
+.icon > svg { padding: 22%; }
 
 .head { grid-area: head; display: grid; gap: 2px; min-width: 0; }
 
@@ -155,9 +136,6 @@
 }
 
 .tray[data-quality]::before { top: auto; right: var(--atlas-space-6); bottom: -1px; left: var(--atlas-space-6); width: auto; height: 2px; }
-.tray .icon { width: 72px; height: 72px; padding: 4px; border-radius: 50%; }
-.tray .icon img,
-.tray .icon > :not(img) { width: 64px; height: 64px; border-radius: 50%; }
 .tray .head { justify-items: center; gap: var(--atlas-space-1); }
 .tray .name { font-size: var(--atlas-text-lead); }
 
@@ -175,15 +153,10 @@
 
 @media (max-width: 760px) {
   .card { gap: 2px var(--atlas-space-3); min-height: 104px; padding: var(--atlas-space-3) var(--atlas-space-3) var(--atlas-space-2); }
-  .icon { width: 52px; height: 52px; }
-  .icon img,
-  .icon > :not(img) { width: 46px; height: 46px; }
-  .icon > :not(img) { padding: 12px; }
+  .card:not(.tray) .icon { width: 56px; height: 56px; }
   .name { font-size: var(--atlas-text-lead); }
   .tray { min-height: 200px; padding: var(--atlas-space-4) var(--atlas-space-2) var(--atlas-space-2); }
-  .tray .icon { width: 64px; height: 64px; }
-  .tray .icon img,
-  .tray .icon > :not(img) { width: 56px; height: 56px; }
+  .tray .icon { width: 68px; height: 68px; }
   .tray .name { font-size: var(--atlas-text-body); }
 }
 
@@ -206,6 +179,5 @@
 @media (forced-colors: active) {
   .card { border: 1px solid CanvasText; background: Canvas; }
   .card::before { display: none; }
-  .icon { background: CanvasText; box-shadow: none; }
   .link { color: LinkText; }
 }
