@@ -134,7 +134,7 @@
 @media (max-width: 1100px) { .featured .content { grid-template-columns: minmax(0, 1fr); gap: 0; } .card.featured:global(.ui-card[data-variant="outline"]) { padding: 0; } .featured .body { margin: -8px 12px 0; padding: 32px 32px 36px; } }
 @media (max-width: 700px) { .archive { grid-template-columns: minmax(0, 1fr); } .body,
   .featured .body { margin-inline: 0; padding: 28px 24px 32px; } .body::before { border-width: var(--raid-panel-width-mobile); } .card .openRaid:global(.ui-button[data-variant="secondary"]) { min-height: 68px; } .featured .title { font-size: var(--atlas-text-h3); } }
-@media (max-width: 520px) { .featured .bosses { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) { .featured .bosses { grid-template-columns: minmax(0, 1fr); } .bosses .order { display: none; } }
 @media (max-width: 700px) {
   .card[data-hub-raid-card="the-unbinding-of-kithix"] .body { padding: 44px; }
   .card[data-hub-raid-card="the-unbinding-of-kithix"] .openRaid:global(.ui-button) { padding-inline: calc(var(--raid-button-inset) * .75); }
