@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronDown, CircleDot, Crosshair, Download, Droplets, Eye, Flame, Leaf, LockKeyhole, PawPrint, Plus, RotateCcw, Save, Search, Share2, Shield, Skull, Snowflake, Sparkles, Sun, Swords, Trash2, Undo2, Upload, Waves, X, Zap } from "lucide-react";
@@ -12,8 +11,9 @@ import { pvpVisualTheme, talentVisualTheme } from "@/lib/talentVisualTheme";
 import { decodeWoWTalentLoadout, encodeWoWTalentLoadout, FURY_REFERENCE_LOADOUT, TALENT_HANDOFF_STORAGE_KEY, talentPointBudgets } from "@/lib/wowTalentLoadout";
 import { SpecMenu } from "@/components/talents/SpecMenuLazy";
 import { TalentTreePanel } from "@/components/talents/TalentTreePanel";
-import talentScene from "@/components/talents/talentAtlasScene.module.css";
-import { materialPlaqueStyle } from "@/components/wow/shared/materialAtlas";
+import { TalentHero } from "@/components/talents/TalentHero";
+import page from "@/components/talents/talentAtlasPage.module.css";
+import { MaterialButton, MaterialPlaque, materialPlaqueStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
 import { TalentDescription } from "@/components/talents/TalentDescription";
 import { getPerformanceTier, type PerformanceTier } from "@/lib/client/performanceTier";
@@ -966,7 +966,13 @@ function sanitizeLoadout(data: TalentCalculatorData, decoded: { ranks: Map<strin
 function ErrorState({ theme, lang }: { theme: TalentSpecTheme; lang: TalentCopyLang }) {
   const copy = talentCalculatorCopy[lang];
   const names = talentThemeNames(theme, lang);
-  return <main className="talent-calculator tc-state" lang={lang} data-atlas-scope="" data-spec={theme.slug} data-spec-motif={theme.motif}><div className="tc-state-card"><span className="tc-state-kicker">Midnight · {names.className}</span><h1>{copy.errorTitle(names.spec)}</h1><p>{copy.errorBody}</p></div></main>;
+  return <main className={`talent-calculator tc-state ${page.page}`} lang={lang} data-atlas-scope="" data-talent-page="" data-spec={theme.slug} data-spec-motif={theme.motif}>
+    <TalentHero theme={theme} lang={lang} />
+    <MaterialPlaque kit={CHARACTERS_KIT} as="section" className={page.state} role="alert" aria-labelledby="tc-error-title">
+      <h2 id="tc-error-title" className={materialStyles.title}>{copy.errorTitle(names.spec)}</h2>
+      <p className={materialStyles.text}>{copy.errorBody}</p>
+    </MaterialPlaque>
+  </main>;
 }
 
 function ResourceGlyph({ motif }: { motif: TalentSpecTheme["motif"] }) {
@@ -1718,21 +1724,20 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
 
   return (
     <TalentCopyContext.Provider value={copy}><TalentLangContext.Provider value={lang}>
-    <main ref={calculatorRef} className={`talent-calculator${rotationFlow ? " is-rotation-flow" : ""}`} lang={lang} data-atlas-scope="" data-spec={theme.slug} data-hero={data.heroSubtreeId} data-spec-motif={theme.motif} data-performance={performanceTier} data-page-active="true">
-      <section className={`tc-commandbar ${talentScene.bar}`} aria-label={copy.toolbarLabel}>
-        <span className={talentScene.scene} aria-hidden="true" />
-        <div className="tc-page-title">
-          <span className="tc-fury-portrait tc-spec-icon"><Image src={theme.iconUrl} alt="" width={64} height={64} sizes="52px" quality={90} priority /></span>
-          <div>
-            {rotationFlow ? <button className="tc-back-link" type="button" onClick={() => router.push(returnTo)}>{copy.backToRotation}</button> : null}
-            <h1>{copy.title(theme)}</h1>
-            <span className="tc-build-version">
-              {names.className} · {names.role} ·{" "}
-              <a href={data.source.url} target="_blank" rel="noreferrer" title={`${sourceLabel} · ${snapshotTime} UTC`}>{sourceLabel}</a>{" "}
-              {copy.snapshotOn(snapshotDate)}
-            </span>
-          </div>
-        </div>
+    <main ref={calculatorRef} className={`talent-calculator ${page.page}${rotationFlow ? " is-rotation-flow" : ""}`} lang={lang} data-atlas-scope="" data-talent-page="" data-spec={theme.slug} data-hero={data.heroSubtreeId} data-spec-motif={theme.motif} data-performance={performanceTier} data-page-active="true">
+      <TalentHero theme={theme} lang={lang}
+        back={rotationFlow ? <button className={`tc-back-link ${page.back}`} type="button" onClick={() => router.push(returnTo)}>{copy.backToRotation}</button> : null}
+        actions={<div className={page.actions}>
+          <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" icon={<Upload aria-hidden="true" />} onClick={openImportDialog}>{copy.importTitle}</MaterialButton>
+          <MaterialButton kit={CHARACTERS_KIT} fit="stack" icon={<Share2 aria-hidden="true" />} onClick={() => void copyShareLink()}>{copy.share}</MaterialButton>
+        </div>}
+        stats={[
+          { value: String(data.trees.class.nodes.length + data.trees.hero.nodes.length + data.trees.spec.nodes.length), label: copy.statTalents },
+          { value: String(theme.heroPaths.length), label: copy.statHeroPaths },
+          ...(data.pvpTalents.length ? [{ value: String(data.pvpTalents.length), label: copy.statPvp }] : []),
+        ]}
+        source={<>{copy.dataSource}: <a href={data.source.url} target="_blank" rel="noreferrer" title={`${sourceLabel} · ${snapshotTime} UTC`}>{sourceLabel}<span aria-hidden="true"> ↗</span><span className="sr-only"> ({copy.opensInNewTab})</span></a> {copy.snapshotOn(snapshotDate)}</>} />
+      <MaterialPlaque kit={CHARACTERS_KIT} as="section" className={page.command} aria-label={copy.toolbarLabel}>
         <div className="tc-command-actions">
           <SpecMenu current={theme} localePrefix={localePrefix} lang={lang} />
           <div className="tc-points-badge" data-resource-state={spent === 0 ? "empty" : spent === totalAvailable ? "complete" : "active"} style={{ "--tc-rage-level": `${ragePercent}%` } as CSSProperties} role="img" aria-label={copy.pointsAria(spent, totalAvailable, ragePercent)}>
@@ -1755,16 +1760,14 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
           </div>
           <div className="tc-command-group">
             <button className="tc-command-button is-undo" type="button" disabled={!undoState} onClick={undoReset} aria-label={copy.undo} title={copy.undo}><Undo2 aria-hidden="true" /><span>{copy.undo}</span></button>
-            <button className="tc-command-button" type="button" onClick={openImportDialog} aria-label={copy.importShort} title={copy.importShort}><Upload aria-hidden="true" /><span>{copy.importShort}</span></button>
             <button className="tc-command-button is-reset" type="button" onClick={reset} aria-label={copy.resetShort} title={copy.resetShort}><RotateCcw aria-hidden="true" /><span>{copy.resetShort}</span></button>
-            <button className="tc-command-button is-share" type="button" onClick={() => void copyShareLink()} aria-label={copy.share} title={copy.share}><Share2 aria-hidden="true" /><span>{copy.share}</span></button>
           </div>
         </div>
-      </section>
+      </MaterialPlaque>
       <div className="tc-mobile-tree-switcher" role="group" aria-label={copy.treeSwitcher}>
         {([["class", data.className], ["hero", data.heroName], ["spec", data.specName]] as const).map(([kind, name]) => <button key={kind} type="button" aria-label={`${copy.treeTabs[kind]}: ${name}`} aria-pressed={mobileTree === kind} onClick={() => setMobileTree(kind)}>{copy.treeTabs[kind]}</button>)}
       </div>
-      <section className={`tc-workspace ${talentScene.plaqueHead}`} data-mobile-tree={mobileTree} style={materialPlaqueStyle(CHARACTERS_KIT)}>
+      <section className={`tc-workspace ${page.workspace}`} data-mobile-tree={mobileTree} style={materialPlaqueStyle(CHARACTERS_KIT)}>
         {!compactLayout || mobileTree === "class" ? <TalentTreePanel lang={lang} style={rowStepStyle("class")} variant="class" eyebrow={copy.treeEyebrows.class} title={data.className} iconSrc={theme.classIconUrl} spent={rank("class")} budget={budgets.class} nodeCount={data.trees.class.nodes.length}><TalentTreeView tree={data.trees.class} ranks={treeRanks.class} choices={treeChoices.class} spentInTree={rank("class")} nodeCatalog={nodeCatalog} searchIndex={searchableChoicesByNode} onRank={changeRank} onCycleChoice={cycleChoice} query={deferredQuery} openTooltip={openTooltip} closeTooltip={closeTooltip} /></TalentTreePanel> : null}
         {!compactLayout || mobileTree === "hero" ? mountedTrees.has("hero") ? <TalentTreePanel lang={lang} style={rowStepStyle("hero")} variant="hero" eyebrow={copy.treeEyebrows.hero} title={data.heroName} iconSrc={heroPanelIcon} secondary={<nav className="tc-hero-paths" aria-label={copy.heroPathsLabel}>{theme.heroPaths.map((hero) => {
           const href = `${localePrefix}/talents/${theme.slug}?hero=${hero.id}`;
@@ -1813,7 +1816,7 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
             </button>;
           })}
         </div> : null}
-        <button type="button" className={`tc-use-rotation${buildSaved && !rotationFlow ? " is-saved" : ""}`} disabled={rotationFlow && !buildComplete} onClick={rotationFlow ? useInRotation : () => saveBuild(false)}><span className="tc-save-mark" aria-hidden="true">{buildSaved && !rotationFlow ? <Check /> : <Save />}</span><span className="tc-save-copy"><b>{rotationFlow ? (buildComplete ? copy.useInTrainer : copy.pointsLeft(missingPoints)) : buildSaved ? copy.buildIsSaved : activeBuildId ? copy.saveChanges : copy.saveBuildCta}</b>{rotationFlow ? <small>{buildComplete ? copy.readyForSim : copy.spendAllPoints}</small> : savedBuilds.length ? <small>{copy.saveMeta(savedBuilds.length)}</small> : null}</span></button>
+        <span className={page.save}><MaterialButton kit={CHARACTERS_KIT} fit="block" variant="primary" className={`tc-save-build${buildSaved && !rotationFlow ? " is-saved" : ""}`} disabled={rotationFlow && !buildComplete} onClick={rotationFlow ? useInRotation : () => saveBuild(false)} icon={buildSaved && !rotationFlow ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}><span className={page.saveCopy}><b>{rotationFlow ? (buildComplete ? copy.useInTrainer : copy.pointsLeft(missingPoints)) : buildSaved ? copy.buildIsSaved : activeBuildId ? copy.saveChanges : copy.saveBuildCta}</b>{rotationFlow ? <small>{buildComplete ? copy.readyForSim : copy.spendAllPoints}</small> : savedBuilds.length ? <small>{copy.saveMeta(savedBuilds.length)}</small> : null}</span></MaterialButton></span>
         {notice ? <div className="tc-toast" role="status" aria-live="polite"><span>{notice.message}</span>{undoState ? <button type="button" onClick={undoReset}>{copy.undo}</button> : null}{notice.persistent ? <button type="button" aria-label={copy.closeNotice} onClick={() => setNotice(null)}>×</button> : null}</div> : null}
       </footer>
       {importOpen ? <div className="tc-import-backdrop" aria-hidden="true" onClick={closeImport} /> : null}

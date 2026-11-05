@@ -128,7 +128,7 @@ try {
   const persistedNode = page.locator('[data-node-id="class-90344"]');
   await persistedNode.click();
   const selectedPoints = await page.locator(".tc-total-points").innerText();
-  await page.locator(".tc-use-rotation").click();
+  await page.locator(".tc-save-build").click();
   const loadoutUrl = page.url();
   const encodedLoadout = new URL(loadoutUrl).searchParams.get("loadout");
   if (!encodedLoadout) throw new Error("Saving a talent build did not persist a loadout in the URL");
