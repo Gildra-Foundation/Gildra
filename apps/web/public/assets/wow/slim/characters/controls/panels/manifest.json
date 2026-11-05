@@ -1,0 +1,34 @@
+{
+  "entries": {
+    "characters": {
+      "path": "/assets/wow/slim/characters/controls/panels/characters.webp",
+      "width": 768,
+      "height": 967,
+      "bytes": 51712,
+      "sha256": "a1a6e8782a38c157c29ac643e80a8183ab203b386325201718f4546e91bafd21",
+      "native": "/home/debian/gildra-slim-assets-20261105/asset-sources/panels/characters-native.png",
+      "nativeSha256": "2250b5393a6c502eeb890951e22e90fca36338aff6fd1ec0f2d2301e53bf3eeb",
+      "nativeDimensions": {
+        "width": 1122,
+        "height": 1402
+      },
+      "crop": {
+        "left": 35,
+        "top": 34,
+        "width": 1052,
+        "height": 1330
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      },
+      "slices": [
+        110,
+        128,
+        110,
+        129
+      ],
+      "railInset": 26
+    }
+  }
+}

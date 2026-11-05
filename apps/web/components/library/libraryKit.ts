@@ -1,11 +1,7 @@
-import type { MaterialKit } from "@/components/wow/shared/materialAtlas";
+import type { AnyMaterialKit, MaterialIconKit } from "@/components/wow/shared/material/materialKit";
 
-/**
- * The painted kit the library wears until it has its own (docs/library-assets/CODEX-PROMPTS.v2.md):
- * Den of Nalorakk — cold slate-blue stone and bronze, the closest to the archive scene and the ice shell.
- * One place to switch when the library kit is generated.
- */
-export const libraryKit: MaterialKit = "den-of-nalorakk";
+/** The library's own slim kit (walnut, bronze, arcane-blue crystal), components/wow/shared/material/sectionKits.ts. */
+export const libraryKit: AnyMaterialKit & MaterialIconKit = "library";
 
-/** Second painted button of a hero pair (the reference pairs two kits): Voidscar Arena's violet void-metal. */
-export const librarySecondKit: MaterialKit = "voidscar-arena";
+/** Second painted button of a hero pair (the reference pairs two kits): the slim Talent Codex kit. */
+export const librarySecondKit: AnyMaterialKit = "talents";

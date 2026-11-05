@@ -3,11 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MaterialLinkButton } from "./MaterialButton";
-import { materialFrameArtwork, materialFrameStyle, materialPlaqueStyle, type AnyMaterialKit } from "./materialKit";
+import { materialFrameArtwork, materialFrameStyle, materialPlaqueStyle, type FramedMaterialKit } from "./materialKit";
 import styles from "./material.module.css";
 
 type FrameProps = {
-  kit: AnyMaterialKit;
+  kit: FramedMaterialKit;
   /** Scene painted inside the frame's window (decor: alt=""). */
   src: string;
   children?: never;
@@ -18,7 +18,7 @@ type FrameProps = {
 };
 
 /** Live content in the frame's window (a 3D slot, a map): the page keeps its own accessibility. */
-type LiveFrameProps = { kit: AnyMaterialKit; children: ReactNode; sizes?: string; src?: never; position?: never; priority?: never };
+type LiveFrameProps = { kit: FramedMaterialKit; children: ReactNode; sizes?: string; src?: never; position?: never; priority?: never };
 
 /** A scene — or live content — inside the kit's painted frame, clipped to the frame's measured window (design.md §4.3). */
 export function MaterialFrame(props: FrameProps | LiveFrameProps) {

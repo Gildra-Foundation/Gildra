@@ -1,0 +1,34 @@
+{
+  "entries": {
+    "library": {
+      "path": "/assets/wow/slim/library/controls/panels/library.webp",
+      "width": 768,
+      "height": 960,
+      "bytes": 48126,
+      "sha256": "3a1ba01458963f354834af140f83635a412e4cc4dd6ed174847683d5823583fa",
+      "native": "/home/debian/gildra-slim-assets-20261105/asset-sources/panels/library-native.png",
+      "nativeSha256": "683874ca685b8a2cf798250cf5809aecbfc392afd5b4de3160146254f0c03ede",
+      "nativeDimensions": {
+        "width": 1122,
+        "height": 1402
+      },
+      "crop": {
+        "left": 34,
+        "top": 33,
+        "width": 1054,
+        "height": 1323
+      },
+      "centreAlpha": {
+        "min": 251,
+        "max": 254
+      },
+      "slices": [
+        103,
+        103,
+        102,
+        104
+      ],
+      "railInset": 25
+    }
+  }
+}

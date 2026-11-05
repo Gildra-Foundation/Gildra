@@ -8,6 +8,7 @@ import { raidHubControlLayout } from "@/components/wow/raid/raidHubControls";
 import { raidHubFrameArtwork, raidHubFrameLayout } from "@/components/wow/raid/raidHubFrames";
 import type { RaidHubSlug } from "@/components/wow/raid/raidHubData";
 import pullArt from "../../../../public/assets/wow/mythic/pull-art/manifest.json";
+import { isSectionKit, sectionButtonLayout, sectionControlLayout, sectionIconFrameStyle, sectionKitAccent, type SectionKit } from "./sectionKits";
 
 /**
  * A painted kit (gildra-wow-material-design): the finished kits of the Mythic+ atlas (dungeons)
@@ -18,11 +19,14 @@ import pullArt from "../../../../public/assets/wow/mythic/pull-art/manifest.json
  */
 export type MaterialKit = DungeonSlug;
 export type RaidMaterialKit = RaidHubSlug;
-export type AnyMaterialKit = MaterialKit | RaidMaterialKit;
-export type MaterialIconKit = MaterialKit;
+export type { SectionKit };
+export type AnyMaterialKit = MaterialKit | RaidMaterialKit | SectionKit;
+export type MaterialIconKit = MaterialKit | SectionKit;
+/** Kits that have a painted picture frame (slim section kits have none). */
+export type FramedMaterialKit = MaterialKit | RaidMaterialKit;
 
-const isRaidKit = (kit: AnyMaterialKit): kit is RaidHubSlug => kit in raidCardThemes;
-const accentOf = (kit: AnyMaterialKit) => (isRaidKit(kit) ? raidCardThemes[kit].accent : dungeonArtDirections[kit].accent);
+const isRaidKit = (kit: string): kit is RaidHubSlug => kit in raidCardThemes;
+const accentOf = (kit: AnyMaterialKit) => (isSectionKit(kit) ? sectionKitAccent(kit) : isRaidKit(kit) ? raidCardThemes[kit].accent : dungeonArtDirections[kit].accent);
 
 /** The raid manifests expressed in the plaque/button variables the shared CSS reads (--mythic-*). */
 function raidMaterialVars(kit: RaidHubSlug, withPanel: boolean): CSSProperties {
@@ -49,17 +53,18 @@ const pct = (value: number) => `${(value * 100).toFixed(4)}%`;
 
 /** Plaque + button geometry of the kit and its accent (the plaque's light, base and line derive from it). */
 export function materialPlaqueStyle(kit: AnyMaterialKit): CSSProperties {
-  const layout = isRaidKit(kit) ? raidMaterialVars(kit, true) : mythicHubControlLayout(kit);
+  const layout = isSectionKit(kit) ? sectionControlLayout(kit) : isRaidKit(kit) ? raidMaterialVars(kit, true) : mythicHubControlLayout(kit);
   return { ...layout, "--material-accent": accentOf(kit) } as CSSProperties;
 }
 
 /** Button geometry only (nine-slice cuts scaled to a 68 px button). */
 export function materialButtonStyle(kit: AnyMaterialKit): CSSProperties {
-  return isRaidKit(kit) ? raidMaterialVars(kit, false) : mythicHubButtonLayout(kit);
+  return isSectionKit(kit) ? sectionButtonLayout(kit) : isRaidKit(kit) ? raidMaterialVars(kit, false) : mythicHubButtonLayout(kit);
 }
 
 /** The kit's square frame around a game icon; the icon is clipped to the frame's measured window. */
 export function materialIconFrameStyle(kit: MaterialIconKit, size = 52): CSSProperties {
+  if (isSectionKit(kit)) return sectionIconFrameStyle(kit, size);
   const skill = pullArt.entries.skills[kit];
   const { left, top, right, bottom } = skill.window.bounds;
   return {
@@ -72,7 +77,7 @@ export function materialIconFrameStyle(kit: MaterialIconKit, size = 52): CSSProp
 }
 
 /** The kit's painted picture frame (3:2) and its measured window (design.md §4.3). */
-export function materialFrameStyle(kit: AnyMaterialKit): CSSProperties {
+export function materialFrameStyle(kit: FramedMaterialKit): CSSProperties {
   if (!isRaidKit(kit)) return { ...mythicHubFrameLayout(kit), "--material-accent": accentOf(kit) } as CSSProperties;
   const raid = raidHubFrameLayout(kit) as Record<string, string>;
   return {
@@ -84,4 +89,4 @@ export function materialFrameStyle(kit: AnyMaterialKit): CSSProperties {
 }
 
 /** The frame's transparent-window artwork. */
-export const materialFrameArtwork = (kit: AnyMaterialKit) => (isRaidKit(kit) ? raidHubFrameArtwork(kit) : dungeonFrameArtwork(kit));
+export const materialFrameArtwork = (kit: FramedMaterialKit) => (isRaidKit(kit) ? raidHubFrameArtwork(kit) : dungeonFrameArtwork(kit));

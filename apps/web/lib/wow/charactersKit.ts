@@ -1,6 +1,8 @@
 /**
- * The painted kit (a `MaterialKit` of components/wow/shared/materialAtlas) worn by the Characters section —
- * classes, talents, rotation: the frost kit of the atlas, slate-blue stone and bronze, matching the Frost
- * sign-in frame. One place, so the section moves to its own kit (gildra-asset-imagegen) by changing this line.
+ * The painted kit worn by the Characters section — characters, classes, rotation: the slim Frost Hall section kit
+ * (components/wow/shared/material/sectionKits.ts, generated 2026-11-05 by gildra-asset-imagegen).
  */
-export const CHARACTERS_KIT = "den-of-nalorakk" as const;
+export const CHARACTERS_KIT = "characters" as const;
+
+/** The talent calculator's own slim kit (Talent Codex: blued steel, silver inlay, amethyst). */
+export const TALENTS_KIT = "talents" as const;

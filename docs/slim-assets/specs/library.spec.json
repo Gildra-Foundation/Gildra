@@ -1,0 +1,58 @@
+{
+ "title": "Библиотека — тонкий кит",
+ "kit": "library",
+ "kit_name": "Library",
+ "pages": "/library, наборы, записи, /search",
+ "page": "the World of Warcraft Library pages",
+ "material": "dark oiled walnut wood rails, aged warm bronze fittings, brass book-corner caps, one small cool arcane-blue crystal per corner, deep ink-blue face; quiet mage archive; slim low-relief construction: thin flat rails, shallow bevels, compact flush end caps and clasps, minimal depth and bulk, light and elegant rather than heavy",
+ "anchors": {
+  "face": "#0b1220",
+  "metal": "#5a4228",
+  "highlight": "#d9b98a",
+  "accent": "#6fa8d8"
+ },
+ "site_accent": "#c8a46a",
+ "accent_note": "кит из style-bible §5 (accent-check pass ранее).",
+ "task_dir": "/home/debian/gildra-slim-assets-20261105",
+ "repo": "/home/debian/Gildra-slim-assets-20261105",
+ "public_dir": "/assets/wow/slim/library",
+ "assets": [
+  {
+   "type": "panel",
+   "title": "Табличка (9-slice)",
+   "where": "формы, фильтры, карточки",
+   "holds": "search fields, filters, tables and short lists",
+   "palette_ref_role": "reference painting of the World of Warcraft library archive",
+   "refs": [
+    "$REF/loading-archive.webp",
+    "$REF/panels-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "button",
+   "title": "Кнопка (9-slice)",
+   "where": "основные действия страницы",
+   "caps": "each cap is a small flat brass book-corner cap holding one tiny smooth arcane-blue crystal",
+   "refs": [
+    "{PANEL}",
+    "$REF/buttons-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "skill",
+   "name": "library-icon",
+   "title": "Рамка иконки",
+   "where": "иконки записей, специализаций, портреты",
+   "icon": "an item, spell or collection icon",
+   "corners": "four small brass book-corner caps",
+   "size": "40–96 px",
+   "refs": [
+    "{PANEL}",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  }
+ ],
+ "after": [
+  "Упаковка и подключение — Claude-сессия (координатор)."
+ ]
+}

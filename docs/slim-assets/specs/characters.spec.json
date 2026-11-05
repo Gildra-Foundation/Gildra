@@ -1,0 +1,58 @@
+{
+ "title": "Персонажи — тонкий кит Frost",
+ "kit": "characters",
+ "kit_name": "Frost Hall",
+ "pages": "/wow/characters",
+ "page": "the World of Warcraft account characters pages",
+ "material": "frosted pale steel rails with a thin rim of rime, small faceted ice-blue crystals, cold silver highlights, deep midnight-blue face; quiet northern citadel; slim low-relief construction: thin flat rails, shallow bevels, compact flush end caps and clasps, minimal depth and bulk, light and elegant rather than heavy",
+ "anchors": {
+  "face": "#0a1220",
+  "metal": "#56657a",
+  "highlight": "#d8e6f2",
+  "accent": "#8fb8e0"
+ },
+ "site_accent": "#9fb6d6",
+ "accent_note": "pass, оттенок 27° от ближайшего соседа.",
+ "task_dir": "/home/debian/gildra-slim-assets-20261105",
+ "repo": "/home/debian/Gildra-slim-assets-20261105",
+ "public_dir": "/assets/wow/slim/characters",
+ "assets": [
+  {
+   "type": "panel",
+   "title": "Табличка (9-slice)",
+   "where": "формы, фильтры, карточки",
+   "holds": "search fields, filters, tables and short lists",
+   "palette_ref_role": "finished panel of a neighbouring kit",
+   "refs": [
+    "$REF/panels-den-of-nalorakk.webp",
+    "$REF/panels-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "button",
+   "title": "Кнопка (9-slice)",
+   "where": "основные действия страницы",
+   "caps": "each cap is a small flat frosted-steel tip holding one tiny faceted ice-blue crystal",
+   "refs": [
+    "{PANEL}",
+    "$REF/buttons-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "skill",
+   "name": "characters-icon",
+   "title": "Рамка иконки",
+   "where": "иконки записей, специализаций, портреты",
+   "icon": "a character class portrait",
+   "corners": "four small faceted ice-crystal corner tips",
+   "size": "40–96 px",
+   "refs": [
+    "{PANEL}",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  }
+ ],
+ "after": [
+  "Упаковка и подключение — Claude-сессия (координатор)."
+ ]
+}

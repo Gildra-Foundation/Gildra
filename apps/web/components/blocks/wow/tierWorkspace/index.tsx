@@ -60,7 +60,7 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorks
           title={copy.title}
           lede={sample ? copy.ledeSample : copy.ledeLive}
           actions={<div className={styles.heroActions}>
-            <MaterialLinkButton kit="voidscar-arena" fit="stack" className={styles.heroButton} href={`#${ANCHORS.builds}`} variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{copy.heroRanking}</MaterialLinkButton>
+            <MaterialLinkButton kit="tier-lists" fit="stack" className={styles.heroButton} href={`#${ANCHORS.builds}`} variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{copy.heroRanking}</MaterialLinkButton>
             <MaterialLinkButton kit="kings-rest" fit="stack" className={styles.heroButton} href={p(lang, "/wow/mythic-plus/meta")} iconAfter={<ArrowUpRight aria-hidden="true" />}>{copy.heroMeta}</MaterialLinkButton>
           </div>}
         />

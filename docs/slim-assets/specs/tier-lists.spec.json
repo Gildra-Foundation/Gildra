@@ -1,0 +1,58 @@
+{
+ "title": "Тир-листы — тонкий кит",
+ "kit": "tier-lists",
+ "kit_name": "Ranking Hall",
+ "pages": "/tier-lists",
+ "page": "the World of Warcraft tier list page",
+ "material": "dark oxidised bronze with thin brushed-copper rails, small ember-garnet enamel studs, deep umber face; a tournament ranking board, crisp metal rather than wood, roots or mushrooms; slim low-relief construction: thin flat rails, shallow bevels, compact flush end caps and clasps, minimal depth and bulk, light and elegant rather than heavy",
+ "anchors": {
+  "face": "#140e0a",
+  "metal": "#5b4632",
+  "highlight": "#e2b98c",
+  "accent": "#b5523a"
+ },
+ "site_accent": "#cf9a6a",
+ "accent_note": "pass; оттенок в 1° от sporefall — материал другой: окисленная бронза и медь, без дерева, корней и грибов.",
+ "task_dir": "/home/debian/gildra-slim-assets-20261105",
+ "repo": "/home/debian/Gildra-slim-assets-20261105",
+ "public_dir": "/assets/wow/slim/tier-lists",
+ "assets": [
+  {
+   "type": "panel",
+   "title": "Табличка (9-slice)",
+   "where": "формы, фильтры, карточки",
+   "holds": "search fields, filters, tables and short lists",
+   "palette_ref_role": "finished panel of a neighbouring kit",
+   "refs": [
+    "$REF/panels-den-of-nalorakk.webp",
+    "$REF/panels-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "button",
+   "title": "Кнопка (9-slice)",
+   "where": "основные действия страницы",
+   "caps": "each cap is a small flat copper tip holding one tiny ember-garnet enamel stud",
+   "refs": [
+    "{PANEL}",
+    "$REF/buttons-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "skill",
+   "name": "tier-lists-icon",
+   "title": "Рамка иконки",
+   "where": "иконки записей, специализаций, портреты",
+   "icon": "a class specialization icon",
+   "corners": "four small brushed-copper corner tips",
+   "size": "40–96 px",
+   "refs": [
+    "{PANEL}",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  }
+ ],
+ "after": [
+  "Упаковка и подключение — Claude-сессия (координатор)."
+ ]
+}

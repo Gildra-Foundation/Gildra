@@ -1,0 +1,33 @@
+{
+  "entries": {
+    "tier-lists": {
+      "path": "/assets/wow/slim/tier-lists/controls/buttons/tier-lists.webp",
+      "width": 768,
+      "height": 115,
+      "bytes": 11486,
+      "sha256": "a32cf6dce7c22e50422e048a6e514046c41617bfd98188b44276bfa5903a6792",
+      "native": "/home/debian/gildra-slim-assets-20261105/asset-sources/buttons/tier-lists-native.png",
+      "nativeSha256": "39cf306097a34fedcfcc863787f0eb75b83c6f4d70a7ac7e7864f0292834c33e",
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "crop": {
+        "left": 57,
+        "top": 213,
+        "width": 2058,
+        "height": 271
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      },
+      "slices": [
+        30,
+        103,
+        27,
+        104
+      ]
+    }
+  }
+}

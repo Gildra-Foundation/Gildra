@@ -14,7 +14,7 @@ import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
 import { SOURCE_META, SourceAbout, SourceCompare, useSourceRoles } from "@/components/blocks/wow/tierWorkspace/TierSources";
 import { DEFAULT_SOURCE_DIFFICULTY, SOURCE_DIFFICULTIES, TIER_SOURCES, isTierSource, type ExternalTierSource, type TierSourceId, type TierSourceSlices } from "@/components/blocks/wow/tierWorkspace/tierSourceKeys";
 import { tierSourcesCopy } from "@/components/blocks/wow/tierWorkspace/tierSourcesCopy";
-import { MaterialButton, MaterialLinkButton, MaterialPlaque, type MaterialKit } from "@/components/wow/shared/materialAtlas";
+import { MaterialButton, MaterialLinkButton, MaterialPlaque, type AnyMaterialKit, type MaterialKit } from "@/components/wow/shared/materialAtlas";
 import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
 import { dungeonArtDirections } from "@/lib/wow/dungeonArtDirection";
 
@@ -29,9 +29,10 @@ const KEY_RANGES: KeyRange[] = ["all", "high", "middle", "low"];
 const EMPTY_ROLES: Record<TierRole, TierEntry[]> = { dps: [], healer: [], tank: [] };
 /** Painted kits (gildra-wow-material-design), as on the Mythic+ meta: the ranking frame and "About the data" wear Voidscar,
  *  the filters King's Rest, the spec card the kit of its role (tank, healer, damage). */
-const TABLE_KIT: MaterialKit = "voidscar-arena";
-const FILTER_KIT: MaterialKit = "kings-rest";
-const ABOUT_BUTTON_KIT: MaterialKit = "the-blinding-vale";
+// The slim Ranking Hall kit (sectionKits.ts): oxidised bronze, copper rails, ember garnet.
+const TABLE_KIT: AnyMaterialKit = "tier-lists";
+const FILTER_KIT: AnyMaterialKit = "tier-lists";
+const ABOUT_BUTTON_KIT: AnyMaterialKit = "tier-lists";
 const ROLE_KITS: Record<string, MaterialKit> = { tank: "den-of-nalorakk", healer: "the-blinding-vale", dps: "ruby-life-pools" };
 /** Tier → the dungeon kit whose pull marker it wears; its accent colours the tier band. */
 const TIER_KITS: Record<string, MaterialKit> = { s: "ruby-life-pools", a: "kings-rest", b: "altar-of-fangs", c: "den-of-nalorakk", d: "voidscar-arena" };

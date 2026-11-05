@@ -1,0 +1,33 @@
+{
+  "entries": {
+    "library": {
+      "path": "/assets/wow/slim/library/controls/buttons/library.webp",
+      "width": 768,
+      "height": 121,
+      "bytes": 14888,
+      "sha256": "49175d080648e0cb61487cc9f94231cbae9c87d4130417226f46e9f06b8c35d3",
+      "native": "/home/debian/gildra-slim-assets-20261105/asset-sources/buttons/library-native.png",
+      "nativeSha256": "b9260b16ba9483c631ee1e6b59bd27505cadda605c390b8de2f0da14c80bb9f4",
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "crop": {
+        "left": 69,
+        "top": 214,
+        "width": 2034,
+        "height": 284
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      },
+      "slices": [
+        32,
+        96,
+        32,
+        96
+      ]
+    }
+  }
+}

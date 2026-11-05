@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
-import loginManifest from "../../../public/assets/wow/characters/frost-login/manifest.json";
+import slimButtons from "../../../public/assets/wow/slim/characters/controls/buttons/manifest.json";
+import slimPanels from "../../../public/assets/wow/slim/characters/controls/panels/manifest.json";
 import rosterManifest from "../../../public/assets/wow/characters/frost-roster/manifest.json";
 
 /**
@@ -9,8 +10,11 @@ import rosterManifest from "../../../public/assets/wow/characters/frost-roster/m
  * Cuts are the measured nine-slice values of the manifests; scales follow design.md §4.1/§4.2
  * (button 68 px tall, plaque .18 on desktop, .14 on phones).
  */
-const button = loginManifest.entries.button;
-const { card, portraitRing, heraldry } = rosterManifest.entries;
+// Button and plaque: the slim Frost Hall kit (2026-11-05, thin rails, lighter files); portrait ring and
+// heraldry stay from the Frost roster set.
+const button = slimButtons.entries.characters;
+const card = slimPanels.entries.characters;
+const { portraitRing, heraldry } = rosterManifest.entries;
 const px = (value: number) => `${value.toFixed(2)}px`;
 const widths = (cuts: readonly number[], scale: number) => cuts.map((value) => px(value * scale)).join(" ");
 const buttonScale = 68 / button.height;

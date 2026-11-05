@@ -1,0 +1,33 @@
+{
+  "entries": {
+    "talents": {
+      "path": "/assets/wow/slim/talents/controls/buttons/talents.webp",
+      "width": 768,
+      "height": 133,
+      "bytes": 13410,
+      "sha256": "987d219d5e6f434ff49826ab3874283ddba2a99ac4127d25697329473ffdfd50",
+      "native": "/home/debian/gildra-slim-assets-20261105/asset-sources/buttons/talents-native.png",
+      "nativeSha256": "bf8e1a573ca3093195127c2ff88f7a30999ae866d7a55eec4564e6f50f5bd922",
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "crop": {
+        "left": 49,
+        "top": 193,
+        "width": 2071,
+        "height": 323
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      },
+      "slices": [
+        39,
+        122,
+        36,
+        124
+      ]
+    }
+  }
+}

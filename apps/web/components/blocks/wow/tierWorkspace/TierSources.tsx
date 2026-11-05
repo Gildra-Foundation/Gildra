@@ -7,7 +7,7 @@ import type { TierActivity, TierEntry, TierRole } from "@/lib/platform/games/int
 import { tierSourcesCopy, type TierSourcesCopy } from "./tierSourcesCopy";
 import { sourceKey, type ExternalTierSource, type SourceSlice, type TierSourceId, type TierSourceSlices } from "./tierSourceKeys";
 import styles from "./tierWorkspace.module.css";
-import { MaterialLinkButton, MaterialPlaque, type MaterialKit } from "@/components/wow/shared/materialAtlas";
+import { MaterialLinkButton, MaterialPlaque, type AnyMaterialKit, type MaterialKit } from "@/components/wow/shared/materialAtlas";
 
 const ROLES = ["dps", "healer", "tank"] as const;
 const TIER_ORDER = ["S", "A", "B", "C", "D", "F"];
@@ -77,7 +77,7 @@ function useAgo(iso: string | undefined, copy: TierSourcesCopy) {
 
 /** "About the data" for an external source: who published the list, how fresh it is, what we keep,
  *  and a painted button back to the original page (the Mythic+ meta's source plaque). */
-export function SourceAbout({ lang, source, activity, role, difficulty, updatedAt, kit, buttonKit }: { lang: Lang; source: ExternalTierSource; activity: TierActivity; role: TierRole; difficulty: string; updatedAt?: string; kit: MaterialKit; buttonKit: MaterialKit }) {
+export function SourceAbout({ lang, source, activity, role, difficulty, updatedAt, kit, buttonKit }: { lang: Lang; source: ExternalTierSource; activity: TierActivity; role: TierRole; difficulty: string; updatedAt?: string; kit: AnyMaterialKit; buttonKit: AnyMaterialKit }) {
   const copy = tierSourcesCopy[lang];
   const meta = SOURCE_META[source];
   const ago = useAgo(updatedAt, copy);

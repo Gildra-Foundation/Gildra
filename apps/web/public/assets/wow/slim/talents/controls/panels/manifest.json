@@ -1,0 +1,34 @@
+{
+  "entries": {
+    "talents": {
+      "path": "/assets/wow/slim/talents/controls/panels/talents.webp",
+      "width": 768,
+      "height": 958,
+      "bytes": 47260,
+      "sha256": "aad83e197631071eb2121f5ad2f8934b3002c74392182fb396af769cac540499",
+      "native": "/home/debian/gildra-slim-assets-20261105/asset-sources/panels/talents-native.png",
+      "nativeSha256": "8fd526e0c41d466a7e830b7b076303725c00ede7859a1061b8d3f69e582a9bd1",
+      "nativeDimensions": {
+        "width": 1122,
+        "height": 1402
+      },
+      "crop": {
+        "left": 32,
+        "top": 34,
+        "width": 1059,
+        "height": 1327
+      },
+      "centreAlpha": {
+        "min": 251,
+        "max": 253
+      },
+      "slices": [
+        128,
+        126,
+        128,
+        126
+      ],
+      "railInset": 36
+    }
+  }
+}

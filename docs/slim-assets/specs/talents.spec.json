@@ -1,0 +1,58 @@
+{
+ "title": "Таланты — тонкий кит",
+ "kit": "talents",
+ "kit_name": "Talent Codex",
+ "pages": "/talents/<spec>",
+ "page": "the World of Warcraft talent calculator pages",
+ "material": "blackened blued steel with fine bright-silver filigree inlay lines, small rounded amethyst cabochons, deep slate-violet face; a scholar's codex of class mastery, clean engraved geometry rather than spikes or void energy; slim low-relief construction: thin flat rails, shallow bevels, compact flush end caps and clasps, minimal depth and bulk, light and elegant rather than heavy",
+ "anchors": {
+  "face": "#0f0d18",
+  "metal": "#3d3f52",
+  "highlight": "#cfd3e0",
+  "accent": "#9a7cc8"
+ },
+ "site_accent": "#b49ad8",
+ "accent_note": "pass; оттенок в 3° от the-voidspire — материал другой: гладкая воронёная сталь с серебряной инкрустацией и кабошоном, без шипов, пустотного металла и свечения.",
+ "task_dir": "/home/debian/gildra-slim-assets-20261105",
+ "repo": "/home/debian/Gildra-slim-assets-20261105",
+ "public_dir": "/assets/wow/slim/talents",
+ "assets": [
+  {
+   "type": "panel",
+   "title": "Табличка (9-slice)",
+   "where": "формы, фильтры, карточки",
+   "holds": "search fields, filters, tables and short lists",
+   "palette_ref_role": "finished panel of a neighbouring kit",
+   "refs": [
+    "$REF/panels-den-of-nalorakk.webp",
+    "$REF/panels-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "button",
+   "title": "Кнопка (9-slice)",
+   "where": "основные действия страницы",
+   "caps": "each cap is a small flat silver filigree tip holding one tiny rounded amethyst cabochon",
+   "refs": [
+    "{PANEL}",
+    "$REF/buttons-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "skill",
+   "name": "talents-icon",
+   "title": "Рамка иконки",
+   "where": "иконки записей, специализаций, портреты",
+   "icon": "a talent or spell icon",
+   "corners": "four small silver filigree corner tips",
+   "size": "40–96 px",
+   "refs": [
+    "{PANEL}",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  }
+ ],
+ "after": [
+  "Упаковка и подключение — Claude-сессия (координатор)."
+ ]
+}
