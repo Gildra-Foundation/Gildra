@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, Eraser, Link2, LocateFixed, Pause, Play, RotateCcw, RotateCw, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { MaterialButton, MaterialPlaque } from "@/components/wow/shared/materialAtlas";
 import { AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
 import {
@@ -21,6 +22,8 @@ import { SlotGlyph } from "./TransmogSlotGlyph";
 import styles from "./transmog.module.css";
 
 type Lang = "ru" | "en";
+/** The studio wears the slim Library kit: gilded wardrobe plaque and buttons (see transmog.module.css). */
+const KIT = "library";
 type Looks = Partial<Record<TransmogSlot, TransmogAppearance>>;
 type Snapshot = { looks: Looks; hidden: TransmogSlot[] };
 
@@ -230,7 +233,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
       const blob = await canvasBlob(canvas, output.type);
       const extension = blob.type === "image/webp" ? "webp" : "png";
       downloadBlob(blob, `gildra-transmog-${state.format}-${width}x${height}.${extension}`);
-      const saved = c.exported(`${width}×${height}`, Math.max(1, Math.round(blob.size / 1024)));
+      const saved = c.exported(`${width}×${height}`);
       setExportMessage(output.type === "image/webp" && extension !== "webp" ? `${saved}. ${c.webpFallback}` : saved);
     } catch {
       setExportMessage(c.exportFailed);
@@ -309,15 +312,17 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
           <button type="button" aria-pressed={state.gender === "f"} onClick={() => patch({ gender: "f" })} aria-label={c.female} title={c.female}>♀</button>
         </div>
         <span className={styles.toolbarSpacer} />
-        <AtlasButton size="sm" variant="ghost" className={styles.toolButton} icon={<Undo2 aria-hidden />} onClick={undo} disabled={!history.length} title={`${c.undo} (Z)`} aria-label={c.undo}><span className={styles.toolText}>{c.undo}</span></AtlasButton>
-        <AtlasButton size="sm" variant="ghost" className={styles.toolButton} icon={<Eraser aria-hidden />} onClick={reset} title={c.reset} aria-label={c.reset}><span className={styles.toolText}>{c.reset}</span></AtlasButton>
-        <AtlasButton size="sm" variant="ghost" className={styles.toolButton} icon={<Link2 aria-hidden />} onClick={() => void share()} data-transmog-share title={c.share} aria-label={c.share}><span className={styles.toolText}>{c.share}</span></AtlasButton>
-        <AtlasButton size="sm" variant="primary" className={styles.downloadButton} icon={<Download aria-hidden />} onClick={() => void exportFrame()} disabled={!ready3d || exportState === "busy"}
-          title={ready3d ? `${c.download(downloadLabel)} · ${format.width * Math.min(output.scale, maxScale)}×${format.height * Math.min(output.scale, maxScale)}` : c.downloadWait} data-transmog-download>
-          <span className={styles.toolText}>{exportState === "busy" ? c.exporting : `${c.downloadShort} ${downloadLabel}`}</span>
-        </AtlasButton>
+        <div className={styles.actions}>
+          <AtlasButton variant="ghost" className={styles.undoButton} icon={<Undo2 aria-hidden />} onClick={undo} disabled={!history.length} title={`${c.undo} (Z)`} aria-keyshortcuts="Z"><span className={styles.visuallyHidden}>{c.undo}</span></AtlasButton>
+          <MaterialButton kit={KIT} className={styles.actionButton} data-compact icon={<Eraser aria-hidden />} onClick={reset} title={c.reset} aria-label={c.reset}><span className={styles.actionText}>{c.reset}</span></MaterialButton>
+          <MaterialButton kit={KIT} className={styles.actionButton} data-compact icon={<Link2 aria-hidden />} onClick={() => void share()} data-transmog-share title={c.share} aria-label={c.share}><span className={styles.actionText}>{c.share}</span></MaterialButton>
+          <MaterialButton kit={KIT} variant="primary" className={styles.actionButton} icon={<Download aria-hidden />} onClick={() => void exportFrame()} disabled={!ready3d || exportState === "busy"}
+            title={ready3d ? `${c.download(downloadLabel)} · ${format.width * Math.min(output.scale, maxScale)}×${format.height * Math.min(output.scale, maxScale)}` : c.downloadWait} data-transmog-download>
+            {exportState === "busy" ? c.exporting : <>{c.downloadShort}<span className={styles.actionFormat}> {downloadLabel}</span></>}
+          </MaterialButton>
+        </div>
       </div>
-      <p className={styles.notice} role="status" aria-live="polite">{notice || (tab !== "frame" ? exportMessage : "")}</p>
+      <p className={styles.notice} role="status" aria-live="polite">{notice || exportMessage}</p>
 
       <div className={styles.workspace} style={{ "--stage-aspect": String(format.width / format.height) } as React.CSSProperties}>
         <div className={styles.doll}>
@@ -325,9 +330,6 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
           <div className={styles.stageColumn}>
             <TransmogStage ref={stageRef} requested={requested} modelId={modelId} items={items} pose={state.pose} paused={paused}
               aspect={format.width / format.height} background={backgroundDef} {...light} label={stageLabel} poster={poster} onStatus={onStatus} onBusy={onBusy}>
-              <span className={styles.frameTag} aria-hidden="true">
-                {c.frameLabel(c.formats[format.id].label, `${format.width}×${format.height}`)}{backgroundDef.kind === "transparent" ? ` · ${c.transparent}` : ""}
-              </span>
               {state.title || state.subtitle ? (
                 <span className={styles.caption} aria-hidden="true">
                   {state.subtitle ? <span className={styles.captionSubtitle}>{state.subtitle}</span> : null}
@@ -338,7 +340,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
               {stage.status === "loading" ? (
                 <>
                   <span className={styles.progressBar} aria-hidden="true"><i style={{ width: `${Math.max(4, stage.progress)}%` }} /></span>
-                  <p className={styles.stagePill} aria-live="polite" data-stage-pill><i className={styles.spinner} aria-hidden="true" />{c.loadingPart(stage.progress, weight)}</p>
+                  <p className={styles.stagePill} aria-live="polite" data-stage-pill><i className={styles.spinner} aria-hidden="true" />{c.loadingPart(stage.progress)}</p>
                 </>
               ) : null}
               {preview && ready3d ? <p className={styles.stagePill} data-preview-pill>{c.trying(preview.look.name)}</p> : null}
@@ -346,7 +348,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
                 <div className={styles.stageOverlay} data-stage-overlay="idle">
                   <div className={styles.loadBox}>
                     <AtlasButton variant="primary" onClick={() => setRequested(true)} data-transmog-load>{c.openStudio}</AtlasButton>
-                    <p className={styles.loadHint}>{c.slowNetwork(weight)}</p>
+                    <p className={styles.loadHint}>{c.weight(weight)}</p>
                   </div>
                 </div>
               ) : null}
@@ -374,7 +376,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
           </div>
         </div>
 
-        <div className={styles.panel}>
+        <MaterialPlaque kit={KIT} className={styles.panel}>
           <AtlasTabs label={c.title} value={tab} onChange={setTab} className={styles.tabs} tabs={[
             { id: "items", label: c.tabs.items, content: <ItemPicker lang={lang} slot={selected} current={looks[selected]} hidden={state.hidden.includes(selected)}
               onPick={(look) => pick(selected, look)} onToggleHidden={() => toggleHidden(selected)} onRemove={() => pick(selected, undefined)}
@@ -386,8 +388,6 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
               }} /> },
             { id: "sets", label: c.tabs.sets, content: <SetPicker lang={lang} wearing={wearingSet} onWear={(entry) => void wear(entry)} /> },
             { id: "frame", label: c.tabs.frame, content: <TransmogFramePanel lang={lang} settings={frameSettings} maxScale={maxScale}
-              canExport={ready3d} exportState={exportState} exportMessage={ready3d ? exportMessage : c.downloadWait}
-              onExport={() => void exportFrame()}
               onChange={(change) => {
                 const { brightness, contrast, shadow, scale, type, ...rest } = change;
                 if (brightness !== undefined || contrast !== undefined || shadow !== undefined) setLight((previous) => ({ brightness: brightness ?? previous.brightness, contrast: contrast ?? previous.contrast, shadow: shadow ?? previous.shadow }));
@@ -395,13 +395,8 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
                 if (Object.keys(rest).length) patch(rest);
               }} /> },
           ]} />
-        </div>
+        </MaterialPlaque>
       </div>
-      <p className={styles.keys}>{c.keys}</p>
-      <details className={styles.sources}>
-        <summary>{c.sources}</summary>
-        <p>{c.sourcesBody}</p>
-      </details>
     </section>
   );
 }
