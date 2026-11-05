@@ -56,16 +56,20 @@ function objectFocus(position: string | undefined): [number, number] {
   return [part(x), part(y)];
 }
 
-/** The frame's legal line (brand, notice, motion switch, links); pages outside the frame (a full-bleed reader) reuse it. */
+/**
+ * The site footer: the crest on a thin rail, one row of footer links with the
+ * "Less motion" switch, and the one-line legal notice. Pages outside the frame
+ * (a full-bleed reader) reuse it.
+ */
 export function AtlasFrameFooter({ locale, brand, legal, links, motion }: { locale: "en" | "ru"; legal: ReactNode; links: ReactNode; brand?: ReactNode; motion?: ReactNode }) {
   return (
     <footer className={styles.legal} data-text-links>
       {brand ? <div className={styles.legalBrand}>{brand}</div> : null}
-      <p>{legal}</p>
       <div className={styles.legalLinks}>
+        <nav aria-label={locale === "ru" ? "Подвал" : "Footer"} className={styles.legalNav}>{links}</nav>
         {motion ?? <AtlasMotionToggle locale={locale} />}
-        {links}
       </div>
+      <p>{legal}</p>
     </footer>
   );
 }

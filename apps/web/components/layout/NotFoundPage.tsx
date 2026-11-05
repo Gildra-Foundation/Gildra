@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { atlasLegal } from "@/components/atlas/AtlasFrame";
-import { t } from "@/lib/i18n";
 import { NotFoundActions, NotFoundFooterLinks, NotFoundLede, NotFoundMotionToggle, NotFoundText, NotFoundTitle } from "./NotFoundCopy";
 import { NotFoundSuggestions } from "./NotFoundSuggestions";
 
@@ -17,7 +16,7 @@ export function NotFoundPage({ locale }: { locale?: "en" | "ru" }) {
     // The 404 of unmatched URLs learns its language only from the URL after hydration: its legal line carries both.
     <AtlasFrame lang={locale} scene="lost" footer={locale ? true : {
       legal: <NotFoundText en={atlasLegal("en")} ru={atlasLegal("ru")} />,
-      links: <NotFoundFooterLinks whatsNew={{ en: t("en")("What's new"), ru: t("ru")("What's new") }} privacy={{ en: t("en")("Privacy Policy"), ru: t("ru")("Privacy Policy") }} />,
+      links: <NotFoundFooterLinks />,
       motion: <NotFoundMotionToggle />,
     }}>
       <AtlasHero

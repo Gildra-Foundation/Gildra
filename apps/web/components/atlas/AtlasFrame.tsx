@@ -2,8 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import Link from "next/link";
 import { AtlasFrameFooter, AtlasFrameShell } from "@gildra/atlas-ui";
 import { atlasScenes, type AtlasScene, type AtlasSceneId } from "@/lib/atlas/scenes";
-import { GAMES } from "@/lib/games/registry";
-import { t } from "@/lib/i18n";
+import { ATLAS_FOOTER_LINKS } from "./footerLinks";
 import { GildraCrest } from "@/components/brand/GildraCrest";
 import styles from "./AtlasFrame.module.css";
 
@@ -12,20 +11,25 @@ type ShellProps = ComponentProps<typeof AtlasFrameShell>;
 export type AtlasFrameProps = Omit<ShellProps, "footer" | "ember" | "glow" | "horizon"> & {
   /** Section scene from lib/atlas/scenes.ts (art, crop, shade, tint, sparks, living light); explicit props override it. */
   scene?: AtlasSceneId;
-  /** Slim legal line (Blizzard trademark notice, "What's new", privacy) under the content.
+  /** Site footer under the content: crest on a rail, footer links with "Less motion", the one-line legal notice.
    *  An object replaces the line's text and links (the 404 of unmatched URLs picks its language on the client). */
   footer?: boolean | { legal: ReactNode; links: ReactNode; motion?: ReactNode };
 };
 
-/** The site's one legal line (Blizzard trademark notice) in a language. */
-export const atlasLegal = (locale: "en" | "ru") => t(locale)(GAMES.wow.legal);
+/** The site's one legal line (Blizzard trademark notice) in a language: one short sentence pair. */
+const LEGAL = {
+  en: "World of Warcraft® is a registered trademark of Blizzard Entertainment, Inc. Gildra is an unofficial fan site, not affiliated with Blizzard.",
+  ru: "World of Warcraft® — зарегистрированный товарный знак Blizzard Entertainment, Inc. Gildra — неофициальный фанатский сайт, не связанный с Blizzard.",
+} as const;
+export const atlasLegal = (locale: "en" | "ru") => LEGAL[locale];
 
 const footerParts = (locale: "en" | "ru") => ({
   brand: <span className={styles.seal}><GildraCrest height={44} className={styles.crest} /><span>GILDRA</span></span>,
   legal: atlasLegal(locale),
   links: <>
-    <Link href={locale === "ru" ? "/ru/wow/whats-new" : "/wow/whats-new"} prefetch={false}>{t(locale)("What's new")}</Link>
-    <Link href={locale === "ru" ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(locale)("Privacy Policy")}</Link>
+    {ATLAS_FOOTER_LINKS.map((link) => (
+      <Link key={link.href} href={`${locale === "ru" ? "/ru" : ""}${link.href}`} prefetch={false}>{link[locale]}</Link>
+    ))}
   </>,
 });
 

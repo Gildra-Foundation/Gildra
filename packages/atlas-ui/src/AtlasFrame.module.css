@@ -226,52 +226,78 @@
 }
 
 /* The column keeps block flow (its sections' margins collapse as before). On a short
-   page it is taller than its content, and the sticky offset lowers the legal line to
-   the column's foot; on a long page there is no room below it, so it never moves. */
+   page it is taller than its content, and the sticky offset lowers the footer to
+   the column's foot; on a long page there is no room below it, so it never moves.
+   The footer: the crest on a thin rail, one centred row of links and the motion
+   switch, the legal notice in one short line under it. No band, no box. */
 .legal {
   position: sticky;
   top: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--atlas-space-2) var(--atlas-space-5);
+  display: grid;
+  justify-items: center;
+  gap: var(--atlas-space-3);
   margin-top: var(--atlas-space-8);
-  padding-top: var(--atlas-space-4);
-  border-top: 1px solid var(--atlas-line-soft);
-  color: var(--atlas-text-subtle);
-  font-size: var(--atlas-text-meta);
+  padding-bottom: var(--atlas-space-2);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
   line-height: 1.5;
+  text-align: center;
   /* Pages whose painting runs under the footer (the Ruby Life Pools route) put the
-     notice on bright water: a dark wash and halo keep it readable; on the solid body they are invisible. */
-  background: linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 55%, transparent), color-mix(in srgb, var(--atlas-bg) 88%, transparent) 40%);
+     notice on bright water: a halo keeps it readable; on the solid body it is invisible. */
   text-shadow: 0 1px 2px var(--atlas-bg), 0 0 8px var(--atlas-bg);
 }
 
-/* The notice sits over the scene light at the foot of the page: one step brighter than meta text keeps it above 4.5:1. */
-.legal p { max-width: 90ch; margin: 0; color: var(--atlas-text-muted); }
-.legal .motionToggle { color: var(--atlas-text); }
+/* The notice sits over the scene light at the foot of the page: muted text keeps it above 4.5:1. */
+.legal p { max-width: 100%; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-wrap: balance; }
+.legal .motionToggle { color: var(--atlas-text-muted); }
+.legal .motionToggle:hover { color: var(--atlas-text-strong); }
 
-/* The brand seal over the legal line: the crest between two engraved rules. */
+/* The rail: a thin engraved line across the column, the crest at its centre. */
 .legalBrand {
   display: flex;
-  flex-basis: 100%;
   align-items: center;
-  justify-content: center;
-  gap: var(--atlas-space-4);
-  margin-bottom: var(--atlas-space-3);
+  width: 100%;
+  gap: var(--atlas-space-5);
 }
 .legalBrand::before,
 .legalBrand::after {
-  flex: 0 1 180px;
+  flex: 1 1 0;
   height: 1px;
   content: "";
-  background: linear-gradient(90deg, transparent, var(--atlas-line));
+  background: linear-gradient(90deg, transparent, var(--atlas-line) 70%);
 }
-.legalBrand::after { background: linear-gradient(90deg, var(--atlas-line), transparent); }
-.legal a { color: var(--atlas-accent); }
-.legal a:hover { color: var(--atlas-accent-strong); }
-.legalLinks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-5); }
+.legalBrand::after { background: linear-gradient(90deg, var(--atlas-line) 30%, transparent); }
+
+/* One row: the footer links, then the motion switch. */
+.legalLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0 var(--atlas-space-5);
+}
+.legalNav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0 var(--atlas-space-6);
+  font-size: var(--atlas-text-body);
+}
+.legalNav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--atlas-text);
+  text-decoration: none;
+}
+.legalNav a:hover { color: var(--atlas-accent-strong); }
+.legalNav a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+@media (max-width: 720px) {
+  .legal { gap: var(--atlas-space-2); margin-top: var(--atlas-space-7); }
+  .legalNav { gap: 0 var(--atlas-space-5); }
+}
 
 /* The account roster is one environment, from its title to its legal line.
    A viewport-sized painting stays in its own page-length track, so a long
