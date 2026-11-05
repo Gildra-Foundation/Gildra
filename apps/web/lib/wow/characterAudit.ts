@@ -80,7 +80,9 @@ export type CharacterAuditScores = {
 
 export type CharacterAuditSnapshot = {
   slug: string;
-  character: { name: string; className: string; race: string; level: number; faction: string; itemLevel: number; mythicRating: number };
+  character: { name: string; className: string; race: string; level: number; faction: string; itemLevel: number; mythicRating: number; realm?: string };
+  /** Official Battle.net portrait (avatar) and full-body render, when the profile has them. */
+  media?: { avatar?: string; render?: string };
   specialization: CharacterSpecialization;
   /** Demo-only heuristic scores. Real Battle.net snapshots omit them until a
    * versioned simulation/benchmark can provide a defensible assessment. */

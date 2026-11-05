@@ -1,58 +1,38 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
+import { LoaderCircle, RotateCcw } from "lucide-react";
 import type { CharacterAppearanceProfile } from "@/lib/wow/characterAudit";
-import styles from "./characterAuditPage.module.css";
+import styles from "./characterEquipment.module.css";
 import type { Lang } from "@/lib/i18n";
+import { characterPageCopy } from "./characterPageCopy";
 import { configureZamViewerGlobals, createZamViewer, loadZamViewerScript, ZAM_CONTENT_PATH, ZAM_MODEL_TYPE, type WowViewer } from "@/lib/wow/zamModelViewer";
 
 type ViewerProps = {
   lang?: Lang;
   appearance: CharacterAppearanceProfile;
-  focusSlot: string | null;
   characterName: string;
-  race: string;
-  specIcon: string;
-  accent: string;
   characterSlug: string;
 };
 type WowCustomization = { Options: Array<{ Id: number; Choices: Array<{ Id: number }> }> };
 
-export function CharacterModelViewer({ appearance, focusSlot, characterName, race, specIcon, accent, characterSlug, lang = "ru" }: ViewerProps) {
-  const ru = lang === "ru";
+/** The character's 3D model in its current equipment. Mounted only when the reader asks for it (the viewer
+ * downloads several megabytes and renders every frame), and destroyed when they close it. */
+export function CharacterModelViewer({ appearance, characterName, characterSlug, lang = "ru" }: ViewerProps) {
+  const copy = characterPageCopy(lang);
   const imported = appearance.presetId.startsWith("battlenet-");
-  const viewportRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<WowViewer | null>(null);
-  const [nearViewport, setNearViewport] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
   useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-    if (!("IntersectionObserver" in window)) {
-      setNearViewport(true);
-      return;
-    }
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry?.isIntersecting) return;
-      observer.disconnect();
-      setNearViewport(true);
-    }, { rootMargin: "120px 0px" });
-    observer.observe(viewport);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!nearViewport) return;
     let cancelled = false;
     let readyTimer: number | undefined;
     let positionTimer: number | undefined;
     const host = hostRef.current;
     if (!host) return;
     host.replaceChildren();
-    setStatus("loading");
 
     const boot = async () => {
       await configureZamViewerGlobals();
@@ -140,34 +120,16 @@ export function CharacterModelViewer({ appearance, focusSlot, characterName, rac
       viewerRef.current = null;
       host.replaceChildren();
     };
-  }, [attempt, appearance.customizations, appearance.modelId, appearance.modelItems, appearance.presetId, characterSlug, imported, lang, nearViewport]);
+  }, [attempt, appearance.customizations, appearance.modelId, appearance.modelItems, appearance.presetId, characterSlug, imported, lang]);
 
   return (
-    <div
-      ref={viewportRef}
-      className={`${styles.modelViewport} ${focusSlot ? styles.modelFocused : ""}`}
-      data-book-surface="foldout"
-      data-focus-slot={focusSlot ?? undefined}
-      aria-label={ru ? `Интерактивная 3D-модель персонажа ${characterName}, ${race}, в текущей экипировке${imported ? " из Battle.net" : ""}` : `Interactive 3D model of ${characterName}, ${race}, wearing current equipment${imported ? " from Battle.net" : ""}`}
-    >
-      <div ref={hostRef} className={styles.wowModelHost} aria-hidden="true" />
-      {status !== "ready" ? (
-        <div className={styles.modelLoading} data-error={status === "error" || undefined}>
-          {status === "error" ? (
-            <>
-              <div className={styles.modelSpecFallback} style={{ "--model-accent": accent } as CSSProperties} aria-hidden="true">
-                <img src={specIcon} alt="" />
-              </div>
-              <span>{ru ? "3D-модель временно недоступна" : "3D model temporarily unavailable"}</span>
-              <button type="button" onClick={() => setAttempt((value) => value + 1)}>{ru ? "Повторить" : "Retry"}</button>
-            </>
-          ) : status === "loading" ? <><i /><span>{ru ? "Подготавливаем модель" : "Preparing model"}: {characterName}…</span></> : <span>{ru ? "3D-модель появится при прокрутке" : "3D model loads when you reach it"}</span>}
-        </div>
-      ) : null}
-      <div className={styles.modelFrame} aria-hidden="true">
-        <i /><i /><i /><i />
-      </div>
-      <div className={styles.modelMeta} aria-hidden="true"><b>3D</b><span>{focusSlot ? `${ru ? "Осмотр" : "Inspect"}: ${focusSlot.toLocaleLowerCase(ru ? "ru-RU" : "en-US")}` : ru ? "Осмотр экипировки" : "Inspect equipment"}</span></div>
+    <div className={styles.viewer} data-model-state={status} role="img" aria-label={`${copy.model3d}: ${characterName}`}>
+      <div ref={hostRef} className={styles.viewerHost} aria-hidden="true" />
+      {status === "loading" ? <span className={styles.viewerState} role="status"><LoaderCircle aria-hidden="true" className={styles.spin} /><span className={styles.srOnly}>{copy.modelLoading}</span></span> : null}
+      {status === "error" ? <span className={styles.viewerState}>
+        <span>{copy.modelError}</span>
+        <button type="button" onClick={() => { setStatus("loading"); setAttempt((value) => value + 1); }}><RotateCcw aria-hidden="true" />{copy.retry}</button>
+      </span> : null}
     </div>
   );
 }

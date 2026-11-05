@@ -1,0 +1,164 @@
+/* Equipment of the character page (CharacterEquipment): one Frost plaque with the secondary stats, the paper doll
+   (two item columns around the character figure) and the item tooltip content. Item names wear their quality colour. */
+
+.section { min-width: 0; scroll-margin-top: calc(var(--atlas-header-height, 108px) + 16px); }
+.plaque { display: grid; gap: var(--atlas-space-5); }
+
+/* ---------- Secondary stats ---------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border-block: 1px solid var(--atlas-line-soft);
+}
+.stats > div { display: grid; gap: 2px; min-width: 0; padding: var(--atlas-space-3) var(--atlas-space-4); }
+.stats > div + div { border-left: 1px solid var(--atlas-line-soft); }
+.stats dt { overflow: hidden; color: var(--atlas-text-muted); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.stats dd { margin: 0; color: var(--atlas-text-strong); font: 600 22px/1.2 var(--atlas-font-display); }
+
+/* ---------- Paper doll ---------- */
+.doll {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px) minmax(0, 1fr);
+  grid-template-areas: "left figure right";
+  gap: var(--atlas-space-4);
+  align-items: stretch;
+}
+.column { display: grid; align-content: start; gap: 6px; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.column[data-column="left"] { grid-area: left; }
+.column[data-column="right"] { grid-area: right; }
+
+.item {
+  --item-quality: var(--atlas-text-strong);
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 10px 6px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text);
+  background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
+  text-align: left;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.item:hover, .item[aria-pressed="true"] { border-color: var(--atlas-line); background: color-mix(in srgb, var(--atlas-surface-raised) 80%, transparent); }
+.item:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.itemCopy { display: grid; gap: 1px; min-width: 0; }
+.itemCopy small { overflow: hidden; color: var(--atlas-text-subtle); font-size: 11px; letter-spacing: .06em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.itemCopy b { overflow: hidden; color: var(--item-quality); font-size: 14px; font-weight: 600; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.itemMeta { display: grid; justify-items: end; gap: 4px; }
+.itemMeta strong { color: var(--atlas-text-strong); font: 600 17px/1 var(--atlas-font-display); }
+.marks { display: flex; gap: 4px; }
+.marks i { display: block; width: 8px; height: 8px; border: 1px solid var(--atlas-caution); border-radius: 50%; }
+.marks i[data-mark="enchant"] { border-radius: 1px; transform: rotate(45deg) scale(.85); }
+.marks i[data-active] { border-color: var(--atlas-accent); background: var(--atlas-accent); }
+.itemMeta strong { display: inline-flex; align-items: center; gap: 4px; }
+.warn { width: 13px; height: 13px; color: var(--atlas-caution); }
+
+/* ---------- Figure: official render, the 3D model on request ---------- */
+.figure {
+  position: relative;
+  grid-area: figure;
+  display: grid;
+  min-width: 0;
+  min-height: 420px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: radial-gradient(ellipse at 50% 70%, color-mix(in srgb, var(--atlas-accent) 12%, transparent), transparent 70%), var(--atlas-surface-sunken);
+}
+.stage { position: relative; display: grid; place-items: center; min-height: 0; }
+.render { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
+.emblem { display: block; width: 96px; height: 96px; overflow: hidden; border: 1px solid var(--atlas-line); border-radius: 50%; opacity: .7; }
+.emblem img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.figureToggle {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-strong);
+  background: color-mix(in srgb, var(--atlas-bg) 82%, transparent);
+  font-size: 13px;
+  font-weight: 600;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.figureToggle svg { width: 16px; height: 16px; }
+.figureToggle:hover { border-color: var(--atlas-accent); }
+.figureToggle[aria-pressed="true"] { border-color: var(--atlas-accent); color: var(--atlas-accent-strong); }
+.figureToggle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+.viewer { position: absolute; inset: 0 0 56px; display: grid; align-items: center; touch-action: pan-y; }
+.viewerHost { width: 100%; }
+.viewer[data-model-state="loading"] .viewerHost { visibility: hidden; }
+.viewerState { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); text-align: center; }
+.viewerState button { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); color: var(--atlas-text-strong); background: transparent; }
+.viewerState svg { width: 18px; height: 18px; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- Tooltip content ---------- */
+.tip { --item-quality: var(--atlas-text-strong); display: grid; gap: 8px; }
+.tip header { display: flex; align-items: center; gap: 10px; padding-right: 28px; }
+.tip header > span:last-child { display: grid; gap: 2px; min-width: 0; }
+.tip header strong { color: var(--item-quality); font: 600 16px/1.25 var(--atlas-font-display); overflow-wrap: anywhere; }
+.tip header small { color: var(--atlas-text-muted); font-size: 12px; }
+.tip p { margin: 0; }
+.tipLevel { display: flex; justify-content: space-between; padding-block: 6px; border-block: 1px solid var(--atlas-line-soft); color: var(--atlas-text-muted); }
+.tipLevel b { color: var(--atlas-text-strong); font-size: 15px; }
+.tipLine { color: var(--atlas-text); }
+.tipStats { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; color: var(--atlas-text-strong); }
+.tipStats li[data-secondary] { color: var(--atlas-positive); }
+.tipMod { display: grid; gap: 2px; padding-left: 16px; position: relative; color: var(--atlas-caution); }
+.tipMod::before { position: absolute; top: .45em; left: 2px; width: 7px; height: 7px; border: 1px solid currentColor; border-radius: 1px; transform: rotate(45deg); content: ""; }
+.tipMod[data-socket]::before { border-radius: 50%; transform: none; }
+.tipMod[data-active] { color: var(--atlas-positive); }
+.tipMod[data-active]::before { background: currentColor; }
+.tipMod small { color: var(--atlas-text-muted); }
+.tipSet { display: grid; gap: 2px; color: var(--atlas-text-muted); }
+.tipSet strong { color: var(--atlas-text-strong); font-weight: 600; }
+.tipSet span[data-active] { color: var(--atlas-positive); }
+.tipWarn { display: flex; align-items: center; gap: 6px; color: var(--atlas-caution); }
+.tipWarn svg { width: 14px; height: 14px; }
+
+/* ---------- Narrow layouts ---------- */
+@container auditPage (max-width: 1100px) {
+  .doll { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "left right" "figure figure"; }
+  .figure { min-height: 0; }
+  .figure[data-figure="empty"] { min-height: 0; background: transparent; border: 0; }
+  .figure[data-figure="empty"] .stage { display: none; }
+  .figure[data-figure="empty"] .figureToggle { position: static; justify-self: center; transform: none; }
+  .figure:is([data-figure="render"], [data-figure="model"]) { height: min(70vh, 520px); }
+}
+@container auditPage (max-width: 640px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats > div:nth-child(3) { border-left: 0; }
+  .stats > div:nth-child(n + 3) { border-top: 1px solid var(--atlas-line-soft); }
+  .stats > div { padding: var(--atlas-space-2) var(--atlas-space-3); }
+  .stats dd { font-size: 19px; }
+  .stats dt { white-space: normal; letter-spacing: .04em; }
+  .itemCopy b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; white-space: normal; }
+  .doll { grid-template-columns: minmax(0, 1fr); grid-template-areas: "left" "right" "figure"; gap: 6px; }
+  .item { min-height: 52px; }
+}
+@media (prefers-reduced-motion: reduce) { .item { transition: none; } .spin { animation: none; } }
+:global(html[data-motion="reduced"]) .item { transition: none; }
+:global(html[data-motion="reduced"]) .spin { animation: none; }
+@media (forced-colors: active) {
+  .item { border-color: CanvasText; }
+  .marks i, .marks i[data-active] { border-color: CanvasText; }
+  .marks i[data-active] { background: CanvasText; }
+}

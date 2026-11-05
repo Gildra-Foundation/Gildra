@@ -23,7 +23,7 @@ const { toCharacterAuditSnapshot } = load("../lib/wow/battleNetAuditSnapshot.ts"
   "@/lib/talentSpecThemes": themes, "./characterAudit": audit, "./battleNetCharacterDetails": details,
 });
 const { characterProfileFingerprint } = load("../lib/wow/characterProfileFingerprint.ts", { "node:crypto": { createHash } });
-const { characterPageText } = load("../components/wow/audit/characterPageCopy.ts");
+const { characterPageCopy } = load("../components/wow/audit/characterPageCopy.ts");
 const base = {
   character: { id: 777, name: "Элкардия", level: 80, realm: { slug: "eversong" }, region: "eu", gender: { type: "FEMALE" }, playableClass: { id: 1 }, playableRace: { id: 10, name: "Blood Elf" }, faction: { name: "Horde" } },
   activeSpec: "Fury", averageItemLevel: 120, equippedItemLevel: 120,
@@ -40,7 +40,7 @@ assert.equal(en.character.name, ru.character.name, "Names must not be translated
 assert.equal(en.slug, ru.slug, "Locale must not change character ownership identity");
 assert.equal(en.gear[0].name, base.equipment[0].name, "Item names must come from the source");
 assert.equal(en.gear[0].details.quality, ru.gear[0].details.quality, "Internal quality identity must not break existing styles");
-assert.equal(characterPageText("en")(en.gear[0].details.quality), "Epic");
+assert.equal(characterPageCopy("en").quality[en.gear[0].details.quality], "Epic");
 assert.equal(characterProfileFingerprint(en), characterProfileFingerprint(ru), "Language must not mark unchanged gear as stale");
 assert.notEqual(characterProfileFingerprint(en), characterProfileFingerprint({ ...en, gear: en.gear.map(item => ({ ...item, modificationIds: { enchantments: [999], gems: [789] } })) }), "Real enchant changes must still invalidate results");
 assert.notEqual(characterProfileFingerprint(en), characterProfileFingerprint({ ...en, gear: en.gear.map(item => ({ ...item, modificationIds: { enchantments: [456], gems: [999] } })) }), "Real gem changes must still invalidate results");
@@ -48,8 +48,8 @@ const path = "/wow/characters/eu--eversong--%D1%8D%D0%BB%D0%BA%D0%B0%D1%80%D0%B4
 assert.equal(i18n.altPath(path, "ru"), `/ru${path}`);
 assert.equal(i18n.altPath(`/ru${path}`, "en"), path);
 assert.equal(i18n.altPath(`/ru${path}`, "ru"), `/ru${path}`);
-assert.equal(characterPageText("en")("Таланты и симуляция"), "Talents and simulation");
-assert.equal(characterPageText("ru")("Таланты и симуляция"), "Таланты и симуляция");
+assert.equal(characterPageCopy("en").equipment, "Equipment");
+assert.equal(characterPageCopy("ru").equipment, "Экипировка");
 for (const [route, lang] of [["../app/wow/characters/[slug]/page.tsx", "en"], ["../app/ru/wow/characters/[slug]/page.tsx", "ru"]]) {
   const source = readFileSync(new URL(route, import.meta.url), "utf8");
   assert.ok(source.includes(`toCharacterAuditSnapshot(details, "${lang}")`));
@@ -84,14 +84,4 @@ assert.ok(!workspaceNavSource.includes('"/profile/arcanist"'), "Character naviga
 const bookNavSource = readFileSync(new URL("../components/platform/navigation/BookNavigationDialog.tsx", import.meta.url), "utf8");
 assert.ok(bookNavSource.includes('battleNetConnected ? "/wow/characters" : "/login"'), "A connected account must always return to the real Battle.net roster");
 assert.ok(!bookNavSource.includes("/profile/arcanist"), "The book navigation must not link the hidden sample-profile route");
-const auditPageSource = readFileSync(new URL("../components/wow/audit/CharacterAuditPage.tsx", import.meta.url), "utf8");
-assert.ok(auditPageSource.includes('dataMode === "battle-net" ? `${localePrefix}/wow/characters`'), "The live character folio brand must return to the real account roster");
-const stateFrameSource = readFileSync(new URL("../components/wow/characters/CharacterBookStateFrame.tsx", import.meta.url), "utf8");
-assert.ok(stateFrameSource.includes("lang={locale}"), "Profile loading and error states must expose the same RU/EN language as the surrounding folio");
-const profileErrorSource = readFileSync(new URL("../components/wow/characters/CharacterProfileLoadError.tsx", import.meta.url), "utf8");
-assert.ok(profileErrorSource.includes("className={styles.leftLeaf}"));
-assert.ok(profileErrorSource.includes("className={styles.rightLeaf}"));
-const profileErrorCss = readFileSync(new URL("../components/wow/characters/characterProfileLoadError.module.css", import.meta.url), "utf8");
-assert.ok(profileErrorCss.includes("grid-template-columns: repeat(2, minmax(0, 1fr))"), "A profile error must respect the book's two leaves rather than float over the binding");
-assert.ok(profileErrorCss.includes("@container auditPage (max-width: 820px)"), "The error spread must collapse cleanly to one mobile leaf");
 console.log(JSON.stringify({ status: "passed", localeCopies: true, authenticatedRoutes: true, rosterAndLoginUseTokenConnection: true, connectedLoginStateIsNotDuplicated: true, characterNavigationReturnsToRoster: true, sourceNamesPreserved: true, sameProfileFingerprint: true, realGearChangesDetected: true, cyrillicSlugRoundTrip: true }));

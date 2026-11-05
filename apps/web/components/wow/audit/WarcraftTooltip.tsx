@@ -3,8 +3,7 @@
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import styles from "./characterAuditPage.module.css";
-import atlas from "./characterAtlasProfile.module.css";
+import styles from "./warcraftTooltip.module.css";
 
 let pinnedTooltipId: string | null = null;
 const pinEvent = "gildra:item-tooltip-pinned";
@@ -171,8 +170,8 @@ export function WarcraftTooltip({ children, content, block = false, pinned = fal
   };
 
   return <>
-    <span ref={anchorRef} className={`${styles.tooltipAnchor} ${block ? styles.tooltipBlock : ""}`} aria-describedby={open ? id : undefined} onPointerEnter={show} onPointerLeave={hide} onFocusCapture={show} onBlurCapture={hide}>{typeof children === "function" ? children(open ? id : undefined) : children}</span>
-    {open ? createPortal(<div ref={tooltipRef} id={id} role={pinned ? "dialog" : "tooltip"} aria-label={pinned ? tr("Описание предмета") : undefined} data-pinned={pinned || undefined} data-character-atlas={bookTheme || undefined} onPointerEnter={() => { if (timerRef.current) clearTimeout(timerRef.current); }} onPointerLeave={hide} className={`${className} ${styles.warcraftTooltip} ${position.side === "top" ? styles.tooltipTop : styles.tooltipBottom} ${bookTheme ? `gildra-atlas ${atlas.tooltip}` : ""}`} style={{ left: position.left, top: position.top } as CSSProperties}>{pinned && onPinnedClose ? <div className={styles.tooltipControls}><button ref={closeRef} type="button" onClick={closePinned} aria-label={tr("Закрыть описание предмета")}><X /></button></div> : null}{content}</div>, document.body) : null}
+    <span ref={anchorRef} className={`${styles.anchor} ${block ? styles.block : ""}`} aria-describedby={open ? id : undefined} onPointerEnter={show} onPointerLeave={hide} onFocusCapture={show} onBlurCapture={hide}>{typeof children === "function" ? children(open ? id : undefined) : children}</span>
+    {open ? createPortal(<div ref={tooltipRef} id={id} role={pinned ? "dialog" : "tooltip"} aria-label={pinned ? tr("Описание предмета") : undefined} data-pinned={pinned || undefined} data-character-atlas={bookTheme || undefined} onPointerEnter={() => { if (timerRef.current) clearTimeout(timerRef.current); }} onPointerLeave={hide} className={`${className} ${styles.tooltip} ${position.side === "top" ? styles.top : styles.bottom} ${bookTheme ? "gildra-atlas" : ""}`} style={{ left: position.left, top: position.top } as CSSProperties}>{pinned && onPinnedClose ? <div className={styles.controls}><button ref={closeRef} type="button" onClick={closePinned} aria-label={tr("Закрыть описание предмета")}><X /></button></div> : null}{content}</div>, document.body) : null}
   </>;
 }
 
