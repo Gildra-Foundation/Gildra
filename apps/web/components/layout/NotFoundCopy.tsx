@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { AtlasMotionToggle } from "@gildra/atlas-ui/AtlasMotionToggle";
 import { MaterialLinkButton } from "@/components/wow/shared/material/MaterialButton";
 import type { Lang as Locale } from "@/lib/i18n-paths";
 
@@ -68,4 +69,10 @@ export function NotFoundFooterLinks({ whatsNew, privacy }: { whatsNew: Words; pr
     <Link href={`${prefix}/wow/whats-new`} prefetch={false}>{whatsNew[lang]}</Link>
     <Link href={`${prefix}/privacy`} prefetch={false}>{privacy[lang]}</Link>
   </>;
+}
+
+/** The footer's "Less motion" switch in the URL's language. */
+export function NotFoundMotionToggle() {
+  const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
+  return <AtlasMotionToggle locale={ruUrl ? "ru" : "en"} />;
 }

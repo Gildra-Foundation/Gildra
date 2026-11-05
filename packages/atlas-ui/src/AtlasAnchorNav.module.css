@@ -8,6 +8,11 @@
   background: color-mix(in srgb, var(--atlas-bg) 94%, transparent);
 }
 
+/* Under this strip too: a control reached with Tab clears the bar and the strip. */
+:global(:where([data-atlas-scope], .gildra-atlas)):has(.nav) :where(:focus-visible) {
+  scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-control-height) + var(--atlas-space-4));
+}
+
 .nav ul {
   display: flex;
   margin: 0;

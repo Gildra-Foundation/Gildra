@@ -14,7 +14,7 @@ export type AtlasFrameProps = Omit<ShellProps, "footer" | "ember" | "glow" | "ho
   scene?: AtlasSceneId;
   /** Slim legal line (Blizzard trademark notice, "What's new", privacy) under the content.
    *  An object replaces the line's text and links (the 404 of unmatched URLs picks its language on the client). */
-  footer?: boolean | { legal: ReactNode; links: ReactNode };
+  footer?: boolean | { legal: ReactNode; links: ReactNode; motion?: ReactNode };
 };
 
 /** The site's one legal line (Blizzard trademark notice) in a language. */

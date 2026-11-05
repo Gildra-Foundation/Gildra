@@ -80,7 +80,7 @@ export const transmogCopy: Record<"ru" | "en", Copy> = {
     lede: "Build an outfit from any appearance or set, try it on the race you want and make a picture for social media — on a transparent background, a color or a scene.",
     noJS: "Enable JavaScript to use the transmog studio.",
     slots: { head: "Head", shoulder: "Shoulders", back: "Back", chest: "Chest", shirt: "Shirt", tabard: "Tabard", wrist: "Wrists", hands: "Hands", waist: "Waist", legs: "Legs", feet: "Feet", "main-hand": "Main hand", "off-hand": "Off hand" },
-    slotShort: { "main-hand": "Main", "off-hand": "Off" },
+    slotShort: { tabard: "Tabard", "main-hand": "Main", "off-hand": "Off", hands: "Hands" },
     races: { human: "Human", orc: "Orc", dwarf: "Dwarf", "night-elf": "Night Elf", undead: "Undead", tauren: "Tauren", gnome: "Gnome", troll: "Troll", goblin: "Goblin", "blood-elf": "Blood Elf", draenei: "Draenei" },
     armor: { all: "All", plate: "Plate", mail: "Mail", leather: "Leather", cloth: "Cloth", cosmetic: "Cosmetic" },
     formats: { "1x1": { label: "1:1", note: "post" }, "4x5": { label: "4:5", note: "feed" }, "9x16": { label: "9:16", note: "story" }, og: { label: "1.91:1", note: "link preview" }, "16x9": { label: "16:9", note: "screen" } },

@@ -72,6 +72,9 @@
   line-height: var(--atlas-leading-tight);
   text-shadow: var(--atlas-text-shadow-hero);
   text-wrap: balance;
+  /* One long word ("конфиденциальности" on a 320 px phone) hyphenates instead of running off the page. */
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Gilded headline: the letters catch the theme's light towards their feet. The

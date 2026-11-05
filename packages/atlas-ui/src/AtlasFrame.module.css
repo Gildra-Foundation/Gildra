@@ -242,9 +242,15 @@
   color: var(--atlas-text-subtle);
   font-size: var(--atlas-text-meta);
   line-height: 1.5;
+  /* Pages whose painting runs under the footer (the Ruby Life Pools route) put the
+     notice on bright water: a dark wash and halo keep it readable; on the solid body they are invisible. */
+  background: linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 55%, transparent), color-mix(in srgb, var(--atlas-bg) 88%, transparent) 40%);
+  text-shadow: 0 1px 2px var(--atlas-bg), 0 0 8px var(--atlas-bg);
 }
 
-.legal p { max-width: 90ch; margin: 0; }
+/* The notice sits over the scene light at the foot of the page: one step brighter than meta text keeps it above 4.5:1. */
+.legal p { max-width: 90ch; margin: 0; color: var(--atlas-text-muted); }
+.legal .motionToggle { color: var(--atlas-text); }
 
 /* The brand seal over the legal line: the crest between two engraved rules. */
 .legalBrand {

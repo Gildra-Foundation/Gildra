@@ -12,7 +12,9 @@
 .button:global(.ui-button[data-size="sm"]) { min-height: 36px; padding: var(--atlas-space-2) var(--atlas-space-3); }
 .button:global(.ui-button[data-variant="ghost"]) { padding-inline: 0; }
 .button:global(.ui-button[data-variant="ghost"]):hover { background: transparent; color: var(--atlas-accent-strong); }
-.button :global(.ui-button__label) { overflow: visible; overflow-wrap: anywhere; }
+/* Labels wrap between words; a word is split only when it cannot fit at all
+   ("anywhere" let a narrow painted button print "Открыт / ь"). */
+.button :global(.ui-button__label) { overflow: visible; min-width: min(100%, min-content); overflow-wrap: break-word; hyphens: auto; }
 .button svg { width: 16px; height: 16px; flex: none; }
 @media (max-width: 720px) {
   .button:global(.ui-button[data-size="sm"]) { min-height: var(--atlas-control-height); }
