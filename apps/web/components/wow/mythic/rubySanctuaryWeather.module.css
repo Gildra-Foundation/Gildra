@@ -8,5 +8,4 @@
 @media (max-width: 767px) { .rain { opacity: .32; } .rain i:nth-child(even) { display: none; } .bloom { opacity: .08; } }
 :global(html[data-motion="reduced"]) .rain { display: none; }
 @media (prefers-reduced-motion: reduce) { .rain { display: none; } }
-@media (prefers-reduced-transparency: reduce) { .weather { display: none; } }
 @media (forced-colors: active) { .weather { display: none; } }

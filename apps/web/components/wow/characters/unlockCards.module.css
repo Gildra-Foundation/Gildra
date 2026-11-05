@@ -174,8 +174,8 @@ a.card:hover .title, a.card:focus-visible .title { color: var(--unlock-light); }
   transition: none !important;
   transform: none !important;
 }
-@media (prefers-reduced-transparency: reduce) { .card::after, .art::after { display: none; } }
-:global([data-transparency="reduced"]) .card::after, :global([data-transparency="reduced"]) .art::after { display: none; }
+@media (prefers-reduced-transparency: reduce) { .card::after { display: none; } }
+:global([data-transparency="reduced"]) .card::after { display: none; }
 @media (forced-colors: active) {
   .card { border: 1px solid CanvasText; background: Canvas; box-shadow: none; transform: none; }
   .card::after, .art, .shape { display: none; }

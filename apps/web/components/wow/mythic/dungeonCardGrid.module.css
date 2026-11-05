@@ -175,7 +175,7 @@
 :global([data-ui-motion="reduce"]) .hubCard .sceneImage,
 :global([data-ui-motion="reduce"]) .hubCard .openRoute:global(.ui-button),
 :global([data-ui-motion="reduce"]) .hubCard .openRoute::after { animation: none !important; transition: none !important; transform: none !important; }
-@media (prefers-reduced-transparency: reduce) { .artShade, .openRoute::after { display: none; } }
+@media (prefers-reduced-transparency: reduce) { .openRoute::after { display: none; } }
 @media (forced-colors: active) {
   .frameImage, .artShade, .body::before, .openRoute::before, .openRoute::after { display: none; }
   .artWindow { clip-path: none; border: 1px solid CanvasText; background: Canvas; }

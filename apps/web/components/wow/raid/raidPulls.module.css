@@ -80,9 +80,8 @@
 @media (max-width: 900px) { .columns { grid-template-columns: minmax(0, 1fr); } .mapFigure { position: static; } .mapNote { max-width: 70ch; } }
 @media (max-width: 480px) { .selectedHeader, .briefing { padding: var(--atlas-space-4); } .toolbar { align-items: stretch; flex-direction: column; } .pullStrip button { width: 220px; } }
 @media (max-width: 700px) { .mapViewport, .selectedHeader::before { border-width: var(--raid-panel-width-mobile); } }
-@media (prefers-reduced-transparency: reduce) { .selected { background: var(--atlas-surface); } .mapArt { display: none; } }
+@media (prefers-reduced-transparency: reduce) { .selected { background: var(--atlas-surface); } }
 :global([data-transparency="reduced"]) .selected { background: var(--atlas-surface); }
-:global([data-transparency="reduced"]) .mapArt { display: none; }
 @media (forced-colors: active) { .pullStrip button::before, .selectedHeader::before, .mapArt { display: none; } .mapViewport { border: 1px solid CanvasText; border-image: none; background: Canvas; } .mapMarker, .bossMarker, .pullStrip button { color: ButtonText; background: ButtonFace; border-color: ButtonText; } .mapMarker[aria-pressed="true"], .pullStrip button[aria-pressed="true"] { outline: 3px solid Highlight; } .routeLine, .bossBranch, .corridor { stroke: CanvasText; } .room { fill: Canvas; stroke: CanvasText; } }
 /* The original schematic remains an explicit background choice. */
 .mapPlane[data-background="grid"] { background-image: linear-gradient(var(--atlas-line) 1px, transparent 1px), linear-gradient(90deg, var(--atlas-line) 1px, transparent 1px), linear-gradient(var(--atlas-line-soft) 1px, transparent 1px), linear-gradient(90deg, var(--atlas-line-soft) 1px, transparent 1px); background-size: 25% 25%, 25% 25%, 5% 5%, 5% 5%; }

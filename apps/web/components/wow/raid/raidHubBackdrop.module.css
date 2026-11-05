@@ -222,12 +222,10 @@
 }
 
 :global(html[data-motion="reduced"]) :is(.vaultLight, .warmLight, .rain, .motes, .atmosphere),
-:global([data-ui-motion="reduce"]) :is(.vaultLight, .warmLight, .rain, .motes, .atmosphere),
-:global([data-transparency="reduced"]) :is(.vaultLight, .warmLight, .rain, .motes, .atmosphere) { display: none; }
+:global([data-ui-motion="reduce"]) :is(.vaultLight, .warmLight, .rain, .motes, .atmosphere) { display: none; }
 :global(html[data-transparency="reduced"]) :is(.scene img, .continuation img) { filter: none; }
 @media (prefers-reduced-motion: reduce) { .vaultLight, .warmLight, .rain, .motes, .atmosphere { display: none; } }
 @media (prefers-reduced-transparency: reduce) {
-  .vaultLight, .warmLight, .rain, .motes, .atmosphere { display: none; }
   .scene img, .continuation img { filter: none; }
 }
 @media (prefers-contrast: more) { .scene, .continuation { opacity: .45; } }

@@ -149,7 +149,6 @@
 }
 
 :global([data-motion="reduced"]) .atmosphere,
-:global([data-transparency="reduced"]) .atmosphere,
 :global([data-ui-motion="reduce"]) .atmosphere { display: none; }
 :global([data-motion="reduced"]) .card *,
 :global([data-transparency="reduced"]) .card *,
@@ -161,8 +160,8 @@
 :global([data-motion="reduced"]) .openRaid:global(.ui-button):active,
 :global([data-transparency="reduced"]) .openRaid:global(.ui-button):active,
 :global([data-ui-motion="reduce"]) .openRaid:global(.ui-button):active { transform: none !important; }
+@media (prefers-reduced-motion: reduce), (forced-colors: active), print { .atmosphere { display: none; } }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active), print {
-  .atmosphere { display: none; }
   .card:global(.ui-card), .card * { transition: none !important; }
   .sceneImage { transform: none !important; }
   .openRaid:global(.ui-button):active { transform: none !important; }

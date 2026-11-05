@@ -46,14 +46,14 @@
 @keyframes descend { from { transform: translateY(0); } to { transform: translateY(calc(100dvh - 100%)); } }
 
 @media (max-width: 700px) { .veil { background: color-mix(in srgb, var(--atlas-bg) 60%, transparent); } .motes i:nth-child(n+13) { display: none; } .mist { opacity: .3; } .farMist { opacity: .18; } }
-@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .painting { animation: none !important; transform: none !important; will-change: auto; }
   .atmosphere { display: none; }
   .mist, .motes i { animation: none; }
 }
-:global(:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .painting { animation: none !important; transform: none !important; will-change: auto; }
-:global(:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) .atmosphere { display: none; }
-:global(:is([data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"])) :is(.mist, .motes i) { animation: none; }
+:global(:is([data-motion="reduced"], [data-ui-motion="reduce"])) .painting { animation: none !important; transform: none !important; will-change: auto; }
+:global(:is([data-motion="reduced"], [data-ui-motion="reduce"])) .atmosphere { display: none; }
+:global(:is([data-motion="reduced"], [data-ui-motion="reduce"])) :is(.mist, .motes i) { animation: none; }
 @media (prefers-reduced-transparency: reduce) { .veil { background: color-mix(in srgb, var(--atlas-bg) 88%, transparent); } }
 :global([data-transparency="reduced"]) .veil { background: color-mix(in srgb, var(--atlas-bg) 88%, transparent); }
 @media (forced-colors: active), print { .backdrop { display: none; } }

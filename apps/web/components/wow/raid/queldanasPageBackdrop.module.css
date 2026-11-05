@@ -16,9 +16,9 @@
 @keyframes quelHaze { from { transform: translate3d(-2%,2%,0); } to { transform: translate3d(3%,-3%,0); } }
 @keyframes quelDrift { 0%,100% { opacity: 0; transform: translate3d(0,20px,0); } 25% { opacity: .46; } 65% { opacity: .32; } 95% { opacity: 0; transform: translate3d(20px,-70px,0); } }
 @media (max-width: 700px) { .veil { background: color-mix(in srgb,var(--atlas-bg) 48%,transparent); } .motes i:nth-child(n+9) { display: none; } .mist { opacity: .18; } .farMist { opacity: .1; } }
-@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) { .atmosphere { display: none; } .mist,.motes i { animation: none; } }
-:global(:is([data-motion="reduced"],[data-ui-motion="reduce"],[data-transparency="reduced"])) .atmosphere { display: none; }
-:global(:is([data-motion="reduced"],[data-ui-motion="reduce"],[data-transparency="reduced"])) :is(.mist,.motes i) { animation: none; }
+@media (prefers-reduced-motion: reduce) { .atmosphere { display: none; } .mist,.motes i { animation: none; } }
+:global(:is([data-motion="reduced"],[data-ui-motion="reduce"])) .atmosphere { display: none; }
+:global(:is([data-motion="reduced"],[data-ui-motion="reduce"])) :is(.mist,.motes i) { animation: none; }
 @media (prefers-reduced-transparency: reduce) { .painting { filter: none; } .veil { background: color-mix(in srgb,var(--atlas-bg) 88%,transparent); } }
 :global([data-transparency="reduced"]) .painting { filter: none; }
 :global([data-transparency="reduced"]) .veil { background: color-mix(in srgb,var(--atlas-bg) 88%,transparent); }

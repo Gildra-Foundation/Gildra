@@ -33,13 +33,12 @@ export function MythicHubBackdrop() {
     const scene = element.querySelector("[data-mythic-hub-scene]");
     const preferences = [
       window.matchMedia("(prefers-reduced-motion: reduce)"),
-      window.matchMedia("(prefers-reduced-transparency: reduce)"),
       window.matchMedia("(forced-colors: active)"),
     ];
     const syncAtmosphere = () => {
       if (disposed) return;
       const reduced = lessMotion() || preferences.some(query => query.matches)
-        || !!element.closest('[data-ui-motion="reduce"], [data-transparency="reduced"]');
+        || !!element.closest('[data-ui-motion="reduce"]');
       const active = visible && !document.hidden && !reduced;
       element.toggleAttribute("data-atmosphere-active", active);
       element.toggleAttribute("data-bloom-active", active && sceneVisible);
@@ -57,7 +56,7 @@ export function MythicHubBackdrop() {
     const attributes = new MutationObserver(syncAtmosphere);
     attributes.observe(document.documentElement, {
       attributes: true, subtree: true,
-      attributeFilter: ["data-motion", "data-ui-motion", "data-transparency"],
+      attributeFilter: ["data-motion", "data-ui-motion"],
     });
     for (const query of preferences) query.addEventListener("change", syncAtmosphere);
     document.addEventListener("visibilitychange", syncAtmosphere);

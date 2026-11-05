@@ -81,6 +81,4 @@
 @media (prefers-reduced-motion: reduce) { .snow, .mist, .wind, .shard { display: none; } }
 :global([data-motion="reduced"]) :is(.snow, .mist, .wind, .shard),
 :global([data-ui-motion="reduce"]) :is(.snow, .mist, .wind, .shard) { display: none; }
-@media (prefers-reduced-transparency: reduce) { .atmosphere { display: none; } }
-:global([data-transparency="reduced"]) .atmosphere { display: none; }
 @media (forced-colors: active) { .atmosphere, .materialIcon { display: none; } }

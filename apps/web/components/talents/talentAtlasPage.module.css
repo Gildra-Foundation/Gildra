@@ -174,8 +174,6 @@
 }
 
 /* Motion and preference fallbacks (design.md §5); the painted buttons and plaques carry their own. */
-@media (prefers-reduced-transparency: reduce) { .scene img { display: none; } }
-:global([data-transparency="reduced"]) .scene img { display: none; }
 @media (forced-colors: active) {
   .scene { display: none; }
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel)::after { display: none; }

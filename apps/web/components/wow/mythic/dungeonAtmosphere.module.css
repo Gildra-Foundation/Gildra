@@ -21,7 +21,6 @@
 @media (max-width: 767px) { .particles i:nth-child(even) { display: none; } .mist { opacity: .14; } }
 :global(html[data-motion="reduced"]) :is(.particles, .mist) { display: none; }
 @media (prefers-reduced-motion: reduce) { .particles, .mist { display: none; } }
-@media (prefers-reduced-transparency: reduce) { .atmosphere { display: none; } }
 @media (forced-colors: active) { .atmosphere { display: none; } }
 
 .atmosphere[data-atmosphere="pollen"] .particles i { background: var(--atlas-text-strong); box-shadow: 0 0 7px var(--ruby-gold), 0 0 2px var(--atlas-text-strong); }
@@ -32,4 +31,3 @@
 .atmosphere[data-atmosphere="sand"] .particles i { background: var(--ruby-gold); }
 .atmosphere[data-atmosphere="sand"] .mist { background: radial-gradient(ellipse at 25% 60%, var(--ruby-gold), transparent 60%); opacity: .19; }
 .atmosphere[data-atmosphere="void"] .mist { opacity: .2; }
-@media (prefers-reduced-transparency: reduce) { .atmosphere { display: none; } }

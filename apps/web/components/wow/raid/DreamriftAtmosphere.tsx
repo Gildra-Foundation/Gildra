@@ -19,10 +19,10 @@ export function DreamriftAtmosphere() {
     const root = ref.current;
     if (!root) return;
     let visible = typeof IntersectionObserver === 'undefined';
-    const media = ['(prefers-reduced-motion: reduce)', '(prefers-reduced-transparency: reduce)', '(forced-colors: active)'].map(query => matchMedia(query));
+    const media = ['(prefers-reduced-motion: reduce)', '(forced-colors: active)'].map(query => matchMedia(query));
     const sync = () => {
       const reduced = lessMotion() || media.some(query => query.matches)
-        || !!root.closest('[data-motion="reduced"], [data-ui-motion="reduce"], [data-transparency="reduced"]');
+        || !!root.closest('[data-motion="reduced"], [data-ui-motion="reduce"]');
       root.dataset.atmosphereState = reduced ? 'static' : visible && !document.hidden ? 'active' : 'paused';
     };
     const observer = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(entries => {
@@ -32,7 +32,7 @@ export function DreamriftAtmosphere() {
     observer?.observe(root);
     const attributes = new MutationObserver(sync);
     for (let element: HTMLElement | null = root; element; element = element.parentElement) {
-      attributes.observe(element, { attributes: true, attributeFilter: ['data-motion', 'data-ui-motion', 'data-transparency'] });
+      attributes.observe(element, { attributes: true, attributeFilter: ['data-motion', 'data-ui-motion'] });
     }
     const unsubscribe = subscribeSiteMotion(sync);
     media.forEach(query => query.addEventListener('change', sync));
