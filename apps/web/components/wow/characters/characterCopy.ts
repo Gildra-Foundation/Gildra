@@ -12,6 +12,7 @@ export type RosterCopy = {
   classLabel: string;
   allClasses: string;
   rosterTitle: string;
+  rosterText: string;
   /** "{total}" and "{shown}" are replaced on the client. */
   countAll: string;
   countFiltered: string;
@@ -53,7 +54,11 @@ const en = {
     panelText: "One sign-in opens every hero on your account.",
     expiredTitle: "Battle.net session expired",
     expiredText: "Connect your account again to refresh access to your character list.",
-    unlocksTitle: "Each hero opens with",
+    unlocksTitle: "What opens after sign-in",
+    unlocksText: "Every hero on the account, each with the same three tools.",
+    statsLabel: "What the sign-in covers",
+    statRegions: "Battle.net regions",
+    statTools: "Tools per hero",
     unlocks: [
       ["Equipment", "Gear and item level of the hero."],
       ["Talents", "The active build in the talent calculator."],
@@ -87,6 +92,7 @@ const en = {
     classLabel: "Class",
     allClasses: "All classes",
     rosterTitle: "Battle.net roster",
+    rosterText: "Heroes of every region, the highest level first.",
     countAll: "{total} characters",
     countFiltered: "{shown} of {total} characters",
     loadingRegions: "Checking Battle.net regions…",
@@ -136,7 +142,11 @@ const ru: typeof en = {
     panelText: "Один вход открывает всех героев вашего аккаунта.",
     expiredTitle: "Сессия Battle.net истекла",
     expiredText: "Подключите аккаунт заново, чтобы обновить доступ к списку персонажей.",
-    unlocksTitle: "Для каждого героя откроются",
+    unlocksTitle: "Что откроется после входа",
+    unlocksText: "Все герои аккаунта, у каждого — те же три инструмента.",
+    statsLabel: "Что охватывает вход",
+    statRegions: "Региона Battle.net",
+    statTools: "Инструмента у героя",
     unlocks: [
       ["Экипировка", "Снаряжение и уровень предметов героя."],
       ["Таланты", "Активная сборка в калькуляторе талантов."],
@@ -170,6 +180,7 @@ const ru: typeof en = {
     classLabel: "Класс",
     allClasses: "Все классы",
     rosterTitle: "Ростер Battle.net",
+    rosterText: "Герои всех регионов, сначала самые высокие уровни.",
     countAll: "Персонажей: {total}",
     countFiltered: "Показано {shown} из {total}",
     loadingRegions: "Проверяем регионы Battle.net…",

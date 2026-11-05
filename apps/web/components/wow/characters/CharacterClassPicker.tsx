@@ -4,7 +4,7 @@ import { useId, useMemo } from "react";
 import Image from "next/image";
 import { Check, ChevronDown } from "lucide-react";
 import { Floating, useSelect } from "@gildra/atlas-ui/valyroParts";
-import { characterFrostArt, characterFrostMaterial } from "./characterFrostAssets";
+import { characterAtlasMaterial, characterFrostArt } from "./characterAtlasMaterial";
 import frost from "./characterFrost.module.css";
 
 type ClassChoice = { id: number; name: string; icon: string | null };
@@ -16,7 +16,7 @@ function ClassEmblem({ icon }: { icon: string | null }) {
 }
 
 /** The kit owns selection, keyboard/type-ahead and viewport-aware dismissal. */
-export function CharacterClassPicker({ label, allLabel, choices, value, onChange, locale, className }: {
+export function CharacterClassPicker({ label, allLabel, choices, value, onChange, locale, className, labelClassName }: {
   label: string;
   allLabel: string;
   choices: ClassChoice[];
@@ -24,6 +24,8 @@ export function CharacterClassPicker({ label, allLabel, choices, value, onChange
   onChange: (value: number) => void;
   locale: string;
   className: string;
+  /** The same caption style as the search field's label. */
+  labelClassName?: string;
 }) {
   const labelId = useId();
   const items = useMemo(() => [
@@ -34,8 +36,8 @@ export function CharacterClassPicker({ label, allLabel, choices, value, onChange
   const selected = items.find(item => item.value === String(value)) ?? items[0];
 
   return <div className={className}>
-    <span id={labelId}>{label}</span>
-    <div className={`${frost.control} ${frost.selectControl}`} data-frost-control="class">
+    <span id={labelId} className={labelClassName}>{label}</span>
+    <div className={frost.control} data-frost-control="class">
       <button {...select.getTriggerProps({ className: frost.classTrigger, "aria-labelledby": labelId, "data-class-value": String(value) })}>
         <ClassEmblem icon={selected.icon} />
         <span className={frost.pickerValue} title={selected.label}>{selected.label}</span>
@@ -51,7 +53,7 @@ export function CharacterClassPicker({ label, allLabel, choices, value, onChange
       surface={false}
       animation="none"
       onDismiss={reason => select.close(reason === "escape")}
-      {...select.getPopupProps({ className: frost.classMenu, style: characterFrostMaterial, "data-frost-class-menu": "" })}
+      {...select.getPopupProps({ className: frost.classMenu, style: characterAtlasMaterial, "data-frost-class-menu": "" })}
     >
       <div {...select.getListboxProps({ className: frost.classOptions, "aria-labelledby": labelId })}>
         {items.map((item, index) => <div key={item.value} {...select.getOptionProps(index, { className: frost.classOption, "data-class-id": item.value })}>

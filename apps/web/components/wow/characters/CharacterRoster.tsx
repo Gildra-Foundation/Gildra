@@ -2,23 +2,21 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Image from "next/image";
-import { ChevronRight, ExternalLink, Search } from "lucide-react";
-import { AtlasNotice } from "@gildra/atlas-ui/AtlasNotice";
-import { AtlasPanel } from "@gildra/atlas-ui/AtlasPanel";
+import { ArrowRight, ArrowUpRight, MapPin, RefreshCw, Search } from "lucide-react";
+import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
 import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
-import { BattleNetSignIn } from "@/components/auth/BattleNetActions";
+import { AtlasInput } from "@gildra/atlas-ui/AtlasField";
+import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
+import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
 import type { BattleNetCharacter, BattleNetRegion } from "@/lib/wow/battleNetCharacters";
 import { characterSlug } from "@/lib/wow/characterSlug";
 import { classColors } from "@/lib/atlas/dataPalette";
 import { classIcon } from "@/lib/games/wow/assets";
-import { BattleNetConnectPanel } from "./BattleNetConnectPanel";
-import { FrostLoginIcon } from "./FrostLoginIcon";
-import { FrostLoginCrest } from "./FrostLoginCrest";
-import { characterFrostArt } from "./characterFrostAssets";
+import { CharacterSignInButton, FrostButton, FrostLinkButton } from "./CharacterActions";
+import { characterFrostArt, frostPlaqueStyle } from "./characterAtlasMaterial";
 import { CharacterClassPicker } from "./CharacterClassPicker";
 import type { RosterCopy } from "./characterCopy";
-import styles from "./characterRosterPage.module.css";
-import frost from "./characterFrost.module.css";
+import styles from "./characterAtlas.module.css";
 
 type RosterError = "expired" | "forbidden" | "rate-limited" | "unavailable";
 type RegionResult = { region: BattleNetRegion; characters: BattleNetCharacter[]; status: number };
@@ -28,7 +26,7 @@ const classIcons: Record<number, string> = {
   6: "dk", 7: "shaman", 8: "mage", 9: "lock", 10: "monk",
   11: "druid", 12: "dh", 13: "evoker",
 };
-/** Game class colours mark the data (the card's edge and portrait ring), never the chrome. */
+/** Game class colours mark the data (the portrait's edge), never the chrome. */
 const classColorKeys: Record<number, keyof typeof classColors> = {
   1: "warrior", 2: "paladin", 3: "hunter", 4: "rogue", 5: "priest",
   6: "death-knight", 7: "shaman", 8: "mage", 9: "warlock", 10: "monk",
@@ -37,25 +35,14 @@ const classColorKeys: Record<number, keyof typeof classColors> = {
 /** Placeholders while Battle.net answers: the cards' own box, so nothing moves when they arrive. */
 const SKELETON_CARDS = 6;
 
-function RosterHeading({ title, status }: { title: string; status?: string }) {
-  return <div className={`${styles.rosterHeader} ${frost.rosterHeader}`}>
-    <div className={frost.sectionTitle}>
-      <Image className={frost.heraldry} src={characterFrostArt.heraldry} alt="" aria-hidden="true" width={256} height={256} sizes="72px" />
-      <h2 id="character-roster-title">{title}</h2>
-    </div>
-    <p role="status">{status}</p>
-  </div>;
-}
-
 /**
- * Body of the signed-in roster: loads every Battle.net region once, then
- * filters locally. The page hero and the copy (one locale) come from the server.
+ * Body of the signed-in roster: loads every Battle.net region once, then filters locally.
+ * Facts continue the hero; the roster is a reference section of "portrait + plaque" cards.
  */
-export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }: {
+export function CharacterRoster({ locale, copy, pendingRegions }: {
   locale: "en" | "ru";
   copy: RosterCopy;
   pendingRegions: BattleNetRegion[];
-  secureEyebrow: string;
 }) {
   const prefix = locale === "ru" ? "/ru" : "";
   const localeCode = locale === "ru" ? "ru-RU" : "en-US";
@@ -109,91 +96,105 @@ export function CharacterRoster({ locale, copy, pendingRegions, secureEyebrow }:
   if (error && !characters.length) {
     const retry = error === "unavailable" || error === "rate-limited";
     return (
-      <AtlasPanel as="section" padding="lg" className={`${styles.state} ${frost.state}`} data-roster-state={error}>
-        <FrostLoginCrest />
-        <BattleNetConnectPanel eyebrowIcon={<FrostLoginIcon kind="lock" compact />} eyebrow={secureEyebrow} title={copy.stateTitle[error]} description={copy.stateText[error]}>
-          {retry ? <a data-folio-action href={`${prefix}/wow/characters`}>{copy.retry}</a> : <BattleNetSignIn locale={locale} reconnect />}
-        </BattleNetConnectPanel>
-      </AtlasPanel>
-    );
-  }
-
-  if (loading && !characters.length) {
-    return (
-      <section className={`${styles.roster} ${frost.roster}`} aria-labelledby="character-roster-title" aria-busy="true" data-roster-state="loading">
-        <RosterHeading title={copy.rosterTitle} status={copy.loadingRegions} />
-        <ul className={`${styles.grid} ${frost.grid}`} aria-hidden="true">
-          {Array.from({ length: SKELETON_CARDS }, (_, index) => (
-            <li key={index} className={`${styles.card} ${styles.skeleton} ${frost.card} ${frost.skeleton}`}>
-              <span className={`${styles.classMark} ${frost.classMark}`} />
-              <span className={styles.cardCopy}><i /><i /><i /></span>
-              <span className={`${styles.level} ${frost.level}`} />
-            </li>
-          ))}
-        </ul>
-        <p className={styles.loadingNote}>{copy.loadingText}</p>
-      </section>
+      <MaterialPlaque as="section" kit={CHARACTERS_KIT} style={frostPlaqueStyle} className={`${styles.plaque} ${styles.state}`} data-roster-state={error} aria-labelledby="roster-state-title">
+        <Image className={styles.heraldry} src={characterFrostArt.heraldry} alt="" aria-hidden="true" width={256} height={256} sizes="88px" />
+        <div className={styles.stateCopy}>
+          <h2 id="roster-state-title" className={materialStyles.title}>{copy.stateTitle[error]}</h2>
+          <p className={materialStyles.text}>{copy.stateText[error]}</p>
+          <div className={styles.stateAction}>
+            {retry
+              ? <FrostButton fit="stack" icon={<RefreshCw aria-hidden="true" />} onClick={() => window.location.reload()}>{copy.retry}</FrostButton>
+              : <CharacterSignInButton locale={locale} reconnect />}
+          </div>
+        </div>
+      </MaterialPlaque>
     );
   }
 
   const filtersActive = Boolean(query) || classId !== 0;
   const count = (filtersActive ? copy.countFiltered : copy.countAll).replace("{shown}", String(filtered.length)).replace("{total}", String(characters.length));
   const topLevel = characters.reduce((highest, character) => Math.max(highest, character.level), 0);
-  const summary = characters.length ? [
-    { label: <span className={frost.statLabel}><FrostLoginIcon kind="equipment" compact />{copy.statCharacters}</span>, value: characters.length },
-    { label: <span className={frost.statLabel}><FrostLoginIcon kind="combat" compact />{copy.statTopLevel.replace("{level}", String(topLevel))}</span>, value: characters.filter((character) => character.level === topLevel).length },
-    { label: <span className={frost.statLabel}><FrostLoginIcon kind="talents" compact />{copy.statRealms}</span>, value: new Set(characters.map((character) => `${character.region}:${character.realm.slug}`)).size },
-  ] : [];
+  const status = loading ? copy.loadingRegions : characters.length ? count : "";
 
   return (
-    <section className={`${styles.roster} ${frost.roster}`} aria-labelledby="character-roster-title" data-roster-state={characters.length ? "loaded" : "empty"}>
-      <RosterHeading title={copy.rosterTitle} status={`${filtersActive ? count : ""}${loading ? `${filtersActive ? " · " : ""}${copy.loadingRegions}` : ""}`} />
-      {summary.length ? <AtlasStats items={summary} label={copy.summaryLabel} className={`${styles.summary} ${frost.summary}`} /> : null}
+    <>
+      {characters.length ? <div className={styles.facts}>
+        <AtlasStats label={copy.summaryLabel} items={[
+          { value: characters.length, label: copy.statCharacters },
+          { value: characters.filter((character) => character.level === topLevel).length, label: copy.statTopLevel.replace("{level}", String(topLevel)) },
+          { value: new Set(characters.map((character) => `${character.region}:${character.realm.slug}`)).size, label: copy.statRealms },
+        ]} />
+      </div> : null}
+      <AtlasSection id="roster" title={copy.rosterTitle} description={copy.rosterText} className={styles.section}
+        aside={<p className={styles.status} role="status">{status}</p>}>
+        <div className={styles.rosterBody} aria-busy={loading && !characters.length ? true : undefined} data-roster-state={loading && !characters.length ? "loading" : characters.length ? "loaded" : "empty"}>
+          {characters.length ? (
+            <div className={styles.filters}>
+              <label className={styles.field}>
+                <span className={styles.fieldLabel}>{copy.searchLabel}</span>
+                <AtlasInput type="search" icon={<Search aria-hidden="true" />} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} />
+              </label>
+              <CharacterClassPicker className={styles.field} labelClassName={styles.fieldLabel} label={copy.classLabel} allLabel={copy.allClasses} choices={classChoices} value={classId} onChange={setClassId} locale={localeCode} />
+            </div>
+          ) : null}
 
-      {characters.length ? (
-        <div className={`${styles.filters} ${frost.filters}`}>
-          <label className={styles.field}>
-            <span>{copy.searchLabel}</span>
-            <span className={`${styles.inputWrap} ${frost.control}`} data-frost-control="search"><Search aria-hidden="true" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} /></span>
-          </label>
-          <CharacterClassPicker className={styles.field} label={copy.classLabel} allLabel={copy.allClasses} choices={classChoices} value={classId} onChange={setClassId} locale={localeCode} />
+          {loading && !characters.length ? (
+            <ul className={styles.grid} aria-hidden="true">
+              {Array.from({ length: SKELETON_CARDS }, (_, index) => (
+                <li key={index}>
+                  <MaterialPlaque kit={CHARACTERS_KIT} style={frostPlaqueStyle} className={`${styles.plaque} ${styles.card} ${styles.skeleton}`}>
+                    <span className={styles.cardHead}><span className={styles.portrait} /><span className={styles.lines}><i /><i /></span></span>
+                    <span className={styles.lines}><i /><i /></span>
+                  </MaterialPlaque>
+                </li>
+              ))}
+            </ul>
+          ) : filtered.length ? (
+            <ul className={styles.grid}>
+              {filtered.map((character) => {
+                const icon = classIcon(classIcons[character.playableClass.id] ?? "");
+                const colorKey = classColorKeys[character.playableClass.id];
+                const href = `${prefix}/wow/characters/${characterSlug(character)}`;
+                const style = { ...frostPlaqueStyle, "--class-color": colorKey ? classColors[colorKey] : "var(--atlas-accent)" } as CSSProperties;
+                return (
+                  <li key={`${character.region}:${character.accountId}:${character.id}`} data-character-card>
+                    <MaterialPlaque as="article" kit={CHARACTERS_KIT} style={style} className={`${styles.plaque} ${styles.card}`}>
+                      <div className={styles.cardHead}>
+                        <span className={styles.portrait} aria-hidden="true">
+                          {icon ? <Image src={icon} alt="" width={72} height={72} sizes="64px" /> : null}
+                        </span>
+                        <div className={styles.cardName}>
+                          <p className={styles.cardEyebrow}><MapPin aria-hidden="true" />{character.realm.name} · {character.region.toUpperCase()}</p>
+                          <h3 className={styles.cardTitle}><a href={href}>{character.name}</a></h3>
+                        </div>
+                      </div>
+                      <p className={styles.cardFacts}>
+                        <span className={styles.level}>{copy.level} <b>{character.level}</b></span>
+                        <span>{character.playableClass.name} · {character.playableRace.name}</span>
+                        <span>{character.faction.name}</span>
+                      </p>
+                      <FrostLinkButton fit="block" href={href} prefetch={false} iconAfter={<ArrowRight aria-hidden="true" />}>
+                        {copy.openProfile}<span className={styles.srOnly}>: {character.name}</span>
+                      </FrostLinkButton>
+                      <a className={styles.quietLink} href={character.armoryUrl} target="_blank" rel="noreferrer">{copy.armory}<span className={styles.srOnly}>: {character.name}</span><ArrowUpRight aria-hidden="true" /></a>
+                    </MaterialPlaque>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <MaterialPlaque kit={CHARACTERS_KIT} style={frostPlaqueStyle} className={`${styles.plaque} ${styles.state}`}>
+              <Image className={styles.heraldry} src={characterFrostArt.heraldry} alt="" aria-hidden="true" width={256} height={256} sizes="88px" />
+              <div className={styles.stateCopy}>
+                <h3 className={materialStyles.title}>{filtersActive ? copy.noMatches : copy.emptyTitle}</h3>
+                {filtersActive ? null : <p className={materialStyles.text}>{copy.emptyText}</p>}
+                {filtersActive ? <div className={styles.stateAction}><FrostButton fit="stack" onClick={() => { setQuery(""); setClassId(0); }}>{copy.reset}</FrostButton></div> : null}
+              </div>
+            </MaterialPlaque>
+          )}
+          {loading && !characters.length ? <p className={styles.status}>{copy.loadingText}</p> : null}
         </div>
-      ) : null}
-
-      {filtered.length ? (
-        <ul className={`${styles.grid} ${frost.grid}`}>
-          {filtered.map((character, index) => {
-            const icon = classIcon(classIcons[character.playableClass.id] ?? "");
-            const colorKey = classColorKeys[character.playableClass.id];
-            const style = { "--class-color": colorKey ? classColors[colorKey] : "var(--atlas-accent)", "--roster-index": Math.min(index, 11) } as CSSProperties;
-            return (
-              <li key={`${character.region}:${character.accountId}:${character.id}`} className={`${styles.card} ${frost.card}`} style={style} data-character-card>
-                <span className={`${styles.classMark} ${frost.classMark}`} aria-hidden="true">
-                  {icon ? <Image src={icon} alt="" width={72} height={72} sizes="52px" /> : character.playableClass.name.slice(0, 1)}
-                </span>
-                <div className={styles.cardCopy}>
-                  <h3><a href={`${prefix}/wow/characters/${characterSlug(character)}`} aria-label={`${copy.openProfile}: ${character.name}`}>{character.name}</a></h3>
-                  <p>{character.playableClass.name} · {character.playableRace.name}</p>
-                  <p className={styles.cardMeta}>{character.realm.name} · {character.region.toUpperCase()} · {character.faction.name}</p>
-                </div>
-                <span className={`${styles.level} ${frost.level}`} aria-label={`${copy.level} ${character.level}`}>{character.level}</span>
-                <ChevronRight className={styles.cardArrow} aria-hidden="true" />
-                <a className={styles.armory} href={character.armoryUrl} target="_blank" rel="noreferrer">{copy.armory}<ExternalLink aria-hidden="true" /></a>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <div className={frost.empty}>
-        <Image className={frost.emptyHeraldry} src={characterFrostArt.heraldry} alt="" aria-hidden="true" width={256} height={256} sizes="96px" />
-        <AtlasNotice
-          title={loading ? copy.loadingRegions : copy.emptyTitle}
-          action={filtersActive ? <button type="button" data-folio-action="quiet" onClick={() => { setQuery(""); setClassId(0); }}>{copy.reset}</button> : undefined}
-        >
-          {loading ? copy.loadingText : filtersActive ? copy.noMatches : copy.emptyText}
-        </AtlasNotice>
-        </div>
-      )}
-    </section>
+      </AtlasSection>
+    </>
   );
 }
