@@ -32,7 +32,7 @@ export default async function TalentSpecPage({ params, searchParams }: PageProps
   const specStyles = await getTalentSpecStyles(theme);
   return <>
     <style key={theme.slug} data-talent-spec-styles={theme.slug}>{specStyles}</style>
-    <Suspense fallback={<TalentCalculatorSkeleton lang="en" />}>
+    <Suspense fallback={<TalentCalculatorSkeleton lang="en" theme={theme} />}>
       <TalentCalculatorContent spec={spec} searchParams={searchParams} theme={theme} />
     </Suspense>
   </>;

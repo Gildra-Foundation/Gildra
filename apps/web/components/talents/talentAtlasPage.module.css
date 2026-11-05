@@ -1,0 +1,183 @@
+/* atlas:strict — the talent pages on the reference anatomy (docs/design/reference; design.md §3.6 tool page):
+   the talents scene behind an atlas hero, the build controls on a painted plaque, the three trees on painted
+   panels of the Characters kit (lib/wow/charactersKit.ts) and painted primary buttons. The legacy calculator
+   sheets (app/styles/talents*.css) keep the trees themselves; this module re-seats the page around them.
+   Selectors carry [data-talent-page] so they outrank the legacy `.talent-calculator[data-atlas-scope]` layer. */
+
+.frame { --atlas-frame-tint: var(--atlas-accent-glow); }
+
+/* ---------- Scene behind the hero (design.md §4.5) ---------- */
+.backdrop { --talent-scene-height: clamp(560px, 52vw, 900px); position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; }
+.scene { position: absolute; inset: 0 0 auto; height: var(--talent-scene-height); overflow: hidden; mask-image: linear-gradient(180deg, #000 60%, transparent); }
+.scene img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 64% 34%; filter: contrast(.94) saturate(.9); }
+.scene::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 90%, transparent), color-mix(in srgb, var(--atlas-bg) 64%, transparent) 38%, color-mix(in srgb, var(--atlas-bg) 14%, transparent) 76%),
+    linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 16%, transparent), transparent 34%, color-mix(in srgb, var(--atlas-bg) 45%, transparent) 66%, var(--atlas-bg) 100%);
+}
+
+/* ---------- Page: the calculator flows in the frame's column ---------- */
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) {
+  min-height: 0;
+  overflow: visible;
+  background: transparent;
+}
+
+/* ---------- Hero ---------- */
+.hero { min-height: 400px; padding-bottom: var(--atlas-space-5); }
+.heroHeader { max-width: 58%; }
+.heroHeader h1 { max-width: 15ch; }
+.heroHeader p { max-width: 48ch; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+.facts { max-width: 500px; margin-top: var(--atlas-space-5); }
+.facts :global(.ui-stats-card) { padding-block: var(--atlas-space-2); border: 0; background: transparent; box-shadow: none; }
+.source { margin: var(--atlas-space-3) 0 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); line-height: 1.6; }
+.source a { color: var(--atlas-accent); text-decoration: underline; text-decoration-color: var(--atlas-line); text-underline-offset: .2em; }
+.source a:hover { color: var(--atlas-accent-strong); }
+.source a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.back:global(.tc-back-link) {
+  display: inline-flex;
+  min-height: 32px;
+  margin-bottom: var(--atlas-space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--atlas-accent);
+  font: 600 var(--atlas-text-label) / 1.3 var(--atlas-font-ui);
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.back:global(.tc-back-link):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+/* ---------- Build controls on the kit's plaque ---------- */
+.command { position: relative; z-index: 20; padding: 26px 32px; }
+/* An open build library sits above the sticky bottom deck. */
+.command:has(:global(.tc-loadout-popover)) { z-index: 40; }
+.command :global(.tc-command-actions) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--atlas-space-3);
+  width: 100%;
+  padding: 0;
+  overflow: visible;
+}
+.command :global(.tc-command-group) { margin-inline-start: auto; }
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(:is(.tc-points-badge, .tc-build-select, .tc-command-button)) {
+  border-color: var(--material-line);
+  background: color-mix(in srgb, var(--atlas-bg) 72%, transparent);
+}
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(:is(.tc-build-select, .tc-command-button)):hover:not(:disabled) {
+  border-color: var(--material-light);
+  background: var(--atlas-surface-selected);
+}
+
+/* ---------- Tree panels: the painted plaque of the kit around each tree ---------- */
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace:global(.tc-workspace) {
+  gap: var(--atlas-space-4);
+  margin-top: var(--atlas-space-5);
+  padding: 0;
+  background: transparent;
+}
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) {
+  --material-light: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 65%, var(--atlas-text-strong));
+  --material-line: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 28%, transparent);
+  position: relative;
+  padding: 20px 18px 22px;
+  border: 0;
+  background: transparent;
+}
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel)::before { display: none; }
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel)::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  display: block;
+  border: 28px solid transparent;
+  border-image-source: var(--mythic-panel-image);
+  border-image-slice: var(--mythic-panel-slice) fill;
+  border-width: var(--mythic-panel-width);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  filter: contrast(.88) saturate(.84) brightness(.92) !important;
+  background: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 12%, var(--atlas-bg));
+  background-clip: padding-box;
+  opacity: 1;
+  transform: none;
+  animation: none;
+  mask-image: none;
+  content: "";
+  pointer-events: none;
+}
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) > header {
+  background: transparent !important;
+  border-bottom-color: var(--material-line) !important;
+  box-shadow: none !important;
+}
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) > header :is(h2, strong, small) { text-shadow: 0 1px 3px var(--atlas-bg) !important; }
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) > header h2 { font-size: var(--atlas-text-h3) !important; }
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) > header small { color: var(--material-light) !important; }
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-tree-scroll) { scrollbar-color: var(--material-line) transparent; }
+
+/* ---------- Bottom deck: search, PvP, the painted save button ---------- */
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-mobile-tree-switcher) { margin-top: var(--atlas-space-4); padding-inline: 0; border: 0; background: transparent; }
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-toolbar) {
+  margin-top: var(--atlas-space-4);
+  padding: var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-4);
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--atlas-surface) 94%, transparent);
+}
+.save { display: flex; flex: 0 0 auto; min-width: 250px; }
+.saveCopy { display: grid; gap: 2px; text-align: start; }
+.saveCopy b { font: 600 var(--atlas-text-small) / 1.2 var(--atlas-font-ui); }
+.saveCopy small { color: var(--atlas-text-muted); font: 500 var(--atlas-text-meta) / 1.2 var(--atlas-font-ui); }
+
+/* ---------- Error state ---------- */
+.state { margin-top: var(--atlas-space-5); }
+
+@media (max-width: 1023px) {
+  .heroHeader { max-width: 78%; }
+}
+@media (max-width: 900px) {
+  .command { padding: 22px 24px; }
+  .command :global(.tc-command-group) { margin-inline-start: 0; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace:global(.tc-workspace) { margin-top: var(--atlas-space-3); }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-toolbar) { padding: var(--atlas-space-2); }
+  .save { grid-column: 2; grid-row: 1 / 3; align-self: center; min-width: 0; }
+}
+@media (max-width: 600px) {
+  .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
+  .heroHeader { max-width: 100%; }
+  .actions { gap: var(--atlas-space-2); }
+  .actions > * { flex: 1 1 100%; }
+  .facts { margin-top: var(--atlas-space-4); }
+  .command { padding: 22px 20px; }
+  .command :global(.tc-command-actions) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--atlas-space-2); }
+  .command :global(.tc-command-actions) > * { min-width: 0; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(:is(.tc-points-badge, .tc-build-select)) { width: 100%; min-width: 0; }
+  .command :global(.tc-loadout-menu), .command :global(.tc-command-group) { grid-column: 1 / -1; }
+  .command :global(.tc-command-group) { display: flex; width: 100%; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(.tc-command-group) > * { flex: 1 1 0; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-toolbar) { position: relative; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: var(--atlas-space-2); }
+  .save { grid-column: 1; grid-row: auto; }
+  /* The deck scrolls with the page on phones, so its notices pin to the screen instead. */
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-toast) { position: fixed; z-index: 40; bottom: var(--atlas-space-4); }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) { padding: 16px 12px 18px; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel)::after { border-width: var(--mythic-panel-width-mobile); }
+  .saveCopy small { display: none; }
+}
+
+/* Motion and preference fallbacks (design.md §5); the painted buttons and plaques carry their own. */
+@media (prefers-reduced-transparency: reduce) { .scene img { display: none; } }
+:global([data-transparency="reduced"]) .scene img { display: none; }
+@media (forced-colors: active) {
+  .scene { display: none; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel)::after { display: none; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) { border: 1px solid CanvasText; }
+}
