@@ -1,0 +1,33 @@
+{
+  "entries": {
+    "auction": {
+      "path": "/assets/wow/auction/controls/buttons/auction.webp",
+      "width": 768,
+      "height": 118,
+      "bytes": 14724,
+      "sha256": "78cae01975ae2dbd4319dbbe882587d7ce10fd2e999d761a118a1fb85a7f527c",
+      "native": "/home/debian/gildra-owner-20261105b/auction/assets/asset-sources/buttons/auction-native.png",
+      "nativeSha256": "c3c9ed4388f6e0044ea011837a02163b1b8997d9c64846e24f1aa60e53f9ad20",
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "crop": {
+        "left": 114,
+        "top": 228,
+        "width": 1944,
+        "height": 264
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      },
+      "slices": [
+        28,
+        87,
+        29,
+        87
+      ]
+    }
+  }
+}

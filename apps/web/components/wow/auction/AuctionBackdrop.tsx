@@ -1,12 +1,14 @@
 import styles from "./auction.module.css";
 
-/** One painted scene behind the hero, fading into the solid data body (design.md §4.5). Decorative only. */
+/** The auction hall behind the hero, fading into the solid data body (design.md §4.5). Decorative only. */
 export function AuctionBackdrop() {
   return (
     <div className={styles.backdrop} aria-hidden="true" data-auction-backdrop>
-      <div className={styles.scene}>
-        <img src="/assets/wow/loading/tools.webp" width="1920" height="1080" alt="" loading="eager" fetchPriority="high" decoding="async" />
-      </div>
+      <picture className={styles.scene}>
+        <source media="(max-width: 600px)" srcSet="/assets/wow/auction/hall-mobile.webp" width={640} height={1000} />
+        <source media="(max-width: 900px)" srcSet="/assets/wow/auction/hall-768.webp 768w, /assets/wow/auction/hall.webp 1672w" sizes="100vw" />
+        <img src="/assets/wow/auction/hall.webp" width="1672" height="941" alt="" loading="eager" fetchPriority="high" decoding="async" />
+      </picture>
     </div>
   );
 }

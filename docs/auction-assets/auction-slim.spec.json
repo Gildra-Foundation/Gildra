@@ -1,0 +1,72 @@
+{
+ "title": "Аукцион — тонкий кит",
+ "kit": "auction",
+ "kit_name": "Auction House",
+ "pages": "`/wow/auction`, `/ru/wow/auction`",
+ "page": "the Auction House page",
+ "material": "dark gunmetal iron rails with tiny flush rivets, warm copper-gold coin bosses at the corners, small emerald-green enamel accents of a goblin trading house, deep bottle-green ledger face; mercantile; slim low-relief construction: thin flat rails, shallow bevels, compact flush end caps and clasps, minimal depth and bulk, light and elegant rather than heavy",
+ "anchors": {
+  "face": "#0a1712",
+  "metal": "#4a4c4e",
+  "highlight": "#e0b277",
+  "accent": "#3f9a6a"
+ },
+ "site_accent": "#d0995a",
+ "accent_note": "`accent-check.cjs` pass (light #dcba92, 8.82/10.79). Оттенок в 3° от sporefall, поэтому материал явно другой: железо + медные монеты + изумрудная эмаль, без дерева, мха и грибов.",
+ "task_dir": "/home/debian/gildra-owner-20261105b/auction/assets",
+ "repo": "/home/debian/Gildra-owner-20261105b-auction",
+ "public_dir": "/assets/wow/auction",
+ "assets": [
+  {
+   "type": "panel",
+   "title": "Материальная панель (9-slice)",
+   "where": "табличка поиска, табличка результатов, состояния «выберите рынок» / ошибка",
+   "holds": "search fields, item lists with prices and status messages",
+   "palette_ref_role": "World of Warcraft trader's workshop painting",
+   "refs": [
+    "$REF/loading-tools.webp",
+    "$REF/panels-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "button",
+   "title": "Кнопка (9-slice)",
+   "where": "«Найти предмет», «Показать лоты», «Назад/Далее», «Повторить»",
+   "caps": "each cap is a small flat stack of two copper-gold coins in a thin iron bracket with one tiny emerald enamel stud",
+   "refs": [
+    "{PANEL}",
+    "$REF/buttons-den-of-nalorakk.webp"
+   ]
+  },
+  {
+   "type": "skill",
+   "name": "auction-icon",
+   "title": "Рамка иконки предмета",
+   "where": "иконка каждого лота (52 px); цвет качества — данными (линия и цвет имени), не в рамке",
+   "icon": "an item icon in an auction listing",
+   "corners": "four small flat copper-gold coin rivets, a thin emerald enamel inlay along the slim iron rails",
+   "size": "40–56 px (usually 52 px)",
+   "refs": [
+    "{PANEL}",
+    "$REF/pull-art-skills-kings-rest.webp"
+   ]
+  },
+  {
+   "type": "scene",
+   "name": "hall",
+   "title": "Сцена героя (непрозрачная)",
+   "where": "фон героя `/wow/auction` (сейчас временно `loading/tools.webp`)",
+   "scene": "an original grand auction hall of a goblin trading house: a high iron-and-stone gallery; at the focal point a big brass balance scale in front of a tall arched counting window glowing warm gold; stacked crates and coin chests at the sides, plain green banners without any marks, lanterns along the upper balconies.",
+   "mood": "warm lantern gold against cool deep bottle-green shadows, evening trade hall",
+   "refs": [
+    "$REF/hub-gateway.webp"
+   ]
+  }
+ ],
+ "after": [
+  "`components/wow/auction/auctionKit.ts`: переключить с `kings-rest` на манифесты `/assets/wow/auction/controls/*`, акцент `#d0995a` в таблицу тем.",
+  "`AuctionBackdrop.tsx`: `<picture>` `hall-mobile.webp` / `hall-768.webp` / `hall.webp`.",
+  "`SOURCE.md` в каждой папке `/assets/wow/auction/controls/*` и `/assets/wow/auction/` по `gildra-wow-material-design/assets.md` §8 (+ QA-отчёт победителя).",
+  "Проверка 1440/390 RU/EN, 4 темы, reduced motion/transparency, forced colors; контакт-лист кита рядом с `references/kit-sheet-dungeons.jpg`."
+ ]
+}

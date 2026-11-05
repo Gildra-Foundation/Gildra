@@ -10,6 +10,7 @@ import type { AuctionResult, AuctionRegion } from "@/lib/wow/auctionBrowser";
 import type { ExactAuctionTooltip } from "@/lib/wow/auctionExactTooltip";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { AuctionMoney } from "./AuctionMoney";
+import { auctionIconFrameStyle } from "./auctionKit";
 import { auctionCopy } from "./auctionCopy";
 import styles from "./auction.module.css";
 
@@ -44,10 +45,10 @@ function GameTooltipLines({ lines }: { lines: string[] }) {
 }
 function ItemDescription({ row, lang, exact, status }: { row: Row; lang: "ru" | "en"; exact: ExactAuctionTooltip | null; status: string }) {
   const c = auctionCopy[lang], item = row.item;
-  if (row.petSpeciesId) return <p>{c.pet} {row.petSpeciesId}{row.petLevel ? ` · ${c.petLevel} ${row.petLevel}` : ""}</p>;
+  if (row.petSpeciesId) return <p>{c.pet}{row.petLevel ? ` · ${c.petLevel} ${row.petLevel}` : ""}</p>;
   const gear = item?.itemClassId === 2 || item?.itemClassId === 4 || Boolean(item?.stats.length || item?.weapon.length);
   if (gear) {
-    if (!exact) return <p role="status">{status === "loading" ? c.loadingItem : c.exactUnavailable}</p>;
+    if (!exact) return <p role="status">{status === "loading" ? c.loading : c.exactUnavailable}</p>;
     return exact.lines ? <GameTooltipLines lines={exact.lines} /> : <NativeFacts exact={exact} lang={lang} />;
   }
   if (!item) return <p>{c.itemUnavailable}</p>;
@@ -65,15 +66,14 @@ function LotPrices({ row, lang }: { row: Row; lang: "ru" | "en" }) {
 function ItemFacts({ row, lang, exact, status }: { row: Row; lang: "ru" | "en"; exact: ExactAuctionTooltip | null; status: string }) {
   const c = auctionCopy[lang];
   return <div className={styles.itemFacts}>
-    <strong>{exact?.name ?? row.name ?? `ID ${row.itemId}`}</strong>
+    <strong>{exact?.name ?? row.name ?? c.metadata}</strong>
     <span>{exact ? c.qualities[exact.quality] : row.item?.quality}</span>
     <ItemDescription row={row} lang={lang} exact={exact} status={status} />
     <LotPrices row={row} lang={lang} />
-    <small>{exact?.lines ? c.exactSource : c.itemSource} · #{row.id}</small>
   </div>;
 }
 
-export function AuctionItem({ row, lang, region, realm, market }: { row: Row; lang: "ru" | "en"; region: AuctionRegion; realm: string; market: "realm" | "commodities" }) {
+export function AuctionItem({ row, lang, region, realm, market, meta = [] }: { row: Row; lang: "ru" | "en"; region: AuctionRegion; realm: string; market: "realm" | "commodities"; meta?: string[] }) {
   const c = auctionCopy[lang], [open, setOpen] = useState(false), [failedUrl, setFailedUrl] = useState<string | null>(null);
   const [exact, setExact] = useState<ExactAuctionTooltip | null>(null), [status, setStatus] = useState("idle");
   const gear = !row.petSpeciesId && (row.item?.itemClassId === 2 || row.item?.itemClassId === 4 || Boolean(row.item?.stats.length || row.item?.weapon.length));
@@ -86,15 +86,16 @@ export function AuctionItem({ row, lang, region, realm, market }: { row: Row; la
   const quality = exact?.quality ?? row.item?.qualityId;
   const palette = itemQualityColors[quality as keyof typeof itemQualityColors];
   const qualityStyle = palette ? { "--auction-quality": palette.frame, "--auction-quality-text": palette.text } as CSSProperties : undefined;
-  const name = exact?.name ?? row.name ?? `ID ${row.itemId}`;
+  const name = exact?.name ?? row.name ?? c.metadata;
+  const details = [exact ? `${c.itemLevel} ${exact.itemLevel}` : null, ...meta].filter((part): part is string => Boolean(part));
   const reference = new URL(`https://www.wowhead.com/${lang === "ru" ? "ru/" : ""}item=${row.itemId}`);
   if (row.bonusIds.length) reference.searchParams.set("bonus", row.bonusIds.join(":"));
   const facts = <ItemFacts row={row} lang={lang} exact={exact} status={status} />;
   return <>
-    <AtlasTooltip content={open ? null : <div className={styles.itemPreview} style={qualityStyle}>{facts}<p className={styles.secondary}>{c.openItem}</p></div>}>
+    <AtlasTooltip content={open ? null : <div className={styles.itemPreview} style={qualityStyle}>{facts}</div>}>
       <button type="button" className={styles.itemTrigger} style={qualityStyle} aria-haspopup="dialog" aria-expanded={open} aria-label={`${name}. ${c.openItem}`} onPointerEnter={() => void load()} onFocus={() => void load()} onClick={() => { void load(); setOpen(true); }}>
-        <span className={materialStyles.iconFrame} aria-hidden="true">{row.item?.iconUrl && failedUrl !== row.item.iconUrl ? <Image src={row.item.iconUrl} alt="" width={40} height={40} unoptimized onError={() => setFailedUrl(row.item?.iconUrl ?? null)} /> : <Package size={22} />}</span>
-        <span>{name}{exact ? <small className={styles.itemLevel}>{c.itemLevel} {exact.itemLevel}</small> : null}</span>
+        <span className={materialStyles.iconFrame} style={auctionIconFrameStyle(44)} aria-hidden="true">{row.item?.iconUrl && failedUrl !== row.item.iconUrl ? <Image src={row.item.iconUrl} alt="" width={44} height={44} unoptimized onError={() => setFailedUrl(row.item?.iconUrl ?? null)} /> : <Package size={22} />}</span>
+        <span className={styles.itemText}><span className={styles.itemName}>{name}</span>{details.length ? <small className={styles.itemMeta}>{details.join(" · ")}</small> : null}</span>
       </button>
     </AtlasTooltip>
     <AtlasDialog open={open} onClose={() => setOpen(false)} label={name} className={styles.itemDialog}>
