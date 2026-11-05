@@ -22,8 +22,20 @@ export function libraryDatasetForType(type: string) {
   return LIBRARY_TYPE_DATASET[type] ?? LIBRARY_LOOSE_RECORDS;
 }
 
-/** `/library/<dataset>/<type>/<id>/<slug>` (and its /ru twin); non-retail editions keep `?product=`. */
+/**
+ * `/library/<dataset>/<id>/<slug>` (and its /ru twin); non-retail editions keep `?product=`.
+ * The record is read by its UUID, so the type is not part of the address: a dataset holds one
+ * type, and a "records" page learns the type from the record itself.
+ */
 export function libraryRecordPath(lang: Lang, type: string, id: string, slug: string | number | undefined | null, product = "wow") {
   const query = product && product !== "wow" ? `?product=${encodeURIComponent(product)}` : "";
-  return `${lang === "ru" ? "/ru" : ""}/library/${libraryDatasetForType(type)}/${encodeURIComponent(type)}/${encodeURIComponent(id)}/${encodeURIComponent(String(slug || "record"))}${query}`;
+  return `${lang === "ru" ? "/ru" : ""}/library/${libraryDatasetForType(type)}/${encodeURIComponent(id)}/${encodeURIComponent(String(slug || "record"))}${query}`;
+}
+
+/**
+ * The 2026-10 address `/library/<dataset>/<type>/<id>/<slug>` (the type repeated the dataset) moved to
+ * `/library/<home dataset of the type>/<id>/<slug>`; the query string travels along.
+ */
+export function legacyLibraryRecordPath(lang: Lang, type: string, id: string, slug: string, search = "") {
+  return `${lang === "ru" ? "/ru" : ""}/library/${libraryDatasetForType(type)}/${encodeURIComponent(id)}/${encodeURIComponent(slug)}${search}`;
 }
