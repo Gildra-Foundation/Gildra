@@ -187,3 +187,6 @@
 :global([data-motion="reduced"]) .card .openRaid:global(.ui-button),
 :global([data-transparency="reduced"]) .card .openRaid:global(.ui-button),
 :global([data-ui-motion="reduce"]) .card .openRaid:global(.ui-button) { transform: none !important; filter: none !important; }
+/* The widest caps (Dreamrift) leave under 60 px for the label on a 320 px phone:
+   let it reach a little into the plain inner edge of the caps so "Открыть" stays whole. */
+@media (max-width: 360px) { .openRaid :global(.ui-button__label) { margin-inline: -10px; } }

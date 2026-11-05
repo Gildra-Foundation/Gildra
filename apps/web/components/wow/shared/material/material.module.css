@@ -94,7 +94,7 @@
   content: "";
   pointer-events: none;
 }
-.button :global(.ui-button__label), .button :global(.ui-button__icon) { position: relative; z-index: 1; min-width: 0; }
+.button :global(.ui-button__label), .button :global(.ui-button__icon) { position: relative; z-index: 1; }
 .button :global(.ui-button__label) { white-space: normal; text-align: center; }
 .button :global(.ui-button__icon), .button svg { flex: none; width: 18px; height: 18px; }
 .slot .button:global(.ui-button):focus-visible { outline: 2px solid var(--atlas-text-strong); outline-offset: 4px; }
@@ -108,6 +108,11 @@
 @media (max-width: 600px) {
   .slot[data-stack] { flex: 1 1 100%; width: 100%; }
   .slot[data-stack] .button:global(.ui-button) { width: 100%; }
+}
+/* The painted caps keep their width on the narrowest phones, so the decorative
+   icon gives its room to the label: "Открыть" stays one word instead of "Открыт/ь". */
+@media (max-width: 360px) {
+  .button:has(:global(.ui-button__label)) :global(.ui-button__icon), .button:has(:global(.ui-button__label)) > svg { display: none; }
 }
 
 /* ---------- Icon frame (game icon inside the kit's painted square frame) ---------- */
