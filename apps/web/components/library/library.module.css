@@ -28,7 +28,6 @@
 
 .unavailable { margin-top: var(--atlas-space-5); }
 
-.freshness { margin: var(--atlas-space-4) 0 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 
 @media (max-width: 720px) {
   .editions { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }

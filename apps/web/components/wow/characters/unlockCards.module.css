@@ -16,7 +16,7 @@
   --unlock-tab: 66%;
   --unlock-notch: 36px;
   --unlock-curve: 16px;
-  --unlock-plate-top: 50%;
+  --unlock-plate-top: 66%;
   --unlock-plate: color-mix(in srgb, var(--atlas-accent) 7%, var(--atlas-bg));
   --unlock-light: color-mix(in srgb, var(--atlas-accent) 65%, var(--atlas-text-strong));
   position: relative;
@@ -74,7 +74,7 @@
 }
 
 /* ---------- Notched plate ---------- */
-/* In flow: the number on the tab, the title and text at the foot; it reaches 24 px under the card so lifting shows no gap. */
+/* In flow: the number on the tab, the title at the foot; it reaches 24 px under the card so lifting shows no gap. */
 .plate {
   position: relative;
   z-index: 1;

@@ -1,7 +1,6 @@
 import { ArrowDown, Sun, Moon, Egg, Gem } from 'lucide-react';
 import type { QueldanasGuideBoss } from '@/lib/data/wow/raid/queldanasGuide';
 import { RaidPlaque } from './raidMaterial';
-import { queldanasGuideCopy } from './queldanasGuideCopy';
 import styles from './queldanasGuide.module.css';
 
 export function QueldanasBattleDiagram({locale,difficulty,guide}: {locale:'ru'|'en';difficulty:'normal'|'heroic';guide:QueldanasGuideBoss}) {

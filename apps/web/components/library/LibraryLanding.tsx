@@ -2,7 +2,6 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowRight, LibraryBig, Search } from "lucide-react";
 import { AtlasField, AtlasFrame, AtlasHero, AtlasInput, AtlasSection } from "@/components/atlas";
-import { formatAtlasDate } from "@gildra/atlas-ui/format";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
 import { MaterialButton, MaterialLinkButton, MaterialPlaque, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
@@ -30,9 +29,8 @@ type Props = {
  * docs/design/reference): hero with two painted buttons, the
  * library search and edition switch on the library plaque (like the auction
  * form), the featured datasets on painted plaques, then every dataset grouped
- * by area on glass with the kit's icon frames. One quiet line says when the
- * data was updated; a notice appears only when the data really lags (stale or
- * failed update), never while a refresh simply runs.
+ * by area on glass with the kit's icon frames. No counters, freshness dates or
+ * "data may lag" notices (gildra-clean-ui).
  */
 export function LibraryLanding({ lang, datasets: allDatasets, products, samples, selectedProduct, unavailable = false }: Props) {
   const copy = libraryCopy[lang];
@@ -41,10 +39,6 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
   const datasets = allDatasets.filter((dataset) => dataset.entityCount > 0 && !LIBRARY_HIDDEN_DATASETS.has(dataset.slug));
   const groups = Array.from(Map.groupBy(datasets, (dataset) => dataset.group));
   const productQuery = selectedProduct === "wow" ? "" : `?product=${encodeURIComponent(selectedProduct)}`;
-
-  const checked = allDatasets.reduce<string | null>((latest, dataset) => (
-    dataset.coverageUpdatedAt && (!latest || dataset.coverageUpdatedAt > latest) ? dataset.coverageUpdatedAt : latest
-  ), null);
 
   const featured = LIBRARY_FEATURED.map((slug) => datasets.find((dataset) => dataset.slug === slug)).filter((dataset): dataset is LibraryDataset => Boolean(dataset));
   const rowFrame = materialIconFrameStyle(libraryKit, 44);
@@ -135,7 +129,6 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
                 </section>
               ))}
             </div>
-            {checked ? <p className={styles.freshness}>{copy.updated(formatAtlasDate(checked, lang))}</p> : null}
           </AtlasSection>
         </>
       )}
