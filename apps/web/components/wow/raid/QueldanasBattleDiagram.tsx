@@ -14,6 +14,5 @@ export function QueldanasBattleDiagram({locale,difficulty,guide}: {locale:'ru'|'
       {phoenix && index < 2 && <ArrowDown className={styles.stepArrow} aria-hidden="true" />}
     </li>)}</ol>
     <p className={styles.diagramCaption}>{(difficulty === 'heroic' ? plan.heroicCaption : plan.caption)[locale]}</p>
-    <figcaption>{queldanasGuideCopy[locale].relative}</figcaption>
   </RaidPlaque>;
 }

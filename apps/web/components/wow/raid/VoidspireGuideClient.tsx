@@ -7,7 +7,7 @@ import { AtlasSegmented } from '@gildra/atlas-ui/AtlasSegmented';
 import { AtlasField } from '@gildra/atlas-ui/AtlasField';
 import { AtlasDisclosure } from '@gildra/atlas-ui/AtlasDisclosure';
 import { voidspireVideoGuides } from '@/lib/data/wow/raid/voidspireVideoGuide';
-import { voidspireBeginnerGuides, roleBasics as voidspireRoleBasics, voidspireFactSources } from '@/lib/data/wow/raid/voidspireBeginnerGuide';
+import { voidspireBeginnerGuides, voidspireFactSources } from '@/lib/data/wow/raid/voidspireBeginnerGuide';
 import { raidHubControlLayout } from './raidHubControls';
 import { VoidspireGuideMotion } from './VoidspireGuideMotion';
 import { VoidspireBattleDiagram } from './VoidspireBattleDiagram';
@@ -109,7 +109,6 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
           {specPicker}
           {!guide.heroicOnly && <AtlasField label={t.difficulty}><AtlasSegmented aria-label={t.difficulty} value={selection.difficulty} onValueChange={value => select({ difficulty: value as GuideSelection['difficulty'] })} options={['normal','heroic'].map(value => ({ value, label: t[value as 'normal' | 'heroic'] }))} /></AtlasField>}
         </div>
-        {role ? <p className={styles.roleDefinition}>{voidspireRoleBasics[role][locale]}</p> : <div className={styles.roleBasics}>{(['tank','healer','melee','ranged'] as const).map(item => <p key={item}>{voidspireRoleBasics[item][locale]}</p>)}</div>}
         <h3 id="guide-position-title">{t.positioning}{role && <small className={styles.roleLabel}>{t.roles[role]}</small>}</h3>
         <p data-role-position={role ?? 'all'}>{(position ?? beginner.startingPosition)[locale]}</p>
         {guideSpecs.find(spec => spec.id === selection.specId)?.classId === 13 && <p className={styles.rangeNote}>{t.evokerRange}</p>}

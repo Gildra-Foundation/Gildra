@@ -56,12 +56,11 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
       <div className={styles.column}>
         <div className={styles.crumbsRow}>
           <AtlasBreadcrumbs label={copy.breadcrumbsLabel} items={[{ label: copy.hub, href: `${localePrefix}/wow/mythic-plus` }, { label: dungeonName }]} />
-          <span className={styles.season}>{copy.season}</span>
         </div>
 
         <section className={styles.intro} aria-labelledby="route-title">
           <div className={styles.introIdentity}>
-            <p className={styles.eyebrow}>{locale === "ru" ? `Маршрут подземелья · ${dungeon.location}` : `Dungeon route · ${locations[dungeon.slug]}`}</p>
+            <p className={styles.eyebrow}>{locale === "ru" ? dungeon.location : locations[dungeon.slug]}</p>
             <div className={styles.titleRow}>
               <h1 id="route-title">{dungeonName}</h1>
               <span className={styles.keyTag} aria-label={`${copy.keyLevelLabel} +${keyLevel}`}>+{keyLevel}</span>

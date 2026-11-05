@@ -9,7 +9,7 @@ import { lessMotion, subscribeSiteMotion } from '@gildra/atlas-ui/motionPreferen
 import { AtlasField } from '@gildra/atlas-ui/AtlasField';
 import { AtlasSegmented } from '@gildra/atlas-ui/AtlasSegmented';
 import { queldanasGuide, type QueldanasGuideBoss } from '@/lib/data/wow/raid/queldanasGuide';
-import { roleBasics, voidspireBeginnerTerms } from '@/lib/data/wow/raid/voidspireBeginnerGuide';
+import { voidspireBeginnerTerms } from '@/lib/data/wow/raid/voidspireBeginnerGuide';
 import type { CounterKind } from '@/lib/data/wow/raid/voidspireVideoGuide';
 import { guideCounters, guideRole, guideSpecs } from './voidspireGuideCounters';
 import { voidspireGuideCopy } from './voidspireGuideCopy';
@@ -58,7 +58,7 @@ export function QueldanasGuideClient({locale}: {locale: Locale}) {
       <RaidPlaque as="section" raid="march-on-queldanas" className={`${styles.panel} ${styles.personal}`} aria-labelledby="queldanas-role-title">
         <div className={styles.toolbar}><VoidspireSpecPicker raid="march-on-queldanas" locale={locale} value={specId} onChange={spec => select({spec})} /><AtlasField label={t.difficulty}><AtlasSegmented aria-label={t.difficulty} value={difficulty} onValueChange={value => select({difficulty:value as Difficulty})} options={[{value:'normal',label:t.normal},{value:'heroic',label:t.heroic}]} /></AtlasField></div>
         <h2 id="queldanas-role-title">{role ? t.roles[role] : copy.yourJob}</h2>
-        {role ? <><p className={styles.roleDefinition}>{roleBasics[role][locale]}</p><p data-role-position={role}>{guide.roles[role].position[locale]}</p><ul className={styles.roleActions}>{guide.roles[role].actions.map(action => <li key={action.en}>{action[locale]}</li>)}</ul>{heroic && guide.roles[role].heroic && <p className={styles.heroic}>{guide.roles[role].heroic[locale]}</p>}</> : <><div className={styles.roleBasics}>{(['tank','healer','melee','ranged'] as const).map(item => <p key={item}>{roleBasics[item][locale]}</p>)}</div></>}
+        {role ? <><p data-role-position={role}>{guide.roles[role].position[locale]}</p><ul className={styles.roleActions}>{guide.roles[role].actions.map(action => <li key={action.en}>{action[locale]}</li>)}</ul>{heroic && guide.roles[role].heroic && <p className={styles.heroic}>{guide.roles[role].heroic[locale]}</p>}</> : null}
       </RaidPlaque>
       <QueldanasBattleDiagram locale={locale} difficulty={difficulty} guide={guide} />
     </div>
