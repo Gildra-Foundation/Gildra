@@ -1,0 +1,185 @@
+/* atlas:strict — "What opens after sign-in" cards of /wow/characters: a Frost Hall painting behind a dark notched plate
+   (a raised tab with the number, a lowered step with the arrow). Motion is transform/opacity only. */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 48px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cards > li { min-width: 0; }
+
+.card {
+  --unlock-radius: 14px;
+  --unlock-tab: 66%;
+  --unlock-notch: 36px;
+  --unlock-curve: 16px;
+  --unlock-plate-top: 50%;
+  --unlock-plate: color-mix(in srgb, var(--atlas-accent) 7%, var(--atlas-bg));
+  --unlock-light: color-mix(in srgb, var(--atlas-accent) 65%, var(--atlas-text-strong));
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: var(--unlock-radius);
+  background: var(--unlock-plate);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--atlas-accent) 26%, transparent),
+    var(--atlas-shadow-card);
+  color: var(--atlas-text);
+  text-decoration: none;
+  transform: translateY(0);
+  transition: transform var(--atlas-duration-art) var(--atlas-ease);
+}
+/* Rim that lights up on hover/focus (opacity only). */
+.card::after {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--atlas-accent-strong) 70%, transparent),
+    inset 0 0 28px color-mix(in srgb, var(--atlas-accent) 18%, transparent);
+  opacity: 0;
+  transition: opacity var(--atlas-duration-art) var(--atlas-ease);
+}
+
+/* ---------- Painting ---------- */
+.art {
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 auto;
+  height: calc(var(--unlock-plate-top) + var(--unlock-notch) + 24px);
+  overflow: hidden;
+}
+.art::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 18%, transparent), transparent 34%, color-mix(in srgb, var(--atlas-bg) 30%, transparent));
+}
+.card .artImage {
+  object-fit: cover;
+  object-position: 50% 22%;
+  filter: contrast(.94) saturate(.9);
+  transform: scale(1.03);
+  transform-origin: 60% 30%;
+  transition: transform var(--atlas-duration-art) var(--atlas-ease);
+}
+
+/* ---------- Notched plate ---------- */
+/* In flow: the number on the tab, the title and text at the foot; it reaches 24 px under the card so lifting shows no gap. */
+.plate {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100% - var(--unlock-plate-top) + 24px);
+  margin-top: auto;
+  margin-bottom: -24px;
+  padding: 22px 28px calc(24px + 28px);
+  transform: translateY(0);
+  transition: transform var(--atlas-duration-art) var(--atlas-ease);
+}
+.shape { position: absolute; inset: 0; pointer-events: none; }
+.shape i { position: absolute; display: block; background: var(--unlock-plate); }
+/* The raised tab (number side), its rounded shoulder… */
+.shape i:nth-child(1) { inset: 0 auto 0 0; width: var(--unlock-tab); border-top-right-radius: var(--unlock-curve); }
+/* …the concave fillet where the tab steps down… */
+.shape i:nth-child(2) {
+  top: calc(var(--unlock-notch) - var(--unlock-curve));
+  left: var(--unlock-tab);
+  width: var(--unlock-curve);
+  height: var(--unlock-curve);
+  background: radial-gradient(circle at 100% 0, transparent calc(var(--unlock-curve) - .5px), var(--unlock-plate) var(--unlock-curve));
+}
+/* …and the lowered step under the arrow. */
+.shape i:nth-child(3) { inset: var(--unlock-notch) 0 0 0; }
+
+.number {
+  position: relative;
+  color: var(--atlas-text-strong);
+  font: var(--atlas-weight-display, 600) clamp(48px, 4.4vw, 64px) / 1 var(--atlas-font-display);
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: .01em;
+}
+.arrow {
+  position: absolute;
+  top: calc(var(--unlock-notch) + 18px);
+  right: 26px;
+  width: 24px;
+  height: 24px;
+  color: var(--unlock-light);
+  transform: translate(0, 0);
+  transition: transform var(--atlas-duration-art) var(--atlas-ease);
+}
+.copy {
+  position: relative;
+  display: grid;
+  gap: var(--atlas-space-2);
+  margin-top: auto;
+  padding-top: var(--atlas-space-4);
+}
+.title {
+  margin: 0;
+  color: var(--atlas-text-strong);
+  font: var(--atlas-weight-display, 600) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display);
+}
+.text {
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-body);
+  line-height: var(--atlas-leading-body);
+}
+
+/* ---------- Hover / keyboard focus: the card comes alive ---------- */
+.card:hover, .card:focus-visible { transform: translateY(-4px); }
+.card:hover::after, .card:focus-visible::after { opacity: 1; }
+.card:hover .artImage, .card:focus-visible .artImage { transform: scale(1.1) translateY(-2%); }
+.card:hover .plate, .card:focus-visible .plate { transform: translateY(-14px); }
+.card:hover .arrow, .card:focus-visible .arrow { transform: translate(4px, -4px); }
+a.card:hover .title, a.card:focus-visible .title { color: var(--unlock-light); }
+.card:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
+
+/* ---------- Adaptive ---------- */
+@media (max-width: 1180px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+}
+@media (max-width: 760px) {
+  .cards { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .card { --unlock-notch: 30px; --unlock-art-height: 220px; aspect-ratio: auto; }
+  .art { height: var(--unlock-art-height); }
+  .plate { min-height: 0; margin-top: calc(var(--unlock-art-height) - var(--unlock-notch) - 24px); padding: 16px 22px calc(24px + 24px); }
+  .number { font-size: 48px; }
+  .arrow { top: calc(var(--unlock-notch) + 14px); right: 22px; }
+  .copy { gap: var(--atlas-space-1); padding-top: var(--atlas-space-3); }
+}
+
+/* ---------- Preferences: every effect off three ways, plus forced colours ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .card, .card .artImage, .plate, .arrow, .card::after { transition: none !important; }
+  .card:hover, .card:focus-visible, .card:hover .plate, .card:focus-visible .plate,
+  .card:hover .arrow, .card:focus-visible .arrow { transform: none !important; }
+  .card:hover .artImage, .card:focus-visible .artImage { transform: scale(1.03) !important; }
+}
+:global([data-motion="reduced"]) .card, :global([data-ui-motion="reduce"]) .card,
+:global([data-motion="reduced"]) .plate, :global([data-ui-motion="reduce"]) .plate,
+:global([data-motion="reduced"]) .arrow, :global([data-ui-motion="reduce"]) .arrow,
+:global([data-motion="reduced"]) .card .artImage, :global([data-ui-motion="reduce"]) .card .artImage {
+  transition: none !important;
+  transform: none !important;
+}
+@media (prefers-reduced-transparency: reduce) { .card::after, .art::after { display: none; } }
+:global([data-transparency="reduced"]) .card::after, :global([data-transparency="reduced"]) .art::after { display: none; }
+@media (forced-colors: active) {
+  .card { border: 1px solid CanvasText; background: Canvas; box-shadow: none; transform: none; }
+  .card::after, .art, .shape { display: none; }
+  .number, .title, .text, .arrow { color: CanvasText; }
+  .plate { transform: none; }
+  .card:focus-visible { outline: 2px solid Highlight; }
+}

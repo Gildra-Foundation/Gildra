@@ -12,8 +12,8 @@ import styles from "./gearFarmPlanner.module.css";
 
 const copy = {
   ru: {
-    eyebrow: "ДОБЫЧА ДЛЯ ПЕРСОНАЖА", title: "Куда идти за экипировкой",
-    description: "Покажем добычу с подтверждённым приростом DPS для вашего комплекта и специализации. Пассивки и активки учитываются, если их поддерживает SimulationCraft.",
+    title: "Куда идти за экипировкой",
+    description: "Добыча с подтверждённым приростом DPS для вашего комплекта и специализации.",
     start: "Подобрать места фарма", searching: "Подбираем…", cancel: "Отменить", cancelled: "Подбор отменён.",
     sources: "Проверяем места и условия доступа…", rewards: "Проверяем добычу и варианты вещей", simulating: "Сравниваем с текущей экипировкой", waiting: "Ожидаем расчёта…",
     available: "Подтверждённые улучшения DPS", conditional: "Нужно проверить открытие", blocked: "Пока недоступны",
@@ -33,8 +33,8 @@ const copy = {
     rulesError: "Условия доступа изменились. Данные подбора нужно обновить.", referenceError: "Не удалось проверить свойства наград по данным Blizzard. Попробуйте позже.", catalogError: "Не удалось загрузить подтверждённую добычу. Попробуйте позже.", equipmentError: "Не хватает данных об ограничениях надетых вещей.", simulationError: "Сервис сравнения экипировки сейчас недоступен. Попробуйте позже.",
   },
   en: {
-    eyebrow: "LOOT FOR YOUR CHARACTER", title: "Where to farm gear",
-    description: "Find loot with a confirmed DPS gain for your equipped gear and specialization. Passive and on-use effects count when supported by SimulationCraft.",
+    title: "Where to farm gear",
+    description: "Loot with a confirmed DPS gain for your gear and specialization.",
     start: "Find farming locations", searching: "Searching…", cancel: "Cancel", cancelled: "Search cancelled.",
     sources: "Checking locations and access requirements…", rewards: "Checking loot and item variants", simulating: "Comparing against equipped gear", waiting: "Waiting for the search…",
     available: "Confirmed DPS upgrades", conditional: "Check unlock requirements", blocked: "Not yet accessible",
@@ -164,7 +164,7 @@ export function GearFarmPlanner({ characterSlug, snapshotKey, localePrefix = "/r
   const messages: Record<string, string> = { session_expired: c.session, plan_already_running: c.running, plan_rate_limited: c.rateLimit, plan_not_found: c.expired, catalog_unavailable: c.catalogError, farm_sources_unavailable: c.catalogError, farm_rules_update_required: c.rulesError, farm_data_update_required: c.rulesError, farm_reward_unverified: c.referenceError, variant_metadata_worker_upgrade_required: c.simulationError, item_reference_unavailable: c.referenceError, equipment_constraints_unverified: c.equipmentError, simulation_unavailable: c.simulationError };
   const progress = current?.job?.progress, phase = progress?.phase;
   return <section className={styles.panel} aria-labelledby={titleId} data-gear-farm>
-    <header><small>{c.eyebrow}</small><h2 id={titleId}>{c.title}</h2><p>{c.description}</p></header>
+    <header><h2 id={titleId}>{c.title}</h2><p>{c.description}</p></header>
     <div className={styles.controls}><AtlasButton variant="primary" type="button" onClick={() => void start()} disabled={running}>{running ? c.searching : c.start}</AtlasButton>{running ? <AtlasButton type="button" onClick={cancel}>{c.cancel}</AtlasButton> : null}</div>
     {running ? <p role="status">{phase === "sources" ? c.sources : phase === "rewards" || phase === "simulating" ? `${phase === "rewards" ? c.rewards : c.simulating}: ${progress?.completed} / ${progress?.total}` : c.waiting}</p> : null}
     {failure ? <p role="alert">{messages[failure] ?? c.genericError}</p> : null}

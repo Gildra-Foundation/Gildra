@@ -51,7 +51,8 @@ const en = {
   "Все проблемы исправлены. Аудит готов.": "Every issue is fixed.",
   "Потенциальный прирост после исправлений": "Potential gain after the fixes",
   "Сейчас": "Now",
-  "Если что-то не работает": "If something does not work",
+  "Боевые логи": "Combat logs",
+  "Ротация": "Rotation",
 } as const;
 
 export type CharacterPageText = keyof typeof en;

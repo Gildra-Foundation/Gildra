@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { auth, isBattleNetAuthConfigured } from "@/auth";
 import { CharacterAuditPage } from "@/components/wow/audit/CharacterAuditPage";
+import { CharacterProfileFrame } from "@/components/wow/characters/CharacterProfileFrame";
 import { CharacterProfileLoadError } from "@/components/wow/characters/CharacterProfileLoadError";
 import { BattleNetCharacterDataError, characterSlug, getBattleNetCharacterDetails } from "@/lib/wow/battleNetCharacterDetails";
 import { BattleNetProfileError, getBattleNetCharacters, isBattleNetRegion } from "@/lib/wow/battleNetCharacters";
@@ -40,5 +41,5 @@ export default async function CharacterPage({ params }: PageProps) {
     getMidnightTalentData(snapshot.specialization.slug, snapshot.activeHeroTalentTreeId, "en").catch(() => null),
     getRotationPreset(snapshot.specialization.slug, "en").catch(() => null),
   ]);
-  return <CharacterAuditPage initialSnapshot={snapshot} initialFingerprint={characterProfileFingerprint(snapshot)} localePrefix="" dataMode="battle-net" talentData={talentData} rotationPreset={rotationPreset} />;
+  return <CharacterProfileFrame locale="en"><CharacterAuditPage initialSnapshot={snapshot} initialFingerprint={characterProfileFingerprint(snapshot)} localePrefix="" dataMode="battle-net" talentData={talentData} rotationPreset={rotationPreset} /></CharacterProfileFrame>;
 }

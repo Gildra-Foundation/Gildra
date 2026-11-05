@@ -12,12 +12,10 @@ export type RosterCopy = {
   classLabel: string;
   allClasses: string;
   rosterTitle: string;
-  rosterText: string;
   /** "{total}" and "{shown}" are replaced on the client. */
   countAll: string;
   countFiltered: string;
   loadingRegions: string;
-  loadingText: string;
   emptyTitle: string;
   emptyText: string;
   noMatches: string;
@@ -25,17 +23,11 @@ export type RosterCopy = {
   openProfile: string;
   armory: string;
   level: string;
-  realm: string;
   stateTitle: Record<"expired" | "forbidden" | "rate-limited" | "unavailable", string>;
   stateText: Record<"expired" | "forbidden" | "rate-limited" | "unavailable", string>;
-  reconnectEyebrow: string;
   retry: string;
-  /** Account summary over the loaded roster (real counts only). */
-  summaryLabel: string;
-  statCharacters: string;
-  /** "{level}" is the highest level on the account. */
-  statTopLevel: string;
-  statRealms: string;
+
+
 };
 
 const en = {
@@ -43,30 +35,22 @@ const en = {
   characters: "Characters",
   signIn: "Sign in",
   breadcrumbsLabel: "Breadcrumbs",
-  secureEyebrow: "Secure Battle.net sign-in",
-  passwordNote: "Your password stays on Blizzard’s site;",
-  scopeNote: "Gildra asks only for your WoW profile.",
   entry: {
-    eyebrow: "Midnight · Season 2",
+    eyebrow: "Battle.net",
     title: "Account characters",
     lede: "Sign in with Battle.net to open your WoW heroes: equipment, talents and combat tools for each one.",
-    panelTitle: "Connect your Battle.net account",
-    panelText: "One sign-in opens every hero on your account.",
+    passwordNote: "Your password stays with Blizzard.",
     expiredTitle: "Battle.net session expired",
     expiredText: "Connect your account again to refresh access to your character list.",
     unlocksTitle: "What opens after sign-in",
-    unlocksText: "Every hero on the account, each with the same three tools.",
-    statsLabel: "What the sign-in covers",
-    statRegions: "Battle.net regions",
-    statTools: "Tools per hero",
     unlocks: [
-      ["Equipment", "Gear and item level of the hero."],
-      ["Talents", "The active build in the talent calculator."],
-      ["Combat tools", "Rotation and damage tools for the hero’s specialization."],
-    ] as [string, string][],
+      { title: "Equipment", text: "Every slot of your hero: item level, enchants and gems, with upgrades to farm or buy." },
+      { title: "Talents", text: "The hero’s active build in the talent calculator, ready to tune and compare.", href: "/wow/classes" },
+      { title: "Combat tools", text: "Damage simulation for your build and a breakdown of real fights from your logs." },
+    ] as { title: string; text: string; href?: string }[],
   },
   roster: {
-    eyebrowConnected: "Battle.net connected",
+    eyebrowConnected: "Battle.net",
     title: "Account characters",
     lede: "Choose a hero to open their equipment, talents and combat tools.",
     signOut: "Sign out",
@@ -74,13 +58,12 @@ const en = {
   profile: {
     eyebrow: "Battle.net profile",
     loadingTitle: "Loading the character…",
-    loadingText: "The profile appears as soon as Battle.net returns the data.",
     errors: {
       expired: ["Battle.net session expired", "Reconnect your account to load this character again."],
       forbidden: ["Profile access denied", "Battle.net denied profile access. Reconnect and approve the WoW profile permission."],
       rate_limited: ["Too many requests", "Battle.net temporarily limited updates. Wait about a minute and try again."],
       incomplete: ["Profile is incomplete", "Battle.net did not return equipment or an active specialization. Log out of the game and refresh."],
-      unavailable: ["Battle.net is temporarily unavailable", "We do not substitute demo data for your character. Please try again later."],
+      unavailable: ["Battle.net is temporarily unavailable", "Please try again in a minute."],
     },
     reconnect: "Reconnect Battle.net",
     retry: "Try again",
@@ -91,12 +74,10 @@ const en = {
     searchPlaceholder: "Name, realm or class…",
     classLabel: "Class",
     allClasses: "All classes",
-    rosterTitle: "Battle.net roster",
-    rosterText: "Heroes of every region, the highest level first.",
+    rosterTitle: "Your heroes",
     countAll: "{total} characters",
     countFiltered: "{shown} of {total} characters",
     loadingRegions: "Checking Battle.net regions…",
-    loadingText: "Loading the heroes of your account.",
     emptyTitle: "No characters found",
     emptyText: "No World of Warcraft characters are available to this Battle.net account in EU, US, KR or TW.",
     noMatches: "No characters match the selected filters.",
@@ -104,7 +85,6 @@ const en = {
     openProfile: "Open profile",
     armory: "Armory",
     level: "Level",
-    realm: "Realm",
     stateTitle: {
       expired: "Battle.net session expired",
       forbidden: "World of Warcraft access was not granted",
@@ -117,12 +97,7 @@ const en = {
       "rate-limited": "The account is connected. Wait a minute and try loading the characters again.",
       unavailable: "The account is connected, but every regional character request failed. Please try again shortly.",
     },
-    reconnectEyebrow: "Battle.net",
     retry: "Try again",
-    summaryLabel: "Account summary",
-    statCharacters: "Characters",
-    statTopLevel: "At level {level}",
-    statRealms: "Realms",
   } satisfies RosterCopy,
 };
 
@@ -131,30 +106,22 @@ const ru: typeof en = {
   characters: "Персонажи",
   signIn: "Вход",
   breadcrumbsLabel: "Навигационная цепочка",
-  secureEyebrow: "Защищённый вход Battle.net",
-  passwordNote: "Пароль остаётся на сайте Blizzard;",
-  scopeNote: "Gildra запрашивает только профиль WoW.",
   entry: {
-    eyebrow: "Midnight · Сезон 2",
+    eyebrow: "Battle.net",
     title: "Персонажи аккаунта",
     lede: "Войдите через Battle.net, чтобы открыть своих героев WoW: экипировку, таланты и боевые инструменты каждого.",
-    panelTitle: "Подключите аккаунт Battle.net",
-    panelText: "Один вход открывает всех героев вашего аккаунта.",
+    passwordNote: "Пароль остаётся у Blizzard.",
     expiredTitle: "Сессия Battle.net истекла",
     expiredText: "Подключите аккаунт заново, чтобы обновить доступ к списку персонажей.",
     unlocksTitle: "Что откроется после входа",
-    unlocksText: "Все герои аккаунта, у каждого — те же три инструмента.",
-    statsLabel: "Что охватывает вход",
-    statRegions: "Региона Battle.net",
-    statTools: "Инструмента у героя",
     unlocks: [
-      ["Экипировка", "Снаряжение и уровень предметов героя."],
-      ["Таланты", "Активная сборка в калькуляторе талантов."],
-      ["Боевые инструменты", "Ротация и расчёт урона для специализации героя."],
+      { title: "Экипировка", text: "Каждый слот героя: уровень предметов, чары и камни, а ещё улучшения, которые можно добыть или купить." },
+      { title: "Таланты", text: "Активный билд героя в калькуляторе талантов — настраивайте и сравнивайте.", href: "/ru/wow/classes" },
+      { title: "Боевые инструменты", text: "Симуляция урона вашего билда и разбор реальных боёв по логам." },
     ],
   },
   roster: {
-    eyebrowConnected: "Battle.net подключён",
+    eyebrowConnected: "Battle.net",
     title: "Персонажи аккаунта",
     lede: "Выберите героя, чтобы открыть его экипировку, таланты и боевые инструменты.",
     signOut: "Выйти",
@@ -162,13 +129,12 @@ const ru: typeof en = {
   profile: {
     eyebrow: "Профиль Battle.net",
     loadingTitle: "Загружаем персонажа…",
-    loadingText: "Профиль появится, как только Battle.net вернёт данные.",
     errors: {
       expired: ["Сессия Battle.net истекла", "Переподключите аккаунт, чтобы снова получить профиль персонажа."],
       forbidden: ["Нет доступа к профилю", "Battle.net отклонил доступ. Переподключите аккаунт и подтвердите разрешение профиля WoW."],
       rate_limited: ["Слишком много запросов", "Battle.net временно ограничил обновления. Подождите около минуты и попробуйте снова."],
       incomplete: ["Профиль пока неполный", "Battle.net не вернул экипировку или активную специализацию. Выйдите персонажем из игры и обновите страницу."],
-      unavailable: ["Battle.net временно недоступен", "Мы не подставляем тестовые данные вместо вашего персонажа. Попробуйте снова чуть позже."],
+      unavailable: ["Battle.net временно недоступен", "Попробуйте снова через минуту."],
     },
     reconnect: "Переподключить Battle.net",
     retry: "Повторить",
@@ -179,12 +145,10 @@ const ru: typeof en = {
     searchPlaceholder: "Имя, сервер или класс…",
     classLabel: "Класс",
     allClasses: "Все классы",
-    rosterTitle: "Ростер Battle.net",
-    rosterText: "Герои всех регионов, сначала самые высокие уровни.",
+    rosterTitle: "Ваши герои",
     countAll: "Персонажей: {total}",
     countFiltered: "Показано {shown} из {total}",
     loadingRegions: "Проверяем регионы Battle.net…",
-    loadingText: "Загружаем героев вашего аккаунта.",
     emptyTitle: "Персонажи не найдены",
     emptyText: "На этом аккаунте Battle.net нет персонажей WoW в регионах EU, US, KR и TW.",
     noMatches: "По выбранным фильтрам персонажи не найдены.",
@@ -192,7 +156,6 @@ const ru: typeof en = {
     openProfile: "Открыть профиль",
     armory: "Арсенал",
     level: "Уровень",
-    realm: "Сервер",
     stateTitle: {
       expired: "Сессия Battle.net истекла",
       forbidden: "Доступ к персонажам WoW не выдан",
@@ -205,12 +168,7 @@ const ru: typeof en = {
       "rate-limited": "Аккаунт подключён. Подождите минуту и попробуйте загрузить персонажей ещё раз.",
       unavailable: "Аккаунт подключён, но запрос списка персонажей завершился ошибкой во всех регионах. Попробуйте ещё раз чуть позже.",
     },
-    reconnectEyebrow: "Battle.net",
     retry: "Повторить",
-    summaryLabel: "Сводка аккаунта",
-    statCharacters: "Персонажей",
-    statTopLevel: "{level} уровня",
-    statRealms: "Серверов",
   },
 };
 

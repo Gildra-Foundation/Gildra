@@ -19,7 +19,6 @@ export function CharacterProfileLoading({ locale }: { locale: "en" | "ru" }) {
             breadcrumbsLabel={copy.breadcrumbsLabel}
             eyebrow={copy.profile.eyebrow}
             title={copy.profile.loadingTitle}
-            lede={copy.profile.loadingText}
           />
         </div>
       </div>
