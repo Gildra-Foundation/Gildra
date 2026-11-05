@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-11-05T16:51:51.545Z",
+  "capturedAt": "2026-11-05T17:30:09.112Z",
   "base": "https://gildra.net",
   "pages": {
     "mythic-hub": {
@@ -2133,7 +2133,7 @@
               "-webkit-background-clip": "text"
             },
             "eyebrow": {
-              "text": "Midnight Season 2 · Week 12",
+              "text": "Midnight · Season 2 · Week 12",
               "box": [
                 26,
                 214,
@@ -3309,7 +3309,7 @@
               "-webkit-background-clip": "text"
             },
             "eyebrow": {
-              "text": "Midnight Season 2 · Week 12",
+              "text": "Midnight · Season 2 · Week 12",
               "box": [
                 14,
                 139,
@@ -3491,7 +3491,7 @@
           "title": "World of Warcraft Raid Journal — Gildra",
           "theme": "arthas",
           "scrollWidth": 1440,
-          "pageHeight": 4387,
+          "pageHeight": 4487,
           "tokens": {
             "--atlas-bg": "#070b10",
             "--atlas-surface": "#0d131a",
@@ -3761,7 +3761,7 @@
                 "text": "Expansion archive",
                 "box": [
                   26,
-                  2090,
+                  2190,
                   1388,
                   48
                 ],
@@ -3801,7 +3801,7 @@
                 0,
                 108,
                 1440,
-                4279
+                4379
               ],
               "max-width": "none",
               "padding": "0px"
@@ -3821,7 +3821,7 @@
             "footer": {
               "box": [
                 26,
-                4162,
+                4262,
                 1388,
                 153
               ],
@@ -3834,7 +3834,7 @@
                 0,
                 0,
                 1440,
-                4387
+                4487
               ],
               "background-color": "rgb(7, 11, 16)",
               "color": "rgb(238, 226, 204)",
@@ -3876,7 +3876,7 @@
           "title": "Рейдовый журнал World of Warcraft — Gildra",
           "theme": "arthas",
           "scrollWidth": 390,
-          "pageHeight": 6371,
+          "pageHeight": 6394,
           "tokens": {
             "--atlas-bg": "#070b10",
             "--atlas-surface": "#0d131a",
@@ -4146,7 +4146,7 @@
                 "text": "Архив дополнения",
                 "box": [
                   14,
-                  2753,
+                  2776,
                   362,
                   33
                 ],
@@ -4186,7 +4186,7 @@
                 0,
                 57,
                 390,
-                6314
+                6337
               ],
               "max-width": "none",
               "padding": "0px"
@@ -4206,7 +4206,7 @@
             "footer": {
               "box": [
                 14,
-                6031,
+                6054,
                 362,
                 268
               ],
@@ -4219,7 +4219,7 @@
                 0,
                 0,
                 390,
-                6371
+                6394
               ],
               "background-color": "rgb(7, 11, 16)",
               "color": "rgb(238, 226, 204)",
@@ -4261,7 +4261,7 @@
           "title": "Рейдовый журнал World of Warcraft — Gildra",
           "theme": "arthas",
           "scrollWidth": 1440,
-          "pageHeight": 4513,
+          "pageHeight": 4599,
           "tokens": {
             "--atlas-bg": "#070b10",
             "--atlas-surface": "#0d131a",
@@ -4531,7 +4531,7 @@
                 "text": "Архив дополнения",
                 "box": [
                   26,
-                  2199,
+                  2284,
                   1388,
                   48
                 ],
@@ -4571,7 +4571,7 @@
                 0,
                 108,
                 1440,
-                4405
+                4491
               ],
               "max-width": "none",
               "padding": "0px"
@@ -4591,7 +4591,7 @@
             "footer": {
               "box": [
                 26,
-                4270,
+                4356,
                 1388,
                 171
               ],
@@ -4604,7 +4604,7 @@
                 0,
                 0,
                 1440,
-                4513
+                4599
               ],
               "background-color": "rgb(7, 11, 16)",
               "color": "rgb(238, 226, 204)",
@@ -4646,7 +4646,7 @@
           "title": "World of Warcraft Raid Journal — Gildra",
           "theme": "arthas",
           "scrollWidth": 390,
-          "pageHeight": 6218,
+          "pageHeight": 6241,
           "tokens": {
             "--atlas-bg": "#070b10",
             "--atlas-surface": "#0d131a",
@@ -4916,7 +4916,7 @@
                 "text": "Expansion archive",
                 "box": [
                   14,
-                  2659,
+                  2682,
                   362,
                   33
                 ],
@@ -4956,7 +4956,7 @@
                 0,
                 57,
                 390,
-                6161
+                6184
               ],
               "max-width": "none",
               "padding": "0px"
@@ -4976,7 +4976,7 @@
             "footer": {
               "box": [
                 14,
-                5922,
+                5945,
                 362,
                 224
               ],
@@ -4989,7 +4989,7 @@
                 0,
                 0,
                 390,
-                6218
+                6241
               ],
               "background-color": "rgb(7, 11, 16)",
               "color": "rgb(238, 226, 204)",
@@ -5029,5 +5029,6 @@
         }
       }
     }
-  }
+  },
+  "note": "Снято с кандидата reference-polish-20261105 (тот же образ, что выкатывается на прод)"
 }
