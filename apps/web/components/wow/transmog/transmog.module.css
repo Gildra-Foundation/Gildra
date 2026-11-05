@@ -1,8 +1,9 @@
-/* atlas:strict — transmog studio: paper doll, 3D stage in the export frame, picker panel. */
-/* Compact hero: the tool, not the title, owns the first screen. */
+/* atlas:strict — transmog studio: paper doll, 3D stage in the export frame, picker on the Library kit's plaque,
+   painted action buttons (shared MaterialButton; phones turn the secondary ones into 44 px glass icons). */
+/* Compact hero: H1 and one line; the studio owns the first screen. */
 .hero h1 { font-size: clamp(2rem, 1.2rem + 1.8vw, 3rem); }
 .hero > div:last-child { padding-block: var(--atlas-space-2) 0; }
-.hero p { max-width: 100ch; margin-top: var(--atlas-space-1); font-size: var(--atlas-text-body); }
+.hero p { max-width: 60ch; margin-top: var(--atlas-space-1); font-size: var(--atlas-text-body); }
 
 .studio {
   /* Stage height: the window below the sticky header, the toolbar and a little air. */
@@ -21,12 +22,15 @@
 }
 .segmented button[aria-pressed="true"] { background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); box-shadow: inset 0 0 0 1px var(--atlas-line-strong); }
 .segmented button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
-.toolButton svg, .downloadButton svg { width: 16px; height: 16px; }
-.downloadButton { min-width: 44px; }
+/* Actions: Undo as a glass icon, Reset / Link / Download on the kit's painted buttons. */
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); }
+.undoButton:global(.ui-button) { min-width: 44px; min-height: 44px; padding-inline: 0; justify-content: center; }
+.undoButton svg { width: 18px; height: 18px; }
+.actions .actionButton.actionButton:global(.ui-button) { min-width: 0; }
 .notice { min-height: 1.2em; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
 .notice:empty { display: none; }
 
-.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 400px); gap: var(--atlas-space-5); align-items: stretch; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 440px); gap: var(--atlas-space-5); align-items: stretch; }
 .doll { display: grid; grid-template-columns: 64px minmax(0, calc(var(--stage-h) * var(--stage-aspect, .8))) 64px; justify-content: center; gap: var(--atlas-space-4); align-items: center; min-width: 0; }
 .dollColumn { display: grid; gap: var(--atlas-space-3); align-content: center; }
 .dollGap { height: var(--atlas-space-3); }
@@ -58,7 +62,6 @@
 }
 .slotCompact { flex: 0 0 52px; width: 52px; height: 52px; }
 .slotStrip { display: none; }
-.weaponRow { display: flex; gap: var(--atlas-space-3); justify-content: center; }
 /* Camera controls float on the stage's right edge; they are not part of the exported frame. */
 .cameraRow {
   position: absolute; right: var(--atlas-space-2); top: 50%; z-index: 5; display: grid; gap: 2px; padding: 3px; transform: translateY(-50%);
@@ -99,11 +102,6 @@
 .stageHost canvas { display: block; width: 100% !important; height: 100% !important; }
 .touchShield { display: none; position: absolute; inset: 0; z-index: 2; touch-action: pan-y; }
 @media (pointer: coarse) { .touchShield { display: block; } }
-.frameTag {
-  position: absolute; top: var(--atlas-space-3); left: var(--atlas-space-3); z-index: 3; padding: 3px var(--atlas-space-2);
-  border: 1px solid var(--atlas-line); border-radius: 6px; background: color-mix(in srgb, var(--atlas-bg) 78%, transparent);
-  color: var(--atlas-text-muted); font-size: var(--atlas-text-label); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; pointer-events: none;
-}
 .caption { position: absolute; left: 5.93cqmin; right: 26cqmin; bottom: 5.93cqmin; z-index: 3; display: grid; gap: .6cqmin; pointer-events: none; }
 .captionSubtitle {
   color: var(--atlas-accent-2); font: 600 2.04cqmin var(--atlas-font-ui); letter-spacing: .28cqmin; text-transform: uppercase;
@@ -142,13 +140,11 @@
 .spinner { flex: none; width: 14px; height: 14px; border: 2px solid var(--atlas-line); border-top-color: var(--atlas-accent); border-radius: 50%; animation: spin .9s linear infinite; }
 @keyframes spin { to { transform: rotate(1turn); } }
 
-.panel {
-  display: flex; flex-direction: column; min-width: 0; max-height: calc(var(--stage-h) + 2px); overflow: hidden;
-  border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-surface);
-}
+/* The picker sits on the kit's plaque; its list scrolls inside the painted rails. */
+.panel.panel { display: flex; flex-direction: column; min-width: 0; max-height: calc(var(--stage-h) + 2px); overflow: hidden; padding: 24px 22px 26px; }
 .tabs { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; }
 .tabs > :last-child { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; }
-.pickerBody { display: grid; gap: var(--atlas-space-3); padding: var(--atlas-space-4); align-content: start; min-width: 0; }
+.pickerBody { display: grid; gap: var(--atlas-space-3); padding: var(--atlas-space-4) var(--atlas-space-2) var(--atlas-space-2); align-content: start; min-width: 0; }
 .slotHeader { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); min-width: 0; }
 .slotHeaderText { flex: 1 1 8rem; min-width: 0; }
 .slotHeaderIcon {
@@ -158,7 +154,11 @@
 .slotHeaderIcon img { display: block; width: 100%; height: 100%; }
 .slotTitle { margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.1 var(--atlas-font-display); }
 .slotNow { margin: 2px 0 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); overflow-wrap: anywhere; }
-.slotActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); }
+.slotActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1); }
+.slotAction:global(.ui-button) { min-height: 44px; }
+.slotAction svg { width: 16px; height: 16px; }
+.filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 9.5rem); gap: var(--atlas-space-2); }
+.more:global(.ui-button) { justify-self: center; min-height: 44px; }
 .searchLabel { position: relative; display: block; min-width: 0; }
 .searchKey {
   position: absolute; right: var(--atlas-space-3); top: 50%; transform: translateY(-50%); padding: 0 5px; pointer-events: none;
@@ -166,18 +166,7 @@
 }
 .searchLabel:focus-within .searchKey { display: none; }
 @media (pointer: coarse) { .searchKey { display: none; } }
-.chips { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1); }
-.chip {
-  min-height: 32px; padding: 0 var(--atlas-space-3); border: 1px solid var(--atlas-line); border-radius: 999px; background: var(--atlas-surface-sunken);
-  color: var(--atlas-text-muted); font: inherit; font-size: var(--atlas-text-meta); cursor: pointer;
-}
-.chip[aria-pressed="true"] { border-color: var(--atlas-line-strong); background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); }
-.chip:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
-@media (pointer: coarse) { .chip { min-height: 44px; } }
-.resultCount, .hint { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-.resultCount { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--atlas-space-1) var(--atlas-space-3); }
-.resultTip { color: var(--atlas-text-subtle); }
-@media (pointer: coarse) { .resultTip { display: none; } }
+.resultCount { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 .results { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; transition: opacity .15s; }
 .results[data-loading] { opacity: .6; }
 .sentinel { height: 1px; }
@@ -186,30 +175,28 @@
   padding: var(--atlas-space-1) var(--atlas-space-2); border: 0; border-radius: 8px; background: transparent; color: var(--atlas-text);
   font: inherit; text-align: left; cursor: pointer;
 }
-.result:hover { background: var(--atlas-accent-wash); }
-.result[aria-pressed="true"] { background: var(--atlas-accent-wash-strong); }
-.result:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
+.result:hover { background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 10%, transparent); }
+.result[aria-pressed="true"] { background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 18%, transparent); }
+.result:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: -2px; }
 .resultIcon { width: 40px; height: 40px; overflow: hidden; border: 1px solid var(--transmog-quality, var(--atlas-line)); border-radius: 6px; background: var(--atlas-surface-sunken); }
 .resultIcon img { display: block; width: 100%; height: 100%; }
 .resultText { display: grid; min-width: 0; }
 .resultName { color: var(--transmog-quality-text, var(--atlas-text-strong)); font-size: var(--atlas-text-small); font-weight: 600; line-height: var(--atlas-leading-snug); overflow-wrap: anywhere; }
 .resultMeta { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-.wornTag { padding: 2px var(--atlas-space-2); border: 1px solid var(--atlas-line); border-radius: 6px; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); white-space: nowrap; }
-.setFilters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 11rem); gap: var(--atlas-space-2); }
+.wornTag { padding: 2px var(--atlas-space-2); border: 1px solid var(--material-line, var(--atlas-line)); border-radius: 6px; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); white-space: nowrap; }
 
 .group { display: grid; gap: var(--atlas-space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
-.groupLabel { padding: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-weight: 600; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.groupLabel { padding: 0; color: var(--material-light, var(--atlas-text-muted)); font-size: var(--atlas-text-label); font-weight: 600; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
 .field { display: grid; gap: var(--atlas-space-2); }
 .formats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--atlas-space-1); }
 .formatButton {
-  display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 76px; padding: var(--atlas-space-1);
+  display: grid; justify-items: center; align-content: center; gap: 6px; min-height: 64px; padding: var(--atlas-space-1);
   border: 1px solid var(--atlas-line); border-radius: 8px; background: var(--atlas-surface-sunken); color: var(--atlas-text-muted);
   font: inherit; font-size: var(--atlas-text-meta); line-height: 1.15; cursor: pointer;
 }
 .formatButton[aria-pressed="true"] { border-color: var(--atlas-line-strong); background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); }
 .formatButton:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
 .formatShape { width: var(--format-w); height: var(--format-h); border: 1.5px solid currentColor; border-radius: 2px; }
-.formatNote { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); text-align: center; }
 .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: var(--atlas-space-2); }
 .swatch {
   aspect-ratio: 1; min-height: 44px; padding: 0; border: 1px solid var(--atlas-line); border-radius: 8px; background-size: cover; cursor: pointer;
@@ -221,37 +208,28 @@
 .twoColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
 .checkRow { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; font-size: var(--atlas-text-small); cursor: pointer; }
 .checkRow input { width: 18px; height: 18px; accent-color: var(--atlas-accent); }
-.exportRow { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: var(--atlas-space-2); align-items: center; }
-
-.keys { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-@media (pointer: coarse) { .keys { display: none; } }
-.sources { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-.sources summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--atlas-text-muted); }
-.sources p { max-width: var(--atlas-measure-wide); margin: 0; line-height: var(--atlas-leading-body); }
 
 @media (max-width: 1100px) {
   .workspace { grid-template-columns: 1fr; }
-  .panel { max-height: none; overflow: visible; }
+  .panel.panel { max-height: none; overflow: visible; }
   .tabs > :last-child { overflow: visible; }
 }
-@media (max-width: 1280px) { .toolText { display: none; } .downloadButton .toolText { display: inline; } }
 @media (max-width: 700px) {
   /* Phone: the stage and the slot strip stay on screen while the list scrolls beneath. */
   .studio { --stage-h: min(40dvh, 120vw); }
   /* The tab bar sticks under the stage, so Sets and Frame are one tap away from any scroll depth. */
   .tabs > :first-child {
     position: sticky; top: calc(var(--atlas-sticky-top) + var(--stage-h) + 78px); z-index: 5;
-    background: var(--atlas-surface);
+    background: var(--material-base, var(--atlas-surface));
   }
   /* Keep rows and tabs that get focus or a tap clear of the sticky stage. */
   .result, .tabs [role="tab"] { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--stage-h) + 140px); }
   /* While typing a search, the keyboard needs the room: the stage scrolls away. */
   .studio:has(input[type="search"]:focus) .stageColumn { position: relative; top: auto; }
-  .hero p { display: none; }
   /* The stage column must sit in the tall workspace, not in the doll row, to stay sticky. */
   .doll { display: contents; }
   .workspace { display: block; }
-  .panel { margin-top: var(--atlas-space-3); }
+  .panel.panel { margin-top: var(--atlas-space-3); }
   .dollColumn { display: none; }
   .stageColumn {
     position: sticky; top: var(--atlas-sticky-top); z-index: 6; gap: var(--atlas-space-2);
@@ -264,12 +242,23 @@
   .toolbar { gap: var(--atlas-space-2); }
   .toolbarField { flex: 1 1 9rem; min-width: 8rem; }
   .toolbarSpacer { flex-basis: 100%; height: 0; }
-  .toolButton { min-width: 44px; padding-inline: 0; justify-content: center; }
-  .downloadButton { margin-left: auto; }
+  /* Phone: Reset and Link become 44 px glass icons, Download keeps the painted button and the rest of the row. */
+  .actions { flex: 1 1 100%; flex-wrap: nowrap; }
+  .actions > :last-child { flex: 1 1 auto; }
+  .actions > :last-child .actionButton.actionButton:global(.ui-button) { width: 100%; }
+  .actionText { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+  .actions .actionButton.actionButton[data-compact]:global(.ui-button) {
+    width: 44px; min-width: 44px; min-height: 44px; padding: 0; gap: 0;
+    border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-surface-sunken);
+  }
+  .actions .actionButton[data-compact]::before, .actions .actionButton[data-compact]::after { display: none; }
+  /* The painted caps keep their width: the Download label drops its icon and format to stay on one line. */
+  .actions .actionButton:not([data-compact]) :global(.ui-button__icon) { display: none; }
+  .actionFormat { display: none; }
+  .panel.panel { padding: 20px 16px 22px; }
+  .pickerBody { padding-inline: var(--atlas-space-1); }
   .formats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .twoColumns, .setFilters { grid-template-columns: 1fr; }
-  .exportRow { grid-template-columns: 1fr 1fr; }
-  .exportRow > :last-child { grid-column: 1 / -1; }
+  .twoColumns { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -281,8 +270,8 @@
 :global([data-motion="reduced"]) .poster, :global([data-ui-motion="reduce"]) .poster,
 :global([data-motion="reduced"]) .stageHost, :global([data-ui-motion="reduce"]) .stageHost { transition: none; }
 @media (forced-colors: active) {
-  .slot, .result, .chip, .formatButton, .swatch, .stage, .cameraRow, .stagePill { border: 1px solid CanvasText; }
+  .slot, .result, .formatButton, .swatch, .stage, .cameraRow, .stagePill { border: 1px solid CanvasText; }
   .slot[data-busy]::after, .slot[data-previewing]::after { box-shadow: none; outline: 2px dashed Highlight; }
   .progressBar i { background: Highlight; }
-  .slot[aria-pressed="true"], .result[aria-pressed="true"], .chip[aria-pressed="true"], .formatButton[aria-pressed="true"], .swatch[aria-pressed="true"] { outline: 2px solid Highlight; }
+  .slot[aria-pressed="true"], .result[aria-pressed="true"], .formatButton[aria-pressed="true"], .swatch[aria-pressed="true"] { outline: 2px solid Highlight; }
 }

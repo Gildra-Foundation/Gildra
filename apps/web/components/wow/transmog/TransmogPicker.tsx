@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { Eye, EyeOff, X } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasInput, AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
@@ -167,27 +168,26 @@ export function ItemPicker({ lang, slot, current, hidden, onPick, onPreview, onT
           <p className={styles.slotNow}>{current ? current.name : c.empty}{hidden ? ` · ${c.hiddenTag}` : ""}</p>
         </div>
         <div className={styles.slotActions}>
-          <AtlasButton size="sm" variant="ghost" onClick={onToggleHidden} aria-pressed={hidden} title={`${hidden ? c.show : c.hide} (H)`}>{hidden ? c.show : c.hide}</AtlasButton>
-          <AtlasButton size="sm" variant="ghost" onClick={onRemove} disabled={!current}>{c.remove}</AtlasButton>
+          <AtlasButton variant="ghost" className={styles.slotAction} icon={hidden ? <Eye aria-hidden /> : <EyeOff aria-hidden />} onClick={onToggleHidden} aria-pressed={hidden} aria-keyshortcuts="H" title={`${hidden ? c.show : c.hide} (H)`}>{hidden ? c.show : c.hide}</AtlasButton>
+          <AtlasButton variant="ghost" className={styles.slotAction} icon={<X aria-hidden />} onClick={onRemove} disabled={!current}>{c.remove}</AtlasButton>
         </div>
       </div>
-      <label className={styles.searchLabel}>
-        <span className={styles.visuallyHidden}>{c.searchItems}</span>
-        <AtlasInput type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={c.searchItemsIn(c.slots[slot])} maxLength={80} data-transmog-search enterKeyHint="search" />
-        <kbd className={styles.searchKey} aria-hidden="true">/</kbd>
-      </label>
-      {armoredSlots.has(slot) ? (
-        <div className={styles.chips} role="group" aria-label={c.armorFilter}>
-          {(["all", ...armorTypes] as const).map((type) => (
-            <button key={type} type="button" className={styles.chip} aria-pressed={armor === type} onClick={() => setArmor(type)}>{c.armor[type]}</button>
-          ))}
-        </div>
-      ) : null}
+      <div className={armoredSlots.has(slot) ? styles.filters : undefined}>
+        <label className={styles.searchLabel}>
+          <span className={styles.visuallyHidden}>{c.searchItemsIn(c.slots[slot])}</span>
+          <AtlasInput type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={c.search} maxLength={80} data-transmog-search enterKeyHint="search" aria-keyshortcuts="/" />
+          <kbd className={styles.searchKey} aria-hidden="true">/</kbd>
+        </label>
+        {armoredSlots.has(slot) ? (
+          <AtlasSelect value={armor} onChange={(event) => setArmor(event.target.value as ArmorType | "all")} aria-label={c.armorFilter} data-transmog-armor>
+            {(["all", ...armorTypes] as const).map((type) => <option key={type} value={type}>{c.armor[type]}</option>)}
+          </AtlasSelect>
+        ) : null}
+      </div>
       <p className={styles.resultCount} aria-live="polite">
         {search.state === "error" ? c.error : search.state === "ready" ? (search.total ? c.results(search.total) : c.nothing) : c.loading}
-        {search.state === "ready" && search.total ? <span className={styles.resultTip}>{c.hoverTip}</span> : null}
       </p>
-      {search.state === "error" ? <AtlasButton size="sm" onClick={search.retry}>{c.retry}</AtlasButton> : null}
+      {search.state === "error" ? <AtlasButton onClick={search.retry}>{c.retry}</AtlasButton> : null}
       <ul className={styles.results} data-transmog-results data-loading={search.state === "loading" || undefined} onKeyDown={listKeys}
         onMouseLeave={() => preview(null, 160)}>
         {search.items.map((item) => {
@@ -202,7 +202,7 @@ export function ItemPicker({ lang, slot, current, hidden, onPick, onPreview, onT
                 <span className={styles.resultIcon} aria-hidden="true">{item.iconName ? <TransmogIcon name={item.iconName} size={40} /> : null}</span>
                 <span className={styles.resultText}>
                   <span className={styles.resultName}>{item.name}</span>
-                  <span className={styles.resultMeta}>{[item.armor ? c.armor[item.armor] : null, item.itemCount > 1 ? c.shared(item.itemCount) : null].filter(Boolean).join(" · ") || c.qualities[item.quality]}</span>
+                  {armor === "all" && item.armor ? <span className={styles.resultMeta}>{c.armor[item.armor]}</span> : null}
                 </span>
                 {worn ? <span className={styles.wornTag}>{c.worn}</span> : null}
               </button>
@@ -211,7 +211,7 @@ export function ItemPicker({ lang, slot, current, hidden, onPick, onPreview, onT
         })}
         {search.cursor ? <li ref={sentinel} className={styles.sentinel} aria-hidden="true" /> : null}
       </ul>
-      {search.cursor ? <AtlasButton size="sm" variant="ghost" onClick={search.more} disabled={search.state === "loading"}>{c.more}</AtlasButton> : null}
+      {search.cursor ? <AtlasButton className={styles.more} onClick={search.more} disabled={search.state === "loading"}>{c.more}</AtlasButton> : null}
     </div>
   );
 }
@@ -224,7 +224,7 @@ export function SetPicker({ lang, wearing, onWear }: { lang: Lang; wearing: numb
   const sentinel = useLoadMore(search.more, Boolean(search.cursor));
   return (
     <div className={styles.pickerBody}>
-      <div className={styles.setFilters}>
+      <div className={styles.filters}>
         <label className={styles.searchLabel}>
           <span className={styles.visuallyHidden}>{c.searchSets}</span>
           <AtlasInput type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={c.searchSets} maxLength={80} enterKeyHint="search" />
@@ -239,9 +239,8 @@ export function SetPicker({ lang, wearing, onWear }: { lang: Lang; wearing: numb
       </div>
       <p className={styles.resultCount} aria-live="polite">
         {search.state === "error" ? c.error : search.state === "ready" ? (search.total ? c.setResults(search.total) : c.nothing) : c.loading}
-        <span className={styles.resultTip}>{c.wearHint}</span>
       </p>
-      {search.state === "error" ? <AtlasButton size="sm" onClick={search.retry}>{c.retry}</AtlasButton> : null}
+      {search.state === "error" ? <AtlasButton onClick={search.retry}>{c.retry}</AtlasButton> : null}
       <ul className={styles.results} data-transmog-sets data-loading={search.state === "loading" || undefined} onKeyDown={listKeys}>
         {search.items.map((entry) => (
           <li key={entry.id}>
@@ -258,7 +257,7 @@ export function SetPicker({ lang, wearing, onWear }: { lang: Lang; wearing: numb
         ))}
         {search.cursor ? <li ref={sentinel} className={styles.sentinel} aria-hidden="true" /> : null}
       </ul>
-      {search.cursor ? <AtlasButton size="sm" variant="ghost" onClick={search.more} disabled={search.state === "loading"}>{c.more}</AtlasButton> : null}
+      {search.cursor ? <AtlasButton className={styles.more} onClick={search.more} disabled={search.state === "loading"}>{c.more}</AtlasButton> : null}
     </div>
   );
 }

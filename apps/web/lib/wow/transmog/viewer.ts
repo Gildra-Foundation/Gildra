@@ -43,7 +43,11 @@ export function setViewerItems(viewer: WowViewer | null, items: ViewerItem[]) {
 export function clearViewerSlots(viewer: WowViewer | null, slots: number[]) {
   const target = actor(viewer);
   if (!target?.clearSlots || slots.length === 0) return false;
-  target.clearSlots(slots.join(","));
+  // The viewer's clearSlots indexes its item list by the loop counter, so a list longer than what is
+  // worn (Reset) throws after the slot is already bare. One slot per call; the throw is harmless.
+  for (const slot of slots) {
+    try { target.clearSlots(String(slot)); } catch { /* slot is cleared before the viewer's bookkeeping fails */ }
+  }
   return true;
 }
 

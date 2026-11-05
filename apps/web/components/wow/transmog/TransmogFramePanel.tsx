@@ -1,8 +1,6 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { Download } from "lucide-react";
-import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasInput, AtlasRange, AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import { backgrounds, frameFormats, poses, type BackgroundDef, type FrameFormatId, type Pose } from "@/lib/wow/transmog/model";
 import { transmogTextLimit } from "@/lib/wow/transmog/state";
@@ -30,20 +28,17 @@ function swatchStyle(entry: BackgroundDef): CSSProperties {
   return {};
 }
 
-export function TransmogFramePanel({ lang, settings, onChange, onExport, exportState, exportMessage, canExport, maxScale }: {
+/** Frame of the exported picture; the one Download button lives in the studio's action bar. */
+export function TransmogFramePanel({ lang, settings, onChange, maxScale }: {
   lang: "ru" | "en";
   settings: FrameSettings;
   onChange: (patch: Partial<FrameSettings>) => void;
-  onExport: () => void;
-  exportState: "idle" | "busy";
-  exportMessage: string;
-  canExport: boolean;
   maxScale: 1 | 2;
 }) {
   const c = transmogCopy[lang];
   const format = frameFormats.find((entry) => entry.id === settings.format) ?? frameFormats[1];
   const scale = Math.min(settings.scale, maxScale);
-  const size = `${format.width * scale}×${format.height * scale}`;
+  const size = (factor: number) => `${format.width * factor}×${format.height * factor}`;
   return (
     <div className={styles.pickerBody} data-transmog-frame>
       <fieldset className={styles.group}>
@@ -53,8 +48,7 @@ export function TransmogFramePanel({ lang, settings, onChange, onExport, exportS
             <button key={entry.id} type="button" className={styles.formatButton} aria-pressed={settings.format === entry.id} onClick={() => onChange({ format: entry.id })} data-format={entry.id}
               style={{ "--format-w": `${Math.round(22 * Math.min(1, entry.width / entry.height))}px`, "--format-h": `${Math.round(22 * Math.min(1, entry.height / entry.width))}px` } as CSSProperties}>
               <span className={styles.formatShape} aria-hidden="true" />
-              <span>{c.formats[entry.id].label}</span>
-              <span className={styles.formatNote}>{c.formats[entry.id].note}</span>
+              <span>{c.formats[entry.id]}</span>
             </button>
           ))}
         </div>
@@ -96,22 +90,19 @@ export function TransmogFramePanel({ lang, settings, onChange, onExport, exportS
           <span>{c.mark}</span>
         </label>
       </fieldset>
-      <div className={styles.exportRow}>
-        <label><span className={styles.visuallyHidden}>{c.scale}</span>
+      <fieldset className={styles.group}>
+        <legend className={styles.groupLabel}>{c.file}</legend>
+        <div className={styles.twoColumns}>
           <AtlasSelect value={scale} onChange={(event) => onChange({ scale: Number(event.target.value) as 1 | 2 })} aria-label={c.scale}>
-            <option value={1}>1×</option>
-            {maxScale > 1 ? <option value={2}>2×</option> : null}
-          </AtlasSelect></label>
-        <label><span className={styles.visuallyHidden}>{c.fileType}</span>
+            <option value={1}>{size(1)}</option>
+            {maxScale > 1 ? <option value={2}>{size(2)}</option> : null}
+          </AtlasSelect>
           <AtlasSelect value={settings.type} onChange={(event) => onChange({ type: event.target.value as FrameSettings["type"] })} aria-label={c.fileType}>
             <option value="image/png">PNG</option>
             <option value="image/webp">WebP</option>
-          </AtlasSelect></label>
-        <AtlasButton variant="primary" icon={<Download aria-hidden />} onClick={onExport} disabled={!canExport || exportState === "busy"} data-transmog-export>
-          {exportState === "busy" ? c.exporting : <span className={styles.exportLabel}><span>{c.download(settings.type === "image/webp" ? "WebP" : "PNG")}</span><small>{size}</small></span>}
-        </AtlasButton>
-      </div>
-      <p className={styles.hint} aria-live="polite" data-export-message>{exportMessage || c.exportNote}</p>
+          </AtlasSelect>
+        </div>
+      </fieldset>
     </div>
   );
 }
