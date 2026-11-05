@@ -1,5 +1,9 @@
 # Gildra — правила дизайна
 
+> **Эталон зафиксирован 5 ноября 2026:** `/wow/mythic-plus`, `/wow/mythic-plus/meta`, `/wow/raids` —
+> [docs/design/reference/README.md](docs/design/reference/README.md) (токены, анатомия, код, снимки, `npm run design:lock`).
+> Он главнее всего ниже и скилла; вид этих страниц меняется только по решению владельца.
+>
 > **Источник правды по дизайну с 27 октября 2026 — скилл `gildra-wow-material-design`**
 > (`~/.claude/skills/gildra-wow-material-design/`, он же в `~/.codex/skills/`): единый стиль «материальный атлас»
 > для всего сайта, анатомии страниц, правила текста (§8.1), эталонные скриншоты. Растровые ассеты — скилл

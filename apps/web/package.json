@@ -96,6 +96,7 @@
     "audit:wow:provenance": "node scripts/backfill-wow-manifest-provenance.mjs",
     "generate:api": "openapi-typescript ../../backend/api/openapi.yaml -o lib/api/schema.d.ts",
     "design:capture": "node scripts/capture-design.mjs",
+    "design:lock": "node scripts/design-lock.cjs",
     "design:compare": "node scripts/compare-design.mjs",
     "visual:diff": "node scripts/visual-diff.mjs",
     "qa:a11y": "node scripts/qa-a11y.mjs",

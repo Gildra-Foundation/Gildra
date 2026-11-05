@@ -14,6 +14,12 @@ export const dungeonArtDirections: Record<DungeonSlug, { accent: string; glow: s
 export function dungeonMapFrame(slug: DungeonSlug, kind: "mdt" | "route", floor: number) {
   return `/assets/wow/mythic/frames/${slug}-${kind}-${floor}.svg`;
 }
+/** Full-size scene for the hub card: the image optimizer serves the width each
+ * screen needs, so 2× displays get a sharp picture (the 768 file is too small). */
+export function dungeonCardScene(slug: DungeonSlug) {
+  if (slug === "ruby-life-pools") return "/assets/wow/mythic/ruby-sanctuary/sanctuary.webp";
+  return `/assets/wow/mythic/dungeon-scenes/${slug}/scene.webp`;
+}
 export function dungeonBackdropSmall(slug: DungeonSlug) {
   if (slug === "ruby-life-pools") return "/assets/wow/mythic/ruby-sanctuary/sanctuary-768.webp";
   return `/assets/wow/mythic/dungeon-scenes/${slug}/scene-768.webp`;

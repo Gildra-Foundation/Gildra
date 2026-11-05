@@ -56,6 +56,7 @@ export const raidHubEntries: RaidHubEntry[] = [
     section: "current",
     names: localizedIdentity(current.names, current.canonicalSlug),
     descriptions: localizedIdentity(current.descriptions, current.canonicalSlug),
+    location: { en: "The Coiled Isle", ru: "Извилистый остров" },
     artwork: "/assets/wow/raids/hub/venomous-abyss.webp",
     accent: "#8bbd89",
     bosses: currentBosses.map((boss) => ({ slug: boss.canonicalSlug, names: localizedIdentity(boss.names, boss.canonicalSlug) })),

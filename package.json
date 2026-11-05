@@ -112,6 +112,7 @@
     "audit:wow:provenance": "npm run audit:wow:provenance -w @gildra/web --",
     "generate:api": "npm run generate:api -w @gildra/web --",
     "design:capture": "npm run design:capture -w @gildra/web --",
+    "design:lock": "npm run design:lock -w @gildra/web --",
     "design:compare": "npm run design:compare -w @gildra/web --",
     "visual:diff": "npm run visual:diff -w @gildra/web --",
     "qa:a11y": "npm run qa:a11y -w @gildra/web --",

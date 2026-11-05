@@ -69,6 +69,10 @@ economy (model/effort, quiet builds, reading map, brief template):
 
 ## Hard design rules
 
+- **Fixed reference (5 Nov 2026): `/wow/mythic-plus`, `/wow/mythic-plus/meta`, `/wow/raids`** —
+  [docs/design/reference/README.md](docs/design/reference/README.md) is the first read for any UI task.
+  Do not restyle them; other pages follow them. Shared UI changes must pass
+  `npm run design:lock -- --base <candidate>`; re-capturing the reference is the owner's call.
 - Different backgrounds are non-negotiable: cinematic artwork hero, solid
   `--bg` data body. No full-page fixed artwork.
 - Honest UI only: no `href="#"`; unimplemented things use `.soon`,

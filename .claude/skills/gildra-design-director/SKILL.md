@@ -11,7 +11,8 @@ the values are. Do not duplicate the contract here.
 
 ## Workflow
 
-1. **Read the contract.** Read root `design.md` in full. If the task touches
+1. **Read the contract.** Read `docs/design/reference/README.md` (the fixed
+   reference: Mythic+, meta, raids — never restyle them) and root `design.md` in full. If the task touches
    areas where the contract and code disagree, resolve the intent explicitly —
    never silently pick one side (source-of-truth order is defined there, §C).
 

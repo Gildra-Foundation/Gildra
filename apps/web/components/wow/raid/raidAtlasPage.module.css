@@ -75,7 +75,10 @@
 .actions .heroAction :global(.ui-button__label) { min-width: 0; }
 .actions .heroAction :global(.ui-button__icon) { width: 20px; height: 20px; flex: 0 0 20px; }
 .actions .heroAction svg { width: 20px; height: 20px; }
-.actions .heroAction:global(.ui-button):focus-visible { outline: 2px solid var(--atlas-text-strong); outline-offset: 5px; }
+/* Focus follows the painted silhouette: a light rim through drop-shadow on the
+   art layer; the transparent outline turns into the system ring in forced colors. */
+.actions .heroAction:global(.ui-button):focus-visible { outline: 2px solid transparent; outline-offset: 5px; }
+.actions .heroAction:global(.ui-button):focus-visible::before { filter: contrast(.88) saturate(.84) brightness(1) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 6px var(--atlas-accent)); }
 @media (hover: hover) and (pointer: fine) {
   .actions .heroAction:global(.ui-button):hover { color: var(--atlas-text-strong); }
   .heroAction:hover::after { opacity: 1; }

@@ -3,7 +3,7 @@ const en = {
   dateLocale: "en-GB",
   breadcrumb: "Meta",
   lede: "Which specializations make it into the top 2000 Mythic+ keys of the week, by role, and how the picture moves week to week.",
-  season: (number: number | null, label: string) => number ? `Midnight Season ${number}` : label,
+  season: (number: number | null, label: string) => number ? `Midnight · Season ${number}` : label,
   week: (week: number) => `Week ${week}`,
   weekShort: (week: number) => `W${week}`,
   statsLabel: "This week in the top keys",

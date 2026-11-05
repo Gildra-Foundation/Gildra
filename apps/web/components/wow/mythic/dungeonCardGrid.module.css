@@ -132,6 +132,10 @@
 .source { display: inline-flex; align-self: center; align-items: center; justify-content: center; gap: var(--atlas-space-2); min-height: 44px; color: var(--atlas-text); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); text-decoration: none; }
 .source svg { flex: none; width: 16px; height: 16px; }
 .hubCard a:focus-visible { outline: 2px solid var(--mythic-card-light); outline-offset: 3px; }
+/* Focus follows the painted silhouette: a light rim through drop-shadow on the
+   art layer; the transparent outline turns into the system ring in forced colors. */
+.hubCard a.openRoute:focus-visible { outline-color: transparent; }
+.hubCard a.openRoute:focus-visible::before { filter: contrast(.88) saturate(.84) brightness(1) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 6px var(--mythic-card-light)); }
 .hubCard a { scroll-margin-block: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
 .openRoute:focus-visible::after { animation: materialPulse 900ms var(--atlas-ease) both; }
 .hubCard:focus-within .sceneImage { transform: scale(1.018); }

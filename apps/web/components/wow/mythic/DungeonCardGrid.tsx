@@ -2,7 +2,7 @@ import { wowSourceName } from "@/lib/wow/sourceLocale";
 import { Clock3, Skull } from "lucide-react";
 import { AtlasGrid } from "@/components/atlas";
 import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
-import { dungeonBackdropSmall } from "@/lib/wow/dungeonArtDirection";
+import { dungeonCardScene } from "@/lib/wow/dungeonArtDirection";
 import { mythicHubThemes, mythicHubMaterialCopy } from "./hub/mythicHubThemes";
 import { PaintedCard } from "./PaintedCard";
 import { dungeonLocationEn, mythicAtlasCopy } from "./mythicAtlasCopy";
@@ -24,7 +24,7 @@ export function DungeonCardGrid({ locale, hrefBase, priority = true }: { locale:
           kit={slug}
           id={`mythic-hub-${slug}`}
           href={`${prefix}${hrefBase}/${slug}`}
-          scene={dungeonBackdropSmall(slug)}
+          scene={dungeonCardScene(slug)}
           priority={priority && index < 2}
           location={locale === "ru" ? dungeon.location : dungeonLocationEn[dungeon.location]}
           title={name}

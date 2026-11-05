@@ -97,7 +97,10 @@
 .assetButton :global(.ui-button__label), .assetButton :global(.ui-button__icon) { position: relative; z-index: 1; min-width: 0; }
 .assetButton :global(.ui-button__label) { white-space: normal; text-align: center; }
 .assetButton :global(.ui-button__icon), .assetButton svg { flex: none; width: 18px; height: 18px; }
-.page .assetButton:global(.ui-button):focus-visible { outline: 2px solid var(--atlas-text-strong); outline-offset: 4px; }
+/* Focus follows the painted silhouette: a light rim through drop-shadow on the
+   art layer; the transparent outline turns into the system ring in forced colors. */
+.page .assetButton:global(.ui-button):focus-visible { outline: 2px solid transparent; outline-offset: 4px; }
+.page .assetButton:global(.ui-button):focus-visible::before { filter: contrast(.88) saturate(.84) brightness(1) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 6px var(--atlas-accent)); }
 .page .assetButton:global(.ui-button):active { transform: translateY(1px) scale(.98); }
 @media (hover: hover) and (pointer: fine) {
   .page .assetButton:global(.ui-button):hover { transform: translateY(-2px); }

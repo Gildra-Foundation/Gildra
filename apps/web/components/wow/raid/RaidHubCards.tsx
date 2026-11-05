@@ -26,7 +26,8 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
       const featured = section === "current";
       const theme = raidCardThemes[raid.material];
       const description = featured ? raid.descriptions?.[locale] : undefined;
-      const sizes = featured ? "(max-width: 1100px) 100vw, 50vw" : "(max-width: 700px) 100vw, 50vw";
+      // Current-raid scenes are cropped to cover their window, so they need more than half the viewport.
+      const sizes = featured ? "(max-width: 1100px) 100vw, 60vw" : "(max-width: 700px) 100vw, 50vw";
       return <Card
         key={raid.slug}
         padding="none"
@@ -73,9 +74,11 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
             <div className={styles.encounters}>
               <p className={styles.bossesLabel}>{copy.bossesLabel}</p>
               <ol className={styles.bosses} aria-label={copy.bossesLabel}>
-                {raid.bosses.map((boss) => <li key={boss.slug}>
+                {raid.bosses.map((boss, index) => <li key={boss.slug}>
                   <Link href={boss.anchor ? `${href}#${boss.anchor}` : `${href}/${boss.slug}`} data-hub-boss-link={`${raid.slug}/${boss.slug}`}>
-                    {boss.artwork ? <Image src={boss.artwork} alt="" width={32} height={32} className={styles.portrait} /> : null}
+                    {boss.artwork
+                      ? <Image src={boss.artwork} alt="" width={32} height={32} className={styles.portrait} />
+                      : <span className={`${styles.portrait} ${styles.order}`} aria-hidden="true">{index + 1}</span>}
                     <span>{boss.names[locale]}</span>
                   </Link>
                 </li>)}
