@@ -311,7 +311,7 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
   return <section className={styles.shell} aria-labelledby={shared ? undefined : "live-talents-heading"} data-talent-editor={shared ? "shared" : "character"} data-read-only={readOnly || undefined}>
 
     {!shared && <header className={styles.header}>
-      <div><small>{talentText(lang, "ТАЛАНТЫ · ")}{data.specName}</small><h2 id="live-talents-heading">{talentText(lang, "Ваш билд и его сила")}</h2><p>{talentText(lang, "Меняйте таланты и сравнивайте результат с текущим билдом персонажа.")}</p></div>
+      <div><h2 id="live-talents-heading">{talentText(lang, "Ваш билд и его сила")}</h2></div>
       <div className={styles.headerActions} data-folio-tools><Link href={`${localePrefix}/wow/rotation/${specSlug}?character=${encodeURIComponent(characterSlug)}&mode=${dataMode}`}><Swords /> {talentText(lang, " Настроить ротацию")}</Link><button type="button" onClick={() => { setSelection({ ranks: new Map(baseline.ranks), choices: new Map(baseline.choices), origin: baseline.origin }); setAutomaticRanks(new Map()); setNotice(""); }}><RotateCcw /> {talentText(lang, " Вернуть исходный билд")}</button></div>
     </header>}
     {!readOnly && <div className={styles.modeChooser}>
