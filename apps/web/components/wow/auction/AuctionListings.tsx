@@ -1,10 +1,10 @@
 "use client";
-import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { MaterialButton } from "@/components/wow/shared/materialAtlas";
 import { type AuctionResult, type AuctionQuery } from "@/lib/wow/auctionBrowser";
 import { auctionCopy } from "./auctionCopy";
 import { AuctionItem } from "./AuctionItem";
 import { AuctionMoney as Money } from "./AuctionMoney";
-import { auctionButtonStyle } from "./auctionKit";
+import { auctionKit } from "./auctionKit";
 import styles from "./auction.module.css";
 export function AuctionListings({ data, lang, onPage, query }: { data: AuctionResult; lang: "ru" | "en"; onPage: (page: number) => void; query: Pick<AuctionQuery, "region" | "realm"> }) {
   const c = auctionCopy[lang];
@@ -25,7 +25,6 @@ export function AuctionListings({ data, lang, onPage, query }: { data: AuctionRe
           <td className={styles.itemCell}><AuctionItem row={row} lang={lang} region={query.region} realm={query.realm} market={data.market} />
             <div className={styles.itemMeta}>
             {!row.name ? <span className={styles.secondary}>{c.metadata}</span> : null}
-            <span className={styles.secondary}>ID {row.itemId}{row.petSpeciesId ? ` · ${c.pet} ${row.petSpeciesId}` : ""}</span>
             <details className={styles.details}><summary>{c.details}</summary><div>
               <span>#{row.id}</span>
               {row.timeLeft ? <span>{c.time}: {c.times[row.timeLeft as keyof typeof c.times] ?? row.timeLeft}</span> : null}
@@ -43,9 +42,9 @@ export function AuctionListings({ data, lang, onPage, query }: { data: AuctionRe
       </table>
     </div>}
     {data.pages > 1 ? <nav className={styles.pagination} aria-label={c.page}>
-      <span className={styles.pageSlot} style={auctionButtonStyle()}><AtlasButton className={styles.assetButton} disabled={data.page <= 1} onClick={() => onPage(data.page - 1)}>{c.prev}</AtlasButton></span>
+      <MaterialButton kit={auctionKit} className={styles.pageButton} disabled={data.page <= 1} onClick={() => onPage(data.page - 1)}>{c.prev}</MaterialButton>
       <span className={styles.pageCount}>{c.page} {data.page.toLocaleString(lang)} {c.of} {data.pages.toLocaleString(lang)}</span>
-      <span className={styles.pageSlot} style={auctionButtonStyle()}><AtlasButton className={styles.assetButton} disabled={data.page >= data.pages} onClick={() => onPage(data.page + 1)}>{c.next}</AtlasButton></span>
+      <MaterialButton kit={auctionKit} className={styles.pageButton} disabled={data.page >= data.pages} onClick={() => onPage(data.page + 1)}>{c.next}</MaterialButton>
     </nav> : null}
   </section>;
 }

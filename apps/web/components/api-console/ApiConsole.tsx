@@ -4,15 +4,14 @@ import { useConsoleText } from "./consoleLocale";
 import { type FormEvent, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import {
-  Activity, BarChart3, ChevronRight, CircleAlert, Database, Eye, EyeOff, RefreshCw, Server, ShieldCheck, Swords,
+  ChevronRight, CircleAlert, Eye, EyeOff, RefreshCw, ShieldCheck, Swords,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { requestJSON } from "./client";
 import type { PanelUser } from "./types";
 
@@ -36,7 +35,8 @@ export function ApiConsole({ consolePath, returnTo }: { consolePath: string[]; r
       return;
     }
     setChecking(true);
-    requestJSON<{ user: PanelUser | null }>("/api/api-console/session")
+    // /api-console/session reaches Next.js on both hosts (see sessionRoute.ts); 401 = guest.
+    requestJSON<{ user: PanelUser | null }>("/api-console/session", { retries: 0 })
       .then((result) => setUser(result.user))
       .catch(() => setUser(null))
       .finally(() => setChecking(false));
@@ -88,9 +88,6 @@ function LoginScreen({ onLogin, returnTo }: { onLogin: (user: PanelUser) => void
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [ready, setReady] = useState<boolean | null>(null);
-
-  useEffect(() => { fetch("/readyz").then((r) => setReady(r.ok)).catch(() => setReady(false)); }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -115,9 +112,9 @@ function LoginScreen({ onLogin, returnTo }: { onLogin: (user: PanelUser) => void
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(201,162,79,.12),transparent_34%),linear-gradient(rgba(255,255,255,.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.015)_1px,transparent_1px)] bg-[size:auto,42px_42px,42px_42px]" />
       <header className="relative flex h-20 items-center justify-between border-b border-[#222735] px-5 sm:px-10"><BrandMark /><div className="hidden items-center gap-2 text-[10px] uppercase tracking-[.16em] text-[#778198] sm:flex"><ShieldCheck className="size-4 text-[#9b8349]" />{ct("Защищённая зона")}</div></header>
       <section className="relative grid flex-1 place-items-center px-4 py-12">
-        <div className="grid w-full max-w-[1060px] items-center gap-12 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-16">
+        <div className="grid w-full max-w-[540px]">
           <div className="mx-auto w-full max-w-[540px]">
-          <div className="mb-7 text-center lg:text-left"><p className="mb-2 text-[10px] uppercase tracking-[.24em] text-[#9c834b]">{ct("Управление данными и API")}</p><h1 className="font-[family-name:var(--display)] text-3xl font-semibold tracking-tight sm:text-4xl">{ct("Вход в панель")}</h1><p className="mt-2 text-sm text-[#7f899d]">{ct("Используйте аккаунт администратора Gildra")}</p></div>
+          <div className="mb-7 text-center"><p className="mb-2 text-[10px] uppercase tracking-[.24em] text-[#9c834b]">{ct("Управление данными и API")}</p><h1 className="font-[family-name:var(--display)] text-3xl font-semibold tracking-tight sm:text-4xl">{ct("Вход в панель")}</h1><p className="mt-2 text-sm text-[#7f899d]">{ct("Используйте аккаунт администратора Gildra")}</p></div>
           <Card className="border-[#32313a] bg-[#10131b]/95 shadow-[0_30px_90px_rgba(0,0,0,.55)] [clip-path:polygon(12px_0,100%_0,100%_calc(100%-12px),calc(100%-12px)_100%,0_100%,0_12px)]">
             <CardContent className="p-6 sm:p-8">
               {error && <Alert variant="destructive" className="mb-6 rounded-sm border-[#693b3e] bg-[#2a1518] text-[#ef9a9d]"><CircleAlert className="size-4" /><AlertTitle>{ct("Вход не выполнен")}</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
@@ -131,15 +128,8 @@ function LoginScreen({ onLogin, returnTo }: { onLogin: (user: PanelUser) => void
               </form>
             </CardContent>
           </Card>
-          <div className="mt-6 grid grid-cols-2 gap-px border border-[#242a37] bg-[#242a37] sm:grid-cols-4 lg:hidden">
-            {["API", "Postgres", "ClickHouse", "Redis"].map((name) => <div key={name} className="flex items-center justify-center gap-2 bg-[#0d1017] px-2 py-3 text-[10px] uppercase tracking-[.11em] text-[#778196]"><span className={cn("size-1.5 rounded-full", ready === false ? "bg-[#d95c55]" : ready === true ? "bg-[#58ad67] shadow-[0_0_8px_#58ad67]" : "bg-[#596275]")} />{name}</div>)}
+          <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-[#667086]"><ShieldCheck className="size-3.5 text-[#9b8349]" />{ct("Сессия хранится только в защищённой cookie")}</div>
           </div>
-          <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-[#667086] lg:justify-start"><ShieldCheck className="size-3.5 text-[#9b8349]" />{ct("Сессия хранится только в защищённой cookie")}</div>
-          </div>
-          <Card className="hidden rounded-sm border-[#343a47] bg-[#0e121a]/90 shadow-[0_28px_80px_rgba(0,0,0,.45)] lg:block [clip-path:polygon(12px_0,calc(100%-12px)_0,100%_12px,100%_calc(100%-12px),calc(100%-12px)_100%,12px_100%,0_calc(100%-12px),0_12px)]">
-            <CardHeader className="border-b border-[#303645] px-6 py-5"><CardTitle className="text-center font-[family-name:var(--display)] text-xs uppercase tracking-[.16em] text-[#d5b25d]">{ct("Состояние системы")}</CardTitle></CardHeader>
-            <CardContent className="p-6">{[["API", Activity], ["PostgreSQL", Database], ["ClickHouse", BarChart3], ["Redis", Server]].map(([name, StatusIcon]) => { const IconComponent = StatusIcon as typeof Activity; return <div key={name as string} className="flex items-center gap-4 border-b border-[#2a303d] py-5 last:border-b-0"><IconComponent className="size-5 text-[#aa8c49]" strokeWidth={1.5} /><span className="flex-1 text-sm text-[#9da6b7]">{name as string}</span><span className={cn("size-2 rounded-full", ready === false ? "bg-[#d95c55]" : ready === true ? "bg-[#58ad67] shadow-[0_0_8px_#58ad67]" : "bg-[#596275]")} /></div>; })}</CardContent>
-          </Card>
         </div>
       </section>
       <footer className="relative border-t border-[#1d222e] px-5 py-5 text-center text-[10px] uppercase tracking-[.15em] text-[#515b6e]">Gildra Foundation · API Console</footer>

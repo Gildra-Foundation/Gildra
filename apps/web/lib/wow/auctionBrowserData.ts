@@ -2,7 +2,7 @@ import "server-only";
 import { auctionItemIcon, parseAuctionItemDetails, type AuctionItemDetails } from "./auctionItemDetails";
 import { resolveExactAuctionTooltip } from "./auctionExactTooltip";
 import { auctionVariantKey } from "./auctionItemVariant";
-import { auctionPage, parseAuctionListings, validAuctionRealm, type AuctionListing, type AuctionQuery, type AuctionRegion, type AuctionResult } from "./auctionBrowser";
+import { auctionPage, parseAuctionListings, serviceAuctionRealm, validAuctionRealm, type AuctionListing, type AuctionQuery, type AuctionRegion, type AuctionResult } from "./auctionBrowser";
 
 // All caches are process-local, bounded, and share in-flight requests. No user token is used.
 type Cached = { value?: unknown; expires: number; pending?: Promise<unknown>; error?: Error };
@@ -66,8 +66,8 @@ export async function auctionRealms(region: AuctionRegion, lang: "ru" | "en") {
   return memo(`realms:${region}:${lang}`, 24 * 60 * 60_000, async () => {
     const payload = await readJSON(await blizzard(region, "/data/wow/realm/index", "dynamic", new URLSearchParams({ locale: lang === "ru" ? "ru_RU" : "en_US" }))) as { realms?: { slug: string; name: string | null }[] };
     if (!Array.isArray(payload.realms)) throw new Error("upstream_unavailable");
-    // Blizzard includes auxiliary realms with null names; they are not public choices.
-    const realms = payload.realms.filter((r): r is { slug: string; name: string } => typeof r?.slug === "string" && validAuctionRealm(r.slug) && typeof r.name === "string" && r.name.trim().length > 0);
+    // Blizzard includes auxiliary realms with null names and internal realms; they are not public choices.
+    const realms = payload.realms.filter((r): r is { slug: string; name: string } => typeof r?.slug === "string" && validAuctionRealm(r.slug) && !serviceAuctionRealm(r.slug) && typeof r.name === "string" && r.name.trim().length > 0);
     if (!realms.length) throw new Error("upstream_unavailable");
     return realms.map(({ slug, name }) => ({ slug, name })).sort((a, b) => a.name.localeCompare(b.name, lang));
   });

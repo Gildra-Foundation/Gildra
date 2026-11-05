@@ -5,6 +5,7 @@ import { Package } from "lucide-react";
 import { AtlasTooltip } from "@gildra/atlas-ui/AtlasTooltip";
 import { AtlasDialog } from "@gildra/atlas-ui/AtlasDialog";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { materialStyles } from "@/components/wow/shared/materialAtlas";
 import type { AuctionResult, AuctionRegion } from "@/lib/wow/auctionBrowser";
 import type { ExactAuctionTooltip } from "@/lib/wow/auctionExactTooltip";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
@@ -92,7 +93,7 @@ export function AuctionItem({ row, lang, region, realm, market }: { row: Row; la
   return <>
     <AtlasTooltip content={open ? null : <div className={styles.itemPreview} style={qualityStyle}>{facts}<p className={styles.secondary}>{c.openItem}</p></div>}>
       <button type="button" className={styles.itemTrigger} style={qualityStyle} aria-haspopup="dialog" aria-expanded={open} aria-label={`${name}. ${c.openItem}`} onPointerEnter={() => void load()} onFocus={() => void load()} onClick={() => { void load(); setOpen(true); }}>
-        <span className={styles.itemIcon} aria-hidden="true">{row.item?.iconUrl && failedUrl !== row.item.iconUrl ? <Image src={row.item.iconUrl} alt="" width={40} height={40} unoptimized onError={() => setFailedUrl(row.item?.iconUrl ?? null)} /> : <Package size={22} />}</span>
+        <span className={materialStyles.iconFrame} aria-hidden="true">{row.item?.iconUrl && failedUrl !== row.item.iconUrl ? <Image src={row.item.iconUrl} alt="" width={40} height={40} unoptimized onError={() => setFailedUrl(row.item?.iconUrl ?? null)} /> : <Package size={22} />}</span>
         <span>{name}{exact ? <small className={styles.itemLevel}>{c.itemLevel} {exact.itemLevel}</small> : null}</span>
       </button>
     </AtlasTooltip>

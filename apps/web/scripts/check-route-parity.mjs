@@ -11,7 +11,6 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
 const app = path.join(root, "app");
 const site = path.join(app, "(site)");
 const englishOnly = {
-  "api-console": "developer console of api.gildra.net",
   blueprints: "design archive",
   dev: "development galleries",
 };
@@ -34,6 +33,8 @@ for (const { rel, file } of walk(app)) {
     if (!/["'`](ru|ru_RU)["'`]|lang="ru"|locale="ru"|\/ru\b|\.ru\./.test(source)) problems.push(`app/${rel}/${file} does not render the Russian page (no "ru" locale)`);
     continue;
   }
+  // The API console has its own root layout (no site chrome) and is English-only.
+  if (rel.startsWith("(console)/")) continue;
   if (rel !== "(site)" && !rel.startsWith("(site)/")) {
     // Outside the two trees only route handlers live (api, sitemaps, indexnow …).
     problems.push(`app/${rel}/${file} is outside app/(site) and app/ru — pages belong to one of the two root layouts`);

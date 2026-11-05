@@ -2,7 +2,6 @@ import { connection } from "next/server";
 import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/blocks/types";
 import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components/atlas";
 import { TierSection, type TierSpecNames } from "@/components/TierSection";
-import { TierBoard } from "./TierBoard";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
 import { getTierSourceSlices } from "@/lib/platform/games/tierSources";
 import type { TierSourceSlices } from "./tierSourceKeys";
@@ -40,7 +39,6 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorks
     : [
         { value: new Set(Object.values(mythic ?? {}).flat().map((entry) => `${entry.classSlug}:${entry.specSlug}`)).size, label: copy.statSpecs },
         { value: new Set((data.tierContexts ?? []).filter((item) => item.activity === "mythic_plus" && item.selectionType === "dungeon").map((item) => item.selectionId)).size, label: copy.statDungeons },
-        { value: data.sources.filter((source) => source.status === "live").length, label: copy.statSources },
       ].filter((stat) => stat.value > 0);
 
   return (
@@ -56,7 +54,6 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorks
       />
       {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
       <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} specNames={specNames[lang]} sourceSlices={sample ? {} : data.sourceSlices} />
-      {sample ? <TierBoard lang={lang} roles={sampleRoles} specNames={specNames[lang]} sample /> : mythic ? <TierBoard lang={lang} roles={mythic} specNames={specNames[lang]} sample={false} /> : null}
     </AtlasFrame>
   );
 }

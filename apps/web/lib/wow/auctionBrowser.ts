@@ -14,6 +14,13 @@ export type AuctionResult = {
   market: AuctionQuery["market"]; searchTruncated: boolean;
 };
 export const validAuctionRealm = (value: string) => /^[\p{L}\p{N}][\p{L}\p{N}\p{M}-]{0,79}$/u.test(value);
+/**
+ * Blizzard's realm index also lists internal realms nobody can play on: instance and account realms
+ * ("EU1A1-INST", "US3A Account Realm"), partner and auxiliary realms ("EU4 100 Partner"), the realm
+ * database ("RDB EU", "zzz_RDB EU"), arena-pass and GM-support realms. Their slugs are the same in every locale.
+ */
+export const serviceAuctionRealm = (slug: string) =>
+  /^(?:eu|us|kr|tw|au|cn)\d/.test(slug) || /^(?:zzz)?rdb-/.test(slug) || /^gmsupport-/.test(slug) || /arena-pass/.test(slug);
 const positive = (n: unknown): n is number => Number.isSafeInteger(n) && Number(n) > 0;
 export function auctionQuery(params: URLSearchParams): AuctionQuery {
   const region = params.get("region") ?? "eu", lang = params.get("lang") ?? "en";
