@@ -11,10 +11,12 @@ import styles from "@/components/blocks/wow/tierWorkspace/tierWorkspace.module.c
 import { lessMotion } from "@/lib/client/motionPreference";
 import { tierSectionCopy } from "./tierSectionCopy";
 import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
-import { SOURCE_META, SourceBadge, SourceCompare, useSourceRoles } from "@/components/blocks/wow/tierWorkspace/TierSources";
+import { SOURCE_META, SourceAbout, SourceCompare, useSourceRoles } from "@/components/blocks/wow/tierWorkspace/TierSources";
 import { DEFAULT_SOURCE_DIFFICULTY, SOURCE_DIFFICULTIES, TIER_SOURCES, isTierSource, type ExternalTierSource, type TierSourceId, type TierSourceSlices } from "@/components/blocks/wow/tierWorkspace/tierSourceKeys";
 import { tierSourcesCopy } from "@/components/blocks/wow/tierWorkspace/tierSourcesCopy";
-import { MaterialLinkButton, MaterialPlaque, type MaterialKit } from "@/components/wow/shared/materialAtlas";
+import { MaterialButton, MaterialLinkButton, MaterialPlaque, type MaterialKit } from "@/components/wow/shared/materialAtlas";
+import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
+import { dungeonArtDirections } from "@/lib/wow/dungeonArtDirection";
 
 const CLASS_KEYS: Record<string, string> = {
   "death-knight": "dk", "demon-hunter": "dh", evoker: "evoker", mage: "mage",
@@ -25,9 +27,14 @@ const ROLES = ["dps", "healer", "tank"] as const;
 const ACTIVITIES = ["mythic_plus", "raid"] as const;
 const KEY_RANGES: KeyRange[] = ["all", "high", "middle", "low"];
 const EMPTY_ROLES: Record<TierRole, TierEntry[]> = { dps: [], healer: [], tank: [] };
-/** Painted kits (gildra-wow-material-design): the ranking plaque wears Voidscar like the Mythic+ meta table, the spec card King's Rest. */
+/** Painted kits (gildra-wow-material-design), as on the Mythic+ meta: the ranking frame and "About the data" wear Voidscar,
+ *  the filters King's Rest, the spec card the kit of its role (tank, healer, damage). */
 const TABLE_KIT: MaterialKit = "voidscar-arena";
-const CARD_KIT: MaterialKit = "kings-rest";
+const FILTER_KIT: MaterialKit = "kings-rest";
+const ABOUT_BUTTON_KIT: MaterialKit = "the-blinding-vale";
+const ROLE_KITS: Record<string, MaterialKit> = { tank: "den-of-nalorakk", healer: "the-blinding-vale", dps: "ruby-life-pools" };
+/** Tier → the dungeon kit whose pull marker it wears; its accent colours the tier band. */
+const TIER_KITS: Record<string, MaterialKit> = { s: "ruby-life-pools", a: "kings-rest", b: "altar-of-fangs", c: "den-of-nalorakk", d: "voidscar-arena" };
 
 function classKey(slug: string) { return CLASS_KEYS[slug] ?? slug; }
 /** Class colour token — used only on spec identity (icon chip, class name). */
@@ -40,6 +47,7 @@ function tierClass(tier: string) {
   const letter = tier.charAt(0).toLowerCase();
   return ["s", "a", "b", "c", "d"].includes(letter) ? letter : "b";
 }
+function tierStyle(tier: string) { return { "--tier-accent": dungeonArtDirections[TIER_KITS[tierClass(tier)]].accent } as CSSProperties; }
 const isExternal = (href?: string) => Boolean(href && /^https?:\/\//.test(href));
 
 function compact(value: number | undefined, lang: Lang) {
@@ -57,7 +65,7 @@ function Trend({ value, copy }: { value?: number; copy: TierCopy }) {
 
 /** The tier as a painted medallion (the pull marker of a dungeon kit) with the letter as live text. */
 function TierMark({ tier, copy, size = "md" }: { tier: string; copy: TierCopy; size?: "md" | "sm" }) {
-  return <span className={size === "sm" ? `${styles.tierMark} ${styles.tierMarkSm}` : styles.tierMark} data-tier={tierClass(tier)}><span className={styles.srOnly}>{copy.tier} </span><span className={styles.tierLetter}>{tier}</span></span>;
+  return <span className={size === "sm" ? `${styles.tierMark} ${styles.tierMarkSm}` : styles.tierMark} data-tier={tierClass(tier)} style={tierStyle(tier)}><span className={styles.srOnly}>{copy.tier} </span><span className={styles.tierLetter}>{tier}</span></span>;
 }
 
 /** Localized spec and class names by spec slug (built on the server from the talent spec themes). */
@@ -316,27 +324,17 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   const selectedGuide = selected?.guideUrl || (isExternal(selected?.sourceUrl) ? selected?.sourceUrl : undefined);
   const selectedGuideLabel = external ? sourceCopy.openOn(SOURCE_META[source as ExternalTierSource].site) : selected?.guideUrl ? copy.openGuide : copy.openSource;
   const selectedSpecPage = selected ? specHref(selected) : undefined;
+  const cardKit = ROLE_KITS[selected?.role ?? role] ?? ROLE_KITS.dps;
   const cardAction = selectedSpecPage
-    ? <MaterialLinkButton kit={CARD_KIT} fit="block" href={selectedSpecPage} variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{copy.specPage}</MaterialLinkButton>
-    : selectedGuide ? <MaterialLinkButton kit={CARD_KIT} fit="block" href={selectedGuide} external variant="primary" iconAfter={<ArrowUpRight aria-hidden="true" />}>{selectedGuideLabel}</MaterialLinkButton> : null;
+    ? <MaterialLinkButton kit={cardKit} fit="block" href={selectedSpecPage} variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{copy.specPage}</MaterialLinkButton>
+    : selectedGuide ? <MaterialLinkButton kit={cardKit} fit="block" href={selectedGuide} external variant="primary" iconAfter={<ArrowUpRight aria-hidden="true" />}>{selectedGuideLabel}</MaterialLinkButton> : null;
 
   const sourceLabel = (id: TierSourceId) => id === "gildra" ? "Gildra" : SOURCE_META[id].name;
   const activeTab = view === "compare" ? "compare" : source;
   const externalSource = external ? source as ExternalTierSource : null;
-  const badge = externalSource
-    ? <SourceBadge lang={lang} source={externalSource} activity={activity} role={role} difficulty={sourceDifficulty} updatedAt={sourceState?.data?.updatedAt} />
-    : null;
   const busy = isLoading || Boolean(sourceState?.loading);
-
-  const head = (
-    <div className={styles.resultsHead}>
-      <div className={styles.resultsCopy}>
-        <h2 id="tier-results-title" className={styles.resultsTitle}>{view === "compare" ? sourceCopy.compareTitle : activity === "mythic_plus" ? copy.resultsMythic : copy.resultsRaid}</h2>
-        <p className={styles.resultsMeta}>{external ? `${sourceLabel(source)} · ` : ""}{scopeName}{scopeDetail ? ` · ${scopeDetail}` : ""}{showRoleTabs ? "" : ` · ${copy.roles[role]}`}</p>
-      </div>
-      {busy ? <span className={styles.count} aria-live="polite">{copy.updating}</span> : null}
-    </div>
-  );
+  const resultsTitle = view === "compare" ? sourceCopy.compareTitle : activity === "mythic_plus" ? copy.resultsMythic : copy.resultsRaid;
+  const resultsMeta = `${external ? `${sourceLabel(source)} · ` : ""}${scopeName}${scopeDetail ? ` · ${scopeDetail}` : ""}${showRoleTabs ? "" : ` · ${copy.roles[role]}`}`;
 
   const select = (id: string, label: string, value: string, onChange: (value: string) => void, options: ReactNode, disabled = false, grow = false) => (
     <div className={grow ? `${styles.field} ${styles.fieldGrow}` : styles.field}>
@@ -348,71 +346,70 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     </div>
   );
 
-  /** Every filter in one row: mode, content, key range or difficulty, class and search. */
-  const controls = (
-    <div className={styles.controls} role="group" aria-label={copy.controlsLabel}>
-      {showModes ? (
-        <div className={`${styles.field} ${styles.fieldMode}`}>
-          <span className={styles.label} id="tier-mode-label">{copy.mode}</span>
-          <div className={styles.segmented} role="group" aria-labelledby="tier-mode-label">
-            {ACTIVITIES.map((value) => {
-              const off = value === "raid" && source === "mythicstats" && view === "list";
-              return (
-                <button type="button" key={value} className={styles.segment} aria-pressed={activity === value} disabled={off} title={off ? sourceCopy.mythicPlusOnly : undefined} onClick={() => switchActivity(value)}>
-                  {value === "mythic_plus" ? <Swords aria-hidden="true" /> : <Castle aria-hidden="true" />}{copy.modes[value]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-      {!sample && !external && view === "list" ? (
-        <>
-          {select("tier-content", copy.content, contextValue, chooseContext, contentOptions, !contexts.length, true)}
-          {activity === "mythic_plus"
-            ? select("tier-key", copy.keyRange, keyType, (value) => setKeyType(value as KeyRange), KEY_RANGES.map((value) => <option key={value} value={value}>{copy.keys[value]}</option>), !keyRangeEnabled)
-            : (
-              <div className={styles.field}>
-                <span className={styles.label} id="tier-difficulty-label">{copy.difficulty}</span>
-                <div className={styles.segmented} role="group" aria-labelledby="tier-difficulty-label">
-                  {raidDifficulties.map((value) => (
-                    <button type="button" key={value} className={styles.segment} aria-pressed={difficultyEnabled && difficulty === value} disabled={!difficultyEnabled} onClick={() => setDifficulty(value)}>{copy.difficulties[value] ?? value}</button>
-                  ))}
-                </div>
-              </div>
-            )}
-        </>
-      ) : null}
-      {(source === "ugg" || view === "compare") && activity === "raid"
-        ? select("tier-source-difficulty", copy.difficulty, sourceDifficulty, setSourceDifficulty, SOURCE_DIFFICULTIES.map((value) => <option key={value} value={value}>{value === "all" ? sourceCopy.allDifficulties : copy.difficulties[value]}</option>))
-        : null}
-      {view === "list" && classes.length > 1
-        ? select("tier-class", copy.classLabel, cls, setCls, <><option value="all">{copy.allClasses}</option>{classes.map(([slug, name]) => <option key={slug} value={slug}>{name}</option>)}</>, false, true)
-        : null}
-      {view === "list" ? (
-        <div className={`${styles.field} ${styles.fieldGrow}`}>
-          <label className={styles.label} htmlFor="tier-search">{copy.searchLabel}</label>
-          <span className={styles.searchShell}>
-            <Search aria-hidden="true" />
-            <input id="tier-search" type="search" className={styles.search} placeholder={copy.searchPlaceholder} value={q} onChange={(event) => setQ(event.target.value)} />
-          </span>
-        </div>
-      ) : null}
-      {controlsHint && view === "list" ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
+  /** A pressed/unpressed pair of painted buttons (mode, raid difficulty): the pressed one keeps the kit's full light. */
+  const paintedToggle = (labelId: string, label: string, items: { id: string; label: string; icon?: ReactNode; pressed: boolean; disabled?: boolean; title?: string; onClick: () => void }[]) => (
+    <div className={`${styles.field} ${styles.fieldPainted}`}>
+      <span className={styles.label} id={labelId}>{label}</span>
+      <div className={styles.paintedGroup} role="group" aria-labelledby={labelId}>
+        {items.map((item) => (
+          <MaterialButton key={item.id} kit={FILTER_KIT} className={styles.paintedToggle} aria-pressed={item.pressed} disabled={item.disabled} title={item.title} icon={item.icon} onClick={item.onClick}>{item.label}</MaterialButton>
+        ))}
+      </div>
     </div>
   );
 
-  const roleTabs = showRoleTabs ? (
-    <div className={styles.roleTabs} role="group" aria-label={copy.role}>
-      {visibleRoles.map((value) => (
-        <button type="button" key={value} className={styles.roleTab} aria-pressed={role === value} onClick={() => chooseRole(value)}>
-          {copy.roles[value]}{view === "list" ? <span className={styles.roleCount}>{activeRoles[value]?.length ?? 0}</span> : null}
-        </button>
-      ))}
+  /** Source of the list: Gildra, the two external sites, or the three side by side. */
+  const sourcePicker = !sample ? (
+    <div className={`${styles.field} ${styles.fieldSource}`}>
+      <span className={styles.label} id="tier-source-label">{sourceCopy.source}</span>
+      <div className={styles.segmented} role="group" aria-labelledby="tier-source-label">
+        {[...TIER_SOURCES, "compare" as const].map((id) => (
+          <button type="button" key={id} className={styles.segment} aria-pressed={activeTab === id} onClick={() => chooseTab(id)}>
+            {id === "compare" ? sourceCopy.compare : sourceLabel(id)}
+          </button>
+        ))}
+      </div>
     </div>
   ) : null;
 
-  const list = (
+  /** Every filter on one painted plaque: source, mode, content, key range or difficulty, class and search. */
+  const controls = (
+    <MaterialPlaque kit={FILTER_KIT} className={styles.filters} role="group" aria-label={copy.controlsLabel}>
+      {sourcePicker}
+      <div className={styles.controls}>
+        {showModes ? paintedToggle("tier-mode-label", copy.mode, ACTIVITIES.map((value) => {
+          const off = value === "raid" && source === "mythicstats" && view === "list";
+          return { id: value, label: copy.modes[value], icon: value === "mythic_plus" ? <Swords aria-hidden="true" /> : <Castle aria-hidden="true" />, pressed: activity === value, disabled: off, title: off ? sourceCopy.mythicPlusOnly : undefined, onClick: () => switchActivity(value) };
+        })) : null}
+        {!sample && !external && view === "list" ? (
+          <>
+            {select("tier-content", copy.content, contextValue, chooseContext, contentOptions, !contexts.length, true)}
+            {activity === "mythic_plus"
+              ? select("tier-key", copy.keyRange, keyType, (value) => setKeyType(value as KeyRange), KEY_RANGES.map((value) => <option key={value} value={value}>{copy.keys[value]}</option>), !keyRangeEnabled)
+              : paintedToggle("tier-difficulty-label", copy.difficulty, raidDifficulties.map((value) => ({ id: value, label: copy.difficulties[value] ?? value, pressed: difficultyEnabled && difficulty === value, disabled: !difficultyEnabled, onClick: () => setDifficulty(value) })))}
+          </>
+        ) : null}
+        {(source === "ugg" || view === "compare") && activity === "raid"
+          ? select("tier-source-difficulty", copy.difficulty, sourceDifficulty, setSourceDifficulty, SOURCE_DIFFICULTIES.map((value) => <option key={value} value={value}>{value === "all" ? sourceCopy.allDifficulties : copy.difficulties[value]}</option>))
+          : null}
+        {view === "list" && classes.length > 1
+          ? select("tier-class", copy.classLabel, cls, setCls, <><option value="all">{copy.allClasses}</option>{classes.map(([slug, name]) => <option key={slug} value={slug}>{name}</option>)}</>, false, true)
+          : null}
+        {view === "list" ? (
+          <div className={`${styles.field} ${styles.fieldGrow}`}>
+            <label className={styles.label} htmlFor="tier-search">{copy.searchLabel}</label>
+            <span className={styles.searchShell}>
+              <Search aria-hidden="true" />
+              <input id="tier-search" type="search" className={styles.search} placeholder={copy.searchPlaceholder} value={q} onChange={(event) => setQ(event.target.value)} />
+            </span>
+          </div>
+        ) : null}
+      </div>
+      {controlsHint && view === "list" ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
+    </MaterialPlaque>
+  );
+
+  const table = (
     <>
       {loadError && !external ? <p className={styles.alert} role="status">{loadError}</p> : null}
       {sourceState?.error ? <p className={styles.alert} role="status">{sourceCopy.loadError}</p> : null}
@@ -425,15 +422,15 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
               <tr>
                 <th scope="col" className={styles.colTier}>{copy.tier}</th>
                 <th scope="col">{copy.spec}</th>
-                {hasScore ? <th scope="col" className={styles.num}>{copy.score}</th> : null}
+                {hasScore ? <th scope="col" className={styles.colScore}>{copy.score}</th> : null}
                 {hasRate ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{rateLabel}</th> : null}
                 {hasKey ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{copy.maxKey}</th> : null}
-                {hasTrend ? <th scope="col" className={styles.num}>{copy.trend}</th> : null}
+                {hasTrend ? <th scope="col" className={styles.num}><span className={styles.wideOnly}>{copy.trend}</span><span className={styles.narrowOnly} aria-hidden="true">±</span><span className={`${styles.narrowOnly} ${styles.srOnly}`}>{copy.trend}</span></th> : null}
                 {hasPopularity ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{copy.popularity}</th> : null}
               </tr>
             </thead>
             {groups.map((group) => (
-              <tbody key={group.tier} className={styles.group} data-tier={tierClass(group.tier)}>
+              <tbody key={group.tier} className={styles.group} data-tier={tierClass(group.tier)} style={tierStyle(group.tier)}>
                 {group.rows.map((entry, index) => {
                   const isSelected = Boolean(selected && entryKey(selected) === entryKey(entry));
                   return (
@@ -441,17 +438,19 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
                       {index === 0 ? <th scope="rowgroup" rowSpan={group.rows.length} className={styles.tierCell}><TierMark tier={group.tier} copy={copy} /></th> : null}
                       <td className={styles.specCell}>
                         <div className={styles.specInner}>
-                        <SpecSlot name={fullSpecName(entry)} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} />
-                        <button type="button" className={styles.specButton} style={classStyle(entry.classSlug)} aria-controls="spec-detail" aria-current={isSelected ? "true" : undefined} onClick={() => selectEntry(entry)}>
-                          <span className={styles.specName}>{entry.specName}</span>
-                          <span className={styles.className}>{entry.className}{entry.group && sourceCopy.group[entry.group] ? <span className={styles.groupTag}> · {sourceCopy.group[entry.group]}</span> : null}</span>
-                        </button>
+                          <SpecSlot name={fullSpecName(entry)} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} />
+                          <button type="button" className={styles.specButton} style={classStyle(entry.classSlug)} aria-controls="spec-detail" aria-current={isSelected ? "true" : undefined} onClick={() => selectEntry(entry)}>
+                            <span className={styles.specName}>{entry.specName}</span>
+                            <span className={styles.className}>{entry.className}{entry.group && sourceCopy.group[entry.group] ? <span className={styles.groupTag}> · {sourceCopy.group[entry.group]}</span> : null}</span>
+                          </button>
                         </div>
                       </td>
                       {hasScore ? (
-                        <td className={`${styles.num} ${styles.score}`}>
-                          {compact(entry.score, lang)}
-                          <span className={styles.scoreBar} aria-hidden="true"><i style={{ width: `${entry.score ? Math.max(5, entry.score / maxScore * 100) : 0}%` }} /></span>
+                        <td className={styles.scoreCell}>
+                          <span className={styles.scoreInner}>
+                            <span className={styles.bar} aria-hidden="true"><span style={{ inlineSize: `${entry.score ? Math.max(4, entry.score / maxScore * 100).toFixed(1) : 0}%` }} /></span>
+                            <b>{compact(entry.score, lang)}</b>
+                          </span>
                         </td>
                       ) : null}
                       {hasRate ? <td className={`${styles.num} ${styles.secondary}`}>{compact(rate(entry), lang)}</td> : null}
@@ -469,15 +468,6 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
         )}
         {busy ? <div className={styles.loading} role="status"><span aria-hidden="true" /><b>{copy.loadingSlice}</b></div> : null}
       </div>
-
-      {!external && !sample && intelligence.sources.length ? (
-        <details className={styles.sources}>
-          <summary>{copy.sourceTitle}</summary>
-          <p>{queryContext ? copy.sourceSlice : copy.sourceOverall}</p>
-          <p>{copy.sourcesUsed}: {[...new Set(intelligence.sources.map((item) => item.provider))].join(" · ")}</p>
-          {updated ? <p>{copy.updated}: <time dateTime={intelligence.updatedAt}>{updated} UTC</time></p> : null}
-        </details>
-      ) : null}
     </>
   );
 
@@ -487,6 +477,7 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
       activity={activity}
       role={role}
       classStyle={classStyle}
+      tierStyle={tierStyle}
       renderSpec={(entry) => <SpecSlot name={`${entry.specName} ${entry.className}`} cls={classKey(entry.classSlug)} classSlug={entry.classSlug} specSlug={entry.specSlug} />}
       columns={[
         { id: "gildra" as const, label: "Gildra", short: "Gildra", entries: localize(baseRoles[role]) },
@@ -495,54 +486,72 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
       ]}
     />
   ) : null;
+  const ranking = view === "compare" ? compareView : table;
 
-  const body = (
-    <>
-      {head}
-      {badge}
-      {roleTabs}
-      {controls}
-      {view === "compare" ? compareView : list}
-    </>
+  /** The ranking frame: role tabs with counts (as the Mythic+ meta table), then the table. */
+  const frame = (
+    <MaterialPlaque kit={TABLE_KIT} className={styles.tablePlaque}>
+      {showRoleTabs ? (
+        <AtlasTabs label={copy.role} variant="segmented" value={role} onChange={(id) => chooseRole(id as TierRole)}
+          tabs={visibleRoles.map((value) => ({
+            id: value,
+            label: copy.roles[value],
+            count: view === "list" ? activeRoles[value]?.length ?? 0 : undefined,
+            content: value === role ? <div className={styles.rolePanel}>{ranking}</div> : null,
+          }))} />
+      ) : <div className={styles.rolePanel}>{ranking}</div>}
+    </MaterialPlaque>
   );
-  const tabs = [
-    ...TIER_SOURCES.map((id) => ({ id, label: sourceLabel(id) })),
-    { id: "compare", label: sourceCopy.compare },
-  ];
 
   return (
     <div className={styles.workspace} id={ANCHORS.tierList}>
-      <section className={styles.main} id={ANCHORS.builds} aria-labelledby="tier-results-title">
-        <MaterialPlaque kit={TABLE_KIT} className={styles.mainPlaque}>
-          {!sample ? (
-            <AtlasTabs className={styles.sourceTabs} label={sourceCopy.tabsLabel} value={activeTab} onChange={chooseTab}
-              tabs={tabs.map((tab) => ({ ...tab, content: tab.id === activeTab ? <div className={styles.sourcePanel}>{body}</div> : null }))} />
-          ) : body}
-        </MaterialPlaque>
-      </section>
+      <AtlasSection id={ANCHORS.builds} className={styles.section} title={resultsTitle} description={resultsMeta}
+        aside={busy ? <span className={styles.count} aria-live="polite">{copy.updating}</span> : undefined}>
+        <div className={styles.sectionBody}>
+          {controls}
+          <div className={styles.board}>
+            <div className={styles.main}>{frame}</div>
 
-      <aside className={styles.detail} id="spec-detail" aria-labelledby={selected ? "spec-detail-title" : undefined} aria-label={selected ? undefined : copy.detailLabel}>
-        <MaterialPlaque kit={CARD_KIT} className={styles.detailPlaque}>
-          <p className={styles.detailEyebrow}>{copy.detailLabel}</p>
-          {selected ? (
-            <>
-              <div className={styles.detailHead}>
-                <SpecSlot name={fullSpecName(selected)} cls={classKey(selected.classSlug)} classSlug={selected.classSlug} specSlug={selected.specSlug} size="lg" />
-                <div className={styles.detailName} style={classStyle(selected.classSlug)}>
-                  <h2 id="spec-detail-title" ref={detailTitle} tabIndex={-1} className={styles.detailTitle}>{selected.specName} <span className={styles.className}>{selected.className}</span></h2>
-                  <p className={styles.detailRank}><TierMark tier={selected.tier} copy={copy} size="sm" />{copy.rankLine(selected.rank, copy.roles[selected.role] ?? copy.roles[role])}</p>
-                </div>
-              </div>
-              {metrics.length ? (
-                <dl className={styles.metrics}>
-                  {metrics.map((item) => <div key={item.label} className={styles.metric}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}
-                </dl>
-              ) : null}
-              {cardAction ? <div className={styles.detailActions}>{cardAction}</div> : null}
-            </>
-          ) : <p className={styles.detailEmpty}>{sample ? copy.emptySample : copy.noRows}</p>}
+            <aside className={styles.detail} id="spec-detail" aria-labelledby={selected ? "spec-detail-title" : undefined} aria-label={selected ? undefined : copy.detailLabel}>
+              <MaterialPlaque kit={cardKit} className={styles.detailPlaque}>
+                <p className={styles.detailEyebrow}>{copy.detailLabel}</p>
+                {selected ? (
+                  <>
+                    <div className={styles.detailHead}>
+                      <SpecSlot name={fullSpecName(selected)} cls={classKey(selected.classSlug)} classSlug={selected.classSlug} specSlug={selected.specSlug} size="lg" />
+                      <div className={styles.detailName} style={classStyle(selected.classSlug)}>
+                        <h3 id="spec-detail-title" ref={detailTitle} tabIndex={-1} className={styles.detailTitle}>{selected.specName} <span className={styles.className}>{selected.className}</span></h3>
+                        <p className={styles.detailRank}><TierMark tier={selected.tier} copy={copy} size="sm" />{copy.rankLine(selected.rank, copy.roles[selected.role] ?? copy.roles[role])}</p>
+                      </div>
+                    </div>
+                    {metrics.length ? (
+                      <dl className={styles.metrics}>
+                        {metrics.map((item) => <div key={item.label} className={styles.metric}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}
+                      </dl>
+                    ) : null}
+                    {cardAction ? <div className={styles.detailActions}>{cardAction}</div> : null}
+                  </>
+                ) : <p className={styles.detailEmpty}>{sample ? copy.emptySample : copy.noRows}</p>}
+              </MaterialPlaque>
+            </aside>
+          </div>
+        </div>
+      </AtlasSection>
+
+      {externalSource ? (
+        <SourceAbout lang={lang} source={externalSource} activity={activity} role={role} difficulty={sourceDifficulty} updatedAt={sourceState?.data?.updatedAt} kit={TABLE_KIT} buttonKit={ABOUT_BUTTON_KIT} />
+      ) : !sample && intelligence.sources.length ? (
+        <MaterialPlaque as="section" kit={TABLE_KIT} className={styles.aboutPlaque} aria-labelledby="tier-about-title">
+          <div className={styles.aboutText}>
+            <h2 id="tier-about-title" className={styles.aboutTitle}>{copy.sourceTitle}</h2>
+            <p>{view === "compare" ? sourceCopy.compareLede : queryContext ? copy.sourceSlice : copy.sourceOverall}</p>
+            <p>
+              {copy.sourcesUsed}: {[...new Set(intelligence.sources.map((item) => item.provider))].join(" · ")}
+              {updated ? <>{" · "}{copy.updated} <time dateTime={intelligence.updatedAt}>{updated} UTC</time></> : null}
+            </p>
+          </div>
         </MaterialPlaque>
-      </aside>
+      ) : null}
     </div>
   );
 }

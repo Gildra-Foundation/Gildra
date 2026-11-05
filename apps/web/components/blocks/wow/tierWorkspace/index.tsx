@@ -1,6 +1,11 @@
 import { connection } from "next/server";
 import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/blocks/types";
+import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components/atlas";
+import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
+import { MaterialLinkButton, MythicHubBackdrop } from "@/components/wow/shared/materialAtlas";
+import { ANCHORS } from "@/lib/anchors";
+import { p } from "@/lib/i18n-paths";
 import { TierSection, type TierSpecNames } from "@/components/TierSection";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
 import { getTierSourceSlices } from "@/lib/platform/games/tierSources";
@@ -41,17 +46,26 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorks
         { value: new Set((data.tierContexts ?? []).filter((item) => item.activity === "mythic_plus" && item.selectionType === "dungeon").map((item) => item.selectionId)).size, label: copy.statDungeons },
       ].filter((stat) => stat.value > 0);
 
+  // The hero of the fixed reference (Mythic+ meta): the hub's gateway on the right, title, two painted buttons, the counters under them.
   return (
-    <AtlasFrame as="div" lang={lang} scene="tierLists" className={styles.frame} dataAttributes={{ "data-tier-workspace": true }}>
-      <AtlasHero
-        breadcrumbs={trail(lang, "tierLists")}
-        breadcrumbsLabel={copy.breadcrumbsLabel}
-        eyebrow={copy.eyebrow}
-        title={copy.title}
-        lede={sample ? copy.ledeSample : copy.ledeLive}
-        statsLabel={copy.statsLabel}
-        stats={stats}
-      />
+    <AtlasFrame as="div" lang={lang} className={styles.frame} still foot={false} dataAttributes={{ "data-tier-workspace": true }}>
+      <MythicHubBackdrop />
+      <div className={styles.hero}>
+        <AtlasHero
+          align="start"
+          className={styles.heroHeader}
+          breadcrumbs={trail(lang, "tierLists")}
+          breadcrumbsLabel={copy.breadcrumbsLabel}
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          lede={sample ? copy.ledeSample : copy.ledeLive}
+          actions={<div className={styles.heroActions}>
+            <MaterialLinkButton kit="voidscar-arena" fit="stack" className={styles.heroButton} href={`#${ANCHORS.builds}`} variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{copy.heroRanking}</MaterialLinkButton>
+            <MaterialLinkButton kit="kings-rest" fit="stack" className={styles.heroButton} href={p(lang, "/wow/mythic-plus/meta")} iconAfter={<ArrowUpRight aria-hidden="true" />}>{copy.heroMeta}</MaterialLinkButton>
+          </div>}
+        />
+        {stats.length ? <div className={styles.heroFacts}><AtlasStats label={copy.statsLabel} items={stats} /></div> : null}
+      </div>
       {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
       <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} specNames={specNames[lang]} sourceSlices={sample ? {} : data.sourceSlices} />
     </AtlasFrame>
