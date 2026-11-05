@@ -1,0 +1,216 @@
+/* atlas:strict — the Characters section on the reference anatomy (docs/design/reference, design.md §3.1/§3.12):
+   the Frost scene behind the hero, the painted Frost button and plaque on the shared material pieces,
+   reference sections and "portrait + plaque" cards. Layout only; colours, fonts and sizes are atlas tokens. */
+
+.page { --atlas-frame-tint: var(--atlas-info-wash, var(--atlas-accent-glow)); }
+.material { display: contents; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Scene behind the hero (design.md §4.5) ---------- */
+.backdrop {
+  --scene-height: clamp(660px, 60vw, 1040px);
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.scene {
+  position: absolute;
+  inset: 0 0 auto 26%;
+  height: var(--scene-height);
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, #000 62%, transparent);
+}
+.page .sceneImage { object-fit: cover; object-position: 18% top; filter: contrast(.94) saturate(.9) blur(.6px); }
+.scene::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(90deg, var(--atlas-bg), color-mix(in srgb, var(--atlas-bg) 62%, transparent) 22%, transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 18%, transparent), transparent 30%, color-mix(in srgb, var(--atlas-bg) 40%, transparent) 64%, var(--atlas-bg) 100%);
+}
+
+/* ---------- Hero (reference: crumbs → eyebrow → H1 → lede → painted action → facts) ---------- */
+.hero { min-height: 490px; padding-bottom: var(--atlas-space-5); }
+.heroCompact { min-height: 0; padding-bottom: var(--atlas-space-3); }
+.heroHeader { max-width: 58%; }
+.heroHeader h1 { max-width: 15ch; }
+.heroHeader p { max-width: 48ch; }
+.ledeAlert { color: var(--atlas-caution); font-weight: 600; }
+.actions { display: grid; justify-items: start; gap: var(--atlas-space-3); }
+.actions form { display: flex; min-width: 0; max-width: 100%; }
+.security {
+  display: flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  margin: 0;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  line-height: var(--atlas-leading-snug);
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.facts { max-width: 560px; margin-top: var(--atlas-space-5); }
+.facts :global(.ui-stats-card) { background: transparent; box-shadow: none; border: 0; padding-block: var(--atlas-space-2); }
+
+/* ---------- Frost painted button: the shared button (design.md §4.1) with the Frost art ---------- */
+.frostButton {
+  --mythic-button-image: var(--frost-button-image);
+  --mythic-button-slice: var(--frost-button-slice);
+  --mythic-button-width: var(--frost-button-width);
+  --mythic-button-top: var(--frost-button-top);
+  --mythic-button-right: var(--frost-button-right);
+  --mythic-button-bottom: var(--frost-button-bottom);
+  --mythic-button-left: var(--frost-button-left);
+  --mythic-button-pad-top: var(--frost-button-top);
+  --mythic-button-pad-bottom: var(--frost-button-bottom);
+  --mythic-button-inset: var(--frost-button-inset);
+}
+/* Focus lights the painted silhouette, as on the reference (forced colours keep the system outline). */
+.page.page .frostButton:global(.ui-button):focus-visible { outline: 2px solid transparent; outline-offset: 4px; }
+.page.page .frostButton:global(.ui-button):focus-visible::before {
+  filter: contrast(.88) saturate(.84) brightness(1) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 6px var(--atlas-accent));
+}
+
+/* ---------- Sections and plaques ---------- */
+.section { margin-top: var(--atlas-space-6); }
+.page .plaque { height: 100%; padding: 44px 56px 44px; }
+.plaque > :global([data-frost-icon]) { width: 64px; height: 64px; margin-bottom: var(--atlas-space-3); }
+.unlocks, .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; margin: 0; padding: 0; list-style: none; }
+.unlocks > li, .grid > li { min-width: 0; }
+.status { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+
+/* ---------- Roster: filters and "portrait + plaque" cards ---------- */
+.rosterBody { display: grid; gap: var(--atlas-space-5); }
+.filters { display: grid; grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr); gap: var(--atlas-space-4); align-items: end; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.fieldLabel {
+  color: var(--atlas-text-subtle);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+}
+.card { display: flex; flex-direction: column; gap: var(--atlas-space-3); }
+.cardHead { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.portrait {
+  position: relative;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--class-color, var(--atlas-accent)) 55%, transparent);
+}
+.portrait img {
+  position: absolute;
+  left: var(--frost-portrait-left);
+  top: var(--frost-portrait-top);
+  width: var(--frost-portrait-size);
+  height: var(--frost-portrait-size);
+  border-radius: 50%;
+  object-fit: cover;
+}
+.portrait::after { position: absolute; inset: 0; content: ""; background: var(--frost-portrait-image) center / contain no-repeat; filter: contrast(.88) saturate(.84) brightness(.95); }
+.cardName { display: grid; gap: var(--atlas-space-1); min-width: 0; }
+.cardEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--material-light);
+  font-size: var(--atlas-text-meta);
+  overflow-wrap: anywhere;
+}
+.cardEyebrow svg { flex: none; width: 14px; height: 14px; }
+.cardTitle { margin: 0; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); overflow-wrap: anywhere; }
+.cardTitle a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text-strong); text-decoration: none; text-shadow: 0 1px 3px var(--atlas-bg); }
+.cardTitle a:hover { color: var(--material-light); }
+.cardTitle a:focus-visible, .quietLink:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; border-radius: 2px; }
+.cardFacts { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-1) var(--atlas-space-3); margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+.level { color: var(--atlas-text-muted); }
+.level b { color: var(--material-light); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1 var(--atlas-font-display); font-variant-numeric: lining-nums tabular-nums; }
+.card > :global(span):last-of-type { margin-top: auto; }
+.quietLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: center;
+  min-height: 44px;
+  color: var(--atlas-text);
+  font-size: var(--atlas-text-small);
+  text-decoration: none;
+}
+.quietLink:hover { color: var(--atlas-text-strong); text-decoration: underline; text-underline-offset: .2em; }
+.quietLink svg { width: 14px; height: 14px; }
+
+/* Placeholders while Battle.net answers (same box as a card). */
+.skeleton { min-height: 236px; }
+.lines { display: grid; flex: 1; gap: var(--atlas-space-2); }
+.lines i, .skeleton .portrait { display: block; border-radius: 4px; background: color-mix(in srgb, var(--atlas-accent) 10%, var(--atlas-bg)); }
+.lines i { height: 14px; }
+.lines i:first-child { width: 70%; height: 20px; }
+.skeleton .portrait { border-radius: 50%; box-shadow: none; }
+.skeleton .portrait::after { content: none; }
+
+/* Error / empty: heraldry + text + one action, on the same plaque. */
+.page .state { display: flex; align-items: center; gap: var(--atlas-space-5); height: auto; }
+.heraldry { flex: none; width: 88px; height: 88px; object-fit: contain; pointer-events: none; filter: contrast(.9) saturate(.86) brightness(.94); }
+.stateCopy { display: grid; gap: var(--atlas-space-2); min-width: 0; }
+.stateCopy h2, .stateCopy h3 { margin: 0; }
+.stateAction { display: flex; margin-top: var(--atlas-space-2); }
+
+/* ---------- Adaptive (design.md §7) ---------- */
+@media (max-width: 1180px) {
+  .unlocks, .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+}
+@media (max-width: 1023px) {
+  .hero { min-height: 470px; }
+  .heroHeader { max-width: 78%; }
+  .scene { left: 0; }
+  .page .sceneImage { object-position: 30% top; }
+}
+@media (max-width: 767px) {
+  .backdrop { --scene-height: 760px; }
+  .page .sceneImage { object-position: 24% top; }
+  .scene::after {
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 72%, transparent), color-mix(in srgb, var(--atlas-bg) 36%, transparent)),
+      linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 22%, transparent), transparent 30%, color-mix(in srgb, var(--atlas-bg) 52%, transparent) 60%, var(--atlas-bg) 100%);
+  }
+}
+@media (max-width: 760px) {
+  .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
+  .heroHeader { max-width: 100%; }
+  .actions { justify-items: stretch; }
+  .actions form { width: 100%; }
+  .facts { margin-top: var(--atlas-space-4); }
+  .unlocks, .grid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .filters { grid-template-columns: minmax(0, 1fr); }
+  .page .plaque { padding: 36px 44px; }
+  .page .state { flex-direction: column; align-items: flex-start; gap: var(--atlas-space-3); }
+  .stateAction, .stateAction form { width: 100%; }
+}
+@media (max-width: 360px) { .page .plaque { padding-inline: 36px; } }
+
+/* ---------- Preferences ---------- */
+@media (prefers-reduced-transparency: reduce) { .page .sceneImage { filter: none; } }
+:global([data-transparency="reduced"]) .page .sceneImage { filter: none; }
+@media (prefers-contrast: more) { .scene { opacity: .45; } }
+@media (forced-colors: active) {
+  .backdrop, .portrait::after, .heraldry { display: none; }
+  .page.page .frostButton:global(.ui-button):focus-visible { outline: 2px solid Highlight; }
+  .portrait { box-shadow: none; border: 1px solid CanvasText; }
+  .cardEyebrow, .level b, .cardTitle a, .ledeAlert { color: CanvasText; }
+}
+.actionRow { display: flex; flex-wrap: wrap; align-items: center; }
+@media (max-width: 760px) { .actionRow { flex-direction: column; align-items: stretch; } }
+/* On phones the painted button takes the plaque's whole inner width, so its label stays on one line. */
+@media (max-width: 760px) {
+  .page .card > :global(span[data-block]) { width: calc(100% + 40px); max-width: none; margin-inline: -20px; }
+}
+/* Hero facts stay one row on phones; long captions wrap under their number instead. */
+.facts :global([role="list"]) { flex-wrap: nowrap; }
+.facts :global([role="listitem"]) { flex: 0 1 auto; }

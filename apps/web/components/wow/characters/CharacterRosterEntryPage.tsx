@@ -1,62 +1,66 @@
-import { AtlasFrame, AtlasHero, AtlasPanel } from "@/components/atlas";
-import { BattleNetSignIn } from "@/components/auth/BattleNetActions";
-import { BattleNetConnectPanel } from "./BattleNetConnectPanel";
+import { AtlasFrame, AtlasHero, AtlasSection, AtlasStats } from "@/components/atlas";
+import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
+import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
+import { BATTLE_NET_REGIONS } from "@/lib/wow/battleNetCharacters";
+import { CharacterAtlasBackdrop } from "./CharacterAtlasBackdrop";
+import { CharacterSignInButton } from "./CharacterActions";
 import { characterCopy, characterCrumbs, type CharacterLocale } from "./characterCopy";
-import { characterScene } from "./characterScene";
-import { FrostLoginAtmosphere } from "./FrostLoginAtmosphere";
-import { FrostLoginCrest } from "./FrostLoginCrest";
+import { characterAtlasMaterial, frostPlaqueStyle } from "./characterAtlasMaterial";
 import { FrostLoginIcon, type FrostLoginIconKind } from "./FrostLoginIcon";
-import frost from "./frostLogin.module.css";
-import { frostLoginMaterial } from "./frostLoginAssets";
-import styles from "./characterRosterPage.module.css";
+import styles from "./characterAtlas.module.css";
 
 const unlockIcons: FrostLoginIconKind[] = ["equipment", "talents", "combat"];
 
 /**
- * Signed-out /wow/characters: the reader's homepage character as the scene, the
- * hero and, beside it, the one sign-in card (first screen on phones too).
+ * Signed-out /wow/characters, built like the reference hubs (docs/design/reference): the Frost scene
+ * behind the hero, the one painted sign-in action, honest facts, then what the sign-in opens as
+ * plaques of the section's kit. No character is shown before Battle.net answers.
  */
-export async function CharacterRosterEntryPage({ locale, accountName, apiError }: {
+export function CharacterRosterEntryPage({ locale, accountName, apiError }: {
   locale: CharacterLocale;
   accountName?: string;
   apiError?: "expired";
 }) {
   const copy = characterCopy[locale];
-  const scene = await characterScene();
   return (
-    <AtlasFrame lang={locale} art={scene.art} artPosition={scene.position} artShade="deep" still foot={false} className={frost.page} dataAttributes={{ "data-character-atlas": true, "data-roster-view": "entry", "data-frost-login": true }}>
-      <FrostLoginAtmosphere />
-      <AtlasHero
-        className={frost.hero}
-        breadcrumbs={characterCrumbs(locale)}
-        breadcrumbsLabel={copy.breadcrumbsLabel}
-        eyebrow={<span className={frost.silverLabel}>{accountName ?? copy.entry.eyebrow}</span>}
-        title={copy.entry.title}
-        lede={copy.entry.lede}
-        aside={
-          <div style={frostLoginMaterial}><AtlasPanel as="section" padding="lg" className={`${styles.signInCard} ${frost.card}`} aria-labelledby="battlenet-connect-title">
-            <FrostLoginCrest />
-            <BattleNetConnectPanel
-              className={frost.connectPanel}
-              eyebrowIcon={<FrostLoginIcon kind="equipment" compact />}
-              eyebrow={copy.secureEyebrow}
-              title={apiError ? copy.entry.expiredTitle : copy.entry.panelTitle}
-              description={apiError ? copy.entry.expiredText : copy.entry.panelText}
-              note={<><FrostLoginIcon kind="lock" compact /><span className={frost.securityCopy}>{copy.passwordNote} {copy.scopeNote}</span></>}
-            >
-              <BattleNetSignIn locale={locale} reconnect={Boolean(apiError)} />
-            </BattleNetConnectPanel>
-            <div className={`${styles.unlocks} ${frost.unlocks}`}>
-              <h3>{copy.entry.unlocksTitle}</h3>
-              <ul>
-                {copy.entry.unlocks.map(([title, text], index) => {
-                  return <li key={title}><FrostLoginIcon kind={unlockIcons[index] ?? "equipment"} /><span><strong>{title}</strong>{text}</span></li>;
-                })}
-              </ul>
-            </div>
-          </AtlasPanel></div>
-        }
-      />
+    <AtlasFrame lang={locale} still foot={false} className={styles.page} dataAttributes={{ "data-character-atlas": true, "data-roster-view": "entry", "data-frost-login": true }}>
+      <CharacterAtlasBackdrop />
+      <div className={styles.material} style={characterAtlasMaterial}>
+      <div className={styles.hero}>
+        <AtlasHero
+          align="start"
+          className={styles.heroHeader}
+          breadcrumbs={characterCrumbs(locale)}
+          breadcrumbsLabel={copy.breadcrumbsLabel}
+          eyebrow={accountName ?? copy.secureEyebrow}
+          title={copy.entry.title}
+          lede={apiError ? <><strong className={styles.ledeAlert}>{copy.entry.expiredTitle}.</strong> {copy.entry.expiredText}</> : copy.entry.lede}
+          actions={<div className={styles.actions}>
+            <CharacterSignInButton locale={locale} reconnect={Boolean(apiError)} />
+            <p className={styles.security}><FrostLoginIcon kind="lock" compact />{copy.passwordNote} {copy.scopeNote}</p>
+          </div>}
+        />
+        <div className={styles.facts}>
+          <AtlasStats label={copy.entry.statsLabel} items={[
+            { value: String(BATTLE_NET_REGIONS.length), label: copy.entry.statRegions },
+            { value: String(copy.entry.unlocks.length), label: copy.entry.statTools },
+          ]} />
+        </div>
+      </div>
+      <AtlasSection id="unlocks" title={copy.entry.unlocksTitle} description={copy.entry.unlocksText} className={styles.section}>
+        <ul className={styles.unlocks}>
+          {copy.entry.unlocks.map(([title, text], index) => (
+            <li key={title}>
+              <MaterialPlaque kit={CHARACTERS_KIT} style={frostPlaqueStyle} className={styles.plaque}>
+                <FrostLoginIcon kind={unlockIcons[index] ?? "equipment"} />
+                <h3 className={materialStyles.title}>{title}</h3>
+                <p className={materialStyles.text}>{text}</p>
+              </MaterialPlaque>
+            </li>
+          ))}
+        </ul>
+      </AtlasSection>
+      </div>
     </AtlasFrame>
   );
 }

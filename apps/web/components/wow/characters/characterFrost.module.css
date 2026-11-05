@@ -1,152 +1,39 @@
-/* atlas:strict — Frostmourne materials for real Battle.net roster data. */
-.page { --roster-ink: color-mix(in srgb, var(--atlas-text-strong) 80%, var(--atlas-info)); }
-.hero { padding-bottom: var(--atlas-space-4); }
-.hero h1 { color: var(--atlas-text-strong); text-shadow: 0 2px 14px color-mix(in srgb, var(--atlas-info) 18%, transparent), var(--atlas-text-halo); }
-.connection { display: inline-flex; align-items: center; gap: var(--atlas-space-2); color: var(--roster-ink); }
-
-.page .roster { margin-top: var(--atlas-space-5); }
-.page .rosterHeader {
-  align-items: center;
-  gap: var(--atlas-space-3);
-  padding-bottom: var(--atlas-space-3);
-  border-color: color-mix(in srgb, var(--atlas-info) 35%, transparent);
-}
-.sectionTitle { display: flex; align-items: center; gap: var(--atlas-space-4); min-width: 0; }
-.page .sectionTitle h2 { font-size: var(--atlas-text-h2); color: var(--roster-ink); }
-.heraldry { width: 104px; height: 104px; object-fit: contain; flex: none; pointer-events: none; filter: contrast(.9) saturate(.86) brightness(.94); }
-
-/* One engraved account ledger, containing Valyro's real counters. */
-.page .summary.summary {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: stretch;
-  gap: 0;
-  padding: 64px 76px;
-  margin-bottom: var(--atlas-space-6);
-  border: 0;
-  background: transparent;
-}
-.summary::before, .card::before, .empty::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  border-style: solid;
-  border-color: transparent;
-  border-image-source: var(--roster-card-image);
-  border-image-slice: var(--roster-card-slice) fill;
-  border-image-width: 1;
-  border-width: var(--roster-card-width);
-  background: var(--atlas-bg);
-  background-clip: padding-box;
-  filter: contrast(.88) saturate(.84) brightness(.92);
-  transition: filter var(--atlas-duration-art) var(--atlas-ease);
-}
-.summary::before { border-width: var(--roster-card-width-small); }
-.page .summary :global([role="listitem"]) {
-  min-width: 0;
-  padding: var(--atlas-space-2) var(--atlas-space-5);
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  gap: var(--atlas-space-2);
-}
-.page .summary :global([role="listitem"]) + :global([role="listitem"]) { border-left: 1px solid color-mix(in srgb, var(--atlas-info) 22%, transparent); }
-.page .summary :global(.ui-stats-card__label) { color: var(--roster-ink); line-height: 1.4; }
-.page .summary :global(.ui-stats-card__value) { font-size: var(--atlas-text-stat); color: var(--atlas-text-strong); }
-.statLabel { display: flex; align-items: center; gap: var(--atlas-space-2); }
-
-/* Filters keep native search/select behaviour inside measured material. */
-.page .filters { gap: var(--atlas-space-5); margin-bottom: var(--atlas-space-6); }
-.page .filters label { color: var(--roster-ink); }
-.page .filters :global(input), .page .filters :global(select) { color: var(--atlas-text-strong); }
-.page .filters :global(input)::placeholder { color: var(--atlas-text-muted); }
-.page .filters .control {
-  position: relative;
-  isolation: isolate;
-  min-height: 94px;
-  padding: 35px 62px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  outline: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-.control::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  border: solid transparent;
-  border-image-source: var(--roster-card-image);
-  border-image-slice: var(--roster-card-slice) fill;
-  border-image-width: 1;
-  border-width: var(--roster-card-width-control);
-  background: var(--atlas-bg);
-  background-clip: padding-box;
-  filter: contrast(.88) saturate(.84) brightness(.92);
-  transition: filter var(--atlas-duration-art) var(--atlas-ease);
-}
-.page .filters .selectControl { display: flex; padding: 0; }
-.page.page .filters .control :is(input, select),
-.page.page .filters .control :is(input, select):is(:hover, :focus, :focus-visible, :active) {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  outline: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-.page .filters .selectControl select { min-height: 94px; padding: 35px 66px; }
-/* Focus illuminates only the illustrated silhouette, including its icy tips. */
-.control:focus-within::before {
-  filter: contrast(.95) saturate(1) brightness(1.3) drop-shadow(0 0 4px var(--atlas-info));
-}
-
-/* The opened class list is the same painted ice and steel as its trigger. */
-.page.page .filters .classTrigger,
-.page.page .filters .classTrigger:is(:hover, :focus, :focus-visible, :active) {
+/* atlas:strict — the class picker of the roster: a 44 px glass trigger (design.md §3.10) and the painted
+   Frost list it opens (§3.12), with the official class icons inside the Frost portrait ring. */
+.control { position: relative; display: flex; min-width: 0; }
+.classTrigger {
   display: flex;
   align-items: center;
   gap: var(--atlas-space-2);
   width: 100%;
   min-width: 0;
-  min-height: 104px;
-  padding: 32px 58px;
-  border: 0;
-  border-radius: 0;
-  outline: none;
-  background: transparent;
-  box-shadow: none;
+  min-height: var(--atlas-control-height);
+  padding: 0 var(--atlas-space-3) 0 var(--atlas-space-2);
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  -webkit-backdrop-filter: var(--atlas-glass-filter);
+  backdrop-filter: var(--atlas-glass-filter);
   color: var(--atlas-text-strong);
   font: inherit;
-  font-family: var(--atlas-font-ui);
-  font-size: var(--atlas-text-small);
-  font-weight: var(--atlas-weight-display);
-  letter-spacing: 0;
-  text-transform: none;
+  font-size: var(--atlas-text-body);
   cursor: pointer;
+  transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
+.classTrigger:hover { border-color: var(--atlas-line-strong); }
+.classTrigger:focus-visible { border-color: var(--atlas-accent-strong); outline: none; box-shadow: var(--atlas-ring-focus); }
 .pickerValue { flex: 1; min-width: 0; overflow-wrap: anywhere; text-align: start; line-height: 1.3; }
-.pickerIcon { position: relative; display: block; flex: none; width: 36px; height: 36px; pointer-events: none; }
-.pickerIcon img { position: absolute; left: var(--roster-portrait-left); top: var(--roster-portrait-top); width: var(--roster-portrait-size); height: var(--roster-portrait-size); border-radius: 50%; object-fit: cover; }
-.pickerIcon::after { content: ""; position: absolute; inset: 0; background: var(--roster-portrait-image) center / contain no-repeat; filter: contrast(.88) saturate(.84) brightness(.95); }
-.classChevron { width: 14px; height: 14px; flex: none; color: var(--roster-ink, var(--atlas-text-strong)); transition: rotate var(--atlas-duration-fast) var(--atlas-ease); }
+.pickerIcon { position: relative; display: block; flex: none; width: 32px; height: 32px; pointer-events: none; }
+.pickerIcon img { position: absolute; left: var(--frost-portrait-left); top: var(--frost-portrait-top); width: var(--frost-portrait-size); height: var(--frost-portrait-size); border-radius: 50%; object-fit: cover; }
+.pickerIcon::after { content: ""; position: absolute; inset: 0; background: var(--frost-portrait-image) center / contain no-repeat; filter: contrast(.88) saturate(.84) brightness(.95); }
+.classChevron { width: 16px; height: 16px; flex: none; color: var(--atlas-accent); transition: rotate var(--atlas-duration-fast) var(--atlas-ease); }
 .classChevron[data-open] { rotate: 180deg; }
+
 .classMenu {
-  --roster-ink: color-mix(in srgb, var(--atlas-text-strong) 80%, var(--atlas-info));
   isolation: isolate;
   width: min(420px, calc(100vw - 24px));
   max-width: calc(100vw - 24px);
-  padding: 42px 56px;
+  padding: 40px 64px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -160,9 +47,9 @@
   z-index: -1;
   pointer-events: none;
   border: solid transparent;
-  border-width: var(--roster-card-width-control);
-  border-image-source: var(--roster-card-image);
-  border-image-slice: var(--roster-card-slice) fill;
+  border-width: var(--frost-panel-width-mobile);
+  border-image-source: var(--frost-panel-image);
+  border-image-slice: var(--frost-panel-slice) fill;
   border-image-width: 1;
   background: var(--atlas-bg);
   background-clip: padding-box;
@@ -170,265 +57,21 @@
 }
 .classMenu[data-state="closed"] { visibility: hidden; pointer-events: none; }
 .classOptions { max-height: min(420px, max(56px, calc(var(--ui-available-height, 70dvh) - 84px))); overflow-y: auto; overscroll-behavior: contain; scrollbar-color: var(--atlas-line-strong) var(--atlas-bg); scrollbar-width: thin; outline: none; }
-.classOption { display: grid; grid-template-columns: 36px minmax(0, 1fr) 16px; align-items: center; gap: var(--atlas-space-2); min-height: 56px; padding: var(--atlas-space-2); border-bottom: 1px solid var(--atlas-line-soft); color: var(--atlas-text-strong); background: transparent; font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); line-height: 1.25; letter-spacing: 0; text-transform: none; cursor: pointer; }
+.classOption { display: grid; grid-template-columns: 32px minmax(0, 1fr) 16px; align-items: center; gap: var(--atlas-space-2); min-height: 48px; padding: var(--atlas-space-1) var(--atlas-space-2); border-bottom: 1px solid var(--atlas-line-soft); color: var(--atlas-text-strong); background: transparent; font-size: var(--atlas-text-body); line-height: 1.25; cursor: pointer; }
 .classOption > span { min-width: 0; overflow-wrap: anywhere; }
-.classOption[data-highlighted="true"] { background: color-mix(in srgb, var(--atlas-info) 18%, var(--atlas-bg)); box-shadow: inset 2px 0 var(--atlas-info); }
-.classOption[aria-selected="true"] { background: color-mix(in srgb, var(--atlas-info) 10%, var(--atlas-bg)); }
-.classCheck { width: 16px; height: 16px; color: var(--atlas-info); opacity: 0; }
+.classOption[data-highlighted="true"] { background: color-mix(in srgb, var(--atlas-accent) 16%, var(--atlas-bg)); box-shadow: inset 2px 0 var(--atlas-accent); }
+.classOption[aria-selected="true"] { background: color-mix(in srgb, var(--atlas-accent) 9%, var(--atlas-bg)); }
+.classCheck { width: 16px; height: 16px; color: var(--atlas-accent); opacity: 0; }
 .classOption[aria-selected="true"] .classCheck { opacity: 1; }
 
-/* Individual heroes: official class icon inside an illustrated steel ring. */
-.page .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--atlas-space-6); }
-.page .card.card {
-  position: relative;
-  isolation: isolate;
-  grid-template-columns: 72px minmax(0, 1fr);
-  grid-template-areas: "mark copy" "level armory";
-  gap: var(--atlas-space-3);
-  min-height: 300px;
-  padding: 72px 76px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  transition: transform var(--atlas-duration) var(--atlas-ease);
-}
-/* The frame owns its highlight; no straight class stripe crosses its corners. */
-.card::after { content: none; }
-/* Neutralize the legacy card translate separately so CSS transform lowering cannot merge it. */
-.page .card { translate: none !important; }
-.page .card:hover, .page .card:focus-within { transform: translateY(-3px); border: 0; background: transparent; box-shadow: none; }
-.card:hover::before, .card:focus-within::before { filter: contrast(.9) saturate(.9) brightness(1.1) drop-shadow(0 0 3px color-mix(in srgb, var(--atlas-info) 25%, transparent)); }
-.page .card:has(h3 a:focus-visible) { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
-.page .card h3 { font-size: var(--atlas-text-h3); line-height: var(--atlas-leading-snug); hyphens: none; }
-.page .card > svg { display: none; }
-.page .card h3 a { color: var(--atlas-text-strong); }
-.page .card p { color: var(--atlas-text-muted); }
-.page .card .level {
-  align-self: start;
-  min-width: 36px;
-  padding: 3px 4px;
-  border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--atlas-info) 45%, transparent);
-  background: transparent;
-  color: var(--roster-ink);
-  font-size: var(--atlas-text-title);
-  font-variant-numeric: tabular-nums;
-}
-.page .roster .classMark {
-  position: relative;
-  width: 72px;
-  height: 72px;
-  overflow: visible;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--atlas-text-strong);
-}
-.page .classMark img {
-  position: absolute;
-  left: var(--roster-portrait-left);
-  top: var(--roster-portrait-top);
-  width: var(--roster-portrait-size);
-  height: var(--roster-portrait-size);
-  border-radius: 50%;
-  object-fit: cover;
-}
-.page .roster .classMark::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--roster-portrait-image) center / contain no-repeat;
-  translate: none;
-  animation: none;
-  filter: contrast(.88) saturate(.84) brightness(.95);
-}
-.page .card > :global(a):last-child { min-height: 44px; color: var(--roster-ink); }
-
-/* Reuse the approved action asset; every state defeats the shared solid fill. */
-.page.page .signOut.signOut :global([data-folio-action]),
-.page.page .state.state :global([data-folio-action]:not([data-folio-action="quiet"])),
-.page.page .state.state :global([data-folio-action]:not([data-folio-action="quiet"]):is(:hover, :focus-visible, :active)),
-.page.page .signOut.signOut :global([data-folio-action]:is(:hover, :focus-visible, :active)) {
-  position: relative;
-  isolation: isolate;
-  min-height: 80px;
-  height: auto;
-  padding: 14px var(--roster-action-inset);
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--atlas-text-strong);
-  text-shadow: 0 1px 3px var(--atlas-bg);
-  font-size: var(--atlas-text-small);
-  transition: transform var(--atlas-duration-fast) var(--atlas-ease);
-}
-.signOut :global(button)::before, .state :global([data-folio-action]:not([data-folio-action="quiet"]))::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  height: auto;
-  translate: none;
-  border: 20px solid transparent;
-  border-width: var(--roster-action-width);
-  border-image-source: var(--frost-button-image);
-  border-image-slice: var(--frost-button-slice) fill;
-  border-image-width: 1;
-  background: var(--atlas-bg);
-  background-clip: padding-box;
-  filter: contrast(.88) saturate(.84) brightness(.92);
-  transition: filter var(--atlas-duration-art) var(--atlas-ease);
-}
-.page.page .state.state :global([data-folio-action]:not([data-folio-action="quiet"])) { min-height: 104px; }
-.signOut :global(button):focus-visible, .state :global([data-folio-action]):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
-@media (hover: hover) and (pointer: fine) {
-  .signOut :global(button):hover, .state :global([data-folio-action]):hover { transform: translateY(-2px); }
-  .signOut :global(button):hover::before, .state :global([data-folio-action]):hover::before { filter: contrast(.9) saturate(.9) brightness(1.14) drop-shadow(0 0 4px color-mix(in srgb, var(--atlas-info) 30%, transparent)); }
-}
-.signOut :global(button):active, .state :global([data-folio-action]):active { transform: translateY(1px); }
-
-.page .state.state, .empty {
-  position: relative;
-  isolation: isolate;
-  margin-top: var(--atlas-space-6);
-  padding: 112px 96px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-.state::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border: 30px solid transparent;
-  border-width: var(--frost-panel-width);
-  border-image-source: var(--frost-panel-image);
-  border-image-slice: var(--frost-panel-slice) fill;
-  border-image-width: 1;
-  background: var(--atlas-bg);
-  background-clip: padding-box;
-  pointer-events: none;
-  filter: contrast(.88) saturate(.84) brightness(.92);
-}
-.page .state :global([data-battlenet-eyebrow]) { color: var(--roster-ink); }
-.empty { display: flex; align-items: center; gap: var(--atlas-space-5); margin-top: 0; padding: 76px; }
-.emptyHeraldry { width: 96px; height: 96px; object-fit: contain; flex: none; pointer-events: none; }
-.empty > :last-child { flex: 1; min-width: 0; border: 0; background: transparent; box-shadow: none; }
-.page .skeleton .classMark { background: color-mix(in srgb, var(--atlas-info) 8%, var(--atlas-bg)); border-radius: 50%; }
-
-@keyframes frost-arrive { from { opacity: 0; translate: 0 10px; } }
-@keyframes heraldry-float { from { transform: translateY(2px) rotate(-.6deg); } to { transform: translateY(-4px) rotate(.6deg); } }
-@keyframes ledger-light { from { opacity: .2; transform: translateX(-3%); } to { opacity: .65; transform: translateX(3%); } }
-@keyframes ring-awaken { from { transform: scale(.97); opacity: .65; } to { transform: scale(1.035); opacity: 1; } }
-:global([data-frost-active="true"]) .heraldry { animation: heraldry-float 7s ease-in-out infinite alternate; }
-.summary::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 34px 54px;
-  pointer-events: none;
-  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--atlas-info) 22%, transparent), transparent 65%);
-  opacity: .2;
-}
-:global([data-frost-active="true"]) .summary::after { animation: ledger-light 8s ease-in-out infinite alternate; }
-:global([data-frost-active="true"]) .card:is(:hover, :focus-within) .classMark::after { animation: ring-awaken 1.8s ease-in-out infinite alternate; }
-:global([data-frost-active="true"]) .grid:not([aria-hidden]) .card {
-  animation: frost-arrive .45s var(--atlas-ease) both;
-  animation-delay: calc(var(--roster-index, 0) * 35ms);
-}
-
-@media (max-width: 700px) {
-  .page .grid { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); }
-  .page .summary.summary { grid-template-columns: minmax(0, 1fr); padding: 60px; }
-  .page .summary :global([role="listitem"]) { flex-direction: row-reverse; align-items: center; justify-content: space-between; gap: var(--atlas-space-2); padding: var(--atlas-space-3) 0; }
-  .page .summary :global([role="listitem"]) + :global([role="listitem"]) { border-left: 0; border-top: 1px solid color-mix(in srgb, var(--atlas-info) 22%, transparent); }
-  .page .summary :global(.ui-stats-card__value) { font-size: var(--atlas-text-h2); }
-  .statLabel { flex-direction: row; align-items: center; gap: var(--atlas-space-2); }
-  .statLabel :global([data-frost-icon]) { width: 24px; height: 24px; }
-  .heraldry { width: 88px; height: 88px; }
-  .sectionTitle { gap: var(--atlas-space-2); }
-  .page .sectionTitle h2 { font-size: var(--atlas-text-h3); }
-  .page .card.card { grid-template-columns: 72px minmax(0, 1fr); grid-template-areas: "mark copy" "level armory"; padding: 64px 60px; min-height: 300px; }
-  .card::before { border-width: var(--roster-card-width-mobile); }
-  .page .roster .classMark { width: 72px; height: 72px; }
-  .page .state.state { padding: 76px 64px; }
-  .page .state :global(form),
-  .page .state :global(a[data-folio-action]) { width: calc(100% + 112px); margin-inline: -56px; }
-  .state::before { border-width: var(--frost-panel-width-mobile); }
-  .empty { align-items: flex-start; padding: 64px 60px; gap: var(--atlas-space-3); }
-  .emptyHeraldry { width: 60px; height: 60px; }
-}
-@media (max-width: 360px) {
-  .page .summary :global([role="listitem"]) { padding-inline: 0; }
-  .statLabel :global([data-frost-icon]) { display: none; }
-  .page .card.card { gap: var(--atlas-space-2); }
-  .page .roster .classMark { width: 58px; height: 58px; }
-  .page .card h3 { font-size: var(--atlas-text-title); }
-  .empty { flex-direction: column; }
-}
-
-/* Keep names in the full inner window instead of a sliver beside the portrait. */
-@media (max-width: 480px) {
-  .page .card.card {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: "mark level" "copy copy" "armory armory";
-  }
-  .page .card .level { justify-self: end; align-self: center; }
-}
-
-/* All CSS movement honours the same preference owner as the snow. */
-@media (prefers-reduced-motion: reduce) {
-  .classChevron { transition: none; }
-  .heraldry, .summary::after, .control::before { animation: none !important; transition: none !important; transform: none !important; }
-  .page .card, .page .card *, .page .card::before, .page .card::after,
-  .signOut :global(button), .signOut :global(button)::before,
-  .state :global([data-folio-action]), .state :global([data-folio-action])::before { animation: none !important; transition: none !important; transform: none !important; translate: none !important; }
-}
-:global([data-frost-active="false"]) .page .card,
-:global([data-frost-active="false"]) .classChevron,
-:global([data-frost-active="false"]) .heraldry,
-:global([data-frost-active="false"]) .summary::after,
-:global([data-frost-active="false"]) .control::before,
-:global([data-frost-active="false"]) .card,
-:global([data-frost-active="false"]) .card *,
-:global([data-frost-active="false"]) .card *::after,
-:global([data-frost-active="false"]) .card::before,
-:global([data-frost-active="false"]) .card::after,
-:global([data-frost-active="false"]) .signOut :global(button),
-:global([data-frost-active="false"]) .signOut :global(button)::before,
-:global([data-frost-active="false"]) .state :global([data-folio-action]),
-:global([data-frost-active="false"]) .state :global([data-folio-action])::before { animation: none !important; transition: none !important; transform: none !important; translate: none !important; }
-@media (prefers-reduced-transparency: reduce) { .card::after, .summary::after { display: none; } }
-:global([data-transparency="reduced"]) :is(.card, .summary)::after { display: none; }
+@media (prefers-reduced-motion: reduce) { .classChevron, .classTrigger { transition: none; } }
+:global([data-ui-motion="reduce"]) :is(.classChevron, .classTrigger) { transition: none; }
 @media (forced-colors: active) {
   .classMenu::before, .pickerIcon::after { display: none; }
+  .classTrigger { border: 1px solid ButtonText; background: Canvas; color: CanvasText; }
+  .classTrigger:focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
   .classMenu { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
   .classOption { border-color: CanvasText; color: CanvasText; }
   .classOption[data-highlighted="true"] { outline: 2px solid Highlight; outline-offset: -2px; box-shadow: none; }
   .classOption[aria-selected="true"] .classCheck { color: CanvasText; }
-  .control::before, .card::before, .card::after, .summary::before, .summary::after, .state::before, .empty::before, .heraldry, .emptyHeraldry, .page .roster .classMark::after,
-  .signOut :global(button)::before, .state :global([data-folio-action])::before { display: none; }
-  .page .card.card, .page .summary.summary, .page .state.state, .page .empty { border: 1px solid CanvasText; background: Canvas; box-shadow: none; }
-  .page .filters .control { border: 1px solid ButtonText; background: Canvas; }
-  .page .filters .control:focus-within { outline: 2px solid Highlight; outline-offset: 3px; }
-  .page .hero h1, .page .connection, .page .sectionTitle h2, .page .card a, .page .card p, .page .card .level, .page .statLabel { color: CanvasText; text-shadow: none; }
-  .page.page .signOut.signOut :global([data-folio-action]),
-  .page.page .signOut.signOut :global([data-folio-action]:is(:hover, :focus-visible, :active)),
-  .page.page .state.state :global([data-folio-action]:not([data-folio-action="quiet"])),
-  .page.page .state.state :global([data-folio-action]:not([data-folio-action="quiet"]):is(:hover, :focus-visible, :active)) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
 }
-
-:global([data-frost-active="false"]) .card::before,
-:global([data-frost-active="false"]) .signOut :global(button)::before,
-:global([data-frost-active="false"]) .state :global([data-folio-action])::before { filter: contrast(.88) saturate(.84) brightness(.92) !important; }
