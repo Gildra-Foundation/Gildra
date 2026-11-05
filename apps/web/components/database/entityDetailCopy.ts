@@ -1,18 +1,14 @@
 import type { Lang } from "@/lib/i18n";
 
-/** Interface copy of a library record page (/library/<dataset>/<type>/<id>/<slug>). */
+/** Interface copy of a library record page (/library/<dataset>/<id>/<slug>). */
 export const entityDetailCopy = {
   ru: {
     breadcrumbsLabel: "Навигация",
     library: "Библиотека",
-    itemLevel: "Уровень предмета",
-    requiredLevel: "Требуется уровень",
-    quality: "Качество",
     qualityNames: { 0: "Низкое", 1: "Обычное", 2: "Необычное", 3: "Редкое", 4: "Эпическое", 5: "Легендарное", 6: "Артефакт", 7: "Фамильная ценность" } as Record<number, string>,
-    modelTitle: "Модель",
     modelLabel: (name: string) => `${name} — модель`,
     unresolved: "Числа в этом описании зависят от характеристик персонажа и пока не подставлены.",
-    tooltipTitle: "Игровая подсказка",
+    factsLabel: "Характеристики",
     relationsTitle: "Связанные записи",
     yes: "да",
     no: "нет",
@@ -20,14 +16,10 @@ export const entityDetailCopy = {
   en: {
     breadcrumbsLabel: "Breadcrumbs",
     library: "Library",
-    itemLevel: "Item level",
-    requiredLevel: "Required level",
-    quality: "Quality",
     qualityNames: { 0: "Poor", 1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary", 6: "Artifact", 7: "Heirloom" } as Record<number, string>,
-    modelTitle: "Model",
     modelLabel: (name: string) => `${name} — model`,
     unresolved: "The numbers in this description depend on character stats and are not filled in yet.",
-    tooltipTitle: "In-game tooltip",
+    factsLabel: "Facts",
     relationsTitle: "Related records",
     yes: "yes",
     no: "no",

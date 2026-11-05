@@ -73,6 +73,48 @@ export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: 
 	);
 }
 
+export type RecordFact = { key: string; label: string; value: string };
+
+/**
+ * The few game facts of a record a player compares at a glance, read from its
+ * tooltip blocks (the record endpoint has no typed fields): item level, level,
+ * slot, armour or weapon type, classes and sell price for items; cast time,
+ * range, cooldown, duration and cost for spells. Missing facts are left out.
+ */
+export function recordFacts(entity: CatalogRecord, lang: Lang): RecordFact[] {
+	const copy = tooltipContentCopy[lang];
+	const blocks = entity.tooltip?.blocks ?? [];
+	const block = (type: string) => blocks.find((entry) => String(entry.type ?? "") === type);
+	const positive = (value: unknown) => typeof value === "number" && Number.isFinite(value) && value > 0;
+	const facts: RecordFact[] = [];
+	const add = (key: string, label: string, value: string | undefined) => { if (value) facts.push({ key, label, value }); };
+	const level = block("item_level");
+	if (positive(level?.value)) add("itemLevel", copy.factItemLevel, String(level!.value));
+	const required = block("required_level");
+	if (positive(required?.value)) add("requiredLevel", copy.factRequiredLevel, String(required!.value));
+	const slot = block("slot");
+	if (slot && Number(slot.code) > 0) add("slot", copy.factSlot, inventoryTypeLabel(Number(slot.code), lang));
+	const subclass = block("subclass");
+	if (subclass) add("subclass", copy.factType, subclassLabel(Number(subclass.class_id), Number(subclass.subclass_id), lang));
+	const requirements = block("item_requirements");
+	if (requirements) add("classes", copy.classes, itemClassNames(requirements, lang).join(", "));
+	const stack = block("stack_limit");
+	if (Number(stack?.value) > 1) add("stack", copy.maximumStack, String(stack!.value));
+	const price = block("price");
+	if (Number(price?.sell) > 0) add("sell", copy.factSellPrice, formatQuestMoney(Number(price!.sell), lang));
+	const cast = block("cast_time");
+	if (cast) add("cast", copy.factCast, formatCastTime(Number(cast.milliseconds), lang));
+	const range = block("range");
+	if (Number(range?.yards) > 0) add("range", copy.factRange, `${String(range!.yards)} ${copy.yd}`);
+	const cooldown = block("cooldown");
+	if (Number(cooldown?.milliseconds) > 0) add("cooldown", copy.cooldown2, formatDuration(Number(cooldown!.milliseconds), lang));
+	const duration = block("duration");
+	if (Number(duration?.milliseconds) > 0) add("duration", copy.duration, formatDuration(Number(duration!.milliseconds), lang));
+	const power = block("power");
+	if (power && (Number(power.amount) > 0 || Number(power.percent) > 0)) add("power", copy.factCost, formatPower(power, lang));
+	return facts;
+}
+
 function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<string, unknown>; entityType: string; lang: Lang; mentions: Record<string, unknown>[] }) {
   const type = String(block.type ?? "");
   if (type === "name") return null;
@@ -160,20 +202,19 @@ function RecipeInfo({ block, lang }: { block: Record<string, unknown>; lang: Lan
 	</div>;
 }
 
-function ItemRequirements({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
+function itemClassNames(block: Record<string, unknown>, lang: Lang) {
 	const classMask = BigInt(String(block.class_mask ?? "-1"));
-	const classNames = classMask === -1n ? [] : PLAYABLE_CLASS_IDS.filter((id) => (BigInt.asUintN(32, classMask) & (1n << BigInt(id - 1))) !== 0n).map((id) => className(id, lang));
+	return classMask === -1n ? [] : PLAYABLE_CLASS_IDS.filter((id) => (BigInt.asUintN(32, classMask) & (1n << BigInt(id - 1))) !== 0n).map((id) => className(id, lang));
+}
+
+// Required ability, reputation faction and holiday arrive as bare game ids (no names): an id is not a fact for a player.
+function ItemRequirements({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
+	const classNames = itemClassNames(block, lang);
 	const raceRestricted = String(block.race_mask_0 ?? "-1") !== "-1" || String(block.race_mask_1 ?? "-1") !== "-1";
-	const ability = Number(block.required_ability_id ?? 0);
-	const faction = Number(block.faction_id ?? 0);
-	const holiday = Number(block.holiday_id ?? 0);
-	if (!classNames.length && !raceRestricted && !ability && !faction && !holiday) return null;
+	if (!classNames.length && !raceRestricted) return null;
 	return <div className="db-tooltip-requirements">
 		{classNames.length ? <div>{tooltipContentCopy[lang].classes}: {classNames.join(", ")}</div> : null}
 		{raceRestricted ? <div>{tooltipContentCopy[lang].raceRestricted}</div> : null}
-		{ability ? <div>{tooltipContentCopy[lang].requiresAbility}: {ability}</div> : null}
-		{faction ? <div>{tooltipContentCopy[lang].requiresReputation}: {faction} ({String(block.reputation ?? 0)})</div> : null}
-		{holiday ? <div>{tooltipContentCopy[lang].event}: {holiday}</div> : null}
 	</div>;
 }
 
@@ -185,18 +226,24 @@ function ItemEffectMetadata({ entries, lang }: { entries: Record<string, unknown
 	</div>)}</div>;
 }
 
+/**
+ * Stats of the item's variants. Only variants with stats are shown; a single
+ * one goes without its "Base version" heading, several are named disclosures.
+ * Effects are bare spell ids here (the readable effect lines come from their own blocks).
+ */
 function ItemVariants({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
+	const statsOf = (variant: Record<string, unknown>) => (Array.isArray(variant.stats) ? variant.stats as Record<string, unknown>[] : [])
+		.filter((stat) => stat.value !== null && stat.value !== undefined && String(stat.label || stat.key || ""));
+	const visible = entries.map((variant) => ({ variant, stats: statsOf(variant) })).filter(({ stats }) => stats.length);
+	if (!visible.length) return null;
+	const list = (stats: Record<string, unknown>[]) => <div className="db-tooltip-related">{stats.map((stat, index) => <span key={`${String(stat.index)}-${index}`}>{String(stat.label || stat.key)}: {String(stat.value)}</span>)}</div>;
+	if (visible.length === 1) return <div className="db-tooltip-variants">{list(visible[0].stats)}</div>;
 	return <div className="db-tooltip-variants">
 		<b>{tooltipContentCopy[lang].itemVariants}</b>
-		{entries.map((variant, variantIndex) => {
-			const stats = Array.isArray(variant.stats) ? variant.stats as Record<string, unknown>[] : [];
-			const effects = Array.isArray(variant.effects) ? variant.effects as Record<string, unknown>[] : [];
-			return <details key={`${String(variant.key)}-${variantIndex}`} open={entries.length === 1}>
-				<summary>{!variant.key || String(variant.key) === "base" ? tooltipContentCopy[lang].baseVersion : String(variant.key)}{Number(variant.item_level ?? 0) > 0 ? ` · ${tooltipContentCopy[lang].level} ${String(variant.item_level)}` : ""}</summary>
-				{stats.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].stats}:</b>{stats.map((stat, index) => <span key={`${String(stat.index)}-${index}`}>{String(stat.label || stat.key || `Stat ${stat.type}`)}{stat.value !== null && stat.value !== undefined ? `: ${String(stat.value)}` : ""}{Number(stat.allocation ?? 0) !== 0 ? ` · ${tooltipContentCopy[lang].allocation} ${String(stat.allocation)}` : ""}</span>)}</div> : null}
-				{effects.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].effects}:</b>{effects.map((effect, index) => <span key={`${String(effect.index)}-${index}`}>{tooltipContentCopy[lang].spell} #{String(effect.spell_id || "—")}{Number(effect.cooldown_ms ?? 0) > 0 ? ` · ${formatDuration(Number(effect.cooldown_ms), lang)}` : ""}</span>)}</div> : null}
-							</details>;
-		})}
+		{visible.map(({ variant, stats }, variantIndex) => <details key={`${String(variant.key)}-${variantIndex}`}>
+			<summary>{!variant.key || String(variant.key) === "base" ? tooltipContentCopy[lang].baseVersion : String(variant.key)}{Number(variant.item_level ?? 0) > 0 ? ` · ${tooltipContentCopy[lang].level} ${String(variant.item_level)}` : ""}</summary>
+			{list(stats)}
+		</details>)}
 	</div>;
 }
 
@@ -304,7 +351,6 @@ function CreatureInfo({ block, lang }: { block: Record<string, unknown>; lang: L
 	return <div className="db-tooltip-creature-info">
 		{String(block.creature_type ?? "") ? <div>{tooltipContentCopy[lang].type}: {String(block.creature_type)}</div> : null}
 		{String(block.creature_family ?? "") ? <div>{tooltipContentCopy[lang].family}: {String(block.creature_family)}</div> : null}
-		{Number(block.difficulty_count ?? 0) > 0 ? <div>{tooltipContentCopy[lang].difficultyVariants}: {String(block.difficulty_count)}</div> : null}
 		{roles.length ? <div>{tooltipContentCopy[lang].roles}: {roles.map((role) => String(role.role)).join(", ")}</div> : null}
 		{locations.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].location}:</b>{locations.map((location, index) => <span key={`${String(location.ui_map_id)}-${index}`}>{tooltipContentCopy[lang].map} {String(location.ui_map_id || location.map_id || "—")}: {Number(location.x).toFixed(1)}, {Number(location.y).toFixed(1)}</span>)}</div> : null}
 		{lootTables.length ? <LootTables tables={lootTables} lang={lang} /> : null}

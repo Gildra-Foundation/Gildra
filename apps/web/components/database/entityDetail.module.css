@@ -1,4 +1,4 @@
-/* atlas:strict — library record page (/library/<dataset>/<type>/<id>/<slug>): hero icon in the kit frame and facts on the plaque, the tooltip beside the 3D plaque or the relations. Layout only, atlas tokens. */
+/* atlas:strict — library record page (/library/<dataset>/<id>/<slug>): hero (icon in the kit frame, label line, name), the tooltip and the facts on library plaques side by side, the 3D plaque, the relations. Layout only, atlas tokens. */
 
 /* ---------- Hero ---------- */
 /* Title row: the record's icon in the library kit's frame (the quality colours the frame's inner edge), then the name
@@ -50,17 +50,68 @@
   line-height: 1.5;
 }
 
-.factsPlaque { min-width: 280px; padding: 28px 30px 30px; }
-.facts { border-color: var(--material-line); background: transparent; }
-.facts > * { border-color: var(--material-line); }
+/* Label line over the name: quality in its colour · slot · type, separated by thin dots. */
+.label { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--atlas-space-2); }
+.label > span + span::before { margin-inline-end: var(--atlas-space-2); color: var(--atlas-text-subtle); content: "·"; }
 
-/* ---------- Tooltip beside the model or the relations ---------- */
-/* One column by default; with a model or relations the tooltip takes the left part and the other block the right. */
-.pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-6); align-items: start; }
-.pair[data-pair="relations"] { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
-.pair[data-pair="model"] { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
-.tooltipColumn { min-width: 0; }
-.pair:not([data-pair]) .tooltipColumn { max-width: 720px; }
+/* The hero's side: the tooltip (or, without one, the facts) at a reading width. */
+.heroSide { width: clamp(360px, 32vw, 480px); }
+.heroSide[data-side="model"] { width: clamp(400px, 38vw, 580px); }
+/* Under the title (records with a model): the tooltip takes the actions row's full width, at a reading width. */
+.heroTooltip { flex: 1 0 100%; margin-top: var(--atlas-space-4); }
+.heroTooltip > * { max-width: 560px; }
+
+/* ---------- Body: facts row, model, relations ---------- */
+.record { display: grid; gap: var(--atlas-space-7); margin-top: var(--atlas-space-7); }
+
+/* The game tooltip on the library plaque: the hero already shows the big icon, so the tooltip is text only, on the plaque's own ground. */
+.tooltipPlaque { padding: 26px 30px 30px; }
+.factsPlaque { padding: 30px 34px; }
+.tooltipPlaque :global(.db-wow-tooltip.is-detail-page) { grid-template-columns: minmax(0, 1fr); }
+.tooltipPlaque :global(.db-tooltip-icon) { display: none; }
+.tooltipPlaque :global(.db-tooltip-panel) { min-height: 0; padding: 0; border: 0; background: transparent; box-shadow: none; font-size: var(--atlas-text-body); line-height: 1.55; }
+.tooltipPlaque :global(.db-tooltip-name) { font-size: var(--atlas-text-h3); }
+
+/* Facts: label in small caps over the value; up to six columns. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(var(--fact-columns, 3), minmax(0, 1fr));
+  gap: var(--atlas-space-5) var(--atlas-space-6);
+  margin: 0;
+}
+.facts[data-count="1"] { --fact-columns: 1; }
+.facts[data-count="2"] { --fact-columns: 2; }
+.facts[data-count="3"] { --fact-columns: 3; }
+.facts[data-count="4"] { --fact-columns: 4; }
+.facts[data-count="5"] { --fact-columns: 5; }
+.facts[data-count="6"] { --fact-columns: 6; }
+/* In the hero's side the plaque is narrow: two columns. */
+.heroSide .facts[data-count] { --fact-columns: 2; }
+.heroSide .facts[data-count="1"] { --fact-columns: 1; }
+/* A thin rule of the kit's colour on the left of each value, like the hub counters' dividers. */
+.fact {
+  min-width: 0;
+  padding-inline-start: var(--atlas-space-4);
+  border-inline-start: 1px solid var(--material-line, var(--atlas-line-soft));
+}
+.fact dt {
+  margin-bottom: var(--atlas-space-1);
+  color: var(--material-light, var(--atlas-text-muted));
+  font-size: var(--atlas-text-label);
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.fact dd {
+  margin: 0;
+  color: var(--atlas-text-strong);
+  font: 600 var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-ui);
+  font-variant-numeric: lining-nums tabular-nums;
+  overflow-wrap: anywhere;
+}
+/* Levels are the numbers a player compares: display figures, like the hub counters. */
+.fact[data-fact="itemLevel"] dd,
+.fact[data-fact="requiredLevel"] dd { font: var(--atlas-weight-display) var(--atlas-text-stat) / 1.1 var(--atlas-font-display); font-variant-numeric: lining-nums tabular-nums; }
 
 .columnTitle {
   margin: 0 0 var(--atlas-space-3);
@@ -68,11 +119,11 @@
   font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display);
 }
 
+
 /* ---------- 3D model in the library plaque (design.md §3.9) ---------- */
 /* The plaque is the frame; the viewer fills the stage. Its own controls sit on a strip under the canvas,
    so they never cover the model (the viewer is not edited here: the strip is made from outside). */
 .model { margin: 0; padding: 28px; }
-.modelAlone { max-width: 720px; }
 
 .modelStage {
   position: relative;
@@ -149,14 +200,23 @@
 }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 1000px) {
-  .pair[data-pair] { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 1100px) {
+  .heroSide,
+  .heroSide[data-side="model"] { width: min(560px, 100%); }
+  .facts[data-count="5"],
+  .facts[data-count="6"] { --fact-columns: 3; }
 }
 
 @media (max-width: 720px) {
-  .factsPlaque { min-width: 0; }
-  /* Wide enough for the longest quality word (RU «Эпическое», «Легендарное») on one line. */
-  .factsPlaque .facts { grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
+  .record { gap: var(--atlas-space-6); margin-top: var(--atlas-space-6); }
+  .heroSide,
+  .heroSide[data-side="model"] { width: 100%; }
+  .tooltipPlaque,
+  .factsPlaque { padding: 20px 22px 22px; }
+  .facts[data-count] { --fact-columns: 2; }
+  .facts[data-count="1"] { --fact-columns: 1; }
+  .fact[data-fact="classes"],
+  .fact[data-fact="sell"] { grid-column: 1 / -1; }
   .model { padding: 20px; }
   .disclosure > summary,
   .disclosure > div { padding-inline: var(--atlas-space-3); }
