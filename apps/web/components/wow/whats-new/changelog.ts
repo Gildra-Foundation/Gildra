@@ -8,6 +8,25 @@ export type Release = { date: string; changes: Array<{ kind: ChangeKind; en: str
 
 export const changelog: Release[] = [
   {
+    date: "2026-11-05",
+    changes: [
+      { kind: "better", en: "The Unbinding of Kith’ix has its own organic look: living frames, panels, buttons and ornament.", ru: "У «Освобождения К’тикса» своё живое оформление: рамки, панели, кнопки и орнамент." },
+    ],
+  },
+  {
+    date: "2026-11-04",
+    changes: [
+      { kind: "new", en: "The Venomous Abyss guide: all eight bosses on one page, with Normal and Heroic tactics.", ru: "Гайд по The Venomous Abyss: все восемь боссов на одной странице, тактики Normal и Heroic." },
+      { kind: "better", en: "Every published raid is now in the Raids menu.", ru: "Все опубликованные рейды теперь в меню «Рейды»." },
+    ],
+  },
+  {
+    date: "2026-10-29",
+    changes: [
+      { kind: "better", en: "The Voidspire is simpler: all six bosses and the overview show stages and pulls in one compact view, Normal and Heroic side by side, role tips folded away.", ru: "The Voidspire стал проще: все шесть боссов и обзор показывают стадии и пуллы в одном компактном виде, Normal и Heroic рядом, советы ролям свёрнуты." },
+    ],
+  },
+  {
     date: "2026-10-27",
     changes: [
       { kind: "new", en: "Transmog Studio: try any appearance on a 3D character and save a picture for social media.", ru: "Трансмогрификация: примеряйте любые облики на 3D-персонаже и сохраняйте картинку для соцсетей." },

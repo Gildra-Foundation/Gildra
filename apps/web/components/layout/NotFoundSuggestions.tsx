@@ -14,6 +14,11 @@ const copy = {
   ru: { title: "Возможно, вы искали", search: "Искать на сайте" },
 };
 
+// Service addresses (dev galleries, API, bots probing for CMSs) get no guesses: "/dev" is not "Devastation".
+const servicePath = /^\/(?:ru\/)?(?:(?:dev|api|admin|cgi-bin)(?:\/|$)|_next\/|wp-|\.)|\.(?:php|aspx?|env|xml|txt)$/i;
+// The hero already offers these two pages.
+const heroPages = new Set(["/wow", "/wow/mythic-plus"]);
+
 const subscribe = () => () => {};
 const pathOf = () => window.location.pathname;
 
@@ -33,7 +38,7 @@ export function NotFoundSuggestions() {
   const { last, all } = wordsOf(path);
 
   useEffect(() => {
-    if (!path) return;
+    if (!path || servicePath.test(path)) return;
     let alive = true;
     loadIndex().then((index) => {
       if (!alive) return;
@@ -42,7 +47,7 @@ export function NotFoundSuggestions() {
       const tries = [last, ...last.split(" "), ...all.split(" ")].filter((word, position, list) => word.length > 3 && list.indexOf(word) === position && !/^(wow|ru)$/.test(word));
       const found = new Map<string, SiteSearchHit>();
       for (const query of tries) {
-        for (const hit of searchIndex(entries, query, 6)) if (!found.has(hit.h)) found.set(hit.h, hit);
+        for (const hit of searchIndex(entries, query, 6)) if (!found.has(hit.h) && !heroPages.has(hit.h)) found.set(hit.h, hit);
         if (found.size >= 6) break;
       }
       setHits([...found.values()].slice(0, 6));

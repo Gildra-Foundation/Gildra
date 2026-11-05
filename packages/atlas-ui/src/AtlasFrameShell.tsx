@@ -39,7 +39,7 @@ export type AtlasFrameShellProps = {
   /** Extra attributes for page-level hooks (data-*). */
   dataAttributes?: Record<`data-${string}`, string | boolean | undefined>;
   /** Slim legal line under the content: the text and its links (the "less motion" switch comes first), and an optional brand seal above it. */
-  footer?: { legal: ReactNode; links: ReactNode; brand?: ReactNode } | false;
+  footer?: { legal: ReactNode; links: ReactNode; brand?: ReactNode; motion?: ReactNode } | false;
   /**
    * The page's horizon: at the foot of the page the solid body warms into the
    * scene's light — a glow on the horizon, drifting mist, a slow seal of runes
@@ -57,13 +57,13 @@ function objectFocus(position: string | undefined): [number, number] {
 }
 
 /** The frame's legal line (brand, notice, motion switch, links); pages outside the frame (a full-bleed reader) reuse it. */
-export function AtlasFrameFooter({ locale, brand, legal, links }: { locale: "en" | "ru"; legal: ReactNode; links: ReactNode; brand?: ReactNode }) {
+export function AtlasFrameFooter({ locale, brand, legal, links, motion }: { locale: "en" | "ru"; legal: ReactNode; links: ReactNode; brand?: ReactNode; motion?: ReactNode }) {
   return (
     <footer className={styles.legal} data-text-links>
       {brand ? <div className={styles.legalBrand}>{brand}</div> : null}
       <p>{legal}</p>
       <div className={styles.legalLinks}>
-        <AtlasMotionToggle locale={locale} />
+        {motion ?? <AtlasMotionToggle locale={locale} />}
         {links}
       </div>
     </footer>
