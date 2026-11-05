@@ -69,7 +69,8 @@
   .facts { margin-top: var(--atlas-space-4); }
   .tools { scroll-margin-top: calc(var(--atlas-header-height-mobile, 57px) + 12px); }
   .tabs [role="tablist"] { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-  .tabs [role="tab"] { flex: none; padding-inline: 10px; font-size: 14px; }
+  .tabs [role="tab"] { flex: 1 0 auto; justify-content: center; padding-inline: 6px; font-size: 14px; }
+  .tabs [role="tablist"] { gap: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 :global(html[data-motion="reduced"]) .spin { animation: none; }

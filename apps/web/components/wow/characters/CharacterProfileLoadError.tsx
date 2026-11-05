@@ -22,7 +22,7 @@ export function CharacterProfileLoadError({ locale, code, retryHref }: { locale:
           <AtlasHero
             align="start"
             className={styles.heroHeader}
-            breadcrumbs={characterCrumbs(locale, copy.profile.eyebrow)}
+            breadcrumbs={characterCrumbs(locale)}
             breadcrumbsLabel={copy.breadcrumbsLabel}
             title={title}
             lede={description}

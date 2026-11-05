@@ -15,7 +15,7 @@ export function CharacterProfileLoading({ locale }: { locale: "en" | "ru" }) {
           <AtlasHero
             align="start"
             className={styles.heroHeader}
-            breadcrumbs={characterCrumbs(locale, copy.profile.eyebrow)}
+            breadcrumbs={characterCrumbs(locale)}
             breadcrumbsLabel={copy.breadcrumbsLabel}
             title={copy.profile.loadingTitle}
           />
