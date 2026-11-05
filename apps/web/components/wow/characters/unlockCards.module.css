@@ -4,7 +4,7 @@
 .cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 48px;
+  gap: 32px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -23,7 +23,7 @@
   isolation: isolate;
   display: flex;
   flex-direction: column;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 5 / 6;
   overflow: hidden;
   border-radius: var(--unlock-radius);
   background: var(--unlock-plate);
@@ -143,11 +143,11 @@ a.card:hover .title, a.card:focus-visible .title { color: var(--unlock-light); }
 
 /* ---------- Adaptive ---------- */
 @media (max-width: 1180px) {
-  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 }
 @media (max-width: 760px) {
   .cards { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .card { --unlock-notch: 30px; --unlock-art-height: 220px; aspect-ratio: auto; }
+  .card { --unlock-notch: 30px; --unlock-art-height: 196px; aspect-ratio: auto; }
   .art { height: var(--unlock-art-height); }
   .plate { min-height: 0; margin-top: calc(var(--unlock-art-height) - var(--unlock-notch) - 24px); padding: 16px 22px calc(24px + 24px); }
   .number { font-size: 48px; }
