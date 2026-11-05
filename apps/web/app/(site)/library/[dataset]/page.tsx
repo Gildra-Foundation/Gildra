@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { pairedAlternates } from "@/lib/seo/metadata";
 import { LibraryDatasetPage, type LibraryDatasetFilters } from "@/components/library/LibraryDatasetPage";
 import { libraryDatasetName } from "@/lib/library/server";
 
 export async function generateMetadata({ params }: { params: Promise<{ dataset: string }> }): Promise<Metadata> {
   const { dataset } = await params;
-  return { title: `${await libraryDatasetName(dataset, "en_US")} — Gildra Library`, alternates: { languages: { en: `/library/${dataset}`, ru: `/ru/library/${dataset}` } } };
+  return { title: `${await libraryDatasetName(dataset, "en_US")} — Gildra Library`, alternates: pairedAlternates("en", `/library/${dataset}`) };
 }
 
 export default async function Page({ params, searchParams }: { params: Promise<{ dataset: string }>; searchParams: Promise<LibraryDatasetFilters> }) {

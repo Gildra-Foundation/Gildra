@@ -24,7 +24,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       canonical: `/ru/wow/raids/${raid.slug}`,
       languages: { en: `/wow/raids/${raid.slug}`, ru: `/ru/wow/raids/${raid.slug}`, "x-default": `/wow/raids/${raid.slug}` },
     },
-    robots: { index: false, follow: true },
   };
 }
 

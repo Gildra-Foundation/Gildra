@@ -17,17 +17,14 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   wow: {
     en: { title: "World of Warcraft — Gildra", description: "Your World of Warcraft command center: Mythic+ routes, raid bosses, tier lists, the game library and tools." },
     ru: { title: "World of Warcraft — хаб Gildra", description: "Ваш командный центр World of Warcraft: маршруты Mythic+, боссы рейдов, тир-листы, библиотека игры и инструменты." },
-    noindex: true,
   },
   raids: {
     en: { title: "World of Warcraft Raid Journal — Gildra", description: "Midnight raids: bosses, their abilities and what every role does in the fight." },
     ru: { title: "Рейдовый журнал World of Warcraft — Gildra", description: "Рейды Midnight: боссы, их способности и задачи каждой роли в бою." },
-    noindex: true,
   },
   mythicPlus: {
     en: { title: "Midnight Mythic+ — Gildra", description: "Choose a dungeon and open its route: pulls, bosses, timer, party composition and tactical assignments." },
     ru: { title: "Mythic+ Midnight — Gildra", description: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения." },
-    noindex: true,
   },
   mythicPlusMeta: {
     en: { title: "Mythic+ Meta: Top Specs This Week — Gildra", description: "Which specializations appear in the top 2000 Mythic+ keys of the week, by role, with week-on-week change and the season trend. Data from mythicstats.com." },
@@ -36,32 +33,26 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   dungeons: {
     en: { title: "Midnight Dungeons — Gildra", description: "Dungeons of the current season: route, bosses, timer and strategy for each." },
     ru: { title: "Подземелья Midnight — Gildra", description: "Подземелья текущего сезона: маршрут, боссы, таймер и тактика для каждого." },
-    noindex: true,
   },
   lairs: {
     en: { title: "Midnight Season 2 Lairs and World Bosses — Gildra", description: "Midnight Season 2 Lair and world bosses: locations, abilities, difficulty and loot." },
     ru: { title: "Логова и мировые боссы Midnight Сезон 2 — Gildra", description: "Логово и мировые боссы Midnight Сезон 2: где найти, способности, сложность и добыча." },
-    noindex: true,
   },
   classes: {
     en: { title: "WoW Classes and Specializations — Gildra", description: "Every Midnight class and specialization with its talent tree." },
     ru: { title: "Классы и специализации WoW — Gildra", description: "Все классы и специализации Midnight с деревьями талантов." },
-    noindex: true,
   },
   delves: {
     en: { title: "Midnight Delves — Gildra", description: "Delves of Midnight: where they are and what awaits inside." },
     ru: { title: "Вылазки Midnight — Gildra", description: "Вылазки Midnight: где они и что ждёт внутри." },
-    noindex: true,
   },
   season2: {
     en: { title: "WoW Midnight Season 2 Guide — Gildra", description: "What Midnight Season 2 brings: Mythic+ dungeons, raids, delves and more." },
     ru: { title: "WoW Midnight Сезон 2 — гайд Gildra", description: "Что принёс Midnight Сезон 2: подземелья Mythic+, рейды, вылазки и другое." },
-    noindex: true,
   },
   whatsNew: {
     en: { title: "What's new — Gildra", description: "What changed on Gildra for players, newest first." },
     ru: { title: "Что нового — Gildra", description: "Что изменилось на Gildra для игроков, сначала свежее." },
-    noindex: true,
   },
 };
 

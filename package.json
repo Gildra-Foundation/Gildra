@@ -27,6 +27,7 @@
     "valyro:login": "npx -y valyro-cli@0.1.0 login",
     "atlas:check": "npm run atlas:check -w @gildra/web --",
     "test:atlas": "npm run test:atlas -w @gildra/web --",
+    "test:seo": "npm run test:seo -w @gildra/web --",
     "test:observability": "npm run test:observability -w @gildra/web --",
     "routes:check": "npm run routes:check -w @gildra/web --",
     "routes:mirror": "npm run routes:mirror -w @gildra/web --",

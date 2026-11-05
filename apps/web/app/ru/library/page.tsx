@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   title: "Библиотека данных World of Warcraft — Gildra",
   description: "Опубликованные датасеты World of Warcraft с проверенными tooltip, изображениями, связями и происхождением данных.",
   alternates: { canonical: "/ru/library", languages: { en: "/library", ru: "/ru/library", "x-default": "/library" } },
-  robots: { index: false, follow: true },
 };
 
 export default async function LibraryPageRu({ searchParams }: { searchParams: Promise<{ product?: string }> }) {

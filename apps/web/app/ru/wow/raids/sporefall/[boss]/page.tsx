@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   title: "Rotmire — Sporefall — Gildra",
   description: "Гнилотоп, босс Споропада: что сделать перед пуллом, задачи ролей и способности.",
   alternates: { canonical: path, languages: { en: "/wow/raids/sporefall/rotmire", ru: path, "x-default": "/wow/raids/sporefall/rotmire" } },
-  robots: { index: false, follow: true },
 };
 export function generateStaticParams() { return [{ boss: "rotmire" }]; }
 export default async function Page({ params }: { params: Promise<{ boss: string }> }) {

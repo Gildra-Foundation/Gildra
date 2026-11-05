@@ -1,5 +1,6 @@
 import { wowSourceName } from "@/lib/wow/sourceLocale";
 import type { Metadata } from "next";
+import { pairedAlternates } from "@/lib/seo/metadata";
 import { notFound } from "next/navigation";
 import { LairBossGuide } from "@/components/wow/raid/lairs/LairBossGuide";
 import { getMidnightLairEncounter, midnightLairEncounters } from "@/lib/data/wow";
@@ -14,7 +15,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const encounter = getMidnightLairEncounter((await params).slug);
-  return encounter ? { title: `${wowSourceName(encounter.name, "ru")} — Midnight · Сезон 2 — Gildra`, description: `${wowSourceName(encounter.name, "ru")}: где найти, способности, сложность и добыча — Midnight · Сезон 2.`, robots: { index: false, follow: true } } : {};
+  return encounter ? { title: `${wowSourceName(encounter.name, "ru")} — Midnight · Сезон 2 — Gildra`, description: `${wowSourceName(encounter.name, "ru")}: где найти, способности, сложность и добыча — Midnight · Сезон 2.`, alternates: pairedAlternates("ru", `/wow/lairs/${encounter.slug}`) } : {};
 }
 
 export default async function BossPage({ params }: { params: Promise<{ slug: string }> }) {

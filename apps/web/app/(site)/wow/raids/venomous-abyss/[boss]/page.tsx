@@ -21,7 +21,6 @@ export async function generateMetadata({ params }: { params: Promise<{ boss: str
       canonical: `/wow/raids/venomous-abyss/${slug}`,
       languages: { en: `/wow/raids/venomous-abyss/${slug}`, ru: `/ru/wow/raids/venomous-abyss/${slug}`, "x-default": `/wow/raids/venomous-abyss/${slug}` },
     },
-    robots: { index: false, follow: true },
   };
 }
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { auth, isBattleNetAuthConfigured } from "@/auth";
 import { CharacterAuditPage } from "@/components/wow/audit/CharacterAuditPage";
@@ -10,6 +11,8 @@ import { getRotationPreset } from "@/lib/platform/rotation/repository";
 import { characterProfileFingerprint } from "@/lib/wow/characterProfileFingerprint";
 
 export const dynamic = "force-dynamic";
+// A visitor's own character or a shared link: never indexed.
+export const metadata: Metadata = { robots: { index: false, follow: true } };
 type PageProps = { params: Promise<{ slug: string }> };
 
 export default async function CharacterPage({ params }: PageProps) {

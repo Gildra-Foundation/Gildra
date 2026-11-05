@@ -26,7 +26,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${boss.nameRu} — рейдовый гайд Midnight — Gildra`,
     description: `${boss.nameRu} — босс рейда Midnight · Сезон 1: план боя, механики и способности.`,
     alternates: { canonical: path, languages: { en: enPath, ru: path, "x-default": enPath } },
-    robots: { index: false, follow: true },
   };
 }
 

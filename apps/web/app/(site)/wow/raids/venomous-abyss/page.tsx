@@ -8,7 +8,6 @@ export const metadata: Metadata = {
     canonical: "/wow/raids/venomous-abyss",
     languages: { en: "/wow/raids/venomous-abyss", ru: "/ru/wow/raids/venomous-abyss", "x-default": "/wow/raids/venomous-abyss" },
   },
-  robots: { index: false, follow: true },
 };
 
 export default function Page() {

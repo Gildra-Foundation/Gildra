@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   title: "Rotmire — Sporefall — Gildra",
   description: "Rotmire, the boss of Sporefall: what to do before the pull, role tasks and abilities.",
   alternates: { canonical: path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
-  robots: { index: false, follow: true },
 };
 export function generateStaticParams() { return [{ boss: "rotmire" }]; }
 export default async function Page({ params }: { params: Promise<{ boss: string }> }) {
