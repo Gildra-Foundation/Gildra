@@ -131,11 +131,6 @@
   color: var(--atlas-text-strong);
   font: var(--atlas-weight-display, 600) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display);
 }
-.text {
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-body);
-  line-height: var(--atlas-leading-body);
-}
 
 /* ---------- Hover / keyboard focus: the card comes alive ---------- */
 .card:hover, .card:focus-visible { transform: translateY(-4px); }
@@ -179,7 +174,7 @@ a.card:hover .title, a.card:focus-visible .title { color: var(--unlock-light); }
 @media (forced-colors: active) {
   .card { border: 1px solid CanvasText; background: Canvas; box-shadow: none; transform: none; }
   .card::after, .art, .shape { display: none; }
-  .number, .title, .text, .arrow { color: CanvasText; }
+  .number, .title, .arrow { color: CanvasText; }
   .plate { transform: none; }
   .card:focus-visible { outline: 2px solid Highlight; }
 }

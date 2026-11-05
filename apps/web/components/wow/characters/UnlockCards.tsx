@@ -5,7 +5,6 @@ import styles from "./unlockCards.module.css";
 
 export type UnlockCard = {
   title: string;
-  text: string;
   /** Painted Frost Hall scene behind the card (public/assets/wow/characters/unlocks). */
   art: string;
   /** Only where the card honestly leads somewhere a guest can open. */
@@ -13,7 +12,7 @@ export type UnlockCard = {
 };
 
 /**
- * "What opens after sign-in": tall painted cards with a notched plate (number, arrow, title, text).
+ * Tall painted cards with a notched plate (number, arrow, title) of what a hero page holds.
  * Hover and keyboard focus lift the plate and drift the painting; all motion is transform/opacity
  * and stops under reduced motion, "Less motion", reduced transparency and forced colours.
  */
@@ -33,7 +32,6 @@ export function UnlockCards({ cards }: { cards: UnlockCard[] }) {
               {card.href ? <ArrowUpRight className={styles.arrow} aria-hidden="true" /> : null}
               <span className={styles.copy}>
                 <h3 className={styles.title}>{card.title}</h3>
-                <span className={styles.text}>{card.text}</span>
               </span>
             </span>
           </>
