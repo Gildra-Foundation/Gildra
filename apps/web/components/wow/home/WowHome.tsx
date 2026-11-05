@@ -33,17 +33,10 @@ export function WowHome({ lang }: { lang: Lang }) {
           align="start"
           eyebrow={season?.names[locale] ?? t.eyebrow}
           title={t.title}
-          lede={t.lede}
           actions={<MaterialLinkButton kit={HERO_KIT} fit="stack" variant="primary" href={href("/wow/characters")} iconAfter={<ArrowRight aria-hidden="true" />}>{t.character}</MaterialLinkButton>}
-          statsLabel={t.statsLabel}
-          stats={season ? [
-            { value: season.dungeons, label: t.dungeons(season.dungeons) },
-            { value: season.raids.length, label: t.raids(season.raids.length) },
-            { value: season.delves, label: t.delves(season.delves) },
-          ] : undefined}
         />
 
-      <AtlasSection id="sections" title={t.sections}>
+      <AtlasSection id="sections">
         <div className={styles.cards}>
           {sections.map((section, index) => (
             <MaterialCard
@@ -65,7 +58,6 @@ export function WowHome({ lang }: { lang: Lang }) {
       <MaterialPlaque kit={HERO_KIT} as="section" className={styles.talents} aria-labelledby="wow-talents">
         <div>
           <h2 id="wow-talents" className={materialStyles.title}>{t.talents}</h2>
-          <p className={materialStyles.text}>{t.talentsText}</p>
         </div>
         <MaterialLinkButton kit={HERO_KIT} fit="stack" href={href("/wow/classes")} iconAfter={<ArrowRight aria-hidden="true" />}>{t.talentsAction}</MaterialLinkButton>
       </MaterialPlaque>
