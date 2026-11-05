@@ -7,7 +7,7 @@ import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph, TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
 import { TooltipBody, tooltipClassName } from "@/components/database/TooltipContent";
-import { MaterialPlaque } from "@/components/wow/shared/materialAtlas";
+import { MaterialPlaque, materialButtonStyle, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { libraryKit } from "@/components/library/libraryKit";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { withVariantQuality } from "@/lib/library/recordQuality";
@@ -18,6 +18,7 @@ import { getCatalogPage, type CatalogEntityType, type CatalogRelationship, type 
 import { formatQuestText } from "@/lib/gameText";
 import type { Lang } from "@/lib/i18n";
 import styles from "./entityDetail.module.css";
+import paint from "@/components/library/libraryMaterial.module.css";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 
 type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships: CatalogRelationship[]; lang: Lang;
@@ -75,8 +76,10 @@ function itemFacts(entity: GameEntity) {
 }
 
 /**
- * Library record page (gildra-wow-material-design §3.8): hero with the game
- * facts a player needs (item level, required level, quality), then the
+ * Library record page (gildra-wow-material-design §3.8): hero — the icon in the
+ * library kit's frame (quality on its edge), the name in the strong text colour,
+ * a painted "Share" — with the game facts a player needs (item level, required
+ * level, quality in its colour) on the library plaque, then the
  * in-game tooltip with either the 3D model in a painted plaque or the related
  * records beside it. Build, ids, completeness and the raw record are not
  * shown. Server-only: the tooltip markup renders here, no tooltip code ships
@@ -162,8 +165,8 @@ export async function EntityDetailPage({ entity, entityType, relationships, lang
           eyebrow={typeLabel}
           title={(
             <span className={styles.heroTitle} style={heroStyle} data-quality={qualityColour ? facts.quality : undefined}>
-              {/* The record's own icon in its quality frame: identity, not decoration, so it stays on phones too. */}
-              <span className={styles.heroIcon} aria-hidden="true">
+              {/* The record's own icon in the library kit's frame, the quality on its inner edge: identity, not decoration, so it stays on phones too. */}
+              <span className={`${materialStyles.iconFrame} ${styles.heroIcon}`} style={materialIconFrameStyle(libraryKit, 112)} aria-hidden="true">
                 <ResilientImage src={entity.iconUrl} alt="" width={96} height={96} fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
               </span>
               <span className={styles.heroName}>{displayName}</span>
@@ -173,9 +176,13 @@ export async function EntityDetailPage({ entity, entityType, relationships, lang
           lede={description && !tooltip ? <span className={styles.lede}>{description}</span> : undefined}
           actions={<>
             {unresolvedDescription && !tooltip ? <p className={styles.warning} role="status">{copy.unresolved}</p> : null}
-            <AtlasShareButton title={String(displayName)} locale={lang === "ru" ? "ru" : "en"} />
+            <span className={paint.painted} style={materialButtonStyle(libraryKit)}><AtlasShareButton title={String(displayName)} locale={lang === "ru" ? "ru" : "en"} /></span>
           </>}
-          aside={factItems.length ? <AtlasMetaList columns={1} className={styles.facts} items={factItems} /> : undefined}
+          aside={factItems.length ? (
+            <MaterialPlaque kit={libraryKit} className={styles.factsPlaque}>
+              <AtlasMetaList columns={1} className={styles.facts} items={factItems} />
+            </MaterialPlaque>
+          ) : undefined}
         />
 
         {tooltip && model ? (

@@ -1,0 +1,95 @@
+/* atlas:strict — the library's painted pieces that the shared MaterialButton cannot wrap: atlas-ui buttons rendered by other
+   components (AtlasPagination links, AtlasShareButton) get the kit's nine-slice face. The wrapper carries
+   materialButtonStyle(libraryKit); the rules mirror material.module.css `.button` (design.md §4.1), plus the reference's
+   silhouette focus (drop-shadow on the art layer, system ring in forced colors). */
+
+.painted :global(.ui-button[data-variant]) {
+  --_bg: transparent;
+  --_bg-hover: transparent;
+  --_bg-active: transparent;
+  --_fg: var(--atlas-text-strong);
+  position: relative;
+  isolation: isolate;
+  justify-content: center;
+  min-height: 68px;
+  min-width: min(100%, 220px);
+  padding: var(--mythic-button-pad-top) var(--mythic-button-inset) var(--mythic-button-pad-bottom);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--atlas-text-strong);
+  box-shadow: none;
+  font-size: var(--atlas-text-small);
+  line-height: var(--atlas-leading-snug);
+  text-decoration: none;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  transition: transform var(--atlas-duration-fast) var(--atlas-ease);
+}
+
+.painted :global(.ui-button)::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 20px solid transparent;
+  border-image-source: var(--mythic-button-image);
+  border-image-slice: var(--mythic-button-slice) fill;
+  border-width: var(--mythic-button-width);
+  border-image-width: 1;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--atlas-bg);
+  background-clip: padding-box;
+  content: "";
+  pointer-events: none;
+}
+
+.painted :global(.ui-button)::after {
+  position: absolute;
+  z-index: 0;
+  inset: var(--mythic-button-top) var(--mythic-button-right) var(--mythic-button-bottom) var(--mythic-button-left);
+  border-radius: 40%;
+  background: linear-gradient(110deg, transparent, color-mix(in srgb, var(--atlas-text-strong) 15%, transparent), transparent);
+  opacity: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.painted :global(.ui-button__label),
+.painted :global(.ui-button__icon) { position: relative; z-index: 1; }
+.painted :global(.ui-button__icon) svg { width: 18px; height: 18px; }
+.painted :global(.ui-button):focus-visible { outline: 2px solid transparent; outline-offset: 4px; }
+.painted :global(.ui-button):focus-visible::before {
+  filter: contrast(.88) saturate(.84) brightness(1) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 6px var(--atlas-accent));
+}
+.painted :global(.ui-button):active { transform: translateY(1px) scale(.98); }
+
+@media (hover: hover) and (pointer: fine) {
+  .painted :global(.ui-button[data-variant]):hover { background: transparent; color: var(--atlas-text-strong); transform: translateY(-2px); }
+  .painted :global(.ui-button):hover::after { animation: libraryGlint 900ms var(--atlas-ease) both; }
+}
+
+@keyframes libraryGlint { from { opacity: 0; transform: translateX(-12px); } 45% { opacity: .8; } to { opacity: 0; transform: translateX(12px); } }
+
+/* Paging: the line above stays, the buttons are painted; phones stack them full width. */
+.pager > nav { border-top-color: var(--atlas-line-soft); }
+@media (max-width: 600px) {
+  .pager > nav > :global(.ui-button) { flex: 1 1 100%; width: 100%; }
+  .pager > nav > span:empty { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+  .painted :global(.ui-button) { transform: none; transition: none; }
+  .painted :global(.ui-button)::after { animation: none; opacity: 0; }
+}
+:global([data-motion="reduced"]) .painted :global(.ui-button),
+:global([data-ui-motion="reduce"]) .painted :global(.ui-button),
+:global([data-transparency="reduced"]) .painted :global(.ui-button) { transform: none; transition: none; }
+:global([data-motion="reduced"]) .painted :global(.ui-button)::after,
+:global([data-ui-motion="reduce"]) .painted :global(.ui-button)::after,
+:global([data-transparency="reduced"]) .painted :global(.ui-button)::after { animation: none; opacity: 0; }
+
+@media (forced-colors: active) {
+  .painted :global(.ui-button)::before,
+  .painted :global(.ui-button)::after { display: none; }
+  .painted :global(.ui-button[data-variant]) { border: 2px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
+  .painted :global(.ui-button):focus-visible { outline: 2px solid Highlight; }
+}

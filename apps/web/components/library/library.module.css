@@ -1,11 +1,11 @@
-/* atlas:strict — /library: hero search (glass field + painted button), edition switch, featured datasets on the library plaque, grouped dataset rows, freshness line. Layout only, atlas tokens. */
+/* atlas:strict — /library: hero (painted buttons, counters), search + edition switch on the library plaque, featured datasets on plaques, grouped dataset rows with kit icon frames, freshness line. Layout only, atlas tokens. */
 
 .editions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--atlas-space-1);
   margin-top: var(--atlas-space-5);
-  border-bottom: 1px solid var(--atlas-line-soft);
+  border-bottom: 1px solid var(--material-line, var(--atlas-line-soft));
 }
 
 .editions a {
@@ -19,11 +19,12 @@
   font-size: var(--atlas-text-small);
   font-weight: 600;
   text-decoration: none;
+  text-shadow: 0 1px 3px var(--atlas-bg);
 }
 
 .editions a:hover { color: var(--atlas-text-strong); }
-.editions a[aria-current="page"] { border-bottom-color: var(--atlas-accent); color: var(--atlas-accent-strong); }
-.editions a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.editions a[aria-current="page"] { border-bottom-color: var(--material-light, var(--atlas-accent)); color: var(--atlas-text-strong); }
+.editions a:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 2px; }
 
 .notice { margin-top: var(--atlas-space-4); }
 .unavailable { margin-top: var(--atlas-space-5); }
@@ -35,46 +36,25 @@
   .editions a { flex: none; padding: 0 var(--atlas-space-3); }
 }
 
-/* ---------- Hero search (whole library → /search) ---------- */
+/* ---------- Hero (reference: left column, painted buttons, counters under them) ---------- */
+.hero h1 { max-width: 15ch; }
+.hero p { max-width: 48ch; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+.heroFacts { max-width: 500px; margin-top: var(--atlas-space-4); }
+.heroFacts :global(.ui-stats-card) { padding-block: var(--atlas-space-2); border: 0; background: transparent; box-shadow: none; }
+
+/* ---------- Library search on the plaque (field + painted button), edition switch under it ---------- */
+.searchPlaque { margin-top: var(--atlas-space-6); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+
 .search {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--atlas-space-3);
-  width: min(100%, 760px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--atlas-space-4);
 }
 
-.searchField {
-  display: flex;
-  flex: 1 1 320px;
-  align-items: center;
-  gap: var(--atlas-space-3);
-  min-width: 0;
-  min-height: 60px;
-  padding: 0 var(--atlas-space-4);
-  border: 1px solid var(--atlas-line);
-  border-radius: var(--atlas-radius);
-  background: color-mix(in srgb, var(--atlas-surface-sunken) 88%, transparent);
-  box-shadow: var(--atlas-glass-depth);
-}
-
-.searchField:focus-within { border-color: var(--atlas-accent); box-shadow: 0 0 0 1px var(--atlas-accent), var(--atlas-glow); }
-.searchIcon { width: 18px; height: 18px; flex: none; color: var(--atlas-accent); }
-
-.searchField input {
-  flex: 1;
-  width: 0;
-  min-width: 0;
-  height: 56px;
-  border: 0;
-  outline: 0;
-  background: none;
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-ui);
-  font-size: var(--atlas-text-lead);
-}
-
-.searchField input::placeholder { color: var(--atlas-text-subtle); }
+.searchField { min-width: 0; }
+.searchField input { font-size: var(--atlas-text-lead); }
 
 /* ---------- Featured datasets: the library plaque, the dataset icon in the kit frame, a strip of real record icons ---------- */
 .featured {
@@ -170,7 +150,7 @@
 .row {
   position: relative;
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--atlas-space-3);
   min-height: 52px;
@@ -182,20 +162,8 @@
 .row:hover,
 .row:focus-within { background: var(--atlas-accent-wash); }
 
-.rowIcon {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 1px;
-  background: var(--atlas-surface-sunken);
-  box-shadow: 0 0 0 1px var(--atlas-bg), 0 0 0 2px var(--atlas-line);
-  color: var(--atlas-text-subtle);
-}
-
-.rowIcon img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.rowIcon svg { width: 18px; height: 18px; }
+.rowIcon { color: var(--atlas-text-subtle); }
+.rowIcon > svg { padding: 10px; }
 .rowLink { overflow: hidden; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
 .rowLink::after { content: ""; position: absolute; inset: 0; }
 .row:hover .rowLink { text-decoration: underline; text-underline-offset: 3px; }
@@ -204,8 +172,8 @@
 .rowCount { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
 
 @media (max-width: 720px) {
-  .searchField { flex-basis: 100%; min-height: 52px; padding-inline: var(--atlas-space-3); }
-  .searchField input { height: 48px; font-size: var(--atlas-text-body); }
+  .search { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
+  .searchField input { font-size: var(--atlas-text-body); }
   .featured > .plate { min-height: 0; padding: 28px; }
 }
 
@@ -221,8 +189,6 @@
 :global([data-ui-motion="reduce"]) .plate:hover { transform: none; }
 
 @media (forced-colors: active) {
-  .group,
-  .searchField { border: 1px solid CanvasText; background: Canvas; }
-  .strip > span,
-  .rowIcon { box-shadow: none; border: 1px solid CanvasText; }
+  .group { border: 1px solid CanvasText; background: Canvas; }
+  .strip > span { box-shadow: none; border: 1px solid CanvasText; }
 }

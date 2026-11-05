@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
+import { materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
+import { libraryKit } from "@/components/library/libraryKit";
 import { libraryCardCopy } from "@/components/library/libraryCardCopy";
 import type { Lang } from "@/lib/i18n-paths";
 import styles from "./libraryRecordCard.module.css";
@@ -34,7 +36,7 @@ export type LibraryRecordCardProps = {
 };
 
 /**
- * One record of a library dataset. "cards": icon in the quality frame, the
+ * One record of a library dataset. "cards": icon in the kit frame (quality on its edge), the
  * full name on up to two lines, one line of item level · slot · quality and a
  * footer with the facts and the tooltip button. "tray": a square tile for gems and
  * collections where the icon is the subject. The name link covers the card;
@@ -51,7 +53,8 @@ export function LibraryRecordCard({ id, href, name, lang, layout, iconUrl, iconS
   const sub = [itemLevel ? copy.levelShort(itemLevel) : null, slot, qualityName ? <span key="q" className={styles.quality}>{qualityName}</span> : null].filter(Boolean);
   return (
     <li className={tray ? `${styles.card} ${styles.tray}` : styles.card} data-quality={colour ? quality : undefined} style={style} data-hover-preview={id} data-hover-icon={iconUrl || undefined}>
-      <span className={styles.icon} aria-hidden="true">
+      {/* The game icon in the library kit's painted frame; the item quality tints the frame's inner edge. */}
+      <span className={`${materialStyles.iconFrame} ${styles.icon}`} style={materialIconFrameStyle(libraryKit, tray ? 76 : 64)} aria-hidden="true">
         <ResilientImage src={iconUrl} alt="" width={tray ? 64 : 54} height={tray ? 64 : 54} loading="lazy" fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
       </span>
       <div className={styles.head}>

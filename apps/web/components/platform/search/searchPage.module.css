@@ -1,28 +1,40 @@
-/* atlas:strict — /search layout only; colours, fonts and sizes come from the atlas tokens. */
+/* atlas:strict — /search layout only: the form on the library plaque (MaterialPlaque), kind tabs, results; colours, fonts and sizes come from the atlas tokens and the plaque's --material-*. */
 
-/* ---------- Search field (inside the hero) ---------- */
+/* ---------- Search form on the library plaque ---------- */
+.plaque { margin-top: var(--atlas-space-5); margin-bottom: var(--atlas-space-5); }
+
 .searchForm {
-  display: flex;
-  flex: 1 1 100%;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "label label" "field submit";
   align-items: center;
-  gap: var(--atlas-space-3);
+  gap: var(--atlas-space-2) var(--atlas-space-4);
   min-width: 0;
-  max-width: 820px;
 }
 
+.fieldLabel {
+  grid-area: label;
+  color: var(--material-light, var(--atlas-text-muted));
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+
+.submit { grid-area: submit; }
+
 .searchField {
+  grid-area: field;
   display: flex;
-  flex: 1 1 320px;
   align-items: center;
   gap: var(--atlas-space-3);
   min-width: 0;
-  min-height: 60px;
+  min-height: 56px;
   padding: 0 6px 0 var(--atlas-space-4);
-  border: 1px solid var(--atlas-line);
+  border: 1px solid var(--material-line, var(--atlas-line));
   border-radius: var(--atlas-radius);
-  background: color-mix(in srgb, var(--atlas-surface-sunken) 88%, transparent);
-  box-shadow: var(--atlas-glass-depth);
+  background: color-mix(in srgb, var(--atlas-surface-sunken) 92%, transparent);
   transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 
@@ -77,10 +89,10 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  margin: var(--atlas-space-5) 0 var(--atlas-space-4);
+  margin-top: var(--atlas-space-5);
 }
 
-.kindTabs { display: flex; flex: 1 1 auto; gap: var(--atlas-space-1); border-bottom: 1px solid var(--atlas-line-soft); }
+.kindTabs { display: flex; flex: 1 1 auto; gap: var(--atlas-space-1); border-bottom: 1px solid var(--material-line, var(--atlas-line-soft)); }
 
 .kindTabs a {
   display: inline-flex;
@@ -93,24 +105,26 @@
   font-size: var(--atlas-text-small);
   font-weight: 600;
   text-decoration: none;
+  text-shadow: 0 1px 3px var(--atlas-bg);
 }
 
 .kindTabs a:hover { color: var(--atlas-text-strong); }
-.kindTabs a[aria-current="page"] { border-bottom-color: var(--atlas-accent); color: var(--atlas-accent-strong); }
+.kindTabs a[aria-current="page"] { border-bottom-color: var(--material-light, var(--atlas-accent)); color: var(--atlas-text-strong); }
 
 .databaseLink {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 44px;
-  border-bottom: 1px solid var(--atlas-line-soft);
-  color: var(--atlas-accent);
+  border-bottom: 1px solid var(--material-line, var(--atlas-line-soft));
+  color: var(--material-light, var(--atlas-accent));
   font-size: var(--atlas-text-small);
   font-weight: 600;
   text-decoration: none;
+  text-shadow: 0 1px 3px var(--atlas-bg);
 }
 
-.databaseLink:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+.databaseLink:hover { color: var(--atlas-text-strong); text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- Layout ---------- */
 .layout { display: grid; gap: var(--atlas-space-5); align-items: start; }
@@ -224,8 +238,6 @@
 
 /* ---------- Loading skeleton (app/search/loading.tsx) ---------- */
 .skeletonSearch {
-  flex: 1 1 100%;
-  max-width: 760px;
   height: 56px;
   border: 1px solid var(--atlas-line);
   background: var(--atlas-surface-sunken);
@@ -240,7 +252,8 @@
 }
 
 @media (max-width: 760px) {
-  .searchField { flex-basis: 100%; min-height: 52px; padding-left: var(--atlas-space-3); gap: var(--atlas-space-2); }
+  .searchForm { grid-template-columns: minmax(0, 1fr); grid-template-areas: "label" "field" "submit"; gap: var(--atlas-space-2); }
+  .searchField { min-height: 52px; padding-left: var(--atlas-space-3); gap: var(--atlas-space-2); }
   .searchField input { height: 48px; font-size: var(--atlas-text-lead); }
   .searchField kbd { display: none; }
   .results { min-height: max(40svh, 320px); }
@@ -252,4 +265,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .searchField { transition: none; }
+}
+
+@media (forced-colors: active) {
+  .searchField { border: 1px solid CanvasText; background: Canvas; }
 }
