@@ -392,7 +392,7 @@ function Tooltip({ node, treeKind, left, top, anchorOffset, placement, motion, i
     <aside className={`tc-tooltip tc-tooltip-${node.talentType}${lockReason ? " is-locked" : isSelected ? " is-selected" : ""}${motion === "closing" ? " is-closing" : ""}`} id={id} role="tooltip" data-motion={motion} data-placement={placement} aria-hidden={motion === "closing" ? true : undefined} style={{ left, top, "--tc-tooltip-anchor": `${anchorOffset}px` } as CSSProperties}>
       <span className="tc-tooltip-backplate" aria-hidden="true" />
       <span className="tc-tooltip-forge-line" aria-hidden="true" />
-      <div className="tc-tooltip-meta"><span>{copy.treeLabels[treeKind]}</span><span>{copy.nodeNumber(node.nodeId)}</span></div>
+      <div className="tc-tooltip-meta"><span>{copy.treeLabels[treeKind]}</span></div>
       {node.nodeType === "tiered"
         ? <TalentTieredTooltip node={node} />
         : node.choices.map((choice, index) => <TalentTooltipChoice choice={choice} key={choice.externalId} index={index} showChoice={node.nodeType === "choice"} tiered={false} selected={selectedChoice === choice.externalId} />)}
@@ -400,9 +400,9 @@ function Tooltip({ node, treeKind, left, top, anchorOffset, placement, motion, i
         <span className="tc-tooltip-rank"><small>{copy.currentRank}</small><b>{currentRank}<i> / {node.maxRanks}</i></b></span>
         <span className={lockReason ? "is-danger" : isSelected ? "is-ready" : "is-available"}>{lockReason ? <LockKeyhole /> : isSelected ? <Check /> : <Sparkles />}<span>{lockReason ? copy.unavailable : isSelected ? copy.selected : copy.canLearn}</span></span>
       </div>
-      {lockReason ? <div className="tc-tooltip-lock"><LockKeyhole /><span><b>{copy.howToUnlock}</b><small>{lockReason}</small><i>{copy.requirementsHighlighted}</i></span></div> : null}
+      {lockReason ? <div className="tc-tooltip-lock"><LockKeyhole /><span><b>{copy.howToUnlock}</b><small>{lockReason}</small></span></div> : null}
       <div className="tc-tooltip-controls" aria-hidden="true"><span><kbd>{copy.leftClick}</kbd>{interactionLabel}</span><span><kbd>{copy.rightClick}</kbd>{copy.removeRank}</span>{node.nodeType === "choice" ? <span><kbd>[ / ]</kbd>{copy.choiceKeys}</span> : null}</div>
-      <div className="tc-tooltip-foot"><span>Midnight · {node.talentType === "active" ? copy.spell : copy.talent}</span><span>{node.freeNode ? copy.learnedAutomatically : copy.requiredPoints(node.requiredPoints ?? 0)}</span></div>
+      <div className="tc-tooltip-foot"><span>{node.talentType === "active" ? copy.spell : copy.talent}</span><span>{node.freeNode ? copy.learnedAutomatically : copy.requiredPoints(node.requiredPoints ?? 0)}</span></div>
     </aside>
   );
 }
@@ -410,21 +410,19 @@ function Tooltip({ node, treeKind, left, top, anchorOffset, placement, motion, i
 function PvpTooltip({ talent, left, top, anchorOffset, placement, motion, id, selected }: { talent: PvPTalent; left: number; top: number; anchorOffset: number; placement: TooltipPlacement; motion: TooltipMotion; id: string; selected: boolean }) {
   const copy = useContext(TalentCopyContext);
   const lang = useContext(TalentLangContext);
-  const iconSource = talent.iconSource === "fallback" ? copy.localReplacement : "Blizzard Render / DB2";
   return <aside className={`tc-tooltip tc-pvp-tooltip${selected ? " is-selected" : ""}${motion === "closing" ? " is-closing" : ""}`} id={id} role="tooltip" data-motion={motion} data-placement={placement} aria-hidden={motion === "closing" ? true : undefined} style={{ left, top, "--tc-tooltip-anchor": `${anchorOffset}px` } as CSSProperties}>
     <span className="tc-tooltip-backplate" aria-hidden="true" />
     <span className="tc-tooltip-forge-line" aria-hidden="true" />
-    <div className="tc-tooltip-meta"><span>{copy.pvpScope}</span><span>PvP #{talent.externalId}</span></div>
+    <div className="tc-tooltip-meta"><span>{copy.pvpScope}</span></div>
     <div className="tc-tooltip-choice is-selected">
       <div className="tc-tooltip-heading">
         {talent.iconUrl ? <img src={talent.iconUrl} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.src = UNVERIFIED_ICON_URL; }} /> : null}
-        <div><strong>{talent.name}</strong><span>{copy.pvpTalent} · {selected ? copy.pvpChosen : copy.pvpOpen}{talent.iconFallback ? ` · ${copy.iconReplacement}` : ""}</span></div>
+        <div><strong>{talent.name}</strong><span>{copy.pvpTalent} · {selected ? copy.pvpChosen : copy.pvpOpen}</span></div>
       </div>
       <TalentDescription talent={talent} locale={lang} />
     </div>
     <div className="tc-tooltip-state"><span className="tc-tooltip-rank"><small>{copy.level}</small><b>{talent.levelRequired ?? 80}</b></span><span className={selected ? "is-ready" : "is-available"}>{selected ? <Check /> : <Flame />}<span>{selected ? copy.equipped : copy.canChoose}</span></span></div>
     <div className="tc-tooltip-controls" aria-hidden="true"><span><kbd>{copy.leftClick}</kbd>{copy.openPicker}</span><span><kbd>Esc</kbd>{copy.close}</span></div>
-    <div className="tc-tooltip-foot"><span>Midnight · PvP · {talent.buildVersion}</span><span>{copy.sourceLabel(iconSource)}</span></div>
   </aside>;
 }
 
@@ -475,7 +473,7 @@ function TalentTieredTooltip({ node }: { node: TalentNode }) {
     <div className="tc-tooltip-tiered">
       <div className="tc-tooltip-heading">
         {icon ? <img src={icon} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.src = UNVERIFIED_ICON_URL; }} /> : null}
-        <div><strong>{node.choices[0]?.name ?? copy.apex}</strong><span>{copy.apex} · {copy.apexSequential}{node.choices[0]?.iconFallback ? ` · ${copy.iconReplacement}` : ""}</span></div>
+        <div><strong>{node.choices[0]?.name ?? copy.apex}</strong><span>{copy.apex} · {copy.apexSequential}</span></div>
       </div>
       {node.choices.map((choice) => {
         const start = firstRank;
@@ -494,7 +492,7 @@ function TalentTooltipChoice({ choice, index, showChoice, tiered, selected }: { 
       <div className="tc-tooltip-heading">
         {showChoice ? <span className="tc-choice-marker" aria-hidden="true">{selected ? "✓" : index + 1}</span> : null}
         {choice.iconUrl ? <img src={choice.iconUrl} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.src = UNVERIFIED_ICON_URL; }} /> : null}
-        <div><strong>{choice.name}</strong><span>{showChoice ? `${copy.choiceN(index + 1)} · ` : tiered ? `${copy.tierN(index + 1)} · ` : ""}{choice.talentType === "active" ? copy.activeAbility : copy.passiveEffect}{choice.iconFallback ? ` · ${copy.iconReplacement}` : ""}</span></div>
+        <div><strong>{choice.name}</strong><span>{showChoice ? `${copy.choiceN(index + 1)} · ` : tiered ? `${copy.tierN(index + 1)} · ` : ""}{choice.talentType === "active" ? copy.activeAbility : copy.passiveEffect}</span></div>
       </div>
       <TalentDescription talent={choice} locale={lang} />
       <small>{copy.maxRankShort(choice.maxRanks)}</small>
@@ -1718,9 +1716,6 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
   const activePvpTalent = pvpPickerSlot === null ? null : pvpById.get(pvpSelections[pvpPickerSlot] ?? -1);
 
   const rowStepStyle = (kind: TalentKind) => ({ "--tc-row-step": treeSpacings[kind].row, "--tc-col-step": treeSpacings[kind].column }) as CSSProperties;
-  const snapshotDate = new Date(data.source.observedAt).toLocaleDateString(copy.locale, { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" });
-  const sourceLabel = data.source.kind === "community_snapshot" ? copy.sourceCommunity : data.source.label;
-  const snapshotTime = new Date(data.source.observedAt).toLocaleString(copy.locale, { timeZone: "UTC", dateStyle: "short", timeStyle: "short" });
 
   return (
     <TalentCopyContext.Provider value={copy}><TalentLangContext.Provider value={lang}>
@@ -1730,29 +1725,23 @@ export function TalentCalculator({ data, theme, lang: langProp }: { data: Talent
         actions={<div className={page.actions}>
           <MaterialButton kit={TALENTS_KIT} fit="stack" variant="primary" icon={<Upload aria-hidden="true" />} onClick={openImportDialog}>{copy.importTitle}</MaterialButton>
           <MaterialButton kit={TALENTS_KIT} fit="stack" icon={<Share2 aria-hidden="true" />} onClick={() => void copyShareLink()}>{copy.share}</MaterialButton>
-        </div>}
-        stats={[
-          { value: String(data.trees.class.nodes.length + data.trees.hero.nodes.length + data.trees.spec.nodes.length), label: copy.statTalents },
-          { value: String(theme.heroPaths.length), label: copy.statHeroPaths },
-          ...(data.pvpTalents.length ? [{ value: String(data.pvpTalents.length), label: copy.statPvp }] : []),
-        ]}
-        source={<>{copy.dataSource}: <a href={data.source.url} target="_blank" rel="noreferrer" title={`${sourceLabel} · ${snapshotTime} UTC`}>{sourceLabel}<span aria-hidden="true"> ↗</span><span className="sr-only"> ({copy.opensInNewTab})</span></a> {copy.snapshotOn(snapshotDate)}</>} />
+        </div>} />
       <MaterialPlaque kit={TALENTS_KIT} as="section" className={page.command} aria-label={copy.toolbarLabel}>
         <div className="tc-command-actions">
           <SpecMenu current={theme} localePrefix={localePrefix} lang={lang} />
           <div className="tc-points-badge" data-resource-state={spent === 0 ? "empty" : spent === totalAvailable ? "complete" : "active"} style={{ "--tc-rage-level": `${ragePercent}%` } as CSSProperties} role="img" aria-label={copy.pointsAria(spent, totalAvailable, ragePercent)}>
             <span className="tc-rage-emblem" aria-hidden="true"><ResourceGlyph motif={theme.motif} /><i /></span>
-            <span className="tc-rage-copy" aria-hidden="true"><small>{copy.pointsTitle}</small><b>{spent}<i> / {totalAvailable}</i></b></span>
+            <span className="tc-rage-copy" aria-hidden="true"><b>{spent}<i> / {totalAvailable}</i></b></span>
             <span className="tc-rage-meter" aria-hidden="true"><strong className="tc-rage-percent">{ragePercent}%</strong><progress value={spent} max={totalAvailable} /></span>
           </div>
           <div className="tc-loadout-menu" ref={loadoutMenuRef}>
-            <button ref={loadoutTriggerRef} className="tc-build-select" type="button" aria-label={copy.buildSelectAria(buildName)} aria-haspopup="menu" aria-controls="tc-loadout-menu" aria-expanded={loadoutOpen} onClick={() => setLoadoutOpen((open) => !open)}><span><small>{buildSaved ? copy.savedState : activeBuildId || spent > 0 ? copy.unsavedState : copy.buildTitle}</small><b>{buildName}</b></span><ChevronDown /></button>
+            <button ref={loadoutTriggerRef} className="tc-build-select" type="button" aria-label={copy.buildSelectAria(buildName)} aria-haspopup="menu" aria-controls="tc-loadout-menu" aria-expanded={loadoutOpen} onClick={() => setLoadoutOpen((open) => !open)}><span>{buildSaved || activeBuildId || spent > 0 ? <small>{buildSaved ? copy.savedState : copy.unsavedState}</small> : null}<b>{buildName}</b></span><ChevronDown /></button>
             {loadoutOpen ? <div className="tc-loadout-popover" id="tc-loadout-menu" role="menu" aria-label={copy.libraryLabel}>
               <div className="tc-build-popover-head"><span><small>{copy.libraryTitle}</small><b>{copy.savedCount(savedBuilds.length)}</b></span><button type="button" role="menuitem" tabIndex={-1} onClick={createNewBuild}><Plus />{copy.newBuild}</button></div>
               <label className="tc-build-name"><span>{copy.buildNameLabel}</span><input value={buildName} maxLength={48} onChange={(event) => { setBuildName(event.target.value); setSavedSignature(null); }} /></label>
               <div className="tc-build-actions"><button type="button" role="menuitem" tabIndex={-1} onClick={() => saveBuild(false)}><Save />{activeBuildId ? copy.saveChanges : copy.saveBuild}</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => saveBuild(true)}>{copy.saveCopy}</button></div>
               <div className="tc-build-list" role="group" aria-label={copy.savedBuildsLabel}>
-                {savedBuilds.map((build) => <div className={`tc-build-row${build.id === activeBuildId ? " is-active" : ""}`} key={build.id}><button type="button" role="menuitem" tabIndex={-1} onClick={() => loadSavedBuild(build)}><span>{build.name}</span><small>{new Date(build.savedAt).toLocaleDateString(copy.locale)} · {build.buildVersion}</small></button><button type="button" role="menuitem" tabIndex={-1} aria-label={copy.deleteBuildAria(build.name)} onClick={() => deleteSavedBuild(build)}><Trash2 /></button></div>)}
+                {savedBuilds.map((build) => <div className={`tc-build-row${build.id === activeBuildId ? " is-active" : ""}`} key={build.id}><button type="button" role="menuitem" tabIndex={-1} onClick={() => loadSavedBuild(build)}><span>{build.name}</span><small>{new Date(build.savedAt).toLocaleDateString(copy.locale)}</small></button><button type="button" role="menuitem" tabIndex={-1} aria-label={copy.deleteBuildAria(build.name)} onClick={() => deleteSavedBuild(build)}><Trash2 /></button></div>)}
                 {!savedBuilds.length ? <p>{copy.noSavedBuilds}</p> : null}
               </div>
               <div className="tc-build-tools"><button type="button" role="menuitem" tabIndex={-1} onClick={openImportDialog}><Upload />{copy.importShort}</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => void copyShareLink()}><Share2 />{copy.linkShort}</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => void copyJson()}><Download />JSON</button><button type="button" role="menuitem" tabIndex={-1} onClick={reset}><RotateCcw />{copy.resetShort}</button></div>

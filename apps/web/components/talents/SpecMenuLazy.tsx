@@ -51,13 +51,14 @@ export function SpecMenu({ current, localePrefix, lang }: { current: TalentSpecT
         className={styles.trigger}
         ref={triggerRef}
         type="button"
+        aria-label={`${copy.trigger}: ${names.spec}`}
         aria-haspopup="menu"
         aria-controls="tc-spec-menu"
         aria-expanded={open}
         onClick={toggle}
       >
         <span className={styles.triggerIcon} aria-hidden="true"><img src={current.iconUrl} alt="" width={30} height={30} /></span>
-        <span className={styles.triggerCopy}><small>{copy.trigger}</small><b>{names.spec}</b></span>
+        <span className={styles.triggerCopy}><b>{names.spec}</b></span>
         <ChevronDown className={open ? styles.chevronOpen : undefined} aria-hidden="true" />
       </button>
       {open && !Catalog ? <span className={styles.menuLoading} role="status">{copy.loading}</span> : null}
