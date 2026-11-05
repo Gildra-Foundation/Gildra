@@ -28,7 +28,7 @@ const out = args.out ?? ".artifacts/visual";
 const viewports = (args.viewports ?? "desktop,mobile").split(",");
 const routes = (args.routes ?? [
   "/ru/wow", "/wow/raids", "/ru/wow/raids/the-voidspire", "/ru/wow/lairs", "/wow/classes", "/ru/wow/mythic-plus",
-  "/ru/wow/delves", "/ru/database", "/tier-lists", "/ru/library", "/ru/search", "/wow/mythic-plus/midnight-season-2/murder-row",
+  "/ru/database", "/tier-lists", "/ru/library", "/ru/search", "/wow/mythic-plus/midnight-season-2/murder-row",
 ].join(",")).split(",");
 const sizes = { desktop: { width: 1440, height: 900 }, mobile: { width: 390, height: 844 } };
 

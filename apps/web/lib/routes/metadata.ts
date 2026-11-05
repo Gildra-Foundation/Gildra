@@ -42,10 +42,6 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     en: { title: "WoW Classes and Specializations — Gildra", description: "Every Midnight class and specialization with its talent tree." },
     ru: { title: "Классы и специализации WoW — Gildra", description: "Все классы и специализации Midnight с деревьями талантов." },
   },
-  delves: {
-    en: { title: "Midnight Delves — Gildra", description: "Delves of Midnight: where they are and what awaits inside." },
-    ru: { title: "Вылазки Midnight — Gildra", description: "Вылазки Midnight: где они и что ждёт внутри." },
-  },
   season2: {
     en: { title: "WoW Midnight Season 2 Guide — Gildra", description: "What Midnight Season 2 brings: Mythic+ dungeons, raids, delves and more." },
     ru: { title: "WoW Midnight Сезон 2 — гайд Gildra", description: "Что принёс Midnight Сезон 2: подземелья Mythic+, рейды, вылазки и другое." },

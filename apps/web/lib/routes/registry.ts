@@ -32,7 +32,6 @@ export const routeSections = {
   dungeons: { path: "/wow/dungeons", parent: "wow", title: { en: "Dungeons", ru: "Подземелья" }, scene: "dungeons" },
   lairs: { path: "/wow/lairs", parent: "wow", title: { en: "Lairs and world bosses", ru: "Логова и мировые боссы" }, scene: "lairs" },
   classes: { path: "/wow/classes", parent: "wow", title: { en: "Classes and specializations", ru: "Классы и специализации" }, scene: "classes", search: { keywords: "specs спеки" } },
-  delves: { path: "/wow/delves", parent: "wow", title: { en: "Delves", ru: "Вылазки" }, scene: "delves" },
   tierLists: { path: "/tier-lists", parent: "wow", title: { en: "Tier lists", ru: "Тир-листы" }, scene: "tierLists", search: { keywords: "tier list рейтинг" } },
   characters: { path: "/wow/characters", parent: "wow", title: { en: "Characters", ru: "Персонажи" }, search: { keywords: "battle.net armory оружейная" } },
   season2: { path: "/wow/midnight/season-2", parent: "wow", title: { en: "Midnight Season 2", ru: "Midnight · Сезон 2" } },

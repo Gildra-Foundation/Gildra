@@ -24,7 +24,6 @@ export function SeasonTwoHub({ locale }: { locale: Locale }) {
   const tiles = [
     { id: "raid", title: raidName, ...copy.tiles.raid, href: `${prefix}/wow/raids/venomous-abyss`, scene: "/assets/wow/raids/hub/venomous-abyss.webp" },
     { id: "mythic-plus", ...copy.tiles.mythicPlus, href: `${prefix}/wow/mythic-plus`, scene: "/assets/wow/mythic/hub/gateway.webp" },
-    { id: "delves", ...copy.tiles.delves, href: `${prefix}/wow/delves`, scene: "/assets/wow/loading/dungeon.webp" },
     { id: "prey", ...copy.tiles.prey, href: OFFICIAL_SEASON_SOURCE, external: true, scene: "/assets/wow/loading/pvp.webp" },
     { id: "lairs", ...copy.tiles.lairs, href: `${prefix}/wow/lairs`, scene: "/assets/wow/lairs/bosses/nymrissa.jpg" },
   ];

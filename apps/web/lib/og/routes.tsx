@@ -2,7 +2,7 @@ import { pluralRu } from "@gildra/atlas-ui/format";
 import { getMidnightRaid, raidSceneArt, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
 import { getBossStrategy } from "@/lib/data/wow/raid/raidStrategy";
 import { dungeonRoutes, getDungeonRoute, type DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
-import { contentManifest, midnightDelves, midnightLairEncounters } from "@gildra/game-data";
+import { contentManifest, midnightLairEncounters } from "@gildra/game-data";
 import { getMidnightClass, getMidnightClassSpec, getMidnightClassSpecs, midnightClasses, midnightSpecializations } from "@/lib/data/wow/specializations";
 import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { getBoss } from "@/lib/lairs";
@@ -40,7 +40,6 @@ const hubs = {
   mythicPlusMeta: (locale) => ({ ...scene("mythicPlus"), eyebrow: "Midnight · Mythic+", title: ru(locale) ? "Мета Mythic+" : "Mythic+ meta", subtitle: ru(locale) ? "Какие специализации встречаются в топ-2000 ключей недели — по ролям." : "Which specializations appear in the top 2000 keys of the week, by role." }),
   lairs: (locale) => ({ ...scene("lairs"), eyebrow: ru(locale) ? "Midnight · Сезон 2" : "Midnight · Season 2", title: ru(locale) ? "Логова и мировые боссы" : "Lairs and world bosses", subtitle: ru(locale) ? "Где найти, что делать в бою и какая добыча падает." : "Where to find them, what to do and what drops." }),
   classes: (locale) => ({ ...scene("classes"), eyebrow: "Midnight", title: ru(locale) ? "Классы и специализации" : "Classes and specializations", facts: [count(locale, midnightClasses.length, "класс", "класса", "классов", "class", "classes"), count(locale, midnightSpecializations.length, "специализация", "специализации", "специализаций", "specialization")] }),
-  delves: (locale) => ({ ...scene("delves"), eyebrow: "Midnight", title: ru(locale) ? "Вылазки" : "Delves", facts: [count(locale, midnightDelves.length, "вылазка", "вылазки", "вылазок", "delve")] }),
   tierLists: (locale) => ({ ...scene("tierLists"), eyebrow: "Mythic+ · Raids", title: ru(locale) ? "Тир-листы" : "Tier lists", subtitle: ru(locale) ? "Сила специализаций в ключах и рейдах." : "Specialization strength in keys and raids." }),
   database: (locale) => ({ ...scene("archive"), eyebrow: "World of Warcraft", title: ru(locale) ? "База данных" : "Database", subtitle: ru(locale) ? "Предметы, заклинания, задания и существа с подсказками и историей версий." : "Items, spells, quests and creatures with tooltips and version history." }),
   library: (locale) => ({ ...scene("library"), eyebrow: "World of Warcraft", title: ru(locale) ? "Библиотека" : "Library", subtitle: ru(locale) ? "Наборы игровых данных: подсказки, изображения и связи." : "Game datasets: tooltips, images and relations." }),
@@ -159,13 +158,6 @@ const kinds = {
       facts: theme.heroPaths.map((path) => (ru(locale) ? path.nameRu : path.name)),
     };
   },
-
-  delve: (locale: Locale, { delve: slug }: Params): Spec => {
-    const delve = midnightDelves.find((entry) => entry.slug === slug);
-    if (!delve) return hubs.delves(locale);
-    const season = delve.season.endsWith("2") ? 2 : 1;
-    return { art: `${L}/dungeon.webp`, focus: [0.5, 0.45], eyebrow: ru(locale) ? `Вылазка · Midnight · Сезон ${season}` : `Delve · Midnight · Season ${season}`, title: delve.name, facts: [ru(locale) ? `Патч ${delve.patch}` : `Patch ${delve.patch}`] };
-  },
 } satisfies Record<string, (locale: Locale, params: Params) => Spec>;
 
 export type OgKind = keyof typeof kinds;
@@ -181,7 +173,6 @@ const staticParams = {
   class: () => midnightClasses.map(({ slug }) => ({ class: slug })),
   spec: () => midnightSpecializations.map((entry) => ({ class: entry.classSlug, spec: entry.slug })),
   talents: () => talentSpecThemes.map(({ slug }) => ({ spec: slug })),
-  delve: () => midnightDelves.map(({ slug }) => ({ delve: slug })),
 };
 
 export function ogStaticParams(key: keyof typeof staticParams) {

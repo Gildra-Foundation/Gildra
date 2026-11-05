@@ -13,11 +13,12 @@ const misplacedWowBossRedirects = [
   ["ravi", "dungeons/altar-of-fangs"],
   ["the-writhing-coil", "dungeons/altar-of-fangs"],
   ["zuljan", "dungeons/altar-of-fangs"],
-  ["drakta", "delves/the-ring-of-glory"],
-  ["gnok", "delves/the-ring-of-glory"],
-  ["gralka-snake-eater", "delves/gnarldor-isle"],
-  ["osseous-amalgamation", "delves/gnarldor-isle"],
-  ["aztarec", "delves/venomfall-deeps"],
+  // Delve bosses: the delves page was removed (owner, 5 Nov 2026); the season guide covers them.
+  ["drakta", "midnight/season-2"],
+  ["gnok", "midnight/season-2"],
+  ["gralka-snake-eater", "midnight/season-2"],
+  ["osseous-amalgamation", "midnight/season-2"],
+  ["aztarec", "midnight/season-2"],
 ] as const;
 
 const legacyWowSpecRedirects = [
@@ -122,6 +123,11 @@ const nextConfig: NextConfig = {
       { source: "/ru/wow/mythic", destination: "/ru/wow/mythic-plus", permanent: true },
       { source: "/wow/mythic/:dungeon", destination: "/wow/mythic-plus/midnight-season-2/:dungeon", permanent: true },
       { source: "/ru/wow/mythic/:dungeon", destination: "/ru/wow/mythic-plus/midnight-season-2/:dungeon", permanent: true },
+      // Delves page removed by the owner (5 Nov 2026): the season guide is the closest page.
+      { source: "/wow/delves", destination: "/wow/midnight/season-2", permanent: true },
+      { source: "/ru/wow/delves", destination: "/ru/wow/midnight/season-2", permanent: true },
+      { source: "/wow/delves/:delve", destination: "/wow/midnight/season-2", permanent: true },
+      { source: "/ru/wow/delves/:delve", destination: "/ru/wow/midnight/season-2", permanent: true },
       // The story library is Russian-only (lib/routes/registry.ts `only`).
       { source: "/wow/stories", destination: "/ru/wow/stories", permanent: true },
       ...misplacedWowBossRedirects.flatMap(([slug, destination]) => [
