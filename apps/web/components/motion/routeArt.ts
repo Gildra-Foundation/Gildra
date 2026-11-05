@@ -24,17 +24,17 @@ function nextImage(src: string, sizes: string): Preload[] {
 }
 
 // Same file as CharacterAtlasBackdrop's CHARACTER_SCENE (not imported: it would pull the backdrop into the shell bundle).
-const CHARACTER_SCENE = "/assets/wow/character-book/intro/icecrown-home-background-v1.webp";
+const CHARACTER_SCENE = "/assets/wow/loading/characters-icecrown-20261106.webp";
 const MYTHIC = () => picture("/assets/wow/mythic/hub/gateway", "768");
 const routes: [RegExp, () => Preload[]][] = [
   [/^\/(?:wow\/mythic-plus|tier-lists)$/, MYTHIC],
   [/^\/wow\/raids$/, () => picture("/assets/wow/raids/hub/vault", "tablet")],
   [/^\/wow\/auction$/, () => [
-    { href: "/assets/wow/auction/hall-mobile.webp", media: "(max-width: 600px)" },
-    { href: "/assets/wow/auction/hall.webp", media: "(min-width: 601px) and (max-width: 900px)", srcSet: "/assets/wow/auction/hall-768.webp 768w, /assets/wow/auction/hall.webp 1672w", sizes: "100vw" },
-    { href: "/assets/wow/auction/hall.webp", media: "(min-width: 901px)" },
+    { href: "/assets/wow/auction/hall-orgrimmar-20261106-mobile.webp", media: "(max-width: 600px)" },
+    { href: "/assets/wow/auction/hall-orgrimmar-20261106.webp", media: "(min-width: 601px) and (max-width: 900px)", srcSet: "/assets/wow/auction/hall-orgrimmar-20261106-768.webp 768w, /assets/wow/auction/hall-orgrimmar-20261106.webp 1672w", sizes: "100vw" },
+    { href: "/assets/wow/auction/hall-orgrimmar-20261106.webp", media: "(min-width: 901px)" },
   ]],
-  [/^\/talents(?:\/|$)/, () => [{ href: "/assets/wow/loading/talents-wow.webp" }]],
+  [/^\/talents(?:\/|$)/, () => [{ href: "/assets/wow/loading/talents-hall-20261106.webp", srcSet: "/assets/wow/loading/talents-hall-20261106-768.webp 768w, /assets/wow/loading/talents-hall-20261106.webp 1672w", sizes: "100vw" }]],
   [/^\/wow\/characters$/, () => nextImage(CHARACTER_SCENE, "(max-width: 767px) 100vw, 72vw")],
 ];
 

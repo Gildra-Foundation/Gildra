@@ -14,7 +14,7 @@ export function transmogMetadata(lang: "ru" | "en"): Metadata {
 
 export function TransmogPage({ lang }: { lang: "ru" | "en" }) {
   const c = transmogCopy[lang];
-  return <AtlasFrame scene="articles" lang={lang}>
+  return <AtlasFrame scene="transmog" lang={lang}>
     <AtlasHero className={styles.hero} title={c.title} lede={c.lede} breadcrumbs={trail(lang, "transmog")} breadcrumbsLabel={trailLabel(lang)} />
     <TransmogStudio lang={lang} />
     <noscript>{c.noJS}</noscript>

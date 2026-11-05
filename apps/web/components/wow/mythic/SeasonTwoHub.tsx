@@ -24,11 +24,11 @@ export function SeasonTwoHub({ locale }: { locale: Locale }) {
   const tiles = [
     { id: "raid", title: raidName, ...copy.tiles.raid, href: `${prefix}/wow/raids/venomous-abyss`, scene: "/assets/wow/raids/hub/venomous-abyss.webp" },
     { id: "mythic-plus", ...copy.tiles.mythicPlus, href: `${prefix}/wow/mythic-plus`, scene: "/assets/wow/mythic/hub/gateway.webp" },
-    { id: "prey", ...copy.tiles.prey, href: OFFICIAL_SEASON_SOURCE, external: true, scene: "/assets/wow/loading/pvp.webp" },
+    { id: "prey", ...copy.tiles.prey, href: OFFICIAL_SEASON_SOURCE, external: true, scene: "/assets/wow/loading/prey-eversong-20261106.webp" },
     { id: "lairs", ...copy.tiles.lairs, href: `${prefix}/wow/lairs`, scene: "/assets/wow/lairs/bosses/nymrissa.jpg" },
   ];
   return (
-    <AtlasFrame lang={locale} art="/assets/wow/loading/raid-wow-optimized.webp" artPosition="center 40%" tint="rgba(122, 64, 196, .2)">
+    <AtlasFrame lang={locale} art="/assets/wow/loading/season-2-quel-danas-20261106.webp" artPosition="70% 40%" tint="rgba(122, 64, 196, .2)">
       <AtlasHero
         breadcrumbs={trail(locale, "season2")}
         breadcrumbsLabel={copy.breadcrumbs}

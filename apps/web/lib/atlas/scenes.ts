@@ -28,7 +28,7 @@ export type AtlasScene = {
 const L = "/assets/wow/loading";
 
 export const atlasScenes = {
-  wow: { art: "/assets/characters/furybar-horde-hero-v1-optimized.webp", position: "72% 30%", horizon: "rgba(214, 92, 40, .2)", og: [0.72, 0.3] },
+  wow: { art: `${L}/wow-azeroth-vista-20261106.webp`, position: "70% 40%", horizon: "rgba(220, 170, 90, .18)", og: [0.7, 0.4] },
   raids: { art: "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp", position: "center 30%", tint: "rgba(95, 46, 151, .2)", ember: "rgba(200, 168, 255, .95)", og: [0.5, 0.35] },
   venomousAbyss: { art: "/assets/wow/mythic/backgrounds/altar.webp", position: "center 35%", tint: "rgba(96, 150, 70, .16)", ember: "rgba(180, 238, 146, .95)", og: [0.5, 0.4] },
   venomousBoss: { art: "/assets/wow/mythic/backgrounds/altar.webp", position: "center 45%", horizon: "rgba(96, 150, 70, .16)", og: [0.5, 0.4] },
@@ -38,18 +38,17 @@ export const atlasScenes = {
     glow: { size: [1500, 844], points: [{ at: [0.72, 0.77], radius: 120, color: "rgba(255, 120, 40, .55)", tempo: 5 }, { at: [0.875, 0.56], radius: 70, color: "rgba(255, 150, 60, .5)", tempo: 3.4 }] } },
   mythicSeasons: { art: "/assets/wow/mythic/backgrounds/nalorakk.webp", position: "center 40%", horizon: "rgba(40, 150, 160, .2)", og: [0.5, 0.4] },
   dungeons: { art: "/assets/wow/mythic/backgrounds/nalorakk.webp", position: "center 40%", horizon: "rgba(40, 150, 160, .2)", og: [0.5, 0.4] },
-  lairs: { art: "/assets/wow/lairs/bosses/nymrissa.jpg", position: "center 30%", ember: "rgba(156, 222, 255, .95)", horizon: "rgba(90, 170, 230, .2)", og: [0.5, 0.3],
-    // Nymrissa's staff crystal pulses.
-    glow: { size: [700, 790], points: [{ at: [0.344, 0.526], radius: 34, color: "rgba(140, 220, 255, .75)", tempo: 2.8 }] } },
-  classes: { art: `${L}/talents-wow.webp`, position: "center 40%", horizon: "rgba(150, 110, 220, .18)", og: [0.5, 0.4] },
+  lairs: { art: `${L}/lairs-grotto-20261106.webp`, position: "72% 40%", ember: "rgba(156, 238, 214, .95)", horizon: "rgba(60, 190, 160, .2)", og: [0.7, 0.4] },
+  classes: { art: `${L}/classes-heroes-20261106.webp`, position: "68% 62%", horizon: "rgba(150, 110, 220, .18)", og: [0.5, 0.4] },
   delves: { art: `${L}/dungeon.webp`, position: "center 45%", horizon: "rgba(190, 140, 70, .18)", og: [0.5, 0.45] },
-  tierLists: { art: "/assets/wow/mythic/backgrounds/kings.webp", position: "center 40%", horizon: "rgba(60, 170, 150, .18)", og: [0.5, 0.4] },
-  archive: { art: `${L}/archive.webp`, position: "center 45%", horizon: "rgba(210, 150, 70, .16)", og: [0.5, 0.45] },
-  archiveDeep: { art: `${L}/archive.webp`, position: "center 45%", shade: "deep", horizon: "rgba(210, 150, 70, .16)", og: [0.5, 0.45] },
-  library: { art: `${L}/tier.webp`, position: "center 50%", horizon: "rgba(210, 150, 70, .16)", og: [0.5, 0.5] },
-  articles: { art: `${L}/city.webp`, position: "center 40%", horizon: "rgba(210, 150, 70, .16)", og: [0.5, 0.4] },
+  tierLists: { art: `${L}/tier-lists-war-room-20261106.webp`, position: "70% 45%", horizon: "rgba(220, 150, 70, .16)", og: [0.68, 0.45] },
+  archive: { art: `${L}/library-violet-citadel-20261106.webp`, position: "70% 40%", horizon: "rgba(130, 120, 230, .16)", og: [0.7, 0.4] },
+  archiveDeep: { art: `${L}/library-violet-citadel-20261106.webp`, position: "70% 40%", shade: "deep", horizon: "rgba(130, 120, 230, .16)", og: [0.7, 0.4] },
+  library: { art: `${L}/library-violet-citadel-20261106.webp`, position: "70% 40%", horizon: "rgba(130, 120, 230, .16)", og: [0.7, 0.4] },
+  articles: { art: `${L}/whats-new-silvermoon-20261106.webp`, position: "72% 35%", horizon: "rgba(230, 170, 90, .16)", og: [0.72, 0.35] },
+  transmog: { art: `${L}/transmog-wardrobe-20261106.webp`, position: "72% 40%", horizon: "rgba(90, 200, 190, .16)", og: [0.72, 0.4] },
   login: { art: "/assets/wow/character-book/intro/varok-home-background-v2.webp", position: "center 30%", horizon: "rgba(200, 160, 90, .18)", og: [0.5, 0.3] },
-  lost: { art: `${L}/pvp.webp`, position: "center 55%", horizon: "rgba(200, 70, 50, .18)", og: [0.5, 0.55] },
+  lost: { art: `${L}/lost-battlefield-20261106.webp`, position: "70% 40%", horizon: "rgba(200, 70, 50, .18)", og: [0.7, 0.4] },
 } as const satisfies Record<string, AtlasScene>;
 
 export type AtlasSceneId = keyof typeof atlasScenes;
