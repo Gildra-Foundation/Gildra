@@ -97,7 +97,10 @@
 .button :global(.ui-button__label), .button :global(.ui-button__icon) { position: relative; z-index: 1; }
 .button :global(.ui-button__label) { white-space: normal; text-align: center; }
 .button :global(.ui-button__icon), .button svg { flex: none; width: 18px; height: 18px; }
-.slot .button:global(.ui-button):focus-visible { outline: 2px solid var(--atlas-text-strong); outline-offset: 4px; }
+/* Focus follows the painted silhouette (docs/design/reference): a light rim through drop-shadow on
+   the art layer; the transparent outline becomes the system ring in forced colors. */
+.slot .button:global(.ui-button):focus-visible { outline: 2px solid transparent; outline-offset: 4px; }
+.slot .button:global(.ui-button):focus-visible::before { filter: contrast(.88) saturate(.84) brightness(1) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 6px var(--material-light, var(--atlas-accent))); }
 .slot .button:global(.ui-button):active { transform: translateY(1px) scale(.98); }
 .slot .button:global(.ui-button):disabled { opacity: .55; transform: none; }
 @media (hover: hover) and (pointer: fine) {
