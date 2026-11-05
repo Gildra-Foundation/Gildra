@@ -155,7 +155,8 @@
 
 @media (max-width: 720px) {
   .factsPlaque { min-width: 0; }
-  .factsPlaque .facts { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+  /* Wide enough for the longest quality word (RU «Эпическое», «Легендарное») on one line. */
+  .factsPlaque .facts { grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
   .model { padding: 20px; }
   .disclosure > summary,
   .disclosure > div { padding-inline: var(--atlas-space-3); }
