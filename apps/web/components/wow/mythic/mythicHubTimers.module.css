@@ -39,10 +39,6 @@
 .link:active { transform: translateY(1px) scale(.995); }
 @keyframes relicNod { from { transform: rotate(0deg) translateY(0); } 38% { transform: rotate(-4deg) translateY(-3px); } 70% { transform: rotate(2deg) translateY(-1px); } to { transform: rotate(0deg) translateY(0); } }
 @keyframes sandLight { from { opacity: 0; transform: translateX(-100%); } 45% { opacity: .65; } to { opacity: 0; transform: translateX(100%); } }
-.provenance { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-1); margin: var(--atlas-space-4) 0 0; padding: 0 var(--atlas-space-2); color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-body); }
-.provenance a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 24px; color: var(--atlas-text-muted); text-decoration: underline; text-underline-offset: .2em; }
-.provenance a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-.provenance svg { width: 13px; height: 13px; }
 @media (max-width: 900px) {
   .list { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; gap: var(--atlas-space-3); }
 }

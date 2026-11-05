@@ -11,13 +11,13 @@ import type { Lang as Locale } from "@/lib/i18n-paths";
 const copy = {
   en: {
     title: "This page fell in battle",
-    lede: "The route was moved or no longer exists. The World of Warcraft hub lists every section that is live today.",
+    lede: "The route was moved or no longer exists.",
     hub: "Open the WoW hub",
     mythic: "Mythic+ atlas",
   },
   ru: {
     title: "Эта страница пала в бою",
-    lede: "Похоже, маршрут перенесён или больше не существует. Все разделы, которые работают сегодня, собраны в центре World of Warcraft.",
+    lede: "Маршрут перенесён или больше не существует.",
     hub: "Открыть центр WoW",
     mythic: "Атлас Mythic+",
   },

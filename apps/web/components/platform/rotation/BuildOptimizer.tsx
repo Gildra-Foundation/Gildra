@@ -84,7 +84,7 @@ function validStudio(value: unknown): StoredStudio {
   return { builds, combos, selectedBuildId: typeof parsed.selectedBuildId === "string" ? parsed.selectedBuildId : undefined };
 }
 
-export function BuildOptimizer({ slug, specialization, lang, abilities, scenario, fightLength, targets, rules, aplRules, characterSlug, dataMode, connectedTalentLoadout, embedded = false, currentResult, resultMatchesCurrent, sectionTitle, sectionText, onScenarioChange, onFightLengthChange, onTargetsChange, onTalentLoadoutChange, onOptimized, onUseCombo, onSimulate, simulateLabel, simulating = false }: {
+export function BuildOptimizer({ slug, specialization, lang, abilities, scenario, fightLength, targets, rules, aplRules, characterSlug, dataMode, connectedTalentLoadout, embedded = false, currentResult, resultMatchesCurrent, sectionTitle, onScenarioChange, onFightLengthChange, onTargetsChange, onTalentLoadoutChange, onOptimized, onUseCombo, onSimulate, simulateLabel, simulating = false }: {
   slug: string;
   specialization: string;
   lang: Lang;
@@ -101,7 +101,6 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
   currentResult: RotationSimulationResult | null;
   resultMatchesCurrent: boolean;
   sectionTitle: string;
-  sectionText: string;
   onScenarioChange: (scenario: RotationScenario) => void;
   onFightLengthChange: (seconds: number) => void;
   onTargetsChange: (targets: number) => void;
@@ -411,7 +410,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
     <>
     <section className={shell.section} aria-labelledby="build-studio-title">
       <header className={shell.sectionHeader} data-atlas-ui>
-        <div><h2 id="build-studio-title">{sectionTitle}</h2><p>{sectionText}</p></div>
+        <div><h2 id="build-studio-title">{sectionTitle}</h2></div>
       </header>
 
       <MaterialPlaque kit={CHARACTERS_KIT} className={shell.forge} data-atlas-ui>
@@ -419,7 +418,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
           <legend>{buildOptimizerCopy[lang].build}</legend>
           <label className={shell.field}><span>{buildOptimizerCopy[lang].talentLoadout}</span><select value={selectedBuildId} disabled={optimizing || buildEditor !== null} onChange={(event) => { setSelectedBuildId(event.target.value); setScores([]); setReadyComboId(null); setError(""); }}>{builds.map((build) => <option key={build.id} value={build.id}>{build.name}</option>)}</select></label>
           {!buildEditor && selectedBuild ? <>
-            <p className={shell.status}><Check aria-hidden="true" />{selectedBuild.source === "reference" ? (characterSlug && dataMode === "battle-net" ? buildOptimizerCopy[lang].gearAndActiveTalents : buildOptimizerCopy[lang].specializationBaseline) : buildOptimizerCopy[lang].yourTalentsAreConnected}</p>
+            {selectedBuild.source !== "reference" || (characterSlug && dataMode === "battle-net") ? <p className={shell.status}><Check aria-hidden="true" />{selectedBuild.source === "reference" ? buildOptimizerCopy[lang].gearAndActiveTalents : buildOptimizerCopy[lang].yourTalentsAreConnected}</p> : null}
             <div className={shell.editorButtons}>
               {embedded ? <AtlasLinkButton size="sm" href="#live-talents-heading" icon={<Network aria-hidden="true" />}>{buildOptimizerCopy[lang].changeTalentsAbove}</AtlasLinkButton> : <AtlasLinkButton size="sm" href={talentCalculatorHref} prefetch={false} icon={<Network aria-hidden="true" />}>{buildOptimizerCopy[lang].chooseTalents}</AtlasLinkButton>}
               <AtlasButton size="sm" icon={selectedBuild.source === "reference" ? <ClipboardPaste aria-hidden="true" /> : <Edit3 aria-hidden="true" />} onClick={selectedBuild.source === "reference" ? openNewBuild : openBuildEdit}>{buildOptimizerCopy[lang].pasteString}</AtlasButton>
@@ -443,7 +442,6 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
             {(["single-target", "aoe", "execute"] as const).map((item) => (
               <button key={item} type="button" role="radio" aria-checked={scenario === item} onClick={() => { setScores([]); setReadyComboId(null); onScenarioChange(item); }} disabled={optimizing}>
                 <strong>{item === "single-target" ? buildOptimizerCopy[lang].singleTarget : item === "aoe" ? buildOptimizerCopy[lang].aoe : buildOptimizerCopy[lang].execute}</strong>
-                <small>{item === "single-target" ? buildOptimizerCopy[lang].bossOrDummy : item === "aoe" ? buildOptimizerCopy[lang].enemyPack : buildOptimizerCopy[lang].targetBelow20}</small>
               </button>
             ))}
           </div>
@@ -485,7 +483,7 @@ export function BuildOptimizer({ slug, specialization, lang, abilities, scenario
     </section>
 
       <details className={styles.comboLibrary} open={Boolean(editingComboId) || buildCombos.length > 0}>
-        <summary><LibraryBig /><span>{buildOptimizerCopy[lang].comboArsenal}<small>{buildOptimizerCopy[lang].combatReadySequencesFor}</small></span><b><strong>{buildCombos.length}</strong><small>{buildOptimizerCopy[lang].saved}</small></b><ChevronDown /></summary>
+        <summary><LibraryBig /><span>{buildOptimizerCopy[lang].comboArsenal}</span><b><strong>{buildCombos.length}</strong><small>{buildOptimizerCopy[lang].saved}</small></b><ChevronDown /></summary>
         <div className={styles.comboSection}>
           <div className={styles.rotationSaveBar}><span><b>{buildOptimizerCopy[lang].currentPanel}</b><small>{rules.map((rule) => byId.get(rule)?.name ?? rule).slice(0, 4).join(" → ")}{rules.length > 4 ? "…" : ""}</small></span><button type="button" onClick={saveCurrentPriority}><Save /> {buildOptimizerCopy[lang].saveRotation}</button></div>
           <div className={styles.rotationShare}><label><span>{buildOptimizerCopy[lang].rotationTag}</span><input value={shareTag} onChange={(event) => setShareTag(event.target.value)} placeholder={buildOptimizerCopy[lang].pasteAGld1Tag} /></label><button type="button" disabled={!shareTag.trim()} onClick={importCombo}><ClipboardPaste /> {buildOptimizerCopy[lang].import}</button><small>{buildOptimizerCopy[lang].theTagContainsAbility}</small></div>

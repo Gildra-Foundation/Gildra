@@ -24,9 +24,8 @@ export function CharacterRosterConnectedPage({ locale, accountName, pendingRegio
             className={styles.heroHeader}
             breadcrumbs={characterCrumbs(locale)}
             breadcrumbsLabel={copy.breadcrumbsLabel}
-            eyebrow={accountName ?? copy.roster.eyebrowConnected}
+            eyebrow={accountName}
             title={copy.roster.title}
-            lede={copy.roster.lede}
             actions={<div className={styles.actions}>
               <CharacterSignOutButton locale={locale} />
             </div>}

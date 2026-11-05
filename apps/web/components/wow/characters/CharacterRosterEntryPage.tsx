@@ -12,7 +12,7 @@ const unlockArt = ["equipment", "talents", "combat"].map((name) => `/assets/wow/
 
 /**
  * Signed-out /wow/characters, built like the reference hubs (docs/design/reference): the Frost scene
- * behind the hero, the one painted sign-in action, then what the sign-in opens as painted notched cards. No character is shown before Battle.net answers.
+ * behind the hero, the one painted sign-in action, then the three painted notched cards of what a hero page holds. No character is shown before Battle.net answers.
  */
 export function CharacterRosterEntryPage({ locale, accountName, apiError }: {
   locale: CharacterLocale;
@@ -30,16 +30,16 @@ export function CharacterRosterEntryPage({ locale, accountName, apiError }: {
           className={styles.heroHeader}
           breadcrumbs={characterCrumbs(locale)}
           breadcrumbsLabel={copy.breadcrumbsLabel}
-          eyebrow={accountName ?? copy.entry.eyebrow}
+          eyebrow={accountName}
           title={copy.entry.title}
-          lede={apiError ? <><strong className={styles.ledeAlert}>{copy.entry.expiredTitle}.</strong> {copy.entry.expiredText}</> : copy.entry.lede}
+          lede={apiError ? <><strong className={styles.ledeAlert}>{copy.entry.expiredTitle}.</strong> {copy.entry.expiredText}</> : undefined}
           actions={<div className={styles.actions}>
             <CharacterSignInButton locale={locale} reconnect={Boolean(apiError)} />
             <p className={styles.security}><FrostLoginIcon kind="lock" compact />{copy.entry.passwordNote}</p>
           </div>}
         />
       </div>
-      <AtlasSection id="unlocks" title={copy.entry.unlocksTitle} className={styles.section}>
+      <AtlasSection id="unlocks" className={styles.section}>
         <UnlockCards cards={copy.entry.unlocks.map((card, index) => ({ ...card, art: unlockArt[index] }))} />
       </AtlasSection>
       </div>

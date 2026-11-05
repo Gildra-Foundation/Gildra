@@ -14,6 +14,6 @@ export function DreamriftBattleDiagram({locale}: {locale:'ru'|'en'; difficulty?:
     </div>)}</div>
     <h3 className={styles.rotationTitle}><ArrowRightLeft aria-hidden="true" />{copy.groupOrder}</h3>
     <ol className={styles.rotation} data-dreamrift-groups>{plan.rotation.map((step,index) => <li key={step.id} data-dreamrift-rotation={step.id}><span>{index+1}</span><div><strong>{step.title[locale]}</strong><p>{step.body[locale]}</p></div></li>)}</ol>
-    <p className={styles.returnNote}>{plan.returnNote[locale]}</p><figcaption>{copy.relative}</figcaption>
+    <p className={styles.returnNote}>{plan.returnNote[locale]}</p>
   </RaidPlaque>;
 }

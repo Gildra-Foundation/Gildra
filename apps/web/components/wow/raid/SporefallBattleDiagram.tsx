@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { ArrowDown, ArrowUp, Shield, Users, Sprout, MoveRight } from 'lucide-react';
+import { ArrowUp, Shield, Users, Sprout, MoveRight } from 'lucide-react';
 import { RaidPlaque } from './raidMaterial';
 import { sporefallGuide } from '@/lib/data/wow/raid/sporefallGuide';
 import { sporefallGuideCopy } from './sporefallGuideCopy';
@@ -20,6 +20,5 @@ export function SporefallBattleDiagram({locale, difficulty}: Props) {
       <div className={styles.edgeZone}><MoveRight aria-hidden="true" /><strong>{copy.vinesEdge}</strong><span>{copy.distance}</span><small>{copy.ground}</small></div>
     </div>
     <figcaption>{(heroic ? sporefallGuide.diagram.heroicCaption : sporefallGuide.diagram.caption)[locale]}</figcaption>
-    <p className={styles.diagramNote}><ArrowDown aria-hidden="true" />{copy.relative}</p>
   </RaidPlaque>;
 }

@@ -17,7 +17,6 @@ export function CharacterProfileLoading({ locale }: { locale: "en" | "ru" }) {
             className={styles.heroHeader}
             breadcrumbs={characterCrumbs(locale, copy.profile.eyebrow)}
             breadcrumbsLabel={copy.breadcrumbsLabel}
-            eyebrow={copy.profile.eyebrow}
             title={copy.profile.loadingTitle}
           />
         </div>

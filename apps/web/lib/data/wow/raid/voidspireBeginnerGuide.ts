@@ -1,5 +1,4 @@
 import type { GuideText } from './voidspireVideoGuide';
-import type { GuideRole } from './voidspireRoleTactics';
 
 const l = (ru: string, en: string): GuideText => ({ ru, en });
 type Priority = { title: GuideText; detail: GuideText; mechanicId: string };
@@ -72,13 +71,6 @@ export const voidspireBeginnerGuides: Record<string, BeginnerBossGuide> = {
     startingPosition: l('В начале группа атакует одного часового. У двух остальных остаются назначенные игроки в ближнем бою; не оставляйте живого часового без такой цели.', 'At the start, the group attacks one sentinel. Assigned players stay in melee of the other two; never leave a living sentinel without a nearby target.'),
     diagram: { title: l('Первая фаза: часовые', 'Phase one: sentinels'), caption: l("В первой фазе героического боя группа атакует одного часового. У каждого другого остаётся назначенный игрок.", "In phase one of the Heroic encounter, the group attacks one sentinel. An assigned player stays at each other sentinel.") },
   },
-};
-
-export const roleBasics: Record<GuideRole, GuideText> = {
-  tank: l('Танк принимает основные удары и перемещает босса; второй танк сменяет его в нужный момент.', 'A tank takes the main hits and positions the boss; the second tank takes over at the required moment.'),
-  healer: l('Целитель восстанавливает здоровье группы и снимает подходящие вредные эффекты.', 'A healer restores the group’s health and removes harmful effects that can safely be dispelled.'),
-  melee: l("Боец ближнего боя атакует рядом с врагом и отходит, когда под ним появляется опасная зона.", "A melee damage dealer attacks close to the enemy and moves away when dangerous ground appears beneath them."),
-  ranged: l('Боец дальнего боя атакует издалека, но подходит к группе, когда нужно вместе принять удар.', 'A ranged damage dealer attacks from a distance but joins the group when a hit must be shared.'),
 };
 
 export const voidspireBeginnerTerms: Record<string, { label: GuideText; detail: GuideText }> = {

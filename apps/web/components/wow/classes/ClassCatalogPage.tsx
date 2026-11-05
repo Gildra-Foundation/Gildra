@@ -1,12 +1,10 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
-import { pluralRu } from "@gildra/atlas-ui/format";
 import { MaterialPlaque, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { CHARACTERS_KIT as KIT } from "@/lib/wow/charactersKit";
-import { midnightSpecializations, TALENT_SNAPSHOT } from "@/lib/data/wow";
+import { midnightSpecializations } from "@/lib/data/wow";
 import styles from "./classCatalog.module.css";
 import { trail } from "@/lib/routes/registry";
 import type { Lang as Locale } from "@/lib/i18n-paths";
@@ -14,27 +12,13 @@ import type { Lang as Locale } from "@/lib/i18n-paths";
 const copy = {
   ru: {
     breadcrumbs: "Навигация",
-    eyebrow: "Midnight · Сезон 2",
     title: "Классы и специализации",
-    lede: "Все классы Midnight. Выберите специализацию, чтобы открыть её дерево талантов.",
-    statsLabel: "Классы и специализации",
-    classes: (count: number) => pluralRu(count, "класс", "класса", "классов"),
-    specs: (count: number) => pluralRu(count, "специализация", "специализации", "специализаций"),
-    section: "Выберите специализацию",
     specsOf: (name: string) => `Специализации: ${name}`,
-    source: "Деревья талантов — Raidbots",
   },
   en: {
     breadcrumbs: "Breadcrumbs",
-    eyebrow: "Midnight · Season 2",
     title: "Classes and specializations",
-    lede: "Every Midnight class. Pick a specialization to open its talent tree.",
-    statsLabel: "Classes and specializations",
-    classes: (count: number) => (count === 1 ? "class" : "classes"),
-    specs: (count: number) => (count === 1 ? "specialization" : "specializations"),
-    section: "Pick a specialization",
     specsOf: (name: string) => `${name} specializations`,
-    source: "Talent trees from Raidbots",
   },
 } as const;
 
@@ -57,17 +41,10 @@ export function ClassCatalogPage({ locale }: { locale: Locale }) {
       <AtlasHero
         breadcrumbs={trail(locale, "classes")}
         breadcrumbsLabel={text.breadcrumbs}
-        eyebrow={text.eyebrow}
         title={text.title}
-        lede={text.lede}
-        statsLabel={text.statsLabel}
-        stats={[
-          { value: classes.length, label: text.classes(classes.length) },
-          { value: midnightSpecializations.length, label: text.specs(midnightSpecializations.length) },
-        ]}
       />
 
-      <AtlasSection id="classes" title={text.section}>
+      <AtlasSection id="classes">
         <ul className={styles.roster}>
           {classes.map((specs) => {
             const first = specs[0];
@@ -98,11 +75,6 @@ export function ClassCatalogPage({ locale }: { locale: Locale }) {
             );
           })}
         </ul>
-        <p className={styles.note}>
-          <a href={TALENT_SNAPSHOT.sourceUrl} target="_blank" rel="noopener noreferrer">
-            {text.source}<ArrowUpRight aria-hidden="true" />
-          </a>
-        </p>
       </AtlasSection>
     </AtlasFrame>
   );

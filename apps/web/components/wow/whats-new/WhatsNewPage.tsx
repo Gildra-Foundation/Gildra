@@ -15,7 +15,6 @@ export function WhatsNewPage({ locale }: { locale: "en" | "ru" }) {
         breadcrumbs={trail(locale, "whatsNew")}
         breadcrumbsLabel={copy.breadcrumbs}
         title={copy.title}
-        lede={copy.lede}
       />
       {changelog.map((release) => (
         <AtlasSection key={release.date} id={`release-${release.date}`} title={formatAtlasDate(release.date, locale)}>

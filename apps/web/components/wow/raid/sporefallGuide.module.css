@@ -55,8 +55,6 @@
 .edgeZone span,.edgeZone small { grid-column: 2; }
 .edgeZone small { color: var(--atlas-text-muted); }
 .diagram figcaption { font-size: var(--atlas-text-small); }
-.diagramNote { display: flex; align-items: start; gap: var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
-.diagramNote svg { width: 14px; height: 14px; flex: 0 0 14px; margin-top: 2px; }
 .flow h2,.mechanics > h2 { margin-bottom: var(--atlas-space-5); }
 .flow ol { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: var(--atlas-space-5); list-style: none; padding: 0; margin: 0; }
 .flow li { display: grid; grid-template-columns: 24px 1fr; gap: var(--atlas-space-2); align-content: start; }

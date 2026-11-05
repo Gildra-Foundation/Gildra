@@ -76,22 +76,6 @@
 }
 .spec:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 2px; }
 
-.note {
-  margin: var(--atlas-space-6) 0 0;
-  color: var(--atlas-text-subtle);
-  font-size: var(--atlas-text-meta);
-}
-.note a {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 44px;
-  color: var(--atlas-text-muted);
-  text-decoration: none;
-}
-.note a:hover, .note a:focus-visible { color: var(--atlas-accent); }
-.note svg { width: 14px; height: 14px; }
-
 @media (max-width: 900px) {
   .roster { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-5); }
 }

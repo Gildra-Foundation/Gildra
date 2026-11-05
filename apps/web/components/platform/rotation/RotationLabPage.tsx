@@ -352,7 +352,7 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
 
       {labMode === "training" ? (
         <section id="lab-training-panel" className={shell.section} aria-label={copy.trainingTitle}>
-          <p className={shell.drill} data-atlas-ui><span>{copy.currentDrill}</span><strong>{selectedComboName ?? copy.practiceRotation(specLabel)}</strong><small>{copy.trainingHint}</small></p>
+          <p className={shell.drill} data-atlas-ui><span>{copy.currentDrill}</span><strong>{selectedComboName ?? copy.practiceRotation(specLabel)}</strong></p>
           <BookFoldout enabled={connectedEmbed}><RotationTrainer
             abilities={displayAbilities}
             rules={rules}
@@ -372,11 +372,11 @@ function RotationLabPageContent({ preset, spellbookAbilities = [], lang, charact
           /></BookFoldout>
         </section>
       ) : <div id="lab-simulation-panel">
-        <BuildOptimizer slug={preset.slug} specialization={specLabel} lang={lang} abilities={displayAbilities} scenario={scenario} fightLength={fightLength} targets={targets} rules={rules} aplRules={aplRules} characterSlug={characterSlug} dataMode={dataMode} connectedTalentLoadout={connectedTalentLoadout} embedded={embedded} currentResult={result} resultMatchesCurrent={!isDirty} sectionTitle={copy.buildTitle} sectionText={copy.buildText} onScenarioChange={chooseScenario} onFightLengthChange={setFightLength} onTargetsChange={setTargets} onTalentLoadoutChange={setActiveTalentLoadout} onOptimized={acceptOptimized} onUseCombo={useCombo} onSimulate={() => void run()} simulateLabel={simulateLabel} simulating={status === "running"} />
+        <BuildOptimizer slug={preset.slug} specialization={specLabel} lang={lang} abilities={displayAbilities} scenario={scenario} fightLength={fightLength} targets={targets} rules={rules} aplRules={aplRules} characterSlug={characterSlug} dataMode={dataMode} connectedTalentLoadout={connectedTalentLoadout} embedded={embedded} currentResult={result} resultMatchesCurrent={!isDirty} sectionTitle={copy.buildTitle} onScenarioChange={chooseScenario} onFightLengthChange={setFightLength} onTargetsChange={setTargets} onTalentLoadoutChange={setActiveTalentLoadout} onOptimized={acceptOptimized} onUseCombo={useCombo} onSimulate={() => void run()} simulateLabel={simulateLabel} simulating={status === "running"} />
 
         <section id="rotation-advanced-analysis" className={`${shell.section} ${connectedEmbed ? motion.chapter : ""}`} aria-labelledby="rotation-panel-title">
           <header className={shell.sectionHeader} data-atlas-ui>
-            <div><h2 id="rotation-panel-title">{copy.panelTitle}</h2><p>{copy.panelText}</p></div>
+            <div><h2 id="rotation-panel-title">{copy.panelTitle}</h2></div>
             <div id="rotation-simulation-controls" className={shell.actions}>
               <AtlasButton icon={<RotateCcw aria-hidden="true" />} onClick={() => reset()} disabled={status === "running"}>{tr("Reset")}</AtlasButton>
             </div>

@@ -32,16 +32,10 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
         breadcrumbsLabel={copy.breadcrumbsLabel}
         eyebrow={copy.eyebrow}
         title={copy.title}
-        lede={copy.lede}
         actions={<div className={page.actions}>
           {lair ? <RaidLinkButton raid={kit} fit="stack" href="#lair" variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{copy.lairSection}</RaidLinkButton> : null}
           <RaidLinkButton raid={kit} fit="stack" href="#world-bosses" iconAfter={<ArrowRight aria-hidden="true" />}>{copy.worldSection}</RaidLinkButton>
         </div>}
-        statsLabel={copy.statsLabel}
-        stats={[
-          { value: lair ? 1 : 0, label: copy.statLair },
-          { value: worldBosses.length, label: copy.statWorld },
-        ]}
       />
 
       {lair ? (
@@ -92,7 +86,7 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
         </ul>
       </AtlasSection>
 
-      <AtlasSection id="rewards" title={copy.rewardsSection} description={copy.rewardsText}>
+      <AtlasSection id="rewards" title={copy.rewardsSection}>
         <div className={page.plaqueGrid}>
           {lair ? (
             <RaidPlaque raid={kit} as="article" aria-labelledby="rewards-lair" className={page.plaque}>

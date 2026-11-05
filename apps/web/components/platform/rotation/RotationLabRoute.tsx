@@ -39,9 +39,7 @@ export function RotationLabRoute({ locale, theme, preset, characterSlug, dataMod
         breadcrumbsLabel={copy.breadcrumbsLabel}
         toolbar={<RotationSpecMenu activeSlug={theme.slug} lang={locale} copy={copy.specMenu} />}
         emblem={<Image className={styles.specEmblem} src={theme.iconUrl} alt="" width={56} height={56} unoptimized priority />}
-        eyebrow={`${className} · ${ru ? theme.roleRu : theme.role}`}
         title={copy.title(specName)}
-        lede={copy.lede}
       />
       <Suspense fallback={<div className={styles.loading} role="status" aria-busy="true"><AtlasNotice title={copy.loading} /></div>}>
         <RotationLabContent locale={locale} preset={preset} characterSlug={characterSlug} dataMode={dataMode} />

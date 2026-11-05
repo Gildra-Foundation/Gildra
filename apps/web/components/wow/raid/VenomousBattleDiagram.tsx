@@ -49,6 +49,5 @@ export function VenomousBattleDiagram({locale,difficulty,guide}: {locale:'ru'|'e
       <div><h3>{step.title[locale]}</h3><p>{step.body[locale]}</p></div>
     </li>; })}</ol>
     <p className={styles.diagramCaption}>{(difficulty === 'heroic' ? plan.heroicCaption : plan.caption)[locale]}</p>
-    <figcaption>{venomousGuideCopy[locale].relative}</figcaption>
   </RaidPlaque>;
 }

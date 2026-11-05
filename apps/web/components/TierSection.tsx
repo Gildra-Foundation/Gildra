@@ -545,7 +545,6 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
         <MaterialPlaque as="section" kit={TABLE_KIT} className={styles.aboutPlaque} aria-labelledby="tier-about-title">
           <div className={styles.aboutText}>
             <h2 id="tier-about-title" className={styles.aboutTitle}>{copy.sourceTitle}</h2>
-            <p>{view === "compare" ? sourceCopy.compareLede : queryContext ? copy.sourceSlice : copy.sourceOverall}</p>
             <p>
               {copy.sourcesUsed}: {[...new Set(intelligence.sources.map((item) => item.provider))].join(" · ")}
               {updated ? <>{" · "}{copy.updated} <time dateTime={intelligence.updatedAt}>{updated} UTC</time></> : null}

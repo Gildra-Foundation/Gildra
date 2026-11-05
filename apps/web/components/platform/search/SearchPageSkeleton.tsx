@@ -10,10 +10,7 @@ export function SearchPageSkeleton({ lang }: { lang: Lang }) {
   const t = searchCopy[lang];
   return (
     <AtlasFrame lang={lang} scene="archive" dataAttributes={{ "data-book-route-loading": true }}>
-      <AtlasHero
-        title={t.title}
-        lede={t.lede}
-      />
+      <AtlasHero title={t.title} />
       <MaterialPlaque kit={libraryKit} className={styles.plaque} aria-hidden="true"><div className={styles.skeletonSearch} /></MaterialPlaque>
       <AtlasSkeleton variant="rows" count={5} label={t.counting} className={styles.skeleton} />
     </AtlasFrame>

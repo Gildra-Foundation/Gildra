@@ -58,9 +58,7 @@ export function SearchPage({
       <AtlasHero
         breadcrumbs={[{ label: t.wow, href: `${prefix}/wow` }, { label: t.library, href: `${prefix}/library` }, { label: t.crumb }]}
         breadcrumbsLabel={t.breadcrumbsLabel}
-        eyebrow={t.eyebrow}
         title={t.title}
-        lede={t.lede}
       />
 
       {/* The search form on the library plaque (like the auction form): labelled field, painted button, then the kind tabs. */}
@@ -120,9 +118,7 @@ export function SearchPage({
               <SearchResultCount results={results} lang={lang} query={query} />
             </Suspense>
           ) : (
-            <AtlasEmpty title={t.startTitle}>
-              {t.startText}
-            </AtlasEmpty>
+            <AtlasEmpty title={t.startTitle} />
           )}
           {results.map(({ gameId, result }) => (
             <Suspense key={gameId} fallback={<SearchGameFallback gameId={gameId} lang={lang} />}>

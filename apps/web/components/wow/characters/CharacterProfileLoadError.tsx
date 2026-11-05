@@ -24,7 +24,6 @@ export function CharacterProfileLoadError({ locale, code, retryHref }: { locale:
             className={styles.heroHeader}
             breadcrumbs={characterCrumbs(locale, copy.profile.eyebrow)}
             breadcrumbsLabel={copy.breadcrumbsLabel}
-            eyebrow={copy.profile.eyebrow}
             title={title}
             lede={description}
             actions={<div className={`${styles.actions} ${styles.actionRow}`}>

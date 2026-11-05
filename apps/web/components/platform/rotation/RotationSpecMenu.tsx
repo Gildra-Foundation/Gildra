@@ -7,7 +7,7 @@ import { Check, ChevronDown } from "lucide-react";
 import { getTalentSpecTheme, talentSpecClasses } from "@/lib/talentSpecThemes";
 import styles from "./rotationSpecMenu.module.css";
 
-type MenuCopy = { label: string; title: string; text: string };
+type MenuCopy = { label: string; title: string };
 
 /** Spec switcher of the Rotation Lab toolbar. The list renders only while open. */
 export function RotationSpecMenu({ activeSlug, lang, copy }: { activeSlug: string; lang: "en" | "ru"; copy: MenuCopy }) {
@@ -26,7 +26,7 @@ export function RotationSpecMenu({ activeSlug, lang, copy }: { activeSlug: strin
       </summary>
       {open ? (
         <div className={styles.panel}>
-          <p className={styles.heading}><strong>{copy.title}</strong><span>{copy.text}</span></p>
+          <p className={styles.heading}><strong>{copy.title}</strong></p>
           <div className={styles.classes}>
             {talentSpecClasses.map((group) => (
               <section key={group.classKey} className={styles.group} aria-label={ru ? group.classNameRu : group.specs[0].className}>
