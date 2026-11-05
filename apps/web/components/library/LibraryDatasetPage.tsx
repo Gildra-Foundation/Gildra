@@ -1,13 +1,11 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
-import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { LibraryWorkspace } from "@/components/library/LibraryWorkspace";
 import { CatalogTotal } from "@/components/database/CatalogTotal";
 import { PageShell } from "@/components/layout/PageShell";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
 import { libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/library/libraryCopy";
-import { formatCount } from "@/components/database/databaseCopy";
 import { libraryCardLayout, libraryRails } from "@/components/library/libraryRails";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
 import { requireCatalogSession } from "@/lib/library/server";
@@ -62,11 +60,6 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
           title={dataset.name}
           lede={libraryDatasetLine(dataset, lang) || undefined}
         />
-        {dataset.entityCount ? (
-          <div className={styles.heroFacts}>
-            <AtlasStats label={copy.statsLabel} items={[{ value: formatCount(dataset.entityCount, lang), label: copy.statRecords }]} />
-          </div>
-        ) : null}
         <LibraryWorkspace
           lang={lang}
           dataset={dataset}

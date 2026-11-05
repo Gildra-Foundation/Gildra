@@ -1,8 +1,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowRight, LibraryBig, Search } from "lucide-react";
-import { AtlasField, AtlasFrame, AtlasHero, AtlasInput, AtlasNotice, AtlasSection } from "@/components/atlas";
-import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
+import { AtlasField, AtlasFrame, AtlasHero, AtlasInput, AtlasSection } from "@/components/atlas";
 import { formatAtlasDate } from "@gildra/atlas-ui/format";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
@@ -26,27 +25,9 @@ type Props = {
   unavailable?: boolean;
 };
 
-type Freshness = "fresh" | "stale" | "empty" | "refreshing" | "failed" | "unknown";
-
-/**
- * Distinct records across the datasets. Category and item-class datasets (Weapons, Armor, Gems…) are
- * subsets of their entity type's whole dataset, so each entity type is counted once. Returns null when
- * the union cannot be known (several filtered datasets of one type without a whole-type dataset).
- */
-function distinctRecordCount(datasets: LibraryDataset[]): number | null {
-  let total = 0;
-  for (const entries of Map.groupBy(datasets, (dataset) => dataset.entityType).values()) {
-    const whole = entries.filter((dataset) => !dataset.categoryPath && dataset.itemClassId == null);
-    if (whole.length) total += Math.max(...whole.map((dataset) => dataset.entityCount));
-    else if (entries.length === 1) total += entries[0].entityCount;
-    else return null;
-  }
-  return total;
-}
-
 /**
  * /library and /ru/library (gildra-wow-material-design §3.7, reference
- * docs/design/reference): hero with two painted buttons and the counters, the
+ * docs/design/reference): hero with two painted buttons, the
  * library search and edition switch on the library plaque (like the auction
  * form), the featured datasets on painted plaques, then every dataset grouped
  * by area on glass with the kit's icon frames. One quiet line says when the
@@ -58,20 +39,12 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
   const prefix = lang === "ru" ? "/ru" : "";
   const formatter = new Intl.NumberFormat(libraryLandingCopy[lang].numberLocale);
   const datasets = allDatasets.filter((dataset) => dataset.entityCount > 0 && !LIBRARY_HIDDEN_DATASETS.has(dataset.slug));
-  const total = distinctRecordCount(datasets);
   const groups = Array.from(Map.groupBy(datasets, (dataset) => dataset.group));
   const productQuery = selectedProduct === "wow" ? "" : `?product=${encodeURIComponent(selectedProduct)}`;
 
   const checked = allDatasets.reduce<string | null>((latest, dataset) => (
     dataset.coverageUpdatedAt && (!latest || dataset.coverageUpdatedAt > latest) ? dataset.coverageUpdatedAt : latest
   ), null);
-  const product = products.find((entry) => entry.slug === selectedProduct);
-  const states: Freshness[] = [
-    ...(product?.freshness ? [product.freshness] : []),
-    ...datasets.filter((dataset) => dataset.applicability === "applicable").map((dataset) => dataset.freshness),
-  ];
-  const notice = states.includes("failed") ? { title: copy.failedTitle, text: copy.failedText }
-    : states.includes("stale") ? { title: copy.staleTitle, text: copy.staleText } : null;
 
   const featured = LIBRARY_FEATURED.map((slug) => datasets.find((dataset) => dataset.slug === slug)).filter((dataset): dataset is LibraryDataset => Boolean(dataset));
   const rowFrame = materialIconFrameStyle(libraryKit, 44);
@@ -83,9 +56,7 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
         className={styles.hero}
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.library }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
-        eyebrow={copy.eyebrow}
         title={copy.title}
-        lede={copy.lede}
         actions={unavailable ? undefined : (
           <div className={styles.actions}>
             <MaterialLinkButton kit={libraryKit} fit="stack" href="#library-search" variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{copy.findRecord}</MaterialLinkButton>
@@ -93,14 +64,6 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
           </div>
         )}
       />
-      {unavailable ? null : (
-        <div className={styles.heroFacts}>
-          <AtlasStats label={copy.statsLabel} items={[
-            ...(total === null ? [] : [{ value: formatter.format(total), label: copy.statRecords }]),
-            { value: formatter.format(datasets.length), label: copy.statDatasets },
-          ]} />
-        </div>
-      )}
 
       {unavailable ? <LibraryUnavailable lang={lang} /> : (
         <>
@@ -122,8 +85,6 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
               </nav>
             ) : null}
           </MaterialPlaque>
-
-          {notice ? <AtlasNotice tone="caution" title={notice.title} className={styles.notice}>{notice.text}</AtlasNotice> : null}
 
           {featured.length ? (
             <AtlasSection id="featured" title={copy.featuredTitle}>
