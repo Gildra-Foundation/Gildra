@@ -37,12 +37,12 @@
   margin: -15px -15px 0;
   padding: 15px 20px;
   border-bottom: 2px ridge #896333;
-  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface));
 }
 :global([data-profile-source="battle-net"]) .heading > span { border-color: #80572d; border-radius: 2px; color: #eed19b; background: #342011; }
-:global([data-profile-source="battle-net"]) .heading small { color: #684a2b; font-size: 11px; letter-spacing: .08em; }
-:global([data-profile-source="battle-net"]) .heading h3 { color: #3b2817; font: 700 19px/1.2 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
-:global([data-profile-source="battle-net"]) .heading p { color: #594024; font-size: 12px; line-height: 1.45; }
+:global([data-profile-source="battle-net"]) .heading small { color: var(--atlas-text-muted); font-size: 11px; letter-spacing: .08em; }
+:global([data-profile-source="battle-net"]) .heading h3 { color: var(--atlas-text-strong); font: 700 19px/1.2 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
+:global([data-profile-source="battle-net"]) .heading p { color: var(--atlas-text-muted); font-size: 12px; line-height: 1.45; }
 :global([data-profile-source="battle-net"]) .controls legend { color: #d7bd8c; font-size: 11px; }
 :global([data-profile-source="battle-net"]) .scenarios button {
   min-height: 65px;
@@ -84,31 +84,31 @@
 :global([data-profile-source="battle-net"]) .summaryGain {
   border: 2px solid #8c6538;
   border-radius: 2px;
-  color: #5b3e22;
-  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  color: var(--atlas-text-muted);
+  background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface));
 }
 :global([data-profile-source="battle-net"]) .summaryGain { border-color: #688a3b; }
-:global([data-profile-source="battle-net"]) .summary small { color: #674827; font-size: 11px; }
-:global([data-profile-source="battle-net"]) .summary b { color: #352312; font: 700 17px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
-:global([data-profile-source="battle-net"]) .summaryGain b { color: #24561e; }
-:global([data-profile-source="battle-net"]) .summary em { color: #614426; font-size: 11px; }
-:global([data-profile-source="battle-net"]) .results { border: 2px solid #8c6538; border-radius: 2px; color: #3b2817; background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat; }
+:global([data-profile-source="battle-net"]) .summary small { color: var(--atlas-text-muted); font-size: 11px; }
+:global([data-profile-source="battle-net"]) .summary b { color: var(--atlas-text-strong); font: 700 17px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
+:global([data-profile-source="battle-net"]) .summaryGain b { color: var(--atlas-positive); }
+:global([data-profile-source="battle-net"]) .summary em { color: var(--atlas-text-muted); font-size: 11px; }
+:global([data-profile-source="battle-net"]) .results { border: 2px solid #8c6538; border-radius: 2px; color: var(--atlas-text-strong); background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface)); }
 :global([data-profile-source="battle-net"]) .results > header { border-bottom-color: #9a7549; }
 :global([data-profile-source="battle-net"]) .results header small,
-:global([data-profile-source="battle-net"]) .results > header > span { color: #684a2b; font-size: 11px; }
-:global([data-profile-source="battle-net"]) .results h4 { color: #352312; font: 700 17px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
+:global([data-profile-source="battle-net"]) .results > header > span { color: var(--atlas-text-muted); font-size: 11px; }
+:global([data-profile-source="battle-net"]) .results h4 { color: var(--atlas-text-strong); font: 700 17px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]) .results li,
 :global([data-profile-source="battle-net"]) .results li[data-positive="true"] { border-color: #ad8553; background: #ffe4b552; }
 :global([data-profile-source="battle-net"]) .results li[data-positive="true"] { border-left: 3px solid #4c7a2f; }
 :global([data-profile-source="battle-net"]) .rank { color: #5d3817; background: #f1d5a0; font-family: var(--wow-title, var(--atlas-font-display, Georgia, serif)); }
-:global([data-profile-source="battle-net"]) .variantHead b { color: #352312; font: 700 13px var(--wow-ui, Arial, sans-serif); }
+:global([data-profile-source="battle-net"]) .variantHead b { color: var(--atlas-text-strong); font: 700 13px var(--wow-ui, Arial, sans-serif); }
 :global([data-profile-source="battle-net"]) .variantHead small,
-:global([data-profile-source="battle-net"]) .numbers { color: #684a2b; font-size: 11px; }
-:global([data-profile-source="battle-net"]) .variantHead strong { color: #8b341d; font-size: 16px; }
+:global([data-profile-source="battle-net"]) .numbers { color: var(--atlas-text-muted); font-size: 11px; }
+:global([data-profile-source="battle-net"]) .variantHead strong { color: var(--atlas-negative); font-size: 16px; }
 :global([data-profile-source="battle-net"]) .results li[data-positive="true"] .variantHead strong { color: #2f6527; }
 :global([data-profile-source="battle-net"]) .changes span { border-color: #ad8553; color: #50351d; background: #f2d5a477; }
 :global([data-profile-source="battle-net"]) .changes em { font-size: 11px; }
-:global([data-profile-source="battle-net"]) .results > p { border-top-color: #9a7549; color: #604327; font-size: 11px; }
+:global([data-profile-source="battle-net"]) .results > p { border-top-color: #9a7549; color: var(--atlas-text-muted); font-size: 11px; }
 :global([data-profile-source="battle-net"]) .optimizer :is(button, input):focus-visible { outline: 2px solid #ffd689; outline-offset: 2px; }
 @media (max-width: 520px) {
   :global([data-profile-source="battle-net"]) .heading { margin: -11px -11px 0; padding: 14px; }
@@ -135,15 +135,15 @@
 :global([data-profile-source="battle-net"]) .controls legend,
 :global([data-profile-source="battle-net"]) .scenarios b,
 :global([data-profile-source="battle-net"]) .progress b,
-:global([data-profile-source="battle-net"]) .cancelled b { color: #3b2817; }
-:global([data-profile-source="battle-net"]) .scenarios span { color: #614528; }
+:global([data-profile-source="battle-net"]) .cancelled b { color: var(--atlas-text-strong); }
+:global([data-profile-source="battle-net"]) .scenarios span { color: var(--atlas-text-muted); }
 :global([data-profile-source="battle-net"]) .scenarios button:hover,
 :global([data-profile-source="battle-net"]) .scenarios button:focus-visible { color: #2d1b0d; background: var(--wow-paper); box-shadow: inset 0 0 0 2px #fff0ca77; }
 :global([data-profile-source="battle-net"]) .scenarios button[aria-pressed="true"] { border-color: #8d471e; color: #2d1b0d; background: var(--wow-paper); box-shadow: inset 4px 0 #a45622, inset 0 0 0 1px #fff1c7; }
 :global([data-profile-source="battle-net"]) .progress,
 :global([data-profile-source="battle-net"]) .cancelled { border-color: #927045; }
 :global([data-profile-source="battle-net"]) .error { border-color: #a75237; }
-:global([data-profile-source="battle-net"]) .error b { color: #8e301f; }
+:global([data-profile-source="battle-net"]) .error b { color: var(--atlas-negative); }
 :global([data-profile-source="battle-net"]) .startButton,
 :global([data-profile-source="battle-net"]) .results li > button,
 :global([data-profile-source="battle-net"]) .cancelButton {

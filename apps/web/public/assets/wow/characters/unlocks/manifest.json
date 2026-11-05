@@ -1,0 +1,46 @@
+{
+  "entries": {
+    "equipment": {
+      "path": "/assets/wow/characters/unlocks/equipment.webp",
+      "width": 768,
+      "height": 960,
+      "bytes": 41206,
+      "sha256": "f398ae34ab053037f3aaf5c406bbdb9ad01390af8b239c203a5a3edd1d559608",
+      "native": "/home/debian/gildra-owner-20261105b/characters/assets/asset-sources/scenes/equipment-native.png",
+      "nativeSha256": "23b4a09df0198eafedbe756af21bddcadc3479d838632045f2b5061839c5f5cb",
+      "nativeDimensions": {
+        "width": 1122,
+        "height": 1402
+      },
+      "crop": null
+    },
+    "talents": {
+      "path": "/assets/wow/characters/unlocks/talents.webp",
+      "width": 768,
+      "height": 960,
+      "bytes": 37488,
+      "sha256": "d6fb9abbc23ea30f94216274a64e46be569c4d3690d3cde25587f52890b6bdaf",
+      "native": "/home/debian/gildra-owner-20261105b/characters/assets/asset-sources/scenes/talents-native.png",
+      "nativeSha256": "cd3ca34d43e5e830231eb41887d05b7c5c37df3858fd1a5f13452d3cc87a95e1",
+      "nativeDimensions": {
+        "width": 1122,
+        "height": 1402
+      },
+      "crop": null
+    },
+    "combat": {
+      "path": "/assets/wow/characters/unlocks/combat.webp",
+      "width": 768,
+      "height": 960,
+      "bytes": 47280,
+      "sha256": "2b9dc8d3f85ef9b7f9c595dab3f81516fb372ba334629f20e9ac5ca2e97bbf2c",
+      "native": "/home/debian/gildra-owner-20261105b/characters/assets/asset-sources/scenes/combat-native.png",
+      "nativeSha256": "8acdcc35292cd838afd81629b4b0b568cee3ff7889469fbe4da6debcd7dbe0bf",
+      "nativeDimensions": {
+        "width": 1122,
+        "height": 1402
+      },
+      "crop": null
+    }
+  }
+}

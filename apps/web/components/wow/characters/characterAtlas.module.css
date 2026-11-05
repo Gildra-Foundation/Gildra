@@ -78,8 +78,8 @@
 .section { margin-top: var(--atlas-space-6); }
 .page .plaque { height: 100%; padding: 44px 56px 44px; }
 .plaque > :global([data-frost-icon]) { width: 64px; height: 64px; margin-bottom: var(--atlas-space-3); }
-.unlocks, .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; margin: 0; padding: 0; list-style: none; }
-.unlocks > li, .grid > li { min-width: 0; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; margin: 0; padding: 0; list-style: none; }
+.grid > li { min-width: 0; }
 .status { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
 
 /* ---------- Roster: filters and "portrait + plaque" cards ---------- */
@@ -164,7 +164,7 @@
 
 /* ---------- Adaptive (design.md §7) ---------- */
 @media (max-width: 1180px) {
-  .unlocks, .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
 }
 @media (max-width: 1023px) {
   .hero { min-height: 470px; }
@@ -187,7 +187,7 @@
   .actions { justify-items: stretch; }
   .actions form { width: 100%; }
   .facts { margin-top: var(--atlas-space-4); }
-  .unlocks, .grid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .grid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   .filters { grid-template-columns: minmax(0, 1fr); }
   .page .plaque { padding: 36px 44px; }
   .page .state { flex-direction: column; align-items: flex-start; gap: var(--atlas-space-3); }

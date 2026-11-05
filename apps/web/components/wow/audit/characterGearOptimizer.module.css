@@ -126,7 +126,7 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .segmented button[aria-pressed="true"],
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .toolbar button[aria-pressed="true"] { border-color: #d3a35a; color: #2d1c0d; background: linear-gradient(#f0d39b, #bc8e4c); box-shadow: inset 0 1px #fff1c7, inset 0 -2px #785024; text-shadow: 0 1px #f6ddaa; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .segmented button[aria-pressed="true"] b,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .segmented button[aria-pressed="true"] small { color: #3b2614; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .segmented button[aria-pressed="true"] small { color: var(--atlas-text-strong); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .currentItem { border-left: 3px solid #b48745; border-radius: 1px; background: #160f09; box-shadow: inset 0 1px #dcaa6033; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .currentItem img,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .itemPair img { border: 2px solid #8c6535; box-shadow: inset 0 0 0 1px #180e05, 0 2px 4px #0007; }
@@ -135,8 +135,8 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .toolbar > span { color: #e3c28a; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .calculateAll { border-color: #c9893b !important; border-radius: 2px !important; color: #251404 !important; background: linear-gradient(#f0bf6b, #ad6522) !important; box-shadow: inset 0 1px #fff2bf, inset 0 -2px #6a3512, 0 4px 10px #0007 !important; text-shadow: 0 1px #f8d58d; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .state { margin: 14px; border: 2px solid #8d6535; border-radius: 2px; color: #4d3520; background: linear-gradient(rgba(237, 207, 154, .88), rgba(202, 160, 101, .93)), url("/assets/wow/ui-textures/character/spellbook-paper-optimized.webp") center / cover; box-shadow: inset 0 0 0 1px #efce8d77; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state b { color: #332113; font-family: var(--atlas-font-display, Georgia, serif); }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state span { color: #624527; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state b { color: var(--atlas-text-strong); font-family: var(--atlas-font-display, Georgia, serif); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state span { color: var(--atlas-text-muted); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .state button { color: #f2ddb4; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .candidates { gap: 9px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .candidates > li {
@@ -148,19 +148,19 @@
   box-shadow: inset 0 0 0 1px #efce8d77, 0 3px 10px #0008;
 }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .candidates > li[data-recommendation="true"] { border-color: #708143; border-left-color: #436b2d; background: linear-gradient(90deg, rgba(183, 205, 123, .35), transparent 48%), linear-gradient(rgba(237, 207, 154, .82), rgba(202, 160, 101, .91)), url("/assets/wow/ui-textures/character/spellbook-paper-optimized.webp") center / cover; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .rank { color: #6d4b2a; font-family: var(--atlas-font-display, Georgia, serif); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .rank { color: var(--atlas-text-muted); font-family: var(--atlas-font-display, Georgia, serif); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .itemPair small,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .source small,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .constraints small,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .result small { color: #72502d; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .itemPair b,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .source b,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .result b { color: #322013; font-family: var(--atlas-font-display, Georgia, serif); font-weight: 700; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .itemPair em { color: #684220; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .result b { color: var(--atlas-text-strong); font-family: var(--atlas-font-display, Georgia, serif); font-weight: 700; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .itemPair em { color: var(--atlas-text-muted); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .itemPair > svg { color: #805323; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .source span,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .constraints span,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .result span { color: #654527; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .result span { color: var(--atlas-text-muted); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .constraints span { border-color: #a47948; border-radius: 1px; background: #e8c99c88; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .result b[data-positive="true"] { color: #356323; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .actions button:last-child { border-color: #75683d; color: #deceaa; background: linear-gradient(#2c301c, #15180e); }
@@ -178,14 +178,14 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .heading {
   min-height: 0;
   padding: 20px 28px;
-  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface));
   box-shadow: inset 0 3px #f2d9a06b, inset 0 -3px #68471e77;
 }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .heading h2 { margin-block: 3px; color: var(--wow-ink, #3b2817); font: 700 clamp(23px, 2.5vw, 27px)/1.12 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; text-shadow: 0 1px #f2dcae88; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .heading small,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .controls legend,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .controls label > span { color: var(--wow-ink-muted, #684a2b); font-size: 11px; letter-spacing: .08em; text-shadow: none; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .heading p { color: #54391e; font-size: 13px; line-height: 1.45; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .heading p { color: var(--atlas-text-muted); font-size: 13px; line-height: 1.45; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .headingIcon { border-color: #67431d; color: #f3daa8; background: #38200d; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .liveBadge { font-size: 11px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .controls { padding: 16px 24px; grid-template-columns: minmax(190px, .8fr) minmax(320px, 1.4fr) minmax(260px, 1fr); }
@@ -214,7 +214,7 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .candidates { padding: 18px 24px 22px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .candidates > li,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .candidates > li[data-recommendation="true"] {
-  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface));
 }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .rank { font: 700 19px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .itemPair small,
@@ -238,16 +238,16 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .actions button:last-child:active { background-image: url("/assets/wow/ui-textures/character/dark-gold-button-down.png"); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .state {
   margin: 18px 24px;
-  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface));
 }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .state b { font: 700 20px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state span { color: #53391f; font-size: 13px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state span { color: var(--atlas-text-muted); font-size: 13px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .state button { min-height: 40px; font-size: 12px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer { padding: 14px 24px; font-size: 11px; line-height: 1.5; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer > div { min-width: 0; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .technical { margin-top: 3px; color: #6a4828; font-size: 11px; line-height: 1.45; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .technical summary { width: fit-content; color: #573716; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .technical summary:hover { color: #251408; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .technical { margin-top: 3px; color: var(--atlas-text-muted); font-size: 11px; line-height: 1.45; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .technical summary { width: fit-content; color: var(--atlas-text-muted); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .technical summary:hover { color: var(--atlas-text-strong); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer .technical { color: #bca584; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer .technical summary { color: #d6b477; }
 @container auditPage (max-width: 1180px) {
@@ -298,9 +298,9 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .currentItem small,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .toolbar > span,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer .technical { color: #68492a; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer .technical { color: var(--atlas-text-muted); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .currentItem b,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer b { color: #342210; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer b { color: var(--atlas-text-strong); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .currentItem em,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer em,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .optimizer > footer .technical summary { color: #73501e; }

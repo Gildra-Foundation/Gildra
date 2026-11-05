@@ -7,7 +7,7 @@ import { characterCopy, characterCrumbs, type CharacterLocale } from "./characte
 import { characterAtlasMaterial } from "./characterAtlasMaterial";
 import styles from "./characterAtlas.module.css";
 
-/** Signed-in /wow/characters: the reference hero on the server, the roster (counts, filters, cards) on the client. */
+/** Signed-in /wow/characters: the reference hero on the server, the roster (filters, cards) on the client. */
 export function CharacterRosterConnectedPage({ locale, accountName, pendingRegions }: {
   locale: CharacterLocale;
   accountName?: string;
@@ -24,7 +24,7 @@ export function CharacterRosterConnectedPage({ locale, accountName, pendingRegio
             className={styles.heroHeader}
             breadcrumbs={characterCrumbs(locale)}
             breadcrumbsLabel={copy.breadcrumbsLabel}
-            eyebrow={accountName ? `${accountName} · ${copy.roster.eyebrowConnected}` : copy.roster.eyebrowConnected}
+            eyebrow={accountName ?? copy.roster.eyebrowConnected}
             title={copy.roster.title}
             lede={copy.roster.lede}
             actions={<div className={styles.actions}>

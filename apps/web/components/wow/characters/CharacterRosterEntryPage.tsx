@@ -1,20 +1,18 @@
-import { AtlasFrame, AtlasHero, AtlasSection, AtlasStats } from "@/components/atlas";
-import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
-import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
-import { BATTLE_NET_REGIONS } from "@/lib/wow/battleNetCharacters";
+import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { CharacterAtlasBackdrop } from "./CharacterAtlasBackdrop";
 import { CharacterSignInButton } from "./CharacterActions";
 import { characterCopy, characterCrumbs, type CharacterLocale } from "./characterCopy";
-import { characterAtlasMaterial, frostPlaqueStyle } from "./characterAtlasMaterial";
-import { FrostLoginIcon, type FrostLoginIconKind } from "./FrostLoginIcon";
+import { characterAtlasMaterial } from "./characterAtlasMaterial";
+import { FrostLoginIcon } from "./FrostLoginIcon";
+import { UnlockCards } from "./UnlockCards";
 import styles from "./characterAtlas.module.css";
 
-const unlockIcons: FrostLoginIconKind[] = ["equipment", "talents", "combat"];
+/** Frost Hall paintings of the three cards, in the order of `copy.entry.unlocks`. */
+const unlockArt = ["equipment", "talents", "combat"].map((name) => `/assets/wow/characters/unlocks/${name}.webp`);
 
 /**
  * Signed-out /wow/characters, built like the reference hubs (docs/design/reference): the Frost scene
- * behind the hero, the one painted sign-in action, honest facts, then what the sign-in opens as
- * plaques of the section's kit. No character is shown before Battle.net answers.
+ * behind the hero, the one painted sign-in action, then what the sign-in opens as painted notched cards. No character is shown before Battle.net answers.
  */
 export function CharacterRosterEntryPage({ locale, accountName, apiError }: {
   locale: CharacterLocale;
@@ -32,33 +30,17 @@ export function CharacterRosterEntryPage({ locale, accountName, apiError }: {
           className={styles.heroHeader}
           breadcrumbs={characterCrumbs(locale)}
           breadcrumbsLabel={copy.breadcrumbsLabel}
-          eyebrow={accountName ?? copy.secureEyebrow}
+          eyebrow={accountName ?? copy.entry.eyebrow}
           title={copy.entry.title}
           lede={apiError ? <><strong className={styles.ledeAlert}>{copy.entry.expiredTitle}.</strong> {copy.entry.expiredText}</> : copy.entry.lede}
           actions={<div className={styles.actions}>
             <CharacterSignInButton locale={locale} reconnect={Boolean(apiError)} />
-            <p className={styles.security}><FrostLoginIcon kind="lock" compact />{copy.passwordNote} {copy.scopeNote}</p>
+            <p className={styles.security}><FrostLoginIcon kind="lock" compact />{copy.entry.passwordNote}</p>
           </div>}
         />
-        <div className={styles.facts}>
-          <AtlasStats label={copy.entry.statsLabel} items={[
-            { value: String(BATTLE_NET_REGIONS.length), label: copy.entry.statRegions },
-            { value: String(copy.entry.unlocks.length), label: copy.entry.statTools },
-          ]} />
-        </div>
       </div>
-      <AtlasSection id="unlocks" title={copy.entry.unlocksTitle} description={copy.entry.unlocksText} className={styles.section}>
-        <ul className={styles.unlocks}>
-          {copy.entry.unlocks.map(([title, text], index) => (
-            <li key={title}>
-              <MaterialPlaque kit={CHARACTERS_KIT} style={frostPlaqueStyle} className={styles.plaque}>
-                <FrostLoginIcon kind={unlockIcons[index] ?? "equipment"} />
-                <h3 className={materialStyles.title}>{title}</h3>
-                <p className={materialStyles.text}>{text}</p>
-              </MaterialPlaque>
-            </li>
-          ))}
-        </ul>
+      <AtlasSection id="unlocks" title={copy.entry.unlocksTitle} className={styles.section}>
+        <UnlockCards cards={copy.entry.unlocks.map((card, index) => ({ ...card, art: unlockArt[index] }))} />
       </AtlasSection>
       </div>
     </AtlasFrame>

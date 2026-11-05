@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import { ArrowRight, ArrowUpRight, MapPin, RefreshCw, Search } from "lucide-react";
 import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
-import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { AtlasInput } from "@gildra/atlas-ui/AtlasField";
 import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
@@ -37,7 +36,7 @@ const SKELETON_CARDS = 6;
 
 /**
  * Body of the signed-in roster: loads every Battle.net region once, then filters locally.
- * Facts continue the hero; the roster is a reference section of "portrait + plaque" cards.
+ * The roster is a reference section of "portrait + plaque" cards; the count sits beside its title.
  */
 export function CharacterRoster({ locale, copy, pendingRegions }: {
   locale: "en" | "ru";
@@ -113,19 +112,11 @@ export function CharacterRoster({ locale, copy, pendingRegions }: {
 
   const filtersActive = Boolean(query) || classId !== 0;
   const count = (filtersActive ? copy.countFiltered : copy.countAll).replace("{shown}", String(filtered.length)).replace("{total}", String(characters.length));
-  const topLevel = characters.reduce((highest, character) => Math.max(highest, character.level), 0);
   const status = loading ? copy.loadingRegions : characters.length ? count : "";
 
   return (
     <>
-      {characters.length ? <div className={styles.facts}>
-        <AtlasStats label={copy.summaryLabel} items={[
-          { value: characters.length, label: copy.statCharacters },
-          { value: characters.filter((character) => character.level === topLevel).length, label: copy.statTopLevel.replace("{level}", String(topLevel)) },
-          { value: new Set(characters.map((character) => `${character.region}:${character.realm.slug}`)).size, label: copy.statRealms },
-        ]} />
-      </div> : null}
-      <AtlasSection id="roster" title={copy.rosterTitle} description={copy.rosterText} className={styles.section}
+      <AtlasSection id="roster" title={copy.rosterTitle} className={styles.section}
         aside={<p className={styles.status} role="status">{status}</p>}>
         <div className={styles.rosterBody} aria-busy={loading && !characters.length ? true : undefined} data-roster-state={loading && !characters.length ? "loading" : characters.length ? "loaded" : "empty"}>
           {characters.length ? (
@@ -192,7 +183,6 @@ export function CharacterRoster({ locale, copy, pendingRegions }: {
               </div>
             </MaterialPlaque>
           )}
-          {loading && !characters.length ? <p className={styles.status}>{copy.loadingText}</p> : null}
         </div>
       </AtlasSection>
     </>

@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Check, Clock3, Copy, History, Link2, LoaderCircle, RefreshCw, Shield, ShieldCheck, Sparkles, Swords, Unlink } from "lucide-react";
+import { AlertTriangle, Check, Clock3, Copy, Link2, LoaderCircle, RefreshCw, Shield, ShieldCheck, Sparkles, Swords, Unlink } from "lucide-react";
 import type { CharacterRunRecord } from "@/lib/wow/characterRunHistory";
-import { BookEngraving } from "./BookEngraving";
 import { characterWorkspaceCopy, workspaceLocale, workspaceNumber, workspaceRunLabel, type WorkspaceLocale } from "./characterWorkspaceCopy";
 import styles from "./characterHistory.module.css";
 import { copyText } from "@gildra/atlas-ui/clipboard";
@@ -86,15 +85,10 @@ export function CharacterHistory({ characterSlug, specializationSlug, fingerprin
     finally { setBusy(""); }
   }
 
-  return <section className={styles.history} id="audit-history" aria-labelledby="character-history-heading">
+  return <section className={styles.history} id="audit-history" aria-label={t("Сохранённые расчёты")}>
 
-    <header>
-      <div className={styles.heading}>
-        <span className={styles.icon} aria-hidden="true"><History /></span>
-        <div><small>{t("БОЕВОЙ АРХИВ")}</small><h2 id="character-history-heading">{t("Сохранённые расчёты")}</h2><p>{t("Здесь остаются результаты для вашего персонажа. Если экипировка или таланты изменятся, мы пометим старые результаты.")}</p></div>
-      </div>
+    <header className={styles.toolbar}>
       <div className={styles.archiveTools}>
-        <BookEngraving motif="logs" className={styles.archiveEngraving} />
         {state === "ready" || runs.length ? <span className={styles.archiveCount}><small>{t("Сохранено")}</small><strong>{runs.length}</strong><small>{t("в этой истории")}</small></span> : null}
         <button data-folio-action="quiet" data-folio-icon type="button" onClick={() => void load()} disabled={state === "loading"} aria-label={t("Обновить историю")} title={t("Обновить историю")} aria-busy={state === "loading"}><RefreshCw className={state === "loading" ? styles.spin : undefined} aria-hidden="true" /></button>
       </div>

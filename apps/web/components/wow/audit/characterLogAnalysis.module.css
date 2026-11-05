@@ -558,12 +558,12 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > header {
   min-height: 0;
   padding: 20px 28px;
-  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface));
   box-shadow: inset 0 3px #f2d9a06b, inset 0 -3px #68471e77;
 }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs h2 { color: var(--wow-ink, #3b2817); font: 700 clamp(23px, 2.5vw, 27px)/1.12 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; text-shadow: 0 1px #f2dcae88; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header small { color: var(--wow-ink-muted, #684a2b); font-size: 11px; text-shadow: none; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header p { color: #54391e; font-size: 13px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header p { color: var(--atlas-text-muted); font-size: 13px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header button {
   min-height: 40px;
   border: 0;
@@ -578,16 +578,16 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article {
   color: var(--wow-ink, #3b2817);
-  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface));
 }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .state,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect { margin: 16px 24px; border: 2px solid #8b6334; border-radius: 2px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .state b,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect b { color: #3b2817; font: 700 18px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect b { color: var(--atlas-text-strong); font: 700 18px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect > svg,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state > svg { color: #315a35; stroke-width: 2.4; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .state > svg { color: var(--atlas-positive); stroke-width: 2.4; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .state span,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect span { color: #5b4025; font-size: 13px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect span { color: var(--atlas-text-muted); font-size: 13px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .connect a,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > button,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .import > button {
@@ -618,16 +618,16 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics { border-block: 2px solid #8b6334; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics > div { border-right-color: #947043; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics small,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics span { color: #654729; font-size: 11px; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics b { color: #332110; font: 700 22px/1.15 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; text-shadow: 0 1px #f2dcae; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics span { color: var(--atlas-text-muted); font-size: 11px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .metrics b { color: var(--atlas-text-strong); font: 700 22px/1.15 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; text-shadow: 0 1px #f2dcae; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings { padding: 20px 24px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings h3 { font: 700 21px var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article { border-color: #8c6538; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article b { color: #352312; font-size: 14px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article b { color: var(--atlas-text-strong); font-size: 14px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article small,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article p { color: #5d4024; font-size: 12px; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article a { color: #714215; font-size: 12px; font-weight: 700; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article a:hover { color: #3b2108; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article p { color: var(--atlas-text-muted); font-size: 12px; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article a { color: var(--atlas-negative); font-size: 12px; font-weight: 700; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .findings article a:hover { color: var(--atlas-text-strong); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer { margin: 0 24px 24px; padding: 14px; color: #d7c6aa; font-size: 12px; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer > div { min-width: 0; }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .technical { margin-top: 4px; color: #bca98b; font-size: 11px; line-height: 1.5; }
@@ -665,9 +665,9 @@
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .import label span,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector label span,
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .selector > div small,
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer .technical { color: #67492b; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer b { color: #34220f; }
-:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer .technical summary { color: #654016; }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer .technical { color: var(--atlas-text-muted); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer b { color: var(--atlas-text-strong); }
+:global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs > footer .technical summary { color: var(--atlas-text-muted); }
 :global([data-profile-source="battle-net"]:not([data-character-atlas])) .logs header button {
   border: 1px solid #9b713a;
   border-radius: 2px;

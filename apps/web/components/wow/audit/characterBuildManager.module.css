@@ -68,14 +68,14 @@
   margin: -15px -15px 0;
   padding: 15px 20px;
   border-bottom: 2px ridge #896333;
-  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface));
 }
 :global([data-profile-source="battle-net"]) .heading > span { border-color: #80572d; border-radius: 2px; color: #eed19b; background: #342011; }
 :global([data-profile-source="battle-net"]) .heading small,
-:global([data-profile-source="battle-net"]) .libraryHead small { color: #684a2b; font-size: 11px; letter-spacing: .08em; }
+:global([data-profile-source="battle-net"]) .libraryHead small { color: var(--atlas-text-muted); font-size: 11px; letter-spacing: .08em; }
 :global([data-profile-source="battle-net"]) .heading h3,
-:global([data-profile-source="battle-net"]) .libraryHead h3 { color: #3b2817; font: 700 19px/1.2 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
-:global([data-profile-source="battle-net"]) .heading p { color: #594024; font-size: 12px; line-height: 1.45; }
+:global([data-profile-source="battle-net"]) .libraryHead h3 { color: var(--atlas-text-strong); font: 700 19px/1.2 var(--wow-title, var(--atlas-font-display, Georgia, serif)); font-variant-numeric: lining-nums; }
+:global([data-profile-source="battle-net"]) .heading p { color: var(--atlas-text-muted); font-size: 12px; line-height: 1.45; }
 :global([data-profile-source="battle-net"]) .modes { margin-top: 14px; }
 :global([data-profile-source="battle-net"]) .modes button {
   min-height: 90px;
@@ -95,7 +95,7 @@
   margin: 18px -15px 0;
   padding: 11px 20px;
   border-block: 2px ridge #896333;
-  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface));
 }
 :global([data-profile-source="battle-net"]) .newButton,
 :global([data-profile-source="battle-net"]) .saveRow > button {
@@ -118,16 +118,16 @@
 :global([data-profile-source="battle-net"]) .builds article[data-active="true"] {
   border-color: #957040;
   border-radius: 2px;
-  background: linear-gradient(rgba(255, 226, 171, .35), rgba(255, 226, 171, .22)), url("/assets/wow/ui-textures/character/map-parchment-tile-optimized.webp") center / 512px repeat;
+  background: color-mix(in srgb, var(--atlas-accent) 6%, var(--atlas-surface));
 }
 :global([data-profile-source="battle-net"]) .builds article[data-active="true"] { box-shadow: inset 3px 0 #386627; }
-:global([data-profile-source="battle-net"]) .loadButton { min-height: 52px; color: #543820; }
+:global([data-profile-source="battle-net"]) .loadButton { min-height: 52px; color: var(--atlas-text-muted); }
 :global([data-profile-source="battle-net"]) .loadButton:hover,
 :global([data-profile-source="battle-net"]) .loadButton:focus-visible { background: #ffebbb55; }
-:global([data-profile-source="battle-net"]) .loadButton > svg { color: #68421c; }
-:global([data-profile-source="battle-net"]) .loadButton b { color: #382414; font: 700 13px var(--wow-ui, Arial, sans-serif); }
-:global([data-profile-source="battle-net"]) .loadButton small { color: #654626; font-size: 11px; }
-:global([data-profile-source="battle-net"]) .deleteButton { border-left-color: #a0794c; color: #6e321d; }
+:global([data-profile-source="battle-net"]) .loadButton > svg { color: var(--atlas-text-muted); }
+:global([data-profile-source="battle-net"]) .loadButton b { color: var(--atlas-text-strong); font: 700 13px var(--wow-ui, Arial, sans-serif); }
+:global([data-profile-source="battle-net"]) .loadButton small { color: var(--atlas-text-muted); font-size: 11px; }
+:global([data-profile-source="battle-net"]) .deleteButton { border-left-color: #a0794c; color: var(--atlas-negative); }
 :global([data-profile-source="battle-net"]) .deleteButton:hover,
 :global([data-profile-source="battle-net"]) .deleteButton:focus-visible { color: #a82617; background: #e8b09a77; }
 :global([data-profile-source="battle-net"]) .empty { padding: 13px; border-color: #8b6a42; border-radius: 2px; color: #d1bc98; background: #1a140d; font-size: 11px; }
@@ -371,14 +371,14 @@
 :global([data-profile-source="battle-net"]) .modes button:hover,
 :global([data-profile-source="battle-net"]) .modes button:focus-visible { color: #2d1b0d; background: var(--wow-paper); box-shadow: inset 0 0 0 2px #fff0ca77; }
 :global([data-profile-source="battle-net"]) .modes button[aria-pressed="true"] { border-color: #8d471e; color: #2d1b0d; background: var(--wow-paper); box-shadow: inset 4px 0 #a45622, inset 0 0 0 1px #fff1c7; }
-:global([data-profile-source="battle-net"]) .modes button b { color: #3c2715; }
+:global([data-profile-source="battle-net"]) .modes button b { color: var(--atlas-text-strong); }
 :global([data-profile-source="battle-net"]) .modes button small,
 :global([data-profile-source="battle-net"]) .modeNote,
-:global([data-profile-source="battle-net"]) .message { color: #614528; }
-:global([data-profile-source="battle-net"]) .modes button em { color: #71491c; }
-:global([data-profile-source="battle-net"]) .saveRow input { border-color: #896139; color: #3b2817; }
+:global([data-profile-source="battle-net"]) .message { color: var(--atlas-text-muted); }
+:global([data-profile-source="battle-net"]) .modes button em { color: var(--atlas-text-muted); }
+:global([data-profile-source="battle-net"]) .saveRow input { border-color: #896139; color: var(--atlas-text-strong); }
 :global([data-profile-source="battle-net"]) .saveRow input::placeholder { color: #725334; opacity: 1; }
-:global([data-profile-source="battle-net"]) .empty { color: #5f4124; }
+:global([data-profile-source="battle-net"]) .empty { color: var(--atlas-text-muted); }
 :global([data-profile-source="battle-net"]) .newButton,
 :global([data-profile-source="battle-net"]) .saveRow > button {
   border: 1px solid #76572d;
