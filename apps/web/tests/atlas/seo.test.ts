@@ -54,3 +54,26 @@ describe("seo: static sitemap paths", () => {
     assert.ok(!staticPaths().includes("/library"), "the library is listed only while the catalog is public");
   });
 });
+
+describe("seo: library record addresses", async () => {
+  const { libraryRecordPath, legacyLibraryRecordPath } = await import("../../lib/library/recordPath.ts");
+  const id = "00004a86-3321-43ac-983d-9d73d79d11ae";
+  it("records live at /library/<dataset>/<id>/<slug>, without the repeated type", () => {
+    assert.equal(libraryRecordPath("en", "item", id, "grievous-gladiator-s-wyrmhide-legguards"), `/library/items/${id}/grievous-gladiator-s-wyrmhide-legguards`);
+    assert.equal(libraryRecordPath("ru", "spell", id, "шар"), `/ru/library/spells/${id}/${encodeURIComponent("шар")}`);
+    assert.equal(libraryRecordPath("en", "item_set", id, "regalia"), `/library/records/${id}/regalia`, "a type without a dataset opens under records");
+    assert.equal(libraryRecordPath("en", "item", id, "x", "wow_classic"), `/library/items/${id}/x?product=wow_classic`);
+    assert.equal(libraryRecordPath("en", "item", id, null), `/library/items/${id}/record`);
+  });
+  it("the old /library/<dataset>/<type>/<id>/<slug> moves to the type's home dataset with its query", () => {
+    assert.equal(legacyLibraryRecordPath("en", "item", id, "x", "?product=wow_classic&a=1"), `/library/items/${id}/x?product=wow_classic&a=1`);
+    assert.equal(legacyLibraryRecordPath("ru", "item_set", id, "x"), `/ru/library/records/${id}/x`);
+  });
+  it("the old four-segment route answers a 308 route handler in both languages", () => {
+    for (const root of ["(site)", "ru"]) {
+      const file = readFileSync(new URL(`../../app/${root}/library/[dataset]/[id]/[slug]/[legacy]/route.ts`, import.meta.url), "utf8");
+      assert.match(file, /legacyRecordRedirect\("(en|ru)"\)/, root);
+      assert.match(readFileSync(new URL(`../../app/${root}/library/[dataset]/[id]/[slug]/page.tsx`, import.meta.url), "utf8"), /LibraryRecordRoute/, root);
+    }
+  });
+});

@@ -2,6 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { ATLAS_FOOTER_LINKS } from "@/components/atlas/footerLinks";
 import { ArrowRight } from "lucide-react";
 import { AtlasMotionToggle } from "@gildra/atlas-ui/AtlasMotionToggle";
 import { MaterialLinkButton } from "@/components/wow/shared/material/MaterialButton";
@@ -61,13 +62,13 @@ export function NotFoundText({ en, ru }: Words) {
   return <>{ruUrl ? ru : en}</>;
 }
 
-export function NotFoundFooterLinks({ whatsNew, privacy }: { whatsNew: Words; privacy: Words }) {
+/** The footer links (components/atlas/footerLinks.ts) in the URL's language. */
+export function NotFoundFooterLinks() {
   const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
   const lang = ruUrl ? "ru" : "en";
   const prefix = ruUrl ? "/ru" : "";
   return <>
-    <Link href={`${prefix}/wow/whats-new`} prefetch={false}>{whatsNew[lang]}</Link>
-    <Link href={`${prefix}/privacy`} prefetch={false}>{privacy[lang]}</Link>
+    {ATLAS_FOOTER_LINKS.map((link) => <Link key={link.href} href={`${prefix}${link.href}`} prefetch={false}>{link[lang]}</Link>)}
   </>;
 }
 

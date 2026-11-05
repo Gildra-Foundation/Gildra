@@ -1,12 +1,13 @@
 import { catalogLocaleView } from "@/lib/catalogLocale";
 import type { CSSProperties, ReactNode } from "react";
-import { AtlasFrame, AtlasHero, AtlasMetaList, AtlasSection } from "@/components/atlas";
+import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { AtlasDisclosure } from "@/components/atlas";
 import { PageShell } from "@/components/layout/PageShell";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph, TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
-import { TooltipBody, tooltipClassName } from "@/components/database/TooltipContent";
+import { TooltipBody, recordFacts, tooltipClassName } from "@/components/database/TooltipContent";
+import { JsonLd, breadcrumbListLd } from "@/lib/seo/jsonld";
 import { MaterialPlaque, materialButtonStyle, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { libraryKit } from "@/components/library/libraryKit";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
@@ -25,7 +26,9 @@ type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships
   /** The record's library dataset; without it the record is one of the types that have no dataset ("records"). */
   libraryDataset?: { slug: string; name: string };
   /** 3D model of the record (library mounts and transmog sets); the tooltip section gets a second column for it. */
-  model?: ReactNode };
+  model?: ReactNode;
+  /** Canonical address of the record (breadcrumb structured data). */
+  canonicalPath?: string };
 
 function hasUnresolvedTemplate(value: string) {
   return /\$(?:@spelldesc|[0-9]*[dD]|[0-9]*s[0-9]+|[st][0-9]+|[dD]|[A-Za-z]|[<{])/.test(value);
@@ -60,32 +63,26 @@ async function withSummaryIcon(entity: GameEntity, lang: Lang): Promise<GameEnti
   }
 }
 
-/** Item facts the hero shows, read from the tooltip blocks (the record endpoint has no item fields of its own). */
-function itemFacts(entity: GameEntity) {
-  const blocks = entity.tooltip?.blocks ?? [];
-  const block = (type: string) => blocks.find((entry) => String(entry.type ?? "") === type);
-  const number = (value: unknown) => (typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined);
-  const variants = block("item_variants")?.entries;
+/** Quality of an item: the record's own, or that of its base variant. */
+function itemQuality(entity: GameEntity) {
+  const variants = (entity.tooltip?.blocks ?? []).find((entry) => String(entry.type ?? "") === "item_variants")?.entries;
   const base = Array.isArray(variants) ? (variants as Record<string, unknown>[]).find((variant) => variant.key === "base") ?? (variants[0] as Record<string, unknown> | undefined) : undefined;
   const quality = typeof entity.quality === "number" ? entity.quality : typeof base?.quality === "number" ? base.quality : undefined;
-  return {
-    itemLevel: number(block("item_level")?.value) ?? number(base?.item_level),
-    requiredLevel: number(block("required_level")?.value),
-    quality: quality !== undefined && quality in itemQualityColors ? quality as keyof typeof itemQualityColors : undefined,
-  };
+  return quality !== undefined && quality in itemQualityColors ? quality as keyof typeof itemQualityColors : undefined;
 }
 
 /**
- * Library record page (gildra-wow-material-design §3.8): hero — the icon in the
- * library kit's frame (quality on its edge), the name in the strong text colour,
- * a painted "Share" — with the game facts a player needs (item level, required
- * level, quality in its colour) on the library plaque, then the
- * in-game tooltip with either the 3D model in a painted plaque or the related
- * records beside it. Build, ids, completeness and the raw record are not
- * shown. Server-only: the tooltip markup renders here, no tooltip code ships
- * to the browser.
+ * Library record page (gildra-wow-material-design §3.8). Hero: the record's
+ * icon in the library kit's frame (quality on its edge), one label line —
+ * quality in its colour · slot · type — the name and a painted "Share".
+ * The hero's side (the empty half of the artwork; under the title on tablets
+ * and phones) holds the 3D model plaque (§3.9) — then the tooltip sits under
+ * the title — or the in-game tooltip on the library plaque, or, without
+ * either, the facts. Below: the facts plaque as one row of values (three
+ * facts or more) and the related records.
+ * Build, ids, completeness and the raw record are not shown. Server-only: no tooltip code ships to the browser.
  */
-export async function EntityDetailPage({ entity, entityType, relationships, lang, libraryDataset, model }: Props) {
+export async function EntityDetailPage({ entity, entityType, relationships, lang, libraryDataset, model, canonicalPath }: Props) {
   // An English-only record keeps its English name on the Russian page (game names stay English) instead of "Spell #id".
   const englishName = entity.name;
   entity = await withSummaryIcon(catalogLocaleView(entity, lang), lang);
@@ -105,66 +102,106 @@ export async function EntityDetailPage({ entity, entityType, relationships, lang
     libraryDataset ? { label: libraryDataset.name, href: `${prefix}/library/${encodeURIComponent(libraryDataset.slug)}${productQuery}` } : { label: entityType?.label ?? typeLabel },
     { label: displayName },
   ];
-  const facts = itemFacts(entity);
-  const qualityColour = facts.quality !== undefined ? itemQualityColors[facts.quality] : undefined;
+  const quality = itemQuality(entity);
+  const qualityColour = quality !== undefined ? itemQualityColors[quality] : undefined;
   const heroStyle = qualityColour ? { "--record-quality": qualityColour.frame, "--record-quality-text": qualityColour.text } as CSSProperties : undefined;
-  const factItems = [
-    ...(facts.itemLevel ? [{ label: copy.itemLevel, value: facts.itemLevel }] : []),
-    ...(facts.requiredLevel ? [{ label: copy.requiredLevel, value: facts.requiredLevel }] : []),
-    ...(qualityColour && facts.quality !== undefined ? [{ label: copy.quality, value: <span className={styles.qualityValue} style={heroStyle}>{copy.qualityNames[facts.quality]}</span> }] : []),
-  ];
+  const facts = recordFacts(entity, lang);
+  const fact = (key: string) => facts.find((entry) => entry.key === key)?.value;
+  // The label line: quality in its colour, slot and armour/weapon type; without a slot the record's type closes it.
+  const labelParts = [fact("slot"), fact("subclass"), fact("slot") ? undefined : typeLabel].filter(Boolean) as string[];
+  const label = (
+    <span className={styles.label}>
+      {qualityColour && quality !== undefined ? <span className={styles.qualityValue} style={heroStyle}>{copy.qualityNames[quality]}</span> : null}
+      {labelParts.map((part) => <span key={part}>{part}</span>)}
+    </span>
+  );
+  // Slot and type already stand in the label line; the plaque keeps the rest. Two facts or fewer
+  // only repeat the tooltip's own first lines, so the plaque needs three.
+  const restFacts = facts.filter((entry) => entry.key !== "slot" && entry.key !== "subclass");
+  const plaqueFacts = restFacts.length >= 3 ? restFacts : [];
   // A tooltip with nothing but the name (item sets, some NPCs) adds nothing to the hero: the page goes without it.
   const tooltipBlocks = (entity.tooltip?.blocks ?? []).filter((block) => !["name", "provenance"].includes(String(block.type ?? "")));
   const tooltipEntity = entity.tooltip && tooltipBlocks.length ? withVariantQuality({ ...entity, name: displayName }) : null;
 
   const tooltip = tooltipEntity ? (
-    <div data-atlas-scope className={tooltipClassName(tooltipEntity, "page")} role="region" aria-labelledby={`tooltip-name-${entity.id}`}>
-      <TooltipBody entity={tooltipEntity} lang={lang} iconSymbol={iconSymbol} />
-    </div>
+    <MaterialPlaque kit={libraryKit} className={styles.tooltipPlaque} style={heroStyle}>
+      <div data-atlas-scope className={tooltipClassName(tooltipEntity, "page")} role="region" aria-labelledby={`tooltip-name-${entity.id}`}>
+        <TooltipBody entity={tooltipEntity} lang={lang} iconSymbol={iconSymbol} />
+      </div>
+    </MaterialPlaque>
+  ) : null;
+
+  const factsPlaque = plaqueFacts.length ? (
+    <MaterialPlaque kit={libraryKit} as="section" className={styles.factsPlaque} aria-label={copy.factsLabel}>
+      <dl className={styles.facts} data-count={Math.min(plaqueFacts.length, 6)}>
+        {plaqueFacts.map((entry) => (
+          <div key={entry.key} className={styles.fact} data-fact={entry.key}>
+            <dt>{entry.label}</dt>
+            <dd>{entry.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </MaterialPlaque>
+  ) : null;
+
+  const modelPlaque = model ? (
+    <MaterialPlaque kit={libraryKit} as="figure" className={styles.model} aria-label={copy.modelLabel(String(displayName))}>
+      <div className={styles.modelStage}>{model}</div>
+    </MaterialPlaque>
   ) : null;
 
   const relations = relationships.length ? (
-    <div className={styles.relationGroups}>
-      {relationGroups.map(([group, entries], index) => {
-        const [direction, relation] = group.split(":");
-        return (
-          <AtlasDisclosure key={group} className={styles.disclosure} open={index < 2 || undefined}
-            summary={<>
-              <span className={styles.disclosureTitle}><span aria-hidden="true" className={styles.direction}>{direction === "incoming" ? "←" : "→"}</span>{relationLabels[relation]?.[lang] ?? relation.replaceAll("_", " ")}</span>
-              <span className={styles.disclosureMeta}>{entries.length}</span>
-            </>}>
-            <ul className={styles.relatedList}>
-              {entries.map(({ entity: related, attributes }) => {
-                const relatedType = entityTypeLabel(related.type, lang);
-                return (
-                  <CatalogRecordRow
-                    key={related.id}
-                    href={libraryRecordPath(lang, related.type, related.id, related.slug || related.externalId, related.product)}
-                    name={catalogLocaleView(related, lang).name || related.name || `${relatedType} #${related.externalId}`}
-                    typeLabel={relatedType}
-                    iconUrl={related.iconUrl}
-                    iconSymbol={TYPE_SYMBOLS[related.type]}
-                    quality={related.quality}
-                    meta={relationshipAttributes(attributes, lang, copy)}
-                  />
-                );
-              })}
-            </ul>
-          </AtlasDisclosure>
-        );
-      })}
-    </div>
+    <section className={styles.relations} aria-labelledby="record-relations">
+      <h2 id="record-relations" className={styles.columnTitle}>{copy.relationsTitle}</h2>
+      <div className={styles.relationGroups}>
+        {relationGroups.map(([group, entries], index) => {
+          const [direction, relation] = group.split(":");
+          return (
+            <AtlasDisclosure key={group} className={styles.disclosure} open={index < 2 || undefined}
+              summary={<>
+                <span className={styles.disclosureTitle}><span aria-hidden="true" className={styles.direction}>{direction === "incoming" ? "←" : "→"}</span>{relationLabels[relation]?.[lang] ?? relation.replaceAll("_", " ")}</span>
+                <span className={styles.disclosureMeta}>{entries.length}</span>
+              </>}>
+              <ul className={styles.relatedList}>
+                {entries.map(({ entity: related, attributes }) => {
+                  const relatedType = entityTypeLabel(related.type, lang);
+                  return (
+                    <CatalogRecordRow
+                      key={related.id}
+                      href={libraryRecordPath(lang, related.type, related.id, related.slug || related.externalId, related.product)}
+                      name={catalogLocaleView(related, lang).name || related.name || `${relatedType} #${related.externalId}`}
+                      typeLabel={relatedType}
+                      iconUrl={related.iconUrl}
+                      iconSymbol={TYPE_SYMBOLS[related.type]}
+                      quality={related.quality}
+                      meta={relationshipAttributes(attributes, lang, copy)}
+                    />
+                  );
+                })}
+              </ul>
+            </AtlasDisclosure>
+          );
+        })}
+      </div>
+    </section>
   ) : null;
 
+  // The hero's side (the empty half of the artwork) takes the 3D model, else the tooltip, else the facts.
+  // With a model the tooltip sits under the title, in the hero's own column.
+  const heroSide = modelPlaque ?? tooltip ?? factsPlaque;
+  const sideKind = modelPlaque ? "model" : tooltip ? "tooltip" : "facts";
+  const tooltipUnderTitle = modelPlaque ? tooltip : null;
+  const bodyFacts = heroSide === factsPlaque ? null : factsPlaque;
   return (
     <PageShell lang={lang}>
+      {canonicalPath ? <JsonLd data={breadcrumbListLd(breadcrumbs, canonicalPath)} /> : null}
       <AtlasFrame as="div" lang={lang} scene="archiveDeep" dataAttributes={{ "data-database-entity": true }}>
         <AtlasHero
           breadcrumbs={breadcrumbs}
           breadcrumbsLabel={copy.breadcrumbsLabel}
-          eyebrow={typeLabel}
+          eyebrow={label}
           title={(
-            <span className={styles.heroTitle} style={heroStyle} data-quality={qualityColour ? facts.quality : undefined}>
+            <span className={styles.heroTitle} style={heroStyle} data-quality={qualityColour ? quality : undefined}>
               {/* The record's own icon in the library kit's frame, the quality on its inner edge: identity, not decoration, so it stays on phones too. */}
               <span className={`${materialStyles.iconFrame} ${styles.heroIcon}`} style={materialIconFrameStyle(libraryKit, 112)} aria-hidden="true">
                 <ResilientImage src={entity.iconUrl} alt="" width={96} height={96} fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
@@ -177,45 +214,15 @@ export async function EntityDetailPage({ entity, entityType, relationships, lang
           actions={<>
             {unresolvedDescription && !tooltip ? <p className={styles.warning} role="status">{copy.unresolved}</p> : null}
             <span className={paint.painted} style={materialButtonStyle(libraryKit)}><AtlasShareButton title={String(displayName)} locale={lang === "ru" ? "ru" : "en"} /></span>
+            {tooltipUnderTitle ? <div className={styles.heroTooltip}>{tooltipUnderTitle}</div> : null}
           </>}
-          aside={factItems.length ? (
-            <MaterialPlaque kit={libraryKit} className={styles.factsPlaque}>
-              <AtlasMetaList columns={1} className={styles.facts} items={factItems} />
-            </MaterialPlaque>
-          ) : undefined}
+          aside={heroSide ? <div className={styles.heroSide} data-side={sideKind}>{heroSide}</div> : undefined}
         />
-
-        {tooltip && model ? (
-          <AtlasSection id="tooltip" title={copy.tooltipTitle}>
-            <div className={styles.pair} data-pair="model">
-              <div className={styles.tooltipColumn}>{tooltip}</div>
-              <MaterialPlaque kit={libraryKit} as="figure" className={styles.model} aria-label={copy.modelLabel(String(displayName))}>
-                <div className={styles.modelStage}>{model}</div>
-              </MaterialPlaque>
-            </div>
-          </AtlasSection>
-        ) : tooltip ? (
-          <AtlasSection id="tooltip" title={copy.tooltipTitle}>
-            <div className={styles.pair} data-pair={relations ? "relations" : undefined}>
-              <div className={styles.tooltipColumn}>{tooltip}</div>
-              {relations ? (
-                <section className={styles.relationsColumn} aria-labelledby="record-relations">
-                  <h3 id="record-relations" className={styles.columnTitle}>{copy.relationsTitle}</h3>
-                  {relations}
-                </section>
-              ) : null}
-            </div>
-          </AtlasSection>
-        ) : model ? (
-          <AtlasSection id="model" title={copy.modelTitle}>
-            <MaterialPlaque kit={libraryKit} as="figure" className={`${styles.model} ${styles.modelAlone}`} aria-label={copy.modelLabel(String(displayName))}>
-              <div className={styles.modelStage}>{model}</div>
-            </MaterialPlaque>
-          </AtlasSection>
-        ) : null}
-
-        {relations && (model || !tooltip) ? (
-          <AtlasSection id="relations" title={copy.relationsTitle}>{relations}</AtlasSection>
+        {bodyFacts || relations ? (
+          <div className={styles.record}>
+            {bodyFacts}
+            {relations}
+          </div>
         ) : null}
       </AtlasFrame>
     </PageShell>

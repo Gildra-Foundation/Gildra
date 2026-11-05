@@ -8,7 +8,7 @@ import { catalogReadable, requireCatalogSession } from "@/lib/library/server";
 import { LIBRARY_LOOSE_RECORDS, LIBRARY_TYPE_DATASET, libraryRecordPath } from "@/lib/library/recordPath";
 import type { Lang } from "@/lib/i18n-paths";
 
-export type LibraryRecordParams = Promise<{ dataset: string; type: string; id: string; slug: string }>;
+export type LibraryRecordParams = Promise<{ dataset: string; id: string; slug: string }>;
 export type LibraryRecordSearch = Promise<{ product?: string }> | undefined;
 
 const words = {
@@ -24,57 +24,68 @@ function decoded(value: string) {
   try { return decodeURIComponent(value); } catch { return value; }
 }
 
-/** The record of the address, or null: unknown id, another type, another edition. */
-async function routeRecord(lang: Lang, dataset: string, type: string, id: string, product: string) {
+/** The record of the address, or null: unknown id, another edition. */
+async function routeRecord(lang: Lang, dataset: string, id: string, product: string) {
   if (!RECORD_ID.test(id)) return null;
   const loose = dataset === LIBRARY_LOOSE_RECORDS;
   const entity = await getCatalogEntity(id, locale(lang), loose ? "" : dataset).then((record) => record ? catalogLocaleView(record, lang) : null);
-  if (!entity || entity.type !== type || entity.product !== product) return null;
+  if (!entity || entity.product !== product) return null;
   return entity;
 }
 
 export async function libraryRecordMetadata(lang: Lang, params: LibraryRecordParams, searchParams: LibraryRecordSearch): Promise<Metadata> {
   if (!(await catalogReadable())) return { title: words[lang].site };
-  const [{ id, type, dataset }, filters] = await Promise.all([params, searchParams]);
+  const [{ id, dataset }, filters] = await Promise.all([params, searchParams]);
   const product = filters?.product ?? "wow";
   const [entity, twin] = await Promise.all([
-    routeRecord(lang, dataset, type, id, product),
+    routeRecord(lang, dataset, id, product),
     getCatalogEntity(id, locale(lang === "ru" ? "en" : "ru")).then((record) => record ? catalogLocaleView(record, lang === "ru" ? "en" : "ru") : null).catch(() => null),
   ]);
   if (!entity) return {};
+  const type = entity.type;
   const name = entity.name || `${type.replaceAll("_", " ")} #${entity.externalId}`;
   const canonical = libraryRecordPath(lang, type, id, entity.slug || entity.externalId, product);
   const other = libraryRecordPath(lang === "ru" ? "en" : "ru", type, id, twin?.slug || entity.slug || entity.externalId, product);
   const en = lang === "en" ? canonical : other;
   const ru = lang === "ru" ? canonical : other;
+  const title = `${name} — ${words[lang].site}`;
+  const description = (entity.description || entity.tooltip?.plainText || words[lang].fallback(name)).slice(0, 160);
   return {
-    title: `${name} — ${words[lang].site}`,
-    description: (entity.description || entity.tooltip?.plainText || words[lang].fallback(name)).slice(0, 160),
+    title,
+    description,
+    // No openGraph object here: it would replace the inherited library card image (app/**/library/opengraph-image.tsx).
     alternates: { canonical, languages: { en, ru, "x-default": en } },
   };
 }
 
 /**
- * One library record (`/library/<dataset>/<type>/<id>/<slug>` and the /ru
- * twin). A type with its own dataset lives only there, so another dataset of
- * the same type (weapons for an item) or the shared "records" path moves
- * permanently to it, as does a stale slug.
+ * One library record (`/library/<dataset>/<id>/<slug>` and the /ru twin). A
+ * type with its own dataset lives only there, so another dataset of the same
+ * type (weapons for an item) or the shared "records" path moves permanently to
+ * it, as does a stale slug. The old `/library/<dataset>/<type>/<id>/<slug>`
+ * answers 308 from its own route handler; a truncated old address
+ * (`/library/<dataset>/<type>/<id>`) lands here and moves too.
  */
 export async function LibraryRecordRoute({ lang, params, searchParams }: { lang: Lang; params: LibraryRecordParams; searchParams: LibraryRecordSearch }) {
   const [routeParams, filters] = await Promise.all([params, searchParams]);
-  const { dataset: datasetSlug, id, type, slug } = routeParams;
+  const { dataset: datasetSlug, id, slug } = routeParams;
   const product = filters?.product ?? "wow";
-  const here = `${lang === "ru" ? "/ru" : ""}/library/${encodeURIComponent(datasetSlug)}/${encodeURIComponent(type)}/${encodeURIComponent(id)}/${encodeURIComponent(slug)}${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`;
+  const productQuery = product === "wow" ? "" : `?product=${encodeURIComponent(product)}`;
+  if (!RECORD_ID.test(id) && RECORD_ID.test(slug) && id in LIBRARY_TYPE_DATASET) {
+    permanentRedirect(`${lang === "ru" ? "/ru" : ""}/library/${LIBRARY_TYPE_DATASET[id]}/${encodeURIComponent(slug)}/record${productQuery}`);
+  }
+  const here = `${lang === "ru" ? "/ru" : ""}/library/${encodeURIComponent(datasetSlug)}/${encodeURIComponent(id)}/${encodeURIComponent(slug)}${productQuery}`;
   await requireCatalogSession(here);
   const loose = datasetSlug === LIBRARY_LOOSE_RECORDS;
   const [entity, datasets, entityTypes, relationships] = await Promise.all([
-    routeRecord(lang, datasetSlug, type, id, product),
+    routeRecord(lang, datasetSlug, id, product),
     getLibraryDatasets(locale(lang), product),
     getCatalogEntityTypes(locale(lang), product),
     getCatalogRelationships(id, locale(lang), 100).catch(() => []),
   ]);
   const dataset = loose ? undefined : datasets.find((entry) => entry.slug === datasetSlug);
-  if (!entity || (!loose && (!dataset || dataset.entityType !== type))) notFound();
+  if (!entity || (!loose && (!dataset || dataset.entityType !== entity.type))) notFound();
+  const type = entity.type;
   const home = LIBRARY_TYPE_DATASET[type];
   const ownSlug = entity.slug || String(entity.externalId);
   if ((home && home !== datasetSlug) || (loose && home) || decoded(slug) !== ownSlug) {
@@ -85,6 +96,7 @@ export async function LibraryRecordRoute({ lang, params, searchParams }: { lang:
     : null;
   return (
     <EntityDetailPage entity={entity} entityType={entityTypes.find((entry) => entry.type === entity.type)} relationships={relationships} lang={lang}
-      libraryDataset={dataset ? { slug: dataset.slug, name: dataset.name } : undefined} model={model} />
+      libraryDataset={dataset ? { slug: dataset.slug, name: dataset.name } : undefined} model={model}
+      canonicalPath={libraryRecordPath(lang, type, id, ownSlug, product)} />
   );
 }
