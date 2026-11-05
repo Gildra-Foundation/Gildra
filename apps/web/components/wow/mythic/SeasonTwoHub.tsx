@@ -32,9 +32,7 @@ export function SeasonTwoHub({ locale }: { locale: Locale }) {
       <AtlasHero
         breadcrumbs={trail(locale, "season2")}
         breadcrumbsLabel={copy.breadcrumbs}
-        eyebrow={copy.eyebrow}
         title={copy.title}
-        lede={copy.lede}
         actions={<MaterialLinkButton kit={kit} fit="stack" href="#activities" variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{copy.choose}</MaterialLinkButton>}
       />
       <AtlasSection id="activities" title={copy.listTitle}>

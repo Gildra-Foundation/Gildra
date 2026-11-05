@@ -9,8 +9,6 @@ import timerArtifacts from "../../../public/assets/wow/mythic/hub/controls/timer
 import { mythicHubControlLayout } from "./hub/mythicHubControls";
 import { mythicAtlasCopy } from "./mythicAtlasCopy";
 import { formatHubTimer, hubTimerCopy, hubTimerPercent } from "./mythicHubTimers";
-import { mythicVerification } from "./mythicVerification";
-import { verificationDate } from "./mythicVerificationCopy";
 import styles from "./mythicHubTimers.module.css";
 
 /** Static source-backed durations, shared with the dungeon detail pages. */
@@ -60,11 +58,6 @@ export function MythicHubTimers({ locale }: { locale: "ru" | "en" }) {
             );
           })}
         </ol>
-        <p className={styles.provenance}>
-          {copy.snapshot} <time dateTime={mythicVerification.timers.checkedAt}>{verificationDate(mythicVerification.timers.checkedAt, locale)}</time>
-          <span aria-hidden="true"> · </span>
-          <a href={mythicVerification.timers.source}>{copy.source}<ArrowUpRight aria-hidden="true" /></a>
-        </p>
       </div>
     </AtlasSection>
   );

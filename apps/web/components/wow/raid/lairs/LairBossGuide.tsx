@@ -3,11 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Crown, ExternalLink, Shield, Swords, UsersRound } from "lucide-react";
 import { AtlasAnchorNav, AtlasBadge, AtlasFrame, AtlasHero, AtlasMetaList, AtlasSection, AtlasTable, type AtlasBadgeTone } from "@/components/atlas";
-import { formatAtlasDate } from "@gildra/atlas-ui/format";
 import { RaidFramedArt } from "../RaidFramedArt";
 import { RaidPlaque, raidIconFrameStyle, raidMaterialStyles } from "../raidMaterial";
 import page from "../raidPage.module.css";
-import { getLootIcon, lairGuideLastVerifiedAt, type Boss, type Mechanic } from "@/lib/lairs";
+import { getLootIcon, type Boss, type Mechanic } from "@/lib/lairs";
 import { CopyWaypointButton } from "./CopyWaypointButton";
 import { lairsCopy, mechanicActions, type LairsLocale } from "./lairsCopy";
 import styles from "./lairs.module.css";
@@ -75,14 +74,13 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
         </div>
       </AtlasSection>
 
-      <AtlasSection id="abilities" title={copy.abilitiesTitle} description={copy.abilitiesText}>
+      <AtlasSection id="abilities" title={copy.abilitiesTitle}>
         <RaidPlaque raid={kit} className={page.plaque}>
         <ol className={styles.abilityList}>
           {boss.mechanics.map((mechanic) => {
             const tags = mechanic.tags ?? [mechanic.action];
-            // The boss name and the page-wide source are already in the hero.
+            // The boss name is already in the hero.
             const castBy = mechanic.castBy && mechanic.castBy !== boss.name ? mechanic.castBy : null;
-            const source = mechanic.sourceUrl && mechanic.sourceUrl !== boss.sourceUrl ? mechanic.sourceUrl : null;
             return (
               <li key={mechanic.name} id={spellAnchor(mechanic.name)} className={styles.ability}>
                 <span className={raidMaterialStyles.iconFrame} style={raidIconFrameStyle(kit, 56)}><Image src={mechanic.icon} alt="" width={56} height={56} /></span>
@@ -96,13 +94,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
                   </div>
                   <p>{mechanic.description}</p>
                   <p className={styles.response}><strong>{copy.response}:</strong> {mechanic.response}</p>
-                  {castBy || source ? (
-                    <small className={styles.abilityMeta}>
-                      {castBy}
-                      {castBy && source ? " · " : null}
-                      {source ? <a href={source} target="_blank" rel="noreferrer">{copy.source} ↗</a> : null}
-                    </small>
-                  ) : null}
+                  {castBy ? <small className={styles.abilityMeta}>{castBy}</small> : null}
                 </div>
               </li>
             );
@@ -176,8 +168,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
         />
         </RaidPlaque>
         <p className={page.quiet}>
-          {boss.sourceUrl ? <><a href={boss.sourceUrl} target="_blank" rel="noreferrer">{copy.strategySource}<ExternalLink aria-hidden="true" /></a> · </> : null}
-          {copy.updated(formatAtlasDate(boss.lastVerifiedAt ?? lairGuideLastVerifiedAt, locale))}
+          {boss.sourceUrl ? <a href={boss.sourceUrl} target="_blank" rel="noreferrer">{copy.strategySource}<ExternalLink aria-hidden="true" /></a> : null}
         </p>
       </AtlasSection>
 
