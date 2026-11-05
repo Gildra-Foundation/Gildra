@@ -86,7 +86,6 @@ export function SourceAbout({ lang, source, activity, role, difficulty, updatedA
       <div className={styles.aboutText}>
         <h2 id="tier-about-title" className={styles.aboutTitle}>{copy.aboutTitle}</h2>
         <p>{copy.sourceBy}: <b>{meta.name}</b>{ago && updatedAt ? <>{" · "}<time dateTime={updatedAt}>{ago}</time></> : null}</p>
-        <p>{copy.attribution[source]}</p>
       </div>
       <MaterialLinkButton kit={buttonKit} fit="stack" className={styles.aboutButton} href={meta.page(activity, role, difficulty)} external iconAfter={<ArrowUpRight aria-hidden="true" />}>{copy.openOn(meta.site)}</MaterialLinkButton>
     </MaterialPlaque>
@@ -123,9 +122,6 @@ export function SourceCompare({ lang, activity, role, columns, classStyle, tierS
 
   return (
     <div className={styles.compare}>
-      <div className={styles.compareHead}>
-        <p>{copy.compareLede}</p>
-      </div>
       <div className={styles.tableBox} data-scrollbox>
         <table className={`${styles.table} ${styles.compareTable}`}>
           <caption className={styles.srOnly}>{`${copy.compareTitle} · ${activity} · ${role}`}</caption>

@@ -1,8 +1,7 @@
 import { connection } from "next/server";
 import { defineBlock, type BlockComponentProps, type EmptyProps } from "@/lib/blocks/types";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
-import { AtlasFrame, AtlasHero, AtlasNotice, type AtlasStat } from "@/components/atlas";
-import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
+import { AtlasFrame, AtlasHero, AtlasNotice } from "@/components/atlas";
 import { MaterialLinkButton, MythicHubBackdrop } from "@/components/wow/shared/materialAtlas";
 import { ANCHORS } from "@/lib/anchors";
 import { p } from "@/lib/i18n-paths";
@@ -38,13 +37,6 @@ type TierWorkspaceData = GameIntelligence & { sourceSlices: TierSourceSlices };
 function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorkspaceData>) {
   const copy = tierCopy[lang];
   const sample = usesSample(data);
-  const mythic = data.tierLists?.mythic_plus?.roles ?? data.roles;
-  const stats: AtlasStat[] = sample
-    ? []
-    : [
-        { value: new Set(Object.values(mythic ?? {}).flat().map((entry) => `${entry.classSlug}:${entry.specSlug}`)).size, label: copy.statSpecs },
-        { value: new Set((data.tierContexts ?? []).filter((item) => item.activity === "mythic_plus" && item.selectionType === "dungeon").map((item) => item.selectionId)).size, label: copy.statDungeons },
-      ].filter((stat) => stat.value > 0);
 
   // The hero of the fixed reference (Mythic+ meta): the hub's gateway on the right, title, two painted buttons, the counters under them.
   return (
@@ -58,13 +50,11 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorks
           breadcrumbsLabel={copy.breadcrumbsLabel}
           eyebrow={copy.eyebrow}
           title={copy.title}
-          lede={sample ? copy.ledeSample : copy.ledeLive}
           actions={<div className={styles.heroActions}>
             <MaterialLinkButton kit="tier-lists" fit="stack" className={styles.heroButton} href={`#${ANCHORS.builds}`} variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{copy.heroRanking}</MaterialLinkButton>
             <MaterialLinkButton kit="kings-rest" fit="stack" className={styles.heroButton} href={p(lang, "/wow/mythic-plus/meta")} iconAfter={<ArrowUpRight aria-hidden="true" />}>{copy.heroMeta}</MaterialLinkButton>
           </div>}
         />
-        {stats.length ? <div className={styles.heroFacts}><AtlasStats label={copy.statsLabel} items={stats} /></div> : null}
       </div>
       {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
       <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} specNames={specNames[lang]} sourceSlices={sample ? {} : data.sourceSlices} />
