@@ -7,6 +7,7 @@ import type { TierActivity, TierEntry, TierRole } from "@/lib/platform/games/int
 import { tierSourcesCopy, type TierSourcesCopy } from "./tierSourcesCopy";
 import { sourceKey, type ExternalTierSource, type SourceSlice, type TierSourceId, type TierSourceSlices } from "./tierSourceKeys";
 import styles from "./tierWorkspace.module.css";
+import { MaterialLinkButton, MaterialPlaque, type MaterialKit } from "@/components/wow/shared/materialAtlas";
 
 const ROLES = ["dps", "healer", "tank"] as const;
 const TIER_ORDER = ["S", "A", "B", "C", "D", "F"];
@@ -74,33 +75,34 @@ function useAgo(iso: string | undefined, copy: TierSourcesCopy) {
   return label;
 }
 
-/** Badge «Source · updated N h ago» with the link back to the original page. */
-export function SourceBadge({ lang, source, activity, role, difficulty, updatedAt }: { lang: Lang; source: ExternalTierSource; activity: TierActivity; role: TierRole; difficulty: string; updatedAt?: string }) {
+/** "About the data" for an external source: who published the list, how fresh it is, what we keep,
+ *  and a painted button back to the original page (the Mythic+ meta's source plaque). */
+export function SourceAbout({ lang, source, activity, role, difficulty, updatedAt, kit, buttonKit }: { lang: Lang; source: ExternalTierSource; activity: TierActivity; role: TierRole; difficulty: string; updatedAt?: string; kit: MaterialKit; buttonKit: MaterialKit }) {
   const copy = tierSourcesCopy[lang];
   const meta = SOURCE_META[source];
   const ago = useAgo(updatedAt, copy);
   return (
-    <div className={styles.provenance}>
-      <p className={styles.provenanceLine}>
-        <span className={styles.provenanceDot} aria-hidden="true" />
-        <span>{copy.sourceBy}: <b>{meta.name}</b></span>
-        {ago && updatedAt ? <><span aria-hidden="true">·</span><time dateTime={updatedAt}>{ago}</time></> : null}
-        <a className={styles.provenanceLink} href={meta.page(activity, role, difficulty)} target="_blank" rel="noreferrer">{copy.openOn(meta.site)}<ArrowUpRight aria-hidden="true" /></a>
-      </p>
-      <p className={styles.provenanceNote}>{copy.attribution[source]}</p>
-    </div>
+    <MaterialPlaque as="section" kit={kit} className={styles.aboutPlaque} aria-labelledby="tier-about-title">
+      <div className={styles.aboutText}>
+        <h2 id="tier-about-title" className={styles.aboutTitle}>{copy.aboutTitle}</h2>
+        <p>{copy.sourceBy}: <b>{meta.name}</b>{ago && updatedAt ? <>{" · "}<time dateTime={updatedAt}>{ago}</time></> : null}</p>
+        <p>{copy.attribution[source]}</p>
+      </div>
+      <MaterialLinkButton kit={buttonKit} fit="stack" className={styles.aboutButton} href={meta.page(activity, role, difficulty)} external iconAfter={<ArrowUpRight aria-hidden="true" />}>{copy.openOn(meta.site)}</MaterialLinkButton>
+    </MaterialPlaque>
   );
 }
 
 type CompareRow = { key: string; specName: string; className: string; classSlug: string; tiers: (string | undefined)[]; average: number };
 
 /** Spec rows × source tiers for one mode and role, sorted by the average position. */
-export function SourceCompare({ lang, activity, role, columns, classStyle, renderSpec }: {
+export function SourceCompare({ lang, activity, role, columns, classStyle, tierStyle, renderSpec }: {
   lang: Lang;
   activity: TierActivity;
   role: TierRole;
   columns: { id: TierSourceId; label: string; short: string; entries?: TierEntry[] }[];
   classStyle: (slug: string) => CSSProperties;
+  tierStyle: (tier: string) => CSSProperties;
   renderSpec: (entry: { specName: string; className: string; classSlug: string; specSlug: string }) => React.ReactNode;
 }) {
   const copy = tierSourcesCopy[lang];
@@ -155,7 +157,7 @@ export function SourceCompare({ lang, activity, role, columns, classStyle, rende
                   </td>
                   {row.tiers.map((tier, column) => (
                     <td key={columns[column].id} className={styles.compareCol}>
-                      {tier ? <span className={`${styles.tierMark} ${styles.tierMarkSm}`} data-tier={tier.charAt(0).toLowerCase()}><span className={styles.srOnly}>{columns[column].label} </span>{tier}</span> : <span className={styles.compareNone}>{copy.noTier}</span>}
+                      {tier ? <span className={`${styles.tierMark} ${styles.tierMarkSm}`} data-tier={tier.charAt(0).toLowerCase()} style={tierStyle(tier)}><span className={styles.srOnly}>{columns[column].label} </span>{tier}</span> : <span className={styles.compareNone}>{copy.noTier}</span>}
                     </td>
                   ))}
                   <td className={`${styles.num} ${styles.compareAgree}`}>
