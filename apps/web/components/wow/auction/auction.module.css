@@ -1,13 +1,13 @@
-/* atlas:strict — Auction House in the material atlas: the shared painted plaque and buttons of one kit
-   (MaterialPlaque / MaterialButton, kit in auctionKit.ts) around live HTML fields, names and prices.
+/* atlas:strict — Auction House in the material atlas: the shared painted plaque, buttons and icon frame wearing the
+   auction kit (AuctionMaterial.tsx → auctionKit.ts) around live HTML fields, names and prices.
    Shell colour is the theme accent; plaque light comes from the kit (--material-*); item names keep their quality colour. */
 
 .page { --atlas-frame-tint: var(--atlas-info-wash, var(--atlas-accent-glow)); }
 
 /* Scene behind the hero (design.md §4.5). */
 .backdrop { --auction-scene-height: clamp(560px, 52vw, 900px); position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; }
-.scene { position: absolute; inset: 0 0 auto; height: var(--auction-scene-height); overflow: hidden; mask-image: linear-gradient(180deg, #000 60%, transparent); }
-.scene img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 62% 30%; filter: contrast(.94) saturate(.9) blur(1px); }
+.scene { display: block; position: absolute; inset: 0 0 auto; height: var(--auction-scene-height); overflow: hidden; mask-image: linear-gradient(180deg, #000 60%, transparent); }
+.scene img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 70% 42%; filter: contrast(.94) saturate(.9); }
 .scene::after {
   position: absolute;
   inset: 0;
@@ -17,63 +17,71 @@
     linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 18%, transparent), transparent 34%, color-mix(in srgb, var(--atlas-bg) 45%, transparent) 66%, var(--atlas-bg) 100%);
 }
 
-.hero { min-height: 400px; padding-bottom: var(--atlas-space-5); }
+.hero { min-height: 300px; padding-bottom: var(--atlas-space-6); }
 .heroHeader { max-width: 58%; }
 .heroHeader h1 { max-width: 15ch; }
-.heroHeader p { max-width: 48ch; }
+.heroHeader p { max-width: 46ch; }
 
-.browser { display: grid; gap: var(--atlas-space-5); min-width: 0; }
-.searchPlaque { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
-.filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-4); align-items: end; }
-.realm, .search { grid-column: span 2; }
-.submit { align-self: end; }
-.stateText { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
-.stateAction { margin-top: var(--atlas-space-4); }
-.secondary, .note { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: 1.6; }
-.note { margin: 0; padding-inline: var(--atlas-space-2); color: var(--atlas-text-subtle); }
-.note a, .table a { color: var(--atlas-accent); text-underline-offset: .2em; }
+.browser { display: grid; gap: var(--atlas-space-6); min-width: 0; }
+.searchPlaque, .resultsPlaque { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+.searchPlaque { padding: 32px 40px 36px; }
 
-/* Results: under the form on the same plaque — summary, then compact lot rows on the plaque face. */
-.result { margin-top: var(--atlas-space-5); padding-top: var(--atlas-space-5); border-top: 1px solid var(--material-line); }
-.summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-2) var(--atlas-space-6); padding: 0 var(--atlas-space-2) var(--atlas-space-4); border-bottom: 1px solid var(--material-line); font-size: var(--atlas-text-meta); color: var(--atlas-text-muted); }
-.summary strong { display: inline-flex; align-items: baseline; gap: var(--atlas-space-2); color: var(--atlas-text); font-weight: 400; }
-.summaryCount { color: var(--material-light); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h2); line-height: 1; font-variant-numeric: tabular-nums lining-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
-.summaryLabel { font-size: var(--atlas-text-label); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+/* Plaque head: heading on the left, a segmented choice (market / sort) on the right. */
+.plaqueHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3) var(--atlas-space-5); margin-bottom: var(--atlas-space-5); }
+.plaqueHead > h2 { margin: 0; }
+.segmented { flex: none; max-width: 100%; }
+
+/* Form: one row on desktop — region, realm, item, the painted submit. */
+.filters { display: grid; grid-template-columns: minmax(104px, 140px) minmax(0, 1fr) minmax(0, 1.25fr) minmax(220px, auto); gap: var(--atlas-space-4); align-items: end; }
+.filters[data-market="commodities"] { grid-template-columns: minmax(104px, 140px) minmax(0, 1fr) minmax(220px, auto); }
+.submit { align-self: end; margin-bottom: -12px; }
+.stateBox { display: grid; justify-items: start; gap: var(--atlas-space-4); padding: var(--atlas-space-5) var(--atlas-space-2); }
+.stateText { margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+.secondary { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+
+/* Results plaque: count + snapshot time, sort, then lot rows on the plaque face. */
+.resultsPlaque { padding: 32px 36px 36px; }
+.resultsTitle { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-2) var(--atlas-space-3); margin: 0; font: inherit; color: var(--atlas-text); }
+.summaryCount { color: var(--material-light); font: var(--atlas-weight-display) var(--atlas-text-h2) / 1 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
+.summaryLabel { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.updated { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-weight: 400; }
+.updated::before { margin-inline-end: var(--atlas-space-3); color: var(--material-line); content: "·"; }
 .tableScroll { max-width: 100%; overflow: auto; }
 .tableScroll:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
 .table { width: 100%; border-collapse: collapse; text-align: left; font-size: var(--atlas-text-small); }
-.table th { padding: var(--atlas-space-3) var(--atlas-space-4); color: var(--material-light); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; white-space: nowrap; }
-.table td { padding: var(--atlas-space-3) var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); vertical-align: middle; }
-.table td:first-child { min-width: 16rem; }
-.table td:nth-child(n+2) { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table thead th { padding: 0 var(--atlas-space-4) var(--atlas-space-3); border-bottom: 1px solid var(--material-line); color: var(--material-light); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; white-space: nowrap; }
+.table tbody th, .table td { padding: var(--atlas-space-2) var(--atlas-space-4); border-bottom: 1px solid var(--atlas-line-soft); vertical-align: middle; font-weight: 400; }
+.table [data-numeric] { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table thead th:first-child { width: 44%; }
+.table[data-market="commodities"] thead th:first-child { width: 52%; }
+.table tbody tr:last-child > * { border-bottom: 0; }
 .lotRow { transition: background-color var(--atlas-duration-fast) var(--atlas-ease); }
 .lotRow:hover { background: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 7%, transparent); }
-.secondary { display: block; }
-.itemMeta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--atlas-space-4); padding-inline-start: 64px; }
-.itemMeta .secondary { font-size: var(--atlas-text-label); color: var(--atlas-text-subtle); }
-.itemMeta .details[open] { flex-basis: 100%; }
-.money { display: inline-flex; gap: var(--atlas-space-2); white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--atlas-text-strong); }
-.coin { display: inline-flex; align-items: center; gap: var(--atlas-space-1); }
+.bid { display: block; margin-top: 2px; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.bid .money { color: var(--atlas-text-muted); }
+.money { display: inline-flex; justify-content: flex-end; gap: var(--atlas-space-2); white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--atlas-text-strong); }
+.coin { display: inline-flex; align-items: center; gap: 3px; }
 .coin img { display: inline-block; flex-shrink: 0; image-rendering: auto; }
-.details { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); }
-.details summary { display: inline-flex; align-items: center; min-height: 24px; cursor: pointer; }
-.details summary:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
-.details > div { display: grid; gap: var(--atlas-space-1); padding-block: var(--atlas-space-1); overflow-wrap: anywhere; }
-.warning, .error { margin: var(--atlas-space-4) 0 0; padding: var(--atlas-space-3) var(--atlas-space-4); border-inline-start: 2px solid var(--material-light, var(--atlas-accent)); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent); color: var(--atlas-text); font-size: var(--atlas-text-small); }
-.error { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); }
+.warning, .error { margin: 0 0 var(--atlas-space-4); padding: var(--atlas-space-3) var(--atlas-space-4); border-inline-start: 2px solid var(--material-light, var(--atlas-accent)); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent); color: var(--atlas-text); font-size: var(--atlas-text-small); }
+.error { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); margin: var(--atlas-space-5) 0 0; }
 .error p { margin: 0; }
-.pagination { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); padding: var(--atlas-space-4) 0 0; border-top: 1px solid var(--material-line); font-size: var(--atlas-text-meta); }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); margin-top: var(--atlas-space-4); padding-top: var(--atlas-space-4); border-top: 1px solid var(--material-line); font-size: var(--atlas-text-meta); }
 .pageCount { color: var(--atlas-text-muted); font-variant-numeric: tabular-nums; }
-.empty { padding: var(--atlas-space-6) var(--atlas-space-2); }
-.empty h2 { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); }
-.empty p { margin: 0; color: var(--atlas-text-muted); }
+.emptyTitle { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.empty { margin: 0; padding: var(--atlas-space-2) 0 var(--atlas-space-1); color: var(--atlas-text-muted); font-size: var(--atlas-text-body); }
 .resultFocus { min-width: 0; outline-offset: var(--atlas-space-2); }
-.visuallyHidden { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+
+/* About the data: one quiet line on the kit's plaque at the end of the page. */
+.aboutPlaque { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-2) var(--atlas-space-5); padding: 28px 40px 30px; }
+.aboutTitle { margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
 
 /* Item: icon inside the kit's painted ability frame, name in its quality colour. */
-.itemTrigger { display: inline-flex; gap: var(--atlas-space-3); align-items: center; min-height: 56px; padding: 0; border: 0; background: transparent; color: var(--auction-quality-text, var(--atlas-accent)); font: inherit; font-weight: 600; text-align: left; cursor: pointer; text-shadow: 0 1px 3px var(--atlas-bg); }
+.itemTrigger { display: inline-flex; gap: var(--atlas-space-3); align-items: center; min-height: 52px; padding: 0; border: 0; background: transparent; color: var(--auction-quality-text, var(--atlas-accent)); font: inherit; font-weight: 600; text-align: left; cursor: pointer; text-shadow: 0 1px 3px var(--atlas-bg); }
 .itemTrigger:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent)); outline-offset: var(--atlas-space-1); }
-.itemTrigger:hover > span:last-child { text-decoration: underline; text-underline-offset: .2em; }
+.itemTrigger:hover .itemName { text-decoration: underline; text-underline-offset: .2em; }
+.itemText { display: grid; gap: 2px; min-width: 0; }
+.itemName { overflow-wrap: anywhere; }
+.itemMeta { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-weight: 400; text-shadow: none; }
 .itemTrigger { --material-icon-edge: var(--auction-quality, var(--atlas-line)); }
 .itemTrigger svg { padding: 6px; color: var(--atlas-text-muted); }
 .itemPreview { max-height: min(24rem, 55dvh); overflow: auto; font-size: var(--atlas-text-meta); }
@@ -82,12 +90,10 @@
 .itemFacts p, .itemFacts ul { margin: 0; }
 .itemFacts ul { padding-inline-start: var(--atlas-space-4); }
 .itemFacts small { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); }
-.variantNote { color: var(--atlas-text-muted); border-inline-start: 2px solid var(--atlas-accent); padding-inline-start: var(--atlas-space-3); }
 .itemDialog { max-width: min(32rem, calc(100vw - 2rem)); }
 .itemDialogContent { padding: var(--atlas-space-5); max-height: 72dvh; overflow: auto; }
 .itemActions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--atlas-space-4); margin-top: var(--atlas-space-5); }
 .itemActions a { color: var(--atlas-accent); font-size: var(--atlas-text-meta); }
-.itemLevel { display: block; margin-top: var(--atlas-space-1); color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-weight: 400; }
 .tooltipPrices { display: grid; gap: var(--atlas-space-2); padding-block-start: var(--atlas-space-3); margin: var(--atlas-space-3) 0 0; border-top: 1px solid var(--atlas-line); }
 .tooltipPrices > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-2); }
 .tooltipPrices dt { color: var(--atlas-text-muted); }
@@ -95,30 +101,44 @@
 .wowLines { display: grid; gap: var(--atlas-space-1); }
 .wowLines [data-stat] { color: var(--auction-quality-text, var(--atlas-accent)); }
 
-@media (max-width: 1100px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1100px) {
+  .filters, .filters[data-market="commodities"] { grid-template-columns: minmax(104px, 140px) minmax(0, 1fr); }
+  .search { grid-column: 1 / -1; }
+  .filters[data-market="commodities"] .search { grid-column: auto; }
+  .submit { grid-column: 1 / -1; justify-self: end; }
+}
 @media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
 /* Narrow screens: every lot is a small card — item on top, then quantity / unit / buyout with their labels. */
 @media (max-width: 760px) {
+  .searchPlaque, .resultsPlaque { padding: 26px 24px 28px; }
+  .aboutPlaque { padding: 24px 26px 26px; }
   .table thead { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
-  .table, .table tbody, .table tr, .table td { display: block; }
-  .table td:first-child { min-width: 0; }
-  .table .lotRow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-1) var(--atlas-space-3); padding: var(--atlas-space-3) var(--atlas-space-1); border-top: 1px solid var(--atlas-line-soft); }
-  .table td { padding: 0; border: 0; white-space: normal; }
-  .table td.itemCell { grid-column: 1 / -1; }
+  .table, .table tbody, .table tr, .table tbody th, .table td { display: block; }
+  .table .lotRow { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--atlas-space-1) var(--atlas-space-3); padding: var(--atlas-space-3) 0; border-bottom: 1px solid var(--atlas-line-soft); }
+  .table[data-market="commodities"] .lotRow { grid-template-columns: minmax(0, .7fr) minmax(0, 1fr); }
+  .table tbody th, .table td { padding: 0; border: 0; white-space: normal; }
+  .table [data-numeric] { text-align: left; }
+  .table .itemCell { grid-column: 1 / -1; }
   .table td[data-label]::before { display: block; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; content: attr(data-label); }
-  .money { flex-wrap: wrap; gap: var(--atlas-space-1) var(--atlas-space-2); }
+  .money { flex-wrap: wrap; justify-content: flex-start; gap: 0 var(--atlas-space-2); }
 }
 @media (max-width: 600px) {
-  .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
+  .hero { min-height: 0; padding-bottom: var(--atlas-space-4); }
   .heroHeader { max-width: 100%; }
-  .filters { grid-template-columns: minmax(0, 1fr); }
-  .realm, .search { grid-column: auto; }
+  .filters, .filters[data-market="commodities"] { grid-template-columns: minmax(0, 1fr); }
+  .search, .filters[data-market="commodities"] .search, .submit { grid-column: auto; }
+  .submit { justify-self: stretch; margin-bottom: 0; }
+  .plaqueHead { margin-bottom: var(--atlas-space-4); }
+  .segmented { flex: 1 1 100%; }
   .pagination { flex-wrap: wrap; }
   .pageCount { order: -1; flex: 1 1 100%; text-align: center; }
   .pagination > span { flex: 1 1 0; }
-  .pageButton:global(.ui-button) { width: 100%; }
+  .pageButton:global(.ui-button) { width: 100%; min-width: 0; }
 }
-@media (max-width: 360px) { .table .lotRow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 360px) {
+  .searchPlaque, .resultsPlaque, .aboutPlaque { padding-inline: 18px; }
+  .table .lotRow, .table[data-market="commodities"] .lotRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 /* Motion and preference fallbacks (design.md §5); the painted pieces carry their own. */
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) { .lotRow { transition: none; } }

@@ -6,8 +6,11 @@ import { AtlasSkeleton } from "@gildra/atlas-ui/AtlasState";
 import { auctionRegions, validAuctionRealm, type AuctionRegion, type AuctionResult } from "@/lib/wow/auctionBrowser";
 import { auctionCopy } from "./auctionCopy";
 import { AuctionListings } from "./AuctionListings";
-import { MaterialButton, MaterialPlaque, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
-import { auctionKit } from "./auctionKit";
+import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
+import { Search } from "lucide-react";
+import { materialStyles } from "@/components/wow/shared/materialAtlas";
+import { auctionIconFrameStyle } from "./auctionKit";
+import { AuctionButton, AuctionPlaque } from "./AuctionMaterial";
 import styles from "./auction.module.css";
 const emptyFilters = { region: "eu" as AuctionRegion, realm: "", market: "realm", q: "", sort: "price" };
 type Filters = typeof emptyFilters;
@@ -78,28 +81,49 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
   const realmName = realms.find(r => r.slug === filters.realm)?.name;
   const realmValue = realmText || realmName || "";
   const realmInvalid = filters.market === "realm" && realmState === "ready" && realmText.trim() !== "" && !filters.realm;
-  return <div className={styles.browser} style={materialIconFrameStyle(auctionKit, 52)}>
-    <MaterialPlaque kit={auctionKit} as="section" id="auction-search" className={styles.searchPlaque} aria-labelledby="auction-search-title">
-      <h2 id="auction-search-title" className={materialStyles.title}>{c.searchTitle}</h2>
-      <form className={styles.filters} onSubmit={submit}>
+  const setSort = (sort: string) => {
+    if (sort === filters.sort) return;
+    const next = { ...filters, sort };
+    setFilters(next);
+    if (data || error) void load(next, 1);
+  };
+  const date = (value: string) => new Date(value).toLocaleString(c.dateLocale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
+  const showResults = busy || Boolean(error) || Boolean(data);
+  return <div className={styles.browser}>
+    <AuctionPlaque as="section" id="auction-search" className={styles.searchPlaque} aria-labelledby="auction-search-title">
+      <div className={styles.plaqueHead}>
+        <h2 id="auction-search-title" className={materialStyles.title}>{c.searchTitle}</h2>
+        <AtlasSegmented className={styles.segmented} aria-label={c.market} value={filters.market} onValueChange={value => change("market", value)} options={[{ value: "realm", label: c.realmMarket }, { value: "commodities", label: c.commodities }]} />
+      </div>
+      <form className={styles.filters} data-market={filters.market} onSubmit={submit}>
         <AtlasField htmlFor="auction-region" label={c.region}><AtlasSelect id="auction-region" value={filters.region} onChange={e => change("region", e.target.value as AuctionRegion)}>{auctionRegions.map(region => <option key={region} value={region}>{region.toUpperCase()}</option>)}</AtlasSelect></AtlasField>
-        <AtlasField htmlFor="auction-market" label={c.market}><AtlasSelect id="auction-market" value={filters.market} onChange={e => change("market", e.target.value)}><option value="realm">{c.realmMarket}</option><option value="commodities">{c.commodities}</option></AtlasSelect></AtlasField>
-        {filters.market === "realm" ? <AtlasField htmlFor="auction-realm" label={c.realm} className={styles.realm} error={realmInvalid ? c.realmUnknown : undefined}>
+        {filters.market === "realm" ? <AtlasField htmlFor="auction-realm" label={c.realm} error={realmInvalid ? c.realmUnknown : undefined}>
           <AtlasInput id="auction-realm" role="combobox" list="auction-realms" autoComplete="off" required value={realmValue} disabled={realmState !== "ready"} placeholder={realmState === "loading" ? c.loadingRealms : c.realmPlaceholder} onChange={e => chooseRealm(e.target.value)} />
           <datalist id="auction-realms">{realms.map(realm => <option key={realm.slug} value={realm.name} />)}</datalist>
         </AtlasField> : null}
-        <AtlasField htmlFor="auction-item" label={c.search} className={styles.search}><AtlasInput id="auction-item" value={filters.q} type="search" maxLength={100} placeholder={c.placeholder} onChange={e => change("q", e.target.value)} /></AtlasField>
-        <AtlasField htmlFor="auction-sort" label={c.sort}><AtlasSelect id="auction-sort" value={filters.sort} onChange={e => change("sort", e.target.value)}><option value="price">{c.price}</option><option value="quantity">{c.quantitySort}</option></AtlasSelect></AtlasField>
-        <MaterialButton kit={auctionKit} fit="block" className={styles.submit} type="submit" variant="primary" disabled={busy || (filters.market === "realm" && !filters.realm)}>{busy ? c.loading : c.submit}</MaterialButton>
+        <AtlasField htmlFor="auction-item" label={c.search} className={styles.search}><AtlasInput id="auction-item" icon={<Search size={16} />} value={filters.q} type="search" maxLength={100} placeholder={c.placeholder} onChange={e => change("q", e.target.value)} /></AtlasField>
+        <AuctionButton fit="block" className={styles.submit} type="submit" variant="primary" disabled={busy || (filters.market === "realm" && !filters.realm)}>{busy ? c.loading : c.submit}</AuctionButton>
       </form>
-      {filters.market === "realm" && !["ready", "loading"].includes(realmState) ? <div className={styles.error} role="alert"><p>{message(realmState, lang)}</p><MaterialButton kit={auctionKit} onClick={() => { setRealmState("loading"); setRealmAttempt(n => n + 1); }}>{c.retry}</MaterialButton></div> : null}
+      {filters.market === "realm" && !["ready", "loading"].includes(realmState) ? <div className={styles.error} role="alert"><p>{message(realmState, lang)}</p><AuctionButton onClick={() => { setRealmState("loading"); setRealmAttempt(n => n + 1); }}>{c.retry}</AuctionButton></div> : null}
+    </AuctionPlaque>
+    {showResults ? <AuctionPlaque as="section" className={styles.resultsPlaque} aria-labelledby="auction-results-title" style={auctionIconFrameStyle(44)}>
+      <div className={styles.plaqueHead}>
+        <h2 id="auction-results-title" className={styles.resultsTitle}>
+          {data?.total ? <><span className={styles.summaryCount}>{data.total.toLocaleString(lang)}</span> <span className={styles.summaryLabel}>{c.results}</span></> : data ? <span className={styles.emptyTitle}>{c.empty}</span> : <span className={styles.summaryLabel}>{c.loading}</span>}
+          {data?.sourceUpdatedAt ? <span className={styles.updated}>{c.updated} <time dateTime={data.sourceUpdatedAt}>{date(data.sourceUpdatedAt)}</time></span> : null}
+        </h2>
+        <AtlasSegmented className={styles.segmented} size="sm" aria-label={c.sort} value={filters.sort} onValueChange={setSort} disabled={busy} options={[{ value: "price", label: c.price }, { value: "quantity", label: c.quantitySort }]} />
+      </div>
       <div ref={resultRef} tabIndex={-1} className={styles.resultFocus} aria-busy={busy}>
-        {busy ? <div className={styles.result}><p role="status" className={styles.stateText}>{c.loading}</p><AtlasSkeleton variant="rows" count={6} label={c.loading} /></div>
-          : error ? <div className={styles.result}><p role="alert" className={styles.stateText}>{message(error, lang)}</p><MaterialButton kit={auctionKit} className={styles.stateAction} onClick={() => void load()}>{c.retry}</MaterialButton></div>
-          : data ? <div className={styles.result}><AuctionListings data={data} lang={lang} query={filters} onPage={page => void load(filters, page, true)} /></div>
+        {busy ? <AtlasSkeleton variant="rows" count={6} label={c.loading} />
+          : error ? <div className={styles.stateBox} role="alert"><p className={styles.stateText}>{message(error, lang)}</p><AuctionButton onClick={() => void load()}>{c.retry}</AuctionButton></div>
+          : data ? <AuctionListings data={data} lang={lang} query={filters} onPage={page => void load(filters, page, true)} />
           : null}
       </div>
-    </MaterialPlaque>
-    <p className={styles.note}>{c.note} <a href="https://develop.battle.net/documentation/world-of-warcraft/game-data-apis" target="_blank" rel="noreferrer">{c.source}</a></p>
+    </AuctionPlaque> : null}
+    <AuctionPlaque as="section" className={styles.aboutPlaque} aria-labelledby="auction-about-title">
+      <h2 id="auction-about-title" className={styles.aboutTitle}>{c.aboutTitle}</h2>
+      <p className={materialStyles.text}>{c.about}</p>
+    </AuctionPlaque>
   </div>;
 }
