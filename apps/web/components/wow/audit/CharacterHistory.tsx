@@ -1,28 +1,55 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Check, Clock3, Copy, Link2, LoaderCircle, RefreshCw, Shield, ShieldCheck, Sparkles, Swords, Unlink } from "lucide-react";
-import type { CharacterRunRecord } from "@/lib/wow/characterRunHistory";
-import { characterWorkspaceCopy, workspaceLocale, workspaceNumber, workspaceRunLabel, type WorkspaceLocale } from "./characterWorkspaceCopy";
-import styles from "./characterHistory.module.css";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertTriangle, Check, Link2, LoaderCircle, Shield, Sparkles, Swords, Unlink } from "lucide-react";
+import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { copyText } from "@gildra/atlas-ui/clipboard";
+import { MaterialButton } from "@/components/wow/shared/materialAtlas";
+import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
+import type { CharacterRunKind, CharacterRunRecord } from "@/lib/wow/characterRunHistory";
+import { characterWorkspaceCopy, workspaceKind, workspaceLocale, workspaceNumber, workspaceRunLabel, workspaceScenarioSize, type WorkspaceLocale } from "./characterWorkspaceCopy";
+import styles from "./characterHistory.module.css";
 
-function formatNumber(value: number, locale: WorkspaceLocale) { return workspaceNumber(locale, value); }
+const kindOrder: CharacterRunKind[] = ["talent", "rotation", "gear"];
+const kindIcon = { talent: Sparkles, rotation: Swords, gear: Shield } as const;
+type Feedback = { id: string; tone: "done" | "error"; text: string };
 
-function metric(record: CharacterRunRecord, locale: WorkspaceLocale) {
-  const t = characterWorkspaceCopy(locale);
-  if (record.metrics.dps !== undefined) return `${formatNumber(record.metrics.dps, locale)} DPS`;
-  if (record.metrics.candidateDps !== undefined) return `${formatNumber(record.metrics.candidateDps, locale)} DPS`;
-  if (record.metrics.aoeDps !== undefined) return `${formatNumber(record.metrics.aoeDps, locale)} ${locale === "ru" ? "DPS по пачке" : "AoE DPS"}`;
-  return t("Результат сохранён");
+/** The run's headline number and its change; AoE runs report their own pair. */
+function result(run: CharacterRunRecord) {
+  const { dps, candidateDps, aoeDps, deltaPercent, aoeDeltaPercent } = run.metrics;
+  if (dps !== undefined || candidateDps !== undefined) return { dps: (dps ?? candidateDps) as number, aoe: false, delta: deltaPercent };
+  if (aoeDps !== undefined) return { dps: aoeDps, aoe: true, delta: aoeDeltaPercent ?? deltaPercent };
+  return null;
 }
 
+function formatDelta(locale: WorkspaceLocale, value: number) {
+  const size = Math.abs(value);
+  const text = workspaceNumber(locale, size, size < 1 ? 2 : 1);
+  return value > 0 ? `+${text}%` : value < 0 ? `−${text}%` : `${text}%`;
+}
+
+const dayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+
+function dayLabel(date: Date, locale: WorkspaceLocale, t: ReturnType<typeof characterWorkspaceCopy>) {
+  const today = new Date();
+  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+  if (dayKey(date) === dayKey(today)) return t("Сегодня");
+  if (dayKey(date) === dayKey(yesterday)) return t("Вчера");
+  return new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : "en-GB", {
+    day: "numeric", month: "long", ...(date.getFullYear() === today.getFullYear() ? {} : { year: "numeric" }),
+  }).format(date);
+}
+
+/** Saved talent, rotation and gear results of one character, newest first, grouped by day. */
 export function CharacterHistory({ characterSlug, specializationSlug, fingerprint, localePrefix }: { characterSlug: string; specializationSlug: string; fingerprint: string; localePrefix: "" | "/ru" }) {
   const locale = workspaceLocale(localePrefix), t = characterWorkspaceCopy(locale);
   const [runs, setRuns] = useState<CharacterRunRecord[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [kind, setKind] = useState<"all" | CharacterRunKind>("all");
   const [busy, setBusy] = useState("");
-  const [notice, setNotice] = useState("");
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const feedbackTimer = useRef<number | undefined>(undefined);
   const query = new URLSearchParams({ character: characterSlug, specialization: specializationSlug, fingerprint }).toString();
 
   // One history request at a time: a newer load (another character, a saved
@@ -57,54 +84,113 @@ export function CharacterHistory({ characterSlug, specializationSlug, fingerprin
     window.addEventListener("gildra:character-history-updated", update);
     return () => window.removeEventListener("gildra:character-history-updated", update);
   }, [characterSlug, load, specializationSlug]);
+  useEffect(() => () => window.clearTimeout(feedbackTimer.current), []);
+
+  const flash = (next: Feedback) => {
+    window.clearTimeout(feedbackTimer.current);
+    setFeedback(next);
+    feedbackTimer.current = window.setTimeout(() => setFeedback(null), 2600);
+  };
 
   async function share(run: CharacterRunRecord) {
-    setBusy(run.id); setNotice("");
+    setBusy(run.id); setFeedback(null);
     try {
       const response = await fetch(`/api/wow/workspace/history/${run.id}/share?${query}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
       const payload = await response.json() as { id?: string; token?: string };
       if (!response.ok || !payload.id || !payload.token) throw new Error("share_unavailable");
-      const url = `${window.location.origin}${localePrefix}/wow/shared/${payload.token}`;
-      await copyText(url);
+      await copyText(`${window.location.origin}${localePrefix}/wow/shared/${payload.token}`);
       setRuns((items) => items.map((item) => item.id === run.id ? { ...item, activeShareId: payload.id } : item));
-      setNotice(t("Ссылка скопирована. Данные аккаунта и полный профиль персонажа в неё не входят."));
+      flash({ id: run.id, tone: "done", text: t("Ссылка скопирована") });
     } catch {
-      setNotice(t("Не удалось создать или скопировать ссылку."));
+      flash({ id: run.id, tone: "error", text: t("Не удалось скопировать") });
     } finally { setBusy(""); }
   }
 
   async function revoke(run: CharacterRunRecord) {
     if (!run.activeShareId) return;
-    setBusy(run.id); setNotice("");
+    setBusy(run.id); setFeedback(null);
     try {
       const response = await fetch(`/api/wow/workspace/shares/${run.activeShareId}?${query}`, { method: "DELETE" });
       if (!response.ok) throw new Error("revoke_failed");
       setRuns((items) => items.map((item) => item.id === run.id ? { ...item, activeShareId: undefined } : item));
-      setNotice(t("Ссылка отозвана. По старому адресу результат больше не откроется."));
-    } catch { setNotice(t("Не удалось отозвать ссылку.")); }
-    finally { setBusy(""); }
+      flash({ id: run.id, tone: "done", text: t("Ссылка отозвана") });
+    } catch {
+      flash({ id: run.id, tone: "error", text: t("Не удалось отозвать") });
+    } finally { setBusy(""); }
   }
 
-  return <section className={styles.history} id="audit-history" aria-label={t("Сохранённые расчёты")}>
+  const sorted = useMemo(() => [...runs].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)), [runs]);
+  const kinds = useMemo(() => kindOrder.filter((value) => sorted.some((run) => run.kind === value)), [sorted]);
+  const activeKind = kind !== "all" && kinds.includes(kind) && kinds.length > 1 ? kind : "all";
+  const days = useMemo(() => {
+    const groups: { key: string; date: Date; runs: CharacterRunRecord[] }[] = [];
+    for (const run of sorted) {
+      if (activeKind !== "all" && run.kind !== activeKind) continue;
+      const date = new Date(run.createdAt), key = dayKey(date);
+      const group = groups.at(-1);
+      if (group?.key === key) group.runs.push(run);
+      else groups.push({ key, date, runs: [run] });
+    }
+    return groups;
+  }, [activeKind, sorted]);
+  const time = new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : "en-GB", { hour: "2-digit", minute: "2-digit" });
 
-    <header className={styles.toolbar}>
-      <div className={styles.archiveTools}>
-        {state === "ready" || runs.length ? <span className={styles.archiveCount}><small>{t("Сохранено")}</small><strong>{runs.length}</strong><small>{t("в этой истории")}</small></span> : null}
-        <button data-folio-action="quiet" data-folio-icon type="button" onClick={() => void load()} disabled={state === "loading"} aria-label={t("Обновить историю")} title={t("Обновить историю")} aria-busy={state === "loading"}><RefreshCw className={state === "loading" ? styles.spin : undefined} aria-hidden="true" /></button>
+  const row = (run: CharacterRunRecord) => {
+    const Icon = kindIcon[run.kind];
+    const value = result(run);
+    const note = feedback?.id === run.id ? feedback : null;
+    return <li key={run.id} className={styles.run} data-stale={run.stale || undefined}>
+      <time className={styles.time} dateTime={run.createdAt}>{time.format(new Date(run.createdAt))}</time>
+      <span className={styles.kind} data-kind={run.kind} title={workspaceKind(locale, run.kind)}><Icon aria-hidden="true" /></span>
+      <div className={styles.body}>
+        <p className={styles.label}>
+          <span className={styles.srOnly}>{workspaceKind(locale, run.kind)}: </span>
+          {workspaceRunLabel(locale, run)}
+          {run.stale ? <span className={styles.stale} title={t("Профиль изменился — пересчитайте")}>{t("Устарел")}</span> : null}
+        </p>
+        <p className={styles.scenario}>{workspaceScenarioSize(locale, run.scenario.targets, run.scenario.durationSeconds)}</p>
       </div>
-    </header>
-    {notice ? <div className={styles.notice} role="status"><Check />{notice}</div> : null}
-    {state === "loading" && !runs.length ? <div className={styles.empty} role="status"><LoaderCircle className={styles.spin} />{t("Загружаем историю…")}</div> : null}
-    {state === "error" ? <div className={styles.empty}><AlertTriangle />{t("История временно недоступна.")}<button data-folio-action="quiet" type="button" onClick={() => void load()}>{t("Повторить")}</button></div> : null}
-    {state === "ready" && !runs.length ? <div className={styles.empty}><Clock3 /><b>{t("Здесь пока пусто")}</b><span>{t("Измените талант, рассчитайте ротацию или сравните предмет — результат появится здесь автоматически.")}</span></div> : null}
-    {runs.length ? <ol>{runs.map((run) => <li key={run.id} data-stale={run.stale || undefined} data-book-record data-book-reveal="ink">
-      <span className={styles.kind}>{run.kind === "talent" ? <Sparkles aria-hidden="true" /> : run.kind === "rotation" ? <Swords aria-hidden="true" /> : <Shield aria-hidden="true" />}{run.kind === "talent" ? t("Таланты") : run.kind === "rotation" ? t("Ротация") : t("Экипировка")}</span>
-      <div className={styles.summary}><b>{workspaceRunLabel(locale, run)}</b><strong>{metric(run, locale)}</strong>{run.metrics.deltaPercent !== undefined ? <small>{`${run.metrics.deltaPercent >= 0 ? "+" : ""}${workspaceNumber(locale, run.metrics.deltaPercent, 2)}%`}</small> : null}</div>
-      <div className={styles.provenance}><span>{run.scenario.targets} {t("цел.")} · {run.scenario.durationSeconds} {t("сек.")}</span><time dateTime={run.createdAt}>{new Date(run.createdAt).toLocaleString(localePrefix === "/ru" ? "ru-RU" : "en-US")}</time><details className={styles.technical}><summary>{t("Данные расчёта")}</summary><span><ShieldCheck />{run.engine}</span><span>{t("Версия игры:")} {run.gameBuild}</span></details></div>
-      <div className={styles.recordFooter}>
-        <div className={styles.freshness} data-book-status={run.stale ? "stale" : "current"}>{run.stale ? <><AlertTriangle /><b>{t("Устарел")}</b><small>{t("Профиль изменился — пересчитайте")}</small></> : <><Check /><b>{t("Актуален")}</b><small>{t("Совпадает с текущим профилем")}</small></>}</div>
-        <div className={styles.actions} data-folio-tools>{run.activeShareId ? <button type="button" onClick={() => void revoke(run)} disabled={busy === run.id}>{busy === run.id ? <LoaderCircle className={styles.spin} /> : <Unlink />}{t("Отозвать")}</button> : <button type="button" onClick={() => void share(run)} disabled={busy === run.id}>{busy === run.id ? <LoaderCircle className={styles.spin} /> : <Copy />}{t("Поделиться")}</button>}<span><Link2 />{t("Только результат")}</span></div>
+      <div className={styles.result}>
+        {value ? <>
+          <strong>{workspaceNumber(locale, value.dps)} <small>{value.aoe ? t("DPS по пачке") : "DPS"}</small></strong>
+          {value.delta !== undefined ? <span className={styles.delta} data-sign={value.delta > 0 ? "up" : value.delta < 0 ? "down" : "flat"}>{formatDelta(locale, value.delta)}</span> : null}
+        </> : null}
       </div>
-    </li>)}</ol> : null}
+      <div className={styles.action}>
+        {note
+          ? <span className={styles.feedback} data-tone={note.tone} role="status">{note.tone === "done" ? <Check aria-hidden="true" /> : <AlertTriangle aria-hidden="true" />}{note.text}</span>
+          : run.activeShareId
+            ? <AtlasButton variant="ghost" size="sm" className={styles.share} data-shared onClick={() => void revoke(run)} disabled={busy === run.id} aria-busy={busy === run.id}
+              icon={busy === run.id ? <LoaderCircle className={styles.spin} aria-hidden="true" /> : <Unlink aria-hidden="true" />}>{t("Отозвать ссылку")}</AtlasButton>
+            : <AtlasButton variant="ghost" size="sm" className={styles.share} onClick={() => void share(run)} disabled={busy === run.id} aria-busy={busy === run.id}
+              icon={busy === run.id ? <LoaderCircle className={styles.spin} aria-hidden="true" /> : <Link2 aria-hidden="true" />}>{t("Поделиться")}</AtlasButton>}
+      </div>
+    </li>;
+  };
+
+  return <section className={styles.history} id="audit-history" aria-label={t("Сохранённые расчёты")} aria-busy={state === "loading"}>
+    {state === "loading" && !runs.length ? <div className={styles.skeleton} role="status">
+      {Array.from({ length: 4 }, (_, index) => <div key={index} className={styles.ghostRow} aria-hidden="true"><span /><span /><span /><span /></div>)}
+      <span className={styles.srOnly}>{t("Загружаем историю…")}</span>
+    </div> : null}
+
+    {state === "error" ? <div className={styles.state} role="alert">
+      <p><AlertTriangle aria-hidden="true" />{t("История не загрузилась")}</p>
+      <MaterialButton kit={CHARACTERS_KIT} onClick={() => void load()}>{t("Повторить")}</MaterialButton>
+    </div> : null}
+
+    {state === "ready" && !runs.length ? <div className={styles.state}>
+      <p>{t("Здесь появятся ваши расчёты талантов, ротации и экипировки")}</p>
+      <MaterialButton kit={CHARACTERS_KIT} icon={<Sparkles aria-hidden="true" />} onClick={() => { window.location.hash = "#talents"; }}>{t("Открыть таланты")}</MaterialButton>
+    </div> : null}
+
+    {state !== "error" && runs.length ? <div className={styles.list}>
+      {kinds.length > 1 ? <AtlasSegmented className={styles.filter} size="sm" aria-label={t("Тип расчёта")} value={activeKind} onValueChange={(value) => setKind(value as typeof kind)}
+        options={[{ value: "all", label: t("Все") }, ...kinds.map((value) => ({ value, label: workspaceKind(locale, value) }))]} /> : null}
+      {days.map((day) => <section key={day.key} className={styles.day} aria-label={dayLabel(day.date, locale, t)}>
+        <h3>{dayLabel(day.date, locale, t)}</h3>
+        <ol>{day.runs.map(row)}</ol>
+      </section>)}
+    </div> : null}
   </section>;
 }
