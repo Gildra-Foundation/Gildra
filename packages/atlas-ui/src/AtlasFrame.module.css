@@ -228,8 +228,9 @@
 /* The column keeps block flow (its sections' margins collapse as before). On a short
    page it is taller than its content, and the sticky offset lowers the footer to
    the column's foot; on a long page there is no room below it, so it never moves.
-   The footer: the crest on a thin rail, one centred row of links and the motion
-   switch, the legal notice in one short line under it. No band, no box. */
+   The footer: the crest on a thin rail, one quiet centred row of links with the
+   motion switch after a hairline, the legal notice in one short line under it.
+   No band, no box; links are a step smaller than body text so the page ends calmly. */
 .legal {
   position: sticky;
   top: 100%;
@@ -237,7 +238,7 @@
   justify-items: center;
   gap: var(--atlas-space-3);
   margin-top: var(--atlas-space-8);
-  padding-bottom: var(--atlas-space-2);
+  padding-bottom: var(--atlas-space-3);
   color: var(--atlas-text-muted);
   font-size: var(--atlas-text-small);
   line-height: 1.5;
@@ -248,8 +249,8 @@
 }
 
 /* The notice sits over the scene light at the foot of the page: muted text keeps it above 4.5:1. */
-.legal p { max-width: 100%; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-wrap: balance; }
-.legal .motionToggle { color: var(--atlas-text-muted); }
+.legal p { max-width: min(100%, 76ch); margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-wrap: balance; }
+.legal .motionToggle { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
 .legal .motionToggle:hover { color: var(--atlas-text-strong); }
 
 /* The rail: a thin engraved line across the column, the crest at its centre. */
@@ -268,7 +269,7 @@
 }
 .legalBrand::after { background: linear-gradient(90deg, var(--atlas-line) 30%, transparent); }
 
-/* One row: the footer links, then the motion switch. */
+/* One row: the footer links, a hairline, then the motion switch. */
 .legalLinks {
   display: flex;
   flex-wrap: wrap;
@@ -282,7 +283,9 @@
   align-items: center;
   justify-content: center;
   gap: 0 var(--atlas-space-6);
-  font-size: var(--atlas-text-body);
+  font-size: var(--atlas-text-small);
+  font-weight: 500;
+  letter-spacing: .01em;
 }
 .legalNav a {
   display: inline-flex;
@@ -290,13 +293,23 @@
   min-height: 44px;
   color: var(--atlas-text);
   text-decoration: none;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  transition: color var(--atlas-duration) var(--atlas-ease);
 }
-.legalNav a:hover { color: var(--atlas-accent-strong); }
+.legalNav a:hover { color: var(--atlas-text-strong); text-decoration-line: underline; text-decoration-color: var(--atlas-accent); }
 .legalNav a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.legalDivider { width: 1px; height: 16px; background: var(--atlas-line); }
 
+/* Phone: the six links in two even rows of three, the switch centred under them. */
 @media (max-width: 720px) {
   .legal { gap: var(--atlas-space-2); margin-top: var(--atlas-space-7); }
-  .legalNav { gap: 0 var(--atlas-space-5); }
+  .legalLinks { flex-direction: column; gap: 0; }
+  .legalNav { display: grid; grid-template-columns: repeat(3, auto); justify-content: center; justify-items: center; gap: 0 var(--atlas-space-5); }
+  .legalDivider { display: none; }
+}
+@media (max-width: 360px) {
+  .legalNav { grid-template-columns: repeat(2, auto); }
 }
 
 /* The account roster is one environment, from its title to its legal line.

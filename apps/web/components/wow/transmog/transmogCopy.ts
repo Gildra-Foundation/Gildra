@@ -16,7 +16,7 @@ type Copy = {
   tabs: { items: string; sets: string; frame: string };
   empty: string; hide: string; show: string; remove: string; hiddenTag: string;
   search: string; searchSets: string;
-  worn: string; more: string; loading: string; nothing: string; error: string; allClasses: string; classFilter: string;
+  worn: string; more: string; loading: string; nothing: string; clearSearch: string; error: string; allClasses: string; classFilter: string;
   pieces: (count: number) => string;
   format: string; background: string; pose: string; light: string; brightness: string; contrast: string; shadow: string;
   file: string; fileType: string; caption: string; captionTitle: string; captionSubtitle: string; mark: string; scale: string;
@@ -54,7 +54,7 @@ export const transmogCopy: Record<"ru" | "en", Copy> = {
     tabs: { items: "Предметы", sets: "Наборы", frame: "Кадр" },
     empty: "Пусто", hide: "Скрыть слот", show: "Показать слот", remove: "Снять", hiddenTag: "скрыт",
     search: "Поиск", searchSets: "Название набора",
-    worn: "надето", more: "Показать ещё", loading: "Загружаем…", nothing: "Ничего не нашлось", error: "Не удалось загрузить облики. Попробуйте ещё раз.",
+    worn: "надето", more: "Показать ещё", loading: "Загружаем…", nothing: "Ничего не нашлось", clearSearch: "Очистить поиск", error: "Не удалось загрузить облики. Попробуйте ещё раз.",
     allClasses: "Все классы", classFilter: "Класс",
     pieces: (count) => `${count} ${plural(count, "часть", "части", "частей")}`,
     format: "Формат", background: "Фон", pose: "Поза", light: "Свет", brightness: "Яркость", contrast: "Контраст", shadow: "Тень под ногами",
@@ -95,7 +95,7 @@ export const transmogCopy: Record<"ru" | "en", Copy> = {
     tabs: { items: "Items", sets: "Sets", frame: "Frame" },
     empty: "Empty", hide: "Hide slot", show: "Show slot", remove: "Remove", hiddenTag: "hidden",
     search: "Search", searchSets: "Set name",
-    worn: "worn", more: "Show more", loading: "Loading…", nothing: "Nothing found", error: "Appearances could not be loaded. Please try again.",
+    worn: "worn", more: "Show more", loading: "Loading…", nothing: "Nothing found", clearSearch: "Clear search", error: "Appearances could not be loaded. Please try again.",
     allClasses: "All classes", classFilter: "Class",
     pieces: (count) => `${count} ${count === 1 ? "piece" : "pieces"}`,
     format: "Format", background: "Background", pose: "Pose", light: "Light", brightness: "Brightness", contrast: "Contrast", shadow: "Floor shadow",

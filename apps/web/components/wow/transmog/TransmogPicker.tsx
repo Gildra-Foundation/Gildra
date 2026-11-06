@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Eye, EyeOff, Shirt, X } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasInput, AtlasSelect } from "@gildra/atlas-ui/AtlasField";
@@ -179,8 +179,8 @@ export function ItemPicker({ lang, slot, cls, current, hidden, onPick, onPreview
           <p className={styles.slotNow}>{current ? current.name : c.empty}{hidden ? ` · ${c.hiddenTag}` : ""}</p>
         </div>
         <div className={styles.slotActions}>
-          <AtlasButton variant="ghost" className={styles.slotAction} icon={hidden ? <Eye aria-hidden /> : <EyeOff aria-hidden />} onClick={onToggleHidden} aria-pressed={hidden} aria-keyshortcuts="H" title={`${hidden ? c.show : c.hide} (H)`}>{hidden ? c.show : c.hide}</AtlasButton>
-          <AtlasButton variant="ghost" className={styles.slotAction} icon={<X aria-hidden />} onClick={onRemove} disabled={!current}>{c.remove}</AtlasButton>
+          <AtlasButton variant="ghost" className={styles.slotAction} icon={hidden ? <Eye aria-hidden /> : <EyeOff aria-hidden />} onClick={onToggleHidden} aria-pressed={hidden} aria-keyshortcuts="H" title={`${hidden ? c.show : c.hide} (H)`}><span className={styles.visuallyHidden}>{hidden ? c.show : c.hide}</span></AtlasButton>
+          <AtlasButton variant="ghost" className={styles.slotAction} icon={<X aria-hidden />} onClick={onRemove} disabled={!current} title={c.remove}><span className={styles.visuallyHidden}>{c.remove}</span></AtlasButton>
         </div>
       </div>
       <div className={armoredSlots.has(slot) ? styles.filters : undefined}>
@@ -195,12 +195,11 @@ export function ItemPicker({ lang, slot, cls, current, hidden, onPick, onPreview
           </AtlasSelect>
         ) : null}
       </div>
-      <SearchState state={search.state} empty={!search.items.length} lang={lang} />
-      {search.state === "error" ? <AtlasButton onClick={search.retry}>{c.retry}</AtlasButton> : null}
+      <SearchState state={search.state} empty={!search.items.length} lang={lang} onRetry={search.retry} onClear={query ? () => setQuery("") : undefined} glyph={<SlotGlyph slot={slot} />} />
       <ul className={styles.results} data-transmog-results data-loading={search.state === "loading" || undefined} onKeyDown={listKeys}
         onMouseLeave={() => preview(null, 160)}>
-        {groupVariants(search.items).map((group) => (
-          <LookRow key={group.key} group={group} slot={slot} current={current} showArmor={armor === "all"} lang={lang}
+        {groupVariants(search.items).map((group, index) => (
+          <LookRow key={group.key} order={index} group={group} slot={slot} current={current} showArmor={armor === "all"} lang={lang}
             onChoose={choose} onHover={hover} onPreview={preview} />
         ))}
         {search.cursor ? <li ref={sentinel} className={styles.sentinel} aria-hidden="true" /> : null}
@@ -214,7 +213,8 @@ export function ItemPicker({ lang, slot, cls, current, hidden, onPick, onPreview
  * One look of the list. Variants (difficulty, colour) are a one-line stepper
  * under the name: ‹ 3/8 › wears the previous or next look of the item.
  */
-function LookRow({ group, slot, current, showArmor, lang, onChoose, onHover, onPreview }: {
+function LookRow({ order, group, slot, current, showArmor, lang, onChoose, onHover, onPreview }: {
+  order: number;
   group: LookGroup;
   slot: TransmogSlot;
   current?: TransmogAppearance;
@@ -236,12 +236,12 @@ function LookRow({ group, slot, current, showArmor, lang, onChoose, onHover, onP
     onChoose(group.variants[next]);
   };
   return (
-    <li className={styles.lookRow} style={qualityStyle(group.quality)} data-variants={total > 1 || undefined}>
+    <li className={styles.lookRow} style={{ ...qualityStyle(group.quality), "--row": Math.min(order, 12) } as CSSProperties} data-variants={total > 1 || undefined}>
       <button type="button" className={styles.result} aria-pressed={wornIndex >= 0}
         onClick={() => onChoose(main)} onMouseEnter={(event) => onHover(event, main)} onFocus={() => onPreview(main, 60)} onBlur={() => onPreview(null, 200)}
         data-appearance={main.modifiedAppearanceId}>
         <span className={styles.resultIcon} aria-hidden="true">
-          <TransmogIcon name={main.iconName ?? group.iconName} itemId={main.itemId} size={40} fallback={<SlotGlyph slot={slot} />} />
+          <TransmogIcon name={main.iconName ?? group.iconName} itemId={main.itemId} size={56} fallback={<SlotGlyph slot={slot} />} />
         </span>
         <span className={styles.resultText}>
           <span className={styles.resultName}>{group.name}</span>
@@ -291,14 +291,13 @@ export function SetPicker({ lang, cls, wearing, onWear }: { lang: Lang; cls: Tra
           </AtlasSelect>
         </label>
       </div>
-      <SearchState state={search.state} empty={!sets.length} lang={lang} />
-      {search.state === "error" ? <AtlasButton onClick={search.retry}>{c.retry}</AtlasButton> : null}
+      <SearchState state={search.state} empty={!sets.length} lang={lang} onRetry={search.retry} onClear={query ? () => setQuery("") : undefined} glyph={<Shirt className={styles.slotGlyph} />} />
       <ul className={styles.results} data-transmog-sets data-loading={search.state === "loading" || undefined} onKeyDown={listKeys}>
-        {sets.map((entry) => (
-          <li key={entry.id}>
+        {sets.map((entry, index) => (
+          <li key={entry.id} className={styles.lookRow} style={{ "--row": Math.min(index, 12) } as CSSProperties}>
             <button type="button" className={styles.result} aria-pressed={wearing === entry.id} onClick={() => onWear(entry)} data-set={entry.id}
               onMouseEnter={() => prefetchJson(setDetailUrl(lang, entry.id))} onFocus={() => prefetchJson(setDetailUrl(lang, entry.id))}>
-              <span className={styles.resultIcon} aria-hidden="true"><TransmogIcon name={entry.iconName} setId={entry.id} size={40} fallback={<Shirt className={styles.slotGlyph} />} /></span>
+              <span className={styles.resultIcon} aria-hidden="true"><TransmogIcon name={entry.iconName} setId={entry.id} size={56} fallback={<Shirt className={styles.slotGlyph} />} /></span>
               <span className={styles.resultText}>
                 <span className={styles.resultName}>{entry.name}</span>
                 <span className={styles.resultMeta}>{c.pieces(entry.itemCount)}</span>
@@ -314,9 +313,35 @@ export function SetPicker({ lang, cls, wearing, onWear }: { lang: Lang; cls: Tra
   );
 }
 
-/** Only states a player acts on: loading before the first answer, nothing found, an error. */
-function SearchState({ state, empty, lang }: { state: "idle" | "loading" | "ready" | "error"; empty: boolean; lang: Lang }) {
+/**
+ * Only states a player acts on: skeleton rows before the first answer, nothing found
+ * (with a way back when a search is typed), an error with a retry.
+ */
+function SearchState({ state, empty, lang, onRetry, onClear, glyph }: {
+  state: "idle" | "loading" | "ready" | "error";
+  empty: boolean;
+  lang: Lang;
+  onRetry: () => void;
+  onClear?: () => void;
+  glyph: ReactNode;
+}) {
   const c = transmogCopy[lang];
-  const text = state === "error" ? c.error : !empty ? "" : state === "ready" ? c.nothing : c.loading;
-  return <p className={styles.resultCount} aria-live="polite">{text}</p>;
+  if (state === "error") {
+    return <div className={styles.listState} role="alert"><p>{c.error}</p><AtlasButton size="sm" onClick={onRetry}>{c.retry}</AtlasButton></div>;
+  }
+  if (!empty) return <p className={styles.visuallyHidden} aria-live="polite" />;
+  if (state === "ready") {
+    return (
+      <div className={styles.listState} aria-live="polite">
+        <span className={styles.listStateGlyph} aria-hidden="true">{glyph}</span>
+        <p>{c.nothing}</p>
+        {onClear ? <AtlasButton size="sm" variant="ghost" onClick={onClear}>{c.clearSearch}</AtlasButton> : null}
+      </div>
+    );
+  }
+  return (
+    <div className={styles.skeleton} role="status" aria-label={c.loading}>
+      {Array.from({ length: 6 }, (_, index) => <span key={index} className={styles.skeletonRow} aria-hidden="true"><span /><span /></span>)}
+    </div>
+  );
 }

@@ -1,89 +1,111 @@
-/* atlas:strict — transmog studio: wardrobe doll (slots left/right, weapons under the stage), 3D stage in the export frame,
-   picker on the Library kit's plaque (a bottom sheet on phones), painted Link / Download buttons. */
-/* Compact hero: H1 and one line; the studio owns the first screen. */
+/* atlas:strict — transmog studio, a wardrobe in one frame: the title and the outfit toolbar share the hero row;
+   one Library-kit plaque holds the doll room (slots at its edges, the stage in the middle, the frame's scene
+   continuing dimmed around it) and the picker; on phones the picker is a glass bottom sheet.
+   Controls are one family: 44 px glass (selects, icons), the accent button for Download only. */
 .hero h1 { font-size: clamp(2rem, 1.2rem + 1.8vw, 3rem); }
 .hero > div:last-child { padding-block: var(--atlas-space-2) 0; }
 .hero p { max-width: 60ch; margin-top: var(--atlas-space-1); font-size: var(--atlas-text-body); }
 
 .studio {
-  /* Stage height: the window below the sticky header, the hero, the toolbar and the weapon row. */
-  --stage-h: clamp(440px, calc(100dvh - var(--atlas-sticky-top) - 330px), 820px);
-  --slot-gap: var(--atlas-space-2);
+  /* Stage height: the window below the sticky header, the hero row and the frame's rails. */
+  --stage-h: clamp(440px, calc(100dvh - var(--atlas-sticky-top) - 330px), 760px);
+  --slot-gap: 10px;
   /* Seven slots stand as tall as the stage, as in the game's wardrobe. */
-  --slot: clamp(48px, calc((var(--stage-h) - 6 * var(--slot-gap)) / 7), 64px);
-  display: grid; gap: var(--atlas-space-3); min-width: 0;
+  --slot: clamp(46px, calc((var(--stage-h) - 6 * var(--slot-gap)) / 7), 60px);
+  --doll-gap: clamp(var(--atlas-space-4), 2.4vw, var(--atlas-space-6));
+  --tool-h: 44px;
+  --tool-radius: var(--atlas-radius-control);
+  --tool-face: color-mix(in srgb, var(--atlas-surface) 72%, transparent);
+  display: grid; gap: var(--atlas-space-4); min-width: 0;
 }
 .visuallyHidden { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
 
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-4); }
-/* Tablet and desktop: the toolbar stays under the sticky site header, so race, class, undo and download are never cut. */
-@media (min-width: 701px) {
-  .toolbar { position: sticky; top: var(--atlas-sticky-top); z-index: 20; padding-block: var(--atlas-space-2); margin-block: calc(-1 * var(--atlas-space-2)); }
-  .toolbar[data-stuck] {
-    background: color-mix(in srgb, var(--atlas-bg) 88%, transparent); backdrop-filter: blur(12px);
-    box-shadow: 0 0 0 100vmax color-mix(in srgb, var(--atlas-bg) 88%, transparent), 0 1px 0 100vmax var(--atlas-line);
-    clip-path: inset(0 -100vmax -1px);
-  }
-}
-@media (min-width: 701px) {
-  /* Keyboard focus never lands under the stuck toolbar. */
-  .workspace :is(button, input, select, [tabindex]) { scroll-margin-top: calc(var(--atlas-sticky-top) + 140px); }
-}
-@media (prefers-reduced-transparency: reduce) { .toolbar[data-stuck] { backdrop-filter: none; } }
-.identity { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); min-width: 0; }
-.toolbarField { min-width: 11rem; }
-.segmented { display: inline-flex; gap: var(--atlas-space-1); padding: 3px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-surface-sunken); }
-.segmented button {
-  min-width: 44px; min-height: 38px; border: 0; border-radius: calc(var(--atlas-radius-control) - 3px); background: transparent;
-  color: var(--atlas-text-muted); font: inherit; font-size: var(--atlas-text-title); cursor: pointer;
-}
-.segmented button[aria-pressed="true"] { background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); box-shadow: inset 0 0 0 1px var(--atlas-line-strong); }
-.segmented button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
-/* Actions: Undo / Random / Reset as glass icons, Link and Download on the kit's painted buttons. */
+/* ---------- Hero row: title left, outfit toolbar right (wraps under the title when there is no room) ---------- */
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--atlas-space-4) var(--atlas-space-6); min-width: 0; }
+.head > header { flex: 0 1 auto; min-width: 0; margin: 0; }
+/* The toolbar never breaks inside itself on wide screens: it moves under the title as a whole. */
+.toolbar { display: flex; flex: 0 0 auto; align-items: center; justify-content: flex-end; gap: var(--atlas-space-2) var(--atlas-space-4); margin-left: auto; min-width: 0; }
+.identity { display: flex; align-items: center; gap: var(--atlas-space-2); min-width: 0; }
+.toolbarField { flex: 0 1 12.5rem; min-width: 9rem; }
+.toolbarField :global(select) { width: 100%; }
 .actions { display: flex; align-items: center; gap: var(--atlas-space-2); }
-.toolIcon:global(.ui-button) {
-  min-width: 44px; min-height: 44px; padding-inline: 0; justify-content: center;
-  border: 1px solid var(--atlas-line); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
+
+/* The gender switch and the tool group: one glass capsule each, 44 px tall like the selects. */
+.segmented, .tools {
+  display: inline-flex; align-items: center; gap: 2px; height: var(--tool-h); padding: 3px;
+  border: 1px solid var(--atlas-line); border-radius: var(--tool-radius); background: var(--tool-face);
 }
-.toolIcon:global(.ui-button):hover:not(:disabled) { border-color: var(--atlas-line-strong); }
-.toolIcon svg { width: 18px; height: 18px; }
-.toolIcon[aria-busy] svg { animation: spin .9s linear infinite; }
-.actions .actionButton.actionButton:global(.ui-button) { min-width: 0; }
-.notice { min-height: 1.2em; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.segmented button {
+  min-width: 40px; height: 100%; padding: 0 var(--atlas-space-2); border: 0; border-radius: calc(var(--tool-radius) - 3px); background: transparent;
+  color: var(--atlas-text-muted); font: inherit; font-size: var(--atlas-text-title); cursor: pointer;
+  transition: background-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease);
+}
+.segmented button:hover { color: var(--atlas-text-strong); }
+.segmented button[aria-pressed="true"] { background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); }
+.segmented button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
+.tools .tool:global(.ui-button) {
+  width: 38px; min-width: 38px; height: 100%; min-height: 0; padding: 0; justify-content: center;
+  border: 0; border-radius: calc(var(--tool-radius) - 3px); background: transparent; color: var(--atlas-text-muted);
+}
+.tools .tool:global(.ui-button):hover:not(:disabled) { background: var(--atlas-accent-wash); color: var(--atlas-text-strong); }
+.tools .tool:global(.ui-button):disabled { opacity: .38; }
+.tool svg { width: 18px; height: 18px; }
+.tool[aria-busy] svg, .download[aria-busy] svg { animation: spin .9s linear infinite; }
+.download:global(.ui-button) { min-height: var(--tool-h); padding-inline: var(--atlas-space-4) var(--atlas-space-5); border-radius: var(--tool-radius); white-space: nowrap; }
+.download svg { width: 18px; height: 18px; }
+.notice { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-align: right; }
 .notice:empty { display: none; }
 
-.workspace {
-  display: grid; grid-template-columns: auto minmax(360px, 1fr); align-items: start;
-  gap: var(--atlas-space-5) clamp(var(--atlas-space-5), 3vw, var(--atlas-space-7));
+/* ---------- The wardrobe: one plaque, doll room + picker ---------- */
+.wardrobe.wardrobe {
+  display: grid; grid-template-columns: minmax(0, 1fr) clamp(360px, 36%, 520px); align-items: stretch;
+  padding: 26px 26px 28px;
 }
-.doll { display: grid; grid-template-columns: var(--slot) auto var(--slot); gap: var(--atlas-space-4); align-items: start; min-width: 0; }
+.dollPane {
+  position: relative; isolation: isolate; display: grid; align-content: center; gap: var(--atlas-space-3); min-width: 0; overflow: hidden;
+  padding: var(--atlas-space-4) var(--atlas-space-5); border-radius: var(--atlas-radius-control) 0 0 var(--atlas-radius-control);
+  background: radial-gradient(120% 80% at 50% 40%, var(--atlas-surface-raised), var(--atlas-bg));
+}
+/* The frame's scene continues around the stage, dimmed and soft, so the stage reads as a lit window of the room. */
+.dollPane::before {
+  position: absolute; inset: -24px; z-index: -2; content: ""; pointer-events: none;
+  background: var(--doll-surround, none) var(--doll-surround-position, center) / cover no-repeat;
+  filter: blur(12px) brightness(.5) saturate(.85);
+  transition: opacity var(--atlas-duration-slow) var(--atlas-ease);
+}
+.dollPane[data-surround="transparent"]::before { display: none; }
+.dollPane::after {
+  position: absolute; inset: 0; z-index: -1; content: ""; pointer-events: none;
+  background: radial-gradient(60% 70% at 50% 46%, transparent 40%, color-mix(in srgb, var(--atlas-bg) 72%, transparent));
+}
+.doll {
+  display: grid; grid-template-columns: var(--slot) minmax(0, calc(var(--stage-h) * var(--stage-aspect, .8))) var(--slot); justify-content: center; align-items: start;
+  gap: var(--doll-gap); min-width: 0;
+}
 .dollColumn { display: grid; gap: var(--slot-gap); align-content: start; }
-.stageColumn {
-  display: grid; justify-items: center; gap: var(--atlas-space-3); min-width: 0;
-  /* The stage keeps the export frame's shape; wide frames are capped by the room beside the picker. */
-  width: min(calc(var(--stage-h) * var(--stage-aspect, .8)), calc(100vw - 2 * var(--slot) - 360px - 12rem));
-}
-.weaponRow { display: flex; justify-content: center; gap: var(--slot-gap); }
+.stageColumn { align-self: center; display: grid; width: 100%; min-width: 0; }
 
+/* ---------- Slots ---------- */
 .slot {
   position: relative; display: grid; place-items: center; width: var(--slot); height: var(--slot); padding: 0; overflow: hidden;
-  border: 1px solid var(--transmog-quality, var(--atlas-line)); border-radius: var(--atlas-radius-control);
-  background: color-mix(in srgb, var(--atlas-surface-sunken) 88%, transparent); color: var(--atlas-text-subtle); cursor: pointer;
-  box-shadow: inset 0 0 0 1px var(--atlas-bg);
+  border: 1px solid color-mix(in srgb, var(--transmog-quality, var(--atlas-line-strong)) 60%, var(--atlas-bg));
+  border-radius: 8px; background: var(--atlas-surface-sunken); color: var(--atlas-text-subtle); cursor: pointer;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--atlas-bg) 70%, transparent), 0 6px 14px -8px color-mix(in srgb, #000 80%, transparent);
+  transition: transform var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 .slot img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.slot[aria-pressed="true"] { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-.slot:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.slot:hover { transform: translateY(-1px); border-color: var(--transmog-quality, var(--atlas-line-strong)); }
+.slot[aria-pressed="true"] { border-color: var(--atlas-accent-strong); box-shadow: 0 0 0 2px var(--atlas-bg), 0 0 0 4px var(--atlas-accent), 0 0 18px var(--atlas-accent-glow); }
+.slot:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .slot[data-hidden] img { opacity: .3; filter: grayscale(1); }
-.slot:hover { border-color: var(--atlas-line-strong); }
 /* An empty slot is a recessed socket with the slot's outline, as the game's paper doll draws it. */
 .slot[data-empty] {
-  border-color: color-mix(in srgb, var(--material-line, var(--atlas-line-strong)) 70%, transparent);
+  border-color: var(--atlas-line);
   background: radial-gradient(circle at 50% 38%, var(--atlas-surface-raised), var(--atlas-surface-sunken) 72%);
-  box-shadow: inset 0 0 0 1px var(--atlas-bg), inset 0 3px 10px color-mix(in srgb, #000 55%, transparent);
+  box-shadow: inset 0 3px 10px color-mix(in srgb, #000 55%, transparent);
 }
-.slot[data-empty] .slotGlyph { width: 58%; height: 58%; color: var(--material-light, var(--atlas-text-muted)); opacity: .45; }
-.slot[data-empty]:hover .slotGlyph { opacity: .8; }
+.slot[data-empty] .slotGlyph { width: 54%; height: 54%; color: var(--atlas-text-muted); opacity: .5; }
+.slot[data-empty]:hover .slotGlyph { opacity: .85; }
 .slotGlyph { width: 30px; height: 30px; color: var(--atlas-text-subtle); opacity: .75; }
 /* A swapped item is still downloading: a ring runs around the slot. */
 .slot[data-busy]::after, .slot[data-previewing]::after {
@@ -97,32 +119,36 @@
 .slotHidden svg { width: 22px; height: 22px; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
 .slotCompact { --slot: 52px; flex: 0 0 52px; }
 .slotStrip { display: none; }
-/* Under the stage: weapons in the middle (as in the game's wardrobe), zoom at the left end and view/pause
-   at the right end, so nothing covers the model. The groups keep their room before 3D is ready. */
-.stageBar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--slot-gap); width: 100%; }
-.stageBar .weaponRow { grid-column: 2; grid-row: 1; }
-.cameraRow {
-  grid-row: 1; display: flex; gap: 2px; padding: 2px;
-  border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control);
-  background: color-mix(in srgb, var(--atlas-bg) 72%, transparent);
+
+/* Under the stage: weapons in the middle (as in the game's wardrobe), quiet camera icons at both ends. */
+.stageBar {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--slot-gap);
+  justify-self: center; width: min(100%, calc(var(--stage-h) * var(--stage-aspect, .8) + 2 * var(--slot) + 2 * var(--doll-gap)));
 }
-.cameraRow[data-camera="zoom"] { grid-column: 1; justify-self: start; }
-.cameraRow[data-camera="view"] { grid-column: 3; justify-self: end; }
+.weaponRow { display: flex; justify-content: center; gap: var(--slot-gap); }
+.cameraRow { display: flex; gap: 2px; }
+.cameraRow[data-camera="zoom"] { grid-column: 1; grid-row: 1; justify-self: start; }
+.stageBar .weaponRow { grid-column: 2; grid-row: 1; }
+.cameraRow[data-camera="view"] { grid-column: 3; grid-row: 1; justify-self: end; }
 .cameraRow[hidden] { display: flex; visibility: hidden; }
-.iconButton:global(.ui-button) { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; justify-content: center; }
-.iconButton svg { width: 16px; height: 16px; }
+.iconButton:global(.ui-button) {
+  width: 36px; min-width: 36px; height: 36px; min-height: 36px; padding: 0; justify-content: center;
+  border: 0; border-radius: 999px; background: transparent; color: var(--atlas-text-muted);
+}
+.iconButton:global(.ui-button):hover { background: color-mix(in srgb, var(--atlas-bg) 60%, transparent); color: var(--atlas-text-strong); }
+.iconButton svg { width: 18px; height: 18px; }
 /* Touch: pinch zooms, so only Reset and Pause stay, at full touch size. */
 @media (pointer: coarse) {
-  .cameraRow[data-camera="zoom"] { display: none; }
+  .cameraRow[data-camera="zoom"] { visibility: hidden; }
   .iconButton:global(.ui-button) { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
 }
-
 
 /* Stage = the export frame. Its children scale with container units, so the preview
    caption matches the exported one at any width. */
 .stage {
   position: relative; isolation: isolate; width: 100%; overflow: hidden;
-  container-type: size; border-radius: var(--atlas-radius); box-shadow: 0 0 0 1px var(--atlas-line);
+  container-type: size; border-radius: 6px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--atlas-text-strong) 14%, transparent), 0 28px 60px -24px color-mix(in srgb, #000 90%, transparent);
   background: repeating-conic-gradient(var(--atlas-surface-raised) 0 25%, var(--atlas-surface-sunken) 0 50%) 0 0 / 18px 18px;
 }
 .stage:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
@@ -190,39 +216,50 @@
   background: color-mix(in srgb, var(--atlas-bg) 80%, transparent); color: var(--atlas-text-strong); font-size: var(--atlas-text-meta); white-space: nowrap;
 }
 .loader[data-over-poster] .loaderText { border: 0; background: none; text-shadow: 0 1px 3px var(--atlas-bg); }
+/* The page's reading rule for paragraphs ([data-atlas-frame] p: text-wrap: pretty) would let the pill wrap. */
+.stage p.stagePill { text-wrap: nowrap; hyphens: manual; }
 .stagePill {
-  position: absolute; top: var(--atlas-space-3); left: 50%; z-index: 5; max-width: calc(100% - 2 * var(--atlas-space-3) - 120px);
+  position: absolute; top: var(--atlas-space-3); left: 50%; z-index: 5; max-width: calc(100% - 2 * var(--atlas-space-3));
   transform: translateX(-50%); overflow: hidden; text-overflow: ellipsis; pointer-events: none;
 }
 
-/* The picker sits on the kit's plaque, as tall as the doll; its list scrolls inside the painted rails. */
-.panel.panel {
-  display: flex; flex-direction: column; min-width: 0; overflow: hidden; padding: 24px 22px 26px;
-  height: calc(var(--stage-h) + var(--slot) + var(--atlas-space-3)); max-height: calc(var(--stage-h) + var(--slot) + var(--atlas-space-3));
+
+/* ---------- Picker: the right side of the plaque; its list scrolls inside, fading above the bottom rail ---------- */
+.panel {
+  display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  /* Desktop: as tall as the doll room, never taller (the list scrolls instead). */
+  contain: size; padding: var(--atlas-space-1) 0 0 var(--atlas-space-5);
+  border-left: 1px solid var(--material-line, var(--atlas-line-soft));
 }
 .sheetHandle { display: none; }
 .tabs { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; }
-/* The list scrolls inside the plaque and fades out above its painted bottom rail instead of running under it. */
 .tabs > [role="tabpanel"] {
   flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding-bottom: var(--atlas-space-5);
-  scrollbar-gutter: stable; scrollbar-width: thin;
-  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--atlas-space-5)), transparent);
+  scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: var(--atlas-line-strong) transparent;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--atlas-space-6)), transparent);
+  animation: panelIn var(--atlas-duration-slow) var(--atlas-ease);
 }
-.pickerBody { display: grid; gap: var(--atlas-space-3); padding: var(--atlas-space-4) var(--atlas-space-2) var(--atlas-space-2); align-content: start; min-width: 0; }
-.slotHeader { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); min-width: 0; }
-.slotHeaderText { flex: 1 1 8rem; min-width: 0; }
+@keyframes panelIn { from { opacity: 0; transform: translateY(4px); } }
+.pickerBody { display: grid; gap: var(--atlas-space-3); padding: var(--atlas-space-4) var(--atlas-space-1) var(--atlas-space-2) 0; align-content: start; min-width: 0; }
+.slotHeader { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.slotHeaderText { min-width: 0; }
 .slotHeaderIcon {
-  display: grid; place-items: center;
-  flex: 0 0 44px; width: 44px; height: 44px; overflow: hidden; border: 1px solid var(--transmog-quality, var(--atlas-line));
+  display: grid; place-items: center; width: 48px; height: 48px; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--transmog-quality, var(--atlas-line-strong)) 60%, var(--atlas-bg));
   border-radius: 8px; background: var(--atlas-surface-sunken);
 }
 .slotHeaderIcon img { display: block; width: 100%; height: 100%; }
 .slotTitle { margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.1 var(--atlas-font-display); }
-.slotNow { margin: 2px 0 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); overflow-wrap: anywhere; }
-.slotActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1); }
-.slotAction:global(.ui-button) { min-height: 44px; }
-.slotAction svg { width: 16px; height: 16px; }
-.filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 10rem); gap: var(--atlas-space-2); }
+.pickerBody .slotNow { margin: 2px 0 0; overflow: hidden; hyphens: manual; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); white-space: nowrap; text-overflow: ellipsis; }
+.slotActions { display: flex; gap: 2px; }
+.slotAction:global(.ui-button) {
+  width: 40px; min-width: 40px; min-height: 40px; padding: 0; justify-content: center; border: 0; border-radius: var(--atlas-radius-control);
+  background: transparent; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta);
+}
+.slotAction:global(.ui-button):hover:not(:disabled) { background: var(--atlas-accent-wash); color: var(--atlas-text-strong); }
+.slotAction svg { width: 18px; height: 18px; }
+.slotAction[aria-pressed="true"] { color: var(--atlas-accent-strong); }
+.filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 8.5rem); gap: var(--atlas-space-2); }
 .more:global(.ui-button) { justify-self: center; min-height: 44px; }
 .searchLabel { position: relative; display: block; min-width: 0; }
 .searchKey {
@@ -231,47 +268,74 @@
 }
 .searchLabel:focus-within .searchKey { display: none; }
 @media (pointer: coarse) { .searchKey { display: none; } }
-.resultCount { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-.resultCount:empty { display: none; }
-.results { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr)); gap: 2px var(--atlas-space-2); margin: 0; padding: 0; list-style: none; transition: opacity .15s; }
-.results[data-loading] { opacity: .6; }
+
+/* States of the list: skeleton rows while loading, a calm empty state, an error with a retry. */
+.skeleton { display: grid; gap: 6px; }
+.skeletonRow { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: var(--atlas-space-3); min-height: 60px; padding: 6px var(--atlas-space-2); }
+.skeletonRow > span { height: 48px; border-radius: 8px; background: var(--atlas-surface-raised); animation: shimmer 1.4s var(--atlas-ease) infinite alternate; }
+.skeletonRow > span + span { width: 62%; height: 12px; border-radius: 6px; }
+.skeletonRow:nth-child(2n) > span + span { width: 48%; }
+@keyframes shimmer { from { opacity: .45; } to { opacity: .9; } }
+.listState {
+  display: grid; justify-items: center; gap: var(--atlas-space-2); padding: var(--atlas-space-6) var(--atlas-space-3); text-align: center;
+  color: var(--atlas-text-muted); font-size: var(--atlas-text-small);
+}
+.listState p { margin: 0; }
+.listStateGlyph { display: grid; place-items: center; width: 56px; height: 56px; border: 1px dashed var(--atlas-line-strong); border-radius: 12px; color: var(--atlas-text-subtle); }
+.listStateGlyph svg { width: 28px; height: 28px; }
+
+/* The list: one column of large icons and readable names (two where the picker is wide). */
+.results {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 2px var(--atlas-space-3); margin: 0; padding: 0; list-style: none;
+  transition: opacity var(--atlas-duration) var(--atlas-ease);
+}
+.results[data-loading] { opacity: .55; }
 .sentinel { height: 1px; grid-column: 1 / -1; }
-.lookRow { display: grid; align-content: start; min-width: 0; }
+.lookRow {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-1); min-width: 0;
+  border-radius: 10px; animation: rowIn var(--atlas-duration-slow) var(--atlas-ease) both; animation-delay: calc(var(--row, 0) * 22ms);
+}
+/* Item names keep whole words (the page's reading rule hyphenates list items). */
+.results .lookRow { hyphens: manual; }
+@keyframes rowIn { from { opacity: 0; transform: translateY(6px); } }
+.lookRow:hover { background: color-mix(in srgb, var(--atlas-text) 6%, transparent); }
 .result {
-  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); width: 100%; min-height: 52px;
-  padding: var(--atlas-space-1) var(--atlas-space-2); border: 0; border-radius: 8px; background: transparent; color: var(--atlas-text);
+  display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); width: 100%; min-height: 60px;
+  padding: 6px var(--atlas-space-2); border: 0; border-radius: 10px; background: transparent; color: var(--atlas-text);
   font: inherit; text-align: left; cursor: pointer;
 }
-.result:hover { background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 10%, transparent); }
-.result[aria-pressed="true"] { background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 18%, transparent); }
-.result:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: -2px; }
+.result[aria-pressed="true"] { background: var(--atlas-accent-wash); box-shadow: inset 2px 0 0 var(--atlas-accent); }
+.result:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
 .resultIcon {
-  display: grid; place-items: center; width: 40px; height: 40px; overflow: hidden;
-  border: 1px solid var(--transmog-quality, var(--atlas-line)); border-radius: 6px; background: var(--atlas-surface-sunken);
+  display: grid; place-items: center; width: 48px; height: 48px; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--transmog-quality, var(--atlas-line-strong)) 60%, var(--atlas-bg)); border-radius: 8px; background: var(--atlas-surface-sunken);
+  box-shadow: 0 4px 10px -6px color-mix(in srgb, #000 80%, transparent);
+  transition: transform var(--atlas-duration) var(--atlas-ease);
 }
+.result:hover .resultIcon { transform: scale(1.05); }
 .resultIcon img { display: block; width: 100%; height: 100%; }
-.resultIcon .slotGlyph { width: 22px; height: 22px; }
-.resultText { display: grid; min-width: 0; }
-.resultName { color: var(--transmog-quality-text, var(--atlas-text-strong)); font-size: var(--atlas-text-small); font-weight: 600; line-height: var(--atlas-leading-snug); overflow-wrap: break-word; hyphens: manual; }
-.resultMeta { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-.wornTag { padding: 2px var(--atlas-space-2); border: 1px solid var(--material-line, var(--atlas-line)); border-radius: 6px; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); white-space: nowrap; }
-/* Variants of one look (difficulty and colour): one-line stepper ‹ 3/8 › under its name, never wrapping. */
-.variants {
-  display: inline-flex; align-items: center; justify-self: start; gap: 2px; margin: -6px 0 var(--atlas-space-1) calc(40px + var(--atlas-space-3) + var(--atlas-space-2));
-  padding: 2px; border: 1px solid var(--atlas-line); border-radius: 999px; background: var(--atlas-surface-sunken);
+.resultIcon .slotGlyph { width: 24px; height: 24px; }
+.resultText { display: grid; gap: 2px; min-width: 0; }
+.resultName {
+  display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  color: var(--transmog-quality-text, var(--atlas-text-strong)); font-size: var(--atlas-text-body); font-weight: 600; line-height: var(--atlas-leading-snug);
 }
+.resultMeta { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.wornTag {
+  padding: 2px var(--atlas-space-2); border-radius: 999px; background: var(--atlas-accent-wash-strong);
+  color: var(--atlas-text-strong); font-size: var(--atlas-text-label); white-space: nowrap;
+}
+/* Variants of one look (difficulty and colour): a compact ‹ 3/8 › stepper at the end of the row. */
+.variants { display: inline-flex; align-items: center; gap: 0; margin-right: var(--atlas-space-1); }
 .variantStep {
-  display: grid; place-items: center; width: 28px; height: 24px; padding: 0; border: 0; border-radius: 999px;
+  display: grid; place-items: center; width: 26px; height: 32px; padding: 0; border: 0; border-radius: 8px;
   background: transparent; color: var(--atlas-text-muted); cursor: pointer;
 }
 .variantStep svg { width: 16px; height: 16px; }
-.variantStep:hover { background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 14%, transparent); color: var(--atlas-text-strong); }
-.variantStep:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 0; }
-.variantCount {
-  min-width: 3.2em; color: var(--transmog-quality-text, var(--atlas-text-strong)); font-size: var(--atlas-text-meta);
-  font-variant-numeric: tabular-nums; text-align: center; white-space: nowrap;
-}
-@media (pointer: coarse) { .variantStep { width: 40px; height: 36px; } }
+.variantStep:hover { background: var(--atlas-accent-wash); color: var(--atlas-text-strong); }
+.variantStep:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 0; }
+.variantCount { min-width: 2.6em; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; text-align: center; white-space: nowrap; }
+@media (pointer: coarse) { .variantStep { width: 40px; height: 44px; } }
 
 .group { display: grid; gap: var(--atlas-space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
 .groupLabel { padding: 0; color: var(--material-light, var(--atlas-text-muted)); font-size: var(--atlas-text-label); font-weight: 600; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
@@ -297,87 +361,113 @@
 .checkRow { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; font-size: var(--atlas-text-small); cursor: pointer; }
 .checkRow input { width: 18px; height: 18px; accent-color: var(--atlas-accent); }
 
+
+/* ---------- Narrower screens ---------- */
+@media (max-width: 1320px) {
+  .toolbar { flex: 1 1 100%; justify-content: space-between; margin-left: 0; }
+}
 @media (max-width: 1100px) {
-  /* One toolbar row where it fits: Link becomes a glass icon like Undo / Random / Reset, Download drops the format. */
-  .actionText { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
-  .actions .actionButton.actionButton[data-compact]:global(.ui-button) {
-    width: 44px; min-width: 44px; min-height: 44px; padding: 0; gap: 0;
-    border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
-  }
-  .actions .actionButton[data-compact]::before, .actions .actionButton[data-compact]::after { display: none; }
+  .wardrobe.wardrobe { grid-template-columns: minmax(0, 1fr) clamp(300px, 38%, 380px); }
   .actionFormat { display: none; }
-  .identity { flex-wrap: nowrap; }
-  .identity .toolbarField { flex: 0 1 13rem; min-width: 9rem; }
-  .identity .toolbarField :global(select) { width: 100%; }
-  .workspace { grid-template-columns: minmax(0, 1fr); justify-items: center; }
-  .stageColumn { width: min(calc(var(--stage-h) * var(--stage-aspect, .8)), calc(100vw - 2 * var(--slot) - 6rem)); }
-  .panel.panel { width: 100%; max-width: 760px; height: auto; max-height: none; overflow: visible; }
+  .dollPane { padding-inline: var(--atlas-space-3); }
+  .doll { gap: var(--atlas-space-3); }
+}
+@media (max-width: 900px) {
+  /* Tablet: the picker moves under the doll room and its list flows with the page. */
+  .wardrobe.wardrobe { grid-template-columns: minmax(0, 1fr); }
+  .dollPane { border-radius: var(--atlas-radius-control) var(--atlas-radius-control) 0 0; }
+  .panel { contain: none; padding: var(--atlas-space-3) 0 0; border-left: 0; border-top: 1px solid var(--material-line, var(--atlas-line-soft)); }
   .tabs > [role="tabpanel"] { overflow: visible; padding-bottom: 0; mask-image: none; scrollbar-gutter: auto; }
 }
 @media (max-width: 700px) {
-  /* Phone: stage on top, slots as a scrolling row, the picker a bottom sheet that leaves the stage in view. */
+  /* Phone: stage on top, slots as a scrolling row, the picker a glass bottom sheet that leaves the stage in view. */
   .studio {
-    --stage-h: min(56dvh, 118vw); --sheet-h: 54dvh; --sheet-peek: 86px;
-    padding-bottom: calc(var(--sheet-peek) + var(--atlas-space-3));
+    --stage-h: clamp(340px, calc(100dvh - var(--atlas-sticky-top) - 340px), 118vw); --sheet-h: 56dvh; --sheet-peek: 92px;
+    gap: var(--atlas-space-3); padding-bottom: calc(var(--sheet-peek) + var(--atlas-space-3));
   }
   .studio[data-sheet-open] { --stage-h: max(220px, calc(100dvh - var(--atlas-sticky-top) - var(--sheet-h) - 92px)); }
+  .head { gap: var(--atlas-space-3); }
+  .toolbar { flex-wrap: wrap; gap: var(--atlas-space-2); }
+  .identity { flex: 1 1 100%; }
+  .identity .toolbarField { flex: 1 1 0; min-width: 0; }
+  .actions { flex: 1 1 100%; }
+  .download:global(.ui-button) { flex: 1 1 auto; justify-content: center; }
+  .notice { text-align: left; }
+  /* No painted plaque here, so no stacking context either: the fixed sheet must rise above the footer. */
+  .wardrobe.wardrobe { display: block; padding: 0; isolation: auto; }
+  .wardrobe.wardrobe::before { display: none; }
+  .dollPane { padding: 0; overflow: visible; background: none; border-radius: 0; gap: var(--atlas-space-2); }
+  .dollPane::before, .dollPane::after { display: none; }
   .doll { display: block; }
   .dollColumn, .weaponRow { display: none; }
-  .stageColumn { width: 100%; gap: var(--atlas-space-2); scroll-margin-top: var(--atlas-sticky-top); }
-  .stage { width: min(100%, calc(var(--stage-h) * var(--stage-aspect, .8))); transition: max-width var(--atlas-duration-slow) var(--atlas-ease); }
-  .slotStrip { display: flex; gap: var(--atlas-space-2); min-width: 0; overflow-x: auto; padding: 2px 2px var(--atlas-space-1); scroll-snap-type: x proximity; scrollbar-width: none; }
-  .slotStrip > * { scroll-snap-align: start; }
+  .stageColumn { width: 100%; justify-items: center; scroll-margin-top: var(--atlas-sticky-top); }
+  .stage { width: min(100%, calc(var(--stage-h) * var(--stage-aspect, .8))); transition: width var(--atlas-duration-slow) var(--atlas-ease); }
   .stageBar { grid-template-columns: minmax(0, 1fr) auto; gap: var(--atlas-space-2); }
-  .slotStrip { grid-column: 1; grid-row: 1; }
+  .slotStrip {
+    grid-column: 1; grid-row: 1; display: flex; gap: var(--atlas-space-2); min-width: 0; overflow-x: auto; padding: 4px 2px var(--atlas-space-1);
+    scroll-snap-type: x proximity; scrollbar-width: none;
+  }
+  .slotStrip > * { scroll-snap-align: start; }
   .cameraRow[data-camera="zoom"] { display: none; }
-  .cameraRow[data-camera="view"] { grid-column: 2; }
-  .cameraRow .iconButton:global(.ui-button) { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
-  .toolbar { gap: var(--atlas-space-2); }
-  .identity { flex: 1 1 100%; flex-wrap: nowrap; }
-  .identity .toolbarField { flex: 1 1 0; min-width: 0; }
-  /* Undo / Random / Reset / Link as 44 px glass icons, Download keeps the painted button and the rest of the row. */
-  .actions { flex: 1 1 100%; }
-  .actions > :last-child { flex: 1 1 auto; }
-  .actions { gap: 6px; }
-  /* The painted caps keep their art; the label sits closer to them so the row fits 360 px. */
-  .actions .actionButton.actionButton:not([data-compact]):global(.ui-button) { width: 100%; padding-inline: 46px; }
-  .actions .actionButton :global(.ui-button__label) { white-space: nowrap; hyphens: manual; }
-  .actions .actionButton:not([data-compact]) :global(.ui-button__icon) { display: none; }
-  .panel.panel {
-    position: fixed; inset: auto 0 0; z-index: 30; width: auto; max-width: none; height: var(--sheet-h); max-height: none; margin: 0;
-    padding: 4px 14px 0; overflow: hidden; transform: translateY(calc(100% - var(--sheet-peek)));
+  .cameraRow[data-camera="view"] { grid-column: 2; grid-row: 1; }
+  .panel {
+    position: fixed; inset: auto 0 0; z-index: 30; height: var(--sheet-h); padding: 0 var(--atlas-space-3);
+    border: 0; border-top: 1px solid var(--atlas-line); border-radius: 18px 18px 0 0;
+    background: color-mix(in srgb, var(--atlas-surface) 92%, transparent); backdrop-filter: blur(18px) saturate(1.1);
+    box-shadow: 0 -18px 40px color-mix(in srgb, #000 50%, transparent);
+    transform: translateY(calc(100% - var(--sheet-peek) - env(safe-area-inset-bottom)));
     transition: transform var(--atlas-duration-slow) var(--atlas-ease);
-    box-shadow: 0 -12px 32px color-mix(in srgb, #000 45%, transparent);
   }
-  .panel.panel[data-sheet="open"] { transform: none; }
+  .panel[data-sheet="open"] { transform: none; }
+  /* The folded sheet steps down while the site footer is on screen. */
+  .studio[data-footer-in-view]:not([data-sheet-open]) .panel { transform: translateY(100%); }
   .sheetHandle {
-    display: flex; justify-content: center; align-items: center; flex: none; width: 100%; height: 30px; padding: 0; border: 0; background: none;
-    color: var(--atlas-text-muted); cursor: pointer;
+    display: flex; justify-content: center; align-items: center; flex: none; width: 100%; height: 28px; padding: 0; border: 0; background: none; cursor: pointer;
   }
-  .sheetHandle svg { width: 22px; height: 22px; transition: transform var(--atlas-duration) var(--atlas-ease); }
-  .sheetHandle[aria-expanded="true"] svg { transform: rotate(180deg); }
-  .sheetHandle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
+  .grabber { width: 40px; height: 4px; border-radius: 2px; background: var(--atlas-line-strong); transition: background-color var(--atlas-duration) var(--atlas-ease); }
+  .sheetHandle:hover .grabber { background: var(--atlas-text-muted); }
+  .sheetHandle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; border-radius: 12px; }
   .tabs > [role="tabpanel"] {
     overflow: auto; padding-bottom: calc(var(--atlas-space-5) + env(safe-area-inset-bottom));
     mask-image: linear-gradient(to bottom, #000 calc(100% - var(--atlas-space-4)), transparent);
   }
-  .pickerBody { padding-inline: var(--atlas-space-1); }
+  .pickerBody { padding-right: 0; }
+  .slotHeader { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .slotHeaderIcon { width: 44px; height: 44px; }
+  .slotAction:global(.ui-button) { width: 44px; min-width: 44px; min-height: 44px; }
   .formats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .twoColumns { grid-template-columns: 1fr; }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .slot[data-busy]::after, .toolIcon[aria-busy] svg { animation: none; }
-  .poster, .stageHost, .results, .panel.panel, .stage, .sheetHandle svg { transition: none; }
+@media (max-width: 380px) {
+  .segmented button { min-width: 34px; padding-inline: var(--atlas-space-1); }
+  .tools .tool:global(.ui-button) { width: 36px; min-width: 36px; }
 }
-:global([data-motion="reduced"]) .slot[data-busy]::after, :global([data-ui-motion="reduce"]) .slot[data-busy]::after,
-:global([data-motion="reduced"]) .toolIcon[aria-busy] svg, :global([data-ui-motion="reduce"]) .toolIcon[aria-busy] svg { animation: none; }
-:global([data-motion="reduced"]) .poster, :global([data-ui-motion="reduce"]) .poster,
-:global([data-motion="reduced"]) .stageHost, :global([data-ui-motion="reduce"]) .stageHost,
-:global([data-motion="reduced"]) .panel.panel, :global([data-ui-motion="reduce"]) .panel.panel { transition: none; }
+
+/* ---------- Motion, transparency, forced colours ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .slot[data-busy]::after, .tool[aria-busy] svg, .download[aria-busy] svg, .skeletonRow > span, .lookRow, .tabs > [role="tabpanel"] { animation: none; }
+  .poster, .stageHost, .results, .panel, .stage, .slot, .resultIcon, .dollPane::before { transition: none; }
+  .slot:hover, .result:hover .resultIcon { transform: none; }
+}
+:global([data-motion="reduced"]) :is(.tool[aria-busy] svg, .download[aria-busy] svg, .skeletonRow > span, .lookRow, .tabs > [role="tabpanel"]),
+:global([data-ui-motion="reduce"]) :is(.tool[aria-busy] svg, .download[aria-busy] svg, .skeletonRow > span, .lookRow, .tabs > [role="tabpanel"]),
+:global([data-motion="reduced"]) .slot[data-busy]::after, :global([data-ui-motion="reduce"]) .slot[data-busy]::after { animation: none; }
+:global([data-motion="reduced"]) :is(.poster, .stageHost, .results, .panel, .stage, .slot, .resultIcon),
+:global([data-ui-motion="reduce"]) :is(.poster, .stageHost, .results, .panel, .stage, .slot, .resultIcon),
+:global([data-motion="reduced"]) .dollPane::before, :global([data-ui-motion="reduce"]) .dollPane::before { transition: none; }
+:global([data-motion="reduced"]) :is(.slot:hover, .result:hover .resultIcon),
+:global([data-ui-motion="reduce"]) :is(.slot:hover, .result:hover .resultIcon) { transform: none; }
+@media (prefers-reduced-transparency: reduce) {
+  .dollPane::before { filter: brightness(.42) saturate(.8); }
+  .panel { backdrop-filter: none; }
+}
+:global([data-transparency="reduced"]) .dollPane::before { filter: brightness(.42) saturate(.8); }
+:global([data-transparency="reduced"]) .panel { backdrop-filter: none; }
 @media (forced-colors: active) {
-  .slot, .result, .variants, .formatButton, .swatch, .stage, .cameraRow, .stagePill, .loaderText { border: 1px solid CanvasText; }
+  .dollPane::before, .dollPane::after { display: none; }
+  .slot, .result, .formatButton, .swatch, .stage, .stagePill, .loaderText, .segmented, .tools, .panel, .resultIcon { border: 1px solid CanvasText; }
   .slot[data-busy]::after, .slot[data-previewing]::after { box-shadow: none; outline: 2px dashed Highlight; }
   .loaderRing { background: Highlight; }
-  .slot[aria-pressed="true"], .result[aria-pressed="true"], .formatButton[aria-pressed="true"], .swatch[aria-pressed="true"] { outline: 2px solid Highlight; }
+  .skeletonRow > span { background: GrayText; }
+  .slot[aria-pressed="true"], .result[aria-pressed="true"], .formatButton[aria-pressed="true"], .swatch[aria-pressed="true"], .segmented button[aria-pressed="true"] { outline: 2px solid Highlight; }
 }

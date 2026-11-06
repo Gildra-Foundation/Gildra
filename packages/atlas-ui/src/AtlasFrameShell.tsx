@@ -57,8 +57,8 @@ function objectFocus(position: string | undefined): [number, number] {
 }
 
 /**
- * The site footer: the crest on a thin rail, one row of footer links with the
- * "Less motion" switch, and the one-line legal notice. Pages outside the frame
+ * The site footer: the crest on a thin rail, one row of footer links, a hairline,
+ * the "Less motion" switch, and the one-line legal notice. Pages outside the frame
  * (a full-bleed reader) reuse it.
  */
 export function AtlasFrameFooter({ locale, brand, legal, links, motion }: { locale: "en" | "ru"; legal: ReactNode; links: ReactNode; brand?: ReactNode; motion?: ReactNode }) {
@@ -67,6 +67,7 @@ export function AtlasFrameFooter({ locale, brand, legal, links, motion }: { loca
       {brand ? <div className={styles.legalBrand}>{brand}</div> : null}
       <div className={styles.legalLinks}>
         <nav aria-label={locale === "ru" ? "Подвал" : "Footer"} className={styles.legalNav}>{links}</nav>
+        <span className={styles.legalDivider} aria-hidden="true" />
         {motion ?? <AtlasMotionToggle locale={locale} />}
       </div>
       <p>{legal}</p>
