@@ -26,6 +26,9 @@ export const defaultTransmogState: TransmogState = {
 const MAX_TEXT = 48;
 const isSlot = (value: string): value is TransmogSlot => (transmogSlots as string[]).includes(value);
 
+/** True when a share link names its own outfit (possibly empty), so the starter outfit must not be worn. */
+export const hasOwnLooks = (params: URLSearchParams) => params.has("s");
+
 /** Reads a share link; unknown or broken parts fall back to defaults. */
 export function parseTransmogState(params: URLSearchParams): TransmogState {
   const state: TransmogState = { ...defaultTransmogState, looks: {}, hidden: [] };
@@ -52,14 +55,18 @@ export function parseTransmogState(params: URLSearchParams): TransmogState {
   return state;
 }
 
-/** Compact query string of a state; defaults are left out. */
-export function serializeTransmogState(state: TransmogState): string {
+/**
+ * Compact query string of a state; defaults are left out. `ownLooks` marks an
+ * outfit the visitor dressed: an empty one is kept as `s=` so the link opens
+ * an empty mannequin rather than the starter outfit.
+ */
+export function serializeTransmogState(state: TransmogState, ownLooks = false): string {
   const params = new URLSearchParams();
   if (state.race !== defaultTransmogState.race) params.set("race", state.race);
   if (state.gender === "f") params.set("g", "f");
   if (state.cls) params.set("c", state.cls);
   const looks = transmogSlots.filter((slot) => state.looks[slot]).map((slot) => `${slot}.${state.looks[slot]}`);
-  if (looks.length) params.set("s", looks.join("~"));
+  if (looks.length || ownLooks) params.set("s", looks.join("~"));
   if (state.hidden.length) params.set("hide", state.hidden.join("~"));
   if (state.format !== defaultTransmogState.format) params.set("f", state.format);
   if (state.background !== defaultTransmogState.background) params.set("bg", state.background);

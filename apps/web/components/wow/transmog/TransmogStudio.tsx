@@ -10,7 +10,7 @@ import {
   armoredSlots, background as backgroundOf, chrModelId, classIds, dollLeft, dollRight, dollWeapons, frameFormat, singleBody, transmogRaces, transmogSlots,
   type TransmogAppearance, type TransmogClass, type TransmogGender, type TransmogRace, type TransmogSetSummary, type TransmogSlot,
 } from "@/lib/wow/transmog/model";
-import { defaultTransmogState, parseTransmogState, serializeTransmogState, type TransmogState } from "@/lib/wow/transmog/state";
+import { defaultTransmogState, hasOwnLooks, parseTransmogState, serializeTransmogState, type TransmogState } from "@/lib/wow/transmog/state";
 import {
   lookIds, offsetCursor, outfitArmor, pushHistory, randomOffset, randomSlots, toggleHidden, wearLook, wearSet, type Looks, type Snapshot,
 } from "@/lib/wow/transmog/outfit";
@@ -92,16 +92,41 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
   const [preview, setPreview] = useState<{ slot: TransmogSlot; look: TransmogAppearance } | null>(null);
   const [busySlots, setBusySlots] = useState<TransmogSlot[]>([]);
   const pendingRef = useRef<TransmogSlot[]>([]);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [stuck, setStuck] = useState(false);
+
+  // The toolbar sticks under the site header on wide screens; once stuck it gets its own backdrop.
+  useEffect(() => {
+    const node = toolbarRef.current;
+    if (!node) return;
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const top = parseFloat(getComputedStyle(node).top);
+      setStuck(Number.isFinite(top) && getComputedStyle(node).position === "sticky" && node.getBoundingClientRect().top <= top + 0.5 && window.scrollY > 0);
+    };
+    const schedule = () => { if (!frame) frame = window.requestAnimationFrame(measure); };
+    measure();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => { window.removeEventListener("scroll", schedule); window.removeEventListener("resize", schedule); window.cancelAnimationFrame(frame); };
+  }, []);
 
   // Restore a share link (the starter outfit is already on the doll from the first HTML).
   useEffect(() => {
-    const parsed = parseTransmogState(new URLSearchParams(window.location.search));
+    const params = new URLSearchParams(window.location.search);
+    const parsed = parseTransmogState(params);
     setState(parsed);
     setMaxScale(window.matchMedia("(pointer: coarse)").matches ? 1 : 2);
     if (autoLoad()) setRequested(true);
     else setManual(true);
     const ids = transmogSlots.map((slot) => parsed.looks[slot]).filter((id): id is number => Boolean(id));
-    if (!ids.length) { setReady(true); return; }
+    if (!ids.length) {
+      // `s=` with no looks: the visitor shared an empty mannequin.
+      if (hasOwnLooks(params)) { setLooks({}); setWearingSet(null); setEdited(true); }
+      setReady(true);
+      return;
+    }
     const controller = new AbortController();
     fetch(`/api/wow/transmog/appearances?ids=${ids.join(",")}&locale=${apiLocale(lang)}`, { signal: controller.signal })
       .then(async (response) => {
@@ -126,7 +151,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
   useEffect(() => {
     if (!ready) return;
     const timer = window.setTimeout(() => {
-      const query = serializeTransmogState({ ...state, looks: edited ? lookIds(looks) : {} });
+      const query = serializeTransmogState({ ...state, looks: edited ? lookIds(looks) : {} }, edited);
       window.history.replaceState(window.history.state, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
     }, 250);
     return () => window.clearTimeout(timer);
@@ -320,11 +345,11 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
     const hidden = state.hidden.includes(slot);
     return (
       <button key={slot} type="button" className={compact ? `${styles.slot} ${styles.slotCompact}` : styles.slot} style={look ? qualityStyle(look.quality) : undefined}
-        aria-pressed={selected === slot} data-hidden={hidden || undefined} data-slot={slot} data-busy={busySlots.includes(slot) || undefined}
+        aria-pressed={selected === slot} data-hidden={hidden || undefined} data-empty={look ? undefined : ""} data-slot={slot} data-busy={busySlots.includes(slot) || undefined}
         data-previewing={preview?.slot === slot || undefined} aria-controls={sheetId}
         aria-label={c.slotButton(c.slots[slot], look?.name ?? null, hidden)} title={look ? `${c.slots[slot]}: ${look.name}` : c.slots[slot]}
         onClick={() => chooseSlot(slot)}>
-        {look?.iconName ? <TransmogIcon name={look.iconName} size={56} eager fallback={<SlotGlyph slot={slot} />} /> : <SlotGlyph slot={slot} />}
+        {look ? <TransmogIcon name={look.iconName} itemId={look.itemId} size={56} eager fallback={<SlotGlyph slot={slot} />} /> : <SlotGlyph slot={slot} />}
         {hidden ? <span className={styles.slotHidden} aria-hidden="true"><EyeOff /></span> : null}
       </button>
     );
@@ -341,7 +366,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
 
   return (
     <section className={styles.studio} aria-label={c.title} data-transmog-ready={ready || undefined} data-sheet-open={sheetOpen || undefined}>
-      <div className={styles.toolbar}>
+      <div className={styles.toolbar} ref={toolbarRef} data-stuck={stuck || undefined}>
         <div className={styles.identity}>
           <label className={styles.toolbarField}>
             <span className={styles.visuallyHidden}>{c.race}</span>
@@ -410,15 +435,19 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
                 </div>
               ) : null}
               {stage.status === "unsupported" ? <div className={styles.stageOverlay} data-stage-overlay="unsupported"><p className={styles.stageStatus}>{c.noWebgl}</p></div> : null}
-              <div className={styles.cameraRow} role="group" aria-label={c.camera} data-camera-controls hidden={!ready3d}>
+            </TransmogStage>
+            <div className={styles.stageBar}>
+              <div className={styles.weaponRow} role="group" aria-label={c.weapons}>{dollWeapons.map((slot) => slotButton(slot))}</div>
+              <div className={styles.slotStrip} role="group" aria-label={c.tabs.items}>{transmogSlots.map((slot) => slotButton(slot, true))}</div>
+              <div className={styles.cameraRow} data-camera="zoom" role="group" aria-label={c.camera} data-camera-controls hidden={!ready3d}>
                 <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.zoom(1 / 1.15)} aria-label={c.zoomIn} title={`${c.zoomIn} (+)`}><ZoomIn aria-hidden /></AtlasButton>
                 <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.zoom(1.15)} aria-label={c.zoomOut} title={`${c.zoomOut} (−)`}><ZoomOut aria-hidden /></AtlasButton>
+              </div>
+              <div className={styles.cameraRow} data-camera="view" role="group" aria-label={c.camera} hidden={!ready3d}>
                 <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.resetCamera()} aria-label={c.resetCamera} title={`${c.resetCamera} (Home)`}><LocateFixed aria-hidden /></AtlasButton>
                 <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => setPaused((value) => !value)} aria-pressed={paused} aria-label={paused ? c.play : c.pause} title={paused ? c.play : c.pause}>{paused ? <Play aria-hidden /> : <Pause aria-hidden />}</AtlasButton>
               </div>
-            </TransmogStage>
-            <div className={styles.weaponRow} role="group" aria-label={c.weapons}>{dollWeapons.map((slot) => slotButton(slot))}</div>
-            <div className={styles.slotStrip} role="group" aria-label={c.tabs.items}>{transmogSlots.map((slot) => slotButton(slot, true))}</div>
+            </div>
           </div>
           <div className={styles.dollColumn}>{dollRight.map((slot) => slotButton(slot))}</div>
         </div>

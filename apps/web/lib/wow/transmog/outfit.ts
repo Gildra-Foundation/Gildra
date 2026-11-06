@@ -42,9 +42,10 @@ export function pushHistory<T>(history: T[], entry: T, limit = HISTORY_LIMIT): T
 }
 
 /**
- * Looks that share a name are variants of one item (difficulty or colour):
- * the game lists them as one entry with several looks. Order is kept, the
- * first appearance of a name opens its group; duplicates are dropped.
+ * Looks that share a name and an icon are variants of one item (difficulty or
+ * colour): the game lists them as one entry with several looks. Same-named
+ * items with another icon (a gladiator helm of another class) stay apart.
+ * Order is kept, the first look of a group opens it; duplicates are dropped.
  */
 export type LookGroup = { key: string; name: string; quality: number; iconName?: string; variants: TransmogAppearance[] };
 export function groupVariants(items: TransmogAppearance[]): LookGroup[] {
@@ -53,7 +54,7 @@ export function groupVariants(items: TransmogAppearance[]): LookGroup[] {
   for (const item of items) {
     if (seen.has(item.appearanceId)) continue;
     seen.add(item.appearanceId);
-    const key = item.name.trim().toLocaleLowerCase();
+    const key = `${item.name.trim().toLocaleLowerCase()}|${item.iconName ?? ""}`;
     const group = groups.get(key);
     if (group) {
       group.variants.push(item);
