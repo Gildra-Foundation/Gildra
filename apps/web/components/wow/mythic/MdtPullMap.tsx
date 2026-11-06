@@ -1,6 +1,5 @@
 "use client";
 
-import { ResilientImage } from "@/components/media/ResilientImage";
 import { dungeonArtDirections, dungeonFrameArtwork } from "@/lib/wow/dungeonArtDirection";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Skull } from "lucide-react";
@@ -96,7 +95,7 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
       <div className={styles.workspace}>
         <div className={styles.maps}>{floors.map(floor => <figure className={styles.floor} key={floor} data-map-frame={`${slug}-mdt-${floor}`} data-frame-motif={dungeonArtDirections[slug].motif}>
           {floors.length > 1 && <figcaption>{copy.floor} {floor}</figcaption>}
-          <div className={styles.mapFrame} style={dungeonMapFrameLayout(slug)}>{<ResilientImage className={styles.frameArtwork} src={dungeonFrameArtwork(slug)} width={1536} height={1024} alt="" aria-hidden="true" />}<div className={styles.viewport} data-map-viewport tabIndex={0} role="region" aria-label={`${copy.mapLabel} · ${copy.floor} ${floor}`}>
+          <div className={styles.mapFrame} style={dungeonMapFrameLayout(slug, dungeonFrameArtwork(slug))}><span className={styles.frameArtwork} aria-hidden="true" /><div className={styles.viewport} data-map-viewport tabIndex={0} role="region" aria-label={`${copy.mapLabel} · ${copy.floor} ${floor}`}>
             <div className={styles.map}>
               {/* Keep original MDT pixels and marker coordinates in the same 3:2 plane. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}

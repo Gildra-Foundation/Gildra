@@ -13,12 +13,23 @@ const apertures: Record<DungeonSlug, { top: number; right: number; bottom: numbe
   "temple-of-sethraliss": { top: 10.45, right: 4.59, bottom: 9.57, left: 4.59, radius: "4% / 6%" },
 };
 
-export function dungeonMapFrameLayout(slug: DungeonSlug): CSSProperties {
-  const a = apertures[slug], width = 1 - (a.left + a.right) / 100, height = 1 - (a.top + a.bottom) / 100;
+/**
+ * The painted frame is drawn as a 9-slice cut at the measured aperture, so its corners and crest keep
+ * their painted proportions; only the plain rails stretch. Bands are sized from the frame width (cqw) at
+ * the artwork's own scale, and the box height leaves the window at the map's 3:2.
+ */
+export function dungeonMapFrameLayout(slug: DungeonSlug, frameArt: string): CSSProperties {
+  const a = apertures[slug];
+  const band = (side: number, axis: "x" | "y") => (axis === "x" ? side : side / 1.5);
+  const bands = { top: band(a.top, "y"), right: band(a.right, "x"), bottom: band(a.bottom, "y"), left: band(a.left, "x") };
+  const windowWidth = 1 - (a.left + a.right) / 100;
   return {
-    "--frame-top": `${a.top}%`, "--frame-right": `${a.right}%`,
-    "--frame-bottom": `${a.bottom}%`, "--frame-left": `${a.left}%`,
-    "--frame-window-height": height, "--frame-aspect": 1.5 * height / width,
+    "--frame-art": `url("${frameArt}")`,
+    "--frame-slice": `${(a.top * 10.24).toFixed(1)} ${(a.right * 15.36).toFixed(1)} ${(a.bottom * 10.24).toFixed(1)} ${(a.left * 15.36).toFixed(1)}`,
+    "--frame-top": `${bands.top.toFixed(3)}cqw`, "--frame-right": `${bands.right.toFixed(3)}cqw`,
+    "--frame-bottom": `${bands.bottom.toFixed(3)}cqw`, "--frame-left": `${bands.left.toFixed(3)}cqw`,
+    "--frame-bands-y": `${(bands.top + bands.bottom).toFixed(3)}cqw`,
+    "--frame-aspect": (1.5 / (windowWidth + (a.top + a.bottom) / 100)).toFixed(4),
     "--frame-window-radius": a.radius,
   } as CSSProperties;
 }
