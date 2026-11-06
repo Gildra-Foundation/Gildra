@@ -25,12 +25,12 @@ type Props = {
   select: (index: number, reveal?: boolean) => void;
   panel: RefObject<HTMLDivElement | null>;
   role: RaidPullRole | "all"; onRoleChange: (role: string) => void;
-  playerPicker?: ReactNode; sources: ReactNode;
+  playerPicker?: ReactNode;
   difficulty: "normal" | "heroic"; onDifficultyChange: (value: "normal" | "heroic") => void;
   spec?: { id?: number; className: { ru: string; en: string }; name: { ru: string; en: string } };
 };
 
-export function VoidspirePullOverview({ plan, locale, active, select, panel, role, onRoleChange, playerPicker, sources, spec, difficulty, onDifficultyChange }: Props) {
+export function VoidspirePullOverview({ plan, locale, active, select, panel, role, onRoleChange, playerPicker, spec, difficulty, onDifficultyChange }: Props) {
   const t = { ...raidPullCopy[locale], ...voidspireGuideCopy[locale].pulls };
   const bossCopy = raidBossPlannerCopy[locale];
   const encounter = Boolean(plan.encounter);
@@ -69,7 +69,6 @@ export function VoidspirePullOverview({ plan, locale, active, select, panel, rol
       <AtlasDisclosure summary={t.mapAndArenas} className={styles.map}>
         <RaidPullMap plan={plan} active={active} locale={locale} onSelect={select} role={role} simplified />
       </AtlasDisclosure>
-      {sources}
     </div>
   </div>;
 }

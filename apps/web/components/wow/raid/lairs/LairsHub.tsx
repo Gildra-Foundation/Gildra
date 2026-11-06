@@ -1,7 +1,7 @@
 import { ArrowRight, MapPin, Skull, Swords } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { midnightLairEncounters } from "@/lib/data/wow";
-import { getBoss, lairGuideSourceUrl, type Boss } from "@/lib/lairs";
+import { getBoss, type Boss } from "@/lib/lairs";
 import { RaidFramedArt } from "../RaidFramedArt";
 import { RaidLinkButton, RaidPlaque } from "../raidMaterial";
 import page from "../raidPage.module.css";
@@ -22,7 +22,6 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
   const lair = bosses.find(({ encounter }) => encounter.kind === "lair");
   const worldBosses = bosses.filter(({ encounter }) => encounter.kind === "world-boss");
   const worldExample = worldBosses[0]?.boss;
-  const announcement = midnightLairEncounters[0]?.sourceUrl;
 
   return (
     <AtlasFrame lang={locale} scene="lairs" className={page.page} dataAttributes={{ "data-lairs-root": true }}>
@@ -111,10 +110,6 @@ export function LairsHub({ locale = "ru" }: { locale?: LairsLocale }) {
             </RaidPlaque>
           ) : null}
         </div>
-        <p className={page.quiet}>
-          {announcement ? <><a href={announcement} target="_blank" rel="noreferrer">{copy.blizzard} ↗</a> · </> : null}
-          <a href={lairGuideSourceUrl} target="_blank" rel="noreferrer">{copy.icyVeins} ↗</a>
-        </p>
       </AtlasSection>
     </AtlasFrame>
   );

@@ -1,5 +1,5 @@
 import { wowSourceName, wowSourceText } from "@/lib/wow/sourceLocale";
-import { ArrowDown, ExternalLink } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import { AtlasDisclosure, AtlasFrame, AtlasHero, AtlasSection, AtlasTable } from "@/components/atlas";
 import { contentManifest } from "@/lib/data/wow";
 import { CopyWaypointButton } from "./lairs/CopyWaypointButton";
@@ -9,8 +9,6 @@ import {
   raidFinderWings,
   raidLootBands,
   tierRewards,
-  venomousRaidLootSource,
-  venomousRaidOverviewSource,
 } from "./venomousAbyssIntel";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { venomousCopy } from "./venomousCopy";
@@ -125,7 +123,6 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
             <ul className={page.tokens}>
               {Object.entries(tierRewards).map(([slug, reward]) => <li key={slug}><span>{bossName(slug)}</span>{wowSourceText(reward[locale], locale)}</li>)}
             </ul>
-            <p className={page.quiet}><a href={venomousRaidLootSource} target="_blank" rel="noreferrer">{copy.lootSource}<ExternalLink aria-hidden="true" /></a></p>
           </RaidPlaque>
           <ul className={page.plaqueGrid4}>
             {headlineRewards.map((reward) => (
@@ -141,7 +138,7 @@ export function VenomousAbyssPage({ locale }: { locale: RaidLocale }) {
                 <li key={achievement.name}><strong>{wowSourceName(achievement.name, locale)}</strong><span>{wowSourceText(achievement.requirement[locale], locale)}</span></li>
               ))}
             </ol>
-            <p className={page.quiet}>{copy.gloryReward} <a href={venomousRaidOverviewSource} target="_blank" rel="noreferrer">{copy.source}<ExternalLink aria-hidden="true" /></a></p>
+            <p className={page.quiet}>{copy.gloryReward}</p>
           </AtlasDisclosure>
         </div>
       </AtlasSection>

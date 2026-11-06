@@ -63,7 +63,7 @@ export function RaidPullMap({ plan, active, locale, onSelect, role = "all", simp
     </>}
     {!simplified && <RaidPullRouteList plan={plan} active={active} locale={locale} onSelect={onSelect} />}
     {!simplified && <RaidMapProgression plan={plan} locale={locale} bosses={bosses} defaultBoss={defaultBoss} />}
-    <p className={styles.attribution}><span>{t.sources} · © Blizzard Entertainment</span><a href="https://raidplan.io" target="_blank" rel="noreferrer">RaidPlan<ArrowUpRight size={12} aria-hidden="true" /></a></p>
+    <p className={styles.attribution}><span>© Blizzard Entertainment</span><a href="https://raidplan.io" target="_blank" rel="noreferrer">RaidPlan<ArrowUpRight size={12} aria-hidden="true" /></a></p>
   </section>;
 }
 

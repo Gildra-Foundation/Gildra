@@ -5,13 +5,12 @@ import { useSyncExternalStore, type CSSProperties } from 'react';
 import { Shield, Skull, Users, Sun, Bug, MoveRight, CircleDot } from 'lucide-react';
 import { AtlasSegmented } from '@gildra/atlas-ui/AtlasSegmented';
 import { AtlasField } from '@gildra/atlas-ui/AtlasField';
-import { AtlasDisclosure } from '@gildra/atlas-ui/AtlasDisclosure';
 import { MaterialButton } from '@/components/wow/shared/materialAtlas';
 import { RaidPlaque } from './raidMaterial';
 import { VoidspireGuideHint } from './VoidspireGuideHint';
 import { raidGuideMaterial } from './raidGuideMaterial';
 import { kithixRaid } from './kithixRaidData';
-import { kithixGuideCopy, kithixPhases, kithixMechanics, kithixEnemies, kithixGuideSources, type KithixLocale, type KithixRole } from './kithixGuideData';
+import { kithixGuideCopy, kithixPhases, kithixMechanics, kithixEnemies, type KithixLocale, type KithixRole } from './kithixGuideData';
 import shared from './sporefallGuide.module.css';
 import styles from './kithixGuide.module.css';
 
@@ -87,6 +86,5 @@ export function KithixGuideClient({locale}: {locale:KithixLocale}) {
       <div className={styles.enemyHeading}><Image className={styles.portrait} src={`/assets/wow/raids/kithix/npc-${enemy.npcId}.webp`} alt={enemy.name[locale]} width={112} height={112} /><h3><VoidspireGuideHint raid={raid} locale={locale} title={enemy.name[locale]} portrait={`/assets/wow/raids/kithix/npc-${enemy.npcId}.webp`} source={enemy.npcId ? `https://www.wowhead.com/${locale === 'ru' ? 'ru/' : ''}npc=${enemy.npcId}` : undefined} detail={<div className={shared.hintFacts}><p>{enemy.detail[locale]}</p><p><strong>{enemy.spell[locale]}</strong></p><p>{enemy.action[locale]}</p></div>} /></h3></div>
       <p>{enemy.detail[locale]}</p><p className={shared.personalAction}>{enemy.action[locale]}</p>
     </RaidPlaque>)}</div></section>
-    <div className={styles.sources}><AtlasDisclosure summary={copy.sources}><ul>{kithixGuideSources.map(source => <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title[locale]} ↗</a></li>)}</ul></AtlasDisclosure></div>
   </div>;
 }

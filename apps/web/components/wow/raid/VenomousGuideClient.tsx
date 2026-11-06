@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { useEffect, useSyncExternalStore, type MouseEvent } from 'react';
 import { ArrowDown, Sparkles } from 'lucide-react';
-import { AtlasDisclosure } from '@gildra/atlas-ui/AtlasDisclosure';
 import { AtlasTabs } from '@gildra/atlas-ui/AtlasTabs';
 import { lessMotion, subscribeSiteMotion } from '@gildra/atlas-ui/motionPreference';
 import { AtlasField } from '@gildra/atlas-ui/AtlasField';
@@ -89,7 +88,6 @@ export function VenomousGuideClient({locale}: {locale: Locale}) {
       <header>{add.portrait && <span className={styles.addPortrait}><Image src={add.portrait} width={96} height={112} alt="" /></span>}<div>{add.heroicOnly && <p className={styles.eyebrow}>{t.heroic}</p>}<h3><VoidspireGuideHint raid="venomous-abyss" locale={locale} title={add.name[locale]} portrait={add.portrait} source={`https://www.wowhead.com/${ru ? 'ru/' : ''}npc=${add.npcId}`} detail={<div className={styles.hintFacts}><p>{add.description[locale]}</p><p><strong>{t.response}: </strong>{add.action[locale]}</p>{add.cast && <><p><strong>{t.cast}: </strong>{add.cast.name[locale]}</p><p>{add.cast.action[locale]}</p></>}</div>} /></h3></div></header>
       <p>{add.description[locale]}</p><p className={styles.personalAction}>{add.action[locale]}</p>{add.cast && <div className={styles.enemyCast}><span>{t.cast}</span><VoidspireGuideHint raid="venomous-abyss" locale={locale} title={add.cast.name[locale]} source={`https://www.wowhead.com/${ru ? 'ru/' : ''}spell=${add.cast.spellId}`} detail={<div className={styles.hintFacts}><p>{add.cast.description[locale]}</p><p>{add.cast.action[locale]}</p></div>} /><p>{add.cast.action[locale]}</p>{specId > 0 && guide.mechanics.some(mechanic => mechanic.targetId === add.id && mechanic.counters.includes('interrupt')) && <CounterTools locale={locale} specId={specId} kinds={['interrupt']} target={add} />}</div>}<p className={styles.death}><Sparkles aria-hidden="true" />{add.death[locale]}</p>
     </RaidPlaque>)}</div></section>}
-    <RaidPlaque as="footer" raid="venomous-abyss" className={`${styles.panel} ${styles.sources}`}><AtlasDisclosure summary={t.sources}><ul>{guide.sources.map(source => <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a></li>)}</ul></AtlasDisclosure></RaidPlaque>
   </div>;
   return <div className={styles.guide} style={raidGuideMaterial('venomous-abyss')} data-venomous-guide data-boss={guide.id} data-difficulty={difficulty} data-spec={specId} data-guide-motion="static">
     <VenomousMotion encounter={guide.id} vertical={vertical} />

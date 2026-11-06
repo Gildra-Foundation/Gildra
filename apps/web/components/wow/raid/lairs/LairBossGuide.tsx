@@ -1,7 +1,7 @@
 import { wowGuideText } from "@/lib/wow/sourceLocale";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Crown, ExternalLink, Shield, Swords, UsersRound } from "lucide-react";
+import { ArrowRight, Crown, Shield, Swords, UsersRound } from "lucide-react";
 import { AtlasAnchorNav, AtlasBadge, AtlasFrame, AtlasHero, AtlasMetaList, AtlasSection, AtlasTable, type AtlasBadgeTone } from "@/components/atlas";
 import { RaidFramedArt } from "../RaidFramedArt";
 import { RaidPlaque, raidIconFrameStyle, raidMaterialStyles } from "../raidMaterial";
@@ -170,9 +170,6 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
           ]}
         />
         </RaidPlaque>
-        <p className={page.quiet}>
-          {boss.sourceUrl ? <a href={boss.sourceUrl} target="_blank" rel="noreferrer">{copy.strategySource}<ExternalLink aria-hidden="true" /></a> : null}
-        </p>
       </AtlasSection>
 
       <nav className={styles.pager} aria-label={copy.section}>

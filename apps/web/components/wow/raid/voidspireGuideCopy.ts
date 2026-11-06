@@ -5,8 +5,7 @@ export const voidspireGuideCopy = {
     season:'Midnight · Сезон 1', bosses:'Боссы', trash:'Враги между боссами', normal:'Обычный', heroic:'Героический', difficulty:'Сложность',
     spec:'Ваш класс и специализация', examples:'Весь рейд', sequence:'Ход боя', positioning:'Где стоять',
     mechanics:'Механики и ваши действия', source:'Видеоразбор', talent:'талант', noTool:{interrupt:'Прервать должен другой игрок.',stun:'Оглушить должен другой игрок.',magic:'Снять магию должен целитель.',defend:'Договоритесь с целителем о защите.',aoe:'Договоритесь с целителем о защите группы.'},
-    scope:'Героический · гайд для 12.0', heroicNote:'Героический', sources:'Источники',
-    provenance:'Тактика — по присланным видео. Корона Космоса — героический режим, запись для 12.0. Способности персонажей проверены 2 ноября 2026; ключевые механики боссов сверены с игровыми описаниями обычного и героического режимов 3 ноября 2026. Нужные таланты должны быть выбраны.',
+    scope:'Героический · гайд для 12.0', heroicNote:'Героический',
     kinds:{interrupt:'Прервать',stun:'Оглушить врагов',magic:'Снять магию',defend:'Личная защита',aoe:'Защита от массового урона'},
   },
   en: {
@@ -15,8 +14,7 @@ export const voidspireGuideCopy = {
     season:'Midnight · Season 1', bosses:'Bosses', trash:'Trash pulls', normal:'Normal', heroic:'Heroic', difficulty:'Difficulty',
     spec:'Your class and specialization', examples:'Whole raid', sequence:'Fight flow', positioning:'Where to stand',
     mechanics:'Mechanics and your actions', source:'Video guide', talent:'talent', noTool:{interrupt:'Assign the interrupt to another player.',stun:'Assign the stun to another player.',magic:'Assign the magic dispel to a healer.',defend:'Coordinate protection with a healer.',aoe:'Coordinate group protection with a healer.'},
-    scope:'Heroic · recorded for 12.0', heroicNote:'Heroic', sources:'Sources',
-    provenance:'Tactics follow the supplied videos. Crown of the Cosmos covers Heroic, recorded for 12.0. Player abilities checked on 2 November 2026; key boss mechanics checked against Normal and Heroic game descriptions on 3 November 2026. Required talents must be selected.',
+    scope:'Heroic · recorded for 12.0', heroicNote:'Heroic',
     kinds:{interrupt:'Interrupt',stun:'Stun adds',magic:'Dispel magic',defend:'Personal defensive',aoe:'AoE defensive'},
   },
 };

@@ -102,14 +102,6 @@ function JournalAbility({ ability, locale }: { ability: RaidMechanic; locale: Ra
           <div className={styles.mechanicTags}><AtlasBadge tone="neutral">{copy.roles[ability.role]}</AtlasBadge></div>
         </div>
         <p className={styles.mechanicText}>{locale === "ru" ? ability.description : ability.descriptionEn}</p>
-        {/* Source and build are provenance, folded like the guide cards' details. */}
-        <AtlasDisclosure summary={copy.more}>
-          <p className={styles.mechanicSource}>
-            {copy.journalSource(ability.descriptionBuild, ability.descriptionVerifiedAt)}
-            {" · "}
-            <a href={wowheadSpell(ability.spellId, locale)} target="_blank" rel="noreferrer">{copy.wowheadLink}</a>
-          </p>
-        </AtlasDisclosure>
       </div>
     </li>
   );

@@ -1,11 +1,11 @@
 import Image from "next/image";
-import { ExternalLink, HeartPulse, Shield, Swords } from "lucide-react";
-import { AtlasDisclosure, AtlasFrame, AtlasHero, AtlasSection, AtlasTable } from "@/components/atlas";
+import { HeartPulse, Shield, Swords } from "lucide-react";
+import { AtlasFrame, AtlasHero, AtlasSection, AtlasTable } from "@/components/atlas";
 import { difficulties, type BossGuide, type VerifiedAbilityIdentity } from "@/lib/data/wow";
 import { wowGuideText } from "@/lib/wow/sourceLocale";
 import { contentManifest } from "@/lib/data/wow";
 import { EncounterSwitcher, RaidPager } from "./RaidNavigation";
-import { lootBandIndexForBoss, raidLootBands, tierRewards, venomousRaidLootSource } from "./venomousAbyssIntel";
+import { lootBandIndexForBoss, raidLootBands, tierRewards } from "./venomousAbyssIntel";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { venomousCopy } from "./venomousCopy";
 import page from "./raidPage.module.css";
@@ -61,8 +61,6 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
   const summary = reviewed ? (locale === "ru" ? reviewed.summaryRu : reviewed.summaryEn)
     : wowGuideText(boss.summary[locale].replace(/Nek[’']zali/g, boss.name[locale]), locale);
   const pull = labelled(wowGuideText(boss.pull[locale], locale));
-  const sources = [...(reviewed?.sources ?? []), { title: copy.strategySource, url: boss.source }]
-    .filter((source, index, all) => all.findIndex((entry) => entry.url === source.url) === index);
 
   return (
     <AtlasFrame lang={locale} still className={page.page} dataAttributes={{ "data-raid-page": "venomous-abyss" }}>
@@ -168,11 +166,7 @@ export function VenomousBossPage({ boss, bosses, locale }: { boss: BossGuide; bo
             ]}
           />
           {tierReward ? <p className={page.meta}>{copy.tierReward}: <strong>{tierReward[locale]}</strong></p> : null}
-          <p className={page.quiet}><a href={venomousRaidLootSource} target="_blank" rel="noreferrer">{copy.lootSource}<ExternalLink aria-hidden="true" /></a></p>
         </RaidPlaque>
-        <AtlasDisclosure summary={copy.sources}>
-          <ul className={page.sourceList}>{sources.map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}</ul>
-        </AtlasDisclosure>
       </AtlasSection>
 
       <RaidPager label={shared.pagerLabel} back={{ href: raidHref, label: shared.allBosses(raidName) }} next={encounters[order + 1]} nextLabel={shared.nextBoss} />
