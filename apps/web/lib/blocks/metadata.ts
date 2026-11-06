@@ -40,6 +40,8 @@ export function pageMetadata({
       description,
       siteName: "Gildra",
       type: "website",
+      locale: lang === "ru" ? "ru_RU" : "en_US",
+      url: gameHref(game, lang, path),
       ...(image ? { images: [image] } : {}),
     },
   };

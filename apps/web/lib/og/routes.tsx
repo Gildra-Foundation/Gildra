@@ -7,6 +7,8 @@ import { getMidnightClass, getMidnightClassSpec, getMidnightClassSpecs, midnight
 import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
 import { getBoss } from "@/lib/lairs";
 import { getTalentSpecTheme, talentSpecThemes } from "@/lib/talentSpecThemes";
+import professionIndex from "@/data/wow/professions/index.json";
+import { libraryDatasetText } from "@/components/library/libraryCopy";
 import { atlasOgImage, type AtlasOgSpec } from "./atlasOg";
 import type { Lang as Locale } from "@/lib/i18n-paths";
 
@@ -46,6 +48,12 @@ const hubs = {
   classes: (locale) => ({ ...scene("classes"), eyebrow: "Midnight", title: ru(locale) ? "Классы и специализации" : "Classes and specializations", facts: [count(locale, midnightClasses.length, "класс", "класса", "классов", "class", "classes"), count(locale, midnightSpecializations.length, "специализация", "специализации", "специализаций", "specialization")] }),
   tierLists: (locale) => ({ ...scene("tierLists"), eyebrow: "Mythic+ · Raids", title: ru(locale) ? "Тир-листы" : "Tier lists", subtitle: ru(locale) ? "Сила специализаций в ключах и рейдах." : "Specialization strength in keys and raids." }),
   database: (locale) => ({ ...scene("archive"), eyebrow: "World of Warcraft", title: ru(locale) ? "База данных" : "Database", subtitle: ru(locale) ? "Предметы, заклинания, задания и существа с подсказками и историей версий." : "Items, spells, quests and creatures with tooltips and version history." }),
+  professions: (locale) => ({ ...scene("articles"), eyebrow: "Midnight", title: ru(locale) ? "Профессии" : "Professions", subtitle: ru(locale) ? "Прокачка 1–100 по ценам аукциона и выгодные рецепты." : "Leveling 1–100 at auction prices and profitable crafts.", facts: [count(locale, professionIndex.length, "профессия", "профессии", "профессий", "profession")] }),
+  raidComposition: (locale) => ({ ...scene("raids"), eyebrow: "Midnight · Raids", title: ru(locale) ? "Состав рейда" : "Raid composition", subtitle: ru(locale) ? "Баффы, рассеивания и полезности вашего ростера." : "Buffs, dispels and utility of your roster." }),
+  transmog: (locale) => ({ ...scene("transmog"), eyebrow: "World of Warcraft", title: ru(locale) ? "Трансмогрификация" : "Transmog studio", subtitle: ru(locale) ? "Примеряйте облики и наборы на свою модель." : "Try appearances and sets on your character model." }),
+  auction: (locale) => ({ ...scene("articles"), eyebrow: "World of Warcraft", title: ru(locale) ? "Аукцион" : "Auction House", subtitle: ru(locale) ? "Цены товаров и снаряжения по регионам." : "Commodity and gear prices by region." }),
+  season2: (locale) => ({ ...scene("dungeons"), eyebrow: "Midnight", title: ru(locale) ? "Сезон 2" : "Season 2", subtitle: ru(locale) ? "Подземелья Mythic+, рейды и вылазки сезона." : "Mythic+ dungeons, raids and delves of the season." }),
+  whatsNew: (locale) => ({ ...scene("articles"), eyebrow: "Gildra", title: ru(locale) ? "Что нового" : "What's new", subtitle: ru(locale) ? "Что изменилось на сайте для игроков." : "What changed on the site for players." }),
   library: (locale) => ({ ...scene("library"), eyebrow: "World of Warcraft", title: ru(locale) ? "Библиотека" : "Library", subtitle: ru(locale) ? "Наборы игровых данных: подсказки, изображения и связи." : "Game datasets: tooltips, images and relations." }),
 } satisfies Record<string, (locale: Locale) => Spec>;
 
@@ -150,6 +158,45 @@ const kinds = {
     };
   },
 
+  /** Cards of the cached default views (/wow/mythic-plus/cached/<page>, lib/routes/cachedViews.ts): the section's own card. */
+  mythicPlusPage: (locale: Locale, { page }: Params): Spec => {
+    const sections = { stats: hubs.mythicPlusStats, comps: hubs.mythicPlusComps, routes: hubs.mythicPlusRoutes, meta: hubs.mythicPlusMeta, leaderboard: hubs.mythicPlusLeaderboard } as const;
+    return (sections[page as keyof typeof sections] ?? hubs.mythicPlus)(locale);
+  },
+
+  libraryDataset: (locale: Locale, { dataset }: Params): Spec => {
+    const line = libraryDatasetText[dataset]?.[locale];
+    if (!line) return hubs.library(locale);
+    return { ...scene("library"), eyebrow: ru(locale) ? "Библиотека · World of Warcraft" : "Library · World of Warcraft", title: line };
+  },
+
+  profession: (locale: Locale, { slug }: Params): Spec => {
+    const entry = professionIndex.find((profession) => profession.slug === slug);
+    if (!entry) return hubs.professions(locale);
+    return {
+      ...scene("articles"),
+      eyebrow: ru(locale) ? "Профессия · Midnight" : "Profession · Midnight",
+      title: entry.name[locale],
+      subtitle: entry.kind === "crafting" ? (ru(locale) ? "Прокачка 1–100 по ценам аукциона." : "Leveling 1–100 at auction prices.") : undefined,
+      facts: [
+        ...(entry.recipes ? [count(locale, entry.recipes, "рецепт", "рецепта", "рецептов", "recipe")] : []),
+        ...(entry.treasures ? [count(locale, entry.treasures, "сокровище", "сокровища", "сокровищ", "treasure")] : []),
+      ],
+    };
+  },
+
+  leaderboardSpec: (locale: Locale, { spec: slug }: Params): Spec => {
+    const theme = getTalentSpecTheme(slug);
+    if (!theme) return hubs.mythicPlusLeaderboard(locale);
+    return {
+      ...scene("mythicPlus"),
+      emblem: theme.iconUrl,
+      eyebrow: ru(locale) ? "Рейтинг игроков Mythic+" : "Mythic+ leaderboard",
+      title: ru(locale) ? `${theme.specNameRu} · ${theme.classNameRu}` : `${theme.specName} ${theme.className}`,
+      subtitle: ru(locale) ? "Лучшие игроки специализации по рейтингу." : "The specialization's top players by rating.",
+    };
+  },
+
   talents: (locale: Locale, { spec: slug }: Params): Spec => {
     const theme = getTalentSpecTheme(slug);
     if (!theme) return hubs.classes(locale);
@@ -177,6 +224,9 @@ const staticParams = {
   class: () => midnightClasses.map(({ slug }) => ({ class: slug })),
   spec: () => midnightSpecializations.map((entry) => ({ class: entry.classSlug, spec: entry.slug })),
   talents: () => talentSpecThemes.map(({ slug }) => ({ spec: slug })),
+  leaderboardSpec: () => talentSpecThemes.map(({ slug }) => ({ spec: slug })),
+  profession: () => professionIndex.map(({ slug }) => ({ slug })),
+  libraryDataset: () => Object.keys(libraryDatasetText).map((dataset) => ({ dataset })),
 };
 
 export function ogStaticParams(key: keyof typeof staticParams) {

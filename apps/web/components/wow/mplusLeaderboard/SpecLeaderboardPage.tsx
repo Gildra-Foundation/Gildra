@@ -17,6 +17,8 @@ import {
   className, formatScore, formatShare, pageKit, roleKits, specName, type Locale,
 } from "./LeaderboardParts";
 import styles from "./leaderboard.module.css";
+import { JsonLd } from "@/lib/seo/jsonld";
+import { leaderboardLd } from "@/lib/seo/itemLists";
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -38,6 +40,7 @@ export async function SpecLeaderboardPage({ locale, spec, searchParams }: { loca
 
   return (
     <AtlasFrame lang={locale} className={styles.page} still foot={false} dataAttributes={{ "data-mythic-hub": true }}>
+      {page?.entries.length ? <JsonLd data={leaderboardLd(crumbs[crumbs.length - 1].label, page.entries, locale)} /> : null}
       <MythicHubBackdrop />
       <MythicHubMotion />
       <div className={styles.hero} data-hub-hero style={{ "--class-color": spec.color } as CSSProperties}>

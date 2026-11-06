@@ -3,7 +3,7 @@ import type { LegalProps } from "@/components/blocks/shared/legal";
 
 const EN: LegalProps = {
   title: "Privacy Policy",
-  lede: "What Gildra stores in your browser and which data the site collects.",
+  lede: "Gildra privacy policy: what the site stores in your browser, which data it collects and how you control it.",
   updated: "2026-10-23",
   updatedLabel: "Updated",
   crumbs: [{ label: "Gildra", href: "/" }, { label: "Privacy" }],
@@ -26,7 +26,7 @@ const EN: LegalProps = {
 
 const RU: LegalProps = {
   title: "Политика конфиденциальности",
-  lede: "Что Gildra хранит в вашем браузере и какие данные собирает сайт.",
+  lede: "Политика конфиденциальности Gildra: что сайт хранит в вашем браузере, какие данные собирает и как ими распоряжаться.",
   updated: "2026-10-23",
   updatedLabel: "Обновлено",
   crumbs: [{ label: "Gildra", href: "/" }, { label: "Конфиденциальность" }],
@@ -55,11 +55,11 @@ export const privacyPage = definePage({
     lang === "ru"
       ? {
           title: "Политика конфиденциальности — Gildra",
-          description: "Что Gildra хранит в вашем браузере и какие данные собирает сайт.",
+          description: "Политика конфиденциальности Gildra: что сайт хранит в вашем браузере, какие данные собирает и как ими распоряжаться.",
         }
       : {
           title: "Privacy Policy — Gildra",
-          description: "What Gildra stores in your browser and which data the site collects.",
+          description: "Gildra privacy policy: what the site stores in your browser, which data it collects and how you control it.",
         },
   page: ({ lang }) => ({
     id: "wow/privacy",

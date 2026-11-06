@@ -9,7 +9,7 @@ import { libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/
 import { libraryCardLayout, libraryRails } from "@/components/library/libraryRails";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
 import { libraryDatasetHead, requireCatalogSession } from "@/lib/library/server";
-import { pairedAlternates } from "@/lib/seo/metadata";
+import { pairedAlternates, withPageOpenGraph } from "@/lib/seo/metadata";
 import type { Metadata } from "next";
 import styles from "./library.module.css";
 
@@ -19,11 +19,19 @@ export type LibraryDatasetFilters = { q?: string; product?: string; facet?: stri
 export async function libraryDatasetMetadata(lang: "en" | "ru", slug: string): Promise<Metadata> {
   const head = await libraryDatasetHead(slug, lang === "ru" ? "ru_RU" : "en_US");
   const line = libraryDatasetLine({ slug, description: head.description }, lang);
-  return {
+  const what = line ? `${line.charAt(0).toLowerCase()}${line.slice(1)}` : "";
+  return withPageOpenGraph(lang, {
     title: `${head.name} — ${libraryCopy[lang].site}`,
-    ...(line ? { description: `${head.name}: ${line.charAt(0).toLowerCase()}${line.slice(1)}. World of Warcraft.` } : {}),
+    ...(line ? { description: datasetDescription(lang, head.name, what) } : {}),
     alternates: pairedAlternates(lang, `/library/${slug}`),
-  };
+  });
+}
+
+/** "World of Warcraft Mounts: mounts and how to get them. In-game tooltips, …"; the second sentence only while it fits a snippet. */
+function datasetDescription(lang: "en" | "ru", name: string, what: string) {
+  const first = lang === "ru" ? `${name} World of Warcraft: ${what}.` : `World of Warcraft ${name}: ${what}.`;
+  const more = lang === "ru" ? " Игровые подсказки, иконки и связи между записями." : " In-game tooltips, icons and links between records.";
+  return first.length + more.length <= 160 ? first + more : first;
 }
 
 function optionalNumber(value?: string) { const parsed = Number(value); return value && Number.isFinite(parsed) ? parsed : undefined; }

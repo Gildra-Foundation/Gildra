@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { pairedAlternates } from "@/lib/seo/metadata";
+import { dungeonMetadata } from "@/lib/seo/dungeonMetadata";
 import { notFound } from "next/navigation";
 import { MythicRouteMap } from "@/components/wow/mythic/MythicRouteMap";
 import { getDungeonCombatIntel } from "@/components/wow/mythic/dungeonCombatIntel.server";
@@ -8,7 +8,7 @@ import { localizedRoute } from "@/components/wow/mythic/localizedRoute";
 
 export const dynamicParams = false;
 export function generateStaticParams() { return Object.keys(dungeonRoutes).map((dungeon) => ({ season: "midnight-season-2", dungeon })); }
-export async function generateMetadata({ params }: { params: Promise<{ season: string; dungeon: string }> }): Promise<Metadata> { const { season, dungeon: slug } = await params; const dungeon = season === "midnight-season-2" ? getDungeonRoute(slug as DungeonSlug) : null; return dungeon ? { title: `${dungeon.name} — Midnight Season 2 Mythic+ — Gildra`, alternates: pairedAlternates("en", `/wow/mythic-plus/${season}/${dungeon.slug}`) } : {}; }
+export async function generateMetadata({ params }: { params: Promise<{ season: string; dungeon: string }> }): Promise<Metadata> { const { season, dungeon } = await params; return dungeonMetadata("en", season, dungeon); }
 export default async function Page({ params }: { params: Promise<{ season: string; dungeon: string }> }) {
   const { season, dungeon: slug } = await params;
   const route = season === "midnight-season-2" ? getDungeonRoute(slug as DungeonSlug) : null;

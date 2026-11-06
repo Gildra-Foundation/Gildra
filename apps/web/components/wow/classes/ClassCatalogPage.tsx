@@ -15,6 +15,7 @@ import {
   type Locale, type SpecEntry,
 } from "./ClassParts";
 import styles from "./classCatalog.module.css";
+import { JsonLd, itemListLd } from "@/lib/seo/jsonld";
 
 const roleGroup = (role: SpecEntry["role"]) => (role === "tank" || role === "healer" ? role : "dps");
 
@@ -28,6 +29,7 @@ export async function ClassCatalogPage({ locale }: { locale: Locale }) {
 
   return (
     <AtlasFrame lang={locale} scene="classes">
+      <JsonLd data={itemListLd(copy.title, classes.map((specs) => ({ name: locale === "ru" ? specs[0].classNameRu : specs[0].className, href: `${locale === "ru" ? "/ru" : ""}/wow/classes/${specs[0].classSlug}` })), false)} />
       <AtlasHero
         breadcrumbs={trail(locale, "classes")}
         breadcrumbsLabel={copy.breadcrumbs}

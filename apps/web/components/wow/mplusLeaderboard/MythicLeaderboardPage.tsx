@@ -17,6 +17,8 @@ import {
   formatScore, pageKit, roleKits, type Locale,
 } from "./LeaderboardParts";
 import styles from "./leaderboard.module.css";
+import { JsonLd } from "@/lib/seo/jsonld";
+import { leaderboardLd } from "@/lib/seo/itemLists";
 
 const roleIcons = { tank: Shield, healer: HeartPulse, dps: Swords } satisfies Record<LeaderboardRole, unknown>;
 type Params = Record<string, string | string[] | undefined>;
@@ -35,6 +37,7 @@ export async function MythicLeaderboardPage({ locale, searchParams }: { locale: 
 
   return (
     <AtlasFrame lang={locale} className={styles.page} still foot={false} dataAttributes={{ "data-mythic-hub": true }}>
+      {page?.entries.length ? <JsonLd data={leaderboardLd(crumbs[crumbs.length - 1].label, page.entries, locale)} /> : null}
       <MythicHubBackdrop />
       <MythicHubMotion />
       <div className={styles.hero} data-hub-hero>

@@ -6,7 +6,6 @@ import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
 import { RecordSections, RecordSectionsSkeleton } from "@/components/database/RecordSections";
 import { TooltipBody, recordFacts, tooltipClassName } from "@/components/database/TooltipContent";
-import { JsonLd, breadcrumbListLd } from "@/lib/seo/jsonld";
 import { MaterialPlaque, materialButtonStyle, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { libraryKit } from "@/components/library/libraryKit";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
@@ -25,7 +24,7 @@ type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships
   libraryDataset?: { slug: string; name: string };
   /** 3D model of the record (library mounts and transmog sets); the tooltip section gets a second column for it. */
   model?: ReactNode;
-  /** Canonical address of the record (breadcrumb structured data). */
+  /** Canonical address of the record (the hero trail carries the BreadcrumbList). */
   canonicalPath?: string };
 
 function hasUnresolvedTemplate(value: string) {
@@ -76,7 +75,7 @@ function itemQuality(entity: GameEntity) {
  * facts or more) and the related records.
  * Build, ids, completeness and the raw record are not shown. Server-only: no tooltip code ships to the browser.
  */
-export async function EntityDetailPage({ entity, entityType, relationships, lang, libraryDataset, model, canonicalPath }: Props) {
+export async function EntityDetailPage({ entity, entityType, relationships, lang, libraryDataset, model }: Props) {
   // An English-only record keeps its English name on the Russian page (game names stay English) instead of "Spell #id".
   const englishName = entity.name;
   entity = await withSummaryIcon(catalogLocaleView(entity, lang), lang);
@@ -176,7 +175,6 @@ export async function EntityDetailPage({ entity, entityType, relationships, lang
   const bodyFacts = heroSide === factsPlaque ? null : factsPlaque;
   return (
     <PageShell lang={lang}>
-      {canonicalPath ? <JsonLd data={breadcrumbListLd(breadcrumbs, canonicalPath)} /> : null}
       <AtlasFrame as="div" lang={lang} scene="archiveDeep" dataAttributes={{ "data-database-entity": true }}>
         <AtlasHero
           breadcrumbs={breadcrumbs}
