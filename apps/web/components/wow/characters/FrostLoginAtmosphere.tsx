@@ -4,21 +4,19 @@ import { useEffect, useRef, type CSSProperties } from "react";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import styles from "./frostLogin.module.css";
 
-const snow = Array.from({ length: 48 }, (_, index) => ({
-  "--snow-x": `${(index * 23.71) % 100}%`,
-  "--snow-delay": `${-((index * 3.193) % 27)}s`,
-  "--snow-duration": `${16 + (index * 1.719) % 20}s`,
-  "--snow-size": `${index % 7 === 0 ? 4 : index % 3 === 0 ? 3 : 2}px`,
-  "--snow-drift": `${40 + (index * 17) % 120}px`,
-}) as CSSProperties);
+// Position and timing only; size, brightness and drift come from the stylesheet (nth-child),
+// so the keyframes stay free of custom properties and run on the compositor.
+const snow = Array.from({ length: 32 }, (_, index) => ({
+  left: `${(index * 23.71) % 100}%`,
+  animationDelay: `${-((index * 3.193) % 27)}s`,
+  animationDuration: `${16 + (index * 1.719) % 20}s`,
+}) satisfies CSSProperties);
 
-const shards = Array.from({ length: 12 }, (_, index) => ({
-  "--snow-x": `${(index * 31.73 + 7) % 100}%`,
-  "--snow-delay": `${-((index * 4.217) % 24)}s`,
-  "--snow-duration": `${20 + (index * 2.13) % 14}s`,
-  "--snow-size": `${7 + index % 4 * 2}px`,
-  "--snow-drift": `${100 + index % 5 * 35}px`,
-}) as CSSProperties);
+const shards = Array.from({ length: 8 }, (_, index) => ({
+  left: `${(index * 31.73 + 7) % 100}%`,
+  animationDelay: `${-((index * 4.217) % 24)}s`,
+  animationDuration: `${20 + (index * 2.13) % 14}s`,
+}) satisfies CSSProperties);
 
 /** CSS owns the weather; JS only pauses it when hidden or motion is reduced. */
 export function FrostLoginAtmosphere() {
@@ -55,9 +53,11 @@ export function FrostLoginAtmosphere() {
     };
   }, []);
   return <div ref={root} className={styles.atmosphere} aria-hidden="true">
-    <span className={styles.mist} />
+    <span className={styles.haze}>
+      <span className={styles.mist} />
+      <span className={`${styles.wind} ${styles.windFar}`} />
+    </span>
     <span className={styles.wind} />
-    <span className={`${styles.wind} ${styles.windFar}`} />
     {snow.map((style, index) => <i key={index} className={styles.snow} style={style} />)}
     {shards.map((style, index) => <i key={`ice-${index}`} className={styles.shard} style={style} />)}
   </div>;
