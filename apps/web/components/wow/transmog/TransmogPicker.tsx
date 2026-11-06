@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
-import { Eye, EyeOff, Shirt, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Shirt, X } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasInput, AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
@@ -9,7 +9,7 @@ import {
   armoredSlots, armorTypes, classArmor, classId, classIds,
   type ArmorType, type TransmogAppearance, type TransmogClass, type TransmogSetDetail, type TransmogSetSummary, type TransmogSlot,
 } from "@/lib/wow/transmog/model";
-import { groupVariants, playerSet } from "@/lib/wow/transmog/outfit";
+import { groupVariants, playerSet, type LookGroup } from "@/lib/wow/transmog/outfit";
 import { SlotGlyph } from "./TransmogSlotGlyph";
 import { transmogCopy } from "./transmogCopy";
 import { TransmogIcon } from "./TransmogIcon";
@@ -172,7 +172,7 @@ export function ItemPicker({ lang, slot, cls, current, hidden, onPick, onPreview
     <div className={styles.pickerBody}>
       <div className={styles.slotHeader}>
         <span className={styles.slotHeaderIcon} style={current ? qualityStyle(current.quality) : undefined} aria-hidden="true">
-          {current?.iconName ? <TransmogIcon name={current.iconName} size={44} eager /> : null}
+          {current ? <TransmogIcon name={current.iconName} itemId={current.itemId} size={44} eager fallback={<SlotGlyph slot={slot} />} /> : <SlotGlyph slot={slot} />}
         </span>
         <div className={styles.slotHeaderText}>
           <h3 className={styles.slotTitle}>{c.slots[slot]}</h3>
@@ -199,42 +199,70 @@ export function ItemPicker({ lang, slot, cls, current, hidden, onPick, onPreview
       {search.state === "error" ? <AtlasButton onClick={search.retry}>{c.retry}</AtlasButton> : null}
       <ul className={styles.results} data-transmog-results data-loading={search.state === "loading" || undefined} onKeyDown={listKeys}
         onMouseLeave={() => preview(null, 160)}>
-        {groupVariants(search.items).map((group) => {
-          const wornIndex = group.variants.findIndex((entry) => entry.appearanceId === current?.appearanceId);
-          const main = group.variants[Math.max(0, wornIndex)];
-          return (
-            <li key={group.key} className={styles.lookRow} style={qualityStyle(group.quality)}>
-              <button type="button" className={styles.result} aria-pressed={wornIndex >= 0}
-                onClick={() => choose(main)} onMouseEnter={(event) => hover(event, main)} onFocus={() => preview(main, 60)} onBlur={() => preview(null, 200)}
-                data-appearance={main.modifiedAppearanceId}>
-                <span className={styles.resultIcon} aria-hidden="true">
-                  <TransmogIcon name={group.iconName} size={40} fallback={<SlotGlyph slot={slot} />} />
-                </span>
-                <span className={styles.resultText}>
-                  <span className={styles.resultName}>{group.name}</span>
-                  {armor === "all" && main.armor ? <span className={styles.resultMeta}>{c.armor[main.armor]}</span> : null}
-                </span>
-                {wornIndex >= 0 ? <span className={styles.wornTag}>{c.worn}</span> : null}
-              </button>
-              {group.variants.length > 1 ? (
-                <div className={styles.variants} role="group" aria-label={group.name}>
-                  {group.variants.map((item, index) => (
-                    <button key={item.appearanceId} type="button" className={styles.variant} aria-pressed={index === wornIndex}
-                      aria-label={c.variant(index + 1, group.variants.length)} title={c.variant(index + 1, group.variants.length)}
-                      onClick={() => choose(item)} onMouseEnter={(event) => hover(event, item)} onFocus={() => preview(item, 60)} onBlur={() => preview(null, 200)}
-                      data-appearance={item.modifiedAppearanceId}>
-                      {index + 1}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </li>
-          );
-        })}
+        {groupVariants(search.items).map((group) => (
+          <LookRow key={group.key} group={group} slot={slot} current={current} showArmor={armor === "all"} lang={lang}
+            onChoose={choose} onHover={hover} onPreview={preview} />
+        ))}
         {search.cursor ? <li ref={sentinel} className={styles.sentinel} aria-hidden="true" /> : null}
       </ul>
       {search.cursor ? <AtlasButton className={styles.more} onClick={search.more} disabled={search.state === "loading"}>{c.more}</AtlasButton> : null}
     </div>
+  );
+}
+
+/**
+ * One look of the list. Variants (difficulty, colour) are a one-line stepper
+ * under the name: ‹ 3/8 › wears the previous or next look of the item.
+ */
+function LookRow({ group, slot, current, showArmor, lang, onChoose, onHover, onPreview }: {
+  group: LookGroup;
+  slot: TransmogSlot;
+  current?: TransmogAppearance;
+  showArmor: boolean;
+  lang: Lang;
+  onChoose: (item: TransmogAppearance) => void;
+  onHover: (event: React.MouseEvent, item: TransmogAppearance) => void;
+  onPreview: (item: TransmogAppearance | null, delay: number) => void;
+}) {
+  const c = transmogCopy[lang];
+  const [browsed, setBrowsed] = useState(0);
+  const total = group.variants.length;
+  const wornIndex = group.variants.findIndex((entry) => entry.appearanceId === current?.appearanceId);
+  const index = wornIndex >= 0 ? wornIndex : Math.min(browsed, total - 1);
+  const main = group.variants[index];
+  const step = (delta: number) => {
+    const next = (index + delta + total) % total;
+    setBrowsed(next);
+    onChoose(group.variants[next]);
+  };
+  return (
+    <li className={styles.lookRow} style={qualityStyle(group.quality)} data-variants={total > 1 || undefined}>
+      <button type="button" className={styles.result} aria-pressed={wornIndex >= 0}
+        onClick={() => onChoose(main)} onMouseEnter={(event) => onHover(event, main)} onFocus={() => onPreview(main, 60)} onBlur={() => onPreview(null, 200)}
+        data-appearance={main.modifiedAppearanceId}>
+        <span className={styles.resultIcon} aria-hidden="true">
+          <TransmogIcon name={main.iconName ?? group.iconName} itemId={main.itemId} size={40} fallback={<SlotGlyph slot={slot} />} />
+        </span>
+        <span className={styles.resultText}>
+          <span className={styles.resultName}>{group.name}</span>
+          {showArmor && main.armor ? <span className={styles.resultMeta}>{c.armor[main.armor]}</span> : null}
+        </span>
+        {wornIndex >= 0 ? <span className={styles.wornTag}>{c.worn}</span> : null}
+      </button>
+      {total > 1 ? (
+        <div className={styles.variants} role="group" aria-label={group.name} data-variant-stepper>
+          <button type="button" className={styles.variantStep} onClick={() => step(-1)} aria-label={c.prevVariant} title={c.prevVariant}
+            onMouseEnter={(event) => onHover(event, group.variants[(index - 1 + total) % total])} data-variant-prev>
+            <ChevronLeft aria-hidden />
+          </button>
+          <span className={styles.variantCount} aria-live="polite" aria-label={c.variant(index + 1, total)}>{index + 1}/{total}</span>
+          <button type="button" className={styles.variantStep} onClick={() => step(1)} aria-label={c.nextVariant} title={c.nextVariant}
+            onMouseEnter={(event) => onHover(event, group.variants[(index + 1) % total])} data-variant-next>
+            <ChevronRight aria-hidden />
+          </button>
+        </div>
+      ) : null}
+    </li>
   );
 }
 
@@ -270,7 +298,7 @@ export function SetPicker({ lang, cls, wearing, onWear }: { lang: Lang; cls: Tra
           <li key={entry.id}>
             <button type="button" className={styles.result} aria-pressed={wearing === entry.id} onClick={() => onWear(entry)} data-set={entry.id}
               onMouseEnter={() => prefetchJson(setDetailUrl(lang, entry.id))} onFocus={() => prefetchJson(setDetailUrl(lang, entry.id))}>
-              <span className={styles.resultIcon} aria-hidden="true"><TransmogIcon name={entry.iconName} size={40} fallback={<Shirt className={styles.slotGlyph} />} /></span>
+              <span className={styles.resultIcon} aria-hidden="true"><TransmogIcon name={entry.iconName} setId={entry.id} size={40} fallback={<Shirt className={styles.slotGlyph} />} /></span>
               <span className={styles.resultText}>
                 <span className={styles.resultName}>{entry.name}</span>
                 <span className={styles.resultMeta}>{c.pieces(entry.itemCount)}</span>

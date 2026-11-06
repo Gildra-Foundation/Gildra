@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { chrModelIdForRace } from "../../lib/wow/chrModels.ts";
-import { chrModelId, classArmor, classIds, singleBody, transmogRaces, type TransmogAppearance } from "../../lib/wow/transmog/model.ts";
+import { chrModelId, classArmor, classIds, iconUrls, singleBody, transmogRaces, type TransmogAppearance } from "../../lib/wow/transmog/model.ts";
 import {
   groupVariants, lookIds, offsetCursor, outfitArmor, playerSet, pushHistory, randomOffset, toggleHidden, wearLook, wearSet,
 } from "../../lib/wow/transmog/outfit.ts";
-import { defaultTransmogState, parseTransmogState, serializeTransmogState } from "../../lib/wow/transmog/state.ts";
+import { defaultTransmogState, hasOwnLooks, parseTransmogState, serializeTransmogState } from "../../lib/wow/transmog/state.ts";
 import { transmogCopy } from "../../components/wow/transmog/transmogCopy.ts";
 
 const look = (slot: TransmogAppearance["slot"], id: number, extra: Partial<TransmogAppearance> = {}): TransmogAppearance => ({
@@ -18,6 +18,14 @@ describe("transmog share link", () => {
   it("the default outfit has an empty query", () => {
     assert.equal(serializeTransmogState(defaultTransmogState), "");
     assert.deepEqual(parseTransmogState(new URLSearchParams("")), defaultTransmogState);
+  });
+
+  it("keeps an emptied outfit as s= so the link does not open the starter outfit", () => {
+    const query = serializeTransmogState({ ...defaultTransmogState }, true);
+    assert.equal(query, "s=");
+    assert.equal(hasOwnLooks(new URLSearchParams(query)), true);
+    assert.equal(hasOwnLooks(new URLSearchParams("")), false);
+    assert.deepEqual(parseTransmogState(new URLSearchParams(query)).looks, {});
   });
 
   it("round-trips every part of the state", () => {
@@ -116,6 +124,24 @@ describe("transmog outfit logic", () => {
     assert.deepEqual(groups.map((group) => group.name), ["Gravewarden Casque", "Flamewaker Helm"]);
     assert.deepEqual(groups[0].variants.map((entry) => entry.modifiedAppearanceId), [1, 3]);
     assert.equal(groups[0].quality, 4);
+  });
+
+  it("falls back from the icon file to the item's own icon", () => {
+    assert.deepEqual(iconUrls("inv_helm_plate_outdooramaniloa_c_01", { itemId: 277768 }), [
+      "https://wow.zamimg.com/images/wow/icons/large/inv_helm_plate_outdooramaniloa_c_01.jpg", "/api/wow/transmog/icon?item=277768",
+    ]);
+    assert.deepEqual(iconUrls(undefined, { setId: 5913 }), ["/api/wow/transmog/icon?set=5913"]);
+    assert.deepEqual(iconUrls(undefined), []);
+  });
+
+  it("keeps same-named looks with another icon apart (class versions of a gladiator helm)", () => {
+    const groups = groupVariants([
+      look("head", 1, { name: "Venomous Gladiator's Plate Helmet", iconName: "inv_helm_plate_raidwarriorulatek_d_01" }),
+      look("head", 2, { name: "Venomous Gladiator's Plate Helmet", iconName: "inv_helm_plate_raidpaladinulatek_d_01" }),
+      look("head", 3, { name: "Venomous Gladiator's Plate Helmet", iconName: "inv_helm_plate_raidwarriorulatek_d_01" }),
+    ]);
+    assert.equal(groups.length, 2);
+    assert.deepEqual(groups[0].variants.map((entry) => entry.modifiedAppearanceId), [1, 3]);
   });
 
   it("derives the armor of an outfit", () => {

@@ -315,7 +315,7 @@ export function TransmogStage({ ref, requested, modelId, items, pose, paused, as
       style={{ aspectRatio: String(aspect), "--stage-brightness": brightness, "--stage-contrast": contrast, "--stage-shadow": shadow } as CSSProperties}
       data-stage-state={status}
       data-background={background.kind}
-      role="img"
+      role="group"
       aria-label={label}
       tabIndex={status === "ready" ? 0 : -1}
       onKeyDown={onKeyDown}

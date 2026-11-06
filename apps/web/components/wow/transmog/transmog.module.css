@@ -16,6 +16,20 @@
 .visuallyHidden { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
 
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-4); }
+/* Tablet and desktop: the toolbar stays under the sticky site header, so race, class, undo and download are never cut. */
+@media (min-width: 701px) {
+  .toolbar { position: sticky; top: var(--atlas-sticky-top); z-index: 20; padding-block: var(--atlas-space-2); margin-block: calc(-1 * var(--atlas-space-2)); }
+  .toolbar[data-stuck] {
+    background: color-mix(in srgb, var(--atlas-bg) 88%, transparent); backdrop-filter: blur(12px);
+    box-shadow: 0 0 0 100vmax color-mix(in srgb, var(--atlas-bg) 88%, transparent), 0 1px 0 100vmax var(--atlas-line);
+    clip-path: inset(0 -100vmax -1px);
+  }
+}
+@media (min-width: 701px) {
+  /* Keyboard focus never lands under the stuck toolbar. */
+  .workspace :is(button, input, select, [tabindex]) { scroll-margin-top: calc(var(--atlas-sticky-top) + 140px); }
+}
+@media (prefers-reduced-transparency: reduce) { .toolbar[data-stuck] { backdrop-filter: none; } }
 .identity { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); min-width: 0; }
 .toolbarField { min-width: 11rem; }
 .segmented { display: inline-flex; gap: var(--atlas-space-1); padding: 3px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-surface-sunken); }
@@ -62,6 +76,14 @@
 .slot:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 .slot[data-hidden] img { opacity: .3; filter: grayscale(1); }
 .slot:hover { border-color: var(--atlas-line-strong); }
+/* An empty slot is a recessed socket with the slot's outline, as the game's paper doll draws it. */
+.slot[data-empty] {
+  border-color: color-mix(in srgb, var(--material-line, var(--atlas-line-strong)) 70%, transparent);
+  background: radial-gradient(circle at 50% 38%, var(--atlas-surface-raised), var(--atlas-surface-sunken) 72%);
+  box-shadow: inset 0 0 0 1px var(--atlas-bg), inset 0 3px 10px color-mix(in srgb, #000 55%, transparent);
+}
+.slot[data-empty] .slotGlyph { width: 58%; height: 58%; color: var(--material-light, var(--atlas-text-muted)); opacity: .45; }
+.slot[data-empty]:hover .slotGlyph { opacity: .8; }
 .slotGlyph { width: 30px; height: 30px; color: var(--atlas-text-subtle); opacity: .75; }
 /* A swapped item is still downloading: a ring runs around the slot. */
 .slot[data-busy]::after, .slot[data-previewing]::after {
@@ -75,15 +97,26 @@
 .slotHidden svg { width: 22px; height: 22px; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
 .slotCompact { --slot: 52px; flex: 0 0 52px; }
 .slotStrip { display: none; }
-/* Camera controls float on the stage's right edge; they are not part of the exported frame. */
+/* Under the stage: weapons in the middle (as in the game's wardrobe), zoom at the left end and view/pause
+   at the right end, so nothing covers the model. The groups keep their room before 3D is ready. */
+.stageBar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--slot-gap); width: 100%; }
+.stageBar .weaponRow { grid-column: 2; grid-row: 1; }
 .cameraRow {
-  position: absolute; right: var(--atlas-space-2); top: var(--atlas-space-2); z-index: 5; display: grid; gap: 2px; padding: 3px;
+  grid-row: 1; display: flex; gap: 2px; padding: 2px;
   border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control);
   background: color-mix(in srgb, var(--atlas-bg) 72%, transparent);
 }
-.cameraRow[hidden] { display: none; }
-.iconButton { min-width: 44px; min-height: 44px; padding-inline: 0; justify-content: center; }
-.iconButton svg { width: 18px; height: 18px; }
+.cameraRow[data-camera="zoom"] { grid-column: 1; justify-self: start; }
+.cameraRow[data-camera="view"] { grid-column: 3; justify-self: end; }
+.cameraRow[hidden] { display: flex; visibility: hidden; }
+.iconButton:global(.ui-button) { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; justify-content: center; }
+.iconButton svg { width: 16px; height: 16px; }
+/* Touch: pinch zooms, so only Reset and Pause stay, at full touch size. */
+@media (pointer: coarse) {
+  .cameraRow[data-camera="zoom"] { display: none; }
+  .iconButton:global(.ui-button) { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
+}
+
 
 /* Stage = the export frame. Its children scale with container units, so the preview
    caption matches the exported one at any width. */
@@ -169,11 +202,17 @@
 }
 .sheetHandle { display: none; }
 .tabs { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; }
-.tabs > :last-child { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+/* The list scrolls inside the plaque and fades out above its painted bottom rail instead of running under it. */
+.tabs > [role="tabpanel"] {
+  flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding-bottom: var(--atlas-space-5);
+  scrollbar-gutter: stable; scrollbar-width: thin;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--atlas-space-5)), transparent);
+}
 .pickerBody { display: grid; gap: var(--atlas-space-3); padding: var(--atlas-space-4) var(--atlas-space-2) var(--atlas-space-2); align-content: start; min-width: 0; }
 .slotHeader { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); min-width: 0; }
 .slotHeaderText { flex: 1 1 8rem; min-width: 0; }
 .slotHeaderIcon {
+  display: grid; place-items: center;
   flex: 0 0 44px; width: 44px; height: 44px; overflow: hidden; border: 1px solid var(--transmog-quality, var(--atlas-line));
   border-radius: 8px; background: var(--atlas-surface-sunken);
 }
@@ -216,16 +255,23 @@
 .resultName { color: var(--transmog-quality-text, var(--atlas-text-strong)); font-size: var(--atlas-text-small); font-weight: 600; line-height: var(--atlas-leading-snug); overflow-wrap: break-word; hyphens: manual; }
 .resultMeta { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 .wornTag { padding: 2px var(--atlas-space-2); border: 1px solid var(--material-line, var(--atlas-line)); border-radius: 6px; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); white-space: nowrap; }
-/* Variants of one look (difficulty and colour): numbered swatches under its name. */
-.variants { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1); padding: 0 var(--atlas-space-2) var(--atlas-space-2) calc(40px + var(--atlas-space-3) + var(--atlas-space-2)); }
-.variant {
-  min-width: 34px; height: 34px; padding: 0 var(--atlas-space-1); border: 1px solid var(--atlas-line); border-radius: 6px;
-  background: var(--atlas-surface-sunken); color: var(--atlas-text-muted); font: inherit; font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; cursor: pointer;
+/* Variants of one look (difficulty and colour): one-line stepper ‹ 3/8 › under its name, never wrapping. */
+.variants {
+  display: inline-flex; align-items: center; justify-self: start; gap: 2px; margin: -6px 0 var(--atlas-space-1) calc(40px + var(--atlas-space-3) + var(--atlas-space-2));
+  padding: 2px; border: 1px solid var(--atlas-line); border-radius: 999px; background: var(--atlas-surface-sunken);
 }
-.variant:hover { border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
-.variant[aria-pressed="true"] { border-color: var(--transmog-quality, var(--atlas-line-strong)); color: var(--atlas-text-strong); box-shadow: inset 0 0 0 1px var(--transmog-quality, var(--atlas-line-strong)); }
-.variant:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 1px; }
-@media (pointer: coarse) { .variant { min-width: 40px; height: 40px; } }
+.variantStep {
+  display: grid; place-items: center; width: 28px; height: 24px; padding: 0; border: 0; border-radius: 999px;
+  background: transparent; color: var(--atlas-text-muted); cursor: pointer;
+}
+.variantStep svg { width: 16px; height: 16px; }
+.variantStep:hover { background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 14%, transparent); color: var(--atlas-text-strong); }
+.variantStep:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 0; }
+.variantCount {
+  min-width: 3.2em; color: var(--transmog-quality-text, var(--atlas-text-strong)); font-size: var(--atlas-text-meta);
+  font-variant-numeric: tabular-nums; text-align: center; white-space: nowrap;
+}
+@media (pointer: coarse) { .variantStep { width: 40px; height: 36px; } }
 
 .group { display: grid; gap: var(--atlas-space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
 .groupLabel { padding: 0; color: var(--material-light, var(--atlas-text-muted)); font-size: var(--atlas-text-label); font-weight: 600; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
@@ -252,10 +298,21 @@
 .checkRow input { width: 18px; height: 18px; accent-color: var(--atlas-accent); }
 
 @media (max-width: 1100px) {
+  /* One toolbar row where it fits: Link becomes a glass icon like Undo / Random / Reset, Download drops the format. */
+  .actionText { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+  .actions .actionButton.actionButton[data-compact]:global(.ui-button) {
+    width: 44px; min-width: 44px; min-height: 44px; padding: 0; gap: 0;
+    border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
+  }
+  .actions .actionButton[data-compact]::before, .actions .actionButton[data-compact]::after { display: none; }
+  .actionFormat { display: none; }
+  .identity { flex-wrap: nowrap; }
+  .identity .toolbarField { flex: 0 1 13rem; min-width: 9rem; }
+  .identity .toolbarField :global(select) { width: 100%; }
   .workspace { grid-template-columns: minmax(0, 1fr); justify-items: center; }
   .stageColumn { width: min(calc(var(--stage-h) * var(--stage-aspect, .8)), calc(100vw - 2 * var(--slot) - 6rem)); }
   .panel.panel { width: 100%; max-width: 760px; height: auto; max-height: none; overflow: visible; }
-  .tabs > :last-child { overflow: visible; }
+  .tabs > [role="tabpanel"] { overflow: visible; padding-bottom: 0; mask-image: none; scrollbar-gutter: auto; }
 }
 @media (max-width: 700px) {
   /* Phone: stage on top, slots as a scrolling row, the picker a bottom sheet that leaves the stage in view. */
@@ -268,10 +325,13 @@
   .dollColumn, .weaponRow { display: none; }
   .stageColumn { width: 100%; gap: var(--atlas-space-2); scroll-margin-top: var(--atlas-sticky-top); }
   .stage { width: min(100%, calc(var(--stage-h) * var(--stage-aspect, .8))); transition: max-width var(--atlas-duration-slow) var(--atlas-ease); }
-  .slotStrip { display: flex; gap: var(--atlas-space-2); width: 100%; overflow-x: auto; padding: 2px 2px var(--atlas-space-1); scroll-snap-type: x proximity; scrollbar-width: none; }
+  .slotStrip { display: flex; gap: var(--atlas-space-2); min-width: 0; overflow-x: auto; padding: 2px 2px var(--atlas-space-1); scroll-snap-type: x proximity; scrollbar-width: none; }
   .slotStrip > * { scroll-snap-align: start; }
-  .cameraRow { right: var(--atlas-space-1); top: var(--atlas-space-1); }
-  .cameraRow .iconButton:nth-child(-n+2) { display: none; }
+  .stageBar { grid-template-columns: minmax(0, 1fr) auto; gap: var(--atlas-space-2); }
+  .slotStrip { grid-column: 1; grid-row: 1; }
+  .cameraRow[data-camera="zoom"] { display: none; }
+  .cameraRow[data-camera="view"] { grid-column: 2; }
+  .cameraRow .iconButton:global(.ui-button) { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
   .toolbar { gap: var(--atlas-space-2); }
   .identity { flex: 1 1 100%; flex-wrap: nowrap; }
   .identity .toolbarField { flex: 1 1 0; min-width: 0; }
@@ -282,14 +342,7 @@
   /* The painted caps keep their art; the label sits closer to them so the row fits 360 px. */
   .actions .actionButton.actionButton:not([data-compact]):global(.ui-button) { width: 100%; padding-inline: 46px; }
   .actions .actionButton :global(.ui-button__label) { white-space: nowrap; hyphens: manual; }
-  .actionText { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
-  .actions .actionButton.actionButton[data-compact]:global(.ui-button) {
-    width: 44px; min-width: 44px; min-height: 44px; padding: 0; gap: 0;
-    border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
-  }
-  .actions .actionButton[data-compact]::before, .actions .actionButton[data-compact]::after { display: none; }
   .actions .actionButton:not([data-compact]) :global(.ui-button__icon) { display: none; }
-  .actionFormat { display: none; }
   .panel.panel {
     position: fixed; inset: auto 0 0; z-index: 30; width: auto; max-width: none; height: var(--sheet-h); max-height: none; margin: 0;
     padding: 4px 14px 0; overflow: hidden; transform: translateY(calc(100% - var(--sheet-peek)));
@@ -304,7 +357,10 @@
   .sheetHandle svg { width: 22px; height: 22px; transition: transform var(--atlas-duration) var(--atlas-ease); }
   .sheetHandle[aria-expanded="true"] svg { transform: rotate(180deg); }
   .sheetHandle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
-  .tabs > :last-child { overflow: auto; padding-bottom: env(safe-area-inset-bottom); }
+  .tabs > [role="tabpanel"] {
+    overflow: auto; padding-bottom: calc(var(--atlas-space-5) + env(safe-area-inset-bottom));
+    mask-image: linear-gradient(to bottom, #000 calc(100% - var(--atlas-space-4)), transparent);
+  }
   .pickerBody { padding-inline: var(--atlas-space-1); }
   .formats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .twoColumns { grid-template-columns: 1fr; }
@@ -320,8 +376,8 @@
 :global([data-motion="reduced"]) .stageHost, :global([data-ui-motion="reduce"]) .stageHost,
 :global([data-motion="reduced"]) .panel.panel, :global([data-ui-motion="reduce"]) .panel.panel { transition: none; }
 @media (forced-colors: active) {
-  .slot, .result, .variant, .formatButton, .swatch, .stage, .cameraRow, .stagePill, .loaderText { border: 1px solid CanvasText; }
+  .slot, .result, .variants, .formatButton, .swatch, .stage, .cameraRow, .stagePill, .loaderText { border: 1px solid CanvasText; }
   .slot[data-busy]::after, .slot[data-previewing]::after { box-shadow: none; outline: 2px dashed Highlight; }
   .loaderRing { background: Highlight; }
-  .slot[aria-pressed="true"], .result[aria-pressed="true"], .variant[aria-pressed="true"], .formatButton[aria-pressed="true"], .swatch[aria-pressed="true"] { outline: 2px solid Highlight; }
+  .slot[aria-pressed="true"], .result[aria-pressed="true"], .formatButton[aria-pressed="true"], .swatch[aria-pressed="true"] { outline: 2px solid Highlight; }
 }

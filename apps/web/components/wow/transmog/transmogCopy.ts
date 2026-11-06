@@ -10,7 +10,7 @@ type Copy = {
   backgrounds: Record<string, string>;
   classes: Record<TransmogClass, string>;
   race: string; gender: string; male: string; female: string; cls: string; anyClass: string;
-  randomize: string; variant: (index: number, total: number) => string; openPicker: string; closePicker: string;
+  randomize: string; variant: (index: number, total: number) => string; prevVariant: string; nextVariant: string; openPicker: string; closePicker: string;
   undo: string; reset: string; share: string; copied: string; copyFailed: string;
   openStudio: string; modelError: string; retry: string; noWebgl: string;
   tabs: { items: string; sets: string; frame: string };
@@ -48,7 +48,7 @@ export const transmogCopy: Record<"ru" | "en", Copy> = {
     backgrounds: { transparent: "Прозрачный", night: "Ночь", parchment: "Пергамент", white: "Светлый", void: "Бездна", dawn: "Рассвет", frost: "Иней", fel: "Скверна", vault: "Хранилище", sanctuary: "Ruby Life Pools", voidscar: "Voidscar Arena", nalorakk: "Den of Nalorakk", kings: "Kings' Rest", blinding: "The Blinding Vale", city: "Город", archive: "Архив", tools: "Мастерская" },
     classes: { warrior: "Воин", paladin: "Паладин", hunter: "Охотник", rogue: "Разбойник", priest: "Жрец", "death-knight": "Рыцарь смерти", shaman: "Шаман", mage: "Маг", warlock: "Чернокнижник", monk: "Монах", druid: "Друид", "demon-hunter": "Охотник на демонов", evoker: "Пробудитель" },
     race: "Раса", gender: "Пол", male: "Мужской", female: "Женский", cls: "Класс", anyClass: "Класс",
-    randomize: "Случайный образ", variant: (index, total) => `Вариант ${index} из ${total}`, openPicker: "Открыть выбор", closePicker: "Свернуть",
+    randomize: "Случайный образ", variant: (index, total) => `Вариант ${index} из ${total}`, prevVariant: "Предыдущий вариант", nextVariant: "Следующий вариант", openPicker: "Открыть выбор", closePicker: "Свернуть",
     undo: "Отменить", reset: "Сбросить", share: "Ссылка", copied: "Ссылка на образ скопирована", copyFailed: "Не удалось скопировать — ссылка в адресной строке",
     openStudio: "Открыть 3D-манекен", modelError: "Модель не загрузилась.", retry: "Повторить", noWebgl: "Браузер не поддерживает WebGL — 3D-манекен недоступен. Выбор предметов и ссылка работают.",
     tabs: { items: "Предметы", sets: "Наборы", frame: "Кадр" },
@@ -89,7 +89,7 @@ export const transmogCopy: Record<"ru" | "en", Copy> = {
     backgrounds: { transparent: "Transparent", night: "Night", parchment: "Parchment", white: "Light", void: "Void", dawn: "Dawn", frost: "Frost", fel: "Fel", vault: "Vault", sanctuary: "Ruby Life Pools", voidscar: "Voidscar Arena", nalorakk: "Den of Nalorakk", kings: "Kings' Rest", blinding: "The Blinding Vale", city: "City", archive: "Archive", tools: "Workshop" },
     classes: { warrior: "Warrior", paladin: "Paladin", hunter: "Hunter", rogue: "Rogue", priest: "Priest", "death-knight": "Death Knight", shaman: "Shaman", mage: "Mage", warlock: "Warlock", monk: "Monk", druid: "Druid", "demon-hunter": "Demon Hunter", evoker: "Evoker" },
     race: "Race", gender: "Body", male: "Male", female: "Female", cls: "Class", anyClass: "Class",
-    randomize: "Random outfit", variant: (index, total) => `Variant ${index} of ${total}`, openPicker: "Open picker", closePicker: "Collapse",
+    randomize: "Random outfit", variant: (index, total) => `Variant ${index} of ${total}`, prevVariant: "Previous variant", nextVariant: "Next variant", openPicker: "Open picker", closePicker: "Collapse",
     undo: "Undo", reset: "Reset", share: "Link", copied: "Outfit link copied", copyFailed: "Could not copy — the link is in the address bar",
     openStudio: "Open the 3D mannequin", modelError: "The model did not load.", retry: "Try again", noWebgl: "This browser has no WebGL, so the 3D mannequin is unavailable. Picking items and sharing still work.",
     tabs: { items: "Items", sets: "Sets", frame: "Frame" },
