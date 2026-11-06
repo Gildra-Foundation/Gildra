@@ -48,7 +48,7 @@ const qualityStyle = (quality: AuditGearQuality) => {
 
 /** Equipment of the character: secondary stats, the paper doll with item icons, item level, enchant and gem
  * marks, and the official render (or the 3D model on request) between the two columns. */
-export function CharacterEquipment({ snapshot, lang }: { snapshot: CharacterAuditSnapshot; lang: Lang }) {
+export function CharacterEquipment({ snapshot, lang, modelItemsUrl }: { snapshot: CharacterAuditSnapshot; lang: Lang; modelItemsUrl?: string }) {
   const copy = characterPageCopy(lang);
   const [pinned, setPinned] = useState<string | null>(null);
   const { left, right } = splitEquipment(snapshot.gear);
@@ -62,7 +62,7 @@ export function CharacterEquipment({ snapshot, lang }: { snapshot: CharacterAudi
         <StatsRow stats={snapshot.combatStats} copy={copy} lang={lang} />
         <div className={styles.doll}>
           <ul className={styles.column} data-column="left">{left.map(row)}</ul>
-          <CharacterFigure snapshot={snapshot} copy={copy} lang={lang} />
+          <CharacterFigure snapshot={snapshot} copy={copy} lang={lang} modelItemsUrl={modelItemsUrl} />
           <ul className={styles.column} data-column="right">{right.map(row)}</ul>
         </div>
       </MaterialPlaque>
@@ -79,7 +79,7 @@ function StatsRow({ stats, copy, lang }: { stats?: CharacterAuditSnapshot["comba
   </dl>;
 }
 
-function CharacterFigure({ snapshot, copy, lang }: { snapshot: CharacterAuditSnapshot; copy: CharacterPageCopy; lang: Lang }) {
+function CharacterFigure({ snapshot, copy, lang, modelItemsUrl }: { snapshot: CharacterAuditSnapshot; copy: CharacterPageCopy; lang: Lang; modelItemsUrl?: string }) {
   const [model, setModel] = useState(false);
   const [modelState, setModelState] = useState<ModelViewerStatus>("loading");
   const render = snapshot.media?.render;
@@ -90,7 +90,7 @@ function CharacterFigure({ snapshot, copy, lang }: { snapshot: CharacterAuditSna
       {render
         ? <span className={styles.renderFrame} aria-hidden="true"><img className={styles.render} src={render} alt="" loading="lazy" decoding="async" /></span>
         : <span className={styles.emblem} aria-hidden="true"><img src={snapshot.specialization.iconUrl} alt="" loading="lazy" /></span>}
-      {model ? <CharacterModelViewer lang={lang} appearance={snapshot.appearance} characterName={snapshot.character.name} characterSlug={snapshot.slug} onStatus={setModelState} /> : null}
+      {model ? <CharacterModelViewer lang={lang} appearance={snapshot.appearance} characterName={snapshot.character.name} characterSlug={snapshot.slug} modelItemsUrl={modelItemsUrl} onStatus={setModelState} /> : null}
     </div>
     <button type="button" className={styles.figureToggle} aria-pressed={model} onClick={() => { setModelState("loading"); setModel((value) => !value); }}>
       {model && render ? <ImageIcon aria-hidden="true" /> : <Box aria-hidden="true" />}{copy.model3d}

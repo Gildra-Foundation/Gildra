@@ -17,6 +17,8 @@ type ViewerProps = {
   appearance: CharacterAppearanceProfile;
   characterName: string;
   characterSlug: string;
+  /** Where the equipment display ids come from (a public profile has its own endpoint). */
+  modelItemsUrl?: string;
   onStatus?: (status: ModelViewerStatus) => void;
 };
 type WowCustomization = { Options: Array<{ Id: number; Choices: Array<{ Id: number }> }> };
@@ -52,7 +54,7 @@ function homeCamera(renderer: FramedRenderer, aspect: number): Camera {
 
 /** The character's 3D model in its current equipment. Mounted only when the reader asks for it (the viewer
  * downloads several megabytes and draws every frame) and destroyed when they close it. */
-export function CharacterModelViewer({ appearance, characterName, characterSlug, lang = "ru", onStatus }: ViewerProps) {
+export function CharacterModelViewer({ appearance, characterName, characterSlug, modelItemsUrl, lang = "ru", onStatus }: ViewerProps) {
   const copy = characterPageCopy(lang);
   const imported = appearance.presetId.startsWith("battlenet-");
   const hostRef = useRef<HTMLDivElement>(null);
@@ -77,7 +79,7 @@ export function CharacterModelViewer({ appearance, characterName, characterSlug,
       await prepareZamViewer();
       let modelItems = appearance.modelItems;
       if (imported) {
-        const response = await fetch(`/api/wow/characters/${encodeURIComponent(characterSlug)}/model-items?locale=${lang}`, { cache: "no-store" });
+        const response = await fetch(modelItemsUrl ?? `/api/wow/characters/${encodeURIComponent(characterSlug)}/model-items?locale=${lang}`, { cache: "no-store" });
         if (!response.ok) throw new Error("character model items unavailable");
         const payload = await response.json() as { modelItems?: Array<[number, number]> };
         modelItems = payload.modelItems ?? [];
@@ -129,7 +131,7 @@ export function CharacterModelViewer({ appearance, characterName, characterSlug,
       viewerRef.current = null;
       host.replaceChildren();
     };
-  }, [attempt, appearance.customizations, appearance.modelId, appearance.modelItems, characterSlug, imported, lang]);
+  }, [attempt, appearance.customizations, appearance.modelId, appearance.modelItems, characterSlug, imported, lang, modelItemsUrl]);
 
   // Keep the drawing buffer the size of the stage.
   useEffect(() => {

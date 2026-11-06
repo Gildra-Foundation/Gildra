@@ -1,0 +1,78 @@
+/* atlas:strict — public player profile (/wow/players/…): the character page's hero and equipment, then talents,
+   the season's best keys (rows like the route finder's) and raid progress, each on the Characters plaque. */
+
+.page { display: grid; gap: var(--atlas-space-6); padding-bottom: var(--atlas-space-6); }
+.rating { color: var(--rating-color, var(--atlas-text-strong)); }
+.section { min-width: 0; scroll-margin-top: calc(var(--atlas-header-height, 108px) + 16px); }
+.plaque { display: grid; gap: var(--atlas-space-4); min-width: 0; }
+.talentActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3); }
+
+/* ---------- Best keys ---------- */
+.runs { display: grid; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.run {
+  display: grid;
+  grid-template-columns: 112px 4.5rem minmax(0, 1fr) auto 20px;
+  align-items: center;
+  gap: var(--atlas-space-4);
+  min-height: 76px;
+  padding: 6px var(--atlas-space-3) 6px 6px;
+  border: 1px solid var(--material-line, var(--atlas-line));
+  border-left: 3px solid var(--dungeon-accent, var(--material-light, var(--atlas-accent-strong)));
+  border-radius: var(--atlas-radius);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--dungeon-accent, var(--atlas-accent-strong)) 14%, transparent), transparent 55%);
+  color: var(--atlas-text);
+  text-decoration: none;
+}
+a.run { transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease); }
+a.run:hover { border-color: color-mix(in srgb, var(--dungeon-accent, var(--atlas-accent-strong)) 60%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--dungeon-accent, var(--atlas-accent-strong)) 24%, transparent), transparent 70%); }
+a.run:focus-visible { outline: 2px solid var(--dungeon-accent, var(--atlas-accent-strong)); outline-offset: 2px; }
+.runArt { position: relative; display: block; align-self: stretch; min-height: 62px; overflow: hidden; border-radius: 2px; background: var(--atlas-surface-sunken); }
+.runArt img { object-fit: cover; filter: contrast(.94) saturate(.9); }
+.runKey { display: grid; justify-items: start; line-height: 1.1; }
+.runKey b { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h2) / 1 var(--atlas-font-display); }
+.runKey span { color: var(--dungeon-accent, var(--atlas-accent-strong)); font-size: var(--atlas-text-small); letter-spacing: .12em; }
+.runKey span[data-depleted] { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); letter-spacing: 0; }
+.runMain { display: grid; gap: 5px; min-width: 0; }
+.runDungeon { overflow: hidden; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.runClock { display: block; max-width: 280px; block-size: 4px; border-radius: 999px; background: var(--atlas-surface-sunken); overflow: hidden; }
+.runClock > span { display: block; max-inline-size: 100%; block-size: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--dungeon-accent, var(--atlas-accent-strong)) 35%, var(--atlas-surface-sunken)), var(--dungeon-accent, var(--atlas-accent-strong))); }
+.runClock[data-depleted] > span { background: var(--atlas-text-muted); }
+.runMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.runMeta b { color: var(--atlas-text-strong); font-weight: 650; }
+.runScore { display: grid; justify-items: end; line-height: 1.1; }
+.runScore b { color: var(--rating-color, var(--atlas-text-strong)); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; }
+.runScore span { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.runArrow { width: 18px; height: 18px; color: var(--dungeon-accent, var(--atlas-accent-strong)); }
+
+/* ---------- Raids ---------- */
+.raids { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--atlas-space-4) var(--atlas-space-6); margin: 0; padding: 0; list-style: none; }
+.raid { display: grid; gap: var(--atlas-space-3); min-width: 0; }
+.raidName { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.2 var(--atlas-font-display); text-decoration: none; }
+a.raidName:hover { color: var(--material-light, var(--atlas-accent-strong)); text-decoration: underline; text-underline-offset: 3px; }
+a.raidName:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.modes { display: grid; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.mode { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) 3rem; align-items: center; gap: var(--atlas-space-3); }
+.modeLabel { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+.modeLabel abbr { text-decoration: none; }
+.modeBar { display: block; block-size: 6px; border-radius: 999px; background: var(--atlas-surface-sunken); overflow: hidden; }
+.modeBar > span { display: block; max-inline-size: 100%; block-size: 100%; border-radius: inherit; background: var(--material-light, var(--atlas-accent-strong)); }
+.mode[data-complete] .modeBar > span { background: var(--atlas-positive); }
+.modeCount { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- Outside links ---------- */
+.links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--atlas-space-4); margin: 0; font-size: var(--atlas-text-meta); }
+.links a { display: inline-flex; align-items: center; gap: 4px; color: var(--atlas-text-muted); text-decoration: none; }
+.links a:hover { color: var(--atlas-text-strong); }
+.links a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.links svg { width: 13px; height: 13px; }
+
+@media (max-width: 640px) {
+  .run { grid-template-columns: 44px 2.75rem minmax(0, 1fr) auto; gap: var(--atlas-space-2); padding-right: var(--atlas-space-2); }
+  .runArrow, .run > span:last-child:not(.runScore) { display: none; }
+  .runArt { min-height: 52px; }
+  .runDungeon { white-space: normal; line-height: 1.2; }
+  .runKey b { font-size: var(--atlas-text-h3); }
+  .runScore b { font-size: var(--atlas-text-body); }
+}
+@media (prefers-reduced-motion: reduce) { a.run { transition: none; } }

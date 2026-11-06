@@ -5,11 +5,12 @@ import { ArrowLeft, ArrowRight, ExternalLink, Search, Sparkles, X } from "lucide
 import { AtlasEmpty, AtlasError, AtlasField, AtlasInput, AtlasSelect, AtlasTable } from "@/components/atlas";
 import { MaterialButton, MaterialLinkButton } from "@/components/wow/shared/materialAtlas";
 import {
-  armoryUrl, heroName, leaderboardClasses, leaderboardRegions, leaderboardRoleOf, leaderboardRoles, leaderboardSearch, leaderboardSpec,
+  heroName, leaderboardClasses, leaderboardRegions, leaderboardRoleOf, leaderboardRoles, leaderboardSearch, leaderboardSpec,
   raiderIoUrl, realmName, talentsUrl,
   type LeaderboardEntry, type LeaderboardPage, type LeaderboardQuery, type LeaderboardRegion, type LeaderboardSpec,
 } from "@/lib/games/wow/mplusLeaderboardView";
 import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
+import { playerProfilePath } from "@/lib/wow/playerProfileView";
 import { LeaderboardForm } from "./LeaderboardClient";
 import type { LeaderboardCopy } from "./leaderboardCopy";
 import styles from "./leaderboard.module.css";
@@ -35,13 +36,13 @@ export function SpecIcon({ spec, size = 32 }: { spec: LeaderboardSpec; size?: nu
   );
 }
 
-/** Name in the class colour (a link to the character in the Armory when `armory` is given), realm under it. */
-export function PlayerName({ entry, locale, armory }: { entry: Pick<LeaderboardEntry, "name" | "realm" | "specId">; locale: Locale; armory?: { region: LeaderboardRegion; label: string } }) {
+/** Name in the class colour (a link to the player's profile on Gildra when `profile` is given), realm under it. */
+export function PlayerName({ entry, locale, profile }: { entry: Pick<LeaderboardEntry, "name" | "realm" | "specId">; locale: Locale; profile?: LeaderboardRegion }) {
   const spec = leaderboardSpec(entry.specId);
   return (
     <span className={styles.player} style={{ "--class-color": spec?.color } as CSSProperties}>
-      {armory
-        ? <a className={styles.playerName} href={armoryUrl(armory.region, entry, locale)} target="_blank" rel="noreferrer" title={armory.label}>{entry.name}</a>
+      {profile
+        ? <Link className={styles.playerName} href={playerProfilePath(profile, entry.realm.slug, entry.name, locale === "ru" ? "/ru" : "")} prefetch={false} rel="nofollow">{entry.name}</Link>
         : <b className={styles.playerName}>{entry.name}</b>}
       <span className={styles.realm}>{realmName(entry.realm, locale)}</span>
     </span>
@@ -94,7 +95,7 @@ export function LeaderboardTable({ page, locale, copy, prefix, fixedSpec = false
       rowKey={(entry) => `${entry.realm.slug}:${entry.name}`}
       columns={[
         { key: "rank", header: copy.rank, numeric: true, className: styles.rankCol, cell: (entry) => <span className={styles.rank} data-podium={entry.rank <= 3 || undefined}>{entry.rank}</span> },
-        { key: "character", header: copy.character, rowHeader: true, cell: (entry) => <PlayerName entry={entry} locale={locale} armory={{ region: page.region, label: copy.openArmory(entry.name) }} /> },
+        { key: "character", header: copy.character, rowHeader: true, cell: (entry) => <PlayerName entry={entry} locale={locale} profile={page.region} /> },
         { key: "spec", header: <span className={styles.specHeader}>{fixedSpec ? copy.heroColumn : copy.specialization}</span>, label: fixedSpec ? copy.heroColumn : copy.specialization, className: fixedSpec ? styles.heroCol : styles.specCol, cell: (entry) => <SpecCell entry={entry} locale={locale} copy={copy} heroOnly={fixedSpec} /> },
         { key: "key", header: copy.key, label: copy.keyLabel, numeric: true, className: styles.keyCol, cell: (entry) => entry.key ? <span className={styles.key}>+{entry.key}</span> : <span aria-hidden="true">—</span> },
         { key: "score", header: copy.rating, label: copy.ratingLabel, numeric: true, cell: (entry) => <b className={styles.score}>{formatScore(entry.score, locale)}</b> },

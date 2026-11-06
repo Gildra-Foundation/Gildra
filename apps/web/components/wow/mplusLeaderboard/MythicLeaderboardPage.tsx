@@ -118,7 +118,7 @@ function Leaders({ page, locale, copy }: { page: LeaderboardPage; locale: Locale
                 {leader && leaderSpec ? (
                   <li className={styles.leader} style={{ "--class-color": leaderSpec.color } as CSSProperties}>
                     <span className={styles.podiumRank}>1</span>
-                    <span className={styles.podiumWho}><SpecIcon spec={leaderSpec} size={56} /><PlayerName entry={leader} locale={locale} /></span>
+                    <span className={styles.podiumWho}><SpecIcon spec={leaderSpec} size={56} /><PlayerName entry={leader} locale={locale} profile={page.region} /></span>
                     <b className={styles.leaderScore}>{formatScore(leader.score, locale)}</b>
                   </li>
                 ) : null}
@@ -127,7 +127,7 @@ function Leaders({ page, locale, copy }: { page: LeaderboardPage; locale: Locale
                   return spec ? (
                     <li key={`${entry.realm.slug}:${entry.name}`} className={styles.podiumItem}>
                       <span className={styles.podiumRank}>{entry.rank}</span>
-                      <span className={styles.podiumWho}><SpecIcon spec={spec} size={36} /><PlayerName entry={entry} locale={locale} /></span>
+                      <span className={styles.podiumWho}><SpecIcon spec={spec} size={36} /><PlayerName entry={entry} locale={locale} profile={page.region} /></span>
                       <b className={styles.podiumScore}>{formatScore(entry.score, locale)}</b>
                     </li>
                   ) : null;
