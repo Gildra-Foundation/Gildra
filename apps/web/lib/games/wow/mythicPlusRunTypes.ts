@@ -8,6 +8,8 @@ export type RunRole = "tank" | "healer" | "dps";
 export type RunPlayer = {
   name: string;
   realm: string;
+  /** Realm slug (profile links, Warcraft Logs lookup). */
+  realmSlug: string;
   region: string;
   classSlug: string;
   specId: number;
@@ -20,6 +22,8 @@ export type RunPlayer = {
 };
 
 export type RunEncounter = { name: string; startMs: number; endMs: number; success: boolean };
+/** Raider.IO's own log of a run: every enemy kill ([ms from the key start, npc id, how many, forces]) and every death. */
+export type RunLog = { totalForces: number; kills: Array<[number, number, number, number]>; deaths: Array<{ atMs: number; player: string }> };
 export type RunAffix = { name: string; slug: string; icon: string };
 export type RunVideo = { kind: "youtube" | "twitch"; url: string; player: string };
 
@@ -37,6 +41,8 @@ export type RunDetail = {
   players: RunPlayer[];
   encounters: RunEncounter[];
   deaths: number | null;
+  /** Present when Raider.IO has the run's log (enemy kills over time). */
+  log?: RunLog;
   videos: RunVideo[];
   url: string;
 };
@@ -101,6 +107,7 @@ export function toRunDetail(raw: unknown): RunDetail | null {
     return [{
       name,
       realm: str(obj(character.realm).name),
+      realmSlug: str(obj(character.realm).slug),
       region: str(obj(character.region).slug),
       classSlug: str(obj(character.class).slug),
       specId,
@@ -140,6 +147,28 @@ export function toRunDetail(raw: unknown): RunDetail | null {
     return str(affix.name) ? [{ name: str(affix.name), slug: str(affix.slug), icon: str(affix.icon) }] : [];
   });
 
+  const names = new Map<number, string>();
+  for (const entry of list(data.roster)) {
+    const character = obj(obj(entry).character);
+    const characterId = num(character.id);
+    if (characterId && str(character.name)) names.set(characterId, str(character.name));
+  }
+  const kills: RunLog["kills"] = list(logged?.enemies).flatMap((entry) => {
+    const enemy = obj(entry);
+    const atMs = num(enemy.approximate_relative_ended_at);
+    const npcId = num(enemy.npc_id);
+    const count = num(enemy.count) ?? 1;
+    if (atMs === undefined || !npcId || count < 1) return [];
+    return [[Math.round(atMs), npcId, count, num(enemy.enemy_forces_value) ?? 0] as [number, number, number, number]];
+  }).sort((a, b) => a[0] - b[0]);
+  const logDeaths = list(logged?.deaths).flatMap((entry) => {
+    const death = obj(entry);
+    const atMs = num(death.approximate_died_at);
+    const player = names.get(num(death.character_id) ?? -1);
+    return atMs !== undefined && player ? [{ atMs: Math.round(atMs), player }] : [];
+  }).sort((a, b) => a.atMs - b.atMs);
+  const totalForces = num(logged?.total_enemy_forces) ?? 0;
+
   const slug = str(dungeon.slug);
   return {
     id,
@@ -155,6 +184,7 @@ export function toRunDetail(raw: unknown): RunDetail | null {
     players,
     encounters,
     deaths: logged ? list(logged.deaths).length : null,
+    ...(kills.length && totalForces > 0 ? { log: { totalForces, kills, deaths: logDeaths } } : {}),
     videos,
     url: raiderIoRunUrl(season, id, level, slug),
   };
