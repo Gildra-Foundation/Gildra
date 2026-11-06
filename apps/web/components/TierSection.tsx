@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, ArrowUpRight, Castle, ChevronDown, Search, Swords } from "lucide-react";
 import { SpecSlot } from "./SpecSlot";
 import { p, type Lang } from "@/lib/i18n-paths";
@@ -16,13 +16,10 @@ import { DEFAULT_SOURCE_DIFFICULTY, SOURCE_DIFFICULTIES, TIER_SOURCES, isTierSou
 import { tierSourcesCopy } from "@/components/blocks/wow/tierWorkspace/tierSourcesCopy";
 import { MaterialButton, MaterialLinkButton, MaterialPlaque, type AnyMaterialKit, type MaterialKit } from "@/components/wow/shared/materialAtlas";
 import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
-import { dungeonArtDirections } from "@/lib/wow/dungeonArtDirection";
+import { SimTierBoard } from "@/components/blocks/wow/tierWorkspace/SimTierBoard";
+import { simTierCopy } from "@/components/blocks/wow/tierWorkspace/simTierCopy";
+import { TierMark as SharedTierMark, classKey, classStyle, tierClass, tierStyle } from "@/components/blocks/wow/tierWorkspace/tierVisuals";
 
-const CLASS_KEYS: Record<string, string> = {
-  "death-knight": "dk", "demon-hunter": "dh", evoker: "evoker", mage: "mage",
-  paladin: "pal", rogue: "rogue", druid: "druid", priest: "priest",
-  hunter: "hunter", shaman: "shaman", warlock: "lock", monk: "monk", warrior: "war",
-};
 const ROLES = ["dps", "healer", "tank"] as const;
 const ACTIVITIES = ["mythic_plus", "raid"] as const;
 const KEY_RANGES: KeyRange[] = ["all", "high", "middle", "low"];
@@ -34,21 +31,10 @@ const TABLE_KIT: AnyMaterialKit = "tier-lists";
 const FILTER_KIT: AnyMaterialKit = "tier-lists";
 const ABOUT_BUTTON_KIT: AnyMaterialKit = "tier-lists";
 const ROLE_KITS: Record<string, MaterialKit> = { tank: "den-of-nalorakk", healer: "the-blinding-vale", dps: "ruby-life-pools" };
-/** Tier → the dungeon kit whose pull marker it wears; its accent colours the tier band. */
-const TIER_KITS: Record<string, MaterialKit> = { s: "ruby-life-pools", a: "kings-rest", b: "altar-of-fangs", c: "den-of-nalorakk", d: "voidscar-arena" };
-
-function classKey(slug: string) { return CLASS_KEYS[slug] ?? slug; }
-/** Class colour token — used only on spec identity (icon chip, class name). */
-function classStyle(slug: string) { return { "--class-color": `var(--c-${classKey(slug)}, var(--atlas-text-muted))` } as CSSProperties; }
 function fullSpecName(entry: TierEntry) { return `${entry.specName} ${entry.className}`; }
 function entryKey(entry: TierEntry) { return `${entry.role}:${entry.classSlug}:${entry.specSlug}`; }
 function contextKey(context: TierContext) { return `${context.selectionType}:${context.selectionId}:${context.addonKey}`; }
 function contextLabel(context: TierContext) { return context.addonKey === "midnight" ? context.selectionName : `${context.selectionName} · ${context.addonName}`; }
-function tierClass(tier: string) {
-  const letter = tier.charAt(0).toLowerCase();
-  return ["s", "a", "b", "c", "d"].includes(letter) ? letter : "b";
-}
-function tierStyle(tier: string) { return { "--tier-accent": dungeonArtDirections[TIER_KITS[tierClass(tier)]].accent } as CSSProperties; }
 const isExternal = (href?: string) => Boolean(href && /^https?:\/\//.test(href));
 
 function compact(value: number | undefined, lang: Lang) {
@@ -64,9 +50,8 @@ function Trend({ value, copy }: { value?: number; copy: TierCopy }) {
   return <span className={up ? styles.trendUp : styles.trendDown}><span aria-hidden="true">{up ? "▲" : "▼"} {Math.abs(value)}</span><span className={styles.srOnly}>{up ? copy.trendUp(value) : copy.trendDown(-value)}</span></span>;
 }
 
-/** The tier as a painted medallion (the pull marker of a dungeon kit) with the letter as live text. */
 function TierMark({ tier, copy, size = "md" }: { tier: string; copy: TierCopy; size?: "md" | "sm" }) {
-  return <span className={size === "sm" ? `${styles.tierMark} ${styles.tierMarkSm}` : styles.tierMark} data-tier={tierClass(tier)} style={tierStyle(tier)}><span className={styles.srOnly}>{copy.tier} </span><span className={styles.tierLetter}>{tier}</span></span>;
+  return <SharedTierMark tier={tier} label={copy.tier} size={size} />;
 }
 
 /** Localized spec and class names by spec slug (built on the server from the talent spec themes). */
@@ -173,7 +158,7 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     : "";
   const number = new Intl.NumberFormat(tierSectionCopy[lang].numberLocale);
 
-  const specHref = (entry: TierEntry) => {
+  const specHref = (entry: Pick<TierEntry, "classSlug" | "specSlug">) => {
     const match = [`${entry.classSlug}/${entry.specSlug}`, `${entry.classSlug}/${entry.specSlug}-${entry.classSlug}`].find((path) => specPathSet.has(path));
     return match ? p(lang, `/wow/classes/${match}`) : undefined;
   };
@@ -184,11 +169,11 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     if (sourceParam === "compare") setView("compare");
     else if (isTierSource(sourceParam)) setSource(sourceParam);
     const roleParam = params.get("role");
-    if (roleParam === "healer" || roleParam === "tank") setRole(roleParam);
+    if (roleParam === "tank" || (roleParam === "healer" && sourceParam !== "sim")) setRole(roleParam);
     const difficultyParam = params.get("difficulty");
     if (difficultyParam && SOURCE_DIFFICULTIES.includes(difficultyParam)) setSourceDifficulty(difficultyParam);
     setUrlRead(true);
-    if (params.get("activity") !== "raid" || sourceParam === "mythicstats") return;
+    if (params.get("activity") !== "raid" || sourceParam === "mythicstats" || sourceParam === "sim") return;
     setActivity("raid");
     setContextValue("all:all");
     setRemoteRoles(null);
@@ -264,7 +249,9 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     setSource(id === "compare" ? "gildra" : id);
     setSelectedSlug("");
     setCls("all");
-    if (id === "mythicstats" && activity === "raid") switchActivity("mythic_plus");
+    if ((id === "mythicstats" || id === "sim") && activity === "raid") switchActivity("mythic_plus");
+    // The simulations cover damage specs and tanks only.
+    if (id === "sim" && role === "healer") setRole("dps");
   };
 
   const chooseRole = (value: TierRole) => {
@@ -330,7 +317,7 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     ? <MaterialLinkButton kit={cardKit} fit="block" href={selectedSpecPage} variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{copy.specPage}</MaterialLinkButton>
     : selectedGuide ? <MaterialLinkButton kit={cardKit} fit="block" href={selectedGuide} external variant="primary" iconAfter={<ArrowUpRight aria-hidden="true" />}>{selectedGuideLabel}</MaterialLinkButton> : null;
 
-  const sourceLabel = (id: TierSourceId) => id === "gildra" ? "Gildra" : SOURCE_META[id].name;
+  const sourceLabel = (id: TierSourceId) => id === "gildra" ? "Gildra" : id === "sim" ? simTierCopy[lang].tab : SOURCE_META[id].name;
   const activeTab = view === "compare" ? "compare" : source;
   const externalSource = external ? source as ExternalTierSource : null;
   const busy = isLoading || Boolean(sourceState?.loading);
@@ -503,6 +490,14 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
       ) : <div className={styles.rolePanel}>{ranking}</div>}
     </MaterialPlaque>
   );
+
+  if (source === "sim" && view === "list" && !sample) {
+    return (
+      <SimTierBoard lang={lang} role={role === "tank" ? "tank" : "dps"} onRole={chooseRole} sourcePicker={sourcePicker} specNames={specNames}
+        specHref={(classSlug, specSlug) => specHref({ classSlug, specSlug })}
+        kits={{ filters: FILTER_KIT, table: TABLE_KIT, about: ABOUT_BUTTON_KIT, roles: ROLE_KITS }} />
+    );
+  }
 
   return (
     <div className={styles.workspace} id={ANCHORS.tierList}>

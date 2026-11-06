@@ -2,10 +2,13 @@
  *  exist and how one source slice (source × mode × raid difficulty) is keyed. */
 import type { TierActivity, TierEntry, TierRole } from "@/lib/platform/games/intelligence";
 
-/** `gildra` is the blended Wowhead + wow.gg list; the others are external sites. */
-export type TierSourceId = "gildra" | "mythicstats" | "ugg";
+/** `gildra` is the blended Wowhead + wow.gg list; the others are external sites.
+ *  `sim` is mythistone.com's simulated damage by target count (its own board, not a role list). */
+export type TierSourceId = "gildra" | "mythicstats" | "ugg" | "sim";
 export type ExternalTierSource = Exclude<TierSourceId, "gildra">;
-export const TIER_SOURCES: TierSourceId[] = ["gildra", "mythicstats", "ugg"];
+/** Sources published as role lists through /v1/meta/wow/tier-list. */
+export type ListTierSource = Exclude<ExternalTierSource, "sim">;
+export const TIER_SOURCES: TierSourceId[] = ["gildra", "mythicstats", "ugg", "sim"];
 /** Raid difficulties a source tab offers; `raid_hero` is the default. */
 export const SOURCE_DIFFICULTIES = ["all", "raid_myth", "raid_hero", "raid_normal"];
 export const DEFAULT_SOURCE_DIFFICULTY = "raid_hero";
@@ -19,6 +22,6 @@ export function isTierSource(value: string | null): value is TierSourceId {
 }
 
 /** Mythic+ has no difficulty, so it is left out of the key. */
-export function sourceKey(source: ExternalTierSource, activity: TierActivity, difficulty: string) {
+export function sourceKey(source: ListTierSource, activity: TierActivity, difficulty: string) {
   return activity === "raid" ? `${source}|raid|${difficulty}` : `${source}|${activity}`;
 }

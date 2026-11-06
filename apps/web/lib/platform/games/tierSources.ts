@@ -2,13 +2,13 @@ import "server-only";
 import { internalApiJson } from "@/lib/api/internal";
 import { runtimeFlags } from "@/lib/flags";
 import type { TierActivity, TierEntry, TierRole } from "./intelligence";
-import { DEFAULT_SOURCE_DIFFICULTY, sourceKey, type ExternalTierSource, type SourceSlice, type TierSourceSlices } from "@/components/blocks/wow/tierWorkspace/tierSourceKeys";
+import { DEFAULT_SOURCE_DIFFICULTY, sourceKey, type ListTierSource, type SourceSlice, type TierSourceSlices } from "@/components/blocks/wow/tierWorkspace/tierSourceKeys";
 
 const ROLES: TierRole[] = ["dps", "healer", "tank"];
 /** The slices a source tab opens on: rendered with the page, so switching tabs needs no request. */
-const PRELOADED: [ExternalTierSource, TierActivity][] = [["mythicstats", "mythic_plus"], ["ugg", "mythic_plus"], ["ugg", "raid"]];
+const PRELOADED: [ListTierSource, TierActivity][] = [["mythicstats", "mythic_plus"], ["ugg", "mythic_plus"], ["ugg", "raid"]];
 
-async function slice(source: ExternalTierSource, activity: TierActivity): Promise<SourceSlice> {
+async function slice(source: ListTierSource, activity: TierActivity): Promise<SourceSlice> {
   const snapshots = await Promise.all(ROLES.map((role) => {
     const params = new URLSearchParams({ source, activity, role, limit: "60" });
     if (activity === "raid") params.set("difficulty", DEFAULT_SOURCE_DIFFICULTY);
