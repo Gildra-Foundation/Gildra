@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore, type CSSProperties } from "react";
 import Link from "next/link";
 import { ATLAS_FOOTER_LINKS } from "@/components/atlas/footerLinks";
 import { ArrowRight } from "lucide-react";
 import { AtlasMotionToggle } from "@gildra/atlas-ui/AtlasMotionToggle";
-import { MaterialLinkButton } from "@/components/wow/shared/material/MaterialButton";
+import { MaterialSlotLinkButton } from "@/components/wow/shared/material/MaterialButtonBase";
 import type { Lang as Locale } from "@/lib/i18n-paths";
 
 const copy = {
@@ -46,11 +46,12 @@ export function NotFoundLede({ locale }: { locale?: Locale }) {
   return <>{useNotFoundCopy(locale).text.lede}</>;
 }
 
-export function NotFoundActions({ locale }: { locale?: Locale }) {
+/** `slotStyle`: the painted kit's button geometry, computed on the server (NotFoundPage). */
+export function NotFoundActions({ locale, slotStyle }: { locale?: Locale; slotStyle: CSSProperties }) {
   const { text, prefix } = useNotFoundCopy(locale);
   return <>
-    <MaterialLinkButton kit="den-of-nalorakk" fit="stack" variant="primary" href={`${prefix}/wow`} iconAfter={<ArrowRight aria-hidden="true" />}>{text.hub}</MaterialLinkButton>
-    <MaterialLinkButton kit="den-of-nalorakk" fit="stack" href={`${prefix}/wow/mythic-plus`}>{text.mythic}</MaterialLinkButton>
+    <MaterialSlotLinkButton slotStyle={slotStyle} fit="stack" variant="primary" href={`${prefix}/wow`} iconAfter={<ArrowRight aria-hidden="true" />}>{text.hub}</MaterialSlotLinkButton>
+    <MaterialSlotLinkButton slotStyle={slotStyle} fit="stack" href={`${prefix}/wow/mythic-plus`}>{text.mythic}</MaterialSlotLinkButton>
   </>;
 }
 

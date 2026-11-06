@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { atlasLegal } from "@/components/atlas/AtlasFrame";
 import { NotFoundActions, NotFoundFooterLinks, NotFoundLede, NotFoundMotionToggle, NotFoundText, NotFoundTitle } from "./NotFoundCopy";
-import { NotFoundSuggestions } from "./NotFoundSuggestions";
+import { materialButtonStyle } from "@/components/wow/shared/material/materialKit";
+import { LazyNotFoundSuggestions } from "./LazyNotFoundSuggestions";
 
 export const notFoundMetadata: Metadata = {
   title: "404 — Gildra",
@@ -23,9 +24,9 @@ export function NotFoundPage({ locale }: { locale?: "en" | "ru" }) {
         eyebrow="404"
         title={<NotFoundTitle locale={locale} />}
         lede={<NotFoundLede locale={locale} />}
-        actions={<NotFoundActions locale={locale} />}
+        actions={<NotFoundActions locale={locale} slotStyle={materialButtonStyle("den-of-nalorakk")} />}
       />
-      <NotFoundSuggestions />
+      <LazyNotFoundSuggestions />
     </AtlasFrame>
   );
 }

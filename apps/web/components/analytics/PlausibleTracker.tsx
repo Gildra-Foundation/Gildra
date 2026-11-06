@@ -1,4 +1,4 @@
-import { PlausibleScript } from "./PlausibleScript";
+import { LazyPlausibleScript } from "./LazyAnalytics";
 
 import { plausibleTracker } from "@/lib/analytics/plausible";
 
@@ -6,5 +6,5 @@ import { plausibleTracker } from "@/lib/analytics/plausible";
 export function PlausibleTracker() {
   const tracker = plausibleTracker();
   if (!tracker) return null;
-  return <PlausibleScript {...tracker} />;
+  return <LazyPlausibleScript {...tracker} />;
 }
