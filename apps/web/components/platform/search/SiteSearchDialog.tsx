@@ -16,10 +16,11 @@ type Row = { key: string; href: string; title: string; kind: string; icon?: "rec
 type Group = { label: string; rows: Row[] };
 
 /**
- * The quick search dialog. Loaded only when the reader first opens it and
- * mounted afresh on every opening, so the query and history start clean.
+ * The quick search dialog. Loaded when the page is idle (or on first use) and
+ * mounted afresh on every opening, so the query and history start clean; after
+ * a close it stays mounted until its exit animation has played.
  */
-export function SiteSearchDialog({ onClose, lang, initialQuery = "" }: { onClose: () => void; lang: SiteSearchLang; initialQuery?: string }) {
+export function SiteSearchDialog({ open, onClose, lang, initialQuery = "" }: { open: boolean; onClose: () => void; lang: SiteSearchLang; initialQuery?: string }) {
   const copy = siteSearchCopy[lang];
   const router = useRouter();
   const id = useId();
@@ -94,7 +95,7 @@ export function SiteSearchDialog({ onClose, lang, initialQuery = "" }: { onClose
 
   let position = -1;
   return (
-    <AtlasDialog open onClose={onClose} label={copy.dialog} variant="sheet" className={styles.dialog}>
+    <AtlasDialog open={open} onClose={onClose} label={copy.dialog} variant="sheet" className={styles.dialog}>
       <div className={styles.head}>
         <AtlasInput
           ref={input}
