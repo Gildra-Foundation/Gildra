@@ -490,7 +490,8 @@
   .talent-calculator[data-atlas-scope] { min-height: 0; }
   .talent-calculator[data-atlas-scope] .tc-commandbar { padding: var(--atlas-space-3); gap: var(--atlas-space-3); }
   .talent-calculator[data-atlas-scope] .tc-page-title h1 { white-space: normal; }
-  .talent-calculator[data-atlas-scope] .tc-command-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); width: 100%; }
+  /* The specialization name needs more room than the points counter ("Неистовство" was cut to "Неисто…"). */
+  .talent-calculator[data-atlas-scope] .tc-command-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--atlas-space-2); width: 100%; }
   .talent-calculator[data-atlas-scope] .tc-points-badge { min-width: 0; }
   .talent-calculator[data-atlas-scope] .tc-loadout-menu { grid-column: 1 / -1; min-width: 0; }
   .talent-calculator[data-atlas-scope] .tc-build-select { width: 100%; }

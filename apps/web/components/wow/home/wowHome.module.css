@@ -19,3 +19,9 @@
 
 @media (max-width: 1199px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .cards { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-7); } }
+
+/* The hero kit's claw caps are wide: on phones the arrow gives its room to the label, so
+   "Выбрать класс" stays on one line inside the painted button. */
+@media (max-width: 440px) {
+  .talents :global(.ui-button__icon), .talents a > svg { display: none; }
+}

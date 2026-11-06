@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight, Search, X } from "lucide-react";
-import { AtlasEmpty, AtlasFrame, AtlasHero } from "@/components/atlas";
+import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { MaterialButton, MaterialPlaque } from "@/components/wow/shared/materialAtlas";
 import { libraryKit } from "@/components/library/libraryKit";
 import { TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
@@ -118,9 +118,7 @@ export function SearchPage({
             <Suspense fallback={<p className={styles.resultCount} aria-live="polite">{t.counting}</p>}>
               <SearchResultCount results={results} lang={lang} query={query} />
             </Suspense>
-          ) : (
-            <AtlasEmpty title={t.startTitle} />
-          )}
+          ) : null}
           {results.map(({ gameId, result }) => (
             <Suspense key={gameId} fallback={<SearchGameFallback gameId={gameId} lang={lang} />}>
               <SearchGameResults gameId={gameId} result={result} lang={lang} showGame={multiGame} />

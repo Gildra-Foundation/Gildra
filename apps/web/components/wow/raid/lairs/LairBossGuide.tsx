@@ -42,7 +42,9 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
   ];
 
   return (
-    <AtlasFrame lang={locale} art={boss.portrait} artPosition="center 24%" artShade="deep" morphKey={`/wow/lairs/${boss.slug}`} dataAttributes={{ "data-lairs-root": true }}>
+    // The boss picture is a ~720 px journal capture: framed in the hero it stays sharp, while the
+    // full-width atmosphere is the section's painted grotto (the capture blew up 2× and blurred there).
+    <AtlasFrame lang={locale} scene="lairs" dataAttributes={{ "data-lairs-root": true }}>
       <AtlasHero
         breadcrumbs={trail(locale, "lairs", { label: boss.name })}
         breadcrumbsLabel={copy.breadcrumbsLabel}
@@ -53,6 +55,7 @@ export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; n
           {boss.farm.waypoint ? <CopyWaypointButton waypoint={boss.farm.waypoint} labels={{ label: copy.copyWaypoint, copied: copy.copied, failed: copy.copyFailed }} /> : null}
           <AtlasShareButton title={boss.name} locale={locale} />
         </>}
+        aside={<div className={styles.heroPortrait}><RaidFramedArt raid={kit} src={boss.portrait} position="center 24%" priority sizes="(max-width: 1100px) 92vw, 440px" /></div>}
       />
 
       <AtlasAnchorNav items={chapters} label={copy.chapters} />

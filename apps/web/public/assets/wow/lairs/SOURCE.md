@@ -4,7 +4,7 @@ The boss screenshots, in-game maps, spell icons, and item icons in the `bosses/`
 
 - Guide: https://www.icy-veins.com/wow/midnight-world-bosses-guide
 - Boss and map images: `https://static.icy-veins.com/images/wow/midnight/{boss}.jpg` and `{boss}_location.jpg`
-- Spell and loot icons: `https://static.icy-veins.com/images/wow/large_icons/{icon}.jpg`
+- Spell and loot icons: the same game icons at 56×56 (2026-11-06; the 28×28 copies blurred in the 34 px frames): `https://render.worldofwarcraft.com/eu/icons/56/{icon}.jpg`, ten newer item icons not yet on the Blizzard render CDN from `https://wow.zamimg.com/images/wow/icons/large/{icon}.jpg`. File names unchanged.
 
 World of Warcraft and related artwork are trademarks or registered trademarks of Blizzard Entertainment. These assets are used for the unofficial Gildra fan-guide concept.
 

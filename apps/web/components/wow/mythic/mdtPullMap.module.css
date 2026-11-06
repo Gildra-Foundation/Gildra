@@ -214,15 +214,28 @@
 }
 
 /* The viewport and painted aperture share one box on every screen size. */
+/* The figure is the size container: the frame bands (cqw) follow the frame's own width. */
+.panel[data-dungeon-map] .floor { container-type: inline-size; }
 .panel[data-dungeon-map] .mapFrame { padding: 0; aspect-ratio: var(--frame-aspect); }
-.panel[data-dungeon-map] .frameArtwork { object-fit: fill; }
+/* 9-slice of the painted frame: corners and crest keep their proportions, only the rails stretch.
+   fill keeps the parts of the painting that hang into the window (crest, corner tips). */
+.panel[data-dungeon-map] .frameArtwork {
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--frame-top) var(--frame-right) var(--frame-bottom) var(--frame-left);
+  border-image-source: var(--frame-art);
+  border-image-slice: var(--frame-slice) fill;
+  border-image-width: 1;
+  border-image-repeat: stretch;
+}
 .panel[data-dungeon-map] .viewport { position: absolute; inset: var(--frame-top) var(--frame-right) var(--frame-bottom) var(--frame-left); height: auto; max-height: none; border-radius: var(--frame-window-radius); }
 @media (max-width: 1100px) {
   .panel[data-dungeon-map] .workspace { grid-template-columns: minmax(0, 1fr); }
   .panel[data-dungeon-map] .selectedBody { max-height: none; }
 }
 @media (max-width: 767px) {
-  .panel[data-dungeon-map] .mapFrame { height: calc(300px / var(--frame-window-height)); aspect-ratio: auto; }
+  .panel[data-dungeon-map] .mapFrame { height: calc(300px + var(--frame-bands-y)); aspect-ratio: auto; }
 }
 @media (forced-colors: active) {
   .panel[data-dungeon-map] .mapFrame { height: auto; aspect-ratio: auto; border: 2px solid CanvasText; padding: var(--atlas-space-2); }

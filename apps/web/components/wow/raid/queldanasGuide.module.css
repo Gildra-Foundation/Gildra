@@ -141,3 +141,6 @@
 /* The original 300 px model renders have large transparent margins; only the viewport changes. */
 .addPortrait img,
 :global([data-guide-hint-surface]):has(.hintFacts) :global([data-enemy-portrait]) { transform: scale(1.95) translateY(-21%); }
+
+/* No role chosen: the job heading is for screen readers only, so the picker ends the plaque without a rule. */
+.toolbar:has(+ :global(.sr-only)) { padding-bottom: 0; border-bottom: 0; }

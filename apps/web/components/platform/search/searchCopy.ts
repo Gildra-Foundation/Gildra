@@ -28,7 +28,6 @@ export const searchCopy = {
     emptyHint: "Попробуйте более общий запрос или другое написание. Названия можно искать на русском и английском.",
     itemLevel: "Уровень предмета",
     libraryLink: "Все разделы библиотеки",
-    startTitle: "Что найти?",
     results: "Результаты поиска",
   },
   en: {
@@ -57,7 +56,6 @@ export const searchCopy = {
     emptyHint: "Try a broader term or another spelling. Names can be searched in English and Russian.",
     itemLevel: "Item level",
     libraryLink: "All library sections",
-    startTitle: "What are you looking for?",
     results: "Search results",
   },
 } satisfies Record<Lang, Record<string, unknown>>;

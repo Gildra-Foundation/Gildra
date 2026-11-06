@@ -148,8 +148,9 @@
 .row:hover,
 .row:focus-within { background: var(--atlas-accent-wash); }
 
-.rowIcon { color: var(--atlas-text-subtle); }
-.rowIcon > svg { padding: 10px; }
+/* Sections without a picture show their glyph at a readable size (10 px padding left an 8 px dot in the frame). */
+.rowIcon { color: var(--atlas-text-muted); }
+.rowIcon > svg { padding: 4px; }
 .rowLink { overflow: hidden; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
 .rowLink::after { content: ""; position: absolute; inset: 0; }
 .row:hover .rowLink { text-decoration: underline; text-underline-offset: 3px; }

@@ -148,3 +148,6 @@
 
 
 .bossHeader:not(:has(> img)) { grid-template-columns: minmax(0,1fr); }
+
+/* No role chosen: the job heading is for screen readers only, so the picker ends the plaque without a rule. */
+.toolbar:has(+ :global(.sr-only)) { padding-bottom: 0; border-bottom: 0; }

@@ -33,9 +33,11 @@
   text-shadow: 0 1px 3px var(--atlas-bg);
 }
 
+/* auto-fit: three specializations share the plaque's width instead of leaving an empty fourth track
+   (names like "Beast Mastery" and "Marksmanship" then fit on one line). */
 .specs {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
   gap: var(--atlas-space-2);
   margin: 0;
   padding: 0;
