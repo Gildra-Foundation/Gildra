@@ -139,9 +139,10 @@ export function talentPointBudgets(data: TalentCalculatorData) {
   if (!decoded) return result;
   for (const kind of Object.keys(result) as TalentKind[]) {
     const freeNodes = new Set(data.trees[kind].nodes.filter((node) => node.freeNode).map((node) => node.id));
+    // The reference picks one hero path: on the other path's tree it spends nothing, so the default stays.
     result[kind] = [...decoded.ranks.entries()]
       .filter(([id]) => id.startsWith(`${kind}-`) && !freeNodes.has(id))
-      .reduce((sum, [, rank]) => sum + rank, 0);
+      .reduce((sum, [, rank]) => sum + rank, 0) || result[kind];
   }
   return result;
 }
