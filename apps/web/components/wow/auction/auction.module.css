@@ -40,8 +40,6 @@
 .resultsTitle { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-2) var(--atlas-space-3); margin: 0; font: inherit; color: var(--atlas-text); }
 .summaryCount { color: var(--material-light); font: var(--atlas-weight-display) var(--atlas-text-h2) / 1 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
 .summaryLabel { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-.updated { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-weight: 400; }
-.updated::before { margin-inline-end: var(--atlas-space-3); color: var(--material-line); content: "·"; }
 .tableScroll { max-width: 100%; overflow: auto; }
 .tableScroll:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
 .table { width: 100%; border-collapse: collapse; text-align: left; font-size: var(--atlas-text-small); }

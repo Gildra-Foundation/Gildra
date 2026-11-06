@@ -123,7 +123,6 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
   };
 
   const title = view.compare ? c.compareTitle : view.q ? `«${view.q}»` : category ? c.categories[category.key] : "";
-  const date = (value: string) => new Date(value).toLocaleString(c.dateLocale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   const realmMissing = category?.market === "realm" && !view.realm;
 
   return <div className={styles.browser}>
@@ -163,13 +162,12 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
       <div className={styles.plaqueHead}>
         <h2 id="auction-results-title" className={styles.resultsTitle}>
           <span className={materialStyles.title}>{title}</span>
-          {!view.compare && deferred?.sourceUpdatedAt ? <span className={styles.updated}>{c.updated} <time dateTime={deferred.sourceUpdatedAt}>{date(deferred.sourceUpdatedAt)}</time></span> : null}
         </h2>
         {!view.compare && !view.q && split.split ? <AtlasSegmented className={styles.segmented} size="sm" aria-label={c.all} value={view.all ? "all" : "current"}
           onValueChange={value => go({ all: value === "all" }, "replace")} options={[{ value: "current", label: c.current }, { value: "all", label: c.all }]} /> : null}
       </div>
       <div className={styles.resultBody} aria-busy={list.loading}>
-        {view.compare ? <AuctionCompare ids={view.items} region={view.region} realm={view.realm} lang={lang} onOpen={open}
+        {view.compare ? <AuctionCompare ids={view.items} region={view.region} realm={view.realm} lang={lang} known={knownItems} onOpen={open}
             onRemove={id => { const items = view.items.filter(value => value !== id); go({ items, compare: items.length > 0 }, "replace"); }} onBack={() => go({ compare: false })} />
           : realmMissing ? <p className={styles.empty}>{c.realmNeeded}</p>
           : list.error ? <div className={styles.stateBox} role="alert"><p className={styles.stateText}>{auctionErrorMessage(list.error, lang)}</p><AuctionButton onClick={list.retry}>{c.retry}</AuctionButton></div>

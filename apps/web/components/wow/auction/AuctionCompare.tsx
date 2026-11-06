@@ -27,14 +27,17 @@ function Bar({ value, max, label }: { value: number; max: number; label: React.R
 }
 
 /** Selected items side by side: min and median unit price as bars on one scale, units listed, and what N units cost. */
-export function AuctionCompare({ ids, region, realm, lang, onOpen, onRemove, onBack }: {
+export function AuctionCompare({ ids, region, realm, lang, known, onOpen, onRemove, onBack }: {
   ids: readonly number[]; region: AuctionRegion; realm: string; lang: "ru" | "en";
+  /** Rows already seen in a list: a reagent's rank is only known next to its other ranks. */
+  known?: ReadonlyMap<number, AuctionMarketItem>;
   onOpen: (item: AuctionMarketItem) => void; onRemove: (itemId: number) => void; onBack: () => void;
 }) {
   const c = auctionCopy[lang], [quantity, setQuantity] = useState(100);
   const url = ids.length ? `/api/wow/auction?${new URLSearchParams({ action: "market", region, lang, items: ids.join(","), ...(realm ? { realm } : {}) })}` : null;
   const result = useAuctionData<AuctionMarketView>(url);
-  const entries = result.data ? compareEntries(result.data.items, ids) : [];
+  const entries = (result.data ? compareEntries(result.data.items, ids) : [])
+    .map(item => item.rank || !known?.get(item.itemId)?.rank ? item : { ...item, rank: known.get(item.itemId)?.rank ?? null });
   const maxPrice = Math.max(0, ...entries.map(item => item.medianPrice), ...entries.map(item => item.minPrice));
   const costs = entries.map(item => ladderCost(item.ladder ?? [], quantity));
   const maxCost = Math.max(0, ...costs.map(cost => cost.total));
