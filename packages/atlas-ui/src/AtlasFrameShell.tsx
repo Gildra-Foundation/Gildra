@@ -1,5 +1,4 @@
 import type { CSSProperties, ReactNode } from "react";
-import { preload } from "react-dom";
 import { getImageProps } from "next/image";
 import clsx from "clsx";
 import { AtlasArtGlow, type ArtGlowPoint } from "./AtlasArtGlow";
@@ -91,14 +90,17 @@ function FrameArt({ art, position }: { art: string; position?: string }) {
   const { props: tall } = getImageProps({ ...common, src: portrait.src, sizes: ART_PORTRAIT_SIZES });
   // React preloads a lone <img> in the document head, not one inside <picture>:
   // preload each source for its own screens, so the painting keeps its head start.
-  preload(tall.src, { as: "image", imageSrcSet: tall.srcSet, imageSizes: tall.sizes, fetchPriority: "high", media: ART_PORTRAIT_MEDIA });
-  preload(wide.src, { as: "image", imageSrcSet: wide.srcSet, imageSizes: wide.sizes, fetchPriority: "high", media: `not all and ${ART_PORTRAIT_MEDIA}` });
-  return (
+  // <link> elements (React hoists them into <head>), not ReactDOM.preload(): from a
+  // server component that becomes a hint in the RSC payload, and every prefetch of
+  // this page would download its painting at high priority on whatever page is open.
+  return <>
+    <link rel="preload" as="image" imageSrcSet={tall.srcSet} imageSizes={tall.sizes} fetchPriority="high" media={ART_PORTRAIT_MEDIA} />
+    <link rel="preload" as="image" imageSrcSet={wide.srcSet} imageSizes={wide.sizes} fetchPriority="high" media={`not all and ${ART_PORTRAIT_MEDIA}`} />
     <picture>
       <source media={ART_PORTRAIT_MEDIA} srcSet={tall.srcSet} sizes={tall.sizes} />
       <img {...wide} alt="" className={styles.art} />
     </picture>
-  );
+  </>;
 }
 
 /**
