@@ -1,15 +1,16 @@
 "use client";
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
+import { Check, ChevronDown, Plus, Search } from "lucide-react";
 import { AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { AtlasSkeleton } from "@gildra/atlas-ui/AtlasState";
 import { materialStyles } from "@/components/wow/shared/materialAtlas";
-import { auctionRegions, type AuctionMarketItem, type AuctionMarketView, type AuctionRegion } from "@/lib/wow/auctionBrowser";
+import { AUCTION_COMPARE_LIMIT, auctionRegions, type AuctionMarketItem, type AuctionMarketView, type AuctionRegion } from "@/lib/wow/auctionBrowser";
 import { auctionCategories, auctionCategory, auctionCategoryGroups, auctionIconUrl } from "@/lib/wow/auctionMarketCategories";
 import { sortSummaries, type AuctionSortKey } from "@/lib/wow/auctionMarketSummary";
+import type { CompareSortKey } from "@/lib/wow/auctionMarketCompare";
 import { auctionCopy } from "./auctionCopy";
 import { AuctionCombobox, type ComboOption } from "./AuctionCombobox";
 import { AuctionCompare, AuctionCompareTray } from "./AuctionCompare";
@@ -19,7 +20,7 @@ import { AuctionButton, AuctionPlaque } from "./AuctionMaterial";
 import { AuctionMarketTable } from "./AuctionMarketTable";
 import { AuctionItemLabel } from "./AuctionMarketParts";
 import { AuctionMoney } from "./AuctionMoney";
-import { currentItems, nextSort, readAuctionView, toggleItem, writeAuctionView, type AuctionView } from "./auctionState";
+import { currentItems, nextCompareSort, nextSort, readAuctionView, toggleItem, writeAuctionView, type AuctionView } from "./auctionState";
 import { useAuctionData } from "./useAuctionData";
 import styles from "./auction.module.css";
 
@@ -76,8 +77,11 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
   const suggestions = useAuctionData<AuctionMarketView>(suggestUrl);
   const suggestOptions = useMemo<ComboOption[]>(() => (suggestions.data?.items ?? []).map(item => ({
     key: `${item.market}:${item.itemId}`, label: item.name ?? String(item.itemId),
-    render: <span className={styles.suggestion}><AuctionItemLabel item={item} lang={lang} size={28} /><AuctionMoney value={item.minPrice} lang={lang} /></span>,
-  })), [suggestions.data, lang]);
+    render: <span className={styles.suggestion}><AuctionItemLabel item={item} lang={lang} size={28} /><span className={styles.suggestionEnd}>
+      <AuctionMoney value={item.minPrice} lang={lang} />
+      {view.compare ? view.items.includes(item.itemId) ? <Check size={16} aria-hidden="true" className={styles.suggestionPicked} /> : <Plus size={16} aria-hidden="true" className={styles.suggestionAdd} /> : null}
+    </span></span>,
+  })), [suggestions.data, lang, view.compare, view.items]);
 
   /* The list itself. */
   const listUrl = view.compare ? null : view.q ? api({ action: "market", region: view.region, lang, q: view.q, ...(view.realm ? { realm: view.realm } : {}) })
@@ -105,6 +109,11 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
     return map;
   }, [known, trayData.data, deferred]);
 
+  const add = (item: AuctionMarketItem) => {
+    setKnown(previous => new Map(previous).set(item.itemId, item));
+    if (view.items.includes(item.itemId) || view.items.length >= AUCTION_COMPARE_LIMIT) return;
+    go({ items: [...view.items, item.itemId] }, "replace");
+  };
   const toggle = (item: AuctionMarketItem) => {
     setKnown(previous => new Map(previous).set(item.itemId, item));
     const items = toggleItem(view.items, item.itemId);
@@ -114,7 +123,20 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
   const [openedHere, setOpenedHere] = useState(false);
   const open = (item: Pick<AuctionMarketItem, "itemId" | "market">) => { setOpenedHere(true); go({ item: item.itemId, itemMarket: item.market }); };
   const closeItem = () => { if (openedHere) { setOpenedHere(false); window.history.back(); } else go({ item: null }, "replace"); };
-  const sortBy = (key: AuctionSortKey, dir?: "asc" | "desc") => go(dir ? { sort: key, dir } : nextSort(view, key), "replace");
+  const sortBy = (key: AuctionSortKey | "", dir?: "asc" | "desc") => go(!key ? { sort: "", dir: "asc" } : dir ? { sort: key, dir } : nextSort(view, key), "replace");
+  const sortCompareBy = (key: CompareSortKey | "", dir?: "asc" | "desc") => go(!key ? { csort: "", cdir: "asc" } : dir ? { csort: key, cdir: dir } : nextCompareSort(view, key), "replace");
+  const removeCompared = (id: number) => { const items = view.items.filter(value => value !== id); go({ items, compare: view.compare && items.length > 0 }, "replace"); };
+
+  /* In the comparison the categories fold away; opening it brings the search box and the table into view. */
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const scrollPending = useRef(false);
+  const openCompare = () => { setCategoriesOpen(false); scrollPending.current = true; go({ compare: true }); };
+  useEffect(() => {
+    if (!view.compare || !scrollPending.current) return;
+    scrollPending.current = false;
+    const frame = requestAnimationFrame(() => document.getElementById("auction-search")?.scrollIntoView({ block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, [view.compare]);
   const pickCategory = (key: AuctionView["category"]) => { setFindText(null); go({ category: key, q: "", compare: false, sort: "", all: false }); };
   const submitSearch = (text: string) => {
     const q = text.trim();
@@ -126,7 +148,7 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
   const realmMissing = category?.market === "realm" && !view.realm;
 
   return <div className={styles.browser}>
-    <AuctionPlaque as="section" id="auction-search" className={styles.searchPlaque} aria-label={c.find}>
+    <AuctionPlaque as="section" id="auction-search" className={styles.searchPlaque} aria-label={c.find} data-compact={view.compare || undefined}>
       <div className={styles.toolbar} data-realm={needsRealm || undefined}>
         <label className={styles.regionField}>
           <span className={styles.fieldLabel}>{c.region}</span>
@@ -134,17 +156,24 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
             {auctionRegions.map(region => <option key={region} value={region}>{region.toUpperCase()}</option>)}
           </AtlasSelect>
         </label>
-        <AuctionCombobox id="auction-find" className={styles.findField} label={c.find} value={typed} placeholder={c.findPlaceholder}
+        <AuctionCombobox id="auction-find" className={styles.findField} label={c.find} value={typed} placeholder={view.compare ? c.addItem : c.findPlaceholder}
           icon={<Search size={16} />} busy={suggestions.loading} options={suggestOptions} empty={suggestions.data ? c.noSuggestions : undefined}
           onText={setFindText} onSubmitText={submitSearch}
-          onPick={option => { const [market, id] = option.key.split(":"); setFindText(null); open({ itemId: Number(id), market: market === "realm" ? "realm" : "commodities" }); }} />
+          onPick={option => {
+            const [market, id] = option.key.split(":"), item = suggestions.data?.items.find(row => `${row.market}:${row.itemId}` === option.key);
+            if (view.compare && item) { add(item); setFindText(""); return; }
+            setFindText(null); open({ itemId: Number(id), market: market === "realm" ? "realm" : "commodities" });
+          }} />
         {needsRealm ? <AuctionCombobox id="auction-realm" className={styles.realmField} label={c.realm} value={realmText ?? realmName}
           placeholder={realms.loading ? c.loadingRealms : c.realmPick} disabled={!realms.data}
           options={realmOptions} empty={c.realmEmpty} onText={setRealmText}
           onPick={option => { setRealmText(null); go({ realm: option.key }, "replace"); }} /> : null}
       </div>
       {needsRealm && realms.error ? <div className={styles.error} role="alert"><p>{auctionErrorMessage(realms.error, lang)}</p><AuctionButton onClick={realms.retry}>{c.retry}</AuctionButton></div> : null}
-      <nav className={styles.categories} aria-label={c.categoriesLabel}>
+      {view.compare ? <button type="button" className={styles.categoriesToggle} aria-expanded={categoriesOpen} aria-controls="auction-categories" onClick={() => setCategoriesOpen(value => !value)}>
+        <span>{c.categoriesLabel}</span><ChevronDown size={16} aria-hidden="true" />
+      </button> : null}
+      <nav id="auction-categories" className={styles.categories} aria-label={c.categoriesLabel} hidden={view.compare && !categoriesOpen}>
         {auctionCategoryGroups.map(group => <div key={group} className={styles.categoryGroup}>
           <h2 className={styles.groupTitle}>{c.groups[group]}</h2>
           <ul className={styles.categoryList}>{auctionCategories.filter(item => item.group === group).map(item => {
@@ -165,10 +194,14 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
         </h2>
         {!view.compare && !view.q && split.split ? <AtlasSegmented className={styles.segmented} size="sm" aria-label={c.all} value={view.all ? "all" : "current"}
           onValueChange={value => go({ all: value === "all" }, "replace")} options={[{ value: "current", label: c.current }, { value: "all", label: c.all }]} /> : null}
+        {view.compare ? <div className={styles.compareActions}>
+          <button type="button" className={styles.trayClear} onClick={() => go({ items: [], compare: false }, "replace")}>{c.clear}</button>
+          <AuctionButton onClick={() => go({ compare: false })}>{c.backToList}</AuctionButton>
+        </div> : null}
       </div>
       <div className={styles.resultBody} aria-busy={list.loading}>
-        {view.compare ? <AuctionCompare ids={view.items} region={view.region} realm={view.realm} lang={lang} known={knownItems} onOpen={open}
-            onRemove={id => { const items = view.items.filter(value => value !== id); go({ items, compare: items.length > 0 }, "replace"); }} onBack={() => go({ compare: false })} />
+        {view.compare ? <AuctionCompare ids={view.items} region={view.region} realm={view.realm} lang={lang} known={knownItems} onOpen={open} onRemove={removeCompared}
+            quantity={view.qty} onQuantity={qty => go({ qty }, "replace")} sort={view.csort} dir={view.cdir} onSort={sortCompareBy} />
           : realmMissing ? <p className={styles.empty}>{c.realmNeeded}</p>
           : list.error ? <div className={styles.stateBox} role="alert"><p className={styles.stateText}>{auctionErrorMessage(list.error, lang)}</p><AuctionButton onClick={list.retry}>{c.retry}</AuctionButton></div>
           : list.loading && !deferred ? <AtlasSkeleton variant="rows" count={8} label={c.loading} className={styles.skeleton} />
@@ -181,8 +214,8 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
       </div>
     </AuctionPlaque>
 
-    {!view.compare ? <AuctionCompareTray ids={view.items} known={knownItems} lang={lang} onCompare={() => { go({ compare: true }); document.getElementById("auction-results")?.scrollIntoView({ block: "start" }); }}
-      onClear={() => go({ items: [], compare: false }, "replace")} onRemove={id => go({ items: view.items.filter(value => value !== id) }, "replace")} /> : null}
+    {!view.compare ? <AuctionCompareTray ids={view.items} known={knownItems} lang={lang} onCompare={openCompare}
+      onClear={() => go({ items: [], compare: false }, "replace")} onRemove={removeCompared} /> : null}
 
     {view.item ? <AuctionItemDetail key={`${view.itemMarket}:${view.item}`} itemId={view.item} market={view.itemMarket} region={view.region} realm={view.realm} lang={lang}
       preview={knownItems.get(view.item)} picked={view.items.includes(view.item)} onToggle={toggle} onClose={closeItem} /> : null}

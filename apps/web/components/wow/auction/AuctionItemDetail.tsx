@@ -11,18 +11,10 @@ import { AuctionListings } from "./AuctionListings";
 import { AuctionButton } from "./AuctionMaterial";
 import { AuctionItemLabel, qualityStyle } from "./AuctionMarketParts";
 import { AuctionMoney } from "./AuctionMoney";
+import { AuctionQuantity } from "./AuctionQuantity";
 import { auctionErrorMessage } from "./auctionErrors";
 import { useAuctionData } from "./useAuctionData";
 import styles from "./auction.module.css";
-
-/** Units field shared by the item and the comparison: what N units cost from the cheapest lots. */
-export function BuyQuantity({ id, value, onChange, lang }: { id: string; value: number; onChange: (value: number) => void; lang: "ru" | "en" }) {
-  return <label className={styles.buyField} htmlFor={id}>
-    <span className={styles.fieldLabel}>{auctionCopy[lang].buyQuantity}</span>
-    <input id={id} className={styles.buyInput} type="number" inputMode="numeric" min={1} max={1000000} step={1} value={value || ""}
-      onChange={event => onChange(Math.max(0, Math.min(1000000, Math.floor(Number(event.target.value) || 0))))} />
-  </label>;
-}
 
 export function BuyCost({ ladder, quantity, lang }: { ladder: readonly AuctionLadderStep[]; quantity: number; lang: "ru" | "en" }) {
   const c = auctionCopy[lang], cost = ladderCost(ladder, quantity);
@@ -85,7 +77,7 @@ export function AuctionItemDetail({ itemId, market, region, realm, lang, preview
         : <>
           {/* Gear lots differ from each other, so only the region's commodities get the quantity tools. */}
           {market === "commodities" ? <>
-            <div className={styles.buyRow}><BuyQuantity id={`auction-buy-${itemId}`} value={quantity} onChange={setQuantity} lang={lang} /><BuyCost ladder={item.ladder} quantity={quantity} lang={lang} /></div>
+            <div className={styles.buyRow}><AuctionQuantity id={`auction-buy-${itemId}`} value={quantity} onChange={setQuantity} lang={lang} showLabel /><BuyCost ladder={item.ladder} quantity={quantity} lang={lang} /></div>
             <AuctionDepthChart ladder={item.ladder} median={item.medianPrice} lang={lang} marker={quantity} />
             <Ladder ladder={item.ladder} lang={lang} />
           </> : null}

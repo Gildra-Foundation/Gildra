@@ -30,12 +30,22 @@ export function AuctionRank({ rank, lang }: { rank: number | null; lang: "ru" | 
   </span>;
 }
 
+/** The name a screen reader hears for a row's buttons: ranks of one item must not sound the same. */
+export const rankedName = (item: Pick<AuctionMarketItem, "name" | "rank">, lang: "ru" | "en") =>
+  `${item.name ?? auctionCopy[lang].metadata}${item.rank ? `, ${auctionCopy[lang].rank} ${item.rank}` : ""}`;
+
+/** Item name with its rank gems glued to the last word, so a wrapped name never leaves the gems alone on a line. */
+export function AuctionItemName({ item, lang, className }: { item: Pick<AuctionMarketItem, "name" | "rank">; lang: "ru" | "en"; className?: string }) {
+  const name = item.name ?? auctionCopy[lang].metadata, cut = name.lastIndexOf(" ");
+  return <span className={className ?? styles.itemName}>
+    {cut > 0 ? name.slice(0, cut + 1) : null}
+    <span className={styles.nameTail}>{cut > 0 ? name.slice(cut + 1) : name}<AuctionRank rank={item.rank} lang={lang} /></span>
+  </span>;
+}
+
 export function AuctionItemLabel({ item, lang, size = 40 }: { item: Pick<AuctionMarketItem, "name" | "iconUrl" | "qualityId" | "rank">; lang: "ru" | "en"; size?: number }) {
   return <span className={styles.itemLabel} style={qualityStyle(item.qualityId)}>
     <AuctionIcon url={item.iconUrl} size={size} />
-    <span className={styles.itemLabelText}>
-      <span className={styles.itemName}>{item.name ?? auctionCopy[lang].metadata}</span>
-      <AuctionRank rank={item.rank} lang={lang} />
-    </span>
+    <AuctionItemName item={item} lang={lang} />
   </span>;
 }

@@ -4,7 +4,7 @@ import { AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import type { AuctionMarketItem } from "@/lib/wow/auctionBrowser";
 import type { AuctionSortKey } from "@/lib/wow/auctionMarketSummary";
 import { auctionCopy } from "./auctionCopy";
-import { AuctionItemLabel } from "./AuctionMarketParts";
+import { AuctionItemLabel, rankedName } from "./AuctionMarketParts";
 import { AuctionMoney } from "./AuctionMoney";
 import styles from "./auction.module.css";
 
@@ -14,7 +14,7 @@ import styles from "./auction.module.css";
  */
 export function AuctionMarketTable({ items, lang, sort, dir, onSort, selected, onToggle, onOpen, mixed, label }: {
   items: readonly AuctionMarketItem[]; lang: "ru" | "en"; sort: AuctionSortKey | ""; dir: "asc" | "desc";
-  onSort: (key: AuctionSortKey, dir?: "asc" | "desc") => void; selected: readonly number[]; onToggle: (item: AuctionMarketItem) => void;
+  onSort: (key: AuctionSortKey | "", dir?: "asc" | "desc") => void; selected: readonly number[]; onToggle: (item: AuctionMarketItem) => void;
   onOpen: (item: AuctionMarketItem) => void; mixed: boolean; label: string;
 }) {
   const c = auctionCopy[lang];
@@ -26,13 +26,13 @@ export function AuctionMarketTable({ items, lang, sort, dir, onSort, selected, o
       </button>
     </th>;
   };
-  const options: [AuctionSortKey, "asc" | "desc", string][] = [["min", "asc", `${c.minPrice} ↑`], ["min", "desc", `${c.minPrice} ↓`], ["median", "asc", `${c.median} ↑`], ["median", "desc", `${c.median} ↓`], ["quantity", "desc", `${c.available} ↓`], ["name", "asc", c.item]];
+  const options: [AuctionSortKey, "asc" | "desc", string][] = [["min", "asc", `${c.minPrice} ↑`], ["min", "desc", `${c.minPrice} ↓`], ["median", "asc", `${c.median} ↑`], ["median", "desc", `${c.median} ↓`], ["quantity", "desc", `${c.available} ↓`], ["quantity", "asc", `${c.available} ↑`], ["name", "asc", `${c.item} ↑`], ["name", "desc", `${c.item} ↓`]];
   return <>
   {/* Phones show rows as cards without column heads, so sorting moves into one select. */}
   <label className={styles.mobileSort}>
     <span className={styles.fieldLabel}>{c.sortBy}</span>
-    <AtlasSelect value={sort ? `${sort}:${dir}` : ""} onChange={event => { const [key, order] = event.target.value.split(":") as [AuctionSortKey, "asc" | "desc"]; onSort(key, order); }}>
-      {!sort ? <option value="">—</option> : null}
+    <AtlasSelect value={sort ? `${sort}:${dir}` : ""} onChange={event => { const [key, order] = event.target.value.split(":") as [AuctionSortKey | "", "asc" | "desc"]; onSort(key, order); }}>
+      <option value="">{c.newestFirst}</option>
       {options.map(([key, order, text]) => <option key={`${key}:${order}`} value={`${key}:${order}`}>{text}</option>)}
     </AtlasSelect>
   </label>
@@ -43,7 +43,7 @@ export function AuctionMarketTable({ items, lang, sort, dir, onSort, selected, o
         {head("name", c.item, false)}{head("min", c.minPrice)}{head("median", c.median)}{head("quantity", c.available)}
       </tr></thead>
       <tbody>{items.map(item => {
-        const key = `${item.market}:${item.itemId}`, picked = selected.includes(item.itemId), name = item.name ?? c.metadata;
+        const key = `${item.market}:${item.itemId}`, picked = selected.includes(item.itemId), name = rankedName(item, lang);
         return <tr key={key} className={styles.marketRow} data-selected={picked || undefined}>
           <td className={styles.pickCell}>
             <input type="checkbox" className={styles.pick} checked={picked} onChange={() => onToggle(item)} aria-label={`${c.select}: ${name}`} />
