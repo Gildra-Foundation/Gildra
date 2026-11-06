@@ -14,7 +14,7 @@ import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { withVariantQuality } from "@/lib/library/recordQuality";
 import { libraryRecordPath } from "@/lib/library/recordPath";
 import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
-import { entityDetailCopy, relationAttributeLabels, relationLabels, rewardTypeLabels, type EntityDetailCopy } from "@/components/database/entityDetailCopy";
+import { entityDetailCopy, relationTitle, relationshipAttributes } from "@/components/database/entityDetailCopy";
 import { getCatalogPage, type CatalogEntityType, type CatalogRelationship, type GameEntity } from "@/lib/api/client";
 import { formatQuestText } from "@/lib/gameText";
 import type { Lang } from "@/lib/i18n";
@@ -32,19 +32,6 @@ type Props = { entity: GameEntity; entityType?: CatalogEntityType; relationships
 
 function hasUnresolvedTemplate(value: string) {
   return /\$(?:@spelldesc|[0-9]*[dD]|[0-9]*s[0-9]+|[st][0-9]+|[dD]|[A-Za-z]|[<{])/.test(value);
-}
-
-function relationshipAttributes(attributes: Record<string, unknown>, lang: Lang, copy: EntityDetailCopy) {
-  const index = lang === "ru" ? 1 : 0;
-  return Object.entries(attributes)
-    .filter(([key, value]) => value !== null && value !== "" && typeof value !== "object" && key !== "reward_index" && key !== "source" && !(key === "is_choice" && value === false))
-    .slice(0, 3)
-    .map(([key, value]) => {
-      const rendered = key === "reward_type" && typeof value === "string"
-        ? rewardTypeLabels[value]?.[index] ?? value
-        : typeof value === "boolean" ? (value ? copy.yes : copy.no) : value;
-      return `${relationAttributeLabels[key]?.[index] ?? key.replaceAll("_", " ")}: ${rendered}${key === "chance_percent" ? "%" : ""}`;
-    });
 }
 
 /**
@@ -115,13 +102,13 @@ export async function EntityDetailPage({ entity, entityType, relationships, lang
       {labelParts.map((part) => <span key={part}>{part}</span>)}
     </span>
   );
-  // Slot and type already stand in the label line; the plaque keeps the rest. Two facts or fewer
-  // only repeat the tooltip's own first lines, so the plaque needs three.
-  const restFacts = facts.filter((entry) => entry.key !== "slot" && entry.key !== "subclass");
-  const plaqueFacts = restFacts.length >= 3 ? restFacts : [];
   // A tooltip with nothing but the name (item sets, some NPCs) adds nothing to the hero: the page goes without it.
   const tooltipBlocks = (entity.tooltip?.blocks ?? []).filter((block) => !["name", "provenance"].includes(String(block.type ?? "")));
   const tooltipEntity = entity.tooltip && tooltipBlocks.length ? withVariantQuality({ ...entity, name: displayName }) : null;
+  // Every fact is read from the tooltip's own blocks: with the tooltip on the page the plaque would only
+  // repeat it. Without one, the plaque keeps what the label line does not (slot and type stand there), from three facts on.
+  const restFacts = facts.filter((entry) => entry.key !== "slot" && entry.key !== "subclass");
+  const plaqueFacts = !tooltipEntity && restFacts.length >= 3 ? restFacts : [];
 
   const tooltip = tooltipEntity ? (
     <MaterialPlaque kit={libraryKit} className={styles.tooltipPlaque} style={heroStyle}>
@@ -159,18 +146,20 @@ export async function EntityDetailPage({ entity, entityType, relationships, lang
           return (
             <AtlasDisclosure key={group} className={styles.disclosure} open={index < 2 || undefined}
               summary={<>
-                <span className={styles.disclosureTitle}><span aria-hidden="true" className={styles.direction}>{direction === "incoming" ? "←" : "→"}</span>{relationLabels[relation]?.[lang] ?? relation.replaceAll("_", " ")}</span>
+                <span className={styles.disclosureTitle}>{relationTitle(direction, relation, lang === "ru" ? "ru" : "en")}</span>
                 <span className={styles.disclosureMeta}>{entries.length}</span>
               </>}>
               <ul className={styles.relatedList}>
                 {entries.map(({ entity: related, attributes }) => {
                   const relatedType = entityTypeLabel(related.type, lang);
+                  // One type in the whole group (ten items of a boss): the type line would repeat on every card.
+                  const mixed = entries.some((entry) => entry.entity.type !== entries[0].entity.type);
                   return (
                     <CatalogRecordRow
                       key={related.id}
                       href={libraryRecordPath(lang, related.type, related.id, related.slug || related.externalId, related.product)}
                       name={catalogLocaleView(related, lang).name || related.name || `${relatedType} #${related.externalId}`}
-                      typeLabel={relatedType}
+                      typeLabel={mixed ? relatedType : undefined}
                       iconUrl={related.iconUrl}
                       iconSymbol={TYPE_SYMBOLS[related.type]}
                       quality={related.quality}
@@ -206,7 +195,7 @@ export async function EntityDetailPage({ entity, entityType, relationships, lang
               <span className={`${materialStyles.iconFrame} ${styles.heroIcon}`} style={materialIconFrameStyle(libraryKit, 112)} aria-hidden="true">
                 <ResilientImage src={entity.iconUrl} alt="" width={96} height={96} fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
               </span>
-              <span className={styles.heroName}>{displayName}</span>
+              <span className={styles.heroName} data-long={String(displayName).length > 34 || undefined}>{displayName}</span>
             </span>
           )}
           // The tooltip already carries the description; the hero repeats it only when there is no tooltip.

@@ -30,11 +30,32 @@ export type EntityDetailCopy = (typeof entityDetailCopy)[Lang];
 
 export const relationLabels: Record<string, { en: string; ru: string }> = {
   obtained_from: { en: "Obtained from", ru: "Добывается" }, drops: { en: "Drops", ru: "Добыча" }, rewards: { en: "Rewards", ru: "Награда" },
-  sold_by: { en: "Sold by", ru: "Продаёт" }, teaches: { en: "Teaches", ru: "Обучает" }, crafted_by: { en: "Crafted by", ru: "Создаётся" },
+  sold_by: { en: "Sold by", ru: "Продаётся у" }, teaches: { en: "Teaches", ru: "Обучает" }, crafted_by: { en: "Crafted by", ru: "Создаётся" },
   requires: { en: "Requires", ru: "Требует" }, reagent_for: { en: "Used in", ru: "Используется" }, owned_by: { en: "Belongs to", ru: "Принадлежит" },
+  belongs_to: { en: "Part of", ru: "Входит в" },
   grants: { en: "Grants", ru: "Даёт" }, modifies: { en: "Modifies", ru: "Изменяет" },
   mentions: { en: "Mentions", ru: "Упоминает" },
 };
+
+/**
+ * The same relation read from the other record ("Rajh" ← items "obtained from" him = his loot).
+ * A relation without a reverse name here keeps its own name.
+ */
+export const incomingRelationLabels: Record<string, { en: string; ru: string }> = {
+  obtained_from: { en: "Loot", ru: "Добыча" }, drops: { en: "Dropped by", ru: "Выпадает из" }, rewards: { en: "Reward from", ru: "Награда за" },
+  sold_by: { en: "Sells", ru: "Продаёт" }, teaches: { en: "Taught by", ru: "Изучается у" }, crafted_by: { en: "Crafts", ru: "Создаёт" },
+  requires: { en: "Required by", ru: "Требуется для" }, reagent_for: { en: "Reagents", ru: "Реагенты" }, owned_by: { en: "Owns", ru: "Владеет" },
+  belongs_to: { en: "Includes", ru: "Включает" }, grants: { en: "Granted by", ru: "Даётся" }, modifies: { en: "Modified by", ru: "Изменяется" },
+  mentions: { en: "Mentioned in", ru: "Упоминается в" },
+};
+
+/** Heading of one group of related records, by direction; an unknown relation gets a tidy sentence-case name. */
+export function relationTitle(direction: string, relation: string, lang: "en" | "ru") {
+  const label = (direction === "incoming" ? incomingRelationLabels[relation] : undefined) ?? relationLabels[relation];
+  if (label) return label[lang];
+  const words = relation.replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 
 export const relationAttributeLabels: Record<string, [string, string]> = {
   chance_percent: ["Drop chance", "Шанс добычи"], quantity: ["Quantity", "Количество"],
@@ -46,3 +67,21 @@ export const rewardTypeLabels: Record<string, [string, string]> = {
   item: ["Item", "Предмет"], currency: ["Currency", "Валюта"], reputation: ["Reputation", "Репутация"],
   spell: ["Spell", "Заклинание"], title: ["Title", "Звание"], experience: ["Experience", "Опыт"], money: ["Money", "Деньги"],
 };
+
+/**
+ * Facts of a relation a player reads (drop chance, quantity, reward type…). Internal keys of the
+ * import (difficulty masks, source ids and types, order indexes) and empty values are left out.
+ */
+export function relationshipAttributes(attributes: Record<string, unknown>, lang: "en" | "ru", copy: { yes: string; no: string }) {
+  const index = lang === "ru" ? 1 : 0;
+  return Object.entries(attributes)
+    .filter(([key, value]) => key in relationAttributeLabels && key !== "source" && value !== null && value !== "" && typeof value !== "object"
+      && !(typeof value === "number" && value < 0) && !(key === "is_choice" && value === false))
+    .slice(0, 3)
+    .map(([key, value]) => {
+      const rendered = key === "reward_type" && typeof value === "string"
+        ? rewardTypeLabels[value]?.[index] ?? value
+        : typeof value === "boolean" ? (value ? copy.yes : copy.no) : value;
+      return `${relationAttributeLabels[key][index]}: ${rendered}${key === "chance_percent" ? "%" : ""}`;
+    });
+}
