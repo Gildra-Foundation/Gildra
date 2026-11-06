@@ -376,6 +376,61 @@
 
 
 
+/* ---------- Sim tab: simulated damage as class-coloured bars ---------- */
+.simTable td { padding-block: var(--atlas-space-2); }
+.simRank { width: 40px; color: var(--atlas-text-subtle); font-variant-numeric: tabular-nums lining-nums; text-align: center; }
+.simTier { width: 52px; }
+.simTier .tierMark { vertical-align: middle; }
+.simSpecText { display: grid; gap: var(--atlas-space-1); min-width: 0; }
+.simBarCol { width: 36%; }
+.simBar { display: block; inline-size: 100%; block-size: 8px; overflow: hidden; border-radius: 999px; background: var(--atlas-line-soft); }
+.simBar > span {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--class-color, var(--atlas-accent)) 40%, var(--atlas-surface-sunken)), var(--class-color, var(--atlas-accent)));
+}
+.simBarNarrow { display: none; }
+.simValue b { color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; }
+.simBehindNarrow { display: none; }
+.simBehindCol { color: var(--atlas-text-muted); }
+.simLeader { color: var(--atlas-positive); font-weight: 600; }
+.simByTargets { display: grid; gap: var(--atlas-space-2); }
+.simByTargets .label { margin: 0; }
+.simTargetGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+.simTargetCell {
+  display: grid;
+  justify-items: center;
+  gap: var(--atlas-space-1);
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--atlas-space-2) var(--atlas-space-1);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius-control);
+  color: var(--atlas-text-muted);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.simTargetCell:hover:not(:disabled) { border-color: var(--material-light, var(--atlas-accent)); color: var(--atlas-text-strong); }
+.simTargetCell[aria-pressed="true"] { border-color: var(--atlas-accent); color: var(--atlas-text-strong); background: color-mix(in srgb, var(--atlas-accent) 12%, transparent); }
+.simTargetCell:disabled { cursor: not-allowed; opacity: .6; }
+.simTargetCell:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.simTargetCount { color: var(--atlas-text-strong); font: 600 var(--atlas-text-h3) / 1 var(--atlas-font-display); font-variant-numeric: lining-nums; }
+.simTargetRank { display: inline-flex; align-items: center; gap: var(--atlas-space-1); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums lining-nums; }
+@media (max-width: 720px) {
+  .simBarCol, .simBehindCol { display: none; }
+  .simBarNarrow { display: block; }
+  .simBehindNarrow { display: block; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+  .simRank { width: 24px; }
+  .simTier { width: 36px; padding-inline: 0; }
+}
+@media (forced-colors: active) {
+  .simBar { border: 1px solid CanvasText; background: Canvas; }
+  .simBar > span { background: Highlight; }
+  .simTargetCell[aria-pressed="true"] { outline: 3px solid Highlight; outline-offset: -3px; }
+}
+
 /* ---------- Tablet / phone ---------- */
 @media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
 @media (max-width: 760px) {

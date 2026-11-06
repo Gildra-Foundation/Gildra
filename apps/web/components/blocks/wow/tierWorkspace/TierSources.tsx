@@ -25,17 +25,18 @@ export const SOURCE_META: Record<ExternalTierSource, { name: string; site: strin
       return level ? `${base}/raid?difficulty=${level}` : `${base}/raid`;
     },
   },
+  sim: { name: "MythiStone", site: "mythistone.com", raid: false, page: () => "https://mythistone.com/pages/tierlist" },
 };
 
 /** Loads the three role lists of one external source for a mode (and raid
  *  difficulty). Slices rendered on the server (`initial`) are used as they are. */
 export function useSourceRoles(source: TierSourceId, activity: TierActivity, difficulty: string, initial: TierSourceSlices) {
   const [state, setState] = useState<{ key: string; data?: SourceSlice; error?: boolean }>({ key: "" });
-  const key = source === "gildra" || (source === "mythicstats" && activity === "raid") ? "" : sourceKey(source, activity, difficulty);
+  const key = source === "gildra" || source === "sim" || (source === "mythicstats" && activity === "raid") ? "" : sourceKey(source, activity, difficulty);
   const preloaded = key ? initial[key] : undefined;
 
   useEffect(() => {
-    if (!key || preloaded || source === "gildra") return;
+    if (!key || preloaded || source === "gildra" || source === "sim") return;
     const controller = new AbortController();
     Promise.all(ROLES.map(async (role) => {
       const params = new URLSearchParams({ source, activity, role, limit: "60" });
