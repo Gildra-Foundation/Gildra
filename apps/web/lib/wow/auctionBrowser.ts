@@ -74,3 +74,33 @@ export function copperParts(copper: number) {
   const value = Math.ceil(copper);
   return { gold: Math.floor(value / 10000), silver: Math.floor(value % 10000 / 100), copper: value % 100 };
 }
+
+/** Market view: one row per item with its price summary (see auctionMarketSummary.ts). */
+export type AuctionMarketItem = {
+  itemId: number; market: AuctionQuery["market"]; name: string | null; iconUrl: string | null;
+  qualityId: number | null; classId: number | null; subclassId: number | null; level: number | null; rank: number | null;
+  minPrice: number; medianPrice: number; quantity: number; lots: number;
+  /** Price levels [copper per unit, units], cheapest first; only for compared items. */
+  ladder?: (readonly [number, number])[];
+};
+export type AuctionMarketView = {
+  items: AuctionMarketItem[]; sourceUpdatedAt: string | null; stale: boolean; truncated: boolean;
+};
+export type AuctionMarketQuery = {
+  region: AuctionRegion; lang: "en" | "ru"; realm: string; category: string; q: string; items: number[]; limit: number;
+};
+export const AUCTION_COMPARE_LIMIT = 8;
+export function auctionMarketQuery(params: URLSearchParams, categoryKeys: readonly string[]): AuctionMarketQuery {
+  const region = params.get("region") ?? "eu", lang = params.get("lang") ?? "en", realm = params.get("realm") ?? "";
+  const category = params.get("category") ?? "", q = (params.get("q") ?? "").trim(), rawItems = params.get("items") ?? "";
+  const rawLimit = params.get("limit") ?? "0", limit = Number(rawLimit);
+  const items = rawItems ? rawItems.split(",").map(Number) : [];
+  const modes = [category !== "", q !== "", items.length > 0].filter(Boolean).length;
+  if (!(auctionRegions as readonly string[]).includes(region) || !["en", "ru"].includes(lang) || modes !== 1
+    || (realm !== "" && !validAuctionRealm(realm)) || (category !== "" && !categoryKeys.includes(category))
+    || q.length > 100 || /[\u0000-\u001f]/.test(q) || (q !== "" && q.length < 2 && !/^\d$/.test(q))
+    || (/^\d+$/.test(q) && (!positive(Number(q)) || Number(q) > 10000000))
+    || items.length > AUCTION_COMPARE_LIMIT || items.some(id => !positive(id) || id > 10000000) || new Set(items).size !== items.length
+    || !/^\d{1,2}$/.test(rawLimit) || limit > 20) throw new Error("invalid_query");
+  return { region, lang, realm, category, q, items, limit } as AuctionMarketQuery;
+}

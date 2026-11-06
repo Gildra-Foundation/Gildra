@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { auctionQuery } from "../../../lib/wow/auctionBrowser.ts";
-import { auctionRealms, browseAuctions, auctionLotTooltip } from "../../../lib/wow/auctionBrowserData.ts";
+import { auctionMarket, auctionRealms, browseAuctions, auctionLotTooltip } from "../../../lib/wow/auctionBrowserData.ts";
 import { wowheadTooltipLines, resolveExactAuctionTooltip } from "../../../lib/wow/auctionExactTooltip.ts";
 import { auctionItemIcon, parseAuctionItemDetails, auctionPreviewMatches } from "../../../lib/wow/auctionItemDetails.ts";
 const originalFetch = globalThis.fetch;
@@ -133,5 +133,59 @@ test("exact tooltip resolves actual market lot modifiers, isolates variants and 
   } finally {
     globalThis.fetch = originalFetch;
     for (const [key, value] of [["BATTLENET_CLIENT_ID", before.id], ["BATTLENET_CLIENT_SECRET", before.secret], ["ROTATION_WORKER_URL", before.worker]]) { if (value === undefined) delete process.env[key!]; else process.env[key!] = value; }
+  }
+});
+
+test("market view: category by item class, name search over both markets, compare ladders, realm only when chosen", async () => {
+  const before = { id: process.env.BATTLENET_CLIENT_ID, secret: process.env.BATTLENET_CLIENT_SECRET };
+  process.env.BATTLENET_CLIENT_ID = "test-client"; process.env.BATTLENET_CLIENT_SECRET = "test-secret";
+  (globalThis as typeof globalThis & { __auctionBrowser?: Map<string, unknown> }).__auctionBrowser?.clear();
+  const searches: string[] = [], snapshots: string[] = [];
+  const doc = (id: number, en: string, ru: string, cls: number, sub: number, level: number) => ({ data: { id, name: { en_US: en, ru_RU: ru }, quality: { type: "UNCOMMON" }, item_class: { id: cls }, item_subclass: { id: sub }, level } });
+  globalThis.fetch = async input => {
+    const url = new URL(String(input));
+    if (url.hostname === "oauth.battle.net") return Response.json({ access_token: "market-token", expires_in: 86400 });
+    if (url.pathname.endsWith("/realm/index")) return Response.json({ realms: [{ name: "Test", slug: "test" }] });
+    if (url.pathname.endsWith("/realm/test")) return Response.json({ connected_realm: { href: "https://eu.api.blizzard.com/data/wow/connected-realm/42" } });
+    if (url.pathname.endsWith("/commodities")) { snapshots.push("commodities"); return Response.json({ auctions: [
+      { id: 1, item: { id: 237364 }, quantity: 10, unit_price: 100 }, { id: 2, item: { id: 237364 }, quantity: 30, unit_price: 200 },
+      { id: 3, item: { id: 237365 }, quantity: 5, unit_price: 900 }, { id: 4, item: { id: 2771 }, quantity: 8, unit_price: 50 },
+      { id: 5, item: { id: 555 }, quantity: 1, unit_price: 7 },
+    ] }, { headers: { "last-modified": new Date().toUTCString() } }); }
+    if (url.pathname.endsWith("/connected-realm/42/auctions")) { snapshots.push("realm"); return Response.json({ auctions: [{ id: 9, item: { id: 9000 }, quantity: 1, buyout: 50000 }] }, { headers: { "last-modified": new Date().toUTCString() } }); }
+    if (url.pathname.endsWith("/search/item")) {
+      searches.push(url.search);
+      if (url.searchParams.get("item_class.id") === "7") {
+        assert.equal(url.searchParams.get("item_subclass.id"), "7"); assert.equal(url.searchParams.get("orderby"), "id:desc");
+        return Response.json({ pageCount: 1, results: [doc(237365, "Brilliant Silver Ore", "Яркая серебряная руда", 7, 7, 23), doc(237364, "Brilliant Silver Ore", "Яркая серебряная руда", 7, 7, 23), doc(2771, "Tin Ore", "Оловянная руда", 7, 7, 1), doc(999, "Not listed", "Нет на рынке", 7, 7, 23), doc(4000, "Wrong subclass", "Не та", 7, 9, 1)] });
+      }
+      return Response.json({ pageCount: 1, results: [doc(237364, "Brilliant Silver Ore", "Яркая серебряная руда", 7, 7, 23), doc(9000, "Silver Ore Blade", "Клинок", 2, 7, 600), doc(1234, "Old Thing", "Старое", 7, 7, 1)] });
+    }
+    if (url.pathname.includes("/media/item/")) return Response.json({ assets: [{ key: "icon", value: `https://render.worldofwarcraft.com/eu/icons/56/${url.pathname.split("/").pop()}.jpg` }] });
+    if (url.pathname.startsWith("/data/wow/item/")) { const id = Number(url.pathname.split("/").pop()); return Response.json({ id, name: `Item ${id}`, quality: { type: "COMMON" }, item_class: { id: 7 }, item_subclass: { id: 7 } }); }
+    throw new Error(`unexpected ${url.pathname}`);
+  };
+  try {
+    const base = { region: "eu" as const, lang: "en" as const, realm: "", category: "", q: "", items: [] as number[], limit: 0 };
+    const ore = await auctionMarket({ ...base, category: "ore" });
+    assert.deepEqual(ore.items.map(item => item.itemId).sort((a, b) => a - b), [2771, 237364, 237365], "only listed items of the subclass");
+    const silver = ore.items.find(item => item.itemId === 237364)!;
+    assert.equal(silver.minPrice, 100); assert.equal(silver.medianPrice, 200); assert.equal(silver.quantity, 40); assert.equal(silver.rank, 1);
+    assert.equal(ore.items.find(item => item.itemId === 237365)?.rank, 2); assert.equal(silver.level, 23); assert.equal(silver.ladder, undefined);
+    assert.equal(silver.iconUrl, "https://render.worldofwarcraft.com/eu/icons/56/237364.jpg"); assert.equal(snapshots.includes("realm"), false);
+    const search = await auctionMarket({ ...base, q: "ore" });
+    assert.deepEqual(search.items.map(item => item.itemId), [237364], "commodities only without a realm");
+    const both = await auctionMarket({ ...base, q: "ore", realm: "test" });
+    assert.deepEqual(both.items.map(item => `${item.market}:${item.itemId}`).sort(), ["commodities:237364", "realm:9000"]);
+    const suggest = await auctionMarket({ ...base, q: "ore", realm: "test", limit: 1 });
+    assert.equal(suggest.items.length, 1);
+    const compare = await auctionMarket({ ...base, items: [237364, 555] });
+    assert.deepEqual(compare.items.find(item => item.itemId === 237364)?.ladder, [[100, 10], [200, 30]]);
+    assert.equal(compare.items.find(item => item.itemId === 555)?.name, "Item 555", "names come from item details when no search document exists");
+    await assert.rejects(auctionMarket({ ...base, category: "armor" }), /realm_required/);
+    assert(!JSON.stringify([ore, both, compare]).includes("market-token"));
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of [["BATTLENET_CLIENT_ID", before.id], ["BATTLENET_CLIENT_SECRET", before.secret]]) { if (value === undefined) delete process.env[key!]; else process.env[key!] = value; }
   }
 });
