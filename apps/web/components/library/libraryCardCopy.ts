@@ -3,6 +3,9 @@ import type { Lang } from "@/lib/i18n-paths";
 /** Interface copy of library record lists, the search suggestions and the hover preview (no lib/i18n: used by client code too). */
 export const libraryCardCopy = {
   ru: {
+    instant: "Мгновенно",
+    numberLocale: "ru-RU",
+    seconds: (value: string) => `${value} сек.`,
     levelShort: (level: number) => `Ур. предмета ${level}`,
     requiredLevel: (level: string | number) => `Треб. ур. ${level}`,
     preview: "Подсказка",
@@ -24,6 +27,9 @@ export const libraryCardCopy = {
     filters: "Фильтры",
   },
   en: {
+    instant: "Instant",
+    numberLocale: "en-US",
+    seconds: (value: string) => `${value} sec`,
     levelShort: (level: number) => `Item level ${level}`,
     requiredLevel: (level: string | number) => `Req. level ${level}`,
     preview: "Tooltip",

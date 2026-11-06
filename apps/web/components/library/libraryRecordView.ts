@@ -3,6 +3,7 @@ import { catalogLocaleView } from "@/lib/catalogLocale";
 import { libraryRecordPath } from "@/lib/library/recordPath";
 import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
 import { highlightLabel } from "@/components/database/databaseCopy";
+import { libraryCardCopy } from "@/components/library/libraryCardCopy";
 
 /**
  * What a dataset list, the "show more" request and the search suggestions need of one
@@ -53,12 +54,12 @@ function shortLine(value: string | undefined, max = 140) {
 
 /** Cast time as a table cell under the "Cast" heading: "Instant", "1.5 sec" (the heading already says what it is). */
 export function castTimeLabel(value: string, lang: Lang) {
-  const ru = lang === "ru";
-  if (/^instant$/i.test(value.trim())) return ru ? "Мгновенно" : "Instant";
+  const copy = libraryCardCopy[lang];
+  if (/^instant$/i.test(value.trim())) return copy.instant;
   const ms = /^(\d+)\s*ms$/i.exec(value.trim());
   if (!ms) return value;
-  const seconds = (Number(ms[1]) / 1000).toLocaleString(ru ? "ru-RU" : "en-US", { maximumFractionDigits: 2 });
-  return ru ? `${seconds} сек.` : `${seconds} sec`;
+  const seconds = (Number(ms[1]) / 1000).toLocaleString(copy.numberLocale, { maximumFractionDigits: 2 });
+  return copy.seconds(seconds);
 }
 
 export function libraryRecordView(entity: LibrarySummary, lang: Lang, product = "wow"): LibraryRecordView {
