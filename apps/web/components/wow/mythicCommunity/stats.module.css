@@ -1,0 +1,318 @@
+/* atlas:strict — /wow/mythic-plus/stats as a dense dashboard: compact hero numbers, one filter bar,
+   a 3-column grid of painted plaques (MaterialPlaque of dungeon kits) with small charts.
+   Shell colour is the theme accent; plaque light is --material-light; class colours only on specs,
+   dungeon accents only on dungeon names; region tones reuse the theme accent/gold/positive/negative. */
+
+.page { --stats-gap: var(--atlas-space-4); }
+
+/* ---------- Hero ---------- */
+.hero { padding-bottom: var(--atlas-space-4); }
+.heroHeader { max-width: 64%; }
+.heroHeader h1 { max-width: none; }
+.heroHeader p { max-width: 62ch; }
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--atlas-space-2) var(--atlas-space-5);
+  max-width: 1120px;
+  margin: var(--atlas-space-4) 0 0;
+}
+.kpi { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: var(--atlas-space-1); min-width: 0; padding-left: var(--atlas-space-3); border-left: 1px solid var(--atlas-line); }
+.kpi dt {
+  overflow: hidden;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-label);
+  font-weight: 700;
+  letter-spacing: var(--atlas-tracking-label);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: var(--atlas-text-halo, 0 1px 3px var(--atlas-bg));
+}
+.kpi dd { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-1) var(--atlas-space-2); margin: 0; }
+.kpi dd > b {
+  color: var(--atlas-text-strong);
+  font: var(--atlas-weight-display) clamp(1.5rem, 1.1rem + 1vw, 2.125rem) / 1.05 var(--atlas-font-display);
+  font-variant-numeric: tabular-nums lining-nums;
+  text-shadow: var(--atlas-text-halo, 0 1px 3px var(--atlas-bg));
+}
+.kpiSpec { display: inline-flex; align-items: center; gap: var(--atlas-space-2); }
+
+/* ---------- Change badge, sparkline, bars ---------- */
+.delta { display: inline-flex; align-items: center; gap: 2px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-weight: 650; font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.delta > span[aria-hidden] { font-size: .75em; }
+.delta[data-tone="up"] { color: var(--atlas-positive); }
+.delta[data-tone="down"] { color: var(--atlas-negative); }
+
+.spark { display: block; flex: none; overflow: visible; }
+.spark polyline { fill: none; stroke: var(--material-light, var(--atlas-accent)); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; opacity: .85; }
+.spark circle { fill: var(--material-light, var(--atlas-accent)); }
+
+.bar { display: block; min-width: 24px; block-size: 6px; border-radius: 999px; background: var(--atlas-line-soft); overflow: hidden; }
+.bar > span {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--meter-color, var(--material-light)) 40%, var(--atlas-surface-sunken)), var(--meter-color, var(--material-light)));
+}
+.muted { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.label {
+  margin: 0 0 var(--atlas-space-2);
+  color: var(--material-light, var(--atlas-text-muted));
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-label);
+  font-weight: 700;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+
+/* ---------- Filter bar ---------- */
+.filterBar.filterBar {
+  display: flex;
+  align-items: center;
+  gap: var(--atlas-space-4);
+  margin-bottom: var(--stats-gap);
+  padding: 18px 24px;
+}
+.segment { display: flex; flex: none; gap: 2px; margin: 0; padding: 3px; border: 1px solid var(--material-line); border-radius: var(--atlas-radius-control, 4px); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent); list-style: none; }
+.segment a {
+  --tone-color: var(--atlas-text-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 var(--atlas-space-3);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  font-weight: 650;
+  text-decoration: none;
+}
+.segment a:hover { color: var(--atlas-text-strong); background: var(--atlas-surface-selected, var(--atlas-line-soft)); }
+.segment a[aria-current="page"] { color: var(--atlas-text-strong); background: color-mix(in srgb, var(--tone-color) 22%, transparent); box-shadow: inset 0 -2px 0 var(--tone-color); }
+.segment a:focus-visible, .chip:focus-visible, .cardLink:focus-visible, .dungeonName:focus-visible, .cutoffTable a:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 2px; }
+
+.page [data-tone="0"] { --tone-color: var(--atlas-text-strong); }
+.page [data-tone="1"] { --tone-color: var(--atlas-accent); }
+.page [data-tone="2"] { --tone-color: var(--atlas-accent-2); }
+.page [data-tone="3"] { --tone-color: var(--atlas-positive); }
+.page [data-tone="4"] { --tone-color: var(--atlas-negative); }
+
+.chips {
+  display: grid;
+  flex: 1 1 auto;
+  grid-auto-columns: minmax(96px, 1fr);
+  grid-auto-flow: column;
+  gap: var(--atlas-space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: thin;
+}
+.chip {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  min-height: 48px;
+  padding: var(--atlas-space-1) var(--atlas-space-2);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--dungeon-accent, var(--material-line)) 45%, transparent);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-strong);
+  text-decoration: none;
+}
+.chipArt { position: absolute; z-index: -1; inset: 0; pointer-events: none; }
+.chipArt img { object-fit: cover; filter: saturate(.8) brightness(.6); transition: filter var(--atlas-duration-fast) var(--atlas-ease); }
+.chipArt::after { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 20%, color-mix(in srgb, var(--atlas-bg) 80%, transparent)); content: ""; }
+.chipName { display: -webkit-box; overflow: hidden; font-size: var(--atlas-text-label); font-weight: 650; line-height: 1.2; text-shadow: 0 1px 3px var(--atlas-bg); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.chip:hover .chipArt img { filter: saturate(.95) brightness(.8); }
+.chip[aria-current="page"] { border-color: var(--dungeon-accent, var(--material-light)); box-shadow: inset 0 -3px 0 var(--dungeon-accent, var(--material-light)); }
+.chip[aria-current="page"] .chipArt img { filter: saturate(1) brightness(.85); }
+
+/* ---------- Grid of cards ---------- */
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--stats-gap); align-items: start; margin-bottom: var(--stats-gap); }
+.card.card { padding: 24px 28px 26px; }
+.wide { grid-column: span 2; }
+.full { grid-column: 1 / -1; }
+.column { display: grid; gap: var(--stats-gap); min-width: 0; }
+.cardHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-4); margin-bottom: var(--atlas-space-3); }
+.cardTitle { margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.scopeNote { color: var(--material-light); font-size: var(--atlas-text-meta); font-weight: 650; }
+.cardLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  min-height: 44px;
+  margin-top: var(--atlas-space-1);
+  color: var(--material-light);
+  font-size: var(--atlas-text-small);
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: .2em;
+}
+.cardLink svg { width: 14px; height: 14px; }
+
+/* ---------- Cutoffs ---------- */
+.cutoffBody { display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); gap: var(--atlas-space-5); align-items: start; }
+.cutoffTable { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums lining-nums; }
+.cutoffTable th, .cutoffTable td { padding: 4px var(--atlas-space-2); border-bottom: 1px solid var(--material-line); text-align: end; }
+.cutoffTable thead th { color: var(--material-light); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.cutoffTable tbody th { padding-left: 0; text-align: start; }
+.cutoffTable td { white-space: nowrap; }
+.cutoffTable td b { color: var(--atlas-text-strong); font-size: var(--atlas-text-body); }
+.cutoffTable td .delta { margin-left: 6px; }
+.cutoffTable tr[aria-current] { background: color-mix(in srgb, var(--tone-color) 10%, transparent); }
+.cutoffTable a { display: inline-flex; align-items: center; min-height: 36px; text-decoration: none; }
+.regionTag { padding: 2px 7px; border-radius: 2px; background: color-mix(in srgb, var(--tone-color) 22%, transparent); color: var(--tone-color); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.chartBox { min-width: 0; margin: 0; }
+.chart { margin: 0; }
+.chartSvg { display: block; inline-size: 100%; block-size: auto; overflow: visible; font-family: var(--atlas-font-ui); font-variant-numeric: tabular-nums lining-nums; }
+.chartGrid line { stroke: var(--material-line, var(--atlas-line-soft)); stroke-width: 1; }
+.chartGrid text, .chartAxis { fill: var(--atlas-text-subtle); font-size: var(--atlas-text-label); }
+.chartLine { fill: none; stroke: var(--tone-color); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chartEnd circle { fill: var(--tone-color); }
+.chartEnd text { fill: var(--tone-color); font-size: var(--atlas-text-label); font-weight: 650; }
+.chartNarrow { display: none; }
+
+/* ---------- Ladder ---------- */
+.ladder { display: grid; gap: var(--atlas-space-1); margin: 0 0 var(--atlas-space-4); padding: 0; list-style: none; }
+.ladder:last-child { margin-bottom: 0; }
+.ladderRow { display: grid; grid-template-columns: 6.5ch minmax(0, 1fr) 6ch 8ch; align-items: center; gap: var(--atlas-space-2); min-height: 26px; }
+.ladderLabel { white-space: nowrap; color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 650; font-variant-numeric: tabular-nums lining-nums; }
+.ladderRow b { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
+.ladderRow .muted { text-align: end; white-space: nowrap; }
+
+/* ---------- Specs ---------- */
+.tabLabel { display: inline-flex; align-items: center; gap: var(--atlas-space-1); }
+.tabLabel svg { width: 14px; height: 14px; }
+.specTable { margin-top: var(--atlas-space-2); }
+.specTable :global(td), .specTable :global(th) { padding-block: 5px; }
+.rankCol { width: 2.5ch; color: var(--atlas-text-subtle); }
+.meterCell { display: grid; grid-template-columns: minmax(60px, 1fr) 5.5ch minmax(7ch, auto); align-items: center; gap: var(--atlas-space-2); min-width: 190px; }
+.meterCell[data-compact] { grid-template-columns: minmax(40px, 1fr) 5ch; min-width: 110px; }
+.meterCell b, .trendCell b { color: var(--atlas-text-strong); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
+.trendCell { display: inline-flex; align-items: center; justify-content: flex-end; gap: var(--atlas-space-2); }
+.trendCell .delta { min-width: 5ch; justify-content: flex-end; }
+.specTable abbr { text-decoration: none; cursor: help; }
+.more { margin-top: var(--atlas-space-2); }
+
+/* ---------- Comps & sample ---------- */
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); margin: 0 0 var(--atlas-space-3); }
+.facts div { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 2px; min-width: 0; }
+.facts dt { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
+.facts dd { margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) 1.5rem / 1.1 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; }
+.compList { display: grid; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.compList li { display: grid; grid-template-columns: auto minmax(30px, 1fr) 5.5ch; align-items: center; gap: var(--atlas-space-2); }
+.compList b { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
+.sampleLead { margin: 0 0 var(--atlas-space-1); color: var(--atlas-text); font-size: var(--atlas-text-small); }
+.sampleLead b { color: var(--atlas-text-strong); font: var(--atlas-weight-display) 1.5rem / 1.1 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; }
+
+/* ---------- Dungeons ---------- */
+.legend { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1) var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+.legend li { display: inline-flex; align-items: center; gap: 5px; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.legend li::before { inline-size: 10px; block-size: 10px; border-radius: 2px; background: var(--step-color); content: ""; }
+.page [data-step="1"] { --step-color: color-mix(in srgb, var(--atlas-accent-2) 22%, var(--atlas-surface-raised)); }
+.page [data-step="2"] { --step-color: color-mix(in srgb, var(--atlas-accent-2) 40%, var(--atlas-surface-raised)); }
+.page [data-step="3"] { --step-color: color-mix(in srgb, var(--atlas-accent-2) 60%, var(--atlas-surface-raised)); }
+.page [data-step="4"] { --step-color: color-mix(in srgb, var(--atlas-accent-2) 82%, var(--atlas-surface-raised)); }
+.page [data-step="5"] { --step-color: var(--atlas-negative); }
+
+.dungeons { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.dungeon {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  gap: 6px;
+  min-width: 0;
+  padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-3);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--dungeon-accent, var(--material-line)) 40%, transparent);
+  border-top: 3px solid var(--dungeon-accent, var(--material-light));
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--atlas-bg) 62%, transparent);
+}
+.dungeon[data-current] { border-color: var(--dungeon-accent, var(--material-light)); box-shadow: inset 0 0 0 1px var(--dungeon-accent, var(--material-light)); }
+.dungeonArt { position: absolute; z-index: -1; inset: 0 0 auto; block-size: 84px; pointer-events: none; }
+.dungeonArt img { object-fit: cover; filter: saturate(.85) brightness(.55); }
+.dungeonArt::after { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 10%, color-mix(in srgb, var(--atlas-bg) 92%, transparent)); content: ""; }
+.dungeonName {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--atlas-text-strong);
+  font: var(--atlas-weight-display) 1rem / 1.15 var(--atlas-font-display);
+  text-decoration: none;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.dungeonTitle { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.dungeonName:hover { text-decoration: underline; text-decoration-color: var(--dungeon-accent, currentColor); text-underline-offset: .18em; }
+.dungeonRank { display: inline-grid; flex: none; place-items: center; inline-size: 20px; block-size: 20px; margin-top: 1px; border-radius: 50%; background: color-mix(in srgb, var(--dungeon-accent, var(--atlas-accent)) 30%, var(--atlas-bg)); color: var(--atlas-text-strong); font: 700 var(--atlas-text-label) / 1 var(--atlas-font-ui); }
+.dungeonKey { display: flex; align-items: baseline; gap: var(--atlas-space-2); margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
+.dungeonKey > b { color: var(--atlas-text-strong); font: var(--atlas-weight-display) 1.625rem / 1 var(--atlas-font-display); }
+.margin { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.margin b { color: var(--atlas-text-strong); }
+.stack { display: flex; align-self: end; block-size: 8px; overflow: hidden; border-radius: 999px; background: var(--atlas-line-soft); }
+.stack > span { block-size: 100%; background: var(--step-color); }
+.standout { display: flex; align-items: center; gap: 5px; margin: 0; }
+.standout .label { flex: none; margin: 0 2px 0 0; color: var(--atlas-text-muted); }
+.standout .delta { margin-left: auto; font-size: var(--atlas-text-small); }
+.standout b { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums lining-nums; }
+.dungeon .standout [data-size="sm"] > span[aria-hidden] { --size: 24px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1399px) {
+  .dungeons { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 1180px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wide { grid-column: 1 / -1; }
+}
+@media (max-width: 1023px) {
+  .heroHeader { max-width: 100%; }
+}
+@media (max-width: 860px) {
+  .filterBar.filterBar { flex-direction: column; align-items: stretch; }
+  .segment { justify-content: space-between; }
+  .segment li { flex: 1 1 0; }
+  .segment a { inline-size: 100%; }
+  .chips { grid-auto-columns: 112px; padding-bottom: var(--atlas-space-1); mask-image: linear-gradient(90deg, #000 88%, transparent); }
+  .cutoffBody { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .card.card { padding: 22px 20px; }
+  .filterBar.filterBar { padding: 16px 18px; }
+  .dungeons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chartWide { display: none; }
+  .chartNarrow { display: block; }
+  .optCol, .rankCol, .unit { display: none; }
+  .specTable :global(th), .specTable :global(td) { padding-inline: 6px; }
+  .specTable :global(thead th) { white-space: normal; letter-spacing: 0; line-height: 1.2; }
+  .specTable :global(tbody th) { inline-size: 100%; }
+  .specTable :global(tbody th) * { overflow-wrap: normal; word-break: normal; }
+  .meterCell { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 0; }
+  .meterCell .bar { display: none; }
+  .trendCell { flex-direction: column; align-items: flex-end; gap: 2px; }
+  .trendCell .spark { display: none; }
+  .cutoffTable td b { display: block; }
+  .cutoffTable td .delta { margin-left: 0; }
+  .cutoffTable th, .cutoffTable td { padding-inline: 4px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chipArt img { transition: none; }
+}
+@media (forced-colors: active) {
+  .bar > span, .stack > span { background: CanvasText; }
+  .chartLine { stroke: CanvasText; }
+  .dungeon, .chip { border: 1px solid CanvasText; }
+}
