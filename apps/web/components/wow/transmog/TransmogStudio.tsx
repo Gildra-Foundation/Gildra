@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { ChevronUp, Dices, Download, Eraser, EyeOff, Link2, LocateFixed, Pause, Play, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Dices, Download, Eraser, EyeOff, Link2, LocateFixed, Pause, Play, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
-import { MaterialButton, MaterialPlaque } from "@/components/wow/shared/materialAtlas";
+import { MaterialPlaque } from "@/components/wow/shared/materialAtlas";
 import { AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
 import {
@@ -64,7 +64,12 @@ const phone = () => window.matchMedia("(max-width: 700px)").matches;
 const lessMotion = () => document.documentElement.dataset.motion === "reduced" || document.documentElement.dataset.uiMotion === "reduce"
   || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export function TransmogStudio({ lang }: { lang: Lang }) {
+/** One of the studio's glass icon tools: the label is the tooltip and the accessible name. */
+function ToolButton({ label, icon, ...rest }: { label: string; icon: ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement> & Record<`data-${string}`, string>) {
+  return <AtlasButton variant="ghost" className={styles.tool} icon={icon} title={label} {...rest}><span className={styles.visuallyHidden}>{label}</span></AtlasButton>;
+}
+
+export function TransmogStudio({ lang, hero }: { lang: Lang; hero: ReactNode }) {
   const c = transmogCopy[lang];
   const sheetId = useId();
   const stageRef = useRef<StageHandle>(null);
@@ -92,24 +97,15 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
   const [preview, setPreview] = useState<{ slot: TransmogSlot; look: TransmogAppearance } | null>(null);
   const [busySlots, setBusySlots] = useState<TransmogSlot[]>([]);
   const pendingRef = useRef<TransmogSlot[]>([]);
-  const toolbarRef = useRef<HTMLDivElement>(null);
-  const [stuck, setStuck] = useState(false);
+  const [footerInView, setFooterInView] = useState(false);
 
-  // The toolbar sticks under the site header on wide screens; once stuck it gets its own backdrop.
+  // Phone: the folded sheet steps aside while the site footer is on screen, so it never covers the legal line.
   useEffect(() => {
-    const node = toolbarRef.current;
-    if (!node) return;
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      const top = parseFloat(getComputedStyle(node).top);
-      setStuck(Number.isFinite(top) && getComputedStyle(node).position === "sticky" && node.getBoundingClientRect().top <= top + 0.5 && window.scrollY > 0);
-    };
-    const schedule = () => { if (!frame) frame = window.requestAnimationFrame(measure); };
-    measure();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    return () => { window.removeEventListener("scroll", schedule); window.removeEventListener("resize", schedule); window.cancelAnimationFrame(frame); };
+    const footer = [...document.querySelectorAll("footer")].pop();
+    if (!footer || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => setFooterInView(entries.some((entry) => entry.isIntersecting)));
+    observer.observe(footer);
+    return () => observer.disconnect();
   }, []);
 
   // Restore a share link (the starter outfit is already on the doll from the first HTML).
@@ -364,98 +360,112 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
   const frameSettings: FrameSettings = { format: state.format, background: state.background, pose: state.pose, ...light, title: state.title, subtitle: state.subtitle, mark: state.mark, ...output };
   const downloadLabel = output.type === "image/webp" ? "WebP" : "PNG";
 
+  // The scene of the frame continues, dimmed, around the stage: the wardrobe reads as one room.
+  const surround: CSSProperties = backgroundDef.kind === "scene" ? { "--doll-surround": `url(${backgroundDef.src})`, "--doll-surround-position": backgroundDef.position } as CSSProperties
+    : backgroundDef.kind === "color" ? { "--doll-surround": backgroundDef.color } as CSSProperties
+      : backgroundDef.kind === "gradient" ? { "--doll-surround": `linear-gradient(${backgroundDef.angle}deg, ${backgroundDef.stops[0]}, ${backgroundDef.stops[1]})` } as CSSProperties
+        : {};
   return (
-    <section className={styles.studio} aria-label={c.title} data-transmog-ready={ready || undefined} data-sheet-open={sheetOpen || undefined}>
-      <div className={styles.toolbar} ref={toolbarRef} data-stuck={stuck || undefined}>
-        <div className={styles.identity}>
-          <label className={styles.toolbarField}>
-            <span className={styles.visuallyHidden}>{c.race}</span>
-            <AtlasSelect value={state.race} aria-label={c.race} onChange={(event) => patch({ race: event.target.value as TransmogRace })} data-transmog-race>
-              {transmogRaces.map((race) => <option key={race.id} value={race.id}>{c.races[race.id]}</option>)}
-            </AtlasSelect>
-          </label>
-          {oneBody ? null : (
-            <div className={styles.segmented} role="group" aria-label={c.gender}>
-              <button type="button" aria-pressed={state.gender === "m"} onClick={() => patch({ gender: "m" })} aria-label={c.male} title={c.male}>♂</button>
-              <button type="button" aria-pressed={state.gender === "f"} onClick={() => patch({ gender: "f" })} aria-label={c.female} title={c.female}>♀</button>
+    <section className={styles.studio} aria-label={c.title} data-transmog-ready={ready || undefined} data-sheet-open={sheetOpen || undefined}
+      data-footer-in-view={footerInView || undefined}>
+      <div className={styles.head}>
+        {hero}
+        <div className={styles.toolbar}>
+          <div className={styles.identity}>
+            <label className={styles.toolbarField} data-field="race">
+              <span className={styles.visuallyHidden}>{c.race}</span>
+              <AtlasSelect value={state.race} aria-label={c.race} onChange={(event) => patch({ race: event.target.value as TransmogRace })} data-transmog-race>
+                {transmogRaces.map((race) => <option key={race.id} value={race.id}>{c.races[race.id]}</option>)}
+              </AtlasSelect>
+            </label>
+            {oneBody ? null : (
+              <div className={styles.segmented} role="group" aria-label={c.gender}>
+                <button type="button" aria-pressed={state.gender === "m"} onClick={() => patch({ gender: "m" })} aria-label={c.male} title={c.male}>♂</button>
+                <button type="button" aria-pressed={state.gender === "f"} onClick={() => patch({ gender: "f" })} aria-label={c.female} title={c.female}>♀</button>
+              </div>
+            )}
+            <label className={styles.toolbarField} data-field="class">
+              <span className={styles.visuallyHidden}>{c.cls}</span>
+              <AtlasSelect value={state.cls} aria-label={c.cls} onChange={(event) => patch({ cls: event.target.value as TransmogClass | "" })} data-transmog-class>
+                <option value="">{c.anyClass}</option>
+                {classIds.map((entry) => <option key={entry.slug} value={entry.slug}>{c.classes[entry.slug]}</option>)}
+              </AtlasSelect>
+            </label>
+          </div>
+          <div className={styles.actions}>
+            <div className={styles.tools}>
+              <ToolButton label={`${c.undo} (Z)`} icon={<Undo2 aria-hidden />} onClick={undo} disabled={!history.length} aria-keyshortcuts="Z" />
+              <ToolButton label={c.randomize} icon={<Dices aria-hidden />} onClick={() => void randomize()} disabled={rolling} aria-busy={rolling || undefined} data-transmog-random="" />
+              <ToolButton label={c.reset} icon={<Eraser aria-hidden />} onClick={reset} />
+              <ToolButton label={c.share} icon={<Link2 aria-hidden />} onClick={() => void share()} data-transmog-share="" />
             </div>
-          )}
-          <label className={styles.toolbarField}>
-            <span className={styles.visuallyHidden}>{c.cls}</span>
-            <AtlasSelect value={state.cls} aria-label={c.cls} onChange={(event) => patch({ cls: event.target.value as TransmogClass | "" })} data-transmog-class>
-              <option value="">{c.anyClass}</option>
-              {classIds.map((entry) => <option key={entry.slug} value={entry.slug}>{c.classes[entry.slug]}</option>)}
-            </AtlasSelect>
-          </label>
-        </div>
-        <div className={styles.actions}>
-          <AtlasButton variant="ghost" className={styles.toolIcon} icon={<Undo2 aria-hidden />} onClick={undo} disabled={!history.length} title={`${c.undo} (Z)`} aria-keyshortcuts="Z"><span className={styles.visuallyHidden}>{c.undo}</span></AtlasButton>
-          <AtlasButton variant="ghost" className={styles.toolIcon} icon={<Dices aria-hidden />} onClick={() => void randomize()} disabled={rolling} aria-busy={rolling || undefined} title={c.randomize} data-transmog-random><span className={styles.visuallyHidden}>{c.randomize}</span></AtlasButton>
-          <AtlasButton variant="ghost" className={styles.toolIcon} icon={<Eraser aria-hidden />} onClick={reset} title={c.reset}><span className={styles.visuallyHidden}>{c.reset}</span></AtlasButton>
-          <MaterialButton kit={KIT} className={styles.actionButton} data-compact icon={<Link2 aria-hidden />} onClick={() => void share()} data-transmog-share title={c.share} aria-label={c.share}><span className={styles.actionText}>{c.share}</span></MaterialButton>
-          <MaterialButton kit={KIT} variant="primary" className={styles.actionButton} icon={<Download aria-hidden />} onClick={() => void exportFrame()} disabled={!ready3d || exportState === "busy"}
-            title={ready3d ? `${c.download(downloadLabel)} · ${format.width * Math.min(output.scale, maxScale)}×${format.height * Math.min(output.scale, maxScale)}` : c.downloadWait} data-transmog-download>
-            {exportState === "busy" ? c.exporting : <>{c.downloadShort}<span className={styles.actionFormat}> {downloadLabel}</span></>}
-          </MaterialButton>
+            <AtlasButton variant="primary" className={styles.download} icon={<Download aria-hidden />} onClick={() => void exportFrame()} disabled={!ready3d || exportState === "busy"}
+              aria-busy={exportState === "busy" || undefined}
+              title={ready3d ? `${c.download(downloadLabel)} · ${format.width * Math.min(output.scale, maxScale)}×${format.height * Math.min(output.scale, maxScale)}` : c.downloadWait} data-transmog-download>
+              {c.downloadShort}<span className={styles.actionFormat}> {downloadLabel}</span>
+            </AtlasButton>
+          </div>
         </div>
       </div>
       <p className={styles.notice} role="status" aria-live="polite">{notice || exportMessage}</p>
 
-      <div className={styles.workspace} style={{ "--stage-aspect": String(format.width / format.height) } as React.CSSProperties}>
-        <div className={styles.doll}>
-          <div className={styles.dollColumn}>{dollLeft.map((slot) => slotButton(slot))}</div>
-          <div className={styles.stageColumn} ref={stageColumnRef}>
-            <TransmogStage ref={stageRef} requested={requested} modelId={modelId} items={items} pose={state.pose} paused={paused}
-              aspect={format.width / format.height} background={backgroundDef} {...light} label={stageLabel} poster={poster} onStatus={onStatus} onBusy={onBusy}>
-              {state.title || state.subtitle ? (
-                <span className={styles.caption} aria-hidden="true">
-                  {state.subtitle ? <span className={styles.captionSubtitle}>{state.subtitle}</span> : null}
-                  {state.title ? <span className={styles.captionTitle}>{state.title}</span> : null}
-                </span>
-              ) : null}
-              {state.mark ? <span className={styles.mark} aria-hidden="true">GILDRA.NET</span> : null}
-              {stage.status === "loading" ? (
-                <div className={styles.loader} data-over-poster={poster ? "" : undefined} role="status" data-stage-pill>
-                  <span className={styles.loaderRing} style={{ "--progress": `${Math.max(3, stage.progress)}%` } as React.CSSProperties} aria-hidden="true" />
-                  <span className={styles.loaderText}>{c.loadingPart(stage.progress)}</span>
-                </div>
-              ) : null}
-              {preview && ready3d ? <p className={styles.stagePill} data-preview-pill>{c.trying(preview.look.name)}</p> : null}
-              {stage.status === "idle" && manual ? (
-                <div className={styles.stageOverlay} data-stage-overlay="idle">
-                  <div className={styles.loadBox}>
-                    <AtlasButton variant="primary" onClick={() => setRequested(true)} data-transmog-load>{c.openStudio}</AtlasButton>
-                    <p className={styles.loadHint}>{c.weight(weight)}</p>
+      <MaterialPlaque kit={KIT} className={styles.wardrobe} style={{ "--stage-aspect": String(format.width / format.height) } as CSSProperties}>
+        <div className={styles.dollPane} style={surround} data-surround={backgroundDef.kind}>
+          <div className={styles.doll}>
+            <div className={styles.dollColumn}>{dollLeft.map((slot) => slotButton(slot))}</div>
+            <div className={styles.stageColumn} ref={stageColumnRef}>
+              <TransmogStage ref={stageRef} requested={requested} modelId={modelId} items={items} pose={state.pose} paused={paused}
+                aspect={format.width / format.height} background={backgroundDef} {...light} label={stageLabel} poster={poster} onStatus={onStatus} onBusy={onBusy}>
+                {state.title || state.subtitle ? (
+                  <span className={styles.caption} aria-hidden="true">
+                    {state.subtitle ? <span className={styles.captionSubtitle}>{state.subtitle}</span> : null}
+                    {state.title ? <span className={styles.captionTitle}>{state.title}</span> : null}
+                  </span>
+                ) : null}
+                {state.mark ? <span className={styles.mark} aria-hidden="true">GILDRA.NET</span> : null}
+                {stage.status === "loading" ? (
+                  <div className={styles.loader} data-over-poster={poster ? "" : undefined} role="status" data-stage-pill>
+                    <span className={styles.loaderRing} style={{ "--progress": `${Math.max(3, stage.progress)}%` } as CSSProperties} aria-hidden="true" />
+                    <span className={styles.loaderText}>{c.loadingPart(stage.progress)}</span>
                   </div>
-                </div>
-              ) : null}
-              {stage.status === "error" ? (
-                <div className={styles.stageOverlay} data-stage-overlay="error">
-                  <p className={styles.stageStatus}>{c.modelError} <AtlasButton size="sm" onClick={() => stageRef.current?.retry()}>{c.retry}</AtlasButton></p>
-                </div>
-              ) : null}
-              {stage.status === "unsupported" ? <div className={styles.stageOverlay} data-stage-overlay="unsupported"><p className={styles.stageStatus}>{c.noWebgl}</p></div> : null}
-            </TransmogStage>
-            <div className={styles.stageBar}>
-              <div className={styles.weaponRow} role="group" aria-label={c.weapons}>{dollWeapons.map((slot) => slotButton(slot))}</div>
-              <div className={styles.slotStrip} role="group" aria-label={c.tabs.items}>{transmogSlots.map((slot) => slotButton(slot, true))}</div>
-              <div className={styles.cameraRow} data-camera="zoom" role="group" aria-label={c.camera} data-camera-controls hidden={!ready3d}>
-                <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.zoom(1 / 1.15)} aria-label={c.zoomIn} title={`${c.zoomIn} (+)`}><ZoomIn aria-hidden /></AtlasButton>
-                <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.zoom(1.15)} aria-label={c.zoomOut} title={`${c.zoomOut} (−)`}><ZoomOut aria-hidden /></AtlasButton>
-              </div>
-              <div className={styles.cameraRow} data-camera="view" role="group" aria-label={c.camera} hidden={!ready3d}>
-                <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.resetCamera()} aria-label={c.resetCamera} title={`${c.resetCamera} (Home)`}><LocateFixed aria-hidden /></AtlasButton>
-                <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => setPaused((value) => !value)} aria-pressed={paused} aria-label={paused ? c.play : c.pause} title={paused ? c.play : c.pause}>{paused ? <Play aria-hidden /> : <Pause aria-hidden />}</AtlasButton>
-              </div>
+                ) : null}
+                {preview && ready3d ? <p className={styles.stagePill} data-preview-pill>{c.trying(preview.look.name)}</p> : null}
+                {stage.status === "idle" && manual ? (
+                  <div className={styles.stageOverlay} data-stage-overlay="idle">
+                    <div className={styles.loadBox}>
+                      <AtlasButton variant="primary" onClick={() => setRequested(true)} data-transmog-load>{c.openStudio}</AtlasButton>
+                      <p className={styles.loadHint}>{c.weight(weight)}</p>
+                    </div>
+                  </div>
+                ) : null}
+                {stage.status === "error" ? (
+                  <div className={styles.stageOverlay} data-stage-overlay="error">
+                    <p className={styles.stageStatus}>{c.modelError} <AtlasButton size="sm" onClick={() => stageRef.current?.retry()}>{c.retry}</AtlasButton></p>
+                  </div>
+                ) : null}
+                {stage.status === "unsupported" ? <div className={styles.stageOverlay} data-stage-overlay="unsupported"><p className={styles.stageStatus}>{c.noWebgl}</p></div> : null}
+              </TransmogStage>
+            </div>
+            <div className={styles.dollColumn}>{dollRight.map((slot) => slotButton(slot))}</div>
+          </div>
+          <div className={styles.stageBar}>
+            <div className={styles.cameraRow} data-camera="zoom" role="group" aria-label={c.camera} data-camera-controls hidden={!ready3d}>
+              <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.zoom(1 / 1.15)} aria-label={c.zoomIn} title={`${c.zoomIn} (+)`}><ZoomIn aria-hidden /></AtlasButton>
+              <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.zoom(1.15)} aria-label={c.zoomOut} title={`${c.zoomOut} (−)`}><ZoomOut aria-hidden /></AtlasButton>
+            </div>
+            <div className={styles.weaponRow} role="group" aria-label={c.weapons}>{dollWeapons.map((slot) => slotButton(slot))}</div>
+            <div className={styles.slotStrip} role="group" aria-label={c.tabs.items}>{transmogSlots.map((slot) => slotButton(slot, true))}</div>
+            <div className={styles.cameraRow} data-camera="view" role="group" aria-label={c.camera} hidden={!ready3d}>
+              <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.resetCamera()} aria-label={c.resetCamera} title={`${c.resetCamera} (Home)`}><LocateFixed aria-hidden /></AtlasButton>
+              <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => setPaused((value) => !value)} aria-pressed={paused} aria-label={paused ? c.play : c.pause} title={paused ? c.play : c.pause}>{paused ? <Play aria-hidden /> : <Pause aria-hidden />}</AtlasButton>
             </div>
           </div>
-          <div className={styles.dollColumn}>{dollRight.map((slot) => slotButton(slot))}</div>
         </div>
 
-        <MaterialPlaque kit={KIT} className={styles.panel} id={sheetId} data-sheet={sheetOpen ? "open" : "closed"}
+        <div className={styles.panel} id={sheetId} data-sheet={sheetOpen ? "open" : "closed"}
           onFocusCapture={(event) => { if (!sheetOpen && phone() && !(event.target as HTMLElement).closest("[data-sheet-handle], [role=tab]")) openSheet(); }}>
           <button type="button" className={styles.sheetHandle} data-sheet-handle aria-expanded={sheetOpen} aria-controls={sheetId} onClick={() => (sheetOpen ? setSheetOpen(false) : openSheet())}>
-            <ChevronUp aria-hidden />
+            <span className={styles.grabber} aria-hidden="true" />
             <span className={styles.visuallyHidden}>{sheetOpen ? c.closePicker : c.openPicker}</span>
           </button>
           <AtlasTabs label={c.title} value={tab} onChange={(id) => { setTab(id); openSheet(); }} className={styles.tabs} tabs={[
@@ -476,8 +486,8 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
                 if (Object.keys(rest).length) patch(rest);
               }} /> },
           ]} />
-        </MaterialPlaque>
-      </div>
+        </div>
+      </MaterialPlaque>
     </section>
   );
 }
