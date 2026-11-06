@@ -15,7 +15,7 @@ export async function getTierSources(): Promise<TierSourceTabs> {
     });
     const live = response.sources.filter((source) => source.status !== "empty");
     const tabs: TierSourceInfo[] = live
-      .filter((source) => isTierSource(source.id) && source.id !== "gildra" && source.id !== "sim")
+      .filter((source) => isTierSource(source.id) && source.id !== "gildra" && source.id !== "sim" && source.id !== "wowhead")
       .map(({ id, activities, anyBracket, regions }) => ({
         id: id as TierSourceInfo["id"], activities: TIER_MODES.filter((mode) => activities.includes(mode)), anyBracket, regions,
       }));

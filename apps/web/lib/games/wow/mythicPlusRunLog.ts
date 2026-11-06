@@ -34,6 +34,8 @@ const enemiesBySlug = combat as unknown as CombatFile;
 
 let token: { value: string; expires: number } | null = null;
 let budget = { spent: 0, limit: 3600, resetAt: 0 };
+/** Points per hour the run pages may spend: WARCRAFT_LOGS_HOURLY_POINTS (default 1000), never more than 70% of the client's limit. */
+const hourlyPointsCap = () => Math.min(budget.limit * 0.7, Number(process.env.WARCRAFT_LOGS_HOURLY_POINTS) || 1000);
 let windowStart = 0, windowCalls = 0;
 
 class Skip extends Error {}
@@ -60,7 +62,7 @@ async function accessToken() {
 const rateLimit = "rateLimitData{limitPerHour pointsSpentThisHour pointsResetIn}";
 
 async function graphql<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
-  if (Date.now() < budget.resetAt && budget.spent > budget.limit * 0.7) throw new Skip("Warcraft Logs points budget spent");
+  if (Date.now() < budget.resetAt && budget.spent > hourlyPointsCap()) throw new Skip("Warcraft Logs points budget spent");
   const response = await fetch(apiUrl, {
     method: "POST",
     headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "application/json", Accept: "application/json" },
