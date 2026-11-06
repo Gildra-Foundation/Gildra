@@ -1,0 +1,233 @@
+/* atlas:strict — the talent workbench of /talents/<spec>: one toolbar (specialization, hero path, points of each
+   tree, import · link · reset · copy for the game), the strip of top players' builds, the trees with the hero tree
+   in the middle column and the build panel (PvP talents, search, saved builds) under it. Only transform and
+   opacity animate, on the site's easing; every effect stops under reduced motion. */
+
+/* ---------- Toolbar on the kit's plaque ---------- */
+.toolbar { position: relative; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3) var(--atlas-space-4); padding: 18px 24px; }
+.pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); min-width: 0; }
+.pick > :first-child { flex: 0 1 auto; min-width: 0; }
+
+.heroSwitch { display: inline-grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 2px; min-width: 0; padding: 2px; border: 1px solid var(--material-line, var(--atlas-line-soft)); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 72%, transparent); }
+.heroSwitch a { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-2); min-width: 0; min-height: 40px; padding: 0 var(--atlas-space-3) 0 var(--atlas-space-2); border-radius: calc(var(--atlas-radius) - 2px); color: var(--atlas-text-muted); font: 600 var(--atlas-text-small) / 1.15 var(--atlas-font-ui); text-decoration: none; white-space: nowrap; transition: color var(--atlas-duration-fast) var(--atlas-ease); }
+.heroSwitch a span { overflow: hidden; text-overflow: ellipsis; }
+.heroSwitch a img { flex: none; width: 24px; height: 24px; border-radius: 50%; opacity: .6; filter: grayscale(.6); transition: opacity var(--atlas-duration-fast) var(--atlas-ease); }
+.heroSwitch a:hover { color: var(--atlas-text-strong); }
+.heroSwitch a:hover img { opacity: .9; }
+.heroSwitch a[aria-current="page"] { background: var(--atlas-surface-raised); color: var(--atlas-text-strong); box-shadow: inset 0 -2px 0 var(--tc-spec-accent, var(--atlas-accent)); }
+.heroSwitch a[aria-current="page"] img { opacity: 1; filter: none; box-shadow: 0 0 0 1px var(--tc-spec-accent, var(--atlas-accent)); }
+.heroSwitch a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
+
+/* Points of each tree: the number, and a bar that fills (scaleX). */
+.points { display: flex; align-items: stretch; gap: var(--atlas-space-1); }
+.point { position: relative; display: grid; align-content: center; gap: 1px; min-width: 76px; min-height: 44px; padding: 4px 10px 7px; overflow: hidden; border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 60%, transparent); }
+.point small { color: var(--atlas-text-muted); font: 600 var(--atlas-text-label) / 1.1 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; white-space: nowrap; }
+.point b { color: var(--atlas-text-strong); font: 650 var(--atlas-text-title) / 1.1 var(--atlas-font-ui); font-variant-numeric: tabular-nums; }
+.point b i { color: var(--atlas-text-subtle); font-size: var(--atlas-text-small); font-style: normal; font-weight: 600; }
+.point::after { position: absolute; right: 10px; bottom: 4px; left: 10px; height: 2px; border-radius: 2px; background: var(--tc-spec-accent, var(--atlas-accent)); content: ""; opacity: .85; transform: scaleX(var(--fill, 0)); transform-origin: left; transition: transform var(--atlas-duration) var(--atlas-ease); }
+.point::before { position: absolute; right: 10px; bottom: 4px; left: 10px; height: 2px; border-radius: 2px; background: var(--atlas-line-soft); content: ""; }
+.point[data-full] b { color: var(--tc-spec-hot, var(--atlas-accent-strong)); }
+
+/* Actions: three quiet icons and the one primary action, copy for the game. */
+.actions { display: flex; align-items: center; gap: var(--atlas-space-2); margin-inline-start: auto; }
+.iconButton, .copy, .save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--atlas-space-2);
+  min-width: var(--atlas-control-height);
+  height: var(--atlas-control-height);
+  padding: 0;
+  border: 1px solid var(--material-line, var(--atlas-line));
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--atlas-bg) 72%, transparent);
+  color: var(--atlas-text);
+  font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
+  cursor: pointer;
+  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease), transform var(--atlas-duration-fast) var(--atlas-ease);
+}
+.iconButton svg, .copy svg, .save svg { flex: none; width: 18px; height: 18px; }
+/* Icon buttons name themselves for screen readers; the words show on phones, where there is no hover title. */
+.iconButton span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.copy, .save { padding-inline: var(--atlas-space-4); white-space: nowrap; }
+.copy { border-color: color-mix(in srgb, var(--tc-spec-accent, var(--atlas-accent)) 70%, transparent); background: color-mix(in srgb, var(--tc-spec-accent, var(--atlas-accent)) 20%, var(--atlas-bg)); color: var(--atlas-text-strong); }
+.iconButton:hover, .save:hover:not(:disabled) { border-color: var(--atlas-line-strong); background: var(--atlas-surface-selected); color: var(--atlas-text-strong); }
+.copy:hover { border-color: var(--tc-spec-accent, var(--atlas-accent)); background: color-mix(in srgb, var(--tc-spec-accent, var(--atlas-accent)) 32%, var(--atlas-bg)); }
+.iconButton:active, .copy:active, .save:active:not(:disabled) { transform: scale(var(--atlas-press-scale, .97)); }
+.iconButton:focus-visible, .copy:focus-visible, .save:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+/* ---------- Top players' builds: one quiet line of chips ---------- */
+.strip { display: flex; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); min-width: 0; margin: var(--atlas-space-3) 0 0; }
+.stripTitle { flex: none; color: var(--atlas-text-muted); font: 600 var(--atlas-text-label) / 1.2 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.strip ul { display: flex; gap: var(--atlas-space-2); min-width: 0; margin: 0; padding: 2px; overflow-x: auto; list-style: none; scrollbar-width: none; }
+.strip ul::-webkit-scrollbar { display: none; }
+.chip { display: inline-flex; flex: none; align-items: center; gap: var(--atlas-space-2); height: 36px; padding: 0 var(--atlas-space-3) 0 var(--atlas-space-1); border: 1px solid var(--atlas-line-soft); border-radius: 999px; background: color-mix(in srgb, var(--atlas-bg) 72%, transparent); color: var(--atlas-text-muted); font: 500 var(--atlas-text-small) / 1 var(--atlas-font-ui); cursor: pointer; transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease); }
+.chip img { width: 26px; height: 26px; border-radius: 50%; }
+.chip b { color: var(--tc-spec-hot, var(--atlas-accent-strong)); font-weight: 650; font-variant-numeric: tabular-nums; }
+.chip:not(:has(img)) { padding-inline-start: var(--atlas-space-3); }
+.chip:hover { border-color: var(--atlas-line-strong); background: var(--atlas-surface-selected); color: var(--atlas-text-strong); }
+.chip[aria-pressed="true"] { border-color: var(--tc-spec-accent, var(--atlas-accent)); background: color-mix(in srgb, var(--tc-spec-accent, var(--atlas-accent)) 16%, var(--atlas-bg)); color: var(--atlas-text-strong); }
+.chip:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+/* ---------- Trees: class | hero over the build panel | spec; the columns follow each tree's grid ---------- */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, var(--fr-class, 9fr)) minmax(0, var(--fr-hero, 7fr)) minmax(0, var(--fr-spec, 9fr));
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  gap: var(--atlas-space-4);
+  margin-top: var(--atlas-space-4);
+}
+.trees { display: contents; }
+.trees > [data-tree="class"] { grid-column: 1; grid-row: 1 / span 2; }
+.trees > [data-tree="hero"] { grid-column: 2; grid-row: 1; }
+.trees > [data-tree="spec"] { grid-column: 3; grid-row: 1 / span 2; }
+.workspace > .side { grid-column: 2; grid-row: 2; }
+
+/* The build panel under the hero tree: PvP talents, search, saved builds. */
+.side { display: grid; align-content: start; gap: var(--atlas-space-4); }
+.sideLabel { color: var(--atlas-text-muted); font: 600 var(--atlas-text-label) / 1.2 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.pvp { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-3); }
+.pvpSlots { display: flex; gap: var(--atlas-space-3); }
+.library { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--atlas-space-2); }
+.library > :first-child { position: relative; min-width: 0; }
+.save[data-saved] { color: var(--tc-spec-hot, var(--atlas-accent-strong)); }
+.save:disabled { opacity: .55; cursor: default; }
+
+/* Phones: one tree at a time, picked by name with its points. */
+.tabs { display: none; }
+
+/* ---------- Notices: one line at the bottom of the screen ---------- */
+.toast {
+  position: fixed;
+  z-index: 70;
+  bottom: calc(var(--atlas-space-4) + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  max-width: min(560px, calc(100vw - 2 * var(--atlas-space-3)));
+  min-height: var(--atlas-control-height);
+  padding: var(--atlas-space-1) var(--atlas-space-2) var(--atlas-space-1) var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-raised);
+  box-shadow: var(--atlas-shadow-lift);
+  color: var(--atlas-text-strong);
+  font: 500 var(--atlas-text-small) / 1.35 var(--atlas-font-ui);
+  translate: -50% 0;
+  animation: toastIn var(--atlas-duration) var(--atlas-ease);
+}
+.toast button { display: inline-grid; place-items: center; min-width: 36px; height: 36px; padding: 0 var(--atlas-space-2); border: 0; border-radius: var(--atlas-radius); background: transparent; color: var(--tc-spec-hot, var(--atlas-accent-strong)); font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui); cursor: pointer; }
+.toast button:last-child:not(:first-of-type) { color: var(--atlas-text-muted); }
+.toast button svg { width: 16px; height: 16px; }
+.toast button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(8px); } }
+/* With the talent sheet open (phones), notices sit at the top so they never cover its buttons. */
+.toast[data-over-sheet] { top: calc(var(--atlas-sticky-top, 0px) + 64px); bottom: auto; }
+
+/* ---------- Tablets: class and spec side by side, the hero tree and the build panel below ---------- */
+@media (max-width: 1180px) {
+  .workspace { grid-template-columns: minmax(0, var(--fr-class, 9fr)) minmax(0, var(--fr-spec, 9fr)); grid-template-rows: auto auto; }
+  .trees > [data-tree="class"] { grid-column: 1; grid-row: 1; }
+  .trees > [data-tree="spec"] { grid-column: 2; grid-row: 1; }
+  .trees > [data-tree="hero"] { grid-column: 1; grid-row: 2; }
+  .workspace > .side { grid-column: 2; grid-row: 2; }
+}
+
+/* ---------- Phones: the trees in a sideways strip, one per screen; tabs and swipes move it ---------- */
+@media (max-width: 900px) {
+  .toolbar { padding: 16px 20px; }
+  .points { display: none; }
+  .tabs { position: sticky; z-index: 15; top: var(--atlas-sticky-top, 0px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; margin-top: var(--atlas-space-3); padding: 2px; border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); background: var(--atlas-bg); }
+  .tabs button { position: relative; display: grid; justify-items: center; gap: 2px; min-width: 0; min-height: 48px; padding: var(--atlas-space-1); border: 0; border-radius: calc(var(--atlas-radius) - 2px); background: transparent; color: var(--atlas-text-muted); font: 600 var(--atlas-text-small) / 1.15 var(--atlas-font-ui); cursor: pointer; }
+  .tabs button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tabs button b { color: var(--atlas-text-subtle); font: 600 var(--atlas-text-meta) / 1 var(--atlas-font-ui); font-variant-numeric: tabular-nums; }
+  .tabs button[aria-pressed="true"] { background: var(--atlas-surface-raised); color: var(--atlas-text-strong); box-shadow: inset 0 -2px 0 var(--tc-spec-accent, var(--atlas-accent)); }
+  .tabs button[aria-pressed="true"] b { color: var(--atlas-text-muted); }
+  .tabs button b[data-full] { color: var(--tc-spec-hot, var(--atlas-accent-strong)); }
+  .tabs button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
+
+  .workspace { display: block; margin-top: var(--atlas-space-3); }
+  .trees {
+    position: relative;
+    display: grid;
+    grid-auto-columns: 100%;
+    grid-auto-flow: column;
+    align-items: start;
+    gap: var(--atlas-space-3);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .trees::-webkit-scrollbar { display: none; }
+  :global(.talent-calculator) .trees > [data-tree] { height: auto; scroll-snap-align: start; scroll-snap-stop: always; }
+  .trees > [data-tree="class"], .trees > [data-tree="hero"], .trees > [data-tree="spec"] { grid-row: 1; grid-column: auto; }
+  .workspace > .side { margin-top: var(--atlas-space-3); }
+}
+
+@media (max-width: 600px) {
+  .toolbar { gap: var(--atlas-space-2); padding: 16px 16px; }
+  .pick { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .heroSwitch { width: 100%; }
+  .actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; margin-inline-start: 0; }
+  .copy { grid-column: 1 / -1; grid-row: 1; }
+  .iconButton { padding-inline: var(--atlas-space-2); }
+  .iconButton span { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+  .strip { display: grid; gap: var(--atlas-space-2); }
+  .strip ul { margin-inline-end: calc(var(--atlas-space-3) * -1); padding-inline-end: var(--atlas-space-5); mask-image: linear-gradient(90deg, #000 calc(100% - var(--atlas-space-5)), transparent); }
+  .library { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 400px) {
+  .heroSwitch a { gap: 6px; min-height: 44px; padding-inline: 6px; line-height: 1.1; white-space: normal; }
+  .heroSwitch a span { overflow: visible; }
+  .heroSwitch a img { width: 20px; height: 20px; }
+  .tabs button { font-size: var(--atlas-text-meta); }
+  .iconButton { gap: 6px; }
+}
+@media (max-width: 360px) {
+  .iconButton svg { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .point::after, .chip, .heroSwitch a, .heroSwitch a img, .iconButton, .copy, .save { transition: none; }
+  .toast { animation: none; }
+}
+:global([data-motion="reduced"]) .point::after, :global([data-ui-motion="reduce"]) .point::after,
+:global([data-motion="reduced"]) .toast, :global([data-ui-motion="reduce"]) .toast { animation: none !important; transition: none !important; }
+@media (forced-colors: active) {
+  .chip, .iconButton, .copy, .save, .heroSwitch, .point { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .chip[aria-pressed="true"], .heroSwitch a[aria-current="page"] { outline: 2px solid Highlight; }
+  .point::after { background: Highlight; }
+}
+
+/* ---------- Search and the saved-build picker of the build panel ---------- */
+.search, .select { display: flex; align-items: center; gap: var(--atlas-space-2); width: 100%; min-width: 0; height: var(--atlas-control-height); padding: 0 var(--atlas-space-3); border: 1px solid var(--material-line, var(--atlas-line)); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 72%, transparent); color: var(--atlas-text-strong); transition: border-color var(--atlas-duration-fast) var(--atlas-ease); }
+.search:focus-within { border-color: var(--tc-spec-accent, var(--atlas-accent)); }
+.search label { display: grid; place-items: center; color: var(--atlas-text-muted); }
+.search svg, .select svg { flex: none; width: 16px; height: 16px; }
+.search input { flex: 1 1 auto; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: inherit; font: 400 var(--atlas-text-small) / 1.3 var(--atlas-font-ui); }
+.search input::placeholder { color: var(--atlas-text-subtle); }
+.search input::-webkit-search-cancel-button { display: none; }
+.search output { color: var(--tc-spec-hot, var(--atlas-accent-strong)); font: 600 var(--atlas-text-meta) / 1 var(--atlas-font-ui); font-variant-numeric: tabular-nums; }
+.search button { display: grid; place-items: center; width: 32px; height: 32px; margin-inline-end: calc(var(--atlas-space-2) * -1); border: 0; border-radius: var(--atlas-radius); background: transparent; color: var(--atlas-text-muted); cursor: pointer; }
+.search button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
+.select { justify-content: space-between; font: 600 var(--atlas-text-small) / 1.2 var(--atlas-font-ui); text-align: start; cursor: pointer; }
+.select span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.select svg { color: var(--atlas-text-muted); transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
+.select[aria-expanded="true"] svg { transform: rotate(180deg); }
+.select:hover { border-color: var(--atlas-line-strong); background: var(--atlas-surface-selected); }
+.select:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .search, .select, .select svg { transition: none; } }
+@media (forced-colors: active) { .search, .select { border: 1px solid CanvasText; background: Canvas; color: CanvasText; } }
+
+/* The saved-build menu opens out of the build panel (the legacy panel clips its content). */
+:global(.talent-calculator) .workspace .side { position: relative; z-index: 3; overflow: visible; }
+@media (min-width: 901px) {
+  :global(.talent-calculator) .library :global(.tc-loadout-popover) { right: auto; left: 0; width: min(390px, calc(100vw - 24px)); }
+}
+/* Phones: the menu opens upwards over the trees, from the picker it belongs to. */
+@media (max-width: 900px) {
+  :global(.talent-calculator) .library :global(.tc-loadout-popover) { position: absolute; top: auto; right: 0; bottom: calc(100% + var(--atlas-space-2)); left: 0; width: auto; max-height: min(60dvh, 520px); }
+}

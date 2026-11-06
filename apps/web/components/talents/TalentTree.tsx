@@ -20,9 +20,14 @@ export type TalentTreeActions = {
 type NodeState = "selected" | "partial" | "open" | "locked";
 const UNVERIFIED_ICON = "/assets/wow/icon-unverified.svg";
 
-function TalentIcon({ src, className }: { src?: string; className?: string }) {
+/** A talent icon; a name the CDN refuses falls back to the spell's media file, then to the neutral glyph. */
+function TalentIcon({ src, spellId, className }: { src?: string; spellId?: number; className?: string }) {
   return <img className={className} src={src || UNVERIFIED_ICON} alt="" width={56} height={56} loading="lazy" decoding="async" draggable={false}
-    onError={(event) => { if (!event.currentTarget.src.endsWith(UNVERIFIED_ICON)) event.currentTarget.src = UNVERIFIED_ICON; }} />;
+    onError={(event) => {
+      const image = event.currentTarget;
+      if (spellId && !image.dataset.retried) { image.dataset.retried = "1"; image.src = `/api/talents/icon?spell=${spellId}`; }
+      else if (!image.src.endsWith(UNVERIFIED_ICON)) image.src = UNVERIFIED_ICON;
+    }} />;
 }
 
 type NodeProps = { node: TalentNode; rank: number; state: NodeState; choiceIndex: number; dimmed: boolean; tabbable: boolean; inspected: boolean; label: string };
@@ -45,21 +50,25 @@ const TalentNodeButton = memo(function TalentNodeButton({ node, rank, state, cho
     aria-disabled={state === "locked" || undefined}
     aria-label={label}
   >
-    <span className={styles.art} aria-hidden="true">
-      {split ? <><TalentIcon src={node.choices[0].iconUrl} className={styles.splitA} /><TalentIcon src={node.choices[1].iconUrl} className={styles.splitB} /></> : <TalentIcon src={choice?.iconUrl} />}
+    <span className={styles.art} data-art="" aria-hidden="true">
+      {split ? <><TalentIcon src={node.choices[0].iconUrl} spellId={node.choices[0].spellId} className={styles.splitA} /><TalentIcon src={node.choices[1].iconUrl} spellId={node.choices[1].spellId} className={styles.splitB} /></> : <TalentIcon src={choice?.iconUrl} spellId={choice?.spellId} />}
     </span>
     <span className={styles.flash} data-flash aria-hidden="true" />
     {node.maxRanks > 1 ? <span className={styles.pips} aria-hidden="true">{Array.from({ length: node.maxRanks }, (_, index) => <i key={index} data-on={index < rank || undefined} />)}</span> : null}
   </button>;
 });
 
-function flash(element: HTMLElement | null) {
-  const target = element?.querySelector<HTMLElement>("[data-flash]");
-  if (!target || lessMotion()) return;
-  target.animate([
-    { opacity: 0.9, transform: "scale(.86)" },
-    { opacity: 0, transform: "scale(1.32)" },
-  ], { duration: 320, easing: "cubic-bezier(.2,.8,.2,1)" });
+let siteEase = "";
+/** The site's easing (--atlas-ease), read once: Web Animations do not resolve CSS variables. */
+const ease = () => siteEase ||= getComputedStyle(document.documentElement).getPropertyValue("--atlas-ease").trim() || "cubic-bezier(.2,.7,.2,1)";
+
+/** Rank change feedback, under 200 ms and only transform/opacity: the icon settles in, a ring flares out. */
+function flash(element: HTMLElement | null, gained = true) {
+  if (!element || lessMotion()) return;
+  const art = element.querySelector<HTMLElement>("[data-art]");
+  const ring = element.querySelector<HTMLElement>("[data-flash]");
+  art?.animate([{ transform: `scale(${gained ? .86 : 1.08})` }, { transform: "scale(1)" }], { duration: 180, easing: ease() });
+  if (gained) ring?.animate([{ opacity: .9, transform: "scale(.9)" }, { opacity: 0, transform: "scale(1.3)" }], { duration: 200, easing: ease() });
 }
 
 type TreeProps = {
@@ -133,7 +142,7 @@ export const TalentTree = memo(function TalentTree({ tree, kind, title, geometry
     const hit = nodeOf(event.target);
     if (!hit) return;
     event.preventDefault();
-    if (actions.decrement(hit.node)) flash(hit.element);
+    if (actions.decrement(hit.node)) flash(hit.element, false);
   };
   const onPointerOver = (event: ReactPointerEvent) => {
     if (event.pointerType === "touch") return;
@@ -172,9 +181,14 @@ export const TalentTree = memo(function TalentTree({ tree, kind, title, geometry
       if (!target) return;
       setTabId(target.id);
       canvasRef.current?.querySelector<HTMLElement>(`[data-talent-node="${CSS.escape(target.id)}"]`)?.focus();
+    } else if (event.key === "+" || event.key === "=") {
+      event.preventDefault();
+      if (actions.activate(node, "keyboard")) flash(element);
+      actions.inspect(node, element, "keyboard");
     } else if (event.key === "Backspace" || event.key === "Delete" || event.key === "-") {
       event.preventDefault();
-      if (actions.decrement(node)) flash(element);
+      if (actions.decrement(node)) flash(element, false);
+      actions.inspect(node, element, "keyboard");
     } else if (event.key === "[" || event.key === "]") {
       event.preventDefault();
       if (actions.cycle(node, event.key === "]" ? 1 : -1)) flash(element);

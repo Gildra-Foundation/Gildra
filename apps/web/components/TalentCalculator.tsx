@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Check, ChevronDown, CircleDot, ClipboardCopy, Crosshair, Droplets, Eye, Flame, Leaf, Link2, PawPrint, Plus, RotateCcw, Save, Search, Share2, Shield, Skull, Snowflake, Sparkles, Sun, Swords, Trash2, Undo2, Upload, Waves, X, Zap } from "lucide-react";
+import { Check, ChevronDown, ClipboardCopy, Link2, Plus, RotateCcw, Save, Search, Trash2, Upload, X } from "lucide-react";
 import { memo, startTransition, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent } from "react";
 import type { PvPTalent, TalentCalculatorData, TalentKind, TalentNode } from "@/lib/talentCalculatorData";
 import { talentSpecThemes, type TalentSpecTheme } from "@/lib/talentSpecThemes";
@@ -18,9 +18,11 @@ import { TalentTreePanel } from "@/components/talents/TalentTreePanel";
 import { TalentTree, type PointerKind, type TalentTreeActions } from "@/components/talents/TalentTree";
 import { TalentCardBody, TalentSheet, TalentTip, type TalentTipHandle } from "@/components/talents/TalentCard";
 import { TalentHero } from "@/components/talents/TalentHero";
+import { TreeTabs } from "@/components/talents/TreeTabs";
 import page from "@/components/talents/talentAtlasPage.module.css";
 import treeStyles from "@/components/talents/talentTree.module.css";
-import { MaterialButton, MaterialPlaque, materialPlaqueStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
+import bench from "@/components/talents/talentWorkbench.module.css";
+import { MaterialPlaque, materialPlaqueStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { TALENTS_KIT } from "@/lib/wow/charactersKit";
 import { TalentDescription } from "@/components/talents/TalentDescription";
 import { getPerformanceTier, type PerformanceTier } from "@/lib/client/performanceTier";
@@ -32,19 +34,6 @@ import { copyText as copyToClipboard } from "@gildra/atlas-ui/clipboard";
 type Notice = { message: string; persistent?: boolean } | null;
 type ImportState = { kind: "idle" } | ImportResult;
 
-
-function scheduleWhenIdle(callback: () => void, timeout: number) {
-  const idleWindow = window as Window & {
-    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-    cancelIdleCallback?: (handle: number) => void;
-  };
-  if (idleWindow.requestIdleCallback) {
-    const handle = idleWindow.requestIdleCallback(callback, { timeout });
-    return () => idleWindow.cancelIdleCallback?.(handle);
-  }
-  const handle = window.setTimeout(callback, 250);
-  return () => window.clearTimeout(handle);
-}
 
 function mapsHaveSameValues<K, V>(left: ReadonlyMap<K, V>, right: ReadonlyMap<K, V>) {
   if (left === right) return true;
@@ -233,25 +222,6 @@ function TalentSigil({ visual }: { visual: TalentVisual }) {
 }
 
 
-function ResourceGlyph({ motif }: { motif: TalentSpecTheme["motif"] }) {
-  const Icon = motif === "frost" ? Snowflake
-    : motif === "blood" ? Droplets
-      : ["plague", "decay", "poison"].includes(motif) ? Skull
-        : ["storm", "spirit", "wind"].includes(motif) ? Zap
-          : ["tide", "mist", "brew"].includes(motif) ? Waves
-            : ["astral", "dream", "time", "arcane"].includes(motif) ? Sparkles
-              : ["shadow", "void", "abyss", "demon", "vengeance"].includes(motif) ? Eye
-                : ["shield", "bulwark"].includes(motif) ? Shield
-                  : ["beast", "wild"].includes(motif) ? PawPrint
-                    : motif === "nature" ? Leaf
-                      : motif === "marksman" ? Crosshair
-                        : ["fury", "steel", "spear", "pirate"].includes(motif) ? Swords
-                          : ["holy", "sun", "judgment", "atonement"].includes(motif) ? Sun
-                            : ["fire", "dragonfire", "chaos", "fel"].includes(motif) ? Flame
-                              : CircleDot;
-  return <Icon strokeWidth={1.7} />;
-}
-
 const TalentSearchField = memo(function TalentSearchField({ count, copy, onQueryChange }: { count: number; copy: TalentCalculatorCopy; onQueryChange: (value: string) => void }) {
   const [value, setValue] = useState("");
 
@@ -262,7 +232,7 @@ const TalentSearchField = memo(function TalentSearchField({ count, copy, onQuery
     return () => window.clearTimeout(timeout);
   }, [onQueryChange, value]);
 
-  return <div className="tc-search" role="search"><label htmlFor="tc-search-input"><Search aria-hidden="true" /><span className="sr-only">{copy.searchTalents}</span></label><input id="tc-search-input" value={value} onChange={(event) => setValue(event.target.value)} placeholder={copy.searchPlaceholder} />{value && <span className="tc-search-count" aria-live="polite">{count}</span>}{value && <button type="button" aria-label={copy.clearSearch} onClick={() => setValue("")}>×</button>}</div>;
+  return <div className={bench.search} role="search"><label htmlFor="tc-search-input"><Search aria-hidden="true" /><span className="sr-only">{copy.searchTalents}</span></label><input id="tc-search-input" type="search" value={value} onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape" && value) { event.preventDefault(); setValue(""); } }} placeholder={copy.searchPlaceholder} autoComplete="off" />{value ? <output aria-live="polite">{count}</output> : null}{value ? <button type="button" aria-label={copy.clearSearch} onClick={() => setValue("")}><X aria-hidden="true" /></button> : null}</div>;
 });
 
 
@@ -323,9 +293,6 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
   const updateTalentQuery = useCallback((value: string) => setQuery(value), []);
-  const [mobileTree, setMobileTree] = useState<TalentKind>("class");
-  const [compactLayout, setCompactLayout] = useState(false);
-  const [mountedTrees, setMountedTrees] = useState<Set<TalentKind>>(() => new Set(["class"]));
   const [performanceTier, setPerformanceTier] = useState<PerformanceTier>("balanced");
   const [loadoutOpen, setLoadoutOpen] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
@@ -341,6 +308,8 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
   const [pvpQuery, setPvpQuery] = useState("");
   const [sheetId, setSheetId] = useState<string | null>(null);
   const tipRef = useRef<TalentTipHandle>(null);
+  const treesRef = useRef<HTMLDivElement>(null);
+  const closeSheet = useCallback(() => setSheetId((current) => current === null ? current : null), []);
   const loadoutMenuRef = useRef<HTMLDivElement>(null);
   const loadoutTriggerRef = useRef<HTMLButtonElement>(null);
   const importDialogRef = useRef<HTMLDivElement>(null);
@@ -400,47 +369,14 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
   }, []);
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 900px)");
-    let cancelMount: (() => void) | null = null;
-    const mountRemainingTrees = () => {
-      if (media.matches) return;
-      cancelMount?.();
-      // Build the other trees only after the browser has spare main-thread time.
-      cancelMount = scheduleWhenIdle(() => {
-        cancelMount = null;
-        if (media.matches) return;
-        startTransition(() => setMountedTrees((current) => current.has("hero") ? current : new Set<TalentKind>([...current, "hero"])));
-      }, 1200);
-    };
-    const updateLayoutBudget = () => {
-      const nextCompact = media.matches;
-      const nextTier = getPerformanceTier();
-      setCompactLayout((current) => current === nextCompact ? current : nextCompact);
-      setPerformanceTier((current) => current === nextTier ? current : nextTier);
-      if (nextCompact && cancelMount !== null) { cancelMount(); cancelMount = null; }
-      if (!nextCompact) mountRemainingTrees();
-    };
+    const updateTier = () => { const next = getPerformanceTier(); setPerformanceTier((current) => current === next ? current : next); };
     const updateVisibility = () => { if (calculatorRef.current) calculatorRef.current.dataset.pageActive = document.hidden ? "false" : "true"; };
-    updateLayoutBudget();
+    updateTier();
     updateVisibility();
-    media.addEventListener("change", updateLayoutBudget);
+    window.addEventListener("resize", updateTier, { passive: true });
     document.addEventListener("visibilitychange", updateVisibility);
-    return () => {
-      media.removeEventListener("change", updateLayoutBudget);
-      document.removeEventListener("visibilitychange", updateVisibility);
-      cancelMount?.();
-    };
+    return () => { window.removeEventListener("resize", updateTier); document.removeEventListener("visibilitychange", updateVisibility); };
   }, []);
-
-  useEffect(() => {
-    if (compactLayout || !mountedTrees.has("hero") || mountedTrees.has("spec")) return;
-    return scheduleWhenIdle(() => startTransition(() => setMountedTrees((current) => current.has("spec") ? current : new Set<TalentKind>([...current, "spec"]))), 1500);
-  }, [compactLayout, mountedTrees]);
-
-  useEffect(() => {
-    if (!compactLayout || mountedTrees.has(mobileTree)) return;
-    return scheduleWhenIdle(() => startTransition(() => setMountedTrees((current) => current.has(mobileTree) ? current : new Set<TalentKind>([...current, mobileTree]))), 120);
-  }, [compactLayout, mobileTree, mountedTrees]);
 
   // Saved builds, and the build to open when the URL carries none (the last active one).
   useEffect(() => {
@@ -482,7 +418,10 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
     const timer = window.setTimeout(() => {
       const url = new URL(window.location.href);
       for (const key of ["build", "pvp", "loadout", "import"]) url.searchParams.delete(key);
-      buildSearchParams(data, { ranks, choices, pvp: pvpSelections }).forEach((value, key) => url.searchParams.set(key, value));
+      const params = buildSearchParams(data, { ranks, choices, pvp: pvpSelections });
+      // A build names its hero path, so the link opens the same tree (the server also follows the string).
+      if (params.has("build") || url.searchParams.has("hero")) url.searchParams.set("hero", String(data.heroSubtreeId));
+      params.forEach((value, key) => url.searchParams.set(key, value));
       if (url.href !== window.location.href) writeUrl(url);
     }, 350);
     return () => window.clearTimeout(timer);
@@ -604,7 +543,7 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
   }, [pvpSelections]);
 
   /** Sets one node to `nextRank` (and optionally its choice); drops the ranks that lose their requirement. */
-  const setNodeRank = useCallback((node: TalentNode, nextRank: number, choiceId?: number) => {
+  const setNodeRank = useCallback((node: TalentNode, nextRank: number, choiceId?: number, quiet = false) => {
     const { data: current, ranks: currentRanks, choices: currentChoices, budgets: currentBudgets, copy: currentCopy, nodeCatalog: catalog } = live.current;
     if (!current || node.freeNode) return false;
     const kind = kindOfNode(node.id);
@@ -615,7 +554,7 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
     if (target > rank) {
       const treeSpent = countRanks(currentRanks, kind, current.trees[kind].nodes);
       if (!nodeAvailability(node, kind, currentRanks, treeSpent, catalog, currentCopy).available) return false;
-      if (treeSpent + (target - rank) > currentBudgets[kind]) { showNotice(currentCopy.treeFull(currentBudgets[kind])); return false; }
+      if (treeSpent + (target - rank) > currentBudgets[kind]) { if (!quiet) showNotice(currentCopy.treeFull(currentBudgets[kind])); return false; }
     }
     const nextRanks = new Map(currentRanks);
     const nextChoices = new Map(currentChoices);
@@ -648,7 +587,8 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
         if (pointer === "touch") return false;
         if (rank >= node.maxRanks) return cycleNodeChoice(node, 1);
       }
-      return rank < node.maxRanks ? setNodeRank(node, rank + 1) : false;
+      // A tap also opens the talent's sheet, which says why a rank cannot be added: no extra notice then.
+      return rank < node.maxRanks ? setNodeRank(node, rank + 1, undefined, pointer === "touch") : false;
     },
     decrement: (node: TalentNode) => setNodeRank(node, (live.current.ranks.get(node.id) ?? 0) - 1),
     cycle: cycleNodeChoice,
@@ -727,7 +667,6 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
   const totalAvailable = budgets.class + budgets.hero + budgets.spec;
   const buildComplete = TALENT_KINDS.every((kind) => rankByTree[kind] === budgets[kind]);
   const missingPoints = Math.max(0, totalAvailable - spent);
-  const fill = Math.round((spent / Math.max(1, totalAvailable)) * 100);
   const specPanelIcon = theme.iconUrl !== theme.classIconUrl
     ? theme.iconUrl
     : data.trees.spec.nodes.find((node) => node.entryNode)?.choices.find((choice) => choice.iconUrl)?.iconUrl ?? theme.classIconUrl;
@@ -757,7 +696,9 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
   const shareUrl = () => {
     const url = new URL(window.location.href);
     for (const key of ["build", "pvp", "loadout", "import"]) url.searchParams.delete(key);
-    buildSearchParams(data, loadout).forEach((value, key) => url.searchParams.set(key, value));
+    const params = buildSearchParams(data, loadout);
+    if (params.has("build") || url.searchParams.has("hero")) url.searchParams.set("hero", String(data.heroSubtreeId));
+    params.forEach((value, key) => url.searchParams.set(key, value));
     return url.toString();
   };
   const copyShareLink = () => void copyText(shareUrl(), copy.linkCopied);
@@ -872,9 +813,13 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
   const sheetKind = sheetNode ? kindOfNode(sheetNode.id) : "class";
   const sheetRank = sheetNode ? ranks.get(sheetNode.id) ?? 0 : 0;
   const sheetLock = sheetNode ? nodeAvailability(sheetNode, sheetKind, ranks, rankByTree[sheetKind], nodeCatalog, copy) : null;
-  const heroSwitch = <nav className={`tc-hero-paths ${page.heroSwitch}`} aria-label={copy.heroPathsLabel}>{theme.heroPaths.map((hero) => {
+  const heroIcon = (id: number) => id === data.heroSubtreeId ? heroPanelIcon : data.heroPaths?.find((path) => path.id === id)?.iconUrl;
+  const heroSwitch = <nav className={bench.heroSwitch} aria-label={copy.heroPathsLabel}>{theme.heroPaths.map((hero) => {
     const active = hero.id === data.heroSubtreeId;
-    return <Link key={hero.id} href={`${localePrefix}/talents/${theme.slug}?hero=${hero.id}`} prefetch={false} scroll={false} data-route-scroll="keep" aria-current={active ? "page" : undefined} onClick={(event) => switchHero(event, hero.id)}>{heroPathName(hero, lang)}</Link>;
+    const icon = heroIcon(hero.id);
+    return <Link key={hero.id} href={`${localePrefix}/talents/${theme.slug}?hero=${hero.id}`} prefetch={false} scroll={false} data-route-scroll="keep" aria-current={active ? "page" : undefined} onClick={(event) => switchHero(event, hero.id)}>
+      {icon ? <img src={icon} alt="" width={24} height={24} decoding="async" /> : null}<span>{heroPathName(hero, lang)}</span>
+    </Link>;
   })}</nav>;
   const importOtherSpec = importState.kind === "other-spec" ? talentSpecThemes.find((entry) => entry.specId === importState.specId) : undefined;
   const importMessage = importState.kind === "empty" ? copy.importEmpty
@@ -885,121 +830,120 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
             : "";
   const importReady = importState.kind === "ok" || importState.kind === "other-hero";
 
-  const renderTree = (kind: TalentKind) => {
-    const mounted = mountedTrees.has(kind);
-    return <TalentTreePanel key={kind} lang={lang} variant={kind} title={treeTitle[kind]}
-      iconSrc={kind === "class" ? theme.classIconUrl : kind === "hero" ? heroPanelIcon : specPanelIcon}
-      switcher={kind === "hero" ? heroSwitch : undefined}
-      spent={mounted ? rankByTree[kind] : 0} budget={budgets[kind]} loading={!mounted}>
-      {mounted
-        ? <TalentTree tree={data.trees[kind]} kind={kind} title={treeTitle[kind]} geometry={geometry[kind]} ranks={slices.ranks[kind]} choices={slices.choices[kind]} spent={rankByTree[kind]} catalog={nodeCatalog} copy={copy} matches={searchMatches} inspectedId={sheetNode && sheetKind === kind ? sheetNode.id : null} actions={treeActions} />
-        : <div className={`tc-skeleton-tree ${page.treeSkeleton}`} style={{ aspectRatio: `${geometry[kind].cellsX} / ${geometry[kind].cellsY}`, "--cells-x": geometry[kind].cellsX } as CSSProperties} />}
-    </TalentTreePanel>;
-  };
+  const renderTree = (kind: TalentKind) => <TalentTreePanel key={kind} variant={kind} title={treeTitle[kind]}
+    iconSrc={kind === "class" ? theme.classIconUrl : kind === "hero" ? heroPanelIcon : specPanelIcon}>
+    <TalentTree tree={data.trees[kind]} kind={kind} title={treeTitle[kind]} geometry={geometry[kind]} ranks={slices.ranks[kind]} choices={slices.choices[kind]} spent={rankByTree[kind]} catalog={nodeCatalog} copy={copy} matches={searchMatches} inspectedId={sheetNode && sheetKind === kind ? sheetNode.id : null} actions={treeActions} />
+  </TalentTreePanel>;
+
+  const points = <div className={bench.points} role="group" aria-label={copy.pointsAria(spent, totalAvailable)}>
+    {TALENT_KINDS.map((kind) => {
+      const full = rankByTree[kind] >= budgets[kind];
+      return <span key={kind} className={bench.point} data-full={full || undefined} data-tree-points={kind} style={{ "--fill": rankByTree[kind] / Math.max(1, budgets[kind]) } as CSSProperties}>
+        <small>{copy.treeTabs[kind]}</small><b>{rankByTree[kind]}<i>/{budgets[kind]}</i></b>
+      </span>;
+    })}
+  </div>;
 
   return (
     <main ref={calculatorRef} className={`talent-calculator ${page.page}${rotationFlow ? " is-rotation-flow" : ""}`} lang={lang} data-atlas-scope="" data-talent-page="" data-spec={theme.slug} data-hero={data.heroSubtreeId} data-spec-motif={theme.motif} data-performance={performanceTier} data-page-active="true">
       <TalentHero theme={theme} lang={lang}
-        back={rotationFlow ? <button className={`tc-back-link ${page.back}`} type="button" onClick={() => router.push(returnTo)}>{copy.backToRotation}</button> : null}
-        actions={<div className={page.actions}>
-          <MaterialButton kit={TALENTS_KIT} fit="stack" variant="primary" icon={<Upload aria-hidden="true" />} onClick={openImportDialog}>{copy.importTitle}</MaterialButton>
-          <MaterialButton kit={TALENTS_KIT} fit="stack" icon={<Share2 aria-hidden="true" />} onClick={copyShareLink}>{copy.share}</MaterialButton>
-        </div>} />
-      {presets.length ? <nav className={page.presets} aria-label={copy.popularTitle} data-talent-presets="">
-        <span className={page.presetsTitle} aria-hidden="true">{copy.popularTitle}</span>
+        back={rotationFlow ? <button className={`tc-back-link ${page.back}`} type="button" onClick={() => router.push(returnTo)}>{copy.backToRotation}</button> : null} />
+      <MaterialPlaque kit={TALENTS_KIT} as="section" className={bench.toolbar} aria-label={copy.toolbarLabel} data-talent-toolbar="">
+        <div className={bench.pick}>
+          <SpecMenu current={theme} localePrefix={localePrefix} lang={lang} />
+          {heroSwitch}
+        </div>
+        {points}
+        <div className={bench.actions}>
+          <button type="button" className={bench.iconButton} onClick={openImportDialog} title={copy.importTitle} data-build-import-open=""><Upload aria-hidden="true" /><span>{copy.importShort}</span></button>
+          <button type="button" className={bench.iconButton} onClick={copyShareLink} title={copy.share} data-share-link=""><Link2 aria-hidden="true" /><span>{copy.linkShort}</span></button>
+          <button type="button" className={bench.iconButton} onClick={reset} title={copy.resetShort} data-reset=""><RotateCcw aria-hidden="true" /><span>{copy.resetShort}</span></button>
+          <button type="button" className={bench.copy} onClick={copyGameString} data-copy-game-string=""><ClipboardCopy aria-hidden="true" /><span>{copy.copyGameString}</span></button>
+        </div>
+      </MaterialPlaque>
+      {presets.length ? <nav className={bench.strip} aria-label={copy.popularTitle} data-talent-presets="">
+        <span className={bench.stripTitle} aria-hidden="true">{copy.popularTitle}</span>
         <ul>
           {presets.map((build) => {
             const hero = build.heroId ? theme.heroPaths.find((path) => path.id === build.heroId) : undefined;
             const heroLabel = hero ? heroPathName(hero, lang) : names.spec;
+            const icon = build.heroId ? heroIcon(build.heroId) : undefined;
             const share = `${Math.round(build.share * 100)}%`;
             const player = build.players[0]?.name ?? "";
             const active = presetLoadouts.get(build.loadout)?.signature === currentTreeSignature;
             return <li key={build.loadout}>
-              <button type="button" className={page.preset} aria-pressed={active} aria-label={copy.popularAria(heroLabel, share, player)} onClick={() => loadPopularBuild(build)}>
-                <b>{heroLabel}</b><span>{share}</span><small>{player}</small>
+              <button type="button" className={bench.chip} aria-pressed={active} aria-label={copy.popularAria(heroLabel, share, player)} title={heroLabel} onClick={() => loadPopularBuild(build)}>
+                {icon ? <img src={icon} alt="" width={22} height={22} decoding="async" /> : null}<b>{share}</b><span>{player}</span>
               </button>
             </li>;
           })}
         </ul>
       </nav> : null}
-      <MaterialPlaque kit={TALENTS_KIT} as="section" className={page.command} aria-label={copy.toolbarLabel}>
-        <div className="tc-command-actions">
-          <SpecMenu current={theme} localePrefix={localePrefix} lang={lang} />
-          <div className="tc-points-badge" data-resource-state={spent === 0 ? "empty" : spent === totalAvailable ? "complete" : "active"} style={{ "--tc-rage-level": `${fill}%` } as CSSProperties} role="img" aria-label={copy.pointsAria(spent, totalAvailable)}>
-            <span className="tc-rage-emblem" aria-hidden="true"><ResourceGlyph motif={theme.motif} /><i /></span>
-            <span className="tc-rage-copy" aria-hidden="true"><b>{spent}<i> / {totalAvailable}</i></b></span>
-            <span className={`tc-rage-meter ${page.meter}`} aria-hidden="true"><progress value={spent} max={totalAvailable} /></span>
-          </div>
-          <div className="tc-loadout-menu" ref={loadoutMenuRef}>
-            <button ref={loadoutTriggerRef} className="tc-build-select" type="button" aria-label={copy.buildSelectAria(buildName)} aria-haspopup="menu" aria-controls="tc-loadout-menu" aria-expanded={loadoutOpen} onClick={() => setLoadoutOpen((open) => !open)}><span><b>{buildName}</b></span><ChevronDown /></button>
-            {loadoutOpen ? <div className="tc-loadout-popover" id="tc-loadout-menu" role="menu" aria-label={copy.libraryLabel}>
-              <div className="tc-build-popover-head"><span><b>{copy.libraryTitle}</b></span><button type="button" role="menuitem" tabIndex={-1} onClick={createNewBuild}><Plus />{copy.newBuild}</button></div>
-              <label className="tc-build-name"><span>{copy.buildNameLabel}</span><input value={buildName} maxLength={48} onChange={(event) => { setBuildName(event.target.value); setSavedSignature(null); }} /></label>
-              <div className="tc-build-actions"><button type="button" role="menuitem" tabIndex={-1} onClick={() => saveBuild(false)}><Save />{activeBuildId ? copy.saveChanges : copy.saveBuild}</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => saveBuild(true)}>{copy.saveCopy}</button></div>
-              <div className="tc-build-list" role="group" aria-label={copy.savedBuildsLabel}>
-                {savedBuilds.map((build) => <div className={`tc-build-row${build.id === activeBuildId ? " is-active" : ""}`} key={build.id}><button type="button" role="menuitem" tabIndex={-1} onClick={() => loadSavedBuild(build)}><span>{build.name}</span><small>{new Date(build.savedAt).toLocaleDateString(copy.locale)}</small></button><button type="button" role="menuitem" tabIndex={-1} aria-label={copy.deleteBuildAria(build.name)} onClick={() => deleteSavedBuild(build)}><Trash2 /></button></div>)}
-                {!savedBuilds.length ? <p>{copy.noSavedBuilds}</p> : null}
-              </div>
-              <div className="tc-build-tools"><button type="button" role="menuitem" tabIndex={-1} onClick={openImportDialog}><Upload />{copy.importShort}</button><button type="button" role="menuitem" tabIndex={-1} onClick={copyGameString}><ClipboardCopy />{copy.gameStringShort}</button><button type="button" role="menuitem" tabIndex={-1} onClick={copyShareLink}><Link2 />{copy.linkShort}</button><button type="button" role="menuitem" tabIndex={-1} onClick={reset}><RotateCcw />{copy.resetShort}</button></div>
-            </div> : null}
-          </div>
-          <div className="tc-command-group">
-            <button className={`tc-command-button ${page.copyString}`} type="button" onClick={copyGameString} data-copy-game-string=""><ClipboardCopy aria-hidden="true" /><span>{copy.copyGameString}</span></button>
-            <button className="tc-command-button is-undo" type="button" disabled={!undoState} onClick={undoReset} aria-label={copy.undo} title={copy.undo}><Undo2 aria-hidden="true" /><span>{copy.undo}</span></button>
-            <button className="tc-command-button is-reset" type="button" onClick={reset} aria-label={copy.resetShort} title={copy.resetShort}><RotateCcw aria-hidden="true" /><span>{copy.resetShort}</span></button>
-          </div>
+      <TreeTabs copy={copy} spent={rankByTree} budgets={budgets} trees={treesRef} onSelect={closeSheet} />
+      <section className={`${page.workspace} ${bench.workspace}`} style={{ ...materialPlaqueStyle(TALENTS_KIT), "--fr-class": `${geometry.class.cellsX}fr`, "--fr-hero": `${Math.max(geometry.hero.cellsX, 6)}fr`, "--fr-spec": `${geometry.spec.cellsX}fr` } as CSSProperties}>
+        <div className={bench.trees} ref={treesRef} data-tree-strip="">
+          {renderTree("class")}
+          {renderTree("hero")}
+          {renderTree("spec")}
         </div>
-      </MaterialPlaque>
-      <div className={`tc-mobile-tree-switcher ${page.treeSwitch}`} role="group" aria-label={copy.treeSwitcher}>
-        {TALENT_KINDS.map((kind) => <button key={kind} type="button" aria-pressed={mobileTree === kind} data-tree-tab={kind} onClick={() => { setMobileTree(kind); setSheetId(null); }}>
-          <span>{copy.treeTabs[kind]}</span><b data-full={rankByTree[kind] >= budgets[kind] || undefined}>{rankByTree[kind]}/{budgets[kind]}</b>
-        </button>)}
-      </div>
-      <section className={`tc-workspace ${page.workspace}`} data-mobile-tree={mobileTree} style={{ ...materialPlaqueStyle(TALENTS_KIT), "--fr-class": `${geometry.class.cellsX}fr`, "--fr-hero": `${Math.max(geometry.hero.cellsX, 5)}fr`, "--fr-spec": `${geometry.spec.cellsX}fr` } as CSSProperties}>
-        {TALENT_KINDS.map((kind) => !compactLayout || mobileTree === kind ? renderTree(kind) : null)}
+          <section className={`tc-panel ${bench.side}`} aria-label={copy.pvpTalents}>
+            <div className={bench.pvp} role="group" aria-label={copy.pvpTalents}>
+              <span className={bench.sideLabel}>{copy.pvpTalents}</span>
+              <div className={bench.pvpSlots}>
+                {[0, 1, 2].map((slot) => {
+                  const talent = pvpById.get(pvpSelections[slot] ?? -1);
+                  const visual = talent ? pvpVisualTheme(talent) : null;
+                  return <button
+                    className={`tc-pvp-slot${talent ? ` is-filled tc-vfx-${visual?.theme}` : ""}`}
+                    key={slot}
+                    ref={(element) => { pvpSlotRefs.current[slot] = element; }}
+                    type="button"
+                    disabled={!data.pvpTalents.length}
+                    data-pvp-slot={slot}
+                    data-pvp-id={talent?.externalId}
+                    data-pvp-theme={visual?.theme}
+                    aria-label={copy.pvpSlotAria(slot + 1, talent?.name)}
+                    aria-haspopup="dialog"
+                    aria-controls={pvpPickerSlot === null ? undefined : "tc-pvp-picker"}
+                    aria-expanded={pvpPickerSlot === slot}
+                    onPointerEnter={(event) => { if (talent && event.pointerType !== "touch" && !suppressPvpTooltipRef.current) tipRef.current?.show(`pvp:${talent.externalId}`, event.currentTarget); }}
+                    onPointerLeave={() => tipRef.current?.hide()}
+                    onFocus={(event) => { if (talent && event.currentTarget.matches(":focus-visible") && !suppressPvpTooltipRef.current) tipRef.current?.show(`pvp:${talent.externalId}`, event.currentTarget); }}
+                    onBlur={() => tipRef.current?.hide()}
+                    onClick={() => openPvpPicker(slot)}
+                    onContextMenu={(event) => { if (!talent) return; event.preventDefault(); tipRef.current?.hide(); clearPvpTalent(slot); }}
+                  >
+                    {talent?.iconUrl ? <img src={talent.iconUrl} alt="" loading="lazy" decoding="async" data-icon-source={talent.iconSource} onError={(event) => { event.currentTarget.src = UNVERIFIED_ICON_URL; event.currentTarget.dataset.iconSource = "fallback"; }} /> : <span className="tc-pvp-plus" aria-hidden="true">+</span>}
+                    {visual ? <TalentSigil visual={visual} /> : <i className="tc-pvp-empty-rune" aria-hidden="true" />}
+                    <small>{slot + 1}</small>
+                    <i className="tc-pvp-slot-state" aria-hidden="true" />
+                  </button>;
+                })}
+              </div>
+            </div>
+            <TalentSearchField count={searchMatches?.size ?? 0} copy={copy} onQueryChange={updateTalentQuery} />
+            <div className={bench.library}>
+              <div className="tc-loadout-menu" ref={loadoutMenuRef}>
+                <button ref={loadoutTriggerRef} className={bench.select} type="button" aria-label={copy.buildSelectAria(buildName)} aria-haspopup="menu" aria-controls="tc-loadout-menu" aria-expanded={loadoutOpen} onClick={() => setLoadoutOpen((open) => !open)}><span><b>{buildName}</b></span><ChevronDown /></button>
+                {loadoutOpen ? <div className="tc-loadout-popover" id="tc-loadout-menu" role="menu" aria-label={copy.libraryLabel}>
+                  <div className="tc-build-popover-head"><span><b>{copy.libraryTitle}</b></span><button type="button" role="menuitem" tabIndex={-1} onClick={createNewBuild}><Plus />{copy.newBuild}</button></div>
+                  <label className="tc-build-name"><span>{copy.buildNameLabel}</span><input value={buildName} maxLength={48} onChange={(event) => { setBuildName(event.target.value); setSavedSignature(null); }} /></label>
+                  <div className="tc-build-actions"><button type="button" role="menuitem" tabIndex={-1} onClick={() => saveBuild(false)}><Save />{activeBuildId ? copy.saveChanges : copy.saveBuild}</button><button type="button" role="menuitem" tabIndex={-1} onClick={() => saveBuild(true)}>{copy.saveCopy}</button></div>
+                  <div className="tc-build-list" role="group" aria-label={copy.savedBuildsLabel}>
+                    {savedBuilds.map((build) => <div className={`tc-build-row${build.id === activeBuildId ? " is-active" : ""}`} key={build.id}><button type="button" role="menuitem" tabIndex={-1} onClick={() => loadSavedBuild(build)}><span>{build.name}</span><small>{new Date(build.savedAt).toLocaleDateString(copy.locale)}</small></button><button type="button" role="menuitem" tabIndex={-1} aria-label={copy.deleteBuildAria(build.name)} onClick={() => deleteSavedBuild(build)}><Trash2 /></button></div>)}
+                    {!savedBuilds.length ? <p>{copy.noSavedBuilds}</p> : null}
+                  </div>
+                </div> : null}
+              </div>
+              <button type="button" className={`tc-save-build ${bench.save}`} data-saved={buildSaved && !rotationFlow || undefined} disabled={rotationFlow && !buildComplete} onClick={rotationFlow ? useInRotation : () => saveBuild(false)}>
+                {buildSaved && !rotationFlow ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}
+                <span>{rotationFlow ? (buildComplete ? copy.useInTrainer : copy.pointsLeft(missingPoints)) : buildSaved ? copy.buildIsSaved : activeBuildId ? copy.saveChanges : copy.saveBuildCta}</span>
+              </button>
+            </div>
+          </section>
       </section>
       {sheetNode ? <div className={page.sheetSpace} aria-hidden="true" /> : null}
-      <footer className="tc-toolbar">
-        <div className="tc-toolbar-group tc-toolbar-primary">
-          <TalentSearchField count={searchMatches?.size ?? 0} copy={copy} onQueryChange={updateTalentQuery} />
-        </div>
-        <div className="tc-toolbar-divider" />
-        <div className="tc-toolbar-spacer" />
-        <div className="tc-pvp-group" role="group" aria-label={copy.pvpTalents}>
-          <span className="tc-pvp-label">{copy.pvpTalents}</span>
-          {[0, 1, 2].map((slot) => {
-            const talent = pvpById.get(pvpSelections[slot] ?? -1);
-            const visual = talent ? pvpVisualTheme(talent) : null;
-            return <button
-              className={`tc-pvp-slot${talent ? ` is-filled tc-vfx-${visual?.theme}` : ""}`}
-              key={slot}
-              ref={(element) => { pvpSlotRefs.current[slot] = element; }}
-              type="button"
-              disabled={!data.pvpTalents.length}
-              data-pvp-slot={slot}
-              data-pvp-id={talent?.externalId}
-              data-pvp-theme={visual?.theme}
-              aria-label={copy.pvpSlotAria(slot + 1, talent?.name)}
-              aria-haspopup="dialog"
-              aria-controls={pvpPickerSlot === null ? undefined : "tc-pvp-picker"}
-              aria-expanded={pvpPickerSlot === slot}
-              onPointerEnter={(event) => { if (talent && event.pointerType !== "touch" && !suppressPvpTooltipRef.current) tipRef.current?.show(`pvp:${talent.externalId}`, event.currentTarget); }}
-              onPointerLeave={() => tipRef.current?.hide()}
-              onFocus={(event) => { if (talent && event.currentTarget.matches(":focus-visible") && !suppressPvpTooltipRef.current) tipRef.current?.show(`pvp:${talent.externalId}`, event.currentTarget); }}
-              onBlur={() => tipRef.current?.hide()}
-              onClick={() => openPvpPicker(slot)}
-              onContextMenu={(event) => { if (!talent) return; event.preventDefault(); tipRef.current?.hide(); clearPvpTalent(slot); }}
-            >
-              {talent?.iconUrl ? <img src={talent.iconUrl} alt="" loading="lazy" decoding="async" data-icon-source={talent.iconSource} onError={(event) => { event.currentTarget.src = UNVERIFIED_ICON_URL; event.currentTarget.dataset.iconSource = "fallback"; }} /> : <span className="tc-pvp-plus" aria-hidden="true">+</span>}
-              {visual ? <TalentSigil visual={visual} /> : <i className="tc-pvp-empty-rune" aria-hidden="true" />}
-              <small>{slot + 1}</small>
-              <i className="tc-pvp-slot-state" aria-hidden="true" />
-            </button>;
-          })}
-        </div>
-        <span className={page.save}><MaterialButton kit={TALENTS_KIT} fit="block" variant="primary" className={`tc-save-build${buildSaved && !rotationFlow ? " is-saved" : ""}`} disabled={rotationFlow && !buildComplete} onClick={rotationFlow ? useInRotation : () => saveBuild(false)} icon={buildSaved && !rotationFlow ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}><span className={page.saveCopy}><b>{rotationFlow ? (buildComplete ? copy.useInTrainer : copy.pointsLeft(missingPoints)) : buildSaved ? copy.buildIsSaved : activeBuildId ? copy.saveChanges : copy.saveBuildCta}</b></span></MaterialButton></span>
-        {notice ? <div className="tc-toast" role="status" aria-live="polite"><span>{notice.message}</span>{undoState ? <button type="button" onClick={undoReset}>{copy.undo}</button> : null}{notice.persistent ? <button type="button" aria-label={copy.closeNotice} onClick={() => setNotice(null)}>×</button> : null}</div> : null}
-      </footer>
+      {notice ? <div className={bench.toast} role="status" aria-live="polite" data-talent-toast="" data-over-sheet={sheetNode ? "" : undefined}><span>{notice.message}</span>{undoState ? <button type="button" onClick={undoReset}>{copy.undo}</button> : null}{notice.persistent ? <button type="button" aria-label={copy.closeNotice} onClick={() => setNotice(null)}><X aria-hidden="true" /></button> : null}</div> : null}
       {importOpen ? <div className="tc-import-backdrop" aria-hidden="true" onClick={closeImport} /> : null}
       {importOpen ? <div className="tc-import-dialog" ref={importDialogRef} role="dialog" aria-modal="true" aria-labelledby="tc-import-title">
         <header><h2 id="tc-import-title">{copy.importTitle}</h2><button type="button" aria-label={copy.closeImport} onClick={closeImport}><X /></button></header>

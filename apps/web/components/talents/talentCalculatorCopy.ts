@@ -99,7 +99,7 @@ const ru = {
   // Notices
   brokenLoadout: (spec: string) => `Строка сборки повреждена — открыто чистое дерево «${spec}»`,
   adjustedLink: "Ссылка содержала недоступные таланты — загружены только допустимые ранги",
-  treeFull: (points: number) => `В дереве уже потрачены все ${points} очков — сначала снимите один талант`,
+  treeFull: (_points: number) => "Все очки этого дерева уже потрачены — сначала снимите один талант",
   pvpDuplicate: "Этот PvP-талант уже выбран в другом слоте",
   talentsReset: "Таланты сброшены — можно отменить",
   buildRestored: "Сборка восстановлена",
@@ -158,14 +158,9 @@ const ru = {
     loading: "Загружаю специализации…",
     menuLabel: "Выбор специализации World of Warcraft",
     heading: "Сменить специализацию",
-    hint: "Сначала класс, затем нужный стиль боя.",
     closeMenu: "Закрыть меню специализаций",
     classes: "Классы",
-    classSpecs: "Специализации класса",
-    variants: (count: number) => `${count} ${count === 1 ? "вариант" : count < 5 ? "варианта" : "вариантов"}`,
     picked: "Выбрано",
-    open: "Открыть",
-    footer: "Таланты, путь героя и PvP меняются вместе со специализацией",
   },
 };
 
@@ -289,14 +284,9 @@ const en: TalentCalculatorCopy = {
     loading: "Loading specializations…",
     menuLabel: "Choose a World of Warcraft specialization",
     heading: "Change specialization",
-    hint: "Pick a class first, then a play style.",
     closeMenu: "Close specialization menu",
     classes: "Classes",
-    classSpecs: "Class specializations",
-    variants: (count) => `${count} ${count === 1 ? "spec" : "specs"}`,
     picked: "Selected",
-    open: "Open",
-    footer: "Talents, hero paths and PvP switch with the specialization",
   },
 };
 

@@ -18,7 +18,9 @@ const ready = async (page) => {
   await page.locator('.talent-calculator[data-interactive="true"]').waitFor({ timeout: 120_000 });
 };
 const open = (page, tree) => page.locator(`[data-tree-canvas="${tree}"] [data-talent-node][data-state="open"]`);
-const points = (page, tree) => page.locator(`[data-tree-points="${tree}"]`).innerText().then((text) => Number(text.split("/")[0].trim()));
+// Toolbar cell "<tree>\n34/34": the number before the slash.
+const pointsText = (page, tree) => page.locator(`[data-tree-points="${tree}"] b`).innerText();
+const points = (page, tree) => pointsText(page, tree).then((text) => Number(text.split("/")[0].trim()));
 const overlap = (a, b) => !(a.x >= b.x + b.width || a.x + a.width <= b.x || a.y >= b.y + b.height || a.y + a.height <= b.y);
 
 try {
@@ -87,7 +89,7 @@ try {
 
     // The hero path switch keeps class and spec points.
     const heroBefore = await page.locator("main[data-hero]").getAttribute("data-hero");
-    await page.locator('.tc-hero-paths a:not([aria-current="page"])').click();
+    await page.locator('[data-talent-toolbar] nav a:not([aria-current="page"])').click();
     await page.waitForFunction((previous) => document.querySelector("main[data-hero]")?.getAttribute("data-hero") !== previous, heroBefore, { timeout: 60_000 });
     await ready(page);
     await page.waitForFunction(() => document.querySelectorAll("[data-tree-canvas]").length === 3, undefined, { timeout: 30_000 });
@@ -99,7 +101,7 @@ try {
       if (!(await node.count())) break;
       await node.click();
     }
-    const budget = Number((await page.locator('[data-tree-points="class"]').innerText()).split("/")[1]);
+    const budget = Number((await pointsText(page, "class")).split("/")[1]);
     check(await points(page, "class") <= budget, `${spec}: class tree went over budget`);
 
     // Keyboard: arrows move between nodes, Backspace removes a rank.
@@ -113,7 +115,7 @@ try {
 
     // Import box: tells what is wrong; loads a valid string.
     const game = new URL(page.url()).searchParams.get("build");
-    await page.getByRole("button", { name: /Import build/ }).click();
+    await page.locator("[data-build-import-open]").click();
     const box = page.locator("textarea[data-build-import]");
     await box.fill(game.slice(0, 26));
     check(await page.locator('[data-import-state="damaged"]').isVisible(), `${spec}: damaged string not reported`);
@@ -148,8 +150,9 @@ try {
       check(await phone.locator("[data-talent-sheet]").isVisible(), `${spec}@${width}: no talent sheet on tap`);
       check((await phone.locator('[data-tree-tab="class"]').innerText()).includes("/"), `${spec}@${width}: switch has no counter`);
       await phone.locator('[data-tree-tab="spec"]').tap();
-      await phone.locator('[data-tree-canvas="spec"]').waitFor({ timeout: 10_000 });
-      const layout = await phone.evaluate(() => ({ overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth, trees: document.querySelectorAll("[data-tree-canvas]").length }));
+      await phone.waitForFunction(() => { const box = document.querySelector('[data-tree-canvas="spec"]')?.getBoundingClientRect(); return box && box.left >= 0 && box.right <= innerWidth; }, undefined, { timeout: 10_000 });
+      check(await phone.locator('[data-tree-tab="spec"]').getAttribute("aria-pressed") === "true", `${spec}@${width}: spec tab not marked`);
+      const layout = await phone.evaluate(() => ({ overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth, trees: [...document.querySelectorAll("[data-tree-canvas]")].filter((element) => { const box = element.getBoundingClientRect(); return box.width > 0 && box.left >= -1 && box.right <= innerWidth + 1; }).length }));
       check(!layout.overflow, `${spec}@${width}: page overflows horizontally`);
       check(layout.trees === 1, `${spec}@${width}: ${layout.trees} trees on the phone`);
       check(phoneErrors.length === 0, `${spec}@${width}: console errors ${phoneErrors.join(" | ").slice(0, 300)}`);
@@ -157,6 +160,22 @@ try {
     }
     console.log(`${spec}: checked`);
   }
+
+  // A shared link round-trips: the in-game string picks its hero tree even when ?hero= says otherwise, and the
+  // address the page writes back is the same build.
+  const farseer = "CYQAAAAAAAAAAAAAAAAAAAAAAAAAAAzMbbzMGjZZbZMmhZAAAAgFzsBDYAzGTIzCAMLzMzYstYCzMbzsMjZGjZZWmZWGGzMLAADAMzYYYA";
+  for (const hero of ["56", "55", ""]) {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.goto(`${baseUrl}/ru/talents/elemental-shaman?${hero ? `hero=${hero}&` : ""}build=${farseer}`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+    await ready(page);
+    await page.waitForTimeout(800);
+    const url = new URL(page.url());
+    check(await page.locator("main[data-hero]").getAttribute("data-hero") === "56", `round-trip hero=${hero}: wrong hero tree`);
+    check(await points(page, "hero") === 13 && await points(page, "class") === 34 && await points(page, "spec") === 34, `round-trip hero=${hero}: points lost`);
+    check(url.searchParams.get("build") === farseer && url.searchParams.get("hero") === "56", `round-trip hero=${hero}: address changed to ${url.search.slice(0, 80)}`);
+    await page.close();
+  }
+  console.log("round-trip: checked");
 } finally {
   await browser.close();
 }
