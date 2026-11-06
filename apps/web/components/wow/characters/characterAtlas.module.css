@@ -78,82 +78,157 @@
 .section { margin-top: var(--atlas-space-6); }
 .page .plaque { height: 100%; padding: 44px 56px 44px; }
 .plaque > :global([data-frost-icon]) { width: 64px; height: 64px; margin-bottom: var(--atlas-space-3); }
-.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; margin: 0; padding: 0; list-style: none; }
-.grid > li { min-width: 0; }
 .status { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
 
-/* ---------- Roster: filters and "portrait + plaque" cards ---------- */
-.rosterBody { display: grid; gap: var(--atlas-space-5); }
-.filters { display: grid; grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr); gap: var(--atlas-space-4); align-items: end; }
-.field { display: grid; gap: 6px; min-width: 0; }
-.fieldLabel {
-  color: var(--atlas-text-subtle);
-  font-size: var(--atlas-text-label);
-  font-weight: 650;
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
-}
-.card { display: flex; flex-direction: column; gap: var(--atlas-space-3); }
-.cardHead { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
-.portrait {
-  position: relative;
-  flex: none;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--class-color, var(--atlas-accent)) 55%, transparent);
-}
-.portrait img {
-  position: absolute;
-  left: var(--frost-portrait-left);
-  top: var(--frost-portrait-top);
-  width: var(--frost-portrait-size);
-  height: var(--frost-portrait-size);
-  border-radius: 50%;
-  object-fit: cover;
-}
-.portrait::after { position: absolute; inset: 0; content: ""; background: var(--frost-portrait-image) center / contain no-repeat; filter: contrast(.88) saturate(.84) brightness(.95); }
-.cardName { display: grid; gap: var(--atlas-space-1); min-width: 0; }
-.cardEyebrow {
+/* ---------- Roster: light cards grouped by realm (glass + class colour, no painted frame per card) ---------- */
+.roster { display: grid; gap: var(--atlas-space-5); margin-top: var(--atlas-space-4); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+.search { flex: 1 1 280px; min-width: 0; }
+.classField { flex: 0 1 240px; min-width: 200px; }
+.sort { flex: none; }
+.toolbar + .status { margin-top: calc(var(--atlas-space-3) * -1); }
+
+.realm { display: grid; gap: var(--atlas-space-3); }
+.realmTitle {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--atlas-space-2);
   margin: 0;
-  color: var(--material-light);
-  font-size: var(--atlas-text-meta);
-  overflow-wrap: anywhere;
+  color: var(--atlas-accent);
+  font: 650 var(--atlas-text-label) / 1.3 var(--atlas-font-ui);
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px var(--atlas-bg);
 }
-.cardEyebrow svg { flex: none; width: 14px; height: 14px; }
-.cardTitle { margin: 0; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); overflow-wrap: anywhere; }
-.cardTitle a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text-strong); text-decoration: none; text-shadow: 0 1px 3px var(--atlas-bg); }
-.cardTitle a:hover { color: var(--material-light); }
-.cardTitle a:focus-visible, .quietLink:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; border-radius: 2px; }
-.cardFacts { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-1) var(--atlas-space-3); margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
-.level { color: var(--atlas-text-muted); }
-.level b { color: var(--material-light); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1 var(--atlas-font-display); font-variant-numeric: lining-nums tabular-nums; }
-.card > :global(span):last-of-type { margin-top: auto; }
-.quietLink {
-  display: inline-flex;
+.realmRegion { color: var(--atlas-text-subtle); }
+.realmTitle::after { flex: 1; height: 1px; content: ""; background: linear-gradient(90deg, var(--atlas-line), transparent); }
+
+.list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 44px;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  align-self: center;
-  min-height: 44px;
-  color: var(--atlas-text);
-  font-size: var(--atlas-text-small);
-  text-decoration: none;
+  column-gap: var(--atlas-space-4);
+  min-width: 0;
+  min-height: 88px;
+  padding: var(--atlas-space-3) var(--atlas-space-1) var(--atlas-space-3) var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background:
+    radial-gradient(160px 120% at 0 50%, color-mix(in srgb, var(--class-color, var(--atlas-accent)) 11%, transparent), transparent 72%),
+    var(--atlas-glass-fill);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--class-color, var(--atlas-accent)) 55%, transparent);
+  transition: transform var(--atlas-duration-fast) var(--atlas-ease);
 }
-.quietLink:hover { color: var(--atlas-text-strong); text-decoration: underline; text-underline-offset: .2em; }
-.quietLink svg { width: 14px; height: 14px; }
+/* Hover/focus: a lift and a brighter class edge, drawn on one layer that only fades (GPU-cheap). */
+.card::before {
+  position: absolute;
+  inset: -1px;
+  border: 1px solid color-mix(in srgb, var(--class-color, var(--atlas-accent)) 42%, var(--atlas-line));
+  border-radius: inherit;
+  content: "";
+  background: radial-gradient(240px 140% at 0 50%, color-mix(in srgb, var(--class-color, var(--atlas-accent)) 13%, transparent), transparent 75%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
+}
+.card:hover, .card:focus-within { transform: translateY(-2px); }
+.card:hover::before, .card:focus-within::before { opacity: 1; }
+
+.portrait {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--atlas-surface-sunken);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--class-color, var(--atlas-accent)) 78%, transparent),
+    0 0 0 4px var(--atlas-bg),
+    0 0 0 5px color-mix(in srgb, var(--class-color, var(--atlas-accent)) 28%, transparent);
+  pointer-events: none;
+}
+.portrait img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.12); }
+.level {
+  z-index: 1;
+  grid-column: 1;
+  grid-row: 1;
+  align-self: end;
+  justify-self: center;
+  min-width: 30px;
+  margin-bottom: -10px;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--class-color, var(--atlas-accent)) 50%, var(--atlas-line));
+  border-radius: 999px;
+  background: var(--atlas-bg);
+  color: var(--atlas-text-strong);
+  font: 700 var(--atlas-text-label) / 1.35 var(--atlas-font-ui);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: center;
+  pointer-events: none;
+}
+.cardCopy { display: grid; grid-column: 2; grid-row: 1; gap: 2px; min-width: 0; }
+.cardTitle { min-width: 0; margin: 0; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.cardLink {
+  display: block;
+  overflow: hidden;
+  color: var(--atlas-text-strong);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  white-space: nowrap;
+}
+/* The whole card is the link to the profile; the Armory icon sits above it. */
+.cardLink::after { position: absolute; z-index: 0; inset: 0; border-radius: inherit; content: ""; }
+/* Beats the workspace-wide link outline: the ring goes around the whole card instead. */
+.list .card .cardLink:focus-visible { outline: none; }
+.cardLink:focus-visible::after { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--atlas-space-2);
+  min-width: 0;
+  margin: 0;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.className, .race { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.className { color: color-mix(in srgb, var(--class-color, var(--atlas-accent)) 62%, var(--atlas-text-strong)); }
+.crest { display: inline-flex; flex: none; width: 14px; height: 16px; margin-right: calc(var(--atlas-space-1) * -1); }
+.crest svg { width: 100%; height: 100%; overflow: visible; }
+.crest path:first-child { fill: color-mix(in srgb, var(--faction-color) 72%, var(--atlas-bg)); stroke: color-mix(in srgb, var(--faction-color) 55%, var(--atlas-text-strong)); stroke-width: 1.1; }
+.crest path:last-child { fill: none; stroke: color-mix(in srgb, var(--faction-color) 25%, var(--atlas-text-strong)); stroke-width: 1.1; stroke-linecap: round; opacity: .55; }
+.armory {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  grid-column: 3;
+  grid-row: 1;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--atlas-radius-control);
+  color: var(--atlas-text-subtle);
+  opacity: .72;
+  transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
+}
+.armory svg { width: 16px; height: 16px; }
+.card:hover .armory, .armory:focus-visible { opacity: 1; }
+.armory:hover, .armory:focus-visible { color: var(--atlas-text-strong); }
+.list .card .armory:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -4px; }
 
 /* Placeholders while Battle.net answers (same box as a card). */
-.skeleton { min-height: 236px; }
-.lines { display: grid; flex: 1; gap: var(--atlas-space-2); }
-.lines i, .skeleton .portrait { display: block; border-radius: 4px; background: color-mix(in srgb, var(--atlas-accent) 10%, var(--atlas-bg)); }
-.lines i { height: 14px; }
-.lines i:first-child { width: 70%; height: 20px; }
-.skeleton .portrait { border-radius: 50%; box-shadow: none; }
-.skeleton .portrait::after { content: none; }
+.skeleton { box-shadow: none; }
+.skeleton .portrait { box-shadow: none; background: color-mix(in srgb, var(--atlas-accent) 10%, var(--atlas-bg)); }
+.lines { display: grid; grid-column: 2; gap: var(--atlas-space-2); }
+.lines i { display: block; width: 46%; height: 12px; border-radius: 4px; background: color-mix(in srgb, var(--atlas-accent) 10%, var(--atlas-bg)); }
+.lines i:first-child { width: 68%; height: 18px; }
 
 /* Error / empty: heraldry + text + one action, on the same plaque. */
 .page .state { display: flex; align-items: center; gap: var(--atlas-space-5); height: auto; }
@@ -163,9 +238,6 @@
 .stateAction { display: flex; margin-top: var(--atlas-space-2); }
 
 /* ---------- Adaptive (design.md §7) ---------- */
-@media (max-width: 1180px) {
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
-}
 @media (max-width: 1023px) {
   .hero { min-height: 470px; }
   .heroHeader { max-width: 78%; }
@@ -187,8 +259,8 @@
   .actions { justify-items: stretch; }
   .actions form { width: 100%; }
   .facts { margin-top: var(--atlas-space-4); }
-  .grid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
-  .filters { grid-template-columns: minmax(0, 1fr); }
+  .search { flex-basis: 100%; }
+  .classField { flex: 1 1 160px; min-width: 0; }
   .page .plaque { padding: 36px 44px; }
   .page .state { flex-direction: column; align-items: flex-start; gap: var(--atlas-space-3); }
   .stateAction, .stateAction form { width: 100%; }
@@ -196,21 +268,23 @@
 @media (max-width: 360px) { .page .plaque { padding-inline: 36px; } }
 
 /* ---------- Preferences ---------- */
-@media (prefers-reduced-transparency: reduce) { .page .sceneImage { filter: none; } }
+@media (prefers-reduced-motion: reduce) { .card, .card::before, .armory { transition: none !important; transform: none !important; } }
+:global([data-motion="reduced"]) .card, :global([data-ui-motion="reduce"]) .card { transition: none !important; transform: none !important; }
+@media (prefers-reduced-transparency: reduce) { .page .sceneImage { filter: none; } .card { background: var(--atlas-surface); } }
 :global([data-transparency="reduced"]) .page .sceneImage { filter: none; }
+:global([data-transparency="reduced"]) .card { background: var(--atlas-surface); }
 @media (prefers-contrast: more) { .scene { opacity: .45; } }
 @media (forced-colors: active) {
   .backdrop, .portrait::after, .heraldry { display: none; }
   .page.page .frostButton:global(.ui-button):focus-visible { outline: 2px solid Highlight; }
-  .portrait { box-shadow: none; border: 1px solid CanvasText; }
-  .cardEyebrow, .level b, .cardTitle a, .ledeAlert { color: CanvasText; }
+  .card { border-color: CanvasText; box-shadow: none; background: Canvas; }
+  .card::before { display: none; }
+  .portrait, .level { box-shadow: none; border: 1px solid CanvasText; }
+  .cardLink { color: LinkText; }
+  .className, .realmTitle, .ledeAlert { color: CanvasText; }
 }
 .actionRow { display: flex; flex-wrap: wrap; align-items: center; }
 @media (max-width: 760px) { .actionRow { flex-direction: column; align-items: stretch; } }
-/* On phones the painted button takes the plaque's whole inner width, so its label stays on one line. */
-@media (max-width: 760px) {
-  .page .card > :global(span[data-block]) { width: calc(100% + 40px); max-width: none; margin-inline: -20px; }
-}
 /* Hero facts stay one row on phones; long captions wrap under their number instead. */
 .facts :global([role="list"]) { flex-wrap: nowrap; }
 .facts :global([role="listitem"]) { flex: 0 1 auto; }

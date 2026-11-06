@@ -51,3 +51,6 @@ export const frostPlaqueStyle = {
 } as CSSProperties;
 
 export const characterFrostArt = { heraldry: heraldry.path } as const;
+
+/** Faction banners of the game (data colours, like class colours): the small crest on each roster card. */
+export const factionColors = { ALLIANCE: "#4a7bd6", HORDE: "#cf3f2e" } as const;
