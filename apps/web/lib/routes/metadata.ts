@@ -19,8 +19,8 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     ru: { title: "World of Warcraft — хаб Gildra", description: "Ваш командный центр World of Warcraft: маршруты Mythic+, боссы рейдов, тир-листы, библиотека игры и инструменты." },
   },
   raids: {
-    en: { title: "World of Warcraft Raid Journal — Gildra", description: "Midnight raids: bosses, their abilities and what every role does in the fight." },
-    ru: { title: "Рейдовый журнал World of Warcraft — Gildra", description: "Рейды Midnight: боссы, их способности и задачи каждой роли в бою." },
+    en: { title: "World of Warcraft Raid Journal — Gildra", description: "Midnight raids: bosses, their abilities, the battle plan on the map and what every role does on Normal and Heroic." },
+    ru: { title: "Рейдовый журнал World of Warcraft — Gildra", description: "Рейды Midnight: боссы, их способности, план боя на карте и задачи каждой роли на обычной и героической сложности." },
   },
   mythicPlus: {
     en: { title: "Midnight Mythic+ — Gildra", description: "Choose a dungeon and open its route: pulls, bosses, timer, party composition and tactical assignments." },
@@ -63,8 +63,8 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     ru: { title: "WoW Midnight Сезон 2 — гайд Gildra", description: "Что принёс Midnight Сезон 2: подземелья Mythic+, рейды, вылазки и другое." },
   },
   whatsNew: {
-    en: { title: "What's new — Gildra", description: "What changed on Gildra for players, newest first." },
-    ru: { title: "Что нового — Gildra", description: "Что изменилось на Gildra для игроков, сначала свежее." },
+    en: { title: "What's New on Gildra — World of Warcraft Tools", description: "What changed on Gildra for World of Warcraft players: new pages, tools and data, newest first." },
+    ru: { title: "Что нового на Gildra — инструменты World of Warcraft", description: "Что изменилось на Gildra для игроков World of Warcraft: новые страницы, инструменты и данные, сначала свежее." },
   },
 };
 

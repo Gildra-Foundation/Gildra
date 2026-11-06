@@ -13,13 +13,16 @@ import type { ProfessionKind } from "@/lib/wow/professions/types";
 import { PROFESSION_KIT, professionAccentStyle } from "./professionKit";
 import { professionsCopy } from "./professionsCopy";
 import styles from "./professions.module.css";
+import { seoTitles } from "@/lib/seo/titles";
+import { JsonLd, itemListLd } from "@/lib/seo/jsonld";
 
 type Lang = "en" | "ru";
 
 export function professionsHubMetadata(lang: Lang): Metadata {
   const c = professionsCopy[lang];
-  return { title: c.hubTitle, description: c.hubDescription, alternates: pairedAlternates(lang, "/wow/professions"),
-    openGraph: pageOpenGraph(lang, { title: c.hubTitle, description: c.hubDescription, path: `${lang === "ru" ? "/ru" : ""}/wow/professions` }) };
+  const title = seoTitles.professions[lang];
+  return { title, description: c.hubDescription, alternates: pairedAlternates(lang, "/wow/professions"),
+    openGraph: pageOpenGraph(lang, { title, description: c.hubDescription, path: `${lang === "ru" ? "/ru" : ""}/wow/professions` }) };
 }
 
 const kinds: ProfessionKind[] = ["crafting", "gathering", "secondary"];
@@ -31,6 +34,7 @@ export async function ProfessionsHubPage({ lang }: { lang: Lang }) {
   const prefix = lang === "ru" ? "/ru" : "";
   const facts = new Map<string, ProfessionHubFacts>((await loadProfessionHubFacts("eu")).map((f) => [f.slug, f]));
   return <AtlasFrame lang={lang} scene="articles" className={styles.page} dataAttributes={{ "data-professions-hub": true }}>
+    <JsonLd data={itemListLd(c.hubTitle, professionList.map((profession) => ({ name: profession.name[lang], href: `${prefix}/wow/professions/${profession.slug}` })), false)} />
     <AtlasHero align="start" className={styles.hero} eyebrow={c.eyebrow} title={c.hubTitle} lede={c.hubLede} breadcrumbs={trail(lang, "professions")} breadcrumbsLabel={trailLabel(lang)} />
     {kinds.map((kind) => <AtlasSection key={kind} id={kind} title={c.kinds[kind]}>
       <ul className={styles.hubGrid}>

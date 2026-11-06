@@ -10,11 +10,13 @@ import { AuctionBrowser } from "./AuctionBrowser";
 import { auctionCopy } from "./auctionCopy";
 import { AuctionPlaque } from "./AuctionMaterial";
 import styles from "./auction.module.css";
+import { seoDescriptions, seoTitles } from "@/lib/seo/titles";
 
 export function auctionMetadata(lang: "ru" | "en"): Metadata {
-  const c = auctionCopy[lang];
-  return { title: c.title, description: c.lede, alternates: pairedAlternates(lang, "/wow/auction"),
-    openGraph: pageOpenGraph(lang, { title: c.title, description: c.lede, path: `${lang === "ru" ? "/ru" : ""}/wow/auction` }) };
+  const title = seoTitles.auction[lang];
+  const description = seoDescriptions.auction[lang];
+  return { title, description, alternates: pairedAlternates(lang, "/wow/auction"),
+    openGraph: pageOpenGraph(lang, { title, description, path: `${lang === "ru" ? "/ru" : ""}/wow/auction` }) };
 }
 
 /** /wow/auction: a tool page (design.md §3.6) — scene hero, search and categories on the kit's plaque, the market list on a second plaque. */

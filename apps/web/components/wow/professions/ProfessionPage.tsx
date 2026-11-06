@@ -18,6 +18,7 @@ import { ProfessionProfits } from "./ProfessionProfits";
 import { ProfessionSpecializations } from "./ProfessionSpecializations";
 import { professionsCopy } from "./professionsCopy";
 import styles from "./professions.module.css";
+import { professionSeoTitle } from "@/lib/seo/titles";
 
 type Lang = "en" | "ru";
 const path = (lang: Lang, slug: string) => `${lang === "ru" ? "/ru" : ""}/wow/professions/${slug}`;
@@ -26,7 +27,7 @@ export async function professionMetadata(lang: Lang, slug: string): Promise<Meta
   const data = await loadProfession(slug);
   if (!data) return {};
   const c = professionsCopy[lang], name = data.name[lang];
-  const title = `${name} — ${c.hubTitle}`;
+  const title = professionSeoTitle(lang, name);
   return { title, description: c.description(name), alternates: pairedAlternates(lang, `/wow/professions/${slug}`),
     openGraph: pageOpenGraph(lang, { title, description: c.description(name), path: path(lang, slug) }) };
 }
@@ -54,11 +55,11 @@ function RegionSwitch({ lang, slug, region, anchor }: { lang: Lang; slug: string
 }
 
 /** /wow/professions/<slug>: leveling at live prices, profitable crafts, trainer and knowledge, specializations. */
-export async function ProfessionPage({ lang, slug, searchParams }: { lang: Lang; slug: string; searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
+export async function ProfessionPage({ lang, slug, region: regionCode }: { lang: Lang; slug: string; region?: string }) {
   const data = await loadProfession(slug);
   if (!data) notFound();
   const c = professionsCopy[lang];
-  const region = professionRegion((await searchParams)?.region);
+  const region = professionRegion(regionCode);
   const crafts = data.kind !== "gathering" && data.recipes.length > 3;
   const [{ prices }, records] = await Promise.all([loadProfessionPrices(data, region), crafts ? loadProfessionRecords(data, lang) : Promise.resolve({})]);
   const crafting = crafts;

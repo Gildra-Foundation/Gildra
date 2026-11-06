@@ -2,12 +2,13 @@ import { PageShell } from "@/components/layout/PageShell";
 import type { Metadata } from "next";
 import { LibraryLanding } from "@/components/library/LibraryLanding";
 import { getLibraryLandingData, requireCatalogSession } from "@/lib/library/server";
+import { withPageOpenGraph } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withPageOpenGraph("en", {
   title: "World of Warcraft Data Library — Gildra",
   description: "World of Warcraft items, spells, mounts, bosses and quests with in-game tooltips, icons and links between them.",
   alternates: { canonical: "/library", languages: { en: "/library", ru: "/ru/library", "x-default": "/library" } },
-};
+});
 
 export default async function LibraryPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
   const filters = await searchParams;

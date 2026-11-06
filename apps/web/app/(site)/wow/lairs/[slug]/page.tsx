@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { pairedAlternates } from "@/lib/seo/metadata";
+import { pairedAlternates, withPageOpenGraph } from "@/lib/seo/metadata";
 import { notFound } from "next/navigation";
 import { LairBossGuide } from "@/components/wow/raid/lairs/LairBossGuide";
 import { getMidnightLairEncounter, midnightLairEncounters } from "@/lib/data/wow";
@@ -11,7 +11,7 @@ export const dynamicParams = false;
 export function generateStaticParams() { return midnightLairEncounters.map(({ slug }) => ({ slug })); }
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const encounter = getMidnightLairEncounter((await params).slug);
-  return encounter ? { title: `${encounter.name} — Midnight Season 2 — Gildra`, description: `${encounter.name}: location, abilities, difficulty and loot — Midnight Season 2.`, alternates: pairedAlternates("en", `/wow/lairs/${encounter.slug}`) } : {};
+  return encounter ? withPageOpenGraph("en", { title: `${encounter.name} — Midnight Season 2 — Gildra`, description: `${encounter.name}: location, abilities, difficulty and loot — Midnight Season 2.`, alternates: pairedAlternates("en", `/wow/lairs/${encounter.slug}`) }) : {};
 }
 export default async function BossPage({ params }: { params: Promise<{ slug: string }> }) {
   const encounter = getMidnightLairEncounter((await params).slug);

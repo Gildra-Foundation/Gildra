@@ -17,6 +17,8 @@ import { sampleCount, sampleRoles, usesSample } from "./tierData";
 import styles from "./tierWorkspace.module.css";
 import "./tierWorkspace.css";
 import { trail } from "@/lib/routes/registry";
+import { JsonLd } from "@/lib/seo/jsonld";
+import { tierListLd } from "@/lib/seo/itemLists";
 
 /** Names, hero talent trees and the talents page of every spec, so the client does not bundle the whole spec theme file. */
 const specNames: Record<Lang, TierSpecNames> = {
@@ -38,6 +40,7 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorks
   return (
     <AtlasFrame as="div" lang={lang} className={styles.frame} still foot={false} dataAttributes={{ "data-tier-workspace": true }}>
       <MythicHubBackdrop />
+      {sample ? null : <JsonLd data={tierListLd(lang, data)} />}
       <div className={styles.hero}>
         <AtlasHero
           align="start"

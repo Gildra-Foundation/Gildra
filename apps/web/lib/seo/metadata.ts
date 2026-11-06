@@ -24,3 +24,17 @@ export function pairedAlternates(locale: Locale, path: string): NonNullable<Meta
   const ru = path === "/" ? "/ru" : `/ru${path}`;
   return { canonical: locale === "ru" ? ru : path, languages: { en: path, ru, "x-default": path } };
 }
+
+/**
+ * Adds the page's own Open Graph (title, description, canonical URL, language)
+ * to metadata that names only a title, description and canonical. Without it
+ * the layout's site-wide og:title/og:url would describe every such page.
+ */
+export function withPageOpenGraph(locale: Locale, metadata: Metadata): Metadata {
+  if (metadata.openGraph) return metadata;
+  const title = typeof metadata.title === "string" ? metadata.title : undefined;
+  const canonical = metadata.alternates?.canonical;
+  if (!title || !canonical) return metadata;
+  const description = metadata.description ?? undefined;
+  return { ...metadata, openGraph: pageOpenGraph(locale, { title, description, path: String(canonical) }) };
+}

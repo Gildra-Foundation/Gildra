@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 import { routeSections, type SectionId } from "../../lib/routes/registry.ts";
@@ -74,6 +74,131 @@ describe("seo: library record addresses", async () => {
       const file = readFileSync(new URL(`../../app/${root}/library/[dataset]/[id]/[slug]/[legacy]/route.ts`, import.meta.url), "utf8");
       assert.match(file, /legacyRecordRedirect\("(en|ru)"\)/, root);
       assert.match(readFileSync(new URL(`../../app/${root}/library/[dataset]/[id]/[slug]/page.tsx`, import.meta.url), "utf8"), /LibraryRecordRoute/, root);
+    }
+  });
+});
+
+describe("seo: page metadata (2026-11-06 audit)", async () => {
+  const { dungeonMetadata } = await import("../../lib/seo/dungeonMetadata.ts");
+  const { seoTitles, professionSeoTitle } = await import("../../lib/seo/titles.ts");
+  const professions = (await import("../../data/wow/professions/index.json", { with: { type: "json" } })).default as Array<{ slug: string; name: { en: string; ru: string } }>;
+
+  it("every dungeon page has its own description and Open Graph in both languages", () => {
+    for (const locale of ["en", "ru"] as const) {
+      const descriptions = dungeonSlugs.map((slug) => {
+        const meta = dungeonMetadata(locale, "midnight-season-2", slug);
+        const description = String(meta.description);
+        assert.ok(description.length >= 70 && description.length <= 165, `${slug} ${locale} (${description.length}) ${description}`);
+        assert.equal(meta.openGraph?.url, `${locale === "ru" ? "/ru" : ""}/wow/mythic-plus/midnight-season-2/${slug}`);
+        return description;
+      });
+      assert.equal(new Set(descriptions).size, descriptions.length, locale);
+    }
+    assert.deepEqual(dungeonMetadata("en", "midnight-season-1", dungeonSlugs[0]), {});
+  });
+
+  it("section titles are unique and descriptions fit a search snippet", () => {
+    for (const locale of ["en", "ru"] as const) {
+      const titles = new Set<string>();
+      for (const id of Object.keys(routeSections) as SectionId[]) {
+        let meta;
+        try { meta = sectionMetadata(id, locale); } catch { continue; }
+        const title = String(meta.title);
+        assert.ok(!titles.has(title), `${id} ${locale}: duplicate title ${title}`);
+        titles.add(title);
+        assert.ok(title.length <= 70, `${id} ${locale}: title ${title.length}`);
+        if (meta.description) assert.ok(meta.description.length <= 200, `${id} ${locale}: description ${meta.description.length}`);
+      }
+    }
+  });
+
+  it("tool pages are titled with the game and the task, not one word", () => {
+    for (const titles of Object.values(seoTitles)) for (const title of Object.values(titles)) {
+      assert.ok(title.length >= 25 && title.length <= 65 && title.endsWith("— Gildra"), title);
+    }
+    for (const profession of professions) for (const locale of ["en", "ru"] as const) {
+      const title = professionSeoTitle(locale, profession.name[locale]);
+      assert.ok(title.length <= 65 && title.includes(profession.name[locale]), title);
+    }
+  });
+});
+
+describe("seo: cached views of query-driven pages", async () => {
+  const { cachedViewRewrite } = await import("../../lib/routes/cachedViews.ts");
+  const view = (url: string) => cachedViewRewrite(new URL(url, "https://gildra.net"));
+  it("?region=us of a profession is served from the cached region/us path; EU stays on the page itself", () => {
+    assert.equal(view("/wow/professions/alchemy?region=us"), "/wow/professions/alchemy/region/us");
+    assert.equal(view("/ru/wow/professions/alchemy/?region=us&x=1"), "/ru/wow/professions/alchemy/region/us");
+    assert.equal(view("/wow/professions/alchemy"), null);
+    assert.equal(view("/wow/professions/alchemy?region=eu"), null);
+    assert.equal(view("/wow/professions?region=us"), null);
+  });
+  it("the unfiltered Mythic+ data pages and spec leaderboards are served from their cached views", () => {
+    for (const page of ["stats", "comps", "routes", "meta", "leaderboard"]) {
+      assert.equal(view(`/wow/mythic-plus/${page}`), `/wow/mythic-plus/cached/${page}`);
+      assert.equal(view(`/ru/wow/mythic-plus/${page}/`), `/ru/wow/mythic-plus/cached/${page}`);
+      assert.equal(view(`/wow/mythic-plus/${page}?_rsc=abc`), `/wow/mythic-plus/cached/${page}`, "the router's cache-buster is not a filter");
+      assert.equal(view(`/wow/mythic-plus/${page}?region=us`), null, "a filtered view renders per request");
+    }
+    assert.equal(view("/wow/mythic-plus/leaderboard/holy-priest"), "/wow/mythic-plus/cached/leaderboard/holy-priest");
+    assert.equal(view("/wow/mythic-plus/leaderboard/holy-priest?realm=x"), null);
+    assert.equal(view("/wow/mythic-plus/leaderboard/opengraph-image"), null, "the hub's card is not a spec");
+    assert.equal(view("/wow/mythic-plus/leaderboard/no-such-spec"), null);
+    assert.equal(view("/wow/mythic-plus"), null);
+    assert.equal(view("/wow/mythic-plus/midnight-season-2/kings-rest"), null);
+  });
+  it("internal paths opened directly are a 404; their link-preview cards stay reachable", () => {
+    assert.equal(view("/wow/professions/alchemy/region/us"), "direct");
+    assert.equal(view("/ru/wow/professions/alchemy/region"), "direct");
+    assert.equal(view("/wow/mythic-plus/cached/stats"), "direct");
+    assert.equal(view("/ru/wow/mythic-plus/cached/leaderboard/holy-priest"), "direct");
+    assert.equal(view("/wow/mythic-plus/cached/stats/opengraph-image-usi2he"), null);
+    assert.equal(view("/ru/wow/mythic-plus/cached/leaderboard/holy-priest/opengraph-image"), null);
+  });
+});
+
+describe("seo: structured data", async () => {
+  const { websiteLd, itemListLd } = await import("../../lib/seo/structuredData.ts");
+  const { tierListLd, specPagePath } = await import("../../lib/seo/itemLists.ts");
+  const { breadcrumbJsonLd } = await import("../../../../packages/atlas-ui/src/breadcrumbJsonLd.ts");
+  const { midnightSpecializations } = await import("../../lib/data/wow/specializations.ts");
+
+  it("the home page names the site search", () => {
+    for (const locale of ["en", "ru"] as const) {
+      const site = websiteLd(locale, "x")[0] as unknown as { potentialAction: { target: { urlTemplate: string } } };
+      assert.equal(site.potentialAction.target.urlTemplate, `https://gildra.net${locale === "ru" ? "/ru" : ""}/search?q={search_term_string}`);
+    }
+  });
+
+  it("breadcrumbs resolve to absolute URLs; the current page may go without one", () => {
+    const ld = breadcrumbJsonLd([{ label: "World of Warcraft", href: "/ru/wow" }, { label: "Рейды", href: "/ru/wow/raids" }, { label: "Пустотный шпиль" }]);
+    assert.deepEqual(ld.itemListElement.map((item) => [item.position, item.name, "item" in item ? item.item : null]),
+      [[1, "World of Warcraft", "https://gildra.net/ru/wow"], [2, "Рейды", "https://gildra.net/ru/wow/raids"], [3, "Пустотный шпиль", null]]);
+  });
+
+  it("every tier-list spec links to its specialization page", () => {
+    for (const spec of midnightSpecializations) {
+      const short = spec.slug.slice(0, -(spec.classSlug.length + 1));
+      assert.equal(specPagePath("en", spec.classSlug, short), `/wow/classes/${spec.classSlug}/${spec.slug}`, spec.slug);
+    }
+    const roles = { tank: [], healer: [{ rank: 2, tier: "A", role: "healer", className: "Priest", classSlug: "priest", specName: "Holy", specSlug: "holy" }, { rank: 1, tier: "S", role: "healer", className: "Druid", classSlug: "druid", specName: "Restoration", specSlug: "restoration" }], dps: [] };
+    const [healers] = tierListLd("ru", { roles: roles as never });
+    const items = healers.itemListElement as Array<{ name: string; url?: string; position: number }>;
+    assert.deepEqual(items.map((item) => [item.position, item.name, item.url]), [[1, "Restoration Druid — S", "https://gildra.net/ru/wow/classes/druid/restoration-druid"], [2, "Holy Priest — A", "https://gildra.net/ru/wow/classes/priest/holy-priest"]]);
+    assert.equal(itemListLd("x", []).numberOfItems, 0);
+  });
+});
+
+describe("seo: link previews", () => {
+  it("every indexable page family has its own Open Graph card in both languages", () => {
+    const routes = ["wow", "wow/mythic-plus", "wow/mythic-plus/comps", "wow/mythic-plus/stats", "wow/mythic-plus/routes", "wow/mythic-plus/meta", "wow/mythic-plus/leaderboard",
+      "wow/mythic-plus/leaderboard/[spec]", "wow/mythic-plus/[season]/[dungeon]", "wow/raids", "wow/raids/[raid]", "wow/raids/composition", "wow/lairs", "wow/lairs/[slug]",
+      "wow/classes", "wow/classes/[class]", "wow/classes/[class]/[spec]", "wow/professions", "wow/professions/[slug]", "wow/transmog", "wow/auction", "wow/midnight/season-2",
+      "wow/whats-new", "tier-lists", "library", "library/[dataset]", "wow/raids/the-unbinding-of-kithix", "privacy",
+      "wow/mythic-plus/cached/[page]", "wow/mythic-plus/cached/leaderboard/[spec]", "wow/professions/[slug]/region/[region]"];
+    for (const root of ["(site)", "ru"]) for (const route of routes) {
+      const dir = new URL(`../../app/${root}/${route}/`, import.meta.url);
+      assert.ok(["opengraph-image.tsx", "opengraph-image.png"].some((file) => existsSync(new URL(file, dir))), `${root}/${route}`);
     }
   });
 });

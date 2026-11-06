@@ -75,7 +75,7 @@ export function RaidHubCards({ locale, section }: { locale: RaidHubLocale; secti
               <p className={styles.bossesLabel}>{copy.bossesLabel}</p>
               <ol className={styles.bosses} aria-label={copy.bossesLabel}>
                 {raid.bosses.map((boss, index) => <li key={boss.slug}>
-                  <Link href={boss.anchor ? `${href}#${boss.anchor}` : `${href}/${boss.slug}`} data-hub-boss-link={`${raid.slug}/${boss.slug}`}>
+                  <Link href={boss.anchor ? `${href}#${boss.anchor}` : `${href}#boss=${boss.slug}`} data-hub-boss-link={`${raid.slug}/${boss.slug}`}>
                     {boss.artwork
                       ? <Image src={boss.artwork} alt="" width={32} height={32} className={styles.portrait} />
                       : <span className={`${styles.portrait} ${styles.order}`} aria-hidden="true">{index + 1}</span>}

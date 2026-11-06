@@ -5,11 +5,13 @@ import { trail, trailLabel } from "@/lib/routes/registry";
 import { TransmogStudio } from "./TransmogStudio";
 import { transmogCopy } from "./transmogCopy";
 import styles from "./transmog.module.css";
+import { seoDescriptions, seoTitles } from "@/lib/seo/titles";
 
 export function transmogMetadata(lang: "ru" | "en"): Metadata {
-  const c = transmogCopy[lang];
-  return { title: c.title, description: c.lede, alternates: pairedAlternates(lang, "/wow/transmog"),
-    openGraph: pageOpenGraph(lang, { title: c.title, description: c.lede, path: `${lang === "ru" ? "/ru" : ""}/wow/transmog` }) };
+  const title = seoTitles.transmog[lang];
+  const description = seoDescriptions.transmog[lang];
+  return { title, description, alternates: pairedAlternates(lang, "/wow/transmog"),
+    openGraph: pageOpenGraph(lang, { title, description, path: `${lang === "ru" ? "/ru" : ""}/wow/transmog` }) };
 }
 
 export function TransmogPage({ lang }: { lang: "ru" | "en" }) {
