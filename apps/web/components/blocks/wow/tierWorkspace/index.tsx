@@ -8,8 +8,8 @@ import { p } from "@/lib/i18n-paths";
 import { TierSection } from "@/components/TierSection";
 import type { TierSpecNames } from "./tierBoardRows";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
-import { getTierSourceSlices } from "@/lib/platform/games/tierSources";
-import type { TierSourceSlices } from "./tierSourceKeys";
+import { getTierSources } from "@/lib/platform/games/tierSources";
+import type { TierSourceTabs } from "./tierSourceKeys";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import type { Lang } from "@/lib/i18n-paths";
 import { tierCopy } from "./tierCopy";
@@ -27,8 +27,8 @@ const specNames: Record<Lang, TierSpecNames> = {
 /** The full tier workspace: atlas hero, ONE honest sample notice when the meta
  *  API is off, then the interactive tier board / list (client). design.md:
  *  it lives only on /tier-lists and is never embedded elsewhere. */
-/** Meta intelligence plus the external source slices the source tabs open on. */
-type TierWorkspaceData = GameIntelligence & { sourceSlices: TierSourceSlices };
+/** Meta intelligence plus the source tabs that have a published list. */
+type TierWorkspaceData = GameIntelligence & { sourceTabs: TierSourceTabs };
 
 function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorkspaceData>) {
   const copy = tierCopy[lang];
@@ -53,7 +53,7 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorks
         />
       </div>
       {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
-      <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specNames={specNames[lang]} sourceSlices={sample ? {} : data.sourceSlices} />
+      <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specNames={specNames[lang]} sourceTabs={sample ? undefined : data.sourceTabs} />
     </AtlasFrame>
   );
 }
@@ -65,8 +65,8 @@ export const tierWorkspaceBlock = defineBlock<EmptyProps, TierWorkspaceData>({
     // Rendered per request: WOW_META_API_ENABLED is a runtime switch, and a
     // prerendered page would keep the build's sample until the next release.
     await connection();
-    const [intelligence, sourceSlices] = await Promise.all([getGameIntelligence("wow", ctx.lang), getTierSourceSlices()]);
-    return { ...intelligence, sourceSlices };
+    const [intelligence, sourceTabs] = await Promise.all([getGameIntelligence("wow", ctx.lang), getTierSources()]);
+    return { ...intelligence, sourceTabs };
   },
-  demo: { props: {}, data: { gameId: "wow", status: "unavailable", mode: "pending", version: "—", updatedAt: new Date(0).toISOString(), providerLabel: "Provider not connected", metrics: [], entities: [], sources: [], tierContexts: [], sourceSlices: {} }, note: "Interactive workspace backed by the public meta API." },
+  demo: { props: {}, data: { gameId: "wow", status: "unavailable", mode: "pending", version: "—", updatedAt: new Date(0).toISOString(), providerLabel: "Provider not connected", metrics: [], entities: [], sources: [], tierContexts: [], sourceTabs: { tabs: [], ladder: false } }, note: "Interactive workspace backed by the public meta API." },
 });

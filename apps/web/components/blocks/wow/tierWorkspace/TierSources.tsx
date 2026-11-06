@@ -1,136 +1,172 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import type { Lang } from "@/lib/i18n-paths";
-import type { TierActivity, TierEntry, TierRole } from "@/lib/platform/games/intelligence";
+import type { TierEntry, TierRole } from "@/lib/platform/games/intelligence";
 import { tierSourcesCopy } from "./tierSourcesCopy";
-import { sourceKey, type ExternalTierSource, type SourceSlice, type TierSourceId, type TierSourceSlices } from "./tierSourceKeys";
+import { listParams, sourceKey, type ListQuery, type SourceSlice, type TierMode, type TierSourceSlices } from "./tierSourceKeys";
 import styles from "./tierWorkspace.module.css";
 
 const ROLES = ["dps", "healer", "tank"] as const;
-const TIER_ORDER = ["S", "A", "B", "C", "D", "F"];
 
-export const SOURCE_META: Record<ExternalTierSource, { name: string; site: string; raid: boolean; page: (activity: TierActivity, role: TierRole, difficulty: string) => string }> = {
-  mythicstats: { name: "mythicstats.com", site: "mythicstats.com", raid: false, page: () => "https://mythicstats.com/spec" },
-  ugg: {
-    name: "u.gg",
-    site: "u.gg",
-    raid: true,
-    page: (activity, role, difficulty) => {
-      const base = `https://u.gg/wow/tier-list/${role}-rankings`;
-      if (activity === "mythic_plus") return base;
-      const level = ({ raid_normal: "normal", raid_hero: "heroic", raid_myth: "mythic" } as Record<string, string>)[difficulty];
-      return level ? `${base}/raid?difficulty=${level}` : `${base}/raid`;
-    },
-  },
-  sim: { name: "MythiStone", site: "mythistone.com", raid: false, page: () => "https://mythistone.com/pages/tierlist" },
-};
+type ListResponse = { entries: TierEntry[]; updatedAt: string; tiersDerived?: boolean };
 
-/** Loads the three role lists of one external source for a mode (and raid
- *  difficulty). Slices rendered on the server (`initial`) are used as they are. */
-export function useSourceRoles(source: TierSourceId, activity: TierActivity, difficulty: string, initial: TierSourceSlices) {
-  const [state, setState] = useState<{ key: string; data?: SourceSlice; error?: boolean }>({ key: "" });
-  const key = source === "gildra" || source === "sim" || (source === "mythicstats" && activity === "raid") ? "" : sourceKey(source, activity, difficulty);
+/** Responses shared by every mount for the page view: switching back to a tab needs no new request. */
+const listCache = new Map<string, Promise<SourceSlice>>();
+
+function loadList(query: ListQuery) {
+  const key = sourceKey(query);
+  let request = listCache.get(key);
+  if (!request) {
+    request = Promise.all(ROLES.map(async (role) => {
+      const response = await fetch(`/v1/meta/wow/tier-list?${listParams(query, role)}`);
+      // A role the source does not rank (no tanks in an arena list) is an empty row, not a failure.
+      if (response.status === 404) return { entries: [], updatedAt: "" } satisfies ListResponse;
+      if (!response.ok) throw new Error(`tier list failed (${response.status})`);
+      return await response.json() as ListResponse;
+    })).then((snapshots) => {
+      if (snapshots.every((item) => !item.entries.length)) throw new Error("tier list is empty");
+      return {
+        roles: Object.fromEntries(ROLES.map((role, index) => [role, snapshots[index].entries])) as Record<TierRole, TierEntry[]>,
+        updatedAt: snapshots.map((item) => item.updatedAt).filter(Boolean).sort()[0] ?? "",
+        tiersDerived: snapshots.some((item) => item.tiersDerived),
+      };
+    }).catch((error: unknown) => {
+      listCache.delete(key);
+      throw error;
+    });
+    listCache.set(key, request);
+  }
+  return request;
+}
+
+/** The three role lists of one source tab. Slices rendered on the server (`initial`) are used as they are;
+ *  `null` loads nothing (another tab is open). */
+export function useTierList(query: ListQuery | null, initial: TierSourceSlices) {
+  const key = query ? sourceKey(query) : "";
   const preloaded = key ? initial[key] : undefined;
+  const [state, setState] = useState<{ key: string; data?: SourceSlice; error?: boolean }>({ key: "" });
 
   useEffect(() => {
-    if (!key || preloaded || source === "gildra" || source === "sim") return;
-    const controller = new AbortController();
-    Promise.all(ROLES.map(async (role) => {
-      const params = new URLSearchParams({ source, activity, role, limit: "60" });
-      if (activity === "raid") params.set("difficulty", difficulty);
-      const response = await fetch(`/v1/meta/wow/tier-list?${params}`, { signal: controller.signal });
-      if (!response.ok) throw new Error(`source tier list failed (${response.status})`);
-      return await response.json() as { entries: TierEntry[]; updatedAt: string };
-    })).then((snapshots) => {
-      setState({ key, data: {
-        roles: Object.fromEntries(ROLES.map((role, index) => [role, snapshots[index].entries])) as Record<TierRole, TierEntry[]>,
-        updatedAt: snapshots.map((item) => item.updatedAt).sort()[0],
-      } });
-    }).catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      setState({ key, error: true });
-    });
-    return () => controller.abort();
-  }, [key, preloaded, source, activity, difficulty]);
+    if (!query || preloaded) return;
+    let live = true;
+    loadList(query).then((data) => { if (live) setState({ key, data }); }).catch(() => { if (live) setState({ key, error: true }); });
+    return () => { live = false; };
+    // The key carries every part of the query.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, preloaded]);
 
   const current = preloaded ? { key, data: preloaded } : state.key === key ? state : { key };
   return { data: current.data, error: Boolean(current.error), loading: Boolean(key) && !current.data && !current.error };
 }
 
-type CompareRow = { key: string; specName: string; className: string; classSlug: string; tiers: (string | undefined)[]; average: number };
+export type CompareColumn = { source: string; status: string; tiersDerived?: boolean; entries: TierEntry[] };
+export type CompareResponse = { activity: TierMode; role: TierRole; bracket?: string; updatedAt: string; columns: CompareColumn[]; consensus: TierEntry[] };
 
-/** Spec rows × source tiers for one mode and role, sorted by the average position. */
-export function SourceCompare({ lang, activity, role, columns, classStyle, tierStyle, renderSpec }: {
+const compareCache = new Map<string, Promise<CompareResponse>>();
+
+/** Every source's list and the consensus for one mode and role (GET /v1/meta/wow/tier-list/compare). */
+export function useTierCompare(params: { mode: TierMode; role: TierRole; bracket?: string; difficulty?: string } | null) {
+  const search = useMemo(() => {
+    if (!params) return "";
+    const query = new URLSearchParams({ activity: params.mode, role: params.role });
+    if (params.mode === "pvp" && params.bracket) query.set("bracket", params.bracket);
+    if (params.mode === "raid" && params.difficulty) query.set("difficulty", params.difficulty);
+    return query.toString();
+  }, [params]);
+  const [state, setState] = useState<{ key: string; data?: CompareResponse; error?: boolean }>({ key: "" });
+
+  useEffect(() => {
+    if (!search) return;
+    let request = compareCache.get(search);
+    if (!request) {
+      request = fetch(`/v1/meta/wow/tier-list/compare?${search}`).then(async (response) => {
+        if (!response.ok) throw new Error(`comparison failed (${response.status})`);
+        return await response.json() as CompareResponse;
+      }).catch((error: unknown) => {
+        compareCache.delete(search);
+        throw error;
+      });
+      compareCache.set(search, request);
+    }
+    let live = true;
+    request.then((data) => { if (live) setState({ key: search, data }); }).catch(() => { if (live) setState({ key: search, error: true }); });
+    return () => { live = false; };
+  }, [search]);
+
+  const current = state.key === search ? state : { key: search };
+  return { data: current.data, error: Boolean(current.error), loading: Boolean(search) && !current.data && !current.error };
+}
+
+type Spec = { specName: string; className: string; classSlug: string; specSlug: string };
+
+/** Spec rows (consensus order) × the consensus tier and every source's own tier, with how far they agree. */
+export function SourceCompare({ lang, caption, data, sourceLabel, classStyle, tierStyle, renderSpec, specNames, href, busy }: {
   lang: Lang;
-  activity: TierActivity;
-  role: TierRole;
-  columns: { id: TierSourceId; label: string; short: string; entries?: TierEntry[] }[];
+  caption: string;
+  data: CompareResponse;
+  sourceLabel: (source: string) => string;
   classStyle: (slug: string) => CSSProperties;
   tierStyle: (tier: string) => CSSProperties;
-  renderSpec: (entry: { specName: string; className: string; classSlug: string; specSlug: string }) => React.ReactNode;
+  renderSpec: (entry: Spec) => ReactNode;
+  specNames: (entry: TierEntry) => Spec;
+  href: (entry: Spec) => string | undefined;
+  busy: boolean;
 }) {
   const copy = tierSourcesCopy[lang];
-  const rows = useMemo(() => {
-    const map = new Map<string, CompareRow & { positions: number[]; specSlug: string }>();
-    columns.forEach((column, index) => {
-      (column.entries ?? []).forEach((entry, position) => {
-        const key = `${entry.classSlug}:${entry.specSlug}`;
-        const row = map.get(key) ?? { key, specName: entry.specName, className: entry.className, classSlug: entry.classSlug, specSlug: entry.specSlug, tiers: columns.map(() => undefined), positions: [], average: 0 };
-        row.tiers[index] = entry.tier;
-        row.positions.push((position + 1) / Math.max(column.entries?.length ?? 1, 1));
-        map.set(key, row);
-      });
-    });
-    return [...map.values()].map((row) => ({ ...row, average: row.positions.reduce((sum, value) => sum + value, 0) / row.positions.length }))
-      .sort((a, b) => a.average - b.average);
-  }, [columns]);
+  const columns = data.columns;
+  const rows = useMemo(() => data.consensus.map((entry) => {
+    const tiers = columns.map((column) => column.entries.find((item) => item.classSlug === entry.classSlug && item.specSlug === entry.specSlug)?.tier);
+    // A+ and A share a band: agreement compares the letter, against the consensus letter.
+    const letters = tiers.filter((tier): tier is string => Boolean(tier)).map((tier) => tier.charAt(0));
+    return { entry, spec: specNames(entry), tiers, agree: letters.filter((letter) => letter === entry.tier.charAt(0)).length, known: letters.length };
+  }), [columns, data.consensus, specNames]);
 
   return (
-    <div className={styles.compare}>
-      <div className={styles.tableBox} data-scrollbox>
-        <table className={`${styles.table} ${styles.compareTable}`}>
-          <caption className={styles.srOnly}>{`${copy.compareTitle} · ${activity} · ${role}`}</caption>
-          <thead>
-            <tr>
-              <th scope="col" className={styles.compareRank}>#</th>
-              <th scope="col">{copy.spec}</th>
-              {columns.map((column) => <th key={column.id} scope="col" className={styles.compareCol}><span className={styles.compareLong}>{column.label}</span><abbr className={styles.compareShort} title={column.label}>{column.short}</abbr></th>)}
-              <th scope="col" className={`${styles.num} ${styles.compareAgree}`}>{copy.agreement}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, index) => {
-              // A+ and A share a tier band: agreement compares the letter only.
-              const known = row.tiers.filter((tier): tier is string => Boolean(tier)).map((tier) => tier.charAt(0));
-              const counts = TIER_ORDER.map((tier) => known.filter((value) => value === tier).length);
-              const top = Math.max(...counts);
-              return (
-                <tr key={row.key}>
-                  <td className={styles.compareRank}>{index + 1}</td>
-                  <td className={styles.specCell}>
-                    <div className={styles.specInner}>
-                      {renderSpec(row)}
-                      <span className={styles.specButton} style={classStyle(row.classSlug)}>
-                        <span className={styles.specName}>{row.specName}</span>
-                        <span className={styles.className}>{row.className}</span>
-                      </span>
-                    </div>
+    <div className={styles.tableBox} data-scrollbox aria-busy={busy} data-loading={busy || undefined}>
+      <table className={`${styles.table} ${styles.compareTable}`}>
+        <caption className={styles.srOnly}>{caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col" className={styles.compareRank}>#</th>
+            <th scope="col" className={styles.compareSpecHead}>{copy.spec}</th>
+            <th scope="col" className={`${styles.compareCol} ${styles.compareConsensus}`}>{copy.consensus}</th>
+            {columns.map((column) => <th key={column.source} scope="col" className={styles.compareCol}>{sourceLabel(column.source)}</th>)}
+            <th scope="col" className={`${styles.num} ${styles.compareAgree}`}>{copy.agreement}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ entry, spec, tiers, agree, known }, index) => {
+            const link = href(spec);
+            const name = <><span className={styles.specName}>{spec.specName}</span><span className={styles.className}>{spec.className}</span></>;
+            return (
+              <tr key={`${entry.classSlug}:${entry.specSlug}`}>
+                <td className={styles.compareRank}>{index + 1}</td>
+                <th scope="row" className={styles.specCell}>
+                  <span className={styles.specInner}>
+                    {renderSpec(spec)}
+                    {link ? <a className={styles.specLink} href={link} style={classStyle(entry.classSlug)}>{name}</a> : <span className={styles.specButton} style={classStyle(entry.classSlug)}>{name}</span>}
+                  </span>
+                </th>
+                <td className={`${styles.compareCol} ${styles.compareConsensus}`}>
+                  <span className={`${styles.tierChip} ${styles.tierChipStrong}`} style={tierStyle(entry.tier)}><span className={styles.srOnly}>{copy.consensus} </span>{entry.tier}</span>
+                </td>
+                {tiers.map((tier, column) => (
+                  <td key={columns[column].source} className={styles.compareCol}>
+                    {tier ? <span className={styles.tierChip} style={tierStyle(tier)}><span className={styles.srOnly}>{sourceLabel(columns[column].source)} </span>{tier}</span> : <span className={styles.compareNone} aria-label={copy.noTier}>—</span>}
                   </td>
-                  {row.tiers.map((tier, column) => (
-                    <td key={columns[column].id} className={styles.compareCol}>
-                      {tier ? <span className={styles.tierChip} style={tierStyle(tier)}><span className={styles.srOnly}>{columns[column].label} </span>{tier}</span> : <span className={styles.compareNone}>{copy.noTier}</span>}
-                    </td>
-                  ))}
-                  <td className={`${styles.num} ${styles.compareAgree}`}>
-                    <span className={top === known.length && known.length > 1 ? styles.agreeAll : styles.agreeSome}>{top === known.length && known.length > 1 ? <><span role="img" aria-label={copy.agreeAll} title={copy.agreeAll}>✓ </span><span className={styles.compareLong} aria-hidden="true">{copy.agreeAll}</span></> : <><span className={styles.compareLong}>{copy.agreeSome(top, known.length)}</span><span className={styles.compareShort}>{top}/{known.length}</span></>}</span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                ))}
+                <td className={`${styles.num} ${styles.compareAgree}`}>
+                  <span className={styles.agreeMeter} aria-label={copy.agreeSome(agree, known)} title={copy.agreeSome(agree, known)}>
+                    <span className={styles.agreeTrack} aria-hidden="true"><span style={{ inlineSize: `${known ? Math.round(agree / known * 100) : 0}%` }} /></span>
+                    <span aria-hidden="true">{agree}/{known}</span>
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

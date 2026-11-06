@@ -9,6 +9,7 @@ import styles from "./tierWorkspace.module.css";
 export type TierListLabels = {
   caption: string; rank: string; spec: string; tier: string; score: string; rate: string; maxKey: string;
   trend: string; popularity: string; popularityShort: string; dps: string; behind: string;
+  rating: string; players: string; winRate: string;
 };
 
 /** The compact list for readers who want numbers: rank, spec, tier, then only the metrics this source publishes. */
@@ -17,7 +18,7 @@ export function TierList({ entries, labels, href, format, trend, busy, empty }: 
   labels: TierListLabels;
   href: (entry: BoardEntry) => string | undefined;
   format: { compact: (value?: number) => string; number: (value: number) => string; percent: (value: number) => string; behind: (entry: BoardEntry) => string };
-  trend: (value?: number) => ReactNode;
+  trend: (value?: number, change?: "up" | "down") => ReactNode;
   busy: boolean;
   empty: ReactNode;
 }) {
@@ -40,9 +41,12 @@ export function TierList({ entries, labels, href, format, trend, busy, empty }: 
             {columns.sim ? <th scope="col" className={styles.colScore}>{labels.dps}</th> : null}
             {columns.sim ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{labels.behind}</th> : null}
             {columns.rate ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{labels.rate}</th> : null}
+            {columns.rating ? <th scope="col" className={styles.num}>{labels.rating}</th> : null}
+            {columns.players ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{labels.players}</th> : null}
+            {columns.winRate ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{labels.winRate}</th> : null}
             {columns.maxKey ? <th scope="col" className={`${styles.num} ${styles.secondary}`}>{labels.maxKey}</th> : null}
             {columns.popularity ? <th scope="col" className={styles.num}><span className={styles.wideOnly}>{labels.popularity}</span><abbr className={styles.narrowOnly} title={labels.popularity}>{labels.popularityShort}</abbr></th> : null}
-            {columns.trend ? <th scope="col" className={styles.num}>{labels.trend}</th> : null}
+            {columns.trend || columns.change ? <th scope="col" className={styles.num}>{labels.trend}</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -77,9 +81,12 @@ export function TierList({ entries, labels, href, format, trend, busy, empty }: 
                 ) : null}
                 {columns.sim ? <td className={`${styles.num} ${styles.secondary}`}>{format.behind(entry)}</td> : null}
                 {columns.rate ? <td className={`${styles.num} ${styles.secondary}`}>{format.compact(entry.rate)}</td> : null}
+                {columns.rating ? <td className={styles.num}>{entry.rating !== undefined ? format.number(Math.round(entry.rating)) : "—"}</td> : null}
+                {columns.players ? <td className={`${styles.num} ${styles.secondary}`}>{entry.players !== undefined ? format.number(entry.players) : "—"}</td> : null}
+                {columns.winRate ? <td className={`${styles.num} ${styles.secondary}`}>{entry.winRate !== undefined ? format.percent(entry.winRate) : "—"}</td> : null}
                 {columns.maxKey ? <td className={`${styles.num} ${styles.secondary}`}>{entry.maxKey ? `+${format.number(entry.maxKey)}` : "—"}</td> : null}
                 {columns.popularity ? <td className={styles.num}>{entry.popularity !== undefined ? format.percent(entry.popularity) : "—"}</td> : null}
-                {columns.trend ? <td className={styles.num}>{trend(entry.rankChange)}</td> : null}
+                {columns.trend || columns.change ? <td className={styles.num}>{trend(entry.rankChange, entry.change)}</td> : null}
               </tr>
             );
           })}

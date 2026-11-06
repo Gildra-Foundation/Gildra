@@ -52,7 +52,8 @@
 .segmentRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3) var(--atlas-space-4); min-width: 0; }
 .segmentedControl { max-width: 100%; }
 .segmentedControl svg { width: 16px; height: 16px; }
-.sourceControl { margin-inline-start: auto; }
+/* The source tabs: one row of their own under mode and role; when they do not fit they scroll with faded edges. */
+.sourceControl { justify-self: start; }
 .controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--atlas-space-3) var(--atlas-space-4); }
 .controls:empty { display: none; }
 .field { display: grid; flex: 0 0 auto; gap: var(--atlas-space-2); min-width: 0; }
@@ -361,12 +362,18 @@ a.specLink:hover .specName { color: var(--atlas-accent-strong); }
 .compareNone { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 .agreeAll { color: var(--atlas-positive); font-size: var(--atlas-text-meta); font-weight: 600; }
 .agreeSome { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
-.compareShort { display: none; text-decoration: none; }
 .compareTable .specButton { cursor: default; }
+.compareTable thead .compareCol { white-space: nowrap; }
+.compareSpecHead { min-width: 180px; }
+/* The overall tier leads the row: a stronger chip on a faint wash of its tier colour. */
+.compareConsensus { background: color-mix(in srgb, var(--atlas-text-strong) 4%, transparent); }
+.tierChipStrong { min-width: 36px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--tier-accent, var(--atlas-accent)) 70%, transparent); }
+.agreeMeter { display: inline-grid; grid-template-columns: 56px auto; align-items: center; gap: var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.agreeTrack { display: block; block-size: 6px; overflow: hidden; border-radius: 999px; background: var(--atlas-line-soft); }
+.agreeTrack > span { display: block; block-size: 100%; border-radius: inherit; background: var(--atlas-positive); }
 
 /* ---------- Tablet / phone ---------- */
 @media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
-@media (max-width: 900px) { .sourceControl { margin-inline-start: 0; } }
 @media (max-width: 760px) {
   .filters, .boardPlaque { padding: 24px; }
 }
@@ -383,10 +390,12 @@ a.specLink:hover .specName { color: var(--atlas-accent-strong); }
   .scoreInner { grid-template-columns: auto; }
   .scoreInner .bar { display: none; }
   .search, .select { min-height: 44px; }
-  .compareRank, .compareLong, .compareAgree { display: none; }
-  .compareShort { display: inline; }
+  .compareRank, .compareAgree { display: none; }
   .compareCol { width: 52px; }
+  .compareSpecHead { min-width: 140px; }
   .compareTable th, .compareTable td { padding-inline: 4px; }
+  /* The spec column stays put while the source columns scroll under it. */
+  .compareTable .specCell, .compareTable .compareSpecHead { position: sticky; inset-inline-start: 0; z-index: 1; background: var(--atlas-surface); }
 }
 @media (max-width: 600px) {
   .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }

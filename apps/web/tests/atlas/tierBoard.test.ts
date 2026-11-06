@@ -37,3 +37,38 @@ describe("tier board rows", () => {
     assert.equal(specInfo(names, "mage", "fire"), undefined);
   });
 });
+
+import { listParams, sourceKey, isTierMode, isBracket } from "../../components/blocks/wow/tierWorkspace/tierSourceKeys.ts";
+
+describe("tier source requests", () => {
+  it("keys a list by every part its mode uses", () => {
+    assert.equal(sourceKey({ source: "wowhead", mode: "mythic_plus" }), "wowhead|mythic_plus");
+    assert.equal(sourceKey({ source: "ugg", mode: "raid", difficulty: "raid_myth" }), "ugg|raid|raid_myth");
+    assert.equal(sourceKey({ source: "gildra", mode: "pvp", bracket: "shuffle", region: "eu" }), "gildra|pvp|shuffle|eu");
+    assert.notEqual(sourceKey({ source: "gildra", mode: "pvp", bracket: "3v3" }), sourceKey({ source: "gildra", mode: "pvp", bracket: "2v2" }));
+  });
+
+  it("asks the API for the source, bracket and region of the open tab", () => {
+    assert.equal(listParams({ source: "gildra", mode: "pvp", bracket: "blitz", region: "all" }, "healer").toString(), "activity=pvp&role=healer&limit=60&bracket=blitz");
+    assert.equal(listParams({ source: "murlok", mode: "pvp", bracket: "rbg", region: "us" }, "dps").toString(), "activity=pvp&role=dps&limit=60&source=murlok&bracket=rbg&region=us");
+    // Only u.gg and wow.gg split raids by difficulty.
+    assert.equal(listParams({ source: "wowhead", mode: "raid", difficulty: "raid_myth" }, "tank").get("difficulty"), null);
+    assert.equal(listParams({ source: "wowgg", mode: "raid", difficulty: "raid_myth" }, "tank").get("difficulty"), "raid_myth");
+    const slice = listParams({ source: "wowgg", mode: "mythic_plus", selection: { type: "dungeon", id: "12", addon: "midnight", keyType: "high" } }, "dps");
+    assert.deepEqual([slice.get("selectionType"), slice.get("selectionId"), slice.get("keyType")], ["dungeon", "12", "high"]);
+  });
+
+  it("accepts only known modes and brackets from the URL", () => {
+    assert.equal(isTierMode("pvp"), true);
+    assert.equal(isTierMode("arena"), false);
+    assert.equal(isBracket("shuffle"), true);
+    assert.equal(isBracket("5v5"), false);
+  });
+
+  it("reads the arena numbers and the source's change marker", () => {
+    const board = fromTierEntry(entry(1, "S", { rating: 2650.5, players: 120, winRate: 0.56, change: "up", sources: 7 }), {});
+    assert.deepEqual([board.rating, board.players, board.winRate, board.change, board.sources], [2650.5, 120, 0.56, "up", 7]);
+    const columns = listColumns([board]);
+    assert.deepEqual([columns.rating, columns.players, columns.winRate, columns.change], [true, true, true, true]);
+  });
+});
