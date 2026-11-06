@@ -38,7 +38,7 @@ export function WowHome({ lang }: { lang: Lang }) {
 
       <AtlasSection id="sections">
         <div className={styles.cards}>
-          {sections.map((section, index) => (
+          {sections.map((section) => (
             <MaterialCard
               key={section.href}
               kit={CARD_KIT}
@@ -46,7 +46,6 @@ export function WowHome({ lang }: { lang: Lang }) {
               src={section.art}
               position={section.position}
               sizes="(max-width: 760px) 100vw, (max-width: 1199px) 50vw, 33vw"
-              priority={index < 3}
               title={t.cards[section.key].title}
               text={t.cards[section.key].text}
               action={t.open}

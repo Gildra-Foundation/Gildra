@@ -1,7 +1,8 @@
-"use client";
-
+// Not a client module: on a server page the kit lookup (every kit's manifest
+// tables) runs on the server and only the button's geometry reaches the browser
+// (MaterialButtonBase is the client part). Client code may still import it.
 import type { ComponentProps } from "react";
-import { AtlasButton, AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
+import type { AtlasButton, AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
 import { materialButtonStyle, type AnyMaterialKit } from "./materialKit";
 import { MaterialSlotButton, MaterialSlotLinkButton } from "./MaterialButtonBase";
 
