@@ -107,14 +107,28 @@
 .specChildren { display: grid; gap: var(--atlas-space-2); }
 
 /* Hub and the strip of other professions. */
-.hubGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
-.hubCard {
-  display: flex; align-items: center; gap: var(--atlas-space-4); min-height: 88px; padding: var(--atlas-space-3) var(--atlas-space-4); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius);
-  background: var(--atlas-glass-fill, var(--atlas-surface)); color: var(--atlas-text-strong); text-decoration: none; transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
+.hubGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); gap: var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.hubGrid > li { display: grid; }
+.hubCard { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--atlas-space-3) var(--atlas-space-5); padding: 28px 32px 30px; }
+.hubCard::after {
+  content: ""; position: absolute; z-index: -1; inset: 18px; pointer-events: none;
+  background: radial-gradient(circle at 18% 30%, color-mix(in srgb, var(--profession-accent, var(--atlas-accent)) 26%, transparent), transparent 55%);
 }
-.hubCard:hover { border-color: var(--atlas-accent); background: var(--atlas-glass-raised, var(--atlas-surface-raised)); }
-.hubCard:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-.hubName { font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.hubIcon { display: inline-flex; border-radius: var(--atlas-radius); filter: drop-shadow(0 0 16px color-mix(in srgb, var(--profession-accent, var(--atlas-accent)) 60%, transparent)); transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
+.hubCard:hover .hubIcon { transform: translateY(-2px) scale(1.04); }
+.hubHead { display: grid; gap: var(--atlas-space-1); min-width: 0; }
+.hubName { margin: 0; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.hubName a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text-strong); text-decoration: none; }
+.hubName a::after { content: ""; position: absolute; inset: 0; }
+.hubName a:hover { color: color-mix(in srgb, var(--profession-accent, var(--atlas-accent)) 45%, var(--atlas-text-strong)); }
+.hubName a:focus-visible { outline: none; }
+.hubCard:has(.hubName a:focus-visible) { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
+.hubLabel { color: var(--material-light, var(--atlas-accent)); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.hubCost { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-1) var(--atlas-space-3); margin: 0; font-size: var(--atlas-text-body); }
+.hubBest { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-1) var(--atlas-space-2); margin: 0; padding-top: var(--atlas-space-3); border-top: 1px solid var(--material-line, var(--atlas-line-soft)); font-size: var(--atlas-text-small); }
+.hubBest svg { color: var(--atlas-positive); }
+.hubBestName { color: var(--atlas-text-strong); font-weight: 600; }
+.hubBestValue { display: inline-flex; margin-inline-start: auto; color: var(--atlas-positive); font-weight: 650; }
 .others { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2) var(--atlas-space-4); margin-top: var(--atlas-space-6); padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); }
 .otherLink { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); text-decoration: none; }
 .otherLink img { border-radius: var(--atlas-radius); }
@@ -127,8 +141,10 @@
   .recipeCell { min-width: 9rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .specSummary::before, .hubCard { transition: none; }
+  .specSummary::before, .hubIcon { transition: none; }
+  .hubCard:hover .hubIcon { transform: none; }
 }
+:global([data-motion="reduced"]) .hubCard:hover .hubIcon, :global([data-ui-motion="reduce"]) .hubCard:hover .hubIcon { transform: none; transition: none; }
 @media (forced-colors: active) {
   .chip input:checked + span, .region[aria-current="true"] { border: 2px solid Highlight; }
 }
@@ -144,3 +160,7 @@
 .coin { display: inline-flex; align-items: center; gap: 3px; }
 .coin img { display: inline-block; flex-shrink: 0; }
 @media (forced-colors: active) { .itemLabel { color: CanvasText; } }
+
+/* Profession accent (professionKit.ts) for everything inside the frame; the wrapper takes no box. */
+.accent { display: contents; }
+.emblem { display: inline-flex; border-radius: 50%; filter: drop-shadow(0 0 22px color-mix(in srgb, var(--profession-accent, var(--atlas-accent)) 60%, transparent)); }

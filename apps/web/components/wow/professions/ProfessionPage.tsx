@@ -4,12 +4,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { MaterialPlaque } from "@/components/wow/shared/materialAtlas";
-import { PROFESSION_KIT } from "./professionKit";
+import { PROFESSION_KIT, professionAccentStyle } from "./professionKit";
 import { ProfessionItemLabel, ProfessionMoney } from "./ProfessionParts";
 import { pairedAlternates, pageOpenGraph } from "@/lib/seo/metadata";
 import { trail, trailLabel } from "@/lib/routes/registry";
-import { loadProfession, loadProfessionPrices, professionList, professionRegion, PROFESSION_REGIONS, type ProfessionRegion } from "@/lib/wow/professions/data";
-import { buyCost, planRoute, professionIconUrl, shoppingList } from "@/lib/wow/professions/leveling";
+import { loadProfession, loadProfessionPrices, loadProfessionRecords, professionList, professionRegion, PROFESSION_REGIONS, type ProfessionRegion } from "@/lib/wow/professions/data";
+import { buyCost, planRoute, professionIconUrl, shoppingList, specializationUnlocks } from "@/lib/wow/professions/leveling";
+import { runtimeFlags } from "@/lib/flags";
 import type { ProfessionData, ProfessionPrices } from "@/lib/wow/professions/types";
 import { ProfessionKnowledge } from "./ProfessionKnowledge";
 import { ProfessionLeveling } from "./ProfessionLeveling";
@@ -58,8 +59,9 @@ export async function ProfessionPage({ lang, slug, searchParams }: { lang: Lang;
   if (!data) notFound();
   const c = professionsCopy[lang];
   const region = professionRegion((await searchParams)?.region);
-  const { prices } = await loadProfessionPrices(data, region);
-  const crafting = data.kind !== "gathering" && data.recipes.length > 3;
+  const crafts = data.kind !== "gathering" && data.recipes.length > 3;
+  const [{ prices }, records] = await Promise.all([loadProfessionPrices(data, region), crafts ? loadProfessionRecords(data, lang) : Promise.resolve({})]);
+  const crafting = crafts;
   const total = crafting ? levelingTotal(data, prices) : null;
   const weekly = sum(data.knowledge.weekly.filter((s) => s.kind !== "gathering" && s.kind !== "disenchanting"));
   const oneTime = sum(data.knowledge.oneTime) + data.knowledge.treasures.reduce((t, x) => t + x.points, 0);
@@ -73,14 +75,14 @@ export async function ProfessionPage({ lang, slug, searchParams }: { lang: Lang;
   const others = professionList.filter((p) => p.slug !== slug);
 
   return <AtlasFrame lang={lang} scene="articles" className={styles.page} dataAttributes={{ "data-profession": data.slug }}>
+    <div className={styles.accent} style={professionAccentStyle(data.slug)}>
     <AtlasHero align="start" className={styles.hero} eyebrow={`${c.eyebrow} · ${c.kinds[data.kind]}`} title={data.name[lang]} lede={c.lede[data.kind]}
-      emblem={<Image src={professionIconUrl(data.icon) ?? ""} alt="" width={56} height={56} unoptimized priority />} stats={stats}
+      emblem={<span className={styles.emblem}><Image src={professionIconUrl(data.icon) ?? ""} alt="" width={56} height={56} unoptimized priority /></span>} stats={stats}
       breadcrumbs={trail(lang, "professions", { label: data.name[lang] })} breadcrumbsLabel={trailLabel(lang)} />
 
     {crafting ? <AtlasSection id="leveling" title={c.leveling} aside={<RegionSwitch lang={lang} slug={slug} region={region} anchor="leveling" />}>
-      <MaterialPlaque kit={PROFESSION_KIT} className={styles.plaque}>
-        <ProfessionLeveling lang={lang} recipes={data.recipes} items={data.items} prices={prices} maxSkill={data.maxSkill} />
-      </MaterialPlaque>
+      <ProfessionLeveling lang={lang} recipes={data.recipes} items={data.items} prices={prices} maxSkill={data.maxSkill} trainer={data.trainer}
+        unlocks={specializationUnlocks(data.specializations)} currencies={data.currencies ?? {}} records={records} libraryOpen={runtimeFlags().catalogPublic} icon={data.icon} />
     </AtlasSection> : null}
 
     {crafting && Object.keys(prices).length ? <AtlasSection id="profit" title={c.profit}>
@@ -125,5 +127,6 @@ export async function ProfessionPage({ lang, slug, searchParams }: { lang: Lang;
         <Image src={professionIconUrl(p.icon) ?? ""} alt="" width={24} height={24} unoptimized loading="lazy" />{p.name[lang]}
       </Link>)}
     </nav>
+    </div>
   </AtlasFrame>;
 }

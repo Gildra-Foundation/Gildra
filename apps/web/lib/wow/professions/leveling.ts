@@ -1,10 +1,13 @@
-import type { ProfessionItem, ProfessionPrice, ProfessionPrices, ProfessionRecipe, RecipeSource } from "./types";
+import type { L10n, ProfessionItem, ProfessionPrice, ProfessionPrices, ProfessionRecipe, RecipeSource, SpecializationNode } from "./types";
 
 /** The auction house keeps 5% of every sale. */
 export const AUCTION_CUT = 0.05;
 export const PROFESSION_MAX_SKILL = 100;
-/** Recipes every crafter can get without buying them: known, trainer, research and specialization unlocks. */
-export const DEFAULT_ROUTE_SOURCES: readonly RecipeSource[] = ["start", "trainer", "research", "specialization"];
+/**
+ * Recipes every crafter can count on without buying them: known, trainer and specialization unlocks. Discoveries open
+ * on their own and are not guaranteed, so the player adds them when they have them.
+ */
+export const DEFAULT_ROUTE_SOURCES: readonly RecipeSource[] = ["start", "trainer", "specialization"];
 export const ROUTE_SOURCES: readonly RecipeSource[] = ["start", "trainer", "research", "specialization", "vendor", "quest", "drop"];
 
 type Items = Record<string, ProfessionItem>;
@@ -43,12 +46,33 @@ export function skillUpChance(recipe: Pick<ProfessionRecipe, "yellow" | "grey">,
 }
 
 /**
- * Lowest skill at which the route uses a recipe. Starting and trainer recipes are there from the first point; a recipe
- * unlocked later (research, specialization, a vendor, a drop) is taken no earlier than 20 points before it turns
- * yellow, so the route does not lean on a high-end recipe a beginner cannot have yet.
+ * Lowest skill at which the route uses a recipe: the skill it is learned at when known. Otherwise starting and trainer
+ * recipes are there from the first point, and a recipe unlocked later (discovery, specialization, a vendor, a drop) is
+ * taken no earlier than 20 points before it turns yellow, so the route does not lean on a recipe a beginner cannot have.
  */
-export function recipeFloor(recipe: Pick<ProfessionRecipe, "source" | "yellow">) {
+export function recipeFloor(recipe: Pick<ProfessionRecipe, "source" | "yellow" | "learn">) {
+  if (recipe.learn?.skill) return Math.max(1, recipe.learn.skill);
   return recipe.source === "start" || recipe.source === "trainer" ? 1 : Math.max(1, recipe.yellow - 20);
+}
+
+export type SpecializationUnlock = { tree: L10n; node: L10n; at: number };
+
+/** Recipe spell → the specialization node that teaches it and the points spent there. */
+export function specializationUnlocks(trees: readonly SpecializationNode[]) {
+  const unlocks: Record<number, SpecializationUnlock> = {};
+  const walk = (node: SpecializationNode, tree: L10n) => {
+    for (const perk of node.perks) if (perk.recipe && !unlocks[perk.recipe]) unlocks[perk.recipe] = { tree, node: node.name, at: perk.at };
+    node.children.forEach((child) => walk(child, tree));
+  };
+  trees.forEach((root) => walk(root, root.name));
+  return unlocks;
+}
+
+export type SkillBand = { orange: number; yellow: number; green: number; grey: number };
+/** Where a recipe is orange (certain), yellow, green (rare) and grey (none) — the game's colours of a recipe's difficulty. */
+export function skillBand(recipe: Pick<ProfessionRecipe, "yellow" | "grey">): SkillBand {
+  const green = Math.round((recipe.yellow + recipe.grey) / 2);
+  return { orange: 0, yellow: recipe.yellow, green, grey: recipe.grey };
 }
 
 export type RouteStep = { recipe: ProfessionRecipe; from: number; to: number; crafts: number; cost: number | null };
