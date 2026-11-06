@@ -1,0 +1,47 @@
+/*
+  Page hand-over (components/motion/RouteTransitionRuntime.tsx). React starts a
+  View Transition in the commit of the new page; <html data-route-turn> marks the
+  ones that are page turns. The old picture stays opaque and the new page fades
+  in over it while rising 8 px: a true cross-fade with no dip to the bare
+  background (fading both pictures shows it through), 200 ms on the atlas curve.
+  The top bar is captured apart and shows its new state at once, so it stays still.
+  In-page switches use the same tempo (packages/atlas-ui/src/swapMotion.ts).
+*/
+:root {
+  --atlas-route-duration: 200ms;
+  --atlas-route-shift: 8px;
+}
+
+/* Clicks go to the live page underneath (the new page is the one fading in). */
+html[data-route-turn]::view-transition { pointer-events: none; }
+html[data-route-turn]::view-transition-group(root) { animation: none; }
+html[data-route-turn]::view-transition-image-pair(root) { isolation: auto; }
+html[data-route-turn]::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html[data-route-turn]::view-transition-new(root) {
+  animation: atlas-route-in var(--atlas-route-duration) var(--atlas-ease) both;
+  mix-blend-mode: normal;
+}
+/* A same-page switch by link (filters, regions, paging): the page cross-fades in place. */
+html[data-route-turn="swap"]::view-transition-new(root) { animation-name: atlas-swap-in; }
+@keyframes atlas-swap-in {
+  from { opacity: 0; }
+}
+@keyframes atlas-route-in {
+  from { opacity: 0; translate: 0 var(--atlas-route-shift); }
+}
+
+/* The top bar (WorkspaceNavigatorContent's <header>), named here: a CSS module
+   would hash the name. */
+html[data-route-turn] header[data-toolbar-path] { view-transition-name: atlas-toolbar; }
+html[data-route-turn]::view-transition-group(atlas-toolbar) { animation: none; z-index: 1; }
+html[data-route-turn]::view-transition-old(atlas-toolbar) { display: none; }
+html[data-route-turn]::view-transition-new(atlas-toolbar) { animation: none; }
+
+/* Less motion: the system setting. The site's own switch never arms a turn
+   (and motion-preference.css stops every view-transition animation). */
+@media (prefers-reduced-motion: reduce) {
+  html[data-route-turn]::view-transition-new(root) { animation: none; }
+}
