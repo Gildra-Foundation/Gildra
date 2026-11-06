@@ -37,6 +37,8 @@ SEASON_RE = re.compile(r"^season-[a-z0-9-]+$")
 ISO_RE = re.compile(r"^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$")
 DAY_RE = re.compile(r"^20[0-9]{2}-[01][0-9]-[0-3][0-9]$")
 ROLES = ("tank", "healer", "dps")
+HISTORY_DAYS = 120
+COHORT_SCOPES = (*REGIONS, "world")
 
 
 class DatasetValidationError(ValueError):
@@ -101,6 +103,24 @@ def validate_candidate(payload: dict[str, Any], *, previous_run_count: int | Non
         _check(scores == sorted(scores, reverse=True), f"cutoffs {region}: percentiles out of order")
         for series in block.get("history") or []:
             _check(all(DAY_RE.fullmatch(str(point[0])) and 0 <= float(point[1]) < 6000 for point in series.get("points") or []), f"cutoffs {region}: invalid history")
+    world = payload.get("world_cutoffs")
+    if world is not None:
+        scores = [tier.get("score") for tier in world.get("tiers") or []]
+        _check(bool(scores) and all(isinstance(score, (int, float)) and 0 < score < 6000 for score in scores), "world cutoffs: invalid scores")
+        _check(scores == sorted(scores, reverse=True), "world cutoffs: percentiles out of order")
+    cohorts = payload.get("spec_cohorts") or {}
+    _check(isinstance(cohorts, dict), "spec cohorts must be an object")
+    for scope, block in cohorts.items():
+        _check(scope in COHORT_SCOPES, f"spec cohorts: unknown scope {scope}")
+        rows = block.get("specs") or []
+        _check(10 <= len(rows) <= 60, f"spec cohorts {scope}: spec count outside 10..60")
+        for row in rows:
+            _check(isinstance(row.get("id"), int) and isinstance(row.get("population"), int) and row["population"] >= 0
+                   and isinstance(row.get("title"), int) and 0 <= row["title"] <= row["population"], f"spec cohorts {scope}: invalid counts")
+            values = [row.get("p01"), row.get("p1"), row.get("p10")]
+            _check(all(isinstance(value, (int, float)) and 0 <= value < 6000 for value in values), f"spec cohorts {scope}: invalid cutoffs")
+            _check(isinstance(row.get("trend"), list) and len(row["trend"]) <= 60
+                   and all(isinstance(value, (int, float)) and 0 <= value < 6000 for value in row["trend"]), f"spec cohorts {scope}: invalid trend")
     _check(payload.get("record_count") == len(runs) and payload.get("unique_spec_count") == len(specs), "candidate counts do not match its contents")
     return len(runs)
 
@@ -118,7 +138,29 @@ def _safe_error(exc: BaseException) -> tuple[str, str]:
 
 
 def _semantic_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    return {key: payload[key] for key in ("schema_version", "season", "dungeons", "specs", "runs", "cutoffs")}
+    keys = ("schema_version", "season", "dungeons", "specs", "runs", "cutoffs", "world_cutoffs", "spec_cohorts")
+    return {key: payload[key] for key in keys if key in payload}
+
+
+def presence_day(payload: dict[str, Any], day: str) -> dict[str, Any]:
+    """Runs and runs with each spec per region of a candidate: one day of the presence history."""
+    runs: dict[str, int] = {}
+    specs: dict[str, dict[str, int]] = {}
+    for run in payload["runs"]:
+        region = run["rg"]
+        runs[region] = runs.get(region, 0) + 1
+        counts = specs.setdefault(region, {})
+        for spec in {run["t"], run["h"], *run["d"]}:
+            counts[str(spec)] = counts.get(str(spec), 0) + 1
+    return {"date": day, "runs": runs, "specs": specs}
+
+
+def merge_presence_history(previous: Any, payload: dict[str, Any], day: str) -> list[dict[str, Any]]:
+    """The previous snapshot's history plus today's point (replacing an earlier one of the same day)."""
+    history = [item for item in previous or [] if isinstance(item, dict) and DAY_RE.fullmatch(str(item.get("date") or ""))
+               and item["date"] < day and isinstance(item.get("runs"), dict) and isinstance(item.get("specs"), dict)]
+    history.append(presence_day(payload, day))
+    return sorted(history, key=lambda item: item["date"])[-HISTORY_DAYS:]
 
 
 def _public_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -170,16 +212,20 @@ def refresh_mplus_runs_raiderio(scheduled_for: date, *, trigger: str = "schedule
                     cursor.execute("UPDATE datasets SET last_attempt_at = now(), updated_at = now() WHERE id = %s", (dataset_id,))
                     previous_runs = None
                     previous_hash = None
+                    previous_history = None
                     if current_snapshot_id:
-                        cursor.execute("SELECT page_count, content_hash, payload->'record_count' FROM dataset_snapshots WHERE id = %s", (current_snapshot_id,))
+                        cursor.execute("SELECT page_count, content_hash, payload->'record_count', payload->'presence_history' FROM dataset_snapshots WHERE id = %s", (current_snapshot_id,))
                         previous = cursor.fetchone()
                         if previous:
                             previous_hash = bytes(previous[1])
                             previous_runs = int(previous[2]) if previous[2] is not None else None
+                            previous_history = previous[3]
 
             payload = collect_raiderio_mplus()
             rows = validate_candidate(payload, previous_run_count=previous_runs)
             snapshot_hash = _sha256(_semantic_payload(payload))
+            # Carried forward outside the hash: a day without new runs stays a skipped refresh.
+            payload["presence_history"] = merge_presence_history(previous_history, payload, started_at.date().isoformat())
             credits = Decimal(payload["credits_spent"] or 0)
             unchanged = previous_hash is not None and previous_hash == snapshot_hash
             snapshot_id: UUID | None = current_snapshot_id if unchanged else None

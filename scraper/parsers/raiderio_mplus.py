@@ -9,7 +9,13 @@ these endpoints are read:
 - ``/api/v1/mythic-plus/static-data`` — the current season and its dungeons;
 - ``/api/v1/mythic-plus/runs`` — the leaderboard of timed runs per dungeon and
   region, 20 runs a page (pages 0..100 without an access key);
-- ``/api/v1/mythic-plus/season-cutoffs`` — rating percentiles per region.
+- ``/api/v1/mythic-plus/season-cutoffs`` — rating percentiles per region;
+- ``/api/v1/mythic-plus/cutoff-analysis/summary`` — the world's rating
+  percentiles and their daily history (one request);
+- ``/api/v1/mythic-plus/cutoff-analysis`` (``category=specs``) — every
+  specialization's rated characters: count, how many sit in the region's top
+  0.1 %, the spec's own 0.1/1/10 % cutoffs and the weekly top-1 % trend
+  (one request per region and one for the world).
 
 The sample is the top of every dungeon's leaderboard: ``PAGES`` pages per
 region and dungeon (defaults: 15 for US and EU, 4 for KR and TW), i.e. about
@@ -30,7 +36,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Callable
 
 API_BASE = "https://raider.io/api/v1/mythic-plus"
@@ -43,6 +49,8 @@ PAGE_SIZE = 20
 MAX_PAGE = 100
 MAX_BODY_BYTES = 4_000_000
 CUTOFF_TIERS = (("p999", 0.1), ("p990", 1.0), ("p900", 10.0), ("p750", 25.0), ("p600", 40.0))
+COHORT_PERCENTILES = (("p01", 0.1), ("p1", 1.0), ("p10", 10.0))
+TREND_WEEKS = 12
 MILESTONES = ("keystoneMaster", "keystoneHero", "keystoneLegend", "keystoneMyth")
 ROLE_SLOTS = {"tank": 1, "healer": 1, "dps": 3}
 # One request per second; a 429 is honoured with its Retry-After.
@@ -235,6 +243,80 @@ def parse_cutoffs(payload: dict[str, Any]) -> dict[str, Any]:
             "milestones": milestones, "all_timed": all_timed}
 
 
+def _day(value: Any) -> str | None:
+    text = str(value or "")[:10]
+    try:
+        datetime.strptime(text, "%Y-%m-%d")
+    except ValueError:
+        return None
+    return text
+
+
+def parse_world_cutoffs(payload: dict[str, Any]) -> dict[str, Any]:
+    """World rating percentiles (all factions) and their daily history, shaped like a region's cutoffs."""
+    overall = next((item for item in payload.get("populations") or []
+                    if item.get("key") == "overall" and item.get("faction", "all") == "all"), None)
+    if not overall:
+        raise ValueError("cutoff summary has no overall population")
+    tiers = []
+    for key, percent in CUTOFF_TIERS:
+        entry = next((item for item in overall.get("percentiles") or [] if item.get("percentile") == percent), None)
+        if entry and isinstance(entry.get("cutoffScore"), (int, float)):
+            tiers.append({"key": key, "percent": percent, "score": round(float(entry["cutoffScore"]), 1),
+                          "players": int(entry.get("tailSize") or 0)})
+    keys = {percent: key for key, percent in CUTOFF_TIERS}
+    series: dict[str, list[list[Any]]] = {key: [] for key, _ in CUTOFF_TIERS}
+    for point in sorted(payload.get("history") or [], key=lambda item: str(item.get("date"))):
+        day = _day(point.get("date"))
+        for cutoff in point.get("cutoffs") or []:
+            key = keys.get(cutoff.get("percentile"))
+            if day and key and isinstance(cutoff.get("score"), (int, float)):
+                series[key].append([day, round(float(cutoff["score"]), 1)])
+    return {"updated_at": _iso(payload["updatedAt"]) if payload.get("updatedAt") else None,
+            "players": int(overall.get("population") or 0), "tiers": tiers,
+            "history": [{"key": key, "points": points} for key, points in series.items() if points]}
+
+
+def parse_spec_cohorts(payload: dict[str, Any]) -> dict[str, Any]:
+    """Rated characters per spec: count, title-range count, own cutoffs and the weekly top-1% trend."""
+    trends: dict[int, list[tuple[str, float]]] = {}
+    for series in (payload.get("chart") or {}).get("series") or []:
+        key = str(series.get("cohortKey") or "")
+        if not key.startswith("spec:") or series.get("percentile") != 1:
+            continue
+        points = [(day, float(item["score"])) for item in series.get("observations") or []
+                  if (day := _day(item.get("date"))) and isinstance(item.get("score"), (int, float))]
+        trends[int(key[5:])] = sorted(points)
+    end = max((points[-1][0] for points in trends.values() if points), default=None)
+    specs = []
+    for cohort in payload.get("cohorts") or []:
+        if cohort.get("semantics") != "spec" or not isinstance(cohort.get("specId"), int):
+            continue
+        cutoffs = {item.get("percentile"): item.get("cutoffScore") for item in cohort.get("percentiles") or []}
+        if not all(isinstance(cutoffs.get(percent), (int, float)) for _, percent in COHORT_PERCENTILES):
+            continue
+        row = {"id": cohort["specId"], "population": int(cohort.get("population") or 0),
+               "title": int((cohort.get("titleContext") or {}).get("tailSize") or 0)}
+        for key, percent in COHORT_PERCENTILES:
+            row[key] = round(float(cutoffs[percent]), 1)
+        # Weekly points counted back from the common last day, oldest first.
+        daily = dict(trends.get(cohort["specId"]) or [])
+        weekly = []
+        if end:
+            cursor = datetime.strptime(end, "%Y-%m-%d")
+            for _ in range(TREND_WEEKS):
+                day = cursor.strftime("%Y-%m-%d")
+                if day not in daily:
+                    break
+                weekly.append(round(daily[day], 1))
+                cursor -= timedelta(days=7)
+        row["trend"] = list(reversed(weekly))
+        specs.append(row)
+    specs.sort(key=lambda item: item["id"])
+    updated = payload.get("updatedAt")
+    return {"updated_at": _iso(updated) if updated else None, "trend_end": end, "specs": specs}
+
+
 def _pages() -> dict[str, int]:
     pages = dict(DEFAULT_PAGES)
     raw = os.environ.get("RAIDERIO_MPLUS_PAGES", "")
@@ -284,6 +366,28 @@ def collect_raiderio_mplus(fetch: Fetch = fetch_json, *, now: datetime | None = 
         except (RuntimeError, ValueError, KeyError):
             # Cutoffs enrich the stats page; the run sample alone is still a complete snapshot.
             continue
+    world_cutoffs = None
+    try:
+        world_cutoffs = parse_world_cutoffs(get("/cutoff-analysis/summary", {"season": season["slug"], "region": "world"}))
+    except (RuntimeError, ValueError, KeyError):
+        pass
+    spec_cohorts: dict[str, Any] = {}
+    for region in (*REGIONS, "world"):
+        try:
+            cohorts = parse_spec_cohorts(get("/cutoff-analysis", {"season": season["slug"], "region": region,
+                                                                  "category": "specs", "percentile": 1, "density": "false"}))
+        except (RuntimeError, ValueError, KeyError):
+            continue
+        if cohorts["specs"]:
+            spec_cohorts[region] = cohorts
+    if "world" in spec_cohorts:
+        # The title range (top 0.1%) is regional: the world's count is the sum of the regions read.
+        titles: dict[int, int] = {}
+        for region in REGIONS:
+            for spec in (spec_cohorts.get(region) or {}).get("specs") or []:
+                titles[spec["id"]] = titles.get(spec["id"], 0) + spec["title"]
+        for spec in spec_cohorts["world"]["specs"]:
+            spec["title"] = titles.get(spec["id"], 0)
     ordered = sorted(runs.values(), key=lambda row: (row["dg"], -row["lv"], row["ms"], row["id"]))
     return {
         "schema_version": 1,
@@ -297,6 +401,8 @@ def collect_raiderio_mplus(fetch: Fetch = fetch_json, *, now: datetime | None = 
         "sample": {"page_size": PAGE_SIZE, "pages": {region: pages.get(region, 0) for region in REGIONS}},
         "runs": ordered,
         "cutoffs": cutoffs,
+        **({"world_cutoffs": world_cutoffs} if world_cutoffs else {}),
+        "spec_cohorts": spec_cohorts,
         "page_count": request_count,
         "record_count": len(ordered),
         "dropped_runs": dropped,
