@@ -14,7 +14,7 @@ import type { RunDetail } from "./mythicPlusRunTypes";
  * credentials (WARCRAFT_LOGS_CLIENT_ID/SECRET, server only). A report is found through the players' rankings
  * for the dungeon: the ranked run with the same clear time and end; its fight data never changes, so it is kept
  * for 30 days, the "no report" answer for 6 hours (players upload late). Every answer carries the hourly points
- * budget; past 70% of it no new lookups start until the hour resets.
+ * budget; past WARCRAFT_LOGS_HOURLY_POINTS of it no new lookups start until the hour resets.
  */
 const tokenUrl = "https://www.warcraftlogs.com/oauth/token";
 const apiUrl = "https://www.warcraftlogs.com/api/v2/client";
@@ -34,8 +34,8 @@ const enemiesBySlug = combat as unknown as CombatFile;
 
 let token: { value: string; expires: number } | null = null;
 let budget = { spent: 0, limit: 3600, resetAt: 0 };
-/** Points per hour the run pages may spend: WARCRAFT_LOGS_HOURLY_POINTS (default 1000), never more than 70% of the client's limit. */
-const hourlyPointsCap = () => Math.min(budget.limit * 0.7, Number(process.env.WARCRAFT_LOGS_HOURLY_POINTS) || 1000);
+/** Points per hour the run pages may spend: WARCRAFT_LOGS_HOURLY_POINTS (default 1000), never more than the client's hourly limit. */
+const hourlyPointsCap = () => Math.min(budget.limit, Number(process.env.WARCRAFT_LOGS_HOURLY_POINTS) || 1000);
 let windowStart = 0, windowCalls = 0;
 
 class Skip extends Error {}
