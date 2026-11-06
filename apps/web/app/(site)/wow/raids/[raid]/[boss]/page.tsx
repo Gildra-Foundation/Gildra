@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { RaidBossGuide } from "@/components/wow/raid/RaidBossGuide";
-import { getMidnightRaid, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
+import { getMidnightRaid, raidRouteSlugs } from "@/lib/data/wow/raid/midnightRaidData";
 
 // Every valid slug is prerendered; anything else is a real 404, not a 200 page that says 404.
 export const dynamicParams = false;
@@ -9,7 +9,7 @@ export const dynamicParams = false;
 type PageProps = { params: Promise<{ raid: string; boss: string }> };
 
 export function generateStaticParams() {
-  return raidSlugs.flatMap((raidSlug) => {
+  return raidRouteSlugs.flatMap((raidSlug) => {
     const raid = getMidnightRaid(raidSlug);
     return raid?.bosses.map((boss) => ({ raid: raidSlug, boss: boss.slug })) ?? [];
   });
@@ -34,7 +34,5 @@ export default async function Page({ params }: PageProps) {
   const boss = raid?.bosses.find((entry) => entry.slug === bossSlug);
   if (!raid || !boss) notFound();
   if (raid.slug === "the-voidspire") permanentRedirect(`/wow/raids/the-voidspire#boss=${boss.slug}`);
-  if (raid.slug === "the-dreamrift") permanentRedirect(`/wow/raids/the-dreamrift#boss=${boss.slug}`);
-  if (raid.slug === "march-on-queldanas") permanentRedirect(`/wow/raids/march-on-queldanas#boss=${boss.slug}`);
   return <RaidBossGuide raid={raid} boss={boss} locale="en" />;
 }

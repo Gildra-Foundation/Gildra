@@ -3,6 +3,9 @@ import { seasonOnePublication } from "@/lib/data/wow";
 export const raidSlugs = ["the-voidspire", "the-dreamrift", "march-on-queldanas"] as const;
 
 export type RaidSlug = (typeof raidSlugs)[number];
+/** Raids served by the dynamic app/…/wow/raids/[raid] route. The Dreamrift and March on
+ *  Quel'Danas have routes of their own, so each page ships only its own client code. */
+export const raidRouteSlugs: readonly RaidSlug[] = raidSlugs.filter((slug) => slug !== "the-dreamrift" && slug !== "march-on-queldanas");
 export type RaidAudience = "raid" | "tank" | "healer" | "dps";
 
 export type RaidMechanic = {
