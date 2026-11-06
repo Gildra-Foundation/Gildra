@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
-import { ArrowDown, ArrowLeft, ListOrdered, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowLeft, ListOrdered, Route, Sparkles, Users } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { MaterialLinkButton, MaterialPlaque, MythicHubBackdrop, MythicHubMotion } from "@/components/wow/shared/materialAtlas";
 import { loadMythicPlusLeaderboard } from "@/lib/games/wow/mplusLeaderboard";
@@ -60,9 +60,15 @@ export async function SpecLeaderboardPage({ locale, spec, searchParams }: { loca
       </div>
 
       {!page ? (
-        <MaterialPlaque kit={pageKit} className={styles.statePlaque}>
-          <LeaderboardState state={result.state === "error" ? "error" : "empty"} copy={copy} />
-        </MaterialPlaque>
+        <>
+          <MaterialPlaque kit={pageKit} className={styles.statePlaque}>
+            <LeaderboardState state={result.state === "error" ? "error" : "empty"} copy={copy} />
+          </MaterialPlaque>
+          <div className={styles.stateActions}>
+            <MaterialLinkButton kit={pageKit} fit="stack" href={`${prefix}/wow/mythic-plus/routes?specs=${spec.theme.specId}`} icon={<Route aria-hidden="true" />}>{copy.toRuns}</MaterialLinkButton>
+            <MaterialLinkButton kit="den-of-nalorakk" fit="stack" href={`${prefix}/wow/mythic-plus/comps?specs=${spec.theme.specId}`} icon={<Users aria-hidden="true" />}>{copy.toComps}</MaterialLinkButton>
+          </div>
+        </>
       ) : (
         <>
           {page.status === "stale" ? <AtlasNotice tone="caution">{copy.stale}</AtlasNotice> : null}

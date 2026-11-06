@@ -1,14 +1,15 @@
+import Image from "next/image";
 import type { CSSProperties } from "react";
-import { ArrowUpRight, Clapperboard, Users } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Clapperboard, Users } from "lucide-react";
 import { AtlasField, AtlasFrame, AtlasHero, AtlasSection, AtlasSelect } from "@/components/atlas";
 import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { MaterialLinkButton, MaterialPlaque, MythicHubBackdrop, MythicHubMotion } from "@/components/wow/shared/materialAtlas";
-import { dungeonArtDirections } from "@/lib/wow/dungeonArtDirection";
-import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
+import { dungeonArtDirections, dungeonBackdropSmall } from "@/lib/wow/dungeonArtDirection";
+import { runHref } from "@/lib/games/wow/mythicPlusRunTypes";
 import { loadMythicPlusRuns } from "@/lib/games/wow/mythicPlusRuns";
 import { clock, runsRoles, runsSorts, withSpec, withoutSpec, type RunsQuery, type RunsResponse, type RunsRole } from "@/lib/games/wow/mythicPlusRunsTypes";
 import { trail } from "@/lib/routes/registry";
-import { FilterForm, GroupIcons, hrefWith, LoadState, NoMatch, number, percent, roleIcons, SelectedSpec, SourceLine, specIndex, specLabel, SpecToken, StaleNotice, type Locale } from "./CommunityParts";
+import { dungeonLabel, DungeonStrip, FilterForm, GroupIcons, isSeasonDungeon, hrefWith, LoadState, NoMatch, number, percent, roleIcons, SelectedSpec, SourceLine, specIndex, specLabel, SpecToken, StaleNotice, type Locale } from "./CommunityParts";
 import { communityCopy, type CommunityCopy } from "./communityCopy";
 import styles from "./community.module.css";
 
@@ -54,10 +55,11 @@ export async function RoutesPage({ locale, query }: { locale: Locale; query: Run
         {stats.length ? <div className={styles.heroFacts}><AtlasStats items={stats} /></div> : null}
       </div>
       {data ? <StaleNotice data={data} copy={copy} /> : null}
-      <FilterForm id="routes-filters" kit={kit} data={data} query={query} copy={copy} action={base} fields={["dungeon", "region", "minLevel"]} extra={sortField} />
+      {data ? <DungeonStrip data={data} query={query} base={base} copy={copy} locale={locale} label={copy.dungeon} /> : null}
+      <FilterForm id="routes-filters" kit={kit} data={data} query={query} copy={copy} action={base} fields={data ? ["region", "minLevel"] : ["dungeon", "region", "minLevel"]} extra={sortField} locale={locale} />
       {!data ? <LoadState result={result} kit={kit} copy={copy} resetHref={base} /> : (
         <>
-          <SpecPicker data={data} query={query} copy={copy} base={base} />
+          <SpecPicker data={data} query={query} copy={copy} base={base} locale={locale} />
           <div data-hub-reveal><Results data={data} query={query} copy={copy} locale={locale} base={base} /></div>
         </>
       )}
@@ -66,11 +68,11 @@ export async function RoutesPage({ locale, query }: { locale: Locale; query: Run
   );
 }
 
-type Ctx = { data: RunsResponse; query: RunsQuery; copy: CommunityCopy; base: string };
+type Ctx = { data: RunsResponse; query: RunsQuery; copy: CommunityCopy; base: string; locale: Locale };
 
 /** Your specs: chosen ones (links that remove them) and every spec of a role that still has room (links that add it). */
-function SpecPicker({ data, query, copy, base }: Ctx) {
-  const specs = specIndex(data.specs);
+function SpecPicker({ data, query, copy, base, locale }: Ctx) {
+  const specs = specIndex(data.specs, locale);
   const order: Record<RunsRole, number> = { tank: 0, healer: 1, dps: 2 };
   const chosen = [...(query.specs ?? [])].sort((a, b) => order[specs.get(a)?.role ?? "dps"] - order[specs.get(b)?.role ?? "dps"]);
   const count = (role: RunsRole) => chosen.filter((id) => specs.get(id)?.role === role).length;
@@ -106,9 +108,10 @@ function SpecPicker({ data, query, copy, base }: Ctx) {
   );
 }
 
-function Results({ data, query, copy, locale, base }: Ctx & { locale: Locale }) {
-  const specs = specIndex(data.specs);
-  const names = new Map(data.dungeons.map((dungeon) => [dungeon.slug, dungeon.name]));
+function Results({ data, query, copy, locale, base }: Ctx) {
+  const specs = specIndex(data.specs, locale);
+  const prefix = locale === "ru" ? "/ru" : "";
+  const names = new Map(data.dungeons.map((dungeon) => [dungeon.slug, dungeonLabel(dungeon.slug, dungeon.name, locale)]));
   const date = new Intl.DateTimeFormat(copy.dateLocale, { day: "numeric", month: "short", timeZone: "UTC" });
   const limit = query.limit ?? pageSize;
   const more = data.runs.length < data.sample.runs && limit < 100;
@@ -122,28 +125,36 @@ function Results({ data, query, copy, locale, base }: Ctx & { locale: Locale }) 
       <MaterialPlaque kit="kings-rest" className={styles.tablePlaque}>
         {data.runs.length ? (
           <ol className={styles.runs}>
-            {data.runs.map((run) => (
-              <li key={run.id} className={styles.run} style={{ "--dungeon-accent": dungeonArtDirections[run.dungeon as DungeonSlug]?.accent } as CSSProperties}>
-                <span className={styles.runKey}>
-                  <b>+{run.level}</b>
-                  <span aria-label={copy.routes.upgrades(run.chests)}>{"★".repeat(run.chests)}</span>
-                </span>
-                <span className={styles.runMain}>
-                  <span className={styles.runDungeon} lang="en">{names.get(run.dungeon) ?? run.dungeon}</span>
-                  <span className={styles.runMeta}>
-                    <span>{clock(run.clearMs)} / {clock(run.timerMs)}</span>
-                    <span>{copy.timeLeft.toLowerCase()} {percent(run.timeLeft, locale)}</span>
-                    <span>{copy.regionsShort[run.region] ?? run.region.toUpperCase()}</span>
-                    <time dateTime={run.completedAt}>{date.format(new Date(run.completedAt))}</time>
-                  </span>
-                </span>
-                <GroupIcons group={run.group} specs={specs} />
-                <span className={styles.runLinks}>
-                  {run.video ? <span className={styles.videoMark} title={copy.routes.video}><Clapperboard aria-hidden="true" /><span className={styles.srOnly}>{copy.routes.video}</span></span> : <span className={styles.videoMark} aria-hidden="true" />}
-                  <a className={styles.rowLink} href={run.url} rel="noreferrer" target="_blank">{copy.routes.openRun}<ArrowUpRight aria-hidden="true" /></a>
-                </span>
-              </li>
-            ))}
+            {data.runs.map((run) => {
+              const season = isSeasonDungeon(run.dungeon) ? run.dungeon : null;
+              const name = names.get(run.dungeon) ?? { name: run.dungeon, lang: "en" };
+              return (
+                <li key={run.id} style={{ "--dungeon-accent": season ? dungeonArtDirections[season].accent : undefined, "--run-used": `${Math.min(100, (run.clearMs / run.timerMs) * 100)}%` } as CSSProperties}>
+                  <a className={styles.run} href={runHref(prefix, run.id)}>
+                    <span className={styles.runArt} aria-hidden="true">
+                      {season ? <Image src={dungeonBackdropSmall(season)} alt="" fill sizes="112px" /> : null}
+                    </span>
+                    <span className={styles.runKey}>
+                      <b>+{run.level}</b>
+                      <span aria-label={copy.routes.upgrades(run.chests)}>{"★".repeat(run.chests)}</span>
+                    </span>
+                    <span className={styles.runMain}>
+                      <span className={styles.runDungeon} lang={name.lang}>{name.name}</span>
+                      <span className={styles.runClock} aria-hidden="true"><span /></span>
+                      <span className={styles.runMeta}>
+                        <span><b>{clock(run.clearMs)}</b> / {clock(run.timerMs)}</span>
+                        <span>{copy.timeLeft.toLowerCase()} {percent(run.timeLeft, locale)}</span>
+                        <span>{copy.regionsShort[run.region] ?? run.region.toUpperCase()}</span>
+                        <time dateTime={run.completedAt}>{date.format(new Date(run.completedAt))}</time>
+                        {run.video ? <span className={styles.videoMark} title={copy.routes.video}><Clapperboard aria-hidden="true" /><span className={styles.srOnly}>{copy.routes.video}</span></span> : null}
+                      </span>
+                    </span>
+                    <GroupIcons group={run.group} specs={specs} />
+                    <ArrowRight className={styles.runArrow} aria-hidden="true" />
+                  </a>
+                </li>
+              );
+            })}
           </ol>
         ) : <NoMatch copy={copy} resetHref={base} />}
         {more ? (

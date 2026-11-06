@@ -1,8 +1,11 @@
 import type { CSSProperties } from "react";
-import { ArrowDown, HeartPulse, LayoutGrid, Shield, Swords } from "lucide-react";
+import { ArrowDown, ChartNoAxesColumn, HeartPulse, LayoutGrid, Shield, Swords, Users } from "lucide-react";
+import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { MaterialLinkButton, MaterialPlaque, MythicHubBackdrop, MythicHubMotion, MythicHubOrnaments } from "@/components/wow/shared/materialAtlas";
 import { loadMythicPlusLeaderboard } from "@/lib/games/wow/mplusLeaderboard";
+import { loadMythicPlusStats } from "@/lib/games/wow/mythicPlusRuns";
+import type { RegionCutoffs } from "@/lib/games/wow/mythicPlusRunsTypes";
 import {
   leaderboardRoles, leaderboardSearch, leaderboardSpec, parseLeaderboardQuery,
   type LeaderboardPage, type LeaderboardRole,
@@ -24,7 +27,8 @@ export async function MythicLeaderboardPage({ locale, searchParams }: { locale: 
   const prefix = locale === "ru" ? "/ru" : "";
   const action = `${prefix}/wow/mythic-plus/leaderboard`;
   const query = parseLeaderboardQuery(await searchParams);
-  const result = await loadMythicPlusLeaderboard(query);
+  const [result, stats] = await Promise.all([loadMythicPlusLeaderboard(query), loadMythicPlusStats({ region: query.region })]);
+  const cutoffs = stats.state === "ready" ? stats.data.cutoffs[query.region] : undefined;
   const crumbs = trail(locale, "mythicPlusLeaderboard");
   const page = result.state === "ready" ? result.page : null;
   const eyebrow = page ? copy.eyebrow(page.season.name, copy.regions[page.region]) : copy.regions[query.region];
@@ -49,12 +53,19 @@ export async function MythicLeaderboardPage({ locale, searchParams }: { locale: 
           ) : undefined}
         />
         <RegionSwitch current={query.region} copy={copy} href={(region) => `${action}${leaderboardSearch({ ...query, region, realm: undefined, page: undefined })}`} />
+        <HeroFacts page={page} cutoffs={cutoffs} locale={locale} />
       </div>
 
       {!page ? (
-        <MaterialPlaque kit={pageKit} className={styles.statePlaque}>
-          <LeaderboardState state={result.state === "error" ? "error" : "empty"} copy={copy} />
-        </MaterialPlaque>
+        <>
+          <MaterialPlaque kit={pageKit} className={styles.statePlaque}>
+            <LeaderboardState state={result.state === "error" ? "error" : "empty"} copy={copy} />
+          </MaterialPlaque>
+          <div className={styles.stateActions}>
+            <MaterialLinkButton kit={pageKit} fit="stack" href={`${prefix}/wow/mythic-plus/stats${query.region !== "eu" ? `?region=${query.region}` : ""}#cutoffs`} icon={<ChartNoAxesColumn aria-hidden="true" />}>{copy.toStats}</MaterialLinkButton>
+            <MaterialLinkButton kit="den-of-nalorakk" fit="stack" href={`${prefix}/wow/mythic-plus/comps`} icon={<Users aria-hidden="true" />}>{copy.toComps}</MaterialLinkButton>
+          </div>
+        </>
       ) : (
         <>
           {page.status === "stale" ? <AtlasNotice tone="caution">{copy.stale}</AtlasNotice> : null}
@@ -77,6 +88,19 @@ export async function MythicLeaderboardPage({ locale, searchParams }: { locale: 
       )}
     </AtlasFrame>
   );
+}
+
+/** Rating that makes the region's top 0.1% and 1%, and the leader's rating: the numbers a player measures against. */
+function HeroFacts({ page, cutoffs, locale }: { page: LeaderboardPage | null; cutoffs: RegionCutoffs | undefined; locale: Locale }) {
+  const copy = leaderboardCopy[locale];
+  const tier = (key: string) => cutoffs?.tiers.find((item) => item.key === key);
+  const leader = page?.entries[0]?.rank === 1 ? page.entries[0] : undefined;
+  const items = [
+    ...(leader ? [{ value: formatScore(leader.score, locale), label: copy.leaderRating }] : []),
+    ...(tier("p999") ? [{ value: Math.round(tier("p999")!.score).toLocaleString(locale), label: copy.top01 }] : []),
+    ...(tier("p990") ? [{ value: Math.round(tier("p990")!.score).toLocaleString(locale), label: copy.top1 }] : []),
+  ];
+  return items.length ? <div className={styles.heroFacts}><AtlasStats items={items} /></div> : null;
 }
 
 function Leaders({ page, locale, copy }: { page: LeaderboardPage; locale: Locale; copy: LeaderboardCopy }) {
