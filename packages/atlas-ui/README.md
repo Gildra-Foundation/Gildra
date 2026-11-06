@@ -65,7 +65,7 @@ import-time side effects.
 | `AtlasTile` | Compact icon link: quick access, next steps, catalogues without artwork. An ordered list uses `index` (amber order number) instead of the same icon on every tile | `href`, `icon`, `title`, `text`, `index` |
 | `AtlasCountUp` | Client: a plain number in `AtlasStats` counts up when its page arrives through in-site navigation (never on a first load); the final value holds the width | used automatically for numeric stats |
 | `AtlasPath` | An ordered journey through illustrated steps (raid encounters in order): numbered seals on one spine, artwork alternating sides, steps slide in from their side on scroll | `steps` (`href`, `title`, `image`, `description`, `meta`, `cta`), `label` |
-| `AtlasDisclosure` | Folding detail (`<details>`): long secondary notes stay in the page but closed — prefer it to deleting real content | `summary`, `open` |
+| `AtlasDisclosure` | Folding detail (`<details>`): long secondary notes stay in the page but closed — prefer it to deleting real content; opens and shuts with an eased height where `::details-content` is supported | `summary`, `open` |
 | `AtlasCard` | Illustrated link card (raid, dungeon, boss); `layout="feature"` for the wide highlighted entry | `href`, `title`, `image`, `eyebrow`, `subtitle`, `description`, `meta`, `cta` (accessible name of the arrow), `artBadge`, `artCaption`, `accent`, `artRatio`. No numbering, no badge that repeats the section title, no caption that is the same on every card |
 | `AtlasPanel` | Framed surface; never nest panels | `tone: default \| raised \| highlight`, `padding` |
 | `AtlasMetaList` | Labelled facts grid (zone, group, reward) | `items: {label, value, icon}[]`, `columns` |
@@ -75,9 +75,10 @@ import-time side effects.
 | `AtlasBreadcrumbs` | Trail (also built into the hero) | `items: {label, href}[]` |
 | `AtlasEmblem` | Seal with an icon | `shape: circle \| diamond \| square`, `size` |
 | `AtlasTable` | Data table on tokens: sticky header, numeric columns, row headers; `layout="cards"` turns each row into a labelled card on phones (short tables), `scroll` keeps a horizontal scroll | `columns: {key, header, label, cell, rowHeader, numeric}[]`, `rows`, `rowKey`, `label`, `caption`, `layout`, `maxWidth` |
-| `AtlasTabs` | Client: ARIA tabs (arrows, Home/End), panels kept in the page | `tabs`, `label`, `defaultTab`, `variant: underline \| segmented`, `onChange` |
+| `AtlasTabs` | Client: ARIA tabs (arrows, Home/End), panels kept in the page; the marker slides and the new panel arrives with the switch motion | `tabs`, `label`, `defaultTab`, `variant: underline \| segmented`, `onChange` |
 | `AtlasField` + `AtlasInput` / `AtlasSelect` / `AtlasCheckbox` / `AtlasRange` | Form controls that work in plain GET forms and server components (`AtlasInput` is Valyro `TextInput`, `AtlasCheckbox` Valyro `Checkbox` on a native input); `AtlasField` adds label, hint and error | `label`, `hint`, `error`, `htmlFor`; `AtlasInput icon` |
 | `AtlasSwitch` | Client: on/off setting on Valyro `Switch` (native checkbox, `role=switch`) | Valyro `SwitchProps`: `checked`, `onCheckedChange`, `label`, `size` |
+| `AtlasSwap` | Client: a block whose content switches in place (filtered list, open source, page of results). On a new `swapKey` the content fades in with a short slide and the height eases (`swapMotion.ts`: `playSwap`, `useSwapMotion` — the one in-page switch motion, also used by `AtlasTabs`). Key it on what is shown, so the previous content stays until the new one is ready | `swapKey`, `direction` |
 | `AtlasSegmented` | Client: one of a few choices (filters, modes) on Valyro `SegmentedControl` (radio group, sliding thumb) | `options`, `value`, `onValueChange`, `size`, `aria-label` |
 | `AtlasTierBoard` | Client, Valyro Pro `TierList`: tier rows with portraits and role filter, "your order" drag mode (mouse, touch, keyboard), copy as text and JSON export; load it lazily | `items`, `tiers`, `roles`, `defaultValue`, `title`, `caption`, `locale` |
 | `AtlasTooltip` | Client: short hover/focus explanation tied by `aria-describedby` | `content`, `placement: top \| bottom`, `focusable` |

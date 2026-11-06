@@ -37,6 +37,25 @@
   padding: var(--atlas-space-2) 0 var(--atlas-space-4);
 }
 
+/* The fold eases open and shut (atlas switch tempo) where the browser can
+   size ::details-content to auto; elsewhere it opens at once as before. The
+   content clips only while it moves: on open, overflow turns visible when the
+   height has arrived, so the open block paints exactly as before. */
+@supports selector(::details-content) {
+  .disclosure { interpolate-size: allow-keywords; }
+  .disclosure::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition: block-size var(--atlas-duration) var(--atlas-ease), content-visibility var(--atlas-duration) allow-discrete, overflow 0s allow-discrete;
+  }
+  .disclosure[open]::details-content {
+    block-size: auto;
+    overflow: visible;
+    transition: block-size var(--atlas-duration) var(--atlas-ease), content-visibility var(--atlas-duration) allow-discrete, overflow 0s var(--atlas-duration) allow-discrete;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chevron { transition: none; }
+  .disclosure::details-content { transition: none; }
 }
