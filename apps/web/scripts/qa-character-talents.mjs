@@ -70,25 +70,31 @@ try {
   }
 
   const treeNames = ["Класс", "Герой", "Специализация"];
+  const treeKinds = { "Класс": "class", "Герой": "hero", "Специализация": "spec" };
+  // All three trees are visible at 1440 px; the switcher only exists on narrow screens.
+  const openTree = async (name) => {
+    const nav = page.getByRole("navigation", { name: "Деревья талантов" });
+    if (await nav.isVisible()) await nav.getByRole("button").nth(treeNames.indexOf(name)).click();
+  };
   for (const treeName of treeNames) {
     await reloadBaseline();
-    await page.getByRole("navigation", { name: "Деревья талантов" }).getByRole("button", { name: new RegExp(`^${treeName}`) }).click();
-    const tree = page.locator(".talent-calculator .tc-tree-canvas");
-    const selected = tree.locator("button.tc-node[aria-pressed='true']");
+    await openTree(treeName);
+    const tree = page.locator(`[data-talent-editor] [data-tree="${treeKinds[treeName]}"]`);
+    const selected = tree.locator("button[data-talent-node][aria-pressed='true']");
     const labels = await selected.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("aria-label") ?? "").filter(Boolean));
     labels.sort((left, right) => Number(right.startsWith("Wrath and Fury")) - Number(left.startsWith("Wrath and Fury")));
     let acceptedInTree = 0;
     for (const label of labels) {
       if (candidates.length >= maxBuilds || acceptedInTree >= Math.ceil(maxBuilds / treeNames.length)) break;
       await reloadBaseline();
-      await page.getByRole("navigation", { name: "Деревья талантов" }).getByRole("button", { name: new RegExp(`^${treeName}`) }).click();
+      await openTree(treeName);
       const button = tree.getByRole("button", { name: label, exact: true });
       const pending = nextCaptured(4000).catch(() => null);
       await button.click({ button: "right" });
       const request = await pending;
       if (!request) continue;
       if (request.candidateLoadout === baselineLoadout || request.removedRanks < 1 || request.addedRanks !== 0) continue;
-      candidates.push({ tree: treeName, talent: label.split(", ранг")[0], ...request });
+      candidates.push({ tree: treeName, talent: label.split(/, \d+\/\d+/)[0], ...request });
       acceptedInTree += 1;
     }
   }
@@ -154,9 +160,9 @@ try {
 
   injectContradiction = true;
   await reloadBaseline();
-  await page.getByRole("navigation", { name: "Деревья талантов" }).getByRole("button", { name: /^Специализация/ }).click();
+  await openTree("Специализация");
   const contradictoryRequest = nextCaptured();
-  await page.locator(".talent-calculator .tc-tree-canvas").getByRole("button", { name: /^Wrath and Fury, ранг 1 из/ }).click({ button: "right" });
+  await page.locator('[data-talent-editor] [data-tree="spec"]').getByRole("button", { name: /^Wrath and Fury, 1\// }).click({ button: "right" });
   await contradictoryRequest;
   await page.getByText("Результат не принят:", { exact: false }).waitFor({ timeout: 10000 });
   injectContradiction = false;
