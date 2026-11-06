@@ -2,6 +2,7 @@ import { routeSections, type SectionId } from "@/lib/routes/registry";
 import { dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { midnightLairEncounters } from "@/lib/data/wow";
 import { raidHubEntries } from "@/components/wow/raid/raidHubData";
+import { talentSpecThemes } from "@/lib/talentSpecThemes";
 
 /**
  * Sections of the route registry that are not listed: /wow/dungeons answers
@@ -23,5 +24,6 @@ export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean
   ...dungeonSlugs.map((slug) => `/wow/mythic-plus/midnight-season-2/${slug}`),
   ...raidHubEntries.map(({ slug }) => `/wow/raids/${slug}`),
   ...midnightLairEncounters.map(({ slug }) => `/wow/lairs/${slug}`),
+  ...talentSpecThemes.map(({ slug }) => `/wow/mythic-plus/leaderboard/${slug}`),
   "/privacy",
 ];

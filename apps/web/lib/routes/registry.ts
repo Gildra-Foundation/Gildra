@@ -28,6 +28,7 @@ export const routeSections = {
   wow: { path: "/wow", title: { en: "World of Warcraft", ru: "World of Warcraft" }, scene: "wow", search: { en: "World of Warcraft hub", ru: "Центр World of Warcraft", keywords: "home главная хаб" } },
   raids: { path: "/wow/raids", parent: "wow", title: { en: "Raids", ru: "Рейды" }, scene: "raids", search: { en: "Raid journal", ru: "Рейдовый журнал", keywords: "raids рейды" } },
   mythicPlus: { path: "/wow/mythic-plus", parent: "wow", title: { en: "Mythic+", ru: "Mythic+" }, scene: "mythicPlus", search: { en: "Mythic+ atlas", ru: "Атлас Mythic+", keywords: "mythic plus keys ключи эпохальные" } },
+  mythicPlusLeaderboard: { path: "/wow/mythic-plus/leaderboard", parent: "mythicPlus", title: { en: "Leaderboard", ru: "Рейтинг игроков" }, scene: "mythicPlus", search: { en: "Mythic+ leaderboard", ru: "Рейтинг игроков Mythic+", keywords: "leaderboard top players rating score ladder рейтинг лучшие игроки топ таблица лидеров" } },
   mythicPlusMeta: { path: "/wow/mythic-plus/meta", parent: "mythicPlus", title: { en: "Mythic+ meta", ru: "Мета Mythic+" }, scene: "mythicPlus", search: { keywords: "meta spec popularity top keys мета популярность спеков mythicstats" } },
   dungeons: { path: "/wow/dungeons", parent: "wow", title: { en: "Dungeons", ru: "Подземелья" }, scene: "dungeons" },
   lairs: { path: "/wow/lairs", parent: "wow", title: { en: "Lairs and world bosses", ru: "Логова и мировые боссы" }, scene: "lairs" },
