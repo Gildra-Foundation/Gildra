@@ -1,7 +1,7 @@
 /* atlas:strict — tier workspace (/tier-lists) in the material atlas of the fixed reference (/wow/mythic-plus/meta):
-   the hub's gateway hero with painted buttons, filters on a King's Rest plaque, the ranking in a Voidscar frame with
-   role tabs (as the meta table), the spec card on its role's plaque, "About the data" as the meta's source plaque.
-   Plaques and buttons are the shared material (MaterialPlaque / MaterialButton); colours come from the kit accent
+   the hub's gateway hero with painted buttons, the filters (segmented controls) and the tier board on plaques of the
+   Ranking Hall kit, classic tier rows (coloured badge + spec icons), a compact list view, one quiet source line.
+   Plaques and buttons are the shared material (MaterialPlaque / MaterialLinkButton); colours come from the kit accent
    (--material-*), the tier's kit accent (--tier-accent, data) and atlas tokens. Class colours (--c-*) only on spec identity. */
 
 .frame { --atlas-frame-tint: var(--atlas-info-wash, var(--atlas-accent-glow)); font-variant-numeric: lining-nums; }
@@ -20,9 +20,10 @@
 }
 
 .narrowOnly { display: none; }
+.wideOnly { display: inline; }
 
 /* ---------- Hero (the meta's recipe) ---------- */
-.hero { min-height: 470px; padding-bottom: var(--atlas-space-5); }
+.hero { min-height: 300px; padding-bottom: var(--atlas-space-3); }
 .heroHeader { max-width: 58%; }
 .heroHeader h1 { max-width: 15ch; }
 .heroHeader p { max-width: 52ch; }
@@ -32,31 +33,31 @@
 /* Painted buttons show focus along their silhouette (reference: light rim through drop-shadow on the art layer);
    the transparent outline turns into the system ring in forced colors. */
 .frame :global(.ui-button)[class]:focus-visible { outline: 2px solid transparent; outline-offset: 4px; }
-.heroButton:focus-visible::before, .paintedToggle:focus-visible::before, .detailActions :global(.ui-button):focus-visible::before, .aboutButton:focus-visible::before {
+.heroButton:focus-visible::before {
   filter: contrast(.88) saturate(.84) brightness(1) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 6px var(--atlas-accent));
 }
 
 /* ---------- Layout ---------- */
 .workspace { margin-top: var(--atlas-space-5); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
 .section { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
-.sectionBody { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-6); }
-.board { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-6); }
-.main, .detail { min-width: 0; }
-
-@media (min-width: 1200px) {
-  .board { grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); align-items: start; }
-  .detail { position: sticky; top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
-}
-
+.sectionBody { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-5); }
+.sectionAside { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--atlas-space-3); }
 /* Spec slots (components/SpecSlot) get an amber frame instead of the legacy blue-grey one. */
 .workspace :global(.spec) { background: linear-gradient(150deg, var(--atlas-line-strong), var(--atlas-surface-raised) 72%); }
 .workspace :global(.spec:hover) { transform: none; }
 
 /* ---------- Filters plaque ---------- */
-.filters { display: grid; gap: var(--atlas-space-4); padding: 32px 40px 34px; }
-.controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--atlas-space-4) var(--atlas-space-5); }
+.filters { display: grid; gap: var(--atlas-space-4); padding: 28px 36px 30px; }
+/* Mode, role and source: one row of segmented controls; each scrolls sideways on its own when it does not fit. */
+.segmentRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3) var(--atlas-space-4); min-width: 0; }
+.segmentedControl { max-width: 100%; }
+.segmentedControl svg { width: 16px; height: 16px; }
+.sourceControl { margin-inline-start: auto; }
+.controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--atlas-space-3) var(--atlas-space-4); }
+.controls:empty { display: none; }
 .field { display: grid; flex: 0 0 auto; gap: var(--atlas-space-2); min-width: 0; }
 .fieldGrow { flex: 1 1 170px; }
+.fieldWide { flex-basis: 240px; }
 
 .label {
   color: var(--material-light, var(--atlas-text-subtle));
@@ -67,45 +68,6 @@
   text-transform: uppercase;
   text-shadow: 0 1px 3px var(--atlas-bg);
 }
-
-.controlsHint { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: 1.5; text-shadow: 0 1px 3px var(--atlas-bg); }
-
-/* Source: the segmented pill group of the meta's role tabs. */
-.segmented {
-  display: flex;
-  flex-wrap: wrap;
-  width: fit-content;
-  max-width: 100%;
-  gap: var(--atlas-space-1);
-  padding: 3px;
-  border: 1px solid var(--atlas-line-soft);
-  background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
-}
-.segment {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 0 var(--atlas-space-4);
-  border: 0;
-  color: var(--atlas-text-muted);
-  background: none;
-  font: 600 var(--atlas-text-small) / 1.2 var(--atlas-font-ui);
-  white-space: nowrap;
-  cursor: pointer;
-  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
-}
-.segment:hover { color: var(--atlas-text-strong); }
-.segment[aria-pressed="true"] { color: var(--atlas-accent-ink); background: var(--atlas-accent); box-shadow: 0 0 14px var(--atlas-accent-glow); }
-.segment:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-
-/* Mode and raid difficulty: painted buttons of the kit; the pressed one keeps its full light, the rest sit dimmed. */
-.paintedGroup { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); }
-.frame .paintedToggle:global(.ui-button) { min-width: 150px; min-height: 60px; }
-.paintedToggle[aria-pressed="false"]::before { filter: contrast(.8) saturate(.45) brightness(.62); }
-.frame .paintedToggle[aria-pressed="false"]:global(.ui-button) { color: var(--atlas-text-muted); }
-.paintedToggle[aria-pressed="true"] :global(.ui-button__label) { text-decoration: underline; text-decoration-color: var(--material-light, var(--atlas-accent)); text-decoration-thickness: 2px; text-underline-offset: 6px; }
-.paintedToggle svg { width: 16px; height: 16px; }
 
 .selectShell { position: relative; display: flex; align-items: center; }
 .selectShell svg {
@@ -160,15 +122,6 @@
 .search:hover { border-color: var(--material-light, var(--atlas-accent)); }
 
 
-.alert {
-  margin: 0;
-  padding: var(--atlas-space-2) var(--atlas-space-3);
-  border-left: 3px solid var(--atlas-caution);
-  color: var(--atlas-text);
-  background: var(--atlas-surface-sunken);
-  font-size: var(--atlas-text-small);
-}
-
 .count { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-weight: 600; }
 
 .alert {
@@ -180,11 +133,159 @@
   font-size: var(--atlas-text-small);
 }
 
-/* ---------- Ranking frame (the meta's "Every specialization" plaque) ---------- */
-.tablePlaque { padding: 32px 36px 36px; }
-.rolePanel { margin-top: var(--atlas-space-2); }
-.tableBox { position: relative; min-height: 160px; overflow-x: auto; }
-.tableBox[data-loading] .table { opacity: .34; }
+/* ---------- Board plaque ---------- */
+.boardPlaque { padding: 28px 32px 32px; }
+
+/* ---------- Tier rows: coloured badge + spec icons ---------- */
+.tierBoard { display: grid; gap: 6px; transition: opacity var(--atlas-duration) var(--atlas-ease); }
+.tierBoard[data-loading] { opacity: .4; }
+.boardEmpty { min-height: 240px; }
+
+.tierRow {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  min-height: 92px;
+  border: 1px solid color-mix(in srgb, var(--tier-accent, var(--atlas-line)) 34%, var(--atlas-line-soft));
+  border-radius: var(--atlas-radius);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tier-accent, var(--atlas-accent)) 13%, transparent), color-mix(in srgb, var(--atlas-bg) 42%, transparent) 46%);
+}
+.tierBadge {
+  display: grid;
+  place-items: center;
+  margin: 0;
+  border-radius: calc(var(--atlas-radius) - 1px) 0 0 calc(var(--atlas-radius) - 1px);
+  color: var(--atlas-bg);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--tier-accent, var(--atlas-accent)) 86%, var(--atlas-text-strong)), var(--tier-accent, var(--atlas-accent)) 70%);
+  box-shadow: inset -1px 0 0 color-mix(in srgb, var(--atlas-bg) 40%, transparent), inset 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 30%, transparent);
+  font: 700 2.25rem / 1 var(--atlas-font-display);
+  font-variant-numeric: lining-nums;
+}
+.tierIcons { display: flex; flex-wrap: wrap; align-content: center; gap: var(--atlas-space-1); margin: 0; padding: 10px 12px; list-style: none; }
+.chipItem { display: flex; }
+/* AtlasTooltip puts its inline-flex anchor class on the trigger: the chip keeps its own column. */
+.chipItem .chip { display: grid; }
+
+.chip {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 96px;
+  padding: 6px 3px 4px;
+  border: 0;
+  border-radius: var(--atlas-radius-control);
+  color: var(--atlas-text);
+  background: none;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration) var(--atlas-ease);
+}
+.chip:hover { background: color-mix(in srgb, var(--atlas-text-strong) 7%, transparent); transform: translateY(-2px); }
+.chip:hover .chipName { color: var(--atlas-text-strong); }
+.chip[data-open] { background: color-mix(in srgb, var(--class-color, var(--atlas-accent)) 22%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--class-color, var(--atlas-accent)) 60%, transparent); }
+.chip:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.chipName {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--class-color, var(--atlas-text-muted)) 45%, var(--atlas-text));
+  font-size: var(--atlas-text-meta);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* The spec icon in a frame of its class colour. */
+.specIcon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  border: 2px solid var(--class-color, var(--atlas-line));
+  border-radius: 9px;
+  background: var(--atlas-surface-sunken);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--atlas-bg) 70%, transparent), 0 4px 10px color-mix(in srgb, var(--atlas-bg) 60%, transparent);
+}
+.specIcon img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.specIcon b { color: var(--class-color, var(--atlas-text)); font: 700 var(--atlas-text-title) / 1 var(--atlas-font-display); }
+
+/* The spec card: in the hover tooltip and, on touch, the panel under the row. */
+.tip { display: grid; gap: 6px; min-width: 200px; font-size: var(--atlas-text-small); line-height: 1.35; text-align: start; }
+.tipHead { display: grid; gap: 1px; }
+.tipName { color: var(--atlas-text-strong); font: 600 var(--atlas-text-body) / 1.25 var(--atlas-font-ui); }
+.tipRank { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); color: var(--atlas-text-muted); font-variant-numeric: tabular-nums lining-nums; }
+.tierChip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 22px;
+  padding-inline: 4px;
+  border-radius: 4px;
+  color: var(--atlas-bg);
+  background: var(--tier-accent, var(--atlas-accent));
+  font: 700 var(--atlas-text-small) / 1 var(--atlas-font-display);
+}
+.tipHeroes, .tipMetrics > span { display: grid; gap: 1px; color: var(--atlas-text); }
+.tipMetrics { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1) var(--atlas-space-4); }
+.tipMetrics b { color: var(--atlas-text-strong); font-weight: 600; font-variant-numeric: tabular-nums lining-nums; }
+.tipLabel { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+
+.tierDetail {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--atlas-space-2) var(--atlas-space-3);
+  align-items: start;
+  margin: 0 8px 8px;
+  padding: var(--atlas-space-3);
+  border: 1px solid var(--atlas-line-soft);
+  border-left: 3px solid var(--class-color, var(--atlas-accent));
+  border-radius: var(--atlas-radius-control);
+  background: color-mix(in srgb, var(--atlas-bg) 78%, transparent);
+}
+.tierDetailText { display: grid; gap: 6px; min-width: 0; font-size: var(--atlas-text-small); }
+.tierDetailActions { display: flex; grid-column: 1 / -1; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); }
+.talentsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  min-height: 44px;
+  padding: 0 var(--atlas-space-4);
+  border: 1px solid var(--material-line, var(--atlas-line));
+  border-radius: var(--atlas-radius-control);
+  color: var(--atlas-text-strong);
+  background: color-mix(in srgb, var(--atlas-accent) 16%, transparent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.talentsLink svg { width: 16px; height: 16px; }
+.talentsLink:focus-visible, .detailClose:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.detailClose {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--atlas-radius-control);
+  color: var(--atlas-text-muted);
+  background: none;
+  cursor: pointer;
+}
+.detailClose svg { width: 18px; height: 18px; }
+
+.layoutToggle svg { width: 16px; height: 16px; }
+
+/* ---------- List view ---------- */
+.tableBox { position: relative; overflow-x: auto; transition: opacity var(--atlas-duration) var(--atlas-ease); }
+.tableBox[data-loading] { opacity: .4; }
 
 .table { width: 100%; border-collapse: collapse; color: var(--atlas-text); font-size: var(--atlas-text-small); }
 .table thead th {
@@ -198,73 +299,37 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
-.table td { padding: var(--atlas-space-2) var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line-soft); vertical-align: middle; }
+.table td, .table tbody th { padding: var(--atlas-space-2) var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line-soft); font-weight: inherit; text-align: left; vertical-align: middle; }
 .table .num { text-align: right; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
 .secondary { color: var(--atlas-text-muted); }
-.colTier { width: 84px; }
-.colScore { width: 34%; }
-
-/* Tier bands: each tier is one band — its medallion on a wash of the tier's kit accent with a rule down the side. */
-.group + .group > tr:first-child > * { border-top: 1px solid var(--material-line, var(--atlas-line)); }
-.tierCell {
-  padding: var(--atlas-space-3);
-  border-bottom: 1px solid var(--atlas-line-soft);
-  border-left: 3px solid var(--tier-accent, var(--atlas-line));
-  background: linear-gradient(90deg, color-mix(in srgb, var(--tier-accent, var(--atlas-accent)) 22%, transparent), transparent);
-  text-align: center;
-  vertical-align: middle;
-}
-
-.tierMark {
-  display: inline-grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  background: center / contain no-repeat;
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-title);
-  font-weight: 700;
-  line-height: 1;
-  text-shadow: 0 1px 2px var(--atlas-bg), 0 0 6px var(--atlas-bg);
-}
-.tierLetter { position: relative; }
-
-/* Tier → the pull marker of one dungeon kit: ruby for S, gold for A, green for B, teal for C, violet for D. */
-.tierMark[data-tier="s"] { background-image: url("/assets/wow/mythic/pull-art/markers/ruby-life-pools.webp"); }
-.tierMark[data-tier="a"] { background-image: url("/assets/wow/mythic/pull-art/markers/kings-rest.webp"); }
-.tierMark[data-tier="b"] { background-image: url("/assets/wow/mythic/pull-art/markers/altar-of-fangs.webp"); }
-.tierMark[data-tier="c"] { background-image: url("/assets/wow/mythic/pull-art/markers/den-of-nalorakk.webp"); }
-.tierMark[data-tier="d"] { background-image: url("/assets/wow/mythic/pull-art/markers/voidscar-arena.webp"); }
-.tierMarkSm { width: 32px; height: 32px; font-size: var(--atlas-text-small); }
+.colRank { width: 44px; color: var(--atlas-text-subtle); font-variant-numeric: tabular-nums lining-nums; text-align: center; }
+.table .colRank { text-align: center; }
+.colTier { width: 64px; }
+.colScore { width: 30%; }
 
 .specCell { min-width: 0; }
 .specInner { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
-.specButton {
+.specInner .specIcon, .compareTable .specIcon { width: 36px; height: 36px; border-radius: 7px; }
+.specLink, .specButton {
   display: grid;
   min-width: 0;
-  min-height: var(--atlas-control-height);
+  min-height: 44px;
   align-content: center;
   padding: 2px 0;
   border: 0;
   color: var(--atlas-text-strong);
   background: none;
   text-align: left;
-  cursor: pointer;
+  text-decoration: none;
 }
-.specButton:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.specLink:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 .specName { font-size: var(--atlas-text-body); font-weight: 600; line-height: 1.25; }
-.specButton:hover .specName { color: var(--atlas-accent-strong); }
-.groupTag { color: var(--atlas-text-subtle); }
+a.specLink:hover .specName { color: var(--atlas-accent-strong); }
 .className { color: color-mix(in srgb, var(--class-color, var(--atlas-text-muted)) 70%, var(--atlas-text-strong)); font-size: var(--atlas-text-meta); font-weight: 500; }
 
-.selectedRow > td { background: color-mix(in srgb, var(--tier-accent, var(--atlas-accent)) 12%, transparent); }
-.selectedRow > td.specCell { box-shadow: inset 2px 0 0 var(--atlas-accent); }
-.selectedRow .specName { color: var(--atlas-accent-strong); }
-
-/* Score: the meta's share bar, in the tier's colour, then the number. */
+/* Score / simulated damage: the meta's share bar (tier colour, or class colour for the sims), then the number. */
 .scoreCell { white-space: nowrap; }
-.scoreInner { display: grid; grid-template-columns: minmax(80px, 220px) 7ch; align-items: center; gap: var(--atlas-space-3); }
+.scoreInner { display: grid; grid-template-columns: minmax(80px, 220px) 8ch; align-items: center; gap: var(--atlas-space-3); }
 .scoreInner b { color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; font-variant-numeric: tabular-nums lining-nums; text-align: end; }
 .bar { display: block; inline-size: 100%; block-size: 6px; overflow: hidden; border-radius: 999px; background: var(--atlas-line-soft); }
 .bar > span {
@@ -273,6 +338,7 @@
   border-radius: inherit;
   background: linear-gradient(90deg, color-mix(in srgb, var(--tier-accent, var(--atlas-accent)) 44%, var(--atlas-surface-sunken)), var(--tier-accent, var(--atlas-accent)));
 }
+.classBar > span { background: linear-gradient(90deg, color-mix(in srgb, var(--class-color, var(--atlas-accent)) 40%, var(--atlas-surface-sunken)), var(--class-color, var(--atlas-accent))); }
 
 .trendUp, .trendDown, .trendFlat { font-size: var(--atlas-text-small); font-weight: 650; }
 .trendUp { color: var(--atlas-positive); }
@@ -281,80 +347,11 @@
 
 .empty { margin: 0; padding: var(--atlas-space-6) var(--atlas-space-4); color: var(--atlas-text-muted); font-size: var(--atlas-text-body); text-align: center; }
 
-.loading {
-  position: absolute;
-  inset: 40px 0 auto;
-  display: grid;
-  justify-items: center;
-  gap: var(--atlas-space-2);
-  padding: var(--atlas-space-6) 0;
-  color: var(--atlas-text-strong);
-  font-size: var(--atlas-text-small);
-}
-.loading span {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--atlas-line-soft);
-  border-top-color: var(--atlas-accent);
-  border-radius: 50%;
-  animation: tier-spin .8s linear infinite;
-}
-.loading b { font-weight: 600; }
-@keyframes tier-spin { to { transform: rotate(360deg); } }
-
-/* ---------- Spec card (plaque of the role's kit) ---------- */
-.detail { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
-.detailPlaque { display: grid; gap: var(--atlas-space-4); padding: 32px 36px 36px; }
-.detailEyebrow {
-  margin: 0;
-  color: var(--material-light, var(--atlas-accent));
-  font-size: var(--atlas-text-label);
-  font-weight: 700;
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
-  text-shadow: 0 1px 3px var(--atlas-bg);
-}
-.detailHead { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; padding-bottom: var(--atlas-space-4); border-bottom: 1px solid var(--material-line, var(--atlas-line-soft)); }
-.detailName { min-width: 0; }
-.detailTitle {
-  margin: 0;
-  color: var(--atlas-text-strong);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-h3);
-  font-weight: var(--atlas-weight-display);
-  line-height: var(--atlas-leading-snug);
-  overflow-wrap: anywhere;
-  text-shadow: 0 1px 3px var(--atlas-bg);
-}
-.detailTitle .className { display: block; font-family: var(--atlas-font-ui); font-size: var(--atlas-text-small); }
-.detailTitle:focus:not(:focus-visible) { outline: none; }
-.detailTitle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-.detailRank { display: flex; align-items: center; gap: var(--atlas-space-2); margin: var(--atlas-space-2) 0 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
-
-.metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-1) var(--atlas-space-4); margin: 0; }
-.metric { display: grid; gap: 2px; min-width: 0; padding-block: var(--atlas-space-2); border-bottom: 1px solid var(--atlas-line-soft); }
-.metric dt { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-.metric dd {
-  margin: 0;
-  color: var(--material-light, var(--atlas-text-strong));
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-title);
-  font-weight: 600;
-  font-variant-numeric: lining-nums tabular-nums;
-  overflow-wrap: anywhere;
-  text-shadow: 0 1px 3px var(--atlas-bg);
-}
-.metric dd .trendUp, .metric dd .trendDown, .metric dd .trendFlat { font-family: var(--atlas-font-ui); font-size: var(--atlas-text-body); }
-.detailActions { display: grid; gap: var(--atlas-space-2); }
-.detailEmpty { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
-
-/* ---------- About the data (the meta's source plaque) ---------- */
-.aboutPlaque { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-5); margin-top: var(--atlas-section-gap); padding: 36px 40px; }
-.aboutText { display: grid; gap: var(--atlas-space-2); min-width: 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); text-shadow: 0 1px 3px var(--atlas-bg); }
-.aboutText p { margin: 0; max-width: 80ch; }
-.aboutText b { color: var(--atlas-text-strong); }
-.aboutTitle { margin: 0; color: var(--atlas-text-strong); font: 600 var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); }
-.frame .aboutButton:global(.ui-button) { min-width: min(100%, 280px); }
+/* ---------- One quiet source line ---------- */
+.sourceLine { margin: var(--atlas-space-5) 0 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); line-height: 1.5; text-shadow: 0 1px 3px var(--atlas-bg); }
+.sourceLine a { display: inline-flex; align-items: center; gap: 2px; min-height: 24px; color: var(--atlas-text-muted); text-decoration: underline; text-decoration-color: var(--atlas-line); text-underline-offset: 3px; }
+.sourceLine a:hover { color: var(--atlas-text-strong); }
+.sourceLine svg { width: 12px; height: 12px; }
 
 /* Comparison: spec rows × source tiers. */
 .compare { display: grid; gap: var(--atlas-space-3); }
@@ -364,80 +361,74 @@
 .compareNone { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 .agreeAll { color: var(--atlas-positive); font-size: var(--atlas-text-meta); font-weight: 600; }
 .agreeSome { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
-
 .compareShort { display: none; text-decoration: none; }
+.compareTable .specButton { cursor: default; }
 
+/* ---------- Tablet / phone ---------- */
+@media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
+@media (max-width: 900px) { .sourceControl { margin-inline-start: 0; } }
+@media (max-width: 760px) {
+  .filters, .boardPlaque { padding: 24px; }
+}
 @media (max-width: 720px) {
+  .workspace { margin-top: var(--atlas-space-4); }
+  .sectionBody { gap: var(--atlas-space-4); }
+  .segmentRow { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-2); }
+  .segmentRow .segmentedControl { justify-self: start; }
+  .controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+  .controls > .field:has(.segmentedControl), .fieldWide, .fieldSearch { grid-column: 1 / -1; }
+  .table thead th, .table td, .table tbody th { padding-inline: var(--atlas-space-2); }
+  .secondary { display: none; }
+  .colScore { width: auto; }
+  .scoreInner { grid-template-columns: auto; }
+  .scoreInner .bar { display: none; }
+  .search, .select { min-height: 44px; }
   .compareRank, .compareLong, .compareAgree { display: none; }
   .compareShort { display: inline; }
   .compareCol { width: 52px; }
   .compareTable th, .compareTable td { padding-inline: 4px; }
 }
-
-
-
-/* ---------- Tablet / phone ---------- */
-@media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
-@media (max-width: 760px) {
-  .filters, .tablePlaque, .detailPlaque, .aboutPlaque { padding: 28px; }
-  .tablePlaque { padding-inline: 18px; }
-}
-@media (max-width: 720px) {
-  .workspace { margin-top: var(--atlas-space-4); }
-  .sectionBody, .board { gap: var(--atlas-space-5); }
-  .field { flex: 1 1 calc(50% - var(--atlas-space-5)); }
-  .fieldPainted, .fieldSource { flex-basis: 100%; }
-  /* The painted caps need their width: on phones the toggles stack, one per row. */
-  .paintedGroup { display: grid; grid-template-columns: minmax(0, 1fr); }
-  .paintedGroup > * { display: flex; width: 100%; }
-  .frame .paintedToggle:global(.ui-button) { width: 100%; min-width: 0; }
-  .segmented { width: 100%; }
-  .segment { flex: 1 1 auto; min-height: var(--atlas-control-height); padding: 0 var(--atlas-space-3); }
-  .table thead th, .table td { padding-inline: var(--atlas-space-2); }
-  .secondary { display: none; }
-  .colTier { width: 56px; }
-  .tierCell { padding-inline: var(--atlas-space-1); }
-  .tierMark { width: 40px; height: 40px; font-size: var(--atlas-text-body); }
-  .tierMarkSm { width: 30px; height: 30px; font-size: var(--atlas-text-small); }
-  .specInner { gap: var(--atlas-space-2); }
-  .colScore { width: auto; }
-  .scoreInner { grid-template-columns: auto; }
-  .scoreInner .bar { display: none; }
-  .search, .select { min-height: 44px; }
-}
 @media (max-width: 600px) {
   .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
   .heroHeader { max-width: 100%; }
   .heroActions { gap: var(--atlas-space-2); }
-  .aboutPlaque { align-items: stretch; flex-direction: column; padding: 28px 20px; }
 }
 @media (max-width: 520px) {
-  .tablePlaque { padding: 24px 12px 20px; }
-  .filters { padding: 26px 20px 28px; }
-  .detailPlaque { padding: 28px 22px 30px; }
-}
-@media (max-width: 520px) {
+  .filters { padding: 20px 16px 22px; }
+  .boardPlaque { padding: 18px 10px 20px; }
+  .tierRow { grid-template-columns: 48px minmax(0, 1fr); min-height: 72px; }
+  .tierBadge { font-size: 1.6rem; }
+  .tierIcons { gap: 6px; padding: 8px; }
+  /* Phones: icons only (the name is in the tap card and read aloud), five or six to a line. */
+  .chip { width: auto; padding: 2px; }
+  .chipName { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .specIcon { width: 44px; height: 44px; border-radius: 8px; }
+  .tierDetail { margin: 0 6px 6px; }
+  .colRank { width: 24px; }
+  .colTier { width: 36px; }
+  .table thead th, .table td, .table tbody th { padding-inline: 4px; }
+  .specInner { gap: 6px; }
+  .specInner .specIcon { width: 28px; height: 28px; border-radius: 6px; }
+  .specLink .specName { font-size: var(--atlas-text-small); }
   .wideOnly { display: none; }
-  .narrowOnly { display: inline; }
-  .specName, .className { overflow-wrap: anywhere; hyphens: auto; }
+  .narrowOnly { display: inline; text-decoration: none; }
+  .specName, .className { overflow-wrap: break-word; }
   .table thead th { letter-spacing: .08em; }
 }
-@media (max-width: 360px) { .metrics { grid-template-columns: minmax(0, 1fr); } }
 
 /* ---------- Preferences (design.md §5) ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .loading span { animation: none; }
-  .segment { transition: none; }
+  .chip, .tierBoard, .tableBox { transition: none; }
+  .chip:hover { transform: none; }
 }
-:global([data-motion="reduced"]) .loading span, :global([data-ui-motion="reduce"]) .loading span { animation: none; }
+:global([data-motion="reduced"]) .chip, :global([data-ui-motion="reduce"]) .chip { transition: none; transform: none; }
 @media (forced-colors: active) {
-  .tierCell { border-left-color: CanvasText; background: Canvas; }
-  .tierMark { background-image: none !important; border: 1px solid CanvasText; border-radius: 50%; color: CanvasText; }
+  .tierRow { border-color: CanvasText; background: Canvas; }
+  .tierBadge { border-right: 1px solid CanvasText; background: Canvas; color: CanvasText; forced-color-adjust: none; }
+  .specIcon { border-color: CanvasText; }
+  .tierChip { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
   .bar { border: 1px solid CanvasText; background: Canvas; }
   .bar > span { background: Highlight; }
-  .segment[aria-pressed="true"] { outline: 3px solid Highlight; outline-offset: -3px; background: ButtonFace; color: ButtonText; box-shadow: none; }
-  .frame .paintedToggle[aria-pressed="true"]:global(.ui-button) { border: 4px solid Highlight; background: ButtonFace; color: ButtonText; }
-  .selectedRow > td { background: Canvas; outline: 1px solid Highlight; }
   .select, .search { border-color: CanvasText; }
 }
 /* Phones: the longer lede crosses the bright gateway; the body text tone keeps it above AA on the art. */

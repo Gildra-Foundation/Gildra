@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { ArrowUpRight } from "lucide-react";
 import type { Lang } from "@/lib/i18n-paths";
 import type { TierActivity, TierEntry, TierRole } from "@/lib/platform/games/intelligence";
-import { tierSourcesCopy, type TierSourcesCopy } from "./tierSourcesCopy";
+import { tierSourcesCopy } from "./tierSourcesCopy";
 import { sourceKey, type ExternalTierSource, type SourceSlice, type TierSourceId, type TierSourceSlices } from "./tierSourceKeys";
 import styles from "./tierWorkspace.module.css";
-import { MaterialLinkButton, MaterialPlaque, type AnyMaterialKit, type MaterialKit } from "@/components/wow/shared/materialAtlas";
 
 const ROLES = ["dps", "healer", "tank"] as const;
 const TIER_ORDER = ["S", "A", "B", "C", "D", "F"];
@@ -25,17 +23,18 @@ export const SOURCE_META: Record<ExternalTierSource, { name: string; site: strin
       return level ? `${base}/raid?difficulty=${level}` : `${base}/raid`;
     },
   },
+  sim: { name: "MythiStone", site: "mythistone.com", raid: false, page: () => "https://mythistone.com/pages/tierlist" },
 };
 
 /** Loads the three role lists of one external source for a mode (and raid
  *  difficulty). Slices rendered on the server (`initial`) are used as they are. */
 export function useSourceRoles(source: TierSourceId, activity: TierActivity, difficulty: string, initial: TierSourceSlices) {
   const [state, setState] = useState<{ key: string; data?: SourceSlice; error?: boolean }>({ key: "" });
-  const key = source === "gildra" || (source === "mythicstats" && activity === "raid") ? "" : sourceKey(source, activity, difficulty);
+  const key = source === "gildra" || source === "sim" || (source === "mythicstats" && activity === "raid") ? "" : sourceKey(source, activity, difficulty);
   const preloaded = key ? initial[key] : undefined;
 
   useEffect(() => {
-    if (!key || preloaded || source === "gildra") return;
+    if (!key || preloaded || source === "gildra" || source === "sim") return;
     const controller = new AbortController();
     Promise.all(ROLES.map(async (role) => {
       const params = new URLSearchParams({ source, activity, role, limit: "60" });
@@ -57,39 +56,6 @@ export function useSourceRoles(source: TierSourceId, activity: TierActivity, dif
 
   const current = preloaded ? { key, data: preloaded } : state.key === key ? state : { key };
   return { data: current.data, error: Boolean(current.error), loading: Boolean(key) && !current.data && !current.error };
-}
-
-/** "updated 3h ago", computed after mount so the server HTML never disagrees with the clock. */
-function useAgo(iso: string | undefined, copy: TierSourcesCopy) {
-  const [label, setLabel] = useState("");
-  useEffect(() => {
-    if (!iso) return;
-    const update = () => {
-      const hours = Math.floor((Date.now() - Date.parse(iso)) / 3_600_000);
-      setLabel(hours < 1 ? copy.justNow : hours < 48 ? copy.hoursAgo(hours) : copy.daysAgo(Math.floor(hours / 24)));
-    };
-    update();
-    const timer = window.setInterval(update, 60_000);
-    return () => window.clearInterval(timer);
-  }, [iso, copy]);
-  return label;
-}
-
-/** "About the data" for an external source: who published the list, how fresh it is, what we keep,
- *  and a painted button back to the original page (the Mythic+ meta's source plaque). */
-export function SourceAbout({ lang, source, activity, role, difficulty, updatedAt, kit, buttonKit }: { lang: Lang; source: ExternalTierSource; activity: TierActivity; role: TierRole; difficulty: string; updatedAt?: string; kit: AnyMaterialKit; buttonKit: AnyMaterialKit }) {
-  const copy = tierSourcesCopy[lang];
-  const meta = SOURCE_META[source];
-  const ago = useAgo(updatedAt, copy);
-  return (
-    <MaterialPlaque as="section" kit={kit} className={styles.aboutPlaque} aria-labelledby="tier-about-title">
-      <div className={styles.aboutText}>
-        <h2 id="tier-about-title" className={styles.aboutTitle}>{copy.aboutTitle}</h2>
-        <p>{copy.sourceBy}: <b>{meta.name}</b>{ago && updatedAt ? <>{" · "}<time dateTime={updatedAt}>{ago}</time></> : null}</p>
-      </div>
-      <MaterialLinkButton kit={buttonKit} fit="stack" className={styles.aboutButton} href={meta.page(activity, role, difficulty)} external iconAfter={<ArrowUpRight aria-hidden="true" />}>{copy.openOn(meta.site)}</MaterialLinkButton>
-    </MaterialPlaque>
-  );
 }
 
 type CompareRow = { key: string; specName: string; className: string; classSlug: string; tiers: (string | undefined)[]; average: number };
@@ -153,7 +119,7 @@ export function SourceCompare({ lang, activity, role, columns, classStyle, tierS
                   </td>
                   {row.tiers.map((tier, column) => (
                     <td key={columns[column].id} className={styles.compareCol}>
-                      {tier ? <span className={`${styles.tierMark} ${styles.tierMarkSm}`} data-tier={tier.charAt(0).toLowerCase()} style={tierStyle(tier)}><span className={styles.srOnly}>{columns[column].label} </span>{tier}</span> : <span className={styles.compareNone}>{copy.noTier}</span>}
+                      {tier ? <span className={styles.tierChip} style={tierStyle(tier)}><span className={styles.srOnly}>{columns[column].label} </span>{tier}</span> : <span className={styles.compareNone}>{copy.noTier}</span>}
                     </td>
                   ))}
                   <td className={`${styles.num} ${styles.compareAgree}`}>
