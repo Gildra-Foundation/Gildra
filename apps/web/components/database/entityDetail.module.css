@@ -145,6 +145,20 @@
 
 .modelStage [data-model-controls] { bottom: var(--atlas-space-2); left: 50%; right: auto; translate: -50% 0; }
 
+/* ---------- Art of the record (instance scene 2:1, creature portrait 1:1) in the library plaque ---------- */
+.art { margin: 0; padding: 22px; }
+.art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--material-line, var(--atlas-line-soft));
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-sunken);
+  object-fit: cover;
+}
+.art[data-art="tile"] img { aspect-ratio: 2; }
+.art[data-art="zoom"] img { aspect-ratio: 1; max-height: 60vh; object-fit: contain; }
+
 /* ---------- Relations ---------- */
 .relationGroups { display: grid; gap: var(--atlas-space-2); }
 
@@ -218,7 +232,8 @@
   .facts[data-count="1"] { --fact-columns: 1; }
   .fact[data-fact="classes"],
   .fact[data-fact="sell"] { grid-column: 1 / -1; }
-  .model { padding: 20px; }
+  .model,
+  .art { padding: 16px; }
   .disclosure > summary,
   .disclosure > div { padding-inline: var(--atlas-space-3); }
 }

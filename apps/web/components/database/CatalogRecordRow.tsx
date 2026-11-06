@@ -22,6 +22,8 @@ export type CatalogRecordRowProps = {
   meta?: ReactNode[];
   /** Small action in the row corner (tooltip preview). */
   action?: ReactNode;
+  /** Record id for the hover tooltip (LibraryHoverPreview around the list). */
+  previewId?: string;
   /** Analytics hook for the name link (read by CatalogBehavior). */
   track?: { event: string; props: Record<string, string | number> };
 };
@@ -30,11 +32,11 @@ export type CatalogRecordRowProps = {
  * One catalog record: icon in the library kit's frame (quality on its edge), type, name (the whole row is the link) and a
  * single line of facts. Shared by /database, /library/<dataset> and /search.
  */
-export function CatalogRecordRow({ href, name, typeLabel, iconUrl, iconSymbol = "#ic-gem", quality, description, meta = [], action, track }: CatalogRecordRowProps) {
+export function CatalogRecordRow({ href, name, typeLabel, iconUrl, iconSymbol = "#ic-gem", quality, description, meta = [], action, previewId, track }: CatalogRecordRowProps) {
   const qualityColor = quality !== undefined ? itemQualityColors[quality as keyof typeof itemQualityColors] : undefined;
   const facts = meta.filter((entry) => entry !== null && entry !== undefined && entry !== "");
   return (
-    <li className={styles.row} data-quality={qualityColor ? quality : undefined} style={qualityColor ? { "--record-quality": qualityColor.frame, "--record-quality-text": qualityColor.text } as CSSProperties : undefined}>
+    <li className={styles.row} data-hover-preview={previewId} data-hover-icon={previewId ? iconUrl || undefined : undefined} data-quality={qualityColor ? quality : undefined} style={qualityColor ? { "--record-quality": qualityColor.frame, "--record-quality-text": qualityColor.text } as CSSProperties : undefined}>
       <span className={`${materialStyles.iconFrame} ${styles.icon}`} style={materialIconFrameStyle(libraryKit, 56)} aria-hidden="true">
         <ResilientImage src={iconUrl} alt="" width={48} height={48} loading="lazy" fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
       </span>

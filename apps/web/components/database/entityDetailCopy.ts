@@ -7,9 +7,19 @@ export const entityDetailCopy = {
     library: "Библиотека",
     qualityNames: { 0: "Низкое", 1: "Обычное", 2: "Необычное", 3: "Редкое", 4: "Эпическое", 5: "Легендарное", 6: "Артефакт", 7: "Фамильная ценность" } as Record<number, string>,
     modelLabel: (name: string) => `${name} — модель`,
+    artLabel: (name: string) => `${name} — изображение`,
     unresolved: "Числа в этом описании зависят от характеристик персонажа и пока не подставлены.",
     factsLabel: "Характеристики",
     relationsTitle: "Связанные записи",
+    loot: "Добыча",
+    bosses: "Боссы",
+    bossesOf: (name: string) => `Боссы: ${name}`,
+    bossNav: "Боссы подземелья",
+    previousBoss: "Предыдущий босс",
+    nextBoss: "Следующий босс",
+    columns: { item: "Предмет", slot: "Ячейка", kind: "Тип", itemLevel: "Уровень" },
+    allRecipes: (name: string) => `Все рецепты: ${name}`,
+    bossEncounter: "Босс",
     yes: "да",
     no: "нет",
   },
@@ -18,9 +28,19 @@ export const entityDetailCopy = {
     library: "Library",
     qualityNames: { 0: "Poor", 1: "Common", 2: "Uncommon", 3: "Rare", 4: "Epic", 5: "Legendary", 6: "Artifact", 7: "Heirloom" } as Record<number, string>,
     modelLabel: (name: string) => `${name} — model`,
+    artLabel: (name: string) => `${name} — picture`,
     unresolved: "The numbers in this description depend on character stats and are not filled in yet.",
     factsLabel: "Facts",
     relationsTitle: "Related records",
+    loot: "Loot",
+    bosses: "Bosses",
+    bossesOf: (name: string) => `Bosses of ${name}`,
+    bossNav: "Bosses of the instance",
+    previousBoss: "Previous boss",
+    nextBoss: "Next boss",
+    columns: { item: "Item", slot: "Slot", kind: "Type", itemLevel: "Item level" },
+    allRecipes: (name: string) => `All ${name} recipes`,
+    bossEncounter: "Boss",
     yes: "yes",
     no: "no",
   },
@@ -29,12 +49,13 @@ export const entityDetailCopy = {
 export type EntityDetailCopy = (typeof entityDetailCopy)[Lang];
 
 export const relationLabels: Record<string, { en: string; ru: string }> = {
-  obtained_from: { en: "Obtained from", ru: "Добывается" }, drops: { en: "Drops", ru: "Добыча" }, rewards: { en: "Rewards", ru: "Награда" },
+  obtained_from: { en: "Obtained from", ru: "Где добыть" }, drops: { en: "Drops", ru: "Добыча" }, rewards: { en: "Rewards", ru: "Награда" },
   sold_by: { en: "Sold by", ru: "Продаётся у" }, teaches: { en: "Teaches", ru: "Обучает" }, crafted_by: { en: "Crafted by", ru: "Создаётся" },
   requires: { en: "Requires", ru: "Требует" }, reagent_for: { en: "Used in", ru: "Используется" }, owned_by: { en: "Belongs to", ru: "Принадлежит" },
   belongs_to: { en: "Part of", ru: "Входит в" },
   grants: { en: "Grants", ru: "Даёт" }, modifies: { en: "Modifies", ru: "Изменяет" },
   mentions: { en: "Mentions", ru: "Упоминает" },
+  creates: { en: "Creates", ru: "Создаёт" }, uses_reagent: { en: "Reagents", ru: "Реагенты" },
 };
 
 /**
@@ -47,6 +68,7 @@ export const incomingRelationLabels: Record<string, { en: string; ru: string }> 
   requires: { en: "Required by", ru: "Требуется для" }, reagent_for: { en: "Reagents", ru: "Реагенты" }, owned_by: { en: "Owns", ru: "Владеет" },
   belongs_to: { en: "Includes", ru: "Включает" }, grants: { en: "Granted by", ru: "Даётся" }, modifies: { en: "Modified by", ru: "Изменяется" },
   mentions: { en: "Mentioned in", ru: "Упоминается в" },
+  creates: { en: "Created by", ru: "Создаётся" }, uses_reagent: { en: "Used in", ru: "Используется в" },
 };
 
 /** Heading of one group of related records, by direction; an unknown relation gets a tidy sentence-case name. */

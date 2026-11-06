@@ -1,0 +1,140 @@
+/* atlas:strict — related records of a library record page: boss steps of an instance, the loot table (the dataset table's look), the boss list, the loading placeholder. */
+
+.sections { display: grid; gap: var(--atlas-space-7); min-width: 0; }
+.section { display: grid; min-width: 0; }
+
+/* ---------- Boss steps: previous · instance · next ---------- */
+.bossNav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--atlas-space-3);
+  padding: var(--atlas-space-2) var(--atlas-space-3);
+  border: 1px solid var(--atlas-line-soft);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+}
+
+.bossStep,
+.bossHome {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  min-height: 48px;
+  min-width: 0;
+  padding: var(--atlas-space-1) var(--atlas-space-2);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+  font-weight: var(--atlas-weight-display);
+  line-height: var(--atlas-leading-snug);
+  text-decoration: none;
+}
+
+.bossStep > span { display: grid; min-width: 0; }
+.bossStep small {
+  color: var(--atlas-text-subtle);
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.bossStep svg { flex: none; width: 18px; height: 18px; color: var(--atlas-accent); }
+.bossNext { justify-self: end; text-align: right; }
+.bossHome { justify-self: center; }
+.bossHomeIcon { flex: none; }
+.bossStep:hover,
+.bossHome:hover { background: var(--atlas-accent-wash); }
+.bossStep:focus-visible,
+.bossHome:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+/* ---------- Bosses of an instance, in the Adventure Guide's order ---------- */
+.bossList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: var(--atlas-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: boss;
+}
+
+.boss {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  min-height: 84px;
+  padding: var(--atlas-space-2) var(--atlas-space-3);
+  border: 1px solid var(--atlas-line-soft);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  counter-increment: boss;
+  transition: background-color var(--atlas-duration-fast) var(--atlas-ease);
+}
+
+.boss::before {
+  flex: none;
+  width: 2ch;
+  color: var(--atlas-text-subtle);
+  font: var(--atlas-weight-display) var(--atlas-text-title) / 1 var(--atlas-font-display);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: right;
+  content: counter(boss);
+}
+
+.boss:hover { background: var(--atlas-accent-wash); }
+.bossIcon { flex: none; color: var(--atlas-text-subtle); }
+
+.bossLink {
+  min-width: 0;
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+  font-weight: var(--atlas-weight-display);
+  line-height: var(--atlas-leading-snug);
+  text-decoration: none;
+}
+
+/* The name covers the whole card. */
+.bossLink::after { content: ""; position: absolute; inset: 0; }
+.boss:hover .bossLink { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.bossLink:focus-visible { outline: none; }
+.bossLink:focus-visible::after { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
+
+/* ---------- "All recipes" under a profession's recipes ---------- */
+.allLink { margin: 0 0 var(--atlas-space-3); }
+.allLink a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-1);
+  min-height: 44px;
+  color: var(--atlas-accent);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.allLink a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.allLink svg { width: 16px; height: 16px; }
+
+/* ---------- Loading placeholder ---------- */
+.skeleton { display: grid; gap: var(--atlas-space-2); }
+.skeletonTitle,
+.skeletonRow { display: block; border-radius: var(--atlas-radius); background: var(--atlas-surface); }
+.skeletonTitle { width: min(240px, 60%); height: 28px; margin-bottom: var(--atlas-space-2); }
+.skeletonRow { height: 64px; border: 1px solid var(--atlas-line-soft); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeletonRow { animation: breathe 1.4s ease-in-out infinite alternate; }
+}
+
+@keyframes breathe { to { opacity: .55; } }
+
+@media (max-width: 720px) {
+  .sections { gap: var(--atlas-space-6); }
+  .bossNav { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: var(--atlas-space-2); }
+  .bossHome { grid-column: 1 / -1; grid-row: 1; justify-self: start; }
+  .bossStep { font-size: var(--atlas-text-body); }
+  .boss { min-height: 72px; }
+}

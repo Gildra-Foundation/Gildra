@@ -106,7 +106,9 @@ describe("library: show-more query", () => {
 describe("library: record relations", () => {
   it("names a relation from the side of the record on the page", () => {
     assert.equal(relationTitle("incoming", "obtained_from", "en"), "Loot");
-    assert.equal(relationTitle("outgoing", "obtained_from", "ru"), "Добывается");
+    assert.equal(relationTitle("outgoing", "obtained_from", "ru"), "Где добыть");
+    assert.equal(relationTitle("incoming", "creates", "en"), "Created by", "a recipe that creates the item is where it comes from");
+    assert.equal(relationTitle("outgoing", "uses_reagent", "ru"), "Реагенты");
     assert.equal(relationTitle("outgoing", "belongs_to", "ru"), "Входит в");
     assert.equal(relationTitle("outgoing", "summoned_by", "en"), "Summoned by");
   });
