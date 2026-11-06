@@ -1,5 +1,6 @@
 // Browser QA of /wow/auction against a running server (AUCTION_QA_URL), with the auction API mocked in the page:
-// categories, sorting, compare tray and view, item detail, search suggestions, realm categories, error state, overflow.
+// categories, sorting, compare tray (named chips) and table (best marks, units, sort, add from search, remove, reload,
+// history), item detail, search suggestions, realm categories, error state, overflow.
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import { chromium } from "playwright";
@@ -43,10 +44,42 @@ try {
     // Compare: tray, view, shareable address, back.
     const boxes = page.locator("tbody input[type=checkbox]");
     for (const index of [1, 2]) { await boxes.nth(index).click(); await page.waitForFunction(i => document.querySelectorAll("tbody input[type=checkbox]")[i].checked, index); }
+    // The tray names what is picked.
+    assert.equal(await page.locator("[class*=trayChip]").count(), 2);
+    if (width <= 760) { const toggle = page.locator("[class*=trayToggle]"); await toggle.click(); assert.equal(await toggle.getAttribute("aria-expanded"), "true"); await page.locator("[class*=trayChip]").first().waitFor(); await toggle.click(); }
+    else assert.match(await page.locator("[class*=trayChip]").first().innerText(), /Ore/);
     await page.getByRole("button", { name: new RegExp(lang === "ru" ? "^Сравнить · 2" : "^Compare · 2") }).click();
-    await page.locator("[class*=compareCard]").nth(1).waitFor();
+    await page.locator("tbody [class*=compareRow]").nth(1).waitFor();
     assert.equal(new URL(page.url()).searchParams.get("view"), "compare");
-    await page.goBack(); await page.locator("tbody tr").first().waitFor();
+    await page.waitForFunction(() => document.querySelector("[class*=compareScroll]")?.getAttribute("aria-busy") === "false");
+    // One table: the cheapest purchase is named, the other shows how much more it costs.
+    await page.getByText(lang === "ru" ? "Дешевле всех" : "Cheapest", { exact: true }).waitFor();
+    assert.equal(await page.locator("tbody td[data-best]").count() > 0, true);
+    // Units to buy: a preset goes into the address.
+    await page.getByRole("button", { name: (1000).toLocaleString(lang), exact: true }).filter({ visible: true }).first().click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get("qty") === "1000");
+    // Sorting the comparison by cost.
+    if (width > 1023) await page.getByRole("button", { name: new RegExp(lang === "ru" ? "^Стоимость" : "^Cost of") }).click();
+    else await page.locator("[class*=compareSort] select").selectOption("cost:asc");
+    await page.waitForFunction(() => new URL(location.href).searchParams.get("csort") === "cost");
+    // Adding from the search box while comparing.
+    await page.mouse.move(1, 1);
+    await page.locator("#auction-find").fill("ore");
+    await page.locator("[role=listbox] [role=option] [class*=suggestionAdd]").first().waitFor();
+    await page.locator("[role=listbox] [role=option]").filter({ has: page.locator("[class*=suggestionAdd]") }).first().click();
+    await page.waitForFunction(() => document.querySelectorAll("tbody [class*=compareRow]").length === 3);
+    assert.equal(new URL(page.url()).searchParams.get("items")?.split(",").length, 3);
+    // Removing a row; reload keeps the view.
+    await page.locator("[class*=compareRemove]").first().click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get("items")?.split(",").length === 2);
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForFunction(() => document.querySelectorAll("tbody [class*=compareRow]").length === 2 && document.querySelector("[class*=compareScroll]")?.getAttribute("aria-busy") === "false");
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${lang}/${width}: compare overflow`);
+    if (width === 1440 || width === 390) await page.screenshot({ path: `${output}/${lang}-${width}-compare.png`, fullPage: true });
+    await page.getByRole("button", { name: lang === "ru" ? "К списку" : "Back to list" }).click();
+    await page.locator("tbody input[type=checkbox]").first().waitFor();
+    await page.goBack(); await page.locator("tbody [class*=compareRow]").first().waitFor();
+    await page.goForward(); await page.locator("tbody input[type=checkbox]").first().waitFor();
     // Item detail opens as a history step and closes with Escape.
     await page.locator("tbody th button").first().click();
     await page.getByRole("dialog").locator("[class*=depthPlot]").waitFor();
