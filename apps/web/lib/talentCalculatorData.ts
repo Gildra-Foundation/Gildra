@@ -629,53 +629,63 @@ function directPvpTalent(summary: CatalogRecord, buildVersion: string, buildId: 
 }
 
 type RaidbotsTalentSnapshot = { buildVersion: string; generatedAt: string; contentHash: string; records: unknown[] };
-type RaidbotsTalentSnapshotCache = { expiresAt: number; request: Promise<RaidbotsTalentSnapshot> | null };
+type RaidbotsTalentSnapshotCache = { expiresAt: number; request: Promise<RaidbotsTalentSnapshot> | null; last: RaidbotsTalentSnapshot | null };
 type RaidbotsTalentGlobal = typeof globalThis & { __gildraRaidbotsTalentSnapshot?: RaidbotsTalentSnapshotCache };
-const raidbotsTalentSnapshotCache = (globalThis as RaidbotsTalentGlobal).__gildraRaidbotsTalentSnapshot ??= { expiresAt: 0, request: null };
+const raidbotsTalentSnapshotCache = (globalThis as RaidbotsTalentGlobal).__gildraRaidbotsTalentSnapshot ??= { expiresAt: 0, request: null, last: null };
+raidbotsTalentSnapshotCache.last ??= null;
+const RAIDBOTS_SNAPSHOT_TTL_MS = 300_000;
 
+type RaidbotsMetadata = { wowBuild?: string; generatedAt?: string; contentHash?: string };
+
+/**
+ * The Raidbots talent snapshot, kept per server process. Every 5 minutes the small
+ * metadata.json is checked; the multi-megabyte talents.json (too large for the Data
+ * Cache) is downloaded again only when its contentHash changed. While a check runs,
+ * pages keep rendering from the last good snapshot (stale-while-revalidate), so no
+ * page waits on Raidbots after the first load of the process.
+ */
 function getRaidbotsTalentSnapshot(): Promise<RaidbotsTalentSnapshot> {
-  if (raidbotsTalentSnapshotCache.request && raidbotsTalentSnapshotCache.expiresAt > Date.now()) {
-    return raidbotsTalentSnapshotCache.request;
-  }
-  if (raidbotsTalentSnapshotCache.expiresAt <= Date.now()) raidbotsTalentSnapshotCache.request = null;
-  if (!raidbotsTalentSnapshotCache.request) {
-    const request = Promise.all([
-      fetch("https://www.raidbots.com/static/data/live/metadata.json", {
-        cache: "force-cache",
-        next: { revalidate: 300 },
-        signal: AbortSignal.timeout(10_000),
-      }),
-      fetch("https://www.raidbots.com/static/data/live/talents.json", {
-        // The JSON is larger than Next.js's 2 MB Data Cache item limit. Cache
-        // it once per server process instead of attempting a failing disk write.
-        cache: "no-store",
-        signal: AbortSignal.timeout(10_000),
-      }),
-    ]).then(async ([metadataResponse, talentsResponse]) => {
-      if (!metadataResponse.ok || !talentsResponse.ok) throw new Error("Raidbots talent snapshot is unavailable");
-      const metadata = await metadataResponse.json() as { wowBuild?: string; generatedAt?: string; contentHash?: string };
-      const records = await talentsResponse.json() as unknown[];
-      if (!metadata.wowBuild || !metadata.generatedAt || !metadata.contentHash) {
-        throw new Error("Raidbots talent snapshot metadata is incomplete");
-      }
-      return {
-        buildVersion: metadata.wowBuild,
-        generatedAt: metadata.generatedAt,
-        contentHash: metadata.contentHash,
-        records,
-      };
-    }).then((snapshot) => {
-      raidbotsTalentSnapshotCache.expiresAt = Date.now() + 300_000;
-      return snapshot;
-    }).catch((error) => {
-      raidbotsTalentSnapshotCache.expiresAt = 0;
-      raidbotsTalentSnapshotCache.request = null;
-      throw error;
+  const cache = raidbotsTalentSnapshotCache;
+  const fresh = cache.expiresAt > Date.now();
+  if (cache.request && (fresh || !cache.last)) return cache.request;
+  if (cache.last && (fresh || cache.request)) return Promise.resolve(cache.last);
+  const previous = cache.last;
+  const request = fetch("https://www.raidbots.com/static/data/live/metadata.json", {
+    cache: "force-cache",
+    next: { revalidate: 300 },
+    signal: AbortSignal.timeout(10_000),
+  }).then(async (metadataResponse) => {
+    if (!metadataResponse.ok) throw new Error("Raidbots talent snapshot is unavailable");
+    const metadata = await metadataResponse.json() as RaidbotsMetadata;
+    if (!metadata.wowBuild || !metadata.generatedAt || !metadata.contentHash) {
+      throw new Error("Raidbots talent snapshot metadata is incomplete");
+    }
+    if (previous && previous.contentHash === metadata.contentHash) return previous;
+    const talentsResponse = await fetch("https://www.raidbots.com/static/data/live/talents.json", {
+      // The JSON is larger than Next.js's 2 MB Data Cache item limit: kept here, per process.
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
     });
-    raidbotsTalentSnapshotCache.expiresAt = Number.POSITIVE_INFINITY;
-    raidbotsTalentSnapshotCache.request = request;
-  }
-  return raidbotsTalentSnapshotCache.request!;
+    if (!talentsResponse.ok) throw new Error("Raidbots talent snapshot is unavailable");
+    const records = await talentsResponse.json() as unknown[];
+    return { buildVersion: metadata.wowBuild, generatedAt: metadata.generatedAt, contentHash: metadata.contentHash, records };
+  }).then((snapshot) => {
+    cache.last = snapshot;
+    cache.expiresAt = Date.now() + RAIDBOTS_SNAPSHOT_TTL_MS;
+    cache.request = null;
+    return snapshot;
+  }).catch((error) => {
+    cache.request = null;
+    // A failed check keeps serving the last good snapshot and retries after a minute.
+    if (previous) {
+      cache.expiresAt = Date.now() + 60_000;
+      return previous;
+    }
+    cache.expiresAt = 0;
+    throw error;
+  });
+  cache.request = request;
+  return previous ? Promise.resolve(previous) : request;
 }
 
 async function loadRaidbotsTalentData(theme: TalentSpecTheme = defaultTalentSpecTheme, heroPathId?: number, lang: TalentLang = "ru", localize = true): Promise<TalentCalculatorData> {
