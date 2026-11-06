@@ -134,14 +134,19 @@ func run() error {
 		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
 		cfg.DatasetWorkerURL,
 	))
+	river.AddWorker(workers, datasetrefresh.NewPayloadTierWorker(
+		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
+		cfg.DatasetWorkerURL,
+	))
 	riverClient, err := river.NewClient(riverpgxv5.New(workerPostgres), &river.Config{
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault:       {MaxWorkers: 10},
 			datasetrefresh.QueueName: {MaxWorkers: 1},
 		},
-		PeriodicJobs: []*river.PeriodicJob{
+		// Archon has answered only a bot challenge since 2026-08-26 (direct and
+		// Scrape.do), so its daily job is off; the worker stays for manual runs.
+		PeriodicJobs: append([]*river.PeriodicJob{
 			datasetrefresh.PeriodicJob(time.Now),
-			datasetrefresh.ArchonPeriodicJob(time.Now),
 			datasetrefresh.WowGGPeriodicJob(time.Now),
 			datasetrefresh.IcyVeinsPeriodicJob(time.Now),
 			datasetrefresh.MythicStatsPeriodicJob(time.Now),
@@ -150,7 +155,7 @@ func run() error {
 			datasetrefresh.MythicPlusRunsPeriodicJob(time.Now),
 			datasetrefresh.MythicPlusLeaderboardPeriodicJob(time.Now),
 			datasetrefresh.SimTierPeriodicJob(time.Now),
-		},
+		}, datasetrefresh.PayloadTierPeriodicJobs(time.Now)...),
 		ErrorHandler: &joberrors.SentryHandler{},
 		Workers:      workers,
 	})
