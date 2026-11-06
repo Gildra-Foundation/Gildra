@@ -1,0 +1,104 @@
+{
+ "/assets/wow/character-book/intro/varok-home-background-v2.webp": {
+  "src": "/assets/wow/character-book/intro/varok-home-background-v2-portrait.webp",
+  "x": 0.5,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/classes-heroes-20261106.webp": {
+  "src": "/assets/wow/loading/classes-heroes-20261106-portrait.webp",
+  "x": 0.68,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/dungeon.webp": {
+  "src": "/assets/wow/loading/dungeon-portrait.webp",
+  "x": 0.5,
+  "width": 972,
+  "height": 1080
+ },
+ "/assets/wow/loading/lairs-grotto-20261106.webp": {
+  "src": "/assets/wow/loading/lairs-grotto-20261106-portrait.webp",
+  "x": 0.72,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/library-violet-citadel-20261106.webp": {
+  "src": "/assets/wow/loading/library-violet-citadel-20261106-portrait.webp",
+  "x": 0.7,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/lost-battlefield-20261106.webp": {
+  "src": "/assets/wow/loading/lost-battlefield-20261106-portrait.webp",
+  "x": 0.7,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/raid-wow-optimized.webp": {
+  "src": "/assets/wow/loading/raid-wow-optimized-portrait.webp",
+  "x": 0.5,
+  "width": 608,
+  "height": 675
+ },
+ "/assets/wow/loading/season-2-quel-danas-20261106.webp": {
+  "src": "/assets/wow/loading/season-2-quel-danas-20261106-portrait.webp",
+  "x": 0.7,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/tier-lists-war-room-20261106.webp": {
+  "src": "/assets/wow/loading/tier-lists-war-room-20261106-portrait.webp",
+  "x": 0.7,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/transmog-wardrobe-20261106.webp": {
+  "src": "/assets/wow/loading/transmog-wardrobe-20261106-portrait.webp",
+  "x": 0.72,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/whats-new-silvermoon-20261106.webp": {
+  "src": "/assets/wow/loading/whats-new-silvermoon-20261106-portrait.webp",
+  "x": 0.72,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/wow-azeroth-vista-20261106.webp": {
+  "src": "/assets/wow/loading/wow-azeroth-vista-20261106-portrait.webp",
+  "x": 0.7,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/mythic/backgrounds/altar.webp": {
+  "src": "/assets/wow/mythic/backgrounds/altar-portrait.webp",
+  "x": 0.5,
+  "width": 810,
+  "height": 900
+ },
+ "/assets/wow/mythic/backgrounds/nalorakk.webp": {
+  "src": "/assets/wow/mythic/backgrounds/nalorakk-portrait.webp",
+  "x": 0.5,
+  "width": 810,
+  "height": 900
+ },
+ "/assets/wow/mythic/ruby-depth-v3-light-fast.webp": {
+  "src": "/assets/wow/mythic/ruby-depth-v3-light-fast-portrait.webp",
+  "x": 0.5,
+  "width": 760,
+  "height": 844
+ },
+ "/assets/wow/raids/hub/stylized/scenes/kithix-loading-screen.webp": {
+  "src": "/assets/wow/raids/hub/stylized/scenes/kithix-loading-screen-portrait.webp",
+  "x": 0.5,
+  "width": 829,
+  "height": 921
+ },
+ "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp": {
+  "src": "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene-portrait.webp",
+  "x": 0.5,
+  "width": 661,
+  "height": 734
+ }
+}

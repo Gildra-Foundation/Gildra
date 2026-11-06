@@ -1,10 +1,11 @@
 import type { CSSProperties, ReactNode } from "react";
-import Image from "next/image";
+import { preload } from "react-dom";
+import { getImageProps } from "next/image";
 import clsx from "clsx";
 import { AtlasArtGlow, type ArtGlowPoint } from "./AtlasArtGlow";
 import { AtlasMotionToggle } from "./AtlasMotionToggle";
 import { morphSceneProps } from "./morph";
-import { artPlaceholder } from "./placeholders";
+import { ART_PORTRAIT_MEDIA, ART_PORTRAIT_SIZES, artPlaceholder, artPortrait } from "./placeholders";
 import styles from "./AtlasFrame.module.css";
 
 export type AtlasGlow = { size: readonly [number, number]; points: readonly ArtGlowPoint[] };
@@ -75,6 +76,32 @@ export function AtlasFrameFooter({ locale, brand, legal, links, motion }: { loca
 }
 
 /**
+ * The scene painting. Portrait phones get the painting's phone crop (art
+ * direction, see artPortrait): the same pixels the box shows, from a file the
+ * phone loads at its display size. Server-rendered <picture>; the browser picks
+ * one source, nothing is downloaded twice.
+ */
+function FrameArt({ art, position }: { art: string; position?: string }) {
+  const common = { alt: "", fill: true, quality: 50 } as const;
+  // Decorative, but it is the largest paint of every route that has it: fetch it at high priority.
+  const { props: wide } = getImageProps({ ...common, src: art, sizes: "100vw", loading: "eager", fetchPriority: "high", ...artPlaceholder(art) });
+  const portrait = artPortrait(art, position);
+  // eslint-disable-next-line @next/next/no-img-element -- optimized: getImageProps (same srcset as <Image>)
+  if (!portrait) return <img {...wide} alt="" className={styles.art} />;
+  const { props: tall } = getImageProps({ ...common, src: portrait.src, sizes: ART_PORTRAIT_SIZES });
+  // React preloads a lone <img> in the document head, not one inside <picture>:
+  // preload each source for its own screens, so the painting keeps its head start.
+  preload(tall.src, { as: "image", imageSrcSet: tall.srcSet, imageSizes: tall.sizes, fetchPriority: "high", media: ART_PORTRAIT_MEDIA });
+  preload(wide.src, { as: "image", imageSrcSet: wide.srcSet, imageSizes: wide.sizes, fetchPriority: "high", media: `not all and ${ART_PORTRAIT_MEDIA}` });
+  return (
+    <picture>
+      <source media={ART_PORTRAIT_MEDIA} srcSet={tall.srcSet} sizes={tall.sizes} />
+      <img {...wide} alt="" className={styles.art} />
+    </picture>
+  );
+}
+
+/**
  * Page frame of every inner atlas route: atmosphere artwork, solid body and the
  * 1540 px content column. Pages compose AtlasHero / AtlasSection inside it.
  * The atmosphere is alive: the artwork settles in and drifts slowly, embers rise
@@ -85,7 +112,7 @@ export function AtlasFrameFooter({ locale, brand, legal, links, motion }: { loca
 export function AtlasFrameShell({ children, art, artPosition, artShade = "default", tint, ember, horizon, glow, still = false, artLayer, morphKey, as: Element = "main", className, lang, id, dataAttributes, footer = false, foot = true }: AtlasFrameShellProps) {
   const locale = lang === "ru" ? "ru" : "en";
   const layer = artLayer ?? (glow ? <AtlasArtGlow imageSize={glow.size} focus={objectFocus(artPosition)} points={glow.points} /> : null);
-  const picture = art ? <Image className={styles.art} src={art} alt="" fill sizes="100vw" quality={50} loading="eager" fetchPriority="high" {...artPlaceholder(art)} /> : null;
+  const picture = art ? <FrameArt art={art} position={artPosition} /> : null;
   // Section sparks: the spark and its halo in the section's colour.
   const vars: Record<string, string | undefined> = { "--atlas-frame-tint": tint, "--atlas-frame-horizon": horizon, "--atlas-frame-art-position": artPosition };
   if (ember) Object.assign(vars, { "--atlas-ember": ember, "--atlas-ember-halo": `color-mix(in srgb, ${ember} 24%, transparent)` });
@@ -95,7 +122,6 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
   const atmosphere = (
     <div className={styles.atmosphere} aria-hidden="true" {...(morphKey ? morphSceneProps(morphKey) : {})}>
       <div className={styles.scene}>
-        {/* Decorative, but it is the largest paint of every route that has it: fetch it at high priority. */}
         {picture}
         {layer ? <div className={styles.artLayer}>{layer}</div> : null}
         {/* Torchlight over the artwork and a few suspended embers (CSS only). */}
