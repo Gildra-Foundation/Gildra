@@ -122,6 +122,10 @@ func run() error {
 		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
 		cfg.DatasetWorkerURL,
 	))
+	river.AddWorker(workers, datasetrefresh.NewMythicPlusLeaderboardWorker(
+		datasetrefresh.HTTPClient(cfg.DatasetWorkerTimeout),
+		cfg.DatasetWorkerURL,
+	))
 	riverClient, err := river.NewClient(riverpgxv5.New(workerPostgres), &river.Config{
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault:       {MaxWorkers: 10},
@@ -135,6 +139,7 @@ func run() error {
 			datasetrefresh.MythicStatsPeriodicJob(time.Now),
 			datasetrefresh.UggPeriodicJob(time.Now),
 			datasetrefresh.MythicPlusMetaPeriodicJob(time.Now),
+			datasetrefresh.MythicPlusLeaderboardPeriodicJob(time.Now),
 		},
 		ErrorHandler: &joberrors.SentryHandler{},
 		Workers:      workers,
@@ -176,6 +181,7 @@ func run() error {
 	adminpanel.New(authService, analyticsService, postgres, clickhouseConn, redisClient, cfg.CatalogRecoveryPolicy).Register(router)
 	genshin.NewHandler(genshin.NewService(postgres)).Register(router)
 	gamemeta.NewHandler(gamemeta.NewService(postgres)).Register(router)
+	gamemeta.NewLeaderboardHandler(gamemeta.NewService(postgres)).Register(router)
 	league.NewHandler(league.NewService(postgres)).Register(router)
 	platformhome.NewHandler(platformhome.NewService(postgres)).Register(router)
 	rotationlab.NewHandler(rotationlab.NewService(postgres)).Register(router)

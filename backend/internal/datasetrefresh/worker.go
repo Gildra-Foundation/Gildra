@@ -387,3 +387,55 @@ func MythicPlusMetaPeriodicJob(now func() time.Time) *river.PeriodicJob {
 		},
 	)
 }
+
+const mplusLeaderboardRefreshPath = "/internal/v1/datasets/mplus-leaderboard/refresh"
+
+type MythicPlusLeaderboardRefreshArgs struct {
+	ScheduledFor string `json:"scheduled_for" river:"unique"`
+}
+
+func (MythicPlusLeaderboardRefreshArgs) Kind() string { return "dataset_mplus_leaderboard_refresh" }
+
+// MythicPlusLeaderboardWorker asks the dataset worker to start the crawl of the
+// four regional Mythic+ leaderboards. The crawl runs in the background there
+// (one to two hours at the polite Blizzard API rate) and publishes each region
+// on its own; this request only starts it.
+type MythicPlusLeaderboardWorker struct {
+	river.WorkerDefaults[MythicPlusLeaderboardRefreshArgs]
+	httpClient Client
+	endpoint   string
+}
+
+func NewMythicPlusLeaderboardWorker(httpClient Client, baseURL string) *MythicPlusLeaderboardWorker {
+	return &MythicPlusLeaderboardWorker{
+		httpClient: httpClient,
+		endpoint:   strings.TrimRight(baseURL, "/") + mplusLeaderboardRefreshPath,
+	}
+}
+
+func (w *MythicPlusLeaderboardWorker) Work(ctx context.Context, job *river.Job[MythicPlusLeaderboardRefreshArgs]) error {
+	return requestRefresh(ctx, w.httpClient, w.endpoint, job.Args.ScheduledFor)
+}
+
+// MythicPlusLeaderboardPeriodicJob starts a leaderboard crawl every twelve
+// hours; the collector keys runs by twelve-hour slot, so a retry inside the
+// slot is a no-op and an unchanged region publishes no new snapshot.
+func MythicPlusLeaderboardPeriodicJob(now func() time.Time) *river.PeriodicJob {
+	return river.NewPeriodicJob(
+		IntervalSchedule{Interval: 12 * time.Hour},
+		func() (river.JobArgs, *river.InsertOpts) {
+			return MythicPlusLeaderboardRefreshArgs{ScheduledFor: now().UTC().Format(time.DateOnly)}, &river.InsertOpts{
+				Queue:       QueueName,
+				MaxAttempts: 4,
+				UniqueOpts: river.UniqueOpts{
+					ByArgs:   true,
+					ByPeriod: 12 * time.Hour,
+				},
+			}
+		},
+		&river.PeriodicJobOpts{
+			ID:         "mplus-leaderboard-twelve-hour",
+			RunOnStart: true,
+		},
+	)
+}
