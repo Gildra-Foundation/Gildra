@@ -314,7 +314,6 @@
 }
 @media (max-width: 480px) {
   .milestones { grid-template-columns: minmax(0, 1fr); }
-  .slots { grid-template-columns: minmax(0, 1fr); }
   .run { grid-template-columns: 60px minmax(0, 1fr) 18px; gap: var(--atlas-space-2) var(--atlas-space-3); }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -506,3 +505,9 @@
 :global([data-motion="reduced"]) .dungeonArt img, :global([data-ui-motion="reduce"]) .dungeonArt img { transition: none; transform: none !important; }
 @media (forced-colors: active) { .levelBar, .region, .dungeonCard { border: 1px solid CanvasText; } .levelBar { background: CanvasText; } }
 @media (max-width: 700px) { .specName, .className { white-space: normal; overflow-wrap: anywhere; } }
+@media (max-width: 600px) {
+  .slots { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .slot .emptySlot, .slot .chosen { justify-content: center; min-height: 56px; padding: 4px; }
+  .slot .slotRole, .slot .specText { display: none; }
+  .slot .chosenX { position: absolute; top: 3px; right: 3px; width: 12px; height: 12px; }
+}

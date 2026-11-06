@@ -82,7 +82,7 @@ function Fill({ data, query, copy, locale, base, prefix }: Ctx) {
               <li key={`${slot.role}-${index}`} className={styles.slot} data-filled={slot.spec ? "" : undefined}>
                 {slot.spec
                   ? <SelectedSpec spec={specs.get(slot.spec)} href={hrefWith(base, withoutSpec(query, slot.spec))} copy={copy} />
-                  : <span className={styles.emptySlot}><Icon aria-hidden="true" /><span>{copy.roles[slot.role]}</span><span className={styles.srOnly}>{copy.emptySlot(copy.roles[slot.role])}</span></span>}
+                  : <span className={styles.emptySlot}><Icon aria-hidden="true" /><span className={styles.slotRole}>{copy.roles[slot.role]}</span><span className={styles.srOnly}>{copy.emptySlot(copy.roles[slot.role])}</span></span>}
               </li>
             );
           })}
