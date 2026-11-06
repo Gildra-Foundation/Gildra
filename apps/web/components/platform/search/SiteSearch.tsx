@@ -8,7 +8,7 @@ import { siteSearchCopy, type SiteSearchLang } from "./siteSearchCopy";
 import { OPEN_SITE_SEARCH } from "./siteSearchIndex";
 import styles from "./siteSearch.module.css";
 
-type DialogComponent = ComponentType<{ onClose: () => void; lang: SiteSearchLang; initialQuery?: string }>;
+type DialogComponent = ComponentType<{ open: boolean; onClose: () => void; lang: SiteSearchLang; initialQuery?: string }>;
 let dialogLoad: Promise<DialogComponent> | null = null;
 const loadDialog = () => (dialogLoad ??= import("./SiteSearchDialog").then((module) => module.SiteSearchDialog).catch((error: unknown) => {
   dialogLoad = null;
@@ -33,12 +33,20 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
   // The dialog belongs to the page it was opened on, so any navigation closes it.
   const [openOn, setOpenOn] = useState<string | null>(null);
   const [initialQuery, setInitialQuery] = useState("");
+  // Each opening mounts a fresh dialog (clean query and history); a closed one
+  // stays mounted for its exit animation.
+  const [opening, setOpening] = useState(0);
   const open = openOn === pathname;
   const [Dialog, setDialog] = useState<DialogComponent | null>(null);
   const apple = useSyncExternalStore(noSubscribe, isApple, () => false);
 
   const warm = () => { void loadDialog().then((component) => setDialog(() => component), () => undefined); };
-  const show = (query = "") => { warm(); setInitialQuery(query); setOpenOn(pathname); };
+  const show = (query = "") => {
+    warm();
+    if (!open) setOpening((count) => count + 1);
+    setInitialQuery(query);
+    setOpenOn(pathname);
+  };
 
   const onKey = useEffectEvent((event: KeyboardEvent) => {
     if (event.defaultPrevented || event.altKey) return;
@@ -64,6 +72,15 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
     };
   }, []);
 
+  // ⌘K must not wait for the dialog's chunk: with a keyboard and mouse, fetch it
+  // once the page is idle (a tap warms it on touch, see the button).
+  useEffect(() => {
+    const idle = window as Window & { requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number; cancelIdleCallback?: (handle: number) => void };
+    if (!idle.requestIdleCallback || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    const handle = idle.requestIdleCallback(() => { void loadDialog().then((component) => setDialog(() => component), () => undefined); }, { timeout: 5000 });
+    return () => idle.cancelIdleCallback?.(handle);
+  }, []);
+
   // Remember the page once its title has settled.
   useEffect(() => {
     const path = pathname.replace(/^\/ru(?=\/|$)/, "") || "/";
@@ -81,6 +98,6 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
         <kbd className={styles.triggerKey} data-key={apple ? "⌘K" : "Ctrl K"} aria-hidden="true" />
       </button>
     )}
-    {open && Dialog ? <Dialog onClose={() => setOpenOn(null)} lang={lang} initialQuery={initialQuery} /> : null}
+    {opening > 0 && Dialog ? <Dialog key={opening} open={open} onClose={() => setOpenOn(null)} lang={lang} initialQuery={initialQuery} /> : null}
   </>;
 }

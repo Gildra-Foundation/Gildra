@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type FocusEvent, type KeyboardEvent, type PointerEvent } from "react";
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type FocusEvent, type KeyboardEvent, type PointerEvent, type RefObject } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight, BarChart3, BookOpen, Wrench, ChevronDown, KeyRound, Menu, ScrollText, Swords, UserRound, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, ChevronDown, KeyRound, Library, Menu, ScrollText, Swords, UserRound, Wrench, X, type LucideIcon } from "lucide-react";
+import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { p, type Lang } from "@/lib/i18n-paths";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
 import { LocaleSwitch } from "@/components/platform/locale/LocaleSwitch";
@@ -19,13 +20,20 @@ const renderedPath = (fallback: string) => typeof document === "undefined"
   ? fallback
   : document.querySelector("[data-toolbar-path]")?.getAttribute("data-toolbar-path") ?? fallback;
 
-/** Hover intent: a pointer passing over the bar does not flash a menu. */
-const OPEN_DELAY = 90;
-const CLOSE_DELAY = 180;
+/**
+ * Hover intent of the tab menus: a pointer passing over the bar does not flash
+ * a menu, one crossing a neighbouring tab on its way down into the open menu
+ * does not switch it, and one slipping out of the menu has a moment to come back.
+ */
+const OPEN_DELAY = 100;
+const SWITCH_DELAY = 120;
+const CLOSE_DELAY = 250;
+/** Longest exit animation (menu and sheet); a fallback when animationend never comes. */
+const EXIT_MS = 200;
 
 const word = (lang: Lang, value: { en: string; ru: string }) => value[lang];
 
-const realmIcons: Record<string, LucideIcon> = { heroes: UserRound, mythic: KeyRound, raids: Swords, meta: BarChart3, chronicle: ScrollText, stories: BookOpen, tools: Wrench };
+const realmIcons: Record<string, LucideIcon> = { heroes: UserRound, mythic: KeyRound, raids: Swords, meta: BarChart3, library: Library, chronicle: ScrollText, stories: BookOpen, tools: Wrench };
 
 function RealmIcon({ id, size }: { id: string; size: number }) {
   const Icon = realmIcons[id];
@@ -33,8 +41,10 @@ function RealmIcon({ id, size }: { id: string; size: number }) {
 }
 
 /** The body of a realm menu: the realm's pages, then its quick picks (paintings or the class roster). */
-function RealmMenu({ realm, picks, lang, barePath, onNavigate, compact = false }: {
+function RealmMenu({ realm, picks, lang, barePath, onNavigate, compact = false, art = true }: {
   realm: NavigationRealm; picks: NavigationPicks; lang: Lang; barePath: string; onNavigate: () => void; compact?: boolean;
+  /** Paint the pictures (the prebuilt sheet adds them on its first opening, not on page load). */
+  art?: boolean;
 }) {
   const group = picks[realm.id];
   const items = group?.kind === "class"
@@ -62,7 +72,7 @@ function RealmMenu({ realm, picks, lang, barePath, onNavigate, compact = false }
             style={pick.tint ? { "--pick-tint": pick.tint } as CSSProperties : undefined}
             aria-current={barePath === pick.href ? "page" : undefined}>
             <span className={toolbarStyles.pickArt}>
-              <Image src={pick.image} alt="" fill sizes={group.kind === "class" ? "32px" : "(max-width: 1179px) 62vw, 220px"} quality={50} />
+              {art && <Image src={pick.image} alt="" fill sizes={group.kind === "class" ? "32px" : "(max-width: 1179px) 62vw, 220px"} quality={50} />}
             </span>
             <span className={toolbarStyles.pickLabel}>{word(lang, pick.label)}</span>
           </Link>
@@ -72,27 +82,58 @@ function RealmMenu({ realm, picks, lang, barePath, onNavigate, compact = false }
   </div>;
 }
 
+type OpenMenu = {
+  /** The page the menu was opened on: any navigation closes it. */
+  path: string;
+  realm: string;
+  /** Opened by hover intent, or pinned by a press (click, Enter, arrow). */
+  by: "hover" | "press";
+  /** Opened from a closed bar (it drops in); a switch between tabs swaps in place. */
+  fresh: boolean;
+};
+
+/** The focusable items of an open menu, in reading order. */
+const menuItems = (panel: Element | null | undefined) => [...(panel?.querySelectorAll<HTMLElement>("a[href]") ?? [])];
+
 /** The section tabs: each opens its menu on hover intent or on its chevron; the link itself goes to the hub. */
 function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: NavigationPicks }) {
   const ru = lang === "ru";
   const barePath = barePathOf(path);
   const current = currentRealm(barePath);
-  // The open menu belongs to the page it was opened on: any navigation closes it.
-  const [open, setOpen] = useState<{ path: string; realm: string } | null>(null);
-  const openRealm = open?.path === path ? open.realm : null;
+  const [open, setOpen] = useState<OpenMenu | null>(null);
+  // The menu that is fading out after a close (its exit animation).
+  const [leaving, setLeaving] = useState<{ path: string; realm: string } | null>(null);
+  const openMenu = open?.path === path ? open : null;
+  const openRealm = openMenu?.realm ?? null;
+  const leavingRealm = leaving?.path === path && leaving.realm !== openRealm ? leaving.realm : null;
   const root = useRef<HTMLElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  /** Keyboard opening: which end of the menu receives focus once it renders. */
+  const focusOnOpen = useRef<"first" | "last" | null>(null);
   const id = useId();
 
   const later = (action: () => void, delay: number) => {
     clearTimeout(timer.current);
     timer.current = setTimeout(action, delay);
   };
-  const show = (realm: string) => { clearTimeout(timer.current); setOpen({ path, realm }); };
-  const close = () => { clearTimeout(timer.current); setOpen(null); };
+  const show = (realm: string, by: OpenMenu["by"]) => {
+    clearTimeout(timer.current);
+    setLeaving(null);
+    setOpen(previous => ({ path, realm, by, fresh: !(previous && previous.path === path) }));
+  };
+  const close = () => {
+    clearTimeout(timer.current);
+    if (openRealm && !lessMotion()) {
+      setLeaving({ path, realm: openRealm });
+      clearTimeout(exitTimer.current);
+      exitTimer.current = setTimeout(() => setLeaving(null), EXIT_MS);
+    }
+    setOpen(null);
+  };
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => () => { clearTimeout(timer.current); clearTimeout(exitTimer.current); }, []);
 
   useEffect(() => {
     if (!openRealm) return;
@@ -102,6 +143,15 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
     document.addEventListener("pointerdown", outside);
     return () => document.removeEventListener("pointerdown", outside);
   }, [openRealm]);
+
+  // A menu opened from the keyboard takes focus once it is in the document.
+  useLayoutEffect(() => {
+    const edge = focusOnOpen.current;
+    focusOnOpen.current = null;
+    if (!edge || !openRealm) return;
+    const items = menuItems(document.getElementById(`${id}-${openRealm}`));
+    (edge === "first" ? items[0] : items.at(-1))?.focus();
+  }, [openRealm, id]);
 
   // On narrow screens the strip scrolls sideways: keep the current section in view.
   const currentId = current?.realm.id ?? null;
@@ -115,25 +165,74 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
   const hover = (realm: string) => ({
     onPointerEnter: (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
-      // Moving between tabs with a menu open switches at once.
-      if (openRealm) show(realm); else later(() => show(realm), OPEN_DELAY);
+      if (openRealm === realm) clearTimeout(timer.current);
+      // With a menu open, a neighbour takes over only when the pointer rests on it.
+      else later(() => show(realm, "hover"), openRealm ? SWITCH_DELAY : OPEN_DELAY);
     },
-    onPointerLeave: (event: PointerEvent) => { if (event.pointerType === "mouse") later(close, CLOSE_DELAY); },
+    onPointerLeave: (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      if (!openRealm) clearTimeout(timer.current);
+      else if (openMenu?.by === "hover") later(close, CLOSE_DELAY);
+    },
   });
+  // A plain tab under the pointer lets an open hover menu go after the same grace.
+  const plainHover = {
+    onPointerEnter: (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      if (!openRealm) clearTimeout(timer.current);
+      else if (openMenu?.by === "hover") later(close, CLOSE_DELAY);
+    },
+  };
 
-  return <nav ref={root} className={toolbarStyles.tabs} aria-label={ru ? "Основная навигация" : "Main navigation"}
-    onBlur={(event: FocusEvent) => { if (!event.currentTarget.contains(event.relatedTarget)) close(); }}
-    onKeyDown={(event: KeyboardEvent) => {
-      if (event.key !== "Escape" || !openRealm) return;
+  const onKeyDown = (event: KeyboardEvent) => {
+    const target = event.target as HTMLElement;
+    if (event.key === "Escape") {
+      if (!openRealm) return;
       event.preventDefault();
-      const toggle = list.current?.querySelector<HTMLButtonElement>(`[data-realm="${openRealm}"] button`);
+      const toggle = list.current?.querySelector<HTMLButtonElement>(`[data-realm="${openRealm}"] > button`);
       close();
       toggle?.focus();
-    }}>
+      return;
+    }
+    const panel = target.closest<HTMLElement>("[data-menu-panel]");
+    if (panel && (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End")) {
+      // Up and down walk the open menu: its pages, then its quick picks.
+      event.preventDefault();
+      const items = menuItems(panel);
+      const at = items.indexOf(target);
+      const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1
+        : (at + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+      items[next]?.focus();
+      return;
+    }
+    const realm = target.closest<HTMLElement>("li[data-realm]")?.dataset.realm;
+    if (panel || !realm || target.parentElement?.tagName !== "LI") return;
+    if ((event.key === "ArrowDown" || event.key === "ArrowUp") && target.tagName === "BUTTON") {
+      event.preventDefault();
+      focusOnOpen.current = event.key === "ArrowDown" ? "first" : "last";
+      if (openRealm === realm) {
+        const items = menuItems(document.getElementById(`${id}-${realm}`));
+        focusOnOpen.current = null;
+        (event.key === "ArrowDown" ? items[0] : items.at(-1))?.focus();
+      } else show(realm, "press");
+    } else if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+      // Left and right walk the strip: each tab and its chevron.
+      const stops = [...(list.current?.querySelectorAll<HTMLElement>(":scope > li > a, :scope > li > button") ?? [])];
+      const at = stops.indexOf(target);
+      if (at < 0) return;
+      event.preventDefault();
+      stops[(at + (event.key === "ArrowRight" ? 1 : -1) + stops.length) % stops.length]?.focus();
+    }
+  };
+
+  return <nav ref={root} className={toolbarStyles.tabs} aria-label={ru ? "Основная навигация" : "Main navigation"}
+    onBlur={(event: FocusEvent) => { if (openRealm && !event.currentTarget.contains(event.relatedTarget)) close(); }}
+    onKeyDown={onKeyDown}>
     <ul ref={list}>
       {realmsFor(lang).map(realm => {
         const hub = realm.links[0];
         const isOpen = openRealm === realm.id;
+        const isLeaving = leavingRealm === realm.id;
         const label = word(lang, realm.label);
         // A realm of one page with no quick picks is a plain tab: a menu would only repeat it.
         const single = realm.links.length === 1 && !picks[realm.id];
@@ -141,16 +240,24 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
           aria-current={barePath === hub.href ? "page" : current?.realm.id === realm.id ? "true" : undefined}>
           <RealmIcon id={realm.id} size={17} />{label}
         </Link>;
-        if (single) return <li key={realm.id} data-realm={realm.id} data-single>{link}</li>;
+        if (single) return <li key={realm.id} data-realm={realm.id} data-single {...plainHover}>{link}</li>;
         return <li key={realm.id} data-realm={realm.id} data-open={isOpen || undefined} {...hover(realm.id)}>
           {link}
           <button type="button" className={toolbarStyles.toggle} aria-expanded={isOpen} aria-controls={`${id}-${realm.id}`}
             aria-label={ru ? `${label}: все страницы раздела` : `${label}: all pages`}
-            onClick={() => (isOpen ? close() : show(realm.id))}>
+            onClick={event => {
+              // A click on a menu the hover has just opened pins it instead of closing it again.
+              if (isOpen && openMenu?.by === "hover" && event.detail > 0) setOpen({ ...openMenu, by: "press" });
+              else if (isOpen) close();
+              else show(realm.id, "press");
+            }}>
             <ChevronDown size={14} aria-hidden="true" />
           </button>
-          {isOpen && <div id={`${id}-${realm.id}`} className={toolbarStyles.panel}>
-            <RealmMenu realm={realm} picks={picks} lang={lang} barePath={barePath} onNavigate={close} />
+          {(isOpen || isLeaving) && <div id={`${id}-${realm.id}`} className={toolbarStyles.panel} data-menu-panel
+            data-state={isOpen ? "open" : "closed"} data-enter={(isOpen && openMenu?.fresh) || undefined}
+            inert={!isOpen || undefined}
+            onAnimationEnd={event => { if (!isOpen && event.target === event.currentTarget) setLeaving(null); }}>
+            <RealmMenu key={realm.id} realm={realm} picks={picks} lang={lang} barePath={barePath} onNavigate={close} />
           </div>}
         </li>;
       })}
@@ -158,24 +265,71 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
   </nav>;
 }
 
-/** Phones and tablets: every section's menu in one sheet under the bar, with the account. */
+/** The sheet's sections. Memoised: opening and closing the sheet re-renders only its frame. */
+const SheetContent = memo(function SheetContent({ lang, picks, barePath, currentId, art, onNavigate }: {
+  lang: Lang; picks: NavigationPicks; barePath: string; currentId: string | undefined; art: boolean; onNavigate: () => void;
+}) {
+  return <>
+    <Account lang={lang} />
+    {realmsFor(lang).map(realm => <section key={realm.id} className={toolbarStyles.sheetRealm} data-current={realm.id === currentId || undefined}>
+      <RealmMenu realm={realm} picks={picks} lang={lang} barePath={barePath} onNavigate={onNavigate} compact art={art} />
+    </section>)}
+  </>;
+});
+
+type SheetIdle = Window & { requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number; cancelIdleCallback?: (handle: number) => void };
+
+/**
+ * Phones and tablets: every section's menu in one sheet under the bar, with the
+ * account. The sheet is built and laid out once, when the page is idle (or on the
+ * first touch of the button), and from then on only shown and hidden
+ * (visibility): building and laying out seven menus on the tap held its first
+ * frame back by 150–500 ms on a slow phone. Its pictures load on the first opening.
+ */
 function MenuSheet({ path, lang, picks }: { path: string; lang: Lang; picks: NavigationPicks }) {
   const ru = lang === "ru";
   const barePath = barePathOf(path);
   const currentId = currentRealm(barePath)?.realm.id;
   const [openOn, setOpenOn] = useState<string | null>(null);
+  const [built, setBuilt] = useState(false);
+  const [art, setArt] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const open = openOn === path;
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const id = useId();
-  const close = () => setOpenOn(null);
+  const close = () => {
+    if (!open) return;
+    if (!lessMotion()) {
+      setLeaving(true);
+      clearTimeout(exitTimer.current);
+      exitTimer.current = setTimeout(() => setLeaving(false), EXIT_MS);
+    }
+    setOpenOn(null);
+  };
+
+  // Build the sheet ahead of the first tap where the bar shows the menu button.
+  useEffect(() => {
+    if (built || !window.matchMedia("(max-width: 1179px)").matches) return;
+    const idle = window as SheetIdle;
+    if (idle.requestIdleCallback) {
+      const handle = idle.requestIdleCallback(() => setBuilt(true), { timeout: 4000 });
+      return () => idle.cancelIdleCallback?.(handle);
+    }
+    const handle = setTimeout(() => setBuilt(true), 2000);
+    return () => clearTimeout(handle);
+  }, [built]);
+
+  useEffect(() => () => clearTimeout(exitTimer.current), []);
+
+  // A link in the sheet closes it; one stable handler keeps the memoised sections still.
+  const latestClose = useRef(close);
+  useLayoutEffect(() => { latestClose.current = close; });
+  const navigate = useCallback(() => latestClose.current(), []);
 
   useEffect(() => {
     if (!open) return;
-    const html = document.documentElement;
-    const previous = html.style.overflow;
-    // The page under the sheet does not scroll along with it.
-    html.style.overflow = "hidden";
     // Open on the current section: scroll it to the top and focus its first page.
     const sheet = root.current?.querySelector<HTMLElement>("[data-sheet]");
     const section = sheet?.querySelector<HTMLElement>("[data-current]");
@@ -184,10 +338,20 @@ function MenuSheet({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
     const outside = (event: globalThis.PointerEvent) => {
       if (event.target instanceof Node && !root.current?.contains(event.target)) setOpenOn(null);
     };
+    // The page under the sheet stays put: the sheet itself contains its scroll
+    // (overscroll-behavior), and a drag on the bar above it is held. No overflow
+    // lock on <html>: that relaid the whole page out on the tap.
+    const bar = root.current?.closest("header");
+    const hold = (event: Event) => {
+      if (!(event.target instanceof Node) || !sheet?.contains(event.target)) event.preventDefault();
+    };
     document.addEventListener("pointerdown", outside);
+    bar?.addEventListener("touchmove", hold, { passive: false });
+    bar?.addEventListener("wheel", hold, { passive: false });
     return () => {
-      html.style.overflow = previous;
       document.removeEventListener("pointerdown", outside);
+      bar?.removeEventListener("touchmove", hold);
+      bar?.removeEventListener("wheel", hold);
     };
   }, [open]);
 
@@ -201,15 +365,16 @@ function MenuSheet({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
     }}>
     <button ref={trigger} type="button" className={toolbarStyles.menuButton} aria-controls={id} aria-expanded={open}
       aria-label={ru ? (open ? "Закрыть меню" : "Открыть меню") : (open ? "Close menu" : "Open menu")}
-      onClick={() => setOpenOn(open ? null : path)}>
-      {open ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
+      onPointerDown={() => { setBuilt(true); setArt(true); }} onFocus={() => setBuilt(true)}
+      onClick={() => { setBuilt(true); setArt(true); if (open) close(); else { setLeaving(false); setOpenOn(path); } }}>
+      <Menu className={toolbarStyles.menuIcon} data-icon="open" size={20} aria-hidden="true" />
+      <X className={toolbarStyles.menuIcon} data-icon="close" size={20} aria-hidden="true" />
     </button>
-    {open && <nav id={id} className={toolbarStyles.sheet} data-sheet aria-label={ru ? "Все разделы" : "All sections"}
-      onBlur={event => { if (!root.current?.contains(event.relatedTarget)) close(); }}>
-      <Account lang={lang} />
-      {realmsFor(lang).map(realm => <section key={realm.id} className={toolbarStyles.sheetRealm} data-current={realm.id === currentId || undefined}>
-        <RealmMenu realm={realm} picks={picks} lang={lang} barePath={barePath} onNavigate={close} compact />
-      </section>)}
+    {built && <nav id={id} className={toolbarStyles.sheet} data-sheet data-state={open ? "open" : leaving ? "closing" : "closed"}
+      inert={!open || undefined} aria-label={ru ? "Все разделы" : "All sections"}
+      onAnimationEnd={event => { if (!open && event.target === event.currentTarget) setLeaving(false); }}
+      onBlur={event => { if (open && !root.current?.contains(event.relatedTarget)) close(); }}>
+      <SheetContent lang={lang} picks={picks} barePath={barePath} currentId={currentId} art={art} onNavigate={navigate} />
     </nav>}
   </div>;
 }
@@ -220,18 +385,22 @@ function Account({ lang }: { lang: Lang }) {
     labelClassName={toolbarStyles.accountLabel} avatarContent={<UserRound size={15} strokeWidth={2} />} />;
 }
 
-/** The bar casts a shadow once the page scrolls under it. */
-function useScrolled() {
-  const [scrolled, setScrolled] = useState(false);
+/**
+ * The bar casts a shadow once the page scrolls under it. The flag is written on
+ * the element: a React state re-rendered the whole bar on the frame it changed.
+ */
+function useScrolledFlag(bar: RefObject<HTMLElement | null>) {
   useEffect(() => {
     let frame = 0;
-    const read = () => { frame = 0; setScrolled(window.scrollY > 8); };
+    const read = () => {
+      frame = 0;
+      bar.current?.toggleAttribute("data-scrolled", window.scrollY > 8);
+    };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(read); };
     read();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(frame); };
-  }, []);
-  return scrolled;
+  }, [bar]);
 }
 
 /** The command bar: brand, search and account on top; the section tabs with their menus below. */
@@ -240,9 +409,10 @@ export function WorkspaceNavigatorContent({ picks }: { picks: NavigationPicks })
   const livePath = useSyncExternalStore(noSubscribe, () => pathname, () => renderedPath(pathname));
   const ru = /^\/ru(?:\/|$)/.test(livePath);
   const lang: Lang = ru ? "ru" : "en";
-  const scrolled = useScrolled();
+  const bar = useRef<HTMLElement>(null);
+  useScrolledFlag(bar);
 
-  return <header className={toolbarStyles.toolbar} data-atlas-scope data-toolbar-path={livePath} data-scrolled={scrolled || undefined}>
+  return <header ref={bar} className={toolbarStyles.toolbar} data-atlas-scope data-toolbar-path={livePath}>
     <a className={toolbarStyles.skip} href="#atlas-content" onClick={event => {
       const content = document.getElementById("atlas-content");
       if (!content) return;

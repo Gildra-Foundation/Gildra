@@ -9,6 +9,8 @@
   background: var(--atlas-bg);
   border-bottom: 1px solid var(--atlas-line-soft);
 }
+/* An open menu or sheet stands above the cookie notice (z-index 90) at the bottom edge. */
+.toolbar:has(.panel, .sheet:not([data-state="closed"])) { z-index: 95; }
 /* The shadow under the bar is its own layer that only fades: transitioning
    box-shadow repainted the full-width bar on every frame of the change. */
 .toolbar::after {
@@ -20,7 +22,7 @@
   pointer-events: none;
   opacity: 0;
   background: linear-gradient(180deg, color-mix(in srgb, #000 42%, transparent), transparent);
-  transition: opacity var(--atlas-duration-slow) var(--atlas-ease);
+  transition: opacity var(--atlas-duration) var(--atlas-ease);
 }
 .toolbar[data-scrolled]::after { opacity: 1; }
 
@@ -39,14 +41,17 @@
 .skip:focus-visible { translate: 0 0; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
 /* ── Top row: brand · search · language, game, account ─────────────── */
+/* Brand and controls take equal side columns, so the search stays centred and
+   does not move when the account chip changes width (placeholder → name). */
 .top {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, 560px) minmax(max-content, 1fr);
   align-items: center;
   gap: var(--atlas-space-5);
   height: 60px;
-  padding-inline: var(--atlas-gutter);
+  padding-inline: max(var(--atlas-gutter), env(safe-area-inset-left)) max(var(--atlas-gutter), env(safe-area-inset-right));
 }
+.top > .brand { justify-self: start; }
 .brand {
   display: inline-flex;
   align-items: center;
@@ -79,7 +84,7 @@
 .brand:hover .sigil { translate: 0 -1px; filter: drop-shadow(0 0 9px var(--atlas-accent-glow)) drop-shadow(0 0 2px var(--atlas-accent-2)); }
 
 /* The search is the masthead's centrepiece: a full field, not a pill. */
-.search { justify-self: center; width: min(100%, 560px); }
+.search { justify-self: stretch; min-width: 0; }
 .search button {
   width: 100%;
   min-height: 42px;
@@ -93,7 +98,7 @@
 .search button > span:first-of-type { flex: 1; }
 .search button:hover { border-color: var(--atlas-accent); background: var(--atlas-surface-raised); }
 
-.end { display: flex; align-items: center; gap: var(--atlas-space-3); }
+.end { display: flex; justify-self: end; align-items: center; gap: var(--atlas-space-3); }
 
 /* Account: the one gold control (AccountChip — "Sign in" or the Battle.net name). */
 .accountSlot { display: contents; }
@@ -116,6 +121,11 @@
 .account:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 .accountAvatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--atlas-accent-ink); background: var(--atlas-accent-2); }
 .accountLabel { max-width: 12ch; overflow: hidden; text-overflow: ellipsis; }
+/* The placeholder holds the width of "Sign in" (its hidden word), so the chip
+   keeps its size when the status arrives; the answer fades in over it. */
+.accountLabel :global(.user-skel) { width: auto; max-width: 12ch; overflow: hidden; color: transparent; font-style: normal; line-height: 8px; white-space: nowrap; }
+.account:not(:global(.user-pending)) .accountLabel { animation: label-in var(--atlas-duration-fast) var(--atlas-ease); }
+@keyframes label-in { from { opacity: 0; } }
 
 /* ── Section tabs: icon, label and an accent underline, like a game client's tab strip ── */
 .tabs { position: relative; border-top: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); }
@@ -151,6 +161,8 @@
 .tab:hover, [data-open] > .tab, .tab[aria-current] { color: var(--atlas-text-strong); }
 .tab:hover svg, [data-open] > .tab svg, .tab[aria-current] svg { color: var(--atlas-accent); }
 .tab[aria-current]::after, [data-open] > .tab::after { scale: 1 1; }
+/* A plain tab has no chevron: its underline ends with the label, as it starts. */
+.tabs > ul > li[data-single] > .tab::after { right: 20px; }
 .tab:focus-visible, .toggle:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -4px; border-radius: var(--atlas-radius-control); }
 .toggle {
   display: grid;
@@ -168,20 +180,30 @@
 .toggle svg { transition: rotate var(--atlas-duration) var(--atlas-ease); }
 [data-open] > .toggle svg { rotate: 180deg; color: var(--atlas-accent); }
 
-/* Solid menu across the whole bar: nothing of the page bleeds through. */
+/* Solid menu across the whole bar: nothing of the page bleeds through. It drops
+   in when the bar opens it, swaps in place between tabs (only its content
+   brightens) and fades out on close; opacity and translate only. A short window
+   scrolls the menu, never the page under it. */
 .panel {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
+  max-height: calc(100dvh - var(--atlas-sticky-top));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--atlas-space-5) var(--atlas-gutter) var(--atlas-space-6);
   border-top: 1px solid var(--atlas-line-soft);
   border-bottom: 1px solid var(--atlas-line);
   background: var(--atlas-surface);
   box-shadow: 0 30px 60px color-mix(in srgb, #000 60%, transparent);
-  animation: drop var(--atlas-duration) var(--atlas-ease);
 }
+.panel[data-enter] { animation: drop var(--atlas-duration) var(--atlas-ease); }
+.panel:not([data-enter])[data-state="open"] > .menu { animation: swap var(--atlas-duration-fast) var(--atlas-ease); }
+.panel[data-state="closed"] { pointer-events: none; animation: lift var(--atlas-duration-fast) var(--atlas-ease) forwards; }
 @keyframes drop { from { opacity: 0; translate: 0 -6px; } }
+@keyframes lift { to { opacity: 0; translate: 0 -4px; } }
+@keyframes swap { from { opacity: .4; } }
 
 /* ── Menu body: the section's pages, then its quick picks ───────────── */
 .menu {
@@ -261,10 +283,19 @@
 .menu[data-compact] .picks[data-kind="art"] > li { flex: 0 0 62%; scroll-snap-align: start; }
 .menu[data-compact] .picks[data-kind="class"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
+/* Laptops: the eight tabs keep to one row with tighter spacing. */
+@media (min-width: 1180px) and (max-width: 1365px) {
+  .tab { gap: 6px; padding-left: 10px; }
+  .tabs > ul > li[data-single] > .tab { padding-right: 14px; }
+  .tabs > ul > li[data-single] > .tab::after { right: 10px; }
+  .toggle { width: 24px; margin-right: 4px; }
+  .tab::after { left: 6px; right: -24px; }
+}
+
 /* ── Phones and tablets: icon search, scrolling tab strip, one sheet ── */
 .sheetRoot { display: none; }
 @media (max-width: 1179px) {
-  .top { gap: var(--atlas-space-3); height: 56px; }
+  .top { grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--atlas-space-3); height: 56px; }
   .search { justify-self: end; width: auto; }
   .search button { width: auto; min-height: 40px; padding-inline: 11px; }
   .search button > span, .search button > kbd { display: none; }
@@ -282,12 +313,18 @@
     color: var(--atlas-text-strong);
     cursor: pointer;
   }
+  /* Burger and cross trade places with a quarter turn. */
+  .menuIcon { grid-area: 1 / 1; transition: opacity var(--atlas-duration-fast) var(--atlas-ease), rotate var(--atlas-duration) var(--atlas-ease); }
+  .menuButton[aria-expanded="false"] .menuIcon[data-icon="close"],
+  .menuButton[aria-expanded="true"] .menuIcon[data-icon="open"] { opacity: 0; rotate: -90deg; }
   .menuButton:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; }
   .menuButton[aria-expanded="true"] { border-color: var(--atlas-accent); }
   /* The tab strip stays visible and scrolls sideways. */
   .tabs > ul { overflow-x: auto; scrollbar-width: none; padding-inline: 6px; mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 28px), transparent); }
   .tabs > ul::-webkit-scrollbar { display: none; }
   .tab { height: 44px; padding-inline: 10px; font-size: var(--atlas-text-small); }
+  .tabs > ul > li[data-single] > .tab { padding-right: 10px; }
+  .tabs > ul > li[data-single] > .tab::after { right: 10px; }
   .tab::after { right: 10px; left: 10px; }
   .toggle, .panel { display: none; }
   .sheet {
@@ -299,10 +336,13 @@
     gap: var(--atlas-space-5);
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: var(--atlas-space-4) var(--atlas-gutter) var(--atlas-space-8);
+    padding: var(--atlas-space-4) max(var(--atlas-gutter), env(safe-area-inset-right)) calc(var(--atlas-space-8) + env(safe-area-inset-bottom)) max(var(--atlas-gutter), env(safe-area-inset-left));
     background: var(--atlas-bg);
-    animation: drop var(--atlas-duration) var(--atlas-ease);
   }
+  /* Closed, the prebuilt sheet keeps its layout and is only invisible. */
+  .sheet[data-state="closed"] { visibility: hidden; pointer-events: none; }
+  .sheet[data-state="open"] { animation: drop var(--atlas-duration) var(--atlas-ease); }
+  .sheet[data-state="closing"] { pointer-events: none; animation: lift var(--atlas-duration-fast) var(--atlas-ease) forwards; }
   .sheet > .account { justify-self: start; }
   .sheetRealm { padding-bottom: var(--atlas-space-5); border-bottom: 1px solid var(--atlas-line-soft); }
 }
@@ -313,6 +353,6 @@
 @media (max-width: 420px) { .brand > span { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel, .sheet { animation: none; }
-  .toolbar::after, .tab::after, .tab svg, .toggle svg, .page, .pageGo, .picks .pickArt img, .sigil, .account { transition: none; }
+  .panel, .panel > .menu, .sheet, .account .accountLabel { animation: none !important; }
+  .toolbar::after, .tab::after, .tab svg, .toggle svg, .page, .pageGo, .picks .pickArt img, .sigil, .account, .menuIcon { transition: none; }
 }

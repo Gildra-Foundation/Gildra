@@ -32,6 +32,16 @@
 /* Dialog */
 .dialog { display: grid; }
 
+/* Wider screens: the dialog hangs from a fixed line near the top, as a command
+   palette does, so results arriving under the field grow it downwards instead of
+   re-centring it on every keystroke. Enter and exit are the bar's own tempo. */
+@media (min-width: 721px) {
+  :global(.ui-modal-layer.ui-dialog-layer):has(> .dialog.dialog) { align-items: flex-start; padding-top: min(14vh, 120px); }
+}
+/* (Specificity above the kit's centred and phone-sheet rules.) */
+:global(.ui-modal-layer.ui-dialog-layer) > .dialog.dialog.dialog[data-state="open"] { animation-duration: var(--atlas-duration); }
+:global(.ui-modal-layer.ui-dialog-layer) > .dialog.dialog.dialog[data-state="closed"] { animation-duration: var(--atlas-duration-fast); }
+
 .head {
   display: flex;
   align-items: center;
@@ -43,6 +53,9 @@
 .head > :first-child { flex: 1; }
 
 .head input::-webkit-search-cancel-button { display: none; }
+/* The field's wrapper draws the focus ring; the site-wide outline on the input
+   itself drew a second ring inside it. */
+.head input:focus-visible { outline: none; }
 
 .close {
   min-width: 44px;

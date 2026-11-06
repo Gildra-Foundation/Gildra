@@ -60,11 +60,22 @@ export const navigationRealms: readonly NavigationRealm[] = [
   {
     id: "meta",
     label: { en: "Tier lists", ru: "Тир-листы" },
-    lede: { en: "Compare specializations, then look up any item or spell.", ru: "Сравнение специализаций — и любой предмет или заклинание в библиотеке." },
+    lede: { en: "Rankings of every specialization.", ru: "Рейтинг всех специализаций." },
     scene: "tierLists",
-    also: ["/specs", "/database"],
+    also: ["/specs"],
     links: [
       { href: "/tier-lists", label: { en: "Tier lists", ru: "Тир-листы" }, note: { en: "Specialization rankings", ru: "Рейтинг специализаций" } },
+    ],
+  },
+  {
+    // The game data library (items, spells, mounts) has its own tab: hidden in
+    // the tier-list menu it lit "Tier lists" on its own pages.
+    id: "library",
+    label: { en: "Library", ru: "Библиотека" },
+    lede: { en: "Items, spells, mounts and more.", ru: "Предметы, заклинания, транспорт и другое." },
+    scene: "library",
+    also: ["/database"],
+    links: [
       { href: "/library", label: { en: "Library", ru: "Библиотека" }, note: { en: "Items, spells, mounts and more", ru: "Предметы, заклинания, транспорт и другое" } },
     ],
   },
@@ -79,7 +90,8 @@ export const navigationRealms: readonly NavigationRealm[] = [
   },
   {
     id: "stories",
-    label: { en: "Story Library", ru: "Библиотека историй" },
+    // "Stories" on the tab: next to "Library" a second "Library of …" read as the same place.
+    label: { en: "Stories", ru: "Истории" },
     lede: { en: "Books about the lives and journeys of Azeroth’s heroes.", ru: "Книги о судьбах и странствиях героев Азерота." },
     scene: "library",
     // The manuscript is Russian; the English URL redirects (lib/routes/registry.ts `only`).
