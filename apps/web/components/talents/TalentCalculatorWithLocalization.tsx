@@ -5,7 +5,7 @@ import { TalentCalculator } from "@/components/TalentCalculator";
 import type { TalentCalculatorData } from "@/lib/talentCalculatorData";
 import type { TalentSpecTheme } from "@/lib/talentSpecThemes";
 
-type Props = { data: TalentCalculatorData | null; theme: TalentSpecTheme; lang: "ru" | "en" };
+type Props = { data: TalentCalculatorData | null; theme: TalentSpecTheme; lang: "ru" | "en"; search?: string };
 type SpellTranslation = { name: string; description: string };
 
 function withTranslations(data: TalentCalculatorData, translations: Record<string, SpellTranslation>): TalentCalculatorData {
@@ -25,14 +25,10 @@ function withTranslations(data: TalentCalculatorData, translations: Record<strin
       hero: { ...data.trees.hero, nodes: data.trees.hero.nodes.map((node) => ({ ...node, choices: node.choices.map(localize) })) },
       spec: { ...data.trees.spec, nodes: data.trees.spec.nodes.map((node) => ({ ...node, choices: node.choices.map(localize) })) },
     },
-    source: {
-      ...data.source,
-      label: data.source.label.includes("Wowhead") ? data.source.label : `${data.source.label} · ${data.source.kind === "community_snapshot" ? "Wowhead" : "Blizzard"}`,
-    },
   };
 }
 
-export function TalentCalculatorWithLocalization({ data, theme, lang }: Props) {
+export function TalentCalculatorWithLocalization({ data, theme, lang, search }: Props) {
   const [renderData, setRenderData] = useState(data);
 
   useEffect(() => {
@@ -60,5 +56,5 @@ export function TalentCalculatorWithLocalization({ data, theme, lang }: Props) {
     return () => controller.abort();
   }, [data, lang]);
 
-  return <TalentCalculator data={renderData} theme={theme} lang={lang} />;
+  return <TalentCalculator data={renderData} theme={theme} lang={lang} search={search} />;
 }

@@ -2,12 +2,10 @@
 export const talentTreePanelCopy = {
   en: {
     loadingTalentTree: "Loading talent tree",
-    loading: "loading",
-    points: "points",
+    pointsOf: (spent: number, budget: number) => `${spent} of ${budget} points`,
   },
   ru: {
     loadingTalentTree: "Данные дерева загружаются",
-    loading: "загрузка",
-    points: "очков",
+    pointsOf: (spent: number, budget: number) => `${spent} из ${budget} очков`,
   },
 };

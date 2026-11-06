@@ -25,8 +25,7 @@
   --tc-spec-hot-rgb: var(--tc-hot-rgb);
   --tc-spec-ambient-rgb: var(--tc-ambient-rgb);
 }
-.talent-calculator[data-atlas-scope] > *,
-.tc-tooltip-layer {
+.talent-calculator[data-atlas-scope] > * {
   --tc-accent: var(--atlas-accent);
   --tc-hot: var(--atlas-accent-strong);
   --tc-deep: var(--atlas-surface-selected);
@@ -38,8 +37,6 @@
 }
 .talent-calculator[data-atlas-scope] .tc-panel { --tc-panel-rgb: 157, 112, 48; --tc-panel-hot: 209, 162, 75; }
 /* Data: selected talents and the path between them wear the spec colour. */
-.talent-calculator[data-atlas-scope] .tc-node.is-selected,
-.talent-calculator[data-atlas-scope] .tc-lines line.is-lit,
 .talent-calculator[data-atlas-scope] .tc-spec-icon {
   --tc-accent: var(--tc-spec-accent);
   --tc-hot: var(--tc-spec-hot);
@@ -249,7 +246,6 @@
   background: var(--atlas-surface);
   box-shadow: none;
 }
-.talent-calculator[data-atlas-scope] .tc-panel.is-node-active { border-color: var(--atlas-line); box-shadow: none; }
 .talent-calculator[data-atlas-scope] .tc-panel::before { inset: 96px 6% 24px; opacity: .08; }
 .talent-calculator[data-atlas-scope] .tc-panel::after { display: none; }
 .talent-calculator[data-atlas-scope] .tc-panel > header {
@@ -282,87 +278,11 @@
 /* The tree canvas sits in the panel flow: its height grows with the number of
    rows (--tc-row-step, set from the data) and node size follows the panel
    width (--tc-col-step), so rows and rank labels never overlap. */
-.talent-calculator[data-atlas-scope] .tc-tree-scroll {
-  flex: 1 0 auto;
-  display: flex;
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--atlas-line) var(--atlas-surface);
-}
-.talent-calculator[data-atlas-scope] .tc-panel .tc-tree-canvas {
-  /* Column pitch: the canvas is 86% of the panel, but never narrower than
-     30 px per column (wider trees scroll inside .tc-tree-scroll). */
-  --tc-col-pitch: max(86cqw * var(--tc-col-step, 14) / 100, 30px);
-  --tc-node: clamp(24px, calc(var(--tc-col-pitch) - 12px), 40px);
-  position: relative;
-  inset: auto;
-  flex: 1 0 auto;
-  min-width: calc(30px * 100 / var(--tc-col-step, 14));
-  margin: var(--atlas-space-3) 7%;
-  min-height: calc((var(--tc-node) + 10px) * 100 / var(--tc-row-step, 10));
-}
-.talent-calculator[data-atlas-scope] .tc-panel.tc-hero-panel .tc-tree-canvas { margin-inline: 10%; }
 
 /* 6. Tree: paths, nodes, rank labels -------------------------------------- */
-.talent-calculator[data-atlas-scope] .tc-lines line { stroke: var(--atlas-line); stroke-width: 1; filter: none; }
-.talent-calculator[data-atlas-scope] .tc-lines line.is-lit { stroke: rgb(var(--tc-spec-hot-rgb)); stroke-width: 1.7; stroke-opacity: .9; filter: none !important; }
-.talent-calculator[data-atlas-scope] .tc-lines line.is-dimmed { stroke-opacity: .14; }
-.talent-calculator[data-atlas-scope] .tc-lines line.is-requirement-path { stroke: var(--atlas-caution); stroke-width: 1.7; }
-
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node {
-  width: var(--tc-node);
-  height: var(--tc-node);
-  padding: 2px;
-  border: 2px solid var(--atlas-line);
-  background: var(--atlas-surface-sunken);
-  box-shadow: 0 0 0 1px var(--atlas-bg), 0 4px 10px var(--atlas-scrim);
-}
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node:is(.tiered, .subtree) { width: calc(var(--tc-node) + 8px); height: calc(var(--tc-node) + 8px); padding: 4px; }
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node:not(.is-locked):not(.is-selected) { border-color: var(--atlas-line-strong); box-shadow: 0 0 0 1px var(--atlas-bg), 0 4px 10px var(--atlas-scrim); }
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node.is-selected {
-  border-color: var(--tc-spec-hot);
-  box-shadow: 0 0 0 1px var(--atlas-bg), 0 0 0 3px rgba(var(--tc-spec-accent-rgb), .35), 0 0 14px rgba(var(--tc-spec-accent-rgb), .45);
-}
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node.is-locked { border-color: var(--atlas-line-soft); opacity: .78; box-shadow: 0 0 0 1px var(--atlas-bg); }
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node:hover,
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node:focus-visible { z-index: 8; }
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
-.talent-calculator[data-atlas-scope] .tc-node-ring { border-color: var(--atlas-line-soft); }
-.talent-calculator[data-atlas-scope] .tc-node.is-selected .tc-node-ring { border-color: rgba(var(--tc-spec-hot-rgb), .6); }
-.talent-calculator[data-atlas-scope] .tc-node.is-prerequisite { border-color: var(--atlas-caution) !important; }
 /* Rank label straddles the node's own bottom edge (7 px overhang); the canvas
    reserves node + 10 px per row, so the next row never covers it. */
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node-count {
-  top: auto;
-  bottom: -7px;
-  z-index: 6;
-  min-width: 24px;
-  height: 15px;
-  min-height: 0;
-  padding: 0 4px;
-  border: 1px solid var(--atlas-line);
-  border-radius: var(--atlas-radius);
-  background: var(--atlas-surface-sunken);
-  color: var(--atlas-text-strong);
-  font: 600 var(--atlas-text-label)/13px var(--atlas-font-ui);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-  white-space: nowrap;
-  box-shadow: none;
-  text-shadow: none;
-}
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node:is(:hover, :focus-visible) .tc-node-count { transform: translateX(-50%); border-color: var(--atlas-accent); background: var(--atlas-surface-selected); color: var(--atlas-text-strong); box-shadow: none; }
 /* Diamond (apex/subtree) nodes clip their children, so their label sits inside the diamond. */
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node:is(.tiered, .subtree) .tc-node-count { bottom: 26%; }
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node.is-selected .tc-node-count { border-color: var(--tc-spec-hot); background: var(--atlas-surface-selected); color: var(--atlas-text-strong); box-shadow: none; }
-.talent-calculator[data-atlas-scope] .tc-tree-canvas .tc-node.is-locked .tc-node-count { color: var(--atlas-text-muted); }
-.talent-calculator[data-atlas-scope] .tc-choice-switch { top: -5px; right: -5px; grid-template-columns: repeat(2, 3px) auto; width: auto; height: 15px; padding: 0 3px; border: 1px solid var(--atlas-line-strong); border-radius: var(--atlas-radius); background: var(--atlas-surface-sunken); color: var(--atlas-accent-strong); box-shadow: none; }
-.talent-calculator[data-atlas-scope] .tc-choice-switch i { background: var(--atlas-accent); }
-.talent-calculator[data-atlas-scope] .tc-choice-switch i:nth-child(2) { background: var(--atlas-accent-strong); }
-.talent-calculator[data-atlas-scope] .tc-choice-switch b { font: 700 var(--atlas-text-label)/1 var(--atlas-font-ui); }
-.talent-calculator[data-atlas-scope] .tc-node.is-selected .tc-choice-switch { border-color: var(--tc-spec-hot); background: var(--atlas-surface-selected); color: var(--atlas-text-strong); box-shadow: none; }
 
 /* 7. Hero path switch -------------------------------------------------------- */
 .talent-calculator[data-atlas-scope] .tc-hero-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-1); width: 100%; max-width: 320px; }
@@ -542,46 +462,6 @@
 .talent-calculator[data-atlas-scope] .tc-pvp-empty { color: var(--atlas-text-muted); font: 400 var(--atlas-text-small)/1.4 var(--atlas-font-ui); }
 
 /* 10. Tooltips (portalled into body, scoped by data-atlas-scope) ----------- */
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip {
-  border: 1px solid var(--atlas-line-strong) !important;
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-text);
-  font-family: var(--atlas-font-ui);
-  box-shadow: var(--atlas-shadow-panel) !important;
-}
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-backplate { border-radius: var(--atlas-radius); background: var(--atlas-surface) !important; }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-forge-line { display: none; }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-meta {
-  border-bottom-color: var(--atlas-line-soft);
-  background: var(--atlas-surface-raised);
-  color: var(--atlas-accent);
-  font: 600 var(--atlas-text-label)/1.2 var(--atlas-font-ui);
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
-}
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-heading strong { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title)/1.15 var(--atlas-font-display); font-variant-numeric: lining-nums; text-shadow: none; }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-heading span { color: var(--atlas-text-muted); font: 500 var(--atlas-text-meta)/1.3 var(--atlas-font-ui); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip p { color: var(--atlas-text); font: 400 var(--atlas-text-small)/1.55 var(--atlas-font-ui); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip small { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-choice,
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-tier { border-color: var(--atlas-line-soft); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-choice.is-selected { border-color: var(--atlas-line); background: var(--atlas-surface-selected); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-tier b { color: var(--atlas-accent); font: 600 var(--atlas-text-label)/1.2 var(--atlas-font-ui); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-choice-marker { border-color: var(--atlas-line); background: var(--atlas-surface-raised); color: var(--atlas-accent-strong); font: 700 var(--atlas-text-label)/1 var(--atlas-font-ui); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-state { border-color: var(--atlas-line-soft); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-rank small { color: var(--atlas-text-muted); font: 600 var(--atlas-text-label)/1.2 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-rank b { color: var(--atlas-text-strong); font-variant-numeric: tabular-nums; }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-state > span:last-child { font: 600 var(--atlas-text-meta)/1.2 var(--atlas-font-ui); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-state .is-ready { color: var(--atlas-positive); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-state .is-available { color: var(--atlas-accent-strong); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-state .is-danger { color: var(--atlas-negative); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-lock { border-color: var(--atlas-line-soft); background: var(--atlas-surface-raised); color: var(--atlas-text); font: 400 var(--atlas-text-meta)/1.4 var(--atlas-font-ui); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-lock b { color: var(--atlas-caution); font: 600 var(--atlas-text-label)/1.2 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-lock small { color: var(--atlas-text); font-size: var(--atlas-text-meta); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-lock i { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-style: normal; }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-lock svg { color: var(--atlas-caution); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) :is(.tc-tooltip-controls, .tc-tooltip-foot) { border-color: var(--atlas-line-soft); color: var(--atlas-text-muted); font: 500 var(--atlas-text-label)/1.3 var(--atlas-font-ui); }
-:is(.talent-calculator[data-atlas-scope], .tc-tooltip-layer) .tc-tooltip-controls kbd { border-color: var(--atlas-line); background: var(--atlas-surface-raised); color: var(--atlas-text-strong); font: 600 var(--atlas-text-label)/1 var(--atlas-font-ui); }
 
 /* 11. Loading and error states ------------------------------------------- */
 .talent-calculator[data-atlas-scope].tc-skeleton { --tc-spec-accent: var(--atlas-line); --tc-spec-hot: var(--atlas-line-strong); --tc-spec-accent-rgb: 157, 112, 48; --tc-spec-hot-rgb: 209, 162, 75; background: var(--atlas-bg); }
@@ -626,7 +506,6 @@
   }
   .talent-calculator[data-atlas-scope] .tc-mobile-tree-switcher button { flex: 1 1 0; height: var(--atlas-control-height); }
   .talent-calculator[data-atlas-scope] .tc-workspace { display: block; padding: var(--atlas-space-2); }
-  .talent-calculator[data-atlas-scope] .tc-tree-canvas { margin-inline: 6%; }
   .talent-calculator[data-atlas-scope] .tc-toolbar {
     position: relative;
     display: grid;

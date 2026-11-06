@@ -1,7 +1,7 @@
 /* atlas:strict — the talent pages on the reference anatomy (docs/design/reference; design.md §3.6 tool page):
    the talents scene behind an atlas hero, the build controls on a painted plaque, the three trees on painted
    panels of the Characters kit (lib/wow/charactersKit.ts) and painted primary buttons. The legacy calculator
-   sheets (app/styles/talents*.css) keep the trees themselves; this module re-seats the page around them.
+   sheets (app/styles/talents*.css) keep the controls; the trees are talentTree.module.css.
    Selectors carry [data-talent-page] so they outrank the legacy `.talent-calculator[data-atlas-scope]` layer. */
 
 .frame { --atlas-frame-tint: var(--atlas-accent-glow); }
@@ -108,15 +108,36 @@
   content: "";
   pointer-events: none;
 }
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) > header {
-  background: transparent !important;
-  border-bottom-color: var(--material-line) !important;
-  box-shadow: none !important;
+
+
+/* ---------- Trees: class, hero and spec side by side like the game; columns follow each tree's grid ---------- */
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace:global(.tc-workspace) {
+  grid-template-columns: minmax(0, var(--fr-class, 35fr)) minmax(0, var(--fr-hero, 28fr)) minmax(0, var(--fr-spec, 37fr));
+  align-items: start;
 }
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) > header :is(h2, strong, small) { text-shadow: 0 1px 3px var(--atlas-bg) !important; }
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) > header h2 { font-size: var(--atlas-text-h3) !important; }
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) > header small { color: var(--material-light) !important; }
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-tree-scroll) { scrollbar-color: var(--material-line) transparent; }
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) :global([data-tree-canvas]),
+.treeSkeleton { max-width: calc(var(--cells-x, 8) * 64px); }
+.treeSkeleton:global(.tc-skeleton-tree) { position: relative; inset: auto; width: 100%; margin: 0 auto; border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 40%, transparent); }
+
+/* The hero path switch names the hero tree (the game's two paths). */
+.heroSwitch:global(.tc-hero-paths) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; max-width: none; padding: 2px; border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); background: var(--atlas-surface-sunken); }
+.heroSwitch:global(.tc-hero-paths) a { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 36px; padding: 2px var(--atlas-space-2); border: 0; border-radius: calc(var(--atlas-radius) - 2px); background: transparent; color: var(--atlas-text-muted); font: 600 var(--atlas-text-small) / 1.15 var(--atlas-font-ui); text-align: center; text-decoration: none; white-space: normal; overflow-wrap: anywhere; hyphens: auto; }
+.heroSwitch:global(.tc-hero-paths) a:hover { color: var(--atlas-text-strong); background: transparent; }
+.heroSwitch:global(.tc-hero-paths) a[aria-current="page"] { background: var(--atlas-surface-raised); color: var(--atlas-text-strong); box-shadow: inset 0 -2px 0 var(--tc-spec-accent, var(--atlas-accent)); }
+.heroSwitch:global(.tc-hero-paths) a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
+
+/* Points badge: the bar shows the share, the numbers say the rest. */
+.meter progress { display: block; }
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .copyString:global(.tc-command-button) { width: auto; gap: var(--atlas-space-2); padding-inline: var(--atlas-space-3); }
+.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .copyString:global(.tc-command-button) span { display: inline; }
+
+/* Phones: one tree at a time, picked by name with its points. */
+.treeSwitch { display: none; }
+.treeSwitch button { display: grid; justify-items: center; gap: 2px; min-width: 0; padding-block: var(--atlas-space-1); }
+.treeSwitch button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.treeSwitch button b { color: var(--atlas-text-subtle); font: 600 var(--atlas-text-meta) / 1 var(--atlas-font-ui); font-variant-numeric: tabular-nums; }
+.treeSwitch button[aria-pressed="true"] b { color: var(--atlas-text-muted); }
+.treeSwitch button b[data-full] { color: var(--tc-spec-hot, var(--atlas-accent-strong)); }
 
 /* ---------- Bottom deck: search, PvP, the painted save button ---------- */
 .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-mobile-tree-switcher) { margin-top: var(--atlas-space-4); padding-inline: 0; border: 0; background: transparent; }
@@ -139,6 +160,9 @@
   .heroHeader { max-width: 78%; }
 }
 @media (max-width: 900px) {
+  .treeSwitch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-mobile-tree-switcher).treeSwitch button { height: auto; min-height: 52px; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) :global([data-tree-canvas]) { max-width: 560px; }
   .command { padding: 22px 24px; }
   .command :global(.tc-command-group) { margin-inline-start: 0; }
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace:global(.tc-workspace) { margin-top: var(--atlas-space-3); }
@@ -155,8 +179,10 @@
   .command :global(.tc-command-actions) > * { min-width: 0; }
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(:is(.tc-points-badge, .tc-build-select)) { width: 100%; min-width: 0; }
   .command :global(.tc-loadout-menu), .command :global(.tc-command-group) { grid-column: 1 / -1; }
-  .command :global(.tc-command-group) { display: flex; width: 100%; }
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(.tc-command-group) > * { flex: 1 1 0; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(.tc-command-group) { display: grid; grid-template-columns: minmax(0, 1fr) var(--atlas-control-height) var(--atlas-control-height); width: 100%; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(.tc-command-group) > * { width: auto; min-width: 0; }
+  /* Room to scroll the tree's last rows above the talent sheet (after the trees, so they do not move). */
+  .sheetSpace { height: min(42dvh, 400px); }
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-toolbar) { position: relative; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: var(--atlas-space-2); }
   .save { grid-column: 1; grid-row: auto; }
   /* The deck scrolls with the page on phones, so its notices pin to the screen instead. */

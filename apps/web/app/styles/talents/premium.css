@@ -28,7 +28,7 @@
 
 /* A routed page arrives fully composed; motion is reserved for interaction and
    the single view-transition layer instead of animating five large surfaces. */
-.talent-calculator :is(.tc-header,.tc-commandbar,.tc-toolbar,.tc-panel,.tc-tree-canvas) { animation: none; }
+.talent-calculator :is(.tc-header,.tc-commandbar,.tc-toolbar,.tc-panel) { animation: none; }
 
 /* Global navigation: high-contrast, calm and physically aligned. */
 
@@ -100,43 +100,10 @@
   outline-offset: -4px;
   transition: border-color .22s ease,box-shadow .22s ease,outline-color .22s ease;
 }
-.talent-calculator .tc-panel.is-node-active {
-  outline-color: rgba(var(--tc-panel-hot),.13);
-}
 .talent-calculator .tc-panel::before { inset: 88px 5% 34px; }
 .talent-calculator .tc-hero-panel::before { inset-block-start: 110px; }
 .talent-calculator .tc-panel::after { inset-block-start: 78px; }
 .talent-calculator .tc-hero-panel::after { inset-block-start: 100px; }
-.talent-calculator .tc-tree-canvas { inset: 92px 7% 42px; }
-.talent-calculator .tc-hero-panel .tc-tree-canvas { inset: 114px 10% 42px; }
-.talent-calculator .tc-lines { shape-rendering: geometricPrecision; }
-.talent-calculator .tc-lines line { stroke-linecap: round; }
-.talent-calculator .tc-lines line.is-lit {
-  stroke-opacity: 1;
-  animation: tc-premium-path-awaken .44s var(--tc-ease-premium) both;
-}
-
-.talent-calculator .tc-node {
-  width: 40px;
-  height: 40px;
-  contain: style;
-  padding: 2px;
-  border-color: #8b9194;
-  border-width: 2px;
-  transition: transform .18s var(--tc-ease-premium),border-color .18s ease,box-shadow .18s ease,filter .18s ease,opacity .18s ease;
-}
-.talent-calculator .tc-node-art { inset: 2px; background: #020405; box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
-.talent-calculator .tc-node img { image-rendering: auto; filter: grayscale(.62) saturate(.7) brightness(.78) contrast(1.14); }
-.talent-calculator .tc-node:not(.is-locked):not(.is-selected) {
-  border-color: color-mix(in srgb,rgb(var(--tc-panel-hot)) 72%,#949b9e);
-}
-.talent-calculator .tc-node:not(.is-locked):not(.is-selected) .tc-node-ring {
-  border-color: rgba(var(--tc-panel-hot),.44);
-}
-.talent-calculator .tc-node.is-selected {
-  box-shadow: 0 0 0 1px #000,0 0 0 3px rgba(var(--tc-panel-rgb),.13),0 0 16px rgba(var(--tc-panel-rgb),.52),inset 0 0 0 1px rgba(var(--tc-hot-rgb),.28);
-}
-.talent-calculator .tc-node.is-selected::after { animation: none; }
 
 /* The resource dial wakes on intent, but consumes no frames while idle. */
 .talent-calculator .tc-points-badge::after,
@@ -145,22 +112,6 @@
 .talent-calculator .tc-points-badge:hover::after { animation: tc-resource-scan 1.05s ease-out 1; }
 .talent-calculator .tc-points-badge:hover .tc-rage-emblem::after { animation: tc-resource-orbit 9s linear infinite; }
 .talent-calculator .tc-points-badge:hover .tc-rage-emblem svg { animation: tc-resource-glyph 1.6s ease-in-out infinite; }
-.talent-calculator .tc-node.is-locked { filter: none; }
-.talent-calculator .tc-node.is-dimmed { opacity: .24 !important; }
-.talent-calculator .tc-node:hover,
-.talent-calculator .tc-node:focus-visible { filter: none; transform: translate(-50%,-50%) scale(1.075); }
-.talent-calculator .tc-node-count {
-  top: calc(100% - 2px);
-  min-width: 23px;
-  min-height: 14px;
-  padding: 2px 4px;
-  font-size: 11px;
-  line-height: 10px;
-  letter-spacing: -.02em;
-}
-.talent-calculator .tc-choice-switch { top: -2px; right: -2px; width: 23px; height: 13px; }
-.talent-calculator .tc-choice-switch b { font-size: 11px; }
-.talent-calculator .tc-node:focus-visible { outline: 2px solid var(--tc-hot); outline-offset: 5px; }
 
 /* Hero path controls form a distinct third text level below the title. */
 .talent-calculator .tc-hero-paths {
@@ -215,26 +166,6 @@
 .talent-calculator .tc-use-rotation .tc-save-copy small { font-size: 11px; }
 
 /* Tooltips and build library carry content at body-text scale. */
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip {
-  width: min(390px,calc(100vw - 24px));
-}
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-meta {
-  padding: 11px 14px 9px;
-  font-size: 11px;
-}
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-heading img { width: 52px; height: 52px; border-radius: 5px; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-heading strong { font-size: 18px; line-height: 1.12; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-heading span { font-size: 11px; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip p { font-size: 12px; line-height: 1.55; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip small { font-size: 11px; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-state > span:last-child { font-size: 11px; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-rank small { font-size: 11px; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-lock { font-size: 11px; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-lock b { font-size: 11px; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-lock small { font-size: 11px; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-lock i { font-size: 11px; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-controls,
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-foot { font-size: 11px; }
 .talent-calculator .tc-loadout-popover :where(button,input) { font-size: 11px; }
 .talent-calculator .tc-build-popover-head small,
 .talent-calculator .tc-build-name > span,
@@ -280,8 +211,6 @@
   .talent-calculator .tc-hero-panel::before { inset-block-start: 92px; }
   .talent-calculator .tc-panel::after { inset-block-start: 64px; }
   .talent-calculator .tc-hero-panel::after { inset-block-start: 82px; }
-  .talent-calculator .tc-tree-canvas { inset-block-start: 78px; }
-  .talent-calculator .tc-hero-panel .tc-tree-canvas { inset-block-start: 96px; }
   .talent-calculator.tc-skeleton .tc-skeleton-tree { inset-block-start: 78px; }
   .talent-calculator.tc-skeleton .tc-hero-panel .tc-skeleton-tree { inset-block-start: 96px; }
   .talent-calculator .tc-hero-paths { gap: 4px; width: min(100%,220px); }
@@ -291,7 +220,6 @@
 @media (min-width: 901px) and (max-width: 1100px) {
   .talent-calculator .tc-workspace { grid-template-columns: minmax(0,33fr) minmax(0,31fr) minmax(0,36fr); }
   .talent-calculator .tc-hero-paths { width: 100%; }
-  .talent-calculator .tc-node-count { min-width: 21px; min-height: 12px; padding: 1px 3px; font-size: 11px; }
 }
 
 @media (max-width: 900px) {
@@ -300,8 +228,6 @@
   .talent-calculator .tc-page-title { min-width: 0; }
   .talent-calculator .tc-page-title h1 { font-size: 19px; }
   .talent-calculator .tc-page-title .tc-build-version { font-size: 11px; }
-  .talent-calculator .tc-tree-canvas { inset: 78px 8% 34px; }
-  .talent-calculator .tc-hero-panel .tc-tree-canvas { inset: 96px 8% 34px; }
   .talent-calculator .tc-toolbar {
     grid-template-rows: 48px 52px;
     gap: 4px 8px;
@@ -315,13 +241,10 @@
   .talent-calculator .tc-page-title h1 { font-size: 18px; }
   .talent-calculator .tc-points-badge { min-width: 126px; }
   .talent-calculator .tc-workspace { padding: 6px; }
-  .talent-calculator .tc-node-count { font-size: 11px; }
   .talent-calculator .tc-panel::before { inset-block-start: 66px; }
   .talent-calculator .tc-hero-panel::before { inset-block-start: 86px; }
   .talent-calculator .tc-panel::after { inset-block-start: 56px; }
   .talent-calculator .tc-hero-panel::after { inset-block-start: 76px; }
-  .talent-calculator .tc-tree-canvas { inset-block-start: 72px; }
-  .talent-calculator .tc-hero-panel .tc-tree-canvas { inset-block-start: 92px; }
   .talent-calculator.tc-skeleton .tc-skeleton-tree { inset-block-start: 72px; }
   .talent-calculator.tc-skeleton .tc-hero-panel .tc-skeleton-tree { inset-block-start: 92px; }
   .talent-calculator .tc-hero-paths { gap: 4px; width: 100%; }
@@ -334,15 +257,10 @@
 
 @media (max-width: 340px) {
   .talent-calculator .tc-workspace { padding-inline: 5px; }
-  .talent-calculator .tc-tree-canvas,
-  .talent-calculator .tc-hero-panel .tc-tree-canvas { inset-inline: 3%; }
-  .talent-calculator .tc-node-count { min-width: 21px; min-height: 12px; padding: 1px 3px; font-size: 11px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .talent-calculator { scroll-behavior: auto; }
-  .talent-calculator .tc-lines line.is-lit,
-  .talent-calculator .tc-node.is-selected::after { animation: none; }
 }
 
 @media (min-width: 1600px) {
@@ -350,62 +268,8 @@
 }
 
 /* Talent inspection motion: opaque throughout, directional, and finite. */
-.tc-tooltip-layer { display: contents; }
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip {
-  --tc-tooltip-enter-y: -7px;
-  --tc-tooltip-exit-y: -4px;
-  contain: layout paint style;
-  opacity: 1 !important;
-  transform-origin: var(--tc-tooltip-anchor) 0;
-  will-change: transform;
-  animation: tc-premium-tooltip-unfold .16s cubic-bezier(.16,.9,.24,1) both !important;
-}
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip[data-placement="above"] {
-  --tc-tooltip-enter-y: 7px;
-  --tc-tooltip-exit-y: 4px;
-  transform-origin: var(--tc-tooltip-anchor) 100%;
-}
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip[data-motion="closing"] {
-  pointer-events: none;
-  animation: tc-premium-tooltip-fold .11s cubic-bezier(.4,0,.78,.28) both !important;
-}
-:is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-forge-line::after {
-  left: -80px;
-  animation: tc-premium-tooltip-glint .36s .015s cubic-bezier(.2,.76,.28,1) 1 both !important;
-  will-change: transform,opacity;
-}
 
 /* Hover feedback fires once, then rests. It keeps the themed response without a permanent repaint loop. */
-.talent-calculator .tc-panel.is-node-active::before {
-  opacity: .2;
-  filter: none !important;
-  animation: none !important;
-}
-.talent-calculator .tc-panel.is-node-active .tc-lines line.is-lit {
-  filter: none !important;
-}
-.talent-calculator .tc-node:is(:hover,:focus-visible)::before {
-  animation: tc-premium-node-intent .38s cubic-bezier(.16,.82,.24,1) 1 both !important;
-  will-change: transform,opacity;
-}
-.talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-sigil {
-  animation: none !important;
-  opacity: .9;
-  will-change: auto;
-}
-.talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-ring {
-  animation: none !important;
-  opacity: .94;
-  will-change: auto;
-}
-.talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-vfx {
-  animation: none !important;
-  opacity: .78;
-  will-change: auto !important;
-}
-.talent-calculator .tc-node.is-prerequisite::before {
-  animation: tc-premium-node-intent .44s cubic-bezier(.16,.82,.24,1) 1 both !important;
-}
 
 @keyframes tc-premium-tooltip-unfold {
   0% { transform: translate3d(0,var(--tc-tooltip-enter-y),0); }
@@ -425,22 +289,6 @@
   0% { opacity: .18; transform: scale(.78) rotate(-3deg); }
   64% { opacity: 1; transform: scale(1.09) rotate(3deg); }
   100% { opacity: .72; transform: scale(1.02) rotate(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  :is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip,
-  :is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip > :not(.tc-tooltip-backplate):not(.tc-tooltip-forge-line),
-  :is(.talent-calculator,.tc-tooltip-layer) .tc-tooltip-forge-line::after,
-  .talent-calculator .tc-node:is(:hover,:focus-visible)::before,
-  .talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-sigil,
-  .talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-ring,
-  .talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-vfx {
-    animation: none !important;
-    transform: none;
-    will-change: auto !important;
-  }
-  .talent-calculator .tc-node:is(:hover,:focus-visible) .tc-node-sigil {
-    transform: rotate(var(--tc-sigil-rotation));
-  }
 }
 
 /* The chrome skin (surfaces, borders, typography, palette) lives in

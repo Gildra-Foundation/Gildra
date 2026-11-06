@@ -1,55 +1,36 @@
-import { Crown, Shield, Swords } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
-import Image from "next/image";
-import { SpecEmblem } from "./SpecEmblem";
 import styles from "./TalentTreePanel.module.css";
 import { talentTreePanelCopy } from "./talentTreePanelCopy";
 
 type PanelVariant = "class" | "hero" | "spec";
 
-const panelIcons = { class: Shield, hero: Crown, spec: Swords };
-
 type TalentTreePanelProps = {
   lang?: "ru" | "en";
-  appearance?: "default" | "manuscript" | "atlas";
-  specSlug?: string;
   variant: PanelVariant;
-  eyebrow: string;
-  title: ReactNode;
+  title: string;
   iconSrc?: string;
-  secondary?: ReactNode;
+  /** Replaces the visible title (the hero path switch names the tree itself). */
+  switcher?: ReactNode;
   spent: number;
   budget: number;
-  nodeCount: number;
   loading?: boolean;
   children: ReactNode;
-  scene?: ReactNode;
   style?: CSSProperties;
 };
 
-export function TalentTreePanel({ lang = "ru", appearance = "atlas", specSlug, variant, eyebrow, title, iconSrc, secondary, spent, budget, loading = false, children, scene, style }: TalentTreePanelProps) {
-  const Icon = panelIcons[variant];
-  const manuscript = appearance === "manuscript";
-  return <article className={`tc-panel tc-${variant}-panel ${styles.panel}${manuscript ? ` ${styles.manuscript}` : ""}${appearance === "atlas" ? ` ${styles.atlas}` : ""}`} data-panel-variant={variant} data-panel-appearance={appearance} data-loading={loading || undefined} style={style}>
-    <svg className={styles.frame} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M1 14V3Q1 1 3 1H18M82 1H97Q99 1 99 3V14M99 86V97Q99 99 97 99H82M18 99H3Q1 99 1 97V86" />
-      <path d="M1 24V76M99 24V76" />
-      <circle cx="1" cy="19" r=".7" /><circle cx="99" cy="19" r=".7" />
-      <circle cx="1" cy="81" r=".7" /><circle cx="99" cy="81" r=".7" />
-    </svg>
-    {scene}
-    <header className={`${styles.header}${secondary ? ` ${styles.headerWithSecondary}` : ""}`}>
-      <div className={styles.identity}>
-        <span className={`${styles.icon}${manuscript && specSlug ? ` ${styles.engravedIcon}` : ""}`} aria-hidden="true">{manuscript && specSlug ? <SpecEmblem specSlug={specSlug} size={72} /> : iconSrc ? <img src={iconSrc} alt="" width={56} height={56} loading="eager" decoding="async" draggable={false} /> : <Icon />}</span>
-        <div className={styles.heading}><small>{eyebrow}</small><h2>{title}</h2></div>
-      </div>
-      {secondary ? <div className={styles.secondary}>{secondary}</div> : null}
-      <span className={styles.counter} aria-label={loading ? talentTreePanelCopy[lang].loadingTalentTree : lang === "ru" ? `${spent} из ${budget} очков` : `${spent} of ${budget} points`}>
-        <strong><b>{loading ? "—" : spent}</b><i>/</i>{loading ? "—" : budget}</strong>
-        <small>{loading ? talentTreePanelCopy[lang].loading : talentTreePanelCopy[lang].points}</small>
+/** One talent tree on its painted panel: emblem, name (or the hero path switch) and the points spent in it. */
+export function TalentTreePanel({ lang = "ru", variant, title, iconSrc, switcher, spent, budget, loading = false, children, style }: TalentTreePanelProps) {
+  const copy = talentTreePanelCopy[lang];
+  const full = !loading && budget > 0 && spent >= budget;
+  return <article className={`tc-panel tc-${variant}-panel ${styles.panel}`} data-panel-variant={variant} data-tree={variant} data-loading={loading || undefined} style={style}>
+    <div className={styles.header}>
+      <span className={styles.emblem} aria-hidden="true">{iconSrc ? <img src={iconSrc} alt="" width={40} height={40} loading="eager" decoding="async" draggable={false} /> : null}</span>
+      <h2 className={switcher ? styles.srOnly : styles.title}>{title}</h2>
+      {switcher}
+      <span className={styles.points} data-full={full || undefined} data-tree-points={variant} aria-label={loading ? copy.loadingTalentTree : copy.pointsOf(spent, budget)}>
+        <b>{loading ? "—" : spent}</b><i>/</i>{loading ? "—" : budget}
       </span>
-      {manuscript ? <span className={styles.manuscriptRule} aria-hidden="true"><Image src="/assets/wow/character-book/talent-divider-v1.png" alt="" width={2079} height={756} sizes="(max-width: 768px) 760px, 1200px" draggable={false} /></span> : null}
-    </header>
+    </div>
     {children}
   </article>;
 }

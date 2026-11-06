@@ -599,7 +599,8 @@ async function enrichPvp(summary: TalentEntityRecord, topology: Topology, locale
 }
 
 function placeNodes(kind: TalentKind, rawNodes: RawNode[], grouped: Map<number, TalentChoice[]>) {
-  const visibleNodes = rawNodes.filter((raw) => grouped.has(raw.id)).sort((a, b) => a.posY - b.posY || a.posX - b.posX || a.id - b.id);
+  // Unplaced nodes (no grid position) or nodes without a talent are not part of the drawn tree.
+  const visibleNodes = rawNodes.filter((raw) => (grouped.get(raw.id)?.length ?? 0) > 0 && raw.posX > 0 && raw.posY > 0).sort((a, b) => a.posY - b.posY || a.posX - b.posX || a.id - b.id);
   const xs = visibleNodes.map((node) => node.posX).filter((value) => value > 0);
   const ys = visibleNodes.map((node) => node.posY).filter((value) => value > 0);
   const minX = xs.length ? Math.min(...xs) : 0; const maxX = xs.length ? Math.max(...xs) : 1;
