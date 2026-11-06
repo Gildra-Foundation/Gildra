@@ -1,4 +1,5 @@
 import snapshot from "@/lib/data/wow/mythicTalentImport";
+import { maxTalentStringLength } from "./talentStringLimit";
 
 // nodeID, maxRanks, type(single/choice/subtree/tiered), granted, heroSubtreeID,
 // entries(spellID, maxRanks, heroSubtreeID). Entry order is the client's choice order.
@@ -7,7 +8,6 @@ type ImportSpec = { classId: number; nodes: ImportNode[] };
 type ImportSnapshot = { build: string; generatedAt: string; serializationVersion: number; classes: Record<string, { order: number[]; hash: string }>; specs: Record<string, ImportSpec> };
 // The generated tuple contract is checked by the snapshot generator and tests.
 export const talentImportSnapshot = snapshot as unknown as ImportSnapshot;
-import { maxTalentStringLength } from "./talentStringLimit";
 export { maxTalentStringLength };
 export type TalentImportError = "invalid" | "version" | "spec" | "tree";
 export type ImportedTalents = { ok: true; code: string; classId: number; specId: number; selectedSpellIds: number[]; hashChecked: boolean };
