@@ -70,6 +70,10 @@
 .sources > div { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3); }
 
 /* ---------- Boss guide ---------- */
+/* The boss in the hero: the hub card's framed picture, at a size the capture stays sharp at. */
+.heroPortrait { width: clamp(300px, 30vw, 440px); }
+@media (max-width: 1100px) { .heroPortrait { width: min(100%, 440px); } }
+
 .epithet { color: var(--atlas-text-strong); font-style: normal; font-weight: 600; }
 
 .waypoint {
