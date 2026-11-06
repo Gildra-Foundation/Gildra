@@ -139,7 +139,8 @@
 
 /* ---------- Tier rows: coloured badge + spec icons ---------- */
 .tierBoard { display: grid; gap: 6px; transition: opacity var(--atlas-duration) var(--atlas-ease); }
-.tierBoard[data-loading] { opacity: .4; }
+/* A switch that loads quickly never dims the board; a slow one fades it while the previous rows stay. */
+.tierBoard[data-loading] { opacity: .4; transition-delay: 120ms; }
 .boardEmpty { min-height: 240px; }
 
 .tierRow {
@@ -286,7 +287,7 @@
 
 /* ---------- List view ---------- */
 .tableBox { position: relative; overflow-x: auto; transition: opacity var(--atlas-duration) var(--atlas-ease); }
-.tableBox[data-loading] { opacity: .4; }
+.tableBox[data-loading] { opacity: .4; transition: opacity var(--atlas-duration) var(--atlas-ease) 120ms; }
 
 .table { width: 100%; border-collapse: collapse; color: var(--atlas-text); font-size: var(--atlas-text-small); }
 .table thead th {

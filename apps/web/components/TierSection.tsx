@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowUpRight, Castle, ChevronDown, Columns3, LayoutGrid, List, Search, Shield, Swords } from "lucide-react";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
+import { AtlasSwap } from "@gildra/atlas-ui/AtlasSwap";
 import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
 import { p, type Lang } from "@/lib/i18n-paths";
 import { ANCHORS } from "@/lib/anchors";
@@ -320,6 +321,12 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     return isTierSource(id) && id !== "gildra" ? SOURCE_SITES[id].name : id;
   }, [simCopy.tab]);
   const busy = list.loading || simData.loading || comparison.loading;
+  /** While a switch loads, the board keeps the previous rows (dimmed) and swaps once the new ones are in. */
+  const viewKey = [compare ? "compare" : layout, source, mode, role, bracket, region, difficulty, sourceDifficulty, contextValue, keyType, targets, gear, cls].join("|");
+  const [held, setHeld] = useState({ key: viewKey, rows: filtered, comparison: comparison.data });
+  if (!busy && (held.key !== viewKey || held.rows !== filtered || held.comparison !== comparison.data)) setHeld({ key: viewKey, rows: filtered, comparison: comparison.data });
+  const rows = busy && !filtered.length ? held.rows : filtered;
+  const comparisonShown = comparison.data ?? (busy ? held.comparison : undefined);
   const title = compare ? sourceCopy.compareTitle : sim ? simCopy.title : mode === "mythic_plus" ? copy.resultsMythic : mode === "raid" ? copy.resultsRaid : copy.resultsArena;
   // The sample has no slices and only Mythic+ DPS rows: controls that could only lead to an empty board are not rendered.
   const showModes = !sample && modes.length > 1;
@@ -414,16 +421,16 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   }, [specNames]);
 
   const ranking = compare ? (
-    comparison.data ? (
-      <SourceCompare lang={lang} caption={`${title}: ${copy.modes[mode]} · ${copy.roles[role]}`} data={comparison.data} sourceLabel={sourceLabel}
+    comparisonShown ? (
+      <SourceCompare lang={lang} caption={`${title}: ${copy.modes[mode]} · ${copy.roles[role]}`} data={comparisonShown} sourceLabel={sourceLabel}
         classStyle={classStyle} tierStyle={tierStyle} renderSpec={(entry) => <SpecIcon entry={entry} size={36} />} specNames={compareSpec}
         href={talentsHref} busy={busy} />
     ) : comparison.loading ? <div className={styles.boardEmpty} aria-busy="true" /> : <p className={styles.empty}>{copy.empty}</p>
   ) : layout === "list" ? (
-    <TierList entries={filtered} labels={listLabels} href={talentsHref} busy={busy} empty={emptyText}
+    <TierList entries={rows} labels={listLabels} href={talentsHref} busy={busy} empty={emptyText}
       format={{ compact, number: (value) => number.format(value), percent, behind }} trend={(value, change) => <Trend value={value} change={change} copy={copy} />} />
   ) : (
-    <TierBoard entries={filtered} labels={{ tier: copy.tierMark, talents: copy.talents, close: copy.close }} tip={tip} href={talentsHref} busy={busy} empty={emptyText} />
+    <TierBoard entries={rows} labels={{ tier: copy.tierMark, talents: copy.talents, close: copy.close }} tip={tip} href={talentsHref} busy={busy} empty={emptyText} />
   );
 
   const layoutToggle = (
@@ -459,7 +466,7 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
           {controls}
           <MaterialPlaque kit={KIT} className={styles.boardPlaque}>
             {list.error || comparison.error ? <p className={styles.alert} role="status">{sourceCopy.loadError}</p> : null}
-            {ranking}
+            <AtlasSwap swapKey={held.key}>{ranking}</AtlasSwap>
           </MaterialPlaque>
         </div>
       </AtlasSection>

@@ -1,16 +1,24 @@
 'use client';
 
-import { useEffect } from 'react';
-import { lessMotion, subscribeSiteMotion } from '@gildra/atlas-ui/motionPreference';
+import { useEffect, useRef } from 'react';
+import { lessMotion, routeTurnActive, subscribeSiteMotion } from '@gildra/atlas-ui/motionPreference';
 
 function milliseconds(value: string, fallback: number) {
   const match = /^(\d*\.?\d+)\s*(ms|s)$/.exec(value.trim());
   return match ? Number(match[1]) * (match[2] === 's' ? 1000 : 1) : fallback;
 }
 
-/** A brief illumination when the encounter changes. Content and hit areas stay still. */
+/**
+ * A brief illumination of the panels that come into view. What is on screen
+ * already arrives with the page hand-over (first visit by a link) or with the
+ * boss tab's own switch (AtlasTabs), so it lights up only on a fresh load.
+ * Content and hit areas stay still.
+ */
 export function VoidspireGuideMotion({ encounter }: { encounter: string }) {
+  const mounted = useRef(false);
   useEffect(() => {
+    const firstArrival = !mounted.current && !routeTurnActive();
+    mounted.current = true;
     const root = document.querySelector<HTMLElement>('[data-voidspire-guide]');
     if (!root) return;
     const media = ['(prefers-reduced-motion: reduce)', '(prefers-reduced-transparency: reduce)', '(forced-colors: active)'].map(query => window.matchMedia(query));
@@ -47,7 +55,7 @@ export function VoidspireGuideMotion({ encounter }: { encounter: string }) {
       root.querySelectorAll<HTMLElement>('[data-guide-reveal]').forEach((element, index) => {
         if (!element.getClientRects().length) return;
         const bounds = element.getBoundingClientRect();
-        if (bounds.top <= window.innerHeight && bounds.bottom >= 0) reveal(element, index);
+        if (bounds.top <= window.innerHeight && bounds.bottom >= 0) { if (firstArrival) reveal(element, index); }
         else if (bounds.top > window.innerHeight) arrivals?.observe(element);
       });
     });

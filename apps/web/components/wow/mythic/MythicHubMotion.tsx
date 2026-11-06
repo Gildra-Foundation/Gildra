@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { lessMotion, subscribeSiteMotion } from "@gildra/atlas-ui/motionPreference";
+import { lessMotion, routeTurnActive, subscribeSiteMotion } from "@gildra/atlas-ui/motionPreference";
 import styles from "./mythicHubMotion.module.css";
 
 const revealSelector = "[data-hub-reveal], [data-hub-dungeon-card], [data-mythic-hub-timers]";
@@ -172,7 +172,8 @@ export function MythicHubMotion() {
       marked.add(element);
       element.dataset.hubMotionItem = "";
       element.dataset.hubRevealed = "true";
-      if (reduced(element) || document.hidden || element.contains(document.activeElement)) return;
+      // The page hand-over is this page's arrival: what is in view when it lands does not rise again.
+      if (reduced(element) || document.hidden || routeTurnActive() || element.contains(document.activeElement)) return;
       try {
         const animation = element.animate([
           { opacity: .86, translate: `0 ${distance}px` },
