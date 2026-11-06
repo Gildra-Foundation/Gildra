@@ -3,8 +3,7 @@
 import "@/app/styles/talents.css";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import Link from "next/link";
-import { AlertTriangle, Check, LoaderCircle, LockKeyhole, Minus, Plus, RotateCcw, Sparkles, Swords } from "lucide-react";
+import { AlertTriangle, LoaderCircle, Minus, Plus, RefreshCw, RotateCcw, Sparkles } from "lucide-react";
 import type { TalentCalculatorData, TalentKind, TalentNode } from "@/lib/talentCalculatorData";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { talentVisualTheme } from "@/lib/talentVisualTheme";
@@ -14,19 +13,21 @@ import { talentSimulationIntegrityError } from "@/lib/wow/talentSimulationIntegr
 import { TalentDescription } from "@/components/talents/TalentDescription";
 import { talentSimulationMessage } from "@/components/talents/talentSimulationMessages";
 import { TalentTreePanel } from "@/components/talents/TalentTreePanel";
-import { SpecSignatureFx } from "@/components/talents/spec-signature/SpecSignatureFx";
 import { CharacterBuildManager } from "@/components/wow/audit/CharacterBuildManager";
 import { CharacterTalentOptimizer } from "@/components/wow/audit/CharacterTalentOptimizer";
 import { talentText, localizedTalentScenarios, type TalentLang } from "@/components/talents/talentLocale";
 import styles from "@/components/wow/audit/characterTalentSimulator.module.css";
+import tools from "@/components/wow/audit/characterTools.module.css";
 import { withCharacterContext } from "@/lib/platform/rotation/characterRequestContext";
 import { recordCharacterRun } from "@/lib/wow/characterRunHistory";
 
 type CombatStats = { primary: number; crit: number; haste: number; mastery: number; versatility: number };
 type Selection = { ranks: Map<string, number>; choices: Map<string, number>; origin?: "battle-net" | "reference" | "empty" };
-type TalentChange = { id: string; name: string; iconUrl: string; ranks: number; kind: "added" | "removed" | "automatic" | "choice"; detail: string };
+type TalentChange = { id: string; name: string; iconUrl: string; ranks: number; kind: "added" | "removed" | "automatic" | "choice" };
 type SimulationState = {
   status: "loading" | "ready" | "error";
+  /** The request this answer belongs to; any other request shows as loading. */
+  key?: string;
   singleTargetDelta?: number;
   aoeDelta?: number;
   baselineSingleTargetDps?: number;
@@ -127,16 +128,15 @@ function talentChangeSet(data: TalentCalculatorData, baseline: Selection, select
     const choiceId = difference > 0 ? selection.choices.get(id) : baseline.choices.get(id);
     const choice = node.choices.find((entry) => entry.externalId === choiceId) ?? node.choices[0];
     const automatic = difference < 0 ? Math.min(-difference, automaticRanks.get(id) ?? 0) : 0;
-    if (difference < 0 && automatic) changes.push({ id: `${id}-automatic`, name: choice?.name ?? talentText(lang, "Неизвестный талант"), iconUrl: choice?.iconUrl ?? "", ranks: automatic, kind: "automatic", detail: talentText(lang, "Отключён деревом: после предыдущего изменения требования больше не выполнены.") });
+    if (difference < 0 && automatic) changes.push({ id: `${id}-automatic`, name: choice?.name ?? talentText(lang, "Неизвестный талант"), iconUrl: choice?.iconUrl ?? "", ranks: automatic, kind: "automatic" });
     const manualRanks = difference < 0 ? -difference - automatic : difference;
-    if (manualRanks > 0) changes.push({ id, name: choice?.name ?? talentText(lang, "Неизвестный талант"), iconUrl: choice?.iconUrl ?? "", ranks: manualRanks, kind: difference > 0 ? "added" : "removed", detail: difference > 0 ? talentText(lang, "Ранг добавлен пользователем.") : talentText(lang, "Ранг снят пользователем.") });
+    if (manualRanks > 0) changes.push({ id, name: choice?.name ?? talentText(lang, "Неизвестный талант"), iconUrl: choice?.iconUrl ?? "", ranks: manualRanks, kind: difference > 0 ? "added" : "removed" });
   }
   for (const id of new Set([...baseline.choices.keys(), ...selection.choices.keys()])) {
     if ((baseline.ranks.get(id) ?? 0) <= 0 || (selection.ranks.get(id) ?? 0) <= 0 || baseline.choices.get(id) === selection.choices.get(id)) continue;
     const node = byId.get(id);
-    const before = node?.choices.find((entry) => entry.externalId === baseline.choices.get(id));
     const after = node?.choices.find((entry) => entry.externalId === selection.choices.get(id));
-    if (after) changes.push({ id: `${id}-choice`, name: after.name, iconUrl: after.iconUrl ?? "", ranks: 1, kind: "choice", detail: lang === "ru" ? `Вариант изменён: ${before?.name ?? "предыдущий"} → ${after.name}.` : `Choice changed: ${before?.name ?? "previous"} → ${after.name}.` });
+    if (after) changes.push({ id: `${id}-choice`, name: after.name, iconUrl: after.iconUrl ?? "", ranks: 1, kind: "choice" });
   }
   return changes;
 }
@@ -164,13 +164,15 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
   const labels: Record<TalentKind, string> = { class: talentText(lang, "Класс"), hero: talentText(lang, "Герой"), spec: talentText(lang, "Специализация") };
   const baseline = useMemo(() => data ? initialSelection(data, loadout, dataMode === "fixture") : null, [data, dataMode, loadout]);
   const [selection, setSelection] = useState<Selection | null>(baseline);
-  const [simulation, setSimulation] = useState<SimulationState>({ status: "loading" });
+  const [simulationResult, setSimulation] = useState<SimulationState>({ status: "loading" });
   const [activeTree, setActiveTree] = useState<TalentKind>("spec");
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [retryKey, setRetryKey] = useState(0);
   const [automaticRanks, setAutomaticRanks] = useState<Map<string, number>>(new Map());
-  useEffect(() => { setSelection(baseline); setAutomaticRanks(new Map()); }, [baseline]);
+  // A new profile or tree resets the edit during render instead of in an effect (no cascading renders).
+  const [selectionBase, setSelectionBase] = useState(baseline);
+  if (selectionBase !== baseline) { setSelectionBase(baseline); setSelection(baseline); setAutomaticRanks(new Map()); }
   const simulationCodes = useMemo(() => {
     if (!data || !baseline || !selection) return null;
     const unchanged = sameMap(baseline.ranks, selection.ranks) && sameMap(baseline.choices, selection.choices);
@@ -187,10 +189,12 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
     if (!readOnly && simulationCodes?.candidate) onCandidateLoadoutChange?.(simulationCodes.candidate);
   }, [onCandidateLoadoutChange, readOnly, simulationCodes?.candidate]);
 
+  const simulationKey = simulationCodes ? `${simulationCodes.candidate}|${scenario}|${retryKey}` : "";
+  const simulation: SimulationState = simulationResult.key === simulationKey ? simulationResult : { status: "loading" };
   useEffect(() => {
-    if (shared || !data || !simulationCodes) return;
+    if (shared || !data || !simulationCodes || !simulationCodes.editDistance) return;
     const controller = new AbortController();
-    setSimulation({ status: "loading" });
+    const key = `${simulationCodes.candidate}|${scenario}|${retryKey}`;
     const timer = window.setTimeout(() => {
       fetch("/api/wow/talent-simulation", {
         method: "POST",
@@ -208,7 +212,7 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
           aoeDelta: payload.aoeDelta ?? 0,
         });
         if (integrityError) throw new Error(integrityError);
-        const ready = { status: "ready" as const, ...payload, singleTargetDelta: payload.singleTargetDelta ?? 0, aoeDelta: payload.aoeDelta ?? 0 };
+        const ready = { status: "ready" as const, key, ...payload, singleTargetDelta: payload.singleTargetDelta ?? 0, aoeDelta: payload.aoeDelta ?? 0 };
         setSimulation(ready);
         if (dataMode === "battle-net") void recordCharacterRun(characterSlug, specSlug, {
           kind: "talent",
@@ -225,14 +229,14 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
             confidence: payload.uncertainty?.confidence,
             iterations: payload.iterations,
           },
-          label: `${lang === "ru" ? "Таланты" : "Talents"} · ${talentScenarios.find((entry) => entry.id === scenario)?.label ?? scenario}`,
+          label: `${talentText(lang, "Таланты")} · ${talentScenarios.find((entry) => entry.id === scenario)?.label ?? scenario}`,
         }).catch(() => undefined);
-      }).catch((error: Error) => { if (error.name !== "AbortError") setSimulation({ status: "error", error: talentSimulationMessage(error.message, lang) }); });
+      }).catch((error: Error) => { if (error.name !== "AbortError") setSimulation({ status: "error", key, error: talentSimulationMessage(error.message, lang) }); });
     }, 650);
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [characterSlug, data, dataMode, retryKey, scenario, simulationCodes, snapshotKey, specSlug, lang, talentScenarios, shared]);
 
-  if (!data || !baseline || !selection) return <section className={styles.shell}><div className={styles.empty}><AlertTriangle /><b>{talentText(lang, "Battle.net не отдал активный билд")}</b><span>{talentText(lang, "Мы не подставляем тестовые таланты настоящему персонажу. Переключите активную специализацию в игре, выйдите из неё и обновите профиль.")}</span></div></section>;
+  if (!data || !baseline || !selection) return <section className={styles.shell}><p className={styles.empty} role="status"><AlertTriangle aria-hidden="true" /><b>{talentText(lang, "Battle.net не отдал активный билд")}</b><span>{talentText(lang, "Переключите специализацию в игре и обновите профиль.")}</span></p></section>;
 
   const budgets = talentPointBudgets(data);
   const tree = data.trees[activeTree];
@@ -244,12 +248,9 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
   const scenarioLabel = talentScenarios.find((entry) => entry.id === scenario)?.label ?? scenario;
   const focused = Object.values(data.trees).flatMap((entry) => entry.nodes).find((node) => node.id === focusedId) ?? tree.nodes.find((node) => (selection.ranks.get(node.id) ?? 0) > 0) ?? tree.nodes[0];
   const focusedChoice = focused?.choices.find((choice) => choice.externalId === selection.choices.get(focused.id)) ?? focused?.choices[0];
-  const focusedRequirements = focused ? (focused.requiresNodeIds.length ? focused.requiresNodeIds : focused.prevNodeIds)
-    .flatMap((nodeId) => {
-      const requirement = tree.nodes.find((node) => node.nodeId === nodeId);
-      const requirementChoice = requirement?.choices.find((choice) => choice.externalId === selection.choices.get(requirement.id)) ?? requirement?.choices[0];
-      return requirement && requirementChoice ? [{ node: requirement, choice: requirementChoice }] : [];
-    }) : [];
+  const focusedRank = focused ? selection.ranks.get(focused.id) ?? 0 : 0;
+  const focusedLock = focused && !focusedRank ? available(focused, activeTree, selection.ranks, data, lang) : null;
+  const edited = (simulationCodes?.editDistance ?? 0) > 0;
 
   const setRank = (node: TalentNode, requestedRank: number) => {
     if (readOnly || node.freeNode) return;
@@ -277,12 +278,10 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
     for (const id of [...choices.keys()]) if (!ranks.has(id)) choices.delete(id);
     const pointsBefore = [...selection.ranks.values()].reduce((sum, value) => sum + value, 0);
     const pointsAfter = [...ranks.values()].reduce((sum, value) => sum + value, 0);
-    const totalRemoved = Math.max(0, pointsBefore - pointsAfter);
+    const dependents = Math.max(0, pointsBefore - pointsAfter) - (current - nextRank);
     setSelection({ ranks, choices });
     setFocusedId(node.id);
-    setNotice(totalRemoved > current - nextRank
-      ? lang === "ru" ? `Вместе с этим узлом дерево отключило ещё ${totalRemoved - (current - nextRank)} зависимых ранга. ${shared ? "" : `DPS ниже считается для всех ${totalRemoved} снятых очков.`}` : `The tree also removed ${totalRemoved - (current - nextRank)} dependent ranks. ${shared ? "" : `DPS below includes all ${totalRemoved} removed points.`}`
-      : "");
+    setNotice(dependents > 0 ? `${talentText(lang, "Дерево сняло зависимые ранги: ")}${dependents}` : "");
   };
 
   const changeRank = (node: TalentNode) => {
@@ -298,6 +297,12 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
     setSelection({ ranks: new Map(selection.ranks), choices });
   };
 
+  const restoreBaseline = () => {
+    setSelection({ ranks: new Map(baseline.ranks), choices: new Map(baseline.choices), origin: baseline.origin });
+    setAutomaticRanks(new Map());
+    setNotice("");
+  };
+
   const loadSavedBuild = (savedLoadout: string) => {
     const decoded = decodeWoWTalentLoadout(data, savedLoadout);
     if (!decoded) return false;
@@ -308,34 +313,39 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
     return true;
   };
 
-  return <section className={styles.shell} aria-labelledby={shared ? undefined : "live-talents-heading"} data-talent-editor={shared ? "shared" : "character"} data-read-only={readOnly || undefined}>
-
-    {!shared && <header className={styles.header}>
-      <div><h2 id="live-talents-heading">{talentText(lang, "Ваш билд и его сила")}</h2></div>
-      <div className={styles.headerActions} data-folio-tools><Link href={`${localePrefix}/wow/rotation/${specSlug}?character=${encodeURIComponent(characterSlug)}&mode=${dataMode}`}><Swords /> {talentText(lang, " Настроить ротацию")}</Link><button type="button" onClick={() => { setSelection({ ranks: new Map(baseline.ranks), choices: new Map(baseline.choices), origin: baseline.origin }); setAutomaticRanks(new Map()); setNotice(""); }}><RotateCcw /> {talentText(lang, " Вернуть исходный билд")}</button></div>
-    </header>}
-    {!readOnly && <div className={styles.modeChooser}>
-      <div><b>{talentText(lang, "Измените таланты")}</b><span>{talentText(lang, "Нажмите на талант, чтобы добавить ранг. Правый клик снимает один ранг.")}</span></div>
-      {!shared && <label data-folio-fields className={styles.scenarioPicker} htmlFor="character-talents-scenario"><span>{talentText(lang, "Бой для расчёта")}</span><select id="character-talents-scenario" value={scenario} onChange={(event) => { const chosen = talentScenarios.find((entry) => entry.id === event.currentTarget.value && entry.group === "PvE"); if (chosen) onScenarioChange(chosen.id); }}>
+  return <section className={styles.shell} aria-label={shared ? undefined : talentText(lang, "Таланты")} data-talent-editor={shared ? "shared" : "character"} data-read-only={readOnly || undefined}>
+    {!shared && <div className={styles.toolbar}>
+      <label className={`${tools.field} ${styles.scenario}`} htmlFor="character-talents-scenario">{talentText(lang, "Бой")}<select id="character-talents-scenario" value={scenario} onChange={(event) => { const chosen = talentScenarios.find((entry) => entry.id === event.currentTarget.value && entry.group === "PvE"); if (chosen) onScenarioChange(chosen.id); }}>
         {!talentScenarios.some((entry) => entry.id === scenario && entry.group === "PvE") ? <option value={scenario}>{scenarioLabel}</option> : null}
         {talentScenarios.filter((entry) => entry.group === "PvE").map((entry) => <option key={entry.id} value={entry.id}>{entry.label}</option>)}
-      </select></label>}
-      <div className={styles.legend}><span><i className={styles.legendAdd}><Plus /></i>{talentText(lang, "можно добавить")}</span><span><i className={styles.legendSelected}><Check /></i>{talentText(lang, "уже выбран")}</span><span><i><LockKeyhole /></i>{talentText(lang, "пока закрыт")}</span></div>
+      </select></label>
+      {edited ? <button type="button" className={tools.quiet} onClick={restoreBaseline}><RotateCcw aria-hidden="true" />{talentText(lang, "Вернуть исходный билд")}</button> : null}
+    </div>}
+    {!shared && <div className={styles.results} aria-live="polite" hidden={!edited}>
+      {!edited ? null
+        : simulation.status === "loading" ? <p className={tools.status}><LoaderCircle className={tools.spin} aria-hidden="true" />{talentText(lang, "Считаем урон…")}</p>
+        : simulation.status === "error" ? <div className={styles.simError}><p className={tools.alert}><AlertTriangle aria-hidden="true" />{simulation.error}</p><button type="button" className={tools.quiet} onClick={() => setRetryKey((value) => value + 1)}><RefreshCw aria-hidden="true" />{talentText(lang, "Повторить расчёт")}</button></div>
+        : <>
+          <ResultVerdict lang={lang} singleTarget={simulation.singleTargetDelta ?? 0} aoe={simulation.aoeDelta ?? 0} singleTargetMargin={simulation.uncertainty?.singleTargetPercent ?? 0} aoeMargin={simulation.uncertainty?.aoePercent ?? 0} scenario={scenario} />
+          <div className={styles.damage}>
+            <Metric lang={lang} name={talentText(lang, "Одна цель")} before={simulation.baselineSingleTargetDps} after={simulation.candidateSingleTargetDps} change={simulation.singleTargetDelta ?? 0} marginPercent={simulation.uncertainty?.singleTargetPercent} />
+            <Metric lang={lang} name={`${talentText(lang, "Пачка")}${simulation.encounter?.aoeTargets ? ` · ${simulation.encounter.aoeTargets}` : ""}`} before={simulation.baselineAoeDps} after={simulation.candidateAoeDps} change={simulation.aoeDelta ?? 0} marginPercent={simulation.uncertainty?.aoePercent} />
+          </div>
+          <StatChanges lang={lang} base={baseStats} deltas={simulation.statDeltas} />
+        </>}
+      {changes.length ? <TalentChangeSet lang={lang} changes={changes} /> : null}
     </div>}
     <div className={styles.workspace}>
-      <div className={styles.builder} data-book-surface="foldout">
-        <nav aria-label={talentText(lang, "Деревья талантов")}>{(Object.keys(labels) as TalentKind[]).map((kind) => <button key={kind} type="button" aria-pressed={activeTree === kind} onClick={() => { setActiveTree(kind); setFocusedId(null); }}><span className={styles.navLabelFull}>{labels[kind]}</span><span className={styles.navLabelCompact}>{kind === "spec" ? talentText(lang, "Спец.") : labels[kind]}</span><b>{spent(selection.ranks, data, kind)}/{budgets[kind]}</b></button>)}</nav>
-        <div className={styles.connectionLegend} aria-label={talentText(lang, "Обозначения связей")}><span><i className={styles.lineActive} />{talentText(lang, "выбранный путь")}</span><span><i className={styles.lineAvailable} />{talentText(lang, "можно продолжить")}</span><span><b>→</b>{talentText(lang, "стрелка показывает, какой талант откроется следующим")}</span></div>
-        <p className={styles.treeScrollHint} id="talent-tree-scroll-help">{talentText(lang, "Листайте дерево влево и вправо, чтобы увидеть все таланты.")}</p>
-        <div className={styles.treeViewport} role="region" tabIndex={0} aria-label={`${lang === "ru" ? "Дерево талантов" : "Talent tree"}: ${labels[activeTree]}`} aria-describedby="talent-tree-scroll-help" onFocusCapture={(event) => {
+      <div className={styles.builder}>
+        <nav className={styles.trees} aria-label={talentText(lang, "Деревья талантов")}>{(Object.keys(labels) as TalentKind[]).map((kind) => <button key={kind} type="button" aria-pressed={activeTree === kind} onClick={() => { setActiveTree(kind); setFocusedId(null); }}><span>{labels[kind]}</span><b>{spent(selection.ranks, data, kind)}/{budgets[kind]}</b></button>)}</nav>
+        <div className={styles.treeViewport} role="region" tabIndex={0} aria-label={`${talentText(lang, "Дерево талантов")}: ${labels[activeTree]}`} onFocusCapture={(event) => {
           if (event.currentTarget.scrollWidth > event.currentTarget.clientWidth && event.target instanceof HTMLElement && event.target.matches(".tc-node")) {
             event.target.scrollIntoView({ block: "nearest", inline: "nearest" });
           }
         }}>
         <div className={`talent-calculator ${styles.embeddedCalculator}`} data-performance="balanced">
-          <TalentTreePanel lang={lang} appearance="atlas" specSlug={activeTree === "spec" ? theme?.slug : undefined} variant={activeTree} eyebrow={labels[activeTree]} title={activeTree === "hero" ? data.heroName : activeTree === "class" ? data.className : data.specName} iconSrc={activeTree === "hero" ? data.heroIconUrl : activeTree === "spec" ? theme?.iconUrl : theme?.classIconUrl} spent={spent(selection.ranks, data, activeTree)} budget={budgets[activeTree]} nodeCount={tree.nodes.length} scene={activeTree === "spec" && theme ? <SpecSignatureFx specSlug={theme.slug}  /> : undefined}>
+          <TalentTreePanel lang={lang} appearance="atlas" specSlug={activeTree === "spec" ? theme?.slug : undefined} variant={activeTree} eyebrow={labels[activeTree]} title={activeTree === "hero" ? data.heroName : activeTree === "class" ? data.className : data.specName} iconSrc={activeTree === "hero" ? data.heroIconUrl : activeTree === "spec" ? theme?.iconUrl : theme?.classIconUrl} spent={spent(selection.ranks, data, activeTree)} budget={budgets[activeTree]} nodeCount={tree.nodes.length}>
             <div className="tc-tree-canvas">
-              <div className={styles.flowGuide} aria-hidden="true"><b>{talentText(lang, "НАЧАЛО")}</b><span>{talentText(lang, "развитие билда")}</span><i>→</i><b>{talentText(lang, "СИЛЬНЫЕ УЗЛЫ")}</b></div>
               <svg className="tc-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                 <defs>
                   <marker id={`talent-arrow-${activeTree}`} markerWidth="4" markerHeight="4" refX="3.4" refY="2" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L4,2 L0,4 Z" /></marker>
@@ -344,9 +354,8 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
                 {treeEdges.map(([from, to]) => {
                   const fromSelected = (selection.ranks.get(from.id) ?? 0) > 0;
                   const toSelected = (selection.ranks.get(to.id) ?? 0) > 0;
-                  const pointsToFocused = focused?.id === to.id;
-                  const comesFromFocused = focused?.id === from.id;
-                  const classes = [fromSelected && toSelected ? "is-lit" : "", fromSelected && !toSelected ? styles.availablePath : "", pointsToFocused || comesFromFocused ? styles.focusedPath : ""].filter(Boolean).join(" ");
+                  const touchesFocused = focused?.id === to.id || focused?.id === from.id;
+                  const classes = [fromSelected && toSelected ? "is-lit" : "", fromSelected && !toSelected ? styles.availablePath : "", touchesFocused ? styles.focusedPath : ""].filter(Boolean).join(" ");
                   return <line key={`${from.id}-${to.id}`} className={classes || undefined} x1={from.y} y1={100 - from.x} x2={to.y} y2={100 - to.x} markerEnd={`url(#talent-arrow-${fromSelected && toSelected ? `active-${activeTree}` : activeTree})`} />;
                 })}
               </svg>
@@ -354,15 +363,15 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
                 const rank = selection.ranks.get(node.id) ?? 0;
                 const state = available(node, activeTree, selection.ranks, data, lang);
                 const selectedChoice = selection.choices.get(node.id);
-                const choice = node.choices.find((entry) => entry.externalId === selectedChoice) ?? node.choices[0];
+                const choiceIndex = Math.max(0, node.choices.findIndex((entry) => entry.externalId === selectedChoice));
+                const choice = node.choices[choiceIndex] ?? node.choices[0];
                 const visual = talentVisualTheme(node, selectedChoice);
-                return <button key={node.id} type="button" data-node-id={node.id} data-rank={rank} data-choice={Math.max(0, node.choices.findIndex((entry) => entry.externalId === selectedChoice))} className={`tc-node ${node.talentType} ${node.nodeType} tc-vfx-${visual.theme}${rank ? " is-selected" : ""}${!state.ok && !rank ? " is-locked" : ""}`} style={{ left: `${node.y}%`, top: `${100 - node.x}%`, "--tc-node-delay": `${Math.min(620, 120 + node.row * 35 + node.column * 12)}ms`, "--tc-vfx-phase": `${visual.phaseMs}ms`, "--tc-vfx-speed": `${visual.durationMs}ms`, "--tc-vfx-angle": `${visual.angleDeg}deg`, "--tc-sigil-rotation": `${visual.sigilRotation}deg`, "--tc-sigil-dash": visual.sigilDash } as CSSProperties} aria-pressed={rank > 0} aria-disabled={!state.ok && !rank} aria-label={`${choice?.name ?? talentText(lang, "Талант")}, ${lang === "ru" ? "ранг" : "rank"} ${rank} ${lang === "ru" ? "из" : "of"} ${node.maxRanks}${state.reason ? `, ${state.reason}` : ""}`} title={state.reason || choice?.name} onClick={(event) => { setFocusedId(node.id); if (!readOnly) { playNodeBurst(event.currentTarget); changeRank(node); } }} onContextMenu={(event) => { event.preventDefault(); if (!readOnly && rank) { playNodeBurst(event.currentTarget); setRank(node, rank - 1); } }} onFocus={() => setFocusedId(node.id)} onMouseEnter={() => setFocusedId(node.id)}>
+                return <button key={node.id} type="button" data-node-id={node.id} data-rank={rank} data-choice={choiceIndex} className={`tc-node ${node.talentType} ${node.nodeType} tc-vfx-${visual.theme}${rank ? " is-selected" : ""}${!state.ok && !rank ? " is-locked" : ""}`} style={{ left: `${node.y}%`, top: `${100 - node.x}%`, "--tc-vfx-phase": `${visual.phaseMs}ms`, "--tc-vfx-speed": `${visual.durationMs}ms`, "--tc-vfx-angle": `${visual.angleDeg}deg`, "--tc-sigil-rotation": `${visual.sigilRotation}deg`, "--tc-sigil-dash": visual.sigilDash } as CSSProperties} aria-pressed={rank > 0} aria-disabled={!state.ok && !rank} aria-label={`${choice?.name ?? talentText(lang, "Талант")}, ${rank}/${node.maxRanks}${state.reason ? `, ${state.reason}` : ""}`} onClick={(event) => { setFocusedId(node.id); if (!readOnly) { playNodeBurst(event.currentTarget); changeRank(node); } }} onContextMenu={(event) => { event.preventDefault(); if (!readOnly && rank) { playNodeBurst(event.currentTarget); setRank(node, rank - 1); } }} onFocus={() => setFocusedId(node.id)} onMouseEnter={() => setFocusedId(node.id)}>
                   <span className="tc-node-vfx" aria-hidden="true" />
                   <svg className={`tc-node-sigil tc-sigil-${visual.asset}`} data-vfx-asset={visual.assetId} viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path className="tc-sigil-orbit" d={visual.sigilPath} /><path className="tc-sigil-mark" d={visual.assetMark} /></svg>
                   <span className="tc-node-ring" />
-                  <span className={`tc-node-art${node.nodeType === "choice" ? " is-choice" : ""}`} data-selected-choice={Math.max(0, node.choices.findIndex((entry) => entry.externalId === selectedChoice))} aria-hidden="true">{choice?.iconUrl ? <img className="tc-choice-art-selected" src={choice.iconUrl} alt="" loading="lazy" decoding="async" /> : <Sparkles />}{node.nodeType === "choice" && node.choices.length > 1 ? <span className="tc-choice-switch"><i /><i /><b>↔</b></span> : null}</span>
+                  <span className={`tc-node-art${node.nodeType === "choice" ? " is-choice" : ""}`} data-selected-choice={choiceIndex} aria-hidden="true">{choice?.iconUrl ? <img className="tc-choice-art-selected" src={choice.iconUrl} alt="" loading="lazy" decoding="async" /> : <Sparkles />}{node.nodeType === "choice" && node.choices.length > 1 ? <span className="tc-choice-switch"><i /><i /><b>↔</b></span> : null}</span>
                   <span className="tc-node-count">{rank}/{node.maxRanks}</span>
-                  <span className={styles.nodeState} aria-hidden="true">{rank ? <Check /> : state.ok ? <Plus /> : <LockKeyhole />}</span>
                   <span className={styles.nodeName} aria-hidden="true">{choice?.name}</span>
                 </button>;
               })}
@@ -370,89 +379,72 @@ export function TalentBuildCalculator({ data, characterSlug = "", specSlug, load
           </TalentTreePanel>
         </div>
         </div>
-        {notice ? <p className={styles.notice}><AlertTriangle />{notice}</p> : null}
+        {notice ? <p className={tools.status} role="status"><AlertTriangle aria-hidden="true" />{notice}</p> : null}
         {focused && focusedChoice ? <article className={styles.details} data-testid="shared-talent-inspection">
-          <img src={focusedChoice.iconUrl || "/assets/wow/icon-unverified.svg"} alt="" /><div><small className={(selection.ranks.get(focused.id) ?? 0) ? styles.statusSelected : !available(focused, activeTree, selection.ranks, data, lang).ok ? styles.statusLocked : styles.statusAvailable}>{(selection.ranks.get(focused.id) ?? 0) ? talentText(lang, "✓ В БИЛДЕ") : !available(focused, activeTree, selection.ranks, data, lang).ok ? talentText(lang, "🔒 ПОКА ЗАКРЫТ") : talentText(lang, "+ МОЖНО ДОБАВИТЬ")} · {labels[activeTree]}</small><b>{focusedChoice.name}</b><TalentDescription talent={focusedChoice} locale={localePrefix === "/ru" ? "ru" : "en"} />{focusedRequirements.length ? <div className={styles.requirements}><strong>{talentText(lang, "Связан слева с:")}</strong>{focusedRequirements.map(({ node, choice }) => <button type="button" key={node.id} onClick={() => setFocusedId(node.id)}><img src={choice.iconUrl || "/assets/wow/icon-unverified.svg"} alt="" /><span>{choice.name}<small>{(selection.ranks.get(node.id) ?? 0) > 0 ? talentText(lang, "✓ уже выбран") : talentText(lang, "нужно выбрать")}</small></span></button>)}</div> : <p className={styles.rootNode}>{talentText(lang, "Стартовый узел: предыдущий талант не требуется.")}</p>}{!(selection.ranks.get(focused.id) ?? 0) && !available(focused, activeTree, selection.ranks, data, lang).ok ? <p className={styles.lockReason}>{available(focused, activeTree, selection.ranks, data, lang).reason}</p> : null}</div>
-          {!readOnly && <div className={styles.detailActions} data-folio-tools>{focused.freeNode ? <span>{talentText(lang, "Базовый талант")}</span> : <><button type="button" disabled={!(selection.ranks.get(focused.id) ?? 0)} onClick={() => setRank(focused, (selection.ranks.get(focused.id) ?? 0) - 1)}><Minus />{talentText(lang, "−1 ранг")}</button><button type="button" disabled={(selection.ranks.get(focused.id) ?? 0) >= focused.maxRanks} onClick={() => setRank(focused, (selection.ranks.get(focused.id) ?? 0) + 1)}><Plus />{talentText(lang, "+1 ранг")}</button></>}{focused.choices.length > 1 ? <button type="button" disabled={!(selection.ranks.get(focused.id) ?? 0)} onClick={cycleChoice}>{talentText(lang, "Сменить вариант")}</button> : null}</div>}
+          <img src={focusedChoice.iconUrl || "/assets/wow/icon-unverified.svg"} alt="" width={48} height={48} />
+          <div><b>{focusedChoice.name}</b><TalentDescription talent={focusedChoice} locale={lang} />{focusedLock && !focusedLock.ok ? <p className={styles.lockReason}>{focusedLock.reason}</p> : null}</div>
+          {!readOnly && !focused.freeNode ? <div className={styles.detailActions}>
+            <button type="button" className={tools.quiet} disabled={!focusedRank} onClick={() => setRank(focused, focusedRank - 1)} aria-label={talentText(lang, "−1 ранг")}><Minus aria-hidden="true" /></button>
+            <span>{focusedRank}/{focused.maxRanks}</span>
+            <button type="button" className={tools.quiet} disabled={focusedRank >= focused.maxRanks} onClick={() => setRank(focused, focusedRank + 1)} aria-label={talentText(lang, "+1 ранг")}><Plus aria-hidden="true" /></button>
+            {focused.choices.length > 1 ? <button type="button" className={tools.quiet} disabled={!focusedRank} onClick={cycleChoice}>{talentText(lang, "Сменить вариант")}</button> : null}
+          </div> : null}
         </article> : null}
       </div>
-      {!shared && <aside className={styles.results} aria-live="polite">
-        <div className={styles.resultHead}><span><Check />{talentText(lang, "3. Результат")}</span><small>{scenarioLabel}</small></div>
-        {(simulationCodes?.editDistance ?? 0) > 1 ? <div className={styles.changeScope}><AlertTriangle /><span><b>{talentText(lang, "Считается сразу несколько изменений: ")}{simulationCodes?.editDistance}</b>{talentText(lang, "Урон сравнивается для всего нового билда, а не только для последнего нажатого таланта.")}</span></div> : null}
-        {changes.length ? <TalentChangeSet lang={lang} changes={changes} /> : null}
-        <div className={styles.resultsBody}>
-          <section className={styles.simulationPane}>{simulation.status === "loading" ? <div className={styles.simStatus}><LoaderCircle /> <span><b>{talentText(lang, "SimulationCraft считает…")}</b>{talentText(lang, "Сравниваем исходный билд и выбранный при одинаковом шмоте и условиях.")}</span></div> : simulation.status === "error" ? <div className={`${styles.simStatus} ${styles.simError}`}><AlertTriangle /><span><b>{talentText(lang, "Расчёт не завершился")}</b>{simulation.error}<button data-folio-action type="button" onClick={() => setRetryKey((value) => value + 1)}>{talentText(lang, "Повторить расчёт")}</button></span></div> : <><ResultVerdict lang={lang} singleTarget={simulation.singleTargetDelta ?? 0} aoe={simulation.aoeDelta ?? 0} singleTargetMargin={simulation.uncertainty?.singleTargetPercent ?? 0} aoeMargin={simulation.uncertainty?.aoePercent ?? 0} scenario={scenario} /><div className={styles.damage}><Metric lang={lang} name={talentText(lang, "Одна цель")} before={simulation.baselineSingleTargetDps} after={simulation.candidateSingleTargetDps} change={simulation.singleTargetDelta ?? 0} marginDps={simulation.uncertainty?.singleTargetDps} marginPercent={simulation.uncertainty?.singleTargetPercent} /><Metric lang={lang} name={lang === "ru" ? `Вся пачка · ${simulation.encounter?.aoeTargets ?? "несколько"} целей` : `Enemy group · ${simulation.encounter?.aoeTargets ?? "multiple"} targets`} note={talentText(lang, "Суммарный DPS по всем целям")} before={simulation.baselineAoeDps} after={simulation.candidateAoeDps} change={simulation.aoeDelta ?? 0} marginDps={simulation.uncertainty?.aoeDps} marginPercent={simulation.uncertainty?.aoePercent} /></div><CalculationFacts lang={lang} simulation={simulation} /></>}</section>
-          <section className={styles.statsPane}><h3>{dataMode === "battle-net" ? talentText(lang, "Характеристики персонажа") : talentText(lang, "Характеристики тестового персонажа")}</h3>
-            <Stat lang={lang} name={talentText(lang, "Основная")} value={Math.round(baseStats.primary).toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} change={simulation.statDeltas?.primary} />
-            <Stat lang={lang} name={talentText(lang, "Критический удар")} value={`${baseStats.crit.toFixed(2)}%`} change={simulation.statDeltas?.crit} percent />
-            <Stat lang={lang} name={talentText(lang, "Скорость")} value={`${baseStats.haste.toFixed(2)}%`} change={simulation.statDeltas?.haste} percent />
-            <Stat lang={lang} name={talentText(lang, "Искусность")} value={`${baseStats.mastery.toFixed(2)}%`} change={simulation.statDeltas?.mastery} percent />
-            <Stat lang={lang} name={talentText(lang, "Универсальность")} value={`${baseStats.versatility.toFixed(2)}%`} change={simulation.statDeltas?.versatility} percent />
-            <footer><AlertTriangle /><span><b>{talentText(lang, "Числа на листе персонажа могут не измениться.")}</b> {talentText(lang, " Временные усиления от талантов учитываются в расчёте урона, даже если статические характеристики остаются прежними.")}{dataMode !== "battle-net" ? talentText(lang, " Это тестовый профиль, а не ваши предметы.") : ""}</span></footer>
-          </section>
-        </div>
-      </aside>}
     </div>
-    {!shared && <>
-    <CharacterBuildManager lang={lang} characterSlug={characterSlug} specSlug={specSlug} dataMode={dataMode} buildVersion={data.buildVersion} currentLoadout={simulationCodes?.candidate ?? ""} scenario={scenario} onScenarioChange={onScenarioChange} onLoad={loadSavedBuild} />
-    <CharacterTalentOptimizer lang={lang} data={data} characterSlug={characterSlug} specSlug={specSlug} scenario={scenario} dataMode={dataMode} resetKey={snapshotKey} onScenarioChange={onScenarioChange} onApply={loadSavedBuild} />
-    <details className={styles.dataSources} data-book-disclosure><summary>{talentText(lang, "Откуда данные и как считается урон")}</summary><div><span><Check />{talentText(lang, "Таланты: ")}{baseline.origin === "battle-net" ? "Battle.net API" : talentText(lang, "тестовый импорт")}</span><span><Check />{talentText(lang, "Статы: ")}{dataMode === "battle-net" ? "Battle.net API" : talentText(lang, "эталонный профиль")}</span><span><Check />{talentText(lang, "Дерево: Raidbots")}</span><span><Check />{talentText(lang, "Урон: ")}{dataMode === "battle-net" ? talentText(lang, "SimulationCraft + ваш шмот") : talentText(lang, "SimulationCraft · эталонный шмот")}</span></div></details>
-    </>}
-    <details className={styles.source} data-book-disclosure><summary>{talentText(lang, "Версия дерева талантов")}</summary><div>{data.source.label} {talentText(lang, " · обновление ")}{data.buildVersion} {talentText(lang, " · данные от ")}{new Date(data.source.observedAt).toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US")}</div></details>
+    {!shared && <div className={styles.extras}>
+      <CharacterTalentOptimizer lang={lang} data={data} characterSlug={characterSlug} specSlug={specSlug} scenario={scenario} dataMode={dataMode} resetKey={snapshotKey} onApply={loadSavedBuild} />
+      <CharacterBuildManager lang={lang} characterSlug={characterSlug} specSlug={specSlug} dataMode={dataMode} buildVersion={data.buildVersion} currentLoadout={simulationCodes?.candidate ?? ""} scenario={scenario} onScenarioChange={onScenarioChange} onLoad={loadSavedBuild} />
+    </div>}
   </section>;
 }
 
 function TalentChangeSet({ lang, changes }: { lang: TalentLang; changes: TalentChange[] }) {
   const groups: Array<{ kind: TalentChange["kind"]; title: string }> = [
     { kind: "added", title: talentText(lang, "Добавлены") },
-    { kind: "removed", title: talentText(lang, "Сняты вручную") },
-    { kind: "automatic", title: talentText(lang, "Автоматически отключены") },
+    { kind: "removed", title: talentText(lang, "Сняты") },
+    { kind: "automatic", title: talentText(lang, "Отключены деревом") },
     { kind: "choice", title: talentText(lang, "Изменён вариант") },
   ];
-  return <section className={styles.changeSet} aria-labelledby="talent-change-set-title">
-    <header><b id="talent-change-set-title">{talentText(lang, "Что именно изменилось")}</b><small>{changes.reduce((sum, change) => sum + change.ranks, 0)} {talentText(lang, " изменённых ранга")}</small></header>
-    <div>{groups.map((group) => {
+  return <section className={styles.changeSet} aria-label={talentText(lang, "Изменения")}>
+    {groups.map((group) => {
       const entries = changes.filter((change) => change.kind === group.kind);
-      return entries.length ? <section key={group.kind} data-kind={group.kind}><h3>{group.title}</h3>{entries.map((change) => <article key={change.id}><img src={change.iconUrl || "/assets/wow/icon-unverified.svg"} alt="" /><span><b>{change.name}</b><small>{change.detail}</small></span><em>{change.kind === "added" ? "+" : change.kind === "choice" ? "↔" : "−"}{change.kind === "choice" ? "" : change.ranks}</em></article>)}</section> : null;
-    })}</div>
+      return entries.length ? <div key={group.kind} data-kind={group.kind}><h4>{group.title}</h4><ul>{entries.map((change) => <li key={change.id}><img src={change.iconUrl || "/assets/wow/icon-unverified.svg"} alt="" width={24} height={24} /><span>{change.name}</span><em>{change.kind === "added" ? "+" : change.kind === "choice" ? "↔" : "−"}{change.kind === "choice" ? "" : change.ranks}</em></li>)}</ul></div> : null;
+    })}
   </section>;
 }
 
 function ResultVerdict({ lang, singleTarget, aoe, singleTargetMargin, aoeMargin, scenario }: { lang: TalentLang; singleTarget: number; aoe: number; singleTargetMargin: number; aoeMargin: number; scenario: TalentScenarioId }) {
-  const primary = scenario === "pve-aoe" || scenario === "mythic-plus" ? aoe : singleTarget;
-  const primaryMargin = scenario === "pve-aoe" || scenario === "mythic-plus" ? aoeMargin : singleTargetMargin;
+  const group = scenario === "pve-aoe" || scenario === "mythic-plus";
+  const primary = group ? aoe : singleTarget;
+  const primaryMargin = group ? aoeMargin : singleTargetMargin;
   const direction = (value: number, margin: number) => value > margin ? 1 : value < -margin ? -1 : 0;
   const singleDirection = direction(singleTarget, singleTargetMargin);
   const aoeDirection = direction(aoe, aoeMargin);
-  if (Math.abs(singleTarget) < .005 && Math.abs(aoe) < .005) return <div className={styles.verdict}><Check /><span><b>{talentText(lang, "Это ваш текущий билд")}</b>{talentText(lang, "Вы ещё ничего не поменяли. Поэтому разница равна нулю.")}</span></div>;
-  if (singleDirection > 0 && aoeDirection < 0) return <div className={styles.verdict}><AlertTriangle /><span><b>{talentText(lang, "Сильнее в одну цель, слабее по пачке")}</b>{talentText(lang, "Для AoE это не улучшение, даже если одиночный урон вырос.")}</span></div>;
-  if (aoeDirection > 0 && singleDirection < 0) return <div className={styles.verdict}><AlertTriangle /><span><b>{talentText(lang, "Сильнее по пачке, слабее в босса")}</b>{talentText(lang, "Выигрыш зависит от выбранного режима, универсального улучшения нет.")}</span></div>;
-  if (Math.abs(primary) <= primaryMargin) return <div className={styles.verdict}><AlertTriangle /><span><b>{talentText(lang, "Разница меньше погрешности")}</b>{talentText(lang, "Пока нельзя уверенно сказать, что этот вариант сильнее или слабее текущего.")}</span></div>;
-  if (primary > primaryMargin) return <div className={`${styles.verdict} ${styles.verdictGood}`}><Check /><span><b>{talentText(lang, "Для выбранного режима стало лучше")}</b>{talentText(lang, "Прирост больше статистической погрешности. Остальные результаты показаны отдельно.")}</span></div>;
-  return <div className={`${styles.verdict} ${styles.verdictBad}`}><AlertTriangle /><span><b>{talentText(lang, "Для выбранного режима стало хуже")}</b>{talentText(lang, "Верните талант или попробуйте другой вариант.")}</span></div>;
+  const [tone, text] = singleDirection > 0 && aoeDirection < 0 ? ["mixed", talentText(lang, "Сильнее в одну цель, слабее по пачке")]
+    : aoeDirection > 0 && singleDirection < 0 ? ["mixed", talentText(lang, "Сильнее по пачке, слабее в босса")]
+    : Math.abs(primary) <= primaryMargin ? ["even", talentText(lang, "Разница меньше погрешности")]
+    : primary > primaryMargin ? ["good", talentText(lang, "Для выбранного режима стало лучше")]
+    : ["bad", talentText(lang, "Для выбранного режима стало хуже")];
+  return <p className={styles.verdict} data-tone={tone}>{text}</p>;
 }
 
-function Metric({ lang, name, note, before, after, change, marginDps = 0, marginPercent = 0 }: { lang: TalentLang; name: string; note?: string; before?: number; after?: number; change: number; marginDps?: number; marginPercent?: number }) {
+function Metric({ lang, name, before, after, change, marginPercent = 0 }: { lang: TalentLang; name: string; before?: number; after?: number; change: number; marginPercent?: number }) {
   const conclusive = Math.abs(change) > marginPercent;
-  const tone = conclusive && change > .005 ? styles.positive : conclusive && change < -.005 ? styles.negative : "";
-  const explanation = !conclusive && Math.abs(change) >= .005 ? talentText(lang, "разница внутри погрешности") : change > .005 ? talentText(lang, "станет выше") : change < -.005 ? talentText(lang, "станет ниже") : talentText(lang, "не изменится");
-  const absolute = Number.isFinite(before) && Number.isFinite(after) ? Math.round(after! - before!) : 0;
-  return <div className={tone}><span>{name}</span>{note ? <em>{note}</em> : null}<dl><div><dt>{talentText(lang, "Сейчас")}</dt><dd>{formatDps(before, lang)}</dd></div><div><dt>{talentText(lang, "После")}</dt><dd>{formatDps(after, lang)}</dd></div></dl><b>{delta(change)}</b><small><strong>{talentText(lang, "Абсолютная разница:")}</strong> {absolute > 0 ? "+" : ""}{absolute.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} DPS</small><small><strong>{talentText(lang, "Погрешность:")}</strong> ±{Math.round(marginDps).toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} DPS · ±{marginPercent.toFixed(2)}%</small><small><strong>{talentText(lang, "Вывод:")}</strong> {explanation}</small></div>;
+  const tone = conclusive && change > .005 ? "good" : conclusive && change < -.005 ? "bad" : "even";
+  return <div data-tone={tone}><span>{name}</span><b>{delta(change)}</b><small>{formatDps(before, lang)} → {formatDps(after, lang)} DPS</small></div>;
 }
+
+const numberLocale: Record<TalentLang, string> = { ru: "ru-RU", en: "en-US" };
 
 function formatDps(value: number | undefined, lang: TalentLang) {
-  return Number.isFinite(value) ? `${Math.round(value!).toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} DPS` : "—";
+  return Number.isFinite(value) ? `${Math.round(value!).toLocaleString(numberLocale[lang])}` : "—";
 }
 
-function CalculationFacts({ lang, simulation }: { lang: TalentLang; simulation: SimulationState }) {
-  return <details className={styles.calculation} data-book-disclosure>
-    <summary>{talentText(lang, "Как получили эти цифры?")}</summary>
-    <div><span><b>{talentText(lang, "Сравнение")}</b>{talentText(lang, "Ваш текущий билд → выбранные таланты. Шмот, уровень и остальные условия одинаковые.")}</span><span><b>{talentText(lang, "Бой")}</b>{simulation.encounter?.duration ?? "—"} {talentText(lang, " сек., без движения: 1 цель и ")}{simulation.encounter?.aoeTargets ?? "—"} {talentText(lang, " целей.")}</span><span><b>{talentText(lang, "Точность")}</b>{simulation.iterations?.toLocaleString(lang === "ru" ? "ru-RU" : "en-US") ?? "—"} {talentText(lang, " прогонов на каждый вариант. Погрешность показана для разницы при доверии ")}{simulation.uncertainty?.confidence ?? 95}%.</span></div>
-  </details>;
-}
-
-function Stat({ lang, name, value, change, percent = false }: { lang: TalentLang; name: string; value: string; change?: number; percent?: boolean }) {
-  const changed = typeof change === "number" && Math.abs(change) >= .005;
-  const explanation = changed ? `${change > 0 ? "+" : ""}${percent ? change.toFixed(2) : Math.round(change)}${percent ? talentText(lang, " п.п.") : ""} ${lang === "ru" ? "от талантов" : "from talents"}` : talentText(lang, "таланты не меняют");
-  return <div className={styles.stat}><span>{name}</span><b>{value}</b><small>{explanation}</small></div>;
+function StatChanges({ lang, base, deltas }: { lang: TalentLang; base: CombatStats; deltas?: CombatStats }) {
+  if (!deltas) return null;
+  const rows = ([["crit", "Критический удар"], ["haste", "Скорость"], ["mastery", "Искусность"], ["versatility", "Универсальность"]] as const)
+    .filter(([key]) => Math.abs(deltas[key]) >= .005);
+  if (!rows.length) return null;
+  return <dl className={styles.stats}>{rows.map(([key, name]) => <div key={key}><dt>{talentText(lang, name)}</dt><dd>{base[key].toFixed(2)}% <em>{deltas[key] > 0 ? "+" : ""}{deltas[key].toFixed(2)}</em></dd></div>)}</dl>;
 }
