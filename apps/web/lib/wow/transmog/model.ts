@@ -47,9 +47,16 @@ export type TransmogSetSummary = { id: number; name: string; classMask: number; 
 export type TransmogSetPage = { data: TransmogSetSummary[]; total: number; nextCursor?: string; buildId: number };
 export type TransmogSetDetail = TransmogSetSummary & { items: TransmogAppearance[] };
 
-/** Icon sources in order: Wowhead also has icons of the newest items, Blizzard's render CDN is the fallback. */
-export function iconUrls(iconName?: string) {
-  return iconName ? [`https://wow.zamimg.com/images/wow/icons/medium/${iconName}.jpg`, `https://render.worldofwarcraft.com/us/icons/56/${iconName}.jpg`] : [];
+/**
+ * Where an icon is tried, in order: the 56 px file under its name, then
+ * Blizzard's render of the item's (or set's first piece's) own icon — newer
+ * icons are published only under their file id, which the media API names.
+ */
+export function iconUrls(iconName?: string, owner?: { itemId?: number; setId?: number }) {
+  const urls = iconName ? [`https://wow.zamimg.com/images/wow/icons/large/${iconName}.jpg`] : [];
+  if (owner?.itemId) urls.push(`/api/wow/transmog/icon?item=${owner.itemId}`);
+  else if (owner?.setId) urls.push(`/api/wow/transmog/icon?set=${owner.setId}`);
+  return urls;
 }
 
 /**
