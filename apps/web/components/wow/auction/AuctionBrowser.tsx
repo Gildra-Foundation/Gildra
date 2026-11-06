@@ -1,129 +1,192 @@
 "use client";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { AtlasField, AtlasInput, AtlasSelect } from "@gildra/atlas-ui/AtlasField";
-import { AtlasSkeleton } from "@gildra/atlas-ui/AtlasState";
-import { auctionRegions, validAuctionRealm, type AuctionRegion, type AuctionResult } from "@/lib/wow/auctionBrowser";
-import { auctionCopy } from "./auctionCopy";
-import { AuctionListings } from "./AuctionListings";
-import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { Search } from "lucide-react";
+import { AtlasSelect } from "@gildra/atlas-ui/AtlasField";
+import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
+import { AtlasSkeleton } from "@gildra/atlas-ui/AtlasState";
 import { materialStyles } from "@/components/wow/shared/materialAtlas";
-import { auctionIconFrameStyle } from "./auctionKit";
+import { auctionRegions, type AuctionMarketItem, type AuctionMarketView, type AuctionRegion } from "@/lib/wow/auctionBrowser";
+import { auctionCategories, auctionCategory, auctionCategoryGroups, auctionIconUrl } from "@/lib/wow/auctionMarketCategories";
+import { sortSummaries, type AuctionSortKey } from "@/lib/wow/auctionMarketSummary";
+import { auctionCopy } from "./auctionCopy";
+import { AuctionCombobox, type ComboOption } from "./AuctionCombobox";
+import { AuctionCompare, AuctionCompareTray } from "./AuctionCompare";
+import { auctionErrorMessage } from "./auctionErrors";
+import { AuctionItemDetail } from "./AuctionItemDetail";
 import { AuctionButton, AuctionPlaque } from "./AuctionMaterial";
+import { AuctionMarketTable } from "./AuctionMarketTable";
+import { AuctionItemLabel } from "./AuctionMarketParts";
+import { AuctionMoney } from "./AuctionMoney";
+import { currentItems, nextSort, readAuctionView, toggleItem, writeAuctionView, type AuctionView } from "./auctionState";
+import { useAuctionData } from "./useAuctionData";
 import styles from "./auction.module.css";
-const emptyFilters = { region: "eu" as AuctionRegion, realm: "", market: "realm", q: "", sort: "price" };
-type Filters = typeof emptyFilters;
-const message = (code: string, lang: "ru" | "en") => {
-  const c = auctionCopy[lang];
-  return code === "not_configured" ? c.notConfigured : ["market_busy", "rate_limited"].includes(code) ? c.busy : ["invalid_query", "invalid_realm"].includes(code) ? c.invalid : c.error;
-};
-function readFilters(params: URLSearchParams): Filters {
-  const next = { ...emptyFilters };
-  const region = params.get("region"); if (auctionRegions.includes(region as AuctionRegion)) next.region = region as AuctionRegion;
-  const realm = params.get("realm") ?? ""; if (realm === "" || validAuctionRealm(realm)) next.realm = realm;
-  if (params.get("market") === "commodities") next.market = "commodities";
-  if (params.get("sort") === "quantity") next.sort = "quantity";
-  next.q = (params.get("q") ?? "").slice(0, 100);
-  return next;
+
+type Remembered = { region?: string; realms?: Record<string, string> };
+const STORE = "gildra:auction";
+function remembered(): Remembered {
+  try { return JSON.parse(window.localStorage.getItem(STORE) ?? "{}") as Remembered; } catch { return {}; }
 }
+function remember(region: string, realm: string) {
+  try {
+    const value = remembered();
+    window.localStorage.setItem(STORE, JSON.stringify({ region, realms: { ...value.realms, ...(realm ? { [region]: realm } : {}) } }));
+  } catch { /* Private mode: the address still carries the choice. */ }
+}
+const api = (params: Record<string, string>) => `/api/wow/auction?${new URLSearchParams(params)}`;
+
+function useDebounced<T>(value: T, delay: number) {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => { const timer = setTimeout(() => setSettled(value), delay); return () => clearTimeout(timer); }, [value, delay]);
+  return settled;
+}
+
 export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
   const c = auctionCopy[lang], searchParams = useSearchParams();
-  const [filters, setFilters] = useState<Filters>(() => readFilters(new URLSearchParams(searchParams.toString()))), [realmText, setRealmText] = useState("");
-  const [realms, setRealms] = useState<{ slug: string; name: string }[]>([]), [realmState, setRealmState] = useState("loading"), [realmAttempt, setRealmAttempt] = useState(0);
-  const [data, setData] = useState<AuctionResult | null>(null), [error, setError] = useState(""), [busy, setBusy] = useState(false);
-  const request = useRef<AbortController | null>(null), current = useRef(0), resultRef = useRef<HTMLDivElement>(null);
-  const autoSearch = useRef(true);
-  useEffect(() => () => request.current?.abort(), []);
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = new URLSearchParams({ action: "realms", region: filters.region, lang });
-    fetch(`/api/wow/auction?${params}`, { signal: controller.signal }).then(async response => {
-      const body = await response.json(); if (!response.ok) throw new Error(body.error);
-      if (!controller.signal.aborted) { setRealms(body.realms); setRealmState("ready"); }
-    }).catch(reason => { if (!controller.signal.aborted) setRealmState(reason instanceof Error ? reason.message : "upstream_unavailable"); });
-    return () => controller.abort();
-  }, [filters.region, lang, realmAttempt]);
-  function change<K extends keyof Filters>(key: K, value: Filters[K]) {
-    current.current++; request.current?.abort(); setBusy(false); setData(null); setError(""); autoSearch.current = false;
-    setFilters(previous => ({ ...previous, [key]: value, ...(key === "region" ? { realm: "" } : {}) }));
-    if (key === "region") { setRealms([]); setRealmState("loading"); setRealmText(""); }
-  }
-  const load = useCallback(async (selected = filters, page = 1, moveFocus = false) => {
-    const serial = ++current.current;
-    request.current?.abort(); const controller = new AbortController(); request.current = controller;
-    setBusy(true); setError(""); setData(null);
-    const params = new URLSearchParams({ ...selected, lang, page: String(page) });
-    const url = new URL(window.location.href); url.search = params.toString(); window.history.replaceState(window.history.state, "", url);
-    try {
-      const response = await fetch(`/api/wow/auction?${params}`, { signal: controller.signal });
-      const body = await response.json(); if (!response.ok) throw new Error(body.error);
-      if (current.current === serial) { setData(body); if (moveFocus) requestAnimationFrame(() => resultRef.current?.focus()); }
-    } catch (reason) {
-      if (current.current === serial && !controller.signal.aborted) setError(reason instanceof Error ? reason.message : "upstream_unavailable");
-    } finally { if (current.current === serial && !controller.signal.aborted) setBusy(false); }
-  }, [filters, lang]);
-  useEffect(() => {
-    if (autoSearch.current && (filters.realm || filters.market === "commodities")) {
-      autoSearch.current = false;
-      const page = Math.max(1, Math.min(100000, Number(searchParams.get("page")) || 1));
-      void load(filters, page);
-    }
-  }, [filters, searchParams, load]);
-  const submit = (event: FormEvent) => { event.preventDefault(); void load(); };
-  /** One realm combobox: the typed name picks the realm when it matches one in the list. */
-  const chooseRealm = (text: string) => {
-    setRealmText(text);
-    const wanted = text.trim().toLocaleLowerCase(lang);
-    const match = realms.find(r => r.name.toLocaleLowerCase(lang) === wanted || r.slug === wanted);
-    if ((match?.slug ?? "") !== filters.realm) change("realm", match?.slug ?? "");
+  const [memory] = useState(remembered);
+  const view = useMemo(() => {
+    const params = new URLSearchParams(searchParams.toString()), region = params.get("region") ?? memory.region ?? "eu";
+    return readAuctionView(params, { region: memory.region, realm: memory.realms?.[region] });
+  }, [searchParams, memory]);
+  const go = useCallback((patch: Partial<AuctionView>, mode: "push" | "replace" = "push") => {
+    const next = { ...view, ...patch };
+    const query = writeAuctionView(next).toString().replace(/%2C/g, ","), url = `${window.location.pathname}${query ? `?${query}` : ""}`;
+    if (mode === "push") window.history.pushState(null, "", url); else window.history.replaceState(null, "", url);
+    if (patch.region !== undefined || patch.realm !== undefined) remember(next.region, next.realm);
+  }, [view]);
+
+  const category = auctionCategory(view.category);
+  const needsRealm = category?.market === "realm" || view.q !== "" || view.itemMarket === "realm" && view.item !== null;
+
+  /* Realms load only when the realm field is on screen. */
+  const realms = useAuctionData<{ realms: { slug: string; name: string }[] }>(needsRealm ? api({ action: "realms", region: view.region, lang }) : null);
+  const [realmText, setRealmText] = useState<string | null>(null);
+  const realmName = realms.data?.realms.find(realm => realm.slug === view.realm)?.name ?? "";
+  const realmOptions = useMemo<ComboOption[]>(() => {
+    const list = realms.data?.realms ?? [], text = (realmText ?? "").trim().toLocaleLowerCase(lang);
+    const matches = text ? list.filter(realm => realm.name.toLocaleLowerCase(lang).includes(text) || realm.slug.includes(text.replace(/\s+/g, "-"))) : list;
+    return matches.slice(0, 60).map(realm => ({ key: realm.slug, label: realm.name }));
+  }, [realms.data, realmText, lang]);
+
+  /* Search box: suggestions from the market as you type, Enter shows every match. */
+  const [findText, setFindText] = useState<string | null>(null);
+  const typed = findText ?? view.q, settled = useDebounced(typed.trim(), 300);
+  const suggestUrl = findText !== null && settled.length >= 2 ? api({ action: "market", region: view.region, lang, q: settled, limit: "8", ...(view.realm ? { realm: view.realm } : {}) }) : null;
+  const suggestions = useAuctionData<AuctionMarketView>(suggestUrl);
+  const suggestOptions = useMemo<ComboOption[]>(() => (suggestions.data?.items ?? []).map(item => ({
+    key: `${item.market}:${item.itemId}`, label: item.name ?? String(item.itemId),
+    render: <span className={styles.suggestion}><AuctionItemLabel item={item} lang={lang} size={28} /><AuctionMoney value={item.minPrice} lang={lang} /></span>,
+  })), [suggestions.data, lang]);
+
+  /* The list itself. */
+  const listUrl = view.compare ? null : view.q ? api({ action: "market", region: view.region, lang, q: view.q, ...(view.realm ? { realm: view.realm } : {}) })
+    : category && (category.market === "commodities" || view.realm) ? api({ action: "market", region: view.region, lang, category: category.key, ...(category.market === "realm" ? { realm: view.realm } : {}) }) : null;
+  const list = useAuctionData<AuctionMarketView>(listUrl);
+  const deferred = useDeferredValue(list.data);
+  // Reagents of one expansion share an item level; gear levels vary, so gear is never split.
+  const split = useMemo(() => category?.group === "gear" && !view.q ? { rows: deferred?.items ?? [], split: false } : currentItems(deferred?.items ?? []), [deferred, category, view.q]);
+  const showAll = view.all || Boolean(view.q) || !split.split;
+  const rows = useMemo(() => {
+    const base = showAll ? deferred?.items ?? [] : split.rows;
+    if (view.sort) return sortSummaries(base, view.sort, view.dir, lang);
+    // Default: newest expansion first, then by name with ranks together.
+    return [...base].sort((a, b) => (b.level ?? 0) - (a.level ?? 0) || (a.name ?? "").localeCompare(b.name ?? "", lang) || (a.rank ?? 0) - (b.rank ?? 0) || a.itemId - b.itemId);
+  }, [deferred, split, showAll, view.sort, view.dir, lang]);
+  const mixed = new Set((deferred?.items ?? []).map(item => item.market)).size > 1;
+
+  /* Items the tray and the detail can name without another request. */
+  const [known, setKnown] = useState(() => new Map<number, AuctionMarketItem>());
+  const trayMissing = !view.compare && view.items.some(id => !known.has(id) && !deferred?.items.some(item => item.itemId === id));
+  const trayData = useAuctionData<AuctionMarketView>(trayMissing ? api({ action: "market", region: view.region, lang, items: view.items.join(","), ...(view.realm ? { realm: view.realm } : {}) }) : null);
+  const knownItems = useMemo(() => {
+    const map = new Map(known);
+    for (const item of [...(trayData.data?.items ?? []), ...(deferred?.items ?? [])]) if (!map.has(item.itemId) || item.market === "commodities") map.set(item.itemId, item);
+    return map;
+  }, [known, trayData.data, deferred]);
+
+  const toggle = (item: AuctionMarketItem) => {
+    setKnown(previous => new Map(previous).set(item.itemId, item));
+    const items = toggleItem(view.items, item.itemId);
+    go({ items, compare: view.compare && items.length > 0 }, "replace");
   };
-  const realmName = realms.find(r => r.slug === filters.realm)?.name;
-  const realmValue = realmText || realmName || "";
-  const realmInvalid = filters.market === "realm" && realmState === "ready" && realmText.trim() !== "" && !filters.realm;
-  const setSort = (sort: string) => {
-    if (sort === filters.sort) return;
-    const next = { ...filters, sort };
-    setFilters(next);
-    if (data || error) void load(next, 1);
+  /* The item opens as a history step, so Back closes it; closing it ourselves steps back the same way. */
+  const [openedHere, setOpenedHere] = useState(false);
+  const open = (item: Pick<AuctionMarketItem, "itemId" | "market">) => { setOpenedHere(true); go({ item: item.itemId, itemMarket: item.market }); };
+  const closeItem = () => { if (openedHere) { setOpenedHere(false); window.history.back(); } else go({ item: null }, "replace"); };
+  const sortBy = (key: AuctionSortKey, dir?: "asc" | "desc") => go(dir ? { sort: key, dir } : nextSort(view, key), "replace");
+  const pickCategory = (key: AuctionView["category"]) => { setFindText(null); go({ category: key, q: "", compare: false, sort: "", all: false }); };
+  const submitSearch = (text: string) => {
+    const q = text.trim();
+    if (q.length < 2 && !/^\d$/.test(q)) return;
+    setFindText(null); go({ q, category: "", compare: false, sort: "", all: false });
   };
-  const date = (value: string) => new Date(value).toLocaleString(c.dateLocale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
-  const showResults = busy || Boolean(error) || Boolean(data);
+
+  const title = view.compare ? c.compareTitle : view.q ? `«${view.q}»` : category ? c.categories[category.key] : "";
+  const date = (value: string) => new Date(value).toLocaleString(c.dateLocale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const realmMissing = category?.market === "realm" && !view.realm;
+
   return <div className={styles.browser}>
-    <AuctionPlaque as="section" id="auction-search" className={styles.searchPlaque} aria-labelledby="auction-search-title">
-      <div className={styles.plaqueHead}>
-        <h2 id="auction-search-title" className={materialStyles.title}>{c.searchTitle}</h2>
-        <AtlasSegmented className={styles.segmented} aria-label={c.market} value={filters.market} onValueChange={value => change("market", value)} options={[{ value: "realm", label: c.realmMarket }, { value: "commodities", label: c.commodities }]} />
+    <AuctionPlaque as="section" id="auction-search" className={styles.searchPlaque} aria-label={c.find}>
+      <div className={styles.toolbar} data-realm={needsRealm || undefined}>
+        <label className={styles.regionField}>
+          <span className={styles.fieldLabel}>{c.region}</span>
+          <AtlasSelect value={view.region} onChange={event => { const region = event.target.value as AuctionRegion; setRealmText(null); go({ region, realm: memory.realms?.[region] ?? "", items: [], compare: false, item: null }); }}>
+            {auctionRegions.map(region => <option key={region} value={region}>{region.toUpperCase()}</option>)}
+          </AtlasSelect>
+        </label>
+        <AuctionCombobox id="auction-find" className={styles.findField} label={c.find} value={typed} placeholder={c.findPlaceholder}
+          icon={<Search size={16} />} busy={suggestions.loading} options={suggestOptions} empty={suggestions.data ? c.noSuggestions : undefined}
+          onText={setFindText} onSubmitText={submitSearch}
+          onPick={option => { const [market, id] = option.key.split(":"); setFindText(null); open({ itemId: Number(id), market: market === "realm" ? "realm" : "commodities" }); }} />
+        {needsRealm ? <AuctionCombobox id="auction-realm" className={styles.realmField} label={c.realm} value={realmText ?? realmName}
+          placeholder={realms.loading ? c.loadingRealms : c.realmPick} disabled={!realms.data}
+          options={realmOptions} empty={c.realmEmpty} onText={setRealmText}
+          onPick={option => { setRealmText(null); go({ realm: option.key }, "replace"); }} /> : null}
       </div>
-      <form className={styles.filters} data-market={filters.market} onSubmit={submit}>
-        <AtlasField htmlFor="auction-region" label={c.region}><AtlasSelect id="auction-region" value={filters.region} onChange={e => change("region", e.target.value as AuctionRegion)}>{auctionRegions.map(region => <option key={region} value={region}>{region.toUpperCase()}</option>)}</AtlasSelect></AtlasField>
-        {filters.market === "realm" ? <AtlasField htmlFor="auction-realm" label={c.realm} error={realmInvalid ? c.realmUnknown : undefined}>
-          <AtlasInput id="auction-realm" role="combobox" list="auction-realms" autoComplete="off" required value={realmValue} disabled={realmState !== "ready"} placeholder={realmState === "loading" ? c.loadingRealms : c.realmPlaceholder} onChange={e => chooseRealm(e.target.value)} />
-          <datalist id="auction-realms">{realms.map(realm => <option key={realm.slug} value={realm.name} />)}</datalist>
-        </AtlasField> : null}
-        <AtlasField htmlFor="auction-item" label={c.search} className={styles.search}><AtlasInput id="auction-item" icon={<Search size={16} />} value={filters.q} type="search" maxLength={100} placeholder={c.placeholder} onChange={e => change("q", e.target.value)} /></AtlasField>
-        <AuctionButton fit="block" className={styles.submit} type="submit" variant="primary" disabled={busy || (filters.market === "realm" && !filters.realm)}>{busy ? c.loading : c.submit}</AuctionButton>
-      </form>
-      {filters.market === "realm" && !["ready", "loading"].includes(realmState) ? <div className={styles.error} role="alert"><p>{message(realmState, lang)}</p><AuctionButton onClick={() => { setRealmState("loading"); setRealmAttempt(n => n + 1); }}>{c.retry}</AuctionButton></div> : null}
+      {needsRealm && realms.error ? <div className={styles.error} role="alert"><p>{auctionErrorMessage(realms.error, lang)}</p><AuctionButton onClick={realms.retry}>{c.retry}</AuctionButton></div> : null}
+      <nav className={styles.categories} aria-label={c.categoriesLabel}>
+        {auctionCategoryGroups.map(group => <div key={group} className={styles.categoryGroup}>
+          <h2 className={styles.groupTitle}>{c.groups[group]}</h2>
+          <ul className={styles.categoryList}>{auctionCategories.filter(item => item.group === group).map(item => {
+            const active = !view.q && !view.compare && view.category === item.key;
+            return <li key={item.key}><button type="button" className={styles.categoryChip} aria-pressed={active} onClick={() => pickCategory(item.key)}>
+              <Image src={auctionIconUrl(item.icon)} alt="" width={28} height={28} unoptimized />
+              <span>{c.categories[item.key]}</span>
+            </button></li>;
+          })}</ul>
+        </div>)}
+      </nav>
     </AuctionPlaque>
-    {showResults ? <AuctionPlaque as="section" className={styles.resultsPlaque} aria-labelledby="auction-results-title" style={auctionIconFrameStyle(44)}>
+
+    <AuctionPlaque as="section" id="auction-results" className={styles.resultsPlaque} aria-labelledby="auction-results-title">
       <div className={styles.plaqueHead}>
         <h2 id="auction-results-title" className={styles.resultsTitle}>
-          {data?.total ? <><span className={styles.summaryCount}>{data.total.toLocaleString(lang)}</span> <span className={styles.summaryLabel}>{c.results}</span></> : data ? <span className={styles.emptyTitle}>{c.empty}</span> : <span className={styles.summaryLabel}>{c.loading}</span>}
-          {data?.sourceUpdatedAt ? <span className={styles.updated}>{c.updated} <time dateTime={data.sourceUpdatedAt}>{date(data.sourceUpdatedAt)}</time></span> : null}
+          <span className={materialStyles.title}>{title}</span>
+          {!view.compare && deferred?.sourceUpdatedAt ? <span className={styles.updated}>{c.updated} <time dateTime={deferred.sourceUpdatedAt}>{date(deferred.sourceUpdatedAt)}</time></span> : null}
         </h2>
-        <AtlasSegmented className={styles.segmented} size="sm" aria-label={c.sort} value={filters.sort} onValueChange={setSort} disabled={busy} options={[{ value: "price", label: c.price }, { value: "quantity", label: c.quantitySort }]} />
+        {!view.compare && !view.q && split.split ? <AtlasSegmented className={styles.segmented} size="sm" aria-label={c.all} value={view.all ? "all" : "current"}
+          onValueChange={value => go({ all: value === "all" }, "replace")} options={[{ value: "current", label: c.current }, { value: "all", label: c.all }]} /> : null}
       </div>
-      <div ref={resultRef} tabIndex={-1} className={styles.resultFocus} aria-busy={busy}>
-        {busy ? <AtlasSkeleton variant="rows" count={6} label={c.loading} />
-          : error ? <div className={styles.stateBox} role="alert"><p className={styles.stateText}>{message(error, lang)}</p><AuctionButton onClick={() => void load()}>{c.retry}</AuctionButton></div>
-          : data ? <AuctionListings data={data} lang={lang} query={filters} onPage={page => void load(filters, page, true)} />
-          : null}
+      <div className={styles.resultBody} aria-busy={list.loading}>
+        {view.compare ? <AuctionCompare ids={view.items} region={view.region} realm={view.realm} lang={lang} onOpen={open}
+            onRemove={id => { const items = view.items.filter(value => value !== id); go({ items, compare: items.length > 0 }, "replace"); }} onBack={() => go({ compare: false })} />
+          : realmMissing ? <p className={styles.empty}>{c.realmNeeded}</p>
+          : list.error ? <div className={styles.stateBox} role="alert"><p className={styles.stateText}>{auctionErrorMessage(list.error, lang)}</p><AuctionButton onClick={list.retry}>{c.retry}</AuctionButton></div>
+          : list.loading && !deferred ? <AtlasSkeleton variant="rows" count={8} label={c.loading} className={styles.skeleton} />
+          : deferred ? <div className={styles.listWrap} data-pending={list.loading || undefined}>
+            {deferred.stale ? <p className={styles.warning} role="status">{c.stale}</p> : null}
+            {deferred.truncated ? <p className={styles.warning} role="status">{c.partial}</p> : null}
+            {rows.length ? <AuctionMarketTable items={rows} lang={lang} sort={view.sort} dir={view.dir} onSort={sortBy} selected={view.items} onToggle={toggle} onOpen={open} mixed={mixed} label={title} />
+              : <div className={styles.stateBox}><p className={styles.emptyTitle}>{c.emptyMarket}</p>{view.q ? <p className={styles.empty}>{c.emptyMarketHint}</p> : null}</div>}
+          </div> : null}
       </div>
-    </AuctionPlaque> : null}
-    <AuctionPlaque as="section" className={styles.aboutPlaque} aria-labelledby="auction-about-title">
-      <h2 id="auction-about-title" className={styles.aboutTitle}>{c.aboutTitle}</h2>
-      <p className={materialStyles.text}>{c.about}</p>
     </AuctionPlaque>
+
+    {!view.compare ? <AuctionCompareTray ids={view.items} known={knownItems} lang={lang} onCompare={() => { go({ compare: true }); document.getElementById("auction-results")?.scrollIntoView({ block: "start" }); }}
+      onClear={() => go({ items: [], compare: false }, "replace")} onRemove={id => go({ items: view.items.filter(value => value !== id) }, "replace")} /> : null}
+
+    {view.item ? <AuctionItemDetail key={`${view.itemMarket}:${view.item}`} itemId={view.item} market={view.itemMarket} region={view.region} realm={view.realm} lang={lang}
+      preview={knownItems.get(view.item)} picked={view.items.includes(view.item)} onToggle={toggle} onClose={closeItem} /> : null}
   </div>;
 }
