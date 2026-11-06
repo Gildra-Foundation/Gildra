@@ -15,6 +15,7 @@ from .archon_dataset_service import refresh_tierlist_archon
 from .icyveins_dataset_service import refresh_tierlist_icyveins
 from .mythicstats_dataset_service import refresh_tierlist_mythicstats
 from .mythicstats_meta_dataset_service import refresh_mplus_meta_mythicstats
+from .mplus_leaderboard_dataset_service import start_mplus_leaderboard_refresh
 from .ugg_dataset_service import refresh_tierlist_ugg
 from .wowgg_dataset_service import refresh_tierlist_wowgg
 from .wowhead_dataset_service import RefreshBusy, refresh_tierlist
@@ -53,6 +54,8 @@ class Handler(BaseHTTPRequestHandler):
             "/internal/v1/datasets/tierlist-mythicstats/refresh": refresh_tierlist_mythicstats,
             "/internal/v1/datasets/mplus-meta-mythicstats/refresh": refresh_mplus_meta_mythicstats,
             "/internal/v1/datasets/tierlist-ugg/refresh": refresh_tierlist_ugg,
+            # Starts a background crawl of all four regions and answers at once.
+            "/internal/v1/datasets/mplus-leaderboard/refresh": start_mplus_leaderboard_refresh,
         }
         refresher = refreshers.get(self.path)
         if refresher is None:
