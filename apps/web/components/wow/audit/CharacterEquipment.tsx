@@ -10,6 +10,7 @@ import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import type { AuditGearItem, AuditGearQuality, CharacterAuditSnapshot } from "@/lib/wow/characterAudit";
 import type { Lang } from "@/lib/i18n";
 import { WarcraftTooltip } from "./WarcraftTooltip";
+import type { ModelViewerStatus } from "./CharacterModelViewer";
 import { characterPageCopy, type CharacterPageCopy } from "./characterPageCopy";
 import styles from "./characterEquipment.module.css";
 
@@ -80,15 +81,18 @@ function StatsRow({ stats, copy, lang }: { stats?: CharacterAuditSnapshot["comba
 
 function CharacterFigure({ snapshot, copy, lang }: { snapshot: CharacterAuditSnapshot; copy: CharacterPageCopy; lang: Lang }) {
   const [model, setModel] = useState(false);
+  const [modelState, setModelState] = useState<ModelViewerStatus>("loading");
   const render = snapshot.media?.render;
-  return <figure className={styles.figure} data-figure={model ? "model" : render ? "render" : "empty"}>
+  // The render (or the emblem) stays on stage until the model is drawn, then cross-fades to it.
+  const shown = model && modelState === "ready" ? "model" : "picture";
+  return <figure className={styles.figure} data-figure={model ? "model" : render ? "render" : "empty"} data-shown={shown}>
     <div className={styles.stage}>
-      {model
-        ? <CharacterModelViewer lang={lang} appearance={snapshot.appearance} characterName={snapshot.character.name} characterSlug={snapshot.slug} />
-        : render ? <img className={styles.render} src={render} alt="" loading="lazy" decoding="async" />
-          : <span className={styles.emblem} aria-hidden="true"><img src={snapshot.specialization.iconUrl} alt="" loading="lazy" /></span>}
+      {render
+        ? <span className={styles.renderFrame} aria-hidden="true"><img className={styles.render} src={render} alt="" loading="lazy" decoding="async" /></span>
+        : <span className={styles.emblem} aria-hidden="true"><img src={snapshot.specialization.iconUrl} alt="" loading="lazy" /></span>}
+      {model ? <CharacterModelViewer lang={lang} appearance={snapshot.appearance} characterName={snapshot.character.name} characterSlug={snapshot.slug} onStatus={setModelState} /> : null}
     </div>
-    <button type="button" className={styles.figureToggle} aria-pressed={model} onClick={() => setModel((value) => !value)}>
+    <button type="button" className={styles.figureToggle} aria-pressed={model} onClick={() => { setModelState("loading"); setModel((value) => !value); }}>
       {model && render ? <ImageIcon aria-hidden="true" /> : <Box aria-hidden="true" />}{copy.model3d}
     </button>
   </figure>;
