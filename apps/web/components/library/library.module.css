@@ -1,4 +1,4 @@
-/* atlas:strict — /library: hero (painted buttons, counters), search + edition switch on the library plaque, featured datasets on plaques, grouped dataset rows with kit icon frames, freshness line. Layout only, atlas tokens. */
+/* atlas:strict — /library: hero with the search + edition switch on the library plaque, featured datasets on plaques, grouped dataset rows with kit icon frames, freshness line. Layout only, atlas tokens. */
 
 .editions {
   display: flex;
@@ -34,13 +34,12 @@
   .editions a { flex: none; padding: 0 var(--atlas-space-3); }
 }
 
-/* ---------- Hero (reference: left column, painted buttons, counters under them) ---------- */
+/* ---------- Hero: title, then the library search on the plaque (field + painted button), edition switch under it ---------- */
 .hero h1 { max-width: 15ch; }
 .hero p { max-width: 48ch; }
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
 
-/* ---------- Library search on the plaque (field + painted button), edition switch under it ---------- */
-.searchPlaque { margin-top: var(--atlas-space-6); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+.hero { position: relative; z-index: 3; }
+.searchPlaque { position: relative; z-index: 1; width: min(100%, 980px); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
 
 .search {
   display: grid;
@@ -91,15 +90,6 @@
 .plateLink:focus-visible::after { outline: 2px solid var(--material-light); outline-offset: -6px; }
 
 .plateText { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: 1.45; text-shadow: 0 1px 3px var(--atlas-bg); }
-.plateCount { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-
-.plateCount b {
-  color: var(--material-light);
-  font-family: var(--atlas-font-display);
-  font-size: var(--atlas-text-title);
-  font-weight: var(--atlas-weight-display);
-  font-variant-numeric: lining-nums tabular-nums;
-}
 
 .strip { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: var(--atlas-space-2); }
 
@@ -170,7 +160,13 @@
 @media (max-width: 720px) {
   .search { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
   .searchField input { font-size: var(--atlas-text-body); }
-  .featured > .plate { min-height: 0; padding: 28px; }
+  /* Phones: the five featured datasets as a two-column shelf (icon, name, the record strip), not five screen-high plates. */
+  .featured { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+  .featured > .plate { min-height: 0; padding: 22px 20px 24px; }
+  .featured > .plate:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .plateText { display: none; }
+  .plateTitle { font-size: var(--atlas-text-title); }
+  .strip > span:nth-child(n + 4) { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
