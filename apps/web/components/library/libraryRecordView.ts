@@ -1,5 +1,6 @@
 import type { Lang } from "@/lib/i18n-paths";
 import { catalogLocaleView } from "@/lib/catalogLocale";
+import { playerText } from "@/lib/gameText";
 import { libraryRecordPath } from "@/lib/library/recordPath";
 import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
 import { highlightLabel } from "@/components/database/databaseCopy";
@@ -39,12 +40,8 @@ export type LibrarySummary = {
   locale?: string; localeFallback?: boolean;
 };
 
-/**
- * Client-internal records that the game never shows to a player (do-not-translate
- * placeholders, conversation pings, race-timer bookkeeping). They stay reachable
- * by address; lists and suggestions leave them out.
- */
-export const LIBRARY_INTERNAL_NAME = /\bDNT\b|\[PH\]|^Ping\b|Personal Best Record|^zz|\bdeprecated\b|\bunused\b/i;
+import { LIBRARY_INTERNAL_NAME } from "@/lib/library/internalName";
+export { LIBRARY_INTERNAL_NAME };
 
 function shortLine(value: string | undefined, max = 140) {
   const text = (value ?? "").replace(/\s+/g, " ").trim();
@@ -85,7 +82,7 @@ export function libraryRecordView(entity: LibrarySummary, lang: Lang, product = 
     ...(required > 0 ? { requiredLevel: required } : {}),
     ...(school ? { school: highlightLabel("school", school, lang) } : {}),
     ...(cast ? { castTime: castTimeLabel(cast, lang) } : {}),
-    ...(shortLine(view.description) ? { description: shortLine(view.description) } : {}),
+    ...(shortLine(playerText(view.description, lang)) ? { description: shortLine(playerText(view.description, lang)) } : {}),
   };
 }
 

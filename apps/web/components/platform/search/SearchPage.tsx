@@ -7,6 +7,7 @@ import { libraryKit } from "@/components/library/libraryKit";
 import { TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
 import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
 import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
+import { playerText } from "@/lib/gameText";
 import { SearchShortcut } from "./SearchShortcut";
 import { SearchRouteForm } from "./SearchRouteForm";
 import { searchCopy } from "./searchCopy";
@@ -165,7 +166,7 @@ function SearchResultItem({ item, lang, gameName }: { item: PlatformCatalogItem;
   // WoW meta is rebuilt from structured attributes so it is localized; other games keep their catalog meta.
   const meta = wow ? (itemLevel ? [`${t.itemLevel}\u00a0${itemLevel}`] : []) : item.meta.slice(1);
   // Game text can carry client colour codes (|cFFFFCC99…|r); show the words only.
-  const description = item.description.replace(/\|c[0-9a-fA-F]{8}|\|r/g, "");
+  const description = playerText(item.description.replace(/\|c[0-9a-fA-F]{8}|\|r/g, ""), lang);
   return (
     <CatalogRecordRow
       href={item.href}

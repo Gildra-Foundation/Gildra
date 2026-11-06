@@ -2,8 +2,10 @@
 export const gameTextCopy = {
   en: {
     adventurer: "adventurer",
+    hero: "hero",
   },
   ru: {
     adventurer: "герой",
+    hero: "герой",
   },
 };

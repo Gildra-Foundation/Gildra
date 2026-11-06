@@ -3,6 +3,7 @@
    Chrome is the atlas glass (tokens); the game's own colours stay only on game data: quality, item level, effects.
    Imported by the components that render the tooltip — no route layout loads it. */
 .db-tooltip-stats{margin-top:5px;color:var(--atlas-text-strong)}
+.db-tooltip-stat-names{margin-top:5px;color:var(--atlas-text-strong)}
 .db-tooltip-stats>div{display:flex;justify-content:space-between;gap:14px}
 .db-tooltip-stats small{color:var(--atlas-text-subtle);font-size:11px;font-variant-numeric:tabular-nums}
 .db-tooltip-acquisition{margin-top:7px;color:#ffd100}

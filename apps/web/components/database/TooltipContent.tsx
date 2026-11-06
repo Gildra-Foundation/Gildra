@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { Lang } from "@/lib/i18n";
-import { formatQuestText } from "@/lib/gameText";
+import { formatQuestText, playerText } from "@/lib/gameText";
 import { RichDescription, TooltipOwners, verifiedMediaURL } from "@/components/database/TooltipRelations";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
 import type { CatalogRecord } from "@/lib/api/client";
 import { libraryRecordPath } from "@/lib/library/recordPath";
+import { LIBRARY_INTERNAL_NAME } from "@/lib/library/internalName";
 import { tooltipContentCopy } from "./tooltipContentCopy";
+import { itemStatNames, statName } from "./itemStats";
 import "./catalogTooltip.css";
 
 const PLAYABLE_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
@@ -16,7 +18,7 @@ const PLAYABLE_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 const UNRESOLVED_TEMPLATE = /\$(?:@spelldesc|[0-9]*[dD]|[0-9]*s[0-9]+|[st][0-9]+|[dD]|[A-Za-z]|[<{])/;
 
 function safeTooltipText(value: unknown, lang: Lang) {
-  const text = String(value ?? "");
+  const text = playerText(String(value ?? ""), lang);
   if (!text || UNRESOLVED_TEMPLATE.test(text)) {
     return UNRESOLVED_TEMPLATE.test(text)
       ? tooltipContentCopy[lang].descriptionIsNotResolved
@@ -53,6 +55,8 @@ export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: 
 			if ((entity.type === "spell" || entity.type === "talent") && !text.trim()) return false;
 		}
 		if (String(block.type ?? "") !== "acquisition") return true;
+		// "Crafted with: TK34[DNT]": a source that is a client placeholder is no source for a player.
+		if (LIBRARY_INTERNAL_NAME.test(String(block.name ?? ""))) return false;
 		const key = `${String(block.source_type ?? "")}:${String(block.name ?? "")}:${String(block.location ?? "")}`;
 		if (seenAcquisition.has(key)) return false;
 		seenAcquisition.add(key);
@@ -144,7 +148,9 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
   if (type === "spell_talents" && Array.isArray(block.entries)) return <SpellTalents entries={block.entries as Record<string, unknown>[]} lang={lang} />;
   if (type === "talent_spells" && Array.isArray(block.entries)) return <TalentSpells entries={block.entries as Record<string, unknown>[]} lang={lang} />;
   if (type === "talent_info") return <TalentInfo block={block} lang={lang} />;
-	if (type === "profession_info") return <ProfessionInfo block={block} lang={lang} />;
+	// Skill line ids, catalogue counts and the first recipes in alphabetical order are no facts for a player:
+	// the profession page links to its recipes instead.
+	if (type === "profession_info") return null;
 	if (type === "recipe_info") return <RecipeInfo block={block} lang={lang} />;
 	if (type === "item_requirements") return <ItemRequirements block={block} lang={lang} />;
 	if (type === "item_registry") return <ItemRegistry block={block} lang={lang} />;
@@ -162,7 +168,7 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
 	    if (!text) return null;
 	    return entityType === "spell" || entityType === "talent" || entityType === "pvp_talent"
 			? <RichDescription text={text} mentions={mentions} lang={lang} />
-			: <div className="db-tooltip-description">“{entityType === "quest" ? formatQuestText(text, lang) : text}”</div>;
+			: <div className="db-tooltip-description">“{text}”</div>;
   }
   return null;
 }
@@ -172,21 +178,6 @@ function ItemRegistry({ block, lang }: { block: Record<string, unknown>; lang: L
 	// readable slot and armour type come from their own blocks, the raw codes stay in the JSON section.
 	if (!block.registry_only) return null;
 	return <div className="db-tooltip-item-context db-tooltip-muted">{tooltipContentCopy[lang].theItemExistsIn}</div>;
-}
-
-function ProfessionInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
-  const recipes = Number(block.recipe_count ?? 0);
-  const categories = Number(block.category_count ?? 0);
-	const parentID = Number(block.parent_skill_line_id ?? 0);
-	const recipesList = Array.isArray(block.recipes) ? block.recipes as Record<string, unknown>[] : [];
-  return <div className="db-tooltip-profession-info">
-    <div><b>{tooltipContentCopy[lang].skillLine}:</b> {String(block.skill_line_id ?? "")}</div>
-    {parentID > 0 ? <div>{tooltipContentCopy[lang].parentSkillLine}: {parentID}</div> : null}
-    <div>{tooltipContentCopy[lang].recipesInDatabase}: {recipes.toLocaleString(tooltipContentCopy[lang].numberLocale)}</div>
-    {categories > 0 ? <div>{tooltipContentCopy[lang].recipeCategories}: {categories.toLocaleString(tooltipContentCopy[lang].numberLocale)}</div> : null}
-		{Boolean(block.can_link) ? <div>{tooltipContentCopy[lang].canBeLinkedIn}</div> : null}
-		{recipesList.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].recipeExamples}:</b>{recipesList.map((recipe) => <span key={String(recipe.id)}>{String(recipe.name || `ID ${recipe.external_id}`)}{Number(recipe.min_skill_rank ?? 0) > 0 ? ` (${tooltipContentCopy[lang].skill} ${String(recipe.min_skill_rank)})` : ""}</span>)}</div> : null}
-	</div>;
 }
 
 function RecipeInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
@@ -235,7 +226,12 @@ function ItemVariants({ entries, lang }: { entries: Record<string, unknown>[]; l
 	const statsOf = (variant: Record<string, unknown>) => (Array.isArray(variant.stats) ? variant.stats as Record<string, unknown>[] : [])
 		.filter((stat) => stat.value !== null && stat.value !== undefined && String(stat.label || stat.key || ""));
 	const visible = entries.map((variant) => ({ variant, stats: statsOf(variant) })).filter(({ stats }) => stats.length);
-	if (!visible.length) return null;
+	if (!visible.length) {
+		// The stat budget of the build arrives without values (types and allocations only): the names still tell
+		// a player which stats the piece carries ("Agility / Intellect, Stamina, Haste, Mastery").
+		const names = itemStatNames(entries, lang);
+		return names.length ? <div className="db-tooltip-stat-names">{tooltipContentCopy[lang].statsLine}: {names.join(", ")}</div> : null;
+	}
 	const list = (stats: Record<string, unknown>[]) => <div className="db-tooltip-related">{stats.map((stat, index) => <span key={`${String(stat.index)}-${index}`}>{String(stat.label || stat.key)}: {String(stat.value)}</span>)}</div>;
 	if (visible.length === 1) return <div className="db-tooltip-variants">{list(visible[0].stats)}</div>;
 	return <div className="db-tooltip-variants">
@@ -486,19 +482,6 @@ function TooltipStats({ entries, lang }: { entries: Record<string, unknown>[]; l
   })}</div>;
 }
 
-function statName(id: number, lang: Lang) {
-  const names: Record<number, [string, string]> = {
-    0: ["Mana", "Мана"], 1: ["Health", "Здоровье"], 3: ["Agility", "Ловкость"], 4: ["Strength", "Сила"],
-    5: ["Intellect", "Интеллект"], 7: ["Stamina", "Выносливость"], 12: ["Defense", "Защита"],
-    13: ["Dodge", "Уклонение"], 14: ["Parry", "Парирование"], 31: ["Hit", "Меткость"],
-    32: ["Critical Strike", "Критический удар"], 35: ["Resilience", "Устойчивость"], 36: ["Haste", "Скорость"],
-    37: ["Expertise", "Мастерство"], 40: ["Versatility", "Универсальность"], 49: ["Mastery", "Искусность"],
-    71: ["Agility / Strength / Intellect", "Ловкость / сила / интеллект"],
-    72: ["Agility / Strength", "Ловкость / сила"], 73: ["Agility / Intellect", "Ловкость / интеллект"],
-    74: ["Strength / Intellect", "Сила / интеллект"],
-  };
-  return names[id]?.[lang === "ru" ? 1 : 0] ?? `${tooltipContentCopy[lang].stat} #${id}`;
-}
 
 /** "Dropped by: Vexie — Liberation of Undermine" line of an acquisition block (tooltip and record hero). */
 export function acquisitionLabel(block: Record<string, unknown>, lang: Lang) {
