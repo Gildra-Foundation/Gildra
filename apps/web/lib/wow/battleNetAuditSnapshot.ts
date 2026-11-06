@@ -1,9 +1,8 @@
 import { defaultTalentSpecTheme, talentSpecThemes } from "@/lib/talentSpecThemes";
 import { furybarFixture, type AuditGearDetails, type AuditGearItem, type AuditGearQuality, type CharacterAuditSnapshot } from "./characterAudit";
 import { characterSlug, type BattleNetCharacterDetails, type CharacterGearItem } from "./battleNetCharacterDetails";
+import { chrModelIdForRace } from "./chrModels";
 import type { Lang } from "@/lib/i18n";
-
-const modelByRace: Record<number, number> = { 1: 1, 2: 3, 3: 5, 4: 7, 5: 9, 6: 11, 7: 13, 8: 15, 9: 21, 10: 19, 11: 17, 22: 23, 24: 25, 27: 29, 28: 31, 29: 33, 30: 35, 31: 37, 32: 39, 34: 41, 35: 43, 36: 45, 37: 47, 52: 49 };
 
 function primaryStat(classKey: string, spec: string): "Сила" | "Ловкость" | "Интеллект" {
   if (["warrior", "paladin", "deathknight"].includes(classKey)) return "Сила";
@@ -55,13 +54,13 @@ export function toCharacterAuditSnapshot(data: BattleNetCharacterDetails, lang: 
     details: gearDetails(item, lang),
   }));
   const feminine = data.character.gender?.type === "FEMALE";
-  const baseModelId = modelByRace[data.character.playableRace.id] ?? furybarFixture.appearance.modelId;
+  const modelId = chrModelIdForRace(data.character.playableRace.id, feminine) ?? furybarFixture.appearance.modelId;
   return {
     slug: characterSlug(data.character),
     character: { name: data.character.name, className: `${ru ? theme.classNameRu : theme.className} · ${ru ? theme.specNameRu : theme.specName}`, race: data.character.playableRace.name, level: data.character.level, faction: data.character.faction.name, itemLevel: data.equippedItemLevel, mythicRating: Math.round(data.mythicRating ?? 0), realm: data.character.realm.name },
     media: { avatar: data.avatarUrl, render: data.renderUrl },
     specialization: { slug: theme.slug, classKey: theme.classKey, className: ru ? theme.classNameRu : theme.className, specName: ru ? theme.specNameRu : theme.specName, role: theme.role, roleLabel: ru ? theme.roleRu : ({ tank: "Tank", healer: "Healer", melee: "Melee", ranged: "Ranged", support: "Support" }[theme.role]), primaryStatLabel: ru ? primaryStat(theme.classKey, theme.specName) : ({ "Сила": "Strength", "Ловкость": "Agility", "Интеллект": "Intellect" } as const)[primaryStat(theme.classKey, theme.specName)], accent: theme.accent, resourceLabel: ru ? theme.resourceLabel : ({ "Ярость": "Rage", "Энергия": "Energy", "Мана": "Mana", "Астральная мощь": "Astral power", "Сущность": "Essence", "Безумие": "Insanity", "Сила рун": "Runic power", "Концентрация": "Focus", "Энергия Водоворота": "Maelstrom", "Энергия ци": "Chi", "Осколки душ": "Soul shards", "Гнев": "Fury", "Боль": "Pain", "Энергия Света": "Holy power", "Тайные заряды": "Arcane charges" } as Record<string, string>)[theme.resourceLabel] ?? theme.resourceLabel, fantasy: ru ? theme.fantasy : `${theme.specName} ${theme.className}`, iconUrl: theme.iconUrl },
-    appearance: { ...furybarFixture.appearance, presetId: `battlenet-${data.character.id}-${data.updatedAt}`, race: data.character.playableRace.name, modelId: feminine ? baseModelId + 1 : baseModelId, modelItems: data.modelItems, customizations: data.customizations, bodyType: feminine ? "feminine" : "masculine", skinTone: theme.deep, eyeGlow: theme.hot, armor: { setName: `Battle.net · ${data.equippedItemLevel}`, primary: theme.deep, secondary: theme.accent, accent: theme.hot, glow: theme.accent }, weapons: { mainHand: { ...furybarFixture.appearance.weapons.mainHand, itemName: data.equipment.find((item) => item.slotType === "MAIN_HAND")?.name ?? "Основное оружие" }, offHand: { ...furybarFixture.appearance.weapons.offHand, itemName: data.equipment.find((item) => item.slotType === "OFF_HAND")?.name ?? "Дополнительное оружие" } } },
+    appearance: { ...furybarFixture.appearance, presetId: `battlenet-${data.character.id}-${data.updatedAt}`, race: data.character.playableRace.name, modelId, modelItems: data.modelItems, customizations: data.customizations, bodyType: feminine ? "feminine" : "masculine", skinTone: theme.deep, eyeGlow: theme.hot, armor: { setName: `Battle.net · ${data.equippedItemLevel}`, primary: theme.deep, secondary: theme.accent, accent: theme.hot, glow: theme.accent }, weapons: { mainHand: { ...furybarFixture.appearance.weapons.mainHand, itemName: data.equipment.find((item) => item.slotType === "MAIN_HAND")?.name ?? "Основное оружие" }, offHand: { ...furybarFixture.appearance.weapons.offHand, itemName: data.equipment.find((item) => item.slotType === "OFF_HAND")?.name ?? "Дополнительное оружие" } } },
     activeTalentLoadout: data.activeTalentLoadout,
     activeHeroTalentTreeId: data.activeHeroTalentTreeId,
     combatStats: {

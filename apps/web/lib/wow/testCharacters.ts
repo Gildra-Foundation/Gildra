@@ -69,13 +69,13 @@ const modelByClass: Record<string, { race: string; modelId: number }> = {
   priest: { race: "undead", modelId: 9 },
   deathknight: { race: "orc", modelId: 3 },
   hunter: { race: "troll", modelId: 15 },
-  rogue: { race: "goblin", modelId: 21 },
+  rogue: { race: "goblin", modelId: 17 },
   shaman: { race: "orc", modelId: 3 },
   paladin: { race: "blood-elf", modelId: 19 },
-  mage: { race: "blood-elf", modelId: 19 },
+  mage: { race: "nightborne", modelId: 53 },
   warrior: { race: "orc", modelId: 3 },
   warlock: { race: "undead", modelId: 9 },
-  monk: { race: "pandaren", modelId: 25 },
+  monk: { race: "pandaren", modelId: 47 },
   demonhunter: { race: "blood-elf", modelId: 19 },
 };
 
