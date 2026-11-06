@@ -10,30 +10,56 @@
   height: 1380px;
   overflow: hidden;
   pointer-events: none;
-  mask-image: linear-gradient(180deg, #000 65%, transparent 100%);
 }
 @media (max-width: 767px) { .atmosphere { height: 1600px; } }
 
-.snow {
+/* Mist and the far wind: still light on one masked layer, painted once. Nothing that moves sits
+   under the mask, so the browser never re-blends it; the near wind and the snow move unmasked. */
+.haze {
   position: absolute;
-  top: -12px;
-  left: var(--snow-x);
-  width: var(--snow-size);
-  height: var(--snow-size);
-  border-radius: 50%;
-  background: var(--frost-light);
-  opacity: .5;
-  box-shadow: 0 0 6px color-mix(in srgb, var(--frost-light) 40%, transparent);
-  animation: snowfall var(--snow-duration) var(--snow-delay) linear infinite paused;
+  inset: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, #000 65%, transparent 100%);
 }
-.snow:nth-child(7n) { filter: blur(.7px); opacity: .28; }
-.snow:nth-child(3n) { opacity: .65; }
+
+/* Snow: one small composited layer per flake, transform and opacity only. Keyframes take no
+   custom properties (those kept the flakes on the main thread, a style pass every frame);
+   the flake fades in and out on its own, which replaces the old mask over the falling snow. */
+.snow, .shard {
+  position: absolute;
+  left: 0;
+  opacity: 0;
+  animation: linear infinite paused;
+  animation-name: snowfall-a;
+}
+.snow {
+  top: -12px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--frost-light) 50%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--frost-light) 20%, transparent);
+}
+.snow:nth-child(3n) { width: 3px; height: 3px; background: color-mix(in srgb, var(--frost-light) 65%, transparent); }
+.snow:nth-child(7n) { width: 4px; height: 4px; background: color-mix(in srgb, var(--frost-light) 28%, transparent); filter: blur(.7px); }
+.snow:nth-child(4n + 1) { animation-name: snowfall-b; }
+.snow:nth-child(4n + 2) { animation-name: snowfall-c; }
+.snow:nth-child(4n + 3) { animation-name: snowfall-d; }
+.shard {
+  top: -20px;
+  width: 9px;
+  height: 16px;
+  clip-path: polygon(50% 0, 85% 44%, 50% 100%, 15% 55%);
+  background: linear-gradient(110deg, transparent, color-mix(in srgb, var(--frost-light) 40%, transparent), transparent);
+  animation-name: ice-drift-a;
+}
+.shard:nth-child(even) { width: 11px; height: 20px; animation-name: ice-drift-b; }
 
 .mist {
   position: absolute;
   inset: 20% -12% -8%;
   background: radial-gradient(ellipse at 70% 65%, color-mix(in srgb, var(--atlas-info) 12%, transparent), transparent 60%);
-  animation: mist-drift 26s ease-in-out infinite alternate paused;
+  opacity: .6;
 }
 
 .wind {
@@ -44,19 +70,7 @@
   transform: rotate(-16deg);
   animation: frost-wind 19s ease-in-out infinite alternate paused;
 }
-.windFar { inset: 40% -35% 0; animation-duration: 29s; animation-delay: -13s; }
-.shard {
-  position: absolute;
-  top: -20px;
-  left: var(--snow-x);
-  width: var(--snow-size);
-  height: calc(var(--snow-size) * 1.8);
-  clip-path: polygon(50% 0, 85% 44%, 50% 100%, 15% 55%);
-  background: linear-gradient(110deg, transparent, var(--frost-light), transparent);
-  opacity: .4;
-  animation: ice-drift var(--snow-duration) var(--snow-delay) linear infinite paused;
-}
-
+.windFar { inset: 40% -35% 0; opacity: .45; transform: rotate(-13deg); animation: none; }
 
 .materialIcon {
   display: inline-grid;
@@ -76,13 +90,16 @@
 }
 .compactIcon { width: 26px; height: 26px; }
 
-:global([data-frost-active="true"]) :is(.snow, .mist, .wind, .shard) { animation-play-state: running; }
-@keyframes snowfall { from { transform: translate3d(0, -20px, 0); } to { transform: translate3d(var(--snow-drift), 1100px, 0); } }
-@keyframes ice-drift { from { transform: translate3d(0, -20px, 0) rotate(0); } to { transform: translate3d(var(--snow-drift), 1100px, 0) rotate(220deg); } }
+:global([data-frost-active="true"]) :is(.snow, .wind, .shard) { animation-play-state: running; }
+@keyframes snowfall-a { 0% { opacity: 0; transform: translate3d(0, -20px, 0); } 8%, 66% { opacity: 1; } 100% { opacity: 0; transform: translate3d(50px, 1100px, 0); } }
+@keyframes snowfall-b { 0% { opacity: 0; transform: translate3d(0, -20px, 0); } 8%, 66% { opacity: 1; } 100% { opacity: 0; transform: translate3d(90px, 1100px, 0); } }
+@keyframes snowfall-c { 0% { opacity: 0; transform: translate3d(0, -20px, 0); } 8%, 66% { opacity: 1; } 100% { opacity: 0; transform: translate3d(130px, 1100px, 0); } }
+@keyframes snowfall-d { 0% { opacity: 0; transform: translate3d(0, -20px, 0); } 8%, 66% { opacity: 1; } 100% { opacity: 0; transform: translate3d(160px, 1100px, 0); } }
+@keyframes ice-drift-a { 0% { opacity: 0; transform: translate3d(0, -20px, 0) rotate(0); } 8%, 66% { opacity: 1; } 100% { opacity: 0; transform: translate3d(120px, 1100px, 0) rotate(220deg); } }
+@keyframes ice-drift-b { 0% { opacity: 0; transform: translate3d(0, -20px, 0) rotate(0); } 8%, 66% { opacity: 1; } 100% { opacity: 0; transform: translate3d(220px, 1100px, 0) rotate(220deg); } }
 @keyframes frost-wind { from { transform: translate3d(-6%, 3%, 0) rotate(-16deg); opacity: .25; } to { transform: translate3d(6%, -3%, 0) rotate(-10deg); opacity: .7; } }
-@keyframes mist-drift { from { transform: translateX(-3%); opacity: .4; } to { transform: translateX(3%); opacity: .8; } }
 
-@media (max-width: 700px) { .snow:nth-child(n + 29) { display: none; } }
+@media (max-width: 700px) { .snow:nth-child(n + 20), .shard:nth-child(n + 38) { display: none; } }
 @media (prefers-reduced-motion: reduce) { .snow, .mist, .wind, .shard { display: none; } }
 :global([data-motion="reduced"]) :is(.snow, .mist, .wind, .shard),
 :global([data-ui-motion="reduce"]) :is(.snow, .mist, .wind, .shard) { display: none; }

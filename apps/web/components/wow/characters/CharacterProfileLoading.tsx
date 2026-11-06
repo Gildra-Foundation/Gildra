@@ -8,7 +8,7 @@ import styles from "./characterAtlas.module.css";
 export function CharacterProfileLoading({ locale }: { locale: "en" | "ru" }) {
   const copy = characterCopy[locale];
   return (
-    <AtlasFrame lang={locale} still foot={false} className={styles.page} dataAttributes={{ "data-character-atlas": true, "data-roster-view": "loading", "data-frost-login": true }}>
+    <AtlasFrame lang={locale} still foot={false} className={styles.page} dataAttributes={{ "data-character-atlas": true, "data-roster-view": "loading", "data-frost-login": true, "data-book-route-loading": true }}>
       <CharacterAtlasBackdrop />
       <div className={styles.material} style={characterAtlasMaterial}>
         <div className={styles.hero} role="status" aria-busy="true">
