@@ -28,73 +28,14 @@
 
 /* A routed page arrives fully composed; motion is reserved for interaction and
    the single view-transition layer instead of animating five large surfaces. */
-.talent-calculator :is(.tc-header,.tc-commandbar,.tc-toolbar,.tc-panel) { animation: none; }
 
 /* Global navigation: high-contrast, calm and physically aligned. */
 
 /* Build command strip: readable at normal viewing distance. */
-.talent-calculator .tc-commandbar {
-  gap: 20px;
-  padding: 10px 24px;
-  border-bottom-color: rgba(var(--tc-accent-rgb),.36);
-}
-.talent-calculator .tc-page-title { min-width: 390px; gap: 16px; }
-.talent-calculator .tc-fury-portrait { width: 58px; height: 58px; flex-basis: 58px; border-width: 1px; }
-.talent-calculator .tc-fury-portrait img {
-  object-position: center;
-  filter: saturate(1.02) contrast(1.08) brightness(.96);
-}
-.talent-calculator .tc-page-title > div { gap: 3px; }
-.talent-calculator .tc-page-title h1 {
-  line-height: 1.08;
-}
-.talent-calculator .tc-page-title .tc-build-version {
-  max-width: min(520px,34vw);
-  overflow: hidden;
-  font-size: 11px;
-  line-height: 1.3;
-  letter-spacing: .01em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.talent-calculator .tc-command-actions { gap: 8px; }
-.talent-calculator .tc-build-select,
-.talent-calculator .tc-command-button {
-  height: 50px;
-  border-color: rgba(var(--tc-accent-rgb),.34);
-  border-radius: var(--tc-control-radius);
-  background: linear-gradient(180deg,rgba(var(--tc-ambient-rgb),.065),#090b0c 62%);
-  box-shadow: inset 0 1px rgba(255,255,255,.035),0 4px 13px rgba(0,0,0,.12);
-  transition: transform .2s var(--tc-ease-premium),border-color .2s ease,background-color .2s ease,box-shadow .2s ease,color .2s ease;
-}
-.talent-calculator .tc-build-select svg,
-.talent-calculator .tc-command-button svg { color: var(--tc-accent); }
-.talent-calculator .tc-build-select { width: 240px; padding-inline: 14px; }
-.talent-calculator .tc-build-select > span small { font-size: 11px; letter-spacing: .09em; }
-.talent-calculator .tc-build-select > span b { font-size: 12px; line-height: 1.2; }
-.talent-calculator .tc-command-button { min-width: 82px; padding-inline: 13px; font-size: 11px; font-weight: 600; }
-.talent-calculator .tc-command-button svg { width: 17px; height: 17px; }
-.talent-calculator .tc-command-button.is-share { min-width: 112px; }
-.talent-calculator .tc-command-button:hover:not(:disabled),
-.talent-calculator .tc-build-select:hover,
-.talent-calculator .tc-build-select:focus-visible {
-  transform: translateY(-1px);
-  border-color: var(--tc-accent);
-  background: color-mix(in srgb,var(--tc-deep) 18%,#0c1012);
-  box-shadow: 0 8px 20px rgba(0,0,0,.28),inset 0 1px rgba(var(--tc-hot-rgb),.11),inset 0 0 18px rgba(var(--tc-ambient-rgb),.1);
-}
-.talent-calculator .tc-command-button:active:not(:disabled),
-.talent-calculator .tc-build-select:active { transform: translateY(0) scale(.982); }
 
 /* The specialization resource remains decorative, but never tiny. */
-.talent-calculator .tc-points-badge { min-width: 214px; height: 52px; border-radius: var(--tc-control-radius); }
-.talent-calculator .tc-rage-copy small { font-size: 11px; line-height: 1; letter-spacing: .1em; }
-.talent-calculator .tc-rage-copy b { font-size: 17px; line-height: 1; }
-.talent-calculator .tc-rage-copy b i { font-size: 11px; }
-.talent-calculator .tc-rage-meter .tc-rage-percent { font-size: 11px; font-weight: 700; }
 
 /* Workspace: distinct surfaces and sharp hierarchy, without blur layers. */
-.talent-calculator .tc-workspace::before { right: 20px; left: 20px; }
 .talent-calculator .tc-panel {
   border-color: rgba(var(--tc-panel-hot),.5);
   outline-offset: -4px;
@@ -106,76 +47,18 @@
 .talent-calculator .tc-hero-panel::after { inset-block-start: 100px; }
 
 /* The resource dial wakes on intent, but consumes no frames while idle. */
-.talent-calculator .tc-points-badge::after,
-.talent-calculator .tc-rage-emblem::after,
-.talent-calculator .tc-rage-emblem svg { animation: none; }
-.talent-calculator .tc-points-badge:hover::after { animation: tc-resource-scan 1.05s ease-out 1; }
-.talent-calculator .tc-points-badge:hover .tc-rage-emblem::after { animation: tc-resource-orbit 9s linear infinite; }
-.talent-calculator .tc-points-badge:hover .tc-rage-emblem svg { animation: tc-resource-glyph 1.6s ease-in-out infinite; }
 
 /* Hero path controls form a distinct third text level below the title. */
-.talent-calculator .tc-hero-paths {
-  display: grid;
-  grid-template-columns: repeat(2,minmax(0,1fr));
-  gap: 6px;
-  width: min(100%,280px);
-}
-.talent-calculator .tc-hero-paths a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  min-height: 22px;
-  padding: 5px 8px 4px;
-  overflow: hidden;
-  border: 1px solid rgba(var(--tc-accent-rgb),.28);
-  font: 650 11px/1 var(--ui);
-  letter-spacing: .025em;
-  text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: border-color .16s ease,background-color .16s ease,color .16s ease,box-shadow .16s ease;
-}
-.talent-calculator .tc-hero-paths a:hover,
-.talent-calculator .tc-hero-paths a:focus-visible {
-  outline: 0;
-}
-.talent-calculator .tc-hero-paths a.is-active {
-  border-color: var(--tc-accent);
-  background: rgba(var(--tc-accent-rgb),.15);
-}
 
 /* Bottom deck: compact, intentional, and fully spec-coloured. */
-.talent-calculator .tc-toolbar {
-  gap: 16px;
-  padding-inline: 20px;
-}
-.talent-calculator .tc-search {
-  height: 48px;
-}
-.talent-calculator .tc-search { width: 250px; }
-.talent-calculator .tc-search input { font-size: 12px; line-height: 1.4; }
-.talent-calculator .tc-pvp-label { font-size: 11px; line-height: 1.15; }
-.talent-calculator .tc-pvp-label b { font-size: 11px; }
 .talent-calculator .tc-pvp-slot { width: 50px; height: 50px; }
 .talent-calculator .tc-pvp-slot img { width: 38px; height: 38px; }
-.talent-calculator .tc-use-rotation {
-  height: 52px;
-}
-.talent-calculator .tc-use-rotation .tc-save-copy b { font-size: 12px; }
-.talent-calculator .tc-use-rotation .tc-save-copy small { font-size: 11px; }
 
 /* Tooltips and build library carry content at body-text scale. */
 .talent-calculator .tc-loadout-popover :where(button,input) { font-size: 11px; }
 .talent-calculator .tc-build-popover-head small,
 .talent-calculator .tc-build-name > span,
 .talent-calculator .tc-build-row small { font-size: 11px; }
-
-@keyframes tc-premium-path-awaken {
-  from { stroke-opacity: .25; stroke-width: .7; }
-  62% { stroke-opacity: 1; stroke-width: 1.9; }
-  to { stroke-opacity: 1; stroke-width: 1.55; }
-}
 
 /* Route loading is deliberately neutral: it never impersonates the previous spec. */
 .talent-calculator.tc-skeleton {
@@ -191,105 +74,40 @@
 .talent-calculator.tc-skeleton .tc-skeleton-block::after { animation: none; transform: none; opacity: .45; }
 .talent-calculator.tc-skeleton .tc-skeleton-tree { inset-block-start: 92px; }
 .talent-calculator.tc-skeleton .tc-hero-panel .tc-skeleton-tree { inset-block-start: 114px; }
-.talent-calculator.tc-skeleton .tc-skeleton-path { display: block; width: min(100%,260px); height: 20px; }
-
-@media (max-width: 1500px) {
-  .talent-calculator .tc-commandbar { padding-inline: 18px; }
-  .talent-calculator .tc-page-title { min-width: 340px; }
-  .talent-calculator .tc-workspace { grid-template-columns: minmax(0,34fr) minmax(0,30fr) minmax(0,36fr); gap: 10px; padding-inline: 14px; }
-  .talent-calculator .tc-hero-paths { width: 100%; }
-}
 
 @media (max-width: 1250px) {
   .talent-calculator { grid-template-rows: 56px 80px minmax(510px,1fr) 88px; }
-  .talent-calculator .tc-page-title { min-width: 300px; }
-  .talent-calculator .tc-page-title h1 { font-size: 20px; }
-  .talent-calculator .tc-points-badge { min-width: 170px; }
-  .talent-calculator .tc-command-button { min-width: 46px; }
-  .talent-calculator .tc-command-button.is-share { min-width: 48px; }
   .talent-calculator .tc-panel::before { inset-block-start: 74px; }
   .talent-calculator .tc-hero-panel::before { inset-block-start: 92px; }
   .talent-calculator .tc-panel::after { inset-block-start: 64px; }
   .talent-calculator .tc-hero-panel::after { inset-block-start: 82px; }
   .talent-calculator.tc-skeleton .tc-skeleton-tree { inset-block-start: 78px; }
   .talent-calculator.tc-skeleton .tc-hero-panel .tc-skeleton-tree { inset-block-start: 96px; }
-  .talent-calculator .tc-hero-paths { gap: 4px; width: min(100%,220px); }
-  .talent-calculator .tc-hero-paths a { min-height: 20px; padding-inline: 5px; font-size: 11px; }
-}
-
-@media (min-width: 901px) and (max-width: 1100px) {
-  .talent-calculator .tc-workspace { grid-template-columns: minmax(0,33fr) minmax(0,31fr) minmax(0,36fr); }
-  .talent-calculator .tc-hero-paths { width: 100%; }
 }
 
 @media (max-width: 900px) {
   .talent-calculator { height: 100svh; min-height: 760px; grid-template-rows: 56px auto 46px minmax(458px,1fr) 108px; }
-  .talent-calculator .tc-commandbar { padding: 12px; }
-  .talent-calculator .tc-page-title { min-width: 0; }
-  .talent-calculator .tc-page-title h1 { font-size: 19px; }
-  .talent-calculator .tc-page-title .tc-build-version { font-size: 11px; }
-  .talent-calculator .tc-toolbar {
-    grid-template-rows: 48px 52px;
-    gap: 4px 8px;
-    padding-inline: 10px;
-  }
 }
 
 @media (max-width: 560px) {
   .talent-calculator { min-height: 760px; grid-template-rows: 56px auto 46px minmax(434px,1fr) 108px; }
-  .talent-calculator .tc-fury-portrait { width: 48px; height: 48px; flex-basis: 48px; }
-  .talent-calculator .tc-page-title h1 { font-size: 18px; }
-  .talent-calculator .tc-points-badge { min-width: 126px; }
-  .talent-calculator .tc-workspace { padding: 6px; }
   .talent-calculator .tc-panel::before { inset-block-start: 66px; }
   .talent-calculator .tc-hero-panel::before { inset-block-start: 86px; }
   .talent-calculator .tc-panel::after { inset-block-start: 56px; }
   .talent-calculator .tc-hero-panel::after { inset-block-start: 76px; }
   .talent-calculator.tc-skeleton .tc-skeleton-tree { inset-block-start: 72px; }
   .talent-calculator.tc-skeleton .tc-hero-panel .tc-skeleton-tree { inset-block-start: 92px; }
-  .talent-calculator .tc-hero-paths { gap: 4px; width: 100%; }
-  .talent-calculator .tc-hero-paths a { min-height: 18px; padding: 4px 5px 3px; font-size: 11px; }
-  .talent-calculator .tc-search input { font-size: 11px; }
   .talent-calculator .tc-pvp-slot { width: 38px; height: 38px; }
   .talent-calculator .tc-pvp-slot img { width: 28px; height: 28px; }
-  .talent-calculator .tc-use-rotation .tc-save-copy b { font-size: 11px; }
-}
-
-@media (max-width: 340px) {
-  .talent-calculator .tc-workspace { padding-inline: 5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .talent-calculator { scroll-behavior: auto; }
 }
 
-@media (min-width: 1600px) {
-  .talent-calculator .tc-hero-paths { width: min(100%,320px); }
-}
-
 /* Talent inspection motion: opaque throughout, directional, and finite. */
 
 /* Hover feedback fires once, then rests. It keeps the themed response without a permanent repaint loop. */
-
-@keyframes tc-premium-tooltip-unfold {
-  0% { transform: translate3d(0,var(--tc-tooltip-enter-y),0); }
-  72% { transform: translate3d(0,1px,0); }
-  100% { transform: translate3d(0,0,0); }
-}
-@keyframes tc-premium-tooltip-fold {
-  from { transform: translate3d(0,0,0); }
-  to { transform: translate3d(0,var(--tc-tooltip-exit-y),0); }
-}
-@keyframes tc-premium-tooltip-glint {
-  0% { opacity: 0; transform: translate3d(0,0,0); }
-  24% { opacity: .92; }
-  100% { opacity: 0; transform: translate3d(480px,0,0); }
-}
-@keyframes tc-premium-node-intent {
-  0% { opacity: .18; transform: scale(.78) rotate(-3deg); }
-  64% { opacity: 1; transform: scale(1.09) rotate(3deg); }
-  100% { opacity: .72; transform: scale(1.02) rotate(0); }
-}
 
 /* The chrome skin (surfaces, borders, typography, palette) lives in
    app/styles/talents/atlas.css, which is loaded after this sheet. */
