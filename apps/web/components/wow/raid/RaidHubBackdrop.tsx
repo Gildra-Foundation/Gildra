@@ -20,6 +20,13 @@ const rain = Array.from({ length: 16 }, (_, index) => ({
   length: 30 + (index % 4) * 10,
 }));
 
+/** Edge fade of the rain sheet, baked into each drop (0–1 at its column): a
+ * mask on the full-screen fixed layer cost an extra screen-sized pass per frame. */
+function rainFade(x: number, solidFrom: number, solidTo: number) {
+  const fade = x < solidFrom ? x / solidFrom : x > solidTo ? (100 - x) / (100 - solidTo) : 1;
+  return Math.round(Math.max(0, Math.min(1, fade)) * 1000) / 1000;
+}
+
 /** The approved vault and its painted ravine continue below the hub's real HTML. */
 export function RaidHubBackdrop() {
   const root = useRef<HTMLDivElement>(null);
@@ -89,6 +96,11 @@ export function RaidHubBackdrop() {
           {/* The browser selects one finished crop; there is no duplicate art preload. */}
           <img src="/assets/wow/raids/hub/vault.webp" width="1672" height="941" alt="" loading="eager" fetchPriority="high" decoding="async" />
         </picture>
+      </div>
+      {/* The breathing lights sit beside the masked painting, not inside it: an
+          animated layer inside the mask made the compositor redraw the whole
+          masked scene every frame. Same box, so they land on the same spots. */}
+      <div className={styles.lights}>
         <div className={styles.vaultLight} data-raid-vault-light data-raid-vault-bloom="jade" />
         <div className={styles.warmLight} data-raid-vault-bloom="amber" />
       </div>
@@ -96,6 +108,7 @@ export function RaidHubBackdrop() {
         {rain.map((drop, index) => <i key={index} style={{
           "--rain-x": `${drop.x}%`, "--rain-delay": `${drop.delay}s`,
           "--rain-duration": `${drop.duration}s`, "--rain-length": `${drop.length}px`,
+          "--rain-fade": rainFade(drop.x, 32, 90), "--rain-fade-narrow": rainFade(drop.x, 42, 100),
         } as CSSProperties} />)}
       </div>
       <div className={styles.atmosphere} data-raid-hub-mist><i /><i /></div>

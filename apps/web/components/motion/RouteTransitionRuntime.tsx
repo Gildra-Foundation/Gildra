@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { preconnect } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
+import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { isBookPagePath, isCharacterAuthRedirect, routeTransitionKind } from "./routeTransitionPolicy";
 import { warmRouteArt } from "./routeArt";
 import { RouteThemeController } from "./RouteThemeController";
@@ -18,6 +19,8 @@ import styles from "./routeTransition.module.css";
  * the bare background through the page (a dark flash on every click). Link
  * intent also preloads the destination hub's painting (routeArt.ts), so the new
  * page does not land on an empty background. The top bar lives outside this frame.
+ * The new page's title block alone rises in over 170 ms (playHeroEntrance): a
+ * small composited layer, so the hand-over reads as an arrival and costs no frames.
  */
 type RouteState = "idle" | "leaving" | "loading";
 
@@ -27,6 +30,26 @@ const WATCHDOG_MS = 12000;
 // user navigates there. Keep that CPU work out of the active page interaction.
 // Literal NODE_ENV: the bundler inlines it in the browser (see routePrefetch in lib/flags.ts).
 const routePrefetchEnabled = process.env.NODE_ENV !== "development";
+
+/** Pages whose hero has an arrival of its own (the M+ and raid hubs). */
+const OWN_ARRIVAL = "[data-hub-hero], [data-raid-hub-hero], [data-route-own-arrival]";
+const HERO_ENTRANCE: Keyframe[] = [{ opacity: 0, transform: "translate3d(0, 10px, 0)" }, { opacity: 1, transform: "none" }];
+
+/**
+ * The block around the new page's H1 (eyebrow, title, lede, actions) fades and
+ * rises 10 px. Runs before the first paint of the new page, so it never shows
+ * at rest first; skipped with less motion, off screen or on very large blocks.
+ */
+function playHeroEntrance(frame: HTMLElement | null) {
+  if (!frame || typeof HTMLElement.prototype.animate !== "function" || lessMotion()
+    || frame.closest('[data-ui-motion="reduce"]') || frame.querySelector("[data-book-route-loading]")) return;
+  const title = frame.querySelector<HTMLElement>("main h1") ?? frame.querySelector<HTMLElement>("h1");
+  const hero = title?.parentElement;
+  if (!title || !hero || hero === frame || title.closest(OWN_ARRIVAL) || hero.getAnimations().length) return;
+  const box = hero.getBoundingClientRect();
+  if (box.bottom <= 0 || box.top >= window.innerHeight || box.height > window.innerHeight * .8) return;
+  hero.animate(HERO_ENTRANCE, { duration: 170, easing: "cubic-bezier(.2, .7, .2, 1)" });
+}
 
 function destinationFromTarget(target: EventTarget | null, includeOptOut = false) {
   if (!(target instanceof Element)) return null;
@@ -78,7 +101,10 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   /** A loading.tsx skeleton marked data-book-route-loading commits first; the line runs on until the real page is in. */
   const enterWhenLoaded = useCallback(() => {
     if (frameRef.current?.querySelector("[data-book-route-loading]")) setState("loading");
-    else settle();
+    else {
+      playHeroEntrance(frameRef.current);
+      settle();
+    }
   }, [settle]);
 
   const begin = useCallback((destination: string) => {

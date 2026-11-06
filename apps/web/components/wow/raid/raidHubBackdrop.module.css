@@ -71,6 +71,14 @@
     linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 13%, transparent), transparent 34%, color-mix(in srgb, var(--atlas-bg) 38%, transparent) 64%, var(--atlas-bg) 100%);
 }
 
+.lights {
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--raid-scene-height);
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .vaultLight {
   position: absolute;
   z-index: 2;
@@ -106,7 +114,6 @@
   inset: 0;
   overflow: hidden;
   opacity: 0;
-  mask-image: linear-gradient(90deg, transparent, #000 32%, #000 90%, transparent);
 }
 
 .rain i {
@@ -115,7 +122,9 @@
   left: var(--rain-x);
   width: 1px;
   height: var(--rain-length);
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--atlas-text-strong) 62%, var(--raid-vault-light)));
+  /* Sheet opacity (.27) and edge fade live in each drop's colour: an opacity or a
+     mask on the fixed sheet made the compositor draw it off screen every frame. */
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, color-mix(in srgb, var(--atlas-text-strong) 62%, var(--raid-vault-light)) calc(var(--rain-fade, 1) * 27%), transparent));
   transform-origin: center bottom;
   animation: rainFall var(--rain-duration) var(--rain-delay) linear infinite;
 }
@@ -123,11 +132,14 @@
 .backdrop :is(.vaultLight, .warmLight, .motes i, .atmosphere i, .rain i) { animation-play-state: paused; }
 .backdrop[data-atmosphere-active] :is(.motes i, .atmosphere i, .rain i) { animation-play-state: running; }
 .backdrop[data-bloom-active] :is(.vaultLight, .warmLight) { animation-play-state: running; }
-.backdrop[data-atmosphere-active] .rain { opacity: .27; }
+.backdrop[data-atmosphere-active] .rain { opacity: 1; }
 
+/* Viewport layers, as on the Mythic+ hub: spread over the whole page, the mist
+   and motes moved with every change of the page height while it loaded
+   (CLS 0.68 on a 4x-throttled phone) and were painted as page-tall textures. */
 .motes,
 .atmosphere {
-  position: absolute;
+  position: fixed;
   z-index: 2;
   inset: 0;
   overflow: hidden;
@@ -218,7 +230,7 @@
   .warmLight { left: 62%; top: 21%; width: 25%; }
   .motes i:nth-child(even) { display: none; }
   .rain i:nth-child(even) { display: none; }
-  .rain { mask-image: linear-gradient(90deg, transparent, #000 42%, #000); }
+  .rain i { --rain-fade: var(--rain-fade-narrow); }
 }
 
 :global(html[data-motion="reduced"]) :is(.vaultLight, .warmLight, .rain, .motes, .atmosphere),
