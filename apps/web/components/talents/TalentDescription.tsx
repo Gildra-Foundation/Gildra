@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { TalentChoice } from "@/lib/talentCalculatorData";
 import { talentDescriptionCopy } from "./talentDescriptionCopy";
+import { resolvePluralForms } from "@/lib/talentText";
 
 type DescribedTalent = Pick<TalentChoice, "description" | "name" | "spellId">;
 
@@ -18,10 +19,11 @@ export function formatTalentDescription(description: string, locale: "ru" | "en"
     "weapon damage": { ru: "урона оружия", en: "of Weapon Damage" },
   };
   const replacePower = (_token: string, amount: string, unit: string) => `${amount}% ${units[unit.toLowerCase()][locale]}`;
-  return description
+  const text = description
     .replace(/\{\{\s*(\d+(?:[.,]\d+)?)\s*%\s+of\s+(Attack Power|Spell Power|Weapon Damage)\s*\}\}/gi, replacePower)
     .replace(/\[\s*(\d+(?:[.,]\d+)?)\s*%\s+of\s+(Attack Power|Spell Power|Weapon Damage)\s*\]/gi, replacePower)
     .replace(/\{\{\s*(\d+(?:[.,]\d+)?)\s*(%)?\s*\}\}/g, (_token, amount: string, percent?: string) => `${amount}${percent ?? ""}`);
+  return locale === "ru" ? resolvePluralForms(text) : text;
 }
 
 function suppliedDescription(talent: DescribedTalent) {

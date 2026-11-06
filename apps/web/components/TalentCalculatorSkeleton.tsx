@@ -19,9 +19,9 @@ export function TalentCalculatorSkeleton({ lang = "ru", theme }: { lang?: Talent
       </MaterialPlaque>
       <div className="tc-mobile-tree-switcher" aria-hidden="true"><button type="button" tabIndex={-1}>{copy.treeTabs.class}</button><button type="button" tabIndex={-1}>{copy.treeTabs.hero}</button><button type="button" tabIndex={-1}>{copy.treeTabs.spec}</button></div>
       <section className={`tc-workspace ${page.workspace}`} data-mobile-tree="class" style={materialPlaqueStyle(TALENTS_KIT)}>
-        <TalentTreePanel lang={lang} variant="class" eyebrow={copy.treeEyebrows.class} title={copy.treeLabels.class} spent={0} budget={0} nodeCount={0} loading><div className="tc-skeleton-tree" /></TalentTreePanel>
-        <TalentTreePanel lang={lang} variant="hero" eyebrow={copy.treeEyebrows.hero} title={copy.treeLabels.hero} secondary={<span className="tc-skeleton-block tc-skeleton-path" />} spent={0} budget={0} nodeCount={0} loading><div className="tc-skeleton-tree" /></TalentTreePanel>
-        <TalentTreePanel lang={lang} variant="spec" eyebrow={copy.treeEyebrows.spec} title={copy.treeLabels.spec} spent={0} budget={0} nodeCount={0} loading><div className="tc-skeleton-tree" /></TalentTreePanel>
+        <TalentTreePanel lang={lang} variant="class" title={copy.treeLabels.class} spent={0} budget={0} loading><div className="tc-skeleton-tree" /></TalentTreePanel>
+        <TalentTreePanel lang={lang} variant="hero" title={copy.treeLabels.hero} spent={0} budget={0} loading><div className="tc-skeleton-tree" /></TalentTreePanel>
+        <TalentTreePanel lang={lang} variant="spec" title={copy.treeLabels.spec} spent={0} budget={0} loading><div className="tc-skeleton-tree" /></TalentTreePanel>
       </section>
       <footer className="tc-toolbar" aria-hidden="true"><div className="tc-skeleton-block" style={{ width: 280, height: 44 }} /><div className="tc-toolbar-spacer" /><div className="tc-skeleton-block" style={{ width: 196, height: 50 }} /><div className="tc-skeleton-block" style={{ width: 240, height: 68 }} /></footer>
     </main>

@@ -1,0 +1,147 @@
+/* atlas:strict — talent trees of /talents/<spec>, the same family as the character page editor
+   (components/wow/audit/characterTalentSimulator.module.css): the game grid, square/round/octagon/apex nodes,
+   selected bright with the spec ring, open dim but legible, locked darker, rank pips, lines that follow the build.
+   The spec colour comes from the per-spec sheet (--tc-spec-accent, --tc-spec-hot, --tc-spec-accent-rgb). Only transform and
+   opacity animate. */
+
+.canvas {
+  --accent: var(--tc-spec-accent, var(--atlas-accent));
+  --accent-hot: var(--tc-spec-hot, var(--atlas-accent-strong));
+  --accent-rgb: var(--tc-spec-accent-rgb, 124, 200, 238);
+  --node-share: .66;
+  position: relative;
+  width: 100%;
+  margin-inline: auto;
+  aspect-ratio: var(--cells-x) / var(--cells-y);
+  container-type: inline-size;
+  touch-action: manipulation;
+}
+
+.lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.lines line { stroke: color-mix(in srgb, var(--atlas-line-strong) 70%, transparent); stroke-width: 1.5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.lines line[data-state="open"] { stroke: var(--atlas-text-subtle); stroke-dasharray: 3 4; }
+.lines line[data-state="lit"] { stroke: var(--accent); stroke-width: 2.5; }
+.lines line[data-dimmed] { opacity: .3; }
+
+.node {
+  --size: calc(100cqi / var(--cells-x) * var(--node-share));
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  padding: 0;
+  border: 0;
+  background: none;
+  translate: -50% -50%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: scale var(--atlas-duration-fast) var(--atlas-ease), opacity var(--atlas-duration-fast) var(--atlas-ease);
+}
+/* A hit area wider than the icon, for fingers. */
+.node::before { content: ""; position: absolute; inset: -16%; }
+.art { position: absolute; inset: 0; display: block; padding: 2px; border-radius: 20%; background: var(--atlas-line-strong); }
+.art img { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; background: var(--atlas-bg); filter: grayscale(.45) brightness(.85); }
+.node[data-shape="round"] .art { border-radius: 50%; }
+.node[data-shape="apex"] { --size: calc(100cqi / var(--cells-x) * var(--node-share) * 1.18); }
+.node[data-shape="apex"] .art { padding: 3px; border-radius: 50%; }
+.node[data-shape="choice"] .art,
+.node[data-shape="choice"] .art img { border-radius: 0; clip-path: polygon(29% 0, 71% 0, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0 71%, 0 29%); }
+.art .splitA, .art .splitB { position: absolute; inset: 2px; width: calc(100% - 4px); height: calc(100% - 4px); }
+.node[data-shape="choice"] .art .splitA { clip-path: polygon(29% 0, 50% 0, 50% 100%, 29% 100%, 0 71%, 0 29%); }
+.node[data-shape="choice"] .art .splitB { clip-path: polygon(50% 0, 71% 0, 100% 29%, 100% 71%, 71% 100%, 50% 100%); }
+.node[data-shape="choice"] .art::after { content: ""; position: absolute; top: 8%; bottom: 8%; left: calc(50% - .5px); width: 1px; background: var(--atlas-line-strong); }
+.node[data-shape="choice"]:is([data-state="selected"], [data-state="partial"]) .art::after { display: none; }
+
+.node[data-state="locked"] .art { background: var(--atlas-line-soft); }
+.node[data-state="locked"] .art img { filter: grayscale(.9) brightness(.52); }
+.node:is([data-state="selected"], [data-state="partial"]) .art { background: var(--accent); box-shadow: 0 0 0 1px var(--atlas-bg), 0 0 14px rgba(var(--accent-rgb), .5); }
+.node:is([data-state="selected"], [data-state="partial"]) .art img { filter: none; }
+.node[data-state="partial"] .art { background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 40%, var(--atlas-line))); }
+.node[data-shape="choice"]:is([data-state="selected"], [data-state="partial"]) .art { box-shadow: none; filter: drop-shadow(0 0 6px rgba(var(--accent-rgb), .55)); }
+
+/* Selection feedback: one ring that flares and fades (transform + opacity). */
+.flash { position: absolute; inset: -12%; border: 2px solid var(--accent-hot); border-radius: 50%; opacity: 0; pointer-events: none; }
+
+.pips { position: absolute; bottom: -7px; left: 50%; z-index: 1; display: flex; gap: 2px; padding: 2px 3px; translate: -50% 0; border-radius: 999px; background: var(--atlas-bg); box-shadow: 0 0 0 1px var(--atlas-line-soft); }
+.pips i { width: 5px; height: 5px; border-radius: 50%; background: var(--atlas-line-strong); }
+.pips i[data-on] { background: var(--accent-hot); }
+
+/* What a locked node waits for, while it is inspected. */
+.node[data-blocker] .art { box-shadow: 0 0 0 2px var(--atlas-bg), 0 0 0 4px var(--atlas-caution); }
+.node[data-dimmed] { opacity: .28; }
+.node[data-inspected] { z-index: 2; scale: 1.1; }
+.node[data-inspected] .art { box-shadow: 0 0 0 2px var(--atlas-bg), 0 0 0 4px var(--atlas-text-strong); }
+.node:focus-visible { z-index: 2; outline: 2px solid var(--atlas-text-strong); outline-offset: 3px; }
+@media (hover: hover) {
+  .node:hover { z-index: 2; scale: 1.08; }
+  .node:is([data-state="open"], [data-state="locked"]):hover .art img { filter: grayscale(.2) brightness(.92); }
+}
+
+@container talentWorkspace (max-width: 520px) {
+  .canvas { --node-share: .74; }
+  .pips { bottom: -6px; padding: 1px 2px; }
+  .pips i { width: 4px; height: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node { transition: none; }
+}
+@media (forced-colors: active) {
+  .node[aria-pressed="true"] { outline: 3px solid Highlight; outline-offset: 2px; }
+  .lines line[data-state="lit"] { stroke: Highlight; }
+}
+
+/* ---------- The talent card: hover tooltip (desktop) and the bottom sheet (touch) ---------- */
+.tip { width: min(340px, calc(100vw - 24px)); }
+.card { display: grid; gap: var(--atlas-space-2); }
+.cardHead { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: var(--atlas-space-3); }
+.cardHead img { width: 40px; height: 40px; border: 1px solid var(--atlas-line); border-radius: 6px; object-fit: cover; }
+.cardHead div { display: grid; gap: 1px; min-width: 0; }
+.cardHead b { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.cardHead span { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
+.card p { margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.sheet .card p { color: var(--atlas-text-muted); }
+.option { display: grid; gap: var(--atlas-space-1); padding-top: var(--atlas-space-2); border-top: 1px solid var(--atlas-line-soft); }
+.option[data-selected] .cardHead img { border-color: var(--tc-spec-accent, var(--atlas-accent)); }
+.tier { display: grid; gap: 2px; }
+.tier small { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-weight: 600; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.alt { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.lock { color: var(--atlas-caution); font-size: var(--atlas-text-small); }
+
+.sheet {
+  position: fixed;
+  z-index: 60;
+  right: var(--atlas-space-2);
+  bottom: calc(var(--atlas-space-2) + env(safe-area-inset-bottom, 0px));
+  left: var(--atlas-space-2);
+  display: grid;
+  gap: var(--atlas-space-3);
+  max-height: min(42dvh, 400px);
+  padding: var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text);
+  background: var(--atlas-surface-raised);
+  box-shadow: 0 -12px 40px color-mix(in srgb, var(--atlas-bg) 80%, transparent);
+  font: var(--atlas-text-body) / var(--atlas-leading-body) var(--atlas-font-ui);
+  animation: sheetIn var(--atlas-duration) var(--atlas-ease);
+}
+.sheetHead { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: var(--atlas-space-2); }
+.close { display: grid; place-items: center; width: var(--atlas-control-height); height: var(--atlas-control-height); margin: calc(var(--atlas-space-1) * -1) calc(var(--atlas-space-2) * -1) 0 0; border: 0; border-radius: var(--atlas-radius); background: transparent; color: var(--atlas-text-muted); cursor: pointer; }
+.close svg { width: 18px; height: 18px; }
+.picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+.pick { display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: var(--atlas-space-2); min-height: var(--atlas-control-height); padding: var(--atlas-space-1) var(--atlas-space-2); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); background: var(--atlas-surface-sunken); color: var(--atlas-text-strong); font: 600 var(--atlas-text-small) / 1.25 var(--atlas-font-ui); text-align: start; cursor: pointer; }
+.pick img { width: 32px; height: 32px; border-radius: 4px; }
+.pick[aria-pressed="true"] { border-color: var(--tc-spec-accent, var(--atlas-accent)); background: var(--atlas-surface-selected); }
+.pick:disabled { opacity: .55; cursor: default; }
+.steps { display: grid; grid-template-columns: var(--atlas-control-height) minmax(0, 1fr) var(--atlas-control-height); align-items: center; gap: var(--atlas-space-2); }
+.steps button { display: grid; place-items: center; height: var(--atlas-control-height); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); background: var(--atlas-surface-sunken); color: var(--atlas-text-strong); cursor: pointer; }
+.steps button svg { width: 18px; height: 18px; }
+.steps button:disabled { opacity: .4; cursor: default; }
+.steps output { color: var(--atlas-text-strong); font: 600 var(--atlas-text-title) / 1 var(--atlas-font-ui); font-variant-numeric: tabular-nums; text-align: center; }
+.close:focus-visible, .pick:focus-visible, .steps button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+@keyframes sheetIn { from { opacity: 0; transform: translateY(16px); } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+.sheet .alt { display: none; }
