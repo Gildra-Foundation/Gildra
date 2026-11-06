@@ -46,7 +46,7 @@ const fetchRun = unstable_cache(async (season: string, id: number): Promise<RunD
   if (response.status === 400 || response.status === 404) return null;
   if (!response.ok) throw new Error(`Raider.IO run ${id} failed (${response.status})`);
   return toRunDetail(await response.json());
-}, ["mythic-plus-run", "v1"], { revalidate, tags: ["mythic-plus-run"] });
+}, ["mythic-plus-run", "v2"], { revalidate, tags: ["mythic-plus-run"] });
 
 /** Slug of the season our run sample belongs to (the run endpoint needs it). */
 async function currentSeason() {

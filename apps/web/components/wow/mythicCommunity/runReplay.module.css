@@ -1,0 +1,237 @@
+/* atlas:strict — the run itself: route on the dungeon map, the selected pull, the timeline.
+   Lives inside the run page's material plaque (--material-light / --material-line of the dungeon kit). */
+
+.replay { display: grid; gap: var(--atlas-space-6); min-width: 0; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.workspace { display: grid; gap: var(--atlas-space-4); min-width: 0; }
+.workspace[data-map] { grid-template-columns: minmax(0, 1fr) minmax(280px, 320px); align-items: start; }
+
+/* ---------- Map in the painted frame (same geometry as the dungeon route page) ---------- */
+.frame { position: relative; margin: 0; min-width: 0; container-type: inline-size; isolation: isolate; }
+.frame::before { display: block; padding-top: calc(100% / var(--frame-aspect)); content: ""; }
+.frameArt {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--frame-top) var(--frame-right) var(--frame-bottom) var(--frame-left);
+  border-image-source: var(--frame-art);
+  border-image-slice: var(--frame-slice) fill;
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  filter: contrast(.88) saturate(.84) brightness(.95);
+  pointer-events: none;
+}
+.viewport {
+  position: absolute;
+  z-index: 1;
+  inset: var(--frame-top) var(--frame-right) var(--frame-bottom) var(--frame-left);
+  overflow: auto;
+  border-radius: var(--frame-window-radius);
+  background: var(--atlas-bg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--atlas-line-strong) var(--atlas-bg);
+}
+.frame[data-still] .viewport { overflow: hidden; }
+.viewport:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: -4px; }
+.map { position: relative; width: 100%; }
+.map > img { display: block; width: 100%; height: auto; filter: contrast(.94) saturate(.86) brightness(.86); }
+.path { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.path path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.pathAhead { stroke: color-mix(in srgb, var(--atlas-text-strong) 55%, transparent); stroke-width: 2px; stroke-dasharray: 2 6; }
+.pathDone { stroke: var(--material-light, var(--atlas-accent-strong)); stroke-width: 3px; filter: drop-shadow(0 0 3px var(--atlas-bg)); }
+
+.marker {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 34px;
+  block-size: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pull-marker-image, none) center / contain no-repeat var(--atlas-surface-sunken);
+  color: var(--atlas-text-strong);
+  cursor: pointer;
+  translate: -50% -50%;
+  box-shadow: 0 2px 6px var(--atlas-bg);
+  text-shadow: 0 1px 3px var(--atlas-bg), 0 0 4px var(--atlas-bg);
+  transition: scale var(--atlas-duration-fast) var(--atlas-ease), box-shadow var(--atlas-duration-fast) var(--atlas-ease);
+}
+.marker b { font: 700 var(--atlas-text-small) / 1 var(--atlas-font-ui); font-variant-numeric: tabular-nums lining-nums; }
+.marker[data-boss] { inline-size: 42px; block-size: 42px; box-shadow: 0 0 0 2px var(--material-light, var(--atlas-accent-strong)), 0 2px 8px var(--atlas-bg); }
+.marker[data-done]:not([aria-pressed="true"]) { filter: saturate(.7) brightness(.86); }
+.marker[aria-pressed="true"] { z-index: 3; scale: 1.18; box-shadow: 0 0 0 2px var(--atlas-text-strong), 0 0 14px var(--atlas-accent-glow); }
+.marker:focus-visible { z-index: 3; outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 3px; }
+.markerDeaths {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: var(--atlas-bg);
+  color: var(--atlas-negative);
+  font: 700 var(--atlas-text-label) / 1 var(--atlas-font-ui);
+}
+.markerDeaths svg { width: 11px; height: 11px; }
+@media (hover: hover) and (pointer: fine) {
+  .marker:hover { z-index: 3; scale: 1.12; }
+}
+
+/* ---------- Selected pull ---------- */
+.workspace[data-map] .panel { position: sticky; top: calc(var(--atlas-sticky-top, 0px) + var(--atlas-space-4)); }
+.panel {
+  position: relative;
+  display: grid;
+  gap: var(--atlas-space-4);
+  min-width: 0;
+  padding: var(--atlas-space-4);
+  border: 1px solid var(--material-line, var(--atlas-line));
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--atlas-bg) 78%, transparent);
+}
+.panelHead { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); }
+.panelNumber {
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  background: var(--pull-marker-image, none) center / contain no-repeat;
+  color: var(--atlas-text-strong);
+  font: 700 var(--atlas-text-title) / 1 var(--atlas-font-ui);
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.panelTitle { display: grid; min-width: 0; }
+.panelTitle h3 { margin: 0; overflow: hidden; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.15 var(--atlas-font-display); text-overflow: ellipsis; white-space: nowrap; }
+.panelTitle span { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.panelSteps { display: flex; gap: 2px; }
+.panelSteps button {
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 1px solid var(--atlas-line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--atlas-text-strong);
+  cursor: pointer;
+}
+.panelSteps button:disabled { opacity: .35; cursor: default; }
+.panelSteps button:not(:disabled):hover { border-color: var(--material-light, var(--atlas-line-strong)); }
+.panelSteps button:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 2px; }
+.panelSteps svg { width: 18px; height: 18px; }
+.panelFacts { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2) var(--atlas-space-5); margin: 0; }
+.panelFacts > div { display: grid; gap: 2px; }
+.panelFacts dt { color: var(--material-light, var(--atlas-text-muted)); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.panelFacts dd { margin: 0; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; font-variant-numeric: tabular-nums lining-nums; }
+
+.enemies, .deaths { display: grid; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.enemies li { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto 3.6em; align-items: center; gap: var(--atlas-space-3); }
+.enemies img, .portraitBlank { inline-size: 40px; block-size: 40px; border: 1px solid var(--atlas-line); border-radius: 4px; background: var(--atlas-surface-sunken); object-fit: cover; }
+.portraitBlank { display: block; }
+.enemyName { overflow: hidden; color: var(--atlas-text); font-size: var(--atlas-text-small); text-overflow: ellipsis; white-space: nowrap; }
+.enemyCount { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 650; font-variant-numeric: tabular-nums lining-nums; }
+.enemyForces { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-align: end; font-variant-numeric: tabular-nums lining-nums; }
+
+.deaths { padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line-soft); }
+.deaths li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.deaths li > svg { width: 14px; height: 14px; color: var(--atlas-negative); }
+.deaths time { font-variant-numeric: tabular-nums lining-nums; }
+.deaths b { color: var(--atlas-text-strong); font-weight: 650; }
+.killer { display: inline-flex; align-items: center; gap: 5px; color: var(--atlas-text); }
+.killer img { border-radius: 3px; }
+
+/* ---------- Timeline ---------- */
+.timeline { --row: 34px; position: relative; display: grid; gap: var(--atlas-space-2); min-width: 0; padding-inline: 4px; }
+.plot { position: relative; block-size: 132px; margin-top: 22px; border-bottom: 1px solid var(--material-line, var(--atlas-line)); }
+.curve { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.curveArea { fill: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 30%, transparent); }
+.curveLine { fill: none; stroke: var(--material-light, var(--atlas-accent-strong)); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
+.combat { position: absolute; inset-block: auto 0; block-size: 6px; border-radius: 2px; background: color-mix(in srgb, var(--atlas-text-strong) 22%, transparent); pointer-events: none; }
+.fight {
+  position: absolute;
+  inset-block: 0;
+  border-inline: 1px solid color-mix(in srgb, var(--material-light, var(--atlas-accent)) 70%, transparent);
+  background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 16%, transparent);
+}
+.fight[data-wipe] { border-color: color-mix(in srgb, var(--atlas-negative) 70%, transparent); background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--atlas-negative) 22%, transparent) 0 4px, transparent 4px 8px); }
+.cursor { position: absolute; inset-block: -4px 0; inline-size: 2px; translate: -1px 0; background: var(--atlas-text-strong); pointer-events: none; }
+.threshold { position: absolute; inset-block: -22px 0; inline-size: 0; border-inline-start: 1px dashed color-mix(in srgb, var(--atlas-text-strong) 45%, transparent); pointer-events: none; }
+.threshold span { position: absolute; top: 0; translate: -50% 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-weight: 700; line-height: 1; }
+.threshold[data-reached] span { color: var(--material-light, var(--atlas-accent-strong)); }
+.full { position: absolute; top: -2px; left: 4px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); line-height: 1; translate: 0 -100%; }
+
+.pulls { position: relative; block-size: var(--row); margin: 0; padding: 0; list-style: none; }
+.pulls li { position: absolute; inset-block: 0; display: flex; min-width: 10px; translate: 0 0; }
+.pulls button {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--atlas-text-strong) 30%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--atlas-surface-raised) 85%, transparent);
+  color: var(--atlas-text-muted);
+  font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
+  font-variant-numeric: tabular-nums lining-nums;
+  cursor: pointer;
+}
+.pulls button[data-boss] { border-color: var(--material-light, var(--atlas-accent)); background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 24%, var(--atlas-surface-raised)); color: var(--atlas-text-strong); }
+.pulls button[aria-pressed="true"] { z-index: 1; border-color: var(--atlas-text-strong); background: var(--material-light, var(--atlas-accent-strong)); color: var(--atlas-bg); }
+.pulls button:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .pulls button:hover { border-color: var(--atlas-text-strong); color: var(--atlas-text-strong); }
+}
+
+.events { position: relative; block-size: 24px; }
+.death, .lust { position: absolute; top: 0; display: grid; place-items: center; inline-size: 22px; block-size: 22px; translate: -50% 0; }
+.death svg, .lust svg { width: 16px; height: 16px; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
+.death { color: var(--atlas-text-strong); }
+.lust { color: var(--atlas-warning, var(--material-light)); }
+
+.axis { position: relative; block-size: 16px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.axis span { position: absolute; top: 0; translate: -50% 0; line-height: 1; }
+.axis span:first-child { translate: 0 0; }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2) var(--atlas-space-5); margin: var(--atlas-space-1) 0 0; padding: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); list-style: none; }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; inline-size: 14px; block-size: 10px; border-radius: 2px; }
+.legend svg { width: 13px; height: 13px; }
+.legendForces { background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 40%, transparent); box-shadow: inset 0 2px 0 var(--material-light, var(--atlas-accent-strong)); }
+.legendBoss { border: 1px solid var(--material-light, var(--atlas-accent)); background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 24%, transparent); }
+.legendWipe { border: 1px solid var(--atlas-negative); background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--atlas-negative) 40%, transparent) 0 3px, transparent 3px 6px); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .workspace[data-map] { grid-template-columns: minmax(0, 1fr); }
+  .workspace[data-map] .panel { position: relative; top: auto; }
+}
+@media (max-width: 767px) {
+  .frame:not([data-still])::before { padding-top: calc(300px + var(--frame-bands-y)); }
+  .frame:not([data-still]) .map { width: 760px; }
+  .plot { block-size: 104px; }
+  .pulls button span { display: none; }
+  .pulls button[aria-pressed="true"] span { display: inline; }
+}
+
+/* ---------- Motion, transparency, forced colours ---------- */
+@media (prefers-reduced-motion: reduce) { .marker, .marker:hover { transition: none; } .marker[aria-pressed="true"] { scale: none; } }
+:global([data-motion="reduced"]) .marker, :global([data-ui-motion="reduce"]) .marker { transition: none; }
+:global([data-motion="reduced"]) .marker[aria-pressed="true"], :global([data-ui-motion="reduce"]) .marker[aria-pressed="true"] { scale: none; }
+@media (forced-colors: active) {
+  .frameArt { display: none; }
+  .frame { border: 1px solid CanvasText; }
+  .marker { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .marker[aria-pressed="true"], .pulls button[aria-pressed="true"] { background: Highlight; color: HighlightText; }
+  .pulls button { border-color: CanvasText; }
+  .curveLine { stroke: CanvasText; }
+}
