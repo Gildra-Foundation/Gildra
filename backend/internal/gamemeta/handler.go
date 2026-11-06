@@ -14,6 +14,7 @@ type Store interface {
 	WoWTierList(context.Context, Query) (Snapshot, error)
 	WoWTierListContexts(ctx context.Context, activity, locale string) ([]Context, error)
 	WoWMythicPlusMeta(context.Context) (MythicPlusMeta, error)
+	WoWSimTierList(context.Context) (SimTierList, error)
 }
 
 type Handler struct{ store Store }
@@ -27,6 +28,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/meta/wow/tier-list", h.wowTierList)
 	mux.HandleFunc("GET /v1/meta/wow/tier-list/contexts", h.wowTierListContexts)
 	mux.HandleFunc("GET /v1/meta/wow/mythic-plus/meta", h.wowMythicPlusMeta)
+	mux.HandleFunc("GET /v1/meta/wow/tier-list/sim", h.wowSimTierList)
 }
 
 func (h *Handler) wowMythicPlusMeta(w http.ResponseWriter, r *http.Request) {
@@ -41,6 +43,20 @@ func (h *Handler) wowMythicPlusMeta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpjson.Write(w, http.StatusOK, publicMetaCache, meta)
+}
+
+func (h *Handler) wowSimTierList(w http.ResponseWriter, r *http.Request) {
+	list, err := h.store.WoWSimTierList(r.Context())
+	if errors.Is(err, ErrSnapshotNotFound) {
+		writeProblem(w, r, http.StatusNotFound, "snapshot_not_found", "no published sim tier list is available")
+		return
+	}
+	if err != nil {
+		slog.Error("read public WoW sim tier list", "error", err)
+		writeProblem(w, r, http.StatusServiceUnavailable, "meta_unavailable", "sim tier list data is temporarily unavailable")
+		return
+	}
+	httpjson.Write(w, http.StatusOK, publicMetaCache, list)
 }
 
 func (h *Handler) wowTierList(w http.ResponseWriter, r *http.Request) {
