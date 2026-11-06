@@ -28,6 +28,7 @@ export const routeSections = {
   auction: { path: "/wow/auction", parent: "wow", title: { en: "Auction House", ru: "Аукцион" }, scene: "articles", search: { keywords: "auction house tools market prices аукцион инструменты рынок цены реагенты" } },
   wow: { path: "/wow", title: { en: "World of Warcraft", ru: "World of Warcraft" }, scene: "wow", search: { en: "World of Warcraft hub", ru: "Центр World of Warcraft", keywords: "home главная хаб" } },
   raids: { path: "/wow/raids", parent: "wow", title: { en: "Raids", ru: "Рейды" }, scene: "raids", search: { en: "Raid journal", ru: "Рейдовый журнал", keywords: "raids рейды" } },
+  raidComposition: { path: "/wow/raids/composition", parent: "raids", title: { en: "Raid composition", ru: "Состав рейда" }, scene: "raids", search: { en: "Raid composition planner", ru: "Планировщик состава рейда", keywords: "raid comp roster buffs bloodlust battle res dispel состав рейда ростер баффы жажда крови бр рассеивание" } },
   mythicPlus: { path: "/wow/mythic-plus", parent: "wow", title: { en: "Mythic+", ru: "Mythic+" }, scene: "mythicPlus", search: { en: "Mythic+ atlas", ru: "Атлас Mythic+", keywords: "mythic plus keys ключи эпохальные" } },
   mythicPlusMeta: { path: "/wow/mythic-plus/meta", parent: "mythicPlus", title: { en: "Mythic+ meta", ru: "Мета Mythic+" }, scene: "mythicPlus", search: { keywords: "meta spec popularity top keys мета популярность спеков mythicstats" } },
   dungeons: { path: "/wow/dungeons", parent: "wow", title: { en: "Dungeons", ru: "Подземелья" }, scene: "dungeons" },
