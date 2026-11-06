@@ -93,22 +93,32 @@ html[data-route-theme="wow"] [data-api-console] .rounded-sm { border-color: #513
 html[data-route-theme="wow"] [data-api-console] input { border-color: #51361a !important; border-radius: 2px !important; background: #090704 !important; color: #eadfc9 !important; }
 html[data-route-theme="wow"] [data-api-console] button { border-radius: 2px !important; }
 
+/* The shared dungeon backdrop is switched by an attribute (RouteThemeController),
+   not by a custom property on <html>: changing a root custom property made the
+   browser recompute the style of every element (~740 inherited tokens each) on
+   page hand-overs, 20–40 ms on a desktop and 4x that on a phone. Routes without
+   it (talents, characters, /wow) get no image, as before. */
 html[data-route-theme="wow"] body {
   background-color: #080706;
-  background-image:
-    linear-gradient(180deg, rgba(5, 4, 3, 0.42), #080706 760px),
-    radial-gradient(75% 44% at 66% 0, rgba(174, 91, 20, 0.17), transparent 70%),
-    var(--wow-depth-background);
+  background-image: none;
   background-position: center top;
   background-size: auto, auto, min(1900px, 100vw) auto;
   background-repeat: no-repeat;
   background-attachment: scroll;
 }
-
-/* The talent calculator paints an opaque full-screen surface of its own; do
-   not download the shared dungeon backdrop behind it. */
-html[data-route-theme="wow"]:has([data-talent-route]) body {
-  background-image: none;
+html[data-route-theme="wow"][data-wow-depth] body {
+  background-image:
+    linear-gradient(180deg, rgba(5, 4, 3, 0.42), #080706 760px),
+    radial-gradient(75% 44% at 66% 0, rgba(174, 91, 20, 0.17), transparent 70%),
+    url("/assets/wow/mythic/ruby-depth-v3-light-fast.webp");
+}
+@media (max-width: 720px) {
+  html[data-route-theme="wow"][data-wow-depth] body {
+    background-image:
+      linear-gradient(180deg, rgba(5, 4, 3, 0.42), #080706 760px),
+      radial-gradient(75% 44% at 66% 0, rgba(174, 91, 20, 0.17), transparent 70%),
+      url("/assets/wow/mythic/ruby-depth-v3-mobile-optimized.webp");
+  }
 }
 
 html[data-route-theme="wow"] :focus-visible,
