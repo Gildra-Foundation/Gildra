@@ -104,3 +104,6 @@
 .diagram figcaption { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
 @media (max-width: 430px) { .realmZones { grid-template-columns: 1fr; } }
 @media (forced-colors: active) { .realm { background: Canvas; border-color: CanvasText; } }
+
+/* No role chosen: the job heading is for screen readers only, so the picker ends the plaque without a rule. */
+.toolbar:has(+ :global(.sr-only)) { padding-bottom: 0; border-bottom: 0; }

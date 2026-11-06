@@ -102,3 +102,6 @@
 @media (prefers-reduced-transparency: reduce) { .panel::after, .page footer[data-text-links] { background: var(--atlas-bg); } }
 :global([data-transparency="reduced"]) .panel::after, :global([data-transparency="reduced"]) .page footer[data-text-links] { background: var(--atlas-bg); }
 @media (forced-colors: active) { .page footer[data-text-links] { background: Canvas; color: CanvasText; border-color: CanvasText; box-shadow: none; } .panel { background: Canvas; border: 1px solid CanvasText; color: CanvasText; } .panel::before,.panel::after { display: none; } .guide :is(h2,h3,strong),.heroic,.personalAction,.battleZone,.edgeZone { color: CanvasText; border-color: CanvasText; } }
+
+/* No role chosen: the job heading is for screen readers only, so the picker ends the plaque without a rule. */
+.toolbar:has(+ :global(.sr-only)) { padding-bottom: 0; border-bottom: 0; }

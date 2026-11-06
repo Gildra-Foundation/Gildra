@@ -74,7 +74,8 @@ export function VenomousGuideClient({locale}: {locale: Locale}) {
     <div className={styles.briefing}>
       <RaidPlaque as="section" raid="venomous-abyss" className={`${styles.panel} ${styles.personal}`} aria-labelledby="venomous-role-title">
         <div className={styles.toolbar}><VoidspireSpecPicker raid="venomous-abyss" locale={locale} value={specId} onChange={spec => select({spec})} /><AtlasField label={t.difficulty}><AtlasSegmented aria-label={t.difficulty} value={difficulty} onValueChange={value => select({difficulty:value as Difficulty})} options={[{value:'normal',label:t.normal},{value:'heroic',label:t.heroic}]} /></AtlasField></div>
-        <h2 id="venomous-role-title">{role ? t.roles[role] : copy.yourJob}</h2>
+        {/* Without a chosen role the plaque has no job text: the heading names the section for screen readers only. */}
+        <h2 id="venomous-role-title" className={role ? undefined : 'sr-only'}>{role ? t.roles[role] : copy.yourJob}</h2>
         {role ? <><p data-role-position={role}>{guide.roles[role].position[locale]}</p><ul className={styles.roleActions}>{guide.roles[role].actions.map(action => <li key={action.en}>{action[locale]}</li>)}</ul>{heroic && guide.roles[role].heroic && <p className={styles.heroic}>{guide.roles[role].heroic[locale]}</p>}</> : null}
       </RaidPlaque>
       <VenomousBattleDiagram locale={locale} difficulty={difficulty} guide={guide} />
