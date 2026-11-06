@@ -1,12 +1,18 @@
 import type { CSSProperties } from 'react';
 import { raidHubControlLayout } from './raidHubControls';
+import { kithixRaid } from './kithixRaidData';
 import type { RaidHubSlug } from './raidHubData';
 
 /** Carry the raid material through portal boundaries as well as the page. */
 export function raidGuideMaterial(raid: RaidHubSlug): CSSProperties {
   return {
     ...raidHubControlLayout(raid),
-    ...(raid === 'sporefall' ? {
+    ...(raid === 'the-unbinding-of-kithix' ? {
+      '--guide-accent': kithixRaid.accent,
+      '--guide-accent-strong': `color-mix(in srgb, ${kithixRaid.accent} 65%, var(--atlas-text-strong))`,
+      '--guide-hint-frame-x': '28px',
+      '--guide-hint-frame-y': '28px',
+    } : raid === 'sporefall' ? {
       '--guide-accent': 'var(--atlas-dungeon-altar-accent)',
       '--guide-accent-strong': 'var(--atlas-dungeon-altar-accent-strong)',
       '--guide-hint-frame-x': '26.496px',
