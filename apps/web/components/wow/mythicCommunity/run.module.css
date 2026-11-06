@@ -155,6 +155,9 @@
 .octagon img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; clip-path: inherit; }
 .playerWho { display: grid; min-width: 0; max-width: 100%; }
 .playerName { overflow: hidden; color: var(--class-color, var(--atlas-text-strong)); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.15 var(--atlas-font-display); text-overflow: ellipsis; white-space: nowrap; }
+a.playerName { text-decoration: none; text-underline-offset: .18em; }
+a.playerName:hover { text-decoration: underline; }
+a.playerName:focus-visible { outline: 2px solid var(--class-color, var(--atlas-accent-strong)); outline-offset: 2px; border-radius: 2px; }
 .playerRealm { overflow: hidden; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); text-overflow: ellipsis; white-space: nowrap; }
 .playerSpec { display: grid; justify-items: center; gap: 2px; text-align: center; }
 .specLine { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
@@ -189,6 +192,12 @@
 .videos a { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--material-light); font-weight: 600; text-underline-offset: .2em; }
 .videos a svg { width: 13px; height: 13px; }
 
+.routePlaque { display: block; padding: 34px 40px 30px; text-shadow: 0 1px 3px var(--atlas-bg); }
+.stateTitle { margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.2 var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.noLog { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); align-items: center; gap: var(--atlas-space-6); padding: 30px 40px; text-shadow: 0 1px 3px var(--atlas-bg); }
+.noLogText { display: grid; justify-items: start; gap: var(--atlas-space-4); }
+.noLogMap { opacity: .72; filter: grayscale(.35); }
+@media (max-width: 760px) { .noLog { grid-template-columns: minmax(0, 1fr); padding: 26px 18px; } }
 .statePlaque { display: grid; justify-items: start; gap: var(--atlas-space-4); margin-bottom: var(--atlas-section-gap); }
 .stateText { margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-body); text-shadow: 0 1px 3px var(--atlas-bg); }
 
@@ -202,7 +211,7 @@
 }
 @media (max-width: 760px) {
   .players { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .clockPlaque, .groupPlaque { padding: 28px 22px; }
+  .clockPlaque, .groupPlaque, .routePlaque { padding: 28px 18px; }
   .clockFacts { gap: var(--atlas-space-3) var(--atlas-space-5); }
 }
 @media (max-width: 600px) {
@@ -218,7 +227,7 @@
   .octagon { inline-size: 52px; block-size: 52px; }
   .playerSpec { grid-column: 1 / -1; justify-items: start; text-align: start; }
   .playerFacts, .talents { grid-column: 1 / -1; }
-  .playerFacts { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: var(--atlas-space-3); }
+  .playerFacts { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: row; gap: var(--atlas-space-3); }
   .playerFacts > div { display: grid; grid-template-rows: 1fr auto; justify-content: start; gap: 2px; }
   .clockMain dd { font-size: var(--atlas-text-h2); }
 }
