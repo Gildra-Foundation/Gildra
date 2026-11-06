@@ -160,7 +160,7 @@ test("locale change waits for late POST cancellation before starting the next sc
   await auction.panel.getByRole("button", { name: auction.t("Найти улучшения", "Find upgrades"), exact: true }).click();
   await expect.poll(() => auction.requests.length).toBe(1);
   await page.getByRole("button", { name: "Private locale change", exact: true }).click();
-  const changed = page.getByRole("region", { name: auction.t("Find gear within your budget", "Найти вещи под бюджет"), exact: true });
+  const changed = page.getByRole("region", { name: auction.t("Auction House upgrades", "Улучшения с аукциона"), exact: true });
   await changed.getByRole("button", { name: auction.t("Find upgrades", "Найти улучшения"), exact: true }).click();
   await expect(changed.getByRole("button", { name: auction.t("Searching…", "Ищем вещи…"), exact: true })).toBeDisabled();
   expect(auction.requests).toHaveLength(1);
@@ -204,7 +204,7 @@ test("delayed resume POST followed by reload recovers the intended search job mo
     return entry ? JSON.parse(entry[1]).mode : null;
   })).toBe("search");
   await page.reload({ waitUntil: "networkidle" });
-  await expect(auction.panel.getByText(/Проверка найденных вариантов завершена|Evaluation of discovered options is complete/)).toBeVisible();
+  await expect(auction.panel.getByRole("button", { name: /Продолжить проверку вещей|Continue item comparisons/ })).toHaveCount(0);
   await expect(auction.panel.getByRole("alert")).toHaveCount(0);
   expect(auction.requests.filter(body => body.action === "resume")).toHaveLength(1);
   expect(auction.polls).toContain("synthetic-job-3");
@@ -278,7 +278,7 @@ test("scope change after initial response timeout retires the prior job before r
     } else await route.fallback();
   });
   await page.getByRole("button", { name: "Private locale change", exact: true }).click();
-  const changed = page.getByRole("region", { name: auction.t("Find gear within your budget", "Найти вещи под бюджет"), exact: true });
+  const changed = page.getByRole("region", { name: auction.t("Auction House upgrades", "Улучшения с аукциона"), exact: true });
   for (let step = 0; step < 3; step++) await page.clock.runFor(1000);
   await expect(changed.getByText(/Поиск отменён|Search cancelled/)).toBeVisible();
   expect(restoredPriorScope).toBe(true);

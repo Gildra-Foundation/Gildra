@@ -64,7 +64,7 @@ test("one click finishes every assembly step with fresh nonces and the chosen va
     expect(body.searchId).toBe(searchResult().searchId);
   }
   await expect(auction.assembly.getByRole("button", { name: cancelAssembly })).toHaveCount(0);
-  await expect(auction.result).toContainText(/Все сочетания свойств|All effect combinations/);
+  await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
   await page.clock.install(); await page.clock.fastForward(180_000);
   expect(assemblyRequests(auction)).toHaveLength(firstNewRequest + 3);
   await page.screenshot({ path: info.outputPath("automatic-assembly-complete.png"), fullPage: true });
