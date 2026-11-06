@@ -13,7 +13,6 @@ import { Byline } from "./valyro-ui/editorial/Byline";
 import { EditorNote, type EditorNoteKind } from "./valyro-ui/editorial/EditorNote";
 import { KeyPoints } from "./valyro-ui/editorial/KeyPoints";
 import type { ArticleAuthor } from "./valyro-ui/editorial/utils";
-import bridge from "./valyroAtlasBridge.module.css";
 import styles from "./AtlasArticleParts.module.css";
 
 type Locale = "en" | "ru";
@@ -30,7 +29,7 @@ export function AtlasByline({ locale, authors, published, updated, readingMinute
       timeZone="UTC"
       size="md"
       labels={locale === "ru" ? { by: "Автор:", and: "и", updated: "Обновлено", readingTime: (_m, f) => `${f} мин чтения` } : undefined}
-      className={clsx(bridge.scope, styles.parts, className)}
+      className={clsx(styles.parts, className)}
     />
   );
 }
@@ -43,7 +42,7 @@ export function AtlasArticleToc({ locale, items, className }: { locale: Locale; 
       offset={96}
       smooth
       labels={{ title: locale === "ru" ? "Содержание" : "Contents" }}
-      className={clsx(bridge.scope, styles.parts, styles.toc, className)}
+      className={clsx(styles.parts, styles.toc, className)}
     />
   );
 }
@@ -55,7 +54,7 @@ export function AtlasKeyPoints({ locale, items, title, className }: { locale: Lo
       variant="box"
       headingLevel={2}
       labels={{ title: title ?? (locale === "ru" ? "Главное" : "Key points") }}
-      className={clsx(bridge.scope, styles.parts, className)}
+      className={clsx(styles.parts, className)}
     />
   );
 }
@@ -69,7 +68,7 @@ export function AtlasEditorNote({ locale, kind = "update", date, title, children
       locale={intl(locale)}
       timeZone="UTC"
       labels={locale === "ru" ? { update: "Обновление", correction: "Исправление", clarification: "Уточнение", disclosure: "Раскрытие", sponsored: "Партнёрский материал" } : undefined}
-      className={clsx(bridge.scope, styles.parts, className)}
+      className={clsx(styles.parts, className)}
     >
       {children}
     </EditorNote>

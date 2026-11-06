@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Alegreya, Chakra_Petch, Inter } from "next/font/google";
 import { AtlasValyroScope } from "@gildra/atlas-ui/AtlasValyroScope";
+import { atlasRootAttributes, atlasBridgeClassName } from "@gildra/atlas-ui/atlasRoot";
 import "../globals.css";
 
 // The API console is a service page of api.gildra.net: its own root layout,
@@ -19,8 +20,8 @@ export const metadata: Metadata = {
 
 export default function ConsoleLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${ui.variable} ${atlasDisplay.variable}`} data-route-theme="wow">
-      <body><AtlasValyroScope locale="en-GB">{children}</AtlasValyroScope></body>
+    <html lang="en" className={`${display.variable} ${ui.variable} ${atlasDisplay.variable} ${atlasBridgeClassName}`} {...atlasRootAttributes} data-route-theme="wow">
+      <body><AtlasValyroScope root locale="en-GB">{children}</AtlasValyroScope></body>
     </html>
   );
 }

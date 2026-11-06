@@ -66,8 +66,8 @@ html[data-site-theme="varok"] {
   --site-muted: #d8bdb1;
   --site-subtle: #c5a397;
 }
-/* Explicit scope beats the atlas' defaults, including nested and portal scopes. */
-html :is(.gildra-atlas, [data-atlas-scope]) {
+/* Beats the atlas' defaults on the document root and on portaled theme scopes. */
+html:root, html [data-atlas-scope]:where([data-theme]) {
   --atlas-bg: var(--site-bg);
   --atlas-surface: var(--site-surface);
   --atlas-surface-raised: var(--site-raised);
@@ -95,7 +95,7 @@ html :is(.gildra-atlas, [data-atlas-scope]) {
 /* More contrast on request: one step brighter text, firmer lines (the atlas
    defaults' own block loses to the scope rule above). */
 @media (prefers-contrast: more) {
-  html :is(.gildra-atlas, [data-atlas-scope]) {
+  html:root, html [data-atlas-scope]:where([data-theme]) {
     --atlas-text: color-mix(in srgb, var(--site-text) 55%, var(--site-heading));
     --atlas-text-muted: var(--site-text);
     --atlas-text-subtle: var(--site-muted);

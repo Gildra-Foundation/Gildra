@@ -18,6 +18,7 @@
     "./clipboard": "./src/clipboard.ts",
     "./toast": "./src/toast.ts",
     "./valyroParts": "./src/valyroParts.ts",
+    "./atlasRoot": "./src/atlasRoot.ts",
     "./*.module.css": "./src/*.module.css"
   },
   "sideEffects": [

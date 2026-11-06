@@ -3,7 +3,6 @@ import clsx from "clsx";
 import styles from "./AtlasField.module.css";
 import { Checkbox, type CheckboxProps } from "./valyro-ui/forms/Checkbox";
 import { TextInput } from "./valyro-ui/forms/TextInput";
-import bridge from "./valyroAtlasBridge.module.css";
 
 /**
  * Form controls of the atlas (database filters, search, calculators): native
@@ -30,7 +29,7 @@ export function AtlasInput({ icon, className, size, prefix, ...props }: Componen
       <input className={styles.input} size={size} prefix={prefix} {...props} />
     </span>;
   }
-  return <TextInput leftIcon={icon} className={clsx(bridge.scope, className)} {...props} />;
+  return <TextInput leftIcon={icon} className={className} {...props} />;
 }
 
 export function AtlasSelect({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
@@ -43,7 +42,7 @@ export function AtlasSelect({ className, children, ...props }: SelectHTMLAttribu
 
 /** Valyro's Checkbox (a native input, so it works in plain GET forms) with its label. */
 export function AtlasCheckbox({ className, ...props }: CheckboxProps & { label: ReactNode }) {
-  return <Checkbox {...props} className={clsx(bridge.scope, className)} />;
+  return <Checkbox {...props} className={className} />;
 }
 
 export function AtlasRange({ className, ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {

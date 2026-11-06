@@ -8,11 +8,12 @@ import { RaidHubCards } from "./RaidHubCards";
 import { RaidHubMotion } from "./RaidHubMotion";
 import { raidHubStats } from "./raidHubData";
 import { raidAtlasCopy } from "./raidAtlasCopy";
+import { atlasBridgeClassName } from "@gildra/atlas-ui/atlasRoot";
 import styles from "./raidAtlasPage.module.css";
 
 export function RaidAtlasPage({ locale }: { locale: "ru" | "en" }) {
   const copy = raidAtlasCopy[locale];
-  return <AtlasFrame lang={locale} className={styles.page} still foot={false} dataAttributes={{ "data-raid-hub": true }}>
+  return <AtlasFrame lang={locale} className={`${styles.page} ${atlasBridgeClassName}`} still foot={false} dataAttributes={{ "data-raid-hub": true }}>
     <RaidHubBackdrop />
     <RaidHubMotion />
     <div className={styles.hero} data-raid-hub-hero>

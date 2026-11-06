@@ -4,7 +4,6 @@ import { cloneElement, isValidElement, useSyncExternalStore, type ReactNode } fr
 import { lessMotion, subscribeSiteMotion } from "./motionPreference";
 import clsx from "clsx";
 import { Tooltip } from "./valyro-ui/basic/Tooltip";
-import bridge from "./valyroAtlasBridge.module.css";
 import styles from "./AtlasTooltip.module.css";
 
 const reducedOnServer = () => true;
@@ -21,7 +20,7 @@ export function AtlasTooltip({ content, children, focusable = false, placement =
   const trigger = isValidElement<{ className?: string; tabIndex?: number }>(children)
     ? cloneElement(children, { className: clsx(styles.anchor, children.props.className, className), tabIndex: focusable ? 0 : children.props.tabIndex })
     : <span className={clsx(styles.anchor, className)} tabIndex={focusable ? 0 : undefined}>{children}</span>;
-  return <Tooltip content={content} placement={placement} animation={reduced ? "fade" : "spring"} delay={200} className={bridge.scope}>
+  return <Tooltip content={content} placement={placement} animation={reduced ? "fade" : "spring"} delay={200}>
     {trigger}
   </Tooltip>;
 }

@@ -3,7 +3,8 @@
 
    The landing scene and the contents book keep their own materials; every
    other route is wrapped in `.gildra-atlas` (components/motion/RouteTransitionGate)
-   and reads its look from the variables below.
+   and reads its look from the variables below, declared once on the document
+   root (and on portaled theme scopes, `[data-atlas-scope][data-theme]`).
 
    To change the look of the whole atlas, edit THIS file only:
      - colours ............ "Surfaces", "Text", "Accent", "Lines", "Status"
@@ -13,8 +14,8 @@
    never hardcode colours or font families (checked by
    `npm run atlas:check`). Catalogue and recipes: docs/llm/atlas-theme.md.
    ============================================================================= */
-.gildra-atlas,
-[data-atlas-scope] {
+:root,
+[data-atlas-scope]:where([data-theme]) {
   /* Surfaces — page → panel → raised → selected */
   --atlas-bg: #070b10;
   --atlas-surface: #0d131a;
@@ -170,14 +171,37 @@
   /* Scroll reveal of cards and section flourishes (CSS scroll-driven, no JS) */
   --atlas-reveal-shift: 14px;          /* a short rise reads as settling, not jumping */
 
-  color-scheme: dark;
-  /* Alegreya defaults to old-style figures; counters and dates read better lining.
-     Rules that use the `font:` shorthand reset this, so they repeat it. */
-  font-variant-numeric: lining-nums;
+  /* Personal tools (character folios) — dark panels, no parchment textures. */
+  --folio-ink: var(--atlas-text);
+  --folio-muted: var(--atlas-text-muted);
+  --folio-line: var(--atlas-line);
+  --folio-rubric: var(--atlas-accent);
+  --folio-paper: linear-gradient(var(--atlas-surface), var(--atlas-surface));
+  --folio-panel-paper: var(--folio-paper);
+  --folio-title: var(--atlas-font-display);
+  --folio-body: var(--atlas-font-ui);
+  --folio-medallion: none;
+  --folio-divider-image: none;
+  --folio-control-image: none;
+  --book-gutter: 24px;
+}
 
+/* The root carries the tokens, not the theme's look: <html> keeps the browser's
+   colour scheme (Valyro's data-theme on it would set dark), body and layers outside
+   the scopes stay as they were. */
+:root:root[data-theme] { color-scheme: normal; }
+
+/* The scopes' own look. Tokens live on the document root above (one declaration
+   for the whole page: an element that declares any custom property copies every
+   token declared below the root); `.gildra-atlas` / `[data-atlas-scope]` mark the
+   atlas and portaled layers. */
+.gildra-atlas,
+[data-atlas-scope] {
   /* ---------------------------------------------------------------------------
      Bridge for legacy block styles (they predate the atlas and read the old
-     short names). They follow the tokens above, so editing a token restyles
+     short names). Declared on each scope, not the root: they share names
+     with the legacy :root tokens (tokens.css) that pages outside the atlas read.
+     They follow the tokens above, so editing a token restyles
      those blocks too. New code uses the --atlas-* names only; the old
      --atlas-* aliases are gone and `npm run atlas:check` rejects them.
      ------------------------------------------------------------------------- */
@@ -197,37 +221,20 @@
   --ui: var(--atlas-font-ui);
   --wow-title: var(--atlas-font-display);
   --wow-ui: var(--atlas-font-ui);
-  /* Personal tools (character folios) — dark panels, no parchment textures. */
-  --folio-ink: var(--atlas-text);
-  --folio-muted: var(--atlas-text-muted);
-  --folio-line: var(--atlas-line);
-  --folio-faint-rule: var(--atlas-line-soft);
-  --folio-rubric: var(--atlas-accent);
-  --folio-gilt: var(--atlas-accent);
-  --folio-paper: linear-gradient(var(--atlas-surface), var(--atlas-surface));
-  --folio-panel-paper: var(--folio-paper);
-  --folio-title: var(--atlas-font-display);
-  --folio-body: var(--atlas-font-ui);
-  --folio-focus: var(--atlas-accent-strong);
-  --folio-medallion: none;
-  --folio-divider-image: none;
-  --folio-control-image: none;
-  --folio-ribbon-top: var(--atlas-surface);
-  --folio-ribbon-mid: var(--atlas-surface);
-  --folio-ribbon-bottom: var(--atlas-bg);
-  --folio-ribbon-edge: var(--atlas-line);
-  --folio-ribbon-active: var(--atlas-accent-wash);
-  --book-gutter: 24px;
+  color-scheme: dark;
+  /* Alegreya defaults to old-style figures; counters and dates read better lining.
+     Rules that use the `font:` shorthand reset this, so they repeat it. */
+  font-variant-numeric: lining-nums;
 }
 
 @media (max-width: 1179px) {
-  .gildra-atlas,
-  [data-atlas-scope] { --atlas-sticky-top: 101px; }
+  :root,
+  [data-atlas-scope]:where([data-theme]) { --atlas-sticky-top: 101px; }
 }
 /* Phones have no tab strip under the bar (one 56 px row + rule). */
 @media (max-width: 767px) {
-  .gildra-atlas,
-  [data-atlas-scope] { --atlas-sticky-top: 57px; }
+  :root,
+  [data-atlas-scope]:where([data-theme]) { --atlas-sticky-top: 57px; }
 }
 
 /* A control reached with Tab scrolls into view below the sticky bar, not under it.
@@ -250,8 +257,8 @@
 /* More contrast when the reader asks the system for it: brighter secondary text,
    firmer lines, a darker shade under text set on artwork. */
 @media (prefers-contrast: more) {
-  .gildra-atlas,
-  [data-atlas-scope] {
+  :root,
+  [data-atlas-scope]:where([data-theme]) {
     --atlas-text: #e6edf3;
     --atlas-text-muted: #d2dce5;
     --atlas-text-subtle: #a2b2c1;
@@ -290,14 +297,14 @@
 /* Keep glass readable in browsers without backdrop support, and honour readers
    who prefer opaque surfaces. The same tokens cover every component and portal. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .gildra-atlas, [data-atlas-scope] {
+  :root, [data-atlas-scope]:where([data-theme]) {
     --atlas-glass-fill: var(--atlas-surface);
     --atlas-glass-raised: var(--atlas-surface-raised);
     --atlas-glass-filter: none;
   }
 }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  .gildra-atlas, [data-atlas-scope] {
+  :root, [data-atlas-scope]:where([data-theme]) {
     --atlas-glass-fill: var(--atlas-surface);
     --atlas-glass-raised: var(--atlas-surface-raised);
     --atlas-glass-sheen: linear-gradient(transparent, transparent);

@@ -12,6 +12,7 @@ import { Alert } from "../src/valyro-ui/feedback/Alert.tsx";
 import { AtlasInput, AtlasSelect } from "../src/AtlasField.tsx";
 import { AtlasValyroSelect } from "../src/AtlasValyroSelect.tsx";
 import { AtlasValyroScope } from "../src/AtlasValyroScope.tsx";
+import { atlasRootAttributes } from "../src/atlasRoot.ts";
 import { Button } from "../src/valyro-ui/basic/Button.tsx";
 import { mergeProps } from "../src/valyro-ui/primitives/Slot.tsx";
 
@@ -95,6 +96,15 @@ test("theme scope renders stable atlas and Valyro attributes without a document 
   assert.match(html, /data-atlas-scope="true"/);
   assert.match(html, /data-mode="dark"/);
   assert.match(html, /ui-theme-scope__layers/);
+});
+
+test("root scope inherits the document's tokens instead of re-declaring the theme", () => {
+  const html = render(AtlasValyroScope, { root: true, locale: "ru", children: "Content" });
+  assert.match(html, /data-atlas-scope="true"/);
+  assert.doesNotMatch(html, /data-theme=/);
+  assert.doesNotMatch(html, /data-mode=/);
+  assert.match(html, /ui-theme-scope__layers/);
+  assert.deepEqual(atlasRootAttributes, { "data-theme": "vercel", "data-mode": "dark" });
 });
 
 // Valyro classes and data-* hooks in document order: the server-rendered atlas markup must match the vendor's.

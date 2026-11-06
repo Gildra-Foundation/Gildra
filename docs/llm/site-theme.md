@@ -13,8 +13,13 @@ art preload. The provider synchronizes other tabs and supports blocked storage.
 `HomeTheme` adapts the server's initial art/quote to the shared preference without
 owning a second selection state.
 
-`app/styles/site-theme.css` maps the character palette to atlas tokens in every
-`.gildra-atlas` and `[data-atlas-scope]`, including portalled toolbars/dialogs.
+`app/styles/site-theme.css` maps the character palette to atlas tokens on the document
+root (`<html>`, see `packages/atlas-ui/src/atlasRoot.ts`) and on portaled theme scopes
+(`[data-atlas-scope][data-theme]`); everything else, including portalled toolbars and
+dialogs, inherits them. Tokens are declared once at the root: an element that declares
+any custom property copies every token declared below the root, so do not re-declare the
+set on wrappers or controls. A subtree that re-themes atlas base tokens (raid hub accent,
+Ruby palette) also carries `atlasBridgeClassName` so the Valyro bridge follows it.
 Arthas uses frost blue; Illidan, Garek and Varok follow the homepage's violet,
 green and coral palettes. Fel particles and transition light retain their green.
 Class, role, item-quality and status colours are unchanged.

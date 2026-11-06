@@ -1,5 +1,5 @@
-/* Valyro token adapter: each control resolves the surrounding atlas theme,
-   including nested Characters surfaces and scoped portal content. */
+/* Valyro token adapter, declared once on the document root (atlasRoot.ts) and on
+   scopes that re-declare the theme (portaled AtlasValyroScope): controls inherit it. */
 .scope.scope.scope {
   --ui-page-bg: transparent;
   --ui-font-sans: var(--atlas-font-ui);
@@ -134,7 +134,15 @@
   .scope.scope.scope { --ui-button-transform-active: none; --ui-duration-fast: 0ms; --ui-duration: 0ms; --ui-duration-slow: 0ms; }
 }
 
-.root:global(.ui-theme-scope) { background: transparent; font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+.root:global(.ui-theme-scope) {
+  background: transparent;
+  font-size: var(--atlas-text-body);
+  line-height: var(--atlas-leading-body);
+  /* The root scope has no data-theme of its own: the theme hooks' native tints (tokens.css). */
+  accent-color: var(--ui-accent);
+  scrollbar-color: color-mix(in srgb, var(--ui-fg) 30%, transparent) transparent;
+}
+:global(html[data-motion="reduced"]).scope.scope.scope,
 :global(html[data-motion="reduced"]) .scope.scope.scope {
   --ui-button-transform-active: none;
   --ui-duration-fast: 0ms;

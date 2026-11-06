@@ -11,7 +11,9 @@
 /* Inner pages sit below the 64 px top bar: no extra scroll on short pages. */
 :global(.gildra-atlas) > .system,
 :global(.gildra-atlas) .frame { min-height: calc(100dvh - var(--atlas-sticky-top) - var(--cookie-notice-space, 0px)); }
-.frame[data-theme="wow"] :global([data-platform-home]) {
+/* Doubled class: the specificity the old `[data-theme="wow"]` gave (the attribute matched
+   Valyro's theme hooks and reset them under the frame). */
+.frame.frame :global([data-platform-home]) {
   --ph-gold: #c58b36;
   --ph-gold-soft: #f0cb78;
   --ph-line: rgba(172, 120, 46, .46);

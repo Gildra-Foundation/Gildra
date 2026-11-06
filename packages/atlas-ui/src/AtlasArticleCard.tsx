@@ -2,7 +2,6 @@
 
 import clsx from "clsx";
 import { ArticleCard, type ArticleCardLabels, type ArticleCardProps } from "./valyro-ui/editorial/ArticleCard";
-import bridge from "./valyroAtlasBridge.module.css";
 import styles from "./AtlasArticleCard.module.css";
 
 const ru: Partial<ArticleCardLabels> = {
@@ -21,7 +20,7 @@ export function AtlasArticleCard({ locale, className, labels, ...props }: Articl
       locale={locale === "ru" ? "ru-RU" : "en-GB"}
       timeZone="UTC"
       labels={{ ...(locale === "ru" ? ru : {}), ...labels }}
-      className={clsx(bridge.scope, styles.card, className)}
+      className={clsx(styles.card, className)}
     />
   );
 }
