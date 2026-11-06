@@ -1,3 +1,0 @@
-/* atlas:strict — AtlasSwap: a block that switches its content in place (swapMotion.ts). */
-/* A grid or flex item: wide content (a scrolling table) must not stretch it. */
-.swap { min-width: 0; }

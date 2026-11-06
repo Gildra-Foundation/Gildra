@@ -1,9 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import clsx from "clsx";
 import { useSwapMotion } from "./swapMotion";
-import styles from "./AtlasSwap.module.css";
 
 /**
  * A box whose content switches in place (a filtered list, the open source of a
@@ -20,5 +18,8 @@ export function AtlasSwap({ swapKey, direction = 0, className, style, children }
   children: ReactNode;
 }) {
   const ref = useSwapMotion<HTMLDivElement>(swapKey, direction);
-  return <div ref={ref} className={clsx(styles.swap, className)} style={style} data-atlas-swap>{children}</div>;
+  // min-width 0 inline, not in a stylesheet: a new CSS module in the kit regroups the CSS chunks of
+  // every page and can reorder rules of equal weight. As a grid or flex item, wide content (a
+  // scrolling table) must not stretch the box.
+  return <div ref={ref} className={className} style={{ minWidth: 0, ...style }} data-atlas-swap>{children}</div>;
 }
