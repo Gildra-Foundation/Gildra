@@ -7,7 +7,8 @@ type ImportSpec = { classId: number; nodes: ImportNode[] };
 type ImportSnapshot = { build: string; generatedAt: string; serializationVersion: number; classes: Record<string, { order: number[]; hash: string }>; specs: Record<string, ImportSpec> };
 // The generated tuple contract is checked by the snapshot generator and tests.
 export const talentImportSnapshot = snapshot as unknown as ImportSnapshot;
-export const maxTalentStringLength = 4096;
+import { maxTalentStringLength } from "./talentStringLimit";
+export { maxTalentStringLength };
 export type TalentImportError = "invalid" | "version" | "spec" | "tree";
 export type ImportedTalents = { ok: true; code: string; classId: number; specId: number; selectedSpellIds: number[]; hashChecked: boolean };
 export type TalentImportResult = ImportedTalents | { ok: false; error: TalentImportError };

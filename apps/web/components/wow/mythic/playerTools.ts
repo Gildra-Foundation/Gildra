@@ -1,6 +1,8 @@
 import data from "@/lib/data/wow/mythicPlayerTools";
 import type { PullMechanic, PullRole } from "./mdtPullIntel";
-import { decodeMythicTalentImport, maxTalentStringLength, type TalentSpellSelection, type TalentImportResult } from "./mythicTalentImport";
+import type { TalentSpellSelection } from "./mythicTalentImport";
+// Not the decoder: it carries the talent tree snapshot, which this page-wide module must not pull in.
+import { maxTalentStringLength } from "./talentStringLimit";
 
 export type Localized = { ru: string; en: string };
 export type EffectType = "magic" | "curse" | "poison" | "disease" | "bleed" | "enrage";
@@ -24,14 +26,6 @@ export function parsePlayerProfile(raw: unknown): PlayerProfile {
     if (spec && value.talentString !== undefined && value.talentString !== "") profile.talentString = typeof value.talentString === "string" && value.talentString.length <= maxTalentStringLength ? value.talentString : "!";
     return profile;
   } catch { return { classId: null, specId: null }; }
-}
-
-/** Revalidate saved strings against today's topology. A stale import never restores optional suggestions silently. */
-export function talentsForProfile(profile: PlayerProfile): { selection: TalentSpellSelection; result: TalentImportResult | null } {
-  if (!profile.talentString) return { selection: undefined, result: null };
-  const decoded = decodeMythicTalentImport(profile.talentString);
-  const result: TalentImportResult = decoded.ok && (decoded.specId !== profile.specId || decoded.classId !== profile.classId) ? { ok: false, error: "spec" } : decoded;
-  return { selection: new Set(result.ok ? result.selectedSpellIds : []), result };
 }
 
 const kinds: Partial<Record<PullMechanic["action"], ToolKind>> = { "Кик": "interrupt", "Стоп": "stop", "Диспел": "dispel", "Пурж": "purge", "Защита": "defend" };
