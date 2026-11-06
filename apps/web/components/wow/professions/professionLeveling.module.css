@@ -1,0 +1,214 @@
+/* atlas:strict — Profession leveling as a step-by-step guide (design.md §3.6): a sticky painted summary with the controls,
+   the steps as glass cards on a timeline, the shopping list on a plaque. Item names keep their quality colour, recipe
+   difficulty its game colours (--difficulty-*), the profession its accent (--profession-accent). */
+
+.leveling {
+  --leveling-accent: var(--profession-accent, var(--atlas-accent));
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(19rem, 23rem); grid-template-areas: "main summary" "shopping shopping";
+  gap: var(--atlas-space-6) var(--atlas-space-6); align-items: start; min-width: 0;
+}
+.visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.muted { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.subNote { display: block; margin-top: 2px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-weight: 400; }
+.notice { margin: 0 0 var(--atlas-space-4); padding: var(--atlas-space-3) var(--atlas-space-4); border-inline-start: 2px solid var(--leveling-accent); background: var(--atlas-glass-fill, var(--atlas-surface)); color: var(--atlas-text); font-size: var(--atlas-text-small); }
+
+/* Summary: sticky on wide screens. */
+.summary {
+  grid-area: summary; position: sticky; top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); display: grid; gap: var(--atlas-space-4);
+  max-height: calc(100vh - var(--atlas-sticky-top) - var(--atlas-space-6)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
+  padding: 30px 30px 32px;
+}
+.summaryHead { display: flex; align-items: center; gap: var(--atlas-space-3); }
+.summaryIcon { display: inline-flex; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--leveling-accent) 55%, transparent)); }
+.summaryRange { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h2) / 1 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
+.total { display: grid; gap: var(--atlas-space-1); padding: var(--atlas-space-3) 0; border-block: 1px solid var(--material-line, var(--atlas-line-soft)); }
+.totalLabel, .fieldLabel { margin: 0; padding: 0; color: var(--material-light, var(--atlas-accent)); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; text-shadow: 0 1px 3px var(--atlas-bg); }
+.totalValue { font: var(--atlas-weight-display) var(--atlas-text-h2) / 1.1 var(--atlas-font-display); }
+.totalValue img { width: 20px; height: 20px; }
+.totalParts { display: grid; gap: 2px; margin: var(--atlas-space-1) 0 0; font-size: var(--atlas-text-small); }
+.totalParts div { display: flex; justify-content: space-between; gap: var(--atlas-space-3); }
+.totalParts dt { color: var(--atlas-text-muted); }
+.totalParts dd { margin: 0; }
+
+/* Overview of the route: one segment per step, a link to it. */
+.overview { display: flex; gap: 2px; height: 12px; margin: 0; padding: 0; list-style: none; }
+.overview li { min-width: 4px; flex-basis: 0; }
+.overviewLink { display: block; height: 100%; border-radius: 1px; background: color-mix(in srgb, var(--leveling-accent) 80%, var(--atlas-bg)); transition: filter var(--atlas-duration-fast) var(--atlas-ease); }
+.overview li:nth-child(even) .overviewLink { background: color-mix(in srgb, var(--leveling-accent) 48%, var(--atlas-bg)); }
+.overviewLink:hover { filter: brightness(1.3); }
+.overviewLink:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.overviewGap { border: 1px dashed var(--atlas-line); border-radius: 1px; }
+.overviewScale { display: flex; justify-content: space-between; margin-top: calc(var(--atlas-space-3) * -1); color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
+
+.field { display: grid; gap: var(--atlas-space-2); }
+.skillInput { display: flex; align-items: center; gap: var(--atlas-space-3); }
+.range { flex: 1; min-width: 0; accent-color: var(--leveling-accent); }
+.number, .have {
+  min-height: var(--atlas-control-height); padding: 0 var(--atlas-space-3); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control);
+  background: color-mix(in srgb, var(--atlas-bg) 70%, transparent); color: var(--atlas-text-strong); font: inherit; font-variant-numeric: tabular-nums;
+}
+.number { width: 5.5rem; text-align: right; }
+.have { width: 100%; max-width: 7rem; min-height: 40px; text-align: right; }
+.number:focus-visible, .have:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent)); outline-offset: 1px; }
+
+.sources { min-width: 0; margin: 0; padding: 0; border: 0; display: grid; gap: var(--atlas-space-2); }
+.sources legend { display: flex; align-items: center; gap: var(--atlas-space-2); }
+.legendButton { display: inline-grid; place-items: center; width: 28px; height: 28px; margin: -6px 0; padding: 0; border: 1px solid var(--material-line, var(--atlas-line)); border-radius: 50%; background: transparent; color: var(--material-light, var(--atlas-accent)); cursor: pointer; }
+.legendButton[aria-expanded="true"] { background: color-mix(in srgb, var(--leveling-accent) 22%, var(--atlas-bg)); color: var(--atlas-text-strong); }
+.legendButton:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent)); outline-offset: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); }
+.chip { position: relative; display: inline-flex; }
+.chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.chip span {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 var(--atlas-space-3); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control);
+  color: var(--atlas-text-muted); font-size: var(--atlas-text-small); font-weight: 600; background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
+}
+.chip span svg { color: var(--source-colour); opacity: .6; }
+.chip input:checked + span { border-color: color-mix(in srgb, var(--source-colour) 70%, transparent); color: var(--atlas-text-strong); background: color-mix(in srgb, var(--source-colour) 16%, var(--atlas-bg)); }
+.chip input:checked + span svg { opacity: 1; }
+.chip input:focus-visible + span { outline: 2px solid var(--material-light, var(--atlas-accent)); outline-offset: 2px; }
+.legend { display: grid; gap: var(--atlas-space-2); margin: var(--atlas-space-1) 0 0; padding: var(--atlas-space-3); border: 1px solid var(--material-line, var(--atlas-line-soft)); background: color-mix(in srgb, var(--atlas-bg) 60%, transparent); font-size: var(--atlas-text-meta); line-height: 1.45; }
+.legend[hidden] { display: none; }
+.legend dt { color: var(--atlas-text-strong); font-weight: 650; }
+.legend dd { margin: 0; color: var(--atlas-text-muted); }
+
+/* Colour of each recipe source: chips, step learn lines. */
+.leveling [data-source="start"] { --source-colour: var(--atlas-text-muted); }
+.leveling [data-source="trainer"] { --source-colour: var(--atlas-accent-2); }
+.leveling [data-source="research"] { --source-colour: var(--leveling-accent); }
+.leveling [data-source="specialization"] { --source-colour: var(--atlas-positive); }
+.leveling [data-source="vendor"] { --source-colour: var(--atlas-caution); }
+.leveling [data-source="quest"] { --source-colour: var(--atlas-info); }
+.leveling [data-source="drop"] { --source-colour: var(--atlas-negative); }
+
+.difficulty { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1) var(--atlas-space-3); margin: 0; padding: 0; list-style: none; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.difficulty li { display: inline-flex; align-items: center; gap: 6px; }
+.difficulty li::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--chip); }
+.difficulty [data-difficulty="orange"] { --chip: var(--difficulty-orange); }
+.difficulty [data-difficulty="yellow"] { --chip: var(--difficulty-yellow); }
+.difficulty [data-difficulty="green"] { --chip: var(--difficulty-green); }
+.difficulty [data-difficulty="grey"] { --chip: var(--difficulty-grey); }
+.toShopping { display: inline-flex; align-items: center; gap: var(--atlas-space-2); justify-self: start; min-height: 44px; color: var(--material-light, var(--atlas-accent)); font-size: var(--atlas-text-small); font-weight: 650; text-decoration: none; }
+.toShopping:hover { text-decoration: underline; text-underline-offset: .2em; }
+.toShopping:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent)); outline-offset: 2px; }
+
+/* Steps on a timeline. */
+.main { grid-area: main; min-width: 0; }
+.steps { display: grid; gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.step { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: var(--atlas-space-4); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
+.step::before {
+  content: ""; position: absolute; inset-block: 44px calc(var(--atlas-space-4) * -1); inset-inline-start: 21px; width: 2px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--leveling-accent) 70%, transparent), color-mix(in srgb, var(--leveling-accent) 18%, transparent));
+}
+.step:last-child::before { inset-block-end: 24px; }
+.stepMarker {
+  position: relative; display: grid; place-items: center; width: 44px; height: 44px; margin-top: var(--atlas-space-4); border: 2px solid color-mix(in srgb, var(--leveling-accent) 75%, var(--atlas-text-strong));
+  border-radius: 50%; background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--leveling-accent) 55%, var(--atlas-bg)), var(--atlas-bg) 75%);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--leveling-accent) 35%, transparent);
+  color: var(--atlas-text-strong); font: var(--atlas-weight-display) 1.125rem / 1 var(--atlas-font-display); font-variant-numeric: lining-nums; text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.stepCard {
+  display: grid; gap: var(--atlas-space-4); min-width: 0; padding: var(--atlas-space-5); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius);
+  border-top: 2px solid color-mix(in srgb, var(--leveling-accent) 55%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--leveling-accent) 7%, transparent), transparent 60%), var(--atlas-glass-fill, var(--atlas-surface));
+  box-shadow: var(--atlas-glass-depth, none);
+}
+.stepHead { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-4); }
+.stepIcon { --material-icon-edge: var(--profession-quality, var(--atlas-line)); display: inline-flex; border-radius: var(--atlas-radius); }
+.stepTitle { display: grid; gap: 2px; min-width: 0; }
+.stepRange { color: var(--leveling-accent); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); font-variant-numeric: tabular-nums; }
+.stepName { margin: 0; color: var(--profession-quality-text, var(--atlas-text-strong)); font: var(--atlas-weight-display) var(--atlas-text-title, 1.25rem) / var(--atlas-leading-snug) var(--atlas-font-display); overflow-wrap: anywhere; text-shadow: 0 1px 3px var(--atlas-bg); }
+.stepName a, .shopName a, .reagentName { color: inherit; text-decoration: none; }
+.stepName a:hover, .shopName a:hover, a.reagentName:hover { text-decoration: underline; text-underline-offset: .18em; }
+.stepName a:focus-visible, .shopName a:focus-visible, a.reagentName:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.stepCategory { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.stepNumbers { display: grid; justify-items: end; gap: 2px; text-align: right; }
+.stepCrafts { color: var(--atlas-text-strong); font: var(--atlas-weight-display) 1.375rem / 1.1 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.stepCost { font-size: var(--atlas-text-small); }
+
+/* Difficulty band. */
+.band { display: grid; gap: 4px; }
+.bandTrack { position: relative; height: 10px; border-radius: 5px; overflow: hidden; background: var(--atlas-surface-sunken); }
+.bandTrack > span { position: absolute; inset-block: 0; }
+.bandOrange { inset-inline-start: 0; background: color-mix(in srgb, var(--difficulty-orange) 55%, var(--atlas-bg)); }
+.bandYellow { background: color-mix(in srgb, var(--difficulty-yellow) 50%, var(--atlas-bg)); }
+.bandGreen { background: color-mix(in srgb, var(--difficulty-green) 50%, var(--atlas-bg)); }
+.bandGrey { inset-inline-end: 0; background: color-mix(in srgb, var(--difficulty-grey) 35%, var(--atlas-bg)); }
+.bandWindow { border-radius: 5px; box-shadow: inset 0 0 0 2px var(--atlas-text-strong), 0 0 10px color-mix(in srgb, var(--atlas-text-strong) 40%, transparent); background: color-mix(in srgb, var(--atlas-text-strong) 14%, transparent); }
+.bandScale { position: relative; height: 1rem; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
+.bandScale span { position: absolute; transform: translateX(-50%); }
+.bandScale span:first-child { transform: translateX(-20%); }
+.bandScale span:last-child { transform: translateX(-80%); }
+.bandScale span.bandScaleOne { transform: translateX(-50%); white-space: nowrap; }
+
+/* Reagents as chips. */
+.reagents { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.reagent {
+  --material-icon-edge: var(--profession-quality, var(--atlas-line)); display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 40px; padding: 4px var(--atlas-space-3) 4px 4px;
+  border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius-control); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent); font-size: var(--atlas-text-small);
+}
+.reagentName { color: var(--profession-quality-text, var(--atlas-text-strong)); font-weight: 600; }
+.reagentQty { color: var(--atlas-text-strong); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* How the recipe is learned. */
+.learn { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); padding: var(--atlas-space-3); border-radius: var(--atlas-radius);
+  border-inline-start: 3px solid color-mix(in srgb, var(--source-colour) 80%, transparent); background: color-mix(in srgb, var(--source-colour) 8%, transparent); }
+.learnIcon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: color-mix(in srgb, var(--source-colour) 20%, var(--atlas-bg)); color: var(--source-colour); }
+.learnBody { display: grid; gap: 2px; min-width: 0; }
+.learnKind { color: var(--source-colour); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.learnText { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); line-height: 1.45; }
+.learnNote { color: var(--atlas-text-muted); }
+.learnExtra { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-1) var(--atlas-space-3); font-size: var(--atlas-text-small); }
+.learnWay { display: inline-flex; align-items: center; gap: var(--atlas-space-1); color: var(--source-colour); }
+.cost { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-1) var(--atlas-space-3); }
+.currency { display: inline-flex; align-items: center; gap: 4px; color: var(--atlas-text-strong); font-variant-numeric: tabular-nums; }
+.currency img { border-radius: 2px; }
+.currencyName { color: var(--atlas-text-muted); }
+.renown { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--atlas-space-2); border: 1px solid color-mix(in srgb, var(--atlas-caution) 45%, transparent); border-radius: 12px; color: var(--atlas-caution); font-size: var(--atlas-text-meta); font-weight: 600; }
+
+/* Shopping list. */
+.shopping { grid-area: shopping; display: grid; gap: var(--atlas-space-5); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
+.shoppingTitle { display: flex; align-items: center; gap: var(--atlas-space-2); margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-6)); }
+.shoppingTitle svg { color: var(--material-light, var(--atlas-accent)); }
+.shopGroup { display: grid; gap: var(--atlas-space-2); }
+.shopGroupTitle { display: flex; align-items: center; gap: var(--atlas-space-2); margin: 0; color: var(--material-light, var(--atlas-accent)); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.shopList { display: grid; margin: 0; padding: 0; list-style: none; }
+.shopRow { display: grid; grid-template-columns: minmax(0, 1fr) 6rem 8rem 10rem; align-items: center; gap: var(--atlas-space-3); min-height: 56px; padding: var(--atlas-space-2) var(--atlas-space-2); border-bottom: 1px solid var(--atlas-line-soft); }
+.shopRow[data-done] .shopItem { opacity: .55; }
+.shopItem { --material-icon-edge: var(--profession-quality, var(--atlas-line)); display: inline-flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.shopName { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px var(--atlas-space-2); min-width: 0; color: var(--profession-quality-text, var(--atlas-text-strong)); font-weight: 600; font-size: var(--atlas-text-small); text-shadow: 0 1px 3px var(--atlas-bg); }
+.shopNeed { color: var(--atlas-text-strong); font-weight: 650; font-variant-numeric: tabular-nums; text-align: right; }
+.shopHave { display: flex; justify-content: flex-end; }
+.shopCost { text-align: right; font-size: var(--atlas-text-small); }
+.shopLabel { display: none; }
+.shopTotal { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: baseline; gap: var(--atlas-space-2) var(--atlas-space-6); padding-top: var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.shopTotalPart { display: inline-flex; gap: var(--atlas-space-2); align-items: baseline; }
+.shopTotalValue { display: inline-flex; gap: var(--atlas-space-3); align-items: baseline; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.2 var(--atlas-font-display); }
+
+@media (max-width: 1100px) {
+  .leveling { grid-template-columns: minmax(0, 1fr); grid-template-areas: "summary" "main" "shopping"; }
+  .summary { position: relative; top: auto; max-height: none; overflow: visible; }
+}
+@media (max-width: 600px) {
+  .summary { padding: 24px 20px 26px; }
+  .step { grid-template-columns: minmax(0, 1fr); }
+  .step::before, .stepMarker { display: none; }
+  .stepCard { padding: var(--atlas-space-4); }
+  .stepHead { grid-template-columns: auto minmax(0, 1fr); }
+  .stepNumbers { grid-column: 1 / -1; grid-auto-flow: column; justify-content: space-between; align-items: baseline; padding-top: var(--atlas-space-2); border-top: 1px solid var(--atlas-line-soft); }
+  .learn { grid-template-columns: auto minmax(0, 1fr); }
+  .learnWay { grid-column: 2; }
+  .shopRow { grid-template-columns: repeat(3, minmax(0, 1fr)); padding-inline: 0; }
+  .shopItem { grid-column: 1 / -1; }
+  .shopNeed, .shopCost { text-align: left; }
+  .shopNeed, .shopHave, .shopCost { display: grid; gap: 2px; justify-content: start; }
+  .shopLabel { display: block; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-weight: 400; }
+  .have { max-width: 6rem; }
+}
+@media (prefers-reduced-motion: reduce) { .overviewLink { transition: none; } }
+:global([data-motion="reduced"]) .overviewLink, :global([data-ui-motion="reduce"]) .overviewLink { transition: none; }
+@media (forced-colors: active) {
+  .chip input:checked + span { border: 2px solid Highlight; }
+  .bandWindow, .stepCard, .learn { border: 1px solid CanvasText; }
+  .stepMarker { border-color: CanvasText; background: Canvas; box-shadow: none; }
+}

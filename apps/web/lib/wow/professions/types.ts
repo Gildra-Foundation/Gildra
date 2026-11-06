@@ -1,7 +1,7 @@
 /** Data of one Midnight profession page, built by scripts/build-wow-professions.mjs into data/wow/professions/<slug>.json. */
 export type L10n = { en: string; ru: string };
 export type ProfessionKind = "crafting" | "gathering" | "secondary";
-/** How a recipe is learned. "research" — unlocked at the profession's own station in Silvermoon. */
+/** How a recipe is learned. "research" — a discovery: it opens by itself while working the profession (alchemy: at a station). */
 export type RecipeSource = "start" | "trainer" | "research" | "specialization" | "vendor" | "quest" | "drop";
 
 export type ProfessionItem = {
@@ -30,7 +30,24 @@ export type ProfessionRecipe = {
   /** [rank-1 item id, quantity per craft]. */
   reagents: [number, number][];
   output?: { item: number; qty: number; ranks?: number[] };
+  learn?: RecipeLearn;
 };
+
+/** An NPC or station; the waypoint only when its world map is known. */
+export type RecipePlace = { npc: number; name: L10n; zone?: L10n; map?: number; x?: number; y?: number };
+export type RecipeCost = { gold?: number; currencies?: [number, number][]; items?: [number, number][] };
+export type RecipeDrop = { kind: "npc" | "object" | "container" | "zone" | "world"; name?: L10n; zone?: L10n };
+/** Where and for what a recipe is learned (scripts/build-wow-profession-sources.mjs). */
+export type RecipeLearn = {
+  /** Profession skill at which the recipe can be learned. */
+  skill?: number;
+  vendors?: RecipePlace[];
+  cost?: RecipeCost;
+  renown?: { faction: L10n; rank: number };
+  drops?: RecipeDrop[];
+  station?: RecipePlace;
+};
+export type ProfessionCurrency = { name: L10n; icon: string | null };
 
 export type ProfessionPlace = { npc: number; name: L10n; map: number; zone: L10n; x: number; y: number };
 export type KnowledgeKind = "quest" | "treatise" | "cache" | "gathering" | "disenchanting" | "book";
@@ -59,6 +76,8 @@ export type ProfessionData = {
   knowledge: { weekly: KnowledgeSource[]; oneTime: KnowledgeSource[]; treasures: KnowledgeTreasure[] };
   specializations: SpecializationNode[];
   items: Record<string, ProfessionItem>;
+  /** Currencies and items vendors take for recipes; items keyed `item:<id>`. */
+  currencies?: Record<string, ProfessionCurrency>;
 };
 
 export type ProfessionSummary = { slug: string; kind: ProfessionKind; name: L10n; icon: string; recipes: number; treasures: number; specializations: number };

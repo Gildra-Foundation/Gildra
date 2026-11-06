@@ -14,12 +14,14 @@
  *    extracted once into data/wow/professions/sources/wowhead-recipes.json so rebuilds cost nothing;
  *  - Wowhead tooltips (public JSON): Russian item names, icons, NPC names and coordinates;
  *  - HandyNotes: Midnight Treasures (pinned commit): treasure coordinates and flag quests;
- *  - sources/curated.json: trainers and book vendors checked on Wowhead.
+ *  - sources/curated.json: trainers and book vendors checked on Wowhead;
+ *  - sources/recipe-sources.json: where each recipe is learned (scripts/build-wow-profession-sources.mjs).
  * Caches live in .artifacts/professions-cache (git-ignored).
  */
 import fs from "node:fs";
 import path from "node:path";
 import { parseHandyNotesKnowledge, parseWowheadSpellList } from "./wow-professions-parsers.mjs";
+import { applyRecipeSources } from "./wow-profession-sources.mjs";
 
 const here = path.dirname(new URL(import.meta.url).pathname);
 const web = path.resolve(here, "..");
@@ -514,6 +516,8 @@ await Promise.all(itemList.map(async (id) => {
 /* ---------------- write ---------------- */
 
 fs.mkdirSync(outDir, { recursive: true });
+const recipeSourcesFile = path.join(sourcesDir, "recipe-sources.json");
+const recipeSources = fs.existsSync(recipeSourcesFile) ? JSON.parse(fs.readFileSync(recipeSourcesFile, "utf8")) : null;
 const index = [];
 for (const result of results) {
   const { profession } = result;
@@ -524,11 +528,12 @@ for (const result of results) {
   for (const id of result.gathered ?? []) used.add(id);
   const ownItems = Object.fromEntries([...used].sort((a, b) => a - b).filter((id) => itemInfo.has(id)).map((id) => [id, itemInfo.get(id)]));
   for (const r of result.recipes) for (const [id] of r.reagents) if (!ownItems[id]) warn(`${profession.slug}: reagent ${id} has no item record`);
-  const data = {
+  const raw = {
     slug: profession.slug, id: profession.id, kind: profession.kind, name: result.name, icon: profession.icon, maxSkill: 100,
     trainer: result.trainer, recipes: result.recipes, ...(result.gathered ? { gathered: result.gathered } : {}),
     knowledge: result.knowledge, specializations: result.specializations, items: ownItems,
   };
+  const data = recipeSources ? applyRecipeSources(raw, recipeSources) : raw;
   fs.writeFileSync(path.join(outDir, `${profession.slug}.json`), `${JSON.stringify(data)}\n`);
   index.push({ slug: profession.slug, kind: profession.kind, name: result.name, icon: profession.icon, recipes: result.recipes.length,
     treasures: result.knowledge.treasures.length, specializations: result.specializations.length });

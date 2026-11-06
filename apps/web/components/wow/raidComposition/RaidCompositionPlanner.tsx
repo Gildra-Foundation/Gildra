@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type KeyboardEvent } from "react";
 import Image from "next/image";
-import { Check, Eraser, Users, X } from "lucide-react";
+import { Check, Crosshair, Eraser, HeartPulse, Shield, Swords, Users, X } from "lucide-react";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 import { MaterialSlotButton } from "@/components/wow/shared/material/MaterialButtonBase";
 import material from "@/components/wow/shared/material/material.module.css";
 import { LibraryHoverPreview } from "@/components/library/LibraryHoverPreview";
 import { libraryRecordPath } from "@/lib/library/recordPath";
-import { specIcon } from "@/lib/games/wow/assets";
+import { classIcon, specIcon } from "@/lib/games/wow/assets";
 import {
   ARMORS, COVERAGE, GROUP_SIZE, PLANNER_CLASSES, RAID_SIZES, ROLES, TYPICAL_MYTHIC, armorCounts, coverageOf, decodeRoster,
   emptyRoster, encodeRoster, isRaidSize, resizeRoster, roleCounts, specBySlug, spellOf,
@@ -31,6 +31,8 @@ function specName(spec: PlannerSpec, lang: Lang, copy: RaidCompositionCopy) {
 }
 const className = (spec: PlannerSpec, lang: Lang) => (lang === "ru" ? spec.classNameRu : spec.className);
 const shortSpec = (spec: PlannerSpec, lang: Lang) => (lang === "ru" ? spec.specNameRu : spec.specName);
+
+const ROLE_ICONS = { tank: Shield, healer: HeartPulse, melee: Swords, ranged: Crosshair } as const;
 
 function SpecIcon({ spec, size }: { spec: PlannerSpec; size: number }) {
   const src = specIcon(spec.specName, spec.classSlug, spec.specShort);
@@ -235,14 +237,17 @@ export function RaidCompositionPlanner({ lang, libraryOpen, plaqueStyle, buttonS
           <ul className={styles.classes}>
             {PLANNER_CLASSES.map(({ classKey, specs }) => (
               <li key={classKey} className={styles.classCard} data-wide={specs.length > 3 || undefined} style={classStyle(classKey)}>
-                <span className={styles.className}>{className(specs[0], lang)}</span>
+                <span className={styles.className}>
+                  {classIcon(CLASS_TOKENS[classKey] ?? classKey) ? <Image className={styles.classIcon} src={classIcon(CLASS_TOKENS[classKey] ?? classKey)!} alt="" width={22} height={22} /> : null}
+                  {className(specs[0], lang)}
+                </span>
                 <span className={styles.classSpecs}>
                   {specs.map((spec) => {
                     const name = specName(spec, lang, copy);
                     return (
                       <button key={spec.slug} type="button" className={styles.paletteSpec} title={name} aria-label={copy.add(name)}
                         draggable onDragStart={startDrag({ kind: "spec", slug: spec.slug })} onDragEnd={endDrag} onClick={() => addSpec(spec.slug)}>
-                        <SpecIcon spec={spec} size={40} />
+                        <SpecIcon spec={spec} size={44} />
                       </button>
                     );
                   })}
@@ -253,14 +258,24 @@ export function RaidCompositionPlanner({ lang, libraryOpen, plaqueStyle, buttonS
         </div>
 
         <dl className={styles.summary}>
-          <div className={styles.summaryItem}><dt>{copy.players}</dt><dd>{players}<span className={styles.summaryMax}> / {max}</span></dd></div>
-          {ROLES.map((role) => <div key={role} className={styles.summaryItem}><dt>{copy.roles[role]}</dt><dd>{roles[role]}</dd></div>)}
+          <div className={styles.summaryItem} data-role="players">
+            <dt><Users aria-hidden="true" />{copy.players}</dt>
+            <dd>{players}<span className={styles.summaryMax}> / {max}</span></dd>
+            <span className={styles.summaryBar} aria-hidden="true"><span style={{ inlineSize: `${(players / max) * 100}%` }} /></span>
+          </div>
+          {ROLES.map((role) => {
+            const Icon = ROLE_ICONS[role];
+            return <div key={role} className={styles.summaryItem} data-role={role}><dt><Icon aria-hidden="true" />{copy.roles[role]}</dt><dd>{roles[role]}</dd></div>;
+          })}
         </dl>
 
         <div className={styles.groups} data-groups={groups}>
           {Array.from({ length: groups }, (_, group) => (
             <section key={group} className={styles.group} aria-labelledby={`raid-group-${group + 1}`}>
-              <h3 id={`raid-group-${group + 1}`} className={styles.groupTitle}>{copy.group(group + 1)}</h3>
+              <h3 id={`raid-group-${group + 1}`} className={styles.groupTitle}>
+                {copy.group(group + 1)}
+                <span className={styles.groupCount}>{roster.slice(group * GROUP_SIZE, group * GROUP_SIZE + GROUP_SIZE).filter(Boolean).length}/{GROUP_SIZE}</span>
+              </h3>
               <ol className={styles.slots}>
                 {Array.from({ length: GROUP_SIZE }, (_, slot) => {
                   const index = group * GROUP_SIZE + slot;
@@ -277,7 +292,7 @@ export function RaidCompositionPlanner({ lang, libraryOpen, plaqueStyle, buttonS
                         onClick={() => pressSlot(index)} onKeyDown={(event) => slotKey(index, event)}>
                         {spec ? (
                           <>
-                            <SpecIcon spec={spec} size={32} />
+                            <SpecIcon spec={spec} size={36} />
                             <span className={styles.slotText}>
                               <span className={styles.slotSpec}>{shortSpec(spec, lang)}</span>
                               <span className={styles.slotClass}>{className(spec, lang)}</span>
@@ -298,9 +313,23 @@ export function RaidCompositionPlanner({ lang, libraryOpen, plaqueStyle, buttonS
 
       <section className={`${material.plaque} ${styles.plaque}`} style={plaqueStyle} aria-labelledby="raid-coverage-title">
         <h2 id="raid-coverage-title" className={material.plaqueTitle}>{copy.coverageTitle}</h2>
+        <ul className={styles.score} aria-label={copy.coverageTitle}>
+          {COVERAGE.map((group) => {
+            const covered = group.items.filter((item) => (coverage.get(item.id)?.providers.length ?? 0) > 0).length;
+            return <li key={group.id} className={styles.scoreItem} data-group={group.id} data-full={covered === group.items.length || undefined}>
+              <a href={`#coverage-${group.id}`} className={styles.scoreLink}>
+                <span className={styles.scoreName}>{copy.groups[group.id]}</span>
+                <span className={styles.scoreValue}>{covered}<span>/{group.items.length}</span></span>
+                <span className={styles.scoreBar} aria-hidden="true">
+                  {group.items.map((item) => <span key={item.id} data-on={(coverage.get(item.id)?.providers.length ?? 0) > 0 || undefined} />)}
+                </span>
+              </a>
+            </li>;
+          })}
+        </ul>
         <div className={styles.coverage} id="raid-coverage">
           {COVERAGE.map((group) => (
-            <section key={group.id} className={styles.coverageGroup} aria-labelledby={`coverage-${group.id}`}>
+            <section key={group.id} className={styles.coverageGroup} data-group={group.id} aria-labelledby={`coverage-${group.id}`}>
               <h3 id={`coverage-${group.id}`} className={styles.coverageTitle}>{copy.groups[group.id]}</h3>
               <ul className={styles.items}>
                 {group.items.map((item) => {
@@ -309,16 +338,16 @@ export function RaidCompositionPlanner({ lang, libraryOpen, plaqueStyle, buttonS
                   const { spell, name, href } = spellLink(item, providers);
                   return (
                     <li key={item.id} className={styles.item} data-covered={covered || undefined} data-hover-preview={libraryOpen ? spell.uuid : undefined} data-hover-icon={`/v1/media/${spell.media}`}>
-                      {/* eslint-disable-next-line @next/next/no-img-element -- catalog media is served by the API, not the image optimizer */}
-                      <img className={styles.itemIcon} src={`/v1/media/${spell.media}`} alt="" width={32} height={32} loading="lazy" decoding="async" />
+                      <span className={styles.itemIconWrap}>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- catalog media is served by the API, not the image optimizer */}
+                        <img className={styles.itemIcon} src={`/v1/media/${spell.media}`} alt="" width={44} height={44} loading="lazy" decoding="async" />
+                        {covered ? <span className={styles.itemCheck} aria-hidden="true"><Check /></span> : null}
+                      </span>
                       <span className={styles.itemText}>
                         {libraryOpen ? <a className={styles.itemName} href={href}>{name}</a> : <span className={styles.itemName}>{name}</span>}
                         <span className={styles.itemWho}>{providerLine(item, providers, lang, copy)}</span>
                       </span>
-                      <span className={styles.itemState}>
-                        {covered ? <Check aria-hidden="true" /> : null}
-                        <span className={styles.srOnly}>{covered ? copy.covered : copy.missing}</span>
-                      </span>
+                      <span className={styles.srOnly}>{covered ? copy.covered : copy.missing}</span>
                     </li>
                   );
                 })}
