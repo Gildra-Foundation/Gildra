@@ -1,0 +1,230 @@
+/* atlas:strict — one Mythic+ run (/wow/mythic-plus/routes/<id>): the dungeon's painted scene behind the hero,
+   the dungeon kit on every plaque (--material-light), class colours (--class-color) only on the players. */
+
+.page { --atlas-frame-tint: var(--atlas-info-wash, var(--atlas-accent-glow)); font-variant-numeric: lining-nums; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.section { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+
+/* ---------- Scene ---------- */
+.backdrop { position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; }
+.scene {
+  position: absolute;
+  inset: 0 0 auto;
+  height: clamp(620px, 52vw, 860px);
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, #000 58%, transparent);
+}
+.sceneImage { object-fit: cover; object-position: 62% 30%; filter: contrast(.94) saturate(.9); }
+.scene::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 82%, transparent), color-mix(in srgb, var(--atlas-bg) 38%, transparent) 52%, color-mix(in srgb, var(--atlas-bg) 18%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 30%, transparent), transparent 30%);
+}
+
+/* ---------- Hero ---------- */
+.hero { min-height: 400px; padding-bottom: var(--atlas-space-5); }
+.heroHeader h1 { max-width: 15ch; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+
+.keyPlaque {
+  display: grid;
+  justify-items: center;
+  gap: var(--atlas-space-1);
+  min-width: 260px;
+  padding: 28px 40px 30px 132px;
+  text-align: center;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.relic { position: absolute; left: 26px; top: 50%; width: 88px; translate: 0 -50%; pointer-events: none; }
+.relic img { display: block; width: 100%; height: auto; filter: contrast(.9) saturate(.86) brightness(.96); }
+.keyLabel { color: var(--material-light); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.keyLevel { color: var(--atlas-text-strong); font: var(--atlas-weight-display-hero, 500) clamp(3.5rem, 6vw, 4.75rem) / 1 var(--atlas-font-display); }
+.chests { display: flex; gap: 6px; color: color-mix(in srgb, var(--material-line) 70%, var(--atlas-text-subtle)); font-size: 1.25rem; line-height: 1; }
+.chests [data-on] { color: var(--material-light); }
+.timed { color: var(--atlas-negative); font-size: var(--atlas-text-small); font-weight: 650; }
+.timed[data-timed] { color: var(--material-light); }
+.keyScore { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.keyScore b { color: var(--atlas-text-strong); font-variant-numeric: tabular-nums lining-nums; }
+
+.affixes { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: var(--atlas-space-5) 0 0; padding: 0; list-style: none; }
+.affixes li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  min-height: 36px;
+  padding: 4px 14px 4px 5px;
+  border: 1px solid var(--atlas-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--atlas-surface) 78%, transparent);
+  color: var(--atlas-text);
+  font-size: var(--atlas-text-small);
+}
+.affixes img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
+
+/* ---------- Clock ---------- */
+.clockPlaque { display: grid; gap: var(--atlas-space-5); padding: 34px 44px 38px; text-shadow: 0 1px 3px var(--atlas-bg); }
+.clockFacts { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--atlas-space-4) var(--atlas-space-7); margin: 0; }
+.clockFacts > div { display: grid; gap: 2px; }
+.clockFacts dt { display: inline-flex; align-items: center; gap: 6px; color: var(--material-light); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.clockFacts dt svg { width: 13px; height: 13px; }
+.clockFacts dd { margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.1 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; }
+.clockMain dd { font-size: var(--atlas-text-hero); line-height: 1; }
+.clockFacts [data-tone="positive"] dd { color: var(--atlas-positive); }
+.clockFacts [data-tone="negative"] dd { color: var(--atlas-negative); }
+
+.bar { position: relative; padding-block: 30px 6px; }
+.track {
+  position: relative;
+  display: block;
+  block-size: 16px;
+  border-radius: 999px;
+  background: var(--atlas-surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--material-line);
+  overflow: hidden;
+}
+.fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--material-light) 30%, var(--atlas-surface-sunken)), var(--material-light));
+}
+.fill[data-over] { background: linear-gradient(90deg, color-mix(in srgb, var(--atlas-negative) 30%, var(--atlas-surface-sunken)), var(--atlas-negative)); }
+.fight { position: absolute; inset-block: 3px; border-radius: 3px; background: color-mix(in srgb, var(--atlas-bg) 62%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--atlas-text-strong) 45%, transparent); }
+.mark { position: absolute; top: 0; bottom: 0; translate: -50% 0; display: grid; justify-items: center; align-content: start; pointer-events: none; }
+.mark::after { display: block; inline-size: 2px; block-size: 26px; margin-top: 8px; border-radius: 1px; background: color-mix(in srgb, var(--atlas-text-strong) 55%, transparent); content: ""; }
+.mark span { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-weight: 700; line-height: 1; }
+.mark[data-reached] span { color: var(--material-light); }
+.pin {
+  position: absolute;
+  bottom: -18px;
+  translate: -50% 0;
+  display: grid;
+  place-items: center;
+  inline-size: 22px;
+  block-size: 22px;
+  border: 1px solid var(--material-light);
+  border-radius: 50%;
+  background: var(--atlas-bg);
+  color: var(--atlas-text-strong);
+  font-size: var(--atlas-text-label);
+  font-weight: 700;
+}
+.axis { display: flex; justify-content: space-between; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.bar:has(.pin) + .axis { margin-top: 18px; }
+
+.subTitle { margin: var(--atlas-space-2) 0 0; color: var(--material-light); font-family: var(--atlas-font-ui); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.bosses { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--atlas-space-3) var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.boss { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 2px var(--atlas-space-3); min-height: 56px; padding: var(--atlas-space-2) 0; border-top: 1px solid var(--material-line); }
+.bossNumber { grid-row: span 2; display: grid; place-items: center; inline-size: 34px; block-size: 34px; border: 1px solid var(--material-light); border-radius: 50%; color: var(--atlas-text-strong); font: var(--atlas-weight-display) 1rem / 1 var(--atlas-font-display); }
+.bossName { color: var(--atlas-text-strong); font-weight: 600; }
+.bossTime { display: flex; flex-wrap: wrap; gap: 0 var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.bossTime b { color: var(--material-light); font-weight: 650; }
+
+/* ---------- Group ---------- */
+.groupPlaque { display: grid; gap: var(--atlas-space-5); padding: 34px 40px 38px; }
+.players { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.player {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: var(--atlas-space-3);
+  min-width: 0;
+  padding: var(--atlas-space-5) var(--atlas-space-4) var(--atlas-space-4);
+  border: 1px solid color-mix(in srgb, var(--class-color, var(--atlas-line)) 42%, transparent);
+  border-top: 3px solid var(--class-color, var(--atlas-line));
+  border-radius: var(--atlas-radius);
+  background:
+    radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--class-color, var(--atlas-accent)) 22%, transparent), transparent 70%),
+    color-mix(in srgb, var(--atlas-bg) 72%, transparent);
+}
+.playerRole { position: absolute; top: 10px; right: 10px; color: var(--atlas-text-subtle); }
+.playerRole svg { width: 15px; height: 15px; }
+.playerHead { display: grid; justify-items: center; gap: var(--atlas-space-2); text-align: center; }
+.octagon {
+  display: block;
+  inline-size: 64px;
+  block-size: 64px;
+  padding: 2px;
+  clip-path: polygon(28% 0, 72% 0, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0 72%, 0 28%);
+  background: var(--class-color, var(--atlas-line));
+}
+.octagon img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; clip-path: inherit; }
+.playerWho { display: grid; min-width: 0; max-width: 100%; }
+.playerName { overflow: hidden; color: var(--class-color, var(--atlas-text-strong)); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.15 var(--atlas-font-display); text-overflow: ellipsis; white-space: nowrap; }
+.playerRealm { overflow: hidden; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); text-overflow: ellipsis; white-space: nowrap; }
+.playerSpec { display: grid; justify-items: center; gap: 2px; text-align: center; }
+.specLine { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.specLine b { color: var(--atlas-text-strong); font-weight: 600; }
+.heroTree { display: inline-flex; align-items: center; gap: 5px; color: var(--material-light); font-size: var(--atlas-text-meta); font-weight: 600; }
+.heroTree svg { width: 12px; height: 12px; }
+.playerFacts { display: grid; gap: 4px; align-content: start; margin: 0; padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line-soft); }
+.playerFacts > div { display: flex; justify-content: space-between; gap: var(--atlas-space-2); }
+.playerFacts dt { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.playerFacts dd { margin: 0; color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 650; font-variant-numeric: tabular-nums lining-nums; }
+.talents {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--atlas-space-2);
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--class-color, var(--atlas-line)) 55%, transparent);
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--class-color, var(--atlas-accent)) 12%, transparent);
+  color: var(--atlas-text-strong);
+  font-size: var(--atlas-text-small);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--atlas-duration-fast) var(--atlas-ease);
+}
+.talents:hover { background: color-mix(in srgb, var(--class-color, var(--atlas-accent)) 24%, transparent); }
+.talents:focus-visible { outline: 2px solid var(--class-color, var(--atlas-accent-strong)); outline-offset: 2px; }
+.talents svg { width: 14px; height: 14px; }
+
+.videos { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-4); margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); text-shadow: 0 1px 3px var(--atlas-bg); }
+.videos > svg { width: 16px; height: 16px; color: var(--material-light); }
+.videos a { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--material-light); font-weight: 600; text-underline-offset: .2em; }
+.videos a svg { width: 13px; height: 13px; }
+
+.statePlaque { display: grid; justify-items: start; gap: var(--atlas-space-4); margin-bottom: var(--atlas-section-gap); }
+.stateText { margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-body); text-shadow: 0 1px 3px var(--atlas-bg); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1180px) {
+  .players { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .hero { min-height: 0; }
+  .keyPlaque { justify-self: start; }
+}
+@media (max-width: 760px) {
+  .players { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .clockPlaque, .groupPlaque { padding: 28px 22px; }
+  .clockFacts { gap: var(--atlas-space-3) var(--atlas-space-5); }
+}
+@media (max-width: 600px) {
+  .scene { height: 560px; }
+  .sceneImage { object-position: 70% 30%; }
+  .keyPlaque { justify-self: stretch; min-width: 0; padding: 22px 24px 24px 112px; }
+  .relic { left: 18px; width: 74px; }
+}
+@media (max-width: 480px) {
+  .players { grid-template-columns: minmax(0, 1fr); }
+  .player { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: none; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); }
+  .playerHead { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 1fr); justify-items: start; text-align: start; }
+  .octagon { inline-size: 52px; block-size: 52px; }
+  .playerSpec { grid-column: 1 / -1; justify-items: start; text-align: start; }
+  .playerFacts, .talents { grid-column: 1 / -1; }
+  .playerFacts { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: var(--atlas-space-3); }
+  .playerFacts > div { display: grid; grid-template-rows: 1fr auto; justify-content: start; gap: 2px; }
+  .clockMain dd { font-size: var(--atlas-text-h2); }
+}
+@media (prefers-reduced-motion: reduce) { .talents { transition: none; } }
+:global([data-motion="reduced"]) .talents, :global([data-ui-motion="reduce"]) .talents { transition: none; }
+@media (forced-colors: active) {
+  .fill, .fill[data-over] { background: CanvasText; }
+  .player { border: 1px solid CanvasText; }
+}

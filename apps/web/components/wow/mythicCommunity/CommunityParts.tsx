@@ -6,6 +6,9 @@ import { MaterialButton, MaterialPlaque, type MaterialKit } from "@/components/w
 import { classColors } from "@/lib/atlas/dataPalette";
 import { specIcon } from "@/lib/games/wow/assets";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
+import { dungeonRoutes, dungeonSlugs, type DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
+import { wowSourceName, wowSourceNameLang } from "@/lib/wow/sourceLocale";
+import { dungeonArtDirections, dungeonBackdropSmall } from "@/lib/wow/dungeonArtDirection";
 import { runsRegions, runsSearch, type RunsEnvelope, type RunsGroup, type RunsLoad, type RunsQuery, type RunsRole, type RunsSpec } from "@/lib/games/wow/mythicPlusRunsTypes";
 import type { CommunityCopy } from "./communityCopy";
 import styles from "./community.module.css";
@@ -15,24 +18,33 @@ export const roleIcons = { tank: Shield, healer: HeartPulse, dps: Swords } satis
 
 const themes = new Map(talentSpecThemes.map((theme) => [theme.specId, theme]));
 
-/** Display data of a spec id: English names (game terms stay English), class colour, local icon. */
-export type SpecView = { id: number; role: RunsRole; specName: string; className: string; color: string; icon: string | null };
-export function specView(spec: RunsSpec): SpecView {
+/** Display data of a spec id: names in the page language, class colour, local icon. */
+export type SpecView = { id: number; role: RunsRole; specName: string; className: string; color: string; icon: string | null; lang: Locale };
+export function specView(spec: RunsSpec, locale: Locale = "en"): SpecView {
   const theme = themes.get(spec.id);
-  const specName = theme?.specName ?? spec.spec_name;
+  const ru = locale === "ru" && theme;
   return {
     id: spec.id,
     role: spec.role,
-    specName,
-    className: theme?.className ?? spec.class_name,
+    specName: ru ? theme.specNameRu : theme?.specName ?? spec.spec_name,
+    className: ru ? theme.classNameRu : theme?.className ?? spec.class_name,
     color: classColors[spec.class_slug as keyof typeof classColors] ?? "var(--atlas-text-muted)",
-    icon: specIcon(specName, spec.class_slug, spec.spec_slug),
+    icon: specIcon(theme?.specName ?? spec.spec_name, spec.class_slug, spec.spec_slug),
+    lang: ru ? "ru" : "en",
   };
 }
-export function specIndex(specs: RunsSpec[]) {
-  return new Map(specs.map((spec) => [spec.id, specView(spec)]));
+export function specIndex(specs: RunsSpec[], locale: Locale = "en") {
+  return new Map(specs.map((spec) => [spec.id, specView(spec, locale)]));
 }
-export const specLabel = (spec: SpecView | undefined) => (spec ? `${spec.specName} ${spec.className}` : "");
+export const specLabel = (spec: SpecView | undefined) => (!spec ? "" : spec.lang === "ru" ? `${spec.className}, ${spec.specName.toLocaleLowerCase("ru")}` : `${spec.specName} ${spec.className}`);
+
+/** A dungeon's name in the page language (the confirmed Russian name, else the English original) and its lang. */
+export function dungeonLabel(slug: string, name: string, locale: Locale) {
+  const route = (dungeonRoutes as Record<string, { name: string; nameRu: string } | undefined>)[slug];
+  const source = route?.name ?? name;
+  return { name: wowSourceName(source, locale, route?.nameRu), lang: wowSourceNameLang(source, locale, route?.nameRu) };
+}
+export const isSeasonDungeon = (slug: string): slug is DungeonSlug => (dungeonSlugs as readonly string[]).includes(slug);
 
 export const number = (value: number, locale: Locale, digits = 0) =>
   value.toLocaleString(locale, { maximumFractionDigits: digits, minimumFractionDigits: 0 });
@@ -51,27 +63,28 @@ export function SpecToken({ spec, size = "md", name = true }: { spec: SpecView |
       </span>
       {name ? (
         <span className={styles.specText}>
-          <span className={styles.specName} lang="en">{spec.specName}</span>
-          <span className={styles.className} lang="en">{spec.className}</span>
+          <span className={styles.specName} lang={spec.lang}>{spec.specName}</span>
+          <span className={styles.className} lang={spec.lang}>{spec.className}</span>
         </span>
-      ) : <span className={styles.srOnly} lang="en">{specLabel(spec)}</span>}
+      ) : <span className={styles.srOnly} lang={spec.lang}>{specLabel(spec)}</span>}
     </span>
   );
 }
 
 /** The five icons of a group in role order: tank, healer, three damage dealers. */
-export function GroupIcons({ group, specs }: { group: RunsGroup; specs: Map<number, SpecView> }) {
+export function GroupIcons({ group, specs, size = "sm" }: { group: RunsGroup; specs: Map<number, SpecView>; size?: "sm" | "md" }) {
   const ids = [group.tank, group.healer, ...group.dps];
   return (
-    <span className={styles.group}>
-      {ids.map((id, index) => <SpecToken key={`${id}-${index}`} spec={specs.get(id)} size="sm" name={false} />)}
+    <span className={styles.group} data-size={size}>
+      {ids.map((id, index) => <SpecToken key={`${id}-${index}`} spec={specs.get(id)} size={size} name={false} />)}
     </span>
   );
 }
 
 /** Filter form of the community pages: a plain GET form, so the state lives in the URL and works without script. */
-export function FilterForm({ id, kit, data, query, copy, action, fields, extra }: {
+export function FilterForm({ id, kit, data, query, copy, action, fields, extra, locale = "en" }: {
   id: string;
+  locale?: Locale;
   kit: MaterialKit;
   data: RunsEnvelope | null;
   query: RunsQuery;
@@ -88,11 +101,15 @@ export function FilterForm({ id, kit, data, query, copy, action, fields, extra }
     <MaterialPlaque kit={kit} className={styles.filterPlaque}>
     <form method="get" action={action} className={styles.filters} aria-label={copy.filters} id={id}>
       {query.specs?.length ? <input type="hidden" name="specs" value={query.specs.join(",")} /> : null}
+      {!fields.includes("dungeon") && query.dungeon ? <input type="hidden" name="dungeon" value={query.dungeon} /> : null}
       {fields.includes("dungeon") ? (
         <AtlasField label={copy.dungeon} htmlFor={`${id}-dungeon`}>
           <AtlasSelect id={`${id}-dungeon`} name="dungeon" defaultValue={query.dungeon ?? ""}>
             <option value="">{copy.allDungeons}</option>
-            {(data?.dungeons ?? []).map((dungeon) => <option key={dungeon.slug} value={dungeon.slug} lang="en">{dungeon.name}</option>)}
+            {(data?.dungeons ?? []).map((dungeon) => {
+              const label = dungeonLabel(dungeon.slug, dungeon.name, locale);
+              return <option key={dungeon.slug} value={dungeon.slug} lang={label.lang}>{label.name}</option>;
+            })}
           </AtlasSelect>
         </AtlasField>
       ) : null}
@@ -151,12 +168,19 @@ export function StaleNotice({ data, copy }: { data: RunsEnvelope; copy: Communit
   return data.status === "stale" ? <AtlasNotice tone="caution">{copy.stale}</AtlasNotice> : null;
 }
 
-/** The one attribution line Raider.IO asks for, plus the way back to the hub. */
-export function SourceLine({ copy, hubHref, kit }: { copy: CommunityCopy; hubHref: string; kit: MaterialKit }) {
+/** The one attribution line Raider.IO asks for, plus the way back. */
+export function SourceLine({ copy, hubHref, kit, sourceHref = "https://raider.io", sourceLabel, backLabel, extra }: {
+  copy: CommunityCopy; hubHref: string; kit: MaterialKit; sourceHref?: string; sourceLabel?: string; backLabel?: string; extra?: ReactNode;
+}) {
   return (
     <MaterialPlaque kit={kit} as="footer" className={styles.source}>
-      <span>{copy.source}: <a href="https://raider.io" rel="noreferrer" target="_blank">Raider.IO<ArrowUpRight aria-hidden="true" /></a></span>
-      <a className={styles.hubLink} href={hubHref}><ArrowLeft aria-hidden="true" />{copy.backToHub}</a>
+      <span className={styles.sourceLinks}>
+        {sourceLabel
+          ? <a href={sourceHref} rel="noreferrer" target="_blank">{sourceLabel}<ArrowUpRight aria-hidden="true" /></a>
+          : <span>{copy.source}: <a href={sourceHref} rel="noreferrer" target="_blank">Raider.IO<ArrowUpRight aria-hidden="true" /></a></span>}
+        {extra}
+      </span>
+      <a className={styles.hubLink} href={hubHref}><ArrowLeft aria-hidden="true" />{backLabel ?? copy.backToHub}</a>
     </MaterialPlaque>
   );
 }
@@ -169,5 +193,41 @@ export function SelectedSpec({ spec, href, copy }: { spec: SpecView | undefined;
       <SpecToken spec={spec} size="md" />
       <X aria-hidden="true" className={styles.chosenX} />
     </a>
+  );
+}
+
+const gatewayThumb = "/assets/wow/mythic/hub/gateway-768.webp";
+
+/** The season's dungeons as painted tiles: the dungeon filter of the community pages (links keep the other filters). */
+export function DungeonStrip({ data, query, base, copy, locale, label }: { data: RunsEnvelope; query: RunsQuery; base: string; copy: CommunityCopy; locale: Locale; label: string }) {
+  const tiles = [
+    { slug: "", name: copy.allDungeons, lang: locale as string, scene: gatewayThumb, accent: undefined as string | undefined },
+    ...data.dungeons.map((dungeon) => {
+      const name = dungeonLabel(dungeon.slug, dungeon.name, locale);
+      const season = isSeasonDungeon(dungeon.slug) ? dungeon.slug : null;
+      return { slug: dungeon.slug, name: name.name, lang: name.lang, scene: season ? dungeonBackdropSmall(season) : gatewayThumb, accent: season ? dungeonArtDirections[season].accent : undefined };
+    }),
+  ];
+  return (
+    <nav className={styles.strip} aria-label={label}>
+      <ul className={styles.stripList}>
+        {tiles.map((tile) => {
+          const current = (query.dungeon ?? "") === tile.slug;
+          return (
+            <li key={tile.slug || "all"}>
+              <a
+                className={styles.tile}
+                href={hrefWith(base, { ...query, dungeon: tile.slug || undefined, limit: undefined })}
+                aria-current={current ? "page" : undefined}
+                style={{ "--dungeon-accent": tile.accent } as CSSProperties}
+              >
+                <span className={styles.tileArt} aria-hidden="true"><Image src={tile.scene} alt="" fill sizes="(max-width: 700px) 33vw, 160px" /></span>
+                <span className={styles.tileName} lang={tile.lang}>{tile.name}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
