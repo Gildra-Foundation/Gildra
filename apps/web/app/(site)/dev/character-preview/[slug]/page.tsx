@@ -4,6 +4,7 @@ import { CharacterAuditPage } from "@/components/wow/audit/CharacterAuditPage";
 import { CharacterProfileFrame } from "@/components/wow/characters/CharacterProfileFrame";
 import { furybarFixture } from "@/lib/wow/characterAudit";
 import { getTestCharacter } from "@/lib/wow/testCharacters";
+import { zulutFixture } from "@/lib/wow/devFixtures/zulut";
 import { getMidnightTalentData } from "@/lib/talentCalculatorData";
 import { getRotationPreset } from "@/lib/platform/rotation/repository";
 import { characterProfileFingerprint } from "@/lib/wow/characterProfileFingerprint";
@@ -15,7 +16,7 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 export default async function CharacterPreviewPage({ params }: { params: Promise<{ slug: string }> }) {
   if (process.env.NODE_ENV !== "development") notFound();
   const slug = decodeURIComponent((await params).slug);
-  const snapshot = slug === "furybar" ? furybarFixture : getTestCharacter(slug);
+  const snapshot = slug === "furybar" ? furybarFixture : slug === "zulut" ? zulutFixture("en") : getTestCharacter(slug);
   if (!snapshot) notFound();
   const [talentData, rotationPreset] = await Promise.all([
     getMidnightTalentData(snapshot.specialization.slug, snapshot.activeHeroTalentTreeId, "en").catch(() => null),
