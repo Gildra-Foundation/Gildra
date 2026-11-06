@@ -1,11 +1,6 @@
 import type { ReactNode } from "react";
 import clsx from "clsx";
 import { AtlasStatsCard, AtlasStatsCountUp } from "./AtlasStatsParts";
-// The styles the card and the count-up import, kept in their original cascade
-// position: their code loads on demand (AtlasStatsParts), their CSS does not move.
-import "./AtlasCountUp.module.css";
-import "./valyro-ui/basic/Skeleton.css";
-import "./valyro-ui/data-display/StatsCard.css";
 import styles from "./AtlasStats.module.css";
 
 export type AtlasStat = { value: ReactNode; label: ReactNode };
