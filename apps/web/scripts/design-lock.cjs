@@ -80,8 +80,9 @@ function measure() {
     images: [...document.querySelectorAll("main img")].length,
     paintedAssets: [...new Set([...document.querySelectorAll("main *")].flatMap((e) => {
       const css = [null, "::before", "::after"].map((pe) => { const cs = getComputedStyle(e, pe); return `${cs.borderImageSource} ${cs.backgroundImage} ${cs.maskImage}`; }).join(" ");
-      const src = e.tagName === "IMG" ? e.currentSrc || e.src : "";
-      return [...(css.match(/\/[^"'()]+?\.(webp|png|avif|jpg)/g) ?? []), ...(src ? [new URL(src).pathname] : [])];
+      // An <img> counts with its declared file and with the srcset copy the screen chose (a 192 px copy of a 384 px cutout is the same asset).
+      const srcs = e.tagName === "IMG" ? [...new Set([e.currentSrc, e.src].filter(Boolean))] : [];
+      return [...(css.match(/\/[^"'()]+?\.(webp|png|avif|jpg)/g) ?? []), ...srcs.map((src) => new URL(src).pathname)];
     }).map((u) => u.replace(/^.*?(\/(?:_next|assets|images|wow|atlas)\/)/, "$1")))].sort(),
   };
 }

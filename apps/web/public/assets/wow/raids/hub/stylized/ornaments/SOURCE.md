@@ -188,3 +188,7 @@ Constraints: genuine transparent alpha outside object. No background/scenery/gro
 - Final `/assets/wow/raids/hub/stylized/ornaments/kithix-organic-roots.webp`,384×547,34658bytes,SHA-256 `26aecb51175a6de2266fb61002221a3b23d65190ffc3ebf27a466a9503a7fbec`. Geometry rootPadding12,rootX198,alphaBounds left12/top12/width360/height523.
 - Sharp only alpha-trims948×1378 at44,42, downscales to360px width, adds12px transparent margins and encodes WebP q82/alpha100/effort6. No repainting, recoloring, compositing or alpha repair.
 - Final cyan/dark proof reviewed: complete silhouette, clear separate broad coils, no halo/backdrop. Display approximately96px wide. Prior ornament bytes retained.
+
+## 192 px copies (2026-11-06)
+
+`<name>-192.webp` = the 384 px cutout resized to 192 px wide (sharp lanczos3, WebP quality 82, alphaQuality 100, effort 6). Pages request it through `srcset` with `sizes="96px"`: 1x and 2x screens take the 192 px copy, 3x screens the 384 px original.

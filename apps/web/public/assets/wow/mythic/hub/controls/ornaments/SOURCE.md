@@ -138,3 +138,7 @@ Scene/backdrop: actual transparent RGBA everywhere outside the one subject. No f
 Constraints: no text, no letters, no numbers, no UI, no characters or faces, no border. Make one clean production cutout.
 Avoid: grain, noise, microdetails, engraved veins, tiny particles, sharp white highlights, dramatic contrast, shiny photoreal rendering, repeating patterns, detached small decorations, collage, checkerboard painted into pixels.
 ```
+
+## 192 px copies (2026-11-06)
+
+`<name>-192.webp` = the 384 px cutout resized to 192 px wide (sharp lanczos3, WebP quality 82, alphaQuality 100, effort 6). Pages request it through `srcset` with `sizes="96px"`: 1x and 2x screens take the 192 px copy, 3x screens the 384 px original.

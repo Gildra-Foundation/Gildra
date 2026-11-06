@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import Image from "next/image";
 import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import manifest from "../../../../public/assets/wow/mythic/hub/controls/ornaments/manifest.json";
 import styles from "./mythicHubOrnaments.module.css";
@@ -22,16 +21,19 @@ export function MythicHubOrnaments({ slug }: { slug: DungeonSlug }) {
       } as CSSProperties}
     >
       <span className={styles.growth} data-growth={ornament.theme}>
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element -- static cutout with its own 192/384 widths */}
+        <img
           className={styles.asset}
           src={ornament.path}
+          // At most 96 CSS px wide: the 192 px file covers 1x and 2x screens.
+          srcSet={`${ornament.path.replace(/\.webp$/, "-192.webp")} 192w, ${ornament.path} 384w`}
+          sizes="96px"
           width={ornament.width}
           height={ornament.height}
           alt=""
           loading="lazy"
           decoding="async"
           draggable={false}
-          unoptimized
         />
       </span>
     </span>

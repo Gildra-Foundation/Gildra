@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import Image from "next/image";
 import type { RaidHubSlug } from "./raidHubData";
 import styles from "./raidHubOrnaments.module.css";
 
@@ -27,6 +26,10 @@ const ornaments: Record<RaidHubSlug, readonly Ornament[]> = {
   ],
 };
 
+const ORNAMENT_DIR = "/assets/wow/raids/hub/stylized/ornaments";
+// Cutouts are at most 96 CSS px wide: the 192 px file covers 1x and 2x screens.
+const ORNAMENT_SIZES = "96px";
+
 /** Static server-rendered cutouts. The shared motion observer supplies per-piece
  * decode, first-visibility and activity hooks; CSS owns their finite growth. */
 export function RaidHubOrnaments({ slug }: { slug: RaidHubSlug }) {
@@ -38,16 +41,18 @@ export function RaidHubOrnaments({ slug }: { slug: RaidHubSlug }) {
       style={{ "--growth-duration": `${ornament.duration}ms`, "--growth-delay": `${ornament.delay}ms`, "--raid-root-padding": ornament.rootPadding / ornament.width } as CSSProperties}
     >
       <span className={styles.growth} data-growth={ornament.theme}>
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element -- static cutout with its own 192/384 widths */}
+        <img
           className={styles.asset}
-          src={`/assets/wow/raids/hub/stylized/ornaments/${ornament.name}.webp`}
+          src={`${ORNAMENT_DIR}/${ornament.name}.webp`}
+          srcSet={`${ORNAMENT_DIR}/${ornament.name}-192.webp 192w, ${ORNAMENT_DIR}/${ornament.name}.webp 384w`}
+          sizes={ORNAMENT_SIZES}
           width={ornament.width}
           height={ornament.height}
           alt=""
           loading="lazy"
           decoding="async"
           draggable={false}
-          unoptimized
         />
       </span>
     </span>)}
