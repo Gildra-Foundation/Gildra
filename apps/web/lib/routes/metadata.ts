@@ -30,6 +30,18 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     en: { title: "Mythic+ Meta: Top Specs This Week — Gildra", description: "Which specializations appear in the top 2000 Mythic+ keys of the week, by role, with week-on-week change and the season trend. Data from mythicstats.com." },
     ru: { title: "Мета Mythic+: лучшие специализации недели — Gildra", description: "Какие специализации встречаются в топ-2000 ключей Mythic+ этой недели — по ролям, с изменением к прошлой неделе и динамикой сезона. Данные mythicstats.com." },
   },
+  mythicPlusComps: {
+    en: { title: "Mythic+ Team Compositions — Gildra", description: "The five-spec groups behind the highest timed Mythic+ keys of the season, who to bring next to your specs and which specs team up." },
+    ru: { title: "Составы групп Mythic+ — Gildra", description: "Группы из пяти специализаций, которые закрывают самые высокие ключи Mythic+ сезона, кого взять к вашим специализациям и какие пары работают вместе." },
+  },
+  mythicPlusStats: {
+    en: { title: "Mythic+ Season Stats: Rating Cutoffs — Gildra", description: "Top 0.1%, 1% and 10% Mythic+ rating cutoffs in every region, rating milestones, and the specs and dungeons of the season's top keys." },
+    ru: { title: "Статистика сезона Mythic+: пороги рейтинга — Gildra", description: "Пороги рейтинга Mythic+ топ-0,1%, 1% и 10% по регионам, рубежи рейтинга, специализации и подземелья лучших ключей сезона." },
+  },
+  mythicPlusRoutes: {
+    en: { title: "Mythic+ Route Finder — Gildra", description: "Find the top timed Mythic+ keys played by groups like yours, by dungeon and key level, and open each run." },
+    ru: { title: "Поиск маршрутов Mythic+ — Gildra", description: "Лучшие закрытые ключи Mythic+ групп, похожих на вашу, по подземелью и уровню ключа — со ссылкой на каждый забег." },
+  },
   dungeons: {
     en: { title: "Midnight Dungeons — Gildra", description: "Dungeons of the current season: route, bosses, timer and strategy for each." },
     ru: { title: "Подземелья Midnight — Gildra", description: "Подземелья текущего сезона: маршрут, боссы, таймер и тактика для каждого." },

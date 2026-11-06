@@ -14,6 +14,7 @@ type Store interface {
 	WoWTierList(context.Context, Query) (Snapshot, error)
 	WoWTierListContexts(ctx context.Context, activity, locale string) ([]Context, error)
 	WoWMythicPlusMeta(context.Context) (MythicPlusMeta, error)
+	WoWMythicPlusRuns(context.Context) (*RunsSnapshot, error)
 }
 
 type Handler struct{ store Store }
@@ -27,6 +28,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/meta/wow/tier-list", h.wowTierList)
 	mux.HandleFunc("GET /v1/meta/wow/tier-list/contexts", h.wowTierListContexts)
 	mux.HandleFunc("GET /v1/meta/wow/mythic-plus/meta", h.wowMythicPlusMeta)
+	h.registerMythicPlusRuns(mux)
 }
 
 func (h *Handler) wowMythicPlusMeta(w http.ResponseWriter, r *http.Request) {

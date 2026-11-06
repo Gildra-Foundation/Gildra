@@ -13,9 +13,14 @@ import (
 type fakeStore struct {
 	snapshot Snapshot
 	meta     MythicPlusMeta
+	runs     *RunsSnapshot
 	err      error
 	query    Query
 	locale   string
+}
+
+func (f *fakeStore) WoWMythicPlusRuns(_ context.Context) (*RunsSnapshot, error) {
+	return f.runs, f.err
 }
 
 func (f *fakeStore) WoWMythicPlusMeta(_ context.Context) (MythicPlusMeta, error) {
