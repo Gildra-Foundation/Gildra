@@ -10,7 +10,7 @@ import { pvpVisualTheme } from "@/lib/talentVisualTheme";
 import { encodeWoWTalentLoadout, FURY_REFERENCE_LOADOUT, decodeWoWTalentLoadout, TALENT_HANDOFF_STORAGE_KEY, talentPointBudgets } from "@/lib/wowTalentLoadout";
 import {
   buildSearchParams, countRanks, countRanksByTree, createTalentNodeCatalog, decodeLoadout, emptyLoadout, encodeLoadout, freeTalentRanks, kindOfNode,
-  loadoutFromSearch, nodeAvailability, parseBuildInput, removeInvalidDependents, sanitizeLoadout, TALENT_KINDS, treeGeometry,
+  EMPTY_PVP, loadoutFromSearch, nodeAvailability, parseBuildInput, removeInvalidDependents, sanitizeLoadout, TALENT_KINDS, treeGeometry,
   type ChoiceMap, type ImportResult, type PvpSlots, type RankMap, type SanitizedLoadout,
 } from "@/lib/talentLoadoutState";
 import { SpecMenu } from "@/components/talents/SpecMenuLazy";
@@ -26,6 +26,7 @@ import { TalentDescription } from "@/components/talents/TalentDescription";
 import { getPerformanceTier, type PerformanceTier } from "@/lib/client/performanceTier";
 import { heroPathName, talentCalculatorCopy, talentThemeNames, type TalentCalculatorCopy, type TalentCopyLang } from "@/components/talents/talentCalculatorCopy";
 import { lessMotion } from "@/lib/client/motionPreference";
+import type { PopularBuild } from "@/lib/talentPopularBuilds";
 import { copyText as copyToClipboard } from "@gildra/atlas-ui/clipboard";
 
 type Notice = { message: string; persistent?: boolean } | null;
@@ -304,7 +305,7 @@ const writeUrl = (url: URL) => window.history.replaceState(window.history.state,
  * `search` is the query the page was opened with (from the server). The calculator writes the build into the
  * address itself and does not subscribe to it, so editing never re-renders the page through the router.
  */
-export function TalentCalculator({ data, theme, lang: langProp, search = "" }: { data: TalentCalculatorData | null; theme: TalentSpecTheme; lang?: TalentCopyLang; search?: string }) {
+export function TalentCalculator({ data, theme, lang: langProp, search = "", builds }: { data: TalentCalculatorData | null; theme: TalentSpecTheme; lang?: TalentCopyLang; search?: string; builds?: PopularBuild[] }) {
   const router = useRouter();
   const [searchParams] = useState(() => new URLSearchParams(search));
   const pathname = usePathname();
@@ -712,6 +713,15 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "" }: {
     setPvpSelections((current) => current.map((id, index) => index === slot ? null : id));
   }, [pvpById, pvpSelections]);
 
+  // Top players' builds of the hero tree on screen, decoded once: the picker loads them and marks the one in use.
+  const presetLoadouts = useMemo(() => new Map((builds ?? []).flatMap((build) => {
+    if (!data || (build.heroId && build.heroId !== data.heroSubtreeId)) return [];
+    const decoded = decodeWoWTalentLoadout(data, build.loadout);
+    if (!decoded || decoded.truncated) return [];
+    const loadout = sanitizeLoadout(data, { ranks: decoded.ranks, choices: decoded.choices, pvp: EMPTY_PVP });
+    return [[build.loadout, { loadout, signature: encodeLoadout(loadout.ranks, loadout.choices, EMPTY_PVP) }] as const];
+  })), [builds, data]);
+
   if (!data || !geometry) return <ErrorState theme={theme} lang={lang} />;
 
   const totalAvailable = budgets.class + budgets.hero + budgets.spec;
@@ -805,6 +815,24 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "" }: {
     if (rotationFlow) params.set("returnTo", returnTo);
     return `${localePrefix}/talents/${theme.slug}?${params.toString()}`;
   };
+  const popularName = (build: PopularBuild) => copy.popularBuildName(build.heroId ? heroPathName(theme.heroPaths.find((hero) => hero.id === build.heroId) ?? { name: names.spec, nameRu: names.spec }, lang) : names.spec, build.players[0]?.name ?? "");
+  const loadPopularBuild = (build: PopularBuild) => {
+    const preset = presetLoadouts.get(build.loadout);
+    if (!preset) {
+      if (build.heroId && build.heroId !== data.heroSubtreeId) router.push(pageHref(new URLSearchParams({ build: build.loadout }), build.heroId), { scroll: false });
+      return;
+    }
+    snapshot();
+    applyLoadout({ ...preset.loadout, pvp: pvpSelections });
+    setBuildName(popularName(build).slice(0, 48)); setActiveBuildId(null); setSavedSignature(null);
+    showNotice(copy.loaded(popularName(build)));
+  };
+  const currentTreeSignature = encodeLoadout(ranks, choices, EMPTY_PVP);
+  // Two strings can draw the same trees (one keeps old points in the other hero tree): one button each.
+  const presets = (builds ?? []).filter((build, index, list) => {
+    const signature = presetLoadouts.get(build.loadout)?.signature;
+    return !signature || list.findIndex((other) => presetLoadouts.get(other.loadout)?.signature === signature) === index;
+  });
   const openImportDialog = () => { setImportValue(""); setImportState({ kind: "idle" }); setLoadoutOpen(false); setImportOpen(true); };
   const checkImport = (value: string) => { setImportValue(value); setImportState(value.trim() ? parseBuildInput(data, value) : { kind: "idle" }); };
   const applyImport = () => {
@@ -877,6 +905,23 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "" }: {
           <MaterialButton kit={TALENTS_KIT} fit="stack" variant="primary" icon={<Upload aria-hidden="true" />} onClick={openImportDialog}>{copy.importTitle}</MaterialButton>
           <MaterialButton kit={TALENTS_KIT} fit="stack" icon={<Share2 aria-hidden="true" />} onClick={copyShareLink}>{copy.share}</MaterialButton>
         </div>} />
+      {presets.length ? <nav className={page.presets} aria-label={copy.popularTitle} data-talent-presets="">
+        <span className={page.presetsTitle} aria-hidden="true">{copy.popularTitle}</span>
+        <ul>
+          {presets.map((build) => {
+            const hero = build.heroId ? theme.heroPaths.find((path) => path.id === build.heroId) : undefined;
+            const heroLabel = hero ? heroPathName(hero, lang) : names.spec;
+            const share = `${Math.round(build.share * 100)}%`;
+            const player = build.players[0]?.name ?? "";
+            const active = presetLoadouts.get(build.loadout)?.signature === currentTreeSignature;
+            return <li key={build.loadout}>
+              <button type="button" className={page.preset} aria-pressed={active} aria-label={copy.popularAria(heroLabel, share, player)} onClick={() => loadPopularBuild(build)}>
+                <b>{heroLabel}</b><span>{share}</span><small>{player}</small>
+              </button>
+            </li>;
+          })}
+        </ul>
+      </nav> : null}
       <MaterialPlaque kit={TALENTS_KIT} as="section" className={page.command} aria-label={copy.toolbarLabel}>
         <div className="tc-command-actions">
           <SpecMenu current={theme} localePrefix={localePrefix} lang={lang} />

@@ -1,13 +1,23 @@
-import { notFound, permanentRedirect } from "next/navigation";
+// routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
+import { notFound } from "next/navigation";
+import { SpecPage } from "@/components/wow/classes/SpecPage";
+import { specMetadata } from "@/components/wow/classes/classMetadata";
 import { getMidnightClassSpec, midnightSpecializations } from "@/lib/data/wow";
 
-// A specialization lives in its talent calculator.
 export const dynamicParams = false;
+export const revalidate = 900;
 export const generateStaticParams = () => midnightSpecializations.map((spec) => ({ class: spec.classSlug, spec: spec.slug }));
 
-export default async function Page({ params }: { params: Promise<{ class: string; spec: string }> }) {
+type Props = { params: Promise<{ class: string; spec: string }> };
+
+export async function generateMetadata({ params }: Props) {
   const values = await params;
-  const entry = getMidnightClassSpec(values.class, values.spec);
-  if (!entry) notFound();
-  permanentRedirect(`/talents/${entry.slug}`);
+  return specMetadata("en", values.class, values.spec);
+}
+
+export default async function Page({ params }: Props) {
+  const values = await params;
+  const spec = getMidnightClassSpec(values.class, values.spec);
+  if (!spec) notFound();
+  return <SpecPage locale="en" spec={spec} />;
 }

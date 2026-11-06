@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { TalentCalculatorWithLocalization } from "@/components/talents/TalentCalculatorWithLocalization";
 import { TalentCalculatorSkeleton } from "@/components/TalentCalculatorSkeleton";
 import { getMidnightTalentPageData } from "@/lib/talentCalculatorData";
+import { loadSpecBuilds } from "@/lib/games/wow/classMeta";
 import { getTalentSpecTheme, talentSpecThemes } from "@/lib/talentSpecThemes";
 import { pairedAlternates } from "@/lib/seo/metadata";
 import { getTalentSpecStyles } from "@/lib/talentSpecStyles";
@@ -52,6 +53,8 @@ async function TalentCalculatorContent({
   const query = await searchParams;
   // The opening build (?build=, ?pvp=, ?returnTo=…) reaches the calculator as a string; it then owns the address.
   const search = new URLSearchParams(Object.entries(query).flatMap(([key, value]) => (Array.isArray(value) ? value : value === undefined ? [] : [value]).map((item) => [key, item]))).toString();
+  // Top players' builds load next to the trees; without them the calculator simply has no picker.
+  const builds = loadSpecBuilds(theme);
   try {
     const heroPathId = Number(query.hero) || undefined;
     data = await getMidnightTalentPageData(spec, heroPathId, "en");
@@ -59,5 +62,5 @@ async function TalentCalculatorContent({
     if (process.env.NODE_ENV === "development") console.error(`[talents/${spec}] data load failed`, error);
   }
   if (!data) return <TalentCalculatorWithLocalization key={theme.slug} data={null} theme={theme} lang="en" search={search} />;
-  return <TalentCalculatorWithLocalization key={`${theme.slug}-${data.heroSubtreeId}`} data={data} theme={theme} lang="en" search={search} />;
+  return <TalentCalculatorWithLocalization key={`${theme.slug}-${data.heroSubtreeId}`} data={data} theme={theme} lang="en" search={search} builds={await builds} />;
 }

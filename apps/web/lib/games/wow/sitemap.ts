@@ -1,6 +1,6 @@
 import { routeSections, type SectionId } from "@/lib/routes/registry";
 import { dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
-import { midnightLairEncounters } from "@/lib/data/wow";
+import { midnightClasses, midnightLairEncounters, midnightSpecializations } from "@/lib/data/wow";
 import { raidHubEntries } from "@/components/wow/raid/raidHubData";
 import professions from "@/data/wow/professions/index.json";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
@@ -16,7 +16,7 @@ const UNLISTED_SECTIONS: ReadonlySet<SectionId> = new Set(["dungeons", "characte
  * Game-relative static paths listed in /sitemaps/static (both locales, or the
  * one language of a single-language section). Built from the same data as the
  * pages: the route registry, the raid hub, the Mythic+ dungeon routes, the
- * lair encounters and the professions. Boss pages are not listed: each answers 308 to its raid page.
+ * lair encounters, the professions and the class and specialization pages. Boss pages are not listed: each answers 308 to its raid page.
  */
 export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean } = {}): string[] => [
   "/",
@@ -27,5 +27,7 @@ export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean
   ...midnightLairEncounters.map(({ slug }) => `/wow/lairs/${slug}`),
   ...professions.map(({ slug }) => `/wow/professions/${slug}`),
   ...talentSpecThemes.map(({ slug }) => `/wow/mythic-plus/leaderboard/${slug}`),
+  ...midnightClasses.map(({ slug }) => `/wow/classes/${slug}`),
+  ...midnightSpecializations.map((spec) => `/wow/classes/${spec.classSlug}/${spec.slug}`),
   "/privacy",
 ];

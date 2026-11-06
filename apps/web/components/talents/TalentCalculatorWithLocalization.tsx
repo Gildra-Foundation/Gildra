@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { TalentCalculator } from "@/components/TalentCalculator";
 import type { TalentCalculatorData } from "@/lib/talentCalculatorData";
 import type { TalentSpecTheme } from "@/lib/talentSpecThemes";
+import type { PopularBuild } from "@/lib/talentPopularBuilds";
 
-type Props = { data: TalentCalculatorData | null; theme: TalentSpecTheme; lang: "ru" | "en"; search?: string };
+type Props = { data: TalentCalculatorData | null; theme: TalentSpecTheme; lang: "ru" | "en"; search?: string; builds?: PopularBuild[] };
 type SpellTranslation = { name: string; description: string };
 
 function withTranslations(data: TalentCalculatorData, translations: Record<string, SpellTranslation>): TalentCalculatorData {
@@ -28,7 +29,7 @@ function withTranslations(data: TalentCalculatorData, translations: Record<strin
   };
 }
 
-export function TalentCalculatorWithLocalization({ data, theme, lang, search }: Props) {
+export function TalentCalculatorWithLocalization({ data, theme, lang, search, builds }: Props) {
   const [renderData, setRenderData] = useState(data);
 
   useEffect(() => {
@@ -56,5 +57,5 @@ export function TalentCalculatorWithLocalization({ data, theme, lang, search }: 
     return () => controller.abort();
   }, [data, lang]);
 
-  return <TalentCalculator data={renderData} theme={theme} lang={lang} search={search} />;
+  return <TalentCalculator data={renderData} theme={theme} lang={lang} search={search} builds={builds} />;
 }

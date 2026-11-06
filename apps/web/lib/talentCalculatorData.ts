@@ -1,7 +1,8 @@
 import { catalogLocaleView } from "@/lib/catalogLocale";
 import { getCatalogEntity, getCatalogEntityTypes, getCatalogPage, type CatalogRecord, type GameEntity } from "@/lib/api/client";
 import { midnightManifest } from "@/lib/midnightManifest";
-import { defaultTalentSpecTheme, getTalentSpecTheme, type TalentSpecTheme } from "@/lib/talentSpecThemes";
+import { defaultTalentSpecTheme, getTalentSpecTheme, talentSpecThemes, type TalentSpecTheme } from "@/lib/talentSpecThemes";
+import { formatRussianTalentText, type TalentTextSpec } from "@/lib/talentText";
 import { getLocalizedTalentSpells } from "@/lib/wow/localizedTalentSpells";
 import { talentCalculatorDataCopy } from "./talentCalculatorDataCopy";
 
@@ -193,12 +194,6 @@ function asNumber(value: unknown, fallback = 0) {
   return Number.isFinite(number) ? number : fallback;
 }
 
-function russianPlural(value: number, forms: [string, string, string]) {
-  const mod10 = value % 10;
-  const mod100 = value % 100;
-  return forms[mod10 === 1 && mod100 !== 11 ? 0 : mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20) ? 1 : 2];
-}
-
 function asNumberArray(value: unknown) {
   if (Array.isArray(value)) return value.map((item) => asNumber(item)).filter((item) => item > 0);
   const single = asNumber(value);
@@ -218,7 +213,7 @@ function parseRawEntry(value: unknown): RawEntry | null {
   };
 }
 
-export const cleanTalentDescription = (value: unknown, lang: TalentLang = "ru") => {
+export const cleanTalentDescription = (value: unknown, lang: TalentLang = "ru", spec?: TalentTextSpec) => {
   if (lang === "en") return String(value ?? "")
     .replace(/\|c[0-9A-Fa-f]{8}|\|r/g, "")
     .replace(/\$\?[^\[]+\[([^\]]*)\](?:\?[^\[]+\[([^\]]*)\])?(?:\[([^\]]*)\])?/g, (_, first: string, second?: string, third?: string) => first || second || third || "")
@@ -226,75 +221,19 @@ export const cleanTalentDescription = (value: unknown, lang: TalentLang = "ru") 
     .replace(/\$<[^>]+>|\$\{[^}]+\}|\$[a-zA-Z0-9_<>/-]+/g, "[value depends on character stats]")
     .replace(/\s+/g, " ")
     .trim();
-  return String(value ?? "")
-  .replace(/(?:\[|\{\{)\s*(\d+(?:[.,]\d+)?)\s*%\s+of\s+(Attack Power|Spell Power|Weapon Damage)\s*(?:\]|\}\})/gi, (_token, amount: string, unit: string) => `${amount}% ${({ "attack power": "силы атаки", "spell power": "силы заклинаний", "weapon damage": "урона оружия" } as Record<string, string>)[unit.toLowerCase()]}`)
-  .replace(/\|c[0-9A-Fa-f]{8}|\|r/g, "")
-  .replace(/\$\?[^\[]+\[([^\]]*)\](?:\?[^\[]+\[([^\]]*)\])?(?:\[([^\]]*)\])?/g, (_, first: string, second?: string, third?: string) => first || second || third || "")
-  .replace(/\$\?a[^\[]+\[([^\]]*)\]\[([^\]]*)\]/g, (_, first: string, second: string) => second || first)
-  .replace(/\$\?[^\[]+\[([^\]]*)\](?:\[([^\]]*)\])?/g, (_, first: string, second?: string) => first || second || "")
-  .replace(/\$@(?:spell)?(?:icon|name|desc)\d+/g, "")
-  .replace(/\$<([^>]+)>/g, (_, token: string) => token.toLowerCase().includes("damage") || token.toLowerCase().includes("dmg") ? "урон зависит от характеристик персонажа" : "эффект зависит от контекста")
-  .replace(/\$\{[^}]+\}/g, "эффект зависит от контекста")
-  .replace(/\$proccooldown/gi, "время восстановления")
-  .replace(/\$\d*t\d*/gi, "длительность эффекта")
-  .replace(/\$\d*o\d*/gi, "урон")
-  .replace(/\$\d*[aA]\d*/g, "радиус действия")
-  .replace(/\$\d*u\d*/gi, "число повторений")
-  .replace(/\$\d*h\d*/gi, "эффект зависит от контекста")
-  .replace(/\$\d*[sm]\d*/gi, "эффект зависит от контекста")
-  .replace(/\?c\d+\[/g, "")
-  .replace(/\$[a-zA-Z][\w<>/-]*/g, "")
-  .replace(/\$[a-zA-Z0-9_<>/-]+/g, "")
-  .replace(/\[\]/g, "")
-  .replace(/\]/g, "")
-  .replace(/(на|by)\s+-([0-9]+(?:[.,][0-9]+)?)%/gi, "$1 $2%")
-  .replace(/эффект зависит от контекста\s*%/gi, "величину, зависящую от характеристик персонажа")
-  .replace(/с вероятностью\s+эффект зависит от контекста%/gi, "с неподтвержденной вероятностью")
-  .replace(/с вероятностью\s+величину, зависящую от характеристик персонажа/gi, "с неподтвержденной вероятностью")
-  .replace(/урон зависит от характеристик персонажа\s+ед\./gi, "урон, зависящий от характеристик персонажа")
-  .replace(/на\s+эффект зависит от контекста\s+сек\.?/gi, "; точное значение времени не подтверждено источником")
-  .replace(/получите\s+эффект зависит от контекста\s+ед\.\s+урона от этого эффекта/gi, "получите дополнительный урон от этого эффекта; точное значение не подтверждено источником")
-  .replace(/эффект зависит от контекста\s+ед\.\s+ярости/gi, "дополнительную ярость; точное значение не подтверждено источником")
-  .replace(/на\s+эффект зависит от контекста\s+ед\.\s+меньше ярости/gi, "меньше ярости; точное значение не подтверждено источником")
-  .replace(/автоатаки дают на 10\?\[20\[50% больше ярости/gi, "автоатаки дают ярость; точное значение не подтверждено источником")
-  .replace(/\"Смертельный удар\" и \"Рассекающий удар\" могут\"Буйство\" может\[\"Реванш\" может восполнить 1010\[50% затраченной ярости с вероятностью (?:исцеление%|величину, зависящую от характеристик персонажа)/gi, "условия срабатывания зависят от выбранного таланта; точные значения не подтверждены источником")
-  .replace(/\"Смертельный удар\" и \"Рассекающий удар\" могут\"Буйство\" может\[\"Реванш\" может восполнить 1010\[50% затраченной ярости с неподтвержденной вероятностью/gi, "условия срабатывания зависят от выбранного таланта; точные числа не подтверждены источником")
-  .replace(/еще\s+урон\s+ед\.\s+физического урона/gi, "дополнительный физический урон; точное значение не подтверждено источником")
-  .replace(/после\s+эффект зависит от контекста-й/gi, "после указанного порога")
-  .replace(/на\s+временной интервал/gi, "; точный интервал не подтвержден источником")
-  .replace(/максимум\s+[–-]\s*эффект зависит от контекста\s+ед\.\s+ярости/gi, "максимум — дополнительная ярость; точное значение не подтверждено источником")
-  .replace(/(\d+)\s+эффект:эффекта:эффектов;/gi, "$1 эффекта")
-  .replace(/(\d+)\s+заряд:заряда:зарядов;/gi, (_, value: string) => `${value} ${russianPlural(Number(value), ["заряд", "заряда", "зарядов"])}`)
-  .replace(/(\d+)\s+раз:раза:раз;/gi, (_, value: string) => `${value} ${russianPlural(Number(value), ["раз", "раза", "раз"])}`)
-  .replace(/число повторений\s+следующая атака, действующая на одну цель, поражает:следующие атаки, действующие на одну цель, поражают:следующих атак, действующих на одну цель, поражают;\s*до 4 дополнительной цели, нанося ей:дополнительных целей, нанося им:дополнительных целей, нанося им;\s*65% базового урона/gi, "следующая атака, действующая на одну цель, поражает до 4 дополнительных целей, нанося им 65% базового урона")
-  .replace(/временной интервал/gi, "точный интервал не подтвержден источником")
-  .replace(/дополнительный физический урон; точное значение не подтверждено источником за\s+(\d+(?:[.,]\d+)?)\s+сек/gi, "дополнительный физический урон за $1 сек; точное число не подтверждено источником")
-  .replace(/ед\.\s+ярости\.?/gi, "ярость; точное количество не подтверждено источником")
-  .replace(/точное значение/gi, "точное число")
-  .replace(/точные значения/gi, "точные числа")
-  .replace(/сокращается\s*;\s*точное число времени не подтверждено источником/gi, "сокращается; точное число не подтверждено источником")
-  .replace(/в радиусе\s+радиус действия\s*м/gi, "в радиусе действия")
-  .replace(/радиус действия\s*м/gi, "радиус действия")
-  .replace(/время восстановления\s*сек\.?/gi, "время восстановления")
-  .replace(/длительность эффекта\s*сек\.?/gi, "длительность эффекта")
-  .replace(/(\d{4,})\s*сек\.?/gi, "временной интервал")
-  .replace(/(цель|цели|целей):(?:цель|цели|целей):(?:цель|цели|целей);/gi, "цели")
-  .replace(/\b([^:;]{1,40}):([^:;]{1,40}):([^;]{1,40});/g, "$1")
-  .replace(/число повторений\s+раз/gi, "несколько раз")
-  .replace(/;\d+s\d+/gi, "")
-  .replace(/\s+([.,:])/g, "$1")
-  .replace(/\s+на\./gi, "")
-  .replace(/\s+эффект зависит от контекста\s+ед\./gi, " значение")
-  .replace(/эффект зависит от контекста/gi, "значение, зависящее от характеристик")
-  .replace(/\.\s*:/g, ".")
-  .replace(/:\s*\n/g, "\n")
-  .replace(/\(\s*\)/g, "")
-  .replace(/[ \t]+/g, " ")
-  .replace(/\n{3,}/g, "\n\n")
-  .replace(/\s+([.,:])/g, "$1")
-  .replace(/\s{2,}/g, " ")
-  .trim();
+  return formatRussianTalentText(String(value ?? ""), spec);
 };
+
+const furyTextSpec = () => talentTextSpec(defaultTalentSpecTheme);
+
+/** Which variant and "[Spec: …]" clauses of a Russian description belong to this specialization. */
+export function talentTextSpec(theme: TalentSpecTheme): TalentTextSpec {
+  const own = talentSpecThemes.filter((entry) => entry.classId === theme.classId).map((entry) => entry.specNameRu);
+  return { specName: theme.specNameRu, classSpecNames: [...own, ...(extraSpecNames[theme.classId] ?? [])] };
+}
+
+/** Specializations the game text names that have no page here (Devourer demon hunters). */
+const extraSpecNames: Record<number, string[]> = { 12: ["Пожиратель"] };
 
 function asTalentType(value: unknown): TalentChoice["talentType"] {
   if (value === "active" || value === "choice") return value;
@@ -502,7 +441,7 @@ async function enrich(summary: TalentEntityRecord, topology: Topology, locale: T
         definitionId: sourceEntry.definitionId,
         entryIndex: sourceEntry.index,
         name: summary.name,
-        description: cleanTalentDescription(summary.description, locale === "ru_RU" ? "ru" : "en"),
+        description: cleanTalentDescription(summary.description, locale === "ru_RU" ? "ru" : "en", furyTextSpec()),
         iconUrl: resolvedIcon.iconUrl,
         iconName,
         iconSource: resolvedIcon.iconSource,
@@ -540,7 +479,7 @@ async function enrich(summary: TalentEntityRecord, topology: Topology, locale: T
       definitionId: sourceEntry?.definitionId,
       entryIndex: sourceEntry?.index,
       name: entity.name || summary.name,
-       description: cleanTalentDescription(description?.text || entity.description || summary.description, locale === "ru_RU" ? "ru" : "en"),
+       description: cleanTalentDescription(description?.text || entity.description || summary.description, locale === "ru_RU" ? "ru" : "en", furyTextSpec()),
        iconUrl: resolvedIcon.iconUrl,
        iconName,
        iconSource: resolvedIcon.iconSource,
@@ -563,7 +502,7 @@ async function enrichPvp(summary: TalentEntityRecord, topology: Topology, locale
   if (!entity) {
     const resolvedIcon = resolveTalentIcon(summary.iconName, summary.iconUrl);
     return {
-      externalId: summary.externalId, name: summary.name, description: cleanTalentDescription(summary.description, locale === "ru_RU" ? "ru" : "en"),
+      externalId: summary.externalId, name: summary.name, description: cleanTalentDescription(summary.description, locale === "ru_RU" ? "ru" : "en", furyTextSpec()),
       iconUrl: resolvedIcon.iconUrl, iconName: summary.iconName, iconSource: resolvedIcon.iconSource,
       iconFallback: resolvedIcon.iconFallback, specId, buildId: asNumber(summary.buildId, topology.buildId), buildVersion: topology.buildVersion, sourceUrl: "",
     };
@@ -584,7 +523,7 @@ async function enrichPvp(summary: TalentEntityRecord, topology: Topology, locale
     externalId: summary.externalId,
     spellId: asNumber(info?.spell_id),
     name: entity.name || summary.name,
-    description: cleanTalentDescription(description?.text || entity.description || summary.description, locale === "ru_RU" ? "ru" : "en"),
+    description: cleanTalentDescription(description?.text || entity.description || summary.description, locale === "ru_RU" ? "ru" : "en", furyTextSpec()),
     iconUrl: resolvedIcon.iconUrl,
     iconName,
     iconSource: resolvedIcon.iconSource,
@@ -652,7 +591,7 @@ function loadoutNodes(topology: Topology): TalentCalculatorData["loadoutNodes"] 
   }));
 }
 
-function directChoice(entry: RawEntry, lang: TalentLang, localized?: Pick<CatalogRecord, "name" | "description" | "iconUrl">, fallbackIconUrl = unverifiedIconUrl): TalentChoice {
+function directChoice(entry: RawEntry, lang: TalentLang, localized?: Pick<CatalogRecord, "name" | "description" | "iconUrl">, textSpec?: TalentTextSpec, fallbackIconUrl = unverifiedIconUrl): TalentChoice {
   const source = localized && (lang === "ru" ? /[А-Яа-яЁё]/.test(localized.name) : !/[А-Яа-яЁё]/.test(localized.name)) ? localized : undefined;
   const resolvedIcon = resolveTalentIcon(entry.icon, localized?.iconUrl, entry.icon ? `https://render.worldofwarcraft.com/us/icons/56/${entry.icon}.jpg` : undefined);
   return {
@@ -661,7 +600,7 @@ function directChoice(entry: RawEntry, lang: TalentLang, localized?: Pick<Catalo
     definitionId: entry.definitionId,
     entryIndex: entry.index,
     name: source?.name || (lang === "en" ? entry.name : "") || `${talentCalculatorDataCopy[lang].talent} #${entry.spellId ?? entry.id}`,
-    description: cleanTalentDescription(source?.description, lang) || "",
+    description: cleanTalentDescription(source?.description, lang, textSpec) || "",
     iconUrl: resolvedIcon.iconFallback ? fallbackIconUrl : resolvedIcon.iconUrl,
     iconName: entry.icon,
     iconSource: resolvedIcon.iconSource,
@@ -671,13 +610,13 @@ function directChoice(entry: RawEntry, lang: TalentLang, localized?: Pick<Catalo
   };
 }
 
-function directPvpTalent(summary: CatalogRecord, buildVersion: string, buildId: number, requestedSpecId: number, locale: TalentLocale): PvPTalent {
+function directPvpTalent(summary: CatalogRecord, buildVersion: string, buildId: number, requestedSpecId: number, locale: TalentLocale, textSpec?: TalentTextSpec): PvPTalent {
   const officialIcon = summary.iconName ? `https://render.worldofwarcraft.com/us/icons/56/${summary.iconName}.jpg` : undefined;
   const resolvedIcon = resolveTalentIcon(summary.iconName, summary.iconUrl, officialIcon);
   return {
     externalId: summary.externalId,
     name: summary.name,
-    description: cleanTalentDescription(summary.description, locale === "ru_RU" ? "ru" : "en"),
+    description: cleanTalentDescription(summary.description, locale === "ru_RU" ? "ru" : "en", textSpec),
     iconUrl: resolvedIcon.iconUrl,
     iconName: summary.iconName,
     iconSource: resolvedIcon.iconSource,
@@ -742,6 +681,7 @@ function getRaidbotsTalentSnapshot(): Promise<RaidbotsTalentSnapshot> {
 async function loadRaidbotsTalentData(theme: TalentSpecTheme = defaultTalentSpecTheme, heroPathId?: number, lang: TalentLang = "ru", localize = true): Promise<TalentCalculatorData> {
   const locale = catalogLocale(lang);
   const requestedSpecId = theme.specId;
+  const textSpec = talentTextSpec(theme);
   const requestedHero = theme.heroPaths.find((hero) => hero.id === heroPathId) ?? theme.heroPaths[0];
   const [snapshot, pvpSummaries, talentSummaries] = await Promise.all([
     getRaidbotsTalentSnapshot(),
@@ -783,7 +723,7 @@ async function loadRaidbotsTalentData(theme: TalentSpecTheme = defaultTalentSpec
   for (const [kind, raw] of Object.entries(nodes) as [TalentKind, RawNode[]][]) {
     for (const node of raw) {
       if (kind === "hero" && asNumber(node.subTreeId) !== selectedHeroSubtreeId) continue;
-      grouped.get(kind)!.set(node.id, node.entries.map((entry) => directChoice(entry, lang, localizedSpells.get(entry.spellId ?? 0) ?? localizedTalents.get(entry.id))));
+      grouped.get(kind)!.set(node.id, node.entries.map((entry) => directChoice(entry, lang, localizedSpells.get(entry.spellId ?? 0) ?? localizedTalents.get(entry.id), textSpec)));
     }
   }
   const trees = {
@@ -795,7 +735,7 @@ async function loadRaidbotsTalentData(theme: TalentSpecTheme = defaultTalentSpec
     throw new Error(`Raidbots ${theme.specName} talent snapshot has an unexpected shape`);
   }
   const pvpTalents = pvpSummaries
-    .map((summary) => directPvpTalent(summary, topology.buildVersion, topology.buildId, requestedSpecId, locale))
+    .map((summary) => directPvpTalent(summary, topology.buildVersion, topology.buildId, requestedSpecId, locale, textSpec))
     .sort((a, b) => a.externalId - b.externalId);
   return {
     specId: requestedSpecId, buildId: topology.buildId, buildVersion, buildNumber: topology.buildNumber,

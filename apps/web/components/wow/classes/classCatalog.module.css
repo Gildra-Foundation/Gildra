@@ -1,4 +1,6 @@
-/* atlas:strict — class catalog: one painted plaque per class (MaterialPlaque), specialization links on glass inside. */
+/* atlas:strict — classes: one painted plaque per class (MaterialPlaque, Characters kit), specialization rows on glass inside;
+   the class page and the specialization page reuse the rows, chips and plaques below. Class colour (--class-color) marks
+   only class identity; tier colours (--tier-accent) only the tier letter. */
 .roster {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -21,7 +23,11 @@
   gap: var(--atlas-space-4);
 }
 
-/* The class colour is game data: it marks only the class name and the specialization edge. */
+.classIcon { box-shadow: 0 0 0 1px color-mix(in srgb, var(--class-color) 40%, transparent), 0 6px 22px color-mix(in srgb, var(--class-color) 22%, transparent); border-radius: var(--atlas-radius); }
+
+.classTitle { display: grid; gap: 2px; min-width: 0; }
+
+/* The class colour is game data: it marks the class name and the specialization edge. */
 .className {
   margin: 0;
   color: color-mix(in srgb, var(--class-color) 62%, var(--atlas-text-strong));
@@ -32,68 +38,263 @@
   line-height: var(--atlas-leading-snug);
   text-shadow: 0 1px 3px var(--atlas-bg);
 }
+.className a { color: inherit; text-decoration: none; }
+.className a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.className a:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 3px; border-radius: 4px; }
 
-/* auto-fit: three specializations share the plaque's width instead of leaving an empty fourth track
-   (names like "Beast Mastery" and "Marksmanship" then fit on one line). */
-.specs {
+.classMeta { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); letter-spacing: .04em; }
+
+/* ---- Specialization rows ---- */
+.specRows { display: grid; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+
+.specRow {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
-  gap: var(--atlas-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.spec {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: var(--atlas-control-height);
-  padding: 6px 12px 6px 6px;
-  color: inherit;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--atlas-space-3);
+  padding: 10px 10px 10px 10px;
   border: 1px solid var(--material-line, var(--atlas-line-soft));
+  border-inline-start: 3px solid color-mix(in srgb, var(--class-color) 70%, transparent);
   border-radius: var(--atlas-radius);
   background: color-mix(in srgb, var(--atlas-bg) 58%, transparent);
-  text-decoration: none;
-  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease), translate var(--atlas-duration-fast) var(--atlas-ease);
+  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
+}
+.specRow:hover, .specRow:focus-within {
+  border-color: color-mix(in srgb, var(--class-color) 60%, var(--atlas-line));
+  background: color-mix(in srgb, var(--class-color) 9%, var(--atlas-bg));
 }
 
-.spec img {
-  flex: none;
+.specIcon { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1px color-mix(in srgb, var(--class-color) 45%, transparent); }
+
+.specMain { display: grid; gap: 4px; min-width: 0; }
+.specLine { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--atlas-space-2); }
+
+.specName {
+  color: var(--atlas-text-strong);
+  font-size: var(--atlas-text-body);
+  font-weight: 650;
+  line-height: 1.25;
+  text-decoration: none;
+}
+.specName:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.specName:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 2px; border-radius: 3px; }
+
+.role {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px 1px 5px;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-label);
+  line-height: 1.5;
+  white-space: nowrap;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: 999px;
+}
+.role svg { width: 12px; height: 12px; flex: none; }
+.role[data-role="tank"] svg { color: var(--atlas-info); }
+.role[data-role="healer"] svg { color: var(--atlas-positive); }
+.role[data-role="melee"] svg, .role[data-role="ranged"] svg { color: var(--atlas-negative); }
+.role[data-role="support"] svg { color: var(--atlas-accent-strong); }
+
+.heroShares { display: flex; flex-wrap: wrap; gap: 2px var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: 1.35; }
+.heroShare { display: inline-flex; gap: 5px; white-space: nowrap; }
+.heroShare b { color: var(--atlas-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.topPlayer { display: inline-flex; align-items: center; gap: 6px; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: 1.35; min-width: 0; }
+.topPlayer svg { width: 13px; height: 13px; flex: none; color: var(--material-light, var(--atlas-accent)); }
+.topPlayer b { overflow: hidden; color: var(--atlas-text); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.topPlayer span:last-child { font-variant-numeric: tabular-nums; }
+
+.specSide { display: grid; justify-items: end; gap: var(--atlas-space-2); }
+
+.tier {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 26px;
+  padding: 0 6px;
+  color: var(--atlas-bg);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-body);
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 6px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--tier-accent, var(--atlas-accent)) 82%, var(--atlas-text-strong)), var(--tier-accent, var(--atlas-accent)) 70%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tier-accent, var(--atlas-accent)) 60%, transparent);
+}
+.tier[data-size="large"] { min-width: 44px; height: 40px; font-size: var(--atlas-text-h3); border-radius: 8px; }
+
+.tierPair { display: inline-flex; align-items: center; gap: 6px; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); letter-spacing: .04em; }
+.quickLinks { display: flex; gap: 4px; }
+.quickLink {
+  display: inline-grid;
+  place-items: center;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
+  color: var(--atlas-text-muted);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--atlas-bg) 50%, transparent);
+  transition: color var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast) var(--atlas-ease);
+}
+.quickLink svg { width: 16px; height: 16px; }
+.quickLink:hover, .quickLink:focus-visible { color: var(--atlas-text-strong); border-color: color-mix(in srgb, var(--class-color) 70%, var(--atlas-line)); }
+.quickLink:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 2px; }
+
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- Role filter (hub): hides rows of other roles and classes without them ---- */
+.roleFilter { max-width: 100%; }
+.roster[data-role-filter="tank"] .specRow:not([data-role="tank"]),
+.roster[data-role-filter="healer"] .specRow:not([data-role="healer"]),
+.roster[data-role-filter="dps"] .specRow:not([data-role="dps"]) { display: none; }
+.roster[data-role-filter="tank"] .classCard:not(:has(.specRow[data-role="tank"])),
+.roster[data-role-filter="healer"] .classCard:not(:has(.specRow[data-role="healer"])),
+.roster[data-role-filter="dps"] .classCard:not(:has(.specRow[data-role="dps"])) { display: none; }
+
+/* ---- Class page: specialization plaques ---- */
+.specGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.specCard { display: grid; align-content: start; gap: var(--atlas-space-3); }
+.specCardHead { display: flex; align-items: center; gap: var(--atlas-space-3); }
+.specCardHead img { flex: none; width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 0 1px color-mix(in srgb, var(--class-color) 45%, transparent); }
+.specCardTitle { display: grid; justify-items: start; gap: 4px; min-width: 0; flex: 1; }
+.specCardTitle h3 { margin: 0; font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); }
+.specCardTitle h3 a { color: var(--atlas-text-strong); text-decoration: none; }
+.specCardTitle h3 a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.specCardTitle h3 a:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 3px; border-radius: 4px; }
+
+.facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px var(--atlas-space-4); margin: 0; font-size: var(--atlas-text-small); line-height: 1.4; }
+.facts dt { color: var(--atlas-text-muted); }
+.facts dd { margin: 0; color: var(--atlas-text); }
+
+.strengths { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.strengths li {
+  padding: 3px 10px;
+  color: var(--atlas-text);
+  font-size: var(--atlas-text-small);
+  line-height: 1.4;
+  border: 1px solid color-mix(in srgb, var(--class-color) 34%, var(--atlas-line-soft));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--class-color) 8%, transparent);
 }
 
-.spec > span { display: grid; gap: 1px; min-width: 0; }
-.spec strong { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 650; line-height: 1.25; }
-.spec small { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); line-height: 1.3; }
-
-.spec:hover,
-.spec:focus-visible {
-  border-color: color-mix(in srgb, var(--class-color) 70%, var(--atlas-line));
-  background: color-mix(in srgb, var(--class-color) 14%, var(--atlas-bg));
-  translate: 0 -2px;
+.linkRow { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--atlas-text);
+  font-size: var(--atlas-text-small);
+  text-decoration: none;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--atlas-bg) 50%, transparent);
 }
-.spec:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 2px; }
+.textLink svg { width: 15px; height: 15px; color: var(--material-light, var(--atlas-accent)); }
+.textLink:hover, .textLink:focus-visible { color: var(--atlas-text-strong); border-color: color-mix(in srgb, var(--class-color) 70%, var(--atlas-line)); }
+.textLink:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 2px; }
+
+/* ---- Hero trees ---- */
+.heroGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.heroCard { display: grid; align-content: start; gap: var(--atlas-space-2); }
+.heroCard h3 { margin: 0; color: color-mix(in srgb, var(--class-color) 45%, var(--atlas-text-strong)); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); }
+.heroCard p { margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.heroSpecs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.heroSpecs a { display: inline-flex; align-items: center; gap: 6px; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); text-decoration: none; }
+.heroSpecs a:hover, .heroSpecs a:focus-visible { color: var(--atlas-text-strong); }
+.heroSpecs img { width: 20px; height: 20px; border-radius: 50%; }
+.heroSpecs b { color: var(--atlas-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---- Specialization page ---- */
+.overview { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--atlas-space-5); }
+.panelTitle { margin: 0 0 var(--atlas-space-3); color: var(--material-light, var(--atlas-text-strong)); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+
+.tierTable { width: 100%; border-collapse: collapse; font-size: var(--atlas-text-small); }
+.tierTable th, .tierTable td { padding: 8px 6px; text-align: start; border-bottom: 1px solid var(--material-line, var(--atlas-line-soft)); }
+.tierTable thead th { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-weight: 600; }
+.tierTable tbody th { color: var(--atlas-text); font-weight: 600; }
+.tierTable tr:last-child th, .tierTable tr:last-child td { border-bottom: 0; }
+.tierCell { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.tierCell small { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-variant-numeric: tabular-nums; }
+.dash { color: var(--atlas-text-muted); }
+
+.builds { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.build { display: grid; align-content: start; gap: var(--atlas-space-3); }
+.buildHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-3); }
+.buildHead h3 { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); }
+.buildShare { color: var(--material-light, var(--atlas-accent-strong)); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-variant-numeric: tabular-nums; }
+.track { display: block; height: 4px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--atlas-text-muted) 22%, transparent); }
+.track span { display: block; height: 100%; border-radius: inherit; background: var(--material-light, var(--atlas-accent)); }
+.players { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: var(--atlas-text-small); }
+.players li { display: flex; justify-content: space-between; gap: var(--atlas-space-3); min-width: 0; }
+.players li > span { overflow: hidden; color: var(--atlas-text-muted); text-overflow: ellipsis; white-space: nowrap; }
+.players b { color: var(--atlas-text); font-weight: 600; }
+.players em { color: var(--atlas-text); font-style: normal; font-variant-numeric: tabular-nums; }
+.buildActions { display: flex; flex-wrap: wrap; gap: 6px; }
+.buildAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--atlas-text);
+  font: inherit;
+  font-size: var(--atlas-text-small);
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--atlas-bg) 50%, transparent);
+}
+.buildAction svg { width: 15px; height: 15px; color: var(--material-light, var(--atlas-accent)); }
+.buildAction:hover, .buildAction:focus-visible { color: var(--atlas-text-strong); border-color: var(--material-light, var(--atlas-line-strong)); }
+.buildAction:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 2px; }
+.buildAction[data-state="copied"] svg { color: var(--atlas-positive); }
+
+.items { display: grid; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.item { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); }
+.item img { width: 36px; height: 36px; border-radius: 6px; box-shadow: 0 0 0 1px var(--quality-frame, var(--atlas-line)); }
+.itemText { display: grid; gap: 4px; min-width: 0; }
+.itemText a { overflow: hidden; color: var(--quality-color, var(--atlas-text)); font-size: var(--atlas-text-small); text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.itemText a:hover { text-decoration: underline; }
+.itemShare { color: var(--atlas-text); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums; }
+.gear { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-5); }
+
+.siblings { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.sibling { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 14px 4px 6px; color: var(--atlas-text); text-decoration: none; border: 1px solid var(--atlas-line-soft); border-radius: 999px; background: color-mix(in srgb, var(--atlas-bg) 55%, transparent); }
+.sibling img { width: 32px; height: 32px; border-radius: 50%; }
+.sibling:hover, .sibling:focus-visible { color: var(--atlas-text-strong); border-color: color-mix(in srgb, var(--class-color) 70%, var(--atlas-line)); }
+.sibling:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
 @media (max-width: 900px) {
   .roster { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-5); }
+  .overview, .gear { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 480px) {
-  .specs { grid-template-columns: minmax(0, 1fr); }
+  .specRow { grid-template-columns: 36px minmax(0, 1fr) auto; gap: var(--atlas-space-2); padding: 8px; }
+  .specIcon { width: 36px; height: 36px; }
+  .specSide { grid-column: 2 / -1; display: flex; align-items: center; justify-content: space-between; }
+  .quickLink { width: 40px; height: 40px; }
+  .specGrid, .builds, .heroGrid { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spec { transition: none; }
-  .spec:hover, .spec:focus-visible { translate: none; }
+  .specRow, .quickLink { transition: none; }
 }
-:global([data-motion="reduced"]) .spec,
-:global([data-ui-motion="reduce"]) .spec { transition: none; translate: none; }
+:global([data-motion="reduced"]) .specRow,
+:global([data-ui-motion="reduce"]) .specRow { transition: none; }
 
 @media (forced-colors: active) {
-  .spec { border-color: CanvasText; background: Canvas; }
-  .spec:hover, .spec:focus-visible { border-color: Highlight; }
+  .specRow, .quickLink, .textLink, .buildAction, .sibling, .role, .strengths li { border-color: CanvasText; background: Canvas; }
+  .tier { color: CanvasText; background: Canvas; border: 1px solid CanvasText; }
+  .specRow:hover, .specRow:focus-within { border-color: Highlight; }
 }
+
+.back { margin: var(--atlas-space-6) 0 0; }
+
+/* Class page hero: the class name in its colour. */
+.classHero h1 { color: color-mix(in srgb, var(--class-color) 58%, var(--atlas-text-strong)); }

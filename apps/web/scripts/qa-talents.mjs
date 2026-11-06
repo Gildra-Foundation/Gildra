@@ -30,7 +30,8 @@ try {
     check(response?.status() === 200, `${spec}: status ${response?.status()}`);
     await ready(page);
     await page.waitForFunction(() => document.querySelectorAll("[data-tree-canvas]").length === 3, undefined, { timeout: 30_000 });
-    const text = await page.locator("main").innerText();
+    // Top players' builds carry their share ("46%"): real data, not the old progress percentages.
+    const text = await page.locator("main").evaluate((main) => { const copy = main.cloneNode(true); copy.querySelector("[data-talent-presets]")?.remove(); document.body.append(copy); const value = copy.innerText; copy.remove(); return value; });
     check(!/Talent data|Raidbots|Wowhead|community snapshot|\b\d+\.\d+\.\d+\.\d{4,}\b|Unsaved|%/.test(text), `${spec}: service text on the page`);
 
     // Clicks fill each tree; counters follow; the URL carries the build.
