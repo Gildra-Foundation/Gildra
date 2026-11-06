@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 import { clock, parseRunsQuery, runsSearch, withSpec, withoutSpec } from "../../lib/games/wow/mythicPlusRunsTypes.ts";
+import { parseRunId, runHref, toRunDetail } from "../../lib/games/wow/mythicPlusRunTypes.ts";
 import { communityCopy } from "../../components/wow/mythicCommunity/communityCopy.ts";
 import { staticPaths } from "../../lib/games/wow/sitemap.ts";
 
@@ -36,5 +38,40 @@ describe("Mythic+ community pages", () => {
   });
   it("are listed in the sitemap", () => {
     for (const path of ["/wow/mythic-plus/comps", "/wow/mythic-plus/stats", "/wow/mythic-plus/routes"]) assert.ok(staticPaths().includes(path), path);
+  });
+});
+
+describe("Mythic+ run page", () => {
+  const raw = JSON.parse(readFileSync(new URL("../fixtures/raiderio-run-details.json", import.meta.url), "utf8"));
+  it("keeps the facts of a Raider.IO run", () => {
+    const run = toRunDetail(raw);
+    assert.ok(run);
+    assert.equal(run.id, 24026346);
+    assert.equal(run.dungeon.slug, "ruby-life-pools");
+    assert.equal(run.level, 24);
+    assert.equal(run.chests, 1);
+    assert.equal(run.url, "https://raider.io/mythic-plus-runs/season-mn-2/24026346-24-ruby-life-pools");
+    assert.deepEqual(run.players.map((player) => player.role), ["tank", "healer", "dps", "dps", "dps"]);
+    assert.equal(run.players[0].heroId, 24);
+    assert.ok(run.players.every((player) => player.loadout && player.itemLevel && player.rating));
+    assert.equal(run.players.reduce((sum, player) => sum + player.deaths, 0), 1);
+    assert.equal(run.deaths, 1);
+    assert.deepEqual(run.encounters.map((encounter) => encounter.name), ["Melidrussa Chillworn", "Kokia Blazehoof", "Kyrakka and Erkhart Stormvein"]);
+    assert.equal(run.affixes.length, 3);
+    assert.ok(run.videos.every((video) => video.url.startsWith("https://www.twitch.tv/videos/") || video.url.startsWith("https://www.youtube.com/watch?v=")));
+  });
+  it("rejects answers that are not a finished run", () => {
+    assert.equal(toRunDetail({}), null);
+    assert.equal(toRunDetail({ ...raw, deleted_at: "2026-11-01T00:00:00Z" }), null);
+    assert.equal(toRunDetail(null), null);
+    const unlogged = toRunDetail({ ...raw, logged_details: null, videos: [{ videoType: "youtube", videoId: "bad id!" }] });
+    assert.equal(unlogged?.deaths, null);
+    assert.deepEqual(unlogged?.encounters, []);
+    assert.deepEqual(unlogged?.videos, []);
+  });
+  it("reads only plain run ids from the URL", () => {
+    assert.equal(parseRunId("24026346"), 24026346);
+    for (const value of ["", "0", "012", "1e5", "24026346-24-ruby", "99999999999", "-4"]) assert.equal(parseRunId(value), null, value);
+    assert.equal(runHref("/ru", 5), "/ru/wow/mythic-plus/routes/5");
   });
 });

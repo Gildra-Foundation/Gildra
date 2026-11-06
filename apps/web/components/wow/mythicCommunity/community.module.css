@@ -232,26 +232,38 @@
 .pick { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; border-radius: var(--atlas-radius); }
 .pick:hover { background: color-mix(in srgb, var(--material-light) 12%, transparent); }
 
-.runs { display: grid; margin: 0; padding: 0; list-style: none; }
+.runs { display: grid; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
 .run {
   display: grid;
-  grid-template-columns: 5.5rem minmax(0, 1fr) auto auto;
+  grid-template-columns: 112px 4.5rem minmax(0, 1fr) auto 20px;
   align-items: center;
   gap: var(--atlas-space-4);
-  min-height: 64px;
-  padding-block: var(--atlas-space-2);
-  border-bottom: 1px solid var(--material-line);
+  min-height: 76px;
+  padding: 6px var(--atlas-space-3) 6px 6px;
+  border: 1px solid var(--material-line);
+  border-left: 3px solid var(--dungeon-accent, var(--material-light));
+  border-radius: var(--atlas-radius);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--dungeon-accent, var(--material-light)) 14%, transparent), transparent 55%);
+  color: var(--atlas-text);
+  text-decoration: none;
+  transition: background var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast) var(--atlas-ease);
 }
-.runKey { display: grid; line-height: 1.1; }
-.runKey b { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1 var(--atlas-font-display); }
-.runKey span { color: var(--material-light); font-size: var(--atlas-text-meta); letter-spacing: .1em; }
-.runMain { display: grid; gap: 2px; min-width: 0; }
-.runDungeon { display: inline-flex; align-items: center; gap: var(--atlas-space-2); color: var(--atlas-text-strong); font-weight: 600; }
-.runDungeon::before { width: 4px; height: 1.1em; border-radius: 2px; background: var(--dungeon-accent, var(--material-light)); content: ""; }
-.runMeta { display: flex; flex-wrap: wrap; gap: 0 var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
-.runLinks { display: inline-flex; align-items: center; gap: var(--atlas-space-3); }
-.videoMark { display: inline-grid; place-items: center; width: 16px; color: var(--atlas-text-muted); }
-.videoMark svg { width: 16px; height: 16px; }
+.run:hover { border-color: color-mix(in srgb, var(--dungeon-accent, var(--material-light)) 60%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--dungeon-accent, var(--material-light)) 24%, transparent), transparent 70%); }
+.run:focus-visible { outline: 2px solid var(--dungeon-accent, var(--atlas-accent-strong)); outline-offset: 2px; }
+.runArt { position: relative; display: block; align-self: stretch; min-height: 62px; overflow: hidden; border-radius: 2px; background: var(--atlas-surface-sunken); }
+.runArt img { object-fit: cover; filter: contrast(.94) saturate(.9); }
+.runKey { display: grid; justify-items: start; line-height: 1.1; }
+.runKey b { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h2) / 1 var(--atlas-font-display); }
+.runKey span { color: var(--dungeon-accent, var(--material-light)); font-size: var(--atlas-text-small); letter-spacing: .12em; }
+.runMain { display: grid; gap: 5px; min-width: 0; }
+.runDungeon { overflow: hidden; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.runClock { display: block; max-width: 280px; block-size: 4px; border-radius: 999px; background: var(--atlas-surface-sunken); overflow: hidden; }
+.runClock > span { display: block; inline-size: var(--run-used, 0%); block-size: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--dungeon-accent, var(--material-light)) 35%, var(--atlas-surface-sunken)), var(--dungeon-accent, var(--material-light))); }
+.runMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.runMeta b { color: var(--atlas-text-strong); font-weight: 650; }
+.runArrow { width: 18px; height: 18px; color: var(--dungeon-accent, var(--material-light)); }
+.videoMark { display: inline-grid; place-items: center; color: var(--atlas-text-muted); }
+.videoMark svg { width: 14px; height: 14px; }
 .more { margin: var(--atlas-space-4) 0 0; text-align: center; }
 
 /* ---------- Source ---------- */
@@ -283,8 +295,12 @@
 @media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
 @media (max-width: 900px) {
   .slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .run { grid-template-columns: 4.5rem minmax(0, 1fr); }
-  .run > .group, .run > .runLinks { grid-column: 2; }
+  .run { grid-template-columns: 88px minmax(0, 1fr) 20px; row-gap: var(--atlas-space-2); padding-block: 8px; }
+  .runArt { grid-row: 1 / span 3; }
+  .runKey { grid-column: 2; grid-row: 1; grid-auto-flow: column; justify-content: start; align-items: baseline; gap: var(--atlas-space-2); }
+  .runMain { grid-column: 2; grid-row: 2; }
+  .run > .group { grid-column: 2; grid-row: 3; }
+  .runArrow { grid-column: 3; grid-row: 1 / span 3; }
 }
 @media (max-width: 700px) {
   .heroHeader { max-width: 100%; }
@@ -298,15 +314,10 @@
 }
 @media (max-width: 480px) {
   .milestones { grid-template-columns: minmax(0, 1fr); }
-  .slots { grid-template-columns: minmax(0, 1fr); }
-  .run { grid-template-columns: minmax(0, 1fr) auto; gap: var(--atlas-space-2); }
-  .run > .runKey, .run > .runMain { grid-column: 1 / -1; }
-  .run > .group { grid-column: 1; }
-  .run > .runLinks { grid-column: 2; }
-  .runKey { grid-auto-flow: column; justify-content: start; align-items: baseline; gap: var(--atlas-space-2); }
+  .run { grid-template-columns: 60px minmax(0, 1fr) 18px; gap: var(--atlas-space-2) var(--atlas-space-3); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .candidate, .chosen, .pick { transition: none; }
+  .candidate, .chosen, .pick, .run { transition: none; }
 }
 @media (forced-colors: active) {
   .meter > span, .candidateBar > span { background: CanvasText; }
@@ -316,12 +327,12 @@
 /* ---------- Top compositions (compact rows; labels per cell on phones) ---------- */
 .compHead, .comp {
   display: grid;
-  grid-template-columns: 3ch 190px minmax(0, 1fr) auto;
+  grid-template-columns: 3ch 212px minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--atlas-space-4);
 }
 .compHead {
-  grid-template-columns: 3ch 190px repeat(4, minmax(0, 1fr)) 5.5rem;
+  grid-template-columns: 3ch 212px minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)) 5.5rem;
   padding-bottom: var(--atlas-space-2);
   border-bottom: 1px solid var(--material-line);
   color: var(--material-light);
@@ -332,9 +343,9 @@
 }
 .compHead > :nth-child(n + 3) { text-align: end; }
 .comps { display: grid; margin: 0; padding: 0; list-style: none; }
-.comp { min-height: 56px; padding-block: var(--atlas-space-2); border-bottom: 1px solid var(--material-line); grid-template-columns: 3ch 190px minmax(0, 1fr) 5.5rem; }
+.comp { min-height: 56px; padding-block: var(--atlas-space-2); border-bottom: 1px solid var(--material-line); grid-template-columns: 3ch 212px minmax(0, 1fr) 5.5rem; }
 .compRank { color: var(--atlas-text-subtle); font-variant-numeric: tabular-nums lining-nums; }
-.compStats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-4); margin: 0; }
+.compStats { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-4); margin: 0; }
 .compStats > div { display: grid; justify-items: end; min-width: 0; }
 .compStats dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .compStats dd { margin: 0; color: var(--atlas-text); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
@@ -355,3 +366,148 @@
 .levelRow { display: grid; grid-template-columns: 4ch minmax(0, 1fr) 7ch; align-items: center; gap: var(--atlas-space-3); min-height: 28px; }
 .levelKey { color: var(--material-light); font-weight: 650; font-variant-numeric: tabular-nums lining-nums; }
 .levelRow b { color: var(--atlas-text-strong); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
+.sourceLinks { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-5); }
+
+/* ---------- Dungeon tiles (filter) ---------- */
+.strip { margin-bottom: var(--atlas-space-5); }
+.stripList { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+.tile {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  padding: var(--atlas-space-2) var(--atlas-space-3);
+  border: 1px solid color-mix(in srgb, var(--dungeon-accent, var(--atlas-accent)) 38%, transparent);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-sunken);
+  color: var(--atlas-text-strong);
+  text-decoration: none;
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--dungeon-accent, var(--atlas-accent)) 70%, transparent);
+}
+.tileArt { position: absolute; z-index: -2; inset: 0; }
+.tileArt img { object-fit: cover; filter: contrast(.94) saturate(.82) brightness(.78); transition: transform var(--atlas-duration-art) var(--atlas-ease), filter var(--atlas-duration-art) var(--atlas-ease); }
+.tile::before { position: absolute; z-index: -1; inset: 0; content: ""; background: linear-gradient(180deg, transparent 35%, color-mix(in srgb, var(--atlas-bg) 88%, transparent)); }
+.tileName { font-size: var(--atlas-text-meta); font-weight: 650; line-height: var(--atlas-leading-snug); text-shadow: 0 1px 3px var(--atlas-bg); }
+.tile:hover .tileArt img { transform: scale(1.05); filter: contrast(.94) saturate(.9) brightness(.92); }
+.tile[aria-current="page"] { border-color: var(--dungeon-accent, var(--atlas-accent)); box-shadow: inset 0 0 0 1px var(--dungeon-accent, var(--atlas-accent)), inset 0 -4px 0 var(--dungeon-accent, var(--atlas-accent)); }
+.tile[aria-current="page"] .tileArt img { filter: contrast(.94) saturate(.95) brightness(1); }
+.tile:focus-visible { outline: 2px solid var(--dungeon-accent, var(--atlas-accent-strong)); outline-offset: 3px; }
+@media (max-width: 1100px) { .stripList { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .stripList { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-2); } .tile { aspect-ratio: 5 / 4; } }
+@media (prefers-reduced-motion: reduce) { .tileArt img { transition: none; } .tile:hover .tileArt img { transform: none; } }
+:global([data-motion="reduced"]) .tileArt img, :global([data-ui-motion="reduce"]) .tileArt img { transition: none; transform: none !important; }
+@media (forced-colors: active) { .tile { border: 1px solid CanvasText; } .tile[aria-current="page"] { outline: 2px solid Highlight; } }
+
+/* ---------- Compositions: share meter, the three most played ---------- */
+.compShare dd { display: grid; grid-template-columns: minmax(40px, 1fr) auto auto; align-items: center; gap: var(--atlas-space-2); inline-size: 100%; }
+.comp[data-rank] { background: linear-gradient(90deg, color-mix(in srgb, var(--material-light) 12%, transparent), transparent 60%); }
+.comp[data-rank] .compRank {
+  display: grid;
+  place-items: center;
+  inline-size: 26px;
+  block-size: 26px;
+  border: 1px solid var(--material-light);
+  border-radius: 50%;
+  color: var(--atlas-text-strong);
+  font: var(--atlas-weight-display) var(--atlas-text-small) / 1 var(--atlas-font-display);
+}
+.comp[data-rank="1"] .compRank { background: color-mix(in srgb, var(--material-light) 30%, transparent); }
+.group[data-size="md"] { gap: 4px; flex-wrap: nowrap; }
+.pairFacts .meter { inline-size: 88px; }
+@media (max-width: 760px) {
+  .compStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .compShare { grid-column: 1 / -1; }
+  .compShare dd { grid-template-columns: minmax(40px, 1fr) auto auto; }
+}
+
+/* ---------- Stats: regions, dungeons, key levels ---------- */
+.regions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-4); margin: 0 0 var(--atlas-space-4); padding: 0; list-style: none; }
+.regions[data-count="1"] { grid-template-columns: minmax(0, 560px); }
+.regions[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.regions[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.region {
+  --meter-color: var(--tone-color);
+  display: grid;
+  align-content: start;
+  gap: var(--atlas-space-3);
+  min-width: 0;
+  padding: var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-5);
+  border: 1px solid color-mix(in srgb, var(--tone-color) 34%, transparent);
+  border-top: 3px solid var(--tone-color);
+  border-radius: var(--atlas-radius);
+  background: radial-gradient(120% 60% at 0 0, color-mix(in srgb, var(--tone-color) 16%, transparent), transparent 70%), color-mix(in srgb, var(--atlas-bg) 60%, transparent);
+}
+.region[data-tone="1"], .milestoneRow[data-tone="1"] { --tone-color: var(--atlas-accent); }
+.region[data-tone="2"], .milestoneRow[data-tone="2"] { --tone-color: var(--atlas-accent-2); }
+.region[data-tone="3"], .milestoneRow[data-tone="3"] { --tone-color: var(--atlas-positive); }
+.region[data-tone="4"], .milestoneRow[data-tone="4"] { --tone-color: var(--atlas-negative); }
+.regionName { display: flex; align-items: center; gap: var(--atlas-space-2); margin: 0; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 650; }
+.regionName span { padding: 2px 6px; border-radius: 2px; background: color-mix(in srgb, var(--tone-color) 22%, transparent); color: var(--tone-color); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); }
+.regionLead { display: grid; margin: 0; }
+.regionLead b { color: var(--tone-color); font: var(--atlas-weight-display) var(--atlas-text-h2) / 1 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; }
+.regionLead span { color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.tiers { display: grid; gap: var(--atlas-space-2); margin: 0; }
+.tiers > div { display: grid; grid-template-columns: 7.5ch minmax(0, 1fr); align-items: center; gap: var(--atlas-space-2); }
+.tiers dt { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); white-space: nowrap; }
+.tiers dd { display: grid; grid-template-columns: minmax(24px, 1fr) auto; align-items: center; gap: var(--atlas-space-2); margin: 0; }
+.tiers dd:has(.tierPlayers) { grid-template-columns: minmax(24px, 1fr) auto 9ch; }
+.tiers b { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
+.tierPlayers { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
+.milestoneRow[data-tone] { --meter-color: var(--tone-color); }
+
+.dungeonCards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.dungeonCard {
+  --meter-color: var(--dungeon-accent, var(--material-light));
+  display: grid;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--dungeon-accent, var(--material-line)) 45%, transparent);
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--atlas-bg) 62%, transparent);
+  color: var(--atlas-text);
+  text-decoration: none;
+}
+.dungeonCard:hover { border-color: var(--dungeon-accent, var(--material-light)); }
+.dungeonCard:hover .dungeonArt img { transform: scale(1.04); }
+.dungeonCard:focus-visible { outline: 2px solid var(--dungeon-accent, var(--atlas-accent-strong)); outline-offset: 3px; }
+.dungeonArt { position: relative; display: block; aspect-ratio: 16 / 7; overflow: hidden; border-bottom: 3px solid var(--dungeon-accent, var(--material-light)); background: var(--atlas-surface-sunken); }
+.dungeonArt img { object-fit: cover; filter: contrast(.94) saturate(.9); transition: transform var(--atlas-duration-art) var(--atlas-ease); }
+.dungeonCardName { padding: var(--atlas-space-3) var(--atlas-space-4) 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.dungeonFacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2) var(--atlas-space-4); margin: 0; padding: var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4); }
+.dungeonFacts dt { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.dungeonFacts dd { margin: 0; color: var(--dungeon-accent, var(--atlas-text-strong)); font: var(--atlas-weight-display) 1.375rem / 1.2 var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; }
+.dungeonLeft { grid-column: 1 / -1; }
+.dungeonLeft dd { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); color: var(--atlas-text-strong); font: 650 var(--atlas-text-small) / 1.2 var(--atlas-font-ui); }
+
+.levelColumns { display: flex; align-items: flex-end; gap: var(--atlas-space-3); max-width: 720px; height: 200px; margin: 0; padding: 0; list-style: none; }
+.levelColumn { display: grid; flex: 1 1 0; grid-template-rows: auto 1fr auto; justify-items: center; gap: var(--atlas-space-1); height: 100%; min-width: 0; }
+.levelColumn b { color: var(--atlas-text-strong); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.levelBar { align-self: end; inline-size: 100%; max-inline-size: 72px; block-size: max(3px, var(--level-share)); border-radius: 3px 3px 0 0; background: linear-gradient(180deg, var(--material-light), color-mix(in srgb, var(--material-light) 30%, var(--atlas-surface-sunken))); }
+.levelColumn .levelKey { font-family: var(--atlas-font-display); font-size: 1.125rem; }
+
+@media (max-width: 1100px) {
+  .regions, .regions[data-count="3"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dungeonCards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .regions, .regions[data-count] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+  .regions[data-count="1"] { grid-template-columns: minmax(0, 1fr); }
+  .regions:not([data-count="1"]) .region { padding: var(--atlas-space-3); }
+  .regions:not([data-count="1"]) .tiers dd { grid-template-columns: auto; }
+  .regions:not([data-count="1"]) .tiers .meter { display: none; }
+  .regions:not([data-count="1"]) .tiers > div { grid-template-columns: minmax(0, 1fr) auto; }
+  .dungeonCards { grid-template-columns: minmax(0, 1fr); }
+  .levelColumns { height: 170px; gap: var(--atlas-space-2); }
+}
+@media (prefers-reduced-motion: reduce) { .dungeonArt img { transition: none; } .dungeonCard:hover .dungeonArt img { transform: none; } }
+:global([data-motion="reduced"]) .dungeonArt img, :global([data-ui-motion="reduce"]) .dungeonArt img { transition: none; transform: none !important; }
+@media (forced-colors: active) { .levelBar, .region, .dungeonCard { border: 1px solid CanvasText; } .levelBar { background: CanvasText; } }
+@media (max-width: 700px) { .specName, .className { white-space: normal; overflow-wrap: anywhere; } }
+@media (max-width: 600px) {
+  .slots { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .slot .emptySlot, .slot .chosen { justify-content: center; min-height: 56px; padding: 4px; }
+  .slot .slotRole, .slot .specText { display: none; }
+  .slot .chosenX { position: absolute; top: 3px; right: 3px; width: 12px; height: 12px; }
+}

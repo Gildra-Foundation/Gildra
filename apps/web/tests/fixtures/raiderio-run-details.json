@@ -1,0 +1,298 @@
+{
+ "season": "season-mn-2",
+ "status": "finished",
+ "dungeon": {
+  "type": "dungeon",
+  "id": 14063,
+  "name": "Ruby Life Pools",
+  "short_name": "RLP",
+  "slug": "ruby-life-pools",
+  "keystone_timer_ms": 1680999,
+  "num_bosses": 3
+ },
+ "keystone_run_id": 24026346,
+ "mythic_level": 24,
+ "clear_time_ms": 1667456,
+ "keystone_time_ms": 1680999,
+ "completed_at": "2026-10-31T16:06:39.000Z",
+ "num_chests": 1,
+ "time_remaining_ms": 13543,
+ "logged_run_id": 7521748,
+ "videos": [
+  {
+   "videoType": "twitch",
+   "videoId": "2915714938",
+   "startVideoTimeSeconds": 9946,
+   "character": {
+    "name": "Pjdruid"
+   }
+  },
+  {
+   "videoType": "twitch",
+   "videoId": "2915726001",
+   "startVideoTimeSeconds": 9019,
+   "character": {
+    "name": "Âra"
+   }
+  }
+ ],
+ "weekly_modifiers": [
+  {
+   "id": 10,
+   "icon": "ability_toughness",
+   "name": "Fortified",
+   "slug": "fortified"
+  },
+  {
+   "id": 9,
+   "icon": "achievement_boss_archaedas",
+   "name": "Tyrannical",
+   "slug": "tyrannical"
+  },
+  {
+   "id": 147,
+   "icon": "ability_racial_chillofnight",
+   "name": "Xal'atath's Guile",
+   "slug": "xalataths-guile"
+  }
+ ],
+ "faction": "alliance",
+ "deleted_at": null,
+ "score": 545.3,
+ "logged_details": {
+  "deaths": [
+   {
+    "logged_encounter_id": 22035575,
+    "character_id": 307992771,
+    "approximate_died_at": 1174144
+   }
+  ],
+  "encounters": [
+   {
+    "status": "finished",
+    "duration_ms": 234905,
+    "is_success": true,
+    "approximate_relative_started_at": 216705,
+    "approximate_relative_ended_at": 451517,
+    "boss": {
+     "name": "Melidrussa Chillworn",
+     "slug": "melidrussa-chillworn"
+    }
+   },
+   {
+    "status": "finished",
+    "duration_ms": 267761,
+    "is_success": true,
+    "approximate_relative_started_at": 924051,
+    "approximate_relative_ended_at": 1191812,
+    "boss": {
+     "name": "Kokia Blazehoof",
+     "slug": "kokia-blazehoof"
+    }
+   },
+   {
+    "status": "finished",
+    "duration_ms": 238830,
+    "is_success": true,
+    "approximate_relative_started_at": 1413130,
+    "approximate_relative_ended_at": 1651941,
+    "boss": {
+     "name": "Kyrakka and Erkhart Stormvein",
+     "slug": "kyrakka-and-erkhart-stormvein"
+    }
+   }
+  ]
+ },
+ "roster": [
+  {
+   "role": "dps",
+   "ranks": {
+    "score": 4315.3
+   },
+   "items": {
+    "item_level_equipped": 338.25
+   },
+   "character": {
+    "id": 138503097,
+    "name": "Tacokekw",
+    "class": {
+     "id": 4,
+     "name": "Rogue",
+     "slug": "rogue"
+    },
+    "spec": {
+     "id": 259,
+     "name": "Assassination",
+     "slug": "assassination",
+     "role": "dps"
+    },
+    "realm": {
+     "name": "Hyjal",
+     "slug": "hyjal"
+    },
+    "region": {
+     "name": "Europe",
+     "slug": "eu",
+     "short_name": "EU"
+    },
+    "talentLoadout": {
+     "specId": 259,
+     "heroSubTreeId": 53,
+     "exportLoadoutText": "CMQAAAAAAAAAAAAAAAAAAAAAAYmlZmFDGAAAAAYWGsNDAAAAAotlxMzMzMGbzMzsNzyMz8AmxMjxwMjxAsZWGYALBLDTghFDmZAGjB"
+    }
+   }
+  },
+  {
+   "role": "dps",
+   "ranks": {
+    "score": 4314.6
+   },
+   "items": {
+    "item_level_equipped": 339.25
+   },
+   "character": {
+    "id": 229853762,
+    "name": "Âra",
+    "class": {
+     "id": 2,
+     "name": "Paladin",
+     "slug": "paladin"
+    },
+    "spec": {
+     "id": 70,
+     "name": "Retribution",
+     "slug": "retribution",
+     "role": "dps"
+    },
+    "realm": {
+     "name": "Blackhand",
+     "slug": "blackhand"
+    },
+    "region": {
+     "name": "Europe",
+     "slug": "eu",
+     "short_name": "EU"
+    },
+    "talentLoadout": {
+     "specId": 70,
+     "heroSubTreeId": 50,
+     "exportLoadoutText": "CYEAAAAAAAAAAAAAAAAAAAAAAAAAAAwoZbbmZWGzYGAAAAAAzUmlZYmx2Y2GmZbGjxYYGLsBgZZ2mZmtGEAAwCgBAjZ2AmxMzGwMzwYGDG"
+    }
+   }
+  },
+  {
+   "role": "tank",
+   "ranks": {
+    "score": 4315.3
+   },
+   "items": {
+    "item_level_equipped": 335.812
+   },
+   "character": {
+    "id": 233234976,
+    "name": "Pjdruid",
+    "class": {
+     "id": 11,
+     "name": "Druid",
+     "slug": "druid"
+    },
+    "spec": {
+     "id": 104,
+     "name": "Guardian",
+     "slug": "guardian",
+     "role": "tank"
+    },
+    "realm": {
+     "name": "Blackmoore",
+     "slug": "blackmoore"
+    },
+    "region": {
+     "name": "Europe",
+     "slug": "eu",
+     "short_name": "EU"
+    },
+    "talentLoadout": {
+     "specId": 104,
+     "heroSubTreeId": 24,
+     "exportLoadoutText": "CgGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmxsYmZMziZxMmZZZgZzwoJamZWMzMzsMmxAAAAAAMjNDYbbmBjZbAMFAAAYDzMALGDDYxCAzMAG"
+    }
+   }
+  },
+  {
+   "role": "healer",
+   "ranks": {
+    "score": 4314.6
+   },
+   "items": {
+    "item_level_equipped": 336.438
+   },
+   "character": {
+    "id": 305745476,
+    "name": "Driptinus",
+    "class": {
+     "id": 7,
+     "name": "Shaman",
+     "slug": "shaman"
+    },
+    "spec": {
+     "id": 264,
+     "name": "Restoration",
+     "slug": "restoration",
+     "role": "healer"
+    },
+    "realm": {
+     "name": "Argent Dawn",
+     "slug": "argent-dawn"
+    },
+    "region": {
+     "name": "Europe",
+     "slug": "eu",
+     "short_name": "EU"
+    },
+    "talentLoadout": {
+     "specId": 264,
+     "heroSubTreeId": 54,
+     "exportLoadoutText": "CgQAAAAAAAAAAAAAAAAAAAAAAAAAAgBAAAAzMzsstMmZmZMzYMMsAbwMW0YbAZGYDzMDzyMzMaWWmZYGDWmxMjhlZZGAAGAzMYmBgxgB"
+    }
+   }
+  },
+  {
+   "role": "dps",
+   "ranks": {
+    "score": 4314.6
+   },
+   "items": {
+    "item_level_equipped": 337.438
+   },
+   "character": {
+    "id": 307992771,
+    "name": "Doxorsw",
+    "class": {
+     "id": 1,
+     "name": "Warrior",
+     "slug": "warrior"
+    },
+    "spec": {
+     "id": 71,
+     "name": "Arms",
+     "slug": "arms",
+     "role": "dps"
+    },
+    "realm": {
+     "name": "Twisting Nether",
+     "slug": "twisting-nether"
+    },
+    "region": {
+     "name": "Europe",
+     "slug": "eu",
+     "short_name": "EU"
+    },
+    "talentLoadout": {
+     "specId": 71,
+     "heroSubTreeId": 60,
+     "exportLoadoutText": "CcEAAAAAAAAAAAAAAAAAAAAAAgZmZmFzYmZGAAAghphxYmZbZmZmZYGzMAAAAAGLzMwEGLbDsAGwMMhMD2AzMMMYWmZbAmZAwMMA"
+    }
+   }
+  }
+ ]
+}

@@ -6,7 +6,7 @@ import { MaterialLinkButton, MaterialPlaque, MythicHubBackdrop, MythicHubMotion 
 import { loadMythicPlusComps } from "@/lib/games/wow/mythicPlusRuns";
 import { runsRoles, withSpec, withoutSpec, type CompsResponse, type RunsQuery, type RunsRole } from "@/lib/games/wow/mythicPlusRunsTypes";
 import { trail } from "@/lib/routes/registry";
-import { FilterForm, GroupIcons, hrefWith, LoadState, NoMatch, number, percent, shareOf, roleIcons, SelectedSpec, SourceLine, specIndex, specLabel, SpecToken, StaleNotice, type Locale, type SpecView } from "./CommunityParts";
+import { DungeonStrip, FilterForm, GroupIcons, hrefWith, LoadState, NoMatch, number, percent, shareOf, roleIcons, SelectedSpec, SourceLine, specIndex, specLabel, SpecToken, StaleNotice, type Locale, type SpecView } from "./CommunityParts";
 import { communityCopy, type CommunityCopy } from "./communityCopy";
 import styles from "./community.module.css";
 
@@ -46,7 +46,8 @@ export async function CompsPage({ locale, query }: { locale: Locale; query: Runs
         {stats.length ? <div className={styles.heroFacts}><AtlasStats items={stats} /></div> : null}
       </div>
       {data ? <StaleNotice data={data} copy={copy} /> : null}
-      <FilterForm id="comps-filters" kit={kit} data={data} query={query} copy={copy} action={base} fields={["dungeon", "region", "minLevel"]} />
+      {data ? <DungeonStrip data={data} query={query} base={base} copy={copy} locale={locale} label={copy.dungeon} /> : null}
+      <FilterForm id="comps-filters" kit={kit} data={data} query={query} copy={copy} action={base} fields={data ? ["region", "minLevel"] : ["dungeon", "region", "minLevel"]} locale={locale} />
       {!data ? <LoadState result={result} kit={kit} copy={copy} resetHref={base} /> : (
         <>
           <div data-hub-reveal><Fill data={data} query={query} copy={copy} locale={locale} base={base} prefix={prefix} /></div>
@@ -62,7 +63,7 @@ export async function CompsPage({ locale, query }: { locale: Locale; query: Runs
 type Ctx = { data: CompsResponse; query: RunsQuery; copy: CommunityCopy; locale: Locale; base: string; prefix: string };
 
 function Fill({ data, query, copy, locale, base, prefix }: Ctx) {
-  const specs = specIndex(data.specs);
+  const specs = specIndex(data.specs, locale);
   const chosen = data.fill.selected;
   const byRole = (role: RunsRole) => chosen.filter((id) => specs.get(id)?.role === role);
   const slots: Array<{ role: RunsRole; spec?: number }> = runsRoles.flatMap((role) => {
@@ -81,7 +82,7 @@ function Fill({ data, query, copy, locale, base, prefix }: Ctx) {
               <li key={`${slot.role}-${index}`} className={styles.slot} data-filled={slot.spec ? "" : undefined}>
                 {slot.spec
                   ? <SelectedSpec spec={specs.get(slot.spec)} href={hrefWith(base, withoutSpec(query, slot.spec))} copy={copy} />
-                  : <span className={styles.emptySlot}><Icon aria-hidden="true" /><span>{copy.roles[slot.role]}</span><span className={styles.srOnly}>{copy.emptySlot(copy.roles[slot.role])}</span></span>}
+                  : <span className={styles.emptySlot}><Icon aria-hidden="true" /><span className={styles.slotRole}>{copy.roles[slot.role]}</span><span className={styles.srOnly}>{copy.emptySlot(copy.roles[slot.role])}</span></span>}
               </li>
             );
           })}
@@ -132,7 +133,8 @@ function CandidateList({ role, data, query, copy, locale, base, specs }: Omit<Ct
 }
 
 function TopCompositions({ data, query, copy, locale, prefix }: Ctx) {
-  const specs = specIndex(data.specs);
+  const topShare = Math.max(1, ...data.compositions.slice(0, topRows).map((row) => row.share));
+  const specs = specIndex(data.specs, locale);
   const rows = data.compositions.slice(0, topRows);
   return (
     <AtlasSection id="top" className={styles.section} title={copy.comps.topTitle} description={copy.comps.topText}>
@@ -145,11 +147,11 @@ function TopCompositions({ data, query, copy, locale, prefix }: Ctx) {
             </div>
             <ol className={styles.comps}>
               {rows.map((row, index) => (
-                <li key={`${row.tank}-${row.healer}-${row.dps.join("-")}`} className={styles.comp}>
+                <li key={`${row.tank}-${row.healer}-${row.dps.join("-")}`} className={styles.comp} data-rank={index < 3 ? index + 1 : undefined}>
                   <span className={styles.compRank}>{index + 1}</span>
-                  <GroupIcons group={row} specs={specs} />
+                  <GroupIcons group={row} specs={specs} size="md" />
                   <dl className={styles.compStats}>
-                    <div><dt>{copy.comps.openRuns}</dt><dd><b>{number(row.runs, locale)}</b> <span>{percent(row.share, locale)}</span></dd></div>
+                    <div className={styles.compShare}><dt>{copy.comps.openRuns}</dt><dd><span className={styles.meter} aria-hidden="true"><span style={{ inlineSize: `${(row.share / topShare) * 100}%` }} /></span><b>{number(row.runs, locale)}</b> <span>{percent(row.share, locale)}</span></dd></div>
                     <div><dt>{copy.highestKey}</dt><dd>+{row.maxLevel}</dd></div>
                     <div><dt>{copy.medianKey}</dt><dd>+{number(row.medianLevel, locale, 1)}</dd></div>
                     <div><dt>{copy.timeLeft}</dt><dd>{percent(row.medianTimeLeft, locale)}</dd></div>
@@ -168,7 +170,8 @@ function TopCompositions({ data, query, copy, locale, prefix }: Ctx) {
 }
 
 function Pairs({ data, copy, locale }: Omit<Ctx, "query" | "base" | "prefix">) {
-  const specs = specIndex(data.specs);
+  const specs = specIndex(data.specs, locale);
+  const topLift = Math.max(1, ...data.pairs.map((pair) => pair.lift));
   return (
     <AtlasSection id="pairs" className={styles.section} title={copy.comps.pairsTitle} description={copy.comps.pairsText}>
       <MaterialPlaque kit="voidscar-arena" className={styles.tablePlaque}>
@@ -181,6 +184,7 @@ function Pairs({ data, copy, locale }: Omit<Ctx, "query" | "base" | "prefix">) {
               </span>
               <span className={styles.pairFacts}>
                 <b className={styles.pairLift}>{copy.comps.liftValue(number(pair.lift, locale, 1))}</b>
+                <span className={styles.meter} aria-hidden="true"><span style={{ inlineSize: `${(pair.lift / topLift) * 100}%`, "--meter-color": specs.get(pair.a)?.color } as CSSProperties} /></span>
                 <span>{copy.runsCount(pair.runs, number(pair.runs, locale))}</span>
               </span>
             </li>

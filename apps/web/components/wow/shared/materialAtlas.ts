@@ -8,6 +8,7 @@
  * `materialIconFrameStyle`) instead of copying the plaque and button CSS of another page.
  */
 export { MythicHubBackdrop } from "@/components/wow/mythic/MythicHubBackdrop";
+export { DungeonAtmosphere } from "@/components/wow/mythic/DungeonAtmosphere";
 export { MythicHubMotion } from "@/components/wow/mythic/MythicHubMotion";
 export { MythicHubLinkButton } from "@/components/wow/mythic/hub/MythicHubLinkButton";
 export { MythicHubOrnaments } from "@/components/wow/mythic/hub/MythicHubOrnaments";

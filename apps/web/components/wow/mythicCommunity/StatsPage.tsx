@@ -1,15 +1,16 @@
+import Image from "next/image";
 import type { CSSProperties } from "react";
 import { ArrowDown, Users } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection, AtlasTable, AtlasTabs } from "@/components/atlas";
 import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { MaterialLinkButton, MaterialPlaque, MythicHubBackdrop, MythicHubMotion } from "@/components/wow/shared/materialAtlas";
-import { dungeonArtDirections } from "@/lib/wow/dungeonArtDirection";
+import { dungeonArtDirections, dungeonBackdropSmall } from "@/lib/wow/dungeonArtDirection";
 import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { loadMythicPlusStats } from "@/lib/games/wow/mythicPlusRuns";
 import { runsRegions, runsRoles, type RegionCutoffs, type RunsQuery, type RunsRegion, type RunsRole, type StatsResponse } from "@/lib/games/wow/mythicPlusRunsTypes";
 import { trail } from "@/lib/routes/registry";
 import { CutoffChart, type ChartSeries } from "./CutoffChart";
-import { FilterForm, hrefWith, LoadState, NoMatch, number, percent, shareOf, SourceLine, specIndex, SpecToken, StaleNotice, type Locale } from "./CommunityParts";
+import { dungeonLabel, DungeonStrip, FilterForm, hrefWith, isSeasonDungeon, LoadState, NoMatch, number, percent, shareOf, SourceLine, specIndex, SpecToken, StaleNotice, type Locale } from "./CommunityParts";
 import { communityCopy, type CommunityCopy } from "./communityCopy";
 import styles from "./community.module.css";
 
@@ -56,7 +57,8 @@ export async function StatsPage({ locale, query }: { locale: Locale; query: Runs
         {stats.length ? <div className={styles.heroFacts}><AtlasStats items={stats} /></div> : null}
       </div>
       {data ? <StaleNotice data={data} copy={copy} /> : null}
-      <FilterForm id="stats-filters" kit={kit} data={data} query={query} copy={copy} action={base} fields={["region", "dungeon", "minLevel"]} />
+      {data ? <DungeonStrip data={data} query={query} base={base} copy={copy} locale={locale} label={copy.dungeon} /> : null}
+      <FilterForm id="stats-filters" kit={kit} data={data} query={query} copy={copy} action={base} fields={data ? ["region", "minLevel"] : ["region", "dungeon", "minLevel"]} locale={locale} />
       {!data ? <LoadState result={result} kit={kit} copy={copy} resetHref={base} /> : (
         <>
           {regions.length ? <div data-hub-reveal><Cutoffs data={data} regions={regions} copy={copy} locale={locale} /></div> : null}
@@ -64,7 +66,7 @@ export async function StatsPage({ locale, query }: { locale: Locale; query: Runs
           {data.sample.runs ? (
             <>
               <div data-hub-reveal><Specs data={data} copy={copy} locale={locale} /></div>
-              <div data-hub-reveal><Dungeons data={data} copy={copy} locale={locale} /></div>
+              <div data-hub-reveal><Dungeons data={data} copy={copy} locale={locale} query={query} /></div>
             </>
           ) : <MaterialPlaque kit={kit} className={styles.state}><NoMatch copy={copy} resetHref={base} /></MaterialPlaque>}
         </>
@@ -78,8 +80,7 @@ type Ctx = { data: StatsResponse; copy: CommunityCopy; locale: Locale };
 
 function Cutoffs({ data, regions, copy, locale }: Ctx & { regions: RunsRegion[] }) {
   const blocks = regions.map((region) => [region, data.cutoffs[region]!] as const);
-  const keys = blocks[0][1].tiers.map((tier) => tier.key);
-  const rows = keys.map((key) => ({ key, percent: blocks[0][1].tiers.find((tier) => tier.key === key)!.percent }));
+  const rows = blocks[0][1].tiers.map((tier) => ({ key: tier.key, percent: tier.percent }));
   const single = regions.length === 1;
   const series: ChartSeries[] = single
     ? blocks[0][1].history.filter((item) => tierTone[item.key]).map((item) => ({ key: item.key, label: copy.stats.tier(rows.find((row) => row.key === item.key)?.percent ?? 0), tone: tierTone[item.key], points: item.points }))
@@ -88,36 +89,35 @@ function Cutoffs({ data, regions, copy, locale }: Ctx & { regions: RunsRegion[] 
   return (
     <AtlasSection id="cutoffs" className={styles.section} title={copy.stats.cutoffsTitle} description={copy.stats.cutoffsText}>
       <MaterialPlaque kit={kit} className={styles.tablePlaque}>
-        <AtlasTable
-          className={styles.table}
-          layout="scroll"
-          label={copy.stats.cutoffsTitle}
-          rows={rows}
-          rowKey={(row) => row.key}
-          columns={[
-            { key: "tier", header: copy.share, rowHeader: true, cell: (row) => copy.stats.tier(row.percent) },
-            ...(single ? [
-              { key: "score", header: copy.stats.rating, numeric: true, cell: (row: { key: string }) => scoreOf(blocks[0][1], row.key, locale) },
-              { key: "players", header: copy.stats.playersColumn, numeric: true, cell: (row: { key: string }) => {
-                const tier = blocks[0][1].tiers.find((item) => item.key === row.key);
-                return tier ? number(tier.players, locale) : "—";
-              } },
-            ] : blocks.map(([region, cutoffs]) => ({
-              key: region, header: copy.regionsShort[region], label: copy.regions[region], numeric: true,
-              cell: (row: { key: string }) => scoreOf(cutoffs, row.key, locale),
-            }))),
-          ]}
-        />
+        <ul className={styles.regions} data-count={blocks.length}>
+          {blocks.map(([region, cutoffs]) => {
+            const lead = cutoffs.tiers.find((tier) => tier.key === "p990");
+            const top = Math.max(1, ...cutoffs.tiers.map((tier) => tier.score));
+            return (
+              <li key={region} className={styles.region} data-tone={regionTone[region]}>
+                <h3 className={styles.regionName}><span>{copy.regionsShort[region]}</span>{copy.regions[region]}</h3>
+                {lead ? <p className={styles.regionLead}><b>{number(lead.score, locale)}</b><span>{copy.stats.tier(lead.percent)}</span></p> : null}
+                <dl className={styles.tiers}>
+                  {cutoffs.tiers.filter((tier) => tier.key !== "p990").map((tier) => (
+                    <div key={tier.key}>
+                      <dt>{copy.stats.tier(tier.percent)}</dt>
+                      <dd>
+                        <span className={styles.meter} aria-hidden="true"><span style={{ inlineSize: `${(tier.score / top) * 100}%` }} /></span>
+                        <b>{number(tier.score, locale)}</b>
+                        {single ? <span className={styles.tierPlayers}>{number(tier.players, locale)}</span> : null}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </li>
+            );
+          })}
+        </ul>
         <h3 className={styles.chartTitle}>{chartLabel}</h3>
         <CutoffChart series={series} label={chartLabel} locale={locale} />
       </MaterialPlaque>
     </AtlasSection>
   );
-}
-
-function scoreOf(cutoffs: RegionCutoffs, key: string, locale: Locale) {
-  const tier = cutoffs.tiers.find((item) => item.key === key);
-  return tier ? number(tier.score, locale) : "—";
 }
 
 function Milestones({ data, regions, copy, locale }: Ctx & { regions: RunsRegion[] }) {
@@ -135,7 +135,7 @@ function Milestones({ data, regions, copy, locale }: Ctx & { regions: RunsRegion
                 {blocks.map(([region, cutoffs]) => {
                   const item = cutoffs.milestones.find((entry) => entry.score === score);
                   return item ? (
-                    <div key={region} className={styles.milestoneRow}>
+                    <div key={region} className={styles.milestoneRow} data-tone={regionTone[region]}>
                       <dt>{regions.length === 1 ? copy.regions[region] : copy.regionsShort[region]}</dt>
                       <dd>
                         <span className={styles.meter} aria-hidden="true"><span style={{ inlineSize: `${Math.min(100, item.share)}%` }} /></span>
@@ -154,7 +154,7 @@ function Milestones({ data, regions, copy, locale }: Ctx & { regions: RunsRegion
 }
 
 function Specs({ data, copy, locale }: Ctx) {
-  const specs = specIndex(data.specs);
+  const specs = specIndex(data.specs, locale);
   const table = (role: RunsRole) => {
     const rows = data.specPresence.filter((item) => item.role === role);
     const top = Math.max(...rows.map((row) => row.presence), 1);
@@ -168,7 +168,7 @@ function Specs({ data, copy, locale }: Ctx) {
           columns={[
             { key: "rank", header: "#", numeric: true, className: styles.rankCol, cell: (_, index) => index + 1 },
             { key: "spec", header: copy.stats.spec, rowHeader: true, cell: (row) => <SpecToken spec={specs.get(row.spec)} size="sm" /> },
-            { key: "presence", header: copy.stats.presence, cell: (row) => <span className={styles.presenceCell}><span className={styles.meter} aria-hidden="true"><span style={{ inlineSize: `${(row.presence / top) * 100}%` }} /></span><b>{shareOf(row.presence, row.runs, locale)}</b></span> },
+            { key: "presence", header: copy.stats.presence, cell: (row) => <span className={styles.presenceCell} style={{ "--meter-color": specs.get(row.spec)?.color } as CSSProperties}><span className={styles.meter} aria-hidden="true"><span style={{ inlineSize: `${(row.presence / top) * 100}%` }} /></span><b>{shareOf(row.presence, row.runs, locale)}</b></span> },
             { key: "runs", header: copy.comps.openRuns, numeric: true, cell: (row) => number(row.runs, locale) },
             { key: "median", header: copy.medianKey, numeric: true, className: styles.wideCol, cell: (row) => `+${number(row.medianLevel, locale, 1)}` },
           ]}
@@ -192,33 +192,44 @@ function Specs({ data, copy, locale }: Ctx) {
   );
 }
 
-function Dungeons({ data, copy, locale }: Ctx) {
-  const names = new Map(data.dungeons.map((dungeon) => [dungeon.slug, dungeon]));
+function Dungeons({ data, copy, locale, query }: Ctx & { query: RunsQuery }) {
+  const prefix = locale === "ru" ? "/ru" : "";
+  const names = new Map(data.dungeons.map((dungeon) => [dungeon.slug, dungeonLabel(dungeon.slug, dungeon.name, locale)]));
   const topLevel = Math.max(1, ...data.levels.map((level) => level.runs));
+  const topLeft = Math.max(1, ...data.dungeonStats.map((row) => row.medianTimeLeft));
   const rows = [...data.dungeonStats].sort((a, b) => b.medianLevel - a.medianLevel || b.maxLevel - a.maxLevel || b.medianTimeLeft - a.medianTimeLeft);
   return (
     <AtlasSection id="dungeons" className={styles.section} title={copy.stats.dungeonsTitle} description={copy.stats.dungeonsText}>
       <MaterialPlaque kit={dataKit} className={styles.tablePlaque}>
-        <AtlasTable
-          className={styles.table}
-          layout="cards"
-          label={copy.stats.dungeonsTitle}
-          rows={rows}
-          rowKey={(row) => row.slug}
-          columns={[
-            { key: "dungeon", header: copy.dungeon, rowHeader: true, cell: (row) => <span className={styles.dungeonName} style={{ "--dungeon-accent": dungeonArtDirections[row.slug as DungeonSlug]?.accent } as CSSProperties} lang="en">{names.get(row.slug)?.name ?? row.slug}</span> },
-            { key: "max", header: copy.highestKey, numeric: true, cell: (row) => `+${row.maxLevel}` },
-            { key: "median", header: copy.medianKey, numeric: true, cell: (row) => `+${number(row.medianLevel, locale, 1)}` },
-            { key: "left", header: copy.timeLeft, numeric: true, cell: (row) => percent(row.medianTimeLeft, locale) },
-          ]}
-        />
+        <ul className={styles.dungeonCards}>
+          {rows.map((row) => {
+            const season = isSeasonDungeon(row.slug) ? row.slug : null;
+            const name = names.get(row.slug) ?? { name: row.slug, lang: "en" };
+            return (
+              <li key={row.slug} style={{ "--dungeon-accent": season ? dungeonArtDirections[season].accent : undefined } as CSSProperties}>
+                <a className={styles.dungeonCard} href={hrefWith(`${prefix}/wow/mythic-plus/routes`, { dungeon: row.slug, region: query.region, minLevel: query.minLevel })}>
+                  <span className={styles.dungeonArt} aria-hidden="true">{season ? <Image src={dungeonBackdropSmall(season)} alt="" fill sizes="(max-width: 700px) 100vw, 330px" /> : null}</span>
+                  <span className={styles.dungeonCardName} lang={name.lang}>{name.name}</span>
+                  <dl className={styles.dungeonFacts}>
+                    <div><dt>{copy.highestKey}</dt><dd>+{row.maxLevel}</dd></div>
+                    <div><dt>{copy.medianKey}</dt><dd>+{number(row.medianLevel, locale, 1)}</dd></div>
+                    <div className={styles.dungeonLeft}>
+                      <dt>{copy.timeLeft}</dt>
+                      <dd><span className={styles.meter} aria-hidden="true"><span style={{ inlineSize: `${(row.medianTimeLeft / topLeft) * 100}%` }} /></span>{percent(row.medianTimeLeft, locale)}</dd>
+                    </div>
+                  </dl>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
         <h3 className={styles.chartTitle}>{copy.stats.levelsTitle}</h3>
-        <ol className={styles.levels} aria-label={copy.stats.levelsTitle}>
-          {[...data.levels].reverse().map((level) => (
-            <li key={level.level} className={styles.levelRow}>
-              <span className={styles.levelKey}>{copy.level(level.level)}</span>
-              <span className={styles.meter} aria-hidden="true"><span style={{ inlineSize: `${(level.runs / topLevel) * 100}%` }} /></span>
+        <ol className={styles.levelColumns} aria-label={copy.stats.levelsTitle}>
+          {data.levels.map((level) => (
+            <li key={level.level} className={styles.levelColumn} style={{ "--level-share": `${(level.runs / topLevel) * 100}%` } as CSSProperties}>
               <b>{number(level.runs, locale)}</b>
+              <span className={styles.levelBar} aria-hidden="true" />
+              <span className={styles.levelKey}>{copy.level(level.level)}</span>
             </li>
           ))}
         </ol>

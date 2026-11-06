@@ -341,3 +341,20 @@ a.playerName:focus-visible { outline: 2px solid var(--material-light, var(--atla
   .shareTrack span { background: Highlight; }
   .octagon, .itemIcon { background: CanvasText; }
 }
+
+/* ---------- Hero numbers, empty state, the top three rows ---------- */
+.heroFacts { max-width: 760px; margin-top: var(--atlas-space-5); }
+.heroFacts :global(.ui-stats-card) { background: transparent; box-shadow: none; border: 0; padding-block: var(--atlas-space-2); }
+.stateActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3); margin-top: var(--atlas-space-5); }
+.table tr:has(.rank[data-podium]) { background: linear-gradient(90deg, color-mix(in srgb, var(--material-light) 13%, transparent), transparent 55%); }
+.rank[data-podium] {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 30px;
+  block-size: 30px;
+  border: 1px solid var(--material-light);
+  border-radius: 50%;
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-body);
+}
+@media (max-width: 600px) { .stateActions { display: grid; } }
