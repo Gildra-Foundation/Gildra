@@ -3,8 +3,8 @@ import Link from "next/link";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
-import { materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
-import { libraryKit } from "@/components/library/libraryKit";
+// The CSS module directly, not the materialAtlas barrel: this card also renders inside the client list.
+import materialStyles from "@/components/wow/shared/material/material.module.css";
 import { libraryCardCopy } from "@/components/library/libraryCardCopy";
 import type { Lang } from "@/lib/i18n-paths";
 import styles from "./libraryRecordCard.module.css";
@@ -33,6 +33,8 @@ export type LibraryRecordCardProps = {
   /** Tooltip preview button (keyboard and touch way to the tooltip). */
   action?: ReactNode;
   track?: { event: string; props: Record<string, string | number> };
+  /** `materialIconFrameStyle(libraryKit, size)`, computed on the server (the kit tables stay out of the browser). */
+  iconFrameStyle: CSSProperties;
 };
 
 /**
@@ -43,7 +45,7 @@ export type LibraryRecordCardProps = {
  * `data-hover-preview` lets LibraryHoverPreview show the in-game tooltip on
  * mouse hover.
  */
-export function LibraryRecordCard({ id, href, name, lang, layout, iconUrl, iconSymbol = "#ic-gem", quality, itemLevel, slot, description, facts, badge, action, track }: LibraryRecordCardProps) {
+export function LibraryRecordCard({ id, href, name, lang, layout, iconUrl, iconSymbol = "#ic-gem", quality, itemLevel, slot, description, facts, badge, action, track, iconFrameStyle }: LibraryRecordCardProps) {
   const copy = libraryCardCopy[lang];
   const colour = quality !== undefined ? itemQualityColors[quality as keyof typeof itemQualityColors] : undefined;
   const qualityName = colour ? copy.quality[quality as keyof typeof copy.quality] : undefined;
@@ -54,7 +56,7 @@ export function LibraryRecordCard({ id, href, name, lang, layout, iconUrl, iconS
   return (
     <li className={tray ? `${styles.card} ${styles.tray}` : styles.card} data-quality={colour ? quality : undefined} style={style} data-hover-preview={id} data-hover-icon={iconUrl || undefined}>
       {/* The game icon in the library kit's painted frame; the item quality tints the frame's inner edge. */}
-      <span className={`${materialStyles.iconFrame} ${styles.icon}`} style={materialIconFrameStyle(libraryKit, tray ? 76 : 64)} aria-hidden="true">
+      <span className={`${materialStyles.iconFrame} ${styles.icon}`} style={iconFrameStyle} aria-hidden="true">
         <ResilientImage src={iconUrl} alt="" width={tray ? 64 : 54} height={tray ? 64 : 54} loading="lazy" fallback={<CatalogGlyph symbol={iconSymbol} className={styles.glyph} />} />
       </span>
       <div className={styles.head}>

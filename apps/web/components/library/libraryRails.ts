@@ -1,6 +1,6 @@
 import type { CatalogCategory } from "@/lib/api/client";
 import type { Lang } from "@/lib/i18n-paths";
-import type { LibraryCardLayout } from "@/components/library/LibraryRecordCard";
+import type { LibraryListLayout } from "@/components/library/LibraryResults";
 
 /** One filter (a select) of a dataset page: categories of the dataset's record type picked by a rule. */
 export type LibraryRail = { id: string; label: string; categories: CatalogCategory[] };
@@ -27,11 +27,11 @@ const RULES: Record<string, RailRule[]> = {
   "trade-goods": [{ id: "trade", label: { ru: "Вид", en: "Kind" }, pick: (category) => category.parentPath === "item-types/trade-goods" }],
 };
 
-/** Datasets whose records are mostly looked at by their icon (gems, collections): square tray tiles. */
+/** Datasets whose records are mostly looked at by their icon (gems, collections): square tray tiles; the rest is a table. */
 const TRAY = new Set(["gems", "mounts", "battle-pets", "toys", "currencies", "achievements"]);
 
-export function libraryCardLayout(slug: string): LibraryCardLayout {
-  return TRAY.has(slug) ? "tray" : "cards";
+export function libraryCardLayout(slug: string): LibraryListLayout {
+  return TRAY.has(slug) ? "tray" : "table";
 }
 
 /** Filters of a dataset page, largest categories first; a filter with one choice is left out. */

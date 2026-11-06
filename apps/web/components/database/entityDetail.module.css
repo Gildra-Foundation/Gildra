@@ -12,6 +12,8 @@
 }
 
 .heroName { min-width: 0; overflow-wrap: anywhere; text-wrap: balance; }
+/* Long names ("Набедренники бездушного гладиатора из шкуры змея") stay a two-line title, not a wall of three. */
+.heroName[data-long] { font-size: calc(var(--atlas-text-hero) * .66); line-height: 1.12; }
 
 .heroTitle .heroIcon {
   --material-icon-edge: var(--record-quality);
@@ -181,7 +183,6 @@
   font-weight: var(--atlas-weight-display);
 }
 
-.direction { color: var(--atlas-accent); font-family: var(--atlas-font-ui); }
 
 .disclosureMeta {
   color: var(--atlas-text-subtle);

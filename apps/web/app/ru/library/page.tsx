@@ -5,7 +5,7 @@ import { getLibraryLandingData, requireCatalogSession } from "@/lib/library/serv
 
 export const metadata: Metadata = {
   title: "Библиотека данных World of Warcraft — Gildra",
-  description: "Опубликованные датасеты World of Warcraft с проверенными tooltip, изображениями, связями и происхождением данных.",
+  description: "Предметы, заклинания, маунты, боссы и задания World of Warcraft с игровыми подсказками, иконками и связями.",
   alternates: { canonical: "/ru/library", languages: { en: "/library", ru: "/ru/library", "x-default": "/library" } },
 };
 

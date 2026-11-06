@@ -1,5 +1,4 @@
 import type { Lang } from "@/lib/i18n";
-import { pluralRu } from "@gildra/atlas-ui/format";
 
 /** Interface copy of /library and /library/<dataset> (RU and EN). Dataset names and descriptions come from the API. */
 export const libraryCopy = {
@@ -7,7 +6,6 @@ export const libraryCopy = {
     title: "Библиотека World of Warcraft",
     wow: "World of Warcraft",
     defaultProduct: "World of Warcraft",
-    recordsWord: (n: number) => pluralRu(n, "запись", "записи", "записей"),
     editions: "Издание игры",
     datasetsTitle: "Все разделы",
     featuredTitle: "Предметы и коллекции",
@@ -16,8 +14,6 @@ export const libraryCopy = {
     searchSubmit: "Найти",
     searchTitle: "Поиск по библиотеке",
     searchFieldLabel: "Название на русском или английском",
-    findRecord: "Найти запись",
-    allSections: "Все разделы",
     filtersTitle: "Поиск и фильтры",
     datasetSearchLabel: (name: string) => `Поиск: ${name}`,
     datasetSearchPlaceholder: "Название…",
@@ -26,12 +22,13 @@ export const libraryCopy = {
     unavailableTitle: "Библиотека временно закрыта",
     unavailableText: "Данные не удалены — откройте страницу немного позже.",
     retry: "Обновить",
+    site: "Библиотека Gildra",
+    loading: "Загружаем…",
   },
   en: {
     title: "World of Warcraft Library",
     wow: "World of Warcraft",
     defaultProduct: "World of Warcraft",
-    recordsWord: (n: number) => (n === 1 ? "record" : "records"),
     editions: "Game edition",
     datasetsTitle: "All sections",
     featuredTitle: "Items and collections",
@@ -40,8 +37,6 @@ export const libraryCopy = {
     searchSubmit: "Search",
     searchTitle: "Search the library",
     searchFieldLabel: "Name in English or Russian",
-    findRecord: "Find a record",
-    allSections: "All sections",
     filtersTitle: "Search and filters",
     datasetSearchLabel: (name: string) => `Search ${name}`,
     datasetSearchPlaceholder: "Name…",
@@ -50,6 +45,8 @@ export const libraryCopy = {
     unavailableTitle: "The library is temporarily closed",
     unavailableText: "No data was deleted — open the page again a little later.",
     retry: "Try again",
+    site: "Gildra Library",
+    loading: "Loading…",
   },
 } satisfies Record<Lang, Record<string, unknown>>;
 

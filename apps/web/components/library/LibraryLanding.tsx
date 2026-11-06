@@ -1,16 +1,17 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, LibraryBig, Search } from "lucide-react";
-import { AtlasField, AtlasFrame, AtlasHero, AtlasInput, AtlasSection } from "@/components/atlas";
+import { ArrowRight } from "lucide-react";
+import { AtlasField, AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
-import { MaterialButton, MaterialLinkButton, MaterialPlaque, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
+import { MaterialButton, MaterialPlaque, materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
 import type { CatalogProduct, CatalogRecord, LibraryDataset } from "@/lib/api/client";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { LIBRARY_FEATURED } from "@/lib/library/featured";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
 import { LIBRARY_HIDDEN_DATASETS, libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/library/libraryCopy";
-import { libraryKit, librarySecondKit } from "@/components/library/libraryKit";
+import { libraryKit } from "@/components/library/libraryKit";
+import { LibrarySearchBox, type LibrarySearchSection } from "@/components/library/LibrarySearchBox";
 import styles from "./library.module.css";
 import { libraryLandingCopy } from "./libraryLandingCopy";
 
@@ -25,12 +26,12 @@ type Props = {
 };
 
 /**
- * /library and /ru/library (gildra-wow-material-design §3.7, reference
- * docs/design/reference): hero with two painted buttons, the
- * library search and edition switch on the library plaque (like the auction
- * form), the featured datasets on painted plaques, then every dataset grouped
- * by area on glass with the kit's icon frames. No counters, freshness dates or
- * "data may lag" notices (gildra-clean-ui).
+ * /library and /ru/library (gildra-wow-material-design §3.7): the hero holds
+ * the library search on the library plaque — instant suggestions of sections
+ * and records as you type, Enter for every result — and the edition switch;
+ * then the featured datasets on painted plaques and every dataset grouped by
+ * area on glass with the kit's icon frames. The record count of a dataset
+ * stands once, in its row. No freshness dates or notices (gildra-clean-ui).
  */
 export function LibraryLanding({ lang, datasets: allDatasets, products, samples, selectedProduct, unavailable = false }: Props) {
   const copy = libraryCopy[lang];
@@ -43,6 +44,7 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
   const featured = LIBRARY_FEATURED.map((slug) => datasets.find((dataset) => dataset.slug === slug)).filter((dataset): dataset is LibraryDataset => Boolean(dataset));
   const rowFrame = materialIconFrameStyle(libraryKit, 44);
   const datasetHref = (dataset: LibraryDataset) => `${prefix}/library/${encodeURIComponent(dataset.slug)}${productQuery}`;
+  const sections: LibrarySearchSection[] = datasets.map((dataset) => ({ slug: dataset.slug, name: dataset.name, href: datasetHref(dataset), iconUrl: dataset.previewImageUrl || samples[dataset.slug]?.[0]?.iconUrl, iconSymbol: dataset.iconSymbol }));
 
   return (
     <AtlasFrame as="div" lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
@@ -52,21 +54,11 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
         breadcrumbsLabel={copy.breadcrumbsLabel}
         title={copy.title}
         actions={unavailable ? undefined : (
-          <div className={styles.actions}>
-            <MaterialLinkButton kit={libraryKit} fit="stack" href="#library-search" variant="primary" iconAfter={<ArrowDown aria-hidden="true" />}>{copy.findRecord}</MaterialLinkButton>
-            <MaterialLinkButton kit={librarySecondKit} fit="stack" href="#datasets" icon={<LibraryBig aria-hidden="true" />}>{copy.allSections}</MaterialLinkButton>
-          </div>
-        )}
-      />
-
-      {unavailable ? <LibraryUnavailable lang={lang} /> : (
-        <>
-          {/* The whole library is searched on /search; a plain GET form works without JavaScript. */}
-          <MaterialPlaque kit={libraryKit} as="section" id="library-search" className={styles.searchPlaque} aria-labelledby="library-search-title">
-            <h2 id="library-search-title" className={materialStyles.title}>{copy.searchTitle}</h2>
+          // The whole library is searched on /search; a plain GET form works without JavaScript, the field suggests as you type.
+          <MaterialPlaque kit={libraryKit} as="section" id="library-search" className={styles.searchPlaque} aria-label={copy.searchTitle}>
             <form className={styles.search} role="search" action={`${prefix}/search`} method="get">
               <AtlasField label={copy.searchFieldLabel} htmlFor="library-search-input" className={styles.searchField}>
-                <AtlasInput id="library-search-input" name="q" type="search" icon={<Search />} placeholder={copy.searchPlaceholder} autoComplete="off" required maxLength={200} />
+                <LibrarySearchBox lang={lang} id="library-search-input" placeholder={copy.searchPlaceholder} product={selectedProduct} sections={sections} required />
               </AtlasField>
               <MaterialButton kit={libraryKit} fit="stack" type="submit" variant="primary" iconAfter={<ArrowRight aria-hidden="true" />}>{copy.searchSubmit}</MaterialButton>
             </form>
@@ -79,7 +71,11 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
               </nav>
             ) : null}
           </MaterialPlaque>
+        )}
+      />
 
+      {unavailable ? <LibraryUnavailable lang={lang} /> : (
+        <>
           {featured.length ? (
             <AtlasSection id="featured" title={copy.featuredTitle}>
               <ul className={styles.featured}>
@@ -91,7 +87,6 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
                     </span>
                     <h3 className={styles.plateTitle}><Link href={datasetHref(dataset)} prefetch={false} className={styles.plateLink}>{dataset.name}</Link></h3>
                     <p className={styles.plateText}>{libraryDatasetLine(dataset, lang)}</p>
-                    <p className={styles.plateCount}><b>{formatter.format(dataset.entityCount)}</b> {copy.recordsWord(dataset.entityCount)}</p>
                     {samples[dataset.slug]?.length ? (
                       <span className={styles.strip} aria-hidden="true">
                         {samples[dataset.slug].map((record) => {

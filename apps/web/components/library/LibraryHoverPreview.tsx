@@ -1,28 +1,49 @@
 "use client";
 
 import { catalogLocaleView } from "@/lib/catalogLocale";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CatalogRecord } from "@/lib/api/client";
 import { TooltipBody, tooltipClassName } from "@/components/database/TooltipContent";
 import { withVariantQuality } from "@/lib/library/recordQuality";
 import styles from "./libraryHoverPreview.module.css";
 
-const HOVER_DELAY = 350;
+const HOVER_DELAY = 280;
+/** Once a tooltip is open, moving to the next record swaps it at once (no gap, no second wait). */
+const WARM_DELAY = 40;
+/** A slow answer gets a small "loading" line, a fast one never flashes it. */
+const LOADER_DELAY = 450;
 const GAP = 12;
 
-type Shown = { entity: CatalogRecord; left: number; top: number };
+type Anchor = { left: number; right: number; top: number };
+type Shown = { entity: CatalogRecord; anchor: Anchor };
+
+/** Beside the record's name (a table row is as wide as the page) or the tile: right when there is room, otherwise left; clamped to the viewport. */
+function place(anchor: Anchor, width: number, height: number) {
+  const right = anchor.right + GAP + width <= window.innerWidth - GAP;
+  const left = right ? anchor.right + GAP : Math.max(GAP, anchor.left - GAP - width);
+  const top = Math.max(GAP, Math.min(anchor.top, window.innerHeight - GAP - height));
+  return { left, top };
+}
+
+function anchorOf(card: HTMLElement): Anchor {
+  const name = card.querySelector("a");
+  const box = (card.tagName === "TR" && name ? name : card).getBoundingClientRect();
+  return { left: box.left, right: box.right, top: card.getBoundingClientRect().top };
+}
 
 /**
- * Mouse-hover preview of the in-game tooltip for library cards. One island
+ * Mouse-hover preview of the in-game tooltip for library records. One island
  * per result list: it listens for pointer hover on `[data-hover-preview]`
- * cards inside `#rootId`, loads the record (cached per page) and shows the
- * tooltip beside the card. Touch and keyboard users open the same tooltip
- * through the card's button, so the preview is hidden from assistive tech
- * and only runs on devices with a fine hovering pointer.
+ * rows and tiles inside `#rootId`, starts loading the record at once (cached
+ * per page), shows the tooltip after a short rest and, while one is open,
+ * swaps it immediately as the pointer moves along the list. The final
+ * position is measured before paint, so the tooltip never jumps. Touch and
+ * keyboard users open the same tooltip through the record's button, so the
+ * preview is hidden from assistive tech and only runs with a fine hovering pointer.
  */
 export function LibraryHoverPreview({ rootId, lang, iconSymbol, loadingLabel }: { rootId: string; lang: "en" | "ru"; iconSymbol?: string; loadingLabel: string }) {
   const [shown, setShown] = useState<Shown | null>(null);
-  const [pending, setPending] = useState<{ left: number; top: number } | null>(null);
+  const [pending, setPending] = useState<Anchor | null>(null);
   const popover = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,7 +51,9 @@ export function LibraryHoverPreview({ rootId, lang, iconSymbol, loadingLabel }: 
     if (!root || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     const cache = new Map<string, Promise<CatalogRecord | null>>();
     let timer = 0;
+    let loader = 0;
     let current: HTMLElement | null = null;
+    let warm = false;
     const locale = lang === "ru" ? "ru_RU" : "en_US";
 
     const load = (id: string, iconUrl?: string) => {
@@ -46,18 +69,11 @@ export function LibraryHoverPreview({ rootId, lang, iconSymbol, loadingLabel }: 
       return request;
     };
 
-    // Beside the card: right when there is room, otherwise left; clamped to the viewport.
-    const place = (card: HTMLElement) => {
-      const box = card.getBoundingClientRect();
-      const width = Math.min(420, window.innerWidth - 2 * GAP);
-      const right = box.right + GAP + width <= window.innerWidth - GAP;
-      const left = right ? box.right + GAP : Math.max(GAP, box.left - GAP - width);
-      return { left, top: Math.max(GAP, box.top) };
-    };
-
     const hide = () => {
       window.clearTimeout(timer);
+      window.clearTimeout(loader);
       current = null;
+      warm = false;
       setPending(null);
       setShown(null);
     };
@@ -68,24 +84,35 @@ export function LibraryHoverPreview({ rootId, lang, iconSymbol, loadingLabel }: 
       if (!card || card === current || !root.contains(card)) return;
       // The tooltip button opens the full dialog; hovering it does not stack a second tooltip.
       if (event.target.closest("button")) return;
-      hide();
+      window.clearTimeout(timer);
+      window.clearTimeout(loader);
       current = card;
       const id = card.dataset.hoverPreview ?? "";
+      const request = load(id, card.dataset.hoverIcon || undefined);
       timer = window.setTimeout(() => {
         if (current !== card) return;
-        setPending(place(card));
-        void load(id, card.dataset.hoverIcon || undefined).then((entity) => {
+        let settled = false;
+        loader = window.setTimeout(() => {
+          if (settled || current !== card) return;
+          setShown(null);
+          setPending(anchorOf(card));
+        }, warm ? WARM_DELAY * 4 : LOADER_DELAY);
+        void request.then((entity) => {
+          settled = true;
+          window.clearTimeout(loader);
           if (current !== card) return;
           setPending(null);
-          setShown(entity ? { entity, ...place(card) } : null);
+          if (entity) { warm = true; setShown({ entity, anchor: anchorOf(card) }); } else setShown(null);
         });
-      }, HOVER_DELAY);
+      }, warm ? WARM_DELAY : HOVER_DELAY);
     };
 
     const onOut = (event: PointerEvent) => {
       if (!current) return;
       const next = event.relatedTarget instanceof Node ? event.relatedTarget : null;
       if (next && current.contains(next)) return;
+      // Into another record of the list: onOver takes over and keeps the tooltip warm.
+      if (next instanceof Element && next.closest("[data-hover-preview]") && root.contains(next)) return;
       hide();
     };
 
@@ -96,6 +123,7 @@ export function LibraryHoverPreview({ rootId, lang, iconSymbol, loadingLabel }: 
     window.addEventListener("keydown", onKey);
     return () => {
       window.clearTimeout(timer);
+      window.clearTimeout(loader);
       root.removeEventListener("pointerover", onOver);
       root.removeEventListener("pointerout", onOut);
       window.removeEventListener("scroll", hide);
@@ -103,22 +131,26 @@ export function LibraryHoverPreview({ rootId, lang, iconSymbol, loadingLabel }: 
     };
   }, [lang, rootId]);
 
-  // Keep a tall tooltip inside the viewport once its height is known.
-  useEffect(() => {
+  // Measured before paint: a tall tooltip moves up inside the viewport without a visible jump.
+  useLayoutEffect(() => {
     const element = popover.current;
-    if (!element || !shown) return;
-    const overflow = element.getBoundingClientRect().bottom - (window.innerHeight - GAP);
-    if (overflow > 0) element.style.top = `${Math.max(GAP, shown.top - overflow)}px`;
-  }, [shown]);
+    const anchor = shown?.anchor ?? pending;
+    if (!element || !anchor) return;
+    const box = element.getBoundingClientRect();
+    const { left, top } = place(anchor, box.width, box.height);
+    element.style.left = `${left}px`;
+    element.style.top = `${top}px`;
+    element.style.visibility = "visible";
+  }, [shown, pending]);
 
   if (shown) {
     return (
-      <div ref={popover} className={styles.popover} style={{ left: shown.left, top: shown.top }} aria-hidden="true" data-atlas-scope>
+      <div ref={popover} className={styles.popover} style={{ visibility: "hidden" }} aria-hidden="true" data-atlas-scope>
         <div className={tooltipClassName(shown.entity, "page")}>
           <TooltipBody entity={shown.entity} lang={lang} iconSymbol={iconSymbol} />
         </div>
       </div>
     );
   }
-  return pending ? <div className={`${styles.popover} ${styles.loading}`} style={{ left: pending.left, top: pending.top }} aria-hidden="true">{loadingLabel}</div> : null;
+  return pending ? <div ref={popover} className={`${styles.popover} ${styles.loading}`} style={{ visibility: "hidden" }} aria-hidden="true">{loadingLabel}</div> : null;
 }
