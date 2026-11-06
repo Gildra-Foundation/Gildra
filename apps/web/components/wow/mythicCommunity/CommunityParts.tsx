@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
-import { ArrowLeft, ArrowUpRight, HeartPulse, Shield, Swords, X } from "lucide-react";
+import { HeartPulse, Shield, Swords, X } from "lucide-react";
 import { AtlasEmpty, AtlasError, AtlasField, AtlasNotice, AtlasSelect } from "@/components/atlas";
 import { MaterialButton, MaterialPlaque, type MaterialKit } from "@/components/wow/shared/materialAtlas";
 import { classColors } from "@/lib/atlas/dataPalette";
@@ -166,23 +166,6 @@ export function NoMatch({ copy, resetHref }: { copy: CommunityCopy; resetHref: s
 
 export function StaleNotice({ data, copy }: { data: RunsEnvelope; copy: CommunityCopy }) {
   return data.status === "stale" ? <AtlasNotice tone="caution">{copy.stale}</AtlasNotice> : null;
-}
-
-/** The one attribution line Raider.IO asks for, plus the way back. */
-export function SourceLine({ copy, hubHref, kit, sourceHref = "https://raider.io", sourceLabel, backLabel, extra }: {
-  copy: CommunityCopy; hubHref: string; kit: MaterialKit; sourceHref?: string; sourceLabel?: string; backLabel?: string; extra?: ReactNode;
-}) {
-  return (
-    <MaterialPlaque kit={kit} as="footer" className={styles.source}>
-      <span className={styles.sourceLinks}>
-        {sourceLabel
-          ? <a href={sourceHref} rel="noreferrer" target="_blank">{sourceLabel}<ArrowUpRight aria-hidden="true" /></a>
-          : <span>{copy.source}: <a href={sourceHref} rel="noreferrer" target="_blank">Raider.IO<ArrowUpRight aria-hidden="true" /></a></span>}
-        {extra}
-      </span>
-      <a className={styles.hubLink} href={hubHref}><ArrowLeft aria-hidden="true" />{backLabel ?? copy.backToHub}</a>
-    </MaterialPlaque>
-  );
 }
 
 /** A selected spec with a link that removes it. */

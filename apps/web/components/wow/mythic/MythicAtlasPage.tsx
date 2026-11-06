@@ -3,7 +3,6 @@ import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { MythicHubLinkButton as AtlasLinkButton } from "./hub/MythicHubLinkButton";
 import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { DungeonCardGrid } from "./DungeonCardGrid";
-import { MythicDataNotice } from "./MythicDataNotice";
 import { MythicHubBackdrop } from "./MythicHubBackdrop";
 import { MythicHubMotion } from "./MythicHubMotion";
 import { MythicHubTimers } from "./MythicHubTimers";
@@ -46,6 +45,5 @@ export function MythicAtlasPage({ locale }: { locale: "ru" | "en" }) {
       <span><strong>{copy.metaTitle}</strong><span>{copy.metaDescription}</span></span>
       <span className={styles.metaAction} style={mythicHubButtonLayout("the-blinding-vale")} data-mythic-asset-button="the-blinding-vale"><AtlasLinkButton className={styles.assetButton} href={`${prefix}/wow/mythic-plus/meta`} iconAfter={<ArrowUpRight aria-hidden="true" />}>{copy.metaAction}</AtlasLinkButton></span>
     </div>
-    <div className={styles.sourceNote} data-hub-reveal><MythicDataNotice locale={locale} /></div>
   </AtlasFrame>;
 }

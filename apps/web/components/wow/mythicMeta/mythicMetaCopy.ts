@@ -34,13 +34,12 @@ const en = {
   sourceTitle: "About the data",
   source: "Source:",
   updated: "Updated",
-  stale: "The source has not been reachable for a while: these are the last numbers we collected.",
+  stale: "Showing the last collected numbers.",
   emptyTitle: "No Mythic+ meta yet",
   empty: "The first weekly snapshot from mythicstats.com has not been collected yet.",
   errorTitle: "Mythic+ meta is unavailable",
   error: "The data service did not answer. Try again in a few minutes.",
   openSource: "Open on mythicstats.com",
-  backToHub: "Back to the Mythic+ atlas",
 };
 
 type Copy = typeof en;
@@ -81,13 +80,12 @@ const ru: Copy = {
   sourceTitle: "О данных",
   source: "Источник:",
   updated: "Обновлено",
-  stale: "Источник давно не отвечает: показаны последние собранные числа.",
+  stale: "Показаны последние собранные числа.",
   emptyTitle: "Меты Mythic+ пока нет",
   empty: "Первый недельный снимок с mythicstats.com ещё не собран.",
   errorTitle: "Мета Mythic+ недоступна",
   error: "Сервис данных не ответил. Попробуйте через несколько минут.",
   openSource: "Открыть на mythicstats.com",
-  backToHub: "Вернуться в атлас Mythic+",
 };
 
 export const mythicMetaCopy = { en, ru };

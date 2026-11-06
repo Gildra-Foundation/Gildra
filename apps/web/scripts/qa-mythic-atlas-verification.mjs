@@ -72,16 +72,7 @@ try {
       results.push({ locale, width, rows: 8, noOverflow: true, headingTop });
       console.log(`PASS catalog ${locale} ${width}px`);
     }
-    const details = page.locator("details").filter({ has: page.locator("summary", { hasText: locale === "ru" ? "Источники и даты проверки" : "Sources and verification dates" }) });
-    await details.locator("summary").focus();
-    await page.keyboard.press("Enter");
-    assert.equal(await details.evaluate((element) => element.open), true);
-    assert.equal(await details.locator('time[datetime="2026-10-18"]').count(), 4);
-    assert.equal(await details.locator("a").count(), 4);
-    assert.ok((await details.innerText()).includes(locale === "ru" ? "Даты проверки тактики пока нет" : "No tactical verification date"));
-    assert.ok((await details.innerText()).includes("12.1.5"));
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${locale}: expanded sources overflow`);
-    await page.screenshot({ path: `${output}/sources-${locale}-320.png` });
+    assert.equal(await page.locator("summary", { hasText: locale === "ru" ? "Источники" : "Sources" }).count(), 0, `${locale}: no sources disclosure`);
     for (const slug of ["altar-of-fangs", "the-blinding-vale", "temple-of-sethraliss"]) {
       await page.goto(`${base}${prefix}/wow/mythic-plus/midnight-season-2/${slug}`, { waitUntil: "networkidle" });
       await page.locator(`main[data-dungeon="${slug}"]`).waitFor();
@@ -118,7 +109,7 @@ try {
   assert.equal(await page.locator("details[open] time").count(), 4);
   await noJs.close();
   await writeFile(`${output}/results.json`, JSON.stringify(results, null, 2));
-  console.log(`PASS: RU/EN, 1440/390/320px, timers/names/drafts/sources, route reserves, keyboard and no-JS. Evidence: ${output}`);
+  console.log(`PASS: RU/EN, 1440/390/320px, timers/names/drafts/no sources, route reserves, keyboard and no-JS. Evidence: ${output}`);
 } finally {
   await browser.close();
 }

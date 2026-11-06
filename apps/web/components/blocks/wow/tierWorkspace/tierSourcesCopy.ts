@@ -8,7 +8,6 @@ const brackets: Record<PvpBracket, string> = { "3v3": "3v3", "2v2": "2v2", shuff
 export const tierSourcesCopy = {
   ru: {
     source: "Источник",
-    sourceBy: "Источник",
     allDifficulties: "Все",
     loadError: "Не удалось загрузить тир-лист источника. Попробуйте ещё раз позже.",
     compareTitle: "Тир по источникам",
@@ -31,7 +30,6 @@ export const tierSourcesCopy = {
   },
   en: {
     source: "Source",
-    sourceBy: "Source",
     allDifficulties: "All",
     loadError: "Could not load this source's tier list. Try again later.",
     compareTitle: "Tier by source",

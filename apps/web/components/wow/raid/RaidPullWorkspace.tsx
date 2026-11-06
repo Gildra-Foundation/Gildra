@@ -4,7 +4,6 @@ import { useRef, useState, useSyncExternalStore, type ReactNode, type RefObject 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
-import { AtlasDisclosure } from "@gildra/atlas-ui/AtlasDisclosure";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { usePullRolePreference, pullRoleCopy } from "../shared/usePullRolePreference";
 import { PlayerProfilePicker } from "../shared/PlayerProfilePicker";
@@ -82,7 +81,7 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange, playerPick
     if (reveal && window.matchMedia("(max-width: 900px)").matches) panel.current?.scrollIntoView({ block: "start", behavior: lessMotion() ? "instant" : "smooth" });
   }
   const slug = plan.slug as RaidHubSlug;
-  if (plan.slug === "the-voidspire") return <VoidspirePullOverview plan={plan} locale={locale} active={active} select={select} panel={panel} role={role} onRoleChange={onRoleChange} playerPicker={playerPicker} spec={spec} difficulty={difficulty} onDifficultyChange={setDifficulty} sources={<RaidWorkspaceSources plan={plan} locale={locale} />} />;
+  if (plan.slug === "the-voidspire") return <VoidspirePullOverview plan={plan} locale={locale} active={active} select={select} panel={panel} role={role} onRoleChange={onRoleChange} playerPicker={playerPicker} spec={spec} difficulty={difficulty} onDifficultyChange={setDifficulty} />;
   return <div className={`${styles.workspace} ${voidspirePlannerClass(plan.slug)} ${plan.slug === "the-voidspire" ? glass.surface : ""}`} data-raid-pulls={plan.slug} data-raid-boss-planner={plan.encounter?.bossSlug} data-difficulty={encounter ? difficulty : undefined} style={{ ...raidHubControlLayout(slug), ...voidspirePlannerLayout(plan.slug), "--raid-card-accent": raidCardThemes[slug].accent } as CSSProperties}>
     <RaidWorkspaceRoleToolbar plan={plan} locale={locale} role={role} onRoleChange={onRoleChange} playerPicker={playerPicker} />
     {encounter && <div className={bossStyles.difficulty} data-raid-boss-difficulty><span>{bossCopy.difficulty}</span><AtlasSegmented aria-label={bossCopy.difficulty} animation="spring" value={difficulty} onValueChange={value => setDifficulty(value as "normal" | "heroic")} options={(["normal", "heroic"] as const).map(value => ({ value, label: bossCopy[value] }))} /></div>}
@@ -97,7 +96,6 @@ function RaidPullWorkspaceContent({ plan, locale, role, onRoleChange, playerPick
         <RaidPullBriefing pull={pull} locale={locale} role={role} slug={plan.slug} encounter={encounter} difficulty={difficulty} spec={spec} />
       </div>
     </div>
-    <RaidWorkspaceSources plan={plan} locale={locale} />
   </div>;
 }
 
@@ -127,15 +125,5 @@ function RaidWorkspaceNavigation({ plan, locale, active, strip, select }: Worksp
     <nav className={styles.pullNav} data-raid-pull-navigation aria-label={encounter ? bossCopy.phases : t.list}><ol ref={strip} className={styles.pullStrip}>{plan.pulls.map((item, index) => <li key={item.id}><button type="button"
       data-raid-pull-choice={index} aria-pressed={active === index} aria-controls={`raid-pull-${plan.slug}`} onClick={() => select(index, true)}>
       <b>{index + 1}</b><span><small>{encounter ? label : t[item.kind]}</small>{savedRole ? <span data-raid-pull-title>{item.title[locale]}</span> : item.title[locale]}</span></button></li>)}</ol><RaidPlannerPullPosition slug={plan.slug} label={label} current={active + 1} total={plan.pulls.length} /></nav>
-  );
-}
-
-function RaidWorkspaceSources({ plan, locale }: WorkspaceProps) {
-  const t = raidPullCopy[locale];
-  const bossCopy = raidBossPlannerCopy[locale];
-  const encounter = Boolean(plan.encounter);
-  const savedRole = plan.slug === "the-voidspire";
-  return (
-    <AtlasDisclosure summary={t.sources}>{encounter ? <p>{bossCopy.sourceNote}</p> : savedRole ? <p>{t.reviewedTrash}</p> : <><p>{t.interruptNote}</p><p>{plan.coverage === "route-draft" ? t.routeDraft : t.encounterCoverage}</p><p>{plan.note[locale]}</p></>}<ul className={styles.sources}>{[...plan.sources, ...(plan.atlas?.sources ?? []), ...(plan.atlas?.progression?.sources ?? [])].filter((source, i, entries) => entries.findIndex(s => s.url === source.url) === i).map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}</ul></AtlasDisclosure>
   );
 }

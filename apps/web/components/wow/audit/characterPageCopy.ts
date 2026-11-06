@@ -70,7 +70,7 @@ const en: Copy = {
   refreshing: "Refreshing…",
   retry: "Retry",
   reconnect: "Reconnect Battle.net",
-  backToRoster: "Back to characters",
+  backToRoster: "All characters",
   refreshed: "Profile refreshed",
   refreshFailed: "Could not refresh the profile",
   errors: {

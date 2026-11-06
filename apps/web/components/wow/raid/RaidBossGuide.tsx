@@ -1,4 +1,4 @@
-import { ExternalLink, Hourglass } from "lucide-react";
+import { Hourglass } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { RaidBattlePlan } from "./RaidBattlePlan";
 import { RaidMechanicList } from "./RaidMechanicList";
@@ -6,7 +6,6 @@ import { EncounterSwitcher, RaidPager } from "./RaidNavigation";
 import type { RaidBoss, RaidDefinition } from "@/lib/data/wow/raid/midnightRaidData";
 import { raidGuideCopy, type RaidLocale } from "./raidGuideCopy";
 import { getBossStrategy } from "@/lib/data/wow/raid/raidStrategy";
-import styles from "./raidGuide.module.css";
 import { AtlasShareButton } from "@gildra/atlas-ui/AtlasShareButton";
 import { getRaidReview } from "@/lib/data/raidReviews";
 import { RaidReviewNotes } from "./RaidReviewNotes";
@@ -59,15 +58,6 @@ function ClassicRaidBossGuide({ raid, boss, locale }: { raid: RaidDefinition; bo
       {hasMechanics ? (
         <AtlasSection id="mechanics" title={copy.mechanicsTitle} description={strategy?.guide ? copy.mechanicsText : copy.mechanicsJournalText}>
           <RaidMechanicList guide={strategy?.guide} journal={boss.mechanics} locale={locale} />
-          <p className={styles.sources} data-text-links>
-            {strategy?.guide ? (
-              <>
-                {copy.strategySource(strategy.guide.sourceUpdatedAt, strategy.guide.checkedAt)}{" "}
-                <a href={strategy.guide.sourceUrl} target="_blank" rel="noreferrer">{copy.strategySourceLink}<ExternalLink aria-hidden="true" /></a>{" "}
-              </>
-            ) : null}
-            {copy.descriptionsSource}
-          </p>
         </AtlasSection>
       ) : null}
 

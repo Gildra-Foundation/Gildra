@@ -349,10 +349,6 @@ a.specLink:hover .specName { color: var(--atlas-accent-strong); }
 .empty { margin: 0; padding: var(--atlas-space-6) var(--atlas-space-4); color: var(--atlas-text-muted); font-size: var(--atlas-text-body); text-align: center; }
 
 /* ---------- One quiet source line ---------- */
-.sourceLine { margin: var(--atlas-space-5) 0 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); line-height: 1.5; text-shadow: 0 1px 3px var(--atlas-bg); }
-.sourceLine a { display: inline-flex; align-items: center; gap: 2px; min-height: 24px; color: var(--atlas-text-muted); text-decoration: underline; text-decoration-color: var(--atlas-line); text-underline-offset: 3px; }
-.sourceLine a:hover { color: var(--atlas-text-strong); }
-.sourceLine svg { width: 12px; height: 12px; }
 
 /* Comparison: spec rows × source tiers. */
 .compare { display: grid; gap: var(--atlas-space-3); }

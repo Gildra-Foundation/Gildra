@@ -7,7 +7,7 @@ import { AtlasSegmented } from '@gildra/atlas-ui/AtlasSegmented';
 import { AtlasField } from '@gildra/atlas-ui/AtlasField';
 import { AtlasDisclosure } from '@gildra/atlas-ui/AtlasDisclosure';
 import { voidspireVideoGuides } from '@/lib/data/wow/raid/voidspireVideoGuide';
-import { voidspireBeginnerGuides, voidspireFactSources } from '@/lib/data/wow/raid/voidspireBeginnerGuide';
+import { voidspireBeginnerGuides } from '@/lib/data/wow/raid/voidspireBeginnerGuide';
 import { raidHubControlLayout } from './raidHubControls';
 import { VoidspireGuideMotion } from './VoidspireGuideMotion';
 import { VoidspireBattleDiagram } from './VoidspireBattleDiagram';
@@ -121,7 +121,6 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
     <VoidspireGuideMechanics key={`${guide.slug}:${selection.specId}`} guide={guide} locale={locale} difficulty={selection.difficulty} specId={selection.specId} />
     <footer className={styles.sources}>
       <a href={`https://www.youtube.com/watch?v=${guide.video}`} target="_blank" rel="noreferrer">{t.source} · {guide.author} ↗</a>
-      <AtlasDisclosure summary={t.sources}><p>{t.provenance}</p><ul>{voidspireFactSources.map(source => <li key={source.href}><a href={source.href} target="_blank" rel="noreferrer">{source.label[locale]} ↗</a></li>)}</ul><ol>{guide.mechanics.map(mechanic => <li key={mechanic.id}><a href={`https://www.youtube.com/watch?v=${guide.video}&t=${mechanic.at}s`} target="_blank" rel="noreferrer">{Math.floor(mechanic.at/60)}:{String(mechanic.at%60).padStart(2,'0')} · {mechanic.name[locale]}</a></li>)}</ol></AtlasDisclosure>
     </footer>
   </article>;
   return <div ref={guideRef} className={styles.guide} style={raidHubControlLayout('the-voidspire')} onClickCapture={openBossLink} data-voidspire-guide data-guide-boss={selection.boss} data-difficulty={selection.difficulty}>

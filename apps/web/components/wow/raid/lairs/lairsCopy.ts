@@ -27,8 +27,6 @@ export const lairsCopy = {
     reset: "Сброс",
     bestReward: "Лучшая награда",
     group: "Группа",
-    blizzard: "Анонс Blizzard",
-    icyVeins: "Гайд Icy Veins",
     // Boss guide
     lairType: "Логово",
     worldType: "Мировой босс",
@@ -63,7 +61,6 @@ export const lairsCopy = {
     copyWaypoint: "Скопировать координаты",
     copied: "Скопировано",
     copyFailed: "Не удалось скопировать",
-    strategySource: "Тактика и добыча — Icy Veins",
   },
   en: {
     breadcrumbsLabel: "Breadcrumbs",
@@ -85,8 +82,6 @@ export const lairsCopy = {
     reset: "Reset",
     bestReward: "Best reward",
     group: "Group",
-    blizzard: "Blizzard announcement",
-    icyVeins: "Icy Veins guide",
     lairType: "Lair",
     worldType: "World boss",
     chapters: "Guide sections",
@@ -120,7 +115,6 @@ export const lairsCopy = {
     copyWaypoint: "Copy coordinates",
     copied: "Copied",
     copyFailed: "Copy failed",
-    strategySource: "Strategy and loot — Icy Veins",
   },
 } as const;
 

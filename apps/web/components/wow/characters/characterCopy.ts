@@ -60,7 +60,7 @@ const en = {
     },
     reconnect: "Reconnect Battle.net",
     retry: "Try again",
-    backToRoster: "Back to characters",
+    backToRoster: "All characters",
   },
   rosterList: {
     searchLabel: "Find a character",

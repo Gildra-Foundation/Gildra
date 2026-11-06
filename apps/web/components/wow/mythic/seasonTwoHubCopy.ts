@@ -6,7 +6,6 @@ export const seasonTwoHubCopy = {
     choose: "What the season brings",
     listTitle: "Season activities",
     metaDescription: "Midnight Season 2 at a glance: the Venomous Abyss raid, Mythic+ dungeons, delves, Prey and lairs.",
-    source: "Official Blizzard overview",
     tiles: {
       raid: { label: "Raid", text: "The season's raid: bosses, abilities and loot of every encounter.", action: "Open the raid" },
       mythicPlus: { title: "Mythic+", label: "Dungeons", text: "Eight keystone dungeons with timers, pulls and routes.", action: "Open the Mythic+ atlas" },
@@ -20,7 +19,6 @@ export const seasonTwoHubCopy = {
     choose: "Что принёс сезон",
     listTitle: "Активности сезона",
     metaDescription: "Midnight · Сезон 2 коротко: рейд сезона, подземелья Mythic+, вылазки, Prey и логова.",
-    source: "Официальный обзор Blizzard",
     tiles: {
       raid: { label: "Рейд", text: "Рейд сезона: боссы, способности и добыча каждого боя.", action: "Открыть рейд" },
       mythicPlus: { title: "Mythic+", label: "Подземелья", text: "Восемь подземелий с таймерами, пуллами и маршрутами.", action: "Открыть атлас Mythic+" },

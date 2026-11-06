@@ -53,7 +53,6 @@ export const raidGuideCopy = {
     failure: "Цена ошибки",
     difficulty: "Сложности",
     journal: "Журнал приключений",
-    journalSource: (build: string, date: string) => `Журнал приключений, сборка ${build}, проверено ${formatAtlasDate(date, "ru")}`,
     wowheadLink: "Способность на Wowhead ↗",
     roles: { raid: "Весь рейд", tank: "Танки", healer: "Лекари", dps: "Бойцы" } satisfies Record<RaidAudience, string>,
     tags: {
@@ -72,11 +71,7 @@ export const raidGuideCopy = {
       TARGET_PRIORITY: "Приоритет целей",
     } satisfies Record<VoidspireMechanicTag, string>,
 
-    // Sources and pager
-    sources: "Источники",
-    strategySource: (updated: string, checked: string) => `Тактика — пересказ гайда Icy Veins (обновлён ${formatAtlasDate(updated, "ru")}, проверен ${formatAtlasDate(checked, "ru")}).`,
-    strategySourceLink: "Гайд Icy Veins",
-    descriptionsSource: "Названия и описания — журнал приключений World of Warcraft.",
+    // Pager
     allBosses: (raid: string) => `Все боссы: ${raid}`,
     nextBoss: "Следующий босс",
 
@@ -86,7 +81,6 @@ export const raidGuideCopy = {
     rotmireLede: "Единственный босс рейда Споропад. Имя подтверждено Blizzard.",
     pendingText: "Описание, портреты, способности и тактика появятся после проверки данных.",
     pendingBoss: "Босс · подробности позже",
-    officialSource: "Анонс Blizzard",
     // formatAtlasDate already ends with "г.", so no extra full stop here.
     verifiedOn: (date: string) => `Проверено ${formatAtlasDate(date, "ru")}`,
   },
@@ -129,7 +123,6 @@ export const raidGuideCopy = {
     failure: "If failed",
     difficulty: "Difficulty",
     journal: "Adventure Guide",
-    journalSource: (build: string, date: string) => `Adventure Guide, build ${build}, checked ${formatAtlasDate(date, "en")}`,
     wowheadLink: "Spell on Wowhead ↗",
     roles: { raid: "All players", tank: "Tanks", healer: "Healers", dps: "Damage" } satisfies Record<RaidAudience, string>,
     tags: {
@@ -148,10 +141,6 @@ export const raidGuideCopy = {
       TARGET_PRIORITY: "Target priority",
     } satisfies Record<VoidspireMechanicTag, string>,
 
-    sources: "Sources",
-    strategySource: (updated: string, checked: string) => `Strategy paraphrased from the Icy Veins guide (updated ${formatAtlasDate(updated, "en")}, checked ${formatAtlasDate(checked, "en")}).`,
-    strategySourceLink: "Icy Veins guide",
-    descriptionsSource: "Names and descriptions come from the World of Warcraft Adventure Guide.",
     allBosses: (raid: string) => `All bosses: ${raid}`,
     nextBoss: "Next boss",
 
@@ -160,7 +149,6 @@ export const raidGuideCopy = {
     rotmireLede: "The only boss of Sporefall. The name is confirmed by Blizzard.",
     pendingText: "Description, portraits, abilities and strategy will appear once the data is verified.",
     pendingBoss: "Boss · details coming later",
-    officialSource: "Blizzard announcement",
     verifiedOn: (date: string) => `Checked ${formatAtlasDate(date, "en")}.`,
   },
 } as const;
