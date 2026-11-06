@@ -5,11 +5,11 @@ import { AtlasFrame, AtlasHero, AtlasNotice } from "@/components/atlas";
 import { MaterialLinkButton, MythicHubBackdrop } from "@/components/wow/shared/materialAtlas";
 import { ANCHORS } from "@/lib/anchors";
 import { p } from "@/lib/i18n-paths";
-import { TierSection, type TierSpecNames } from "@/components/TierSection";
+import { TierSection } from "@/components/TierSection";
+import type { TierSpecNames } from "./tierBoardRows";
 import { getGameIntelligence, type GameIntelligence } from "@/lib/platform/games/intelligence";
 import { getTierSourceSlices } from "@/lib/platform/games/tierSources";
 import type { TierSourceSlices } from "./tierSourceKeys";
-import { midnightSpecializations } from "@/lib/data/wow/specializations";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import type { Lang } from "@/lib/i18n-paths";
 import { tierCopy } from "./tierCopy";
@@ -18,18 +18,14 @@ import styles from "./tierWorkspace.module.css";
 import "./tierWorkspace.css";
 import { trail } from "@/lib/routes/registry";
 
-/** Internal spec pages that exist (class/spec), so table rows can link to them. */
-const specPaths = midnightSpecializations.map((spec) => `${spec.classSlug}/${spec.slug}`);
-
-/** Row names for the table, so the client does not bundle the whole spec theme file for them. */
+/** Names, hero talent trees and the talents page of every spec, so the client does not bundle the whole spec theme file. */
 const specNames: Record<Lang, TierSpecNames> = {
-  en: Object.fromEntries(talentSpecThemes.map((theme) => [theme.slug, { specName: theme.specName, className: theme.className }])),
-  ru: Object.fromEntries(talentSpecThemes.map((theme) => [theme.slug, { specName: theme.specNameRu, className: theme.classNameRu }])),
+  en: Object.fromEntries(talentSpecThemes.map((theme) => [theme.slug, { specName: theme.specName, className: theme.className, heroes: [theme.heroPaths[0].name, theme.heroPaths[1].name], talents: theme.slug }])),
+  ru: Object.fromEntries(talentSpecThemes.map((theme) => [theme.slug, { specName: theme.specNameRu, className: theme.classNameRu, heroes: [theme.heroPaths[0].nameRu, theme.heroPaths[1].nameRu], talents: theme.slug }])),
 };
 
 /** The full tier workspace: atlas hero, ONE honest sample notice when the meta
- *  API is off, then the interactive table + spec card (client). Hero counters
- *  appear only with live data (the sample's size is in the notice). design.md:
+ *  API is off, then the interactive tier board / list (client). design.md:
  *  it lives only on /tier-lists and is never embedded elsewhere. */
 /** Meta intelligence plus the external source slices the source tabs open on. */
 type TierWorkspaceData = GameIntelligence & { sourceSlices: TierSourceSlices };
@@ -57,7 +53,7 @@ function TierWorkspace({ lang, data }: BlockComponentProps<EmptyProps, TierWorks
         />
       </div>
       {sample ? <AtlasNotice tone="caution" title={copy.noticeTitle} className={styles.notice}>{copy.noticeText(sampleCount)}</AtlasNotice> : null}
-      <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specPaths={specPaths} specNames={specNames[lang]} sourceSlices={sample ? {} : data.sourceSlices} />
+      <TierSection lang={lang} intelligence={data} sample={sample} sampleRoles={sample ? sampleRoles : undefined} specNames={specNames[lang]} sourceSlices={sample ? {} : data.sourceSlices} />
     </AtlasFrame>
   );
 }
