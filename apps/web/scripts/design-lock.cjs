@@ -134,71 +134,9 @@ function compare(ref, cur) {
       page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
       const url = `${base}${lang === "ru" ? "/ru" : ""}${p.route}`;
       const res = await page.goto(url, { waitUntil: "networkidle", timeout: 90000 });
-      await page.evaluate// Сравнение стиля: токены, типографика ключевых элементов, кнопки, шапка, нарисованные ассеты.
-function compare(ref, cur) {
-  const STYLE = ["font-family", "font-size", "font-weight", "line-height", "letter-spacing", "text-transform", "color",
-    "text-shadow", "max-width", "background-image", "-webkit-background-clip", "background-color", "border-image-source",
-    "border-image-slice", "border-radius", "padding", "gap", "height", "min-height", "position", "backdrop-filter"];
-  const problems = [];
-  const diff = (where, a, b) => {
-    if (!a || !b) { if (!a !== !b) problems.push(`${where}: элемент ${a ? "пропал" : "появился"}`); return; }
-    for (const k of STYLE) if (k in a && a[k] !== b[k]) problems.push(`${where} ${k}: ${a[k]} → ${b[k]}`);
-  };
-  for (const [slug, page] of Object.entries(ref.pages)) for (const [run, a] of Object.entries(page.runs)) {
-    const b = cur.pages[slug]?.runs[run];
-    const at = `${slug} ${run}`;
-    if (!b) { problems.push(`${at}: нет замера`); continue; }
-    if (b.status !== 200) problems.push(`${at}: HTTP ${b.status}`);
-    if (b.consoleErrors.length) problems.push(`${at}: ошибки консоли ${b.consoleErrors.length}`);
-    if (b.scrollWidth > (run.startsWith("phone") ? 390 : 1440)) problems.push(`${at}: горизонтальный скролл ${b.scrollWidth}`);
-    for (const [k, v] of Object.entries(a.tokens)) if (b.tokens[k] !== v) problems.push(`${at} ${k}: ${v} → ${b.tokens[k] ?? "нет"}`);
-    const ea = a.elements, eb = b.elements;
-    for (const k of ["h1", "eyebrow", "lead", "header", "body"]) diff(`${at} ${k}`, ea[k], eb[k]);
-    diff(`${at} h2`, ea.h2[0], eb.h2[0]);
-    diff(`${at} h3`, ea.h3.first, eb.h3.first);
-    diff(`${at} кнопка`, ea.buttons[0], eb.buttons[0]);
-    const missing = a.paintedAssets.filter((u) => !u.startsWith("/_next/") && !b.paintedAssets.includes(u));
-    if (missing.length) problems.push(`${at}: пропали ассеты ${missing.join(", ")}`);
-  }
-  const uniq = [...new Set(problems)];
-  console.log(uniq.length ? `РАСХОЖДЕНИЯ С ЭТАЛОНОМ (${uniq.length}):\n- ${uniq.join("\n- ")}` : "OK: стиль совпадает с эталоном");
-  return uniq.length ? 1 : 0;
-}
-
-(async () => { await document.fonts.ready; });
+      await page.evaluate(async () => { await document.fonts.ready; });
       // Прокрутка до низа, чтобы ленивые картинки и reveal-секции дорисовались.
-      await page.evaluate// Сравнение стиля: токены, типографика ключевых элементов, кнопки, шапка, нарисованные ассеты.
-function compare(ref, cur) {
-  const STYLE = ["font-family", "font-size", "font-weight", "line-height", "letter-spacing", "text-transform", "color",
-    "text-shadow", "max-width", "background-image", "-webkit-background-clip", "background-color", "border-image-source",
-    "border-image-slice", "border-radius", "padding", "gap", "height", "min-height", "position", "backdrop-filter"];
-  const problems = [];
-  const diff = (where, a, b) => {
-    if (!a || !b) { if (!a !== !b) problems.push(`${where}: элемент ${a ? "пропал" : "появился"}`); return; }
-    for (const k of STYLE) if (k in a && a[k] !== b[k]) problems.push(`${where} ${k}: ${a[k]} → ${b[k]}`);
-  };
-  for (const [slug, page] of Object.entries(ref.pages)) for (const [run, a] of Object.entries(page.runs)) {
-    const b = cur.pages[slug]?.runs[run];
-    const at = `${slug} ${run}`;
-    if (!b) { problems.push(`${at}: нет замера`); continue; }
-    if (b.status !== 200) problems.push(`${at}: HTTP ${b.status}`);
-    if (b.consoleErrors.length) problems.push(`${at}: ошибки консоли ${b.consoleErrors.length}`);
-    if (b.scrollWidth > (run.startsWith("phone") ? 390 : 1440)) problems.push(`${at}: горизонтальный скролл ${b.scrollWidth}`);
-    for (const [k, v] of Object.entries(a.tokens)) if (b.tokens[k] !== v) problems.push(`${at} ${k}: ${v} → ${b.tokens[k] ?? "нет"}`);
-    const ea = a.elements, eb = b.elements;
-    for (const k of ["h1", "eyebrow", "lead", "header", "body"]) diff(`${at} ${k}`, ea[k], eb[k]);
-    diff(`${at} h2`, ea.h2[0], eb.h2[0]);
-    diff(`${at} h3`, ea.h3.first, eb.h3.first);
-    diff(`${at} кнопка`, ea.buttons[0], eb.buttons[0]);
-    const missing = a.paintedAssets.filter((u) => !u.startsWith("/_next/") && !b.paintedAssets.includes(u));
-    if (missing.length) problems.push(`${at}: пропали ассеты ${missing.join(", ")}`);
-  }
-  const uniq = [...new Set(problems)];
-  console.log(uniq.length ? `РАСХОЖДЕНИЯ С ЭТАЛОНОМ (${uniq.length}):\n- ${uniq.join("\n- ")}` : "OK: стиль совпадает с эталоном");
-  return uniq.length ? 1 : 0;
-}
-
-(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } scrollTo(0, 0); });
+      await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } scrollTo(0, 0); });
       await page.waitForTimeout(800);
       // Плашку cookie прячем, если согласие не подхватилось.
       await page.addStyleTag({ content: "[data-cookie-notice],[class*=cookieNotice]{display:none!important}" });
