@@ -1,20 +1,23 @@
-/* atlas:strict — transmog studio: paper doll, 3D stage in the export frame, picker on the Library kit's plaque,
-   painted action buttons (shared MaterialButton; phones turn the secondary ones into 44 px glass icons). */
+/* atlas:strict — transmog studio: wardrobe doll (slots left/right, weapons under the stage), 3D stage in the export frame,
+   picker on the Library kit's plaque (a bottom sheet on phones), painted Link / Download buttons. */
 /* Compact hero: H1 and one line; the studio owns the first screen. */
 .hero h1 { font-size: clamp(2rem, 1.2rem + 1.8vw, 3rem); }
 .hero > div:last-child { padding-block: var(--atlas-space-2) 0; }
 .hero p { max-width: 60ch; margin-top: var(--atlas-space-1); font-size: var(--atlas-text-body); }
 
 .studio {
-  /* Stage height: the window below the sticky header, the toolbar and a little air. */
-  --stage-h: clamp(480px, calc(100dvh - var(--atlas-sticky-top) - 236px), 880px);
+  /* Stage height: the window below the sticky header, the hero, the toolbar and the weapon row. */
+  --stage-h: clamp(440px, calc(100dvh - var(--atlas-sticky-top) - 330px), 820px);
+  --slot-gap: var(--atlas-space-2);
+  /* Seven slots stand as tall as the stage, as in the game's wardrobe. */
+  --slot: clamp(48px, calc((var(--stage-h) - 6 * var(--slot-gap)) / 7), 64px);
   display: grid; gap: var(--atlas-space-3); min-width: 0;
 }
 .visuallyHidden { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
 
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-4); }
+.identity { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); min-width: 0; }
 .toolbarField { min-width: 11rem; }
-.toolbarSpacer { flex: 1 1 auto; }
 .segmented { display: inline-flex; gap: var(--atlas-space-1); padding: 3px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-surface-sunken); }
 .segmented button {
   min-width: 44px; min-height: 38px; border: 0; border-radius: calc(var(--atlas-radius-control) - 3px); background: transparent;
@@ -22,25 +25,36 @@
 }
 .segmented button[aria-pressed="true"] { background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); box-shadow: inset 0 0 0 1px var(--atlas-line-strong); }
 .segmented button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
-/* Actions: Undo as a glass icon, Reset / Link / Download on the kit's painted buttons. */
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2); }
-.undoButton:global(.ui-button) { min-width: 44px; min-height: 44px; padding-inline: 0; justify-content: center; }
-.undoButton svg { width: 18px; height: 18px; }
+/* Actions: Undo / Random / Reset as glass icons, Link and Download on the kit's painted buttons. */
+.actions { display: flex; align-items: center; gap: var(--atlas-space-2); }
+.toolIcon:global(.ui-button) {
+  min-width: 44px; min-height: 44px; padding-inline: 0; justify-content: center;
+  border: 1px solid var(--atlas-line); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
+}
+.toolIcon:global(.ui-button):hover:not(:disabled) { border-color: var(--atlas-line-strong); }
+.toolIcon svg { width: 18px; height: 18px; }
+.toolIcon[aria-busy] svg { animation: spin .9s linear infinite; }
 .actions .actionButton.actionButton:global(.ui-button) { min-width: 0; }
 .notice { min-height: 1.2em; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
 .notice:empty { display: none; }
 
-.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 440px); gap: var(--atlas-space-5); align-items: stretch; }
-.doll { display: grid; grid-template-columns: 64px minmax(0, calc(var(--stage-h) * var(--stage-aspect, .8))) 64px; justify-content: center; gap: var(--atlas-space-4); align-items: center; min-width: 0; }
-.dollColumn { display: grid; gap: var(--atlas-space-3); align-content: center; }
-.dollGap { height: var(--atlas-space-3); }
-.weaponGroup { display: grid; gap: var(--atlas-space-3); }
-.stageColumn { display: grid; justify-items: center; gap: var(--atlas-space-3); width: 100%; min-width: 0; }
+.workspace {
+  display: grid; grid-template-columns: auto minmax(360px, 1fr); align-items: start;
+  gap: var(--atlas-space-5) clamp(var(--atlas-space-5), 3vw, var(--atlas-space-7));
+}
+.doll { display: grid; grid-template-columns: var(--slot) auto var(--slot); gap: var(--atlas-space-4); align-items: start; min-width: 0; }
+.dollColumn { display: grid; gap: var(--slot-gap); align-content: start; }
+.stageColumn {
+  display: grid; justify-items: center; gap: var(--atlas-space-3); min-width: 0;
+  /* The stage keeps the export frame's shape; wide frames are capped by the room beside the picker. */
+  width: min(calc(var(--stage-h) * var(--stage-aspect, .8)), calc(100vw - 2 * var(--slot) - 360px - 12rem));
+}
+.weaponRow { display: flex; justify-content: center; gap: var(--slot-gap); }
 
 .slot {
-  position: relative; display: grid; place-items: center; width: 64px; height: 64px; padding: 0; overflow: hidden;
+  position: relative; display: grid; place-items: center; width: var(--slot); height: var(--slot); padding: 0; overflow: hidden;
   border: 1px solid var(--transmog-quality, var(--atlas-line)); border-radius: var(--atlas-radius-control);
-  background: var(--atlas-surface-sunken); color: var(--atlas-text-subtle); cursor: pointer;
+  background: color-mix(in srgb, var(--atlas-surface-sunken) 88%, transparent); color: var(--atlas-text-subtle); cursor: pointer;
   box-shadow: inset 0 0 0 1px var(--atlas-bg);
 }
 .slot img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -56,28 +70,25 @@
 }
 .slot[data-busy]::after { animation: busyPulse 1s var(--atlas-ease) infinite alternate; }
 @keyframes busyPulse { from { opacity: .25; } to { opacity: 1; } }
-.slotHidden {
-  position: absolute; inset: auto 0 2px; color: var(--atlas-text); font-size: var(--atlas-text-label); text-align: center;
-  text-shadow: 0 1px 3px var(--atlas-bg);
-}
-.slotCompact { flex: 0 0 52px; width: 52px; height: 52px; }
+@keyframes spin { to { transform: rotate(1turn); } }
+.slotHidden { position: absolute; inset: 0; display: grid; place-items: center; color: var(--atlas-text-strong); pointer-events: none; }
+.slotHidden svg { width: 22px; height: 22px; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
+.slotCompact { --slot: 52px; flex: 0 0 52px; }
 .slotStrip { display: none; }
 /* Camera controls float on the stage's right edge; they are not part of the exported frame. */
 .cameraRow {
-  position: absolute; right: var(--atlas-space-2); top: 50%; z-index: 5; display: grid; gap: 2px; padding: 3px; transform: translateY(-50%);
+  position: absolute; right: var(--atlas-space-2); top: var(--atlas-space-2); z-index: 5; display: grid; gap: 2px; padding: 3px;
   border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control);
   background: color-mix(in srgb, var(--atlas-bg) 72%, transparent);
 }
 .cameraRow[hidden] { display: none; }
 .iconButton { min-width: 44px; min-height: 44px; padding-inline: 0; justify-content: center; }
 .iconButton svg { width: 18px; height: 18px; }
-.exportLabel { display: grid; gap: 1px; line-height: 1.15; text-align: left; }
-.exportLabel small { font-size: var(--atlas-text-label); font-weight: 500; opacity: .85; font-variant-numeric: tabular-nums; }
 
 /* Stage = the export frame. Its children scale with container units, so the preview
    caption matches the exported one at any width. */
 .stage {
-  position: relative; isolation: isolate; width: 100%; max-width: calc(var(--stage-h) * var(--stage-aspect, .8)); overflow: hidden;
+  position: relative; isolation: isolate; width: 100%; overflow: hidden;
   container-type: size; border-radius: var(--atlas-radius); box-shadow: 0 0 0 1px var(--atlas-line);
   background: repeating-conic-gradient(var(--atlas-surface-raised) 0 25%, var(--atlas-surface-sunken) 0 50%) 0 0 / 18px 18px;
 }
@@ -129,19 +140,34 @@
   padding: var(--atlas-space-3) var(--atlas-space-4); border-radius: var(--atlas-radius-control);
   background: color-mix(in srgb, var(--atlas-bg) 82%, transparent); color: var(--atlas-text); font-size: var(--atlas-text-small);
 }
-.progressBar { position: absolute; inset: 0 0 auto; z-index: 5; height: 3px; background: color-mix(in srgb, var(--atlas-bg) 60%, transparent); pointer-events: none; }
-.progressBar i { display: block; height: 100%; background: var(--atlas-accent); transition: width .3s var(--atlas-ease); }
-.stagePill {
-  position: absolute; top: var(--atlas-space-3); left: 50%; z-index: 5; display: inline-flex; align-items: center; gap: var(--atlas-space-2);
-  max-width: calc(100% - 2 * var(--atlas-space-3) - 120px); margin: 0; padding: 4px var(--atlas-space-3); transform: translateX(-50%);
-  border: 1px solid var(--atlas-line); border-radius: 999px; background: color-mix(in srgb, var(--atlas-bg) 80%, transparent);
-  color: var(--atlas-text-strong); font-size: var(--atlas-text-meta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+/* Loading 3D: a progress ring in the middle of the scene, or a small one at the top over the poster. */
+.loader {
+  position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: var(--atlas-space-2); pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--atlas-bg) 55%, transparent), transparent);
 }
-.spinner { flex: none; width: 14px; height: 14px; border: 2px solid var(--atlas-line); border-top-color: var(--atlas-accent); border-radius: 50%; animation: spin .9s linear infinite; }
-@keyframes spin { to { transform: rotate(1turn); } }
+.loader[data-over-poster] { inset: var(--atlas-space-3) 0 auto; display: flex; justify-content: center; align-items: center; background: none; }
+.loaderRing {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: conic-gradient(var(--atlas-accent) var(--progress, 3%), color-mix(in srgb, var(--atlas-text) 16%, transparent) 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+}
+.loader[data-over-poster] .loaderRing { width: 18px; height: 18px; mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); }
+.loaderText, .stagePill {
+  margin: 0; padding: 4px var(--atlas-space-3); border: 1px solid var(--atlas-line); border-radius: 999px;
+  background: color-mix(in srgb, var(--atlas-bg) 80%, transparent); color: var(--atlas-text-strong); font-size: var(--atlas-text-meta); white-space: nowrap;
+}
+.loader[data-over-poster] .loaderText { border: 0; background: none; text-shadow: 0 1px 3px var(--atlas-bg); }
+.stagePill {
+  position: absolute; top: var(--atlas-space-3); left: 50%; z-index: 5; max-width: calc(100% - 2 * var(--atlas-space-3) - 120px);
+  transform: translateX(-50%); overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+}
 
-/* The picker sits on the kit's plaque; its list scrolls inside the painted rails. */
-.panel.panel { display: flex; flex-direction: column; min-width: 0; max-height: calc(var(--stage-h) + 2px); overflow: hidden; padding: 24px 22px 26px; }
+/* The picker sits on the kit's plaque, as tall as the doll; its list scrolls inside the painted rails. */
+.panel.panel {
+  display: flex; flex-direction: column; min-width: 0; overflow: hidden; padding: 24px 22px 26px;
+  height: calc(var(--stage-h) + var(--slot) + var(--atlas-space-3)); max-height: calc(var(--stage-h) + var(--slot) + var(--atlas-space-3));
+}
+.sheetHandle { display: none; }
 .tabs { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; }
 .tabs > :last-child { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; }
 .pickerBody { display: grid; gap: var(--atlas-space-3); padding: var(--atlas-space-4) var(--atlas-space-2) var(--atlas-space-2); align-content: start; min-width: 0; }
@@ -157,7 +183,7 @@
 .slotActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1); }
 .slotAction:global(.ui-button) { min-height: 44px; }
 .slotAction svg { width: 16px; height: 16px; }
-.filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 9.5rem); gap: var(--atlas-space-2); }
+.filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 10rem); gap: var(--atlas-space-2); }
 .more:global(.ui-button) { justify-self: center; min-height: 44px; }
 .searchLabel { position: relative; display: block; min-width: 0; }
 .searchKey {
@@ -167,9 +193,11 @@
 .searchLabel:focus-within .searchKey { display: none; }
 @media (pointer: coarse) { .searchKey { display: none; } }
 .resultCount { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
-.results { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; transition: opacity .15s; }
+.resultCount:empty { display: none; }
+.results { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr)); gap: 2px var(--atlas-space-2); margin: 0; padding: 0; list-style: none; transition: opacity .15s; }
 .results[data-loading] { opacity: .6; }
-.sentinel { height: 1px; }
+.sentinel { height: 1px; grid-column: 1 / -1; }
+.lookRow { display: grid; align-content: start; min-width: 0; }
 .result {
   display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); width: 100%; min-height: 52px;
   padding: var(--atlas-space-1) var(--atlas-space-2); border: 0; border-radius: 8px; background: transparent; color: var(--atlas-text);
@@ -178,12 +206,26 @@
 .result:hover { background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 10%, transparent); }
 .result[aria-pressed="true"] { background: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 18%, transparent); }
 .result:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: -2px; }
-.resultIcon { width: 40px; height: 40px; overflow: hidden; border: 1px solid var(--transmog-quality, var(--atlas-line)); border-radius: 6px; background: var(--atlas-surface-sunken); }
+.resultIcon {
+  display: grid; place-items: center; width: 40px; height: 40px; overflow: hidden;
+  border: 1px solid var(--transmog-quality, var(--atlas-line)); border-radius: 6px; background: var(--atlas-surface-sunken);
+}
 .resultIcon img { display: block; width: 100%; height: 100%; }
+.resultIcon .slotGlyph { width: 22px; height: 22px; }
 .resultText { display: grid; min-width: 0; }
-.resultName { color: var(--transmog-quality-text, var(--atlas-text-strong)); font-size: var(--atlas-text-small); font-weight: 600; line-height: var(--atlas-leading-snug); overflow-wrap: anywhere; }
+.resultName { color: var(--transmog-quality-text, var(--atlas-text-strong)); font-size: var(--atlas-text-small); font-weight: 600; line-height: var(--atlas-leading-snug); overflow-wrap: break-word; hyphens: manual; }
 .resultMeta { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
 .wornTag { padding: 2px var(--atlas-space-2); border: 1px solid var(--material-line, var(--atlas-line)); border-radius: 6px; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); white-space: nowrap; }
+/* Variants of one look (difficulty and colour): numbered swatches under its name. */
+.variants { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1); padding: 0 var(--atlas-space-2) var(--atlas-space-2) calc(40px + var(--atlas-space-3) + var(--atlas-space-2)); }
+.variant {
+  min-width: 34px; height: 34px; padding: 0 var(--atlas-space-1); border: 1px solid var(--atlas-line); border-radius: 6px;
+  background: var(--atlas-surface-sunken); color: var(--atlas-text-muted); font: inherit; font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.variant:hover { border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
+.variant[aria-pressed="true"] { border-color: var(--transmog-quality, var(--atlas-line-strong)); color: var(--atlas-text-strong); box-shadow: inset 0 0 0 1px var(--transmog-quality, var(--atlas-line-strong)); }
+.variant:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: 1px; }
+@media (pointer: coarse) { .variant { min-width: 40px; height: 40px; } }
 
 .group { display: grid; gap: var(--atlas-space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
 .groupLabel { padding: 0; color: var(--material-light, var(--atlas-text-muted)); font-size: var(--atlas-text-label); font-weight: 600; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
@@ -210,68 +252,76 @@
 .checkRow input { width: 18px; height: 18px; accent-color: var(--atlas-accent); }
 
 @media (max-width: 1100px) {
-  .workspace { grid-template-columns: 1fr; }
-  .panel.panel { max-height: none; overflow: visible; }
+  .workspace { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .stageColumn { width: min(calc(var(--stage-h) * var(--stage-aspect, .8)), calc(100vw - 2 * var(--slot) - 6rem)); }
+  .panel.panel { width: 100%; max-width: 760px; height: auto; max-height: none; overflow: visible; }
   .tabs > :last-child { overflow: visible; }
 }
 @media (max-width: 700px) {
-  /* Phone: the stage and the slot strip stay on screen while the list scrolls beneath. */
-  .studio { --stage-h: min(40dvh, 120vw); }
-  /* The tab bar sticks under the stage, so Sets and Frame are one tap away from any scroll depth. */
-  .tabs > :first-child {
-    position: sticky; top: calc(var(--atlas-sticky-top) + var(--stage-h) + 78px); z-index: 5;
-    background: var(--material-base, var(--atlas-surface));
+  /* Phone: stage on top, slots as a scrolling row, the picker a bottom sheet that leaves the stage in view. */
+  .studio {
+    --stage-h: min(56dvh, 118vw); --sheet-h: 54dvh; --sheet-peek: 86px;
+    padding-bottom: calc(var(--sheet-peek) + var(--atlas-space-3));
   }
-  /* Keep rows and tabs that get focus or a tap clear of the sticky stage. */
-  .result, .tabs [role="tab"] { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--stage-h) + 140px); }
-  /* While typing a search, the keyboard needs the room: the stage scrolls away. */
-  .studio:has(input[type="search"]:focus) .stageColumn { position: relative; top: auto; }
-  /* The stage column must sit in the tall workspace, not in the doll row, to stay sticky. */
-  .doll { display: contents; }
-  .workspace { display: block; }
-  .panel.panel { margin-top: var(--atlas-space-3); }
-  .dollColumn { display: none; }
-  .stageColumn {
-    position: sticky; top: var(--atlas-sticky-top); z-index: 6; gap: var(--atlas-space-2);
-    margin-inline: calc(-1 * var(--atlas-space-1)); padding: var(--atlas-space-1) var(--atlas-space-1) var(--atlas-space-2); background: var(--atlas-bg);
-  }
+  .studio[data-sheet-open] { --stage-h: max(220px, calc(100dvh - var(--atlas-sticky-top) - var(--sheet-h) - 92px)); }
+  .doll { display: block; }
+  .dollColumn, .weaponRow { display: none; }
+  .stageColumn { width: 100%; gap: var(--atlas-space-2); scroll-margin-top: var(--atlas-sticky-top); }
+  .stage { width: min(100%, calc(var(--stage-h) * var(--stage-aspect, .8))); transition: max-width var(--atlas-duration-slow) var(--atlas-ease); }
   .slotStrip { display: flex; gap: var(--atlas-space-2); width: 100%; overflow-x: auto; padding: 2px 2px var(--atlas-space-1); scroll-snap-type: x proximity; scrollbar-width: none; }
   .slotStrip > * { scroll-snap-align: start; }
-  .cameraRow { right: var(--atlas-space-1); }
-  .cameraRow .iconButton:nth-child(n+3):not(:last-child) { display: none; }
+  .cameraRow { right: var(--atlas-space-1); top: var(--atlas-space-1); }
+  .cameraRow .iconButton:nth-child(-n+2) { display: none; }
   .toolbar { gap: var(--atlas-space-2); }
-  .toolbarField { flex: 1 1 9rem; min-width: 8rem; }
-  .toolbarSpacer { flex-basis: 100%; height: 0; }
-  /* Phone: Reset and Link become 44 px glass icons, Download keeps the painted button and the rest of the row. */
-  .actions { flex: 1 1 100%; flex-wrap: nowrap; }
+  .identity { flex: 1 1 100%; flex-wrap: nowrap; }
+  .identity .toolbarField { flex: 1 1 0; min-width: 0; }
+  /* Undo / Random / Reset / Link as 44 px glass icons, Download keeps the painted button and the rest of the row. */
+  .actions { flex: 1 1 100%; }
   .actions > :last-child { flex: 1 1 auto; }
-  .actions > :last-child .actionButton.actionButton:global(.ui-button) { width: 100%; }
+  .actions { gap: 6px; }
+  /* The painted caps keep their art; the label sits closer to them so the row fits 360 px. */
+  .actions .actionButton.actionButton:not([data-compact]):global(.ui-button) { width: 100%; padding-inline: 46px; }
+  .actions .actionButton :global(.ui-button__label) { white-space: nowrap; hyphens: manual; }
   .actionText { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
   .actions .actionButton.actionButton[data-compact]:global(.ui-button) {
     width: 44px; min-width: 44px; min-height: 44px; padding: 0; gap: 0;
-    border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-surface-sunken);
+    border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
   }
   .actions .actionButton[data-compact]::before, .actions .actionButton[data-compact]::after { display: none; }
-  /* The painted caps keep their width: the Download label drops its icon and format to stay on one line. */
   .actions .actionButton:not([data-compact]) :global(.ui-button__icon) { display: none; }
   .actionFormat { display: none; }
-  .panel.panel { padding: 20px 16px 22px; }
+  .panel.panel {
+    position: fixed; inset: auto 0 0; z-index: 30; width: auto; max-width: none; height: var(--sheet-h); max-height: none; margin: 0;
+    padding: 4px 14px 0; overflow: hidden; transform: translateY(calc(100% - var(--sheet-peek)));
+    transition: transform var(--atlas-duration-slow) var(--atlas-ease);
+    box-shadow: 0 -12px 32px color-mix(in srgb, #000 45%, transparent);
+  }
+  .panel.panel[data-sheet="open"] { transform: none; }
+  .sheetHandle {
+    display: flex; justify-content: center; align-items: center; flex: none; width: 100%; height: 30px; padding: 0; border: 0; background: none;
+    color: var(--atlas-text-muted); cursor: pointer;
+  }
+  .sheetHandle svg { width: 22px; height: 22px; transition: transform var(--atlas-duration) var(--atlas-ease); }
+  .sheetHandle[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .sheetHandle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
+  .tabs > :last-child { overflow: auto; padding-bottom: env(safe-area-inset-bottom); }
   .pickerBody { padding-inline: var(--atlas-space-1); }
   .formats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .twoColumns { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spinner, .slot[data-busy]::after { animation: none; }
-  .poster, .stageHost, .progressBar i, .results { transition: none; }
+  .slot[data-busy]::after, .toolIcon[aria-busy] svg { animation: none; }
+  .poster, .stageHost, .results, .panel.panel, .stage, .sheetHandle svg { transition: none; }
 }
-:global([data-motion="reduced"]) .spinner, :global([data-ui-motion="reduce"]) .spinner,
-:global([data-motion="reduced"]) .slot[data-busy]::after, :global([data-ui-motion="reduce"]) .slot[data-busy]::after { animation: none; }
+:global([data-motion="reduced"]) .slot[data-busy]::after, :global([data-ui-motion="reduce"]) .slot[data-busy]::after,
+:global([data-motion="reduced"]) .toolIcon[aria-busy] svg, :global([data-ui-motion="reduce"]) .toolIcon[aria-busy] svg { animation: none; }
 :global([data-motion="reduced"]) .poster, :global([data-ui-motion="reduce"]) .poster,
-:global([data-motion="reduced"]) .stageHost, :global([data-ui-motion="reduce"]) .stageHost { transition: none; }
+:global([data-motion="reduced"]) .stageHost, :global([data-ui-motion="reduce"]) .stageHost,
+:global([data-motion="reduced"]) .panel.panel, :global([data-ui-motion="reduce"]) .panel.panel { transition: none; }
 @media (forced-colors: active) {
-  .slot, .result, .formatButton, .swatch, .stage, .cameraRow, .stagePill { border: 1px solid CanvasText; }
+  .slot, .result, .variant, .formatButton, .swatch, .stage, .cameraRow, .stagePill, .loaderText { border: 1px solid CanvasText; }
   .slot[data-busy]::after, .slot[data-previewing]::after { box-shadow: none; outline: 2px dashed Highlight; }
-  .progressBar i { background: Highlight; }
-  .slot[aria-pressed="true"], .result[aria-pressed="true"], .formatButton[aria-pressed="true"], .swatch[aria-pressed="true"] { outline: 2px solid Highlight; }
+  .loaderRing { background: Highlight; }
+  .slot[aria-pressed="true"], .result[aria-pressed="true"], .variant[aria-pressed="true"], .formatButton[aria-pressed="true"], .swatch[aria-pressed="true"] { outline: 2px solid Highlight; }
 }

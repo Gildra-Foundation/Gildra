@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, type CSSProperties, type Ref } from "react";
 import {
-  createZamViewer, loadZamViewerScript, prepareZamViewer, waitForZamQuiet, waitForZamViewer, webglAvailable, ZAM_CONTENT_PATH, ZAM_MODEL_TYPE, type WowViewer,
+  createZamViewer, loadZamViewerScript, prepareZamViewer, waitForZamQuiet, waitForZamViewer, wakeViewerLoop, webglAvailable, ZAM_CONTENT_PATH, ZAM_MODEL_TYPE, type WowViewer,
 } from "@/lib/wow/zamModelViewer";
 import type { BackgroundDef } from "@/lib/wow/transmog/model";
 import { captureViewer, clearViewerSlots, pauseViewer, resizeViewer, setViewerBackground, setViewerItems, setViewerPose, type ViewerItem } from "@/lib/wow/transmog/viewer";
@@ -23,6 +23,22 @@ type Camera = { distance: number; zenith: number; azimuth: number };
 
 const ROTATE_STEP = Math.PI / 8;
 const ZOOM_STEP = 1.15;
+const BASE_CAMERA: Camera = { distance: 6.6, zenith: 1.55, azimuth: -1.57 };
+type FramedRenderer = NonNullable<WowViewer["renderer"]> & { fov?: number; translationFromModel?: ArrayLike<number> };
+
+/**
+ * Camera that frames the whole body of any race (a Gnome and a Tauren alike): the viewer looks at the
+ * model's centre, half its height below the origin, with a vertical field of view. Same idea as the
+ * character page's model; narrow frames step back a little for weapons and shoulders.
+ */
+function homeCamera(renderer: FramedRenderer, aspect: number): Camera {
+  const centre = Math.abs(Number(renderer.translationFromModel?.[1] ?? 0));
+  if (!Number.isFinite(centre) || centre < 0.2 || centre > 10) return BASE_CAMERA;
+  const fov = ((renderer.fov ?? 30) * Math.PI) / 180;
+  const fill = 0.66;
+  const distance = (centre * 2) / (2 * Math.tan(fov / 2) * fill) * Math.max(1, 0.8 / Math.max(0.2, aspect));
+  return { ...BASE_CAMERA, distance };
+}
 
 async function defaultCustomization(modelId: number) {
   const response = await fetch(`${ZAM_CONTENT_PATH}meta/charactercustomization/${modelId}.json`);
@@ -75,6 +91,8 @@ export function TransmogStage({ ref, requested, modelId, items, pose, paused, as
   const [attempt, setAttempt] = useState(0);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef(0);
+  /** The wheel zooms once the visitor has grabbed the model (or holds Ctrl); otherwise it scrolls the page. */
+  const engagedRef = useRef(false);
   const onBusyRef = useRef(onBusy);
   useEffect(() => { itemsRef.current = items; }, [items]);
   useEffect(() => { onBusyRef.current = onBusy; }, [onBusy]);
@@ -108,20 +126,17 @@ export function TransmogStage({ ref, requested, modelId, items, pose, paused, as
         models: { id: modelId, type: ZAM_MODEL_TYPE.character },
         charCustomization: { options: charOptions },
         items: initial.map(([slot, display]) => [slot, display]),
-        // Zoom with the wheel only while the stage has focus or with Ctrl.
         wheelEventValidation: (event: { originalEvent?: WheelEvent }) =>
-          Boolean(event.originalEvent?.ctrlKey || event.originalEvent?.metaKey || rootRef.current?.contains(document.activeElement)),
+          Boolean(engagedRef.current || event.originalEvent?.ctrlKey || event.originalEvent?.metaKey || rootRef.current?.contains(document.activeElement)),
       });
       viewerRef.current = viewer;
       await waitForZamViewer(viewer, { isCancelled: () => cancelled, onProgress: (fraction) => onStatus("loading", Math.round(fraction * 100)) });
       if (cancelled) return;
       appliedRef.current = new Map(initial);
-      const renderer = viewer.renderer;
+      const renderer = viewer.renderer as FramedRenderer | null;
       if (renderer) {
-        renderer.distance = 6.6;
-        renderer.zenith = 1.55;
-        renderer.azimuth = -1.57;
-        homeRef.current = { distance: renderer.distance, zenith: renderer.zenith, azimuth: renderer.azimuth };
+        homeRef.current = homeCamera(renderer, Math.max(1, host.clientWidth) / Math.max(1, host.clientHeight));
+        Object.assign(renderer, homeRef.current);
       }
       resizeViewer(viewer, host.clientWidth, host.clientHeight);
       if (process.env.NODE_ENV !== "production") (window as unknown as { __transmogViewer?: WowViewer }).__transmogViewer = viewer;
@@ -217,8 +232,10 @@ export function TransmogStage({ ref, requested, modelId, items, pose, paused, as
   }, [background, shadow, stageSize, status]);
 
   const camera = useCallback((change: (renderer: NonNullable<WowViewer["renderer"]>, home: Camera) => void) => {
-    const renderer = viewerRef.current?.renderer;
-    if (renderer && homeRef.current) change(renderer, homeRef.current);
+    const viewer = viewerRef.current;
+    if (!viewer?.renderer || !homeRef.current) return;
+    change(viewer.renderer, homeRef.current);
+    wakeViewerLoop(viewer);
   }, []);
   const rotate = useCallback((direction: 1 | -1) => camera((renderer) => { renderer.azimuth += direction * ROTATE_STEP; }), [camera]);
   const zoom = useCallback((factor: number) => camera((renderer, home) => {
@@ -302,6 +319,9 @@ export function TransmogStage({ ref, requested, modelId, items, pose, paused, as
       aria-label={label}
       tabIndex={status === "ready" ? 0 : -1}
       onKeyDown={onKeyDown}
+      onPointerDown={() => { engagedRef.current = true; }}
+      onPointerLeave={() => { engagedRef.current = false; }}
+      onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) engagedRef.current = false; }}
     >
       <div className={styles.stageBackground} style={backgroundStyle} aria-hidden="true" />
       {background.kind === "scene" ? <div className={styles.stageVignette} aria-hidden="true" /> : null}

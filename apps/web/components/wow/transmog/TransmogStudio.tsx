@@ -1,19 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, Eraser, Link2, LocateFixed, Pause, Play, RotateCcw, RotateCw, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { ChevronUp, Dices, Download, Eraser, EyeOff, Link2, LocateFixed, Pause, Play, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { MaterialButton, MaterialPlaque } from "@/components/wow/shared/materialAtlas";
 import { AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import { AtlasTabs } from "@gildra/atlas-ui/AtlasTabs";
 import {
-  background as backgroundOf, chrModelId, dollLeft, dollRight, dollWeapons, frameFormat, transmogRaces, transmogSlots,
-  type TransmogAppearance, type TransmogGender, type TransmogRace, type TransmogSetDetail, type TransmogSetSummary, type TransmogSlot,
+  armoredSlots, background as backgroundOf, chrModelId, classIds, dollLeft, dollRight, dollWeapons, frameFormat, singleBody, transmogRaces, transmogSlots,
+  type TransmogAppearance, type TransmogClass, type TransmogGender, type TransmogRace, type TransmogSetSummary, type TransmogSlot,
 } from "@/lib/wow/transmog/model";
 import { defaultTransmogState, parseTransmogState, serializeTransmogState, type TransmogState } from "@/lib/wow/transmog/state";
+import {
+  lookIds, offsetCursor, outfitArmor, pushHistory, randomOffset, randomSlots, toggleHidden, wearLook, wearSet, type Looks, type Snapshot,
+} from "@/lib/wow/transmog/outfit";
 import { STARTER_SET_ID, starterSet } from "@/lib/wow/transmog/starter";
 import { canvasBlob, composeFrame, downloadBlob } from "@/lib/wow/transmog/compose";
-import { ItemPicker, SetPicker, apiLocale, appearancesUrl, defaultArmor, loadSetDetail, prefetchJson, qualityStyle, setsUrl } from "./TransmogPicker";
+import {
+  ItemPicker, SetPicker, apiLocale, appearancesUrl, cachedJson, defaultArmor, loadSetDetail, prefetchJson, qualityStyle, setsUrl, type Page,
+} from "./TransmogPicker";
 import { TransmogFramePanel, type FrameSettings } from "./TransmogFramePanel";
 import { TransmogStage, type StageHandle, type StageStatus } from "./TransmogStage";
 import { transmogCopy } from "./transmogCopy";
@@ -24,12 +29,10 @@ import styles from "./transmog.module.css";
 type Lang = "ru" | "en";
 /** The studio wears the slim Library kit: gilded wardrobe plaque and buttons (see transmog.module.css). */
 const KIT = "library";
-type Looks = Partial<Record<TransmogSlot, TransmogAppearance>>;
-type Snapshot = { looks: Looks; hidden: TransmogSlot[] };
 
-/** Approximate first download of a mannequin (skeleton + model + textures, brotli), MB. */
+/** Approximate first download of a mannequin (skeleton + model + textures, brotli), MB; shown only before a manual start. */
 function mannequinWeight(race: TransmogRace, gender: TransmogGender) {
-  if (race === "troll") return gender === "m" ? 21 : 17;
+  if (race === "troll" || race === "zandalari-troll") return gender === "m" ? 21 : 17;
   if (race === "goblin" && gender === "f") return 18;
   return 14;
 }
@@ -50,12 +53,6 @@ function viewerSlot(slot: TransmogSlot, look: TransmogAppearance) {
   return look.inventoryType === 20 ? 20 : look.viewerSlot || look.inventoryType;
 }
 
-function wearSet(looks: Looks, detail: TransmogSetDetail): Looks {
-  const next = { ...looks };
-  for (const item of detail.items) next[item.slot] = item;
-  return next;
-}
-
 /** 3D starts by itself unless the visitor saves data or is on a 2G/3G link. */
 function autoLoad() {
   const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
@@ -63,15 +60,21 @@ function autoLoad() {
 }
 
 const typing = (target: EventTarget | null) => target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+const phone = () => window.matchMedia("(max-width: 700px)").matches;
+const lessMotion = () => document.documentElement.dataset.motion === "reduced" || document.documentElement.dataset.uiMotion === "reduce"
+  || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export function TransmogStudio({ lang }: { lang: Lang }) {
   const c = transmogCopy[lang];
+  const sheetId = useId();
   const stageRef = useRef<StageHandle>(null);
+  const stageColumnRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<TransmogState>(defaultTransmogState);
   const [looks, setLooks] = useState<Looks>(() => wearSet({}, starterSet[lang]));
   const [history, setHistory] = useState<Snapshot[]>([]);
   const [selected, setSelected] = useState<TransmogSlot>("head");
   const [tab, setTab] = useState("items");
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [wearingSet, setWearingSet] = useState<number | null>(STARTER_SET_ID);
   const [edited, setEdited] = useState(false);
   const [requested, setRequested] = useState(false);
@@ -79,6 +82,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
   const [stage, setStage] = useState<{ status: StageStatus; progress: number }>({ status: "idle", progress: 0 });
   const [paused, setPaused] = useState(false);
   const [notice, setNotice] = useState("");
+  const [rolling, setRolling] = useState(false);
   const [exportState, setExportState] = useState<"idle" | "busy">("idle");
   const [exportMessage, setExportMessage] = useState("");
   const [light, setLight] = useState({ brightness: 1, contrast: 1, shadow: 0.6 });
@@ -122,7 +126,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
   useEffect(() => {
     if (!ready) return;
     const timer = window.setTimeout(() => {
-      const query = serializeTransmogState({ ...state, looks: edited ? Object.fromEntries(transmogSlots.filter((slot) => looks[slot]).map((slot) => [slot, looks[slot]!.modifiedAppearanceId])) : {} });
+      const query = serializeTransmogState({ ...state, looks: edited ? lookIds(looks) : {} });
       window.history.replaceState(window.history.state, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
     }, 250);
     return () => window.clearTimeout(timer);
@@ -133,12 +137,12 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
     if (stage.status !== "ready") return;
     const idle = (window as Window & { requestIdleCallback?: (callback: () => void) => number }).requestIdleCallback ?? ((callback: () => void) => window.setTimeout(callback, 400));
     idle(() => {
-      for (const slot of transmogSlots) prefetchJson(appearancesUrl(lang, slot, "", defaultArmor(slot, looks[slot])));
+      for (const slot of transmogSlots) prefetchJson(appearancesUrl(lang, slot, "", defaultArmor(slot, looks[slot], state.cls)));
       prefetchJson(setsUrl(lang, "", 0));
     });
   }, [lang, stage.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const remember = useCallback(() => setHistory((previous) => [...previous.slice(-29), { looks, hidden: state.hidden }]), [looks, state.hidden]);
+  const remember = useCallback(() => setHistory((previous) => pushHistory(previous, { looks, hidden: state.hidden })), [looks, state.hidden]);
   const patch = useCallback((next: Partial<TransmogState>) => setState((previous) => ({ ...previous, ...next })), []);
   const markBusy = (slots: TransmogSlot[]) => { pendingRef.current = slots; };
 
@@ -148,17 +152,12 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
     setEdited(true);
     setPreview(null);
     if (look) markBusy([slot]);
-    setLooks((previous) => {
-      const next = { ...previous };
-      if (look) next[slot] = look;
-      else delete next[slot];
-      return next;
-    });
+    setLooks((previous) => wearLook(previous, slot, look));
   };
-  const toggleHidden = (slot: TransmogSlot) => {
+  const hide = (slot: TransmogSlot) => {
     remember();
     setEdited(true);
-    patch({ hidden: state.hidden.includes(slot) ? state.hidden.filter((entry) => entry !== slot) : [...state.hidden, slot] });
+    patch({ hidden: toggleHidden(state.hidden, slot) });
   };
   const undo = () => {
     const last = history.at(-1);
@@ -187,6 +186,34 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
       setNotice(c.error);
     }
   };
+  /** One random look per armor slot, in the armor of the class (or of the outfit). */
+  const randomize = async () => {
+    if (rolling) return;
+    setRolling(true);
+    const armor = outfitArmor(state.cls, looks);
+    try {
+      const picks = await Promise.all(randomSlots.map(async (slot) => {
+        const url = appearancesUrl(lang, slot, "", armoredSlots.has(slot) ? armor : "all");
+        const first = await cachedJson<Page<TransmogAppearance>>(url);
+        if (!first.total) return null;
+        const offset = randomOffset(first.total);
+        const page = offset < first.data.length ? { data: first.data.slice(offset) } : await cachedJson<Page<TransmogAppearance>>(`${url}&cursor=${offsetCursor(offset)}`);
+        return page.data[0] ? [slot, page.data[0]] as const : null;
+      }));
+      const chosen = picks.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+      if (!chosen.length) throw new Error("nothing to wear");
+      remember();
+      markBusy(chosen.map(([slot]) => slot));
+      setLooks((previous) => ({ ...previous, ...Object.fromEntries(chosen) }));
+      setWearingSet(null);
+      setEdited(true);
+      setNotice("");
+    } catch {
+      setNotice(c.error);
+    } finally {
+      setRolling(false);
+    }
+  };
   const share = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -194,6 +221,17 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
     } catch {
       setNotice(c.copyFailed);
     }
+  };
+
+  /** Phone: the picker is a bottom sheet; opening it brings the stage to the top of the screen. */
+  const openSheet = () => {
+    setSheetOpen(true);
+    if (phone()) window.requestAnimationFrame(() => stageColumnRef.current?.scrollIntoView({ block: "start", behavior: lessMotion() ? "auto" : "smooth" }));
+  };
+  const chooseSlot = (slot: TransmogSlot) => {
+    setSelected(slot);
+    setTab("items");
+    openSheet();
   };
 
   const items = useMemo(() => {
@@ -242,9 +280,10 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
     }
   };
 
-  // Keyboard: / search, [ ] previous/next slot, Z (or Ctrl+Z) undo, H hide slot.
+  // Keyboard: / search, [ ] previous/next slot, Z (or Ctrl+Z) undo, H hide slot, Esc folds the phone sheet.
   const keysRef = useRef<(event: KeyboardEvent) => void>(() => undefined);
   const onKeys = (event: KeyboardEvent) => {
+    if (event.key === "Escape" && sheetOpen && phone()) { setSheetOpen(false); return; }
     if (event.altKey || typing(event.target)) return;
     const ctrl = event.ctrlKey || event.metaKey;
     const order = [...dollLeft, ...dollRight, ...dollWeapons];
@@ -253,6 +292,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
       event.preventDefault();
       event.stopImmediatePropagation();
       setTab("items");
+      openSheet();
       window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>("[data-transmog-search]")?.focus());
     } else if ((event.key === "[" || event.key === "]") && !ctrl) {
       event.preventDefault();
@@ -265,7 +305,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
       undo();
     } else if ((event.key.toLowerCase() === "h" || event.code === "KeyH") && !ctrl) {
       event.preventDefault();
-      toggleHidden(selected);
+      hide(selected);
     }
   };
   useEffect(() => { keysRef.current = onKeys; });
@@ -281,40 +321,52 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
     return (
       <button key={slot} type="button" className={compact ? `${styles.slot} ${styles.slotCompact}` : styles.slot} style={look ? qualityStyle(look.quality) : undefined}
         aria-pressed={selected === slot} data-hidden={hidden || undefined} data-slot={slot} data-busy={busySlots.includes(slot) || undefined}
-        data-previewing={preview?.slot === slot || undefined}
+        data-previewing={preview?.slot === slot || undefined} aria-controls={sheetId}
         aria-label={c.slotButton(c.slots[slot], look?.name ?? null, hidden)} title={look ? `${c.slots[slot]}: ${look.name}` : c.slots[slot]}
-        onClick={() => { setSelected(slot); setTab("items"); }}>
-        {look?.iconName ? <TransmogIcon name={look.iconName} size={56} eager /> : <SlotGlyph slot={slot} />}
-        {hidden ? <span className={styles.slotHidden} aria-hidden="true">{c.hiddenTag}</span> : null}
+        onClick={() => chooseSlot(slot)}>
+        {look?.iconName ? <TransmogIcon name={look.iconName} size={56} eager fallback={<SlotGlyph slot={slot} />} /> : <SlotGlyph slot={slot} />}
+        {hidden ? <span className={styles.slotHidden} aria-hidden="true"><EyeOff /></span> : null}
       </button>
     );
   };
 
   const modelId = chrModelId(state.race, state.gender);
+  const oneBody = singleBody(state.race);
   const weight = mannequinWeight(state.race, state.gender);
-  const stageLabel = c.stage([c.races[state.race], state.gender === "f" ? c.female : c.male].join(", "));
+  const stageLabel = c.stage([c.races[state.race], oneBody ? null : state.gender === "f" ? c.female : c.male, state.cls ? c.classes[state.cls] : null].filter(Boolean).join(", "));
   const ready3d = stage.status === "ready";
   const poster = !edited && state.format === "4x5" ? POSTERS[`${state.race}-${state.gender}`] ?? null : null;
   const frameSettings: FrameSettings = { format: state.format, background: state.background, pose: state.pose, ...light, title: state.title, subtitle: state.subtitle, mark: state.mark, ...output };
   const downloadLabel = output.type === "image/webp" ? "WebP" : "PNG";
 
   return (
-    <section className={styles.studio} aria-label={c.title} data-transmog-ready={ready || undefined}>
+    <section className={styles.studio} aria-label={c.title} data-transmog-ready={ready || undefined} data-sheet-open={sheetOpen || undefined}>
       <div className={styles.toolbar}>
-        <label className={styles.toolbarField}>
-          <span className={styles.visuallyHidden}>{c.race}</span>
-          <AtlasSelect value={state.race} aria-label={c.race} onChange={(event) => patch({ race: event.target.value as TransmogRace })} data-transmog-race>
-            {transmogRaces.map((race) => <option key={race.id} value={race.id}>{c.races[race.id]}</option>)}
-          </AtlasSelect>
-        </label>
-        <div className={styles.segmented} role="group" aria-label={c.gender}>
-          <button type="button" aria-pressed={state.gender === "m"} onClick={() => patch({ gender: "m" })} aria-label={c.male} title={c.male}>♂</button>
-          <button type="button" aria-pressed={state.gender === "f"} onClick={() => patch({ gender: "f" })} aria-label={c.female} title={c.female}>♀</button>
+        <div className={styles.identity}>
+          <label className={styles.toolbarField}>
+            <span className={styles.visuallyHidden}>{c.race}</span>
+            <AtlasSelect value={state.race} aria-label={c.race} onChange={(event) => patch({ race: event.target.value as TransmogRace })} data-transmog-race>
+              {transmogRaces.map((race) => <option key={race.id} value={race.id}>{c.races[race.id]}</option>)}
+            </AtlasSelect>
+          </label>
+          {oneBody ? null : (
+            <div className={styles.segmented} role="group" aria-label={c.gender}>
+              <button type="button" aria-pressed={state.gender === "m"} onClick={() => patch({ gender: "m" })} aria-label={c.male} title={c.male}>♂</button>
+              <button type="button" aria-pressed={state.gender === "f"} onClick={() => patch({ gender: "f" })} aria-label={c.female} title={c.female}>♀</button>
+            </div>
+          )}
+          <label className={styles.toolbarField}>
+            <span className={styles.visuallyHidden}>{c.cls}</span>
+            <AtlasSelect value={state.cls} aria-label={c.cls} onChange={(event) => patch({ cls: event.target.value as TransmogClass | "" })} data-transmog-class>
+              <option value="">{c.anyClass}</option>
+              {classIds.map((entry) => <option key={entry.slug} value={entry.slug}>{c.classes[entry.slug]}</option>)}
+            </AtlasSelect>
+          </label>
         </div>
-        <span className={styles.toolbarSpacer} />
         <div className={styles.actions}>
-          <AtlasButton variant="ghost" className={styles.undoButton} icon={<Undo2 aria-hidden />} onClick={undo} disabled={!history.length} title={`${c.undo} (Z)`} aria-keyshortcuts="Z"><span className={styles.visuallyHidden}>{c.undo}</span></AtlasButton>
-          <MaterialButton kit={KIT} className={styles.actionButton} data-compact icon={<Eraser aria-hidden />} onClick={reset} title={c.reset} aria-label={c.reset}><span className={styles.actionText}>{c.reset}</span></MaterialButton>
+          <AtlasButton variant="ghost" className={styles.toolIcon} icon={<Undo2 aria-hidden />} onClick={undo} disabled={!history.length} title={`${c.undo} (Z)`} aria-keyshortcuts="Z"><span className={styles.visuallyHidden}>{c.undo}</span></AtlasButton>
+          <AtlasButton variant="ghost" className={styles.toolIcon} icon={<Dices aria-hidden />} onClick={() => void randomize()} disabled={rolling} aria-busy={rolling || undefined} title={c.randomize} data-transmog-random><span className={styles.visuallyHidden}>{c.randomize}</span></AtlasButton>
+          <AtlasButton variant="ghost" className={styles.toolIcon} icon={<Eraser aria-hidden />} onClick={reset} title={c.reset}><span className={styles.visuallyHidden}>{c.reset}</span></AtlasButton>
           <MaterialButton kit={KIT} className={styles.actionButton} data-compact icon={<Link2 aria-hidden />} onClick={() => void share()} data-transmog-share title={c.share} aria-label={c.share}><span className={styles.actionText}>{c.share}</span></MaterialButton>
           <MaterialButton kit={KIT} variant="primary" className={styles.actionButton} icon={<Download aria-hidden />} onClick={() => void exportFrame()} disabled={!ready3d || exportState === "busy"}
             title={ready3d ? `${c.download(downloadLabel)} · ${format.width * Math.min(output.scale, maxScale)}×${format.height * Math.min(output.scale, maxScale)}` : c.downloadWait} data-transmog-download>
@@ -327,7 +379,7 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
       <div className={styles.workspace} style={{ "--stage-aspect": String(format.width / format.height) } as React.CSSProperties}>
         <div className={styles.doll}>
           <div className={styles.dollColumn}>{dollLeft.map((slot) => slotButton(slot))}</div>
-          <div className={styles.stageColumn}>
+          <div className={styles.stageColumn} ref={stageColumnRef}>
             <TransmogStage ref={stageRef} requested={requested} modelId={modelId} items={items} pose={state.pose} paused={paused}
               aspect={format.width / format.height} background={backgroundDef} {...light} label={stageLabel} poster={poster} onStatus={onStatus} onBusy={onBusy}>
               {state.title || state.subtitle ? (
@@ -338,10 +390,10 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
               ) : null}
               {state.mark ? <span className={styles.mark} aria-hidden="true">GILDRA.NET</span> : null}
               {stage.status === "loading" ? (
-                <>
-                  <span className={styles.progressBar} aria-hidden="true"><i style={{ width: `${Math.max(4, stage.progress)}%` }} /></span>
-                  <p className={styles.stagePill} aria-live="polite" data-stage-pill><i className={styles.spinner} aria-hidden="true" />{c.loadingPart(stage.progress)}</p>
-                </>
+                <div className={styles.loader} data-over-poster={poster ? "" : undefined} role="status" data-stage-pill>
+                  <span className={styles.loaderRing} style={{ "--progress": `${Math.max(3, stage.progress)}%` } as React.CSSProperties} aria-hidden="true" />
+                  <span className={styles.loaderText}>{c.loadingPart(stage.progress)}</span>
+                </div>
               ) : null}
               {preview && ready3d ? <p className={styles.stagePill} data-preview-pill>{c.trying(preview.look.name)}</p> : null}
               {stage.status === "idle" && manual ? (
@@ -359,34 +411,34 @@ export function TransmogStudio({ lang }: { lang: Lang }) {
               ) : null}
               {stage.status === "unsupported" ? <div className={styles.stageOverlay} data-stage-overlay="unsupported"><p className={styles.stageStatus}>{c.noWebgl}</p></div> : null}
               <div className={styles.cameraRow} role="group" aria-label={c.camera} data-camera-controls hidden={!ready3d}>
-                <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.rotate(-1)} aria-label={c.rotateLeft} title={`${c.rotateLeft} (←)`}><RotateCcw aria-hidden /></AtlasButton>
-                <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.rotate(1)} aria-label={c.rotateRight} title={`${c.rotateRight} (→)`}><RotateCw aria-hidden /></AtlasButton>
                 <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.zoom(1 / 1.15)} aria-label={c.zoomIn} title={`${c.zoomIn} (+)`}><ZoomIn aria-hidden /></AtlasButton>
                 <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.zoom(1.15)} aria-label={c.zoomOut} title={`${c.zoomOut} (−)`}><ZoomOut aria-hidden /></AtlasButton>
                 <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => stageRef.current?.resetCamera()} aria-label={c.resetCamera} title={`${c.resetCamera} (Home)`}><LocateFixed aria-hidden /></AtlasButton>
                 <AtlasButton size="sm" variant="ghost" className={styles.iconButton} onClick={() => setPaused((value) => !value)} aria-pressed={paused} aria-label={paused ? c.play : c.pause} title={paused ? c.play : c.pause}>{paused ? <Play aria-hidden /> : <Pause aria-hidden />}</AtlasButton>
               </div>
             </TransmogStage>
+            <div className={styles.weaponRow} role="group" aria-label={c.weapons}>{dollWeapons.map((slot) => slotButton(slot))}</div>
             <div className={styles.slotStrip} role="group" aria-label={c.tabs.items}>{transmogSlots.map((slot) => slotButton(slot, true))}</div>
           </div>
-          <div className={styles.dollColumn}>
-            {dollRight.map((slot) => slotButton(slot))}
-            <span className={styles.dollGap} aria-hidden="true" />
-            <div className={styles.weaponGroup} role="group" aria-label={c.weapons}>{dollWeapons.map((slot) => slotButton(slot))}</div>
-          </div>
+          <div className={styles.dollColumn}>{dollRight.map((slot) => slotButton(slot))}</div>
         </div>
 
-        <MaterialPlaque kit={KIT} className={styles.panel}>
-          <AtlasTabs label={c.title} value={tab} onChange={setTab} className={styles.tabs} tabs={[
-            { id: "items", label: c.tabs.items, content: <ItemPicker lang={lang} slot={selected} current={looks[selected]} hidden={state.hidden.includes(selected)}
-              onPick={(look) => pick(selected, look)} onToggleHidden={() => toggleHidden(selected)} onRemove={() => pick(selected, undefined)}
+        <MaterialPlaque kit={KIT} className={styles.panel} id={sheetId} data-sheet={sheetOpen ? "open" : "closed"}
+          onFocusCapture={(event) => { if (!sheetOpen && phone() && !(event.target as HTMLElement).closest("[data-sheet-handle], [role=tab]")) openSheet(); }}>
+          <button type="button" className={styles.sheetHandle} data-sheet-handle aria-expanded={sheetOpen} aria-controls={sheetId} onClick={() => (sheetOpen ? setSheetOpen(false) : openSheet())}>
+            <ChevronUp aria-hidden />
+            <span className={styles.visuallyHidden}>{sheetOpen ? c.closePicker : c.openPicker}</span>
+          </button>
+          <AtlasTabs label={c.title} value={tab} onChange={(id) => { setTab(id); openSheet(); }} className={styles.tabs} tabs={[
+            { id: "items", label: c.tabs.items, content: <ItemPicker lang={lang} slot={selected} cls={state.cls} current={looks[selected]} hidden={state.hidden.includes(selected)}
+              onPick={(look) => pick(selected, look)} onToggleHidden={() => hide(selected)} onRemove={() => pick(selected, undefined)}
               onPreview={(look) => {
                 if (!look) { setPreview((current) => (current ? null : current)); return; }
                 if (!ready3d || looks[selected]?.appearanceId === look.appearanceId) return;
                 markBusy([selected]);
                 setPreview({ slot: selected, look });
               }} /> },
-            { id: "sets", label: c.tabs.sets, content: <SetPicker lang={lang} wearing={wearingSet} onWear={(entry) => void wear(entry)} /> },
+            { id: "sets", label: c.tabs.sets, content: <SetPicker lang={lang} cls={state.cls} wearing={wearingSet} onWear={(entry) => void wear(entry)} /> },
             { id: "frame", label: c.tabs.frame, content: <TransmogFramePanel lang={lang} settings={frameSettings} maxScale={maxScale}
               onChange={(change) => {
                 const { brightness, contrast, shadow, scale, type, ...rest } = change;
