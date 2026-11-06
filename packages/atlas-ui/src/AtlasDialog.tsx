@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import clsx from "clsx";
 import { Dialog } from "./valyro-ui/feedback/Dialog";
-import bridge from "./valyroAtlasBridge.module.css";
 import styles from "./AtlasDialog.module.css";
 
 /**
@@ -27,8 +26,8 @@ export function AtlasDialog({ open, onClose, label, children, variant = "panel",
       aria-label={label}
       size="lg"
       showClose={false}
-      className={clsx(bridge.scope, styles.dialog, styles[variant], className)}
-      layerClassName={clsx(bridge.scope, styles.layer)}
+      className={clsx(styles.dialog, styles[variant], className)}
+      layerClassName={styles.layer}
     >
       {children}
     </Dialog>

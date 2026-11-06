@@ -1,4 +1,5 @@
 /* atlas:strict — raid hub layout over its own quiet illustrated vault. */
+/* Re-themes the accent: the page also carries the Valyro bridge (atlasBridgeClassName). */
 .page {
   --atlas-accent: var(--atlas-positive);
   --atlas-accent-strong: color-mix(in srgb, var(--atlas-positive) 70%, var(--atlas-text-strong));

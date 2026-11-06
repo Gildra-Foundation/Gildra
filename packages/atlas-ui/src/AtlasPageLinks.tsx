@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import "./valyro-ui/navigation/Pagination.css";
-import bridge from "./valyroAtlasBridge.module.css";
 import styles from "./AtlasPageLinks.module.css";
 
 /** Page numbers with ellipses, the same shape as Valyro's getPaginationRange (constant length once collapsing). */
@@ -37,7 +36,7 @@ export function AtlasPageLinks({ page, pageCount, href, label, labels, className
       <a className="ui-pagination__item" data-kind="step" href={href(target)} rel={rel} aria-label={text}>{icon}</a>
     );
   return (
-    <nav className={clsx("ui-pagination", bridge.scope, styles.pages, className)} data-size="md" aria-label={label}>
+    <nav className={clsx("ui-pagination", styles.pages, className)} data-size="md" aria-label={label}>
       <ul className="ui-pagination__list">
         <li>{step(page - 1, "prev", labels.previous, <ChevronLeft aria-hidden="true" />)}</li>
         {pageRange(page, pageCount).map((item) =>

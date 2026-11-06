@@ -14,6 +14,7 @@ import { SiteTheme } from "@/components/motion/SiteTheme";
 import { siteThemeScript } from "@/components/platform/home/homeThemes";
 import { localeArrivalScript } from "@/components/platform/locale/localeArrivalScript";
 import { AtlasValyroScope } from "@gildra/atlas-ui/AtlasValyroScope";
+import { atlasRootAttributes, atlasBridgeClassName } from "@gildra/atlas-ui/atlasRoot";
 import "./globals.css";
 
 // The site has two root layouts — English (app/(site)/layout.tsx) and Russian
@@ -78,14 +79,14 @@ export const rootMetadata = rootMetadataFor("en");
 export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: ReactNode }) {
   return (
     // suppressHydrationWarning: the head script may set data-motion before React hydrates.
-    <html lang={lang} className={`${display.variable} ${ui.variable} ${atlasDisplay.variable}`} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
+    <html lang={lang} className={`${display.variable} ${ui.variable} ${atlasDisplay.variable} ${atlasBridgeClassName}`} {...atlasRootAttributes} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
       <head>
         {/* The reader's "less motion" choice, applied before the first paint (lib/client/motionPreference.ts). */}
         <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript + ";" + siteThemeScript + ";" + localeArrivalScript }} />
       </head>
       <body>
         <SiteTheme>
-          <AtlasValyroScope locale={valyroLocale[lang]}>
+          <AtlasValyroScope root locale={valyroLocale[lang]}>
             <WorkspaceNavigator picks={navigationPicks()} />
             <RouteTransitionGate>{children}</RouteTransitionGate>
           </AtlasValyroScope>

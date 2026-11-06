@@ -12,8 +12,9 @@ imported by the public site.
 The Atlas adapters use Button/Slot, TextInput, Tooltip, Select and shared motion
 primitives while keeping the site's public component contracts. Valyro theme
 scope keeps portaled layers in the Characters token scope; the separate
-`valyroAtlasBridge.module.css` maps `--ui-*` to `--atlas-*`. No ThemeProvider
-mutates the document's existing theme attributes. Native AtlasSelect stays
+`valyroAtlasBridge.module.css` maps `--ui-*` to `--atlas-*`. All theme tokens are
+declared once, on `<html>` (`atlasRoot.ts`, rendered by the root layouts), and only
+portaled scopes re-declare them; controls inherit and never re-declare the set. Native AtlasSelect stays
 available for plain forms and existing select-event handlers.
 
 `motion-kit/` (`page-transition`, added with `npm run valyro:add`) serves the

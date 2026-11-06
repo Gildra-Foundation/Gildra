@@ -2,7 +2,6 @@
 
 import clsx from "clsx";
 import { TierList, type TierListLabels, type TierListProps } from "./valyro-ui/gaming/TierList";
-import bridge from "./valyroAtlasBridge.module.css";
 import styles from "./AtlasTierBoard.module.css";
 
 const ru: Partial<TierListLabels> = {
@@ -32,5 +31,5 @@ const en: Partial<TierListLabels> = { edit: "Your order" };
 
 /** Tier board on Valyro's Pro TierList: read the tiers, or drag your own order and export it. */
 export function AtlasTierBoard({ locale, className, labels, ...props }: TierListProps & { locale: "en" | "ru" }) {
-  return <TierList {...props} labels={{ ...(locale === "ru" ? ru : en), ...labels }} className={clsx(bridge.scope, styles.board, className)} />;
+  return <TierList {...props} labels={{ ...(locale === "ru" ? ru : en), ...labels }} className={clsx(styles.board, className)} />;
 }

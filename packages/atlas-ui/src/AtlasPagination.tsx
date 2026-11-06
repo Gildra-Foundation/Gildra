@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import clsx from "clsx";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "./valyro-ui/basic/Button";
-import bridge from "./valyroAtlasBridge.module.css";
 import buttonStyles from "./AtlasButton.module.css";
 import styles from "./AtlasPagination.module.css";
 
@@ -20,13 +19,13 @@ export function AtlasPagination({ label, prev, next, status, className }: { labe
   return (
     <nav className={clsx(styles.pagination, className)} aria-label={label}>
       {prev ? (
-        <Button asChild variant="ghost" leftIcon={<ArrowLeft aria-hidden="true" />} className={clsx(bridge.scope, buttonStyles.button)}>
+        <Button asChild variant="ghost" leftIcon={<ArrowLeft aria-hidden="true" />} className={clsx(buttonStyles.button)}>
           <a href={prev.href} rel="prev" {...prev.attributes}>{prev.label}</a>
         </Button>
       ) : <span />}
       {status ? <span className={styles.status}>{status}</span> : null}
       {next ? (
-        <Button asChild variant="primary" rightIcon={<ArrowRight aria-hidden="true" />} className={clsx(bridge.scope, buttonStyles.button)}>
+        <Button asChild variant="primary" rightIcon={<ArrowRight aria-hidden="true" />} className={clsx(buttonStyles.button)}>
           <a href={next.href} rel="next" {...next.attributes}>{next.label}</a>
         </Button>
       ) : <span />}
