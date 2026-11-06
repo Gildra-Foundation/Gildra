@@ -89,7 +89,7 @@ describe("seo: internal links", () => {
   it("the raid hub links to boss sections, not to redirecting boss URLs", async () => {
     for (const path of ["/wow/raids", "/ru/wow/raids"]) {
       const { body } = await get(path);
-      const bossLinks = [...body.matchAll(/<a[^>]+href="([^"]+)"[^>]+data-hub-boss-link/g)].map((match) => match[1]);
+      const bossLinks = [...body.matchAll(/<a\b[^>]*data-hub-boss-link[^>]*>/g)].map((match) => match[0].match(/href="([^"]+)"/)?.[1] ?? "");
       assert.ok(bossLinks.length >= 10, `${path}: ${bossLinks.length} boss links`);
       for (const href of bossLinks) assert.match(href, /^(\/ru)?\/wow\/raids\/[^/#]+#/, `${path}: ${href}`);
     }

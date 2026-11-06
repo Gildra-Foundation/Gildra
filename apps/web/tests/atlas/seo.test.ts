@@ -194,7 +194,8 @@ describe("seo: link previews", () => {
     const routes = ["wow", "wow/mythic-plus", "wow/mythic-plus/comps", "wow/mythic-plus/stats", "wow/mythic-plus/routes", "wow/mythic-plus/meta", "wow/mythic-plus/leaderboard",
       "wow/mythic-plus/leaderboard/[spec]", "wow/mythic-plus/[season]/[dungeon]", "wow/raids", "wow/raids/[raid]", "wow/raids/composition", "wow/lairs", "wow/lairs/[slug]",
       "wow/classes", "wow/classes/[class]", "wow/classes/[class]/[spec]", "wow/professions", "wow/professions/[slug]", "wow/transmog", "wow/auction", "wow/midnight/season-2",
-      "wow/whats-new", "tier-lists", "library"];
+      "wow/whats-new", "tier-lists", "library", "library/[dataset]", "wow/raids/the-unbinding-of-kithix", "privacy",
+      "wow/mythic-plus/cached/[page]", "wow/mythic-plus/cached/leaderboard/[spec]", "wow/professions/[slug]/region/[region]"];
     for (const root of ["(site)", "ru"]) for (const route of routes) {
       const dir = new URL(`../../app/${root}/${route}/`, import.meta.url);
       assert.ok(["opengraph-image.tsx", "opengraph-image.png"].some((file) => existsSync(new URL(file, dir))), `${root}/${route}`);

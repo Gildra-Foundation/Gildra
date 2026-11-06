@@ -9,6 +9,8 @@ import { getBoss } from "@/lib/lairs";
 import { getTalentSpecTheme, talentSpecThemes } from "@/lib/talentSpecThemes";
 import professionIndex from "@/data/wow/professions/index.json";
 import { libraryDatasetText } from "@/components/library/libraryCopy";
+import { kithixRaid } from "@/components/wow/raid/kithixRaidData";
+import { CACHED_MYTHIC_PAGES } from "@/lib/routes/cachedViews";
 import { atlasOgImage, type AtlasOgSpec } from "./atlasOg";
 import type { Lang as Locale } from "@/lib/i18n-paths";
 
@@ -98,6 +100,16 @@ const kinds = {
     if (index < 0) return kinds.venomous(locale);
     return { ...scene("venomousBoss"), eyebrow: `The Venomous Abyss · ${ru(locale) ? `встреча ${index + 1} из ${bosses.length}` : `encounter ${index + 1} of ${bosses.length}`}`, title: bosses[index].names.en ?? slug };
   },
+
+  kithix: (locale: Locale): Spec => ({
+    art: kithixRaid.artwork,
+    focus: [0.5, 0.4],
+    eyebrow: ru(locale) ? `Midnight · рейд · ${kithixRaid.location.ru}` : `Midnight · raid · ${kithixRaid.location.en}`,
+    title: kithixRaid.names[locale],
+    facts: [count(locale, kithixRaid.bosses.length, "босс", "босса", "боссов", "boss", "bosses")],
+  }),
+
+  privacy: (locale: Locale): Spec => ({ ...hubs.wow(locale), title: ru(locale) ? "Конфиденциальность" : "Privacy", subtitle: undefined }),
 
   sporefall: (locale: Locale): Spec => {
     const raid = instances.find((entry) => entry.canonicalSlug === "sporefall");
@@ -227,6 +239,7 @@ const staticParams = {
   leaderboardSpec: () => talentSpecThemes.map(({ slug }) => ({ spec: slug })),
   profession: () => professionIndex.map(({ slug }) => ({ slug })),
   libraryDataset: () => Object.keys(libraryDatasetText).map((dataset) => ({ dataset })),
+  mythicPlusPage: () => CACHED_MYTHIC_PAGES.map((page) => ({ page })),
 };
 
 export function ogStaticParams(key: keyof typeof staticParams) {
