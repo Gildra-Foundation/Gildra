@@ -22,6 +22,14 @@ export type BoardEntry = {
   maxKey?: number;
   rankChange?: number;
   popularity?: number;
+  /** Mean player rating, players behind the row, PvP win share (0..1). */
+  rating?: number;
+  players?: number;
+  winRate?: number;
+  /** The source's latest move of the spec. */
+  change?: "up" | "down";
+  /** Gildra's consensus: how many sources rank the spec. */
+  sources?: number;
   /** Sim tab: simulated damage of the chosen gear set and the gap to #1 in percent (≤ 0). */
   simDps?: number;
   behind?: number;
@@ -57,7 +65,7 @@ export function groupByTier<T extends { tier: string; rank: number }>(entries: T
     .sort((a, b) => tierWeight(a.tier) - tierWeight(b.tier));
 }
 
-/** A published list row (Gildra, mythicstats.com, u.gg). Popularity 0 means "not published", not "nobody plays it". */
+/** A published list row (Gildra or any source tab). Popularity 0 means "not published", not "nobody plays it". */
 export function fromTierEntry(entry: TierEntry, names: TierSpecNames): BoardEntry {
   const info = specInfo(names, entry.classSlug, entry.specSlug);
   const rate = entry.role === "healer" ? entry.averageHps ?? entry.averageDps : entry.averageDps;
@@ -76,6 +84,11 @@ export function fromTierEntry(entry: TierEntry, names: TierSpecNames): BoardEntr
     maxKey: entry.maxKey || undefined,
     rankChange: entry.rankChange,
     popularity: entry.popularity ? entry.popularity : undefined,
+    rating: entry.rating || undefined,
+    players: entry.players ?? undefined,
+    winRate: entry.winRate ?? undefined,
+    change: entry.change === "up" || entry.change === "down" ? entry.change : undefined,
+    sources: entry.sources || undefined,
   };
 }
 
@@ -104,5 +117,9 @@ export function listColumns(entries: BoardEntry[]) {
     trend: entries.some((entry) => Boolean(entry.rankChange)),
     popularity: entries.some((entry) => entry.popularity !== undefined),
     sim: entries.some((entry) => entry.simDps !== undefined),
+    rating: entries.some((entry) => entry.rating !== undefined),
+    players: entries.some((entry) => entry.players !== undefined),
+    winRate: entries.some((entry) => entry.winRate !== undefined),
+    change: entries.some((entry) => Boolean(entry.change)),
   };
 }

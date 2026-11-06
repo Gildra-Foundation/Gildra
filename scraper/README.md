@@ -100,6 +100,33 @@ and position; the split stays in `hero_talents`). A payload older than seven
 days fails closed, and `parsers.ugg_dataset_service` keeps the last-known-good
 snapshot when validation fails.
 
+JSON-payload tier lists (`parsers.tierlist_payload`) store one validated
+document per snapshot in `dataset_snapshots.payload` (no tables of their own)
+and keep the last good snapshot when a candidate fails validation. All of them
+fetch directly over HTTPS (one request every 1.5 s, zero credits); only spec,
+position, tier and the source's numbers are kept:
+
+- `tierlist-wowmeta` — wowmeta.com Mythic+ DPS/healer/tank (confidence-bound
+  rating, mean rating, sample, max key), 3 pages, daily 08:15 UTC.
+- `tierlist-wythic` — wythic.com spec tiers by share in top Mythic+ runs,
+  1 page, every 12 hours.
+- `tierlist-method` — method.gg editorial Mythic+ tier list, 1 page, daily
+  08:45 UTC.
+- `tierlist-murlok` — murlok.io PvP ranking per role for Solo Shuffle, 2v2,
+  3v3, Blitz and RBG, 15 pages, every 12 hours; murlok has no tiers, so they
+  are cut from its score by natural breaks (`tiers_derived`).
+- `tierlist-pvp-ladder` — Gildra's PvP tier from the official Blizzard PvP
+  leaderboards (EU + US): spec share among players at or above the overall
+  #1000 in Solo Shuffle/Blitz (per-spec boards) and among the top 500/500/300
+  characters of 3v3/2v2/RBG by active specialization; tiers by natural breaks,
+  specs nobody plays at the top are F. About 2 500 API requests, every 12
+  hours. `PVP_LADDER_TOP="3v3=500,2v2=500,rbg=300"` overrides the sample.
+
+Not collected: boomkin.io (its terms forbid automated collection),
+seemeta.com and archon.gg (both answer a bot challenge, direct and through
+Scrape.do; Archon's daily job is off since its snapshot is stale since
+2026-08-26), Maxroll and Mobalytics (terms).
+
 Maxroll and Wowhead tier lists are not collected for the source tabs: their
 terms forbid automated collection (see the source review in the tier-list
 sources task) until written permission exists.

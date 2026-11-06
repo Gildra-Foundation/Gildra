@@ -6,14 +6,14 @@ export const tierListsPage = definePage({
   meta: ({ lang }) =>
     lang === "ru"
       ? {
-          title: "Тир-листы: Эпохальный+ и рейды — Gildra",
+          title: "Тир-листы: Эпохальный+, рейды и арена — Gildra",
           description:
-            "Тир-листы специализаций для режима «Эпохальный+» и рейдов: сводный Gildra, mythicstats.com и u.gg на вкладках и их сравнение; роль, класс, подземелье, уровень ключа и карточка спека.",
+            "Тир-листы специализаций для «Эпохального+», рейдов и арены (3v3, 2v2, Solo Shuffle, Blitz, RBG): сводный тир Gildra, Wowhead, Icy Veins, wow.gg, u.gg, Method и другие источники на вкладках и их сравнение.",
         }
       : {
-          title: "Mythic+ & Raid Tier Lists — Gildra",
+          title: "Mythic+, Raid & Arena Tier Lists — Gildra",
           description:
-            "Specialization tier lists for Mythic+ and raids: Gildra's blended list, mythicstats.com and u.gg in tabs plus a side-by-side comparison; role, class, dungeon, key range and a spec card.",
+            "Specialization tier lists for Mythic+, raids and arena (3v3, 2v2, Solo Shuffle, Blitz, RBG): Gildra's overall tier, Wowhead, Icy Veins, wow.gg, u.gg, Method and more in tabs plus a side-by-side comparison.",
         },
   page: () => ({
     id: "wow/tier-lists",

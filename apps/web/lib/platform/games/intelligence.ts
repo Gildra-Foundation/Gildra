@@ -50,6 +50,14 @@ export type TierEntry = {
   sourceUrl: string;
   /** Source-specific sub-group, e.g. mythicstats.com's melee / ranged DPS lists. */
   group?: string;
+  /** Mean player rating (Mythic+ score or PvP rating), the players behind the row and a PvP win share (0..1). */
+  rating?: number;
+  players?: number;
+  winRate?: number;
+  /** The source's latest move of the spec. */
+  change?: "up" | "down";
+  /** Consensus rows: how many sources rank the spec. */
+  sources?: number;
 };
 
 export type TierActivity = "mythic_plus" | "raid";

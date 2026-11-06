@@ -59,7 +59,13 @@ func TestWoWTierListRejectsInvalidFilters(t *testing.T) {
 	mux := http.NewServeMux()
 	NewHandler(&fakeStore{}).Register(mux)
 	for _, target := range []string{
-		"/v1/meta/wow/tier-list?activity=pvp",
+		"/v1/meta/wow/tier-list?activity=arena",
+		"/v1/meta/wow/tier-list?activity=pvp&bracket=1v1",
+		"/v1/meta/wow/tier-list?activity=pvp&region=kr",
+		"/v1/meta/wow/tier-list?bracket=3v3",
+		"/v1/meta/wow/tier-list?activity=raid&source=murlok",
+		"/v1/meta/wow/tier-list?source=archon",
+		"/v1/meta/wow/tier-list?source=wowhead&selectionType=dungeon&selectionId=1",
 		"/v1/meta/wow/tier-list?role=all",
 		"/v1/meta/wow/tier-list?limit=1000",
 	} {

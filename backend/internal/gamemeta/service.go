@@ -21,6 +21,9 @@ type Query struct {
 	Difficulty    string
 	AddonKey      string
 	Source        string
+	// Bracket and Region select a PvP slice (3v3, 2v2, shuffle, blitz, rbg; all, eu, us).
+	Bracket string
+	Region  string
 }
 
 type Context struct {
@@ -61,6 +64,16 @@ type Entry struct {
 	Group      string   `json:"group,omitempty"`
 	GuideURL   string   `json:"guideUrl,omitempty"`
 	SourceURL  string   `json:"sourceUrl"`
+	// Rating is a mean player rating (Mythic+ score or PvP rating); Players the
+	// sample behind the row; WinRate a PvP win share (0..1).
+	Rating  *float64 `json:"rating,omitempty"`
+	Players *int     `json:"players,omitempty"`
+	WinRate *float64 `json:"winRate,omitempty"`
+	// Change is the source's latest move of the spec: "up" or "down".
+	Change string `json:"change,omitempty"`
+	// Consensus only: how many sources rank the spec and their mean tier (S = 0 … F = 5).
+	Sources   int      `json:"sources,omitempty"`
+	TierScore *float64 `json:"tierScore,omitempty"`
 }
 
 type Snapshot struct {
@@ -68,12 +81,16 @@ type Snapshot struct {
 	Status      string    `json:"status"`
 	Source      string    `json:"source,omitempty"`
 	Activity    string    `json:"activity"`
+	Bracket     string    `json:"bracket,omitempty"`
+	Region      string    `json:"region,omitempty"`
 	Role        string    `json:"role"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 	RecordCount int       `json:"recordCount"`
 	Sources     []Source  `json:"sources"`
 	Entries     []Entry   `json:"entries"`
 	Context     *Context  `json:"context,omitempty"`
+	// TiersDerived: the source publishes no tiers; they are cut from its numbers.
+	TiersDerived bool `json:"tiersDerived,omitempty"`
 }
 
 type Service struct {
@@ -208,90 +225,43 @@ func localizeContexts(contexts []Context, names map[journalName]string) []Contex
 	return localized
 }
 
+// WoWTierList answers one tab: a source's own list, wow.gg's dungeon/boss
+// slice, or Gildra's tier — the consensus of every source for Mythic+ and
+// raids, the Blizzard ladder representation for PvP.
 func (s *Service) WoWTierList(ctx context.Context, query Query) (Snapshot, error) {
 	if query.Source != SourceGildra {
 		return s.sourceTierList(ctx, query)
 	}
-	sources, updatedAt, err := s.sources(ctx)
-	if err != nil {
-		return Snapshot{}, err
+	if query.Activity == "pvp" {
+		ladder := query
+		ladder.Source = SourceLadder
+		snapshot, err := s.sourceTierList(ctx, ladder)
+		snapshot.Source = SourceGildra
+		return snapshot, err
 	}
-
 	if query.SelectionType != "" && query.SelectionType != "all" {
-		return s.contextTierList(ctx, query, sources, updatedAt)
-	}
-
-	rows, err := s.db.Query(ctx, `
-		WITH wowhead AS (
-			SELECT e.*
-			FROM datasets d
-			JOIN tierlist_entries e ON e.snapshot_id = d.current_snapshot_id
-			WHERE d.slug = 'tierlist-wowhead'
-			  AND e.activity = $1
-			  AND e.role = $2
-		), metric_context AS (
-			SELECT c.snapshot_id, c.context_key
-			FROM datasets d
-			JOIN wowgg_tierlist_contexts c ON c.snapshot_id = d.current_snapshot_id
-			WHERE d.slug = 'tierlist-wowgg'
-			  AND c.mode = $1
-			  AND c.role = $2
-			  AND c.selection_type = 'all'
-			  AND c.selection_id = 'all'
-			  AND COALESCE(c.key_type, '') IN ('', 'all')
-			ORDER BY c.source_updated_at DESC
-			LIMIT 1
-		), metrics AS (
-			SELECT e.class_slug, e.spec_slug, e.meta_score::double precision,
-			       e.average_dps::double precision, e.average_hps::double precision,
-			       e.popularity::double precision, e.max_key, e.diff_rank
-			FROM metric_context c
-			JOIN wowgg_tierlist_entries e
-			  ON e.snapshot_id = c.snapshot_id AND e.context_key = c.context_key
-		)
-		SELECT row_number() OVER (
-			ORDER BY CASE w.tier
-				WHEN 'S+' THEN 0 WHEN 'S' THEN 1 WHEN 'A+' THEN 2 WHEN 'A' THEN 3
-				WHEN 'B' THEN 4 WHEN 'C' THEN 5 WHEN 'D' THEN 6 ELSE 7 END,
-			w.rank_in_tier, w.class_name, w.spec_name
-		), w.tier, w.role, w.class_name, w.class_slug, w.spec_name, w.spec_slug,
-		m.meta_score, m.average_dps, m.average_hps, m.popularity, m.max_key, m.diff_rank,
-		w.guide_url, w.source_url
-		FROM wowhead w
-		LEFT JOIN metrics m ON m.class_slug = w.class_slug AND m.spec_slug = w.spec_slug
-		ORDER BY 1
-		LIMIT $3
-	`, query.Activity, query.Role, query.Limit)
-	if err != nil {
-		return Snapshot{}, err
-	}
-	defer rows.Close()
-
-	entries := make([]Entry, 0, query.Limit)
-	for rows.Next() {
-		var entry Entry
-		var rank int64
-		if err := rows.Scan(
-			&rank, &entry.Tier, &entry.Role, &entry.ClassName, &entry.ClassSlug,
-			&entry.SpecName, &entry.SpecSlug, &entry.Score, &entry.AverageDPS,
-			&entry.AverageHPS, &entry.Popularity, &entry.MaxKey, &entry.RankChange,
-			&entry.GuideURL, &entry.SourceURL,
-		); err != nil {
+		sources, updatedAt, err := s.sources(ctx)
+		if err != nil {
 			return Snapshot{}, err
 		}
-		entry.Rank = int(rank)
-		entries = append(entries, entry)
+		return s.contextTierList(ctx, query, sources, updatedAt)
 	}
-	if err := rows.Err(); err != nil {
+	limit := query.Limit
+	comparison, err := s.WoWTierListCompare(ctx, query)
+	if err != nil {
 		return Snapshot{}, err
 	}
-	if len(entries) == 0 {
-		return Snapshot{}, ErrSnapshotNotFound
+	sources, _, err := s.sources(ctx)
+	if err != nil {
+		return Snapshot{}, err
 	}
-
+	entries := comparison.Consensus
+	if limit > 0 && len(entries) > limit {
+		entries = entries[:limit]
+	}
 	return Snapshot{
 		Game: "wow", Status: "live", Activity: query.Activity, Role: query.Role,
-		UpdatedAt: updatedAt, RecordCount: len(entries), Sources: sources, Entries: entries,
+		UpdatedAt: comparison.UpdatedAt, RecordCount: len(entries), Sources: sources, Entries: entries,
 	}, nil
 }
 
@@ -380,14 +350,9 @@ func (s *Service) sources(ctx context.Context) ([]Source, time.Time, error) {
 		       COALESCE(snapshot.record_count, 0)
 		FROM datasets d
 		LEFT JOIN dataset_snapshots snapshot ON snapshot.id = d.current_snapshot_id
-		WHERE d.slug IN (
-			'tierlist-wowhead', 'tierlist-wowgg', 'tierlist-archon',
-			'tierlist-icyveins', 'tierlist-mythicstats'
-		)
-		ORDER BY CASE d.slug
-			WHEN 'tierlist-wowhead' THEN 0 WHEN 'tierlist-wowgg' THEN 1
-			WHEN 'tierlist-archon' THEN 2 WHEN 'tierlist-icyveins' THEN 3 ELSE 4 END
-	`)
+		WHERE d.slug = ANY($1)
+		ORDER BY array_position($1, d.slug)
+	`, sourceDatasets())
 	if err != nil {
 		return nil, time.Time{}, err
 	}

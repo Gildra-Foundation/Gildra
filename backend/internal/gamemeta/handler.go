@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
@@ -16,6 +17,8 @@ type Store interface {
 	WoWMythicPlusMeta(context.Context) (MythicPlusMeta, error)
 	WoWMythicPlusRuns(context.Context) (*RunsSnapshot, error)
 	WoWSimTierList(context.Context) (SimTierList, error)
+	WoWTierListCompare(context.Context, Query) (Comparison, error)
+	WoWTierListSources(context.Context) ([]SourceAvailability, error)
 }
 
 type Handler struct{ store Store }
@@ -31,6 +34,8 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/meta/wow/mythic-plus/meta", h.wowMythicPlusMeta)
 	h.registerMythicPlusRuns(mux)
 	mux.HandleFunc("GET /v1/meta/wow/tier-list/sim", h.wowSimTierList)
+	mux.HandleFunc("GET /v1/meta/wow/tier-list/compare", h.wowTierListCompare)
+	mux.HandleFunc("GET /v1/meta/wow/tier-list/sources", h.wowTierListSources)
 }
 
 func (h *Handler) wowMythicPlusMeta(w http.ResponseWriter, r *http.Request) {
@@ -69,12 +74,7 @@ func (h *Handler) wowTierList(w http.ResponseWriter, r *http.Request) {
 	if query.Role == "" {
 		query.Role = "dps"
 	}
-	if query.Activity != "mythic_plus" && query.Activity != "raid" {
-		writeProblem(w, r, http.StatusBadRequest, "invalid_activity", "activity must be mythic_plus or raid")
-		return
-	}
-	if query.Role != "dps" && query.Role != "healer" && query.Role != "tank" {
-		writeProblem(w, r, http.StatusBadRequest, "invalid_role", "role must be dps, healer or tank")
+	if !validModeQuery(w, r, &query) {
 		return
 	}
 	query.SelectionType = r.URL.Query().Get("selectionType")
@@ -102,12 +102,19 @@ func (h *Handler) wowTierList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	query.Source = r.URL.Query().Get("source")
-	if _, known := sourceDatasets[query.Source]; query.Source != SourceGildra && !known {
-		writeProblem(w, r, http.StatusBadRequest, "invalid_source", "source must be ugg or mythicstats")
-		return
+	if query.Source != SourceGildra {
+		source, known := findSource(query.Source)
+		if !known {
+			writeProblem(w, r, http.StatusBadRequest, "invalid_source", "source is not a known tier-list source")
+			return
+		}
+		if !source.covers(query.Activity) {
+			writeProblem(w, r, http.StatusBadRequest, "invalid_activity", query.Source+" does not rank this activity")
+			return
+		}
 	}
-	if query.Source == SourceMythicStats && query.Activity != "mythic_plus" {
-		writeProblem(w, r, http.StatusBadRequest, "invalid_activity", "mythicstats only publishes a mythic_plus tier list")
+	if (query.SelectionType != "" && query.SelectionType != "all") && query.Source != SourceGildra && query.Source != SourceWowGG {
+		writeProblem(w, r, http.StatusBadRequest, "invalid_selection_type", "only wow.gg publishes dungeon, raid and boss slices")
 		return
 	}
 	if query.Source == SourceUgg {
@@ -142,6 +149,77 @@ func (h *Handler) wowTierList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpjson.Write(w, http.StatusOK, publicMetaCache, snapshot)
+}
+
+// validModeQuery reads and checks activity, role, bracket and region.
+func validModeQuery(w http.ResponseWriter, r *http.Request, query *Query) bool {
+	if query.Activity != "mythic_plus" && query.Activity != "raid" && query.Activity != "pvp" {
+		writeProblem(w, r, http.StatusBadRequest, "invalid_activity", "activity must be mythic_plus, raid or pvp")
+		return false
+	}
+	if query.Role != "dps" && query.Role != "healer" && query.Role != "tank" {
+		writeProblem(w, r, http.StatusBadRequest, "invalid_role", "role must be dps, healer or tank")
+		return false
+	}
+	query.Bracket = r.URL.Query().Get("bracket")
+	query.Region = r.URL.Query().Get("region")
+	if query.Activity != "pvp" {
+		if query.Bracket != "" || query.Region != "" {
+			writeProblem(w, r, http.StatusBadRequest, "invalid_bracket", "bracket and region apply to pvp only")
+			return false
+		}
+		return true
+	}
+	if query.Bracket == "" {
+		query.Bracket = PvPBrackets[0]
+	}
+	if !slices.Contains(PvPBrackets, query.Bracket) {
+		writeProblem(w, r, http.StatusBadRequest, "invalid_bracket", "bracket must be 3v3, 2v2, shuffle, blitz or rbg")
+		return false
+	}
+	if query.Region != "" && query.Region != "all" && query.Region != "eu" && query.Region != "us" {
+		writeProblem(w, r, http.StatusBadRequest, "invalid_region", "region must be all, eu or us")
+		return false
+	}
+	return true
+}
+
+func (h *Handler) wowTierListCompare(w http.ResponseWriter, r *http.Request) {
+	query := Query{Activity: r.URL.Query().Get("activity"), Role: r.URL.Query().Get("role"), Difficulty: r.URL.Query().Get("difficulty")}
+	if query.Activity == "" {
+		query.Activity = "mythic_plus"
+	}
+	if query.Role == "" {
+		query.Role = "dps"
+	}
+	if !validModeQuery(w, r, &query) {
+		return
+	}
+	if _, ok := uggDifficulty(query.Activity, query.Difficulty); !ok || (query.Activity != "raid" && query.Difficulty != "") {
+		writeProblem(w, r, http.StatusBadRequest, "invalid_difficulty", "difficulty is not supported")
+		return
+	}
+	comparison, err := h.store.WoWTierListCompare(r.Context(), query)
+	if errors.Is(err, ErrSnapshotNotFound) {
+		writeProblem(w, r, http.StatusNotFound, "snapshot_not_found", "no source ranks this mode")
+		return
+	}
+	if err != nil {
+		slog.Error("read public WoW tier-list comparison", "error", err)
+		writeProblem(w, r, http.StatusServiceUnavailable, "meta_unavailable", "WoW meta data is temporarily unavailable")
+		return
+	}
+	httpjson.Write(w, http.StatusOK, publicMetaCache, comparison)
+}
+
+func (h *Handler) wowTierListSources(w http.ResponseWriter, r *http.Request) {
+	sources, err := h.store.WoWTierListSources(r.Context())
+	if err != nil {
+		slog.Error("read public WoW tier-list sources", "error", err)
+		writeProblem(w, r, http.StatusServiceUnavailable, "meta_unavailable", "WoW meta data is temporarily unavailable")
+		return
+	}
+	httpjson.Write(w, http.StatusOK, publicMetaCache, map[string]any{"sources": sources, "brackets": PvPBrackets})
 }
 
 func (h *Handler) wowTierListContexts(w http.ResponseWriter, r *http.Request) {
