@@ -1,20 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
-import { Eye, EyeOff, X } from "lucide-react";
+import { Eye, EyeOff, Shirt, X } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { AtlasInput, AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import {
-  armoredSlots, armorTypes, classIds,
-  type ArmorType, type TransmogAppearance, type TransmogSetDetail, type TransmogSetSummary, type TransmogSlot,
+  armoredSlots, armorTypes, classArmor, classId, classIds,
+  type ArmorType, type TransmogAppearance, type TransmogClass, type TransmogSetDetail, type TransmogSetSummary, type TransmogSlot,
 } from "@/lib/wow/transmog/model";
+import { groupVariants, playerSet } from "@/lib/wow/transmog/outfit";
+import { SlotGlyph } from "./TransmogSlotGlyph";
 import { transmogCopy } from "./transmogCopy";
 import { TransmogIcon } from "./TransmogIcon";
 import styles from "./transmog.module.css";
 
 type Lang = "ru" | "en";
-type Page<T> = { data: T[]; total: number; nextCursor?: string };
+export type Page<T> = { data: T[]; total: number; nextCursor?: string };
 export const apiLocale = (lang: Lang) => (lang === "ru" ? "ru_RU" : "en_US");
 
 export function qualityStyle(quality: number) {
@@ -27,7 +29,7 @@ export function qualityStyle(quality: number) {
  * immutable within a catalog build, so a slot or a query seen once opens at once.
  */
 const answers = new Map<string, Promise<unknown>>();
-function cachedJson<T>(url: string): Promise<T> {
+export function cachedJson<T>(url: string): Promise<T> {
   let entry = answers.get(url) as Promise<T> | undefined;
   if (!entry) {
     entry = fetch(url).then((response) => {
@@ -41,9 +43,11 @@ function cachedJson<T>(url: string): Promise<T> {
 }
 const settled = new Set<string>();
 
-/** Default armor filter of a slot: the armor type of what is worn there. */
-export function defaultArmor(slot: TransmogSlot, current?: TransmogAppearance): ArmorType | "all" {
-  return armoredSlots.has(slot) && current?.armor && current.armor !== "cosmetic" ? current.armor : "all";
+/** Default armor filter of a slot: the class's armor, else the armor type of what is worn there. */
+export function defaultArmor(slot: TransmogSlot, current?: TransmogAppearance, cls: TransmogClass | "" = ""): ArmorType | "all" {
+  if (!armoredSlots.has(slot)) return "all";
+  if (cls) return classArmor[cls];
+  return current?.armor && current.armor !== "cosmetic" ? current.armor : "all";
 }
 
 export function appearancesUrl(lang: Lang, slot: TransmogSlot, query: string, armor: ArmorType | "all") {
@@ -123,9 +127,10 @@ function listKeys(event: KeyboardEvent<HTMLUListElement>) {
   buttons[next]?.focus();
 }
 
-export function ItemPicker({ lang, slot, current, hidden, onPick, onPreview, onToggleHidden, onRemove }: {
+export function ItemPicker({ lang, slot, cls, current, hidden, onPick, onPreview, onToggleHidden, onRemove }: {
   lang: Lang;
   slot: TransmogSlot;
+  cls: TransmogClass | "";
   current?: TransmogAppearance;
   hidden: boolean;
   onPick: (appearance: TransmogAppearance) => void;
@@ -136,18 +141,18 @@ export function ItemPicker({ lang, slot, current, hidden, onPick, onPreview, onT
 }) {
   const c = transmogCopy[lang];
   const [query, setQuery] = useState("");
-  // Start from the armor type of what is worn: plate looks for a plate outfit.
-  const [armor, setArmor] = useState<ArmorType | "all">(defaultArmor(slot, current));
-  const armorSlot = useRef<TransmogSlot | null>(current ? slot : null);
-  const currentArmor = current?.armor;
+  // Start from the class's armor, else the armor type of what is worn: plate looks for a plate outfit.
+  const [armor, setArmor] = useState<ArmorType | "all">(defaultArmor(slot, current, cls));
+  const armorKey = useRef<string | null>(current || cls ? `${slot}|${cls}` : null);
   useEffect(() => { setQuery(""); }, [slot]);
-  // Once per slot, as soon as the worn look is known (it may arrive after the share link resolves).
+  // Once per slot and class, as soon as the worn look is known (it may arrive after the share link resolves).
   useEffect(() => {
-    if (armorSlot.current === slot) return;
-    if (!current) { setArmor("all"); return; }
-    armorSlot.current = slot;
-    setArmor(defaultArmor(slot, current));
-  }, [current, currentArmor, slot]);
+    const key = `${slot}|${cls}`;
+    if (armorKey.current === key) return;
+    if (!current && !cls) { setArmor("all"); return; }
+    armorKey.current = key;
+    setArmor(defaultArmor(slot, current, cls));
+  }, [cls, current, slot]);
   const search = usePagedSearch<TransmogAppearance>(appearancesUrl(lang, slot, query, armor));
   const sentinel = useLoadMore(search.more, Boolean(search.cursor));
   const hoverTimer = useRef<number | undefined>(undefined);
@@ -156,6 +161,12 @@ export function ItemPicker({ lang, slot, current, hidden, onPick, onPreview, onT
     hoverTimer.current = window.setTimeout(() => onPreview(item), delay);
   };
   useEffect(() => () => { window.clearTimeout(hoverTimer.current); onPreview(null); }, [slot]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Mouse hover tries a look on; touch taps only pick. */
+  const hover = (event: React.MouseEvent, item: TransmogAppearance) => {
+    if (event.nativeEvent instanceof PointerEvent && event.nativeEvent.pointerType !== "mouse") return;
+    preview(item, 140);
+  };
+  const choose = (item: TransmogAppearance) => { window.clearTimeout(hoverTimer.current); onPick(item); };
 
   return (
     <div className={styles.pickerBody}>
@@ -184,28 +195,39 @@ export function ItemPicker({ lang, slot, current, hidden, onPick, onPreview, onT
           </AtlasSelect>
         ) : null}
       </div>
-      <p className={styles.resultCount} aria-live="polite">
-        {search.state === "error" ? c.error : search.state === "ready" ? (search.total ? c.results(search.total) : c.nothing) : c.loading}
-      </p>
+      <SearchState state={search.state} empty={!search.items.length} lang={lang} />
       {search.state === "error" ? <AtlasButton onClick={search.retry}>{c.retry}</AtlasButton> : null}
       <ul className={styles.results} data-transmog-results data-loading={search.state === "loading" || undefined} onKeyDown={listKeys}
         onMouseLeave={() => preview(null, 160)}>
-        {search.items.map((item) => {
-          const worn = current?.appearanceId === item.appearanceId;
+        {groupVariants(search.items).map((group) => {
+          const wornIndex = group.variants.findIndex((entry) => entry.appearanceId === current?.appearanceId);
+          const main = group.variants[Math.max(0, wornIndex)];
           return (
-            <li key={item.appearanceId}>
-              <button type="button" className={styles.result} style={qualityStyle(item.quality)} aria-pressed={worn}
-                onClick={() => { window.clearTimeout(hoverTimer.current); onPick(item); }}
-                onMouseEnter={(event) => { if (event.nativeEvent instanceof PointerEvent && event.nativeEvent.pointerType !== "mouse") return; preview(item, 140); }}
-                onFocus={() => preview(item, 60)} onBlur={() => preview(null, 200)}
-                data-appearance={item.modifiedAppearanceId}>
-                <span className={styles.resultIcon} aria-hidden="true">{item.iconName ? <TransmogIcon name={item.iconName} size={40} /> : null}</span>
-                <span className={styles.resultText}>
-                  <span className={styles.resultName}>{item.name}</span>
-                  {armor === "all" && item.armor ? <span className={styles.resultMeta}>{c.armor[item.armor]}</span> : null}
+            <li key={group.key} className={styles.lookRow} style={qualityStyle(group.quality)}>
+              <button type="button" className={styles.result} aria-pressed={wornIndex >= 0}
+                onClick={() => choose(main)} onMouseEnter={(event) => hover(event, main)} onFocus={() => preview(main, 60)} onBlur={() => preview(null, 200)}
+                data-appearance={main.modifiedAppearanceId}>
+                <span className={styles.resultIcon} aria-hidden="true">
+                  <TransmogIcon name={group.iconName} size={40} fallback={<SlotGlyph slot={slot} />} />
                 </span>
-                {worn ? <span className={styles.wornTag}>{c.worn}</span> : null}
+                <span className={styles.resultText}>
+                  <span className={styles.resultName}>{group.name}</span>
+                  {armor === "all" && main.armor ? <span className={styles.resultMeta}>{c.armor[main.armor]}</span> : null}
+                </span>
+                {wornIndex >= 0 ? <span className={styles.wornTag}>{c.worn}</span> : null}
               </button>
+              {group.variants.length > 1 ? (
+                <div className={styles.variants} role="group" aria-label={group.name}>
+                  {group.variants.map((item, index) => (
+                    <button key={item.appearanceId} type="button" className={styles.variant} aria-pressed={index === wornIndex}
+                      aria-label={c.variant(index + 1, group.variants.length)} title={c.variant(index + 1, group.variants.length)}
+                      onClick={() => choose(item)} onMouseEnter={(event) => hover(event, item)} onFocus={() => preview(item, 60)} onBlur={() => preview(null, 200)}
+                      data-appearance={item.modifiedAppearanceId}>
+                      {index + 1}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </li>
           );
         })}
@@ -216,11 +238,15 @@ export function ItemPicker({ lang, slot, current, hidden, onPick, onPreview, onT
   );
 }
 
-export function SetPicker({ lang, wearing, onWear }: { lang: Lang; wearing: number | null; onWear: (set: TransmogSetSummary) => void }) {
+export function SetPicker({ lang, cls, wearing, onWear }: { lang: Lang; cls: TransmogClass | ""; wearing: number | null; onWear: (set: TransmogSetSummary) => void }) {
   const c = transmogCopy[lang];
   const [query, setQuery] = useState("");
-  const [classId, setClassId] = useState(0);
-  const search = usePagedSearch<TransmogSetSummary>(setsUrl(lang, query, classId));
+  const [setClass, setSetClass] = useState(classId(cls));
+  // A new class in the toolbar resets the class filter of the sets.
+  const [seenClass, setSeenClass] = useState(cls);
+  if (seenClass !== cls) { setSeenClass(cls); setSetClass(classId(cls)); }
+  const search = usePagedSearch<TransmogSetSummary>(setsUrl(lang, query, setClass));
+  const sets = search.items.filter(playerSet);
   const sentinel = useLoadMore(search.more, Boolean(search.cursor));
   return (
     <div className={styles.pickerBody}>
@@ -231,27 +257,25 @@ export function SetPicker({ lang, wearing, onWear }: { lang: Lang; wearing: numb
         </label>
         <label>
           <span className={styles.visuallyHidden}>{c.classFilter}</span>
-          <AtlasSelect value={classId} onChange={(event) => setClassId(Number(event.target.value))} aria-label={c.classFilter}>
+          <AtlasSelect value={setClass} onChange={(event) => setSetClass(Number(event.target.value))} aria-label={c.classFilter}>
             <option value={0}>{c.allClasses}</option>
             {classIds.map((entry) => <option key={entry.id} value={entry.id}>{c.classes[entry.slug]}</option>)}
           </AtlasSelect>
         </label>
       </div>
-      <p className={styles.resultCount} aria-live="polite">
-        {search.state === "error" ? c.error : search.state === "ready" ? (search.total ? c.setResults(search.total) : c.nothing) : c.loading}
-      </p>
+      <SearchState state={search.state} empty={!sets.length} lang={lang} />
       {search.state === "error" ? <AtlasButton onClick={search.retry}>{c.retry}</AtlasButton> : null}
       <ul className={styles.results} data-transmog-sets data-loading={search.state === "loading" || undefined} onKeyDown={listKeys}>
-        {search.items.map((entry) => (
+        {sets.map((entry) => (
           <li key={entry.id}>
             <button type="button" className={styles.result} aria-pressed={wearing === entry.id} onClick={() => onWear(entry)} data-set={entry.id}
               onMouseEnter={() => prefetchJson(setDetailUrl(lang, entry.id))} onFocus={() => prefetchJson(setDetailUrl(lang, entry.id))}>
-              <span className={styles.resultIcon} aria-hidden="true">{entry.iconName ? <TransmogIcon name={entry.iconName} size={40} /> : null}</span>
+              <span className={styles.resultIcon} aria-hidden="true"><TransmogIcon name={entry.iconName} size={40} fallback={<Shirt className={styles.slotGlyph} />} /></span>
               <span className={styles.resultText}>
                 <span className={styles.resultName}>{entry.name}</span>
                 <span className={styles.resultMeta}>{c.pieces(entry.itemCount)}</span>
               </span>
-              <span className={styles.wornTag}>{wearing === entry.id ? c.worn : c.wear}</span>
+              {wearing === entry.id ? <span className={styles.wornTag}>{c.worn}</span> : null}
             </button>
           </li>
         ))}
@@ -260,4 +284,11 @@ export function SetPicker({ lang, wearing, onWear }: { lang: Lang; wearing: numb
       {search.cursor ? <AtlasButton className={styles.more} onClick={search.more} disabled={search.state === "loading"}>{c.more}</AtlasButton> : null}
     </div>
   );
+}
+
+/** Only states a player acts on: loading before the first answer, nothing found, an error. */
+function SearchState({ state, empty, lang }: { state: "idle" | "loading" | "ready" | "error"; empty: boolean; lang: Lang }) {
+  const c = transmogCopy[lang];
+  const text = state === "error" ? c.error : !empty ? "" : state === "ready" ? c.nothing : c.loading;
+  return <p className={styles.resultCount} aria-live="polite">{text}</p>;
 }
