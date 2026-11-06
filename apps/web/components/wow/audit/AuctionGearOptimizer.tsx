@@ -9,7 +9,7 @@ import { normalizeAuctionBudgetGold } from "@/lib/wow/auctionGearBudget";
 import { auctionGearMarketExpiry, auctionGearPricesAreFresh } from "@/lib/wow/auctionGearFreshness";
 import { auctionGearVariantSelectionKey } from "@/lib/wow/auctionGearExclusions";
 import { auctionGearCoverageReasons } from "@/lib/wow/auctionGearCoverage";
-import { getAuctionGearRecommendationGroups, getAuctionGearRecommendations } from "@/lib/wow/auctionGearRecommendations";
+import { getAuctionGearRecommendationGroups, getAuctionGearRecommendations, type AuctionGearRecommendationGroup } from "@/lib/wow/auctionGearRecommendations";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientPollDelay, auctionClientJobUrl, auctionClientRequestUrl, clearAcknowledgedAuctionClientCache, fetchAuctionClientResult,
   forgetAuctionClientJob, forgetAuctionClientRequest, hasPendingAuctionClientJob, readAuctionClientCache, parseAuctionClientFormIntent, releasePriorAuctionClientJob, rememberAuctionClientJob, rememberAuctionClientRequest,
@@ -23,17 +23,12 @@ import { MaterialButton } from "@/components/wow/shared/materialAtlas";
 import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
 import styles from "./auctionGearOptimizer.module.css";
 import tools from "./characterTools.module.css";
-import { auctionFormats, formatGold } from "./auctionFormat";
+import { auctionFormats, formatGold, formatGoldRate } from "./auctionFormat";
+import { upgradeSlotName } from "./characterUpgradesCopy";
 
-const slotNames: Record<string, [string, string]> = {
-  HEAD: ["Голова", "Head"], NECK: ["Шея", "Neck"], SHOULDER: ["Плечи", "Shoulders"],
-  CHEST: ["Грудь", "Chest"], WAIST: ["Пояс", "Waist"], LEGS: ["Ноги", "Legs"],
-  FEET: ["Ступни", "Feet"], WRIST: ["Запястья", "Wrists"], HANDS: ["Кисти рук", "Hands"],
-  BACK: ["Спина", "Back"], FINGER_1: ["Кольцо 1", "Ring 1"], FINGER_2: ["Кольцо 2", "Ring 2"],
-  TRINKET_1: ["Аксессуар 1", "Trinket 1"], TRINKET_2: ["Аксессуар 2", "Trinket 2"],
-  MAIN_HAND: ["Правая рука", "Main hand"], OFF_HAND: ["Левая рука", "Off hand"],
-};
-type Props = { characterSlug: string; snapshotKey: string; specializationSlug: string; localePrefix?: "" | "/ru" };
+type Props = { characterSlug: string; snapshotKey: string; specializationSlug: string; localePrefix?: "" | "/ru";
+  /** Confirmed single-item upgrades (best value per slot) for the slot overview; null when there is no search. */
+  onRecommendations?: (groups: AuctionGearRecommendationGroup[] | null) => void };
 type Metadata = Pick<NonNullable<AuctionGearJob["result"]>, "market" | "profileFingerprint" | "scenario" | "coverage" | "objective">;
 type SearchResult = AuctionGearSearchResult & Metadata;
 type AssemblyResult = AuctionGearAssemblyResult & Metadata;
@@ -54,7 +49,7 @@ type Recovery = { kind: "recovery"; search: SearchResult; assembly: AssemblyResu
 export function AuctionGearOptimizer(props: Props) {
   return <AuctionGearOptimizerContent key={`${props.characterSlug}:${props.snapshotKey}:${props.specializationSlug}:${props.localePrefix ?? "/ru"}`} {...props} />;
 }
-function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializationSlug, localePrefix = "/ru" }: Props) {
+function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializationSlug, localePrefix = "/ru", onRecommendations }: Props) {
   const locale = localePrefix === "/ru" ? "ru" : "en";
   const ru = locale === "ru";
   const t = (r: string, e: string) => ru ? r : e;
@@ -134,8 +129,10 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const { numeric, signed } = auctionFormats[ru ? "ru" : "en"];
   const number = (value: number) => numeric.format(value);
   const money = (value: number) => formatGold(value, ru ? "ru" : "en");
-  const slotName = (slot: string) => slotNames[slot]?.[ru ? 0 : 1] ?? slot;
+  const slotName = (slot: string) => upgradeSlotName(slot, ru);
   const recommendationGroups = useMemo(() => getAuctionGearRecommendationGroups(search?.items ?? [], { excludedOptionIds: excluded, excludedVariantKeys }), [search, excluded, excludedVariantKeys]);
+  // Stale prices stay visible here with their warning; the slot overview only shows current ones.
+  useEffect(() => { onRecommendations?.(search && !marketStale ? recommendationGroups : null); }, [onRecommendations, recommendationGroups, search, marketStale]);
   useEffect(() => {
     const slot = suggestionFocusSlot.current;
     if (!slot) return;
@@ -801,7 +798,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const incompleteData = Boolean(search && auctionGearCoverageReasons(search.coverage, search.dataComplete, locale).length);
   const discoveryIncomplete = Boolean(search && (search.discoveryComplete === false || search.discoveryComplete === undefined && search.searchLimited));
   const sameScope = discovered?.activeJob ? discovered.activeJob.scope.characterSlug === characterSlug && discovered.activeJob.scope.locale === locale : false;
-  const cost = (copper: number, dps: number) => copper / dps < 1 ? `<${money(1)}` : money(copper / dps);
+  const cost = (copper: number, dps: number) => formatGoldRate(copper / dps, locale);
 
   return <section ref={panel} className={`${tools.tool} ${styles.panel}`} aria-labelledby="auction-gear-title" data-auction-gear>
     <h3 className={tools.title} id="auction-gear-title">{t("Улучшения с аукциона", "Auction House upgrades")}</h3>
@@ -831,7 +828,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="submit" disabled={formLocked || !validBudget} icon={<Search aria-hidden="true" />}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</MaterialButton>
         </div>
       </div>
-      <details className={styles.disclosure}><summary>{t("Слоты экипировки и цель подбора", "Equipment slots and objective")} · {selectedSlots.length} / {auctionGearSlots.length}</summary>
+      <details className={styles.disclosure}><summary>{t("Слоты экипировки и цель подбора", "Equipment slots and objective")}{selectedSlots.length < auctionGearSlots.length ? ` · ${number(selectedSlots.length)} / ${number(auctionGearSlots.length)}` : ""}</summary>
       <div className={tools.fields}><label className={tools.field}>{t("Цель подбора", "Selection objective")}<select name="objective" value={objective} onChange={event => { setObjective(event.target.value as "value" | "dps"); invalidate({ objective: event.target.value as "value" | "dps" }); }} disabled={formLocked}><option value="value">{t("Цена / прирост DPS", "Price / DPS gain")}</option><option value="dps">{t("Максимум DPS", "Maximum DPS")}</option></select></label></div>
       <fieldset className={styles.slotFieldset} disabled={formLocked}>
         <legend className={tools.srOnly}>{t("Какие слоты искать", "Equipment slots to search")}</legend>
@@ -842,8 +839,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     </form>}
     {feedback("search")}
     {!search ? feedback("assembly") : null}
-    {search ? <div className={styles.searchResult} data-auction-search-result>
-      <div className={styles.recommendationHeading}><h4 className={tools.subtitle}>{t("Выгодные улучшения", "Best-value upgrades")}</h4><span className={styles.market}>{search.market.realm} · <time dateTime={new Date(search.market.updatedAt).toISOString()}>{new Date(search.market.updatedAt).toLocaleTimeString(ru ? "ru-RU" : "en-US", { hour: "2-digit", minute: "2-digit" })}</time> · {number(search.baseline.dps)} DPS</span></div>
+    {search ? <div className={styles.searchResult} data-auction-search-result data-auction-market={search.market.realm}>
+      <h4 className={tools.subtitle}>{t("Выгодные улучшения", "Best-value upgrades")}</h4>
       {marketStale ? <p className={tools.status}><AlertTriangle aria-hidden="true" />{t("Цены могли измениться — запустите новый поиск.", "Prices may have changed — run a new search.")}</p> : null}
       {!search.searchComplete && !running && !cancellation ? <div className={tools.actions}><span className={tools.status}>{t("Осталось сравнить", "Left to compare")}: {number(search.pendingItems)}</span><button disabled={!validBudget} className={tools.quiet} type="button" onClick={continueSearch}>{t("Продолжить проверку вещей", "Continue item comparisons")}</button></div> : null}
       {search.searchComplete && (incompleteData || discoveryIncomplete) ? <button className={tools.quiet} type="button" disabled={!validBudget || running || Boolean(cancellation)} onClick={continueSearch}>{t("Обновить варианты", "Refresh options")}</button> : null}

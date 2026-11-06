@@ -7,7 +7,7 @@ import type { AuctionGearSearchItem } from "@/lib/wow/auctionGearTypes";
 import { GearPlannerItem } from "./GearPlannerItem";
 import styles from "./auctionGearOptimizer.module.css";
 import tools from "./characterTools.module.css";
-import { auctionFormats, formatGold } from "./auctionFormat";
+import { auctionFormats, formatGold, formatGoldRate } from "./auctionFormat";
 
 
 type Props = {
@@ -38,7 +38,7 @@ function SlotSuggestion({ group, locale, excluded, excludedVariantKeys, running,
     <dl className={styles.suggestionMetrics}>
       <div><dt>{marketStale ? t("Прежняя цена", "Previous price") : t("Цена", "Price")}</dt><dd>{money(item.lotCostCopper)}</dd></div>
       <div><dt>{t("Прирост", "Gain")}</dt><dd className={styles.confirmed}>{signed.format(item.comparison!.deltaDps)} DPS <small>({signed.format(item.comparison!.deltaPercent)}%)</small></dd></div>
-      <div><dt>{t("Цена за +1 DPS", "Cost per +1 DPS")}</dt><dd>{auctionGearPricePerDps(item) < 1 ? `<${money(1)}` : money(auctionGearPricePerDps(item))}</dd></div>
+      <div><dt>{t("Цена за +1 DPS", "Cost per +1 DPS")}</dt><dd>{formatGoldRate(auctionGearPricePerDps(item), locale)}</dd></div>
     </dl>
     <details className={styles.itemDetails}><summary aria-label={`${t("Сравнение и выбор для сета", "Comparison and loadout selection")}: ${item.name}, ${slotName(item.slotType)}`}>{t("Подробнее", "Details")}</summary>
       <div className={styles.replacement}><span>{t("Вместо", "Replaces")}</span>{item.currentItem ? <GearPlannerItem item={item.currentItem} locale={locale} /> : <span>—</span>}</div>
