@@ -18,3 +18,10 @@ Accent `#d0995a`.
 | `hall.webp`, `hall-768.webp`, `hall-mobile.webp` (crop 903,0,602,941) | `/home/debian/gildra-owner-20261105b/auction/assets/asset-sources/scenes/hall-native.png` | `2bb2ffef9c41f6cd…` | candidate 2 | PASS |
 
 Prompts, QA reports, all candidates and proofs: `/home/debian/gildra-owner-20261105b/auction/assets/` (`asset-sources/`, `proof/`, `asset-sources/auction-selection.json`).
+
+## hall-orgrimmar-20261106 (replaces hall*.webp in AuctionBackdrop)
+
+Orgrimmar auction hall, generated 2026-11-06 by Codex image_gen (gpt-image), no references, candidate 2 of 3, copied unchanged;
+packed by `pack-asset.cjs --type scene` (`hall-orgrimmar-20261106.webp`, `-768.webp`) and `--type scene-mobile --crop 1000,0,602,941`
+(`-mobile.webp`). Native `/home/debian/gildra-art-20261106/asset-sources/scenes/auction-native.png`; prompt and hashes:
+`docs/backgrounds-20261106/CODEX-PROMPTS.md`, `docs/backgrounds-20261106/SOURCE.md`.

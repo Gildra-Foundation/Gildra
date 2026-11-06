@@ -5,9 +5,9 @@ export function AuctionBackdrop() {
   return (
     <div className={styles.backdrop} aria-hidden="true" data-auction-backdrop>
       <picture className={styles.scene}>
-        <source media="(max-width: 600px)" srcSet="/assets/wow/auction/hall-mobile.webp" width={640} height={1000} />
-        <source media="(max-width: 900px)" srcSet="/assets/wow/auction/hall-768.webp 768w, /assets/wow/auction/hall.webp 1672w" sizes="100vw" />
-        <img src="/assets/wow/auction/hall.webp" width="1672" height="941" alt="" loading="eager" fetchPriority="high" decoding="async" />
+        <source media="(max-width: 600px)" srcSet="/assets/wow/auction/hall-orgrimmar-20261106-mobile.webp" width={640} height={1000} />
+        <source media="(max-width: 900px)" srcSet="/assets/wow/auction/hall-orgrimmar-20261106-768.webp 768w, /assets/wow/auction/hall-orgrimmar-20261106.webp 1672w" sizes="100vw" />
+        <img src="/assets/wow/auction/hall-orgrimmar-20261106.webp" width="1672" height="941" alt="" loading="eager" fetchPriority="high" decoding="async" />
       </picture>
     </div>
   );

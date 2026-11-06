@@ -15,10 +15,10 @@ const HERO_KIT: MaterialKit = "den-of-nalorakk";
 const sections = [
   { key: "mythic", href: "/wow/mythic-plus", art: atlasScenes.mythicPlus.art, position: "center 40%" },
   { key: "raids", href: "/wow/raids", art: atlasScenes.raids.art, position: "center 35%" },
-  { key: "lairs", href: "/wow/lairs", art: atlasScenes.lairs.art, position: "center 22%" },
-  { key: "tierLists", href: "/tier-lists", art: atlasScenes.tierLists.art, position: "center 40%" },
-  { key: "library", href: "/library", art: atlasScenes.library.art, position: "center 50%" },
-  { key: "transmog", href: "/wow/transmog", art: "/assets/wow/loading/tools.webp", position: "center 45%" },
+  { key: "lairs", href: "/wow/lairs", art: atlasScenes.lairs.art, position: "72% 45%" },
+  { key: "tierLists", href: "/tier-lists", art: atlasScenes.tierLists.art, position: "72% 50%" },
+  { key: "library", href: "/library", art: atlasScenes.library.art, position: "74% 45%" },
+  { key: "transmog", href: "/wow/transmog", art: atlasScenes.transmog.art, position: "74% 45%" },
 ] as const;
 
 export function WowHome({ lang }: { lang: Lang }) {
