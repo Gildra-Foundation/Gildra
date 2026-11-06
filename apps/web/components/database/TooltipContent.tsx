@@ -143,7 +143,10 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
   if (type === "power") return <div className="db-tooltip-mechanic">{formatPower(block, lang)}</div>;
   if (type === "sockets") return <div className="db-tooltip-socket">◇ {tooltipContentCopy[lang].hasSocket}</div>;
   if (type === "profession") return <div className="db-tooltip-crafted">{tooltipContentCopy[lang].craftedByAProfession}</div>;
-  if (type === "acquisition") return <div className="db-tooltip-acquisition">{acquisitionLabel(block, lang)}</div>;
+  if (type === "acquisition") {
+    const label = acquisitionLabel(block, lang);
+    return label ? <div className="db-tooltip-acquisition">{label}</div> : null;
+  }
   if (type === "spell_owners" && Array.isArray(block.entries)) return <TooltipOwners entries={block.entries as Record<string, unknown>[]} lang={lang} />;
   if (type === "spell_talents" && Array.isArray(block.entries)) return <SpellTalents entries={block.entries as Record<string, unknown>[]} lang={lang} />;
   if (type === "talent_spells" && Array.isArray(block.entries)) return <TalentSpells entries={block.entries as Record<string, unknown>[]} lang={lang} />;
@@ -494,7 +497,7 @@ export function acquisitionLabel(block: Record<string, unknown>, lang: Lang) {
     return `${prefix}${name || `Encounter #${String(block.source_id ?? "")}`}${location ? ` — ${location}` : ""}${chance > 0 ? ` — ${chance}%` : ""}`;
   }
   if (sourceType === "crafting_recipe") return `${tooltipContentCopy[lang].craftedWith}${name || `Spell #${String(block.source_id ?? "")}`}`;
-  return tooltipContentCopy[lang].sourceBlizzardApi;
+  return "";
 }
 
 function effectPrefix(trigger: number, lang: Lang) {

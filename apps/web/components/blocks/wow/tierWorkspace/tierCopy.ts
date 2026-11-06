@@ -68,7 +68,6 @@ export const tierCopy = {
     popularityShort: "Попул.",
     heroRanking: "К рейтингу",
     heroMeta: "Мета Mythic+",
-    sourcesUsed: "Источники",
   },
   en: {
     breadcrumbsLabel: "Breadcrumbs",
@@ -123,7 +122,6 @@ export const tierCopy = {
     popularityShort: "Pop.",
     heroRanking: "To the ranking",
     heroMeta: "Mythic+ meta",
-    sourcesUsed: "Sources",
   },
 } as const;
 

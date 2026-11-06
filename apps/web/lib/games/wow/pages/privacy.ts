@@ -21,7 +21,6 @@ const EN: LegalProps = {
       text: "Gildra does not run advertising trackers and does not sell or share data with third parties. An account is not required. If you choose to sign in with Battle.net, a session cookie keeps you signed in and Gildra requests your World of Warcraft profile from Blizzard to show your characters; your password is entered only on Blizzard's site. If you decline cookies, only the technically necessary storage described above is used.",
     },
   ],
-  backLabel: "Back to Gildra",
 };
 
 const RU: LegalProps = {
@@ -44,7 +43,6 @@ const RU: LegalProps = {
       text: "Gildra не использует рекламные трекеры, не продаёт и не передаёт данные третьим лицам. Аккаунт не обязателен. Если вы входите через Battle.net, сессионный cookie сохраняет вход, а Gildra запрашивает у Blizzard профиль World of Warcraft, чтобы показать ваших персонажей; пароль вводится только на сайте Blizzard. Если вы отклонили файлы cookie, используется только технически необходимое хранилище, описанное выше.",
     },
   ],
-  backLabel: "Назад на Gildra",
 };
 
 /** Site-wide policy page; rendered with the WoW chrome. */

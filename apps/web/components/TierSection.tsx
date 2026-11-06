@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowUpRight, Castle, ChevronDown, Columns3, LayoutGrid, List, Search, Shield, Swords } from "lucide-react";
+import { Castle, ChevronDown, Columns3, LayoutGrid, List, Search, Shield, Swords } from "lucide-react";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
 import { p, type Lang } from "@/lib/i18n-paths";
@@ -33,7 +33,6 @@ const KEY_RANGES: KeyRange[] = ["all", "high", "middle", "low"];
 const RAID_LEVELS = ["raid_myth", "raid_hero", "raid_normal"];
 const EMPTY_ROLES: Record<TierRole, TierEntry[]> = { dps: [], healer: [], tank: [] };
 const MODE_ICONS: Record<TierMode, ReactNode> = { mythic_plus: <Swords aria-hidden="true" />, raid: <Castle aria-hidden="true" />, pvp: <Shield aria-hidden="true" /> };
-const LADDER_URL = "https://worldofwarcraft.blizzard.com/en-gb/game/pvp/leaderboards";
 type Layout = "tiers" | "list" | "compare";
 /** The slim Ranking Hall kit (sectionKits.ts): oxidised bronze, copper rails, ember garnet — filters and the board. */
 const KIT: AnyMaterialKit = "tier-lists";
@@ -435,22 +434,6 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
       ]} />
   );
 
-  /** One quiet source line under the board: the open site, or the sites behind Gildra's tier. */
-  const firstUrl = (activeRoles[role] ?? []).find((entry) => entry.sourceUrl?.startsWith("https://"))?.sourceUrl;
-  const consensusNames = modeTabs.filter((id) => id !== "gildra" && id !== "sim").map(sourceLabel);
-  const sourceLine = sample ? null : compare ? (
-    comparison.data ? <p className={styles.sourceLine}>{copy.sourcesUsed}: {comparison.data.columns.map((column) => column.source === "ladder" ? sourceCopy.ladder : sourceLabel(column.source)).join(" · ")}</p> : null
-  ) : source === "gildra" && mode === "pvp" ? (
-    <p className={styles.sourceLine}>{sourceCopy.sourceBy}: <a href={LADDER_URL} target="_blank" rel="noopener noreferrer">{sourceCopy.ladder}<ArrowUpRight aria-hidden="true" /></a></p>
-  ) : source === "gildra" ? (
-    consensusNames.length ? <p className={styles.sourceLine}>{copy.sourcesUsed}: {consensusNames.join(" · ")}</p> : null
-  ) : (
-    <p className={styles.sourceLine}>
-      {sourceCopy.sourceBy}:{" "}
-      <a href={(source !== "sim" && firstUrl) || SOURCE_SITES[source].home} target="_blank" rel="noopener noreferrer">{SOURCE_SITES[source].name}<ArrowUpRight aria-hidden="true" /></a>
-    </p>
-  );
-
   return (
     <div className={styles.workspace} id={ANCHORS.tierList}>
       <AtlasSection id={ANCHORS.builds} className={styles.section} title={title}
@@ -463,7 +446,6 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
           </MaterialPlaque>
         </div>
       </AtlasSection>
-      {sourceLine}
     </div>
   );
 }

@@ -1,6 +1,5 @@
-import { ArrowLeft } from "lucide-react";
 import { formatAtlasDate } from "@gildra/atlas-ui/format";
-import { AtlasFrame, AtlasHero, AtlasLinkButton } from "@/components/atlas";
+import { AtlasFrame, AtlasHero } from "@/components/atlas";
 import { defineBlock, type BlockComponentProps } from "@/lib/blocks/types";
 import { p } from "@/lib/i18n";
 import { trailLabel } from "@/lib/routes/registry";
@@ -16,11 +15,10 @@ export type LegalProps = {
   /** Breadcrumbs; hrefs are language-less and get the page's prefix. */
   crumbs: { label: string; href?: string }[];
   sections: { heading: string; text: string }[];
-  backLabel: string;
 };
 
 /** Legal/prose page on the atlas kit: archive artwork, h1 with the update date, a readable column of h2 + paragraph sections. */
-function Legal({ title, lede, updated, updatedLabel, crumbs, sections, backLabel, lang }: BlockComponentProps<LegalProps, undefined>) {
+function Legal({ title, lede, updated, updatedLabel, crumbs, sections, lang }: BlockComponentProps<LegalProps, undefined>) {
   return (
     <AtlasFrame as="div" lang={lang} scene="archiveDeep">
       <AtlasHero title={title} lede={lede}
@@ -34,9 +32,6 @@ function Legal({ title, lede, updated, updatedLabel, crumbs, sections, backLabel
             <p>{section.text}</p>
           </section>
         ))}
-        <AtlasLinkButton href={p(lang, "/")} variant="ghost" size="sm" icon={<ArrowLeft aria-hidden="true" />} className={styles.back}>
-          {backLabel}
-        </AtlasLinkButton>
       </div>
     </AtlasFrame>
   );
@@ -53,7 +48,6 @@ export const legalBlock = defineBlock<LegalProps, undefined>({
       updatedLabel: "Updated",
       crumbs: [{ label: "Gildra", href: "/" }, { label: "Policy" }],
       sections: [{ heading: "Section", text: "Paragraph text." }],
-      backLabel: "Back to Gildra",
     },
     data: undefined,
     layout: "full",

@@ -65,6 +65,12 @@ export function PlayerProfilePage({ locale, profile, talentData }: { locale: Loc
           eyebrow={character.className}
           title={character.name}
           lede={[`${copy.level} ${character.level}`, character.race, `${profile.realmName} (${key.region.toUpperCase()})`, profile.guild ? `‹${profile.guild}›` : ""].filter(Boolean).join(" · ")}
+          actions={(
+            <p className={styles.links}>
+              <a href={profile.armoryUrl} target="_blank" rel="noreferrer">{copy.armory}<ArrowUpRight aria-hidden="true" /></a>
+              <a href={`https://raider.io/characters/${key.region}/${encodeURIComponent(key.realm)}/${encodeURIComponent(character.name)}`} target="_blank" rel="noreferrer">{copy.raiderIo}<ArrowUpRight aria-hidden="true" /></a>
+            </p>
+          )}
         />
         <AtlasStats className={auditStyles.facts} label={copy.summary} items={facts} />
       </div>
@@ -84,11 +90,6 @@ export function PlayerProfilePage({ locale, profile, talentData }: { locale: Loc
 
       {profile.runs.length ? <BestRuns runs={profile.runs} locale={locale} copy={copy} /> : null}
       {profile.raids.length ? <RaidProgress raids={profile.raids} locale={locale} copy={copy} /> : null}
-
-      <p className={styles.links}>
-        <a href={profile.armoryUrl} target="_blank" rel="noreferrer">{copy.armory}<ArrowUpRight aria-hidden="true" /></a>
-        <a href={`https://raider.io/characters/${key.region}/${encodeURIComponent(key.realm)}/${encodeURIComponent(character.name)}`} target="_blank" rel="noreferrer">{copy.raiderIo}<ArrowUpRight aria-hidden="true" /></a>
-      </p>
     </div>
   );
 }
