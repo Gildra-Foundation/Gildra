@@ -1,0 +1,31 @@
+/* atlas:strict — loading states of library datasets and records: quiet bars on the atlas surfaces, shaped like the page that comes. */
+
+.body { display: grid; gap: var(--atlas-space-5); margin-top: var(--atlas-space-5); }
+
+.title,
+.lede,
+.field,
+.icon {
+  display: block;
+  border-radius: var(--atlas-radius);
+  background: linear-gradient(90deg, var(--atlas-surface-sunken), var(--atlas-surface-raised), var(--atlas-surface-sunken)) 0 0 / 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.title { width: min(60vw, 420px); height: .9em; }
+.lede { width: min(70vw, 360px); height: 1em; }
+.field { height: 56px; border: 1px solid var(--atlas-line); }
+.recordTitle { display: flex; align-items: center; gap: var(--atlas-space-4); }
+.icon { flex: none; width: 96px; height: 96px; }
+.tooltip { width: min(100%, 420px); }
+
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+@media (max-width: 720px) {
+  .icon { width: 72px; height: 72px; }
+}
+
+@media (prefers-reduced-motion: reduce) { .title, .lede, .field, .icon { animation: none; } }
+:global([data-motion="reduced"]) :is(.title, .lede, .field, .icon),
+:global([data-ui-motion="reduce"]) :is(.title, .lede, .field, .icon) { animation: none; }
+@media (forced-colors: active) { .title, .lede, .field, .icon { border: 1px solid CanvasText; background: Canvas; } }

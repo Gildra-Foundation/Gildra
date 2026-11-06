@@ -8,10 +8,23 @@ import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
 import { libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/library/libraryCopy";
 import { libraryCardLayout, libraryRails } from "@/components/library/libraryRails";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
-import { requireCatalogSession } from "@/lib/library/server";
+import { libraryDatasetHead, requireCatalogSession } from "@/lib/library/server";
+import { pairedAlternates } from "@/lib/seo/metadata";
+import type { Metadata } from "next";
 import styles from "./library.module.css";
 
 export type LibraryDatasetFilters = { q?: string; product?: string; facet?: string | string[]; cursor?: string; minLevel?: string; maxLevel?: string; minRequiredLevel?: string; maxRequiredLevel?: string };
+
+/** Title, description (the dataset's line for players) and EN/RU alternates of /library/<dataset>. */
+export async function libraryDatasetMetadata(lang: "en" | "ru", slug: string): Promise<Metadata> {
+  const head = await libraryDatasetHead(slug, lang === "ru" ? "ru_RU" : "en_US");
+  const line = libraryDatasetLine({ slug, description: head.description }, lang);
+  return {
+    title: `${head.name} — ${libraryCopy[lang].site}`,
+    ...(line ? { description: `${head.name}: ${line.charAt(0).toLowerCase()}${line.slice(1)}. World of Warcraft.` } : {}),
+    alternates: pairedAlternates(lang, `/library/${slug}`),
+  };
+}
 
 function optionalNumber(value?: string) { const parsed = Number(value); return value && Number.isFinite(parsed) ? parsed : undefined; }
 
