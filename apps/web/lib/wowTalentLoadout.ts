@@ -6,7 +6,7 @@ export const TALENT_HANDOFF_STORAGE_KEY = "gildra:talent-calculator:rotation-han
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 class BitReader {
-  private offset = 0;
+  offset = 0;
   private readonly value: string;
   constructor(value: string) { this.value = value; }
   read(width: number) {
@@ -56,6 +56,8 @@ export function decodeWoWTalentLoadout(data: TalentCalculatorData, value: string
     const visible = visibleNodes(data);
     const ranks = new Map<string, number>();
     const choices = new Map<string, number>();
+    /** Which hero path the string picked (index into the hero selection node), if any. */
+    let heroEntryIndex: number | undefined;
     for (const nodeId of data.fullNodeOrder) {
       const node = metadata.get(nodeId);
       const selected = reader.read(1) === 1;
@@ -70,14 +72,28 @@ export function decodeWoWTalentLoadout(data: TalentCalculatorData, value: string
       const rank = partiallyRanked ? reader.read(6) : Math.max(1, node?.maxRanks ?? 1);
       const isChoice = reader.read(1) === 1;
       const choiceIndex = isChoice ? reader.read(2) : 0;
+      if (nodeId === data.heroSelectionNodeId) { heroEntryIndex = choiceIndex; continue; }
       const talentNode = visible.get(nodeId);
-      if (!talentNode || nodeId === data.heroSelectionNodeId) continue;
+      if (!talentNode) continue;
       ranks.set(talentNode.id, Math.min(talentNode.maxRanks, Math.max(1, rank)));
       if (talentNode.nodeType === "choice" && talentNode.choices[choiceIndex]) {
         choices.set(talentNode.id, talentNode.choices[choiceIndex].externalId);
       }
     }
-    return { ranks, choices };
+    // Reading past the end yields zero bits, so a cut-off string would still "decode".
+    const truncated = reader.offset > normalized.length * 6;
+    return { ranks, choices, heroEntryIndex, truncated };
+  } catch {
+    return null;
+  }
+}
+
+/** Header of an in-game talent string (format version and specialization), without the tree data. */
+export function peekWoWTalentLoadout(value: string): { version: number; specId: number } | null {
+  try {
+    if (!value || !/^[A-Za-z0-9+/=_-]+$/.test(value) || value.length < 8) return null;
+    const reader = new BitReader(value.replace(/-/g, "+").replace(/_/g, "/").replace(/=+$/, ""));
+    return { version: reader.read(8), specId: reader.read(16) };
   } catch {
     return null;
   }
