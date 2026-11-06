@@ -55,6 +55,7 @@ export const navigationRealms: readonly NavigationRealm[] = [
     links: [
       { href: "/wow/raids", label: { en: "Raid journal", ru: "Рейдовый журнал" }, note: { en: "Current raid and archive", ru: "Текущий рейд и архив" } },
       { href: "/wow/lairs", label: { en: "Lairs and world bosses", ru: "Логова и мировые боссы" }, note: { en: "Outdoor encounters", ru: "Боссы открытого мира" } },
+      { href: "/wow/raids/composition", label: { en: "Raid composition", ru: "Состав рейда" }, note: { en: "Buffs, utility and roles of your roster", ru: "Баффы, утилиты и роли вашего состава" } },
     ],
   },
   {
@@ -108,6 +109,7 @@ export const navigationRealms: readonly NavigationRealm[] = [
     links: [
       { href: "/wow/auction", label: { en: "Auction House", ru: "Аукцион" }, note: { en: "Browse realm auctions and regional commodities", ru: "Лоты серверов и региональный рынок реагентов" } },
       { href: "/wow/transmog", label: { en: "Transmog Studio", ru: "Трансмогрификация" }, note: { en: "Build outfits and export pictures for social media", ru: "Образы из любых обликов и картинки для соцсетей" } },
+      { href: "/wow/professions", label: { en: "Professions", ru: "Профессии" }, note: { en: "Leveling, profits and knowledge at live prices", ru: "Прокачка, выгода и знания по живым ценам" } },
     ],
   },
 ];
