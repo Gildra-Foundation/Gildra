@@ -16,12 +16,12 @@ import type { RotationPreset } from "@/lib/platform/rotation/types";
 import { abilityIcon, talentAbilityIcon } from "@/lib/games/wow/assets";
 import type { Lang } from "@/lib/i18n";
 import { CharacterEquipment } from "./CharacterEquipment";
+import { CharacterUpgradesSkeleton } from "./CharacterUpgradesSkeleton";
 import { characterPageCopy } from "./characterPageCopy";
 import styles from "./characterProfile.module.css";
 
 const CharacterTalentSimulator = dynamic(() => import("./CharacterTalentSimulator").then((module) => module.CharacterTalentSimulator));
-const GearFarmPlanner = dynamic(() => import("./GearFarmPlanner").then((module) => module.GearFarmPlanner));
-const AuctionGearOptimizer = dynamic(() => import("./AuctionGearOptimizer").then((module) => module.AuctionGearOptimizer));
+const CharacterUpgrades = dynamic(() => import("./CharacterUpgrades").then((module) => module.CharacterUpgrades), { loading: () => <CharacterUpgradesSkeleton plaqueClassName={styles.tool} /> });
 const CharacterLogAnalysis = dynamic(() => import("./CharacterLogAnalysis").then((module) => module.CharacterLogAnalysis));
 const CharacterHistory = dynamic(() => import("./CharacterHistory").then((module) => module.CharacterHistory));
 
@@ -111,10 +111,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
 
   const tools: Record<TabId, () => ReactNode> = {
     talents: () => <MaterialPlaque kit={CHARACTERS_KIT} className={styles.tool}><CharacterTalentSimulator data={talentData} characterSlug={snapshot.slug} specSlug={snapshot.specialization.slug} loadout={snapshot.activeTalentLoadout} baseStats={snapshot.combatStats} scenario={talentScenario} onScenarioChange={setTalentScenario} dataMode="battle-net" localePrefix={localePrefix} snapshotKey={snapshotKey} /></MaterialPlaque>,
-    upgrades: () => <>
-      <MaterialPlaque kit={CHARACTERS_KIT} className={styles.tool}><GearFarmPlanner key={`farm:${snapshotKey}`} characterSlug={snapshot.slug} snapshotKey={snapshotKey} localePrefix={localePrefix} /></MaterialPlaque>
-      <MaterialPlaque kit={CHARACTERS_KIT} className={styles.tool}><AuctionGearOptimizer key={`auction:${snapshotKey}`} characterSlug={snapshot.slug} snapshotKey={snapshotKey} specializationSlug={snapshot.specialization.slug} localePrefix={localePrefix} /></MaterialPlaque>
-    </>,
+    upgrades: () => <CharacterUpgrades key={snapshotKey} snapshot={snapshot} snapshotKey={snapshotKey} localePrefix={localePrefix} plaqueClassName={styles.tool} />,
     logs: () => <MaterialPlaque kit={CHARACTERS_KIT} className={styles.tool}><CharacterLogAnalysis characterSlug={snapshot.slug} specializationSlug={snapshot.specialization.slug} localePrefix={localePrefix} simulation={null} abilities={logAbilities} /></MaterialPlaque>,
     history: () => <MaterialPlaque kit={CHARACTERS_KIT} className={styles.tool}><CharacterHistory characterSlug={snapshot.slug} specializationSlug={snapshot.specialization.slug} fingerprint={snapshotKey} localePrefix={localePrefix} /></MaterialPlaque>,
   };

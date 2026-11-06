@@ -342,7 +342,7 @@ test("owner conflict never displays a loadout for a different active exclusion s
 for (const [cachedMode, activeMode] of [["assembly", "search"], ["search", "assembly"]] as const) test(`mode regression: cached ${cachedMode} reconnects to an active owned ${activeMode}`, async ({ auction, page }) => {
   await auction.open(); await auction.seedRecoveryMode(cachedMode, activeMode);
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(auction.panel.locator("[data-auction-search-result]")).toContainText(`MODE ${activeMode.toUpperCase()} COMPLETED`, { timeout: 10000 });
+  await expect(auction.panel.locator("[data-auction-search-result]")).toHaveAttribute("data-auction-market", `MODE ${activeMode.toUpperCase()} COMPLETED`, { timeout: 10000 });
   await expect(auction.panel.getByRole("alert")).toHaveCount(0);
   expect(auction.requests).toEqual([]); expect(auction.deletes).toEqual([]);
   if (activeMode === "assembly") await expect(auction.result).toHaveAttribute("data-price-state", "verified");
@@ -351,7 +351,7 @@ for (const [cachedMode, activeMode] of [["assembly", "search"], ["search", "asse
 test("mode regression: assembly 409 reconnects to an active owned search", async ({ auction }) => {
   await auction.open(); await auction.search(); auction.seedBusyMode("search", [], true);
   await auction.build.click();
-  await expect(auction.panel.locator("[data-auction-search-result]")).toContainText("MODE SEARCH COMPLETED", { timeout: 10000 });
+  await expect(auction.panel.locator("[data-auction-search-result]")).toHaveAttribute("data-auction-market", "MODE SEARCH COMPLETED", { timeout: 10000 });
   await expect(auction.panel.getByRole("alert")).toHaveCount(0);
   expect(auction.requests.map(body => body.action)).toEqual(["search", "assemble"]);
 });
@@ -359,7 +359,7 @@ test("mode regression: assembly 409 reconnects to an active owned search", async
 test("mode regression: resume 409 reconnects to an active owned assembly", async ({ auction }) => {
   await auction.open(); auction.incompleteSearchOnce = true; auction.conflictResumeMode = "assembly"; await auction.search();
   await expect(auction.result).toBeVisible({ timeout: 10000 });
-  await expect(auction.panel.locator("[data-auction-search-result]")).toContainText("MODE ASSEMBLY COMPLETED");
+  await expect(auction.panel.locator("[data-auction-search-result]")).toHaveAttribute("data-auction-market", "MODE ASSEMBLY COMPLETED");
   await expect(auction.panel.getByRole("alert")).toHaveCount(0);
   expect(auction.requests.map(body => body.action)).toEqual(["search", "resume"]);
 });

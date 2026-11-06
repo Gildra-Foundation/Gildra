@@ -1,5 +1,5 @@
 import { test, expect } from "playwright/test";
-const start = /^(Подобрать|Find upgrades)$/;
+const start = /^(Проверить добычу|Check the loot)$/;
 const good = { itemId: 999001, entityId: "synthetic", name: "Synthetic useful proc", slotType: "TRINKET_1", currentItemId: 99,
   currentItemLevel: 200, encounterId: 1, encounterName: "Synthetic boss", verification: "simulated", itemLevel: 139, requiredLevel: 78,
   deltaDps: 1000, deltaPercent: 10, marginPercent: 0.3, stats: {}, effectsVerified: false };
