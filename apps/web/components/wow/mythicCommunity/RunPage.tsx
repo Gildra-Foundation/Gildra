@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Suspense, type CSSProperties } from "react";
+import { Suspense, type CSSProperties, type ReactNode } from "react";
 import { ArrowRight, ArrowUpRight, Clapperboard, HeartPulse, Map as MapIcon, Route, Shield, Skull, Sparkles, Swords } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { DungeonAtmosphere, MaterialLinkButton, MaterialPlaque, MythicHubBackdrop, type MaterialKit } from "@/components/wow/shared/materialAtlas";
@@ -17,7 +17,7 @@ import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { MapStill, RunReplay, type ReplayEnemyLabel } from "./RunReplay";
 import { trail } from "@/lib/routes/registry";
 import timerArtifacts from "../../../public/assets/wow/mythic/hub/controls/timers/manifest.json";
-import { dungeonLabel, isSeasonDungeon, number, SourceLine, type Locale } from "./CommunityParts";
+import { dungeonLabel, isSeasonDungeon, number, type Locale } from "./CommunityParts";
 import { communityCopy, type CommunityCopy } from "./communityCopy";
 import styles from "./run.module.css";
 
@@ -78,14 +78,14 @@ export function RunPage({ locale, load }: { locale: Locale; load: RunLoad }) {
       </div>
 
       {/* The log lookup may take a few seconds the first time: the page streams the plain clock and group meanwhile. */}
-      <Suspense fallback={<RunBody run={run} kit={kit} season={season} copy={copy} locale={locale} prefix={prefix} finder={finder} />}>
-        <LoggedRunBody run={run} kit={kit} season={season} copy={copy} locale={locale} prefix={prefix} finder={finder} />
+      <Suspense fallback={<RunBody run={run} kit={kit} season={season} copy={copy} locale={locale} prefix={prefix} />}>
+        <LoggedRunBody run={run} kit={kit} season={season} copy={copy} locale={locale} prefix={prefix} />
       </Suspense>
     </AtlasFrame>
   );
 }
 
-type BodyProps = { run: RunDetail; kit: MaterialKit; season: DungeonSlug | null; copy: CommunityCopy; locale: Locale; prefix: string; finder: string };
+type BodyProps = { run: RunDetail; kit: MaterialKit; season: DungeonSlug | null; copy: CommunityCopy; locale: Locale; prefix: string };
 
 async function LoggedRunBody(props: BodyProps) {
   const view = await loadRunReplay(props.run);
@@ -93,28 +93,18 @@ async function LoggedRunBody(props: BodyProps) {
   return <RunBody {...props} view={view} similar={similar} />;
 }
 
-/** Clock, route, group and the source line. `view` undefined = log not resolved yet, null = the run has no log. */
-function RunBody({ run, kit, season, copy, locale, prefix, finder, view, similar }: BodyProps & { view?: ReplayView | null; similar?: LoggedRunLink | null }) {
+/** Clock, route and group. `view` undefined = log not resolved yet, null = the run has no log. */
+function RunBody({ run, kit, season, copy, locale, prefix, view, similar }: BodyProps & { view?: ReplayView | null; similar?: LoggedRunLink | null }) {
   const stats = new Map((view?.replay.stats ?? []).map((stat) => [stat.player, stat]));
   return (
     <>
       <RunClock run={run} kit={kit} copy={copy} locale={locale} bar={!view} />
       {view ? <RouteSection run={run} view={view} kit={kit} season={season} copy={copy} locale={locale} />
         : view === null ? <NoLog kit={kit} season={season} copy={copy} prefix={prefix} similar={similar ?? null} /> : null}
-      <Group run={run} kit={kit} copy={copy} locale={locale} prefix={prefix} stats={stats} />
-
-      <SourceLine
-        copy={copy}
-        kit={kit}
-        hubHref={finder}
-        backLabel={copy.run.toFinder}
-        sourceHref={run.url}
-        sourceLabel={copy.run.source}
-        extra={<>
-          {view?.replay.reportUrl ? <a href={view.replay.reportUrl} rel="noreferrer nofollow" target="_blank">{copy.run.log}<ArrowUpRight aria-hidden="true" /></a> : null}
-          {season ? <a href={`https://keystone.guru/routes/retail/${season}`} rel="noreferrer" target="_blank">{copy.run.guru}<ArrowUpRight aria-hidden="true" /></a> : null}
-        </>}
-      />
+      <Group run={run} kit={kit} copy={copy} locale={locale} prefix={prefix} stats={stats} links={[
+        view?.replay.reportUrl ? <a key="log" href={view.replay.reportUrl} rel="noreferrer nofollow" target="_blank">{copy.run.log}<ArrowUpRight aria-hidden="true" /></a> : null,
+        season ? <a key="guru" href={`https://keystone.guru/routes/retail/${season}`} rel="noreferrer" target="_blank">{copy.run.guru}<ArrowUpRight aria-hidden="true" /></a> : null,
+      ].filter(Boolean)} />
     </>
   );
 }
@@ -238,7 +228,7 @@ function RunClock({ run, kit, copy, locale, bar = true }: { run: RunDetail; kit:
   );
 }
 
-function Group({ run, kit, copy, locale, prefix, stats }: { run: RunDetail; kit: MaterialKit; copy: CommunityCopy; locale: Locale; prefix: string; stats: Map<string, ReplayStat> }) {
+function Group({ run, kit, copy, locale, prefix, stats, links }: { run: RunDetail; kit: MaterialKit; copy: CommunityCopy; locale: Locale; prefix: string; stats: Map<string, ReplayStat>; links: ReactNode[] }) {
   return (
     <AtlasSection id="group" className={styles.section} title={copy.run.groupTitle}>
       <MaterialPlaque kit={kit} className={styles.groupPlaque}>
@@ -251,6 +241,7 @@ function Group({ run, kit, copy, locale, prefix, stats }: { run: RunDetail; kit:
             {run.videos.map((video) => <a key={video.url} href={video.url} rel="noreferrer" target="_blank">{video.player || video.kind}<ArrowUpRight aria-hidden="true" /></a>)}
           </p>
         ) : null}
+        {links.length ? <p className={styles.videos}>{links}</p> : null}
       </MaterialPlaque>
     </AtlasSection>
   );

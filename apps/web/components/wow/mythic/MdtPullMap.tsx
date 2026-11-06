@@ -17,7 +17,6 @@ import type { RouteStop } from "@/lib/data/wow/mythic/rubyLifePoolsData";
 import type { DungeonCombatIntel } from "./dungeonCombatIntel.types";
 import { buildMdtPullIntel } from "./mdtPullIntel";
 import { MdtPullDetails } from "./MdtPullDetails";
-import { DungeonSourceReview } from "./DungeonSourceReview";
 import { PullActionPanel } from "./PullActionPanel";
 import { pullMapModel, pullPosition } from "./pullMapModel";
 import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
@@ -122,6 +121,5 @@ export default function MdtPullMap({ slug, locale, routeUrl, data, stops, combat
         </aside>
       </div>
     </>}
-    <details className={styles.details}><summary>{t.sourcesNotes}</summary><p>{authored ? copy.matched(data.route.author, data.route.name) : copy.incompatible}</p><p>{copy.notice}</p><p>{copy.forcesNotice}</p>{data.route.notes.length > 0 && <><h4>{copy.authorNotes}</h4><ul>{data.route.notes.map(note => <li key={note.en}>{note[locale]}</li>)}</ul></>}{<DungeonSourceReview review={combatIntel.review} locale={locale} />}<p className={styles.source}><a href={data.source} target="_blank" rel="noreferrer">{copy.source}</a> · <time dateTime={data.checkedAt}>{data.checkedAt}</time></p></details>
   </section>;
 }

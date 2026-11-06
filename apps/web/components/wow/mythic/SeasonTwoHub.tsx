@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUpRight } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import { AtlasFrame, AtlasGrid, AtlasHero, AtlasSection } from "@/components/atlas";
 import { MaterialLinkButton, type MaterialKit } from "@/components/wow/shared/materialAtlas";
 import { PaintedCard } from "./PaintedCard";
@@ -44,7 +44,6 @@ export function SeasonTwoHub({ locale }: { locale: Locale }) {
           ))}
         </AtlasGrid>
       </AtlasSection>
-      <p className={styles.source}><a href={OFFICIAL_SEASON_SOURCE} target="_blank" rel="noreferrer">{copy.source}<ArrowUpRight aria-hidden="true" /></a></p>
     </AtlasFrame>
   );
 }

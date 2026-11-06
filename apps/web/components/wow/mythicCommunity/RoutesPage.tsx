@@ -9,7 +9,7 @@ import { runHref } from "@/lib/games/wow/mythicPlusRunTypes";
 import { loadMythicPlusRuns } from "@/lib/games/wow/mythicPlusRuns";
 import { clock, runsRoles, runsSorts, withSpec, withoutSpec, type RunsQuery, type RunsResponse, type RunsRole } from "@/lib/games/wow/mythicPlusRunsTypes";
 import { trail } from "@/lib/routes/registry";
-import { dungeonLabel, DungeonStrip, FilterForm, GroupIcons, isSeasonDungeon, hrefWith, LoadState, NoMatch, number, percent, roleIcons, SelectedSpec, SourceLine, specIndex, specLabel, SpecToken, StaleNotice, type Locale } from "./CommunityParts";
+import { dungeonLabel, DungeonStrip, FilterForm, GroupIcons, isSeasonDungeon, hrefWith, LoadState, NoMatch, number, percent, roleIcons, SelectedSpec, specIndex, specLabel, SpecToken, StaleNotice, type Locale } from "./CommunityParts";
 import { communityCopy, type CommunityCopy } from "./communityCopy";
 import styles from "./community.module.css";
 
@@ -63,7 +63,6 @@ export async function RoutesPage({ locale, query }: { locale: Locale; query: Run
           <div data-hub-reveal><Results data={data} query={query} copy={copy} locale={locale} base={base} /></div>
         </>
       )}
-      <SourceLine copy={copy} hubHref={`${prefix}/wow/mythic-plus`} kit={kit} />
     </AtlasFrame>
   );
 }

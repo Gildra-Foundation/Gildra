@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { ArrowDown, ArrowLeft, ArrowUpRight, HeartPulse, ListOrdered, Shield, Swords } from "lucide-react";
+import { ArrowDown, HeartPulse, ListOrdered, Shield, Swords } from "lucide-react";
 import {
   AtlasEmpty, AtlasError, AtlasFrame, AtlasHero, AtlasNotice, AtlasSection, AtlasTable, AtlasTabs,
 } from "@/components/atlas";
@@ -25,15 +25,13 @@ const roleKits: Record<MetaRole, DungeonSlug> = { tank: "den-of-nalorakk", heale
 const roleIcons = { tank: Shield, healer: HeartPulse, dps: Swords } satisfies Record<MetaRole, unknown>;
 const kitStyle = (slug: DungeonSlug) => ({ ...mythicHubControlLayout(slug), "--meta-kit-accent": dungeonArtDirections[slug].accent } as CSSProperties);
 const number = (value: number, locale: Locale, digits = 0) => value.toLocaleString(locale, { maximumFractionDigits: digits, minimumFractionDigits: digits });
-const dateTime = (iso: string, copy: MythicMetaCopy) => new Intl.DateTimeFormat(copy.dateLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(iso)) + " UTC";
 
-/** /wow/mythic-plus/meta: leaders by role, every spec of a role, how diverse the week is, and the source line. */
+/** /wow/mythic-plus/meta: leaders by role, every spec of a role, and how diverse the week is. */
 export async function MythicMetaPage({ locale }: { locale: Locale }) {
   const copy = mythicMetaCopy[locale];
   const result = await loadMythicPlusMeta();
   const view = result.state === "ready" ? mythicPlusMetaView(result.meta.data) : null;
   const crumbs = trail(locale, "mythicPlus", { label: copy.breadcrumb });
-  const prefix = locale === "ru" ? "/ru" : "";
 
   if (result.state !== "ready" || !view) {
     return (
@@ -96,7 +94,6 @@ export async function MythicMetaPage({ locale }: { locale: Locale }) {
       <div data-hub-reveal><EveryRole {...ctx} /></div>
       <div data-hub-reveal><Diversity {...ctx} /></div>
 
-      <SourcePlaque copy={copy} fetchedAt={meta.checkedAt ?? meta.fetchedAt} url={view.sourceUrl} hubHref={`${prefix}/wow/mythic-plus`} />
     </AtlasFrame>
   );
 }
@@ -209,20 +206,3 @@ function Diversity({ view, copy, locale }: Ctx) {
   );
 }
 
-function SourcePlaque({ copy, fetchedAt, url, hubHref }: { copy: MythicMetaCopy; fetchedAt: string; url: string; hubHref: string }) {
-  return (
-    <section id="source" className={styles.sourcePlaque} style={kitStyle(pageKit)} aria-labelledby="meta-source-title" data-hub-reveal>
-      <span className={styles.sourceText}>
-        <strong id="meta-source-title">{copy.sourceTitle}</strong>
-        <span>
-          {copy.source} <a href={url} rel="noreferrer">mythicstats.com</a>
-          {" · "}{copy.updated} <time dateTime={fetchedAt}>{dateTime(fetchedAt, copy)}</time>
-        </span>
-        <a className={styles.hubLink} href={hubHref}><ArrowLeft aria-hidden="true" />{copy.backToHub}</a>
-      </span>
-      <span className={styles.sourceAction} style={mythicHubButtonLayout("the-blinding-vale")}>
-        <AtlasLinkButton className={styles.assetButton} href={url} external iconAfter={<ArrowUpRight aria-hidden="true" />}>{copy.openSource}</AtlasLinkButton>
-      </span>
-    </section>
-  );
-}

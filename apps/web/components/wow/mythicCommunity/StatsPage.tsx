@@ -12,8 +12,7 @@ import {
 import { trail } from "@/lib/routes/registry";
 import { CutoffChart, type ChartSeries } from "./CutoffChart";
 import {
-  dungeonLabel, GroupIcons, hrefWith, isSeasonDungeon, LoadState, NoMatch, number, percent, roleIcons, shareOf, SourceLine,
-  specIndex, specLabel, SpecToken, StaleNotice, type Locale, type SpecView,
+  dungeonLabel, GroupIcons, hrefWith, isSeasonDungeon, LoadState, NoMatch, number, percent, roleIcons, shareOf, specIndex, specLabel, SpecToken, StaleNotice, type Locale, type SpecView,
 } from "./CommunityParts";
 import { communityCopy, type CommunityCopy } from "./communityCopy";
 import { statsCopy, type StatsCopy } from "./statsCopy";
@@ -69,7 +68,6 @@ export async function StatsPage({ locale, query }: { locale: Locale; query: Runs
           ) : <MaterialPlaque kit={kit} className={`${styles.card} ${styles.full}`}><NoMatch copy={copy} resetHref={base} /></MaterialPlaque>}
         </div>
       )}
-      <SourceLine copy={copy} hubHref={`${prefix}/wow/mythic-plus`} kit={kit} />
     </AtlasFrame>
   );
 }

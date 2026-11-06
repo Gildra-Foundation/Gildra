@@ -16,21 +16,21 @@ import styles from "./mdtPullDetails.module.css";
 const copy = {
   ru: {
     yourTasks: "Ваши действия", common: "Для всей группы", npc: "Существо", enemies: "Мобы в пуле", casts: "Способности и реакция", roles: "Действия по ролям", tank: "Танк", healer: "Лекарь", dps: "Бойцы", all: "Вся группа",
-    more: (count: number) => `Ещё ${count} — в полной памятке`, close: "Закрыть", open: "Нажмите, чтобы открыть полную памятку", notes: "Тактика из старого редактора — черновые заметки, не проверенные в игре.",
+    more: (count: number) => `Ещё ${count} — в полной памятке`, close: "Закрыть", open: "Нажмите, чтобы открыть полную памятку",
     noCasts: "Здесь нет выделенных боевых заклинаний. Следуйте указанным действиям события.",
     missing: "Для этих мобов ещё нет привязанных способностей. Состав пула известен; список кастов не подтверждён.",
-    uncovered: "Нет заметок", facts: "Сведения из источников", source: "Источник", conflicts: "Советы, для которых отмечены расхождения с источниками, не перенесены.",
-    checked: "Сверено с источниками", spell: "Заклинание", guide: "Тактика", patch: "Патч", event: "Действие в событии",
+    uncovered: "Нет заметок", facts: "Подробности",
+    spell: "Заклинание", guide: "Тактика", patch: "Патч", event: "Действие в событии",
     general: "Общие рекомендации", tankDefault: "Контролируйте сбор группы и направление атак; готовьте защиту к опасным ударам.", healerDefault: "Следите за здоровьем группы, готовьте лечение и снятие негативных эффектов.", dpsDefault: "Согласуйте порядок прерываний и контроля, не дублируйте их и следуйте приоритету целей.",
     actions: { "Кик": "Прервать", "Стоп": "Остановить контролем", "Диспел": "Снять негативный эффект", "Пурж": "Снять усиление", "Фокус": "Приоритетная цель", "Уклонение": "Уклониться", "Защита": "Подготовить защиту" },
   },
   en: {
     yourTasks: "Your tasks", common: "Whole party", npc: "NPC", enemies: "Enemies in this pull", casts: "Abilities and response", roles: "Role assignments", tank: "Tank", healer: "Healer", dps: "Damage dealers", all: "Whole party",
-    more: (count: number) => `${count} more in the full briefing`, close: "Close", open: "Press to open the full briefing", notes: "Tactics from the legacy editor are draft notes, not tested in game.",
+    more: (count: number) => `${count} more in the full briefing`, close: "Close", open: "Press to open the full briefing",
     noCasts: "There are no listed combat spells here. Follow the event instructions above.",
     missing: "No abilities are linked to these enemies yet. Pull composition is known; casts are not confirmed.",
-    uncovered: "No notes", facts: "Source notes", source: "Source", conflicts: "Draft advice flagged as conflicting with sources has not been transferred.",
-    checked: "Checked against sources", spell: "Spell", guide: "Strategy", patch: "Patch", event: "Event instruction",
+    uncovered: "No notes", facts: "Details",
+    spell: "Spell", guide: "Strategy", patch: "Patch", event: "Event instruction",
     general: "General guidance", tankDefault: "Control the pull and attack direction; prepare mitigation for dangerous hits.", healerDefault: "Watch party health and prepare healing and dispels.", dpsDefault: "Coordinate interrupts and crowd control, avoid overlapping them and follow target priority.",
     actions: { "Кик": "Interrupt", "Стоп": "Crowd control", "Диспел": "Dispel the debuff", "Пурж": "Purge the buff", "Фокус": "Priority target", "Уклонение": "Dodge", "Защита": "Prepare a defensive" },
   },
@@ -75,8 +75,7 @@ function PullBriefing({ intel, locale, selectedRole, selectedSpec, selectedSpell
         {!tasks.length && !notes.length && <p><small>{t.general}:</small> {t[`${role}Default`]}</p>}
       </dd></div>;
     })}</dl></section>}
-    {intel.facts.length > 0 && <section><h4>{t.facts}</h4><ul className={styles.facts}>{intel.facts.slice(0, full ? undefined : 1).map(fact => <li key={`${fact.source}:${fact.en}`}>{fact[locale]}{full && <> <a href={fact.source} target="_blank" rel="noreferrer">{t.source} ↗</a></>}</li>)}</ul></section>}
-    <p className={styles.notice}>{intel.checkedAt ? <>{t.checked}: <time dateTime={intel.checkedAt}>{intel.checkedAt}</time> · {t.patch} {intel.patch}{full && intel.sources && <> · {intel.sources.map((url, index) => <span key={url}> <a href={url} target="_blank" rel="noreferrer">{t.source} {index + 1} ↗</a></span>)}</>}</> : <>{t.notes}{intel.hasConflicts && <> {t.conflicts}</>}</>}</p>
+    {intel.facts.length > 0 && <section><h4>{t.facts}</h4><ul className={styles.facts}>{intel.facts.slice(0, full ? undefined : 1).map(fact => <li key={`${fact.source}:${fact.en}`}>{fact[locale]}</li>)}</ul></section>}
     {!full && showHint && <p className={styles.hint}>{t.open}</p>}
   </div>;
 }

@@ -9,37 +9,6 @@
   white-space: nowrap;
 }
 
-.verification {
-  display: grid;
-  gap: var(--atlas-space-2);
-  margin-block: var(--atlas-space-4);
-}
-
-.sourceList {
-  display: grid;
-  gap: var(--atlas-space-3);
-  margin: 0;
-}
-
-.sourceList dt {
-  color: var(--atlas-text-strong);
-  font-weight: 600;
-}
-
-.sourceList dd {
-  display: grid;
-  gap: var(--atlas-space-1);
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.sourceList dd span,
-.timerProvenance {
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-small);
-}
-
-
 .page { --atlas-frame-tint: var(--atlas-info-wash, var(--atlas-accent-glow)); }
 .hero { min-height: 490px; padding-bottom: var(--atlas-space-5); }
 .heroHeader { max-width: 58%; }
@@ -116,10 +85,6 @@
 .metaLink > span { display: grid; gap: var(--atlas-space-1); }
 .metaLink strong { font: 600 var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); color: var(--atlas-text-strong); }
 .metaLink > span > span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
-.page .sourceNote :global(.ui-alert) { --ui-alert-radius: 16px; --ui-alert-bg: var(--atlas-glass-fill); border-radius: 16px; box-shadow: var(--atlas-shadow-panel); }
-.sourceNote { margin-top: var(--atlas-space-6); }
-.sourceList a { color: var(--atlas-accent); text-decoration: underline; text-underline-offset: .2em; }
-.sourceList a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 @media (max-width: 1023px) {
   .hero { min-height: 470px; }
   .heroHeader { max-width: 78%; }

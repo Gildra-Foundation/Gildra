@@ -36,7 +36,7 @@
 .filters label { color: var(--material-light); text-shadow: 0 1px 3px var(--atlas-bg); }
 .filterActions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-4); }
 .applyButton { min-width: 132px; }
-.resetLink, .inlineLink, .rowLink, .hubLink {
+.resetLink, .inlineLink, .rowLink {
   display: inline-flex;
   align-items: center;
   gap: var(--atlas-space-2);
@@ -49,13 +49,13 @@
   text-underline-offset: .2em;
   text-shadow: 0 1px 3px var(--atlas-bg);
 }
-.resetLink:hover, .inlineLink:hover, .rowLink:hover, .hubLink:hover { text-decoration-color: currentColor; }
-.resetLink:focus-visible, .inlineLink:focus-visible, .rowLink:focus-visible, .hubLink:focus-visible,
+.resetLink:hover, .inlineLink:hover, .rowLink:hover { text-decoration-color: currentColor; }
+.resetLink:focus-visible, .inlineLink:focus-visible, .rowLink:focus-visible,
 .candidate:focus-visible, .chosen:focus-visible, .pick:focus-visible {
   outline: 2px solid var(--material-light, var(--atlas-accent-strong));
   outline-offset: 3px;
 }
-.inlineLink svg, .rowLink svg, .hubLink svg { width: 14px; height: 14px; flex: none; }
+.inlineLink svg, .rowLink svg { width: 14px; height: 14px; flex: none; }
 .rowLink { white-space: nowrap; }
 
 .state { margin-bottom: var(--atlas-section-gap); }
@@ -266,23 +266,6 @@
 .videoMark svg { width: 14px; height: 14px; }
 .more { margin: var(--atlas-space-4) 0 0; text-align: center; }
 
-/* ---------- Source ---------- */
-.source {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--atlas-space-3) var(--atlas-space-5);
-  margin-top: var(--atlas-section-gap);
-  padding-block: 24px 26px;
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-small);
-  text-shadow: 0 1px 3px var(--atlas-bg);
-}
-.source a:not(.hubLink) { display: inline-flex; align-items: center; gap: 4px; color: var(--material-light); text-underline-offset: .2em; }
-.source a svg { width: 13px; height: 13px; }
-.hubLink { font-size: var(--atlas-text-meta); }
-
 /* ---------- Responsive ---------- */
 .chartNarrow { display: none; }
 @media (max-width: 640px) {
@@ -366,7 +349,6 @@
 .levelRow { display: grid; grid-template-columns: 4ch minmax(0, 1fr) 7ch; align-items: center; gap: var(--atlas-space-3); min-height: 28px; }
 .levelKey { color: var(--material-light); font-weight: 650; font-variant-numeric: tabular-nums lining-nums; }
 .levelRow b { color: var(--atlas-text-strong); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
-.sourceLinks { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-5); }
 
 /* ---------- Dungeon tiles (filter) ---------- */
 .strip { margin-bottom: var(--atlas-space-5); }

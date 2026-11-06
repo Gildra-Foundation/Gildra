@@ -6,7 +6,7 @@ import { MaterialLinkButton, MaterialPlaque, MythicHubBackdrop, MythicHubMotion 
 import { loadMythicPlusComps } from "@/lib/games/wow/mythicPlusRuns";
 import { runsRoles, withSpec, withoutSpec, type CompsResponse, type RunsQuery, type RunsRole } from "@/lib/games/wow/mythicPlusRunsTypes";
 import { trail } from "@/lib/routes/registry";
-import { DungeonStrip, FilterForm, GroupIcons, hrefWith, LoadState, NoMatch, number, percent, shareOf, roleIcons, SelectedSpec, SourceLine, specIndex, specLabel, SpecToken, StaleNotice, type Locale, type SpecView } from "./CommunityParts";
+import { DungeonStrip, FilterForm, GroupIcons, hrefWith, LoadState, NoMatch, number, percent, shareOf, roleIcons, SelectedSpec, specIndex, specLabel, SpecToken, StaleNotice, type Locale, type SpecView } from "./CommunityParts";
 import { communityCopy, type CommunityCopy } from "./communityCopy";
 import styles from "./community.module.css";
 
@@ -55,7 +55,6 @@ export async function CompsPage({ locale, query }: { locale: Locale; query: Runs
           {data.pairs.length ? <div data-hub-reveal><Pairs data={data} copy={copy} locale={locale} /></div> : null}
         </>
       )}
-      <SourceLine copy={copy} hubHref={`${prefix}/wow/mythic-plus`} kit={kit} />
     </AtlasFrame>
   );
 }
