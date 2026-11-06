@@ -1,0 +1,194 @@
+{
+ "expansions": [
+  {
+   "expansion": {
+    "id": 505,
+    "name": "Current Season"
+   },
+   "instances": [
+    {
+     "instance": {
+      "id": 1317,
+      "name": "The Tidebound Grotto"
+     },
+     "modes": [
+      {
+       "difficulty": {
+        "type": "MYTHIC"
+       },
+       "progress": {
+        "completed_count": 1,
+        "total_count": 1
+       }
+      }
+     ]
+    },
+    {
+     "instance": {
+      "id": 1320,
+      "name": "The Venomous Abyss"
+     },
+     "modes": [
+      {
+       "difficulty": {
+        "type": "HEROIC"
+       },
+       "progress": {
+        "completed_count": 8,
+        "total_count": 8
+       }
+      },
+      {
+       "difficulty": {
+        "type": "MYTHIC"
+       },
+       "progress": {
+        "completed_count": 8,
+        "total_count": 8
+       }
+      }
+     ]
+    },
+    {
+     "instance": {
+      "id": 1324,
+      "name": "The Unbinding of Kith'ix"
+     },
+     "modes": [
+      {
+       "difficulty": {
+        "type": "HEROIC"
+       },
+       "progress": {
+        "completed_count": 1,
+        "total_count": 1
+       }
+      },
+      {
+       "difficulty": {
+        "type": "MYTHIC"
+       },
+       "progress": {
+        "completed_count": 1,
+        "total_count": 1
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "expansion": {
+    "id": 514,
+    "name": "The War Within"
+   },
+   "instances": [
+    {
+     "instance": {
+      "id": 1273,
+      "name": "Nerub-ar Palace"
+     },
+     "modes": [
+      {
+       "difficulty": {
+        "type": "NORMAL"
+       },
+       "progress": {
+        "completed_count": 8,
+        "total_count": 8
+       }
+      },
+      {
+       "difficulty": {
+        "type": "HEROIC"
+       },
+       "progress": {
+        "completed_count": 8,
+        "total_count": 8
+       }
+      },
+      {
+       "difficulty": {
+        "type": "MYTHIC"
+       },
+       "progress": {
+        "completed_count": 6,
+        "total_count": 8
+       }
+      }
+     ]
+    },
+    {
+     "instance": {
+      "id": 1296,
+      "name": "Liberation of Undermine"
+     },
+     "modes": [
+      {
+       "difficulty": {
+        "type": "NORMAL"
+       },
+       "progress": {
+        "completed_count": 3,
+        "total_count": 8
+       }
+      },
+      {
+       "difficulty": {
+        "type": "HEROIC"
+       },
+       "progress": {
+        "completed_count": 8,
+        "total_count": 8
+       }
+      },
+      {
+       "difficulty": {
+        "type": "MYTHIC"
+       },
+       "progress": {
+        "completed_count": 8,
+        "total_count": 8
+       }
+      }
+     ]
+    },
+    {
+     "instance": {
+      "id": 1302,
+      "name": "Manaforge Omega"
+     },
+     "modes": [
+      {
+       "difficulty": {
+        "type": "NORMAL"
+       },
+       "progress": {
+        "completed_count": 7,
+        "total_count": 8
+       }
+      },
+      {
+       "difficulty": {
+        "type": "HEROIC"
+       },
+       "progress": {
+        "completed_count": 8,
+        "total_count": 8
+       }
+      },
+      {
+       "difficulty": {
+        "type": "MYTHIC"
+       },
+       "progress": {
+        "completed_count": 8,
+        "total_count": 8
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

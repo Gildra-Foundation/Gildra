@@ -212,6 +212,23 @@ export async function getBattleNetCharacterModelItems(token: string, character: 
   return modelItemsFromAppearance(appearance);
 }
 
+/** An item's icon never changes: remembered per item id, so a repeat profile read skips the per-item media calls. */
+const ITEM_ICON_LIMIT = 5000;
+const itemIcons = new Map<number, string>();
+async function itemIcon(item: RawItem, region: string, locale: "en" | "ru", token: string) {
+  const id = item.item?.id ?? 0;
+  const known = id ? itemIcons.get(id) : undefined;
+  if (known) return known;
+  if (!item.media?.key?.href) return undefined;
+  const media = await api<{ assets?: Array<{ key?: string; value?: string }> }>(withLocale(item.media.key.href, region, locale), token);
+  const icon = media?.assets?.find((asset) => asset.key === "icon")?.value;
+  if (id && icon) {
+    if (itemIcons.size >= ITEM_ICON_LIMIT) itemIcons.delete(itemIcons.keys().next().value!);
+    itemIcons.set(id, icon);
+  }
+  return icon;
+}
+
 function recommendations(items: CharacterGearItem[], average: number, locale: "en" | "ru"): CharacterRecommendation[] {
   const ru = locale === "ru";
   const low = items.filter((item) => item.itemLevel > 0 && item.itemLevel <= average - 8).sort((a, b) => a.itemLevel - b.itemLevel);
@@ -255,11 +272,10 @@ export async function getBattleNetCharacterDetails(token: string, character: Bat
     ?.find((entry) => entry.specialization?.id === activeSpecId)
     ?.loadouts?.find((loadout) => loadout.is_active)?.talent_loadout_code;
   const equipmentPromise = Promise.all(rawItems.map(async (item): Promise<CharacterGearItem> => {
-    const mediaData = item.media?.key?.href ? await api<{ assets?: Array<{ key?: string; value?: string }> }>(withLocale(item.media.key.href, region, locale), token) : null;
     return {
       id: item.item?.id ?? 0, slot: item.slot?.name ?? item.slot?.type ?? "—", slotType: item.slot?.type ?? "UNKNOWN",
       name: item.name ?? `${locale === "ru" ? "Предмет" : "Item"} #${item.item?.id ?? ""}`, quality: item.quality?.type || item.quality?.name || "", itemLevel: item.level?.value ?? 0,
-      iconUrl: mediaData?.assets?.find((asset) => asset.key === "icon")?.value,
+      iconUrl: await itemIcon(item, region, locale, token),
       stats: (item.stats ?? []).map((stat) => stat.display?.display_string ?? `${stat.type?.name ?? stat.type?.type ?? ""} ${stat.value ?? ""}`.trim()),
       enchantments: (item.enchantments ?? []).map((entry) => entry.display_string ?? `#${entry.enchantment_id}`).filter(Boolean),
       sockets: (item.sockets ?? []).map((socket) => ({ filled: Boolean(socket.item), label: socket.item?.name ?? socket.display_string ?? socket.socket_type?.name ?? (locale === "ru" ? "Гнездо" : "Socket") })),

@@ -1,0 +1,433 @@
+{
+ "best_runs": [
+  {
+   "completed_timestamp": 1793987106000,
+   "duration": 1653017,
+   "keystone_level": 24,
+   "is_completed_within_time": true,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 548.06213
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 548.06213
+   },
+   "dungeon": {
+    "name": "The Blinding Vale",
+    "id": 584
+   }
+  },
+  {
+   "completed_timestamp": 1793377901000,
+   "duration": 1801624,
+   "keystone_level": 23,
+   "is_completed_within_time": false,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 319.96616
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 545.66614
+   },
+   "dungeon": {
+    "name": "Voidscar Arena",
+    "id": 585
+   }
+  },
+  {
+   "completed_timestamp": 1793199750000,
+   "duration": 2045937,
+   "keystone_level": 24,
+   "is_completed_within_time": false,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 318.7512
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 546.36554
+   },
+   "dungeon": {
+    "name": "Kings' Rest",
+    "id": 249
+   }
+  },
+  {
+   "completed_timestamp": 1793900176000,
+   "duration": 1907898,
+   "keystone_level": 24,
+   "is_completed_within_time": true,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 546.36554
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 546.36554
+   },
+   "dungeon": {
+    "name": "Kings' Rest",
+    "id": 249
+   }
+  },
+  {
+   "completed_timestamp": 1793810306000,
+   "duration": 1768024,
+   "keystone_level": 24,
+   "is_completed_within_time": true,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 545.66614
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 545.66614
+   },
+   "dungeon": {
+    "name": "Voidscar Arena",
+    "id": 585
+   }
+  },
+  {
+   "completed_timestamp": 1792601134000,
+   "duration": 1926818,
+   "keystone_level": 24,
+   "is_completed_within_time": false,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 319.86685
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 549.94446
+   },
+   "dungeon": {
+    "name": "Den of Nalorakk",
+    "id": 586
+   }
+  },
+  {
+   "completed_timestamp": 1793296093000,
+   "duration": 1959008,
+   "keystone_level": 24,
+   "is_completed_within_time": false,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 319.23813
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 545.7234
+   },
+   "dungeon": {
+    "name": "Temple of Sethraliss",
+    "id": 250
+   }
+  },
+  {
+   "completed_timestamp": 1793983107000,
+   "duration": 1666843,
+   "keystone_level": 24,
+   "is_completed_within_time": true,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 549.94446
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 549.94446
+   },
+   "dungeon": {
+    "name": "Den of Nalorakk",
+    "id": 586
+   }
+  },
+  {
+   "completed_timestamp": 1793461773000,
+   "duration": 1882962,
+   "keystone_level": 24,
+   "is_completed_within_time": true,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 545.7234
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 545.7234
+   },
+   "dungeon": {
+    "name": "Temple of Sethraliss",
+    "id": 250
+   }
+  },
+  {
+   "completed_timestamp": 1793625480000,
+   "duration": 3569080,
+   "keystone_level": 25,
+   "is_completed_within_time": false,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 255,
+     "b": 255,
+     "a": 0.0
+    },
+    "rating": 0.0
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 548.5778
+   },
+   "dungeon": {
+    "name": "Murder Row",
+    "id": 587
+   }
+  },
+  {
+   "completed_timestamp": 1793971975000,
+   "duration": 1845368,
+   "keystone_level": 24,
+   "is_completed_within_time": true,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 548.5778
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 548.5778
+   },
+   "dungeon": {
+    "name": "Murder Row",
+    "id": 587
+   }
+  },
+  {
+   "completed_timestamp": 1793889478000,
+   "duration": 1813300,
+   "keystone_level": 24,
+   "is_completed_within_time": false,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 319.72293
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 545.1724
+   },
+   "dungeon": {
+    "name": "Altar of Fangs",
+    "id": 588
+   }
+  },
+  {
+   "completed_timestamp": 1793708781000,
+   "duration": 1791724,
+   "keystone_level": 24,
+   "is_completed_within_time": true,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 545.1724
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 545.1724
+   },
+   "dungeon": {
+    "name": "Altar of Fangs",
+    "id": 588
+   }
+  },
+  {
+   "completed_timestamp": 1792951891000,
+   "duration": 1694327,
+   "keystone_level": 24,
+   "is_completed_within_time": false,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 319.6802
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 546.1679
+   },
+   "dungeon": {
+    "name": "Ruby Life Pools",
+    "id": 399
+   }
+  },
+  {
+   "completed_timestamp": 1793368852000,
+   "duration": 1627679,
+   "keystone_level": 24,
+   "is_completed_within_time": true,
+   "mythic_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 546.1679
+   },
+   "map_rating": {
+    "color": {
+     "r": 255,
+     "g": 128,
+     "b": 0,
+     "a": 1.0
+    },
+    "rating": 546.1679
+   },
+   "dungeon": {
+    "name": "Ruby Life Pools",
+    "id": 399
+   }
+  }
+ ],
+ "mythic_rating": {
+  "color": {
+   "r": 255,
+   "g": 128,
+   "b": 0,
+   "a": 1.0
+  },
+  "rating": 4375.679
+ }
+}
