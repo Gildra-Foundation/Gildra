@@ -75,6 +75,12 @@ type RunsPayload struct {
 	Regions       []string                   `json:"regions"`
 	Runs          []Run                      `json:"runs"`
 	Cutoffs       map[string]json.RawMessage `json:"cutoffs"`
+	WorldCutoffs  json.RawMessage            `json:"world_cutoffs,omitempty"`
+	// Sample depth, rating cohorts per spec and the daily spec presence
+	// history carried from one snapshot to the next (mythicplusruns_stats.go).
+	Sample          RunsSampleDepth      `json:"sample"`
+	SpecCohorts     map[string]CohortSet `json:"spec_cohorts,omitempty"`
+	PresenceHistory []PresenceDay        `json:"presence_history,omitempty"`
 }
 
 // RunsSnapshot is the parsed current snapshot plus its freshness.
