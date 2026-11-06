@@ -46,10 +46,22 @@
 
 /* ---------- Tools ---------- */
 .tools { min-width: 0; margin-top: var(--atlas-space-6); padding-bottom: var(--atlas-space-6); scroll-margin-top: calc(var(--atlas-header-height, 108px) + 16px); }
-.tabs [role="tablist"] { margin-bottom: var(--atlas-space-5); }
-.tabs [role="tab"] { min-height: 44px; font-size: 15px; }
+/* A compact strip: the labels on a hairline that fades out, the active one on the accent marker,
+   which slides between tabs (AtlasTabs FLIP: translate/scale only). */
+.tabs { gap: var(--atlas-space-4); }
+.tabs.tabs [role="tablist"] {
+  gap: var(--atlas-space-1);
+  border-bottom: 0;
+  background: linear-gradient(90deg, var(--atlas-line), var(--atlas-line-soft) 45%, transparent) left bottom / 100% 1px no-repeat;
+}
+.tabs [role="tab"] { min-height: 44px; padding-inline: var(--atlas-space-3); font-size: 15px; }
+.tabs [role="tab"] > [data-flip-id] { background: var(--atlas-accent-strong); box-shadow: 0 0 8px var(--atlas-accent-glow); }
 .tabs [role="tabpanel"]:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
-.panel { display: grid; gap: 32px; min-width: 0; }
+/* A panel rises in whenever its tab shows (the animation restarts when `hidden` lifts): opacity and
+   transform only, no fill, so nothing stays on its own layer afterwards. */
+.panel { display: grid; gap: 32px; min-width: 0; animation: tool-in var(--atlas-duration) var(--atlas-ease); }
+@keyframes tool-in { from { opacity: 0; transform: translate3d(0, 6px, 0); } }
+.pending { min-height: 220px; }
 .tool { min-width: 0; }
 /* The tools' own boxes lie flat on the plaque. */
 .tool > :is(section, article, div) {
@@ -68,9 +80,8 @@
   .hero :global(.ui-button) { width: 100%; }
   .facts { margin-top: var(--atlas-space-4); }
   .tools { scroll-margin-top: calc(var(--atlas-header-height-mobile, 57px) + 12px); }
-  .tabs [role="tablist"] { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .tabs.tabs [role="tablist"] { flex-wrap: nowrap; gap: 0; overflow-x: auto; scrollbar-width: none; }
   .tabs [role="tab"] { flex: 1 0 auto; justify-content: center; padding-inline: 6px; font-size: 14px; }
-  .tabs [role="tablist"] { gap: 0; }
 }
-@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
-:global(html[data-motion="reduced"]) .spin { animation: none; }
+@media (prefers-reduced-motion: reduce) { .spin, .panel { animation: none; } }
+:global(html[data-motion="reduced"]) :is(.spin, .panel), :global([data-ui-motion="reduce"]) .panel { animation: none; }

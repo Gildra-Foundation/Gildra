@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type ReactNode, Suspense, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { AlertTriangle, Check, RefreshCw } from "lucide-react";
 import { AtlasHero } from "@gildra/atlas-ui/AtlasHero";
@@ -24,6 +24,15 @@ const GearFarmPlanner = dynamic(() => import("./GearFarmPlanner").then((module) 
 const AuctionGearOptimizer = dynamic(() => import("./AuctionGearOptimizer").then((module) => module.AuctionGearOptimizer));
 const CharacterLogAnalysis = dynamic(() => import("./CharacterLogAnalysis").then((module) => module.CharacterLogAnalysis));
 const CharacterHistory = dynamic(() => import("./CharacterHistory").then((module) => module.CharacterHistory));
+
+/** The modules of the tools above: warmed in idle time, a tab opens without waiting for the network. */
+const preloadTools = () => Promise.all([
+  import("./CharacterTalentSimulator"),
+  import("./GearFarmPlanner"),
+  import("./AuctionGearOptimizer"),
+  import("./CharacterLogAnalysis"),
+  import("./CharacterHistory"),
+]).catch(() => undefined);
 
 const tabIds = ["talents", "upgrades", "logs", "history"] as const;
 type TabId = typeof tabIds[number];
@@ -52,30 +61,6 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
   const [running, setRunning] = useState(false);
   const [refresh, setRefresh] = useState<RefreshState>({ status: "idle" });
   const [talentScenario, setTalentScenario] = useState<TalentScenarioId>("mythic-plus");
-  const [tab, setTab] = useState<TabId>("talents");
-  const [opened, setOpened] = useState<ReadonlySet<TabId>>(() => new Set(["talents"]));
-
-  const openTab = useCallback((id: TabId) => {
-    setTab(id);
-    setOpened((current) => current.has(id) ? current : new Set([...current, id]));
-  }, []);
-  useEffect(() => {
-    const fromHash = () => {
-      const id = tabFromHash(window.location.hash);
-      if (!id) return;
-      openTab(id);
-      document.getElementById("character-tools")?.scrollIntoView({ block: "start" });
-    };
-    fromHash();
-    window.addEventListener("hashchange", fromHash);
-    return () => window.removeEventListener("hashchange", fromHash);
-  }, [openTab]);
-  const selectTab = (id: string) => {
-    if (!(tabIds as readonly string[]).includes(id)) return;
-    openTab(id as TabId);
-    window.history.replaceState(window.history.state, "", `#${id}`);
-  };
-
   const logAbilities = useMemo(() => rotationPreset?.abilities.map((ability) => ({
     ...ability,
     iconUrl: abilityIcon(ability.id) || talentAbilityIcon(ability, talentData) || ability.iconUrl,
@@ -162,7 +147,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
           className={styles.hero}
           breadcrumbs={[{ label: "World of Warcraft", href: `${localePrefix}/wow` }, { label: copy.characters, href: `${localePrefix}/wow/characters` }, { label: character.name }]}
           breadcrumbsLabel={copy.breadcrumbs}
-          emblem={<img src={snapshot.media?.avatar ?? snapshot.specialization.iconUrl} alt="" />}
+          emblem={<img src={snapshot.media?.avatar ?? snapshot.specialization.iconUrl} alt="" decoding="async" />}
           eyebrow={character.className}
           title={character.name}
           lede={[`${copy.level} ${character.level}`, character.race, character.realm ?? character.faction].filter(Boolean).join(" · ")}
@@ -187,15 +172,97 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
 
       <CharacterEquipment key={snapshotKey} snapshot={snapshot} lang={lang} />
 
-      <section id="character-tools" className={styles.tools} aria-label={copy.tools}>
-        <AtlasTabs
-          label={copy.tools}
-          value={tab}
-          onChange={selectTab}
-          className={styles.tabs}
-          tabs={tabIds.map((id) => ({ id, label: tabLabels[id], content: opened.has(id) ? <div className={styles.panel}>{tools[id]()}</div> : null }))}
-        />
-      </section>
+      <CharacterTools label={copy.tools} labels={tabLabels} panels={{ talents: tools.talents(), upgrades: tools.upgrades(), logs: tools.logs(), history: tools.history() }} />
     </div>
+  );
+}
+
+/**
+ * The tool tabs. The tab state lives here, so a switch re-renders only the tab list: the panels
+ * arrive as ready elements and React skips them. A tool mounts the first time its tab opens, in a
+ * transition behind the moved marker; the area keeps its height until the new panel settles.
+ */
+function CharacterTools({ label, labels, panels }: { label: string; labels: Record<TabId, string>; panels: Record<TabId, ReactNode> }) {
+  const [tab, setTab] = useState<TabId>("talents");
+  const [opened, setOpened] = useState<ReadonlySet<TabId>>(() => new Set(["talents"]));
+  const sectionRef = useRef<HTMLElement>(null);
+  const releaseHold = useRef<() => void>(undefined);
+
+  const holdHeight = useCallback(() => {
+    const section = sectionRef.current;
+    if (!section || typeof ResizeObserver === "undefined") return;
+    releaseHold.current?.();
+    section.style.minHeight = `${section.getBoundingClientRect().height}px`;
+    let settle: ReturnType<typeof setTimeout> | undefined;
+    const release = () => {
+      clearTimeout(settle);
+      clearTimeout(limit);
+      observer.disconnect();
+      section.style.minHeight = "";
+      releaseHold.current = undefined;
+    };
+    const observer = new ResizeObserver(() => {
+      clearTimeout(settle);
+      settle = setTimeout(release, 450);
+    });
+    const limit = setTimeout(release, 2500);
+    // The panel that is about to show: its content grows inside the held area.
+    observer.observe(section.querySelector("[role=tablist]")?.parentElement ?? section);
+    releaseHold.current = release;
+  }, []);
+
+  const tabRef = useRef<TabId>("talents");
+  const openTab = useCallback((id: TabId) => {
+    if (tabRef.current !== id) holdHeight();
+    tabRef.current = id;
+    setTab(id);
+    startTransition(() => setOpened((current) => current.has(id) ? current : new Set([...current, id])));
+  }, [holdHeight]);
+
+  useEffect(() => {
+    const fromHash = () => {
+      const id = tabFromHash(window.location.hash);
+      if (!id) return;
+      openTab(id);
+      document.getElementById("character-tools")?.scrollIntoView({ block: "start" });
+    };
+    fromHash();
+    window.addEventListener("hashchange", fromHash);
+    return () => window.removeEventListener("hashchange", fromHash);
+  }, [openTab]);
+
+  useEffect(() => {
+    const warm = () => void preloadTools();
+    const idle = typeof window.requestIdleCallback === "function";
+    const handle = idle ? window.requestIdleCallback(warm, { timeout: 4000 }) : setTimeout(warm, 2500);
+    return () => {
+      if (idle) window.cancelIdleCallback(handle as number);
+      else clearTimeout(handle);
+      releaseHold.current?.();
+    };
+  }, []);
+
+  const selectTab = (id: string) => {
+    if (!(tabIds as readonly string[]).includes(id)) return;
+    openTab(id as TabId);
+    window.history.replaceState(window.history.state, "", `#${id}`);
+  };
+
+  return (
+    <section ref={sectionRef} id="character-tools" className={styles.tools} aria-label={label} onPointerEnter={() => void preloadTools()} onFocus={() => void preloadTools()}>
+      <AtlasTabs
+        label={label}
+        value={tab}
+        onChange={selectTab}
+        className={styles.tabs}
+        tabs={tabIds.map((id) => ({
+          id,
+          label: labels[id],
+          content: <div className={styles.panel} data-tool-panel={id}>
+            {opened.has(id) ? <Suspense fallback={<div className={styles.pending} />}>{panels[id]}</Suspense> : <div className={styles.pending} />}
+          </div>,
+        }))}
+      />
+    </section>
   );
 }
