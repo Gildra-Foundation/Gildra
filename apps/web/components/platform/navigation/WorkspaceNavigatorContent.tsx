@@ -3,14 +3,14 @@ import { memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState,
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight, BarChart3, BookOpen, ChevronDown, KeyRound, Library, Menu, ScrollText, Swords, UserRound, Wrench, X, type LucideIcon } from "lucide-react";
+import { BarChart3, BookMarked, BookOpen, ChevronDown, Coins, Compass, Hammer, KeyRound, Library, Map, Menu, Network, Route, ScrollText, Shield, Shirt, Skull, Swords, TrendingUp, Trophy, UserRound, Users, Wrench, X, type LucideIcon } from "lucide-react";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { p, type Lang } from "@/lib/i18n-paths";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
 import { LocaleSwitch } from "@/components/platform/locale/LocaleSwitch";
 import { AccountChip } from "@/components/auth/AccountChip";
 import { GildraCrest } from "@/components/brand/GildraCrest";
-import { barePathOf, currentRealm, realmsFor, type NavigationRealm } from "./navigationMap";
+import { barePathOf, currentRealm, groupsFor, linksFor, realmsFor, type NavigationIcon, type NavigationRealm } from "./navigationMap";
 import type { NavigationPicks } from "./navigationPicks";
 import toolbarStyles from "./atlasToolbar.module.css";
 
@@ -33,14 +33,29 @@ const EXIT_MS = 200;
 
 const word = (lang: Lang, value: { en: string; ru: string }) => value[lang];
 
-const realmIcons: Record<string, LucideIcon> = { heroes: UserRound, mythic: KeyRound, raids: Swords, meta: BarChart3, library: Library, chronicle: ScrollText, stories: BookOpen, tools: Wrench };
+const realmIcons: Record<string, LucideIcon> = { heroes: UserRound, mythic: KeyRound, raids: Swords, meta: BarChart3, library: Library, chronicle: ScrollText, tools: Wrench };
+
+/** Each page its own sign, so the eye finds it before reading. */
+const pageIcons: Record<NavigationIcon, LucideIcon> = {
+  characters: UserRound, classes: Network,
+  atlas: Map, guide: Compass, meta: TrendingUp, comps: Users, stats: BarChart3, leaderboard: Trophy, routes: Route,
+  journal: BookMarked, lairs: Skull, raidComp: Shield,
+  auction: Coins, professions: Hammer, transmog: Shirt,
+  library: Library, stories: BookOpen,
+};
 
 function RealmIcon({ id, size }: { id: string; size: number }) {
   const Icon = realmIcons[id];
   return Icon ? <Icon size={size} strokeWidth={1.75} aria-hidden="true" /> : null;
 }
 
-/** The body of a realm menu: the realm's pages, then its quick picks (paintings or the class roster). */
+/** A realm with one page and no quick picks is a plain tab (a menu would only repeat it). */
+const isSingle = (realm: NavigationRealm, lang: Lang, picks: NavigationPicks) => linksFor(realm, lang).length === 1 && !picks[realm.id];
+
+/**
+ * The body of a realm menu: its pages under short headings, then its quick
+ * picks (dungeon and raid paintings or the class roster) as a compact list.
+ */
 function RealmMenu({ realm, picks, lang, barePath, onNavigate, compact = false, art = true }: {
   realm: NavigationRealm; picks: NavigationPicks; lang: Lang; barePath: string; onNavigate: () => void; compact?: boolean;
   /** Paint the pictures (the prebuilt sheet adds them on its first opening, not on page load). */
@@ -50,21 +65,28 @@ function RealmMenu({ realm, picks, lang, barePath, onNavigate, compact = false, 
   const items = group?.kind === "class"
     ? [...group.picks].sort((a, b) => word(lang, a.label).localeCompare(word(lang, b.label), lang))
     : group?.picks;
-  return <div className={toolbarStyles.menu} data-compact={compact || undefined}>
-    <div>
-      <p className={toolbarStyles.caption}>{word(lang, realm.label)}</p>
-      <ul className={toolbarStyles.pages}>
-        {realm.links.map(link => <li key={link.href}>
-          <Link href={p(lang, link.href)} prefetch={false} className={toolbarStyles.page} onClick={onNavigate}
-            aria-current={barePath === link.href ? "page" : undefined}>
-            <span className={toolbarStyles.pageIcon}><RealmIcon id={realm.id} size={16} /></span>
-            <span className={toolbarStyles.pageText}><strong>{word(lang, link.label)}</strong><small>{word(lang, link.note)}</small></span>
-            <ArrowRight className={toolbarStyles.pageGo} size={15} aria-hidden="true" />
-          </Link>
-        </li>)}
-      </ul>
+  return <div className={toolbarStyles.menu} data-compact={compact || undefined} data-picks={group?.kind}>
+    <div className={toolbarStyles.column}>
+      {groupsFor(realm, lang).map((pages, index) => <div key={index} className={toolbarStyles.group}>
+        {pages.title && <p className={toolbarStyles.caption}>{word(lang, pages.title)}</p>}
+        <ul className={toolbarStyles.pages}>
+          {pages.links.map(link => {
+            const Icon = pageIcons[link.icon];
+            return <li key={link.href}>
+              <Link href={p(lang, link.href)} prefetch={false} className={toolbarStyles.page} onClick={onNavigate}
+                aria-current={barePath === link.href ? "page" : undefined}>
+                <span className={toolbarStyles.pageIcon}><Icon size={17} strokeWidth={1.75} aria-hidden="true" /></span>
+                <span className={toolbarStyles.pageText}>
+                  <strong>{word(lang, link.label)}</strong>
+                  {link.note && <small>{word(lang, link.note)}</small>}
+                </span>
+              </Link>
+            </li>;
+          })}
+        </ul>
+      </div>)}
     </div>
-    {group && items && <div>
+    {group && items && <div className={toolbarStyles.column}>
       <p className={toolbarStyles.caption}>{word(lang, group.title)}</p>
       <ul className={toolbarStyles.picks} data-kind={group.kind}>
         {items.map(pick => <li key={pick.href}>
@@ -72,7 +94,7 @@ function RealmMenu({ realm, picks, lang, barePath, onNavigate, compact = false, 
             style={pick.tint ? { "--pick-tint": pick.tint } as CSSProperties : undefined}
             aria-current={barePath === pick.href ? "page" : undefined}>
             <span className={toolbarStyles.pickArt}>
-              {art && <Image src={pick.image} alt="" fill sizes={group.kind === "class" ? "32px" : "(max-width: 1179px) 62vw, 220px"} quality={50} />}
+              {art && <Image src={pick.image} alt="" fill sizes={group.kind === "class" ? "28px" : "56px"} quality={50} />}
             </span>
             <span className={toolbarStyles.pickLabel}>{word(lang, pick.label)}</span>
           </Link>
@@ -153,6 +175,24 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
     (edge === "first" ? items[0] : items.at(-1))?.focus();
   }, [openRealm, id]);
 
+  // The menu hangs under its tab; near the window's edge it slides back inside.
+  const shown = openRealm ?? leavingRealm;
+  useLayoutEffect(() => {
+    const panel = shown ? document.getElementById(`${id}-${shown}`) : null;
+    if (!panel) return;
+    const fit = () => {
+      panel.style.setProperty("--panel-shift", "0px");
+      const box = panel.getBoundingClientRect();
+      const margin = 12;
+      const room = document.documentElement.clientWidth - margin;
+      const shift = box.right > room ? Math.max(room - box.right, margin - box.left) : 0;
+      panel.style.setProperty("--panel-shift", `${Math.round(shift)}px`);
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [shown, id]);
+
   // On narrow screens the strip scrolls sideways: keep the current section in view.
   const currentId = current?.realm.id ?? null;
   useLayoutEffect(() => {
@@ -230,14 +270,12 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
     onKeyDown={onKeyDown}>
     <ul ref={list}>
       {realmsFor(lang).map(realm => {
-        const hub = realm.links[0];
         const isOpen = openRealm === realm.id;
         const isLeaving = leavingRealm === realm.id;
         const label = word(lang, realm.label);
-        // A realm of one page with no quick picks is a plain tab: a menu would only repeat it.
-        const single = realm.links.length === 1 && !picks[realm.id];
-        const link = <Link href={p(lang, hub.href)} prefetch={false} className={toolbarStyles.tab} onClick={close}
-          aria-current={barePath === hub.href ? "page" : current?.realm.id === realm.id ? "true" : undefined}>
+        const single = isSingle(realm, lang, picks);
+        const link = <Link href={p(lang, realm.hub)} prefetch={false} className={toolbarStyles.tab} onClick={close}
+          aria-current={barePath === realm.hub ? "page" : current?.realm.id === realm.id ? "true" : undefined}>
           <RealmIcon id={realm.id} size={17} />{label}
         </Link>;
         if (single) return <li key={realm.id} data-realm={realm.id} data-single {...plainHover}>{link}</li>;
@@ -265,15 +303,35 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
   </nav>;
 }
 
-/** The sheet's sections. Memoised: opening and closing the sheet re-renders only its frame. */
+/**
+ * The sheet's sections: one row per tab, each a fold with the same groups as its
+ * menu (the current one unfolded); a tab of one page is a plain row.
+ * Memoised: opening and closing the sheet re-renders only its frame.
+ */
 const SheetContent = memo(function SheetContent({ lang, picks, barePath, currentId, art, onNavigate }: {
   lang: Lang; picks: NavigationPicks; barePath: string; currentId: string | undefined; art: boolean; onNavigate: () => void;
 }) {
   return <>
     <Account lang={lang} />
-    {realmsFor(lang).map(realm => <section key={realm.id} className={toolbarStyles.sheetRealm} data-current={realm.id === currentId || undefined}>
-      <RealmMenu realm={realm} picks={picks} lang={lang} barePath={barePath} onNavigate={onNavigate} compact art={art} />
-    </section>)}
+    <div className={toolbarStyles.sheetRealms}>
+      {realmsFor(lang).map(realm => {
+        const isCurrent = realm.id === currentId;
+        const label = word(lang, realm.label);
+        if (isSingle(realm, lang, picks)) return <div key={realm.id} className={toolbarStyles.sheetRealm} data-current={isCurrent || undefined}>
+          <Link href={p(lang, realm.hub)} prefetch={false} className={toolbarStyles.sheetHead} onClick={onNavigate}
+            aria-current={barePath === realm.hub ? "page" : isCurrent ? "true" : undefined}>
+            <RealmIcon id={realm.id} size={19} /><span>{label}</span>
+          </Link>
+        </div>;
+        return <details key={realm.id} className={toolbarStyles.sheetRealm} data-current={isCurrent || undefined} open={isCurrent}>
+          <summary className={toolbarStyles.sheetHead}>
+            <RealmIcon id={realm.id} size={19} /><span>{label}</span>
+            <ChevronDown className={toolbarStyles.sheetChevron} size={18} aria-hidden="true" />
+          </summary>
+          <RealmMenu realm={realm} picks={picks} lang={lang} barePath={barePath} onNavigate={onNavigate} compact art={art} />
+        </details>;
+      })}
+    </div>
   </>;
 });
 
@@ -334,7 +392,8 @@ function MenuSheet({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
     const sheet = root.current?.querySelector<HTMLElement>("[data-sheet]");
     const section = sheet?.querySelector<HTMLElement>("[data-current]");
     if (sheet && section) sheet.scrollTop += section.getBoundingClientRect().top - sheet.getBoundingClientRect().top - 16;
-    (section ?? sheet)?.querySelector<HTMLElement>("a")?.focus({ preventScroll: true });
+    const first = section?.matches("details:not([open])") ? section.querySelector<HTMLElement>("summary") : (section ?? sheet)?.querySelector<HTMLElement>("a");
+    first?.focus({ preventScroll: true });
     const outside = (event: globalThis.PointerEvent) => {
       if (event.target instanceof Node && !root.current?.contains(event.target)) setOpenOn(null);
     };

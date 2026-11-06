@@ -1,127 +1,141 @@
-import { atlasScenes, type AtlasSceneId } from "@/lib/atlas/scenes";
 import type { Lang } from "@/lib/i18n-paths";
 
 /**
- * The atlas map of the top bar: each realm is a hub page with its real
- * sub-pages. Only pages that exist and render without a session are listed;
- * placeholders (gear, Prey) stay out until they have content. The painting of
- * a realm is its section's scene, so the menu shows the art the page opens with.
+ * The atlas map of the top bar: each realm is a tab with its real pages,
+ * grouped under short headings. Only pages that exist and render without a
+ * session are listed. Every page has its own icon (a key of `NavigationIcon`,
+ * drawn by the bar) and an optional one-line note.
  */
 type Words = { en: string; ru: string };
-export type NavigationLink = { href: string; label: Words; note: Words };
+export type NavigationIcon =
+  | "characters" | "classes"
+  | "atlas" | "guide" | "meta" | "comps" | "stats" | "leaderboard" | "routes"
+  | "journal" | "lairs" | "raidComp"
+  | "auction" | "professions" | "transmog"
+  | "library" | "stories";
+export type NavigationLink = {
+  href: string;
+  label: Words;
+  icon: NavigationIcon;
+  note?: Words;
+  /** Languages the page exists in (all when absent). */
+  langs?: readonly Lang[];
+};
+export type NavigationGroup = { title?: Words; links: readonly NavigationLink[] };
 export type NavigationRealm = {
   id: string;
   label: Words;
-  /** One line under the realm's title in the portal panel. */
-  lede: Words;
-  scene: AtlasSceneId;
-  /** Other path prefixes that belong to this realm (detail pages, tools). */
+  /** Where the tab itself leads. */
+  hub: string;
+  /** Other path prefixes that belong to this realm (detail pages, old addresses). */
   also?: readonly string[];
-  links: readonly [NavigationLink, ...NavigationLink[]];
-  /** Languages the realm exists in (all when absent). */
-  langs?: readonly Lang[];
+  groups: readonly NavigationGroup[];
 };
 
 export const navigationRealms: readonly NavigationRealm[] = [
   {
     id: "heroes",
     label: { en: "Characters", ru: "Персонажи" },
-    lede: { en: "Your Battle.net heroes with gear, talents and combat tools.", ru: "Ваши герои Battle.net: экипировка, таланты и боевые инструменты." },
-    scene: "wow",
+    hub: "/wow/characters",
     also: ["/talents", "/wow/rotation", "/wow/shared"],
-    links: [
-      { href: "/wow/characters", label: { en: "My characters", ru: "Мои персонажи" }, note: { en: "Gear, talents and tools of your heroes", ru: "Экипировка, таланты и инструменты героев" } },
-      { href: "/wow/classes", label: { en: "Classes and specs", ru: "Классы и специализации" }, note: { en: "Talent trees of every spec", ru: "Деревья талантов всех специализаций" } },
-    ],
+    groups: [{
+      links: [
+        { href: "/wow/characters", icon: "characters", label: { en: "My characters", ru: "Мои персонажи" }, note: { en: "Gear and talents", ru: "Экипировка и таланты" } },
+        { href: "/wow/classes", icon: "classes", label: { en: "Classes and specs", ru: "Классы и специализации" }, note: { en: "Talent trees", ru: "Деревья талантов" } },
+      ],
+    }],
   },
   {
     id: "mythic",
     label: { en: "Mythic+", ru: "Mythic+" },
-    lede: { en: "Key timers, dungeon routes and the weekly meta.", ru: "Таймеры ключей, маршруты подземелий и мета недели." },
-    scene: "mythicPlus",
-    also: ["/wow/mythic", "/wow/dungeons", "/wow/mythic-plus/seasons"],
-    links: [
-      { href: "/wow/mythic-plus", label: { en: "Mythic+ atlas", ru: "Атлас Mythic+" }, note: { en: "Timers and routes", ru: "Таймеры и маршруты" } },
-      { href: "/wow/mythic-plus/meta", label: { en: "Mythic+ meta", ru: "Мета Mythic+" }, note: { en: "Top specs of the week", ru: "Лучшие спеки недели" } },
-      { href: "/wow/mythic-plus#dungeons", label: { en: "Dungeons", ru: "Подземелья" }, note: { en: "Every dungeon of the season", ru: "Все подземелья сезона" } },
-      { href: "/wow/mythic-plus/comps", label: { en: "Team compositions", ru: "Составы групп" }, note: { en: "Who times the highest keys", ru: "Кто закрывает высокие ключи" } },
-      { href: "/wow/mythic-plus/stats", label: { en: "Season stats", ru: "Статистика сезона" }, note: { en: "Rating cutoffs and top keys", ru: "Пороги рейтинга и лучшие ключи" } },
-      { href: "/wow/mythic-plus/routes", label: { en: "Route finder", ru: "Поиск маршрутов" }, note: { en: "Top runs of groups like yours", ru: "Лучшие забеги групп как ваша" } },
-      { href: "/wow/mythic-plus/leaderboard", label: { en: "Leaderboard", ru: "Рейтинг игроков" }, note: { en: "Top players by Mythic+ rating", ru: "Сильнейшие игроки по рейтингу" } },
-      { href: "/wow/midnight/season-2", label: { en: "Season 2 guide", ru: "Гид по сезону 2" }, note: { en: "Raid, keys, delves, Prey", ru: "Рейд, ключи, вылазки, Prey" } },
+    hub: "/wow/mythic-plus",
+    also: ["/wow/mythic", "/wow/dungeons"],
+    groups: [
+      {
+        title: { en: "Season", ru: "Сезон" },
+        links: [
+          { href: "/wow/mythic-plus", icon: "atlas", label: { en: "Mythic+ atlas", ru: "Атлас Mythic+" }, note: { en: "Timers and routes", ru: "Таймеры и маршруты" } },
+          { href: "/wow/midnight/season-2", icon: "guide", label: { en: "Season 2 guide", ru: "Гид по сезону 2" }, note: { en: "Raid, keys, delves", ru: "Рейд, ключи, вылазки" } },
+        ],
+      },
+      {
+        title: { en: "Meta and data", ru: "Мета и данные" },
+        links: [
+          { href: "/wow/mythic-plus/meta", icon: "meta", label: { en: "Mythic+ meta", ru: "Мета Mythic+" }, note: { en: "Top specs of the week", ru: "Лучшие спеки недели" } },
+          { href: "/wow/mythic-plus/comps", icon: "comps", label: { en: "Team compositions", ru: "Составы групп" }, note: { en: "Groups that time high keys", ru: "С кем закрывают ключи" } },
+          { href: "/wow/mythic-plus/stats", icon: "stats", label: { en: "Season stats", ru: "Статистика сезона" }, note: { en: "Rating cutoffs", ru: "Пороги рейтинга" } },
+          { href: "/wow/mythic-plus/leaderboard", icon: "leaderboard", label: { en: "Leaderboard", ru: "Рейтинг игроков" }, note: { en: "Top players", ru: "Лучшие игроки" } },
+          { href: "/wow/mythic-plus/routes", icon: "routes", label: { en: "Route finder", ru: "Поиск маршрутов" }, note: { en: "Runs of groups like yours", ru: "Забеги групп как ваша" } },
+        ],
+      },
     ],
   },
   {
     id: "raids",
     label: { en: "Raids", ru: "Рейды" },
-    lede: { en: "Boss portraits, abilities and strategy for the raid season.", ru: "Портреты боссов, способности и тактика рейдового сезона." },
-    scene: "raids",
-    links: [
-      { href: "/wow/raids", label: { en: "Raid journal", ru: "Рейдовый журнал" }, note: { en: "Current raid and archive", ru: "Текущий рейд и архив" } },
-      { href: "/wow/lairs", label: { en: "Lairs and world bosses", ru: "Логова и мировые боссы" }, note: { en: "Outdoor encounters", ru: "Боссы открытого мира" } },
-      { href: "/wow/raids/composition", label: { en: "Raid composition", ru: "Состав рейда" }, note: { en: "Buffs, utility and roles of your roster", ru: "Баффы, утилиты и роли вашего состава" } },
-    ],
+    hub: "/wow/raids",
+    groups: [{
+      links: [
+        { href: "/wow/raids", icon: "journal", label: { en: "Raid journal", ru: "Рейдовый журнал" }, note: { en: "Bosses and tactics", ru: "Боссы и тактика" } },
+        { href: "/wow/lairs", icon: "lairs", label: { en: "Lairs and world bosses", ru: "Логова и мировые боссы" }, note: { en: "Outdoor encounters", ru: "Боссы открытого мира" } },
+        { href: "/wow/raids/composition", icon: "raidComp", label: { en: "Raid composition", ru: "Состав рейда" }, note: { en: "Buffs and roles", ru: "Баффы и роли" } },
+      ],
+    }],
   },
   {
     id: "meta",
     label: { en: "Tier lists", ru: "Тир-листы" },
-    lede: { en: "Rankings of every specialization.", ru: "Рейтинг всех специализаций." },
-    scene: "tierLists",
+    hub: "/tier-lists",
     also: ["/specs"],
-    links: [
-      { href: "/tier-lists", label: { en: "Tier lists", ru: "Тир-листы" }, note: { en: "Specialization rankings", ru: "Рейтинг специализаций" } },
-    ],
-  },
-  {
-    // The game data library (items, spells, mounts) has its own tab: hidden in
-    // the tier-list menu it lit "Tier lists" on its own pages.
-    id: "library",
-    label: { en: "Library", ru: "Библиотека" },
-    lede: { en: "Items, spells, mounts and more.", ru: "Предметы, заклинания, транспорт и другое." },
-    scene: "library",
-    also: ["/database"],
-    links: [
-      { href: "/library", label: { en: "Library", ru: "Библиотека" }, note: { en: "Items, spells, mounts and more", ru: "Предметы, заклинания, транспорт и другое" } },
-    ],
-  },
-  {
-    id: "chronicle",
-    label: { en: "What's new", ru: "Что нового" },
-    lede: { en: "What changed on Gildra.", ru: "Новое на Gildra." },
-    scene: "articles",
-    links: [
-      { href: "/wow/whats-new", label: { en: "What's new", ru: "Что нового" }, note: { en: "Gildra updates", ru: "Обновления Gildra" } },
-    ],
-  },
-  {
-    id: "stories",
-    // "Stories" on the tab: next to "Library" a second "Library of …" read as the same place.
-    label: { en: "Stories", ru: "Истории" },
-    lede: { en: "Books about the lives and journeys of Azeroth’s heroes.", ru: "Книги о судьбах и странствиях героев Азерота." },
-    scene: "library",
-    // The manuscript is Russian; the English URL redirects (lib/routes/registry.ts `only`).
-    langs: ["ru"],
-    links: [
-      { href: "/wow/stories", label: { en: "Story Library", ru: "Библиотека историй" }, note: { en: "Books and character chronicles", ru: "Книги и хроники персонажей" } },
-    ],
+    groups: [{ links: [{ href: "/tier-lists", icon: "meta", label: { en: "Tier lists", ru: "Тир-листы" } }] }],
   },
   {
     id: "tools",
     label: { en: "Tools", ru: "Инструменты" },
-    lede: { en: "Useful tools for your adventures in Azeroth.", ru: "Полезные инструменты для приключений в Азероте." },
-    scene: "articles",
-    links: [
-      { href: "/wow/auction", label: { en: "Auction House", ru: "Аукцион" }, note: { en: "Browse realm auctions and regional commodities", ru: "Лоты серверов и региональный рынок реагентов" } },
-      { href: "/wow/transmog", label: { en: "Transmog Studio", ru: "Трансмогрификация" }, note: { en: "Build outfits and export pictures for social media", ru: "Образы из любых обликов и картинки для соцсетей" } },
-      { href: "/wow/professions", label: { en: "Professions", ru: "Профессии" }, note: { en: "Leveling, profits and knowledge at live prices", ru: "Прокачка, выгода и знания по живым ценам" } },
-    ],
+    hub: "/wow/auction",
+    groups: [{
+      links: [
+        { href: "/wow/auction", icon: "auction", label: { en: "Auction House", ru: "Аукцион" }, note: { en: "Realm and region prices", ru: "Цены серверов и региона" } },
+        { href: "/wow/professions", icon: "professions", label: { en: "Professions", ru: "Профессии" }, note: { en: "Leveling and profit", ru: "Прокачка и выгода" } },
+        { href: "/wow/transmog", icon: "transmog", label: { en: "Transmog Studio", ru: "Трансмогрификация" }, note: { en: "Outfits from any look", ru: "Образы из любых обликов" } },
+      ],
+    }],
+  },
+  {
+    // The game data library and the story books share one tab: two tabs named
+    // "Library" and "Library of stories" read as the same place.
+    id: "library",
+    label: { en: "Library", ru: "Библиотека" },
+    hub: "/library",
+    also: ["/database"],
+    groups: [{
+      links: [
+        { href: "/library", icon: "library", label: { en: "Game library", ru: "Библиотека игры" }, note: { en: "Items, spells, mounts", ru: "Предметы, заклинания, транспорт" } },
+        // The manuscript is Russian; the English URL redirects (lib/routes/registry.ts `only`).
+        { href: "/wow/stories", icon: "stories", langs: ["ru"], label: { en: "Stories", ru: "Истории" }, note: { en: "Books about heroes", ru: "Книги о героях Азерота" } },
+      ],
+    }],
+  },
+  {
+    id: "chronicle",
+    label: { en: "What's new", ru: "Что нового" },
+    hub: "/wow/whats-new",
+    groups: [{ links: [{ href: "/wow/whats-new", icon: "guide", label: { en: "What's new", ru: "Что нового" } }] }],
   },
 ];
 
-/** The realms of the bar in a language. */
-export const realmsFor = (lang: Lang) => navigationRealms.filter(realm => !realm.langs || realm.langs.includes(lang));
+const inLang = (lang: Lang) => (link: NavigationLink) => !link.langs || link.langs.includes(lang);
 
-export const realmArt = (realm: NavigationRealm) => atlasScenes[realm.scene];
+/** A realm's groups in a language (groups left empty are dropped). */
+export const groupsFor = (realm: NavigationRealm, lang: Lang) => realm.groups
+  .map(group => ({ ...group, links: group.links.filter(inLang(lang)) }))
+  .filter(group => group.links.length > 0);
+
+/** Every page of a realm in a language, in menu order. */
+export const linksFor = (realm: NavigationRealm, lang: Lang) => groupsFor(realm, lang).flatMap(group => group.links);
+
+/** The realms of the bar in a language. */
+export const realmsFor = (_lang: Lang) => navigationRealms;
 
 /** Locale prefix and trailing slash removed: the page identity the bar compares. */
 export const barePathOf = (path: string) => path.replace(/^\/ru(?=\/|$)/, "").replace(/\/$/, "") || "/";
@@ -132,7 +146,8 @@ const within = (path: string, href: string) => path === href || path.startsWith(
 export function currentRealm(barePath: string) {
   let best: { realm: NavigationRealm; href: string } | null = null;
   for (const realm of navigationRealms) {
-    for (const href of [...realm.links.map(link => link.href), ...(realm.also ?? [])]) {
+    const hrefs = [realm.hub, ...realm.groups.flatMap(group => group.links.map(link => link.href)), ...(realm.also ?? [])];
+    for (const href of hrefs) {
       if (within(barePath, href) && (!best || href.length > best.href.length)) best = { realm, href };
     }
   }

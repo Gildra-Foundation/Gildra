@@ -19,7 +19,7 @@ const iconKeyOf = (classKey: string) => Object.keys(CLASS_ICONS).find(key => CLA
 export function navigationPicks(): NavigationPicks {
   const dungeons: NavigationPickGroup = {
     kind: "art",
-    title: { en: "Season 2 dungeons", ru: "Подземелья 2 сезона" },
+    title: { en: "Dungeons", ru: "Подземелья" },
     picks: dungeonSlugs.map(slug => {
       const dungeon = dungeonRoutes[slug];
       return { href: `/wow/mythic-plus/midnight-season-2/${slug}`, label: { en: dungeon.name, ru: dungeon.nameRu }, image: dungeon.backdropImage };

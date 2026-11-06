@@ -130,7 +130,7 @@
 /* ── Section tabs: icon, label and an accent underline, like a game client's tab strip ── */
 .tabs { position: relative; border-top: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); }
 .tabs > ul { display: flex; gap: 2px; width: min(100%, var(--atlas-container)); margin: 0 auto; padding: 0 var(--atlas-gutter); list-style: none; }
-.tabs > ul > li { display: flex; align-items: center; }
+.tabs > ul > li { position: relative; display: flex; align-items: center; }
 .tabs > ul > li[data-single] > .tab { padding-right: 24px; }
 .tab {
   position: relative;
@@ -180,23 +180,25 @@
 .toggle svg { transition: rotate var(--atlas-duration) var(--atlas-ease); }
 [data-open] > .toggle svg { rotate: 180deg; color: var(--atlas-accent); }
 
-/* Solid menu across the whole bar: nothing of the page bleeds through. It drops
-   in when the bar opens it, swaps in place between tabs (only its content
-   brightens) and fades out on close; opacity and translate only. A short window
-   scrolls the menu, never the page under it. */
+/* The menu hangs under its own tab and is as wide as its content (one or two
+   columns); near the window's edge the bar slides it back inside (--panel-shift).
+   It drops in when the bar opens it, swaps in place between tabs (only its
+   content brightens) and fades out on close; opacity and translate only. A
+   short window scrolls the menu, never the page under it. */
 .panel {
   position: absolute;
   top: 100%;
-  left: 0;
-  right: 0;
-  max-height: calc(100dvh - var(--atlas-sticky-top));
+  left: var(--panel-shift, 0px);
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - var(--atlas-sticky-top) - 12px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: var(--atlas-space-5) var(--atlas-gutter) var(--atlas-space-6);
-  border-top: 1px solid var(--atlas-line-soft);
-  border-bottom: 1px solid var(--atlas-line);
+  padding: var(--atlas-space-3);
+  border: 1px solid var(--atlas-line);
+  border-radius: 0 0 var(--atlas-radius-control) var(--atlas-radius-control);
   background: var(--atlas-surface);
-  box-shadow: 0 30px 60px color-mix(in srgb, #000 60%, transparent);
+  box-shadow: var(--atlas-shadow-panel);
 }
 .panel[data-enter] { animation: drop var(--atlas-duration) var(--atlas-ease); }
 .panel:not([data-enter])[data-state="open"] > .menu { animation: swap var(--atlas-duration-fast) var(--atlas-ease); }
@@ -205,17 +207,14 @@
 @keyframes lift { to { opacity: 0; translate: 0 -4px; } }
 @keyframes swap { from { opacity: .4; } }
 
-/* ── Menu body: the section's pages, then its quick picks ───────────── */
-.menu {
-  display: grid;
-  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-  gap: var(--atlas-space-6);
-  width: min(100%, var(--atlas-container));
-  margin-inline: auto;
-}
-.menu[data-compact] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-5); }
+/* ── Menu body: the section's pages under short headings, then its quick picks ── */
+.menu { display: grid; grid-template-columns: minmax(232px, max-content); gap: var(--atlas-space-4); }
+.menu[data-picks] { grid-template-columns: minmax(232px, max-content) max-content; }
+.column { display: grid; align-content: start; gap: var(--atlas-space-3); min-width: 0; }
+.menu[data-picks] > .column + .column { padding-left: var(--atlas-space-4); border-left: 1px solid var(--atlas-line-soft); }
+.group { display: grid; }
 .caption {
-  margin: 0 0 var(--atlas-space-3);
+  margin: var(--atlas-space-2) 0 var(--atlas-space-2) var(--atlas-space-2);
   color: var(--atlas-text-subtle);
   font: 700 var(--atlas-text-label) / 1.2 var(--atlas-font-ui);
   letter-spacing: var(--atlas-tracking-label);
@@ -225,10 +224,11 @@
 .pages { display: grid; gap: 2px; }
 .page {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
   gap: var(--atlas-space-3);
-  padding: 10px var(--atlas-space-3) 10px 10px;
+  min-height: 48px;
+  padding: 6px var(--atlas-space-4) 6px 8px;
   border-radius: var(--atlas-radius-control);
   color: var(--atlas-text);
   text-decoration: none;
@@ -240,50 +240,59 @@
 .pageIcon {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--atlas-line-soft);
   border-radius: calc(var(--atlas-radius-control) - 2px);
   color: var(--atlas-accent);
   background: var(--atlas-accent-wash);
 }
-.pageText { display: grid; gap: 2px; min-width: 0; }
+.page:hover .pageIcon, .page[aria-current="page"] .pageIcon { border-color: color-mix(in srgb, var(--atlas-accent) 45%, transparent); }
+.pageText { display: grid; gap: 1px; min-width: 0; }
+.pageText strong, .pageText small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pageText strong { color: var(--atlas-text-strong); font: 650 var(--atlas-text-body) / 1.25 var(--atlas-font-ui); }
 .pageText small { color: var(--atlas-text-muted); font: 500 var(--atlas-text-meta) / 1.3 var(--atlas-font-ui); }
-.pageGo { color: var(--atlas-text-subtle); transition: translate var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease); }
-.page:hover .pageGo { color: var(--atlas-accent); translate: 3px 0; }
 
-/* Quick picks: dungeon and raid paintings, or the class roster. */
-.picks[data-kind="art"] { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--atlas-space-3); }
-.picks[data-kind="class"] { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 4px var(--atlas-space-2); }
-.pick { position: relative; display: block; color: var(--atlas-text-strong); text-decoration: none; }
-.pick:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; border-radius: var(--atlas-radius-control); }
-.picks[data-kind="art"] .pick { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius-control); }
-.picks[data-kind="art"] .pick:hover, .picks[data-kind="art"] .pick[aria-current] { border-color: var(--atlas-accent); }
-.picks[data-kind="art"] .pickArt { position: absolute; inset: 0; }
-.picks[data-kind="art"] .pickArt img { object-fit: cover; transition: scale var(--atlas-duration-art) var(--atlas-ease); }
-.picks[data-kind="art"] .pick:hover .pickArt img { scale: 1.06; }
-.picks[data-kind="art"] .pick::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, color-mix(in srgb, var(--atlas-bg) 92%, transparent), transparent 70%); }
-.picks[data-kind="art"] .pickLabel { position: absolute; z-index: 1; inset: auto 10px 8px; font: 650 var(--atlas-text-small) / 1.2 var(--atlas-font-ui); text-shadow: var(--atlas-text-shadow-art); }
-.picks[data-kind="class"] .pick { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: var(--atlas-radius-control); }
-.picks[data-kind="class"] .pick:hover, .picks[data-kind="class"] .pick[aria-current] { background: var(--atlas-surface-raised); }
+/* Quick picks: a compact list — a small painting (dungeon, raid) or the class
+   crest beside the name. */
+.picks { display: grid; gap: 2px; }
+.picks[data-kind="class"] { grid-template-columns: repeat(2, max-content); gap: 2px var(--atlas-space-1); }
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 4px var(--atlas-space-3) 4px 6px;
+  border-radius: var(--atlas-radius-control);
+  color: var(--atlas-text-strong);
+  text-decoration: none;
+  transition: background-color var(--atlas-duration) var(--atlas-ease);
+}
+.pick:hover, .pick[aria-current] { background: var(--atlas-surface-raised); }
+.pick:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -2px; }
+.pickArt { position: relative; flex: none; overflow: hidden; }
+.pickArt img { object-fit: cover; }
+.picks[data-kind="art"] .pickArt { width: 48px; height: 30px; border: 1px solid var(--atlas-line-soft); border-radius: calc(var(--atlas-radius-control) - 4px); }
+.picks[data-kind="art"] .pick:hover .pickArt, .picks[data-kind="art"] .pick[aria-current] .pickArt { border-color: var(--atlas-accent); }
 .picks[data-kind="class"] .pickArt {
-  position: relative;
-  flex: none;
-  width: 30px;
-  height: 30px;
-  overflow: hidden;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   box-shadow: 0 0 0 2px var(--pick-tint), 0 0 10px color-mix(in srgb, var(--pick-tint) 40%, transparent);
 }
-.picks[data-kind="class"] .pickArt img { object-fit: cover; }
+.pickLabel { font: 600 var(--atlas-text-small) / 1.25 var(--atlas-font-ui); white-space: nowrap; }
 /* Class names: 62 % class colour into the heading white (AA on every surface, tests/atlas/palette). */
-.picks[data-kind="class"] .pickLabel { color: color-mix(in srgb, var(--pick-tint) 62%, var(--atlas-text-strong)); font: 600 var(--atlas-text-small) / 1.2 var(--atlas-font-ui); }
-.menu[data-compact] .picks[data-kind="art"] { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
-.menu[data-compact] .picks[data-kind="art"] > li { flex: 0 0 62%; scroll-snap-align: start; }
-.menu[data-compact] .picks[data-kind="class"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.picks[data-kind="class"] .pickLabel { color: color-mix(in srgb, var(--pick-tint) 62%, var(--atlas-text-strong)); }
 
-/* Laptops: the eight tabs keep to one row with tighter spacing. */
+/* In the phone sheet: one column, big rows, the picks two to a row. */
+.menu[data-compact], .menu[data-compact][data-picks] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); padding: 0 0 var(--atlas-space-4); }
+.menu[data-compact][data-picks] > .column + .column { padding-left: 0; border-left: 0; }
+.menu[data-compact] .page { min-height: 56px; }
+.menu[data-compact] .picks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px var(--atlas-space-2); }
+.menu[data-compact] .pick { min-height: 48px; }
+.menu[data-compact] .pickLabel { white-space: normal; }
+
+/* Laptops: the seven tabs keep to one row with tighter spacing. */
 @media (min-width: 1180px) and (max-width: 1365px) {
   .tab { gap: 6px; padding-left: 10px; }
   .tabs > ul > li[data-single] > .tab { padding-right: 14px; }
@@ -344,7 +353,27 @@
   .sheet[data-state="open"] { animation: drop var(--atlas-duration) var(--atlas-ease); }
   .sheet[data-state="closing"] { pointer-events: none; animation: lift var(--atlas-duration-fast) var(--atlas-ease) forwards; }
   .sheet > .account { justify-self: start; }
-  .sheetRealm { padding-bottom: var(--atlas-space-5); border-bottom: 1px solid var(--atlas-line-soft); }
+  .sheetRealms { display: grid; border-top: 1px solid var(--atlas-line-soft); }
+  .sheetRealm { border-bottom: 1px solid var(--atlas-line-soft); }
+  .sheetHead {
+    display: flex;
+    align-items: center;
+    gap: var(--atlas-space-3);
+    min-height: 56px;
+    padding: 0 var(--atlas-space-2);
+    color: var(--atlas-text-strong);
+    font: 650 var(--atlas-text-lead) / 1.2 var(--atlas-font-ui);
+    text-decoration: none;
+    list-style: none;
+    cursor: pointer;
+  }
+  .sheetHead::-webkit-details-marker { display: none; }
+  .sheetHead > svg { flex: none; color: var(--atlas-text-subtle); }
+  .sheetHead > span { flex: 1; }
+  .sheetHead:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -2px; border-radius: var(--atlas-radius-control); }
+  .sheetRealm[data-current] > .sheetHead > svg:first-child, .sheetHead[aria-current] > svg { color: var(--atlas-accent); }
+  .sheetChevron { transition: rotate var(--atlas-duration) var(--atlas-ease); }
+  details[open] > .sheetHead .sheetChevron { rotate: 180deg; color: var(--atlas-accent); }
 }
 /* Phones: one navigation — the menu sheet; the tab strip would only repeat it. */
 @media (max-width: 767px) {
@@ -354,5 +383,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .panel, .panel > .menu, .sheet, .account .accountLabel { animation: none !important; }
-  .toolbar::after, .tab::after, .tab svg, .toggle svg, .page, .pageGo, .picks .pickArt img, .sigil, .account, .menuIcon { transition: none; }
+  .toolbar::after, .tab::after, .tab svg, .toggle svg, .page, .pick, .sigil, .account, .menuIcon, .sheetChevron { transition: none; }
 }
