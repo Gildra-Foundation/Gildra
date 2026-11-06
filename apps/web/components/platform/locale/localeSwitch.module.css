@@ -8,24 +8,34 @@
   isolation: isolate;
 }
 
-/* The active language sits on a pill that travels between the two halves. Its
-   leading edge leaves first and the trailing edge follows, so it stretches
-   towards the chosen language and settles there (left/right of one absolutely
-   positioned span: no layout outside it, no shift). */
+/* The active language sits on a pill that slides to the chosen half on the
+   click (transform only: no layout while the next document loads). While that
+   document is on its way a thin line runs along the top edge, as on every
+   page change (routeTransition.module.css). */
 .pill {
   position: absolute;
-  inset: 0 50% 0 0;
+  inset: 0 auto 0 0;
   z-index: -1;
+  width: 50%;
   background: var(--atlas-accent);
   box-shadow: 0 0 0 1px var(--atlas-accent-strong) inset;
-  transition:
-    left var(--atlas-duration-slow) var(--atlas-ease) var(--pill-left-delay, 0s),
-    right var(--atlas-duration-slow) var(--atlas-ease) var(--pill-right-delay, 0s),
-    box-shadow var(--atlas-duration) var(--atlas-ease);
+  transition: transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
-.switch[data-active="en"] .pill { --pill-right-delay: 70ms; }
-.switch[data-active="ru"] .pill { inset: 0 0 0 50%; --pill-left-delay: 70ms; }
+.switch[data-active="ru"] .pill { transform: translateX(100%); }
 .switch[aria-busy] .pill { box-shadow: 0 0 0 1px var(--atlas-accent-strong) inset, 0 0 14px var(--atlas-accent-glow); }
+.switch[aria-busy]::after {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 120;
+  height: 2px;
+  content: "";
+  pointer-events: none;
+  background: var(--site-accent, var(--atlas-accent));
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: locale-progress 2.4s cubic-bezier(.1, .7, .3, 1) 150ms forwards;
+}
+@keyframes locale-progress { to { transform: scaleX(.85); } }
 
 .option {
   display: grid;
@@ -49,4 +59,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .pill, .option { transition: none; }
+  .switch[aria-busy]::after { animation: none; transform: scaleX(.6); }
 }

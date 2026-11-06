@@ -51,6 +51,10 @@ export function LocaleSwitch({ path, lang }: { path: string; lang: Lang }) {
     const destination = altPath(path, to) + window.location.search;
     saveLocaleSwitch(destination, root.current?.closest("header") ?? null);
     setPending(to);
+    // The pill and the loading line start on this frame, not after a React
+    // render that a busy page could push past the start of the navigation.
+    root.current?.setAttribute("data-active", to);
+    root.current?.setAttribute("aria-busy", "true");
     window.location.assign(destination);
   };
 

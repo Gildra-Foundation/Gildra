@@ -23,7 +23,8 @@ let lastReady: Ready | null = null;
  * The header's real account control. It asks GET /api/auth/status (always
  * no-store) once on mount and never invents a name:
  *  - loading: same-size placeholder (the label slot has a fixed width, see
- *    `.user-name` in components/layout/chrome.css), so the header does not shift;
+ *    `.user-name` in components/layout/chrome.css; the hidden "Sign in" inside
+ *    lets a header size it to that word instead), so the header does not shift;
  *  - signed out (or the status call failed): a "Sign in" link to /login;
  *  - Battle.net connected: the account name, linking to the character roster.
  *
@@ -75,7 +76,7 @@ export function AccountChip({
     return (
       <span className={`${className} user-pending`} aria-busy="true">
         {avatar}
-        <span className={labelClassName} aria-hidden="true"><i className="user-skel" /></span>
+        <span className={labelClassName} aria-hidden="true"><i className="user-skel">{w.signIn}</i></span>
         <span className="sr-only">{w.checking}</span>
         {trailing}
       </span>

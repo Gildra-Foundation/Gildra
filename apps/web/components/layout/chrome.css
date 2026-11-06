@@ -6,7 +6,7 @@
    width, so "checking", "Sign in" and any account name occupy the same space and
    the header never shifts when the session answer arrives. */
 .user-name{display:inline-block;width:104px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.user-skel{display:block;width:62px;height:8px;border-radius:2px;background:var(--line)}
+.user-skel{display:block;width:62px;height:8px;overflow:hidden;border-radius:2px;background:var(--line);color:transparent;font-style:normal;line-height:8px;white-space:nowrap}
 .user-pending{cursor:default}
 
 .soon{
