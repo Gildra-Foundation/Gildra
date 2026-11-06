@@ -162,7 +162,9 @@ export async function EntityDetailPage({ entity, entityType, relationships, lang
 
   const artPlaque = art ? (
     <MaterialPlaque kit={libraryKit} as="figure" className={styles.art} data-art={art.kind} aria-label={copy.artLabel(String(displayName))}>
-      <ResilientImage src={art.url} alt="" width={art.kind === "tile" ? 600 : 480} height={art.kind === "tile" ? 300 : 480} fetchPriority="high" />
+      {/* A picture that fails to load keeps its stage (the record's glyph on the sunken ground), never a collapsed frame. */}
+      <ResilientImage src={art.url} alt="" width={art.kind === "tile" ? 600 : 480} height={art.kind === "tile" ? 300 : 480} fetchPriority="high"
+        fallback={<span className={styles.artStage}><CatalogGlyph symbol={iconSymbol} className={styles.glyph} /></span>} />
     </MaterialPlaque>
   ) : null;
 

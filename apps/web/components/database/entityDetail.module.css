@@ -156,8 +156,20 @@
   background: var(--atlas-surface-sunken);
   object-fit: cover;
 }
-.art[data-art="tile"] img { aspect-ratio: 2; }
-.art[data-art="zoom"] img { aspect-ratio: 1; max-height: 60vh; object-fit: contain; }
+.art[data-art="tile"] img,
+.art[data-art="tile"] .artStage { aspect-ratio: 2; }
+.art[data-art="zoom"] img,
+.art[data-art="zoom"] .artStage { aspect-ratio: 1; max-height: 60vh; object-fit: contain; }
+.artStage {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  border: 1px solid var(--material-line, var(--atlas-line-soft));
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-subtle);
+  background: var(--atlas-surface-sunken);
+}
+.artStage > svg { width: 22%; height: auto; }
 
 /* ---------- Relations ---------- */
 .relationGroups { display: grid; gap: var(--atlas-space-2); }
