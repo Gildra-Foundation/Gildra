@@ -1,12 +1,12 @@
-import styles from "./community.module.css";
+import styles from "./stats.module.css";
 
-export type ChartSeries = { key: string; label: string; tone: 1 | 2 | 3 | 4; points: Array<[string, number]> };
+export type ChartSeries = { key: string; label: string; tone: 0 | 1 | 2 | 3 | 4; points: Array<[string, number]> };
 
 type Frame = { width: number; height: number; pad: { top: number; right: number; bottom: number; left: number } };
 /** Two drawings of one chart, swapped by CSS: text in an SVG scales with it, so a phone gets its own frame. */
 const frames: Record<"wide" | "narrow", Frame> = {
-  wide: { width: 1100, height: 340, pad: { top: 16, right: 130, bottom: 30, left: 56 } },
-  narrow: { width: 320, height: 230, pad: { top: 14, right: 88, bottom: 26, left: 40 } },
+  wide: { width: 500, height: 200, pad: { top: 10, right: 84, bottom: 24, left: 42 } },
+  narrow: { width: 320, height: 210, pad: { top: 12, right: 80, bottom: 24, left: 40 } },
 };
 
 /**

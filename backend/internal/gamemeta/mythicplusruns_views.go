@@ -1,7 +1,6 @@
 package gamemeta
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -504,99 +503,6 @@ func pairs(runs []Run) []Pair {
 		list = list[:pairLimit]
 	}
 	return list
-}
-
-// ---- Season stats --------------------------------------------------------
-
-// DungeonStats summarizes one dungeon of the filtered runs.
-type DungeonStats struct {
-	Slug string `json:"slug"`
-	RunStats
-}
-
-// SpecPresence is how often a spec appears in the filtered runs.
-type SpecPresence struct {
-	Spec        int     `json:"spec"`
-	Role        string  `json:"role"`
-	Runs        int     `json:"runs"`
-	Presence    float64 `json:"presence"`
-	MedianLevel float64 `json:"medianLevel"`
-}
-
-// LevelCount is the number of runs at one key level.
-type LevelCount struct {
-	Level int `json:"level"`
-	Runs  int `json:"runs"`
-}
-
-// StatsResponse is GET /v1/meta/wow/mythic-plus/stats.
-type StatsResponse struct {
-	RunsEnvelope
-	Overall  RunStats                   `json:"overall"`
-	Dungeons []DungeonStats             `json:"dungeonStats"`
-	Specs    []SpecPresence             `json:"specPresence"`
-	Levels   []LevelCount               `json:"levels"`
-	Cutoffs  map[string]json.RawMessage `json:"cutoffs"`
-}
-
-// Stats summarizes the filtered runs (specs filter ignored) and passes the cutoffs through.
-func (s *RunsSnapshot) Stats(filter RunsFilter) (StatsResponse, error) {
-	filter.Specs = nil
-	dungeonID, err := s.validate(&filter)
-	if err != nil {
-		return StatsResponse{}, err
-	}
-	runs := s.filtered(filter, dungeonID)
-	response := StatsResponse{RunsEnvelope: s.envelope(filter, runs), Cutoffs: s.Payload.Cutoffs}
-	if response.Cutoffs == nil {
-		response.Cutoffs = map[string]json.RawMessage{}
-	}
-	overall := statsAccumulator{}
-	perDungeon := map[int]*statsAccumulator{}
-	perSpec := map[int]*statsAccumulator{}
-	levels := map[int]int{}
-	for _, run := range runs {
-		overall.add(run)
-		if perDungeon[run.Dungeon] == nil {
-			perDungeon[run.Dungeon] = &statsAccumulator{}
-		}
-		perDungeon[run.Dungeon].add(run)
-		levels[run.Level]++
-		seen := map[int]bool{}
-		for _, spec := range runGroup(run).slots() {
-			if seen[spec] {
-				continue
-			}
-			seen[spec] = true
-			if perSpec[spec] == nil {
-				perSpec[spec] = &statsAccumulator{}
-			}
-			perSpec[spec].add(run)
-		}
-	}
-	response.Overall = overall.stats()
-	response.Dungeons = []DungeonStats{}
-	for _, dungeon := range s.Payload.Dungeons {
-		if acc := perDungeon[dungeon.ID]; acc != nil {
-			response.Dungeons = append(response.Dungeons, DungeonStats{Slug: dungeon.Slug, RunStats: acc.stats()})
-		}
-	}
-	response.Specs = []SpecPresence{}
-	for _, spec := range s.Payload.Specs {
-		acc := perSpec[spec.ID]
-		if acc == nil {
-			continue
-		}
-		stats := acc.stats()
-		response.Specs = append(response.Specs, SpecPresence{Spec: spec.ID, Role: spec.Role, Runs: stats.Runs, Presence: percentOf(stats.Runs, len(runs)), MedianLevel: stats.MedianLevel})
-	}
-	sort.SliceStable(response.Specs, func(i, j int) bool { return response.Specs[i].Runs > response.Specs[j].Runs })
-	response.Levels = []LevelCount{}
-	for level, count := range levels {
-		response.Levels = append(response.Levels, LevelCount{Level: level, Runs: count})
-	}
-	sort.Slice(response.Levels, func(i, j int) bool { return response.Levels[i].Level < response.Levels[j].Level })
-	return response, nil
 }
 
 // ---- Route finder --------------------------------------------------------

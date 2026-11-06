@@ -47,12 +47,34 @@ export type RegionCutoffs = {
   milestones: Array<{ score: number; players: number; share: number }>;
   all_timed: Array<{ level: number; score: number; players: number; share: number }>;
 };
+export type LevelCount = { level: number; runs: number };
+export type DungeonStats = RunStats & {
+  slug: string;
+  /** Fields below arrive with the stats API of 2026-11-06 (STAT); older responses lack them. */
+  runsAtMax?: number;
+  bestTimeLeft?: number;
+  levels?: LevelCount[];
+  standout?: { spec: number; presence: number; overall: number; lift: number };
+};
+export type SpecPresence = { spec: number; role: RunsRole; runs: number; presence: number; medianLevel: number; delta?: number };
+export type CompDiversity = { comps: number; specs: number; topShare: number; top10Share: number; effective: number; top: Composition[] };
+export type CohortSpec = {
+  spec: number; role: RunsRole; population: number; populationShare: number; title: number; titleShare: number;
+  p01: number; p1: number; p10: number; trend: number[]; delta?: number;
+};
+export type CohortView = { region: RunsRegion | "world"; updatedAt: string; trendEnd: string; population: number; title: number; specs: CohortSpec[] };
+export type WorldCutoffs = Pick<RegionCutoffs, "updated_at" | "players" | "tiers" | "history">;
 export type StatsResponse = RunsEnvelope & {
   overall: RunStats;
-  dungeonStats: Array<RunStats & { slug: string }>;
-  specPresence: Array<{ spec: number; role: RunsRole; runs: number; presence: number; medianLevel: number }>;
-  levels: Array<{ level: number; runs: number }>;
+  dungeonStats: DungeonStats[];
+  specPresence: SpecPresence[];
+  levels: LevelCount[];
   cutoffs: Partial<Record<RunsRegion, RegionCutoffs>>;
+  worldCutoffs?: WorldCutoffs;
+  diversity?: CompDiversity;
+  cohorts?: CohortView;
+  /** Runs read per dungeon from each region's leaderboard. */
+  depth?: Partial<Record<RunsRegion, number>>;
 };
 
 export type RunLink = {

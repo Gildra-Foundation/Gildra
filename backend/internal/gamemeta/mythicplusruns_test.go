@@ -236,3 +236,71 @@ func TestRunsFreshness(t *testing.T) {
 		t.Fatal("freshness thresholds are wrong")
 	}
 }
+
+func TestStatsDungeonsDiversityAndCohorts(t *testing.T) {
+	snapshot := testRunsSnapshot()
+	snapshot.Payload.Sample = RunsSampleDepth{PageSize: 20, Pages: map[string]int{"us": 15, "eu": 15, "kr": 0}}
+	snapshot.Payload.SpecCohorts = map[string]CohortSet{
+		"world": {TrendEnd: "2026-11-06", Specs: []CohortSpec{
+			{ID: 71, Population: 300, Title: 30, P01: 4100, P1: 3900, P10: 3400, Trend: []float64{3700, 3850, 3900}},
+			{ID: 62, Population: 100, Title: 10, P01: 4000, P1: 3800, P10: 3300, Trend: []float64{3800}},
+			{ID: 9999, Population: 50, Title: 5, P01: 1, P1: 1, P10: 1},
+		}},
+	}
+	snapshot.Payload.PresenceHistory = []PresenceDay{
+		{Date: "2026-10-30", Runs: map[string]int{"eu": 10, "us": 10}, Specs: map[string]map[string]int{"eu": {"71": 10}, "us": {"71": 0}}},
+		{Date: "2026-11-05", Runs: map[string]int{"eu": 1}, Specs: map[string]map[string]int{"eu": {"71": 1}}},
+		{Date: "2026-11-06", Runs: map[string]int{"eu": 55}, Specs: map[string]map[string]int{"eu": {"71": 55}}},
+	}
+	response, err := snapshot.Stats(RunsFilter{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if response.Depth["us"] != 300 || response.Depth["eu"] != 300 || len(response.Depth) != 2 {
+		t.Fatalf("depth = %#v", response.Depth)
+	}
+	if response.Diversity.Comps != 3 || response.Diversity.TopShare != 82.1 || len(response.Diversity.Top) != 2 {
+		t.Fatalf("diversity = %#v", response.Diversity)
+	}
+	den := response.Dungeons[0]
+	if den.Slug != "den-of-nalorakk" || den.MaxLevel != 24 || den.RunsAtMax != 10 || den.BestTimeLeft != 25 || len(den.Levels) != 2 {
+		t.Fatalf("den = %#v", den)
+	}
+	// 264 is in 10 of 40 runs here (25%) and 10 of 67 overall: the spec this dungeon favours most.
+	if den.Standout == nil || den.Standout.Spec != 264 || den.Standout.Presence != 25 {
+		t.Fatalf("standout = %#v", den.Standout)
+	}
+	for _, spec := range response.Specs {
+		if spec.Spec == 71 {
+			// 57 of 67 runs now against 10 of 20 a week before.
+			if spec.Delta == nil || *spec.Delta != round1(57.0/67*100-50) {
+				t.Fatalf("arms delta = %v", spec.Delta)
+			}
+		}
+	}
+	if response.Cohorts == nil || response.Cohorts.Region != "world" || len(response.Cohorts.Specs) != 2 || response.Cohorts.Title != 45 {
+		t.Fatalf("cohorts = %#v", response.Cohorts)
+	}
+	arms := response.Cohorts.Specs[0]
+	if arms.Spec != 71 || arms.Role != "dps" || arms.Delta == nil || *arms.Delta != 50 || arms.TitleShare != 66.7 {
+		t.Fatalf("arms cohort = %#v", arms)
+	}
+	if response.Cohorts.Specs[1].Delta != nil {
+		t.Fatal("a one-point trend has no weekly change")
+	}
+	filtered, err := snapshot.Stats(RunsFilter{Dungeon: "murder-row", Region: "eu"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(filtered.Dungeons) != 2 || filtered.Sample.Runs != 25 {
+		t.Fatalf("dungeons keep the region scope and ignore the dungeon filter: %d dungeons, %d runs", len(filtered.Dungeons), filtered.Sample.Runs)
+	}
+	if filtered.Cohorts != nil {
+		t.Fatal("no eu cohorts in the payload: the view must be absent")
+	}
+	for _, spec := range filtered.Specs {
+		if spec.Delta != nil {
+			t.Fatal("presence change is only shown without a dungeon filter")
+		}
+	}
+}

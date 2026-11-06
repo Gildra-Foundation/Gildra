@@ -4,8 +4,10 @@ import unittest
 from datetime import UTC, datetime
 from pathlib import Path
 
-from scraper.parsers.raiderio_mplus import collect_raiderio_mplus, current_season, parse_cutoffs, parse_run
-from scraper.parsers.raiderio_mplus_dataset_service import DatasetValidationError, validate_candidate
+from scraper.parsers.raiderio_mplus import (collect_raiderio_mplus, current_season, parse_cutoffs, parse_run,
+                                            parse_spec_cohorts, parse_world_cutoffs)
+from scraper.parsers.raiderio_mplus_dataset_service import (DatasetValidationError, merge_presence_history,
+                                                            validate_candidate)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 NOW = datetime(2026, 11, 6, 12, 0, tzinfo=UTC)
@@ -19,6 +21,8 @@ def _fake_fetch(calls):
     static = _load("raiderio-static-data-11.json")
     runs = _load("raiderio-runs-murder-row-eu.json")
     cutoffs = _load("raiderio-season-cutoffs-eu.json")
+    cohorts = _load("raiderio-cutoff-analysis-specs-eu.json")
+    summary = _load("raiderio-cutoff-summary-world.json")
 
     def fetch(path, params):
         calls.append((path, dict(params)))
@@ -34,6 +38,10 @@ def _fake_fetch(calls):
             return body
         if path == "/season-cutoffs":
             return cutoffs
+        if path == "/cutoff-analysis/summary":
+            return summary
+        if path == "/cutoff-analysis":
+            return cohorts
         raise AssertionError(path)
 
     return fetch
@@ -84,8 +92,8 @@ class RaiderIOCollectTest(unittest.TestCase):
 
     def test_collect_builds_a_valid_snapshot(self):
         payload, calls = self._collect()
-        # 1 static + 8 dungeons x 7 pages + 4 cutoffs.
-        self.assertEqual(len(calls), 1 + 8 * 7 + 4)
+        # 1 static + 8 dungeons x 7 pages + 4 cutoffs + world summary + 5 spec cohort sets.
+        self.assertEqual(len(calls), 1 + 8 * 7 + 4 + 1 + 5)
         self.assertEqual(payload["page_count"], len(calls))
         self.assertEqual(payload["regions"], ["us", "eu", "kr"])
         self.assertEqual(payload["record_count"], len(payload["runs"]))
@@ -113,6 +121,46 @@ class RaiderIOCollectTest(unittest.TestCase):
         broken["cutoffs"]["eu"]["tiers"].reverse()
         with self.assertRaises(DatasetValidationError):
             validate_candidate(broken)
+
+    def test_world_cutoffs_and_spec_cohorts(self):
+        world = parse_world_cutoffs(_load("raiderio-cutoff-summary-world.json"))
+        self.assertEqual([tier["key"] for tier in world["tiers"]], ["p999", "p990", "p900", "p750", "p600"])
+        self.assertGreater(world["players"], 1_000_000)
+        self.assertEqual(len(world["history"]), 5)
+        self.assertEqual(world["history"][0]["points"][-1][0], "2026-11-06")
+        cohorts = parse_spec_cohorts(_load("raiderio-cutoff-analysis-specs-eu.json"))
+        self.assertEqual(cohorts["trend_end"], "2026-11-06")
+        self.assertEqual(len(cohorts["specs"]), 12)
+        arms = next(spec for spec in cohorts["specs"] if spec["id"] == 71)
+        self.assertGreater(arms["title"], 0)
+        self.assertTrue(arms["p01"] > arms["p1"] > arms["p10"])
+        # 30 days of observations -> weekly points ending at the last day, oldest first.
+        self.assertEqual(len(arms["trend"]), 5)
+        self.assertEqual(arms["trend"][-1], arms["p1"])
+        self.assertEqual(arms["trend"], sorted(arms["trend"]))
+
+    def test_collect_sums_world_title_counts_over_regions(self):
+        payload, _ = self._collect()
+        self.assertEqual(sorted(payload["spec_cohorts"]), ["eu", "kr", "tw", "us", "world"])
+        arms = {scope: next(spec for spec in block["specs"] if spec["id"] == 71) for scope, block in payload["spec_cohorts"].items()}
+        self.assertEqual(arms["world"]["title"], 4 * arms["eu"]["title"])
+        broken = copy.deepcopy(payload)
+        broken["spec_cohorts"]["eu"]["specs"][0]["title"] = broken["spec_cohorts"]["eu"]["specs"][0]["population"] + 1
+        with self.assertRaises(DatasetValidationError):
+            validate_candidate(broken)
+
+    def test_presence_history_is_carried_and_capped(self):
+        payload, _ = self._collect()
+        old = [{"date": "2026-10-30", "runs": {"eu": 10}, "specs": {"eu": {"71": 7}}},
+               {"date": "2026-11-06", "runs": {"eu": 1}, "specs": {"eu": {}}}, "junk"]
+        history = merge_presence_history(old, payload, "2026-11-06")
+        self.assertEqual([item["date"] for item in history], ["2026-10-30", "2026-11-06"])
+        today = history[-1]
+        self.assertEqual(sum(today["runs"].values()), len(payload["runs"]))
+        for region, counts in today["specs"].items():
+            self.assertTrue(all(count <= today["runs"][region] for count in counts.values()))
+        many = [{"date": f"2026-{month:02d}-{day:02d}", "runs": {}, "specs": {}} for month in (6, 7, 8, 9, 10) for day in range(1, 29)]
+        self.assertEqual(len(merge_presence_history(many, payload, "2026-11-06")), 120)
 
 
 if __name__ == "__main__":
