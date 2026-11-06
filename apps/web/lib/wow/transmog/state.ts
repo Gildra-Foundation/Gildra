@@ -1,12 +1,14 @@
 import {
-  backgrounds, frameFormats, poses, transmogRaces, transmogSlots,
-  type FrameFormatId, type Pose, type TransmogGender, type TransmogRace, type TransmogSlot,
+  backgrounds, frameFormats, isTransmogClass, isTransmogRace, poses, transmogSlots,
+  type FrameFormatId, type Pose, type TransmogClass, type TransmogGender, type TransmogRace, type TransmogSlot,
 } from "./model";
 
 /** Everything a share link restores. Looks are ItemModifiedAppearanceIDs. */
 export type TransmogState = {
   race: TransmogRace;
   gender: TransmogGender;
+  /** Class of the outfit, "" for any: picks the armor type and the sets. */
+  cls: TransmogClass | "";
   looks: Partial<Record<TransmogSlot, number>>;
   hidden: TransmogSlot[];
   format: FrameFormatId;
@@ -18,7 +20,7 @@ export type TransmogState = {
 };
 
 export const defaultTransmogState: TransmogState = {
-  race: "human", gender: "m", looks: {}, hidden: [], format: "4x5", background: "vault", pose: "Stand", title: "", subtitle: "", mark: true,
+  race: "human", gender: "m", cls: "", looks: {}, hidden: [], format: "4x5", background: "vault", pose: "Stand", title: "", subtitle: "", mark: true,
 };
 
 const MAX_TEXT = 48;
@@ -28,14 +30,16 @@ const isSlot = (value: string): value is TransmogSlot => (transmogSlots as strin
 export function parseTransmogState(params: URLSearchParams): TransmogState {
   const state: TransmogState = { ...defaultTransmogState, looks: {}, hidden: [] };
   const race = params.get("race");
-  if (race && transmogRaces.some((entry) => entry.id === race)) state.race = race as TransmogRace;
+  if (race && isTransmogRace(race)) state.race = race;
   if (params.get("g") === "f") state.gender = "f";
+  const cls = params.get("c");
+  if (cls && isTransmogClass(cls)) state.cls = cls;
   for (const part of (params.get("s") ?? "").split("~")) {
     const [slot, raw] = part.split(".");
     const id = Number(raw);
     if (slot && isSlot(slot) && Number.isSafeInteger(id) && id > 0) state.looks[slot] = id;
   }
-  state.hidden = (params.get("hide") ?? "").split("~").filter(isSlot);
+  state.hidden = [...new Set((params.get("hide") ?? "").split("~").filter(isSlot))];
   const format = params.get("f");
   if (format && frameFormats.some((entry) => entry.id === format)) state.format = format as FrameFormatId;
   const bg = params.get("bg");
@@ -53,6 +57,7 @@ export function serializeTransmogState(state: TransmogState): string {
   const params = new URLSearchParams();
   if (state.race !== defaultTransmogState.race) params.set("race", state.race);
   if (state.gender === "f") params.set("g", "f");
+  if (state.cls) params.set("c", state.cls);
   const looks = transmogSlots.filter((slot) => state.looks[slot]).map((slot) => `${slot}.${state.looks[slot]}`);
   if (looks.length) params.set("s", looks.join("~"));
   if (state.hidden.length) params.set("hide", state.hidden.join("~"));
@@ -62,7 +67,8 @@ export function serializeTransmogState(state: TransmogState): string {
   if (state.title) params.set("t", state.title.slice(0, MAX_TEXT));
   if (state.subtitle) params.set("n", state.subtitle.slice(0, MAX_TEXT));
   if (!state.mark) params.set("mark", "0");
-  return params.toString();
+  // "~" is unreserved in a URL: keep the slot list readable instead of %7E.
+  return params.toString().replace(/%7E/gi, "~");
 }
 
 export const transmogTextLimit = MAX_TEXT;

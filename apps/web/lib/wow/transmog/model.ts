@@ -4,6 +4,8 @@
  * i18n here — client components import it directly.
  */
 
+import { chrModelIdForRace } from "@/lib/wow/chrModels";
+
 export type TransmogSlot =
   | "head" | "shoulder" | "back" | "chest" | "shirt" | "tabard" | "wrist"
   | "hands" | "waist" | "legs" | "feet" | "main-hand" | "off-hand";
@@ -51,28 +53,33 @@ export function iconUrls(iconName?: string) {
 }
 
 /**
- * Playable races with their ChrModel ids in the Wowhead viewer (male, female).
- * 23/24 is a non-playable model and later races are not mapped yet.
+ * Playable races in the order of the game's race list: core races first, then
+ * allied and later races. `raceId` is Battle.net's playable_race.id; the
+ * viewer model comes from lib/wow/chrModels.ts. Dracthyr has one model.
  */
 export const transmogRaces = [
-  { id: "human", models: [1, 2] },
-  { id: "orc", models: [3, 4] },
-  { id: "dwarf", models: [5, 6] },
-  { id: "night-elf", models: [7, 8] },
-  { id: "undead", models: [9, 10] },
-  { id: "tauren", models: [11, 12] },
-  { id: "gnome", models: [13, 14] },
-  { id: "troll", models: [15, 16] },
-  { id: "goblin", models: [17, 18] },
-  { id: "blood-elf", models: [19, 20] },
-  { id: "draenei", models: [21, 22] },
+  { id: "human", raceId: 1 }, { id: "dwarf", raceId: 3 }, { id: "night-elf", raceId: 4 }, { id: "gnome", raceId: 7 },
+  { id: "draenei", raceId: 11 }, { id: "worgen", raceId: 22 }, { id: "void-elf", raceId: 29 }, { id: "lightforged-draenei", raceId: 30 },
+  { id: "dark-iron-dwarf", raceId: 34 }, { id: "kul-tiran", raceId: 32 }, { id: "mechagnome", raceId: 37 },
+  { id: "orc", raceId: 2 }, { id: "undead", raceId: 5 }, { id: "tauren", raceId: 6 }, { id: "troll", raceId: 8 },
+  { id: "blood-elf", raceId: 10 }, { id: "goblin", raceId: 9 }, { id: "nightborne", raceId: 27 }, { id: "highmountain-tauren", raceId: 28 },
+  { id: "maghar-orc", raceId: 36 }, { id: "zandalari-troll", raceId: 31 }, { id: "vulpera", raceId: 35 },
+  { id: "pandaren", raceId: 24 }, { id: "dracthyr", raceId: 52 }, { id: "earthen", raceId: 84 }, { id: "haranir", raceId: 86 },
 ] as const;
 export type TransmogRace = (typeof transmogRaces)[number]["id"];
 export type TransmogGender = "m" | "f";
 
+export const isTransmogRace = (value: string): value is TransmogRace => transmogRaces.some((entry) => entry.id === value);
+
+/** Races with one body for both sexes: the body toggle is hidden for them. */
+export function singleBody(race: TransmogRace) {
+  const entry = transmogRaces.find((candidate) => candidate.id === race) ?? transmogRaces[0];
+  return chrModelIdForRace(entry.raceId, false) === chrModelIdForRace(entry.raceId, true);
+}
+
 export function chrModelId(race: TransmogRace, gender: TransmogGender) {
   const entry = transmogRaces.find((candidate) => candidate.id === race) ?? transmogRaces[0];
-  return entry.models[gender === "f" ? 1 : 0];
+  return chrModelIdForRace(entry.raceId, gender === "f") ?? 1;
 }
 
 export const classIds = [
@@ -81,6 +88,17 @@ export const classIds = [
   { id: 9, slug: "warlock" }, { id: 10, slug: "monk" }, { id: 11, slug: "druid" }, { id: 12, slug: "demon-hunter" },
   { id: 13, slug: "evoker" },
 ] as const;
+export type TransmogClass = (typeof classIds)[number]["slug"];
+export const isTransmogClass = (value: string): value is TransmogClass => classIds.some((entry) => entry.slug === value);
+
+/** Armor a class wears; it sets the default armor filter, the set filter and Randomize. */
+export const classArmor: Record<TransmogClass, Exclude<ArmorType, "cosmetic">> = {
+  warrior: "plate", paladin: "plate", "death-knight": "plate",
+  hunter: "mail", shaman: "mail", evoker: "mail",
+  rogue: "leather", monk: "leather", druid: "leather", "demon-hunter": "leather",
+  priest: "cloth", mage: "cloth", warlock: "cloth",
+};
+export const classId = (slug: TransmogClass | "") => classIds.find((entry) => entry.slug === slug)?.id ?? 0;
 
 /** Export frames: social posts, stories, link previews and wide screens. */
 export const frameFormats = [
