@@ -5,34 +5,27 @@ export type WorkspaceLocale = Lang;
 
 // Only application-authored UI copy belongs here; names from game data and users remain unchanged.
 const englishCopy = {
-  "Результат сохранён": "Result saved",
-  "Ссылка скопирована. Данные аккаунта и полный профиль персонажа в неё не входят.": "Link copied. Account data and the full character profile are not included.",
-  "Не удалось создать или скопировать ссылку.": "Could not create or copy the link.",
-  "Ссылка отозвана. По старому адресу результат больше не откроется.": "Link revoked. The result is no longer available at the old address.",
-  "Не удалось отозвать ссылку.": "Could not revoke the link.",
   "Сохранённые расчёты": "Saved simulations",
-  "Сохранено": "Saved",
-  "в этой истории": "in this history",
-  "Обновить историю": "Refresh history",
+  "Тип расчёта": "Simulation type",
+  "Все": "All",
+  "Сегодня": "Today",
+  "Вчера": "Yesterday",
   "Загружаем историю…": "Loading history…",
-  "История временно недоступна.": "History is temporarily unavailable.",
+  "История не загрузилась": "History didn't load",
   "Повторить": "Try again",
-  "Здесь пока пусто": "No saved results yet",
-  "Измените талант, рассчитайте ротацию или сравните предмет — результат появится здесь автоматически.": "Change a talent, simulate a rotation, or compare an item to save a result here automatically.",
-  "Таланты": "Talents",
-  "Ротация": "Rotation",
-  "Экипировка": "Gear",
-  "цел.": "targets",
-  "сек.": "sec",
-  "Данные расчёта": "Simulation details",
-  "Версия игры:": "Game build:",
+  "Здесь появятся ваши расчёты талантов, ротации и экипировки": "Your talent, rotation and gear results will appear here",
+  "Открыть таланты": "Open talents",
+  "DPS по пачке": "AoE DPS",
   "Устарел": "Outdated",
   "Профиль изменился — пересчитайте": "Profile changed — simulate again",
-  "Актуален": "Current",
-  "Совпадает с текущим профилем": "Matches the current profile",
-  "Отозвать": "Revoke",
   "Поделиться": "Share",
-  "Только результат": "Result only",
+  "Отозвать ссылку": "Revoke link",
+  "Ссылка скопирована": "Link copied",
+  "Ссылка отозвана": "Link revoked",
+  "Не удалось скопировать": "Could not copy",
+  "Не удалось отозвать": "Could not revoke",
+  "цел.": "targets",
+  "сек.": "sec",
   "Вставьте код из 16 символов или полную ссылку Warcraft Logs.": "Enter the 16-character code or the full Warcraft Logs link.",
   "Этот персонаж не участвовал в отчёте.": "This character did not participate in the report.",
   "Персонаж найден, но в отчёте нет завершённых боёв с его участием.": "The character was found, but the report has no completed fights featuring them.",
@@ -106,6 +99,19 @@ export function workspaceScenario(locale: WorkspaceLocale, id: string) {
     "arena-3v3": { en: "3v3 Arena", ru: "Арена 3 на 3" },
   };
   return scenarios[id]?.[locale] ?? id;
+}
+
+/** "4 цели · 5 мин" / "4 targets · 5 min" — the size of a simulated fight. */
+export function workspaceScenarioSize(locale: WorkspaceLocale, targets: number, durationSeconds: number) {
+  const plural = new Intl.PluralRules(locale === "ru" ? "ru-RU" : "en-US").select(targets);
+  const target = locale === "ru"
+    ? ({ one: "цель", few: "цели" } as Record<string, string>)[plural] ?? "целей"
+    : plural === "one" ? "target" : "targets";
+  const minutes = durationSeconds % 60 === 0 && durationSeconds >= 60;
+  const duration = minutes
+    ? `${durationSeconds / 60} ${locale === "ru" ? "мин" : "min"}`
+    : `${durationSeconds} ${locale === "ru" ? "с" : "s"}`;
+  return `${workspaceNumber(locale, targets)} ${target} · ${duration}`;
 }
 
 export function workspaceRunLabel(locale: WorkspaceLocale, run: { kind: CharacterRunKind; label: string; scenario: { id: string } }) {
