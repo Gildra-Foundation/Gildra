@@ -1,0 +1,228 @@
+/* atlas:strict — records of a library dataset: the record table (sticky head under the site bar, icon + name in its quality colour, fact columns, tooltip button), the tray of icon tiles, "show more". Quality colours arrive as data variables. */
+
+.list { display: grid; gap: var(--atlas-space-4); min-width: 0; }
+
+/* ---------- Table (glass, AtlasTable's look; a page-sticky head, so no scroll region around it) ---------- */
+.table {
+  width: 100%;
+  border: 1px solid var(--atlas-line);
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  box-shadow: var(--atlas-shadow-card);
+  font-size: var(--atlas-text-small);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.table thead th {
+  position: sticky;
+  /* Above the row icons (their frame layers are positioned up to z-index 2). */
+  z-index: 4;
+  top: var(--atlas-sticky-top);
+  padding: var(--atlas-space-3) var(--atlas-space-4);
+  border-bottom: 1px solid var(--atlas-line);
+  color: var(--atlas-text-subtle);
+  background: var(--atlas-surface-raised);
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: .1em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table thead .nameHead { padding-left: calc(var(--atlas-space-4) + 48px + var(--atlas-space-3)); }
+.table thead .actionHead { width: 56px; }
+
+.row {
+  --record-quality: var(--atlas-line);
+  --record-quality-text: var(--atlas-text-strong);
+  position: relative;
+  transition: background-color var(--atlas-duration-fast) var(--atlas-ease);
+}
+
+.row:hover > *,
+.row:focus-within > * { background: color-mix(in srgb, var(--record-quality) 9%, var(--atlas-accent-wash)); }
+
+.row > th,
+.row > td {
+  padding: var(--atlas-space-2) var(--atlas-space-4);
+  border-bottom: 1px solid var(--atlas-line-soft);
+  color: var(--atlas-text);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.row:last-child > * { border-bottom: 0; }
+.row > td[data-empty] { color: var(--atlas-text-subtle); }
+.table .numeric { text-align: right; }
+.fact { white-space: nowrap; }
+
+.nameCell { width: 100%; }
+.nameInner { display: flex; align-items: center; gap: var(--atlas-space-3); min-height: 52px; }
+
+.icon {
+  --material-icon-edge: var(--record-quality);
+  color: var(--atlas-text-subtle);
+}
+
+.icon > svg { padding: 22%; }
+
+.glyph {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nameText { display: grid; gap: 2px; min-width: 0; }
+
+.link {
+  color: var(--record-quality-text);
+  font-family: var(--atlas-font-display);
+  font-size: var(--atlas-text-title);
+  font-weight: var(--atlas-weight-display);
+  line-height: var(--atlas-leading-snug);
+  text-decoration: none;
+  text-wrap: pretty;
+}
+
+/* The name link covers the whole row; the tooltip button sits above it. */
+.link::after { content: ""; position: absolute; inset: 0; z-index: 0; }
+.row:hover .link { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.link:focus-visible { outline: none; }
+.link:focus-visible::after { outline: 2px solid var(--atlas-accent-strong); outline-offset: -2px; }
+
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.actionCell { width: 56px; }
+.actionCell > * { position: relative; z-index: 1; }
+
+/* ---------- Tray: gems and collections, the icon is the subject ---------- */
+.tray {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 208px), 1fr));
+  gap: var(--atlas-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---------- Tooltip button (keyboard and touch way to the tooltip) ---------- */
+.preview {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--atlas-radius);
+  color: var(--atlas-text-subtle);
+  background: transparent;
+  cursor: pointer;
+}
+
+.preview svg { width: 18px; height: 18px; }
+.preview:hover,
+.preview[aria-expanded="true"] { border-color: var(--atlas-line); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
+.preview[data-state="loading"] { color: var(--atlas-accent); animation: pulse 1s ease-in-out infinite alternate; }
+.preview[data-state="error"] { color: var(--atlas-negative); }
+.preview:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+@keyframes pulse { to { opacity: .35; } }
+
+.previewError {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 6px);
+  right: 0;
+  width: max-content;
+  max-width: 260px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--atlas-negative);
+  color: var(--atlas-text);
+  background: var(--atlas-surface-sunken);
+  font-size: var(--atlas-text-small);
+  box-shadow: var(--atlas-shadow-card);
+}
+
+.previewError button {
+  margin-inline-start: 6px;
+  padding: 0;
+  border: 0;
+  color: var(--atlas-accent);
+  background: transparent;
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-small);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+/* ---------- Show more ---------- */
+.more { display: grid; justify-items: center; gap: var(--atlas-space-2); padding-top: var(--atlas-space-2); }
+.moreError { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.nextLink { color: var(--atlas-accent); font-weight: 600; }
+
+/* ---------- Phones: each row is icon · name, the facts on one line under the name ---------- */
+@media (max-width: 720px) {
+  .table { border: 0; background: none; box-shadow: none; }
+  .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .table tbody { display: grid; gap: var(--atlas-space-2); }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--atlas-space-2);
+    /* Fact lines (also when they wrap) start under the name, not under the icon: the name cell takes the indent back. */
+    padding: var(--atlas-space-2) var(--atlas-space-1) var(--atlas-space-2) calc(var(--atlas-space-3) + 48px + var(--atlas-space-3));
+    border: 1px solid var(--atlas-line-soft);
+    border-radius: var(--atlas-radius);
+    background: var(--atlas-glass-sheen), var(--atlas-glass-fill);
+  }
+  .row[data-quality] { border-left-color: var(--record-quality); }
+  /* The facts always start a new line under the name, however short the name is. */
+  .row::after { content: ""; order: 1; flex-basis: 100%; height: 0; }
+  .row > th,
+  .row > td { padding: 0; border: 0; }
+  .nameCell { flex: 1 1 calc(100% - 56px); order: 0; width: auto; margin-left: calc(-48px - var(--atlas-space-3)); }
+  .actionCell { order: 1; width: auto; }
+  .fact {
+    order: 2;
+    color: var(--atlas-text-muted);
+    font-size: var(--atlas-text-meta);
+  }
+  .table .fact { text-align: left; }
+  .fact[data-label]::before { content: attr(data-label) " "; color: var(--atlas-text-subtle); }
+  .fact[data-empty] { display: none; }
+  /* Facts after the first are joined by a dot. */
+  .fact:not([data-empty]) ~ .fact::before { content: "· " attr(data-label) " "; color: var(--atlas-text-subtle); }
+  .fact:not([data-empty]) ~ .fact:not([data-label])::before { content: "· "; }
+  .link { font-size: var(--atlas-text-body); }
+  .preview { width: 44px; height: 44px; }
+  .tray { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+  .previewError { max-width: min(260px, 70vw); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row { transition: none; }
+  .preview[data-state="loading"] { animation: none; }
+}
+
+:global([data-motion="reduced"]) .row,
+:global([data-ui-motion="reduce"]) .row { transition: none; }
+
+@media (forced-colors: active) {
+  .table, .row { border: 1px solid CanvasText; background: Canvas; }
+  .link { color: LinkText; }
+}

@@ -8,14 +8,24 @@
   margin-top: var(--atlas-space-5);
 }
 
-.plaque { display: grid; gap: var(--atlas-space-4); }
+/* Above the record table, so the search suggestions open over it. */
+.plaque { position: relative; z-index: 3; display: grid; gap: var(--atlas-space-4); }
 
 .toolbar {
+  display: grid;
+  gap: var(--atlas-space-4);
+}
+
+/* Filter selects: a grid of fields; on phones folded under the "Filters" toggle. */
+.filters {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
   align-items: end;
   gap: var(--atlas-space-4) var(--atlas-space-3);
 }
+
+.filtersToggle { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.filtersButton { display: none; }
 
 /* Name search: labelled field + the painted button, the whole form width. */
 .search {
@@ -110,70 +120,10 @@
   scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-3));
 }
 
-.records {
-  display: grid;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  transition: opacity var(--atlas-duration) var(--atlas-ease);
-}
-
-.cards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: var(--atlas-space-3); }
-.tray { grid-template-columns: repeat(auto-fill, minmax(min(100%, 208px), 1fr)); gap: var(--atlas-space-3); }
 
 /* CatalogBehavior marks the workspace while the next view loads. */
-.workspace[data-pending] .records,
-.workspace[data-pending] .empty { opacity: .55; }
-
-/* Tooltip preview: a small icon button in the card corner (keyboard and touch way to the tooltip). */
-.preview {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--atlas-radius);
-  color: var(--atlas-text-subtle);
-  background: transparent;
-  cursor: pointer;
-}
-
-.preview svg { width: 18px; height: 18px; }
-.preview:hover,
-.preview[aria-expanded="true"] { border-color: var(--atlas-line); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
-.preview[data-state="loading"] { color: var(--atlas-accent); animation: pulse 1s ease-in-out infinite alternate; }
-.preview[data-state="error"] { color: var(--atlas-negative); }
-
-@keyframes pulse { to { opacity: .35; } }
-
-.previewError {
-  position: absolute;
-  z-index: 3;
-  top: calc(100% + 6px);
-  right: 0;
-  width: max-content;
-  max-width: 260px;
-  margin: 0;
-  padding: 8px 10px;
-  border: 1px solid var(--atlas-negative);
-  color: var(--atlas-text);
-  background: var(--atlas-surface-sunken);
-  font-size: var(--atlas-text-small);
-  box-shadow: var(--atlas-shadow-card);
-}
-
-.previewError button {
-  margin-inline-start: 6px;
-  padding: 0;
-  border: 0;
-  color: var(--atlas-accent);
-  background: transparent;
-  font-family: var(--atlas-font-ui);
-  font-size: var(--atlas-text-small);
-  font-weight: 650;
-  cursor: pointer;
-}
+.results > * { transition: opacity var(--atlas-duration) var(--atlas-ease); }
+.workspace[data-pending] .results > * { opacity: .55; }
 
 .empty {
   display: grid;
@@ -193,7 +143,7 @@
 
 .empty p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); }
 
-:is(.chip, .reset, .preview):focus-visible {
+:is(.chip, .reset):focus-visible {
   outline: 2px solid var(--atlas-accent-strong);
   outline-offset: 2px;
 }
@@ -205,24 +155,40 @@
 }
 
 @media (max-width: 760px) {
-  .toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+  .toolbar { gap: var(--atlas-space-3); }
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+  .filtersButton {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    gap: var(--atlas-space-2);
+    min-height: 44px;
+    padding: 0 var(--atlas-space-4);
+    border: 1px solid var(--material-line, var(--atlas-line));
+    border-radius: var(--atlas-radius);
+    color: var(--atlas-text-strong);
+    background: color-mix(in srgb, var(--atlas-surface-sunken) 70%, transparent);
+    font-size: var(--atlas-text-small);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .filtersButton svg { width: 16px; height: 16px; }
+  .filtersButton b { color: var(--atlas-accent-strong); }
+  .filtersToggle:checked + .filtersButton { border-color: var(--material-light, var(--atlas-accent)); }
+  .filtersToggle:focus-visible + .filtersButton { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+  .filtersToggle:not(:checked) ~ .filters { display: none; }
   .search { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
   .searchField input { font-size: var(--atlas-text-body); }
-  .cards { grid-template-columns: minmax(0, 1fr); }
-  .tray { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
   .levelGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .levelGrid > :last-child { grid-column: 1 / -1; }
   .levels > summary,
   .levels > div { padding-inline: var(--atlas-space-3); }
-  .previewError { max-width: min(260px, 70vw); }
   .chip { min-height: 44px; }
-  .preview { width: 44px; height: 44px; }
 }
 
 
 @media (prefers-reduced-motion: reduce) {
-  .records { transition: none; }
-  .preview[data-state="loading"] { animation: none; }
+  .results > * { transition: none; }
 }
 
 @media (forced-colors: active) {
