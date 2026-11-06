@@ -160,7 +160,8 @@ func (s *Service) payloadEntries(ctx context.Context, dataset string, query Quer
 	}
 	list := doc.findList(query)
 	if list == nil {
-		return nil, false, ErrSnapshotNotFound
+		// The source is published but does not rank this role here (no tank list in 3v3).
+		return []Entry{}, false, nil
 	}
 	return list.entries(query.Limit), list.TiersDerived, nil
 }

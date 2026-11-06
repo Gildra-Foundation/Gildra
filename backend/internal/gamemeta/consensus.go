@@ -45,14 +45,16 @@ func consensusTier(value float64) string {
 }
 
 // Consensus merges the sources' own lists of one mode and role into
-// Gildra's tier: a spec's tier is the mean of the tiers the sources give it,
-// its order the mean tier, then the mean relative position (0 = first of its
-// list), then how many sources rank it. Every source weighs the same; a spec
+// Gildra's tier: a spec's tier is the median of the tiers the sources give it
+// (one outlier cannot move it), its order inside the tier the mean tier, then
+// the mean relative position (0 = first of its list), then how many sources
+// rank it. Every source weighs the same; a spec
 // one source leaves out simply has one tier fewer.
 func Consensus(columns []SourceColumn, role string) []Entry {
 	type tally struct {
 		entry     Entry
 		tierSum   float64
+		tiers     []float64
 		position  float64
 		sources   int
 		positions int
@@ -75,6 +77,7 @@ func Consensus(columns []SourceColumn, role string) []Entry {
 				order = append(order, key)
 			}
 			item.tierSum += value
+			item.tiers = append(item.tiers, value)
 			item.sources++
 			if size > 1 {
 				item.position += float64(index) / float64(size-1)
@@ -91,7 +94,7 @@ func Consensus(columns []SourceColumn, role string) []Entry {
 		}
 	}
 	entries := make([]Entry, 0, len(order))
-	mean := map[string][2]float64{}
+	mean := map[string][3]float64{}
 	for _, key := range order {
 		item := tallies[key]
 		tier := item.tierSum / float64(item.sources)
@@ -99,9 +102,10 @@ func Consensus(columns []SourceColumn, role string) []Entry {
 		if item.positions > 0 {
 			position = item.position / float64(item.positions)
 		}
-		mean[key] = [2]float64{tier, position}
+		letter := tierMedian(item.tiers)
+		mean[key] = [3]float64{math.Round(letter), tier, position}
 		entry := item.entry
-		entry.Tier = consensusTier(tier)
+		entry.Tier = consensusTier(letter)
 		entry.Sources = item.sources
 		value := math.Round(tier*100) / 100
 		entry.TierScore = &value
@@ -109,11 +113,10 @@ func Consensus(columns []SourceColumn, role string) []Entry {
 	}
 	sort.SliceStable(entries, func(a, b int) bool {
 		left, right := mean[entries[a].ClassSlug+":"+entries[a].SpecSlug], mean[entries[b].ClassSlug+":"+entries[b].SpecSlug]
-		if math.Abs(left[0]-right[0]) > 1e-9 {
-			return left[0] < right[0]
-		}
-		if math.Abs(left[1]-right[1]) > 1e-9 {
-			return left[1] < right[1]
+		for index := range left {
+			if math.Abs(left[index]-right[index]) > 1e-9 {
+				return left[index] < right[index]
+			}
 		}
 		return entries[a].Sources > entries[b].Sources
 	})
@@ -121,4 +124,15 @@ func Consensus(columns []SourceColumn, role string) []Entry {
 		entries[index].Rank = index + 1
 	}
 	return entries
+}
+
+// tierMedian of tier values; an even count takes the mean of the middle two.
+func tierMedian(values []float64) float64 {
+	sorted := append([]float64(nil), values...)
+	sort.Float64s(sorted)
+	middle := len(sorted) / 2
+	if len(sorted)%2 == 1 {
+		return sorted[middle]
+	}
+	return (sorted[middle-1] + sorted[middle]) / 2
 }

@@ -140,8 +140,9 @@ func (s *Service) sourceTierList(ctx context.Context, query Query) (Snapshot, er
 	if err != nil {
 		return Snapshot{}, err
 	}
-	if len(entries) == 0 {
-		return Snapshot{}, ErrSnapshotNotFound
+	// A live source that does not rank this role answers an empty list, not a 404.
+	if entries == nil {
+		entries = []Entry{}
 	}
 	snapshot := Snapshot{
 		Game: "wow", Status: sources[0].Status, Source: query.Source, Activity: query.Activity, Bracket: query.Bracket,
