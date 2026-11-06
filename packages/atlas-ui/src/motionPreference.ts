@@ -35,3 +35,12 @@ export function subscribeSiteMotion(callback: () => void) {
   window.addEventListener(EVENT, callback);
   return () => window.removeEventListener(EVENT, callback);
 }
+
+/**
+ * A page hand-over is on screen (RouteTransitionRuntime marks <html data-route-turn>
+ * from the click until the new page has arrived): the route transition is the
+ * page's arrival, so pages skip their own entrance of what is already in view.
+ */
+export function routeTurnActive() {
+  return typeof document !== "undefined" && document.documentElement.hasAttribute("data-route-turn");
+}

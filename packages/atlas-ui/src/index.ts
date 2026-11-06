@@ -38,4 +38,6 @@ export { AtlasPagination } from "./AtlasPagination";
 export { AtlasChart, type AtlasChartDatum } from "./AtlasChart";
 export { artMorphName } from "./morph";
 export { artPlaceholder, configureArtPlaceholders } from "./placeholders";
-export { lessMotion, motionPreferenceScript, setSiteMotionReduced, siteMotionReduced, subscribeSiteMotion, MOTION_STORAGE_KEY } from "./motionPreference";
+export { AtlasSwap } from "./AtlasSwap";
+export { playSwap, useSwapMotion, swapDirection, SWAP_MS } from "./swapMotion";
+export { routeTurnActive, lessMotion, motionPreferenceScript, setSiteMotionReduced, siteMotionReduced, subscribeSiteMotion, MOTION_STORAGE_KEY } from "./motionPreference";

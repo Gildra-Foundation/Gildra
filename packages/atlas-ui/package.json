@@ -14,6 +14,7 @@
     "./motionPreference": "./src/motionPreference.ts",
     "./motionTier": "./src/motionTier.ts",
     "./morph": "./src/morph.ts",
+    "./swapMotion": "./src/swapMotion.ts",
     "./format": "./src/format.ts",
     "./clipboard": "./src/clipboard.ts",
     "./toast": "./src/toast.ts",

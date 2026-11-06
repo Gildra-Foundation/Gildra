@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, ClipboardCopy } from "lucide-react";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { copyText } from "@gildra/atlas-ui/clipboard";
+import { playSwap, swapDirection } from "@gildra/atlas-ui/swapMotion";
 import styles from "./classCatalog.module.css";
 
 type RoleFilterValue = "all" | "tank" | "healer" | "dps";
@@ -22,8 +23,11 @@ export function RoleFilter({ target, label, labels }: { target: string; label: s
       value={value}
       onValueChange={(next) => {
         const role = next as RoleFilterValue;
+        const roster = document.getElementById(target);
+        const fromHeight = roster?.getBoundingClientRect().height;
         setValue(role);
-        document.getElementById(target)?.setAttribute("data-role-filter", role);
+        roster?.setAttribute("data-role-filter", role);
+        if (roster) playSwap(roster, { fromHeight, direction: swapDirection(Object.keys(labels), value, role) });
       }}
       options={(Object.keys(labels) as RoleFilterValue[]).map((key) => ({ value: key, label: labels[key] }))}
     />
