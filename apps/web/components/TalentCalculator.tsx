@@ -905,7 +905,7 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
           <MaterialButton kit={TALENTS_KIT} fit="stack" variant="primary" icon={<Upload aria-hidden="true" />} onClick={openImportDialog}>{copy.importTitle}</MaterialButton>
           <MaterialButton kit={TALENTS_KIT} fit="stack" icon={<Share2 aria-hidden="true" />} onClick={copyShareLink}>{copy.share}</MaterialButton>
         </div>} />
-      {presets.length ? <nav className={page.presets} aria-label={copy.popularTitle}>
+      {presets.length ? <nav className={page.presets} aria-label={copy.popularTitle} data-talent-presets="">
         <span className={page.presetsTitle} aria-hidden="true">{copy.popularTitle}</span>
         <ul>
           {presets.map((build) => {
