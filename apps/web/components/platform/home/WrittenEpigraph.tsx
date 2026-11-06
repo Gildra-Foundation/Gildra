@@ -43,7 +43,8 @@ export function WrittenEpigraph({ quote, author, extended }: { lang: Lang; quote
     };
     const unsubscribe = subscribeSiteMotion(finish);
     media.addEventListener("change", finish);
-    const font = document.fonts.load('400 32px "Gildra Preciosa"').catch(() => []);
+    // The quote's own text: Preciosa is split by script (unicode-range).
+    const font = document.fonts.load('400 32px "Gildra Preciosa"', quote + author).catch(() => []);
     const begin = () => {
       if (began || cancelled) return;
       began = true;
@@ -71,7 +72,7 @@ export function WrittenEpigraph({ quote, author, extended }: { lang: Lang; quote
       unsubscribe();
       media.removeEventListener("change", finish);
     };
-  }, [signature.finish]);
+  }, [signature.finish, quote, author]);
 
   return <figure ref={figure} className={styles.epigraph} data-writing={phase}>
     <blockquote>

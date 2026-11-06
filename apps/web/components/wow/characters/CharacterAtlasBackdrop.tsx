@@ -8,7 +8,7 @@ export const CHARACTER_SCENE = "/assets/wow/loading/characters-icecrown-20261106
 export function CharacterAtlasBackdrop() {
   return <div className={styles.backdrop} aria-hidden="true" data-character-backdrop>
     <div className={styles.scene}>
-      <Image src={CHARACTER_SCENE} alt="" fill priority sizes="(max-width: 767px) 100vw, 72vw" className={styles.sceneImage} style={{ objectPosition: "74% top" }} />
+      <Image src={CHARACTER_SCENE} alt="" fill priority fetchPriority="high" sizes="(max-width: 767px) 100vw, 72vw" className={styles.sceneImage} style={{ objectPosition: "74% top" }} />
     </div>
     <FrostLoginAtmosphere />
   </div>;

@@ -15,9 +15,12 @@
 .hero{max-width:1380px;min-height:calc(100svh - 195px);margin:auto;padding:16px clamp(28px,6vw,96px) 36px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:clamp(35px,6vw,100px)}
 .copy{position:relative;z-index:2;padding-bottom:10px}.eyebrow{display:flex;align-items:center;gap:13px;margin:0 0 29px;color:var(--accent);font-size:9px;letter-spacing:.16em;line-height:1.6}.eyebrow>span{width:32px;height:1px;background:var(--metal);flex-shrink:0}
 .copy h1{margin:0;font:400 clamp(46px,4.8vw,76px)/1.12 "Gildra Kurale",Georgia,serif;letter-spacing:-.025em;color:var(--heading)}.copy h1 em{color:var(--accent);font-style:normal}
-/* Preciosa is shared by every hero's quote and signature. */
-@font-face{font-family:"Gildra Preciosa";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/wow/fonts/preciosa/preciosa-regular.woff2") format("woff2")}
-/* Until Preciosa (115 KB) arrives the quote renders in Kurale scaled to Preciosa's width (EN quotes 77–79 %, RU 80–82 % of Kurale), so it keeps its line count and the book below does not jump when the script font swaps in. */
+/* Preciosa is shared by every hero's quote and signature. Split by script like the
+   other book fonts (lossless glyph subsets of the original; the full file was 115 KB):
+   an English page downloads only the Latin face. */
+@font-face{font-family:"Gildra Preciosa";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/wow/fonts/preciosa/preciosa-latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Gildra Preciosa";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/wow/fonts/preciosa/preciosa-cyrillic.woff2") format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+/* Until Preciosa (28 KB Latin, 21 KB Cyrillic) arrives the quote renders in Kurale scaled to Preciosa's width (EN quotes 77–79 %, RU 80–82 % of Kurale), so it keeps its line count and the book below does not jump when the script font swaps in. */
 @font-face{font-family:"Gildra Preciosa Fallback";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/wow/fonts/grimoire/kurale-latin.woff2") format("woff2");size-adjust:78%;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"Gildra Preciosa Fallback";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/wow/fonts/grimoire/kurale-cyrillic.woff2") format("woff2");size-adjust:81%;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
 .epigraph,.epigraph blockquote{margin:0}

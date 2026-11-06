@@ -18,13 +18,18 @@ const coverWebpSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v2-320
 // Kurale (headings, nav) and PT Serif (body) subsets the first screen renders
 // in. Discovered only through CSS they land ~1 s after the first paint on a
 // phone and re-wrap the quote and nav (CLS 0.23 / 0.55 on /, /ru).
+// Preciosa writes the epigraph: Russian quotes take its Latin face too (« »).
 const firstScreenFonts = {
-  en: ["grimoire/kurale-latin", "atlas/pt-serif-regular-latin"],
-  ru: ["grimoire/kurale-cyrillic", "grimoire/kurale-latin", "atlas/pt-serif-regular-cyrillic", "atlas/pt-serif-regular-latin"],
+  en: ["preciosa/preciosa-latin", "grimoire/kurale-latin", "atlas/pt-serif-regular-latin"],
+  ru: ["preciosa/preciosa-cyrillic", "preciosa/preciosa-latin", "grimoire/kurale-cyrillic", "grimoire/kurale-latin", "atlas/pt-serif-regular-cyrillic", "atlas/pt-serif-regular-latin"],
 } as const;
 
+// The scene paints its own page colour and reserves the cookie notice's space inside
+// its painting (app/styles/atlas-pages.css). Same specificity as the former :has() rules.
+const homeShellCss = 'html[data-route-theme="wow"][data-route-theme] body{background-color:#0d0e0d;background-image:none}'
+  + ".workspace-content.gildra-atlas[id=atlas-content]{padding-bottom:0}";
+
 export async function GrimoireHome({ lang }: { lang: Lang }) {
-  preload("/assets/wow/fonts/preciosa/preciosa-regular.woff2", { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
   for (const font of firstScreenFonts[lang === "ru" ? "ru" : "en"]) {
     preload(`/assets/wow/fonts/${font}.woff2`, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
   }
@@ -55,6 +60,9 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
     <span className={styles.coverSubtitle} aria-hidden="true"><span>{ru ? <>Хроники<br />Азерота</> : <>Chronicles<br />of Azeroth</>}</span><small>{ru ? "ПУТЕВОДИТЕЛЬ ГЕРОЯ" : "A HERO’S COMPANION"}</small></span>
   </>;
   return <HomeTheme initialTheme={initialTheme}>
+    {/* Mounted with the landing page only: as `:has([data-grimoire-home])` rules on
+        <html>/<body> they made every DOM insertion on every page restyle the root. */}
+    <style>{homeShellCss}</style>
     <div className={styles.snow} aria-hidden="true">
       {Array.from({ length: 28 }, (_, index) => <span key={index} style={{
         "--snow-x": `${(index * 37 + 7) % 100}%`,

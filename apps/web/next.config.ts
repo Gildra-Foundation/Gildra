@@ -67,6 +67,10 @@ const nextConfig: NextConfig = {
   cacheHandler: path.join(process.cwd(), "lib/next/memoryCacheHandler.cjs"),
   images: {
     qualities: [50, 75, 90],
+    // Optimized variants of the public art stay fresh for a day (default 4 h), like
+    // the files themselves (headers below): fewer re-encodes on the server and
+    // fewer revalidations from returning readers.
+    minimumCacheTTL: 86400,
     // Least-recently-used variants are evicted past this size, so the image
     // cache can never fill /app/.next/cache (a 128 MB tmpfs in production).
     maximumDiskCacheSize: 96 * 1024 * 1024,
@@ -111,8 +115,15 @@ const nextConfig: NextConfig = {
       { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
     ];
+    // Art, fonts and brand files from public/: Next serves them with `max-age=0`, so
+    // every view revalidated each file (and the CDN went back to the origin for it).
+    // A day fresh, then served from cache while it revalidates; files that change
+    // get a new name (-v2, dated), so a stale copy can live at most a day.
+    const publicArt = [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=2592000" }];
     return [
       { source: "/:path*", headers: [...security, ...sameOriginFrames] },
+      { source: "/assets/:path*", headers: publicArt },
+      { source: "/brand/:path*", headers: publicArt },
     ];
   },
   async redirects() {
