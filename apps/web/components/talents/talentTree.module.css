@@ -11,6 +11,8 @@
   --node-share: .66;
   position: relative;
   width: 100%;
+  /* One cell size for every tree: a narrow tree (the hero path) does not blow up in a wide column. */
+  max-width: calc(var(--cells-x) * 64px);
   margin-inline: auto;
   aspect-ratio: var(--cells-x) / var(--cells-y);
   container-type: inline-size;
@@ -18,8 +20,8 @@
 }
 
 .lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.lines line { stroke: color-mix(in srgb, var(--atlas-line-strong) 70%, transparent); stroke-width: 1.5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-.lines line[data-state="open"] { stroke: var(--atlas-text-subtle); stroke-dasharray: 3 4; }
+.lines line { stroke: color-mix(in srgb, var(--atlas-line-strong) 55%, transparent); stroke-width: 1.5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.lines line[data-state="open"] { stroke: color-mix(in srgb, var(--accent) 55%, var(--atlas-text-subtle)); stroke-dasharray: 3 4; }
 .lines line[data-state="lit"] { stroke: var(--accent); stroke-width: 2.5; }
 .lines line[data-dimmed] { opacity: .3; }
 
@@ -39,7 +41,7 @@
 /* A hit area wider than the icon, for fingers. */
 .node::before { content: ""; position: absolute; inset: -16%; }
 .art { position: absolute; inset: 0; display: block; padding: 2px; border-radius: 20%; background: var(--atlas-line-strong); }
-.art img { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; background: var(--atlas-bg); filter: grayscale(.45) brightness(.85); }
+.art img { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; background: var(--atlas-bg); }
 .node[data-shape="round"] .art { border-radius: 50%; }
 .node[data-shape="apex"] { --size: calc(100cqi / var(--cells-x) * var(--node-share) * 1.18); }
 .node[data-shape="apex"] .art { padding: 3px; border-radius: 50%; }
@@ -51,12 +53,15 @@
 .node[data-shape="choice"] .art::after { content: ""; position: absolute; top: 8%; bottom: 8%; left: calc(50% - .5px); width: 1px; background: var(--atlas-line-strong); }
 .node[data-shape="choice"]:is([data-state="selected"], [data-state="partial"]) .art::after { display: none; }
 
+/* Three states a player tells apart at a glance: taken (spec colour, lit), open (full colour, light rim), locked (grey, dark). */
+.node[data-state="open"] .art { background: color-mix(in srgb, var(--accent) 35%, var(--atlas-text-muted)); }
+.node[data-state="open"] .art img { filter: saturate(.8) brightness(.9); }
 .node[data-state="locked"] .art { background: var(--atlas-line-soft); }
-.node[data-state="locked"] .art img { filter: grayscale(.9) brightness(.52); }
-.node:is([data-state="selected"], [data-state="partial"]) .art { background: var(--accent); box-shadow: 0 0 0 1px var(--atlas-bg), 0 0 14px rgba(var(--accent-rgb), .5); }
+.node[data-state="locked"] .art img { filter: grayscale(1) brightness(.55); }
+.node:is([data-state="selected"], [data-state="partial"]) .art { background: var(--accent-hot); box-shadow: 0 0 0 1px var(--atlas-bg), 0 0 12px rgba(var(--accent-rgb), .55); }
 .node:is([data-state="selected"], [data-state="partial"]) .art img { filter: none; }
-.node[data-state="partial"] .art { background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 40%, var(--atlas-line))); }
-.node[data-shape="choice"]:is([data-state="selected"], [data-state="partial"]) .art { box-shadow: none; filter: drop-shadow(0 0 6px rgba(var(--accent-rgb), .55)); }
+.node[data-state="partial"] .art { background: linear-gradient(var(--accent-hot), color-mix(in srgb, var(--accent) 45%, var(--atlas-line))); }
+.node[data-shape="choice"]:is([data-state="selected"], [data-state="partial"]) .art { box-shadow: none; filter: drop-shadow(0 0 6px rgba(var(--accent-rgb), .6)); }
 
 /* Selection feedback: one ring that flares and fades (transform + opacity). */
 .flash { position: absolute; inset: -12%; border: 2px solid var(--accent-hot); border-radius: 50%; opacity: 0; pointer-events: none; }
@@ -73,7 +78,8 @@
 .node:focus-visible { z-index: 2; outline: 2px solid var(--atlas-text-strong); outline-offset: 3px; }
 @media (hover: hover) {
   .node:hover { z-index: 2; scale: 1.08; }
-  .node:is([data-state="open"], [data-state="locked"]):hover .art img { filter: grayscale(.2) brightness(.92); }
+  .node[data-state="open"]:hover .art img { filter: none; }
+  .node[data-state="locked"]:hover .art img { filter: grayscale(.7) brightness(.6); }
 }
 
 @container talentWorkspace (max-width: 520px) {

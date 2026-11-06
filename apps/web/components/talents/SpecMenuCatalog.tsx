@@ -85,7 +85,7 @@ export function SpecMenuCatalog({ current, localePrefix, lang, rootRef, triggerR
     <section ref={menuRef} className={styles.menu} id="tc-spec-menu" role="menu" aria-label={copy.menuLabel} style={menuStyle} data-atlas-scope="" lang={lang}>
       <header className={styles.menuHeader}>
         <span className={styles.currentSigil} aria-hidden="true"><Image src={current.iconUrl} alt="" width={44} height={44} /></span>
-        <span><small>World of Warcraft · Midnight</small><strong>{copy.heading}</strong><p>{copy.hint}</p></span>
+        <span><strong>{copy.heading}</strong></span>
         <button type="button" aria-label={copy.closeMenu} onClick={onClose}><X /></button>
       </header>
 
@@ -105,7 +105,6 @@ export function SpecMenuCatalog({ current, localePrefix, lang, rootRef, triggerR
             >
               <Image src={seed.classIconUrl} alt="" width={26} height={26} />
               <span>{className(group)}</span>
-              <small>{group.specs.length}</small>
             </button>
           );
         })}
@@ -113,8 +112,7 @@ export function SpecMenuCatalog({ current, localePrefix, lang, rootRef, triggerR
 
       <div className={styles.specSection}>
         <div className={styles.specHeading}>
-          <span><small>{copy.classSpecs}</small><h2>{className(currentClass)}</h2></span>
-          <span>{copy.variants(currentClass.specs.length)}</span>
+          <span><h2>{className(currentClass)}</h2></span>
         </div>
         <div className={styles.specList}>
           {currentClass.specs.map((spec) => {
@@ -138,18 +136,14 @@ export function SpecMenuCatalog({ current, localePrefix, lang, rootRef, triggerR
                 style={{ "--menu-spec-accent": spec.accent, "--menu-spec-hot": spec.hot, "--menu-spec-rgb": spec.accentRgb } as CSSProperties}
               >
                 <span className={styles.specIcon}><Image src={spec.iconUrl} alt="" width={44} height={44} /></span>
-                <span className={styles.specCopy}><b>{specNames.spec}</b><small><RoleIcon aria-hidden="true" />{specNames.role}</small>{specNames.fantasy ? <em>{specNames.fantasy}</em> : null}</span>
-                <span className={styles.specState}>{selected ? <><Check aria-hidden="true" /><small>{copy.picked}</small></> : <><i aria-hidden="true" /><small>{copy.open}</small></>}</span>
+                <span className={styles.specCopy}><b>{specNames.spec}</b><small><RoleIcon aria-hidden="true" />{specNames.role}</small></span>
+                <span className={styles.specState}>{selected ? <Check aria-label={copy.picked} /> : null}</span>
               </Link>
             );
           })}
         </div>
       </div>
 
-      <footer className={styles.menuFooter}>
-        <span><i aria-hidden="true" />{copy.footer}</span>
-        <kbd>Esc</kbd>
-      </footer>
     </section>,
     document.body,
   );

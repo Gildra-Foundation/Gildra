@@ -27,11 +27,10 @@
 }
 
 /* ---------- Hero ---------- */
-.hero { min-height: 400px; padding-bottom: var(--atlas-space-5); }
-.heroHeader { max-width: 58%; }
-.heroHeader h1 { max-width: 15ch; }
-.heroHeader p { max-width: 48ch; }
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+/* A short hero: crumbs and the title on one line, so the trees open in the first screen. */
+.hero { padding-bottom: var(--atlas-space-4); }
+.heroHeader { max-width: 100%; }
+.heroHeader h1 { max-width: none; font-size: clamp(2.5rem, 1.6rem + 2.6vw, 3.75rem); }
 .back:global(.tc-back-link) {
   display: inline-flex;
   min-height: 32px;
@@ -47,37 +46,7 @@
 }
 .back:global(.tc-back-link):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
-/* ---------- Build controls on the kit's plaque ---------- */
-.command { position: relative; z-index: 20; padding: 26px 32px; }
-/* An open build library sits above the sticky bottom deck. */
-.command:has(:global(.tc-loadout-popover)) { z-index: 40; }
-.command :global(.tc-command-actions) {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--atlas-space-3);
-  width: 100%;
-  padding: 0;
-  overflow: visible;
-}
-.command :global(.tc-command-group) { margin-inline-start: auto; }
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(:is(.tc-points-badge, .tc-build-select, .tc-command-button)) {
-  border-color: var(--material-line);
-  background: color-mix(in srgb, var(--atlas-bg) 72%, transparent);
-}
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(:is(.tc-build-select, .tc-command-button)):hover:not(:disabled) {
-  border-color: var(--material-light);
-  background: var(--atlas-surface-selected);
-}
-
 /* ---------- Tree panels: the painted plaque of the kit around each tree ---------- */
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace:global(.tc-workspace) {
-  gap: var(--atlas-space-4);
-  margin-top: var(--atlas-space-5);
-  padding: 0;
-  background: transparent;
-}
 .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) {
   --material-light: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 65%, var(--atlas-text-strong));
   --material-line: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 28%, transparent);
@@ -110,86 +79,19 @@
 }
 
 
-/* ---------- Trees: class, hero and spec side by side like the game; columns follow each tree's grid ---------- */
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace:global(.tc-workspace) {
-  grid-template-columns: minmax(0, var(--fr-class, 35fr)) minmax(0, var(--fr-hero, 28fr)) minmax(0, var(--fr-spec, 37fr));
-  align-items: start;
-}
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) :global([data-tree-canvas]),
-.treeSkeleton { max-width: calc(var(--cells-x, 8) * 64px); }
-.treeSkeleton:global(.tc-skeleton-tree) { position: relative; inset: auto; width: 100%; margin: 0 auto; border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 40%, transparent); }
-
-/* The hero path switch names the hero tree (the game's two paths). */
-.heroSwitch:global(.tc-hero-paths) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; max-width: none; padding: 2px; border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); background: var(--atlas-surface-sunken); }
-.heroSwitch:global(.tc-hero-paths) a { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 36px; padding: 2px var(--atlas-space-2); border: 0; border-radius: calc(var(--atlas-radius) - 2px); background: transparent; color: var(--atlas-text-muted); font: 600 var(--atlas-text-small) / 1.15 var(--atlas-font-ui); text-align: center; text-decoration: none; white-space: normal; overflow-wrap: anywhere; hyphens: auto; }
-.heroSwitch:global(.tc-hero-paths) a:hover { color: var(--atlas-text-strong); background: transparent; }
-.heroSwitch:global(.tc-hero-paths) a[aria-current="page"] { background: var(--atlas-surface-raised); color: var(--atlas-text-strong); box-shadow: inset 0 -2px 0 var(--tc-spec-accent, var(--atlas-accent)); }
-.heroSwitch:global(.tc-hero-paths) a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
-
-/* Points badge: the bar shows the share, the numbers say the rest. */
-.meter progress { display: block; }
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .copyString:global(.tc-command-button) { width: auto; gap: var(--atlas-space-2); padding-inline: var(--atlas-space-3); }
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .copyString:global(.tc-command-button) span { display: inline; }
-
-/* Phones: one tree at a time, picked by name with its points. */
-.treeSwitch { display: none; }
-.treeSwitch button { display: grid; justify-items: center; gap: 2px; min-width: 0; padding-block: var(--atlas-space-1); }
-.treeSwitch button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.treeSwitch button b { color: var(--atlas-text-subtle); font: 600 var(--atlas-text-meta) / 1 var(--atlas-font-ui); font-variant-numeric: tabular-nums; }
-.treeSwitch button[aria-pressed="true"] b { color: var(--atlas-text-muted); }
-.treeSwitch button b[data-full] { color: var(--tc-spec-hot, var(--atlas-accent-strong)); }
-
-/* ---------- Bottom deck: search, PvP, the painted save button ---------- */
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-mobile-tree-switcher) { margin-top: var(--atlas-space-4); padding-inline: 0; border: 0; background: transparent; }
-.page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-toolbar) {
-  margin-top: var(--atlas-space-4);
-  padding: var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-4);
-  border: 1px solid var(--atlas-line);
-  border-radius: var(--atlas-radius);
-  background: color-mix(in srgb, var(--atlas-surface) 94%, transparent);
-}
-.save { display: flex; flex: 0 0 auto; min-width: 250px; }
-.saveCopy { display: grid; gap: 2px; text-align: start; }
-.saveCopy b { font: 600 var(--atlas-text-small) / 1.2 var(--atlas-font-ui); }
-.saveCopy small { color: var(--atlas-text-muted); font: 500 var(--atlas-text-meta) / 1.2 var(--atlas-font-ui); }
-
 /* ---------- Error state ---------- */
 .state { margin-top: var(--atlas-space-5); }
 
-@media (max-width: 1023px) {
-  .heroHeader { max-width: 78%; }
-}
 @media (max-width: 900px) {
-  .treeSwitch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-mobile-tree-switcher).treeSwitch button { height: auto; min-height: 52px; }
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) :global([data-tree-canvas]) { max-width: 560px; }
-  .command { padding: 22px 24px; }
-  .command :global(.tc-command-group) { margin-inline-start: 0; }
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace:global(.tc-workspace) { margin-top: var(--atlas-space-3); }
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-toolbar) { padding: var(--atlas-space-2); }
-  .save { grid-column: 2; grid-row: 1 / 3; align-self: center; min-width: 0; }
 }
 @media (max-width: 600px) {
   .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
-  .heroHeader { max-width: 100%; }
-  .actions { gap: var(--atlas-space-2); }
-  .actions > * { flex: 1 1 100%; }
-  .command { padding: 22px 20px; }
-  .command :global(.tc-command-actions) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--atlas-space-2); }
-  .command :global(.tc-command-actions) > * { min-width: 0; }
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(:is(.tc-points-badge, .tc-build-select)) { width: 100%; min-width: 0; }
-  .command :global(.tc-loadout-menu), .command :global(.tc-command-group) { grid-column: 1 / -1; }
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(.tc-command-group) { display: grid; grid-template-columns: minmax(0, 1fr) var(--atlas-control-height) var(--atlas-control-height); width: 100%; }
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(.tc-command-group) > * { width: auto; min-width: 0; }
+  .heroHeader h1 { font-size: clamp(2rem, 1.2rem + 4vw, 2.5rem); }
   /* Room to scroll the tree's last rows above the talent sheet (after the trees, so they do not move). */
   .sheetSpace { height: min(42dvh, 400px); }
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-toolbar) { position: relative; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: var(--atlas-space-2); }
-  .save { grid-column: 1; grid-row: auto; }
-  /* The deck scrolls with the page on phones, so its notices pin to the screen instead. */
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-toast) { position: fixed; z-index: 40; bottom: var(--atlas-space-4); }
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) { padding: 16px 12px 18px; }
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel)::after { border-width: var(--mythic-panel-width-mobile); }
-  .saveCopy small { display: none; }
 }
 
 /* Motion and preference fallbacks (design.md §5); the painted buttons and plaques carry their own. */
@@ -197,43 +99,4 @@
   .scene { display: none; }
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel)::after { display: none; }
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) { border: 1px solid CanvasText; }
-}
-
-/* ---------- Top players' builds: one row of presets above the build controls ---------- */
-.presets { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); margin: 0 0 var(--atlas-space-4); }
-.presetsTitle { color: var(--atlas-text-muted); font: 600 var(--atlas-text-label) / 1.2 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-.presets ul { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
-.preset {
-  display: inline-grid;
-  grid-template-columns: auto auto;
-  align-items: baseline;
-  column-gap: 8px;
-  min-height: 44px;
-  padding: 5px 12px;
-  color: var(--atlas-text);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-  border: 1px solid var(--atlas-line-soft);
-  border-radius: var(--atlas-radius);
-  background: color-mix(in srgb, var(--atlas-bg) 72%, transparent);
-  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
-}
-.preset b { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 650; white-space: nowrap; }
-.preset span { color: var(--tc-spec-accent, var(--atlas-accent-strong)); font-size: var(--atlas-text-small); font-weight: 650; font-variant-numeric: tabular-nums; }
-.preset small { grid-column: 1 / -1; white-space: nowrap; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); line-height: 1.3; }
-.preset:hover { border-color: var(--atlas-line-strong); background: var(--atlas-surface-selected); }
-.preset[aria-pressed="true"] { border-color: var(--tc-spec-accent, var(--atlas-accent)); background: color-mix(in srgb, var(--tc-spec-accent, var(--atlas-accent)) 14%, var(--atlas-bg)); }
-.preset:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-@media (max-width: 600px) {
-  .presets ul { flex-wrap: nowrap; width: 100%; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
-  .preset { flex: none; }
-}
-@media (prefers-reduced-motion: reduce) { .preset { transition: none; } }
-@media (forced-colors: active) { .preset { border-color: CanvasText; background: Canvas; } .preset[aria-pressed="true"] { border-color: Highlight; } }
-/* Narrow phones: one control per row, so the specialization and build names are not cut ("Неистовство"). */
-@media (max-width: 400px) {
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(.tc-command-actions) { grid-template-columns: minmax(0, 1fr); }
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-mobile-tree-switcher).treeSwitch button { padding-inline: 4px; }
-  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-mobile-tree-switcher).treeSwitch button span { font-size: calc(var(--atlas-text-label) * .9); letter-spacing: 0; }
 }

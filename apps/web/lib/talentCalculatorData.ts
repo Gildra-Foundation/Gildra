@@ -84,6 +84,8 @@ export type TalentCalculatorData = {
   fullNodeOrder: number[];
   loadoutNodes: Array<{ nodeId: number; maxRanks: number; nodeType: TalentNodeType; freeNode: boolean; choiceEntryIds: number[] }>;
   heroIconUrl: string;
+  /** Both hero paths of the specialization: icon of the path's first talent and its index in the in-game string. */
+  heroPaths?: Array<{ id: number; iconUrl?: string; entryIndex: number }>;
   trees: Record<TalentKind, TalentTree>;
   pvpTalents: PvPTalent[];
   source: {
@@ -167,18 +169,37 @@ const pvpTalentIdsBySpec: Readonly<Record<number, readonly number[]>> = {
   1473: [5454, 5557, 5558, 5560, 5561, 5563, 5564, 5612, 5615, 5619],
   1480: [5728, 5729, 5730, 5731, 5732, 5733, 5734, 5735, 5738],
 };
-const unavailableOfficialIcons = new Set(["inv121_ability_warrior_javelineer"]);
 const unverifiedIconUrl = "/assets/wow/icon-unverified.svg";
-const verifiedAlternateIcons = new Map([
-  ["inv121_ability_warrior_javelineer", "https://wow.zamimg.com/images/wow/icons/large/8026700.jpg"],
+/**
+ * Icons Blizzard's render CDN does not serve by name (403), only by file id. The ids come from the
+ * Game Data API spell media of a talent that uses the icon (/data/wow/media/spell/<id>, 2026-11-06).
+ * A name missing here and from the CDN falls back on the client to /api/talents/icon?spell=<id>.
+ */
+const iconFileIds = new Map<string, number>([
+  ["ability_rogue_shuriken_storm", 1373913],
+  ["achievement_firelands_raid_ragnaros", 512617],
+  ["achievement_guildperk_havegroup_willtravel", 413583],
+  ["inv121_ability_hunter_aimedshot", 8026692],
+  ["inv121_ability_shaman_ascendance_air", 8026696],
+  ["inv121_ability_shaman_ascendance_fire", 8026697],
+  ["inv121_ability_shaman_ascendance_water", 8026698],
+  ["inv121_ability_warrior_javelineer", 8026700],
+  ["inv12_apextalent_demonhunter__untetheredrage", 7636527],
+  ["inv_10_specialreagentfoozles_tuskclaw_ice", 4643993],
+  ["spell_firefrost_orb", 430840],
+  ["spell_frost_ice_shards", 429385],
+  ["spell_frost_piercing_chill", 429386],
+  ["spell_frost_ring_of_frost", 464484],
+  ["spell_frostfire_orb", 429384],
+  ["spell_priest_power_word", 1386546],
+  ["spell_priest_void_blast", 1386548],
+  ["spell_priest_void_flay", 1386549],
+  ["warlock__bloodstone", 538744],
 ]);
 
 function resolveTalentIcon(iconName: string | undefined, ...candidates: Array<string | undefined>) {
-  const alternate = iconName ? verifiedAlternateIcons.get(iconName.toLowerCase()) : undefined;
-  if (alternate) return { iconUrl: alternate, iconSource: "wowhead" as const, iconFallback: false };
-  if (iconName && unavailableOfficialIcons.has(iconName.toLowerCase())) {
-    return { iconUrl: unverifiedIconUrl, iconSource: "fallback" as const, iconFallback: true };
-  }
+  const fileId = iconName ? iconFileIds.get(iconName.toLowerCase()) : undefined;
+  if (fileId) return { iconUrl: `https://render.worldofwarcraft.com/us/icons/56/${fileId}.jpg`, iconSource: "blizzard-render" as const, iconFallback: false };
   const preferred = candidates.find((candidate): candidate is string => Boolean(candidate));
   return preferred
     ? { iconUrl: preferred, iconSource: "blizzard-render" as const, iconFallback: false }
@@ -744,6 +765,12 @@ async function loadRaidbotsTalentData(theme: TalentSpecTheme = defaultTalentSpec
   if (!topology.fullNodeOrder.length || !trees.class.nodes.length || !trees.hero.nodes.length || !trees.spec.nodes.length) {
     throw new Error(`Raidbots ${theme.specName} talent snapshot has an unexpected shape`);
   }
+  const heroPaths = selectorEntries.map((entry, entryIndex) => {
+    const id = asNumber(entry.traitSubTreeId);
+    const first = nodes.hero.filter((node) => asNumber(node.subTreeId) === id).sort((a, b) => Number(Boolean(b.entryNode)) - Number(Boolean(a.entryNode)) || a.posY - b.posY)[0]?.entries[0];
+    const icon = first?.icon ? resolveTalentIcon(first.icon, `https://render.worldofwarcraft.com/us/icons/56/${first.icon}.jpg`) : null;
+    return { id, entryIndex, iconUrl: icon && !icon.iconFallback ? icon.iconUrl : undefined };
+  }).filter((path) => path.id > 0);
   const pvpTalents = pvpSummaries
     .map((summary) => directPvpTalent(summary, topology.buildVersion, topology.buildId, requestedSpecId, locale, textSpec))
     .sort((a, b) => a.externalId - b.externalId);
@@ -752,7 +779,8 @@ async function loadRaidbotsTalentData(theme: TalentSpecTheme = defaultTalentSpec
     className: lang === "ru" ? theme.classNameRu : theme.className, specName: lang === "ru" ? theme.specNameRu : theme.specName, heroName: topology.heroName, heroSubtreeId: selectedHeroSubtreeId,
     heroSelectionNodeId: topology.heroSelectionNodeId, heroSelectionEntryIndex: topology.heroSelectionEntryIndex,
     fullNodeOrder: topology.fullNodeOrder, loadoutNodes: loadoutNodes(topology),
-    heroIconUrl: "https://render.worldofwarcraft.com/us/icons/56/inv_ability_slayerwarrior_slayersdominance.jpg",
+    heroIconUrl: heroPaths.find((path) => path.id === selectedHeroSubtreeId)?.iconUrl ?? unverifiedIconUrl,
+    heroPaths,
     trees, pvpTalents,
     source: {
       kind: "community_snapshot",
