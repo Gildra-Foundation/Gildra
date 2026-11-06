@@ -8,7 +8,6 @@ import styles from "./transmog.module.css";
 import { seoDescriptions, seoTitles } from "@/lib/seo/titles";
 
 export function transmogMetadata(lang: "ru" | "en"): Metadata {
-  const c = transmogCopy[lang];
   const title = seoTitles.transmog[lang];
   const description = seoDescriptions.transmog[lang];
   return { title, description, alternates: pairedAlternates(lang, "/wow/transmog"),

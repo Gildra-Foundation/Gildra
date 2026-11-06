@@ -29,8 +29,8 @@ export async function libraryDatasetMetadata(lang: "en" | "ru", slug: string): P
 
 /** "World of Warcraft Mounts: mounts and how to get them. In-game tooltips, …"; the second sentence only while it fits a snippet. */
 function datasetDescription(lang: "en" | "ru", name: string, what: string) {
-  const first = lang === "ru" ? `${name} World of Warcraft: ${what}.` : `World of Warcraft ${name}: ${what}.`;
-  const more = lang === "ru" ? " Игровые подсказки, иконки и связи между записями." : " In-game tooltips, icons and links between records.";
+  const first = libraryCopy[lang].datasetDescription(name, what);
+  const more = libraryCopy[lang].datasetDescriptionMore;
   return first.length + more.length <= 160 ? first + more : first;
 }
 

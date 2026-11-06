@@ -13,7 +13,6 @@ import styles from "./auction.module.css";
 import { seoDescriptions, seoTitles } from "@/lib/seo/titles";
 
 export function auctionMetadata(lang: "ru" | "en"): Metadata {
-  const c = auctionCopy[lang];
   const title = seoTitles.auction[lang];
   const description = seoDescriptions.auction[lang];
   return { title, description, alternates: pairedAlternates(lang, "/wow/auction"),

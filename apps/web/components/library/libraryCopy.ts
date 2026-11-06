@@ -23,6 +23,8 @@ export const libraryCopy = {
     unavailableText: "Данные не удалены — откройте страницу немного позже.",
     retry: "Обновить",
     site: "Библиотека Gildra",
+    datasetDescription: (name: string, what: string) => `${name} World of Warcraft: ${what}.`,
+    datasetDescriptionMore: " Игровые подсказки, иконки и связи между записями.",
     loading: "Загружаем…",
   },
   en: {
@@ -46,6 +48,8 @@ export const libraryCopy = {
     unavailableText: "No data was deleted — open the page again a little later.",
     retry: "Try again",
     site: "Gildra Library",
+    datasetDescription: (name: string, what: string) => `World of Warcraft ${name}: ${what}.`,
+    datasetDescriptionMore: " In-game tooltips, icons and links between records.",
     loading: "Loading…",
   },
 } satisfies Record<Lang, Record<string, unknown>>;
