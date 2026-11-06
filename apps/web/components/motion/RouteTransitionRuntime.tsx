@@ -193,6 +193,15 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
         warmRouteArt(destination.pathname);
       }, event.type === "focusin" ? 0 : 100);
     };
+    // A finger has no hover: the press itself is the intent. It lands 50–150 ms
+    // before the click, which the route's data spends in flight instead of waiting.
+    const warmOnPress = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" || event.button !== 0) return;
+      const destination = destinationFromTarget(event.target);
+      if (!destination || routeTransitionKind(committedPath.current, destination.pathname) === "still") return;
+      router.prefetch(destination.pathname + destination.search);
+      warmRouteArt(destination.pathname);
+    };
     const cancelWarm = (event: PointerEvent) => {
       const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
       if (anchor && event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return;
@@ -205,6 +214,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       document.addEventListener("pointerover", warm, true);
       document.addEventListener("pointerout", cancelWarm, true);
       document.addEventListener("focusin", warm, true);
+      document.addEventListener("pointerdown", warmOnPress, { capture: true, passive: true });
     }
     document.addEventListener("click", navigateAnchor);
     // Hydrated and intercepting: browser QA waits for this marker before clicking.
@@ -218,6 +228,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
         document.removeEventListener("pointerover", warm, true);
         document.removeEventListener("pointerout", cancelWarm, true);
         document.removeEventListener("focusin", warm, true);
+        document.removeEventListener("pointerdown", warmOnPress, true);
       }
       document.removeEventListener("click", navigateAnchor);
       clearTimeout(prefetchTimer);

@@ -194,13 +194,32 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
   }, [shown, id]);
 
   // On narrow screens the strip scrolls sideways: keep the current section in view.
+  // Whether it scrolls is measured by a ResizeObserver (layout is clean there), not
+  // in the commit of a navigation: reading scrollWidth then laid out the whole new
+  // page synchronously inside React's commit (~70 ms per click on a desktop).
   const currentId = current?.realm.id ?? null;
-  useLayoutEffect(() => {
+  const scrollable = useRef(false);
+  const reveal = useCallback((realm: string | null) => {
     const host = list.current;
-    const item = currentId ? host?.querySelector<HTMLElement>(`[data-realm="${currentId}"]`) : null;
-    if (!host || !item || host.scrollWidth <= host.clientWidth) return;
-    host.scrollLeft = item.offsetLeft - (host.clientWidth - item.offsetWidth) / 2;
-  }, [currentId]);
+    const item = realm ? host?.querySelector<HTMLElement>(`[data-realm="${realm}"]`) : null;
+    if (host && item) host.scrollLeft = item.offsetLeft - (host.clientWidth - item.offsetWidth) / 2;
+  }, []);
+  const currentRef = useRef(currentId);
+  useEffect(() => {
+    const host = list.current;
+    if (!host || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      const was = scrollable.current;
+      scrollable.current = host.scrollWidth > host.clientWidth;
+      if (scrollable.current && !was) reveal(currentRef.current);
+    });
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [reveal]);
+  useLayoutEffect(() => {
+    currentRef.current = currentId;
+    if (scrollable.current) reveal(currentId);
+  }, [currentId, reveal]);
 
   const hover = (realm: string) => ({
     onPointerEnter: (event: PointerEvent) => {
