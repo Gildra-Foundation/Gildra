@@ -6,6 +6,9 @@
 
 .tooltip {
   position: fixed;
+  /* Placed with `translate` (inline): following its item on scroll moves a layer, no layout or repaint. */
+  top: 0;
+  left: 0;
   z-index: 140;
   width: min(340px, calc(100vw - 24px));
   padding: 14px 16px;
@@ -53,6 +56,7 @@
   .tooltip[data-pinned="true"] {
     top: 12px !important;
     left: 12px !important;
+    translate: none !important;
     width: calc(100vw - 24px);
     max-height: calc(100dvh - 88px);
     transform: none !important;
