@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {decodeMythicTalentImport,talentImportSnapshot} from '../../components/wow/mythic/mythicTalentImport.ts';
-import {playerSpecs,parsePlayerProfile,talentsForProfile,toolsForMechanic,canHelpWithMechanic} from '../../components/wow/mythic/playerTools.ts';
+import {playerSpecs,parsePlayerProfile,toolsForMechanic,canHelpWithMechanic} from '../../components/wow/mythic/playerTools.ts';
+import {talentsForProfile} from '../../components/wow/mythic/playerTalents.ts';
 import {pullRoleTasks} from '../../components/wow/mythic/pullRole.ts';import {buildMdtPullIntel} from '../../components/wow/mythic/mdtPullIntel.ts';
 const read=name=>JSON.parse(fs.readFileSync(new URL(name,import.meta.url)));const fixtures=read('./talentImport.fixtures.json');
 const spec=id=>playerSpecs.find(s=>s.id===id);const fixture=id=>fixtures.specs.find(s=>s.specId===id);

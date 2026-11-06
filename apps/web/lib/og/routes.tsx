@@ -1,5 +1,5 @@
 import { pluralRu } from "@gildra/atlas-ui/format";
-import { getMidnightRaid, raidSceneArt, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
+import { getMidnightRaid, raidRouteSlugs, raidSceneArt } from "@/lib/data/wow/raid/midnightRaidData";
 import { getBossStrategy } from "@/lib/data/wow/raid/raidStrategy";
 import { dungeonRoutes, getDungeonRoute, type DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { contentManifest, midnightLairEncounters } from "@gildra/game-data";
@@ -168,8 +168,8 @@ export type OgKind = keyof typeof kinds;
 
 /** Params of the dynamic card routes, so every card is drawn once at build time. */
 const staticParams = {
-  raid: () => raidSlugs.map((raid) => ({ raid })),
-  raidBoss: () => raidSlugs.flatMap((raid) => (getMidnightRaid(raid)?.bosses ?? []).map((boss) => ({ raid, boss: boss.slug }))),
+  raid: () => raidRouteSlugs.map((raid) => ({ raid })),
+  raidBoss: () => raidRouteSlugs.flatMap((raid) => (getMidnightRaid(raid)?.bosses ?? []).map((boss) => ({ raid, boss: boss.slug }))),
   venomousBoss: () => encounters.filter((entry) => entry.instance === "venomous-abyss").map((entry) => ({ boss: entry.canonicalSlug })),
   lair: () => midnightLairEncounters.map(({ slug }) => ({ slug })),
   dungeon: () => Object.keys(dungeonRoutes).map((dungeon) => ({ dungeon })),

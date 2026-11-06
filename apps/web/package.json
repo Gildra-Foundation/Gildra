@@ -105,6 +105,7 @@
     "qa:release": "node scripts/qa-release.mjs",
     "budgets": "node scripts/check-route-budgets.mjs",
     "art:placeholders": "node scripts/generate-art-placeholders.mjs",
+    "art:portraits": "node scripts/generate-scene-portraits.mjs",
     "test:analytics": "node --experimental-strip-types --no-warnings --test tests/analytics/*.test.ts",
     "lint": "eslint .",
     "test:auction-reliability": "node scripts/test-auction-reliability.mjs",

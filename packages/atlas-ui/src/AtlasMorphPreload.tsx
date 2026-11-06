@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { getImageProps } from "next/image";
+import { ART_PORTRAIT_MEDIA } from "./placeholders";
 
 const warmed = new Set<string>();
 
@@ -15,7 +16,8 @@ export function AtlasMorphPreload({ art }: { art: string }) {
   const marker = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const target = marker.current?.closest("a, article, li");
-    if (!target || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    // A portrait window takes the scene's phone crop (AtlasFrameShell), not this file.
+    if (!target || !window.matchMedia("(hover: hover) and (pointer: fine)").matches || window.matchMedia(ART_PORTRAIT_MEDIA).matches) return;
     const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
     if (connection?.saveData || /2g/.test(connection?.effectiveType ?? "")) return;
     const warm = () => {

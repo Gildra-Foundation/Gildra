@@ -10,6 +10,7 @@ import { routeTextEn } from "../../components/wow/mythic/routeStopsEn.ts";
 import { atlasScenes } from "../../lib/atlas/scenes.ts";
 
 const placeholders = JSON.parse(readFileSync(new URL("../../lib/atlas/artPlaceholders.json", import.meta.url), "utf8")) as Record<string, string>;
+const portraits = JSON.parse(readFileSync(new URL("../../lib/atlas/artPortraits.json", import.meta.url), "utf8")) as Record<string, { src: string; x: number; width: number; height: number }>;
 
 describe("atlas format helpers", () => {
   it("picks the Russian plural form", () => {
@@ -60,6 +61,15 @@ describe("scene registry", () => {
       assert.ok(existsSync(new URL(`../../public${scene.art}`, import.meta.url)), scene.art);
       assert.ok(placeholders[scene.art]?.startsWith("data:image/webp;base64,"), `placeholder for ${scene.art} (npm run art:placeholders)`);
       assert.ok(scene.og.every((value) => value >= 0 && value <= 1));
+    });
+    it(`${id}: phones get a crop of the painting at the scene's focus`, () => {
+      const portrait = portraits[scene.art];
+      assert.ok(portrait, `phone crop for ${scene.art} (npm run art:portraits)`);
+      assert.ok(existsSync(new URL(`../../public${portrait.src}`, import.meta.url)), portrait.src);
+      const [x] = scene.position.split(" ");
+      assert.equal(portrait.x, x === "center" ? 0.5 : parseFloat(x) / 100, "crop focus = scene focus");
+      // The crop covers every box the frame swaps it into (ART_PORTRAIT_MEDIA: box at most 0.9 as wide as tall).
+      assert.ok(portrait.width >= portrait.height * 0.9 - 1);
     });
   }
 });
