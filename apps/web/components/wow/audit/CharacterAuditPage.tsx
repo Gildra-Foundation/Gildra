@@ -28,8 +28,7 @@ const CharacterHistory = dynamic(() => import("./CharacterHistory").then((module
 /** The modules of the tools above: warmed in idle time, a tab opens without waiting for the network. */
 const preloadTools = () => Promise.all([
   import("./CharacterTalentSimulator"),
-  import("./GearFarmPlanner"),
-  import("./AuctionGearOptimizer"),
+  import("./CharacterUpgrades"),
   import("./CharacterLogAnalysis"),
   import("./CharacterHistory"),
 ]).catch(() => undefined);
