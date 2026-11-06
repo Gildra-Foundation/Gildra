@@ -30,7 +30,7 @@ export class AuctionHarness {
   constructor(readonly page: Page, info: TestInfo) {
     this.language = info.project.metadata.language as "en" | "ru";
   }
-  get panel() { return this.page.getByRole("region", { name: this.t("Найти вещи под бюджет", "Find gear within your budget"), exact: true }); }
+  get panel() { return this.page.getByRole("region", { name: this.t("Улучшения с аукциона", "Auction House upgrades"), exact: true }); }
   get result() { return this.panel.locator("[data-auction-assembly-result]"); }
   get assembly() { return this.panel.locator("[data-auction-assembly]"); }
   get build() { return this.assembly.getByRole("button", { name: /Собрать сет под бюджет|Продолжить сборку сета|Обновить и пересобрать сет|Build a loadout within budget|Continue loadout assembly|Refresh and rebuild loadout|Повторить|Retry/ }).first(); }

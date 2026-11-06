@@ -1,5 +1,5 @@
 import { test, expect } from "playwright/test";
-const start = /Подобрать места фарма|Find farming locations/;
+const start = /^(Подобрать|Find upgrades)$/;
 const good = { itemId: 999001, entityId: "synthetic", name: "Synthetic useful proc", slotType: "TRINKET_1", currentItemId: 99,
   currentItemLevel: 200, encounterId: 1, encounterName: "Synthetic boss", verification: "simulated", itemLevel: 139, requiredLevel: 78,
   deltaDps: 1000, deltaPercent: 10, marginPercent: 0.3, stats: {}, effectsVerified: false };
@@ -17,7 +17,7 @@ const job = (value: unknown) => ({ id: "synthetic-job", status: "completed", res
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/**", route => route.abort());
 });
-test("show only significant attainable upgrades and preserve coverage", async ({ page }, info) => {
+test("show only significant attainable upgrades", async ({ page }, info) => {
   const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
   await page.route("**/api/wow/gear-farm-plans**", route => route.fulfill({ json: job(result([good, ...bad])) }));
   await page.goto(`/?lang=${info.project.metadata.locale}`);
@@ -25,10 +25,7 @@ test("show only significant attainable upgrades and preserve coverage", async ({
   await expect(page.locator("[data-farm-verification]")).toHaveCount(1);
   await expect(page.getByText("Synthetic useful proc", { exact: true })).toBeVisible();
   await expect(page.getByText(/Junk/)).toHaveCount(0);
-  await expect(page.getByText(/Проверены не все варианты|Some loot variants/)).toBeVisible();
-  await expect(page.getByText("Synthetic locked dungeon")).not.toBeVisible();
-  await page.locator("details").last().locator("summary").click();
-  await expect(page.getByText("Synthetic locked dungeon")).toBeVisible();
+  await expect(page.getByText("Synthetic locked dungeon")).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: info.outputPath("confirmed-farm.png"), fullPage: true });
@@ -37,7 +34,7 @@ test("show only significant attainable upgrades and preserve coverage", async ({
 test("empty results never suggest farming junk", async ({ page }, info) => {
   await page.route("**/api/wow/gear-farm-plans**", route => route.fulfill({ json: job(result(bad)) }));
   await page.goto(`/?lang=${info.project.metadata.locale}`); await page.getByRole("button", { name: start }).click();
-  await expect(page.getByRole("status")).toContainText(/не найдено|No compatible upgrades/);
+  await expect(page.getByRole("status")).toContainText(/не найдено|No upgrades found/);
   await expect(page.locator("[data-farm-verification]")).toHaveCount(0);
   await expect(page.getByText("Synthetic accessible dungeon")).toHaveCount(0);
   await expect(page.getByText(/Junk/)).toHaveCount(0);

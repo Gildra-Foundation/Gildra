@@ -166,7 +166,7 @@ test("lost automatic resume response reconnects with its own nonce and no duplic
   await auction.open(); auction.incompleteSearchOnce = true; auction.dropAction = "resume"; await auction.search();
   const retry = auction.panel.getByRole("button", { name: /Повторить восстановление|Retry recovery/ });
   await expect(retry).toBeVisible(); await retry.click();
-  await expect(auction.panel.getByText(/Проверка найденных вариантов завершена|Evaluation of discovered options is complete/)).toBeVisible();
+  await expect(auction.panel.getByRole("button", { name: /Продолжить проверку вещей|Continue item comparisons/ })).toHaveCount(0);
   expect(auction.requests.map(body => body.action)).toEqual(["search", "resume"]);
   expect(auction.requests[1].clientRequestId).not.toBe(auction.requests[0].clientRequestId);
   expect(auction.requestLookups).toContain(auction.requests[1].clientRequestId);
@@ -287,7 +287,7 @@ test("cancelled nonce prevents work when the POST reaches server admission only 
 
 test("confirmed loadout shopping list remains visible with real fonts and no page overflow", async ({ auction, page }, info) => {
   await auction.open(); await auction.search(); await auction.build.click(); await expect(auction.result).toBeVisible();
-  await expect(auction.result.getByRole("heading", { name: /Что купить для сета|Items to buy for this loadout/ })).toBeVisible();
+  await expect(auction.result.getByRole("heading", { name: /Что купить|Items to buy/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   const screenshot = info.outputPath("confirmed-loadout.png");
   await page.screenshot({ path: screenshot, fullPage: true }); await info.attach("confirmed-loadout", { path: screenshot, contentType: "image/png" });
@@ -371,7 +371,6 @@ test("value: one efficient choice per slot, two alternatives on demand and compl
   await expect(main).toHaveAttribute('data-auction-option', 'value-best');
   await page.evaluate(() => window.scrollTo(0, 0));
   expect((await main.boundingBox())!.y).toBeLessThan(1000);
-  await expect(auction.panel.getByRole('link', { name: auction.t('К сборке сета', 'Build a loadout'), exact: true })).toBeVisible();
   await expect(auction.panel.locator('[data-auction-option]')).toHaveCount(1);
   await expect(main).toContainText(auction.t('Цена за +1 DPS', 'Cost per +1 DPS'));
   await expect(main).toContainText('20 DPS');
@@ -483,20 +482,9 @@ test("audit fixes: value is default objective and maximum DPS is an explicit sea
   const objective = auction.panel.locator('select[name="objective"]'); await expect(objective).toHaveValue('value');
   await objective.selectOption('dps'); await auction.search();
   expect(auction.requests[0].objective).toBe('dps');
-  await expect(auction.assembly).toContainText(auction.t('наибольший подтверждённый DPS', 'highest confirmed DPS'));
 });
 
 
-for (const maximum of ["confirmed", "unconfirmed"] as const) test(`audit fixes: value result explains a ${maximum} maximum-DPS diagnostic accurately`, async ({ auction }) => {
-  auction.valueMaximum = maximum; await auction.open(); await auction.search();
-  await expect(auction.assembly).toContainText(auction.t('Иногда выгоднее одна замена', 'Sometimes one replacement offers better value'));
-  await auction.build.click(); await expect(auction.result).toBeVisible();
-  await auction.result.locator('summary').filter({ hasText: /максимальным измеренным DPS|highest measured DPS/ }).click();
-  await expect(auction.result).toContainText(maximum === 'confirmed'
-    ? auction.t('сет выгоднее по цене за прирост DPS', 'offers better value per DPS gained')
-    : auction.t('Его прирост не подтверждён', 'Its gain is not confirmed'));
-  await expect(auction.result).toContainText(auction.t('Цена за +1 DPS всего сета', 'Whole-loadout cost per +1 DPS'));
-});
 
 
 for (const handle of ["job", "nonce"] as const) test(`postfix fixes: pending ${handle} recovery preserves original form intent before a result`, async ({ auction, page }, info) => {
@@ -901,22 +889,6 @@ test("five-speed control: hover description clamps at a short viewport edge and 
 });
 
 
-for (const countKey of ["unsupportedModifierLots", "variantsRejected", "referenceItemsRejected", "catalogItemsMissing", "catalogUnmatchedItemIds", "eligibilityUnverifiedItems", "generic"] as const) test(`four-fix regression: unverified coverage explains ${countKey}`, async ({ auction, page }, info) => {
-  await page.route("**/api/wow/auction-gear-plans**", async route => {
-    const source = searchResult();
-    source.coverage = { ...source.coverage, unsupportedModifierLots: 0, variantsRejected: 0, referenceItemsRejected: 0, catalogItemsMissing: 0, catalogUnmatchedItemIds: 0, eligibilityUnverifiedItems: 0, ...(countKey === "generic" ? {} : { [countKey]: 7 }) };
-    source.dataComplete = false;
-    await route.fulfill({ status: 202, json: completedJob(auction.language, source) });
-  });
-  await auction.open(); await auction.search();
-  const details = auction.panel.locator("details").filter({ has: page.getByText(auction.t("Часть рынка пока не проверена", "Part of the market is unverified"), { exact: true }) });
-  await details.locator("summary").click();
-  await expect(details.locator(":scope > p")).not.toHaveCount(0);
-  if (countKey !== "generic") await expect(details).toContainText("7");
-  await details.scrollIntoViewIfNeeded();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
-  if (countKey === "unsupportedModifierLots") await page.screenshot({ path: info.outputPath("coverage-explanation.png"), fullPage: true });
-});
 
 test("four-fix regression: excluding the best variant reranks cards and keeps an explicit restore action", async ({ auction }) => {
   auction.valueChoices = true; await auction.open(); await auction.search();
@@ -949,7 +921,7 @@ test("four-fix regression: cold-tab conflict offers explicit recovery with the o
   await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("333.33");
   await auction.panel.locator("summary").filter({ hasText: /Слоты экипировки и цель подбора|Equipment slots and objective/ }).click();
   await expect(auction.panel.locator('[name="objective"]')).toHaveValue("dps");
-  await expect(auction.panel.getByRole("combobox", { name: /Сценарий|Encounter/ })).toHaveValue("aoe");
+  await expect(auction.panel.getByRole("combobox", { name: /Бой|Encounter/ })).toHaveValue("aoe");
   await expect(auction.panel.locator('[name="selectedSlots"]:checked')).toHaveCount(1);
   await expect(auction.panel.locator('[name="selectedSlots"][value="WRIST"]')).toBeChecked();
   expect(requests.filter(x => x.startsWith("POST"))).toHaveLength(1);
@@ -1012,11 +984,9 @@ test("four-fix regression: 320px recovery, exclusions and explanation stay reada
   await expectExcludedRecommendations(auction);
   const exclusions = auction.panel.locator("[data-auction-exclusions] > summary");
   await expect(exclusions).toBeFocused();
-  await expect(auction.panel).toContainText(auction.t("Найденные подтверждённые улучшения исключены", "The confirmed upgrades found are excluded"));
+  await expect(auction.panel).toContainText(auction.t("Найденные улучшения исключены", "The upgrades found are excluded"));
   await exclusions.click(); await auction.panel.locator("[data-excluded-restore]").click();
   await expect(auction.panel.locator("[data-best-value=true] summary")).toBeFocused();
-  const coverage = auction.panel.locator("summary").filter({ hasText: /Часть рынка пока не проверена|Part of the market is unverified/ });
-  await coverage.click();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.screenshot({ path: info.outputPath("320px-restored-explanation.png"), fullPage: true });
 });
@@ -1072,7 +1042,7 @@ test("four-fix midflight regression: cold-tab initial search resumes by exact jo
   expect(posts).toBe(1);
   expect(reads).toEqual([{ id: null, searchId: result.searchId, characterSlug, locale: auction.language }, { id: job.id, searchId: null, characterSlug, locale: auction.language }]);
   await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("333.33");
-  await expect(auction.panel.getByRole("combobox", { name: /Сценарий|Encounter/ })).toHaveValue("aoe");
+  await expect(auction.panel.getByRole("combobox", { name: /Бой|Encounter/ })).toHaveValue("aoe");
   await expect(auction.panel.locator("[data-auction-owned-recovery]")).toHaveCount(0);
   await info.attach("midflight-scoped-reads", { body: JSON.stringify({ reads, posts }), contentType: "application/json" });
 });

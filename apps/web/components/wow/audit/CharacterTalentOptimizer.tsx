@@ -4,9 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Check, LoaderCircle, Square, TrendingUp, WandSparkles } from "lucide-react";
 import type { TalentCalculatorData } from "@/lib/talentCalculatorData";
 import { type TalentScenarioId } from "@/lib/wow/testCharacterTalentAudit";
-import { talentText, localizedTalentScenarios, type TalentLang } from "@/components/talents/talentLocale";
+import { talentText, type TalentLang } from "@/components/talents/talentLocale";
+import { MaterialButton } from "@/components/wow/shared/materialAtlas";
+import { TALENTS_KIT } from "@/lib/wow/charactersKit";
 import styles from "./characterTalentOptimizer.module.css";
-import book from "./talentBookLeaves.module.css";
+import tools from "./characterTools.module.css";
 
 type OptimizerScenario = "solo-pve" | "pve-aoe" | "mythic-plus" | "raid";
 type OptimizerChange = { nodeId: number; nodeKey: string; name: string; rankDelta: number; choiceFrom?: number; choiceTo?: number };
@@ -25,24 +27,23 @@ type OptimizerJob = {
 
 function errorMessage(code: string | null, lang: TalentLang) {
   return {
-    optimizer_rate_limited: talentText(lang, "Слишком много подборов за минуту. Готовые результаты не потеряны — подождите и запустите новый поиск."),
-    simulation_unavailable: talentText(lang, "SimulationCraft временно недоступен. Уже рассчитанные варианты сохранены ниже."),
-    unsupported_combat_model: talentText(lang, "Для этой роли пока нет корректной модели DPS. Фальшивый результат показывать не будем."),
-    battle_net_session_required: talentText(lang, "Сессия Battle.net закончилась. Войдите снова и повторите подбор."),
-    active_specialization_changed: talentText(lang, "Активная специализация изменилась. Обновите профиль персонажа."),
-    cancelled: talentText(lang, "Подбор остановлен. Уже готовые варианты оставлены на экране."),
-  }[code ?? ""] ?? talentText(lang, "Подбор не завершился. Попробуйте ещё раз через несколько секунд.");
+    optimizer_rate_limited: talentText(lang, "Слишком много подборов. Подождите минуту."),
+    simulation_unavailable: talentText(lang, "Расчёт сейчас недоступен. Попробуйте позже."),
+    unsupported_combat_model: talentText(lang, "Подбор недоступен для этой роли."),
+    battle_net_session_required: talentText(lang, "Войдите в Battle.net повторно."),
+    active_specialization_changed: talentText(lang, "Специализация изменилась. Обновите профиль."),
+  }[code ?? ""] ?? talentText(lang, "Подбор не завершился. Попробуйте ещё раз.");
 }
 
-function changeLabel(change: OptimizerChange, lang: TalentLang) {
-  const name = change.name;
-  if (change.rankDelta > 0) return talentText(lang, "Добавить «") + name + (lang === "ru" ? "»" : "”");
-  if (change.rankDelta < 0) return talentText(lang, "Убрать «") + name + (lang === "ru" ? "»" : "”");
-  return talentText(lang, "Сменить вариант на «") + name + (lang === "ru" ? "»" : "”");
+function changeLabel(change: OptimizerChange) {
+  return `${change.rankDelta > 0 ? "+" : change.rankDelta < 0 ? "−" : "↔"} ${change.name}`;
 }
+
+const optimizerScenarios: readonly OptimizerScenario[] = ["solo-pve", "pve-aoe", "mythic-plus", "raid"];
+const signed = (value: number) => `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
 
 export function CharacterTalentOptimizer({
-  data, characterSlug, specSlug, scenario, dataMode, resetKey, onScenarioChange, onApply, lang = "ru",
+  data, characterSlug, specSlug, scenario, dataMode, resetKey, onApply, lang = "ru",
 }: {
   lang?: TalentLang;
   data: TalentCalculatorData;
@@ -51,30 +52,20 @@ export function CharacterTalentOptimizer({
   scenario: TalentScenarioId;
   dataMode: "fixture" | "battle-net";
   resetKey: string;
-  onScenarioChange: (scenario: TalentScenarioId) => void;
   onApply: (loadout: string) => boolean;
 }) {
-  const modes = useMemo(() => localizedTalentScenarios(lang).filter((entry) => entry.group === "PvE") as Array<ReturnType<typeof localizedTalentScenarios>[number] & { id: OptimizerScenario }>, [lang]);
-  const treeLabels = { class: talentText(lang, "класс"), hero: talentText(lang, "герой"), spec: talentText(lang, "специализация") };
-  const initialScenario: OptimizerScenario = modes.some((entry) => entry.id === scenario) ? scenario as OptimizerScenario : "mythic-plus";
-  const [selectedScenario, setSelectedScenario] = useState<OptimizerScenario>(initialScenario);
+  const selectedScenario: OptimizerScenario = optimizerScenarios.includes(scenario as OptimizerScenario) ? scenario as OptimizerScenario : "mythic-plus";
   const [job, setJob] = useState<OptimizerJob | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [appliedId, setAppliedId] = useState<string | null>(null);
+  const [scope, setScope] = useState(resetKey);
   const polling = useRef<AbortController | null>(null);
   const icons = useMemo(() => new Map(Object.values(data.trees).flatMap((tree) => tree.nodes.map((node) => [node.id, node.choices[0]?.iconUrl ?? ""] as const))), [data]);
   const running = job?.status === "queued" || job?.status === "running";
 
-  useEffect(() => () => polling.current?.abort(), []);
-  useEffect(() => {
-    polling.current?.abort();
-    setJob(null);
-    setRequestError(null);
-    setAppliedId(null);
-  }, [resetKey]);
-  useEffect(() => {
-    if (!running && modes.some((entry) => entry.id === scenario)) setSelectedScenario(scenario as OptimizerScenario);
-  }, [running, scenario, modes]);
+  // A new character profile drops the previous job (state reset during render, no effect cascade).
+  if (scope !== resetKey) { setScope(resetKey); setJob(null); setRequestError(null); setAppliedId(null); }
+  useEffect(() => () => polling.current?.abort(), [resetKey]);
 
   const readUntilDone = async (id: string, signal: AbortSignal) => {
     while (!signal.aborted) {
@@ -121,68 +112,51 @@ export function CharacterTalentOptimizer({
       const response = await fetch("/api/wow/talent-optimizer?id=" + encodeURIComponent(id) + "&dataMode=" + dataMode, { method: "DELETE" });
       const payload = await response.json() as OptimizerJob;
       if (response.ok) setJob(payload);
-    } catch { setRequestError(talentText(lang, "Не удалось подтвердить отмену, но браузер перестал ждать результат.")); }
+    } catch { setJob(null); }
   };
 
   const apply = (entry: OptimizerEntry) => {
-    if (!onApply(entry.loadout)) { setRequestError(talentText(lang, "Этот вариант не загрузился: версия дерева талантов изменилась.")); return; }
+    if (!onApply(entry.loadout)) { setRequestError(talentText(lang, "Этот вариант больше не подходит к дереву талантов.")); return; }
     setAppliedId(entry.candidateId);
-    onScenarioChange(selectedScenario);
   };
 
   const results = job?.result?.results ?? job?.results ?? [];
-  const winner = job?.result?.winner ?? results[0] ?? null;
   const baseline = job?.result?.baseline;
   const verification = job?.result?.verification;
   const verifiedDelta = baseline && verification ? verification.dps - baseline.dps : null;
   const verifiedPercent = verifiedDelta !== null && baseline!.dps > 0 ? verifiedDelta / baseline!.dps * 100 : null;
   const winnerMargin = baseline && verification ? 1.96 * Math.hypot(baseline.dpsError, verification.dpsError) : 0;
   const provenGain = verifiedDelta !== null && verifiedDelta > winnerMargin;
+  const phase = job?.phase === "baseline" ? talentText(lang, "Считаем текущий билд") : job?.phase === "verification" || job?.phase === "crosscheck" ? talentText(lang, "Перепроверяем лучший вариант") : talentText(lang, "Сравниваем варианты");
 
-  return <section className={`${styles.optimizer} ${book.optimizer}`} aria-labelledby="talent-optimizer-title">
-    <header className={styles.heading}>
-      <span><WandSparkles aria-hidden="true" /></span>
-      <div><small>{talentText(lang, "АВТОПОДБОР ТАЛАНТОВ")}</small><h3 id="talent-optimizer-title">{talentText(lang, "Найти более сильный вариант")}</h3><p>{talentText(lang, "Проверим близкие варианты по одному очку на вашем снаряжении. Это поиск рядом с текущим билдом, а не перебор всех билдов.")}</p></div>
-    </header>
-
-    <div className={`${styles.controls} ${book.controls}`}>
-      <fieldset disabled={running}>
-        <legend>{talentText(lang, "Для какого боя подбирать")}</legend>
-        <div className={`${styles.scenarios} ${book.modes}`}>{modes.map((mode) => <button data-folio-choice key={mode.id} type="button" aria-pressed={selectedScenario === mode.id} onClick={() => { setSelectedScenario(mode.id); onScenarioChange(mode.id); }}><b>{mode.label}</b><span>{mode.fight}</span></button>)}</div>
-      </fieldset>
-      <div className={styles.actions}>
-        {running ? <button type="button" className={styles.cancelButton} data-folio-action="quiet" onClick={cancel}><Square aria-hidden="true" />{talentText(lang, "Остановить")}</button> : null}
-        <button type="button" className={styles.startButton} data-folio-action onClick={start} disabled={running}><WandSparkles aria-hidden="true" />{job?.status === "completed" ? talentText(lang, "Подобрать заново") : talentText(lang, "Начать подбор")}</button>
+  return <section className={`${tools.tool} ${styles.optimizer}`} aria-labelledby="talent-optimizer-title">
+    <div className={tools.head}>
+      <h3 className={tools.title} id="talent-optimizer-title">{talentText(lang, "Найти более сильный вариант")}</h3>
+      <div className={tools.actions}>
+        {running ? <button type="button" className={tools.quiet} onClick={cancel}><Square aria-hidden="true" />{talentText(lang, "Остановить")}</button> : null}
+        <MaterialButton kit={TALENTS_KIT} fit="stack" variant="primary" type="button" onClick={start} disabled={running} icon={running ? <LoaderCircle className={tools.spin} aria-hidden="true" /> : <WandSparkles aria-hidden="true" />}>{job?.status === "completed" ? talentText(lang, "Подобрать заново") : talentText(lang, "Начать подбор")}</MaterialButton>
       </div>
     </div>
 
-    {running ? <div className={styles.progress} role="status" aria-live="polite">
-      <LoaderCircle aria-hidden="true" /><div><b>{job.phase === "baseline" ? talentText(lang, "Считаем текущий билд") : job.phase === "crosscheck" ? talentText(lang, "Проверяем лучшие варианты в одну цель и по пачке") : job.phase === "verification" ? talentText(lang, "Перепроверяем лучший вариант") : talentText(lang, "Сравниваем варианты")}</b><span>{job.completed} {talentText(lang, " из ")}{job.total} {talentText(lang, " расчётов завершено. Уже готовые результаты не пропадут при остановке.")}</span><progress value={job.completed} max={job.total || 1}>{job.completed}/{job.total}</progress></div>
-    </div> : null}
+    {running ? <div className={styles.progress} role="status" aria-live="polite"><span className={tools.status}>{phase} · {job.completed}/{job.total}</span><div className={tools.progress} aria-hidden="true"><i style={{ width: `${Math.min(100, job.completed / Math.max(1, job.total) * 100)}%` }} /></div></div> : null}
+    {requestError || job?.status === "failed" ? <p className={tools.alert} role="alert"><AlertTriangle aria-hidden="true" />{requestError ?? errorMessage(job?.error ?? null, lang)}</p> : null}
+    {job?.status === "cancelled" ? <p className={tools.status} role="status">{talentText(lang, "Подбор остановлен")}</p> : null}
 
-    {requestError || job?.status === "failed" ? <div className={styles.error} role="alert"><AlertTriangle aria-hidden="true" /><span><b>{talentText(lang, "Подбор остановился")}</b>{requestError ?? errorMessage(job?.error ?? null, lang)}</span></div> : null}
-    {job?.status === "cancelled" ? <div className={styles.cancelled} role="status"><Square aria-hidden="true" /><span><b>{talentText(lang, "Подбор остановлен")}</b>{results.length ? talentText(lang, "Сохранили ") + results.length + talentText(lang, " уже рассчитанных вариантов.") : talentText(lang, "Ни один кандидат ещё не успел рассчитаться.")}</span></div> : null}
-
-    {job?.status === "completed" && winner && baseline && verification ? <div className={`${styles.summary} ${book.insert}${provenGain ? " " + styles.summaryGain : ""}`} data-book-surface="foldout">
+    {job?.status === "completed" && baseline && verification ? <p className={styles.summary} data-gain={provenGain || undefined}>
       {provenGain ? <TrendingUp aria-hidden="true" /> : <Check aria-hidden="true" />}
-      <span><small>{talentText(lang, "ПРОВЕРЕННЫЙ ИТОГ")}</small><b>{provenGain ? talentText(lang, "Найден прирост ") + verifiedPercent!.toFixed(2) + "%" : talentText(lang, "Доказанного улучшения рядом не найдено")}</b><em>{baseline.dps.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} → {verification.dps.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} {talentText(lang, " DPS · погрешность разницы ±")}{Math.round(winnerMargin).toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} DPS</em></span>
-    </div> : null}
+      <b>{provenGain ? `${talentText(lang, "Найден прирост ")}${verifiedPercent!.toFixed(2)}%` : talentText(lang, "Сильнее варианта рядом не найдено")}</b>
+      <span>{baseline.dps.toLocaleString(numberLocale[lang])} → {verification.dps.toLocaleString(numberLocale[lang])} DPS</span>
+    </p> : null}
 
-    {results.length ? <div className={`${styles.results} ${book.insert}`} data-book-surface="foldout" aria-label={talentText(lang, "Лучшие найденные варианты")}>
-      <header><div><small>{talentText(lang, "РЕЗУЛЬТАТЫ")}</small><h4>{job?.status === "completed" ? talentText(lang, "Лучшие варианты") : talentText(lang, "Уже рассчитано")}</h4></div><span>{talentText(lang, "Сравнение с текущим билдом")}</span></header>
-      <ol>{results.slice(0, 3).map((entry, index) => {
-        const meaningful = entry.deltaDps > entry.marginDps;
-        return <li key={entry.candidateId} data-positive={meaningful}>
-          <div className={styles.rank}>{index + 1}</div>
-          <div className={styles.variant}>
-            <div className={styles.variantHead}><span><b>{index === 0 ? talentText(lang, "Лучший найденный") : talentText(lang, "Вариант ") + (index + 1)}</b><small>{treeLabels[entry.tree]} · {entry.kind === "rank-swap" ? talentText(lang, "перестановка очка") : talentText(lang, "смена выбора")}</small></span><strong>{entry.deltaPercent > 0 ? "+" : ""}{entry.deltaPercent.toFixed(2)}%</strong></div>
-            <div className={styles.changes}>{entry.changes.map((change) => <span key={[entry.candidateId, change.nodeKey, change.rankDelta].join("-")}><img src={icons.get(change.nodeKey) || "/assets/wow/icon-unverified.svg"} alt="" /><em>{changeLabel(change, lang)}</em></span>)}</div>
-            <div className={styles.numbers}><span>{talentText(lang, "Одна цель: ")}{typeof entry.singleTargetDeltaPercent === "number" ? (entry.singleTargetDeltaPercent > 0 ? "+" : "") + entry.singleTargetDeltaPercent.toFixed(2) + "%" : talentText(lang, "считается")}</span><span>{talentText(lang, "Пачка врагов: ")}{typeof entry.aoeDeltaPercent === "number" ? (entry.aoeDeltaPercent > 0 ? "+" : "") + entry.aoeDeltaPercent.toFixed(2) + "%" : talentText(lang, "считается")}</span><span>{entry.dps.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} {talentText(lang, " DPS в выбранном режиме")}</span><span>{meaningful ? talentText(lang, "выше погрешности") : talentText(lang, "в пределах погрешности")}</span></div>
-          </div>
-          <button data-folio-action type="button" onClick={() => apply(entry)}>{appliedId === entry.candidateId ? <><Check aria-hidden="true" />{talentText(lang, "Применён")}</> : talentText(lang, "Применить")}</button>
-        </li>;
-      })}</ol>
-      <p>{talentText(lang, "После применения дерево и показатели урона ниже пересчитаются. Сохранить вариант можно в разделе «Мои варианты».")}</p>
-    </div> : null}
+    {results.length ? <ol className={styles.results} aria-label={talentText(lang, "Лучшие найденные варианты")}>{results.slice(0, 3).map((entry) => {
+      const meaningful = entry.deltaDps > entry.marginDps;
+      return <li key={entry.candidateId} data-positive={meaningful}>
+        <div className={styles.changes}>{entry.changes.map((change) => <span key={[entry.candidateId, change.nodeKey, change.rankDelta].join("-")}><img src={icons.get(change.nodeKey) || "/assets/wow/icon-unverified.svg"} alt="" width={28} height={28} /><em>{changeLabel(change)}</em></span>)}</div>
+        <div className={styles.numbers}><strong>{signed(entry.deltaPercent)}</strong>{typeof entry.singleTargetDeltaPercent === "number" ? <span>{talentText(lang, "Одна цель")} {signed(entry.singleTargetDeltaPercent)}</span> : null}{typeof entry.aoeDeltaPercent === "number" ? <span>{talentText(lang, "Пачка")} {signed(entry.aoeDeltaPercent)}</span> : null}</div>
+        <button type="button" className={tools.quiet} onClick={() => apply(entry)} aria-pressed={appliedId === entry.candidateId}>{appliedId === entry.candidateId ? <><Check aria-hidden="true" />{talentText(lang, "Применён")}</> : talentText(lang, "Применить")}</button>
+      </li>;
+    })}</ol> : null}
   </section>;
 }
+
+const numberLocale: Record<TalentLang, string> = { ru: "ru-RU", en: "en-US" };

@@ -14,7 +14,7 @@
 .header { display:flex; align-items:center; gap:var(--atlas-space-3); }
 .header > div { display:grid; gap:var(--atlas-space-1); min-width:0; }
 .header strong { color:var(--gear-quality-text,var(--atlas-text-strong)); font:650 var(--atlas-text-body)/1.4 var(--atlas-font-ui); overflow-wrap:anywhere; }
-.header span,.requirement,.description footer { color:var(--atlas-text-muted); font-size:var(--atlas-text-meta); }
+.header span,.requirement { color:var(--atlas-text-muted); font-size:var(--atlas-text-meta); }
 .level { margin:0; padding-block:var(--atlas-space-2); display:flex; justify-content:space-between; gap:var(--atlas-space-3); border-block:1px solid var(--atlas-line-soft); }
 .level dd { margin:0; color:var(--atlas-text-strong); font-weight:700; }
 .requirement { margin:0; }
@@ -29,4 +29,3 @@
 .source { padding-top:var(--atlas-space-2); border-top:1px solid var(--atlas-line-soft); }
 .source > span { color:var(--atlas-text-muted); font-size:var(--atlas-text-meta); }
 .source p { margin:var(--atlas-space-1) 0 0; }
-.description footer { padding-top:var(--atlas-space-2); border-top:1px solid var(--atlas-line-soft); }

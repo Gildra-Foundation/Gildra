@@ -72,13 +72,12 @@ export function GearPlannerItem({ item, locale, verified = true, compact = false
       <div><dt>{t("Урон", "Damage")}</dt><dd>{number(weapon.minDamage)}–{number(weapon.maxDamage)}</dd></div>
       <div><dt>{t("Скорость оружия", "Weapon speed")}</dt><dd>{number(weapon.speedSeconds)} {t("сек.", "sec")}</dd></div>
       <div><dt>{t("Урон в секунду", "Damage per second")}</dt><dd>{number(weapon.dps)}</dd></div>
-    </dl> : verified && weaponExpected ? <p className={styles.unverified}>{t("Параметры оружия этого варианта недоступны.", "Weapon properties for this variant are unavailable.")}</p> : null}
+    </dl> : verified && weaponExpected ? <p className={styles.unverified}>{t("Параметры оружия этого варианта недоступны.", "Weapon properties unavailable.")}</p> : null}
     {stats.length ? <dl className={styles.stats}>{stats.map(([key, value]) => <div key={key}><dt>{statNames[key][ru ? 0 : 1]}</dt><dd>+{number(value)}</dd></div>)}</dl> : statLines?.length ? <ul className={styles.stats}>{statLines.map((line, index) => <li key={`${index}:${line}`}>{line}</li>)}</ul> : null}
     {verified && item.effectsVerified !== false && item.effects?.length ? <div className={styles.effects}>{item.effects.map((effect, index) => <p key={`${index}:${effect}`}>{effect}</p>)}</div> : null}
-    {verified && item.effectsVerified === false ? <p className={styles.unverified}>{t("Описание особых эффектов этого варианта недоступно. Подбор учитывает свойства, рассчитанные симулятором.", "Special effect descriptions for this variant are unavailable. The planner uses the properties resolved by the simulator.")}</p> : null}
-    {!verified ? <p className={styles.unverified}>{t("Свойства награды для вашего уровня пока не подтверждены. Этот предмет не считается улучшением.", "The reward properties at your level have not been verified. This item is not counted as an upgrade.")}</p> : null}
+    {verified && item.effectsVerified === false ? <p className={styles.unverified}>{t("Описание особых эффектов этого варианта недоступно.", "Special effects unavailable.")}</p> : null}
+    {!verified ? <p className={styles.unverified}>{t("Свойства награды для вашего уровня неизвестны.", "Reward properties at your level are unknown.")}</p> : null}
     {item.source ? <div className={styles.source}><span>{t("Источник", "Source")}</span><p>{item.source}</p></div> : null}
-    <footer>{pinned ? t("Нажмите по предмету ещё раз или Esc, чтобы закрыть", "Click the item again or press Esc to close") : t("Нажмите по предмету, чтобы закрепить описание", "Click the item to keep its details open")}</footer>
   </div>;
   return <WarcraftTooltip content={content} pinned={pinned} onPinnedClose={() => setPinned(false)} locale={locale} atlasScope className={styles.tooltip}>
     {tooltipId => <button type="button" className={`${styles.trigger} ${compact ? styles.compact : ""}`} style={qualityStyle(item.quality)} data-quality={item.quality} aria-pressed={pinned} aria-describedby={tooltipId} aria-label={`${item.name}${verified && item.itemLevel !== undefined ? `, ${t("уровень предмета", "item level")} ${item.itemLevel}` : ""}. ${t("Описание предмета", "Item details")}`} onClick={() => setPinned(value => !value)}>
