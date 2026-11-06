@@ -1,0 +1,343 @@
+/* atlas:strict — Mythic+ leaderboard (/wow/mythic-plus/leaderboard and /<spec>) in the material atlas of
+   the Mythic+ hub: painted plaques of the dungeon kits (shared MaterialPlaque) around live HTML.
+   Shell colour is the theme accent; a plaque's light is its kit (--material-light);
+   class colours (--class-color) only on character and spec identity; item quality only on item names. */
+
+.page { --atlas-frame-tint: var(--atlas-info-wash, var(--atlas-accent-glow)); font-variant-numeric: lining-nums; }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Hero ---------- */
+.hero { min-height: 430px; padding-bottom: var(--atlas-space-5); }
+.heroHeader { max-width: 58%; }
+.heroHeader h1 { max-width: 17ch; }
+.heroHeader p { max-width: 52ch; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+
+.regions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--atlas-space-1);
+  margin-top: var(--atlas-space-5);
+  padding: var(--atlas-space-1);
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--atlas-bg) 72%, transparent);
+}
+.region {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--atlas-space-2);
+  min-height: 44px;
+  padding: var(--atlas-space-2) var(--atlas-space-4);
+  border-radius: calc(var(--atlas-radius) - 2px);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-meta);
+  line-height: 28px;
+  text-decoration: none;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+  transition: background var(--atlas-duration-fast) var(--atlas-ease), color var(--atlas-duration-fast) var(--atlas-ease);
+}
+.region b { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); letter-spacing: var(--atlas-tracking-label); }
+.region:hover { color: var(--atlas-text-strong); background: var(--atlas-surface-hover, var(--atlas-surface)); }
+.region[aria-current="page"] { background: color-mix(in srgb, var(--atlas-accent) 18%, var(--atlas-surface)); color: var(--atlas-text-strong); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--atlas-accent) 55%, transparent); }
+.region:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; }
+
+.section { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+.statePlaque { margin-top: var(--atlas-space-6); }
+
+/* ---------- Identity ---------- */
+.octagon {
+  --size: 32px;
+  flex: none;
+  display: block;
+  inline-size: var(--size);
+  block-size: var(--size);
+  padding: 2px;
+  clip-path: polygon(28% 0, 72% 0, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0 72%, 0 28%);
+  background: color-mix(in srgb, var(--class-color, var(--atlas-line)) 70%, var(--atlas-surface));
+}
+.octagon img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; clip-path: inherit; }
+
+.player { display: grid; min-width: 0; line-height: 1.25; }
+.playerName {
+  overflow: hidden;
+  color: color-mix(in srgb, var(--class-color, var(--atlas-text-strong)) 78%, var(--atlas-text-strong));
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.playerName { text-decoration: none; }
+a.playerName:hover { text-decoration: underline; text-underline-offset: .2em; }
+a.playerName:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent)); outline-offset: 2px; }
+.realm { overflow: hidden; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Leaders by role ---------- */
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-7); }
+.rolePlaque { padding: 32px 36px 40px; }
+.rolePlaque > [data-mythic-hub-ornaments] { --mythic-ornament-width: 64px; }
+.roleTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  margin: 0 0 var(--atlas-space-4);
+  color: var(--material-light);
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-label);
+  font-weight: 700;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px var(--atlas-bg);
+}
+.roleTitle svg { width: 16px; height: 16px; }
+.podiumList { display: grid; gap: var(--atlas-space-1); margin: 0; padding: 0; list-style: none; }
+.leader, .podiumItem { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); }
+.leader { padding-block: var(--atlas-space-2) var(--atlas-space-4); margin-bottom: var(--atlas-space-2); border-block-end: 1px solid var(--material-line); }
+.podiumItem { padding-block: var(--atlas-space-2); border-block-end: 1px solid var(--atlas-line-soft); }
+.podiumItem:last-child { border-block-end: 0; }
+.podiumWho { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.podiumRank { color: var(--atlas-text-subtle); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); text-align: center; }
+.leader .podiumRank { color: var(--material-light); font-size: var(--atlas-text-h3); }
+.leader .playerName { font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); }
+.podiumScore, .leaderScore { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
+.leaderScore { color: var(--material-light); font-size: var(--atlas-text-h3); line-height: 1; }
+
+/* ---------- The list ---------- */
+.tablePlaque { padding: 32px 36px 36px; }
+.filters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: var(--atlas-space-3) var(--atlas-space-4);
+  margin-bottom: var(--atlas-space-5);
+}
+.filters label { color: var(--material-light); }
+.filterActions { display: flex; align-items: center; gap: var(--atlas-space-3); }
+.filterActions > * { min-width: 0; }
+.reset {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-1);
+  min-height: 44px;
+  color: var(--material-light);
+  font-size: var(--atlas-text-meta);
+  white-space: nowrap;
+  text-underline-offset: .2em;
+}
+.reset svg { width: 14px; height: 14px; }
+.reset:focus-visible { outline: 2px solid var(--material-light); outline-offset: 3px; }
+
+/* No glass over painted material (design.md §9): the kit table sits straight on the plaque face. */
+.page .table { border: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+.page .table thead th { border-bottom: 1px solid var(--material-line); background: transparent; color: var(--material-light); }
+.page .table tbody tr { transition: background var(--atlas-duration-fast) var(--atlas-ease); }
+.page .table tbody tr:hover { background: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 8%, transparent); }
+.rankCol { width: 3.5rem; }
+.rank { color: var(--atlas-text-muted); font-family: var(--atlas-font-display); font-size: var(--atlas-text-body); }
+.rank[data-podium] { color: var(--material-light); font-size: var(--atlas-text-title); }
+.specCell { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.specText { display: grid; min-width: 0; line-height: 1.25; }
+.specName { color: color-mix(in srgb, var(--class-color, var(--atlas-text)) 62%, var(--atlas-text-strong)); font-weight: 600; white-space: nowrap; }
+.specClass { color: var(--atlas-text-muted); font-weight: 400; }
+.heroOnly { color: var(--atlas-text); white-space: nowrap; }
+.heroTree { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); white-space: nowrap; }
+.key { color: var(--atlas-text-strong); font-variant-numeric: tabular-nums lining-nums; }
+.score { color: var(--material-light); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.links { display: inline-flex; align-items: center; justify-content: flex-end; gap: var(--atlas-space-2); }
+.linksCol { text-align: end; }
+.linkIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 var(--atlas-space-2);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: calc(var(--atlas-radius) - 2px);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-meta);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast) var(--atlas-ease);
+}
+.linkIcon { min-width: 32px; padding: 0; color: var(--material-light); }
+.linkIcon + .linkIcon { color: var(--atlas-text-muted); }
+.linkIcon svg { width: 15px; height: 15px; }
+.linkIcon:hover { border-color: var(--material-line); color: var(--atlas-text-strong); }
+.linkIcon:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
+.noMatches { margin: var(--atlas-space-5) 0; color: var(--atlas-text-muted); }
+.pager { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--atlas-space-4); margin-top: var(--atlas-space-5); }
+.pager > :last-child { justify-self: end; }
+.pagerStatus { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); white-space: nowrap; }
+
+/* ---------- Specialization directory ---------- */
+.directory { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+.directoryClass {
+  display: grid;
+  align-content: start;
+  gap: var(--atlas-space-2);
+  padding: var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface);
+}
+.directoryName { color: color-mix(in srgb, var(--class-color) 72%, var(--atlas-text-strong)); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.directorySpecs { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); }
+.directorySpec {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  min-height: 44px;
+  padding: var(--atlas-space-1) var(--atlas-space-3) var(--atlas-space-1) var(--atlas-space-1);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: calc(var(--atlas-radius) - 2px);
+  color: var(--atlas-text);
+  font-size: var(--atlas-text-small);
+  text-decoration: none;
+  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background var(--atlas-duration-fast) var(--atlas-ease);
+}
+.directorySpec:hover { border-color: color-mix(in srgb, var(--class-color) 55%, transparent); background: var(--atlas-surface-raised, var(--atlas-surface)); color: var(--atlas-text-strong); }
+.directorySpec[aria-current="page"] { border-color: color-mix(in srgb, var(--class-color) 70%, transparent); color: var(--atlas-text-strong); }
+.directorySpec:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; }
+
+/* ---------- Spec page: what the top players use ---------- */
+.build { display: grid; grid-template-columns: minmax(0, 1.25fr) repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-6); align-items: start; }
+.buildPlaque { padding: 32px 36px 36px; }
+.heroList, .itemList { display: grid; gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.heroItem { display: grid; gap: var(--atlas-space-2); padding-bottom: var(--atlas-space-4); border-block-end: 1px solid var(--material-line); }
+.heroItem:last-child { padding-bottom: 0; border-block-end: 0; }
+.heroHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-3); }
+.heroHead b { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: 600; text-shadow: 0 1px 3px var(--atlas-bg); }
+.shareValue { color: var(--material-light); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.shareTrack { display: block; height: 5px; overflow: hidden; border-radius: 3px; background: var(--atlas-surface-sunken); box-shadow: inset 0 0 0 1px var(--atlas-line-soft); }
+.shareTrack span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--material-accent) 44%, var(--atlas-surface-sunken)), var(--material-accent)); }
+.topBuild { display: grid; gap: var(--atlas-space-2); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.topBuildWho b { color: var(--atlas-text-strong); font-weight: 600; }
+.topBuildActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); }
+.copy, .talentsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  min-height: 44px;
+  padding: 0 var(--atlas-space-3);
+  border: 1px solid var(--material-line);
+  border-radius: calc(var(--atlas-radius) - 2px);
+  background: color-mix(in srgb, var(--atlas-bg) 40%, transparent);
+  color: var(--atlas-text-strong);
+  font: inherit;
+  font-size: var(--atlas-text-meta);
+  text-decoration: none;
+  cursor: pointer;
+}
+.copy svg, .talentsLink svg { width: 15px; height: 15px; color: var(--material-light); }
+.copy:hover, .talentsLink:hover { border-color: var(--material-light); }
+.copy:focus-visible, .talentsLink:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
+.copy[data-status="copied"] svg { color: var(--atlas-positive); }
+.item { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); }
+.itemIcon {
+  display: block;
+  inline-size: 40px;
+  block-size: 40px;
+  padding: 2px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--quality-frame, var(--atlas-line)) 70%, var(--atlas-surface));
+}
+.itemIcon img { display: block; inline-size: 100%; block-size: 100%; border-radius: 4px; }
+.itemText { display: grid; gap: var(--atlas-space-1); min-width: 0; }
+.itemName { overflow: hidden; color: var(--quality-color, var(--atlas-text-strong)); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+.itemName:hover { text-decoration: underline; text-underline-offset: .2em; }
+.itemName:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
+
+.siblings { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); margin: 0 0 var(--atlas-space-4); padding: 0; list-style: none; }
+.sibling {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-3);
+  min-height: 52px;
+  padding: var(--atlas-space-1) var(--atlas-space-4) var(--atlas-space-1) var(--atlas-space-2);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface);
+  color: color-mix(in srgb, var(--class-color) 62%, var(--atlas-text-strong));
+  font-weight: 600;
+  text-decoration: none;
+}
+.sibling:hover { border-color: color-mix(in srgb, var(--class-color) 55%, transparent); }
+.sibling:focus-visible, .backLink:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; }
+.backLink { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; color: var(--atlas-accent); font-size: var(--atlas-text-small); }
+.backLink svg { width: 14px; height: 14px; }
+.allSpecs summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+  cursor: pointer;
+}
+.allSpecs summary:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; }
+.allSpecs[open] summary { margin-bottom: var(--atlas-space-3); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1200px) {
+  .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .build { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .build > :first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 1100px) {
+  .podium { gap: var(--atlas-space-5); }
+  .rolePlaque { padding: 28px 28px 36px; }
+  .rolePlaque > [data-mythic-hub-ornaments] { --mythic-ornament-width: 56px; }
+  .ilvlCol { display: none; }
+}
+@media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
+@media (max-width: 900px) {
+  .podium, .build { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-6); }
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .keyCol { display: none; }
+}
+@media (max-width: 700px) {
+  .rolePlaque, .tablePlaque, .buildPlaque { padding: 28px; }
+  .tablePlaque { padding-inline: 18px; }
+}
+@media (max-width: 600px) {
+  .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
+  .heroHeader { max-width: 100%; }
+  .actions { gap: var(--atlas-space-2); }
+  .regions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
+  .region { flex-direction: column; align-items: center; gap: 0; padding-inline: var(--atlas-space-1); line-height: 1.2; justify-content: center; }
+  .region span { font-size: var(--atlas-text-label); }
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+  .filters > :nth-last-child(2), .filterActions, .filters[data-compact] > * { grid-column: 1 / -1; }
+  .linksCol { display: none; }
+  .pager { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .pagerStatus { grid-column: 1 / -1; grid-row: 1; justify-self: center; }
+}
+/* Phones: rank, character, spec icon, rating. */
+@media (max-width: 520px) {
+  .tablePlaque { padding: 24px 12px 20px; }
+  .page .table th, .page .table td { padding-inline: var(--atlas-space-2); }
+  .specText, .heroCol { display: none; }
+  /* The column keeps only the spec icon: its heading stays for screen readers. */
+  .specHeader { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .playerName { white-space: normal; overflow-wrap: anywhere; }
+  .rankCol { width: 2.5rem; }
+  .score { font-size: var(--atlas-text-body); }
+}
+@media (max-width: 360px) { .rolePlaque, .buildPlaque { padding-inline: 20px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .region, .page .table tbody tr, .linkIcon, .directorySpec { transition: none; }
+}
+:global([data-motion="reduced"]) .region, :global([data-ui-motion="reduce"]) .region { transition: none; }
+@media (forced-colors: active) {
+  .region[aria-current="page"], .directorySpec[aria-current="page"] { outline: 2px solid Highlight; }
+  .shareTrack { border: 1px solid CanvasText; background: Canvas; }
+  .shareTrack span { background: Highlight; }
+  .octagon, .itemIcon { background: CanvasText; }
+}

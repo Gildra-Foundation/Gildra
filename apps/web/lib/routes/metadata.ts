@@ -41,6 +41,9 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   mythicPlusRoutes: {
     en: { title: "Mythic+ Route Finder — Gildra", description: "Find the top timed Mythic+ keys played by groups like yours, by dungeon and key level, and open each run." },
     ru: { title: "Поиск маршрутов Mythic+ — Gildra", description: "Лучшие закрытые ключи Mythic+ групп, похожих на вашу, по подземелью и уровню ключа — со ссылкой на каждый забег." },
+  mythicPlusLeaderboard: {
+    en: { title: "Mythic+ Leaderboard: Top Players by Rating — Gildra", description: "The strongest Mythic+ characters of Europe, the Americas, Korea and Taiwan by rating, with filters by role, class, specialization and realm." },
+    ru: { title: "Рейтинг игроков Mythic+ — Gildra", description: "Сильнейшие персонажи Mythic+ Европы, Америки, Кореи и Тайваня по рейтингу — с фильтрами по роли, классу, специализации и серверу." },
   },
   dungeons: {
     en: { title: "Midnight Dungeons — Gildra", description: "Dungeons of the current season: route, bosses, timer and strategy for each." },

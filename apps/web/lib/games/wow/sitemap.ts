@@ -3,6 +3,7 @@ import { dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { midnightLairEncounters } from "@/lib/data/wow";
 import { raidHubEntries } from "@/components/wow/raid/raidHubData";
 import professions from "@/data/wow/professions/index.json";
+import { talentSpecThemes } from "@/lib/talentSpecThemes";
 
 /**
  * Sections of the route registry that are not listed: /wow/dungeons answers
@@ -25,5 +26,6 @@ export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean
   ...raidHubEntries.map(({ slug }) => `/wow/raids/${slug}`),
   ...midnightLairEncounters.map(({ slug }) => `/wow/lairs/${slug}`),
   ...professions.map(({ slug }) => `/wow/professions/${slug}`),
+  ...talentSpecThemes.map(({ slug }) => `/wow/mythic-plus/leaderboard/${slug}`),
   "/privacy",
 ];

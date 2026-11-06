@@ -127,3 +127,26 @@ scraping beyond the published endpoints; nothing else is read.
   snapshot on failure. The API computes compositions, stats and the route
   finder from it (`/v1/meta/wow/mythic-plus/{comps,stats,runs}`) and marks it
   `stale` after 30 hours without a successful check.
+
+`Mythic+ leaderboard — EU/US/KR/TW` (`mplus-leaderboard-<region>`) is
+collected by `parsers.mplus_leaderboard` every twelve hours from the official
+Blizzard APIs only (client credentials `BATTLENET_CLIENT_ID` /
+`BATTLENET_CLIENT_SECRET` in the worker's environment, never stored):
+
+- Discovery: Mythic+ leaderboards of every connected realm, dungeon and week
+  (the last three weeks; sixteen on the first run) give each character's best
+  observed run per dungeon, a lower bound of the rating. Characters of the
+  previous snapshot are carried over.
+- Rating: the season Mythic+ profile of the top 700 candidates and the top 130
+  of every specialization gives the exact rating, the specialization of the
+  counted runs and the highest timed key.
+- Details: overall top 500 + top 100 per specialization get item level, hero
+  talent tree and talent loadout; the top 30 per specialization also get
+  equipment, summarised as trinket and weapon shares.
+- Budget: about 16k requests for EU or US and 2–3k for KR or TW per run,
+  at `BLIZZARD_API_RATE` (default 6 requests per second, far below the 36k per
+  hour / 100 per second limit shared with the website), so a full run takes
+  1.5–2 hours. The daemon starts it in a background thread
+  (`POST /internal/v1/datasets/mplus-leaderboard/refresh` answers at once);
+  every region is validated and published on its own, a failed region keeps
+  its last-known-good snapshot, and the API marks it `stale` after 48 hours.
