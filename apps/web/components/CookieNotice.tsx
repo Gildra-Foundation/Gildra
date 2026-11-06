@@ -7,6 +7,8 @@ import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { readBrowserConsent, saveBrowserConsent, consentChanged } from "@/lib/browserConsent";
 import styles from "./cookieNotice.module.css";
 
+const SPACE = "--cookie-notice-space";
+
 const copy = {
   ru: { label: "Файлы cookie", text: "Gildra хранит настройки в браузере и собирает анонимную статистику использования. Подробнее — в", link: "политике конфиденциальности", accept: "Принять", decline: "Отклонить" },
   en: { label: "Cookies", text: "Gildra stores your preferences in the browser and collects anonymous usage statistics. See the", link: "privacy policy", accept: "Accept", decline: "Decline" },
@@ -41,20 +43,33 @@ export function CookieNotice() {
   // The space the notice covers at the bottom of the viewport (--cookie-notice-space):
   // atlas pages reserve it under their content (app/styles/atlas-pages.css), so a
   // short page's legal line rests just above the notice and a long one scrolls clear.
+  // The property does not inherit (@property in atlas-pages.css): it is written on
+  // the few boxes that read it ([data-cookie-notice-space]), including ones a later
+  // page mounts. Declared on <html>, it restyled every element of the page.
   useEffect(() => {
     const element = notice.current;
     if (!visible || !element) return;
-    const root = document.documentElement;
+    let space = "";
+    const apply = () => {
+      for (const box of document.querySelectorAll<HTMLElement>("[data-cookie-notice-space]")) {
+        if (box.style.getPropertyValue(SPACE) !== space) box.style.setProperty(SPACE, space);
+      }
+    };
     const measure = () => {
       const bottom = Number.parseFloat(getComputedStyle(element).bottom) || 0;
-      root.style.setProperty("--cookie-notice-space", `${Math.ceil(element.offsetHeight + bottom)}px`);
+      space = `${Math.ceil(element.offsetHeight + bottom)}px`;
+      apply();
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(element);
+    const content = document.getElementById("atlas-content");
+    const mounts = new MutationObserver(apply);
+    if (content) mounts.observe(content, { childList: true, subtree: true });
     return () => {
       observer.disconnect();
-      root.style.removeProperty("--cookie-notice-space");
+      mounts.disconnect();
+      for (const box of document.querySelectorAll<HTMLElement>("[data-cookie-notice-space]")) box.style.removeProperty(SPACE);
     };
   }, [visible]);
 

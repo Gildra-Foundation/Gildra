@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Alegreya, Chakra_Petch, Inter } from "next/font/google";
 import { CookieNoticeGate } from "@/components/CookieNoticeGate";
 import { PlausibleTracker } from "@/components/analytics/PlausibleTracker";
-import { WebVitals } from "@/components/analytics/WebVitals";
+import { LazyWebVitals } from "@/components/analytics/LazyAnalytics";
 import { StagingBadge } from "@/components/StagingBadge";
 import { plausibleTracker } from "@/lib/analytics/plausible";
 import { RouteTransitionGate } from "@/components/motion/RouteTransitionGate";
@@ -84,7 +84,7 @@ export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: 
         {/* The reader's "less motion" choice, applied before the first paint (lib/client/motionPreference.ts). */}
         <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript + ";" + siteThemeScript + ";" + localeArrivalScript }} />
       </head>
-      <body>
+      <body className="atlas-shell" data-atlas-shell="dark">
         <SiteTheme>
           <AtlasValyroScope root locale={valyroLocale[lang]}>
             <WorkspaceNavigator picks={navigationPicks()} />
@@ -93,7 +93,7 @@ export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: 
         </SiteTheme>
         <CookieNoticeGate />
         <PlausibleTracker />
-        {plausibleTracker() ? <WebVitals /> : null}
+        {plausibleTracker() ? <LazyWebVitals /> : null}
         <StagingBadge />
       </body>
     </html>

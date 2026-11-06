@@ -20,7 +20,7 @@ export function storyLibraryMetadata(): Metadata {
 export function StoryLibrary() {
   return <main id="main-content" className={styles.library} lang="ru">
     <h1 className={styles.srOnly}>{copy.heading}</h1>
-    <iframe className={styles.room} src="/story-library/index.html" title={copy.frameTitle} />
+    <iframe className={styles.room} src="/story-library/index.html" title={copy.frameTitle} data-cookie-notice-space />
     <div className={styles.footer}><AtlasLegalFooter lang="ru" /></div>
   </main>;
 }

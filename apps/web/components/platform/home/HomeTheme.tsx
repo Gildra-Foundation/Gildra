@@ -11,7 +11,7 @@ export function HomeTheme({ initialTheme, children }: { initialTheme: HomeThemeI
   const { theme, ready, selectTheme } = useSiteTheme();
   const selected = ready ? theme : initialTheme;
   return <HomeContext.Provider value={{ theme: selected, selectTheme }}>
-    <div className={styles.page} data-grimoire-home data-home-theme={selected}>{children}</div>
+    <div className={styles.page} data-grimoire-home data-home-theme={selected} data-cookie-notice-space>{children}</div>
   </HomeContext.Provider>;
 }
 

@@ -33,8 +33,8 @@ export function RaidHubMotion() {
     const spring = style.getPropertyValue("--ui-spring-smooth").trim();
     const easing = spring && CSS.supports("animation-timing-function", spring)
       ? spring : style.getPropertyValue("--atlas-ease").trim() || "ease-out";
-    const duration = Math.min(620, milliseconds(style.getPropertyValue("--raid-hub-enter-duration"), 620));
-    const stagger = Math.min(60, milliseconds(style.getPropertyValue("--raid-hub-enter-stagger"), 60));
+    const duration = Math.min(620, milliseconds(style.getPropertyValue("--atlas-duration-enter"), 620));
+    const stagger = Math.min(60, milliseconds(style.getPropertyValue("--atlas-stagger"), 60));
     const running = new Map<HTMLElement, Animation>();
     const marked = new Set<HTMLElement>();
     const seen = new WeakSet<HTMLElement>();

@@ -225,10 +225,10 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
   }, [begin, router, settle]);
 
   const active = state !== "idle";
-  return <div className={styles.system} data-book-navigation={active ? "turn" : "idle"} data-route-state={state}>
+  return <div className={styles.system} data-book-navigation={active ? "turn" : "idle"} data-route-state={state} data-cookie-notice-space>
     <RouteThemeController />
     <span className={styles.progress} aria-hidden="true" />
-    <div className={styles.frame} ref={frameRef} data-book-route-frame data-route-state={state} aria-busy={active || undefined}>
+    <div className={styles.frame} ref={frameRef} data-book-route-frame data-route-state={state} aria-busy={active || undefined} data-cookie-notice-space>
       {children}
     </div>
   </div>;

@@ -1,3 +1,12 @@
+/* The cookie notice's height, written by CookieNotice on the boxes that reserve it
+   ([data-cookie-notice-space]). Not inherited: a change restyles those boxes only,
+   where a custom property on <html> restyled every element. Kept out of the
+   Tailwind-processed global sheet, which would add a universal fallback rule. */
+@property --cookie-notice-space {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
 .system {
   --route-accent: #c58b36;
   --route-soft: #f0cb78;
