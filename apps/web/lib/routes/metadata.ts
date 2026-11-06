@@ -55,8 +55,8 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     ru: { title: "Логова и мировые боссы Midnight Сезон 2 — Gildra", description: "Логово и мировые боссы Midnight Сезон 2: где найти, способности, сложность и добыча." },
   },
   classes: {
-    en: { title: "WoW Classes and Specializations — Gildra", description: "Every Midnight class and specialization with its talent tree." },
-    ru: { title: "Классы и специализации WoW — Gildra", description: "Все классы и специализации Midnight с деревьями талантов." },
+    en: { title: "WoW Classes and Specializations — Gildra", description: "Every Midnight class and specialization: role, Mythic+ tier, hero trees and top players' builds." },
+    ru: { title: "Классы и специализации WoW — Gildra", description: "Все классы и специализации Midnight: роль, тир в Mythic+, героические таланты и билды лучших игроков." },
   },
   season2: {
     en: { title: "WoW Midnight Season 2 Guide — Gildra", description: "What Midnight Season 2 brings: Mythic+ dungeons, raids, delves and more." },

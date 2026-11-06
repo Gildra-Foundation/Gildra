@@ -2,6 +2,7 @@
 import { ClassCatalogPage } from "@/components/wow/classes/ClassCatalogPage";
 import { sectionMetadata } from "@/lib/routes/metadata";
 
+export const revalidate = 900;
 export const metadata = sectionMetadata("classes", "ru");
 
 export default function Page() {

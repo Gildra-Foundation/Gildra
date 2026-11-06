@@ -1,12 +1,21 @@
-import { notFound, permanentRedirect } from "next/navigation";
+// routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
+import { notFound } from "next/navigation";
+import { ClassPage } from "@/components/wow/classes/ClassPage";
+import { classMetadata } from "@/components/wow/classes/classMetadata";
 import { getMidnightClass, midnightClasses } from "@/lib/data/wow";
 
-// A class has no page of its own: its card on the class list carries the specializations.
 export const dynamicParams = false;
+export const revalidate = 900;
 export const generateStaticParams = () => midnightClasses.map(({ slug }) => ({ class: slug }));
 
-export default async function Page({ params }: { params: Promise<{ class: string }> }) {
+type Props = { params: Promise<{ class: string }> };
+
+export async function generateMetadata({ params }: Props) {
+  return classMetadata("en", (await params).class);
+}
+
+export default async function Page({ params }: Props) {
   const entry = getMidnightClass((await params).class);
   if (!entry) notFound();
-  permanentRedirect(`/wow/classes#${entry.slug}`);
+  return <ClassPage locale="en" classSlug={entry.slug} />;
 }
