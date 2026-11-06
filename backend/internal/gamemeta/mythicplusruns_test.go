@@ -50,6 +50,9 @@ func TestCompsCountExactGroupsAndHideTinySamples(t *testing.T) {
 	if response.Sample.Runs != 67 || response.Sample.MinLevel != 20 || response.Sample.MaxLevel != 24 {
 		t.Fatalf("sample = %#v", response.Sample)
 	}
+	if response.Levels != (LevelRange{Min: 20, Max: 24}) {
+		t.Fatalf("level range = %#v", response.Levels)
+	}
 	if len(response.Compositions) != 2 {
 		t.Fatalf("compositions = %d, want 2 (the two-run group is below the minimum sample)", len(response.Compositions))
 	}

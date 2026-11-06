@@ -66,6 +66,14 @@ type RunsEnvelope struct {
 	Regions   []string      `json:"regions"`
 	Filter    RunsFilter    `json:"filter"`
 	Sample    SampleSummary `json:"sample"`
+	// Key levels of the whole snapshot, so a client can offer every level filter.
+	Levels LevelRange `json:"levelRange"`
+}
+
+// LevelRange is the lowest and highest key level of the snapshot.
+type LevelRange struct {
+	Min int `json:"min"`
+	Max int `json:"max"`
 }
 
 // ParseSpecList reads "250,65,62" (at most five ids).
@@ -167,8 +175,13 @@ func (s *RunsSnapshot) envelope(filter RunsFilter, runs []Run) RunsEnvelope {
 	return RunsEnvelope{
 		Game: "wow", Status: s.Status, Source: s.Source, FetchedAt: s.FetchedAt, CheckedAt: s.CheckedAt,
 		Season: s.Payload.Season, Dungeons: s.Payload.Dungeons, Specs: s.Payload.Specs, Regions: s.Payload.Regions,
-		Filter: filter, Sample: summarize(runs),
+		Filter: filter, Sample: summarize(runs), Levels: s.levelRange(),
 	}
+}
+
+func (s *RunsSnapshot) levelRange() LevelRange {
+	all := summarize(s.Payload.Runs)
+	return LevelRange{Min: all.MinLevel, Max: all.MaxLevel}
 }
 
 func summarize(runs []Run) SampleSummary {
