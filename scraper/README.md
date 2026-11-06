@@ -103,3 +103,27 @@ snapshot when validation fails.
 Maxroll and Wowhead tier lists are not collected for the source tabs: their
 terms forbid automated collection (see the source review in the tier-list
 sources task) until written permission exists.
+
+`Mythic+ runs — Raider.IO` (`mplus-runs-raiderio`) is collected by
+`parsers.raiderio_mplus` every twelve hours from Raider.IO's documented public
+API (https://raider.io/api): `static-data` (current season and dungeons),
+`runs` (season leaderboard per dungeon and region, 20 runs a page) and
+`season-cutoffs` (rating percentiles per region). Raider.IO's terms require a
+link back to raider.io on every public page that shows the data and forbid
+scraping beyond the published endpoints; nothing else is read.
+
+- Sample: the top of every dungeon's leaderboard — 15 pages for US and EU, 4
+  for KR and TW (`RAIDERIO_MPLUS_PAGES="us=15,eu=15,kr=4,tw=4"` overrides),
+  about 6 000 runs. The leaderboards list timed runs only, so the snapshot
+  keeps upgrades and time left, never a "timed %".
+- Stored per run: run id, dungeon, key level, upgrades, clear time, timer,
+  completion time, region, the five specializations and a video flag.
+  Character names are not stored.
+- Budget: ~310 direct API requests a run at one request per second (about six
+  minutes), `Retry-After` honoured on 429, zero paid credits.
+- Publishing: `parsers.raiderio_mplus_dataset_service` checks roles (1 tank,
+  1 healer, 3 DPS), levels, timers, ids, regions and cutoff ordering, rejects a
+  candidate that lost more than half of its runs, and keeps the last good
+  snapshot on failure. The API computes compositions, stats and the route
+  finder from it (`/v1/meta/wow/mythic-plus/{comps,stats,runs}`) and marks it
+  `stale` after 30 hours without a successful check.

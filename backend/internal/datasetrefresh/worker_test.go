@@ -218,3 +218,25 @@ func TestIntervalSchedule(t *testing.T) {
 		t.Fatalf("Next(%s) = %s, want %s", current, got, want)
 	}
 }
+
+func TestMythicPlusRunsWorkerRequestsPrivateRefreshEndpoint(t *testing.T) {
+	t.Parallel()
+	var path string
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		path = request.URL.Path
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"status":"succeeded"}`))
+	}))
+	defer server.Close()
+
+	worker := NewMythicPlusRunsWorker(server.Client(), server.URL)
+	err := worker.Work(context.Background(), &river.Job[MythicPlusRunsRefreshArgs]{
+		Args: MythicPlusRunsRefreshArgs{ScheduledFor: "2026-11-06"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if path != mplusRunsRefreshPath {
+		t.Fatalf("unexpected request path: %s", path)
+	}
+}

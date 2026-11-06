@@ -22,6 +22,7 @@ const (
 	mplusMetaRefreshPath   = "/internal/v1/datasets/mplus-meta-mythicstats/refresh"
 	mythicStatsRefreshPath = "/internal/v1/datasets/tierlist-mythicstats/refresh"
 	uggRefreshPath         = "/internal/v1/datasets/tierlist-ugg/refresh"
+	mplusRunsRefreshPath   = "/internal/v1/datasets/mplus-runs-raiderio/refresh"
 )
 
 type RefreshArgs struct {
@@ -383,6 +384,54 @@ func MythicPlusMetaPeriodicJob(now func() time.Time) *river.PeriodicJob {
 		},
 		&river.PeriodicJobOpts{
 			ID:         "mplus-meta-mythicstats-six-hour",
+			RunOnStart: true,
+		},
+	)
+}
+
+type MythicPlusRunsRefreshArgs struct {
+	ScheduledFor string `json:"scheduled_for" river:"unique"`
+}
+
+func (MythicPlusRunsRefreshArgs) Kind() string { return "dataset_mplus_runs_raiderio_refresh" }
+
+type MythicPlusRunsWorker struct {
+	river.WorkerDefaults[MythicPlusRunsRefreshArgs]
+	httpClient Client
+	endpoint   string
+}
+
+// NewMythicPlusRunsWorker asks the scraper to collect the Raider.IO run sample
+// (about 310 polite API requests, roughly six minutes, zero paid credits).
+func NewMythicPlusRunsWorker(httpClient Client, baseURL string) *MythicPlusRunsWorker {
+	return &MythicPlusRunsWorker{
+		httpClient: httpClient,
+		endpoint:   strings.TrimRight(baseURL, "/") + mplusRunsRefreshPath,
+	}
+}
+
+func (w *MythicPlusRunsWorker) Work(ctx context.Context, job *river.Job[MythicPlusRunsRefreshArgs]) error {
+	return requestRefresh(ctx, w.httpClient, w.endpoint, job.Args.ScheduledFor)
+}
+
+// MythicPlusRunsPeriodicJob refreshes the Raider.IO run sample every twelve
+// hours; the collector keys runs by twelve-hour slot, so a retry inside the
+// same slot reuses the run.
+func MythicPlusRunsPeriodicJob(now func() time.Time) *river.PeriodicJob {
+	return river.NewPeriodicJob(
+		IntervalSchedule{Interval: 12 * time.Hour},
+		func() (river.JobArgs, *river.InsertOpts) {
+			return MythicPlusRunsRefreshArgs{ScheduledFor: now().UTC().Format(time.DateOnly)}, &river.InsertOpts{
+				Queue:       QueueName,
+				MaxAttempts: 3,
+				UniqueOpts: river.UniqueOpts{
+					ByArgs:   true,
+					ByPeriod: 12 * time.Hour,
+				},
+			}
+		},
+		&river.PeriodicJobOpts{
+			ID:         "mplus-runs-raiderio-twelve-hour",
 			RunOnStart: true,
 		},
 	)
