@@ -198,3 +198,42 @@
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel)::after { display: none; }
   .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .workspace :global(.tc-panel) { border: 1px solid CanvasText; }
 }
+
+/* ---------- Top players' builds: one row of presets above the build controls ---------- */
+.presets { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-3); margin: 0 0 var(--atlas-space-4); }
+.presetsTitle { color: var(--atlas-text-muted); font: 600 var(--atlas-text-label) / 1.2 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.presets ul { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.preset {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 8px;
+  min-height: 44px;
+  padding: 5px 12px;
+  color: var(--atlas-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--atlas-bg) 72%, transparent);
+  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
+}
+.preset b { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 650; white-space: nowrap; }
+.preset span { color: var(--tc-spec-accent, var(--atlas-accent-strong)); font-size: var(--atlas-text-small); font-weight: 650; font-variant-numeric: tabular-nums; }
+.preset small { grid-column: 1 / -1; white-space: nowrap; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); line-height: 1.3; }
+.preset:hover { border-color: var(--atlas-line-strong); background: var(--atlas-surface-selected); }
+.preset[aria-pressed="true"] { border-color: var(--tc-spec-accent, var(--atlas-accent)); background: color-mix(in srgb, var(--tc-spec-accent, var(--atlas-accent)) 14%, var(--atlas-bg)); }
+.preset:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+@media (max-width: 600px) {
+  .presets ul { flex-wrap: nowrap; width: 100%; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .preset { flex: none; }
+}
+@media (prefers-reduced-motion: reduce) { .preset { transition: none; } }
+@media (forced-colors: active) { .preset { border-color: CanvasText; background: Canvas; } .preset[aria-pressed="true"] { border-color: Highlight; } }
+/* Narrow phones: one control per row, so the specialization and build names are not cut ("Неистовство"). */
+@media (max-width: 400px) {
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) .command :global(.tc-command-actions) { grid-template-columns: minmax(0, 1fr); }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-mobile-tree-switcher).treeSwitch button { padding-inline: 4px; }
+  .page:global(.talent-calculator[data-atlas-scope][data-talent-page]) :global(.tc-mobile-tree-switcher).treeSwitch button span { font-size: calc(var(--atlas-text-label) * .9); letter-spacing: 0; }
+}

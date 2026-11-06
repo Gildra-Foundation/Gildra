@@ -22,10 +22,17 @@ type Props = {
 export function TalentHero({ theme, lang, actions, back }: Props) {
   const copy = talentCalculatorCopy[lang];
   const title = copy.title(theme);
+  // Classes › class › specialization › talents: the class and spec pages are a step up.
+  const prefix = lang === "ru" ? "/ru" : "";
+  const classSlug = theme.className.toLowerCase().replace(/[^a-z]+/g, "-");
+  const crumbs = trail(lang, "classes",
+    { label: lang === "ru" ? theme.classNameRu : theme.className, href: `${prefix}/wow/classes/${classSlug}` },
+    { label: lang === "ru" ? theme.specNameRu : theme.specName, href: `${prefix}/wow/classes/${classSlug}/${theme.slug}` },
+    { label: copy.talentsCrumb });
   return <div className={styles.hero} data-talent-hero>
     {back}
     <AtlasHero align="start" className={styles.heroHeader}
-      breadcrumbs={trail(lang, "characters", { label: title })} breadcrumbsLabel={trailLabel(lang)}
+      breadcrumbs={crumbs} breadcrumbsLabel={trailLabel(lang)}
       title={title} actions={actions} />
   </div>;
 }
