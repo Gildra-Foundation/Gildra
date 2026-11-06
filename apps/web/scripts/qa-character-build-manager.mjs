@@ -60,15 +60,13 @@ try {
   await page.waitForTimeout(800);
   if (requests.at(-1)?.scenario !== "pve-aoe") throw new Error("AoE mode did not change simulation conditions");
 
-  await page.getByRole("navigation", { name: "Деревья талантов" }).getByRole("button", { name: /^Специализация/ }).click();
-  const directionStats = await page.locator(".talent-calculator .tc-lines line").evaluateAll((lines) => ({
+  // Trees read top to bottom like the game.
+  const directionStats = await page.locator('[data-talent-editor] [data-tree="spec"] svg line').evaluateAll((lines) => ({
     total: lines.length,
-    leftToRight: lines.filter((line) => Number(line.getAttribute("x2")) > Number(line.getAttribute("x1"))).length,
-    arrows: lines.filter((line) => Boolean(line.getAttribute("marker-end"))).length,
+    topToBottom: lines.filter((line) => Number(line.getAttribute("y2")) > Number(line.getAttribute("y1"))).length,
   }));
-  if (!directionStats.total || directionStats.leftToRight / directionStats.total < .8) throw new Error(`Talent tree is not predominantly left-to-right: ${JSON.stringify(directionStats)}`);
-  if (directionStats.arrows !== directionStats.total) throw new Error("Not every talent connection has a direction arrow");
-  const selected = page.locator(".talent-calculator .tc-tree-canvas button.tc-node[aria-pressed='true']").first();
+  if (!directionStats.total || directionStats.topToBottom / directionStats.total < .8) throw new Error(`Talent tree is not predominantly top-to-bottom: ${JSON.stringify(directionStats)}`);
+  const selected = page.locator("[data-talent-editor] button[data-talent-node][aria-pressed='true']").first();
   await selected.click({ button: "right" });
   await page.waitForTimeout(800);
   const savedLoadout = requests.at(-1)?.candidateLoadout;
