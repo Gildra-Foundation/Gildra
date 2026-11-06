@@ -1,4 +1,4 @@
-import type { WowViewer } from "@/lib/wow/zamModelViewer";
+import { holdViewerLoop, setViewerStill, wakeViewerLoop, type WowViewer } from "@/lib/wow/zamModelViewer";
 
 /**
  * Studio-only handles on the Wowhead viewer beyond lib/wow/zamModelViewer.ts:
@@ -36,6 +36,7 @@ export function setViewerItems(viewer: WowViewer | null, items: ViewerItem[]) {
   const target = actor(viewer);
   if (!target?.setItems || items.length === 0) return false;
   target.setItems(items.map((item) => ({ slot: item.slot, display: item.display, visual: 0 })));
+  wakeViewerLoop(viewer);
   return true;
 }
 
@@ -48,15 +49,19 @@ export function clearViewerSlots(viewer: WowViewer | null, slots: number[]) {
   for (const slot of slots) {
     try { target.clearSlots(String(slot)); } catch { /* slot is cleared before the viewer's bookkeeping fails */ }
   }
+  wakeViewerLoop(viewer);
   return true;
 }
 
 export function setViewerPose(viewer: WowViewer | null, pose: string) {
   actor(viewer)?.setAnimation?.(pose);
+  wakeViewerLoop(viewer);
 }
 
 export function pauseViewer(viewer: WowViewer | null, paused: boolean) {
   for (const entry of renderer(viewer)?.actors ?? []) entry.setAnimPaused?.(paused);
+  // A paused pose is a still picture: the viewer stops drawing once the stage is quiet.
+  setViewerStill(viewer, paused);
 }
 
 /** Resizes the drawing buffer (the viewer ignores devicePixelRatio). */
@@ -64,6 +69,7 @@ export function resizeViewer(viewer: WowViewer | null, width: number, height: nu
   const target = renderer(viewer);
   if (!target?.onResize || width < 1 || height < 1) return;
   target.onResize(Math.round(width), Math.round(height), width / height);
+  wakeViewerLoop(viewer);
 }
 
 /**
@@ -74,6 +80,7 @@ export function resizeViewer(viewer: WowViewer | null, width: number, height: nu
 export function setViewerBackground(viewer: WowViewer | null, url: string | null) {
   const target = renderer(viewer);
   if (!target) return;
+  wakeViewerLoop(viewer);
   if (!url) {
     target.clearBackground?.();
     if (target.options) delete target.options.background;
@@ -108,6 +115,7 @@ export async function captureViewer(viewer: WowViewer | null, width: number, hei
   const options = target.options ?? {};
   const wasTransparent = options.transparent;
   options.transparent = true;
+  const release = holdViewerLoop(viewer);
   try {
     resizeViewer(viewer, width, height);
     await frame();
@@ -130,5 +138,6 @@ export async function captureViewer(viewer: WowViewer | null, width: number, hei
   } finally {
     options.transparent = wasTransparent;
     if (before.width && before.height) resizeViewer(viewer, before.width, before.height);
+    release();
   }
 }

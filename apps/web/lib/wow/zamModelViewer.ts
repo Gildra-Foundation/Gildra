@@ -68,7 +68,148 @@ export async function configureZamViewerGlobals() {
 
 export function createZamViewer(container: HTMLElement, options: Record<string, unknown>) {
   if (!window.ZamModelViewer) throw new Error("viewer script not loaded");
-  return new window.ZamModelViewer({ type: 2, contentPath: ZAM_CONTENT_PATH, container: $(container), ...options });
+  installFrameGate();
+  const gate: LoopGate = { loop: null, parked: null, visible: true, activeUntil: 0, holds: 0, stillAllowed: false, cleanup: () => undefined };
+  capturing = gate;
+  let viewer: WowViewer;
+  try {
+    viewer = new window.ZamModelViewer({ type: 2, contentPath: ZAM_CONTENT_PATH, container: $(container), ...options });
+  } finally {
+    capturing = null;
+  }
+  if (gate.loop) watchLoop(viewer, gate, container);
+  return viewer;
+}
+
+/**
+ * Render-loop gate. The viewer draws every animation frame for as long as it
+ * exists (58 fps with the model standing still, also scrolled out of view).
+ * Its loop re-arms itself through window.requestAnimationFrame, so the gate
+ * recognises that callback (the one armed inside the constructor) and:
+ * - parks it while the stage is off screen;
+ * - halves the rate (30 fps) once nobody has touched the page for a while;
+ * - parks it when the pose is paused and nothing is loading (a still picture).
+ * Any pointer, wheel or key input, a model request or holdViewerLoop() wakes it.
+ */
+type LoopGate = {
+  loop: FrameRequestCallback | null;
+  parked: FrameRequestCallback | null;
+  visible: boolean;
+  activeUntil: number;
+  holds: number;
+  /** The pose is paused: the picture may freeze once the stage is quiet. */
+  stillAllowed: boolean;
+  cleanup: () => void;
+};
+const ACTIVE_MS = 2_500;
+const gates = new Map<FrameRequestCallback, LoopGate>();
+const viewerGates = new WeakMap<WowViewer, LoopGate>();
+let capturing: LoopGate | null = null;
+let nativeFrame: ((callback: FrameRequestCallback) => number) | null = null;
+
+function installFrameGate() {
+  if (nativeFrame) return;
+  const native = window.requestAnimationFrame.bind(window);
+  nativeFrame = native;
+  window.requestAnimationFrame = (callback: FrameRequestCallback) => {
+    if (capturing && !capturing.loop) {
+      capturing.loop = callback;
+      gates.set(callback, capturing);
+    }
+    const gate = gates.get(callback);
+    if (!gate) return native(callback);
+    const mode = loopMode(gate);
+    if (mode === "stop") {
+      gate.parked = callback;
+      return 0;
+    }
+    return mode === "slow" ? native(() => { native(callback); }) : native(callback);
+  };
+}
+
+function loopMode(gate: LoopGate): "run" | "slow" | "stop" {
+  if (!gate.visible) return "stop";
+  if (gate.holds > 0 || Date.now() < gate.activeUntil || zamRequestsInFlight() > 0) return "run";
+  return gate.stillAllowed ? "stop" : "slow";
+}
+
+function resumeLoop(gate: LoopGate) {
+  const parked = gate.parked;
+  if (!parked || !nativeFrame || loopMode(gate) === "stop") return;
+  gate.parked = null;
+  nativeFrame(parked);
+}
+
+function wakeLoop(gate: LoopGate) {
+  gate.activeUntil = Date.now() + ACTIVE_MS;
+  resumeLoop(gate);
+}
+
+function watchLoop(viewer: WowViewer, gate: LoopGate, container: HTMLElement) {
+  const loop = gate.loop as FrameRequestCallback;
+  viewerGates.set(viewer, gate);
+  const wake = () => wakeLoop(gate);
+  const stage = container.parentElement ?? container;
+  const options = { capture: true, passive: true } as const;
+  document.addEventListener("pointerdown", wake, options);
+  document.addEventListener("keydown", wake, options);
+  document.addEventListener("wheel", wake, options);
+  stage.addEventListener("pointermove", wake, options);
+  let observer: IntersectionObserver | null = null;
+  if ("IntersectionObserver" in window) {
+    observer = new IntersectionObserver(([entry]) => {
+      gate.visible = Boolean(entry?.isIntersecting);
+      if (gate.visible) wake();
+    }, { rootMargin: "120px 0px" });
+    observer.observe(container);
+  }
+  gate.cleanup = () => {
+    document.removeEventListener("pointerdown", wake, options);
+    document.removeEventListener("keydown", wake, options);
+    document.removeEventListener("wheel", wake, options);
+    stage.removeEventListener("pointermove", wake, options);
+    observer?.disconnect();
+    gates.delete(loop);
+  };
+  const destroy = viewer.destroy?.bind(viewer);
+  viewer.destroy = () => {
+    gate.cleanup();
+    // A parked loop must run once more to see the viewer is gone.
+    const parked = gate.parked;
+    gate.parked = null;
+    destroy?.();
+    if (parked && nativeFrame) nativeFrame(parked);
+  };
+  wake();
+}
+
+/** Keeps the viewer drawing at full rate (model load, screenshot) until the returned release is called. */
+export function holdViewerLoop(viewer: WowViewer | null) {
+  const gate = viewer ? viewerGates.get(viewer) : undefined;
+  if (!gate) return () => undefined;
+  gate.holds += 1;
+  resumeLoop(gate);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    gate.holds = Math.max(0, gate.holds - 1);
+    wakeLoop(gate);
+  };
+}
+
+/** Wakes the viewer after a change made from code (items, pose, camera, background). */
+export function wakeViewerLoop(viewer: WowViewer | null) {
+  const gate = viewer ? viewerGates.get(viewer) : undefined;
+  if (gate) wakeLoop(gate);
+}
+
+/** With the pose paused the viewer may stop drawing once the stage is quiet. */
+export function setViewerStill(viewer: WowViewer | null, still: boolean) {
+  const gate = viewer ? viewerGates.get(viewer) : undefined;
+  if (!gate) return;
+  gate.stillAllowed = still;
+  wakeLoop(gate);
 }
 
 type DownloadEntry = { loaded?: number; total?: number };
@@ -116,6 +257,8 @@ function trackZamRequests() {
     if (url.origin !== window.location.origin || !url.pathname.startsWith(ZAM_CONTENT_PATH)) return;
     tracker.pending.set(url.href, (tracker.pending.get(url.href) ?? 0) + 1);
     tracker.lastActivity = Date.now();
+    // A model part on its way: parked loops draw again until it is in.
+    for (const gate of gates.values()) resumeLoop(gate);
   };
   const nativeFetch = window.fetch.bind(window);
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
