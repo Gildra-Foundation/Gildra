@@ -122,15 +122,15 @@
 }
 
 /* Kit colours, derived from one accent exactly like the hub cards. */
-.rolePlaque, .tablePlaque, .giniItem, .statePlaque {
+.rolePlaque, .tablePlaque, .giniItem, .sourcePlaque, .statePlaque {
   --meta-kit-light: color-mix(in srgb, var(--meta-kit-accent, var(--atlas-accent)) 65%, var(--atlas-text-strong));
   --meta-kit-base: color-mix(in srgb, var(--meta-kit-accent, var(--atlas-accent)) 15%, var(--atlas-bg));
   --meta-kit-line: color-mix(in srgb, var(--meta-kit-accent, var(--atlas-accent)) 30%, transparent);
 }
 
 /* One 9-slice recipe for every plaque (design.md §4.2). */
-.rolePlaque, .tablePlaque, .giniItem, .statePlaque { position: relative; isolation: isolate; min-width: 0; }
-.rolePlaque::before, .tablePlaque::before, .giniItem::before, .statePlaque::before {
+.rolePlaque, .tablePlaque, .giniItem, .sourcePlaque, .statePlaque { position: relative; isolation: isolate; min-width: 0; }
+.rolePlaque::before, .tablePlaque::before, .giniItem::before, .sourcePlaque::before, .statePlaque::before {
   position: absolute;
   z-index: -1;
   inset: 0;
@@ -154,7 +154,7 @@
 .heroHeader h1 { max-width: 15ch; }
 .heroHeader p { max-width: 52ch; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
-.actionSlot { display: flex; min-width: 0; max-width: 100%; }
+.actionSlot, .sourceAction { display: flex; min-width: 0; max-width: 100%; }
 .weekFacts { display: grid; gap: var(--atlas-space-4); max-width: 1040px; margin-top: var(--atlas-space-5); }
 .weekFacts :global(.ui-stats-card) { background: transparent; box-shadow: none; border: 0; padding-block: var(--atlas-space-2); }
 .affixes { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
@@ -293,6 +293,11 @@
 .giniBefore { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
 
 /* About the data: the hub's CTA plaque. */
+.sourcePlaque { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-5); margin-top: var(--atlas-section-gap); padding: 36px 40px; scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+.sourceText { display: grid; gap: var(--atlas-space-2); min-width: 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); text-shadow: 0 1px 3px var(--atlas-bg); }
+.sourceText strong { color: var(--atlas-text-strong); font: 600 var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); }
+.sourceText a { color: var(--meta-kit-light); text-underline-offset: .2em; }
+.sourceText a:focus-visible { outline: 2px solid var(--meta-kit-light); outline-offset: 3px; }
 .statePlaque { padding: 32px 40px; }
 
 @media (max-width: 1100px) {
@@ -304,9 +309,9 @@
 @media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
 @media (max-width: 900px) { .podium { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-6); } }
 @media (max-width: 700px) {
-  .rolePlaque, .tablePlaque, .statePlaque { padding: 28px; }
+  .rolePlaque, .tablePlaque, .sourcePlaque, .statePlaque { padding: 28px; }
   .tablePlaque { padding-inline: 18px; }
-  .rolePlaque::before, .tablePlaque::before, .statePlaque::before { border-width: var(--mythic-panel-width-mobile); }
+  .rolePlaque::before, .tablePlaque::before, .sourcePlaque::before, .statePlaque::before { border-width: var(--mythic-panel-width-mobile); }
   .rolePlaque { --mythic-panel-rail-inset: var(--mythic-panel-rail-inset-mobile); }
 }
 @media (max-width: 640px) { .seasonCol { display: none; } }
@@ -315,7 +320,9 @@
   .heroHeader { max-width: 100%; }
   .actions { gap: var(--atlas-space-2); }
   .actionSlot { flex: 1 1 100%; width: 100%; }
-  .actions .assetButton:global(.ui-button) { width: 100%; }
+  .actions .assetButton:global(.ui-button), .sourcePlaque .assetButton:global(.ui-button) { width: 100%; }
+  .sourcePlaque { align-items: stretch; flex-direction: column; padding: 28px 20px; }
+  .sourceAction :global(.ui-button__icon) { display: none; }
 }
 /* Phones: the table keeps rank, spec, share and change; the season line and the bar give way. */
 @media (max-width: 520px) {
@@ -344,8 +351,8 @@
 :global([data-transparency="reduced"]) .assetButton::after { animation: none; opacity: 0; }
 :global([data-motion="reduced"]) .bar > span, :global([data-ui-motion="reduce"]) .bar > span { animation: none; }
 @media (forced-colors: active) {
-  .rolePlaque::before, .tablePlaque::before, .giniItem::before, .statePlaque::before, .assetButton::before, .assetButton::after { display: none; }
-  .rolePlaque, .tablePlaque, .giniItem, .statePlaque { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .rolePlaque::before, .tablePlaque::before, .giniItem::before, .sourcePlaque::before, .statePlaque::before, .assetButton::before, .assetButton::after { display: none; }
+  .rolePlaque, .tablePlaque, .giniItem, .sourcePlaque, .statePlaque { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
   .page .assetButton:global(.ui-button) { border: 2px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
   .leaderTrack, .giniScale { border: 1px solid CanvasText; background: Canvas; }
   .leaderTrack span { background: Highlight; }
