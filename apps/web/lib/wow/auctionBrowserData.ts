@@ -289,3 +289,18 @@ export async function auctionMarket(query: AuctionMarketQuery): Promise<AuctionM
   const sourceUpdatedAt = updated.length && updated.every(Boolean) ? (updated as string[]).sort()[0] : null;
   return { items, sourceUpdatedAt, stale: updated.some(freshness), truncated };
 }
+
+/**
+ * Commodity prices of a fixed list of items for server-rendered pages (professions): min / median unit price,
+ * units listed and the cheapest price levels. Shares the cached region snapshot with the market view; no names or icons.
+ */
+export async function commodityPrices(region: AuctionRegion, itemIds: readonly number[], ladderLimit = 30) {
+  const market = await snapshot({ region, lang: "en", realm: "", market: "commodities", q: "", sort: "price", page: 1 }, null);
+  const summary = summaryOf(market);
+  const prices: Record<string, { min: number; median: number; quantity: number; ladder: [number, number][] }> = {};
+  for (const id of itemIds) {
+    const item = summary.get(id);
+    if (item) prices[id] = { min: item.minPrice, median: item.medianPrice, quantity: item.quantity, ladder: compactLadder(item.ladder, ladderLimit) as [number, number][] };
+  }
+  return { prices, sourceUpdatedAt: market.sourceUpdatedAt };
+}

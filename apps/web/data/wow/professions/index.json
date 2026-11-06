@@ -1,0 +1,158 @@
+[
+ {
+  "slug": "alchemy",
+  "kind": "crafting",
+  "name": {
+   "en": "Alchemy",
+   "ru": "Алхимия"
+  },
+  "icon": "ui_profession_alchemy",
+  "recipes": 46,
+  "treasures": 8,
+  "specializations": 4
+ },
+ {
+  "slug": "blacksmithing",
+  "kind": "crafting",
+  "name": {
+   "en": "Blacksmithing",
+   "ru": "Кузнечное дело"
+  },
+  "icon": "ui_profession_blacksmithing",
+  "recipes": 101,
+  "treasures": 8,
+  "specializations": 4
+ },
+ {
+  "slug": "enchanting",
+  "kind": "crafting",
+  "name": {
+   "en": "Enchanting",
+   "ru": "Наложение чар"
+  },
+  "icon": "ui_profession_enchanting",
+  "recipes": 94,
+  "treasures": 8,
+  "specializations": 4
+ },
+ {
+  "slug": "engineering",
+  "kind": "crafting",
+  "name": {
+   "en": "Engineering",
+   "ru": "Инженерное дело"
+  },
+  "icon": "ui_profession_engineering",
+  "recipes": 107,
+  "treasures": 8,
+  "specializations": 4
+ },
+ {
+  "slug": "inscription",
+  "kind": "crafting",
+  "name": {
+   "en": "Inscription",
+   "ru": "Начертание"
+  },
+  "icon": "ui_profession_inscription",
+  "recipes": 86,
+  "treasures": 8,
+  "specializations": 4
+ },
+ {
+  "slug": "jewelcrafting",
+  "kind": "crafting",
+  "name": {
+   "en": "Jewelcrafting",
+   "ru": "Ювелирное дело"
+  },
+  "icon": "ui_profession_jewelcrafting",
+  "recipes": 84,
+  "treasures": 8,
+  "specializations": 4
+ },
+ {
+  "slug": "leatherworking",
+  "kind": "crafting",
+  "name": {
+   "en": "Leatherworking",
+   "ru": "Кожевничество"
+  },
+  "icon": "ui_profession_leatherworking",
+  "recipes": 105,
+  "treasures": 8,
+  "specializations": 4
+ },
+ {
+  "slug": "tailoring",
+  "kind": "crafting",
+  "name": {
+   "en": "Tailoring",
+   "ru": "Портняжное дело"
+  },
+  "icon": "ui_profession_tailoring",
+  "recipes": 82,
+  "treasures": 8,
+  "specializations": 4
+ },
+ {
+  "slug": "herbalism",
+  "kind": "gathering",
+  "name": {
+   "en": "Herbalism",
+   "ru": "Травничество"
+  },
+  "icon": "ui_profession_herbalism",
+  "recipes": 3,
+  "treasures": 8,
+  "specializations": 3
+ },
+ {
+  "slug": "mining",
+  "kind": "gathering",
+  "name": {
+   "en": "Mining",
+   "ru": "Горное дело"
+  },
+  "icon": "ui_profession_mining",
+  "recipes": 0,
+  "treasures": 8,
+  "specializations": 3
+ },
+ {
+  "slug": "skinning",
+  "kind": "gathering",
+  "name": {
+   "en": "Skinning",
+   "ru": "Снятие шкур"
+  },
+  "icon": "ui_profession_skinning",
+  "recipes": 9,
+  "treasures": 8,
+  "specializations": 3
+ },
+ {
+  "slug": "cooking",
+  "kind": "secondary",
+  "name": {
+   "en": "Cooking",
+   "ru": "Кулинария"
+  },
+  "icon": "ui_profession_cooking",
+  "recipes": 47,
+  "treasures": 0,
+  "specializations": 0
+ },
+ {
+  "slug": "fishing",
+  "kind": "secondary",
+  "name": {
+   "en": "Fishing",
+   "ru": "Рыбная ловля"
+  },
+  "icon": "ui_profession_fishing",
+  "recipes": 6,
+  "treasures": 0,
+  "specializations": 0
+ }
+]

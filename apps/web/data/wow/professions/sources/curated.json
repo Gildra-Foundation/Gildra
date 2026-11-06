@@ -1,0 +1,250 @@
+{
+  "about": "Facts collected by hand for the Midnight professions. Every NPC and item below was checked on Wowhead item/NPC pages (via Scrape.do) or Wowhead tooltips; treasure coordinates and flag quests come from the HandyNotes: Midnight Treasures data files at the pinned commit and were spot-checked against Wowhead object coordinates. Rebuild with: node apps/web/scripts/build-wow-professions.mjs",
+  "handynotes": {
+    "repo": "kemayo/wow-handynotes-midnight",
+    "commit": "8e3f20ab4d66cf27726242582bcd1860a5f578dc"
+  },
+  "professions": [
+    {
+      "slug": "alchemy",
+      "id": 171,
+      "skillLine": 2906,
+      "kind": "crafting",
+      "trainer": 243357,
+      "handynotes": "Alchemy",
+      "icon": "ui_profession_alchemy"
+    },
+    {
+      "slug": "blacksmithing",
+      "id": 164,
+      "skillLine": 2907,
+      "kind": "crafting",
+      "trainer": 241450,
+      "handynotes": "Blacksmithing",
+      "icon": "ui_profession_blacksmithing"
+    },
+    {
+      "slug": "enchanting",
+      "id": 333,
+      "skillLine": 2909,
+      "kind": "crafting",
+      "trainer": 243349,
+      "handynotes": "Enchanting",
+      "icon": "ui_profession_enchanting"
+    },
+    {
+      "slug": "engineering",
+      "id": 202,
+      "skillLine": 2910,
+      "kind": "crafting",
+      "trainer": 241452,
+      "handynotes": "Engineering",
+      "icon": "ui_profession_engineering"
+    },
+    {
+      "slug": "inscription",
+      "id": 773,
+      "skillLine": 2913,
+      "kind": "crafting",
+      "trainer": 243553,
+      "handynotes": "Inscription",
+      "icon": "ui_profession_inscription"
+    },
+    {
+      "slug": "jewelcrafting",
+      "id": 755,
+      "skillLine": 2914,
+      "kind": "crafting",
+      "trainer": 243345,
+      "handynotes": "Jewelcrafting",
+      "icon": "ui_profession_jewelcrafting"
+    },
+    {
+      "slug": "leatherworking",
+      "id": 165,
+      "skillLine": 2915,
+      "kind": "crafting",
+      "trainer": 243500,
+      "handynotes": "Leatherworking",
+      "icon": "ui_profession_leatherworking"
+    },
+    {
+      "slug": "tailoring",
+      "id": 197,
+      "skillLine": 2918,
+      "kind": "crafting",
+      "trainer": 243352,
+      "handynotes": "Tailoring",
+      "icon": "ui_profession_tailoring"
+    },
+    {
+      "slug": "herbalism",
+      "id": 182,
+      "skillLine": 2912,
+      "kind": "gathering",
+      "trainer": 243355,
+      "handynotes": "Herbalism",
+      "icon": "ui_profession_herbalism",
+      "gathers": {
+        "classId": 7,
+        "subclassId": 9
+      }
+    },
+    {
+      "slug": "mining",
+      "id": 186,
+      "skillLine": 2916,
+      "kind": "gathering",
+      "trainer": 241455,
+      "handynotes": "Mining",
+      "icon": "ui_profession_mining",
+      "gathers": {
+        "classId": 7,
+        "subclassId": 7
+      }
+    },
+    {
+      "slug": "skinning",
+      "id": 393,
+      "skillLine": 2917,
+      "kind": "gathering",
+      "trainer": 243527,
+      "handynotes": "Skinning",
+      "icon": "ui_profession_skinning",
+      "gathers": {
+        "classId": 7,
+        "subclassId": 6
+      }
+    },
+    {
+      "slug": "cooking",
+      "id": 185,
+      "skillLine": 2908,
+      "kind": "secondary",
+      "trainer": 257913,
+      "icon": "ui_profession_cooking"
+    },
+    {
+      "slug": "fishing",
+      "id": 356,
+      "skillLine": 2911,
+      "kind": "secondary",
+      "trainer": 253468,
+      "icon": "ui_profession_fishing",
+      "gathers": {
+        "classId": 7,
+        "subclassId": 8
+      }
+    }
+  ],
+  "bookVendors": {
+    "Beyond the Event Horizon": {
+      "npc": 248328,
+      "checkedItem": 262645
+    },
+    "Demystifyin'": {
+      "npc": 268228,
+      "checkedItem": 274500
+    },
+    "Skill Issue": {
+      "npc": 240838,
+      "checkedItem": 257600
+    },
+    "Whisper of the Loa": {
+      "npc": 240279,
+      "checkedItem": 250924
+    },
+    "Traditions of the Haranir": {
+      "npc": 240407,
+      "checkedItem": 258411
+    },
+    "Echo of Abundance": {
+      "npc": 241928,
+      "checkedItem": 250445
+    }
+  },
+  "checked": {
+    "weeklyQuestReward": [
+      263454,
+      263463
+    ],
+    "cacheDrop": [
+      259188
+    ],
+    "gatheringDrop": [
+      237496,
+      238465,
+      238466
+    ],
+    "treasureCoordinates": [
+      238538,
+      238540,
+      238549,
+      238562,
+      238470,
+      238599,
+      238578,
+      238582,
+      238595,
+      238618,
+      238633
+    ],
+    "vendorReagents": "Wowhead 'sold by' lists for gold; Fused Vitality (currency only), Practically Pork, Plant Protein and Thalassian Fillet are not sold for gold",
+    "fish": "Items linked from Wowhead's Midnight fishing overview (guide 32848)"
+  },
+  "vendorReagents": [
+    38682,
+    242641,
+    242642,
+    242643,
+    242644,
+    242645,
+    242646,
+    242647,
+    242651,
+    243060,
+    245881,
+    245882,
+    247811,
+    251665,
+    251691,
+    253302,
+    253303
+  ],
+  "fish": [
+    238365,
+    238366,
+    238367,
+    238368,
+    238369,
+    238370,
+    238371,
+    238372,
+    238373,
+    238374,
+    238375,
+    238376,
+    238377,
+    238378,
+    238379,
+    238380,
+    238381,
+    238382,
+    238383,
+    238384,
+    274587,
+    274588,
+    274589,
+    274590,
+    274591,
+    274592,
+    274593,
+    274594,
+    279091,
+    279093,
+    279094,
+    279100,
+    279105,
+    279106
+  ]
+}
