@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
+import { AtlasSkeleton } from "@gildra/atlas-ui/AtlasState";
 import { materialStyles } from "@/components/wow/shared/materialAtlas";
 import { pairedAlternates, pageOpenGraph } from "@/lib/seo/metadata";
 import { trail, trailLabel } from "@/lib/routes/registry";
@@ -16,7 +17,7 @@ export function auctionMetadata(lang: "ru" | "en"): Metadata {
     openGraph: pageOpenGraph(lang, { title: c.title, description: c.lede, path: `${lang === "ru" ? "/ru" : ""}/wow/auction` }) };
 }
 
-/** /wow/auction: a tool page (design.md §3.6) — scene hero, the search form on the kit's plaque, results on a second plaque, one "About the data" plaque. */
+/** /wow/auction: a tool page (design.md §3.6) — scene hero, search and categories on the kit's plaque, the market list on a second plaque. */
 export function AuctionPage({ lang }: { lang: "ru" | "en" }) {
   const c = auctionCopy[lang];
   return <AtlasFrame lang={lang} className={styles.page} still foot={false} dataAttributes={{ "data-auction-hub": true }}>
@@ -24,7 +25,7 @@ export function AuctionPage({ lang }: { lang: "ru" | "en" }) {
     <div className={styles.hero}>
       <AtlasHero align="start" className={styles.heroHeader} title={c.title} lede={c.lede} breadcrumbs={trail(lang, "auction")} breadcrumbsLabel={trailLabel(lang)} />
     </div>
-    <Suspense fallback={<AuctionPlaque><p className={materialStyles.text}>{c.loading}</p></AuctionPlaque>}><AuctionBrowser lang={lang} /></Suspense>
+    <Suspense fallback={<AuctionPlaque className={styles.searchPlaque}><AtlasSkeleton variant="rows" count={4} label={c.loading} /></AuctionPlaque>}><AuctionBrowser lang={lang} /></Suspense>
     <noscript><AuctionPlaque><p className={materialStyles.text}>{c.noJS}</p></AuctionPlaque></noscript>
   </AtlasFrame>;
 }

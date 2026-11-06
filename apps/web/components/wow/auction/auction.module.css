@@ -31,10 +31,6 @@
 .plaqueHead > h2 { margin: 0; }
 .segmented { flex: none; max-width: 100%; }
 
-/* Form: one row on desktop — region, realm, item, the painted submit. */
-.filters { display: grid; grid-template-columns: minmax(104px, 140px) minmax(0, 1fr) minmax(0, 1.25fr) minmax(220px, auto); gap: var(--atlas-space-4); align-items: end; }
-.filters[data-market="commodities"] { grid-template-columns: minmax(104px, 140px) minmax(0, 1fr) minmax(220px, auto); }
-.submit { align-self: end; margin-bottom: -12px; }
 .stateBox { display: grid; justify-items: start; gap: var(--atlas-space-4); padding: var(--atlas-space-5) var(--atlas-space-2); }
 .stateText { margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
 .secondary { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
@@ -71,16 +67,13 @@
 .empty { margin: 0; padding: var(--atlas-space-2) 0 var(--atlas-space-1); color: var(--atlas-text-muted); font-size: var(--atlas-text-body); }
 .resultFocus { min-width: 0; outline-offset: var(--atlas-space-2); }
 
-/* About the data: one quiet line on the kit's plaque at the end of the page. */
-.aboutPlaque { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-2) var(--atlas-space-5); padding: 28px 40px 30px; }
-.aboutTitle { margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
 
 /* Item: icon inside the kit's painted ability frame, name in its quality colour. */
 .itemTrigger { display: inline-flex; gap: var(--atlas-space-3); align-items: center; min-height: 52px; padding: 0; border: 0; background: transparent; color: var(--auction-quality-text, var(--atlas-accent)); font: inherit; font-weight: 600; text-align: left; cursor: pointer; text-shadow: 0 1px 3px var(--atlas-bg); }
 .itemTrigger:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent)); outline-offset: var(--atlas-space-1); }
 .itemTrigger:hover .itemName { text-decoration: underline; text-underline-offset: .2em; }
 .itemText { display: grid; gap: 2px; min-width: 0; }
-.itemName { overflow-wrap: anywhere; }
+.itemName { overflow-wrap: break-word; hyphens: manual; }
 .itemMeta { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-weight: 400; text-shadow: none; }
 .itemTrigger { --material-icon-edge: var(--auction-quality, var(--atlas-line)); }
 .itemTrigger svg { padding: 6px; color: var(--atlas-text-muted); }
@@ -101,17 +94,10 @@
 .wowLines { display: grid; gap: var(--atlas-space-1); }
 .wowLines [data-stat] { color: var(--auction-quality-text, var(--atlas-accent)); }
 
-@media (max-width: 1100px) {
-  .filters, .filters[data-market="commodities"] { grid-template-columns: minmax(104px, 140px) minmax(0, 1fr); }
-  .search { grid-column: 1 / -1; }
-  .filters[data-market="commodities"] .search { grid-column: auto; }
-  .submit { grid-column: 1 / -1; justify-self: end; }
-}
 @media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
 /* Narrow screens: every lot is a small card — item on top, then quantity / unit / buyout with their labels. */
 @media (max-width: 760px) {
   .searchPlaque, .resultsPlaque { padding: 26px 24px 28px; }
-  .aboutPlaque { padding: 24px 26px 26px; }
   .table thead { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
   .table, .table tbody, .table tr, .table tbody th, .table td { display: block; }
   .table .lotRow { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--atlas-space-1) var(--atlas-space-3); padding: var(--atlas-space-3) 0; border-bottom: 1px solid var(--atlas-line-soft); }
@@ -125,9 +111,6 @@
 @media (max-width: 600px) {
   .hero { min-height: 0; padding-bottom: var(--atlas-space-4); }
   .heroHeader { max-width: 100%; }
-  .filters, .filters[data-market="commodities"] { grid-template-columns: minmax(0, 1fr); }
-  .search, .filters[data-market="commodities"] .search, .submit { grid-column: auto; }
-  .submit { justify-self: stretch; margin-bottom: 0; }
   .plaqueHead { margin-bottom: var(--atlas-space-4); }
   .segmented { flex: 1 1 100%; }
   .pagination { flex-wrap: wrap; }
@@ -136,13 +119,204 @@
   .pageButton:global(.ui-button) { width: 100%; min-width: 0; }
 }
 @media (max-width: 360px) {
-  .searchPlaque, .resultsPlaque, .aboutPlaque { padding-inline: 18px; }
+  .searchPlaque, .resultsPlaque { padding-inline: 18px; }
   .table .lotRow, .table[data-market="commodities"] .lotRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* ---------- Toolbar: region, find, realm (only when the view needs one) ---------- */
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.fieldLabel { display: block; margin-bottom: 6px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.toolbar { display: grid; grid-template-columns: minmax(96px, 120px) minmax(0, 1fr); gap: var(--atlas-space-4); align-items: end; }
+.toolbar[data-realm] { grid-template-columns: minmax(96px, 120px) minmax(0, 1.4fr) minmax(0, 1fr); }
+.regionField { display: block; min-width: 0; }
+.combo { position: relative; min-width: 0; }
+.comboField { position: relative; display: flex; align-items: center; }
+.comboIcon { position: absolute; left: 13px; display: grid; color: var(--atlas-accent); pointer-events: none; }
+.comboIcon svg { width: 17px; height: 17px; }
+.comboInput {
+  width: 100%; min-height: var(--atlas-control-height); padding: 0 var(--atlas-space-3);
+  border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius);
+  background: var(--atlas-glass-sheen), var(--atlas-glass-fill); color: var(--atlas-text-strong);
+  font: inherit; font-size: var(--atlas-text-body);
+  transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+}
+.comboIcon + .comboInput { padding-left: 40px; }
+.comboInput::placeholder { color: var(--atlas-text-subtle); }
+.comboInput:hover { border-color: var(--atlas-line-strong); }
+.comboInput:focus-visible { border-color: var(--atlas-accent-strong); outline: none; box-shadow: var(--atlas-ring-focus); }
+.comboInput:disabled { cursor: progress; opacity: .7; }
+.combo[data-invalid] .comboInput { border-color: var(--atlas-negative); }
+.comboBusy { position: absolute; right: 14px; width: 14px; height: 14px; border: 2px solid var(--atlas-line); border-top-color: var(--atlas-accent); border-radius: 50%; animation: auctionSpin .8s linear infinite; }
+@keyframes auctionSpin { to { rotate: 360deg; } }
+.comboList {
+  position: absolute; z-index: 30; inset: calc(100% + 6px) 0 auto; max-height: min(22rem, 60dvh); margin: 0; padding: var(--atlas-space-1);
+  overflow: auto; overscroll-behavior: contain; list-style: none;
+  border: 1px solid var(--atlas-line-strong); border-radius: var(--atlas-radius); background: var(--atlas-surface-raised); box-shadow: var(--atlas-shadow-panel);
+}
+.comboList[hidden] { display: none; }
+.comboOption { display: flex; align-items: center; min-height: 40px; padding: var(--atlas-space-1) var(--atlas-space-3); border-radius: var(--atlas-radius-control); color: var(--atlas-text); cursor: pointer; }
+.comboOption[aria-selected="true"] { background: var(--atlas-surface-selected); color: var(--atlas-text-strong); }
+.comboEmpty { padding: var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.suggestion { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); min-width: 0; }
+.suggestion .money { flex: none; font-size: var(--atlas-text-meta); }
+
+/* ---------- Categories: official item icons, grouped as in the game ---------- */
+.categories { display: grid; grid-template-columns: 2fr 1fr; gap: var(--atlas-space-4) var(--atlas-space-6); margin-top: var(--atlas-space-5); padding-top: var(--atlas-space-5); border-top: 1px solid var(--material-line, var(--atlas-line)); }
+.categoryGroup:last-child { grid-column: 1 / -1; }
+.groupTitle { margin: 0 0 var(--atlas-space-2); color: var(--material-light, var(--atlas-text-muted)); font: 700 var(--atlas-text-label) / 1.2 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.categoryList { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.categoryChip {
+  display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 40px; padding: 5px var(--atlas-space-3) 5px 5px;
+  border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius-control);
+  background: color-mix(in srgb, var(--atlas-bg) 45%, transparent); color: var(--atlas-text); font: inherit; font-size: var(--atlas-text-small); font-weight: 600; cursor: pointer;
+  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
+}
+.categoryChip img { flex: none; width: 28px; height: 28px; border: 1px solid var(--atlas-line); border-radius: 4px; }
+.categoryChip:hover { border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
+.categoryChip[aria-pressed="true"] { border-color: var(--material-light, var(--atlas-accent)); background: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 16%, var(--atlas-bg)); color: var(--atlas-text-strong); }
+.categoryChip:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent)); outline-offset: 2px; }
+
+/* ---------- Market list: one row per item ---------- */
+.resultBody { min-width: 0; min-height: 240px; }
+.skeleton { min-height: 420px; }
+.listWrap { min-width: 0; transition: opacity var(--atlas-duration) var(--atlas-ease); }
+.listWrap[data-pending] { opacity: .55; }
+.marketScroll { max-width: 100%; overflow-x: auto; }
+.mobileSort { display: none; }
+.marketScroll:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
+.marketTable { width: 100%; border-collapse: collapse; font-size: var(--atlas-text-small); }
+.marketTable thead th { padding: 0 var(--atlas-space-3) var(--atlas-space-2); border-bottom: 1px solid var(--material-line); text-align: left; white-space: nowrap; }
+.marketTable thead th[data-numeric] { text-align: right; }
+.marketTable tbody th, .marketTable td { padding: 6px var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line-soft); vertical-align: middle; font-weight: 400; text-align: left; }
+.marketTable td[data-numeric] { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.marketTable tbody tr:last-child > * { border-bottom: 0; }
+.marketTable .pickCell { width: 44px; padding-inline: var(--atlas-space-1); text-align: center; }
+.sortButton {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0; border: 0; background: transparent;
+  color: var(--material-light); font: 700 var(--atlas-text-label) / 1 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; cursor: pointer;
+}
+.sortButton:hover, .sortButton[data-active] { color: var(--atlas-text-strong); }
+.sortButton:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
+.marketRow { transition: background-color var(--atlas-duration-fast) var(--atlas-ease); }
+.marketRow:hover, .marketRow[data-selected] { background: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 8%, transparent); }
+.pick { width: 18px; height: 18px; margin: 0; accent-color: var(--material-accent, var(--atlas-accent)); cursor: pointer; }
+.marketItem { min-width: 220px; }
+.itemOpen { display: inline-flex; align-items: center; gap: var(--atlas-space-2); max-width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.itemOpen:hover .itemName { text-decoration: underline; text-underline-offset: .2em; }
+.itemOpen:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent)); outline-offset: 2px; }
+.itemLabel { --material-icon-edge: var(--auction-quality, var(--atlas-line)); display: inline-flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; color: var(--auction-quality-text, var(--atlas-text-strong)); font-weight: 600; text-shadow: 0 1px 3px var(--atlas-bg); }
+.itemLabel svg { color: var(--atlas-text-muted); }
+.itemLabelText { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px var(--atlas-space-2); min-width: 0; }
+.rank { display: inline-flex; gap: 1px; color: var(--material-light, var(--atlas-accent)); }
+.rank[data-rank="1"] { color: var(--atlas-text-muted); }
+.rank svg { fill: currentColor; }
+.marketTag { margin-inline-start: var(--atlas-space-2); padding: 1px 6px; border: 1px solid var(--atlas-line); border-radius: 999px; color: var(--atlas-text-muted); font-size: var(--atlas-text-label); font-weight: 600; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.quantity { color: var(--atlas-text); font-variant-numeric: tabular-nums; }
+.money .coin { min-width: 0; }
+
+/* ---------- Compare tray (sticky under the list) and the comparison ---------- */
+.tray {
+  position: sticky; z-index: 20; bottom: var(--atlas-space-3); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3);
+  padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-2) var(--atlas-space-4);
+  border: 1px solid var(--material-light, var(--atlas-line-strong)); border-radius: var(--atlas-radius); background: var(--atlas-surface-raised); box-shadow: var(--atlas-shadow-panel);
+}
+.trayItems { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1); margin: 0; padding: 0; list-style: none; }
+.trayItem { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.trayItem:focus-visible, .trayClear:focus-visible, .compareRemove:focus-visible, .detailClose:focus-visible { outline: 2px solid var(--material-light, var(--atlas-accent)); outline-offset: 2px; }
+.trayActions { display: flex; align-items: center; gap: var(--atlas-space-3); }
+.trayClear { min-height: 44px; padding: 0 var(--atlas-space-2); border: 0; background: transparent; color: var(--atlas-text-muted); font: inherit; font-size: var(--atlas-text-small); cursor: pointer; }
+.trayClear:hover { color: var(--atlas-text-strong); }
+.compare { display: grid; gap: var(--atlas-space-5); }
+.compareTools { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--atlas-space-4); }
+.compareGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.compareCard { display: grid; align-content: start; gap: var(--atlas-space-3); padding: var(--atlas-space-4); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 50%, transparent); }
+.compareHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--atlas-space-2); }
+.compareRemove, .detailClose { display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid transparent; border-radius: var(--atlas-radius-control); background: transparent; color: var(--atlas-text-muted); cursor: pointer; }
+.compareRemove:hover, .detailClose:hover { border-color: var(--atlas-line); color: var(--atlas-text-strong); }
+.compareStats { display: grid; gap: var(--atlas-space-3); margin: 0; }
+.compareStats dt { margin-bottom: 4px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.compareStats dd { margin: 0; }
+.compareBar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); }
+.compareTrack { display: block; height: 5px; overflow: hidden; border-radius: 3px; background: var(--atlas-line-soft); }
+.compareTrack > span { display: block; height: 100%; border-radius: inherit; background: var(--material-light, var(--atlas-accent)); }
+.compareValue { font-size: var(--atlas-text-small); }
+.compareNote { display: block; margin-top: 2px; color: var(--atlas-caution); font-size: var(--atlas-text-meta); }
+
+/* ---------- Item: summary, cost of N units, depth, cheapest levels ---------- */
+.detailDialog { max-width: min(40rem, calc(100vw - 2rem)); }
+.detail { display: grid; gap: var(--atlas-space-5); max-height: 86dvh; padding: var(--atlas-space-5); overflow: auto; }
+.detailHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--atlas-space-3); }
+.detailHead .itemLabel { font-size: var(--atlas-text-lead); }
+.detailName { color: var(--atlas-text-strong); font-size: var(--atlas-text-lead); font-weight: 600; }
+.detailStats, .buyCost { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); margin: 0; }
+.detailStats > div, .buyCost > div { display: grid; gap: 4px; min-width: 0; }
+.detailStats dt, .buyCost dt { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.detailStats dd, .buyCost dd { margin: 0; font-size: var(--atlas-text-body); }
+.buyRow { display: grid; grid-template-columns: 140px minmax(0, 1fr); align-items: end; gap: var(--atlas-space-4); padding: var(--atlas-space-4); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); }
+.buyField { display: block; min-width: 0; }
+.buyInput {
+  width: 100%; max-width: 160px; min-height: var(--atlas-control-height); padding: 0 var(--atlas-space-3);
+  border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); background: var(--atlas-glass-fill); color: var(--atlas-text-strong);
+  font: inherit; font-size: var(--atlas-text-body); font-variant-numeric: tabular-nums;
+}
+.buyInput:focus-visible { border-color: var(--atlas-accent-strong); outline: none; box-shadow: var(--atlas-ring-focus); }
+.depth { display: grid; gap: var(--atlas-space-2); margin: 0; }
+.depthTitle, .ladderTitle { margin: 0; color: var(--material-light, var(--atlas-text-muted)); font: 700 var(--atlas-text-label) / 1.2 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-align: left; text-transform: uppercase; }
+.depthPlot { position: relative; height: 140px; padding: 22px 0 18px; }
+.depthPlot svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.depthHigh, .depthLow { position: absolute; left: 0; font-size: var(--atlas-text-meta); }
+.depthHigh { top: 0; } .depthLow { bottom: 0; }
+.depthHigh .money, .depthLow .money { color: var(--atlas-text-muted); }
+.depthArea { fill: color-mix(in srgb, var(--material-light, var(--atlas-accent)) 18%, transparent); }
+.depthLine { fill: none; stroke: var(--material-light, var(--atlas-accent)); stroke-width: 2; }
+.depthMarker { stroke: var(--atlas-text-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+.depthAxis { display: flex; justify-content: space-between; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
+.ladder { width: 100%; border-collapse: collapse; font-size: var(--atlas-text-small); }
+.ladder caption { margin-bottom: var(--atlas-space-2); }
+.ladder th { padding: 0 var(--atlas-space-2) var(--atlas-space-2); border-bottom: 1px solid var(--atlas-line); color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.ladder td { padding: 6px var(--atlas-space-2); border-bottom: 1px solid var(--atlas-line-soft); }
+.ladder [data-numeric] { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.detailLots { display: grid; gap: var(--atlas-space-3); min-width: 0; }
+.detailActions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-4); }
+.detailActions a { color: var(--atlas-accent); font-size: var(--atlas-text-meta); }
+
+@media (max-width: 1100px) {
+  .toolbar[data-realm] { grid-template-columns: minmax(96px, 120px) minmax(0, 1fr); }
+  .toolbar[data-realm] .realmField { grid-column: 1 / -1; }
+  .categories { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .mobileSort { display: block; max-width: 260px; margin-bottom: var(--atlas-space-3); }
+  .marketTable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .marketTable, .marketTable tbody, .marketTable tr, .marketTable tbody th, .marketTable td { display: block; }
+  .marketTable .marketRow { display: grid; grid-template-columns: 36px repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-1) var(--atlas-space-2); padding: var(--atlas-space-2) 0 var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line-soft); }
+  .marketTable tbody th, .marketTable td { padding: 0; border: 0; }
+  .marketTable .pickCell { display: grid; grid-row: 1; place-items: center; width: auto; }
+  .marketTable .marketItem { grid-column: 2 / -1; grid-row: 1; min-width: 0; }
+  .marketTable td[data-numeric] { text-align: left; white-space: normal; }
+  .marketTable td[data-numeric]:nth-of-type(2) { grid-column: 2; }
+  .marketTable td[data-label]::before { display: block; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; content: attr(data-label); }
+  .marketTable .money { flex-wrap: wrap; justify-content: flex-start; gap: 0 var(--atlas-space-2); }
+}
+@media (max-width: 600px) {
+  .toolbar, .toolbar[data-realm] { grid-template-columns: minmax(0, 1fr); }
+  .toolbar[data-realm] .realmField { grid-column: auto; }
+  .categoryChip { min-height: 36px; padding-block: 3px; font-size: var(--atlas-text-meta); }
+  .categoryChip img { width: 24px; height: 24px; }
+  .detail { padding: var(--atlas-space-4); }
+  .detailStats, .buyCost { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .buyRow { grid-template-columns: minmax(0, 1fr); }
+  .tray { bottom: var(--atlas-space-2); padding-inline: var(--atlas-space-2); }
+  .trayActions { flex: 1 1 100%; justify-content: space-between; }
+}
+
 /* Motion and preference fallbacks (design.md §5); the painted pieces carry their own. */
-@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) { .lotRow { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .lotRow, .marketRow, .categoryChip, .listWrap { transition: none; } .comboBusy { animation: none; } }
+:global([data-motion="reduced"]) .marketRow, :global([data-motion="reduced"]) .categoryChip, :global([data-motion="reduced"]) .listWrap { transition: none; }
+:global([data-motion="reduced"]) .comboBusy, :global([data-ui-motion="reduce"]) .comboBusy { animation: none; }
 @media (forced-colors: active) {
   .scene { display: none; }
-  .itemTrigger { color: LinkText; }
+  .itemTrigger, .itemLabel { color: LinkText; }
+  .categoryChip[aria-pressed="true"], .tray { border: 2px solid CanvasText; }
+  .compareTrack > span, .depthLine { background: CanvasText; stroke: CanvasText; }
 }

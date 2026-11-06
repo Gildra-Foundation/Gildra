@@ -2,7 +2,9 @@ import "server-only";
 import { auctionItemIcon, parseAuctionItemDetails, type AuctionItemDetails } from "./auctionItemDetails";
 import { resolveExactAuctionTooltip } from "./auctionExactTooltip";
 import { auctionVariantKey } from "./auctionItemVariant";
-import { auctionPage, parseAuctionListings, serviceAuctionRealm, validAuctionRealm, type AuctionListing, type AuctionQuery, type AuctionRegion, type AuctionResult } from "./auctionBrowser";
+import { auctionPage, parseAuctionListings, serviceAuctionRealm, validAuctionRealm, type AuctionListing, type AuctionMarketItem, type AuctionMarketQuery, type AuctionMarketView, type AuctionQuery, type AuctionRegion, type AuctionResult } from "./auctionBrowser";
+import { auctionCategory, inAuctionCategory, type AuctionCategory } from "./auctionMarketCategories";
+import { compactLadder, reagentRanks, summarizeAuctions, type AuctionItemSummary } from "./auctionMarketSummary";
 
 // All caches are process-local, bounded, and share in-flight requests. No user token is used.
 type Cached = { value?: unknown; expires: number; pending?: Promise<unknown>; error?: Error };
@@ -108,26 +110,49 @@ async function snapshot(query: AuctionQuery, connectedId: number | null): Promis
     } finally { marketRequests--; }
   });
 }
+/** The fields of a Blizzard item search document the market view needs; anything missing stays null. */
+export type AuctionItemDoc = { id: number; names: { en: string | null; ru: string | null }; qualityId: number | null; classId: number | null; subclassId: number | null; level: number | null };
+const qualityIds: Record<string, number> = { POOR: 0, COMMON: 1, UNCOMMON: 2, RARE: 3, EPIC: 4, LEGENDARY: 5, ARTIFACT: 6, HEIRLOOM: 7 };
+const record = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
+const whole = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 0 ? Number(value) : null;
+const label = (value: unknown) => typeof value === "string" && value.trim() ? value.trim().slice(0, 200) : null;
+export function parseItemSearchPage(payload: unknown): { docs: AuctionItemDoc[]; pageCount: number } {
+  const results = record(payload).results;
+  if (!Array.isArray(results)) throw new Error("upstream_unavailable");
+  const docs = results.map(result => {
+    const data = record(record(result).data), name = record(data.name);
+    if (!Number.isSafeInteger(data.id) || Number(data.id) < 1) throw new Error("upstream_unavailable");
+    return { id: Number(data.id), names: { en: label(name.en_US) ?? label(name.en_GB), ru: label(name.ru_RU) },
+      qualityId: qualityIds[String(record(data.quality).type)] ?? null, classId: whole(record(data.item_class).id),
+      subclassId: whole(record(data.item_subclass).id), level: whole(data.level) };
+  });
+  return { docs, pageCount: Math.max(1, whole(record(payload).pageCount) ?? 1) };
+}
+async function searchByName(region: AuctionRegion, lang: "ru" | "en", q: string) {
+  return memo(`search:${region}:${lang}:${q.toLowerCase()}`, 10 * 60_000, async () => {
+    const params = new URLSearchParams({ [`name.${lang === "ru" ? "ru_RU" : "en_US"}`]: q, _pageSize: "1000", _page: "1", orderby: "id" });
+    const page = parseItemSearchPage(await readJSON(await blizzard(region, "/data/wow/search/item", "static", params), 8 * 1024 * 1024));
+    // Blizzard matches individual words with OR semantics. Keep phrase/substring
+    // matches in the requested locale so unrelated old items do not hide the result.
+    const needle = q.toLocaleLowerCase(lang);
+    return { docs: page.docs.filter(doc => doc.names[lang]?.toLocaleLowerCase(lang).includes(needle)), truncated: page.pageCount > 1 };
+  });
+}
 async function matchingItems(query: AuctionQuery): Promise<{ ids?: Set<number>; truncated: boolean }> {
   if (!query.q) return { truncated: false };
   if (/^\d+$/.test(query.q)) return { ids: new Set([Number(query.q)]), truncated: false };
-  const result = await memo(`search:${query.region}:${query.lang}:${query.q.toLowerCase()}`, 10 * 60_000, async () => {
-    const params = new URLSearchParams({ [`name.${query.lang === "ru" ? "ru_RU" : "en_US"}`]: query.q, _pageSize: "1000", _page: "1", orderby: "id" });
-    const payload = await readJSON(await blizzard(query.region, "/data/wow/search/item", "static", params), 4 * 1024 * 1024) as { results?: { data: { id: number; name?: Record<string, string> } }[]; pageCount?: number };
-    if (!Array.isArray(payload.results) || payload.results.some(r => !Number.isSafeInteger(r.data?.id))) throw new Error("upstream_unavailable");
-    // Blizzard matches individual words with OR semantics. Keep phrase/substring
-    // matches in the requested locale so unrelated old items do not hide the result.
-    const locale = query.lang === "ru" ? "ru_RU" : "en_US", needle = query.q.toLocaleLowerCase(query.lang);
-    return { ids: payload.results.filter(r => r.data.name?.[locale]?.toLocaleLowerCase(query.lang).includes(needle)).map(r => r.data.id), truncated: Number(payload.pageCount) > 1 };
-  });
-  return { ids: new Set(result.ids), truncated: result.truncated };
+  const result = await searchByName(query.region, query.lang, query.q);
+  return { ids: new Set(result.docs.map(doc => doc.id)), truncated: result.truncated };
+}
+function itemIcon(region: AuctionRegion, id: number) {
+  return memo(`item-icon:${region}:${id}`, 24 * 60 * 60_000, async () => auctionItemIcon(await readJSON(await blizzard(region, `/data/wow/media/item/${id}`, "static", new URLSearchParams(), 3000))));
 }
 async function itemDetails(region: AuctionRegion, lang: "ru" | "en", id: number): Promise<AuctionItemDetails> {
   return memo(`item-details:${region}:${lang}:${id}`, 24 * 60 * 60_000, async () => {
     const params = new URLSearchParams({ locale: lang === "ru" ? "ru_RU" : "en_US" });
     const [payload, icon] = await Promise.all([
       blizzard(region, `/data/wow/item/${id}`, "static", params, 3000).then(r => readJSON(r)),
-      memo(`item-icon:${region}:${id}`, 24 * 60 * 60_000, async () => auctionItemIcon(await readJSON(await blizzard(region, `/data/wow/media/item/${id}`, "static", new URLSearchParams(), 3000)))).catch(() => null),
+      itemIcon(region, id).catch(() => null),
     ]);
     return parseAuctionItemDetails(payload, id, icon);
   });
@@ -163,4 +188,104 @@ export async function auctionLotTooltip(query: AuctionQuery, auctionId: number) 
     try { return await resolveExactAuctionTooltip(row, await itemDetails(query.region, query.lang, row.itemId), query.lang); }
     finally { tooltipRequests--; }
   });
+}
+
+/* ---------- Market view: one row per item ---------- */
+
+const summaries = new WeakMap<Snapshot, Map<number, AuctionItemSummary>>();
+function summaryOf(market: Snapshot) {
+  let summary = summaries.get(market);
+  if (!summary) summaries.set(market, summary = summarizeAuctions(market.rows));
+  return summary;
+}
+/** Search pages of one item class, newest items first; a realm category keeps only the newest two pages. */
+async function categoryDocs(region: AuctionRegion, category: AuctionCategory) {
+  return memo(`category:${region}:${category.key}`, 12 * 60 * 60_000, async () => {
+    const pages = category.market === "realm" ? 2 : 5, docs: AuctionItemDoc[] = [];
+    for (const [cls, sub] of category.classes) {
+      const params = (page: number, order: string) => new URLSearchParams({ "item_class.id": String(cls), ...(sub === undefined ? {} : { "item_subclass.id": String(sub) }), orderby: order, _pageSize: "1000", _page: String(page) });
+      let order = "id:desc", first;
+      try { first = parseItemSearchPage(await readJSON(await blizzard(region, "/data/wow/search/item", "static", params(1, order), 15000), 12 * 1024 * 1024)); }
+      catch (error) {
+        if (error instanceof Error && error.message === "rate_limited") throw error;
+        order = "id"; first = parseItemSearchPage(await readJSON(await blizzard(region, "/data/wow/search/item", "static", params(1, order), 15000), 12 * 1024 * 1024));
+      }
+      docs.push(...first.docs);
+      for (let page = 2; page <= Math.min(first.pageCount, pages); page++) {
+        docs.push(...parseItemSearchPage(await readJSON(await blizzard(region, "/data/wow/search/item", "static", params(page, order), 15000), 12 * 1024 * 1024)).docs);
+      }
+    }
+    // A class search can return neighbouring subclasses; keep what the category really holds.
+    return docs.filter(doc => inAuctionCategory(category, doc.classId, doc.subclassId));
+  });
+}
+/** Fill icons (and, when the search document lacked them, names) within a short deadline; the rest stay empty. */
+async function decorate(region: AuctionRegion, lang: "ru" | "en", rows: AuctionMarketItem[], deadline = Date.now() + 4000) {
+  const queue = [...rows];
+  await Promise.all(Array.from({ length: Math.min(4, queue.length) }, async () => {
+    while (Date.now() < deadline) {
+      const row = queue.shift(); if (!row) break;
+      try {
+        if (!row.name || row.qualityId === null) {
+          const details = await itemDetails(region, lang, row.itemId);
+          row.name ??= details.name; row.iconUrl = details.iconUrl;
+          row.qualityId ??= Number.isInteger(details.qualityId) ? details.qualityId! : null;
+          row.classId ??= Number.isInteger(details.itemClassId) ? details.itemClassId! : null;
+          row.subclassId ??= Number.isInteger(details.itemSubclassId) ? details.itemSubclassId! : null;
+        } else row.iconUrl = await itemIcon(region, row.itemId);
+      } catch { /* A missing icon or name must not hide the price. */ }
+    }
+  }));
+}
+function marketRows(summary: Map<number, AuctionItemSummary>, market: AuctionMarketItem["market"], docs: Map<number, AuctionItemDoc | null>, lang: "ru" | "en", ladder: boolean) {
+  const rows: AuctionMarketItem[] = [];
+  for (const [itemId, doc] of docs) {
+    const item = summary.get(itemId); if (!item) continue;
+    rows.push({ itemId, market, name: doc?.names[lang] ?? null, iconUrl: null, qualityId: doc?.qualityId ?? null, classId: doc?.classId ?? null,
+      subclassId: doc?.subclassId ?? null, level: doc?.level ?? null, rank: null, minPrice: item.minPrice, medianPrice: item.medianPrice,
+      quantity: item.quantity, lots: item.lots, ...(ladder ? { ladder: compactLadder(item.ladder) } : {}) });
+  }
+  return rows;
+}
+const freshness = (updated: string | null) => updated === null || Date.now() - Date.parse(updated) > 2 * 60 * 60_000;
+/**
+ * Items of a category, a name search or an explicit list, each with min / median unit price and units listed.
+ * Commodities are always included; a realm's own auction house only when a realm is chosen.
+ */
+export async function auctionMarket(query: AuctionMarketQuery): Promise<AuctionMarketView> {
+  const category = auctionCategory(query.category);
+  const base = { region: query.region, lang: query.lang, realm: query.realm, q: "", sort: "price" as const, page: 1 };
+  const wantRealm = category ? category.market === "realm" : query.realm !== "";
+  const wantCommodities = !category || category.market === "commodities";
+  if (category?.market === "realm" && !query.realm) throw new Error("realm_required");
+  let docs = new Map<number, AuctionItemDoc | null>(), truncated = false;
+  const [commodities, realm] = await Promise.all([
+    wantCommodities ? snapshot({ ...base, market: "commodities" }, null) : null,
+    wantRealm ? connectedRealm({ ...base, market: "realm" }).then(id => snapshot({ ...base, market: "realm" }, id)) : null,
+    (async () => {
+      if (category) docs = new Map((await categoryDocs(query.region, category)).map(doc => [doc.id, doc]));
+      else if (query.items.length) docs = new Map(query.items.map(id => [id, null]));
+      else if (/^\d+$/.test(query.q)) docs = new Map([[Number(query.q), null]]);
+      else { const found = await searchByName(query.region, query.lang, query.q); truncated = found.truncated; docs = new Map(found.docs.map(doc => [doc.id, doc])); }
+    })(),
+  ]);
+  const ladder = query.items.length > 0;
+  let items = [
+    ...(commodities ? marketRows(summaryOf(commodities), "commodities", docs, query.lang, ladder) : []),
+    ...(realm ? marketRows(summaryOf(realm), "realm", docs, query.lang, ladder) : []),
+  ];
+  // Suggestions: the best-supplied matches first, then cut.
+  if (query.limit) {
+    // Names that start a word with the typed text come first, then the newest items, then the best supplied.
+    const needle = query.q.toLocaleLowerCase(query.lang);
+    const starts = (item: AuctionMarketItem) => (item.name ?? "").toLocaleLowerCase(query.lang).split(/[\s'’-]+/).some(word => word.startsWith(needle)) ? 0 : 1;
+    items = items.sort((a, b) => starts(a) - starts(b) || (b.level ?? 0) - (a.level ?? 0) || b.quantity - a.quantity || a.itemId - b.itemId).slice(0, query.limit);
+  }
+  else if (items.length > 400) { items = items.sort((a, b) => b.quantity - a.quantity).slice(0, 400); truncated = true; }
+  await decorate(query.region, query.lang, items);
+  const ranks = reagentRanks(items);
+  for (const item of items) item.rank = ranks.get(item.itemId) ?? null;
+  const updated = [commodities?.sourceUpdatedAt, realm?.sourceUpdatedAt].filter((v): v is string | null => v !== undefined);
+  const sourceUpdatedAt = updated.length && updated.every(Boolean) ? (updated as string[]).sort()[0] : null;
+  return { items, sourceUpdatedAt, stale: updated.some(freshness), truncated };
 }
