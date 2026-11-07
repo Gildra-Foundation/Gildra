@@ -15,6 +15,10 @@ import { professionsCopy } from "./professionsCopy";
 import styles from "./professions.module.css";
 import { seoTitles } from "@/lib/seo/titles";
 import { JsonLd, itemListLd } from "@/lib/seo/jsonld";
+import Image from "next/image";
+import { RelatedLinks } from "@/components/wow/shared/RelatedLinks";
+import { auctionCategoryHref, relatedCopy } from "@/components/wow/shared/relatedLinksCopy";
+import { auctionCategories, auctionCategoryNames, auctionIconUrl } from "@/lib/wow/auctionMarketCategories";
 
 type Lang = "en" | "ru";
 
@@ -59,5 +63,9 @@ export async function ProfessionsHubPage({ lang }: { lang: Lang }) {
         })}
       </ul>
     </AtlasSection>)}
+    <RelatedLinks label={relatedCopy[lang].label} links={auctionCategories.filter((category) => category.group === "materials").slice(0, 6).map((category) => ({
+      href: auctionCategoryHref(lang, category.key), label: `${relatedCopy[lang].auction}: ${auctionCategoryNames[lang][category.key]}`,
+      icon: <Image src={auctionIconUrl(category.icon)} alt="" width={20} height={20} unoptimized loading="lazy" />,
+    }))} />
   </AtlasFrame>;
 }

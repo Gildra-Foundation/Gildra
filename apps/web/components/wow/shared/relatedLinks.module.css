@@ -1,0 +1,23 @@
+/* RelatedLinks: one row of pill links to the neighbouring pages (tokens only). */
+.row { margin-block: var(--atlas-space-4) 0; }
+.list { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 16px;
+  color: var(--atlas-text);
+  font: 600 var(--atlas-text-small) / 1.25 var(--atlas-font-ui);
+  text-decoration: none;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
+  transition: color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
+}
+.link svg { flex: none; width: 18px; height: 18px; color: var(--atlas-accent); }
+.link img { flex: none; width: 24px; height: 24px; border-radius: 50%; }
+.link:hover, .link:focus-visible { color: var(--atlas-text-strong); border-color: color-mix(in srgb, var(--atlas-accent) 70%, var(--atlas-line)); }
+.link:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .link { transition: none; } }
+@media (forced-colors: active) { .link { border-color: CanvasText; background: Canvas; } }

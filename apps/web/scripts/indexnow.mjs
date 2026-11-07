@@ -6,6 +6,8 @@
 //   INDEXNOW_KEY=… node scripts/indexnow.mjs --send          submit every sitemap URL
 //   INDEXNOW_KEY=… node scripts/indexnow.mjs --send --only /wow/professions,/tier-lists
 //                                                            submit only URLs under these paths (both languages)
+//   … --records                                              also read the library record files
+//                                                            (/sitemaps/library/<dataset>/<lang>/<shard>: ~1 M URLs)
 //
 // The key is the one the site serves at https://gildra.net/<key>.txt (INDEXNOW_KEY of the web
 // container: `sudo docker exec gildra-web-1 printenv INDEXNOW_KEY`); it is never printed.
@@ -15,6 +17,7 @@ const site = (process.env.SITE ?? "https://gildra.net").replace(/\/$/, "");
 const key = process.env.INDEXNOW_KEY ?? "";
 const args = process.argv.slice(2);
 const send = args.includes("--send");
+const records = args.includes("--records");
 const onlyArg = args.includes("--only") ? args[args.indexOf("--only") + 1] ?? "" : "";
 const only = onlyArg.split(",").map((path) => path.trim()).filter(Boolean);
 
@@ -37,7 +40,8 @@ if ((await text(keyFile)).trim() !== key) {
   process.exit(2);
 }
 
-const children = locs(await text(`${site}/sitemap.xml`));
+const RECORD_FILE = /\/sitemaps\/library\/[^/]+\/(?:en|ru)\/[^/]+$/;
+const children = locs(await text(`${site}/sitemap.xml`)).filter((child) => records || !RECORD_FILE.test(child));
 const urls = [];
 for (const child of children) urls.push(...locs(await text(child.replace(/^https:\/\/gildra\.net/, site))));
 const host = new URL(urls[0] ?? site).host;

@@ -330,7 +330,7 @@ paths:
       summary: List a stable UUID shard for segmented catalog sitemaps.
       security:
         - CatalogSession: []
-      description: Intended for Gildra's sitemap renderer. Empty shard means the complete entity type and is capped at 50000 records.
+      description: Intended for Gildra's sitemap renderer. Lists only records GET /v1/game/entities/{id} serves (published, not deleted, displayable and usable) whose English name renders on the web. Empty shard means the complete entity type and is capped at 50000 records.
       parameters:
         - in: query
           name: product
@@ -1291,7 +1291,7 @@ components:
           type: string
     GameSitemapEntry:
       type: object
-      required: [id, type, slug, updatedAt]
+      required: [id, type, slug, slugRu, updatedAt]
       properties:
         id:
           type: string
@@ -1300,6 +1300,10 @@ components:
           type: string
         slug:
           type: string
+          description: English record slug, as returned for locale en_US.
+        slugRu:
+          type: [string, "null"]
+          description: Russian record slug, as returned for locale ru_RU. Null when the Russian record would fall back to the English name, so only the English URL should be listed.
         updatedAt:
           type: string
           format: date-time

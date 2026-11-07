@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
-import { ArrowDown, ArrowLeft, ListOrdered, Route, Sparkles, Users } from "lucide-react";
+import { ArrowDown, ArrowLeft, BarChart3, BookOpen, Castle, ListOrdered, Route, Sparkles, Swords, Users } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasNotice, AtlasSection } from "@/components/atlas";
 import { MaterialLinkButton, MaterialPlaque, MythicHubBackdrop, MythicHubMotion } from "@/components/wow/shared/materialAtlas";
 import { loadMythicPlusLeaderboard } from "@/lib/games/wow/mplusLeaderboard";
@@ -19,6 +19,10 @@ import {
 import styles from "./leaderboard.module.css";
 import { JsonLd } from "@/lib/seo/jsonld";
 import { leaderboardLd } from "@/lib/seo/itemLists";
+import { RelatedLinks } from "@/components/wow/shared/RelatedLinks";
+import { relatedCopy, specLinkTargets } from "@/components/wow/shared/relatedLinksCopy";
+
+const relatedIcons = { spec: <BookOpen aria-hidden="true" />, talents: <Sparkles aria-hidden="true" />, mythicTier: <Swords aria-hidden="true" />, raidTier: <Castle aria-hidden="true" />, meta: <BarChart3 aria-hidden="true" /> } as const;
 
 type Params = Record<string, string | string[] | undefined>;
 
@@ -99,6 +103,7 @@ export async function SpecLeaderboardPage({ locale, spec, searchParams }: { loca
                   <a className={styles.backLink} href={`${board}${leaderboardSearch({ region: query.region })}`}><ArrowLeft aria-hidden="true" />{copy.backToBoard}</a>
                 </li>
               </ul>
+              <RelatedLinks label={relatedCopy[locale].label} links={specLinkTargets(locale, { slug: spec.theme.slug, classSlug: spec.classSlug }, ["leaderboard"]).map((link) => ({ ...link, icon: relatedIcons[link.key as keyof typeof relatedIcons] }))} />
               <details className={styles.allSpecs}>
                 <summary>{copy.specsTitle}</summary>
                 <SpecDirectory region={query.region} locale={locale} copy={copy} prefix={prefix} current={spec.theme.specId} />

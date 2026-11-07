@@ -118,7 +118,7 @@ export interface paths {
         };
         /**
          * List a stable UUID shard for segmented catalog sitemaps.
-         * @description Intended for Gildra's sitemap renderer. Empty shard means the complete entity type and is capped at 50000 records.
+         * @description Intended for Gildra's sitemap renderer. Lists only records GET /v1/game/entities/{id} serves (published, not deleted, displayable and usable) whose English name renders on the web. Empty shard means the complete entity type and is capped at 50000 records.
          */
         get: operations["listGameSitemapEntries"];
         put?: never;
@@ -638,7 +638,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             type: string;
+            /** @description English record slug, as returned for locale en_US. */
             slug: string;
+            /** @description Russian record slug, as returned for locale ru_RU. Null when the Russian record would fall back to the English name, so only the English URL should be listed. */
+            slugRu: string | null;
             /** Format: date-time */
             updatedAt: string;
         };

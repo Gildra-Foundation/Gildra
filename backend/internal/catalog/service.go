@@ -951,8 +951,12 @@ func normalizeLocale(locale string) string {
 func publicCatalogDisplayNamePredicate(localizedAlias, fallbackAlias string) string {
 	name := fmt.Sprintf("COALESCE(NULLIF(%s.name,''),NULLIF(%s.name,''))", localizedAlias, fallbackAlias)
 	return `AND ` + name + ` IS NOT NULL
-		AND ` + name + ` !~* '(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\]'`
+		AND ` + name + ` !~* ` + publicCatalogJunkNamePattern
 }
+
+// publicCatalogJunkNamePattern is the case-insensitive SQL regex literal for
+// placeholder/import marker names that must never reach a public page.
+const publicCatalogJunkNamePattern = `'(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\]'`
 
 func encodeCursor(id uuid.UUID) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(id.String()))

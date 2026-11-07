@@ -9,10 +9,7 @@ const EMPTY = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.s
 /**
  * Library dataset pages (/library/<dataset> and the /ru twin) with hreflang
  * alternates; one cached catalog read (lib/api/client.ts, revalidate 300 s).
- * Records are not listed: the catalog's sitemap-entries read model includes
- * records the library does not publish (they answer 404) and has no Russian
- * slugs, so a correct record sitemap needs that API first. Records stay
- * reachable through the dataset pages, each with its own canonical and hreflang.
+ * Records have their own files (/sitemaps/library/<dataset>/<lang>/<shard>).
  */
 export async function GET() {
   if (!runtimeFlags().catalogPublic) return xmlResponse(EMPTY);

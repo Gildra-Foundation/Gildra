@@ -15,8 +15,9 @@ import { SourceCompare, useTierCompare, useTierList } from "@/components/blocks/
 import {
   DEFAULT_SOURCE_DIFFICULTY, PVP_BRACKETS, PVP_REGIONS, SOURCE_DIFFICULTIES, SOURCE_SITES, TIER_MODES,
   isBracket, isRegion, isTierMode, isTierSource,
-  type ListQuery, type PvpBracket, type PvpRegion, type TierMode, type TierSourceId, type TierSourceInfo, type TierSourceTabs,
+  type ListQuery, type PvpBracket, type PvpRegion, type TierMode, type TierSourceId, type TierSourceInfo, type TierSourceSlices, type TierSourceTabs,
 } from "@/components/blocks/wow/tierWorkspace/tierSourceKeys";
+import { tierModeMeta, tierModePath } from "@/components/blocks/wow/tierWorkspace/tierModes";
 import { tierSourcesCopy } from "@/components/blocks/wow/tierWorkspace/tierSourcesCopy";
 import { MaterialPlaque, type AnyMaterialKit } from "@/components/wow/shared/materialAtlas";
 import { SIM_GEAR, SIM_TARGETS, simTierCopy, type SimGear, type SimTargets } from "@/components/blocks/wow/tierWorkspace/simTierCopy";
@@ -33,6 +34,7 @@ const ROLES = ["dps", "healer", "tank"] as const;
 const KEY_RANGES: KeyRange[] = ["all", "high", "middle", "low"];
 const RAID_LEVELS = ["raid_myth", "raid_hero", "raid_normal"];
 const EMPTY_ROLES: Record<TierRole, TierEntry[]> = { dps: [], healer: [], tank: [] };
+const NO_SLICES: TierSourceSlices = {};
 const MODE_ICONS: Record<TierMode, ReactNode> = { mythic_plus: <Swords aria-hidden="true" />, raid: <Castle aria-hidden="true" />, pvp: <Shield aria-hidden="true" /> };
 type Layout = "tiers" | "list" | "compare";
 /** The slim Ranking Hall kit (sectionKits.ts): oxidised bronze, copper rails, ember garnet — filters and the board. */
@@ -72,9 +74,14 @@ function Trend({ value, change, copy }: { value?: number; change?: "up" | "down"
  * comparison of every source with the overall tier. Each tab keeps its source's own ranking; Gildra is the
  * consensus of the sources (Mythic+, raids) or the Blizzard PvP ladder (arena). With the saved sample
  * (`sampleRoles`, meta API off) only the Mythic+ DPS rows render and the page notice says so.
- * Mode, role, source, bracket, region, difficulty, view, sim targets and gear set live in the URL.
+ * The mode and the arena bracket are the page's address (/tier-lists, /tier-lists/raid, /tier-lists/arena[/<bracket>]:
+ * each renders on the server; a switch moves the address without a reload). Role, source, region, difficulty, view,
+ * sim targets and gear set live in the query string.
  */
-export function TierSection({ lang, intelligence, sample = false, sampleRoles, specNames, sourceTabs }: { lang: Lang; intelligence: GameIntelligence; sample?: boolean; sampleRoles?: Record<TierRole, TierEntry[]>; specNames: TierSpecNames; sourceTabs?: TierSourceTabs }) {
+export function TierSection({ lang, intelligence, sample = false, sampleRoles, specNames, sourceTabs, initialMode = "mythic_plus", initialBracket = "3v3", initialSlices }: {
+  lang: Lang; intelligence: GameIntelligence; sample?: boolean; sampleRoles?: Record<TierRole, TierEntry[]>; specNames: TierSpecNames; sourceTabs?: TierSourceTabs;
+  initialMode?: TierMode; initialBracket?: PvpBracket; initialSlices?: TierSourceSlices;
+}) {
   const copy = tierCopy[lang];
   const sourceCopy = tierSourcesCopy[lang];
   const simCopy = simTierCopy[lang];
@@ -83,9 +90,9 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   const [layout, setLayout] = useState<Layout>("tiers");
   const [sourceDifficulty, setSourceDifficulty] = useState(DEFAULT_SOURCE_DIFFICULTY);
   const [urlRead, setUrlRead] = useState(false);
-  const [mode, setMode] = useState<TierMode>("mythic_plus");
+  const [mode, setMode] = useState<TierMode>(initialMode);
   const [role, setRole] = useState<TierRole>("dps");
-  const [bracket, setBracket] = useState<PvpBracket>("3v3");
+  const [bracket, setBracket] = useState<PvpBracket>(initialBracket);
   const [region, setRegion] = useState<PvpRegion>("all");
   const [cls, setCls] = useState("all");
   const [q, setQ] = useState("");
@@ -151,7 +158,7 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     }
     return query;
   }, [sample, compare, sim, source, mode, bracket, region, showRegion, difficulty, sourceDifficulty, queryContext, keyType]);
-  const list = useTierList(listQuery, {});
+  const list = useTierList(listQuery, initialSlices ?? NO_SLICES);
   const comparison = useTierCompare(useMemo(() => compare ? { mode, role, bracket, difficulty: sourceDifficulty } : null, [compare, mode, role, bracket, sourceDifficulty]));
   const simData = useSimTier(sim && !sample);
 
@@ -240,9 +247,6 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sourceParam = params.get("source");
-    const modeParam = params.get("activity");
-    const nextMode: TierMode = isTierMode(modeParam) ? modeParam : "mythic_plus";
-    setMode(nextMode);
     if (isTierSource(sourceParam)) setTab(sourceParam);
     const viewParam = params.get("view");
     // `source=compare` is the comparison's address before it became a view.
@@ -253,8 +257,6 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     const difficultyParam = params.get("difficulty");
     if (difficultyParam && SOURCE_DIFFICULTIES.includes(difficultyParam)) setSourceDifficulty(difficultyParam);
     if (difficultyParam && RAID_LEVELS.includes(difficultyParam)) setDifficulty(difficultyParam);
-    const bracketParam = params.get("bracket");
-    if (isBracket(bracketParam)) setBracket(bracketParam);
     const regionParam = params.get("region");
     if (isRegion(regionParam)) setRegion(regionParam);
     const targetParam = Number(params.get("targets"));
@@ -270,17 +272,19 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
     const url = new URL(window.location.href);
     const set = (key: string, value: string, fallback: string) => { if (value === fallback) url.searchParams.delete(key); else url.searchParams.set(key, value); };
     set("source", compare ? "gildra" : source, "gildra");
-    set("activity", mode, "mythic_plus");
     set("role", role, "dps");
     const raidDifficulty = mode !== "raid" ? DEFAULT_SOURCE_DIFFICULTY : source === "wowgg" && !compare ? difficulty : sourceDifficulty;
     set("difficulty", raidDifficulty, DEFAULT_SOURCE_DIFFICULTY);
-    set("bracket", mode === "pvp" ? bracket : "3v3", "3v3");
     set("region", showRegion ? region : "all", "all");
     set("view", layout, "tiers");
     set("targets", sim ? String(targets) : "1", "1");
     set("gear", sim ? gear : "best", "best");
-    if (url.href !== window.location.href) window.history.replaceState(window.history.state, "", url);
-  }, [urlRead, source, compare, mode, role, sourceDifficulty, difficulty, bracket, region, showRegion, layout, sim, targets, gear]);
+    // The mode (and the arena bracket) is the path: the page of each renders on the server.
+    url.pathname = p(lang, tierModePath(mode, bracket));
+    if (url.href === window.location.href) return;
+    window.history.replaceState(window.history.state, "", url);
+    document.title = tierModeMeta(lang, mode, bracket).title;
+  }, [urlRead, lang, source, compare, mode, role, sourceDifficulty, difficulty, bracket, region, showRegion, layout, sim, targets, gear]);
 
   const switchMode = (value: string) => {
     if (!isTierMode(value)) return;
