@@ -33,6 +33,7 @@ export type AtlasEvent = {
   /** null: the place is not on the map yet (the event still sits on the timeline). */
   map: number | null; x: number; y: number; before?: string; after?: string; links: Array<{ href: string; label?: string }>;
   changed?: number[];
+  kind?: string;
 };
 export type AtlasBundle = { lang: Lang; maps: AtlasMap[]; pois: AtlasPoi[]; eras: AtlasEra[]; events: AtlasEvent[] };
 
@@ -157,6 +158,7 @@ export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle {
       title: event.title[lang] || event.title.en, summary: event.summary[lang] || event.summary.en,
       map: placed.has(event.mapId) ? event.mapId : null, x: event.x, y: event.y,
       ...(event.changedMapIds?.length ? { changed: event.changedMapIds } : {}),
+      ...(event.kind ? { kind: event.kind } : {}),
       ...(event.beforeEraId && eraIds.has(event.beforeEraId) ? { before: event.beforeEraId } : {}),
       ...(event.afterEraId && eraIds.has(event.afterEraId) ? { after: event.afterEraId } : {}),
       links: (event.links ?? []).map((link: EventLink | string) => typeof link === "string" ? { href: link } : { href: link.href, ...(link.label ? { label: link.label[lang] || link.label.en } : {}) })

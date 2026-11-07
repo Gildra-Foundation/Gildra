@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
-import { ArrowUpRight, Bird, Castle, ChevronUp, Crown, DoorOpen, Expand, Hourglass, Layers as LayersIcon, Minus, Orbit, Pickaxe, Plus, Search, Shrink, Skull, Tent, X } from "lucide-react";
+import { ArrowUpRight, Bird, Castle, ChevronUp, Crown, DoorOpen, Expand, Flame, Hourglass, Layers as LayersIcon, Minus, Mountain, Orbit, Pickaxe, Plus, Search, Shrink, Skull, Sparkles, Swords, Tent, X } from "lucide-react";
 import { lessMotion, subscribeSiteMotion } from "@gildra/atlas-ui/motionPreference";
 import type { AtlasBundle, AtlasEra, AtlasEvent, AtlasMap, AtlasPoi, Lang } from "@/lib/wow/worldMap/bundle";
 import { mapPagePath } from "@/lib/wow/worldMap/bundle";
@@ -21,6 +21,8 @@ type Placed = Marker & { sx: number; sy: number };
 const KIND_ICON: Record<PoiKind, typeof Crown> = {
   capital: Crown, city: Castle, town: Tent, flight: Bird, portal: Orbit, dungeon: DoorOpen, raid: Skull, delve: Pickaxe, "zone-label": Castle,
 };
+/** Runes of world events by what happened: a land revealed, reshaped, a battle, an invasion, a new instance. */
+const EVENT_ICON: Record<string, typeof Crown> = { reveal: Sparkles, reshape: Mountain, battle: Swords, invasion: Flame, instance: DoorOpen };
 const LAYER_KEYS: Array<keyof Layers> = ["cities", "instances", "flight", "portals", "events", "labels", "alive"];
 
 /** Markers are centred on their point; a capital's name hangs under its glowing seal. */
@@ -400,11 +402,12 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
               );
             }
             if (marker.type === "event") {
+              const Rune = EVENT_ICON[marker.event.kind ?? ""] ?? Hourglass;
               return (
                 <button key={marker.key} ref={ref} type="button" data-map-ui className={styles.eventMarker} data-current={marker.current ? "" : undefined}
                   data-selected={selected?.type === "event" && selected.event.id === marker.event.id ? "" : undefined}
                   aria-label={marker.label} onClick={() => openEvent(marker.event)}>
-                  <span className={styles.eventRune} aria-hidden="true"><Hourglass /></span>
+                  <span className={styles.eventRune} aria-hidden="true"><Rune /></span>
                   <span className={styles.markerName}>{marker.label}</span>
                 </button>
               );
