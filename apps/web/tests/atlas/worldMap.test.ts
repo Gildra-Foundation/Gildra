@@ -49,12 +49,17 @@ function assertArt(art: Art, label: string) {
   for (const file of tilesOf(art)) assert.ok(existsSync(file), `${label}: missing ${file}`);
 }
 
-function dirBytes(dir: string): number {
+// bytes on disk; hard-linked tiles (ruRU pictures share their unchanged tiles) count once
+function dirBytes(dir: string, seen = new Set<number>()): number {
   if (!existsSync(dir)) return 0;
   let total = 0;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
-    total += entry.isDirectory() ? dirBytes(path) : statSync(path).size;
+    if (entry.isDirectory()) { total += dirBytes(path, seen); continue; }
+    const stat = statSync(path);
+    if (seen.has(stat.ino)) continue;
+    seen.add(stat.ino);
+    total += stat.size;
   }
   return total;
 }
@@ -178,8 +183,9 @@ describe("world map art", () => {
   it("stays within the tile budget", () => {
     const tiles = join(web, "public/maps/tiles");
     const total = dirBytes(tiles);
-    const eraBytes = dirBytes(join(tiles, "era"));
-    assert.ok(total - eraBytes <= 200e6, `retail tiles ${(total - eraBytes) / 1e6} MB`);
+    const seen = new Set<number>();
+    const retail = readdirSync(tiles).filter((d) => d !== "era" && d !== "ru").reduce((sum, d) => sum + dirBytes(join(tiles, d), seen), 0);
+    assert.ok(retail <= 200e6, `retail tiles ${retail / 1e6} MB`);
     assert.ok(total <= 400e6, `all tiles ${total / 1e6} MB`);
   });
 });
