@@ -83,6 +83,13 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   // The page map of the current history entry; a Back/Forward restore must not add entries.
   const entry = useRef<{ mapId: number; depth: number } | null>(null);
   const restoring = useRef(false);
+  // The first picture of the link (its era), then the link's own requests: an event to fly to, a comparison.
+  const firstSet = useRef(true);
+  const startedRef = useRef(false);
+  const startEvent = useRef<AtlasEvent | null>(null);
+  // The link shows its map whole: in the era's hierarchy the map may sit elsewhere, so fit it again there.
+  const startWhole = useRef(false);
+  const startCompare = useRef(false);
 
   // ------------------------------------------------------------ data
   useEffect(() => {
@@ -347,12 +354,6 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     return () => { cancelled = true; };
   }, [artNow, artLeft, eraData, bundleUrl]);
   // The map follows the timeline: the moment's maps cross-fade in (at once on the first draw).
-  const firstSet = useRef(true);
-  const startedRef = useRef(false);
-  const startEvent = useRef<AtlasEvent | null>(null);
-  // The link shows its map whole: in the era's hierarchy the map may sit elsewhere, so fit it again there.
-  const startWhole = useRef(false);
-  const startCompare = useRef(false);
   useEffect(() => {
     const engine = engineRef.current;
     const set = setFor(artNow);

@@ -522,15 +522,16 @@ export class WorldMapEngine {
     const root = this.maps.get(this.rootAt(camera.x, camera.y)) ?? this.maps.values().next().value;
     if (!root) return camera;
     const min = this.fit(root.frame, 0.02).scale * 0.6;
-    let deepest = root;
+    // The most detailed picture under the centre sets the limit (a small coarse sub-zone overlapping a city must not).
+    let max = 0;
     let terrain: AtlasMap["terrain"] | undefined;
     for (const map of this.maps.values()) {
-      if (!map.art || !contains(map.frame, camera.x, camera.y)) continue;
-      if (map.depth > deepest.depth && !UNDER.has(map.type)) deepest = map;
+      if (!map.art || UNDER.has(map.type) || !contains(map.frame, camera.x, camera.y)) continue;
+      max = Math.max(max, maxScaleOf(map.art, map.frame[2] - map.frame[0]));
       if (map.terrain && contains(map.terrain.frame, camera.x, camera.y)) terrain = map.terrain;
     }
-    const art = deepest.art;
-    const max = art ? maxScaleOf(art, deepest.frame[2] - deepest.frame[0], terrain) : min * 100;
+    if (terrain) max = Math.max(max, maxScaleOf({ width: 0 }, 1, terrain));
+    if (!max) max = min * 100;
     const scale = clamp(camera.scale, min, Math.max(min, max));
     let next = { ...camera, scale };
     if (anchor && scale !== camera.scale) {
