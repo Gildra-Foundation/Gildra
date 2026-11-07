@@ -37,10 +37,22 @@ export const navigationRealms: readonly NavigationRealm[] = [
     id: "heroes",
     label: { en: "Characters", ru: "Персонажи" },
     hub: "/wow/characters",
-    also: ["/talents", "/wow/rotation", "/wow/shared"],
+    also: ["/wow/shared"],
     groups: [{
       links: [
         { href: "/wow/characters", icon: "characters", label: { en: "My characters", ru: "Мои персонажи" }, note: { en: "Gear and talents", ru: "Экипировка и таланты" } },
+      ],
+    }],
+  },
+  {
+    // Classes, specs and everything per spec (talent trees, rotation) are one
+    // area: a talent page lights «Classes», not the reader's own characters.
+    id: "classes",
+    label: { en: "Classes", ru: "Классы" },
+    hub: "/wow/classes",
+    also: ["/talents", "/specs", "/wow/rotation"],
+    groups: [{
+      links: [
         { href: "/wow/classes", icon: "classes", label: { en: "Classes and specs", ru: "Классы и специализации" }, note: { en: "Talent trees", ru: "Деревья талантов" } },
       ],
     }],
@@ -49,7 +61,8 @@ export const navigationRealms: readonly NavigationRealm[] = [
     id: "mythic",
     label: { en: "Mythic+", ru: "Mythic+" },
     hub: "/wow/mythic-plus",
-    also: ["/wow/mythic", "/wow/dungeons"],
+    // A player's page opens from the Mythic+ leaderboard (its breadcrumbs say so).
+    also: ["/wow/mythic", "/wow/dungeons", "/wow/players"],
     groups: [
       {
         title: { en: "Season", ru: "Сезон" },
@@ -86,7 +99,6 @@ export const navigationRealms: readonly NavigationRealm[] = [
     id: "meta",
     label: { en: "Tier lists", ru: "Тир-листы" },
     hub: "/tier-lists",
-    also: ["/specs"],
     groups: [{ links: [{ href: "/tier-lists", icon: "meta", label: { en: "Tier lists", ru: "Тир-листы" } }] }],
   },
   {
@@ -107,7 +119,7 @@ export const navigationRealms: readonly NavigationRealm[] = [
     id: "library",
     label: { en: "Library", ru: "Библиотека" },
     hub: "/library",
-    also: ["/database"],
+    also: ["/database", "/search"],
     groups: [{
       links: [
         { href: "/library", icon: "library", label: { en: "Game library", ru: "Библиотека игры" }, note: { en: "Items, spells, mounts", ru: "Предметы, заклинания, транспорт" } },
