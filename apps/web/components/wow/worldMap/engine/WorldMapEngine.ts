@@ -650,8 +650,8 @@ export class WorldMapEngine {
 
     on("pointerdown", (event) => {
       if (event.button !== 0 && event.pointerType === "mouse") return;
-      if ((event.target as HTMLElement).closest("[data-map-ui]")) return;
-      el.setPointerCapture(event.pointerId);
+      // A press on a marker may still become a drag; the pointer is captured only once it moves,
+      // so a plain tap stays a click on the marker.
       const [x, y] = local(event);
       this.pointers.set(event.pointerId, { id: event.pointerId, x, y });
       this.flight = null;
@@ -680,6 +680,7 @@ export class WorldMapEngine {
       }
       this.camera = this.limit(camera);
       g.moved = Math.max(g.moved, Math.hypot(after[0] - g.start[0], after[1] - g.start[1]));
+      if (g.moved > 4 && !el.hasPointerCapture(event.pointerId)) { try { el.setPointerCapture(event.pointerId); } catch { /* pointer already gone */ } }
       g.samples.push({ t: performance.now(), x: after[0], y: after[1] });
       if (g.samples.length > 8) g.samples.shift();
       if (g.moved > 4) this.setHover(null);
@@ -695,7 +696,7 @@ export class WorldMapEngine {
       if (!g) return;
       if (g.moved <= 5 && !wasPinch && event.type === "pointerup") {
         const [x, y] = local(event);
-        this.handleTap(x, y, event.pointerType);
+        if (!(event.target as HTMLElement).closest("[data-map-ui]")) this.handleTap(x, y, event.pointerType);
       } else if (!this.options.reducedMotion && !wasPinch) {
         const recent = g.samples.filter((s) => performance.now() - s.t < 90);
         if (recent.length >= 2) {
