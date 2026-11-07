@@ -127,7 +127,8 @@
   --ui-ease-spring: var(--atlas-ease);
   --ui-focus-ring: 0 0 0 3px var(--atlas-bg), 0 0 0 5px var(--atlas-accent-strong);
 }
-@media (max-width: 720px) {
+/* Phones and every touch screen: small controls (segmented, tabs, fields) are 44 px targets too. */
+@media (max-width: 720px), (pointer: coarse) {
   .scope.scope.scope { --ui-control-h-sm: var(--atlas-control-height); }
 }
 @media (prefers-reduced-motion: reduce) {
