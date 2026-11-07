@@ -893,13 +893,14 @@ export class WorldMapEngine {
     }
     for (let ty = ty0; ty <= ty1; ty++) {
       for (let tx = tx0; tx <= tx1; tx++) {
-        const rx0 = sx0 + tx * ts * pxW, ry0 = sy0 + ty * ts * pxH;
+        // Neighbouring tiles share the very same edge coordinates: the rasteriser then leaves neither a gap
+        // nor a doubly blended line between them (an overlap would show where the map is see-through: masks, edges).
+        const edgeX = (i: number) => (i * ts >= lw ? sx1 : sx0 + i * ts * pxW), edgeY = (i: number) => (i * ts >= lh ? sy1 : sy0 + i * ts * pxH);
+        const rx0 = edgeX(tx), ry0 = edgeY(ty);
         // Edge tiles cover fewer texels than a full tile; their files may be full-size with empty padding.
         const tw = Math.min(ts, lw - tx * ts), th = Math.min(ts, lh - ty * ts);
-        const rw = tw * pxW, rh = th * pxH;
-        // Opaque tiles overlap by half a pixel against seams; see-through ones must not (the overlap would show as lines).
-        const o = style.alpha > 0.999 && style.levelScale === 1 ? 0.5 : 0;
-        const rect: Box = [rx0 - o, ry0 - o, rx0 + rw + o, ry0 + rh + o];
+        const rect: Box = [rx0, ry0, edgeX(tx + 1), edgeY(ty + 1)];
+        const rw = rect[2] - rx0, rh = rect[3] - ry0;
         // Ground with no tile there (open sea): nothing to ask for.
         if (exists && !exists(z, tx, ty)) continue;
         const dist = Math.hypot(rx0 + rw / 2 - centerX, ry0 + rh / 2 - centerY) / Math.max(W, H);
@@ -913,8 +914,7 @@ export class WorldMapEngine {
           if (tile.state === "ready") this.fadingUntil = Math.max(this.fadingUntil, tile.readyAt + FADE_TILE);
         }
         if (tile.state === "ready" && tile.texture) {
-          const u1 = Math.min(1, (tw + (o ? o / pxW : 0)) / tile.width), v1 = Math.min(1, (th + (o ? o / pxH : 0)) / tile.height);
-          this.renderer.draw(tile.texture, { ...base, rect, uv: [o ? -o / pxW / tile.width : 0, o ? -o / pxH / tile.height : 0, u1, v1], alpha: style.alpha * fade });
+          this.renderer.draw(tile.texture, { ...base, rect, uv: [0, 0, Math.min(1, tw / tile.width), Math.min(1, th / tile.height)], alpha: style.alpha * fade });
         }
       }
     }

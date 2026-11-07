@@ -77,12 +77,17 @@ void main() {
   vec3 col = texel.a > 0.0 ? texel.rgb / texel.a : vec3(0.0);
   if (u_paper.a > 0.0) {
     // A city drawn on a plain sheet whose mask is only a soft rectangle: the bare sheet gives way to the
-    // map under it, the drawing stays (at the edges; the middle keeps its sheet so the zone's own words under it stay hidden).
+    // map under it, the drawing stays (at the edges; the middle keeps its sheet so the zone's own words under
+    // it stay hidden). The sheet's border is torn (noise), never a straight line, and the bare sheet left is a
+    // little darker, nearer the tone of the map around.
     vec2 m = (v_p - u_maskRect.xy) / (u_maskRect.zw - u_maskRect.xy);
     float edge = min(min(m.x, 1.0 - m.x), min(m.y, 1.0 - m.y));
-    float strength = u_paper.a * mix(1.0, 0.0, smoothstep(0.07, 0.24, edge));
+    float torn = vnoise(m * vec2(11.0, 7.0) + 3.7) * 0.65 + vnoise(m * vec2(29.0, 19.0) - 1.3) * 0.35 - 0.5;
+    float e = edge + torn * 0.08;
+    float strength = u_paper.a * mix(1.0, 0.0, smoothstep(0.08, 0.26, e));
     float key = smoothstep(0.05, 0.3, length(col - u_paper.rgb));
-    a *= mix(1.0, key, strength);
+    a *= mix(1.0, key, strength) * smoothstep(0.0, 0.07, e);
+    col *= mix(0.86, 1.0, key);
   }
   if (u_water > 0.0) {
     float wet = smoothstep(0.035, 0.13, col.b - max(col.r, col.g * 0.94)) * smoothstep(0.12, 0.3, col.b);
