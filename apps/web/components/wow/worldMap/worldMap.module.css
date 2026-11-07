@@ -106,6 +106,7 @@
 }
 .line {
   display: -webkit-box;
+  flex: none;
   margin: 6px 0 0;
   overflow: hidden;
   color: var(--atlas-text-muted);
