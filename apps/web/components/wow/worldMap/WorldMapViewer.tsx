@@ -168,6 +168,14 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const onFrame = (info: FrameInfo) => {
     const engine = engineRef.current;
     if (!engine || !index) return;
+    // A frame of the living layers only (the camera has not moved): the markers stay where they are.
+    const c = info.camera;
+    const still = c.x === lastView.current.x && c.y === lastView.current.y && c.scale === lastView.current.scale && info.width === lastView.current.w && info.height === lastView.current.h && lastPick.current !== 0;
+    lastView.current = { x: c.x, y: c.y, scale: c.scale, w: info.width, h: info.height };
+    // The hovered flight master's routes: the dotted line runs towards its destinations.
+    const poi = hoverPoiRef.current;
+    if (poi?.routes && !reducedRef.current) for (const path of routeEls.current) path?.style.setProperty("stroke-dashoffset", String((-info.time * 22) % 1000));
+    if (still) return;
     for (const marker of markerList.current) {
       const el = markerEls.current.get(marker.key);
       if (!el) continue;
@@ -175,7 +183,6 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       el.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) ${anchor(marker)}`;
     }
     // Flight routes of the hovered flight master.
-    const poi = hoverPoiRef.current;
     if (poi?.routes) {
       const from = byIdRef.current?.get(poi.map);
       poi.routes.forEach((id, i) => {
@@ -200,6 +207,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   };
 
   const hoverPoiRef = useRef<AtlasPoi | null>(null);
+  const lastView = useRef({ x: NaN, y: NaN, scale: NaN, w: 0, h: 0 });
+  const reducedRef = useRef(false);
   const byIdRef = useRef(byId);
   const poisRef = useRef(new Map<string, AtlasPoi>());
 
@@ -324,6 +333,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const atParam = eraParam && era && Math.abs(pos - restOf(eras, era)) > 0.004 ? positionToPatch(pos) : null;
     state.current = { layers, eraParam, atParam, metaEra: era, selected, compare };
     hoverPoiRef.current = hoverPoi;
+    reducedRef.current = reduced;
     byIdRef.current = byId;
     onFrameRef.current = onFrame;
     onFocusRef.current = onFocus;
@@ -432,6 +442,19 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     engine.setCompare(left ? { left, at: divider } : null);
   }, [compare, divider, artLeft, setFor]);
   useEffect(() => { lastPick.current = 0; engineRef.current?.invalidate(); }, [layers, activeSet]);
+  // The living map's lights: capitals pulse, portals swirl (with their marker layers on).
+  useEffect(() => {
+    const engine = engineRef.current;
+    if (!engine || !index) return;
+    const list: Array<{ map: number; x: number; y: number; kind: "capital" | "portal" }> = [];
+    for (const pois of index.poisByMap.values()) {
+      for (const poi of pois) {
+        if (poi.kind === "capital" && layers.cities) list.push({ map: poi.map, x: poi.x, y: poi.y, kind: "capital" });
+        else if (poi.kind === "portal" && layers.portals) list.push({ map: poi.map, x: poi.x, y: poi.y, kind: "portal" });
+      }
+    }
+    engine.setEffects(layers.alive ? list : []);
+  }, [index, layers, started]);
   // Another era's maps: the title line and trail tell the place as that era draws it.
   useEffect(() => {
     const engine = engineRef.current;
