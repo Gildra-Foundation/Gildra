@@ -31,14 +31,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from art import art_specs, image_digest, stitch, write_pyramid  # noqa: E402
+from art import art_specs, image_digest, localized_refs, stitch, write_localized_pyramid, write_pyramid  # noqa: E402
 from geometry import Geometry  # noqa: E402
+from masks import save_mask, tree_masks  # noqa: E402
 from sources import CatalogDB, GameTables  # noqa: E402
+from tact import LOCALE_RURU  # noqa: E402
 
 WEB = Path(__file__).resolve().parents[2]
 DATA_DIR = WEB / "data" / "wow" / "map"
 TILES_DIR = WEB / "public" / "maps" / "tiles"
 TILES_URL = "/maps/tiles"
+MASKS_DIR = WEB / "public" / "maps" / "masks"
+MASKS_URL = "/maps/masks"
 COSMIC = 946
 
 TYPE_NAMES = {0: "cosmic", 1: "world", 2: "continent", 3: "zone", 4: "dungeon", 5: "micro", 6: "orphan"}
@@ -184,6 +188,16 @@ def _render(job):
     meta = write_pyramid(image, Path(out_dir), quality=quality, max_side=max_side)
     meta["digest"] = digest
     return key, meta
+
+
+def _render_ru(job):
+    """Worker: the ruRU picture of one art -> its pyramid next to the enUS one (None when equal)."""
+    key, spec, refs_ru, base_dir, out_dir, quality, digest = job
+    image = stitch(refs_ru, spec)
+    if image_digest(image) == digest:
+        shutil.rmtree(out_dir, ignore_errors=True)
+        return key, None
+    return key, write_localized_pyramid(image, Path(out_dir), Path(base_dir), quality=quality)
 
 
 def render_arts(jobs, workers: int):
@@ -365,6 +379,8 @@ def main() -> None:
     parser.add_argument("--work", type=Path, required=True, help="cache for raw downloads (e.g. /tmp/wm-work)")
     parser.add_argument("--maps", help="comma separated UiMap IDs: build only these maps (sample)")
     parser.add_argument("--skip-tiles", action="store_true")
+    parser.add_argument("--skip-masks", action="store_true", help="keep existing masks")
+    parser.add_argument("--skip-ru", action="store_true", help="keep existing ruRU pictures")
     parser.add_argument("--dungeon-art", choices=("none", "linked", "all"), default="linked")
     parser.add_argument("--quality", type=int, default=80)
     parser.add_argument("--workers", type=int, default=6)
@@ -476,6 +492,86 @@ def main() -> None:
             "maxZoom": meta["maxZoom"],
             "url": f"{TILES_URL}/{owner}/{{z}}/{{x}}_{{y}}.webp",
         }
+
+    # ruRU pictures: the client paints continent and zone names in the player's language
+    art_of_owner = {int(n["art"]["url"].split("/")[3]): base_art(art_maps, m) for m, n in nodes.items() if n["art"]}
+    if not args.skip_ru:
+        jobs = []
+        for owner, art_id in sorted(art_of_owner.items()):
+            spec = specs[art_id]
+            refs_ru = localized_refs(game_source.client, spec, {}, LOCALE_RURU)
+            if refs_ru is None:
+                shutil.rmtree(TILES_DIR / "ru" / str(owner), ignore_errors=True)
+                retail.get(str(owner), {}).pop("ru", None)
+                continue
+            jobs.append((owner, spec, refs_ru, str(TILES_DIR / str(owner)), str(TILES_DIR / "ru" / str(owner)), args.quality, retail[str(owner)]["digest"]))
+        # the enUS files of each localized art, resolved in one pass
+        need = {f for _, spec, refs_ru, *_ in jobs for f in spec.fdids() if f not in refs_ru}
+        en_refs = game_source.client.resolve(need)
+        jobs = [(o, sp, {**{f: en_refs[f] for f in sp.fdids() if f in en_refs}, **rr}, *rest) for o, sp, rr, *rest in jobs]
+        print(f"ruRU pictures: {len(jobs)} localized arts")
+        from concurrent.futures import ProcessPoolExecutor
+
+        with ProcessPoolExecutor(max_workers=args.workers) as pool:
+            for owner, meta in pool.map(_render_ru, jobs):
+                if meta is None:
+                    retail[str(owner)].pop("ru", None)
+                else:
+                    retail[str(owner)]["ru"] = {"bytes": meta["bytes"], "linked": meta["linked"]}
+        ru_bytes = sum(v["ru"]["bytes"] for v in retail.values() if isinstance(v, dict) and v.get("ru"))
+        print(f"ruRU pictures: {sum(1 for v in retail.values() if isinstance(v, dict) and v.get('ru'))} written, {ru_bytes / 1e6:.1f} MB of own tiles")
+    for node in nodes.values():
+        if node["art"]:
+            owner = node["art"]["url"].split("/")[3]
+            if retail.get(owner, {}).get("ru") and (TILES_DIR / "ru" / owner).exists():
+                node["art"]["urlRu"] = f"{TILES_URL}/ru/{owner}/{{z}}/{{x}}_{{y}}.webp"
+
+    # masks of each map's own area (one per distinct art, shared like its tiles)
+    owners = {}
+    for map_id, node in sorted(nodes.items()):
+        if node["art"] and node["rectInParent"] and node["type"] != "dungeon":
+            owners.setdefault(int(node["art"]["url"].split("/")[3]), map_id)
+    if not args.skip_masks:
+        entries = {}
+        for owner, map_id in owners.items():
+            node = nodes[map_id]
+            art_id = base_art(art_maps, owner)
+            entries[map_id] = {
+                "spec": specs[art_id],
+                "rect": node["rectInParent"],
+                "parent": node["parentId"],
+                "areas": [r["AreaID"] for r in geometry.by_map.get(map_id, []) if r["AreaID"]],
+            }
+        # parents without a rect lend their overlays to cities on them
+        for map_id in {e["parent"] for e in entries.values()} - set(entries):
+            art_id = base_art(art_maps, map_id)
+            if map_id in nodes and art_id in specs:
+                entries[map_id] = {"spec": specs[art_id], "rect": None, "parent": None, "areas": []}
+        need = {f for e in entries.values() for f in e["spec"].fdids() - set(e["spec"].tiles.values())}
+        print(f"masks: {len(entries)} maps, {len(need)} overlay/highlight files")
+        mask_refs = game_source.client.resolve(need)
+        made = tree_masks(entries, mask_refs, args.workers)
+        if MASKS_DIR.exists():
+            for old_mask in MASKS_DIR.glob("*.webp"):
+                old_mask.unlink()
+        methods = {}
+        for owner, map_id in owners.items():
+            image, method = made[map_id]
+            size = save_mask(image, MASKS_DIR / f"{owner}.webp")
+            retail.setdefault(str(owner), {})["mask"] = {"method": method, "bytes": size}
+            methods[method] = methods.get(method, 0) + 1
+        print(f"masks by method: {methods}")
+    for owner, map_id in owners.items():
+        if (MASKS_DIR / f"{owner}.webp").exists():
+            for node in nodes.values():
+                if node["art"] and node["rectInParent"] and node["art"]["url"].split("/")[3] == str(owner):
+                    node["mask"] = f"{MASKS_URL}/{owner}.webp"
+    # deep-zoom terrain of continents (terrain.py)
+    terrain_path = DATA_DIR / "terrain-manifest.json"
+    if terrain_path.exists():
+        for map_id, terrain in json.loads(terrain_path.read_text()).get("maps", {}).items():
+            if int(map_id) in nodes:
+                nodes[int(map_id)]["terrain"] = terrain
 
     pois = build_pois(nodes, geometry, game, journal_en, journal_ru, maps_db, areas_db, all_names, all_areas)
     maps = [nodes[m] for m in sorted(nodes)]

@@ -28,9 +28,15 @@ class ArtSpec:
     # exploration overlays drawn by the game on top of the base art once an area is
     # explored: (offset_x, offset_y, width, height, {(row, col): FileDataID})
     overlays: list = field(default_factory=list)
+    # hover highlight of the map on its parent: ("file", fdid) or
+    # ("atlas", fdid, left, top, right, bottom) — a region of an atlas texture
+    highlight: tuple | None = None
+    overlay_areas: list = field(default_factory=list)  # AreaIDs of each overlay
 
     def fdids(self) -> set[int]:
         out = set(self.tiles.values())
+        if self.highlight:
+            out.add(self.highlight[1])
         for *_, tiles in self.overlays:
             out |= set(tiles.values())
         return out
@@ -56,6 +62,7 @@ def art_specs(tables: dict[str, dict[int, dict]]) -> dict[int, ArtSpec]:
         if tile["LayerIndex"] == 0:
             overlay_tiles.setdefault(tile["WorldMapOverlayID"], {})[(tile["RowIndex"], tile["ColIndex"])] = tile["FileDataID"]
     overlays: dict[int, list] = {}
+    overlay_areas: dict[int, list] = {}
     for overlay_id, overlay in sorted(tables.get("WorldMapOverlay", {}).items()):
         # conditional overlays belong to quest phases; the explored map shows the rest
         if overlay.get("PlayerConditionID") or overlay_id not in overlay_tiles:
@@ -63,6 +70,20 @@ def art_specs(tables: dict[str, dict[int, dict]]) -> dict[int, ArtSpec]:
         overlays.setdefault(overlay["UiMapArtID"], []).append(
             (overlay["OffsetX"], overlay["OffsetY"], overlay["TextureWidth"], overlay["TextureHeight"], overlay_tiles[overlay_id])
         )
+        area = overlay.get("AreaID") or []
+        overlay_areas.setdefault(overlay["UiMapArtID"], []).append(tuple(area if isinstance(area, list) else [area]))
+    atlas_members = tables.get("UiTextureAtlasMember", {})
+    atlases = tables.get("UiTextureAtlas", {})
+
+    def highlight_of(art):
+        if art.get("HighlightFileDataID"):
+            return ("file", art["HighlightFileDataID"])
+        member = atlas_members.get(art.get("HighlightAtlasID") or 0)
+        atlas = atlases.get(member["UiTextureAtlasID"]) if member else None
+        if member and atlas and atlas.get("FileDataID"):
+            return ("atlas", atlas["FileDataID"], member["CommittedLeft"], member["CommittedTop"], member["CommittedRight"], member["CommittedBottom"])
+        return None
+
     specs = {}
     for art_id, art in tables["UiMapArt"].items():
         layer = layers.get(art["UiMapArtStyleID"])
@@ -76,11 +97,13 @@ def art_specs(tables: dict[str, dict[int, dict]]) -> dict[int, ArtSpec]:
             layer["TileHeight"],
             tiles[art_id],
             overlays.get(art_id, []),
+            highlight_of(art),
+            overlay_areas.get(art_id, []),
         )
     return specs
 
 
-def stitch(refs: dict, spec: ArtSpec, workers: int = 8) -> Image.Image:
+def stitch(refs: dict, spec: ArtSpec, workers: int = 8, keep: dict | None = None) -> Image.Image:
     """Download every layer-0 tile of ``spec`` (refs: FileDataID -> FileRef) and stitch them."""
     rows = max(r for r, _ in spec.tiles) + 1
     cols = max(c for _, c in spec.tiles) + 1
@@ -114,6 +137,8 @@ def stitch(refs: dict, spec: ArtSpec, workers: int = 8) -> Image.Image:
     if overlay_items:
         with ThreadPoolExecutor(max_workers=workers) as pool:
             loaded = dict(pool.map(lambda item: (item[0], load((item[0][1], item[1]))[2]), overlay_items))
+        if keep is not None:
+            keep.update(loaded)
         for i, (x, y, w, h, tiles) in enumerate(spec.overlays):
             if any(loaded.get((i, rc)) is None for rc in tiles):
                 # an overlay of content the client keeps encrypted (not yet released): skip it
@@ -126,6 +151,43 @@ def stitch(refs: dict, spec: ArtSpec, workers: int = 8) -> Image.Image:
                 layer.paste(piece, (x + col * 256, y + row * 256))
             canvas.alpha_composite(layer)
     return canvas.crop((0, 0, spec.width, spec.height))
+
+
+def load_highlight(refs: dict, spec: ArtSpec) -> Image.Image | None:
+    """The map's hover highlight texture (an atlas region cut out)."""
+    if not spec.highlight or spec.highlight[1] not in refs:
+        return None
+    try:
+        image = Image.open(io.BytesIO(refs[spec.highlight[1]].read()))
+        image.load()
+    except (MissingFile, EncryptedFile, OSError):
+        return None
+    if spec.highlight[0] == "atlas":
+        _, _, left, top, right, bottom = spec.highlight
+        if right <= left or bottom <= top:
+            return None
+        image = image.crop((left, top, right, bottom))
+    return image
+
+
+def load_overlays(refs: dict, spec: ArtSpec, workers: int = 8) -> dict:
+    """{(overlay index, (row, col)): image} of every exploration overlay tile."""
+    items = [((i, rc), fdid) for i, (*_, tiles) in enumerate(spec.overlays) for rc, fdid in tiles.items()]
+
+    def load(item):
+        key, fdid = item
+        ref = refs.get(fdid)
+        if ref is None:
+            return key, None
+        try:
+            image = Image.open(io.BytesIO(ref.read()))
+            image.load()
+            return key, image.convert("RGBA")
+        except (MissingFile, EncryptedFile, OSError):
+            return key, None
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        return dict(pool.map(load, items))
 
 
 def image_digest(image: Image.Image) -> str:
@@ -168,3 +230,31 @@ def write_pyramid(image: Image.Image, out_dir: Path, quality: int = 80, max_side
                 total += path.stat().st_size
                 count += 1
     return {"width": width, "height": height, "tileSize": TILE, "maxZoom": max_zoom, "bytes": total, "tiles": count}
+
+
+def localized_refs(client, spec: ArtSpec, refs_en: dict, locale: int) -> dict | None:
+    """refs of ``spec`` for another locale when any of its files differ there, else None."""
+    from tact import LOCALE_ENUS
+
+    differs = [f for f in spec.fdids() if client.root.ckey(f, locale) not in (None, client.root.ckey(f, LOCALE_ENUS))]
+    if not differs:
+        return None
+    local = client.resolve(differs, locale)
+    return {**refs_en, **local}
+
+
+def write_localized_pyramid(image: Image.Image, out_dir: Path, base_dir: Path, quality: int = 80) -> dict:
+    """Pyramid of a localized picture; tiles identical to the base locale's become hard links."""
+    import os
+
+    meta = write_pyramid(image, out_dir, quality=quality)
+    linked = 0
+    for path in out_dir.rglob("*.webp"):
+        twin = base_dir / path.relative_to(out_dir)
+        if twin.exists() and twin.stat().st_size == path.stat().st_size and twin.read_bytes() == path.read_bytes():
+            path.unlink()
+            os.link(twin, path)
+            linked += 1
+    meta["linked"] = linked
+    meta["bytes"] = sum(p.stat().st_size for p in out_dir.rglob("*.webp") if p.stat().st_nlink == 1)
+    return meta

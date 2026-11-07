@@ -81,7 +81,7 @@ def parse_config(text: str) -> dict[str, list[str]]:
     return out
 
 
-def blte_decode(data: bytes, expected_ekey: bytes | None = None) -> bytes:
+def blte_decode(data: bytes, expected_ekey: bytes | None = None, zero_encrypted: bool = False) -> bytes:
     if data[:4] != b"BLTE":
         raise ValueError("not a BLTE stream")
     header_size = struct.unpack(">I", data[4:8])[0]
@@ -105,7 +105,7 @@ def blte_decode(data: bytes, expected_ekey: bytes | None = None) -> bytes:
             cursor += 24
         position = header_size
     out = bytearray()
-    for compressed, _ in chunks:
+    for compressed, decompressed in chunks:
         chunk = data[position : position + compressed]
         position += compressed
         mode = chunk[:1]
@@ -116,7 +116,11 @@ def blte_decode(data: bytes, expected_ekey: bytes | None = None) -> bytes:
         elif mode == b"F":
             out += blte_decode(chunk[1:])
         elif mode == b"E":
-            raise EncryptedFile()
+            # DB2 files keep unreleased rows in encrypted chunks: zero-fill them
+            # (the DB2 reader skips zeroed sections) instead of failing the table
+            if not zero_encrypted or decompressed is None:
+                raise EncryptedFile()
+            out += bytes(decompressed)
         else:
             raise ValueError(f"unsupported BLTE chunk mode {mode!r}")
     return bytes(out)
@@ -310,41 +314,70 @@ class TactClient:
         os.replace(tmp, path)
         return data
 
+    def _global_index(self):
+        """Every archive index of the CDN config merged into sorted numpy arrays (cached)."""
+        if getattr(self, "_gindex", None) is not None:
+            return self._gindex
+        import numpy as np
+
+        name = self.cdn_config.get("archive-group", [None])[0] or hashlib.md5(" ".join(self.cdn_config["archives"]).encode()).hexdigest()
+        path = self.index_dir / f"merged-{name}.npz"
+        if not path.exists():
+            archives = self.cdn_config["archives"]
+
+            def parse(item):
+                number, archive = item
+                data = self._index_bytes(archive)
+                footer = data[-28:]
+                block_kb, offset_bytes, size_bytes, key_bytes = footer[11], footer[12], footer[13], footer[14]
+                if (offset_bytes, size_bytes, key_bytes) != (4, 4, 16):
+                    raise ValueError(f"index {archive}: unexpected layout")
+                entry = key_bytes + size_bytes + offset_bytes
+                block = block_kb * 1024
+                blocks = (len(data) - 28) // (block + key_bytes + 8)
+                per_block = block // entry
+                raw = np.frombuffer(data, dtype=np.uint8, count=blocks * block).reshape(blocks, block)[:, : per_block * entry]
+                rows = raw.reshape(blocks * per_block, entry)
+                hi = rows[:, 0:8].copy().view(">u8").ravel()
+                lo = rows[:, 8:16].copy().view(">u8").ravel()
+                size = rows[:, 16:20].copy().view(">u4").ravel()
+                offset = rows[:, 20:24].copy().view(">u4").ravel()
+                keep = (hi != 0) | (lo != 0)
+                return hi[keep], lo[keep], size[keep], offset[keep], np.full(int(keep.sum()), number, dtype=np.uint16)
+
+            with ThreadPoolExecutor(max_workers=16) as pool:
+                parts = list(pool.map(parse, enumerate(archives)))
+            hi, lo, size, offset, number = (np.concatenate([p[i] for p in parts]) for i in range(5))
+            order = np.lexsort((lo, hi))
+            tmp = path.with_suffix(".part.npz")
+            np.savez(tmp, hi=hi[order], lo=lo[order], size=size[order], offset=offset[order], number=number[order])
+            os.replace(tmp, path)
+        loaded = np.load(path)
+        self._gindex = {k: loaded[k] for k in ("hi", "lo", "size", "offset", "number")}
+        return self._gindex
+
     def locate(self, ekeys: set[bytes]) -> None:
-        """Resolve archive locations for ``ekeys`` (scans every archive index once per call)."""
-        wanted = {key for key in ekeys if key not in self._index and key not in self._indexed_for}
+        """Resolve archive locations for ``ekeys`` through the merged archive index."""
+        wanted = [key for key in ekeys if key not in self._index and key not in self._indexed_for]
         if not wanted:
             return
+        import numpy as np
+
+        index = self._global_index()
         archives = self.cdn_config["archives"]
-
-        def scan(archive: str) -> list[tuple[bytes, ArchiveLocation]]:
-            data = self._index_bytes(archive)
-            footer = data[-28:]
-            block_kb, offset_bytes, size_bytes, key_bytes = footer[11], footer[12], footer[13], footer[14]
-            entry = key_bytes + size_bytes + offset_bytes
-            block = block_kb * 1024
-            blocks = (len(data) - 28) // (block + key_bytes + 8)
-            found = []
-            per_block = block // entry
-            for b in range(blocks):
-                base = b * block
-                for i in range(per_block):
-                    start = base + i * entry
-                    key = data[start : start + key_bytes]
-                    if key in wanted:
-                        size = int.from_bytes(data[start + key_bytes : start + key_bytes + size_bytes], "big")
-                        offset = int.from_bytes(data[start + key_bytes + size_bytes : start + entry], "big")
-                        found.append((key, ArchiveLocation(archive, offset, size)))
-            return found
-
-        with ThreadPoolExecutor(max_workers=16) as pool:
-            for result in pool.map(scan, archives):
-                for key, location in result:
-                    self._index.setdefault(key, location)
-        self._indexed_for |= wanted
+        his = np.array([int.from_bytes(k[:8], "big") for k in wanted], dtype=np.uint64)
+        left = np.searchsorted(index["hi"], his, side="left")
+        right = np.searchsorted(index["hi"], his, side="right")
+        for key, a, b in zip(wanted, left, right):
+            lo = int.from_bytes(key[8:16], "big")
+            for i in range(a, b):
+                if int(index["lo"][i]) == lo:
+                    self._index[key] = ArchiveLocation(archives[int(index["number"][i])], int(index["offset"][i]), int(index["size"][i]))
+                    break
+        self._indexed_for |= set(wanted)
 
     # -- file access ----------------------------------------------------
-    def _fetch_ekey_uncached(self, ekey: bytes) -> bytes:
+    def _fetch_ekey_uncached(self, ekey: bytes, zero_encrypted: bool = False) -> bytes:
         location = self._index.get(ekey)
         if location is None and ekey not in self._indexed_for:
             self.locate({ekey})
@@ -353,7 +386,7 @@ class TactClient:
             raw = self._get("data", ekey.hex())  # loose (unarchived) file
         else:
             raw = self._get("data", location.archive, "", (location.offset, location.offset + location.size - 1))
-        return blte_decode(raw, ekey)
+        return blte_decode(raw, ekey, zero_encrypted)
 
     def ekey_for_fdid(self, fdid: int, locale: int = LOCALE_ENUS) -> bytes | None:
         ckey = self.root.ckey(fdid, locale)
@@ -364,11 +397,11 @@ class TactClient:
     def has_file(self, fdid: int) -> bool:
         return fdid in self.root.files
 
-    def read_fdid(self, fdid: int, locale: int = LOCALE_ENUS) -> bytes:
+    def read_fdid(self, fdid: int, locale: int = LOCALE_ENUS, zero_encrypted: bool = False) -> bytes:
         ekey = self.ekey_for_fdid(fdid, locale)
         if ekey is None:
             raise MissingFile(f"fdid {fdid} not in {self.product} {self.version_name}")
-        return self._fetch_ekey_uncached(ekey)
+        return self._fetch_ekey_uncached(ekey, zero_encrypted)
 
     def prefetch(self, fdids: list[int], locale: int = LOCALE_ENUS) -> None:
         keys = {k for k in (self.ekey_for_fdid(f, locale) for f in fdids) if k}

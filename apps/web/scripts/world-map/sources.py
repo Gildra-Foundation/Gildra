@@ -29,7 +29,11 @@ GAME_TABLES = (
     "JournalInstanceEntrance",
     "WorldMapOverlay",
     "WorldMapOverlayTile",
+    "UiTextureAtlas",
+    "UiTextureAtlasMember",
+    "Map",
 )
+OPTIONAL = {"UiTextureAtlas", "UiTextureAtlasMember"}
 LOCALIZED = {"UiMap", "TaxiNodes", "AreaPOI", "UiMapGroupMember"}
 
 
@@ -127,12 +131,23 @@ class GameTables:
         fdid = self.manifest[name]
         if not self.client.has_file(fdid):
             return {}
-        return read_db2(self.client.read_fdid(fdid, locale), self.definition(name), self.version)
+        path = self.client.cache / f"db2-{self.client.build_id}-{fdid}-{locale:x}"
+        if not path.exists():
+            tmp = path.with_suffix(".part")
+            tmp.write_bytes(self.client.read_fdid(fdid, locale, zero_encrypted=True))
+            tmp.replace(path)
+        return read_db2(path.read_bytes(), self.definition(name), self.version)
 
     def load(self, names=GAME_TABLES) -> dict[str, dict[int, dict]]:
         out = {}
         for name in names:
-            out[name] = self.table(name)
+            try:
+                out[name] = self.table(name)
+            except Exception as error:  # noqa: BLE001 - optional tables of older clients
+                if name not in OPTIONAL:
+                    raise
+                print(f"  {self.client.product}: {name} unreadable ({error}), skipped")
+                out[name] = {}
             if name in LOCALIZED:
                 out[name + "@ru"] = self.table(name, LOCALE_RURU)
         return out
