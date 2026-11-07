@@ -204,7 +204,7 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
             quantity={view.qty} onQuantity={qty => go({ qty }, "replace")} sort={view.csort} dir={view.cdir} onSort={sortCompareBy} />
           : realmMissing ? <p className={styles.empty}>{c.realmNeeded}</p>
           : list.error ? <div className={styles.stateBox} role="alert"><p className={styles.stateText}>{auctionErrorMessage(list.error, lang)}</p><AuctionButton onClick={list.retry}>{c.retry}</AuctionButton></div>
-          : list.loading && !deferred ? <AtlasSkeleton variant="rows" count={8} label={c.loading} className={styles.skeleton} />
+          : (list.loading || list.data) && !deferred ? <AtlasSkeleton variant="rows" count={8} label={c.loading} className={styles.skeleton} />
           : deferred ? <div className={styles.listWrap} data-pending={list.loading || undefined}>
             {deferred.stale ? <p className={styles.warning} role="status">{c.stale}</p> : null}
             {deferred.truncated ? <p className={styles.warning} role="status">{c.partial}</p> : null}

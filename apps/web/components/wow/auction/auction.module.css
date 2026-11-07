@@ -25,6 +25,16 @@
 .browser { display: grid; gap: var(--atlas-space-6); min-width: 0; }
 .searchPlaque, .resultsPlaque { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
 .searchPlaque { position: relative; z-index: 3; padding: 32px 40px 36px; }
+/* The search plaque's height while the browser boots on the client (Suspense
+   fallback), so the page below it does not jump when the toolbar and the
+   category chips arrive. Measured heights of the loaded plaque per width. */
+.searchHold { min-height: 374px; }
+@media (max-width: 1100px) { .searchHold { min-height: 452px; } }
+@media (max-width: 760px) { .searchHold { min-height: 502px; } }
+@media (max-width: 600px) { .searchHold { min-height: 586px; } }
+@media (max-width: 480px) { .searchHold { min-height: 690px; } }
+@media (max-width: 400px) { .searchHold { min-height: 742px; } }
+@media (max-width: 360px) { .searchHold { min-height: 846px; } }
 /* Suggestions open over the plaque below. */
 
 /* Plaque head: heading on the left, a segmented choice (market / sort) on the right. */

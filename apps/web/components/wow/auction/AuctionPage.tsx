@@ -30,7 +30,10 @@ export function AuctionPage({ lang }: { lang: "ru" | "en" }) {
     <div className={styles.hero}>
       <AtlasHero align="start" className={styles.heroHeader} title={c.title} lede={c.lede} breadcrumbs={trail(lang, "auction")} breadcrumbsLabel={trailLabel(lang)} />
     </div>
-    <Suspense fallback={<AuctionPlaque className={styles.searchPlaque}><AtlasSkeleton variant="rows" count={4} label={c.loading} /></AuctionPlaque>}><AuctionBrowser lang={lang} /></Suspense>
+    <Suspense fallback={<div className={styles.browser}>
+      <AuctionPlaque className={`${styles.searchPlaque} ${styles.searchHold}`}><AtlasSkeleton variant="rows" count={4} label={c.loading} /></AuctionPlaque>
+      <AuctionPlaque className={styles.resultsPlaque} aria-hidden="true"><AtlasSkeleton variant="rows" count={8} label={c.loading} className={styles.skeleton} /></AuctionPlaque>
+    </div>}><AuctionBrowser lang={lang} /></Suspense>
     <noscript><AuctionPlaque><p className={materialStyles.text}>{c.noJS}</p></AuctionPlaque></noscript>
     <RelatedLinks label={relatedCopy[lang].label} links={[{ href: `${lang === "ru" ? "/ru" : ""}/wow/professions`, label: relatedCopy[lang].professions, icon: <Hammer aria-hidden="true" /> }]} />
   </AtlasFrame>;
