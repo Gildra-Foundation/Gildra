@@ -4,6 +4,7 @@ import { midnightClasses, midnightLairEncounters, midnightSpecializations } from
 import { raidHubEntries } from "@/components/wow/raid/raidHubData";
 import professions from "@/data/wow/professions/index.json";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
+import { tierModePaths } from "@/components/blocks/wow/tierWorkspace/tierModes";
 
 /**
  * Sections of the route registry that are not listed: /wow/dungeons answers
@@ -22,6 +23,7 @@ export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean
   "/",
   ...(Object.keys(routeSections) as SectionId[]).filter((id) => !UNLISTED_SECTIONS.has(id)).map((id) => routeSections[id].path),
   ...(catalogPublic ? [routeSections.library.path] : []),
+  ...tierModePaths().filter((path) => path !== routeSections.tierLists.path),
   ...dungeonSlugs.map((slug) => `/wow/mythic-plus/midnight-season-2/${slug}`),
   ...raidHubEntries.map(({ slug }) => `/wow/raids/${slug}`),
   ...midnightLairEncounters.map(({ slug }) => `/wow/lairs/${slug}`),
