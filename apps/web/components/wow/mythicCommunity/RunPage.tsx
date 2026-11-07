@@ -265,7 +265,6 @@ function PlayerCard({ player, copy, locale, prefix, logged, stat }: { player: Ru
       </span>
       <dl className={styles.playerFacts}>
         {player.itemLevel ? <div><dt>{copy.run.itemLevel}</dt><dd>{number(player.itemLevel, locale, 1)}</dd></div> : null}
-        {player.rating ? <div><dt>{copy.run.rating}</dt><dd>{number(player.rating, locale, 1)}</dd></div> : null}
         {stat?.dps !== undefined && player.role !== "healer" ? <div><dt>{copy.run.dps}</dt><dd>{compact(stat.dps, locale)}</dd></div> : null}
         {stat?.hps !== undefined && player.role === "healer" ? <div><dt>{copy.run.hps}</dt><dd>{compact(stat.hps, locale)}</dd></div> : null}
         {stat?.interrupts !== undefined ? <div><dt>{copy.run.interrupts}</dt><dd>{number(stat.interrupts, locale)}</dd></div> : null}

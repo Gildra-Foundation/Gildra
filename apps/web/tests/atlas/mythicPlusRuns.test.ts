@@ -53,7 +53,7 @@ describe("Mythic+ run page", () => {
     assert.equal(run.url, "https://raider.io/mythic-plus-runs/season-mn-2/24026346-24-ruby-life-pools");
     assert.deepEqual(run.players.map((player) => player.role), ["tank", "healer", "dps", "dps", "dps"]);
     assert.equal(run.players[0].heroId, 24);
-    assert.ok(run.players.every((player) => player.loadout && player.itemLevel && player.rating));
+    assert.ok(run.players.every((player) => player.loadout && player.itemLevel));
     assert.equal(run.players.reduce((sum, player) => sum + player.deaths, 0), 1);
     assert.equal(run.deaths, 1);
     assert.deepEqual(run.encounters.map((encounter) => encounter.name), ["Melidrussa Chillworn", "Kokia Blazehoof", "Kyrakka and Erkhart Stormvein"]);
