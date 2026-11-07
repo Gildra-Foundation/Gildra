@@ -6,6 +6,6 @@
    cross-document view transition (capturing both pages delayed the new
    page's first paint). Less motion never sets the mark. */
 @media (prefers-reduced-motion: no-preference) {
-  html[data-locale-arrival]:not([data-motion="reduced"]) #atlas-content { animation: gildra-locale-fade .16s ease-out both; }
+  html[data-locale-arrival]:not([data-motion="reduced"]) #atlas-content { animation: gildra-locale-fade var(--atlas-duration-fast) ease-out both; }
 }
 @keyframes gildra-locale-fade { from { opacity: .6; } }

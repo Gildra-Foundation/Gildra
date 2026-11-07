@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { preconnect } from "react-dom";
 import { Dices, Download, Eraser, EyeOff, Link2, LocateFixed, Pause, Play, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
 import { MaterialPlaque } from "@/components/wow/shared/materialAtlas";
@@ -59,6 +60,25 @@ function autoLoad() {
   return !connection?.saveData && !/(^|-)(2g|3g)$/.test(connection?.effectiveType ?? "");
 }
 
+/** Run once the page has loaded and the main thread is idle (at most 2 s after load). */
+function afterLoadIdle(run: () => void) {
+  let idle = 0, timer = 0, done = false;
+  const go = () => { if (!done) { done = true; run(); } };
+  const schedule = () => {
+    const requestIdle = window.requestIdleCallback as typeof window.requestIdleCallback | undefined; // Safari < 18
+    if (requestIdle) idle = requestIdle.call(window, go, { timeout: 2000 });
+    else timer = window.setTimeout(go, 300);
+  };
+  if (document.readyState === "complete") schedule();
+  else window.addEventListener("load", schedule, { once: true });
+  return () => {
+    done = true;
+    window.removeEventListener("load", schedule);
+    if (idle) window.cancelIdleCallback(idle);
+    if (timer) window.clearTimeout(timer);
+  };
+}
+
 const typing = (target: EventTarget | null) => target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
 const phone = () => window.matchMedia("(max-width: 700px)").matches;
 const lessMotion = () => document.documentElement.dataset.motion === "reduced" || document.documentElement.dataset.uiMotion === "reduce"
@@ -70,6 +90,8 @@ function ToolButton({ label, icon, ...rest }: { label: string; icon: ReactNode }
 }
 
 export function TransmogStudio({ lang, hero }: { lang: Lang; hero: ReactNode }) {
+  // The model viewer script comes from its own host: open the connection with the page.
+  preconnect("https://wow.zamimg.com");
   const c = transmogCopy[lang];
   const sheetId = useId();
   const stageRef = useRef<StageHandle>(null);
@@ -114,14 +136,18 @@ export function TransmogStudio({ lang, hero }: { lang: Lang; hero: ReactNode }) 
     const parsed = parseTransmogState(params);
     setState(parsed);
     setMaxScale(window.matchMedia("(pointer: coarse)").matches ? 1 : 2);
-    if (autoLoad()) setRequested(true);
+    // The model (a 0.8 MB third-party viewer and its WebGL start) waits until the page
+    // has loaded and the main thread is idle: hydration, the poster and the first
+    // taps go first.
+    let cancelIdle = () => {};
+    if (autoLoad()) cancelIdle = afterLoadIdle(() => setRequested(true));
     else setManual(true);
     const ids = transmogSlots.map((slot) => parsed.looks[slot]).filter((id): id is number => Boolean(id));
     if (!ids.length) {
       // `s=` with no looks: the visitor shared an empty mannequin.
       if (hasOwnLooks(params)) { setLooks({}); setWearingSet(null); setEdited(true); }
       setReady(true);
-      return;
+      return cancelIdle;
     }
     const controller = new AbortController();
     fetch(`/api/wow/transmog/appearances?ids=${ids.join(",")}&locale=${apiLocale(lang)}`, { signal: controller.signal })
@@ -140,7 +166,7 @@ export function TransmogStudio({ lang, hero }: { lang: Lang; hero: ReactNode }) 
       })
       .catch(() => { if (!controller.signal.aborted) setNotice(c.error); })
       .finally(() => setReady(true));
-    return () => controller.abort();
+    return () => { controller.abort(); cancelIdle(); };
   }, [c.error, lang]);
 
   // Keep the address bar a share link of the current outfit and frame.

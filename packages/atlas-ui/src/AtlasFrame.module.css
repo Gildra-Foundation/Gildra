@@ -156,8 +156,12 @@
   overflow: hidden;
   pointer-events: none;
   mask-image: linear-gradient(180deg, transparent, #000 45%);
-  /* Off screen its layers are neither painted nor animated. */
-  content-visibility: auto;
+  /* No content-visibility: while skipped off screen its layers kept the size of
+     the first layout, and when a page grew after load (client-loaded lists, the
+     transmog stage) they caught up on scroll-in and counted as a layout shift
+     (CLS 0.17 on /wow/transmog at 390, 2026-11-07). The layers are still, so
+     the browser does not paint them off screen anyway. */
+  contain: layout paint;
   will-change: transform;
 }
 

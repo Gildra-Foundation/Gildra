@@ -7,11 +7,16 @@ import styles from "./AtlasButton.module.css";
 type Variant = "primary" | "secondary" | "ghost";
 type Common = { children: ReactNode; variant?: Variant; icon?: ReactNode; iconAfter?: ReactNode; className?: string; size?: "md" | "sm" };
 
-/** Valyro's Slot keeps a real Next Link / external anchor, with no nested button. */
+/**
+ * Valyro's Slot keeps a real Next Link / external anchor, with no nested button.
+ * A jump within the page ("#section") is a plain anchor: as a Next Link it made
+ * the router prefetch the whole current page again (161 KB on the M+ hub).
+ */
 export function AtlasLinkButton({ href, external, children, variant = "secondary", icon, iconAfter, className, size = "md", prefetch }: Common & { href: string; external?: boolean; prefetch?: boolean }) {
   return <Button asChild variant={variant} size={size} leftIcon={icon} rightIcon={iconAfter} className={clsx(styles.button, className)}>
     {external
       ? <a href={href} target="_blank" rel="noreferrer">{children}</a>
+      : href.startsWith("#") ? <a href={href}>{children}</a>
       : <Link href={href} prefetch={prefetch}>{children}</Link>}
   </Button>;
 }

@@ -13,9 +13,6 @@ html[data-motion="reduced"] [data-atlas-scope] *::after {
   scroll-behavior: auto !important;
 }
 
-html[data-motion="reduced"] .gildra-atlas *::details-content,
-html[data-motion="reduced"] [data-atlas-scope] *::details-content { transition: none !important; }
-
 html[data-motion="reduced"] .gildra-atlas [data-motion-layer] { display: none; }
 
 html[data-motion="reduced"]::view-transition-group(*),

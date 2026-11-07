@@ -119,7 +119,7 @@
 
 .chevron { transition: transform var(--atlas-duration) var(--atlas-ease); }
 .selectorRoot[data-open] .chevron { transform: rotate(180deg); }
-.loadingIcon { animation: selectorSpin .8s linear infinite; }
+.loadingIcon { animation: selectorSpin var(--atlas-duration-spin) linear infinite; }
 
 .selectorMenu {
   position: absolute;

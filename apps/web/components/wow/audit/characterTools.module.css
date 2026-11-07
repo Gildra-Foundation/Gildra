@@ -42,9 +42,10 @@
 .status svg, .alert svg { flex: none; width: 18px; height: 18px; }
 .alert { color: var(--atlas-text-strong); }
 .alert svg { color: var(--atlas-negative); }
-.spin { animation: toolSpin 1s linear infinite; }
+.spin { animation: toolSpin var(--atlas-duration-spin) linear infinite; }
 .progress { width: 100%; height: 4px; overflow: hidden; border-radius: 2px; background: var(--atlas-line-soft); }
-.progress > i { display: block; height: 100%; background: var(--atlas-accent); transition: width var(--atlas-duration-fast) var(--atlas-ease); }
+.progress > i { display: block; height: 100%; background: var(--atlas-accent); transform-origin: left; transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
+:dir(rtl) .progress > i { transform-origin: right; }
 .positive { color: var(--atlas-positive); }
 .negative { color: var(--atlas-negative); }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

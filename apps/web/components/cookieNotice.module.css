@@ -18,7 +18,7 @@
   background: var(--atlas-surface-raised);
   box-shadow: 0 -14px 32px color-mix(in srgb, #000 50%, transparent);
   font-family: var(--atlas-font-ui);
-  animation: cookie-in .3s var(--atlas-ease) both;
+  animation: cookie-in var(--atlas-duration-slow) var(--atlas-ease) both;
 }
 
 .text {

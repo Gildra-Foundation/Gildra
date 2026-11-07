@@ -19,3 +19,11 @@ export const ATLAS_DURATION_ART = 550;
 export const ATLAS_DURATION_ENTER = 620;
 /** Step of an arrival cascade. */
 export const ATLAS_STAGGER = 60;
+/** One pass of light over a material on hover or focus. */
+export const ATLAS_DURATION_SWEEP = 900;
+/** A route or a glow drawing itself in. */
+export const ATLAS_DURATION_DRAW = 1200;
+/** One beat of a loading skeleton or a busy pulse. */
+export const ATLAS_DURATION_PULSE = 1400;
+/** One turn of a busy spinner. */
+export const ATLAS_DURATION_SPIN = 900;

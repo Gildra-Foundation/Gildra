@@ -152,8 +152,12 @@ export function emptyLoadout(data: TalentCalculatorData): SanitizedLoadout {
 
 /* ---------- Compact code (older shared links: ?loadout=) ---------- */
 
+/** Node ids are digit strings: a plain comparison gives localeCompare's order without
+ *  starting the browser's collation data on the talent page's first render. */
+const byKey = ([a]: [string, unknown], [b]: [string, unknown]) => (a < b ? -1 : a > b ? 1 : 0);
+
 export function encodeLoadout(ranks: RankMap, choices: ChoiceMap, pvp: PvpSlots) {
-  const payload = JSON.stringify({ v: 2, ranks: [...ranks.entries()].sort(([a], [b]) => a.localeCompare(b)), choices: [...choices.entries()].sort(([a], [b]) => a.localeCompare(b)), pvp: pvp.map((id) => id ?? null) });
+  const payload = JSON.stringify({ v: 2, ranks: [...ranks.entries()].sort(byKey), choices: [...choices.entries()].sort(byKey), pvp: pvp.map((id) => id ?? null) });
   return btoa(payload).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 

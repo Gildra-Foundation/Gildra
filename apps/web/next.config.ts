@@ -125,6 +125,8 @@ const nextConfig: NextConfig = {
       { source: "/assets/:path*", headers: publicArt },
       { source: "/brand/:path*", headers: publicArt },
       { source: "/maps/:path*", headers: publicArt },
+      { source: "/platform/:path*", headers: publicArt },
+      { source: "/images/:path*", headers: publicArt },
     ];
   },
   async redirects() {
