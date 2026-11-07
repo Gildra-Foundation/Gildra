@@ -5,7 +5,8 @@ import { EXPANSIONS, worldMapCopy } from "./worldMapCopy";
 
 /** A zone inside a zone is a city (Orgrimmar in Durotar); so is a zone named like a capital marker. */
 export function isCity(map: AtlasMap, byId: Map<number, AtlasMap>, capitals: ReadonlySet<string>) {
-  if (map.type !== "zone" && map.type !== "micro") return false;
+  // Micro maps are caves, keeps and districts inside a zone, not cities.
+  if (map.type !== "zone") return false;
   const parent = map.parent === null ? undefined : byId.get(map.parent);
   return parent?.type === "zone" || capitals.has(map.name);
 }

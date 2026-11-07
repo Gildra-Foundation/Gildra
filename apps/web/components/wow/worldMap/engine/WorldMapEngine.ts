@@ -416,31 +416,46 @@ export class WorldMapEngine {
       const density = ((x1 - x0) * this.dpr) / art.width;
       let portalOpen = 0;
       let dominant = 0;
+      const mx = this.width / 2, my = this.height / 2;
+      const opened: Array<{ child: AtlasMap; a: number; fill: number; off: number }> = [];
       for (const id of map.children) {
         const child = this.maps.get(id);
         if (!child) continue;
         const [cx0, cy0] = this.project(child.frame[0], child.frame[1]);
         const [cx1, cy1] = this.project(child.frame[2], child.frame[3]);
-        let a: number;
         if (child.portal) {
-          a = smoothstep(0.34, 0.8, Math.min(cx1 - cx0, cy1 - cy0) / minDim);
+          let a = smoothstep(0.34, 0.8, Math.min(cx1 - cx0, cy1 - cy0) / minDim);
           // Only the world the camera heads for opens; its neighbours on the Cosmic map stay planets.
-          const mx = this.width / 2, my = this.height / 2;
           const gap = Math.hypot(Math.max(cx0 - mx, 0, mx - cx1), Math.max(cy0 - my, 0, my - cy1));
           a *= 1 - smoothstep(0.05, 0.3, gap / Math.max(1, Math.min(cx1 - cx0, cy1 - cy0)));
           portalOpen = Math.max(portalOpen, a);
-        } else {
-          // A child opens when the parent's picture runs out of detail, or when the
-          // child fills most of the view (a continent framed on the world map).
-          const vw = Math.min(cx1, clip[2]) - Math.max(cx0, clip[0]), vh = Math.min(cy1, clip[3]) - Math.max(cy0, clip[1]);
-          const fill = Math.max(vw / this.width, vh / this.height);
-          // Detail alone does not open a small child (a city on a continent): it must also take a fair part of the view.
-          a = Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill));
-          // The map the reader came to see stands out: its parent darkens around it.
-          dominant = Math.max(dominant, a * smoothstep(0.4, 0.7, fill));
+          if (a > 0.003) opened.push({ child, a, fill: 0, off: Infinity });
+          continue;
         }
-        if (a > 0.003) visit(child, alpha * a, clip);
+        // A child opens when the parent's picture runs out of detail, or when the
+        // child fills most of the view (a continent framed on the world map).
+        const vx0 = Math.max(cx0, clip[0]), vy0 = Math.max(cy0, clip[1]), vx1 = Math.min(cx1, clip[2]), vy1 = Math.min(cy1, clip[3]);
+        const vw = vx1 - vx0, vh = vy1 - vy0;
+        if (vw <= 0 || vh <= 0) continue;
+        const fill = Math.max(vw / this.width, vh / this.height);
+        // Detail alone does not open a small child (a city on a continent): it must also take a fair part of the view.
+        const a = Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill));
+        if (a <= 0.003) continue;
+        const off = Math.hypot((vx0 + vx1) / 2 - mx, (vy0 + vy1) / 2 - my) / Math.max(vw, vh);
+        opened.push({ child, a, fill, off });
       }
+      // Zone pictures overlap their neighbours: the one the camera looks at goes on top, and
+      // once it fills the view its neighbours give way (the parent darkens around it instead).
+      let best: (typeof opened)[number] | null = null;
+      for (const entry of opened) if (entry.off !== Infinity && entry.a > 0.4 && (!best || entry.off < best.off)) best = entry;
+      const bestHold = best ? best.a * smoothstep(0.4, 0.7, best.fill) : 0;
+      dominant = bestHold;
+      for (const entry of opened) {
+        if (entry === best || entry.off === Infinity) continue;
+        entry.a *= 1 - 0.9 * smoothstep(0.55, 0.85, best?.fill ?? 0) * (best?.a ?? 0);
+      }
+      opened.sort((p, q) => (p === best ? 1 : 0) - (q === best ? 1 : 0));
+      for (const entry of opened) if (entry.a > 0.003) visit(entry.child, alpha * entry.a, clip);
       // A world opened from the Cosmic map: the starry parchment around it falls back.
       if (portalOpen > 0) entry.alpha = alpha * (1 - 0.8 * portalOpen);
       if (dominant > 0) entry.dim = 0.62 * dominant;
