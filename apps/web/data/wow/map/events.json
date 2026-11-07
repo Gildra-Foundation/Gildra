@@ -1,0 +1,1598 @@
+[
+  {
+    "id": "ahnqiraj-gates",
+    "eraId": "vanilla",
+    "patch": "1.9.0",
+    "year": 2006,
+    "kind": "instance",
+    "title": {
+      "en": "The Gates of Ahn'Qiraj open",
+      "ru": "Открытие врат Ан'Киража"
+    },
+    "summary": {
+      "en": "After a server-wide war effort, the Scarab Wall in southern Silithus opens and the ruins and temple of Ahn'Qiraj become raids.",
+      "ru": "После общего сбора ресурсов на каждом сервере Стена Скарабея на юге Силитуса открывается, и руины и храм Ан'Киража становятся рейдами."
+    },
+    "mapId": 81,
+    "x": 0.3644,
+    "y": 0.9403
+  },
+  {
+    "id": "scourge-invasion",
+    "eraId": "vanilla",
+    "patch": "1.11.0",
+    "year": 2006,
+    "kind": "invasion",
+    "title": {
+      "en": "The Scourge invades and Naxxramas appears",
+      "ru": "Нашествие Плети и появление Наксрамаса"
+    },
+    "summary": {
+      "en": "Necropolises hover over zones across both continents while the floating citadel of Naxxramas arrives above the Plaguewood in the Eastern Plaguelands.",
+      "ru": "Над зонами обоих континентов зависают некрополи, а летающая цитадель Наксрамас появляется над Чумным лесом в Восточных Чумных землях."
+    },
+    "mapId": 23,
+    "x": 0.2708,
+    "y": 0.1152
+  },
+  {
+    "id": "dark-portal-opens",
+    "eraId": "tbc",
+    "patch": "2.0.3",
+    "year": 2007,
+    "kind": "reveal",
+    "title": {
+      "en": "The Dark Portal reopens",
+      "ru": "Темный портал открывается вновь"
+    },
+    "summary": {
+      "en": "The Dark Portal in the Blasted Lands becomes passable again and leads expeditions from Azeroth to the shattered world of Outland.",
+      "ru": "Темный портал в Выжженных землях снова становится проходимым и ведёт экспедиции Азерота в расколотый мир Запределья."
+    },
+    "mapId": 17,
+    "x": 0.5489,
+    "y": 0.5289,
+    "beforeEraId": "vanilla",
+    "afterEraId": "tbc"
+  },
+  {
+    "id": "zulaman-raid",
+    "eraId": "tbc",
+    "patch": "2.3.0",
+    "year": 2007,
+    "kind": "instance",
+    "title": {
+      "en": "Zul'Aman opens",
+      "ru": "Открытие Зул'Амана"
+    },
+    "summary": {
+      "en": "The Amani temple city on the eastern edge of the Ghostlands opens as a raid against Zul'jin.",
+      "ru": "Храмовый город Амани на восточной окраине Призрачных земель открывается как рейд против Зул'джина."
+    },
+    "mapId": 95,
+    "x": 0.8196,
+    "y": 0.6434
+  },
+  {
+    "id": "sunwell-isle",
+    "eraId": "tbc",
+    "patch": "2.4.0",
+    "year": 2008,
+    "kind": "reveal",
+    "title": {
+      "en": "Fury of the Sunwell",
+      "ru": "Ярость Солнечного Колодца"
+    },
+    "summary": {
+      "en": "The Isle of Quel'Danas opens with a new quest hub, Magisters' Terrace and the Sunwell Plateau raid.",
+      "ru": "Открывается остров Кель'Данас с новым лагерем заданий, Террасой Магистров и рейдом Плато Солнечного Колодца."
+    },
+    "mapId": 122,
+    "x": 0.4426,
+    "y": 0.456,
+    "changedMapIds": [
+      122
+    ]
+  },
+  {
+    "id": "northrend",
+    "eraId": "wrath",
+    "patch": "3.0.2",
+    "year": 2008,
+    "kind": "reveal",
+    "title": {
+      "en": "Northrend opens",
+      "ru": "Открытие Нордскола"
+    },
+    "summary": {
+      "en": "Alliance and Horde fleets land on the frozen continent of Northrend to take the war to the Lich King.",
+      "ru": "Флоты Альянса и Орды высаживаются на ледяном континенте Нордскол, чтобы начать войну с Королём-личом."
+    },
+    "mapId": 947,
+    "x": 0.4997,
+    "y": 0.1507,
+    "beforeEraId": "tbc",
+    "afterEraId": "wrath",
+    "changedMapIds": [
+      113
+    ]
+  },
+  {
+    "id": "dalaran-to-northrend",
+    "eraId": "wrath",
+    "patch": "3.0.2",
+    "year": 2008,
+    "kind": "reshape",
+    "title": {
+      "en": "Dalaran moves to Northrend",
+      "ru": "Даларан переносится в Нордскол"
+    },
+    "summary": {
+      "en": "The Kirin Tor lift the city of Dalaran from the Alterac foothills and float it above Crystalsong Forest.",
+      "ru": "Кирин-Тор поднимают Даларан из предгорий Альтерака и переносят город в небо над Лесом Хрустальной Песни."
+    },
+    "mapId": 127,
+    "x": 0.2961,
+    "y": 0.3924,
+    "beforeEraId": "tbc",
+    "afterEraId": "wrath",
+    "changedMapIds": [
+      125,
+      127
+    ]
+  },
+  {
+    "id": "wrathgate",
+    "eraId": "wrath",
+    "patch": "3.0.2",
+    "year": 2008,
+    "kind": "battle",
+    "title": {
+      "en": "Battle at the Wrathgate",
+      "ru": "Битва у Врат Гнева"
+    },
+    "summary": {
+      "en": "The joint Alliance and Horde assault on Angrathar the Wrathgate in Dragonblight ends in the Forsaken plague and the fall of Bolvar Fordragon.",
+      "ru": "Совместный штурм Альянса и Орды у Ангратара, Врат Гнева, в Драконьем Погосте заканчивается чумой Отрёкшихся и падением Болвара Фордрагона."
+    },
+    "mapId": 115,
+    "x": 0.3926,
+    "y": 0.2072
+  },
+  {
+    "id": "battle-for-undercity",
+    "eraId": "wrath",
+    "patch": "3.0.2",
+    "year": 2008,
+    "kind": "battle",
+    "title": {
+      "en": "Battle for the Undercity",
+      "ru": "Битва за Подгород"
+    },
+    "summary": {
+      "en": "Thrall, Sylvanas and Varian retake the Undercity after Varimathras and Putress seize the Forsaken capital.",
+      "ru": "Тралл, Сильвана и Вариан отбивают Подгород после того, как Варимати и Мерзоцид захватывают столицу Отрёкшихся."
+    },
+    "mapId": 18,
+    "x": 0.6181,
+    "y": 0.7446
+  },
+  {
+    "id": "icecrown-citadel",
+    "eraId": "wrath",
+    "patch": "3.3.0",
+    "year": 2009,
+    "kind": "instance",
+    "title": {
+      "en": "Fall of the Lich King",
+      "ru": "Падение Короля-лича"
+    },
+    "summary": {
+      "en": "The Icecrown Citadel raid opens in the heart of Icecrown, ending the campaign against Arthas.",
+      "ru": "В сердце Ледяной Короны открывается рейд Цитадель Ледяной Короны, завершающий поход против Артаса."
+    },
+    "mapId": 118,
+    "x": 0.538,
+    "y": 0.8709
+  },
+  {
+    "id": "shattering",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reshape",
+    "title": {
+      "en": "The Shattering",
+      "ru": "Катаклизм"
+    },
+    "summary": {
+      "en": "Deathwing bursts out of Deepholm through the Maelstrom, and quakes and floods reshape most of Kalimdor and the Eastern Kingdoms.",
+      "ru": "Смертокрыл вырывается из Подземья через Водоворот, а землетрясения и наводнения меняют облик большей части Калимдора и Восточных королевств."
+    },
+    "mapId": 947,
+    "x": 0.4508,
+    "y": 0.4694,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      12,
+      13,
+      948
+    ]
+  },
+  {
+    "id": "thousand-needles-flooded",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reshape",
+    "title": {
+      "en": "Thousand Needles floods",
+      "ru": "Затопление Тысячи Игл"
+    },
+    "summary": {
+      "en": "The canyon of Thousand Needles fills with sea water, leaving only the tops of its mesas above the surface.",
+      "ru": "Каньон Тысячи Игл заполняется морской водой, и над поверхностью остаются только вершины столовых гор."
+    },
+    "mapId": 12,
+    "x": 0.5353,
+    "y": 0.7232,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      64
+    ]
+  },
+  {
+    "id": "barrens-split",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reshape",
+    "title": {
+      "en": "The Barrens split in two",
+      "ru": "Степи раскалываются надвое"
+    },
+    "summary": {
+      "en": "A vast rift, the Great Divide, tears the Barrens apart into the Northern and Southern Barrens.",
+      "ru": "Огромный разлом, Великий Раздел, разрывает Степи на Северные и Южные."
+    },
+    "mapId": 12,
+    "x": 0.5104,
+    "y": 0.5196,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      10,
+      199
+    ]
+  },
+  {
+    "id": "darkshore-shattered",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reshape",
+    "title": {
+      "en": "Darkshore is shattered",
+      "ru": "Разорение Темных берегов"
+    },
+    "summary": {
+      "en": "Tidal waves and an elemental rift wreck the coast of Darkshore and destroy the port of Auberdine; Lor'danel becomes the new outpost.",
+      "ru": "Приливные волны и разлом стихий разрушают побережье Темных берегов и порт Аубердин; новым оплотом становится Лор'данел."
+    },
+    "mapId": 62,
+    "x": 0.4029,
+    "y": 0.4138,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      62
+    ]
+  },
+  {
+    "id": "badlands-scarred",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reshape",
+    "title": {
+      "en": "Deathwing scars the Badlands",
+      "ru": "Смертокрыл выжигает Бесплодные земли"
+    },
+    "summary": {
+      "en": "Deathwing's flight burns a deep scar across the Badlands, changing the layout of the whole zone.",
+      "ru": "Полёт Смертокрыла оставляет глубокий выжженный след через Бесплодные земли и меняет облик всей зоны."
+    },
+    "mapId": 13,
+    "x": 0.5379,
+    "y": 0.6939,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      15
+    ]
+  },
+  {
+    "id": "stormwind-park",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reshape",
+    "title": {
+      "en": "Deathwing burns Stormwind Park",
+      "ru": "Смертокрыл сжигает парк Штормграда"
+    },
+    "summary": {
+      "en": "Deathwing's attack leaves Stormwind's park district in ruins; in 7.0.3 the site becomes the Lion's Rest memorial.",
+      "ru": "Атака Смертокрыла превращает парковый квартал Штормграда в руины; в 7.0.3 на этом месте появляется мемориал Покой Льва."
+    },
+    "mapId": 84,
+    "x": 0.355,
+    "y": 0.6563,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      84
+    ]
+  },
+  {
+    "id": "orgrimmar-rebuilt",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reshape",
+    "title": {
+      "en": "Garrosh rebuilds Orgrimmar",
+      "ru": "Гаррош перестраивает Оргриммар"
+    },
+    "summary": {
+      "en": "Under Warchief Garrosh Hellscream, Orgrimmar is rebuilt in iron with new districts and a remodelled layout.",
+      "ru": "При вожде Гарроше Адском Крике Оргриммар перестраивают в железе: у города новые кварталы и новая планировка."
+    },
+    "mapId": 12,
+    "x": 0.5827,
+    "y": 0.424,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      85
+    ]
+  },
+  {
+    "id": "azshara-goblins",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reshape",
+    "title": {
+      "en": "Goblins reshape Azshara",
+      "ru": "Гоблины перестраивают Азшару"
+    },
+    "summary": {
+      "en": "The Bilgewater goblins carve up Azshara for the Horde, turning it into a new low-level Horde zone.",
+      "ru": "Гоблины Трюмных Вод перекраивают Азшару для Орды и превращают её в новую зону Орды для начальных уровней."
+    },
+    "mapId": 12,
+    "x": 0.6304,
+    "y": 0.3573,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      76
+    ]
+  },
+  {
+    "id": "hyjal-assault",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reveal",
+    "title": {
+      "en": "The fight for Mount Hyjal",
+      "ru": "Битва за гору Хиджал"
+    },
+    "summary": {
+      "en": "Mount Hyjal opens as a high-level zone where the Cenarion Circle defends Nordrassil from Ragnaros' forces.",
+      "ru": "Гора Хиджал открывается как зона высокого уровня: Круг Кенария защищает Нордрассил от сил Рагнароса."
+    },
+    "mapId": 12,
+    "x": 0.5619,
+    "y": 0.2766,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      198
+    ]
+  },
+  {
+    "id": "vashjir",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reveal",
+    "title": {
+      "en": "Vashj'ir beneath the waves",
+      "ru": "Подводный Вайш'ир"
+    },
+    "summary": {
+      "en": "The sunken naga realm of Vashj'ir off the coast of Stormwind opens as an underwater zone.",
+      "ru": "Затонувшее королевство наг Вайш'ир у берегов Штормграда открывается как подводная зона."
+    },
+    "mapId": 13,
+    "x": 0.3284,
+    "y": 0.6636,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      203
+    ]
+  },
+  {
+    "id": "uldum-revealed",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reveal",
+    "title": {
+      "en": "Uldum is revealed",
+      "ru": "Ульдум открывается"
+    },
+    "summary": {
+      "en": "The titan-guarded desert of Uldum south of Tanaris becomes reachable for the first time.",
+      "ru": "Пустыня Ульдум к югу от Танариса, охраняемая титанами, впервые становится доступной."
+    },
+    "mapId": 12,
+    "x": 0.4816,
+    "y": 0.9132,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      249
+    ]
+  },
+  {
+    "id": "twilight-highlands",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reveal",
+    "title": {
+      "en": "Twilight Highlands open",
+      "ru": "Открытие Сумеречного нагорья"
+    },
+    "summary": {
+      "en": "The highlands east of the Wetlands, home of Grim Batol and the Twilight's Hammer, open as a new zone.",
+      "ru": "Нагорье к востоку от Болотины с Грим Батолом и логовом Сумеречного Молота открывается как новая зона."
+    },
+    "mapId": 13,
+    "x": 0.5772,
+    "y": 0.5871,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      241
+    ]
+  },
+  {
+    "id": "gilneas-opens",
+    "eraId": "cataclysm",
+    "patch": "4.0.3a",
+    "year": 2010,
+    "kind": "reveal",
+    "title": {
+      "en": "The Greymane Wall falls",
+      "ru": "Стена Седогрива пала"
+    },
+    "summary": {
+      "en": "Gilneas, sealed behind the Greymane Wall since the Third War, opens as the worgen starting area.",
+      "ru": "Гилнеас, закрытый Стеной Седогрива со времён Третьей войны, открывается как стартовая зона воргенов."
+    },
+    "mapId": 13,
+    "x": 0.4104,
+    "y": 0.503,
+    "beforeEraId": "wrath",
+    "afterEraId": "cataclysm",
+    "changedMapIds": [
+      179,
+      217
+    ]
+  },
+  {
+    "id": "pandaria",
+    "eraId": "mop",
+    "patch": "5.0.4",
+    "year": 2012,
+    "kind": "reveal",
+    "title": {
+      "en": "Pandaria emerges from the mists",
+      "ru": "Пандария выходит из туманов"
+    },
+    "summary": {
+      "en": "The mists around the hidden continent of Pandaria part, and Alliance and Horde fleets land on its shores.",
+      "ru": "Туманы вокруг скрытого континента Пандария рассеиваются, и к его берегам причаливают флоты Альянса и Орды."
+    },
+    "mapId": 947,
+    "x": 0.481,
+    "y": 0.8093,
+    "beforeEraId": "cataclysm",
+    "afterEraId": "mop",
+    "changedMapIds": [
+      424
+    ]
+  },
+  {
+    "id": "theramore-destroyed",
+    "eraId": "mop",
+    "patch": "5.0.4",
+    "year": 2012,
+    "kind": "battle",
+    "title": {
+      "en": "The fall of Theramore",
+      "ru": "Падение Терамора"
+    },
+    "summary": {
+      "en": "Garrosh Hellscream's mana bomb destroys Theramore Isle, leaving a crater in place of Jaina's city.",
+      "ru": "Манабомба Гарроша Адского Крика уничтожает остров Терамор, и на месте города Джайны остаётся воронка."
+    },
+    "mapId": 70,
+    "x": 0.6502,
+    "y": 0.4705,
+    "beforeEraId": "cataclysm",
+    "afterEraId": "mop",
+    "changedMapIds": [
+      70
+    ]
+  },
+  {
+    "id": "isle-of-thunder",
+    "eraId": "mop",
+    "patch": "5.2.0",
+    "year": 2013,
+    "kind": "reveal",
+    "title": {
+      "en": "The Isle of Thunder rises",
+      "ru": "Остров Грома"
+    },
+    "summary": {
+      "en": "The Isle of Thunder opens off Kun-Lai Summit, with the Kirin Tor and Sunreavers fighting over Lei Shen's stronghold.",
+      "ru": "У Вершины Кунь-Лай открывается Остров Грома, где Кирин-Тор и Похитители Солнца сражаются за твердыню Лэй Шэня."
+    },
+    "mapId": 424,
+    "x": 0.219,
+    "y": 0.1231,
+    "changedMapIds": [
+      504
+    ]
+  },
+  {
+    "id": "vale-corrupted",
+    "eraId": "mop",
+    "patch": "5.4.0",
+    "year": 2013,
+    "kind": "reshape",
+    "title": {
+      "en": "The Vale of Eternal Blossoms is ravaged",
+      "ru": "Разорение Вечноцветущего дола"
+    },
+    "summary": {
+      "en": "Garrosh unearths the Heart of Y'Shaarj beneath the Vale, and sha energy ravages its eastern half.",
+      "ru": "Гаррош выкапывает из-под дола Сердце И'Шарджа, и энергия ша опустошает его восточную половину."
+    },
+    "mapId": 424,
+    "x": 0.4859,
+    "y": 0.539,
+    "changedMapIds": [
+      390
+    ]
+  },
+  {
+    "id": "siege-of-orgrimmar",
+    "eraId": "mop",
+    "patch": "5.4.0",
+    "year": 2013,
+    "kind": "battle",
+    "title": {
+      "en": "Siege of Orgrimmar",
+      "ru": "Осада Оргриммара"
+    },
+    "summary": {
+      "en": "Alliance and Horde rebels storm Orgrimmar and bring down Warchief Garrosh Hellscream.",
+      "ru": "Альянс и восставшие воины Орды штурмуют Оргриммар и свергают вождя Гарроша Адского Крика."
+    },
+    "mapId": 12,
+    "x": 0.5826,
+    "y": 0.4454
+  },
+  {
+    "id": "iron-horde-incursion",
+    "eraId": "wod",
+    "patch": "6.0.2",
+    "year": 2014,
+    "kind": "invasion",
+    "title": {
+      "en": "The Iron Horde comes through the Dark Portal",
+      "ru": "Железная Орда выходит из Темного портала"
+    },
+    "summary": {
+      "en": "The Dark Portal turns red and the Iron Horde floods into the Blasted Lands, which change to show the invasion.",
+      "ru": "Темный портал становится красным, Железная Орда хлынула в Выжженные земли, и зона меняется, показывая вторжение."
+    },
+    "mapId": 17,
+    "x": 0.5489,
+    "y": 0.5289,
+    "beforeEraId": "mop",
+    "afterEraId": "wod",
+    "changedMapIds": [
+      17
+    ]
+  },
+  {
+    "id": "draenor",
+    "eraId": "wod",
+    "patch": "6.0.3",
+    "year": 2014,
+    "kind": "reveal",
+    "title": {
+      "en": "Expedition to Draenor",
+      "ru": "Экспедиция на Дренор"
+    },
+    "summary": {
+      "en": "Heroes of Azeroth pass through the Dark Portal into an alternate, untainted Draenor ruled by the warlords of the Iron Horde.",
+      "ru": "Герои Азерота проходят через Темный портал в альтернативный, неосквернённый Дренор, где правят вожди Железной Орды."
+    },
+    "mapId": 946,
+    "x": 0.8335,
+    "y": 0.5975,
+    "beforeEraId": "mop",
+    "afterEraId": "wod",
+    "changedMapIds": [
+      572
+    ]
+  },
+  {
+    "id": "tanaan-jungle",
+    "eraId": "wod",
+    "patch": "6.2.0",
+    "year": 2015,
+    "kind": "reveal",
+    "title": {
+      "en": "Assault on Tanaan Jungle",
+      "ru": "Штурм Танаанских джунглей"
+    },
+    "summary": {
+      "en": "Tanaan Jungle opens, with Hellfire Citadel as the Iron Horde's last bastion under Gul'dan's control.",
+      "ru": "Открываются Танаанские джунгли, где Цитадель Адского Пламени становится последним оплотом Железной Орды под властью Гул'дана."
+    },
+    "mapId": 572,
+    "x": 0.5788,
+    "y": 0.4625,
+    "changedMapIds": [
+      534
+    ]
+  },
+  {
+    "id": "broken-shore-battle",
+    "eraId": "legion",
+    "patch": "7.0.3",
+    "year": 2016,
+    "kind": "battle",
+    "title": {
+      "en": "Battle for the Broken Shore",
+      "ru": "Битва за Расколотый берег"
+    },
+    "summary": {
+      "en": "The Alliance and Horde assault on the Legion's beachhead fails and King Varian Wrynn falls on the Broken Shore.",
+      "ru": "Наступление Альянса и Орды на плацдарм Легиона проваливается, и король Вариан Ринн гибнет на Расколотом берегу."
+    },
+    "mapId": 619,
+    "x": 0.5366,
+    "y": 0.6808,
+    "beforeEraId": "wod",
+    "afterEraId": "legion",
+    "changedMapIds": [
+      646
+    ]
+  },
+  {
+    "id": "dalaran-to-broken-isles",
+    "eraId": "legion",
+    "patch": "7.0.3",
+    "year": 2016,
+    "kind": "reshape",
+    "title": {
+      "en": "Dalaran moves to the Broken Isles",
+      "ru": "Даларан переносится на Расколотые острова"
+    },
+    "summary": {
+      "en": "The Kirin Tor teleport Dalaran from Northrend to hover over the Broken Isles as the base against the Legion.",
+      "ru": "Кирин-Тор переносят Даларан из Нордскола в небо над Расколотыми островами, где он становится базой против Легиона."
+    },
+    "mapId": 619,
+    "x": 0.4586,
+    "y": 0.6465,
+    "beforeEraId": "wod",
+    "afterEraId": "legion",
+    "changedMapIds": [
+      627
+    ]
+  },
+  {
+    "id": "broken-shore-return",
+    "eraId": "legion",
+    "patch": "7.2.0",
+    "year": 2017,
+    "kind": "reshape",
+    "title": {
+      "en": "Return to the Broken Shore",
+      "ru": "Возвращение на Расколотый берег"
+    },
+    "summary": {
+      "en": "The Broken Shore grows into a full zone where the Armies of Legionfall push to the Tomb of Sargeras.",
+      "ru": "Расколотый берег становится полноценной зоной, где Армия погибели Легиона пробивается к Гробнице Саргераса."
+    },
+    "mapId": 619,
+    "x": 0.5652,
+    "y": 0.6222,
+    "changedMapIds": [
+      646
+    ]
+  },
+  {
+    "id": "argus",
+    "eraId": "legion",
+    "patch": "7.3.0",
+    "year": 2017,
+    "kind": "reveal",
+    "title": {
+      "en": "Assault on Argus",
+      "ru": "Штурм Аргуса"
+    },
+    "summary": {
+      "en": "The Vindicaar carries the war to Argus, the Legion's homeworld, which now hangs in the sky over Azeroth.",
+      "ru": "Виндикар переносит войну на Аргус, родной мир Легиона, который теперь висит в небе над Азеротом."
+    },
+    "mapId": 619,
+    "x": 0.8493,
+    "y": 0.2081,
+    "changedMapIds": [
+      905
+    ]
+  },
+  {
+    "id": "silithus-wound",
+    "eraId": "legion",
+    "patch": "7.3.2",
+    "year": 2017,
+    "kind": "reshape",
+    "title": {
+      "en": "Sargeras strikes Silithus",
+      "ru": "Удар Саргераса по Силитусу"
+    },
+    "summary": {
+      "en": "As the Pantheon imprisons him, Sargeras plunges his sword into Silithus, and the wound begins to bleed azerite.",
+      "ru": "Перед тем как Пантеон заточает его, Саргерас вонзает меч в Силитус, и из раны начинает сочиться азерит."
+    },
+    "mapId": 12,
+    "x": 0.4378,
+    "y": 0.7963,
+    "beforeEraId": "legion",
+    "afterEraId": "bfa",
+    "changedMapIds": [
+      81
+    ]
+  },
+  {
+    "id": "teldrassil-burns",
+    "eraId": "bfa",
+    "patch": "8.0.1",
+    "year": 2018,
+    "kind": "battle",
+    "title": {
+      "en": "The Burning of Teldrassil",
+      "ru": "Сожжение Тельдрассила"
+    },
+    "summary": {
+      "en": "At the end of the War of the Thorns Sylvanas orders the World Tree Teldrassil set ablaze, and Darnassus burns with it.",
+      "ru": "В конце Войны Шипов Сильвана приказывает поджечь Мировое древо Тельдрассил, и вместе с ним сгорает Дарнас."
+    },
+    "mapId": 12,
+    "x": 0.4025,
+    "y": 0.0961,
+    "beforeEraId": "legion",
+    "afterEraId": "bfa",
+    "changedMapIds": [
+      57,
+      89
+    ]
+  },
+  {
+    "id": "fall-of-lordaeron",
+    "eraId": "bfa",
+    "patch": "8.0.1",
+    "year": 2018,
+    "kind": "battle",
+    "title": {
+      "en": "The Fall of Lordaeron",
+      "ru": "Падение Лордерона"
+    },
+    "summary": {
+      "en": "The Alliance besieges Lordaeron; Sylvanas floods the Undercity with blight and the city is left in ruins.",
+      "ru": "Альянс осаждает Лордерон; Сильвана заливает Подгород чумой, и город остаётся в руинах."
+    },
+    "mapId": 18,
+    "x": 0.6181,
+    "y": 0.7446,
+    "beforeEraId": "legion",
+    "afterEraId": "bfa",
+    "changedMapIds": [
+      18,
+      90
+    ]
+  },
+  {
+    "id": "zandalar",
+    "eraId": "bfa",
+    "patch": "8.0.1",
+    "year": 2018,
+    "kind": "reveal",
+    "title": {
+      "en": "Zandalar opens to the Horde",
+      "ru": "Зандалар открывается Орде"
+    },
+    "summary": {
+      "en": "The troll continent of Zandalar, with its capital Dazar'alor, becomes the Horde's new war front.",
+      "ru": "Тролльский континент Зандалар со столицей Дазар'алор становится новым фронтом Орды."
+    },
+    "mapId": 947,
+    "x": 0.5436,
+    "y": 0.6321,
+    "beforeEraId": "legion",
+    "afterEraId": "bfa",
+    "changedMapIds": [
+      875
+    ],
+    "links": [
+      "/wow/mythic-plus/midnight-season-2/kings-rest",
+      "/wow/mythic-plus/midnight-season-2/temple-of-sethraliss"
+    ]
+  },
+  {
+    "id": "kul-tiras",
+    "eraId": "bfa",
+    "patch": "8.0.1",
+    "year": 2018,
+    "kind": "reveal",
+    "title": {
+      "en": "Kul Tiras opens to the Alliance",
+      "ru": "Кул-Тирас открывается Альянсу"
+    },
+    "summary": {
+      "en": "The island kingdom of Kul Tiras and its port Boralus become the Alliance's new war front.",
+      "ru": "Островное королевство Кул-Тирас и его порт Боралус становятся новым фронтом Альянса."
+    },
+    "mapId": 947,
+    "x": 0.7154,
+    "y": 0.4866,
+    "beforeEraId": "legion",
+    "afterEraId": "bfa",
+    "changedMapIds": [
+      876
+    ]
+  },
+  {
+    "id": "battle-for-stromgarde",
+    "eraId": "bfa",
+    "patch": "8.0.1",
+    "year": 2018,
+    "kind": "battle",
+    "title": {
+      "en": "Battle for Stromgarde",
+      "ru": "Битва за Стромгард"
+    },
+    "summary": {
+      "en": "The first warfront turns the Arathi Highlands into a battlefield between Stromgarde Keep and the Horde fortress of Ar'gorok.",
+      "ru": "Первый военный фронт превращает Нагорье Арати в поле боя между Стромгардом и крепостью Орды Ар'горок."
+    },
+    "mapId": 13,
+    "x": 0.4986,
+    "y": 0.5064,
+    "changedMapIds": [
+      14
+    ]
+  },
+  {
+    "id": "battle-for-darkshore",
+    "eraId": "bfa",
+    "patch": "8.1.0",
+    "year": 2018,
+    "kind": "battle",
+    "title": {
+      "en": "Battle for Darkshore",
+      "ru": "Битва за Темные берега"
+    },
+    "summary": {
+      "en": "The second warfront reshapes Darkshore as night elves and Forsaken fight over the coast below burned Teldrassil.",
+      "ru": "Второй военный фронт меняет облик Темных берегов: ночные эльфы и Отрёкшиеся сражаются за побережье под сожжённым Тельдрассилом."
+    },
+    "mapId": 62,
+    "x": 0.4029,
+    "y": 0.4138,
+    "beforeEraId": "legion",
+    "afterEraId": "bfa",
+    "changedMapIds": [
+      62
+    ]
+  },
+  {
+    "id": "battle-of-dazaralor",
+    "eraId": "bfa",
+    "patch": "8.1.0",
+    "year": 2019,
+    "kind": "battle",
+    "title": {
+      "en": "Battle of Dazar'alor",
+      "ru": "Битва за Дазар'алор"
+    },
+    "summary": {
+      "en": "The Alliance strikes the Zandalari capital, and King Rastakhan falls in the raid on the Great Seal.",
+      "ru": "Альянс наносит удар по столице зандаларов, и король Растахан гибнет в рейде на Великую Печать."
+    },
+    "mapId": 862,
+    "x": 0.5426,
+    "y": 0.2994
+  },
+  {
+    "id": "nazjatar",
+    "eraId": "bfa",
+    "patch": "8.2.0",
+    "year": 2019,
+    "kind": "reveal",
+    "title": {
+      "en": "Azshara raises Nazjatar",
+      "ru": "Азшара открывает Назжатар"
+    },
+    "summary": {
+      "en": "Queen Azshara parts the Great Sea and opens her sunken capital of Nazjatar to the surface world.",
+      "ru": "Королева Азшара раздвигает воды Великого моря и открывает свою затонувшую столицу Назжатар."
+    },
+    "mapId": 947,
+    "x": 0.6451,
+    "y": 0.5792,
+    "changedMapIds": [
+      1355
+    ]
+  },
+  {
+    "id": "mechagon",
+    "eraId": "bfa",
+    "patch": "8.2.0",
+    "year": 2019,
+    "kind": "reveal",
+    "title": {
+      "en": "Mechagon Island",
+      "ru": "Остров Мехагон"
+    },
+    "summary": {
+      "en": "The mechanical island of Mechagon opens northwest of Kul Tiras, home of King Mechagon and a megadungeon.",
+      "ru": "К северо-западу от Кул-Тираса открывается механический остров Мехагон с королём Мехагоном и мегаподземельем."
+    },
+    "mapId": 876,
+    "x": 0.1578,
+    "y": 0.2945,
+    "changedMapIds": [
+      1462
+    ]
+  },
+  {
+    "id": "nzoth-vale",
+    "eraId": "bfa",
+    "patch": "8.3.0",
+    "year": 2020,
+    "kind": "invasion",
+    "title": {
+      "en": "N'Zoth assaults the Vale",
+      "ru": "Н'Зот атакует Вечноцветущий дол"
+    },
+    "summary": {
+      "en": "Ny'alotha rises over the Vale of Eternal Blossoms, and the restored vale falls under the Black Empire's assaults.",
+      "ru": "Над Вечноцветущим долом поднимается Ни'алота, и восстановленный дол становится целью атак Чёрной империи."
+    },
+    "mapId": 424,
+    "x": 0.4697,
+    "y": 0.5355,
+    "changedMapIds": [
+      390,
+      1530
+    ]
+  },
+  {
+    "id": "nzoth-uldum",
+    "eraId": "bfa",
+    "patch": "8.3.0",
+    "year": 2020,
+    "kind": "invasion",
+    "title": {
+      "en": "N'Zoth assaults Uldum",
+      "ru": "Н'Зот атакует Ульдум"
+    },
+    "summary": {
+      "en": "A second entrance to Ny'alotha opens in Uldum, and the desert falls under rotating assaults.",
+      "ru": "Второй вход в Ни'алоту открывается в Ульдуме, и пустыня оказывается под чередой атак."
+    },
+    "mapId": 12,
+    "x": 0.4903,
+    "y": 0.903,
+    "changedMapIds": [
+      249,
+      1527
+    ]
+  },
+  {
+    "id": "icecrown-veil-torn",
+    "eraId": "shadowlands",
+    "patch": "9.0.1",
+    "year": 2020,
+    "kind": "invasion",
+    "title": {
+      "en": "The sky over Icecrown is torn",
+      "ru": "Небо над Ледяной Короной разорвано"
+    },
+    "summary": {
+      "en": "With the veil to the afterlife shattered above Icecrown Citadel, the Scourge rises again across Azeroth.",
+      "ru": "Завеса между мирами над Цитаделью Ледяной Короны разрушена, и Плеть снова поднимается по всему Азероту."
+    },
+    "mapId": 118,
+    "x": 0.538,
+    "y": 0.8709
+  },
+  {
+    "id": "shadowlands",
+    "eraId": "shadowlands",
+    "patch": "9.0.2",
+    "year": 2020,
+    "kind": "reveal",
+    "title": {
+      "en": "Into the Shadowlands",
+      "ru": "Путь в Темные Земли"
+    },
+    "summary": {
+      "en": "Heroes cross into the Shadowlands; Oribos, the Eternal City, becomes the hub between the realms of death.",
+      "ru": "Герои переходят в Темные Земли; Орибос, Вечный город, становится центром между царствами смерти."
+    },
+    "mapId": 1550,
+    "x": 0.4675,
+    "y": 0.4925,
+    "beforeEraId": "bfa",
+    "afterEraId": "shadowlands",
+    "changedMapIds": [
+      1550
+    ]
+  },
+  {
+    "id": "korthia",
+    "eraId": "shadowlands",
+    "patch": "9.1.0",
+    "year": 2021,
+    "kind": "reveal",
+    "title": {
+      "en": "Korthia, City of Secrets",
+      "ru": "Кортия, город тайн"
+    },
+    "summary": {
+      "en": "Korthia, a part of the Maw holding the secrets of the First Ones, opens to explorers.",
+      "ru": "Кортия, часть Утробы с тайнами Изначальных, открывается для исследователей."
+    },
+    "mapId": 1550,
+    "x": 0.2628,
+    "y": 0.2245,
+    "changedMapIds": [
+      1961
+    ]
+  },
+  {
+    "id": "zereth-mortis",
+    "eraId": "shadowlands",
+    "patch": "9.2.0",
+    "year": 2022,
+    "kind": "reveal",
+    "title": {
+      "en": "Zereth Mortis",
+      "ru": "Зерет Мортис"
+    },
+    "summary": {
+      "en": "The hidden realm of the First Ones opens, where the Jailer seeks the Sepulcher of the First Ones.",
+      "ru": "Открывается скрытый мир Изначальных, где Тюремщик ищет Гробницу Предвечных."
+    },
+    "mapId": 1550,
+    "x": 0.86,
+    "y": 0.815,
+    "changedMapIds": [
+      1970
+    ]
+  },
+  {
+    "id": "dragon-isles",
+    "eraId": "dragonflight",
+    "patch": "10.0.2",
+    "year": 2022,
+    "kind": "reveal",
+    "title": {
+      "en": "The Dragon Isles awaken",
+      "ru": "Пробуждение Драконьих островов"
+    },
+    "summary": {
+      "en": "The ancestral home of the dragonflights reappears in the north, and expeditions land on the Waking Shores.",
+      "ru": "Родина драконьих стай вновь появляется на севере, и экспедиции высаживаются на Берегах Пробуждения."
+    },
+    "mapId": 947,
+    "x": 0.7672,
+    "y": 0.2119,
+    "beforeEraId": "shadowlands",
+    "afterEraId": "dragonflight",
+    "changedMapIds": [
+      1978
+    ],
+    "links": [
+      "/wow/mythic-plus/midnight-season-2/ruby-life-pools"
+    ]
+  },
+  {
+    "id": "zaralek-cavern",
+    "eraId": "dragonflight",
+    "patch": "10.1.0",
+    "year": 2023,
+    "kind": "reveal",
+    "title": {
+      "en": "Zaralek Cavern",
+      "ru": "Пещера Заралек"
+    },
+    "summary": {
+      "en": "A vast cave system opens beneath the Dragon Isles, hiding Neltharion's old laboratory and Aberrus.",
+      "ru": "Под Драконьими островами открывается огромная система пещер с давней лабораторией Нелтариона и Аберрусом."
+    },
+    "mapId": 1978,
+    "x": 0.5202,
+    "y": 0.4982,
+    "changedMapIds": [
+      2133
+    ]
+  },
+  {
+    "id": "amirdrassil",
+    "eraId": "dragonflight",
+    "patch": "10.2.0",
+    "year": 2023,
+    "kind": "reveal",
+    "title": {
+      "en": "Amirdrassil blooms",
+      "ru": "Амирдрассил расцветает"
+    },
+    "summary": {
+      "en": "The new World Tree Amirdrassil grows in the Emerald Dream and later blooms into the waking world on the Dragon Isles.",
+      "ru": "Новое Мировое древо Амирдрассил вырастает в Изумрудном Сне, а затем расцветает в реальном мире на Драконьих островах."
+    },
+    "mapId": 1978,
+    "x": 0.2457,
+    "y": 0.5883,
+    "changedMapIds": [
+      2200,
+      2239
+    ]
+  },
+  {
+    "id": "khaz-algar",
+    "eraId": "tww",
+    "patch": "11.0.2",
+    "year": 2024,
+    "kind": "reveal",
+    "title": {
+      "en": "Khaz Algar is discovered",
+      "ru": "Открытие Каз Алгара"
+    },
+    "summary": {
+      "en": "The hidden isle and subterranean continent of Khaz Algar opens northwest of Pandaria.",
+      "ru": "К северо-западу от Пандарии открывается скрытый остров и подземный континент Каз Алгар."
+    },
+    "mapId": 947,
+    "x": 0.281,
+    "y": 0.845,
+    "beforeEraId": "dragonflight",
+    "afterEraId": "tww",
+    "changedMapIds": [
+      2274
+    ]
+  },
+  {
+    "id": "dalaran-destroyed",
+    "eraId": "tww",
+    "patch": "11.0.2",
+    "year": 2024,
+    "kind": "battle",
+    "title": {
+      "en": "The fall of Dalaran",
+      "ru": "Гибель Даларана"
+    },
+    "summary": {
+      "en": "Xal'atath destroys Dalaran above the Isle of Dorn, and the wreckage of the city crashes onto the Tranquil Strand.",
+      "ru": "Ксал'атат уничтожает Даларан над островом Дорн, и обломки города падают на Безмятежное взморье."
+    },
+    "mapId": 2248,
+    "x": 0.2891,
+    "y": 0.5454,
+    "beforeEraId": "dragonflight",
+    "afterEraId": "tww"
+  },
+  {
+    "id": "dornogal",
+    "eraId": "tww",
+    "patch": "11.0.2",
+    "year": 2024,
+    "kind": "reveal",
+    "title": {
+      "en": "Dornogal opens its gates",
+      "ru": "Дорногал открывает ворота"
+    },
+    "summary": {
+      "en": "The earthen capital of Dornogal on the Isle of Dorn becomes the new hub for adventurers in Khaz Algar.",
+      "ru": "Столица земельников Дорногал на острове Дорн становится новым центром для искателей приключений в Каз Алгаре."
+    },
+    "mapId": 2248,
+    "x": 0.4732,
+    "y": 0.3873,
+    "beforeEraId": "dragonflight",
+    "afterEraId": "tww",
+    "changedMapIds": [
+      2339
+    ]
+  },
+  {
+    "id": "siren-isle",
+    "eraId": "tww",
+    "patch": "11.0.7",
+    "year": 2024,
+    "kind": "reveal",
+    "title": {
+      "en": "Siren Isle",
+      "ru": "Остров Сирен"
+    },
+    "summary": {
+      "en": "The storm-wracked Siren Isle, once an azerite mine of Kul Tiras, opens off the Isle of Dorn.",
+      "ru": "У острова Дорн открывается остров Сирен, где бушуют штормы и где Кул-Тирас когда-то добывал азерит."
+    },
+    "mapId": 2248,
+    "x": 0.178,
+    "y": 0.2435,
+    "changedMapIds": [
+      2369
+    ]
+  },
+  {
+    "id": "undermine",
+    "eraId": "tww",
+    "patch": "11.1.0",
+    "year": 2025,
+    "kind": "reveal",
+    "title": {
+      "en": "Undermine opens",
+      "ru": "Открытие Нижней Шахты"
+    },
+    "summary": {
+      "en": "The goblin capital of Undermine, deep under Kezan, opens with the Liberation of Undermine raid.",
+      "ru": "Гоблинская столица Нижняя Шахта в глубинах Кезана открывается вместе с рейдом «Освобождение Нижней Шахты»."
+    },
+    "mapId": 2274,
+    "x": 0.8035,
+    "y": 0.7425,
+    "changedMapIds": [
+      2346
+    ]
+  },
+  {
+    "id": "karesh",
+    "eraId": "tww",
+    "patch": "11.2.0",
+    "year": 2025,
+    "kind": "reveal",
+    "title": {
+      "en": "Ghosts of K'aresh",
+      "ru": "Призраки К'ареша"
+    },
+    "summary": {
+      "en": "Adventurers reach K'aresh, the ruined homeworld of the ethereals, and the Manaforge Omega raid.",
+      "ru": "Искатели приключений попадают на К'ареш, разрушенную родину эфириалов, и в рейд «Манагорн Омега»."
+    },
+    "mapId": 2274,
+    "x": 0.1765,
+    "y": 0.1945,
+    "changedMapIds": [
+      2371
+    ]
+  },
+  {
+    "id": "twilight-ascension",
+    "eraId": "midnight",
+    "patch": "12.0.0",
+    "year": 2026,
+    "kind": "invasion",
+    "title": {
+      "en": "Twilight Ascension",
+      "ru": "Сумеречное восхождение"
+    },
+    "summary": {
+      "en": "Before the return to Quel'Thalas, the Twilight's Blade cult gathers in the Twilight Highlands and is driven back.",
+      "ru": "Перед возвращением в Кель'Талас культ Сумеречного Клинка собирается в Сумеречном нагорье и терпит поражение."
+    },
+    "mapId": 13,
+    "x": 0.5772,
+    "y": 0.5871
+  },
+  {
+    "id": "quelthalas-reborn",
+    "eraId": "midnight",
+    "patch": "12.0.1",
+    "year": 2026,
+    "kind": "reshape",
+    "title": {
+      "en": "Quel'Thalas is remade",
+      "ru": "Кель'Талас преображается"
+    },
+    "summary": {
+      "en": "Eversong Woods and the Ghostlands merge into one restored land, now joined to the rest of the Eastern Kingdoms.",
+      "ru": "Леса Вечной Песни и Призрачные земли объединяются в один восстановленный край, теперь связанный с остальными Восточными королевствами."
+    },
+    "mapId": 13,
+    "x": 0.6475,
+    "y": 0.1775,
+    "beforeEraId": "tww",
+    "afterEraId": "midnight",
+    "changedMapIds": [
+      2537,
+      2395,
+      94,
+      95
+    ]
+  },
+  {
+    "id": "silvermoon-restored",
+    "eraId": "midnight",
+    "patch": "12.0.1",
+    "year": 2026,
+    "kind": "reshape",
+    "title": {
+      "en": "Silvermoon restored",
+      "ru": "Луносвет восстановлен"
+    },
+    "summary": {
+      "en": "Silvermoon City, rebuilt in full after decades of ruin, opens its gates to both factions against the Void.",
+      "ru": "Луносвет, полностью отстроенный после десятилетий разрухи, открывает ворота обеим фракциям перед лицом Бездны."
+    },
+    "mapId": 2395,
+    "x": 0.5056,
+    "y": 0.2722,
+    "beforeEraId": "tww",
+    "afterEraId": "midnight",
+    "changedMapIds": [
+      2393,
+      110
+    ],
+    "links": [
+      "/wow/mythic-plus/midnight-season-2/murder-row"
+    ]
+  },
+  {
+    "id": "queldanas-assault",
+    "eraId": "midnight",
+    "patch": "12.0.1",
+    "year": 2026,
+    "kind": "invasion",
+    "title": {
+      "en": "The Void strikes Quel'Danas",
+      "ru": "Удар Бездны по Кель'Данасу"
+    },
+    "summary": {
+      "en": "Xal'atath and her Void armies attack the Isle of Quel'Danas in a bid to claim the Sunwell.",
+      "ru": "Ксал'атат и войска Бездны атакуют остров Кель'Данас, чтобы захватить Солнечный Колодец."
+    },
+    "mapId": 2537,
+    "x": 0.2651,
+    "y": 0.1535,
+    "beforeEraId": "tww",
+    "afterEraId": "midnight",
+    "changedMapIds": [
+      2424,
+      122
+    ]
+  },
+  {
+    "id": "zulaman",
+    "eraId": "midnight",
+    "patch": "12.0.1",
+    "year": 2026,
+    "kind": "reveal",
+    "title": {
+      "en": "Zul'Aman, rebuilt",
+      "ru": "Новый Зул'Аман"
+    },
+    "summary": {
+      "en": "The Amani homeland returns as a full zone, with the temple city of Atal'Aman at its heart.",
+      "ru": "Земли Амани возвращаются как полноценная зона, в сердце которой стоит храмовый город Атал'Аман."
+    },
+    "mapId": 2537,
+    "x": 0.4973,
+    "y": 0.6961,
+    "beforeEraId": "tww",
+    "afterEraId": "midnight",
+    "changedMapIds": [
+      2437
+    ],
+    "links": [
+      "/wow/mythic-plus/midnight-season-2/den-of-nalorakk"
+    ]
+  },
+  {
+    "id": "harandar",
+    "eraId": "midnight",
+    "patch": "12.0.1",
+    "year": 2026,
+    "kind": "reveal",
+    "title": {
+      "en": "Harandar, roots of the World Trees",
+      "ru": "Харандар, корни Мировых деревьев"
+    },
+    "summary": {
+      "en": "Beneath Quel'Thalas lies Harandar, a glowing cavern jungle where the roots of Azeroth's World Trees meet.",
+      "ru": "Под Кель'Таласом лежит Харандар — светящиеся пещерные джунгли, где сходятся корни Мировых деревьев Азерота."
+    },
+    "mapId": 2537,
+    "x": 0.8175,
+    "y": 0.1675,
+    "beforeEraId": "tww",
+    "afterEraId": "midnight",
+    "changedMapIds": [
+      2413
+    ],
+    "links": [
+      "/wow/mythic-plus/midnight-season-2/the-blinding-vale",
+      "/wow/raids/the-dreamrift"
+    ]
+  },
+  {
+    "id": "voidstorm",
+    "eraId": "midnight",
+    "patch": "12.0.1",
+    "year": 2026,
+    "kind": "reveal",
+    "title": {
+      "en": "Into the Voidstorm",
+      "ru": "В Бурю Бездны"
+    },
+    "summary": {
+      "en": "Heroes cross into the Voidstorm, the world Xal'atath uses as her launching point, crowned by the Voidspire.",
+      "ru": "Герои отправляются в Бурю Бездны — мир, откуда Ксал'атат начинает наступление, над которым возвышается Шпиль Бездны."
+    },
+    "mapId": 2537,
+    "x": 0.5325,
+    "y": 0.2325,
+    "beforeEraId": "tww",
+    "afterEraId": "midnight",
+    "changedMapIds": [
+      2405
+    ],
+    "links": [
+      "/wow/raids/the-voidspire",
+      "/wow/mythic-plus/midnight-season-2/voidscar-arena"
+    ]
+  },
+  {
+    "id": "march-on-queldanas",
+    "eraId": "midnight",
+    "patch": "12.0.1",
+    "year": 2026,
+    "kind": "battle",
+    "title": {
+      "en": "March on Quel'Danas",
+      "ru": "Марш на Кель'Данас"
+    },
+    "summary": {
+      "en": "The united elves storm the Void-tainted Sunwell and defeat L'ura in the final battle of the first raid tier.",
+      "ru": "Объединённые эльфы штурмуют осквернённый Бездной Солнечный Колодец и побеждают Л'уру в последней битве первого рейдового этапа."
+    },
+    "mapId": 2424,
+    "x": 0.5261,
+    "y": 0.853,
+    "links": [
+      "/wow/raids/march-on-queldanas"
+    ]
+  },
+  {
+    "id": "val-naigtal",
+    "eraId": "midnight",
+    "patch": "12.0.7",
+    "year": 2026,
+    "kind": "reveal",
+    "title": {
+      "en": "Showdown in Val and Naigtal",
+      "ru": "Схватка в Вале и Найтале"
+    },
+    "summary": {
+      "en": "Two new mini zones open beyond the Voidstorm, the frozen world of Val and Naigtal, to confront leaders of the Void.",
+      "ru": "За Бурей Бездны открываются две новые мини-зоны — ледяной мир Вал и Найтал, где героев ждут предводители Бездны."
+    },
+    "mapId": 2405,
+    "x": 0.176,
+    "y": 0.219,
+    "changedMapIds": [
+      2599,
+      2600
+    ]
+  },
+  {
+    "id": "sporefall",
+    "eraId": "midnight",
+    "patch": "12.0.7",
+    "year": 2026,
+    "kind": "instance",
+    "title": {
+      "en": "Sporefall",
+      "ru": "Споропад"
+    },
+    "summary": {
+      "en": "In Harandar the fungarians grow the giant Rotmire, and the one-boss Sporefall raid opens.",
+      "ru": "В Харандаре грибной народ выращивает гиганта Гнилотопа, и открывается рейд из одного босса — Споропад."
+    },
+    "mapId": 2413,
+    "x": 0.7356,
+    "y": 0.6636,
+    "links": [
+      "/wow/raids/sporefall"
+    ]
+  },
+  {
+    "id": "coiled-isle",
+    "eraId": "midnight",
+    "patch": "12.1.0",
+    "year": 2026,
+    "kind": "reveal",
+    "title": {
+      "en": "The Coiled Isle emerges",
+      "ru": "Спиральный остров выходит из тумана"
+    },
+    "summary": {
+      "en": "The fog lifts from the island east of Zul'Aman, revealing the temple of Atal'Utek and the Venomous Abyss.",
+      "ru": "Туман над островом к востоку от Зул'Амана рассеивается, открывая храм Атал'Утек и Отравленную бездну."
+    },
+    "mapId": 2537,
+    "x": 0.71,
+    "y": 0.6426,
+    "changedMapIds": [
+      2512,
+      2509
+    ],
+    "links": [
+      "/wow/mythic-plus/midnight-season-2/altar-of-fangs",
+      "/wow/raids/venomous-abyss"
+    ]
+  },
+  {
+    "id": "unbinding-of-kithix",
+    "eraId": "midnight",
+    "patch": "12.1.5",
+    "year": 2026,
+    "kind": "instance",
+    "title": {
+      "en": "The Unbinding of Kith'ix",
+      "ru": "Освобождение Кит'икса"
+    },
+    "summary": {
+      "en": "With Ula'tek defeated, the bonds on the C'Thraxxi general Kith'ix weaken beneath the Coiled Isle.",
+      "ru": "После поражения Ула'тека слабеют путы, которыми под Спиральным островом скован ц'тракский генерал Кит'икс."
+    },
+    "mapId": 2509,
+    "x": 0.4723,
+    "y": 0.0649,
+    "links": [
+      "/wow/raids/the-unbinding-of-kithix"
+    ]
+  }
+]
