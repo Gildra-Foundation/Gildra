@@ -51,7 +51,7 @@ void main() {
   float a = u_alpha;
   if (u_feather > 0.0) {
     float d = min(min(v_p.x - u_frame.x, u_frame.z - v_p.x), min(v_p.y - u_frame.y, u_frame.w - v_p.y));
-    a *= smoothstep(0.0, u_feather, d);
+    a *= smoothstep(u_feather * 0.12, u_feather, d);
   }
   if (u_portal.z > 0.0) {
     float d = length(v_p - u_portal.xy);
@@ -73,7 +73,8 @@ void main() {
     float shade = smoothstep(0.48, 0.76, n) * u_cloud;
     col *= 1.0 - shade * 0.3;
   }
-  col += u_light * (vec3(0.1, 0.085, 0.05) + col * 0.18);
+  if (u_light > 0.0) col += u_light * (vec3(0.1, 0.085, 0.05) + col * 0.18);
+  else col *= 1.0 + u_light;
   gl_FragColor = vec4(col * texel.a, texel.a) * a;
 }`;
 

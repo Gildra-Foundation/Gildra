@@ -1,4 +1,4 @@
-import type { EraMapOverride, EventLink, MapArt, MapRecord, MapType, PoiKind, Rect, WorldMapData } from "./types";
+import type { EraMapOverride, EventLink, MapArt, MapRecord, MapType, PatchRange, PoiKind, Rect, WorldMapData } from "./types";
 
 /**
  * The viewer's compact bundle of the world map, for one language. Every map
@@ -26,11 +26,13 @@ export type AtlasMap = {
   /** Shown inside a round "portal" while it fades in (worlds on the Cosmic map). */
   portal: boolean;
 };
-export type AtlasPoi = { id: string; map: number; kind: PoiKind; name: string; x: number; y: number; faction?: "alliance" | "horde" | "neutral"; href?: string; routes?: string[] };
-export type AtlasEra = { id: string; name: string; expansion: string; range: [string, string]; product: string; maps: Record<number, MapArt | null> };
+export type AtlasPoi = { id: string; map: number; kind: PoiKind; name: string; x: number; y: number; faction?: "alliance" | "horde" | "neutral"; href?: string; routes?: string[]; target?: number };
+export type AtlasEra = { id: string; name: string; expansion: string; range: [string, string]; years?: [number, number]; accent?: string; maps: Record<number, MapArt | null> };
 export type AtlasEvent = {
   id: string; era: string; patch: string; year?: number; title: string; summary: string;
-  map: number; x: number; y: number; before?: string; after?: string; links: Array<{ href: string; label?: string }>;
+  /** null: the place is not on the map yet (the event still sits on the timeline). */
+  map: number | null; x: number; y: number; before?: string; after?: string; links: Array<{ href: string; label?: string }>;
+  changed?: number[];
 };
 export type AtlasBundle = { lang: Lang; maps: AtlasMap[]; pois: AtlasPoi[]; eras: AtlasEra[]; events: AtlasEvent[] };
 
@@ -123,25 +125,38 @@ export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle {
       ...(poi.faction ? { faction: poi.faction } : {}),
       ...(poi.href ? { href: poi.href } : {}),
       ...(poi.routes?.length ? { routes: poi.routes.map(String) } : {}),
+      ...(poi.targetMapId && placed.has(poi.targetMapId) ? { target: poi.targetMapId } : {}),
     }));
-  const eras = data.eras.map((era) => {
-    const overrides: Record<number, MapArt | null> = {};
-    for (const [key, value] of Object.entries(era.maps ?? {})) {
+  // Timeline eras (one per expansion, eras-meta.json) take their art from the art
+  // eras (eras.json) of the same id, else from the latest art era that began before.
+  const overridesOf = (maps: Record<string, EraMapOverride> | undefined) => {
+    const out: Record<number, MapArt | null> = {};
+    for (const [key, value] of Object.entries(maps ?? {})) {
       const id = Number(key);
-      const map = placed.get(id);
-      if (!map) continue;
+      if (!placed.has(id)) continue;
       const art = eraArt(value);
-      if (art !== undefined) overrides[id] = art;
+      if (art !== undefined) out[id] = art;
     }
-    return { id: era.id, name: era.name[lang] || era.name.en, expansion: era.expansion, range: era.patchRange, product: era.source?.product ?? "wow", maps: overrides };
+    return out;
+  };
+  const artEras = (data.eras ?? []).map((era) => ({ era, range: rangeOf(era.patchRange), maps: overridesOf(era.maps) }));
+  const timeline = data.eraMeta?.length ? data.eraMeta : data.eras ?? [];
+  const eras: AtlasEra[] = timeline.map((era) => {
+    const range = rangeOf(era.patchRange);
+    const art = artEras.find((entry) => entry.era.id === era.id)
+      ?? artEras.filter((entry) => comparePatch(entry.range[0], range[0]) <= 0).sort((a, b) => comparePatch(b.range[0], a.range[0]))[0];
+    const years = "years" in era && era.years?.from ? [era.years.from, era.years.to ?? era.years.from] as [number, number] : undefined;
+    const accent = "accent" in era && typeof era.accent === "string" && /^#[0-9a-f]{6}$/i.test(era.accent) ? era.accent : undefined;
+    return { id: era.id, name: era.name[lang] || era.name.en, expansion: era.expansion, range, ...(years ? { years } : {}), ...(accent ? { accent } : {}), maps: art?.maps ?? {} };
   });
   const eraIds = new Set(eras.map((era) => era.id));
   const events = data.events
-    .filter((event) => placed.has(event.mapId) && eraIds.has(event.eraId))
+    .filter((event) => eraIds.has(event.eraId))
     .map((event) => ({
       id: event.id, era: event.eraId, patch: event.patch, ...(event.year ? { year: event.year } : {}),
       title: event.title[lang] || event.title.en, summary: event.summary[lang] || event.summary.en,
-      map: event.mapId, x: event.x, y: event.y,
+      map: placed.has(event.mapId) ? event.mapId : null, x: event.x, y: event.y,
+      ...(event.changedMapIds?.length ? { changed: event.changedMapIds } : {}),
       ...(event.beforeEraId && eraIds.has(event.beforeEraId) ? { before: event.beforeEraId } : {}),
       ...(event.afterEraId && eraIds.has(event.afterEraId) ? { after: event.afterEraId } : {}),
       links: (event.links ?? []).map((link: EventLink | string) => typeof link === "string" ? { href: link } : { href: link.href, ...(link.label ? { label: link.label[lang] || link.label.en } : {}) })
@@ -149,6 +164,13 @@ export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle {
     }))
     .sort((a, b) => comparePatch(a.patch, b.patch));
   return { lang, maps, pois, eras, events };
+}
+
+/** A patch range as [from, to]; an open range (the current expansion) ends with its own major version. */
+export function rangeOf(range: PatchRange): [string, string] {
+  const [from, to] = Array.isArray(range) ? range : [range.from, range.to];
+  const start = from || "1.0.0";
+  return [start, to || `${patchParts(start)[0]}.9.9`];
 }
 
 /** "5.4.0" → [5, 4, 0]. */

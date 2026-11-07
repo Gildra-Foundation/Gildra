@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { Columns2, Hourglass } from "lucide-react";
+import { ChevronLeft, ChevronRight, Columns2, Hourglass } from "lucide-react";
 import type { AtlasEra, AtlasEvent, Lang } from "@/lib/wow/worldMap/bundle";
 import { EXPANSIONS, worldMapCopy } from "./worldMapCopy";
 import { eraAt, patchPosition } from "./worldMapModel";
@@ -21,14 +21,19 @@ export function MapTimeline({ lang, eras, events, era, activeEvent, compare, can
 }) {
   const copy = worldMapCopy[lang];
   const track = useRef<HTMLDivElement>(null);
-  const eraStart = era ? patchPosition(era.range[0]) : SPAN - 0.5;
-  const [time, setTime] = useState(activeEvent ? patchPosition(activeEvent.patch) : eraStart);
+  const latest = eras.at(-1);
+  // The thumb rests at the start of an era; at today's end for the latest one.
+  const restOf = (entry: AtlasEra) => entry.id === latest?.id ? Math.min(SPAN - 0.04, patchPosition(entry.range[1]) + 0.4) : patchPosition(entry.range[0]);
+  const [time, setTime] = useState(activeEvent ? patchPosition(activeEvent.patch) : era ? restOf(era) : SPAN - 0.04);
   const [peek, setPeek] = useState<AtlasEvent | null>(null);
   const dragging = useRef(false);
 
   useEffect(() => {
     if (dragging.current) return;
-    setTime(activeEvent ? patchPosition(activeEvent.patch) : era ? Math.max(patchPosition(era.range[0]), Math.min(patchPosition(era.range[1]), time)) : time);
+    if (activeEvent) { setTime(patchPosition(activeEvent.patch)); return; }
+    if (!era) return;
+    const inside = eraAt(eras, time)?.id === era.id;
+    if (!inside) setTime(restOf(era));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- follow the era/event, not our own scrubbing
   }, [era?.id, activeEvent?.id]);
 
@@ -53,11 +58,16 @@ export function MapTimeline({ lang, eras, events, era, activeEvent, compare, can
   const key = (event: KeyboardEvent<HTMLDivElement>) => {
     const ordered = eras;
     const index = ordered.findIndex((entry) => entry.id === era?.id);
-    const go = (i: number) => { const next = ordered[Math.max(0, Math.min(ordered.length - 1, i))]; if (next) { setTime(patchPosition(next.range[0])); onEra(next); } };
+    const go = (i: number) => { const next = ordered[Math.max(0, Math.min(ordered.length - 1, i))]; if (next) { setTime(restOf(next)); onEra(next); } };
     if (event.key === "ArrowLeft" || event.key === "ArrowDown") { event.preventDefault(); go(index - 1); }
     if (event.key === "ArrowRight" || event.key === "ArrowUp") { event.preventDefault(); go(index + 1); }
     if (event.key === "Home") { event.preventDefault(); go(0); }
     if (event.key === "End") { event.preventDefault(); go(ordered.length - 1); }
+  };
+  const eraIndex = eras.findIndex((entry) => entry.id === era?.id);
+  const step = (delta: number) => {
+    const next = eras[Math.max(0, Math.min(eras.length - 1, eraIndex + delta))];
+    if (next) { setTime(restOf(next)); onEra(next); }
   };
   const nowLabel = era ? `${era.name} · ${EXPANSIONS[Math.min(SPAN - 1, Math.floor(time))]?.name ?? ""}` : "";
 
@@ -65,13 +75,14 @@ export function MapTimeline({ lang, eras, events, era, activeEvent, compare, can
     <div className={styles.timeline} data-map-ui>
       <div className={styles.eraRow}>
         <Hourglass aria-hidden="true" className={styles.eraIcon} />
-        <div className={styles.eraChips} role="group" aria-label={copy.eras}>
-          {eras.map((entry) => (
-            <button key={entry.id} type="button" className={styles.eraChip} aria-pressed={entry.id === era?.id} onClick={() => { setTime(patchPosition(entry.range[0])); onEra(entry); }}>
-              {entry.name}
-            </button>
-          ))}
-        </div>
+        <p className={styles.eraNow} aria-live="polite">
+          <span className={styles.eraName}>{era?.name}</span>
+          {era?.years ? <span className={styles.eraYears}>{era.years[0] === era.years[1] ? era.years[0] : `${era.years[0]}–${era.years[1]}`}</span> : null}
+        </p>
+        <span className={styles.eraStep}>
+          <button type="button" aria-label={copy.earlier} disabled={eraIndex <= 0} onClick={() => step(-1)}><ChevronLeft aria-hidden="true" /></button>
+          <button type="button" aria-label={copy.later} disabled={eraIndex >= eras.length - 1} onClick={() => step(1)}><ChevronRight aria-hidden="true" /></button>
+        </span>
         {canCompare || compare ? (
           <button type="button" className={styles.compareButton} aria-pressed={compare} onClick={onCompare}>
             <Columns2 aria-hidden="true" />
@@ -83,14 +94,18 @@ export function MapTimeline({ lang, eras, events, era, activeEvent, compare, can
         <div className={styles.rail} aria-hidden="true" />
         {eras.map((entry) => (
           <span key={entry.id} aria-hidden="true" className={styles.band} data-active={entry.id === era?.id ? "" : undefined}
-            style={{ left: pct(patchPosition(entry.range[0])), width: `calc(${pct(patchPosition(entry.range[1]) + 0.45)} - ${pct(patchPosition(entry.range[0]))})` }} />
+            style={{ left: pct(patchPosition(entry.range[0])), width: `calc(${pct(Math.min(SPAN, patchPosition(entry.range[1]) + 0.45))} - ${pct(patchPosition(entry.range[0]))})`, ...(entry.accent ? { ["--era-accent" as string]: entry.accent } : {}) }} />
         ))}
-        <ol className={styles.ticks} aria-hidden="true">
-          {EXPANSIONS.map((expansion) => (
-            <li key={expansion.id} style={{ left: pct(expansion.major - 1) }} data-wide={expansion.major % 2 === 0 ? undefined : ""}>
-              <span>{expansion.short}</span>
-            </li>
-          ))}
+        <ol className={styles.ticks}>
+          {EXPANSIONS.map((expansion) => {
+            const target = eraAt(eras, expansion.major - 1 + 0.05);
+            return (
+              <li key={expansion.id} style={{ left: pct(expansion.major - 1) }} data-wide={expansion.major % 2 === 0 ? undefined : ""}>
+                <button type="button" tabIndex={-1} data-event-rune aria-hidden="true" data-active={target?.id === era?.id ? "" : undefined}
+                  onClick={() => { if (target) { setTime(restOf(target)); onEra(target); } }}>{expansion.short}</button>
+              </li>
+            );
+          })}
         </ol>
         {events.map((event) => (
           <button key={event.id} type="button" data-event-rune className={styles.rune} data-active={event.id === activeEvent?.id ? "" : undefined}

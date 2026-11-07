@@ -36,17 +36,30 @@ export type PoiRecord = {
   href?: string;
   /** Flight masters this one connects to (ids of other `flight` POIs), when the data has them. */
   routes?: Array<string | number>;
+  /** The map this point opens (a capital's own city map). */
+  targetMapId?: number;
 };
 
 /** Per-era picture of a map: other art, the current art, or absent in that era. */
 export type EraMapOverride = MapArt | "unchanged" | null | { art?: MapArt | null; rectInParent?: Rect };
+export type PatchRange = [string, string] | { from: string; to: string | null };
+/** An era of the art (eras.json): the game's maps as a client of that time drew them. */
 export type EraRecord = {
   id: string;
   name: Words;
   expansion: string;
-  patchRange: [string, string];
-  source: { product: "wow" | "wow_classic" | "wow_classic_era"; build: string };
-  maps: Record<string, EraMapOverride>;
+  patchRange: PatchRange;
+  source?: { product: "wow" | "wow_classic" | "wow_classic_era"; build: string };
+  maps?: Record<string, EraMapOverride>;
+};
+/** An era of the timeline (eras-meta.json): one per expansion. */
+export type EraMeta = {
+  id: string;
+  name: Words;
+  expansion: string;
+  patchRange: PatchRange;
+  years?: { from: number; to: number | null };
+  accent?: string;
 };
 
 export type EventLink = { href: string; label?: Words };
@@ -63,6 +76,8 @@ export type EventRecord = {
   beforeEraId?: string;
   afterEraId?: string;
   links?: Array<EventLink | string>;
+  kind?: string;
+  changedMapIds?: number[];
 };
 
-export type WorldMapData = { maps: MapRecord[]; pois: PoiRecord[]; eras: EraRecord[]; events: EventRecord[] };
+export type WorldMapData = { maps: MapRecord[]; pois: PoiRecord[]; eras: EraRecord[]; eraMeta?: EraMeta[]; events: EventRecord[] };

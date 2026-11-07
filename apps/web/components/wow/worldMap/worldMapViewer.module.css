@@ -56,6 +56,9 @@
 .mapLabel[data-size="world"] .labelText { font-size: 1.5rem; letter-spacing: .12em; text-transform: uppercase; }
 .mapLabel:is(:hover, :focus-visible, [data-hover]) .labelText { color: var(--atlas-text-strong); text-shadow: var(--atlas-text-halo), 0 0 18px color-mix(in srgb, var(--atlas-accent-2) 70%, transparent); }
 .mapLabel:focus-visible { outline: none; }
+/* Over painted names (Cosmic, world maps): the label is the hover hint of the painted one. */
+.mapLabel[data-quiet] .labelText { opacity: 0; }
+.mapLabel[data-quiet]:is(:hover, :focus-visible, [data-hover]) .labelText { opacity: 1; }
 .mapLabel:focus-visible .labelText { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 .mapLabel[data-capital] { padding-top: 30px; }
 .mapLabel[data-capital] .labelText { font-size: 1rem; }
@@ -311,23 +314,24 @@
 }
 .eraRow { display: flex; align-items: center; gap: var(--atlas-space-3); min-height: 40px; }
 .eraIcon { width: 16px; height: 16px; flex: none; color: var(--atlas-accent-2); }
-.eraChips { display: flex; gap: var(--atlas-space-1); min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.eraChip {
-  flex: none;
-  min-height: 34px;
-  padding: 0 var(--atlas-space-3);
+.eraNow { display: flex; align-items: baseline; gap: var(--atlas-space-2); min-width: 0; margin: 0; }
+.eraName { overflow: hidden; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.1875rem; font-weight: var(--atlas-weight-display); white-space: nowrap; text-overflow: ellipsis; }
+.eraYears { flex: none; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.eraStep { display: inline-flex; gap: 2px; flex: none; }
+.eraStep button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
   border: 1px solid var(--atlas-line-soft);
   border-radius: var(--atlas-radius-control);
   background: transparent;
-  color: var(--atlas-text-muted);
-  font-family: var(--atlas-font-display);
-  font-size: 0.9375rem;
-  font-weight: var(--atlas-weight-display);
+  color: var(--atlas-text);
   cursor: pointer;
-  transition: color var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
 }
-.eraChip:hover { color: var(--atlas-text-strong); border-color: var(--atlas-line-strong); }
-.eraChip[aria-pressed="true"] { border-color: color-mix(in srgb, var(--atlas-accent-2) 70%, transparent); background: color-mix(in srgb, var(--atlas-accent-2) 18%, transparent); color: var(--atlas-text-strong); }
+.eraStep button:hover:not(:disabled) { border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
+.eraStep button:disabled { opacity: .35; cursor: default; }
+.eraStep svg { width: 16px; height: 16px; }
 .compareButton {
   display: inline-flex;
   align-items: center;
@@ -349,12 +353,14 @@
 
 .track { position: relative; height: 50px; margin: 2px 6px 0; touch-action: none; cursor: pointer; }
 .rail { position: absolute; left: 0; right: 0; top: 18px; height: 3px; border-radius: 2px; background: var(--atlas-line); }
-.band { position: absolute; top: 15px; height: 9px; border-radius: 5px; background: color-mix(in srgb, var(--atlas-accent-2) 22%, transparent); transition: background-color var(--atlas-duration-fast) var(--atlas-ease); }
-.band[data-active] { background: color-mix(in srgb, var(--atlas-accent-2) 55%, transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--atlas-accent-2) 40%, transparent); }
+.band { --era-accent: var(--atlas-accent-2); position: absolute; top: 15px; height: 9px; border-radius: 5px; background: color-mix(in srgb, var(--era-accent) 20%, transparent); transition: background-color var(--atlas-duration-fast) var(--atlas-ease); }
+.band[data-active] { background: color-mix(in srgb, var(--era-accent) 62%, transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--era-accent) 45%, transparent); }
 .ticks { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; pointer-events: none; }
 .ticks li { position: absolute; top: 12px; }
 .ticks li::before { content: ""; position: absolute; left: 0; top: 0; width: 1px; height: 14px; background: var(--atlas-line-strong); }
-.ticks span { position: absolute; left: 4px; top: 16px; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); white-space: nowrap; }
+.ticks button { position: absolute; left: 0; top: 12px; padding: 2px 4px; border: 0; background: none; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); white-space: nowrap; cursor: pointer; pointer-events: auto; }
+.ticks button:hover { color: var(--atlas-text-strong); }
+.ticks button[data-active] { color: var(--atlas-text-strong); font-weight: 650; }
 .rune {
   position: absolute;
   top: 19px;
@@ -483,9 +489,10 @@
   }
   .timeline { padding: var(--atlas-space-2) var(--atlas-space-3) calc(var(--atlas-space-1) + env(safe-area-inset-bottom)); border-radius: 12px 12px 0 0; border-bottom: 0; }
   .timeline::before { content: ""; display: block; width: 36px; height: 4px; margin: 0 auto var(--atlas-space-2); border-radius: 2px; background: var(--atlas-line-strong); }
-  .eraChip, .compareButton { min-height: 40px; }
+  .compareButton { min-height: 40px; }
+  .eraName { font-size: 1.0625rem; }
   .compareButton span { display: none; }
-  .ticks li:not([data-wide]) span { display: none; }
+  .ticks li:not([data-wide]) button { display: none; }
   .peek { width: 220px; }
   .compareTag { top: 200px; font-size: 0.875rem; }
   .labelText { font-size: 0.875rem; }
@@ -493,7 +500,7 @@
   .mapLabel[data-size="continent"] .labelText { font-size: 1rem; }
 }
 @media (pointer: coarse) {
-  .eraChip { min-height: 44px; }
+  .eraStep button { width: 44px; height: 44px; }
   .compareButton { min-height: 44px; }
   .poiIcon::before { content: ""; position: absolute; inset: -9px; }
 }

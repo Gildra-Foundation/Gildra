@@ -12,7 +12,8 @@ import { levelSize, levelTiles, TileStore, tileUrl } from "./tiles";
  * compare mode splits the view between two eras at a divider.
  */
 export type Insets = { top: number; right: number; bottom: number; left: number };
-export type DrawnMap = { map: AtlasMap; alpha: number; screen: Box };
+/** A map in this frame: its art rect on screen and the part of it inside its parents (children may overhang). */
+export type DrawnMap = { map: AtlasMap; alpha: number; screen: Box; clip: Box; dim?: number };
 export type FrameInfo = {
   camera: Camera;
   width: number;
@@ -385,34 +386,50 @@ export class WorldMapEngine {
     const out: DrawnMap[] = [];
     const view: Box = [0, 0, this.width, this.height];
     const minDim = Math.min(this.width, this.height);
-    const visit = (map: AtlasMap, alpha: number) => {
+    const visit = (map: AtlasMap, alpha: number, parentClip: Box | null) => {
       const art = this.artIn(map, era);
       if (!art) return;
       const [x0, y0] = this.project(map.frame[0], map.frame[1]);
       const [x1, y1] = this.project(map.frame[2], map.frame[3]);
       const screen: Box = [x0, y0, x1, y1];
-      if (!intersects(screen, view)) return;
-      out.push({ map, alpha, screen });
+      const clip: Box = parentClip && !map.portal
+        ? [Math.max(x0, parentClip[0]), Math.max(y0, parentClip[1]), Math.min(x1, parentClip[2]), Math.min(y1, parentClip[3])]
+        : screen;
+      if (clip[2] <= clip[0] || clip[3] <= clip[1] || !intersects(clip, view)) return;
+      const entry: DrawnMap = { map, alpha, screen, clip };
+      out.push(entry);
       const density = ((x1 - x0) * this.dpr) / art.width;
+      let portalOpen = 0;
+      let dominant = 0;
       for (const id of map.children) {
         const child = this.maps.get(id);
         if (!child) continue;
+        const [cx0, cy0] = this.project(child.frame[0], child.frame[1]);
+        const [cx1, cy1] = this.project(child.frame[2], child.frame[3]);
         let a: number;
         if (child.portal) {
-          const [cx0, cy0] = this.project(child.frame[0], child.frame[1]);
-          const [cx1, cy1] = this.project(child.frame[2], child.frame[3]);
           a = smoothstep(0.34, 0.8, Math.min(cx1 - cx0, cy1 - cy0) / minDim);
+          portalOpen = Math.max(portalOpen, a);
         } else {
-          a = smoothstep(0.6 / this.quality, 1.05 / this.quality, density);
+          // A child opens when the parent's picture runs out of detail, or when the
+          // child fills most of the view (a continent framed on the world map).
+          const fill = Math.max((cx1 - cx0) / this.width, (cy1 - cy0) / this.height);
+          // Detail alone does not open a small child (a city on a continent): it must also take a fair part of the view.
+          a = Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill));
+          // The map the reader came to see stands out: its parent darkens around it.
+          dominant = Math.max(dominant, a * smoothstep(0.6, 0.95, fill));
         }
-        if (a > 0.003) visit(child, alpha * a);
+        if (a > 0.003) visit(child, alpha * a, clip);
       }
+      // A world opened from the Cosmic map: the starry parchment around it falls back.
+      if (portalOpen > 0) entry.alpha = alpha * (1 - 0.8 * portalOpen);
+      if (dominant > 0) entry.dim = 0.62 * dominant;
     };
-    for (const map of this.maps.values()) if (map.depth === 0) visit(map, 1);
+    for (const map of this.maps.values()) if (map.depth === 0) visit(map, 1, null);
     // A settled map that covers the whole view hides everything drawn before it.
     for (let i = out.length - 1; i > 0; i--) {
       const entry = out[i];
-      if (entry.alpha > 0.995 && !entry.map.portal && entry.screen[0] <= 0 && entry.screen[1] <= 0 && entry.screen[2] >= this.width && entry.screen[3] >= this.height) {
+      if (entry.alpha > 0.995 && !entry.map.portal && entry.clip[0] <= 0 && entry.clip[1] <= 0 && entry.clip[2] >= this.width && entry.clip[3] >= this.height) {
         return out.slice(i);
       }
     }
@@ -490,25 +507,28 @@ export class WorldMapEngine {
       const alpha = (hovered ? Math.max(entry.alpha, 0.3) : entry.alpha) * eraAlpha;
       if (alpha < 0.003) continue;
       const terrain = entry.map.type !== "cosmic";
-      this.drawArt(entry.map, art, entry.screen, alpha, hovered ? 0.55 : 0, terrain ? cloud * (entry.map.depth <= 2 || entry.map.type === "continent" ? 1 : 0.6) : 0, terrain ? water : 0, now, moving);
+      this.drawArt(entry.map, art, entry.screen, entry.clip, alpha, hovered ? 0.55 : -(entry.dim ?? 0), terrain ? cloud * (entry.map.depth <= 2 || entry.map.type === "continent" ? 1 : 0.6) : 0, terrain ? water : 0, now, moving);
     }
     // A hovered child that is not drawn yet peeks through its parent.
     if (this.hoverId !== null && !list.some((entry) => entry.map.id === this.hoverId)) {
       const map = this.maps.get(this.hoverId);
       const art = map && this.artIn(map, era);
-      if (map && art && list.some((entry) => entry.map.id === map.parent)) {
+      const parent = map && list.find((entry) => entry.map.id === map.parent);
+      if (map && art && parent) {
         const [x0, y0] = this.project(map.frame[0], map.frame[1]);
         const [x1, y1] = this.project(map.frame[2], map.frame[3]);
-        this.drawArt(map, art, [x0, y0, x1, y1], 0.3 * eraAlpha, 0.55, 0, 0, now, moving);
+        const clip: Box = [Math.max(x0, parent.clip[0]), Math.max(y0, parent.clip[1]), Math.min(x1, parent.clip[2]), Math.min(y1, parent.clip[3])];
+        if (clip[2] > clip[0] && clip[3] > clip[1]) this.drawArt(map, art, [x0, y0, x1, y1], clip, 0.3 * eraAlpha, 0.55, 0, 0, now, moving);
       }
     }
   }
 
-  private drawArt(map: AtlasMap, art: MapArt, screen: Box, alpha: number, light: number, cloud: number, water: number, now: number, moving: boolean) {
+  private drawArt(map: AtlasMap, art: MapArt, screen: Box, clipBox: Box, alpha: number, light: number, cloud: number, water: number, now: number, moving: boolean) {
     const d = this.dpr;
     const sx0 = screen[0] * d, sy0 = screen[1] * d, sx1 = screen[2] * d, sy1 = screen[3] * d;
     const devW = sx1 - sx0, devH = sy1 - sy0;
     const W = this.canvas.width, H = this.canvas.height;
+    const cx0 = Math.max(0, clipBox[0] * d), cy0 = Math.max(0, clipBox[1] * d), cx1 = Math.min(W, clipBox[2] * d), cy1 = Math.min(H, clipBox[3] * d);
     // Level: the smallest one that is not upscaled by more than ~10%.
     let z = 0;
     while (z < art.maxZoom && levelSize(art, z)[0] < devW * 0.9) z += 1;
@@ -516,9 +536,9 @@ export class WorldMapEngine {
     const [lw, lh] = levelSize(art, z);
     const ts = art.tileSize;
     const pxW = devW / lw, pxH = devH / lh;
-    const tx0 = clamp(Math.floor((0 - sx0) / pxW / ts), 0, cols - 1), tx1 = clamp(Math.floor((W - sx0) / pxW / ts), 0, cols - 1);
-    const ty0 = clamp(Math.floor((0 - sy0) / pxH / ts), 0, rows - 1), ty1 = clamp(Math.floor((H - sy0) / pxH / ts), 0, rows - 1);
-    const feather = map.depth === 0 || map.portal ? 0 : clamp(Math.min(devW, devH) * 0.06, 4 * d, 90 * d);
+    const tx0 = clamp(Math.floor((cx0 - sx0) / pxW / ts), 0, cols - 1), tx1 = clamp(Math.floor((cx1 - sx0) / pxW / ts), 0, cols - 1);
+    const ty0 = clamp(Math.floor((cy0 - sy0) / pxH / ts), 0, rows - 1), ty1 = clamp(Math.floor((cy1 - sy0) / pxH / ts), 0, rows - 1);
+    const feather = map.depth === 0 || map.portal ? 0 : clamp(Math.min(devW, devH) * 0.08, 6 * d, 120 * d);
     let portal: [number, number, number] = [0, 0, 0];
     if (map.portal && alpha < 0.999) {
       // The world opens from the planet outwards: a circle that grows to cover the art.
@@ -526,7 +546,7 @@ export class WorldMapEngine {
       const inner = Math.min(devW, devH) / 2, outer = Math.hypot(devW, devH) / 2 * 1.2;
       portal = [cx, cy, inner + (outer - inner) * smoothstep(0.35, 1, alpha)];
     }
-    const base = { alpha, frame: [sx0, sy0, sx1, sy1] as Box, feather, portal, light, cloud, water };
+    const base = { alpha, frame: [clipBox[0] * d, clipBox[1] * d, clipBox[2] * d, clipBox[3] * d] as Box, feather, portal, light, cloud, water };
     const centerX = W / 2, centerY = H / 2;
     // The whole picture at level 0 first: something to show while the details load.
     this.tiles.get(tileUrl(art, map.id, 0, 0, 0), map.depth);

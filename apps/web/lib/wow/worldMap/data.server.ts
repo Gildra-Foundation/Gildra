@@ -33,6 +33,7 @@ function load() {
     maps: readJson(dir, "maps.json", []),
     pois: readJson(dir, "pois.json", []),
     eras: readJson(dir, "eras.json", []),
+    eraMeta: readJson(dir, "eras-meta.json", []),
     events: readJson(dir, "events.json", []),
   };
   const version = createHash("sha1").update(JSON.stringify(data)).digest("hex").slice(0, 10);

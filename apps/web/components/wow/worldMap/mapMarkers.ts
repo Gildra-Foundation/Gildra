@@ -13,7 +13,7 @@ export const DEFAULT_LAYERS: Layers = { cities: true, instances: true, flight: t
 
 export type Marker =
   | { key: string; type: "poi"; kind: PoiKind; label: string; ax: number; ay: number; priority: number; showLabel: boolean; poi: AtlasPoi; faction?: string }
-  | { key: string; type: "map"; label: string; ax: number; ay: number; priority: number; map: AtlasMap; capital: boolean; faction?: string; size: "world" | "continent" | "zone" }
+  | { key: string; type: "map"; label: string; ax: number; ay: number; priority: number; map: AtlasMap; capital: boolean; faction?: string; size: "world" | "continent" | "zone"; quiet: boolean }
   | { key: string; type: "event"; label: string; ax: number; ay: number; priority: number; event: AtlasEvent; current: boolean };
 
 const MIN_WIDTH: Record<PoiKind, number> = { capital: 180, city: 640, town: 1000, dungeon: 520, raid: 420, delve: 900, flight: 1200, portal: 900, "zone-label": 240 };
@@ -31,7 +31,7 @@ export function indexMarkers(bundle: AtlasBundle): MarkerIndex {
   const poisByMap = new Map<number, AtlasPoi[]>();
   for (const poi of bundle.pois) poisByMap.set(poi.map, [...(poisByMap.get(poi.map) ?? []), poi]);
   const eventsByMap = new Map<number, AtlasEvent[]>();
-  for (const event of bundle.events) eventsByMap.set(event.map, [...(eventsByMap.get(event.map) ?? []), event]);
+  for (const event of bundle.events) if (event.map !== null) eventsByMap.set(event.map, [...(eventsByMap.get(event.map) ?? []), event]);
   const capitals = new Map<string, AtlasPoi>();
   for (const poi of bundle.pois) if (poi.kind === "capital" || poi.kind === "city") capitals.set(poi.name, poi);
   return { poisByMap, eventsByMap, capitals, byId: new Map(bundle.maps.map((map) => [map.id, map])) };
@@ -51,19 +51,36 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
     const kids = map.children.map((id) => index.byId.get(id)).filter((child): child is AtlasMap => Boolean(child) && Boolean(artIn(child as AtlasMap)));
     const openKid = (ax: number, ay: number) => kids.some((child) => (drawnAlpha.get(child.id) ?? 0) > 0.7 && contains(child.box, ax, ay));
     const labelled = new Set<string>();
+    const targeted = new Set<number>();
+    // The map the reader stands in shows all its points sooner.
+    const near = info.focus.id === map.id ? 0.5 : 1;
     for (const poi of index.poisByMap.get(map.id) ?? []) {
-      if (!layers[LAYER[poi.kind]] || width < MIN_WIDTH[poi.kind]) continue;
+      if (poi.target) targeted.add(poi.target);
+      if (!layers[LAYER[poi.kind]] || width < MIN_WIDTH[poi.kind] * near) continue;
       if (poi.kind === "zone-label" && width > 3600) continue;
       const [ax, ay] = point(map, poi.x, poi.y);
-      if (poi.kind !== "zone-label" && openKid(ax, ay)) continue;
+      // A point that opens a map (a capital) stays until that map itself is in view.
+      if (poi.target) { if ((drawnAlpha.get(poi.target) ?? 0) > 0.6) continue; }
+      else if (poi.kind !== "zone-label" && openKid(ax, ay)) continue;
       if (poi.kind === "zone-label") labelled.add(poi.name);
-      const showLabel = poi.kind === "capital" || poi.kind === "city" || poi.kind === "zone-label" || (poi.kind === "town" && width > 1400) || ((poi.kind === "raid" || poi.kind === "dungeon") && width > 1500);
+      // A zone name that opens its zone: the same clickable label as a child map's name.
+      const target = poi.kind === "zone-label" && poi.target ? index.byId.get(poi.target) : undefined;
+      if (target) {
+        if (!artIn(target)) continue;
+        out.push({
+          key: `m${target.id}`, type: "map", label: poi.name, ax, ay, priority: map.type === "world" || map.type === "cosmic" ? 0 : 2,
+          map: target, capital: false, size: map.type === "cosmic" || map.type === "world" ? "world" : map.type === "continent" ? "continent" : "zone",
+          quiet: map.type === "cosmic" || map.type === "world",
+        });
+        continue;
+      }
+      const showLabel = poi.kind === "capital" || poi.kind === "city" || poi.kind === "zone-label" || (poi.kind === "town" && width > 1400 * near) || ((poi.kind === "raid" || poi.kind === "dungeon" || poi.kind === "delve") && width > 1500 * near);
       out.push({ key: `p${poi.id}`, type: "poi", kind: poi.kind, label: poi.name, ax, ay, priority: PRIORITY[poi.kind], showLabel, poi, faction: poi.faction });
     }
     // Names of child maps not opened yet: click to fly in.
     if (layers.labels && width >= 240) {
       for (const child of kids) {
-        if ((drawnAlpha.get(child.id) ?? 0) > 0.6 || labelled.has(child.name)) continue;
+        if ((drawnAlpha.get(child.id) ?? 0) > 0.6 || labelled.has(child.name) || targeted.has(child.id)) continue;
         const [x0] = project(child.box[0], child.box[1]);
         const [x1] = project(child.box[2], child.box[3]);
         if (x1 - x0 < 46) continue;
@@ -73,6 +90,8 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
         out.push({
           key: `m${child.id}`, type: "map", label: child.name, ax: cx, ay: cy, priority: capital ? 1 : map.type === "world" || map.type === "cosmic" ? 0 : 2,
           map: child, capital: Boolean(capital), faction: capital?.faction, size: map.type === "cosmic" || map.type === "world" ? "world" : map.type === "continent" ? "continent" : "zone",
+          // The Cosmic and world pictures carry their own painted names: ours shows on hover only.
+          quiet: map.type === "cosmic" || map.type === "world",
         });
       }
     }
@@ -97,7 +116,7 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
   for (const marker of sorted) {
     const text = marker.type === "map" || (marker.type === "poi" && marker.showLabel) ? marker.label.length * (marker.type === "map" && marker.size !== "zone" ? 9.5 : 7.4) : 0;
     const icon = marker.type === "map" ? 0 : 26;
-    const w = Math.max(icon, text + (icon ? 8 : 0)), h = marker.type === "map" ? 22 : 26;
+    const w = Math.max(icon, text + (icon ? 8 : 0)), h = marker.type === "map" ? 30 : 26;
     const box: [number, number, number, number] = [marker.sx - w / 2, marker.sy - h / 2, marker.sx + w / 2, marker.sy + h / 2 + (text && icon ? 16 : 0)];
     if (boxes.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
     boxes.push(box);

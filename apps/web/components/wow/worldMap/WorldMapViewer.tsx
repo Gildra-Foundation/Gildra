@@ -286,7 +286,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const engine = engineRef.current;
     setSelected({ type: "event", event });
     setEraId(event.after ?? event.era);
-    if (!engine) return;
+    if (!engine || event.map === null) return;
     const map = engine.maps.get(event.map);
     engine.flyToPoint(event.map, event.x, event.y, map && (map.type === "continent" || map.type === "world") ? 1.6 : 1.2);
   }, []);
@@ -355,7 +355,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
 
   // ------------------------------------------------------------ render
   if (failed && !bundle) return <p className={styles.fallback} data-map-ui>{copy.noWebgl}</p>;
-  const selectedMap = selected?.type === "poi" ? byId?.get(selected.poi.map) : selected?.type === "event" ? byId?.get(selected.event.map) : undefined;
+  const selectedMap = selected?.type === "poi" ? byId?.get(selected.poi.map) : selected?.type === "event" && selected.event.map !== null ? byId?.get(selected.event.map) : undefined;
   const chainNames = (map?: AtlasMap) => {
     const out: string[] = [];
     for (let m = map; m && byId; m = m.parent === null ? undefined : byId.get(m.parent)) if (m.type !== "cosmic") out.push(m.name);
@@ -379,7 +379,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
             const ref = (el: HTMLElement | null) => { if (el) { markerEls.current.set(marker.key, el); el.style.transform = `translate3d(${marker.sx}px, ${marker.sy}px, 0) ${anchor(marker)}`; } else markerEls.current.delete(marker.key); };
             if (marker.type === "map") {
               return (
-                <button key={marker.key} ref={ref} type="button" data-map-ui className={styles.mapLabel} data-size={marker.size} data-capital={marker.capital ? "" : undefined}
+                <button key={marker.key} ref={ref} type="button" data-map-ui className={styles.mapLabel} data-size={marker.size} data-capital={marker.capital ? "" : undefined} data-quiet={marker.quiet ? "" : undefined}
                   data-faction={marker.faction} data-hover={hoverMap === marker.map.id ? "" : undefined}
                   onClick={() => { setSelected(null); engineRef.current?.flyToMap(marker.map.id); }}
                   onPointerEnter={() => { setHoverMap(marker.map.id); engineRef.current?.highlight(marker.map.id); }}
@@ -412,7 +412,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
                 data-labelled={marker.showLabel ? "" : undefined}
                 data-selected={selected?.type === "poi" && selected.poi.id === marker.poi.id ? "" : undefined}
                 aria-label={`${marker.label}, ${copy.kind[marker.kind]}`}
-                onClick={() => setSelected({ type: "poi", poi: marker.poi })}
+                onClick={() => { setSelected({ type: "poi", poi: marker.poi }); if (marker.poi.target) engineRef.current?.flyToMap(marker.poi.target); }}
                 onPointerEnter={() => setHoverPoi(marker.poi)} onPointerLeave={() => setHoverPoi((p) => (p?.id === marker.poi.id ? null : p))}>
                 <span className={styles.poiIcon} aria-hidden="true"><Icon /></span>
                 <span className={styles.markerName}>{marker.label}</span>
