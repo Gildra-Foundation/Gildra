@@ -148,7 +148,7 @@ export type DrawParams = {
   /** Colour of the bare sheet to key out and how strongly (0 = off). */
   paper?: [number, number, number, number] | null;
   /** The own-area mask and the art's rect it spans (device px). */
-  mask?: { texture: WebGLTexture; rect: [number, number, number, number] } | null;
+  mask?: { texture: WebGLTexture; rect: [number, number, number, number]; strength?: number } | null;
 };
 
 type Target = { fb: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
@@ -275,7 +275,7 @@ export class MapRenderer {
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, p.mask.texture);
       gl.activeTexture(gl.TEXTURE0);
-      gl.uniform1f(this.u.u_maskOn, 1);
+      gl.uniform1f(this.u.u_maskOn, p.mask.strength ?? 1);
       gl.uniform4f(this.u.u_maskRect, ...p.mask.rect);
       this.maskBound = true;
     } else if (this.maskBound) {

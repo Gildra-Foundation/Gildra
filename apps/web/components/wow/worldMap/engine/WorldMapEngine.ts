@@ -27,7 +27,11 @@ export type Insets = { top: number; right: number; bottom: number; left: number 
  * parents (children may overhang); `upscale` CSS px per art texel; `blur`
  * 0 (in focus) … 1 (a soft backdrop).
  */
-export type DrawnMap = { map: AtlasMap; alpha: number; screen: Box; clip: Box; upscale: number; blur: number; dim?: number; /** A neighbour of the map in view: a wider soft edge. */ side?: boolean };
+export type DrawnMap = {
+  map: AtlasMap; alpha: number; screen: Box; clip: Box; upscale: number; blur: number; dim?: number;
+  /** A neighbour of the map in view: a wider soft edge. */ side?: boolean;
+  /** How far out of focus the map under it is drawn. */ under?: number;
+};
 export type FrameInfo = {
   camera: Camera;
   width: number;
@@ -52,12 +56,14 @@ export type EngineOptions = { alive: boolean; reducedMotion: boolean; insets: In
 type Flight = { path: ReturnType<typeof flightPath>; start: number; duration: number; after?: () => void };
 type Pointer = { id: number; x: number; y: number };
 type TerrainDraw = { map: AtlasMap; alpha: number; clip: Box };
-type ArtStyle = { alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number; exists?: (z: number, x: number, y: number) => boolean };
+type ArtStyle = { alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number; exists?: (z: number, x: number, y: number) => boolean; maskStrength?: number };
 
 /** Floors and caves under a place (micro maps, orphan levels like Cleft of Shadow): never opened by zooming over its surface. */
 const UNDER: ReadonlySet<string> = new Set(["micro", "orphan"]);
 /** A map blended into the one under it by its own-area mask (zones and cities; a top map has nothing under it). */
-const usesMask = (map: AtlasMap) => Boolean(map.mask) && map.depth > 0 && map.type !== "world" && map.type !== "continent";
+// Worlds and continents keep their own painted sea (soft edge): their land masks open the sea to the world
+// picture under it, whose painted names of those very continents then show twice.
+const usesMask = (map: AtlasMap) => Boolean(map.mask) && map.depth > 0 && map.type !== "world" && map.type !== "cosmic" && map.type !== "continent";
 const FADE_TILE = 150;
 const FADE_ERA = 650;
 /** Longest wait for an era's picture to load before it fades in anyway. */
@@ -163,8 +169,24 @@ export class WorldMapEngine {
   get focus() { return this.maps.get(this.focusId) ?? null; }
 
   setOptions(next: Partial<EngineOptions>) {
+    const home = this.stillHome();
     this.options = { ...this.options, ...next };
+    if (home !== null && next.insets) this.refitHome(home);
     this.invalidate();
+  }
+
+  /** The map shown whole if the camera has not moved since (else null). */
+  private stillHome() {
+    return this.home && !this.moving && this.atHome(this.home.id) ? this.home.id : null;
+  }
+
+  /** The panels or the window changed size while a map was shown whole: show it whole again. */
+  private refitHome(id: number) {
+    const camera = this.fitMap(id);
+    if (!camera) return;
+    this.camera = this.limit(camera);
+    this.home = { id, camera: this.camera };
+    this.scheduleSettle();
   }
 
   get setKey() { return this.set.key; }
@@ -187,6 +209,8 @@ export class WorldMapEngine {
 
   private switchSet(next: MapSet, anchor: number | null, fade: boolean, anchorFirst = false) {
     const from = this.set;
+    // A map shown whole stays shown whole in the other era (its place and size there may differ).
+    const home = this.stillHome();
     const focus = chainUp(from, this.focusId), anchored = anchor !== null ? chainUp(next, anchor) : [];
     const chain = anchorFirst ? [...anchored, ...focus] : [...focus, ...anchored];
     const moved = transferCamera(this.camera, from, next, chain);
@@ -211,6 +235,7 @@ export class WorldMapEngine {
       const left = Math.max(200, flight.duration - (performance.now() - flight.start));
       this.flight = { path: flightPath(this.camera, this.limit(flightTarget), this.width, this.height), start: performance.now(), duration: left, after: flight.after };
     }
+    if (home !== null && next.maps.has(home)) this.refitHome(home);
     // The anchor is the focus until the next frame finds it again.
     if (!next.maps.has(this.focusId)) this.focusId = chain.find((id) => next.maps.has(id)) ?? -1;
     this.fromSet = fade ? from : null;
@@ -399,12 +424,14 @@ export class WorldMapEngine {
   resize() {
     const rect = this.surface.getBoundingClientRect();
     const width = Math.max(1, rect.width), height = Math.max(1, rect.height);
+    const home = this.width > 1 ? this.stillHome() : null;
     if (this.width > 1 && (width !== this.width || height !== this.height)) {
       // Keep the same span of the atlas visible across a resize.
       this.camera = { ...this.camera, scale: this.camera.scale * Math.min(width / this.width, height / this.height) ** 0.5 * Math.max(width / this.width, height / this.height) ** 0.5 };
     }
     this.width = width;
     this.height = height;
+    if (home !== null) this.refitHome(home);
     this.applyDpr();
     this.invalidate();
   }
@@ -565,7 +592,7 @@ export class WorldMapEngine {
     const { top, right, bottom, left } = this.options.insets;
     const freeW = Math.max(80, this.width - left - right), freeH = Math.max(80, this.height - top - bottom);
     const homeLock = this.home && set === this.set && this.atHome(this.home.id) ? this.home.id : null;
-    const visit = (map: AtlasMap, alpha: number, parentClip: Box | null, side = false) => {
+    const visit = (map: AtlasMap, alpha: number, parentClip: Box | null, side = false, under = 0) => {
       const art = map.art;
       if (!art) return;
       const [x0, y0] = this.project(map.frame[0], map.frame[1]);
@@ -576,7 +603,7 @@ export class WorldMapEngine {
         : screen;
       if (clip[2] <= clip[0] || clip[3] <= clip[1] || !intersects(clip, view)) return;
       const upscale = upscaleOf(x1 - x0, art);
-      const entry: DrawnMap = { map, alpha, screen, clip, upscale, blur: blurOf(upscale), ...(side ? { side } : {}) };
+      const entry: DrawnMap = { map, alpha, screen, clip, upscale, blur: blurOf(upscale), ...(side ? { side } : {}), ...(under ? { under } : {}) };
       out.push(entry);
       const density = ((x1 - x0) * this.dpr) / art.width;
       // Most of this map in view: the reader looks at it, not into one of its children
@@ -611,7 +638,8 @@ export class WorldMapEngine {
         const fill = Math.max(vw / freeW, vh / freeH);
         // Detail alone does not open a small child (a city on a continent): it must also take a fair part of the view.
         // A map shown whole on purpose keeps its children closed until its own detail runs out.
-        const a = homeLock === map.id
+        // The map shown whole on purpose is open itself, whatever its parent's picture (Classic's Kalimdor on Azeroth).
+        const a = homeLock === child.id ? 1 : homeLock === map.id
           ? smoothstep(0.95 / this.quality, 1.3 / this.quality, density) * smoothstep(0.22, 0.45, fill)
           : Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill)) * (1 - lookingAtParent);
         if (a <= 0.003) continue;
@@ -635,7 +663,7 @@ export class WorldMapEngine {
       };
       const rank = (entry: (typeof opened)[number]) => (entry === best ? 1 : inside(entry) ? 2 : 0);
       opened.sort((p, q) => rank(p) - rank(q) || q.area - p.area);
-      for (const entry of opened) visit(entry.child, alpha * entry.a, clip, Boolean(best) && rank(entry) === 0);
+      for (const opening of opened) visit(opening.child, alpha * opening.a, clip, Boolean(best) && rank(opening) === 0, entry.blur);
       // A world opened from the Cosmic map: the starry parchment around it falls back.
       if (portalOpen > 0) entry.alpha = alpha * (1 - 0.8 * portalOpen);
     };
@@ -799,6 +827,7 @@ export class WorldMapEngine {
         const terrain = entry.map.type !== "cosmic";
         const style: ArtStyle = {
           alpha, light: hovered ? 0.55 : -(entry.dim ?? 0), edge: entry.side ? 1.6 : 1,
+          maskStrength: 1,
           cloud: terrain ? cloud * (entry.map.depth <= 2 || entry.map.type === "continent" ? 1 : 0.6) : 0, water: terrain ? water : 0,
           desat: 0, levelScale: scale,
         };
@@ -856,15 +885,14 @@ export class WorldMapEngine {
     const ty0 = clamp(Math.floor((cy0 - sy0) / pxH / ts), 0, rows - 1), ty1 = clamp(Math.floor((cy1 - sy0) / pxH / ts), 0, rows - 1);
     const isTerrain = kind === "t";
     // A mask blends a map into the one under it; a top map (Draenor standing alone) has nothing under it.
-    // Worlds and continents end in open sea that blends by the soft edge; their masks are not land shapes
-    // one can trust (Azeroth's traces the Cosmic ring, the Eastern Kingdoms' misses the south).
     const mask = !isTerrain && map.mask && usesMask(map) ? this.tiles.get(map.mask, map.depth * 0.5) : null;
-    const maskReady = mask && mask.state === "ready" && mask.texture ? mask : null;
+    const maskStrength = style.maskStrength ?? 1;
+    const maskReady = mask && mask.state === "ready" && mask.texture && maskStrength > 0.02 ? mask : null;
     // Top maps have no edge to blend; a world opened from the Cosmic map softens its edge once open.
     const feather: number | [number, number] = isTerrain ? featherOf(cx1 - cx0, cy1 - cy0, d) * 0.6
       : map.depth === 0 ? 0
       : map.portal ? (style.alpha > 0.98 ? featherOf(devW, devH, d) * 0.6 : 0)
-      : maskReady ? maskFeatherOf(devW, devH, d)
+      : maskReady && maskStrength > 0.98 ? maskFeatherOf(devW, devH, d)
       : [featherInsetOf(devW, devH), featherOf(devW, devH, d) * (style.edge ?? 1)];
     let portal: [number, number, number] = [0, 0, 0];
     if (!isTerrain && map.portal && style.alpha < 0.999) {
@@ -878,7 +906,7 @@ export class WorldMapEngine {
     const paper = maskReady && !isTerrain && map.depth > 0 ? this.paperOf(map, art) : null;
     const base: Omit<DrawParams, "rect" | "uv"> = {
       alpha: style.alpha, frame, feather, portal, light: style.light, cloud: style.cloud, water: style.water, desat: style.desat,
-      mask: maskReady && maskReady.texture ? { texture: maskReady.texture, rect: [sx0, sy0, sx1, sy1] } : null,
+      mask: maskReady && maskReady.texture ? { texture: maskReady.texture, rect: [sx0, sy0, sx1, sy1], strength: maskStrength } : null,
       paper: paper ? [paper[0], paper[1], paper[2], 0.9] : null,
     };
     const centerX = W / 2, centerY = H / 2;

@@ -335,6 +335,15 @@ describe("world map events across phases", () => {
     assert.ok(pair.left < patchPosition("5.1.0") && pair.left >= patchPosition("5.0.4"), "left: the Mists picture with Theramore standing");
   });
 
+  it("takes a phase that starts with the event's own patch (no fixed later patch)", () => {
+    const same = art.map((a) => (a.id === "theramore-fall" ? { ...a, range: ["5.0.4", "5.4.8"] as [string, string] } : a));
+    const pair = eventComparison(theramore, same, eras);
+    assert.ok(pair);
+    assert.equal(pair.right, patchPosition("5.0.4"));
+    assert.equal(positionToPatch(pair.left), "5.0.3");
+    assert.equal(eventMoment(theramore, same), patchPosition("5.0.4"));
+  });
+
   it("opens an event on the moment that shows its result", () => {
     assert.equal(eventMoment(theramore, art), patchPosition("5.1.0"));
     assert.equal(eventMoment({ patch: "4.0.3", map: 12, changed: [] }, art), patchPosition("4.0.3"));

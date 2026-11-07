@@ -444,6 +444,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const flyToPoi = useCallback((poi: AtlasPoi) => {
     const engine = engineRef.current;
     if (!engine) return;
+    // A point that is a place of its own (Dalaran over the Broken Isles) opens that map.
+    if (poi.target !== undefined && engine.maps.has(poi.target)) { setSelected(null); engine.flyToMap(poi.target); return; }
     setSelected({ type: "poi", poi });
     const map = engine.maps.get(poi.map);
     // Points of a big map: come close enough to see the place itself.
