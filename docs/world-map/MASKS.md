@@ -67,3 +67,35 @@ Run after `eras.py` (pipeline: build_world_map → eras → refine_masks → ann
   coastal margin. The hover highlights of continents are outlines drawn for an
   older parent picture (the Eastern Kingdoms one missed the south) and the
   world's is the Cosmic globe ring — neither is the map's land.
+
+## Round 5: words, decor, composition (refine_masks.py)
+
+Pipeline: build_world_map → eras → annotate → **refine_masks** (run it on the
+first-pass masks; it recomputes content/children masks and composes the rest).
+
+* **Whose word** (`art.paintedLabels[] = {box, plaque, labelFor, patch?}`): the
+  enUS/ruRU difference boxes, pieces of one banner joined into lines. Parchment
+  pictures (cities, caves) paint only their own words. On zone pictures a word
+  inside a small sibling's rect (a city), or a word painted larger than the
+  picture's typical name and near a city (within 1.6 city sizes), is the city's;
+  a word on this map's land (mask) is this map's or its smallest child's; on a
+  sibling's land the sibling's; elsewhere (sea, surroundings) the parent's.
+  `plaque` = the word with its banner/scroll (banners: 1.6 heights each side).
+* **patch**: for words of another map, `/maps/patches/<picture>/<i>.webp` — the
+  plaque refilled from the picture itself (the bands just above and below,
+  mirrored and cross-faded; side bands for short words; one band at the
+  picture's edge). A source band is used only if it holds no other word and is
+  the same in the enUS and ruRU pictures (painted words differ), so no word is
+  ever copied. Draw the patch over the parent picture at `plaque` when
+  `labelFor` is the focused map; without a patch let the word give way.
+* **decor** (`art.decor[] = {box, kind}`): `ornament` — the frame corners and
+  knots the pictures of one size share (per-pixel median of the family; present
+  where the picture matches it); `crest` — faction crests of city sheets (sepia
+  line art without colour in a corner). Both are cut out of the masks.
+* **Composition** of zone/city masks: ragged inward fade over 6 % of the short
+  side at the picture's border (no straight line where a drawing runs into the
+  sheet's edge); decor and crests cut out; the map's own words kept whole as soft
+  clouds (zones: only words at least partly on their land). Phased pictures
+  (Theramore 5.0.4, Silithus, Tirisfal, Darkshore, Vale, Krasarang, Blasted
+  Lands, Arathi) take the land of their default picture — a phase repaints part
+  of a zone, not its outline.
