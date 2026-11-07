@@ -248,7 +248,7 @@ export class WorldMapEngine {
     const [ax, ay] = this.unproject(sx, sy);
     // The deepest settled map under the point is the base; its children are the targets.
     let base: AtlasMap | null = null;
-    for (const entry of info.drawn) if (entry.alpha > 0.85 && contains(entry.map.frame, ax, ay)) base = entry.map;
+    for (const entry of info.drawn) if (entry.alpha > 0.55 && contains(this.shown.get(entry.map.id) ?? entry.map.frame, ax, ay)) base = entry.map;
     if (!base) return null;
     let best: AtlasMap | null = null;
     let bestArea = Infinity;
@@ -401,6 +401,8 @@ export class WorldMapEngine {
     const out: DrawnMap[] = [];
     const view: Box = [0, 0, this.width, this.height];
     const minDim = Math.min(this.width, this.height);
+    const { top, right, bottom, left } = this.options.insets;
+    const freeW = Math.max(80, this.width - left - right), freeH = Math.max(80, this.height - top - bottom);
     const visit = (map: AtlasMap, alpha: number, parentClip: Box | null) => {
       const art = this.artIn(map, era);
       if (!art) return;
@@ -437,7 +439,8 @@ export class WorldMapEngine {
         const vx0 = Math.max(cx0, clip[0]), vy0 = Math.max(cy0, clip[1]), vx1 = Math.min(cx1, clip[2]), vy1 = Math.min(cy1, clip[3]);
         const vw = vx1 - vx0, vh = vy1 - vy0;
         if (vw <= 0 || vh <= 0) continue;
-        const fill = Math.max(vw / this.width, vh / this.height);
+        // How much of the free part of the view (panels excluded) the child takes.
+        const fill = Math.max(vw / freeW, vh / freeH);
         // Detail alone does not open a small child (a city on a continent): it must also take a fair part of the view.
         const a = Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill));
         if (a <= 0.003) continue;

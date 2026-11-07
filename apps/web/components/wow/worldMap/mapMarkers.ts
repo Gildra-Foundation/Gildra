@@ -40,6 +40,24 @@ export function indexMarkers(bundle: AtlasBundle): MarkerIndex {
 const point = (map: AtlasMap, x: number, y: number): [number, number] =>
   [map.frame[0] + x * (map.frame[2] - map.frame[0]), map.frame[1] + y * (map.frame[3] - map.frame[1])];
 
+/** Glyph widths of the label styles (worldMapViewer.module.css), in px per character. */
+const CHAR = { world: 15.5, continent: 11.6, zone: 8.6, capital: 8.6, point: 7.2 } as const;
+
+/** The screen box a marker takes, for placing labels without overlaps. */
+function markerBox(marker: Marker & { sx: number; sy: number }): [number, number, number, number] {
+  const { sx, sy } = marker;
+  if (marker.type === "map") {
+    const w = marker.label.length * CHAR[marker.size] + 16;
+    const top = marker.capital ? sy - 15 : sy - 13;
+    return [sx - w / 2, top, sx + w / 2, marker.capital ? sy + 44 : sy + 13];
+  }
+  const icon = marker.type === "poi" && marker.kind === "capital" ? 30 : 26;
+  const labelled = marker.type === "poi" && marker.showLabel;
+  const text = labelled ? marker.label.length * (marker.kind === "capital" || marker.kind === "city" ? CHAR.capital : CHAR.point) + 10 : 0;
+  const w = Math.max(icon, text);
+  return [sx - w / 2, sy - icon / 2, sx + w / 2, sy + icon / 2 + (labelled ? 22 : 0)];
+}
+
 export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers, era: AtlasEra | null, project: (x: number, y: number) => [number, number], artIn: (map: AtlasMap) => unknown): Array<Marker & { sx: number; sy: number }> {
   const drawnAlpha = new Map(info.drawn.map((entry) => [entry.map.id, entry.alpha]));
   const out: Marker[] = [];
@@ -68,7 +86,7 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
       if (target) {
         if (!artIn(target)) continue;
         out.push({
-          key: `m${target.id}`, type: "map", label: poi.name, ax, ay, priority: map.type === "world" || map.type === "cosmic" ? 0 : 2,
+          key: `m${target.id}`, type: "map", label: poi.name, ax, ay, priority: map.type === "world" || map.type === "cosmic" ? 9 : 2,
           map: target, capital: false, size: map.type === "cosmic" || map.type === "world" ? "world" : map.type === "continent" ? "continent" : "zone",
           quiet: map.type === "cosmic" || map.type === "world",
         });
@@ -88,7 +106,7 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
         if (capital && !layers.cities) continue;
         const cx = (child.box[0] + child.box[2]) / 2, cy = (child.box[1] + child.box[3]) / 2;
         out.push({
-          key: `m${child.id}`, type: "map", label: child.name, ax: cx, ay: cy, priority: capital ? 1 : map.type === "world" || map.type === "cosmic" ? 0 : 2,
+          key: `m${child.id}`, type: "map", label: child.name, ax: cx, ay: cy, priority: capital ? 1 : map.type === "world" || map.type === "cosmic" ? 9 : 2,
           map: child, capital: Boolean(capital), faction: capital?.faction, size: map.type === "cosmic" || map.type === "world" ? "world" : map.type === "continent" ? "continent" : "zone",
           // The Cosmic and world pictures carry their own painted names: ours shows on hover only.
           quiet: map.type === "cosmic" || map.type === "world",
@@ -114,12 +132,11 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
   }).filter((marker) => marker.sx > -40 && marker.sy > -40 && marker.sx < info.width + 40 && marker.sy < info.height + 40)
     .sort((a, b) => a.priority - b.priority);
   for (const marker of sorted) {
-    const text = marker.type === "map" || (marker.type === "poi" && marker.showLabel) ? marker.label.length * (marker.type === "map" && marker.size !== "zone" ? 9.5 : 7.4) : 0;
-    const icon = marker.type === "map" ? 0 : 26;
-    const w = Math.max(icon, text + (icon ? 8 : 0)), h = marker.type === "map" ? 30 : 26;
-    const box: [number, number, number, number] = [marker.sx - w / 2, marker.sy - h / 2, marker.sx + w / 2, marker.sy + h / 2 + (text && icon ? 16 : 0)];
-    if (boxes.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
-    boxes.push(box);
+    const box = markerBox(marker);
+    // Hover-only names over painted ones never push a visible marker away.
+    const quiet = marker.type === "map" && marker.quiet;
+    if (!quiet && boxes.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
+    if (!quiet) boxes.push(box);
     placed.push(marker);
     if (placed.length >= 140) break;
   }
