@@ -12,7 +12,7 @@
   display:flex;align-items:center;gap:12px;padding:12px 14px;min-width:0;
   background:var(--panel-2);border:1px solid #2b3145;cursor:pointer;
   clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
-  transition:border-color .14s,transform .14s,opacity .25s;
+  transition:border-color var(--atlas-duration-fast) var(--atlas-ease),transform var(--atlas-duration-fast) var(--atlas-ease),opacity var(--atlas-duration) var(--atlas-ease);
 }
 .bcard:hover{
   border-color:var(--gold-dim);transform:translateY(-2px);

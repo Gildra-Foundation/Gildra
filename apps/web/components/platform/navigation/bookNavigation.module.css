@@ -16,7 +16,7 @@
   font: 20px/1.5 "Gildra Atlas", Georgia, serif;
 }
 .dialog::backdrop { background: #080e17d9; }
-.dialog[open] { animation: unfold 180ms ease-out; }
+.dialog[open] { animation: unfold var(--atlas-duration) var(--atlas-ease); }
 .dialog * { box-sizing: border-box; }
 .dialog :is(a, button):focus-visible,
 .volume :is(a, button):focus-visible { outline: 2px solid var(--nav-muted-ink); outline-offset: 3px; }
@@ -148,7 +148,7 @@
   color: var(--nav-ink);
   text-decoration: none;
   font: clamp(17px, 2.12cqw, 27px)/1.25 "Gildra Kurale", Georgia, serif;
-  transition: background-color 140ms ease;
+  transition: background-color var(--atlas-duration-fast) var(--atlas-ease);
 }
 .chapters .entry { padding-block: 6px; }
 .entry:hover, .entry[aria-current="page"] { background: linear-gradient(90deg, transparent, #292c310c 20%, #292c310c 80%, transparent); }

@@ -57,6 +57,10 @@
 @media (max-width: 480px) {
   .option { min-width: 32px; padding: 0 var(--atlas-space-1); }
 }
+/* Touch: each language is a 44 px target. */
+@media (pointer: coarse) {
+  .option { min-width: 44px; min-height: 44px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .pill, .option { transition: none; }
   .switch[aria-busy]::after { animation: none; transform: scaleX(.6); }

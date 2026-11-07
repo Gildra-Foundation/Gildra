@@ -53,7 +53,6 @@
 
 .table tbody th { color: var(--atlas-text-strong); font-weight: 600; }
 .table tbody tr:last-child > * { border-bottom: 0; }
-.table tbody tr { transition: background-color var(--atlas-duration) var(--atlas-ease); }
 .table tbody tr:hover { background: var(--atlas-accent-wash); }
 .table .numeric { text-align: right; font-variant-numeric: lining-nums tabular-nums; }
 
@@ -68,10 +67,6 @@
   .cards .table tbody th { padding-bottom: var(--atlas-space-1); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); }
   .cards .table tbody td::before { color: var(--atlas-text-subtle); content: attr(data-label); font-size: var(--atlas-text-meta); }
   .cards .table tbody th { grid-template-columns: minmax(0, 1fr); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .table tbody tr { transition: none; }
 }
 
 /* Phones: links in cells (item names, sources) are 44 px touch targets. */

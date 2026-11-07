@@ -8,7 +8,7 @@
   In-page switches use the same tempo (packages/atlas-ui/src/swapMotion.ts).
 */
 :root {
-  --atlas-route-duration: 200ms;
+  --atlas-route-duration: var(--atlas-duration);
   --atlas-route-shift: 8px;
 }
 

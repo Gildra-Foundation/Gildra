@@ -27,5 +27,10 @@
 }
 
 .trail a:hover { color: var(--atlas-text-strong); }
+/* Touch: a 44 px tall target around each crumb, without moving the line. */
+@media (pointer: coarse) {
+  .trail a { position: relative; }
+  .trail a::after { position: absolute; inset: 50% calc(var(--atlas-space-1) * -1) auto; height: var(--atlas-control-height); content: ""; translate: 0 -50%; }
+}
 .trail [aria-current="page"] { color: var(--atlas-text); }
 .trail svg { width: 12px; height: 12px; color: var(--atlas-text-subtle); }

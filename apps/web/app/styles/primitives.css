@@ -48,7 +48,7 @@
   clip-path:var(--oct);
   background:linear-gradient(150deg,#4a5468,#232a3a 65%);
   display:grid;place-items:center;
-  cursor:pointer;transition:transform .13s;
+  cursor:pointer;transition:transform var(--atlas-duration-fast) var(--atlas-ease);
 }
 .spec > b{
   width:26px;height:26px;clip-path:var(--oct);

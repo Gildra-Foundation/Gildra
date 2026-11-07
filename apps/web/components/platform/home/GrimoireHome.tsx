@@ -19,6 +19,9 @@ const coverWebpSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v2-320
 // in. Discovered only through CSS they land ~1 s after the first paint on a
 // phone and re-wrap the quote and nav (CLS 0.23 / 0.55 on /, /ru).
 // Preciosa writes the epigraph: Russian quotes take its Latin face too (« »).
+// <link> elements, which React hoists into the HTML <head>: ReactDOM.preload()
+// from this async server component only reached the RSC payload at the end of
+// the document, so the fonts were still found late.
 const firstScreenFonts = {
   en: ["preciosa/preciosa-latin", "grimoire/kurale-latin", "atlas/pt-serif-regular-latin"],
   ru: ["preciosa/preciosa-cyrillic", "preciosa/preciosa-latin", "grimoire/kurale-cyrillic", "grimoire/kurale-latin", "atlas/pt-serif-regular-cyrillic", "atlas/pt-serif-regular-latin"],
@@ -30,9 +33,6 @@ const homeShellCss = 'html[data-route-theme="wow"][data-route-theme] body{backgr
   + ".workspace-content.gildra-atlas[id=atlas-content]{padding-bottom:0}";
 
 export async function GrimoireHome({ lang }: { lang: Lang }) {
-  for (const font of firstScreenFonts[lang === "ru" ? "ru" : "en"]) {
-    preload(`/assets/wow/fonts/${font}.woff2`, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
-  }
   preload("/assets/wow/character-book/intro/chronicle-cover-v2-640.avif", {
     as: "image",
     type: "image/avif",
@@ -63,13 +63,13 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
     {/* Mounted with the landing page only: as `:has([data-grimoire-home])` rules on
         <html>/<body> they made every DOM insertion on every page restyle the root. */}
     <style>{homeShellCss}</style>
+    {firstScreenFonts[ru ? "ru" : "en"].map((font) => <link key={font} rel="preload" href={`/assets/wow/fonts/${font}.woff2`} as="font" type="font/woff2" crossOrigin="anonymous" />)}
     <div className={styles.snow} aria-hidden="true">
       {Array.from({ length: 28 }, (_, index) => <span key={index} style={{
         "--snow-x": `${(index * 37 + 7) % 100}%`,
         "--snow-size": `${index % 7 === 0 ? 5 : 2 + index % 3}px`,
         "--snow-duration": `${16 + index % 13}s`,
         "--snow-delay": `${-((index * 7) % 29)}s`,
-        "--snow-drift": `${(index % 2 ? 1 : -1) * (18 + index % 5 * 9)}px`,
         "--snow-rest": `${(index * 23 + 11) % 96}svh`,
       } as CSSProperties} />)}
     </div>

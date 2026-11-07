@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { lessMotion } from "./motionPreference";
+import { ATLAS_DURATION, ATLAS_EASE } from "./motionTokens";
 
 /**
  * One motion for every in-page switch of the atlas (tabs, segmented filters,
@@ -17,8 +18,8 @@ import { lessMotion } from "./motionPreference";
  * box's lower edge (before or after) is on screen. The previous height comes from a ResizeObserver, so nothing is
  * measured before the switch.
  */
-export const SWAP_MS = 200;
-export const SWAP_EASE = "cubic-bezier(.2, .7, .2, 1)";
+export const SWAP_MS = ATLAS_DURATION;
+export const SWAP_EASE = ATLAS_EASE;
 const CONTENT = "atlas-swap";
 const SIZE = "atlas-swap-size";
 

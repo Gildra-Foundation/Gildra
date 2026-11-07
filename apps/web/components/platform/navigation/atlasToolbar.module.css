@@ -381,6 +381,17 @@
 }
 @media (max-width: 420px) { .brand > span { display: none; } }
 
+/* Touch: every control of the bar is a 44 px target. */
+@media (pointer: coarse) {
+  .brand { min-width: 44px; min-height: 44px; }
+  .search button { min-width: 44px; min-height: 44px; }
+  .menuButton { width: 44px; height: 44px; }
+}
+/* Phones held sideways: one row (the tab strip is in the menu sheet), so the page keeps its height. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 540px) {
+  .tabs { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .panel, .panel > .menu, .sheet, .account .accountLabel { animation: none !important; }
   .toolbar::after, .tab::after, .tab svg, .toggle svg, .page, .pick, .sigil, .account, .menuIcon, .sheetChevron { transition: none; }
