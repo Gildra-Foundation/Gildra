@@ -67,7 +67,7 @@ const UNDER: ReadonlySet<string> = new Set(["micro", "orphan"]);
 // picture under it, whose painted names of those very continents then show twice.
 const usesMask = (map: AtlasMap) => Boolean(map.mask) && map.depth > 0 && map.type !== "world" && map.type !== "cosmic" && map.type !== "continent";
 const FADE_TILE = 150;
-const FADE_ERA = 650;
+const FADE_ERA = 900;
 /** Longest wait for an era's picture to load before it fades in anyway. */
 const ERA_WAIT = 900;
 
@@ -123,7 +123,9 @@ export class WorldMapEngine {
     const cores = navigator.hardwareConcurrency || 4;
     this.quality = coarse && cores <= 4 ? 0.75 : 1;
     // GPU memory for tiles: ~240 tiles of 256² on desktop, ~110 on phones.
-    this.tiles = new TileStore(this.renderer.gl, (coarse ? 56 : 128) * 1048576, 6);
+    // GPU memory for tiles: ~500 tiles of 256² on desktop, ~220 on phones, ~150 on dense (DPR ≥ 2) phones.
+    const dense = coarse && (window.devicePixelRatio || 1) >= 2;
+    this.tiles = new TileStore(this.renderer.gl, (dense ? 40 : coarse ? 56 : 128) * 1048576, coarse ? 4 : 6);
     this.tiles.onReady = () => this.invalidate();
     this.bindInput();
     this.resize();
@@ -245,6 +247,36 @@ export class WorldMapEngine {
     this.events.set?.(next);
     this.invalidate();
     this.scheduleSettle();
+  }
+
+  /**
+   * Places that glow on the living map: capitals pulse slowly, portals swirl. Points in their
+   * map's 0..1 space; drawn only over a map shown in focus (not out of focus, not while reduced motion).
+   */
+  setEffects(list: Array<{ map: number; x: number; y: number; kind: "capital" | "portal" }>) {
+    this.effects = list.map((e, i) => ({ ...e, phase: ((i * 0.618) % 1) }));
+    this.invalidate();
+  }
+  private effects: Array<{ map: number; x: number; y: number; kind: "capital" | "portal"; phase: number }> = [];
+
+  private drawEffects(drawn: DrawnMap[]) {
+    if (!this.alive || !this.effects.length) return;
+    const d = this.dpr;
+    const shown = new Map<number, DrawnMap>();
+    for (const entry of drawn) if (entry.alpha > 0.6 && entry.blur < 0.3) shown.set(entry.map.id, entry);
+    for (const fx of this.effects) {
+      const entry = shown.get(fx.map);
+      if (!entry) continue;
+      const [ax, ay] = this.mapPoint(entry.map, fx.x, fx.y);
+      const [sx, sy] = this.project(ax, ay);
+      if (sx < -60 || sy < -60 || sx > this.width + 60 || sy > this.height + 60) continue;
+      const r = (fx.kind === "capital" ? 34 : 15) * d;
+      const color: [number, number, number, number] = fx.kind === "capital" ? [1, 0.76, 0.42, fx.phase] : [0.58, 0.62, 1, fx.phase];
+      this.renderer.draw(this.renderer.blank, {
+        rect: [sx * d - r, sy * d - r, sx * d + r, sy * d + r], uv: [0, 0, 1, 1], alpha: entry.alpha, frame: [0, 0, this.canvas.width, this.canvas.height],
+        feather: 0, portal: [0, 0, 0], light: 0, cloud: 0, water: 0, fx: { kind: fx.kind === "capital" ? 1 : 2, color },
+      });
+    }
   }
 
   /** Split view: `left` on the left of the divider, the current maps on the right. */
@@ -476,11 +508,16 @@ export class WorldMapEngine {
       tiles: this.tiles.loadedCount, entries: this.tiles.count, gpuMB: Math.round((this.tiles.bytes + this.renderer.layerBytes) / 1048576), dpr: this.dpr, quality: this.quality,
       frameMs: this.frameTimes.length ? this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length : 0,
       intervalP50: pct(0.5), intervalP95: pct(0.95), samples: sorted.length,
+      uploadMsMax: Math.max(0, ...this.tiles.uploadTimes), uploadMsP95: [...this.tiles.uploadTimes].sort((a, b) => a - b)[Math.floor(this.tiles.uploadTimes.length * 0.95)] ?? 0,
+      frames: this.frameCount, idleFrames: this.idleFrames,
       drawn: this.lastInfo?.drawn.length ?? 0, set: this.set.key, pending: Boolean(this.pending),
     };
   }
 
-  resetStats() { this.intervals = []; }
+  resetStats() { this.intervals = []; this.tiles.uploadTimes = []; this.frameCount = 0; this.idleFrames = 0; }
+  /** Frames drawn, and rAF callbacks that drew nothing (the living layers' 30 fps gate). */
+  private frameCount = 0;
+  private idleFrames = 0;
 
   // ---------------------------------------------------------------- loop
 
@@ -501,7 +538,8 @@ export class WorldMapEngine {
     const animating = Boolean(this.moving || this.pending || (this.fromSet && now - this.eraStart < FADE_ERA));
     if (!this.visible || document.hidden) { this.lastFrame = now; return; }
     // The living layers alone run at ~30 fps; interaction at full rate.
-    if (!animating && !this.dirty && this.alive && now - this.lastFrame < 31) { this.raf = requestAnimationFrame((t) => this.tick(t)); return; }
+    if (!animating && !this.dirty && this.alive && now - this.lastFrame < 31) { this.idleFrames += 1; this.raf = requestAnimationFrame((t) => this.tick(t)); return; }
+    this.frameCount += 1;
     if (this.moving && this.lastFrame && now - this.lastFrame < 200) {
       this.intervals.push(now - this.lastFrame);
       if (this.intervals.length > 600) this.intervals.splice(0, this.intervals.length - 600);
@@ -509,6 +547,12 @@ export class WorldMapEngine {
     this.lastFrame = now;
     this.step(now, dt);
     const t0 = performance.now();
+    // Decoded tiles go to the GPU within a budget per frame: a burst never stalls one frame.
+    this.tiles.moving = this.moving;
+    this.tiles.flushUploads(this.moving ? 3 : 6);
+    const z0 = this.lastScale;
+    this.zoomDir = this.camera.scale > z0 * 1.002 ? 1 : this.camera.scale < z0 * 0.998 ? -1 : 0;
+    this.lastScale = this.camera.scale;
     this.render(now);
     this.measure(performance.now() - t0);
     this.dirty = false;
@@ -526,6 +570,9 @@ export class WorldMapEngine {
   }
 
   private fadingUntil = 0;
+  /** The camera's zoom direction this frame (1 in, -1 out, 0 still): the next level is asked for ahead of it. */
+  private zoomDir = 0;
+  private lastScale = 0;
   private fading(now: number) { return now < this.fadingUntil; }
 
   private step(now: number, dt: number) {
@@ -550,7 +597,8 @@ export class WorldMapEngine {
     }
     if (this.velocity) {
       this.camera = this.limit({ ...this.camera, x: this.camera.x - (this.velocity.x * dt) / this.camera.scale, y: this.camera.y - (this.velocity.y * dt) / this.camera.scale });
-      const decay = Math.exp(-dt / 325);
+      // Glide like a native map: a long, soft stop (~0.4 s time constant).
+      const decay = Math.exp(-dt / 400);
       this.velocity = { x: this.velocity.x * decay, y: this.velocity.y * decay };
       if (Math.hypot(this.velocity.x, this.velocity.y) < 0.02) { this.velocity = null; this.scheduleSettle(); }
     }
@@ -782,20 +830,25 @@ export class WorldMapEngine {
       this.renderer.clip([split, 0, W, H], H);
       drawn = this.collect(this.set);
       this.drawList(drawn, this.set, 1, cloud, water, now);
+      this.drawEffects(drawn);
       this.renderer.clip(null, H);
     } else {
       const fade = this.fromSet ? clamp((now - this.eraStart) / FADE_ERA, 0, 1) : 1;
       const from = this.fromSet;
       if (from && fade < 1) {
-        // The old picture stays under the new one until the new one is nearly opaque (no dip to the background).
+        // The old picture stays whole underneath; the new one spreads over it like ink from the middle of the view.
         const camera = transferCamera(this.camera, this.set, from, this.focusChain(this.set)) ?? this.camera;
-        this.withCamera(camera, () => this.drawList(this.collect(from), from, 1 - smoothstep(0.6, 1, fade), cloud, water, now));
+        this.withCamera(camera, () => this.drawList(this.collect(from), from, 1, cloud, water, now));
         drawn = this.collect(this.set);
-        this.drawList(drawn, this.set, easeInOut(fade), cloud, water, now);
+        this.renderer.setInk(easeInOut(fade));
+        this.drawList(drawn, this.set, 1, cloud, water, now);
+        this.drawEffects(drawn);
+        this.renderer.setInk(0);
       } else {
         this.fromSet = null;
         drawn = this.collect(this.set);
         this.drawList(drawn, this.set, 1, cloud, water, now);
+        this.drawEffects(drawn);
       }
     }
     this.tiles.endFrame();
@@ -981,14 +1034,16 @@ export class WorldMapEngine {
     const ty0 = clamp(Math.floor((cy0 - sy0) / pxH / ts), 0, rows - 1), ty1 = clamp(Math.floor((cy1 - sy0) / pxH / ts), 0, rows - 1);
     const isTerrain = kind === "t";
     // A mask blends a map into the one under it; a top map (Draenor standing alone) has nothing under it.
-    const mask = !isTerrain && map.mask && usesMask(map) ? this.tiles.get(map.mask, map.depth * 0.5) : null;
+    // A world's or continent's land mask does not cut it out (its own sea blends by the soft edge): it keeps the water shimmer off land.
+    const landOnly = !isTerrain && !usesMask(map) && style.water > 0 && (map.type === "continent" || map.type === "world" || map.type === "cosmic");
+    const mask = !isTerrain && map.mask && (usesMask(map) || landOnly) ? this.tiles.get(map.mask, map.depth * 0.5 + (landOnly ? 4 : 0)) : null;
     const maskStrength = style.maskStrength ?? 1;
     const maskReady = mask && mask.state === "ready" && mask.texture && maskStrength > 0.02 ? mask : null;
     // Top maps have no edge to blend; a world opened from the Cosmic map softens its edge once open.
     const feather: number | [number, number] = isTerrain ? featherOf(cx1 - cx0, cy1 - cy0, d) * 0.6
       : map.depth === 0 ? 0
       : map.portal ? (style.alpha > 0.98 ? featherOf(devW, devH, d) * 0.6 : 0)
-      : maskReady && maskStrength > 0.98 ? maskFeatherOf(devW, devH, d)
+      : maskReady && !landOnly && maskStrength > 0.98 ? maskFeatherOf(devW, devH, d)
       : [featherInsetOf(devW, devH), featherOf(devW, devH, d) * (style.edge ?? 1)];
     let portal: [number, number, number] = [0, 0, 0];
     if (!isTerrain && map.portal && style.alpha < 0.999) {
@@ -999,10 +1054,10 @@ export class WorldMapEngine {
     }
     // The terrain fades at the edge of the part shown (the continent's picture), a map at its own art border.
     const frame: Box = isTerrain ? [cx0, cy0, cx1, cy1] : [clipBox[0] * d, clipBox[1] * d, clipBox[2] * d, clipBox[3] * d];
-    const paper = maskReady && !isTerrain && map.depth > 0 ? this.paperOf(map, art) : null;
+    const paper = maskReady && !landOnly && !isTerrain && map.depth > 0 ? this.paperOf(map, art) : null;
     const base: Omit<DrawParams, "rect" | "uv"> = {
       alpha: style.alpha, frame, feather, portal, light: style.light, cloud: style.cloud, water: style.water, desat: style.desat,
-      mask: maskReady && maskReady.texture ? { texture: maskReady.texture, rect: [sx0, sy0, sx1, sy1], strength: maskStrength } : null,
+      mask: maskReady && maskReady.texture ? { texture: maskReady.texture, rect: [sx0, sy0, sx1, sy1], strength: maskStrength, land: landOnly } : null,
       paper: paper ? [paper[0], paper[1], paper[2], 0.9] : null,
       art: [sx0, sy0, sx1, sy1], corner: isTerrain ? 0 : style.corner ?? 0, holes: isTerrain ? [] : style.holes ?? [],
     };
@@ -1053,8 +1108,8 @@ export class WorldMapEngine {
         this.renderer.draw(tile.texture, { ...base, rect: [px0 * d, py0 * d, px1 * d, py1 * d], uv: [0, 0, 1, 1], alpha: style.alpha * fade });
       }
     }
-    // Next level for the middle of the view, while nothing moves.
-    if (!dry && !moving && z < art.maxZoom && style.levelScale === 1) {
+    // Next level for the middle of the view while nothing moves — and ahead of a zoom in.
+    if (!dry && (!moving || this.zoomDir > 0) && z < art.maxZoom && style.levelScale === 1) {
       const [ncols, nrows] = levelTiles(art, z + 1);
       const nx0 = clamp(tx0 * 2, 0, ncols - 1), nx1 = clamp(tx1 * 2 + 1, 0, ncols - 1);
       const ny0 = clamp(ty0 * 2, 0, nrows - 1), ny1 = clamp(ty1 * 2 + 1, 0, nrows - 1);
@@ -1063,7 +1118,7 @@ export class WorldMapEngine {
         for (let tx = nx0; tx <= nx1; tx++) {
           if (Math.abs(tx - midX) > (nx1 - nx0) / 3 + 1 || Math.abs(ty - midY) > (ny1 - ny0) / 3 + 1) continue;
           if (exists && !exists(z + 1, tx, ty)) continue;
-          this.tiles.get(tileUrl(art, id, z + 1, tx, ty), 40 + map.depth);
+          this.tiles.get(tileUrl(art, id, z + 1, tx, ty), (this.zoomDir > 0 ? 12 : 40) + map.depth);
         }
       }
     }
@@ -1190,7 +1245,7 @@ export class WorldMapEngine {
         if (!(event.target as HTMLElement).closest("[data-map-ui]")) this.handleTap(x, y, event.pointerType);
       } else if (!this.options.reducedMotion && !wasPinch) {
         // Inertia: the map keeps gliding at the speed of the last ~90 ms of the drag.
-        const recent = g.samples.filter((s) => performance.now() - s.t < 90);
+        const recent = g.samples.filter((s) => performance.now() - s.t < 100);
         if (recent.length >= 2) {
           const a = recent[0], b = recent[recent.length - 1];
           const dt = Math.max(8, b.t - a.t);

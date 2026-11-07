@@ -51,6 +51,10 @@ uniform vec4 u_holes[8];
 uniform float u_holeCount;
 uniform vec2 u_screen;
 uniform float u_vignette;
+uniform float u_land;
+uniform vec3 u_ink;
+uniform float u_fx;
+uniform vec4 u_fxColor;
 varying vec2 v_uv;
 varying vec2 v_p;
 
@@ -61,7 +65,25 @@ float vnoise(vec2 p) {
   return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
+// Light effects drawn on a quad of their own (no texture): a capital's slow warm pulse, a portal's swirl.
+vec4 effect() {
+  vec2 q = v_uv * 2.0 - 1.0;
+  float r = length(q);
+  if (u_fx < 1.5) {
+    float pulse = 0.72 + 0.28 * sin(u_time * 1.6 + u_fxColor.a * 6.283);
+    float glow = exp(-r * r * 4.5) * pulse;
+    return vec4(u_fxColor.rgb * glow, glow) * u_alpha * 0.55;
+  }
+  float ang = atan(q.y, q.x);
+  float arms = 0.5 + 0.5 * sin(ang * 3.0 - r * 9.0 + u_time * 2.4);
+  float ring = smoothstep(1.0, 0.55, r) * smoothstep(0.08, 0.3, r);
+  float core = exp(-r * r * 14.0) * 0.6;
+  float k = clamp(arms * ring * 0.8 + core, 0.0, 1.0);
+  return vec4(u_fxColor.rgb * k, k) * u_alpha * 0.7;
+}
+
 void main() {
+  if (u_fx > 0.0) { gl_FragColor = effect(); return; }
   vec4 texel = texture2D(u_tex, v_uv);
   float a = u_alpha;
   if (u_feather.y > 0.0) {
@@ -116,6 +138,11 @@ void main() {
   }
   if (u_water > 0.0) {
     float wet = smoothstep(0.035, 0.13, col.b - max(col.r, col.g * 0.94)) * smoothstep(0.12, 0.3, col.b);
+    // Where the map's own land mask says land, no shimmer (blue roofs, lakes painted as land stay still).
+    if (u_land > 0.0) {
+      vec2 lm = (v_p - u_maskRect.xy) / (u_maskRect.zw - u_maskRect.xy);
+      wet *= 1.0 - texture2D(u_mask, clamp(lm, 0.0, 1.0)).r * u_land;
+    }
     if (wet > 0.0) {
       vec2 q = v_p * u_waterMap.x + u_waterMap.yz;
       float s = vnoise(q + vec2(u_time * 0.42, u_time * 0.21)) * vnoise(q * 1.73 - vec2(u_time * 0.27, -u_time * 0.33));
@@ -136,6 +163,17 @@ void main() {
   }
   if (u_light > 0.0) col += u_light * (vec3(0.1, 0.085, 0.05) + col * 0.18);
   else col *= 1.0 + u_light;
+  if (u_ink.z > 0.0) {
+    // Era switch: the new picture spreads like ink from the middle of the view, a darker rim at its edge.
+    vec2 e = (v_p / u_screen - 0.5) * vec2(u_screen.x / u_screen.y, 1.0);
+    float n = vnoise(v_p / (u_screen.y * 0.09)) * 0.22 + vnoise(v_p / (u_screen.y * 0.025)) * 0.08;
+    float d = length(e) * 0.85 + n;
+    float t = u_ink.x * 1.35;
+    float inside = 1.0 - smoothstep(t - 0.06, t, d);
+    float rim = smoothstep(t - 0.14, t - 0.04, d) * inside;
+    a *= inside;
+    col *= 1.0 - 0.28 * rim * (1.0 - u_ink.x);
+  }
   gl_FragColor = vec4(col * texel.a, texel.a) * a;
 }`;
 
@@ -185,17 +223,20 @@ export type DrawParams = {
   /** Colour of the bare sheet to key out and how strongly (0 = off). */
   paper?: [number, number, number, number] | null;
   /** The own-area mask and the art's rect it spans (device px). */
-  mask?: { texture: WebGLTexture; rect: [number, number, number, number]; strength?: number } | null;
+  mask?: { texture: WebGLTexture; rect: [number, number, number, number]; strength?: number; /** Only to keep the water shimmer off land. */ land?: boolean } | null;
+  /** A light effect instead of a picture: 1 = a capital's pulse, 2 = a portal's swirl; rgb + phase. */
+  fx?: { kind: 1 | 2; color: [number, number, number, number] } | null;
 };
 
 type Target = { fb: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
 type Layer = { scale: number; a: Target; b: Target };
 
-const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat", "u_paper", "u_art", "u_corner", "u_holes", "u_holeCount", "u_screen", "u_vignette"];
+const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat", "u_paper", "u_art", "u_corner", "u_holes", "u_holeCount", "u_screen", "u_vignette", "u_land", "u_ink", "u_fx", "u_fxColor"];
 
 export class MapRenderer {
   readonly gl: WebGLRenderingContext;
   private program!: WebGLProgram;
+  blank!: WebGLTexture;
   private blur!: WebGLProgram;
   private u: Record<string, WebGLUniformLocation | null> = {};
   private ub: Record<string, WebGLUniformLocation | null> = {};
@@ -234,6 +275,10 @@ export class MapRenderer {
       return program;
     };
     this.program = link(VERTEX, FRAGMENT);
+    // A 1×1 texture for draws that sample nothing (light effects).
+    this.blank = gl.createTexture() as WebGLTexture;
+    gl.bindTexture(gl.TEXTURE_2D, this.blank);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
     this.blur = link(BLUR_VERTEX, BLUR_FRAGMENT);
     this.u = {};
     this.ub = {};
@@ -257,6 +302,10 @@ export class MapRenderer {
     this.layers = new Map();
     this.into = null;
     this.maskBound = false;
+    this.inkSet = -1;
+    this.fxOn = false;
+    gl.uniform1f(this.u.u_fx, 0);
+    gl.uniform1f(this.u.u_land, 0);
   }
 
   begin(width: number, height: number, time: number, cloudMap: [number, number, number], waterMap: [number, number, number]) {
@@ -323,15 +372,28 @@ export class MapRenderer {
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, p.mask.texture);
       gl.activeTexture(gl.TEXTURE0);
-      gl.uniform1f(this.u.u_maskOn, p.mask.strength ?? 1);
+      gl.uniform1f(this.u.u_maskOn, p.mask.land ? 0 : p.mask.strength ?? 1);
+      gl.uniform1f(this.u.u_land, p.mask.land ? 1 : 0);
       gl.uniform4f(this.u.u_maskRect, ...p.mask.rect);
       this.maskBound = true;
     } else if (this.maskBound) {
       gl.uniform1f(this.u.u_maskOn, 0);
+      gl.uniform1f(this.u.u_land, 0);
       this.maskBound = false;
     }
+    if (p.fx) { gl.uniform1f(this.u.u_fx, p.fx.kind); gl.uniform4f(this.u.u_fxColor, ...p.fx.color); this.fxOn = true; }
+    else if (this.fxOn) { gl.uniform1f(this.u.u_fx, 0); this.fxOn = false; }
+    // The era's ink acts on the screen: inside an offscreen layer it waits for the layer's own draw.
+    const ink = this.into ? 0 : this.ink;
+    if (ink !== this.inkSet) { gl.uniform3f(this.u.u_ink, Math.max(0, ink), 0, ink > 0 ? 1 : 0); this.inkSet = ink; }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
+
+  /** The era switch's spread (0..1) for the draws that follow; 0 = off. */
+  setInk(progress: number) { this.ink = progress > 0 && progress < 1 ? progress : 0; }
+  private ink = 0;
+  private inkSet = -1;
+  private fxOn = false;
 
   /**
    * Start an out-of-focus layer: what is drawn next goes into an offscreen
