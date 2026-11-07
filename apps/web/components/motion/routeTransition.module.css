@@ -47,7 +47,7 @@
   transform-origin: left;
 }
 .system:is([data-route-state="leaving"], [data-route-state="loading"]) .progress {
-  animation: route-progress 2.4s cubic-bezier(.1, .7, .3, 1) 150ms forwards;
+  animation: route-progress 2.4s cubic-bezier(.1, .7, .3, 1) var(--atlas-duration-fast) forwards;
 }
 @keyframes route-progress {
   0% { opacity: 1; transform: scaleX(0); }

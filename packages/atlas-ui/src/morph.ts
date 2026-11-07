@@ -1,3 +1,5 @@
+import { ATLAS_DURATION_ART, ATLAS_EASE } from "./motionTokens";
+
 /**
  * The art "morph" between a card and the page it opens (roadmap item 41): the
  * tapped card's picture grows into the opened page's scene. The card's picture
@@ -54,8 +56,9 @@ export function captureMorphArt(anchor: Element): MorphArtSource | null {
   };
 }
 
-const MORPH_MS = 520;
-const MORPH_EASE = "cubic-bezier(.2, .7, .2, 1)";
+/** The flight of a picture into a scene: the artwork tempo. */
+const MORPH_MS = ATLAS_DURATION_ART;
+const MORPH_EASE = ATLAS_EASE;
 
 /**
  * Grows the captured picture into the opened page's scene, then lets it dissolve

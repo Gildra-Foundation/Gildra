@@ -232,7 +232,7 @@
   [data-atlas-scope]:where([data-theme]) { --atlas-sticky-top: 101px; }
 }
 /* Phones have no tab strip under the bar (one 56 px row + rule). */
-@media (max-width: 767px) {
+@media (max-width: 767px), (pointer: coarse) and (orientation: landscape) and (max-height: 540px) {
   :root,
   [data-atlas-scope]:where([data-theme]) { --atlas-sticky-top: 57px; }
 }

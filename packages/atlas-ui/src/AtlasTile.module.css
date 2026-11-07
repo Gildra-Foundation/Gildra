@@ -12,7 +12,8 @@
   backdrop-filter: var(--atlas-glass-filter);
   box-shadow: var(--atlas-shadow-card);
   text-decoration: none;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
+  /* Only the press moves; colours switch at once (as AtlasCard): no repaint of the tile frame by frame. */
+  transition: scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .tile:hover { border-color: var(--atlas-accent); background: var(--atlas-glass-sheen), var(--atlas-glass-raised); }

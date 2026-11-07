@@ -4,9 +4,12 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, us
 import { preconnect } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { lessMotion, subscribeSiteMotion } from "@gildra/atlas-ui/motionPreference";
+import { knownRenderTier, onRenderTier } from "@gildra/atlas-ui/renderTier";
+import { ATLAS_DURATION, ATLAS_EASE } from "@gildra/atlas-ui/motionTokens";
 import { bookPageIdentity, isBookPagePath, isCharacterAuthRedirect, routeTransitionKind } from "./routeTransitionPolicy";
 import { warmRouteArt } from "./routeArt";
 import { RouteThemeController } from "./RouteThemeController";
+import { routeTurnDeviceAllowed, type RouteTurnDevice } from "./routeTurnDevice";
 import styles from "./routeTransition.module.css";
 
 /**
@@ -25,8 +28,10 @@ import styles from "./routeTransition.module.css";
  * view (routeTurnActive in the kit), so nothing animates twice. Link intent
  * prefetches the route and preloads the hub painting (routeArt.ts).
  *
- * Without View Transitions (or with less motion) the page is swapped in one
- * frame; browsers without the API get the title block's 170 ms rise instead.
+ * With less motion the page is swapped in one frame. Browsers without the API,
+ * and devices that would drop frames on it (four cores or less, 4 GB or less,
+ * Save-Data, software compositing: routeTurnDevice.ts), get the light
+ * hand-over instead: the title block rises on the atlas tempo.
  * A route whose loading.tsx skeleton commits first keeps the old picture for
  * up to SKELETON_DELAY_MS, so a quick load never flashes the skeleton.
  */
@@ -47,6 +52,29 @@ type DocumentWithTransition = Document & { activeViewTransition?: ViewTransition
 
 function viewTransitionsSupported() {
   return typeof document !== "undefined" && typeof document.startViewTransition === "function";
+}
+
+/** The render tier, probed once per tab session (a WebGL context, when the browser is idle). */
+const RENDER_TIER_KEY = "gildra-render-tier";
+function renderTier() {
+  const known = knownRenderTier();
+  if (known) return known;
+  try {
+    const saved = sessionStorage.getItem(RENDER_TIER_KEY);
+    return saved === "gpu" || saved === "cpu" ? saved : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** View Transitions on a device that can afford them (routeTurnDevice.ts); motion preference apart. */
+function routeTurnCapable() {
+  return viewTransitionsSupported() && routeTurnDeviceAllowed(navigator as Navigator & RouteTurnDevice, renderTier());
+}
+
+/** The page hand-over may cross-fade now. */
+function routeTurnAllowed() {
+  return routeTurnCapable() && !lessMotion();
 }
 
 /** The page hand-over that React has started for the commit in progress (null without one). */
@@ -76,12 +104,20 @@ function routeInAnimation() {
   return document.documentElement.getAnimations({ subtree: true }).find((animation) => (animation.effect as KeyframeEffect | null)?.pseudoElement === ROUTE_IN) ?? null;
 }
 
-const subscribeNothing = () => () => {};
-/** View Transitions with motion allowed: false on the server and during hydration. */
+/** Probes the render tier when the browser is idle unless this tab already knows it; the store updates then. */
+const subscribeRenderTier = (callback: () => void) => {
+  // No probe where the answer cannot change anything: no API, a weak device, or a tier already known.
+  if (renderTier() || !viewTransitionsSupported() || !routeTurnDeviceAllowed(navigator as Navigator & RouteTurnDevice)) return () => {};
+  return onRenderTier((tier) => {
+    try { sessionStorage.setItem(RENDER_TIER_KEY, tier); } catch { /* blocked storage: probe again next load */ }
+    callback();
+  });
+};
+/** View Transitions on a capable device with motion allowed: false on the server and during hydration. */
 function useRouteTurnMotion() {
-  const supported = useSyncExternalStore(subscribeNothing, viewTransitionsSupported, () => false);
+  const capable = useSyncExternalStore(subscribeRenderTier, routeTurnCapable, () => false);
   const reduced = useSyncExternalStore(subscribeSiteMotion, lessMotion, () => true);
-  return supported && !reduced;
+  return capable && !reduced;
 }
 
 /**
@@ -110,19 +146,20 @@ const OWN_ARRIVAL = "[data-hub-hero], [data-raid-hub-hero], [data-route-own-arri
 const HERO_ENTRANCE: Keyframe[] = [{ opacity: 0, transform: "translate3d(0, 10px, 0)" }, { opacity: 1, transform: "none" }];
 
 /**
- * The block around the new page's H1 (eyebrow, title, lede, actions) fades and
+ * The light hand-over (no View Transition: unsupported, or a weak device): the
+ * block around the new page's H1 (eyebrow, title, lede, actions) fades and
  * rises 10 px. Runs before the first paint of the new page, so it never shows
  * at rest first; skipped with less motion, off screen or on very large blocks.
  */
 function playHeroEntrance(frame: HTMLElement | null) {
-  if (!frame || viewTransitionsSupported() || typeof HTMLElement.prototype.animate !== "function" || lessMotion()
+  if (!frame || routeTurnCapable() || typeof HTMLElement.prototype.animate !== "function" || lessMotion()
     || frame.closest('[data-ui-motion="reduce"]') || frame.querySelector("[data-book-route-loading]")) return;
   const title = frame.querySelector<HTMLElement>("main h1") ?? frame.querySelector<HTMLElement>("h1");
   const hero = title?.parentElement;
   if (!title || !hero || hero === frame || title.closest(OWN_ARRIVAL) || hero.getAnimations().length) return;
   const box = hero.getBoundingClientRect();
   if (box.bottom <= 0 || box.top >= window.innerHeight || box.height > window.innerHeight * .8) return;
-  hero.animate(HERO_ENTRANCE, { duration: 170, easing: "cubic-bezier(.2, .7, .2, 1)" });
+  hero.animate(HERO_ENTRANCE, { duration: ATLAS_DURATION, easing: ATLAS_EASE });
 }
 
 function destinationFromTarget(target: EventTarget | null, includeOptOut = false) {
@@ -224,7 +261,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
     }
     expectedPath.current = destination;
     quietPath.current = null;
-    if (crossFade && viewTransitionsSupported() && !lessMotion()) armRouteTurn();
+    if (crossFade && routeTurnAllowed()) armRouteTurn();
     else disarmRouteTurn();
     setState("leaving");
     clearTimeout(watchdog.current);
@@ -283,7 +320,7 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
         settle();
       } else if (destination && destination.pathname + destination.search !== window.location.pathname + window.location.search) {
         warmRouteArt(destination.pathname);
-        if (destination.pathname === window.location.pathname && viewTransitionsSupported() && !lessMotion()) {
+        if (destination.pathname === window.location.pathname && routeTurnAllowed()) {
           const turn = searchTurns += 1;
           armRouteTurn("swap");
           setTimeout(() => {
