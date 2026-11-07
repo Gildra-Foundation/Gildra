@@ -156,7 +156,12 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   useLayoutEffect(() => applyMapKit(stage.current), [stage]);
 
   // ------------------------------------------------------------ insets of the panels
-  const insets = (): Insets => measureInsets(stage.current, titleBar.current, dock.current, tools.current);
+  const insets = (): Insets => {
+    const base = measureInsets(stage.current, titleBar.current, dock.current, tools.current);
+    // The overview inset in the lower right (hidden on small screens: then no corner).
+    const box = stage.current?.querySelector<HTMLElement>("[data-map-locator]")?.getBoundingClientRect();
+    return box && box.width > 0 ? { ...base, corner: { width: box.width + 12, height: box.height + 12 } } : base;
+  };
 
   // Wide screens hang the place panel under the title; phones get a bottom sheet.
   useEffect(() => {
@@ -299,7 +304,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     handle.current?.setCrumbs(crumbs);
     // The line tells the map as the era shown draws it (no Pandaria among Azeroth's continents in Cataclysm).
     const shown = engineRef.current?.maps;
-    handle.current?.setTitle(last.id === homeId ? copy.title : last.name, mapLine(lang, last, shown ? { ...bundle, maps: [...shown.values()] } : bundle));
+    const view = shown ? { ...bundle, maps: [...shown.values()] } : bundle;
+    handle.current?.setTitle(last.id === homeId ? copy.title : last.name, mapLine(lang, last, view, true), mapLine(lang, last, view));
   };
 
   useEffect(() => {
@@ -388,9 +394,9 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const observer = new ResizeObserver(update);
     if (dock.current) observer.observe(dock.current);
     if (titleBar.current) observer.observe(titleBar.current);
-    // The cookie notice lifts the dock by a property written on the stage.
+    // The cookie notice lifts the dock by a property written on the stage; the overview inset comes and goes.
     const lifted = new MutationObserver(update);
-    if (stage.current) lifted.observe(stage.current, { attributes: true, attributeFilter: ["style"] });
+    if (stage.current) lifted.observe(stage.current, { attributes: true, attributeFilter: ["style"], childList: true });
     return () => { observer.disconnect(); lifted.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- insets() reads the panels from refs
   }, [bundle]);

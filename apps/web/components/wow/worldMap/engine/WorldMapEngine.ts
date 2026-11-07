@@ -22,7 +22,8 @@ export { composeSet, mapSet, type MapSet } from "./sets";
  * over past the painted maps' detail. Eras swap the maps with a cross-fade once
  * the new picture has loaded; the compare mode splits the view at a divider.
  */
-export type Insets = { top: number; right: number; bottom: number; left: number };
+/** Panels around the map (CSS px); `corner`: a box in the lower right (the overview inset) the fitted map keeps clear of. */
+export type Insets = { top: number; right: number; bottom: number; left: number; corner?: { width: number; height: number } };
 /**
  * A map in this frame: its art rect on screen and the part of it inside its
  * parents (children may overhang); `upscale` CSS px per art texel; `blur`
@@ -303,6 +304,18 @@ export class WorldMapEngine {
     // A wide map on a tall phone screen: come closer than "whole" so it fills more of the screen (pan sideways).
     const boxAspect = (box[2] - box[0]) / (box[3] - box[1]);
     if (freeW / freeH < 1.05 && boxAspect > 1.1) camera = { ...camera, scale: Math.min(camera.scale * closer, (freeH * (1 - margin * 2)) / (box[3] - box[1])) };
+    // The overview inset in the lower right: shrink the fitted map just enough to clear it on one side.
+    const corner = this.options.insets.corner;
+    if (corner && corner.width > 0 && corner.height > 0) {
+      const w = (box[2] - box[0]) * camera.scale, h = (box[3] - box[1]) * camera.scale;
+      const overW = (left + (freeW - w) / 2 + w) - (this.width - right - corner.width);
+      const overH = (top + (freeH - h) / 2 + h) - (this.height - bottom - corner.height);
+      if (overW > 0 && overH > 0) {
+        // Clearing sideways or upwards, whichever costs less of the map's size (never below 85%).
+        const k = Math.max(0.85, Math.max((w - 2 * overW) / w, (h - 2 * overH) / h));
+        camera = { ...camera, scale: camera.scale * Math.min(1, k) };
+      }
+    }
     return { scale: camera.scale, x: camera.x - (left - right) / 2 / camera.scale, y: camera.y - (top - bottom) / 2 / camera.scale };
   }
 

@@ -29,7 +29,11 @@ function list(lang: Lang, names: string[], limit = 4) {
 }
 
 /** One factual line about a map, from its place in the hierarchy. */
-export function mapLine(lang: Lang, map: AtlasMap, bundle: AtlasBundle) {
+/**
+ * `short`: the line shown on the page, where the place panel lists the zones and cities itself — only what
+ * the map is (the meta description keeps the whole line).
+ */
+export function mapLine(lang: Lang, map: AtlasMap, bundle: AtlasBundle, short = false) {
   const copy = worldMapCopy[lang];
   const byId = new Map(bundle.maps.map((entry) => [entry.id, entry]));
   const capitals = capitalNames(bundle);
@@ -39,8 +43,8 @@ export function mapLine(lang: Lang, map: AtlasMap, bundle: AtlasBundle) {
   };
   const kids = map.children.map((id) => byId.get(id)).filter((m): m is AtlasMap => Boolean(m));
   if (map.type === "cosmic") return copy.lede;
-  if (map.type === "world") return kids.length ? copy.line.world(list(lang, kids.map((m) => m.name))) : "";
-  if (map.type === "continent") return copy.line.continent(up("world")?.name ?? "", list(lang, kids.filter((m) => !isCity(m, byId, capitals)).map((m) => m.name)));
+  if (map.type === "world") return kids.length && !short ? copy.line.world(list(lang, kids.map((m) => m.name))) : "";
+  if (map.type === "continent") return copy.line.continent(up("world")?.name ?? "", short ? "" : list(lang, kids.filter((m) => !isCity(m, byId, capitals)).map((m) => m.name)));
   if (isCity(map, byId, capitals)) {
     // The game hangs a city on its zone (Thunder Bluff in Mulgore) or straight on the continent (Orgrimmar).
     const parent = map.parent === null ? undefined : byId.get(map.parent);
@@ -49,7 +53,7 @@ export function mapLine(lang: Lang, map: AtlasMap, bundle: AtlasBundle) {
   }
   const cities = kids.filter((m) => isCity(m, byId, capitals)).map((m) => m.name);
   const continent = up("continent")?.name ?? up("world")?.name ?? "";
-  return continent ? copy.line.zone(continent, list(lang, cities)) : "";
+  return continent ? copy.line.zone(continent, short ? "" : list(lang, cities)) : "";
 }
 
 /** Position on the timeline: 0 at Classic's launch, 1 per expansion. */

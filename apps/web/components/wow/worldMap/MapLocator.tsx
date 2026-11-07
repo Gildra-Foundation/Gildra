@@ -68,7 +68,7 @@ export function MapLocator({ lang, map, here, followRef, onPick }: {
 
   if (!art) return null;
   return (
-    <button type="button" className={styles.locator} data-map-ui onClick={pick} aria-label={`${copy.overview}: ${map.name}`} title={map.name}>
+    <button type="button" className={styles.locator} data-map-ui data-map-locator onClick={pick} aria-label={`${copy.overview}: ${map.name}`} title={map.name}>
       <span className={styles.locatorArt} style={{ aspectRatio: aspect }}>
         {tiles.map((tile) => (
           // eslint-disable-next-line @next/next/no-img-element -- map tiles: exact pixel grid, no optimizer

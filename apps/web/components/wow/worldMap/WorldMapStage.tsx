@@ -16,7 +16,8 @@ import styles from "./worldMap.module.css";
 export type StageCrumb = { label: string; href?: string; mapId?: number };
 export type StagePoster = { aspect: number; tiles: Array<{ src: string; left: number; top: number; width: number; height: number }> };
 export type StageHandle = {
-  setTitle(title: string, line: string): void;
+  /** The shown line (short) and the head's description (the whole line). */
+  setTitle(title: string, line: string, description?: string): void;
   setCrumbs(crumbs: StageCrumb[]): void;
   onCrumb(handler: ((mapId: number) => void) | null): void;
   ready(): void;
@@ -25,12 +26,12 @@ export type StageHandle = {
 
 const WorldMapViewer = dynamic(() => import("./WorldMapViewer"), { ssr: false });
 
-export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster, bundleUrl }: {
-  lang: Lang; mapId: number | null; homeId: number | null; title: string; line: string;
+export function WorldMapStage({ lang, mapId, homeId, title, line, description, crumbs, poster, bundleUrl }: {
+  lang: Lang; mapId: number | null; homeId: number | null; title: string; line: string; description?: string;
   crumbs: StageCrumb[]; poster: StagePoster | null; bundleUrl: string;
 }) {
   const stage = useRef<HTMLElement>(null);
-  const [heading, setHeading] = useState({ title, line });
+  const [heading, setHeading] = useState({ title, line, description: description || line });
   const [trail, setTrail] = useState(crumbs);
   const [live, setLive] = useState(false);
   const [start, setStart] = useState(false);
@@ -52,7 +53,7 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
   }, []);
 
   const handle = useRef<StageHandle>({
-    setTitle: (t, l) => setHeading({ title: t, line: l }),
+    setTitle: (t, l, d) => setHeading({ title: t, line: l, description: d || l }),
     setCrumbs: (c) => setTrail(c),
     onCrumb: (h) => { crumbHandler.current = h; },
     ready: () => setLive(true),
@@ -63,7 +64,7 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
   const moved = useRef(false);
   useEffect(() => {
     if (!moved.current) { moved.current = trail !== crumbs; if (!moved.current) return; }
-    syncHead(lang, trail, homeId, heading.line);
+    syncHead(lang, trail, homeId, heading.description);
   }, [trail, heading, lang, homeId, crumbs]);
 
   // On phones the trail is one scrolling row: keep its deepest step in sight.

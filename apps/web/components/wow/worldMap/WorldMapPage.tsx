@@ -62,7 +62,8 @@ export function WorldMapPage({ lang, map: requested }: { lang: Lang; map?: Atlas
   ];
   const children = map ? worldMapChildren(map, lang).filter((child) => child.page) : [];
   const heading = !map || map.id === home?.id ? copy.title : map.name;
-  const line = map ? mapLine(lang, map, bundle) : "";
+  const line = map ? mapLine(lang, map, bundle, true) : "";
+  const description = map ? mapLine(lang, map, bundle) : "";
   const childTitle = map ? copy.children[map.type === "zone" && map.parent !== null && bundle.maps.find((m) => m.id === map.parent)?.type === "zone" ? "city" : map.type] : copy.places;
 
   // The trail as search engines read it (the stage draws the same trail).
@@ -84,6 +85,7 @@ export function WorldMapPage({ lang, map: requested }: { lang: Lang; map?: Atlas
         homeId={home?.id ?? null}
         title={heading}
         line={line}
+        description={description}
         crumbs={crumbs}
         poster={map ? poster(map) : null}
         bundleUrl={`${routeSections.worldMap.path}/atlas/${lang}?v=${worldMapVersion()}`}
