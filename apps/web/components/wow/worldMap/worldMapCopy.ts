@@ -52,7 +52,7 @@ export const worldMapCopy = {
     and: (n: number) => ` and ${n} more`,
     line: {
       world: (list: string) => `Continents: ${list}.`,
-      continent: (world: string, list: string) => list ? `Continent of ${world}. Zones: ${list}.` : `Continent of ${world}.`,
+      continent: (world: string, list: string) => world ? (list ? `Continent of ${world}. Zones: ${list}.` : `Continent of ${world}.`) : list ? `Zones: ${list}.` : "",
       zone: (continent: string, list: string) => list ? `Zone of ${continent}. Cities: ${list}.` : `Zone of ${continent}.`,
       city: (zone: string, continent: string) => continent && continent !== zone ? `City in ${zone}, ${continent}.` : `City in ${zone}.`,
       cityOn: (continent: string) => `City in ${continent}.`,
@@ -113,7 +113,7 @@ export const worldMapCopy = {
     and: (n: number) => ` и ещё ${n}`,
     line: {
       world: (list: string) => `Континенты: ${list}.`,
-      continent: (world: string, list: string) => list ? `Континент мира ${world}. Зоны: ${list}.` : `Континент мира ${world}.`,
+      continent: (world: string, list: string) => world ? (list ? `Континент мира ${world}. Зоны: ${list}.` : `Континент мира ${world}.`) : list ? `Зоны: ${list}.` : "",
       zone: (continent: string, list: string) => list ? `Зона континента ${continent}. Города: ${list}.` : `Зона континента ${continent}.`,
       city: (zone: string, continent: string) => continent && continent !== zone ? `Город в зоне ${zone}, ${continent}.` : `Город в зоне ${zone}.`,
       cityOn: (continent: string) => `Город на континенте ${continent}.`,

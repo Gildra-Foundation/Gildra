@@ -41,8 +41,9 @@ function poster(map: AtlasMap): StagePoster | null {
   const tiles: StagePoster["tiles"] = [];
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
-      const w = Math.min(art.tileSize, lw - x * art.tileSize), h = Math.min(art.tileSize, lh - y * art.tileSize);
-      tiles.push({ src: tileUrl(art, map.id, z, x, y), left: (x * art.tileSize) / lw, top: (y * art.tileSize) / lh, width: w / lw, height: h / lh });
+      // Edge tiles are full-size files with an empty margin: drawn at a whole tile's size, the margin
+      // falls outside the picture (clipped) instead of the art being squeezed into the edge.
+      tiles.push({ src: tileUrl(art, map.id, z, x, y), left: (x * art.tileSize) / lw, top: (y * art.tileSize) / lh, width: art.tileSize / lw, height: art.tileSize / lh });
     }
   }
   return { aspect: art.width / art.height, tiles };

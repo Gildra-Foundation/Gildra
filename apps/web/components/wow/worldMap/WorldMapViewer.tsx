@@ -19,7 +19,7 @@ import { measureInsets, NARROW_QUERY } from "./ui/layout";
 import { placeFacts } from "./ui/placeFacts";
 import type { StageCrumb, StageHandle } from "./WorldMapStage";
 import { worldMapCopy } from "./worldMapCopy";
-import { artErasAt, artKey, eraAt, mapIdOfPath, mapLine, orderedEras, patchPosition, positionToPatch, pushesHistory, queryToView, restOf, viewToQuery } from "./worldMapModel";
+import { artErasAt, artKey, eraAt, eraFromParam, mapIdOfPath, mapLine, orderedEras, patchPosition, positionToPatch, pushesHistory, queryToView, restOf, viewToQuery } from "./worldMapModel";
 import styles from "./worldMapViewer.module.css";
 
 type Selected = { type: "poi"; poi: AtlasPoi } | { type: "event"; event: AtlasEvent } | null;
@@ -248,7 +248,9 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       ...chain.map((map) => ({ label: map.id === homeId ? copy.title : map.name, href: map.id === homeId ? `${prefix}/wow/map` : map.page ? `${prefix}${mapPagePath(map)}` : undefined, mapId: map.id })),
     ];
     handle.current?.setCrumbs(crumbs);
-    handle.current?.setTitle(last.id === homeId ? copy.title : last.name, mapLine(lang, last, bundle));
+    // The line tells the map as the era shown draws it (no Pandaria among Azeroth's continents in Cataclysm).
+    const shown = engineRef.current?.maps;
+    handle.current?.setTitle(last.id === homeId ? copy.title : last.name, mapLine(lang, last, shown ? { ...bundle, maps: [...shown.values()] } : bundle));
   };
 
   useEffect(() => {
@@ -275,7 +277,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     }
     const q = readQuery();
     const ordered = orderedEras(bundle.eras);
-    const startEra = q.era ? ordered.find((e) => e.id === q.era) : undefined;
+    const startEra = eraFromParam(q.era, ordered, bundle.art);
     if (q.at !== null) setPosition(Math.max(0, Math.min(restOf(ordered, ordered[ordered.length - 1]), q.at)));
     else if (startEra) setPosition(restOf(ordered, startEra));
     const start = mapId ?? homeId;
@@ -402,7 +404,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       if (!engine) return;
       const q = readQuery();
       const ordered = orderedEras(bundle.eras);
-      const target = q.era ? ordered.find((e) => e.id === q.era) : undefined;
+      const target = eraFromParam(q.era, ordered, bundle.art);
       setPosition(q.at !== null ? q.at : target ? restOf(ordered, target) : null);
       const id = mapIdOfPath(window.location.pathname, homeId);
       const map = id === null ? undefined : engine.maps.get(id);
@@ -424,6 +426,12 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     engine.setCompare(left ? { left, at: divider } : null);
   }, [compare, divider, artLeft, setFor]);
   useEffect(() => { lastPick.current = 0; engineRef.current?.invalidate(); }, [layers, activeSet]);
+  // Another era's maps: the title line and trail tell the place as that era draws it.
+  useEffect(() => {
+    const engine = engineRef.current;
+    const focusMap = engine?.focus;
+    if (engine && focusMap) onFocusRef.current(engine.chain(focusMap.id));
+  }, [activeSet]);
   useEffect(() => { const engine = engineRef.current; if (engine?.view && engine.focus) settleRef.current({ camera: engine.view, ...engine.size, focus: engine.focus, drawn: [], moving: false, time: 0 }); }, [era?.id, position, selected, compare]);
 
   // ------------------------------------------------------------ actions

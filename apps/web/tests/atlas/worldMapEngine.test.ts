@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
-import { buildAtlasBundle, type ArtEra, type AtlasMap } from "@/lib/wow/worldMap/bundle";
+import { buildAtlasBundle, localArt, type ArtEra, type AtlasMap } from "@/lib/wow/worldMap/bundle";
 import type { EraRecord, MapRecord, PoiRecord } from "@/lib/wow/worldMap/types";
 import { blurGroups, blurOf, desatOf, dimOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "@/components/wow/worldMap/engine/lod";
 import { chainUp, composeSet, mapSet, transferCamera } from "@/components/wow/worldMap/engine/sets";
 import { wheelKind } from "@/components/wow/worldMap/engine/input";
-import { mapIdOfPath, patchPosition, positionToPatch, pushesHistory, queryToView, viewToQuery } from "@/components/wow/worldMap/worldMapModel";
+import { eraFromParam, mapIdOfPath, patchPosition, positionToPatch, pushesHistory, queryToView, viewToQuery } from "@/components/wow/worldMap/worldMapModel";
+import { isRectMask, paperColour } from "@/components/wow/worldMap/engine/paper";
+import { paintedOf } from "@/components/wow/worldMap/ui/paintedArt";
 
 const fixture = JSON.parse(readFileSync(fileURLToPath(new URL("../fixtures/world-map/engine.json", import.meta.url)), "utf8")) as { maps: MapRecord[]; pois: PoiRecord[]; eras: EraRecord[] };
 const bundle = buildAtlasBundle({ maps: fixture.maps, pois: fixture.pois, eras: fixture.eras, events: [] }, "en");
@@ -239,5 +241,77 @@ describe("world map URL state", () => {
     assert.equal(positionToPatch(4.1), "5.1.0");
     // Theramore: left just before the phase that starts at 5.1 stays before it.
     assert.ok(patchPosition(positionToPatch(4.1 - 0.011)) < 4.1);
+  });
+});
+
+describe("world map round 3 data", () => {
+  const art = { width: 1000, height: 666, tileSize: 256, maxZoom: 2, url: "/maps/tiles/1/{z}/{x}_{y}.webp" };
+
+  it("draws the Russian client's picture on /ru, today's elsewhere", () => {
+    const withRu = { ...art, urlRu: "/maps/tiles/ru/1/{z}/{x}_{y}.webp", namesPainted: true };
+    assert.equal(localArt(withRu, "ru").url, withRu.urlRu);
+    assert.equal(localArt(withRu, "ru").localized, true);
+    assert.equal(localArt(withRu, "en").url, art.url);
+    assert.equal(localArt(withRu, "en").localized, true);
+    assert.equal(localArt(art, "ru").url, art.url);
+    assert.equal(localArt(art, "ru").localized, undefined, "no RU picture: its words are not in Russian");
+    assert.ok(!("urlRu" in localArt(withRu, "ru")), "the bundle carries one url");
+  });
+
+  it("stands a world the era's Cosmic has no place for apart, as its own root", () => {
+    const eras: EraRecord[] = [...fixture.eras, {
+      id: "warlords-of-draenor", name: { en: "Warlords", ru: "Warlords" }, expansion: "wod", patchRange: ["6.0.2", "6.2.4"], rootMapId: 946,
+      source: { product: "wow", build: "6" },
+      maps: { ...Object.fromEntries(fixture.maps.map((m) => [String(m.id), "unchanged" as const])), "424": { art: { ...art, url: "/maps/tiles/424/{z}/{x}_{y}.webp" }, parentId: null, rectInParent: null } },
+    }];
+    const b = buildAtlasBundle({ maps: fixture.maps, pois: fixture.pois, eras, events: [] }, "en");
+    const wod = composeSet("wod", mapSet("current", b.maps), [b.artEras.find((e) => e.id === "warlords-of-draenor") as ArtEra]);
+    const alone = wod.maps.get(424) as AtlasMap;
+    assert.ok(alone, "kept");
+    assert.equal(alone.depth, 0);
+    assert.equal(alone.parent, null);
+    const cosmic = wod.maps.get(946) as AtlasMap;
+    assert.ok(alone.frame[0] > cosmic.frame[2], "laid out apart, not on today's Cosmic");
+    assert.ok(!(wod.maps.get(947) as AtlasMap).children.includes(424));
+    assert.ok(wod.maps.has(371), "its zones come along");
+  });
+
+  it("reads ?era= as a timeline id, an art era id or an older art era id", () => {
+    const eras = [
+      { id: "wod", name: "WoD", expansion: "wod", range: ["6.0.2", "6.2.4"] as [string, string] },
+      { id: "legion", name: "Legion", expansion: "legion", range: ["7.0.3", "7.3.5"] as [string, string] },
+    ];
+    const art = [{ id: "warlords-of-draenor", name: "WoD", range: ["6.0.2", "6.2.4"] as [string, string], changed: [] }, { id: "legion", name: "Legion", range: ["7.0.3", "7.3.5"] as [string, string], changed: [] }];
+    assert.equal(eraFromParam("wod", eras, art)?.id, "wod");
+    assert.equal(eraFromParam("warlords-of-draenor", eras, art)?.id, "wod");
+    assert.equal(eraFromParam("warlords-legion", eras, art)?.id, "wod");
+    assert.equal(eraFromParam("nonsense", eras, art), undefined);
+    assert.equal(eraFromParam(null, eras, art), undefined);
+  });
+
+  it("tells a soft-rectangle mask from a place's shape and finds the bare sheet's colour", () => {
+    const w = 40, h = 30;
+    const rect = Array.from({ length: w * h }, (_, i) => { const x = i % w, y = (i / w) | 0; const e = Math.min(x, w - 1 - x, y, h - 1 - y); return Math.min(1, e / 3); });
+    assert.equal(isRectMask(rect, w, h), true);
+    const shape = rect.map((v, i) => ((i % w) > w * 0.6 ? 0 : v));
+    assert.equal(isRectMask(shape, w, h), false);
+    const px = new Uint8Array(w * h * 4);
+    for (let i = 0; i < w * h; i++) { px.set([200, 170, 120, 255], i * 4); }
+    for (let y = 10; y < 20; y++) for (let x = 12; x < 28; x++) px.set([90, 40, 30, 255], (y * w + x) * 4);
+    const paper = paperColour(px, w, h);
+    assert.ok(paper);
+    assert.deepEqual(paper.map((v) => Math.round(v * 255)), [200, 170, 120]);
+  });
+
+  it("takes the painted words from the data, the hand table where the data has none", () => {
+    const map = (url: string, extra: Partial<AtlasMap["art"] & object> = {}, type: AtlasMap["type"] = "zone") =>
+      ({ id: 1, slug: "x", type, name: "x", parent: null, children: [], box: [0, 0, 1, 1], frame: [0, 0, 1, 1], art: { ...art, url, ...extra }, depth: 1, page: true, portal: false }) as AtlasMap;
+    const zone = paintedOf(map("/maps/tiles/ru/1/{z}/{x}_{y}.webp", { namesPainted: true, paintedLabels: [[0.1, 0.1, 0.2, 0.15]] }));
+    assert.deepEqual(zone, { titles: [[0.1, 0.1, 0.2, 0.15]], names: true });
+    // Kalimdor's painted words are its title and seas: the table says its zones are not named there.
+    const kalimdor = paintedOf(map("/maps/tiles/ru/12/{z}/{x}_{y}.webp", { namesPainted: true, paintedLabels: [[0.4, 0.45, 0.6, 0.5]] }, "continent"));
+    assert.equal(kalimdor?.names, false);
+    assert.equal(paintedOf(map("/maps/tiles/101/{z}/{x}_{y}.webp"))?.names, true, "table fallback");
+    assert.equal(paintedOf(map("/maps/tiles/9999/{z}/{x}_{y}.webp")), null);
   });
 });

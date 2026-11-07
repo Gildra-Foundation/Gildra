@@ -54,8 +54,10 @@ const inside = (box: Box, width: number, height: number) => box[0] >= 2 && box[2
 const hits = (box: Box, boxes: Box[]) => boxes.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]);
 
 /** The screen box of a map's name (zone names, capitals with their seal). */
+/** Cyrillic capitals of the spaced map lettering run wider than Latin ones. */
+const wide = (label: string) => (/[\u0400-\u04ff]/.test(label) ? 1.14 : 1);
 function mapBox(marker: Extract<Placed, { type: "map" }>, shift: number): Box {
-  const w = marker.label.length * CHAR[marker.size] + 16;
+  const w = marker.label.length * CHAR[marker.size] * wide(marker.label) + 22;
   const sy = marker.sy + shift;
   return marker.capital ? [marker.sx - w / 2, sy - 15, marker.sx + w / 2, sy + 44] : [marker.sx - w / 2, sy - 13, marker.sx + w / 2, sy + 13];
 }
@@ -78,8 +80,10 @@ function nameBox(marker: Placed, side: LabelSide): Box {
 export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers, era: AtlasEra | null, project: (x: number, y: number) => [number, number], artIn: (map: AtlasMap) => unknown, lang: "en" | "ru" = "en"): Array<Marker & { sx: number; sy: number }> {
   // Words the game painted into the pictures in view: labels keep clear of them.
   const painted: Box[] = [];
+  // Maps drawn out of focus (a backdrop far magnified) carry no markers.
+  const backdrop = (entry: FrameInfo["drawn"][number]) => (entry.blur ?? 0) > 0.5;
   for (const entry of info.drawn) {
-    if (entry.alpha < 0.55) continue;
+    if (entry.alpha < 0.55 || backdrop(entry)) continue;
     for (const [x0, y0, x1, y1] of paintedBoxes(entry.map)) {
       const [a, b] = project(x0, y0), [c, d] = project(x1, y1);
       if (c > 0 && a < info.width && d > 0 && b < info.height) painted.push([a, b, c, d]);
@@ -91,13 +95,15 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
   for (const entry of info.drawn) {
     const { map, alpha, screen } = entry;
     const width = screen[2] - screen[0];
-    if (alpha < 0.55) continue;
+    if (alpha < 0.55 || backdrop(entry)) continue;
     const kids = map.children.map((id) => index.byId.get(id)).filter((child): child is AtlasMap => Boolean(child) && Boolean(artIn(child as AtlasMap)));
     const openKid = (ax: number, ay: number) => kids.some((child) => (drawnAlpha.get(child.id) ?? 0) > 0.7 && contains(child.box, ax, ay));
     const labelled = new Set<string>();
     const targeted = new Set<number>();
-    // Art that names its zones itself: our names show on hover (EN) or as plaques over the painted words (RU).
+    // Art that names its zones itself: our names show on hover where the picture speaks the reader's
+    // language (EN; RU from the Russian client), else as plaques over the painted words.
     const namesPainted = Boolean(paintedOf(map)?.names);
+    const localized = lang === "en" || Boolean(map.art?.localized);
     // The map the reader stands in shows all its points sooner.
     const near = info.focus.id === map.id ? 0.5 : 1;
     for (const poi of index.poisByMap.get(map.id) ?? []) {
@@ -116,8 +122,8 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
         out.push({
           key: `m${target.id}`, type: "map", label: poi.name, ax, ay, priority: map.type === "world" || map.type === "cosmic" ? 9 : 2,
           map: target, capital: false, size: map.type === "cosmic" || map.type === "world" ? "world" : map.type === "continent" ? "continent" : "zone",
-          quiet: map.type === "cosmic" || map.type === "world" || (namesPainted && lang === "en"),
-          covers: namesPainted && lang !== "en" && map.type !== "cosmic" && map.type !== "world",
+          quiet: map.type === "cosmic" || map.type === "world" || (namesPainted && localized),
+          covers: namesPainted && !localized && map.type !== "cosmic" && map.type !== "world",
         });
         continue;
       }
@@ -139,8 +145,8 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
           key: `m${child.id}`, type: "map", label: child.name, ax: cx, ay: cy, priority: capital ? 1 : map.type === "world" || map.type === "cosmic" ? 9 : 2,
           map: child, capital: Boolean(capital), faction: capital?.faction, size: map.type === "cosmic" || map.type === "world" ? "world" : map.type === "continent" ? "continent" : "zone",
           // The Cosmic and world pictures carry their own painted names: ours shows on hover only.
-          quiet: map.type === "cosmic" || map.type === "world" || (namesPainted && lang === "en"),
-          covers: namesPainted && lang !== "en" && map.type !== "cosmic" && map.type !== "world",
+          quiet: map.type === "cosmic" || map.type === "world" || (namesPainted && localized),
+          covers: namesPainted && !localized && map.type !== "cosmic" && map.type !== "world",
         });
       }
     }

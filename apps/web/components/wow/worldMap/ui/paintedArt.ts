@@ -27,11 +27,23 @@ const PAINTED: Record<string, Painted> = {
   "/maps/tiles/2537/": { names: true, titles: [] },
 };
 
+/**
+ * The data names the painted words of every picture that has a Russian
+ * version (where the EN and RU pictures differ); the hand table covers the
+ * rest and says whether a continent's words are its zones' names.
+ */
 export function paintedOf(map: AtlasMap): Painted | null {
-  const url = map.art?.url;
-  if (!url) return null;
-  const at = url.indexOf("{z}");
-  return PAINTED[at > 0 ? url.slice(0, at) : url] ?? null;
+  const art = map.art;
+  if (!art?.url) return null;
+  const at = art.url.indexOf("{z}");
+  const key = (at > 0 ? art.url.slice(0, at) : art.url).replace("/maps/tiles/ru/", "/maps/tiles/");
+  const table = PAINTED[key];
+  if (art.paintedLabels?.length) {
+    // A continent's painted words may be only its title and seas (Kalimdor): the table knows; zones and cities name their places.
+    const names = table ? table.names : Boolean(art.namesPainted) && map.type !== "continent";
+    return { titles: art.paintedLabels, names };
+  }
+  return table ?? null;
 }
 
 /** The painted words of a map in atlas space. */

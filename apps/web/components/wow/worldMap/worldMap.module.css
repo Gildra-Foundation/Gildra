@@ -44,7 +44,7 @@
   pointer-events: none;
   transition: opacity var(--atlas-duration-slow) var(--atlas-ease) .35s;
 }
-.posterArt { position: relative; width: min(90cqw, calc(90cqh * var(--poster-aspect))); }
+.posterArt { position: relative; overflow: hidden; width: min(90cqw, calc(90cqh * var(--poster-aspect))); }
 .posterArt img { position: absolute; display: block; max-width: none; }
 .stage[data-live] .poster { opacity: 0; }
 
