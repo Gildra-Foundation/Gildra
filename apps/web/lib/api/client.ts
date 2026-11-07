@@ -363,11 +363,12 @@ export async function getCatalogSitemapEntries(
   type: string,
   shard = "",
   product = "wow",
+  timeoutMs = 15_000,
 ): Promise<CatalogSitemapEntry[]> {
   const params = new URLSearchParams({ product, type });
   if (shard) params.set("shard", shard);
   // Shards can exceed Next's 2 MB Data Cache item limit. The XML response is
   // cached at the route/CDN layer, so avoid a second oversized JSON cache.
-  const page = await catalogRequest<{ data: CatalogSitemapEntry[] }>(`/v1/game/sitemap-entries?${params}`, 3600, "no-store");
+  const page = await catalogRequest<{ data: CatalogSitemapEntry[] }>(`/v1/game/sitemap-entries?${params}`, 3600, "no-store", timeoutMs);
   return page.data;
 }

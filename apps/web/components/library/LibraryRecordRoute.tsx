@@ -12,8 +12,8 @@ export type LibraryRecordParams = Promise<{ dataset: string; id: string; slug: s
 export type LibraryRecordSearch = Promise<{ product?: string }> | undefined;
 
 const words = {
-  en: { site: "Gildra Library", fallback: (name: string) => `${name} — World of Warcraft library entry.` },
-  ru: { site: "Библиотека Gildra", fallback: (name: string) => `${name} — запись библиотеки World of Warcraft.` },
+  en: { site: "Gildra Library", fallback: (name: string, set?: string) => `${name}${set ? ` (${set})` : ""} — World of Warcraft library entry with its tooltip, details and related records.` },
+  ru: { site: "Библиотека Gildra", fallback: (name: string, set?: string) => `${name}${set ? ` (${set})` : ""} — запись библиотеки World of Warcraft: подсказка, свойства и связанные записи.` },
 } as const;
 
 const locale = (lang: Lang) => (lang === "ru" ? "ru_RU" as const : "en_US" as const);
@@ -37,10 +37,12 @@ export async function libraryRecordMetadata(lang: Lang, params: LibraryRecordPar
   if (!(await catalogReadable())) return { title: words[lang].site };
   const [{ id, dataset }, filters] = await Promise.all([params, searchParams]);
   const product = filters?.product ?? "wow";
-  const [entity, twin] = await Promise.all([
+  const [entity, twin, datasets] = await Promise.all([
     routeRecord(lang, dataset, id, product),
     getCatalogEntity(id, locale(lang === "ru" ? "en" : "ru")).then((record) => record ? catalogLocaleView(record, lang === "ru" ? "en" : "ru") : null).catch(() => null),
+    getLibraryDatasets(locale(lang), product).catch(() => []),
   ]);
+  const setName = datasets.find((item) => item.slug === dataset)?.name;
   if (!entity) return {};
   const type = entity.type;
   const name = entity.name || `${type.replaceAll("_", " ")} #${entity.externalId}`;
@@ -48,13 +50,22 @@ export async function libraryRecordMetadata(lang: Lang, params: LibraryRecordPar
   const other = libraryRecordPath(lang === "ru" ? "en" : "ru", type, id, twin?.slug || entity.slug || entity.externalId, product);
   const en = lang === "en" ? canonical : other;
   const ru = lang === "ru" ? canonical : other;
-  const title = `${name} — ${words[lang].site}`;
-  const description = (entity.description || entity.tooltip?.plainText || words[lang].fallback(name)).slice(0, 160);
+  // A Russian page whose record has no Russian name of its own (the game left it untranslated) is not
+  // a page of its own: it stays out of the index and the English page names no Russian twin. The
+  // record sitemap lists the same Russian pages (API sitemap-entries `slugRu`).
+  const russian = lang === "ru" ? entity : twin;
+  const ruOwn = Boolean(russian?.name) && !russian?.localeFallback;
+  // A long record name keeps the title within a search result: the site name alone closes it.
+  const title = `${name} — ${words[lang].site}`.length > 65 ? `${name} — Gildra` : `${name} — ${words[lang].site}`;
+  const text = entity.description || entity.tooltip?.plainText || "";
+  // A one-line game text ("Season 14 Elite") says too little on its own: the record's name and kind follow it.
+  const description = (text.length >= 70 ? text : text ? `${text} ${words[lang].fallback(name, setName)}` : words[lang].fallback(name, setName)).slice(0, 160);
   return {
     title,
     description,
+    ...(lang === "ru" && !ruOwn ? { robots: { index: false, follow: true } } : {}),
     // No openGraph object here: it would replace the inherited library card image (app/**/library/opengraph-image.tsx).
-    alternates: { canonical, languages: { en, ru, "x-default": en } },
+    alternates: { canonical, languages: ruOwn ? { en, ru, "x-default": en } : { en, "x-default": en } },
   };
 }
 
