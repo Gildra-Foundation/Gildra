@@ -9,7 +9,15 @@
  */
 export type Words = { en: string; ru: string };
 export type MapType = "cosmic" | "world" | "continent" | "zone" | "dungeon" | "micro" | "orphan";
-export type MapArt = { width: number; height: number; tileSize: number; maxZoom: number; url: string };
+export type MapArt = {
+  width: number; height: number; tileSize: number; maxZoom: number; url: string;
+  /** The same picture from the Russian client (names painted in Russian), same tiling. */
+  urlRu?: string;
+  /** The picture names its places itself (where the EN and RU pictures differ). */
+  namesPainted?: boolean;
+  /** Boxes of the painted words, 0..1 of the picture. */
+  paintedLabels?: Rect[];
+};
 /** [x0, y0, x1, y1], 0..1 in the parent's picture. */
 export type Rect = [number, number, number, number];
 /**
@@ -17,7 +25,11 @@ export type Rect = [number, number, number, number];
  * pyramid like `MapArt` ({z} {x} {y} placeholders), placed by `rect` in the
  * continent's 0..1 picture space (may exceed 0..1).
  */
-export type MapTerrain = { url: string; tileSize: number; width: number; height: number; maxZoom: number; rect: Rect };
+export type MapTerrain = {
+  url: string; tileSize: number; width: number; height: number; maxZoom: number; rect: Rect;
+  /** JSON {z: ["x_y", …]} of the tiles that exist (open sea has none): only those are requested. */
+  index?: string;
+};
 
 export type MapRecord = {
   id: number;

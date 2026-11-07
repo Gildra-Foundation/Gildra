@@ -52,13 +52,18 @@ export function worldMapBundle(lang: Lang): AtlasBundle {
   return bundle;
 }
 
+/** Art eras renamed since a link or a cached viewer asked for them: the era that now covers that time. */
+const ART_ERA_ALIASES: Record<string, string> = { "warlords-legion": "warlords-of-draenor" };
+
 /** One art era's maps and points. */
 export function worldMapArtEra(lang: Lang, id: string): ArtEra | null {
-  return full(lang).artEras.find((era) => era.id === id) ?? null;
+  const eras = full(lang).artEras;
+  return eras.find((era) => era.id === id) ?? eras.find((era) => era.id === ART_ERA_ALIASES[id]) ?? null;
 }
 
 export function worldMapArtEraIds() {
-  return full("en").artEras.map((era) => era.id);
+  const ids = full("en").artEras.map((era) => era.id);
+  return [...ids, ...Object.keys(ART_ERA_ALIASES).filter((alias) => !ids.includes(alias) && ids.includes(ART_ERA_ALIASES[alias]))];
 }
 
 /** Changes with the data: the viewer's bundle URL carries it so a new release never serves a stale copy. */

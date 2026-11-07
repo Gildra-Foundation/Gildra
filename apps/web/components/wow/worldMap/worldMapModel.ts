@@ -150,3 +150,20 @@ export function positionToPatch(position: number) {
   if (build >= 10) { minor += 1; build -= 10; }
   return `${index + 1}.${minor}.${build}`;
 }
+
+/** Art-era ids of older links (the eras were split since). */
+const ERA_ALIASES: Record<string, string> = { "warlords-legion": "warlords-of-draenor" };
+
+/**
+ * The timeline era a ?era= value names: a timeline id (vanilla … midnight), or
+ * an art era's id (warlords-of-draenor, an older warlords-legion) — that era's
+ * first patch on the timeline.
+ */
+export function eraFromParam(value: string | null, eras: AtlasEra[], art: ArtEraInfo[]): AtlasEra | undefined {
+  if (!value) return undefined;
+  const direct = eras.find((era) => era.id === value);
+  if (direct) return direct;
+  const id = ERA_ALIASES[value] ?? value;
+  const picture = art.find((era) => era.id === id);
+  return picture ? eraAt(eras, patchPosition(picture.range[0])) ?? undefined : undefined;
+}
