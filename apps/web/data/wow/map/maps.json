@@ -1,0 +1,7 @@
+[
+{"id":1,"slug":"durotar","name":{"en":"Durotar","ru":"Дуротар"},"type":"zone","parentId":12,"children":[],"rectInParent":[0.517098,0.428028,0.660781,0.571711],"art":{"width":1002,"height":668,"tileSize":256,"maxZoom":2,"url":"/maps/tiles/1/{z}/{x}_{y}.webp"}},
+{"id":12,"slug":"kalimdor","name":{"en":"Kalimdor","ru":"Калимдор"},"type":"continent","parentId":947,"children":[1,85],"rectInParent":[-0.059548,0.30318,0.414547,0.776291],"art":{"width":3840,"height":2560,"tileSize":256,"maxZoom":4,"url":"/maps/tiles/12/{z}/{x}_{y}.webp"}},
+{"id":85,"slug":"orgrimmar","name":{"en":"Orgrimmar","ru":"Оргриммар"},"type":"zone","parentId":12,"children":[],"rectInParent":[0.559051,0.400379,0.606317,0.447645],"art":{"width":1002,"height":668,"tileSize":256,"maxZoom":2,"url":"/maps/tiles/85/{z}/{x}_{y}.webp"}},
+{"id":946,"slug":"cosmic","name":{"en":"Cosmic","ru":"Космос"},"type":"cosmic","parentId":null,"children":[947],"rectInParent":null,"art":{"width":1002,"height":668,"tileSize":256,"maxZoom":2,"url":"/maps/tiles/946/{z}/{x}_{y}.webp"}},
+{"id":947,"slug":"azeroth","name":{"en":"Azeroth","ru":"Азерот"},"type":"world","parentId":946,"children":[12],"rectInParent":[0.348,0.25,0.68,0.745],"art":{"width":3840,"height":2560,"tileSize":256,"maxZoom":4,"url":"/maps/tiles/947/{z}/{x}_{y}.webp"}}
+]
