@@ -5,8 +5,16 @@ import type { MapArt, Rect } from "@/lib/wow/worldMap/types";
  * the picture): a box, optionally naming the map it labels (`labelFor`).
  * Accepts plain boxes ([x0, y0, x1, y1]) and objects ({ box | rect, labelFor }).
  */
-export type ArtBox = { box: Rect; for?: number };
-type Raw = Rect | { box?: Rect; rect?: Rect; labelFor?: number | string | null; for?: number | string | null };
+export type ArtBox = {
+  box: Rect; for?: number;
+  /** The word with its banner or scroll: what goes when the word gives way. */
+  plaque?: Rect;
+  /** A picture of the ground under the plaque (RGBA, the plaque's size): drawn over it instead of a hole. */
+  patch?: string;
+  /** Decor kind (ornament, crest). */
+  kind?: string;
+};
+type Raw = Rect | { box?: Rect; rect?: Rect; plaque?: Rect; patch?: string; kind?: string; labelFor?: number | string | null; for?: number | string | null };
 
 const isRect = (value: unknown): value is Rect =>
   Array.isArray(value) && value.length === 4 && value.every(Number.isFinite) && value[2] > value[0] && value[3] > value[1];
@@ -21,7 +29,13 @@ function boxes(list: unknown): ArtBox[] {
     if (!box) continue;
     const target = item.labelFor ?? item.for;
     const id = typeof target === "number" ? target : typeof target === "string" && /^\d+$/.test(target) ? Number(target) : undefined;
-    out.push(id === undefined ? { box } : { box, for: id });
+    // A label for an era-only map ("classic-1416") names nothing the engine can match: kept unbound.
+    out.push({
+      box, ...(id === undefined ? {} : { for: id }),
+      ...(isRect(item.plaque) ? { plaque: item.plaque } : {}),
+      ...(typeof item.patch === "string" && item.patch.startsWith("/") ? { patch: item.patch } : {}),
+      ...(typeof item.kind === "string" ? { kind: item.kind } : {}),
+    });
   }
   return out;
 }

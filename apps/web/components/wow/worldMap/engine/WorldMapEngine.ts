@@ -57,7 +57,8 @@ export type EngineOptions = { alive: boolean; reducedMotion: boolean; insets: In
 type Flight = { path: ReturnType<typeof flightPath>; start: number; duration: number; after?: () => void };
 type Pointer = { id: number; x: number; y: number };
 type TerrainDraw = { map: AtlasMap; alpha: number; clip: Box };
-type ArtStyle = { corner?: number; holes?: Array<[number, number, number, number]>; alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number; exists?: (z: number, x: number, y: number) => boolean; maskStrength?: number };
+type Patch = { url: string; box: Box };
+type ArtStyle = { corner?: number; holes?: Array<[number, number, number, number]>; patches?: Patch[]; alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number; exists?: (z: number, x: number, y: number) => boolean; maskStrength?: number };
 
 /** Floors and caves under a place (micro maps, orphan levels like Cleft of Shadow): never opened by zooming over its surface. */
 const UNDER: ReadonlySet<string> = new Set(["micro", "orphan"]);
@@ -675,7 +676,9 @@ export class WorldMapEngine {
       let best: (typeof opened)[number] | null = null;
       for (const entry of opened) if (entry.centre && entry.fill >= 0.45 && (!best || off(entry) < off(best))) best = entry;
       const inside = (entry: (typeof opened)[number]) => {
-        if (!best || entry === best || entry.area >= best.area) return false;
+        // A place inside the framed map is much smaller than it (a city in its zone); an overlapping
+        // neighbour of about its size (Pandaria by Khaz Algar) is not.
+        if (!best || entry === best || entry.area >= best.area * 0.25) return false;
         // Mostly over the framed map (a city on the edge of its zone counts).
         const b = best.box, e = entry.box;
         const ow = Math.min(b[2], e[2]) - Math.max(b[0], e[0]), oh = Math.min(b[3], e[3]) - Math.max(b[1], e[1]);
@@ -688,6 +691,12 @@ export class WorldMapEngine {
       if (portalOpen > 0) entry.alpha = alpha * (1 - 0.8 * portalOpen);
     };
     for (const map of set.maps.values()) if (map.depth === 0) visit(map, 1, null);
+    // Another map of the same place (the old Silvermoon and Eversong beside Midnight's) is not drawn around it.
+    const chain = chainUp(set, this.focusId);
+    if (chain.length) {
+      const ids = new Set(chain), names = new Set(chain.map((id) => set.maps.get(id)?.name));
+      for (let i = out.length - 1; i >= 0; i--) if (!ids.has(out[i].map.id) && out[i].map.depth > 0 && names.has(out[i].map.name)) out.splice(i, 1);
+    }
     // A settled map whose solid part covers the whole view hides everything drawn before it.
     for (let i = out.length - 1; i > 0; i--) {
       const entry = out[i];
@@ -822,29 +831,40 @@ export class WorldMapEngine {
   }
 
   /**
-   * Where a map around the one in view gives way (device px): its painted names of that place
-   * (labelFor, else words over the place's frame) and its decor near it.
+   * Where a map around the one in view gives way: its painted names of that place go (the word with
+   * its banner; the ground drawn over it where the data has a patch of it), its decor near the place
+   * goes, and — for words not tied to a place — a big word over the place's centre goes.
+   * Holes in device px; patches as boxes in atlas space.
    */
-  private holesOf(entry: DrawnMap, focus: AtlasMap): Array<[number, number, number, number]> {
+  private givesWay(entry: DrawnMap, focus: AtlasMap, set: MapSet): { holes: Array<[number, number, number, number]>; patches: Patch[] } {
     const art = entry.map.art;
-    if (!art) return [];
+    if (!art) return { holes: [], patches: [] };
     const f = focus.frame, fw = f[2] - f[0], fh = f[3] - f[1];
     const near: Box = [f[0] - fw * 0.15, f[1] - fh * 0.15, f[2] + fw * 0.15, f[3] + fh * 0.15];
     const m = entry.map.frame, mw = m[2] - m[0], mh = m[3] - m[1];
     const toAtlas = (b: ArtBox["box"]): Box => [m[0] + b[0] * mw, m[1] + b[1] * mh, m[0] + b[2] * mw, m[1] + b[3] * mh];
-    const out: Array<[number, number, number, number]> = [];
+    const holes: Array<[number, number, number, number]> = [];
+    const patches: Patch[] = [];
     const add = (b: Box) => {
       const [x0, y0] = this.project(b[0], b[1]), [x1, y1] = this.project(b[2], b[3]);
       if (x1 < 0 || y1 < 0 || x0 > this.width || y0 > this.height) return;
-      out.push([x0 * this.dpr, y0 * this.dpr, x1 * this.dpr, y1 * this.dpr]);
+      holes.push([x0 * this.dpr, y0 * this.dpr, x1 * this.dpr, y1 * this.dpr]);
     };
-    // Without labelFor: only a big name over the place itself (the neighbour's "STORMWIND" banner over the
-    // city) — a word that merely touches the place's edge stays: a hole there would show the map below.
+    // Without labelFor: only a big name over the place itself (an HD "VALDRAKKEN" on its zone) — a word that
+    // merely touches the place's edge stays: a hole there would show the map below.
     const core: Box = [f[0] + fw * 0.12, f[1] + fh * 0.12, f[2] - fw * 0.12, f[3] - fh * 0.12];
     for (const label of labelBoxes(art)) {
-      if (label.for !== undefined) { if (label.for === focus.id) add(toAtlas(label.box)); continue; }
+      const plaque = toAtlas(label.plaque ?? label.box);
+      if (label.for !== undefined) {
+        // The place in view, or an older map of the same place (Silvermoon before Midnight on the old Eversong).
+        const target = label.for === focus.id ? focus : set.maps.get(label.for);
+        if (!target || (target.id !== focus.id && target.name !== focus.name)) continue;
+        if (label.patch) patches.push({ url: label.patch, box: plaque });
+        else add(plaque);
+        continue;
+      }
       const b = toAtlas(label.box);
-      if (contains(core, (b[0] + b[2]) / 2, (b[1] + b[3]) / 2) && b[2] - b[0] >= fw * 0.18) add(b);
+      if (contains(core, (b[0] + b[2]) / 2, (b[1] + b[3]) / 2) && b[2] - b[0] >= fw * 0.18) add(plaque);
     }
     for (const decor of decorBoxes(art)) {
       if (decor.for !== undefined && decor.for !== focus.id) continue;
@@ -852,7 +872,8 @@ export class WorldMapEngine {
       if (intersects(b, near)) add(b);
     }
     // The biggest first: when there are more than the shader takes, the small ones go.
-    return out.sort((a, b) => (b[2] - b[0]) * (b[3] - b[1]) - (a[2] - a[0]) * (a[3] - a[1])).slice(0, 8);
+    holes.sort((a, b) => (b[2] - b[0]) * (b[3] - b[1]) - (a[2] - a[0]) * (a[3] - a[1]));
+    return { holes: holes.slice(0, 8), patches };
   }
 
   /** Asks for the tiles a set needs in this view; returns the share already loaded. */
@@ -876,10 +897,12 @@ export class WorldMapEngine {
    */
   private drawList(list: DrawnMap[], set: MapSet, eraAlpha: number, cloud: number, water: number, now: number) {
     const moving = this.moving;
+    // The map in view and what lies in it come last: nothing around it is drawn over it.
+    const inFocus = this.focusSubtree(set);
+    if (inFocus.size) list = [...list.filter((entry) => !inFocus.has(entry.map.id)), ...list.filter((entry) => inFocus.has(entry.map.id))];
     // Out-of-focus draws grouped by their blur radius (it grows with the magnification).
     const keys = list.map((entry) => blurKey(blurRadiusCss(entry.blur, entry.upscale)));
     const focus = set.maps.get(this.focusId);
-    const inFocus = this.focusSubtree(set);
     for (const group of blurGroups(keys)) {
       const radius = radiusOfKey(group.blur) * this.dpr;
       const scale = group.blur > 0 ? layerScale(radius) : 1;
@@ -901,7 +924,7 @@ export class WorldMapEngine {
           desat: 0, levelScale: scale,
           // Maps around the one in view: their corner ornaments go, and their painted words and decor
           // where the place in view lies give way (no second "STORMWIND" over the city).
-          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, holes: this.holesOf(entry, focus) } : {}),
+          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set) } : {}),
         };
         this.drawArt(entry.map, art, entry.screen, entry.clip, style, now, moving);
       }
@@ -1017,6 +1040,16 @@ export class WorldMapEngine {
         if (tile.state === "ready" && tile.texture) {
           this.renderer.draw(tile.texture, { ...base, rect, uv: [0, 0, Math.min(1, tw / tile.width), Math.min(1, th / tile.height)], alpha: style.alpha * fade });
         }
+      }
+    }
+    // The ground over a neighbour's name of the place in view (drawn as the picture itself is: same mask, edges, light).
+    if (!dry && !isTerrain && style.patches?.length && ready > 0) {
+      for (const patch of style.patches) {
+        const tile = this.tiles.get(patch.url, 1 + map.depth * 0.5);
+        if (tile.state !== "ready" || !tile.texture) continue;
+        const [px0, py0] = this.project(patch.box[0], patch.box[1]), [px1, py1] = this.project(patch.box[2], patch.box[3]);
+        const fade = this.options.reducedMotion ? 1 : clamp((now - tile.readyAt) / FADE_TILE, 0, 1);
+        this.renderer.draw(tile.texture, { ...base, rect: [px0 * d, py0 * d, px1 * d, py1 * d], uv: [0, 0, 1, 1], alpha: style.alpha * fade });
       }
     }
     // Next level for the middle of the view, while nothing moves.

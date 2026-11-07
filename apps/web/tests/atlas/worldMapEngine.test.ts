@@ -378,6 +378,10 @@ describe("world map depth backdrop and painted boxes", () => {
     assert.deepEqual(labelBoxes({ paintedLabels: [{ box: [0.1, 0.1, 0.2, 0.2], labelFor: 84 }, { rect: [0, 0, 1, 1], labelFor: "85" }, { box: [0.5, 0.5, 0.4, 0.6] }] as never }),
       [{ box: [0.1, 0.1, 0.2, 0.2], for: 84 }, { box: [0, 0, 1, 1], for: 85 }]);
     assert.deepEqual(decorBoxes({ decor: [[0.9, 0.9, 1, 1]] }), [{ box: [0.9, 0.9, 1, 1] }]);
+    // r5 data: the plaque (word with its banner) and a patch of the ground under it; era-only targets stay unbound.
+    assert.deepEqual(labelBoxes({ paintedLabels: [{ box: [0.2, 0.2, 0.3, 0.25], plaque: [0.15, 0.18, 0.35, 0.27], labelFor: 84, patch: "/maps/patches/x/1.webp" }, { box: [0.1, 0.1, 0.2, 0.2], plaque: [0.1, 0.1, 0.2, 0.2], labelFor: "classic-1416" }] as never }),
+      [{ box: [0.2, 0.2, 0.3, 0.25], for: 84, plaque: [0.15, 0.18, 0.35, 0.27], patch: "/maps/patches/x/1.webp" }, { box: [0.1, 0.1, 0.2, 0.2], plaque: [0.1, 0.1, 0.2, 0.2] }]);
+    assert.deepEqual(decorBoxes({ decor: [{ box: [0, 0, 0.2, 0.3], kind: "crest" }] }), [{ box: [0, 0, 0.2, 0.3], kind: "crest" }]);
     assert.deepEqual(decorBoxes({}), []);
   });
 });

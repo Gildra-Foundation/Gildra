@@ -92,7 +92,7 @@ void main() {
       float soft = max(6.0, max(r.x, r.y) * 0.5);
       vec2 d = abs(v_p - c) - r;
       float outside = length(max(d, vec2(0.0))) + min(max(d.x, d.y), 0.0);
-      a *= mix(0.08, 1.0, smoothstep(-min(r.x, r.y) * 0.6, soft, outside));
+      a *= smoothstep(-min(r.x, r.y) * 0.6, soft, outside);
     }
   }
   if (u_portal.z > 0.0) {
