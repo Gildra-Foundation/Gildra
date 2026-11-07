@@ -227,7 +227,8 @@
 /* ---------- Panels: shared glass ---------- */
 .searchBox, .controls > button, .controlGroup, .layers, .place, .timeline, .compareHandle, .compareTag, .loading, .fallback {
   border: 1px solid var(--atlas-line);
-  background: color-mix(in srgb, var(--atlas-surface) 88%, transparent);
+  /* Dense enough that the words painted on the art never read through the panels. */
+  background: color-mix(in srgb, var(--atlas-surface) 95%, transparent);
   box-shadow: var(--atlas-glass-depth);
   backdrop-filter: blur(10px) saturate(1.1);
   -webkit-backdrop-filter: blur(10px) saturate(1.1);
