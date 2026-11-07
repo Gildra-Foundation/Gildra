@@ -2,8 +2,10 @@ import type { MapArt } from "@/lib/wow/worldMap/types";
 
 /**
  * Tile cache of the world map: fetches WebP tiles by priority (a few at a
- * time, decoded off the main thread with createImageBitmap), keeps them as
- * GPU textures and forgets the least recently drawn ones past a budget.
+ * time, the middle of the screen first, decoded off the main thread with
+ * createImageBitmap), keeps them as GPU textures and forgets the least
+ * recently drawn ones past a memory budget. Loads nobody asked for during the
+ * last half second (the view moved on) are cancelled.
  */
 export type Tile = {
   key: string;
@@ -29,6 +31,9 @@ export const levelTiles = (art: MapArt, z: number) => {
   return [Math.ceil(w / art.tileSize), Math.ceil(h / art.tileSize)] as const;
 };
 
+/** Frames without a request after which a running load is cancelled (~0.5 s at 60 fps). */
+const STALE_FRAMES = 30;
+
 export class TileStore {
   private tiles = new Map<string, Tile>();
   private wanted: Tile[] = [];
@@ -38,7 +43,8 @@ export class TileStore {
   loadedCount = 0;
   onReady: () => void = () => {};
 
-  constructor(private gl: WebGLRenderingContext, private budget: number, private concurrency: number) {}
+  /** `budget`: GPU bytes kept; `concurrency`: loads at a time. */
+  constructor(private gl: WebGLRenderingContext, private budget: number, private concurrency: number, private maxEntries = 900) {}
 
   /** A tile for this frame; asks for it with a priority (lower loads first). */
   get(key: string, priority: number): Tile {
@@ -73,7 +79,11 @@ export class TileStore {
     }
     // Reset priorities so stale wishes do not keep their place.
     for (const tile of queue) if (tile.state === "queued") tile.priority = Number.POSITIVE_INFINITY;
-    if (this.tiles.size > this.budget) this.evict();
+    // Loads for places the view has left: cancel them (they would only push wanted tiles back).
+    if (this.frame % 8 === 0) {
+      for (const tile of this.tiles.values()) if (tile.state === "loading" && tile.usedAt < this.frame - STALE_FRAMES) this.drop(tile);
+    }
+    if (this.bytes > this.budget || this.tiles.size > this.maxEntries) this.evict();
   }
 
   get pending() { return this.active; }
@@ -83,7 +93,7 @@ export class TileStore {
     this.active += 1;
     const abort = new AbortController();
     tile.abort = abort;
-    const done = () => { this.active -= 1; tile.abort = undefined; };
+    const done = () => { if (tile.abort === abort) { this.active -= 1; tile.abort = undefined; } };
     fetch(tile.key, { signal: abort.signal, cache: "force-cache" })
       .then((response) => {
         if (!response.ok) throw new Error(String(response.status));
@@ -92,13 +102,15 @@ export class TileStore {
       .then((blob) => createImageBitmap(blob))
       .then((bitmap) => {
         done();
-        if (!this.tiles.has(tile.key)) { bitmap.close?.(); return; }
+        if (this.tiles.get(tile.key) !== tile) { bitmap.close?.(); return; }
         this.upload(tile, bitmap);
         bitmap.close?.();
         this.onReady();
       })
       .catch(() => {
+        const cancelled = abort.signal.aborted;
         done();
+        if (cancelled) return;
         tile.state = "failed";
         this.onReady();
       });
@@ -128,19 +140,28 @@ export class TileStore {
       .filter((tile) => tile.usedAt < this.frame - 2 && tile.state !== "loading")
       .sort((a, b) => a.usedAt - b.usedAt);
     for (const tile of old) {
-      if (this.tiles.size <= this.budget * 0.85) break;
+      if (this.bytes <= this.budget * 0.85 && this.tiles.size <= this.maxEntries * 0.85) break;
       this.drop(tile);
     }
   }
 
-  private drop(tile: Tile) {
+  private drop(tile: Tile, lost = false) {
     if (tile.texture) {
-      this.gl.deleteTexture(tile.texture);
+      if (!lost) this.gl.deleteTexture(tile.texture);
       this.bytes -= tile.width * tile.height * 4;
+      this.loadedCount -= 1;
     }
-    tile.abort?.abort();
+    if (tile.abort) { const abort = tile.abort; tile.abort = undefined; this.active -= 1; abort.abort(); }
     this.tiles.delete(tile.key);
   }
+
+  /** The GL context was lost: every texture is gone; start again (the browser cache keeps the files). */
+  reset() {
+    for (const tile of [...this.tiles.values()]) this.drop(tile, true);
+    this.wanted = [];
+  }
+
+  get count() { return this.tiles.size; }
 
   dispose() {
     for (const tile of [...this.tiles.values()]) this.drop(tile);

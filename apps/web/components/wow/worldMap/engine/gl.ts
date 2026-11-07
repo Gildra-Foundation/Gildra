@@ -1,8 +1,12 @@
 /**
- * The world map's one WebGL program: a textured quad with the living-world
- * effects folded into the fragment shader — feathered edges for maps laid
- * over their parent, a round portal mask for worlds opening from the Cosmic
- * map, drifting cloud shadows and a shimmer on water-coloured pixels.
+ * The world map's WebGL programs. The main one draws a textured quad with the
+ * living-world effects folded into the fragment shader: the map's own-area
+ * mask (or a feathered edge) blending it into the maps around it, a round
+ * portal mask for worlds opening from the Cosmic map, drifting cloud shadows,
+ * a shimmer on water-coloured pixels, light/dim and desaturation. The blur
+ * program softens a low-resolution layer (depth of field for maps shown far
+ * above their native size): layers are drawn into an offscreen target, blurred
+ * in two passes and laid back over the screen.
  */
 const VERTEX = `
 attribute vec2 a_corner;
@@ -26,9 +30,12 @@ precision highp float;
 precision mediump float;
 #endif
 uniform sampler2D u_tex;
+uniform sampler2D u_mask;
+uniform float u_maskOn;
+uniform vec4 u_maskRect;
 uniform float u_alpha;
 uniform vec4 u_frame;
-uniform float u_feather;
+uniform vec2 u_feather;
 uniform vec3 u_portal;
 uniform float u_time;
 uniform float u_cloud;
@@ -36,6 +43,7 @@ uniform vec3 u_cloudMap;
 uniform float u_water;
 uniform vec3 u_waterMap;
 uniform float u_light;
+uniform float u_desat;
 varying vec2 v_uv;
 varying vec2 v_p;
 
@@ -49,9 +57,17 @@ float vnoise(vec2 p) {
 void main() {
   vec4 texel = texture2D(u_tex, v_uv);
   float a = u_alpha;
-  if (u_feather > 0.0) {
+  if (u_feather.y > 0.0) {
+    // Fully transparent for the first u_feather.x px (the art's own painted border), then a smooth ramp.
     float d = min(min(v_p.x - u_frame.x, u_frame.z - v_p.x), min(v_p.y - u_frame.y, u_frame.w - v_p.y));
-    a *= smoothstep(u_feather * 0.12, u_feather, d);
+    float t = clamp((d - u_feather.x) / max(1.0, u_feather.y - u_feather.x), 0.0, 1.0);
+    a *= t * t * (3.0 - 2.0 * t);
+  }
+  if (u_maskOn > 0.0) {
+    vec2 m = (v_p - u_maskRect.xy) / (u_maskRect.zw - u_maskRect.xy);
+    vec4 k = texture2D(u_mask, clamp(m, 0.0, 1.0));
+    // Opaque grey mask: luminance; a mask drawn in alpha: its alpha.
+    a *= mix(1.0, k.a < 0.99 ? k.a : k.r, u_maskOn);
   }
   if (u_portal.z > 0.0) {
     float d = length(v_p - u_portal.xy);
@@ -73,9 +89,33 @@ void main() {
     float shade = smoothstep(0.48, 0.76, n) * u_cloud;
     col *= 1.0 - shade * 0.3;
   }
+  if (u_desat > 0.0) col = mix(col, vec3(dot(col, vec3(0.299, 0.587, 0.114))), u_desat);
   if (u_light > 0.0) col += u_light * (vec3(0.1, 0.085, 0.05) + col * 0.18);
   else col *= 1.0 + u_light;
   gl_FragColor = vec4(col * texel.a, texel.a) * a;
+}`;
+
+const BLUR_VERTEX = `
+attribute vec2 a_corner;
+varying vec2 v_uv;
+void main() {
+  v_uv = a_corner;
+  gl_Position = vec4(a_corner * 2.0 - 1.0, 0.0, 1.0);
+}`;
+
+/** Nine-tap Gaussian folded into five linear fetches; u_dir is the step in texture space. */
+const BLUR_FRAGMENT = `
+precision mediump float;
+uniform sampler2D u_tex;
+uniform vec2 u_dir;
+uniform vec4 u_bounds;
+varying vec2 v_uv;
+vec4 at(vec2 uv) { return texture2D(u_tex, clamp(uv, u_bounds.xy, u_bounds.zw)); }
+void main() {
+  vec4 c = at(v_uv) * 0.2270270270;
+  c += (at(v_uv + u_dir * 1.3846153846) + at(v_uv - u_dir * 1.3846153846)) * 0.3162162162;
+  c += (at(v_uv + u_dir * 3.2307692308) + at(v_uv - u_dir * 3.2307692308)) * 0.0702702703;
+  gl_FragColor = c;
 }`;
 
 export type DrawParams = {
@@ -83,65 +123,116 @@ export type DrawParams = {
   uv: [number, number, number, number];
   alpha: number;
   frame: [number, number, number, number];
-  feather: number;
+  /** Soft edge (device px): [transparent inset, end of the ramp]; 0 = none. */
+  feather: number | [number, number];
   portal: [number, number, number];
   light: number;
   cloud: number;
   water: number;
+  desat?: number;
+  /** The own-area mask and the art's rect it spans (device px). */
+  mask?: { texture: WebGLTexture; rect: [number, number, number, number] } | null;
 };
+
+type Target = { fb: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
+type Layer = { scale: number; a: Target; b: Target };
+
+const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat"];
 
 export class MapRenderer {
   readonly gl: WebGLRenderingContext;
-  private program: WebGLProgram;
+  private program!: WebGLProgram;
+  private blur!: WebGLProgram;
   private u: Record<string, WebGLUniformLocation | null> = {};
+  private ub: Record<string, WebGLUniformLocation | null> = {};
+  private layers = new Map<number, Layer>();
+  private width = 1;
+  private height = 1;
+  private scissor: [number, number, number, number] | null = null;
+  private maskBound = false;
+  /** The layer being drawn into (null: the screen). */
+  private into: Layer | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl", { alpha: true, antialias: false, premultipliedAlpha: true, powerPreference: "high-performance" });
     if (!gl) throw new Error("webgl");
     this.gl = gl;
+    this.init();
+  }
+
+  /** Programs, buffers and state; again after a lost context comes back. */
+  init() {
+    const gl = this.gl;
     const compile = (type: number, source: string) => {
       const shader = gl.createShader(type) as WebGLShader;
       gl.shaderSource(shader, source);
       gl.compileShader(shader);
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader) ?? "shader");
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS) && !gl.isContextLost()) throw new Error(gl.getShaderInfoLog(shader) ?? "shader");
       return shader;
     };
-    const program = gl.createProgram() as WebGLProgram;
-    gl.attachShader(program, compile(gl.VERTEX_SHADER, VERTEX));
-    gl.attachShader(program, compile(gl.FRAGMENT_SHADER, FRAGMENT));
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program) ?? "link");
-    this.program = program;
-    gl.useProgram(program);
-    for (const name of ["u_view", "u_rect", "u_uv", "u_tex", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light"]) {
-      this.u[name] = gl.getUniformLocation(program, name);
-    }
+    const link = (vs: string, fs: string) => {
+      const program = gl.createProgram() as WebGLProgram;
+      gl.attachShader(program, compile(gl.VERTEX_SHADER, vs));
+      gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fs));
+      gl.bindAttribLocation(program, 0, "a_corner");
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS) && !gl.isContextLost()) throw new Error(gl.getProgramInfoLog(program) ?? "link");
+      return program;
+    };
+    this.program = link(VERTEX, FRAGMENT);
+    this.blur = link(BLUR_VERTEX, BLUR_FRAGMENT);
+    this.u = {};
+    this.ub = {};
+    for (const name of MAIN_UNIFORMS) this.u[name] = gl.getUniformLocation(this.program, name);
+    for (const name of ["u_tex", "u_dir", "u_bounds"]) this.ub[name] = gl.getUniformLocation(this.blur, name);
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), gl.STATIC_DRAW);
-    const corner = gl.getAttribLocation(program, "a_corner");
-    gl.enableVertexAttribArray(corner);
-    gl.vertexAttribPointer(corner, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.useProgram(this.blur);
+    gl.uniform1i(this.ub.u_tex, 0);
+    gl.useProgram(this.program);
     gl.uniform1i(this.u.u_tex, 0);
+    gl.uniform1i(this.u.u_mask, 1);
+    gl.uniform1f(this.u.u_desat, 0);
+    gl.uniform1f(this.u.u_maskOn, 0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.activeTexture(gl.TEXTURE0);
+    this.layers = new Map();
+    this.into = null;
+    this.maskBound = false;
   }
 
   begin(width: number, height: number, time: number, cloudMap: [number, number, number], waterMap: [number, number, number]) {
     const gl = this.gl;
+    if (width !== this.width || height !== this.height) this.dropLayers();
+    this.width = width;
+    this.height = height;
+    this.into = null;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, width, height);
     gl.disable(gl.SCISSOR_TEST);
+    this.scissor = null;
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(this.program);
     gl.uniform2f(this.u.u_view, width, height);
     gl.uniform1f(this.u.u_time, time);
     gl.uniform3f(this.u.u_cloudMap, ...cloudMap);
     gl.uniform3f(this.u.u_waterMap, ...waterMap);
   }
 
+  /** Limit drawing on the screen to a box (device px, top-left origin); null: everywhere. */
   clip(box: [number, number, number, number] | null, height: number) {
+    this.scissor = box;
+    if (!this.into) this.applyScissor(height);
+  }
+
+  private applyScissor(height: number) {
     const gl = this.gl;
+    const box = this.scissor;
     if (!box) { gl.disable(gl.SCISSOR_TEST); return; }
     gl.enable(gl.SCISSOR_TEST);
     gl.scissor(Math.round(box[0]), Math.round(height - box[3]), Math.max(0, Math.round(box[2] - box[0])), Math.max(0, Math.round(box[3] - box[1])));
@@ -154,11 +245,119 @@ export class MapRenderer {
     gl.uniform4f(this.u.u_uv, ...p.uv);
     gl.uniform1f(this.u.u_alpha, p.alpha);
     gl.uniform4f(this.u.u_frame, ...p.frame);
-    gl.uniform1f(this.u.u_feather, p.feather);
+    const f = typeof p.feather === "number" ? [0, p.feather] : p.feather;
+    gl.uniform2f(this.u.u_feather, f[0], f[1]);
     gl.uniform3f(this.u.u_portal, ...p.portal);
     gl.uniform1f(this.u.u_light, p.light);
     gl.uniform1f(this.u.u_cloud, p.cloud);
     gl.uniform1f(this.u.u_water, p.water);
+    gl.uniform1f(this.u.u_desat, p.desat ?? 0);
+    if (p.mask) {
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, p.mask.texture);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.uniform1f(this.u.u_maskOn, 1);
+      gl.uniform4f(this.u.u_maskRect, ...p.mask.rect);
+      this.maskBound = true;
+    } else if (this.maskBound) {
+      gl.uniform1f(this.u.u_maskOn, 0);
+      this.maskBound = false;
+    }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  /**
+   * Start an out-of-focus layer: what is drawn next goes into an offscreen
+   * target `scale` times smaller than the screen (a power of two, 2…16).
+   */
+  beginLayer(scale: number) {
+    const gl = this.gl;
+    const layer = this.layer(scale);
+    this.into = layer;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, layer.a.fb);
+    gl.viewport(0, 0, layer.a.w, layer.a.h);
+    gl.disable(gl.SCISSOR_TEST);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    // Device pixels map onto the target `scale` times smaller (the screen's top at the target's top rows).
+    gl.uniform2f(this.u.u_view, layer.a.w * scale, layer.a.h * scale);
+  }
+
+  /** Blur the layer (`radius` in its own pixels) and lay it over the screen, dimmed and greyed a little. */
+  endLayer(radius: number, dim: number, desat: number) {
+    const gl = this.gl;
+    const layer = this.into;
+    if (!layer) return;
+    this.into = null;
+    gl.useProgram(this.blur);
+    gl.disable(gl.BLEND);
+    // The targets are a little larger than the drawn part (whole pixels): never read past it.
+    const W = this.width, H = this.height;
+    const u1 = W / layer.scale / layer.a.w, v1 = H / layer.scale / layer.a.h;
+    gl.uniform4f(this.ub.u_bounds, 0.5 / layer.a.w, 1 - v1 + 0.5 / layer.a.h, u1 - 0.5 / layer.a.w, 1 - 0.5 / layer.a.h);
+    const step = Math.max(0.5, radius / 2);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, layer.b.fb);
+    gl.bindTexture(gl.TEXTURE_2D, layer.a.tex);
+    gl.uniform2f(this.ub.u_dir, step / layer.a.w, 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, layer.a.fb);
+    gl.bindTexture(gl.TEXTURE_2D, layer.b.tex);
+    gl.uniform2f(this.ub.u_dir, 0, step / layer.a.h);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.enable(gl.BLEND);
+    gl.useProgram(this.program);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, W, H);
+    gl.uniform2f(this.u.u_view, W, H);
+    this.applyScissor(H);
+    // The screen's top sits at the target's top rows (GL rows count from the bottom).
+    this.draw(layer.a.tex, {
+      rect: [0, 0, W, H], uv: [0, 1, u1, 1 - v1], alpha: 1, frame: [0, 0, W, H], feather: 0, portal: [0, 0, 0],
+      light: -dim, cloud: 0, water: 0, desat,
+    });
+  }
+
+  get inLayer() { return this.into !== null; }
+
+  private layer(scale: number): Layer {
+    const found = this.layers.get(scale);
+    if (found) return found;
+    const w = Math.max(1, Math.ceil(this.width / scale) + 1), h = Math.max(1, Math.ceil(this.height / scale) + 1);
+    const layer = { scale, a: this.target(w, h), b: this.target(w, h) };
+    this.layers.set(scale, layer);
+    return layer;
+  }
+
+  private target(w: number, h: number): Target {
+    const gl = this.gl;
+    const tex = gl.createTexture() as WebGLTexture;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const fb = gl.createFramebuffer() as WebGLFramebuffer;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { fb, tex, w, h };
+  }
+
+  private dropLayers() {
+    const gl = this.gl;
+    for (const layer of this.layers.values()) for (const t of [layer.a, layer.b]) { gl.deleteFramebuffer(t.fb); gl.deleteTexture(t.tex); }
+    this.layers.clear();
+  }
+
+  /** Offscreen targets in bytes (for the memory probe). */
+  get layerBytes() {
+    let total = 0;
+    for (const layer of this.layers.values()) total += layer.a.w * layer.a.h * 8;
+    return total;
+  }
+
+  dispose() {
+    this.dropLayers();
   }
 }

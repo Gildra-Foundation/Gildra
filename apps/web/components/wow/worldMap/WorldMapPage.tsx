@@ -76,7 +76,7 @@ export function WorldMapPage({ lang, map: requested }: { lang: Lang; map?: Atlas
 
   return (
     <main className={styles.page} lang={lang}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <script id="world-map-trail" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <WorldMapStage
         lang={lang}
         mapId={map?.id ?? null}

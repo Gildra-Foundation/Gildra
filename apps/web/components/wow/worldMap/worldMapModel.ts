@@ -95,3 +95,58 @@ export function artErasAt(art: ArtEraInfo[], position: number): ArtEraInfo[] {
   return [base, ...art.filter((era) => era.inherits === base.id && inside(era))];
 }
 export const artKey = (eras: ArtEraInfo[]) => eras.map((era) => era.id).join("+") || "current";
+
+/**
+ * The view in the URL: ?x=&y= is the centre in the page map's own 0..1 space,
+ * z the zoom in powers of two over "the map shown whole" (fitScale). Omitted
+ * at the map's home view. Pure, so a link opens the same view in any era
+ * whose hierarchy draws that map elsewhere.
+ */
+export type ViewQuery = { x: number; y: number; z: number } | null;
+type Frame = [number, number, number, number];
+type View = { x: number; y: number; scale: number };
+
+export function viewToQuery(camera: View, frame: Frame, fitScale: number, fitCentre: { x: number; y: number }): ViewQuery {
+  const z = Math.log2(camera.scale / fitScale);
+  const home = Math.abs(z) < 0.05 && Math.abs(camera.x - fitCentre.x) * fitScale < 8 && Math.abs(camera.y - fitCentre.y) * fitScale < 8;
+  if (home) return null;
+  const w = frame[2] - frame[0], h = frame[3] - frame[1];
+  const round = (v: number, digits: number) => Number(v.toFixed(digits));
+  return { x: round((camera.x - frame[0]) / w, 4), y: round((camera.y - frame[1]) / h, 4), z: round(z, 2) };
+}
+
+export function queryToView(query: ViewQuery, frame: Frame, fitScale: number): View | null {
+  if (!query || ![query.x, query.y, query.z].every(Number.isFinite)) return null;
+  const w = frame[2] - frame[0], h = frame[3] - frame[1];
+  return { x: frame[0] + query.x * w, y: frame[1] + query.y * h, scale: fitScale * 2 ** Math.max(-3, Math.min(14, query.z)) };
+}
+
+/** The map of a map page path (/ru/wow/map/85-orgrimmar → 85; /wow/map → home). */
+export function mapIdOfPath(pathname: string, homeId: number | null): number | null {
+  const match = /\/wow\/map\/(\d+)-[a-z0-9-]+\/?$/.exec(pathname);
+  if (match) return Number(match[1]);
+  return /\/wow\/map\/?$/.test(pathname) ? homeId : null;
+}
+
+/**
+ * Should a settled view add a history entry (Back returns to it)? Yes when the
+ * page map changed by flying there or by going a level deeper or up; panning
+ * across neighbouring maps only rewrites the current entry.
+ */
+export function pushesHistory(prev: { mapId: number; depth: number } | null, next: { mapId: number; depth: number }, flown: boolean) {
+  if (!prev || prev.mapId === next.mapId) return false;
+  return flown || prev.depth !== next.depth;
+}
+
+/**
+ * A timeline position as a patch for the URL (?at=, ?cmp=): 4.1 → "5.1.0",
+ * 4.089 → "5.0.9". patchPosition reads it back to within 0.005.
+ */
+export function positionToPatch(position: number) {
+  const index = Math.max(0, Math.floor(position + 1e-9));
+  const rest = Math.max(0, position - index);
+  let minor = Math.floor(rest * 10 + 1e-6);
+  let build = Math.round((rest - minor * 0.1) * 100);
+  if (build >= 10) { minor += 1; build -= 10; }
+  return `${index + 1}.${minor}.${build}`;
+}

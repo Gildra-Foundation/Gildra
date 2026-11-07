@@ -12,6 +12,12 @@ export type MapType = "cosmic" | "world" | "continent" | "zone" | "dungeon" | "m
 export type MapArt = { width: number; height: number; tileSize: number; maxZoom: number; url: string };
 /** [x0, y0, x1, y1], 0..1 in the parent's picture. */
 export type Rect = [number, number, number, number];
+/**
+ * Deep-zoom ground of a continent (the client's minimap textures): a tile
+ * pyramid like `MapArt` ({z} {x} {y} placeholders), placed by `rect` in the
+ * continent's 0..1 picture space (may exceed 0..1).
+ */
+export type MapTerrain = { url: string; tileSize: number; width: number; height: number; maxZoom: number; rect: Rect };
 
 export type MapRecord = {
   id: number;
@@ -22,6 +28,9 @@ export type MapRecord = {
   children: number[];
   rectInParent: Rect | null;
   art: MapArt | null;
+  /** The map's own area (white) inside its art: a single-channel picture of the art's aspect. */
+  mask?: string;
+  terrain?: MapTerrain;
 };
 
 export type PoiKind = "capital" | "city" | "town" | "flight" | "portal" | "dungeon" | "raid" | "delve" | "zone-label";
@@ -41,7 +50,12 @@ export type PoiRecord = {
 };
 
 /** Per-era picture of a map: other art, the current art, or absent in that era. */
-export type EraMapOverride = MapArt | "unchanged" | null | { art?: MapArt | null; rectInParent?: Rect | null; name?: Words; parentId?: number | string | null; children?: Array<number | string> } | MapRecord;
+export type EraMapOverride = MapArt | "unchanged" | null | {
+  art?: MapArt | null; rectInParent?: Rect | null; name?: Words; parentId?: number | string | null; children?: Array<number | string>;
+  mask?: string | null; terrain?: MapTerrain | null;
+  /** The map did not exist in that era (nor its points). */
+  absent?: boolean;
+} | MapRecord;
 export type PatchRange = [string, string] | { from: string; to: string | null };
 /** An era of the art (eras.json): the game's maps as a client of that time drew them. */
 export type EraRecord = {

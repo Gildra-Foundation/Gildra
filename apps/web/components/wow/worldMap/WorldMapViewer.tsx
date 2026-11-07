@@ -1,18 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
-import { ArrowUpRight, Bird, Castle, ChevronUp, Crown, DoorOpen, Expand, Flame, Hourglass, Layers as LayersIcon, Minus, Mountain, Orbit, Pickaxe, Plus, Search, Shrink, Skull, Sparkles, Swords, Tent, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Bird, Castle, Crown, DoorOpen, Flame, Hourglass, Mountain, Orbit, Pickaxe, Skull, Sparkles, Swords, Tent } from "lucide-react";
 import { lessMotion, subscribeSiteMotion } from "@gildra/atlas-ui/motionPreference";
 import type { ArtEra, AtlasBundle, AtlasEra, AtlasEvent, AtlasMap, AtlasPoi, Lang } from "@/lib/wow/worldMap/bundle";
 import { mapPagePath } from "@/lib/wow/worldMap/bundle";
 import type { PoiKind } from "@/lib/wow/worldMap/types";
 import { composeSet, mapSet, WorldMapEngine, type FrameInfo, type Insets, type MapSet } from "./engine/WorldMapEngine";
 import { DEFAULT_LAYERS, indexMarkers, pickMarkers, type Layers, type Marker } from "./mapMarkers";
-import { buildSearch, type SearchHit } from "./mapSearch";
+import type { SearchHit } from "./mapSearch";
 import { MapTimeline } from "./MapTimeline";
+import { MapControls } from "./ui/MapControls";
+import { MapHoverName } from "./ui/MapHoverName";
+import { MapPlacePanel, type PanelSelection } from "./ui/MapPlacePanel";
+import { MapSearchBox } from "./ui/MapSearchBox";
+import { measureInsets, NARROW_QUERY } from "./ui/layout";
+import { placeFacts } from "./ui/placeFacts";
 import type { StageCrumb, StageHandle } from "./WorldMapStage";
 import { worldMapCopy } from "./worldMapCopy";
-import { artErasAt, artKey, eraAt, mapLine, orderedEras, patchPosition, restOf } from "./worldMapModel";
+import { artErasAt, artKey, eraAt, mapIdOfPath, mapLine, orderedEras, patchPosition, positionToPatch, pushesHistory, queryToView, restOf, viewToQuery } from "./worldMapModel";
 import styles from "./worldMapViewer.module.css";
 
 type Selected = { type: "poi"; poi: AtlasPoi } | { type: "event"; event: AtlasEvent } | null;
@@ -23,15 +30,17 @@ const KIND_ICON: Record<PoiKind, typeof Crown> = {
 };
 /** Runes of world events by what happened: a land revealed, reshaped, a battle, an invasion, a new instance. */
 const EVENT_ICON: Record<string, typeof Crown> = { reveal: Sparkles, reshape: Mountain, battle: Swords, invasion: Flame, instance: DoorOpen };
-const LAYER_KEYS: Array<keyof Layers> = ["cities", "instances", "flight", "portals", "events", "labels", "alive"];
-
-/** Markers are centred on their point; a capital's name hangs under its glowing seal. */
-const anchor = (marker: Marker) => (marker.type === "map" && marker.capital ? "translate(-50%, -15px)" : "translate(-50%, -50%)");
+/** Markers are centred on their point; a capital's name hangs under its glowing seal; a name may step clear of painted words. */
+const anchor = (marker: Marker) => (marker.type === "map" && marker.capital ? "translate(-50%, -15px)" : marker.type === "map" && marker.shift ? `translate(-50%, calc(-50% + ${marker.shift}px))` : "translate(-50%, -50%)");
 
 function readQuery() {
   const params = new URLSearchParams(window.location.search);
   const num = (key: string) => { const v = params.get(key); const n = v === null ? NaN : Number(v); return Number.isFinite(n) ? n : null; };
-  return { era: params.get("era"), event: params.get("event"), x: num("x"), y: num("y"), z: num("z"), compare: params.get("cmp") === "1" };
+  const cmp = params.get("cmp");
+  const at = params.get("at");
+  const patch = (v: string | null) => (v && /^\d+(\.\d+){0,2}$/.test(v) ? patchPosition(v) : null);
+  // cmp=1: compare with what changed here; cmp=<patch>: that moment on the left. at=<patch>: the exact moment (a phase inside an era).
+  return { era: params.get("era"), event: params.get("event"), x: num("x"), y: num("y"), z: num("z"), compare: cmp !== null && cmp !== "0", compareAt: patch(cmp === "1" ? null : cmp), at: patch(at) };
 }
 
 export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bundleUrl }: {
@@ -59,16 +68,28 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const [focus, setFocus] = useState<AtlasMap | null>(null);
   const [hoverMap, setHoverMap] = useState<number | null>(null);
   const [hoverPoi, setHoverPoi] = useState<AtlasPoi | null>(null);
-  const [query, setQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [active, setActive] = useState(0);
+  const [narrow, setNarrow] = useState(false);
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
   const [full, setFull] = useState(false);
   const [reduced, setReduced] = useState(false);
   const routeEls = useRef<Array<SVGPathElement | null>>([]);
   const lastPick = useRef(0);
-  const state = useRef({ layers, eraParam: null as string | null, metaEra: null as AtlasEra | null, selected, compare });
+  const state = useRef({ layers, eraParam: null as string | null, atParam: null as string | null, metaEra: null as AtlasEra | null, selected, compare });
   const dock = useRef<HTMLDivElement>(null);
+  const tools = useRef<HTMLDivElement>(null);
   const titleBar = useRef<HTMLElement | null>(null);
+  // The canvas shows once the first picture (the era of the link) is in place.
+  const [started, setStarted] = useState(false);
+  // The page map of the current history entry; a Back/Forward restore must not add entries.
+  const entry = useRef<{ mapId: number; depth: number } | null>(null);
+  const restoring = useRef(false);
+  // The first picture of the link (its era), then the link's own requests: an event to fly to, a comparison.
+  const firstSet = useRef(true);
+  const startedRef = useRef(false);
+  const startEvent = useRef<AtlasEvent | null>(null);
+  // The link shows its map whole: in the era's hierarchy the map may sit elsewhere, so fit it again there.
+  const startWhole = useRef(false);
+  const startCompare = useRef(false);
 
   // ------------------------------------------------------------ data
   useEffect(() => {
@@ -115,8 +136,6 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     });
     return indexMarkers({ maps: [...set.maps.values()], pois, events });
   }, [bundle, baseSet, activeSet, artNow, eraData]);
-  const search = useMemo(() => (bundle ? buildSearch(bundle) : null), [bundle]);
-  const hits = useMemo(() => (search && query ? search(query) : []), [search, query]);
   const byId = index?.byId;
 
   // ------------------------------------------------------------ motion preference
@@ -130,21 +149,17 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   }, []);
 
   // ------------------------------------------------------------ insets of the panels
-  const insets = (): Insets => {
-    const stageRect = stage.current?.getBoundingClientRect();
-    const dockRect = dock.current?.getBoundingClientRect();
-    const narrow = (stageRect?.width ?? 1000) < 700;
-    const title = titleBar.current?.getBoundingClientRect();
-    const bottom = stageRect && dockRect ? Math.max(0, stageRect.bottom - dockRect.top) + 8 : 120;
-    let top = 0;
-    if (narrow && stageRect && title) {
-      // Phones: the search row sits under the title; the map fits below both.
-      const searchTop = Math.round(title.bottom - stageRect.top + 8);
-      handle.current?.setSearchTop(searchTop);
-      top = searchTop + 52;
-    }
-    return { top, right: 0, bottom, left: 0 };
-  };
+  const insets = (): Insets => measureInsets(stage.current, titleBar.current, dock.current, tools.current);
+
+  // Wide screens hang the place panel under the title; phones get a bottom sheet.
+  useEffect(() => {
+    const media = matchMedia(NARROW_QUERY);
+    const update = () => setNarrow(media.matches);
+    update();
+    media.addEventListener("change", update);
+    setSlot(stage.current?.querySelector<HTMLElement>("[data-map-slot]") ?? null);
+    return () => media.removeEventListener("change", update);
+  }, [stage]);
 
   // ------------------------------------------------------------ engine
   const onFrame = (info: FrameInfo) => {
@@ -175,7 +190,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     if (now - lastPick.current > (info.moving ? 160 : 60)) {
       lastPick.current = now;
       const s = state.current;
-      const next = pickMarkers(info, index, s.layers, s.metaEra, (x, y) => engine.project(x, y), (map) => map.art);
+      const next = pickMarkers(info, index, s.layers, s.metaEra, (x, y) => engine.project(x, y), (map) => map.art, lang);
       const same = next.length === markerList.current.length && next.every((m, i) => m.key === markerList.current[i].key);
       if (!same) { markerList.current = next; setMarkers(next); }
     }
@@ -191,28 +206,35 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
 
   const settle = (info: FrameInfo) => {
     const engine = engineRef.current;
-    if (!engine) return;
+    if (!engine || !startedRef.current) return;
     const s = state.current;
     const focusMap = info.focus;
     const pathMap = focusMap.page || focusMap.id === homeId ? focusMap : engine.chain(focusMap.id).reverse().find((m) => m.page || m.id === homeId) ?? focusMap;
     const base = engine.fitMap(pathMap.id);
     if (!base) return;
-    const w = pathMap.frame[2] - pathMap.frame[0], h = pathMap.frame[3] - pathMap.frame[1];
     const params = new URLSearchParams();
-    const z = Math.log2(info.camera.scale / base.scale);
-    const atHome = Math.abs(z) < 0.05 && Math.abs(info.camera.x - base.x) * base.scale < 8 && Math.abs(info.camera.y - base.y) * base.scale < 8;
-    if (!atHome) {
-      params.set("x", ((info.camera.x - pathMap.frame[0]) / w).toFixed(4));
-      params.set("y", ((info.camera.y - pathMap.frame[1]) / h).toFixed(4));
-      params.set("z", z.toFixed(2));
+    // Still where "show this map whole" left it (panels may have changed size since): no view in the URL.
+    const view = engine.atHome(pathMap.id) ? null : viewToQuery(info.camera, pathMap.frame, base.scale, base);
+    if (view) {
+      params.set("x", view.x.toFixed(4));
+      params.set("y", view.y.toFixed(4));
+      params.set("z", view.z.toFixed(2));
     }
     if (s.eraParam) params.set("era", s.eraParam);
+    if (s.atParam) params.set("at", s.atParam);
     if (s.selected?.type === "event") params.set("event", s.selected.event.id);
-    if (s.compare) params.set("cmp", "1");
+    if (s.compare) params.set("cmp", positionToPatch(s.compare.left));
     const path = pathMap.id === homeId ? "/wow/map" : mapPagePath(pathMap);
     const qs = params.toString();
     const url = `${prefix}${path}${qs ? `?${qs}` : ""}`;
-    if (url !== window.location.pathname + window.location.search) window.history.replaceState(window.history.state, "", url);
+    const next = { mapId: pathMap.id, depth: pathMap.depth };
+    // Flying into a place (or a level up or down) is a step Back can return from; panning only rewrites the entry.
+    const push = !restoring.current && pushesHistory(entry.current, next, engine.takeFlown());
+    restoring.current = false;
+    entry.current = next;
+    if (url === window.location.pathname + window.location.search) return;
+    if (push) window.history.pushState(window.history.state, "", url);
+    else window.history.replaceState(window.history.state, "", url);
   };
 
   const onFocus = (chain: AtlasMap[]) => {
@@ -240,6 +262,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
         hover: (map) => setHoverMap(map?.id ?? null),
         settle: (info) => settleRef.current(info),
         background: () => setSelected(null),
+        set: (set) => setActiveSet(set),
       }, { alive: state.current.layers.alive, reducedMotion: lessMotion(), insets: insets() });
     } catch {
       setFailed(true);
@@ -253,25 +276,28 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const q = readQuery();
     const ordered = orderedEras(bundle.eras);
     const startEra = q.era ? ordered.find((e) => e.id === q.era) : undefined;
-    if (startEra) setPosition(restOf(ordered, startEra));
+    if (q.at !== null) setPosition(Math.max(0, Math.min(restOf(ordered, ordered[ordered.length - 1]), q.at)));
+    else if (startEra) setPosition(restOf(ordered, startEra));
     const start = mapId ?? homeId;
     const map = start === null ? undefined : engine.maps.get(start);
     if (map) {
       const fit = engine.fitMap(map.id) ?? engine.fit(map.frame);
-      if (q.x !== null && q.y !== null && q.z !== null) {
-        const [ax, ay] = engine.mapPoint(map, q.x, q.y);
-        engine.jumpTo({ x: ax, y: ay, scale: fit.scale * 2 ** Math.max(-3, Math.min(14, q.z)) });
-      } else engine.jumpTo(fit);
+      const view = q.x !== null && q.y !== null && q.z !== null ? queryToView({ x: q.x, y: q.y, z: q.z }, map.frame, fit.scale) : null;
+      if (view) engine.jumpTo(view);
+      else { engine.jumpToMap(map.id); startWhole.current = true; }
+      entry.current = { mapId: map.id, depth: map.depth };
     }
     const event = q.event ? bundle.events.find((e) => e.id === q.event) : undefined;
     if (event) {
       setSelected({ type: "event", event });
-      if (!startEra) setPosition(patchPosition(event.patch));
-      if (q.compare) setCompare({ left: patchPosition(event.patch) - 0.011 });
+      if (!startEra && q.at === null) setPosition(patchPosition(event.patch));
+      // The event's place, once the first picture is in (unless the link has its own view).
+      if (q.x === null || q.y === null || q.z === null) startEvent.current = event;
     }
+    if (q.compareAt !== null) setCompare({ left: q.compareAt });
+    else if (q.compare) startCompare.current = true;
     const stageHandle = handle.current;
     stageHandle?.onCrumb((id) => engine.flyToMap(id));
-    stageHandle?.ready();
     return () => {
       stageHandle?.onCrumb(null);
       engine.destroy();
@@ -285,7 +311,10 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const settleRef = useRef(settle);
   // The engine calls back through refs: they follow the latest render.
   useLayoutEffect(() => {
-    state.current = { layers, eraParam: position !== null && era && Math.abs(pos - latestPos) > 1e-6 ? era.id : null, metaEra: era, selected, compare };
+    const eraParam = position !== null && era && Math.abs(pos - latestPos) > 1e-6 ? era.id : null;
+    // A moment other than the era's resting one (a phase: Theramore in ruins from 5.1) is kept exactly.
+    const atParam = eraParam && era && Math.abs(pos - restOf(eras, era)) > 0.004 ? positionToPatch(pos) : null;
+    state.current = { layers, eraParam, atParam, metaEra: era, selected, compare };
     hoverPoiRef.current = hoverPoi;
     byIdRef.current = byId;
     onFrameRef.current = onFrame;
@@ -297,10 +326,14 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
-    const observer = new ResizeObserver(() => engine.setOptions({ insets: insets() }));
+    const update = () => engine.setOptions({ insets: insets() });
+    const observer = new ResizeObserver(update);
     if (dock.current) observer.observe(dock.current);
     if (titleBar.current) observer.observe(titleBar.current);
-    return () => observer.disconnect();
+    // The cookie notice lifts the dock by a property written on the stage.
+    const lifted = new MutationObserver(update);
+    if (stage.current) lifted.observe(stage.current, { attributes: true, attributeFilter: ["style"] });
+    return () => { observer.disconnect(); lifted.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- insets() reads the panels from refs
   }, [bundle]);
 
@@ -321,15 +354,69 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     return () => { cancelled = true; };
   }, [artNow, artLeft, eraData, bundleUrl]);
   // The map follows the timeline: the moment's maps cross-fade in (at once on the first draw).
-  const firstSet = useRef(true);
   useEffect(() => {
     const engine = engineRef.current;
     const set = setFor(artNow);
     if (!engine || !set) return;
-    engine.setMapSet(set, !firstSet.current);
+    // The first picture comes at once, kept on the page's map (the link's view in that era's hierarchy).
+    const first = firstSet.current;
+    engine.setMapSet(set, { animate: !first, anchor: first ? mapId ?? homeId : engine.focus?.id ?? null });
     firstSet.current = false;
-    setActiveSet(set);
-  }, [artNow, setFor, bundle]);
+    const start = mapId ?? homeId;
+    if (first && startWhole.current && start !== null) engine.jumpToMap(start);
+    if (first) {
+      setActiveSet(set);
+      startedRef.current = true;
+      setStarted(true);
+      handle.current?.ready();
+      const event = startEvent.current;
+      startEvent.current = null;
+      if (event && event.map !== null && engine.maps.has(event.map)) {
+        const map = engine.maps.get(event.map);
+        // Part of opening the link, not a step of its own in the history.
+        restoring.current = true;
+        engine.flyToPoint(event.map, event.x, event.y, map && (map.type === "continent" || map.type === "world") ? 1.6 : 1.2);
+      }
+    }
+  }, [artNow, setFor, bundle, mapId, homeId, handle]);
+  // The era of a link could not load: show today's maps rather than nothing.
+  useEffect(() => {
+    if (!bundle || started) return;
+    const timer = window.setTimeout(() => {
+      const engine = engineRef.current;
+      if (!engine || startedRef.current || !baseSet) return;
+      firstSet.current = false;
+      engine.setMapSet(baseSet, { animate: false, anchor: mapId ?? homeId });
+      setActiveSet(baseSet);
+      startedRef.current = true;
+      setStarted(true);
+      handle.current?.ready();
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, [bundle, started, baseSet, mapId, homeId, handle]);
+  // Back / Forward: the entry's place, zoom and era come back.
+  useEffect(() => {
+    if (!bundle) return;
+    const pop = () => {
+      const engine = engineRef.current;
+      if (!engine) return;
+      const q = readQuery();
+      const ordered = orderedEras(bundle.eras);
+      const target = q.era ? ordered.find((e) => e.id === q.era) : undefined;
+      setPosition(q.at !== null ? q.at : target ? restOf(ordered, target) : null);
+      const id = mapIdOfPath(window.location.pathname, homeId);
+      const map = id === null ? undefined : engine.maps.get(id);
+      if (!map) return;
+      const fit = engine.fitMap(map.id) ?? engine.fit(map.frame);
+      const view = q.x !== null && q.y !== null && q.z !== null ? queryToView({ x: q.x, y: q.y, z: q.z }, map.frame, fit.scale) : null;
+      restoring.current = true;
+      entry.current = { mapId: map.id, depth: map.depth };
+      if (view) engine.flyTo(view);
+      else engine.flyToMap(map.id);
+    };
+    window.addEventListener("popstate", pop);
+    return () => window.removeEventListener("popstate", pop);
+  }, [bundle, homeId]);
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
@@ -360,8 +447,6 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   }, []);
 
   const pickHit = useCallback((hit: SearchHit) => {
-    setQuery("");
-    setSearchOpen(false);
     const engine = engineRef.current;
     if (hit.type === "map") { setSelected(null); engine?.flyToMap(hit.map.id); }
     else if (hit.type === "poi") flyToPoi(hit.poi);
@@ -403,6 +488,13 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     else { setCompare({ left: pos }); setPosition(otherPos); }
   }, [compare, selected, changedHere, eras, art, pos]);
 
+  // A link with cmp=1: the comparison opens once the map knows what changed here.
+  useEffect(() => {
+    if (!startCompare.current || !started || !focus || compare) return;
+    startCompare.current = false;
+    toggleCompare();
+  }, [started, focus, compare, toggleCompare]);
+
   const toggleFull = () => {
     const el = stage.current;
     const next = !full;
@@ -425,6 +517,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       if (event.key !== "Escape") return;
       if (selected) setSelected(null);
       else if (full && !document.fullscreenElement) setFull(false);
+      // Nothing to close: one level up, like the game's map.
+      else if (event.target === surface.current) { event.preventDefault(); engineRef.current?.up(); }
     };
     window.addEventListener("keydown", key);
     return () => { document.removeEventListener("fullscreenchange", exit); window.removeEventListener("keydown", key); };
@@ -439,6 +533,14 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
   }, [stage]);
+
+  // What the place in focus holds (zones, cities, continents): its instances and the events there.
+  const facts = useMemo(() => {
+    if (!focus || !index || !bundle || focus.type === "cosmic" || focus.type === "world") return null;
+    return placeFacts(focus, index.byId, index.poisByMap, bundle.events);
+  }, [focus, index, bundle]);
+  const toggleLayers = useCallback((open: boolean) => setLayersOpen(open), []);
+  const existsNow = useCallback((id: number) => Boolean((activeSet ?? baseSet)?.maps.has(id)), [activeSet, baseSet]);
 
   // ------------------------------------------------------------ render
   if (failed && !bundle) return <p className={styles.fallback} data-map-ui>{copy.noWebgl}</p>;
@@ -457,11 +559,25 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const rightEra = compare ? { name: artName(artNow) } : null;
   const patchOf = (at: number) => `${Math.floor(at) + 1}.${Math.floor((at % 1) * 10 + 1e-6)}`;
   const sameName = leftEra && rightEra && leftEra.name === rightEra.name;
+  const selection: PanelSelection = selected?.type === "poi" ? { type: "poi", poi: selected.poi, where: chainNames(selectedMap) } : selected;
+  const eventCompare = selected?.type === "event" && Boolean(selected.event.before || selected.event.changed?.length);
+  const panel = bundle ? (
+    <MapPlacePanel lang={lang} facts={facts} selection={selection} sheet={narrow}
+      onClose={() => setSelected(null)} onPoi={flyToPoi} onEvent={openEvent} />
+  ) : null;
+  const search = bundle ? <MapSearchBox lang={lang} bundle={bundle} bundleUrl={bundleUrl} byId={byId} exists={existsNow} onPick={pickHit} /> : null;
+  const controls = (
+    <MapControls lang={lang} canUp={Boolean(focus && focus.parent !== null)} full={full} layers={layers} layersOpen={layersOpen}
+      onZoom={(factor) => engineRef.current?.zoomBy(factor)} onUp={() => engineRef.current?.up()} onLayersOpen={toggleLayers} onLayers={setLayers} onFull={toggleFull} />
+  );
+  // The name under the pointer, unless its label is on screen already (that label lights up instead).
+  const hoverLabelled = hoverMap !== null && markers.some((marker) => marker.type === "map" && marker.map.id === hoverMap && !marker.quiet);
+  const hoverName = hoverMap !== null && !hoverLabelled ? byId?.get(hoverMap)?.name ?? null : null;
 
   return (
     <>
       <div ref={surface} className={styles.surface} tabIndex={0} role="application" aria-label={copy.map} aria-roledescription={copy.map}
-        data-alive={layers.alive && !reduced ? "" : undefined} data-ready={bundle ? "" : undefined}>
+        data-alive={layers.alive && !reduced ? "" : undefined} data-ready={started ? "" : undefined}>
         <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />
         {hoverPoi?.routes?.length ? (
           <svg className={styles.routes} aria-hidden="true">
@@ -474,7 +590,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
             if (marker.type === "map") {
               return (
                 <button key={marker.key} ref={ref} type="button" data-map-ui className={styles.mapLabel} data-size={marker.size} data-capital={marker.capital ? "" : undefined} data-quiet={marker.quiet ? "" : undefined}
-                  data-faction={marker.faction} data-hover={hoverMap === marker.map.id ? "" : undefined}
+                  data-covers={marker.covers ? "" : undefined} data-faction={marker.faction} data-hover={hoverMap === marker.map.id ? "" : undefined}
                   onClick={() => { setSelected(null); engineRef.current?.flyToMap(marker.map.id); }}
                   onPointerEnter={() => { setHoverMap(marker.map.id); engineRef.current?.highlight(marker.map.id); }}
                   onPointerLeave={() => { setHoverMap(null); engineRef.current?.highlight(null); }}>
@@ -504,7 +620,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
             }
             return (
               <button key={marker.key} ref={ref} type="button" data-map-ui className={styles.poi} data-kind={marker.kind} data-faction={marker.faction}
-                data-labelled={marker.showLabel ? "" : undefined}
+                data-labelled={marker.showLabel ? "" : undefined} data-side={marker.showLabel ? marker.side : undefined}
                 data-selected={selected?.type === "poi" && selected.poi.id === marker.poi.id ? "" : undefined}
                 aria-label={`${marker.label}, ${copy.kind[marker.kind]}`}
                 onClick={() => { setSelected({ type: "poi", poi: marker.poi }); if (marker.poi.target) engineRef.current?.flyToMap(marker.poi.target); }}
@@ -515,6 +631,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
             );
           })}
         </div>
+        <MapHoverName surface={surface} name={hoverName} />
       </div>
 
       {compare && leftEra && rightEra ? (
@@ -528,89 +645,15 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
         </div>
       ) : null}
 
-      <div className={styles.searchBox} data-map-ui data-open={searchOpen || query ? "" : undefined}>
-        <label className={styles.searchField}>
-          <Search aria-hidden="true" />
-          <input type="search" value={query} placeholder={copy.search} aria-label={copy.searchLabel}
-            role="combobox" aria-expanded={hits.length > 0} aria-controls="world-map-hits" aria-autocomplete="list"
-            aria-activedescendant={hits[active] ? `hit-${hits[active].key}` : undefined}
-            onFocus={() => setSearchOpen(true)} onBlur={() => window.setTimeout(() => setSearchOpen(false), 150)}
-            onChange={(e) => { setQuery(e.target.value); setActive(0); }}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(hits.length - 1, a + 1)); }
-              if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(0, a - 1)); }
-              if (e.key === "Enter" && hits[active]) { e.preventDefault(); pickHit(hits[active]); (e.target as HTMLInputElement).blur(); }
-              if (e.key === "Escape") { setQuery(""); (e.target as HTMLInputElement).blur(); }
-            }} />
-        </label>
-        {query ? (
-          <ul id="world-map-hits" role="listbox" className={styles.hits} data-map-ui-scroll>
-            {hits.length ? hits.map((hit, i) => (
-              <li key={hit.key} id={`hit-${hit.key}`} role="option" aria-selected={i === active}
-                onMouseDown={(e) => e.preventDefault()} onClick={() => pickHit(hit)} onMouseEnter={() => setActive(i)}>
-                <span className={styles.hitTitle}>{hit.title}</span>
-                <span className={styles.hitMeta}>
-                  {hit.type === "map" ? copy.type[hit.map.type === "zone" && byId && hit.map.parent !== null && byId.get(hit.map.parent)?.type === "zone" ? "city" : hit.map.type] : hit.type === "poi" ? copy.kind[hit.poi.kind] : `${copy.patch} ${hit.event.patch}`}
-                  {hit.context && hit.type !== "event" ? ` · ${hit.context}` : ""}
-                </span>
-              </li>
-            )) : <li className={styles.nothing} role="presentation">{copy.nothing}</li>}
-          </ul>
-        ) : null}
-      </div>
-
-      <div className={styles.controls} data-map-ui>
-        <button type="button" onClick={() => engineRef.current?.zoomBy(1.8)} aria-label={copy.zoomIn} title={copy.zoomIn}><Plus aria-hidden="true" /></button>
-        <button type="button" onClick={() => engineRef.current?.zoomBy(1 / 1.8)} aria-label={copy.zoomOut} title={copy.zoomOut}><Minus aria-hidden="true" /></button>
-        <button type="button" onClick={() => engineRef.current?.up()} aria-label={copy.up} title={copy.up} disabled={!focus || (focus.parent === null && !!focus)}><ChevronUp aria-hidden="true" /></button>
-        <button type="button" onClick={() => setLayersOpen((o) => !o)} aria-label={copy.layers} title={copy.layers} aria-expanded={layersOpen} aria-controls="world-map-layers"><LayersIcon aria-hidden="true" /></button>
-        <button type="button" onClick={toggleFull} aria-label={full ? copy.exitFullscreen : copy.fullscreen} title={full ? copy.exitFullscreen : copy.fullscreen}>{full ? <Shrink aria-hidden="true" /> : <Expand aria-hidden="true" />}</button>
-      </div>
-      {layersOpen ? (
-        <fieldset id="world-map-layers" className={styles.layers} data-map-ui>
-          <legend>{copy.layers}</legend>
-          {LAYER_KEYS.map((key) => (
-            <label key={key}>
-              <input type="checkbox" checked={layers[key]} onChange={(e) => setLayers((l) => ({ ...l, [key]: e.target.checked }))} />
-              <span>{copy.layer[key]}</span>
-            </label>
-          ))}
-        </fieldset>
-      ) : null}
+      {/* Search and the place panel live in the title column (wide screens); on phones the search and tools share the header row. */}
+      {slot ? createPortal(<>{search}{narrow ? controls : panel}</>, slot) : null}
+      {narrow ? null : <div ref={tools} className={styles.tools}>{controls}</div>}
 
       <div ref={dock} className={styles.dock} data-map-ui>
-        {selected ? (
-          <article className={styles.card} aria-live="polite">
-            <button type="button" className={styles.cardClose} onClick={() => setSelected(null)} aria-label={copy.close}><X aria-hidden="true" /></button>
-            {selected.type === "poi" ? (
-              <>
-                <p className={styles.cardKind}>
-                  {copy.kind[selected.poi.kind]}{selected.poi.faction && selected.poi.faction !== "neutral" ? ` · ${copy.faction[selected.poi.faction]}` : ""}
-                </p>
-                <h2 className={styles.cardTitle}>{selected.poi.name}</h2>
-                {chainNames(selectedMap) ? <p className={styles.cardText}>{chainNames(selectedMap)}</p> : null}
-                {selected.poi.href ? <a className={styles.cardLink} href={`${prefix}${selected.poi.href}`}>{copy.open}<ArrowUpRight aria-hidden="true" /></a> : null}
-              </>
-            ) : (
-              <>
-                <p className={styles.cardKind}>{copy.patch} {selected.event.patch}{selected.event.year ? ` · ${selected.event.year}` : ""}</p>
-                <h2 className={styles.cardTitle}>{selected.event.title}</h2>
-                <p className={styles.cardText}>{selected.event.summary}</p>
-                <div className={styles.cardActions}>
-                  {selected.event.before || selected.event.changed?.length ? (
-                    <button type="button" className={styles.cardButton} aria-pressed={Boolean(compare)} onClick={toggleCompare}>{compare ? copy.compareOff : copy.compare}</button>
-                  ) : null}
-                  {selected.event.links.map((link) => (
-                    <a key={link.href} className={styles.cardLink} href={`${prefix}${link.href}`}>{link.label ?? copy.open}<ArrowUpRight aria-hidden="true" /></a>
-                  ))}
-                </div>
-              </>
-            )}
-          </article>
-        ) : null}
+        {narrow ? panel : null}
         {eras.length > 1 ? (
           <MapTimeline lang={lang} eras={eras} events={bundle?.events ?? []} position={pos} activeEvent={selected?.type === "event" ? selected.event : null}
-            compare={Boolean(compare)} canCompare={changedHere.length > 0 || (selected?.type === "event" && Boolean(selected.event.before || selected.event.changed?.length))}
+            compare={Boolean(compare)} canCompare={changedHere.length > 0 || eventCompare}
             onPosition={setPosition} onEvent={openEvent} onCompare={toggleCompare} />
         ) : null}
       </div>
