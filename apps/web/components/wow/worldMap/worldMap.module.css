@@ -1,0 +1,147 @@
+/* atlas:strict — world map page: the stage (first picture, title, trail) and the places under it. */
+
+.page {
+  position: relative;
+  min-height: 100dvh;
+  overflow-x: clip;
+  color: var(--atlas-text);
+  background: var(--atlas-bg);
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-body);
+  isolation: isolate;
+}
+.page :is(button, input, select, textarea) { font: inherit; }
+.page :is(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+
+/* ---------- Stage ---------- */
+.stage {
+  --map-dock: 118px;
+  position: relative;
+  height: calc(100dvh - var(--atlas-sticky-top));
+  min-height: 460px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 42%, color-mix(in srgb, var(--atlas-surface-raised) 80%, var(--atlas-bg)), var(--atlas-bg) 78%);
+  isolation: isolate;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.stage[data-full] { position: fixed; inset: 0; z-index: 120; height: 100dvh; }
+
+.poster {
+  position: absolute;
+  inset: 0 0 var(--map-dock) 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+  pointer-events: none;
+  transition: opacity var(--atlas-duration-slow) var(--atlas-ease) .35s;
+}
+.posterArt { position: relative; width: min(90cqw, calc(90cqh * var(--poster-aspect))); }
+.posterArt img { position: absolute; display: block; max-width: none; }
+.stage[data-live] .poster { opacity: 0; }
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 75% at 50% 46%, transparent 58%, color-mix(in srgb, var(--atlas-bg) 78%, transparent) 100%),
+    linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 70%, transparent), transparent 22%);
+}
+
+/* ---------- Title and trail ---------- */
+.titleBar {
+  position: absolute;
+  z-index: 6;
+  top: var(--atlas-space-4);
+  left: var(--atlas-gutter);
+  max-width: min(560px, calc(100% - 420px));
+  pointer-events: none;
+}
+.titleBar > * { pointer-events: auto; }
+.trail ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--atlas-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+  text-shadow: var(--atlas-text-halo);
+}
+.trail li { display: inline-flex; align-items: center; gap: var(--atlas-space-1); }
+.trail a { display: inline-flex; align-items: center; min-height: 32px; color: var(--atlas-accent); text-decoration: none; }
+.trail a:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+.trail [aria-current] { color: var(--atlas-text-muted); }
+.trail svg { width: 12px; height: 12px; color: var(--atlas-text-subtle); }
+.title {
+  margin: var(--atlas-space-1) 0 0;
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: clamp(1.75rem, 1.1rem + 2.2vw, 3.25rem);
+  font-weight: var(--atlas-weight-display-hero);
+  line-height: var(--atlas-leading-tight);
+  letter-spacing: var(--atlas-tracking-display);
+  text-shadow: var(--atlas-text-halo);
+  text-wrap: balance;
+}
+.line {
+  max-width: 54ch;
+  margin: var(--atlas-space-2) 0 0;
+  color: var(--atlas-text);
+  font-size: var(--atlas-text-small);
+  line-height: var(--atlas-leading-snug);
+  text-shadow: var(--atlas-text-halo);
+}
+
+/* ---------- Places under the map ---------- */
+.below {
+  width: min(100%, var(--atlas-container));
+  margin-inline: auto;
+  padding: var(--atlas-space-7) var(--atlas-gutter) var(--atlas-space-6);
+}
+.places {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--atlas-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.places a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 var(--atlas-space-4);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-glass-fill);
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: 1.0625rem;
+  font-weight: var(--atlas-weight-display);
+  text-decoration: none;
+  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
+}
+.places a:hover { border-color: var(--atlas-glass-edge); background: var(--atlas-surface-raised); }
+
+@media (max-width: 700px) {
+  .stage { --map-dock: 132px; height: calc(100dvh - var(--atlas-sticky-top)); min-height: 520px; }
+  .poster { inset: 150px 0 var(--map-dock) 0; }
+  .titleBar { top: var(--atlas-space-2); right: var(--atlas-gutter); max-width: none; }
+  .title { font-size: 1.625rem; }
+  .line { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--atlas-text-meta); }
+  .trail a { min-height: 28px; }
+}
+@media (pointer: coarse) {
+  .trail a { min-height: 44px; }
+}
+@media (forced-colors: active) {
+  .vignette, .poster { display: none; }
+}
