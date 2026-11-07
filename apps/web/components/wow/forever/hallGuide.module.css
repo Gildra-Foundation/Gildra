@@ -1,0 +1,18 @@
+/* atlas:strict — Forever guide layout and encounter interaction. */
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--atlas-space-5); align-items: start; }
+.workspace > * { min-width: 0; }
+.map { position: relative; max-width: 100%; width: 100%; }
+.map img { display: block; width: 100%; height: auto; }
+.pin { position: absolute; transform: translate(-50%, -50%); width: 44px; height: 44px; border: 2px solid var(--atlas-accent); border-radius: 50%; background: var(--atlas-bg); color: var(--atlas-text-strong); font-weight: 700; cursor: pointer; }
+.pin[aria-pressed="true"] { background: var(--atlas-accent); color: var(--atlas-bg); }
+.choices { display: grid; gap: var(--atlas-space-2); margin-bottom: var(--atlas-space-4); }
+.choices button { text-align: start; min-height: 44px; padding: var(--atlas-space-2) var(--atlas-space-3); border: 1px solid var(--atlas-line); background: var(--atlas-surface); color: var(--atlas-text); cursor: pointer; }
+.choices button[aria-pressed="true"] { border-color: var(--atlas-accent); color: var(--atlas-accent); }
+.pin:focus-visible, .choices button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
+.mechanics { display: grid; gap: var(--atlas-space-4); }
+.mechanics dt { color: var(--atlas-text-strong); font-weight: 600; }
+.mechanics dt span { display: block; font-size: var(--atlas-text-small); color: var(--atlas-accent); }
+.mechanics dd { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text); }
+.ability { color: var(--atlas-accent); }
+@media (max-width: 767px) { .workspace { grid-template-columns: minmax(0, 1fr); } }
+@media (forced-colors: active) { .pin[aria-pressed="true"], .choices button[aria-pressed="true"] { outline: 3px solid Highlight; } }

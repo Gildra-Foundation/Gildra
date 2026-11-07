@@ -1,0 +1,2 @@
+/* atlas:strict */
+.location { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-muted); font: 500 var(--atlas-text-small) / var(--atlas-leading-body) var(--atlas-font-ui); }
