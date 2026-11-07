@@ -9,7 +9,7 @@ For every era (resolved like the viewer resolves it):
       the era's, and the Azeroth and Cosmic pictures come from that era or an
       older one;
   (c) in the old world (classic … wrath) the capitals sit inside their zones:
-      the city's centre lies on its zone's own land (the zone's mask) and the
+      the city's centre lies within the zone's rect, on or by its land (mask) and the
       city's flight master lies inside the city's rect;
   (d) masks exist and match the art's aspect ratio.
 Composites (parent + children through their masks) go to --out for a visual check.
@@ -106,9 +106,14 @@ def main() -> None:
                     continue
                 mask = mask_image(z)
                 if mask is not None:
-                    value = mask.getpixel((min(mask.width - 1, int(u * mask.width)), min(mask.height - 1, int(v * mask.height))))
-                    if value < 100:
-                        problems.append(f"capital {city} not on the land of zone {zone} (mask {value})")
+                    # on the zone's land or at its edge (old capitals are zones of their own,
+                    # so the zone's overlays stop at the city wall)
+                    px, py = int(u * mask.width), int(v * mask.height)
+                    r = max(2, int(0.08 * mask.width))
+                    window = mask.crop((max(0, px - r), max(0, py - r), min(mask.width, px + r), min(mask.height, py + r)))
+                    value = window.getextrema()[1]
+                    if value < 128:
+                        problems.append(f"capital {city} not by the land of zone {zone} (mask {value})")
                 flight = [p for p in pois if p["kind"] == "flight" and p["name"]["en"].startswith(CAPITAL_FLIGHT[city]) and p["mapId"] in (city, zone)]
                 for p in flight:
                     holder = nodes[p["mapId"]]
