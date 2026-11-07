@@ -34,14 +34,10 @@ export function mapLine(lang: Lang, map: AtlasMap, bundle: AtlasBundle) {
   if (map.type === "world") return kids.length ? copy.line.world(list(lang, kids.map((m) => m.name))) : "";
   if (map.type === "continent") return copy.line.continent(up("world")?.name ?? "", list(lang, kids.filter((m) => !isCity(m, byId, capitals)).map((m) => m.name)));
   if (isCity(map, byId, capitals)) {
+    // The game hangs a city on its zone (Thunder Bluff in Mulgore) or straight on the continent (Orgrimmar).
     const parent = map.parent === null ? undefined : byId.get(map.parent);
-    // A city hung on the continent (Orgrimmar on Kalimdor) lies in the zone it overlaps most.
-    const overlap = (m: AtlasMap) => Math.max(0, Math.min(m.box[2], map.box[2]) - Math.max(m.box[0], map.box[0])) * Math.max(0, Math.min(m.box[3], map.box[3]) - Math.max(m.box[1], map.box[1]));
-    const around = parent?.type === "zone" ? parent : parent?.children
-      .map((id) => byId.get(id))
-      .filter((m): m is AtlasMap => Boolean(m) && m!.id !== map.id && m!.type === "zone" && !isCity(m!, byId, capitals) && overlap(m!) > 0)
-      .sort((a, b) => overlap(b) - overlap(a))[0];
-    return copy.line.city(around?.name ?? parent?.name ?? "", up("continent")?.name ?? "");
+    if (parent?.type === "zone") return copy.line.city(parent.name, up("continent")?.name ?? "");
+    return copy.line.cityOn(up("continent")?.name ?? parent?.name ?? "");
   }
   const cities = kids.filter((m) => isCity(m, byId, capitals)).map((m) => m.name);
   const continent = up("continent")?.name ?? up("world")?.name ?? "";

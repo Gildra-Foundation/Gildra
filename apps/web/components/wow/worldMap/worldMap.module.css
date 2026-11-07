@@ -17,7 +17,8 @@
 .stage {
   --map-dock: 118px;
   position: relative;
-  height: calc(100dvh - var(--atlas-sticky-top));
+  /* Up to the bottom of the first screen: the stage knows where it starts (the version strip scrolls away above the bar). */
+  height: calc(100dvh - var(--map-top-offset, calc(var(--atlas-sticky-top) + 35px)));
   min-height: 460px;
   overflow: hidden;
   background:
@@ -132,7 +133,7 @@
 .places a:hover { border-color: var(--atlas-glass-edge); background: var(--atlas-surface-raised); }
 
 @media (max-width: 700px) {
-  .stage { --map-dock: 132px; height: calc(100dvh - var(--atlas-sticky-top)); min-height: 520px; }
+  .stage { --map-dock: 132px; min-height: 520px; }
   .poster { inset: 150px 0 var(--map-dock) 0; }
   .titleBar { top: var(--atlas-space-2); right: var(--atlas-gutter); max-width: none; }
   .title { margin-top: 0; font-size: 1.625rem; }

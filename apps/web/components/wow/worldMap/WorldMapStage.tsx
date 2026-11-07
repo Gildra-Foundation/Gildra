@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import { ChevronRight } from "lucide-react";
 import type { Lang } from "@/lib/wow/worldMap/bundle";
 import { worldMapCopy } from "./worldMapCopy";
@@ -38,6 +38,13 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
   const [searchTop, setSearchTop] = useState<number | null>(null);
   const crumbHandler = useRef<((mapId: number) => void) | null>(null);
 
+  // The stage fills the first screen below whatever sits above it (version strip, top bar).
+  const [topOffset, setTopOffset] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const el = stage.current;
+    if (el) setTopOffset(Math.max(0, Math.round(el.getBoundingClientRect().top + window.scrollY)));
+  }, []);
+
   // The viewer chunk loads once the first picture is on screen.
   useEffect(() => {
     const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
@@ -62,7 +69,7 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
 
   return (
     <section ref={stage} className={styles.stage} data-map-stage data-live={live ? "" : undefined} data-full={full ? "" : undefined}
-      style={searchTop === null ? undefined : { ["--map-search-top" as string]: `${searchTop}px` }} aria-labelledby="world-map-title">
+      style={{ ...(searchTop === null ? {} : { ["--map-search-top" as string]: `${searchTop}px` }), ...(topOffset === null ? {} : { ["--map-top-offset" as string]: `${topOffset}px` }) }} aria-labelledby="world-map-title">
       {poster ? (
         <div className={styles.poster} aria-hidden="true">
           <div className={styles.posterArt} style={{ aspectRatio: poster.aspect, ["--poster-aspect" as string]: poster.aspect }}>

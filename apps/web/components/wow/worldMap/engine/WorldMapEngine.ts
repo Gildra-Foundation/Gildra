@@ -41,6 +41,7 @@ const FADE_ERA = 700;
 
 export class WorldMapEngine {
   readonly maps = new Map<number, AtlasMap>();
+  private shown = new Map<number, Box>();
   private renderer: MapRenderer;
   private tiles: TileStore;
   private camera: Camera = { x: 0.5, y: 0.33, scale: 1000 };
@@ -80,6 +81,17 @@ export class WorldMapEngine {
     private options: EngineOptions,
   ) {
     for (const map of bundle.maps) this.maps.set(map.id, map);
+    // The part of each map inside its parents: children may overhang (Kalimdor past the edge of Azeroth).
+    for (const map of bundle.maps) {
+      let box = map.frame;
+      for (let m = map; m.parent !== null && !m.portal; ) {
+        const parent = this.maps.get(m.parent);
+        if (!parent) break;
+        box = [Math.max(box[0], parent.frame[0]), Math.max(box[1], parent.frame[1]), Math.min(box[2], parent.frame[2]), Math.min(box[3], parent.frame[3])];
+        m = parent;
+      }
+      this.shown.set(map.id, box[2] > box[0] && box[3] > box[1] ? box : map.frame);
+    }
     this.renderer = new MapRenderer(canvas);
     const coarse = matchMedia("(pointer: coarse)").matches;
     const cores = navigator.hardwareConcurrency || 4;
@@ -135,13 +147,13 @@ export class WorldMapEngine {
     let camera = fitBox(box, freeW, freeH, margin);
     // A wide map on a tall phone screen: come closer than "whole" so it fills more of the screen (pan sideways).
     const boxAspect = (box[2] - box[0]) / (box[3] - box[1]);
-    if (freeW / freeH < 0.85 && boxAspect > 1.1) camera = { ...camera, scale: Math.min(camera.scale * 1.55, (freeH * (1 - margin * 2)) / (box[3] - box[1])) };
+    if (freeW / freeH < 0.85 && boxAspect > 1.1) camera = { ...camera, scale: Math.min(camera.scale * 1.9, (freeH * (1 - margin * 2)) / (box[3] - box[1])) };
     return { scale: camera.scale, x: camera.x - (left - right) / 2 / camera.scale, y: camera.y - (top - bottom) / 2 / camera.scale };
   }
 
   fitMap(id: number) {
     const map = this.maps.get(id);
-    return map ? this.fit(map.frame) : null;
+    return map ? this.fit(this.shown.get(id) ?? map.frame) : null;
   }
 
   jumpTo(camera: Camera) {
@@ -185,7 +197,7 @@ export class WorldMapEngine {
   flyToPoint(mapId: number, x: number, y: number, zoom = 1.6, after?: () => void) {
     const map = this.maps.get(mapId);
     if (!map) return;
-    const fit = this.fit(map.frame);
+    const fit = this.fit(this.shown.get(map.id) ?? map.frame);
     const [ax, ay] = this.mapPoint(map, x, y);
     const { top, right, bottom, left } = this.options.insets;
     const scale = fit.scale * zoom;
@@ -209,7 +221,7 @@ export class WorldMapEngine {
   up() {
     const focus = this.focus;
     if (!focus) return;
-    const fitFocus = this.fit(focus.frame);
+    const fitFocus = this.fit(this.shown.get(focus.id) ?? focus.frame);
     // Zoomed into the focus map: first show it whole; already whole: go to its parent.
     if (this.camera.scale > fitFocus.scale * 1.15 || focus.parent === null) this.flyTo(fitFocus);
     else this.flyToMap(focus.parent);
@@ -412,15 +424,20 @@ export class WorldMapEngine {
         let a: number;
         if (child.portal) {
           a = smoothstep(0.34, 0.8, Math.min(cx1 - cx0, cy1 - cy0) / minDim);
+          // Only the world the camera heads for opens; its neighbours on the Cosmic map stay planets.
+          const mx = this.width / 2, my = this.height / 2;
+          const gap = Math.hypot(Math.max(cx0 - mx, 0, mx - cx1), Math.max(cy0 - my, 0, my - cy1));
+          a *= 1 - smoothstep(0.05, 0.3, gap / Math.max(1, Math.min(cx1 - cx0, cy1 - cy0)));
           portalOpen = Math.max(portalOpen, a);
         } else {
           // A child opens when the parent's picture runs out of detail, or when the
           // child fills most of the view (a continent framed on the world map).
-          const fill = Math.max((cx1 - cx0) / this.width, (cy1 - cy0) / this.height);
+          const vw = Math.min(cx1, clip[2]) - Math.max(cx0, clip[0]), vh = Math.min(cy1, clip[3]) - Math.max(cy0, clip[1]);
+          const fill = Math.max(vw / this.width, vh / this.height);
           // Detail alone does not open a small child (a city on a continent): it must also take a fair part of the view.
           a = Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill));
           // The map the reader came to see stands out: its parent darkens around it.
-          dominant = Math.max(dominant, a * smoothstep(0.6, 0.95, fill));
+          dominant = Math.max(dominant, a * smoothstep(0.4, 0.7, fill));
         }
         if (a > 0.003) visit(child, alpha * a, clip);
       }

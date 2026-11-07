@@ -218,7 +218,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const start = mapId ?? homeId;
     const map = start === null ? undefined : engine.maps.get(start);
     if (map) {
-      const fit = engine.fit(map.frame);
+      const fit = engine.fitMap(map.id) ?? engine.fit(map.frame);
       if (q.x !== null && q.y !== null && q.z !== null) {
         const [ax, ay] = engine.mapPoint(map, q.x, q.y);
         engine.jumpTo({ x: ax, y: ay, scale: fit.scale * 2 ** Math.max(-3, Math.min(14, q.z)) });
@@ -227,6 +227,11 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const event = q.event ? bundle.events.find((e) => e.id === q.event) : undefined;
     if (event) {
       setSelected({ type: "event", event });
+      if (!startEra) {
+        const eventEra = event.after ?? event.era;
+        setEraId(eventEra);
+        engine.setEra(bundle.eras.find((e) => e.id === eventEra) ?? null, false);
+      }
       if (q.compare && event.before && event.after) setCompare({ left: event.before, right: event.after });
     }
     const stageHandle = handle.current;
