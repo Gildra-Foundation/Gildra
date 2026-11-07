@@ -62,9 +62,7 @@ function RealmMenu({ realm, picks, lang, barePath, onNavigate, compact = false, 
   art?: boolean;
 }) {
   const group = picks[realm.id];
-  const items = group?.kind === "class"
-    ? [...group.picks].sort((a, b) => word(lang, a.label).localeCompare(word(lang, b.label), lang))
-    : group?.picks;
+  const items = group?.order ? group.order[lang].map((index) => group.picks[index]) : group?.picks;
   return <div className={toolbarStyles.menu} data-compact={compact || undefined} data-picks={group?.kind}>
     <div className={toolbarStyles.column}>
       {groupsFor(realm, lang).map((pages, index) => <div key={index} className={toolbarStyles.group}>

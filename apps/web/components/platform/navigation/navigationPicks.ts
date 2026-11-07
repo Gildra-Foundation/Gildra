@@ -6,7 +6,12 @@ import { CLASS_ICONS, classIcon } from "@/lib/games/wow/assets";
 
 /** One quick link of a realm menu: a dungeon or raid painting, or a class of the roster. */
 export type NavigationPick = { href: string; label: { en: string; ru: string }; image: string; tint?: string };
-export type NavigationPickGroup = { kind: "art" | "class"; title: { en: string; ru: string }; picks: NavigationPick[] };
+export type NavigationPickGroup = {
+  kind: "art" | "class"; title: { en: string; ru: string }; picks: NavigationPick[];
+  /** Alphabetical order of the picks per language (indices into picks), sorted here on the
+   *  server: a localeCompare in the bar started the browser's collation data on every page. */
+  order?: { en: number[]; ru: number[] };
+};
 /** Quick links next to a realm's pages, by realm id (realms without any are absent). */
 export type NavigationPicks = Partial<Record<string, NavigationPickGroup>>;
 
@@ -46,5 +51,7 @@ export function navigationPicks(): NavigationPicks {
       return [{ href: `/wow/classes#${entry.slug}`, label: { en: entry.nameEn, ru: entry.nameRu }, image, tint: classColors[entry.slug as keyof typeof classColors] }];
     }),
   };
+  const alphabetical = (lang: "en" | "ru") => classes.picks.map((_, index) => index).sort((a, b) => classes.picks[a].label[lang].localeCompare(classes.picks[b].label[lang], lang));
+  classes.order = { en: alphabetical("en"), ru: alphabetical("ru") };
   return { classes, mythic: dungeons, raids };
 }
