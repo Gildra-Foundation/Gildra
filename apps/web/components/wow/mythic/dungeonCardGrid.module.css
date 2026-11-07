@@ -137,14 +137,14 @@
 .hubCard a.openRoute:focus-visible { outline-color: transparent; }
 .hubCard a.openRoute:focus-visible::before { filter: contrast(.88) saturate(.84) brightness(1) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 1px var(--atlas-text-strong)) drop-shadow(0 0 6px var(--mythic-card-light)); }
 .hubCard a { scroll-margin-block: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
-.openRoute:focus-visible::after { animation: materialPulse 900ms var(--atlas-ease) both; }
+.openRoute:focus-visible::after { animation: materialPulse var(--atlas-duration-sweep) var(--atlas-ease) both; }
 .hubCard:focus-within .sceneImage { transform: scale(1.018); }
 
 @media (hover: hover) and (pointer: fine) {
   .hubCard:hover .sceneImage { transform: scale(1.025); }
   .title a:hover, .source:hover { color: var(--mythic-card-light); text-decoration: underline; text-underline-offset: 3px; }
   .hubCard .openRoute:global(.ui-button):hover { transform: translateY(-2px); }
-  .openRoute:hover::after { animation: materialSweep 900ms var(--atlas-ease) both; }
+  .openRoute:hover::after { animation: materialSweep var(--atlas-duration-sweep) var(--atlas-ease) both; }
   .hubCard[data-mythic-card-theme="void"] .openRoute:hover::after { animation-name: materialPulse; }
   .hubCard[data-mythic-card-theme="bloom"] .openRoute:hover::after,
   .hubCard[data-mythic-card-theme="fangs"] .openRoute:hover::after { animation-name: materialRise; }

@@ -73,7 +73,7 @@
 .page .assetButton:global(.ui-button):active { transform: translateY(1px) scale(.98); }
 @media (hover: hover) and (pointer: fine) {
   .page .assetButton:global(.ui-button):hover { transform: translateY(-2px); }
-  .assetButton:hover::after { animation: assetGlint 900ms var(--atlas-ease) both; }
+  .assetButton:hover::after { animation: assetGlint var(--atlas-duration-sweep) var(--atlas-ease) both; }
 }
 @keyframes assetGlint { from { opacity: 0; transform: translateX(-12px); } 45% { opacity: .8; } to { opacity: 0; transform: translateX(12px); } }
 .seasonFacts { max-width: 500px; margin-top: var(--atlas-space-5); }

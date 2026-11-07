@@ -155,7 +155,7 @@
 .comboInput:focus-visible { border-color: var(--atlas-accent-strong); outline: none; box-shadow: var(--atlas-ring-focus); }
 .comboInput:disabled { cursor: progress; opacity: .7; }
 .combo[data-invalid] .comboInput { border-color: var(--atlas-negative); }
-.comboBusy { position: absolute; right: 14px; width: 14px; height: 14px; border: 2px solid var(--atlas-line); border-top-color: var(--atlas-accent); border-radius: 50%; animation: auctionSpin .8s linear infinite; }
+.comboBusy { position: absolute; right: 14px; width: 14px; height: 14px; border: 2px solid var(--atlas-line); border-top-color: var(--atlas-accent); border-radius: 50%; animation: auctionSpin var(--atlas-duration-spin) linear infinite; }
 @keyframes auctionSpin { to { rotate: 360deg; } }
 .comboList {
   position: absolute; z-index: 30; inset: calc(100% + 6px) 0 auto; max-height: min(22rem, 60dvh); margin: 0; padding: var(--atlas-space-1);
@@ -302,9 +302,9 @@ td[data-best] .metricTrack > span { background: var(--material-light, var(--atla
 .removeCell { width: 44px; padding-inline: var(--atlas-space-1) !important; text-align: center !important; }
 .compareRemove, .detailClose { display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid transparent; border-radius: var(--atlas-radius-control); background: transparent; color: var(--atlas-text-muted); cursor: pointer; }
 .compareRemove:hover, .detailClose:hover { border-color: var(--atlas-line); color: var(--atlas-text-strong); }
-.cellSkeleton { display: inline-block; width: 6rem; height: 14px; border-radius: 4px; background: var(--atlas-line-soft); animation: auctionPulse 1.4s var(--atlas-ease-ambient) infinite; }
+.cellSkeleton { display: inline-block; width: 6rem; height: 14px; border-radius: 4px; background: var(--atlas-line-soft); animation: auctionPulse var(--atlas-duration-pulse) var(--atlas-ease-ambient) infinite; }
 .rowSkeleton { display: inline-flex; align-items: center; gap: var(--atlas-space-3); min-height: 44px; }
-.rowSkeleton > span { display: block; border-radius: 4px; background: var(--atlas-line-soft); animation: auctionPulse 1.4s var(--atlas-ease-ambient) infinite; }
+.rowSkeleton > span { display: block; border-radius: 4px; background: var(--atlas-line-soft); animation: auctionPulse var(--atlas-duration-pulse) var(--atlas-ease-ambient) infinite; }
 .rowSkeleton > span:first-child { width: 36px; height: 36px; }
 .rowSkeleton > span:last-child { width: 10rem; height: 14px; }
 @keyframes auctionPulse { 50% { opacity: .45; } }

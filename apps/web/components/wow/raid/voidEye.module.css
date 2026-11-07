@@ -4,7 +4,7 @@
   opacity: 0;
   mix-blend-mode: screen;
   pointer-events: none;
-  transition: opacity 1.2s var(--atlas-ease);
+  transition: opacity var(--atlas-duration-draw) var(--atlas-ease);
 }
 
 .canvas[data-live] { opacity: .9; }

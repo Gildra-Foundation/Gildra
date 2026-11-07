@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Guards the atlas theme: stylesheets that opted in must take colours, fonts
-// and type sizes from the tokens in app/styles/atlas-theme.css.
+// Guards the atlas theme: stylesheets that opted in must take colours, fonts,
+// type sizes and motion times from the tokens in app/styles/atlas-theme.css.
 //
 // Checked files: every CSS module (*.module.css) in components/, app/ and packages/, plus
 // any stylesheet whose first line contains `atlas:strict`, except the surfaces
@@ -29,6 +29,14 @@ const exempt = {
   "components/talents/TalentTreePanel.module.css": "talent tree — class colours of the game",
 };
 const allowedHex = new Set(["#000", "#020303"]);
+// Motion: UI tempo comes from the --atlas-duration-* tokens (app/styles/atlas-theme.css).
+// Literal times of 2 s and more are scene loops (mist, sway) with their own slow tempo;
+// scroll-driven animations have no time. Below, motion owned by another surface.
+const motionExempt = {
+  "components/wow/worldMap/": "world map — its own engine and session (tokens requested 2026-11-07)",
+};
+const choreographed = [/fel-fallback 1080ms/]; // paired with FEL_RELEASE_MS in components/motion/felMaterial.ts
+const stripFunctions = (value) => { let previous; do { previous = value; value = value.replace(/(?:var|cubic-bezier|linear|steps|calc)\([^()]*\)/g, ""); } while (value !== previous); return value; };
 const retiredAliases = {
   background: "--atlas-bg", title: "--atlas-text-strong", muted: "--atlas-text-muted", "accent-bright": "--atlas-accent-strong",
   border: "--atlas-line", rule: "--atlas-line-soft", display: "--atlas-font-display", ui: "--atlas-font-ui",
@@ -68,6 +76,14 @@ for (const dir of scanDirs) {
       if (family && !family[1].includes("var(--atlas-font")) problems.push(`${where}  font-family "${family[1].trim()}" — use var(--atlas-font-display) or var(--atlas-font-ui)`);
       const shorthand = code.match(/(?:^|[\s;{])font\s*:\s*([^;]+)/);
       if (shorthand && !shorthand[1].includes("var(--atlas-font") && !/^(inherit|initial|unset)$/.test(shorthand[1].trim())) problems.push(`${where}  font shorthand without an atlas font token`);
+      if (!/animation-timeline/.test(code) && !Object.keys(motionExempt).some((prefix) => rel.startsWith(prefix))) {
+        for (const [declaration, kind, , value] of code.matchAll(/(transition|animation)(-duration|-delay)?\s*:\s*([^;}]*)/g)) {
+          if (choreographed.some((pattern) => pattern.test(declaration))) continue;
+          const times = [...stripFunctions(value).matchAll(/(?:^|[\s,])-?(\d*\.?\d+)(ms|s)\b/g)].map(([, number, unit]) => Number(number) * (unit === "s" ? 1000 : 1)).filter((time) => time > 1);
+          const literal = times.filter((time) => kind === "transition" || time < 2000);
+          if (literal.length) problems.push(`${where}  ${kind} time ${literal.map((time) => `${time}ms`).join(", ")} — use a --atlas-duration-* token`);
+        }
+      }
       for (const match of code.matchAll(/font-size\s*:\s*(\d+(?:\.\d+)?)px/g)) {
         if (Number(match[1]) < 11) problems.push(`${where}  font-size ${match[1]}px is below the 11 px minimum — use --atlas-text-label or larger`);
       }

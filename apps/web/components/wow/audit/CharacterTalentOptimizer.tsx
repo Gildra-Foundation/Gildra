@@ -138,7 +138,7 @@ export function CharacterTalentOptimizer({
       </div>
     </div>
 
-    {running ? <div className={styles.progress} role="status" aria-live="polite"><span className={tools.status}>{phase} · {job.completed}/{job.total}</span><div className={tools.progress} aria-hidden="true"><i style={{ width: `${Math.min(100, job.completed / Math.max(1, job.total) * 100)}%` }} /></div></div> : null}
+    {running ? <div className={styles.progress} role="status" aria-live="polite"><span className={tools.status}>{phase} · {job.completed}/{job.total}</span><div className={tools.progress} aria-hidden="true"><i style={{ transform: `scaleX(${Math.min(1, job.completed / Math.max(1, job.total))})` }} /></div></div> : null}
     {requestError || job?.status === "failed" ? <p className={tools.alert} role="alert"><AlertTriangle aria-hidden="true" />{requestError ?? errorMessage(job?.error ?? null, lang)}</p> : null}
     {job?.status === "cancelled" ? <p className={tools.status} role="status">{talentText(lang, "Подбор остановлен")}</p> : null}
 

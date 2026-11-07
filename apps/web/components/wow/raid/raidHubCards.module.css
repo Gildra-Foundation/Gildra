@@ -124,7 +124,7 @@
   .source:hover { color: var(--raid-card-light); text-decoration: underline; text-underline-offset: 3px; }
   .bosses a:hover { transform: translateY(-2px); filter: brightness(1.05); }
   .card .openRaid:global(.ui-button):hover { transform: translateY(-2px); filter: brightness(1.05); }
-  .openRaid:hover::after { animation: jadeCharge 900ms var(--atlas-ease) both; }
+  .openRaid:hover::after { animation: jadeCharge var(--atlas-duration-sweep) var(--atlas-ease) both; }
   .card[data-raid-card-theme="void"] .openRaid:hover::after { animation-name: voidCharge; }
   .card[data-raid-card-theme="dream"] .openRaid:hover::after { animation-name: dreamCharge; }
   .card[data-raid-card-theme="sun"] .openRaid:hover::after { animation-name: sunCharge; }

@@ -33,7 +33,7 @@
   background: var(--site-accent, var(--atlas-accent));
   transform: scaleX(0);
   transform-origin: left;
-  animation: locale-progress 2.4s cubic-bezier(.1, .7, .3, 1) 150ms forwards;
+  animation: locale-progress 2.4s cubic-bezier(.1, .7, .3, 1) var(--atlas-duration-fast) forwards;
 }
 @keyframes locale-progress { to { transform: scaleX(.85); } }
 

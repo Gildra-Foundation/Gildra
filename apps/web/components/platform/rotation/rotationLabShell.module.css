@@ -198,7 +198,7 @@
   display: block;
   width: 34%;
   background: var(--atlas-accent-strong);
-  animation: rotation-shell-sweep 1.4s var(--atlas-ease) infinite;
+  animation: rotation-shell-sweep var(--atlas-duration-pulse) var(--atlas-ease) infinite;
 }
 
 .progress[data-value] > span { width: var(--progress, 0%); animation: none; transition: width var(--atlas-duration) var(--atlas-ease); }

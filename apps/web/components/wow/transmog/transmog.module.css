@@ -50,7 +50,7 @@
 .tools .tool:global(.ui-button):hover:not(:disabled) { background: var(--atlas-accent-wash); color: var(--atlas-text-strong); }
 .tools .tool:global(.ui-button):disabled { opacity: .38; }
 .tool svg { width: 18px; height: 18px; }
-.tool[aria-busy] svg, .download[aria-busy] svg { animation: spin .9s linear infinite; }
+.tool[aria-busy] svg, .download[aria-busy] svg { animation: spin var(--atlas-duration-spin) linear infinite; }
 .download:global(.ui-button) { min-height: var(--tool-h); padding-inline: var(--atlas-space-4) var(--atlas-space-5); border-radius: var(--tool-radius); white-space: nowrap; }
 .download svg { width: 18px; height: 18px; }
 .notice { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-align: right; }
@@ -112,7 +112,7 @@
   content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   box-shadow: inset 0 0 0 2px var(--atlas-accent);
 }
-.slot[data-busy]::after { animation: busyPulse 1s var(--atlas-ease) infinite alternate; }
+.slot[data-busy]::after { animation: busyPulse var(--atlas-duration-pulse) var(--atlas-ease) infinite alternate; }
 @keyframes busyPulse { from { opacity: .25; } to { opacity: 1; } }
 @keyframes spin { to { transform: rotate(1turn); } }
 .slotHidden { position: absolute; inset: 0; display: grid; place-items: center; color: var(--atlas-text-strong); pointer-events: none; }
@@ -272,7 +272,7 @@
 /* States of the list: skeleton rows while loading, a calm empty state, an error with a retry. */
 .skeleton { display: grid; gap: 6px; }
 .skeletonRow { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: var(--atlas-space-3); min-height: 60px; padding: 6px var(--atlas-space-2); }
-.skeletonRow > span { height: 48px; border-radius: 8px; background: var(--atlas-surface-raised); animation: shimmer 1.4s var(--atlas-ease) infinite alternate; }
+.skeletonRow > span { height: 48px; border-radius: 8px; background: var(--atlas-surface-raised); animation: shimmer var(--atlas-duration-pulse) var(--atlas-ease) infinite alternate; }
 .skeletonRow > span + span { width: 62%; height: 12px; border-radius: 6px; }
 .skeletonRow:nth-child(2n) > span + span { width: 48%; }
 @keyframes shimmer { from { opacity: .45; } to { opacity: .9; } }

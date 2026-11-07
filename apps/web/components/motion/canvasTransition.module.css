@@ -20,7 +20,7 @@
 /* The one page texture follows the ice geometry. The inert DOM is removed
    from view once its pixels are on the worker surface. */
 .host[data-effect="arthas"][data-phase="shattering"] > .outgoing {
-  animation: source-dismiss 150ms ease-out both;
+  animation: source-dismiss var(--atlas-duration-fast) ease-out both;
 }
 @keyframes source-dismiss { from { opacity: 1; } to { opacity: 0; } }
 
