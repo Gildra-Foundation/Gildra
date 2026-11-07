@@ -49,3 +49,21 @@ share a picture share its mask) and `/maps/masks/era/<era>/<key>.webp`.
 
 `validate_eras.py` (mask files exist, aspect matches the art, capitals lie on
 their zone's mask) and composites (`composite.py --map 12 --depth 1`).
+
+## Second pass (refine_masks.py)
+
+Run after `eras.py` (pipeline: build_world_map → eras → refine_masks → annotate):
+
+* **content** — parchment pictures (≤ 1100 px: old capitals, caves, scenario
+  maps) whose first-pass mask was only a borrowed footprint or the soft rect:
+  the drawing on the sheet. Sheet colour = median of the inner border band;
+  score = 0.6 · Lab colour distance from the sheet + 0.4 · line detail (Sobel),
+  thresholded by Otsu over the inner picture; closed, small regions and corner
+  crests (faction emblem) dropped, holes filled. Classic Orgrimmar, Undercity,
+  Thunder Bluff, Darnassus, Ironforge and Stormwind now keep their streets and
+  drop the sheet, frame and emblem.
+* **children** — continents and worlds: union of their zones' (and
+  continents') masks carried through each child's rect, grown by a round 2 %
+  coastal margin. The hover highlights of continents are outlines drawn for an
+  older parent picture (the Eastern Kingdoms one missed the south) and the
+  world's is the Cosmic globe ring — neither is the map's land.

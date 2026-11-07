@@ -112,5 +112,19 @@ expansion offsets.
 
 `build_world_map.py` (tiles, masks, ruRU, terrain merge) → `terrain.py` (when
 continents change; then build_world_map again or `--skip-tiles --skip-masks
---skip-ru`) → `eras.py` (`--resume` reuses cached client trees) → `annotate.py`
-→ `validate_eras.py`.
+--skip-ru`) → `eras.py` (`--resume` reuses cached client trees) → `refine_masks.py` → `annotate.py` → `validate_eras.py`.
+
+## Round 4 corrections
+
+* Theramore: the Theramore's Fall scenario and the destroyed phase came with
+  5.0.4 (2012-08-28; warcraft.wiki.gg "Theramore's Fall"); until 5.1 the crater
+  was a personal phase after the scenario. The `theramore-fall` variant starts
+  at 5.0.4 (= the event in events.json); every later era (WoD … Midnight)
+  shows the crater (Dustwallow Marsh PhaseID 1403).
+* Dalaran: the client files Dalaran (125 Northrend, 627 Broken Isles) as
+  instance maps; as hub cities they are emitted as `zone` with their surface
+  floor's art, mask and rect (628/629 are the Underbelly floors).
+* Era points: portals whose destination (the place or the zone after the comma)
+  is a map of a later expansion and entrances of instances of a later
+  expansion are dropped; kept points carry `expansion` (Map.ExpansionID).
+  validate_eras.py (e) checks it.

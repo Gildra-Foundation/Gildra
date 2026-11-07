@@ -11,7 +11,9 @@ For every era (resolved like the viewer resolves it):
   (c) in the old world (classic … wrath) the capitals sit inside their zones:
       the city's centre lies within the zone's rect, on or by its land (mask) and the
       city's flight master lies inside the city's rect;
-  (d) masks exist and match the art's aspect ratio.
+  (d) masks exist and match the art's aspect ratio;
+  (e) the era's points: none on absent maps, no portal to a map of a later
+      expansion, no entrance of a later instance.
 Composites (parent + children through their masks) go to --out for a visual check.
 
 Usage: python validate_eras.py [--out /tmp/mapd2] [--no-render]
@@ -21,6 +23,7 @@ Exit code 1 when a check fails.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -30,6 +33,7 @@ from composite import PUBLIC, load_json, mask_image, render, resolve_era  # noqa
 
 ORDER = ["classic", "burning-crusade", "wrath-of-the-lich-king", "cataclysm", "cataclysm-pandaria", "warlords-of-draenor",
          "legion", "battle-for-azeroth", "shadowlands", "dragonflight", "the-war-within", "midnight"]
+EXP_IDS = {e: i for i, e in enumerate(["vanilla", "tbc", "wrath", "cataclysm", "mop", "wod", "legion", "bfa", "shadowlands", "dragonflight", "tww", "midnight"])}
 # landmark maps -> first era they exist in
 LANDMARKS = {101: "burning-crusade", 113: "wrath-of-the-lich-king", 948: "cataclysm", 424: "cataclysm-pandaria",
              572: "warlords-of-draenor", 619: "legion", 905: "legion", 875: "battle-for-azeroth", 876: "battle-for-azeroth",
@@ -122,6 +126,24 @@ def main() -> None:
                     x0, y0, x1, y1 = c["rectInParent"]
                     if not (x0 - 0.01 <= px <= x1 + 0.01 and y0 - 0.01 <= py <= y1 + 0.01):
                         problems.append(f"flight master {p['id']} outside capital {city}")
+        # (e) points of the era: none on absent maps, none of later content (portals to
+        # maps of a later expansion, entrances of later instances)
+        era_max = index  # ORDER index == expansion id (vanilla 0 … midnight 11)
+        names = {}
+        for m in retail.values():
+            if m.get("expansion") in EXP_IDS and m["type"] in ("continent", "zone", "world"):
+                key = m["name"]["en"].lower().removeprefix("the ")
+                names[key] = min(names.get(key, 99), EXP_IDS[m["expansion"]])
+        for p in era.get("pois") or []:
+            if p["mapId"] not in nodes:
+                problems.append(f"point {p['id']} on a map absent in the era")
+            if p.get("expansion") is not None and p["expansion"] > era_max:
+                problems.append(f"point {p['id']} of a later expansion ({p['expansion']})")
+            if p["kind"] == "portal":
+                dest = re.sub(r"^portal to (the )?", "", p["name"]["en"], flags=re.I).strip().lower()
+                exp = max(names.get(dest, -1), names.get(dest.split(",")[-1].strip().removeprefix("the "), -1))
+                if exp > era_max:
+                    problems.append(f"portal {p['id']} to a later map ({p['name']['en']})")
         # (d) masks
         for key, node in nodes.items():
             if node.get("mask") and node.get("art"):
