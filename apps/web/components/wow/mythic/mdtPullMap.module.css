@@ -268,4 +268,4 @@
   .savedBuilds p > a::after { content: ""; position: absolute; inset: -15px -6px; }
 }
 
-@media (max-width: 600px) { .actionGroup.actionGroup li p { font-size: var(--atlas-text-body); } }
+@media (max-width: 600px) { .panel[data-dungeon-map] .actionGroup.actionGroup p { font-size: var(--atlas-text-body); } }

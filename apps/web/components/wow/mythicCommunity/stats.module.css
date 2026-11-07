@@ -320,3 +320,6 @@
 
 /* Touch: 44 px targets. */
 @media (pointer: coarse) { .segment a, .cutoffTable a { min-height: 44px; } .cutoffTable a { min-width: 44px; } }
+
+/* Touch: 44 px spec tabs. */
+@media (pointer: coarse) { .page :global([role="tab"]) { min-height: 44px; } }

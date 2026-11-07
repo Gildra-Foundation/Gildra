@@ -226,3 +226,6 @@
   .table, .row { border: 1px solid CanvasText; background: Canvas; }
   .link { color: LinkText; }
 }
+
+/* Touch: 44 px preview button. */
+@media (pointer: coarse) { .preview { width: 44px; height: 44px; } }

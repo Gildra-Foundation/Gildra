@@ -446,6 +446,7 @@
   .pickerBody .slotNow { display: -webkit-box; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 }
 /* Touch: a 44 px handle for the sheet (the peek grows with it) and 44 px gender buttons. */
+@media (pointer: coarse) { .segmented button { min-width: 44px; min-height: 44px; } }
 @media (max-width: 700px) and (pointer: coarse) {
   .studio { --sheet-peek: 108px; }
   .sheetHandle { height: 44px; }

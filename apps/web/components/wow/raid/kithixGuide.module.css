@@ -36,10 +36,10 @@
 @media (max-width: 480px) {
   .guide .panel { padding: 40px 22px; }
   /* The painted band is wider than the frame's safe inset: whole words, two lines at most. */
-  .phases > .phaseButton.phaseButton.phaseButton { padding-inline: 72px; }
+  .phases .phaseButton.phaseButton.phaseButton { padding-inline: 72px; }
   .phases .phaseButton :global(.ui-button__label) { hyphens: manual; overflow-wrap: normal; }
 }
-@media (max-width: 400px) { .phases > .phaseButton.phaseButton.phaseButton { font-size: var(--atlas-text-meta); } }
+@media (max-width: 400px) { .phases .phaseButton.phaseButton.phaseButton { font-size: var(--atlas-text-meta); } }
 
 /* Phones: guide copy reads at body size. */
 @media (max-width: 600px) { .guide .panel p { font-size: var(--atlas-text-body); } }

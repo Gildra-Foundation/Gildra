@@ -236,6 +236,7 @@
 /* Touch: 44 px chips and a 16 px search field (no iOS zoom on focus). */
 @media (pointer: coarse) {
   .chip { height: 44px; }
+  .heroSwitch a { min-height: 44px; }
   .search { min-height: 44px; }
   .search input { font-size: max(16px, 1em); }
 }

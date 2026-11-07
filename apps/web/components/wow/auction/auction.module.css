@@ -448,6 +448,7 @@ td[data-best] .metricTrack > span { background: var(--material-light, var(--atla
   .qtyInput { min-height: 44px; font-size: max(16px, 1em); }
   .comboInput { font-size: max(16px, 1em); }
   .pick { width: 24px; height: 24px; }
+  .sortButton { min-height: 44px; }
 }
 
 /* Touch: 16 px fields, so iOS does not zoom on focus. */

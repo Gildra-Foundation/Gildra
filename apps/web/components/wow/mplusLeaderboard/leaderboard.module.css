@@ -334,7 +334,8 @@ a.playerName:focus-visible { outline: 2px solid var(--material-light, var(--atla
 @media (max-width: 400px) { .leader .playerName { font-size: var(--atlas-text-lead); overflow-wrap: break-word; } }
 @media (max-width: 360px) { .rolePlaque, .buildPlaque { padding-inline: 20px; } }
 /* Touch: names are 44 px targets without moving the rows. */
-@media (pointer: coarse) { a.playerName, .itemName { margin-block: -13px; padding-block: 13px; } }
+@media (pointer: coarse) { a.playerName, .itemName { margin-block: -14px; padding-block: 14px; } .linkIcon { min-width: 44px; min-height: 44px; } }
+@media (max-width: 520px) { .player .playerName.playerName { overflow-wrap: anywhere; } }
 
 @media (prefers-reduced-motion: reduce) {
   .region, .page .table tbody tr, .linkIcon, .directorySpec { transition: none; }

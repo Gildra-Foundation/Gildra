@@ -125,8 +125,8 @@
 .candidates { min-width: 0; container: candidates / inline-size; }
 /* A narrow column (two roles side by side on a tablet): the bar gives way so the spec names stay whole. */
 @container candidates (max-width: 400px) {
-  .candidate { grid-template-columns: minmax(0, 1fr) 6ch 4ch; }
-  .candidateBar { display: none; }
+  .candidates .candidate { grid-template-columns: minmax(0, 1fr) 6ch 4ch; }
+  .candidates .candidateBar { display: none; }
 }
 .roleTitle {
   display: flex;
