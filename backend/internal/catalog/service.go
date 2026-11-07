@@ -133,7 +133,8 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 			COALESCE(public_release.build_version, ''),
 			COALESCE(build_check.status, ''),
 			COALESCE(build_check.observed_build, ''),
-			COALESCE(latest_pipeline.status, '')
+			COALESCE(latest_pipeline.status, ''),
+			EXISTS(SELECT 1 FROM game_entities legacy WHERE legacy.product_id=product.id AND legacy.deleted_at IS NULL AND legacy.published_version_id IS NOT NULL)
 		FROM game_products product
 		LEFT JOIN LATERAL (
 			SELECT build.version
@@ -169,13 +170,14 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 	products := make([]Product, 0, 8)
 	for rows.Next() {
 		var product Product
+		var legacyAvailable bool
 		var activeBuild, releaseStatus, releaseBuild, checkStatus, observedBuild, pipelineStatus string
 		if err := rows.Scan(&product.ID, &product.Slug, &product.Name, &activeBuild, &releaseStatus, &releaseBuild,
-			&checkStatus, &observedBuild, &pipelineStatus); err != nil {
+			&checkStatus, &observedBuild, &pipelineStatus, &legacyAvailable); err != nil {
 			return nil, fmt.Errorf("scan game product: %w", err)
 		}
 		product.Freshness, product.FreshnessReason = productFreshness(
-			activeBuild, releaseStatus, releaseBuild, checkStatus, observedBuild, pipelineStatus,
+			activeBuild, releaseStatus, releaseBuild, checkStatus, observedBuild, pipelineStatus, legacyAvailable,
 		)
 		products = append(products, product)
 	}
@@ -189,7 +191,7 @@ func (s *Service) Products(ctx context.Context) ([]Product, error) {
 // public release pointer, and the latest build/pipeline observations.  A
 // staging projection never appears as fresh until it has an actual published
 // release matching the active build.
-func productFreshness(activeBuild, releaseStatus, releaseBuild, checkStatus, observedBuild, pipelineStatus string) (string, string) {
+func productFreshness(activeBuild, releaseStatus, releaseBuild, checkStatus, observedBuild, pipelineStatus string, legacyAvailable bool) (string, string) {
 	activeBuild = strings.TrimSpace(activeBuild)
 	releaseStatus = strings.ToLower(strings.TrimSpace(releaseStatus))
 	releaseBuild = strings.TrimSpace(releaseBuild)
@@ -197,6 +199,9 @@ func productFreshness(activeBuild, releaseStatus, releaseBuild, checkStatus, obs
 	observedBuild = strings.TrimSpace(observedBuild)
 	pipelineStatus = strings.ToLower(strings.TrimSpace(pipelineStatus))
 
+	if (releaseStatus != "published" || releaseBuild == "") && legacyAvailable {
+		return "stale", "доступны ранее опубликованные данные; атомарный релиз ещё не опубликован"
+	}
 	if activeBuild == "" {
 		return "empty", "для издания ещё не определена активная сборка"
 	}
@@ -464,9 +469,9 @@ const publicEntitySelectTemplate = `
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','recipe_info','spell_id',recipe.spell_id,
 				'professions',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',profession_entity.id,'external_id',profession_entity.external_id,'name',COALESCE(profession_name.name,profession_fallback.name,''),'min_skill_rank',link.min_skill_rank,'category_id',link.trade_skill_category_id) ORDER BY profession_entity.external_id) FROM catalog_profession_recipes link JOIN game_entity_versions profession_version ON profession_version.id=link.profession_version_id JOIN game_entities profession_entity ON profession_entity.id=profession_version.entity_id LEFT JOIN game_entity_localizations profession_name ON profession_name.version_id=link.profession_version_id AND profession_name.locale={locale} LEFT JOIN game_entity_localizations profession_fallback ON profession_fallback.version_id=link.profession_version_id AND profession_fallback.locale='en_US' WHERE link.recipe_version_id=v.id),'[]'::jsonb),
-				'reagents',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',reagent.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'quantity',reagent.quantity,'recraft_quantity',reagent.recraft_quantity,'slot',reagent.slot,'resolution_status',CASE WHEN reagent.item_external_id IS NULL THEN 'not_applicable' WHEN item.id IS NOT NULL THEN 'resolved' ELSE 'source_missing' END,'resolution_reason',CASE WHEN reagent.item_external_id IS NOT NULL AND item.id IS NULL THEN 'item_id_absent_from_source_catalog' ELSE '' END) ORDER BY reagent.slot) FROM catalog_recipe_reagents reagent LEFT JOIN game_entities item ON item.id=reagent.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale={locale} LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE reagent.recipe_version_id=v.id),'[]'::jsonb),
+				'reagents',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',reagent.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'quantity',reagent.quantity,'recraft_quantity',reagent.recraft_quantity,'slot',reagent.slot,'resolution_status',CASE WHEN reagent.item_external_id IS NULL THEN 'not_applicable' WHEN item.id IS NOT NULL THEN 'resolved' ELSE 'source_missing' END,'resolution_reason',CASE WHEN reagent.item_external_id IS NOT NULL AND item.id IS NULL THEN 'item_id_absent_from_source_catalog' ELSE '' END) ORDER BY reagent.slot) FROM catalog_recipe_reagents reagent LEFT JOIN game_entities item ON item.product_id=e.product_id AND item.entity_type='item' AND item.id=reagent.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale={locale} LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE reagent.recipe_version_id=v.id),'[]'::jsonb),
 				'currencies',COALESCE((SELECT jsonb_agg(jsonb_build_object('external_id',currency.currency_external_id,'quantity',currency.quantity,'recraft_quantity',currency.recraft_quantity) ORDER BY currency.order_index,currency.currency_external_id) FROM catalog_recipe_currencies currency WHERE currency.recipe_version_id=v.id),'[]'::jsonb),
-				'outputs',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',output.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'source',output.source,'resolution_status',CASE WHEN output.item_external_id IS NULL THEN 'not_applicable' WHEN item.id IS NOT NULL THEN 'resolved' ELSE 'source_missing' END,'resolution_reason',CASE WHEN output.item_external_id IS NOT NULL AND item.id IS NULL THEN 'item_id_absent_from_source_catalog' ELSE '' END) ORDER BY output.item_external_id) FROM catalog_recipe_outputs output LEFT JOIN game_entities item ON item.id=output.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale={locale} LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE output.recipe_version_id=v.id),'[]'::jsonb))) AS blocks
+				'outputs',COALESCE((SELECT jsonb_agg(jsonb_build_object('entity_id',item.id,'external_id',output.item_external_id,'name',COALESCE(item_name.name,item_fallback.name,''),'source',output.source,'resolution_status',CASE WHEN output.item_external_id IS NULL THEN 'not_applicable' WHEN item.id IS NOT NULL THEN 'resolved' ELSE 'source_missing' END,'resolution_reason',CASE WHEN output.item_external_id IS NOT NULL AND item.id IS NULL THEN 'item_id_absent_from_source_catalog' ELSE '' END) ORDER BY output.item_external_id) FROM catalog_recipe_outputs output LEFT JOIN game_entities item ON item.product_id=e.product_id AND item.entity_type='item' AND item.id=output.item_entity_id LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale={locale} LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US' WHERE output.recipe_version_id=v.id),'[]'::jsonb))) AS blocks
 			FROM catalog_recipes recipe WHERE e.entity_type='recipe' AND recipe.version_id=v.id
 		) recipe_info ON e.entity_type='recipe'
 		LEFT JOIN LATERAL (
@@ -576,7 +581,7 @@ const publicEntitySelectTemplate = `
 						FROM catalog_loot_entries entry
 						JOIN catalog_source_artifacts entry_artifact ON entry_artifact.id=entry.source_artifact_id
 							AND entry_artifact.status='ready' AND entry_artifact.content_hash IS NOT NULL AND entry_artifact.byte_size IS NOT NULL
-						LEFT JOIN game_entities item ON item.id=entry.item_entity_id AND item.published_version_id IS NOT NULL
+						LEFT JOIN game_entities item ON item.product_id=e.product_id AND item.entity_type='item' AND item.id=entry.item_entity_id AND item.published_version_id IS NOT NULL
 						LEFT JOIN game_entity_localizations item_name ON item_name.version_id=item.published_version_id AND item_name.locale={locale}
 						LEFT JOIN game_entity_localizations item_fallback ON item_fallback.version_id=item.published_version_id AND item_fallback.locale='en_US'
 						LEFT JOIN catalog_entity_icons item_icon ON item_icon.build_id=v.build_id AND item_icon.entity_type='item' AND item_icon.external_id=entry.item_external_id
@@ -739,8 +744,8 @@ func listMatchSQL(params ListParams) (string, []any) {
 				OR fallback.name % $4
 			) END
 		  )`, []any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
-		normalizeLocale(params.Locale), strings.TrimSpace(params.Query),
-		strings.TrimSpace(params.Category)}
+			normalizeLocale(params.Locale), strings.TrimSpace(params.Query),
+			strings.TrimSpace(params.Category)}
 }
 
 func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity, error) {
@@ -956,7 +961,7 @@ func publicCatalogDisplayNamePredicate(localizedAlias, fallbackAlias string) str
 
 // publicCatalogJunkNamePattern is the case-insensitive SQL regex literal for
 // placeholder/import marker names that must never reach a public page.
-const publicCatalogJunkNamePattern = `'(^|[[:space:]])(dnt|test|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_:-]|$)|\[(ph|dnt|test|unused|deprecated|internal|zzold|nyi)\]'`
+const publicCatalogJunkNamePattern = `'(^|[[:space:]_(<\[])(dnt|ph|test|testing|unused|deprecated|internal|zzold|delete|dummy|nyi)([[:space:]_)>\]:-]|$)|^Ping([[:space:]]|$)|Personal Best Record|^zz'`
 
 func encodeCursor(id uuid.UUID) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(id.String()))

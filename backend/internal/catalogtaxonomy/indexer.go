@@ -39,10 +39,11 @@ type Result struct {
 }
 
 type Indexer struct {
-	db *pgxpool.Pool
+	db      *pgxpool.Pool
+	product string
 }
 
-func New(db *pgxpool.Pool) *Indexer { return &Indexer{db: db} }
+func New(db *pgxpool.Pool) *Indexer { return NewForProduct(db, "wow") }
 
 func (i *Indexer) RebuildItemsAndTooltips(ctx context.Context) (Result, error) {
 	return i.rebuildItems(ctx, true)
@@ -54,7 +55,7 @@ func (i *Indexer) RebuildTaxonomy(ctx context.Context) (Result, error) { return 
 
 func (i *Indexer) rebuild(ctx context.Context, includeTooltips bool) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		var productID int16
 		if err := tx.QueryRow(ctx, `SELECT id FROM game_products WHERE slug = 'wow'`).Scan(&productID); err != nil {
 			return fmt.Errorf("find wow product: %w", err)

@@ -95,7 +95,7 @@ func run() error {
 		}
 		return printJSON(map[string]any{"dry_run": true, "items": items, "talent_trees": trees})
 	}
-	indexer := catalogtaxonomy.New(db)
+	indexer := catalogtaxonomy.NewForProduct(db, product)
 	var result catalogtaxonomy.Result
 	selectedModes := 0
 	for _, selected := range []bool{tooltipsOnly, itemsOnly, itemsTaxonomyOnly, variantsOnly, descriptionsOnly, taxonomyOnly, racesOnly, classesOnly, professionsOnly, talentsOnly, pvpTalentsOnly, spellEffectsOnly, iconsOnly, questRewardsOnly, graphOnly, statsOnly} {

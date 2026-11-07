@@ -11,7 +11,7 @@ import (
 // the substantially more expensive taxonomy and tooltip rebuilds.
 func (i *Indexer) RebuildIcons(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		var err error
 		result.Icons, err = rebuildEntityIcons(ctx, tx)
 		return err

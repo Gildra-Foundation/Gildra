@@ -46,7 +46,7 @@ func TestProductFreshnessRequiresPublishedBuild(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			state, reason := productFreshness(tt.active, tt.releaseStatus, tt.release, tt.check, tt.observed, tt.pipeline)
+			state, reason := productFreshness(tt.active, tt.releaseStatus, tt.release, tt.check, tt.observed, tt.pipeline, false)
 			if state != tt.wantState {
 				t.Fatalf("state = %q, want %q (reason: %s)", state, tt.wantState, reason)
 			}
@@ -54,5 +54,14 @@ func TestProductFreshnessRequiresPublishedBuild(t *testing.T) {
 				t.Fatal("freshness reason must be present")
 			}
 		})
+	}
+}
+
+func TestLegacyPublishedDataIsAvailableWithoutAtomicRelease(t *testing.T) {
+	for _, pipeline := range []string{"", "failed", "running"} {
+		state, reason := productFreshness("5.5.4", "", "", "", "", pipeline, true)
+		if state != "stale" || reason == "" {
+			t.Fatalf("legacy availability lost: %s %s", state, reason)
+		}
 	}
 }

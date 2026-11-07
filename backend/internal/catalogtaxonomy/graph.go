@@ -9,7 +9,7 @@ import (
 
 func (i *Indexer) RebuildGraph(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		if err := rebuildSpellRelationships(ctx, tx); err != nil {
 			return err
 		}
@@ -24,7 +24,7 @@ func rebuildEntityGraph(ctx context.Context, tx pgx.Tx) (int64, error) {
 	if err := rebuildEntityMentions(ctx, tx); err != nil {
 		return 0, err
 	}
-	if _, err := tx.Exec(ctx, `
+	if _, err := tx.Exec(ctx, projectionSQL(`
 		WITH matches AS (
 			SELECT DISTINCT ON (source.version_id,source.source_type,source.source_id,source.context_id)
 				source.version_id,source.source_type,source.source_id,source.context_id,encounter.entity_id
@@ -38,11 +38,11 @@ func rebuildEntityGraph(ctx context.Context, tx pgx.Tx) (int64, error) {
 		UPDATE catalog_item_acquisition_sources source SET source_entity_id=matches.entity_id
 		FROM matches WHERE source.version_id=matches.version_id AND source.source_type=matches.source_type
 			AND source.source_id=matches.source_id AND source.context_id=matches.context_id;
-		`, pgx.QueryExecModeSimpleProtocol); err != nil {
+		`), pgx.QueryExecModeSimpleProtocol); err != nil {
 		return 0, fmt.Errorf("resolve acquisition sources: %w", err)
 	}
-	if _, err := tx.Exec(ctx, `
-		DELETE FROM game_entity_links WHERE relation_type IN (
+	if _, err := tx.Exec(ctx, projectionSQL(`
+		DELETE FROM game_entity_links WHERE build_id IN ({projection_builds}) AND relation_type IN (
 			'obtained_from','grants','modifies','replaces','teaches','uses_reagent','creates',
 			'rewards','belongs_to','owned_by','mentions'
 		);
@@ -115,7 +115,7 @@ func rebuildEntityGraph(ctx context.Context, tx pgx.Tx) (int64, error) {
 		JOIN game_entities target ON target.product_id=reward_build.product_id
 			AND target.entity_type=CASE reward.reward_type WHEN 'reputation' THEN 'faction' ELSE reward.reward_type END
 			AND target.external_id=reward.external_id AND target.deleted_at IS NULL AND target.latest_version_id IS NOT NULL
-		WHERE reward.external_id IS NOT NULL
+		WHERE reward.external_id IS NOT NULL AND reward.build_id IN ({projection_builds})
 		ON CONFLICT DO NOTHING;
 
 		INSERT INTO game_entity_links(source_entity_id,target_entity_id,build_id,relation_type,attributes)
@@ -124,7 +124,7 @@ func rebuildEntityGraph(ctx context.Context, tx pgx.Tx) (int64, error) {
 		FROM catalog_journal_encounters encounter
 		JOIN catalog_journal_instances instance ON instance.build_id=encounter.build_id
 			AND instance.journal_instance_id=encounter.journal_instance_id
-		WHERE encounter.entity_id IS NOT NULL AND instance.entity_id IS NOT NULL
+		WHERE encounter.build_id IN ({projection_builds}) AND encounter.entity_id IS NOT NULL AND instance.entity_id IS NOT NULL
 		ON CONFLICT DO NOTHING;
 
 		INSERT INTO game_entity_links(source_entity_id,target_entity_id,build_id,relation_type,attributes)
@@ -182,7 +182,7 @@ func rebuildEntityGraph(ctx context.Context, tx pgx.Tx) (int64, error) {
 		FROM catalog_entity_mentions mention
 		JOIN game_entity_versions source_version ON source_version.id=mention.source_version_id
 		JOIN game_entities source_entity ON source_entity.id=source_version.entity_id
-		ON CONFLICT DO NOTHING`, pgx.QueryExecModeSimpleProtocol); err != nil {
+		ON CONFLICT DO NOTHING`), pgx.QueryExecModeSimpleProtocol); err != nil {
 		return 0, fmt.Errorf("rebuild entity graph: %w", err)
 	}
 	var count int64
@@ -193,10 +193,10 @@ func rebuildEntityGraph(ctx context.Context, tx pgx.Tx) (int64, error) {
 }
 
 func rebuildEntityMentions(ctx context.Context, tx pgx.Tx) error {
-	if _, err := tx.Exec(ctx, `
-		DELETE FROM catalog_entity_mentions WHERE source IN ('verified_description_exact','canonical_description_exact');
+	if _, err := tx.Exec(ctx, projectionSQL(`
+		DELETE FROM catalog_entity_mentions WHERE source_version_id IN (SELECT id FROM game_entity_versions) AND source IN ('verified_description_exact','canonical_description_exact');
 		WITH description_matches AS MATERIALIZED (
-			SELECT description.version_id AS source_version_id,description.locale,
+			SELECT source_entity.product_id,description.version_id AS source_version_id,description.locale,
 				btrim((match.value)[1]) AS mention_text,'exact_quoted_name'::text AS match_kind
 			FROM game_entity_localizations description
 			JOIN game_entity_versions source_version ON source_version.id=description.version_id
@@ -206,7 +206,7 @@ func rebuildEntityMentions(ctx context.Context, tx pgx.Tx) error {
 			  AND source_entity.entity_type IN ('spell','talent','pvp_talent') AND source_entity.deleted_at IS NULL
 			  AND NULLIF(description.description,'') IS NOT NULL
 			UNION ALL
-			SELECT description.version_id,description.locale,btrim((match.value)[1]),'exact_bracketed_name'
+			SELECT source_entity.product_id,description.version_id,description.locale,btrim((match.value)[1]),'exact_bracketed_name'
 			FROM game_entity_localizations description
 			JOIN game_entity_versions source_version ON source_version.id=description.version_id
 			JOIN game_entities source_entity ON source_entity.id=source_version.entity_id
@@ -215,7 +215,7 @@ func rebuildEntityMentions(ctx context.Context, tx pgx.Tx) error {
 			  AND source_entity.entity_type IN ('spell','talent','pvp_talent') AND source_entity.deleted_at IS NULL
 			  AND NULLIF(description.description,'') IS NOT NULL
 		), localized_targets AS MATERIALIZED (
-			SELECT localized.locale,lower(btrim(localized.name)) AS normalized_name,entity.id,
+			SELECT entity.product_id,localized.locale,lower(btrim(localized.name)) AS normalized_name,entity.id,
 				entity.entity_type,version.id AS target_version_id
 			FROM game_entity_localizations localized
 			JOIN game_entity_versions version ON version.id=localized.version_id
@@ -232,7 +232,7 @@ func rebuildEntityMentions(ctx context.Context, tx pgx.Tx) error {
 				) THEN 0 ELSE 100 END
 				+ CASE target.entity_type WHEN 'spell' THEN 0 WHEN 'talent' THEN 10 ELSE 20 END AS match_score
 			FROM description_matches matched
-			JOIN localized_targets target ON target.locale=matched.locale
+			JOIN localized_targets target ON target.product_id=matched.product_id AND target.locale=matched.locale
 				AND target.normalized_name=lower(matched.mention_text)
 		), ranked AS MATERIALIZED (
 			SELECT candidate.*,
@@ -249,15 +249,17 @@ func rebuildEntityMentions(ctx context.Context, tx pgx.Tx) error {
 		SELECT DISTINCT resolved.source_version_id,resolved.locale,resolved.id,resolved.mention_text,
 			'canonical_description_exact',jsonb_build_object('match',resolved.match_kind,'score',resolved.match_score)
 		FROM resolved WHERE resolved.best_count=1
-		ON CONFLICT DO NOTHING`, pgx.QueryExecModeSimpleProtocol); err != nil {
+		ON CONFLICT DO NOTHING`), pgx.QueryExecModeSimpleProtocol); err != nil {
 		return fmt.Errorf("rebuild entity mentions: %w", err)
 	}
 	return nil
 }
 
 func rebuildSpellRelationships(ctx context.Context, tx pgx.Tx) error {
-	_, err := tx.Exec(ctx, `
-		TRUNCATE catalog_spell_owners,catalog_talent_spell_relations,catalog_talent_spell_links;
+	_, err := tx.Exec(ctx, projectionSQL(`
+		DELETE FROM catalog_spell_owners WHERE spell_version_id IN (SELECT id FROM game_entity_versions);
+ DELETE FROM catalog_talent_spell_relations WHERE talent_version_id IN (SELECT id FROM game_entity_versions);
+ DELETE FROM catalog_talent_spell_links WHERE talent_version_id IN (SELECT id FROM game_entity_versions);
 
 		INSERT INTO catalog_talent_spell_links(talent_version_id,spell_version_id,relationship,source,attributes)
 		SELECT talent.latest_version_id,spell.latest_version_id,'grants','raidbots',
@@ -418,7 +420,9 @@ func rebuildSpellRelationships(ctx context.Context, tx pgx.Tx) error {
 		INSERT INTO catalog_spell_owners(spell_version_id,owner_type,owner_id,source,attributes)
 		SELECT DISTINCT owner.spell_version_id,'class',(tree_version.payload #>> '{raidbots,classId}')::bigint,'raidbots','{}'::jsonb
 		FROM catalog_spell_owners owner
-		JOIN game_entities tree ON tree.entity_type='talent_tree' AND tree.external_id=owner.owner_id AND tree.deleted_at IS NULL
+		JOIN game_entity_versions owned_version ON owned_version.id=owner.spell_version_id
+ JOIN game_entities owned_spell ON owned_spell.id=owned_version.entity_id
+ JOIN game_entities tree ON tree.product_id=owned_spell.product_id AND tree.entity_type='talent_tree' AND tree.external_id=owner.owner_id AND tree.deleted_at IS NULL
 		JOIN game_entity_versions tree_version ON tree_version.id=tree.latest_version_id
 		WHERE owner.owner_type='specialization' AND tree_version.payload #>> '{raidbots,classId}' ~ '^[0-9]+$'
 		ON CONFLICT(spell_version_id,owner_type,owner_id,source) DO NOTHING;
@@ -427,7 +431,7 @@ func rebuildSpellRelationships(ctx context.Context, tx pgx.Tx) error {
 		SELECT DISTINCT spell.latest_version_id,'class',class_id,'db2',jsonb_build_object('skill_line_id',(ability.payload->>'SkillLine')::bigint)
 		FROM catalog_db2_rows ability
 		JOIN game_builds build ON build.id=ability.build_id AND build.is_active
-		JOIN game_entities spell ON spell.entity_type='spell' AND spell.external_id=(ability.payload->>'Spell')::bigint AND spell.deleted_at IS NULL
+		JOIN game_entities spell ON spell.product_id=build.product_id AND spell.entity_type='spell' AND spell.external_id=(ability.payload->>'Spell')::bigint AND spell.deleted_at IS NULL
 		JOIN game_entity_versions spell_version ON spell_version.id=spell.latest_version_id AND spell_version.build_id=ability.build_id
 		CROSS JOIN generate_series(1,13) class_id
 		WHERE ability.table_name='SkillLineAbility' AND ability.locale='en_US'
@@ -440,7 +444,7 @@ func rebuildSpellRelationships(ctx context.Context, tx pgx.Tx) error {
 		FROM catalog_db2_rows ability
 		JOIN game_builds build ON build.id=ability.build_id AND build.is_active
 		JOIN catalog_db2_rows race ON race.build_id=ability.build_id AND race.table_name='ChrRaces' AND race.locale='en_US'
-		JOIN game_entities spell ON spell.entity_type='spell' AND spell.external_id=(ability.payload->>'Spell')::bigint AND spell.deleted_at IS NULL
+		JOIN game_entities spell ON spell.product_id=build.product_id AND spell.entity_type='spell' AND spell.external_id=(ability.payload->>'Spell')::bigint AND spell.deleted_at IS NULL
 		JOIN game_entity_versions spell_version ON spell_version.id=spell.latest_version_id AND spell_version.build_id=ability.build_id
 		WHERE ability.table_name='SkillLineAbility' AND ability.locale='en_US'
 		  AND (race.payload->>'PlayableRaceBit')::int>=0
@@ -455,10 +459,10 @@ func rebuildSpellRelationships(ctx context.Context, tx pgx.Tx) error {
 		JOIN game_builds build ON build.id=ability.build_id AND build.is_active
 		JOIN catalog_professions profession ON profession.skill_line_id=(ability.payload->>'SkillLine')::bigint
 		JOIN game_entity_versions profession_version ON profession_version.id=profession.version_id AND profession_version.build_id=ability.build_id
-		JOIN game_entities spell ON spell.entity_type='spell' AND spell.external_id=(ability.payload->>'Spell')::bigint AND spell.deleted_at IS NULL
+		JOIN game_entities spell ON spell.product_id=build.product_id AND spell.entity_type='spell' AND spell.external_id=(ability.payload->>'Spell')::bigint AND spell.deleted_at IS NULL
 		JOIN game_entity_versions spell_version ON spell_version.id=spell.latest_version_id AND spell_version.build_id=ability.build_id
 		WHERE ability.table_name='SkillLineAbility' AND ability.locale='en_US'
-		ON CONFLICT(spell_version_id,owner_type,owner_id,source) DO NOTHING`, pgx.QueryExecModeSimpleProtocol)
+		ON CONFLICT(spell_version_id,owner_type,owner_id,source) DO NOTHING`), pgx.QueryExecModeSimpleProtocol)
 	if err != nil {
 		return fmt.Errorf("rebuild spell relationships: %w", err)
 	}

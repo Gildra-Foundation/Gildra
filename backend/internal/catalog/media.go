@@ -2,7 +2,6 @@ package catalog
 
 import (
 	"context"
-	"fmt"
 	"maps"
 	"net/url"
 	"slices"
@@ -145,40 +144,17 @@ func (s *Service) cachedIconURLs(ctx context.Context, ids []uuid.UUID) (map[uuid
 	if len(ids) == 0 {
 		return result, nil
 	}
-	rows, err := s.postgres.Query(ctx, `
-		SELECT DISTINCT ON (media.entity_id) media.entity_id,
-			COALESCE(NULLIF(media.cached_url,''),media.source_url)
-		FROM catalog_entity_media media
-		JOIN game_entities entity ON entity.id=media.entity_id
-		JOIN game_entity_versions published ON published.id=entity.published_version_id
-		JOIN game_builds published_build ON published_build.id=published.build_id
-		  AND published_build.product_id=entity.product_id
-		JOIN game_builds media_build ON media_build.id=media.build_id
-		  AND media_build.product_id=entity.product_id
-		JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
-		JOIN catalog_published_source_dependencies dependency ON dependency.source=media.source
-		WHERE media.entity_id=ANY($1::uuid[])
-		  AND media.cache_status='cached' AND NULLIF(media.cached_url,'') IS NOT NULL
-		  AND media.cached_content_hash IS NOT NULL AND media.cached_byte_size IS NOT NULL
-		  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL
-		  AND artifact.byte_size IS NOT NULL
-		  AND media_build.build_number<=published_build.build_number
-		ORDER BY media.entity_id,(media.media_kind='icon') DESC,media.is_primary DESC,
-		  media_build.build_number DESC,media.updated_at DESC,media.id`, ids)
-	if err != nil {
-		return nil, fmt.Errorf("list cached entity icons: %w", err)
+	entities := make([]*Entity, 0, len(ids))
+	for _, id := range ids {
+		entities = append(entities, &Entity{ID: id})
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var entityID uuid.UUID
-		var value string
-		if err := rows.Scan(&entityID, &value); err != nil {
-			return nil, fmt.Errorf("scan cached entity icon: %w", err)
+	if err := s.enrichMedia(ctx, entities); err != nil {
+		return nil, err
+	}
+	for _, entity := range entities {
+		if entity.IconURL != nil {
+			result[entity.ID] = *entity.IconURL
 		}
-		result[entityID] = value
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate cached entity icons: %w", err)
 	}
 	return result, nil
 }

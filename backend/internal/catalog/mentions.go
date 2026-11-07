@@ -50,7 +50,8 @@ func (s *Service) enrichMentions(ctx context.Context, entities []Entity) error {
 				NULLIF(target_version.payload #>> '{raidbots,icon}',''))
 		FROM description_sources source
 		JOIN catalog_entity_mentions mention ON mention.source_version_id=source.source_version_id AND mention.locale=$2
-		JOIN game_entities target ON target.id=mention.target_entity_id AND target.deleted_at IS NULL
+		JOIN game_entities display_entity ON display_entity.id=source.display_entity_id
+ JOIN game_entities target ON target.product_id=display_entity.product_id AND target.id=mention.target_entity_id AND target.deleted_at IS NULL
 		JOIN game_entity_versions target_version ON target_version.id=target.published_version_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=target_version.id AND localized.locale=$2
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=target_version.id AND fallback.locale='en_US'
@@ -70,7 +71,8 @@ func (s *Service) enrichMentions(ctx context.Context, entities []Entity) error {
 				AND raw.locale='en_US' AND raw.payload->>'SpellID'=target.external_id::text
 			ORDER BY COALESCE(NULLIF(raw.payload->>'DifficultyID','')::int,0),raw.row_id LIMIT 1
 		) spell_icon ON true
-		ORDER BY source.display_entity_id,mention.mention_text,target.external_id`, ids, normalizeLocale(entities[0].Locale))
+		WHERE true `+publicCatalogDisplayNamePredicate("localized", "fallback")+publicCatalogUsabilityPredicate("target", "target_version")+`
+ ORDER BY source.display_entity_id,mention.mention_text,target.external_id`, ids, normalizeLocale(entities[0].Locale))
 	if err != nil {
 		return fmt.Errorf("load entity mentions: %w", err)
 	}

@@ -3,6 +3,8 @@ import type { Lang } from "@/lib/i18n";
 /** Interface copy of /library and /library/<dataset> (RU and EN). Dataset names and descriptions come from the API. */
 export const libraryCopy = {
   ru: {
+    emptyProduct: "Пока нет данных",
+    unavailableProduct: "Недоступно в этом издании",
     title: "Библиотека World of Warcraft",
     wow: "World of Warcraft",
     defaultProduct: "World of Warcraft",
@@ -28,6 +30,8 @@ export const libraryCopy = {
     loading: "Загружаем…",
   },
   en: {
+    emptyProduct: "No data yet",
+    unavailableProduct: "Unavailable in this edition",
     title: "World of Warcraft Library",
     wow: "World of Warcraft",
     defaultProduct: "World of Warcraft",

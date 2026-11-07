@@ -20,12 +20,12 @@ export async function catalogReadable() {
 }
 
 /** Name and API description of a dataset for its page metadata (a tidy slug when the catalog is closed or unavailable). */
-export async function libraryDatasetHead(slug: string, locale: "en_US" | "ru_RU"): Promise<{ name: string; description?: string }> {
+export async function libraryDatasetHead(slug: string, locale: "en_US" | "ru_RU", product = "wow"): Promise<{ name: string; description?: string; entityCount?: number }> {
   const fallback = { name: slug.replaceAll("-", " ").replace(/^\w/, (letter) => letter.toUpperCase()) };
   if (!(await catalogReadable())) return fallback;
   try {
-    const dataset = (await getLibraryDatasets(locale)).find((entry) => entry.slug === slug);
-    return dataset ? { name: dataset.name, description: dataset.description } : fallback;
+    const dataset = (await getLibraryDatasets(locale, product)).find((entry) => entry.slug === slug);
+    return dataset ? { name: dataset.name, description: dataset.description, entityCount: dataset.entityCount } : fallback;
   } catch {
     return fallback;
   }
