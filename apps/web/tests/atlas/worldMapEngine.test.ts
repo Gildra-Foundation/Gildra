@@ -7,7 +7,7 @@ import type { EraRecord, MapRecord, PoiRecord } from "@/lib/wow/worldMap/types";
 import { blurGroups, blurOf, desatOf, dimOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "@/components/wow/worldMap/engine/lod";
 import { chainUp, composeSet, mapSet, transferCamera } from "@/components/wow/worldMap/engine/sets";
 import { wheelKind } from "@/components/wow/worldMap/engine/input";
-import { eraFromParam, mapIdOfPath, patchPosition, positionToPatch, pushesHistory, queryToView, viewToQuery } from "@/components/wow/worldMap/worldMapModel";
+import { eraFromParam, eventComparison, eventMoment, mapIdOfPath, patchPosition, positionToPatch, pushesHistory, queryToView, viewToQuery } from "@/components/wow/worldMap/worldMapModel";
 import { isRectMask, paperColour } from "@/components/wow/worldMap/engine/paper";
 import { paintedOf } from "@/components/wow/worldMap/ui/paintedArt";
 
@@ -313,5 +313,37 @@ describe("world map round 3 data", () => {
     assert.equal(kalimdor?.names, false);
     assert.equal(paintedOf(map("/maps/tiles/101/{z}/{x}_{y}.webp"))?.names, true, "table fallback");
     assert.equal(paintedOf(map("/maps/tiles/9999/{z}/{x}_{y}.webp")), null);
+  });
+});
+
+describe("world map events across phases", () => {
+  const eras = [
+    { id: "cataclysm", name: "Cata", expansion: "cataclysm", range: ["4.0.1", "4.3.4"] as [string, string] },
+    { id: "mop", name: "MoP", expansion: "mop", range: ["5.0.4", "5.4.8"] as [string, string] },
+  ];
+  const art = [
+    { id: "cataclysm", name: "Cata", range: ["4.0.1", "4.3.4"] as [string, string], changed: [] },
+    { id: "cataclysm-pandaria", name: "MoP", range: ["5.0.4", "5.4.8"] as [string, string], changed: [] },
+    { id: "theramore-fall", name: "Fall of Theramore", range: ["5.1.0", "5.4.8"] as [string, string], inherits: "cataclysm-pandaria", changed: [70] },
+  ];
+  const theramore = { patch: "5.0.4", map: 70, changed: [70], before: "cataclysm" };
+
+  it("compares the city just before its fall with its ruins, not two pictures of it standing", () => {
+    const pair = eventComparison(theramore, art, eras);
+    assert.ok(pair);
+    assert.equal(pair.right, patchPosition("5.1.0"));
+    assert.ok(pair.left < patchPosition("5.1.0") && pair.left >= patchPosition("5.0.4"), "left: the Mists picture with Theramore standing");
+  });
+
+  it("opens an event on the moment that shows its result", () => {
+    assert.equal(eventMoment(theramore, art), patchPosition("5.1.0"));
+    assert.equal(eventMoment({ patch: "4.0.3", map: 12, changed: [] }, art), patchPosition("4.0.3"));
+  });
+
+  it("falls back to the change of client picture at the patch, then to the era before", () => {
+    const pair = eventComparison({ patch: "5.0.4", map: 12, changed: [] }, art, eras);
+    assert.ok(pair);
+    assert.ok(pair.left < patchPosition("5.0.4") && pair.right === patchPosition("5.0.4"));
+    assert.equal(eventComparison({ patch: "5.2.0", map: 12, changed: [] }, art, eras), null);
   });
 });

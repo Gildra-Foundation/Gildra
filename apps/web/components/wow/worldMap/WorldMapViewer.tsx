@@ -19,7 +19,7 @@ import { measureInsets, NARROW_QUERY } from "./ui/layout";
 import { placeFacts } from "./ui/placeFacts";
 import type { StageCrumb, StageHandle } from "./WorldMapStage";
 import { worldMapCopy } from "./worldMapCopy";
-import { artErasAt, artKey, eraAt, eraFromParam, mapIdOfPath, mapLine, orderedEras, patchPosition, positionToPatch, pushesHistory, queryToView, restOf, viewToQuery } from "./worldMapModel";
+import { artErasAt, artKey, eraAt, eraFromParam, eventComparison, eventMoment, mapIdOfPath, mapLine, orderedEras, patchPosition, positionToPatch, pushesHistory, queryToView, restOf, viewToQuery } from "./worldMapModel";
 import styles from "./worldMapViewer.module.css";
 
 type Selected = { type: "poi"; poi: AtlasPoi } | { type: "event"; event: AtlasEvent } | null;
@@ -124,7 +124,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     if (!bundle || !baseSet) return null;
     const set = activeSet ?? baseSet;
     const first = artNow[0] ? eraData[artNow[0].id] : undefined;
-    const pois = first?.pois ?? bundle.pois.filter((poi) => set.maps.has(poi.map));
+    // That era's own points (its client's portals and flight paths); a point leading to a map of another time is left out.
+    const pois = (first?.pois ?? bundle.pois).filter((poi) => set.maps.has(poi.map) && (poi.target === undefined || set.maps.has(poi.target)));
     // Events sit on the current maps' coordinates: shown where the era draws that map in the same place.
     // An older client draws its maps in other projections: there only maps with the current picture keep the points.
     const retailArt = !first || first.product === "wow";
@@ -137,6 +138,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     return indexMarkers({ maps: [...set.maps.values()], pois, events });
   }, [bundle, baseSet, activeSet, artNow, eraData]);
   const byId = index?.byId;
+  // Search offers the places and points of the era on screen (no portal to the Jade Forest in Classic).
+  const searchBundle = useMemo(() => (bundle && index ? { ...bundle, pois: [...index.poisByMap.values()].flat() } : bundle), [bundle, index]);
 
   // ------------------------------------------------------------ motion preference
   useEffect(() => {
@@ -204,7 +207,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     if (bundle) poisRef.current = new Map(bundle.pois.map((poi) => [poi.id, poi]));
   }, [bundle]);
 
-  const settle = (info: FrameInfo) => {
+  /** `refresh`: only the query changed (era, card, comparison) — not a move: it must not use up a flight's history step. */
+  const settle = (info: FrameInfo, refresh = false) => {
     const engine = engineRef.current;
     if (!engine || !startedRef.current) return;
     const s = state.current;
@@ -229,12 +233,14 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const url = `${prefix}${path}${qs ? `?${qs}` : ""}`;
     const next = { mapId: pathMap.id, depth: pathMap.depth };
     // Flying into a place (or a level up or down) is a step Back can return from; panning only rewrites the entry.
-    const push = !restoring.current && pushesHistory(entry.current, next, engine.takeFlown());
-    restoring.current = false;
-    entry.current = next;
+    if (refresh && entry.current && entry.current.mapId !== next.mapId) return;
+    const push = !refresh && !restoring.current && pushesHistory(entry.current, next, engine.takeFlown());
+    if (!refresh) { restoring.current = false; entry.current = next; }
     if (url === window.location.pathname + window.location.search) return;
-    if (push) window.history.pushState(window.history.state, "", url);
-    else window.history.replaceState(window.history.state, "", url);
+    // A fresh state (null): the router then takes the new address as its own (usePathname, the EN/RU links);
+    // passing its current state would mark the call as the router's own and skip that.
+    if (push) window.history.pushState(null, "", url);
+    else window.history.replaceState(null, "", url);
   };
 
   const onFocus = (chain: AtlasMap[]) => {
@@ -292,7 +298,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const event = q.event ? bundle.events.find((e) => e.id === q.event) : undefined;
     if (event) {
       setSelected({ type: "event", event });
-      if (!startEra && q.at === null) setPosition(patchPosition(event.patch));
+      if (!startEra && q.at === null) setPosition(eventMoment(event, bundle.art));
       // The event's place, once the first picture is in (unless the link has its own view).
       if (q.x === null || q.y === null || q.z === null) startEvent.current = event;
     }
@@ -432,7 +438,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const focusMap = engine?.focus;
     if (engine && focusMap) onFocusRef.current(engine.chain(focusMap.id));
   }, [activeSet]);
-  useEffect(() => { const engine = engineRef.current; if (engine?.view && engine.focus) settleRef.current({ camera: engine.view, ...engine.size, focus: engine.focus, drawn: [], moving: false, time: 0 }); }, [era?.id, position, selected, compare]);
+  useEffect(() => { const engine = engineRef.current; if (engine?.view && engine.focus) settleRef.current({ camera: engine.view, ...engine.size, focus: engine.focus, drawn: [], moving: false, time: 0 }, true); }, [era?.id, position, selected, compare]);
 
   // ------------------------------------------------------------ actions
   const flyToPoi = useCallback((poi: AtlasPoi) => {
@@ -448,11 +454,11 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const openEvent = useCallback((event: AtlasEvent) => {
     const engine = engineRef.current;
     setSelected({ type: "event", event });
-    setPosition(patchPosition(event.patch));
+    setPosition(eventMoment(event, art));
     if (!engine || event.map === null) return;
     const map = engine.maps.get(event.map);
     engine.flyToPoint(event.map, event.x, event.y, map && (map.type === "continent" || map.type === "world") ? 1.6 : 1.2);
-  }, []);
+  }, [art]);
 
   const pickHit = useCallback((hit: SearchHit) => {
     const engine = engineRef.current;
@@ -477,16 +483,9 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     if (compare) { setCompare(null); return; }
     const event = selected?.type === "event" ? selected.event : null;
     if (event) {
-      // Just before the event on the left, the event's moment on the right.
-      const at = patchPosition(event.patch);
-      setPosition(at);
-      if (artKey(artErasAt(art, at - 0.011)) !== artKey(artErasAt(art, at))) { setCompare({ left: at - 0.011 }); return; }
-      // The picture may change a little after the patch named by the event (a phase of the art): find it.
-      const ids = new Set([...(event.map !== null ? [event.map] : []), ...(event.changed ?? [])]);
-      const phase = art.find((info) => info.inherits && info.changed.some((id) => ids.has(id)) && patchPosition(info.range[0]) >= at && patchPosition(info.range[0]) - at < 1);
-      if (phase) { const start = patchPosition(phase.range[0]); setPosition(start); setCompare({ left: start - 0.011 }); return; }
-      const before = event.before ? eras.find((e) => e.id === event.before) : undefined;
-      if (before) { setCompare({ left: restOf(eras, before) }); return; }
+      // The last picture before the event's result on the left, the result on the right.
+      const pair = eventComparison(event, art, eras);
+      if (pair) { setPosition(pair.right); setCompare({ left: pair.left }); return; }
     }
     const earlier = changedHere.filter((other) => restOf(eras, other) < pos);
     const other = earlier.at(-1) ?? changedHere[0];
@@ -573,7 +572,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     <MapPlacePanel lang={lang} facts={facts} selection={selection} sheet={narrow}
       onClose={() => setSelected(null)} onPoi={flyToPoi} onEvent={openEvent} />
   ) : null;
-  const search = bundle ? <MapSearchBox lang={lang} bundle={bundle} bundleUrl={bundleUrl} byId={byId} exists={existsNow} onPick={pickHit} /> : null;
+  const search = bundle ? <MapSearchBox lang={lang} bundle={searchBundle ?? bundle} bundleUrl={bundleUrl} byId={byId} exists={existsNow} onPick={pickHit} /> : null;
   const controls = (
     <MapControls lang={lang} canUp={Boolean(focus && focus.parent !== null)} full={full} layers={layers} layersOpen={layersOpen}
       onZoom={(factor) => engineRef.current?.zoomBy(factor)} onUp={() => engineRef.current?.up()} onLayersOpen={toggleLayers} onLayers={setLayers} onFull={toggleFull} />

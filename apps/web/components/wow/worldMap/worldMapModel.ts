@@ -1,4 +1,4 @@
-import { comparePatch, patchParts, type ArtEraInfo, type AtlasBundle, type AtlasEra, type AtlasMap, type Lang } from "@/lib/wow/worldMap/bundle";
+import { comparePatch, patchParts, type ArtEraInfo, type AtlasBundle, type AtlasEra, type AtlasEvent, type AtlasMap, type Lang } from "@/lib/wow/worldMap/bundle";
 import { EXPANSIONS, worldMapCopy } from "./worldMapCopy";
 
 /** Shared by the server page and the viewer: facts, timeline positions, eras. */
@@ -166,4 +166,38 @@ export function eraFromParam(value: string | null, eras: AtlasEra[], art: ArtEra
   const id = ERA_ALIASES[value] ?? value;
   const picture = art.find((era) => era.id === id);
   return picture ? eraAt(eras, patchPosition(picture.range[0])) ?? undefined : undefined;
+}
+
+/**
+ * A phase of the art that an event brings (Theramore in ruins from 5.1 while
+ * the event's patch is 5.0.4): the first variant changing the event's maps
+ * that starts within a patch after it.
+ */
+function eventPhase(event: Pick<AtlasEvent, "patch" | "map" | "changed">, art: ArtEraInfo[]) {
+  const at = patchPosition(event.patch);
+  const ids = new Set([...(event.map !== null ? [event.map] : []), ...(event.changed ?? [])]);
+  return art
+    .filter((info) => info.inherits && info.changed.some((id) => ids.has(id)) && patchPosition(info.range[0]) >= at - 1e-6 && patchPosition(info.range[0]) - at < 1)
+    .sort((a, b) => patchPosition(a.range[0]) - patchPosition(b.range[0]))[0];
+}
+
+/** The moment that shows an event's result on the map (its phase when it brings one). */
+export function eventMoment(event: Pick<AtlasEvent, "patch" | "map" | "changed">, art: ArtEraInfo[]) {
+  const phase = eventPhase(event, art);
+  return phase ? patchPosition(phase.range[0]) : patchPosition(event.patch);
+}
+
+/**
+ * The before/after pair of an event: the last picture before its result on
+ * the left, the result on the right — a phase of the art first (Theramore
+ * standing → in ruins), else the change of client picture at its patch, else
+ * its "before" era. null when the map does not change.
+ */
+export function eventComparison(event: Pick<AtlasEvent, "patch" | "map" | "changed" | "before">, art: ArtEraInfo[], eras: AtlasEra[]): { left: number; right: number } | null {
+  const phase = eventPhase(event, art);
+  if (phase) { const start = patchPosition(phase.range[0]); return { left: start - 0.011, right: start }; }
+  const at = patchPosition(event.patch);
+  if (artKey(artErasAt(art, at - 0.011)) !== artKey(artErasAt(art, at))) return { left: at - 0.011, right: at };
+  const before = event.before ? eras.find((era) => era.id === event.before) : undefined;
+  return before ? { left: restOf(eras, before), right: at } : null;
 }
