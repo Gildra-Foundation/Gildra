@@ -4,15 +4,22 @@ import { EXPANSIONS, worldMapCopy } from "./worldMapCopy";
 /** Shared by the server page and the viewer: facts, timeline positions, eras. */
 
 /** A zone inside a zone is a city (Orgrimmar in Durotar); so is a zone named like a capital marker. */
-export function isCity(map: AtlasMap, byId: Map<number, AtlasMap>, capitals: ReadonlySet<string>) {
+export function isCity(map: AtlasMap, byId: Map<number, AtlasMap>, capitals: ReadonlySet<string | number>) {
   // Micro maps are caves, keeps and districts inside a zone, not cities.
   if (map.type !== "zone") return false;
   const parent = map.parent === null ? undefined : byId.get(map.parent);
-  return parent?.type === "zone" || capitals.has(map.name);
+  return parent?.type === "zone" || capitals.has(map.id) || capitals.has(map.name);
 }
 
+/** Maps opened by a capital or city marker (by id), and those markers' names. */
 export function capitalNames(bundle: AtlasBundle) {
-  return new Set(bundle.pois.filter((poi) => poi.kind === "capital" || poi.kind === "city").map((poi) => poi.name));
+  const out = new Set<string | number>();
+  for (const poi of bundle.pois) {
+    if (poi.kind !== "capital" && poi.kind !== "city") continue;
+    out.add(poi.name);
+    if (poi.target) out.add(poi.target);
+  }
+  return out;
 }
 
 function list(lang: Lang, names: string[], limit = 4) {
