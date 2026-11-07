@@ -1,7 +1,7 @@
 /* atlas:strict — Mythic+ meta (/wow/mythic-plus/meta) in the material atlas of the Mythic+ hub:
    painted plaques and buttons of the dungeon kit around live HTML numbers.
    Shell colour is the theme accent; a plaque's light comes from its kit (--meta-kit-accent);
-   class colours (--class-color) only on spec identity; trend colours only on the change figures. */
+   class colours (--class-color) on spec identity and presence history; trend colours only on the change figures. */
 
 .page { --atlas-frame-tint: var(--atlas-info-wash, var(--atlas-accent-glow)); font-variant-numeric: lining-nums; }
 
@@ -122,15 +122,15 @@
 }
 
 /* Kit colours, derived from one accent exactly like the hub cards. */
-.rolePlaque, .tablePlaque, .giniItem, .sourcePlaque, .statePlaque {
+.rolePlaque, .statePlaque {
   --meta-kit-light: color-mix(in srgb, var(--meta-kit-accent, var(--atlas-accent)) 65%, var(--atlas-text-strong));
   --meta-kit-base: color-mix(in srgb, var(--meta-kit-accent, var(--atlas-accent)) 15%, var(--atlas-bg));
   --meta-kit-line: color-mix(in srgb, var(--meta-kit-accent, var(--atlas-accent)) 30%, transparent);
 }
 
 /* One 9-slice recipe for every plaque (design.md §4.2). */
-.rolePlaque, .tablePlaque, .giniItem, .sourcePlaque, .statePlaque { position: relative; isolation: isolate; min-width: 0; }
-.rolePlaque::before, .tablePlaque::before, .giniItem::before, .sourcePlaque::before, .statePlaque::before {
+.rolePlaque, .statePlaque { position: relative; isolation: isolate; min-width: 0; }
+.rolePlaque::before, .statePlaque::before {
   position: absolute;
   z-index: -1;
   inset: 0;
@@ -146,7 +146,6 @@
   content: "";
   pointer-events: none;
 }
-.giniItem::before { border-width: var(--mythic-panel-width-mobile); }
 
 /* Hero: the hub's gateway, eyebrow, title, two painted buttons, the week in numbers. */
 .hero { min-height: 470px; padding-bottom: var(--atlas-space-5); }
@@ -154,7 +153,7 @@
 .heroHeader h1 { max-width: 15ch; }
 .heroHeader p { max-width: 52ch; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
-.actionSlot, .sourceAction { display: flex; min-width: 0; max-width: 100%; }
+.actionSlot { display: flex; min-width: 0; max-width: 100%; }
 .weekFacts { display: grid; gap: var(--atlas-space-4); max-width: 1040px; margin-top: var(--atlas-space-5); }
 .weekFacts :global(.ui-stats-card) { background: transparent; box-shadow: none; border: 0; padding-block: var(--atlas-space-2); }
 .affixes { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
@@ -228,133 +227,69 @@
 .page .assetButton:global(.ui-button):active { transform: translateY(1px) scale(.98); }
 @media (hover: hover) and (pointer: fine) {
   .page .assetButton:global(.ui-button):hover { transform: translateY(-2px); }
-  .assetButton:hover::after { animation: assetGlint 900ms var(--atlas-ease) both; }
+  .assetButton:hover::after { animation: assetGlint var(--atlas-duration-slow) var(--atlas-ease) both; }
 }
 @keyframes assetGlint { from { opacity: 0; transform: translateX(-12px); } 45% { opacity: .8; } to { opacity: 0; transform: translateX(12px); } }
 
 .section { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
 
-/* Leaders by role: three plaques, one dungeon material per role. */
-.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-7); }
-.rolePlaque { padding: 32px 36px 40px; }
-/* The role sprout stays inside the plaque's side padding (it sits 28px outside
-   the rail), so it never covers a rank, delta or spec of the last row. */
-.rolePlaque > [data-mythic-hub-ornaments] { --mythic-ornament-width: 64px; }
-.roleTitle {
-  display: flex;
-  align-items: center;
-  gap: var(--atlas-space-2);
-  margin: 0 0 var(--atlas-space-4);
-  color: var(--meta-kit-light);
-  font-family: var(--atlas-font-ui);
-  font-size: var(--atlas-text-label);
-  font-weight: 700;
-  letter-spacing: var(--atlas-tracking-label);
-  text-transform: uppercase;
-  text-shadow: 0 1px 3px var(--atlas-bg);
-}
-.roleTitle svg { width: 16px; height: 16px; }
-.podiumList { display: grid; gap: var(--atlas-space-1); margin: 0; padding: 0; list-style: none; }
-.leader, .podiumItem { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); }
-.leader { grid-template-rows: auto 5px; row-gap: var(--atlas-space-3); padding-block: var(--atlas-space-2) var(--atlas-space-4); margin-bottom: var(--atlas-space-2); border-block-end: 1px solid var(--meta-kit-line); }
-.podiumItem { padding-block: var(--atlas-space-2); border-block-end: 1px solid var(--atlas-line-soft); }
-.podiumItem:last-child { border-block-end: 0; }
-.podiumRank { color: var(--atlas-text-subtle); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-variant-numeric: lining-nums; text-align: center; }
-.leader .podiumRank { color: var(--meta-kit-light); font-size: var(--atlas-text-h3); }
-.podiumValue, .leaderValue { display: grid; justify-items: end; gap: 2px; }
-.podiumValue b, .leaderValue b { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
-.leaderValue b { color: var(--meta-kit-light); font-size: var(--atlas-text-h2); line-height: 1; }
-.leaderTrack { grid-column: 1 / -1; height: 5px; overflow: hidden; border-radius: 3px; background: var(--atlas-surface-sunken); box-shadow: inset 0 0 0 1px var(--atlas-line-soft); }
-.leaderTrack span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--meta-kit-accent) 44%, var(--atlas-surface-sunken)), var(--meta-kit-accent)); }
 
-/* Every specialization: one Voidscar plaque around the tabs and the table. */
-.tablePlaque { padding: 32px 36px 36px; }
-/* No glass over painted material (design.md §9): the kit table sits straight on the plaque face. */
-.page .metaTable { border: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
-.page .metaTable thead th { border-bottom: 1px solid var(--meta-kit-line); background: transparent; color: var(--meta-kit-light); }
-.tableTint { --meta-bar: var(--meta-role-accent, var(--atlas-accent)); margin-top: var(--atlas-space-4); }
-.tableTint .bar > span { background: linear-gradient(90deg, color-mix(in srgb, var(--meta-bar) 44%, var(--atlas-surface-sunken)), var(--meta-bar)); }
-.tableTint .sparkline polyline { stroke: color-mix(in srgb, var(--meta-bar) 65%, var(--atlas-text-strong)); }
-.tableTint .sparkline circle { fill: color-mix(in srgb, var(--meta-bar) 65%, var(--atlas-text-strong)); }
-
-.presenceCell { display: grid; grid-template-columns: minmax(80px, 200px) 6ch; align-items: center; gap: var(--atlas-space-3); }
-.presenceCell b { white-space: nowrap; color: var(--atlas-text-strong); font-variant-numeric: tabular-nums lining-nums; text-align: end; }
-
-/* Diversity: four small plaques, each in its role material. */
-.gini { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
-.giniItem { display: grid; gap: var(--atlas-space-2); padding: 26px 28px 28px; }
-.giniLabel { color: var(--meta-kit-light); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; text-shadow: 0 1px 3px var(--atlas-bg); }
-.giniValue { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h2); line-height: 1; font-variant-numeric: lining-nums tabular-nums; text-shadow: 0 1px 3px var(--atlas-bg); }
-.giniScale { position: relative; display: block; block-size: 5px; margin-block: var(--atlas-space-2); border-radius: 3px; background: linear-gradient(90deg, var(--atlas-positive), var(--atlas-caution), var(--atlas-negative)); opacity: .75; }
-.giniScale span { position: absolute; inset-block: -4px; inline-size: 3px; margin-inline-start: -1px; border-radius: 2px; background: var(--atlas-text-strong); }
-.giniFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2); }
-.giniFoot .sparkline polyline { stroke: var(--meta-kit-light); }
-.giniFoot .sparkline circle { fill: var(--meta-kit-light); }
-.giniBefore { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
-
-/* About the data: the hub's CTA plaque. */
-.sourcePlaque { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-5); margin-top: var(--atlas-section-gap); padding: 36px 40px; scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
-.sourceText { display: grid; gap: var(--atlas-space-2); min-width: 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); text-shadow: 0 1px 3px var(--atlas-bg); }
-.sourceText strong { color: var(--atlas-text-strong); font: 600 var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); }
-.sourceText a { color: var(--meta-kit-light); text-underline-offset: .2em; }
-.sourceText a:focus-visible { outline: 2px solid var(--meta-kit-light); outline-offset: 3px; }
+.rolePlaque { padding: 24px 32px 32px; }
+.roleLegend { display: flex; gap: var(--atlas-space-4); align-items: center; padding-bottom: var(--atlas-space-4); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.roleLegend svg { width: 18px; height: 18px; color: var(--meta-kit-light); }
+.specGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); list-style: none; margin: 0; padding: 0; }
+.specCard { min-width: 0; padding: var(--atlas-space-4); border: 1px solid var(--atlas-line-soft); border-top: 2px solid color-mix(in srgb, var(--class-color) 65%, var(--atlas-line-soft)); background: var(--atlas-surface); border-radius: var(--atlas-radius); }
+.specCard[data-leader] { background: linear-gradient(135deg, color-mix(in srgb, var(--class-color) 12%, var(--atlas-surface)), var(--atlas-surface)); }
+.cardHead { display: flex; gap: var(--atlas-space-3); align-items: center; }
+.rank { flex: none; color: var(--atlas-text-subtle); font: 600 var(--atlas-text-h3)/1 var(--atlas-font-display); }
+.specCard[data-leader] .rank { color: var(--class-color); }
+.specLink { min-width: 0; text-decoration: none; }
+.cardNumbers { display: flex; align-items: center; gap: var(--atlas-space-3); margin-block: var(--atlas-space-3) var(--atlas-space-2); }
+.cardNumbers > b { font: 600 var(--atlas-text-h2)/1 var(--atlas-font-display); color: var(--atlas-text-strong); }
+.cardNumbers .sparkline { margin-inline-start: auto; flex: none; }
+.specCard .sparkline polyline { stroke: var(--class-color); }
+.specCard .sparkline circle { fill: var(--class-color); }
+.specCard .bar > span { background: var(--class-color); animation: none; }
+.heroTree { display: flex; gap: var(--atlas-space-2); justify-content: space-between; margin-top: var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-decoration: none; }
+.heroTree b { font-weight: 500; color: var(--atlas-text); }
+.specActions { display: flex; flex-wrap: wrap; gap: 0 var(--atlas-space-3); margin-top: var(--atlas-space-2); }
+.specActions a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; font-size: var(--atlas-text-meta); color: var(--atlas-text-muted); text-decoration: none; }
+.specActions svg { width: 12px; height: 12px; }
+.specCard a:hover { color: var(--atlas-text-strong); }
+.specCard a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .statePlaque { padding: 32px 40px; }
-
-@media (max-width: 1100px) {
-  .podium { gap: var(--atlas-space-5); }
-  .rolePlaque { padding: 28px 28px 36px; }
-  .rolePlaque > [data-mythic-hub-ornaments] { --mythic-ornament-width: 56px; }
-  .gini { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
-@media (max-width: 900px) { .podium { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-6); } }
-@media (max-width: 700px) {
-  .rolePlaque, .tablePlaque, .sourcePlaque, .statePlaque { padding: 28px; }
-  .tablePlaque { padding-inline: 18px; }
-  .rolePlaque::before, .tablePlaque::before, .sourcePlaque::before, .statePlaque::before { border-width: var(--mythic-panel-width-mobile); }
-  .rolePlaque { --mythic-panel-rail-inset: var(--mythic-panel-rail-inset-mobile); }
-}
-@media (max-width: 640px) { .seasonCol { display: none; } }
+.hero { min-height: 0; }
+.heroHeader { max-width: 75%; }
+.actions { gap: var(--atlas-space-2); }
+.actions .assetButton:global(.ui-button) { min-width: 180px; min-height: 60px; }
+.weekFacts { max-width: 760px; }
+@media (max-width: 1100px) { .specGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .heroHeader { max-width: 90%; } }
 @media (max-width: 600px) {
-  .hero { min-height: 0; padding-bottom: var(--atlas-space-3); }
   .heroHeader { max-width: 100%; }
-  .actions { gap: var(--atlas-space-2); }
-  .actionSlot { flex: 1 1 100%; width: 100%; }
-  .actions .assetButton:global(.ui-button), .sourcePlaque .assetButton:global(.ui-button) { width: 100%; }
-  .sourcePlaque { align-items: stretch; flex-direction: column; padding: 28px 20px; }
-  .sourceAction :global(.ui-button__icon) { display: none; }
+  .actions { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .actionSlot { width: 100%; }
+  .actions .assetButton:global(.ui-button) { min-width: 0; width: 100%; min-height: 52px; padding-inline: 12px; font-size: var(--atlas-text-meta); }
+  .actions .assetButton :global(.ui-button__icon) { display: none; }
+  .weekFacts > [role="list"] { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+  .page .weekFacts :global(.ui-stats-card.ui-stats-card) { min-width: 0; padding-inline: 0; border: 0; }
+  .weekFacts :global(.ui-stats-card__value) { font-size: var(--atlas-text-h3); }
+  .weekFacts :global(.ui-stats-card__label) { font-size: var(--atlas-text-label); letter-spacing: 0; }
+  .specGrid { grid-template-columns: minmax(0, 1fr); }
+  .rolePlaque { padding: 20px 18px 26px; }
+  .rolePlaque::before, .statePlaque::before { border-width: var(--mythic-panel-width-mobile); }
+  .roleLegend { gap: var(--atlas-space-3); }
 }
-/* Phones: the table keeps rank, spec, share and change; the season line and the bar give way. */
-@media (max-width: 520px) {
-  .gini { grid-template-columns: minmax(0, 1fr); }
-  .presenceCell .bar { display: none; }
-  .wideOnly { display: none; }
-  .narrowOnly { display: inline; }
-  .specName { white-space: normal; }
-  .page .rankCol { padding-inline: var(--atlas-space-2) 0; }
-  .tablePlaque { padding: 24px 12px 20px; }
-  .page .metaTable th, .page .metaTable td { padding-inline: var(--atlas-space-2); }
-  .presenceCell { grid-template-columns: 6ch; }
-}
-@media (max-width: 360px) { .rolePlaque, .giniItem { padding-inline: 20px; } .rolePlaque > [data-mythic-hub-ornaments] { --mythic-ornament-width: 48px; } }
-
-/* Motion and preference fallbacks (design.md §5). */
-@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
-  .page .assetButton:global(.ui-button) { transform: none; transition: none; }
-  .assetButton::after { animation: none; opacity: 0; }
-}
-:global([data-motion="reduced"]) .page .assetButton:global(.ui-button),
-:global([data-ui-motion="reduce"]) .page .assetButton:global(.ui-button),
-:global([data-transparency="reduced"]) .page .assetButton:global(.ui-button) { transform: none; transition: none; }
-:global([data-motion="reduced"]) .assetButton::after,
-:global([data-ui-motion="reduce"]) .assetButton::after,
-:global([data-transparency="reduced"]) .assetButton::after { animation: none; opacity: 0; }
-:global([data-motion="reduced"]) .bar > span, :global([data-ui-motion="reduce"]) .bar > span { animation: none; }
+@media (prefers-reduced-motion: reduce) { .page .assetButton:global(.ui-button) { transition: none; transform: none; } .assetButton::after { animation: none; } }
+:global([data-ui-motion="reduce"]) .page .assetButton:global(.ui-button) { transition: none; transform: none; }
+:global([data-ui-motion="reduce"]) .assetButton::after { animation: none; }
 @media (forced-colors: active) {
-  .rolePlaque::before, .tablePlaque::before, .giniItem::before, .sourcePlaque::before, .statePlaque::before, .assetButton::before, .assetButton::after { display: none; }
-  .rolePlaque, .tablePlaque, .giniItem, .sourcePlaque, .statePlaque { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
-  .page .assetButton:global(.ui-button) { border: 2px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
-  .leaderTrack, .giniScale { border: 1px solid CanvasText; background: Canvas; }
-  .leaderTrack span { background: Highlight; }
-  .affixes li { border-color: CanvasText; color: CanvasText; background: Canvas; }
+  .rolePlaque::before, .statePlaque::before, .assetButton::before, .assetButton::after { display: none; }
+  .rolePlaque, .specCard, .statePlaque { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .page .assetButton:global(.ui-button) { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
+  .bar { border: 1px solid CanvasText; } .specCard .bar > span { background: Highlight; }
 }
+
+.moreSpecs { margin-top: var(--atlas-space-4); }
+.moreSpecs summary { padding-block: var(--atlas-space-3); min-height: 44px; color: var(--meta-kit-light); font-size: var(--atlas-text-small); cursor: pointer; }
+.moreSpecs summary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.moreSpecs[open] summary { margin-bottom: var(--atlas-space-3); }

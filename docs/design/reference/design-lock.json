@@ -1918,7 +1918,7 @@
           "title": "Mythic+ Meta: Top Specs This Week — Gildra",
           "theme": "arthas",
           "scrollWidth": 1440,
-          "pageHeight": 4035,
+          "pageHeight": 3382,
           "tokens": {
             "--atlas-bg": "#070b10",
             "--atlas-surface": "#0d131a",
@@ -2108,6 +2108,8 @@
             "--atlas-dungeon-temple-red-deep": "#203e3d",
             "--atlas-dungeon-temple-selection-edge": "#a7d6ca",
             "--atlas-dungeon-temple-gold": "#ba9e72",
+            "--atlas-route-duration": ".2s",
+            "--atlas-route-shift": "8px",
             "--atlas-frame-tint": "rgba(124, 200, 238, .16)",
             "--atlas-foot-height": ""
           },
@@ -2154,7 +2156,7 @@
                 26,
                 325,
                 520,
-                51
+                26
               ],
               "font-family": "Inter, \"Inter Fallback\", \"Inter Fallback Local\", \"Segoe UI\", Roboto, Arial, sans-serif",
               "font-size": "16px",
@@ -2168,10 +2170,10 @@
             },
             "h2": [
               {
-                "text": "Top picks by role",
+                "text": "Tanks",
                 "box": [
                   26,
-                  718,
+                  684,
                   1388,
                   48
                 ],
@@ -2185,10 +2187,10 @@
                 "text-shadow": "none"
               },
               {
-                "text": "Every specialization",
+                "text": "Healers",
                 "box": [
                   26,
-                  1402,
+                  1397,
                   1388,
                   48
                 ],
@@ -2202,10 +2204,10 @@
                 "text-shadow": "none"
               },
               {
-                "text": "How diverse is the meta",
+                "text": "Damage",
                 "box": [
                   26,
-                  3167,
+                  2352,
                   1388,
                   48
                 ],
@@ -2220,24 +2222,8 @@
               }
             ],
             "h3": {
-              "count": 3,
-              "first": {
-                "text": "Tanks",
-                "box": [
-                  62,
-                  864,
-                  359,
-                  18
-                ],
-                "font-family": "Inter, \"Inter Fallback\", \"Inter Fallback Local\", \"Segoe UI\", Roboto, Arial, sans-serif",
-                "font-size": "11px",
-                "font-weight": "700",
-                "line-height": "17.6px",
-                "letter-spacing": "1.54px",
-                "text-transform": "uppercase",
-                "color": "color(srgb 0.666078 0.804118 0.83)",
-                "text-shadow": "rgb(7, 11, 16) 0px 1px 3px"
-              }
+              "count": 0,
+              "first": null
             },
             "buttons": [],
             "main": {
@@ -2245,7 +2231,7 @@
                 0,
                 108,
                 1440,
-                3927
+                3274
               ],
               "max-width": "none",
               "padding": "0px"
@@ -2265,20 +2251,20 @@
             "footer": {
               "box": [
                 26,
-                3810,
+                3131,
                 1388,
-                153
+                179
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
                 0,
                 0,
                 1440,
-                4035
+                3382
               ],
               "background-color": "rgb(7, 11, 16)",
               "color": "rgb(238, 226, 204)",
@@ -2286,21 +2272,18 @@
               "font-size": "13px"
             }
           },
-          "images": 61,
+          "images": 43,
           "paintedAssets": [
             "/_next/image",
             "/assets/wow/mythic/hub/continuation.webp",
-            "/assets/wow/mythic/hub/controls/buttons/kings-rest.webp",
+            "/assets/wow/mythic/hub/controls/buttons/den-of-nalorakk.webp",
+            "/assets/wow/mythic/hub/controls/buttons/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/buttons/the-blinding-vale.webp",
-            "/assets/wow/mythic/hub/controls/buttons/voidscar-arena.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/den-of-nalorakk.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/ruby-life-pools.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/the-blinding-vale.webp",
             "/assets/wow/mythic/hub/controls/panels/den-of-nalorakk.webp",
             "/assets/wow/mythic/hub/controls/panels/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/panels/the-blinding-vale.webp",
-            "/assets/wow/mythic/hub/controls/panels/voidscar-arena.webp",
             "/assets/wow/mythic/hub/gateway.webp",
+            "/brand/gildra-helmet-112.webp",
             "/brand/gildra-helmet-56.avif"
           ],
           "status": 200,
@@ -2310,7 +2293,7 @@
           "title": "Мета Mythic+: лучшие специализации недели — Gildra",
           "theme": "arthas",
           "scrollWidth": 390,
-          "pageHeight": 5984,
+          "pageHeight": 6010,
           "tokens": {
             "--atlas-bg": "#070b10",
             "--atlas-surface": "#0d131a",
@@ -2500,6 +2483,8 @@
             "--atlas-dungeon-temple-red-deep": "#203e3d",
             "--atlas-dungeon-temple-selection-edge": "#a7d6ca",
             "--atlas-dungeon-temple-gold": "#ba9e72",
+            "--atlas-route-duration": ".2s",
+            "--atlas-route-shift": "8px",
             "--atlas-frame-tint": "rgba(124, 200, 238, .16)",
             "--atlas-foot-height": ""
           },
@@ -2546,7 +2531,7 @@
                 14,
                 214,
                 362,
-                77
+                51
               ],
               "font-family": "Inter, \"Inter Fallback\", \"Inter Fallback Local\", \"Segoe UI\", Roboto, Arial, sans-serif",
               "font-size": "16px",
@@ -2560,10 +2545,10 @@
             },
             "h2": [
               {
-                "text": "Лидеры по ролям",
+                "text": "Танки",
                 "box": [
                   14,
-                  935,
+                  703,
                   362,
                   33
                 ],
@@ -2577,10 +2562,10 @@
                 "text-shadow": "none"
               },
               {
-                "text": "Все специализации",
+                "text": "Лекари",
                 "box": [
                   14,
-                  2606,
+                  2253,
                   362,
                   33
                 ],
@@ -2594,12 +2579,12 @@
                 "text-shadow": "none"
               },
               {
-                "text": "Насколько разнообразна мета",
+                "text": "Бойцы",
                 "box": [
                   14,
-                  4322,
+                  4034,
                   362,
-                  65
+                  33
                 ],
                 "font-family": "Alegreya, \"Alegreya Fallback\", \"Alegreya Fallback Local\", Georgia, \"Times New Roman\", serif",
                 "font-size": "26px",
@@ -2612,24 +2597,8 @@
               }
             ],
             "h3": {
-              "count": 3,
-              "first": {
-                "text": "Танки",
-                "box": [
-                  42,
-                  1079,
-                  306,
-                  18
-                ],
-                "font-family": "Inter, \"Inter Fallback\", \"Inter Fallback Local\", \"Segoe UI\", Roboto, Arial, sans-serif",
-                "font-size": "11px",
-                "font-weight": "700",
-                "line-height": "17.6px",
-                "letter-spacing": "1.54px",
-                "text-transform": "uppercase",
-                "color": "color(srgb 0.666078 0.804118 0.83)",
-                "text-shadow": "rgb(7, 11, 16) 0px 1px 3px"
-              }
+              "count": 0,
+              "first": null
             },
             "buttons": [],
             "main": {
@@ -2637,7 +2606,7 @@
                 0,
                 57,
                 390,
-                5927
+                5953
               ],
               "max-width": "none",
               "padding": "0px"
@@ -2657,20 +2626,20 @@
             "footer": {
               "box": [
                 14,
-                5644,
+                5661,
                 362,
-                268
+                277
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
                 0,
                 0,
                 390,
-                5984
+                6010
               ],
               "background-color": "rgb(7, 11, 16)",
               "color": "rgb(238, 226, 204)",
@@ -2678,21 +2647,20 @@
               "font-size": "13px"
             }
           },
-          "images": 61,
+          "images": 43,
           "paintedAssets": [
             "/_next/image",
             "/assets/wow/mythic/hub/continuation-mobile.webp",
-            "/assets/wow/mythic/hub/controls/buttons/kings-rest.webp",
+            "/assets/wow/mythic/hub/continuation.webp",
+            "/assets/wow/mythic/hub/controls/buttons/den-of-nalorakk.webp",
+            "/assets/wow/mythic/hub/controls/buttons/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/buttons/the-blinding-vale.webp",
-            "/assets/wow/mythic/hub/controls/buttons/voidscar-arena.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/den-of-nalorakk.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/ruby-life-pools.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/the-blinding-vale.webp",
             "/assets/wow/mythic/hub/controls/panels/den-of-nalorakk.webp",
             "/assets/wow/mythic/hub/controls/panels/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/panels/the-blinding-vale.webp",
-            "/assets/wow/mythic/hub/controls/panels/voidscar-arena.webp",
             "/assets/wow/mythic/hub/gateway-mobile.webp",
+            "/assets/wow/mythic/hub/gateway.webp",
+            "/brand/gildra-helmet-112.webp",
             "/brand/gildra-helmet-56.avif"
           ],
           "status": 200,
@@ -2702,7 +2670,7 @@
           "title": "Мета Mythic+: лучшие специализации недели — Gildra",
           "theme": "arthas",
           "scrollWidth": 1440,
-          "pageHeight": 4053,
+          "pageHeight": 3382,
           "tokens": {
             "--atlas-bg": "#070b10",
             "--atlas-surface": "#0d131a",
@@ -2892,6 +2860,8 @@
             "--atlas-dungeon-temple-red-deep": "#203e3d",
             "--atlas-dungeon-temple-selection-edge": "#a7d6ca",
             "--atlas-dungeon-temple-gold": "#ba9e72",
+            "--atlas-route-duration": ".2s",
+            "--atlas-route-shift": "8px",
             "--atlas-frame-tint": "rgba(124, 200, 238, .16)",
             "--atlas-foot-height": ""
           },
@@ -2938,7 +2908,7 @@
                 26,
                 325,
                 520,
-                51
+                26
               ],
               "font-family": "Inter, \"Inter Fallback\", \"Inter Fallback Local\", \"Segoe UI\", Roboto, Arial, sans-serif",
               "font-size": "16px",
@@ -2952,10 +2922,10 @@
             },
             "h2": [
               {
-                "text": "Лидеры по ролям",
+                "text": "Танки",
                 "box": [
                   26,
-                  718,
+                  684,
                   1388,
                   48
                 ],
@@ -2969,10 +2939,10 @@
                 "text-shadow": "none"
               },
               {
-                "text": "Все специализации",
+                "text": "Лекари",
                 "box": [
                   26,
-                  1402,
+                  1397,
                   1388,
                   48
                 ],
@@ -2986,10 +2956,10 @@
                 "text-shadow": "none"
               },
               {
-                "text": "Насколько разнообразна мета",
+                "text": "Бойцы",
                 "box": [
                   26,
-                  3167,
+                  2352,
                   1388,
                   48
                 ],
@@ -3004,24 +2974,8 @@
               }
             ],
             "h3": {
-              "count": 3,
-              "first": {
-                "text": "Танки",
-                "box": [
-                  62,
-                  864,
-                  359,
-                  18
-                ],
-                "font-family": "Inter, \"Inter Fallback\", \"Inter Fallback Local\", \"Segoe UI\", Roboto, Arial, sans-serif",
-                "font-size": "11px",
-                "font-weight": "700",
-                "line-height": "17.6px",
-                "letter-spacing": "1.54px",
-                "text-transform": "uppercase",
-                "color": "color(srgb 0.666078 0.804118 0.83)",
-                "text-shadow": "rgb(7, 11, 16) 0px 1px 3px"
-              }
+              "count": 0,
+              "first": null
             },
             "buttons": [],
             "main": {
@@ -3029,7 +2983,7 @@
                 0,
                 108,
                 1440,
-                3945
+                3274
               ],
               "max-width": "none",
               "padding": "0px"
@@ -3049,20 +3003,20 @@
             "footer": {
               "box": [
                 26,
-                3810,
+                3131,
                 1388,
-                171
+                179
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
                 0,
                 0,
                 1440,
-                4053
+                3382
               ],
               "background-color": "rgb(7, 11, 16)",
               "color": "rgb(238, 226, 204)",
@@ -3070,21 +3024,18 @@
               "font-size": "13px"
             }
           },
-          "images": 61,
+          "images": 43,
           "paintedAssets": [
             "/_next/image",
             "/assets/wow/mythic/hub/continuation.webp",
-            "/assets/wow/mythic/hub/controls/buttons/kings-rest.webp",
+            "/assets/wow/mythic/hub/controls/buttons/den-of-nalorakk.webp",
+            "/assets/wow/mythic/hub/controls/buttons/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/buttons/the-blinding-vale.webp",
-            "/assets/wow/mythic/hub/controls/buttons/voidscar-arena.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/den-of-nalorakk.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/ruby-life-pools.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/the-blinding-vale.webp",
             "/assets/wow/mythic/hub/controls/panels/den-of-nalorakk.webp",
             "/assets/wow/mythic/hub/controls/panels/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/panels/the-blinding-vale.webp",
-            "/assets/wow/mythic/hub/controls/panels/voidscar-arena.webp",
             "/assets/wow/mythic/hub/gateway.webp",
+            "/brand/gildra-helmet-112.webp",
             "/brand/gildra-helmet-56.avif"
           ],
           "status": 200,
@@ -3094,7 +3045,7 @@
           "title": "Mythic+ Meta: Top Specs This Week — Gildra",
           "theme": "arthas",
           "scrollWidth": 390,
-          "pageHeight": 5743,
+          "pageHeight": 6010,
           "tokens": {
             "--atlas-bg": "#070b10",
             "--atlas-surface": "#0d131a",
@@ -3284,6 +3235,8 @@
             "--atlas-dungeon-temple-red-deep": "#203e3d",
             "--atlas-dungeon-temple-selection-edge": "#a7d6ca",
             "--atlas-dungeon-temple-gold": "#ba9e72",
+            "--atlas-route-duration": ".2s",
+            "--atlas-route-shift": "8px",
             "--atlas-frame-tint": "rgba(124, 200, 238, .16)",
             "--atlas-foot-height": ""
           },
@@ -3330,7 +3283,7 @@
                 14,
                 214,
                 362,
-                77
+                51
               ],
               "font-family": "Inter, \"Inter Fallback\", \"Inter Fallback Local\", \"Segoe UI\", Roboto, Arial, sans-serif",
               "font-size": "16px",
@@ -3344,10 +3297,10 @@
             },
             "h2": [
               {
-                "text": "Top picks by role",
+                "text": "Tanks",
                 "box": [
                   14,
-                  771,
+                  703,
                   362,
                   33
                 ],
@@ -3361,10 +3314,10 @@
                 "text-shadow": "none"
               },
               {
-                "text": "Every specialization",
+                "text": "Healers",
                 "box": [
                   14,
-                  2442,
+                  2253,
                   362,
                   33
                 ],
@@ -3378,10 +3331,10 @@
                 "text-shadow": "none"
               },
               {
-                "text": "How diverse is the meta",
+                "text": "Damage",
                 "box": [
                   14,
-                  4158,
+                  4034,
                   362,
                   33
                 ],
@@ -3396,24 +3349,8 @@
               }
             ],
             "h3": {
-              "count": 3,
-              "first": {
-                "text": "Tanks",
-                "box": [
-                  42,
-                  915,
-                  306,
-                  18
-                ],
-                "font-family": "Inter, \"Inter Fallback\", \"Inter Fallback Local\", \"Segoe UI\", Roboto, Arial, sans-serif",
-                "font-size": "11px",
-                "font-weight": "700",
-                "line-height": "17.6px",
-                "letter-spacing": "1.54px",
-                "text-transform": "uppercase",
-                "color": "color(srgb 0.666078 0.804118 0.83)",
-                "text-shadow": "rgb(7, 11, 16) 0px 1px 3px"
-              }
+              "count": 0,
+              "first": null
             },
             "buttons": [],
             "main": {
@@ -3421,7 +3358,7 @@
                 0,
                 57,
                 390,
-                5686
+                5953
               ],
               "max-width": "none",
               "padding": "0px"
@@ -3441,20 +3378,20 @@
             "footer": {
               "box": [
                 14,
-                5447,
+                5661,
                 362,
-                224
+                277
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
                 0,
                 0,
                 390,
-                5743
+                6010
               ],
               "background-color": "rgb(7, 11, 16)",
               "color": "rgb(238, 226, 204)",
@@ -3462,21 +3399,20 @@
               "font-size": "13px"
             }
           },
-          "images": 61,
+          "images": 43,
           "paintedAssets": [
             "/_next/image",
             "/assets/wow/mythic/hub/continuation-mobile.webp",
-            "/assets/wow/mythic/hub/controls/buttons/kings-rest.webp",
+            "/assets/wow/mythic/hub/continuation.webp",
+            "/assets/wow/mythic/hub/controls/buttons/den-of-nalorakk.webp",
+            "/assets/wow/mythic/hub/controls/buttons/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/buttons/the-blinding-vale.webp",
-            "/assets/wow/mythic/hub/controls/buttons/voidscar-arena.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/den-of-nalorakk.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/ruby-life-pools.webp",
-            "/assets/wow/mythic/hub/controls/ornaments/the-blinding-vale.webp",
             "/assets/wow/mythic/hub/controls/panels/den-of-nalorakk.webp",
             "/assets/wow/mythic/hub/controls/panels/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/panels/the-blinding-vale.webp",
-            "/assets/wow/mythic/hub/controls/panels/voidscar-arena.webp",
             "/assets/wow/mythic/hub/gateway-mobile.webp",
+            "/assets/wow/mythic/hub/gateway.webp",
+            "/brand/gildra-helmet-112.webp",
             "/brand/gildra-helmet-56.avif"
           ],
           "status": 200,
