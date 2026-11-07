@@ -11,11 +11,64 @@ import (
 )
 
 type SitemapEntry struct {
-	ID        uuid.UUID
-	Type      string
-	Slug      string
+	ID   uuid.UUID
+	Type string
+	// Slug is the English record slug (what Get returns for en_US).
+	Slug string
+	// SlugRu is the Russian record slug, set only when the Russian page shows a
+	// genuine Russian name; nil means the record has only an English URL.
+	SlugRu    *string
 	UpdatedAt time.Time
 }
+
+// sitemapLocalizationProof mirrors the localization_proof lateral of
+// publicEntitySelectTemplate: an imported ready artifact proves that a Russian
+// name equal to the English one is the real Russian name, not a copied
+// fallback.
+func sitemapLocalizationProof(versionExpr, localeExpr string) string {
+	return `SELECT 1
+			FROM catalog_entity_localization_artifacts observation
+			JOIN catalog_source_artifacts artifact ON artifact.id=observation.source_artifact_id
+			WHERE observation.version_id=` + versionExpr + ` AND observation.locale=` + localeExpr + `
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			  AND (artifact.locale='' OR artifact.locale=observation.locale)`
+}
+
+// sitemapScriptExempt mirrors apps/web/lib/catalogLocale.ts wrongName: these
+// names are shown as-is in both locales.
+func sitemapScriptExempt(entityAlias, nameExpr string) string {
+	return `(` + entityAlias + `.entity_type IN ('expansion','product') OR ` + nameExpr + `='World of Warcraft')`
+}
+
+// sitemapEntriesQuery lists exactly the records GET /v1/game/entities/{id}
+// serves (published, not deleted, displayable name, usable) whose English name
+// the web renders. slugRu is the ru_RU slug Get returns, only when the ru_RU
+// response is not a locale fallback and its name passes the same junk and
+// script checks the web applies.
+var sitemapEntriesQuery = `
+		SELECT entity.id,entity.entity_type,
+			COALESCE(NULLIF(en.slug,''),entity.canonical_slug),
+			CASE WHEN NULLIF(ru.name,'') IS NOT NULL
+				AND (ru.name<>en.name OR EXISTS (` + sitemapLocalizationProof("version.id", "'ru_RU'") + `))
+				AND ru.name !~* ` + publicCatalogJunkNamePattern + `
+				AND (ru.name !~ '[A-Za-z]' OR ` + sitemapScriptExempt("entity", "ru.name") + `)
+				THEN COALESCE(NULLIF(ru.slug,''),NULLIF(en.slug,''),entity.canonical_slug) END,
+			entity.updated_at
+		FROM game_entities entity
+		JOIN game_products product ON product.id=entity.product_id
+		JOIN game_entity_versions version ON version.id=entity.published_version_id
+		LEFT JOIN game_entity_localizations en ON en.version_id=version.id AND en.locale='en_US'
+		LEFT JOIN game_entity_localizations ru ON ru.version_id=version.id AND ru.locale='ru_RU'
+		JOIN catalog_entity_type_registry registry ON registry.product_id=entity.product_id
+			AND registry.entity_type=entity.entity_type AND registry.is_public
+		WHERE product.slug=$1 AND entity.entity_type=$2
+			AND entity.deleted_at IS NULL AND entity.published_version_id IS NOT NULL
+			AND entity.id >= $3 AND ($4::uuid IS NULL OR entity.id < $4)
+			` + publicCatalogDisplayNamePredicate("en", "en") + `
+			` + publicCatalogUsabilityPredicate("entity", "version") + `
+			AND (en.name !~ '[А-Яа-яЁё]' OR ` + sitemapScriptExempt("entity", "en.name") + `)
+		ORDER BY entity.id
+		LIMIT 50001`
 
 func (s *Service) SitemapEntries(ctx context.Context, product, entityType, shard string) ([]SitemapEntry, error) {
 	product = strings.TrimSpace(product)
@@ -30,18 +83,7 @@ func (s *Service) SitemapEntries(ctx context.Context, product, entityType, shard
 	if err != nil {
 		return nil, err
 	}
-	rows, err := s.postgres.Query(ctx, `
-		SELECT entity.id,entity.entity_type,COALESCE(NULLIF(localized.slug,''),entity.canonical_slug),entity.updated_at
-		FROM game_entities entity
-		JOIN game_products product ON product.id=entity.product_id
-		JOIN game_entity_versions version ON version.id=entity.published_version_id
-		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale='en_US'
-		JOIN catalog_entity_type_registry registry ON registry.product_id=entity.product_id
-			AND registry.entity_type=entity.entity_type AND registry.is_public
-		WHERE product.slug=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL
-			AND entity.id >= $3 AND ($4::uuid IS NULL OR entity.id < $4)
-		ORDER BY entity.id
-		LIMIT 50001`, product, entityType, lower, upper)
+	rows, err := s.postgres.Query(ctx, sitemapEntriesQuery, product, entityType, lower, upper)
 	if err != nil {
 		return nil, fmt.Errorf("list sitemap entries: %w", err)
 	}
@@ -49,7 +91,7 @@ func (s *Service) SitemapEntries(ctx context.Context, product, entityType, shard
 	entries := make([]SitemapEntry, 0, 4096)
 	for rows.Next() {
 		var entry SitemapEntry
-		if err := rows.Scan(&entry.ID, &entry.Type, &entry.Slug, &entry.UpdatedAt); err != nil {
+		if err := rows.Scan(&entry.ID, &entry.Type, &entry.Slug, &entry.SlugRu, &entry.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan sitemap entry: %w", err)
 		}
 		entries = append(entries, entry)

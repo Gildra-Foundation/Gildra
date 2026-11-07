@@ -122,7 +122,12 @@
 }
 .fillSummary:empty { display: none; }
 .candidateRoles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--atlas-space-5); }
-.candidates { min-width: 0; }
+.candidates { min-width: 0; container: candidates / inline-size; }
+/* A narrow column (two roles side by side on a tablet): the bar gives way so the spec names stay whole. */
+@container candidates (max-width: 400px) {
+  .candidates .candidate { grid-template-columns: minmax(0, 1fr) 6ch 4ch; }
+  .candidates .candidateBar { display: none; }
+}
 .roleTitle {
   display: flex;
   align-items: center;
@@ -298,6 +303,7 @@
 @media (max-width: 480px) {
   .milestones { grid-template-columns: minmax(0, 1fr); }
   .run { grid-template-columns: 60px minmax(0, 1fr) 18px; gap: var(--atlas-space-2) var(--atlas-space-3); }
+  .runDungeon { white-space: normal; line-height: 1.2; }
 }
 @media (prefers-reduced-motion: reduce) {
   .candidate, .chosen, .pick, .run { transition: none; }
@@ -493,3 +499,9 @@
   .slot .slotRole, .slot .specText { display: none; }
   .slot .chosenX { position: absolute; top: 3px; right: 3px; width: 12px; height: 12px; }
 }
+
+/* Touch: 16 px fields, so iOS does not zoom on focus. */
+@media (pointer: coarse) { .page :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }
+
+/* Smallest phones: a long spec name wraps (hyphenated where the browser can) instead of an ellipsis. */
+@media (max-width: 400px) { .specText .specName { white-space: normal; overflow-wrap: break-word; hyphens: auto; } }

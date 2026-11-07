@@ -1,7 +1,7 @@
 /* atlas:strict — restrained location weather, below all content. */
 .atmosphere { z-index: 1; position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .bloom { position: absolute; inset: 0; opacity: .09; background: radial-gradient(ellipse at 65% 20%, var(--atlas-accent-strong), transparent 48%); mix-blend-mode: screen; }
-.mist { position: absolute; left: -8%; right: -8%; top: 18%; height: 34%; opacity: .16; background: radial-gradient(ellipse at 22% 65%, var(--atlas-accent), transparent 55%), radial-gradient(ellipse at 78% 40%, var(--atlas-accent), transparent 50%); filter: blur(26px); animation: mistDrift 36s ease-in-out infinite alternate; }
+.mist { position: absolute; left: -8%; right: -8%; top: 18%; height: 34%; opacity: .16; background: radial-gradient(ellipse at 22% 65%, var(--atlas-accent), transparent 55%), radial-gradient(ellipse at 78% 40%, var(--atlas-accent), transparent 50%); filter: blur(26px); animation: mistDrift 36s var(--atlas-ease-ambient) infinite alternate; }
 .particles { position: absolute; inset: 0; opacity: .62; }
 .particles i { position: absolute; left: var(--particle-x); top: var(--particle-y); width: var(--particle-size); height: var(--particle-size); border-radius: 50%; background: var(--atlas-accent-strong); animation: motes var(--particle-duration) var(--particle-delay) linear infinite; }
 .atmosphere[data-atmosphere="mist"] .particles { display: none; }

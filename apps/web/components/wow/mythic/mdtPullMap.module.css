@@ -140,15 +140,15 @@
 .panel[data-dungeon-map] .pullStrip [aria-pressed="true"] { background: var(--ruby-selection); border-color: var(--ruby-selection-edge); box-shadow: inset 0 0 0 1px var(--ruby-selection-edge), 0 0 12px var(--atlas-accent-glow); color: var(--atlas-text-strong); }
 .panel[data-dungeon-map] .pullStrip { position: relative; isolation: isolate; padding: 6px 4px 12px; }
 .panel[data-dungeon-map] .pullStrip button { position: relative; z-index: 1; min-height: 66px; overflow: hidden; background: color-mix(in srgb, var(--ruby-dark-glass) 28%, transparent); border-top-color: var(--atlas-line-strong); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 3px 8px var(--atlas-bg); }
-.panel[data-dungeon-map] .pullStrip button::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(115deg, transparent 15%, var(--atlas-line-soft) 48%, transparent 76%); opacity: 0; transform: translateX(-100%); transition: opacity .2s var(--atlas-ease), transform .5s var(--atlas-ease); pointer-events: none; }
+.panel[data-dungeon-map] .pullStrip button::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(115deg, transparent 15%, var(--atlas-line-soft) 48%, transparent 76%); opacity: 0; transform: translateX(-100%); transition: opacity var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration-art) var(--atlas-ease); pointer-events: none; }
 .panel[data-dungeon-map] .pullStrip:has([data-choice-highlight="selected"]) [aria-pressed="true"] { background: transparent; border-color: transparent; box-shadow: none; }
 .pullHighlights { position: absolute; inset: 0; pointer-events: none; list-style: none; }
-.selectionHighlight, .hoverHighlight { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 6px; pointer-events: none; transition: transform .42s var(--ui-spring-snappy, var(--atlas-ease)), width .42s var(--ui-spring-snappy, var(--atlas-ease)), height .24s var(--atlas-ease), opacity .18s var(--atlas-ease); }
+.selectionHighlight, .hoverHighlight { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 6px; pointer-events: none; transition: transform var(--atlas-duration-slow) var(--ui-spring-snappy, var(--atlas-ease)), width var(--atlas-duration-slow) var(--ui-spring-snappy, var(--atlas-ease)), height var(--atlas-duration) var(--atlas-ease), opacity var(--atlas-duration) var(--atlas-ease); }
 .selectionHighlight { background: var(--ruby-selection); border: 1px solid var(--ruby-selection-edge); box-shadow: inset 0 1px 0 var(--atlas-text-muted), inset 0 -3px 8px var(--atlas-accent-wash-strong), 0 0 18px var(--atlas-accent-glow); }
 .hoverHighlight { background: linear-gradient(145deg, var(--atlas-line-soft), transparent 70%); border: 1px solid var(--ruby-gold); box-shadow: inset 0 1px 0 var(--atlas-line-strong), 0 0 16px var(--atlas-accent-glow); }
 .hoverHighlight[data-visible="false"] { opacity: 0; }
 .panel[data-dungeon-map] .rolePicker :global(.ui-segmented-control__thumb) { border: 1px solid var(--ruby-selection-edge); box-shadow: inset 0 1px 0 var(--atlas-text-muted), inset 0 -3px 8px var(--atlas-accent-wash-strong), 0 0 18px var(--atlas-accent-glow); }
-.panel[data-dungeon-map] .rolePicker :global(.ui-segmented-control__item) { transition: color .2s var(--atlas-ease), background-color .2s var(--atlas-ease), box-shadow .2s var(--atlas-ease); }
+.panel[data-dungeon-map] .rolePicker :global(.ui-segmented-control__item) { transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease); }
 .panel[data-dungeon-map] .rolePicker :global(.ui-segmented-control__item):is(:hover, :focus-visible) { color: var(--atlas-text-strong); background: var(--atlas-line-soft); box-shadow: inset 0 1px 0 var(--atlas-line-strong); }
 @media (hover: hover) and (pointer: fine) {
   .panel[data-dungeon-map] .pullStrip button:hover::before { opacity: 1; transform: translateX(100%); }
@@ -174,8 +174,8 @@
 .panel[data-dungeon-map] .briefingButton { border-top: 1px solid var(--atlas-line); padding-top: var(--atlas-space-3); border-radius: 0; }
 .panel[data-dungeon-map] :is(.pullStrip button, .marker, .pullArrows button, .buildDisclosure > summary, .briefingButton) { transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration) var(--atlas-ease); }
 .panel[data-dungeon-map] :is(.pullStrip button, .pullArrows button, .buildDisclosure > summary, .briefingButton):is(:hover, :focus-visible) { border-color: var(--atlas-line-strong); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 0 16px var(--atlas-accent-wash); }
-.panel[data-dungeon-map] .marker[aria-pressed="true"]::after { content: ""; position: absolute; inset: -7px; border: 1px solid var(--ruby-selection-edge); border-radius: 50%; pointer-events: none; animation: rubyPullRing .48s var(--atlas-ease) both; }
-.panel[data-dungeon-map] .selectedBody { animation: rubyPullReveal .22s var(--atlas-ease) both; }
+.panel[data-dungeon-map] .marker[aria-pressed="true"]::after { content: ""; position: absolute; inset: -7px; border: 1px solid var(--ruby-selection-edge); border-radius: 50%; pointer-events: none; animation: rubyPullRing var(--atlas-duration-enter) var(--atlas-ease) both; }
+.panel[data-dungeon-map] .selectedBody { animation: rubyPullReveal var(--atlas-duration) var(--atlas-ease) both; }
 @keyframes rubyPullRing { from { opacity: .75; transform: scale(.9); } to { opacity: 0; transform: scale(1.45); } }
 @keyframes rubyPullReveal { from { opacity: .65; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 @media (hover: hover) and (pointer: fine) {
@@ -253,9 +253,19 @@
 :global(html[data-motion="reduced"]) .panel[data-dungeon-map] .profileFields select { transition: none; }
 
 /* Native Valyro fields paint their outer edge on the wrapper, not the select. */
-.panel[data-dungeon-map] .profileFields :global(.ui-field.ui-select) { border-radius: 12px; border-top-color: var(--atlas-line-strong); background: var(--ruby-dark-glass); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 4px 12px var(--atlas-bg); transition: border-color .2s var(--atlas-ease), box-shadow .2s var(--atlas-ease); }
+.panel[data-dungeon-map] .profileFields :global(.ui-field.ui-select) { border-radius: 12px; border-top-color: var(--atlas-line-strong); background: var(--ruby-dark-glass); box-shadow: inset 0 1px 0 var(--atlas-line-soft), 0 4px 12px var(--atlas-bg); transition: border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease); }
 .panel[data-dungeon-map] .profileFields :global(.ui-field.ui-select):is(:hover, :focus-within) { border-color: var(--ruby-selection-edge); box-shadow: inset 0 1px 0 var(--atlas-line-strong), 0 0 18px var(--atlas-accent-glow); }
 .panel[data-dungeon-map] .profileFields select { border: 0; border-radius: inherit; background: transparent; box-shadow: none; }
 .panel[data-dungeon-map] .profileFields select:is(:hover, :focus-visible) { border-color: transparent; box-shadow: none; }
 @media (prefers-reduced-motion: reduce) { .panel[data-dungeon-map] .profileFields :global(.ui-field.ui-select) { transition: none; } }
 :global(html[data-motion="reduced"]) .panel[data-dungeon-map] .profileFields :global(.ui-field.ui-select) { transition: none; }
+
+/* Touch: the route link is a 44 px target; the hit area grows, the look stays. */
+@media (pointer: coarse) {
+  .routeLink { position: relative; }
+  .routeLink::after { content: ""; position: absolute; inset: -14px -6px; }
+  .savedBuilds p > a { position: relative; }
+  .savedBuilds p > a::after { content: ""; position: absolute; inset: -15px -6px; }
+}
+
+@media (max-width: 600px) { .panel[data-dungeon-map] .actionGroup.actionGroup p { font-size: var(--atlas-text-body); } }

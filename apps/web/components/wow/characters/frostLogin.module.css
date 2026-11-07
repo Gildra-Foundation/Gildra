@@ -68,7 +68,7 @@
   background: radial-gradient(ellipse at 45% 65%, color-mix(in srgb, var(--frost-light) 13%, transparent), transparent 55%);
   opacity: .35;
   transform: rotate(-16deg);
-  animation: frost-wind 19s ease-in-out infinite alternate paused;
+  animation: frost-wind 19s var(--atlas-ease-ambient) infinite alternate paused;
 }
 .windFar { inset: 40% -35% 0; opacity: .45; transform: rotate(-13deg); animation: none; }
 

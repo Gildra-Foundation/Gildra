@@ -1,0 +1,62 @@
+/* atlas:strict — the strip of game versions above the command bar; it scrolls away, the bar stays. */
+.strip {
+  position: relative;
+  z-index: 81;
+  background: color-mix(in srgb, #000 38%, var(--atlas-bg));
+  border-bottom: 1px solid var(--atlas-line-soft);
+}
+
+.list {
+  display: flex;
+  align-items: stretch;
+  gap: var(--atlas-space-1);
+  height: 34px;
+  margin: 0;
+  padding: 0 max(var(--atlas-gutter), env(safe-area-inset-right)) 0 max(var(--atlas-gutter), env(safe-area-inset-left));
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+.list::-webkit-scrollbar { display: none; }
+.list > li { display: flex; flex: none; }
+
+.version {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--atlas-space-3);
+  color: var(--atlas-text-muted);
+  font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
+  letter-spacing: .02em;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color var(--atlas-duration-fast) var(--atlas-ease);
+}
+.list > li:first-child > .version { margin-inline-start: calc(-1 * var(--atlas-space-3)); }
+/* The active version: bright text and a gilded rule along the strip's lower edge. */
+.version::after {
+  position: absolute;
+  inset: auto var(--atlas-space-3) -1px;
+  height: 2px;
+  content: "";
+  border-radius: 2px 2px 0 0;
+  background: var(--atlas-accent);
+  opacity: 0;
+  transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
+}
+.version:hover { color: var(--atlas-text); }
+.version[aria-current] { color: var(--atlas-text-strong); }
+.version[aria-current]::after { opacity: 1; }
+.version:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -4px; border-radius: var(--atlas-radius-control); }
+
+.short { display: none; }
+@media (max-width: 559px) {
+  .full { display: none; }
+  .short { display: inline; }
+  .version { padding-inline: var(--atlas-space-2); }
+  .version::after { inset-inline: var(--atlas-space-2); }
+  .list > li:first-child > .version { margin-inline-start: calc(-1 * var(--atlas-space-2)); }
+}
+
+@media (prefers-reduced-motion: reduce) { .version, .version::after { transition: none; } }
+@media (forced-colors: active) { .version[aria-current]::after { background: Highlight; forced-color-adjust: none; } }

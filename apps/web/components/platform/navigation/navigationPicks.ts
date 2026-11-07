@@ -46,5 +46,5 @@ export function navigationPicks(): NavigationPicks {
       return [{ href: `/wow/classes#${entry.slug}`, label: { en: entry.nameEn, ru: entry.nameRu }, image, tint: classColors[entry.slug as keyof typeof classColors] }];
     }),
   };
-  return { heroes: classes, mythic: dungeons, raids };
+  return { classes, mythic: dungeons, raids };
 }

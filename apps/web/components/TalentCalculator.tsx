@@ -30,6 +30,7 @@ import { heroPathName, talentCalculatorCopy, talentThemeNames, type TalentCalcul
 import { lessMotion } from "@/lib/client/motionPreference";
 import type { PopularBuild } from "@/lib/talentPopularBuilds";
 import { copyText as copyToClipboard } from "@gildra/atlas-ui/clipboard";
+import { routeTurnActive } from "@gildra/atlas-ui/motionPreference";
 
 type Notice = { message: string; persistent?: boolean } | null;
 type ImportState = { kind: "idle" } | ImportResult;
@@ -314,6 +315,10 @@ export function TalentCalculator({ data, theme, lang: langProp, search = "", bui
   const loadoutTriggerRef = useRef<HTMLButtonElement>(null);
   const importDialogRef = useRef<HTMLDivElement>(null);
   const calculatorRef = useRef<HTMLElement>(null);
+  // The page hand-over is this page's arrival: the panels do not rise again under it.
+  useLayoutEffect(() => {
+    if (routeTurnActive() && calculatorRef.current) calculatorRef.current.dataset.entrance = "still";
+  }, []);
   const pvpPickerRef = useRef<HTMLDivElement>(null);
   const pvpSlotRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const pvpReturnFocusRef = useRef<number | null>(null);

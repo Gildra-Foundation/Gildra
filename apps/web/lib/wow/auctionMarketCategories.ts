@@ -36,6 +36,12 @@ export const auctionCategories: readonly AuctionCategory[] = [
   { key: "recipes", group: "gear", market: "realm", classes: [[9]], icon: "inv_scroll_03" },
 ];
 
+/** Category names (the auction page, the professions' links to it). */
+export const auctionCategoryNames: Record<"en" | "ru", Record<AuctionCategoryKey, string>> = {
+  ru: { ore: "Руда и металл", herbs: "Травы", cloth: "Ткань", leather: "Кожа", enchanting: "Чары", gems: "Самоцветы", elemental: "Стихии", cooking: "Кулинария", inscription: "Начертание", parts: "Детали", reagents: "Особые реагенты", potions: "Зелья", flasks: "Настои и эликсиры", food: "Еда", enhancements: "Улучшения", weapons: "Оружие", armor: "Броня", recipes: "Рецепты" },
+  en: { ore: "Ore & metal", herbs: "Herbs", cloth: "Cloth", leather: "Leather", enchanting: "Enchanting", gems: "Gems", elemental: "Elemental", cooking: "Cooking", inscription: "Inscription", parts: "Parts", reagents: "Special reagents", potions: "Potions", flasks: "Flasks & elixirs", food: "Food", enhancements: "Enhancements", weapons: "Weapons", armor: "Armor", recipes: "Recipes" },
+};
+
 export const auctionCategoryGroups: readonly AuctionCategoryGroup[] = ["materials", "consumables", "gear"];
 
 export function auctionCategory(key: string | null | undefined): AuctionCategory | undefined {

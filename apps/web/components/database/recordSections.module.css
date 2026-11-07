@@ -126,7 +126,7 @@
 .skeletonRow { height: 64px; border: 1px solid var(--atlas-line-soft); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .skeletonRow { animation: breathe 1.4s ease-in-out infinite alternate; }
+  .skeletonRow { animation: breathe 1.4s var(--atlas-ease-ambient) infinite alternate; }
 }
 
 @keyframes breathe { to { opacity: .55; } }

@@ -3,7 +3,9 @@ import { dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { midnightClasses, midnightLairEncounters, midnightSpecializations } from "@/lib/data/wow";
 import { raidHubEntries } from "@/components/wow/raid/raidHubData";
 import professions from "@/data/wow/professions/index.json";
+import mistsClasses from "@/data/wow/mists/classes.json";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
+import { tierModePaths } from "@/components/blocks/wow/tierWorkspace/tierModes";
 import { mapPagePath } from "@/lib/wow/worldMap/bundle";
 import { worldMapPages } from "@/lib/wow/worldMap/data.server";
 
@@ -24,10 +26,14 @@ export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean
   "/",
   ...(Object.keys(routeSections) as SectionId[]).filter((id) => !UNLISTED_SECTIONS.has(id)).map((id) => routeSections[id].path),
   ...(catalogPublic ? [routeSections.library.path] : []),
+  ...tierModePaths().filter((path) => path !== routeSections.tierLists.path),
   ...dungeonSlugs.map((slug) => `/wow/mythic-plus/midnight-season-2/${slug}`),
   ...raidHubEntries.map(({ slug }) => `/wow/raids/${slug}`),
   ...midnightLairEncounters.map(({ slug }) => `/wow/lairs/${slug}`),
   ...professions.map(({ slug }) => `/wow/professions/${slug}`),
+  "/wow/forever", "/wow/forever/raids", "/wow/forever/dungeons", "/wow/forever/dungeons/hall-of-thanes",
+  "/wow/mists", "/wow/mists/talents",
+  ...mistsClasses.classes.map(({ slug }) => `/wow/mists/talents/${slug}`),
   ...talentSpecThemes.map(({ slug }) => `/wow/mythic-plus/leaderboard/${slug}`),
   ...midnightClasses.map(({ slug }) => `/wow/classes/${slug}`),
   ...midnightSpecializations.map((spec) => `/wow/classes/${spec.classSlug}/${spec.slug}`),

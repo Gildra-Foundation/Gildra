@@ -325,11 +325,17 @@ a.playerName:focus-visible { outline: 2px solid var(--material-light, var(--atla
   .specText, .heroCol { display: none; }
   /* The column keeps only the spec icon: its heading stays for screen readers. */
   .specHeader { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .playerName { white-space: normal; overflow-wrap: anywhere; }
+  .playerName, .itemName { overflow-wrap: anywhere; }
   .rankCol { width: 2.5rem; }
   .score { font-size: var(--atlas-text-body); }
 }
+/* Tablets and phones: names and realms wrap instead of an ellipsis. */
+@media (max-width: 1100px) { .player .playerName, .player .realm, .itemText .itemName { white-space: normal; overflow-wrap: break-word; } }
+@media (max-width: 400px) { .leader .playerName { font-size: var(--atlas-text-lead); overflow-wrap: break-word; } }
 @media (max-width: 360px) { .rolePlaque, .buildPlaque { padding-inline: 20px; } }
+/* Touch: names are 44 px targets without moving the rows. */
+@media (pointer: coarse) { a.playerName, .itemName { margin-block: -14px; padding-block: 14px; } .linkIcon { min-width: 44px; min-height: 44px; } }
+@media (max-width: 520px) { .player .playerName.playerName { overflow-wrap: anywhere; } }
 
 @media (prefers-reduced-motion: reduce) {
   .region, .page .table tbody tr, .linkIcon, .directorySpec { transition: none; }
@@ -358,3 +364,6 @@ a.playerName:focus-visible { outline: 2px solid var(--material-light, var(--atla
   font-size: var(--atlas-text-body);
 }
 @media (max-width: 600px) { .stateActions { display: grid; } }
+
+/* Touch: 16 px fields, so iOS does not zoom on focus. */
+@media (pointer: coarse) { .page :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }

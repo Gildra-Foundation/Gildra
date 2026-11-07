@@ -280,6 +280,10 @@
   .specSide { grid-column: 2 / -1; display: flex; align-items: center; justify-content: space-between; }
   .quickLink { width: 40px; height: 40px; }
   .specGrid, .builds, .heroGrid { grid-template-columns: minmax(0, 1fr); }
+  .itemText a, .players li > span { white-space: normal; overflow-wrap: anywhere; }
+  /* The source columns stay inside the plaque: rank under the tier. */
+  .tierTable th, .tierTable td { padding-inline: 4px; }
+  .tierCell { flex-direction: column; align-items: flex-start; gap: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -298,3 +302,12 @@
 
 /* Class page hero: the class name in its colour. */
 .classHero h1 { color: color-mix(in srgb, var(--class-color) 58%, var(--atlas-text-strong)); }
+
+/* Touch: every link and button is a 44 px target; the hit area grows, the look stays. */
+@media (pointer: coarse) {
+  .quickLink { width: 44px; height: 44px; }
+  .textLink, .buildAction { min-height: 44px; }
+  .specName, .className a, .specCardTitle h3 a, .heroSpecs a { position: relative; }
+  .specName::after, .className a::after, .specCardTitle h3 a::after, .heroSpecs a::after { content: ""; position: absolute; inset: -13px -6px; }
+  .itemText a { margin-block: -13px; padding-block: 13px; }
+}

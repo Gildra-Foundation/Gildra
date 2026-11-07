@@ -56,7 +56,7 @@
   color: var(--atlas-text);
   font-family: var(--atlas-font-ui);
   box-shadow: var(--atlas-shadow-panel);
-  animation: menuIn .16s var(--atlas-ease) both;
+  animation: menuIn var(--atlas-duration-fast) var(--atlas-ease) both;
 }
 
 .menuHeader {

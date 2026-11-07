@@ -109,7 +109,7 @@
   border-bottom: 1px solid var(--script-rule);
   background: none;
   box-shadow: none;
-  animation: manuscript-reveal 180ms ease-out;
+  animation: manuscript-reveal var(--atlas-duration) var(--atlas-ease);
 }
 :global(#rotation-lab-content) .manuscript .catalog {
   width: 100%;

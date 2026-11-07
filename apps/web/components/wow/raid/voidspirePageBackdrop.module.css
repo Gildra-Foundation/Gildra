@@ -13,7 +13,7 @@
   inset: 8% -18% 24% -18%;
   background: radial-gradient(ellipse at 25% 56%, color-mix(in srgb, var(--atlas-dungeon-void-accent) 30%, transparent), transparent 54%), radial-gradient(ellipse at 76% 42%, color-mix(in srgb, var(--atlas-dungeon-void-accent-strong) 18%, transparent), transparent 45%);
   opacity: .46;
-  animation: voidMist 24s ease-in-out -7s infinite alternate;
+  animation: voidMist 24s var(--atlas-ease-ambient) -7s infinite alternate;
   animation-play-state: paused;
 }
 .farMist { inset: 36% -12% -8% -12%; opacity: .28; animation-duration: 31s; animation-delay: -19s; animation-direction: alternate-reverse; }
@@ -28,7 +28,7 @@
   background: var(--atlas-dungeon-void-accent-strong);
   box-shadow: 0 0 8px 2px color-mix(in srgb, var(--atlas-dungeon-void-accent) 60%, transparent);
   opacity: 0;
-  animation: voidMote var(--mote-duration) var(--mote-delay) ease-in-out infinite;
+  animation: voidMote var(--mote-duration) var(--mote-delay) var(--atlas-ease-ambient) infinite;
   animation-play-state: paused;
 }
 .motes i:nth-child(3n) { width: 2px; height: 2px; }

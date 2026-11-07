@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { ListOrdered, Repeat, Sparkles } from "lucide-react";
+import { BarChart3, Castle, ListOrdered, Repeat, Sparkles, Swords } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { MaterialLinkButton, MaterialPlaque } from "@/components/wow/shared/materialAtlas";
 import { CHARACTERS_KIT as KIT, TALENTS_KIT } from "@/lib/wow/charactersKit";
@@ -18,6 +18,10 @@ import {
   rotationHref, specHref, specName, talentsHref, type Locale, type SpecEntry,
 } from "./ClassParts";
 import styles from "./classCatalog.module.css";
+import { RelatedLinks } from "@/components/wow/shared/RelatedLinks";
+import { relatedCopy, specLinkTargets } from "@/components/wow/shared/relatedLinksCopy";
+
+const relatedIcons = { mythicTier: <Swords aria-hidden="true" />, raidTier: <Castle aria-hidden="true" />, meta: <BarChart3 aria-hidden="true" /> } as const;
 
 const tierRows: TierActivity[] = ["mythic_plus", "raid"];
 const tierColumns: TierSource[] = ["gildra", "mythicstats", "ugg"];
@@ -83,6 +87,7 @@ export async function SpecPage({ locale, spec }: { locale: Locale; spec: SpecEnt
             ))}
             <li><Link className={styles.sibling} href={classHref(locale, spec.classSlug)}><Image src={spec.classIconUrl} alt="" width={32} height={32} />{cls}</Link></li>
           </ul>
+          <RelatedLinks label={relatedCopy[locale].label} links={specLinkTargets(locale, spec, ["spec", "talents", "leaderboard"]).map((link) => ({ ...link, icon: relatedIcons[link.key as keyof typeof relatedIcons] }))} />
         </AtlasSection>
       </div>
     </AtlasFrame>

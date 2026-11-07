@@ -103,7 +103,6 @@ export function toRunDetail(raw: unknown): RunDetail | null {
     const talents = obj(character.talentLoadout);
     const loadout = str(talents.exportLoadoutText) || str(talents.loadoutText);
     const itemLevel = num(obj(member.items).item_level_equipped);
-    const rating = num(obj(member.ranks).score);
     return [{
       name,
       realm: str(obj(character.realm).name),
@@ -115,7 +114,6 @@ export function toRunDetail(raw: unknown): RunDetail | null {
       ...(num(talents.heroSubTreeId) ? { heroId: num(talents.heroSubTreeId) } : {}),
       ...(loadout && /^[A-Za-z0-9+/=]{20,}$/.test(loadout) ? { loadout } : {}),
       ...(itemLevel ? { itemLevel } : {}),
-      ...(rating ? { rating } : {}),
       deaths: deathsBy.get(num(character.id) ?? -1) ?? 0,
     }];
   }).sort((a, b) => roleOrder[a.role] - roleOrder[b.role]);

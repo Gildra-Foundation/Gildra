@@ -43,7 +43,7 @@
   color: var(--atlas-text);
   background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
   text-align: left;
-  transition: border-color .15s ease, background-color .15s ease;
+  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
 }
 .item:hover, .item[aria-pressed="true"] { border-color: var(--atlas-line); background: color-mix(in srgb, var(--atlas-surface-raised) 80%, transparent); }
 .item:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
@@ -211,7 +211,7 @@
   .stats > div:nth-child(n + 3) { border-top: 1px solid var(--atlas-line-soft); }
   .stats > div { padding: var(--atlas-space-2) var(--atlas-space-3); }
   .stats dd { font-size: 19px; }
-  .stats dt { white-space: normal; letter-spacing: .04em; }
+  .stats dt { white-space: normal; letter-spacing: .04em; overflow-wrap: anywhere; hyphens: auto; }
   .itemCopy b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; white-space: normal; }
   .doll { grid-template-columns: minmax(0, 1fr); grid-template-areas: "left" "right" "figure"; gap: 6px; }
   .item { min-height: 52px; }
@@ -223,4 +223,9 @@
   .item { border-color: CanvasText; }
   .marks i, .marks i[data-active] { border-color: CanvasText; }
   .marks i[data-active] { background: CanvasText; }
+}
+
+/* Tablets: item names take a second line instead of an ellipsis. */
+@container auditPage (max-width: 1100px) {
+  .itemCopy b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; white-space: normal; }
 }

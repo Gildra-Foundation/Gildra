@@ -15,7 +15,7 @@ export function KithixPage({ locale }: { locale: "en" | "ru" }) {
   const prefix = locale === "ru" ? "/ru" : "";
   return <AtlasFrame lang={locale} still art={kithixRaid.artwork} artShade="deep" className={`${styles.page} ${artStyles.page}`} dataAttributes={{ "data-raid-page": kithixRaid.slug }}>
     <AtlasHero
-      breadcrumbs={[...trail(locale, "raids"), { label: kithixRaid.names[locale] }]}
+      breadcrumbs={trail(locale, "raids", { label: kithixRaid.names[locale] })}
       className={guideStyles.pageHero}
       eyebrow={kithixGuideCopy[locale].context}
       title={kithixRaid.names[locale]}

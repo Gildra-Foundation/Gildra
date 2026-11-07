@@ -1,6 +1,6 @@
 export const playerToolsCopy = {
   ru: {
-    classLabel: "Мой класс", specLabel: "Специализация", noClass: "Не выбран", noSpec: "Выберите специализацию", selectClass: "Сначала выберите класс",
+    classLabel: "Мой класс", specLabel: "Специализация", noClass: "Не выбран", noSpec: "Не выбрана", selectClass: "Сначала класс",
     hint: "Специализация задаёт роль. Условия талантов и питомца указаны рядом с вашими способностями.",
     tools: "Ваши способности", talent: "Нужен талант", personal: "Если урон направлен на вас", noInterrupt: "У этой специализации нет обычного прерывания. Согласуйте кик с группой.",
     selectedTalent: "В билде", notInBuild: "В импортированном билде нет подходящей способности. Попросите помощь группы и следуйте тактике выше.",
@@ -9,7 +9,7 @@ export const playerToolsCopy = {
     effects: { magic: "Магия", curse: "Проклятие", poison: "Яд", disease: "Болезнь", bleed: "Кровотечение", enrage: "Исступление" },
   },
   en: {
-    classLabel: "My class", specLabel: "Specialization", noClass: "Not selected", noSpec: "Choose a specialization", selectClass: "Choose a class first",
+    classLabel: "My class", specLabel: "Specialization", noClass: "Not selected", noSpec: "Not selected", selectClass: "Class first",
     hint: "Specialization sets your role. Talent and pet requirements appear beside your abilities.",
     tools: "Your abilities", talent: "Requires talent", personal: "If the damage targets you", noInterrupt: "This specialization has no regular interrupt. Coordinate a kick with your party.",
     selectedTalent: "In your build", notInBuild: "Your imported build has no suitable ability. Ask your party for help and follow the tactics above.",

@@ -19,6 +19,6 @@ export function guideSpecForClass(classId: number, previousSpecId: number): numb
 }
 
 export const voidspirePickerCopy = {
-  ru: { classLabel: 'Класс', specLabel: 'Специализация', chooseClass: 'Сначала выберите класс' },
-  en: { classLabel: 'Class', specLabel: 'Specialization', chooseClass: 'Choose a class first' },
+  ru: { classLabel: 'Класс', specLabel: 'Специализация', chooseClass: 'Сначала класс' },
+  en: { classLabel: 'Class', specLabel: 'Specialization', chooseClass: 'Class first' },
 };

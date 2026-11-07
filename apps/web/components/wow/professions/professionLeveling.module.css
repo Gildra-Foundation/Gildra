@@ -15,7 +15,7 @@
 /* Summary: sticky on wide screens. */
 .summary {
   grid-area: summary; position: sticky; top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); display: grid; gap: var(--atlas-space-4);
-  max-height: calc(100vh - var(--atlas-sticky-top) - var(--atlas-space-6)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
+  max-height: calc(100dvh - var(--atlas-sticky-top) - var(--atlas-space-6)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
   padding: 30px 30px 32px;
 }
 .summaryHead { display: flex; align-items: center; gap: var(--atlas-space-3); }
@@ -211,4 +211,15 @@
   .chip input:checked + span { border: 2px solid Highlight; }
   .bandWindow, .stepCard, .learn { border: 1px solid CanvasText; }
   .stepMarker { border-color: CanvasText; background: Canvas; box-shadow: none; }
+}
+
+/* Touch: 44 px targets (the hit area grows, the look stays) and 16 px fields, so iOS does not zoom on focus. */
+@media (pointer: coarse) {
+  .overviewLink { position: relative; }
+  .overviewLink::after { content: ""; position: absolute; inset: -16px 0; }
+  .stepName a, .shopName a, a.reagentName { position: relative; }
+  .stepName a::after, .shopName a::after, a.reagentName::after { content: ""; position: absolute; inset: -13px -6px; }
+  .legendButton { position: relative; }
+  .legendButton::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; }
+  .number, .have { min-height: 44px; font-size: max(16px, 1em); }
 }

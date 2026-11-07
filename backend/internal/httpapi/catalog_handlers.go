@@ -215,11 +215,17 @@ func (s *Server) ListGameSitemapEntries(ctx context.Context, request api.ListGam
 			Code: "catalog_unavailable", Message: "catalog sitemap is temporarily unavailable",
 		}}, nil
 	}
+	return api.ListGameSitemapEntries200JSONResponse{Data: sitemapEntriesResponse(entries)}, nil
+}
+
+func sitemapEntriesResponse(entries []catalog.SitemapEntry) []api.GameSitemapEntry {
 	data := make([]api.GameSitemapEntry, 0, len(entries))
 	for _, entry := range entries {
-		data = append(data, api.GameSitemapEntry{Id: entry.ID, Type: entry.Type, Slug: entry.Slug, UpdatedAt: entry.UpdatedAt})
+		data = append(data, api.GameSitemapEntry{
+			Id: entry.ID, Type: entry.Type, Slug: entry.Slug, SlugRu: entry.SlugRu, UpdatedAt: entry.UpdatedAt,
+		})
 	}
-	return api.ListGameSitemapEntries200JSONResponse{Data: data}, nil
+	return data
 }
 
 func (s *Server) ListGameCoverage(ctx context.Context, request api.ListGameCoverageRequestObject) (api.ListGameCoverageResponseObject, error) {

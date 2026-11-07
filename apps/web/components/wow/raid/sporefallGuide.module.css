@@ -105,3 +105,8 @@
 
 /* No role chosen: the job heading is for screen readers only, so the picker ends the plaque without a rule. */
 .toolbar:has(+ :global(.sr-only)) { padding-bottom: 0; border-bottom: 0; }
+
+/* Phones: guide copy reads at body size (no 13 px paragraphs). */
+@media (max-width: 600px) {
+  .signal > p, .flow p, .diagram figcaption, .guide .panel p, .guide .panel figcaption, .personalAction { font-size: var(--atlas-text-body); }
+}

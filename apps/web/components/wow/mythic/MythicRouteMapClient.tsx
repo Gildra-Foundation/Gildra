@@ -17,6 +17,10 @@ import { RouteNamesContext, useRouteNameTable } from "./routeNames";
 import { dungeonThemeClass } from "./dungeonTheme";
 import { dungeonPullArtClass } from "./dungeonPullArt";
 import styles from "./mythicRouteMap.module.css";
+import { BarChart3, Route, Users } from "lucide-react";
+import { trail } from "@/lib/routes/registry";
+import { RelatedLinks } from "@/components/wow/shared/RelatedLinks";
+import { relatedCopy } from "@/components/wow/shared/relatedLinksCopy";
 
 const MdtPullMap = dynamic(() => import("./MdtPullMap"), { ssr: false, loading: () => <div className={styles.mdtLoading} role="status"><span>MDT…</span></div> });
 const locations = { "ruby-life-pools": "Dragon Isles", "altar-of-fangs": "The Coiled Isle", "murder-row": "Silvermoon", "den-of-nalorakk": "Zul'Aman", "the-blinding-vale": "Harandar", "voidscar-arena": "Voidstorm", "kings-rest": "Zuldazar", "temple-of-sethraliss": "Vol'dun" };
@@ -55,7 +59,7 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
       </div></div>
       <div className={styles.column}>
         <div className={styles.crumbsRow}>
-          <AtlasBreadcrumbs label={copy.breadcrumbsLabel} items={[{ label: copy.hub, href: `${localePrefix}/wow/mythic-plus` }, { label: dungeonName }]} />
+          <AtlasBreadcrumbs label={copy.breadcrumbsLabel} items={trail(locale, "mythicPlus", { label: dungeonName })} />
         </div>
 
         <section className={styles.intro} aria-labelledby="route-title">
@@ -77,6 +81,11 @@ export function MythicRouteMapClient({ locale, dungeon, dungeonOptions, combatIn
         </section>
 
         <div className={styles.panel}><MdtPullMap key={dungeon.slug} slug={dungeon.slug} locale={locale} routeUrl={dungeon.mdtRouteUrl} data={combatIntel.mdt} stops={dungeon.stops} combatIntel={combatIntel} /></div>
+        <RelatedLinks label={relatedCopy[locale].label} links={[
+          { href: `${localePrefix}/wow/mythic-plus/comps?dungeon=${dungeon.slug}`, label: relatedCopy[locale].comps, icon: <Users aria-hidden="true" /> },
+          { href: `${localePrefix}/wow/mythic-plus/routes?dungeon=${dungeon.slug}`, label: relatedCopy[locale].runs, icon: <Route aria-hidden="true" /> },
+          { href: `${localePrefix}/wow/mythic-plus/stats?dungeon=${dungeon.slug}`, label: relatedCopy[locale].stats, icon: <BarChart3 aria-hidden="true" /> },
+        ]} />
         {footer}
       </div>
 

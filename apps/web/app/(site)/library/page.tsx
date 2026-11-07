@@ -1,18 +1,27 @@
+import { notFound } from "next/navigation";
+import { libraryProduct, libraryProductPath } from "@/lib/library/product";
 import { PageShell } from "@/components/layout/PageShell";
 import type { Metadata } from "next";
 import { LibraryLanding } from "@/components/library/LibraryLanding";
 import { getLibraryLandingData, requireCatalogSession } from "@/lib/library/server";
 import { withPageOpenGraph } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = withPageOpenGraph("en", {
+const baseMetadata: Metadata = {
   title: "World of Warcraft Data Library — Gildra",
   description: "World of Warcraft items, spells, mounts, bosses and quests with in-game tooltips, icons and links between them.",
-  alternates: { canonical: "/library", languages: { en: "/library", ru: "/ru/library", "x-default": "/library" } },
-});
+};
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ product?: string }> }): Promise<Metadata> {
+  const product = libraryProduct((await searchParams).product);
+  if (!product) notFound();
+  const en = libraryProductPath("/library", product), ru = libraryProductPath("/ru/library", product);
+  return withPageOpenGraph("en", { ...baseMetadata, alternates: { canonical: en, languages: { en, ru, "x-default": en } } });
+}
 
 export default async function LibraryPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
   const filters = await searchParams;
-  const product = filters.product || "wow";
+  const product = libraryProduct(filters.product);
+  if (!product) notFound();
   await requireCatalogSession(`/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
   const data = await getLibraryLandingData("en_US", product);
   return <PageShell lang="en"><LibraryLanding lang="en" selectedProduct={product} {...data} /></PageShell>;

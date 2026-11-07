@@ -135,7 +135,7 @@
 .preview svg { width: 18px; height: 18px; }
 .preview:hover,
 .preview[aria-expanded="true"] { border-color: var(--atlas-line); color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
-.preview[data-state="loading"] { color: var(--atlas-accent); animation: pulse 1s ease-in-out infinite alternate; }
+.preview[data-state="loading"] { color: var(--atlas-accent); animation: pulse 1s var(--atlas-ease-ambient) infinite alternate; }
 .preview[data-state="error"] { color: var(--atlas-negative); }
 .preview:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
@@ -226,3 +226,6 @@
   .table, .row { border: 1px solid CanvasText; background: Canvas; }
   .link { color: LinkText; }
 }
+
+/* Touch: 44 px preview button. */
+@media (pointer: coarse) { .preview { width: 44px; height: 44px; } }

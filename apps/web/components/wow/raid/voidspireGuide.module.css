@@ -412,3 +412,9 @@
   .hintHeading > :is(strong, h3), .hintText :is(b, strong), .hintCast > strong { color: CanvasText; }
   .enemyHintPortrait, .hintAction, .hintFooter button { background: Canvas; color: CanvasText; box-shadow: none; border-color: CanvasText; }
 }
+
+/* Touch: the counter hints are 44 px targets like every other hint. */
+@media (pointer: coarse) { .counterGroup > span > .hintTrigger { min-height: 44px; } }
+
+/* Phones: the caption reads at body size. */
+@media (max-width: 600px) { .diagramCaption { font-size: var(--atlas-text-body); } }

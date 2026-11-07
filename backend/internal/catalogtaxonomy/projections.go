@@ -12,7 +12,7 @@ import (
 // source_build_id and source_artifact_id retain both provenance dimensions.
 func (i *Indexer) RebuildQuestRewards(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `
 			UPDATE catalog_quest_rewards
 			SET source_build_id=build_id
@@ -74,8 +74,8 @@ func (i *Indexer) RebuildQuestRewards(ctx context.Context) (Result, error) {
 
 func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
-		command, err := tx.Exec(ctx, `
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
+		command, err := tx.Exec(ctx, projectionSQL(`
 			WITH spell_versions AS MATERIALIZED (
 				SELECT entity.external_id,version.id AS version_id,version.build_id
 				FROM game_entities entity
@@ -144,15 +144,15 @@ func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 				misc_source_artifact_id=EXCLUDED.misc_source_artifact_id,
 				cast_time_source_artifact_id=EXCLUDED.cast_time_source_artifact_id,
 				cooldown_source_artifact_id=EXCLUDED.cooldown_source_artifact_id,
-				range_source_artifact_id=EXCLUDED.range_source_artifact_id`)
+				range_source_artifact_id=EXCLUDED.range_source_artifact_id`))
 		if err != nil {
 			return fmt.Errorf("rebuild DB2 spell details: %w", err)
 		}
 		result.SpellDetails = command.RowsAffected()
-		if _, err := tx.Exec(ctx, `DELETE FROM catalog_spell_effects WHERE source='db2'`); err != nil {
+		if _, err := tx.Exec(ctx, projectionSQL(`DELETE FROM catalog_spell_effects WHERE source='db2' AND spell_version_id IN (SELECT id FROM game_entity_versions)`)); err != nil {
 			return fmt.Errorf("clear DB2 spell effects: %w", err)
 		}
-		command, err = tx.Exec(ctx, `INSERT INTO catalog_spell_effects(
+		command, err = tx.Exec(ctx, projectionSQL(`INSERT INTO catalog_spell_effects(
 			spell_version_id,effect_index,difficulty_id,effect_type,aura_type,base_points,coefficient,
 			attack_power_coefficient,amplitude_ms,radius_index,chain_targets,mechanic_id,source,attributes,source_artifact_id)
 		SELECT version.id,COALESCE(NULLIF(raw.payload->>'EffectIndex','')::smallint,0),
@@ -173,7 +173,8 @@ func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 				'variance',COALESCE(NULLIF(raw.payload->>'Variance','')::numeric,0),
 				'pvp_multiplier',COALESCE(NULLIF(raw.payload->>'PvpMultiplier','')::numeric,1)),raw.source_artifact_id
 		FROM catalog_db2_rows raw
-		JOIN game_entities entity ON entity.entity_type='spell' AND entity.external_id=(raw.payload->>'SpellID')::bigint AND entity.deleted_at IS NULL
+		JOIN game_builds raw_build ON raw_build.id=raw.build_id
+ JOIN game_entities entity ON entity.product_id=raw_build.product_id AND entity.entity_type='spell' AND entity.external_id=(raw.payload->>'SpellID')::bigint AND entity.deleted_at IS NULL
 		JOIN game_entity_versions version ON version.id=entity.latest_version_id AND version.build_id=raw.build_id
 		WHERE raw.table_name='SpellEffect' AND raw.locale='en_US' AND raw.payload ? 'SpellID'
 		ON CONFLICT (spell_version_id,effect_index,difficulty_id,source) DO UPDATE SET
@@ -181,7 +182,7 @@ func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 			coefficient=EXCLUDED.coefficient,attack_power_coefficient=EXCLUDED.attack_power_coefficient,
 			amplitude_ms=EXCLUDED.amplitude_ms,radius_index=EXCLUDED.radius_index,chain_targets=EXCLUDED.chain_targets,
 			mechanic_id=EXCLUDED.mechanic_id,attributes=EXCLUDED.attributes,
-			source_artifact_id=EXCLUDED.source_artifact_id`)
+			source_artifact_id=EXCLUDED.source_artifact_id`))
 		if err != nil {
 			return fmt.Errorf("rebuild DB2 spell effects: %w", err)
 		}
@@ -193,7 +194,7 @@ func (i *Indexer) RebuildSpellEffects(ctx context.Context) (Result, error) {
 
 func (i *Indexer) RebuildPvpTalents(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		var productID int16
 		if err := tx.QueryRow(ctx, `SELECT id FROM game_products WHERE slug='wow'`).Scan(&productID); err != nil {
 			return fmt.Errorf("find wow product: %w", err)
@@ -246,7 +247,7 @@ func (i *Indexer) RebuildPvpTalents(ctx context.Context) (Result, error) {
 
 func (i *Indexer) RebuildRaces(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		var productID int16
 		if err := tx.QueryRow(ctx, `SELECT id FROM game_products WHERE slug='wow'`).Scan(&productID); err != nil {
 			return fmt.Errorf("find wow product: %w", err)
@@ -283,7 +284,7 @@ func (i *Indexer) RebuildRaces(ctx context.Context) (Result, error) {
 
 func (i *Indexer) RebuildSpellClasses(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		var productID int16
 		if err := tx.QueryRow(ctx, `SELECT id FROM game_products WHERE slug='wow'`).Scan(&productID); err != nil {
 			return fmt.Errorf("find wow product: %w", err)
@@ -320,7 +321,7 @@ func (i *Indexer) RebuildSpellClasses(ctx context.Context) (Result, error) {
 
 func (i *Indexer) RebuildProfessionRecipes(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		var productID int16
 		if err := tx.QueryRow(ctx, `SELECT id FROM game_products WHERE slug='wow'`).Scan(&productID); err != nil {
 			return fmt.Errorf("find wow product: %w", err)

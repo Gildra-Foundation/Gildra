@@ -18,6 +18,9 @@ import { ProfessionProfits } from "./ProfessionProfits";
 import { ProfessionSpecializations } from "./ProfessionSpecializations";
 import { professionsCopy } from "./professionsCopy";
 import styles from "./professions.module.css";
+import { RelatedLinks } from "@/components/wow/shared/RelatedLinks";
+import { auctionCategoryHref, professionAuctionCategories, relatedCopy } from "@/components/wow/shared/relatedLinksCopy";
+import { auctionCategory, auctionCategoryNames, auctionIconUrl } from "@/lib/wow/auctionMarketCategories";
 import { professionSeoTitle } from "@/lib/seo/titles";
 
 type Lang = "en" | "ru";
@@ -123,6 +126,11 @@ export async function ProfessionPage({ lang, slug, region: regionCode }: { lang:
       <ProfessionSpecializations data={data} lang={lang} />
     </AtlasSection> : null}
 
+    <RelatedLinks label={relatedCopy[lang].label} links={(professionAuctionCategories[slug] ?? []).flatMap((key) => {
+      const category = auctionCategory(key);
+      return category ? [{ href: auctionCategoryHref(lang, key), label: `${relatedCopy[lang].auction}: ${auctionCategoryNames[lang][category.key]}`,
+        icon: <Image src={auctionIconUrl(category.icon)} alt="" width={20} height={20} unoptimized loading="lazy" /> }] : [];
+    })} />
     <nav className={styles.others} aria-label={c.otherProfessions}>
       {others.map((p) => <Link key={p.slug} href={path(lang, p.slug)} className={styles.otherLink}>
         <Image src={professionIconUrl(p.icon) ?? ""} alt="" width={24} height={24} unoptimized loading="lazy" />{p.name[lang]}

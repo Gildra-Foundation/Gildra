@@ -101,3 +101,6 @@
   .list { border: 1px solid CanvasText; background: Canvas; }
   .option[aria-selected="true"] { outline: 2px solid Highlight; }
 }
+
+/* Touch: 16 px search field (no iOS zoom on focus). */
+@media (pointer: coarse) { .box.box :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }

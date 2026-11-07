@@ -38,6 +38,6 @@
 .skeleton i { grid-row:1 / 3; width:64px; height:64px; border-radius:var(--atlas-radius); }
 .skeleton b { height:14px; border-radius:var(--atlas-radius); }
 .skeleton b + b { width:60%; }
-.skeleton i,.skeleton b { background:linear-gradient(100deg,var(--atlas-surface-sunken) 30%,var(--atlas-surface-raised) 50%,var(--atlas-surface-sunken) 70%) 0 0 / 300% 100%; animation:farmShimmer 1.6s ease-in-out infinite; }
+.skeleton i,.skeleton b { background:linear-gradient(100deg,var(--atlas-surface-sunken) 30%,var(--atlas-surface-raised) 50%,var(--atlas-surface-sunken) 70%) 0 0 / 300% 100%; animation:farmShimmer 1.6s var(--atlas-ease-ambient) infinite; }
 @keyframes farmShimmer { from { background-position:100% 0; } to { background-position:0 0; } }
 @media (prefers-reduced-motion:reduce){.skeleton i,.skeleton b{animation:none}}

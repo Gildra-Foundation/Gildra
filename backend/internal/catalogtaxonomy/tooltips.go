@@ -28,7 +28,7 @@ func (i *Indexer) RebuildTooltipsForProduct(ctx context.Context, productID int16
 
 func (i *Indexer) rebuildTooltips(ctx context.Context, productID *int16) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		var err error
 		if productID == nil {
 			carried, carryErr := carryForwardOfficialLocalizations(ctx, tx)
@@ -76,7 +76,7 @@ func (i *Indexer) rebuildTooltips(ctx context.Context, productID *int16) (Result
 
 func (i *Indexer) RebuildTalentTooltips(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		if err := rebuildSpellRelationships(ctx, tx); err != nil {
 			return err
 		}

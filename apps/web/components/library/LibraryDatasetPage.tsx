@@ -1,3 +1,4 @@
+import { libraryProduct, libraryProductPath, emptyProductDataset } from "@/lib/library/product";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
@@ -16,14 +17,17 @@ import styles from "./library.module.css";
 export type LibraryDatasetFilters = { q?: string; product?: string; facet?: string | string[]; cursor?: string; minLevel?: string; maxLevel?: string; minRequiredLevel?: string; maxRequiredLevel?: string };
 
 /** Title, description (the dataset's line for players) and EN/RU alternates of /library/<dataset>. */
-export async function libraryDatasetMetadata(lang: "en" | "ru", slug: string): Promise<Metadata> {
-  const head = await libraryDatasetHead(slug, lang === "ru" ? "ru_RU" : "en_US");
+export async function libraryDatasetMetadata(lang: "en" | "ru", slug: string, selectedProduct?: string): Promise<Metadata> {
+  const product = libraryProduct(selectedProduct);
+  if (!product) notFound();
+  const head = await libraryDatasetHead(slug, lang === "ru" ? "ru_RU" : "en_US", product);
   const line = libraryDatasetLine({ slug, description: head.description }, lang);
   const what = line ? `${line.charAt(0).toLowerCase()}${line.slice(1)}` : "";
   return withPageOpenGraph(lang, {
+    ...(emptyProductDataset(head) ? { robots: { index: false, follow: true } } : {}),
     title: `${head.name} — ${libraryCopy[lang].site}`,
     ...(line ? { description: datasetDescription(lang, head.name, what) } : {}),
-    alternates: pairedAlternates(lang, `/library/${slug}`),
+    alternates: pairedAlternates(lang, libraryProductPath(`/library/${slug}`, product)),
   });
 }
 
@@ -45,7 +49,8 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
   const copy = libraryCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
   const locale = lang === "ru" ? "ru_RU" as const : "en_US" as const;
-  const product = filters.product || "wow";
+  const product = libraryProduct(filters.product);
+  if (!product) notFound();
   await requireCatalogSession(`${prefix}/library/${encodeURIComponent(slug)}${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
   const unavailable = <PageShell lang={lang}><AtlasFrame as="div" lang={lang}><LibraryUnavailable lang={lang} href={`${prefix}/library`} /></AtlasFrame></PageShell>;
   let datasets;

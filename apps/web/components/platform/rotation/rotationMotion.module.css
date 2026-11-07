@@ -6,7 +6,7 @@
   --rotation-motion-wash: #fff0c64d;
 }
 :global(#rotation-lab-content).motion .abilityCell {
-  transition: background-color 150ms var(--rotation-motion-ease), box-shadow 150ms var(--rotation-motion-ease);
+  transition: background-color var(--atlas-duration-fast) var(--rotation-motion-ease), box-shadow var(--atlas-duration-fast) var(--rotation-motion-ease);
 }
 :global(#rotation-lab-content).motion .slotInput,
 :global(#rotation-lab-content).motion .slotInput:is(:hover, :active, :focus-visible) {
@@ -21,16 +21,16 @@
   outline-offset: 3px;
 }
 :global(#rotation-lab-content).motion .catalogReveal {
-  animation: ink-appear 220ms var(--rotation-motion-ease) both;
+  animation: ink-appear var(--atlas-duration) var(--rotation-motion-ease) both;
 }
 :global(#rotation-lab-content).motion .pageReveal {
-  animation: ink-appear 180ms var(--rotation-motion-ease) both;
+  animation: ink-appear var(--atlas-duration) var(--rotation-motion-ease) both;
 }
 :global(#rotation-lab-content).motion .noteReveal {
-  animation: ink-appear 140ms var(--rotation-motion-ease) both;
+  animation: ink-appear var(--atlas-duration-fast) var(--rotation-motion-ease) both;
 }
 :global(#rotation-lab-content).motion .catalogAbility {
-  transition: background-color 160ms var(--rotation-motion-ease), box-shadow 160ms var(--rotation-motion-ease);
+  transition: background-color var(--atlas-duration-fast) var(--rotation-motion-ease), box-shadow var(--atlas-duration-fast) var(--rotation-motion-ease);
 }
 :global(#rotation-lab-content).motion .catalogAbility,
 :global(#rotation-lab-content).motion .catalogAbility:is(:hover, :active, :focus-visible) {
@@ -51,7 +51,7 @@
   box-shadow: inset 3px 0 var(--rotation-motion-ink), inset 0 1px 5px #6441212b;
 }
 :global(#rotation-lab-content).motion .categories > button {
-  transition: background-color 150ms var(--rotation-motion-ease), box-shadow 150ms var(--rotation-motion-ease), color 150ms var(--rotation-motion-ease);
+  transition: background-color var(--atlas-duration-fast) var(--rotation-motion-ease), box-shadow var(--atlas-duration-fast) var(--rotation-motion-ease), color var(--atlas-duration-fast) var(--rotation-motion-ease);
 }
 :global(#rotation-lab-content).motion .categories > button:focus-visible {
   outline: 2px solid var(--rotation-motion-ink);
@@ -66,7 +66,7 @@
 :global(#rotation-lab-content).motion .chapter > summary > svg:first-child { transform: none; }
 :global(#rotation-lab-content).motion .chapter > summary > svg:last-child {
   transform: rotate(-90deg);
-  transition: transform 190ms var(--rotation-motion-ease);
+  transition: transform var(--atlas-duration) var(--rotation-motion-ease);
 }
 :global(#rotation-lab-content).motion .chapter[open] > summary > svg:last-child { transform: rotate(0); }
 :global(#rotation-lab-content).motion .chapter > summary:focus-visible {

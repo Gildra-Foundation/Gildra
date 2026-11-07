@@ -34,6 +34,9 @@ const pages: Array<[path: string, types: string[]]> = [
   ["/", ["WebSite", "Organization"]],
   ["/ru", ["WebSite", "Organization"]],
   ["/tier-lists", ["BreadcrumbList"]],
+  ["/tier-lists/raid", ["BreadcrumbList"]],
+  ["/ru/tier-lists/arena", ["BreadcrumbList"]],
+  ["/tier-lists/arena/solo-shuffle", ["BreadcrumbList"]],
   ["/wow/professions", ["BreadcrumbList", "ItemList"]],
   ["/ru/wow/professions/alchemy", ["BreadcrumbList"]],
   ["/wow/classes", ["BreadcrumbList", "ItemList"]],
@@ -92,6 +95,47 @@ describe("seo: internal links", () => {
       const bossLinks = [...body.matchAll(/<a\b[^>]*data-hub-boss-link[^>]*>/g)].map((match) => match[0].match(/href="([^"]+)"/)?.[1] ?? "");
       assert.ok(bossLinks.length >= 10, `${path}: ${bossLinks.length} boss links`);
       for (const href of bossLinks) assert.match(href, /^(\/ru)?\/wow\/raids\/[^/#]+#/, `${path}: ${href}`);
+    }
+  });
+});
+
+describe("seo: tier-list modes", () => {
+  it("old mode queries answer 308 to the mode's own page, other options kept", async () => {
+    const cases: Array<[string, string]> = [
+      ["/tier-lists?activity=raid", "/tier-lists/raid"],
+      ["/ru/tier-lists?activity=pvp&bracket=shuffle&role=healer", "/ru/tier-lists/arena/solo-shuffle?role=healer"],
+      ["/tier-lists?activity=pvp", "/tier-lists/arena"],
+      ["/tier-lists?mode=raid", "/tier-lists/raid"],
+      ["/tier-lists/arena/3v3", "/tier-lists/arena"],
+      ["/tier-lists/arena?bracket=2v2", "/tier-lists/arena/2v2"],
+    ];
+    for (const [from, to] of cases) {
+      const response = await get(from);
+      assert.equal(response.status, 308, from);
+      assert.equal(new URL(response.location ?? "", base).pathname + new URL(response.location ?? "", base).search, to, from);
+    }
+    assert.equal((await get("/tier-lists/arena/5v5")).status, 404);
+  });
+
+  it("every mode page names its language twins", async () => {
+    const page = await get("/ru/tier-lists/raid");
+    assert.match(head(page.body), new RegExp(`hrefLang="en" href="${origin}/tier-lists/raid"`, "i"));
+    assert.match(head(page.body), new RegExp(`hrefLang="x-default" href="${origin}/tier-lists/raid"`, "i"));
+  });
+});
+
+describe("seo: related links", () => {
+  it("spec pages, spec leaderboards and dungeon pages link to their neighbours", async () => {
+    const expectations: Array<[string, string[]]> = [
+      ["/wow/classes/priest/holy-priest", ["/tier-lists/raid", "/wow/mythic-plus/meta", "/talents/holy-priest", "/wow/mythic-plus/leaderboard/holy-priest"]],
+      ["/ru/wow/mythic-plus/leaderboard/holy-priest", ["/ru/wow/classes/priest/holy-priest", "/ru/talents/holy-priest", "/ru/tier-lists"]],
+      ["/wow/mythic-plus/midnight-season-2/kings-rest", ["/wow/mythic-plus/comps?dungeon=kings-rest", "/wow/mythic-plus/routes?dungeon=kings-rest"]],
+      ["/wow/professions/alchemy", ["/wow/auction?cat=herbs"]],
+      ["/wow/professions", ["/wow/auction?cat=ore"]],
+    ];
+    for (const [path, hrefs] of expectations) {
+      const { body } = await get(path);
+      for (const href of hrefs) assert.ok(body.includes(`href="${href}"`), `${path} → ${href}`);
     }
   });
 });

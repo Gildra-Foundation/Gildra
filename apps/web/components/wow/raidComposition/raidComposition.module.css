@@ -167,7 +167,7 @@
 
 .coverage { display: grid; gap: var(--atlas-space-5); }
 .coverageGroup { display: grid; gap: var(--atlas-space-3); min-width: 0; scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
-.coverageTitle { display: flex; align-items: center; gap: var(--atlas-space-2); }
+.coverageTitle { display: flex; align-items: center; gap: var(--atlas-space-2); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
 .coverageTitle::before { content: ""; width: 8px; height: 8px; transform: rotate(45deg); background: var(--group); box-shadow: 0 0 8px var(--group); }
 .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
 .item {
@@ -233,7 +233,14 @@ a.itemName:focus-visible { outline: 2px solid var(--material-light, var(--atlas-
   .classCard { padding: var(--atlas-space-2); }
   .classCard[data-wide] { grid-column: span 2; }
   .classSpecs { gap: var(--atlas-space-1); }
-  .paletteSpec { width: 42px; height: 42px; }
+  .paletteSpec { width: 44px; height: 44px; }
+}
+@media (max-width: 400px) {
+  /* Whole words inside the painted buttons and the size switch (no broken «эпохаль-ный», no cut «Героический · обы…»). */
+  .presets.presets > span[style] :global(.ui-button) { padding-inline: 64px; font-size: var(--atlas-text-meta); }
+  .presets.presets :global(.ui-button__label) { hyphens: manual; overflow-wrap: normal; }
+  .sizeSwitch.sizeSwitch :global(.ui-segmented-control__item) { flex: 1 1 0; min-width: 0; height: auto; min-height: 44px; white-space: normal; line-height: 1.15; }
+  .sizeSwitch.sizeSwitch :global(.ui-segmented-control__item) > * { overflow: visible; white-space: normal; text-overflow: clip; }
 }
 @media (max-width: 360px) {
   .groups, .groups[data-groups="6"] { grid-template-columns: minmax(0, 1fr); }
@@ -247,4 +254,10 @@ a.itemName:focus-visible { outline: 2px solid var(--material-light, var(--atlas-
   .slot, .classCard, .paletteSpec, .item, .scoreLink, .summaryItem, .armorRow { border: 1px solid CanvasText; }
   .slot[data-selected] { outline: 2px solid Highlight; }
   .itemIcon { filter: none; }
+}
+
+/* Touch: names are 44 px targets; the hit area grows, the look stays. */
+@media (pointer: coarse) {
+  a.itemName { position: relative; }
+  a.itemName::after { content: ""; position: absolute; inset: -14px -4px; }
 }

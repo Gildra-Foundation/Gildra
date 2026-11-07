@@ -164,3 +164,9 @@
 /* Profession accent (professionKit.ts) for everything inside the frame; the wrapper takes no box. */
 .accent { display: contents; }
 .emblem { display: inline-flex; border-radius: 50%; filter: drop-shadow(0 0 22px color-mix(in srgb, var(--profession-accent, var(--atlas-accent)) 60%, transparent)); }
+
+/* Touch: 44 px targets and 16 px fields (no iOS zoom on focus). */
+@media (pointer: coarse) {
+  .region, .copyButton { min-height: 44px; }
+  .number, .have { min-height: 44px; font-size: max(16px, 1em); }
+}

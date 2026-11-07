@@ -1,7 +1,7 @@
 /* atlas:strict — saved runs of the character profile: a day-grouped list on the Characters plaque. */
 .history { display: grid; gap: var(--atlas-space-5); min-width: 0; color: var(--atlas-text); font-family: var(--atlas-font-ui); }
 
-.list { display: grid; gap: var(--atlas-space-5); min-width: 0; animation: fadeIn var(--atlas-duration-fast, .15s) ease-out both; }
+.list { display: grid; gap: var(--atlas-space-5); min-width: 0; animation: fadeIn var(--atlas-duration-fast) var(--atlas-ease) both; }
 .filter { justify-self: start; max-width: 100%; }
 
 .day { display: grid; gap: var(--atlas-space-1); min-width: 0; }
@@ -101,7 +101,7 @@
 /* Loading: rows in the list's own shape. */
 .skeleton { display: grid; }
 .ghostRow { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) 8rem 6rem; align-items: center; gap: var(--atlas-space-4); min-height: 64px; padding: var(--atlas-space-2); border-bottom: 1px solid var(--atlas-line-soft); }
-.ghostRow span { height: 12px; border-radius: 3px; background: var(--atlas-surface-raised); animation: pulse 1.2s ease-in-out infinite alternate; }
+.ghostRow span { height: 12px; border-radius: 3px; background: var(--atlas-surface-raised); animation: pulse 1.2s var(--atlas-ease-ambient) infinite alternate; }
 .ghostRow span:first-child { height: 2.25rem; border-radius: var(--atlas-radius-control, 6px); }
 .ghostRow span:nth-child(2) { width: min(100%, 22rem); }
 .ghostRow:nth-child(2n) span:nth-child(2) { width: min(100%, 15rem); }

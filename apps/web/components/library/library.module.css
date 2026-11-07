@@ -185,3 +185,9 @@
   .group { border: 1px solid CanvasText; background: Canvas; }
   .strip > span { box-shadow: none; border: 1px solid CanvasText; }
 }
+
+/* Phones: a long dataset name takes a second line instead of an ellipsis. */
+@media (max-width: 1100px) { .rowLink { white-space: normal; } }
+
+/* Touch: 16 px fields, so iOS does not zoom on focus. */
+@media (pointer: coarse) { .searchField.searchField :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea), .field :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }

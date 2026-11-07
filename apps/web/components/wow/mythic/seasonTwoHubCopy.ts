@@ -15,7 +15,7 @@ export const seasonTwoHubCopy = {
   },
   ru: {
     breadcrumbs: "Навигация",
-    title: "Midnight · Сезон 2",
+    title: "Midnight\u00a0· Сезон 2",
     choose: "Что принёс сезон",
     listTitle: "Активности сезона",
     metaDescription: "Midnight · Сезон 2 коротко: рейд сезона, подземелья Mythic+, вылазки, Prey и логова.",
