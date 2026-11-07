@@ -9,7 +9,7 @@ import { chainUp, composeSet, mapSet, transferCamera } from "@/components/wow/wo
 import { wheelKind } from "@/components/wow/worldMap/engine/input";
 import { eraFromParam, eventComparison, eventMoment, mapIdOfPath, patchPosition, positionToPatch, pushesHistory, queryToView, viewToQuery } from "@/components/wow/worldMap/worldMapModel";
 import { isRectMask, paperColour } from "@/components/wow/worldMap/engine/paper";
-import { decorBoxes, labelBoxes } from "@/components/wow/worldMap/engine/painted";
+import { decorBoxes, labelBoxes } from "@/lib/wow/worldMap/painted";
 import { paintedOf } from "@/components/wow/worldMap/ui/paintedArt";
 
 const fixture = JSON.parse(readFileSync(fileURLToPath(new URL("../fixtures/world-map/engine.json", import.meta.url)), "utf8")) as { maps: MapRecord[]; pois: PoiRecord[]; eras: EraRecord[] };

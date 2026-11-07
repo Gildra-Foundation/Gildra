@@ -5,7 +5,7 @@ import { MapRenderer, type DrawParams } from "./gl";
 import { blurGroups, blurKey, blurOf, blurRadiusCss, blurRadiusPx, desatOf, dimOf, radiusOfKey, vignetteOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "./lod";
 import { wheelKind } from "./input";
 import { analysePaper } from "./paper";
-import { decorBoxes, labelBoxes, type ArtBox } from "./painted";
+import { decorBoxes, labelBoxes, type ArtBox } from "@/lib/wow/worldMap/painted";
 import { chainUp, transferCamera, type MapSet } from "./sets";
 import { levelSize, levelTiles, TileStore, tileUrl } from "./tiles";
 

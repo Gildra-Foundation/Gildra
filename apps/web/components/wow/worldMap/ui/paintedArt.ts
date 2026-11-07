@@ -1,5 +1,5 @@
 import type { AtlasMap } from "@/lib/wow/worldMap/bundle";
-import { labelBoxes } from "../engine/painted";
+import { labelBoxes } from "@/lib/wow/worldMap/painted";
 
 /**
  * What the game painted into a map's own picture: the big title of the
