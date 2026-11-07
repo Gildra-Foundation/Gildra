@@ -13,7 +13,7 @@ export function SpecIdentity({ spec, size = "md", showClass = true }: { spec: Me
   return (
     <span className={styles.identity} data-size={size} style={{ "--class-color": spec.color } as CSSProperties}>
       <span className={styles.octagon} aria-hidden="true">
-        {spec.icon ? <Image src={spec.icon} alt="" width={px} height={px} sizes={`${px}px`} /> : null}
+        {spec.icon ? <Image src={spec.icon} alt="" loading="eager" width={px} height={px} sizes={`${px}px`} /> : null}
       </span>
       <span className={styles.identityText}>
         <span className={styles.specName} lang="en">{spec.specName}</span>
