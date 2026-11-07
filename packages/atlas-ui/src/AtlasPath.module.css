@@ -52,7 +52,8 @@
   border: 1px solid var(--atlas-line-soft);
   background: var(--atlas-surface);
   text-decoration: none;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
+  /* Only the lift and the press move; the border colour switches at once (as AtlasCard). */
+  transition: translate var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .card::before {
