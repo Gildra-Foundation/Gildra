@@ -1291,3 +1291,6 @@
 
 /* Phones: the goal line and pull notes read at body size. */
 @media (max-width: 600px) { .page[data-dungeon] .description { font-size: var(--atlas-text-body); } }
+
+/* Touch: 16 px fields, so iOS does not zoom on focus (import string, filters). */
+@media (pointer: coarse) { .page[data-dungeon] :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }

@@ -499,3 +499,6 @@
   .slot .slotRole, .slot .specText { display: none; }
   .slot .chosenX { position: absolute; top: 3px; right: 3px; width: 12px; height: 12px; }
 }
+
+/* Touch: 16 px fields, so iOS does not zoom on focus. */
+@media (pointer: coarse) { .page :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }

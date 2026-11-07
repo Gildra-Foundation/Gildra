@@ -449,3 +449,6 @@ td[data-best] .metricTrack > span { background: var(--material-light, var(--atla
   .comboInput { font-size: max(16px, 1em); }
   .pick { width: 24px; height: 24px; }
 }
+
+/* Touch: 16 px fields, so iOS does not zoom on focus. */
+@media (pointer: coarse) { .page :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }

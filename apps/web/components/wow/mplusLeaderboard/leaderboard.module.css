@@ -363,3 +363,6 @@ a.playerName:focus-visible { outline: 2px solid var(--material-light, var(--atla
   font-size: var(--atlas-text-body);
 }
 @media (max-width: 600px) { .stateActions { display: grid; } }
+
+/* Touch: 16 px fields, so iOS does not zoom on focus. */
+@media (pointer: coarse) { .page :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }
