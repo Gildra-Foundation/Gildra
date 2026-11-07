@@ -31,7 +31,7 @@ export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean
   ...professions.map(({ slug }) => `/wow/professions/${slug}`),
   "/wow/forever", "/wow/forever/raids", "/wow/forever/dungeons", "/wow/forever/dungeons/hall-of-thanes",
   "/wow/mists", "/wow/mists/talents",
-  ...mistsClasses.map(({ slug }) => `/wow/mists/talents/${slug}`),
+  ...mistsClasses.classes.map(({ slug }) => `/wow/mists/talents/${slug}`),
   ...talentSpecThemes.map(({ slug }) => `/wow/mythic-plus/leaderboard/${slug}`),
   ...midnightClasses.map(({ slug }) => `/wow/classes/${slug}`),
   ...midnightSpecializations.map((spec) => `/wow/classes/${spec.classSlug}/${spec.slug}`),
