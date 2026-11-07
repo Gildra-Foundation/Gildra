@@ -72,6 +72,8 @@ CITIES = {
     2339: ("city", "neutral"),  # Dornogal
 }
 
+ENTRANCE_ATLAS = {6091: "dungeon", 6092: "raid"}
+
 # Instance pages on the site, matched by the journal's English instance name.
 INSTANCE_PAGES = {
     "Ruby Life Pools": "/wow/dungeons/ruby-life-pools",
@@ -85,6 +87,9 @@ INSTANCE_PAGES = {
     "The Voidspire": "/wow/raids/the-voidspire",
     "The Dreamrift": "/wow/raids/the-dreamrift",
     "March on Quel'Danas": "/wow/raids/march-on-queldanas",
+    "Sporefall": "/wow/raids/sporefall",
+    "The Venomous Abyss": "/wow/raids/venomous-abyss",
+    "The Unbinding of Kith'ix": "/wow/raids/the-unbinding-of-kithix",
 }
 
 
@@ -112,7 +117,7 @@ def write_json(path: Path, items) -> None:
 # -- hierarchy ---------------------------------------------------------------
 
 
-def build_hierarchy(uimap_en, uimap_ru, geometry: Geometry, art_maps: dict[int, list[dict]]):
+def build_hierarchy(uimap_en, uimap_ru, geometry: Geometry, art_maps: dict[int, list[dict]], root: int = COSMIC):
     """Playable public maps reachable from Cosmic, with children and rects."""
 
     def chain(map_id):
@@ -125,15 +130,17 @@ def build_hierarchy(uimap_en, uimap_ru, geometry: Geometry, art_maps: dict[int, 
     kept: dict[int, dict] = {}
     for map_id, row in uimap_en.items():
         path = chain(map_id)
-        if not path or path[-1] != COSMIC:
+        if not path or path[-1] != root:
             continue
         if any(HIDDEN_NAME.search(uimap_en[m]["Name_lang"] or "") for m in path):
             continue
         kept[map_id] = row
     nodes: dict[int, dict] = {}
     for map_id, row in sorted(kept.items()):
-        parent = row["ParentUiMapID"] if map_id != COSMIC else None
+        parent = row["ParentUiMapID"] if map_id != root else None
         rect, how = (None, None) if parent is None else geometry.rect_in_parent(map_id, parent)
+        if rect and row["Type"] == 4 and uimap_en.get(parent, {}).get("Type") == 4:
+            rect = None  # floors of one instance are not drawn on each other
         if rect and how == "assignment" and row["Type"] in (4, 6):
             # instances and phased copies live on their own MapID: a world box on the
             # parent is only meaningful when both maps share the same MapID
@@ -205,7 +212,7 @@ def dir_size(path: Path) -> int:
 # -- POIs --------------------------------------------------------------------
 
 
-def build_pois(nodes, geometry: Geometry, game, journal_en, journal_ru, maps_db, areas_db, all_names=frozenset(), all_areas=frozenset()):
+def build_pois(nodes, geometry: Geometry, game, journal_en, journal_ru, maps_db, areas_db, all_names=frozenset(), all_areas=frozenset(), cities=None):
     allowed = {m: {"cosmic": 0, "world": 1, "continent": 2, "zone": 3, "dungeon": 4, "micro": 5, "orphan": 6}[n["type"]] for m, n in nodes.items() if n["art"]}
     pois = []
     names = {m: n["name"]["en"] for m, n in nodes.items()}
@@ -237,7 +244,8 @@ def build_pois(nodes, geometry: Geometry, game, journal_en, journal_ru, maps_db,
         pois.append(poi)
 
     # capitals and cities: centre of the city map on its parent
-    for map_id, (kind, faction) in CITIES.items():
+    cities = CITIES if cities is None else cities
+    for map_id, (kind, faction) in cities.items():
         node = nodes.get(map_id)
         if not node or not node["rectInParent"] or node["parentId"] not in nodes:
             continue
@@ -246,7 +254,7 @@ def build_pois(nodes, geometry: Geometry, game, journal_en, journal_ru, maps_db,
 
     # zone labels on every parent with art
     for map_id, node in nodes.items():
-        if node["type"] not in ("world", "continent", "zone") or map_id in CITIES:
+        if node["type"] not in ("world", "continent", "zone") or map_id in cities:
             continue
         parent = nodes.get(node["parentId"])
         if not parent or not parent["art"] or not node["rectInParent"]:
@@ -314,6 +322,37 @@ def build_pois(nodes, geometry: Geometry, game, journal_en, journal_ru, maps_db,
         if name in INSTANCE_PAGES:
             poi["href"] = INSTANCE_PAGES[name]
         add(poi)
+    # entrances the journal table does not list yet: AreaPOIs drawn with the game's
+    # dungeon (6091) / raid (6092) entrance atlas
+    def norm(text):
+        return re.sub(r"^the ", "", re.sub(r"[’']", "'", (text or "").lower().strip()))
+
+    journal_by_name = {}
+    for journal_id, instance in sorted(journal_en.items()):
+        journal_by_name.setdefault(norm(instance["Name_lang"]), journal_id)
+    for poi_id, row in sorted(game["AreaPOI"].items()):
+        kind = ENTRANCE_ATLAS.get(row.get("UiTextureAtlasMemberID"))
+        name = row["Name_lang"] or ""
+        if not kind or not name or HIDDEN_NAME.search(name):
+            continue
+        journal_id = journal_by_name.get(norm(name))
+        if journal_id:
+            name = journal_en[journal_id]["Name_lang"]
+        x, y, z = row["Pos"]
+        hit = located(row["ContinentID"], x, y, z, row["AreaID"])
+        if not hit:
+            continue
+        map_id, u, v = hit
+        if journal_id and (journal_id, map_id) in seen:
+            continue
+        seen.add((journal_id or f"poi{poi_id}", map_id))
+        ru = (journal_ru.get(journal_id) or {}).get("Name_lang") if journal_id else None
+        poi = {"id": f"instance-{journal_id}-{map_id}" if journal_id else f"entrance-{poi_id}", "mapId": map_id, "kind": kind, "name": {"en": name, "ru": ru or (poi_ru.get(poi_id) or {}).get("Name_lang") or name}, "x": u, "y": v}
+        if journal_id:
+            poi["journalInstanceId"] = journal_id
+        if name in INSTANCE_PAGES:
+            poi["href"] = INSTANCE_PAGES[name]
+        add(poi)
     pois.sort(key=lambda p: (p["mapId"], p["kind"], p["id"]))
     return pois
 
@@ -376,9 +415,13 @@ def main() -> None:
             node["href"] = INSTANCE_PAGES[instance["Name_lang"]]
 
     def wants_art(node) -> bool:
-        if node["type"] != "dungeon":
-            return True
-        return args.dungeon_art == "all" or (args.dungeon_art == "linked" and "href" in node)
+        # size budget: instance floors only where the site has a page for the instance,
+        # phased/instanced copies ("orphan") only when they sit on their parent's map
+        if node["type"] == "dungeon":
+            return args.dungeon_art == "all" or (args.dungeon_art == "linked" and "href" in node)
+        if node["type"] == "orphan":
+            return node["rectInParent"] is not None
+        return True
 
     # one tile pyramid per distinct art; maps sharing an art share its tiles
     art_owner: dict[int, int] = {}
@@ -393,18 +436,18 @@ def main() -> None:
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
     retail = manifest.setdefault("retail", {})
     if not args.skip_tiles:
-        all_fdids = {fdid for art_id in art_owner for fdid in specs[art_id].tiles.values()}
+        all_fdids = {fdid for art_id in art_owner for fdid in specs[art_id].fdids()}
         print(f"resolving {len(all_fdids)} tile files for {len(art_owner)} arts")
         refs = game_source.client.resolve(all_fdids)
         jobs = []
         for art_id, owner in sorted(art_owner.items()):
             spec = specs[art_id]
-            fingerprint = ",".join(str(spec.tiles[k]) for k in sorted(spec.tiles))
+            fingerprint = spec.fingerprint()
             out_dir = TILES_DIR / str(owner)
             previous = retail.get(str(owner))
             if previous and previous.get("artId") == art_id and previous.get("fingerprint") == fingerprint and out_dir.exists():
                 continue
-            jobs.append((art_id, spec, {f: refs[f] for f in spec.tiles.values() if f in refs}, str(out_dir), args.quality, None))
+            jobs.append((art_id, spec, {f: refs[f] for f in spec.fdids() if f in refs}, str(out_dir), args.quality, None))
         print(f"rendering {len(jobs)} arts ({len(art_owner) - len(jobs)} unchanged)")
         results, failures = render_arts(jobs, args.workers)
         for art_id, meta in results.items():
@@ -412,7 +455,7 @@ def main() -> None:
             spec = specs[art_id]
             retail[str(owner)] = {
                 "artId": art_id,
-                "fingerprint": ",".join(str(spec.tiles[k]) for k in sorted(spec.tiles)),
+                "fingerprint": spec.fingerprint(),
                 **{k: meta[k] for k in ("width", "height", "maxZoom", "bytes", "tiles", "digest")},
             }
         for art_id, error in sorted(failures.items()):

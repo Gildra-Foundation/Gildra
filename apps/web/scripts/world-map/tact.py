@@ -227,14 +227,16 @@ class Root:
 
 
 class TactClient:
-    def __init__(self, product: str, cache_dir: Path, region: str = "us"):
+    def __init__(self, product: str, cache_dir: Path, region: str = "us", index_dir: Path | None = None, cdn_region: str | None = None):
         self.product = product
         self.cache = Path(cache_dir)
+        # archive indexes are keyed by archive hash, so products can share them
+        self.index_dir = Path(index_dir) if index_dir else self.cache / "indexes"
         self.cache.mkdir(parents=True, exist_ok=True)
         versions = parse_bpsv(_http(f"{PATCH_HOST}/{product}/versions").decode())
         cdns = parse_bpsv(_http(f"{PATCH_HOST}/{product}/cdns").decode())
         version = next(v for v in versions if v["Region"] == region)
-        cdn = next(c for c in cdns if c["Name"] == region)
+        cdn = next(c for c in cdns if c["Name"] == (cdn_region or region))
         self.version_name = version["VersionsName"]
         self.build_id = int(version["BuildId"])
         self.path = cdn["Path"]
@@ -298,7 +300,7 @@ class TactClient:
 
     # -- archive indexes ------------------------------------------------
     def _index_bytes(self, archive: str) -> bytes:
-        path = self.cache / "indexes" / f"{archive}.index"
+        path = self.index_dir / f"{archive}.index"
         if path.exists():
             return path.read_bytes()
         path.parent.mkdir(exist_ok=True)

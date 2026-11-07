@@ -27,6 +27,8 @@ GAME_TABLES = (
     "TaxiNodes",
     "AreaPOI",
     "JournalInstanceEntrance",
+    "WorldMapOverlay",
+    "WorldMapOverlayTile",
 )
 LOCALIZED = {"UiMap", "TaxiNodes", "AreaPOI", "UiMapGroupMember"}
 
@@ -100,9 +102,11 @@ class CatalogDB:
 class GameTables:
     """DB2 tables read from one product's current build on the public CDN."""
 
-    def __init__(self, product: str, cache: Path):
+    def __init__(self, product: str, cache: Path, region: str = "us"):
         self.cache = cache
-        self.client = TactClient(product, cache / product)
+        # some products publish versions for one region only (wow_classic_titan: cn);
+        # their files are on the same public CDN, read through the US hosts
+        self.client = TactClient(product, cache / product, region=region, index_dir=cache / "wow" / "indexes", cdn_region="us")
         self.version = self.client.version_name
         self._dbd: dict[str, object] = {}
         manifest_path = cache / "dbd-manifest.json"
