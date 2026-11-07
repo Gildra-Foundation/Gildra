@@ -13,7 +13,7 @@ func (i *Indexer) RebuildItemTaxonomy(ctx context.Context) (Result, error) {
 
 func (i *Indexer) RebuildItemVariants(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		var err error
 		result.Variants, result.VariantStats, result.VariantEffects, err = rebuildBaseItemVariants(ctx, tx)
 		return err
@@ -23,7 +23,7 @@ func (i *Indexer) RebuildItemVariants(ctx context.Context) (Result, error) {
 
 func (i *Indexer) rebuildItems(ctx context.Context, includeTooltips bool) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		var productID int16
 		if err := tx.QueryRow(ctx, `SELECT id FROM game_products WHERE slug='wow'`).Scan(&productID); err != nil {
 			return fmt.Errorf("find wow product: %w", err)
@@ -85,7 +85,7 @@ func (i *Indexer) rebuildItems(ctx context.Context, includeTooltips bool) (Resul
 }
 
 func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, int64, int64, error) {
-	command, err := tx.Exec(ctx, `
+	command, err := tx.Exec(ctx, projectionSQL(`
 		INSERT INTO catalog_item_variants(item_version_id,snapshot_id,source_artifact_id,variant_key,
 			item_level,quality,content_hash,attributes)
 		SELECT version.id,version.snapshot_id,version.source_artifact_id,'base',item.item_level,
@@ -97,18 +97,18 @@ func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, int64, int6
 		WHERE entity.entity_type='item' AND entity.deleted_at IS NULL
 		ON CONFLICT(item_version_id,variant_key) DO UPDATE SET snapshot_id=EXCLUDED.snapshot_id,
 			source_artifact_id=EXCLUDED.source_artifact_id,item_level=EXCLUDED.item_level,quality=EXCLUDED.quality,
-			content_hash=EXCLUDED.content_hash,attributes=EXCLUDED.attributes,updated_at=now()`)
+			content_hash=EXCLUDED.content_hash,attributes=EXCLUDED.attributes,updated_at=now()`))
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf("rebuild base item variants: %w", err)
 	}
-	stats, err := tx.Exec(ctx, `
+	stats, err := tx.Exec(ctx, projectionSQL(`
 		UPDATE catalog_item_stats stat SET source_artifact_id=version.source_artifact_id
 		FROM game_entity_versions version
 		WHERE version.id=stat.version_id AND stat.source_artifact_id IS NULL
 		  AND version.source_artifact_id IS NOT NULL;
 
 		DELETE FROM catalog_item_variant_stats stats USING catalog_item_variants variant
-		WHERE stats.variant_id=variant.id AND variant.variant_key='base';
+		WHERE stats.variant_id=variant.id AND variant.variant_key='base' AND variant.item_version_id IN (SELECT id FROM game_entity_versions);
 
 		WITH current_items AS MATERIALIZED (
 			SELECT item.id AS entity_id,item_version.id AS item_version_id,item_version.build_id,
@@ -134,13 +134,13 @@ func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, int64, int6
 			'stat_'||stat.stat_type,NULL,NULL,CASE WHEN stat.source='raidbots' THEN 'raidbots' ELSE 'db2' END,
 			jsonb_build_object('value_kind','scaling_allocation','source_version',stat.source),
 			stat.source_artifact_id
-		FROM current_stats stat`, pgx.QueryExecModeSimpleProtocol)
+		FROM current_stats stat`), pgx.QueryExecModeSimpleProtocol)
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf("rebuild canonical item variant stats: %w", err)
 	}
-	effects, err := tx.Exec(ctx, `
+	effects, err := tx.Exec(ctx, projectionSQL(`
 		DELETE FROM catalog_item_variant_effects stored USING catalog_item_variants variant
-		WHERE stored.variant_id=variant.id AND variant.variant_key='base';
+		WHERE stored.variant_id=variant.id AND variant.variant_key='base' AND variant.item_version_id IN (SELECT id FROM game_entity_versions);
 
 		WITH current_items AS MATERIALIZED (
 			SELECT item.id AS entity_id,item.product_id,item_version.id AS item_version_id,
@@ -187,7 +187,7 @@ func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, int64, int6
 		LEFT JOIN game_entities spell ON spell.product_id=effect.product_id AND spell.entity_type='spell'
 			AND spell.external_id=effect.spell_id AND spell.deleted_at IS NULL
 		LEFT JOIN game_entity_versions spell_version ON spell_version.id=spell.latest_version_id
-			AND spell_version.build_id=effect.build_id`, pgx.QueryExecModeSimpleProtocol)
+			AND spell_version.build_id=effect.build_id`), pgx.QueryExecModeSimpleProtocol)
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf("rebuild canonical item variant effects: %w", err)
 	}
@@ -294,7 +294,7 @@ func classifyItem(ctx context.Context, tx pgx.Tx, categoryID int64, facet string
 			AND (v.payload #>> '{raidbots,profession,id}')::int=$2
 			ON CONFLICT (version_id, category_id) DO NOTHING`, categoryID, intAttribute(attributes, "profession_id"))
 	case "catalog_status":
-		return tx.Exec(ctx, `
+		return tx.Exec(ctx, projectionSQL(`
 			INSERT INTO game_entity_categories(version_id,category_id,source,confidence)
 			SELECT target.version_id,$1,'gildra_classifier',1
 			FROM game_entities e
@@ -307,7 +307,7 @@ func classifyItem(ctx context.Context, tx pgx.Tx, categoryID int64, facet string
 				WHERE existing.version_id=target.version_id AND category.entity_type='item'
 				  AND category.facet<>'catalog_status'
 			  )
-			ON CONFLICT(version_id,category_id) DO NOTHING`, categoryID)
+			ON CONFLICT(version_id,category_id) DO NOTHING`), categoryID)
 	default:
 		return nil, fmt.Errorf("unsupported item facet %q", facet)
 	}

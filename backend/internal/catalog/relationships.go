@@ -111,7 +111,11 @@ func (s *Service) Relationships(ctx context.Context, params RelationshipParams) 
 		return RelationshipPage{}, err
 	}
 	var exists bool
-	if err := s.postgres.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM game_entities WHERE id=$1 AND deleted_at IS NULL AND published_version_id IS NOT NULL)`, params.EntityID).Scan(&exists); err != nil {
+	if err := s.postgres.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM game_entities e
+			JOIN game_entity_versions v ON v.id=e.published_version_id
+			LEFT JOIN game_entity_localizations l ON l.version_id=v.id AND l.locale=$2
+			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
+			WHERE e.id=$1 AND e.deleted_at IS NULL `+publicCatalogDisplayNamePredicate("l", "fallback")+publicCatalogUsabilityPredicate("e", "v")+`)`, params.EntityID, normalizeLocale(params.Locale)).Scan(&exists); err != nil {
 		return RelationshipPage{}, fmt.Errorf("find relationship entity: %w", err)
 	}
 	if !exists {
@@ -119,11 +123,11 @@ func (s *Service) Relationships(ctx context.Context, params RelationshipParams) 
 	}
 	baseSQL := `
 		WITH selected_entity AS (
-			SELECT version.build_id
+			SELECT version.build_id, entity.product_id
 			FROM game_entities entity
 			JOIN game_entity_versions version ON version.id=entity.published_version_id
 			WHERE entity.id=$1 AND entity.deleted_at IS NULL
-		), links AS (
+		), raw_links AS (
 			SELECT 'outgoing'::text AS direction,link.relation_type,link.target_entity_id AS related_entity_id,
 				link.build_id,link.attributes
 			FROM game_entity_links link
@@ -132,12 +136,21 @@ func (s *Service) Relationships(ctx context.Context, params RelationshipParams) 
 			SELECT 'incoming'::text,link.relation_type,link.source_entity_id,link.build_id,link.attributes
 			FROM game_entity_links link
 			WHERE link.target_entity_id=$1 AND link.build_id=(SELECT build_id FROM selected_entity)
+		), links AS (
+			SELECT raw_links.* FROM raw_links
+			JOIN game_entities entity ON entity.id=raw_links.related_entity_id
+				AND entity.product_id=(SELECT product_id FROM selected_entity)
+				AND entity.deleted_at IS NULL
+			JOIN game_entity_versions version ON version.id=entity.published_version_id
+			LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
+			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
+			WHERE true ` + publicCatalogDisplayNamePredicate("localized", "fallback") + publicCatalogUsabilityPredicate("entity", "version") + `
 		)`
 	var total int64
 	if err := s.postgres.QueryRow(ctx, baseSQL+`
 		SELECT count(*) FROM links
 		WHERE ($2='both' OR direction=$2) AND ($3='' OR relation_type=$3)`,
-		params.EntityID, params.Direction, strings.TrimSpace(params.Relation)).Scan(&total); err != nil {
+		params.EntityID, params.Direction, strings.TrimSpace(params.Relation), normalizeLocale(params.Locale)).Scan(&total); err != nil {
 		return RelationshipPage{}, fmt.Errorf("count entity relationships: %w", err)
 	}
 	rows, err := s.postgres.Query(ctx, baseSQL+`
@@ -148,7 +161,7 @@ func (s *Service) Relationships(ctx context.Context, params RelationshipParams) 
 				NULLIF(version.payload #>> '{raidbots,icon}',''))
 		FROM links
 		JOIN game_entities entity ON entity.id=links.related_entity_id AND entity.deleted_at IS NULL
-		JOIN game_entity_versions version ON version.id=entity.published_version_id AND version.build_id=links.build_id
+		JOIN game_entity_versions version ON version.id=entity.published_version_id
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 		LEFT JOIN catalog_entity_icons source_icon ON source_icon.build_id=version.build_id

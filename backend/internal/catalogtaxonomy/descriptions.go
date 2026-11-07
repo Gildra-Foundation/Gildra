@@ -9,7 +9,7 @@ import (
 
 func (i *Indexer) RebuildDescriptions(ctx context.Context) (Result, error) {
 	var result Result
-	err := pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
+	err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
 		carried, err := carryForwardOfficialLocalizations(ctx, tx)
 		if err != nil {
 			return err

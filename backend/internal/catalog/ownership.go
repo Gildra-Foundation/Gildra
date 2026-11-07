@@ -33,7 +33,7 @@ func (s *Service) enrichTalentOwners(ctx context.Context, entities []Entity) err
 		JOIN game_entities talent ON talent.id=link.source_entity_id
 		JOIN game_entity_versions talent_version ON talent_version.id=talent.published_version_id
 		JOIN game_entities specialization ON specialization.id=link.target_entity_id
-			AND specialization.entity_type='specialization' AND specialization.deleted_at IS NULL
+			AND specialization.product_id=talent.product_id AND specialization.entity_type='specialization' AND specialization.deleted_at IS NULL
 		JOIN game_entity_versions spec_version ON spec_version.id=specialization.published_version_id
 			AND spec_version.build_id=link.build_id AND talent_version.build_id=link.build_id
 		LEFT JOIN game_entity_localizations spec_name ON spec_name.version_id=spec_version.id AND spec_name.locale=$2
