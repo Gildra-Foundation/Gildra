@@ -8,6 +8,7 @@ import { RotationLabPage } from "./RotationLabPage";
 import { RotationSpecMenu } from "./RotationSpecMenu";
 import { rotationLabCopy, type RotationLabLocale } from "./rotationLabCopy";
 import styles from "./rotationLabShell.module.css";
+import { trail } from "@/lib/routes/registry";
 
 type Props = {
   locale: RotationLabLocale;
@@ -31,11 +32,10 @@ export function RotationLabRoute({ locale, theme, preset, characterSlug, dataMod
   return (
     <AtlasFrame lang={locale} scene="classes" still tint={`rgba(${theme.ambientRgb}, .2)`} dataAttributes={{ "data-rotation-route": theme.slug }}>
       <AtlasHero
-        breadcrumbs={[
-          { label: copy.wow, href: `${prefix}/wow` },
-          ...(classSlug ? [{ label: className, href: `${prefix}/wow/classes#${classSlug}` }] : []),
-          { label: copy.crumb },
-        ]}
+        breadcrumbs={classSlug
+          // Classes › class › specialization › rotation, as on the talent page of the spec.
+          ? trail(locale, "classes", { label: className, href: `${prefix}/wow/classes/${classSlug}` }, { label: specName, href: `${prefix}/wow/classes/${classSlug}/${theme.slug}` }, { label: copy.crumb })
+          : trail(locale, "classes", { label: copy.crumb })}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         toolbar={<RotationSpecMenu activeSlug={theme.slug} lang={locale} copy={copy.specMenu} />}
         emblem={<Image className={styles.specEmblem} src={theme.iconUrl} alt="" width={56} height={56} unoptimized priority />}

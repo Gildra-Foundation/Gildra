@@ -4,7 +4,7 @@ import { JsonLd, websiteLd } from "@/lib/seo/jsonld";
 import { pageOpenGraph, pairedAlternates } from "@/lib/seo/metadata";
 
 const TITLE = "Gildra — Хроники Азерота";
-const DESCRIPTION = "Ваш спутник в World of Warcraft: персонажи, маршруты подземелий, рейдовые тактики, тир-листы и статьи.";
+const DESCRIPTION = "Ваш спутник в World of Warcraft: персонажи, маршруты подземелий, рейдовые тактики, тир-листы и библиотека игры.";
 
 export const metadata: Metadata = {
   title: TITLE,
