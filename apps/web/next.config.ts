@@ -174,6 +174,9 @@ export default withSentryConfig(nextConfig, {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: !process.env.CI,
   widenClientFileUpload: true,
+  // Browser tracing is off (tracesSampleRate 0, instrumentation-client.ts), so the
+  // route table that names its transactions would only weigh on every page (1.5 KB gz).
+  routeManifestInjection: false,
   // No `tunnelRoute`: it only tunnels sentry.io DSNs. Browser reports go to
   // GlitchTip through app/monitoring/route.ts (instrumentation-client.ts).
 });
