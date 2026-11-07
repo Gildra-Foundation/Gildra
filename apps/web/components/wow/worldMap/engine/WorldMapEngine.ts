@@ -1,4 +1,4 @@
-import type { AtlasBundle, AtlasEra, AtlasMap } from "@/lib/wow/worldMap/bundle";
+import type { ArtEra, AtlasMap } from "@/lib/wow/worldMap/bundle";
 import type { MapArt } from "@/lib/wow/worldMap/types";
 import { clamp, contains, easeInOut, fitBox, flightPath, intersects, smoothstep, toAtlas, toScreen, zoomAt, type Box, type Camera } from "./camera";
 import { MapRenderer } from "./gl";
@@ -33,6 +33,44 @@ export type EngineEvents = {
 };
 export type EngineOptions = { alive: boolean; reducedMotion: boolean; insets: Insets };
 
+/** The maps of one moment of the timeline: the current maps, or an era's (other art, other places). */
+export type MapSet = { key: string; maps: Map<number, AtlasMap>; shown: Map<number, Box> };
+
+/** The part of each map inside its parents: children may overhang (Kalimdor past the edge of Azeroth). */
+function shownBoxes(maps: Map<number, AtlasMap>) {
+  const shown = new Map<number, Box>();
+  for (const map of maps.values()) {
+    let box: Box = map.frame;
+    for (let m = map; m.parent !== null && !m.portal; ) {
+      const parent = maps.get(m.parent);
+      if (!parent) break;
+      box = [Math.max(box[0], parent.frame[0]), Math.max(box[1], parent.frame[1]), Math.min(box[2], parent.frame[2]), Math.min(box[3], parent.frame[3])];
+      m = parent;
+    }
+    shown.set(map.id, box[2] > box[0] && box[3] > box[1] ? box : map.frame);
+  }
+  return shown;
+}
+
+export function mapSet(key: string, maps: Iterable<AtlasMap>): MapSet {
+  const byId = new Map<number, AtlasMap>();
+  for (const map of maps) byId.set(map.id, map);
+  return { key, maps: byId, shown: shownBoxes(byId) };
+}
+
+/** An era's maps: the current maps that existed then, its own maps over them, then its variants' maps. */
+export function composeSet(key: string, base: MapSet, eras: ArtEra[]): MapSet {
+  const [first, ...variants] = eras;
+  const maps = new Map<number, AtlasMap>();
+  if (first) {
+    if (first.only) for (const id of first.only) { const m = base.maps.get(id); if (m) maps.set(id, m); }
+    else for (const [id, m] of base.maps) maps.set(id, m);
+    for (const m of first.own) maps.set(m.id, m);
+  } else for (const [id, m] of base.maps) maps.set(id, m);
+  for (const variant of variants) for (const m of variant.own) maps.set(m.id, m);
+  return { key, maps, shown: shownBoxes(maps) };
+}
+
 type Flight = { path: ReturnType<typeof flightPath>; start: number; duration: number; after?: () => void };
 type Pointer = { id: number; x: number; y: number };
 
@@ -40,8 +78,10 @@ const FADE_TILE = 240;
 const FADE_ERA = 700;
 
 export class WorldMapEngine {
-  readonly maps = new Map<number, AtlasMap>();
-  private shown = new Map<number, Box>();
+  private set: MapSet;
+  private fromSet: MapSet | null = null;
+  get maps() { return this.set.maps; }
+  private get shown() { return this.set.shown; }
   private renderer: MapRenderer;
   private tiles: TileStore;
   private camera: Camera = { x: 0.5, y: 0.33, scale: 1000 };
@@ -63,10 +103,8 @@ export class WorldMapEngine {
   private hoverId: number | null = null;
   private clickTimer = 0;
   private settleTimer = 0;
-  private era: AtlasEra | null = null;
-  private fromEra: AtlasEra | null = null;
   private eraStart = 0;
-  private compare: { left: AtlasEra | null; right: AtlasEra | null; at: number } | null = null;
+  private compare: { left: MapSet; at: number } | null = null;
   private start = performance.now();
   private pausedTime = 0;
   private lastInfo: FrameInfo | null = null;
@@ -76,22 +114,11 @@ export class WorldMapEngine {
   constructor(
     private canvas: HTMLCanvasElement,
     private surface: HTMLElement,
-    bundle: AtlasBundle,
+    base: MapSet,
     private events: EngineEvents,
     private options: EngineOptions,
   ) {
-    for (const map of bundle.maps) this.maps.set(map.id, map);
-    // The part of each map inside its parents: children may overhang (Kalimdor past the edge of Azeroth).
-    for (const map of bundle.maps) {
-      let box = map.frame;
-      for (let m = map; m.parent !== null && !m.portal; ) {
-        const parent = this.maps.get(m.parent);
-        if (!parent) break;
-        box = [Math.max(box[0], parent.frame[0]), Math.max(box[1], parent.frame[1]), Math.min(box[2], parent.frame[2]), Math.min(box[3], parent.frame[3])];
-        m = parent;
-      }
-      this.shown.set(map.id, box[2] > box[0] && box[3] > box[1] ? box : map.frame);
-    }
+    this.set = base;
     this.renderer = new MapRenderer(canvas);
     const coarse = matchMedia("(pointer: coarse)").matches;
     const cores = navigator.hardwareConcurrency || 4;
@@ -121,23 +148,44 @@ export class WorldMapEngine {
     this.invalidate();
   }
 
-  setEra(era: AtlasEra | null, animate = true) {
-    if (era?.id === this.era?.id) return;
-    this.fromEra = animate && !this.options.reducedMotion ? this.era : null;
-    this.era = era;
+  get setKey() { return this.set.key; }
+
+  /** Show another moment of the timeline: the camera keeps the place it looks at, the art cross-fades. */
+  setMapSet(next: MapSet, animate = true) {
+    if (next === this.set || next.key === this.set.key) return;
+    const from = this.set;
+    this.camera = this.transfer(this.camera, from, next);
+    if (this.flight) this.flight = null;
+    this.fromSet = animate && !this.options.reducedMotion ? from : null;
+    this.set = next;
     this.eraStart = performance.now();
     this.invalidate();
+    this.scheduleSettle();
   }
 
-  setCompare(compare: { left: AtlasEra | null; right: AtlasEra | null; at: number } | null) {
+  /** Split view: `left` on the left of the divider, the current maps on the right. */
+  setCompare(compare: { left: MapSet; at: number } | null) {
     this.compare = compare;
     this.invalidate();
   }
 
-  /** The art a map shows in an era: `null` when it did not exist then. */
-  artIn(map: AtlasMap, era: AtlasEra | null): MapArt | null {
-    if (era && map.id in era.maps) return era.maps[map.id];
-    return map.art;
+  /** The same place in another set: anchored on the deepest map of the focus chain that both have. */
+  private transfer(camera: Camera, from: MapSet, to: MapSet): Camera {
+    if (from === to) return camera;
+    for (let m = from.maps.get(this.focusId); m; m = m.parent === null ? undefined : from.maps.get(m.parent)) {
+      const b = to.maps.get(m.id)?.frame;
+      if (!b) continue;
+      const a = m.frame;
+      const sx = (b[2] - b[0]) / (a[2] - a[0]), sy = (b[3] - b[1]) / (a[3] - a[1]);
+      return { x: b[0] + (camera.x - a[0]) * sx, y: b[1] + (camera.y - a[1]) * sy, scale: camera.scale / sx };
+    }
+    return camera;
+  }
+
+  private withCamera<T>(camera: Camera, run: () => T): T {
+    const saved = this.camera;
+    this.camera = camera;
+    try { return run(); } finally { this.camera = saved; }
   }
 
   /** Camera that shows a box inside the free part of the viewport (UI panels excluded). */
@@ -254,7 +302,7 @@ export class WorldMapEngine {
     let bestArea = Infinity;
     for (const id of base.children) {
       const child = this.maps.get(id);
-      if (!child || !contains(child.box, ax, ay) || this.artIn(child, this.era) === null) continue;
+      if (!child || !contains(child.box, ax, ay) || !child.art) continue;
       const area = (child.box[2] - child.box[0]) * (child.box[3] - child.box[1]);
       if (area < bestArea) { best = child; bestArea = area; }
     }
@@ -307,7 +355,7 @@ export class WorldMapEngine {
     this.raf = 0;
     if (this.disposed) return;
     const dt = Math.min(64, now - (this.lastFrame || now));
-    const animating = Boolean(this.flight || this.velocity || this.wheel || this.pointers.size || (this.fromEra && now - this.eraStart < FADE_ERA));
+    const animating = Boolean(this.flight || this.velocity || this.wheel || this.pointers.size || (this.fromSet && now - this.eraStart < FADE_ERA));
     if (!this.visible || document.hidden) { this.lastFrame = now; return; }
     // The living layers alone run at ~30 fps; interaction at full rate.
     if (!animating && !this.dirty && this.alive && now - this.lastFrame < 31) { this.raf = requestAnimationFrame((t) => this.tick(t)); return; }
@@ -317,7 +365,7 @@ export class WorldMapEngine {
     this.render(now);
     this.measure(performance.now() - t0 + (dt > 40 ? 8 : 0));
     this.dirty = false;
-    const keep = this.flight || this.velocity || this.wheel || this.alive || this.tiles.pending > 0 || this.fading(now) || (this.fromEra && now - this.eraStart < FADE_ERA);
+    const keep = this.flight || this.velocity || this.wheel || this.alive || this.tiles.pending > 0 || this.fading(now) || (this.fromSet && now - this.eraStart < FADE_ERA);
     if (keep) this.raf = requestAnimationFrame((t) => this.tick(t));
   }
 
@@ -377,9 +425,9 @@ export class WorldMapEngine {
     const min = this.fit(root.frame, 0.02).scale * 0.6;
     let deepest = root;
     for (const map of this.maps.values()) {
-      if (map.depth > deepest.depth && contains(map.frame, camera.x, camera.y) && this.artIn(map, this.era)) deepest = map;
+      if (map.depth > deepest.depth && contains(map.frame, camera.x, camera.y) && map.art) deepest = map;
     }
-    const art = this.artIn(deepest, this.era) ?? deepest.art;
+    const art = deepest.art;
     const max = art ? (art.width / (deepest.frame[2] - deepest.frame[0])) * 2.4 : min * 100;
     const scale = clamp(camera.scale, min, Math.max(min, max));
     let next = { ...camera, scale };
@@ -397,14 +445,14 @@ export class WorldMapEngine {
 
   // ---------------------------------------------------------------- render
 
-  private collect(era: AtlasEra | null): DrawnMap[] {
+  private collect(set: MapSet): DrawnMap[] {
     const out: DrawnMap[] = [];
     const view: Box = [0, 0, this.width, this.height];
     const minDim = Math.min(this.width, this.height);
     const { top, right, bottom, left } = this.options.insets;
     const freeW = Math.max(80, this.width - left - right), freeH = Math.max(80, this.height - top - bottom);
     const visit = (map: AtlasMap, alpha: number, parentClip: Box | null) => {
-      const art = this.artIn(map, era);
+      const art = map.art;
       if (!art) return;
       const [x0, y0] = this.project(map.frame[0], map.frame[1]);
       const [x1, y1] = this.project(map.frame[2], map.frame[3]);
@@ -421,7 +469,7 @@ export class WorldMapEngine {
       const mx = this.width / 2, my = this.height / 2;
       const opened: Array<{ child: AtlasMap; a: number; fill: number; off: number }> = [];
       for (const id of map.children) {
-        const child = this.maps.get(id);
+        const child = set.maps.get(id);
         if (!child) continue;
         const [cx0, cy0] = this.project(child.frame[0], child.frame[1]);
         const [cx1, cy1] = this.project(child.frame[2], child.frame[3]);
@@ -463,7 +511,7 @@ export class WorldMapEngine {
       if (portalOpen > 0) entry.alpha = alpha * (1 - 0.8 * portalOpen);
       if (dominant > 0) entry.dim = 0.62 * dominant;
     };
-    for (const map of this.maps.values()) if (map.depth === 0) visit(map, 1, null);
+    for (const map of set.maps.values()) if (map.depth === 0) visit(map, 1, null);
     // A settled map that covers the whole view hides everything drawn before it.
     for (let i = out.length - 1; i > 0; i--) {
       const entry = out[i];
@@ -496,26 +544,26 @@ export class WorldMapEngine {
 
     let drawn: DrawnMap[];
     if (this.compare) {
+      // The other era on the left of the divider, with the camera on the same place in its maps.
       const split = this.compare.at * W;
+      const left = this.compare.left;
       this.renderer.clip([0, 0, split, H], H);
-      drawn = this.collect(this.compare.left);
-      this.drawList(drawn, this.compare.left, 1, cloud, water, now);
+      this.withCamera(this.transfer(this.camera, this.set, left), () => this.drawList(this.collect(left), left, 1, cloud, water, now));
       this.renderer.clip([split, 0, W, H], H);
-      const right = this.collect(this.compare.right);
-      this.drawList(right, this.compare.right, 1, cloud, water, now);
+      drawn = this.collect(this.set);
+      this.drawList(drawn, this.set, 1, cloud, water, now);
       this.renderer.clip(null, H);
-      drawn = right.length >= drawn.length ? right : drawn;
     } else {
-      const fade = this.fromEra ? clamp((now - this.eraStart) / FADE_ERA, 0, 1) : 1;
-      if (this.fromEra && fade < 1) {
-        const before = this.collect(this.fromEra);
-        this.drawList(before, this.fromEra, 1, cloud, water, now);
-        drawn = this.collect(this.era);
-        this.drawList(drawn, this.era, easeInOut(fade), cloud, water, now, this.fromEra);
+      const fade = this.fromSet ? clamp((now - this.eraStart) / FADE_ERA, 0, 1) : 1;
+      const from = this.fromSet;
+      if (from && fade < 1) {
+        this.withCamera(this.transfer(this.camera, this.set, from), () => this.drawList(this.collect(from), from, 1, cloud, water, now));
+        drawn = this.collect(this.set);
+        this.drawList(drawn, this.set, easeInOut(fade), cloud, water, now);
       } else {
-        if (this.fromEra) this.fromEra = null;
-        drawn = this.collect(this.era);
-        this.drawList(drawn, this.era, 1, cloud, water, now);
+        this.fromSet = null;
+        drawn = this.collect(this.set);
+        this.drawList(drawn, this.set, 1, cloud, water, now);
       }
     }
     this.tiles.endFrame();
@@ -534,13 +582,12 @@ export class WorldMapEngine {
     this.events.frame(this.lastInfo);
   }
 
-  /** Draws the maps of one era; `over` = the era fading out underneath (only changed art is drawn again). */
-  private drawList(list: DrawnMap[], era: AtlasEra | null, eraAlpha: number, cloud: number, water: number, now: number, over?: AtlasEra) {
+  /** Draws the maps of one set at an opacity (the incoming era fades in over the outgoing one). */
+  private drawList(list: DrawnMap[], set: MapSet, eraAlpha: number, cloud: number, water: number, now: number) {
     const moving = Boolean(this.flight || this.velocity || this.wheel || this.pointers.size);
     for (const entry of list) {
-      const art = this.artIn(entry.map, era);
+      const art = entry.map.art;
       if (!art) continue;
-      if (over && eraAlpha < 1 && this.artIn(entry.map, over) === art) continue;
       const hovered = this.hoverId === entry.map.id && entry.alpha < 0.98;
       const alpha = (hovered ? Math.max(entry.alpha, 0.3) : entry.alpha) * eraAlpha;
       if (alpha < 0.003) continue;
@@ -548,9 +595,9 @@ export class WorldMapEngine {
       this.drawArt(entry.map, art, entry.screen, entry.clip, alpha, hovered ? 0.55 : -(entry.dim ?? 0), terrain ? cloud * (entry.map.depth <= 2 || entry.map.type === "continent" ? 1 : 0.6) : 0, terrain ? water : 0, now, moving);
     }
     // A hovered child that is not drawn yet peeks through its parent.
-    if (this.hoverId !== null && !list.some((entry) => entry.map.id === this.hoverId)) {
-      const map = this.maps.get(this.hoverId);
-      const art = map && this.artIn(map, era);
+    if (set === this.set && this.hoverId !== null && !list.some((entry) => entry.map.id === this.hoverId)) {
+      const map = set.maps.get(this.hoverId);
+      const art = map?.art;
       const parent = map && list.find((entry) => entry.map.id === map.parent);
       if (map && art && parent) {
         const [x0, y0] = this.project(map.frame[0], map.frame[1]);

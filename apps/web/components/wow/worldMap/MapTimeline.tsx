@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { ChevronLeft, ChevronRight, Columns2, Hourglass } from "lucide-react";
 import type { AtlasEra, AtlasEvent, Lang } from "@/lib/wow/worldMap/bundle";
 import { EXPANSIONS, worldMapCopy } from "./worldMapCopy";
-import { eraAt, patchPosition } from "./worldMapModel";
+import { eraAt, patchPosition, restOf } from "./worldMapModel";
 import styles from "./worldMapViewer.module.css";
 
 const SPAN = EXPANSIONS.length;
@@ -14,60 +14,39 @@ const pct = (position: number) => `${(Math.max(0, Math.min(SPAN, position)) / SP
  * The timeline under the map: eras as chips and bands, expansions as ticks,
  * world events as runes; the thumb scrubs through time and the map follows.
  */
-export function MapTimeline({ lang, eras, events, era, activeEvent, compare, canCompare, onEra, onEvent, onCompare }: {
-  lang: Lang; eras: AtlasEra[]; events: AtlasEvent[]; era: AtlasEra | null; activeEvent: AtlasEvent | null;
+export function MapTimeline({ lang, eras, events, position, activeEvent, compare, canCompare, onPosition, onEvent, onCompare }: {
+  lang: Lang; eras: AtlasEra[]; events: AtlasEvent[]; position: number; activeEvent: AtlasEvent | null;
   compare: boolean; canCompare: boolean;
-  onEra(era: AtlasEra): void; onEvent(event: AtlasEvent): void; onCompare(): void;
+  onPosition(position: number): void; onEvent(event: AtlasEvent): void; onCompare(): void;
 }) {
   const copy = worldMapCopy[lang];
   const track = useRef<HTMLDivElement>(null);
-  const latest = eras.at(-1);
-  // The thumb rests at the start of an era; at today's end for the latest one.
-  const restOf = (entry: AtlasEra) => entry.id === latest?.id ? Math.min(SPAN - 0.04, patchPosition(entry.range[1]) + 0.4) : patchPosition(entry.range[0]);
-  const [time, setTime] = useState(activeEvent ? patchPosition(activeEvent.patch) : era ? restOf(era) : SPAN - 0.04);
   const [peek, setPeek] = useState<AtlasEvent | null>(null);
   const dragging = useRef(false);
-
-  useEffect(() => {
-    if (dragging.current) return;
-    if (activeEvent) { setTime(patchPosition(activeEvent.patch)); return; }
-    if (!era) return;
-    const inside = eraAt(eras, time)?.id === era.id;
-    if (!inside) setTime(restOf(era));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- follow the era/event, not our own scrubbing
-  }, [era?.id, activeEvent?.id]);
+  const era = eraAt(eras, position);
+  const time = position;
 
   const positionAt = (clientX: number) => {
     const rect = track.current?.getBoundingClientRect();
     if (!rect) return time;
     return Math.max(0, Math.min(SPAN - 0.001, ((clientX - rect.left) / rect.width) * SPAN));
   };
-  const scrubTo = (position: number) => {
-    setTime(position);
-    const next = eraAt(eras, position);
-    if (next && next.id !== era?.id) onEra(next);
-  };
   const down = (event: PointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest("[data-event-rune]")) return;
     dragging.current = true;
     event.currentTarget.setPointerCapture(event.pointerId);
-    scrubTo(positionAt(event.clientX));
+    onPosition(positionAt(event.clientX));
   };
-  const move = (event: PointerEvent<HTMLDivElement>) => { if (dragging.current) scrubTo(positionAt(event.clientX)); };
+  const move = (event: PointerEvent<HTMLDivElement>) => { if (dragging.current) onPosition(positionAt(event.clientX)); };
   const up = () => { dragging.current = false; };
-  const key = (event: KeyboardEvent<HTMLDivElement>) => {
-    const ordered = eras;
-    const index = ordered.findIndex((entry) => entry.id === era?.id);
-    const go = (i: number) => { const next = ordered[Math.max(0, Math.min(ordered.length - 1, i))]; if (next) { setTime(restOf(next)); onEra(next); } };
-    if (event.key === "ArrowLeft" || event.key === "ArrowDown") { event.preventDefault(); go(index - 1); }
-    if (event.key === "ArrowRight" || event.key === "ArrowUp") { event.preventDefault(); go(index + 1); }
-    if (event.key === "Home") { event.preventDefault(); go(0); }
-    if (event.key === "End") { event.preventDefault(); go(ordered.length - 1); }
-  };
   const eraIndex = eras.findIndex((entry) => entry.id === era?.id);
-  const step = (delta: number) => {
-    const next = eras[Math.max(0, Math.min(eras.length - 1, eraIndex + delta))];
-    if (next) { setTime(restOf(next)); onEra(next); }
+  const goEra = (i: number) => { const next = eras[Math.max(0, Math.min(eras.length - 1, i))]; if (next) onPosition(restOf(eras, next)); };
+  const step = (delta: number) => goEra(eraIndex + delta);
+  const key = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowDown") { event.preventDefault(); step(-1); }
+    if (event.key === "ArrowRight" || event.key === "ArrowUp") { event.preventDefault(); step(1); }
+    if (event.key === "Home") { event.preventDefault(); goEra(0); }
+    if (event.key === "End") { event.preventDefault(); goEra(eras.length - 1); }
   };
   const nowLabel = era ? `${era.name} · ${EXPANSIONS[Math.min(SPAN - 1, Math.floor(time))]?.name ?? ""}` : "";
 
@@ -102,7 +81,7 @@ export function MapTimeline({ lang, eras, events, era, activeEvent, compare, can
             return (
               <li key={expansion.id} style={{ left: pct(expansion.major - 1) }} data-wide={expansion.major % 2 === 0 ? undefined : ""}>
                 <button type="button" tabIndex={-1} data-event-rune aria-hidden="true" data-active={target?.id === era?.id ? "" : undefined}
-                  onClick={() => { if (target) { setTime(restOf(target)); onEra(target); } }}>{expansion.short}</button>
+                  onClick={() => { if (target) onPosition(restOf(eras, target)); }}>{expansion.short}</button>
               </li>
             );
           })}
@@ -113,7 +92,7 @@ export function MapTimeline({ lang, eras, events, era, activeEvent, compare, can
             aria-label={`${event.title}, ${copy.patch} ${event.patch}`}
             onPointerEnter={() => setPeek(event)} onPointerLeave={() => setPeek((current) => (current?.id === event.id ? null : current))}
             onFocus={() => setPeek(event)} onBlur={() => setPeek(null)}
-            onClick={() => { setTime(patchPosition(event.patch)); onEvent(event); }}>
+            onClick={() => onEvent(event)}>
             <span aria-hidden="true" />
           </button>
         ))}

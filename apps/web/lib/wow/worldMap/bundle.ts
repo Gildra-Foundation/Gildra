@@ -1,4 +1,4 @@
-import type { EraMapOverride, EventLink, MapArt, MapRecord, MapType, PatchRange, PoiKind, Rect, WorldMapData } from "./types";
+import type { EraMapOverride, EraRecord, EventLink, MapArt, MapRecord, MapType, PatchRange, PoiKind, PoiRecord, Rect, WorldMapData } from "./types";
 
 /**
  * The viewer's compact bundle of the world map, for one language. Every map
@@ -27,7 +27,18 @@ export type AtlasMap = {
   portal: boolean;
 };
 export type AtlasPoi = { id: string; map: number; kind: PoiKind; name: string; x: number; y: number; faction?: "alliance" | "horde" | "neutral"; href?: string; routes?: string[]; target?: number };
-export type AtlasEra = { id: string; name: string; expansion: string; range: [string, string]; years?: [number, number]; accent?: string; maps: Record<number, MapArt | null> };
+/** An era of the timeline (one per expansion). */
+export type AtlasEra = { id: string; name: string; expansion: string; range: [string, string]; years?: [number, number]; accent?: string };
+/**
+ * The maps as one game client drew them (eras.json): `only` = the base maps that
+ * exist then unchanged (null: all), `own` = maps placed or drawn differently
+ * (other art, other place, era-only maps), `pois` = that client's points (null:
+ * the base points of the maps that exist). A variant (`inherits`) is a phase of
+ * a few maps inside its parent's time (Theramore after its fall).
+ */
+export type ArtEra = { id: string; name: string; range: [string, string]; inherits?: string; product: string; only: number[] | null; own: AtlasMap[]; pois: AtlasPoi[] | null };
+/** What the main bundle says about an art era; the maps come on demand (atlas/<lang>/<era>). */
+export type ArtEraInfo = { id: string; name: string; range: [string, string]; inherits?: string; changed: number[] };
 export type AtlasEvent = {
   id: string; era: string; patch: string; year?: number; title: string; summary: string;
   /** null: the place is not on the map yet (the event still sits on the timeline). */
@@ -35,7 +46,7 @@ export type AtlasEvent = {
   changed?: number[];
   kind?: string;
 };
-export type AtlasBundle = { lang: Lang; maps: AtlasMap[]; pois: AtlasPoi[]; eras: AtlasEra[]; events: AtlasEvent[] };
+export type AtlasBundle = { lang: Lang; maps: AtlasMap[]; pois: AtlasPoi[]; eras: AtlasEra[]; art: ArtEraInfo[]; events: AtlasEvent[] };
 
 const ROOT_GAP = 3;
 const DRAWN: ReadonlySet<MapType> = new Set(["cosmic", "world", "continent", "zone", "micro", "orphan"]);
@@ -67,89 +78,91 @@ export function eraArt(override: EraMapOverride): MapArt | null | undefined {
   return undefined;
 }
 
-export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle {
-  const records = new Map<number, MapRecord>();
-  for (const map of data.maps) if (DRAWN.has(map.type) && validArt(map.art)) records.set(map.id, map);
-
+/**
+ * Places a set of maps in atlas space. Children hang by parentId + rectInParent;
+ * `anchors` give fixed frames to tops that exist elsewhere (an era's Azeroth sits
+ * where the current Azeroth sits, so the camera keeps its place across eras).
+ */
+function placeRecords(records: Map<number, MapRecord>, lang: Lang, anchors: Map<number, AtlasMap> | null, firstOffset: number) {
+  const usable = new Map<number, MapRecord>();
+  for (const [id, map] of records) if (DRAWN.has(map.type) && validArt(map.art)) usable.set(id, map);
+  const kids = new Map<number, number[]>();
+  for (const map of usable.values()) {
+    if (map.parentId === null || !usable.has(map.parentId) || !validRect(map.rectInParent)) continue;
+    kids.set(map.parentId, [...(kids.get(map.parentId) ?? []), map.id]);
+  }
   const placed = new Map<number, AtlasMap>();
-  const place = (record: MapRecord, box: Rect, depth: number, portal: boolean) => {
-    const frame = fitFrame(box, record.art);
+  const place = (record: MapRecord, box: Rect, depth: number, portal: boolean, frameOverride?: Rect) => {
+    const frame = frameOverride ?? fitFrame(box, record.art);
     const node: AtlasMap = {
       id: record.id, slug: record.slug, type: record.type, name: record.name[lang] || record.name.en,
       parent: depth === 0 ? null : record.parentId, children: [], box, frame, art: record.art, depth,
       page: false, portal,
     };
     placed.set(record.id, node);
-    for (const childId of record.children) {
-      const child = records.get(childId);
-      if (!child || placed.has(childId) || child.parentId !== record.id || !validRect(child.rectInParent)) continue;
-      const [x0, y0, x1, y1] = child.rectInParent;
+    for (const childId of (kids.get(record.id) ?? []).sort((x, y) => x - y)) {
+      const child = usable.get(childId) as MapRecord;
+      if (placed.has(childId)) continue;
+      const [x0, y0, x1, y1] = child.rectInParent as Rect;
       const w = frame[2] - frame[0], h = frame[3] - frame[1];
-      const childBox: Rect = [frame[0] + x0 * w, frame[1] + y0 * h, frame[0] + x1 * w, frame[1] + y1 * h];
       node.children.push(childId);
-      place(child, childBox, depth + 1, record.type === "cosmic");
+      place(child, [frame[0] + x0 * w, frame[1] + y0 * h, frame[0] + x1 * w, frame[1] + y1 * h], depth + 1, record.type === "cosmic");
     }
   };
-
   // Tops first: the Cosmic map, then worlds, continents… that hang nowhere.
   const order: MapType[] = ["cosmic", "world", "continent", "zone", "micro", "orphan"];
-  const tops = [...records.values()]
-    .filter((map) => map.parentId === null || !records.has(map.parentId) || !validRect(map.rectInParent))
-    .sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type) || a.id - b.id);
-  let offset = 0;
-  for (const top of tops) {
+  const tops = [...usable.values()]
+    .filter((map) => map.parentId === null || !usable.has(map.parentId) || !validRect(map.rectInParent))
+    .sort((x, y) => order.indexOf(x.type) - order.indexOf(y.type) || x.id - y.id);
+  let offset = firstOffset;
+  for (const top of [...tops, ...usable.values()]) {
     if (placed.has(top.id)) continue;
+    const anchor = anchors?.get(top.id);
+    if (anchor) { place(top, anchor.box, 0, false, anchor.frame); continue; }
     const art = top.art as MapArt;
     place(top, [offset, 0, offset + 1, art.height / art.width], 0, false);
     offset += 1 + ROOT_GAP;
   }
-  // A map listed by a parent that is not placed (a cycle or a missing rect) becomes its own top.
-  for (const record of records.values()) {
-    if (placed.has(record.id)) continue;
-    const art = record.art as MapArt;
-    place(record, [offset, 0, offset + 1, art.height / art.width], 0, false);
-    offset += 1 + ROOT_GAP;
-  }
+  return placed;
+}
 
+function toPoi(poi: PoiRecord, lang: Lang, mapId: number, target: number | undefined) {
+  return {
+    id: String(poi.id), map: mapId, kind: poi.kind, name: poi.name[lang] || poi.name.en, x: poi.x, y: poi.y,
+    ...(poi.faction ? { faction: poi.faction } : {}),
+    ...(poi.href ? { href: poi.href } : {}),
+    ...(poi.routes?.length ? { routes: poi.routes.map(String) } : {}),
+    ...(target !== undefined ? { target } : {}),
+  } satisfies AtlasPoi;
+}
+
+const sameNode = (a: AtlasMap, b: AtlasMap) =>
+  a.parent === b.parent && a.depth === b.depth && a.portal === b.portal && a.name === b.name && a.art?.url === b.art?.url
+  && a.frame.every((v, i) => Math.abs(v - b.frame[i]) < 1e-9) && a.children.length === b.children.length && a.children.every((id, i) => b.children[i] === id);
+
+export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle & { artEras: ArtEra[] } {
+  const retail = new Map<number, MapRecord>();
+  for (const map of data.maps) retail.set(map.id, map);
+  const placed = placeRecords(retail, lang, null, 0);
   const cosmic = [...placed.values()].find((map) => map.type === "cosmic" && map.depth === 0);
   const chainTop = (map: AtlasMap) => { let m = map; while (m.parent !== null) m = placed.get(m.parent) as AtlasMap; return m; };
   for (const map of placed.values()) {
     const top = chainTop(map);
     map.page = PAGED.has(map.type) && (!cosmic || top.id === cosmic.id || top.type === "world");
   }
-
   const maps = [...placed.values()].sort((a, b) => a.depth - b.depth || a.id - b.id);
   const pois = data.pois
     .filter((poi) => placed.has(poi.mapId) && Number.isFinite(poi.x) && Number.isFinite(poi.y))
-    .map((poi) => ({
-      id: String(poi.id), map: poi.mapId, kind: poi.kind, name: poi.name[lang] || poi.name.en, x: poi.x, y: poi.y,
-      ...(poi.faction ? { faction: poi.faction } : {}),
-      ...(poi.href ? { href: poi.href } : {}),
-      ...(poi.routes?.length ? { routes: poi.routes.map(String) } : {}),
-      ...(poi.targetMapId && placed.has(poi.targetMapId) ? { target: poi.targetMapId } : {}),
-    }));
-  // Timeline eras (one per expansion, eras-meta.json) take their art from the art
-  // eras (eras.json) of the same id, else from the latest art era that began before.
-  const overridesOf = (maps: Record<string, EraMapOverride> | undefined) => {
-    const out: Record<number, MapArt | null> = {};
-    for (const [key, value] of Object.entries(maps ?? {})) {
-      const id = Number(key);
-      if (!placed.has(id)) continue;
-      const art = eraArt(value);
-      if (art !== undefined) out[id] = art;
-    }
-    return out;
-  };
-  const artEras = (data.eras ?? []).map((era) => ({ era, range: rangeOf(era.patchRange), maps: overridesOf(era.maps) }));
-  const timeline = data.eraMeta?.length ? data.eraMeta : data.eras ?? [];
+    .map((poi) => toPoi(poi, lang, poi.mapId, poi.targetMapId && placed.has(poi.targetMapId) ? poi.targetMapId : undefined));
+
+  const art = buildArtEras(data.eras ?? [], retail, placed, lang);
+  const timeline = data.eraMeta?.length ? data.eraMeta : (data.eras ?? []).filter((era) => !("inherits" in era && era.inherits));
   const eras: AtlasEra[] = timeline.map((era) => {
     const range = rangeOf(era.patchRange);
-    const art = artEras.find((entry) => entry.era.id === era.id)
-      ?? artEras.filter((entry) => comparePatch(entry.range[0], range[0]) <= 0).sort((a, b) => comparePatch(b.range[0], a.range[0]))[0];
     const years = "years" in era && era.years?.from ? [era.years.from, era.years.to ?? era.years.from] as [number, number] : undefined;
     const accent = "accent" in era && typeof era.accent === "string" && /^#[0-9a-f]{6}$/i.test(era.accent) ? era.accent : undefined;
-    return { id: era.id, name: era.name[lang] || era.name.en, expansion: era.expansion, range, ...(years ? { years } : {}), ...(accent ? { accent } : {}), maps: art?.maps ?? {} };
-  });
+    return { id: era.id, name: era.name[lang] || era.name.en, expansion: era.expansion, range, ...(years ? { years } : {}), ...(accent ? { accent } : {}) };
+  }).sort((a, b) => comparePatch(a.range[0], b.range[0]));
   const eraIds = new Set(eras.map((era) => era.id));
   const events = data.events
     .filter((event) => eraIds.has(event.eraId))
@@ -165,7 +178,91 @@ export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle {
         .filter((link) => link.href.startsWith("/")),
     }))
     .sort((a, b) => comparePatch(a.patch, b.patch));
-  return { lang, maps, pois, eras, events };
+  return { lang, maps, pois, eras, art: art.map(({ id, name, range, inherits, own }) => ({ id, name, range, ...(inherits ? { inherits } : {}), changed: own.map((map) => map.id) })), artEras: art, events };
+}
+
+/**
+ * The art eras: each era's maps resolved (listed = existed; "unchanged" = the
+ * current map; an object overrides art, place, name or parent; keys like
+ * "classic-1416" are maps of that era only; a variant starts from its parent),
+ * placed with its top anchored on the current map of the same id, and kept as
+ * the difference from the current maps.
+ */
+function buildArtEras(eras: EraRecord[], retail: Map<number, MapRecord>, base: Map<number, AtlasMap>, lang: Lang): ArtEra[] {
+  const byId = new Map(eras.map((era) => [era.id, era]));
+  const extra = new Map<string, number>();
+  const idOf = (key: string | number | null | undefined): number | null => {
+    if (key === null || key === undefined) return null;
+    if (typeof key === "number") return key;
+    if (/^\d+$/.test(key)) return Number(key);
+    if (!extra.has(key)) extra.set(key, 9_000_000 + extra.size);
+    return extra.get(key) as number;
+  };
+  const resolved = new Map<string, Map<number, MapRecord>>();
+  const resolve = (era: EraRecord, seen = new Set<string>()): Map<number, MapRecord> => {
+    const done = resolved.get(era.id);
+    if (done) return done;
+    const parent = "inherits" in era && typeof era.inherits === "string" ? byId.get(era.inherits) : undefined;
+    const nodes = parent && !seen.has(parent.id) ? new Map(resolve(parent, new Set([...seen, era.id]))) : new Map<number, MapRecord>();
+    for (const [key, value] of Object.entries(era.maps ?? {})) {
+      const id = idOf(key) as number;
+      if (value === "unchanged") { const r = retail.get(id); if (r) nodes.set(id, r); continue; }
+      if (value === null) { nodes.delete(id); continue; }
+      if (typeof value !== "object") continue;
+      const current = nodes.get(id) ?? retail.get(id);
+      const o = value as Record<string, unknown>;
+      if ("url" in o) { if (current) nodes.set(id, { ...current, art: validArt(o as MapArt) ? (o as MapArt) : current.art }); continue; }
+      const node = {
+        ...(current ?? { id, slug: String(o.slug ?? key), type: (o.type as MapType) ?? "zone", name: (o.name as MapRecord["name"]) ?? { en: key, ru: key }, parentId: null, children: [], rectInParent: null, art: null }),
+        id,
+        ...(o.art !== undefined ? { art: validArt(o.art as MapArt) ? (o.art as MapArt) : null } : {}),
+        ...(o.rectInParent !== undefined ? { rectInParent: o.rectInParent as Rect | null } : {}),
+        ...(o.name ? { name: o.name as MapRecord["name"] } : {}),
+        ...(o.parentId !== undefined ? { parentId: idOf(o.parentId as string | number | null) } : {}),
+        ...(o.type ? { type: o.type as MapType } : {}),
+      } as MapRecord;
+      nodes.set(id, node);
+    }
+    resolved.set(era.id, nodes);
+    return nodes;
+  };
+  const poisOf = (era: EraRecord, placed: Map<number, AtlasMap>): AtlasPoi[] | null => {
+    const list = (era as EraRecord & { pois?: PoiRecord[] }).pois;
+    if (!list) {
+      const parent = "inherits" in era && typeof era.inherits === "string" ? byId.get(era.inherits) : undefined;
+      return parent ? poisOf(parent, placed) : null;
+    }
+    return list
+      .map((poi) => ({ poi, map: idOf(poi.mapId as unknown as string), target: idOf(poi.targetMapId as unknown as string) }))
+      .filter((entry) => entry.map !== null && placed.has(entry.map) && Number.isFinite(entry.poi.x) && Number.isFinite(entry.poi.y))
+      .map((entry) => toPoi(entry.poi, lang, entry.map as number, entry.target !== null && placed.has(entry.target) ? entry.target : undefined));
+  };
+  const placedOf = new Map<string, Map<number, AtlasMap>>();
+  const placeEra = (era: EraRecord) => {
+    let done = placedOf.get(era.id);
+    if (!done) { done = placeRecords(resolve(era), lang, base, 1000); placedOf.set(era.id, done); }
+    return done;
+  };
+  return eras.map((era) => {
+    const placed = placeEra(era);
+    const parent = "inherits" in era && typeof era.inherits === "string" ? byId.get(era.inherits) : undefined;
+    // A variant keeps only what differs from its parent era (the viewer lays it over the parent).
+    const against = parent ? placeEra(parent) : base;
+    const own: AtlasMap[] = [];
+    const only: number[] = [];
+    for (const node of placed.values()) {
+      const current = against.get(node.id);
+      if (current && sameNode(node, current)) only.push(node.id);
+      else own.push({ ...node, page: base.get(node.id)?.page ?? false });
+    }
+    return {
+      id: era.id, name: era.name?.[lang] || era.name?.en || era.id, range: rangeOf(era.patchRange), product: era.source?.product ?? "wow",
+      ...(parent ? { inherits: parent.id } : {}),
+      only: parent || only.length === base.size ? null : only.sort((x, y) => x - y),
+      own,
+      pois: parent ? null : poisOf(era, placed),
+    };
+  });
 }
 
 /** A patch range as [from, to]; an open range (the current expansion) ends with its own major version. */

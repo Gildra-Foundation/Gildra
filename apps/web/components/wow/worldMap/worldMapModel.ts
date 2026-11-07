@@ -1,4 +1,4 @@
-import { comparePatch, patchParts, type AtlasBundle, type AtlasEra, type AtlasMap, type Lang } from "@/lib/wow/worldMap/bundle";
+import { comparePatch, patchParts, type ArtEraInfo, type AtlasBundle, type AtlasEra, type AtlasMap, type Lang } from "@/lib/wow/worldMap/bundle";
 import { EXPANSIONS, worldMapCopy } from "./worldMapCopy";
 
 /** Shared by the server page and the viewer: facts, timeline positions, eras. */
@@ -73,9 +73,25 @@ export function eraAt(eras: AtlasEra[], position: number) {
   return found;
 }
 
-/** Maps whose art differs between two eras. */
-export function changedMaps(a: AtlasEra | null, b: AtlasEra | null) {
-  const ids = new Set<number>([...Object.keys(a?.maps ?? {}), ...Object.keys(b?.maps ?? {})].map(Number));
-  const key = (era: AtlasEra | null, id: number) => !era || !(id in era.maps) ? "current" : era.maps[id]?.url ?? "absent";
-  return [...ids].filter((id) => key(a, id) !== key(b, id));
+/** Where the thumb rests in an era: early in it (its own art is in place); at today's end for the latest. */
+export function restOf(eras: AtlasEra[], era: AtlasEra) {
+  const latest = orderedEras(eras).at(-1);
+  if (era.id === latest?.id) return Math.min(EXPANSIONS.length - 0.04, patchPosition(era.range[1]) + 0.4);
+  return Math.min(patchPosition(era.range[1]), patchPosition(era.range[0]) + 0.05);
 }
+
+/**
+ * The art at a moment of the timeline: the client era it falls into (else the
+ * last one that began before), plus its variants running then (Theramore in
+ * ruins from 5.1).
+ */
+export function artErasAt(art: ArtEraInfo[], position: number): ArtEraInfo[] {
+  const inside = (era: ArtEraInfo) => patchPosition(era.range[0]) <= position + 1e-6 && position <= patchPosition(era.range[1]) + 0.009;
+  const mains = art.filter((era) => !era.inherits);
+  const base = mains.find(inside)
+    ?? [...mains].filter((era) => patchPosition(era.range[0]) <= position).sort((a, b) => patchPosition(b.range[0]) - patchPosition(a.range[0]))[0]
+    ?? mains[0];
+  if (!base) return [];
+  return [base, ...art.filter((era) => era.inherits === base.id && inside(era))];
+}
+export const artKey = (eras: ArtEraInfo[]) => eras.map((era) => era.id).join("+") || "current";

@@ -27,7 +27,7 @@ export type MarkerIndex = {
   byId: Map<number, AtlasMap>;
 };
 
-export function indexMarkers(bundle: AtlasBundle): MarkerIndex {
+export function indexMarkers(bundle: Pick<AtlasBundle, "maps" | "pois" | "events">): MarkerIndex {
   const poisByMap = new Map<number, AtlasPoi[]>();
   for (const poi of bundle.pois) poisByMap.set(poi.map, [...(poisByMap.get(poi.map) ?? []), poi]);
   const eventsByMap = new Map<number, AtlasEvent[]>();

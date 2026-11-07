@@ -41,7 +41,7 @@ export type PoiRecord = {
 };
 
 /** Per-era picture of a map: other art, the current art, or absent in that era. */
-export type EraMapOverride = MapArt | "unchanged" | null | { art?: MapArt | null; rectInParent?: Rect };
+export type EraMapOverride = MapArt | "unchanged" | null | { art?: MapArt | null; rectInParent?: Rect | null; name?: Words; parentId?: number | string | null; children?: Array<number | string> } | MapRecord;
 export type PatchRange = [string, string] | { from: string; to: string | null };
 /** An era of the art (eras.json): the game's maps as a client of that time drew them. */
 export type EraRecord = {
@@ -49,8 +49,13 @@ export type EraRecord = {
   name: Words;
   expansion: string;
   patchRange: PatchRange;
-  source?: { product: "wow" | "wow_classic" | "wow_classic_era"; build: string };
+  source?: { product: string; build: string };
   maps?: Record<string, EraMapOverride>;
+  /** A phase of a few maps inside the parent era's time. */
+  inherits?: string;
+  rootMapId?: number;
+  /** That client's points (replace the current ones). */
+  pois?: PoiRecord[];
 };
 /** An era of the timeline (eras-meta.json): one per expansion. */
 export type EraMeta = {

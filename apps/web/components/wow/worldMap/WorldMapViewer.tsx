@@ -3,16 +3,16 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import { ArrowUpRight, Bird, Castle, ChevronUp, Crown, DoorOpen, Expand, Flame, Hourglass, Layers as LayersIcon, Minus, Mountain, Orbit, Pickaxe, Plus, Search, Shrink, Skull, Sparkles, Swords, Tent, X } from "lucide-react";
 import { lessMotion, subscribeSiteMotion } from "@gildra/atlas-ui/motionPreference";
-import type { AtlasBundle, AtlasEra, AtlasEvent, AtlasMap, AtlasPoi, Lang } from "@/lib/wow/worldMap/bundle";
+import type { ArtEra, AtlasBundle, AtlasEra, AtlasEvent, AtlasMap, AtlasPoi, Lang } from "@/lib/wow/worldMap/bundle";
 import { mapPagePath } from "@/lib/wow/worldMap/bundle";
 import type { PoiKind } from "@/lib/wow/worldMap/types";
-import { WorldMapEngine, type FrameInfo, type Insets } from "./engine/WorldMapEngine";
+import { composeSet, mapSet, WorldMapEngine, type FrameInfo, type Insets, type MapSet } from "./engine/WorldMapEngine";
 import { DEFAULT_LAYERS, indexMarkers, pickMarkers, type Layers, type Marker } from "./mapMarkers";
 import { buildSearch, type SearchHit } from "./mapSearch";
 import { MapTimeline } from "./MapTimeline";
 import type { StageCrumb, StageHandle } from "./WorldMapStage";
 import { worldMapCopy } from "./worldMapCopy";
-import { changedMaps, currentEra, mapLine, orderedEras } from "./worldMapModel";
+import { artErasAt, artKey, eraAt, mapLine, orderedEras, patchPosition, restOf } from "./worldMapModel";
 import styles from "./worldMapViewer.module.css";
 
 type Selected = { type: "poi"; poi: AtlasPoi } | { type: "event"; event: AtlasEvent } | null;
@@ -49,8 +49,11 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const markerList = useRef<Placed[]>([]);
   const [layers, setLayers] = useState<Layers>(DEFAULT_LAYERS);
   const [layersOpen, setLayersOpen] = useState(false);
-  const [eraId, setEraId] = useState<string | null>(null);
-  const [compare, setCompare] = useState<{ left: string; right: string } | null>(null);
+  // The moment of the timeline (null: today) and, when comparing, the moment on the left of the divider.
+  const [position, setPosition] = useState<number | null>(null);
+  const [compare, setCompare] = useState<{ left: number } | null>(null);
+  const [eraData, setEraData] = useState<Record<string, ArtEra>>({});
+  const [activeSet, setActiveSet] = useState<MapSet | null>(null);
   const [divider, setDivider] = useState(0.5);
   const [selected, setSelected] = useState<Selected>(null);
   const [focus, setFocus] = useState<AtlasMap | null>(null);
@@ -63,7 +66,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const [reduced, setReduced] = useState(false);
   const routeEls = useRef<Array<SVGPathElement | null>>([]);
   const lastPick = useRef(0);
-  const state = useRef({ layers, eraId, selected, compare });
+  const state = useRef({ layers, eraParam: null as string | null, metaEra: null as AtlasEra | null, selected, compare });
   const dock = useRef<HTMLDivElement>(null);
   const titleBar = useRef<HTMLElement | null>(null);
 
@@ -75,9 +78,43 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   }, [bundleUrl]);
 
   const eras = useMemo(() => (bundle ? orderedEras(bundle.eras) : []), [bundle]);
-  const eraById = useMemo(() => new Map(eras.map((era) => [era.id, era])), [eras]);
-  const era = (eraId ? eraById.get(eraId) : null) ?? currentEra(eras);
-  const index = useMemo(() => (bundle ? indexMarkers(bundle) : null), [bundle]);
+  const latestPos = eras.length ? restOf(eras, eras[eras.length - 1]) : 0;
+  const pos = position ?? latestPos;
+  const era = eraAt(eras, pos);
+  const art = useMemo(() => bundle?.art ?? [], [bundle]);
+  const artNow = useMemo(() => artErasAt(art, pos), [art, pos]);
+  const artLeft = useMemo(() => (compare ? artErasAt(art, compare.left) : []), [art, compare]);
+  const baseSet = useMemo(() => (bundle ? mapSet("current", bundle.maps) : null), [bundle]);
+  const sets = useRef(new Map<string, MapSet>());
+  // The maps of a moment once its eras have arrived (else null and the map keeps what it shows).
+  const setFor = useCallback((infos: typeof art) => {
+    if (!baseSet) return null;
+    if (!infos.length) return baseSet;
+    const key = artKey(infos);
+    const cached = sets.current.get(key);
+    if (cached) return cached;
+    const loaded = infos.map((info) => eraData[info.id]);
+    if (loaded.some((entry) => !entry)) return null;
+    const made = composeSet(key, baseSet, loaded);
+    sets.current.set(key, made);
+    return made;
+  }, [baseSet, eraData]);
+  const index = useMemo(() => {
+    if (!bundle || !baseSet) return null;
+    const set = activeSet ?? baseSet;
+    const first = artNow[0] ? eraData[artNow[0].id] : undefined;
+    const pois = first?.pois ?? bundle.pois.filter((poi) => set.maps.has(poi.map));
+    // Events sit on the current maps' coordinates: shown where the era draws that map in the same place.
+    // An older client draws its maps in other projections: there only maps with the current picture keep the points.
+    const retailArt = !first || first.product === "wow";
+    const events = bundle.events.filter((event) => {
+      if (event.map === null) return false;
+      const now = set.maps.get(event.map), current = baseSet.maps.get(event.map);
+      if (!now || !current || !now.frame.every((v, i) => Math.abs(v - current.frame[i]) < 1e-9)) return false;
+      return retailArt || now.art?.url === current.art?.url;
+    });
+    return indexMarkers({ maps: [...set.maps.values()], pois, events });
+  }, [bundle, baseSet, activeSet, artNow, eraData]);
   const search = useMemo(() => (bundle ? buildSearch(bundle) : null), [bundle]);
   const hits = useMemo(() => (search && query ? search(query) : []), [search, query]);
   const byId = index?.byId;
@@ -138,8 +175,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     if (now - lastPick.current > (info.moving ? 160 : 60)) {
       lastPick.current = now;
       const s = state.current;
-      const eraNow = (s.eraId ? eraByIdRef.current.get(s.eraId) : null) ?? currentEraRef.current;
-      const next = pickMarkers(info, index, s.layers, eraNow, (x, y) => engine.project(x, y), (map) => engine.artIn(map, eraNow));
+      const next = pickMarkers(info, index, s.layers, s.metaEra, (x, y) => engine.project(x, y), (map) => map.art);
       const same = next.length === markerList.current.length && next.every((m, i) => m.key === markerList.current[i].key);
       if (!same) { markerList.current = next; setMarkers(next); }
     }
@@ -148,8 +184,6 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const hoverPoiRef = useRef<AtlasPoi | null>(null);
   const byIdRef = useRef(byId);
   const poisRef = useRef(new Map<string, AtlasPoi>());
-  const eraByIdRef = useRef(eraById);
-  const currentEraRef = useRef<AtlasEra | null>(null);
 
   useEffect(() => {
     if (bundle) poisRef.current = new Map(bundle.pois.map((poi) => [poi.id, poi]));
@@ -172,8 +206,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       params.set("y", ((info.camera.y - pathMap.frame[1]) / h).toFixed(4));
       params.set("z", z.toFixed(2));
     }
-    const latest = currentEraRef.current;
-    if (s.eraId && s.eraId !== latest?.id) params.set("era", s.eraId);
+    if (s.eraParam) params.set("era", s.eraParam);
     if (s.selected?.type === "event") params.set("event", s.selected.event.id);
     if (s.compare) params.set("cmp", "1");
     const path = pathMap.id === homeId ? "/wow/map" : mapPagePath(pathMap);
@@ -199,7 +232,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     titleBar.current = stage.current?.querySelector("header") ?? null;
     let engine: WorldMapEngine;
     try {
-      engine = new WorldMapEngine(canvas.current, surface.current, bundle, {
+      engine = new WorldMapEngine(canvas.current, surface.current, baseSet ?? mapSet("current", bundle.maps), {
         frame: (info) => onFrameRef.current(info),
         focus: (chain) => onFocusRef.current(chain),
         hover: (map) => setHoverMap(map?.id ?? null),
@@ -214,9 +247,9 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     // Checks and performance probes read the viewer from the page.
     (window as Window & { __worldMap?: WorldMapEngine }).__worldMap = engine;
     const q = readQuery();
-    const startEra = q.era && bundle.eras.some((e) => e.id === q.era) ? q.era : null;
-    if (startEra) { setEraId(startEra); engine.setEra(bundle.eras.find((e) => e.id === startEra) ?? null, false); }
-    else engine.setEra(currentEra(orderedEras(bundle.eras)), false);
+    const ordered = orderedEras(bundle.eras);
+    const startEra = q.era ? ordered.find((e) => e.id === q.era) : undefined;
+    if (startEra) setPosition(restOf(ordered, startEra));
     const start = mapId ?? homeId;
     const map = start === null ? undefined : engine.maps.get(start);
     if (map) {
@@ -229,12 +262,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const event = q.event ? bundle.events.find((e) => e.id === q.event) : undefined;
     if (event) {
       setSelected({ type: "event", event });
-      if (!startEra) {
-        const eventEra = event.after ?? event.era;
-        setEraId(eventEra);
-        engine.setEra(bundle.eras.find((e) => e.id === eventEra) ?? null, false);
-      }
-      if (q.compare && event.before && event.after) setCompare({ left: event.before, right: event.after });
+      if (!startEra) setPosition(patchPosition(event.patch));
+      if (q.compare) setCompare({ left: patchPosition(event.patch) - 0.011 });
     }
     const stageHandle = handle.current;
     stageHandle?.onCrumb((id) => engine.flyToMap(id));
@@ -252,11 +281,9 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const settleRef = useRef(settle);
   // The engine calls back through refs: they follow the latest render.
   useLayoutEffect(() => {
-    state.current = { layers, eraId, selected, compare };
+    state.current = { layers, eraParam: position !== null && era && Math.abs(pos - latestPos) > 1e-6 ? era.id : null, metaEra: era, selected, compare };
     hoverPoiRef.current = hoverPoi;
     byIdRef.current = byId;
-    eraByIdRef.current = eraById;
-    currentEraRef.current = currentEra(eras);
     onFrameRef.current = onFrame;
     onFocusRef.current = onFocus;
     settleRef.current = settle;
@@ -274,14 +301,39 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   }, [bundle]);
 
   useEffect(() => { engineRef.current?.setOptions({ alive: layers.alive, reducedMotion: reduced }); }, [layers.alive, reduced]);
-  useEffect(() => { engineRef.current?.setEra(era); engineRef.current?.invalidate(); }, [era]);
+  // The eras the timeline needs come on demand (one small file each).
+  useEffect(() => {
+    const missing = [...artNow, ...artLeft].map((info) => info.id).filter((id) => !eraData[id]);
+    if (!missing.length) return;
+    let cancelled = false;
+    const base = bundleUrl.replace(/\?.*$/, "");
+    const version = bundleUrl.includes("?") ? bundleUrl.slice(bundleUrl.indexOf("?")) : "";
+    Promise.all([...new Set(missing)].map((id) => fetch(`${base}/${id}${version}`).then((r) => (r.ok ? r.json() as Promise<ArtEra> : null)).catch(() => null)))
+      .then((list) => {
+        if (cancelled) return;
+        const loaded = list.filter((entry): entry is ArtEra => Boolean(entry));
+        if (loaded.length) setEraData((data) => ({ ...data, ...Object.fromEntries(loaded.map((entry) => [entry.id, entry])) }));
+      });
+    return () => { cancelled = true; };
+  }, [artNow, artLeft, eraData, bundleUrl]);
+  // The map follows the timeline: the moment's maps cross-fade in (at once on the first draw).
+  const firstSet = useRef(true);
+  useEffect(() => {
+    const engine = engineRef.current;
+    const set = setFor(artNow);
+    if (!engine || !set) return;
+    engine.setMapSet(set, !firstSet.current);
+    firstSet.current = false;
+    setActiveSet(set);
+  }, [artNow, setFor, bundle]);
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
-    engine.setCompare(compare ? { left: eraById.get(compare.left) ?? null, right: eraById.get(compare.right) ?? null, at: divider } : null);
-  }, [compare, divider, eraById]);
-  useEffect(() => { lastPick.current = 0; engineRef.current?.invalidate(); }, [layers, eraId]);
-  useEffect(() => { const engine = engineRef.current; if (engine?.view && engine.focus) settleRef.current({ camera: engine.view, ...engine.size, focus: engine.focus, drawn: [], moving: false, time: 0 }); }, [eraId, selected, compare]);
+    const left = compare ? setFor(artLeft) : null;
+    engine.setCompare(left ? { left, at: divider } : null);
+  }, [compare, divider, artLeft, setFor]);
+  useEffect(() => { lastPick.current = 0; engineRef.current?.invalidate(); }, [layers, activeSet]);
+  useEffect(() => { const engine = engineRef.current; if (engine?.view && engine.focus) settleRef.current({ camera: engine.view, ...engine.size, focus: engine.focus, drawn: [], moving: false, time: 0 }); }, [era?.id, position, selected, compare]);
 
   // ------------------------------------------------------------ actions
   const flyToPoi = useCallback((poi: AtlasPoi) => {
@@ -297,7 +349,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const openEvent = useCallback((event: AtlasEvent) => {
     const engine = engineRef.current;
     setSelected({ type: "event", event });
-    setEraId(event.after ?? event.era);
+    setPosition(patchPosition(event.patch));
     if (!engine || event.map === null) return;
     const map = engine.maps.get(event.map);
     engine.flyToPoint(event.map, event.x, event.y, map && (map.type === "continent" || map.type === "world") ? 1.6 : 1.2);
@@ -312,21 +364,40 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     else openEvent(hit.event);
   }, [flyToPoi, openEvent]);
 
+  // Earlier (or later) eras that draw the map in view differently: what "Compare" can show.
   const changedHere = useMemo(() => {
-    if (!focus || !era || eras.length < 2) return [] as AtlasEra[];
-    const ids = new Set([focus.id, ...focus.children, ...(focus.parent !== null ? [focus.parent] : [])]);
-    return eras.filter((other) => other.id !== era.id && changedMaps(other, era).some((id) => ids.has(id)));
-  }, [focus, era, eras]);
+    if (!focus || eras.length < 2) return [] as AtlasEra[];
+    const ids = new Set([focus.id, ...(focus.parent !== null ? [focus.parent] : [])]);
+    const keyNow = artKey(artNow);
+    const touches = (infos: typeof art) => infos.some((info) => info.changed.some((id) => ids.has(id)));
+    return eras.filter((other) => {
+      const infos = artErasAt(art, restOf(eras, other));
+      return artKey(infos) !== keyNow && (touches(infos) || touches(artNow));
+    });
+  }, [focus, eras, art, artNow]);
 
   const toggleCompare = useCallback(() => {
     if (compare) { setCompare(null); return; }
     const event = selected?.type === "event" ? selected.event : null;
-    if (event?.before && event.after) { setCompare({ left: event.before, right: event.after }); setEraId(event.after); return; }
-    const other = changedHere.at(-1) ?? eras.find((e) => e.id !== era?.id);
-    if (!other || !era) return;
-    const [left, right] = eras.indexOf(other) < eras.indexOf(era) ? [other, era] : [era, other];
-    setCompare({ left: left.id, right: right.id });
-  }, [compare, selected, changedHere, eras, era]);
+    if (event) {
+      // Just before the event on the left, the event's moment on the right.
+      const at = patchPosition(event.patch);
+      setPosition(at);
+      if (artKey(artErasAt(art, at - 0.011)) !== artKey(artErasAt(art, at))) { setCompare({ left: at - 0.011 }); return; }
+      // The picture may change a little after the patch named by the event (a phase of the art): find it.
+      const ids = new Set([...(event.map !== null ? [event.map] : []), ...(event.changed ?? [])]);
+      const phase = art.find((info) => info.inherits && info.changed.some((id) => ids.has(id)) && patchPosition(info.range[0]) >= at && patchPosition(info.range[0]) - at < 1);
+      if (phase) { const start = patchPosition(phase.range[0]); setPosition(start); setCompare({ left: start - 0.011 }); return; }
+      const before = event.before ? eras.find((e) => e.id === event.before) : undefined;
+      if (before) { setCompare({ left: restOf(eras, before) }); return; }
+    }
+    const earlier = changedHere.filter((other) => restOf(eras, other) < pos);
+    const other = earlier.at(-1) ?? changedHere[0];
+    if (!other) return;
+    const otherPos = restOf(eras, other);
+    if (otherPos < pos) setCompare({ left: otherPos });
+    else { setCompare({ left: pos }); setPosition(otherPos); }
+  }, [compare, selected, changedHere, eras, art, pos]);
 
   const toggleFull = () => {
     const el = stage.current;
@@ -373,8 +444,15 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     for (let m = map; m && byId; m = m.parent === null ? undefined : byId.get(m.parent)) if (m.type !== "cosmic") out.push(m.name);
     return out.slice(0, 2).join(", ");
   };
-  const leftEra = compare ? eraById.get(compare.left) : null;
-  const rightEra = compare ? eraById.get(compare.right) : null;
+  // The divider's tags name the pictures: the client era, or the phase of the map (Fall of Theramore).
+  const artName = (infos: typeof art) => {
+    const phase = focus ? infos.slice(1).find((info) => info.changed.includes(focus.id)) : undefined;
+    return (phase ?? infos[0])?.name ?? era?.name ?? "";
+  };
+  const leftEra = compare ? { name: artName(artLeft) } : null;
+  const rightEra = compare ? { name: artName(artNow) } : null;
+  const patchOf = (at: number) => `${Math.floor(at) + 1}.${Math.floor((at % 1) * 10 + 1e-6)}`;
+  const sameName = leftEra && rightEra && leftEra.name === rightEra.name;
 
   return (
     <>
@@ -437,8 +515,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
 
       {compare && leftEra && rightEra ? (
         <div className={styles.compare} style={{ left: `${divider * 100}%` }} data-map-ui>
-          <span className={styles.compareTag} data-side="left">{leftEra.name}</span>
-          <span className={styles.compareTag} data-side="right">{rightEra.name}</span>
+          <span className={styles.compareTag} data-side="left">{leftEra.name}{sameName && compare ? ` · ${patchOf(compare.left)}` : ""}</span>
+          <span className={styles.compareTag} data-side="right">{rightEra.name}{sameName ? ` · ${patchOf(pos)}` : ""}</span>
           <div className={styles.compareHandle} role="slider" tabIndex={0} aria-label={copy.divider}
             aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(divider * 100)}
             onPointerDown={startDivider}
@@ -515,7 +593,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
                 <h2 className={styles.cardTitle}>{selected.event.title}</h2>
                 <p className={styles.cardText}>{selected.event.summary}</p>
                 <div className={styles.cardActions}>
-                  {selected.event.before && selected.event.after ? (
+                  {selected.event.before || selected.event.changed?.length ? (
                     <button type="button" className={styles.cardButton} aria-pressed={Boolean(compare)} onClick={toggleCompare}>{compare ? copy.compareOff : copy.compare}</button>
                   ) : null}
                   {selected.event.links.map((link) => (
@@ -527,9 +605,9 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
           </article>
         ) : null}
         {eras.length > 1 ? (
-          <MapTimeline lang={lang} eras={eras} events={bundle?.events ?? []} era={era} activeEvent={selected?.type === "event" ? selected.event : null}
-            compare={Boolean(compare)} canCompare={changedHere.length > 0}
-            onEra={(next) => { setEraId(next.id); if (compare) setCompare(null); }} onEvent={openEvent} onCompare={toggleCompare} />
+          <MapTimeline lang={lang} eras={eras} events={bundle?.events ?? []} position={pos} activeEvent={selected?.type === "event" ? selected.event : null}
+            compare={Boolean(compare)} canCompare={changedHere.length > 0 || (selected?.type === "event" && Boolean(selected.event.before || selected.event.changed?.length))}
+            onPosition={setPosition} onEvent={openEvent} onCompare={toggleCompare} />
         ) : null}
       </div>
       {!bundle ? <p className={styles.loading} role="status">{copy.loading}</p> : null}

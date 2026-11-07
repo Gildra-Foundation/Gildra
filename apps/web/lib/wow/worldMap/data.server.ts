@@ -2,7 +2,7 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import { buildAtlasBundle, mapPageParam, type AtlasBundle, type AtlasMap, type Lang } from "./bundle";
+import { buildAtlasBundle, mapPageParam, type ArtEra, type AtlasBundle, type AtlasMap, type Lang } from "./bundle";
 import type { WorldMapData } from "./types";
 
 /**
@@ -24,7 +24,7 @@ function readJson<T>(name: string, fallback: T): T {
   }
 }
 
-let cached: { data: WorldMapData; version: string; bundles: Partial<Record<Lang, AtlasBundle>> } | null = null;
+let cached: { data: WorldMapData; version: string; bundles: Partial<Record<Lang, AtlasBundle & { artEras: ArtEra[] }>> } | null = null;
 
 function load() {
   if (cached) return cached;
@@ -40,9 +40,25 @@ function load() {
   return cached;
 }
 
-export function worldMapBundle(lang: Lang): AtlasBundle {
+function full(lang: Lang) {
   const state = load();
   return (state.bundles[lang] ??= buildAtlasBundle(state.data, lang));
+}
+
+/** The viewer's main bundle (the art eras' maps are served one by one). */
+export function worldMapBundle(lang: Lang): AtlasBundle {
+  const { artEras: _artEras, ...bundle } = full(lang);
+  void _artEras;
+  return bundle;
+}
+
+/** One art era's maps and points. */
+export function worldMapArtEra(lang: Lang, id: string): ArtEra | null {
+  return full(lang).artEras.find((era) => era.id === id) ?? null;
+}
+
+export function worldMapArtEraIds() {
+  return full("en").artEras.map((era) => era.id);
 }
 
 /** Changes with the data: the viewer's bundle URL carries it so a new release never serves a stale copy. */

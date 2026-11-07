@@ -501,7 +501,7 @@
   .peek { width: 220px; }
   .rune { width: 12px; height: 12px; }
   .rune span { border-width: 1.5px; }
-  .compareTag { top: 200px; font-size: 0.875rem; }
+  .compareTag { top: calc(var(--map-search-top, 118px) + 168px); max-width: 44vw; overflow: hidden; text-overflow: ellipsis; font-size: 0.875rem; }
   .labelText { font-size: 0.875rem; }
   .mapLabel[data-size="world"] .labelText { font-size: 1.125rem; }
   .mapLabel[data-size="continent"] .labelText { font-size: 1rem; }
