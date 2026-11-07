@@ -60,3 +60,6 @@
 
 @media (prefers-reduced-motion: reduce) { .version, .version::after { transition: none; } }
 @media (forced-colors: active) { .version[aria-current]::after { background: Highlight; forced-color-adjust: none; } }
+
+/* The strip sits above the bar on every page: the home first screen gives its height back. */
+:global(html) { --wow-version-strip-height: 34px; }
