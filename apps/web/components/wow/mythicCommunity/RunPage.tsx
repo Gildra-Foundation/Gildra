@@ -1,6 +1,7 @@
+import { routeViewerCopy } from "./routeViewerCopy";
 import Image from "next/image";
 import { Suspense, type CSSProperties, type ReactNode } from "react";
-import { ArrowRight, ArrowUpRight, Clapperboard, HeartPulse, Map as MapIcon, Route, Shield, Skull, Sparkles, Swords } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Clapperboard, HeartPulse, Route, Shield, Skull, Sparkles, Swords } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { DungeonAtmosphere, MaterialLinkButton, MaterialPlaque, MythicHubBackdrop, type MaterialKit } from "@/components/wow/shared/materialAtlas";
 import { dungeonArtDirections, dungeonAtmospheres, dungeonCardScene } from "@/lib/wow/dungeonArtDirection";
@@ -8,7 +9,7 @@ import { wowSourceName, wowSourceNameLang } from "@/lib/wow/sourceLocale";
 import { heroName, leaderboardSpec, talentsUrl } from "@/lib/games/wow/mplusLeaderboardView";
 import { clock } from "@/lib/games/wow/mythicPlusRunsTypes";
 import { runHref, upgradeMarks, type RunDetail, type RunLoad, type RunPlayer, type RunRole } from "@/lib/games/wow/mythicPlusRunTypes";
-import { loadRunReplay, similarLoggedRun, type LoggedRunLink, type ReplayView } from "@/lib/games/wow/mythicPlusRunLog";
+import { loadRunReplay, loadSimilarRoute, type LoggedRunLink, type ReplayView } from "@/lib/games/wow/mythicPlusRunLog";
 import type { ReplayStat } from "@/lib/games/wow/mythicPlusReplayModel";
 import { playerProfilePath } from "@/lib/wow/playerProfileView";
 import { dungeonFrameArtwork } from "@/lib/wow/dungeonArtDirection";
@@ -28,8 +29,7 @@ const fallbackKit: MaterialKit = "temple-of-sethraliss";
 export function RunPage({ locale, load }: { locale: Locale; load: RunLoad }) {
   const copy = communityCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
-  const finder = `${prefix}/wow/mythic-plus/routes`;
-  if (load.state !== "ready") return <Unavailable locale={locale} copy={copy} finder={finder} />;
+  if (load.state !== "ready") return <Unavailable locale={locale} copy={copy} finder={`${prefix}/wow/mythic-plus/routes`} />;
 
   const { run } = load;
   const slug = run.dungeon.slug;
@@ -59,10 +59,6 @@ export function RunPage({ locale, load }: { locale: Locale; load: RunLoad }) {
           breadcrumbs={crumbs}
           eyebrow={eyebrow}
           title={<span lang={dungeon.lang}>{dungeon.name}</span>}
-          actions={<div className={styles.actions}>
-            {season ? <MaterialLinkButton kit={kit} href={`${prefix}/wow/mythic-plus/midnight-season-2/${season}`} variant="primary" fit="stack" icon={<MapIcon aria-hidden="true" />}>{copy.run.dungeonRoute}</MaterialLinkButton> : null}
-            <MaterialLinkButton kit={kit} href={`${finder}?dungeon=${encodeURIComponent(slug)}`} fit="stack" icon={<Route aria-hidden="true" />}>{copy.run.moreRuns}</MaterialLinkButton>
-          </div>}
           aside={<KeyPlaque run={run} kit={kit} season={season} copy={copy} locale={locale} />}
         />
         {run.affixes.length ? (
@@ -89,18 +85,18 @@ type BodyProps = { run: RunDetail; kit: MaterialKit; season: DungeonSlug | null;
 
 async function LoggedRunBody(props: BodyProps) {
   const view = await loadRunReplay(props.run);
-  const similar = view ? null : await similarLoggedRun(props.run);
-  return <RunBody {...props} view={view} similar={similar} />;
+  const fallback = view ? null : await loadSimilarRoute(props.run);
+  return <RunBody {...props} view={view} fallback={fallback} />;
 }
 
 /** Clock, route and group. `view` undefined = log not resolved yet, null = the run has no log. */
-function RunBody({ run, kit, season, copy, locale, prefix, view, similar }: BodyProps & { view?: ReplayView | null; similar?: LoggedRunLink | null }) {
+function RunBody({ run, kit, season, copy, locale, prefix, view, fallback }: BodyProps & { view?: ReplayView | null; fallback?: { run: RunDetail; view: ReplayView } | null }) {
   const stats = new Map((view?.replay.stats ?? []).map((stat) => [stat.player, stat]));
   return (
     <>
-      <RunClock run={run} kit={kit} copy={copy} locale={locale} bar={!view} />
       {view ? <RouteSection run={run} view={view} kit={kit} season={season} copy={copy} locale={locale} />
-        : view === null ? <NoLog kit={kit} season={season} copy={copy} prefix={prefix} similar={similar ?? null} /> : null}
+        : fallback ? <><p className={styles.similarLabel}>{routeViewerCopy[locale].similar} · +{fallback.run.level} · {clock(fallback.run.clearMs)} <a href={runHref(prefix, fallback.run.id)} aria-label={routeViewerCopy[locale].open}>↗</a></p><RouteSection run={fallback.run} view={fallback.view} kit={kit} season={season} copy={copy} locale={locale} /></> : view === null ? <NoLog kit={kit} season={season} copy={copy} prefix={prefix} similar={null} /> : null}
+      <RunClock run={run} kit={kit} copy={copy} locale={locale} bar={!view} />
       <Group run={run} kit={kit} copy={copy} locale={locale} prefix={prefix} stats={stats} links={[
         view?.replay.reportUrl ? <a key="log" href={view.replay.reportUrl} rel="noreferrer nofollow" target="_blank">{copy.run.log}<ArrowUpRight aria-hidden="true" /></a> : null,
         season ? <a key="guru" href={`https://keystone.guru/routes/retail/${season}`} rel="noreferrer" target="_blank">{copy.run.guru}<ArrowUpRight aria-hidden="true" /></a> : null,

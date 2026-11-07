@@ -240,3 +240,15 @@ a.playerName:focus-visible { outline: 2px solid var(--class-color, var(--atlas-a
 
 /* Touch: player names are 44 px targets without moving the rows. */
 @media (pointer: coarse) { a.playerName { margin-block: -10px; padding-block: 10px; } }
+
+.hero { min-height: 0; }
+.heroHeader { padding-block: var(--atlas-space-4); }
+.heroHeader h1 { font-size: var(--atlas-text-h2); }
+.similarLabel { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.similarLabel a { display: inline-grid; place-items: center; width: 44px; height: 44px; color: var(--atlas-accent); }
+.heroHeader > div:last-child { padding-block: 0; }
+.keyPlaque { min-width: 200px; padding: 12px 22px 12px 80px; }
+.relic { left: 18px; width: 48px; }
+.keyLevel { font-size: var(--atlas-text-h2); }
+.affixes { margin-top: var(--atlas-space-2); }
+.section { margin-top: var(--atlas-space-4); }
