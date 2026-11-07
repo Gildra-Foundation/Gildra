@@ -2,9 +2,10 @@ import type { AtlasMap } from "@/lib/wow/worldMap/bundle";
 import type { MapArt } from "@/lib/wow/worldMap/types";
 import { clamp, contains, easeInOut, fitBox, flightPath, intersects, smoothstep, toAtlas, toScreen, zoomAt, type Box, type Camera } from "./camera";
 import { MapRenderer, type DrawParams } from "./gl";
-import { blurGroups, blurOf, blurRadiusPx, desatOf, dimOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "./lod";
+import { blurGroups, blurKey, blurOf, blurRadiusCss, blurRadiusPx, desatOf, dimOf, radiusOfKey, vignetteOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "./lod";
 import { wheelKind } from "./input";
 import { analysePaper } from "./paper";
+import { decorBoxes, labelBoxes, type ArtBox } from "./painted";
 import { chainUp, transferCamera, type MapSet } from "./sets";
 import { levelSize, levelTiles, TileStore, tileUrl } from "./tiles";
 
@@ -56,7 +57,7 @@ export type EngineOptions = { alive: boolean; reducedMotion: boolean; insets: In
 type Flight = { path: ReturnType<typeof flightPath>; start: number; duration: number; after?: () => void };
 type Pointer = { id: number; x: number; y: number };
 type TerrainDraw = { map: AtlasMap; alpha: number; clip: Box };
-type ArtStyle = { alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number; exists?: (z: number, x: number, y: number) => boolean; maskStrength?: number };
+type ArtStyle = { corner?: number; holes?: Array<[number, number, number, number]>; alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number; exists?: (z: number, x: number, y: number) => boolean; maskStrength?: number };
 
 /** Floors and caves under a place (micro maps, orphan levels like Cleft of Shadow): never opened by zooming over its surface. */
 const UNDER: ReadonlySet<string> = new Set(["micro", "orphan"]);
@@ -274,8 +275,27 @@ export class WorldMapEngine {
 
   fitMap(id: number) {
     const map = this.maps.get(id);
-    // A world or the Cosmic map on a phone comes a little closer only: its continents stay one picture.
-    return map ? this.fit(this.shown.get(id) ?? map.frame, 0.05, map.type === "world" || map.type === "cosmic" ? 1.35 : 1.9) : null;
+    return map ? this.fit(this.shown.get(id) ?? map.frame, 0.05, this.closerOf(map)) : null;
+  }
+
+  /**
+   * How much closer than "whole" a wide map comes on a tall phone screen: a continent fills the height
+   * (pan sideways), a world a little; a city is shown whole — its quarters are what the reader came for.
+   */
+  private closerOf(map: AtlasMap) {
+    if (map.type === "world" || map.type === "cosmic") return 1.35;
+    if (map.type === "continent") return 1.9;
+    const parent = map.parent === null ? undefined : this.maps.get(map.parent);
+    const share = parent ? (map.frame[2] - map.frame[0]) / Math.max(1e-9, parent.frame[2] - parent.frame[0]) : 1;
+    return parent?.type === "zone" || share < 0.08 ? 1 : 1.5;
+  }
+
+  /** "Show the map whole": the map in view fitted entirely, on any screen. */
+  showWhole() {
+    const map = this.focus;
+    if (!map) return;
+    const camera = this.fit(this.shown.get(map.id) ?? map.frame, 0.05, 1);
+    this.flyTo(camera, () => { this.home = { id: map.id, camera: this.camera }; });
   }
 
   /** The last move was a flight to a place (search, a click on a map), not a drag or wheel: true until read. */
@@ -789,13 +809,59 @@ export class WorldMapEngine {
     this.events.frame(this.lastInfo);
   }
 
+  /** The map in view and everything inside it (its own words and decor stay). */
+  private focusSubtree(set: MapSet) {
+    const out = new Set<number>();
+    const walk = (id: number) => {
+      if (out.has(id)) return;
+      out.add(id);
+      for (const child of set.maps.get(id)?.children ?? []) walk(child);
+    };
+    if (set.maps.has(this.focusId)) walk(this.focusId);
+    return out;
+  }
+
+  /**
+   * Where a map around the one in view gives way (device px): its painted names of that place
+   * (labelFor, else words over the place's frame) and its decor near it.
+   */
+  private holesOf(entry: DrawnMap, focus: AtlasMap): Array<[number, number, number, number]> {
+    const art = entry.map.art;
+    if (!art) return [];
+    const f = focus.frame, fw = f[2] - f[0], fh = f[3] - f[1];
+    const near: Box = [f[0] - fw * 0.15, f[1] - fh * 0.15, f[2] + fw * 0.15, f[3] + fh * 0.15];
+    const m = entry.map.frame, mw = m[2] - m[0], mh = m[3] - m[1];
+    const toAtlas = (b: ArtBox["box"]): Box => [m[0] + b[0] * mw, m[1] + b[1] * mh, m[0] + b[2] * mw, m[1] + b[3] * mh];
+    const out: Array<[number, number, number, number]> = [];
+    const add = (b: Box) => {
+      const [x0, y0] = this.project(b[0], b[1]), [x1, y1] = this.project(b[2], b[3]);
+      if (x1 < 0 || y1 < 0 || x0 > this.width || y0 > this.height) return;
+      out.push([x0 * this.dpr, y0 * this.dpr, x1 * this.dpr, y1 * this.dpr]);
+    };
+    // Without labelFor: only a big name over the place itself (the neighbour's "STORMWIND" banner over the
+    // city) — a word that merely touches the place's edge stays: a hole there would show the map below.
+    const core: Box = [f[0] + fw * 0.12, f[1] + fh * 0.12, f[2] - fw * 0.12, f[3] - fh * 0.12];
+    for (const label of labelBoxes(art)) {
+      if (label.for !== undefined) { if (label.for === focus.id) add(toAtlas(label.box)); continue; }
+      const b = toAtlas(label.box);
+      if (contains(core, (b[0] + b[2]) / 2, (b[1] + b[3]) / 2) && b[2] - b[0] >= fw * 0.18) add(b);
+    }
+    for (const decor of decorBoxes(art)) {
+      if (decor.for !== undefined && decor.for !== focus.id) continue;
+      const b = toAtlas(decor.box);
+      if (intersects(b, near)) add(b);
+    }
+    // The biggest first: when there are more than the shader takes, the small ones go.
+    return out.sort((a, b) => (b[2] - b[0]) * (b[3] - b[1]) - (a[2] - a[0]) * (a[3] - a[1])).slice(0, 8);
+  }
+
   /** Asks for the tiles a set needs in this view; returns the share already loaded. */
   private prefetch(set: MapSet, now: number) {
     let ready = 0, total = 0;
     const list = this.collect(set);
     for (const entry of list) {
       if (entry.alpha < 0.3 || !entry.map.art) continue;
-      const scale = entry.blur > 0.06 ? layerScale(blurRadiusPx(entry.blur, this.dpr)) : 1;
+      const scale = entry.blur > 0.06 ? layerScale(blurRadiusPx(entry.blur, this.dpr, entry.upscale)) : 1;
       const [r, t] = this.drawArt(entry.map, entry.map.art, entry.screen, entry.clip, { alpha: 0, light: 0, cloud: 0, water: 0, desat: 0, levelScale: scale }, now, true, true);
       ready += r;
       total += t;
@@ -810,9 +876,12 @@ export class WorldMapEngine {
    */
   private drawList(list: DrawnMap[], set: MapSet, eraAlpha: number, cloud: number, water: number, now: number) {
     const moving = this.moving;
-    const blurs = list.map((entry) => entry.blur);
-    for (const group of blurGroups(blurs)) {
-      const radius = blurRadiusPx(group.blur, this.dpr);
+    // Out-of-focus draws grouped by their blur radius (it grows with the magnification).
+    const keys = list.map((entry) => blurKey(blurRadiusCss(entry.blur, entry.upscale)));
+    const focus = set.maps.get(this.focusId);
+    const inFocus = this.focusSubtree(set);
+    for (const group of blurGroups(keys)) {
+      const radius = radiusOfKey(group.blur) * this.dpr;
       const scale = group.blur > 0 ? layerScale(radius) : 1;
       let upscale = 0;
       if (group.blur > 0) this.renderer.beginLayer(scale);
@@ -830,12 +899,15 @@ export class WorldMapEngine {
           maskStrength: 1,
           cloud: terrain ? cloud * (entry.map.depth <= 2 || entry.map.type === "continent" ? 1 : 0.6) : 0, water: terrain ? water : 0,
           desat: 0, levelScale: scale,
+          // Maps around the one in view: their corner ornaments go, and their painted words and decor
+          // where the place in view lies give way (no second "STORMWIND" over the city).
+          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, holes: this.holesOf(entry, focus) } : {}),
         };
         this.drawArt(entry.map, art, entry.screen, entry.clip, style, now, moving);
       }
       if (group.blur > 0) {
         const u = upscale / (group.to - group.from + 1);
-        this.renderer.endLayer(radius / scale, dimOf(u), desatOf(u));
+        this.renderer.endLayer(radius / scale, dimOf(u), desatOf(u), vignetteOf(u));
       }
     }
     // The ground of a continent over its painted maps, deep in.
@@ -908,6 +980,7 @@ export class WorldMapEngine {
       alpha: style.alpha, frame, feather, portal, light: style.light, cloud: style.cloud, water: style.water, desat: style.desat,
       mask: maskReady && maskReady.texture ? { texture: maskReady.texture, rect: [sx0, sy0, sx1, sy1], strength: maskStrength } : null,
       paper: paper ? [paper[0], paper[1], paper[2], 0.9] : null,
+      art: [sx0, sy0, sx1, sy1], corner: isTerrain ? 0 : style.corner ?? 0, holes: isTerrain ? [] : style.holes ?? [],
     };
     const centerX = W / 2, centerY = H / 2;
     const id = map.id;

@@ -30,6 +30,10 @@ export function syncHead(lang: Lang, crumbs: StageCrumb[], homeId: number | null
   set('meta[property="og:title"]', "content", title);
   set('meta[property="og:description"]', "content", description);
   set('meta[property="og:url"]', "content", origin + path);
+  // Every card format the server writes for a page: X/Twitter repeats the title and description.
+  set('meta[name="twitter:title"]', "content", title);
+  set('meta[name="twitter:description"]', "content", description);
+  set('meta[name="twitter:url"]', "content", origin + path);
   const ld = document.getElementById("world-map-trail");
   if (ld) {
     const trail = crumbs.slice(0, index + 1);

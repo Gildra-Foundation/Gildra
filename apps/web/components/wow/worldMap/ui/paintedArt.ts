@@ -1,4 +1,5 @@
 import type { AtlasMap } from "@/lib/wow/worldMap/bundle";
+import { labelBoxes } from "../engine/painted";
 
 /**
  * What the game painted into a map's own picture: the big title of the
@@ -38,10 +39,11 @@ export function paintedOf(map: AtlasMap): Painted | null {
   const at = art.url.indexOf("{z}");
   const key = (at > 0 ? art.url.slice(0, at) : art.url).replace("/maps/tiles/ru/", "/maps/tiles/");
   const table = PAINTED[key];
-  if (art.paintedLabels?.length) {
+  const labels = labelBoxes(art).map((label) => label.box);
+  if (labels.length) {
     // A continent's painted words may be only its title and seas (Kalimdor): the table knows; zones and cities name their places.
     const names = table ? table.names : Boolean(art.namesPainted) && map.type !== "continent";
-    return { titles: art.paintedLabels, names };
+    return { titles: labels, names };
   }
   return table ?? null;
 }

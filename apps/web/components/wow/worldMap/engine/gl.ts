@@ -45,6 +45,12 @@ uniform vec3 u_waterMap;
 uniform float u_light;
 uniform float u_desat;
 uniform vec4 u_paper;
+uniform vec4 u_art;
+uniform float u_corner;
+uniform vec4 u_holes[8];
+uniform float u_holeCount;
+uniform vec2 u_screen;
+uniform float u_vignette;
 varying vec2 v_uv;
 varying vec2 v_p;
 
@@ -69,6 +75,25 @@ void main() {
     vec4 k = texture2D(u_mask, clamp(m, 0.0, 1.0));
     // Opaque grey mask: luminance; a mask drawn in alpha: its alpha.
     a *= mix(1.0, k.a < 0.99 ? k.a : k.r, u_maskOn);
+  }
+  if (u_corner > 0.0) {
+    // The gold corner pieces baked into a zone picture: gone on maps around the one in view.
+    vec2 q = min(v_p - u_art.xy, u_art.zw - v_p);
+    float side = min(u_art.z - u_art.x, u_art.w - u_art.y);
+    a *= smoothstep(u_corner * side * 0.6, u_corner * side * 1.25, length(max(q, vec2(0.0))));
+  }
+  if (u_holeCount > 0.0) {
+    // Painted words and decor of a parent where the place in view lies: the parent gives way there.
+    for (int i = 0; i < 8; i++) {
+      if (float(i) >= u_holeCount) break;
+      vec4 h = u_holes[i];
+      vec2 c = (h.xy + h.zw) * 0.5, r = max((h.zw - h.xy) * 0.5, vec2(1.0));
+      // A soft oval-ish fade wider than the box: the map below shows through gradually, never as a rectangle.
+      float soft = max(6.0, max(r.x, r.y) * 0.5);
+      vec2 d = abs(v_p - c) - r;
+      float outside = length(max(d, vec2(0.0))) + min(max(d.x, d.y), 0.0);
+      a *= mix(0.08, 1.0, smoothstep(-min(r.x, r.y) * 0.6, soft, outside));
+    }
   }
   if (u_portal.z > 0.0) {
     float d = length(v_p - u_portal.xy);
@@ -105,6 +130,10 @@ void main() {
     col *= 1.0 - shade * 0.3;
   }
   if (u_desat > 0.0) col = mix(col, vec3(dot(col, vec3(0.299, 0.587, 0.114))), u_desat);
+  if (u_vignette > 0.0) {
+    vec2 e = (v_p / u_screen - 0.5) * vec2(1.0, 1.25);
+    col *= 1.0 - u_vignette * smoothstep(0.25, 0.75, length(e));
+  }
   if (u_light > 0.0) col += u_light * (vec3(0.1, 0.085, 0.05) + col * 0.18);
   else col *= 1.0 + u_light;
   gl_FragColor = vec4(col * texel.a, texel.a) * a;
@@ -145,6 +174,14 @@ export type DrawParams = {
   cloud: number;
   water: number;
   desat?: number;
+  /** The art's own rect on screen (device px), for its corners. */
+  art?: [number, number, number, number];
+  /** Fade the art's corners over this share of its smaller side (0 = keep). */
+  corner?: number;
+  /** Boxes (device px) where the picture gives way (painted words, decor). Up to 8. */
+  holes?: Array<[number, number, number, number]>;
+  /** Darken toward the screen's edges (the layer composite). */
+  vignette?: number;
   /** Colour of the bare sheet to key out and how strongly (0 = off). */
   paper?: [number, number, number, number] | null;
   /** The own-area mask and the art's rect it spans (device px). */
@@ -154,7 +191,7 @@ export type DrawParams = {
 type Target = { fb: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
 type Layer = { scale: number; a: Target; b: Target };
 
-const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat", "u_paper"];
+const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat", "u_paper", "u_art", "u_corner", "u_holes", "u_holeCount", "u_screen", "u_vignette"];
 
 export class MapRenderer {
   readonly gl: WebGLRenderingContext;
@@ -236,6 +273,7 @@ export class MapRenderer {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(this.program);
     gl.uniform2f(this.u.u_view, width, height);
+    gl.uniform2f(this.u.u_screen, width, height);
     gl.uniform1f(this.u.u_time, time);
     gl.uniform3f(this.u.u_cloudMap, ...cloudMap);
     gl.uniform3f(this.u.u_waterMap, ...waterMap);
@@ -271,6 +309,16 @@ export class MapRenderer {
     gl.uniform1f(this.u.u_desat, p.desat ?? 0);
     if (p.paper) gl.uniform4f(this.u.u_paper, ...p.paper);
     else gl.uniform4f(this.u.u_paper, 0, 0, 0, 0);
+    gl.uniform4f(this.u.u_art, ...(p.art ?? p.rect));
+    gl.uniform1f(this.u.u_corner, p.corner ?? 0);
+    gl.uniform1f(this.u.u_vignette, p.vignette ?? 0);
+    const holes = p.holes ?? [];
+    gl.uniform1f(this.u.u_holeCount, Math.min(8, holes.length));
+    if (holes.length) {
+      const flat = new Float32Array(32);
+      holes.slice(0, 8).forEach((h, i) => flat.set(h, i * 4));
+      gl.uniform4fv(this.u.u_holes, flat);
+    }
     if (p.mask) {
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, p.mask.texture);
@@ -302,8 +350,8 @@ export class MapRenderer {
     gl.uniform2f(this.u.u_view, layer.a.w * scale, layer.a.h * scale);
   }
 
-  /** Blur the layer (`radius` in its own pixels) and lay it over the screen, dimmed and greyed a little. */
-  endLayer(radius: number, dim: number, desat: number) {
+  /** Blur the layer (`radius` in its own pixels) and lay it over the screen, dimmed, greyed and vignetted a little. */
+  endLayer(radius: number, dim: number, desat: number, vignette = 0) {
     const gl = this.gl;
     const layer = this.into;
     if (!layer) return;
@@ -332,7 +380,7 @@ export class MapRenderer {
     // The screen's top sits at the target's top rows (GL rows count from the bottom).
     this.draw(layer.a.tex, {
       rect: [0, 0, W, H], uv: [0, 1, u1, 1 - v1], alpha: 1, frame: [0, 0, W, H], feather: 0, portal: [0, 0, 0],
-      light: -dim, cloud: 0, water: 0, desat,
+      light: -dim, cloud: 0, water: 0, desat, vignette,
     });
   }
 

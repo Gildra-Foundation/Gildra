@@ -4,11 +4,12 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { buildAtlasBundle, localArt, type ArtEra, type AtlasMap } from "@/lib/wow/worldMap/bundle";
 import type { EraRecord, MapRecord, PoiRecord } from "@/lib/wow/worldMap/types";
-import { blurGroups, blurOf, desatOf, dimOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "@/components/wow/worldMap/engine/lod";
+import { blurGroups, blurKey, blurOf, blurRadiusCss, desatOf, dimOf, radiusOfKey, vignetteOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "@/components/wow/worldMap/engine/lod";
 import { chainUp, composeSet, mapSet, transferCamera } from "@/components/wow/worldMap/engine/sets";
 import { wheelKind } from "@/components/wow/worldMap/engine/input";
 import { eraFromParam, eventComparison, eventMoment, mapIdOfPath, patchPosition, positionToPatch, pushesHistory, queryToView, viewToQuery } from "@/components/wow/worldMap/worldMapModel";
 import { isRectMask, paperColour } from "@/components/wow/worldMap/engine/paper";
+import { decorBoxes, labelBoxes } from "@/components/wow/worldMap/engine/painted";
 import { paintedOf } from "@/components/wow/worldMap/ui/paintedArt";
 
 const fixture = JSON.parse(readFileSync(fileURLToPath(new URL("../fixtures/world-map/engine.json", import.meta.url)), "utf8")) as { maps: MapRecord[]; pois: PoiRecord[]; eras: EraRecord[] };
@@ -34,8 +35,8 @@ describe("world map LOD", () => {
       prev = b;
     }
     assert.equal(blurOf(25), 1);
-    assert.ok(dimOf(25) > 0.3 && dimOf(25) <= 0.34);
-    assert.ok(desatOf(25) > 0.25 && desatOf(25) <= 0.3);
+    assert.ok(dimOf(25) > 0.4 && dimOf(25) <= 0.46);
+    assert.ok(desatOf(25) > 0.3 && desatOf(25) <= 0.36);
     // An ancestor 10–25× magnified (a continent behind a city) is a soft backdrop, never raw texels.
     assert.ok(blurOf(10) > 0.95);
   });
@@ -55,7 +56,7 @@ describe("world map LOD", () => {
     assert.equal(layerScale(1), 2);
     assert.equal(layerScale(10), 4);
     assert.equal(layerScale(44), 16);
-    assert.equal(layerScale(400), 16);
+    assert.equal(layerScale(400), 64);
     for (const r of [7, 13, 20, 30]) assert.ok(r / layerScale(r) <= 3 && r / layerScale(r) >= 1.5, `radius ${r}`);
   });
 
@@ -354,5 +355,29 @@ describe("world map events across phases", () => {
     assert.ok(pair);
     assert.ok(pair.left < patchPosition("5.0.4") && pair.right === patchPosition("5.0.4"));
     assert.equal(eventComparison({ patch: "5.2.0", map: 12, changed: [] }, art, eras), null);
+  });
+});
+
+describe("world map depth backdrop and painted boxes", () => {
+  it("blurs a far magnified backdrop wider than its magnified texels, up to a calm wash", () => {
+    assert.equal(blurRadiusCss(0, 30), 0);
+    for (const u of [6, 10, 20]) assert.ok(blurRadiusCss(blurOf(u), u) >= u * 7, `radius at ${u}×`);
+    assert.equal(blurRadiusCss(1, 80), 200, "capped");
+    assert.ok(vignetteOf(1.5) === 0 && vignetteOf(12) > 0.25);
+  });
+
+  it("groups blurs by radius and gets the radius back", () => {
+    for (const r of [4, 30, 120]) assert.ok(Math.abs(radiusOfKey(blurKey(r)) - r) < 1e-6);
+    assert.equal(blurKey(0), 0);
+    const groups = blurGroups([blurKey(100), blurKey(120), blurKey(8), 0]);
+    assert.deepEqual(groups.map((g) => [g.from, g.to]), [[0, 1], [2, 2], [3, 3]]);
+  });
+
+  it("reads painted words and decor as boxes or objects naming the map they label", () => {
+    assert.deepEqual(labelBoxes({ paintedLabels: [[0.1, 0.1, 0.2, 0.2]] }), [{ box: [0.1, 0.1, 0.2, 0.2] }]);
+    assert.deepEqual(labelBoxes({ paintedLabels: [{ box: [0.1, 0.1, 0.2, 0.2], labelFor: 84 }, { rect: [0, 0, 1, 1], labelFor: "85" }, { box: [0.5, 0.5, 0.4, 0.6] }] as never }),
+      [{ box: [0.1, 0.1, 0.2, 0.2], for: 84 }, { box: [0, 0, 1, 1], for: 85 }]);
+    assert.deepEqual(decorBoxes({ decor: [[0.9, 0.9, 1, 1]] }), [{ box: [0.9, 0.9, 1, 1] }]);
+    assert.deepEqual(decorBoxes({}), []);
   });
 });

@@ -604,6 +604,8 @@
   /* The tools sit in the header row next to the search; pinch zooms. */
   .controls { position: static; display: flex; gap: var(--atlas-space-1); }
   .controlGroup { display: none; }
+  /* The trail above is the way up on a phone; the row keeps room for the search. */
+  .controls > button[data-up] { display: none; }
   .layers { top: calc(100% + 6px); right: 0; }
   .dock { left: 0; right: 0; bottom: 0; gap: 0; }
   .dock > * { width: 100%; }

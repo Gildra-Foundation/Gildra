@@ -18,12 +18,22 @@ export const upscaleOf = (screenWidthCss: number, art: Pick<MapArt, "width">) =>
 
 /** Out-of-focus strength 0 (sharp) … 1 (a soft backdrop). */
 export const blurOf = (upscale: number) => smoothstep(SHARP_UPSCALE + 0.1, 5, upscale);
-/** Blur radius on screen, device px: up to ~22 CSS px. */
-export const blurRadiusPx = (blur: number, dpr: number) => blur * 22 * dpr;
-/** How much darker an out-of-focus map is drawn (0..0.34). */
-export const dimOf = (upscale: number) => 0.34 * smoothstep(SHARP_UPSCALE + 0.3, 9, upscale);
-/** How much greyer (0..0.3). */
-export const desatOf = (upscale: number) => 0.3 * smoothstep(2.5, 10, upscale);
+/**
+ * Blur radius on screen, CSS px. It grows with the magnification itself: a
+ * texel magnified 20× is a 20 px block, so the blur must be wider than that to
+ * hide it. Far magnified pictures (a continent behind a city) end as a calm,
+ * low-frequency wash of their own colours — no stripes, no readable letters.
+ */
+export const BLUR_MAX_CSS = 200;
+export const blurRadiusCss = (blur: number, upscale = 0) => (blur <= 0 ? 0 : Math.min(BLUR_MAX_CSS, Math.max(blur * 22, blur * upscale * 9)));
+/** Blur radius on screen, device px. */
+export const blurRadiusPx = (blur: number, dpr: number, upscale = 0) => blurRadiusCss(blur, upscale) * dpr;
+/** How much darker an out-of-focus map is drawn (0..0.46): the map in focus reads as the hero. */
+export const dimOf = (upscale: number) => 0.24 * smoothstep(SHARP_UPSCALE + 0.3, 6, upscale) + 0.22 * smoothstep(6, 18, upscale);
+/** How much greyer (0..0.36). */
+export const desatOf = (upscale: number) => 0.36 * smoothstep(2.5, 12, upscale);
+/** Darkening toward the screen's edges over a far magnified backdrop (0..0.3). */
+export const vignetteOf = (upscale: number) => 0.3 * smoothstep(3, 10, upscale);
 
 /** Blur strengths closer than this share one offscreen pass. */
 export const BLUR_GROUP = 0.18;
@@ -36,8 +46,12 @@ export const BLUR_MIN = 0.06;
  */
 export function layerScale(radius: number) {
   const s = 2 ** Math.ceil(Math.log2(Math.max(1, radius / 3)));
-  return clamp(s, 2, 16);
+  return clamp(s, 2, 64);
 }
+
+/** Grouping key of a blur: draws whose radii are within ~1.6× share one offscreen pass. */
+export const blurKey = (radiusCss: number) => (radiusCss <= 0 ? 0 : Math.max(BLUR_MIN, Math.log2(1 + radiusCss) / 8));
+export const radiusOfKey = (key: number) => (key <= 0 ? 0 : 2 ** (key * 8) - 1);
 
 /**
  * Pyramid level for a picture drawn `deviceWidth` px wide: the smallest one

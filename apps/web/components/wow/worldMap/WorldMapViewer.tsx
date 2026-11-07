@@ -577,7 +577,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const search = bundle ? <MapSearchBox lang={lang} bundle={searchBundle ?? bundle} bundleUrl={bundleUrl} byId={byId} exists={existsNow} onPick={pickHit} /> : null;
   const controls = (
     <MapControls lang={lang} canUp={Boolean(focus && focus.parent !== null)} full={full} layers={layers} layersOpen={layersOpen}
-      onZoom={(factor) => engineRef.current?.zoomBy(factor)} onUp={() => engineRef.current?.up()} onLayersOpen={toggleLayers} onLayers={setLayers} onFull={toggleFull} />
+      onZoom={(factor) => engineRef.current?.zoomBy(factor)} onWhole={() => engineRef.current?.showWhole()} onUp={() => engineRef.current?.up()} onLayersOpen={toggleLayers} onLayers={setLayers} onFull={toggleFull} />
   );
   // The name under the pointer, unless its label is on screen already (that label lights up instead).
   const hoverLabelled = hoverMap !== null && markers.some((marker) => marker.type === "map" && marker.map.id === hoverMap && !marker.quiet);

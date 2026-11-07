@@ -15,8 +15,10 @@ export type MapArt = {
   urlRu?: string;
   /** The picture names its places itself (where the EN and RU pictures differ). */
   namesPainted?: boolean;
-  /** Boxes of the painted words, 0..1 of the picture. */
-  paintedLabels?: Rect[];
+  /** Boxes of the painted words, 0..1 of the picture; an object names the map it labels. */
+  paintedLabels?: Array<Rect | { box?: Rect; rect?: Rect; labelFor?: number | string | null }>;
+  /** Frames, crests and corner pieces painted into the picture, same forms. */
+  decor?: Array<Rect | { box?: Rect; rect?: Rect; labelFor?: number | string | null }>;
 };
 /** [x0, y0, x1, y1], 0..1 in the parent's picture. */
 export type Rect = [number, number, number, number];
