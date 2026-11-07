@@ -85,6 +85,11 @@
 }
 
 .poi { width: 26px; height: 26px; cursor: pointer; }
+/* Capitals glow in their faction's colour and breathe slowly. */
+.poi[data-kind="capital"] { width: 30px; height: 30px; }
+.poi[data-kind="capital"] .poiIcon { width: 30px; height: 30px; border-width: 2px; box-shadow: 0 0 16px 3px color-mix(in srgb, var(--marker-tint) 55%, transparent); }
+.poi[data-kind="capital"] .poiIcon svg { width: 16px; height: 16px; }
+.surface[data-alive] .poi[data-kind="capital"] .poiIcon { animation: breathe 3.6s var(--atlas-ease-ambient, ease-in-out) infinite; }
 .poi[data-kind="dungeon"] { --marker-tint: var(--atlas-info); }
 .poi[data-kind="raid"] { --marker-tint: var(--atlas-caution); }
 .poi[data-kind="delve"] { --marker-tint: var(--atlas-positive); }
@@ -509,11 +514,11 @@
 
 /* ---------- Reduced motion, transparency, forced colours ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .glow, .poiIcon::after, .eventRune::after, .routes path, .card { animation: none !important; }
+  .glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .card { animation: none !important; }
   .canvas, .labelText, .poiIcon { transition: none !important; }
 }
-:global([data-motion="reduced"]) :is(.glow, .poiIcon::after, .eventRune::after, .routes path, .card),
-:global([data-ui-motion="reduce"]) :is(.glow, .poiIcon::after, .eventRune::after, .routes path, .card) { animation: none !important; }
+:global([data-motion="reduced"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .card),
+:global([data-ui-motion="reduce"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .card) { animation: none !important; }
 @media (prefers-reduced-transparency: reduce) {
   .searchBox, .controls button, .layers, .card, .timeline, .compareHandle, .compareTag, .loading, .fallback { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--atlas-surface); }
 }

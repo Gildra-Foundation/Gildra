@@ -11,14 +11,14 @@ import type { WorldMapData } from "./types";
  * files can point GILDRA_WORLD_MAP_DATA at another folder with the same files
  * (the viewer's test data lives in tests/fixtures/world-map).
  */
-function dataDir() {
+function readJson<T>(name: string, fallback: T): T {
   const override = process.env.GILDRA_WORLD_MAP_DATA;
-  return override ? path.resolve(process.cwd(), override) : path.join(process.cwd(), "data/wow/map");
-}
-
-function readJson<T>(dir: string, name: string, fallback: T): T {
+  // The build traces only data/wow/map; the development override is left out of the trace.
+  const file = override
+    ? path.resolve(/*turbopackIgnore: true*/ process.cwd(), override, name)
+    : path.join(process.cwd(), "data", "wow", "map", name);
   try {
-    return JSON.parse(fs.readFileSync(path.join(dir, name), "utf8")) as T;
+    return JSON.parse(fs.readFileSync(file, "utf8")) as T;
   } catch {
     return fallback;
   }
@@ -28,13 +28,12 @@ let cached: { data: WorldMapData; version: string; bundles: Partial<Record<Lang,
 
 function load() {
   if (cached) return cached;
-  const dir = dataDir();
   const data: WorldMapData = {
-    maps: readJson(dir, "maps.json", []),
-    pois: readJson(dir, "pois.json", []),
-    eras: readJson(dir, "eras.json", []),
-    eraMeta: readJson(dir, "eras-meta.json", []),
-    events: readJson(dir, "events.json", []),
+    maps: readJson("maps.json", []),
+    pois: readJson("pois.json", []),
+    eras: readJson("eras.json", []),
+    eraMeta: readJson("eras-meta.json", []),
+    events: readJson("events.json", []),
   };
   const version = createHash("sha1").update(JSON.stringify(data)).digest("hex").slice(0, 10);
   cached = { data, version, bundles: {} };
