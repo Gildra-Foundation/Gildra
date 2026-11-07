@@ -32,9 +32,7 @@ const allowedHex = new Set(["#000", "#020303"]);
 // Motion: UI tempo comes from the --atlas-duration-* tokens (app/styles/atlas-theme.css).
 // Literal times of 2 s and more are scene loops (mist, sway) with their own slow tempo;
 // scroll-driven animations have no time. Below, motion owned by another surface.
-const motionExempt = {
-  "components/wow/worldMap/": "world map — its own engine and session (tokens requested 2026-11-07)",
-};
+const motionExempt = {};
 const choreographed = [/fel-fallback 1080ms/]; // paired with FEL_RELEASE_MS in components/motion/felMaterial.ts
 const stripFunctions = (value) => { let previous; do { previous = value; value = value.replace(/(?:var|cubic-bezier|linear|steps|calc)\([^()]*\)/g, ""); } while (value !== previous); return value; };
 const retiredAliases = {

@@ -30,7 +30,7 @@
   stroke-dasharray: 2 8;
   stroke-linecap: round;
   filter: drop-shadow(0 0 3px var(--atlas-bg));
-  animation: flight 1.1s linear infinite;
+  animation: flight var(--atlas-duration-draw) linear infinite;
 }
 @keyframes flight { to { stroke-dashoffset: -20; } }
 
@@ -624,7 +624,7 @@
 .eraNow { display: grid; min-width: 0; width: 18.5ch; margin: 0 var(--atlas-space-1); overflow: hidden; }
 /* A new era slides in under the old one's place. */
 .eraName { overflow: hidden; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.0625rem; font-weight: var(--atlas-weight-display); line-height: 1.15; white-space: nowrap; text-overflow: ellipsis; animation: eraIn var(--atlas-duration) var(--atlas-ease) both; }
-.eraYears { color: color-mix(in srgb, var(--era-accent) 45%, var(--atlas-text-muted)); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; line-height: 1.2; animation: eraIn var(--atlas-duration) var(--atlas-ease) 40ms both; }
+.eraYears { color: color-mix(in srgb, var(--era-accent) 45%, var(--atlas-text-muted)); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; line-height: 1.2; animation: eraIn var(--atlas-duration) var(--atlas-ease) calc(var(--atlas-duration-fast) / 4) both; }
 @keyframes eraIn { from { opacity: 0; transform: translateY(5px); } }
 .eraStep { display: inline-flex; gap: 2px; flex: none; }
 .eraStep button, .timelineToggle {
