@@ -26,14 +26,14 @@
 .fill::after { position: absolute; inset: 0; background: linear-gradient(105deg, transparent, color-mix(in srgb, var(--atlas-text-strong) 45%, transparent), transparent); opacity: 0; content: ""; }
 .link:focus-visible { outline: 2px solid var(--timer-light); outline-offset: 4px; }
 .link:focus-visible::after { opacity: .65; }
-.link:focus-visible .artifact { animation: relicNod 720ms var(--atlas-ease) both; }
-.link:focus-visible .fill::after { animation: sandLight 800ms var(--atlas-ease) both; }
+.link:focus-visible .artifact { animation: relicNod var(--atlas-duration-sweep) var(--atlas-ease) both; }
+.link:focus-visible .fill::after { animation: sandLight var(--atlas-duration-sweep) var(--atlas-ease) both; }
 .link:focus-visible .arrow { opacity: 1; transform: translate(2px, -2px); }
 @media (hover: hover) and (pointer: fine) {
   .link:hover { transform: translateY(-2px); }
   .link:hover::after { opacity: .65; }
-  .link:hover .artifact { animation: relicNod 720ms var(--atlas-ease) both; }
-  .link:hover .fill::after { animation: sandLight 800ms var(--atlas-ease) both; }
+  .link:hover .artifact { animation: relicNod var(--atlas-duration-sweep) var(--atlas-ease) both; }
+  .link:hover .fill::after { animation: sandLight var(--atlas-duration-sweep) var(--atlas-ease) both; }
   .link:hover .arrow { opacity: 1; transform: translate(2px, -2px); }
 }
 .link:active { transform: translateY(1px) scale(.995); }

@@ -23,6 +23,10 @@ test("scripted motion uses the CSS tempo of the atlas", () => {
   assert.equal(ms(token("atlas-duration-art")), tokens.ATLAS_DURATION_ART);
   assert.equal(ms(token("atlas-duration-enter")), tokens.ATLAS_DURATION_ENTER);
   assert.equal(ms(token("atlas-stagger")), tokens.ATLAS_STAGGER);
+  assert.equal(ms(token("atlas-duration-sweep")), tokens.ATLAS_DURATION_SWEEP);
+  assert.equal(ms(token("atlas-duration-draw")), tokens.ATLAS_DURATION_DRAW);
+  assert.equal(ms(token("atlas-duration-pulse")), tokens.ATLAS_DURATION_PULSE);
+  assert.equal(ms(token("atlas-duration-spin")), tokens.ATLAS_DURATION_SPIN);
 });
 
 test("shared stylesheets take their durations from the motion tokens", () => {

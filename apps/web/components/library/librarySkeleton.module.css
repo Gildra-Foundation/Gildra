@@ -9,7 +9,7 @@
   display: block;
   border-radius: var(--atlas-radius);
   background: linear-gradient(90deg, var(--atlas-surface-sunken), var(--atlas-surface-raised), var(--atlas-surface-sunken)) 0 0 / 200% 100%;
-  animation: shimmer 1.4s linear infinite;
+  animation: shimmer var(--atlas-duration-pulse) linear infinite;
 }
 
 .title { width: min(60vw, 420px); height: .9em; }

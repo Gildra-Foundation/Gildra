@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Check, ChevronDown, Plus, Search } from "lucide-react";
@@ -42,6 +42,34 @@ function useDebounced<T>(value: T, delay: number) {
   useEffect(() => { const timer = setTimeout(() => setSettled(value), delay); return () => clearTimeout(timer); }, [value, delay]);
   return settled;
 }
+
+/** A handler that keeps one identity across renders and always calls the latest
+ *  closure, so memoised rows and chips skip re-rendering when the view changes. */
+function useStableHandler<A extends unknown[]>(handler: (...args: A) => void) {
+  const latest = useRef(handler);
+  useLayoutEffect(() => { latest.current = handler; });
+  return useCallback((...args: A) => latest.current(...args), []);
+}
+
+type Category = (typeof auctionCategories)[number];
+/** The category chips: re-rendered only when the language, the active chip or the fold changes. */
+const AuctionCategoryNav = memo(function AuctionCategoryNav({ lang, active, hidden, onPick }: {
+  lang: "ru" | "en"; active: Category["key"] | null; hidden: boolean; onPick: (key: Category["key"]) => void;
+}) {
+  const c = auctionCopy[lang];
+  return <nav id="auction-categories" className={styles.categories} aria-label={c.categoriesLabel} hidden={hidden}>
+    {auctionCategoryGroups.map(group => <div key={group} className={styles.categoryGroup}>
+      <h2 className={styles.groupTitle}>{c.groups[group]}</h2>
+      <ul className={styles.categoryList}>{auctionCategories.filter(item => item.group === group).map(item => {
+        const pressed = active === item.key;
+        return <li key={item.key}><button type="button" className={styles.categoryChip} aria-pressed={pressed} onClick={() => onPick(item.key)}>
+          <Image src={auctionIconUrl(item.icon)} alt="" width={28} height={28} unoptimized />
+          <span>{c.categories[item.key]}</span>
+        </button></li>;
+      })}</ul>
+    </div>)}
+  </nav>;
+});
 
 export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
   const c = auctionCopy[lang], searchParams = useSearchParams();
@@ -138,6 +166,9 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
     return () => cancelAnimationFrame(frame);
   }, [view.compare]);
   const pickCategory = (key: AuctionView["category"]) => { setFindText(null); go({ category: key, q: "", compare: false, sort: "", all: false }); };
+  const pickCategoryStable = useStableHandler(pickCategory);
+  const toggleStable = useStableHandler(toggle);
+  const openStable = useStableHandler(open);
   const submitSearch = (text: string) => {
     const q = text.trim();
     if (q.length < 2 && !/^\d$/.test(q)) return;
@@ -173,18 +204,7 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
       {view.compare ? <button type="button" className={styles.categoriesToggle} aria-expanded={categoriesOpen} aria-controls="auction-categories" onClick={() => setCategoriesOpen(value => !value)}>
         <span>{c.categoriesLabel}</span><ChevronDown size={16} aria-hidden="true" />
       </button> : null}
-      <nav id="auction-categories" className={styles.categories} aria-label={c.categoriesLabel} hidden={view.compare && !categoriesOpen}>
-        {auctionCategoryGroups.map(group => <div key={group} className={styles.categoryGroup}>
-          <h2 className={styles.groupTitle}>{c.groups[group]}</h2>
-          <ul className={styles.categoryList}>{auctionCategories.filter(item => item.group === group).map(item => {
-            const active = !view.q && !view.compare && view.category === item.key;
-            return <li key={item.key}><button type="button" className={styles.categoryChip} aria-pressed={active} onClick={() => pickCategory(item.key)}>
-              <Image src={auctionIconUrl(item.icon)} alt="" width={28} height={28} unoptimized />
-              <span>{c.categories[item.key]}</span>
-            </button></li>;
-          })}</ul>
-        </div>)}
-      </nav>
+      <AuctionCategoryNav lang={lang} active={!view.q && !view.compare ? view.category || null : null} hidden={view.compare && !categoriesOpen} onPick={pickCategoryStable} />
     </AuctionPlaque>
 
     <AuctionPlaque as="section" id="auction-results" className={styles.resultsPlaque} aria-labelledby="auction-results-title">
@@ -204,11 +224,11 @@ export function AuctionBrowser({ lang }: { lang: "ru" | "en" }) {
             quantity={view.qty} onQuantity={qty => go({ qty }, "replace")} sort={view.csort} dir={view.cdir} onSort={sortCompareBy} />
           : realmMissing ? <p className={styles.empty}>{c.realmNeeded}</p>
           : list.error ? <div className={styles.stateBox} role="alert"><p className={styles.stateText}>{auctionErrorMessage(list.error, lang)}</p><AuctionButton onClick={list.retry}>{c.retry}</AuctionButton></div>
-          : list.loading && !deferred ? <AtlasSkeleton variant="rows" count={8} label={c.loading} className={styles.skeleton} />
+          : (list.loading || list.data) && !deferred ? <AtlasSkeleton variant="rows" count={8} label={c.loading} className={styles.skeleton} />
           : deferred ? <div className={styles.listWrap} data-pending={list.loading || undefined}>
             {deferred.stale ? <p className={styles.warning} role="status">{c.stale}</p> : null}
             {deferred.truncated ? <p className={styles.warning} role="status">{c.partial}</p> : null}
-            {rows.length ? <AuctionMarketTable items={rows} lang={lang} sort={view.sort} dir={view.dir} onSort={sortBy} selected={view.items} onToggle={toggle} onOpen={open} mixed={mixed} label={title} />
+            {rows.length ? <AuctionMarketTable items={rows} lang={lang} sort={view.sort} dir={view.dir} onSort={sortBy} selected={view.items} onToggle={toggleStable} onOpen={openStable} mixed={mixed} label={title} />
               : <div className={styles.stateBox}><p className={styles.emptyTitle}>{c.emptyMarket}</p>{view.q ? <p className={styles.empty}>{c.emptyMarketHint}</p> : null}</div>}
           </div> : null}
       </div>
