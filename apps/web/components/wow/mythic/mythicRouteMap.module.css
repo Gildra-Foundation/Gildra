@@ -1260,13 +1260,13 @@
   .page[data-dungeon] .intro { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: var(--atlas-space-4); }
   .page[data-dungeon] .routeControls { width: 100%; }
   .page[data-dungeon] .titleRow h1 { font-size: calc(var(--atlas-text-h2) * 1.25); }
-  .page[data-dungeon] .selectorRow { grid-template-columns: minmax(0, 1fr) 176px; }
+  .page[data-dungeon] .selectorRow { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 767px) {
   .page[data-dungeon] .intro { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); padding-top: var(--atlas-space-4); }
   .page[data-dungeon] .titleRow h1 { font-size: calc(var(--atlas-text-h2) * 1.15); }
   .page[data-dungeon] .routeControls { max-width: none; }
-  .page[data-dungeon] .selectorRow { grid-template-columns: minmax(0, 1fr) 176px; }
+  .page[data-dungeon] .selectorRow { grid-template-columns: minmax(0, 1fr); }
   .page[data-dungeon] .backdropImage { object-position: center top; }
   .page[data-dungeon] .column { gap: var(--atlas-space-3); }
 }
