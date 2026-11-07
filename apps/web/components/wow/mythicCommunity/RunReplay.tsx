@@ -1,7 +1,9 @@
 "use client";
 
+import { routeViewerCopy } from "./routeViewerCopy";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight, Flame, Skull } from "lucide-react";
+import { stepPull } from "@/lib/games/wow/mythicPlusRouteSelection";
 import { clock } from "@/lib/games/wow/mythicPlusRunsTypes";
 import { forcesShare, type ReplayPull, type RunReplay } from "@/lib/games/wow/mythicPlusReplayModel";
 import { upgradeMarks } from "@/lib/games/wow/mythicPlusRunTypes";
@@ -45,6 +47,12 @@ function spread(pulls: ReplayPull[]) {
 export function RunReplay({ locale, replay, map, enemies, colors, timerMs, clearMs }: Props) {
   const copy = communityCopy[locale].replay;
   const [selected, setSelected] = useState(1);
+  const [playing, setPlaying] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const list = useRef<HTMLOListElement>(null);
+  const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+  const touches = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<number | null>(null);
   const [hover, setHover] = useState<number | null>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const positions = useMemo(() => spread(replay.pulls), [replay.pulls]);
@@ -61,6 +69,25 @@ export function RunReplay({ locale, replay, map, enemies, colors, timerMs, clear
     setSelected(n);
     if (scroll) reveal(n, true);
   }
+  useEffect(() => {
+    const item = list.current?.querySelector<HTMLElement>(`[data-pull="${selected}"]`);
+    if (item && list.current) list.current.scrollTo({ top: item.offsetTop - list.current.offsetTop - 30, behavior: lessMotion() ? "instant" : "smooth" });
+  }, [selected]);
+  useEffect(() => {
+    if (!playing) return;
+    const next = stepPull(replay.pulls.map(p => p.n), selected, 1);
+    if (next === selected) return;
+    const timer = window.setTimeout(() => { choose(next, true); if (next === replay.pulls.at(-1)?.n) setPlaying(false); }, Math.max(700, Math.min(3500, ((pull?.toMs ?? 0) - (pull?.startMs ?? pull?.fromMs ?? 0)) / 20)));
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- choose reads the current viewport
+  }, [playing, selected, replay.pulls]);
+  useEffect(() => {
+    const box = viewport.current;
+    if (!box) return;
+    const wheel = (event: WheelEvent) => { event.preventDefault(); setZoom(z => Math.max(1, Math.min(4, z * (event.deltaY > 0 ? .9 : 1.1)))); };
+    box.addEventListener("wheel", wheel, { passive: false });
+    return () => box.removeEventListener("wheel", wheel);
+  }, []);
   // On a phone the map scrolls inside its frame: open it on the first pull.
   useEffect(() => {
     const frame = requestAnimationFrame(() => reveal(1, false));
@@ -72,17 +99,50 @@ export function RunReplay({ locale, replay, map, enemies, colors, timerMs, clear
   const pathTo = (limit: number) => route.filter((point) => point.n <= limit).map((point, index) => `${index ? "L" : "M"}${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
 
   return (
-    <div className={styles.replay} style={map ? { "--pull-marker-image": `url("${map.markerImage}")` } as CSSProperties : undefined}>
+    <div className={styles.replay} onKeyDown={event => {
+      if (event.target instanceof HTMLInputElement || event.altKey || event.metaKey || event.ctrlKey) return;
+      if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); setPlaying(false); choose(stepPull(replay.pulls.map(p => p.n), selected, event.key === "ArrowRight" ? 1 : -1), true); }
+    }} style={map ? { "--pull-marker-image": `url("${map.markerImage}")` } as CSSProperties : undefined}>
+      <div className={styles.controls}>
+        <button type="button" disabled={selected === replay.pulls[0]?.n} aria-label={copy.previous} onClick={() => { setPlaying(false); choose(stepPull(replay.pulls.map(p => p.n), selected, -1), true); }}>‹</button>
+        <button type="button" aria-pressed={playing} onClick={() => { if (selected === replay.pulls.at(-1)?.n) choose(replay.pulls[0].n, true); setPlaying(!playing); }}>{playing ? (routeViewerCopy[locale].pause) : (routeViewerCopy[locale].play)}</button>
+        <button type="button" disabled={selected === replay.pulls.at(-1)?.n} aria-label={copy.next} onClick={() => { setPlaying(false); choose(stepPull(replay.pulls.map(p => p.n), selected, 1), true); }}>›</button>
+        <button type="button" aria-label={routeViewerCopy[locale].zoomOut} onClick={() => setZoom(z => Math.max(1, z / 1.3))}>−</button>
+        <button type="button" aria-label={routeViewerCopy[locale].zoomIn} onClick={() => setZoom(z => Math.min(4, z * 1.3))}>+</button>
+        <button type="button" onClick={() => { setZoom(1); viewport.current?.scrollTo(0, 0); }}>{routeViewerCopy[locale].reset}</button>
+      </div>
       <div className={styles.workspace} data-map={map ? "" : undefined}>
         {map ? (
           <figure className={styles.frame} style={map.frameStyle}>
             <span className={styles.frameArt} aria-hidden="true" />
-            <div ref={viewport} className={styles.viewport} role="region" tabIndex={0} aria-label={copy.mapLabel}>
-              <div className={styles.map}>
+            <div ref={viewport} className={styles.viewport} role="region" tabIndex={0} aria-label={copy.mapLabel}
+              onDoubleClick={() => setZoom(z => Math.min(4, z * 1.5))}
+              onPointerDown={event => {
+                touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+                if ((event.target as HTMLElement).closest("button")) return;
+                try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* The pointer may already have been cancelled by the browser. */ }
+                drag.current = { x: event.clientX, y: event.clientY, left: event.currentTarget.scrollLeft, top: event.currentTarget.scrollTop };
+              }}
+              onPointerMove={event => {
+                if (!touches.current.has(event.pointerId)) return;
+                touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+                const points = [...touches.current.values()];
+                if (points.length === 2) {
+                  const distance = Math.hypot(points[0].x-points[1].x, points[0].y-points[1].y);
+                  const previous = pinch.current;
+                  if (previous) setZoom(z => Math.max(1, Math.min(4, z * distance / previous)));
+                  pinch.current = distance;
+                } else if (drag.current) { event.currentTarget.scrollLeft = drag.current.left + drag.current.x-event.clientX; event.currentTarget.scrollTop = drag.current.top + drag.current.y-event.clientY; }
+              }}
+              onPointerUp={event => { touches.current.delete(event.pointerId); drag.current = null; pinch.current = null; }}
+              onPointerCancel={() => { touches.current.clear(); drag.current = null; pinch.current = null; }}>
+
+              <div className={styles.map} style={{ width: `${zoom * 100}%`, "--map-mobile-width": `${zoom * 600}px` } as CSSProperties}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- the planner canvas keeps its own pixels and marker plane */}
-                <img src={map.image} alt="" width={1680} height={1120} decoding="async" />
+                <img src={map.image} alt="" width={1680} height={1120} decoding="async" onLoad={() => reveal(selected, false)} />
                 <svg className={styles.path} viewBox="0 0 150 100" preserveAspectRatio="none" aria-hidden="true">
-                  <path d={pathTo(Infinity)} className={styles.pathAhead} />
+                  <defs><marker id="route-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><polygon points="0,0 10,5 0,10" fill="currentColor" /></marker></defs>
+                  <path d={pathTo(Infinity)} className={styles.pathAhead} markerMid="url(#route-arrow)" markerEnd="url(#route-arrow)" />
                   <path d={pathTo(selected)} className={styles.pathDone} />
                 </svg>
                 {replay.pulls.map((entry) => {
@@ -112,7 +172,19 @@ export function RunReplay({ locale, replay, map, enemies, colors, timerMs, clear
             </div>
           </figure>
         ) : null}
-        {pull ? <PullPanel pull={pull} replay={replay} enemies={enemies} colors={colors} copy={copy} number={number} onStep={(n) => choose(n, true)} /> : null}
+        <div className={styles.sidebar}>
+        <details className={styles.pullSheet} open>
+          <summary>{copy.pulls}</summary>
+          <ol ref={list} className={styles.pullList}>
+            {replay.pulls.map(entry => <li key={entry.n} data-pull={entry.n}><button type="button" aria-pressed={selected === entry.n} onClick={() => { setPlaying(false); choose(entry.n, true); }}>
+              <b>{entry.n}{entry.boss ? " ◆" : ""}</b><span>{entry.boss ?? `${copy.pull} ${entry.n}`}<small>{number.format(forcesShare(entry.forces, replay.totalForces || 1))}% · {clock(entry.toMs - (entry.startMs ?? entry.fromMs))}</small><span className={styles.miniEnemies}>{entry.enemies.map(enemy => <span key={enemy.npcId} title={enemies[enemy.npcId]?.name}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- local game portraits */}
+              {enemies[enemy.npcId]?.portrait ? <img src={enemies[enemy.npcId].portrait} alt={enemies[enemy.npcId]?.name ?? ""} width={22} height={22} /> : null}×{enemy.count}</span>)}</span></span>
+            </button></li>)}
+          </ol>
+        </details>
+        {pull ? <PullPanel pull={pull} replay={replay} enemies={enemies} colors={colors} copy={copy} number={number} onStep={(n) => { setPlaying(false); choose(n, true); }} /> : null}
+        </div>
       </div>
 
       <Timeline replay={replay} timerMs={timerMs} clearMs={clearMs} selected={selected} shown={shown} colors={colors} copy={copy} onChoose={choose} onHover={setHover} />
@@ -154,7 +226,7 @@ function PullPanel({ pull, replay, enemies, colors, copy, number, onStep }: {
             <li key={enemy.npcId}>
               {/* eslint-disable-next-line @next/next/no-img-element -- 40 px portrait already sized on disk */}
               {label?.portrait ? <img src={label.portrait} alt="" width={40} height={40} loading="lazy" decoding="async" /> : <span className={styles.portraitBlank} aria-hidden="true" />}
-              <span className={styles.enemyName} lang={label?.lang}>{label?.name ?? `#${enemy.npcId}`}</span>
+              <span className={styles.enemyName} lang={label?.lang}>{label?.name ?? copy.enemies(1)}</span>
               <span className={styles.enemyCount}>×{enemy.count}</span>
               {replay.totalForces && enemy.forces ? <span className={styles.enemyForces}>{number.format(forcesShare(enemy.forces, replay.totalForces))}%</span> : <span className={styles.enemyForces} />}
             </li>
@@ -211,7 +283,7 @@ function Timeline({ replay, timerMs, clearMs, selected, shown, colors, copy, onC
         {replay.fights.map((fight, index) => (
           <span key={`f${index}`} className={styles.fight} data-wipe={fight.kill ? undefined : ""} style={{ left: percent(at(fight.startMs)), width: percent(at(fight.endMs) - at(fight.startMs)) }} title={`${fight.name}${fight.kill ? "" : ` · ${copy.wipe}`}`} aria-hidden="true" />
         ))}
-        {shownPull ? <span className={styles.cursor} style={{ left: percent(at(shownPull.toMs)) }} aria-hidden="true" /> : null}
+        {shownPull ? <span className={styles.cursor} style={{ transform: `translateX(${Math.min(100, at(shownPull.toMs))}cqw)` }} aria-hidden="true" /> : null}
         {marks.map((mark) => (
           <span key={mark.label} className={styles.threshold} style={{ left: percent(at(mark.ms)) }} data-reached={clearMs <= mark.ms ? "" : undefined} aria-hidden="true"><span>{mark.label}</span></span>
         ))}

@@ -1,0 +1,1 @@
+export const routeViewerCopy = { en: { similar: "Similar run route", open: "Open run", play: "Play", pause: "Pause", reset: "Reset", zoomIn: "Zoom in", zoomOut: "Zoom out" }, ru: { similar: "Маршрут похожего забега", open: "Открыть забег", play: "Воспроизвести", pause: "Пауза", reset: "Сброс", zoomIn: "Увеличить", zoomOut: "Уменьшить" } };

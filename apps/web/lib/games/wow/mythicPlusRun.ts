@@ -21,7 +21,7 @@ let windowStart = 0;
 let windowCalls = 0;
 let blockedUntil = 0;
 
-function takeSlot() {
+export function takeRaiderIoSlot() {
   const now = Date.now();
   if (now < blockedUntil) return false;
   if (now - windowStart > 60_000) { windowStart = now; windowCalls = 0; }
@@ -29,18 +29,22 @@ function takeSlot() {
   return windowCalls <= perMinute;
 }
 
+export function pauseRaiderIo(retryAfter: string | null) {
+  const wait = Number(retryAfter);
+  blockedUntil = Date.now() + (Number.isFinite(wait) && wait > 0 ? Math.min(wait, 600) : 60) * 1000;
+}
+
 class Busy extends Error {}
 
 const fetchRun = unstable_cache(async (season: string, id: number): Promise<RunDetail | null> => {
-  if (!takeSlot()) throw new Busy("Raider.IO run budget spent");
+  if (!takeRaiderIoSlot()) throw new Busy("Raider.IO run budget spent");
   const response = await fetch(`${upstream}?season=${encodeURIComponent(season)}&id=${id}`, {
     cache: "no-store",
     headers: { accept: "application/json", "user-agent": "Gildra (+https://gildra.net)" },
     signal: AbortSignal.timeout(timeoutMs),
   });
   if (response.status === 429) {
-    const wait = Number(response.headers.get("retry-after"));
-    blockedUntil = Date.now() + (Number.isFinite(wait) && wait > 0 ? Math.min(wait, 600) : 60) * 1000;
+    pauseRaiderIo(response.headers.get("retry-after"));
     throw new Busy("Raider.IO rate limit");
   }
   if (response.status === 400 || response.status === 404) return null;

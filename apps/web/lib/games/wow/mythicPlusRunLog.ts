@@ -6,6 +6,8 @@ import combat from "@/data/wow/mythic-reviews/combat.json";
 import { sourceNpcNames } from "@/lib/wow/sourceNpcNames";
 import { replayFromRaiderIo, type MapNode, type RunReplay } from "./mythicPlusReplayModel";
 import { replayFromWarcraftLogs, satedDebuffs, type WclRunRaw } from "./mythicPlusReplayWcl";
+import { rankSimilarRuns } from "./mythicPlusRouteSelection";
+import { loadMythicPlusRun, takeRaiderIoSlot, pauseRaiderIo } from "./mythicPlusRun";
 import type { RunDetail } from "./mythicPlusRunTypes";
 
 /**
@@ -209,27 +211,44 @@ export const loadRunReplay = cache(async (run: RunDetail): Promise<ReplayView | 
   return { replay, ...(map?.image ? { map: map.image } : {}), enemies: enemyInfo(slug, replay, nodes) };
 });
 
-export type LoggedRunLink = { id: number; level: number; clearMs: number };
+export type LoggedRunLink = { id: number; level: number; clearMs: number; specs?: number[] };
 
 /** The best logged run of the dungeon at the nearest key level: the action of the "no log" state. */
 const loggedRuns = unstable_cache(async (season: string, slug: string): Promise<LoggedRunLink[]> => {
+  if (!takeRaiderIoSlot()) throw new Skip("Raider.IO run budget spent");
   const response = await fetch(`https://raider.io/api/v1/mythic-plus/runs?season=${encodeURIComponent(season)}&region=world&dungeon=${encodeURIComponent(slug)}&page=0`, {
     cache: "no-store",
     headers: { accept: "application/json", "user-agent": "Gildra (+https://gildra.net)" },
     signal: AbortSignal.timeout(6_000),
   });
+  if (response.status === 429) pauseRaiderIo(response.headers.get("retry-after"));
   if (!response.ok) throw new Error(`Raider.IO runs ${slug} failed (${response.status})`);
-  const data = await response.json() as { rankings?: Array<{ run?: { keystone_run_id?: number; mythic_level?: number; clear_time_ms?: number; logged_run_id?: number | null; num_chests?: number } }> };
+  const data = await response.json() as { rankings?: Array<{ run?: { keystone_run_id?: number; mythic_level?: number; clear_time_ms?: number; logged_run_id?: number | null; num_chests?: number; roster?: Array<{ character?: { spec?: { id?: number } } }> } }> };
   return (data.rankings ?? []).flatMap(({ run }) => run?.keystone_run_id && run.logged_run_id && run.mythic_level && run.clear_time_ms && run.num_chests
-    ? [{ id: run.keystone_run_id, level: run.mythic_level, clearMs: run.clear_time_ms }] : []);
-}, ["mythic-plus-logged-runs", "v1"], { revalidate: 60 * 60, tags: ["mythic-plus-run-log"] });
+    ? [{ id: run.keystone_run_id, level: run.mythic_level, clearMs: run.clear_time_ms, specs: (run.roster ?? []).flatMap(p => p.character?.spec?.id ? [p.character.spec.id] : []) }] : []);
+}, ["mythic-plus-logged-runs", "v2"], { revalidate: 60 * 60, tags: ["mythic-plus-run-log"] });
 
 export async function similarLoggedRun(run: RunDetail): Promise<LoggedRunLink | null> {
   if (!maps[run.dungeon.slug]) return null;
   try {
     const runs = (await loggedRuns(run.season, run.dungeon.slug)).filter((entry) => entry.id !== run.id);
-    return runs.sort((a, b) => Math.abs(a.level - run.level) - Math.abs(b.level - run.level) || a.clearMs - b.clearMs)[0] ?? null;
+    return runs.sort((a, b) => Math.abs(a.level - run.level) - Math.abs(b.level - run.level) || Math.abs(a.clearMs - run.clearMs) - Math.abs(b.clearMs - run.clearMs))[0] ?? null;
   } catch {
     return null;
   }
 }
+
+/** Bounded fallback: reuse cached run details and RIO logs, never fan out WCL searches. */
+export const loadSimilarRoute = cache(async (run: RunDetail): Promise<{ run: RunDetail; view: ReplayView } | null> => {
+  try {
+    const candidates = rankSimilarRuns({ ...run, specs: run.players.map(p => p.specId) }, await loggedRuns(run.season, run.dungeon.slug));
+    for (const candidate of candidates.slice(0, 3)) {
+      const result = await loadMythicPlusRun(candidate.id);
+      if (result.state !== "ready" || result.run.dungeon.slug !== run.dungeon.slug) continue;
+      const map = maps[run.dungeon.slug];
+      const replay = replayFromRaiderIo(result.run, map?.nodes ?? []);
+      if (replay?.pulls.length) return { run: result.run, view: { replay, map: map?.image, enemies: enemyInfo(run.dungeon.slug, replay, map?.nodes ?? []) } };
+    }
+  } catch { /* Keep the original run available during an upstream outage. */ }
+  return null;
+});
