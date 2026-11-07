@@ -242,7 +242,6 @@ a.itemName:focus-visible { outline: 2px solid var(--material-light, var(--atlas-
   .sizeSwitch.sizeSwitch :global(.ui-segmented-control__item) { flex: 1 1 0; min-width: 0; height: auto; min-height: 44px; white-space: normal; line-height: 1.15; }
   .sizeSwitch.sizeSwitch :global(.ui-segmented-control__item) > * { overflow: visible; white-space: normal; text-overflow: clip; }
 }
-}
 @media (max-width: 360px) {
   .groups, .groups[data-groups="6"] { grid-template-columns: minmax(0, 1fr); }
 }
