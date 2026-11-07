@@ -66,6 +66,13 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
     syncHead(lang, trail, homeId, heading.line);
   }, [trail, heading, lang, homeId, crumbs]);
 
+  // On phones the trail is one scrolling row: keep its deepest step in sight.
+  const trailList = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    const list = trailList.current;
+    if (list && list.scrollWidth > list.clientWidth) list.scrollLeft = list.scrollWidth;
+  }, [trail]);
+
   const crumbClick = useCallback((event: MouseEvent<HTMLAnchorElement>, crumb: StageCrumb) => {
     if (crumb.mapId === undefined || !crumbHandler.current || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
     event.preventDefault();
@@ -79,9 +86,10 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
         <div className={styles.poster} aria-hidden="true">
           <div className={styles.posterArt} style={{ aspectRatio: poster.aspect, ["--poster-aspect" as string]: poster.aspect }}>
             {poster.tiles.map((tile) => (
+              // Tiles overlap by a pixel: scaled, their edges would leave hairline seams.
               // eslint-disable-next-line @next/next/no-img-element -- map tiles: exact pixel grid, no optimizer
               <img key={tile.src} src={tile.src} alt="" decoding="async" fetchPriority="high" draggable={false}
-                style={{ left: `${tile.left * 100}%`, top: `${tile.top * 100}%`, width: `${tile.width * 100}%`, height: `${tile.height * 100}%` }} />
+                style={{ left: `${tile.left * 100}%`, top: `${tile.top * 100}%`, width: `calc(${tile.width * 100}% + 1px)`, height: `calc(${tile.height * 100}% + 1px)` }} />
             ))}
           </div>
         </div>
@@ -89,7 +97,7 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
       <div className={styles.vignette} aria-hidden="true" />
       <header className={styles.titleBar} data-map-ui>
         <nav aria-label={worldMapCopy[lang].trail} className={styles.trail}>
-          <ol>
+          <ol ref={trailList}>
             {trail.map((crumb, index) => {
               const last = index === trail.length - 1;
               return (

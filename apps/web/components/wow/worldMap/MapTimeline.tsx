@@ -101,12 +101,11 @@ export function MapTimeline({ lang, eras, events, position, activeEvent, compare
           <button type="button" aria-label={copy.earlier} title={copy.earlier} disabled={eraIndex <= 0} onClick={() => step(-1)}><ChevronLeft aria-hidden="true" /></button>
           <button type="button" aria-label={copy.later} title={copy.later} disabled={eraIndex >= eras.length - 1} onClick={() => step(1)}><ChevronRight aria-hidden="true" /></button>
         </span>
-        {canCompare || compare ? (
-          <button type="button" className={styles.compareButton} aria-pressed={compare} onClick={onCompare} title={copy.compare}>
-            <Columns2 aria-hidden="true" />
-            <span>{copy.compare}</span>
-          </button>
-        ) : null}
+        {/* Always in place (the rail does not jump); off where no other era draws this place differently. */}
+        <button type="button" className={styles.compareButton} aria-pressed={compare} disabled={!canCompare && !compare} onClick={onCompare} title={copy.compare}>
+          <Columns2 aria-hidden="true" />
+          <span>{copy.compare}</span>
+        </button>
         <button type="button" className={styles.timelineToggle} data-timeline-toggle aria-expanded={open} aria-controls="world-map-track"
           aria-label={copy.timeline} title={copy.timeline} onClick={() => setOpen((o) => !o)}>
           <ChevronUp aria-hidden="true" />

@@ -36,7 +36,8 @@
 
 .poster {
   position: absolute;
-  inset: 0 calc(var(--atlas-gutter) + var(--map-tools)) calc(var(--map-dock) + var(--map-cookie)) calc(var(--atlas-gutter) + var(--map-side) + 12px);
+  /* The cookie notice comes after the first paint: the first picture does not move for it. */
+  inset: 0 calc(var(--atlas-gutter) + var(--map-tools)) var(--map-dock) calc(var(--atlas-gutter) + var(--map-side) + 12px);
   display: grid;
   place-items: center;
   container-type: size;
@@ -89,7 +90,8 @@
 .trail li:first-child { display: none; }
 .trail a { display: inline-flex; align-items: center; min-height: 28px; color: var(--atlas-accent); text-decoration: none; }
 .trail a:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
-.trail [aria-current] { color: var(--atlas-text-muted); }
+/* The current place is the heading right below: the trail shows the way to it (screen readers still hear it). */
+.trail li:has(> [aria-current]) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .trail svg { width: 12px; height: 12px; flex: none; color: var(--atlas-text-subtle); }
 .title {
   margin: var(--atlas-space-1) 0 0;
@@ -151,7 +153,7 @@
 
 @media (max-width: 700px) {
   .stage { --map-side: 0px; --map-tools: 0px; --map-dock: 72px; min-height: 520px; }
-  .poster { inset: 150px 0 calc(var(--map-dock) + var(--map-cookie)) 0; }
+  .poster { inset: 150px 0 var(--map-dock) 0; }
   /* A compact header over the map: trail, name, line, then search and tools in one row. */
   .titleBar {
     top: 0;
@@ -166,6 +168,7 @@
   .line { display: -webkit-box; margin-top: 2px; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--atlas-text-meta); }
   /* One scrolling row of the trail; the site crumb is in the top bar already. */
   .trail ol { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
+  .trail li { flex: none; }
   .slot { position: relative; flex-direction: row; align-items: center; gap: var(--atlas-space-2); margin-top: var(--atlas-space-2); }
 }
 @media (pointer: coarse) {

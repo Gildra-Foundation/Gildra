@@ -24,7 +24,10 @@ export function MapPlacePanel({ lang, facts, selection, sheet, onClose, onPoi, o
   const copy = worldMapCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
   const [open, setOpen] = useState(false);
-  const hasFacts = Boolean(facts && (facts.instances.length || facts.events.length));
+  // The chosen event is in the card already: the list shows the others.
+  const chosen = selection?.type === "event" ? selection.event.id : null;
+  const events = facts?.events.filter((event) => event.id !== chosen) ?? [];
+  const hasFacts = Boolean(facts && (facts.instances.length || events.length));
   // A new choice opens the sheet; the place's lists stay folded until asked for.
   const [shown, setShown] = useState(selection);
   if (shown !== selection) { setShown(selection); if (selection) setOpen(true); }
@@ -82,15 +85,14 @@ export function MapPlacePanel({ lang, facts, selection, sheet, onClose, onPoi, o
           </ul>
         </section>
       ) : null}
-      {facts.events.length ? (
+      {events.length ? (
         <section aria-labelledby="map-place-events">
           <h2 id="map-place-events" className={styles.placeHeading}>{copy.events}</h2>
           <ul className={styles.placeList}>
-            {facts.events.map((event) => (
+            {events.map((event) => (
               <li key={event.id}>
                 <span className={styles.placeIcon} data-event="" aria-hidden="true"><Hourglass /></span>
-                <button type="button" className={styles.placeName} onClick={() => onEvent(event)}
-                  aria-current={selection?.type === "event" && selection.event.id === event.id ? "true" : undefined}>
+                <button type="button" className={styles.placeName} onClick={() => onEvent(event)}>
                   <span>{event.title}</span>
                   <span className={styles.placeMeta}>{copy.patch} {event.patch}</span>
                 </button>
@@ -107,7 +109,7 @@ export function MapPlacePanel({ lang, facts, selection, sheet, onClose, onPoi, o
     <div className={styles.place} data-map-ui data-sheet="" data-open={open ? "" : undefined}>
       {lists ? (
         <button type="button" className={styles.sheetHandle} aria-expanded={open} aria-controls="map-place-sheet" onClick={() => setOpen((o) => !o)}>
-          <span>{[facts?.instances.length ? instancesTitle : "", facts?.events.length ? copy.events : ""].filter(Boolean).join(" · ")}</span>
+          <span>{[facts?.instances.length ? instancesTitle : "", events.length ? copy.events : ""].filter(Boolean).join(" · ")}</span>
           <ChevronUp aria-hidden="true" />
         </button>
       ) : null}
