@@ -154,7 +154,20 @@ export class WorldMapEngine {
   setMapSet(next: MapSet, animate = true) {
     if (next === this.set || next.key === this.set.key) return;
     const from = this.set;
-    this.camera = this.transfer(this.camera, from, next);
+    const moved = this.transferOrNull(this.camera, from, next);
+    if (moved) this.camera = moved;
+    else {
+      // Nothing in view existed then (the Cosmic map before Outland): show that era's top map whole.
+      let top: AtlasMap | undefined;
+      let best = Infinity;
+      for (const map of next.maps.values()) {
+        if (map.depth !== 0 || !map.art) continue;
+        const d = Math.hypot((map.frame[0] + map.frame[2]) / 2 - this.camera.x, (map.frame[1] + map.frame[3]) / 2 - this.camera.y);
+        if (d < best) { best = d; top = map; }
+      }
+      this.set = next;
+      if (top) this.camera = this.limit(this.fit(next.shown.get(top.id) ?? top.frame));
+    }
     if (this.flight) this.flight = null;
     this.fromSet = animate && !this.options.reducedMotion ? from : null;
     this.set = next;
@@ -171,6 +184,10 @@ export class WorldMapEngine {
 
   /** The same place in another set: anchored on the deepest map of the focus chain that both have. */
   private transfer(camera: Camera, from: MapSet, to: MapSet): Camera {
+    return this.transferOrNull(camera, from, to) ?? camera;
+  }
+
+  private transferOrNull(camera: Camera, from: MapSet, to: MapSet): Camera | null {
     if (from === to) return camera;
     for (let m = from.maps.get(this.focusId); m; m = m.parent === null ? undefined : from.maps.get(m.parent)) {
       const b = to.maps.get(m.id)?.frame;
@@ -179,7 +196,7 @@ export class WorldMapEngine {
       const sx = (b[2] - b[0]) / (a[2] - a[0]), sy = (b[3] - b[1]) / (a[3] - a[1]);
       return { x: b[0] + (camera.x - a[0]) * sx, y: b[1] + (camera.y - a[1]) * sy, scale: camera.scale / sx };
     }
-    return camera;
+    return null;
   }
 
   private withCamera<T>(camera: Camera, run: () => T): T {
@@ -464,6 +481,11 @@ export class WorldMapEngine {
       const entry: DrawnMap = { map, alpha, screen, clip };
       out.push(entry);
       const density = ((x1 - x0) * this.dpr) / art.width;
+      // Most of this map in view: the reader looks at it, not into one of its children
+      // (Classic's continents fill most of its world map, yet the world map is what shows).
+      const iw = Math.max(0, Math.min(clip[2], this.width) - Math.max(clip[0], 0)), ih = Math.max(0, Math.min(clip[3], this.height) - Math.max(clip[1], 0));
+      const shownFrac = (iw * ih) / Math.max(1, (clip[2] - clip[0]) * (clip[3] - clip[1]));
+      const lookingAtParent = smoothstep(0.4, 0.6, shownFrac);
       let portalOpen = 0;
       let dominant = 0;
       const mx = this.width / 2, my = this.height / 2;
@@ -490,7 +512,7 @@ export class WorldMapEngine {
         // How much of the free part of the view (panels excluded) the child takes.
         const fill = Math.max(vw / freeW, vh / freeH);
         // Detail alone does not open a small child (a city on a continent): it must also take a fair part of the view.
-        const a = Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill));
+        const a = Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill)) * (1 - lookingAtParent);
         if (a <= 0.003) continue;
         const off = Math.hypot((vx0 + vx1) / 2 - mx, (vy0 + vy1) / 2 - my) / Math.max(vw, vh);
         opened.push({ child, a, fill, off });

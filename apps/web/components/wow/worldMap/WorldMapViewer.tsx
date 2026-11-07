@@ -221,6 +221,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     if (!bundle || !last) return;
     const crumbs: StageCrumb[] = [
       { label: "World of Warcraft", href: `${prefix}/wow` },
+      // An era without the Cosmic map still sits under the world map's own page.
+      ...(chain[0] && chain[0].id !== homeId ? [{ label: copy.title, href: `${prefix}/wow/map` }] : []),
       ...chain.map((map) => ({ label: map.id === homeId ? copy.title : map.name, href: map.id === homeId ? `${prefix}/wow/map` : map.page ? `${prefix}${mapPagePath(map)}` : undefined, mapId: map.id })),
     ];
     handle.current?.setCrumbs(crumbs);
