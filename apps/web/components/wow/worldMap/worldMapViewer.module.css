@@ -356,14 +356,14 @@
 .compareButton[aria-pressed="true"] { background: var(--atlas-accent-wash-strong); }
 .compareButton svg { width: 15px; height: 15px; }
 
-.track { position: relative; height: 50px; margin: 2px 6px 0; touch-action: none; cursor: pointer; }
+.track { position: relative; height: 56px; margin: 2px 6px 0; touch-action: none; cursor: pointer; }
 .rail { position: absolute; left: 0; right: 0; top: 18px; height: 3px; border-radius: 2px; background: var(--atlas-line); }
 .band { --era-accent: var(--atlas-accent-2); position: absolute; top: 15px; height: 9px; border-radius: 5px; background: color-mix(in srgb, var(--era-accent) 20%, transparent); transition: background-color var(--atlas-duration-fast) var(--atlas-ease); }
 .band[data-active] { background: color-mix(in srgb, var(--era-accent) 62%, transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--era-accent) 45%, transparent); }
 .ticks { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; pointer-events: none; }
 .ticks li { position: absolute; top: 12px; }
 .ticks li::before { content: ""; position: absolute; left: 0; top: 0; width: 1px; height: 14px; background: var(--atlas-line-strong); }
-.ticks button { position: absolute; left: 0; top: 12px; padding: 2px 4px; border: 0; background: none; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); white-space: nowrap; cursor: pointer; pointer-events: auto; }
+.ticks button { position: absolute; left: 0; top: 18px; padding: 2px 4px; border: 0; background: none; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); white-space: nowrap; cursor: pointer; pointer-events: auto; }
 .ticks button:hover { color: var(--atlas-text-strong); }
 .ticks button[data-active] { color: var(--atlas-text-strong); font-weight: 650; }
 .rune {
@@ -377,7 +377,7 @@
   transform: translate(-50%, -50%);
   cursor: pointer;
 }
-.rune::before { content: ""; position: absolute; inset: -14px; }
+.rune::before { content: ""; position: absolute; inset: -14px -10px -3px; }
 .rune span {
   position: absolute;
   inset: 2px;
