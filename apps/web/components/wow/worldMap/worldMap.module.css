@@ -135,9 +135,11 @@
   .stage { --map-dock: 132px; height: calc(100dvh - var(--atlas-sticky-top)); min-height: 520px; }
   .poster { inset: 150px 0 var(--map-dock) 0; }
   .titleBar { top: var(--atlas-space-2); right: var(--atlas-gutter); max-width: none; }
-  .title { font-size: 1.625rem; }
-  .line { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--atlas-text-meta); }
-  .trail a { min-height: 28px; }
+  .title { margin-top: 0; font-size: 1.625rem; }
+  .line { display: -webkit-box; margin-top: 2px; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--atlas-text-meta); }
+  /* One scrolling row of the trail; the site crumb is in the top bar already. */
+  .trail ol { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
+  .trail li:first-child { display: none; }
 }
 @media (pointer: coarse) {
   .trail a { min-height: 44px; }

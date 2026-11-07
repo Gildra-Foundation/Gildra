@@ -64,8 +64,19 @@ export function WorldMapPage({ lang, map: requested }: { lang: Lang; map?: Atlas
   const line = map ? mapLine(lang, map, bundle) : "";
   const childTitle = map ? copy.children[map.type === "zone" && map.parent !== null && bundle.maps.find((m) => m.id === map.parent)?.type === "zone" ? "city" : map.type] : copy.places;
 
+  // The trail as search engines read it (the stage draws the same trail).
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((crumb, index) => ({
+      "@type": "ListItem", position: index + 1, name: crumb.label,
+      ...(crumb.href && index < crumbs.length - 1 ? { item: `https://gildra.net${crumb.href}` } : {}),
+    })),
+  };
+
   return (
     <main className={styles.page} lang={lang}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <WorldMapStage
         lang={lang}
         mapId={map?.id ?? null}

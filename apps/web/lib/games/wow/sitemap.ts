@@ -4,6 +4,8 @@ import { midnightClasses, midnightLairEncounters, midnightSpecializations } from
 import { raidHubEntries } from "@/components/wow/raid/raidHubData";
 import professions from "@/data/wow/professions/index.json";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
+import { mapPagePath } from "@/lib/wow/worldMap/bundle";
+import { worldMapPages } from "@/lib/wow/worldMap/data.server";
 
 /**
  * Sections of the route registry that are not listed: /wow/dungeons answers
@@ -29,5 +31,6 @@ export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean
   ...talentSpecThemes.map(({ slug }) => `/wow/mythic-plus/leaderboard/${slug}`),
   ...midnightClasses.map(({ slug }) => `/wow/classes/${slug}`),
   ...midnightSpecializations.map((spec) => `/wow/classes/${spec.classSlug}/${spec.slug}`),
+  ...worldMapPages().map(mapPagePath),
   "/privacy",
 ];

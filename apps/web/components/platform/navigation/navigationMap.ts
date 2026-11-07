@@ -98,6 +98,7 @@ export const navigationRealms: readonly NavigationRealm[] = [
         { href: "/wow/auction", icon: "auction", label: { en: "Auction House", ru: "Аукцион" }, note: { en: "Realm and region prices", ru: "Цены серверов и региона" } },
         { href: "/wow/professions", icon: "professions", label: { en: "Professions", ru: "Профессии" }, note: { en: "Leveling and profit", ru: "Прокачка и выгода" } },
         { href: "/wow/transmog", icon: "transmog", label: { en: "Transmog Studio", ru: "Трансмогрификация" }, note: { en: "Outfits from any look", ru: "Образы из любых обликов" } },
+        { href: "/wow/map", icon: "atlas", label: { en: "World map", ru: "Карта мира" }, note: { en: "Azeroth through the eras", ru: "Азерот сквозь эпохи" } },
       ],
     }],
   },

@@ -132,7 +132,10 @@ export class WorldMapEngine {
   fit(box: Box, margin = 0.05): Camera {
     const { top, right, bottom, left } = this.options.insets;
     const freeW = Math.max(80, this.width - left - right), freeH = Math.max(80, this.height - top - bottom);
-    const camera = fitBox(box, freeW, freeH, margin);
+    let camera = fitBox(box, freeW, freeH, margin);
+    // A wide map on a tall phone screen: come closer than "whole" so it fills more of the screen (pan sideways).
+    const boxAspect = (box[2] - box[0]) / (box[3] - box[1]);
+    if (freeW / freeH < 0.85 && boxAspect > 1.1) camera = { ...camera, scale: Math.min(camera.scale * 1.55, (freeH * (1 - margin * 2)) / (box[3] - box[1])) };
     return { scale: camera.scale, x: camera.x - (left - right) / 2 / camera.scale, y: camera.y - (top - bottom) / 2 / camera.scale };
   }
 
@@ -554,7 +557,9 @@ export class WorldMapEngine {
       for (let tx = tx0; tx <= tx1; tx++) {
         const rx0 = sx0 + tx * ts * pxW, ry0 = sy0 + ty * ts * pxH;
         const rw = Math.min(ts, lw - tx * ts) * pxW, rh = Math.min(ts, lh - ty * ts) * pxH;
-        const rect: Box = [rx0 - 0.5, ry0 - 0.5, rx0 + rw + 0.5, ry0 + rh + 0.5];
+        // Opaque tiles overlap by half a pixel against seams; see-through ones must not (the overlap would show as lines).
+        const o = alpha > 0.999 ? 0.5 : 0;
+        const rect: Box = [rx0 - o, ry0 - o, rx0 + rw + o, ry0 + rh + o];
         const dist = Math.hypot(rx0 + rw / 2 - centerX, ry0 + rh / 2 - centerY) / Math.max(W, H);
         const tile = this.tiles.get(tileUrl(art, map.id, z, tx, ty), 2 + map.depth * 0.5 + dist * 4 + (z - 0) * 0.01);
         const fade = tile.state === "ready" ? clamp((now - tile.readyAt) / FADE_TILE, 0, 1) : 0;

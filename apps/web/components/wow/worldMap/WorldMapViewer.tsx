@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import { ArrowUpRight, Bird, Castle, ChevronUp, Crown, DoorOpen, Expand, Hourglass, Layers as LayersIcon, Minus, Orbit, Pickaxe, Plus, Search, Shrink, Skull, Tent, X } from "lucide-react";
 import { lessMotion, subscribeSiteMotion } from "@gildra/atlas-ui/motionPreference";
 import type { AtlasBundle, AtlasEra, AtlasEvent, AtlasMap, AtlasPoi, Lang } from "@/lib/wow/worldMap/bundle";
@@ -62,7 +62,6 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const routeEls = useRef<Array<SVGPathElement | null>>([]);
   const lastPick = useRef(0);
   const state = useRef({ layers, eraId, selected, compare });
-  state.current = { layers, eraId, selected, compare };
   const dock = useRef<HTMLDivElement>(null);
   const titleBar = useRef<HTMLElement | null>(null);
 
@@ -92,7 +91,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   }, []);
 
   // ------------------------------------------------------------ insets of the panels
-  const insets = useCallback((): Insets => {
+  const insets = (): Insets => {
     const stageRect = stage.current?.getBoundingClientRect();
     const dockRect = dock.current?.getBoundingClientRect();
     const narrow = (stageRect?.width ?? 1000) < 700;
@@ -102,14 +101,14 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     if (narrow && stageRect && title) {
       // Phones: the search row sits under the title; the map fits below both.
       const searchTop = Math.round(title.bottom - stageRect.top + 8);
-      stage.current?.style.setProperty("--map-search-top", `${searchTop}px`);
+      handle.current?.setSearchTop(searchTop);
       top = searchTop + 52;
     }
     return { top, right: 0, bottom, left: 0 };
-  }, [stage]);
+  };
 
   // ------------------------------------------------------------ engine
-  const onFrame = useCallback((info: FrameInfo) => {
+  const onFrame = (info: FrameInfo) => {
     const engine = engineRef.current;
     if (!engine || !index) return;
     for (const marker of markerList.current) {
@@ -142,23 +141,19 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       const same = next.length === markerList.current.length && next.every((m, i) => m.key === markerList.current[i].key);
       if (!same) { markerList.current = next; setMarkers(next); }
     }
-  }, [index]);
+  };
 
   const hoverPoiRef = useRef<AtlasPoi | null>(null);
-  hoverPoiRef.current = hoverPoi;
   const byIdRef = useRef(byId);
-  byIdRef.current = byId;
   const poisRef = useRef(new Map<string, AtlasPoi>());
   const eraByIdRef = useRef(eraById);
-  eraByIdRef.current = eraById;
   const currentEraRef = useRef<AtlasEra | null>(null);
-  currentEraRef.current = currentEra(eras);
 
   useEffect(() => {
     if (bundle) poisRef.current = new Map(bundle.pois.map((poi) => [poi.id, poi]));
   }, [bundle]);
 
-  const settle = useCallback((info: FrameInfo) => {
+  const settle = (info: FrameInfo) => {
     const engine = engineRef.current;
     if (!engine) return;
     const s = state.current;
@@ -183,9 +178,9 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const qs = params.toString();
     const url = `${prefix}${path}${qs ? `?${qs}` : ""}`;
     if (url !== window.location.pathname + window.location.search) window.history.replaceState(window.history.state, "", url);
-  }, [homeId, prefix]);
+  };
 
-  const onFocus = useCallback((chain: AtlasMap[]) => {
+  const onFocus = (chain: AtlasMap[]) => {
     const last = chain.at(-1) ?? null;
     setFocus(last);
     if (!bundle || !last) return;
@@ -195,7 +190,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     ];
     handle.current?.setCrumbs(crumbs);
     handle.current?.setTitle(last.id === homeId ? copy.title : last.name, mapLine(lang, last, bundle));
-  }, [bundle, copy.title, handle, homeId, lang, prefix]);
+  };
 
   useEffect(() => {
     if (!bundle || !canvas.current || !surface.current) return;
@@ -234,10 +229,11 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       setSelected({ type: "event", event });
       if (q.compare && event.before && event.after) setCompare({ left: event.before, right: event.after });
     }
-    handle.current?.onCrumb((id) => engine.flyToMap(id));
-    handle.current?.ready();
+    const stageHandle = handle.current;
+    stageHandle?.onCrumb((id) => engine.flyToMap(id));
+    stageHandle?.ready();
     return () => {
-      handle.current?.onCrumb(null);
+      stageHandle?.onCrumb(null);
       engine.destroy();
       engineRef.current = null;
     };
@@ -245,11 +241,19 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   }, [bundle]);
 
   const onFrameRef = useRef(onFrame);
-  onFrameRef.current = onFrame;
   const onFocusRef = useRef(onFocus);
-  onFocusRef.current = onFocus;
   const settleRef = useRef(settle);
-  settleRef.current = settle;
+  // The engine calls back through refs: they follow the latest render.
+  useLayoutEffect(() => {
+    state.current = { layers, eraId, selected, compare };
+    hoverPoiRef.current = hoverPoi;
+    byIdRef.current = byId;
+    eraByIdRef.current = eraById;
+    currentEraRef.current = currentEra(eras);
+    onFrameRef.current = onFrame;
+    onFocusRef.current = onFocus;
+    settleRef.current = settle;
+  });
 
   // Panels change size: the engine fits maps into what stays free.
   useEffect(() => {
@@ -259,7 +263,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     if (dock.current) observer.observe(dock.current);
     if (titleBar.current) observer.observe(titleBar.current);
     return () => observer.disconnect();
-  }, [bundle, insets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- insets() reads the panels from refs
+  }, [bundle]);
 
   useEffect(() => { engineRef.current?.setOptions({ alive: layers.alive, reducedMotion: reduced }); }, [layers.alive, reduced]);
   useEffect(() => { engineRef.current?.setEra(era); engineRef.current?.invalidate(); }, [era]);
@@ -316,34 +321,34 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     setCompare({ left: left.id, right: right.id });
   }, [compare, selected, changedHere, eras, era]);
 
-  const toggleFull = useCallback(() => {
+  const toggleFull = () => {
     const el = stage.current;
-    if (!el) return;
     const next = !full;
     setFull(next);
-    if (next) {
-      el.dataset.full = "";
-      if (el.requestFullscreen && !/iPhone|iPad/.test(navigator.userAgent)) el.requestFullscreen().catch(() => {});
-    } else {
-      delete el.dataset.full;
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    }
-    window.setTimeout(() => engineRef.current?.resize(), 60);
-  }, [full, stage]);
+    if (next && el?.requestFullscreen && !/iPhone|iPad/.test(navigator.userAgent)) el.requestFullscreen().catch(() => {});
+    if (!next && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  };
+
+  // Full screen is drawn by the stage (fixed over the page); the browser's own full screen when it has one.
+  useEffect(() => {
+    handle.current?.setFull(full);
+    const timer = window.setTimeout(() => engineRef.current?.resize(), 60);
+    return () => window.clearTimeout(timer);
+  }, [full, handle]);
 
   useEffect(() => {
-    const exit = () => { if (!document.fullscreenElement && stage.current?.dataset.full !== undefined && full) { delete stage.current.dataset.full; setFull(false); window.setTimeout(() => engineRef.current?.resize(), 60); } };
+    const exit = () => { if (!document.fullscreenElement && full) setFull(false); };
     document.addEventListener("fullscreenchange", exit);
     const key = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (selected) setSelected(null);
-      else if (full && !document.fullscreenElement) toggleFull();
+      else if (full && !document.fullscreenElement) setFull(false);
     };
     window.addEventListener("keydown", key);
     return () => { document.removeEventListener("fullscreenchange", exit); window.removeEventListener("keydown", key); };
-  }, [full, selected, stage, toggleFull]);
+  }, [full, selected]);
 
-  const startDivider = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+  const startDivider = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     const el = event.currentTarget;
     el.setPointerCapture(event.pointerId);
     const rect = stage.current?.getBoundingClientRect();

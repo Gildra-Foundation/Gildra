@@ -2,6 +2,7 @@
 export const worldMapCopy = {
   en: {
     title: "World map",
+    trail: "Breadcrumbs",
     lede: "From the stars down to the streets of the capitals — and back through the eras of Azeroth.",
     search: "Search places and events",
     searchLabel: "Search the map",
@@ -57,6 +58,7 @@ export const worldMapCopy = {
   },
   ru: {
     title: "Карта мира",
+    trail: "Навигация",
     lede: "От звёзд до улиц столиц — и назад сквозь эпохи Азерота.",
     search: "Поиск мест и событий",
     searchLabel: "Поиск по карте",

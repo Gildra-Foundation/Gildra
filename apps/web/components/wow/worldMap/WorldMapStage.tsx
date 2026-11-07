@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { ChevronRight } from "lucide-react";
 import type { Lang } from "@/lib/wow/worldMap/bundle";
+import { worldMapCopy } from "./worldMapCopy";
 import styles from "./worldMap.module.css";
 
 /**
@@ -18,6 +19,8 @@ export type StageHandle = {
   setCrumbs(crumbs: StageCrumb[]): void;
   onCrumb(handler: ((mapId: number) => void) | null): void;
   ready(): void;
+  setFull(full: boolean): void;
+  setSearchTop(px: number): void;
 };
 
 const WorldMapViewer = dynamic(() => import("./WorldMapViewer"), { ssr: false });
@@ -31,6 +34,8 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
   const [trail, setTrail] = useState(crumbs);
   const [live, setLive] = useState(false);
   const [start, setStart] = useState(false);
+  const [full, setFull] = useState(false);
+  const [searchTop, setSearchTop] = useState<number | null>(null);
   const crumbHandler = useRef<((mapId: number) => void) | null>(null);
 
   // The viewer chunk loads once the first picture is on screen.
@@ -45,6 +50,8 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
     setCrumbs: (c) => setTrail(c),
     onCrumb: (h) => { crumbHandler.current = h; },
     ready: () => setLive(true),
+    setFull: (value) => setFull(value),
+    setSearchTop: (px) => setSearchTop(px),
   });
 
   const crumbClick = useCallback((event: MouseEvent<HTMLAnchorElement>, crumb: StageCrumb) => {
@@ -54,7 +61,8 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
   }, []);
 
   return (
-    <section ref={stage} className={styles.stage} data-map-stage data-live={live ? "" : undefined} aria-labelledby="world-map-title">
+    <section ref={stage} className={styles.stage} data-map-stage data-live={live ? "" : undefined} data-full={full ? "" : undefined}
+      style={searchTop === null ? undefined : { ["--map-search-top" as string]: `${searchTop}px` }} aria-labelledby="world-map-title">
       {poster ? (
         <div className={styles.poster} aria-hidden="true">
           <div className={styles.posterArt} style={{ aspectRatio: poster.aspect, ["--poster-aspect" as string]: poster.aspect }}>
@@ -68,7 +76,7 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, crumbs, poster
       ) : null}
       <div className={styles.vignette} aria-hidden="true" />
       <header className={styles.titleBar} data-map-ui>
-        <nav aria-label={lang === "ru" ? "Навигация" : "Breadcrumbs"} className={styles.trail}>
+        <nav aria-label={worldMapCopy[lang].trail} className={styles.trail}>
           <ol>
             {trail.map((crumb, index) => {
               const last = index === trail.length - 1;
