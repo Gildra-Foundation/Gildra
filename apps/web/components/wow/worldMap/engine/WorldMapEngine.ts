@@ -4,6 +4,7 @@ import { clamp, contains, easeInOut, fitBox, flightPath, intersects, smoothstep,
 import { MapRenderer, type DrawParams } from "./gl";
 import { blurGroups, blurOf, blurRadiusPx, desatOf, dimOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "./lod";
 import { wheelKind } from "./input";
+import { analysePaper } from "./paper";
 import { chainUp, transferCamera, type MapSet } from "./sets";
 import { levelSize, levelTiles, TileStore, tileUrl } from "./tiles";
 
@@ -51,10 +52,12 @@ export type EngineOptions = { alive: boolean; reducedMotion: boolean; insets: In
 type Flight = { path: ReturnType<typeof flightPath>; start: number; duration: number; after?: () => void };
 type Pointer = { id: number; x: number; y: number };
 type TerrainDraw = { map: AtlasMap; alpha: number; clip: Box };
-type ArtStyle = { alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number };
+type ArtStyle = { alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number; exists?: (z: number, x: number, y: number) => boolean };
 
 /** Floors and caves under a place (micro maps, orphan levels like Cleft of Shadow): never opened by zooming over its surface. */
 const UNDER: ReadonlySet<string> = new Set(["micro", "orphan"]);
+/** A map blended into the one under it by its own-area mask (zones and cities; a top map has nothing under it). */
+const usesMask = (map: AtlasMap) => Boolean(map.mask) && map.depth > 0 && map.type !== "world" && map.type !== "continent";
 const FADE_TILE = 150;
 const FADE_ERA = 650;
 /** Longest wait for an era's picture to load before it fades in anyway. */
@@ -234,19 +237,20 @@ export class WorldMapEngine {
   }
 
   /** Camera that shows a box inside the free part of the viewport (UI panels excluded). */
-  fit(box: Box, margin = 0.05): Camera {
+  fit(box: Box, margin = 0.05, closer = 1.9): Camera {
     const { top, right, bottom, left } = this.options.insets;
     const freeW = Math.max(80, this.width - left - right), freeH = Math.max(80, this.height - top - bottom);
     let camera = fitBox(box, freeW, freeH, margin);
     // A wide map on a tall phone screen: come closer than "whole" so it fills more of the screen (pan sideways).
     const boxAspect = (box[2] - box[0]) / (box[3] - box[1]);
-    if (freeW / freeH < 1.05 && boxAspect > 1.1) camera = { ...camera, scale: Math.min(camera.scale * 1.9, (freeH * (1 - margin * 2)) / (box[3] - box[1])) };
+    if (freeW / freeH < 1.05 && boxAspect > 1.1) camera = { ...camera, scale: Math.min(camera.scale * closer, (freeH * (1 - margin * 2)) / (box[3] - box[1])) };
     return { scale: camera.scale, x: camera.x - (left - right) / 2 / camera.scale, y: camera.y - (top - bottom) / 2 / camera.scale };
   }
 
   fitMap(id: number) {
     const map = this.maps.get(id);
-    return map ? this.fit(this.shown.get(id) ?? map.frame) : null;
+    // A world or the Cosmic map on a phone comes a little closer only: its continents stay one picture.
+    return map ? this.fit(this.shown.get(id) ?? map.frame, 0.05, map.type === "world" || map.type === "cosmic" ? 1.35 : 1.9) : null;
   }
 
   /** The last move was a flight to a place (search, a click on a map), not a drag or wheel: true until read. */
@@ -560,6 +564,7 @@ export class WorldMapEngine {
     const minDim = Math.min(this.width, this.height);
     const { top, right, bottom, left } = this.options.insets;
     const freeW = Math.max(80, this.width - left - right), freeH = Math.max(80, this.height - top - bottom);
+    const homeLock = this.home && set === this.set && this.atHome(this.home.id) ? this.home.id : null;
     const visit = (map: AtlasMap, alpha: number, parentClip: Box | null, side = false) => {
       const art = map.art;
       if (!art) return;
@@ -605,7 +610,10 @@ export class WorldMapEngine {
         // How much of the free part of the view (panels excluded) the child takes.
         const fill = Math.max(vw / freeW, vh / freeH);
         // Detail alone does not open a small child (a city on a continent): it must also take a fair part of the view.
-        const a = Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill)) * (1 - lookingAtParent);
+        // A map shown whole on purpose keeps its children closed until its own detail runs out.
+        const a = homeLock === map.id
+          ? smoothstep(0.95 / this.quality, 1.3 / this.quality, density) * smoothstep(0.22, 0.45, fill)
+          : Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill)) * (1 - lookingAtParent);
         if (a <= 0.003) continue;
         opened.push({ child, a, area: (cx1 - cx0) * (cy1 - cy0), fill, centre: vx0 <= mx && mx <= vx1 && vy0 <= my && my <= vy1, box: [cx0, cy0, cx1, cy1] });
       }
@@ -635,7 +643,7 @@ export class WorldMapEngine {
     // A settled map whose solid part covers the whole view hides everything drawn before it.
     for (let i = out.length - 1; i > 0; i--) {
       const entry = out[i];
-      if (entry.alpha < 0.995 || entry.map.portal || entry.map.mask) continue;
+      if (entry.alpha < 0.995 || entry.map.portal || usesMask(entry.map)) continue;
       const devW = (entry.screen[2] - entry.screen[0]) * this.dpr, devH = (entry.screen[3] - entry.screen[1]) * this.dpr;
       const f = entry.map.depth === 0 ? 0 : featherOf(devW, devH, this.dpr) / this.dpr;
       if (entry.clip[0] + f <= 0 && entry.clip[1] + f <= 0 && entry.clip[2] - f >= this.width && entry.clip[3] - f >= this.height) {
@@ -740,6 +748,9 @@ export class WorldMapEngine {
     const [cx, cy] = this.unproject(left + (this.width - left - right) / 2, top + (this.height - top - bottom) / 2);
     let focus = drawn[0]?.map ?? this.maps.get(this.focusId) ?? this.maps.values().next().value as AtlasMap;
     for (const entry of drawn) if (entry.alpha > 0.5 && contains(entry.map.frame, cx, cy) && entry.map.depth >= (focus?.depth ?? 0)) focus = entry.map;
+    // Still on "show this map whole" (a page, a click): that map is the one in view, even where a child fills the phone screen.
+    const home = this.home && this.atHome(this.home.id) ? this.maps.get(this.home.id) : undefined;
+    if (home) focus = home;
     if (focus && focus.id !== this.focusId) {
       this.focusId = focus.id;
       this.events.focus(this.chain(focus.id));
@@ -801,9 +812,11 @@ export class WorldMapEngine {
     for (const t of terrain) {
       const tr = t.map.terrain;
       if (!tr) continue;
+      const exists = this.terrainTiles(tr.index);
+      if (exists === null) continue;
       const [x0, y0] = this.project(tr.frame[0], tr.frame[1]);
       const [x1, y1] = this.project(tr.frame[2], tr.frame[3]);
-      this.drawArt(t.map, tr.art, [x0, y0, x1, y1], t.clip, { alpha: t.alpha * eraAlpha, light: 0, cloud: 0, water: water * 0.5, desat: 0, levelScale: 1 }, now, moving, false, "t");
+      this.drawArt(t.map, tr.art, [x0, y0, x1, y1], t.clip, { alpha: t.alpha * eraAlpha, light: 0, cloud: 0, water: water * 0.5, desat: 0, levelScale: 1, exists }, now, moving, false, "t");
     }
     // A hovered child that is not drawn yet peeks through its parent.
     if (set === this.set && this.hoverId !== null && !list.some((entry) => entry.map.id === this.hoverId)) {
@@ -840,13 +853,16 @@ export class WorldMapEngine {
     const tx0 = clamp(Math.floor((cx0 - sx0) / pxW / ts), 0, cols - 1), tx1 = clamp(Math.floor((cx1 - sx0) / pxW / ts), 0, cols - 1);
     const ty0 = clamp(Math.floor((cy0 - sy0) / pxH / ts), 0, rows - 1), ty1 = clamp(Math.floor((cy1 - sy0) / pxH / ts), 0, rows - 1);
     const isTerrain = kind === "t";
-    const mask = !isTerrain && map.mask ? this.tiles.get(map.mask, map.depth * 0.5) : null;
+    // A mask blends a map into the one under it; a top map (Draenor standing alone) has nothing under it.
+    // Worlds and continents end in open sea that blends by the soft edge; their masks are not land shapes
+    // one can trust (Azeroth's traces the Cosmic ring, the Eastern Kingdoms' misses the south).
+    const mask = !isTerrain && map.mask && usesMask(map) ? this.tiles.get(map.mask, map.depth * 0.5) : null;
     const maskReady = mask && mask.state === "ready" && mask.texture ? mask : null;
     // Top maps have no edge to blend; a world opened from the Cosmic map softens its edge once open.
     const feather: number | [number, number] = isTerrain ? featherOf(cx1 - cx0, cy1 - cy0, d) * 0.6
       : map.depth === 0 ? 0
-      : maskReady ? maskFeatherOf(devW, devH, d)
       : map.portal ? (style.alpha > 0.98 ? featherOf(devW, devH, d) * 0.6 : 0)
+      : maskReady ? maskFeatherOf(devW, devH, d)
       : [featherInsetOf(devW, devH), featherOf(devW, devH, d) * (style.edge ?? 1)];
     let portal: [number, number, number] = [0, 0, 0];
     if (!isTerrain && map.portal && style.alpha < 0.999) {
@@ -857,15 +873,22 @@ export class WorldMapEngine {
     }
     // The terrain fades at the edge of the part shown (the continent's picture), a map at its own art border.
     const frame: Box = isTerrain ? [cx0, cy0, cx1, cy1] : [clipBox[0] * d, clipBox[1] * d, clipBox[2] * d, clipBox[3] * d];
+    const paper = maskReady && !isTerrain && map.depth > 0 ? this.paperOf(map, art) : null;
     const base: Omit<DrawParams, "rect" | "uv"> = {
       alpha: style.alpha, frame, feather, portal, light: style.light, cloud: style.cloud, water: style.water, desat: style.desat,
       mask: maskReady && maskReady.texture ? { texture: maskReady.texture, rect: [sx0, sy0, sx1, sy1] } : null,
+      paper: paper ? [paper[0], paper[1], paper[2], 0.9] : null,
     };
     const centerX = W / 2, centerY = H / 2;
     const id = map.id;
+    const exists = style.exists;
     // The whole picture at level 0 first: something to show while the details load.
-    const root = this.tiles.get(tileUrl(art, id, 0, 0, 0), map.depth);
-    let ready = root.state === "ready" ? 1 : 0, total = 1;
+    let ready = 0, total = 0;
+    if (!exists || exists(0, 0, 0)) {
+      const root = this.tiles.get(tileUrl(art, id, 0, 0, 0), map.depth);
+      ready = root.state === "ready" ? 1 : 0;
+      total = 1;
+    }
     for (let ty = ty0; ty <= ty1; ty++) {
       for (let tx = tx0; tx <= tx1; tx++) {
         const rx0 = sx0 + tx * ts * pxW, ry0 = sy0 + ty * ts * pxH;
@@ -875,6 +898,8 @@ export class WorldMapEngine {
         // Opaque tiles overlap by half a pixel against seams; see-through ones must not (the overlap would show as lines).
         const o = style.alpha > 0.999 && style.levelScale === 1 ? 0.5 : 0;
         const rect: Box = [rx0 - o, ry0 - o, rx0 + rw + o, ry0 + rh + o];
+        // Ground with no tile there (open sea): nothing to ask for.
+        if (exists && !exists(z, tx, ty)) continue;
         const dist = Math.hypot(rx0 + rw / 2 - centerX, ry0 + rh / 2 - centerY) / Math.max(W, H);
         const tile = this.tiles.get(tileUrl(art, id, z, tx, ty), 2 + map.depth * 0.5 + dist * 4 + (isTerrain ? -0.5 : 0));
         total += 1;
@@ -900,11 +925,50 @@ export class WorldMapEngine {
       for (let ty = ny0; ty <= ny1; ty++) {
         for (let tx = nx0; tx <= nx1; tx++) {
           if (Math.abs(tx - midX) > (nx1 - nx0) / 3 + 1 || Math.abs(ty - midY) > (ny1 - ny0) / 3 + 1) continue;
+          if (exists && !exists(z + 1, tx, ty)) continue;
           this.tiles.get(tileUrl(art, id, z + 1, tx, ty), 40 + map.depth);
         }
       }
     }
     return [ready, total];
+  }
+
+  /** The bare sheet's colour of a picture whose mask is only a soft rectangle (looked at once per picture). */
+  private papers = new Map<string, [number, number, number] | null | "loading">();
+  private paperOf(map: AtlasMap, art: MapArt): [number, number, number] | null {
+    if (!map.mask) return null;
+    const key = `${map.mask}|${art.url}`;
+    const known = this.papers.get(key);
+    if (known === "loading") return null;
+    if (known !== undefined) return known;
+    this.papers.set(key, "loading");
+    const [w0, h0] = levelSize(art, 0);
+    analysePaper(map.mask, tileUrl(art, map.id, 0, 0, 0), [w0, h0])
+      .then((paper) => { this.papers.set(key, paper); if (paper) this.invalidate(); })
+      .catch(() => this.papers.set(key, null));
+    return null;
+  }
+
+  /** Which terrain tiles exist (its index file, fetched once); null while it loads, a pass-all without an index. */
+  private terrainIndex = new Map<string, Map<number, Set<string>> | "loading" | "failed">();
+  private terrainTiles(index: string | undefined): ((z: number, x: number, y: number) => boolean) | null {
+    if (!index) return () => true;
+    const known = this.terrainIndex.get(index);
+    if (known === "failed") return () => false;
+    if (known && known !== "loading") return (z, x, y) => known.get(z)?.has(`${x}_${y}`) ?? false;
+    if (!known) {
+      this.terrainIndex.set(index, "loading");
+      fetch(index, { cache: "force-cache" })
+        .then((r) => (r.ok ? r.json() as Promise<Record<string, string[]>> : Promise.reject(new Error(String(r.status)))))
+        .then((data) => {
+          const levels = new Map<number, Set<string>>();
+          for (const [z, list] of Object.entries(data)) if (Array.isArray(list)) levels.set(Number(z), new Set(list));
+          this.terrainIndex.set(index, levels);
+          this.invalidate();
+        })
+        .catch(() => this.terrainIndex.set(index, "failed"));
+    }
+    return null;
   }
 
   private drawFallback(art: MapArt, id: number, z: number, tx: number, ty: number, rect: Box, base: Omit<DrawParams, "rect" | "uv">) {

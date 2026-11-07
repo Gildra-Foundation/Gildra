@@ -44,6 +44,7 @@ uniform float u_water;
 uniform vec3 u_waterMap;
 uniform float u_light;
 uniform float u_desat;
+uniform vec4 u_paper;
 varying vec2 v_uv;
 varying vec2 v_p;
 
@@ -74,6 +75,15 @@ void main() {
     a *= 1.0 - smoothstep(u_portal.z * 0.82, u_portal.z, d);
   }
   vec3 col = texel.a > 0.0 ? texel.rgb / texel.a : vec3(0.0);
+  if (u_paper.a > 0.0) {
+    // A city drawn on a plain sheet whose mask is only a soft rectangle: the bare sheet gives way to the
+    // map under it, the drawing stays (at the edges; the middle keeps its sheet so the zone's own words under it stay hidden).
+    vec2 m = (v_p - u_maskRect.xy) / (u_maskRect.zw - u_maskRect.xy);
+    float edge = min(min(m.x, 1.0 - m.x), min(m.y, 1.0 - m.y));
+    float strength = u_paper.a * mix(1.0, 0.0, smoothstep(0.07, 0.24, edge));
+    float key = smoothstep(0.05, 0.3, length(col - u_paper.rgb));
+    a *= mix(1.0, key, strength);
+  }
   if (u_water > 0.0) {
     float wet = smoothstep(0.035, 0.13, col.b - max(col.r, col.g * 0.94)) * smoothstep(0.12, 0.3, col.b);
     if (wet > 0.0) {
@@ -130,6 +140,8 @@ export type DrawParams = {
   cloud: number;
   water: number;
   desat?: number;
+  /** Colour of the bare sheet to key out and how strongly (0 = off). */
+  paper?: [number, number, number, number] | null;
   /** The own-area mask and the art's rect it spans (device px). */
   mask?: { texture: WebGLTexture; rect: [number, number, number, number] } | null;
 };
@@ -137,7 +149,7 @@ export type DrawParams = {
 type Target = { fb: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
 type Layer = { scale: number; a: Target; b: Target };
 
-const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat"];
+const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat", "u_paper"];
 
 export class MapRenderer {
   readonly gl: WebGLRenderingContext;
@@ -252,6 +264,8 @@ export class MapRenderer {
     gl.uniform1f(this.u.u_cloud, p.cloud);
     gl.uniform1f(this.u.u_water, p.water);
     gl.uniform1f(this.u.u_desat, p.desat ?? 0);
+    if (p.paper) gl.uniform4f(this.u.u_paper, ...p.paper);
+    else gl.uniform4f(this.u.u_paper, 0, 0, 0, 0);
     if (p.mask) {
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, p.mask.texture);

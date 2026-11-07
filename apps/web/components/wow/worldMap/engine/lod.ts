@@ -50,7 +50,7 @@ export function levelFor(art: Pick<MapArt, "width" | "maxZoom">, deviceWidth: nu
 }
 
 /** The ground (terrain) over the painted maps: in once the finest painted map at the centre is magnified past ~1.3×. */
-export const terrainAlphaOf = (finestUpscale: number) => smoothstep(1.3, 2.1, finestUpscale);
+export const terrainAlphaOf = (finestUpscale: number) => smoothstep(1.35, 1.9, finestUpscale);
 
 /**
  * Deepest zoom (CSS px per atlas unit) over a map: twice its art's own size;
