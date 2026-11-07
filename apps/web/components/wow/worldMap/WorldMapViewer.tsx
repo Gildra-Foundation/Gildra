@@ -246,8 +246,10 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       return;
     }
     engineRef.current = engine;
-    // Checks and performance probes read the viewer from the page.
-    (window as Window & { __worldMap?: WorldMapEngine }).__worldMap = engine;
+    // Checks and performance probes read the viewer from the page (dev builds or ?debug only).
+    if (process.env.NODE_ENV !== "production" || new URLSearchParams(window.location.search).has("debug")) {
+      (window as Window & { __worldMap?: WorldMapEngine }).__worldMap = engine;
+    }
     const q = readQuery();
     const ordered = orderedEras(bundle.eras);
     const startEra = q.era ? ordered.find((e) => e.id === q.era) : undefined;

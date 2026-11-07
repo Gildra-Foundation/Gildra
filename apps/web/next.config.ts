@@ -61,7 +61,7 @@ const nextConfig: NextConfig = {
   // The link-preview routes read fonts and art from public/ (lib/og/atlasOg.tsx), so
   // tracing would copy public/ into .next/standalone and the image would hold it
   // twice (the Dockerfile copies public/ to /app/public anyway).
-  outputFileTracingExcludes: { "*": ["public/**"] },
+  outputFileTracingExcludes: { "*": ["public/**", "./public/**", "**/public/maps/**"] },
   // Fetch and ISR entries stay in memory (see the handler); only optimized
   // images use the disk cache, which lives in the container's bounded tmpfs.
   cacheHandler: path.join(process.cwd(), "lib/next/memoryCacheHandler.cjs"),
@@ -124,6 +124,7 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: [...security, ...sameOriginFrames] },
       { source: "/assets/:path*", headers: publicArt },
       { source: "/brand/:path*", headers: publicArt },
+      { source: "/maps/:path*", headers: publicArt },
     ];
   },
   async redirects() {
