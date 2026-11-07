@@ -1,7 +1,8 @@
+import { libraryCopy } from "@/components/library/libraryCopy";
 import type { ReactNode } from "react";
 import { ArrowRight, SlidersHorizontal, X } from "lucide-react";
 import type { Lang } from "@/lib/i18n-paths";
-import type { CatalogCategory, CatalogEntityType, CatalogPage, CatalogProduct } from "@/lib/api/client";
+import type { CatalogCategory, CatalogEntityType, CatalogPage, CatalogProduct, LibraryDataset } from "@/lib/api/client";
 import { AtlasDisclosure, AtlasField, AtlasInput, AtlasSelect } from "@/components/atlas";
 import { CatalogBehavior } from "@/components/database/CatalogBehavior";
 import { databaseCopy, FACET_LABELS, formatCount } from "@/components/database/databaseCopy";
@@ -48,7 +49,7 @@ const level = (value: string) => (value && Number.isFinite(Number(value)) ? Numb
  * the in-game tooltip on hover.
  */
 export function LibraryWorkspace({ lang, dataset, catalog, categories, entityType, products, totalCount, query = "", selectedProduct = "wow", selectedFacets = [], cursor = "", levels, layout = "table", rails = [] }: {
-  lang: Lang; dataset: { slug: string; name: string; entityType: string }; catalog: CatalogPage; categories: CatalogCategory[];
+  lang: Lang; dataset: Pick<LibraryDataset, "slug" | "name" | "entityType" | "entityCount" | "applicability">; catalog: CatalogPage; categories: CatalogCategory[];
   entityType?: CatalogEntityType; products: CatalogProduct[]; totalCount?: ReactNode;
   query?: string; selectedProduct?: string; selectedFacets?: string[]; cursor?: string;
   levels: Record<(typeof LEVELS)[number], string>; layout?: LibraryListLayout; rails?: LibraryRail[];
@@ -168,8 +169,10 @@ export function LibraryWorkspace({ lang, dataset, catalog, categories, entityTyp
           </>
         ) : (
           <div className={styles.empty} role="status">
-            <h3>{copy.emptyTitle}</h3>
-            <p>{copy.emptyText}</p>
+            {dataset.entityCount === 0 ? <p>{dataset.applicability === "not_applicable"
+              ? libraryCopy[lang].unavailableProduct
+              : libraryCopy[lang].emptyProduct}</p>
+              : <><h3>{copy.emptyTitle}</h3><p>{copy.emptyText}</p></>}
           </div>
         )}
         {/* A page opened at a cursor (old links, no JavaScript) can go back to the start of the list. */}

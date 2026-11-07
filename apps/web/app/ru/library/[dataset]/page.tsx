@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { LibraryDatasetPage, libraryDatasetMetadata, type LibraryDatasetFilters } from "@/components/library/LibraryDatasetPage";
 
-export async function generateMetadata({ params }: { params: Promise<{ dataset: string }> }): Promise<Metadata> {
-  return libraryDatasetMetadata("ru", (await params).dataset);
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ dataset: string }>; searchParams: Promise<LibraryDatasetFilters> }): Promise<Metadata> {
+  return libraryDatasetMetadata("ru", (await params).dataset, (await searchParams).product);
 }
 
 export default async function Page({ params, searchParams }: { params: Promise<{ dataset: string }>; searchParams: Promise<LibraryDatasetFilters> }) {
