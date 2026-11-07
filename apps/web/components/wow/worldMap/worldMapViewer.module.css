@@ -201,21 +201,55 @@
 }
 .mapLabel[data-covers]:is(:hover, :focus-visible, [data-hover]) .labelText { border-color: var(--atlas-glass-edge); }
 
-/* The name of the zone under the pointer. */
+/* ---------- The painted kit of the map (ui/mapKit.ts writes the kit on the stage) ---------- */
+/* Every panel around the map wears the same nine-slice plaque: thin bronze-and-wood rails, a gem at each corner. */
+.place, .timeline, .layers, .peek, .poiTipBody, .hoverName, .compareTag, .searchBox, .hits, .locator, .loading, .fallback {
+  --map-panel-base: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 9%, var(--atlas-bg));
+  isolation: isolate;
+  color: var(--atlas-text);
+}
+.place::before, .timeline::before, .layers::before, .peek::before, .poiTipBody::before, .hoverName::before, .compareTag::before,
+.searchBox::before, .hits::before, .locator::before, .loading::before, .fallback::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 12px solid transparent;
+  border-image-source: var(--map-panel-image, none);
+  border-image-slice: var(--map-panel-slice, 0) fill;
+  border-width: var(--map-panel-width, 12px);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  /* The site's dimming of painted layers (design.md §4.1). */
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--map-panel-base);
+  background-clip: padding-box;
+  pointer-events: none;
+}
+/* Small pieces take thinner rails. */
+.peek::before, .poiTipBody::before, .hoverName::before, .compareTag::before, .searchBox::before, .hits::before, .locator::before, .loading::before, .fallback::before {
+  border-width: var(--map-panel-width-small, 9px);
+}
+/* Text set on the painted material (design.md: always with the dark halo). */
+.place, .timeline, .layers, .peek, .poiTipBody, .hoverName, .compareTag, .hits { text-shadow: 0 1px 3px var(--atlas-bg); }
+
+/* Entering panels: 150–250 ms of opacity and a short lift (transform only). */
+@keyframes mapEnter { from { opacity: 0; transform: translateY(6px); } }
+@keyframes mapLeave { to { opacity: 0; transform: translateY(4px); } }
+@keyframes mapFade { from { opacity: 0; } }
+
+/* The name of the zone under the pointer, as the game shows it: gold letters on a small dark plaque. */
 .hoverName {
   position: absolute;
   left: 0;
   top: 0;
   z-index: 3;
-  padding: 4px 10px;
-  border: 1px solid var(--atlas-glass-edge);
-  border-radius: var(--atlas-radius);
-  background: color-mix(in srgb, var(--atlas-surface) 92%, transparent);
-  box-shadow: var(--atlas-shadow-panel);
-  color: var(--atlas-text-strong);
+  padding: 6px 14px 7px;
+  color: color-mix(in srgb, var(--atlas-accent-2) 70%, var(--atlas-text-strong));
   font-family: var(--atlas-font-display);
   font-size: 1rem;
   font-weight: var(--atlas-weight-display);
+  letter-spacing: .02em;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
@@ -224,19 +258,48 @@
 .hoverName[data-shown]:not([data-over]) { opacity: 1; }
 @media (hover: none) { .hoverName { display: none; } }
 
-/* ---------- Panels: shared glass ---------- */
-.searchBox, .controls > button, .controlGroup, .layers, .place, .timeline, .compareHandle, .compareTag, .loading, .fallback {
-  border: 1px solid var(--atlas-line);
-  /* Dense enough that the words painted on the art never read through the panels. */
-  background: color-mix(in srgb, var(--atlas-surface) 95%, transparent);
-  box-shadow: var(--atlas-glass-depth);
-  backdrop-filter: blur(10px) saturate(1.1);
-  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+/* Zones under the pointer open on a click: the hand says so. */
+.surface[data-pointer] { cursor: pointer; }
+.surface[data-pointer]:active { cursor: grabbing; }
+
+/* ---------- The tooltip of a point (flight master, portal, entrance) ---------- */
+.poiTip { position: absolute; left: 0; top: 0; z-index: 3; width: 0; height: 0; pointer-events: none; }
+.poiTipBody {
+  position: absolute;
+  left: 0;
+  bottom: 20px;
+  display: grid;
+  gap: 1px;
+  width: max-content;
+  max-width: 240px;
+  padding: 9px 14px 10px;
+  translate: -50% 0;
+  pointer-events: auto;
+  animation: mapEnter var(--atlas-duration) var(--atlas-ease) both;
 }
+/* A bridge over the gap to the point: the pointer reaches the tooltip without it closing. */
+.poiTipBody::after { content: ""; position: absolute; left: 30%; right: 30%; top: 100%; height: 14px; }
+.poiTipKind { display: flex; align-items: center; gap: 6px; margin: 0; color: color-mix(in srgb, var(--marker-tint) 60%, var(--atlas-text-strong)); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.poiTipKind svg { width: 13px; height: 13px; flex: none; }
+.poiTipName { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.0625rem; font-weight: var(--atlas-weight-display); line-height: 1.2; }
+.poiTipText { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.poiTipLink { display: inline-flex; align-items: center; gap: 4px; width: max-content; margin-top: 3px; color: var(--atlas-accent); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; }
+.poiTipLink:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+.poiTipLink svg { width: 13px; height: 13px; }
+.poiTip { --marker-tint: var(--atlas-accent-2); }
+.poiTip[data-kind="dungeon"] { --marker-tint: var(--atlas-info); }
+.poiTip[data-kind="raid"] { --marker-tint: var(--atlas-caution); }
+.poiTip[data-kind="delve"] { --marker-tint: var(--atlas-positive); }
+.poiTip[data-kind="portal"] { --marker-tint: color-mix(in srgb, var(--atlas-info) 55%, var(--atlas-negative)); }
+.poiTip[data-faction="horde"] { --marker-tint: var(--atlas-negative); }
+.poiTip[data-faction="alliance"] { --marker-tint: var(--atlas-info); }
+/* The tooltip names the point: the small name under the icon steps aside meanwhile. */
+.poi[data-tip]:not([data-labelled]) .markerName { opacity: 0; }
+@media (hover: none) { .poiTip { display: none; } }
 
 /* ---------- Search (in the title column) ---------- */
-.searchBox { position: relative; z-index: 2; flex: none; border-radius: var(--atlas-radius-control); }
-.searchField { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; padding: 0 var(--atlas-space-1) 0 var(--atlas-space-3); color: var(--atlas-text-muted); }
+.searchBox { position: relative; z-index: 2; flex: none; }
+.searchField { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 46px; padding: 0 var(--atlas-space-2) 0 var(--atlas-space-4); color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 55%, var(--atlas-text-muted)); }
 .searchField > svg { width: 16px; height: 16px; flex: none; }
 .searchField input {
   flex: 1;
@@ -251,29 +314,28 @@
 .searchField input::-webkit-search-cancel-button { display: none; }
 .searchField input::placeholder { color: var(--atlas-text-subtle); }
 .searchClear { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
-.searchClear:hover { color: var(--atlas-text-strong); background: var(--atlas-surface-raised); }
+.searchClear:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
 .searchClear svg { width: 15px; height: 15px; }
-.searchBox:focus-within { border-color: var(--atlas-accent); box-shadow: var(--atlas-glass-depth), 0 0 0 1px var(--atlas-accent); }
+/* Focus lights the painted rail (a drop-shadow on the art layer follows its silhouette). */
+.searchBox:focus-within::before { filter: contrast(.88) saturate(.84) brightness(1.05) drop-shadow(0 0 1px var(--atlas-accent-strong)) drop-shadow(0 0 5px var(--atlas-accent)); }
 /* The field's frame shows the focus; the bare input inside draws no second ring. */
 .searchBox:focus-within .searchField input:focus-visible { outline: none; }
 .hits {
   position: absolute;
-  top: calc(100% + 4px);
-  left: -1px;
-  right: -1px;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
   max-height: min(380px, 55dvh);
   margin: 0;
-  padding: var(--atlas-space-1);
+  padding: 10px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  border: 1px solid var(--atlas-glass-edge);
-  border-radius: var(--atlas-radius-control);
-  background: var(--atlas-surface-raised);
-  box-shadow: var(--atlas-shadow-panel);
+  scrollbar-width: thin;
   list-style: none;
+  animation: mapEnter var(--atlas-duration) var(--atlas-ease) both;
 }
-.hits li { display: grid; grid-template-columns: 20px 1fr; align-items: center; column-gap: var(--atlas-space-2); min-height: 44px; padding: var(--atlas-space-2) var(--atlas-space-2); border-radius: var(--atlas-radius); cursor: pointer; }
-.hits li[aria-selected="true"] { background: var(--atlas-surface-selected); }
+.hits li { display: grid; grid-template-columns: 20px 1fr; align-items: center; column-gap: var(--atlas-space-2); min-height: 44px; padding: var(--atlas-space-1) var(--atlas-space-2); border-radius: var(--atlas-radius); cursor: pointer; }
+.hits li[aria-selected="true"] { background: var(--atlas-accent-wash); box-shadow: inset 2px 0 0 var(--atlas-accent); }
 .hitIcon { grid-row: span 2; width: 16px; height: 16px; color: var(--atlas-accent); }
 .hitIcon[data-type="event"] { color: var(--atlas-accent-2); }
 .hitTitle { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1rem; font-weight: var(--atlas-weight-display); line-height: 1.2; }
@@ -282,7 +344,7 @@
 .hits .hitsHeading { display: flex; gap: var(--atlas-space-2); min-height: 28px; padding: var(--atlas-space-1) var(--atlas-space-2); color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; cursor: default; }
 .hitsHeading svg { width: 13px; height: 13px; }
 
-/* ---------- Tools on the right edge ---------- */
+/* ---------- Tools on the right edge: each in the kit's square frame ---------- */
 .tools { display: contents; }
 .controls {
   position: absolute;
@@ -292,113 +354,234 @@
   display: grid;
   gap: var(--atlas-space-2);
 }
-.controlGroup { display: grid; overflow: hidden; border-radius: var(--atlas-radius-control); }
-.controlGroup > button + button { border-top: 1px solid var(--atlas-line-soft); }
+.controlGroup { display: grid; gap: 2px; }
 .controls button {
+  --map-panel-base: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 9%, var(--atlas-bg));
+  position: relative;
+  isolation: isolate;
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: var(--atlas-radius-control);
-  color: var(--atlas-text-strong);
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 40%, var(--atlas-text-strong));
   cursor: pointer;
-  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
+  transition: color var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration-fast) var(--atlas-ease);
 }
-.controlGroup > button { border: 0; border-radius: 0; background: none; }
-.controls button:hover:not(:disabled) { color: var(--atlas-accent-strong); }
-.controls > button:hover:not(:disabled) { border-color: var(--atlas-glass-edge); }
-.controlGroup > button:hover { background: var(--atlas-accent-wash); }
-.controls button:disabled { opacity: .4; cursor: default; }
-.controls button:is([aria-expanded="true"], [aria-pressed="true"]) { border-color: var(--atlas-glass-edge); background: var(--atlas-accent-wash); color: var(--atlas-accent-strong); }
-.controls svg { width: 18px; height: 18px; }
+/* The dark face inside the frame's window, then the painted frame over it. */
+.controls button::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: var(--map-frame-top, 0) var(--map-frame-right, 0) var(--map-frame-bottom, 0) var(--map-frame-left, 0);
+  border-radius: 3px;
+  background: var(--map-panel-base);
+  transition: background-color var(--atlas-duration) var(--atlas-ease);
+}
+.controls button::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: var(--map-frame-image, none) center / contain no-repeat;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  pointer-events: none;
+  transition: filter var(--atlas-duration) var(--atlas-ease);
+}
+.controls button:hover:not(:disabled) { color: var(--atlas-text-strong); }
+.controls button:hover:not(:disabled)::after { filter: contrast(.92) saturate(.9) brightness(1.08); }
+.controls button:active:not(:disabled) { transform: translateY(1px) scale(.97); }
+.controls button:disabled { color: var(--atlas-text-subtle); cursor: default; }
+.controls button:disabled::after { filter: contrast(.8) saturate(.4) brightness(.7); }
+.controls button:is([aria-expanded="true"], [aria-pressed="true"]) { color: var(--atlas-text-strong); }
+.controls button:is([aria-expanded="true"], [aria-pressed="true"])::before { background: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 30%, var(--atlas-bg)); }
+.controls button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.controls svg { width: 18px; height: 18px; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
 
+/* The layers menu doubles as the map's key: each kind with the icon its points wear. */
 .layers {
   position: absolute;
   z-index: 7;
   top: var(--atlas-space-4);
   right: calc(var(--atlas-gutter) + 52px);
   display: grid;
-  min-width: 230px;
+  min-width: 248px;
   margin: 0;
-  padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-3);
-  border-radius: var(--atlas-radius-control);
-  border-color: var(--atlas-glass-edge);
-  background: var(--atlas-surface-raised);
-  box-shadow: var(--atlas-shadow-panel);
-  animation: rise var(--atlas-duration-fast) var(--atlas-ease);
+  padding: 14px 16px 14px;
+  border: 0;
+  transform-origin: top right;
+  animation: mapEnter var(--atlas-duration) var(--atlas-ease) both;
 }
-.layers legend { float: left; width: 100%; padding: var(--atlas-space-2) 0; color: var(--atlas-accent); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-.layers label { display: flex; align-items: center; gap: var(--atlas-space-3); min-height: 40px; color: var(--atlas-text); font-size: var(--atlas-text-small); cursor: pointer; }
-.layers input { width: 18px; height: 18px; accent-color: var(--atlas-accent); }
-
-/* ---------- Place panel: the chosen point or event, then what the place holds ---------- */
-.place {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  border-radius: var(--atlas-radius-control);
-  animation: rise var(--atlas-duration-fast) var(--atlas-ease);
+.layers[data-state="closing"] { animation: mapLeave var(--atlas-duration-fast) var(--atlas-ease) forwards; pointer-events: none; }
+.layers legend { float: left; width: 100%; padding: 0 0 var(--atlas-space-2); color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 65%, var(--atlas-text-strong)); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.layers label { --marker-tint: var(--atlas-accent-2); display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: var(--atlas-space-3); min-height: 36px; color: var(--atlas-text); font-size: var(--atlas-text-small); cursor: pointer; }
+.layers label:hover { color: var(--atlas-text-strong); }
+.layers label[data-kind="dungeon"] { --marker-tint: var(--atlas-info); }
+.layers label[data-kind="raid"] { --marker-tint: var(--atlas-caution); }
+.layers label[data-kind="delve"] { --marker-tint: var(--atlas-positive); }
+.layers label[data-kind="portal"] { --marker-tint: color-mix(in srgb, var(--atlas-info) 55%, var(--atlas-negative)); }
+.layers label[data-plain] { --marker-tint: var(--atlas-text-muted); }
+.layers label:has(input:not(:checked)) .legendIcon { opacity: .4; filter: saturate(.3); }
+.layers label:has(input:not(:checked)) > span:nth-child(2) { color: var(--atlas-text-muted); }
+/* A small switch in the kit's colours (the native checkbox stays for keyboards and readers). */
+.layers input {
+  appearance: none;
+  position: relative;
+  width: 30px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: 8px;
+  background: var(--atlas-surface-sunken);
+  cursor: pointer;
+  transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
 }
-@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
-.card { position: relative; flex: none; padding: var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-3); }
-.card + .placeLists { border-top: 1px solid var(--atlas-line-soft); }
-.cardClose { position: absolute; top: 2px; right: 2px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; background: none; color: var(--atlas-text-muted); cursor: pointer; }
-.cardClose:hover { color: var(--atlas-text-strong); }
-.cardClose svg { width: 16px; height: 16px; }
-.cardKind { margin: 0; padding-right: 36px; color: var(--atlas-accent); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-.cardTitle { margin: var(--atlas-space-1) 0 0; padding-right: 32px; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.375rem; font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); }
-.cardText { margin: var(--atlas-space-2) 0 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
-.cardActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2) var(--atlas-space-4); align-items: center; margin-top: var(--atlas-space-3); }
-.cardLink { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; color: var(--atlas-accent); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; }
-.cardLink:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
-.cardLink svg { width: 14px; height: 14px; }
-
-.placeLists { display: grid; gap: var(--atlas-space-3); padding: var(--atlas-space-3) var(--atlas-space-2) var(--atlas-space-2); }
-.placeHeading { margin: 0; padding: 0 var(--atlas-space-2) var(--atlas-space-1); color: var(--atlas-accent); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-.placeList { display: grid; margin: 0; padding: 0; list-style: none; }
-.placeList li { --marker-tint: var(--atlas-info); display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; padding: 0 0 0 var(--atlas-space-2); border-radius: var(--atlas-radius); }
-.placeList li[data-kind="raid"] { --marker-tint: var(--atlas-caution); }
-.placeList li[data-kind="delve"] { --marker-tint: var(--atlas-positive); }
-.placeList li:hover { background: var(--atlas-surface-raised); }
-.placeIcon {
+.layers input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--atlas-text-muted);
+  transition: transform var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+}
+.layers input:checked { border-color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 70%, transparent); background: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 35%, var(--atlas-bg)); }
+.layers input:checked::after { background: var(--atlas-text-strong); transform: translateX(14px); }
+.layers input:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.legendIcon, .placeIcon {
   display: grid;
   place-items: center;
   flex: none;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: 1.5px solid color-mix(in srgb, var(--marker-tint) 85%, var(--atlas-text-strong));
   background: color-mix(in srgb, var(--atlas-bg) 78%, var(--marker-tint));
   color: color-mix(in srgb, var(--marker-tint) 60%, var(--atlas-text-strong));
+  transition: opacity var(--atlas-duration) var(--atlas-ease);
 }
+.legendIcon svg, .placeIcon svg { width: 12px; height: 12px; }
+.layers label[data-kind="event"] .legendIcon { border-radius: 3px; transform: rotate(45deg) scale(.86); }
+.layers label[data-kind="event"] .legendIcon svg { transform: rotate(-45deg); }
+.layers label[data-plain] .legendIcon { border-color: transparent; background: none; }
+.layers label[data-plain] .legendIcon svg { width: 15px; height: 15px; }
+
+/* ---------- Overview inset: the continent around the place, the view as a frame ---------- */
+.locator {
+  position: absolute;
+  z-index: 5;
+  right: var(--atlas-gutter);
+  bottom: calc(var(--atlas-space-4) + 66px + var(--atlas-space-3));
+  display: block;
+  padding: 9px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transform: translateY(calc(-1 * var(--map-cookie, 0px)));
+  animation: mapFade var(--atlas-duration-slow) var(--atlas-ease) both;
+}
+.locatorArt { position: relative; display: block; width: 176px; overflow: hidden; border-radius: 2px; background: var(--atlas-surface-sunken); }
+.locatorArt img { position: absolute; display: block; max-width: none; filter: saturate(.85) brightness(.9); pointer-events: none; }
+.locatorMarks { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.locatorHere { fill: color-mix(in srgb, var(--atlas-accent-2) 24%, transparent); stroke: color-mix(in srgb, var(--atlas-accent-2) 80%, var(--atlas-text-strong)); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.locatorView { fill: none; stroke: var(--atlas-text-strong); stroke-width: 1.5px; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 2px var(--atlas-bg)); }
+.locator:hover .locatorArt img { filter: saturate(1) brightness(1); }
+.locator:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+@media (max-width: 1100px), (max-height: 720px) { .locator { display: none; } }
+
+/* ---------- Place panel: the chosen point or event, then what the place holds ---------- */
+.place {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 13px;
+  animation: mapEnter var(--atlas-duration) var(--atlas-ease) both;
+}
+.placeScroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 45%, transparent) transparent; }
+.card { position: relative; flex: none; padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-3); animation: mapEnter var(--atlas-duration) var(--atlas-ease) both; }
+.card + .placeLists { border-top: 1px solid var(--atlas-line-soft); }
+.cardClose { position: absolute; top: -4px; right: -4px; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
+.cardClose:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
+.cardClose svg { width: 16px; height: 16px; }
+.cardKind { margin: 0; padding-right: 36px; color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 65%, var(--atlas-text-strong)); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.cardTitle { margin: var(--atlas-space-1) 0 0; padding-right: 28px; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.25rem; font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); }
+.cardText { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.cardActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1) var(--atlas-space-4); align-items: center; margin-top: var(--atlas-space-2); }
+.cardLink { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; color: var(--atlas-accent); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; }
+.cardLink:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+.cardLink svg { width: 14px; height: 14px; }
+
+.placeLists { display: grid; gap: var(--atlas-space-1); padding: var(--atlas-space-1) 0; }
+.placeSection + .placeSection { border-top: 1px solid var(--atlas-line-soft); padding-top: var(--atlas-space-1); }
+.placeHeading { margin: 0; }
+.placeHeading button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-2);
+  width: 100%;
+  min-height: 34px;
+  padding: 0 var(--atlas-space-2);
+  border: 0;
+  border-radius: var(--atlas-radius);
+  background: none;
+  color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 65%, var(--atlas-text-strong));
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+  text-shadow: inherit;
+  cursor: pointer;
+}
+.placeHeading button:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
+.placeHeading svg { width: 14px; height: 14px; flex: none; transition: transform var(--atlas-duration) var(--atlas-ease); }
+.placeHeading button[aria-expanded="false"] svg { transform: rotate(-90deg); }
+.placeFold:not([data-open]) { display: none; }
+.placeFold[data-open] > div { animation: mapEnter var(--atlas-duration) var(--atlas-ease) both; }
+.placeList { display: grid; margin: 0 0 var(--atlas-space-1); padding: 0; list-style: none; }
+.placeList li { --marker-tint: var(--atlas-info); display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 40px; padding: 0 0 0 var(--atlas-space-2); border-radius: var(--atlas-radius); }
+.placeList li[data-kind="raid"] { --marker-tint: var(--atlas-caution); }
+.placeList li[data-kind="delve"] { --marker-tint: var(--atlas-positive); }
+.placeList li:is([data-kind="zone"], [data-kind="city"]) { --marker-tint: var(--atlas-accent-2); }
+.placeList li:hover { background: var(--atlas-accent-wash); }
+/* Zones and cities: two short columns instead of one long list. */
+.placeList[data-places] { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2px; }
+.placeList[data-places] li { gap: 6px; min-height: 34px; padding-left: 4px; }
+.placeList[data-places] .placeIcon { width: 18px; height: 18px; border-width: 1px; }
+.placeList[data-places] .placeIcon svg { width: 10px; height: 10px; }
+.placeList[data-places] .placeName { font-size: 0.875rem; }
+.placeList[data-places] .placeName > span:first-child { white-space: normal; line-height: 1.15; }
 .placeIcon[data-event] { --marker-tint: var(--atlas-accent-2); border-radius: 3px; transform: rotate(45deg) scale(.86); }
 .placeIcon[data-event] svg { transform: rotate(-45deg); }
-.placeIcon svg { width: 13px; height: 13px; }
 .placeName {
   display: grid;
   flex: 1;
   min-width: 0;
-  padding: var(--atlas-space-1) 0;
+  padding: 3px 0;
   border: 0;
   background: none;
   color: var(--atlas-text-strong);
   font-family: var(--atlas-font-display);
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: var(--atlas-weight-display);
   line-height: 1.2;
   text-align: left;
   text-decoration: none;
+  text-shadow: inherit;
   cursor: pointer;
 }
-.placeName > span:first-child { overflow: hidden; text-overflow: ellipsis; }
-.placeName:hover > span:first-child { color: var(--atlas-accent-strong); }
+.placeName > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.placeName:hover > span:first-child { color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 55%, var(--atlas-text-strong)); }
 .placeMeta { color: var(--atlas-text-muted); font-family: var(--atlas-font-ui); font-size: var(--atlas-text-meta); font-weight: 500; }
-.placeLocate { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
+.placeLocate { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
 .placeLocate:hover { color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
-.placeLocate svg { width: 16px; height: 16px; }
+.placeLocate svg { width: 15px; height: 15px; }
 
 /* ---------- Bottom dock: the timeline (and the place sheet on phones) ---------- */
 .dock {
@@ -419,31 +602,45 @@
 /* ---------- Timeline ---------- */
 .timeline {
   --era-accent: var(--atlas-accent-2);
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--atlas-space-4);
-  padding: var(--atlas-space-2) var(--atlas-space-4);
-  border-radius: var(--atlas-radius-control);
+  padding: 9px 18px 9px 16px;
+  animation: mapEnter var(--atlas-duration-slow) var(--atlas-ease) both;
 }
 .eraRow { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; }
-.eraSwatch { flex: none; width: 10px; height: 10px; transform: rotate(45deg); border: 1.5px solid color-mix(in srgb, var(--era-accent) 70%, var(--atlas-text-strong)); background: var(--era-accent); box-shadow: 0 0 10px color-mix(in srgb, var(--era-accent) 60%, transparent); }
-.eraNow { display: grid; min-width: 0; margin: 0 var(--atlas-space-1) 0 var(--atlas-space-1); }
-.eraName { overflow: hidden; max-width: 14ch; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.125rem; font-weight: var(--atlas-weight-display); line-height: 1.15; white-space: nowrap; text-overflow: ellipsis; }
-.eraYears { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; line-height: 1.2; }
+.eraSwatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  border: 1.5px solid color-mix(in srgb, var(--era-accent) 70%, var(--atlas-text-strong));
+  background: var(--era-accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--era-accent) 60%, transparent);
+  transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
+}
+.eraNow { display: grid; min-width: 0; width: 18.5ch; margin: 0 var(--atlas-space-1); overflow: hidden; }
+/* A new era slides in under the old one's place. */
+.eraName { overflow: hidden; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.0625rem; font-weight: var(--atlas-weight-display); line-height: 1.15; white-space: nowrap; text-overflow: ellipsis; animation: eraIn var(--atlas-duration) var(--atlas-ease) both; }
+.eraYears { color: color-mix(in srgb, var(--era-accent) 45%, var(--atlas-text-muted)); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; line-height: 1.2; animation: eraIn var(--atlas-duration) var(--atlas-ease) 40ms both; }
+@keyframes eraIn { from { opacity: 0; transform: translateY(5px); } }
 .eraStep { display: inline-flex; gap: 2px; flex: none; }
 .eraStep button, .timelineToggle {
   display: grid;
   place-items: center;
   width: 32px;
   height: 32px;
-  border: 1px solid var(--atlas-line-soft);
+  border: 1px solid color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 28%, transparent);
   border-radius: var(--atlas-radius-control);
-  background: transparent;
+  background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
   color: var(--atlas-text);
   cursor: pointer;
+  transition: border-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease);
 }
-.eraStep button:hover:not(:disabled), .timelineToggle:hover { border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
+.eraStep button:hover:not(:disabled), .timelineToggle:hover { border-color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 60%, transparent); color: var(--atlas-text-strong); }
+.eraStep button:active:not(:disabled) { transform: scale(.95); }
 .eraStep button:disabled { opacity: .35; cursor: default; }
 .eraStep svg, .timelineToggle svg { width: 16px; height: 16px; }
 .timelineToggle { display: none; }
@@ -454,28 +651,32 @@
   flex: none;
   min-height: 32px;
   padding: 0 var(--atlas-space-3);
-  border: 1px solid var(--atlas-line-soft);
+  border: 1px solid color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 28%, transparent);
   border-radius: var(--atlas-radius-control);
-  background: transparent;
+  background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
   color: var(--atlas-text);
   font-size: var(--atlas-text-small);
   font-weight: 600;
+  text-shadow: inherit;
   cursor: pointer;
+  transition: border-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
 }
-.compareButton:hover:not(:disabled) { border-color: var(--atlas-glass-edge); color: var(--atlas-text-strong); }
+.compareButton:hover:not(:disabled) { border-color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 60%, transparent); color: var(--atlas-text-strong); }
 .compareButton:disabled { opacity: .4; cursor: default; }
-.compareButton[aria-pressed="true"] { border-color: var(--atlas-glass-edge); background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); }
+.compareButton[aria-pressed="true"] { border-color: color-mix(in srgb, var(--era-accent) 70%, transparent); background: color-mix(in srgb, var(--era-accent) 22%, var(--atlas-bg)); color: var(--atlas-text-strong); }
 .compareButton svg { width: 15px; height: 15px; }
 
 .track { position: relative; height: 46px; margin: 0 8px; touch-action: none; cursor: pointer; }
 .rail { position: absolute; left: 0; right: 0; top: 20px; height: 2px; border-radius: 1px; background: var(--atlas-line); }
-.band { --era-accent: var(--atlas-accent-2); position: absolute; top: 18px; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--era-accent) 28%, transparent); transition: background-color var(--atlas-duration-fast) var(--atlas-ease), box-shadow var(--atlas-duration-fast) var(--atlas-ease); }
-.band[data-active] { background: color-mix(in srgb, var(--era-accent) 80%, transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--era-accent) 50%, transparent); }
+.band { --era-accent: var(--atlas-accent-2); position: absolute; top: 18px; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--era-accent) 28%, transparent); transition: background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease); }
+.band[data-active] { background: color-mix(in srgb, var(--era-accent) 82%, transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--era-accent) 55%, transparent); }
+/* Comparing: the stretch of time between the two moments. */
+.span { position: absolute; top: 16px; height: 10px; border-top: 1px dashed color-mix(in srgb, var(--atlas-text-strong) 55%, transparent); border-bottom: 1px dashed color-mix(in srgb, var(--atlas-text-strong) 55%, transparent); pointer-events: none; }
 .ticks { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; pointer-events: none; }
-.ticks li { position: absolute; top: 27px; }
-.ticks button { position: absolute; left: 0; top: 0; padding: 1px 3px; border: 0; background: none; color: var(--atlas-text-subtle); font-size: 0.6875rem; letter-spacing: .02em; white-space: nowrap; transform: translateX(-50%); cursor: pointer; pointer-events: auto; }
-.ticks button:hover { color: var(--atlas-text-strong); }
-.ticks button[data-active] { color: var(--atlas-text-strong); font-weight: 650; }
+.ticks li { --era-accent: var(--atlas-accent-2); position: absolute; top: 27px; }
+.ticks button { position: absolute; left: 0; top: 0; padding: 1px 3px; border: 0; background: none; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); letter-spacing: .02em; white-space: nowrap; text-shadow: inherit; transform: translateX(-50%); cursor: pointer; pointer-events: auto; transition: color var(--atlas-duration) var(--atlas-ease); }
+.ticks button:hover { color: color-mix(in srgb, var(--era-accent) 50%, var(--atlas-text-strong)); }
+.ticks button[data-active] { color: color-mix(in srgb, var(--era-accent) 35%, var(--atlas-text-strong)); font-weight: 650; }
 .rune {
   --era-accent: var(--atlas-accent-2);
   position: absolute;
@@ -502,8 +703,12 @@
 .rune[data-active] span { box-shadow: 0 0 8px var(--era-accent); }
 /* A rune of several events: a second diamond behind the first. */
 .rune[data-many] span { box-shadow: 3px -3px 0 -1px color-mix(in srgb, var(--era-accent) 55%, var(--atlas-bg)); }
+/* The thumbs ride lanes as wide as the track: they glide by transform alone. */
+.thumbLane { position: absolute; inset: 0; pointer-events: none; will-change: transform; transition: transform var(--atlas-duration) var(--atlas-ease); }
+.timeline[data-dragging] .thumbLane { transition: none; }
 .thumb {
   position: absolute;
+  left: 0;
   top: 21px;
   width: 16px;
   height: 16px;
@@ -514,74 +719,99 @@
   transform: translate(-50%, -50%);
   cursor: grab;
   touch-action: none;
-  transition: left var(--atlas-duration-fast) var(--atlas-ease);
+  pointer-events: auto;
+  transition: background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
 }
-.timeline[data-dragging] .thumb { cursor: grabbing; transition: none; }
+.thumb:hover, .timeline[data-dragging] .thumb { scale: 1.15; }
+.timeline[data-dragging] .thumb { cursor: grabbing; }
 .thumb::before { content: ""; position: absolute; inset: -14px; }
 .thumb:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
+/* The moment on the left of the divider: a ring in its era's colour. */
+.thumb[data-side="left"] { width: 14px; height: 14px; border-color: var(--era-accent); background: var(--atlas-bg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--atlas-bg) 60%, transparent), 0 0 10px color-mix(in srgb, var(--era-accent) 60%, transparent); }
 .peek {
   position: absolute;
-  bottom: calc(100% + 6px);
+  bottom: calc(100% + 4px);
   z-index: 2;
   display: grid;
-  gap: 2px;
+  gap: 6px;
   width: max-content;
-  max-width: 260px;
-  padding: var(--atlas-space-2) var(--atlas-space-3);
-  border: 1px solid var(--atlas-glass-edge);
-  border-radius: var(--atlas-radius-control);
-  background: var(--atlas-surface-raised);
-  box-shadow: var(--atlas-shadow-panel);
-  transform: translateX(-50%);
-  color: var(--atlas-text);
+  min-width: 220px;
+  max-width: 300px;
+  padding: 11px 12px 11px 14px;
+  translate: -50% 0;
   font-size: var(--atlas-text-small);
   line-height: var(--atlas-leading-snug);
-  pointer-events: none;
+  animation: mapEnter var(--atlas-duration-fast) var(--atlas-ease) both;
 }
-.peek strong { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1rem; font-weight: var(--atlas-weight-display); line-height: 1.25; }
-.peekMeta { color: var(--atlas-accent); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+/* A bridge down to the rune: the pointer reaches the tooltip without it closing. */
+.peek::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; }
+.peekEvent { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-2); }
+.peekRune { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 3px; border: 1.5px solid color-mix(in srgb, var(--era-accent) 80%, var(--atlas-text-strong)); background: color-mix(in srgb, var(--era-accent) 35%, var(--atlas-bg)); color: var(--atlas-text-strong); transform: rotate(45deg) scale(.82); }
+.peekRune svg { width: 12px; height: 12px; transform: rotate(-45deg); }
+.peekText { display: grid; min-width: 0; }
+.peekText strong { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1rem; font-weight: var(--atlas-weight-display); line-height: 1.2; }
+.peekMeta { color: color-mix(in srgb, var(--era-accent) 45%, var(--atlas-text-muted)); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.peekHead { color: color-mix(in srgb, var(--era-accent) 45%, var(--atlas-text-muted)); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; font-variant-numeric: tabular-nums lining-nums; }
+.peekMore { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); padding-left: 30px; }
+.peekJump { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
+.peekJump:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
+.peekJump svg { width: 15px; height: 15px; }
 
 /* ---------- Compare divider ---------- */
-.compare { position: absolute; top: 0; bottom: 0; z-index: 4; width: 0; }
-.compare::before { content: ""; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--atlas-text-strong); box-shadow: 0 0 10px var(--atlas-bg); pointer-events: none; }
+/* As wide as the stage and moved by transform: the line sits at its left edge. */
+.compare { position: absolute; top: 0; bottom: 0; left: 0; z-index: 4; width: 100%; pointer-events: none; will-change: transform; }
+.compare::before { content: ""; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: color-mix(in srgb, var(--atlas-accent-2) 40%, var(--atlas-text-strong)); box-shadow: 0 0 10px var(--atlas-bg), 0 0 3px color-mix(in srgb, var(--atlas-accent-2) 60%, transparent); }
 .compareHandle {
   position: absolute;
   top: 50%;
   left: -22px;
+  display: grid;
+  place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  border-color: var(--atlas-text-strong);
-  transform: translateY(-50%);
+  margin-top: -22px;
+  isolation: isolate;
+  color: var(--atlas-text-strong);
   cursor: ew-resize;
   touch-action: none;
+  pointer-events: auto;
+  transition: scale var(--atlas-duration-fast) var(--atlas-ease);
 }
-.compareHandle::before, .compareHandle::after {
+.compareHandle::before {
   content: "";
   position: absolute;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  border-top: 2px solid var(--atlas-text-strong);
-  border-left: 2px solid var(--atlas-text-strong);
+  z-index: -2;
+  inset: var(--map-frame-top, 0) var(--map-frame-right, 0) var(--map-frame-bottom, 0) var(--map-frame-left, 0);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 14%, var(--atlas-bg));
 }
-.compareHandle::before { left: 10px; transform: translateY(-50%) rotate(-45deg); }
-.compareHandle::after { right: 10px; transform: translateY(-50%) rotate(135deg); }
+.compareHandle::after { content: ""; position: absolute; z-index: -1; inset: 0; background: var(--map-frame-image, none) center / contain no-repeat; filter: contrast(.88) saturate(.84) brightness(.95); }
+/* A wider grip than the handle: the line is easy to catch anywhere near it. */
+.compareHandle > svg { width: 18px; height: 18px; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
+.compareHandle:hover, .compareHandle:active { scale: 1.08; }
 .compareHandle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .compareTag {
+  --era-accent: var(--atlas-accent-2);
   position: absolute;
-  top: calc(50% - 64px);
-  padding: var(--atlas-space-1) var(--atlas-space-3);
-  border-radius: var(--atlas-radius-control);
+  top: var(--atlas-space-4);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  padding: 7px 14px 8px;
   color: var(--atlas-text-strong);
   font-family: var(--atlas-font-display);
   font-size: 1rem;
   font-weight: var(--atlas-weight-display);
   white-space: nowrap;
   pointer-events: none;
+  animation: mapFade var(--atlas-duration) var(--atlas-ease) both;
 }
-.compareTag[data-side="left"] { right: 12px; }
-.compareTag[data-side="right"] { left: 12px; }
+.compareTag[data-side="left"] { right: calc(100% + 10px); }
+.compareTag[data-side="right"] { left: 10px; }
+/* Near the title column (or the tools) both tags stand on the open side, one under the other. */
+.compare[data-cramped="left"] .compareTag[data-side="left"] { right: auto; left: 10px; top: calc(var(--atlas-space-4) + 44px); }
+.compare[data-cramped="right"] .compareTag[data-side="right"] { left: auto; right: calc(100% + 10px); top: calc(var(--atlas-space-4) + 44px); }
+.compareSwatch { flex: none; width: 9px; height: 9px; transform: rotate(45deg); border: 1.5px solid color-mix(in srgb, var(--era-accent) 70%, var(--atlas-text-strong)); background: var(--era-accent); }
 
 .loading, .fallback {
   position: absolute;
@@ -589,8 +819,7 @@
   left: 50%;
   top: 50%;
   margin: 0;
-  padding: var(--atlas-space-2) var(--atlas-space-4);
-  border-radius: var(--atlas-radius-control);
+  padding: var(--atlas-space-3) var(--atlas-space-5);
   transform: translate(-50%, -50%);
   color: var(--atlas-text-muted);
   font-size: var(--atlas-text-small);
@@ -600,6 +829,24 @@
 @media (max-width: 700px) {
   /* The results span the whole header row (the slot), not just the narrow field. */
   .searchBox { position: static; flex: 1; min-width: 0; }
+  .searchBox::before { display: none; }
+  .searchField { position: relative; isolation: isolate; }
+  .searchField::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border: 9px solid transparent;
+    border-image-source: var(--map-panel-image, none);
+    border-image-slice: var(--map-panel-slice, 0) fill;
+    border-width: var(--map-panel-width-small, 9px);
+    border-image-width: 1;
+    filter: contrast(.88) saturate(.84) brightness(.92);
+    background: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 9%, var(--atlas-bg));
+    background-clip: padding-box;
+    pointer-events: none;
+  }
+  .searchBox:focus-within .searchField::before { filter: contrast(.88) saturate(.84) brightness(1.05) drop-shadow(0 0 1px var(--atlas-accent-strong)) drop-shadow(0 0 5px var(--atlas-accent)); }
   .hits { left: 0; right: 0; }
   /* The tools sit in the header row next to the search; pinch zooms. */
   .controls { position: static; display: flex; gap: var(--atlas-space-1); }
@@ -610,10 +857,11 @@
   .dock { left: 0; right: 0; bottom: 0; gap: 0; }
   .dock > * { width: 100%; }
   /* Bottom sheet: the place in focus or the chosen point, above the timeline. */
-  .place { max-height: 46dvh; margin: 0 var(--atlas-space-2) var(--atlas-space-2); width: auto; justify-self: stretch; }
+  .place { max-height: 46dvh; margin: 0 var(--atlas-space-2) var(--atlas-space-2); padding: 10px; width: auto; justify-self: stretch; }
+  .place::before { border-width: var(--map-panel-width-small, 9px); }
   /* Folded, the sheet is a small tab at the map's lower left. */
-  .place[data-sheet]:not([data-open]) { justify-self: start; width: auto; max-width: calc(100% - 2 * var(--atlas-space-2)); border-radius: 999px; }
-  .place[data-sheet]:not([data-open]) .sheetHandle { min-height: 40px; gap: var(--atlas-space-3); padding: 0 var(--atlas-space-3) 0 var(--atlas-space-4); }
+  .place[data-sheet]:not([data-open]) { justify-self: start; width: auto; max-width: calc(100% - 2 * var(--atlas-space-2)); padding: 6px 8px; }
+  .place[data-sheet]:not([data-open]) .sheetHandle { min-height: 40px; gap: var(--atlas-space-3); padding: 0 var(--atlas-space-2) 0 var(--atlas-space-3); }
   .sheetHandle {
     display: flex;
     align-items: center;
@@ -621,39 +869,44 @@
     gap: var(--atlas-space-2);
     flex: none;
     min-height: 44px;
-    padding: 0 var(--atlas-space-4);
+    padding: 0 var(--atlas-space-3);
     border: 0;
     background: none;
     color: var(--atlas-text-strong);
     font-size: var(--atlas-text-small);
     font-weight: 600;
+    text-shadow: inherit;
     cursor: pointer;
   }
-  .sheetHandle svg { width: 16px; height: 16px; transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
+  .sheetHandle svg { width: 16px; height: 16px; transition: transform var(--atlas-duration) var(--atlas-ease); }
   .place[data-open] .sheetHandle svg { transform: rotate(180deg); }
   .place[data-open] .sheetHandle { border-bottom: 1px solid var(--atlas-line-soft); }
   .sheetBody { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .sheetBody[hidden] { display: none; }
+  .place[data-open] .sheetBody { animation: mapEnter var(--atlas-duration) var(--atlas-ease) both; }
   .timeline {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
-    padding: var(--atlas-space-1) var(--atlas-space-3) calc(var(--atlas-space-1) + env(safe-area-inset-bottom));
-    border-radius: 14px 14px 0 0;
-    border-bottom: 0;
+    padding: 8px 12px calc(6px + env(safe-area-inset-bottom));
   }
+  .timeline::before { border-width: var(--map-panel-width-small, 9px); border-bottom-width: 0; }
   .eraRow { min-height: 52px; }
-  .eraName { max-width: none; font-size: 1.0625rem; }
-  .eraNow { flex: 1; }
+  .eraName { font-size: 1.0625rem; }
+  .eraNow { flex: 1; width: auto; }
   .timelineToggle { display: grid; }
-  .timelineToggle svg { transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
+  .timelineToggle svg { transition: transform var(--atlas-duration) var(--atlas-ease); }
   .timeline[data-open] .timelineToggle svg { transform: rotate(180deg); }
   .timeline:not([data-open]) .track { display: none; }
+  .timeline[data-open] .track { animation: mapEnter var(--atlas-duration) var(--atlas-ease) both; }
   .track { height: 50px; margin: 0 10px var(--atlas-space-1); }
   .compareButton span { display: none; }
   .compareButton { width: 44px; justify-content: center; padding: 0; }
   .ticks li:not([data-wide]) button { display: none; }
   .rune { width: 9px; height: 9px; }
-  .compareTag { top: auto; bottom: calc(50% + 40px); max-width: 44vw; overflow: hidden; text-overflow: ellipsis; font-size: 0.875rem; }
+  .peek { min-width: 0; max-width: min(300px, calc(100vw - 32px)); }
+  .compareTag { top: auto; bottom: calc(50% + 34px); max-width: 44vw; overflow: hidden; text-overflow: ellipsis; padding: 5px 10px 6px; font-size: 0.875rem; }
+  .compare[data-cramped] .compareTag:is([data-side="left"], [data-side="right"]) { top: auto; }
+  .compare[data-cramped="left"] .compareTag[data-side="left"], .compare[data-cramped="right"] .compareTag[data-side="right"] { bottom: calc(50% + 72px); }
   .labelText { font-size: 0.875rem; }
   .mapLabel[data-size="world"] .labelText { font-size: 1.125rem; }
   .mapLabel[data-size="continent"] .labelText { font-size: 1rem; }
@@ -663,23 +916,29 @@
   .eraStep button, .timelineToggle { width: 44px; height: 44px; }
   .compareButton { min-height: 44px; }
   .poiIcon::before { content: ""; position: absolute; inset: -9px; }
+  .layers label { min-height: 44px; }
 }
 
-/* ---------- Reduced motion, transparency, forced colours ---------- */
+/* ---------- Reduced motion, transparency, forced colours (design.md §5) ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers { animation: none !important; }
-  .canvas, .labelText, .poiIcon, .thumb, .hoverName, .band, .rune span { transition: none !important; }
+  .glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers, .card, .hits, .peek, .poiTipBody, .timeline, .eraName, .eraYears, .locator, .compareTag, .placeFold > div, .sheetBody, .track { animation: none !important; }
+  .canvas, .labelText, .poiIcon, .thumb, .thumbLane, .hoverName, .band, .rune span, .eraSwatch, .controls button, .compareHandle, .layers input::after { transition: none !important; }
 }
-:global([data-motion="reduced"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers),
-:global([data-ui-motion="reduce"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers) { animation: none !important; }
-:global([data-motion="reduced"]) :is(.thumb, .hoverName),
-:global([data-ui-motion="reduce"]) :is(.thumb, .hoverName) { transition: none !important; }
+:global([data-motion="reduced"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers, .card, .hits, .peek, .poiTipBody, .timeline, .eraName, .eraYears, .locator, .compareTag, .placeFold > div, .sheetBody, .track),
+:global([data-ui-motion="reduce"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers, .card, .hits, .peek, .poiTipBody, .timeline, .eraName, .eraYears, .locator, .compareTag, .placeFold > div, .sheetBody, .track) { animation: none !important; }
+:global([data-motion="reduced"]) :is(.thumb, .thumbLane, .hoverName, .controls button, .compareHandle),
+:global([data-ui-motion="reduce"]) :is(.thumb, .thumbLane, .hoverName, .controls button, .compareHandle) { transition: none !important; }
+/* Reduced transparency: the glows go, the painted panels stay (they are opaque). */
 @media (prefers-reduced-transparency: reduce) {
-  .searchBox, .controls > button, .controlGroup, .layers, .place, .timeline, .compareHandle, .compareTag, .loading, .fallback { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--atlas-surface); }
+  .band[data-active], .thumb, .eraSwatch { box-shadow: none; }
 }
-:global([data-transparency="reduced"]) :is(.searchBox, .controls > button, .controlGroup, .layers, .place, .timeline, .compareHandle, .compareTag) { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--atlas-surface); }
+:global([data-transparency="reduced"]) :is(.band[data-active], .thumb, .eraSwatch) { box-shadow: none; }
 @media (forced-colors: active) {
-  .searchBox, .controls button, .layers, .place, .timeline, .compareHandle, .compareTag, .hoverName { border: 1px solid CanvasText; background: Canvas; color: CanvasText; backdrop-filter: none; }
+  .place::before, .timeline::before, .layers::before, .peek::before, .poiTipBody::before, .hoverName::before, .compareTag::before,
+  .searchBox::before, .searchField::before, .hits::before, .locator::before, .loading::before, .fallback::before,
+  .controls button::after, .compareHandle::after { display: none; }
+  .searchBox, .controls button, .layers, .place, .timeline, .compareHandle, .compareTag, .hoverName, .peek, .poiTipBody, .hits, .locator { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .layers input { appearance: auto; }
   .glow, .poiIcon::after, .eventRune::before, .eventRune::after { display: none; }
   .labelText, .markerName { color: CanvasText; background: Canvas; text-shadow: none; }
   .compare::before { background: CanvasText; }

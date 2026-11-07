@@ -9,8 +9,28 @@ import { paintedBoxes, paintedOf } from "./ui/paintedArt";
  * maps that are well in view, names of the child maps not opened yet, events
  * of the timeline — then the most important ones that do not overlap.
  */
-export type Layers = { cities: boolean; instances: boolean; flight: boolean; portals: boolean; events: boolean; labels: boolean; alive: boolean };
-export const DEFAULT_LAYERS: Layers = { cities: true, instances: true, flight: true, portals: true, events: true, labels: true, alive: true };
+export type Layers = {
+  capitals: boolean; cities: boolean; flight: boolean; portals: boolean; dungeons: boolean; raids: boolean; delves: boolean;
+  events: boolean; labels: boolean; alive: boolean;
+};
+export const DEFAULT_LAYERS: Layers = { capitals: true, cities: true, flight: true, portals: true, dungeons: true, raids: true, delves: true, events: true, labels: true, alive: true };
+/** The layers menu in its order: kinds of points first, then names and the living world. */
+export const LAYER_KEYS: Array<keyof Layers> = ["capitals", "cities", "dungeons", "raids", "delves", "flight", "portals", "events", "labels", "alive"];
+
+const LAYERS_KEY = "gildra.worldMap.layers";
+/** The reader's layers from the last visit (unknown or missing keys fall back to on). */
+export function readLayers(): Layers {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(LAYERS_KEY) ?? "null") as Partial<Record<string, unknown>> | null;
+    if (!stored || typeof stored !== "object") return DEFAULT_LAYERS;
+    const out = { ...DEFAULT_LAYERS };
+    for (const key of LAYER_KEYS) if (typeof stored[key] === "boolean") out[key] = stored[key] as boolean;
+    return out;
+  } catch { return DEFAULT_LAYERS; }
+}
+export function storeLayers(layers: Layers) {
+  try { window.localStorage.setItem(LAYERS_KEY, JSON.stringify(layers)); } catch { /* private mode: the choice lasts this visit */ }
+}
 
 export type Marker =
   | { key: string; type: "poi"; kind: PoiKind; label: string; ax: number; ay: number; priority: number; showLabel: boolean; poi: AtlasPoi; faction?: string; side?: LabelSide }
@@ -19,7 +39,7 @@ export type Marker =
 
 const MIN_WIDTH: Record<PoiKind, number> = { capital: 180, city: 640, town: 1000, dungeon: 520, raid: 420, delve: 900, flight: 1200, portal: 900, "zone-label": 240 };
 const PRIORITY: Record<PoiKind, number> = { capital: 1, "zone-label": 2, raid: 3, city: 3, dungeon: 4, delve: 5, town: 5, portal: 6, flight: 7 };
-const LAYER: Record<PoiKind, keyof Layers> = { capital: "cities", city: "cities", town: "cities", dungeon: "instances", raid: "instances", delve: "instances", flight: "flight", portal: "portals", "zone-label": "labels" };
+export const LAYER: Record<PoiKind, keyof Layers> = { capital: "capitals", city: "cities", town: "cities", dungeon: "dungeons", raid: "raids", delve: "delves", flight: "flight", portal: "portals", "zone-label": "labels" };
 
 /** Where a point's name hangs off its icon: under it first, then to the right, above, to the left. */
 export type LabelSide = "below" | "right" | "above" | "left";
@@ -139,7 +159,7 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
         const [x1] = project(child.box[2], child.box[3]);
         if (x1 - x0 < 46) continue;
         const capital = index.capitals.get(child.name);
-        if (capital && !layers.cities) continue;
+        if (capital && !layers[capital.kind === "capital" ? "capitals" : "cities"]) continue;
         const cx = (child.box[0] + child.box[2]) / 2, cy = (child.box[1] + child.box[3]) / 2;
         out.push({
           key: `m${child.id}`, type: "map", label: child.name, ax: cx, ay: cy, priority: capital ? 1 : map.type === "world" || map.type === "cosmic" ? 9 : 2,

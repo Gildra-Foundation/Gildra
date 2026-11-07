@@ -3,11 +3,11 @@
 import { useEffect, useRef } from "react";
 import { ChevronUp, Expand, Layers as LayersIcon, Minus, Plus, Scan, Shrink } from "lucide-react";
 import type { Lang } from "@/lib/wow/worldMap/bundle";
-import type { Layers } from "../mapMarkers";
+import { LAYER_KEYS, type Layers } from "../mapMarkers";
 import { worldMapCopy } from "../worldMapCopy";
+import { LAYER_ICON } from "./mapIcons";
+import { usePresence } from "./usePresence";
 import styles from "../worldMapViewer.module.css";
-
-const LAYER_KEYS: Array<keyof Layers> = ["cities", "instances", "flight", "portals", "events", "labels", "alive"];
 
 /** The map's tools on the right edge: zoom as one pair, the map whole, a level up, the layers menu and full screen. */
 export function MapControls({ lang, canUp, full, layers, layersOpen, onZoom, onWhole, onUp, onLayersOpen, onLayers, onFull }: {
@@ -17,6 +17,7 @@ export function MapControls({ lang, canUp, full, layers, layersOpen, onZoom, onW
   const copy = worldMapCopy[lang];
   const menu = useRef<HTMLFieldSetElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
+  const presence = usePresence(layersOpen);
 
   // The layers menu closes on a click elsewhere and on Escape (focus goes back to its button).
   useEffect(() => {
@@ -43,15 +44,19 @@ export function MapControls({ lang, canUp, full, layers, layersOpen, onZoom, onW
         <button ref={toggle} type="button" onClick={() => onLayersOpen(!layersOpen)} aria-label={copy.layers} title={copy.layers} aria-expanded={layersOpen} aria-controls="world-map-layers"><LayersIcon aria-hidden="true" /></button>
         <button type="button" onClick={onFull} aria-label={full ? copy.exitFullscreen : copy.fullscreen} title={full ? copy.exitFullscreen : copy.fullscreen} aria-pressed={full}>{full ? <Shrink aria-hidden="true" /> : <Expand aria-hidden="true" />}</button>
       </div>
-      {layersOpen ? (
-        <fieldset ref={menu} id="world-map-layers" className={styles.layers} data-map-ui>
+      {presence.present ? (
+        <fieldset ref={menu} id="world-map-layers" className={styles.layers} data-map-ui data-state={presence.state} inert={!layersOpen}>
           <legend>{copy.layers}</legend>
-          {LAYER_KEYS.map((key) => (
-            <label key={key}>
-              <input type="checkbox" checked={layers[key]} onChange={(e) => onLayers({ ...layers, [key]: e.target.checked })} />
-              <span>{copy.layer[key]}</span>
-            </label>
-          ))}
+          {LAYER_KEYS.map((key) => {
+            const { icon: Icon, kind } = LAYER_ICON[key];
+            return (
+              <label key={key} data-kind={kind} data-plain={kind ? undefined : ""}>
+                <span className={styles.legendIcon} aria-hidden="true"><Icon /></span>
+                <span>{copy.layer[key]}</span>
+                <input type="checkbox" role="switch" checked={layers[key]} onChange={(e) => onLayers({ ...layers, [key]: e.target.checked })} />
+              </label>
+            );
+          })}
         </fieldset>
       ) : null}
     </>

@@ -1,18 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { Bird, Castle, Crown, DoorOpen, Flame, Hourglass, Mountain, Orbit, Pickaxe, Skull, Sparkles, Swords, Tent } from "lucide-react";
+import { ArrowUpRight, ChevronsLeftRight, Hourglass } from "lucide-react";
 import { lessMotion, subscribeSiteMotion } from "@gildra/atlas-ui/motionPreference";
 import type { ArtEra, AtlasBundle, AtlasEra, AtlasEvent, AtlasMap, AtlasPoi, Lang } from "@/lib/wow/worldMap/bundle";
 import { mapPagePath } from "@/lib/wow/worldMap/bundle";
-import type { PoiKind } from "@/lib/wow/worldMap/types";
 import { composeSet, mapSet, WorldMapEngine, type FrameInfo, type Insets, type MapSet } from "./engine/WorldMapEngine";
-import { DEFAULT_LAYERS, indexMarkers, pickMarkers, type Layers, type Marker } from "./mapMarkers";
+import { indexMarkers, pickMarkers, readLayers, storeLayers, type Layers, type Marker } from "./mapMarkers";
 import type { SearchHit } from "./mapSearch";
 import { MapTimeline } from "./MapTimeline";
 import { MapControls } from "./ui/MapControls";
 import { MapHoverName } from "./ui/MapHoverName";
+import { EVENT_ICON, KIND_ICON } from "./ui/mapIcons";
+import { applyMapKit } from "./ui/mapKit";
+import { MapLocator } from "./MapLocator";
 import { MapPlacePanel, type PanelSelection } from "./ui/MapPlacePanel";
 import { MapSearchBox } from "./ui/MapSearchBox";
 import { measureInsets, NARROW_QUERY } from "./ui/layout";
@@ -25,11 +27,6 @@ import styles from "./worldMapViewer.module.css";
 type Selected = { type: "poi"; poi: AtlasPoi } | { type: "event"; event: AtlasEvent } | null;
 type Placed = Marker & { sx: number; sy: number };
 
-const KIND_ICON: Record<PoiKind, typeof Crown> = {
-  capital: Crown, city: Castle, town: Tent, flight: Bird, portal: Orbit, dungeon: DoorOpen, raid: Skull, delve: Pickaxe, "zone-label": Castle,
-};
-/** Runes of world events by what happened: a land revealed, reshaped, a battle, an invasion, a new instance. */
-const EVENT_ICON: Record<string, typeof Crown> = { reveal: Sparkles, reshape: Mountain, battle: Swords, invasion: Flame, instance: DoorOpen };
 /** Markers are centred on their point; a capital's name hangs under its glowing seal; a name may step clear of painted words. */
 const anchor = (marker: Marker) => (marker.type === "map" && marker.capital ? "translate(-50%, -15px)" : marker.type === "map" && marker.shift ? `translate(-50%, calc(-50% + ${marker.shift}px))` : "translate(-50%, -50%)");
 
@@ -56,7 +53,9 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const [markers, setMarkers] = useState<Placed[]>([]);
   const markerEls = useRef(new Map<string, HTMLElement>());
   const markerList = useRef<Placed[]>([]);
-  const [layers, setLayers] = useState<Layers>(DEFAULT_LAYERS);
+  // The layers of the last visit (the viewer runs in the browser only).
+  const [layers, setLayersState] = useState<Layers>(readLayers);
+  const setLayers = useCallback((next: Layers) => { setLayersState(next); storeLayers(next); }, []);
   const [layersOpen, setLayersOpen] = useState(false);
   // The moment of the timeline (null: today) and, when comparing, the moment on the left of the divider.
   const [position, setPosition] = useState<number | null>(null);
@@ -64,6 +63,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const [eraData, setEraData] = useState<Record<string, ArtEra>>({});
   const [activeSet, setActiveSet] = useState<MapSet | null>(null);
   const [divider, setDivider] = useState(0.5);
+  // The free stretch of the stage between the title column and the tools (fractions): the divider's tags keep inside it.
+  const [room, setRoom] = useState<[number, number]>([0, 1]);
   const [selected, setSelected] = useState<Selected>(null);
   const [focus, setFocus] = useState<AtlasMap | null>(null);
   const [hoverMap, setHoverMap] = useState<number | null>(null);
@@ -151,6 +152,9 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     return () => { media.removeEventListener("change", update); off(); };
   }, []);
 
+  // The panels wear the map's painted kit (written once on the stage they live in).
+  useLayoutEffect(() => applyMapKit(stage.current), [stage]);
+
   // ------------------------------------------------------------ insets of the panels
   const insets = (): Insets => measureInsets(stage.current, titleBar.current, dock.current, tools.current);
 
@@ -174,8 +178,19 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       const [sx, sy] = engine.project(marker.ax, marker.ay);
       el.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) ${anchor(marker)}`;
     }
-    // Flight routes of the hovered flight master.
+    // The overview inset's frame and the tooltip of the hovered point follow the camera (no React render).
+    const follow = locatorFollow.current;
+    if (follow) {
+      const [x0, y0] = engine.unproject(0, 0), [x1, y1] = engine.unproject(info.width, info.height);
+      follow([x0, y0, x1, y1]);
+    }
+    // Flight routes of the hovered flight master; the tooltip of the hovered point.
     const poi = hoverPoiRef.current;
+    const tipMap = poi ? byIdRef.current?.get(poi.map) : undefined;
+    if (poi && tipMap && tipEl.current) {
+      const [tx, ty] = engine.project(...engine.mapPoint(tipMap, poi.x, poi.y));
+      tipEl.current.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0)`;
+    }
     if (poi?.routes) {
       const from = byIdRef.current?.get(poi.map);
       poi.routes.forEach((id, i) => {
@@ -200,6 +215,25 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   };
 
   const hoverPoiRef = useRef<AtlasPoi | null>(null);
+  const locatorFollow = useRef<((view: [number, number, number, number]) => void) | null>(null);
+  const tipEl = useRef<HTMLDivElement | null>(null);
+  const tipHide = useRef(0);
+  const placeTip = (poi: AtlasPoi | null) => {
+    const engine = engineRef.current, tip = tipEl.current;
+    const map = poi ? byIdRef.current?.get(poi.map) : undefined;
+    if (!engine || !tip || !poi || !map) return;
+    const [sx, sy] = engine.project(...engine.mapPoint(map, poi.x, poi.y));
+    tip.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0)`;
+  };
+  // The tooltip of a point waits a moment after the pointer leaves: it can be reached to follow its link.
+  const hoverPoint = useCallback((poi: AtlasPoi | null) => {
+    window.clearTimeout(tipHide.current);
+    if (poi) setHoverPoi(poi);
+    else tipHide.current = window.setTimeout(() => setHoverPoi(null), 240);
+  }, []);
+  useEffect(() => () => window.clearTimeout(tipHide.current), []);
+  // A new tooltip starts at its point; then the frames move it with the map.
+  useLayoutEffect(() => placeTip(hoverPoi));
   const byIdRef = useRef(byId);
   const poisRef = useRef(new Map<string, AtlasPoi>());
 
@@ -334,7 +368,13 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
-    const update = () => engine.setOptions({ insets: insets() });
+    const update = () => {
+      const next = insets();
+      engine.setOptions({ insets: next });
+      const width = stage.current?.clientWidth ?? 0;
+      if (width) setRoom((was) => { const r: [number, number] = [next.left / width, 1 - next.right / width]; return Math.abs(r[0] - was[0]) + Math.abs(r[1] - was[1]) < 1e-3 ? was : r; });
+    };
+    update();
     const observer = new ResizeObserver(update);
     if (dock.current) observer.observe(dock.current);
     if (titleBar.current) observer.observe(titleBar.current);
@@ -525,23 +565,49 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const key = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (selected) setSelected(null);
+      else if (compare && event.target !== surface.current) setCompare(null);
       else if (full && !document.fullscreenElement) setFull(false);
       // Nothing to close: one level up, like the game's map.
       else if (event.target === surface.current) { event.preventDefault(); engineRef.current?.up(); }
     };
     window.addEventListener("keydown", key);
     return () => { document.removeEventListener("fullscreenchange", exit); window.removeEventListener("keydown", key); };
-  }, [full, selected]);
+  }, [full, selected, compare]);
 
+  // The divider follows the pointer once per frame, however fast it moves.
   const startDivider = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     const el = event.currentTarget;
     el.setPointerCapture(event.pointerId);
     const rect = stage.current?.getBoundingClientRect();
-    const move = (e: PointerEvent) => { if (rect) setDivider(Math.max(0.04, Math.min(0.96, (e.clientX - rect.left) / rect.width))); };
-    const up = () => { el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); };
+    let next: number | null = null, frame = 0;
+    const move = (e: PointerEvent) => {
+      if (!rect) return;
+      next = Math.max(0.04, Math.min(0.96, (e.clientX - rect.left) / rect.width));
+      if (!frame) frame = requestAnimationFrame(() => { frame = 0; if (next !== null) setDivider(next); });
+    };
+    const up = () => { el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); };
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
   }, [stage]);
+  const dividerKey = useCallback((event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const moves: Record<string, (d: number) => number> = {
+      ArrowLeft: (d) => d - 0.04, ArrowRight: (d) => d + 0.04, PageDown: (d) => d - 0.2, PageUp: (d) => d + 0.2, Home: () => 0.04, End: () => 0.96,
+    };
+    const run = moves[event.key];
+    if (!run) return;
+    event.preventDefault();
+    setDivider((d) => Math.max(0.04, Math.min(0.96, run(d))));
+  }, []);
+  /** The child of a map under a point of it (normalized): the overview inset opens the zone clicked. */
+  const childAt = (id: number, x: number, y: number) => {
+    const map = byId?.get(id);
+    if (!map || !byId) return null;
+    const ax = map.frame[0] + x * (map.frame[2] - map.frame[0]), ay = map.frame[1] + y * (map.frame[3] - map.frame[1]);
+    const hits = map.children.map((child) => byId.get(child)).filter((child): child is AtlasMap => Boolean(child?.art) && ax >= child!.box[0] && ax <= child!.box[2] && ay >= child!.box[1] && ay <= child!.box[3]);
+    hits.sort((a, b) => (a.box[2] - a.box[0]) * (a.box[3] - a.box[1]) - (b.box[2] - b.box[0]) * (b.box[3] - b.box[1]));
+    return hits[0]?.id ?? null;
+  };
 
   // What the place in focus holds (zones, cities, continents): its instances and the events there.
   const facts = useMemo(() => {
@@ -564,15 +630,25 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const phase = focus ? infos.slice(1).find((info) => info.changed.includes(focus.id)) : undefined;
     return (phase ?? infos[0])?.name ?? era?.name ?? "";
   };
-  const leftEra = compare ? { name: artName(artLeft) } : null;
-  const rightEra = compare ? { name: artName(artNow) } : null;
+  const leftEra = compare ? { name: artName(artLeft), accent: eraAt(eras, compare.left)?.accent } : null;
+  const rightEra = compare ? { name: artName(artNow), accent: era?.accent } : null;
   const patchOf = (at: number) => `${Math.floor(at) + 1}.${Math.floor((at % 1) * 10 + 1e-6)}`;
   const sameName = leftEra && rightEra && leftEra.name === rightEra.name;
-  const selection: PanelSelection = selected?.type === "poi" ? { type: "poi", poi: selected.poi, where: chainNames(selectedMap) } : selected;
+  const targetName = (poi: AtlasPoi) => (poi.target !== undefined && poi.kind === "portal" ? byId?.get(poi.target)?.name : undefined);
+  const selection: PanelSelection = selected?.type === "poi" ? { type: "poi", poi: selected.poi, where: chainNames(selectedMap), target: targetName(selected.poi) } : selected;
   const eventCompare = selected?.type === "event" && Boolean(selected.event.before || selected.event.changed?.length);
+  // The zones of a continent, the cities of a zone: the places one level down that the era draws.
+  const places = focus && byId && focus.type !== "cosmic" ? focus.children.map((id) => byId.get(id)).filter((child): child is AtlasMap => Boolean(child?.art) && child!.type !== "dungeon" && child!.type !== "orphan") : [];
+  places.sort((a, b) => a.name.localeCompare(b.name, lang));
+  // Two maps of one name (a keep on two floors) are one place in the list.
+  const named = new Set<string>();
+  for (let i = places.length - 1; i >= 0; i--) { if (named.has(places[i].name)) places.splice(i, 1); else named.add(places[i].name); }
+  const placesTitle = focus ? copy.children[focus.type === "zone" && focus.parent !== null && byId?.get(focus.parent)?.type === "zone" ? "city" : focus.type] : copy.places;
+  const highlightMap = (id: number | null) => { setHoverMap(id); engineRef.current?.highlight(id); };
   const panel = bundle ? (
-    <MapPlacePanel lang={lang} facts={facts} selection={selection} sheet={narrow}
-      onClose={() => setSelected(null)} onPoi={flyToPoi} onEvent={openEvent} />
+    <MapPlacePanel lang={lang} facts={facts} places={places} placesTitle={placesTitle} placesKind={focus?.type === "continent" ? "zone" : "city"} selection={selection} sheet={narrow}
+      onClose={() => setSelected(null)} onPoi={flyToPoi} onEvent={openEvent}
+      onMap={(id) => { setSelected(null); engineRef.current?.flyToMap(id); }} onHoverMap={highlightMap} />
   ) : null;
   const search = bundle ? <MapSearchBox lang={lang} bundle={searchBundle ?? bundle} bundleUrl={bundleUrl} byId={byId} exists={existsNow} onPick={pickHit} /> : null;
   const controls = (
@@ -582,11 +658,22 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   // The name under the pointer, unless its label is on screen already (that label lights up instead).
   const hoverLabelled = hoverMap !== null && markers.some((marker) => marker.type === "map" && marker.map.id === hoverMap && !marker.quiet);
   const hoverName = hoverMap !== null && !hoverLabelled ? byId?.get(hoverMap)?.name ?? null : null;
+  // The overview inset: the continent around a zone or city, the world around a continent.
+  const overview = (() => {
+    if (!focus || !byId || narrow) return null;
+    if (focus.type === "cosmic" || focus.type === "world") return null;
+    let up = focus.parent === null ? undefined : byId.get(focus.parent);
+    while (up && focus.type !== "continent" && up.type !== "continent" && up.type !== "world" && up.parent !== null) up = byId.get(up.parent);
+    return up?.art && up.type !== "cosmic" ? up : null;
+  })();
+  const tipPoi = hoverPoi;
+  const TipIcon = tipPoi ? KIND_ICON[tipPoi.kind] : null;
 
   return (
     <>
       <div ref={surface} className={styles.surface} tabIndex={0} role="application" aria-label={copy.map} aria-roledescription={copy.map}
-        data-alive={layers.alive && !reduced ? "" : undefined} data-ready={started ? "" : undefined}>
+        data-alive={layers.alive && !reduced ? "" : undefined} data-ready={started ? "" : undefined}
+        data-pointer={hoverMap !== null && hoverMap !== focus?.id ? "" : undefined}>
         <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />
         {hoverPoi?.routes?.length ? (
           <svg className={styles.routes} aria-hidden="true">
@@ -601,8 +688,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
                 <button key={marker.key} ref={ref} type="button" data-map-ui className={styles.mapLabel} data-size={marker.size} data-capital={marker.capital ? "" : undefined} data-quiet={marker.quiet ? "" : undefined}
                   data-covers={marker.covers ? "" : undefined} data-faction={marker.faction} data-hover={hoverMap === marker.map.id ? "" : undefined}
                   onClick={() => { setSelected(null); engineRef.current?.flyToMap(marker.map.id); }}
-                  onPointerEnter={() => { setHoverMap(marker.map.id); engineRef.current?.highlight(marker.map.id); }}
-                  onPointerLeave={() => { setHoverMap(null); engineRef.current?.highlight(null); }}>
+                  onPointerEnter={() => highlightMap(marker.map.id)}
+                  onPointerLeave={() => highlightMap(null)}>
                   {marker.capital ? <span className={styles.glow} aria-hidden="true" /> : null}
                   <span className={styles.labelText}>{marker.label}</span>
                 </button>
@@ -631,39 +718,65 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
               <button key={marker.key} ref={ref} type="button" data-map-ui className={styles.poi} data-kind={marker.kind} data-faction={marker.faction}
                 data-labelled={marker.showLabel ? "" : undefined} data-side={marker.showLabel ? marker.side : undefined}
                 data-selected={selected?.type === "poi" && selected.poi.id === marker.poi.id ? "" : undefined}
+                data-tip={tipPoi?.id === marker.poi.id ? "" : undefined}
                 aria-label={`${marker.label}, ${copy.kind[marker.kind]}`}
                 onClick={() => { setSelected({ type: "poi", poi: marker.poi }); if (marker.poi.target) engineRef.current?.flyToMap(marker.poi.target); }}
-                onPointerEnter={() => setHoverPoi(marker.poi)} onPointerLeave={() => setHoverPoi((p) => (p?.id === marker.poi.id ? null : p))}>
+                onPointerEnter={(event) => { if (event.pointerType !== "touch") hoverPoint(marker.poi); }} onPointerLeave={() => hoverPoint(null)}>
                 <span className={styles.poiIcon} aria-hidden="true"><Icon /></span>
                 <span className={styles.markerName}>{marker.label}</span>
               </button>
             );
           })}
+          {tipPoi && TipIcon ? (
+            // The point's tooltip, as the game shows it: name, kind, where a portal leads, a link to our page.
+            <div key={tipPoi.id} ref={tipEl} className={styles.poiTip} data-map-ui data-kind={tipPoi.kind} data-faction={tipPoi.faction}
+              onPointerEnter={() => hoverPoint(tipPoi)} onPointerLeave={() => hoverPoint(null)}>
+              <div className={styles.poiTipBody}>
+                <p className={styles.poiTipKind}>
+                  <TipIcon aria-hidden="true" />
+                  {copy.kind[tipPoi.kind]}{tipPoi.faction && tipPoi.faction !== "neutral" ? ` · ${copy.faction[tipPoi.faction]}` : ""}
+                </p>
+                <p className={styles.poiTipName}>{tipPoi.name}</p>
+                {targetName(tipPoi) ? <p className={styles.poiTipText}>{copy.leadsTo}: {targetName(tipPoi)}</p> : null}
+                {tipPoi.href ? <a className={styles.poiTipLink} href={`${prefix}${tipPoi.href}`} tabIndex={-1}>{copy.open}<ArrowUpRight aria-hidden="true" /></a> : null}
+              </div>
+            </div>
+          ) : null}
         </div>
         <MapHoverName surface={surface} name={hoverName} />
       </div>
 
       {compare && leftEra && rightEra ? (
-        <div className={styles.compare} style={{ left: `${divider * 100}%` }} data-map-ui>
-          <span className={styles.compareTag} data-side="left">{leftEra.name}{sameName && compare ? ` · ${patchOf(compare.left)}` : ""}</span>
-          <span className={styles.compareTag} data-side="right">{rightEra.name}{sameName ? ` · ${patchOf(pos)}` : ""}</span>
-          <div className={styles.compareHandle} role="slider" tabIndex={0} aria-label={copy.divider}
-            aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(divider * 100)}
-            onPointerDown={startDivider}
-            onKeyDown={(e) => { if (e.key === "ArrowLeft") setDivider((d) => Math.max(0.04, d - 0.04)); if (e.key === "ArrowRight") setDivider((d) => Math.min(0.96, d + 0.04)); }} />
+        <div className={styles.compare} style={{ transform: `translate3d(${(divider * 100).toFixed(3)}%, 0, 0)` }} data-map-ui
+          data-cramped={divider - room[0] < 0.17 ? "left" : room[1] - divider < 0.17 ? "right" : undefined}>
+          <span className={styles.compareTag} data-side="left" style={leftEra.accent ? { ["--era-accent" as string]: leftEra.accent } : undefined}>
+            <span className={styles.compareSwatch} aria-hidden="true" />{leftEra.name}{sameName && compare ? ` · ${patchOf(compare.left)}` : ""}
+          </span>
+          <span className={styles.compareTag} data-side="right" style={rightEra.accent ? { ["--era-accent" as string]: rightEra.accent } : undefined}>
+            <span className={styles.compareSwatch} aria-hidden="true" />{rightEra.name}{sameName ? ` · ${patchOf(pos)}` : ""}
+          </span>
+          <div className={styles.compareHandle} role="slider" tabIndex={0} aria-label={copy.divider} aria-orientation="horizontal"
+            aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(divider * 100)} aria-valuetext={`${leftEra.name} ${Math.round(divider * 100)}% · ${rightEra.name}`}
+            onPointerDown={startDivider} onKeyDown={dividerKey}>
+            <ChevronsLeftRight aria-hidden="true" />
+          </div>
         </div>
       ) : null}
 
       {/* Search and the place panel live in the title column (wide screens); on phones the search and tools share the header row. */}
       {slot ? createPortal(<>{search}{narrow ? controls : panel}</>, slot) : null}
       {narrow ? null : <div ref={tools} className={styles.tools}>{controls}</div>}
+      {overview && focus ? (
+        <MapLocator key={overview.id} lang={lang} map={overview} here={focus} followRef={locatorFollow}
+          onPick={(id, x, y) => { setSelected(null); const engine = engineRef.current; if (!engine) return; const child = childAt(id, x, y); if (child) engine.flyToMap(child); else engine.flyToMap(id); }} />
+      ) : null}
 
       <div ref={dock} className={styles.dock} data-map-ui>
         {narrow ? panel : null}
         {eras.length > 1 ? (
           <MapTimeline lang={lang} eras={eras} events={bundle?.events ?? []} position={pos} activeEvent={selected?.type === "event" ? selected.event : null}
-            compare={Boolean(compare)} canCompare={changedHere.length > 0 || eventCompare}
-            onPosition={setPosition} onEvent={openEvent} onCompare={toggleCompare} />
+            compare={Boolean(compare)} compareLeft={compare?.left ?? null} canCompare={changedHere.length > 0 || eventCompare}
+            onPosition={setPosition} onCompareLeft={(left) => setCompare({ left })} onEvent={openEvent} onCompare={toggleCompare} />
         ) : null}
       </div>
       {!bundle ? <p className={styles.loading} role="status">{copy.loading}</p> : null}
