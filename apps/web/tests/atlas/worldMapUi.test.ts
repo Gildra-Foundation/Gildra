@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { AtlasBundle, AtlasEvent, AtlasMap, AtlasPoi } from "../../lib/wow/worldMap/bundle.ts";
 import type { FrameInfo } from "../../components/wow/worldMap/engine/WorldMapEngine.ts";
-import { DEFAULT_LAYERS, indexMarkers, pickMarkers } from "../../components/wow/worldMap/mapMarkers.ts";
+import { DEFAULT_LAYERS, indexMarkers, LAYER, LAYER_KEYS, pickMarkers, readLayers, storeLayers } from "../../components/wow/worldMap/mapMarkers.ts";
 import { altNames, buildSearch } from "../../components/wow/worldMap/mapSearch.ts";
 import { groupRunes, RUNE_GAP } from "../../components/wow/worldMap/ui/timelineRunes.ts";
 import { paintedBoxes, paintedOf } from "../../components/wow/worldMap/ui/paintedArt.ts";
@@ -69,6 +69,40 @@ describe("world map labels", () => {
     const big = pickMarkers(info, index, DEFAULT_LAYERS, null, project, (m) => m.art).length;
     const small = pickMarkers({ ...info, width: 390, height: 500 }, index, DEFAULT_LAYERS, null, project, (m) => m.art).length;
     assert.ok(small <= 30 && small < big, `${small} < ${big}`);
+  });
+});
+
+describe("world map layers", () => {
+  it("toggles each kind of point on its own", () => {
+    const pois = [poi("d", 12, "dungeon", "Wailing Caverns", 0.3, 0.3), poi("r", 12, "raid", "Onyxia's Lair", 0.6, 0.6), poi("v", 12, "delve", "Delve", 0.8, 0.2)];
+    const index = indexMarkers({ maps: [kalimdor], pois, events: [] });
+    const { info, project } = frame([kalimdor]);
+    const keys = (layers: typeof DEFAULT_LAYERS) => pickMarkers(info, index, layers, null, project, (m) => m.art).map((m) => m.key).sort();
+    assert.deepEqual(keys(DEFAULT_LAYERS), ["pd", "pr", "pv"]);
+    assert.deepEqual(keys({ ...DEFAULT_LAYERS, dungeons: false }), ["pr", "pv"]);
+    assert.deepEqual(keys({ ...DEFAULT_LAYERS, raids: false, delves: false }), ["pd"]);
+  });
+
+  it("gives every kind of point a layer of the menu", () => {
+    for (const layer of Object.values(LAYER)) assert.ok(LAYER_KEYS.includes(layer), layer);
+  });
+
+  it("keeps the reader's layers between visits and ignores what it does not know", () => {
+    const store = new Map<string, string>();
+    const g = globalThis as { window?: unknown };
+    const before = g.window;
+    g.window = { localStorage: { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v); } } };
+    try {
+      assert.deepEqual(readLayers(), DEFAULT_LAYERS);
+      storeLayers({ ...DEFAULT_LAYERS, flight: false, alive: false });
+      assert.equal(readLayers().flight, false);
+      assert.equal(readLayers().alive, false);
+      // An old menu's keys and broken values fall back to on.
+      store.set("gildra.worldMap.layers", JSON.stringify({ instances: false, raids: "no", portals: false }));
+      assert.deepEqual(readLayers(), { ...DEFAULT_LAYERS, portals: false });
+      store.set("gildra.worldMap.layers", "{");
+      assert.deepEqual(readLayers(), DEFAULT_LAYERS);
+    } finally { g.window = before; }
   });
 });
 

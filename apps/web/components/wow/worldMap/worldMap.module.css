@@ -105,18 +105,23 @@
   text-wrap: balance;
 }
 .line {
-  margin: var(--atlas-space-2) 0 0;
-  color: var(--atlas-text);
+  display: -webkit-box;
+  flex: none;
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: var(--atlas-text-muted);
   font-size: var(--atlas-text-small);
   line-height: var(--atlas-leading-snug);
   text-shadow: var(--atlas-text-halo);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .slot {
   display: flex;
   flex-direction: column;
-  gap: var(--atlas-space-3);
+  gap: var(--atlas-space-2);
   min-height: 0;
-  margin-top: var(--atlas-space-4);
+  margin-top: var(--atlas-space-3);
 }
 .slot:empty { display: none; }
 
