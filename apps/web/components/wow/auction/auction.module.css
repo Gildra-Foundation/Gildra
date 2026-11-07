@@ -292,9 +292,9 @@ td[data-best] .metricTrack > span { background: var(--material-light, var(--atla
 .removeCell { width: 44px; padding-inline: var(--atlas-space-1) !important; text-align: center !important; }
 .compareRemove, .detailClose { display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid transparent; border-radius: var(--atlas-radius-control); background: transparent; color: var(--atlas-text-muted); cursor: pointer; }
 .compareRemove:hover, .detailClose:hover { border-color: var(--atlas-line); color: var(--atlas-text-strong); }
-.cellSkeleton { display: inline-block; width: 6rem; height: 14px; border-radius: 4px; background: var(--atlas-line-soft); animation: auctionPulse 1.4s ease-in-out infinite; }
+.cellSkeleton { display: inline-block; width: 6rem; height: 14px; border-radius: 4px; background: var(--atlas-line-soft); animation: auctionPulse 1.4s var(--atlas-ease-ambient) infinite; }
 .rowSkeleton { display: inline-flex; align-items: center; gap: var(--atlas-space-3); min-height: 44px; }
-.rowSkeleton > span { display: block; border-radius: 4px; background: var(--atlas-line-soft); animation: auctionPulse 1.4s ease-in-out infinite; }
+.rowSkeleton > span { display: block; border-radius: 4px; background: var(--atlas-line-soft); animation: auctionPulse 1.4s var(--atlas-ease-ambient) infinite; }
 .rowSkeleton > span:first-child { width: 36px; height: 36px; }
 .rowSkeleton > span:last-child { width: 10rem; height: 14px; }
 @keyframes auctionPulse { 50% { opacity: .45; } }
@@ -405,9 +405,13 @@ td[data-best] .metricTrack > span { background: var(--material-light, var(--atla
   .compareRow[data-grouped] > .compareItem { box-shadow: none; }
   .compareRow[data-grouped]:not([data-group-end]) { border-bottom-color: transparent; }
 }
+/* Small phones: the per-cell labels of the stacked rows wrap instead of running out of the card. */
+@media (max-width: 400px) {
+  .compareTable td[data-label]::before { letter-spacing: .04em; overflow-wrap: anywhere; }
+}
 /* Phones: the tray is one row (icons, Clear, Compare); the names unfold above it on demand. */
 @media (max-width: 760px) {
-  .tray { flex-wrap: wrap; gap: var(--atlas-space-2) 4px; bottom: var(--atlas-space-2); padding: 6px; }
+  .tray { flex-wrap: wrap; gap: var(--atlas-space-2) 4px; bottom: calc(var(--atlas-space-2) + env(safe-area-inset-bottom, 0px)); padding: 6px; }
   .trayToggle { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 4px; border: 0; border-radius: var(--atlas-radius-control); background: transparent; color: var(--atlas-text-muted); cursor: pointer; }
   .trayStack { display: inline-flex; }
   .trayStack > * + * { margin-inline-start: -8px; }
@@ -434,4 +438,14 @@ td[data-best] .metricTrack > span { background: var(--material-light, var(--atla
   .itemTrigger, .itemLabel { color: LinkText; }
   .categoryChip[aria-pressed="true"], .tray, .qtyPreset[aria-pressed="true"], .cheapestTag { border: 2px solid CanvasText; }
   .metricTrack > span, .depthLine { background: CanvasText; stroke: CanvasText; }
+}
+
+/* Touch: 44 px targets and 16 px fields (no iOS zoom on focus). */
+@media (pointer: coarse) {
+  .categoryChip, .categoriesToggle, .qtyPreset { min-height: 44px; }
+  .qtyPreset { min-width: 44px; }
+  .compareRemove, .detailClose { width: 44px; height: 44px; }
+  .qtyInput { min-height: 44px; font-size: max(16px, 1em); }
+  .comboInput { font-size: max(16px, 1em); }
+  .pick { width: 24px; height: 24px; }
 }

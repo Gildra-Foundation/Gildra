@@ -183,7 +183,8 @@
   .heroSwitch a { gap: 6px; min-height: 44px; padding-inline: 6px; line-height: 1.1; white-space: normal; }
   .heroSwitch a span { overflow: visible; }
   .heroSwitch a img { width: 20px; height: 20px; }
-  .tabs button { font-size: var(--atlas-text-meta); }
+  .tabs { grid-template-columns: repeat(3, auto); }
+  .tabs button { padding-inline: 4px; font-size: var(--atlas-text-meta); }
   .iconButton { gap: 6px; }
 }
 @media (max-width: 360px) {
@@ -230,4 +231,11 @@
 /* Phones: the menu opens upwards over the trees, from the picker it belongs to. */
 @media (max-width: 900px) {
   :global(.talent-calculator) .library :global(.tc-loadout-popover) { position: absolute; top: auto; right: 0; bottom: calc(100% + var(--atlas-space-2)); left: 0; width: auto; max-height: min(60dvh, 520px); }
+}
+
+/* Touch: 44 px chips and a 16 px search field (no iOS zoom on focus). */
+@media (pointer: coarse) {
+  .chip { height: 44px; }
+  .search { min-height: 44px; }
+  .search input { font-size: max(16px, 1em); }
 }

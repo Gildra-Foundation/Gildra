@@ -185,3 +185,6 @@
   .group { border: 1px solid CanvasText; background: Canvas; }
   .strip > span { box-shadow: none; border: 1px solid CanvasText; }
 }
+
+/* Phones: a long dataset name takes a second line instead of an ellipsis. */
+@media (max-width: 480px) { .rowLink { white-space: normal; } }

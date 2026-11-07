@@ -237,3 +237,6 @@ a.playerName:focus-visible { outline: 2px solid var(--class-color, var(--atlas-a
   .fill, .fill[data-over] { background: CanvasText; }
   .player { border: 1px solid CanvasText; }
 }
+
+/* Touch: player names are 44 px targets without moving the rows. */
+@media (pointer: coarse) { a.playerName { margin-block: -8px; padding-block: 8px; } }

@@ -22,14 +22,14 @@
   position:absolute;z-index:30;top:calc(100% + 5px);left:10px;display:grid;grid-template-columns:58px minmax(260px,340px);align-items:start;gap:6px;
   width:max-content;max-width:min(420px,calc(100vw - 40px));color:var(--atlas-text-strong);font:500 var(--atlas-text-small)/1.4 var(--atlas-font-ui);
   letter-spacing:0;opacity:0;visibility:hidden;transform:translateY(-3px);pointer-events:none;text-align:left;
-  transition:opacity .1s ease,transform .1s ease,visibility .1s;filter:drop-shadow(0 7px 12px var(--atlas-bg));
+  transition:opacity var(--atlas-duration-fast) var(--atlas-ease),transform var(--atlas-duration-fast) var(--atlas-ease),visibility var(--atlas-duration-fast);filter:drop-shadow(0 7px 12px var(--atlas-bg));
 }
 
 .db-tooltip-icon{display:grid;width:58px;height:58px;padding:2px;border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);background:var(--atlas-surface-sunken)}
 .db-tooltip-icon img{width:100%;height:100%;border:2px solid var(--record-quality,var(--atlas-line-strong));object-fit:cover}.db-tooltip-icon .i{width:28px;height:28px;margin:auto;color:var(--atlas-text-subtle)}
 .db-tooltip-panel{min-height:58px;padding:var(--atlas-space-3) var(--atlas-space-4) var(--atlas-space-4);border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);background:var(--atlas-glass-fill,var(--atlas-surface));box-shadow:var(--atlas-glass-depth,none);font-weight:400;color:var(--atlas-text)}
-.db-wow-tooltip.is-expanded{position:fixed;z-index:95;top:70px;right:20px;left:auto;max-height:calc(100vh - 90px);opacity:1;visibility:visible;transform:none;pointer-events:auto}
-.db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:calc(100vh - 90px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.db-wow-tooltip.is-expanded{position:fixed;z-index:95;top:70px;right:20px;left:auto;max-height:calc(100dvh - 90px);opacity:1;visibility:visible;transform:none;pointer-events:auto}
+.db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:calc(100dvh - 90px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
 .db-tooltip-close{position:absolute;z-index:2;top:5px;right:5px;width:28px;height:28px;border:1px solid var(--atlas-line);border-radius:var(--atlas-radius);background:var(--atlas-surface-raised);color:var(--atlas-text-strong);font:500 20px/1 var(--atlas-font-ui);cursor:pointer}.db-tooltip-close:hover{border-color:var(--atlas-accent);color:var(--atlas-accent-strong)}.db-tooltip-close:focus-visible{outline:2px solid var(--atlas-accent-strong);outline-offset:2px}.db-wow-tooltip.is-expanded .db-tooltip-panel{padding-inline-end:38px}
 .db-tooltip-name{margin-bottom:var(--atlas-space-1);font:var(--atlas-weight-display) var(--atlas-text-title)/1.2 var(--atlas-font-display);color:var(--atlas-text-strong)}
 .db-wow-tooltip.quality-2 .db-tooltip-name{color:#1eff00}.db-wow-tooltip.quality-2 .db-tooltip-icon img{border-color:#1eff00}
@@ -57,7 +57,7 @@
 
 @media (max-width:720px){
 	.db-wow-tooltip.is-expanded{position:fixed;inset:64px 12px 12px;grid-template-columns:44px minmax(0,1fr);width:auto;max-width:none;max-height:none}
-	.db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:calc(100vh - 76px)}
+	.db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:calc(100dvh - 76px)}
   .db-wow-tooltip.is-expanded .db-tooltip-icon{width:44px;height:44px}
   
 }
@@ -69,13 +69,13 @@
 @keyframes db-tooltip-spin{to{transform:rotate(360deg)}}
 @keyframes db-tooltip-shimmer{to{background-position:-220% 0}}
 @media(prefers-reduced-motion:reduce){.db-tooltip-loading>span,.db-tooltip-loading::after{animation:none}}
-.db-wow-tooltip.is-expanded{top:50%;left:50%;right:auto;max-height:min(760px,calc(100vh - 48px));transform:translate(-50%,-50%);filter:drop-shadow(0 18px 28px var(--atlas-bg))}
-.db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:min(760px,calc(100vh - 48px))}
+.db-wow-tooltip.is-expanded{top:50%;left:50%;right:auto;max-height:min(760px,calc(100dvh - 48px));transform:translate(-50%,-50%);filter:drop-shadow(0 18px 28px var(--atlas-bg))}
+.db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:min(760px,calc(100dvh - 48px))}
 .db-wow-tooltip.is-detail-page{position:relative;inset:auto;display:grid;width:100%;max-width:100%;grid-template-columns:58px minmax(0,1fr);gap:var(--atlas-space-3);opacity:1;visibility:visible;transform:none;pointer-events:auto;filter:none}
 
 @media (max-width:720px){
   .db-wow-tooltip.is-expanded{inset:64px 10px 10px;width:auto;max-width:none;max-height:none;transform:none;grid-template-columns:44px minmax(0,1fr)}
-  .db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:calc(100vh - 74px)}
+  .db-wow-tooltip.is-expanded .db-tooltip-panel{max-height:calc(100dvh - 74px)}
   .db-wow-tooltip.is-detail-page{grid-template-columns:44px minmax(0,1fr)}
   .db-wow-tooltip.is-detail-page .db-tooltip-icon{width:44px;height:44px}
 }

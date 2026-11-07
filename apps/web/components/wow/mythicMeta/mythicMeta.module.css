@@ -358,3 +358,6 @@
   .leaderTrack span { background: Highlight; }
   .affixes li { border-color: CanvasText; color: CanvasText; background: Canvas; }
 }
+
+/* Smallest phones: the spec column is narrow; one step smaller keeps whole names (no ellipsis). */
+@media (max-width: 359px) { .specName { font-size: var(--atlas-text-small); } }

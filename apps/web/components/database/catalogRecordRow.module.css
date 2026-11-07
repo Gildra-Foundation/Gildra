@@ -107,3 +107,11 @@
 @media (prefers-reduced-motion: reduce) {
   .row { transition: none; }
 }
+
+/* Phones: names take up to two lines instead of an ellipsis. */
+@media (max-width: 480px) {
+  .link { display: -webkit-box; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+}
+
+/* Phones: descriptions read at body size. */
+@media (max-width: 600px) { .description { font-size: var(--atlas-text-body); } }

@@ -357,3 +357,13 @@
 .abilityList > .ability:target { border-bottom-color: var(--material-light); }
 .abilityList .abilityHead h3 { text-shadow: 0 1px 3px var(--atlas-bg); }
 @media (forced-colors: active) { .abilityList > .ability { border-color: CanvasText; } }
+
+/* Touch: ability names are 44 px targets; the hit area grows, the look stays. */
+@media (pointer: coarse) {
+  .abilityHead h3 a { position: relative; }
+  .abilityHead h3 a::after { content: ""; position: absolute; inset: -8px -4px; }
+}
+@media (pointer: coarse) {
+  .lootItem a { position: relative; }
+  .lootItem a::after { content: ""; position: absolute; inset: -12px -4px; }
+}

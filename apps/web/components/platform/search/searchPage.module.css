@@ -270,3 +270,6 @@
 @media (forced-colors: active) {
   .searchField { border: 1px solid CanvasText; background: Canvas; }
 }
+
+/* Touch: 44 px clear button. */
+@media (pointer: coarse) { .clearQuery { width: 44px; height: 44px; } }

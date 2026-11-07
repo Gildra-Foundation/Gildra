@@ -119,6 +119,7 @@
   .extras { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 }
 @container talents (max-width: 480px) {
+  .trees { grid-template-columns: repeat(3, auto); }
   .trees button { padding-inline: var(--atlas-space-1); font-size: var(--atlas-text-meta); }
 }
 @media (prefers-reduced-motion: reduce) { .node { transition: none; } }

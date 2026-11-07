@@ -307,6 +307,7 @@
   .cutoffTable td .delta { margin-left: 0; }
   .cutoffTable th, .cutoffTable td { padding-inline: 4px; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+  .kpi dt { white-space: normal; }
 }
 @media (prefers-reduced-motion: reduce) {
   .chipArt img { transition: none; }
@@ -316,3 +317,6 @@
   .chartLine { stroke: CanvasText; }
   .dungeon, .chip { border: 1px solid CanvasText; }
 }
+
+/* Touch: 44 px targets. */
+@media (pointer: coarse) { .segment a, .cutoffTable a { min-height: 44px; } }
