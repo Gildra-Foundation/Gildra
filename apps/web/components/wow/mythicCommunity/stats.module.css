@@ -319,4 +319,4 @@
 }
 
 /* Touch: 44 px targets. */
-@media (pointer: coarse) { .segment a, .cutoffTable a { min-height: 44px; } }
+@media (pointer: coarse) { .segment a, .cutoffTable a { min-height: 44px; } .cutoffTable a { min-width: 44px; } }

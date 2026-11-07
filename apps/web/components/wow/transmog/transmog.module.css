@@ -449,7 +449,7 @@
 @media (max-width: 700px) and (pointer: coarse) {
   .studio { --sheet-peek: 108px; }
   .sheetHandle { height: 44px; }
-  .segmented button { min-width: 44px; }
+  .segmented button { min-width: 44px; min-height: 44px; }
 }
 
 /* ---------- Motion, transparency, forced colours ---------- */

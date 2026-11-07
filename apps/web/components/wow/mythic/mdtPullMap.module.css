@@ -263,7 +263,9 @@
 /* Touch: the route link is a 44 px target; the hit area grows, the look stays. */
 @media (pointer: coarse) {
   .routeLink { position: relative; }
-  .routeLink::after { content: ""; position: absolute; inset: -13px -4px; }
+  .routeLink::after { content: ""; position: absolute; inset: -14px -6px; }
+  .savedBuilds p > a { position: relative; }
+  .savedBuilds p > a::after { content: ""; position: absolute; inset: -15px -6px; }
 }
 
-@media (max-width: 600px) { .actionGroup p { font-size: var(--atlas-text-body); } }
+@media (max-width: 600px) { .actionGroup.actionGroup li p { font-size: var(--atlas-text-body); } }

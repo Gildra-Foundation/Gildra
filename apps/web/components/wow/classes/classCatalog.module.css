@@ -308,6 +308,6 @@
   .quickLink { width: 44px; height: 44px; }
   .textLink, .buildAction { min-height: 44px; }
   .specName, .className a, .specCardTitle h3 a, .heroSpecs a { position: relative; }
-  .specName::after, .className a::after, .specCardTitle h3 a::after, .heroSpecs a::after { content: ""; position: absolute; inset: -12px -4px; }
-  .itemText a { margin-block: -12px; padding-block: 12px; }
+  .specName::after, .className a::after, .specCardTitle h3 a::after, .heroSpecs a::after { content: ""; position: absolute; inset: -13px -6px; }
+  .itemText a { margin-block: -13px; padding-block: 13px; }
 }

@@ -502,3 +502,6 @@
 
 /* Touch: 16 px fields, so iOS does not zoom on focus. */
 @media (pointer: coarse) { .page :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }
+
+/* Smallest phones: a long spec name wraps (hyphenated where the browser can) instead of an ellipsis. */
+@media (max-width: 400px) { .specText .specName { white-space: normal; overflow-wrap: break-word; hyphens: auto; } }

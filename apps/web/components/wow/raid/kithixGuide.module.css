@@ -33,8 +33,13 @@
 
 .enemyHeading { display: flex; align-items: center; flex-wrap: wrap; gap: var(--atlas-space-3); }
 .portrait { width: 112px; height: auto; object-fit: contain; flex: 0 0 112px; background: radial-gradient(ellipse, color-mix(in srgb, var(--kithix-accent) 18%, transparent), transparent 70%); }
-@media (max-width: 480px) { .guide .panel { padding: 40px 22px; } .phases .phaseButton :global(.ui-button__label) { hyphens: manual; } }
-@media (max-width: 400px) { .phases .phaseButton { font-size: var(--atlas-text-meta); } }
+@media (max-width: 480px) {
+  .guide .panel { padding: 40px 22px; }
+  /* The painted band is wider than the frame's safe inset: whole words, two lines at most. */
+  .phases > .phaseButton.phaseButton.phaseButton { padding-inline: 72px; }
+  .phases .phaseButton :global(.ui-button__label) { hyphens: manual; overflow-wrap: normal; }
+}
+@media (max-width: 400px) { .phases > .phaseButton.phaseButton.phaseButton { font-size: var(--atlas-text-meta); } }
 
 /* Phones: guide copy reads at body size. */
 @media (max-width: 600px) { .guide .panel p { font-size: var(--atlas-text-body); } }

@@ -330,11 +330,11 @@ a.playerName:focus-visible { outline: 2px solid var(--material-light, var(--atla
   .score { font-size: var(--atlas-text-body); }
 }
 /* Tablets and phones: names and realms wrap instead of an ellipsis. */
-@media (max-width: 1100px) { .playerName, .realm, .itemName { white-space: normal; overflow-wrap: break-word; } }
+@media (max-width: 1100px) { .player .playerName, .player .realm, .itemText .itemName { white-space: normal; overflow-wrap: break-word; } }
 @media (max-width: 400px) { .leader .playerName { font-size: var(--atlas-text-lead); overflow-wrap: break-word; } }
 @media (max-width: 360px) { .rolePlaque, .buildPlaque { padding-inline: 20px; } }
 /* Touch: names are 44 px targets without moving the rows. */
-@media (pointer: coarse) { a.playerName, .itemName { margin-block: -12px; padding-block: 12px; } }
+@media (pointer: coarse) { a.playerName, .itemName { margin-block: -13px; padding-block: 13px; } }
 
 @media (prefers-reduced-motion: reduce) {
   .region, .page .table tbody tr, .linkIcon, .directorySpec { transition: none; }

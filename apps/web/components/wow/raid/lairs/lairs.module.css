@@ -361,9 +361,9 @@
 /* Touch: ability names are 44 px targets; the hit area grows, the look stays. */
 @media (pointer: coarse) {
   .abilityHead h3 a { position: relative; }
-  .abilityHead h3 a::after { content: ""; position: absolute; inset: -8px -4px; }
+  .abilityHead h3 a::after { content: ""; position: absolute; inset: -9px -6px; }
 }
 @media (pointer: coarse) {
   .lootItem a { position: relative; }
-  .lootItem a::after { content: ""; position: absolute; inset: -12px -4px; }
+  .lootItem a::after { content: ""; position: absolute; inset: -13px -6px; }
 }

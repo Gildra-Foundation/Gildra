@@ -190,4 +190,4 @@
 @media (max-width: 480px) { .rowLink { white-space: normal; } }
 
 /* Touch: 16 px fields, so iOS does not zoom on focus. */
-@media (pointer: coarse) { .searchField :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea), .field :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }
+@media (pointer: coarse) { .searchField.searchField :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea), .field :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }

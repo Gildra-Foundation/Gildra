@@ -218,8 +218,8 @@
   .overviewLink { position: relative; }
   .overviewLink::after { content: ""; position: absolute; inset: -16px 0; }
   .stepName a, .shopName a, a.reagentName { position: relative; }
-  .stepName a::after, .shopName a::after, a.reagentName::after { content: ""; position: absolute; inset: -12px -4px; }
+  .stepName a::after, .shopName a::after, a.reagentName::after { content: ""; position: absolute; inset: -13px -6px; }
   .legendButton { position: relative; }
-  .legendButton::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; }
+  .legendButton::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; }
   .number, .have { min-height: 44px; font-size: max(16px, 1em); }
 }
