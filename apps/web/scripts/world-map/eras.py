@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 import shutil
 import sys
 import time
@@ -87,20 +88,22 @@ CLIENTS = {
 
 # Retail phased art from Battle for Azeroth on: Silithus (the Wound), Tirisfal
 # (the blight), Darkshore (after the War of the Thorns)
-RETAIL_PHASES_BFA = {81: ("wow", 9491), 18: ("wow", 11519), 62: ("wow", 12608)}
+# Theramore stays a crater from Mists on (the retail default art is the city before 5.0.4)
+THERAMORE_RUINS = {70: ("wow", 1403)}
+RETAIL_PHASES_BFA = {81: ("wow", 9491), 18: ("wow", 11519), 62: ("wow", 12608), **THERAMORE_RUINS}
 
 ERAS = [
-    {"id": "classic", "name": {"en": "World of Warcraft", "ru": "World of Warcraft"}, "expansion": "classic",
+    {"id": "classic", "maxExpansion": 0, "name": {"en": "World of Warcraft", "ru": "World of Warcraft"}, "expansion": "classic",
      "patchRange": ["1.0.0", "1.12.3"], "kind": "client", "product": "wow_classic_era"},
-    {"id": "burning-crusade", "name": {"en": "The Burning Crusade", "ru": "The Burning Crusade"}, "expansion": "tbc",
+    {"id": "burning-crusade", "maxExpansion": 1, "name": {"en": "The Burning Crusade", "ru": "The Burning Crusade"}, "expansion": "tbc",
      "patchRange": ["2.0.1", "2.4.3"], "kind": "client", "product": "wow_anniversary"},
-    {"id": "wrath-of-the-lich-king", "name": {"en": "Wrath of the Lich King", "ru": "Wrath of the Lich King"}, "expansion": "wotlk",
+    {"id": "wrath-of-the-lich-king", "maxExpansion": 2, "name": {"en": "Wrath of the Lich King", "ru": "Wrath of the Lich King"}, "expansion": "wotlk",
      "patchRange": ["3.0.2", "3.3.5"], "kind": "client", "product": "wow_classic_titan"},
     {"id": "cataclysm", "name": {"en": "Cataclysm", "ru": "Cataclysm"}, "expansion": "cataclysm",
-     "patchRange": ["4.0.1", "4.3.4"], "kind": "cataclysm"},
+     "patchRange": ["4.0.1", "4.3.4"], "kind": "cataclysm", "maxExpansion": 3},
     # the Vale before the Siege of Orgrimmar (the client keeps three phases, none default)
     {"id": "cataclysm-pandaria", "name": {"en": "Mists of Pandaria", "ru": "Mists of Pandaria"}, "expansion": "mop",
-     "patchRange": ["5.0.4", "5.4.8"], "kind": "client", "product": "wow_classic", "phases": {390: ("wow_classic", 25583)}},
+     "patchRange": ["5.0.4", "5.4.8"], "kind": "client", "product": "wow_classic", "maxExpansion": 4, "phases": {390: ("wow_classic", 25583)}},
     {"id": "warlords-of-draenor", "name": {"en": "Warlords of Draenor", "ru": "Warlords of Draenor"}, "expansion": "wod",
      "patchRange": ["6.0.2", "6.2.4"], "kind": "pre-retail", "maxExpansion": 5,
      "phases": {390: ("wow_classic", 25585), 70: ("wow", 1403)}},
@@ -121,8 +124,9 @@ ERAS = [
 ]
 
 VARIANTS = [
+    # the Theramore's Fall scenario and the destroyed phase came with 5.0.4 (2012-08-28)
     {"id": "theramore-fall", "name": {"en": "Fall of Theramore", "ru": "Падение Терамора"}, "expansion": "mop",
-     "patchRange": ["5.1.0", "5.4.8"], "inherits": "cataclysm-pandaria", "phases": {70: ("wow", 1403)}},
+     "patchRange": ["5.0.4", "5.4.8"], "inherits": "cataclysm-pandaria", "phases": {70: ("wow", 1403)}},
     {"id": "krasarang-landfall", "name": {"en": "Krasarang Wilds: Landfall", "ru": "Красарангские джунгли: высадка"}, "expansion": "mop",
      "patchRange": ["5.1.0", "5.4.8"], "inherits": "cataclysm-pandaria", "phases": {418: ("wow_classic", 1918)}},
     {"id": "vale-corruption", "name": {"en": "Vale of Eternal Blossoms: corruption", "ru": "Вечноцветущий дол: порча"}, "expansion": "mop",
@@ -678,7 +682,7 @@ class EraBuilder:
             out["substitutes"] = notes
         out["maps"] = self.serialize(tree)
         if era["id"] != "midnight":
-            out["pois"] = self.era_pois(era["id"], tree, pois)
+            out["pois"] = self.era_pois(era["id"], tree, pois, era["maxExpansion"])
         changed = sum(1 for v in out["maps"].values() if v != "unchanged" and not v.get("absent"))
         absent = sum(1 for v in out["maps"].values() if v != "unchanged" and v.get("absent"))
         print(f"  {era['id']}: {len(tree)} maps ({changed} own, {absent} absent), {len(out.get('pois', []))} points")
@@ -724,10 +728,37 @@ class EraBuilder:
                 out[str(k)] = {"absent": True, "art": None}
         return out
 
-    def era_pois(self, era_id: str, tree: dict, pois: list) -> list:
-        """Points of the era: its sources' points on its maps, labels and cities re-derived from its rects."""
-        kept = [dict(p) for p in pois if p["mapId"] in tree and p["kind"] not in ("zone-label", "capital", "city")
-                and (p.get("targetMapId") is None or p["targetMapId"] in tree)]
+    def poi_expansion(self, poi: dict) -> int | None:
+        """Expansion a point belongs to: an instance's MapID, a portal's destination map."""
+        if poi.get("journalInstanceId"):
+            instance = self.journal_en.get(poi["journalInstanceId"]) or {}
+            exp = (self.maps_db.get(instance.get("MapID")) or {}).get("ExpansionID")
+            return int(exp) if exp is not None else None
+        if poi["kind"] == "portal":
+            # "Portal to Dalaran", "Portal to Paw'don Village, Jade Forest": the place or its zone
+            dest = re.sub(r"^portal to (the )?", "", poi["name"]["en"], flags=re.I).strip().lower()
+            wanted = {dest, dest.split(",")[-1].strip().removeprefix("the ")}
+            found = [self.retail_expansion(m) for m, n in self.retail_maps.items()
+                     if n["type"] in ("continent", "zone", "world") and n["name"]["en"].lower().removeprefix("the ") in wanted]
+            return min(found) if found else None
+        return None
+
+    def era_pois(self, era_id: str, tree: dict, pois: list, max_expansion: int) -> list:
+        """Points of the era: its sources' points on its maps (none of later content), labels and
+        cities re-derived from its rects."""
+        kept = []
+        for p in pois:
+            if p["mapId"] not in tree or p["kind"] in ("zone-label", "capital", "city"):
+                continue
+            if p.get("targetMapId") is not None and p["targetMapId"] not in tree:
+                continue
+            exp = self.poi_expansion(p)
+            if exp is not None and exp > max_expansion:
+                continue  # a portal to / an entrance of a later expansion
+            q = dict(p)
+            if exp is not None:
+                q["expansion"] = exp
+            kept.append(q)
         for p in kept:
             if not p["id"].startswith(era_id):
                 p["id"] = f"{era_id}-{p['id']}"

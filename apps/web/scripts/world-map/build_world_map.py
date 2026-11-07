@@ -153,11 +153,14 @@ def build_hierarchy(uimap_en, uimap_ru, geometry: Geometry, art_maps: dict[int, 
                 rect = None
         name_en = row["Name_lang"]
         name_ru = (uimap_ru.get(map_id) or {}).get("Name_lang") or name_en
+        kind = TYPE_NAMES.get(row["Type"], "orphan")
+        if kind == "dungeon" and map_id in CITIES and rect:
+            kind = "zone"  # hub cities the client files as instance maps (Dalaran): open-world cities
         nodes[map_id] = {
             "id": map_id,
             "slug": slugify(name_en),
             "name": {"en": name_en, "ru": name_ru},
-            "type": TYPE_NAMES.get(row["Type"], "orphan"),
+            "type": kind,
             "parentId": parent,
             "children": [],
             "rectInParent": [r6(v) for v in rect] if rect else None,
@@ -504,6 +507,8 @@ def main() -> None:
                 shutil.rmtree(TILES_DIR / "ru" / str(owner), ignore_errors=True)
                 retail.get(str(owner), {}).pop("ru", None)
                 continue
+            if (retail[str(owner)].get("ru") or {}).get("fingerprint") == spec.fingerprint() and (TILES_DIR / "ru" / str(owner)).exists():
+                continue  # same files as last time
             jobs.append((owner, spec, refs_ru, str(TILES_DIR / str(owner)), str(TILES_DIR / "ru" / str(owner)), args.quality, retail[str(owner)]["digest"]))
         # the enUS files of each localized art, resolved in one pass
         need = {f for _, spec, refs_ru, *_ in jobs for f in spec.fdids() if f not in refs_ru}
@@ -517,7 +522,7 @@ def main() -> None:
                 if meta is None:
                     retail[str(owner)].pop("ru", None)
                 else:
-                    retail[str(owner)]["ru"] = {"bytes": meta["bytes"], "linked": meta["linked"]}
+                    retail[str(owner)]["ru"] = {"bytes": meta["bytes"], "linked": meta["linked"], "fingerprint": specs[art_of_owner[owner]].fingerprint()}
         ru_bytes = sum(v["ru"]["bytes"] for v in retail.values() if isinstance(v, dict) and v.get("ru"))
         print(f"ruRU pictures: {sum(1 for v in retail.values() if isinstance(v, dict) and v.get('ru'))} written, {ru_bytes / 1e6:.1f} MB of own tiles")
     for node in nodes.values():
