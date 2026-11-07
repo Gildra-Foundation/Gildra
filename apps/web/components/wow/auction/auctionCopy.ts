@@ -1,3 +1,5 @@
+import { auctionCategoryNames } from "@/lib/wow/auctionMarketCategories";
+
 export const auctionCopy = {
   ru: {
     qualities: ["Низкое качество", "Обычное", "Необычное", "Редкое", "Эпическое", "Легендарное", "Артефакт", "Наследуемое"],
@@ -10,7 +12,7 @@ export const auctionCopy = {
     find: "Найти товар", categoriesLabel: "Категории", findPlaceholder: "Руда, трава, зелье…", noSuggestions: "Ничего на рынке",
     realmPick: "Выберите сервер", realmEmpty: "Нет такого сервера", realmNeeded: "Выберите сервер, чтобы увидеть лоты.",
     groups: { materials: "Материалы", consumables: "Расходуемые", gear: "Снаряжение" },
-    categories: { ore: "Руда и металл", herbs: "Травы", cloth: "Ткань", leather: "Кожа", enchanting: "Чары", gems: "Самоцветы", elemental: "Стихии", cooking: "Кулинария", inscription: "Начертание", parts: "Детали", reagents: "Особые реагенты", potions: "Зелья", flasks: "Настои и эликсиры", food: "Еда", enhancements: "Улучшения", weapons: "Оружие", armor: "Броня", recipes: "Рецепты" },
+    categories: auctionCategoryNames.ru,
     current: "Актуальные", all: "Все", minPrice: "Мин. цена", median: "Медиана", available: "Доступно",
     rank: "Ранг", select: "Сравнить", compare: "Сравнить", clear: "Очистить", backToList: "К списку", compareTitle: "Сравнение",
     buyQuantity: "Купить, шт.", total: "Итого", average: "В среднем", upTo: "до", shortfall: "На рынке только",
@@ -35,7 +37,7 @@ export const auctionCopy = {
     find: "Find an item", categoriesLabel: "Categories", findPlaceholder: "Ore, herb, potion…", noSuggestions: "Nothing on the market",
     realmPick: "Choose a realm", realmEmpty: "No such realm", realmNeeded: "Choose a realm to see its auctions.",
     groups: { materials: "Materials", consumables: "Consumables", gear: "Gear" },
-    categories: { ore: "Ore & metal", herbs: "Herbs", cloth: "Cloth", leather: "Leather", enchanting: "Enchanting", gems: "Gems", elemental: "Elemental", cooking: "Cooking", inscription: "Inscription", parts: "Parts", reagents: "Special reagents", potions: "Potions", flasks: "Flasks & elixirs", food: "Food", enhancements: "Enhancements", weapons: "Weapons", armor: "Armor", recipes: "Recipes" },
+    categories: auctionCategoryNames.en,
     current: "Current", all: "All", minPrice: "Min price", median: "Median", available: "Available",
     rank: "Rank", select: "Compare", compare: "Compare", clear: "Clear", backToList: "Back to list", compareTitle: "Comparison",
     buyQuantity: "Buy, units", total: "Total", average: "Average", upTo: "up to", shortfall: "Only on the market:",

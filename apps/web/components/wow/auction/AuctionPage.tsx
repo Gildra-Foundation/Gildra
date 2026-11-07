@@ -10,6 +10,9 @@ import { AuctionBrowser } from "./AuctionBrowser";
 import { auctionCopy } from "./auctionCopy";
 import { AuctionPlaque } from "./AuctionMaterial";
 import styles from "./auction.module.css";
+import { Hammer } from "lucide-react";
+import { RelatedLinks } from "@/components/wow/shared/RelatedLinks";
+import { relatedCopy } from "@/components/wow/shared/relatedLinksCopy";
 import { seoDescriptions, seoTitles } from "@/lib/seo/titles";
 
 export function auctionMetadata(lang: "ru" | "en"): Metadata {
@@ -29,5 +32,6 @@ export function AuctionPage({ lang }: { lang: "ru" | "en" }) {
     </div>
     <Suspense fallback={<AuctionPlaque className={styles.searchPlaque}><AtlasSkeleton variant="rows" count={4} label={c.loading} /></AuctionPlaque>}><AuctionBrowser lang={lang} /></Suspense>
     <noscript><AuctionPlaque><p className={materialStyles.text}>{c.noJS}</p></AuctionPlaque></noscript>
+    <RelatedLinks label={relatedCopy[lang].label} links={[{ href: `${lang === "ru" ? "/ru" : ""}/wow/professions`, label: relatedCopy[lang].professions, icon: <Hammer aria-hidden="true" /> }]} />
   </AtlasFrame>;
 }
