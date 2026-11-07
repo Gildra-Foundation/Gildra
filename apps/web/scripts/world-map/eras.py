@@ -264,27 +264,39 @@ class EraBuilder:
             art_maps[row["UiMapID"]].append(row)
         root = 946 if 946 in tables["UiMap"] else 947
         nodes = build_hierarchy(tables["UiMap"], tables["UiMap@ru"], geometry, art_maps, root)
-        nodes = {m: n for m, n in nodes.items() if n["type"] not in ("dungeon",) and (n["type"] != "orphan" or n["rectInParent"])}
+        # the open world only: no instance floors, nothing without a place on its parent
+        # (older clients file Dalaran under instance maps: keep the hub cities)
+        nodes = {m: n for m, n in nodes.items() if (n["type"] != "dungeon" or m in CITIES) and (m == root or n["rectInParent"])}
         for node in nodes.values():
             node["children"] = [c for c in node["children"] if c in nodes]
 
         # era UiMap -> retail UiMap (same id, or same MapID/AreaID/type of the primary assignment)
         mapping: dict[int, int | str] = {}
         taken = set()
-        order = sorted(nodes, key=lambda m: (TYPE_IDS[nodes[m]["type"]], m))
+        def depth(m):
+            d = 0
+            while nodes[m]["parentId"] in nodes:
+                m = nodes[m]["parentId"]
+                d += 1
+            return d
+
+        order = sorted(nodes, key=lambda m: (depth(m), TYPE_IDS[nodes[m]["type"]], m))  # parents first
         for map_id in order:
             node = nodes[map_id]
             own = geometry.primary(map_id)
-            candidates = []
+            candidates = set()
             if own:
-                candidates = [c for c in self.retail_by_key.get((own["MapID"], own["AreaID"], TYPE_IDS[node["type"]]), []) if c not in taken]
-            if map_id in self.retail_maps and self.retail_maps[map_id]["name"]["en"] == node["name"]["en"] and map_id not in taken:
-                target = map_id
-            elif map_id in candidates:
-                target = map_id
-            else:
-                named = [c for c in candidates if self.retail_maps[c]["name"]["en"] == node["name"]["en"]]
-                target = (named or sorted(candidates) or [None])[0]
+                candidates |= set(self.retail_by_key.get((own["MapID"], own["AreaID"], TYPE_IDS[node["type"]]), []))
+            if map_id in self.retail_maps and self.retail_maps[map_id]["name"]["en"] == node["name"]["en"]:
+                candidates.add(map_id)
+            candidates -= taken
+            parent_target = mapping.get(node["parentId"]) if node["parentId"] else None
+
+            def score(c):
+                retail = self.retail_maps[c]
+                return (retail["parentId"] != parent_target, retail["name"]["en"] != node["name"]["en"], c != map_id, c)
+
+            target = min(candidates, key=score) if candidates else None
             if target is None:
                 target = f"{era['id']}-{map_id}"
             else:

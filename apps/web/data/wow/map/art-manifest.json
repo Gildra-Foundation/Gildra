@@ -5180,5 +5180,939 @@
       "product": "wow",
       "build": "12.1.5.70783"
     }
+  },
+  "eras": {
+    "classic": {
+      "947": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 210596,
+        "tiles": 17,
+        "digest": "879348b0005f0f9efae1fe5ad9f87bc15f2288374c82c73b75c90c58a1472d4d"
+      },
+      "12": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 196110,
+        "tiles": 17,
+        "digest": "9f18b4cb3446154b8b91250f593fc163387e4d586893569c0bc921bd5e7dcec4"
+      },
+      "13": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 196450,
+        "tiles": 17,
+        "digest": "d4d0e5ec437c59eaf1dc465506cba01e00849463f87cb0d088c077df257f7f90"
+      },
+      "1": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 218710,
+        "tiles": 17,
+        "digest": "b6a1ffb80bc4013d6af2e6aaabdd9f5af3edbf1773fc1fdc62ed099cc00360bc"
+      },
+      "7": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 156502,
+        "tiles": 17,
+        "digest": "8f0127341f62c3b931297958b4a35ce86c756544560a715b62617548d5bc6faf"
+      },
+      "10": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 198058,
+        "tiles": 17,
+        "digest": "ac71fc578ebe3bd922452e369eddb5b95f4a196ee0a1cbd9fc573c50b8d12bb6"
+      },
+      "classic-1416": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 220660,
+        "tiles": 17,
+        "digest": "c479f1a7c116fef9b88434a7f98a0e562065cc46b2a7ea77de70d08488975501"
+      },
+      "14": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 205592,
+        "tiles": 17,
+        "digest": "e73200020f9732435e6b5a8120f6e3b225f6cc4d24d7f26fd1fe5a72b454237b"
+      },
+      "15": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 173940,
+        "tiles": 17,
+        "digest": "534e76f41f0fcadcfc8a190419fd1b5a8f8a6b43a9f6dfbca0332f3f4f2069e4"
+      },
+      "17": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 186402,
+        "tiles": 17,
+        "digest": "590835bf2c220b654e709ff708caf8803d66fdba568b29585bbffb112f880e3a"
+      },
+      "18": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 212818,
+        "tiles": 17,
+        "digest": "cc6a22ae0d61f6eed9a78ac8bf8155b675bc09a7c42cca5be59168427b40261a"
+      },
+      "21": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 216222,
+        "tiles": 17,
+        "digest": "df9d6eb67d1acfa2ede474d98621792004db68c6aa269dc0506d9a65d74458be"
+      },
+      "22": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 195290,
+        "tiles": 17,
+        "digest": "3a69a52dd734e52542ca30f71ffb0f0ce771f90e5b66e67f2ed5d239b9d209bf"
+      },
+      "23": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 161112,
+        "tiles": 17,
+        "digest": "fe25c9a321bc1ba32bd3c0c80a92b866b22ed69af652490487203a56caa760dd"
+      },
+      "25": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 189256,
+        "tiles": 17,
+        "digest": "949efdb8a62ff9046cbe6d8b6440bf8720d4774ae8650635ce570b52429e8b75"
+      },
+      "26": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 211468,
+        "tiles": 17,
+        "digest": "36e15d9b89d8c31bb9b21e747267a7f1b4673e07f825fd252566962ce6a75e88"
+      },
+      "27": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 227526,
+        "tiles": 17,
+        "digest": "39b3490c7f299cb05e7862361ab6294804ee84aa75caea5d22946a622e2a9927"
+      },
+      "32": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 161908,
+        "tiles": 17,
+        "digest": "82fdff4da83778119a8767e3056134807743fa3029b547c9d67fdc26be338d81"
+      },
+      "36": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 179926,
+        "tiles": 17,
+        "digest": "ba49ebf0095251b2c6582f223ce7ff80c9c08428c801f7212fcaf473b23b0e4a"
+      },
+      "37": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 219332,
+        "tiles": 17,
+        "digest": "eaba5efeba25d1ded6755ba59774fa782f172ae28d74767f0d431b3a4f228fff"
+      },
+      "42": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 174148,
+        "tiles": 17,
+        "digest": "e2818e70c8bdfc648b0a5d2cc512072647babef1ee1b3d8c1bdcb5831731cfab"
+      },
+      "47": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 213658,
+        "tiles": 17,
+        "digest": "18f513ac667702b71fd4d3a1a29755ce47469686491ec8ccb8e6542b45a8b2fd"
+      },
+      "48": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 220768,
+        "tiles": 17,
+        "digest": "0d421a57e0faad0dac062c8c350b80d0f7a74ed026035f9374602ad88fa666f7"
+      },
+      "49": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 193554,
+        "tiles": 17,
+        "digest": "c8e5ed83b04d0aa638a41c133ec3b3e71453f9bb29ef0174dbc5f4f97bd46874"
+      },
+      "50": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 224132,
+        "tiles": 17,
+        "digest": "710ca5ecd6f25ae75500729a1a67035c8a77a4a2ef897fcb2f66ca9bdbcc2e21"
+      },
+      "51": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 222488,
+        "tiles": 17,
+        "digest": "224f9be27f3b11f0ae2072839bccb0f49c2e1c9b77cc5f85df5ee5f0d8ed213a"
+      },
+      "52": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 206028,
+        "tiles": 17,
+        "digest": "ed5d81b4da197d1a50328599fa0d4093bf4c202ec5a90f90c4272c6821adbcaf"
+      },
+      "56": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 212032,
+        "tiles": 17,
+        "digest": "fb0bb15d9a02d2896535b7f1207b15d808a6d2c64b7c559bd1f5a2534492c6c4"
+      },
+      "57": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 241178,
+        "tiles": 17,
+        "digest": "65d4225e2a8b90a1780940a7565b8bd4f1b00d0437a2dae96d5d003e54be4001"
+      },
+      "62": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 195880,
+        "tiles": 17,
+        "digest": "70533e5d0a500eb13ae7ad68ffa62810f040ceace87ebb8f2d1ebd064657040e"
+      },
+      "63": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 208200,
+        "tiles": 17,
+        "digest": "2268289363dd5cecf46a0bf208a159bfc19f3740c8a46b4883e860a4281d92a0"
+      },
+      "64": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 160308,
+        "tiles": 17,
+        "digest": "f55138fd27dad3f9a6d226f5a4b0efa8a601314a1442f20a1fb513238649905e"
+      },
+      "65": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 197754,
+        "tiles": 17,
+        "digest": "7cb623d473b4c430667f6055f2816cd1b3a3d9dafd2c1a6d45687512590025be"
+      },
+      "66": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 211376,
+        "tiles": 17,
+        "digest": "42954bc820fd5a42ac3dd4befc05021bc5b07fa38f3bd45f3df938d77df82771"
+      },
+      "69": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 189238,
+        "tiles": 17,
+        "digest": "60965cfce338b5fcc6dc33c6830b6f7457e1088f45f30f9a8290c85a253e31a8"
+      },
+      "70": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 205836,
+        "tiles": 17,
+        "digest": "25e2f019f817a1a4e2b85787e4efbe221e5739bc5f02e18805d7dc47d3f80e34"
+      },
+      "71": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 209342,
+        "tiles": 17,
+        "digest": "19c21a2f661220e650b8114fec73c17753de66bd004bcfec494ae7f4368146f0"
+      },
+      "76": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 201582,
+        "tiles": 17,
+        "digest": "3924bde7db7721574431f89dfb2be1c033ce5412c4c804ece607254daf06ce05"
+      },
+      "77": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 175708,
+        "tiles": 17,
+        "digest": "59bce6844b1f0b124740389f84ec3bdd9657aa71fc571446dfd457aafcda29ed"
+      },
+      "78": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 199360,
+        "tiles": 17,
+        "digest": "b4c053ce08c60399d3451d46a08956680c8dfba14dd2eba6346f022ffeec8bd7"
+      },
+      "80": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 174926,
+        "tiles": 17,
+        "digest": "acf93cf41c5785e0d27399e31ba78ca2d73497bbb43a2d569069c20d74b07fa7"
+      },
+      "81": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 163918,
+        "tiles": 17,
+        "digest": "a56f115029a735f743a6e47d9def66eb1b5ef98566e2861710fa683e4e347e9e"
+      },
+      "83": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 188556,
+        "tiles": 17,
+        "digest": "bf26be91d030b9d197ef226f2045062b73fc471b356ca7a0c33234a463d1f65d"
+      },
+      "84": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 168998,
+        "tiles": 17,
+        "digest": "4e509116a3c8d6662e78bdf15f3cdf180c320a885c67b428668720a8a5826e3b"
+      },
+      "85": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 167190,
+        "tiles": 17,
+        "digest": "d88f553afbb1f20b7ee814e45f4f28a49e90fc0db3e1795a926f05e38f4ace92"
+      },
+      "87": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 163356,
+        "tiles": 17,
+        "digest": "15875b53b3f72c7878dcbee49a7c7808bfc6aa614b77acd9164f07ffa2f7e61a"
+      },
+      "88": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 151360,
+        "tiles": 17,
+        "digest": "32f0b902bd8ce768d2d332b119add19f0be73e5360ba38e7e4fcf521076e6fd1"
+      },
+      "89": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 154068,
+        "tiles": 17,
+        "digest": "770b87a017380b33be26182e8c69f81d2b2614a49c91f37ae79adb3cc26940a7"
+      },
+      "90": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 147742,
+        "tiles": 17,
+        "digest": "3571ab312c5932d65f999be6d5350f0550cacef949510c542f9d264f53d3d8a5"
+      }
+    },
+    "burning-crusade": {
+      "946": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 174888,
+        "tiles": 17,
+        "digest": "a5240f66962d99a5862921e0fbf8796c4d54a7d34a8987939708e6df732a397d"
+      },
+      "947": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 211862,
+        "tiles": 17,
+        "digest": "f48c9371d9e82ee5274eabdbc9a012ede0e6686097260be44b70e761744388eb"
+      },
+      "101": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 137694,
+        "tiles": 17,
+        "digest": "4f4fa65f30a0b19945b47c8b7198c5d95462ad7ddf3973c6af622b4a282bba30"
+      },
+      "12": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 199188,
+        "tiles": 17,
+        "digest": "097c3717b63730c99a0a74724c53adead19428dc59a94a1ebd4e8dabc2948a06"
+      },
+      "13": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 187354,
+        "tiles": 17,
+        "digest": "052a8192a3cff787c3a5e5b9f4313db82917f451d5307111e0ae0d87817db9ac"
+      },
+      "105": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 180492,
+        "tiles": 17,
+        "digest": "1fdd2f9eb6d1a570fe6dc94d2c0edfd4a658d45da377f193bbb12d24c1e35a08"
+      },
+      "burning-crusade-1416": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 220660,
+        "tiles": 17,
+        "digest": "c479f1a7c116fef9b88434a7f98a0e562065cc46b2a7ea77de70d08488975501"
+      },
+      "15": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 173928,
+        "tiles": 17,
+        "digest": "af681c256f5ef194194857e7ca3b3dca2a731fc660cd94d3ef993d17bef6467a"
+      },
+      "17": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 187496,
+        "tiles": 17,
+        "digest": "dbae0cae2a008212d5b7b38b7e352c4b15b5aa03f91417750382c6bfd1355cbb"
+      },
+      "25": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 189078,
+        "tiles": 17,
+        "digest": "43e00fa2e7eb608a2e486ab4a699771c086b68f094d0f741fa253524d8458379"
+      },
+      "51": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 222282,
+        "tiles": 17,
+        "digest": "0704e4cb5c07651440a10061902662696c7cb0f80de9441a0d8c7c2a3e291edd"
+      },
+      "56": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 211720,
+        "tiles": 17,
+        "digest": "d7e3d8d719b94ad34c9a89f5dfce595420f37d486b043976133c2ec0d4acb160"
+      },
+      "66": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 211060,
+        "tiles": 17,
+        "digest": "a06dc892babeea69f263040a4514f28b6f18973c7ce5d021043a0c7439bb4529"
+      },
+      "70": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 206890,
+        "tiles": 17,
+        "digest": "18d2558d79c44ebecb7b7c3e3fb5705c733ae9a34e2370534c2426a95e784376"
+      },
+      "103": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 218840,
+        "tiles": 17,
+        "digest": "37a91e45c39d813ae9c2ae277a425f6cfaf8692deba1418115d37af58d572b53"
+      },
+      "106": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 172074,
+        "tiles": 17,
+        "digest": "58a88fccb7b376aa1d0a3f162715b1f98c7b87bff84d398ec9060cd7803aa4df"
+      }
+    },
+    "wrath-of-the-lich-king": {
+      "947": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 217350,
+        "tiles": 17,
+        "digest": "5782ff78e8f1264fb7ff2681793384d98e48070e017b12b5cc4bb7674704f6a1"
+      },
+      "113": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 243170,
+        "tiles": 17,
+        "digest": "ccb37fd3c3c0e70d0d21393d6559303a70d3228a1e00f7d76487752216125d67"
+      },
+      "1": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 219022,
+        "tiles": 17,
+        "digest": "2d7b32b0eed8da448e181ada0fcf0d1e02a494f82911fbee7464bf89ac914878"
+      },
+      "wrath-of-the-lich-king-1416": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 219352,
+        "tiles": 17,
+        "digest": "5e40b6be4d5d11e907b6130d39bebfb8167d34449f882a16c932f59434b94435"
+      },
+      "18": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 213206,
+        "tiles": 17,
+        "digest": "ed1eda653a91ed1d2743ece203ad56bb996277c52ab6e50df486bf829b6205f8"
+      },
+      "23": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 158630,
+        "tiles": 17,
+        "digest": "4364a4bc1aa0b36bd4df457bbedab9c67df0eca3cafaecca6c0a14bbe8d9add3"
+      },
+      "52": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 205244,
+        "tiles": 17,
+        "digest": "2ec376a5198aabecb2cb8911434d9f441e6374a4d0216ccca4adf2b0539164aa"
+      },
+      "62": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 194994,
+        "tiles": 17,
+        "digest": "6541fb218efc504a9dabc40c69e020180ce97d3e855ce6f7516a103d97fea7a1"
+      },
+      "63": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 207590,
+        "tiles": 17,
+        "digest": "79647132735dd6fef40a29eded82a32c1128ae7dd6aca59492b58465b0445e56"
+      },
+      "70": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 205950,
+        "tiles": 17,
+        "digest": "aa86abbb1ad058c07772d70cf0edc16b562f482ca79b8b977167e2879a308189"
+      },
+      "78": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 199350,
+        "tiles": 17,
+        "digest": "044cbbaee49e60195bc354069038fd26e41ab38e5aabcb2b33f2ef81bbe56ddc"
+      },
+      "83": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 188436,
+        "tiles": 17,
+        "digest": "392692160e8e9814c1b6a7fa86e8a345ddd3c71a5126949e1ac6df7c3fbf374e"
+      },
+      "84": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 171556,
+        "tiles": 17,
+        "digest": "3c45e5b33fe781b615519007dfaee6649944324ef747ff1915be4e6a71166235"
+      },
+      "88": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 150546,
+        "tiles": 17,
+        "digest": "b217c1201b36be7141c227fac070c81565366078db07f04ea51e75df1527e934"
+      },
+      "103": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 220440,
+        "tiles": 17,
+        "digest": "d54bb7f9c1d115ebdc0420b0eb4fff9389246ef9d1440d27d59ee17f06557ebb"
+      },
+      "125": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 228558,
+        "tiles": 17,
+        "digest": "77fc58fc084eaf1fe19794e71b8be80642ba984a206c2d7fe8dc56a1e6233d7a"
+      }
+    },
+    "cataclysm-pandaria": {
+      "947": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 207124,
+        "tiles": 17,
+        "digest": "ed5a66f40dcde05e2236441c4df7d0adf35dc8aac3ed41c54453c16e3cd90e00"
+      },
+      "12": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 202012,
+        "tiles": 17,
+        "digest": "936c7be43e834c87dd5a537b009e130c17a93f02803d66ee8d2c136cadfbbc89"
+      },
+      "13": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 191304,
+        "tiles": 17,
+        "digest": "203cb0605ab4176685952a34808d950e1bf50f9aff7acfed7017d86bf792302c"
+      },
+      "424": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 164830,
+        "tiles": 17,
+        "digest": "85e7dffe5e2ac2502213efa60dd38a12076fb21c1134c8a985e2280bc3e68e34"
+      },
+      "1": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 181654,
+        "tiles": 17,
+        "digest": "02712278378ad42d73affec33c23f259a67d46976bff4bc9a179d4c84127c4b3"
+      },
+      "17": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 180478,
+        "tiles": 17,
+        "digest": "1316734157a35bee0a83711d889fb1a9cef55b57e5fcb506bfaa9b1b1c8798af"
+      },
+      "23": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 187962,
+        "tiles": 17,
+        "digest": "2d9b88080f1a482fa92ba90bb0acc678086461ee9db4b035ccfa2d8568523d31"
+      },
+      "62": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 169184,
+        "tiles": 17,
+        "digest": "a5c439ae719c5404dacc99cbe1eea25987e1497bab77de76169a83f809209cef"
+      },
+      "69": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 173542,
+        "tiles": 17,
+        "digest": "a5db2ab4299805d66aa7eca10b32fdcb136687578e8d8b82d6cec6f270368746"
+      },
+      "84": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 187586,
+        "tiles": 17,
+        "digest": "ef66786f40f9dafd72590bc0bc63d0cc30831897f03337c3997f1ca5c0611288"
+      },
+      "85": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 163264,
+        "tiles": 17,
+        "digest": "4f47e201b032fc62caaa2cae99d2a6097c3daa061be259bcc681a5d03a4bf446"
+      },
+      "89": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 166794,
+        "tiles": 17,
+        "digest": "ae46acc3a49698459274546a7b3d2f2f2d956e5963d702a9e4c9b70ceb0d8371"
+      },
+      "390": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 155062,
+        "tiles": 17,
+        "digest": "5726920c90e981e149e8f851a6ec4dfaf5d65a618c678e89ebe834922aa9f360"
+      },
+      "463": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 175232,
+        "tiles": 17,
+        "digest": "f924cd87718a1f2085e03dedbc2fba8773f977a6c60ce087678c13826e677d33"
+      },
+      "33": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 145940,
+        "tiles": 17,
+        "digest": "1cc62531a24818050a18b5096329e3a0a0707d0641bdeae80654d4de868b93ad"
+      },
+      "34": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 122252,
+        "tiles": 17,
+        "digest": "d22f1ab81a19a42eef42a815b6780b5edbbe458dbef4b5e053c788f55a8af547"
+      },
+      "35": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 137162,
+        "tiles": 17,
+        "digest": "26e3b5a09c10229183691a317ccdac99c09f610999544a1e5bf52174422b8f96"
+      },
+      "75": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 130804,
+        "tiles": 17,
+        "digest": "7e250477120e1e53374d27a50e883756e26200c7e83dcca40652b24024298c7d"
+      },
+      "99": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 127962,
+        "tiles": 17,
+        "digest": "d668b0c1d63899ef2bf4d50d9bbdcf00d36b21f71dc24e1894b8656dfd2222c1"
+      },
+      "86": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 133428,
+        "tiles": 17,
+        "digest": "9f979ff60d790e16a6ec141fe46935992838b5b1977b408bb8351f9540edb450"
+      }
+    },
+    "battle-for-azeroth": {
+      "81": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 185358,
+        "tiles": 17,
+        "digest": "748c22a411b5ee4cd314ae8eac401a4a2d55fd038fcb3725dde8cc76b6888fde"
+      },
+      "18": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 185636,
+        "tiles": 17,
+        "digest": "65f211b1e375e2a55a4227d1a0a07eff7939595ba0a1247a15e0a37118eeb06a"
+      },
+      "62": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 169250,
+        "tiles": 17,
+        "digest": "44ead32549ff850d167e0294709b2db1146c43f3d3b4e23fb1757f6a5a99f2fc"
+      }
+    },
+    "theramore-fall": {
+      "70": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 180290,
+        "tiles": 17,
+        "digest": "10afe956fd2079dff7e7418424cd740691ce60389997145d2d91b4be9382b4bc"
+      }
+    },
+    "krasarang-landfall": {
+      "418": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 167706,
+        "tiles": 17,
+        "digest": "1819ebed3ea7f62997946d472fce418cb04fda5bc7328e3d8bab453b06a8bfe5"
+      }
+    },
+    "iron-horde-incursion": {
+      "17": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 180484,
+        "tiles": 17,
+        "digest": "1de23795ba890defaefd82b3d2d3d952010e5c11d8da478fb9764c695008eaf3"
+      }
+    },
+    "arathi-warfront": {
+      "14": {
+        "width": 1002,
+        "height": 668,
+        "maxZoom": 2,
+        "bytes": 189882,
+        "tiles": 17,
+        "digest": "5afda91b33ad43c8a679667ed3a2391bafb151f7beece883234d4219a6fd5740"
+      }
+    }
+  },
+  "eraSources": {
+    "classic": {
+      "product": "wow_classic_era",
+      "build": "1.15.9.70576"
+    },
+    "burning-crusade": {
+      "product": "wow_anniversary",
+      "build": "2.5.6.70577"
+    },
+    "wrath-of-the-lich-king": {
+      "product": "wow_classic_titan",
+      "build": "3.80.2.70522"
+    },
+    "cataclysm-pandaria": {
+      "product": "wow_classic",
+      "build": "5.5.4.70631"
+    },
+    "warlords-legion": {
+      "product": "wow",
+      "build": "12.1.5.70783"
+    },
+    "battle-for-azeroth": {
+      "product": "wow",
+      "build": "12.1.5.70783"
+    },
+    "midnight": {
+      "product": "wow",
+      "build": "12.1.5.70783"
+    },
+    "theramore-fall": {
+      "product": "wow",
+      "build": "12.1.5.70783"
+    },
+    "krasarang-landfall": {
+      "product": "wow_classic",
+      "build": "5.5.4.70631"
+    },
+    "vale-corruption": {
+      "product": "wow_classic",
+      "build": "5.5.4.70631"
+    },
+    "iron-horde-incursion": {
+      "product": "wow",
+      "build": "12.1.5.70783"
+    },
+    "arathi-warfront": {
+      "product": "wow",
+      "build": "12.1.5.70783"
+    }
   }
 }
