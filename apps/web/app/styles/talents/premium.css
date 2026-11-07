@@ -39,7 +39,7 @@
 .talent-calculator .tc-panel {
   border-color: rgba(var(--tc-panel-hot),.5);
   outline-offset: -4px;
-  transition: border-color .22s ease,box-shadow .22s ease,outline-color .22s ease;
+  transition: border-color var(--atlas-duration) var(--atlas-ease),box-shadow var(--atlas-duration) var(--atlas-ease),outline-color var(--atlas-duration) var(--atlas-ease);
 }
 .talent-calculator .tc-panel::before { inset: 88px 5% 34px; }
 .talent-calculator .tc-hero-panel::before { inset-block-start: 110px; }

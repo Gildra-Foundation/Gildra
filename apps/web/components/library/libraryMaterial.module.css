@@ -64,7 +64,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .painted :global(.ui-button[data-variant]):hover { background: transparent; color: var(--atlas-text-strong); transform: translateY(-2px); }
-  .painted :global(.ui-button):hover::after { animation: libraryGlint 900ms var(--atlas-ease) both; }
+  .painted :global(.ui-button):hover::after { animation: libraryGlint var(--atlas-duration-enter) var(--atlas-ease) both; }
 }
 
 @keyframes libraryGlint { from { opacity: 0; transform: translateX(-12px); } 45% { opacity: .8; } to { opacity: 0; transform: translateX(12px); } }

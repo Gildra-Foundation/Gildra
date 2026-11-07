@@ -4,10 +4,10 @@
 .image { object-fit: cover; object-position: center 50%; }
 .veil { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb,var(--atlas-bg) 54%,transparent), color-mix(in srgb,var(--atlas-bg) 32%,transparent) 52%, color-mix(in srgb,var(--atlas-bg) 48%,transparent)), linear-gradient(180deg,color-mix(in srgb,var(--atlas-bg) 12%,transparent),color-mix(in srgb,var(--atlas-bg) 28%,transparent)); }
 .atmosphere { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.mist { position: absolute; inset: 8% -15% 20%; opacity: .24; background: radial-gradient(ellipse at 28% 50%, color-mix(in srgb,var(--atlas-dungeon-altar-accent) 28%,transparent),transparent 58%), radial-gradient(ellipse at 74% 40%,color-mix(in srgb,var(--atlas-dungeon-altar-accent-strong) 14%,transparent),transparent 45%); animation: sporeHaze 29s ease-in-out -7s infinite alternate; animation-play-state: paused; }
+.mist { position: absolute; inset: 8% -15% 20%; opacity: .24; background: radial-gradient(ellipse at 28% 50%, color-mix(in srgb,var(--atlas-dungeon-altar-accent) 28%,transparent),transparent 58%), radial-gradient(ellipse at 74% 40%,color-mix(in srgb,var(--atlas-dungeon-altar-accent-strong) 14%,transparent),transparent 45%); animation: sporeHaze 29s var(--atlas-ease-ambient) -7s infinite alternate; animation-play-state: paused; }
 .farMist { inset: 40% -10% -10%; opacity: .16; animation-duration: 37s; animation-delay: -19s; animation-direction: alternate-reverse; }
 .motes { position: absolute; inset: 0; }
-.motes i { position: absolute; left: var(--mote-x); top: var(--mote-y); width: 3px; height: 3px; border-radius: 50%; background: var(--atlas-dungeon-altar-accent-strong); box-shadow: 0 0 7px 1px color-mix(in srgb,var(--atlas-dungeon-altar-accent) 40%,transparent); opacity: 0; animation: sporeDrift var(--mote-duration) var(--mote-delay) ease-in-out infinite; animation-play-state: paused; }
+.motes i { position: absolute; left: var(--mote-x); top: var(--mote-y); width: 3px; height: 3px; border-radius: 50%; background: var(--atlas-dungeon-altar-accent-strong); box-shadow: 0 0 7px 1px color-mix(in srgb,var(--atlas-dungeon-altar-accent) 40%,transparent); opacity: 0; animation: sporeDrift var(--mote-duration) var(--mote-delay) var(--atlas-ease-ambient) infinite; animation-play-state: paused; }
 .motes i:nth-child(3n) { width: 2px; height: 2px; }
 .atmosphere[data-atmosphere-state="active"] :is(.mist,.motes i) { animation-play-state: running; }
 .atmosphere[data-atmosphere-state="static"] { visibility: hidden; }
