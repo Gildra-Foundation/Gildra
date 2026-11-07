@@ -1,0 +1,201 @@
+{
+  "maps": {
+    "12": {
+      "url": "/maps/terrain/12/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/12/index.json",
+      "tileSize": 256,
+      "width": 15872,
+      "height": 23552,
+      "maxZoom": 7,
+      "rect": [
+        0.275362,
+        0.001735,
+        0.72464,
+        1.001741
+      ]
+    },
+    "13": {
+      "url": "/maps/terrain/13/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/13/index.json",
+      "tileSize": 256,
+      "width": 21504,
+      "height": 27136,
+      "maxZoom": 7,
+      "rect": [
+        0.263041,
+        -0.015396,
+        0.801341,
+        1.003528
+      ]
+    },
+    "113": {
+      "url": "/maps/terrain/113/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/113/index.json",
+      "tileSize": 256,
+      "width": 18944,
+      "height": 12288,
+      "maxZoom": 7,
+      "rect": [
+        -0.019684,
+        -0.007464,
+        1.027756,
+        1.011611
+      ]
+    },
+    "424": {
+      "url": "/maps/terrain/424/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/424/index.json",
+      "tileSize": 256,
+      "width": 14848,
+      "height": 10240,
+      "maxZoom": 6,
+      "rect": [
+        0.014149,
+        -0.024573,
+        1.011015,
+        1.006666
+      ]
+    },
+    "619": {
+      "url": "/maps/terrain/619/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/619/index.json",
+      "tileSize": 256,
+      "width": 13824,
+      "height": 12288,
+      "maxZoom": 6,
+      "rect": [
+        0.100864,
+        -0.016286,
+        0.865269,
+        1.002918
+      ]
+    },
+    "875": {
+      "url": "/maps/terrain/875/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/875/index.json",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9216,
+      "maxZoom": 6,
+      "rect": [
+        0.014327,
+        -0.029492,
+        0.95077,
+        1.024005
+      ]
+    },
+    "876": {
+      "url": "/maps/terrain/876/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/876/index.json",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9216,
+      "maxZoom": 6,
+      "rect": [
+        0.044826,
+        -0.044826,
+        1.021459,
+        1.053887
+      ]
+    },
+    "1978": {
+      "url": "/maps/terrain/1978/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1978/index.json",
+      "tileSize": 256,
+      "width": 22016,
+      "height": 16896,
+      "maxZoom": 7,
+      "rect": [
+        0.000245,
+        -0.005765,
+        0.900474,
+        1.030545
+      ]
+    },
+    "2274": {
+      "url": "/maps/terrain/2274/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2274/index.json",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9216,
+      "maxZoom": 6,
+      "rect": [
+        0.099507,
+        0.312582,
+        0.699061,
+        0.987079
+      ]
+    },
+    "2537": {
+      "url": "/maps/terrain/13/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/13/index.json",
+      "tileSize": 256,
+      "width": 21504,
+      "height": 27136,
+      "maxZoom": 7,
+      "rect": [
+        -0.546976,
+        -0.031177,
+        0.904428,
+        2.715928
+      ]
+    }
+  },
+  "stats": {
+    "12": {
+      "mapId": 1,
+      "blocks": 984,
+      "tiles": 5292,
+      "bytes": 20924873
+    },
+    "13": {
+      "mapId": 0,
+      "blocks": 1159,
+      "tiles": 6241,
+      "bytes": 19299947
+    },
+    "113": {
+      "mapId": 571,
+      "blocks": 888,
+      "tiles": 4752,
+      "bytes": 16499723
+    },
+    "424": {
+      "mapId": 870,
+      "blocks": 566,
+      "tiles": 3029,
+      "bytes": 8750811
+    },
+    "619": {
+      "mapId": 1220,
+      "blocks": 648,
+      "tiles": 3467,
+      "bytes": 6975353
+    },
+    "875": {
+      "mapId": 1642,
+      "blocks": 420,
+      "tiles": 2252,
+      "bytes": 3584215
+    },
+    "876": {
+      "mapId": 1643,
+      "blocks": 432,
+      "tiles": 2312,
+      "bytes": 4511061
+    },
+    "1978": {
+      "mapId": 2444,
+      "blocks": 1419,
+      "tiles": 7612,
+      "bytes": 12084558
+    },
+    "2274": {
+      "mapId": 2601,
+      "blocks": 386,
+      "tiles": 2073,
+      "bytes": 5188259
+    }
+  },
+  "build": "12.1.5.70783"
+}
