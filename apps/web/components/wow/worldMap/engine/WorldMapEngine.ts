@@ -754,6 +754,8 @@ export class WorldMapEngine {
     if (focus && focus.id !== this.focusId) {
       this.focusId = focus.id;
       this.events.focus(this.chain(focus.id));
+      // The URL follows the map in view even when nothing moved (an era's picture came in).
+      this.scheduleSettle();
     }
     this.lastInfo = { camera: this.camera, width: this.width, height: this.height, focus, drawn, moving: this.moving, time };
     this.events.frame(this.lastInfo);
