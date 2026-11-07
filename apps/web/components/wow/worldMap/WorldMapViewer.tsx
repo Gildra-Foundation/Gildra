@@ -81,6 +81,14 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const titleBar = useRef<HTMLElement | null>(null);
   // The canvas shows once the first picture (the era of the link) is in place.
   const [started, setStarted] = useState(false);
+  // The first view is loaded: the overview inset (its own pictures) comes after, never competing with it.
+  const [resident, setResident] = useState(false);
+  useEffect(() => {
+    if (!started || resident) return;
+    // A view that keeps loading (a slow network) still gets its overview after a while.
+    const timer = window.setTimeout(() => setResident(true), 4000);
+    return () => window.clearTimeout(timer);
+  }, [started, resident]);
   // The page map of the current history entry; a Back/Forward restore must not add entries.
   const entry = useRef<{ mapId: number; depth: number } | null>(null);
   const restoring = useRef(false);
@@ -320,6 +328,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
         settle: (info) => settleRef.current(info),
         background: () => setSelected(null),
         set: (set) => setActiveSet(set),
+        resident: () => setResident(true),
       }, { alive: state.current.layers.alive, reducedMotion: lessMotion(), insets: insets() });
     } catch {
       setFailed(true);
@@ -689,7 +698,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const hoverName = hoverMap !== null && !hoverLabelled ? byId?.get(hoverMap)?.name ?? null : null;
   // The overview inset: the continent around a zone or city, the world around a continent.
   const overview = (() => {
-    if (!focus || !byId || narrow) return null;
+    if (!focus || !byId || narrow || !resident) return null;
     if (focus.type === "cosmic" || focus.type === "world") return null;
     let up = focus.parent === null ? undefined : byId.get(focus.parent);
     while (up && focus.type !== "continent" && up.type !== "continent" && up.type !== "world" && up.parent !== null) up = byId.get(up.parent);

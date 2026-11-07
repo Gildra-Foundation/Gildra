@@ -133,14 +133,21 @@ export class TileStore {
         if (!response.ok) throw new Error(String(response.status));
         return response.blob();
       })
-      // Decoded and premultiplied off the main thread: the upload is then a plain copy.
-      .then((blob) => createImageBitmap(blob, { premultiplyAlpha: "premultiply", colorSpaceConversion: "none" }))
+      // Decoded off the main thread (options here can send the browser down a slower decode path).
+      .then((blob) => createImageBitmap(blob))
       .then((bitmap) => {
         done();
         if (this.tiles.get(tile.key) !== tile) { bitmap.close?.(); return; }
-        tile.state = "decoded";
-        tile.bitmap = bitmap;
-        this.uploads.push(tile);
+        // At rest (loading a view) a decoded tile goes to the GPU at once; only while the view moves do uploads
+        // wait in a queue drained within a per-frame budget (a burst must not stall a moving frame).
+        if (!this.moving) {
+          this.upload(tile, bitmap);
+          bitmap.close?.();
+        } else {
+          tile.state = "decoded";
+          tile.bitmap = bitmap;
+          this.uploads.push(tile);
+        }
         this.onReady();
       })
       .catch(() => {
@@ -156,8 +163,7 @@ export class TileStore {
     const gl = this.gl;
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);

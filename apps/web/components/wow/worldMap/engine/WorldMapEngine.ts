@@ -50,6 +50,8 @@ export type EngineEvents = {
   /** The view settled (after a move): good moment to save it in the URL. */
   settle(info: FrameInfo): void;
   background(): void;
+  /** The first view is all on screen (every tile it needs is loaded): extras may start now. */
+  resident?(): void;
   /** The maps shown changed (an era's picture is in). */
   set?(set: MapSet): void;
 };
@@ -175,8 +177,12 @@ export class WorldMapEngine {
 
   setOptions(next: Partial<EngineOptions>) {
     const home = this.stillHome();
+    const was = this.options.insets;
     this.options = { ...this.options, ...next };
-    if (home !== null && next.insets) this.refitHome(home);
+    // Panels that changed size refit a map shown whole; the overview's corner only shapes the next fits
+    // (no jump of the view, no second set of tiles right after it loaded).
+    const sides = next.insets && (next.insets.top !== was.top || next.insets.right !== was.right || next.insets.bottom !== was.bottom || next.insets.left !== was.left);
+    if (home !== null && sides) this.refitHome(home);
     this.invalidate();
   }
 
@@ -552,6 +558,9 @@ export class WorldMapEngine {
     if (!this.visible || document.hidden) { this.lastFrame = now; return; }
     // The living layers alone run at ~30 fps; interaction at full rate.
     if (!animating && !this.dirty && this.alive && now - this.lastFrame < 31) { this.idleFrames += 1; this.raf = requestAnimationFrame((t) => this.tick(t)); return; }
+    // Still camera, tiles arriving: draw at ~15 fps, not on every tile — each frame would take the main thread
+    // from the loads themselves (slow devices load the first view faster this way).
+    if (!animating && this.tiles.pending > 0 && now - this.lastFrame < 66) { this.idleFrames += 1; this.raf = requestAnimationFrame((t) => this.tick(t)); return; }
     this.frameCount += 1;
     if (this.moving && this.lastFrame && now - this.lastFrame < 200) {
       this.intervals.push(now - this.lastFrame);
@@ -562,13 +571,14 @@ export class WorldMapEngine {
     const t0 = performance.now();
     // Decoded tiles go to the GPU within a budget per frame: a burst never stalls one frame.
     this.tiles.moving = this.moving;
-    this.tiles.flushUploads(this.moving ? 3 : 6);
+    this.tiles.flushUploads(this.moving ? 3 : Infinity);
     const z0 = this.lastScale;
-    this.zoomDir = this.camera.scale > z0 * 1.002 ? 1 : this.camera.scale < z0 * 0.998 ? -1 : 0;
+    this.zoomDir = z0 <= 0 ? 0 : this.camera.scale > z0 * 1.002 ? 1 : this.camera.scale < z0 * 0.998 ? -1 : 0;
     this.lastScale = this.camera.scale;
     this.render(now);
     this.measure(performance.now() - t0);
     this.dirty = false;
+    if (!this.residentOnce && this.tiles.loadedCount > 0 && this.tiles.pending === 0 && !this.pending) { this.residentOnce = true; this.events.resident?.(); }
     const keep = this.moving || this.alive || this.pending || this.tiles.pending > 0 || this.fading(now) || (this.fromSet && now - this.eraStart < FADE_ERA);
     if (keep) this.raf = requestAnimationFrame((t) => this.tick(t));
   }
@@ -583,9 +593,11 @@ export class WorldMapEngine {
   }
 
   private fadingUntil = 0;
+  private residentOnce = false;
   /** The camera's zoom direction this frame (1 in, -1 out, 0 still): the next level is asked for ahead of it. */
   private zoomDir = 0;
   private lastScale = 0;
+
   private fading(now: number) { return now < this.fadingUntil; }
 
   private step(now: number, dt: number) {
@@ -987,7 +999,9 @@ export class WorldMapEngine {
         const style: ArtStyle = {
           alpha, light: hovered ? 0.55 : -(entry.dim ?? 0), edge: entry.side ? 1.6 : 1,
           maskStrength: 1,
-          cloud: terrain ? cloud * (entry.map.depth <= 2 || entry.map.type === "continent" ? 1 : 0.6) : 0, water: terrain ? water : 0,
+          cloud: terrain ? cloud * (entry.map.depth <= 2 || entry.map.type === "continent" ? 1 : 0.6) : 0,
+          // No shimmer on a backdrop out of focus (nor its land mask to load): it would not show.
+          water: terrain && entry.blur < 0.3 ? water : 0,
           desat: 0, levelScale: scale,
           // Maps around the one in view: their corner ornaments go, and their painted words and decor
           // where the place in view lies give way (no second "STORMWIND" over the city).
