@@ -9,7 +9,9 @@ import type { MapArt } from "@/lib/wow/worldMap/types";
  */
 export type Tile = {
   key: string;
-  state: "queued" | "loading" | "ready" | "failed";
+  state: "queued" | "loading" | "decoded" | "ready" | "failed";
+  /** Decoded off the main thread, waiting for its turn to go to the GPU. */
+  bitmap?: ImageBitmap;
   texture: WebGLTexture | null;
   width: number;
   height: number;
@@ -31,16 +33,22 @@ export const levelTiles = (art: MapArt, z: number) => {
   return [Math.ceil(w / art.tileSize), Math.ceil(h / art.tileSize)] as const;
 };
 
-/** Frames without a request after which a running load is cancelled (~0.5 s at 60 fps). */
+/** Frames without a request after which a running load is cancelled (~0.5 s at 60 fps; ~0.15 s while the view moves fast). */
 const STALE_FRAMES = 30;
+const STALE_FRAMES_MOVING = 10;
 
 export class TileStore {
   private tiles = new Map<string, Tile>();
   private wanted: Tile[] = [];
+  private uploads: Tile[] = [];
   private active = 0;
   private frame = 0;
   bytes = 0;
   loadedCount = 0;
+  /** The view moves (pan, zoom, flight): loads the view has left are cancelled sooner. */
+  moving = false;
+  /** Upload timings (ms per frame that uploaded anything), for the probe. */
+  uploadTimes: number[] = [];
   onReady: () => void = () => {};
 
   /** `budget`: GPU bytes kept; `concurrency`: loads at a time. */
@@ -80,13 +88,39 @@ export class TileStore {
     // Reset priorities so stale wishes do not keep their place.
     for (const tile of queue) if (tile.state === "queued") tile.priority = Number.POSITIVE_INFINITY;
     // Loads for places the view has left: cancel them (they would only push wanted tiles back).
-    if (this.frame % 8 === 0) {
-      for (const tile of this.tiles.values()) if (tile.state === "loading" && tile.usedAt < this.frame - STALE_FRAMES) this.drop(tile);
+    const stale = this.moving ? STALE_FRAMES_MOVING : STALE_FRAMES;
+    if (this.frame % (this.moving ? 4 : 8) === 0) {
+      for (const tile of this.tiles.values()) if (tile.state === "loading" && tile.usedAt < this.frame - stale) this.drop(tile);
     }
     if (this.bytes > this.budget || this.tiles.size > this.maxEntries) this.evict();
   }
 
-  get pending() { return this.active; }
+  get pending() { return this.active + this.uploads.length; }
+
+  /**
+   * Upload decoded tiles to the GPU, the most wanted first, within a time budget per frame
+   * (a burst of tiles never stalls one frame); the rest wait for the next frames.
+   */
+  flushUploads(budgetMs: number) {
+    if (!this.uploads.length) return 0;
+    const t0 = performance.now();
+    this.uploads.sort((a, b) => a.priority - b.priority);
+    let done = 0;
+    while (this.uploads.length) {
+      const tile = this.uploads.shift() as Tile;
+      const bitmap = tile.bitmap;
+      tile.bitmap = undefined;
+      if (!bitmap || this.tiles.get(tile.key) !== tile) { bitmap?.close?.(); continue; }
+      this.upload(tile, bitmap);
+      bitmap.close?.();
+      done += 1;
+      if (performance.now() - t0 >= budgetMs) break;
+    }
+    const ms = performance.now() - t0;
+    this.uploadTimes.push(ms);
+    if (this.uploadTimes.length > 600) this.uploadTimes.splice(0, this.uploadTimes.length - 600);
+    return done;
+  }
 
   private load(tile: Tile) {
     tile.state = "loading";
@@ -99,12 +133,14 @@ export class TileStore {
         if (!response.ok) throw new Error(String(response.status));
         return response.blob();
       })
-      .then((blob) => createImageBitmap(blob))
+      // Decoded and premultiplied off the main thread: the upload is then a plain copy.
+      .then((blob) => createImageBitmap(blob, { premultiplyAlpha: "premultiply", colorSpaceConversion: "none" }))
       .then((bitmap) => {
         done();
         if (this.tiles.get(tile.key) !== tile) { bitmap.close?.(); return; }
-        this.upload(tile, bitmap);
-        bitmap.close?.();
+        tile.state = "decoded";
+        tile.bitmap = bitmap;
+        this.uploads.push(tile);
         this.onReady();
       })
       .catch(() => {
@@ -120,7 +156,8 @@ export class TileStore {
     const gl = this.gl;
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -137,7 +174,7 @@ export class TileStore {
 
   private evict() {
     const old = [...this.tiles.values()]
-      .filter((tile) => tile.usedAt < this.frame - 2 && tile.state !== "loading")
+      .filter((tile) => tile.usedAt < this.frame - 2 && tile.state !== "loading" && tile.state !== "decoded")
       .sort((a, b) => a.usedAt - b.usedAt);
     for (const tile of old) {
       if (this.bytes <= this.budget * 0.85 && this.tiles.size <= this.maxEntries * 0.85) break;
@@ -152,6 +189,7 @@ export class TileStore {
       this.loadedCount -= 1;
     }
     if (tile.abort) { const abort = tile.abort; tile.abort = undefined; this.active -= 1; abort.abort(); }
+    if (tile.bitmap) { tile.bitmap.close?.(); tile.bitmap = undefined; this.uploads = this.uploads.filter((t) => t !== tile); }
     this.tiles.delete(tile.key);
   }
 
