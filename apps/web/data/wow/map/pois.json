@@ -1,0 +1,11 @@
+[
+{"id":"taxi-536","mapId":1,"kind":"flight","name":{"en":"Sen'jin Village, Durotar","ru":"Деревня Сен'джин, Дуротар"},"x":0.553717,"y":0.734354,"faction":"horde"},
+{"id":"taxi-537","mapId":1,"kind":"flight","name":{"en":"Razor Hill, Durotar","ru":"Колючий Холм, Дуротар"},"x":0.530356,"y":0.436429,"faction":"horde"},
+{"id":"city-85","mapId":12,"kind":"capital","name":{"en":"Orgrimmar","ru":"Оргриммар"},"x":0.582684,"y":0.424012,"faction":"horde","targetMapId":85},
+{"id":"label-1","mapId":12,"kind":"zone-label","name":{"en":"Durotar","ru":"Дуротар"},"x":0.588939,"y":0.499869,"targetMapId":1},
+{"id":"instance-226-85","mapId":85,"kind":"dungeon","name":{"en":"Ragefire Chasm","ru":"Огненная Пропасть"},"x":0.529446,"y":0.576299,"journalInstanceId":226},
+{"id":"taxi-23","mapId":85,"kind":"flight","name":{"en":"Orgrimmar, Durotar","ru":"Оргриммар, Дуротар"},"x":0.492657,"y":0.593659,"faction":"horde"},
+{"id":"portal-5889","mapId":85,"kind":"portal","name":{"en":"Portal to Honeydew Village, Jade Forest","ru":"Портал в Деревню Медовой Росы (Нефритовый лес)"},"x":0.685733,"y":0.407014},
+{"id":"label-947","mapId":946,"kind":"zone-label","name":{"en":"Azeroth","ru":"Азерот"},"x":0.514,"y":0.4975,"targetMapId":947},
+{"id":"label-12","mapId":947,"kind":"zone-label","name":{"en":"Kalimdor","ru":"Калимдор"},"x":0.1775,"y":0.539735,"targetMapId":12}
+]
