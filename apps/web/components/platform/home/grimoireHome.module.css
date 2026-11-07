@@ -12,7 +12,8 @@
 .brand:hover .brandMark,.brand:focus-visible .brandMark{filter:drop-shadow(0 0 9px color-mix(in srgb,var(--accent) 40%,transparent));transform:translateY(-1px)}
 .headerRight{display:flex;align-items:center;gap:18px}
 .language{display:flex;align-items:center;gap:11px;font:11px "Gildra Atlas",Georgia,serif;color:var(--subtle)}.language a{min-height:44px;display:grid;place-items:center}.language a[aria-current]{color:var(--bright)}
-.hero{max-width:1380px;min-height:calc(100svh - 195px);margin:auto;padding:16px clamp(28px,6vw,96px) 36px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:clamp(35px,6vw,100px)}
+/* The first screen fits the viewport under the bar; a strip above the bar (the game versions) sets --wow-version-strip-height on :root and the hero and the book give that height back. */
+.hero{max-width:1380px;min-height:calc(100svh - 195px - var(--wow-version-strip-height,0px));margin:auto;padding:16px clamp(28px,6vw,96px) 36px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:clamp(35px,6vw,100px)}
 .copy{position:relative;z-index:2;padding-bottom:10px}.eyebrow{display:flex;align-items:center;gap:13px;margin:0 0 29px;color:var(--accent);font-size:9px;letter-spacing:.16em;line-height:1.6}.eyebrow>span{width:32px;height:1px;background:var(--metal);flex-shrink:0}
 .copy h1{margin:0;font:400 clamp(46px,4.8vw,76px)/1.12 "Gildra Kurale",Georgia,serif;letter-spacing:-.025em;color:var(--heading)}.copy h1 em{color:var(--accent);font-style:normal}
 /* Preciosa is shared by every hero's quote and signature. Split by script like the
@@ -40,7 +41,7 @@
 .openButton:active{transform:translateY(0);box-shadow:0 3px 12px #0003,inset 0 1px 0 #ffffff24}
 .bookScene{position:relative;display:grid;justify-items:center;min-width:0}.halo{position:absolute;pointer-events:none;inset:4% -14% 10%;border-radius:50%;background:radial-gradient(ellipse,#d9dce015,transparent 65%);filter:blur(24px)}
 /* A 2D tilt avoids the low-resolution compositing caused by rotateY. */
-.cover{position:relative;display:block;width:min(100%,440px,calc((100svh - 230px)*.667));min-width:260px;padding:0;border:0;background:none;transform:rotate(-3deg);transform-origin:50% 80%;transition:transform 550ms cubic-bezier(.2,.7,.25,1)}
+.cover{position:relative;display:block;width:min(100%,440px,calc((100svh - 230px - var(--wow-version-strip-height,0px))*.667));min-width:260px;padding:0;border:0;background:none;transform:rotate(-3deg);transform-origin:50% 80%;transition:transform 550ms cubic-bezier(.2,.7,.25,1)}
 .cover:hover{transform:rotate(-2deg) translateY(-3px);}
 /* Filter only the artwork; text retains its own sharp layer during the tilt. */
 .coverImage{width:100%;height:auto;display:block;filter:grayscale(1) drop-shadow(-14px 18px 16px #0008);transition:filter 550ms}
@@ -77,7 +78,7 @@
 .navHighlight{position:absolute;z-index:-1;left:0;top:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--accent) 18%,var(--bright) 50%,var(--accent) 82%,transparent);box-shadow:0 1px 6px color-mix(in srgb,var(--accent) 55%,transparent);transition:transform 320ms cubic-bezier(.2,.75,.2,1),width 320ms cubic-bezier(.2,.75,.2,1),opacity 180ms}
 .navHighlight::after{content:"";position:absolute;left:-4px;right:-4px;top:0;height:8px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 30%,transparent) 30%,color-mix(in srgb,var(--accent) 42%,transparent) 50%,color-mix(in srgb,var(--accent) 30%,transparent) 70%,transparent);filter:blur(5px)}
 @media(max-width:1100px){.header{grid-template-columns:1fr auto;gap:14px 24px}.headerNav{grid-column:1/-1;grid-row:2}.headerRight{grid-column:2;grid-row:1}.headerNav ul{column-gap:12px}}
-@media(min-width:1600px){.hero{gap:130px}.cover{width:min(470px,calc((100svh - 230px)*.667))}}
+@media(min-width:1600px){.hero{gap:130px}.cover{width:min(470px,calc((100svh - 230px - var(--wow-version-strip-height,0px))*.667))}}
 @media(max-width:1000px){.hero{gap:30px;padding-inline:40px}.copy h1{font-size:51px}.cover{min-width:240px}.coverSubtitle{font-size:24px}}
 @media(max-width:760px){.page{background-image:linear-gradient(180deg,rgba(var(--shade),.2),rgba(var(--shade),.12) 300px,var(--night) 660px),var(--home-art);background-position:center top,42% top;background-size:100% 100%,auto 680px}.header{padding:23px 24px 10px;row-gap:16px}.headerNav ul{gap:2px 4px}.headerNav a{padding:10px 9px;font-size:14px}.brand{gap:9px}.brandMark{width:42px;height:48px}.brandWordmark>span{font-size:25px}.brandWordmark small{font-size:6px}.hero{grid-template-columns:1fr;padding:28px 25px 30px;gap:34px;text-align:center}.eyebrow{justify-content:center;font-size:11px;margin-bottom:18px}.eyebrow>span{width:20px}.copy h1{font-size:clamp(40px,8vw,57px);line-height:1.08}.bookScene{grid-row:2;padding:0 0 8px}.copy{grid-row:1}.cover{width:min(70vw,280px);min-width:0}.coverTitle strong{font-size:30px}.coverTitle small{font-size:7px}.coverTitle i{margin-top:3px;width:56%}.coverSubtitle{font-size:22px}.coverSubtitle small{font-size:7px;margin-top:11px}.bookHint{margin-top:19px;font-size:12px}.footer{margin-inline:24px;padding:17px 0 22px;flex-wrap:wrap;justify-content:center;text-align:center;gap:6px 10px}}
 @media(max-width:1000px){.copy .quoteText{font-size:46px}.copy .longQuote{font-size:40px}}
