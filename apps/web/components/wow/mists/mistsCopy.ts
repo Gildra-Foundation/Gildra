@@ -1,0 +1,33 @@
+export const mistsCopy = {
+  en: {
+    title: "Mists of Pandaria Classic",
+    description: "Mists of Pandaria Classic classes and specializations with roles, and a talent calculator for every class.",
+    breadcrumbs: "Breadcrumbs",
+    talents: "Talents",
+    calculator: "Talent calculator",
+    classTalents: (name: string) => `${name} talents`,
+    roles: { tank: "Tank", healer: "Healer", damage: "Damage" },
+    specsOf: (name: string) => `${name} specializations`,
+    classes: "Classes",
+    spec: "Specialization",
+    level: "Level",
+    tiers: "Talent tiers",
+    reset: "Reset",
+  },
+  ru: {
+    title: "Mists of Pandaria Classic",
+    description: "Классы и специализации Mists of Pandaria Classic с ролями и калькулятор талантов для каждого класса.",
+    breadcrumbs: "Навигация",
+    talents: "Таланты",
+    calculator: "Калькулятор талантов",
+    classTalents: (name: string) => `Таланты: ${name}`,
+    roles: { tank: "Танк", healer: "Лекарь", damage: "Урон" },
+    specsOf: (name: string) => `Специализации: ${name}`,
+    classes: "Классы",
+    spec: "Специализация",
+    level: "Уровень",
+    tiers: "Ряды талантов",
+    reset: "Сбросить",
+  },
+} as const;
+export type MistsCopy = (typeof mistsCopy)["en" | "ru"];
