@@ -864,7 +864,8 @@ export class WorldMapEngine {
         continue;
       }
       const b = toAtlas(label.box);
-      if (contains(core, (b[0] + b[2]) / 2, (b[1] + b[3]) / 2) && b[2] - b[0] >= fw * 0.18) add(plaque);
+      const cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+      if ((contains(core, cx, cy) && b[2] - b[0] >= fw * 0.18) || (contains(f, cx, cy) && b[2] - b[0] >= fw * 0.3)) add(plaque);
     }
     for (const decor of decorBoxes(art)) {
       if (decor.for !== undefined && decor.for !== focus.id) continue;
