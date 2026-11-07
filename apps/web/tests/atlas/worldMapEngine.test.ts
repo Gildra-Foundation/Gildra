@@ -8,7 +8,6 @@ import { blurGroups, blurOf, desatOf, dimOf, featherOf, layerScale, levelFor, ma
 import { chainUp, composeSet, mapSet, transferCamera } from "@/components/wow/worldMap/engine/sets";
 import { wheelKind } from "@/components/wow/worldMap/engine/input";
 import { mapIdOfPath, patchPosition, positionToPatch, pushesHistory, queryToView, viewToQuery } from "@/components/wow/worldMap/worldMapModel";
-import { breadcrumbLd, headLinks } from "@/components/wow/worldMap/worldMapHead";
 
 const fixture = JSON.parse(readFileSync(fileURLToPath(new URL("../fixtures/world-map/engine.json", import.meta.url)), "utf8")) as { maps: MapRecord[]; pois: PoiRecord[]; eras: EraRecord[] };
 const bundle = buildAtlasBundle({ maps: fixture.maps, pois: fixture.pois, eras: fixture.eras, events: [] }, "en");
@@ -240,13 +239,5 @@ describe("world map URL state", () => {
     assert.equal(positionToPatch(4.1), "5.1.0");
     // Theramore: left just before the phase that starts at 5.1 stays before it.
     assert.ok(patchPosition(positionToPatch(4.1 - 0.011)) < 4.1);
-  });
-
-  it("describes the shown map in the head after a client-side move", () => {
-    assert.deepEqual(headLinks("/wow/map/85-orgrimmar"), { en: "https://gildra.net/wow/map/85-orgrimmar", ru: "https://gildra.net/ru/wow/map/85-orgrimmar", xDefault: "https://gildra.net/wow/map/85-orgrimmar" });
-    const ld = breadcrumbLd([{ label: "World of Warcraft", href: "/wow" }, { label: "Kalimdor", href: "/wow/map/12-kalimdor" }, { label: "Orgrimmar", href: "/wow/map/85-orgrimmar" }]);
-    assert.equal(ld.itemListElement.length, 3);
-    assert.equal((ld.itemListElement[1] as { item?: string }).item, "https://gildra.net/wow/map/12-kalimdor");
-    assert.equal((ld.itemListElement[2] as { item?: string }).item, undefined, "the last crumb is the page itself");
   });
 });

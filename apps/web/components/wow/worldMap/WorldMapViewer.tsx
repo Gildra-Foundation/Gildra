@@ -20,7 +20,6 @@ import { placeFacts } from "./ui/placeFacts";
 import type { StageCrumb, StageHandle } from "./WorldMapStage";
 import { worldMapCopy } from "./worldMapCopy";
 import { artErasAt, artKey, eraAt, mapIdOfPath, mapLine, orderedEras, patchPosition, positionToPatch, pushesHistory, queryToView, restOf, viewToQuery } from "./worldMapModel";
-import { syncHead } from "./worldMapHead";
 import styles from "./worldMapViewer.module.css";
 
 type Selected = { type: "poi"; poi: AtlasPoi } | { type: "event"; event: AtlasEvent } | null;
@@ -84,8 +83,6 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   // The page map of the current history entry; a Back/Forward restore must not add entries.
   const entry = useRef<{ mapId: number; depth: number } | null>(null);
   const restoring = useRef(false);
-  // The map the page head describes (the server's page first).
-  const headMap = useRef<number | null>(null);
 
   // ------------------------------------------------------------ data
   useEffect(() => {
@@ -209,7 +206,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const base = engine.fitMap(pathMap.id);
     if (!base) return;
     const params = new URLSearchParams();
-    const view = viewToQuery(info.camera, pathMap.frame, base.scale, base);
+    // Still where "show this map whole" left it (panels may have changed size since): no view in the URL.
+    const view = engine.atHome(pathMap.id) ? null : viewToQuery(info.camera, pathMap.frame, base.scale, base);
     if (view) {
       params.set("x", view.x.toFixed(4));
       params.set("y", view.y.toFixed(4));
@@ -223,23 +221,6 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const qs = params.toString();
     const url = `${prefix}${path}${qs ? `?${qs}` : ""}`;
     const next = { mapId: pathMap.id, depth: pathMap.depth };
-    if (headMap.current !== pathMap.id) {
-      // Another map's page now: the head follows (title, description, canonical, breadcrumbs).
-      const known = headMap.current !== null;
-      headMap.current = pathMap.id;
-      if (known && bundle) {
-        const page = baseSet?.maps.get(pathMap.id) ?? pathMap;
-        const isHome = page.id === homeId;
-        const chain: AtlasMap[] = [];
-        for (let m: AtlasMap | undefined = page; m && chain.length < 32; m = m.parent === null ? undefined : baseSet?.maps.get(m.parent)) chain.unshift(m);
-        syncHead({
-          lang, path,
-          title: isHome ? copy.rootTitle : copy.pageTitle(page.name),
-          description: isHome ? copy.rootDescription : mapLine(lang, page, bundle) || copy.rootDescription,
-          crumbs: [{ label: "World of Warcraft", href: `${prefix}/wow` }, ...chain.map((m) => ({ label: m.id === homeId ? copy.title : m.name, href: m.id === homeId ? `${prefix}/wow/map` : m.page ? `${prefix}${mapPagePath(m)}` : undefined }))],
-        });
-      }
-    }
     // Flying into a place (or a level up or down) is a step Back can return from; panning only rewrites the entry.
     const push = !restoring.current && pushesHistory(entry.current, next, engine.takeFlown());
     restoring.current = false;
@@ -295,9 +276,9 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     if (map) {
       const fit = engine.fitMap(map.id) ?? engine.fit(map.frame);
       const view = q.x !== null && q.y !== null && q.z !== null ? queryToView({ x: q.x, y: q.y, z: q.z }, map.frame, fit.scale) : null;
-      engine.jumpTo(view ?? fit);
+      if (view) engine.jumpTo(view);
+      else { engine.jumpToMap(map.id); startWhole.current = true; }
       entry.current = { mapId: map.id, depth: map.depth };
-      headMap.current = map.id;
     }
     const event = q.event ? bundle.events.find((e) => e.id === q.event) : undefined;
     if (event) {
@@ -369,6 +350,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const firstSet = useRef(true);
   const startedRef = useRef(false);
   const startEvent = useRef<AtlasEvent | null>(null);
+  // The link shows its map whole: in the era's hierarchy the map may sit elsewhere, so fit it again there.
+  const startWhole = useRef(false);
   const startCompare = useRef(false);
   useEffect(() => {
     const engine = engineRef.current;
@@ -378,6 +361,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const first = firstSet.current;
     engine.setMapSet(set, { animate: !first, anchor: first ? mapId ?? homeId : engine.focus?.id ?? null });
     firstSet.current = false;
+    const start = mapId ?? homeId;
+    if (first && startWhole.current && start !== null) engine.jumpToMap(start);
     if (first) {
       setActiveSet(set);
       startedRef.current = true;
@@ -417,7 +402,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       const q = readQuery();
       const ordered = orderedEras(bundle.eras);
       const target = q.era ? ordered.find((e) => e.id === q.era) : undefined;
-      setPosition(target ? restOf(ordered, target) : null);
+      setPosition(q.at !== null ? q.at : target ? restOf(ordered, target) : null);
       const id = mapIdOfPath(window.location.pathname, homeId);
       const map = id === null ? undefined : engine.maps.get(id);
       if (!map) return;
@@ -425,7 +410,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       const view = q.x !== null && q.y !== null && q.z !== null ? queryToView({ x: q.x, y: q.y, z: q.z }, map.frame, fit.scale) : null;
       restoring.current = true;
       entry.current = { mapId: map.id, depth: map.depth };
-      engine.flyTo(view ?? fit);
+      if (view) engine.flyTo(view);
+      else engine.flyToMap(map.id);
     };
     window.addEventListener("popstate", pop);
     return () => window.removeEventListener("popstate", pop);

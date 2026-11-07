@@ -187,6 +187,9 @@ export class WorldMapEngine {
     const focus = chainUp(from, this.focusId), anchored = anchor !== null ? chainUp(next, anchor) : [];
     const chain = anchorFirst ? [...anchored, ...focus] : [...focus, ...anchored];
     const moved = transferCamera(this.camera, from, next, chain);
+    // A flight under way goes on to the same place in the new maps.
+    const flight = this.flight;
+    const flightTarget = flight ? transferCamera(flight.path.at(1), from, next, chain) : null;
     this.flight = null;
     this.set = next;
     if (moved) this.camera = this.limit(moved);
@@ -200,6 +203,10 @@ export class WorldMapEngine {
         if (d < best) { best = d; top = map; }
       }
       if (top) this.camera = this.limit(this.fit(next.shown.get(top.id) ?? top.frame));
+    }
+    if (flight && flightTarget) {
+      const left = Math.max(200, flight.duration - (performance.now() - flight.start));
+      this.flight = { path: flightPath(this.camera, this.limit(flightTarget), this.width, this.height), start: performance.now(), duration: left, after: flight.after };
     }
     // The anchor is the focus until the next frame finds it again.
     if (!next.maps.has(this.focusId)) this.focusId = chain.find((id) => next.maps.has(id)) ?? -1;
@@ -233,7 +240,7 @@ export class WorldMapEngine {
     let camera = fitBox(box, freeW, freeH, margin);
     // A wide map on a tall phone screen: come closer than "whole" so it fills more of the screen (pan sideways).
     const boxAspect = (box[2] - box[0]) / (box[3] - box[1]);
-    if (freeW / freeH < 0.85 && boxAspect > 1.1) camera = { ...camera, scale: Math.min(camera.scale * 1.9, (freeH * (1 - margin * 2)) / (box[3] - box[1])) };
+    if (freeW / freeH < 1.05 && boxAspect > 1.1) camera = { ...camera, scale: Math.min(camera.scale * 1.9, (freeH * (1 - margin * 2)) / (box[3] - box[1])) };
     return { scale: camera.scale, x: camera.x - (left - right) / 2 / camera.scale, y: camera.y - (top - bottom) / 2 / camera.scale };
   }
 
@@ -282,7 +289,29 @@ export class WorldMapEngine {
 
   flyToMap(id: number, after?: () => void) {
     const camera = this.fitMap(id);
-    if (camera) this.flyTo(camera, after);
+    if (!camera) return;
+    this.flyTo(camera, after);
+    this.home = { id, camera: this.limit(camera) };
+  }
+
+  /** Show a map whole at once (a page opening). */
+  jumpToMap(id: number) {
+    const camera = this.fitMap(id);
+    if (!camera) return;
+    this.jumpTo(camera);
+    this.home = { id, camera: this.camera };
+  }
+
+  /**
+   * The last "show this map whole" view: the camera is still there (the reader
+   * did not move since), even if the panels around changed size afterwards.
+   */
+  private home: { id: number; camera: Camera } | null = null;
+  atHome(id: number) {
+    const h = this.home;
+    if (!h || h.id !== id) return false;
+    const c = this.camera;
+    return Math.abs(c.scale / h.camera.scale - 1) < 0.01 && Math.abs(c.x - h.camera.x) * c.scale < 2 && Math.abs(c.y - h.camera.y) * c.scale < 2;
   }
 
   /** Centre a point of a map with the map shown at least whole. */

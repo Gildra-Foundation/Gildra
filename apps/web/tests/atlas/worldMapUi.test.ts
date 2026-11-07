@@ -27,7 +27,7 @@ function frame(maps: AtlasMap[]): { info: FrameInfo; project: (x: number, y: num
     project,
     info: {
       camera: { x: 0.5, y: 1 / 3, scale: 1500 }, width: 1500, height: 1000, focus: maps[0], moving: false, time: 0,
-      drawn: maps.map((m) => ({ map: m, alpha: 1, screen: [m.frame[0] * 1500, m.frame[1] * 1500, m.frame[2] * 1500, m.frame[3] * 1500], clip: m.frame })),
+      drawn: maps.map((m) => ({ map: m, alpha: 1, screen: [m.frame[0] * 1500, m.frame[1] * 1500, m.frame[2] * 1500, m.frame[3] * 1500], clip: m.frame, upscale: 1, blur: 0 })),
     },
   };
 }
