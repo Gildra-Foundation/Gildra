@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Development-only stand-in art for the world map viewer: procedural terrain
 // tiles for the maps of tests/fixtures/world-map/maps.json (and the era
-// overrides of eras.json), written to apps/web/public/maps/fixture-tiles/.
+// overrides of eras.json), their masks and the deep-zoom terrain, written to
+// apps/web/public/maps/fixture-tiles/.
 // Never committed: the real game art comes from the map data pipeline.
 // Run from the repo root: node apps/web/tests/fixtures/world-map/make-fixture-tiles.mjs
 import fs from "node:fs";
@@ -98,12 +99,58 @@ async function pyramid(map, art, variant) {
   }
 }
 
-for (const map of maps) await pyramid(map, map.art, "retail");
+// soft elliptical mask of a map's own area (single channel, white = the map)
+async function mask(url, art) {
+  if (!url) return;
+  const w = Math.min(512, art.width), h = Math.round((w * art.height) / art.width);
+  const px = Buffer.alloc(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const d = Math.hypot((x / w - 0.5) / 0.42, (y / h - 0.5) / 0.4) + (fbm(x / 40, y / 40, 9) - 0.5) * 0.3;
+    px[y * w + x] = Math.round(255 * Math.max(0, Math.min(1, (1 - d) / 0.12)));
+  }
+  const file = path.join(out, url.replace(/^\//, ""));
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  await sharp(px, { raw: { width: w, height: h, channels: 1 } }).webp({ quality: 70 }).toFile(file);
+}
+
+// deep-zoom terrain: one 256 px tile per block, open sea (no tile) at the edges
+async function terrainPyramid(map) {
+  const t = map.terrain;
+  if (!t) return;
+  const index = {};
+  for (let z = 0; z <= t.maxZoom; z++) {
+    const scale = 2 ** (t.maxZoom - z);
+    const cols = Math.ceil(t.width / scale / t.tileSize), rows = Math.ceil(t.height / scale / t.tileSize);
+    index[z] = [];
+    for (let ty = 0; ty < rows; ty++) for (let tx = 0; tx < cols; tx++) {
+      if (z === t.maxZoom && Math.hypot((tx + 0.5) / cols - 0.5, (ty + 0.5) / rows - 0.5) > 0.5) continue;
+      const px = Buffer.alloc(t.tileSize * t.tileSize * 3);
+      for (let y = 0; y < t.tileSize; y++) for (let x = 0; x < t.tileSize; x++) {
+        const h = fbm((tx * t.tileSize + x) * scale / 300, (ty * t.tileSize + y) * scale / 300, map.id);
+        px.set(mix([60, 90, 50], [150, 140, 100], h).map(Math.round), (y * t.tileSize + x) * 3);
+      }
+      const file = path.join(out, t.url.replace(/^\//, "").replace("{z}", z).replace("{x}", tx).replace("{y}", ty));
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      await sharp(px, { raw: { width: t.tileSize, height: t.tileSize, channels: 3 } }).webp({ quality: 70 }).toFile(file);
+      index[z].push(`${tx}_${ty}`);
+    }
+  }
+  if (t.index) fs.writeFileSync(path.join(out, t.index.replace(/^\//, "")), JSON.stringify(index));
+}
+
+for (const map of maps) {
+  await pyramid(map, map.art, "retail");
+  await mask(map.mask, map.art);
+  await terrainPyramid(map);
+}
 for (const era of eras) {
-  for (const [id, art] of Object.entries(era.maps)) {
-    if (!art || typeof art !== "object") continue;
+  for (const [id, value] of Object.entries(era.maps)) {
+    if (!value || typeof value !== "object" || value.absent) continue;
+    const art = "url" in value ? value : value.art;
+    if (!art) continue;
     const map = maps.find((m) => m.id === Number(id));
     await pyramid(map, art, era.id === "classic" ? "classic" : "cata");
+    if (value.mask) await mask(value.mask, art);
   }
 }
 console.log("fixture tiles written under", path.join(out, "maps/fixture-tiles"));

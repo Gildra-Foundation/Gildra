@@ -1,18 +1,5 @@
 [
-  { "id": "classic", "name": { "en": "Classic", "ru": "Классика" }, "expansion": "classic", "patchRange": ["1.0.0", "3.3.5"], "source": { "product": "wow_classic_era", "build": "1.15.8" },
-    "maps": {
-      "12": { "width": 2048, "height": 1365, "tileSize": 256, "maxZoom": 3, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp" },
-      "1": { "width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp" },
-      "85": { "width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp" },
-      "57": { "width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp" },
-      "70": { "width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp" },
-      "424": null,
-      "13": "unchanged"
-    } },
-  { "id": "cataclysm", "name": { "en": "Cataclysm", "ru": "Катаклизм" }, "expansion": "cataclysm", "patchRange": ["4.0.3", "5.4.8"], "source": { "product": "wow_classic", "build": "5.5.1" },
-    "maps": {
-      "85": { "width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-cata/{id}/{z}/{x}_{y}.webp" },
-      "57": { "width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp" }
-    } },
-  { "id": "retail", "name": { "en": "Today", "ru": "Сегодня" }, "expansion": "midnight", "patchRange": ["8.0.1", "12.0.0"], "source": { "product": "wow", "build": "12.0.0" }, "maps": {} }
+  {"id": "classic", "name": {"en": "Classic", "ru": "Классика"}, "expansion": "classic", "patchRange": ["1.0.0", "3.3.5"], "source": {"product": "wow_classic_era", "build": "1.15.8"}, "maps": {"12": {"width": 2048, "height": 1365, "tileSize": 256, "maxZoom": 3, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp"}, "1": {"width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp"}, "85": {"art": {"width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp"}, "rectInParent": [0.5, 0.3, 0.62, 0.42], "parentId": 1, "children": [], "mask": "/maps/fixture-tiles/masks/era-classic-85.webp"}, "57": {"width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp"}, "70": {"width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp"}, "424": {"absent": true, "art": null}, "13": "unchanged", "113": {"absent": true, "art": null}}},
+  {"id": "cataclysm", "name": {"en": "Cataclysm", "ru": "Катаклизм"}, "expansion": "cataclysm", "patchRange": ["4.0.3", "5.4.8"], "source": {"product": "wow_classic", "build": "5.5.1"}, "maps": {"85": {"width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-cata/{id}/{z}/{x}_{y}.webp"}, "57": {"width": 1024, "height": 683, "tileSize": 256, "maxZoom": 2, "url": "/maps/fixture-tiles/era-classic/{id}/{z}/{x}_{y}.webp"}}},
+  {"id": "retail", "name": {"en": "Today", "ru": "Сегодня"}, "expansion": "midnight", "patchRange": ["8.0.1", "12.0.0"], "source": {"product": "wow", "build": "12.0.0"}, "maps": {}}
 ]

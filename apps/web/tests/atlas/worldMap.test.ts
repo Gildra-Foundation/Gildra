@@ -5,12 +5,14 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 type Art = { width: number; height: number; tileSize: number; maxZoom: number; url: string };
+type Terrain = { url: string; index?: string; tileSize: number; width: number; height: number; maxZoom: number; rect: [number, number, number, number] };
 type MapNode = {
   id: number; slug: string; name: { en: string; ru: string }; type: string; parentId: number | null;
   children: number[]; rectInParent: [number, number, number, number] | null; art: Art | null; href?: string;
+  mask?: string; terrain?: Terrain;
 };
 type Poi = { id: string; mapId: number | string; kind: string; name: { en: string; ru: string }; x: number; y: number; faction?: string; href?: string; targetMapId?: number | string };
-type Override = Partial<MapNode> & { art?: Art | null; id?: number | string };
+type Override = Partial<MapNode> & { art?: Art | null; id?: number | string; absent?: boolean; mask?: string };
 type Era = {
   id: string; name: { en: string; ru: string }; expansion: string; patchRange: [string, string];
   source: { product: string; build: string }; rootMapId: number | string; inherits?: string;
@@ -145,6 +147,34 @@ describe("world map art", () => {
     for (const id of [COSMIC, 947, 12, 13, 1, 85, 84, 2339]) assert.ok(byId.get(id)?.art, `${id} has art`);
   });
 
+  it("cuts children out of their parents with masks of the right shape", () => {
+    const masked = maps.filter((m) => m.mask);
+    assert.ok(masked.length > 300, `masked maps: ${masked.length}`);
+    for (const m of masked) {
+      assert.ok(m.art && m.rectInParent, `${m.id} mask without art or place`);
+      assert.match(m.mask!, /^\/maps\/masks\/[a-z0-9/-]+\.webp$/, `${m.id} mask url`);
+      assert.ok(existsSync(join(web, "public", m.mask!)), `${m.id} mask file`);
+    }
+    for (const id of [1, 10, 12, 13, 85, 84]) assert.ok(byId.get(id)?.mask, `map ${id} has a mask`);
+  });
+
+  it("gives the main continents a deep-zoom terrain", () => {
+    const withTerrain = maps.filter((m) => m.terrain);
+    for (const m of withTerrain) {
+      const t = m.terrain!;
+      assert.equal(m.type === "continent" || m.type === "zone", true, `${m.id} terrain on ${m.type}`);
+      assert.equal(t.tileSize, 256);
+      assert.equal(t.maxZoom, Math.max(0, Math.ceil(Math.log2(Math.max(t.width, t.height) / 256))), `${m.id} terrain maxZoom`);
+      assert.match(t.url, /^\/maps\/terrain\/\d+\/\{z\}\/\{x\}_\{y\}\.webp$/);
+      assert.ok(t.rect[2] > t.rect[0] && t.rect[3] > t.rect[1], `${m.id} terrain rect`);
+      assert.ok(existsSync(join(web, "public", t.url.replace(/\{z\}\/\{x\}_\{y\}\.webp$/, "0/0_0.webp"))), `${m.id} terrain top tile`);
+    }
+  });
+
+  it("keeps all map files within the size budget", () => {
+    assert.ok(dirBytes(join(web, "public/maps")) <= 650e6, `public/maps ${dirBytes(join(web, "public/maps")) / 1e6} MB`);
+  });
+
   it("stays within the tile budget", () => {
     const tiles = join(web, "public/maps/tiles");
     const total = dirBytes(tiles);
@@ -200,7 +230,7 @@ describe("world map eras", () => {
       assert.ok(era.name.en && era.name.ru, `${era.id} names`);
       if (era.inherits) assert.ok(eraIds.has(era.inherits), `${era.id} inherits`);
     }
-    const expectations: Record<string, string> = { classic: "1.", "burning-crusade": "2.", "wrath-of-the-lich-king": "3.", "cataclysm-pandaria": "5.", midnight: "12." };
+    const expectations: Record<string, string> = { classic: "1.", "burning-crusade": "2.", "wrath-of-the-lich-king": "3.", cataclysm: "5.", "cataclysm-pandaria": "5.", legion: "5.", "battle-for-azeroth": "12.", midnight: "12." };
     for (const [id, major] of Object.entries(expectations)) assert.ok(eraIds.get(id)?.source.build.startsWith(major), `${id} build`);
   });
 
@@ -219,12 +249,40 @@ describe("world map eras", () => {
           assert.ok(byId.has(Number(key)), `${era.id} ${key} unchanged exists`);
           continue;
         }
+        if (value.absent) {
+          assert.ok(byId.has(Number(key)) && value.art === null, `${era.id} ${key} absent is a current map without art`);
+          continue;
+        }
+        if (value.mask) assert.ok(existsSync(join(web, "public", value.mask)), `${era.id} ${key} mask file`);
         if (!byId.has(Number(key))) {
           assert.ok(value.type && value.name?.en && value.name?.ru && value.slug, `${era.id} era-only ${key}`);
         }
         if (value.art) assertArt(value.art, `${era.id} ${key}`);
         if (value.rectInParent) assert.equal(value.rectInParent.length, 4);
       }
+    }
+  });
+
+  const absent = (era: Era, key: string) => {
+    const value = era.maps[key];
+    return value === undefined ? !era.inherits : value !== "unchanged" && value.absent === true;
+  };
+
+  it("show no map before its time", () => {
+    const first: Record<string, string> = {
+      "101": "burning-crusade", "113": "wrath-of-the-lich-king", "948": "cataclysm", "424": "cataclysm-pandaria", "572": "warlords-of-draenor",
+      "619": "legion", "875": "battle-for-azeroth", "876": "battle-for-azeroth", "1550": "shadowlands", "1978": "dragonflight", "2274": "the-war-within", "2537": "midnight",
+    };
+    const main = eras.filter((e) => !e.inherits).map((e) => e.id);
+    for (const [key, from] of Object.entries(first)) {
+      for (const id of main) {
+        const era = eraIds.get(id)!;
+        assert.equal(absent(era, key), main.indexOf(id) < main.indexOf(from), `${id}: map ${key} (from ${from})`);
+      }
+    }
+    // the Azeroth picture of today paints Dragon Isles and Khaz Algar: older pictures until then
+    for (const id of ["cataclysm", "legion", "battle-for-azeroth", "dragonflight"]) {
+      assert.notEqual(resolveArt(eraIds.get(id)!, "947")?.url, byId.get(947)?.art?.url, `${id} Azeroth picture`);
     }
   });
 
@@ -235,8 +293,8 @@ describe("world map eras", () => {
       const value = classic.maps[id];
       assert.ok(value && value !== "unchanged" && value.art, `classic ${id} has its own art`);
     }
-    assert.equal(classic.maps["424"], undefined, "no Pandaria in 1.x");
-    assert.equal(classic.maps["113"], undefined, "no Northrend in 1.x");
+    assert.ok(absent(classic, "424"), "no Pandaria in 1.x");
+    assert.ok(absent(classic, "113"), "no Northrend in 1.x");
     assert.ok(eraIds.get("burning-crusade")!.maps["101"], "Outland in 2.x");
     assert.ok(eraIds.get("wrath-of-the-lich-king")!.maps["113"], "Northrend in 3.x");
     assert.ok(cata.maps["424"], "Pandaria in 5.x");
@@ -244,9 +302,9 @@ describe("world map eras", () => {
     // the Vale of Eternal Blossoms before and after its corruption
     assert.notEqual(resolveArt(cata, "390")?.url, resolveArt(eraIds.get("vale-corruption")!, "390")?.url);
     // phased art of the retail client
-    assert.notEqual(resolveArt(eraIds.get("warlords-legion")!, "81")?.url, resolveArt(eraIds.get("battle-for-azeroth")!, "81")?.url, "Silithus wound");
+    assert.notEqual(resolveArt(eraIds.get("legion")!, "81")?.url, resolveArt(eraIds.get("battle-for-azeroth")!, "81")?.url, "Silithus wound");
     assert.notEqual(resolveArt(cata, "70")?.url, resolveArt(eraIds.get("theramore-fall")!, "70")?.url, "Theramore");
-    assert.equal(eraIds.get("battle-for-azeroth")!.maps["2537"], undefined, "Quel'Thalas rebuilt only in Midnight");
+    assert.ok(absent(eraIds.get("battle-for-azeroth")!, "2537"), "Quel'Thalas rebuilt only in Midnight");
     assert.ok(eraIds.get("midnight")!.maps["2537"]);
   });
 
@@ -254,7 +312,7 @@ describe("world map eras", () => {
     for (const era of eras.filter((e) => e.pois)) {
       assert.ok(era.pois!.length > 20, `${era.id} points`);
       for (const p of era.pois!) {
-        assert.ok(era.maps[String(p.mapId)] !== undefined, `${era.id} ${p.id} on listed map`);
+        assert.ok(era.maps[String(p.mapId)] !== undefined && !absent(era, String(p.mapId)), `${era.id} ${p.id} on listed map`);
         assert.ok(p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1, `${era.id} ${p.id}`);
         assert.ok(KINDS.has(p.kind));
       }
