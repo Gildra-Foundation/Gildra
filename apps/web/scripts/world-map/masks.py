@@ -184,14 +184,23 @@ def footprint(spec, rect, area_ids, neighbours) -> Image.Image | None:
     if not wanted or not rect:
         return None
     size = mask_size(spec.width, spec.height)
-    parts = []
+    parts, clipped = [], False
     for other_rect, pieces in neighbours:
         for areas, piece in pieces:
             if wanted & set(areas):
-                parts.append(binary(carry(piece, other_rect, rect, size)))
+                part = binary(carry(piece, other_rect, rect, size))
+                parts.append(part)
+                # the other map's picture ends inside this one: the overlay is cut at that edge
+                inside = binary(carry(Image.new("L", piece.size, 255), other_rect, rect, size))
+                core = inside.filter(ImageFilter.MinFilter(_odd(FEATHER)))
+                if coverage(inside) < 0.98 and ImageChops.subtract(part, core).getbbox():
+                    clipped = True
     shape = union(parts)
     if shape is None or coverage(shape) < 0.02:
         return None
+    if clipped:
+        # keep the city whole where the neighbour's picture stops: add the soft-edged rect
+        return ImageChops.lighter(finish(shape, close=FEATHER), rounded_rect(size))
     return finish(shape, close=FEATHER)
 
 

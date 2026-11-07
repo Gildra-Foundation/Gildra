@@ -30,7 +30,9 @@ shows.
    Darnassus, Silvermoon, the Exodar…): the overlay of the same area
    (`WorldMapOverlay.AreaID` = the city's AreaID) on the parent or a sibling
    zone (the "Orgrimmar" overlay of Durotar), carried into the city's space
-   through both rects.
+   through both rects. When that picture ends inside the city (vanilla
+   Durotar stops at Orgrimmar's gate, so its overlay is cut there), the
+   soft-edged rect of 4 is added so the city stays whole.
 4. **edge** — maps with nothing of the above (caves, scenario and phased
    maps): a rounded rect with a soft 6 % edge, so the rectangle never shows.
 

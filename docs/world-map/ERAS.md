@@ -60,6 +60,10 @@ When an era shows a picture of another client (Azeroth 3.80 in Cataclysm,
 Azeroth 5.5 in BfA–Dragonflight, Cosmic 5.5 in BfA), its children are re-placed:
 
 1. **source** — the same child picture exists in that client: its rect there;
+1. **via** — that client has another picture of the same continent (same
+   MapID): its rect there, carried through both pictures' world boxes (so the
+   retail 3840 px Eastern Kingdoms lands exactly on the Eastern Kingdoms painted
+   on the 5.5 Azeroth);
 2. **world** — the child's world box (primary UiMapAssignment) mapped through
    that client's assignment rows of the parent for the same MapID (exact:
    continents are placed linearly by world coordinates);
@@ -90,3 +94,23 @@ Stormwind, Ironforge) on the land of their zone's mask and their flight master
 inside the city rect; (d) masks exist with the art's aspect. Composites of
 each era's root, Azeroth, Kalimdor and the Eastern Kingdoms are rendered for a
 visual check.
+
+## Russian pictures and painted words
+
+The ruRU client paints place names in Russian: CASC root entries with the ruRU
+locale flag (0x2000) and their own content key replace the enUS file. Every
+picture with such files gets `art.urlRu` (`/maps/tiles/ru/<owner>/…`,
+`/maps/tiles/era/<era>/ru/<key>/…`), rendered from the ruRU files; tiles equal
+to the enUS ones are hard links. `annotate.py` compares both pictures: their
+differences are the painted words → `art.paintedLabels` (boxes, 0..1) and
+`art.namesPainted`. It also adds `expansion` (Map.ExpansionID of the primary
+MapID) to every zone and continent. Level ranges are not emitted: retail
+ContentTuning keeps scaled levels whose real range depends on the server's
+expansion offsets.
+
+## Pipeline order
+
+`build_world_map.py` (tiles, masks, ruRU, terrain merge) → `terrain.py` (when
+continents change; then build_world_map again or `--skip-tiles --skip-masks
+--skip-ru`) → `eras.py` (`--resume` reuses cached client trees) → `annotate.py`
+→ `validate_eras.py`.

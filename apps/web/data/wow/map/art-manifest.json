@@ -25,7 +25,7 @@
       "digest": "bde8afa3602b196290001665e8fdc6ae6a0294cc2bda6996ece153b0657d25f0",
       "mask": {
         "method": "footprint",
-        "bytes": 776
+        "bytes": 1024
       },
       "ru": {
         "bytes": 134978,
@@ -1525,7 +1525,7 @@
       "digest": "b8a700dd7b63f66b7d868b15fd20eccce0a4a03480dcbebe55fc463a2afea258",
       "mask": {
         "method": "footprint",
-        "bytes": 1278
+        "bytes": 1226
       },
       "ru": {
         "bytes": 181702,
@@ -9064,7 +9064,7 @@
         "digest": "d88f553afbb1f20b7ee814e45f4f28a49e90fc0db3e1795a926f05e38f4ace92",
         "mask": {
           "method": "footprint",
-          "bytes": 824
+          "bytes": 1058
         },
         "ru": 166012
       },
@@ -9690,7 +9690,7 @@
         "digest": "ef66786f40f9dafd72590bc0bc63d0cc30831897f03337c3997f1ca5c0611288",
         "mask": {
           "method": "footprint",
-          "bytes": 1278
+          "bytes": 1226
         },
         "ru": 169526
       },
@@ -9703,7 +9703,7 @@
         "digest": "4f47e201b032fc62caaa2cae99d2a6097c3daa061be259bcc681a5d03a4bf446",
         "mask": {
           "method": "footprint",
-          "bytes": 792
+          "bytes": 1038
         },
         "ru": 134346
       },
