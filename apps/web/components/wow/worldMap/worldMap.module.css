@@ -15,7 +15,12 @@
 
 /* ---------- Stage ---------- */
 .stage {
-  --map-dock: 118px;
+  /* The title column on the left, the tools on the right, the dock at the bottom: the map fits between them. */
+  --map-side: min(340px, 30vw);
+  --map-tools: 56px;
+  --map-dock: 96px;
+  /* The cookie notice writes its height on the stage (the property does not inherit): pass it down. */
+  --map-cookie: var(--cookie-notice-space, 0px);
   position: relative;
   /* Up to the bottom of the first screen: the stage knows where it starts (the version strip scrolls away above the bar). */
   height: calc(100dvh - var(--map-top-offset, calc(var(--atlas-sticky-top) + 35px)));
@@ -31,7 +36,7 @@
 
 .poster {
   position: absolute;
-  inset: 0 0 var(--map-dock) 0;
+  inset: 0 calc(var(--atlas-gutter) + var(--map-tools)) calc(var(--map-dock) + var(--map-cookie)) calc(var(--atlas-gutter) + var(--map-side) + 12px);
   display: grid;
   place-items: center;
   container-type: size;
@@ -48,17 +53,20 @@
   z-index: 2;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 75% at 50% 46%, transparent 58%, color-mix(in srgb, var(--atlas-bg) 78%, transparent) 100%),
-    linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 70%, transparent), transparent 22%);
+    linear-gradient(90deg, color-mix(in srgb, var(--atlas-bg) 94%, transparent) 0, color-mix(in srgb, var(--atlas-bg) 74%, transparent) calc(var(--atlas-gutter) + var(--map-side)), transparent calc(var(--atlas-gutter) + var(--map-side) + 140px)),
+    radial-gradient(ellipse 80% 75% at 55% 46%, transparent 58%, color-mix(in srgb, var(--atlas-bg) 78%, transparent) 100%);
 }
 
-/* ---------- Title and trail ---------- */
+/* ---------- Title column: trail, name, one line of facts, then the viewer's search and place panel ---------- */
 .titleBar {
   position: absolute;
   z-index: 6;
   top: var(--atlas-space-4);
+  bottom: calc(var(--atlas-space-4) + var(--map-cookie));
   left: var(--atlas-gutter);
-  max-width: min(560px, calc(100% - 420px));
+  display: flex;
+  flex-direction: column;
+  width: var(--map-side);
   pointer-events: none;
 }
 .titleBar > * { pointer-events: auto; }
@@ -76,16 +84,18 @@
   text-transform: uppercase;
   text-shadow: var(--atlas-text-halo);
 }
-.trail li { display: inline-flex; align-items: center; gap: var(--atlas-space-1); }
-.trail a { display: inline-flex; align-items: center; min-height: 32px; color: var(--atlas-accent); text-decoration: none; }
+.trail li { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-width: 0; }
+/* The site crumb is in the top bar already: the map's own trail starts at the world map. */
+.trail li:first-child { display: none; }
+.trail a { display: inline-flex; align-items: center; min-height: 28px; color: var(--atlas-accent); text-decoration: none; }
 .trail a:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
 .trail [aria-current] { color: var(--atlas-text-muted); }
-.trail svg { width: 12px; height: 12px; color: var(--atlas-text-subtle); }
+.trail svg { width: 12px; height: 12px; flex: none; color: var(--atlas-text-subtle); }
 .title {
   margin: var(--atlas-space-1) 0 0;
   color: var(--atlas-text-strong);
   font-family: var(--atlas-font-display);
-  font-size: clamp(1.75rem, 1.1rem + 2.2vw, 3.25rem);
+  font-size: clamp(1.75rem, 1.2rem + 1.3vw, 2.5rem);
   font-weight: var(--atlas-weight-display-hero);
   line-height: var(--atlas-leading-tight);
   letter-spacing: var(--atlas-tracking-display);
@@ -93,13 +103,20 @@
   text-wrap: balance;
 }
 .line {
-  max-width: 54ch;
   margin: var(--atlas-space-2) 0 0;
   color: var(--atlas-text);
   font-size: var(--atlas-text-small);
   line-height: var(--atlas-leading-snug);
   text-shadow: var(--atlas-text-halo);
 }
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--atlas-space-3);
+  min-height: 0;
+  margin-top: var(--atlas-space-4);
+}
+.slot:empty { display: none; }
 
 /* ---------- Places under the map ---------- */
 .below {
@@ -133,14 +150,23 @@
 .places a:hover { border-color: var(--atlas-glass-edge); background: var(--atlas-surface-raised); }
 
 @media (max-width: 700px) {
-  .stage { --map-dock: 132px; min-height: 520px; }
-  .poster { inset: 150px 0 var(--map-dock) 0; }
-  .titleBar { top: var(--atlas-space-2); right: var(--atlas-gutter); max-width: none; }
-  .title { margin-top: 0; font-size: 1.625rem; }
+  .stage { --map-side: 0px; --map-tools: 0px; --map-dock: 72px; min-height: 520px; }
+  .poster { inset: 150px 0 calc(var(--map-dock) + var(--map-cookie)) 0; }
+  /* A compact header over the map: trail, name, line, then search and tools in one row. */
+  .titleBar {
+    top: 0;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: auto;
+    padding: var(--atlas-space-2) var(--atlas-gutter) var(--atlas-space-3);
+    background: linear-gradient(180deg, var(--atlas-bg) 0, color-mix(in srgb, var(--atlas-bg) 88%, transparent) 72%, transparent);
+  }
+  .title { margin-top: 0; font-size: 1.5rem; }
   .line { display: -webkit-box; margin-top: 2px; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--atlas-text-meta); }
   /* One scrolling row of the trail; the site crumb is in the top bar already. */
   .trail ol { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
-  .trail li:first-child { display: none; }
+  .slot { position: relative; flex-direction: row; align-items: center; gap: var(--atlas-space-2); margin-top: var(--atlas-space-2); }
 }
 @media (pointer: coarse) {
   .trail a { min-height: 44px; }

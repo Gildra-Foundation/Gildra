@@ -186,8 +186,46 @@
 .eventMarker:focus-visible .eventRune { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .eventMarker .markerName { top: calc(100% + 4px); font-family: var(--atlas-font-display); font-size: 0.9375rem; }
 
+/* A point's name on the free side of its icon. */
+.poi[data-side="above"] .markerName { top: auto; bottom: calc(100% + 1px); }
+.poi[data-side="right"] .markerName { top: 50%; left: calc(100% + 3px); transform: translateY(-50%); }
+.poi[data-side="left"] .markerName { top: 50%; left: auto; right: calc(100% + 3px); transform: translateY(-50%); }
+/* RU names over the English words painted into the art: a small plaque covers them. */
+.mapLabel[data-covers] .labelText {
+  padding: 3px 9px;
+  border: 1px solid color-mix(in srgb, var(--atlas-accent-2) 35%, transparent);
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--atlas-bg) 76%, transparent);
+  font-size: 0.875rem;
+  letter-spacing: .06em;
+}
+.mapLabel[data-covers]:is(:hover, :focus-visible, [data-hover]) .labelText { border-color: var(--atlas-glass-edge); }
+
+/* The name of the zone under the pointer. */
+.hoverName {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  padding: 4px 10px;
+  border: 1px solid var(--atlas-glass-edge);
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--atlas-surface) 92%, transparent);
+  box-shadow: var(--atlas-shadow-panel);
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: 1rem;
+  font-weight: var(--atlas-weight-display);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
+}
+.hoverName[data-shown]:not([data-over]) { opacity: 1; }
+@media (hover: none) { .hoverName { display: none; } }
+
 /* ---------- Panels: shared glass ---------- */
-.searchBox, .controls button, .layers, .card, .timeline, .compareHandle, .compareTag, .loading, .fallback {
+.searchBox, .controls > button, .controlGroup, .layers, .place, .timeline, .compareHandle, .compareTag, .loading, .fallback {
   border: 1px solid var(--atlas-line);
   background: color-mix(in srgb, var(--atlas-surface) 88%, transparent);
   box-shadow: var(--atlas-glass-depth);
@@ -195,17 +233,10 @@
   -webkit-backdrop-filter: blur(10px) saturate(1.1);
 }
 
-/* ---------- Search ---------- */
-.searchBox {
-  position: absolute;
-  z-index: 7;
-  top: var(--atlas-space-4);
-  right: var(--atlas-gutter);
-  width: min(340px, calc(100% - 2 * var(--atlas-gutter)));
-  border-radius: var(--atlas-radius-control);
-}
-.searchField { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; padding: 0 var(--atlas-space-3); color: var(--atlas-text-muted); }
-.searchField svg { width: 16px; height: 16px; flex: none; }
+/* ---------- Search (in the title column) ---------- */
+.searchBox { position: relative; z-index: 2; flex: none; border-radius: var(--atlas-radius-control); }
+.searchField { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; padding: 0 var(--atlas-space-1) 0 var(--atlas-space-3); color: var(--atlas-text-muted); }
+.searchField > svg { width: 16px; height: 16px; flex: none; }
 .searchField input {
   flex: 1;
   min-width: 0;
@@ -216,24 +247,52 @@
   font-size: var(--atlas-text-body);
   outline: none;
 }
+.searchField input::-webkit-search-cancel-button { display: none; }
 .searchField input::placeholder { color: var(--atlas-text-subtle); }
-.searchBox:focus-within { border-color: var(--atlas-glass-edge); }
-.hits { max-height: min(360px, 50dvh); margin: 0; padding: var(--atlas-space-1); overflow-y: auto; border-top: 1px solid var(--atlas-line-soft); list-style: none; }
-.hits li { display: grid; gap: 2px; min-height: 44px; padding: var(--atlas-space-2) var(--atlas-space-3); border-radius: var(--atlas-radius); cursor: pointer; }
+.searchClear { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
+.searchClear:hover { color: var(--atlas-text-strong); background: var(--atlas-surface-raised); }
+.searchClear svg { width: 15px; height: 15px; }
+.searchBox:focus-within { border-color: var(--atlas-accent); box-shadow: var(--atlas-glass-depth), 0 0 0 1px var(--atlas-accent); }
+/* The field's frame shows the focus; the bare input inside draws no second ring. */
+.searchBox:focus-within .searchField input:focus-visible { outline: none; }
+.hits {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -1px;
+  right: -1px;
+  max-height: min(380px, 55dvh);
+  margin: 0;
+  padding: var(--atlas-space-1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--atlas-glass-edge);
+  border-radius: var(--atlas-radius-control);
+  background: var(--atlas-surface-raised);
+  box-shadow: var(--atlas-shadow-panel);
+  list-style: none;
+}
+.hits li { display: grid; grid-template-columns: 20px 1fr; align-items: center; column-gap: var(--atlas-space-2); min-height: 44px; padding: var(--atlas-space-2) var(--atlas-space-2); border-radius: var(--atlas-radius); cursor: pointer; }
 .hits li[aria-selected="true"] { background: var(--atlas-surface-selected); }
-.hitTitle { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1rem; font-weight: var(--atlas-weight-display); }
-.hitMeta { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
-.hits .nothing { color: var(--atlas-text-muted); cursor: default; }
+.hitIcon { grid-row: span 2; width: 16px; height: 16px; color: var(--atlas-accent); }
+.hitIcon[data-type="event"] { color: var(--atlas-accent-2); }
+.hitTitle { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1rem; font-weight: var(--atlas-weight-display); line-height: 1.2; }
+.hitMeta { grid-column: 2; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.hits .nothing { display: block; color: var(--atlas-text-muted); cursor: default; }
+.hits .hitsHeading { display: flex; gap: var(--atlas-space-2); min-height: 28px; padding: var(--atlas-space-1) var(--atlas-space-2); color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; cursor: default; }
+.hitsHeading svg { width: 13px; height: 13px; }
 
-/* ---------- Controls ---------- */
+/* ---------- Tools on the right edge ---------- */
+.tools { display: contents; }
 .controls {
   position: absolute;
   z-index: 6;
-  top: calc(var(--atlas-space-4) + 56px);
+  top: var(--atlas-space-4);
   right: var(--atlas-gutter);
   display: grid;
-  gap: var(--atlas-space-1);
+  gap: var(--atlas-space-2);
 }
+.controlGroup { display: grid; overflow: hidden; border-radius: var(--atlas-radius-control); }
+.controlGroup > button + button { border-top: 1px solid var(--atlas-line-soft); }
 .controls button {
   display: grid;
   place-items: center;
@@ -242,174 +301,229 @@
   border-radius: var(--atlas-radius-control);
   color: var(--atlas-text-strong);
   cursor: pointer;
-  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), color var(--atlas-duration-fast) var(--atlas-ease);
+  transition: border-color var(--atlas-duration-fast) var(--atlas-ease), color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease);
 }
-.controls button:hover:not(:disabled) { border-color: var(--atlas-glass-edge); color: var(--atlas-accent-strong); }
-.controls button:disabled { opacity: .45; cursor: default; }
-.controls button[aria-expanded="true"] { border-color: var(--atlas-glass-edge); background: var(--atlas-accent-wash); }
+.controlGroup > button { border: 0; border-radius: 0; background: none; }
+.controls button:hover:not(:disabled) { color: var(--atlas-accent-strong); }
+.controls > button:hover:not(:disabled) { border-color: var(--atlas-glass-edge); }
+.controlGroup > button:hover { background: var(--atlas-accent-wash); }
+.controls button:disabled { opacity: .4; cursor: default; }
+.controls button:is([aria-expanded="true"], [aria-pressed="true"]) { border-color: var(--atlas-glass-edge); background: var(--atlas-accent-wash); color: var(--atlas-accent-strong); }
 .controls svg { width: 18px; height: 18px; }
 
 .layers {
   position: absolute;
   z-index: 7;
-  top: calc(var(--atlas-space-4) + 56px);
+  top: var(--atlas-space-4);
   right: calc(var(--atlas-gutter) + 52px);
   display: grid;
   min-width: 230px;
   margin: 0;
   padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-3);
   border-radius: var(--atlas-radius-control);
+  border-color: var(--atlas-glass-edge);
+  background: var(--atlas-surface-raised);
+  box-shadow: var(--atlas-shadow-panel);
+  animation: rise var(--atlas-duration-fast) var(--atlas-ease);
 }
 .layers legend { float: left; width: 100%; padding: var(--atlas-space-2) 0; color: var(--atlas-accent); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
 .layers label { display: flex; align-items: center; gap: var(--atlas-space-3); min-height: 40px; color: var(--atlas-text); font-size: var(--atlas-text-small); cursor: pointer; }
 .layers input { width: 18px; height: 18px; accent-color: var(--atlas-accent); }
 
-/* ---------- Bottom dock: card + timeline ---------- */
-.dock {
-  position: absolute;
-  z-index: 6;
-  left: 50%;
-  bottom: var(--atlas-space-4);
-  display: grid;
-  gap: var(--atlas-space-2);
-  width: min(1040px, calc(100% - 2 * var(--atlas-gutter)));
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.dock > * { pointer-events: auto; }
-
-.card {
-  position: relative;
-  justify-self: start;
-  width: min(400px, 100%);
-  padding: var(--atlas-space-4) var(--atlas-space-5) var(--atlas-space-4) var(--atlas-space-4);
+/* ---------- Place panel: the chosen point or event, then what the place holds ---------- */
+.place {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   border-radius: var(--atlas-radius-control);
-  border-color: var(--atlas-glass-edge);
   animation: rise var(--atlas-duration-fast) var(--atlas-ease);
 }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+.card { position: relative; flex: none; padding: var(--atlas-space-4) var(--atlas-space-4) var(--atlas-space-3); }
+.card + .placeLists { border-top: 1px solid var(--atlas-line-soft); }
 .cardClose { position: absolute; top: 2px; right: 2px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; background: none; color: var(--atlas-text-muted); cursor: pointer; }
 .cardClose:hover { color: var(--atlas-text-strong); }
 .cardClose svg { width: 16px; height: 16px; }
 .cardKind { margin: 0; padding-right: 36px; color: var(--atlas-accent); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-.cardTitle { margin: var(--atlas-space-1) 0 0; padding-right: 32px; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); }
+.cardTitle { margin: var(--atlas-space-1) 0 0; padding-right: 32px; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.375rem; font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); }
 .cardText { margin: var(--atlas-space-2) 0 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
 .cardActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2) var(--atlas-space-4); align-items: center; margin-top: var(--atlas-space-3); }
-.cardLink { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin-top: var(--atlas-space-1); color: var(--atlas-accent); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; }
-.cardActions .cardLink { margin-top: 0; }
+.cardLink { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; color: var(--atlas-accent); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; }
 .cardLink:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
 .cardLink svg { width: 14px; height: 14px; }
-.cardButton {
-  min-height: 40px;
-  padding: 0 var(--atlas-space-4);
-  border: 1px solid var(--atlas-glass-edge);
-  border-radius: var(--atlas-radius-control);
-  background: var(--atlas-accent-wash);
+
+.placeLists { display: grid; gap: var(--atlas-space-3); padding: var(--atlas-space-3) var(--atlas-space-2) var(--atlas-space-2); }
+.placeHeading { margin: 0; padding: 0 var(--atlas-space-2) var(--atlas-space-1); color: var(--atlas-accent); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.placeList { display: grid; margin: 0; padding: 0; list-style: none; }
+.placeList li { --marker-tint: var(--atlas-info); display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; padding: 0 0 0 var(--atlas-space-2); border-radius: var(--atlas-radius); }
+.placeList li[data-kind="raid"] { --marker-tint: var(--atlas-caution); }
+.placeList li[data-kind="delve"] { --marker-tint: var(--atlas-positive); }
+.placeList li:hover { background: var(--atlas-surface-raised); }
+.placeIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--marker-tint) 85%, var(--atlas-text-strong));
+  background: color-mix(in srgb, var(--atlas-bg) 78%, var(--marker-tint));
+  color: color-mix(in srgb, var(--marker-tint) 60%, var(--atlas-text-strong));
+}
+.placeIcon[data-event] { --marker-tint: var(--atlas-accent-2); border-radius: 3px; transform: rotate(45deg) scale(.86); }
+.placeIcon[data-event] svg { transform: rotate(-45deg); }
+.placeIcon svg { width: 13px; height: 13px; }
+.placeName {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  padding: var(--atlas-space-1) 0;
+  border: 0;
+  background: none;
   color: var(--atlas-text-strong);
-  font-size: var(--atlas-text-small);
-  font-weight: 600;
+  font-family: var(--atlas-font-display);
+  font-size: 1rem;
+  font-weight: var(--atlas-weight-display);
+  line-height: 1.2;
+  text-align: left;
+  text-decoration: none;
   cursor: pointer;
 }
-.cardButton[aria-pressed="true"] { background: var(--atlas-accent-wash-strong); }
+.placeName > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.placeName:hover > span:first-child, .placeName[aria-current] > span:first-child { color: var(--atlas-accent-strong); }
+.placeMeta { color: var(--atlas-text-muted); font-family: var(--atlas-font-ui); font-size: var(--atlas-text-meta); font-weight: 500; }
+.placeLocate { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
+.placeLocate:hover { color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
+.placeLocate svg { width: 16px; height: 16px; }
+
+/* ---------- Bottom dock: the timeline (and the place sheet on phones) ---------- */
+.dock {
+  position: absolute;
+  z-index: 6;
+  left: calc(var(--atlas-gutter) + var(--map-side, 0px) + 12px);
+  right: calc(var(--atlas-gutter) + var(--map-tools, 0px));
+  bottom: calc(var(--atlas-space-4) + var(--map-cookie, 0px));
+  display: grid;
+  justify-items: center;
+  gap: var(--atlas-space-2);
+  pointer-events: none;
+}
+.dock > * { width: min(980px, 100%); pointer-events: auto; }
 
 /* ---------- Timeline ---------- */
 .timeline {
-  padding: var(--atlas-space-2) var(--atlas-space-5) var(--atlas-space-1);
+  --era-accent: var(--atlas-accent-2);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--atlas-space-4);
+  padding: var(--atlas-space-2) var(--atlas-space-4);
   border-radius: var(--atlas-radius-control);
 }
-.eraRow { display: flex; align-items: center; gap: var(--atlas-space-3); min-height: 40px; }
-.eraIcon { width: 16px; height: 16px; flex: none; color: var(--atlas-accent-2); }
-.eraNow { display: flex; align-items: baseline; gap: var(--atlas-space-2); min-width: 0; margin: 0; }
-.eraName { overflow: hidden; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.1875rem; font-weight: var(--atlas-weight-display); white-space: nowrap; text-overflow: ellipsis; }
-.eraYears { flex: none; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
+.eraRow { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; }
+.eraSwatch { flex: none; width: 10px; height: 10px; transform: rotate(45deg); border: 1.5px solid color-mix(in srgb, var(--era-accent) 70%, var(--atlas-text-strong)); background: var(--era-accent); box-shadow: 0 0 10px color-mix(in srgb, var(--era-accent) 60%, transparent); }
+.eraNow { display: grid; min-width: 0; margin: 0 var(--atlas-space-1) 0 var(--atlas-space-1); }
+.eraName { overflow: hidden; max-width: 14ch; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.125rem; font-weight: var(--atlas-weight-display); line-height: 1.15; white-space: nowrap; text-overflow: ellipsis; }
+.eraYears { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; line-height: 1.2; }
 .eraStep { display: inline-flex; gap: 2px; flex: none; }
-.eraStep button {
+.eraStep button, .timelineToggle {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--atlas-line-soft);
   border-radius: var(--atlas-radius-control);
   background: transparent;
   color: var(--atlas-text);
   cursor: pointer;
 }
-.eraStep button:hover:not(:disabled) { border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
+.eraStep button:hover:not(:disabled), .timelineToggle:hover { border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
 .eraStep button:disabled { opacity: .35; cursor: default; }
-.eraStep svg { width: 16px; height: 16px; }
+.eraStep svg, .timelineToggle svg { width: 16px; height: 16px; }
+.timelineToggle { display: none; }
 .compareButton {
   display: inline-flex;
   align-items: center;
   gap: var(--atlas-space-2);
   flex: none;
-  min-height: 34px;
-  margin-left: auto;
+  min-height: 32px;
   padding: 0 var(--atlas-space-3);
-  border: 1px solid var(--atlas-glass-edge);
+  border: 1px solid var(--atlas-line-soft);
   border-radius: var(--atlas-radius-control);
-  background: var(--atlas-accent-wash);
-  color: var(--atlas-text-strong);
+  background: transparent;
+  color: var(--atlas-text);
   font-size: var(--atlas-text-small);
   font-weight: 600;
   cursor: pointer;
 }
-.compareButton[aria-pressed="true"] { background: var(--atlas-accent-wash-strong); }
+.compareButton:hover { border-color: var(--atlas-glass-edge); color: var(--atlas-text-strong); }
+.compareButton[aria-pressed="true"] { border-color: var(--atlas-glass-edge); background: var(--atlas-accent-wash-strong); color: var(--atlas-text-strong); }
 .compareButton svg { width: 15px; height: 15px; }
 
-.track { position: relative; height: 56px; margin: 2px 6px 0; touch-action: none; cursor: pointer; }
-.rail { position: absolute; left: 0; right: 0; top: 18px; height: 3px; border-radius: 2px; background: var(--atlas-line); }
-.band { --era-accent: var(--atlas-accent-2); position: absolute; top: 15px; height: 9px; border-radius: 5px; background: color-mix(in srgb, var(--era-accent) 20%, transparent); transition: background-color var(--atlas-duration-fast) var(--atlas-ease); }
-.band[data-active] { background: color-mix(in srgb, var(--era-accent) 62%, transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--era-accent) 45%, transparent); }
+.track { position: relative; height: 46px; margin: 0 8px; touch-action: none; cursor: pointer; }
+.rail { position: absolute; left: 0; right: 0; top: 20px; height: 2px; border-radius: 1px; background: var(--atlas-line); }
+.band { --era-accent: var(--atlas-accent-2); position: absolute; top: 18px; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--era-accent) 28%, transparent); transition: background-color var(--atlas-duration-fast) var(--atlas-ease), box-shadow var(--atlas-duration-fast) var(--atlas-ease); }
+.band[data-active] { background: color-mix(in srgb, var(--era-accent) 80%, transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--era-accent) 50%, transparent); }
 .ticks { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; pointer-events: none; }
-.ticks li { position: absolute; top: 12px; }
-.ticks li::before { content: ""; position: absolute; left: 0; top: 0; width: 1px; height: 14px; background: var(--atlas-line-strong); }
-.ticks button { position: absolute; left: 0; top: 18px; padding: 2px 4px; border: 0; background: none; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); white-space: nowrap; cursor: pointer; pointer-events: auto; }
+.ticks li { position: absolute; top: 27px; }
+.ticks button { position: absolute; left: 0; top: 0; padding: 1px 3px; border: 0; background: none; color: var(--atlas-text-subtle); font-size: 0.6875rem; letter-spacing: .02em; white-space: nowrap; transform: translateX(-50%); cursor: pointer; pointer-events: auto; }
 .ticks button:hover { color: var(--atlas-text-strong); }
 .ticks button[data-active] { color: var(--atlas-text-strong); font-weight: 650; }
 .rune {
+  --era-accent: var(--atlas-accent-2);
   position: absolute;
-  top: 19px;
-  width: 16px;
-  height: 16px;
+  top: 9px;
+  width: 10px;
+  height: 10px;
   padding: 0;
   border: 0;
   background: none;
   transform: translate(-50%, -50%);
   cursor: pointer;
 }
-.rune::before { content: ""; position: absolute; inset: -14px -10px -3px; }
+/* The hit area is RUNE_GAP (16 px) wide: neighbouring runes never overlap. */
+.rune::before { content: ""; position: absolute; inset: -8px -3px -4px; }
 .rune span {
   position: absolute;
-  inset: 2px;
+  inset: 1px;
   transform: rotate(45deg);
-  border: 2px solid color-mix(in srgb, var(--atlas-accent-2) 85%, var(--atlas-text-strong));
-  background: var(--atlas-bg);
+  border: 1.5px solid color-mix(in srgb, var(--era-accent) 80%, var(--atlas-text-strong));
+  background: color-mix(in srgb, var(--era-accent) 30%, var(--atlas-bg));
   transition: background-color var(--atlas-duration-fast) var(--atlas-ease), transform var(--atlas-duration-fast) var(--atlas-ease);
 }
-.rune:hover span, .rune[data-active] span { background: var(--atlas-accent-2); transform: rotate(45deg) scale(1.2); }
+.rune:hover span, .rune[data-active] span { background: var(--era-accent); transform: rotate(45deg) scale(1.35); }
+.rune[data-active] span { box-shadow: 0 0 8px var(--era-accent); }
+/* A rune of several events: a second diamond behind the first. */
+.rune[data-many] span { box-shadow: 3px -3px 0 -1px color-mix(in srgb, var(--era-accent) 55%, var(--atlas-bg)); }
 .thumb {
   position: absolute;
-  top: 19px;
-  width: 18px;
-  height: 18px;
+  top: 21px;
+  width: 16px;
+  height: 16px;
   border: 2px solid var(--atlas-text-strong);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--atlas-accent-2) 70%, var(--atlas-bg));
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--atlas-bg) 60%, transparent), 0 0 14px color-mix(in srgb, var(--atlas-accent-2) 60%, transparent);
+  background: var(--era-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--atlas-bg) 60%, transparent), 0 0 14px color-mix(in srgb, var(--era-accent) 70%, transparent);
   transform: translate(-50%, -50%);
   cursor: grab;
   touch-action: none;
+  transition: left var(--atlas-duration-fast) var(--atlas-ease);
 }
-.thumb::before { content: ""; position: absolute; inset: -13px; }
+.timeline[data-dragging] .thumb { cursor: grabbing; transition: none; }
+.thumb::before { content: ""; position: absolute; inset: -14px; }
 .thumb:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
 .peek {
   position: absolute;
-  bottom: calc(100% + 12px);
+  bottom: calc(100% + 6px);
   z-index: 2;
   display: grid;
-  gap: 4px;
-  width: 260px;
-  padding: var(--atlas-space-3);
+  gap: 2px;
+  width: max-content;
+  max-width: 260px;
+  padding: var(--atlas-space-2) var(--atlas-space-3);
   border: 1px solid var(--atlas-glass-edge);
   border-radius: var(--atlas-radius-control);
   background: var(--atlas-surface-raised);
@@ -420,11 +534,11 @@
   line-height: var(--atlas-leading-snug);
   pointer-events: none;
 }
-.peek strong { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.0625rem; font-weight: var(--atlas-weight-display); }
+.peek strong { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1rem; font-weight: var(--atlas-weight-display); line-height: 1.25; }
 .peekMeta { color: var(--atlas-accent); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
 
 /* ---------- Compare divider ---------- */
-.compare { position: absolute; top: 0; bottom: calc(var(--map-dock, 118px) + 4px); z-index: 4; width: 0; }
+.compare { position: absolute; top: 0; bottom: 0; z-index: 4; width: 0; }
 .compare::before { content: ""; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--atlas-text-strong); box-shadow: 0 0 10px var(--atlas-bg); pointer-events: none; }
 .compareHandle {
   position: absolute;
@@ -452,7 +566,7 @@
 .compareHandle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .compareTag {
   position: absolute;
-  top: 110px;
+  top: calc(50% - 64px);
   padding: var(--atlas-space-1) var(--atlas-space-3);
   border-radius: var(--atlas-radius-control);
   color: var(--atlas-text-strong);
@@ -480,51 +594,86 @@
 
 /* ---------- Phones ---------- */
 @media (max-width: 700px) {
-  .searchBox { top: auto; bottom: auto; position: absolute; top: var(--map-search-top, 118px); left: var(--atlas-gutter); right: auto; width: calc(100% - 2 * var(--atlas-gutter) - 52px); }
-  .controls { top: var(--map-search-top, 118px); }
-  .controls button:nth-child(-n + 2) { display: none; }
-  .layers { top: calc(var(--map-search-top, 118px) + 52px); right: var(--atlas-gutter); }
-  .dock { left: 0; right: 0; bottom: 0; width: auto; transform: none; gap: 0; }
-  .card {
-    justify-self: stretch;
-    width: auto;
-    max-height: 46dvh;
-    overflow-y: auto;
-    margin: 0 var(--atlas-space-2) var(--atlas-space-2);
+  /* The results span the whole header row (the slot), not just the narrow field. */
+  .searchBox { position: static; flex: 1; min-width: 0; }
+  .hits { left: 0; right: 0; }
+  /* The tools sit in the header row next to the search; pinch zooms. */
+  .controls { position: static; display: flex; gap: var(--atlas-space-1); }
+  .controlGroup { display: none; }
+  .layers { top: calc(100% + 6px); right: 0; }
+  .dock { left: 0; right: 0; bottom: var(--map-cookie, 0px); gap: 0; }
+  .dock > * { width: 100%; }
+  /* Bottom sheet: the place in focus or the chosen point, above the timeline. */
+  .place { max-height: 46dvh; margin: 0 var(--atlas-space-2) var(--atlas-space-2); width: auto; justify-self: stretch; }
+  /* Folded, the sheet is a small tab at the map's lower left. */
+  .place[data-sheet]:not([data-open]) { justify-self: start; width: auto; max-width: calc(100% - 2 * var(--atlas-space-2)); border-radius: 999px; }
+  .place[data-sheet]:not([data-open]) .sheetHandle { min-height: 40px; gap: var(--atlas-space-3); padding: 0 var(--atlas-space-3) 0 var(--atlas-space-4); }
+  .sheetHandle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--atlas-space-2);
+    flex: none;
+    min-height: 44px;
+    padding: 0 var(--atlas-space-4);
+    border: 0;
+    background: none;
+    color: var(--atlas-text-strong);
+    font-size: var(--atlas-text-small);
+    font-weight: 600;
+    cursor: pointer;
   }
-  .timeline { padding: var(--atlas-space-2) var(--atlas-space-3) calc(var(--atlas-space-1) + env(safe-area-inset-bottom)); border-radius: 12px 12px 0 0; border-bottom: 0; }
-  .timeline::before { content: ""; display: block; width: 36px; height: 4px; margin: 0 auto var(--atlas-space-2); border-radius: 2px; background: var(--atlas-line-strong); }
-  .compareButton { min-height: 40px; }
-  .eraName { font-size: 1.0625rem; }
+  .sheetHandle svg { width: 16px; height: 16px; transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
+  .place[data-open] .sheetHandle svg { transform: rotate(180deg); }
+  .place[data-open] .sheetHandle { border-bottom: 1px solid var(--atlas-line-soft); }
+  .sheetBody { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .sheetBody[hidden] { display: none; }
+  .timeline {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: var(--atlas-space-1) var(--atlas-space-3) calc(var(--atlas-space-1) + env(safe-area-inset-bottom));
+    border-radius: 14px 14px 0 0;
+    border-bottom: 0;
+  }
+  .eraRow { min-height: 52px; }
+  .eraName { max-width: none; font-size: 1.0625rem; }
+  .eraNow { flex: 1; }
+  .timelineToggle { display: grid; }
+  .timelineToggle svg { transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
+  .timeline[data-open] .timelineToggle svg { transform: rotate(180deg); }
+  .timeline:not([data-open]) .track { display: none; }
+  .track { height: 50px; margin: 0 10px var(--atlas-space-1); }
   .compareButton span { display: none; }
+  .compareButton { width: 44px; justify-content: center; padding: 0; }
   .ticks li:not([data-wide]) button { display: none; }
-  .peek { width: 220px; }
-  .rune { width: 12px; height: 12px; }
-  .rune span { border-width: 1.5px; }
-  .compareTag { top: calc(var(--map-search-top, 118px) + 168px); max-width: 44vw; overflow: hidden; text-overflow: ellipsis; font-size: 0.875rem; }
+  .rune { width: 9px; height: 9px; }
+  .compareTag { top: auto; bottom: calc(50% + 40px); max-width: 44vw; overflow: hidden; text-overflow: ellipsis; font-size: 0.875rem; }
   .labelText { font-size: 0.875rem; }
   .mapLabel[data-size="world"] .labelText { font-size: 1.125rem; }
   .mapLabel[data-size="continent"] .labelText { font-size: 1rem; }
 }
+@media (min-width: 701px) { .sheetHandle, .sheetBody { display: contents; } }
 @media (pointer: coarse) {
-  .eraStep button { width: 44px; height: 44px; }
+  .eraStep button, .timelineToggle { width: 44px; height: 44px; }
   .compareButton { min-height: 44px; }
   .poiIcon::before { content: ""; position: absolute; inset: -9px; }
 }
 
 /* ---------- Reduced motion, transparency, forced colours ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .card { animation: none !important; }
-  .canvas, .labelText, .poiIcon { transition: none !important; }
+  .glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers { animation: none !important; }
+  .canvas, .labelText, .poiIcon, .thumb, .hoverName, .band, .rune span { transition: none !important; }
 }
-:global([data-motion="reduced"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .card),
-:global([data-ui-motion="reduce"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .card) { animation: none !important; }
+:global([data-motion="reduced"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers),
+:global([data-ui-motion="reduce"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers) { animation: none !important; }
+:global([data-motion="reduced"]) :is(.thumb, .hoverName),
+:global([data-ui-motion="reduce"]) :is(.thumb, .hoverName) { transition: none !important; }
 @media (prefers-reduced-transparency: reduce) {
-  .searchBox, .controls button, .layers, .card, .timeline, .compareHandle, .compareTag, .loading, .fallback { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--atlas-surface); }
+  .searchBox, .controls > button, .controlGroup, .layers, .place, .timeline, .compareHandle, .compareTag, .loading, .fallback { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--atlas-surface); }
 }
-:global([data-transparency="reduced"]) :is(.searchBox, .controls button, .layers, .card, .timeline, .compareHandle, .compareTag) { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--atlas-surface); }
+:global([data-transparency="reduced"]) :is(.searchBox, .controls > button, .controlGroup, .layers, .place, .timeline, .compareHandle, .compareTag) { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--atlas-surface); }
 @media (forced-colors: active) {
-  .searchBox, .controls button, .layers, .card, .timeline, .compareHandle, .compareTag { border: 1px solid CanvasText; background: Canvas; color: CanvasText; backdrop-filter: none; }
+  .searchBox, .controls button, .layers, .place, .timeline, .compareHandle, .compareTag, .hoverName { border: 1px solid CanvasText; background: Canvas; color: CanvasText; backdrop-filter: none; }
   .glow, .poiIcon::after, .eventRune::before, .eventRune::after { display: none; }
   .labelText, .markerName { color: CanvasText; background: Canvas; text-shadow: none; }
   .compare::before { background: CanvasText; }
