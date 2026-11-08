@@ -100,8 +100,9 @@ function nameBox(marker: Placed, side: LabelSide): Box {
 export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers, era: AtlasEra | null, project: (x: number, y: number) => [number, number], artIn: (map: AtlasMap) => unknown, lang: "en" | "ru" = "en"): Array<Marker & { sx: number; sy: number }> {
   // Words the game painted into the pictures in view: labels keep clear of them.
   const painted: Box[] = [];
-  // Maps drawn out of focus (a backdrop far magnified) carry no markers.
-  const backdrop = (entry: FrameInfo["drawn"][number]) => (entry.blur ?? 0) > 0.5;
+  // Maps drawn out of focus (a backdrop far magnified) and the ancestors of the map in view (only their calm
+  // wash shows) carry no markers: no points floating over a backdrop.
+  const backdrop = (entry: FrameInfo["drawn"][number]) => (entry.blur ?? 0) > 0.5 || (entry.role === "ancestor" && (entry.tone ?? 0) > 0.5);
   for (const entry of info.drawn) {
     if (entry.alpha < 0.55 || backdrop(entry)) continue;
     for (const [x0, y0, x1, y1] of paintedBoxes(entry.map)) {
