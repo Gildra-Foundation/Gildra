@@ -52,7 +52,7 @@ export const worldMapCopy = {
     hideOverview: "Hide the overview",
     expansion: {
       classic: "Classic", tbc: "Burning Crusade", wotlk: "Wrath", cataclysm: "Cataclysm", mop: "Pandaria", wod: "Draenor",
-      legion: "Legion", bfa: "Battle for Azeroth", shadowlands: "Shadow\u00adlands", dragonflight: "Dragon\u00adflight", tww: "War Within", midnight: "Midnight",
+      legion: "Legion", bfa: "Battle for Azeroth", shadowlands: "Shadowlands", dragonflight: "Dragonflight", tww: "War Within", midnight: "Midnight",
     },
     compareWith: "Compared moment",
     leadsTo: "To",
@@ -127,7 +127,7 @@ export const worldMapCopy = {
     hideOverview: "Скрыть обзор",
     expansion: {
       classic: "Классика", tbc: "Burning Crusade", wotlk: "Wrath", cataclysm: "Cataclysm", mop: "Pandaria", wod: "Draenor",
-      legion: "Legion", bfa: "Battle for Azeroth", shadowlands: "Shadow\u00adlands", dragonflight: "Dragon\u00adflight", tww: "War Within", midnight: "Midnight",
+      legion: "Legion", bfa: "Battle for Azeroth", shadowlands: "Shadowlands", dragonflight: "Dragonflight", tww: "War Within", midnight: "Midnight",
     },
     compareWith: "Момент для сравнения",
     leadsTo: "Ведёт в",

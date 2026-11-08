@@ -93,3 +93,12 @@ export function patchLabel(patch: string) {
 
 /** Years of an era for people: 2004–2007, or one year. */
 export const yearsOf = (era: AtlasEra | null) => (era?.years ? (era.years[0] === era.years[1] ? String(era.years[0]) : `${era.years[0]}–${era.years[1]}`) : "");
+
+/**
+ * A band's name on one line: the first candidate (the full name, then the short one players use)
+ * whose measured width fits the band; the shortest when none does. Never broken over lines.
+ */
+export function fitLabel(candidates: string[], room: number, measure: (text: string) => number) {
+  for (const text of candidates) if (measure(text) <= room) return text;
+  return candidates.reduce((a, b) => (measure(b) < measure(a) ? b : a));
+}

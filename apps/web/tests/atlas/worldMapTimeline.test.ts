@@ -134,7 +134,7 @@ describe("world map timeline against maps.json", { skip: !existsSync(mapsFile) &
 });
 
 // ---------------------------------------------------------------- the timeline control
-import { buildStops, nearestStop, patchLabel, pickStop, SPAN, stepStop, stopAt } from "../../components/wow/worldMap/ui/timelineStops.ts";
+import { buildStops, fitLabel, nearestStop, patchLabel, pickStop, SPAN, stepStop, stopAt } from "../../components/wow/worldMap/ui/timelineStops.ts";
 import { EXPANSIONS, worldMapCopy } from "../../components/wow/worldMap/worldMapCopy.ts";
 import type { ArtEraInfo, AtlasEra, AtlasEvent } from "../../lib/wow/worldMap/bundle.ts";
 
@@ -202,15 +202,22 @@ describe("world map timeline control", () => {
     assert.equal(patchLabel("4.0.3a"), "4.0.3a");
     assert.equal(patchLabel("12.0.0"), "12.0");
   });
-  it("names every expansion band in both languages, short enough for two lines", () => {
+  it("names every expansion band in both languages on one line, never hyphen-broken", () => {
     for (const lang of ["en", "ru"] as const) {
       for (const expansion of EXPANSIONS) {
         const label = worldMapCopy[lang].expansion[expansion.id];
         assert.ok(label, `${lang} ${expansion.id}`);
-        assert.ok(label.split(" ").length <= 3 && label.split(" ").every((word) => word.split("\u00ad").every((part) => part.length <= 10)), `${lang} ${label}`);
+        assert.doesNotMatch(label, /[\u00ad\u2010-]/, `${lang} ${label}`);
       }
     }
     assert.equal(worldMapCopy.ru.expansion.classic, "Классика");
     assert.equal(worldMapCopy.ru.expansion.midnight, worldMapCopy.en.expansion.midnight, "game names stay as the game spells them");
   });
+  it("puts the full name on a band where it fits, else the short one", () => {
+    const measure = (text: string) => text.length * 7;
+    assert.equal(fitLabel(["Shadowlands", "SL"], 80, measure), "Shadowlands");
+    assert.equal(fitLabel(["Shadowlands", "SL"], 60, measure), "SL");
+    assert.equal(fitLabel(["Burning Crusade", "TBC"], 10, measure), "TBC", "nothing fits: the shortest");
+  });
+
 });

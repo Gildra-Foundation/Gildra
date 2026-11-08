@@ -7,7 +7,7 @@ import type { ArtEraInfo, AtlasEra, AtlasEvent, Lang } from "@/lib/wow/worldMap/
 import { EXPANSIONS, worldMapCopy } from "./worldMapCopy";
 import { EVENT_ICON } from "./ui/mapIcons";
 import { groupRunes } from "./ui/timelineRunes";
-import { buildStops, nearestStop, patchLabel, pickStop, SPAN, stepStop, stopAt, yearsOf, type TimelineStop } from "./ui/timelineStops";
+import { buildStops, fitLabel, nearestStop, patchLabel, pickStop, SPAN, stepStop, stopAt, yearsOf, type TimelineStop } from "./ui/timelineStops";
 import { eraAt, patchPosition } from "./worldMapModel";
 import styles from "./ui/mapChrome.module.css";
 
@@ -75,6 +75,22 @@ export function MapTimeline({ lang, eras, events, phases, position, activeEvent,
     return () => observer.disconnect();
   }, []);
   const runes = useMemo(() => groupRunes(ordered, railWidth), [ordered, railWidth]);
+  // Each band names its expansion on one line: the full name where it fits, else the short one (the full name is in the preview).
+  const measurer = useRef<HTMLSpanElement>(null);
+  const [labels, setLabels] = useState<string[] | null>(null);
+  const [fontsReady, setFontsReady] = useState(false);
+  useEffect(() => { let live = true; document.fonts?.ready.then(() => { if (live) setFontsReady(true); }); return () => { live = false; }; }, []);
+  useLayoutEffect(() => {
+    const band = track.current?.querySelector<HTMLElement>("[data-band]");
+    const probe = measurer.current;
+    if (!band || !probe || !railWidth) return;
+    const style = getComputedStyle(band);
+    const room = band.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 2;
+    const measure = (text: string) => { probe.textContent = text; return probe.getBoundingClientRect().width; };
+    const next = EXPANSIONS.map((expansion) => fitLabel([copy.expansion[expansion.id], expansion.id === "classic" ? copy.expansion.classic : expansion.short], room, measure));
+    probe.textContent = "";
+    setLabels((was) => (was && was.join("|") === next.join("|") ? was : next));
+  }, [railWidth, copy, fontsReady]);
   useEffect(() => () => { if (frame.current) cancelAnimationFrame(frame.current); window.clearTimeout(hidePeek.current); }, []);
 
   // The stage learns how tall the timeline is: the overview inset sits right above it.
@@ -210,7 +226,6 @@ export function MapTimeline({ lang, eras, events, phases, position, activeEvent,
   const shownLeft = drag?.side === "left" && drag.moved ? drag.at : compareLeft;
   const between = shownLeft === null ? null : [Math.min(shownLeft, shownRight), Math.max(shownLeft, shownRight)];
   const stepIndex = here ? stops.indexOf(here) : -1;
-  const abbr = (expansion: (typeof EXPANSIONS)[number]) => (expansion.id === "classic" ? copy.expansion.classic : expansion.short);
 
   return (
     <div ref={root} className={styles.timeline} data-map-ui data-open={open ? "" : undefined} data-dragging={drag?.moved ? "" : undefined}
@@ -240,6 +255,7 @@ export function MapTimeline({ lang, eras, events, phases, position, activeEvent,
       <div id="world-map-track" ref={scroller} className={styles.scroller}>
         <div className={styles.track} ref={track} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onCancel}
           onPointerLeave={() => setHover(null)}>
+          <span ref={measurer} className={`${styles.bandLabel} ${styles.measure}`} aria-hidden="true" />
           <ol className={styles.bands} aria-hidden="true">
             {EXPANSIONS.map((expansion, index) => {
               const owner = eraAt(eras, index + 0.05);
@@ -249,8 +265,7 @@ export function MapTimeline({ lang, eras, events, phases, position, activeEvent,
                   data-active={active ? "" : undefined} data-past={index < eraMajor ? "" : undefined}
                   data-left={shownLeft !== null && index === Math.floor(clampPos(shownLeft) - 1e-6) ? "" : undefined}
                   data-hover={hoverStop && Math.floor(hoverStop.at + 1e-6) === index ? "" : undefined}>
-                  <span className={styles.bandLabel}>{copy.expansion[expansion.id]}</span>
-                  <span className={styles.bandAbbr}>{abbr(expansion)}</span>
+                  <span className={styles.bandLabel}>{labels?.[index] ?? (expansion.id === "classic" ? copy.expansion.classic : expansion.short)}</span>
                 </li>
               );
             })}

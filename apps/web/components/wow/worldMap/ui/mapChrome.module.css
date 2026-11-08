@@ -98,14 +98,13 @@
   display: grid;
   place-items: center;
   min-width: 0;
-  padding: 0 3px 9px;
+  padding: 0 2px 9px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--era-accent) 34%, transparent);
   border-radius: 3px;
   background: linear-gradient(180deg, color-mix(in srgb, var(--era-accent) 20%, var(--atlas-bg)), color-mix(in srgb, var(--era-accent) 9%, var(--atlas-bg)));
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 9%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--atlas-bg) 70%, transparent);
   color: color-mix(in srgb, var(--era-accent) 28%, var(--atlas-text));
-  container-type: inline-size;
   transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 .band[data-past] { background: linear-gradient(180deg, color-mix(in srgb, var(--era-accent) 30%, var(--atlas-bg)), color-mix(in srgb, var(--era-accent) 15%, var(--atlas-bg))); }
@@ -117,26 +116,20 @@
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 22%, transparent), 0 0 14px color-mix(in srgb, var(--era-accent) 45%, transparent);
 }
 .band[data-left]:not([data-active]) { background: linear-gradient(180deg, color-mix(in srgb, var(--era-accent) 36%, var(--atlas-bg)), color-mix(in srgb, var(--era-accent) 18%, var(--atlas-bg))); }
-.bandLabel, .bandAbbr {
-  display: -webkit-box;
+/* One line, never broken: the timeline picks the full name or the short one by the band's width. */
+.bandLabel {
   max-width: 100%;
   overflow: hidden;
-  font-size: 0.75rem;
+  font-size: 0.71875rem;
   font-weight: 650;
-  line-height: 1.05;
-  letter-spacing: .01em;
-  text-align: center;
-  overflow-wrap: normal;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.1;
+  letter-spacing: -.005em;
+  white-space: nowrap;
+  text-overflow: clip;
   pointer-events: none;
 }
-.bandAbbr { display: none; }
-/* Narrow bands (a small window): the short names the players use. */
-@container (max-width: 66px) {
-  .bandLabel { display: none; }
-  .bandAbbr { display: block; white-space: nowrap; }
-}
+/* The timeline measures names with it (the same type, out of sight). */
+.measure { position: absolute; top: 0; left: 0; max-width: none; visibility: hidden; }
 /* Comparing: the stretch of time between the two moments. */
 .span { position: absolute; top: 8px; bottom: 0; border: 1px dashed color-mix(in srgb, var(--atlas-text-strong) 55%, transparent); border-radius: 3px; background: color-mix(in srgb, var(--atlas-text-strong) 6%, transparent); pointer-events: none; }
 /* Marks inside a band: a patch where the map changes. */
