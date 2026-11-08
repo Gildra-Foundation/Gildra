@@ -17,6 +17,8 @@ export function WowVersionStrip() {
       {wowPortals.map(portal => <li key={portal.id}>
         <Link className={styles.version} href={wowPortalHref(lang, portal, path)} prefetch={false} data-version={portal.id}
           aria-current={portal.id === current.id ? "true" : undefined}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- an 18 px emblem; the optimiser would only add a request hop */}
+          <img className={styles.emblem} src={portal.emblem} alt="" width={18} height={18} decoding="async" />
           <span className={styles.full}>{portal.label[lang]}</span>
           <span className={styles.short}>{portal.shortLabel[lang]}</span>
         </Link>

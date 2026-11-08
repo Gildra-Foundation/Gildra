@@ -24,6 +24,7 @@
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 7px;
   padding: 0 var(--atlas-space-3);
   color: var(--atlas-text-muted);
   font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
@@ -44,7 +45,17 @@
   opacity: 0;
   transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
 }
+/* The version's emblem: dimmed until the version is current or under the pointer. */
+.emblem {
+  display: block;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  opacity: .62;
+  transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
+}
 .version:hover { color: var(--atlas-text); }
+.version:hover > .emblem, .version[aria-current] > .emblem { opacity: 1; }
 .version[aria-current] { color: var(--atlas-text-strong); }
 .version[aria-current]::after { opacity: 1; }
 .version:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -4px; border-radius: var(--atlas-radius-control); }
@@ -53,12 +64,12 @@
 @media (max-width: 559px) {
   .full { display: none; }
   .short { display: inline; }
-  .version { padding-inline: var(--atlas-space-2); }
+  .version { gap: 6px; padding-inline: var(--atlas-space-2); }
   .version::after { inset-inline: var(--atlas-space-2); }
   .list > li:first-child > .version { margin-inline-start: calc(-1 * var(--atlas-space-2)); }
 }
 
-@media (prefers-reduced-motion: reduce) { .version, .version::after { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .version, .version::after, .emblem { transition: none; } }
 @media (forced-colors: active) { .version[aria-current]::after { background: Highlight; forced-color-adjust: none; } }
 
 /* The strip sits above the bar on every page: the home first screen gives its height back. */

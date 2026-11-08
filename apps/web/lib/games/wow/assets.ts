@@ -160,3 +160,11 @@ export function talentAbilityIcon(ability: AbilityIconCandidate, talentData?: Ta
   const keys = new Set([normalizedAbilityName(ability.id), normalizedAbilityName(ability.name)]);
   return choices.find((choice) => keys.has(normalizedAbilityName(choice.name)) && choice.iconUrl && !choice.iconFallback)?.iconUrl ?? null;
 }
+
+/** Emblems of the game versions in the top strip, cut from the client's shop
+ * product logos (provenance: /assets/wow/versions/SOURCE.md). */
+export const WOW_VERSION_EMBLEMS = {
+  retail: "/assets/wow/versions/retail.png",
+  forever: "/assets/wow/versions/forever.png",
+  mists: "/assets/wow/versions/mists.png",
+} as const;

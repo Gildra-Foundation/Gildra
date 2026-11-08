@@ -1,4 +1,5 @@
 import { p, type Lang } from "@/lib/i18n-paths";
+import { WOW_VERSION_EMBLEMS } from "@/lib/games/wow/assets";
 
 /**
  * The versions of World of Warcraft the site covers, in the order of the top strip.
@@ -15,6 +16,8 @@ export type WowPortal = {
   label: Words;
   /** Narrow screens. */
   shortLabel: Words;
+  /** The version's emblem from the game files. */
+  emblem: string;
   path: string;
   sections: Partial<Record<WowPortalSection, string>>;
 };
@@ -22,6 +25,7 @@ export type WowPortal = {
 export const wowPortals: readonly WowPortal[] = [
   {
     id: "retail",
+    emblem: WOW_VERSION_EMBLEMS.retail,
     label: { en: "Midnight", ru: "Midnight" },
     shortLabel: { en: "Midnight", ru: "Midnight" },
     path: "/wow",
@@ -29,6 +33,7 @@ export const wowPortals: readonly WowPortal[] = [
   },
   {
     id: "forever",
+    emblem: WOW_VERSION_EMBLEMS.forever,
     label: { en: "Forever", ru: "Forever" },
     shortLabel: { en: "Forever", ru: "Forever" },
     path: "/wow/forever",
@@ -36,6 +41,7 @@ export const wowPortals: readonly WowPortal[] = [
   },
   {
     id: "mists",
+    emblem: WOW_VERSION_EMBLEMS.mists,
     label: { en: "Mists of Pandaria Classic", ru: "Mists of Pandaria Classic" },
     shortLabel: { en: "MoP Classic", ru: "MoP Classic" },
     path: "/wow/mists",
