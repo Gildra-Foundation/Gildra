@@ -37,6 +37,7 @@ export function AccountChip({
   avatarClassName = "avatar",
   labelClassName = "user-name",
   avatarContent,
+  initial = false,
   trailing,
 }: {
   lang: Lang;
@@ -45,6 +46,8 @@ export function AccountChip({
   labelClassName?: string;
   /** Decorative glyph inside the avatar ring (none by default). */
   avatarContent?: ReactNode;
+  /** Signed in, the avatar shows the first letter of the account name instead of the glyph. */
+  initial?: boolean;
   /** Decorative arrow/caret shown after the label (kept in every state for a stable width). */
   trailing?: ReactNode;
 }) {
@@ -94,15 +97,17 @@ export function AccountChip({
   }
 
   const label = status.name ?? w.characters;
+  const letter = initial && status.name ? Array.from(status.name)[0]?.toLocaleUpperCase(lang) : null;
   return (
     <Link
       className={className}
+      data-signed-in=""
       href={p(lang, "/wow/characters")}
       prefetch={false}
       aria-label={status.name ? `${w.account}: ${status.name}` : label}
       title={status.name ?? undefined}
     >
-      {avatar}
+      {letter ? <span className={avatarClassName} aria-hidden="true">{letter}</span> : avatar}
       <span className={labelClassName}>{label}</span>
       {trailing}
     </Link>

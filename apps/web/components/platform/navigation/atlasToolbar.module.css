@@ -8,6 +8,8 @@
      scroll frame, which weak GPUs drop frames on. */
   background: var(--atlas-bg);
   border-bottom: 1px solid var(--atlas-line-soft);
+  /* Search, language and account share one height. */
+  --toolbar-control-height: 40px;
 }
 /* An open menu or sheet stands above the cookie notice (z-index 90) at the bottom edge. */
 .toolbar:has(.panel, .sheet:not([data-state="closed"])) { z-index: 95; }
@@ -87,7 +89,7 @@
 .search { justify-self: stretch; min-width: 0; }
 .search button {
   width: 100%;
-  min-height: 42px;
+  min-height: var(--toolbar-control-height);
   padding-inline: 14px 8px;
   border-color: var(--atlas-line);
   border-radius: var(--atlas-radius-control);
@@ -100,27 +102,40 @@
 
 .end { display: flex; justify-self: end; align-items: center; gap: var(--atlas-space-3); }
 
-/* Account: the one gold control (AccountChip — "Sign in" or the Battle.net name). */
+/* Account: a quiet control of the same frame as the language switch; the gold
+   is only in the avatar's ring (AccountChip — "Sign in" or the Battle.net name). */
 .accountSlot { display: contents; }
 .account {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 38px;
-  padding: 0 14px 0 4px;
-  border: 1px solid color-mix(in srgb, var(--atlas-accent-2) 55%, transparent);
-  border-radius: 999px;
+  height: var(--toolbar-control-height);
+  padding: 0 14px 0 6px;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius-control);
   color: var(--atlas-text-strong);
-  background: color-mix(in srgb, var(--atlas-accent-2) 10%, transparent);
+  background: var(--atlas-surface);
   font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
   text-decoration: none;
   white-space: nowrap;
   transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
 }
-.account:hover { border-color: var(--atlas-accent-2); background: color-mix(in srgb, var(--atlas-accent-2) 20%, transparent); }
+.account:hover { border-color: var(--atlas-line-strong); background: var(--atlas-surface-raised); }
 .account:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-.accountAvatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--atlas-accent-ink); background: var(--atlas-accent-2); }
-.accountLabel { max-width: 12ch; overflow: hidden; text-overflow: ellipsis; }
+.accountAvatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--atlas-accent-2);
+  background: color-mix(in srgb, var(--atlas-accent-2) 14%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--atlas-accent-2) 60%, transparent) inset;
+}
+/* Signed in: the account's initial on the gold. */
+.account[data-signed-in] .accountAvatar { color: var(--atlas-accent-ink); background: var(--atlas-accent-2); font: 700 var(--atlas-text-small) / 1 var(--atlas-font-display); }
+.accountLabel { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; }
 /* The placeholder holds the width of "Sign in" (its hidden word), so the chip
    keeps its size when the status arrives; the answer fades in over it. */
 .accountLabel :global(.user-skel) { width: auto; max-width: 12ch; overflow: hidden; color: transparent; font-style: normal; line-height: 8px; white-space: nowrap; }
@@ -306,15 +321,17 @@
 @media (max-width: 1179px) {
   .top { grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--atlas-space-3); height: 56px; }
   .search { justify-self: end; width: auto; }
-  .search button { width: auto; min-height: 40px; padding-inline: 11px; }
+  .search button { width: auto; padding-inline: 11px; }
   .search button > span, .search button > kbd { display: none; }
-  .accountSlot { display: none; }
+  /* The account stays in the bar as its avatar; the menu sheet repeats it with the name. */
+  .accountSlot > .account { width: var(--toolbar-control-height); padding: 0; justify-content: center; }
+  .accountSlot > .account > .accountLabel { display: none; }
   .sheetRoot { display: block; }
   .menuButton {
     display: grid;
     place-items: center;
-    width: 40px;
-    height: 40px;
+    width: var(--toolbar-control-height);
+    height: var(--toolbar-control-height);
     padding: 0;
     border: 1px solid var(--atlas-line);
     border-radius: var(--atlas-radius-control);
@@ -383,9 +400,9 @@
 
 /* Touch: every control of the bar is a 44 px target. */
 @media (pointer: coarse) {
+  .toolbar { --toolbar-control-height: 44px; }
   .brand { min-width: 44px; min-height: 44px; }
-  .search button { min-width: 44px; min-height: 44px; }
-  .menuButton { width: 44px; height: 44px; }
+  .search button { min-width: 44px; }
 }
 /* Phones held sideways: one row (the tab strip is in the menu sheet), so the page keeps its height. */
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 540px) {

@@ -3,8 +3,11 @@
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
+  height: var(--toolbar-control-height, 40px);
+  padding: 3px;
   border: 1px solid var(--atlas-line);
-  border-radius: var(--atlas-radius);
+  border-radius: var(--atlas-radius-control);
+  background: var(--atlas-surface);
   isolation: isolate;
 }
 
@@ -14,15 +17,16 @@
    page change (routeTransition.module.css). */
 .pill {
   position: absolute;
-  inset: 0 auto 0 0;
+  inset: 3px auto 3px 3px;
   z-index: -1;
-  width: 50%;
-  background: var(--atlas-accent);
-  box-shadow: 0 0 0 1px var(--atlas-accent-strong) inset;
+  width: calc(50% - 3px);
+  border-radius: calc(var(--atlas-radius-control) - 3px);
+  background: var(--atlas-surface-selected);
+  box-shadow: 0 0 0 1px var(--atlas-line-strong) inset;
   transition: transform var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
 }
 .switch[data-active="ru"] .pill { transform: translateX(100%); }
-.switch[aria-busy] .pill { box-shadow: 0 0 0 1px var(--atlas-accent-strong) inset, 0 0 14px var(--atlas-accent-glow); }
+.switch[aria-busy] .pill { box-shadow: 0 0 0 1px var(--atlas-accent) inset, 0 0 10px var(--atlas-accent-glow); }
 .switch[aria-busy]::after {
   position: fixed;
   inset: 0 0 auto;
@@ -40,26 +44,26 @@
 .option {
   display: grid;
   place-items: center;
-  min-width: 36px;
-  min-height: var(--atlas-control-height);
+  min-width: 34px;
   padding: 0 var(--atlas-space-2);
-  color: var(--atlas-text-muted);
+  border-radius: calc(var(--atlas-radius-control) - 3px);
+  color: var(--atlas-text-subtle);
   font: 650 var(--atlas-text-label) / 1 var(--atlas-font-ui);
   letter-spacing: var(--atlas-tracking-label);
   text-decoration: none;
-  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+  transition: color var(--atlas-duration) var(--atlas-ease);
 }
-.option:not([data-shown]):hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
-.option:not([data-shown]):active { background: var(--atlas-accent-wash-strong); }
-.option[data-shown] { color: var(--atlas-accent-ink); cursor: default; }
-.option:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.option:not([data-shown]):hover { color: var(--atlas-text-strong); }
+.option[data-shown] { color: var(--atlas-text-strong); cursor: default; }
+.option:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
 
 @media (max-width: 480px) {
-  .option { min-width: 32px; padding: 0 var(--atlas-space-1); }
+  .option { min-width: 30px; padding: 0 var(--atlas-space-1); }
 }
-/* Touch: each language is a 44 px target. */
+/* Touch: each language is a 44 px target (the frame's padding is part of it). */
 @media (pointer: coarse) {
-  .option { min-width: 44px; min-height: 44px; }
+  .switch { height: 44px; }
+  .option { min-width: 38px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pill, .option { transition: none; }

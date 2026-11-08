@@ -458,7 +458,7 @@ function MenuSheet({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
 /** Real account state (GET /api/auth/status): "Sign in" or the Battle.net name. */
 function Account({ lang }: { lang: Lang }) {
   return <AccountChip lang={lang} className={toolbarStyles.account} avatarClassName={toolbarStyles.accountAvatar}
-    labelClassName={toolbarStyles.accountLabel} avatarContent={<UserRound size={15} strokeWidth={2} />} />;
+    labelClassName={toolbarStyles.accountLabel} avatarContent={<UserRound size={15} strokeWidth={2} />} initial />;
 }
 
 /**
