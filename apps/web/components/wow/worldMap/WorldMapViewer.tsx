@@ -823,7 +823,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       <div ref={dock} className={styles.dock} data-map-ui>
         {narrow ? panel : null}
         {eras.length > 1 ? (
-          <MapTimeline lang={lang} eras={eras} events={bundle?.events ?? []} position={pos} activeEvent={selected?.type === "event" ? selected.event : null}
+          <MapTimeline lang={lang} eras={eras} events={bundle?.events ?? []} phases={art} position={pos} activeEvent={selected?.type === "event" ? selected.event : null}
             compare={Boolean(compare)} compareLeft={compare?.left ?? null} canCompare={changedHere.length > 0 || eventCompare}
             onPosition={setPosition} onCompareLeft={(left) => setCompare({ left })} onEvent={openEvent} onCompare={toggleCompare} />
         ) : null}
