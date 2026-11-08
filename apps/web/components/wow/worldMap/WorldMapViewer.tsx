@@ -193,8 +193,12 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     if (!engine || !index) return;
     // A frame of the living layers only (the camera has not moved): the markers stay where they are.
     const c = info.camera;
-    const still = c.x === lastView.current.x && c.y === lastView.current.y && c.scale === lastView.current.scale && info.width === lastView.current.w && info.height === lastView.current.h && lastPick.current !== 0;
-    lastView.current = { x: c.x, y: c.y, scale: c.scale, w: info.width, h: info.height };
+    // (A new map in view at rest is not still: its markers replace the last one's.)
+    // (The map the frame was composed around: it changes one frame after the map in view does.)
+    const composed = info.drawn.find((entry) => entry.role === "focus")?.map.id ?? info.focus.id;
+    const still = c.x === lastView.current.x && c.y === lastView.current.y && c.scale === lastView.current.scale && info.width === lastView.current.w && info.height === lastView.current.h && composed === lastView.current.focus && lastPick.current !== 0;
+    const focusChanged = composed !== lastView.current.focus;
+    lastView.current = { x: c.x, y: c.y, scale: c.scale, w: info.width, h: info.height, focus: composed };
     // The hovered flight master's routes: the dotted line runs towards its destinations.
     const poi = hoverPoiRef.current;
     if (poi?.routes && !reducedRef.current) for (const path of routeEls.current) path?.style.setProperty("stroke-dashoffset", String((-info.time * 22) % 1000));
@@ -231,17 +235,20 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       });
     }
     const now = performance.now();
-    if (now - lastPick.current > (info.moving ? 160 : 60)) {
+    if (focusChanged || now - lastPick.current > (info.moving ? 160 : 60)) {
       lastPick.current = now;
       const s = state.current;
       const next = pickMarkers(info, index, s.layers, s.metaEra, (x, y) => engine.project(x, y), (map) => map.art, lang);
       const same = next.length === markerList.current.length && next.every((m, i) => m.key === markerList.current[i].key);
       if (!same) { markerList.current = next; setMarkers(next); }
+      // Checks read the markers of the frame beside the engine (dev builds or ?debug only, as the engine itself).
+      const probe = window as Window & { __worldMap?: unknown; __worldMapMarkers?: unknown };
+      if (probe.__worldMap) probe.__worldMapMarkers = next.map((m) => ({ key: m.key, owner: m.owner, label: m.label, type: m.type, sx: m.sx, sy: m.sy }));
     }
   };
 
   const hoverPoiRef = useRef<AtlasPoi | null>(null);
-  const lastView = useRef({ x: NaN, y: NaN, scale: NaN, w: 0, h: 0 });
+  const lastView = useRef({ x: NaN, y: NaN, scale: NaN, w: 0, h: 0, focus: -1 });
   const reducedRef = useRef(false);
   const locatorFollow = useRef<((view: [number, number, number, number]) => void) | null>(null);
   const tipEl = useRef<HTMLDivElement | null>(null);

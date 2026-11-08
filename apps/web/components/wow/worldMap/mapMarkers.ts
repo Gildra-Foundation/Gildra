@@ -32,10 +32,11 @@ export function storeLayers(layers: Layers) {
   try { window.localStorage.setItem(LAYERS_KEY, JSON.stringify(layers)); } catch { /* private mode: the choice lasts this visit */ }
 }
 
-export type Marker =
+/** `owner`: the map whose place it is (for checks). */
+export type Marker = ({ owner?: number }) & (
   | { key: string; type: "poi"; kind: PoiKind; label: string; ax: number; ay: number; priority: number; showLabel: boolean; poi: AtlasPoi; faction?: string; side?: LabelSide }
   | { key: string; type: "map"; label: string; ax: number; ay: number; priority: number; map: AtlasMap; capital: boolean; faction?: string; size: "world" | "continent" | "zone"; quiet: boolean; covers?: boolean; shift?: number }
-  | { key: string; type: "event"; label: string; ax: number; ay: number; priority: number; event: AtlasEvent; current: boolean };
+  | { key: string; type: "event"; label: string; ax: number; ay: number; priority: number; event: AtlasEvent; current: boolean });
 
 const MIN_WIDTH: Record<PoiKind, number> = { capital: 180, city: 640, town: 1000, dungeon: 520, raid: 420, delve: 900, flight: 1200, portal: 900, "zone-label": 240 };
 const PRIORITY: Record<PoiKind, number> = { capital: 1, "zone-label": 2, raid: 3, city: 3, dungeon: 4, delve: 5, town: 5, portal: 6, flight: 7 };
@@ -117,6 +118,9 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
     const { map, alpha, screen } = entry;
     const width = screen[2] - screen[0];
     if (alpha < 0.55 || backdrop(entry)) continue;
+    // Only the map in view names its places: no points or names of the maps around it (neighbours, the
+    // continents of a world, the zones of a continent), none of a level the reader is not looking at.
+    if (entry.role !== undefined && entry.role !== "focus") continue;
     const kids = map.children.map((id) => index.byId.get(id)).filter((child): child is AtlasMap => Boolean(child) && Boolean(artIn(child as AtlasMap)));
     const openKid = (ax: number, ay: number) => kids.some((child) => (drawnAlpha.get(child.id) ?? 0) > 0.7 && contains(child.box, ax, ay));
     const labelled = new Set<string>();
@@ -141,7 +145,7 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
       if (target) {
         if (!artIn(target)) continue;
         out.push({
-          key: `m${target.id}`, type: "map", label: poi.name, ax, ay, priority: map.type === "world" || map.type === "cosmic" ? 9 : 2,
+          owner: map.id, key: `m${target.id}`, type: "map", label: poi.name, ax, ay, priority: map.type === "world" || map.type === "cosmic" ? 9 : 2,
           map: target, capital: false, size: map.type === "cosmic" || map.type === "world" ? "world" : map.type === "continent" ? "continent" : "zone",
           quiet: map.type === "cosmic" || map.type === "world" || (namesPainted && localized),
           covers: namesPainted && !localized && map.type !== "cosmic" && map.type !== "world",
@@ -150,7 +154,7 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
       }
       if (poi.kind === "zone-label" && namesPainted) continue;
       const showLabel = poi.kind === "capital" || poi.kind === "city" || poi.kind === "zone-label" || (poi.kind === "town" && width > 1400 * near) || ((poi.kind === "raid" || poi.kind === "dungeon" || poi.kind === "delve") && width > 1500 * near);
-      out.push({ key: `p${poi.id}`, type: "poi", kind: poi.kind, label: poi.name, ax, ay, priority: PRIORITY[poi.kind], showLabel, poi, faction: poi.faction });
+      out.push({ owner: map.id, key: `p${poi.id}`, type: "poi", kind: poi.kind, label: poi.name, ax, ay, priority: PRIORITY[poi.kind], showLabel, poi, faction: poi.faction });
     }
     // Names of child maps not opened yet: click to fly in.
     if (layers.labels && width >= 240) {
@@ -163,7 +167,7 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
         if (capital && !layers[capital.kind === "capital" ? "capitals" : "cities"]) continue;
         const cx = (child.box[0] + child.box[2]) / 2, cy = (child.box[1] + child.box[3]) / 2;
         out.push({
-          key: `m${child.id}`, type: "map", label: child.name, ax: cx, ay: cy, priority: capital ? 1 : map.type === "world" || map.type === "cosmic" ? 9 : 2,
+          owner: map.id, key: `m${child.id}`, type: "map", label: child.name, ax: cx, ay: cy, priority: capital ? 1 : map.type === "world" || map.type === "cosmic" ? 9 : 2,
           map: child, capital: Boolean(capital), faction: capital?.faction, size: map.type === "cosmic" || map.type === "world" ? "world" : map.type === "continent" ? "continent" : "zone",
           // The Cosmic and world pictures carry their own painted names: ours shows on hover only.
           quiet: map.type === "cosmic" || map.type === "world" || (namesPainted && localized),
@@ -177,7 +181,7 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
         seenEvents.add(event.id);
         const [ax, ay] = point(map, event.x, event.y);
         const current = !era || event.era === era.id || event.after === era.id;
-        out.push({ key: `e${event.id}`, type: "event", label: event.title, ax, ay, priority: current ? 0 : 3, event, current });
+        out.push({ owner: map.id, key: `e${event.id}`, type: "event", label: event.title, ax, ay, priority: current ? 0 : 3, event, current });
       }
     }
   }
