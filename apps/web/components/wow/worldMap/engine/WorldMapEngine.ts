@@ -42,6 +42,8 @@ export type DrawnMap = {
    * in it (`child`: one level down, its own land only, never over another child; `inside`: deeper), an ancestor (a calm backdrop without its words) or a neighbour (only its own land, outside the map in view).
    */
   role?: DrawRole;
+  /** The map in view magnified past its own detail (0..1): its words give way, it goes out of focus. */
+  past?: number;
   /** Ancestor: how far it is a backdrop (0 = its picture, 1 = only the wash); focus: how far it shows whole (its mask off). */
   tone?: number;
 };
@@ -754,9 +756,10 @@ export class WorldMapEngine {
     // The most detailed picture under the centre sets the limit (a small coarse sub-zone overlapping a city must not).
     let max = 0;
     let terrain: AtlasMap["terrain"] | undefined;
-    // Zooming at a point (the cursor), the place under it counts too: the view's middle only gets there as it zooms.
+    // Zooming at a point (the cursor), the place under it sets the limit (not the view's middle: over the sea beside
+    // an island the world map would otherwise be blown up past its detail on the way).
     const at = anchor ? toAtlas(camera, this.width, this.height, anchor.x, anchor.y) : null;
-    const under = (box: Box) => contains(box, camera.x, camera.y) || (at !== null && contains(box, at[0], at[1]));
+    const under = (box: Box) => (at !== null ? contains(box, at[0], at[1]) : contains(box, camera.x, camera.y));
     for (const map of this.maps.values()) {
       // (The map in view counts wherever the middle is: it may be zoomed to its own limit.)
       if (!map.art || UNDER.has(map.type) || (!under(map.frame) && map.id !== this.focusId)) continue;
@@ -822,7 +825,14 @@ export class WorldMapEngine {
       const open = natural;
       if (role === "focus" && !map.portal) alpha = 1;
       const entry: DrawnMap = { map, alpha, open, screen, clip, upscale, blur: role === "focus" ? 0 : blurOf(upscale), ...(side ? { side } : {}), ...(under ? { under } : {}), ...(role ? { role } : {}) };
-      if (role === "focus") entry.tone = smoothstep(0.5, 0.9, alpha);
+      if (role === "focus") {
+        entry.tone = smoothstep(0.5, 0.9, alpha);
+        // The map in view magnified past its own detail on the way into one of its places (a fast zoom, before the
+        // hand-over): its painted words give way and it goes softly out of focus — never shown blown up and sharp.
+        const whole = this.wholeUpscale(set, map);
+        const past = smoothstep(Math.max(1.7, whole * 1.3), Math.max(2.3, whole * 1.75), upscale);
+        if (past > 0) { entry.past = past; entry.blur = blurOf(upscale) * past; }
+      }
       out.push(entry);
       // A neighbour shows its own land only: the places inside it are not opened (no picture over another).
       if (role === "neighbour") return;
@@ -1437,6 +1447,8 @@ export class WorldMapEngine {
           ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set, role === "ancestor" || (role === "neighbour" && (entry.blur >= BLURRED_WORDS || keys[i] > 0 || entry.map.type === "continent" || entry.map.type === "world"))) } : {}),
           // The map in view: its frame's corner pieces go too (its painted border is under its soft edge already).
           ...(role === "focus" && entry.map.depth > 0 ? { corner: 0.2 } : {}),
+          // …and, magnified past its detail, its painted words.
+          ...(role === "focus" && focus && (entry.past ?? 0) > 0.2 ? this.givesWay(entry, focus, set, true) : {}),
         };
         // Neighbours in one layer: each only where the ones before it left the layer empty.
         this.renderer.setUnder((role === "neighbour" || role === "child") && this.renderer.inLayer);
