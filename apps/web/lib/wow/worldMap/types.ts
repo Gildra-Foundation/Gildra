@@ -47,6 +47,10 @@ export type MapRecord = {
   terrain?: MapTerrain;
   /** Another map of the same place (a phase, a later or earlier picture): the place's main map id. */
   samePlaceAs?: number;
+  placeRole?: "floor" | "phase" | "successor" | "predecessor" | "alternate" | "aggregate";
+  /** The patches this picture of the place stands for (phases, successors, predecessors). */
+  activeFrom?: string;
+  activeTo?: string;
 };
 
 export type PoiKind = "capital" | "city" | "town" | "flight" | "portal" | "dungeon" | "raid" | "delve" | "zone-label";
@@ -86,6 +90,8 @@ export type EraRecord = {
   rootMapId?: number;
   /** That client's points (replace the current ones). */
   pois?: PoiRecord[];
+  /** Maps another map of the same place stands for at the era's start: not drawn, nor their points. */
+  inactive?: number[];
 };
 /** An era of the timeline (eras-meta.json): one per expansion. */
 export type EraMeta = {

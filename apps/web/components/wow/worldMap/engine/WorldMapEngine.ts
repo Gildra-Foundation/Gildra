@@ -84,6 +84,7 @@ const UNDER: ReadonlySet<string> = new Set(["micro", "orphan"]);
 const usesMask = (map: AtlasMap) => Boolean(map.mask) && map.depth > 0 && map.type !== "world" && map.type !== "cosmic" && map.type !== "continent";
 /** A neighbour this far out of focus loses its painted words (they would read as blurred letters). */
 const BLURRED_WORDS = 0.06;
+const NONE: ReadonlySet<number> = new Set();
 const FADE_TILE = 150;
 const FADE_ERA = 900;
 /** Longest wait for an era's picture to load before it fades in anyway. */
@@ -503,12 +504,22 @@ export class WorldMapEngine {
     let bestArea = Infinity;
     for (const id of base.children) {
       const child = this.maps.get(id);
-      if (!child || !contains(child.box, ax, ay) || !child.art || UNDER.has(child.type)) continue;
+      if (!child || !contains(child.box, ax, ay) || !child.art || UNDER.has(child.type) || this.hiddenIn(this.set).has(id)) continue;
       const area = (child.box[2] - child.box[0]) * (child.box[3] - child.box[1]);
       if (area < bestArea) { best = child; bestArea = area; }
     }
     return best;
   }
+
+  /** Maps of a set not shown at the moment (another picture of their place stands for them). */
+  setHidden(key: string, ids: ReadonlySet<number>) {
+    const known = this.hidden.get(key);
+    if (known && known.size === ids.size && [...ids].every((id) => known.has(id))) return;
+    this.hidden.set(key, ids);
+    this.invalidate();
+  }
+  private hidden = new Map<string, ReadonlySet<number>>();
+  private hiddenIn(set: MapSet): ReadonlySet<number> { return this.hidden.get(set.key) ?? NONE; }
 
   invalidate() {
     this.dirty = true;
@@ -715,9 +726,12 @@ export class WorldMapEngine {
     const within = fid !== null ? this.subtreeOf(set, fid) : new Set<number>();
     const roleOf = (id: number): DrawRole | undefined => (fid === null ? undefined : id === fid ? "focus"
       : within.has(id) ? (set.maps.get(id)?.parent === fid ? "child" : "inside") : onChain.has(id) ? "ancestor" : "neighbour");
+    const hidden = this.hiddenIn(set);
     const visit = (map: AtlasMap, alpha: number, parentClip: Box | null, side = false, under = 0) => {
       const art = map.art;
       if (!art) return;
+      // Another picture of its place stands for it now (unless the reader is on its way to it).
+      if (hidden.has(map.id) && !onChain.has(map.id)) return;
       const role = roleOf(map.id);
       const [x0, y0] = this.project(map.frame[0], map.frame[1]);
       const [x1, y1] = this.project(map.frame[2], map.frame[3]);
@@ -745,7 +759,7 @@ export class WorldMapEngine {
       for (const id of map.children) {
         const child = set.maps.get(id);
         // Floors and caves under a place (Cleft of Shadow under Orgrimmar) are not part of its surface.
-        if (!child?.art || UNDER.has(child.type)) continue;
+        if (!child?.art || UNDER.has(child.type) || (hidden.has(id) && !onChain.has(id))) continue;
         const [cx0, cy0] = this.project(child.frame[0], child.frame[1]);
         const [cx1, cy1] = this.project(child.frame[2], child.frame[3]);
         if (child.portal) {
@@ -1000,8 +1014,9 @@ export class WorldMapEngine {
     const core: Box = [f[0] + fw * 0.12, f[1] + fh * 0.12, f[2] - fw * 0.12, f[3] - fh * 0.12];
     for (const label of labelBoxes(art)) {
       const plaque = toAtlas(label.plaque ?? label.box);
-      // A neighbour out of focus: its words would only be blurred letters; they go (the backdrop shows there).
-      if (allWords && !(label.patch && label.for === focus.id)) { add(plaque); continue; }
+      // Every word goes: an ancestor's (while it is still seen as a picture, on the way to its backdrop) and a
+      // blurred neighbour's — the ground drawn over it where the data has a patch, else the backdrop shows there.
+      if (allWords) { if (label.patch) patches.push({ url: label.patch, box: plaque }); else add(plaque); continue; }
       if (label.for !== undefined) {
         // The place in view, or an older map of the same place (Silvermoon before Midnight on the old Eversong).
         const target = label.for === focus.id ? focus : set.maps.get(label.for);
@@ -1188,7 +1203,7 @@ export class WorldMapEngine {
           desat: 0, levelScale: scale,
           // Maps around the one in view: their corner ornaments go, and their painted words and decor
           // where the place in view lies give way (no second "STORMWIND" over the city).
-          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set, role === "neighbour" && entry.blur >= BLURRED_WORDS) } : {}),
+          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set, role === "ancestor" || (role === "neighbour" && entry.blur >= BLURRED_WORDS)) } : {}),
           // The map in view: its frame's corner pieces go too (its painted border is under its soft edge already).
           ...(role === "focus" && entry.map.depth > 0 ? { corner: 0.12 } : {}),
         };

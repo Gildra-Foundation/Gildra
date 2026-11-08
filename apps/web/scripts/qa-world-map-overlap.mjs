@@ -192,7 +192,8 @@ async function measure() {
   {
     e.dirty = true;
     e.render(performance.now());
-    const gl = e.renderer.gl, k = e.dpr;
+    // The drawing buffer may be smaller than the canvas (the engine lowers its resolution when frames are slow).
+    const gl = e.renderer.gl, k = gl.drawingBufferWidth / Math.max(1, W);
     const x0 = Math.max(0, Math.round(core[0] * k)), y0 = Math.max(0, Math.round(core[1] * k));
     const x1 = Math.min(gl.drawingBufferWidth, Math.round(core[2] * k)), y1 = Math.min(gl.drawingBufferHeight, Math.round(core[3] * k));
     if (x1 - x0 > 20 && y1 - y0 > 20) {
@@ -201,15 +202,21 @@ async function measure() {
       let n = 0;
       for (let i = 0; i < px.length; i += 4) if (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2] < 14) n += 1;
       dark = n / (px.length / 4);
+      if (dark > 0.5) {
+        const c = new Uint8Array(4); gl.readPixels(gl.drawingBufferWidth >> 1, gl.drawingBufferHeight >> 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, c);
+        window.__darkDebug = { err: gl.getError(), buf: [gl.drawingBufferWidth, gl.drawingBufferHeight], canvas: [e.canvas.width, e.canvas.height], W, H, q: e.quality, centre: [...c], drawn: e.lastInfo.drawn.length, visible: e.visible, raf: e.raf, fb: Boolean(gl.getParameter(gl.FRAMEBUFFER_BINDING)) };
+      }
     }
   }
-  return { focus: comp.focus, core, dark, duplicates, blurry, foreign, overlap: covered ? over / covered : 0, mix: mixBase ? mix / mixBase : 0, letters, pairs: pairs.slice(0, 6).map(([k, v]) => `${k} ${(100 * v / Math.max(1, covered)).toFixed(1)}%`) };
+  const lost = e.renderer.gl.isContextLost() || Boolean(e.lost);
+  const debug = window.__darkDebug ?? null;
+  return { focus: comp.focus, core, dark, lost, debug, set: e.set.key, duplicates, blurry, foreign, overlap: covered ? over / covered : 0, mix: mixBase ? mix / mixBase : 0, letters, pairs: pairs.slice(0, 6).map(([k, v]) => `${k} ${(100 * v / Math.max(1, covered)).toFixed(1)}%`) };
 }
 
 /** The audit's classes (MAPQ4): a page can have several; OK only without any. */
 function classify(r) {
   if (r.missing) return ["NOT-A-PAGE"];
-  if (r.error || r.note) return ["OTHER"];
+  if (r.error || r.note || r.requests?.length) return ["OTHER"];
   const out = [];
   if (r.foreign.length || r.overlap > maxOverlap) out.push("OVERLAP-NEIGHBOUR");
   if (r.duplicates.length) out.push("DUPLICATE-PLACE");
@@ -228,6 +235,12 @@ const work = async () => {
   for (let route = queue.shift(); route; route = queue.shift()) {
     const page = await context.newPage();
     const url = `${base}${route}${route.includes("?") ? "&" : "?"}debug`;
+    // Every file the viewer asks for must exist (no 404 tile, mask, patch, page or bundle).
+    const missing = [];
+    page.on("response", (response) => {
+      const u = response.url();
+      if (response.status() >= 400 && u.startsWith(base) && !u.startsWith(url.split("?")[0])) missing.push(`${response.status()} ${u.slice(base.length)}`);
+    });
     let result;
     try {
       const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90000 });
@@ -236,9 +249,16 @@ const work = async () => {
       await page.waitForFunction(() => { const e = window.__worldMap; return e && e.lastInfo && e.tiles.loadedCount > 4 && e.tiles.pending === 0 && !e.pending && !e.fromSet; }, null, { timeout: Number(args.wait ?? 120000), polling: 300 });
       await page.waitForTimeout(400);
       result = { route, ...(await page.evaluate(measure)) };
+      // The settled view: a frame read back mid-way (a backdrop still being made, a dark read) is measured again;
+      // a real defect is there again a moment later.
+      for (let again = 0; again < 2 && classify(result)[0] !== "OK"; again++) {
+        await page.waitForTimeout(1500);
+        result = { route, ...(await page.evaluate(measure)) };
+      }
     } catch (error) {
       result = { route, error: String(error.message ?? error).split("\n")[0] };
     }
+    if (!result.missing) result.requests = missing;
     result.classes = classify(result);
     result.ok = result.classes.length === 1 && result.classes[0] === "OK";
     results.push(result);

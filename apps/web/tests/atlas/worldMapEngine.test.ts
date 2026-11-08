@@ -10,6 +10,7 @@ import { wheelKind } from "@/components/wow/worldMap/engine/input";
 import { blurRgb, fillBoxes, toneImage } from "@/components/wow/worldMap/engine/tone";
 import { layerGroups, placeKeys } from "@/components/wow/worldMap/engine/compose";
 import type { DrawnMap } from "@/components/wow/worldMap/engine/WorldMapEngine";
+import { hiddenAt } from "@/components/wow/worldMap/worldMapModel";
 import { eraFromParam, eventComparison, eventMoment, mapIdOfPath, patchPosition, positionToPatch, pushesHistory, queryToView, viewToQuery } from "@/components/wow/worldMap/worldMapModel";
 import { isRectMask, paperColour } from "@/components/wow/worldMap/engine/paper";
 import { decorBoxes, labelBoxes } from "@/lib/wow/worldMap/painted";
@@ -459,5 +460,24 @@ describe("world map composition rules", () => {
     assert.ok(shared(map(390, "Vale of Eternal Blossoms"), map(1530, "Vale (N'Zoth)", 390)));
     assert.ok(!shared(map(1, "Durotar"), map(10, "Northern Barrens")));
     assert.deepEqual(placeKeys({ id: 947, name: "Azeroth", depth: 0 } as AtlasMap), []);
+  });
+});
+
+describe("one picture per place on the timeline", () => {
+  const vale = { id: 390 }, nzoth = { id: 1530, samePlace: 390, placeRole: "phase" as const, activeFrom: "8.3.0", activeTo: "8.3.7" };
+  const eversong = { id: 94, samePlace: 2395, placeRole: "predecessor" as const, activeTo: "11.2.7" };
+  const midnight = { id: 2395, samePlace: 94, placeRole: "successor" as const, activeFrom: "12.0.0" };
+  const maps = [vale, nzoth, eversong, midnight];
+  it("a phase stands for its place only in its own patches", () => {
+    assert.deepEqual([...hiddenAt(maps, [], 7.25)].sort(), [1530, 2395]);
+    const assault = hiddenAt(maps, [], 7.33);
+    assert.ok(assault.has(390) && !assault.has(1530));
+  });
+  it("Midnight's pictures replace the old ones; the era's own list counts too", () => {
+    const now = hiddenAt(maps, [94, 1530, 4], 11.05);
+    assert.ok(now.has(94) && now.has(1530) && now.has(4) && !now.has(2395) && !now.has(390));
+  });
+  it("the page's own map always shows", () => {
+    assert.ok(!hiddenAt(maps, [94], 11.05, 94).has(94));
   });
 });

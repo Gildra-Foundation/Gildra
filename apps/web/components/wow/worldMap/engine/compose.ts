@@ -36,4 +36,4 @@ export function layerGroups(groups: Array<{ from: number; to: number; blur: numb
  * own link (`samePlace`: a phase or another picture of that place's main map).
  */
 export const placeKeys = (map: AtlasMap | undefined): string[] =>
-  !map || map.depth === 0 ? [] : [`n:${map.name}`, `v:${map.samePlace ?? map.id}`];
+  !map || map.depth === 0 ? [] : [`n:${map.name}`, `v:${map.samePlace === undefined ? map.id : Math.min(map.id, map.samePlace)}`];

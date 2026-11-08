@@ -31,6 +31,10 @@ export type AtlasMap = {
   terrain?: AtlasTerrain;
   /** The main map of the place this one is another picture of (phases, earlier/later pictures). */
   samePlace?: number;
+  placeRole?: MapRecord["placeRole"];
+  /** The patches this picture of the place stands for. */
+  activeFrom?: string;
+  activeTo?: string;
 };
 export type AtlasTerrain = { art: MapArt; frame: Rect; index?: string };
 /** A map's picture in the bundle's language: `localized` when its painted words are in that language. */
@@ -45,9 +49,9 @@ export type AtlasEra = { id: string; name: string; expansion: string; range: [st
  * the base points of the maps that exist). A variant (`inherits`) is a phase of
  * a few maps inside its parent's time (Theramore after its fall).
  */
-export type ArtEra = { id: string; name: string; range: [string, string]; inherits?: string; product: string; only: number[] | null; own: AtlasMap[]; pois: AtlasPoi[] | null };
+export type ArtEra = { id: string; name: string; range: [string, string]; inherits?: string; product: string; only: number[] | null; own: AtlasMap[]; pois: AtlasPoi[] | null; inactive?: number[] };
 /** What the main bundle says about an art era; the maps come on demand (atlas/<lang>/<era>). */
-export type ArtEraInfo = { id: string; name: string; range: [string, string]; inherits?: string; changed: number[] };
+export type ArtEraInfo = { id: string; name: string; range: [string, string]; inherits?: string; changed: number[]; inactive?: number[] };
 export type AtlasEvent = {
   id: string; era: string; patch: string; year?: number; title: string; summary: string;
   /** null: the place is not on the map yet (the event still sits on the timeline). */
@@ -133,6 +137,9 @@ function placeRecords(records: Map<number, MapRecord>, lang: Lang, anchors: Map<
       page: false, portal,
       ...(validMask(record.mask) ? { mask: record.mask } : {}),
       ...(typeof record.samePlaceAs === "number" && record.samePlaceAs !== record.id ? { samePlace: record.samePlaceAs } : {}),
+      ...(record.placeRole ? { placeRole: record.placeRole } : {}),
+      ...(typeof record.activeFrom === "string" ? { activeFrom: record.activeFrom } : {}),
+      ...(typeof record.activeTo === "string" ? { activeTo: record.activeTo } : {}),
     };
     const terrain = terrainOf(record, frame);
     if (terrain) node.terrain = terrain;
@@ -219,7 +226,7 @@ export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle & 
         .filter((link) => link.href.startsWith("/")),
     }))
     .sort((a, b) => comparePatch(a.patch, b.patch));
-  return { lang, maps, pois, eras, art: art.map(({ id, name, range, inherits, own }) => ({ id, name, range, ...(inherits ? { inherits } : {}), changed: own.map((map) => map.id) })), artEras: art, events };
+  return { lang, maps, pois, eras, art: art.map(({ id, name, range, inherits, own, inactive }) => ({ id, name, range, ...(inherits ? { inherits } : {}), changed: own.map((map) => map.id), ...(inactive?.length ? { inactive } : {}) })), artEras: art, events };
 }
 
 /**
@@ -331,6 +338,7 @@ function buildArtEras(eras: EraRecord[], retail: Map<number, MapRecord>, base: M
       only: parent || only.length === base.size ? null : only.sort((x, y) => x - y),
       own,
       pois: parent ? null : poisOf(era, placed),
+      ...(Array.isArray(era.inactive) && era.inactive.length ? { inactive: era.inactive.filter((id): id is number => typeof id === "number") } : {}),
     };
   });
 }

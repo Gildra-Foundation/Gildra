@@ -63,6 +63,26 @@ export function patchPosition(patch: string) {
   return index + Math.min(0.96, minor * 0.1 + build * 0.01);
 }
 
+/**
+ * The maps not shown at a moment: one picture per place. The era's `inactive` list (the maps another one stands
+ * for at its start), then each picture with its own time (`activeFrom`/`activeTo`): out of it, it is hidden; in it,
+ * a phase hides its place's main map (the Vale under N'Zoth in 8.3 hides the Vale). The page's own map (`keep`)
+ * always shows: the reader asked for it.
+ */
+export function hiddenAt(maps: Iterable<Pick<AtlasMap, "id" | "samePlace" | "placeRole" | "activeFrom" | "activeTo">>, inactive: readonly number[], position: number, keep: number | null = null) {
+  const hidden = new Set(inactive);
+  for (const map of maps) {
+    if (map.activeFrom === undefined && map.activeTo === undefined) continue;
+    const on = (map.activeFrom === undefined || patchPosition(map.activeFrom) <= position + 1e-6)
+      && (map.activeTo === undefined || position <= patchPosition(map.activeTo) + 0.009);
+    if (!on) { hidden.add(map.id); continue; }
+    hidden.delete(map.id);
+    if (map.placeRole === "phase" && map.samePlace !== undefined) hidden.add(map.samePlace);
+  }
+  if (keep !== null) hidden.delete(keep);
+  return hidden;
+}
+
 /** Eras in time order; the current game's era is the latest. */
 export function orderedEras(eras: AtlasEra[]) {
   return [...eras].sort((a, b) => comparePatch(a.range[0], b.range[0]));

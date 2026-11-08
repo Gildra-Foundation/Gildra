@@ -21,7 +21,7 @@ import { measureInsets, NARROW_QUERY } from "./ui/layout";
 import { placeFacts } from "./ui/placeFacts";
 import type { StageCrumb, StageHandle } from "./WorldMapStage";
 import { worldMapCopy } from "./worldMapCopy";
-import { artErasAt, artKey, eraAt, eraFromParam, eventComparison, eventMoment, mapIdOfPath, mapLine, orderedEras, patchPosition, positionToPatch, pushesHistory, queryToView, restOf, viewToQuery } from "./worldMapModel";
+import { artErasAt, artKey, eraAt, hiddenAt, eraFromParam, eventComparison, eventMoment, mapIdOfPath, mapLine, orderedEras, patchPosition, positionToPatch, pushesHistory, queryToView, restOf, viewToQuery } from "./worldMapModel";
 import styles from "./worldMapViewer.module.css";
 
 type Selected = { type: "poi"; poi: AtlasPoi } | { type: "event"; event: AtlasEvent } | null;
@@ -129,9 +129,15 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     sets.current.set(key, made);
     return made;
   }, [baseSet, eraData]);
+  // One picture per place: the maps another one stands for now (the page's own map always shows).
+  const hidden = useMemo(() => {
+    const set = activeSet ?? baseSet;
+    return set ? hiddenAt(set.maps.values(), artNow[0]?.inactive ?? [], pos, mapId ?? null) : new Set<number>();
+  }, [activeSet, baseSet, artNow, pos, mapId]);
   const index = useMemo(() => {
     if (!bundle || !baseSet) return null;
-    const set = activeSet ?? baseSet;
+    const all = activeSet ?? baseSet;
+    const set = hidden.size ? { ...all, maps: new Map([...all.maps].filter(([id]) => !hidden.has(id))) } : all;
     const first = artNow[0] ? eraData[artNow[0].id] : undefined;
     // That era's own points (its client's portals and flight paths); a point leading to a map of another time is left out.
     const pois = (first?.pois ?? bundle.pois).filter((poi) => set.maps.has(poi.map) && (poi.target === undefined || set.maps.has(poi.target)));
@@ -145,7 +151,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
       return retailArt || now.art?.url === current.art?.url;
     });
     return indexMarkers({ maps: [...set.maps.values()], pois, events });
-  }, [bundle, baseSet, activeSet, artNow, eraData]);
+  }, [bundle, baseSet, activeSet, artNow, eraData, hidden]);
   const byId = index?.byId;
   // Search offers the places and points of the era on screen (no portal to the Jade Forest in Classic).
   const searchBundle = useMemo(() => (bundle && index ? { ...bundle, pois: [...index.poisByMap.values()].flat() } : bundle), [bundle, index]);
@@ -494,8 +500,13 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const engine = engineRef.current;
     if (!engine) return;
     const left = compare ? setFor(artLeft) : null;
+    if (left && compare) engine.setHidden(left.key, hiddenAt(left.maps.values(), artLeft[0]?.inactive ?? [], compare.left, mapId ?? null));
     engine.setCompare(left ? { left, at: divider } : null);
-  }, [compare, divider, artLeft, setFor]);
+  }, [compare, divider, artLeft, setFor, mapId]);
+  useEffect(() => {
+    const set = activeSet ?? baseSet;
+    if (set) engineRef.current?.setHidden(set.key, hidden);
+  }, [activeSet, baseSet, hidden]);
   useEffect(() => { lastPick.current = 0; engineRef.current?.invalidate(); }, [layers, activeSet]);
   // The living map's lights: capitals pulse, portals swirl (with their marker layers on).
   useEffect(() => {
@@ -653,7 +664,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     return placeFacts(focus, index.byId, index.poisByMap, bundle.events);
   }, [focus, index, bundle]);
   const toggleLayers = useCallback((open: boolean) => setLayersOpen(open), []);
-  const existsNow = useCallback((id: number) => Boolean((activeSet ?? baseSet)?.maps.has(id)), [activeSet, baseSet]);
+  const existsNow = useCallback((id: number) => Boolean((activeSet ?? baseSet)?.maps.has(id)) && !hidden.has(id), [activeSet, baseSet, hidden]);
 
   // ------------------------------------------------------------ render
   if (failed && !bundle) return <p className={styles.fallback} data-map-ui>{copy.noWebgl}</p>;
