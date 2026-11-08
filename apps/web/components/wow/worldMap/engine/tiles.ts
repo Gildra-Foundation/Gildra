@@ -71,6 +71,12 @@ export class TileStore {
     return tile;
   }
 
+  /** Loaded or given up on (nothing more to wait for), without asking. */
+  settled(key: string) {
+    const state = this.tiles.get(key)?.state;
+    return state === "ready" || state === "failed";
+  }
+
   /** Peek without asking. */
   peek(key: string) {
     const tile = this.tiles.get(key);

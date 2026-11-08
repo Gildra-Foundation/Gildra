@@ -4,6 +4,7 @@ import { clamp, contains, easeInOut, fitBox, flightPath, intersects, smoothstep,
 import { MapRenderer, type DrawParams } from "./gl";
 import { blurGroups, blurKey, blurOf, blurRadiusCss, blurRadiusPx, desatOf, dimOf, radiusOfKey, vignetteOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "./lod";
 import { wheelKind } from "./input";
+import { FOCUS_FADE, MAX_AHEAD, TAU_NOTCH, TAU_SMOOTH, ZOOM_DONE, fadeOut, gather, holdFocus, spend, wheelLog } from "./motion";
 import { analysePaper } from "./paper";
 import { loadTone } from "./tone";
 import { decorBoxes, labelBoxes, type ArtBox } from "@/lib/wow/worldMap/painted";
@@ -33,6 +34,7 @@ export type Insets = { top: number; right: number; bottom: number; left: number;
  */
 export type DrawnMap = {
   map: AtlasMap; alpha: number; screen: Box; clip: Box; upscale: number; blur: number; dim?: number;
+  /** How far the zoom has opened it (0..1), whatever it is drawn at: the map in view is drawn whole, yet it hands over by this. */ open?: number;
   /** A neighbour of the map in view: a wider soft edge. */ side?: boolean;
   /** How far out of focus the map under it is drawn. */ under?: number;
   /**
@@ -103,7 +105,7 @@ function outsideOf(box: Box, hole: Box): Box | null {
 const FADE_TILE = 150;
 const FADE_ERA = 900;
 /** Longest wait for an era's picture to load before it fades in anyway. */
-const ERA_WAIT = 900;
+const ERA_WAIT = 2500;
 
 export class WorldMapEngine {
   private set: MapSet;
@@ -127,7 +129,19 @@ export class WorldMapEngine {
   private lost = false;
   private flight: Flight | null = null;
   private velocity: { x: number; y: number } | null = null;
-  private wheel: { x: number; y: number; log: number } | null = null;
+  /** Zoom still to come, eased in frame by frame around a screen point (wheel, buttons, keys, double click). */
+  private wheel: { x: number; y: number; log: number; tau: number } | null = null;
+  /** The frame before the map in view changed, fading out over the new one. */
+  private crossfade: { camera: Camera; start: number; width: number; height: number } | null = null;
+  /** The map in view changed while the camera moved: told to the page once it rests. */
+  private focusUntold = false;
+  /**
+   * The atlas point the reader zoomed at (under the cursor; the middle for the buttons and keys): the map in view is
+   * the one there, also once the zoom rests — until the view is dragged or flown elsewhere.
+   */
+  private lookAt: [number, number] | null = null;
+  /** The pointer over the map (mouse/pen), for the hover name once a move ends. */
+  private pointerAt: { x: number; y: number; target: HTMLElement } | null = null;
   private pointers = new Map<number, Pointer>();
   private gesture: { distance: number; mid: [number, number]; moved: number; start: [number, number]; startTime: number; samples: Array<{ t: number; x: number; y: number }> } | null = null;
   private lastTap: { t: number; x: number; y: number } | null = null;
@@ -380,6 +394,21 @@ export class WorldMapEngine {
     return parent?.type === "zone" || share < 0.08 ? 1 : 1.5;
   }
 
+  /** CSS px per texel of a map's art when it is shown whole (cached per size of the view). */
+  private wholeUpscale(set: MapSet, map: AtlasMap) {
+    if (!map.art) return 1;
+    const key = `${set.key}|${map.id}|${this.width}x${this.height}|${this.options.insets.left},${this.options.insets.right},${this.options.insets.top},${this.options.insets.bottom}`;
+    const known = this.wholeCache.get(key);
+    if (known !== undefined) return known;
+    const box = set.shown.get(map.id) ?? map.frame;
+    const fit = this.fit(box, 0.05, this.closerOf(map));
+    const value = ((map.frame[2] - map.frame[0]) * fit.scale) / map.art.width;
+    if (this.wholeCache.size > 400) this.wholeCache.clear();
+    this.wholeCache.set(key, value);
+    return value;
+  }
+  private wholeCache = new Map<string, number>();
+
   /** "Show the map whole": the map in view fitted entirely, on any screen. */
   showWhole() {
     const map = this.focus;
@@ -393,6 +422,7 @@ export class WorldMapEngine {
   takeFlown() { const value = this.flown; this.flown = false; return value; }
 
   jumpTo(camera: Camera) {
+    this.lookAt = null;
     this.flight = null;
     this.velocity = null;
     this.wheel = null;
@@ -402,6 +432,7 @@ export class WorldMapEngine {
   }
 
   flyTo(target: Camera, after?: () => void) {
+    this.lookAt = null;
     this.velocity = null;
     this.wheel = null;
     const to = this.limit(target);
@@ -464,15 +495,29 @@ export class WorldMapEngine {
     this.flyTo({ scale, x: ax - (left - right) / 2 / scale, y: ay - (top - bottom) / 2 / scale }, after);
   }
 
+  /** Zoom by a factor around a screen point (buttons, keys, double click): eased like the wheel, the point held in place. */
   zoomBy(factor: number, sx = this.width / 2, sy = this.height / 2) {
-    const target = this.limit(zoomAt(this.camera, this.width, this.height, sx, sy, factor), { x: sx, y: sy });
-    if (this.options.reducedMotion) this.jumpTo(target);
-    else {
-      this.velocity = null;
-      this.wheel = null;
-      this.flight = { path: flightPath(this.camera, target, this.width, this.height, 0.0001), start: performance.now(), duration: 320 };
-      this.invalidate();
-    }
+    if (this.options.reducedMotion) { this.jumpTo(this.limit(zoomAt(this.camera, this.width, this.height, sx, sy, factor), { x: sx, y: sy })); return; }
+    this.flight = null;
+    this.velocity = null;
+    this.addZoom(Math.log(factor), sx, sy, TAU_NOTCH * 1.15);
+  }
+
+  /**
+   * Adds zoom to what is still to come around a screen point. The total never runs past the zoom limits
+   * (nothing left to spend against a wall) nor more than MAX_AHEAD ahead of the camera.
+   */
+  private addZoom(log: number, x: number, y: number, tau: number) {
+    let left = gather(this.wheel?.log ?? 0, log);
+    // What the limits allow from here, around this point.
+    const far = this.limit(zoomAt(this.camera, this.width, this.height, x, y, Math.exp(left > 0 ? MAX_AHEAD : -MAX_AHEAD)), { x, y });
+    const room = Math.log(far.scale / this.camera.scale);
+    left = left > 0 ? Math.min(left, Math.max(0, room)) : Math.max(left, Math.min(0, room));
+    if (Math.abs(left) < ZOOM_DONE) { this.wheel = null; return; }
+    this.wheel = { x, y, log: left, tau };
+    this.lookAt = this.unproject(x, y);
+    this.setHover(null);
+    this.invalidate();
   }
 
   panBy(dx: number, dy: number) {
@@ -602,7 +647,7 @@ export class WorldMapEngine {
     this.raf = 0;
     if (this.disposed || this.lost) return;
     const dt = Math.min(64, now - (this.lastFrame || now));
-    const animating = Boolean(this.moving || this.pending || (this.fromSet && now - this.eraStart < FADE_ERA));
+    const animating = Boolean(this.moving || this.pending || this.crossfade || (this.fromSet && now - this.eraStart < FADE_ERA));
     if (!this.visible || document.hidden) { this.lastFrame = now; return; }
     // The living layers alone run at ~30 fps; interaction at full rate.
     if (!animating && !this.dirty && this.alive && now - this.lastFrame < 31) { this.idleFrames += 1; this.raf = requestAnimationFrame((t) => this.tick(t)); return; }
@@ -616,6 +661,9 @@ export class WorldMapEngine {
     }
     this.lastFrame = now;
     this.step(now, dt);
+    // The page hides what follows the pointer (the hover name) while the view moves, on this very frame.
+    const moving = this.moving;
+    if (moving !== this.surface.hasAttribute("data-moving")) this.surface.toggleAttribute("data-moving", moving);
     const t0 = performance.now();
     // Decoded tiles go to the GPU within a budget per frame: a burst never stalls one frame.
     this.tiles.moving = this.moving;
@@ -627,7 +675,7 @@ export class WorldMapEngine {
     this.measure(performance.now() - t0);
     this.dirty = false;
     if (!this.residentOnce && this.tiles.loadedCount > 0 && this.tiles.pending === 0 && !this.pending) { this.residentOnce = true; this.events.resident?.(); }
-    const keep = this.moving || this.alive || this.pending || this.tiles.pending > 0 || this.fading(now) || (this.fromSet && now - this.eraStart < FADE_ERA);
+    const keep = this.moving || this.alive || this.pending || this.tiles.pending > 0 || this.fading(now) || this.crossfade || this.focusUntold || (this.fromSet && now - this.eraStart < FADE_ERA);
     if (keep) this.raf = requestAnimationFrame((t) => this.tick(t));
   }
 
@@ -640,6 +688,8 @@ export class WorldMapEngine {
     if (average > 14 && this.quality > 0.5) { this.quality = Math.max(0.5, this.quality - 0.15); this.applyDpr(); }
   }
 
+  /** Why the map in view is what it is (for checks, `?debug`). */
+  private focusWhy: Record<string, unknown> = {};
   private fadingUntil = 0;
   private residentOnce = false;
   /** The camera's zoom direction this frame (1 in, -1 out, 0 still): the next level is asked for ahead of it. */
@@ -661,12 +711,11 @@ export class WorldMapEngine {
       }
     }
     if (this.wheel) {
-      // Eased wheel zoom: each notch is spent over ~100 ms, the point under the cursor stays put.
-      const portion = 1 - Math.exp(-dt / 70);
-      const log = this.wheel.log * portion;
-      this.wheel.log -= log;
+      // Eased zoom: what is left is spent exponentially (the same at any frame rate), the point under the cursor stays put.
+      const [log, left] = spend(this.wheel.log, dt, this.wheel.tau);
       this.camera = this.limit(zoomAt(this.camera, this.width, this.height, this.wheel.x, this.wheel.y, Math.exp(log)), this.wheel);
-      if (Math.abs(this.wheel.log) < 0.002) { this.wheel = null; this.scheduleSettle(); }
+      this.wheel.log = left;
+      if (Math.abs(left) < ZOOM_DONE) { this.wheel = null; this.scheduleSettle(); }
     }
     if (this.velocity) {
       this.camera = this.limit({ ...this.camera, x: this.camera.x - (this.velocity.x * dt) / this.camera.scale, y: this.camera.y - (this.velocity.y * dt) / this.camera.scale });
@@ -679,7 +728,14 @@ export class WorldMapEngine {
 
   private scheduleSettle() {
     window.clearTimeout(this.settleTimer);
-    this.settleTimer = window.setTimeout(() => { if (this.lastInfo && !this.disposed) this.events.settle(this.lastInfo); }, 260);
+    this.settleTimer = window.setTimeout(() => {
+      if (!this.lastInfo || this.disposed) return;
+      if (this.moving) { this.scheduleSettle(); return; }
+      this.events.settle(this.lastInfo);
+      // The name under a resting pointer, now that the view stands still.
+      const at = this.pointerAt;
+      if (at && !this.pointers.size) this.updateHover(at.x, at.y, at.target);
+    }, 260);
   }
 
   private rootAt(x: number, y: number) {
@@ -698,10 +754,14 @@ export class WorldMapEngine {
     // The most detailed picture under the centre sets the limit (a small coarse sub-zone overlapping a city must not).
     let max = 0;
     let terrain: AtlasMap["terrain"] | undefined;
+    // Zooming at a point (the cursor), the place under it counts too: the view's middle only gets there as it zooms.
+    const at = anchor ? toAtlas(camera, this.width, this.height, anchor.x, anchor.y) : null;
+    const under = (box: Box) => contains(box, camera.x, camera.y) || (at !== null && contains(box, at[0], at[1]));
     for (const map of this.maps.values()) {
-      if (!map.art || UNDER.has(map.type) || !contains(map.frame, camera.x, camera.y)) continue;
+      // (The map in view counts wherever the middle is: it may be zoomed to its own limit.)
+      if (!map.art || UNDER.has(map.type) || (!under(map.frame) && map.id !== this.focusId)) continue;
       max = Math.max(max, maxScaleOf(map.art, map.frame[2] - map.frame[0]));
-      if (map.terrain && contains(map.terrain.frame, camera.x, camera.y)) terrain = map.terrain;
+      if (map.terrain && under(map.terrain.frame)) terrain = map.terrain;
     }
     if (terrain) max = Math.max(max, maxScaleOf({ width: 0 }, 1, terrain));
     if (!max) max = min * 100;
@@ -742,7 +802,8 @@ export class WorldMapEngine {
     const roleOf = (id: number): DrawRole | undefined => (fid === null ? undefined : id === fid ? "focus"
       : within.has(id) ? (set.maps.get(id)?.parent === fid ? "child" : "inside") : onChain.has(id) ? "ancestor" : "neighbour");
     const hidden = this.hiddenIn(set);
-    const visit = (map: AtlasMap, alpha: number, parentClip: Box | null, side = false, under = 0) => {
+    /** `natural`: how far the zoom has opened it, whatever it is drawn at (a neighbour shows whole around the map in view, yet is not "open"). */
+    const visit = (map: AtlasMap, alpha: number, parentClip: Box | null, side = false, under = 0, natural = alpha) => {
       const art = map.art;
       if (!art) return;
       // Another picture of its place stands for it now (unless the reader is on its way to it).
@@ -756,8 +817,11 @@ export class WorldMapEngine {
         : screen;
       if (clip[2] <= clip[0] || clip[3] <= clip[1] || !intersects(clip, view)) return;
       const upscale = upscaleOf(x1 - x0, art);
-      // The map in view is always crisp.
-      const entry: DrawnMap = { map, alpha, screen, clip, upscale, blur: role === "focus" ? 0 : blurOf(upscale), ...(side ? { side } : {}), ...(under ? { under } : {}), ...(role ? { role } : {}) };
+      // The map in view is always crisp, and whole: never half see-through over the backdrop while the zoom hands
+      // over to another level (the change of the map in view cross-fades the whole picture instead).
+      const open = natural;
+      if (role === "focus" && !map.portal) alpha = 1;
+      const entry: DrawnMap = { map, alpha, open, screen, clip, upscale, blur: role === "focus" ? 0 : blurOf(upscale), ...(side ? { side } : {}), ...(under ? { under } : {}), ...(role ? { role } : {}) };
       if (role === "focus") entry.tone = smoothstep(0.5, 0.9, alpha);
       out.push(entry);
       // A neighbour shows its own land only: the places inside it are not opened (no picture over another).
@@ -768,9 +832,14 @@ export class WorldMapEngine {
       const iw = Math.max(0, Math.min(clip[2], this.width) - Math.max(clip[0], 0)), ih = Math.max(0, Math.min(clip[3], this.height) - Math.max(clip[1], 0));
       const shownFrac = (iw * ih) / Math.max(1, (clip[2] - clip[0]) * (clip[3] - clip[1]));
       const lookingAtParent = smoothstep(0.65, 0.85, shownFrac);
+      // Magnified past its own detail, a map hands over to the places in it, whatever their size in the view:
+      // never a map shown blown up with its painted words while its children wait (relative to its size shown
+      // whole: on a wide screen a whole map may already be a little magnified).
+      const wholeUp = this.wholeUpscale(set, map);
+      const overDetail = smoothstep(Math.max(1.3, wholeUp * 1.15), Math.max(1.75, wholeUp * 1.55), upscale);
       let portalOpen = 0;
       const mx = this.width / 2, my = this.height / 2;
-      const opened: Array<{ child: AtlasMap; a: number; area: number; fill: number; centre: boolean; box: Box }> = [];
+      const opened: Array<{ child: AtlasMap; a: number; n?: number; area: number; fill: number; centre: boolean; box: Box }> = [];
       for (const id of map.children) {
         const child = set.maps.get(id);
         // Floors and caves under a place (Cleft of Shadow under Orgrimmar) are not part of its surface.
@@ -800,7 +869,7 @@ export class WorldMapEngine {
         // The map shown whole on purpose is open itself, whatever its parent's picture (Classic's Kalimdor on Azeroth).
         const a = homeLock === child.id ? 1 : homeLock === map.id
           ? smoothstep(0.95 / this.quality, 1.3 / this.quality, density) * smoothstep(0.22, 0.45, fill)
-          : Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill)) * (1 - lookingAtParent);
+          : Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill), overDetail) * (1 - lookingAtParent * (1 - overDetail));
         opened.push({ child, a, area: (cx1 - cx0) * (cy1 - cy0), fill, centre: vx0 <= mx && mx <= vx1 && vy0 <= my && my <= vy1, box: [cx0, cy0, cx1, cy1] });
       }
       if (role === "ancestor") {
@@ -808,19 +877,25 @@ export class WorldMapEngine {
         // comes from its other children (the neighbours), each its own land, instead of its own picture.
         const next = opened.find((entry) => onChain.has(entry.child.id));
         // A world opening from the Cosmic map: the starry sheet is a backdrop as soon as the portal is half open.
-        const tone = !next ? 0 : next.child.portal ? smoothstep(0.1, 0.5, alpha * next.a) : smoothstep(0.5, 0.9, alpha * next.a);
+        // Any other ancestor is only its calm wash: never its picture blown up with its painted words.
+        const tone = !next ? 1 : next.child.portal ? smoothstep(0.1, 0.5, alpha * next.a) : 1;
         entry.tone = tone;
         for (const entry of opened) {
           if (entry.child.portal || onChain.has(entry.child.id)) continue;
           // Strictly its own land: a neighbour without a mask is left out (the backdrop shows there).
-          if (!entry.child.mask) { entry.a = 0; continue; }
+          if (!entry.child.mask) { entry.a = 0; entry.n = 0; continue; }
           // Other continents and worlds stay in the backdrop until they open by themselves (framed by the view):
           // around a continent the world's wash is enough, and their pictures would only slow the first view.
           if (entry.child.type === "continent" || entry.child.type === "world") continue;
+          entry.n = entry.a;
           entry.a = Math.max(entry.a, tone);
         }
       }
-      for (let i = opened.length - 1; i >= 0; i--) if (opened[i].a <= 0.003) opened.splice(i, 1);
+      // The way down to the map in view always stays (barely open, it still leads to the map drawn whole).
+      for (let i = opened.length - 1; i >= 0; i--) {
+        if (opened[i].a > 0.003) continue;
+        if (onChain.has(opened[i].child.id) && !opened[i].child.portal) { opened[i].n = opened[i].n ?? opened[i].a; opened[i].a = 0.004; } else opened.splice(i, 1);
+      }
       // The child the reader looks into (at the centre, filling most of the view) lies over its
       // neighbours, whose rectangles would otherwise cover its edges; places inside it (a city in
       // its zone) lie over it. Otherwise bigger pictures first, the smaller ones over them.
@@ -841,7 +916,7 @@ export class WorldMapEngine {
       };
       const rank = (entry: (typeof opened)[number]) => (entry === best ? 1 : inside(entry) ? 2 : 0);
       opened.sort((p, q) => rank(p) - rank(q) || q.area - p.area);
-      for (const opening of opened) visit(opening.child, alpha * opening.a, clip, Boolean(best) && rank(opening) === 0, entry.blur);
+      for (const opening of opened) visit(opening.child, alpha * opening.a, clip, Boolean(best) && rank(opening) === 0, entry.blur, open * (opening.n ?? opening.a));
       // A world opened from the Cosmic map: the starry parchment around it falls back.
       if (portalOpen > 0) entry.alpha = alpha * (1 - 0.8 * portalOpen);
     };
@@ -879,7 +954,8 @@ export class WorldMapEngine {
     for (let i = out.length - 1; i > 0; i--) {
       const entry = out[i];
       const masked = entry.role === "focus" ? (entry.tone ?? 0) < 0.995 && usesMask(entry.map) : usesMask(entry.map);
-      if (entry.alpha < 0.995 || entry.map.portal || masked || entry.role === "neighbour") continue;
+      // (Only once it has something to show: a map whose smallest level is not in yet hides nothing.)
+      if (entry.alpha < 0.995 || entry.map.portal || masked || entry.role === "neighbour" || !this.artReady(entry.map)) continue;
       const devW = (entry.screen[2] - entry.screen[0]) * this.dpr, devH = (entry.screen[3] - entry.screen[1]) * this.dpr;
       const f = entry.map.depth === 0 ? 0 : featherOf(devW, devH, this.dpr) / this.dpr;
       if (entry.clip[0] + f <= 0 && entry.clip[1] + f <= 0 && entry.clip[2] - f >= this.width && entry.clip[3] - f >= this.height) {
@@ -983,18 +1059,87 @@ export class WorldMapEngine {
         this.drawEffects(drawn);
       }
     }
+    // The frame before the map in view changed fades out over the new one, laid where its view lies now.
+    const fade = this.crossfade;
+    if (fade && !this.compare) {
+      // A fast zoom leaves the old frame behind sooner: never a blown-up picture of it (its words 2× magnified).
+      const k = this.camera.scale / fade.camera.scale;
+      const alpha = fadeOut(now - fade.start, FOCUS_FADE) * (1 - smoothstep(1.2, 1.7, Math.max(k, 1 / k)));
+      if (alpha <= 0.003 || fade.width !== this.width || fade.height !== this.height) this.crossfade = null;
+      else {
+        const [ax0, ay0] = toAtlas(fade.camera, fade.width, fade.height, 0, 0), [ax1, ay1] = toAtlas(fade.camera, fade.width, fade.height, fade.width, fade.height);
+        const [x0, y0] = this.project(ax0, ay0), [x1, y1] = this.project(ax1, ay1);
+        const d = this.dpr;
+        // Its own edges are soft where it no longer covers the screen (zooming out).
+        this.renderer.drawSnapshot([x0 * d, y0 * d, x1 * d, y1 * d], alpha, x0 > 0.5 || y0 > 0.5 ? 28 * d : 0);
+      }
+    }
     this.tiles.endFrame();
 
     // Focus: the deepest well-shown map under the centre of the free area.
     const { top, right, bottom, left } = this.options.insets;
-    const [cx, cy] = this.unproject(left + (this.width - left - right) / 2, top + (this.height - top - bottom) / 2);
-    let focus = drawn[0]?.map ?? this.maps.get(this.focusId) ?? this.maps.values().next().value as AtlasMap;
-    for (const entry of drawn) if (entry.alpha > 0.5 && contains(entry.map.frame, cx, cy) && entry.map.depth >= (focus?.depth ?? 0)) focus = entry.map;
+    // The point the reader looks at: where the wheel zoomed (the view's middle only gets there as it zooms), else
+    // the middle of the free area.
+    const [cx, cy] = this.lookAt ?? this.unproject(left + (this.width - left - right) / 2, top + (this.height - top - bottom) / 2);
+    const freeArea = Math.max(1, (this.width - left - right) * (this.height - top - bottom));
+    /** The share of the free part of the view a drawn map covers. */
+    const share = (entry: DrawnMap) => {
+      const w = Math.min(entry.clip[2], this.width - right) - Math.max(entry.clip[0], left), h = Math.min(entry.clip[3], this.height - bottom) - Math.max(entry.clip[1], top);
+      return w > 0 && h > 0 ? (w * h) / freeArea : 0;
+    };
+    // How far the centre is from a map's own middle (0 there, 1 at its edge): of two overlapping zones, the one
+    // the reader looks at is the one the view is centred on.
+    const off = (map: AtlasMap) => {
+      const f = map.frame;
+      return Math.max(Math.abs(cx - (f[0] + f[2]) / 2) / Math.max(1e-12, (f[2] - f[0]) / 2), Math.abs(cy - (f[1] + f[3]) / 2) / Math.max(1e-12, (f[3] - f[1]) / 2));
+    };
+    let candidate: DrawnMap | undefined;
+    for (const entry of drawn) {
+      if ((entry.open ?? entry.alpha) <= 0.5 || !contains(entry.map.frame, cx, cy)) continue;
+      const depth = candidate?.map.depth ?? -1;
+      if (entry.map.depth > depth || (entry.map.depth === depth && candidate && off(entry.map) < off(candidate.map))) candidate = entry;
+    }
+    let focus = candidate?.map ?? drawn[0]?.map ?? this.maps.get(this.focusId) ?? this.maps.values().next().value as AtlasMap;
+    // With hysteresis: down into a child once it is clearly open, up once the map in view has clearly faded.
+    const held = this.maps.get(this.focusId);
+    if (candidate && held && held.id !== candidate.map.id) {
+      const shown = drawn.find((entry) => entry.map.id === held.id);
+      const chain = chainUp(this.set, candidate.map.id);
+      const relation = chain.includes(held.id) ? "deeper" : chainUp(this.set, held.id).includes(candidate.map.id) ? "above" : "other";
+      // "Under" the point: inside its rectangle — or still filling a good part of the view. Beside the candidate
+      // (zone rectangles overlap, a city may sit beside its zone in the data): inside it and not clearly further
+      // off its middle than the candidate is from its own.
+      // Not up while the point is already over a place of its level that is opening (Classic's Orgrimmar lies
+      // beside Durotar in the data): the reader is on the way in, not out.
+      const heading = relation === "above" && this.zoomDir >= 0 && drawn.some((entry) => entry !== shown && entry.map.depth >= held.depth && (entry.open ?? entry.alpha) > 0.2 && contains(entry.map.frame, cx, cy));
+      const under = Boolean(shown) && (heading || relation === "other"
+        ? contains(held.frame, cx, cy) && off(held) <= off(candidate.map) + 0.25
+        // Up a level: while zooming in only once it has all but left the view; at rest once it is a small part of it.
+        : contains(held.frame, cx, cy) || share(shown as DrawnMap) >= (relation !== "above" || this.zoomDir < 0 ? 0.3 : this.zoomDir > 0 ? 0.04 : 0.12));
+      const keep = holdFocus({ id: held.id, alpha: shown?.open ?? shown?.alpha ?? 0, under }, { id: candidate.map.id, alpha: candidate.open ?? candidate.alpha }, relation, this.zoomDir);
+      // Down only once there is something to show: the child's whole picture (its smallest level) and the wash
+      // the map in view turns into — never a child floating in an empty backdrop.
+      // (Not for ever: past ~2× the map in view hands over anyway, rather than be shown blown up.)
+      const heldUp = shown?.upscale ?? 0;
+      const ready = relation !== "deeper" || heldUp > 2.1 || (this.artSettled(candidate.map) && this.washSettled(held));
+      if (keep === held.id || !ready) focus = held;
+      this.focusWhy = { held: held.id, candidate: candidate.map.id, relation, under, open: shown?.open ?? -1, zoom: this.zoomDir, keep, ready };
+    } else this.focusWhy = { held: held?.id ?? -1, candidate: candidate?.map.id ?? -1 };
     // Still on "show this map whole" (a page, a click): that map is the one in view, even where a child fills the phone screen.
     const home = this.home && this.atHome(this.home.id) ? this.maps.get(this.home.id) : undefined;
     if (home) focus = home;
     if (focus && focus.id !== this.focusId) {
+      // The new composition comes in under this very frame, which then fades out.
+      if (this.focusId >= 0 && !this.options.reducedMotion && !this.compare && !this.fromSet && this.lastInfo) {
+        this.renderer.snapshot();
+        this.crossfade = { camera: { ...this.camera }, start: now, width: this.width, height: this.height };
+      }
       this.focusId = focus.id;
+      this.focusUntold = true;
+    }
+    // The page hears of the map in view once the camera rests (no title or panel jumping through every level on the way).
+    if (this.focusUntold && !this.moving && focus) {
+      this.focusUntold = false;
       this.events.focus(this.chain(focus.id));
       // The URL follows the map in view even when nothing moved (an era's picture came in).
       this.scheduleSettle();
@@ -1143,7 +1288,9 @@ export class WorldMapEngine {
           excluded: entry.role === "neighbour" ? exclude?.strength ?? 0 : 0,
           layer: pass.get(entry)?.layer ?? -1, under: (entry.role === "neighbour" || entry.role === "child") && Boolean(pass.get(entry)?.shared),
           order: ordered.indexOf(entry),
-          detail: entry.role === "ancestor" ? (tone >= 0.999 && this.toneReady(entry) ? 0 : 1 - (this.toneReady(entry) ? tone : 0)) : 1,
+          // An ancestor's own picture shows only on the way to its wash (a world opening from the Cosmic map); at a
+          // full wash its picture is never drawn (its parchment stands in while the wash is made).
+          detail: entry.role === "ancestor" ? (tone >= 0.999 ? 0 : 1 - (this.toneReady(entry) ? tone : 0)) : 1,
         };
       }),
     };
@@ -1158,6 +1305,22 @@ export class WorldMapEngine {
     return this.tiles.get(`tone:${url}`, map.depth * 0.5 - 1, () => loadTone(url, known ? boxes : null, levelSize(art, 0)));
   }
 
+  private artReady(map: AtlasMap) {
+    return Boolean(map.art && this.tiles.peek(tileUrl(map.art, map.id, 0, 0, 0)));
+  }
+
+  private artSettled(map: AtlasMap) {
+    return !map.art || this.tiles.settled(tileUrl(map.art, map.id, 0, 0, 0));
+  }
+
+  private washSettled(map: AtlasMap) {
+    if (!map.art) return true;
+    const key = `tone:${tileUrl(map.art, map.id, 0, 0, 0)}`;
+    if (this.tiles.settled(key)) return true;
+    this.toneTile(map);
+    return false;
+  }
+
   private toneReady(entry: DrawnMap) {
     return Boolean(entry.map.art && this.tiles.peek(`tone:${tileUrl(entry.map.art, entry.map.id, 0, 0, 0)}`));
   }
@@ -1168,6 +1331,11 @@ export class WorldMapEngine {
     if (!art) return false;
     const tile = this.toneTile(map);
     if (tile.state !== "ready" || !tile.texture) return false;
+    // A wash just made comes in softly over the parchment that stood in for it.
+    const now = performance.now();
+    const fade = this.options.reducedMotion ? 1 : clamp((now - tile.readyAt) / FADE_TILE, 0, 1);
+    if (fade < 1) { this.drawPaper(entry, alpha); this.fadingUntil = Math.max(this.fadingUntil, tile.readyAt + FADE_TILE); }
+    alpha *= fade;
     const d = this.dpr;
     const rect: Box = [entry.screen[0] * d, entry.screen[1] * d, entry.screen[2] * d, entry.screen[3] * d];
     const devW = rect[2] - rect[0], devH = rect[3] - rect[1];
@@ -1180,11 +1348,28 @@ export class WorldMapEngine {
     return true;
   }
 
+  /** The calm parchment over an ancestor's place (with its soft edge) while its wash is not ready. */
+  private drawPaper(entry: DrawnMap, alpha: number) {
+    const d = this.dpr;
+    const rect: Box = [entry.screen[0] * d, entry.screen[1] * d, entry.screen[2] * d, entry.screen[3] * d];
+    const devW = rect[2] - rect[0], devH = rect[3] - rect[1];
+    this.renderer.draw(this.renderer.paper, {
+      rect, uv: [0, 0, 1, 1], alpha: alpha * 0.92, frame: [entry.clip[0] * d, entry.clip[1] * d, entry.clip[2] * d, entry.clip[3] * d],
+      feather: entry.map.depth === 0 ? 0 : [featherInsetOf(devW, devH), featherOf(devW, devH, d)], portal: [0, 0, 0], light: 0, cloud: 0, water: 0,
+    });
+  }
+
   /** Asks for the tiles a set needs in this view; returns the share already loaded. */
   private prefetch(set: MapSet, now: number) {
     let ready = 0, total = 0;
     const list = this.collect(set);
     for (const entry of list) {
+      // An ancestor shows only its wash: that is what has to be ready (made from its smallest level).
+      if (entry.role === "ancestor" && entry.map.art && !entry.map.portal) {
+        total += 1;
+        if (this.washSettled(entry.map)) ready += 1;
+        continue;
+      }
       if (entry.alpha < 0.3 || !entry.map.art) continue;
       const scale = entry.blur > 0.06 ? layerScale(blurRadiusPx(entry.blur, this.dpr, entry.upscale)) : 1;
       const [r, t] = this.drawArt(entry.map, entry.map.art, entry.screen, entry.clip, { alpha: 0, light: 0, cloud: 0, water: 0, desat: 0, levelScale: scale }, now, true, true);
@@ -1228,11 +1413,17 @@ export class WorldMapEngine {
         const role = entry.role;
         const tone = role === "ancestor" ? entry.tone ?? 0 : 0;
         const washed = tone > 0.003 && this.drawTone(entry, alpha, cloud);
-        // Only the wash: its own picture (and its words) is gone — nor is it loaded while the wash is being made.
-        if (tone >= 0.999) continue;
-        void washed;
+        // Only the wash: its own picture (and its words) is gone. While the wash is being made (a jump far away, an
+        // era just switched) calm parchment stands in — never an empty void, never its picture blown up.
+        if (tone >= 0.999) {
+          if (!washed) this.drawPaper(entry, alpha);
+          continue;
+        }
+        // The map in view becomes the backdrop as soon as the zoom goes into one of its places: its wash is made ahead.
+        // Not in yet itself (a jump far away): parchment under it, never an empty frame.
+        if (role === "focus") { this.toneTile(entry.map); if (!this.artReady(entry.map)) this.drawPaper(entry, alpha); }
         const style: ArtStyle = {
-          alpha: alpha * (1 - (tone > 0.003 && this.toneReady(entry) ? tone : 0)), light: hovered ? 0.55 : -(entry.dim ?? 0), edge: entry.side ? 1.6 : 1,
+          alpha: alpha * (1 - (tone > 0.003 && washed ? tone : 0)), light: hovered ? 0.55 : -(entry.dim ?? 0), edge: entry.side ? 1.6 : 1,
           // The map in view shows whole (its painted surroundings too) once open; a neighbour only its own land.
           maskStrength: role === "focus" ? 1 - (entry.tone ?? 0) : 1,
           ...(role === "neighbour" ? { ownLand: true, exclude, ...(exclude && exclude.strength >= 0.999 ? { hidden: coreOf(exclude) } : {}) } : role === "child" ? { ownLand: true } : {}),
@@ -1242,7 +1433,8 @@ export class WorldMapEngine {
           desat: 0, levelScale: scale,
           // Maps around the one in view: their corner ornaments go, and their painted words and decor
           // where the place in view lies give way (no second "STORMWIND" over the city).
-          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set, role === "ancestor" || (role === "neighbour" && (entry.blur >= BLURRED_WORDS || keys[i] > 0))) } : {}),
+          // (A neighbouring continent or world keeps none of its words either: its big painted names would only be cut by the view's edge.)
+          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set, role === "ancestor" || (role === "neighbour" && (entry.blur >= BLURRED_WORDS || keys[i] > 0 || entry.map.type === "continent" || entry.map.type === "world"))) } : {}),
           // The map in view: its frame's corner pieces go too (its painted border is under its soft edge already).
           ...(role === "focus" && entry.map.depth > 0 ? { corner: 0.2 } : {}),
         };
@@ -1508,6 +1700,7 @@ export class WorldMapEngine {
       }
       this.camera = this.limit(camera, this.pointers.size >= 2 ? { x: after[0], y: after[1] } : undefined);
       g.moved = Math.max(g.moved, Math.hypot(after[0] - g.start[0], after[1] - g.start[1]));
+      if (g.moved > 4) this.lookAt = null;
       if (g.moved > 4 && !el.hasPointerCapture(event.pointerId)) { try { el.setPointerCapture(event.pointerId); } catch { /* pointer already gone */ } }
       g.samples.push({ t: performance.now(), x: after[0], y: after[1] });
       if (g.samples.length > 8) g.samples.shift();
@@ -1540,7 +1733,7 @@ export class WorldMapEngine {
     };
     on("pointerup", release);
     on("pointercancel", release);
-    on("pointerleave", (event) => { if (event.pointerType === "mouse" && !this.pointers.size) this.setHover(null); });
+    on("pointerleave", (event) => { if (event.pointerType === "mouse" && !this.pointers.size) { this.pointerAt = null; this.setHover(null); } });
     on("wheel", (event) => {
       if ((event.target as HTMLElement).closest("[data-map-ui-scroll]")) return;
       event.preventDefault();
@@ -1550,17 +1743,16 @@ export class WorldMapEngine {
       this.flight = null;
       this.velocity = null;
       const kind = wheelKind(event.deltaMode, event.deltaX, event.deltaY, event.ctrlKey);
-      if (kind === "notch" && !this.options.reducedMotion) {
-        // A mouse wheel: ~1.32× per notch, eased over the next frames.
-        this.wheel = { x, y, log: clamp((this.wheel?.log ?? 0) - clamp(dy, -300, 300) * 0.0028, -2.5, 2.5) };
-      } else {
-        // Trackpad scroll or pinch: it is already smooth, follow it frame by frame.
-        const log = kind === "pinch" ? -clamp(dy, -60, 60) * 0.011 : -clamp(dy, -120, 120) * (kind === "notch" ? 0.0028 : 0.0042);
+      const log = wheelLog(kind, dy);
+      if (this.options.reducedMotion) {
         this.wheel = null;
         this.camera = this.limit(zoomAt(this.camera, this.width, this.height, x, y, Math.exp(log)), { x, y });
         this.scheduleSettle();
+        this.invalidate();
+        return;
       }
-      this.invalidate();
+      // A mouse wheel glides (~1.3× a notch); a trackpad or pinch, smooth by itself, is followed closely.
+      this.addZoom(log, x, y, kind === "notch" ? TAU_NOTCH : TAU_SMOOTH);
     }, { passive: false });
     on("dblclick", (event) => {
       if ((event.target as HTMLElement).closest("[data-map-ui]")) return;
@@ -1626,6 +1818,9 @@ export class WorldMapEngine {
   }
 
   private updateHover(x: number, y: number, target: HTMLElement) {
+    this.pointerAt = { x, y, target };
+    // No names while the view moves under a resting pointer: they come back once it settles.
+    if (this.moving) { this.setHover(null); return; }
     if (target.closest("[data-map-ui]")) { this.setHover(null); return; }
     this.setHover(this.drillTarget(x, y));
   }

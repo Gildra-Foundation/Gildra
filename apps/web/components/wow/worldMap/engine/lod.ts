@@ -17,7 +17,9 @@ export const SHARP_UPSCALE = 1.5;
 export const upscaleOf = (screenWidthCss: number, art: Pick<MapArt, "width">) => screenWidthCss / Math.max(1, art.width);
 
 /** Out-of-focus strength 0 (sharp) … 1 (a soft backdrop). */
-export const blurOf = (upscale: number) => smoothstep(SHARP_UPSCALE + 0.1, 5, upscale);
+// It sets in quickly past the sharp limit (a square root of the ramp): a map 2× magnified is visibly, deliberately
+// out of focus — like depth of field — never a sharp-looking picture of soft magnified texels.
+export const blurOf = (upscale: number) => Math.sqrt(smoothstep(SHARP_UPSCALE, 5, upscale));
 /**
  * Blur radius on screen, CSS px. It grows with the magnification itself: a
  * texel magnified 20× is a 20 px block, so the blur must be wider than that to
@@ -67,13 +69,14 @@ export function levelFor(art: Pick<MapArt, "width" | "maxZoom">, deviceWidth: nu
 export const terrainAlphaOf = (finestUpscale: number) => smoothstep(1.35, 1.9, finestUpscale);
 
 /**
- * Deepest zoom (CSS px per atlas unit) over a map: twice its art's own size;
- * over a continent's terrain, twice the terrain's own size.
+ * Deepest zoom (CSS px per atlas unit) over a map: its art just past the sharp
+ * limit (1.6× its own size); over a continent's terrain, 1.6× the terrain's.
  */
+export const MAX_UPSCALE = 1.6;
 export function maxScaleOf(art: Pick<MapArt, "width">, frameWidth: number, terrain?: { art: Pick<MapArt, "width">; frame: [number, number, number, number] } | null) {
-  const own = (art.width / Math.max(1e-12, frameWidth)) * 2;
+  const own = (art.width / Math.max(1e-12, frameWidth)) * MAX_UPSCALE;
   if (!terrain) return own;
-  return Math.max(own, (terrain.art.width / Math.max(1e-12, terrain.frame[2] - terrain.frame[0])) * 2);
+  return Math.max(own, (terrain.art.width / Math.max(1e-12, terrain.frame[2] - terrain.frame[0])) * MAX_UPSCALE);
 }
 
 /**
