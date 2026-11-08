@@ -76,6 +76,31 @@ def stamp(picture: np.ndarray, box: tuple[int, int, int, int], avoid: list[tuple
     return out
 
 
+def soft_fill(picture: np.ndarray, box: tuple[int, int, int, int]) -> np.ndarray | None:
+    """Last resort for an ancestor's word: the box filled by a normalized blur of the ring
+    around it (smooth, no texture), fading in over its edge."""
+    from scipy import ndimage
+
+    height, width = picture.shape[:2]
+    x0, y0, x1, y1 = box
+    bw, bh = x1 - x0, y1 - y0
+    if bw < 2 or bh < 2:
+        return None
+    pad = max(bw, bh) // 2 + 4
+    rx0, ry0, rx1, ry1 = max(0, x0 - pad), max(0, y0 - pad), min(width, x1 + pad), min(height, y1 + pad)
+    region = picture[ry0:ry1, rx0:rx1, :3].astype(np.float32)
+    ring = np.ones(region.shape[:2], np.float32)
+    ring[y0 - ry0:y1 - ry0, x0 - rx0:x1 - rx0] = 0
+    sigma = max(3.0, 0.6 * min(bw, bh))
+    weight = ndimage.gaussian_filter(ring, sigma)
+    fill = np.dstack([ndimage.gaussian_filter(region[..., c] * ring, sigma) for c in range(3)]) / np.maximum(weight, 1e-3)[..., None]
+    fill = fill[y0 - ry0:y1 - ry0, x0 - rx0:x1 - rx0]
+    yy, xx = np.mgrid[0:bh, 0:bw]
+    edge = np.minimum(np.minimum(xx, bw - 1 - xx), np.minimum(yy, bh - 1 - yy)).astype(np.float32)
+    alpha = np.clip(edge / max(2.0, 0.15 * min(bw, bh)), 0, 1)
+    return np.dstack([np.clip(fill, 0, 255), alpha * 255]).astype(np.uint8)
+
+
 def save_patch(patch: np.ndarray, path) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
     Image.fromarray(patch, "RGBA").save(path, "WEBP", quality=80, method=6)

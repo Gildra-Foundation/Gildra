@@ -94,6 +94,7 @@ def children_of(nodes: dict, key) -> list:
     return sorted(out, key=lambda k: (isinstance(k, str), str(k) if isinstance(k, str) else k))
 
 
+INACTIVE: set = set()  # maps of the era that another map of the same place stands for
 FOCUS = None  # a map the viewer focuses: other maps' painted words for it and decor over it are hidden
 
 
@@ -201,7 +202,17 @@ def render_focus(nodes: dict, focus, width: int = 1600, margin: float = 0.6, use
     crop = (view[0] * pimg.width, view[1] * pimg.height, view[2] * pimg.width, view[3] * pimg.height)
     region = suppressed(parent, pimg, node["rectInParent"]).crop(tuple(round(v) for v in crop)).resize((width, height), Image.LANCZOS)
     canvas.alpha_composite(region)
-    siblings = [k for k in children_of(nodes, parent_key) if k != focus]
+    siblings = [k for k in children_of(nodes, parent_key) if k != focus and k not in INACTIVE]
+    # the parent's own lettering gives way around the focused map (as the engine does)
+    if node["rectInParent"]:
+        words = [l for l in (parent.get("art") or {}).get("paintedLabels", []) if isinstance(l, dict)]
+        if words:
+            fake = dict(parent)
+            fake["art"] = dict(parent["art"])
+            fake["art"]["paintedLabels"] = [dict(l, labelFor=FOCUS) for l in words]
+            region = suppressed(fake, pimg, None).crop(tuple(round(v) for v in crop)).resize((width, height), Image.LANCZOS)
+            canvas = Image.new("RGBA", (width, height), (20, 20, 24, 255))
+            canvas.alpha_composite(region)
     for key in siblings + [focus]:
         other = nodes[key]
         x0, y0, x1, y1 = project(other["rectInParent"])
@@ -258,7 +269,11 @@ def main() -> None:
     MASK_DIR = args.mask_dir
     LANG = args.lang
     retail = {m["id"]: m for m in load_json("maps.json")}
-    nodes = resolve_era(load_json("eras.json"), retail, args.era)
+    eras = load_json("eras.json")
+    nodes = resolve_era(eras, retail, args.era)
+    global INACTIVE
+    era = next((e for e in eras if e["id"] == (args.era or "midnight")), {})
+    INACTIVE = set(era.get("inactive") or [])
     key = int(args.map) if args.map.isdigit() else args.map
     if FOCUS is not None and args.crop is not None and nodes.get(FOCUS, {}).get("parentId") == key:
         image = render_focus(nodes, FOCUS, args.width, args.crop, not args.no_masks)
