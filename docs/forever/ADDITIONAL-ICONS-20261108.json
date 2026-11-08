@@ -1,0 +1,209 @@
+{
+  "source": "https://foreverdb.net/data/search/en.json",
+  "policy": "Exact existing mechanic names, only when all matching spell records agree on icon. No new mechanics or encounter associations inferred.",
+  "matches": [
+    {
+      "slug": "ruins-of-lordaeron",
+      "boss": "Witherfang",
+      "ability": "Leech Poison",
+      "icon": 136067,
+      "matchingSpellIds": [
+        3358,
+        8382,
+        1312869
+      ]
+    },
+    {
+      "slug": "ruins-of-lordaeron",
+      "boss": "The Baron",
+      "ability": "Knockout",
+      "icon": 132939,
+      "matchingSpellIds": [
+        17307
+      ]
+    },
+    {
+      "slug": "ruins-of-lordaeron",
+      "boss": "Viktor the Vile",
+      "ability": "Leech Poison",
+      "icon": 136067,
+      "matchingSpellIds": [
+        3358,
+        8382,
+        1312869
+      ]
+    },
+    {
+      "slug": "ruins-of-lordaeron",
+      "boss": "Bjork",
+      "ability": "Anti-Magic Shield",
+      "icon": 136120,
+      "matchingSpellIds": [
+        7121,
+        19645,
+        24021,
+        1301635
+      ]
+    },
+    {
+      "slug": "excavation-site",
+      "boss": "Shadetooth",
+      "ability": "Terrifying Roar",
+      "icon": 132111,
+      "matchingSpellIds": [
+        14100,
+        29685,
+        1324618,
+        1327713
+      ]
+    },
+    {
+      "slug": "excavation-site",
+      "boss": "Highland Horror",
+      "ability": "Entangling Roots",
+      "icon": 136100,
+      "matchingSpellIds": [
+        339,
+        1062,
+        5195,
+        5196,
+        9852,
+        9853,
+        11922,
+        12747,
+        19970,
+        19971,
+        19972,
+        19973,
+        19974,
+        19975,
+        20654,
+        20699,
+        21331,
+        22127,
+        22415,
+        22800,
+        24648,
+        26071,
+        28858,
+        435991,
+        1213253,
+        1263640,
+        1281781,
+        1303308,
+        1316480,
+        1320095
+      ]
+    },
+    {
+      "slug": "city-of-dalaran",
+      "boss": "Lyn the Ignored",
+      "ability": "Curse of Thorns",
+      "icon": 136121,
+      "matchingSpellIds": [
+        6909,
+        16247,
+        1304473
+      ]
+    },
+    {
+      "slug": "city-of-dalaran",
+      "boss": "Arcane Anomaly",
+      "ability": "Focal Blast",
+      "icon": 4667417,
+      "matchingSpellIds": [
+        1241501,
+        1241514
+      ]
+    },
+    {
+      "slug": "city-of-dalaran",
+      "boss": "Arcanic Enigma",
+      "ability": "Manamorph",
+      "icon": 136116,
+      "matchingSpellIds": [
+        1240869
+      ]
+    },
+    {
+      "slug": "city-of-dalaran",
+      "boss": "Unstable Sentinel",
+      "ability": "Arcing Smash",
+      "icon": 132338,
+      "matchingSpellIds": [
+        8374,
+        16169,
+        28168
+      ]
+    },
+    {
+      "slug": "city-of-dalaran",
+      "boss": "Shade of the Archmage",
+      "ability": "Bounding Mana",
+      "icon": 236222,
+      "matchingSpellIds": [
+        1241515,
+        1241523,
+        1241524
+      ]
+    },
+    {
+      "slug": "the-drowned-city",
+      "boss": "Min’loth the Serpent",
+      "ability": "Fear",
+      "icon": 136183,
+      "matchingSpellIds": [
+        5782,
+        6213,
+        6215,
+        12096,
+        12542,
+        22678,
+        26070,
+        26580,
+        27641,
+        27990,
+        29168,
+        30002,
+        411959,
+        469521,
+        469793,
+        469879,
+        1213452,
+        1222563,
+        1247087,
+        1271593,
+        1323802,
+        1324448,
+        1324451,
+        1324453
+      ]
+    },
+    {
+      "slug": "alcaz-prison",
+      "boss": "Tidemistress Ca’zass",
+      "ability": "Blizzard",
+      "icon": 135857,
+      "matchingSpellIds": [
+        10,
+        6141,
+        8364,
+        8427,
+        10185,
+        10186,
+        10187,
+        15783,
+        19099,
+        20680,
+        21096,
+        21367,
+        25019,
+        26607,
+        27618,
+        30093,
+        1213279,
+        1220862
+      ]
+    }
+  ]
+}

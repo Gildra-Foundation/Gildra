@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "hall-of-thanes",
+    "item": 271095,
+    "boss": "Infurnus",
+    "reason": "unresolved encounter alias"
+  },
+  {
+    "slug": "hall-of-thanes",
+    "item": 270230,
+    "boss": "Infurnus",
+    "reason": "unresolved encounter alias"
+  },
+  {
+    "slug": "hall-of-thanes",
+    "item": 270231,
+    "boss": "Infurnus",
+    "reason": "unresolved encounter alias"
+  },
+  {
+    "slug": "ruins-of-lordaeron",
+    "item": 271204,
+    "boss": "The Butcher",
+    "reason": "unresolved encounter alias"
+  },
+  {
+    "slug": "ruins-of-lordaeron",
+    "item": 271206,
+    "boss": "The Butcher",
+    "reason": "unresolved encounter alias"
+  },
+  {
+    "slug": "ruins-of-lordaeron",
+    "item": 271205,
+    "boss": "The Butcher",
+    "reason": "unresolved encounter alias"
+  },
+  {
+    "slug": "ruins-of-lordaeron",
+    "item": 4567,
+    "boss": "The Butcher",
+    "reason": "unresolved encounter alias"
+  },
+  {
+    "slug": "ruins-of-lordaeron",
+    "item": 9764,
+    "boss": "The Butcher",
+    "reason": "unresolved encounter alias"
+  },
+  {
+    "slug": "ruins-of-lordaeron",
+    "item": 15926,
+    "boss": "The Butcher",
+    "reason": "unresolved encounter alias"
+  },
+  {
+    "slug": "city-of-dalaran",
+    "item": 273045,
+    "boss": "Mana Elemental",
+    "reason": "unresolved encounter alias"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "boss": "Varrox Bleakhoof",
+    "spell": 1246456,
+    "source": "https://foreverdb.net/data/spells/56.json",
+    "explicitBossReference": "Forced to walk towards Varrox and unable to act.",
+    "description": "Forces players to walk towards the caster's location.",
+    "durationMilliseconds": 6000,
+    "basis": "client aura names Varrox; not an observed run"
+  },
+  {
+    "boss": "Withermaw",
+    "spell": 1302780,
+    "source": "https://foreverdb.net/data/spells/60.json",
+    "explicitBossReference": "A mass of creatures writhes within Withermaw's flesh, summoning a Flesh Maggot every 2.5 sec.",
+    "basis": "client spell description names this boss; tactical response is editorial inference; not an observed run"
+  },
+  {
+    "boss": "Bonesnout the Unbroken",
+    "spell": 1277406,
+    "source": "https://foreverdb.net/data/spells/30.json",
+    "explicitBossReference": "The Satyr's rituals empower Bonesnout, reducing incoming damage by 25% per stack.",
+    "basis": "client spell description names this boss; tactical response is editorial inference; not an observed run"
+  },
+  {
+    "boss": "Unbound Spirit",
+    "spell": 1247237,
+    "source": "https://foreverdb.net/data/spells/5.json",
+    "explicitBossReference": "The magic of the profane totems protects the Unbound Spirit, reducing damage by 100%.",
+    "basis": "client spell description names this boss; tactical response is editorial inference; not an observed run"
+  }
+]

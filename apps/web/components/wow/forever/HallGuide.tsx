@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
-import { AtlasGrid, AtlasHero, AtlasMetaList, AtlasSection, AtlasTabs } from "@/components/atlas";
+import { AtlasDisclosure, AtlasGrid, AtlasHero, AtlasMetaList, AtlasSection, AtlasTabs } from "@/components/atlas";
 import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { p, type Lang } from "@/lib/i18n-paths";
+import { InstanceLoot } from "./InstanceLoot";
 import { ForeverFrame } from "./ForeverFrame";
-import { hallEncounters, hallTrash } from "./hallOfThanes";
+import { hallEncounters, hallSources, hallTrash } from "./hallOfThanes";
 import styles from "./hallGuide.module.css";
 import { hallGuideCopy as copy } from "./hallGuideCopy";
 
@@ -15,7 +16,7 @@ export function HallGuide({ lang }: { lang: Lang }) {
   const encounter = hallEncounters[active];
   function select(index: number) { setActive(index); setFloor(String(hallEncounters[index].floor)); }
   return <ForeverFrame lang={lang}>
-    <AtlasHero title="Hall of Thanes" align="start" lede={t.entrance} breadcrumbsLabel={t.breadcrumb} breadcrumbs={[{ label: "Forever", href: p(lang, "/wow/forever") }, { label: t.dungeons, href: p(lang, "/wow/forever/dungeons") }, { label: "Hall of Thanes" }]} />
+    <AtlasHero title="Hall of Thanes" align="start" lede={t.entrance} breadcrumbsLabel={t.breadcrumb} breadcrumbs={[{ label: "WoW — Forever", href: p(lang, "/wow/forever") }, { label: t.dungeons, href: p(lang, "/wow/forever/dungeons") }, { label: "Hall of Thanes" }]} />
     <AtlasMetaList items={[{ label: t.level, value: "13–18" }, { label: t.players, value: 5 }]} />
     <AtlasSection title={t.map}>
       <div className={styles.workspace}>
@@ -41,5 +42,7 @@ export function HallGuide({ lang }: { lang: Lang }) {
     </AtlasSection>
     <AtlasSection title={t.trash}><AtlasGrid min={260} fit>{hallTrash.map(enemy => <MaterialPlaque kit="den-of-nalorakk" as="article" key={enemy.name}><h3 className={materialStyles.title}>{enemy.name}</h3><p className={styles.ability}>{enemy.ability}</p><p className={materialStyles.text}>{enemy.response[lang]}</p></MaterialPlaque>)}</AtlasGrid></AtlasSection>
     <AtlasSection title={t.before}><MaterialPlaque kit="den-of-nalorakk"><h3 className={materialStyles.title}>{t.pack}</h3><p className={materialStyles.text}>{t.packText}</p></MaterialPlaque></AtlasSection>
+    <InstanceLoot slug="hall-of-thanes" lang={lang} />
+    <AtlasDisclosure summary={t.sources}>{hallSources.map(([label, href]) => <a key={href} href={href} target="_blank" rel="noreferrer">{label} ↗</a>)}</AtlasDisclosure>
   </ForeverFrame>;
 }

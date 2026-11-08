@@ -1,0 +1,4392 @@
+{
+  "ragefire-chasm": {
+    "loot": [
+      {
+        "id": 272998,
+        "name": {
+          "en": "Bone Knuckles",
+          "ru": "Bone Knuckles"
+        },
+        "icon": "/images/wow/forever/icons/132369.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 21,
+        "boss": "Oggleflint",
+        "url": "https://foreverdb.net/item/272998"
+      },
+      {
+        "id": 272999,
+        "name": {
+          "en": "Barbaric Crossbow",
+          "ru": "Barbaric Crossbow"
+        },
+        "icon": "/images/wow/forever/icons/135531.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 26,
+        "boss": "Oggleflint",
+        "url": "https://foreverdb.net/item/272999"
+      },
+      {
+        "id": 272996,
+        "name": {
+          "en": "Trogg Scepter",
+          "ru": "Trogg Scepter"
+        },
+        "icon": "/images/wow/forever/icons/133727.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 21,
+        "boss": "Oggleflint",
+        "url": "https://foreverdb.net/item/272996"
+      },
+      {
+        "id": 3040,
+        "name": {
+          "en": "Hunter's Muzzle Loader",
+          "ru": "Hunter's Muzzle Loader"
+        },
+        "icon": "/images/wow/forever/icons/135610.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 26,
+        "boss": "Oggleflint",
+        "url": "https://foreverdb.net/item/3040"
+      },
+      {
+        "id": 3653,
+        "name": {
+          "en": "Ceremonial Buckler",
+          "ru": "Ceremonial Buckler"
+        },
+        "icon": "/images/wow/forever/icons/134955.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 14,
+        "boss": "Oggleflint",
+        "url": "https://foreverdb.net/item/3653"
+      },
+      {
+        "id": 14145,
+        "name": {
+          "en": "Cursed Felblade",
+          "ru": "Cursed Felblade"
+        },
+        "icon": "/images/wow/forever/icons/135648.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 21,
+        "boss": "Taragaman the Hungerer",
+        "url": "https://foreverdb.net/item/14145"
+      },
+      {
+        "id": 14148,
+        "name": {
+          "en": "Crystalline Cuffs",
+          "ru": "Crystalline Cuffs"
+        },
+        "icon": "/images/wow/forever/icons/132612.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 9,
+        "boss": "Taragaman the Hungerer",
+        "url": "https://foreverdb.net/item/14148"
+      },
+      {
+        "id": 14149,
+        "name": {
+          "en": "Subterranean Cape",
+          "ru": "Subterranean Cape"
+        },
+        "icon": "/images/wow/forever/icons/133770.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 16,
+        "boss": "Taragaman the Hungerer",
+        "url": "https://foreverdb.net/item/14149"
+      },
+      {
+        "id": 2073,
+        "name": {
+          "en": "Dwarven Hatchet",
+          "ru": "Dwarven Hatchet"
+        },
+        "icon": "/images/wow/forever/icons/132395.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 21,
+        "boss": "Taragaman the Hungerer",
+        "url": "https://foreverdb.net/item/2073"
+      },
+      {
+        "id": 3040,
+        "name": {
+          "en": "Hunter's Muzzle Loader",
+          "ru": "Hunter's Muzzle Loader"
+        },
+        "icon": "/images/wow/forever/icons/135610.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 26,
+        "boss": "Taragaman the Hungerer",
+        "url": "https://foreverdb.net/item/3040"
+      },
+      {
+        "id": 4566,
+        "name": {
+          "en": "Sturdy Quarterstaff",
+          "ru": "Sturdy Quarterstaff"
+        },
+        "icon": "/images/wow/forever/icons/135145.webp",
+        "level": 8,
+        "itemLevel": 13,
+        "slot": 17,
+        "boss": "Taragaman the Hungerer",
+        "url": "https://foreverdb.net/item/4566"
+      },
+      {
+        "id": 15491,
+        "name": {
+          "en": "Bloodspattered Gloves",
+          "ru": "Bloodspattered Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132949.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 10,
+        "boss": "Taragaman the Hungerer",
+        "url": "https://foreverdb.net/item/15491"
+      },
+      {
+        "id": 14150,
+        "name": {
+          "en": "Robe of Evocation",
+          "ru": "Robe of Evocation"
+        },
+        "icon": "/images/wow/forever/icons/132665.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 20,
+        "boss": "Jergosh the Invoker",
+        "url": "https://foreverdb.net/item/14150"
+      },
+      {
+        "id": 14151,
+        "name": {
+          "en": "Chanting Blade",
+          "ru": "Chanting Blade"
+        },
+        "icon": "/images/wow/forever/icons/135661.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 13,
+        "boss": "Jergosh the Invoker",
+        "url": "https://foreverdb.net/item/14151"
+      },
+      {
+        "id": 3654,
+        "name": {
+          "en": "Brackwater Shield",
+          "ru": "Brackwater Shield"
+        },
+        "icon": "/images/wow/forever/icons/134955.webp",
+        "level": 9,
+        "itemLevel": 14,
+        "slot": 14,
+        "boss": "Jergosh the Invoker",
+        "url": "https://foreverdb.net/item/3654"
+      },
+      {
+        "id": 4564,
+        "name": {
+          "en": "Spiked Club",
+          "ru": "Spiked Club"
+        },
+        "icon": "/images/wow/forever/icons/133489.webp",
+        "level": 8,
+        "itemLevel": 13,
+        "slot": 17,
+        "boss": "Jergosh the Invoker",
+        "url": "https://foreverdb.net/item/4564"
+      },
+      {
+        "id": 15012,
+        "name": {
+          "en": "Lupine Slippers",
+          "ru": "Lupine Slippers"
+        },
+        "icon": "/images/wow/forever/icons/132539.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 8,
+        "boss": "Jergosh the Invoker",
+        "url": "https://foreverdb.net/item/15012"
+      },
+      {
+        "id": 15298,
+        "name": {
+          "en": "Grizzly Buckler",
+          "ru": "Grizzly Buckler"
+        },
+        "icon": "/images/wow/forever/icons/134956.webp",
+        "level": 8,
+        "itemLevel": 13,
+        "slot": 14,
+        "boss": "Jergosh the Invoker",
+        "url": "https://foreverdb.net/item/15298"
+      },
+      {
+        "id": 15487,
+        "name": {
+          "en": "War Torn Tunic",
+          "ru": "War Torn Tunic"
+        },
+        "icon": "/images/wow/forever/icons/132629.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 5,
+        "boss": "Jergosh the Invoker",
+        "url": "https://foreverdb.net/item/15487"
+      },
+      {
+        "id": 273003,
+        "name": {
+          "en": "Searing Dagger",
+          "ru": "Searing Dagger"
+        },
+        "icon": "/images/wow/forever/icons/135639.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 21,
+        "boss": "Bazzalan",
+        "url": "https://foreverdb.net/item/273003"
+      },
+      {
+        "id": 273007,
+        "name": {
+          "en": "Chasm Walkers",
+          "ru": "Chasm Walkers"
+        },
+        "icon": "/images/wow/forever/icons/132540.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 8,
+        "boss": "Bazzalan",
+        "url": "https://foreverdb.net/item/273007"
+      },
+      {
+        "id": 14151,
+        "name": {
+          "en": "Chanting Blade",
+          "ru": "Chanting Blade"
+        },
+        "icon": "/images/wow/forever/icons/135661.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 13,
+        "boss": "Bazzalan",
+        "url": "https://foreverdb.net/item/14151"
+      },
+      {
+        "id": 273005,
+        "name": {
+          "en": "Satyrskin Cloak",
+          "ru": "Satyrskin Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133770.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 16,
+        "boss": "Bazzalan",
+        "url": "https://foreverdb.net/item/273005"
+      },
+      {
+        "id": 2075,
+        "name": {
+          "en": "Priest's Mace",
+          "ru": "Priest's Mace"
+        },
+        "icon": "/images/wow/forever/icons/133481.webp",
+        "level": 7,
+        "itemLevel": 12,
+        "slot": 21,
+        "boss": "",
+        "url": "https://foreverdb.net/item/2075"
+      },
+      {
+        "id": 3287,
+        "name": {
+          "en": "Tribal Pants",
+          "ru": "Tribal Pants"
+        },
+        "icon": "/images/wow/forever/icons/134586.webp",
+        "level": 7,
+        "itemLevel": 12,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3287"
+      },
+      {
+        "id": 4567,
+        "name": {
+          "en": "Merc Sword",
+          "ru": "Merc Sword"
+        },
+        "icon": "/images/wow/forever/icons/135274.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/4567"
+      },
+      {
+        "id": 4570,
+        "name": {
+          "en": "Birchwood Maul",
+          "ru": "Birchwood Maul"
+        },
+        "icon": "/images/wow/forever/icons/133052.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/4570"
+      },
+      {
+        "id": 4571,
+        "name": {
+          "en": "War Knife",
+          "ru": "War Knife"
+        },
+        "icon": "/images/wow/forever/icons/135651.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 13,
+        "boss": "",
+        "url": "https://foreverdb.net/item/4571"
+      },
+      {
+        "id": 4577,
+        "name": {
+          "en": "Compact Shotgun",
+          "ru": "Compact Shotgun"
+        },
+        "icon": "/images/wow/forever/icons/135612.webp",
+        "level": 8,
+        "itemLevel": 13,
+        "slot": 26,
+        "boss": "",
+        "url": "https://foreverdb.net/item/4577"
+      },
+      {
+        "id": 5071,
+        "name": {
+          "en": "Shadow Wand",
+          "ru": "Shadow Wand"
+        },
+        "icon": "/images/wow/forever/icons/135645.webp",
+        "level": 9,
+        "itemLevel": 14,
+        "slot": 26,
+        "boss": "",
+        "url": "https://foreverdb.net/item/5071"
+      },
+      {
+        "id": 14364,
+        "name": {
+          "en": "Mystic's Slippers",
+          "ru": "Mystic's Slippers"
+        },
+        "icon": "/images/wow/forever/icons/132539.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 8,
+        "boss": "",
+        "url": "https://foreverdb.net/item/14364"
+      },
+      {
+        "id": 14722,
+        "name": {
+          "en": "War Paint Anklewraps",
+          "ru": "War Paint Anklewraps"
+        },
+        "icon": "/images/wow/forever/icons/132540.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 8,
+        "boss": "",
+        "url": "https://foreverdb.net/item/14722"
+      },
+      {
+        "id": 15011,
+        "name": {
+          "en": "Lupine Cord",
+          "ru": "Lupine Cord"
+        },
+        "icon": "/images/wow/forever/icons/132492.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 6,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15011"
+      },
+      {
+        "id": 15016,
+        "name": {
+          "en": "Lupine Handwraps",
+          "ru": "Lupine Handwraps"
+        },
+        "icon": "/images/wow/forever/icons/132949.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15016"
+      },
+      {
+        "id": 15268,
+        "name": {
+          "en": "Twin-bladed Axe",
+          "ru": "Twin-bladed Axe"
+        },
+        "icon": "/images/wow/forever/icons/132400.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15268"
+      },
+      {
+        "id": 15303,
+        "name": {
+          "en": "Grizzly Pants",
+          "ru": "Grizzly Pants"
+        },
+        "icon": "/images/wow/forever/icons/134589.webp",
+        "level": 9,
+        "itemLevel": 14,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15303"
+      },
+      {
+        "id": 15495,
+        "name": {
+          "en": "Bloodspattered Wristbands",
+          "ru": "Bloodspattered Wristbands"
+        },
+        "icon": "/images/wow/forever/icons/132609.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 9,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15495"
+      },
+      {
+        "id": 15970,
+        "name": {
+          "en": "Native Branch",
+          "ru": "Дикарская ветвь"
+        },
+        "icon": "/images/wow/forever/icons/135465.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 23,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15970"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/389"
+  },
+  "the-deadmines": {
+    "loot": [
+      {
+        "id": 872,
+        "name": {
+          "en": "Rockslicer",
+          "ru": "Rockslicer"
+        },
+        "icon": "/images/wow/forever/icons/135419.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 17,
+        "boss": "Rhahk'Zor",
+        "url": "https://foreverdb.net/item/872"
+      },
+      {
+        "id": 5187,
+        "name": {
+          "en": "Rhahk'Zor's Hammer",
+          "ru": "Rhahk'Zor's Hammer"
+        },
+        "icon": "/images/wow/forever/icons/133046.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 17,
+        "boss": "Rhahk'Zor",
+        "url": "https://foreverdb.net/item/5187"
+      },
+      {
+        "id": 273289,
+        "name": {
+          "en": "Ogre Loincloth",
+          "ru": "Ogre Loincloth"
+        },
+        "icon": "/images/wow/forever/icons/134589.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 7,
+        "boss": "Rhahk'Zor",
+        "url": "https://foreverdb.net/item/273289"
+      },
+      {
+        "id": 2982,
+        "name": {
+          "en": "Seer's Pants",
+          "ru": "Seer's Pants"
+        },
+        "icon": "/images/wow/forever/icons/134581.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 7,
+        "boss": "Rhahk'Zor",
+        "url": "https://foreverdb.net/item/2982"
+      },
+      {
+        "id": 3645,
+        "name": {
+          "en": "Seer's Cuffs",
+          "ru": "Seer's Cuffs"
+        },
+        "icon": "/images/wow/forever/icons/132606.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 9,
+        "boss": "Rhahk'Zor",
+        "url": "https://foreverdb.net/item/3645"
+      },
+      {
+        "id": 273293,
+        "name": {
+          "en": "Bandsaw Wristbands",
+          "ru": "Bandsaw Wristbands"
+        },
+        "icon": "/images/wow/forever/icons/132602.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 9,
+        "boss": "Sneed",
+        "url": "https://foreverdb.net/item/273293"
+      },
+      {
+        "id": 1937,
+        "name": {
+          "en": "Buzz Saw",
+          "ru": "Buzz Saw"
+        },
+        "icon": "/images/wow/forever/icons/135325.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 13,
+        "boss": "Sneed",
+        "url": "https://foreverdb.net/item/1937"
+      },
+      {
+        "id": 2169,
+        "name": {
+          "en": "Buzzer Blade",
+          "ru": "Buzzer Blade"
+        },
+        "icon": "/images/wow/forever/icons/135641.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 21,
+        "boss": "Sneed",
+        "url": "https://foreverdb.net/item/2169"
+      },
+      {
+        "id": 5195,
+        "name": {
+          "en": "Gold-flecked Gloves",
+          "ru": "Gold-flecked Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132957.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 10,
+        "boss": "Sneed",
+        "url": "https://foreverdb.net/item/5195"
+      },
+      {
+        "id": 285292,
+        "name": {
+          "en": "Dull Sawblade",
+          "ru": "Dull Sawblade"
+        },
+        "icon": "/images/wow/forever/icons/134427.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 25,
+        "boss": "Sneed",
+        "url": "https://foreverdb.net/item/285292"
+      },
+      {
+        "id": 10401,
+        "name": {
+          "en": "Blackened Defias Gloves",
+          "ru": "Blackened Defias Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132952.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 10,
+        "boss": "Sneed",
+        "url": "https://foreverdb.net/item/10401"
+      },
+      {
+        "id": 3195,
+        "name": {
+          "en": "Barbaric Battle Axe",
+          "ru": "Barbaric Battle Axe"
+        },
+        "icon": "/images/wow/forever/icons/132401.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 17,
+        "boss": "Sneed",
+        "url": "https://foreverdb.net/item/3195"
+      },
+      {
+        "id": 5207,
+        "name": {
+          "en": "Opaque Wand",
+          "ru": "Opaque Wand"
+        },
+        "icon": "/images/wow/forever/icons/135469.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 26,
+        "boss": "Sneed",
+        "url": "https://foreverdb.net/item/5207"
+      },
+      {
+        "id": 1945,
+        "name": {
+          "en": "Woodworking Gloves",
+          "ru": "Woodworking Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132955.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 10,
+        "boss": "Sneed",
+        "url": "https://foreverdb.net/item/1945"
+      },
+      {
+        "id": 5199,
+        "name": {
+          "en": "Smelting Pants",
+          "ru": "Smelting Pants"
+        },
+        "icon": "/images/wow/forever/icons/134582.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 7,
+        "boss": "Gilnid",
+        "url": "https://foreverdb.net/item/5199"
+      },
+      {
+        "id": 1156,
+        "name": {
+          "en": "Lavishly Jeweled Ring",
+          "ru": "Lavishly Jeweled Ring"
+        },
+        "icon": "/images/wow/forever/icons/133351.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 11,
+        "boss": "Gilnid",
+        "url": "https://foreverdb.net/item/1156"
+      },
+      {
+        "id": 10402,
+        "name": {
+          "en": "Blackened Defias Boots",
+          "ru": "Blackened Defias Boots"
+        },
+        "icon": "/images/wow/forever/icons/132539.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 8,
+        "boss": "Gilnid",
+        "url": "https://foreverdb.net/item/10402"
+      },
+      {
+        "id": 2078,
+        "name": {
+          "en": "Northern Shortsword",
+          "ru": "Northern Shortsword"
+        },
+        "icon": "/images/wow/forever/icons/135321.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 13,
+        "boss": "Gilnid",
+        "url": "https://foreverdb.net/item/2078"
+      },
+      {
+        "id": 3040,
+        "name": {
+          "en": "Hunter's Muzzle Loader",
+          "ru": "Hunter's Muzzle Loader"
+        },
+        "icon": "/images/wow/forever/icons/135610.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 26,
+        "boss": "Gilnid",
+        "url": "https://foreverdb.net/item/3040"
+      },
+      {
+        "id": 9789,
+        "name": {
+          "en": "Raider's Legguards",
+          "ru": "Raider's Legguards"
+        },
+        "icon": "/images/wow/forever/icons/134583.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 7,
+        "boss": "Gilnid",
+        "url": "https://foreverdb.net/item/9789"
+      },
+      {
+        "id": 15222,
+        "name": {
+          "en": "Barbed Club",
+          "ru": "Barbed Club"
+        },
+        "icon": "/images/wow/forever/icons/133045.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 21,
+        "boss": "Gilnid",
+        "url": "https://foreverdb.net/item/15222"
+      },
+      {
+        "id": 1944,
+        "name": {
+          "en": "Metalworking Gloves",
+          "ru": "Metalworking Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132938.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 10,
+        "boss": "Gilnid",
+        "url": "https://foreverdb.net/item/1944"
+      },
+      {
+        "id": 3196,
+        "name": {
+          "en": "Edged Bastard Sword",
+          "ru": "Edged Bastard Sword"
+        },
+        "icon": "/images/wow/forever/icons/135324.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 17,
+        "boss": "Gilnid",
+        "url": "https://foreverdb.net/item/3196"
+      },
+      {
+        "id": 5200,
+        "name": {
+          "en": "Impaling Harpoon",
+          "ru": "Impaling Harpoon"
+        },
+        "icon": "/images/wow/forever/icons/135130.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 17,
+        "boss": "Captain Greenskin",
+        "url": "https://foreverdb.net/item/5200"
+      },
+      {
+        "id": 5201,
+        "name": {
+          "en": "Emberstone Staff",
+          "ru": "Emberstone Staff"
+        },
+        "icon": "/images/wow/forever/icons/135150.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 17,
+        "boss": "Captain Greenskin",
+        "url": "https://foreverdb.net/item/5201"
+      },
+      {
+        "id": 5196,
+        "name": {
+          "en": "Smite's Reaver",
+          "ru": "Smite's Reaver"
+        },
+        "icon": "/images/wow/forever/icons/132416.webp",
+        "level": 17,
+        "itemLevel": 21,
+        "slot": 13,
+        "boss": "Mr. Smite",
+        "url": "https://foreverdb.net/item/5196"
+      },
+      {
+        "id": 5192,
+        "name": {
+          "en": "Thief's Blade",
+          "ru": "Thief's Blade"
+        },
+        "icon": "/images/wow/forever/icons/135325.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 13,
+        "boss": "Mr. Smite",
+        "url": "https://foreverdb.net/item/5192"
+      },
+      {
+        "id": 284715,
+        "name": {
+          "en": "First Mate Band",
+          "ru": "First Mate Band"
+        },
+        "icon": "/images/wow/forever/icons/133343.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 11,
+        "boss": "Mr. Smite",
+        "url": "https://foreverdb.net/item/284715"
+      },
+      {
+        "id": 4575,
+        "name": {
+          "en": "Medicine Staff",
+          "ru": "Medicine Staff"
+        },
+        "icon": "/images/wow/forever/icons/135168.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 17,
+        "boss": "Mr. Smite",
+        "url": "https://foreverdb.net/item/4575"
+      },
+      {
+        "id": 2985,
+        "name": {
+          "en": "Inscribed Leather Breastplate",
+          "ru": "Inscribed Leather Breastplate"
+        },
+        "icon": "/images/wow/forever/icons/132724.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 5,
+        "boss": "Mr. Smite",
+        "url": "https://foreverdb.net/item/2985"
+      },
+      {
+        "id": 14174,
+        "name": {
+          "en": "Buccaneer's Boots",
+          "ru": "Buccaneer's Boots"
+        },
+        "icon": "/images/wow/forever/icons/132539.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 8,
+        "boss": "Mr. Smite",
+        "url": "https://foreverdb.net/item/14174"
+      },
+      {
+        "id": 5198,
+        "name": {
+          "en": "Cookie's Stirring Rod",
+          "ru": "Cookie's Stirring Rod"
+        },
+        "icon": "/images/wow/forever/icons/135139.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 26,
+        "boss": "Cookie",
+        "url": "https://foreverdb.net/item/5198"
+      },
+      {
+        "id": 273298,
+        "name": {
+          "en": "Lookie's Spyglass",
+          "ru": "Lookie's Spyglass"
+        },
+        "icon": "/images/wow/forever/icons/134440.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 12,
+        "boss": "Cookie",
+        "url": "https://foreverdb.net/item/273298"
+      },
+      {
+        "id": 5202,
+        "name": {
+          "en": "Corsair's Overshirt",
+          "ru": "Corsair's Overshirt"
+        },
+        "icon": "/images/wow/forever/icons/135012.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 5,
+        "boss": "Edwin VanCleef",
+        "url": "https://foreverdb.net/item/5202"
+      },
+      {
+        "id": 5191,
+        "name": {
+          "en": "Cruel Barb",
+          "ru": "Cruel Barb"
+        },
+        "icon": "/images/wow/forever/icons/135325.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 13,
+        "boss": "Edwin VanCleef",
+        "url": "https://foreverdb.net/item/5191"
+      },
+      {
+        "id": 5193,
+        "name": {
+          "en": "Cape of the Brotherhood",
+          "ru": "Cape of the Brotherhood"
+        },
+        "icon": "/images/wow/forever/icons/133760.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 16,
+        "boss": "Edwin VanCleef",
+        "url": "https://foreverdb.net/item/5193"
+      },
+      {
+        "id": 6564,
+        "name": {
+          "en": "Shimmering Cloak",
+          "ru": "Shimmering Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133767.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 16,
+        "boss": "Edwin VanCleef",
+        "url": "https://foreverdb.net/item/6564"
+      },
+      {
+        "id": 12975,
+        "name": {
+          "en": "Prospector Axe",
+          "ru": "Prospector Axe"
+        },
+        "icon": "/images/wow/forever/icons/132394.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/12975"
+      },
+      {
+        "id": 2983,
+        "name": {
+          "en": "Seer's Boots",
+          "ru": "Seer's Boots"
+        },
+        "icon": "/images/wow/forever/icons/132539.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 8,
+        "boss": "",
+        "url": "https://foreverdb.net/item/2983"
+      },
+      {
+        "id": 2987,
+        "name": {
+          "en": "Inscribed Leather Boots",
+          "ru": "Inscribed Leather Boots"
+        },
+        "icon": "/images/wow/forever/icons/132539.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 8,
+        "boss": "",
+        "url": "https://foreverdb.net/item/2987"
+      },
+      {
+        "id": 4699,
+        "name": {
+          "en": "Seer's Belt",
+          "ru": "Seer's Belt"
+        },
+        "icon": "/images/wow/forever/icons/132511.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 6,
+        "boss": "",
+        "url": "https://foreverdb.net/item/4699"
+      },
+      {
+        "id": 4701,
+        "name": {
+          "en": "Inscribed Cloak",
+          "ru": "Inscribed Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133763.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 16,
+        "boss": "",
+        "url": "https://foreverdb.net/item/4701"
+      },
+      {
+        "id": 6547,
+        "name": {
+          "en": "Soldier's Gauntlets",
+          "ru": "Soldier's Gauntlets"
+        },
+        "icon": "/images/wow/forever/icons/132946.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6547"
+      },
+      {
+        "id": 9780,
+        "name": {
+          "en": "Bandit Gloves",
+          "ru": "Bandit Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132949.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/9780"
+      },
+      {
+        "id": 9784,
+        "name": {
+          "en": "Raider's Boots",
+          "ru": "Raider's Boots"
+        },
+        "icon": "/images/wow/forever/icons/132535.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 8,
+        "boss": "",
+        "url": "https://foreverdb.net/item/9784"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/36"
+  },
+  "wailing-caverns": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/43"
+  },
+  "shadowfang-keep": {
+    "loot": [
+      {
+        "id": 5254,
+        "name": {
+          "en": "Rugged Spaulders",
+          "ru": "Rugged Spaulders"
+        },
+        "icon": "/images/wow/forever/icons/135039.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 3,
+        "boss": "Rethilgore",
+        "url": "https://foreverdb.net/item/5254"
+      },
+      {
+        "id": 273456,
+        "name": {
+          "en": "Cell Keeper's Claws",
+          "ru": "Cell Keeper's Claws"
+        },
+        "icon": "/images/wow/forever/icons/134297.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 21,
+        "boss": "Rethilgore",
+        "url": "https://foreverdb.net/item/273456"
+      },
+      {
+        "id": 6545,
+        "name": {
+          "en": "Soldier's Armor",
+          "ru": "Soldier's Armor"
+        },
+        "icon": "/images/wow/forever/icons/132638.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 5,
+        "boss": "Rethilgore",
+        "url": "https://foreverdb.net/item/6545"
+      },
+      {
+        "id": 1292,
+        "name": {
+          "en": "Butcher's Cleaver",
+          "ru": "Butcher's Cleaver"
+        },
+        "icon": "/images/wow/forever/icons/132417.webp",
+        "level": 20,
+        "itemLevel": 25,
+        "slot": 13,
+        "boss": "Razorclaw the Butcher",
+        "url": "https://foreverdb.net/item/1292"
+      },
+      {
+        "id": 6633,
+        "name": {
+          "en": "Butcher's Slicer",
+          "ru": "Butcher's Slicer"
+        },
+        "icon": "/images/wow/forever/icons/135314.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 13,
+        "boss": "Razorclaw the Butcher",
+        "url": "https://foreverdb.net/item/6633"
+      },
+      {
+        "id": 2988,
+        "name": {
+          "en": "Inscribed Leather Gloves",
+          "ru": "Inscribed Leather Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132952.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 10,
+        "boss": "Razorclaw the Butcher",
+        "url": "https://foreverdb.net/item/2988"
+      },
+      {
+        "id": 4575,
+        "name": {
+          "en": "Medicine Staff",
+          "ru": "Medicine Staff"
+        },
+        "icon": "/images/wow/forever/icons/135168.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 17,
+        "boss": "Razorclaw the Butcher",
+        "url": "https://foreverdb.net/item/4575"
+      },
+      {
+        "id": 6323,
+        "name": {
+          "en": "Baron's Scepter",
+          "ru": "Baron's Scepter"
+        },
+        "icon": "/images/wow/forever/icons/133477.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 21,
+        "boss": "Baron Silverlaine",
+        "url": "https://foreverdb.net/item/6323"
+      },
+      {
+        "id": 273637,
+        "name": {
+          "en": "Blade of Silverlaine",
+          "ru": "Blade of Silverlaine"
+        },
+        "icon": "/images/wow/forever/icons/135275.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 21,
+        "boss": "Baron Silverlaine",
+        "url": "https://foreverdb.net/item/273637"
+      },
+      {
+        "id": 3193,
+        "name": {
+          "en": "Oak Mallet",
+          "ru": "Oak Mallet"
+        },
+        "icon": "/images/wow/forever/icons/133052.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 17,
+        "boss": "Baron Silverlaine",
+        "url": "https://foreverdb.net/item/3193"
+      },
+      {
+        "id": 3191,
+        "name": {
+          "en": "Arced War Axe",
+          "ru": "Arced War Axe"
+        },
+        "icon": "/images/wow/forever/icons/132397.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 17,
+        "boss": "Commander Springvale",
+        "url": "https://foreverdb.net/item/3191"
+      },
+      {
+        "id": 273643,
+        "name": {
+          "en": "Worgenbane Talisman",
+          "ru": "Worgenbane Talisman"
+        },
+        "icon": "/images/wow/forever/icons/133439.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 12,
+        "boss": "Commander Springvale",
+        "url": "https://foreverdb.net/item/273643"
+      },
+      {
+        "id": 6571,
+        "name": {
+          "en": "Scouting Buckler",
+          "ru": "Scouting Buckler"
+        },
+        "icon": "/images/wow/forever/icons/134948.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 14,
+        "boss": "Commander Springvale",
+        "url": "https://foreverdb.net/item/6571"
+      },
+      {
+        "id": 14173,
+        "name": {
+          "en": "Buccaneer's Cord",
+          "ru": "Buccaneer's Cord"
+        },
+        "icon": "/images/wow/forever/icons/132511.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 6,
+        "boss": "Commander Springvale",
+        "url": "https://foreverdb.net/item/14173"
+      },
+      {
+        "id": 273645,
+        "name": {
+          "en": "Blindwatcher's Sight",
+          "ru": "Blindwatcher's Sight"
+        },
+        "icon": "/images/wow/forever/icons/133693.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 1,
+        "boss": "Odo the Blindwatcher",
+        "url": "https://foreverdb.net/item/273645"
+      },
+      {
+        "id": 1483,
+        "name": {
+          "en": "Face Smasher",
+          "ru": "Face Smasher"
+        },
+        "icon": "/images/wow/forever/icons/133045.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 13,
+        "boss": "Odo the Blindwatcher",
+        "url": "https://foreverdb.net/item/1483"
+      },
+      {
+        "id": 6319,
+        "name": {
+          "en": "Girdle of the Blindwatcher",
+          "ru": "Girdle of the Blindwatcher"
+        },
+        "icon": "/images/wow/forever/icons/132492.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 6,
+        "boss": "Odo the Blindwatcher",
+        "url": "https://foreverdb.net/item/6319"
+      },
+      {
+        "id": 6642,
+        "name": {
+          "en": "Phantom Armor",
+          "ru": "Phantom Armor"
+        },
+        "icon": "/images/wow/forever/icons/132627.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 5,
+        "boss": "Odo the Blindwatcher",
+        "url": "https://foreverdb.net/item/6642"
+      },
+      {
+        "id": 3230,
+        "name": {
+          "en": "Black Wolf Bracers",
+          "ru": "Black Wolf Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132606.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 9,
+        "boss": "Fenrus the Devourer",
+        "url": "https://foreverdb.net/item/3230"
+      },
+      {
+        "id": 5943,
+        "name": {
+          "en": "Rift Bracers",
+          "ru": "Rift Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132602.webp",
+        "level": 20,
+        "itemLevel": 25,
+        "slot": 9,
+        "boss": "Fenrus the Devourer",
+        "url": "https://foreverdb.net/item/5943"
+      },
+      {
+        "id": 15223,
+        "name": {
+          "en": "Jagged Star",
+          "ru": "Jagged Star"
+        },
+        "icon": "/images/wow/forever/icons/133045.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 21,
+        "boss": "Fenrus the Devourer",
+        "url": "https://foreverdb.net/item/15223"
+      },
+      {
+        "id": 1935,
+        "name": {
+          "en": "Assassin's Blade",
+          "ru": "Assassin's Blade"
+        },
+        "icon": "/images/wow/forever/icons/135660.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 13,
+        "boss": "Wolf Master Nandos",
+        "url": "https://foreverdb.net/item/1935"
+      },
+      {
+        "id": 3748,
+        "name": {
+          "en": "Feline Mantle",
+          "ru": "Feline Mantle"
+        },
+        "icon": "/images/wow/forever/icons/135036.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 3,
+        "boss": "Wolf Master Nandos",
+        "url": "https://foreverdb.net/item/3748"
+      },
+      {
+        "id": 6314,
+        "name": {
+          "en": "Wolfmaster Cape",
+          "ru": "Wolfmaster Cape"
+        },
+        "icon": "/images/wow/forever/icons/133762.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 16,
+        "boss": "Wolf Master Nandos",
+        "url": "https://foreverdb.net/item/6314"
+      },
+      {
+        "id": 273647,
+        "name": {
+          "en": "Worgpelt Leggings",
+          "ru": "Worgpelt Leggings"
+        },
+        "icon": "/images/wow/forever/icons/134592.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 7,
+        "boss": "Wolf Master Nandos",
+        "url": "https://foreverdb.net/item/273647"
+      },
+      {
+        "id": 6552,
+        "name": {
+          "en": "Bard's Tunic",
+          "ru": "Bard's Tunic"
+        },
+        "icon": "/images/wow/forever/icons/135015.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 5,
+        "boss": "Wolf Master Nandos",
+        "url": "https://foreverdb.net/item/6552"
+      },
+      {
+        "id": 9814,
+        "name": {
+          "en": "Fortified Belt",
+          "ru": "Fortified Belt"
+        },
+        "icon": "/images/wow/forever/icons/132493.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 6,
+        "boss": "Wolf Master Nandos",
+        "url": "https://foreverdb.net/item/9814"
+      },
+      {
+        "id": 6220,
+        "name": {
+          "en": "Meteor Shard",
+          "ru": "Meteor Shard"
+        },
+        "icon": "/images/wow/forever/icons/135661.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 13,
+        "boss": "Archmage Arugal",
+        "url": "https://foreverdb.net/item/6220"
+      },
+      {
+        "id": 6324,
+        "name": {
+          "en": "Robes of Arugal",
+          "ru": "Robes of Arugal"
+        },
+        "icon": "/images/wow/forever/icons/132672.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 20,
+        "boss": "Archmage Arugal",
+        "url": "https://foreverdb.net/item/6324"
+      },
+      {
+        "id": 6382,
+        "name": {
+          "en": "Forest Leather Belt",
+          "ru": "Forest Leather Belt"
+        },
+        "icon": "/images/wow/forever/icons/132492.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 6,
+        "boss": "Archmage Arugal",
+        "url": "https://foreverdb.net/item/6382"
+      },
+      {
+        "id": 2981,
+        "name": {
+          "en": "Seer's Robe",
+          "ru": "Seer's Robe"
+        },
+        "icon": "/images/wow/forever/icons/132649.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 20,
+        "boss": "",
+        "url": "https://foreverdb.net/item/2981"
+      },
+      {
+        "id": 2984,
+        "name": {
+          "en": "Seer's Gloves",
+          "ru": "Seer's Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132952.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/2984"
+      },
+      {
+        "id": 3198,
+        "name": {
+          "en": "Battering Hammer",
+          "ru": "Battering Hammer"
+        },
+        "icon": "/images/wow/forever/icons/133053.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3198"
+      },
+      {
+        "id": 3647,
+        "name": {
+          "en": "Bright Bracers",
+          "ru": "Bright Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132601.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 9,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3647"
+      },
+      {
+        "id": 3740,
+        "name": {
+          "en": "Decapitating Sword",
+          "ru": "Decapitating Sword"
+        },
+        "icon": "/images/wow/forever/icons/135662.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 21,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3740"
+      },
+      {
+        "id": 6381,
+        "name": {
+          "en": "Bright Cloak",
+          "ru": "Bright Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133762.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 16,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6381"
+      },
+      {
+        "id": 6563,
+        "name": {
+          "en": "Shimmering Bracers",
+          "ru": "Shimmering Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132611.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 9,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6563"
+      },
+      {
+        "id": 6578,
+        "name": {
+          "en": "Defender Leggings",
+          "ru": "Defender Leggings"
+        },
+        "icon": "/images/wow/forever/icons/134583.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6578"
+      },
+      {
+        "id": 9782,
+        "name": {
+          "en": "Bandit Jerkin",
+          "ru": "Bandit Jerkin"
+        },
+        "icon": "/images/wow/forever/icons/135015.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 5,
+        "boss": "",
+        "url": "https://foreverdb.net/item/9782"
+      },
+      {
+        "id": 9805,
+        "name": {
+          "en": "Superior Cloak",
+          "ru": "Superior Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133762.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 16,
+        "boss": "",
+        "url": "https://foreverdb.net/item/9805"
+      },
+      {
+        "id": 9813,
+        "name": {
+          "en": "Fortified Gauntlets",
+          "ru": "Fortified Gauntlets"
+        },
+        "icon": "/images/wow/forever/icons/132955.webp",
+        "level": 20,
+        "itemLevel": 25,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/9813"
+      },
+      {
+        "id": 14171,
+        "name": {
+          "en": "Buccaneer's Pants",
+          "ru": "Buccaneer's Pants"
+        },
+        "icon": "/images/wow/forever/icons/134586.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/14171"
+      },
+      {
+        "id": 15222,
+        "name": {
+          "en": "Barbed Club",
+          "ru": "Barbed Club"
+        },
+        "icon": "/images/wow/forever/icons/133045.webp",
+        "level": 14,
+        "itemLevel": 19,
+        "slot": 21,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15222"
+      },
+      {
+        "id": 15248,
+        "name": {
+          "en": "Gleaming Claymore",
+          "ru": "Gleaming Claymore"
+        },
+        "icon": "/images/wow/forever/icons/135324.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15248"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/33"
+  },
+  "blackfathom-deeps": {
+    "loot": [
+      {
+        "id": 6907,
+        "name": {
+          "en": "Tortoise Armor",
+          "ru": "Tortoise Armor"
+        },
+        "icon": "/images/wow/forever/icons/135010.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 5,
+        "boss": "Ghamoo-ra",
+        "url": "https://foreverdb.net/item/6907"
+      },
+      {
+        "id": 6908,
+        "name": {
+          "en": "Ghamoo-ra's Bind",
+          "ru": "Ghamoo-ra's Bind"
+        },
+        "icon": "/images/wow/forever/icons/132513.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 6,
+        "boss": "Ghamoo-ra",
+        "url": "https://foreverdb.net/item/6908"
+      },
+      {
+        "id": 273839,
+        "name": {
+          "en": "Spiked Shell Band",
+          "ru": "Spiked Shell Band"
+        },
+        "icon": "/images/wow/forever/icons/133344.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 11,
+        "boss": "Ghamoo-ra",
+        "url": "https://foreverdb.net/item/273839"
+      },
+      {
+        "id": 14165,
+        "name": {
+          "en": "Pagan Britches",
+          "ru": "Pagan Britches"
+        },
+        "icon": "/images/wow/forever/icons/134582.webp",
+        "level": 20,
+        "itemLevel": 25,
+        "slot": 7,
+        "boss": "Ghamoo-ra",
+        "url": "https://foreverdb.net/item/14165"
+      },
+      {
+        "id": 15311,
+        "name": {
+          "en": "Feral Harness",
+          "ru": "Feral Harness"
+        },
+        "icon": "/images/wow/forever/icons/132719.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 5,
+        "boss": "Ghamoo-ra",
+        "url": "https://foreverdb.net/item/15311"
+      },
+      {
+        "id": 11121,
+        "name": {
+          "en": "Darkwater Talwar",
+          "ru": "Darkwater Talwar"
+        },
+        "icon": "/images/wow/forever/icons/135346.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 21,
+        "boss": "Lady Sarevess",
+        "url": "https://foreverdb.net/item/11121"
+      },
+      {
+        "id": 888,
+        "name": {
+          "en": "Naga Battle Gloves",
+          "ru": "Naga Battle Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132947.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 10,
+        "boss": "Lady Sarevess",
+        "url": "https://foreverdb.net/item/888"
+      },
+      {
+        "id": 3078,
+        "name": {
+          "en": "Naga Heartpiercer",
+          "ru": "Naga Heartpiercer"
+        },
+        "icon": "/images/wow/forever/icons/135492.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 15,
+        "boss": "Lady Sarevess",
+        "url": "https://foreverdb.net/item/3078"
+      },
+      {
+        "id": 14749,
+        "name": {
+          "en": "Hulking Spaulders",
+          "ru": "Hulking Spaulders"
+        },
+        "icon": "/images/wow/forever/icons/135038.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 3,
+        "boss": "Lady Sarevess",
+        "url": "https://foreverdb.net/item/14749"
+      },
+      {
+        "id": 3039,
+        "name": {
+          "en": "Short Ash Bow",
+          "ru": "Short Ash Bow"
+        },
+        "icon": "/images/wow/forever/icons/135491.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 15,
+        "boss": "Lady Sarevess",
+        "url": "https://foreverdb.net/item/3039"
+      },
+      {
+        "id": 15333,
+        "name": {
+          "en": "Wrangler's Cloak",
+          "ru": "Wrangler's Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133753.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 16,
+        "boss": "Lady Sarevess",
+        "url": "https://foreverdb.net/item/15333"
+      },
+      {
+        "id": 273840,
+        "name": {
+          "en": "Cursed Murloc Eye",
+          "ru": "Cursed Murloc Eye"
+        },
+        "icon": "/images/wow/forever/icons/136155.webp",
+        "level": 24,
+        "itemLevel": 29,
+        "slot": 12,
+        "boss": "Geilhast",
+        "url": "https://foreverdb.net/item/273840"
+      },
+      {
+        "id": 6906,
+        "name": {
+          "en": "Algae Fists",
+          "ru": "Algae Fists"
+        },
+        "icon": "/images/wow/forever/icons/132944.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 10,
+        "boss": "Geilhast",
+        "url": "https://foreverdb.net/item/6906"
+      },
+      {
+        "id": 2879,
+        "name": {
+          "en": "Antipodean Rod",
+          "ru": "Antipodean Rod"
+        },
+        "icon": "/images/wow/forever/icons/135466.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 23,
+        "boss": "Geilhast",
+        "url": "https://foreverdb.net/item/2879"
+      },
+      {
+        "id": 6905,
+        "name": {
+          "en": "Reef Axe",
+          "ru": "Reef Axe"
+        },
+        "icon": "/images/wow/forever/icons/135576.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 17,
+        "boss": "Geilhast",
+        "url": "https://foreverdb.net/item/6905"
+      },
+      {
+        "id": 9781,
+        "name": {
+          "en": "Bandit Pants",
+          "ru": "Bandit Pants"
+        },
+        "icon": "/images/wow/forever/icons/134586.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 7,
+        "boss": "Geilhast",
+        "url": "https://foreverdb.net/item/9781"
+      },
+      {
+        "id": 9771,
+        "name": {
+          "en": "Greenweave Gloves",
+          "ru": "Greenweave Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132952.webp",
+        "level": 20,
+        "itemLevel": 25,
+        "slot": 10,
+        "boss": "Geilhast",
+        "url": "https://foreverdb.net/item/9771"
+      },
+      {
+        "id": 14376,
+        "name": {
+          "en": "Sanguine Cape",
+          "ru": "Sanguine Cape"
+        },
+        "icon": "/images/wow/forever/icons/133770.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 16,
+        "boss": "Geilhast",
+        "url": "https://foreverdb.net/item/14376"
+      },
+      {
+        "id": 15259,
+        "name": {
+          "en": "Hefty Battlehammer",
+          "ru": "Hefty Battlehammer"
+        },
+        "icon": "/images/wow/forever/icons/133053.webp",
+        "level": 20,
+        "itemLevel": 25,
+        "slot": 17,
+        "boss": "Geilhast",
+        "url": "https://foreverdb.net/item/15259"
+      },
+      {
+        "id": 273841,
+        "name": {
+          "en": "Twilight Maul",
+          "ru": "Twilight Maul"
+        },
+        "icon": "/images/wow/forever/icons/133046.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 17,
+        "boss": "Lorgus Jett",
+        "url": "https://foreverdb.net/item/273841"
+      },
+      {
+        "id": 273843,
+        "name": {
+          "en": "Fallenroot Longbow",
+          "ru": "Fallenroot Longbow"
+        },
+        "icon": "/images/wow/forever/icons/135491.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 15,
+        "boss": "Lorgus Jett",
+        "url": "https://foreverdb.net/item/273843"
+      },
+      {
+        "id": 6904,
+        "name": {
+          "en": "Bite of Serra'kis",
+          "ru": "Bite of Serra'kis"
+        },
+        "icon": "/images/wow/forever/icons/134298.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 13,
+        "boss": "Old Serra'kis",
+        "url": "https://foreverdb.net/item/6904"
+      },
+      {
+        "id": 252513,
+        "name": {
+          "en": "Trapper's Leather Helm",
+          "ru": "Кожаный шлем зверолова"
+        },
+        "icon": "/images/wow/forever/icons/133134.webp",
+        "level": 25,
+        "itemLevel": 30,
+        "slot": 1,
+        "boss": "Old Serra'kis",
+        "url": "https://foreverdb.net/item/252513"
+      },
+      {
+        "id": 1155,
+        "name": {
+          "en": "Rod of the Sleepwalker",
+          "ru": "Rod of the Sleepwalker"
+        },
+        "icon": "/images/wow/forever/icons/135143.webp",
+        "level": 24,
+        "itemLevel": 29,
+        "slot": 17,
+        "boss": "Twilight Lord Kelris",
+        "url": "https://foreverdb.net/item/1155"
+      },
+      {
+        "id": 6903,
+        "name": {
+          "en": "Gaze Dreamer Pants",
+          "ru": "Gaze Dreamer Pants"
+        },
+        "icon": "/images/wow/forever/icons/134582.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 7,
+        "boss": "Twilight Lord Kelris",
+        "url": "https://foreverdb.net/item/6903"
+      },
+      {
+        "id": 273846,
+        "name": {
+          "en": "Twilight Lord Girdle",
+          "ru": "Twilight Lord Girdle"
+        },
+        "icon": "/images/wow/forever/icons/132516.webp",
+        "level": 25,
+        "itemLevel": 30,
+        "slot": 6,
+        "boss": "Twilight Lord Kelris",
+        "url": "https://foreverdb.net/item/273846"
+      },
+      {
+        "id": 2072,
+        "name": {
+          "en": "Dwarven Magestaff",
+          "ru": "Dwarven Magestaff"
+        },
+        "icon": "/images/wow/forever/icons/135141.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 17,
+        "boss": "Twilight Lord Kelris",
+        "url": "https://foreverdb.net/item/2072"
+      },
+      {
+        "id": 10287,
+        "name": {
+          "en": "Greenweave Mantle",
+          "ru": "Greenweave Mantle"
+        },
+        "icon": "/images/wow/forever/icons/135044.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 3,
+        "boss": "Twilight Lord Kelris",
+        "url": "https://foreverdb.net/item/10287"
+      },
+      {
+        "id": 6909,
+        "name": {
+          "en": "Strike of the Hydra",
+          "ru": "Strike of the Hydra"
+        },
+        "icon": "/images/wow/forever/icons/135352.webp",
+        "level": 26,
+        "itemLevel": 31,
+        "slot": 17,
+        "boss": "Aku'mai",
+        "url": "https://foreverdb.net/item/6909"
+      },
+      {
+        "id": 6911,
+        "name": {
+          "en": "Moss Cinch",
+          "ru": "Moss Cinch"
+        },
+        "icon": "/images/wow/forever/icons/132514.webp",
+        "level": 25,
+        "itemLevel": 30,
+        "slot": 6,
+        "boss": "Aku'mai",
+        "url": "https://foreverdb.net/item/6911"
+      },
+      {
+        "id": 6910,
+        "name": {
+          "en": "Leech Pants",
+          "ru": "Leech Pants"
+        },
+        "icon": "/images/wow/forever/icons/134594.webp",
+        "level": 24,
+        "itemLevel": 29,
+        "slot": 7,
+        "boss": "Aku'mai",
+        "url": "https://foreverdb.net/item/6910"
+      },
+      {
+        "id": 3415,
+        "name": {
+          "en": "Staff of the Friar",
+          "ru": "Staff of the Friar"
+        },
+        "icon": "/images/wow/forever/icons/135169.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3415"
+      },
+      {
+        "id": 14162,
+        "name": {
+          "en": "Pagan Mitts",
+          "ru": "Pagan Mitts"
+        },
+        "icon": "/images/wow/forever/icons/132939.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/14162"
+      },
+      {
+        "id": 14179,
+        "name": {
+          "en": "Watcher's Cape",
+          "ru": "Watcher's Cape"
+        },
+        "icon": "/images/wow/forever/icons/133767.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 16,
+        "boss": "",
+        "url": "https://foreverdb.net/item/14179"
+      },
+      {
+        "id": 14562,
+        "name": {
+          "en": "Prospector's Chestpiece",
+          "ru": "Prospector's Chestpiece"
+        },
+        "icon": "/images/wow/forever/icons/132724.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 5,
+        "boss": "",
+        "url": "https://foreverdb.net/item/14562"
+      },
+      {
+        "id": 14746,
+        "name": {
+          "en": "Hulking Belt",
+          "ru": "Hulking Belt"
+        },
+        "icon": "/images/wow/forever/icons/132511.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 6,
+        "boss": "",
+        "url": "https://foreverdb.net/item/14746"
+      },
+      {
+        "id": 15122,
+        "name": {
+          "en": "Robust Bracers",
+          "ru": "Robust Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132611.webp",
+        "level": 20,
+        "itemLevel": 25,
+        "slot": 9,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15122"
+      },
+      {
+        "id": 15126,
+        "name": {
+          "en": "Robust Leggings",
+          "ru": "Robust Leggings"
+        },
+        "icon": "/images/wow/forever/icons/134587.webp",
+        "level": 24,
+        "itemLevel": 29,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15126"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/48"
+  },
+  "the-stockade": {
+    "loot": [
+      {
+        "id": 273805,
+        "name": {
+          "en": "Blackrock Harness",
+          "ru": "Blackrock Harness"
+        },
+        "icon": "/images/wow/forever/icons/132719.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 5,
+        "boss": "Targorr the Dread",
+        "url": "https://foreverdb.net/item/273805"
+      },
+      {
+        "id": 2280,
+        "name": {
+          "en": "Kam's Walking Stick",
+          "ru": "Kam's Walking Stick"
+        },
+        "icon": "/images/wow/forever/icons/135143.webp",
+        "level": 24,
+        "itemLevel": 29,
+        "slot": 17,
+        "boss": "Kam Deepfury",
+        "url": "https://foreverdb.net/item/2280"
+      },
+      {
+        "id": 274092,
+        "name": {
+          "en": "Sharpened Cutlery",
+          "ru": "Sharpened Cutlery"
+        },
+        "icon": "/images/wow/forever/icons/135426.webp",
+        "level": 19,
+        "itemLevel": 26,
+        "slot": 25,
+        "boss": "Kam Deepfury",
+        "url": "https://foreverdb.net/item/274092"
+      },
+      {
+        "id": 273811,
+        "name": {
+          "en": "Repurposed Rack",
+          "ru": "Repurposed Rack"
+        },
+        "icon": "/images/wow/forever/icons/134957.webp",
+        "level": 25,
+        "itemLevel": 30,
+        "slot": 14,
+        "boss": "Hamhock",
+        "url": "https://foreverdb.net/item/273811"
+      },
+      {
+        "id": 9798,
+        "name": {
+          "en": "Ivycloth Robe",
+          "ru": "Ivycloth Robe"
+        },
+        "icon": "/images/wow/forever/icons/132683.webp",
+        "level": 24,
+        "itemLevel": 29,
+        "slot": 20,
+        "boss": "Hamhock",
+        "url": "https://foreverdb.net/item/9798"
+      },
+      {
+        "id": 11983,
+        "name": {
+          "en": "Chrome Ring",
+          "ru": "Chrome Ring"
+        },
+        "icon": "/images/wow/forever/icons/133347.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 11,
+        "boss": "Hamhock",
+        "url": "https://foreverdb.net/item/11983"
+      },
+      {
+        "id": 273819,
+        "name": {
+          "en": "Boneslicer",
+          "ru": "Boneslicer"
+        },
+        "icon": "/images/wow/forever/icons/135128.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 17,
+        "boss": "Dextren Ward",
+        "url": "https://foreverdb.net/item/273819"
+      },
+      {
+        "id": 9805,
+        "name": {
+          "en": "Superior Cloak",
+          "ru": "Superior Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133762.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 16,
+        "boss": "Dextren Ward",
+        "url": "https://foreverdb.net/item/9805"
+      },
+      {
+        "id": 273829,
+        "name": {
+          "en": "Concealed Hand Crossbow",
+          "ru": "Concealed Hand Crossbow"
+        },
+        "icon": "/images/wow/forever/icons/135531.webp",
+        "level": 26,
+        "itemLevel": 31,
+        "slot": 26,
+        "boss": "Bazil Thredd",
+        "url": "https://foreverdb.net/item/273829"
+      },
+      {
+        "id": 3066,
+        "name": {
+          "en": "Bright Gloves",
+          "ru": "Bright Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132957.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3066"
+      },
+      {
+        "id": 6578,
+        "name": {
+          "en": "Defender Leggings",
+          "ru": "Defender Leggings"
+        },
+        "icon": "/images/wow/forever/icons/134583.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6578"
+      },
+      {
+        "id": 6587,
+        "name": {
+          "en": "Scouting Trousers",
+          "ru": "Scouting Trousers"
+        },
+        "icon": "/images/wow/forever/icons/134582.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6587"
+      },
+      {
+        "id": 15269,
+        "name": {
+          "en": "Massive Battle Axe",
+          "ru": "Massive Battle Axe"
+        },
+        "icon": "/images/wow/forever/icons/132415.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15269"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/34"
+  },
+  "gnomeregan": {
+    "loot": [
+      {
+        "id": 9492,
+        "name": {
+          "en": "Electromagnetic Gigaflux Reactivator",
+          "ru": "Electromagnetic Gigaflux Reactivator"
+        },
+        "icon": "/images/wow/forever/icons/132995.webp",
+        "level": 31,
+        "itemLevel": 36,
+        "slot": 1,
+        "boss": "Mekgineer Thermaplugg",
+        "url": "https://foreverdb.net/item/9492"
+      },
+      {
+        "id": 9861,
+        "name": {
+          "en": "Archer's Gloves",
+          "ru": "Archer's Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132956.webp",
+        "level": 30,
+        "itemLevel": 35,
+        "slot": 10,
+        "boss": "Mekgineer Thermaplugg",
+        "url": "https://foreverdb.net/item/9861"
+      },
+      {
+        "id": 5214,
+        "name": {
+          "en": "Wand of Eventide",
+          "ru": "Wand of Eventide"
+        },
+        "icon": "/images/wow/forever/icons/135463.webp",
+        "level": 27,
+        "itemLevel": 32,
+        "slot": 26,
+        "boss": "",
+        "url": "https://foreverdb.net/item/5214"
+      },
+      {
+        "id": 6613,
+        "name": {
+          "en": "Sage's Bracers",
+          "ru": "Sage's Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132610.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 9,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6613"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/90"
+  },
+  "razorfen-kraul": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/47"
+  },
+  "scarlet-monastery": {
+    "loot": [
+      {
+        "id": 7682,
+        "name": {
+          "en": "Torturing Poker",
+          "ru": "Torturing Poker"
+        },
+        "icon": "/images/wow/forever/icons/135124.webp",
+        "level": 29,
+        "itemLevel": 34,
+        "slot": 13,
+        "boss": "Interrogator Vishas",
+        "url": "https://foreverdb.net/item/7682"
+      },
+      {
+        "id": 7683,
+        "name": {
+          "en": "Bloody Brass Knuckles",
+          "ru": "Bloody Brass Knuckles"
+        },
+        "icon": "/images/wow/forever/icons/132945.webp",
+        "level": 29,
+        "itemLevel": 34,
+        "slot": 13,
+        "boss": "Interrogator Vishas",
+        "url": "https://foreverdb.net/item/7683"
+      },
+      {
+        "id": 2080,
+        "name": {
+          "en": "Hillborne Axe",
+          "ru": "Hillborne Axe"
+        },
+        "icon": "/images/wow/forever/icons/132402.webp",
+        "level": 29,
+        "itemLevel": 34,
+        "slot": 13,
+        "boss": "Interrogator Vishas",
+        "url": "https://foreverdb.net/item/2080"
+      },
+      {
+        "id": 3197,
+        "name": {
+          "en": "Stonecutter Claymore",
+          "ru": "Stonecutter Claymore"
+        },
+        "icon": "/images/wow/forever/icons/135357.webp",
+        "level": 30,
+        "itemLevel": 35,
+        "slot": 17,
+        "boss": "Interrogator Vishas",
+        "url": "https://foreverdb.net/item/3197"
+      },
+      {
+        "id": 3202,
+        "name": {
+          "en": "Forest Leather Bracers",
+          "ru": "Forest Leather Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132605.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 9,
+        "boss": "Interrogator Vishas",
+        "url": "https://foreverdb.net/item/3202"
+      },
+      {
+        "id": 6617,
+        "name": {
+          "en": "Sage's Mantle",
+          "ru": "Sage's Mantle"
+        },
+        "icon": "/images/wow/forever/icons/135033.webp",
+        "level": 25,
+        "itemLevel": 30,
+        "slot": 3,
+        "boss": "Interrogator Vishas",
+        "url": "https://foreverdb.net/item/6617"
+      },
+      {
+        "id": 9837,
+        "name": {
+          "en": "Banded Bracers",
+          "ru": "Banded Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132602.webp",
+        "level": 25,
+        "itemLevel": 30,
+        "slot": 9,
+        "boss": "Interrogator Vishas",
+        "url": "https://foreverdb.net/item/9837"
+      },
+      {
+        "id": 15286,
+        "name": {
+          "en": "Long Redwood Bow",
+          "ru": "Long Redwood Bow"
+        },
+        "icon": "/images/wow/forever/icons/135498.webp",
+        "level": 30,
+        "itemLevel": 35,
+        "slot": 15,
+        "boss": "Interrogator Vishas",
+        "url": "https://foreverdb.net/item/15286"
+      },
+      {
+        "id": 7684,
+        "name": {
+          "en": "Bloodmage Mantle",
+          "ru": "Bloodmage Mantle"
+        },
+        "icon": "/images/wow/forever/icons/135036.webp",
+        "level": 30,
+        "itemLevel": 35,
+        "slot": 3,
+        "boss": "Bloodmage Thalnos",
+        "url": "https://foreverdb.net/item/7684"
+      },
+      {
+        "id": 7685,
+        "name": {
+          "en": "Orb of the Forgotten Seer",
+          "ru": "Orb of the Forgotten Seer"
+        },
+        "icon": "/images/wow/forever/icons/134334.webp",
+        "level": 32,
+        "itemLevel": 37,
+        "slot": 23,
+        "boss": "Bloodmage Thalnos",
+        "url": "https://foreverdb.net/item/7685"
+      },
+      {
+        "id": 252515,
+        "name": {
+          "en": "Wisdom's Leather Helm",
+          "ru": "Кожаный шлем мудрости"
+        },
+        "icon": "/images/wow/forever/icons/133128.webp",
+        "level": 25,
+        "itemLevel": 30,
+        "slot": 1,
+        "boss": "Bloodmage Thalnos",
+        "url": "https://foreverdb.net/item/252515"
+      },
+      {
+        "id": 4065,
+        "name": {
+          "en": "Combat Shield",
+          "ru": "Combat Shield"
+        },
+        "icon": "/images/wow/forever/icons/134951.webp",
+        "level": 31,
+        "itemLevel": 36,
+        "slot": 14,
+        "boss": "Bloodmage Thalnos",
+        "url": "https://foreverdb.net/item/4065"
+      },
+      {
+        "id": 7688,
+        "name": {
+          "en": "Ironspine's Ribcage",
+          "ru": "Ironspine's Ribcage"
+        },
+        "icon": "/images/wow/forever/icons/132750.webp",
+        "level": 30,
+        "itemLevel": 35,
+        "slot": 5,
+        "boss": "",
+        "url": "https://foreverdb.net/item/7688"
+      },
+      {
+        "id": 7691,
+        "name": {
+          "en": "Embalmed Shroud",
+          "ru": "Embalmed Shroud"
+        },
+        "icon": "/images/wow/forever/icons/133130.webp",
+        "level": 30,
+        "itemLevel": 35,
+        "slot": 1,
+        "boss": "",
+        "url": "https://foreverdb.net/item/7691"
+      },
+      {
+        "id": 7709,
+        "name": {
+          "en": "Blighted Leggings",
+          "ru": "Blighted Leggings"
+        },
+        "icon": "/images/wow/forever/icons/134587.webp",
+        "level": 30,
+        "itemLevel": 35,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/7709"
+      },
+      {
+        "id": 15285,
+        "name": {
+          "en": "Archer's Longbow",
+          "ru": "Archer's Longbow"
+        },
+        "icon": "/images/wow/forever/icons/135491.webp",
+        "level": 27,
+        "itemLevel": 32,
+        "slot": 15,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15285"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/189"
+  },
+  "uldaman": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/70"
+  },
+  "razorfen-downs": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/129"
+  },
+  "zul-farrak": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/209"
+  },
+  "maraudon": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/349"
+  },
+  "sunken-temple": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/109"
+  },
+  "blackrock-depths": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/230"
+  },
+  "blackrock-spire": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/229"
+  },
+  "dire-maul": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/429"
+  },
+  "stratholme": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/329"
+  },
+  "scholomance": {
+    "loot": [],
+    "source": "https://foreverdb.net/dungeon/289"
+  },
+  "hall-of-thanes": {
+    "loot": [
+      {
+        "id": 270227,
+        "name": {
+          "en": "Ephemeral Choker",
+          "ru": "Ephemeral Choker"
+        },
+        "icon": "/images/wow/forever/icons/466975.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 2,
+        "boss": "Faldrim Anvilmar",
+        "url": "https://foreverdb.net/item/270227"
+      },
+      {
+        "id": 271096,
+        "name": {
+          "en": "Aetherwisp Bracers",
+          "ru": "Aetherwisp Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132610.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 9,
+        "boss": "Faldrim Anvilmar",
+        "url": "https://foreverdb.net/item/271096"
+      },
+      {
+        "id": 271097,
+        "name": {
+          "en": "Spiritwraith Drape",
+          "ru": "Spiritwraith Drape"
+        },
+        "icon": "/images/wow/forever/icons/133764.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 16,
+        "boss": "Faldrim Anvilmar",
+        "url": "https://foreverdb.net/item/271097"
+      },
+      {
+        "id": 5071,
+        "name": {
+          "en": "Shadow Wand",
+          "ru": "Shadow Wand"
+        },
+        "icon": "/images/wow/forever/icons/135645.webp",
+        "level": 9,
+        "itemLevel": 14,
+        "slot": 26,
+        "boss": "Faldrim Anvilmar",
+        "url": "https://foreverdb.net/item/5071"
+      },
+      {
+        "id": 6543,
+        "name": {
+          "en": "Willow Bracers",
+          "ru": "Willow Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132611.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 9,
+        "boss": "Faldrim Anvilmar",
+        "url": "https://foreverdb.net/item/6543"
+      },
+      {
+        "id": 9765,
+        "name": {
+          "en": "Cadet Vest",
+          "ru": "Cadet Vest"
+        },
+        "icon": "/images/wow/forever/icons/132627.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 5,
+        "boss": "Faldrim Anvilmar",
+        "url": "https://foreverdb.net/item/9765"
+      },
+      {
+        "id": 271098,
+        "name": {
+          "en": "Golemguard Chest",
+          "ru": "Golemguard Chest"
+        },
+        "icon": "/images/wow/forever/icons/132624.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 5,
+        "boss": "Plunder",
+        "url": "https://foreverdb.net/item/271098"
+      },
+      {
+        "id": 270229,
+        "name": {
+          "en": "Treads of the Protector Golem",
+          "ru": "Treads of the Protector Golem"
+        },
+        "icon": "/images/wow/forever/icons/132535.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 8,
+        "boss": "Plunder",
+        "url": "https://foreverdb.net/item/270229"
+      },
+      {
+        "id": 2632,
+        "name": {
+          "en": "Curved Dagger",
+          "ru": "Curved Dagger"
+        },
+        "icon": "/images/wow/forever/icons/135637.webp",
+        "level": 9,
+        "itemLevel": 14,
+        "slot": 13,
+        "boss": "Plunder",
+        "url": "https://foreverdb.net/item/2632"
+      },
+      {
+        "id": 6268,
+        "name": {
+          "en": "Pioneer Tunic",
+          "ru": "Pioneer Tunic"
+        },
+        "icon": "/images/wow/forever/icons/135010.webp",
+        "level": 8,
+        "itemLevel": 13,
+        "slot": 5,
+        "boss": "Plunder",
+        "url": "https://foreverdb.net/item/6268"
+      },
+      {
+        "id": 9764,
+        "name": {
+          "en": "Cadet Shield",
+          "ru": "Cadet Shield"
+        },
+        "icon": "/images/wow/forever/icons/134955.webp",
+        "level": 8,
+        "itemLevel": 13,
+        "slot": 14,
+        "boss": "Plunder",
+        "url": "https://foreverdb.net/item/9764"
+      },
+      {
+        "id": 270260,
+        "name": {
+          "en": "Direhammer Leggings",
+          "ru": "Direhammer Leggings"
+        },
+        "icon": "/images/wow/forever/icons/134586.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 7,
+        "boss": "Durgen Dirgehammer",
+        "url": "https://foreverdb.net/item/270260"
+      },
+      {
+        "id": 270261,
+        "name": {
+          "en": "Robes of the Disgraced Thane",
+          "ru": "Robes of the Disgraced Thane"
+        },
+        "icon": "/images/wow/forever/icons/132650.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 20,
+        "boss": "Durgen Dirgehammer",
+        "url": "https://foreverdb.net/item/270261"
+      },
+      {
+        "id": 6541,
+        "name": {
+          "en": "Willow Gloves",
+          "ru": "Willow Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132957.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 10,
+        "boss": "Durgen Dirgehammer",
+        "url": "https://foreverdb.net/item/6541"
+      },
+      {
+        "id": 9748,
+        "name": {
+          "en": "Simple Robe",
+          "ru": "Simple Robe"
+        },
+        "icon": "/images/wow/forever/icons/132659.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 20,
+        "boss": "Durgen Dirgehammer",
+        "url": "https://foreverdb.net/item/9748"
+      },
+      {
+        "id": 3651,
+        "name": {
+          "en": "Veteran Shield",
+          "ru": "Veteran Shield"
+        },
+        "icon": "/images/wow/forever/icons/134955.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 14,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3651"
+      },
+      {
+        "id": 6539,
+        "name": {
+          "en": "Willow Belt",
+          "ru": "Willow Belt"
+        },
+        "icon": "/images/wow/forever/icons/132494.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 6,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6539"
+      },
+      {
+        "id": 6548,
+        "name": {
+          "en": "Soldier's Girdle",
+          "ru": "Soldier's Girdle"
+        },
+        "icon": "/images/wow/forever/icons/132514.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 6,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6548"
+      },
+      {
+        "id": 6554,
+        "name": {
+          "en": "Bard's Gloves",
+          "ru": "Bard's Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132949.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6554"
+      },
+      {
+        "id": 6557,
+        "name": {
+          "en": "Bard's Boots",
+          "ru": "Bard's Boots"
+        },
+        "icon": "/images/wow/forever/icons/132539.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 8,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6557"
+      },
+      {
+        "id": 15933,
+        "name": {
+          "en": "Simple Branch",
+          "ru": "Простая ветвь"
+        },
+        "icon": "/images/wow/forever/icons/135139.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 23,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15933"
+      },
+      {
+        "id": 271095,
+        "name": {
+          "en": "Fang of Magmatus",
+          "ru": "Fang of Magmatus"
+        },
+        "icon": "/images/wow/forever/icons/133723.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 21,
+        "boss": "Magmatus",
+        "url": "https://foreverdb.net/item/271095"
+      },
+      {
+        "id": 270230,
+        "name": {
+          "en": "Kindlegem Girdle",
+          "ru": "Kindlegem Girdle"
+        },
+        "icon": "/images/wow/forever/icons/132509.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 6,
+        "boss": "Magmatus",
+        "url": "https://foreverdb.net/item/270230"
+      },
+      {
+        "id": 270231,
+        "name": {
+          "en": "Flamefist Grips",
+          "ru": "Flamefist Grips"
+        },
+        "icon": "/images/wow/forever/icons/132959.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 10,
+        "boss": "Magmatus",
+        "url": "https://foreverdb.net/item/270231"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/3065"
+  },
+  "ruins-of-lordaeron": {
+    "loot": [
+      {
+        "id": 271202,
+        "name": {
+          "en": "Witherbite Bracers",
+          "ru": "Witherbite Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132606.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 9,
+        "boss": "Witherfang",
+        "url": "https://foreverdb.net/item/271202"
+      },
+      {
+        "id": 271203,
+        "name": {
+          "en": "Segmented Spider Leg",
+          "ru": "Segmented Spider Leg"
+        },
+        "icon": "/images/wow/forever/icons/135146.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 17,
+        "boss": "Witherfang",
+        "url": "https://foreverdb.net/item/271203"
+      },
+      {
+        "id": 286978,
+        "name": {
+          "en": "Rotmender's Garb",
+          "ru": "Rotmender's Garb"
+        },
+        "icon": "/images/wow/forever/icons/135008.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 5,
+        "boss": "Witherfang",
+        "url": "https://foreverdb.net/item/286978"
+      },
+      {
+        "id": 286979,
+        "name": {
+          "en": "Rotmender's Gloves",
+          "ru": "Rotmender's Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132956.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 10,
+        "boss": "Witherfang",
+        "url": "https://foreverdb.net/item/286979"
+      },
+      {
+        "id": 2974,
+        "name": {
+          "en": "Hunting Pants",
+          "ru": "Hunting Pants"
+        },
+        "icon": "/images/wow/forever/icons/134706.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 7,
+        "boss": "Witherfang",
+        "url": "https://foreverdb.net/item/2974"
+      },
+      {
+        "id": 3036,
+        "name": {
+          "en": "Heavy Shortbow",
+          "ru": "Heavy Shortbow"
+        },
+        "icon": "/images/wow/forever/icons/135500.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 15,
+        "boss": "Witherfang",
+        "url": "https://foreverdb.net/item/3036"
+      },
+      {
+        "id": 6542,
+        "name": {
+          "en": "Willow Cape",
+          "ru": "Willow Cape"
+        },
+        "icon": "/images/wow/forever/icons/133769.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 16,
+        "boss": "Witherfang",
+        "url": "https://foreverdb.net/item/6542"
+      },
+      {
+        "id": 9749,
+        "name": {
+          "en": "Simple Blouse",
+          "ru": "Simple Blouse"
+        },
+        "icon": "/images/wow/forever/icons/135009.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 5,
+        "boss": "Witherfang",
+        "url": "https://foreverdb.net/item/9749"
+      },
+      {
+        "id": 9779,
+        "name": {
+          "en": "Bandit Cloak",
+          "ru": "Bandit Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133771.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 16,
+        "boss": "Witherfang",
+        "url": "https://foreverdb.net/item/9779"
+      },
+      {
+        "id": 15926,
+        "name": {
+          "en": "Spellbinder Orb",
+          "ru": "Сфера Заклинателя"
+        },
+        "icon": "/images/wow/forever/icons/134333.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 23,
+        "boss": "Witherfang",
+        "url": "https://foreverdb.net/item/15926"
+      },
+      {
+        "id": 271207,
+        "name": {
+          "en": "Rotmender's Leggings",
+          "ru": "Rotmender's Leggings"
+        },
+        "icon": "/images/wow/forever/icons/134599.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 7,
+        "boss": "The Abandoned",
+        "url": "https://foreverdb.net/item/271207"
+      },
+      {
+        "id": 271208,
+        "name": {
+          "en": "Grip of Fear",
+          "ru": "Grip of Fear"
+        },
+        "icon": "/images/wow/forever/icons/132938.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 10,
+        "boss": "The Abandoned",
+        "url": "https://foreverdb.net/item/271208"
+      },
+      {
+        "id": 271216,
+        "name": {
+          "en": "Scepter of the Abandoned",
+          "ru": "Scepter of the Abandoned"
+        },
+        "icon": "/images/wow/forever/icons/133728.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 21,
+        "boss": "The Abandoned",
+        "url": "https://foreverdb.net/item/271216"
+      },
+      {
+        "id": 286978,
+        "name": {
+          "en": "Rotmender's Garb",
+          "ru": "Rotmender's Garb"
+        },
+        "icon": "/images/wow/forever/icons/135008.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 5,
+        "boss": "The Abandoned",
+        "url": "https://foreverdb.net/item/286978"
+      },
+      {
+        "id": 9757,
+        "name": {
+          "en": "Nomad Tunic",
+          "ru": "Nomad Tunic"
+        },
+        "icon": "/images/wow/forever/icons/135010.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 5,
+        "boss": "The Abandoned",
+        "url": "https://foreverdb.net/item/9757"
+      },
+      {
+        "id": 5071,
+        "name": {
+          "en": "Shadow Wand",
+          "ru": "Shadow Wand"
+        },
+        "icon": "/images/wow/forever/icons/135645.webp",
+        "level": 9,
+        "itemLevel": 14,
+        "slot": 26,
+        "boss": "The Abandoned",
+        "url": "https://foreverdb.net/item/5071"
+      },
+      {
+        "id": 6541,
+        "name": {
+          "en": "Willow Gloves",
+          "ru": "Willow Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132957.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 10,
+        "boss": "The Abandoned",
+        "url": "https://foreverdb.net/item/6541"
+      },
+      {
+        "id": 271218,
+        "name": {
+          "en": "Vileblood Scimitar",
+          "ru": "Vileblood Scimitar"
+        },
+        "icon": "/images/wow/forever/icons/135314.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 13,
+        "boss": "Viktor the Vile",
+        "url": "https://foreverdb.net/item/271218"
+      },
+      {
+        "id": 271211,
+        "name": {
+          "en": "Vilewalkers",
+          "ru": "Vilewalkers"
+        },
+        "icon": "/images/wow/forever/icons/132551.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 8,
+        "boss": "Viktor the Vile",
+        "url": "https://foreverdb.net/item/271211"
+      },
+      {
+        "id": 271212,
+        "name": {
+          "en": "Bloodied Chestwraps",
+          "ru": "Bloodied Chestwraps"
+        },
+        "icon": "/images/wow/forever/icons/133684.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 5,
+        "boss": "Viktor the Vile",
+        "url": "https://foreverdb.net/item/271212"
+      },
+      {
+        "id": 286979,
+        "name": {
+          "en": "Rotmender's Gloves",
+          "ru": "Rotmender's Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132956.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 10,
+        "boss": "Viktor the Vile",
+        "url": "https://foreverdb.net/item/286979"
+      },
+      {
+        "id": 2970,
+        "name": {
+          "en": "Spellbinder Pants",
+          "ru": "Spellbinder Pants"
+        },
+        "icon": "/images/wow/forever/icons/134590.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 7,
+        "boss": "Viktor the Vile",
+        "url": "https://foreverdb.net/item/2970"
+      },
+      {
+        "id": 2977,
+        "name": {
+          "en": "Veteran Armor",
+          "ru": "Veteran Armor"
+        },
+        "icon": "/images/wow/forever/icons/132631.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 5,
+        "boss": "Viktor the Vile",
+        "url": "https://foreverdb.net/item/2977"
+      },
+      {
+        "id": 4570,
+        "name": {
+          "en": "Birchwood Maul",
+          "ru": "Birchwood Maul"
+        },
+        "icon": "/images/wow/forever/icons/133052.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 17,
+        "boss": "Viktor the Vile",
+        "url": "https://foreverdb.net/item/4570"
+      },
+      {
+        "id": 9763,
+        "name": {
+          "en": "Cadet Leggings",
+          "ru": "Cadet Leggings"
+        },
+        "icon": "/images/wow/forever/icons/134590.webp",
+        "level": 9,
+        "itemLevel": 14,
+        "slot": 7,
+        "boss": "Viktor the Vile",
+        "url": "https://foreverdb.net/item/9763"
+      },
+      {
+        "id": 9785,
+        "name": {
+          "en": "Raider's Bracers",
+          "ru": "Raider's Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132612.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 9,
+        "boss": "Viktor the Vile",
+        "url": "https://foreverdb.net/item/9785"
+      },
+      {
+        "id": 271210,
+        "name": {
+          "en": "Tuskwrap Belt",
+          "ru": "Tuskwrap Belt"
+        },
+        "icon": "/images/wow/forever/icons/132515.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 6,
+        "boss": "Bjork",
+        "url": "https://foreverdb.net/item/271210"
+      },
+      {
+        "id": 271217,
+        "name": {
+          "en": "Corpse Chopper",
+          "ru": "Corpse Chopper"
+        },
+        "icon": "/images/wow/forever/icons/132415.webp",
+        "level": 16,
+        "itemLevel": 21,
+        "slot": 17,
+        "boss": "Bjork",
+        "url": "https://foreverdb.net/item/271217"
+      },
+      {
+        "id": 286977,
+        "name": {
+          "en": "Sword of the Fallen",
+          "ru": "Sword of the Fallen"
+        },
+        "icon": "/images/wow/forever/icons/135312.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 17,
+        "boss": "Bjork",
+        "url": "https://foreverdb.net/item/286977"
+      },
+      {
+        "id": 3645,
+        "name": {
+          "en": "Seer's Cuffs",
+          "ru": "Seer's Cuffs"
+        },
+        "icon": "/images/wow/forever/icons/132606.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 9,
+        "boss": "Bjork",
+        "url": "https://foreverdb.net/item/3645"
+      },
+      {
+        "id": 4571,
+        "name": {
+          "en": "War Knife",
+          "ru": "War Knife"
+        },
+        "icon": "/images/wow/forever/icons/135651.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 13,
+        "boss": "Bjork",
+        "url": "https://foreverdb.net/item/4571"
+      },
+      {
+        "id": 5207,
+        "name": {
+          "en": "Opaque Wand",
+          "ru": "Opaque Wand"
+        },
+        "icon": "/images/wow/forever/icons/135469.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 26,
+        "boss": "Bjork",
+        "url": "https://foreverdb.net/item/5207"
+      },
+      {
+        "id": 6542,
+        "name": {
+          "en": "Willow Cape",
+          "ru": "Willow Cape"
+        },
+        "icon": "/images/wow/forever/icons/133769.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 16,
+        "boss": "Bjork",
+        "url": "https://foreverdb.net/item/6542"
+      },
+      {
+        "id": 6545,
+        "name": {
+          "en": "Soldier's Armor",
+          "ru": "Soldier's Armor"
+        },
+        "icon": "/images/wow/forever/icons/132638.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 5,
+        "boss": "Bjork",
+        "url": "https://foreverdb.net/item/6545"
+      },
+      {
+        "id": 271213,
+        "name": {
+          "en": "Mirror of Rath'mael",
+          "ru": "Mirror of Rath'mael"
+        },
+        "icon": "/images/wow/forever/icons/134948.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 14,
+        "boss": "Rath'mael",
+        "url": "https://foreverdb.net/item/271213"
+      },
+      {
+        "id": 271214,
+        "name": {
+          "en": "Rotmender's Treads",
+          "ru": "Rotmender's Treads"
+        },
+        "icon": "/images/wow/forever/icons/132539.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 8,
+        "boss": "Rath'mael",
+        "url": "https://foreverdb.net/item/271214"
+      },
+      {
+        "id": 271215,
+        "name": {
+          "en": "Coldspire Staff",
+          "ru": "Coldspire Staff"
+        },
+        "icon": "/images/wow/forever/icons/135144.webp",
+        "level": 19,
+        "itemLevel": 24,
+        "slot": 17,
+        "boss": "Rath'mael",
+        "url": "https://foreverdb.net/item/271215"
+      },
+      {
+        "id": 286977,
+        "name": {
+          "en": "Sword of the Fallen",
+          "ru": "Sword of the Fallen"
+        },
+        "icon": "/images/wow/forever/icons/135312.webp",
+        "level": 18,
+        "itemLevel": 23,
+        "slot": 17,
+        "boss": "Rath'mael",
+        "url": "https://foreverdb.net/item/286977"
+      },
+      {
+        "id": 6542,
+        "name": {
+          "en": "Willow Cape",
+          "ru": "Willow Cape"
+        },
+        "icon": "/images/wow/forever/icons/133769.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 16,
+        "boss": "Rath'mael",
+        "url": "https://foreverdb.net/item/6542"
+      },
+      {
+        "id": 9748,
+        "name": {
+          "en": "Simple Robe",
+          "ru": "Simple Robe"
+        },
+        "icon": "/images/wow/forever/icons/132659.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 20,
+        "boss": "Rath'mael",
+        "url": "https://foreverdb.net/item/9748"
+      },
+      {
+        "id": 9764,
+        "name": {
+          "en": "Cadet Shield",
+          "ru": "Cadet Shield"
+        },
+        "icon": "/images/wow/forever/icons/134955.webp",
+        "level": 8,
+        "itemLevel": 13,
+        "slot": 14,
+        "boss": "Rath'mael",
+        "url": "https://foreverdb.net/item/9764"
+      },
+      {
+        "id": 286980,
+        "name": {
+          "en": "Rotmender's Sash",
+          "ru": "Rotmender's Sash"
+        },
+        "icon": "/images/wow/forever/icons/132500.webp",
+        "level": 17,
+        "itemLevel": 22,
+        "slot": 6,
+        "boss": "",
+        "url": "https://foreverdb.net/item/286980"
+      },
+      {
+        "id": 2079,
+        "name": {
+          "en": "Sergeant's Warhammer",
+          "ru": "Sergeant's Warhammer"
+        },
+        "icon": "/images/wow/forever/icons/133048.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 13,
+        "boss": "",
+        "url": "https://foreverdb.net/item/2079"
+      },
+      {
+        "id": 2976,
+        "name": {
+          "en": "Hunting Gloves",
+          "ru": "Hunting Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132939.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/2976"
+      },
+      {
+        "id": 2978,
+        "name": {
+          "en": "Veteran Leggings",
+          "ru": "Veteran Leggings"
+        },
+        "icon": "/images/wow/forever/icons/134589.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/2978"
+      },
+      {
+        "id": 2980,
+        "name": {
+          "en": "Veteran Gloves",
+          "ru": "Veteran Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132939.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/2980"
+      },
+      {
+        "id": 3195,
+        "name": {
+          "en": "Barbaric Battle Axe",
+          "ru": "Barbaric Battle Axe"
+        },
+        "icon": "/images/wow/forever/icons/132401.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3195"
+      },
+      {
+        "id": 3196,
+        "name": {
+          "en": "Edged Bastard Sword",
+          "ru": "Edged Bastard Sword"
+        },
+        "icon": "/images/wow/forever/icons/135324.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3196"
+      },
+      {
+        "id": 3652,
+        "name": {
+          "en": "Hunting Buckler",
+          "ru": "Hunting Buckler"
+        },
+        "icon": "/images/wow/forever/icons/134955.webp",
+        "level": 9,
+        "itemLevel": 14,
+        "slot": 14,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3652"
+      },
+      {
+        "id": 4569,
+        "name": {
+          "en": "Staunch Hammer",
+          "ru": "Staunch Hammer"
+        },
+        "icon": "/images/wow/forever/icons/133045.webp",
+        "level": 9,
+        "itemLevel": 14,
+        "slot": 21,
+        "boss": "",
+        "url": "https://foreverdb.net/item/4569"
+      },
+      {
+        "id": 4701,
+        "name": {
+          "en": "Inscribed Cloak",
+          "ru": "Inscribed Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133763.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 16,
+        "boss": "",
+        "url": "https://foreverdb.net/item/4701"
+      },
+      {
+        "id": 5212,
+        "name": {
+          "en": "Blazing Wand",
+          "ru": "Blazing Wand"
+        },
+        "icon": "/images/wow/forever/icons/135139.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 26,
+        "boss": "",
+        "url": "https://foreverdb.net/item/5212"
+      },
+      {
+        "id": 6380,
+        "name": {
+          "en": "Inscribed Buckler",
+          "ru": "Inscribed Buckler"
+        },
+        "icon": "/images/wow/forever/icons/134955.webp",
+        "level": 13,
+        "itemLevel": 18,
+        "slot": 14,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6380"
+      },
+      {
+        "id": 6550,
+        "name": {
+          "en": "Soldier's Wristguards",
+          "ru": "Soldier's Wristguards"
+        },
+        "icon": "/images/wow/forever/icons/132611.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 9,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6550"
+      },
+      {
+        "id": 6558,
+        "name": {
+          "en": "Bard's Belt",
+          "ru": "Bard's Belt"
+        },
+        "icon": "/images/wow/forever/icons/132492.webp",
+        "level": 10,
+        "itemLevel": 15,
+        "slot": 6,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6558"
+      },
+      {
+        "id": 9786,
+        "name": {
+          "en": "Raider's Cloak",
+          "ru": "Raider's Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133770.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 16,
+        "boss": "",
+        "url": "https://foreverdb.net/item/9786"
+      },
+      {
+        "id": 15210,
+        "name": {
+          "en": "Raider Shortsword",
+          "ru": "Raider Shortsword"
+        },
+        "icon": "/images/wow/forever/icons/135274.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 13,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15210"
+      },
+      {
+        "id": 15268,
+        "name": {
+          "en": "Twin-bladed Axe",
+          "ru": "Twin-bladed Axe"
+        },
+        "icon": "/images/wow/forever/icons/132400.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15268"
+      },
+      {
+        "id": 271204,
+        "name": {
+          "en": "Meathook Slicer",
+          "ru": "Meathook Slicer"
+        },
+        "icon": "/images/wow/forever/icons/134298.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 13,
+        "boss": "The Baron",
+        "url": "https://foreverdb.net/item/271204"
+      },
+      {
+        "id": 271206,
+        "name": {
+          "en": "Leftover Abomination Skin",
+          "ru": "Leftover Abomination Skin"
+        },
+        "icon": "/images/wow/forever/icons/132687.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 5,
+        "boss": "The Baron",
+        "url": "https://foreverdb.net/item/271206"
+      },
+      {
+        "id": 271205,
+        "name": {
+          "en": "Abomination Bones",
+          "ru": "Abomination Bones"
+        },
+        "icon": "/images/wow/forever/icons/132637.webp",
+        "level": 15,
+        "itemLevel": 20,
+        "slot": 5,
+        "boss": "The Baron",
+        "url": "https://foreverdb.net/item/271205"
+      },
+      {
+        "id": 4567,
+        "name": {
+          "en": "Merc Sword",
+          "ru": "Merc Sword"
+        },
+        "icon": "/images/wow/forever/icons/135274.webp",
+        "level": 11,
+        "itemLevel": 16,
+        "slot": 17,
+        "boss": "The Baron",
+        "url": "https://foreverdb.net/item/4567"
+      },
+      {
+        "id": 9764,
+        "name": {
+          "en": "Cadet Shield",
+          "ru": "Cadet Shield"
+        },
+        "icon": "/images/wow/forever/icons/134955.webp",
+        "level": 8,
+        "itemLevel": 13,
+        "slot": 14,
+        "boss": "The Baron",
+        "url": "https://foreverdb.net/item/9764"
+      },
+      {
+        "id": 15926,
+        "name": {
+          "en": "Spellbinder Orb",
+          "ru": "Сфера Заклинателя"
+        },
+        "icon": "/images/wow/forever/icons/134333.webp",
+        "level": 12,
+        "itemLevel": 17,
+        "slot": 23,
+        "boss": "The Baron",
+        "url": "https://foreverdb.net/item/15926"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/2999"
+  },
+  "excavation-site": {
+    "loot": [
+      {
+        "id": 273024,
+        "name": {
+          "en": "Glinteye Slippers",
+          "ru": "Glinteye Slippers"
+        },
+        "icon": "/images/wow/forever/icons/132539.webp",
+        "level": 26,
+        "itemLevel": 31,
+        "slot": 8,
+        "boss": "Saltspine",
+        "url": "https://foreverdb.net/item/273024"
+      },
+      {
+        "id": 273025,
+        "name": {
+          "en": "Raptorclaw Greaves",
+          "ru": "Raptorclaw Greaves"
+        },
+        "icon": "/images/wow/forever/icons/132551.webp",
+        "level": 26,
+        "itemLevel": 31,
+        "slot": 8,
+        "boss": "Shadetooth",
+        "url": "https://foreverdb.net/item/273025"
+      },
+      {
+        "id": 273030,
+        "name": {
+          "en": "Ring of Power Regulation",
+          "ru": "Ring of Power Regulation"
+        },
+        "icon": "/images/wow/forever/icons/133370.webp",
+        "level": 28,
+        "itemLevel": 33,
+        "slot": 11,
+        "boss": "Relic Guardian",
+        "url": "https://foreverdb.net/item/273030"
+      },
+      {
+        "id": 3067,
+        "name": {
+          "en": "Bright Pants",
+          "ru": "Bright Pants"
+        },
+        "icon": "/images/wow/forever/icons/134582.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3067"
+      },
+      {
+        "id": 4715,
+        "name": {
+          "en": "Emblazoned Cloak",
+          "ru": "Emblazoned Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133760.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 16,
+        "boss": "",
+        "url": "https://foreverdb.net/item/4715"
+      },
+      {
+        "id": 9799,
+        "name": {
+          "en": "Ivycloth Sash",
+          "ru": "Ivycloth Sash"
+        },
+        "icon": "/images/wow/forever/icons/132514.webp",
+        "level": 21,
+        "itemLevel": 26,
+        "slot": 6,
+        "boss": "",
+        "url": "https://foreverdb.net/item/9799"
+      },
+      {
+        "id": 9807,
+        "name": {
+          "en": "Superior Shoulders",
+          "ru": "Superior Shoulders"
+        },
+        "icon": "/images/wow/forever/icons/135039.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 3,
+        "boss": "",
+        "url": "https://foreverdb.net/item/9807"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/2998"
+  },
+  "city-of-dalaran": {
+    "loot": [
+      {
+        "id": 273031,
+        "name": {
+          "en": "Runemender's Seal",
+          "ru": "Runemender's Seal"
+        },
+        "icon": "/images/wow/forever/icons/133370.webp",
+        "level": 27,
+        "itemLevel": 32,
+        "slot": 11,
+        "boss": "Arcane Anomaly",
+        "url": "https://foreverdb.net/item/273031"
+      },
+      {
+        "id": 273034,
+        "name": {
+          "en": "Ephemeral Grips",
+          "ru": "Ephemeral Grips"
+        },
+        "icon": "/images/wow/forever/icons/132958.webp",
+        "level": 27,
+        "itemLevel": 32,
+        "slot": 10,
+        "boss": "Arcane Anomaly",
+        "url": "https://foreverdb.net/item/273034"
+      },
+      {
+        "id": 273039,
+        "name": {
+          "en": "Blightleaf Rope",
+          "ru": "Blightleaf Rope"
+        },
+        "icon": "/images/wow/forever/icons/132499.webp",
+        "level": 29,
+        "itemLevel": 34,
+        "slot": 6,
+        "boss": "Fel Ancient",
+        "url": "https://foreverdb.net/item/273039"
+      },
+      {
+        "id": 273042,
+        "name": {
+          "en": "Manascale Treads",
+          "ru": "Manascale Treads"
+        },
+        "icon": "/images/wow/forever/icons/132551.webp",
+        "level": 28,
+        "itemLevel": 33,
+        "slot": 8,
+        "boss": "Mana Devourer",
+        "url": "https://foreverdb.net/item/273042"
+      },
+      {
+        "id": 273046,
+        "name": {
+          "en": "Guardian's Dualblade",
+          "ru": "Guardian's Dualblade"
+        },
+        "icon": "/images/wow/forever/icons/135423.webp",
+        "level": 28,
+        "itemLevel": 33,
+        "slot": 17,
+        "boss": "Unstable Sentinel",
+        "url": "https://foreverdb.net/item/273046"
+      },
+      {
+        "id": 273048,
+        "name": {
+          "en": "Refractory Scaleguards",
+          "ru": "Refractory Scaleguards"
+        },
+        "icon": "/images/wow/forever/icons/134664.webp",
+        "level": 28,
+        "itemLevel": 33,
+        "slot": 7,
+        "boss": "Unstable Sentinel",
+        "url": "https://foreverdb.net/item/273048"
+      },
+      {
+        "id": 4714,
+        "name": {
+          "en": "Silver-thread Sash",
+          "ru": "Silver-thread Sash"
+        },
+        "icon": "/images/wow/forever/icons/132492.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 6,
+        "boss": "Unstable Sentinel",
+        "url": "https://foreverdb.net/item/4714"
+      },
+      {
+        "id": 6407,
+        "name": {
+          "en": "Nightsky Wristbands",
+          "ru": "Nightsky Wristbands"
+        },
+        "icon": "/images/wow/forever/icons/132606.webp",
+        "level": 28,
+        "itemLevel": 33,
+        "slot": 9,
+        "boss": "Unstable Sentinel",
+        "url": "https://foreverdb.net/item/6407"
+      },
+      {
+        "id": 720,
+        "name": {
+          "en": "Brawler Gloves",
+          "ru": "Brawler Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132939.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 10,
+        "boss": "Atrexis the Grave Knight",
+        "url": "https://foreverdb.net/item/720"
+      },
+      {
+        "id": 273032,
+        "name": {
+          "en": "Bonebinder's Signet",
+          "ru": "Bonebinder's Signet"
+        },
+        "icon": "/images/wow/forever/icons/133370.webp",
+        "level": 25,
+        "itemLevel": 31,
+        "slot": 11,
+        "boss": "Atrexis the Grave Knight",
+        "url": "https://foreverdb.net/item/273032"
+      },
+      {
+        "id": 273036,
+        "name": {
+          "en": "Graveweave Bindings",
+          "ru": "Graveweave Bindings"
+        },
+        "icon": "/images/wow/forever/icons/132609.webp",
+        "level": 26,
+        "itemLevel": 31,
+        "slot": 9,
+        "boss": "Atrexis the Grave Knight",
+        "url": "https://foreverdb.net/item/273036"
+      },
+      {
+        "id": 273051,
+        "name": {
+          "en": "Violet Sorcerer's Mantle",
+          "ru": "Violet Sorcerer's Mantle"
+        },
+        "icon": "/images/wow/forever/icons/135033.webp",
+        "level": 30,
+        "itemLevel": 35,
+        "slot": 3,
+        "boss": "Shade of the Archmage",
+        "url": "https://foreverdb.net/item/273051"
+      },
+      {
+        "id": 273052,
+        "name": {
+          "en": "Ponderous Orb",
+          "ru": "Ponderous Orb"
+        },
+        "icon": "/images/wow/forever/icons/134336.webp",
+        "level": 30,
+        "itemLevel": 35,
+        "slot": 23,
+        "boss": "Shade of the Archmage",
+        "url": "https://foreverdb.net/item/273052"
+      },
+      {
+        "id": 3045,
+        "name": {
+          "en": "Lambent Scale Boots",
+          "ru": "Lambent Scale Boots"
+        },
+        "icon": "/images/wow/forever/icons/132588.webp",
+        "level": 22,
+        "itemLevel": 27,
+        "slot": 8,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3045"
+      },
+      {
+        "id": 3210,
+        "name": {
+          "en": "Brutal War Axe",
+          "ru": "Brutal War Axe"
+        },
+        "icon": "/images/wow/forever/icons/132408.webp",
+        "level": 25,
+        "itemLevel": 30,
+        "slot": 17,
+        "boss": "",
+        "url": "https://foreverdb.net/item/3210"
+      },
+      {
+        "id": 4711,
+        "name": {
+          "en": "Glimmering Cloak",
+          "ru": "Glimmering Cloak"
+        },
+        "icon": "/images/wow/forever/icons/133762.webp",
+        "level": 23,
+        "itemLevel": 28,
+        "slot": 16,
+        "boss": "",
+        "url": "https://foreverdb.net/item/4711"
+      },
+      {
+        "id": 6615,
+        "name": {
+          "en": "Sage's Gloves",
+          "ru": "Sage's Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132950.webp",
+        "level": 24,
+        "itemLevel": 29,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/6615"
+      },
+      {
+        "id": 7366,
+        "name": {
+          "en": "Elder's Gloves",
+          "ru": "Elder's Gloves"
+        },
+        "icon": "/images/wow/forever/icons/132951.webp",
+        "level": 27,
+        "itemLevel": 32,
+        "slot": 10,
+        "boss": "",
+        "url": "https://foreverdb.net/item/7366"
+      },
+      {
+        "id": 9791,
+        "name": {
+          "en": "Ivycloth Tunic",
+          "ru": "Ivycloth Tunic"
+        },
+        "icon": "/images/wow/forever/icons/135010.webp",
+        "level": 24,
+        "itemLevel": 29,
+        "slot": 5,
+        "boss": "",
+        "url": "https://foreverdb.net/item/9791"
+      },
+      {
+        "id": 9841,
+        "name": {
+          "en": "Banded Leggings",
+          "ru": "Banded Leggings"
+        },
+        "icon": "/images/wow/forever/icons/134583.webp",
+        "level": 27,
+        "itemLevel": 32,
+        "slot": 7,
+        "boss": "",
+        "url": "https://foreverdb.net/item/9841"
+      },
+      {
+        "id": 15934,
+        "name": {
+          "en": "Sage's Stave",
+          "ru": "Посох книжника"
+        },
+        "icon": "/images/wow/forever/icons/135154.webp",
+        "level": 27,
+        "itemLevel": 32,
+        "slot": 23,
+        "boss": "",
+        "url": "https://foreverdb.net/item/15934"
+      },
+      {
+        "id": 273045,
+        "name": {
+          "en": "Drape of Shifting Energy",
+          "ru": "Drape of Shifting Energy"
+        },
+        "icon": "/images/wow/forever/icons/133770.webp",
+        "level": 27,
+        "itemLevel": 32,
+        "slot": 16,
+        "boss": "Arcanic Enigma",
+        "url": "https://foreverdb.net/item/273045"
+      }
+    ],
+    "source": "https://foreverdb.net/dungeon/2959"
+  },
+  "alcaz-prison": {
+    "loot": [
+      {
+        "id": 276733,
+        "name": {
+          "en": "Grips of Control",
+          "ru": "Grips of Control"
+        },
+        "icon": "/images/wow/forever/icons/132960.webp",
+        "level": 47,
+        "itemLevel": 52,
+        "slot": 10,
+        "boss": "Overseer Wrex",
+        "url": "https://foreverdb.net/item/276733"
+      },
+      {
+        "id": 276734,
+        "name": {
+          "en": "Wrex's Pinky Ring",
+          "ru": "Wrex's Pinky Ring"
+        },
+        "icon": "/images/wow/forever/icons/133406.webp",
+        "level": 47,
+        "itemLevel": 52,
+        "slot": 11,
+        "boss": "Overseer Wrex",
+        "url": "https://foreverdb.net/item/276734"
+      },
+      {
+        "id": 276735,
+        "name": {
+          "en": "Tidesong Wand",
+          "ru": "Tidesong Wand"
+        },
+        "icon": "/images/wow/forever/icons/135463.webp",
+        "level": 47,
+        "itemLevel": 52,
+        "slot": 26,
+        "boss": "Tidemistress Ca’zass",
+        "url": "https://foreverdb.net/item/276735"
+      },
+      {
+        "id": 276736,
+        "name": {
+          "en": "Seascale Bracers",
+          "ru": "Seascale Bracers"
+        },
+        "icon": "/images/wow/forever/icons/132606.webp",
+        "level": 47,
+        "itemLevel": 52,
+        "slot": 9,
+        "boss": "Tidemistress Ca’zass",
+        "url": "https://foreverdb.net/item/276736"
+      },
+      {
+        "id": 276739,
+        "name": {
+          "en": "Cutthroat Chestguard",
+          "ru": "Cutthroat Chestguard"
+        },
+        "icon": "/images/wow/forever/icons/132747.webp",
+        "level": 49,
+        "itemLevel": 54,
+        "slot": 5,
+        "boss": "Katerina the Cleaner",
+        "url": "https://foreverdb.net/item/276739"
+      },
+      {
+        "id": 276741,
+        "name": {
+          "en": "Defias Enforcer's Shoulderpads",
+          "ru": "Defias Enforcer's Shoulderpads"
+        },
+        "icon": "/images/wow/forever/icons/135039.webp",
+        "level": 48,
+        "itemLevel": 53,
+        "slot": 3,
+        "boss": "The Questioner",
+        "url": "https://foreverdb.net/item/276741"
+      },
+      {
+        "id": 276742,
+        "name": {
+          "en": "Girdle of Extracted Answers",
+          "ru": "Girdle of Extracted Answers"
+        },
+        "icon": "/images/wow/forever/icons/132501.webp",
+        "level": 48,
+        "itemLevel": 53,
+        "slot": 6,
+        "boss": "The Questioner",
+        "url": "https://foreverdb.net/item/276742"
+      },
+      {
+        "id": 276743,
+        "name": {
+          "en": "Fingerbreaker Stamp",
+          "ru": "Fingerbreaker Stamp"
+        },
+        "icon": "/images/wow/forever/icons/133597.webp",
+        "level": 48,
+        "itemLevel": 53,
+        "slot": 12,
+        "boss": "The Questioner",
+        "url": "https://foreverdb.net/item/276743"
+      },
+      {
+        "id": 287021,
+        "name": {
+          "en": "Defias Enforcer's Prowlers",
+          "ru": "Defias Enforcer's Prowlers"
+        },
+        "icon": "/images/wow/forever/icons/132539.webp",
+        "level": 48,
+        "itemLevel": 53,
+        "slot": 8,
+        "boss": "",
+        "url": "https://foreverdb.net/item/287021"
+      }
+    ],
+    "source": "https://conquestcapped.com/guides/wow-forever/wow-forever-alcaz-prison-guide/"
+  },
+  "blackmaw-hold": {
+    "loot": [
+      {
+        "id": 280064,
+        "name": {
+          "en": "Withering Grips",
+          "ru": "Withering Grips"
+        },
+        "icon": "/images/wow/forever/icons/132938.webp",
+        "level": 55,
+        "itemLevel": 60,
+        "slot": 10,
+        "boss": "Withermaw",
+        "url": "https://foreverdb.net/item/280064"
+      },
+      {
+        "id": 280058,
+        "name": {
+          "en": "Impish Chain Hood",
+          "ru": "Impish Chain Hood"
+        },
+        "icon": "/images/wow/forever/icons/133119.webp",
+        "level": 54,
+        "itemLevel": 59,
+        "slot": 1,
+        "boss": "Impaan the Imprisoner",
+        "url": "https://foreverdb.net/item/280058"
+      },
+      {
+        "id": 280060,
+        "name": {
+          "en": "Lucky Shovelnose Tuft",
+          "ru": "Lucky Shovelnose Tuft"
+        },
+        "icon": "/images/wow/forever/icons/132184.webp",
+        "level": 55,
+        "itemLevel": 60,
+        "slot": 12,
+        "boss": "Bonesnout the Unbroken",
+        "url": "https://foreverdb.net/item/280060"
+      },
+      {
+        "id": 280080,
+        "name": {
+          "en": "Claymore of Two Moons",
+          "ru": "Claymore of Two Moons"
+        },
+        "icon": "/images/wow/forever/icons/135354.webp",
+        "level": 52,
+        "itemLevel": 57,
+        "slot": 17,
+        "boss": "Moontouched Wanderer",
+        "url": "https://foreverdb.net/item/280080"
+      },
+      {
+        "id": 287036,
+        "name": {
+          "en": "Satyr's Touch",
+          "ru": "Satyr's Touch"
+        },
+        "icon": "/images/wow/forever/icons/135469.webp",
+        "level": 54,
+        "itemLevel": 59,
+        "slot": 26,
+        "boss": "Legashi Ritualist",
+        "url": "https://foreverdb.net/item/287036"
+      }
+    ],
+    "source": "https://conquestcapped.com/guides/wow-forever/wow-forever-blackmaw-hold-guide/"
+  }
+}

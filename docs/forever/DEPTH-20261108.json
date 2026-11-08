@@ -1,0 +1,147 @@
+[
+  {
+    "slug": "shadowfang-keep",
+    "boss": "Baron Silverlaine",
+    "action": "expand",
+    "mechanic": "Veil of Shadow",
+    "source": "https://www.icy-veins.com/wow-forever/shadowfang-keep-guide"
+  },
+  {
+    "slug": "shadowfang-keep",
+    "boss": "Razorclaw the Butcher",
+    "action": "expand",
+    "mechanic": "Butcher Drain",
+    "source": "https://www.icy-veins.com/wow-forever/shadowfang-keep-guide"
+  },
+  {
+    "slug": "shadowfang-keep",
+    "boss": "Archmage Arugal",
+    "action": "add",
+    "mechanic": "Shadow Port",
+    "source": "https://www.icy-veins.com/wow-forever/shadowfang-keep-guide"
+  },
+  {
+    "slug": "shadowfang-keep",
+    "enemy": "Vile Bat",
+    "action": "trash",
+    "source": "https://www.icy-veins.com/wow-forever/shadowfang-keep-guide"
+  },
+  {
+    "slug": "shadowfang-keep",
+    "enemy": "Fel Steed · Shadow Charger",
+    "action": "trash",
+    "source": "https://www.icy-veins.com/wow-forever/shadowfang-keep-guide"
+  },
+  {
+    "slug": "gnomeregan",
+    "action": "preparation",
+    "source": "https://www.icy-veins.com/wow-forever/gnomeregan-guide"
+  },
+  {
+    "slug": "gnomeregan",
+    "boss": "Crowd Pummeler 9-60",
+    "action": "add",
+    "mechanic": "Arcing Smash",
+    "source": "https://www.icy-veins.com/wow-forever/gnomeregan-guide"
+  },
+  {
+    "slug": "gnomeregan",
+    "boss": "Dark Iron Ambassador",
+    "action": "add",
+    "mechanic": "Fire Shield · Fireball",
+    "source": "https://www.icy-veins.com/wow-forever/gnomeregan-guide"
+  },
+  {
+    "slug": "gnomeregan",
+    "enemy": "Walking Bomb",
+    "action": "trash",
+    "source": "https://www.icy-veins.com/wow-forever/gnomeregan-guide"
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "boss": "Lady Sarevess",
+    "action": "add",
+    "mechanic": "Frost Nova",
+    "source": "https://www.icy-veins.com/wow-forever/blackfathom-deeps-guide"
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "boss": "Geilhast",
+    "action": "expand",
+    "mechanic": "Net",
+    "source": "https://www.icy-veins.com/wow-forever/blackfathom-deeps-guide"
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "boss": "Twilight Lord Kelris",
+    "action": "add",
+    "mechanic": "Mind Blast",
+    "source": "https://www.icy-veins.com/wow-forever/blackfathom-deeps-guide"
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "action": "preparation",
+    "source": "https://www.icy-veins.com/wow-forever/blackfathom-deeps-guide"
+  },
+  {
+    "slug": "razorfen-kraul",
+    "boss": "Earthcaller Halmgar",
+    "action": "add",
+    "mechanic": "Earthbind Totem",
+    "source": "https://www.icy-veins.com/wow-forever/razorfen-kraul-guide"
+  },
+  {
+    "slug": "razorfen-kraul",
+    "boss": "Agathelos the Raging",
+    "action": "expand",
+    "mechanic": "Rushing Charge · Enrage",
+    "source": "https://www.icy-veins.com/wow-forever/razorfen-kraul-guide"
+  },
+  {
+    "slug": "razorfen-kraul",
+    "boss": "Death Speaker Jargba",
+    "action": "add",
+    "mechanic": "Caster escorts",
+    "source": "https://www.icy-veins.com/wow-forever/razorfen-kraul-guide"
+  },
+  {
+    "slug": "razorfen-kraul",
+    "boss": "Blind Hunter",
+    "action": "expand",
+    "mechanic": "Sonic Burst",
+    "source": "https://www.icy-veins.com/wow-forever/razorfen-kraul-guide"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Houndmaster Loksey",
+    "action": "expand",
+    "mechanic": "Bloodlust",
+    "source": "https://www.icy-veins.com/wow-forever/scarlet-monastery-library-guide"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Arcanist Doan",
+    "action": "expand",
+    "mechanic": "Detonation",
+    "source": "https://www.icy-veins.com/wow-forever/scarlet-monastery-library-guide"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Arcanist Doan",
+    "action": "add",
+    "mechanic": "Arcane Explosion",
+    "source": "https://www.icy-veins.com/wow-forever/scarlet-monastery-library-guide"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Arcanist Doan",
+    "action": "add",
+    "mechanic": "Polymorph · Silence",
+    "source": "https://www.icy-veins.com/wow-forever/scarlet-monastery-library-guide"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "action": "preparation",
+    "source": "https://www.icy-veins.com/wow-forever/scarlet-monastery-library-guide"
+  }
+]

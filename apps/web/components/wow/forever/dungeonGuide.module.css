@@ -1,0 +1,24 @@
+/* atlas:strict — Original dungeon maps and expandable encounter cards. */
+.workspace { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--atlas-space-5); align-items: start; }
+.workspace > * { min-width: 0; }
+.map { display: block; width: 100%; height: auto; }
+.mapLink { display: block; }
+.mapLink:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
+.bosses { display: grid; gap: var(--atlas-space-3); }
+.mechanics { display: grid; gap: var(--atlas-space-4); }
+.mechanics dt { color: var(--atlas-text-strong); font-weight: 600; }
+.mechanics dd { margin: var(--atlas-space-2) 0 0; color: var(--atlas-text); }
+.ability { color: var(--atlas-accent); }
+.spell { display: flex; gap: var(--atlas-space-2); align-items: center; }
+.spell img { flex-shrink: 0; }
+.audience { color: var(--atlas-accent); }
+.routePanel { margin-block-start: var(--atlas-space-4); }
+.route { list-style: decimal; display: grid; gap: var(--atlas-space-4); padding-inline-start: var(--atlas-space-5); color: var(--atlas-text); }
+.route h4 { margin: 0; color: var(--atlas-text-strong); }
+.routeBosses { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2) var(--atlas-space-4); padding: 0; list-style: none; }
+.routeBosses a { display: inline-block; padding-block: var(--atlas-space-2); color: var(--atlas-accent); }
+.routeBosses a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.encounter { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+.bossSummary { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
+.portrait { flex-shrink: 0; object-fit: cover; }
+@media (max-width: 767px) { .workspace { grid-template-columns: minmax(0, 1fr); } }

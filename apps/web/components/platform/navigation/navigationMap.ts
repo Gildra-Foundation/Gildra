@@ -148,7 +148,13 @@ export const groupsFor = (realm: NavigationRealm, lang: Lang) => realm.groups
 export const linksFor = (realm: NavigationRealm, lang: Lang) => groupsFor(realm, lang).flatMap(group => group.links);
 
 /** The realms of the bar in a language. */
-export const realmsFor = (_lang: Lang) => navigationRealms;
+export const foreverRealms: readonly NavigationRealm[] = [
+  { id: "forever-dungeons", label: { en: "Dungeons", ru: "Подземелья" }, hub: "/wow/forever/dungeons",
+    groups: [{ links: [{ href: "/wow/forever/dungeons", icon: "atlas", label: { en: "Dungeons", ru: "Подземелья" } }] }] },
+  { id: "forever-raids", label: { en: "Raids", ru: "Рейды" }, hub: "/wow/forever/raids",
+    groups: [{ links: [{ href: "/wow/forever/raids", icon: "journal", label: { en: "Raids", ru: "Рейды" } }] }] },
+];
+export const realmsFor = (_lang: Lang, path = "/") => within(barePathOf(path), "/wow/forever") ? foreverRealms : navigationRealms;
 
 /** Locale prefix and trailing slash removed: the page identity the bar compares. */
 export const barePathOf = (path: string) => path.replace(/^\/ru(?=\/|$)/, "").replace(/\/$/, "") || "/";
@@ -158,7 +164,7 @@ const within = (path: string, href: string) => path === href || path.startsWith(
 /** The realm the reader stands in (the longest matching link wins). */
 export function currentRealm(barePath: string) {
   let best: { realm: NavigationRealm; href: string } | null = null;
-  for (const realm of navigationRealms) {
+  for (const realm of [...navigationRealms, ...foreverRealms]) {
     const hrefs = [realm.hub, ...realm.groups.flatMap(group => group.links.map(link => link.href)), ...(realm.also ?? [])];
     for (const href of hrefs) {
       if (within(barePath, href) && (!best || href.length > best.href.length)) best = { realm, href };

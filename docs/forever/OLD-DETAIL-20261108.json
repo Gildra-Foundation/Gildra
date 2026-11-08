@@ -1,0 +1,371 @@
+[
+  {
+    "slug": "blackrock-spire",
+    "boss": "Highlord Omokk",
+    "mechanic": "Ogre escorts",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/lower-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Highlord Omokk",
+    "mechanic": "Enrage",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/lower-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Shadow Hunter Vosh'gajin",
+    "mechanic": "Hex",
+    "action": "expand",
+    "source": "https://www.wowhead.com/forever/guide/lower-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Mother Smolderweb",
+    "mechanic": "Crystallize",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/lower-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Overlord Wyrmthalak",
+    "mechanic": "Reinforcements",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/lower-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "enemy": "Firebrand Invoker",
+    "action": "trash",
+    "source": "https://www.wowhead.com/forever/guide/lower-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Pyroguard Emberseer",
+    "mechanic": "Blackrock Altar",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/upper-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Warchief Rend Blackhand",
+    "mechanic": "Whirlwind",
+    "action": "expand",
+    "source": "https://www.wowhead.com/forever/guide/upper-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "The Beast",
+    "mechanic": "Flamebreak",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/upper-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "General Drakkisath",
+    "mechanic": "Chromatic Elite Guards",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/upper-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "enemy": "Blackhand Summoner",
+    "action": "trash",
+    "source": "https://www.wowhead.com/forever/guide/upper-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-spire",
+    "action": "preparation",
+    "source": "https://www.wowhead.com/forever/guide/upper-blackrock-spire-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "action": "preparation",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-warpwood-quarter-east-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Pusillin",
+    "mechanic": "Wildspawn Imps",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-warpwood-quarter-east-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Zevrim Thornhoof",
+    "mechanic": "Sacrifice",
+    "action": "expand",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-warpwood-quarter-east-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Zevrim Thornhoof",
+    "mechanic": "Intense Pain",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-warpwood-quarter-east-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Alzzin the Wildshaper",
+    "mechanic": "Reinforcements",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-warpwood-quarter-east-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "enemy": "Warpwood Pod",
+    "action": "trash",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-warpwood-quarter-east-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "action": "preparation",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-capital-gardens-west-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Tendris Warpwood",
+    "mechanic": "Ancient reinforcements",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-capital-gardens-west-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Tendris Warpwood",
+    "mechanic": "Trample · Entangle",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-capital-gardens-west-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Illyanna Ravenoak",
+    "mechanic": "Ferra",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-capital-gardens-west-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Immol'thar",
+    "mechanic": "Portal of Immol’thar",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-capital-gardens-west-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Prince Tortheldrin",
+    "mechanic": "Arcane Blast",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-capital-gardens-west-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "action": "preparation",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-gordoks-commons-north-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Guard Fengus",
+    "mechanic": "Gordok Courtyard Key",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-gordoks-commons-north-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Guard Slip'kik",
+    "mechanic": "Broken Trap",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-gordoks-commons-north-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Captain Kromcrush",
+    "mechanic": "Gordok Ogre Suit",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-gordoks-commons-north-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Cho'Rush the Observer",
+    "mechanic": "Tribute",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/dire-maul-gordoks-commons-north-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "stratholme",
+    "action": "preparation",
+    "source": "https://wowhandbook.com/zones/dungeons/stratholme/"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Cannon Master Willey",
+    "mechanic": "Crimson Riflemen",
+    "action": "expand",
+    "source": "https://wowhandbook.com/zones/dungeons/stratholme/"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Archivist Galford",
+    "mechanic": "Burning Winds",
+    "action": "add",
+    "source": "https://wowhandbook.com/zones/dungeons/stratholme/"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Maleki the Pallid",
+    "mechanic": "Drain Life",
+    "action": "add",
+    "source": "https://wowhandbook.com/zones/dungeons/stratholme/"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Postmaster Malown",
+    "mechanic": "Postboxes",
+    "action": "add",
+    "source": "https://wowhandbook.com/zones/dungeons/stratholme/"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Balnazzar",
+    "mechanic": "Sleep · Psychic Scream",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/stratholme/"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Nerub'enkan",
+    "mechanic": "Pierce Armor",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/stratholme/"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Magistrate Barthilas",
+    "mechanic": "Furious Anger",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/stratholme/"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Baron Rivendare",
+    "mechanic": "Unholy Aura",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/stratholme/"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Black Guard Swordsmith",
+    "mechanic": "Blacksmithing plans",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/stratholme/"
+  },
+  {
+    "slug": "ragefire-chasm",
+    "boss": "Oggleflint",
+    "mechanic": "Cleave",
+    "action": "expand",
+    "source": "https://www.method.gg/wow-forever/dungeons/ragefire-chasm"
+  },
+  {
+    "slug": "ragefire-chasm",
+    "boss": "Taragaman the Hungerer",
+    "mechanic": "Uppercut · Fire Nova",
+    "action": "expand",
+    "source": "https://www.method.gg/wow-forever/dungeons/ragefire-chasm"
+  },
+  {
+    "slug": "ragefire-chasm",
+    "boss": "Jergosh the Invoker",
+    "mechanic": "Escorts",
+    "action": "add",
+    "source": "https://www.method.gg/wow-forever/dungeons/ragefire-chasm"
+  },
+  {
+    "slug": "ragefire-chasm",
+    "boss": "Bazzalan",
+    "mechanic": "Escorts",
+    "action": "add",
+    "source": "https://www.method.gg/wow-forever/dungeons/ragefire-chasm"
+  },
+  {
+    "slug": "the-deadmines",
+    "boss": "Sneed",
+    "mechanic": "Terrify · Disarm",
+    "action": "expand",
+    "source": "https://www.method.gg/wow-forever/dungeons/the-deadmines"
+  },
+  {
+    "slug": "the-deadmines",
+    "boss": "Mr. Smite",
+    "mechanic": "Smite Stomp",
+    "action": "expand",
+    "source": "https://www.method.gg/wow-forever/dungeons/the-deadmines"
+  },
+  {
+    "slug": "the-deadmines",
+    "boss": "Edwin VanCleef",
+    "mechanic": "Defias Blackguards",
+    "action": "expand",
+    "source": "https://www.method.gg/wow-forever/dungeons/the-deadmines"
+  },
+  {
+    "slug": "the-deadmines",
+    "enemy": "Goblin Engineer",
+    "action": "trash",
+    "source": "https://www.method.gg/wow-forever/dungeons/the-deadmines"
+  },
+  {
+    "slug": "wailing-caverns",
+    "action": "preparation",
+    "source": "https://www.method.gg/wow-forever/dungeons/wailing-caverns"
+  },
+  {
+    "slug": "wailing-caverns",
+    "boss": "Lord Cobrahn",
+    "mechanic": "Druid’s Slumber",
+    "action": "add",
+    "source": "https://www.method.gg/wow-forever/dungeons/wailing-caverns"
+  },
+  {
+    "slug": "wailing-caverns",
+    "boss": "Lord Pythas",
+    "mechanic": "Escorts · Thunderclap",
+    "action": "add",
+    "source": "https://www.method.gg/wow-forever/dungeons/wailing-caverns"
+  },
+  {
+    "slug": "wailing-caverns",
+    "boss": "Lord Serpentis",
+    "mechanic": "Druids’ Slumber",
+    "action": "expand",
+    "source": "https://www.method.gg/wow-forever/dungeons/wailing-caverns"
+  },
+  {
+    "slug": "the-stockade",
+    "boss": "Targorr the Dread",
+    "mechanic": "Prisoner escorts",
+    "action": "add",
+    "source": "https://www.method.gg/wow-forever/dungeons/the-stockade"
+  },
+  {
+    "slug": "the-stockade",
+    "boss": "Dextren Ward",
+    "mechanic": "Intimidating Shout",
+    "action": "expand",
+    "source": "https://www.method.gg/wow-forever/dungeons/the-stockade"
+  },
+  {
+    "slug": "the-stockade",
+    "boss": "Hamhock",
+    "mechanic": "Bloodlust",
+    "action": "add",
+    "source": "https://www.method.gg/wow-forever/dungeons/the-stockade"
+  },
+  {
+    "slug": "the-stockade",
+    "boss": "Bazil Thredd",
+    "mechanic": "Smoke Bomb",
+    "action": "expand",
+    "source": "https://www.method.gg/wow-forever/dungeons/the-stockade"
+  }
+]

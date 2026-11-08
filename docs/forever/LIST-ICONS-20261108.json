@@ -1,0 +1,231 @@
+[
+  {
+    "slug": "wailing-caverns",
+    "boss": "Kresh",
+    "mechanic": "Bite",
+    "icon": 132278,
+    "matchingSpellIds": [
+      "17262",
+      "17265",
+      "17260",
+      "17256",
+      "17254",
+      "17267",
+      "17261",
+      "17259",
+      "17253",
+      "17268",
+      "17263",
+      "17255",
+      "17257",
+      "17266",
+      "17258",
+      "17264"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "shadowfang-keep",
+    "boss": "Archmage Arugal",
+    "mechanic": "Shadow Port",
+    "icon": 136121,
+    "matchingSpellIds": [
+      "7587",
+      "7136",
+      "7586"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "boss": "Lady Sarevess",
+    "mechanic": "Frost Nova",
+    "icon": 135848,
+    "matchingSpellIds": [
+      "15063",
+      "12674",
+      "865",
+      "11831",
+      "1220855",
+      "30094",
+      "10230",
+      "22645",
+      "15532",
+      "122",
+      "9915",
+      "14907",
+      "463448",
+      "6131",
+      "12748",
+      "15531",
+      "29849",
+      "1289447"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "gnomeregan",
+    "boss": "Crowd Pummeler 9-60",
+    "mechanic": "Arcing Smash",
+    "icon": 132338,
+    "matchingSpellIds": [
+      "28168",
+      "8374",
+      "16169"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "gnomeregan",
+    "boss": "Dark Iron Ambassador",
+    "mechanic": "Summon Burning Servant",
+    "icon": 135805,
+    "matchingSpellIds": [
+      "10870"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "razorfen-kraul",
+    "boss": "Roogug",
+    "mechanic": "Summon Earth Rumbler",
+    "icon": 136025,
+    "matchingSpellIds": [
+      "8270"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "razorfen-kraul",
+    "boss": "Earthcaller Halmgar",
+    "mechanic": "Summon Earth Rumbler",
+    "icon": 136025,
+    "matchingSpellIds": [
+      "8270"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "razorfen-kraul",
+    "boss": "Earthcaller Halmgar",
+    "mechanic": "Earthbind Totem",
+    "icon": 136102,
+    "matchingSpellIds": [
+      "1213480",
+      "2076",
+      "2484",
+      "15786"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Houndmaster Grebmar",
+    "mechanic": "Pummel",
+    "icon": 132938,
+    "matchingSpellIds": [
+      "12555",
+      "19639",
+      "6552",
+      "13491",
+      "6554",
+      "15615",
+      "19640"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Warder Stilgiss",
+    "mechanic": "Curse of Blood",
+    "icon": 136189,
+    "matchingSpellIds": [
+      "15042",
+      "24673",
+      "12279",
+      "8282",
+      "446362",
+      "16098"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Ribbly Screwspigot",
+    "mechanic": "Gouge",
+    "icon": 132155,
+    "matchingSpellIds": [
+      "11286",
+      "1324481",
+      "11285",
+      "13579",
+      "1777",
+      "8629",
+      "24698",
+      "28456",
+      "12540",
+      "1776"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Lord Valthalak",
+    "mechanic": "Defile",
+    "icon": 136160,
+    "matchingSpellIds": [
+      "27197",
+      "27194",
+      "27195",
+      "27198",
+      "27200",
+      "27183",
+      "27177",
+      "27199",
+      "27193",
+      "27178",
+      "27192",
+      "27196"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Pusillin",
+    "mechanic": "Spirit of Runn Tum",
+    "icon": 134011,
+    "matchingSpellIds": [
+      "22735"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Tsu'zee",
+    "mechanic": "Gouge",
+    "icon": 132155,
+    "matchingSpellIds": [
+      "11286",
+      "1324481",
+      "11285",
+      "13579",
+      "1777",
+      "8629",
+      "24698",
+      "28456",
+      "12540",
+      "1776"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Kormok",
+    "mechanic": "Bone Shield",
+    "icon": 136127,
+    "matchingSpellIds": [
+      "27688"
+    ],
+    "basis": "Exact name; every matching spell agrees on icon. Icon only, no cast attribution."
+  }
+]

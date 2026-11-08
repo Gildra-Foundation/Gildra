@@ -28,7 +28,7 @@ const EXIT_MS = 200;
 
 const word = (lang: Lang, value: { en: string; ru: string }) => value[lang];
 
-const realmIcons: Record<string, LucideIcon> = { heroes: UserRound, classes: Network, mythic: KeyRound, raids: Swords, meta: BarChart3, library: Library, chronicle: ScrollText, tools: Wrench };
+const realmIcons: Record<string, LucideIcon> = { "forever-dungeons": KeyRound, "forever-raids": Swords, heroes: UserRound, classes: Network, mythic: KeyRound, raids: Swords, meta: BarChart3, library: Library, chronicle: ScrollText, tools: Wrench };
 
 /** Each page its own sign, so the eye finds it before reading. */
 const pageIcons: Record<NavigationIcon, LucideIcon> = {
@@ -281,7 +281,7 @@ function RealmTabs({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
     onBlur={(event: FocusEvent) => { if (openRealm && !event.currentTarget.contains(event.relatedTarget)) close(); }}
     onKeyDown={onKeyDown}>
     <ul ref={list}>
-      {realmsFor(lang).map(realm => {
+      {realmsFor(lang, barePath).map(realm => {
         const isOpen = openRealm === realm.id;
         const isLeaving = leavingRealm === realm.id;
         const label = word(lang, realm.label);
@@ -326,7 +326,7 @@ const SheetContent = memo(function SheetContent({ lang, picks, barePath, current
   return <>
     <Account lang={lang} />
     <div className={toolbarStyles.sheetRealms}>
-      {realmsFor(lang).map(realm => {
+      {realmsFor(lang, barePath).map(realm => {
         const isCurrent = realm.id === currentId;
         const label = word(lang, realm.label);
         if (isSingle(realm, lang, picks)) return <div key={realm.id} className={toolbarStyles.sheetRealm} data-current={isCurrent || undefined}>

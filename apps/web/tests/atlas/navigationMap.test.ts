@@ -7,6 +7,10 @@ import { barePathOf, currentRealm } from "../../components/platform/navigation/n
 const expected: Record<string, string | null> = {
   "/": null,
   "/wow": null,
+  "/wow/forever": null,
+  "/wow/forever/dungeons": "forever-dungeons",
+  "/wow/forever/dungeons/wailing-caverns": "forever-dungeons",
+  "/wow/forever/raids": "forever-raids",
   "/privacy": null,
   "/wow/characters": "heroes",
   "/wow/characters/eu-tarren-mill-andymuerte": "heroes",

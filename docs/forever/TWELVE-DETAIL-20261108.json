@@ -1,0 +1,371 @@
+[
+  {
+    "slug": "shadowfang-keep",
+    "boss": "Rethilgore",
+    "mechanic": "Worg escorts",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/shadowfang-keep/bosses/"
+  },
+  {
+    "slug": "shadowfang-keep",
+    "boss": "Razorclaw the Butcher",
+    "mechanic": "Butcher Drain",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/shadowfang-keep/bosses/"
+  },
+  {
+    "slug": "shadowfang-keep",
+    "boss": "Commander Springvale",
+    "mechanic": "Divine Shield",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/shadowfang-keep/bosses/"
+  },
+  {
+    "slug": "shadowfang-keep",
+    "boss": "Odo the Blindwatcher",
+    "mechanic": "Howling Rage",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/shadowfang-keep/bosses/"
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "boss": "Ghamoo-ra",
+    "mechanic": "Trample",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/blackfathom-deeps/bosses/"
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "boss": "Lady Sarevess",
+    "mechanic": "Guards",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/blackfathom-deeps/bosses/"
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "boss": "Geilhast",
+    "mechanic": "Net",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/blackfathom-deeps/bosses/"
+  },
+  {
+    "slug": "gnomeregan",
+    "boss": "Electrocutioner 6000",
+    "mechanic": "Chain Bolt · Megavolt",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/gnomeregan/bosses/"
+  },
+  {
+    "slug": "gnomeregan",
+    "boss": "Mekgineer Thermaplugg",
+    "mechanic": "Bomb control",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/gnomeregan/bosses/"
+  },
+  {
+    "slug": "gnomeregan",
+    "boss": "Mekgineer Thermaplugg",
+    "mechanic": "Threat recovery",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/gnomeregan/bosses/"
+  },
+  {
+    "slug": "gnomeregan",
+    "boss": "Grubbis",
+    "mechanic": "Chomper",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/gnomeregan/bosses/"
+  },
+  {
+    "slug": "razorfen-kraul",
+    "boss": "Aggem Thorncurse",
+    "mechanic": "Summoned spirits",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/razorfen-kraul/"
+  },
+  {
+    "slug": "razorfen-kraul",
+    "boss": "Overlord Ramtusk",
+    "mechanic": "Razorfen Spearhides",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/razorfen-kraul/"
+  },
+  {
+    "slug": "razorfen-kraul",
+    "boss": "Roogug",
+    "mechanic": "Summon Earth Rumbler",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/razorfen-kraul/"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Interrogator Vishas",
+    "mechanic": "Scarlet escorts",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/scarlet-monastery/bosses/"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Houndmaster Loksey",
+    "mechanic": "Scarlet Tracking Hounds",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/scarlet-monastery/bosses/"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Herod",
+    "mechanic": "Scarlet reinforcements",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/scarlet-monastery/bosses/"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "High Inquisitor Whitemane",
+    "mechanic": "Scarlet Resurrection",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/scarlet-monastery/bosses/"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Revelosh",
+    "mechanic": "Trogg escorts",
+    "action": "add",
+    "source": "https://wowhandbook.com/zones/dungeons/uldaman/"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Ironaya",
+    "mechanic": "Knock Away",
+    "action": "add",
+    "source": "https://wowhandbook.com/zones/dungeons/uldaman/"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Grimlok",
+    "mechanic": "Escorts",
+    "action": "add",
+    "source": "https://wowhandbook.com/zones/dungeons/uldaman/"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Archaedas",
+    "mechanic": "Vault Warders",
+    "action": "add",
+    "source": "https://wowhandbook.com/zones/dungeons/uldaman/"
+  },
+  {
+    "slug": "uldaman",
+    "action": "preparation",
+    "source": "https://wowhandbook.com/zones/dungeons/uldaman/"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Tuten'kash",
+    "mechanic": "Curse",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/razorfen-downs/"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Mordresh Fire Eye",
+    "mechanic": "Fireball",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/razorfen-downs/"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Ragglesnout",
+    "mechanic": "Dominate Mind",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/razorfen-downs/"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Plaguemaw the Rotting",
+    "mechanic": "Putrid Stench",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/razorfen-downs/"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Gahz'rilla",
+    "mechanic": "Freeze Solid",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/zul-farrak/bosses/"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Antu'sul",
+    "mechanic": "Earthgrab Totem",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/zul-farrak/bosses/"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Theka the Martyr",
+    "mechanic": "Fevered Plague",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/zul-farrak/bosses/"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Shadowpriest Sezz'ziz",
+    "mechanic": "Psychic Scream",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/zul-farrak/bosses/"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Chief Ukorz Sandscalp",
+    "mechanic": "Enrage",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/zul-farrak/bosses/"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Noxxion",
+    "mechanic": "Toxic Volley",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/maraudon/bosses/"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Razorlash",
+    "mechanic": "Puncture",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/maraudon/bosses/"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Tinkerer Gizlock",
+    "mechanic": "Bomb · Flash Bomb",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/maraudon/bosses/"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Lord Vyletongue",
+    "mechanic": "Blink",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/maraudon/bosses/"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Landslide",
+    "mechanic": "Shardlings",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/maraudon/bosses/"
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Avatar of Hakkar",
+    "mechanic": "Curse of Tongues",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/sunken-temple/"
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Shade of Eranikus",
+    "mechanic": "War Stomp",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/sunken-temple/"
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Jammal'an the Prophet",
+    "mechanic": "Ogom’s spells",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/sunken-temple/"
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Weaver",
+    "mechanic": "Wing Flap",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/sunken-temple/"
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Dreamscythe",
+    "mechanic": "Wing Flap",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/sunken-temple/"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Lord Roccor",
+    "mechanic": "Flame Shock",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/blackrock-depths/"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Houndmaster Grebmar",
+    "mechanic": "Bloodlust",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/blackrock-depths/"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "General Angerforge",
+    "mechanic": "Medic reinforcements",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/blackrock-depths/"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Golem Lord Argelmach",
+    "mechanic": "Chain Lightning",
+    "action": "expand",
+    "source": "https://wowfdb.com/zones/blackrock-depths/"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Hurley Blackbreath",
+    "mechanic": "Cronies",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/blackrock-depths/"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Warder Stilgiss",
+    "mechanic": "Frostbolt · Frost Nova",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/blackrock-depths/"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Kirtonos",
+    "mechanic": "Summoning brazier",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/scholomance/bosses/"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Vectus",
+    "mechanic": "Viewing Room students",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/scholomance/bosses/"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Kormok",
+    "mechanic": "Skeletal Mages",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/scholomance/bosses/"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Doctor Theolen Krastinov",
+    "mechanic": "Enrage",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/scholomance/bosses/"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Lord Alexei Barov",
+    "mechanic": "Guardians",
+    "action": "add",
+    "source": "https://wowfdb.com/zones/scholomance/bosses/"
+  }
+]

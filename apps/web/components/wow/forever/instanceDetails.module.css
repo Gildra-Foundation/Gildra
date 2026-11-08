@@ -1,0 +1,4 @@
+/* atlas:strict — Equipment and original client floor maps. */
+.item { display: flex; align-items: center; gap: var(--atlas-space-3); overflow-wrap: anywhere; }
+.item img { flex: 0 0 auto; border: 1px solid var(--atlas-line); }
+.map { display: block; width: 100%; height: auto; }

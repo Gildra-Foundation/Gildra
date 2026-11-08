@@ -1,0 +1,163 @@
+[
+  {
+    "slug": "ragefire-chasm",
+    "source": "https://foreverdb.net/data/dungeons/389.json",
+    "observedEquipment": 38,
+    "excludedClassicAbilities": 6,
+    "excludedClassicMarkers": 4
+  },
+  {
+    "slug": "the-deadmines",
+    "source": "https://foreverdb.net/data/dungeons/36.json",
+    "observedEquipment": 45,
+    "excludedClassicAbilities": 15,
+    "excludedClassicMarkers": 7
+  },
+  {
+    "slug": "wailing-caverns",
+    "source": "https://foreverdb.net/data/dungeons/43.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 20,
+    "excludedClassicMarkers": 6
+  },
+  {
+    "slug": "shadowfang-keep",
+    "source": "https://foreverdb.net/data/dungeons/33.json",
+    "observedEquipment": 44,
+    "excludedClassicAbilities": 18,
+    "excludedClassicMarkers": 8
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "source": "https://foreverdb.net/data/dungeons/48.json",
+    "observedEquipment": 38,
+    "excludedClassicAbilities": 11,
+    "excludedClassicMarkers": 7
+  },
+  {
+    "slug": "the-stockade",
+    "source": "https://foreverdb.net/data/dungeons/34.json",
+    "observedEquipment": 13,
+    "excludedClassicAbilities": 11,
+    "excludedClassicMarkers": 5
+  },
+  {
+    "slug": "gnomeregan",
+    "source": "https://foreverdb.net/data/dungeons/90.json",
+    "observedEquipment": 4,
+    "excludedClassicAbilities": 10,
+    "excludedClassicMarkers": 4
+  },
+  {
+    "slug": "razorfen-kraul",
+    "source": "https://foreverdb.net/data/dungeons/47.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 15,
+    "excludedClassicMarkers": 6
+  },
+  {
+    "slug": "scarlet-monastery",
+    "source": "https://foreverdb.net/data/dungeons/189.json",
+    "observedEquipment": 16,
+    "excludedClassicAbilities": 28,
+    "excludedClassicMarkers": 7
+  },
+  {
+    "slug": "uldaman",
+    "source": "https://foreverdb.net/data/dungeons/70.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 26,
+    "excludedClassicMarkers": 7
+  },
+  {
+    "slug": "razorfen-downs",
+    "source": "https://foreverdb.net/data/dungeons/129.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 15,
+    "excludedClassicMarkers": 4
+  },
+  {
+    "slug": "zul-farrak",
+    "source": "https://foreverdb.net/data/dungeons/209.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 28,
+    "excludedClassicMarkers": 5
+  },
+  {
+    "slug": "maraudon",
+    "source": "https://foreverdb.net/data/dungeons/349.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 24,
+    "excludedClassicMarkers": 8
+  },
+  {
+    "slug": "sunken-temple",
+    "source": "https://foreverdb.net/data/dungeons/109.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 20,
+    "excludedClassicMarkers": 4
+  },
+  {
+    "slug": "blackrock-depths",
+    "source": "https://foreverdb.net/data/dungeons/230.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 81,
+    "excludedClassicMarkers": 18
+  },
+  {
+    "slug": "blackrock-spire",
+    "source": "https://foreverdb.net/data/dungeons/229.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 53,
+    "excludedClassicMarkers": 10
+  },
+  {
+    "slug": "dire-maul",
+    "source": "https://foreverdb.net/data/dungeons/429.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 91,
+    "excludedClassicMarkers": 18
+  },
+  {
+    "slug": "stratholme",
+    "source": "https://foreverdb.net/data/dungeons/329.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 55,
+    "excludedClassicMarkers": 12
+  },
+  {
+    "slug": "scholomance",
+    "source": "https://foreverdb.net/data/dungeons/289.json",
+    "observedEquipment": 0,
+    "excludedClassicAbilities": 58,
+    "excludedClassicMarkers": 11
+  },
+  {
+    "slug": "hall-of-thanes",
+    "source": "https://foreverdb.net/data/dungeons/3065.json",
+    "observedEquipment": 24,
+    "excludedClassicAbilities": 0,
+    "excludedClassicMarkers": 0
+  },
+  {
+    "slug": "ruins-of-lordaeron",
+    "source": "https://foreverdb.net/data/dungeons/2999.json",
+    "observedEquipment": 64,
+    "excludedClassicAbilities": 0,
+    "excludedClassicMarkers": 0
+  },
+  {
+    "slug": "excavation-site",
+    "source": "https://foreverdb.net/data/dungeons/2998.json",
+    "observedEquipment": 7,
+    "excludedClassicAbilities": 0,
+    "excludedClassicMarkers": 0
+  },
+  {
+    "slug": "city-of-dalaran",
+    "source": "https://foreverdb.net/data/dungeons/2959.json",
+    "observedEquipment": 22,
+    "excludedClassicAbilities": 0,
+    "excludedClassicMarkers": 0
+  }
+]
