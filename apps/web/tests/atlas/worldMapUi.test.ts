@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import type { AtlasBundle, AtlasEvent, AtlasMap, AtlasPoi } from "../../lib/wow/worldMap/bundle.ts";
 import type { FrameInfo } from "../../components/wow/worldMap/engine/WorldMapEngine.ts";
@@ -165,5 +166,33 @@ describe("world map layout", () => {
     assert.equal(insets.top, 158);
     assert.equal(insets.left, 0);
     assert.equal(insets.bottom, 98);
+  });
+});
+
+describe("world map chrome", () => {
+  const css = readFileSync(new URL("../../components/wow/worldMap/ui/mapChrome.module.css", import.meta.url), "utf8");
+  const rule = (selector: string, from = 0) => {
+    const at = css.indexOf(`${selector} {`, from);
+    assert.ok(at >= 0, selector);
+    return css.slice(at, css.indexOf("}", at));
+  };
+  const px = (block: string, prop: string) => Number(new RegExp(`(?:^|[\\s;{])${prop}:\\s*(\\d+)px`).exec(block)?.[1] ?? NaN);
+  it("gives the timeline targets of at least 32 px, 44 px under a finger", () => {
+    assert.ok(px(rule(".track"), "height") >= 32, "the bands are the target");
+    const buttons = rule(".step button, .toggle, .compareButton");
+    assert.ok(px(buttons, "width") >= 32 && px(buttons, "height") >= 32);
+    const coarse = css.slice(css.indexOf("@media (pointer: coarse)"));
+    assert.ok(px(rule(".step button, .toggle, .compareButton", css.indexOf("@media (pointer: coarse)")), "height") >= 44, coarse.slice(0, 80));
+    const phones = css.indexOf("@media (max-width: 700px)");
+    assert.ok(px(rule(".thumb", phones), "width") >= 44 && px(rule(".track", phones), "height") >= 44);
+  });
+  it("keeps motion off for readers who ask for less", () => {
+    const reduced = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"));
+    for (const name of [".thumbLane", ".timeline", ".locator"]) assert.ok(reduced.slice(0, reduced.indexOf("\n}")).includes(name), name);
+  });
+  it("folds the overview inset by default and keeps the reader's choice", () => {
+    const source = readFileSync(new URL("../../components/wow/worldMap/MapLocator.tsx", import.meta.url), "utf8");
+    assert.match(source, /getItem\(OPEN_KEY\) === "1"/);
+    assert.match(source, /setItem\(OPEN_KEY/);
   });
 });

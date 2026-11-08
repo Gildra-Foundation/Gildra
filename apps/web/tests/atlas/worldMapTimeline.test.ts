@@ -132,3 +132,80 @@ describe("world map timeline against maps.json", { skip: !existsSync(mapsFile) &
     assert.deepEqual(missing, []);
   });
 });
+
+// ---------------------------------------------------------------- the timeline control
+import { buildStops, nearestStop, patchLabel, pickStop, SPAN, stepStop, stopAt } from "../../components/wow/worldMap/ui/timelineStops.ts";
+import { EXPANSIONS, worldMapCopy } from "../../components/wow/worldMap/worldMapCopy.ts";
+import type { ArtEraInfo, AtlasEra, AtlasEvent } from "../../lib/wow/worldMap/bundle.ts";
+
+type ArtRecord = { id: string; name: Text; patchRange: [string, string]; inherits?: string };
+const atlasEras: AtlasEra[] = eras.map((era) => ({
+  id: era.id, name: era.name.ru, expansion: era.expansion, range: [era.patchRange.from, era.patchRange.to ?? era.patchRange.from],
+  years: [era.years.from, era.years.to ?? era.years.from], accent: era.accent,
+}));
+const atlasEvents: AtlasEvent[] = events.map((event) => ({
+  id: event.id, era: event.eraId, patch: event.patch, year: event.year, title: event.title.ru, summary: event.summary.ru, map: event.mapId, x: event.x, y: event.y, links: [],
+}));
+const phases: ArtEraInfo[] = read<ArtRecord[]>("eras.json").map((era) => ({ id: era.id, name: era.name.ru, range: era.patchRange, ...(era.inherits ? { inherits: era.inherits } : {}), changed: [] }));
+const stops = buildStops(atlasEras, atlasEvents, phases);
+
+describe("world map timeline control", () => {
+  it("has one rest per era, in order, each inside its expansion's band", () => {
+    const mains = stops.filter((stop) => stop.main);
+    assert.deepEqual(mains.map((stop) => stop.era.id), ERA_ORDER);
+    for (const stop of stops) assert.equal(Math.floor(stop.at + 1e-6), eraIndex(stop.era.id), `${stop.era.id} ${stop.patch ?? "rest"}`);
+    for (let i = 1; i < stops.length; i += 1) assert.ok(stops[i].at > stops[i - 1].at, "stops in time order, each moment once");
+    assert.ok(stops.every((stop) => stop.at >= 0 && stop.at < SPAN));
+  });
+  it("marks the patches inside an expansion where the map changes, with the phase's name", () => {
+    const mop = stops.filter((stop) => stop.era.id === "mop" && !stop.main);
+    assert.deepEqual(mop.map((stop) => patchLabel(stop.patch ?? "")), ["5.1", "5.2", "5.4"]);
+    assert.equal(mop[0].phase, "Красарангские джунгли: высадка");
+    assert.equal(mop[2].phase, "Вечноцветущий дол: порча");
+    assert.ok(mop[2].events.length >= 1, "5.4 also carries its events");
+    // A phase starting with its expansion is the expansion's own picture: no separate mark, the era names it.
+    assert.ok(!stops.some((stop) => !stop.main && stop.phase === "Падение Терамора"));
+    assert.equal(stops.find((stop) => stop.main && stop.era.id === "mop")?.phase, "Падение Терамора");
+    assert.ok(stops.filter((stop) => stop.era.id === "bfa" && !stop.main).some((stop) => patchLabel(stop.patch ?? "") === "8.3"));
+  });
+  it("a click on a band picks its era, a click on a mark picks the mark", () => {
+    const mopBand = 4;
+    assert.equal(pickStop(stops, mopBand + 0.5, 0).era.id, "mop");
+    assert.ok(pickStop(stops, mopBand + 0.5, 0).main);
+    const mark = stops.find((stop) => stop.era.id === "mop" && stop.patch === "5.4.0")!;
+    assert.equal(pickStop(stops, mark.at + 0.03, 0.08), mark);
+    assert.ok(pickStop(stops, mark.at + 0.03, 0).main, "without reach (aiming at the band) the era wins");
+    assert.equal(nearestStop(stops, mark.at - 0.001), mark);
+  });
+  it("steps mark by mark with the arrows and era by era with Page Up/Down", () => {
+    let at = stops[0].at;
+    const seen = [at];
+    for (let i = 0; i < stops.length + 2; i += 1) { at = stepStop(stops, at, 1)!.at; seen.push(at); }
+    assert.deepEqual([...new Set(seen)], stops.map((stop) => stop.at));
+    for (let i = 0; i < stops.length + 2; i += 1) at = stepStop(stops, at, -1)!.at;
+    assert.equal(at, stops[0].at);
+    const mop = stops.find((stop) => stop.main && stop.era.id === "mop")!;
+    assert.equal(stepStop(stops, mop.at, 1, true)!.era.id, "wod");
+    assert.equal(stepStop(stops, mop.at, -1, true)!.era.id, "cataclysm");
+    // Between two marks, a step back lands on the one just passed.
+    assert.equal(stepStop(stops, mop.at + 0.005, -1), mop);
+    assert.equal(stopAt(stops, mop.at + 0.005), mop);
+  });
+  it("names patches the way players write them", () => {
+    assert.equal(patchLabel("8.3.0"), "8.3");
+    assert.equal(patchLabel("7.0.3"), "7.0.3");
+    assert.equal(patchLabel("4.0.3a"), "4.0.3a");
+    assert.equal(patchLabel("12.0.0"), "12.0");
+  });
+  it("names every expansion band in both languages, short enough for two lines", () => {
+    for (const lang of ["en", "ru"] as const) {
+      for (const expansion of EXPANSIONS) {
+        const label = worldMapCopy[lang].expansion[expansion.id];
+        assert.ok(label, `${lang} ${expansion.id}`);
+        assert.ok(label.split(" ").length <= 3 && label.split(" ").every((word) => word.split("\u00ad").every((part) => part.length <= 10)), `${lang} ${label}`);
+      }
+    }
+    assert.equal(worldMapCopy.ru.expansion.classic, "Классика");
+    assert.equal(worldMapCopy.ru.expansion.midnight, worldMapCopy.en.expansion.midnight, "game names stay as the game spells them");
+  });
+});
