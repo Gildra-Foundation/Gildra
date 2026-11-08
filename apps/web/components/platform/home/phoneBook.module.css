@@ -27,3 +27,6 @@
 .tab:disabled{cursor:default}
 .tab:focus-visible,.close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.dialog[data-fade]::backdrop{animation:none}.tab,.tab::after,.close{transition:none}}
+.dialog :global([data-book-artwork]){filter:none}
+/* Keep the small-screen spread inside the viewport and use its compact contents. */
+@media(max-width:480px){.viewport{--page-width:min(calc(100vw - 32px),calc((100dvh - 150px)*.75),340px)}}
