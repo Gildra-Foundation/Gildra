@@ -18,7 +18,7 @@
   /* The title column on the left, the tools on the right, the dock at the bottom: the map fits between them. */
   --map-side: min(340px, 30vw);
   --map-tools: 56px;
-  --map-dock: 96px;
+  --map-dock: 112px;
   /* The cookie notice writes its height on the stage (the property does not inherit): pass it down. */
   --map-cookie: var(--cookie-notice-space, 0px);
   position: relative;
@@ -103,6 +103,12 @@
   letter-spacing: var(--atlas-tracking-display);
   text-shadow: var(--atlas-text-halo);
   text-wrap: balance;
+  /* At most two lines: the search and the panel below keep their place while the map in focus changes. */
+  display: -webkit-box;
+  flex: none;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .line {
   display: -webkit-box;
@@ -115,7 +121,11 @@
   text-shadow: var(--atlas-text-halo);
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  /* Two lines kept whether the facts take one or two: zooming through places does not shift the column. */
+  min-height: 2lh;
 }
+/* A place without a line of facts keeps the same room. */
+.title:not(:has(+ .line)) { margin-bottom: calc(6px + 2 * var(--atlas-text-small) * var(--atlas-leading-snug)); }
 .slot {
   display: flex;
   flex-direction: column;
@@ -170,7 +180,9 @@
     background: linear-gradient(180deg, var(--atlas-bg) 0, color-mix(in srgb, var(--atlas-bg) 88%, transparent) 72%, transparent);
   }
   .title { margin-top: 0; font-size: 1.5rem; }
-  .line { display: -webkit-box; margin-top: 2px; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--atlas-text-meta); }
+  .line { display: -webkit-box; min-height: 1lh; margin-top: 2px; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--atlas-text-meta); }
+  .title:not(:has(+ .line)) { margin-bottom: calc(2px + var(--atlas-text-meta) * var(--atlas-leading-snug)); }
+  .title { -webkit-line-clamp: 1; }
   /* One scrolling row of the trail; the site crumb is in the top bar already. */
   .trail ol { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
   .trail li { flex: none; }
