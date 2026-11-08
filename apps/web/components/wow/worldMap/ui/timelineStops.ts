@@ -26,13 +26,17 @@ export function buildStops(eras: AtlasEra[], events: AtlasEvent[], phases: ArtEr
   const ordered = orderedEras(eras);
   if (!ordered.length) return [];
   const stops: TimelineStop[] = ordered.map((era) => ({ at: restOf(eras, era), era, main: true, events: [] }));
-  const mainOf = (era: AtlasEra) => stops.find((stop) => stop.main && stop.era.id === era.id) as TimelineStop;
+  // The game today rests at the latest era's end: its launch is a mark of its own, where its first changes are.
+  const latest = ordered.at(-1) as AtlasEra;
+  const launch = Math.min(patchPosition(latest.range[0]) + 0.05, (stops.at(-1) as TimelineStop).at - 0.01);
+  stops.push({ at: launch, era: latest, main: false, patch: latest.range[0], events: [] });
+  const startOf = (era: AtlasEra) => stops.find((stop) => stop.era.id === era.id && (era.id === latest.id ? !stop.main && stop.at === launch : stop.main)) as TimelineStop;
   const add = (at: number, patch: string, fill: (stop: TimelineStop) => void) => {
     const era = eraAt(eras, at);
     if (!era) return;
-    const main = mainOf(era);
-    // Before or at the era's rest the map is the era's own: the patch belongs to the era's stop.
-    if (at <= main.at + EPS) { fill(main); return; }
+    const start = startOf(era);
+    // At the era's start the map is the era's own: the patch belongs to the era's first stop.
+    if (at <= start.at + EPS) { fill(start); return; }
     let stop = stops.find((entry) => !entry.main && Math.abs(entry.at - at) < 0.0005);
     if (!stop) { stop = { at, era, main: false, patch, events: [] }; stops.push(stop); }
     fill(stop);

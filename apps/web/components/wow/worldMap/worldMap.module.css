@@ -71,9 +71,13 @@
   pointer-events: none;
 }
 .titleBar > * { pointer-events: auto; }
+/* One row (the deepest step kept in sight by the stage): a longer trail never pushes the column down. */
 .trail ol {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
   align-items: center;
   gap: 0 var(--atlas-space-1);
   margin: 0;
@@ -85,7 +89,10 @@
   text-transform: uppercase;
   text-shadow: var(--atlas-text-halo);
 }
-.trail li { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-width: 0; }
+.trail ol::-webkit-scrollbar { display: none; }
+/* Room for the focus ring inside the scrolling row. */
+.trail ol { margin: -3px -3px 0; padding: 3px; }
+.trail li { display: inline-flex; flex: none; align-items: center; gap: var(--atlas-space-1); min-width: 0; }
 /* The site crumb is in the top bar already: the map's own trail starts at the world map. */
 .trail li:first-child { display: none; }
 .trail a { display: inline-flex; align-items: center; min-height: 28px; color: var(--atlas-accent); text-decoration: none; }

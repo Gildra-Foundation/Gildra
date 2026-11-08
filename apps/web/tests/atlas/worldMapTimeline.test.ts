@@ -167,6 +167,11 @@ describe("world map timeline control", () => {
     assert.ok(!stops.some((stop) => !stop.main && stop.phase === "Падение Терамора"));
     assert.equal(stops.find((stop) => stop.main && stop.era.id === "mop")?.phase, "Падение Терамора");
     assert.ok(stops.filter((stop) => stop.era.id === "bfa" && !stop.main).some((stop) => patchLabel(stop.patch ?? "") === "8.3"));
+    // Today rests at the end of the latest era; its launch and its patches are marks before it.
+    const midnight = stops.filter((stop) => stop.era.id === "midnight");
+    assert.ok(midnight.at(-1)?.main, "today is the last stop");
+    assert.deepEqual(midnight.filter((stop) => !stop.main).map((stop) => patchLabel(stop.patch ?? "")), ["12.0", "12.0.7", "12.1", "12.1.5"]);
+    assert.ok(midnight[0].events.some((event) => event.patch === "12.0.1"), "the launch mark carries the launch week");
   });
   it("a click on a band picks its era, a click on a mark picks the mark", () => {
     const mopBand = 4;
