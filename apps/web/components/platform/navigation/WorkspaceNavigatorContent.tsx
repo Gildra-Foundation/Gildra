@@ -1,8 +1,7 @@
 "use client";
-import { memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type FocusEvent, type KeyboardEvent, type PointerEvent, type RefObject } from "react";
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type PointerEvent, type RefObject } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { BarChart3, BookMarked, BookOpen, ChevronDown, Coins, Compass, Hammer, KeyRound, Library, Map, Menu, Network, Route, ScrollText, Shield, Shirt, Skull, Swords, TrendingUp, Trophy, UserRound, Users, Wrench, X, type LucideIcon } from "lucide-react";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { p, type Lang } from "@/lib/i18n-paths";
@@ -12,13 +11,9 @@ import { AccountChip } from "@/components/auth/AccountChip";
 import { GildraCrest } from "@/components/brand/GildraCrest";
 import { barePathOf, currentRealm, groupsFor, linksFor, realmsFor, type NavigationIcon, type NavigationRealm } from "./navigationMap";
 import type { NavigationPicks } from "./navigationPicks";
+import { useToolbarPath } from "./toolbarPath";
 import toolbarStyles from "./atlasToolbar.module.css";
 
-const noSubscribe = () => () => {};
-/** Prerendered 404 pages must hydrate with their original toolbar language. */
-const renderedPath = (fallback: string) => typeof document === "undefined"
-  ? fallback
-  : document.querySelector("[data-toolbar-path]")?.getAttribute("data-toolbar-path") ?? fallback;
 
 /**
  * Hover intent of the tab menus: a pointer passing over the bar does not flash
@@ -487,8 +482,7 @@ function useScrolledFlag(bar: RefObject<HTMLElement | null>) {
 
 /** The command bar: brand, search and account on top; the section tabs with their menus below. */
 export function WorkspaceNavigatorContent({ picks }: { picks: NavigationPicks }) {
-  const pathname = usePathname();
-  const livePath = useSyncExternalStore(noSubscribe, () => pathname, () => renderedPath(pathname));
+  const livePath = useToolbarPath();
   const ru = /^\/ru(?:\/|$)/.test(livePath);
   const lang: Lang = ru ? "ru" : "en";
   const bar = useRef<HTMLElement>(null);

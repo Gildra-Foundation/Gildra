@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { wowPortalFor, wowPortalHref, wowPortals } from "@/lib/games/wowPortals";
+import { useToolbarPath } from "./toolbarPath";
 import styles from "./wowVersionStrip.module.css";
 
 /**
@@ -9,7 +9,7 @@ import styles from "./wowVersionStrip.module.css";
  * The address names the version; a switch keeps the reader in the same section when the version has it.
  */
 export function WowVersionStrip() {
-  const path = usePathname() ?? "/";
+  const path = useToolbarPath();
   const lang = /^\/ru(?:\/|$)/.test(path) ? "ru" : "en";
   const current = wowPortalFor(path);
   return <nav className={styles.strip} aria-label={lang === "ru" ? "Версии World of Warcraft" : "World of Warcraft versions"} data-atlas-scope>
