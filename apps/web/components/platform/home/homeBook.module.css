@@ -13,13 +13,13 @@
 .front,.back{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden}
 /* Drawn at the closed cover's own size, then scaled to the page, so its
    lettering matches the cover on the page exactly at the first frame. */
-.cover{position:relative;width:var(--leaf-width,auto);height:var(--leaf-height,100%);aspect-ratio:1024/1536;transform:scale(var(--leaf-scale,1));transform-origin:0 0}
+.cover{position:relative;width:var(--leaf-width,auto);height:var(--leaf-height,100%);aspect-ratio:3/4;transform:scale(var(--leaf-scale,1));transform-origin:0 0}
 /* Its inside lands as the left page of the same folio artwork. */
-.back{transform:rotateY(180deg);background:url("/assets/wow/character-book/folio-binding-v1.png") 0 0/200% 100% no-repeat;filter:grayscale(1)}
+.back{transform:rotateY(180deg);background:url("/assets/wow/character-book/icecrown-folio.webp") 0 0/200% 100% no-repeat}
 .shade{position:absolute;inset:0;opacity:0;pointer-events:none;background:linear-gradient(90deg,#000b,#0006 60%,#0003)}
 /* Shading follows the opaque pixels of each face, never its transparent margin. */
-.back .shade{background:linear-gradient(270deg,#000b,#0006 60%,#0003);-webkit-mask:url("/assets/wow/character-book/folio-binding-v1.png") 0 0/200% 100% no-repeat;mask:url("/assets/wow/character-book/folio-binding-v1.png") 0 0/200% 100% no-repeat}
-.front .shade{right:auto;aspect-ratio:1024/1536;height:100%;-webkit-mask:url("/assets/wow/character-book/intro/chronicle-cover-v2-mask.png") 0 0/100% 100% no-repeat;mask:url("/assets/wow/character-book/intro/chronicle-cover-v2-mask.png") 0 0/100% 100% no-repeat}
+.back .shade{background:linear-gradient(270deg,#000b,#0006 60%,#0003);-webkit-mask:url("/assets/wow/character-book/icecrown-folio.webp") 0 0/200% 100% no-repeat;mask:url("/assets/wow/character-book/icecrown-folio.webp") 0 0/200% 100% no-repeat}
+.front .shade{right:auto;aspect-ratio:3/4;height:100%;-webkit-mask:url("/assets/wow/character-book/intro/icecrown-cover-1024.webp") 0 0/100% 100% no-repeat;mask:url("/assets/wow/character-book/intro/icecrown-cover-1024.webp") 0 0/100% 100% no-repeat}
 .actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px clamp(12px,3vw,40px)}
 .actions .action{position:relative;min-height:44px;padding:8px 14px;border:0;border-radius:0;background:transparent;color:var(--paper);font:400 19px/1.25 "Gildra Kurale",Georgia,serif;text-shadow:0 2px 8px #000;cursor:pointer;transition:color 220ms}
 .actions .action::after{content:"";position:absolute;left:14px;right:14px;bottom:5px;height:1px;background:linear-gradient(90deg,transparent,var(--accent) 18%,var(--bright) 50%,var(--accent) 82%,transparent);box-shadow:0 1px 6px color-mix(in srgb,var(--accent) 55%,transparent);opacity:0;transform:scaleX(.65);transition:opacity 180ms,transform 320ms cubic-bezier(.2,.75,.2,1)}
@@ -31,3 +31,4 @@
 .actions .action:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
 @media(prefers-reduced-motion:reduce){.actions .action,.actions .action::after{transition:none}}
+.book :global([data-book-artwork]){filter:none}

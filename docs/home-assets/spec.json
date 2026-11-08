@@ -1,0 +1,17 @@
+{
+  "kit": "icecrown-grimoire",
+  "assets": {
+    "cover": {
+      "type": "cutout",
+      "display": "280\u2013470px",
+      "canvas": "2:3"
+    },
+    "folio": {
+      "type": "cutout",
+      "display": "1000px",
+      "canvas": "3:2"
+    }
+  },
+  "nativeRoot": "/home/debian/gildra-home-book-20261108/asset-sources",
+  "candidates": 3
+}
