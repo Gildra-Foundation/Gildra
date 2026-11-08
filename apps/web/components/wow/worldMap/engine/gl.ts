@@ -47,7 +47,7 @@ uniform float u_desat;
 uniform vec4 u_paper;
 uniform vec4 u_art;
 uniform float u_corner;
-uniform vec4 u_holes[8];
+uniform vec4 u_holes[HOLES];
 uniform float u_holeCount;
 uniform vec2 u_screen;
 uniform float u_vignette;
@@ -108,7 +108,7 @@ void main() {
   }
   if (u_holeCount > 0.0) {
     // Painted words and decor of a parent where the place in view lies: the parent gives way there.
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < HOLES; i++) {
       if (float(i) >= u_holeCount) break;
       vec4 h = u_holes[i];
       vec2 c = (h.xy + h.zw) * 0.5, r = max((h.zw - h.xy) * 0.5, vec2(1.0));
@@ -224,7 +224,7 @@ export type DrawParams = {
   art?: [number, number, number, number];
   /** Fade the art's corners over this share of its smaller side (0 = keep). */
   corner?: number;
-  /** Boxes (device px) where the picture gives way (painted words, decor). Up to 8. */
+  /** Boxes (device px) where the picture gives way (painted words, decor). Up to `MapRenderer.holes` (24, or 8 on small GPUs). */
   holes?: Array<[number, number, number, number]>;
   /** Darken toward the screen's edges (the layer composite). */
   vignette?: number;
@@ -247,6 +247,8 @@ export class MapRenderer {
   readonly gl: WebGLRenderingContext;
   private program!: WebGLProgram;
   blank!: WebGLTexture;
+  /** How many holes (painted words to give way at) one draw takes. */
+  holes = 8;
   /** One texel of the calm parchment the maps lie on: what shows where a backdrop has not loaded yet. */
   paper!: WebGLTexture;
   private blur!: WebGLProgram;
@@ -286,7 +288,9 @@ export class MapRenderer {
       if (!gl.getProgramParameter(program, gl.LINK_STATUS) && !gl.isContextLost()) throw new Error(gl.getProgramInfoLog(program) ?? "link");
       return program;
     };
-    this.program = link(VERTEX, FRAGMENT);
+    // Painted words a picture can give way at: 24 where the GPU has the uniforms for it (all but the smallest), else 8.
+    this.holes = (gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS) as number) >= 96 ? 24 : 8;
+    this.program = link(VERTEX, `#define HOLES ${this.holes}\n${FRAGMENT}`);
     // A 1×1 texture for draws that sample nothing (light effects).
     this.blank = gl.createTexture() as WebGLTexture;
     gl.bindTexture(gl.TEXTURE_2D, this.blank);
@@ -382,10 +386,10 @@ export class MapRenderer {
     gl.uniform1f(this.u.u_corner, p.corner ?? 0);
     gl.uniform1f(this.u.u_vignette, p.vignette ?? 0);
     const holes = p.holes ?? [];
-    gl.uniform1f(this.u.u_holeCount, Math.min(8, holes.length));
+    gl.uniform1f(this.u.u_holeCount, Math.min(this.holes, holes.length));
     if (holes.length) {
-      const flat = new Float32Array(32);
-      holes.slice(0, 8).forEach((h, i) => flat.set(h, i * 4));
+      const flat = new Float32Array(this.holes * 4);
+      holes.slice(0, this.holes).forEach((h, i) => flat.set(h, i * 4));
       gl.uniform4fv(this.u.u_holes, flat);
     }
     if (p.mask) {

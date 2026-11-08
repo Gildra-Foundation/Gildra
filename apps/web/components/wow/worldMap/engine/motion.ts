@@ -41,12 +41,16 @@ export function gather(left: number, add: number): number {
  */
 export function spend(left: number, dt: number, tau: number): [number, number] {
   if (tau <= 0 || dt <= 0) return dt <= 0 ? [0, left] : [left, 0];
+  // A device drawing fewer than ~6 frames a second gains nothing from a glide: the zoom lands at once.
+  if (dt >= SLOW_FRAME) return [left, 0];
   const step = left * (1 - Math.exp(-dt / tau));
   return [step, left - step];
 }
 
-/** Below this the remaining zoom is done (it would move the view by less than ~0.2%). */
-export const ZOOM_DONE = 0.002;
+/** Below this the remaining zoom is done (it would move the view by less than ~0.6%). */
+export const ZOOM_DONE = 0.006;
+/** A frame this long (ms) ends an eased zoom at once. */
+export const SLOW_FRAME = 180;
 
 /**
  * The map in view, with hysteresis. `candidate`: the deepest map well open under the point the reader looks

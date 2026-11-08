@@ -7,7 +7,7 @@ import type { EraRecord, MapRecord, PoiRecord } from "@/lib/wow/worldMap/types";
 import { blurGroups, blurKey, blurOf, blurRadiusCss, desatOf, dimOf, radiusOfKey, vignetteOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "@/components/wow/worldMap/engine/lod";
 import { chainUp, composeSet, mapSet, transferCamera } from "@/components/wow/worldMap/engine/sets";
 import { wheelKind } from "@/components/wow/worldMap/engine/input";
-import { FOCUS_FADE, FOCUS_IN, FOCUS_OUT, MAX_AHEAD, NOTCH_LOG, TAU_NOTCH, TAU_SMOOTH, ZOOM_DONE, fadeOut, gather, holdFocus, spend, wheelLog } from "@/components/wow/worldMap/engine/motion";
+import { FOCUS_FADE, FOCUS_IN, FOCUS_OUT, MAX_AHEAD, NOTCH_LOG, SLOW_FRAME, TAU_NOTCH, TAU_SMOOTH, ZOOM_DONE, fadeOut, gather, holdFocus, spend, wheelLog } from "@/components/wow/worldMap/engine/motion";
 import { toAtlas, zoomAt, type Camera } from "@/components/wow/worldMap/engine/camera";
 import { blurRgb, fillBoxes, toneImage } from "@/components/wow/worldMap/engine/tone";
 import { layerGroups, placeKeys } from "@/components/wow/worldMap/engine/compose";
@@ -126,6 +126,8 @@ describe("world map camera motion", () => {
     // Most of a notch is spent within ~0.3 s, all of it within a second; nothing is left for ever.
     assert.ok(Math.abs(glide(NOTCH_LOG, 1000 / 60, 300).left) < NOTCH_LOG * 0.15);
     assert.ok(Math.abs(glide(NOTCH_LOG, 1000 / 60, 1000).left) < ZOOM_DONE);
+    // A device drawing a frame every 200+ ms lands the zoom at once (no glide over seconds).
+    assert.deepEqual(spend(0.3, SLOW_FRAME, TAU_NOTCH), [0.3, 0]);
     // A pinch follows closely.
     assert.ok(Math.abs(glide(0.3, 1000 / 60, 150, TAU_SMOOTH).left) < 0.3 * 0.05);
   });
