@@ -39,8 +39,10 @@
   background: var(--atlas-accent);
   font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
   translate: 0 -200%;
+  /* Unseen until focused: over an open menu the bar stands above the version strip, where its edge showed. */
+  opacity: 0;
 }
-.skip:focus-visible { translate: 0 0; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.skip:focus-visible { translate: 0 0; opacity: 1; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
 /* ── Top row: brand · search · language, game, account ─────────────── */
 /* Brand and controls take equal side columns, so the search stays centred and
@@ -355,7 +357,7 @@
   .toggle, .panel { display: none; }
   .sheet {
     position: fixed;
-    inset: var(--atlas-sticky-top) 0 0;
+    inset: var(--sheet-top, var(--atlas-sticky-top)) 0 0;
     z-index: 2;
     display: grid;
     align-content: start;

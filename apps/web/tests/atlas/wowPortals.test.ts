@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import test from "node:test";
 import { wowPortalFor, wowPortalHref, wowPortalSection, wowPortals } from "../../lib/games/wowPortals.ts";
 
@@ -23,4 +24,10 @@ test("without an equivalent section the switch lands on the version's hub", () =
   assert.equal(wowPortalHref("en", portal("mists"), "/wow/forever/raids"), "/wow/mists");
   assert.equal(wowPortalHref("en", portal("mists"), "/wow/auction"), "/wow/mists");
   assert.equal(wowPortalHref("ru", portal("retail"), "/ru/wow/forever"), "/ru/wow");
+});
+
+test("every version has its own emblem file", () => {
+  const emblems = new Set(wowPortals.map(item => item.emblem));
+  assert.equal(emblems.size, wowPortals.length);
+  for (const emblem of emblems) assert.ok(existsSync(new URL(`../../public${emblem}`, import.meta.url)), emblem);
 });

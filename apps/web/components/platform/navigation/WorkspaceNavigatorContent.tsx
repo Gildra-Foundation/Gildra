@@ -374,6 +374,12 @@ function MenuSheet({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
   const trigger = useRef<HTMLButtonElement>(null);
   const exitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const id = useId();
+  // The sheet starts at the bar's lower edge: at the top of the page the version
+  // strip still stands above the bar, so a fixed offset would cover its controls.
+  const placeSheet = () => {
+    const bar = root.current?.closest("header");
+    if (bar) root.current?.style.setProperty("--sheet-top", `${Math.max(0, Math.round(bar.getBoundingClientRect().bottom))}px`);
+  };
   const close = () => {
     if (!open) return;
     if (!lessMotion()) {
@@ -442,7 +448,7 @@ function MenuSheet({ path, lang, picks }: { path: string; lang: Lang; picks: Nav
     <button ref={trigger} type="button" className={toolbarStyles.menuButton} aria-controls={id} aria-expanded={open}
       aria-label={ru ? (open ? "Закрыть меню" : "Открыть меню") : (open ? "Close menu" : "Open menu")}
       onPointerDown={() => { setBuilt(true); setArt(true); }} onFocus={() => setBuilt(true)}
-      onClick={() => { setBuilt(true); setArt(true); if (open) close(); else { setLeaving(false); setOpenOn(path); } }}>
+      onClick={() => { setBuilt(true); setArt(true); if (open) close(); else { placeSheet(); setLeaving(false); setOpenOn(path); } }}>
       <Menu className={toolbarStyles.menuIcon} data-icon="open" size={20} aria-hidden="true" />
       <X className={toolbarStyles.menuIcon} data-icon="close" size={20} aria-hidden="true" />
     </button>
