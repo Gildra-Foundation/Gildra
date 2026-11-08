@@ -55,6 +55,8 @@ uniform float u_land;
 uniform vec3 u_ink;
 uniform float u_fx;
 uniform vec4 u_fxColor;
+uniform vec4 u_excl;
+uniform vec3 u_exclEdge;
 varying vec2 v_uv;
 varying vec2 v_p;
 
@@ -116,6 +118,12 @@ void main() {
       float outside = length(max(d, vec2(0.0))) + min(max(d.x, d.y), 0.0);
       a *= smoothstep(-min(r.x, r.y) * 0.6, soft, outside);
     }
+  }
+  if (u_exclEdge.z > 0.0) {
+    // The map in view covers its own rectangle: a map around it gives way there, along the same soft edge.
+    float d = min(min(v_p.x - u_excl.x, u_excl.z - v_p.x), min(v_p.y - u_excl.y, u_excl.w - v_p.y));
+    float t = clamp((d - u_exclEdge.x) / max(1.0, u_exclEdge.y - u_exclEdge.x), 0.0, 1.0);
+    a *= 1.0 - u_exclEdge.z * t * t * (3.0 - 2.0 * t);
   }
   if (u_portal.z > 0.0) {
     float d = length(v_p - u_portal.xy);
@@ -226,12 +234,14 @@ export type DrawParams = {
   mask?: { texture: WebGLTexture; rect: [number, number, number, number]; strength?: number; /** Only to keep the water shimmer off land. */ land?: boolean } | null;
   /** A light effect instead of a picture: 1 = a capital's pulse, 2 = a portal's swirl; rgb + phase. */
   fx?: { kind: 1 | 2; color: [number, number, number, number] } | null;
+  /** The rect of the map in view (device px) this picture gives way to, with that map's soft edge [inset, ramp end] and a strength. */
+  exclude?: { rect: [number, number, number, number]; edge: [number, number]; strength: number } | null;
 };
 
 type Target = { fb: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
 type Layer = { scale: number; a: Target; b: Target };
 
-const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat", "u_paper", "u_art", "u_corner", "u_holes", "u_holeCount", "u_screen", "u_vignette", "u_land", "u_ink", "u_fx", "u_fxColor"];
+const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat", "u_paper", "u_art", "u_corner", "u_holes", "u_holeCount", "u_screen", "u_vignette", "u_land", "u_ink", "u_fx", "u_fxColor", "u_excl", "u_exclEdge"];
 
 export class MapRenderer {
   readonly gl: WebGLRenderingContext;
@@ -304,6 +314,9 @@ export class MapRenderer {
     this.maskBound = false;
     this.inkSet = -1;
     this.fxOn = false;
+    this.exclOn = false;
+    this.under = false;
+    gl.uniform3f(this.u.u_exclEdge, 0, 0, 0);
     gl.uniform1f(this.u.u_fx, 0);
     gl.uniform1f(this.u.u_land, 0);
   }
@@ -326,6 +339,7 @@ export class MapRenderer {
     gl.uniform1f(this.u.u_time, time);
     gl.uniform3f(this.u.u_cloudMap, ...cloudMap);
     gl.uniform3f(this.u.u_waterMap, ...waterMap);
+    this.setUnder(false);
   }
 
   /** Limit drawing on the screen to a box (device px, top-left origin); null: everywhere. */
@@ -381,6 +395,11 @@ export class MapRenderer {
       gl.uniform1f(this.u.u_land, 0);
       this.maskBound = false;
     }
+    if (p.exclude && p.exclude.strength > 0) {
+      gl.uniform4f(this.u.u_excl, ...p.exclude.rect);
+      gl.uniform3f(this.u.u_exclEdge, p.exclude.edge[0], p.exclude.edge[1], p.exclude.strength);
+      this.exclOn = true;
+    } else if (this.exclOn) { gl.uniform3f(this.u.u_exclEdge, 0, 0, 0); this.exclOn = false; }
     if (p.fx) { gl.uniform1f(this.u.u_fx, p.fx.kind); gl.uniform4f(this.u.u_fxColor, ...p.fx.color); this.fxOn = true; }
     else if (this.fxOn) { gl.uniform1f(this.u.u_fx, 0); this.fxOn = false; }
     // The era's ink acts on the screen: inside an offscreen layer it waits for the layer's own draw.
@@ -394,6 +413,7 @@ export class MapRenderer {
   private ink = 0;
   private inkSet = -1;
   private fxOn = false;
+  private exclOn = false;
 
   /**
    * Start an out-of-focus layer: what is drawn next goes into an offscreen
@@ -412,28 +432,44 @@ export class MapRenderer {
     gl.uniform2f(this.u.u_view, layer.a.w * scale, layer.a.h * scale);
   }
 
-  /** Blur the layer (`radius` in its own pixels) and lay it over the screen, dimmed, greyed and vignetted a little. */
+  /**
+   * Draws that follow go under what the target already holds (only where it is still empty): maps beside each
+   * other in one layer never lie over each other, whatever their masks say.
+   */
+  setUnder(on: boolean) {
+    if (on === this.under) return;
+    this.under = on;
+    const gl = this.gl;
+    if (on) gl.blendFunc(gl.ONE_MINUS_DST_ALPHA, gl.ONE);
+    else gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  }
+  under = false;
+
+  /** Blur the layer (`radius` in its own pixels; 0 = none) and lay it over the screen, dimmed, greyed and vignetted a little. */
   endLayer(radius: number, dim: number, desat: number, vignette = 0) {
     const gl = this.gl;
     const layer = this.into;
     if (!layer) return;
     this.into = null;
-    gl.useProgram(this.blur);
-    gl.disable(gl.BLEND);
+    this.setUnder(false);
     // The targets are a little larger than the drawn part (whole pixels): never read past it.
     const W = this.width, H = this.height;
     const u1 = W / layer.scale / layer.a.w, v1 = H / layer.scale / layer.a.h;
-    gl.uniform4f(this.ub.u_bounds, 0.5 / layer.a.w, 1 - v1 + 0.5 / layer.a.h, u1 - 0.5 / layer.a.w, 1 - 0.5 / layer.a.h);
-    const step = Math.max(0.5, radius / 2);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, layer.b.fb);
-    gl.bindTexture(gl.TEXTURE_2D, layer.a.tex);
-    gl.uniform2f(this.ub.u_dir, step / layer.a.w, 0);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, layer.a.fb);
-    gl.bindTexture(gl.TEXTURE_2D, layer.b.tex);
-    gl.uniform2f(this.ub.u_dir, 0, step / layer.a.h);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    gl.enable(gl.BLEND);
+    if (radius > 0) {
+      gl.useProgram(this.blur);
+      gl.disable(gl.BLEND);
+      gl.uniform4f(this.ub.u_bounds, 0.5 / layer.a.w, 1 - v1 + 0.5 / layer.a.h, u1 - 0.5 / layer.a.w, 1 - 0.5 / layer.a.h);
+      const step = Math.max(0.5, radius / 2);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, layer.b.fb);
+      gl.bindTexture(gl.TEXTURE_2D, layer.a.tex);
+      gl.uniform2f(this.ub.u_dir, step / layer.a.w, 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, layer.a.fb);
+      gl.bindTexture(gl.TEXTURE_2D, layer.b.tex);
+      gl.uniform2f(this.ub.u_dir, 0, step / layer.a.h);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.enable(gl.BLEND);
+    }
     gl.useProgram(this.program);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, W, H);

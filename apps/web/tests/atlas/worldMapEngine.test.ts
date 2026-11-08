@@ -7,6 +7,7 @@ import type { EraRecord, MapRecord, PoiRecord } from "@/lib/wow/worldMap/types";
 import { blurGroups, blurKey, blurOf, blurRadiusCss, desatOf, dimOf, radiusOfKey, vignetteOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "@/components/wow/worldMap/engine/lod";
 import { chainUp, composeSet, mapSet, transferCamera } from "@/components/wow/worldMap/engine/sets";
 import { wheelKind } from "@/components/wow/worldMap/engine/input";
+import { blurRgb, fillBoxes, toneImage } from "@/components/wow/worldMap/engine/tone";
 import { eraFromParam, eventComparison, eventMoment, mapIdOfPath, patchPosition, positionToPatch, pushesHistory, queryToView, viewToQuery } from "@/components/wow/worldMap/worldMapModel";
 import { isRectMask, paperColour } from "@/components/wow/worldMap/engine/paper";
 import { decorBoxes, labelBoxes } from "@/lib/wow/worldMap/painted";
@@ -383,5 +384,51 @@ describe("world map depth backdrop and painted boxes", () => {
       [{ box: [0.2, 0.2, 0.3, 0.25], for: 84, plaque: [0.15, 0.18, 0.35, 0.27], patch: "/maps/patches/x/1.webp" }, { box: [0.1, 0.1, 0.2, 0.2], plaque: [0.1, 0.1, 0.2, 0.2] }]);
     assert.deepEqual(decorBoxes({ decor: [{ box: [0, 0, 0.2, 0.3], kind: "crest" }] }), [{ box: [0, 0, 0.2, 0.3], kind: "crest" }]);
     assert.deepEqual(decorBoxes({}), []);
+  });
+});
+
+describe("world map backdrop (tone)", () => {
+  const picture = (w: number, h: number, paint: (x: number, y: number) => [number, number, number]) => {
+    const data = new Uint8ClampedArray(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const [r, g, b] = paint(x, y); data.set([r, g, b, 255], (y * w + x) * 4); }
+    return data;
+  };
+  it("fills a word's box from the ground around it", () => {
+    // Green ground with a black word in the middle.
+    const w = 64, h = 40;
+    const data = picture(w, h, (x, y) => (x >= 20 && x < 44 && y >= 16 && y < 24 ? [0, 0, 0] : [40, 160, 60]));
+    fillBoxes(data, w, h, [[20 / w, 16 / h, 44 / w, 24 / h]]);
+    for (let y = 16; y < 24; y++) for (let x = 20; x < 44; x++) {
+      const i = (y * w + x) * 4;
+      assert.deepEqual([data[i], data[i + 1], data[i + 2]], [40, 160, 60]);
+    }
+  });
+  it("blends the fill between different grounds and leaves the rest as it was", () => {
+    const w = 32, h = 32;
+    const data = picture(w, h, (x) => (x < 16 ? [200, 0, 0] : [0, 0, 200]));
+    const before = data.slice();
+    fillBoxes(data, w, h, [[12 / w, 12 / h, 20 / w, 20 / h]], 0);
+    const at = (x: number, y: number) => data[(y * w + x) * 4];
+    assert.equal(at(2, 2), before[(2 * w + 2) * 4]);
+    assert.ok(at(12, 16) > at(19, 16), "the red side stays redder");
+    for (let i = 3; i < data.length; i += 4) assert.equal(data[i], 255);
+  });
+  it("washes out fine stripes (a magnified sea's lines) and keeps the average colour", () => {
+    const w = 64, h = 64;
+    const data = picture(w, h, (_x, y) => (y % 2 ? [0, 0, 0] : [200, 200, 200]));
+    blurRgb(data, w, h, 2);
+    const row = (y: number) => data[(y * w + 32) * 4];
+    assert.ok(Math.abs(row(31) - row(32)) < 12, "no stripes left");
+    assert.ok(Math.abs(row(32) - 100) < 12);
+  });
+  it("without word boxes washes out much more", () => {
+    const w = 100, h = 60;
+    const word = (x: number, y: number): [number, number, number] => (x >= 40 && x < 60 && y >= 25 && y < 35 ? [0, 0, 0] : [180, 180, 180]);
+    const blind = picture(w, h, word), known = picture(w, h, word);
+    toneImage(blind, w, h, null);
+    toneImage(known, w, h, [[0.4, 25 / 60, 0.6, 35 / 60]]);
+    const centre = (data: Uint8ClampedArray) => data[(30 * w + 50) * 4];
+    assert.ok(centre(known) > 170, "the word is gone where its box is known");
+    assert.ok(centre(blind) > 60, "an unknown word is washed out into the ground");
   });
 });

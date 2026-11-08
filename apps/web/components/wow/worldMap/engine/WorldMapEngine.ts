@@ -5,6 +5,7 @@ import { MapRenderer, type DrawParams } from "./gl";
 import { blurGroups, blurKey, blurOf, blurRadiusCss, blurRadiusPx, desatOf, dimOf, radiusOfKey, vignetteOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "./lod";
 import { wheelKind } from "./input";
 import { analysePaper } from "./paper";
+import { loadTone } from "./tone";
 import { decorBoxes, labelBoxes, type ArtBox } from "@/lib/wow/worldMap/painted";
 import { chainUp, transferCamera, type MapSet } from "./sets";
 import { levelSize, levelTiles, TileStore, tileUrl } from "./tiles";
@@ -33,7 +34,15 @@ export type DrawnMap = {
   map: AtlasMap; alpha: number; screen: Box; clip: Box; upscale: number; blur: number; dim?: number;
   /** A neighbour of the map in view: a wider soft edge. */ side?: boolean;
   /** How far out of focus the map under it is drawn. */ under?: number;
+  /**
+   * Its part in the picture of the map in view: that map itself (whole, crisp, over its own rectangle), a place
+   * in it (`child`: one level down, its own land only, never over another child; `inside`: deeper), an ancestor (a calm backdrop without its words) or a neighbour (only its own land, outside the map in view).
+   */
+  role?: DrawRole;
+  /** Ancestor: how far it is a backdrop (0 = its picture, 1 = only the wash); focus: how far it shows whole (its mask off). */
+  tone?: number;
 };
+export type DrawRole = "focus" | "child" | "inside" | "ancestor" | "neighbour";
 export type FrameInfo = {
   camera: Camera;
   width: number;
@@ -61,7 +70,10 @@ type Flight = { path: ReturnType<typeof flightPath>; start: number; duration: nu
 type Pointer = { id: number; x: number; y: number };
 type TerrainDraw = { map: AtlasMap; alpha: number; clip: Box };
 type Patch = { url: string; box: Box };
-type ArtStyle = { corner?: number; holes?: Array<[number, number, number, number]>; patches?: Patch[]; alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number; exists?: (z: number, x: number, y: number) => boolean; maskStrength?: number };
+type ArtStyle = { corner?: number; holes?: Array<[number, number, number, number]>; patches?: Patch[]; alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number; exists?: (z: number, x: number, y: number) => boolean; maskStrength?: number;
+  /** Only its own land: drawn through its mask or not at all (not before the mask is in). */ ownLand?: boolean;
+  exclude?: DrawParams["exclude"];
+};
 
 /** Floors and caves under a place (micro maps, orphan levels like Cleft of Shadow): never opened by zooming over its surface. */
 const UNDER: ReadonlySet<string> = new Set(["micro", "orphan"]);
@@ -69,6 +81,47 @@ const UNDER: ReadonlySet<string> = new Set(["micro", "orphan"]);
 // Worlds and continents keep their own painted sea (soft edge): their land masks open the sea to the world
 // picture under it, whose painted names of those very continents then show twice.
 const usesMask = (map: AtlasMap) => Boolean(map.mask) && map.depth > 0 && map.type !== "world" && map.type !== "cosmic" && map.type !== "continent";
+/**
+ * The passes of a frame: blurred runs split where ancestors (backdrops) meet the maps over them (neighbours
+ * must never go under a backdrop in a shared layer), and runs of sharp neighbours (or of the children of the
+ * map in view) gathered into one flat layer.
+ */
+function layerGroups(groups: Array<{ from: number; to: number; blur: number }>, list: DrawnMap[]) {
+  const out: Array<{ from: number; to: number; blur: number; flat?: boolean }> = [];
+  const back = (i: number) => list[i].role === "ancestor";
+  for (const group of groups) {
+    if (group.blur > 0) {
+      let from = group.from;
+      for (let i = group.from + 1; i <= group.to + 1; i++) {
+        if (i <= group.to && back(i) === back(from)) continue;
+        out.push({ from, to: i - 1, blur: group.blur });
+        from = i;
+      }
+      continue;
+    }
+    const last = out[out.length - 1];
+    const role = list[group.from].role;
+    const beside = (role === "neighbour" || role === "child") && group.from === group.to;
+    if (beside && last?.flat && last.to === group.from - 1 && list[last.from].role === role) last.to = group.to;
+    else out.push(beside ? { ...group, flat: true } : { ...group });
+  }
+  for (const group of out) if (group.flat && group.to === group.from) delete group.flat;
+  return out;
+}
+
+/**
+ * What says two maps show one place: the same name (the old Silvermoon beside Midnight's),
+ * or the data's own link (`variantOf`: a phase or another picture of that map).
+ */
+const placeKeys = (map: AtlasMap | undefined): string[] => {
+  if (!map || map.depth === 0) return [];
+  const keys = [`n:${map.name}`];
+  const variant = (map as AtlasMap & { variantOf?: number }).variantOf;
+  keys.push(`v:${typeof variant === "number" ? variant : map.id}`);
+  return keys;
+};
+/** A neighbour this far out of focus loses its painted words (they would read as blurred letters). */
+const BLURRED_WORDS = 0.06;
 const FADE_TILE = 150;
 const FADE_ERA = 900;
 /** Longest wait for an era's picture to load before it fades in anyway. */
@@ -686,9 +739,17 @@ export class WorldMapEngine {
     const { top, right, bottom, left } = this.options.insets;
     const freeW = Math.max(80, this.width - left - right), freeH = Math.max(80, this.height - top - bottom);
     const homeLock = this.home && set === this.set && this.atHome(this.home.id) ? this.home.id : null;
+    // The map in view (the page's map, or the last frame's focus): it alone shows over its rectangle.
+    const fid = homeLock !== null && set.maps.has(homeLock) ? homeLock : set.maps.has(this.focusId) ? this.focusId : null;
+    const chainIds = fid !== null ? chainUp(set, fid) : [];
+    const onChain = new Set(chainIds);
+    const within = fid !== null ? this.subtreeOf(set, fid) : new Set<number>();
+    const roleOf = (id: number): DrawRole | undefined => (fid === null ? undefined : id === fid ? "focus"
+      : within.has(id) ? (set.maps.get(id)?.parent === fid ? "child" : "inside") : onChain.has(id) ? "ancestor" : "neighbour");
     const visit = (map: AtlasMap, alpha: number, parentClip: Box | null, side = false, under = 0) => {
       const art = map.art;
       if (!art) return;
+      const role = roleOf(map.id);
       const [x0, y0] = this.project(map.frame[0], map.frame[1]);
       const [x1, y1] = this.project(map.frame[2], map.frame[3]);
       const screen: Box = [x0, y0, x1, y1];
@@ -697,8 +758,12 @@ export class WorldMapEngine {
         : screen;
       if (clip[2] <= clip[0] || clip[3] <= clip[1] || !intersects(clip, view)) return;
       const upscale = upscaleOf(x1 - x0, art);
-      const entry: DrawnMap = { map, alpha, screen, clip, upscale, blur: blurOf(upscale), ...(side ? { side } : {}), ...(under ? { under } : {}) };
+      // The map in view is always crisp.
+      const entry: DrawnMap = { map, alpha, screen, clip, upscale, blur: role === "focus" ? 0 : blurOf(upscale), ...(side ? { side } : {}), ...(under ? { under } : {}), ...(role ? { role } : {}) };
+      if (role === "focus") entry.tone = smoothstep(0.5, 0.9, alpha);
       out.push(entry);
+      // A neighbour shows its own land only: the places inside it are not opened (no picture over another).
+      if (role === "neighbour") return;
       const density = ((x1 - x0) * this.dpr) / art.width;
       // Most of this map in view: the reader looks at it, not into one of its children
       // (Classic's continents fill most of its world map, yet the world map is what shows).
@@ -736,9 +801,22 @@ export class WorldMapEngine {
         const a = homeLock === child.id ? 1 : homeLock === map.id
           ? smoothstep(0.95 / this.quality, 1.3 / this.quality, density) * smoothstep(0.22, 0.45, fill)
           : Math.max(Math.min(smoothstep(0.6 / this.quality, 1.05 / this.quality, density), smoothstep(0.22, 0.45, fill)), smoothstep(0.5, 0.85, fill)) * (1 - lookingAtParent);
-        if (a <= 0.003) continue;
         opened.push({ child, a, area: (cx1 - cx0) * (cy1 - cy0), fill, centre: vx0 <= mx && mx <= vx1 && vy0 <= my && my <= vy1, box: [cx0, cy0, cx1, cy1] });
       }
+      if (role === "ancestor") {
+        // An ancestor of the map in view turns into a backdrop as the way down to it opens; then the land around
+        // comes from its other children (the neighbours), each its own land, instead of its own picture.
+        const next = opened.find((entry) => onChain.has(entry.child.id));
+        const tone = next ? smoothstep(0.5, 0.9, alpha * next.a) : 0;
+        entry.tone = tone;
+        for (const entry of opened) {
+          if (entry.child.portal || onChain.has(entry.child.id)) continue;
+          // Strictly its own land: a neighbour without a mask is left out (the backdrop shows there).
+          if (!entry.child.mask) { entry.a = 0; continue; }
+          entry.a = Math.max(entry.a, tone);
+        }
+      }
+      for (let i = opened.length - 1; i >= 0; i--) if (opened[i].a <= 0.003) opened.splice(i, 1);
       // The child the reader looks into (at the centre, filling most of the view) lies over its
       // neighbours, whose rectangles would otherwise cover its edges; places inside it (a city in
       // its zone) lie over it. Otherwise bigger pictures first, the smaller ones over them.
@@ -764,16 +842,23 @@ export class WorldMapEngine {
       if (portalOpen > 0) entry.alpha = alpha * (1 - 0.8 * portalOpen);
     };
     for (const map of set.maps.values()) if (map.depth === 0) visit(map, 1, null);
-    // Another map of the same place (the old Silvermoon and Eversong beside Midnight's) is not drawn around it.
-    const chain = chainUp(set, this.focusId);
-    if (chain.length) {
-      const ids = new Set(chain), names = new Set(chain.map((id) => set.maps.get(id)?.name));
-      for (let i = out.length - 1; i >= 0; i--) if (!ids.has(out[i].map.id) && out[i].map.depth > 0 && names.has(out[i].map.name)) out.splice(i, 1);
+    // Two pictures of one place (phases, variants): only the one on the way to the map in view, or the first.
+    if (fid !== null) {
+      const seen = new Map<string, number>();
+      for (const id of chainIds) for (const key of placeKeys(set.maps.get(id))) seen.set(key, id);
+      for (let i = 0; i < out.length; i++) {
+        const entry = out[i];
+        if (onChain.has(entry.map.id) || within.has(entry.map.id) || entry.map.depth === 0) continue;
+        const keys = placeKeys(entry.map);
+        if (keys.some((key) => seen.has(key) && seen.get(key) !== entry.map.id)) { out.splice(i, 1); i -= 1; continue; }
+        for (const key of keys) seen.set(key, entry.map.id);
+      }
     }
     // A settled map whose solid part covers the whole view hides everything drawn before it.
     for (let i = out.length - 1; i > 0; i--) {
       const entry = out[i];
-      if (entry.alpha < 0.995 || entry.map.portal || usesMask(entry.map)) continue;
+      const masked = entry.role === "focus" ? (entry.tone ?? 0) < 0.995 && usesMask(entry.map) : usesMask(entry.map);
+      if (entry.alpha < 0.995 || entry.map.portal || masked || entry.role === "neighbour") continue;
       const devW = (entry.screen[2] - entry.screen[0]) * this.dpr, devH = (entry.screen[3] - entry.screen[1]) * this.dpr;
       const f = entry.map.depth === 0 ? 0 : featherOf(devW, devH, this.dpr) / this.dpr;
       if (entry.clip[0] + f <= 0 && entry.clip[1] + f <= 0 && entry.clip[2] - f >= this.width && entry.clip[3] - f >= this.height) {
@@ -896,6 +981,18 @@ export class WorldMapEngine {
     this.events.frame(this.lastInfo);
   }
 
+  /** A map and everything inside it. */
+  private subtreeOf(set: MapSet, id: number) {
+    const out = new Set<number>();
+    const walk = (at: number) => {
+      if (out.has(at)) return;
+      out.add(at);
+      for (const child of set.maps.get(at)?.children ?? []) walk(child);
+    };
+    walk(id);
+    return out;
+  }
+
   /** The map in view and everything inside it (its own words and decor stay). */
   private focusSubtree(set: MapSet) {
     const out = new Set<number>();
@@ -914,7 +1011,7 @@ export class WorldMapEngine {
    * goes, and — for words not tied to a place — a big word over the place's centre goes.
    * Holes in device px; patches as boxes in atlas space.
    */
-  private givesWay(entry: DrawnMap, focus: AtlasMap, set: MapSet): { holes: Array<[number, number, number, number]>; patches: Patch[] } {
+  private givesWay(entry: DrawnMap, focus: AtlasMap, set: MapSet, allWords = false): { holes: Array<[number, number, number, number]>; patches: Patch[] } {
     const art = entry.map.art;
     if (!art) return { holes: [], patches: [] };
     const f = focus.frame, fw = f[2] - f[0], fh = f[3] - f[1];
@@ -933,6 +1030,8 @@ export class WorldMapEngine {
     const core: Box = [f[0] + fw * 0.12, f[1] + fh * 0.12, f[2] - fw * 0.12, f[3] - fh * 0.12];
     for (const label of labelBoxes(art)) {
       const plaque = toAtlas(label.plaque ?? label.box);
+      // A neighbour out of focus: its words would only be blurred letters; they go (the backdrop shows there).
+      if (allWords && !(label.patch && label.for === focus.id)) { add(plaque); continue; }
       if (label.for !== undefined) {
         // The place in view, or an older map of the same place (Silvermoon before Midnight on the old Eversong).
         const target = label.for === focus.id ? focus : set.maps.get(label.for);
@@ -953,6 +1052,108 @@ export class WorldMapEngine {
     // The biggest first: when there are more than the shader takes, the small ones go.
     holes.sort((a, b) => (b[2] - b[0]) * (b[3] - b[1]) - (a[2] - a[0]) * (a[3] - a[1]));
     return { holes: holes.slice(0, 8), patches };
+  }
+
+  /** The rectangle of the map in view and its soft edge (as drawArt gives it), for the maps around to give way there. */
+  private excludeOf(held: DrawnMap): NonNullable<DrawParams["exclude"]> {
+    const d = this.dpr;
+    const devW = (held.screen[2] - held.screen[0]) * d, devH = (held.screen[3] - held.screen[1]) * d;
+    const edge: [number, number] = held.map.depth === 0 ? [0, 1] : [featherInsetOf(devW, devH), featherOf(devW, devH, d)];
+    return { rect: [held.clip[0] * d, held.clip[1] * d, held.clip[2] * d, held.clip[3] * d], edge, strength: held.tone ?? 0 };
+  }
+
+  /**
+   * The order of the draws: the backdrops (ancestors, the outer first), then the neighbours, then the map in
+   * view and what lies in it — nothing around it is drawn over it.
+   */
+  private drawOrder(list: DrawnMap[], inFocus: Set<number>) {
+    if (!inFocus.size) return list;
+    const rest = list.filter((entry) => !inFocus.has(entry.map.id));
+    const back = rest.filter((entry) => entry.role === "ancestor").sort((a, b) => a.map.depth - b.map.depth);
+    const own = list.filter((entry) => inFocus.has(entry.map.id));
+    return [
+      ...back, ...rest.filter((entry) => entry.role !== "ancestor"),
+      ...own.filter((entry) => entry.role === "focus" || !entry.role), ...own.filter((entry) => entry.role === "child"), ...own.filter((entry) => entry.role === "inside"),
+    ];
+  }
+
+  /**
+   * Blur keys of the draws. A backdrop is a wash already (no pass). The neighbours share one pass (one layer,
+   * each under the ones before it: never one over another), at their middle blur.
+   */
+  private blurKeys(list: DrawnMap[]) {
+    const keys = list.map((entry) => (entry.role === "ancestor" && (entry.tone ?? 0) >= 0.999 ? 0 : blurKey(blurRadiusCss(entry.blur, entry.upscale))));
+    for (const role of ["neighbour", "child"] as const) {
+      const near = keys.filter((_, i) => list[i].role === role).sort((a, b) => a - b);
+      if (near.length < 2) continue;
+      const middle = near[Math.floor(near.length / 2)];
+      list.forEach((entry, i) => { if (entry.role === role) keys[i] = middle; });
+    }
+    return keys;
+  }
+
+  /**
+   * How this frame is put together (for the overlap check, `?debug`): every map drawn with its part, its
+   * share of its own mask, whether it gives way over the map in view, and whether an ancestor shows only its wash.
+   */
+  composition() {
+    const info = this.lastInfo;
+    if (!info) return null;
+    const held = info.drawn.find((entry) => entry.role === "focus");
+    const exclude = held && (held.tone ?? 0) > 0.003 ? this.excludeOf(held) : null;
+    // The passes as drawList makes them (the map in view and what is in it last).
+    const ordered = this.drawOrder(info.drawn, this.focusSubtree(this.set));
+    const pass = new Map<DrawnMap, { layer: number; shared: boolean }>();
+    layerGroups(blurGroups(this.blurKeys(ordered)), ordered).forEach((group, layer) => {
+      for (let i = group.from; i <= group.to; i++) pass.set(ordered[i], { layer, shared: group.blur > 0 || Boolean(group.flat) });
+    });
+    return {
+      dpr: this.dpr, width: this.width, height: this.height, focus: held?.map.id ?? info.focus.id, exclude,
+      draws: info.drawn.map((entry) => {
+        const tone = entry.tone ?? 0;
+        const masked = entry.role === "neighbour" || (entry.role === "child" && entry.map.mask) ? 1 : entry.role === "focus" ? (usesMask(entry.map) ? 1 - tone : 0) : entry.role === "ancestor" ? 0 : usesMask(entry.map) ? 1 : 0;
+        return {
+          id: entry.map.id, name: entry.map.name, type: entry.map.type, depth: entry.map.depth, role: entry.role ?? null,
+          alpha: entry.alpha, tone, blur: entry.blur, screen: entry.screen, clip: entry.clip, mask: entry.map.mask ?? null, masked,
+          excluded: entry.role === "neighbour" ? exclude?.strength ?? 0 : 0,
+          layer: pass.get(entry)?.layer ?? -1, under: (entry.role === "neighbour" || entry.role === "child") && Boolean(pass.get(entry)?.shared),
+          order: ordered.indexOf(entry),
+          detail: entry.role === "ancestor" ? (tone >= 0.999 && this.toneReady(entry) ? 0 : 1 - (this.toneReady(entry) ? tone : 0)) : 1,
+        };
+      }),
+    };
+  }
+
+  /** The backdrop of an ancestor: its smallest level with the painted words filled in, washed out (one texture). */
+  private toneTile(map: AtlasMap) {
+    const art = map.art as MapArt;
+    const url = tileUrl(art, map.id, 0, 0, 0);
+    const boxes = [...labelBoxes(art).map((label) => label.plaque ?? label.box), ...decorBoxes(art).map((decor) => decor.box)];
+    const known = labelBoxes(art).length > 0;
+    return this.tiles.get(`tone:${url}`, map.depth * 0.5 - 1, () => loadTone(url, known ? boxes : null));
+  }
+
+  private toneReady(entry: DrawnMap) {
+    return Boolean(entry.map.art && this.tiles.peek(`tone:${tileUrl(entry.map.art, entry.map.id, 0, 0, 0)}`));
+  }
+
+  /** Draws an ancestor as the calm wash behind the map in view; false while its backdrop is still being made. */
+  private drawTone(entry: DrawnMap, alpha: number, cloud: number) {
+    const map = entry.map, art = map.art;
+    if (!art) return false;
+    const tile = this.toneTile(map);
+    if (tile.state !== "ready" || !tile.texture) return false;
+    const d = this.dpr;
+    const rect: Box = [entry.screen[0] * d, entry.screen[1] * d, entry.screen[2] * d, entry.screen[3] * d];
+    const devW = rect[2] - rect[0], devH = rect[3] - rect[1];
+    const [lw, lh] = levelSize(art, 0);
+    this.renderer.draw(tile.texture, {
+      rect, uv: [0, 0, Math.min(1, lw / tile.width), Math.min(1, lh / tile.height)], alpha,
+      frame: [entry.clip[0] * d, entry.clip[1] * d, entry.clip[2] * d, entry.clip[3] * d],
+      feather: map.depth === 0 ? 0 : [featherInsetOf(devW, devH), featherOf(devW, devH, d)], portal: [0, 0, 0],
+      light: -(0.12 + dimOf(entry.upscale) * 0.6), cloud: map.type === "cosmic" ? 0 : cloud, water: 0, desat: 0.18 + desatOf(entry.upscale) * 0.5, art: rect,
+    });
+    return true;
   }
 
   /** Asks for the tiles a set needs in this view; returns the share already loaded. */
@@ -978,15 +1179,19 @@ export class WorldMapEngine {
     const moving = this.moving;
     // The map in view and what lies in it come last: nothing around it is drawn over it.
     const inFocus = this.focusSubtree(set);
-    if (inFocus.size) list = [...list.filter((entry) => !inFocus.has(entry.map.id)), ...list.filter((entry) => inFocus.has(entry.map.id))];
-    // Out-of-focus draws grouped by their blur radius (it grows with the magnification).
-    const keys = list.map((entry) => blurKey(blurRadiusCss(entry.blur, entry.upscale)));
+    list = this.drawOrder(list, inFocus);
+    // Out-of-focus draws grouped by their blur radius (it grows with the magnification); a backdrop is a wash already.
+    const keys = this.blurKeys(list);
     const focus = set.maps.get(this.focusId);
-    for (const group of blurGroups(keys)) {
+    // The maps around give way over the rectangle of the map in view, along its own soft edge, as it shows whole.
+    const held = list.find((entry) => entry.role === "focus");
+    const exclude: DrawParams["exclude"] = held && (held.tone ?? 0) > 0.003 ? this.excludeOf(held) : null;
+    for (const group of layerGroups(blurGroups(keys), list)) {
       const radius = radiusOfKey(group.blur) * this.dpr;
       const scale = group.blur > 0 ? layerScale(radius) : 1;
       let upscale = 0;
       if (group.blur > 0) this.renderer.beginLayer(scale);
+      else if (group.flat) this.renderer.beginLayer(1);
       for (let i = group.from; i <= group.to; i++) {
         const entry = list[i];
         const art = entry.map.art;
@@ -996,23 +1201,36 @@ export class WorldMapEngine {
         const alpha = (hovered ? Math.max(entry.alpha, 0.3) : entry.alpha) * eraAlpha;
         if (alpha < 0.003) continue;
         const terrain = entry.map.type !== "cosmic";
+        const role = entry.role;
+        const tone = role === "ancestor" ? entry.tone ?? 0 : 0;
+        if (tone > 0.003 && this.drawTone(entry, alpha, cloud)) {
+          // Only the wash: its own picture (and its words) is gone.
+          if (tone >= 0.999) continue;
+        }
         const style: ArtStyle = {
-          alpha, light: hovered ? 0.55 : -(entry.dim ?? 0), edge: entry.side ? 1.6 : 1,
-          maskStrength: 1,
+          alpha: alpha * (1 - (tone > 0.003 && this.toneReady(entry) ? tone : 0)), light: hovered ? 0.55 : -(entry.dim ?? 0), edge: entry.side ? 1.6 : 1,
+          // The map in view shows whole (its painted surroundings too) once open; a neighbour only its own land.
+          maskStrength: role === "focus" ? 1 - (entry.tone ?? 0) : 1,
+          ...(role === "neighbour" ? { ownLand: true, exclude } : role === "child" ? { ownLand: true } : {}),
           cloud: terrain ? cloud * (entry.map.depth <= 2 || entry.map.type === "continent" ? 1 : 0.6) : 0,
           // No shimmer on a backdrop out of focus (nor its land mask to load): it would not show.
           water: terrain && entry.blur < 0.3 ? water : 0,
           desat: 0, levelScale: scale,
           // Maps around the one in view: their corner ornaments go, and their painted words and decor
           // where the place in view lies give way (no second "STORMWIND" over the city).
-          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set) } : {}),
+          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set, role === "neighbour" && entry.blur >= BLURRED_WORDS) } : {}),
+          // The map in view: its frame's corner pieces go too (its painted border is under its soft edge already).
+          ...(role === "focus" && entry.map.depth > 0 ? { corner: 0.12 } : {}),
         };
+        // Neighbours in one layer: each only where the ones before it left the layer empty.
+        this.renderer.setUnder((role === "neighbour" || role === "child") && this.renderer.inLayer);
         this.drawArt(entry.map, art, entry.screen, entry.clip, style, now, moving);
       }
       if (group.blur > 0) {
         const u = upscale / (group.to - group.from + 1);
         this.renderer.endLayer(radius / scale, dimOf(u), desatOf(u), vignetteOf(u));
-      }
+      } else if (group.flat) this.renderer.endLayer(0, 0, 0, 0);
+      this.renderer.setUnder(false);
     }
     // The ground of a continent over its painted maps, deep in.
     const terrain = set === this.set ? (this.terrain = this.collectTerrain(list)) : this.collectTerrain(list);
@@ -1062,10 +1280,13 @@ export class WorldMapEngine {
     const isTerrain = kind === "t";
     // A mask blends a map into the one under it; a top map (Draenor standing alone) has nothing under it.
     // A world's or continent's land mask does not cut it out (its own sea blends by the soft edge): it keeps the water shimmer off land.
-    const landOnly = !isTerrain && !usesMask(map) && style.water > 0 && (map.type === "continent" || map.type === "world" || map.type === "cosmic");
-    const mask = !isTerrain && map.mask && (usesMask(map) || landOnly) ? this.tiles.get(map.mask, map.depth * 0.5 + (landOnly ? 4 : 0)) : null;
+    const ownLand = !isTerrain && Boolean(style.ownLand && map.mask);
+    const landOnly = !isTerrain && !ownLand && !usesMask(map) && style.water > 0 && (map.type === "continent" || map.type === "world" || map.type === "cosmic");
+    const mask = !isTerrain && map.mask && (ownLand || usesMask(map) || landOnly) ? this.tiles.get(map.mask, map.depth * 0.5 + (landOnly ? 4 : -0.5)) : null;
     const maskStrength = style.maskStrength ?? 1;
     const maskReady = mask && mask.state === "ready" && mask.texture && maskStrength > 0.02 ? mask : null;
+    // Its own land or nothing: until the mask is in, its tiles are only asked for.
+    if (ownLand && !maskReady) dry = true;
     // Top maps have no edge to blend; a world opened from the Cosmic map softens its edge once open.
     const feather: number | [number, number] = isTerrain ? featherOf(cx1 - cx0, cy1 - cy0, d) * 0.6
       : map.depth === 0 ? 0
@@ -1087,6 +1308,7 @@ export class WorldMapEngine {
       mask: maskReady && maskReady.texture ? { texture: maskReady.texture, rect: [sx0, sy0, sx1, sy1], strength: maskStrength, land: landOnly } : null,
       paper: paper ? [paper[0], paper[1], paper[2], 0.9] : null,
       art: [sx0, sy0, sx1, sy1], corner: isTerrain ? 0 : style.corner ?? 0, holes: isTerrain ? [] : style.holes ?? [],
+      exclude: isTerrain ? null : style.exclude ?? null,
     };
     const centerX = W / 2, centerY = H / 2;
     const id = map.id;
@@ -1127,6 +1349,9 @@ export class WorldMapEngine {
     }
     // The ground over a neighbour's name of the place in view (drawn as the picture itself is: same mask, edges, light).
     if (!dry && !isTerrain && style.patches?.length && ready > 0) {
+      // Over the picture itself, even where it went under the maps before it.
+      const under = this.renderer.under;
+      this.renderer.setUnder(false);
       for (const patch of style.patches) {
         const tile = this.tiles.get(patch.url, 1 + map.depth * 0.5);
         if (tile.state !== "ready" || !tile.texture) continue;
@@ -1134,6 +1359,7 @@ export class WorldMapEngine {
         const fade = this.options.reducedMotion ? 1 : clamp((now - tile.readyAt) / FADE_TILE, 0, 1);
         this.renderer.draw(tile.texture, { ...base, rect: [px0 * d, py0 * d, px1 * d, py1 * d], uv: [0, 0, 1, 1], alpha: style.alpha * fade });
       }
+      this.renderer.setUnder(under);
     }
     // Next level for the middle of the view while nothing moves — and ahead of a zoom in.
     if (!dry && (!moving || this.zoomDir > 0) && z < art.maxZoom && style.levelScale === 1) {

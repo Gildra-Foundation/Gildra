@@ -19,6 +19,8 @@ export type Tile = {
   usedAt: number;
   priority: number;
   abort?: AbortController;
+  /** Made here instead of fetched (a backdrop worked out of a tile). */
+  source?: () => Promise<TexImageSource & { width: number; height: number }>;
 };
 
 export const tileUrl = (art: MapArt, id: number, z: number, x: number, y: number) =>
@@ -55,10 +57,10 @@ export class TileStore {
   constructor(private gl: WebGLRenderingContext, private budget: number, private concurrency: number, private maxEntries = 900) {}
 
   /** A tile for this frame; asks for it with a priority (lower loads first). */
-  get(key: string, priority: number): Tile {
+  get(key: string, priority: number, source?: Tile["source"]): Tile {
     let tile = this.tiles.get(key);
     if (!tile) {
-      tile = { key, state: "queued", texture: null, width: 0, height: 0, readyAt: 0, usedAt: this.frame, priority };
+      tile = { key, state: "queued", texture: null, width: 0, height: 0, readyAt: 0, usedAt: this.frame, priority, ...(source ? { source } : {}) };
       this.tiles.set(key, tile);
     }
     tile.usedAt = this.frame;
@@ -128,6 +130,23 @@ export class TileStore {
     const abort = new AbortController();
     tile.abort = abort;
     const done = () => { if (tile.abort === abort) { this.active -= 1; tile.abort = undefined; } };
+    if (tile.source) {
+      tile.source()
+        .then((image) => {
+          done();
+          if (this.tiles.get(tile.key) !== tile || abort.signal.aborted) return;
+          this.upload(tile, image);
+          this.onReady();
+        })
+        .catch(() => {
+          const cancelled = abort.signal.aborted;
+          done();
+          if (cancelled) return;
+          tile.state = "failed";
+          this.onReady();
+        });
+      return;
+    }
     fetch(tile.key, { signal: abort.signal, cache: "force-cache" })
       .then((response) => {
         if (!response.ok) throw new Error(String(response.status));
@@ -159,7 +178,7 @@ export class TileStore {
       });
   }
 
-  private upload(tile: Tile, source: ImageBitmap) {
+  private upload(tile: Tile, source: TexImageSource & { width: number; height: number }) {
     const gl = this.gl;
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
