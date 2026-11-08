@@ -767,6 +767,8 @@ export class WorldMapEngine {
           // Only the world the camera heads for opens; its neighbours on the Cosmic map stay planets.
           const gap = Math.hypot(Math.max(cx0 - mx, 0, mx - cx1), Math.max(cy0 - my, 0, my - cy1));
           a *= 1 - smoothstep(0.05, 0.3, gap / Math.max(1, Math.min(cx1 - cx0, cy1 - cy0)));
+          // The world shown whole on purpose (its page) is open, whatever its size in the view.
+          if (homeLock === child.id) a = 1;
           portalOpen = Math.max(portalOpen, a);
           if (a > 0.003) opened.push({ child, a, area: Infinity, fill: 0, centre: false, box: [cx0, cy0, cx1, cy1] });
           continue;
