@@ -133,7 +133,7 @@ function compare(ref, cur) {
       page.on("pageerror", (e) => errors.push(String(e)));
       page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
       const url = `${base}${lang === "ru" ? "/ru" : ""}${p.route}`;
-      const res = await page.goto(url, { waitUntil: "networkidle", timeout: 90000 });
+      const res = await page.goto(url, { waitUntil: "networkidle", timeout: Number(args.timeout ?? 90000) });
       await page.evaluate(async () => { await document.fonts.ready; });
       // Прокрутка до низа, чтобы ленивые картинки и reveal-секции дорисовались.
       await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } scrollTo(0, 0); });

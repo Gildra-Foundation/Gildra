@@ -14,13 +14,23 @@ Observed BEFORE dev-server LCP, no throttling: before 1440 RU 15,316ms / EN 5,48
 
 ## Validation and evidence
 
-- test:atlas: 777 passed, 0 failed; atlas:check: 163 strict stylesheets.
+- test:atlas: 778 passed, 0 failed; atlas:check: 163 strict stylesheets.
 - Site-theme regression test passes for Arthas, all three legacy preferences, invalid preference and blocked/unavailable storage.
 - ESLint changed source files: 0 errors/warnings. npx tsc --noEmit -p apps/web passed; valyro:check 8/8 passed. Full production build passed (exit 0), including all 1499 static pages. Log: /tmp/home/build-final.log. Initial build process was terminated with SIGTERM during SSG; repeat completed successfully.
 - clean-ui-audit: EN/RU zero suspicious nodes. Removed visible redundant eyebrow and open-cover explanatory hint; no new service prose.
 - Screenshots /tmp/home/before-{1440-ru,1440-en,390-ru}.png and /tmp/home/after-{1440-ru,1440-en,1920-ru,1280-ru,768-ru,390-ru}.png. Open spread /tmp/home/open-book.png; held /tmp/home/held-book.png; phone /tmp/home/phone-modal.png and phone-companion-viewport.png; proofs /tmp/home/proof/.
 - Normal-motion phone: opening → open, companion tab, Escape → closed pass (/tmp/home/phone-check.log). Desktop lift reached held modal (screenshot reviewed).
 
+## Coordinator phone review — 2026-11-08
+
+The phone modal now shows a complete framed leaf (including the whole hinge) in a centred scroll slot, using two crops of the accepted native folio. Its opaque background obscures the site header. The modal has its own top bar and a 48×48 close control with a 32px glyph. The page and pager form one compact group inside 390×844; smaller screens scroll content within the paper. Desktop cover and spread sources are unchanged.
+
+The old meta timeout was caused by rewriting the request into a force-static view while the loader awaits connection(). Meta now stays on its existing public dynamic route; the API payload retains revalidate900. Other cached views and internal URL guards are unchanged. Added EN/RU rewrite regression. design-lock.cjs accepts --timeout (default90000) for a longer diagnostic navigation limit.
+
+Final validation: production build exit0, TypeScript passed; ESLint0; atlas:check163; test:atlas778/0. `npm run design:lock -- --base http://127.0.0.1:3134 --timeout 300000` PASS, all12 cases200/console0/overflow0/style identical. Read-only API_INTERNAL_URL=https://gildra.net/api supplied during local build/start. Log /tmp/home/design-lock-review-prod.log. No deployment, backend or database changes.
+
+`node apps/web/scripts/qa-home-phone.mjs` PASS: ten page states across390 RU/EN,320 RU,768 RU and390 RU normal motion. Checks cover loaded images, full leaf within viewport, centring, close hit target and top-bar containment, opaque background, compact pager, Escape and restored focus; no page errors. Artifacts /tmp/home/phone-review-final/report.json; 390 screenshots: 390-ru-reduce-contents.png, 390-ru-reduce-companion.png, 390-en-reduce-contents.png, 390-en-reduce-companion.png (same directory). All screenshot files are viewport captures at DPR2.
+
 ## Open integration risks
 
-`design:lock` fails (64 differences): dev cached meta rewrite answers 404, header hydration error includes Forever href mismatch, and CSS URL/newline serialization differs from captured reference. Log /tmp/home/design-lock.log. Shared reference routes, tokens and header source not edited. A repeat on the local production build also failed: meta navigation timed out after 90 seconds waiting for networkidle (/tmp/home/design-lock-prod.log); the hub had one console error per run. Must investigate on the integrated candidate before release; reference was not recaptured. At 768 header horizontally clips its own nav row; HDR owns this. No API, DB, nginx or production changes.
+Earlier design-lock failure is resolved by the meta routing fix and production-mode verification. The prior shared-host RAF result did not establish stable60fps on physical devices; no new performance claim is made in this layout review. Source notes and /tmp/mapcoord/HOME-requests.md are available for integration.

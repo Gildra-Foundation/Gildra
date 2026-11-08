@@ -106,6 +106,52 @@
         "min": 252,
         "max": 254
       }
+    },
+    "phone-left": {
+      "path": "/assets/wow/character-book/icecrown-phone-left.webp",
+      "width": 720,
+      "height": 913,
+      "bytes": 61292,
+      "sha256": "2c17a82954ef3e856a3131a27e94bb40cbc42cdec7fe5b20cdae814592abb92a",
+      "native": "/home/debian/gildra-home-book-20261108/asset-sources/folio-native.png",
+      "nativeSha256": "5e1fdbc67cfda0642e49b0ad5d1d4eb549c8bf2559226bd7eccf7e87965645a6",
+      "nativeDimensions": {
+        "width": 1536,
+        "height": 1024
+      },
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 800,
+        "height": 1024
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      }
+    },
+    "phone-right": {
+      "path": "/assets/wow/character-book/icecrown-phone-right.webp",
+      "width": 720,
+      "height": 913,
+      "bytes": 59850,
+      "sha256": "61bea4706b2007c895f686c50c4d266c5d3c004fb08d6078297645598611f3fd",
+      "native": "/home/debian/gildra-home-book-20261108/asset-sources/folio-native.png",
+      "nativeSha256": "5e1fdbc67cfda0642e49b0ad5d1d4eb549c8bf2559226bd7eccf7e87965645a6",
+      "nativeDimensions": {
+        "width": 1536,
+        "height": 1024
+      },
+      "crop": {
+        "left": 736,
+        "top": 0,
+        "width": 800,
+        "height": 1024
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      }
     }
   }
 }

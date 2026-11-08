@@ -134,7 +134,7 @@ describe("seo: cached views of query-driven pages", async () => {
     assert.equal(view("/wow/professions?region=us"), null);
   });
   it("the unfiltered Mythic+ data pages and spec leaderboards are served from their cached views", () => {
-    for (const page of ["stats", "comps", "routes", "meta", "leaderboard"]) {
+    for (const page of ["stats", "comps", "routes", "leaderboard"]) {
       assert.equal(view(`/wow/mythic-plus/${page}`), `/wow/mythic-plus/cached/${page}`);
       assert.equal(view(`/ru/wow/mythic-plus/${page}/`), `/ru/wow/mythic-plus/cached/${page}`);
       assert.equal(view(`/wow/mythic-plus/${page}?_rsc=abc`), `/wow/mythic-plus/cached/${page}`, "the router's cache-buster is not a filter");
@@ -146,6 +146,12 @@ describe("seo: cached views of query-driven pages", async () => {
     assert.equal(view("/wow/mythic-plus/leaderboard/no-such-spec"), null);
     assert.equal(view("/wow/mythic-plus"), null);
     assert.equal(view("/wow/mythic-plus/midnight-season-2/kings-rest"), null);
+  });
+  it("live meta renders in the public request while its API payload remains cached", () => {
+    for (const prefix of ["", "/ru"]) {
+      for (const suffix of ["", "/", "?_rsc=abc"]) assert.equal(view(`${prefix}/wow/mythic-plus/meta${suffix}`), null);
+      assert.equal(view(`${prefix}/wow/mythic-plus/cached/meta`), "direct");
+    }
   });
   it("internal paths opened directly are a 404; their link-preview cards stay reachable", () => {
     assert.equal(view("/wow/professions/alchemy/region/us"), "direct");

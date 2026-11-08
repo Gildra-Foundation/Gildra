@@ -1,17 +1,17 @@
 /* The phone book is a full-screen modal surface over the dimmed home scene. */
-.dialog{position:fixed;inset:0;box-sizing:border-box;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;border:0;background:transparent;color:var(--paper);overflow:hidden;font-family:"Gildra Atlas",Georgia,serif;outline:none}
-.dialog::backdrop{background:rgba(6,10,16,.9)}
+.dialog{position:fixed;inset:0;box-sizing:border-box;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;border:0;background:var(--atlas-bg);color:var(--paper);overflow:hidden;font-family:"Gildra Atlas",Georgia,serif;outline:none}
+.dialog::backdrop{background:var(--atlas-bg)}
 .dialog[data-fade="in"]::backdrop{animation:backdropIn 480ms ease-out both}
 .dialog[data-fade="out"]::backdrop{animation:backdropOut 520ms ease-in 900ms both}
 @keyframes backdropIn{from{opacity:0}to{opacity:1}}
 @keyframes backdropOut{from{opacity:1}to{opacity:0}}
-.layout{box-sizing:border-box;height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding:max(6px,env(safe-area-inset-top)) 0 max(14px,env(safe-area-inset-bottom))}
+.layout{box-sizing:border-box;height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);padding:max(6px,env(safe-area-inset-top)) 0 max(14px,env(safe-area-inset-bottom))}
 .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:0 6px 0 20px}
 .bar>span{font:9px/1.5 "Gildra Atlas",Georgia,serif;letter-spacing:.16em;color:var(--accent);text-shadow:0 1px 4px #000}
 .close{display:grid;place-items:center;width:48px;height:48px;padding:0;border:0;background:transparent;color:var(--paper);font:30px/1 Georgia,serif;cursor:pointer;transition:color 200ms}
 .close:hover,.close:focus-visible{color:var(--bright)}
 /* One page fills the width; the second page is a swipe (or a tab) away. */
-.viewport{--page-width:min(calc(100vw - 8px),calc((100vh - 150px)*.75),calc((100dvh - 150px)*.75),520px);align-self:center;justify-self:center;width:var(--page-width);padding-block:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.viewport{--page-width:min(calc(100vw - 8px),calc((100vh - 150px)*.75),calc((100dvh - 150px)*.75),520px);flex:none;align-self:center;width:var(--page-width);padding-block:0;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .viewport::-webkit-scrollbar{display:none}
 /* While the cover moves, nothing may clip its 3D swing. */
 .viewport[data-moving]{overflow:visible}
@@ -30,3 +30,22 @@
 .dialog :global([data-book-artwork]){filter:none}
 /* Keep the small-screen spread inside the viewport and use its compact contents. */
 @media(max-width:480px){.viewport{--page-width:min(calc(100vw - 32px),calc((100dvh - 150px)*.75),340px)}}
+
+/* Each scroll slot includes a whole framed leaf and its complete hinge. */
+.reading{min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:8px 0 20px}
+.bar{background:var(--atlas-bg);padding:4px 12px 4px 20px;min-height:64px}
+.bar>span{font-size:var(--atlas-text-label)}
+.dialog .bar .close{flex:none;min-width:48px;min-height:48px;width:48px;height:48px;font-size:32px;line-height:1}
+.dialog .bar .close>span{font-size:32px;line-height:1}
+.track{isolation:isolate}
+.pageArtwork{position:absolute;inset:0;z-index:-1;display:block;pointer-events:none}
+.pageArtwork[hidden]{display:none}
+.pageArtwork img{position:absolute;top:0;left:0;width:50%;height:100%;min-width:0;display:block;object-fit:contain;transform:translateX(-5px)}
+.pageArtwork img+img{left:50%;transform:translateX(5px)}
+.track:not([data-moving]) :global([data-book-artwork]){visibility:hidden}
+.dialog .track :global([data-layout="spread"]){aspect-ratio:auto;height:calc(var(--page-width)*1.267)}
+.dialog .track :global([data-layout="spread"]>div:has(>[data-book-page])){inset:0;gap:0}
+.dialog .reading .track :global([data-book-page]){margin:64px 32px 38px 60px;padding:0}
+.dialog .reading .track :global([data-book-page="right"]){margin-inline:32px 60px}
+.track :global([data-book-page]>span:last-child){display:none}
+.pager{margin-top:-24px}
