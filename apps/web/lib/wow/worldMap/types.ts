@@ -45,6 +45,8 @@ export type MapRecord = {
   /** The map's own area (white) inside its art: a single-channel picture of the art's aspect. */
   mask?: string;
   terrain?: MapTerrain;
+  /** Another map of the same place (a phase, a later or earlier picture): the place's main map id. */
+  samePlaceAs?: number;
 };
 
 export type PoiKind = "capital" | "city" | "town" | "flight" | "portal" | "dungeon" | "raid" | "delve" | "zone-label";

@@ -102,6 +102,7 @@
     "visual:diff": "node scripts/visual-diff.mjs",
     "qa:a11y": "node scripts/qa-a11y.mjs",
     "qa:motion": "node scripts/qa-motion.mjs",
+    "qa:map-overlap": "node scripts/qa-world-map-overlap.mjs",
     "qa:home-gate": "node scripts/qa-home-gate.mjs",
     "qa:release": "node scripts/qa-release.mjs",
     "budgets": "node scripts/check-route-budgets.mjs",

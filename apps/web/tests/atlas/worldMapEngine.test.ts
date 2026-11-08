@@ -8,6 +8,8 @@ import { blurGroups, blurKey, blurOf, blurRadiusCss, desatOf, dimOf, radiusOfKey
 import { chainUp, composeSet, mapSet, transferCamera } from "@/components/wow/worldMap/engine/sets";
 import { wheelKind } from "@/components/wow/worldMap/engine/input";
 import { blurRgb, fillBoxes, toneImage } from "@/components/wow/worldMap/engine/tone";
+import { layerGroups, placeKeys } from "@/components/wow/worldMap/engine/compose";
+import type { DrawnMap } from "@/components/wow/worldMap/engine/WorldMapEngine";
 import { eraFromParam, eventComparison, eventMoment, mapIdOfPath, patchPosition, positionToPatch, pushesHistory, queryToView, viewToQuery } from "@/components/wow/worldMap/worldMapModel";
 import { isRectMask, paperColour } from "@/components/wow/worldMap/engine/paper";
 import { decorBoxes, labelBoxes } from "@/lib/wow/worldMap/painted";
@@ -430,5 +432,32 @@ describe("world map backdrop (tone)", () => {
     const centre = (data: Uint8ClampedArray) => data[(30 * w + 50) * 4];
     assert.ok(centre(known) > 170, "the word is gone where its box is known");
     assert.ok(centre(blind) > 60, "an unknown word is washed out into the ground");
+  });
+});
+
+describe("world map composition rules", () => {
+  const drawn = (role: DrawnMap["role"]) => ({ role } as DrawnMap);
+  it("gathers sharp neighbours (and the children of the map in view) into one flat layer each", () => {
+    const list = [drawn("ancestor"), drawn("neighbour"), drawn("neighbour"), drawn("neighbour"), drawn("focus"), drawn("child"), drawn("child")];
+    const groups = layerGroups(list.map((_, i) => ({ from: i, to: i, blur: 0 })), list);
+    assert.deepEqual(groups, [
+      { from: 0, to: 0, blur: 0 }, { from: 1, to: 3, blur: 0, flat: true }, { from: 4, to: 4, blur: 0 }, { from: 5, to: 6, blur: 0, flat: true },
+    ]);
+  });
+  it("never shares a blurred layer between a backdrop and the maps over it", () => {
+    const list = [drawn("ancestor"), drawn("ancestor"), drawn("neighbour"), drawn("neighbour")];
+    assert.deepEqual(layerGroups([{ from: 0, to: 3, blur: 0.3 }], list), [{ from: 0, to: 1, blur: 0.3 }, { from: 2, to: 3, blur: 0.3 }]);
+  });
+  it("a lone neighbour needs no layer", () => {
+    const list = [drawn("ancestor"), drawn("neighbour"), drawn("focus")];
+    assert.deepEqual(layerGroups(list.map((_, i) => ({ from: i, to: i, blur: 0 })), list).map((g) => Boolean(g.flat)), [false, false, false]);
+  });
+  it("knows two pictures of one place by name or by the data's samePlace link", () => {
+    const map = (id: number, name: string, samePlace?: number) => ({ id, name, depth: 3, ...(samePlace ? { samePlace } : {}) } as AtlasMap);
+    const shared = (a: AtlasMap, b: AtlasMap) => placeKeys(a).some((key) => placeKeys(b).includes(key));
+    assert.ok(shared(map(249, "Uldum"), map(1527, "Uldum")));
+    assert.ok(shared(map(390, "Vale of Eternal Blossoms"), map(1530, "Vale (N'Zoth)", 390)));
+    assert.ok(!shared(map(1, "Durotar"), map(10, "Northern Barrens")));
+    assert.deepEqual(placeKeys({ id: 947, name: "Azeroth", depth: 0 } as AtlasMap), []);
   });
 });

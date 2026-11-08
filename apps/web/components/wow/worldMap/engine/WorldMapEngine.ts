@@ -8,6 +8,7 @@ import { analysePaper } from "./paper";
 import { loadTone } from "./tone";
 import { decorBoxes, labelBoxes, type ArtBox } from "@/lib/wow/worldMap/painted";
 import { chainUp, transferCamera, type MapSet } from "./sets";
+import { layerGroups, placeKeys } from "./compose";
 import { levelSize, levelTiles, TileStore, tileUrl } from "./tiles";
 
 export { composeSet, mapSet, type MapSet } from "./sets";
@@ -81,45 +82,6 @@ const UNDER: ReadonlySet<string> = new Set(["micro", "orphan"]);
 // Worlds and continents keep their own painted sea (soft edge): their land masks open the sea to the world
 // picture under it, whose painted names of those very continents then show twice.
 const usesMask = (map: AtlasMap) => Boolean(map.mask) && map.depth > 0 && map.type !== "world" && map.type !== "cosmic" && map.type !== "continent";
-/**
- * The passes of a frame: blurred runs split where ancestors (backdrops) meet the maps over them (neighbours
- * must never go under a backdrop in a shared layer), and runs of sharp neighbours (or of the children of the
- * map in view) gathered into one flat layer.
- */
-function layerGroups(groups: Array<{ from: number; to: number; blur: number }>, list: DrawnMap[]) {
-  const out: Array<{ from: number; to: number; blur: number; flat?: boolean }> = [];
-  const back = (i: number) => list[i].role === "ancestor";
-  for (const group of groups) {
-    if (group.blur > 0) {
-      let from = group.from;
-      for (let i = group.from + 1; i <= group.to + 1; i++) {
-        if (i <= group.to && back(i) === back(from)) continue;
-        out.push({ from, to: i - 1, blur: group.blur });
-        from = i;
-      }
-      continue;
-    }
-    const last = out[out.length - 1];
-    const role = list[group.from].role;
-    const beside = (role === "neighbour" || role === "child") && group.from === group.to;
-    if (beside && last?.flat && last.to === group.from - 1 && list[last.from].role === role) last.to = group.to;
-    else out.push(beside ? { ...group, flat: true } : { ...group });
-  }
-  for (const group of out) if (group.flat && group.to === group.from) delete group.flat;
-  return out;
-}
-
-/**
- * What says two maps show one place: the same name (the old Silvermoon beside Midnight's),
- * or the data's own link (`variantOf`: a phase or another picture of that map).
- */
-const placeKeys = (map: AtlasMap | undefined): string[] => {
-  if (!map || map.depth === 0) return [];
-  const keys = [`n:${map.name}`];
-  const variant = (map as AtlasMap & { variantOf?: number }).variantOf;
-  keys.push(`v:${typeof variant === "number" ? variant : map.id}`);
-  return keys;
-};
 /** A neighbour this far out of focus loses its painted words (they would read as blurred letters). */
 const BLURRED_WORDS = 0.06;
 const FADE_TILE = 150;
@@ -300,6 +262,13 @@ export class WorldMapEngine {
       this.flight = { path: flightPath(this.camera, this.limit(flightTarget), this.width, this.height), start: performance.now(), duration: left, after: flight.after };
     }
     if (home !== null && next.maps.has(home)) this.refitHome(home);
+    else {
+      // The page's map did not exist then (Boralus before Kul Tiras): its nearest ancestor that did, shown whole —
+      // not the empty spot where it would be, nor a neighbour that happens to lie there.
+      const missing = home ?? (anchor !== null && !next.maps.has(anchor) ? anchor : null);
+      const kept = missing !== null ? chainUp(from, missing).find((id) => next.maps.has(id) && next.maps.get(id)?.art) : undefined;
+      if (kept !== undefined) { this.refitHome(kept); this.focusId = kept; }
+    }
     // The anchor is the focus until the next frame finds it again.
     if (!next.maps.has(this.focusId)) this.focusId = chain.find((id) => next.maps.has(id)) ?? -1;
     this.fromSet = fade ? from : null;
@@ -807,7 +776,8 @@ export class WorldMapEngine {
         // An ancestor of the map in view turns into a backdrop as the way down to it opens; then the land around
         // comes from its other children (the neighbours), each its own land, instead of its own picture.
         const next = opened.find((entry) => onChain.has(entry.child.id));
-        const tone = next ? smoothstep(0.5, 0.9, alpha * next.a) : 0;
+        // A world opening from the Cosmic map: the starry sheet is a backdrop as soon as the portal is half open.
+        const tone = !next ? 0 : next.child.portal ? smoothstep(0.1, 0.5, alpha * next.a) : smoothstep(0.5, 0.9, alpha * next.a);
         entry.tone = tone;
         for (const entry of opened) {
           if (entry.child.portal || onChain.has(entry.child.id)) continue;

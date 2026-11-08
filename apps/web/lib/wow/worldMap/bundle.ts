@@ -29,6 +29,8 @@ export type AtlasMap = {
   mask?: string;
   /** Deep-zoom ground of a continent, with its box in atlas space. */
   terrain?: AtlasTerrain;
+  /** The main map of the place this one is another picture of (phases, earlier/later pictures). */
+  samePlace?: number;
 };
 export type AtlasTerrain = { art: MapArt; frame: Rect; index?: string };
 /** A map's picture in the bundle's language: `localized` when its painted words are in that language. */
@@ -130,6 +132,7 @@ function placeRecords(records: Map<number, MapRecord>, lang: Lang, anchors: Map<
       parent: depth === 0 ? null : record.parentId, children: [], box, frame, art: record.art ? localArt(record.art, lang) : null, depth,
       page: false, portal,
       ...(validMask(record.mask) ? { mask: record.mask } : {}),
+      ...(typeof record.samePlaceAs === "number" && record.samePlaceAs !== record.id ? { samePlace: record.samePlaceAs } : {}),
     };
     const terrain = terrainOf(record, frame);
     if (terrain) node.terrain = terrain;

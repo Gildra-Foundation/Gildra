@@ -13,7 +13,6 @@
 // same script gives the "before" numbers. Exits 1 when a page fails.
 import fs from "node:fs";
 import { chromium } from "playwright";
-import { PNG } from "pngjs";
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((pairs, arg, index, all) => {
   if (arg.startsWith("--")) pairs.push([arg.slice(2), all[index + 1]]);
@@ -35,7 +34,11 @@ if (args.urls) {
   // An external job list (one URL or path per line, or a JSON array of {url}): the audit's pages.
   const text = fs.readFileSync(args.urls, "utf8");
   const list = text.trim().startsWith("[") ? JSON.parse(text).map((job) => job.url ?? job) : text.split("\n").filter(Boolean);
-  routes = [...new Set(list.map((url) => url.replace(/^https?:\/\/[^/]+/, "").replace(/[?&]debug\b/, "").replace(/\?$/, "")))];
+  routes = [...new Set(list.map((line) => {
+    const url = new URL(line.trim(), "http://x");
+    url.searchParams.delete("debug");
+    return url.pathname + url.search;
+  }))];
 }
 if (args.only) {
   const only = args.only.split(",");
@@ -179,10 +182,28 @@ async function measure() {
   // Two pictures of one place in the frame (same name), and a focus that reads blurred: drawn out of focus,
   // or see-through (its mask) over a blurred ancestor.
   const names = new Map();
-  for (const d of draws) names.set(d.name, [...(names.get(d.name) ?? []), d.id]);
+  // An ancestor of the same name (the Maelstrom zone in the Maelstrom) is the backdrop, not a second picture.
+  for (const d of draws) if (d.role !== "ancestor") names.set(d.name, [...(names.get(d.name) ?? []), d.id]);
   const duplicates = [...names.values()].filter((ids) => new Set(ids).size > 1).map((ids) => ids.join("/"));
   const blurry = held.blur >= 0.06 || (held.masked > 0.02 && draws.some((d) => d.role === "ancestor" && d.blur >= 0.06 && d.detail > 0.05 && hits(d.clip, core)));
-  return { focus: comp.focus, core, duplicates, blurry, foreign, overlap: covered ? over / covered : 0, mix: mixBase ? mix / mixBase : 0, letters, pairs: pairs.slice(0, 6).map(([k, v]) => `${k} ${(100 * v / Math.max(1, covered)).toFixed(1)}%`) };
+  // Dark patches over the map in view: near-black share of its core, read back from a frame drawn just now
+  // (what the canvas shows: transparent counts as dark, the page behind it is).
+  let dark = 0;
+  {
+    e.dirty = true;
+    e.render(performance.now());
+    const gl = e.renderer.gl, k = e.dpr;
+    const x0 = Math.max(0, Math.round(core[0] * k)), y0 = Math.max(0, Math.round(core[1] * k));
+    const x1 = Math.min(gl.drawingBufferWidth, Math.round(core[2] * k)), y1 = Math.min(gl.drawingBufferHeight, Math.round(core[3] * k));
+    if (x1 - x0 > 20 && y1 - y0 > 20) {
+      const px = new Uint8Array((x1 - x0) * (y1 - y0) * 4);
+      gl.readPixels(x0, gl.drawingBufferHeight - y1, x1 - x0, y1 - y0, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      let n = 0;
+      for (let i = 0; i < px.length; i += 4) if (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2] < 14) n += 1;
+      dark = n / (px.length / 4);
+    }
+  }
+  return { focus: comp.focus, core, dark, duplicates, blurry, foreign, overlap: covered ? over / covered : 0, mix: mixBase ? mix / mixBase : 0, letters, pairs: pairs.slice(0, 6).map(([k, v]) => `${k} ${(100 * v / Math.max(1, covered)).toFixed(1)}%`) };
 }
 
 /** The audit's classes (MAPQ4): a page can have several; OK only without any. */
@@ -212,22 +233,9 @@ const work = async () => {
       const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90000 });
       if (response?.status() === 404) { result = { route, missing: true, ok: true, classes: ["NOT-A-PAGE"] }; results.push(result); console.log(`404  ${route}`); await page.close(); continue; }
       if (!response || response.status() >= 400) throw new Error(`HTTP ${response?.status()}`);
-      await page.waitForFunction(() => { const e = window.__worldMap; return e && e.lastInfo && e.tiles.loadedCount > 4 && e.tiles.pending === 0; }, null, { timeout: Number(args.wait ?? 120000), polling: 300 });
+      await page.waitForFunction(() => { const e = window.__worldMap; return e && e.lastInfo && e.tiles.loadedCount > 4 && e.tiles.pending === 0 && !e.pending && !e.fromSet; }, null, { timeout: Number(args.wait ?? 120000), polling: 300 });
       await page.waitForTimeout(400);
       result = { route, ...(await page.evaluate(measure)) };
-      // Dark patches over the map in view: share of near-black pixels in its core (the canvas as shown).
-      if (result.core && result.core[2] - result.core[0] > 40 && result.core[3] - result.core[1] > 40) {
-        const box = await page.locator("canvas").first().boundingBox();
-        if (box) {
-          const clip = { x: box.x + Math.max(0, result.core[0]), y: box.y + Math.max(0, result.core[1]), width: Math.min(box.width, result.core[2]) - Math.max(0, result.core[0]), height: Math.min(box.height, result.core[3]) - Math.max(0, result.core[1]) };
-          if (clip.width > 20 && clip.height > 20) {
-            const png = PNG.sync.read(await page.screenshot({ clip }));
-            let dark = 0;
-            for (let i = 0; i < png.data.length; i += 4) if (0.299 * png.data[i] + 0.587 * png.data[i + 1] + 0.114 * png.data[i + 2] < 14) dark += 1;
-            result.dark = dark / (png.width * png.height);
-          }
-        }
-      }
     } catch (error) {
       result = { route, error: String(error.message ?? error).split("\n")[0] };
     }
