@@ -13,7 +13,10 @@ For every era (resolved like the viewer resolves it):
       city's flight master lies inside the city's rect;
   (d) masks exist and match the art's aspect ratio;
   (e) the era's points: none on absent maps, no portal to a map of a later
-      expansion, no entrance of a later instance.
+      expansion, no entrance of a later instance;
+  (f) every continent/world/Cosmic picture with a ruRU version has its painted words;
+  (g) of maps marked as one place (samePlaceAs), at most one is drawn in the era;
+  (h) with --overlaps: sibling masks do not claim the same land (> 2 % of the smaller).
 Composites (parent + children through their masks) go to --out for a visual check.
 
 Usage: python validate_eras.py [--out /tmp/mapd2] [--no-render]
@@ -51,15 +54,42 @@ def inside_share(rect) -> float:
     return (w * h) / max(1e-12, (x1 - x0) * (y1 - y0))
 
 
+def overlapping(nodes: dict, inactive: set):
+    """Sibling pairs whose masks claim the same land beyond neighbours.LIMIT."""
+    from neighbours import LIMIT, claims, is_city, load, overlap_share, pairs_of, same_place
+
+    cache: dict = {}
+    out = []
+    for ka, kb in pairs_of(nodes):
+        a, b = nodes[ka], nodes[kb]
+        if ka in inactive or kb in inactive or same_place(ka, a, kb, b) or a.get("parts") or b.get("parts"):
+            continue
+        ma, mb = load(a["mask"], cache), load(b["mask"], cache)
+        if ma is None or mb is None:
+            continue
+        _, _, ca, cb = claims(ma, a["rectInParent"], mb, b["rectInParent"])
+        share = overlap_share(ca, cb)
+        if share <= LIMIT:
+            continue
+        if is_city(ka, a) != is_city(kb, b):
+            city, zone = (ca, cb) if is_city(ka, a) else (cb, ca)
+            if float(((city > 0.5) & (zone > 0.5)).sum()) / max(1, (city > 0.5).sum()) > 0.6:
+                continue  # a city inside its zone
+        out.append((ka, kb, share))
+    return out
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--out", type=Path, default=Path("/tmp/mapd2"))
     parser.add_argument("--no-render", action="store_true")
+    parser.add_argument("--overlaps", action="store_true", help="also check neighbouring masks (slow)")
     args = parser.parse_args()
     retail = {m["id"]: m for m in load_json("maps.json")}
     eras = load_json("eras.json")
     failures: list[str] = []
     summary = []
+    by_id = {e["id"]: e for e in eras}
 
     for era in eras:
         nodes = resolve_era(eras, retail, era["id"])
@@ -144,6 +174,28 @@ def main() -> None:
                 exp = max(names.get(dest, -1), names.get(dest.split(",")[-1].strip().removeprefix("the "), -1))
                 if exp > era_max:
                     problems.append(f"portal {p['id']} to a later map ({p['name']['en']})")
+        # (f) every continent, world and Cosmic picture knows its painted words
+        for key, node in nodes.items():
+            if node.get("type") in ("continent", "world", "cosmic") and node.get("art") and node["art"].get("urlRu") and not node["art"].get("paintedLabels"):
+                problems.append(f"no painted words on {key}")
+        # (g) one map per place: of maps marked as the same place, at most one is drawn
+        inactive = set(era.get("inactive") or [])
+        if era.get("inherits"):
+            inactive |= set(by_id[era["inherits"]].get("inactive") or [])
+        groups: dict = {}
+        for key, node in nodes.items():
+            main = node.get("samePlaceAs")
+            if main is not None and node.get("art") and key not in inactive:
+                groups.setdefault(main, set()).add(key)
+        for main, members in groups.items():
+            if main in nodes and nodes[main].get("art") and main not in inactive:
+                members = members | {main}
+            if len(members) > 1:
+                problems.append(f"place {main} drawn {len(members)} times: {sorted(members, key=str)}")
+        # (h) neighbours do not claim the same land
+        if args.overlaps and not era.get("inherits"):
+            for ka, kb, share in overlapping(nodes, inactive):
+                problems.append(f"masks of {ka} and {kb} overlap by {share:.0%}")
         # (d) masks
         for key, node in nodes.items():
             if node.get("mask") and node.get("art"):

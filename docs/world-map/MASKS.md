@@ -99,3 +99,36 @@ first-pass masks; it recomputes content/children masks and composes the rest).
   (Theramore 5.0.4, Silithus, Tirisfal, Darkshore, Vale, Krasarang, Blasted
   Lands, Arathi) take the land of their default picture — a phase repaints part
   of a zone, not its outline.
+
+## Round 6: one map per place, neighbours, ancestor lettering
+
+Pipeline: build_world_map → eras → annotate → refine_masks → **labels → places →
+neighbours** → validate_eras (`--overlaps`).
+
+* **labels.py** — continent, world and Cosmic pictures: the tallest word
+  (clearly taller than the rest) is the map's own title (`kind: "title"`,
+  `labelFor` = the map); every other word belongs to the child whose rect holds
+  it and whose centre it is closest to (`kind: "place"`). On zone pictures the
+  city rules of refine_masks.py now apply to real cities only (CITIES), not to
+  any small neighbour. Every word of a continent/world/Cosmic picture has a
+  `patch`, so the engine can remove an ancestor's lettering around the focused
+  map without opening a hole.
+* **places.py** — maps of one place (see its docstring): floors, 8.3 assault
+  phases, Midnight successors, alternates (mask of one inside the other's,
+  > 90 %), aggregates. Node fields `samePlaceAs`, `placeRole`, `activeFrom`,
+  `activeTo`, `parts`; per era `inactive` = maps another map of the same place
+  stands for at the era's start.
+* **neighbours.py** — sibling masks claiming the same land (> 2 % of the smaller,
+  same-place pairs and a city inside its zone excepted) are split along the line
+  of equal depth; a city gives way wherever another zone claims land. Report
+  before/after: `/tmp/mapd6/neighbours-before.json`, `/tmp/mapd6/neighbours.json`.
+
+Lettering the enUS/ruRU difference cannot see (words the ruRU client paints the
+same, digits) is not detected yet: no stroke/plaque detector is implemented —
+mountain and coast hatching are painted with the same strokes as letters, so a
+detector needs its own validation round.
+
+Pages QA4 listed as PARENT-TEXT / DUPLICATE-PLACE are checked by
+`/tmp/mapd6/qa4-coverage.txt` (ancestors' words with patches; place roles).
+A picture that is the parent of a drawn zone or city gets a patch for every one
+of its words (`patchKind` "stamp", or "blur" where no wordless band exists).

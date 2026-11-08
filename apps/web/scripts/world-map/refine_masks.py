@@ -33,9 +33,9 @@ import numpy as np  # noqa: E402
 from PIL import Image  # noqa: E402
 from scipy import ndimage  # noqa: E402
 
-from build_world_map import DATA_DIR, write_json  # noqa: E402
+from build_world_map import CITIES, DATA_DIR, write_json  # noqa: E402
 from composite import PUBLIC, art_image, node_image, resolve_era  # noqa: E402
-from plaques import save_patch, stamp  # noqa: E402
+from plaques import save_patch, soft_fill, stamp  # noqa: E402
 from masks import FEATHER, binary, carry, coverage, finish, mask_size, save_mask, union  # noqa: E402
 
 from PIL import ImageFilter  # noqa: E402
@@ -222,7 +222,7 @@ def label_owner(box, key, nodes: dict, land, drawing: bool, big: bool = False):
     # painted on the zone ("IRONFORGE" on Dun Morogh)
     mine = (x1 - x0) * (y1 - y0)
     cities = [(k, n["rectInParent"]) for k, n in nodes.items()
-              if k != key and n.get("parentId") == node["parentId"] and n.get("rectInParent") and n.get("art")
+              if k != key and k in CITIES and n.get("parentId") == node["parentId"] and n.get("rectInParent") and n.get("art")
               and (n["rectInParent"][2] - n["rectInParent"][0]) * (n["rectInParent"][3] - n["rectInParent"][1]) < 0.25 * mine
               and n["rectInParent"][0] <= px <= n["rectInParent"][2] and n["rectInParent"][1] <= py <= n["rectInParent"][3]]
     if cities:
@@ -233,7 +233,7 @@ def label_owner(box, key, nodes: dict, land, drawing: bool, big: bool = False):
         near = []
         for k, n in nodes.items():
             r = n.get("rectInParent")
-            if k == key or not r or not n.get("art"):
+            if k == key or k not in CITIES or not r or not n.get("art"):
                 continue
             if n.get("parentId") == key:
                 qx, qy, limit = cx, cy, 0.25
@@ -285,13 +285,13 @@ def merge_lines(boxes: list, aspect: float) -> list:
     return [[round(v, 4) for v in b] for b in sorted(boxes, key=lambda b: (b[1], b[0]))]
 
 
-def plaque_of(box, aspect: float):
+def plaque_of(box, aspect: float, scroll: bool = True):
     """The word with the plaque it is painted on: banner-shaped words (much wider than tall)
     sit on a scroll whose curled ends reach about 1.6 heights beyond the text."""
     x0, y0, x1, y1 = box
     h = y1 - y0
     w = x1 - x0
-    if w * aspect > 3 * h:
+    if scroll and w * aspect > 3 * h:
         gx, gy = 1.6 * h / aspect, 0.45 * h
     else:
         gx, gy = 0.25 * h / aspect, 0.25 * h
@@ -379,6 +379,11 @@ def set_method(manifest: dict, url: str, method: str) -> None:
 
 
 def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--labels-only", action="store_true", help="re-derive words, owners and patches; keep the masks")
+    args = parser.parse_args()
     maps = json.loads((DATA_DIR / "maps.json").read_text())
     eras = json.loads((DATA_DIR / "eras.json").read_text())
     manifest = json.loads((DATA_DIR / "art-manifest.json").read_text())
@@ -391,7 +396,7 @@ def main() -> None:
     crests_of: dict[str, list] = {}
 
     # 1. drawings on parchment
-    for _, nodes in trees + variants:
+    for _, nodes in ([] if args.labels_only else trees + variants):
         for node in nodes.values():
             url, art = node.get("mask"), node.get("art")
             if not url or not art or url in done or node.get("type") not in CONTENT_TYPES or art["width"] > 1100:
@@ -448,7 +453,8 @@ def main() -> None:
             boxes = merge_lines([l["box"] if isinstance(l, dict) else l for l in art["paintedLabels"]], aspect)
             heights = sorted(b[3] - b[1] for b in boxes)
             typical = heights[len(heights) // 2] if heights else 0
-            labels_of[art["url"]] = [{"box": box, "plaque": plaque_of(box, aspect),
+            scroll = node.get("type") not in ("continent", "world", "cosmic")  # continent titles have no scroll
+            labels_of[art["url"]] = [{"box": box, "plaque": plaque_of(box, aspect, scroll),
                                       "labelFor": label_owner(box, key, nodes, land, drawing, big=(box[3] - box[1]) > 1.25 * typical)} for box in boxes]
             owner_of[art["url"]] = (key, nodes)
 
@@ -460,7 +466,12 @@ def main() -> None:
     for url, labels in labels_of.items():
         key, nodes = owner_of[url]
         mine = {key} | descendants(key, nodes)
-        foreign = [i for i, l in enumerate(labels) if l["labelFor"] not in mine]
+        # every word of a continent/world/Cosmic picture (the engine removes an ancestor's
+        # lettering around the focused map); on other pictures the words of other maps
+        big = nodes[key].get("type") in ("continent", "world", "cosmic") or any(
+            n.get("parentId") == key and n.get("art") and n.get("rectInParent") and n.get("type") in ("zone", "continent", "orphan")
+            for n in nodes.values())  # an ancestor of a drawn zone/city: all its lettering may give way
+        foreign = [i for i, l in enumerate(labels) if big or l["labelFor"] not in mine]
         if not foreign:
             continue
         picture = np.asarray(node_image(nodes[key]).convert("RGBA"))
@@ -474,8 +485,12 @@ def main() -> None:
         folder = url.split("/maps/tiles/")[1].split("/{z}")[0].replace("/", "-")
         for i in foreign:
             patch = stamp(picture, px[i], [b for j, b in enumerate(px) if j != i], other)
+            kind = "stamp"
+            if patch is None and big:
+                patch, kind = soft_fill(picture, px[i]), "blur"
             if patch is None:
                 continue
+            labels[i]["patchKind"] = kind
             path = PATCHES_DIR / folder / f"{i}.webp"
             save_patch(patch, path)
             labels[i]["patch"] = f"{PATCHES_URL}/{folder}/{i}.webp"
@@ -483,7 +498,7 @@ def main() -> None:
     counts["patches"] = patches
 
     # 3. zone-level masks: soft inward border, decor cut out, own words kept whole
-    for _, nodes in trees + variants:
+    for _, nodes in ([] if args.labels_only else trees + variants):
         for key, node in nodes.items():
             url, art = node.get("mask"), node.get("art")
             if not url or not art or node.get("type") in ("continent", "world", "cosmic") or url in composed:
@@ -514,7 +529,7 @@ def main() -> None:
             counts["composed"] += 1
 
     # 4. continents, then worlds: their children's land
-    for kind in ("continent", "world"):
+    for kind in (() if args.labels_only else ("continent", "world")):
         for _, nodes in trees:
             for key, node in nodes.items():
                 url, art = node.get("mask"), node.get("art")
@@ -541,7 +556,10 @@ def main() -> None:
             # objects: {box (the word), plaque (with its banner), labelFor, patch?}
             art["paintedLabels"] = labels_of[art["url"]]
         items = [{"box": b, "kind": "ornament"} for b in (decor.get(art["url"]) or {}).get("boxes", [])]
-        items += [{"box": b, "kind": "crest"} for b in crests_of.get(art["url"], [])]
+        crests = crests_of.get(art["url"])
+        if crests is None:  # not re-derived this run (--labels-only): keep the known crests
+            crests = [d["box"] for d in art.get("decor", []) if isinstance(d, dict) and d.get("kind") == "crest"]
+        items += [{"box": b, "kind": "crest"} for b in crests]
         if items:
             art["decor"] = items
         else:
