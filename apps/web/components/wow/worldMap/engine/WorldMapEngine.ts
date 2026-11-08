@@ -73,6 +73,7 @@ type TerrainDraw = { map: AtlasMap; alpha: number; clip: Box };
 type Patch = { url: string; box: Box };
 type ArtStyle = { corner?: number; holes?: Array<[number, number, number, number]>; patches?: Patch[]; alpha: number; light: number; cloud: number; water: number; desat: number; levelScale: number; edge?: number; exists?: (z: number, x: number, y: number) => boolean; maskStrength?: number;
   /** Only its own land: drawn through its mask or not at all (not before the mask is in). */ ownLand?: boolean;
+  /** Device-px box under the solid part of the map in view: tiles wholly inside it are neither drawn nor asked for. */ hidden?: Box;
   exclude?: DrawParams["exclude"];
 };
 
@@ -85,6 +86,20 @@ const usesMask = (map: AtlasMap) => Boolean(map.mask) && map.depth > 0 && map.ty
 /** A neighbour this far out of focus loses its painted words (they would read as blurred letters). */
 const BLURRED_WORDS = 0.06;
 const NONE: ReadonlySet<number> = new Set();
+/** Where the map in view is solid (device px): its rectangle inside its soft edge. */
+const coreOf = (exclude: NonNullable<DrawParams["exclude"]>): Box => {
+  const [x0, y0, x1, y1] = exclude.rect, e = exclude.edge[1];
+  return [x0 + e, y0 + e, x1 - e, y1 - e];
+};
+/** The bounding box of `box` without `hole` (null when the hole covers it). */
+function outsideOf(box: Box, hole: Box): Box | null {
+  const parts: Box[] = [
+    [box[0], box[1], Math.min(box[2], hole[0]), box[3]], [Math.max(box[0], hole[2]), box[1], box[2], box[3]],
+    [box[0], box[1], box[2], Math.min(box[3], hole[1])], [box[0], Math.max(box[1], hole[3]), box[2], box[3]],
+  ].filter((b): b is Box => b[2] > b[0] && b[3] > b[1]);
+  if (!parts.length) return null;
+  return [Math.min(...parts.map((b) => b[0])), Math.min(...parts.map((b) => b[1])), Math.max(...parts.map((b) => b[2])), Math.max(...parts.map((b) => b[3]))];
+}
 const FADE_TILE = 150;
 const FADE_ERA = 900;
 /** Longest wait for an era's picture to load before it fades in anyway. */
@@ -799,6 +814,9 @@ export class WorldMapEngine {
           if (entry.child.portal || onChain.has(entry.child.id)) continue;
           // Strictly its own land: a neighbour without a mask is left out (the backdrop shows there).
           if (!entry.child.mask) { entry.a = 0; continue; }
+          // Other continents and worlds stay in the backdrop until they open by themselves (framed by the view):
+          // around a continent the world's wash is enough, and their pictures would only slow the first view.
+          if (entry.child.type === "continent" || entry.child.type === "world") continue;
           entry.a = Math.max(entry.a, tone);
         }
       }
@@ -840,6 +858,23 @@ export class WorldMapEngine {
         for (const key of keys) seen.set(key, entry.map.id);
       }
     }
+    // Under the solid part of the map in view nothing else shows: a neighbour is cut to what lies outside it
+    // (no tiles asked for under it), and one wholly under it is not drawn at all.
+    const held = out.find((entry) => entry.role === "focus");
+    if (held && held.alpha >= 0.999 && (held.tone ?? 0) >= 0.999 && held.map.depth > 0) {
+      const w = held.screen[2] - held.screen[0], h = held.screen[3] - held.screen[1];
+      const ramp = featherOf(w * this.dpr, h * this.dpr, this.dpr) / this.dpr;
+      const core: Box = [held.clip[0] + ramp, held.clip[1] + ramp, held.clip[2] - ramp, held.clip[3] - ramp];
+      for (let i = out.length - 1; i >= 0; i--) {
+        const entry = out[i];
+        if (entry.role !== "neighbour" || core[2] <= core[0] || core[3] <= core[1]) continue;
+        const outside = outsideOf(entry.clip, core);
+        // A sliver beside it is left to the backdrop (not worth its mask and tiles).
+        const seen = outside ? Math.max(0, Math.min(outside[2], this.width) - Math.max(outside[0], 0)) * Math.max(0, Math.min(outside[3], this.height) - Math.max(outside[1], 0)) : 0;
+        if (!outside || seen < this.width * this.height * 0.03) out.splice(i, 1);
+        else entry.clip = outside;
+      }
+    }
     // A settled map whose solid part covers the whole view hides everything drawn before it.
     for (let i = out.length - 1; i > 0; i--) {
       const entry = out[i];
@@ -864,7 +899,8 @@ export class WorldMapEngine {
     const cx = this.width / 2, cy = this.height / 2;
     for (const entry of list) {
       const terrain = entry.map.terrain;
-      if (!terrain) continue;
+      // Only the ground under the way to the map in view: a neighbour's would lie over that map.
+      if (!terrain || entry.role === "neighbour") continue;
       let finest = entry.upscale;
       for (const other of list) {
         if (other.alpha < 0.5 || !contains(other.clip, cx, cy)) continue;
@@ -1096,6 +1132,8 @@ export class WorldMapEngine {
     });
     return {
       dpr: this.dpr, width: this.width, height: this.height, focus: held?.map.id ?? info.focus.id, exclude,
+      // The continents' ground drawn over the painted maps (deep in), with the part of the map it belongs to.
+      ground: this.terrain.map((t) => ({ id: t.map.id, alpha: t.alpha, clip: t.clip, role: info.drawn.find((entry) => entry.map === t.map)?.role ?? null })),
       draws: info.drawn.map((entry) => {
         const tone = entry.tone ?? 0;
         const masked = entry.role === "neighbour" || (entry.role === "child" && entry.map.mask) ? 1 : entry.role === "focus" ? (usesMask(entry.map) ? 1 - tone : 0) : entry.role === "ancestor" ? 0 : usesMask(entry.map) ? 1 : 0;
@@ -1117,7 +1155,7 @@ export class WorldMapEngine {
     const url = tileUrl(art, map.id, 0, 0, 0);
     const boxes = [...labelBoxes(art).map((label) => label.plaque ?? label.box), ...decorBoxes(art).map((decor) => decor.box)];
     const known = labelBoxes(art).length > 0;
-    return this.tiles.get(`tone:${url}`, map.depth * 0.5 - 1, () => loadTone(url, known ? boxes : null));
+    return this.tiles.get(`tone:${url}`, map.depth * 0.5 - 1, () => loadTone(url, known ? boxes : null, levelSize(art, 0)));
   }
 
   private toneReady(entry: DrawnMap) {
@@ -1133,9 +1171,8 @@ export class WorldMapEngine {
     const d = this.dpr;
     const rect: Box = [entry.screen[0] * d, entry.screen[1] * d, entry.screen[2] * d, entry.screen[3] * d];
     const devW = rect[2] - rect[0], devH = rect[3] - rect[1];
-    const [lw, lh] = levelSize(art, 0);
     this.renderer.draw(tile.texture, {
-      rect, uv: [0, 0, Math.min(1, lw / tile.width), Math.min(1, lh / tile.height)], alpha,
+      rect, uv: [0, 0, 1, 1], alpha,
       frame: [entry.clip[0] * d, entry.clip[1] * d, entry.clip[2] * d, entry.clip[3] * d],
       feather: map.depth === 0 ? 0 : [featherInsetOf(devW, devH), featherOf(devW, devH, d)], portal: [0, 0, 0],
       light: -(0.12 + dimOf(entry.upscale) * 0.6), cloud: map.type === "cosmic" ? 0 : cloud, water: 0, desat: 0.18 + desatOf(entry.upscale) * 0.5, art: rect,
@@ -1190,24 +1227,24 @@ export class WorldMapEngine {
         const terrain = entry.map.type !== "cosmic";
         const role = entry.role;
         const tone = role === "ancestor" ? entry.tone ?? 0 : 0;
-        if (tone > 0.003 && this.drawTone(entry, alpha, cloud)) {
-          // Only the wash: its own picture (and its words) is gone.
-          if (tone >= 0.999) continue;
-        }
+        const washed = tone > 0.003 && this.drawTone(entry, alpha, cloud);
+        // Only the wash: its own picture (and its words) is gone — nor is it loaded while the wash is being made.
+        if (tone >= 0.999) continue;
+        void washed;
         const style: ArtStyle = {
           alpha: alpha * (1 - (tone > 0.003 && this.toneReady(entry) ? tone : 0)), light: hovered ? 0.55 : -(entry.dim ?? 0), edge: entry.side ? 1.6 : 1,
           // The map in view shows whole (its painted surroundings too) once open; a neighbour only its own land.
           maskStrength: role === "focus" ? 1 - (entry.tone ?? 0) : 1,
-          ...(role === "neighbour" ? { ownLand: true, exclude } : role === "child" ? { ownLand: true } : {}),
+          ...(role === "neighbour" ? { ownLand: true, exclude, ...(exclude && exclude.strength >= 0.999 ? { hidden: coreOf(exclude) } : {}) } : role === "child" ? { ownLand: true } : {}),
           cloud: terrain ? cloud * (entry.map.depth <= 2 || entry.map.type === "continent" ? 1 : 0.6) : 0,
           // No shimmer on a backdrop out of focus (nor its land mask to load): it would not show.
           water: terrain && entry.blur < 0.3 ? water : 0,
           desat: 0, levelScale: scale,
           // Maps around the one in view: their corner ornaments go, and their painted words and decor
           // where the place in view lies give way (no second "STORMWIND" over the city).
-          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set, role === "ancestor" || (role === "neighbour" && entry.blur >= BLURRED_WORDS)) } : {}),
+          ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set, role === "ancestor" || (role === "neighbour" && (entry.blur >= BLURRED_WORDS || keys[i] > 0))) } : {}),
           // The map in view: its frame's corner pieces go too (its painted border is under its soft edge already).
-          ...(role === "focus" && entry.map.depth > 0 ? { corner: 0.12 } : {}),
+          ...(role === "focus" && entry.map.depth > 0 ? { corner: 0.2 } : {}),
         };
         // Neighbours in one layer: each only where the ones before it left the layer empty.
         this.renderer.setUnder((role === "neighbour" || role === "child") && this.renderer.inLayer);
@@ -1269,7 +1306,7 @@ export class WorldMapEngine {
     // A world's or continent's land mask does not cut it out (its own sea blends by the soft edge): it keeps the water shimmer off land.
     const ownLand = !isTerrain && Boolean(style.ownLand && map.mask);
     const landOnly = !isTerrain && !ownLand && !usesMask(map) && style.water > 0 && (map.type === "continent" || map.type === "world" || map.type === "cosmic");
-    const mask = !isTerrain && map.mask && (ownLand || usesMask(map) || landOnly) ? this.tiles.get(map.mask, map.depth * 0.5 + (landOnly ? 4 : -0.5)) : null;
+    const mask = !isTerrain && map.mask && (ownLand || usesMask(map) || landOnly) ? this.tiles.get(map.mask, map.depth * 0.5 + (landOnly ? 4 : -0.5) + (style.exclude ? 6 : 0)) : null;
     const maskStrength = style.maskStrength ?? 1;
     const maskReady = mask && mask.state === "ready" && mask.texture && maskStrength > 0.02 ? mask : null;
     // Its own land or nothing: until the mask is in, its tiles are only asked for.
@@ -1289,7 +1326,8 @@ export class WorldMapEngine {
     }
     // The terrain fades at the edge of the part shown (the continent's picture), a map at its own art border.
     const frame: Box = isTerrain ? [cx0, cy0, cx1, cy1] : [clipBox[0] * d, clipBox[1] * d, clipBox[2] * d, clipBox[3] * d];
-    const paper = maskReady && !landOnly && !isTerrain && map.depth > 0 ? this.paperOf(map, art) : null;
+    // The bare sheet is a city picture's (never a continent's or world's, nor needed for a neighbour's own land).
+    const paper = maskReady && !landOnly && !isTerrain && map.depth > 0 && !style.exclude && (map.type === "zone" || map.type === "micro") ? this.paperOf(map, art) : null;
     const base: Omit<DrawParams, "rect" | "uv"> = {
       alpha: style.alpha, frame, feather, portal, light: style.light, cloud: style.cloud, water: style.water, desat: style.desat,
       mask: maskReady && maskReady.texture ? { texture: maskReady.texture, rect: [sx0, sy0, sx1, sy1], strength: maskStrength, land: landOnly } : null,
@@ -1303,7 +1341,7 @@ export class WorldMapEngine {
     // The whole picture at level 0 first: something to show while the details load.
     let ready = 0, total = 0;
     if (!exists || exists(0, 0, 0)) {
-      const root = this.tiles.get(tileUrl(art, id, 0, 0, 0), map.depth);
+      const root = this.tiles.get(tileUrl(art, id, 0, 0, 0), map.depth + (style.exclude ? 6 : 0));
       ready = root.state === "ready" ? 1 : 0;
       total = 1;
     }
@@ -1319,8 +1357,11 @@ export class WorldMapEngine {
         const rw = rect[2] - rx0, rh = rect[3] - ry0;
         // Ground with no tile there (open sea): nothing to ask for.
         if (exists && !exists(z, tx, ty)) continue;
+        const under = style.hidden;
+        if (under && rect[0] >= under[0] && rect[1] >= under[1] && rect[2] <= under[2] && rect[3] <= under[3]) continue;
         const dist = Math.hypot(rx0 + rw / 2 - centerX, ry0 + rh / 2 - centerY) / Math.max(W, H);
-        const tile = this.tiles.get(tileUrl(art, id, z, tx, ty), 2 + map.depth * 0.5 + dist * 4 + (isTerrain ? -0.5 : 0));
+        // A neighbour's tiles come after the map in view's own.
+        const tile = this.tiles.get(tileUrl(art, id, z, tx, ty), 2 + map.depth * 0.5 + dist * 4 + (isTerrain ? -0.5 : 0) + (style.exclude ? 6 : 0));
         total += 1;
         if (tile.state === "ready" || tile.state === "failed") ready += 1;
         if (dry) continue;
@@ -1349,7 +1390,8 @@ export class WorldMapEngine {
       this.renderer.setUnder(under);
     }
     // Next level for the middle of the view while nothing moves — and ahead of a zoom in.
-    if (!dry && (!moving || this.zoomDir > 0) && z < art.maxZoom && style.levelScale === 1) {
+    // (Not for a neighbour: the reader looks at the map in view.)
+    if (!dry && !style.exclude && (!moving || this.zoomDir > 0) && z < art.maxZoom && style.levelScale === 1) {
       const [ncols, nrows] = levelTiles(art, z + 1);
       const nx0 = clamp(tx0 * 2, 0, ncols - 1), nx1 = clamp(tx1 * 2 + 1, 0, ncols - 1);
       const ny0 = clamp(ty0 * 2, 0, nrows - 1), ny1 = clamp(ty1 * 2 + 1, 0, nrows - 1);

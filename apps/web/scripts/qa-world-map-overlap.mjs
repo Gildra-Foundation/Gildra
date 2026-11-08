@@ -83,7 +83,9 @@ async function measure() {
     if (draws.indexOf(d) > draws.indexOf(held) && d.role !== "neighbour") { foreign.push(`${d.id} ${d.name} (${d.role}, over)`); continue; }
     foreign.push(`${d.id} ${d.name} (${d.role})`);
   }
-  // (b) Coverage of the maps beside each other, each through its own mask, at a quarter of the view.
+  // A neighbour's ground (terrain) laid over the map in view is foreign too.
+  for (const g of comp.ground ?? []) if (g.role === "neighbour" && g.alpha > 0.05 && hits(g.clip, core)) foreign.push(`${g.id} ground (neighbour)`);
+    // (b) Coverage of the maps beside each other, each through its own mask, at a quarter of the view.
   const q = 4, gw = Math.ceil(W / q), gh = Math.ceil(H / q);
   const sum = new Float32Array(gw * gh), max = new Float32Array(gw * gh);
   const fields = [];

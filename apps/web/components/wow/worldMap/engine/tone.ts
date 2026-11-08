@@ -93,16 +93,22 @@ export function toneImage(data: Uint8ClampedArray, w: number, h: number, boxes: 
   blurRgb(data, w, h, w * (boxes ? TONE_BLUR : TONE_BLUR_BLIND));
 }
 
+/** The backdrop is worked out this wide at most: it is magnified and washed out anyway, and the script stays short. */
+export const TONE_WIDTH = 128;
+
 /** Fetches a picture's smallest level and makes its backdrop on a canvas (for the GPU). */
-export async function loadTone(url: string, boxes: Rect[] | null): Promise<HTMLCanvasElement | OffscreenCanvas> {
+export async function loadTone(url: string, boxes: Rect[] | null, size?: readonly [number, number]): Promise<HTMLCanvasElement | OffscreenCanvas> {
   const response = await fetch(url, { cache: "force-cache" });
   if (!response.ok) throw new Error(String(response.status));
   const bitmap = await createImageBitmap(await response.blob());
-  const w = bitmap.width, h = bitmap.height;
+  // The picture itself (a tile may carry empty padding past it).
+  const sw = Math.min(bitmap.width, size?.[0] ?? bitmap.width), sh = Math.min(bitmap.height, size?.[1] ?? bitmap.height);
+  const k = Math.min(1, TONE_WIDTH / sw);
+  const w = Math.max(2, Math.round(sw * k)), h = Math.max(2, Math.round(sh * k));
   const canvas: HTMLCanvasElement | OffscreenCanvas = typeof OffscreenCanvas !== "undefined" ? new OffscreenCanvas(w, h) : Object.assign(document.createElement("canvas"), { width: w, height: h });
   const ctx = canvas.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
   if (!ctx) throw new Error("2d");
-  ctx.drawImage(bitmap, 0, 0);
+  ctx.drawImage(bitmap, 0, 0, sw, sh, 0, 0, w, h);
   bitmap.close?.();
   const image = ctx.getImageData(0, 0, w, h);
   toneImage(image.data, w, h, boxes);
