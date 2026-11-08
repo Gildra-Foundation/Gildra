@@ -247,6 +247,8 @@ export class MapRenderer {
   readonly gl: WebGLRenderingContext;
   private program!: WebGLProgram;
   blank!: WebGLTexture;
+  /** One texel of the calm parchment the maps lie on: what shows where a backdrop has not loaded yet. */
+  paper!: WebGLTexture;
   private blur!: WebGLProgram;
   private u: Record<string, WebGLUniformLocation | null> = {};
   private ub: Record<string, WebGLUniformLocation | null> = {};
@@ -289,6 +291,9 @@ export class MapRenderer {
     this.blank = gl.createTexture() as WebGLTexture;
     gl.bindTexture(gl.TEXTURE_2D, this.blank);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+    this.paper = gl.createTexture() as WebGLTexture;
+    gl.bindTexture(gl.TEXTURE_2D, this.paper);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([74, 66, 52, 255]));
     this.blur = link(BLUR_VERTEX, BLUR_FRAGMENT);
     this.u = {};
     this.ub = {};
@@ -310,6 +315,7 @@ export class MapRenderer {
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.activeTexture(gl.TEXTURE0);
     this.layers = new Map();
+    this.snap = null;
     this.into = null;
     this.maskBound = false;
     this.inkSet = -1;
@@ -484,6 +490,42 @@ export class MapRenderer {
 
   get inLayer() { return this.into !== null; }
 
+  /**
+   * Keeps what the screen shows now (the frame just drawn) as a picture: when the map in view changes, the
+   * old frame fades out over the new one instead of the new composition popping in.
+   */
+  snapshot() {
+    const gl = this.gl;
+    const W = this.width, H = this.height;
+    if (!this.snap || this.snap.w !== W || this.snap.h !== H) {
+      if (this.snap) gl.deleteTexture(this.snap.tex);
+      const tex = gl.createTexture() as WebGLTexture;
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this.snap = { tex, w: W, h: H };
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, this.snap.tex);
+    gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, W, H, 0);
+  }
+
+  /** Lays the kept frame over the screen at `rect` (device px, where the old view lies now), fading to `alpha`. */
+  drawSnapshot(rect: [number, number, number, number], alpha: number, edge: number) {
+    if (!this.snap || alpha <= 0.003) return;
+    this.setUnder(false);
+    // GL rows count from the bottom: the frame's top is the texture's last row.
+    this.draw(this.snap.tex, { rect, uv: [0, 1, 1, 0], alpha, frame: rect, feather: edge, portal: [0, 0, 0], light: 0, cloud: 0, water: 0 });
+  }
+
+  dropSnapshot() {
+    if (this.snap) this.gl.deleteTexture(this.snap.tex);
+    this.snap = null;
+  }
+  private snap: { tex: WebGLTexture; w: number; h: number } | null = null;
+
   private layer(scale: number): Layer {
     const found = this.layers.get(scale);
     if (found) return found;
@@ -519,10 +561,11 @@ export class MapRenderer {
   get layerBytes() {
     let total = 0;
     for (const layer of this.layers.values()) total += layer.a.w * layer.a.h * 8;
-    return total;
+    return total + (this.snap ? this.snap.w * this.snap.h * 4 : 0);
   }
 
   dispose() {
     this.dropLayers();
+    this.dropSnapshot();
   }
 }

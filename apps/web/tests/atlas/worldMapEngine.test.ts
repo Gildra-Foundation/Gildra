@@ -7,6 +7,8 @@ import type { EraRecord, MapRecord, PoiRecord } from "@/lib/wow/worldMap/types";
 import { blurGroups, blurKey, blurOf, blurRadiusCss, desatOf, dimOf, radiusOfKey, vignetteOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "@/components/wow/worldMap/engine/lod";
 import { chainUp, composeSet, mapSet, transferCamera } from "@/components/wow/worldMap/engine/sets";
 import { wheelKind } from "@/components/wow/worldMap/engine/input";
+import { FOCUS_FADE, FOCUS_IN, FOCUS_OUT, MAX_AHEAD, NOTCH_LOG, TAU_NOTCH, TAU_SMOOTH, ZOOM_DONE, fadeOut, gather, holdFocus, spend, wheelLog } from "@/components/wow/worldMap/engine/motion";
+import { toAtlas, zoomAt, type Camera } from "@/components/wow/worldMap/engine/camera";
 import { blurRgb, fillBoxes, toneImage } from "@/components/wow/worldMap/engine/tone";
 import { layerGroups, placeKeys } from "@/components/wow/worldMap/engine/compose";
 import type { DrawnMap } from "@/components/wow/worldMap/engine/WorldMapEngine";
@@ -76,10 +78,10 @@ describe("world map LOD", () => {
     assert.ok(maskFeatherOf(1000, 600, 1) < featherOf(1000, 600, 1) / 3);
   });
 
-  it("limits zoom to twice the art's own size, deeper over terrain, and fades terrain in past the art", () => {
-    close(maxScaleOf({ width: 1000 }, 0.01), 200000);
+  it("limits zoom to 1.6× the art's own size, deeper over terrain, and fades terrain in past the art", () => {
+    close(maxScaleOf({ width: 1000 }, 0.01), 160000);
     const terrain = { art: { width: 16384 }, frame: [0, 0, 0.05, 0.05] as [number, number, number, number] };
-    close(maxScaleOf({ width: 1000 }, 0.01, terrain), 16384 / 0.05 * 2);
+    close(maxScaleOf({ width: 1000 }, 0.01, terrain), 16384 / 0.05 * 1.6);
     assert.equal(terrainAlphaOf(1), 0);
     assert.equal(terrainAlphaOf(1.3), 0);
     assert.ok(terrainAlphaOf(1.7) > 0 && terrainAlphaOf(1.7) < 1);
@@ -93,6 +95,91 @@ describe("world map LOD", () => {
     assert.equal(wheelKind(0, 0, 4.5, false), "trackpad");
     assert.equal(wheelKind(0, 1.2, 30, false), "trackpad");
     assert.equal(wheelKind(0, 0, 3.2, true), "pinch");
+  });
+});
+
+describe("world map camera motion", () => {
+  /** The engine's eased zoom: `log` spent over `ms` at a frame interval, around a screen point. */
+  const glide = (log: number, frame: number, ms: number, tau = TAU_NOTCH, at: [number, number] = [900, 500]) => {
+    let camera: Camera = { x: 0.5, y: 0.33, scale: 2000 };
+    let left = log;
+    const [ax, ay] = toAtlas(camera, 1440, 900, at[0], at[1]);
+    let drift = 0;
+    for (let t = 0; t < ms; t += frame) {
+      const [step, rest] = spend(left, frame, tau);
+      left = rest;
+      camera = zoomAt(camera, 1440, 900, at[0], at[1], Math.exp(step));
+      const [bx, by] = toAtlas(camera, 1440, 900, at[0], at[1]);
+      drift = Math.max(drift, Math.hypot(bx - ax, by - ay) * camera.scale);
+    }
+    return { camera, left, drift };
+  };
+
+  it("eases the wheel's zoom the same at any frame rate", () => {
+    const at30 = glide(NOTCH_LOG * 2, 1000 / 30, 400), at60 = glide(NOTCH_LOG * 2, 1000 / 60, 400), at144 = glide(NOTCH_LOG * 2, 1000 / 144, 400);
+    // Same zoom reached after the same time (within the last partial frame), whatever the frame rate.
+    close(Math.log(at60.camera.scale / 2000), Math.log(at144.camera.scale / 2000), 0.02);
+    close(Math.log(at30.camera.scale / 2000), Math.log(at60.camera.scale / 2000), 0.03);
+    // Splitting a frame in two spends exactly what the whole frame does.
+    const [a, rest] = spend(1, 8, TAU_NOTCH), [b] = spend(rest, 8, TAU_NOTCH), [c] = spend(1, 16, TAU_NOTCH);
+    close(a + b, c, 1e-12);
+    // Most of a notch is spent within ~0.3 s, all of it within a second; nothing is left for ever.
+    assert.ok(Math.abs(glide(NOTCH_LOG, 1000 / 60, 300).left) < NOTCH_LOG * 0.15);
+    assert.ok(Math.abs(glide(NOTCH_LOG, 1000 / 60, 1000).left) < ZOOM_DONE);
+    // A pinch follows closely.
+    assert.ok(Math.abs(glide(0.3, 1000 / 60, 150, TAU_SMOOTH).left) < 0.3 * 0.05);
+  });
+
+  it("keeps the point under the cursor in place on every frame of the zoom", () => {
+    for (const at of [[900, 500], [10, 890], [1430, 20]] as Array<[number, number]>) {
+      const run = glide(MAX_AHEAD, 1000 / 60, 800, TAU_NOTCH, at);
+      assert.ok(run.drift < 1e-6, `drift ${run.drift} px at ${at}`);
+    }
+  });
+
+  it("normalises the wheel: a notch is ×1.3, a burst never more than ×3 ahead, a turn back stops at once", () => {
+    close(wheelLog("notch", 100), -NOTCH_LOG);
+    close(wheelLog("notch", -100), NOTCH_LOG);
+    // Firefox lines (3 × 16 px) and a big step both stay within ½…3 notches.
+    close(wheelLog("notch", 48), -NOTCH_LOG * 0.5);
+    close(wheelLog("notch", -900), NOTCH_LOG * 3);
+    assert.ok(Math.abs(wheelLog("pinch", -4)) < 0.1 && wheelLog("pinch", -4) > 0);
+    assert.ok(Math.abs(wheelLog("trackpad", 6)) < 0.05);
+    let left = 0;
+    for (let i = 0; i < 20; i++) left = gather(left, NOTCH_LOG);
+    close(left, MAX_AHEAD);
+    close(gather(left, -NOTCH_LOG), -NOTCH_LOG);
+    assert.equal(wheelLog("notch", 0), 0);
+  });
+
+  it("changes the map in view with hysteresis and cross-fades the picture", () => {
+    const current = { id: 1, alpha: 1, under: true };
+    // Down into a child only once it is clearly open, and never while zooming out.
+    assert.equal(holdFocus(current, { id: 2, alpha: FOCUS_IN - 0.05 }, "deeper", 1), 1);
+    assert.equal(holdFocus(current, { id: 2, alpha: FOCUS_IN + 0.01 }, "deeper", 1), 2);
+    assert.equal(holdFocus(current, { id: 2, alpha: FOCUS_IN + 0.01 }, "deeper", 0), 2);
+    assert.equal(holdFocus(current, { id: 2, alpha: 0.9 }, "deeper", -1), 1);
+    // Up only by zooming out once the map in view has clearly faded — not while zooming in, not at rest
+    // (Classic's continents fill most of the world map: barely open, yet the one the reader is in).
+    assert.equal(holdFocus({ id: 2, alpha: FOCUS_OUT + 0.05, under: true }, { id: 1, alpha: 1 }, "above", -1), 2);
+    assert.equal(holdFocus({ id: 2, alpha: FOCUS_OUT - 0.01, under: true }, { id: 1, alpha: 1 }, "above", -1), 1);
+    assert.equal(holdFocus({ id: 2, alpha: 0.1, under: true }, { id: 1, alpha: 1 }, "above", 1), 2);
+    assert.equal(holdFocus({ id: 2, alpha: 0.1, under: true }, { id: 1, alpha: 1 }, "above", 0), 2);
+    // Left the view (panned away): up at once.
+    assert.equal(holdFocus({ id: 2, alpha: 0.9, under: false }, { id: 1, alpha: 1 }, "above", 0), 1);
+    // Beside it (another zone): only once the point has left the current one; nothing held: the candidate.
+    assert.equal(holdFocus(current, { id: 3, alpha: 0.9 }, "other", 1), 1);
+    assert.equal(holdFocus({ id: 1, alpha: 1, under: false }, { id: 3, alpha: 0.55 }, "other", 0), 3);
+    assert.equal(holdFocus(null, { id: 3, alpha: 0.55 }, "deeper"), 3);
+    // The band between the two thresholds holds either way: no flip-flop.
+    for (const a of [FOCUS_OUT + 0.01, 0.5, FOCUS_IN - 0.01]) {
+      assert.equal(holdFocus({ id: 1, alpha: 1, under: true }, { id: 2, alpha: a }, "deeper", 1), 1);
+      assert.equal(holdFocus({ id: 2, alpha: a, under: true }, { id: 1, alpha: 1 }, "above", -1), 2);
+    }
+    assert.equal(fadeOut(0), 1);
+    assert.equal(fadeOut(FOCUS_FADE), 0);
+    assert.ok(fadeOut(FOCUS_FADE / 2) > 0.45 && fadeOut(FOCUS_FADE / 2) < 0.55);
+    assert.ok(FOCUS_FADE >= 250 && FOCUS_FADE <= 400);
   });
 });
 

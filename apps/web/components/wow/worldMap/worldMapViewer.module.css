@@ -256,6 +256,8 @@
   transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
 }
 .hoverName[data-shown]:not([data-over]) { opacity: 1; }
+/* No names while the view moves under a resting pointer (set by the engine on the very frame the move starts). */
+.surface[data-moving] .hoverName { opacity: 0; transition: none; }
 @media (hover: none) { .hoverName { display: none; } }
 
 /* Zones under the pointer open on a click: the hand says so. */

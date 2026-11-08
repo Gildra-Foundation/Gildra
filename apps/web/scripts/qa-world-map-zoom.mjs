@@ -1,0 +1,365 @@
+#!/usr/bin/env node
+// World map zoom check: wheels a mouse in and out along chains of maps (world → continent → zone → city) the
+// way a reader does — notches of 100 px every ~110 ms, the cursor on the next place of the chain — and checks
+// every frame drawn on the way:
+//   - no ancestor of the map in view shows its picture (with its painted words): only its calm wash;
+//   - no empty void around the map in view (the canvas is see-through over the free part of the view);
+//   - no hover name while the view moves;
+//   - the map in view the page tells (title, crumbs) only changes once the camera rests, only along the chain,
+//     never back and forth;
+//   - frame intervals while moving (p95, max) and long tasks.
+//   npm run qa:map-zoom                                  local :3100, current era + vanilla
+//   npm run qa:map-zoom -- --base http://127.0.0.1:3131 --only kalimdor --cpu 4 --shots /tmp/mapz/zoom
+//   … --only interactions: keys, double click, buttons, era switch mid-zoom, Back mid-flight, resize, phone pinch
+// Exits 1 when a chain fails.
+import fs from "node:fs";
+import { chromium } from "playwright";
+
+const args = Object.fromEntries(process.argv.slice(2).reduce((pairs, arg, index, all) => {
+  if (arg.startsWith("--")) pairs.push([arg.slice(2), all[index + 1] && !all[index + 1].startsWith("--") ? all[index + 1] : "1"]);
+  return pairs;
+}, []));
+const base = args.base ?? "http://127.0.0.1:3100";
+const cpu = Number(args.cpu ?? 1);
+const maxVoid = Number(args["max-void"] ?? 0.04);
+// Frame interval p95 while moving (ms). Headless SwiftShader on a loaded host is slow: the default only catches
+// regressions there (live map6b/mapov7 measured 1270–1880 ms on the same host); on a real GPU pass --max-frame 34.
+const maxFrame = Number(args["max-frame"] ?? 1000);
+const shots = args.shots ?? null;
+const data = JSON.parse(fs.readFileSync(new URL("../data/wow/map/maps.json", import.meta.url), "utf8"));
+const maps = Array.isArray(data) ? data : data.maps;
+const byId = new Map(maps.map((map) => [map.id, map]));
+const page = (id) => `/ru/wow/map/${id}-${byId.get(id)?.slug ?? ""}`;
+
+// Chains: the page to start on, then the places to wheel into, one after another.
+const CHAINS = [
+  { key: "broken-isles", era: null, chain: [947, 619, 630] },
+  { key: "kalimdor", era: null, chain: [12, 1, 85] },
+  { key: "eastern-kingdoms", era: null, chain: [13, 37, 84] },
+  { key: "kalimdor-vanilla", era: "vanilla", chain: [12, 1, 85] },
+  { key: "eastern-kingdoms-vanilla", era: "vanilla", chain: [13, 37, 84] },
+];
+let chains = CHAINS;
+if (args.only) chains = chains.filter((c) => args.only.split(",").some((key) => c.key === key || c.key.startsWith(`${key}`)));
+//   (--only interactions runs only the interactions; --only kalimdor only that chain.)
+
+/** Runs in the page: a recorder of every frame (after the engine's own frame callback). */
+function install() {
+  const e = window.__worldMap;
+  const rec = { frames: [], long: [], told: [], focusTold: [], voids: [], phase: "in", stop: false };
+  window.__zoomRec = rec;
+  new PerformanceObserver((list) => { for (const entry of list.getEntries()) rec.long.push(entry.duration); }).observe({ type: "longtask", buffered: false });
+  const title = () => document.querySelector("#world-map-title")?.textContent?.trim() ?? "";
+  let lastTitle = title();
+  const probe = document.createElement("canvas");
+  const ctx = probe.getContext("2d", { willReadFrequently: true });
+  let last = performance.now();
+  let prev = null;
+  const frame = (t) => {
+    if (rec.stop) return;
+    try { record(t); } catch (error) { rec.errors = (rec.errors ?? 0) + 1; rec.lastError = String(error); }
+    requestAnimationFrame(frame);
+  };
+  const record = (t) => {
+    const comp = e.composition?.();
+    // Moving: the camera changed since the last frame (or a move is under way).
+    const v = e.view;
+    const moving = Boolean(e.flight || e.velocity || e.wheel || e.pointers?.size) || (prev !== null && (v.scale !== prev.scale || v.x !== prev.x || v.y !== prev.y));
+    prev = { ...v };
+    // A name shown on screen (its own rule and the stage's, as computed).
+    const pill = [...document.querySelectorAll("div[data-shown]")].some((el) => /hoverName/.test(el.className) && Number(getComputedStyle(el).opacity) > 0.05);
+    const ancestors = comp ? comp.draws.filter((d) => d.role === "ancestor" && d.alpha > 0.05 && d.detail > 0.05).map((d) => `${d.id}:${d.detail.toFixed(2)}`) : [];
+    const focus = comp?.focus ?? null;
+    const held = comp?.draws.find((d) => d.role === "focus");
+    const art = held ? e.maps.get(held.id)?.art : null;
+    const upscale = held && art ? (held.screen[2] - held.screen[0]) / art.width : 0;
+    const empty = sampled;
+    sampled = 0;
+    const now = title();
+    if (now !== lastTitle) { rec.told.push({ t, title: now, moving, focus }); lastTitle = now; }
+    const ground = comp?.ground?.some((g) => g.alpha > 0.9) ?? false;
+    rec.frames.push({ t, phase: rec.phase, dt: t - last, moving, pill, ancestors, focus, empty, scale: Math.round(v.scale), cx: Number(v.x.toFixed(5)), cy: Number(v.y.toFixed(5)), wheel: e.wheel ? Number(e.wheel.log.toFixed(3)) : 0, why: e.focusWhy, upscale: ground ? 0 : Number(upscale.toFixed(2)), fade: Boolean(e.crossfade) });
+    last = t;
+  };
+  // The canvas, read inside the engine's own frame right after it drew (the buffer is handed over after that).
+  let sampled = 0;
+  let calls = 0;
+  const events = e.events;
+  // The page hears of the map in view: was the camera at rest then?
+  const tell = events.focus;
+  events.focus = (chain) => { rec.focusTold.push({ id: chain.at(-1)?.id ?? null, moving: Boolean(e.moving) }); tell(chain); };
+  const original = events.frame;
+  events.frame = (info) => {
+    original(info);
+    calls += 1;
+    if (calls % 2 || !ctx) return;
+    const c = e.canvas;
+    const w = 160, h = Math.max(1, Math.round((160 * c.height) / c.width));
+    probe.width = w; probe.height = h;
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(c, 0, 0, w, h);
+    const px = ctx.getImageData(0, 0, w, h).data;
+    const ins = e.options.insets, W = e.width, H = e.height;
+    // Only inside the top map of the one in view (past the edge of the world the page shows through, as it should).
+    // (A world opened from the Cosmic map lies in the dark of space on purpose: the top is the world.)
+    let root = info.focus;
+    while (root && root.parent !== null && e.maps.get(root.parent) && e.maps.get(root.parent).type !== "cosmic") root = e.maps.get(root.parent);
+    const [rx0, ry0] = e.project(root.frame[0], root.frame[1]), [rx1, ry1] = e.project(root.frame[2], root.frame[3]);
+    // Inside its own soft edge (a world under the Cosmic map fades out at its rim, as it should).
+    const rim = root.depth > 0 ? Math.min(rx1 - rx0, ry1 - ry0) * 0.12 : 0;
+    const x0 = Math.floor((Math.max(ins.left, rx0 + rim) / W) * w), x1 = Math.ceil((Math.min(W - ins.right, rx1 - rim) / W) * w);
+    const y0 = Math.floor((Math.max(ins.top, ry0 + rim) / H) * h), y1 = Math.ceil((Math.min(H - ins.bottom, ry1 - rim) / H) * h);
+    let total = 0, holes = 0;
+    // (Its frame's corner pieces fade out on purpose: the corners are not counted.)
+    const cr = Math.min(x1 - x0, y1 - y0) * 0.22;
+    const corner = (x, y) => (x - x0 < cr || x1 - x < cr) && (y - y0 < cr || y1 - y < cr);
+    for (let y = Math.max(0, y0); y < Math.min(h, y1); y++) for (let x = Math.max(0, x0); x < Math.min(w, x1); x++) { if (root.depth > 0 && corner(x, y)) continue; total += 1; if (px[(y * w + x) * 4 + 3] < 96) holes += 1; }
+    const value = total ? holes / total : 0;
+    sampled = Math.max(sampled, value);
+    // The first few empty frames as pictures, to look at.
+    if (value > window.__zoomMaxVoid && rec.voids.length < 4) rec.voids.push({ value, focus: info.focus.id, url: probe.toDataURL("image/png") });
+  };
+  requestAnimationFrame(frame);
+}
+
+async function ready(pg) {
+  await pg.waitForFunction(() => { const e = window.__worldMap; return e && e.lastInfo && e.tiles.loadedCount > 4 && e.tiles.pending === 0 && !e.pending && !e.fromSet; }, null, { timeout: 180000, polling: 300 });
+  await pg.waitForTimeout(800);
+}
+
+/** Screen point of a map's centre (or of its first child's centre, if it is the map in view). */
+const centreOf = (pg, id) => pg.evaluate((id) => {
+  const e = window.__worldMap; const map = e.maps.get(id);
+  if (!map) return null;
+  const [x, y] = e.project((map.frame[0] + map.frame[2]) / 2, (map.frame[1] + map.frame[3]) / 2);
+  // Inside the free part of the view (never over the panels: the wheel scrolls them there).
+  const ins = e.options.insets;
+  return [Math.round(Math.max(ins.left + 30, Math.min(e.width - ins.right - 30, x))), Math.round(Math.max(ins.top + 30, Math.min(e.height - ins.bottom - 30, y)))];
+}, id);
+
+async function runChain(browser, spec) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const pg = await ctx.newPage();
+  if (cpu > 1) { const cdp = await ctx.newCDPSession(pg); await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpu }); }
+  const url = `${base}${page(spec.chain[0])}?${spec.era ? `era=${spec.era}&` : ""}debug`;
+  await pg.goto(url, { waitUntil: "domcontentloaded", timeout: 180000 });
+  await ready(pg);
+  // The cookie notice is part of the page, not the map: accepted so it does not cover the dock.
+  await pg.locator("button", { hasText: /Принять|Accept/ }).first().click({ timeout: 2000 }).catch(() => {});
+  await pg.evaluate((max) => { window.__zoomMaxVoid = max; }, maxVoid);
+  await pg.evaluate(install);
+  const surface = await pg.evaluate(() => { const r = window.__worldMap.surface.getBoundingClientRect(); return [r.left, r.top]; });
+  const told = [];
+  const wheel = async (target, dir, max) => {
+    for (let i = 0; i < max; i++) {
+      // In: the cursor on the place to go into; out: at the middle of the view, as a reader backs out.
+      const at = dir < 0 ? await centreOf(pg, target) : null;
+      const [x, y] = at ?? [720, 450];
+      await pg.mouse.move(surface[0] + x, surface[1] + y);
+      await pg.mouse.wheel(0, dir * 100);
+      await pg.waitForTimeout(110);
+      if (shots) await pg.screenshot({ path: `${shots}/${spec.key}-${dir < 0 ? "in" : "out"}-${String(i).padStart(2, "0")}.png` });
+      const focus = await pg.evaluate(() => window.__worldMap.focus?.id ?? null);
+      if (focus === target) return true;
+    }
+    // The last notches still gliding.
+    await pg.waitForTimeout(900);
+    return (await pg.evaluate(() => window.__worldMap.focus?.id ?? null)) === target;
+  };
+  const reached = [];
+  // In: the cursor on each next place until it is the map in view.
+  for (const id of spec.chain.slice(1)) reached.push([id, await wheel(id, -1, 14)]);
+  await pg.waitForTimeout(900);
+  // Out: back to the first map of the chain.
+  await pg.evaluate(() => { window.__zoomRec.phase = "out"; });
+  reached.push([spec.chain[0], await wheel(spec.chain[0], 1, 16)]);
+  await pg.waitForTimeout(900);
+  const rec = await pg.evaluate(() => { const r = window.__zoomRec; r.stop = true; return r; });
+  told.push(...rec.told);
+  if (shots) rec.voids.forEach((v, i) => fs.writeFileSync(`${shots}/${spec.key}-void-${i}-${v.focus}-${v.value.toFixed(2)}.png`, Buffer.from(v.url.split(",")[1], "base64")));
+  await ctx.close();
+  const moving = rec.frames.filter((f) => f.moving);
+  const intervals = moving.map((f) => f.dt).filter((dt) => dt < 2000).sort((a, b) => a - b);
+  const pct = (p) => (intervals.length ? intervals[Math.min(intervals.length - 1, Math.floor(intervals.length * p))] : 0);
+  // Focus sequence (the engine's own, per frame): no A → B → A flip-flops.
+  // Each way on its own (in, then out by the same maps: A → B → A across the turn is the way back, not a flip).
+  const seq = [];
+  let flips = 0;
+  for (const phase of ["in", "out"]) {
+    const part = [];
+    for (const f of rec.frames) if (f.phase === phase && f.focus !== null && part.at(-1) !== f.focus) part.push(f.focus);
+    for (let i = 2; i < part.length; i++) if (part[i] === part[i - 2] && part[i - 1] !== part[i]) flips += 1;
+    for (const id of part) if (seq.at(-1) !== id) seq.push(id);
+  }
+  if (args.debug) {
+    const at = rec.frames.findIndex((f, i) => i > 1 && f.focus === rec.frames[i - 2]?.focus && rec.frames[i - 1].focus !== f.focus);
+    if (at >= 0) for (const f of rec.frames.slice(Math.max(0, at - 6), at + 6)) console.log("     ", JSON.stringify({ focus: f.focus, scale: f.scale, cx: f.cx, cy: f.cy, wheel: f.wheel, moving: f.moving, phase: f.phase }));
+    // Every change of the map in view, with the frames around it.
+    rec.frames.forEach((f, i) => { if (i && f.focus !== rec.frames[i - 1].focus) console.log("      change", rec.frames[i - 1].focus, "→", f.focus, JSON.stringify({ scale: f.scale, wheel: f.wheel, phase: f.phase, why: f.why })); });
+    const big = rec.frames.reduce((a, f) => (f.upscale > (a?.upscale ?? 0) ? f : a), null);
+    if (big) console.log("      max upscale", JSON.stringify(big));
+  }
+  const allowed = new Set(spec.chain);
+  const result = {
+    key: spec.key, era: spec.era ?? "current", frames: rec.frames.length, movingFrames: moving.length,
+    reached: Object.fromEntries(reached.map(([id, ok]) => [id, ok])),
+    ancestorFrames: rec.frames.filter((f) => f.ancestors.length).length,
+    ancestorSample: rec.frames.find((f) => f.ancestors.length)?.ancestors ?? null,
+    voidFrames: rec.frames.filter((f) => f.empty > maxVoid).length, voidMax: Math.max(0, ...rec.frames.map((f) => f.empty)),
+    pillWhileMoving: moving.filter((f) => f.pill).length,
+    toldWhileMoving: rec.focusTold.filter((t) => t.moving).length, toldTitles: told.map((t) => t.title),
+    focusSeq: seq, flips, offChain: seq.filter((id) => !allowed.has(id)).length,
+    focusUpscaleMax: Math.max(0, ...rec.frames.map((f) => f.upscale)),
+    intervalP50: Math.round(pct(0.5)), intervalP95: Math.round(pct(0.95)), intervalMax: Math.round(intervals.at(-1) ?? 0),
+    longTasks: rec.long.length, longMax: Math.round(Math.max(0, ...rec.long)),
+  };
+  const problems = [];
+  if (Object.values(result.reached).some((ok) => !ok)) problems.push("NOT-REACHED");
+  if (result.ancestorFrames) problems.push("ANCESTOR-PICTURE");
+  if (result.voidFrames) problems.push("VOID");
+  if (result.pillWhileMoving) problems.push("HOVER-WHILE-MOVING");
+  if (result.toldWhileMoving) problems.push("TITLE-WHILE-MOVING");
+  if (result.flips) problems.push("FLIP-FLOP");
+  if (result.intervalP95 > maxFrame) problems.push("SLOW-FRAMES");
+  result.problems = problems;
+  return result;
+}
+
+/**
+ * The other ways to zoom and move, on one page each: keys + and −, double click, the zoom buttons, an era switch
+ * in the middle of a zoom, Back during a flight, a resize mid-zoom; a phone (390, DPR 2) pinching with two
+ * fingers. Every frame is checked as above; plus no page errors and a camera that stays a number.
+ */
+async function runInteractions(browser) {
+  const out = [];
+  const summarise = (key, rec, errors, extra = {}) => {
+    const moving = rec.frames.filter((f) => f.moving);
+    const r = {
+      key, frames: rec.frames.length, errors: errors.slice(0, 3),
+      ancestorFrames: rec.frames.filter((f) => f.ancestors.length).length, pillWhileMoving: moving.filter((f) => f.pill).length,
+      toldWhileMoving: rec.focusTold.filter((t) => t.moving).length, nonFinite: rec.frames.filter((f) => !Number.isFinite(f.scale) || !Number.isFinite(f.cx)).length,
+      voidFrames: rec.frames.filter((f) => f.empty > maxVoid).length, recorderErrors: rec.errors ?? 0, lastError: rec.lastError, ...extra,
+    };
+    if (shots) rec.voids.forEach((v, i) => fs.writeFileSync(`${shots}/${key}-void-${i}-${v.focus}-${v.value.toFixed(2)}.png`, Buffer.from(v.url.split(",")[1], "base64")));
+    r.voidMax = Number(Math.max(0, ...rec.frames.map((f) => f.empty)).toFixed(3));
+    r.voidAt = rec.frames.filter((f) => f.empty > maxVoid).map((f) => `${f.phase}:${f.focus}`);
+    r.ancestorAt = rec.frames.filter((f) => f.ancestors.length).map((f) => `${f.phase}:${f.ancestors.join("/")}`);
+    r.problems = [errors.length && "PAGE-ERROR", r.ancestorFrames && "ANCESTOR-PICTURE", r.pillWhileMoving && "HOVER-WHILE-MOVING", r.toldWhileMoving && "TITLE-WHILE-MOVING", r.nonFinite && "NAN-CAMERA", r.voidFrames && "VOID"].filter(Boolean);
+    return r;
+  };
+  // Desktop: keys, double click, buttons, era switch mid-zoom, Back mid-flight, resize mid-zoom.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const pg = await ctx.newPage();
+    const errors = [];
+    pg.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
+    if (args.debug) pg.on("framenavigated", (f) => { if (f === pg.mainFrame()) console.log("      navigated", f.url()); });
+    await pg.goto(`${base}${page(12)}?debug`, { waitUntil: "domcontentloaded", timeout: 180000 });
+    await ready(pg);
+    await pg.locator("button", { hasText: /Принять|Accept/ }).first().click({ timeout: 2000 }).catch(() => {});
+    await pg.evaluate((max) => { window.__zoomMaxVoid = max; }, maxVoid);
+    await pg.evaluate(install);
+    const surface = await pg.evaluate(() => { const r = window.__worldMap.surface.getBoundingClientRect(); return [r.left, r.top]; });
+    const step = (name) => pg.evaluate((n) => { if (window.__zoomRec) window.__zoomRec.phase = n; }, name);
+    await step("keys");
+    await pg.evaluate(() => window.__worldMap.surface.focus());
+    for (const key of ["+", "+", "+", "-", "-"]) { await pg.keyboard.press(key); await pg.waitForTimeout(160); }
+    await pg.waitForTimeout(900);
+    if (args.debug) console.log("      keys done");
+    const at = await centreOf(pg, 1);
+    await step("dblclick");
+    await pg.mouse.dblclick(surface[0] + at[0], surface[1] + at[1]);
+    await pg.waitForTimeout(900);
+    await step("buttons");
+    for (const label of [/Приблизить|Zoom in/, /Приблизить|Zoom in/, /Отдалить|Zoom out/, /Отдалить|Zoom out/]) {
+      await pg.getByRole("button", { name: label }).first().click({ timeout: 3000 }).catch(() => {});
+      await pg.waitForTimeout(180);
+    }
+    await pg.waitForTimeout(900);
+    // An era switch in the middle of a wheel zoom.
+    await step("era");
+    await pg.mouse.move(surface[0] + 900, surface[1] + 450);
+    await pg.mouse.wheel(0, -100);
+    await pg.waitForTimeout(60);
+    await pg.getByText(/^Classic$/).first().click({ timeout: 3000 }).catch(() => {});
+    await pg.mouse.wheel(0, -100);
+    await pg.waitForTimeout(1600);
+    if (args.debug) console.log("      era done");
+    // Back while a flight is under way (a click on a zone flies there and adds a history step).
+    // (The first flight settles and leaves a step to go back to; Back comes in the middle of the second.)
+    await step("back");
+    await pg.evaluate(() => window.__worldMap.showWhole());
+    await pg.waitForTimeout(1800);
+    const zone = await centreOf(pg, 1);
+    await pg.mouse.click(surface[0] + zone[0], surface[1] + zone[1]);
+    await pg.waitForTimeout(2200);
+    const city = await centreOf(pg, 85);
+    await pg.mouse.click(surface[0] + city[0], surface[1] + city[1]);
+    await pg.waitForTimeout(400);
+    await pg.evaluate(() => history.back());
+    await pg.waitForTimeout(1800);
+    if (args.debug) console.log("      back done");
+    // A resize in the middle of a zoom.
+    await step("resize");
+    await pg.mouse.wheel(0, -100);
+    await pg.setViewportSize({ width: 1100, height: 760 });
+    await pg.waitForTimeout(1600);
+    const rec = await pg.evaluate(() => { const r = window.__zoomRec; if (!r) return null; r.stop = true; return r; });
+    if (!rec) { out.push({ key: "interactions-desktop", problems: ["LEFT-THE-PAGE"], url: pg.url() }); await ctx.close(); return out; }
+    out.push(summarise("interactions-desktop", rec, errors, { url: pg.url().replace(base, "") }));
+    await ctx.close();
+  }
+  // Phone: 390 × 844 at DPR 2, two fingers pinching out and in.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const pg = await ctx.newPage();
+    const errors = [];
+    pg.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
+    await pg.goto(`${base}${page(1)}?debug`, { waitUntil: "domcontentloaded", timeout: 180000 });
+    await ready(pg);
+    await pg.locator("button", { hasText: /Принять|Accept/ }).first().click({ timeout: 2000 }).catch(() => {});
+    await pg.evaluate((max) => { window.__zoomMaxVoid = max; }, maxVoid);
+    await pg.evaluate(install);
+    const cdp = await ctx.newCDPSession(pg);
+    const box = await pg.evaluate(() => { const r = window.__worldMap.surface.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height * 0.4]; });
+    const pinch = async (from, to) => {
+      const pts = (d) => [{ x: box[0] - d, y: box[1], id: 1 }, { x: box[0] + d, y: box[1], id: 2 }];
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: pts(from) });
+      for (let i = 1; i <= 12; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: pts(from + ((to - from) * i) / 12) }); await pg.waitForTimeout(16); }
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await pg.waitForTimeout(900);
+    };
+    const s0 = await pg.evaluate(() => window.__worldMap.view.scale);
+    await pinch(30, 120);
+    const s1 = await pg.evaluate(() => window.__worldMap.view.scale);
+    await pinch(120, 30);
+    const s2 = await pg.evaluate(() => window.__worldMap.view.scale);
+    const rec = await pg.evaluate(() => { const r = window.__zoomRec; r.stop = true; return r; });
+    const r = summarise("interactions-phone-390-dpr2", rec, errors, { pinchOut: Number((s1 / s0).toFixed(2)), pinchIn: Number((s2 / s1).toFixed(2)) });
+    if (!(s1 > s0 * 1.5 && s2 < s1 / 1.5)) r.problems.push("PINCH");
+    out.push(r);
+    await ctx.close();
+  }
+  return out;
+}
+
+if (shots) fs.mkdirSync(shots, { recursive: true });
+const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
+const results = [];
+for (const spec of chains) {
+  try { results.push(await runChain(browser, spec)); } catch (error) { results.push({ key: spec.key, problems: ["ERROR"], error: String(error).slice(0, 300) }); }
+  const r = results.at(-1);
+  const missed = Object.entries(r.reached ?? {}).filter(([, ok]) => !ok).map(([id]) => id);
+  console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(26)} ${r.problems.join(",") || ""}${missed.length ? ` (not reached ${missed.join(",")})` : ""}`);
+  console.log(`     focus ${(r.focusSeq ?? []).join("→")} | titles ${(r.toldTitles ?? []).join(" → ")} | void ${r.voidFrames ?? "-"} (max ${(r.voidMax ?? 0).toFixed(3)}) | ancestor ${r.ancestorFrames ?? "-"} ${r.ancestorSample ? JSON.stringify(r.ancestorSample) : ""} | pill ${r.pillWhileMoving ?? "-"} | frames p50 ${r.intervalP50} p95 ${r.intervalP95} max ${r.intervalMax} ms, long tasks ${r.longTasks} (max ${r.longMax}) | focus upscale max ${r.focusUpscaleMax}${r.error ? ` | ${r.error}` : ""}`);
+}
+if (!args.only || args.only.includes("interactions")) {
+  for (const r of await runInteractions(browser).catch((error) => [{ key: "interactions", problems: ["ERROR"], error: String(error).slice(0, 300) }])) {
+    results.push(r);
+    console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(26)} ${r.problems.join(",")}`);
+    console.log(`     ${JSON.stringify({ ...r, problems: undefined, key: undefined })}`);
+  }
+}
+await browser.close();
+if (args.out) fs.writeFileSync(args.out, JSON.stringify(results, null, 2));
+process.exit(results.some((r) => r.problems.length) ? 1 : 0);
