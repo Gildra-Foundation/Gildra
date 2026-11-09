@@ -115,6 +115,8 @@
     "1978": {
       "url": "/maps/terrain/1978/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/1978/index.json",
+      "empty": "/maps/terrain/1978/empty.json",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 22016,
       "height": 16896,
@@ -124,9 +126,7 @@
         -0.005765,
         0.900474,
         1.030545
-      ],
-      "empty": "/maps/terrain/1978/empty.json",
-      "ocean": "#303038"
+      ]
     },
     "2274": {
       "url": "/maps/terrain/2274/{z}/{x}_{y}.webp",
@@ -1317,9 +1317,10 @@
     },
     "1978": {
       "mapId": 2444,
+      "blockPixels": 512,
       "blocks": 1419,
       "tiles": 7612,
-      "bytes": 12084616
+      "bytes": 20072149
     },
     "2274": {
       "mapId": 2601,
