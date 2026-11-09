@@ -384,6 +384,8 @@ async function runInteractions(browser) {
  */
 async function settled(pg) {
   await pg.waitForFunction(() => { const e = window.__worldMap; return !e.wheel && !e.flight && !e.velocity && !e.crossfade && !e.focusUntold && !e.pending && e.tiles.pending === 0; }, null, { timeout: 15000, polling: 100 }).catch(() => {});
+  // …the screen has been drawn around it (a frame after the change; on a slow device that is a while)…
+  await pg.waitForFunction(() => { const e = window.__worldMap; return e.composition().focus === e.focusId; }, null, { timeout: 5000, polling: 100 }).catch(() => {});
   // …and the page has caught up with it (its title is the map in view).
   await pg.waitForFunction(() => { const e = window.__worldMap; const m = e.maps.get(e.focusId); const t = document.querySelector("#world-map-title")?.textContent?.trim(); return !m || m.type === "cosmic" || t === m.name; }, null, { timeout: 3000, polling: 100 }).catch(() => {});
   await pg.waitForTimeout(300);
@@ -441,12 +443,16 @@ async function runNotches(browser, spec, delta) {
   const check = async (dir) => {
     const st = await stateOf(pg);
     const issues = [];
-    if (st.type !== "cosmic" && st.title !== st.name) issues.push(`TITLE(${st.title}≠${st.name})`);
+    if (st.type !== "cosmic" && st.title !== st.name) {
+      issues.push(`TITLE(${st.title}≠${st.name})`);
+      if (args.debug) console.log("      title-debug", JSON.stringify(await pg.evaluate(() => { const e = window.__worldMap; return { focusId: e.focusId, home: e.home?.id, atHome: e.home ? e.atHome(e.home.id) : null, untold: e.focusUntold, moving: e.moving, why: e.focusWhy, comp: e.composition().focus, info: e.lastInfo.focus.id }; })));
+    }
     // The map in view dominates: nothing else drawn covers clearly more of the view.
     if (st.dominant !== st.focus && st.topShare > st.focusShare + 0.15) issues.push(`DOMINANT(${st.dominant} ${st.topShare.toFixed(2)} > ${st.focus} ${st.focusShare.toFixed(2)})`);
     if (st.letters.length) issues.push(`LETTERS(${st.letters.join(",")})`);
     if (st.markers.length) issues.push(`MARKERS(${st.markers.slice(0, 4).join(",")})`);
     steps.push(`${dir}${n}:${st.focus}`);
+    if (args.debug) console.log("      step", dir, n, JSON.stringify(await pg.evaluate(() => { const e = window.__worldMap; const ins = e.options.insets; const [cx, cy] = e.lookAt ?? [0, 0]; const [sx, sy] = e.project(cx, cy); return { f: e.focusId, s: Math.round(e.view.scale), look: [Math.round(sx), Math.round(sy)], why: e.focusWhy, draws: e.lastInfo.drawn.filter((d) => d.map.depth >= 3).map((d) => `${d.map.id}:${d.role}:o${(d.open ?? 0).toFixed(2)}`).slice(0, 8) }; })));
     if (issues.length) {
       problems.push(`${dir}${n} focus ${st.focus} ${issues.join(" ")}`);
       if (shots) await pg.screenshot({ path: `${shots}/notch-${spec.key}-${delta}-${dir}${n}.png`, timeout: 120000 }).catch(() => {});
