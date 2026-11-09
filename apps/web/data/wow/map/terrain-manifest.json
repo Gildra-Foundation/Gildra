@@ -628,7 +628,7 @@
       "url": "/maps/terrain/2432/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/2432/index.json",
       "empty": "/maps/terrain/2432/empty.json",
-      "ocean": "#282830",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 2560,
       "height": 2560,
@@ -1236,16 +1236,16 @@
       "url": "/maps/terrain/2432/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/2432/index.json",
       "empty": "/maps/terrain/2432/empty.json",
-      "ocean": "#282830",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 2560,
       "height": 2560,
       "maxZoom": 4,
       "rect": [
-        -1.267368,
-        -2.619668,
-        3.17708,
-        4.047002
+        -1.267367,
+        -2.619667,
+        3.177078,
+        4.047
       ]
     },
     "2623": {
@@ -1467,7 +1467,7 @@
       "blockPixels": 512,
       "blocks": 25,
       "tiles": 139,
-      "bytes": 631442
+      "bytes": 880775
     },
     "1462": {
       "mapId": 1643,
