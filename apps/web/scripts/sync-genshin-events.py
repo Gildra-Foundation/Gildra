@@ -19,7 +19,7 @@ IMAGE_RE = re.compile(r"https?://[^\"'<> ]+")
 
 
 def fetch(url: str) -> bytes:
-    request = Request(url, headers={"User-Agent": "Gildra-Genshin-Events/1.0 (+https://api.gildra.net)"})
+    request = Request(url, headers={"User-Agent": "Gildra-Genshin-Events/1.0 (+https://api.wowarcana.com)"})
     with urlopen(request, timeout=45) as response:  # noqa: S310 - URL is an explicit operator input
         if response.status != 200:
             raise RuntimeError(f"event source returned HTTP {response.status}")

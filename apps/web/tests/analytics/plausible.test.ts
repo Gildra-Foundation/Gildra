@@ -5,8 +5,8 @@ import { plausibleTracker } from "../../lib/analytics/plausible.ts";
 
 describe("Plausible tracker", () => {
   it("tracks only in production with an https script and a public site id", () => {
-    const env = { NODE_ENV: "production", PLAUSIBLE_SCRIPT_URL: "https://stats.example.net/js/script.js", PLAUSIBLE_SITE_DOMAIN: "gildra.net" };
-    assert.deepEqual(plausibleTracker(env), { src: "https://stats.example.net/js/script.js", domain: "gildra.net" });
+    const env = { NODE_ENV: "production", PLAUSIBLE_SCRIPT_URL: "https://stats.example.net/js/script.js", PLAUSIBLE_SITE_DOMAIN: "wowarcana.com" };
+    assert.deepEqual(plausibleTracker(env), { src: "https://stats.example.net/js/script.js", domain: "wowarcana.com" });
     assert.equal(plausibleTracker({ ...env, NODE_ENV: "test" }), null);
     assert.equal(plausibleTracker({ ...env, NODE_ENV: "development" }), null);
     assert.equal(plausibleTracker({ ...env, PLAUSIBLE_TRACKING: "off" }), null);
@@ -16,7 +16,7 @@ describe("Plausible tracker", () => {
     // Optional same-site event endpoint (proxied Plausible); an invalid one disables tracking.
     assert.deepEqual(plausibleTracker({ ...env, PLAUSIBLE_API_URL: "/stats/api/event" }), {
       src: "https://stats.example.net/js/script.js",
-      domain: "gildra.net",
+      domain: "wowarcana.com",
       api: "/stats/api/event",
     });
     assert.equal(plausibleTracker({ ...env, PLAUSIBLE_API_URL: "https://stats.example.net/api/event" })?.api, "https://stats.example.net/api/event");

@@ -19,7 +19,7 @@ export function CookieNoticeGate() {
     || pathname.includes("/wow/characters/");
 
   useEffect(() => {
-    if (hidden || window.location.hostname === "api.gildra.net") {
+    if (hidden || window.location.hostname === "api.wowarcana.com") {
       setNeedsNotice(false);
       return;
     }

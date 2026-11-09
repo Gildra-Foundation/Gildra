@@ -46,7 +46,7 @@ func isPrivateCatalogPath(path string) bool {
 
 func writeCatalogUnauthorized(w http.ResponseWriter) {
 	httpjson.WriteProblem(w, http.StatusUnauthorized, httpjson.PrivateNoStore, map[string]any{
-		"type":   "https://api.gildra.net/errors/catalog-authentication-required",
+		"type":   "https://api.wowarcana.com/errors/catalog-authentication-required",
 		"title":  "Catalog authentication required",
 		"status": http.StatusUnauthorized,
 		"code":   "catalog_authentication_required",

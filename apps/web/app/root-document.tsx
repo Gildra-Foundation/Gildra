@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_ORIGIN } from "@/lib/seo/site";
 import type { ReactNode } from "react";
 import { Alegreya, Chakra_Petch, Inter } from "next/font/google";
 import { CookieNoticeGate } from "@/components/CookieNoticeGate";
@@ -66,7 +67,7 @@ const rootWords = {
  */
 export function rootMetadataFor(lang: "en" | "ru"): Metadata {
   return {
-    metadataBase: new URL("https://gildra.net"),
+    metadataBase: new URL(SITE_ORIGIN),
     title: rootWords[lang].title,
     description: rootWords[lang].description,
     openGraph: { siteName: "Gildra", type: "website", locale: lang === "ru" ? "ru_RU" : "en_US" },

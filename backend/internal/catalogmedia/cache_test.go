@@ -71,11 +71,11 @@ func TestValidCacheKeyRejectsTraversal(t *testing.T) {
 
 func TestNewRejectsNonOriginPublicBase(t *testing.T) {
 	for _, raw := range []string{
-		"http://api.gildra.net",
-		"https://api.gildra.net/path",
-		"https://api.gildra.net?token=secret",
-		"https://api.gildra.net#fragment",
-		"https://user@api.gildra.net",
+		"http://api.wowarcana.com",
+		"https://api.wowarcana.com/path",
+		"https://api.wowarcana.com?token=secret",
+		"https://api.wowarcana.com#fragment",
+		"https://user@api.wowarcana.com",
 	} {
 		if _, err := New(&pgxpool.Pool{}, t.TempDir(), raw, nil); err == nil {
 			t.Fatalf("New accepted non-origin public base %q", raw)

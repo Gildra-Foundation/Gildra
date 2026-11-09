@@ -7,7 +7,7 @@ info:
     name: Proprietary
     identifier: LicenseRef-Proprietary
 servers:
-  - url: https://api.gildra.net/league-of-legends/v1
+  - url: https://api.wowarcana.com/league-of-legends/v1
 tags:
   - name: Discovery
   - name: Champions

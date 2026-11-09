@@ -1,4 +1,4 @@
-export const siteOrigin = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://gildra.net").replace(/\/$/, "");
+export { SITE_ORIGIN as siteOrigin } from "@/lib/seo/site";
 
 export function xmlEscape(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({

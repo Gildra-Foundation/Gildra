@@ -72,7 +72,7 @@ export function WorldMapPage({ lang, map: requested }: { lang: Lang; map?: Atlas
     "@type": "BreadcrumbList",
     itemListElement: crumbs.map((crumb, index) => ({
       "@type": "ListItem", position: index + 1, name: crumb.label,
-      ...(crumb.href && index < crumbs.length - 1 ? { item: `https://gildra.net${crumb.href}` } : {}),
+      ...(crumb.href && index < crumbs.length - 1 ? { item: `https://wowarcana.com${crumb.href}` } : {}),
     })),
   };
 

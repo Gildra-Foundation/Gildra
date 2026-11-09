@@ -61,7 +61,7 @@ func run() error {
 	var all, templatesOnly bool
 	var timeout time.Duration
 	flag.StringVar(&databaseURL, "database-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection string")
-	flag.StringVar(&apiBase, "api-base-url", "https://api.gildra.net", "public API base URL")
+	flag.StringVar(&apiBase, "api-base-url", "https://api.wowarcana.com", "public API base URL")
 	flag.StringVar(&build, "build", "", "build version (defaults to the active WoW build)")
 	flag.StringVar(&seed, "seed", "midnight-acceptance-v1", "deterministic selection seed")
 	flag.IntVar(&randomCount, "random", 200, "number of eligible random records")
@@ -534,7 +534,7 @@ func validateDisplay(payload map[string]any, entityType string, hasMedia bool) e
 		return errors.New("missing verified primary media")
 	}
 	if hasMedia {
-		if iconURL, _ := payload["iconUrl"].(string); !strings.HasPrefix(iconURL, "https://api.gildra.net/v1/media/") {
+		if iconURL, _ := payload["iconUrl"].(string); !strings.HasPrefix(iconURL, "https://api.wowarcana.com/v1/media/") {
 			return fmt.Errorf("cached media has no local icon URL")
 		}
 	}

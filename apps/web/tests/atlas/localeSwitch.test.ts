@@ -5,7 +5,7 @@ import vm from "node:vm";
 import { localeArrivalScript } from "../../components/platform/locale/localeArrivalScript.ts";
 import { LOCALE_SWITCH_KEY, readingAnchor } from "../../components/platform/locale/localeSwitch.ts";
 
-const url = (path: string) => new URL(path, "https://gildra.net");
+const url = (path: string) => new URL(path, "https://wowarcana.com");
 
 describe("locale switch", () => {
   it("anchors the reading line on the deepest in-flow element, skipping artwork layers", () => {
@@ -36,7 +36,7 @@ function arrive({ path, record, pageReveal = true, reduced = false }: { path: st
   const replaced: string[] = [];
   const target = { tagName: "SECTION", children: [], isConnected: true, getBoundingClientRect: () => ({ top: 1500 - window.scrollY }) };
   const content = { children: [target] };
-  const location = { href: `https://gildra.net${path}`, pathname: path.split(/[?#]/)[0], search: "" };
+  const location = { href: `https://wowarcana.com${path}`, pathname: path.split(/[?#]/)[0], search: "" };
   const window: Record<string, unknown> & { scrollY: number } = {
     scrollY: 0,
     location,

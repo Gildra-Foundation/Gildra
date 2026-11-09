@@ -48,7 +48,7 @@ func TestAPIEntityRedactsRawSourceFieldsButPreservesDisplayAndProvenance(t *test
 }
 
 func TestAPIEntityExposesLocallyCachedSourceBackedMedia(t *testing.T) {
-	localURL := "https://api.gildra.net/v1/media/" + uuid.NewString()
+	localURL := "https://api.wowarcana.com/v1/media/" + uuid.NewString()
 	entity := catalog.Entity{
 		ID: uuid.New(), Product: "wow", Type: "achievement", ExternalID: 6, Slug: "level-10",
 		Locale: "en_US", ResolvedLocale: "en_US", Name: "Level 10", UpdatedAt: time.Unix(1, 0).UTC(),
@@ -76,7 +76,7 @@ func TestAPILibraryDatasetPreservesFreshnessAndCoverage(t *testing.T) {
 	updatedAt := time.Unix(10, 0).UTC()
 	build := "12.0.1.65000"
 	previewIcon := "inv_sword_04"
-	previewURL := "https://api.gildra.net/v1/media/79be8de3-77ba-436d-afd0-91a38146611a"
+	previewURL := "https://api.wowarcana.com/v1/media/79be8de3-77ba-436d-afd0-91a38146611a"
 	itemClassID := 2
 	got := toAPILibraryDataset(catalog.LibraryDataset{
 		Slug: "weapons", Product: "wow", EntityType: "item", CategoryPath: "equipment/weapons",

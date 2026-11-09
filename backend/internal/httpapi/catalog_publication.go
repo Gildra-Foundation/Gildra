@@ -62,7 +62,7 @@ func isCatalogDeliveryPath(path string) bool {
 
 func writePublicationProblem(w http.ResponseWriter, code, detail string) {
 	httpjson.WriteProblem(w, http.StatusServiceUnavailable, httpjson.NoStore, map[string]any{
-		"type":  "https://api.gildra.net/errors/" + strings.ReplaceAll(code, "_", "-"),
+		"type":  "https://api.wowarcana.com/errors/" + strings.ReplaceAll(code, "_", "-"),
 		"title": "Catalog publication unavailable", "status": http.StatusServiceUnavailable,
 		"code": code, "detail": detail,
 	})

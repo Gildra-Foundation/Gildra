@@ -202,7 +202,7 @@ def parse_icyveins_page(html: bytes | str, source: dict[str, str]) -> dict[str, 
 
 def _direct_fetch(source_url: str, contract: ResponseContract) -> tuple[bytes, dict[str, Any]]:
     request = urllib.request.Request(source_url, headers={
-        "User-Agent": "GildraDatasetBot/1.0 (+https://gildra.net)",
+        "User-Agent": "GildraDatasetBot/1.0 (+https://wowarcana.com)",
         "Accept": "text/html,application/xhtml+xml", "Accept-Encoding": "identity",
     })
     with urllib.request.urlopen(request, timeout=60) as response:

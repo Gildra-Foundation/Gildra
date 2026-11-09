@@ -3,8 +3,8 @@ import { apiInternalUrl } from "@/lib/env";
 /**
  * The console's panel session: 200 with the user when signed in, 401 for a guest.
  * Reachable as /api/api-console/session and as /api-console/session — the second
- * is the one the console calls, because nginx sends /api/* on gildra.net to the Go
- * API and rewrites it into console pages on api.gildra.net.
+ * is the one the console calls, because nginx sends /api/* on wowarcana.com to the Go
+ * API and rewrites it into console pages on api.wowarcana.com.
  */
 export async function GET(request: Request) {
   const api = apiInternalUrl();

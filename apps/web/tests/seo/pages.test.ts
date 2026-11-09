@@ -8,7 +8,7 @@ import { describe, it } from "node:test";
  * hub links that do not bounce through redirects, and the cached profession region view.
  */
 const base = (process.env.SEO_BASE_URL ?? "http://localhost:3420").replace(/\/$/, "");
-const origin = (process.env.SEO_CANONICAL_ORIGIN ?? "https://gildra.net").replace(/\/$/, "");
+const origin = (process.env.SEO_CANONICAL_ORIGIN ?? "https://wowarcana.com").replace(/\/$/, "");
 const BOT = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
 async function get(path: string) {

@@ -54,7 +54,7 @@ scraper_healthy() {
 }
 web_serves_database() {
   # The origin certificate is Cloudflare's, not publicly trusted: -k.
-  curl -kfsS -o /dev/null --max-time 30 --resolve gildra.net:443:127.0.0.1 "https://gildra.net/database?type=item&q=helm"
+  curl -kfsS -o /dev/null --max-time 30 --resolve wowarcana.com:443:127.0.0.1 "https://wowarcana.com/database?type=item&q=helm"
 }
 
 time_searches() {

@@ -44,7 +44,7 @@ export function ApiConsole({ consolePath, returnTo }: { consolePath: string[]; r
 
   // The Genshin catalog is a read-only public encyclopedia. Keep the
   // operational/admin sections behind the panel session, while allowing the
-  // catalog page to be opened directly from api.gildra.net.
+  // catalog page to be opened directly from api.wowarcana.com.
   if (isPublicGenshin) {
     return <PublicGenshinCatalog />;
   }

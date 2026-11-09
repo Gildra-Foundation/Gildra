@@ -101,8 +101,8 @@ services:
           create_host_path: false
     # First-party Plausible tracker.
     environment:
-      SITE_PUBLIC_ORIGIN: https://gildra.net
-      PLAUSIBLE_SCRIPT_URL: https://gildra.net/stats/js/script.js
+      SITE_PUBLIC_ORIGIN: https://wowarcana.com
+      PLAUSIBLE_SCRIPT_URL: https://wowarcana.com/stats/js/script.js
       PLAUSIBLE_API_URL: /stats/api/event
       PLAUSIBLE_SITE_DOMAIN: gildra.net
       GILDRA_AUCTION_STATE_DIR: /var/lib/gildra/auction-state

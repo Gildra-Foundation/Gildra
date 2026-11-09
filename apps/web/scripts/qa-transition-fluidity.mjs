@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
-const base=process.env.BASE_URL||'https://gildra.net',label=process.env.FLUIDITY_LABEL||'baseline';
+const base=process.env.BASE_URL||'https://wowarcana.com',label=process.env.FLUIDITY_LABEL||'baseline';
 const out=path.resolve(import.meta.dirname,'../.artifacts/transition-fluidity',label);fs.mkdirSync(out,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox','--site-per-process']});
 const profiles=[{name:'desktop',width:1440,cpu:1},{name:'mobile',width:390,cpu:4}].filter(p=>(process.env.FLUIDITY_PROFILES||'desktop,mobile').split(',').includes(p.name));

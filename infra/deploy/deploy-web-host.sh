@@ -119,14 +119,14 @@ smoke() {
   local failed=0
   printf '%s\n' $smoke_paths | xargs -P 8 -I{} sh -c '
     curl --fail --silent --show-error --insecure --retry 5 --retry-delay 2 --max-time 20 \
-      --resolve "gildra.net:$2:$1" "https://gildra.net:$2$3" -o /dev/null || { echo "smoke failed: $3" >&2; exit 1; }' \
+      --resolve "wowarcana.com:$2:$1" "https://wowarcana.com:$2$3" -o /dev/null || { echo "smoke failed: $3" >&2; exit 1; }' \
     _ "$smoke_host" "$smoke_port" {} || failed=1
   curl --fail --silent --show-error --insecure --retry 5 --retry-delay 2 --max-time 15 \
-    --resolve "api.gildra.net:$smoke_port:$smoke_host" "https://api.gildra.net:$smoke_port/readyz" -o /dev/null ||
+    --resolve "api.wowarcana.com:$smoke_port:$smoke_host" "https://api.wowarcana.com:$smoke_port/readyz" -o /dev/null ||
     { echo "smoke failed: api readyz" >&2; failed=1; }
   if [ -n "$expect" ]; then
-    curl --fail --silent --show-error --insecure --max-time 20 --resolve "gildra.net:$smoke_port:$smoke_host" \
-      "https://gildra.net:$smoke_port${expect%%:*}" | grep -Fq -- "${expect#*:}" ||
+    curl --fail --silent --show-error --insecure --max-time 20 --resolve "wowarcana.com:$smoke_port:$smoke_host" \
+      "https://wowarcana.com:$smoke_port${expect%%:*}" | grep -Fq -- "${expect#*:}" ||
       { echo "smoke failed: ${expect%%:*} does not contain ${expect#*:}" >&2; failed=1; }
   fi
   return "$failed"

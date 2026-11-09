@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Playwright smoke for the API console (api.gildra.net panel).
+ * Playwright smoke for the API console (api.wowarcana.com panel).
  *
  * Runs against a live Next.js server (default http://127.0.0.1:3000) and
  * stubs every /v1 request with fixtures, so it needs no database and no
@@ -17,7 +17,7 @@ const budgetMs = Number(process.env.CONSOLE_SMOKE_BUDGET_MS ?? 8000);
 const now = new Date().toISOString();
 
 const fixtures = {
-  "/v1/auth/me": { user: { id: "u1", email: "ops@gildra.net", displayName: "Ops", role: "admin" } },
+  "/v1/auth/me": { user: { id: "u1", email: "ops@wowarcana.com", displayName: "Ops", role: "admin" } },
   "/v1/admin/system": { generatedAt: now, healthy: true, schemaVersion: 131, recoveryPolicy: "verified_same_host", systems: [
     { name: "API", status: "operational", latencyMs: 0 }, { name: "PostgreSQL", status: "operational", latencyMs: 3 },
     { name: "ClickHouse", status: "operational", latencyMs: 5 }, { name: "Redis", status: "degraded", latencyMs: 2001 },
@@ -45,7 +45,7 @@ const checks = [
   { path: "/api-console", name: "Overview", expect: ["Обзор API", "Полнота каталога", "Доступные методы API", "Живые счётчики импорта пропущены"] },
   { path: "/api-console/datasets", name: "Datasets", expect: ["Все датасеты", "Tierlist WoWHead", "Свежие данные"] },
   { path: "/api-console/datasets/tierlist-wowhead", name: "Dataset detail", expect: ["Данные датасета", "История обновлений", "Обновление выполнено"] },
-  { path: "/api-console/api", name: "API", expect: ["Документация API", "/world-of-warcraft/{retail|classic|classic-era|hardcore}/v1", "https://api.gildra.net/world-of-warcraft/hardcore/v1"] },
+  { path: "/api-console/api", name: "API", expect: ["Документация API", "/world-of-warcraft/{retail|classic|classic-era|hardcore}/v1", "https://api.wowarcana.com/world-of-warcraft/hardcore/v1"] },
   { path: "/api-console/system", name: "System", expect: ["Состояние системы", "PostgreSQL", "Отклонение", "Схема БД: версия 131"] },
 ];
 

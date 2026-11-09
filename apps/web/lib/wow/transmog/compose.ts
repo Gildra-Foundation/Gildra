@@ -3,7 +3,7 @@ import type { BackgroundDef } from "./model";
 /**
  * Builds the export picture in a 2D canvas: background (none, color, gradient
  * or one of the site's scenes), a soft floor shadow, the model the viewer
- * rendered on a transparent background, the caption and the gildra.net mark.
+ * rendered on a transparent background, the caption and the wowarcana.com mark.
  * Every source is same-origin or a data URL, so the canvas stays exportable.
  */
 export type ComposeOptions = {
@@ -187,7 +187,7 @@ export async function composeFrame(options: ComposeOptions): Promise<HTMLCanvasE
     context.font = `600 ${Math.round(18 * unit)}px ${options.uiFont}`;
     context.letterSpacing = `${(2.5 * unit).toFixed(1)}px`;
     context.textAlign = "right";
-    context.fillText("GILDRA.NET", width - pad, height - pad);
+    context.fillText("WOWARCANA.COM", width - pad, height - pad);
     context.textAlign = "left";
     context.letterSpacing = "0px";
   }

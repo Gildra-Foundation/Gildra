@@ -855,7 +855,7 @@ async function loadMidnightWarriorTalentData(lang: TalentLang): Promise<TalentCa
     source: {
       kind: "official_catalog",
       label: talentCalculatorDataCopy[lang].gildraBlizzardBackedCatalog,
-      url: "https://api.gildra.net/v1/game/entity-summaries",
+      url: "https://api.wowarcana.com/v1/game/entity-summaries",
       observedAt: new Date().toISOString(),
     },
   };

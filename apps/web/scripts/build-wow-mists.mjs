@@ -107,7 +107,7 @@ function catalogRows(table, locale, version) {
 
 async function wagoRows(table, locale, version) {
   const url = `https://wago.tools/db2/${table}/csv?build=${version}${locale === "en_US" ? "" : `&locale=${locale.replace("_", "")}`}`;
-  const response = await fetch(url, { headers: { "user-agent": "gildra.net data build" } });
+  const response = await fetch(url, { headers: { "user-agent": "wowarcana.com data build" } });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`wago.tools ${table} ${locale}: HTTP ${response.status}`);
   return parseCsv(await response.text());

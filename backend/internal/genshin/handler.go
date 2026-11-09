@@ -333,6 +333,6 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 
 func writeProblem(w http.ResponseWriter, r *http.Request, status int, problemType, title, detail string) {
 	httpjson.WriteProblem(w, status, httpjson.NoStore, httpjson.Problem{
-		Type: "https://api.gildra.net/errors/genshin-impact/" + problemType, Title: title, Status: status, Detail: detail, Instance: r.URL.Path,
+		Type: "https://api.wowarcana.com/errors/genshin-impact/" + problemType, Title: title, Status: status, Detail: detail, Instance: r.URL.Path,
 	})
 }

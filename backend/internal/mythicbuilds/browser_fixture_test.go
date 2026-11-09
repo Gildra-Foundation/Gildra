@@ -30,7 +30,7 @@ func TestBrowserFixture(t *testing.T) {
 	}
 	mux := http.NewServeMux()
 	NewHandler(service, fakeIdentity{}).Register(mux)
-	target, _ := url.Parse("https://api.gildra.net")
+	target, _ := url.Parse("https://api.wowarcana.com")
 	proxy := httputil.NewSingleHostReverseProxy(target)
 	original := proxy.Director
 	proxy.Director = func(r *http.Request) {

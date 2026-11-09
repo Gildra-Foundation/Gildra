@@ -251,6 +251,6 @@ func (h *Handler) wowTierListContexts(w http.ResponseWriter, r *http.Request) {
 
 func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, detail string) {
 	httpjson.WriteProblem(w, status, httpjson.NoStore, httpjson.Problem{
-		Type: "https://api.gildra.net/errors/meta/" + code, Title: http.StatusText(status), Status: status, Detail: detail, Instance: r.URL.Path,
+		Type: "https://api.wowarcana.com/errors/meta/" + code, Title: http.StatusText(status), Status: status, Detail: detail, Instance: r.URL.Path,
 	})
 }

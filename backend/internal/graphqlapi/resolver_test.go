@@ -9,7 +9,7 @@ import (
 )
 
 func TestToGraphQLEntityRedactsRawSourceFieldsButPreservesDisplayAndProvenance(t *testing.T) {
-	iconURL := "https://api.gildra.net/v1/media/79be8de3-77ba-436d-afd0-91a38146611a"
+	iconURL := "https://api.wowarcana.com/v1/media/79be8de3-77ba-436d-afd0-91a38146611a"
 	quality := 95
 	fileDataID := int64(12345)
 	entity := catalog.Entity{
@@ -44,7 +44,7 @@ func TestToGraphQLEntityRedactsRawSourceFieldsButPreservesDisplayAndProvenance(t
 
 func TestToGraphQLDatasetExposesFreshnessAndCoverage(t *testing.T) {
 	build := "12.1.0.69497"
-	preview := "https://api.gildra.net/v1/media/preview"
+	preview := "https://api.wowarcana.com/v1/media/preview"
 	dataset := catalog.LibraryDataset{
 		Slug: "items", Product: "wow", EntityType: "item", Group: "equipment", IconSymbol: "#ic-item",
 		Name: "Items", Description: "All items", BuildVersion: &build, PreviewImageURL: &preview,

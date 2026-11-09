@@ -125,7 +125,7 @@ describe("seo: page metadata (2026-11-06 audit)", async () => {
 
 describe("seo: cached views of query-driven pages", async () => {
   const { cachedViewRewrite } = await import("../../lib/routes/cachedViews.ts");
-  const view = (url: string) => cachedViewRewrite(new URL(url, "https://gildra.net"));
+  const view = (url: string) => cachedViewRewrite(new URL(url, "https://wowarcana.com"));
   it("?region=us of a profession is served from the cached region/us path; EU stays on the page itself", () => {
     assert.equal(view("/wow/professions/alchemy?region=us"), "/wow/professions/alchemy/region/us");
     assert.equal(view("/ru/wow/professions/alchemy/?region=us&x=1"), "/ru/wow/professions/alchemy/region/us");
@@ -172,14 +172,14 @@ describe("seo: structured data", async () => {
   it("the home page names the site search", () => {
     for (const locale of ["en", "ru"] as const) {
       const site = websiteLd(locale, "x")[0] as unknown as { potentialAction: { target: { urlTemplate: string } } };
-      assert.equal(site.potentialAction.target.urlTemplate, `https://gildra.net${locale === "ru" ? "/ru" : ""}/search?q={search_term_string}`);
+      assert.equal(site.potentialAction.target.urlTemplate, `https://wowarcana.com${locale === "ru" ? "/ru" : ""}/search?q={search_term_string}`);
     }
   });
 
   it("breadcrumbs resolve to absolute URLs; the current page may go without one", () => {
     const ld = breadcrumbJsonLd([{ label: "World of Warcraft", href: "/ru/wow" }, { label: "Рейды", href: "/ru/wow/raids" }, { label: "Пустотный шпиль" }]);
     assert.deepEqual(ld.itemListElement.map((item) => [item.position, item.name, "item" in item ? item.item : null]),
-      [[1, "World of Warcraft", "https://gildra.net/ru/wow"], [2, "Рейды", "https://gildra.net/ru/wow/raids"], [3, "Пустотный шпиль", null]]);
+      [[1, "World of Warcraft", "https://wowarcana.com/ru/wow"], [2, "Рейды", "https://wowarcana.com/ru/wow/raids"], [3, "Пустотный шпиль", null]]);
   });
 
   it("every tier-list spec links to its specialization page", () => {
@@ -190,7 +190,7 @@ describe("seo: structured data", async () => {
     const roles = { tank: [], healer: [{ rank: 2, tier: "A", role: "healer", className: "Priest", classSlug: "priest", specName: "Holy", specSlug: "holy" }, { rank: 1, tier: "S", role: "healer", className: "Druid", classSlug: "druid", specName: "Restoration", specSlug: "restoration" }], dps: [] };
     const [healers] = tierListLd("ru", { roles: roles as never });
     const items = healers.itemListElement as Array<{ name: string; url?: string; position: number }>;
-    assert.deepEqual(items.map((item) => [item.position, item.name, item.url]), [[1, "Restoration Druid — S", "https://gildra.net/ru/wow/classes/druid/restoration-druid"], [2, "Holy Priest — A", "https://gildra.net/ru/wow/classes/priest/holy-priest"]]);
+    assert.deepEqual(items.map((item) => [item.position, item.name, item.url]), [[1, "Restoration Druid — S", "https://wowarcana.com/ru/wow/classes/druid/restoration-druid"], [2, "Holy Priest — A", "https://wowarcana.com/ru/wow/classes/priest/holy-priest"]]);
     assert.equal(itemListLd("x", []).numberOfItems, 0);
   });
 });

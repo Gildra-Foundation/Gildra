@@ -31,7 +31,7 @@ from .wowhead_tier_lists import fetch_with_fallback
 BASE_URL = "https://mythistone.com"
 TIERLIST_PATH = "/pages/tierlist"
 SOURCE_URL = f"{BASE_URL}{TIERLIST_PATH}"
-USER_AGENT = "GildraDatasetBot/1.0 (+https://gildra.net)"
+USER_AGENT = "GildraDatasetBot/1.0 (+https://wowarcana.com)"
 MAX_BODY_BYTES = 4_000_000
 ROLES = {"dps": "dps", "tanks": "tank"}
 TARGETS = (1, 3, 5, 8)
