@@ -569,6 +569,7 @@ export class WorldMapEngine {
 
   /** The map a zoom out stops at, shown whole (see detentOut): it becomes the map shown whole once the zoom rests. */
   private detent: number | null = null;
+  private detentHome: number | null = null;
   /** The scale at which a map's parent is shown whole (cached per view size). */
   private parentFit(map: AtlasMap) {
     const parent = map.parent === null ? undefined : this.maps.get(map.parent);
@@ -585,7 +586,8 @@ export class WorldMapEngine {
       const fit = this.fit(this.shown.get(id) ?? map.frame, 0.05, this.closerOf(map)).scale;
       // (Already at or past that size: look further up.)
       if (fit >= s * 0.97) continue;
-      if (fit <= target * 1.03) return -Infinity;
+      // (Reaching it — or landing within 3% of it — stops there.)
+      if (target > fit * 1.03) return -Infinity;
       // Landing there, that map is the one shown whole — as if flown to (Classic's Kalimdor fills most of its world,
       // yet stopping at its whole size names Kalimdor, not the world).
       this.detent = id;
@@ -830,13 +832,9 @@ export class WorldMapEngine {
       this.wheel.log = left;
       if (Math.abs(left) < ZOOM_DONE) {
         this.wheel = null;
-        const id = this.detent;
+        // (Named once the view has also settled inside its pin: the map shown whole is where the camera rests.)
+        this.detentHome = this.detent;
         this.detent = null;
-        if (id !== null) {
-          const map = this.maps.get(id);
-          const fit = map ? this.fit(this.shown.get(id) ?? map.frame, 0.05, this.closerOf(map)).scale : 0;
-          if (fit && Math.abs(this.camera.scale / fit - 1) < 0.02) this.home = { id, camera: { ...this.camera } };
-        }
         this.scheduleSettle();
       }
     }
@@ -846,6 +844,12 @@ export class WorldMapEngine {
       if (Math.abs(this.stretch.log) < 0.003) { this.stretch = null; this.scheduleSettle(); }
     }
     this.springing = this.springBack(dt, now);
+    if (this.detentHome !== null && !this.springing && !this.wheel && !this.pointers.size && !this.flight) {
+      const id = this.detentHome, map = this.maps.get(id);
+      this.detentHome = null;
+      const fit = map ? this.fit(this.shown.get(id) ?? map.frame, 0.05, this.closerOf(map)).scale : 0;
+      if (fit && Math.abs(this.camera.scale / fit - 1) < 0.02) { this.home = { id, camera: { ...this.camera } }; this.invalidate(); }
+    }
     if (this.velocity) {
       const free = { ...this.camera, x: this.camera.x - (this.velocity.x * dt) / this.camera.scale, y: this.camera.y - (this.velocity.y * dt) / this.camera.scale };
       this.camera = this.limit(free, undefined, this.camera, "centre");
