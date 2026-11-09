@@ -49,5 +49,40 @@ class TerrainTest(unittest.TestCase):
         self.assertEqual(reproject({'rect':[0,0,1,1]},source,target)['rect'],[0,0.5,1,1])
 
 
+
+class EdgeTest(unittest.TestCase):
+    def test_continuous_source_across_adt_and_output_edges(self):
+        """A smooth source must not acquire a stripe at ADT/256px boundaries."""
+        import numpy as np
+        chunk = bytearray(64 * 64 * 32)
+        refs = {}
+        rows = []
+        for bx in (31, 32):
+            struct.pack_into('<I', chunk, (31 * 64 + bx) * 32 + 28, bx)
+            a,b,c,d = block_box(bx,31)
+            rows.append({'Region':[a,b,0,c,d,0]})
+            pixels = np.zeros((512,512,4),dtype=np.uint8)
+            pixels[:,:,0] = np.arange((bx-31)*512,(bx-30)*512)[None,:] // 8 + 32
+            pixels[:,:,1] = np.arange(512)[:,None] // 4 + 32
+            pixels[:,:,2] = 64
+            pixels[:,:,3] = 255
+            buf=io.BytesIO();Image.fromarray(pixels).save(buf,'PNG')
+            refs[bx]=SimpleNamespace(read=lambda data=buf.getvalue():data)
+        client=SimpleNamespace(tables={'Map':{1:{'WdtFileDataID':1}}},client=SimpleNamespace(read_fdid=lambda _:b'DIAM'+struct.pack('<I',len(chunk))+chunk,resolve=lambda _:refs))
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            result=build_pyramid(1,rows,client,root,85,2,512)
+            for z in range(result['maxZoom']+1):
+                files=sorted((root/str(z)).glob('*.webp'))
+                for f in files:
+                    x,y=map(int,f.stem.split('_'));adj=f.with_name(f'{x+1}_{y}.webp')
+                    if not adj.exists():continue
+                    a=np.array(Image.open(f).convert('RGBA'),dtype=float)
+                    b=np.array(Image.open(adj).convert('RGBA'),dtype=float)
+                    self.assertTrue((a[:,-1,3]==255).all())
+                    self.assertTrue((b[:,0,3]==255).all())
+                    self.assertLess(np.abs(a[:,-1,:3]-b[:,0,:3]).mean(),4)
+            self.assertFalse((root/'.native').exists())
+
 if __name__ == '__main__':
     unittest.main()
