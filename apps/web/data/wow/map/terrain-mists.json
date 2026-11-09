@@ -171,9 +171,10 @@
     },
     "13": {
       "mapId": 0,
+      "blockPixels": 256,
       "blocks": 839,
       "tiles": 1158,
-      "bytes": 4853890
+      "bytes": 7666923
     },
     "424": {
       "mapId": 870,
