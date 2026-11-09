@@ -7,16 +7,33 @@ export type SiteIndex = Record<SiteSearchLang, SiteSearchEntry[]>;
 let loaded: SiteIndex | null = null;
 let indexLoad: Promise<SiteIndex> | null = null;
 
+let failed = false;
+const listeners = new Set<() => void>();
+const notify = () => { for (const listener of listeners) listener(); };
+
 /** The index once it has arrived in this page life, else null. */
 export const loadedIndex = () => loaded;
+/** The last load failed (a new subscription tries again). */
+export const indexFailed = () => failed;
+
+/** useSyncExternalStore subscription: loads the index if needed and tells when it arrives or fails. */
+export function subscribeIndex(callback: () => void) {
+  listeners.add(callback);
+  if (!loaded) loadIndex().then(notify, notify);
+  return () => { listeners.delete(callback); };
+}
 
 /** Fetches the index once per page life (the dialog and the 404 suggestions share it). */
 export function loadIndex() {
   indexLoad ??= fetch("/api/platform/site-search").then((response) => {
     if (!response.ok) throw new Error(String(response.status));
     return response.json() as Promise<SiteIndex>;
-  }).then((data) => (loaded = data)).catch((error: unknown) => {
+  }).then((data) => {
+    failed = false;
+    return (loaded = data);
+  }).catch((error: unknown) => {
     indexLoad = null;
+    failed = true;
     throw error;
   });
   return indexLoad;

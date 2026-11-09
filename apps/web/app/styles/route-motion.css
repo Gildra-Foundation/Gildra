@@ -40,8 +40,45 @@ html[data-route-turn]::view-transition-group(atlas-toolbar) { animation: none; z
 html[data-route-turn]::view-transition-old(atlas-toolbar) { display: none; }
 html[data-route-turn]::view-transition-new(atlas-toolbar) { animation: none; }
 
+/* A switch between game versions (the strip above the bar, gameTurn.ts): the
+   old page slips away and fades, the new one slides in from the side of the
+   chosen version, and between the two shows a glow of that version's colour
+   rising from where it sits on the strip (not the bare background). 420 ms. */
+html[data-route-turn][data-game-turn] { --game-accent: var(--atlas-accent); }
+html[data-route-turn][data-game-turn="forever"] { --game-accent: var(--atlas-accent-2); }
+html[data-route-turn][data-game-turn="mists"] { --game-accent: color-mix(in srgb, var(--atlas-positive) 70%, var(--atlas-accent)); }
+html[data-route-turn][data-game-turn]::view-transition {
+  background:
+    radial-gradient(90% 70% at var(--game-x, 50%) 0%, color-mix(in srgb, var(--game-accent) 22%, transparent), transparent 70%),
+    var(--atlas-bg);
+}
+html[data-route-turn][data-game-turn]::view-transition-old(root) {
+  animation: atlas-game-out var(--atlas-duration-slow) var(--atlas-ease) both;
+}
+html[data-route-turn][data-game-turn]::view-transition-new(root) {
+  animation: atlas-game-in calc(var(--atlas-duration) * 2.1) var(--atlas-ease) both;
+}
+@keyframes atlas-game-out {
+  to { opacity: 0; translate: calc(var(--game-dir, 1) * -28px) 0; }
+}
+@keyframes atlas-game-in {
+  from { opacity: 0; translate: calc(var(--game-dir, 1) * 44px) 0; filter: saturate(.55) brightness(1.18); }
+  55% { opacity: 1; }
+}
+/* The strip above the bar is its own picture too: its rule has already
+   glided to the chosen version on the click, so it never slides with the page. */
+html[data-route-turn] nav[data-wow-version-strip] { view-transition-name: wow-version-strip; }
+html[data-route-turn]::view-transition-group(wow-version-strip) { animation: none; z-index: 1; }
+html[data-route-turn]::view-transition-old(wow-version-strip) { display: none; }
+html[data-route-turn]::view-transition-new(wow-version-strip) { animation: none; }
+@media (prefers-reduced-transparency: reduce) {
+  html[data-route-turn][data-game-turn]::view-transition { background: var(--atlas-bg); }
+}
+html[data-transparency="reduced"][data-route-turn][data-game-turn]::view-transition { background: var(--atlas-bg); }
+
 /* Less motion: the system setting. The site's own switch never arms a turn
    (and motion-preference.css stops every view-transition animation). */
 @media (prefers-reduced-motion: reduce) {
-  html[data-route-turn]::view-transition-new(root) { animation: none; }
+  html[data-route-turn]::view-transition-new(root),
+  html[data-route-turn]::view-transition-old(root) { animation: none; }
 }
