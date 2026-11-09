@@ -30,7 +30,10 @@
 }
 
 /* Dialog */
-.dialog { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+/* Field, list, hints: the list takes what is left and nothing else grows (the
+   kit's body is the grid; without the rows its auto tracks shared the free
+   height of the phone sheet and the field slid down while results changed). */
+.dialog :global(.ui-dialog__body) { grid-template-rows: auto minmax(0, 1fr) auto; align-content: start; }
 
 /* Wider screens: the dialog hangs from a fixed line near the top, as a command
    palette does, and keeps one height, so results arriving under the field never
@@ -237,6 +240,7 @@
     padding-bottom: env(safe-area-inset-bottom);
     box-shadow: none;
   }
+  .dialog :global(.ui-dialog__body) { height: 100%; align-content: stretch; }
   .head { padding: max(var(--atlas-space-3), env(safe-area-inset-top)) var(--atlas-space-3) var(--atlas-space-3); }
   .head input { min-height: 48px; font-size: 16px; }
   .list { height: auto; }
