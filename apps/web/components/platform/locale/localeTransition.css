@@ -5,7 +5,8 @@
       loads; the toolbar and the strip above it stay as they are;
    2. the arriving document's head script (localeArrivalScript.ts) marks it
       data-locale-arrival with how far that dissolve had got (0-4, quarters),
-      and the content resolves from there in its final layout, 350 ms, while a
+      ("hold" while a streamed first frame has no content yet), and the content
+   resolves from there in its final layout, 350 ms, while a
       band of frost light crosses it once ("re-inked" in the other language).
    Opacity, filter and a transform only: no layout, no shift. Less motion: a
    plain short fade on arrival ("still"). Less transparency: no blur, no light.
@@ -34,9 +35,17 @@ html[data-locale-arrival="4"] { --locale-from-opacity: var(--locale-dissolve-opa
   to { opacity: 1; filter: none; }
 }
 
+/* The first frame came before the content: it waits dissolved, still, until
+   its reading position is restored (then "4" starts the resolve). */
+html[data-locale-arrival="hold"] #atlas-content {
+  animation: none;
+  opacity: var(--locale-dissolve-opacity);
+  filter: blur(var(--locale-dissolve-blur)) saturate(.7);
+}
+
 /* The frost light: a soft diagonal band in the theme's accent that crosses
    the reading area once while the new language resolves. */
-html[data-locale-arrival]:not([data-locale-arrival="still"])::after {
+html[data-locale-arrival]:not([data-locale-arrival="still"], [data-locale-arrival="hold"])::after {
   position: fixed;
   inset: 0;
   z-index: 79;

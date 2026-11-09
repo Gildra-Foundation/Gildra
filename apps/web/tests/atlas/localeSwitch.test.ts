@@ -28,7 +28,7 @@ describe("locale switch", () => {
 });
 
 /** Runs the inline head script against a minimal browser and returns its listeners and effects. */
-function arrive({ path, record, pageReveal = true, reduced = false }: { path: string; record?: object; pageReveal?: boolean; reduced?: boolean }) {
+function arrive({ path, record, pageReveal = true, reduced = false, streaming = false }: { path: string; record?: object; pageReveal?: boolean; reduced?: boolean; streaming?: boolean }) {
   const listeners: Record<string, (event: unknown) => void> = {};
   const documentListeners: Record<string, (event: unknown) => void> = {};
   const storage = new Map(record ? [[LOCALE_SWITCH_KEY, JSON.stringify(record)]] : []);
@@ -36,6 +36,7 @@ function arrive({ path, record, pageReveal = true, reduced = false }: { path: st
   const replaced: string[] = [];
   const target = { tagName: "SECTION", children: [], isConnected: true, getBoundingClientRect: () => ({ top: 1500 - window.scrollY }) };
   const content = { children: [target] };
+  const parsing = { streaming };
   const location = { href: `https://gildra.net${path}`, pathname: path.split(/[?#]/)[0], search: "" };
   const window: Record<string, unknown> & { scrollY: number } = {
     scrollY: 0,
@@ -49,7 +50,8 @@ function arrive({ path, record, pageReveal = true, reduced = false }: { path: st
     document: {
       documentElement: { dataset: {} as Record<string, string> },
       referrer: "",
-      getElementById: (id: string) => (id === "atlas-content" ? content : null),
+      readyState: streaming ? "loading" : "interactive",
+      getElementById: (id: string) => (id === "atlas-content" && !parsing.streaming ? content : null),
       addEventListener: (name: string, listener: (event: unknown) => void) => { documentListeners[name] = listener; },
     },
     URL,
@@ -61,7 +63,8 @@ function arrive({ path, record, pageReveal = true, reduced = false }: { path: st
   if (pageReveal) Object.assign(window, { onpagereveal: null });
   window.window = window;
   vm.runInNewContext(localeArrivalScript, window);
-  return { listeners, documentListeners, scrolls, replaced, storage, dataset: (window.document as { documentElement: { dataset: Record<string, string> } }).documentElement.dataset };
+  const ready = () => { parsing.streaming = false; (window.document as { readyState: string }).readyState = "interactive"; };
+  return { listeners, documentListeners, scrolls, replaced, storage, ready, dataset: (window.document as { documentElement: { dataset: Record<string, string> } }).documentElement.dataset };
 }
 
 describe("locale arrival script", () => {
@@ -89,6 +92,19 @@ describe("locale arrival script", () => {
     still.listeners.pagereveal({});
     assert.equal(still.dataset.localeArrival, "still", "less motion: a plain short fade");
     assert.deepEqual(still.scrolls, [900], "the position is still restored");
+  });
+
+  it("waits for the content when the first frame comes before it", () => {
+    const record = { to: "/ru/wow/raids", at: Date.now(), y: 900, path: [[0, "SECTION"]], top: 80, hash: "" };
+    const page = arrive({ path: "/ru/wow/raids", record, streaming: true });
+    page.listeners.pagereveal({});
+    assert.equal(page.dataset.localeArrival, "hold", "the first frame waits dissolved");
+    assert.deepEqual(page.scrolls, [], "no guess at the position before the content exists");
+    assert.ok(page.documentListeners.DOMContentLoaded, "the position is restored once the content is parsed");
+    page.ready();
+    page.documentListeners.DOMContentLoaded({});
+    assert.deepEqual(page.scrolls, [1420], "the anchor is back in place");
+    assert.equal(page.dataset.localeArrival, "0", "and only then the content resolves");
   });
 
   it("ignores a stale record and restores on DOMContentLoaded without pagereveal", () => {

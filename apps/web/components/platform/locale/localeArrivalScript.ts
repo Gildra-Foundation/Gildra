@@ -25,8 +25,11 @@ function to(y){y=Math.max(0,y);try{w.scrollTo({top:y,left:0,behavior:"instant"})
 // The page arrives in its final layout and only its content resolves (the toolbar stays still).
 // Marked on the first frame where pagereveal says when that is (styles and fonts can hold the first
 // paint long enough for the whole resolve to play unseen); elsewhere at once, before any paint.
-var m=0;function arrive(){if(!r||m)return;m=1;h.dataset.localeArrival=still()?"still":String(Math.round(4*Math.min(1,Math.max(0,(Date.now()-r.at)/${LOCALE_LEAVE_MS}))));setTimeout(function(){delete h.dataset.localeArrival},${LOCALE_ARRIVAL_MS + 200})}
-function restore(){arrive();if(!r)return;var s=r;r=null;var e=d.getElementById("atlas-content"),i,stop;
+// "hold": the first frame came before the content; it stays dissolved until its position is restored.
+var m=0;function arrive(wait){if(!r||m)return;if(wait){if(!still())h.dataset.localeArrival="hold";return}m=1;h.dataset.localeArrival=still()?"still":String(Math.round(4*Math.min(1,Math.max(0,(Date.now()-r.at)/${LOCALE_LEAVE_MS}))));setTimeout(function(){delete h.dataset.localeArrival},${LOCALE_ARRIVAL_MS + 200})}
+// A streamed document can reveal its first frame before the content is parsed: then the anchor is found once it is
+// (the content waits dissolved meanwhile, so the reader never sees the top of the page jump to the anchor).
+function restore(){var wait=d.readyState==="loading"&&!d.getElementById("atlas-content");arrive(wait);if(!r)return;if(wait){d.addEventListener("DOMContentLoaded",restore);return}var s=r;r=null;var e=d.getElementById("atlas-content"),i,stop;
 if(e&&s.path&&s.path.length){for(i=0;i<s.path.length&&e;i++){e=e.children[s.path[i][0]];if(e&&e.tagName!==s.path[i][1])e=null}}else e=null;
 function align(){if(!stop&&e&&e.isConnected){var o=e.getBoundingClientRect().top-s.top;if(Math.abs(o)>1)to(w.scrollY+o)}}
 if(e)align();else to(s.y);
