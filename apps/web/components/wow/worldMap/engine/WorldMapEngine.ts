@@ -1165,7 +1165,7 @@ export class WorldMapEngine {
       // Beside it: the one that shows more of the view wins, with a margin (no flip-flop between two halves).
       const heldShare = shown ? share(shown) : 0;
       const under = Boolean(shown) && (heading || (relation === "other"
-        ? contains(held.frame, cx, cy) && heldShare + 0.15 >= share(candidate)
+        ? contains(held.frame, cx, cy) && heldShare + 0.15 >= share(candidate) && off(held) <= off(candidate.map) + 0.1
         // Up a level: while zooming in only once it has all but left the view; at rest once it is a small part of it.
         : (contains(held.frame, cx, cy) || heldShare >= (relation !== "above" || this.zoomDir < 0 ? 0.3 : this.zoomDir > 0 ? 0.04 : 0.12))
           // …and never kept once it has shrunk to a small part of the view (zooming out, or at rest after it).
