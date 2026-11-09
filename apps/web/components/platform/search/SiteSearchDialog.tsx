@@ -1,7 +1,6 @@
 "use client";
 
 import { useDeferredValue, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Castle, ChevronDown, Clock3, Compass, CornerDownLeft, Database, History, MapPin, Search, Skull, Swords, X } from "lucide-react";
 import { AtlasDialog } from "@gildra/atlas-ui/AtlasDialog";
@@ -93,15 +92,15 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
     // The blurred veil only where the page is composited on a GPU: in software every frame re-blurs the page.
     if (panel?.parentElement && !routeTurnDeviceAllowed(navigator as Navigator & RouteTurnDevice, renderTier() ?? "cpu")) panel.parentElement.dataset.veil = "plain";
     if (!panel || !origin || lessMotion() || typeof panel.animate !== "function" || !window.matchMedia("(min-width: 721px)").matches) return;
-    const box = panel.getBoundingClientRect();
-    if (!box.width || !box.height) return;
+    // Nothing is measured here (a read would force the new dialog's layout inside the opening task):
+    // the panel hangs centred from min(12vh, 104px) (siteSearch.module.css), so the field's box is
+    // expressed against that — horizontally in percentages of the panel's own width.
     panel.dataset.morph = "";
-    const top = origin.top - box.top;
-    const left = origin.left - box.left;
-    const inset = `inset(${Math.max(0, top)}px ${Math.max(0, box.right - origin.right)}px ${Math.max(0, box.bottom - origin.bottom)}px ${Math.max(0, left)}px)`;
-    const shift = Math.min(0, top);
+    const centre = window.innerWidth / 2;
+    const shift = origin.top - Math.min(window.innerHeight * .12, 104);
+    const inset = `inset(0px max(0px, calc(50% - ${Math.round(origin.right - centre)}px)) calc(100% - ${Math.round(origin.height)}px) max(0px, calc(50% - ${Math.round(centre - origin.left)}px)))`;
     const animation = panel.animate([
-      { clipPath: inset, translate: `0 ${shift}px`, opacity: .4 },
+      { clipPath: inset, translate: `0 ${Math.round(shift)}px`, opacity: .4 },
       { clipPath: "inset(0px)", translate: "0 0", opacity: 1 },
     ], { duration: 260, easing: "cubic-bezier(.2, .7, .2, 1)" });
     const content = panel.querySelectorAll<HTMLElement>("[data-search-reveal]");
@@ -247,14 +246,15 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
                   onMouseMove={() => { if (!selected) setActive(rowIndex); }} onClick={() => go(row)}>{content}</div>;
               }
               return (
-                <Link
+                // A plain link: the router opens it (go), a modified click opens a tab; next/link's
+                // own work per row was a good part of the opening task.
+                <a
                   key={row.key}
                   id={optionId(row)}
                   href={row.href}
                   role="option"
                   aria-selected={selected}
                   tabIndex={-1}
-                  prefetch={false}
                   className={styles.option}
                   onMouseMove={() => { if (!selected) setActive(rowIndex); }}
                   onClick={(event) => {
@@ -264,7 +264,7 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
                   }}
                 >
                   {content}
-                </Link>
+                </a>
               );
             })}
           </div>

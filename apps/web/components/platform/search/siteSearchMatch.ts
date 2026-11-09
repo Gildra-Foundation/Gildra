@@ -69,17 +69,29 @@ function typoMatch(words: readonly string[], word: string) {
   return words.some((candidate) => nearlyEqual(candidate.slice(0, word.length), word) || nearlyEqual(candidate.slice(0, word.length + 1), word) || nearlyEqual(candidate, word));
 }
 
+type Prepared = { entry: SiteSearchEntry; title: string; extra: string; titleWords: string[]; extraWords: string[] };
+/** Each index normalised once (the dialog searches the same list on every keystroke). */
+const prepared = new WeakMap<readonly SiteSearchEntry[], Prepared[]>();
+function prepare(entries: readonly SiteSearchEntry[]) {
+  let list = prepared.get(entries);
+  if (!list) {
+    list = entries.map((entry) => {
+      const title = normalize(entry.t);
+      const extra = normalize(`${entry.k ?? ""} ${entry.s}`);
+      return { entry, title, extra, titleWords: title.split(" "), extraWords: extra.split(" ") };
+    });
+    prepared.set(entries, list);
+  }
+  return list;
+}
+
 function scoreAll(entries: readonly SiteSearchEntry[], query: string, weight: number, typos: boolean) {
   const words = normalize(query).split(" ").filter(Boolean);
   const hits = new Map<string, SiteSearchHit>();
   if (!words.length) return hits;
   const whole = words.join(" ");
-  for (const entry of entries) {
-    const title = normalize(entry.t);
-    const extra = normalize(`${entry.k ?? ""} ${entry.s}`);
+  for (const { entry, title, extra, titleWords, extraWords } of prepare(entries)) {
     let score = title.startsWith(whole) ? 40 : 0;
-    let titleWords: string[] | null = null;
-    let extraWords: string[] | null = null;
     for (const word of words) {
       let best = title.startsWith(word) ? 30
         : ` ${title}`.includes(` ${word}`) ? 22
@@ -87,11 +99,7 @@ function scoreAll(entries: readonly SiteSearchEntry[], query: string, weight: nu
         : ` ${extra}`.includes(` ${word}`) ? 10
         : extra.includes(word) ? 5
         : 0;
-      if (!best && typos) {
-        titleWords ??= title.split(" ");
-        extraWords ??= extra.split(" ");
-        best = typoMatch(titleWords, word) ? 9 : typoMatch(extraWords, word) ? 4 : 0;
-      }
+      if (!best && typos) best = typoMatch(titleWords, word) ? 9 : typoMatch(extraWords, word) ? 4 : 0;
       if (!best) { score = 0; break; }
       score += best;
     }

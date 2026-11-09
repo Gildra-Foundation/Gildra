@@ -5,7 +5,7 @@ import { contentManifest, midnightLairEncounters } from "@gildra/game-data";
 import { midnightClasses, midnightSpecializations } from "@/lib/data/wow/specializations";
 import { getBoss } from "@/lib/lairs";
 import { routeSections, type RouteSection } from "@/lib/routes/registry";
-import { journalInstanceIcon } from "@/lib/games/wow/assets";
+import { journalInstanceIcon, specIcon } from "@/lib/games/wow/assets";
 import { mapPagePath } from "@/lib/wow/worldMap/bundle";
 import { worldMapBundle } from "@/lib/wow/worldMap/data.server";
 import type { Lang as Locale } from "@/lib/i18n-paths";
@@ -95,7 +95,8 @@ function entries(locale: Locale): SiteSearchEntry[] {
       h: `/talents/${spec.slug}`,
       k: ru ? `${spec.specName} ${spec.className}` : `${spec.specNameRu} ${spec.classNameRu}`,
       g: "talents",
-      i: spec.iconUrl,
+      // The spec's own icon where the site has one (the theme falls back to the class icon).
+      i: specIcon(spec.specName, spec.classSlug, spec.slug) ?? spec.iconUrl,
     });
   }
 
