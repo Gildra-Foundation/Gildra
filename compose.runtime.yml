@@ -102,6 +102,8 @@ services:
     # First-party Plausible tracker.
     environment:
       SITE_PUBLIC_ORIGIN: https://wowarcana.com
+      AUTH_REDIRECT_PROXY_URL: https://gildra.net/api/auth
+      WARCRAFT_LOGS_REDIRECT_URI: https://gildra.net/api/wow/logs/callback
       PLAUSIBLE_SCRIPT_URL: https://wowarcana.com/stats/js/script.js
       PLAUSIBLE_API_URL: /stats/api/event
       PLAUSIBLE_SITE_DOMAIN: gildra.net

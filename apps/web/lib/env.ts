@@ -24,6 +24,7 @@ export const serverEnvSchema: readonly Variable[] = [
   { key: "CATALOG_ACCESS_MODE", kind: "enum", values: ["public", "private"], warnUnset: "the library treats the catalog as private" },
   { key: "INDEXNOW_KEY", kind: "indexnow", warnUnset: "IndexNow key file (/<key>.txt) answers 404" },
   { key: "AUTH_SECRET", kind: "secret", warnUnset: "Battle.net sign-in is reported as not configured" },
+  { key: "AUTH_REDIRECT_PROXY_URL", kind: "url" },
   { key: "AUTH_URL", kind: "url", warnUnset: "Warcraft Logs sign-in returns to a development address" },
   { key: "BATTLENET_CLIENT_ID", kind: "text" },
   { key: "BATTLENET_CLIENT_SECRET", kind: "secret" },

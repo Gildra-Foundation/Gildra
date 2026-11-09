@@ -1,5 +1,5 @@
 import "server-only";
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
 import BattleNet from "next-auth/providers/battlenet";
 
 const issuers = {
@@ -15,7 +15,9 @@ export const isBattleNetAuthConfigured = Boolean(
   process.env.AUTH_SECRET && process.env.BATTLENET_CLIENT_ID && process.env.BATTLENET_CLIENT_SECRET,
 );
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const authConfig: NextAuthConfig = {
+  secret: process.env.AUTH_SECRET,
+  redirectProxyUrl: process.env.AUTH_REDIRECT_PROXY_URL || undefined,
   providers: [
     BattleNet({
       clientId: process.env.BATTLENET_CLIENT_ID,
@@ -50,4 +52,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   trustHost: true,
-});
+};
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);

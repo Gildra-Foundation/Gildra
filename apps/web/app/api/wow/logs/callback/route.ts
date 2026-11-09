@@ -1,3 +1,4 @@
+import { legacyLogsTarget, protectedCallback } from "@/lib/auth/legacyCallback";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
@@ -8,6 +9,8 @@ export const dynamic = "force-dynamic";
 function redirect(request: Request, path: string) { return NextResponse.redirect(warcraftLogsAppRedirect(path, request.url)); }
 
 export async function GET(request: Request) {
+  const proxyTarget = legacyLogsTarget(request);
+  if (proxyTarget) return protectedCallback(NextResponse.redirect(proxyTarget));
   const session = await auth(), jar = await cookies(), secret = process.env.AUTH_SECRET ?? "";
   const pending = unsealWarcraftLogsValue<WarcraftLogsOAuthState>(jar.get(WCL_OAUTH_COOKIE)?.value, secret);
   jar.delete(WCL_OAUTH_COOKIE);
