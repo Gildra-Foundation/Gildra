@@ -21,7 +21,7 @@ type Group = { id: string; label: string; rows: Row[] };
 
 /** Results per group while typing: the best few of each kind, the rest one keystroke away. */
 const GROUP_LIMIT = 6;
-const SECTION_SUGGESTIONS = 8;
+const SECTION_SUGGESTIONS = 7;
 
 const groupIcons: Partial<Record<RowIcon, ReactNode>> = {
   recent: <Clock3 size={16} strokeWidth={1.8} />,
@@ -77,6 +77,9 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
   const [query, setQuery] = useState(initialQuery);
   // Results follow the field at a lower priority: typing never waits for the list.
   const deferred = useDeferredValue(query);
+  // The first commit is only the frame and the field (the opening task stays short); the rows
+  // follow in a render of their own, inside the unfold, before its content fades in.
+  const rowsReady = useDeferredValue(true, false);
   const [active, setActive] = useState(0);
   const [recent] = useState(readRecentPages);
   const [queries] = useState(readRecentQueries);
@@ -113,8 +116,8 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
   const groups = useMemo<Group[]>(() => {
     const entries = index?.[lang] ?? [];
     if (!trimmed) {
-      const queryRows: Row[] = queries.map((text) => ({ key: `q${text}`, href: "", title: text, icon: "recent", query: text }));
-      const recentRows: Row[] = recent.slice(0, 5).map((page) => ({ key: `r${page.h}`, href: localized(page.h), title: page.t, icon: "recent" }));
+      const queryRows: Row[] = queries.slice(0, 3).map((text) => ({ key: `q${text}`, href: "", title: text, icon: "recent", query: text }));
+      const recentRows: Row[] = recent.slice(0, 4).map((page) => ({ key: `r${page.h}`, href: localized(page.h), title: page.t, icon: "recent" }));
       const sectionRows: Row[] = entries.filter((entry) => entry.g === "section").slice(0, SECTION_SUGGESTIONS)
         .map((entry) => ({ key: `s${entry.h}`, href: localized(entry.h), title: entry.t, icon: "section" }));
       return [
@@ -223,7 +226,7 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
       </div>
       <div className={styles.list} id={`${id}-list`} role="listbox" aria-label={copy.dialog} data-search-reveal data-stale={query.trim() !== trimmed || undefined}>
         {status ? <p className={styles.status}>{status}</p> : null}
-        {groups.map((group) => (
+        {rowsReady ? groups.map((group) => (
           <div className={styles.group} role="group" aria-labelledby={`${id}-g-${group.id}`} key={group.id} data-group={group.id}>
             <p className={styles.groupLabel} id={`${id}-g-${group.id}`}>{group.label}</p>
             {group.rows.map((row) => {
@@ -239,36 +242,33 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
                   <span className={styles.optionTitle}><Highlighted text={row.title} query={row.icon === "database" || row.query !== undefined ? "" : trimmed} /></span>
                   {row.detail ? <span className={styles.optionDetail}>{row.detail}</span> : null}
                 </span>
-                <CornerDownLeft className={styles.enter} size={14} aria-hidden="true" />
+                {selected ? <CornerDownLeft className={styles.enter} size={14} aria-hidden="true" /> : null}
               </>;
-              if (row.query !== undefined) {
-                return <div key={row.key} id={optionId(row)} role="option" aria-selected={selected} className={styles.option}
-                  onMouseMove={() => { if (!selected) setActive(rowIndex); }} onClick={() => go(row)}>{content}</div>;
-              }
+              // Options, not links: the dialog's focus trap walks every focusable element on opening, and
+              // a list of links made that the longest part of it. Enter or a click opens through the
+              // router; Ctrl/⌘ or the middle button opens a tab, as a link would.
               return (
-                // A plain link: the router opens it (go), a modified click opens a tab; next/link's
-                // own work per row was a good part of the opening task.
-                <a
+                <div
                   key={row.key}
                   id={optionId(row)}
-                  href={row.href}
                   role="option"
                   aria-selected={selected}
-                  tabIndex={-1}
                   className={styles.option}
+                  data-href={row.href || undefined}
                   onMouseMove={() => { if (!selected) setActive(rowIndex); }}
+                  onMouseEnter={() => { if (row.href && row.icon !== "database") router.prefetch(row.href); }}
                   onClick={(event) => {
-                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
-                    event.preventDefault();
+                    if (row.href && (event.metaKey || event.ctrlKey || event.shiftKey)) { window.open(row.href, "_blank", "noopener"); return; }
                     go(row);
                   }}
+                  onAuxClick={(event) => { if (event.button === 1 && row.href) window.open(row.href, "_blank", "noopener"); }}
                 >
                   {content}
-                </a>
+                </div>
               );
             })}
           </div>
-        ))}
+        )) : null}
         {!index && !failed ? <div className={styles.skeleton} aria-hidden="true"><i /><i /><i /><i /></div> : null}
       </div>
       <span className="sr-only" aria-live="polite">{trimmed && index ? copy.count(hitCount) : ""}</span>

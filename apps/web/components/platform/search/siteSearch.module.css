@@ -174,8 +174,7 @@
   text-underline-offset: 3px;
 }
 
-.enter { flex: none; color: var(--atlas-accent); opacity: 0; transition: opacity var(--atlas-duration-fast) var(--atlas-ease); }
-.option[aria-selected="true"] .enter { opacity: 1; }
+.enter { flex: none; color: var(--atlas-accent); }
 
 .status {
   margin: 0;
