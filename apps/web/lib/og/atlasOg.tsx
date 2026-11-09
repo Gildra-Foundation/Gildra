@@ -112,7 +112,7 @@ async function renderJpeg(spec: AtlasOgSpec) {
  * rebuild draws only cards whose inputs changed (the Docker build keeps
  * .next/cache in a cache mount). Bump the version to discard every card.
  */
-const OG_CACHE_VERSION = 1;
+const OG_CACHE_VERSION = 2;
 const buildCacheDir =
   process.env.NEXT_PHASE === "phase-production-build" ? join(process.cwd(), ".next/cache/og") : null;
 
@@ -123,6 +123,7 @@ let rendererHash: Promise<string> | undefined;
 function renderer() {
   rendererHash ??= Promise.all([
     ...["/assets/og/fonts/alegreya-500.ttf", "/assets/og/fonts/inter-400.ttf", "/assets/og/fonts/inter-600.ttf"].map((font) => fileHash(publicFile(font))),
+    fileHash(publicFile("/brand/wowarcana-logo.png")),
     // Satori/resvg ship inside next and the encoders inside sharp: any dependency change redraws every card.
     fileHash(join(process.cwd(), "../../package-lock.json")),
   ]).then((files) =>
@@ -149,10 +150,11 @@ async function cachedJpeg(spec: AtlasOgSpec) {
 }
 
 async function renderPng(spec: AtlasOgSpec) {
-  const [fontList, scene, emblem] = await Promise.all([
+  const [fontList, scene, emblem, logo] = await Promise.all([
     fonts,
     sceneDataUrl(spec.art, spec.focus ?? [0.5, 0.3]),
     spec.emblem ? iconDataUrl(spec.emblem) : Promise.resolve(null),
+    readFile(join(process.cwd(), "public/brand/wowarcana-logo.png")).then(data => `data:image/png;base64,${data.toString("base64")}`),
   ]);
 
   return new ImageResponse(
@@ -168,8 +170,10 @@ async function renderPng(spec: AtlasOgSpec) {
         ))}
 
         <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", width: "100%", height: "100%", padding: "52px 72px 58px" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 18 }}>
-            <div style={{ display: "flex", fontFamily: "Alegreya", fontSize: 30, letterSpacing: 7, color: palette.text }}>GILDRA</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Satori renders plain <img> */}
+            <img src={logo} alt="" width={48} height={48} />
+            <div style={{ display: "flex", fontFamily: "Alegreya", fontSize: 30, letterSpacing: 7, color: palette.text }}>WOWARCANA</div>
             <div style={{ display: "flex", fontSize: 15, fontWeight: 600, letterSpacing: 3.5, color: palette.muted }}>WORLD OF WARCRAFT</div>
           </div>
 
