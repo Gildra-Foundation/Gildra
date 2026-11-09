@@ -35,7 +35,7 @@ export function WowHome({ lang, raids, news }: { lang: Lang; raids: HomeRaid[]; 
   const raid = season?.raids.map(entry => raids.find(raid => raid.slug === entry.slug)).find(Boolean);
   const seasonalDungeons = season?.slug === "midnight-season-2" ? dungeonSlugs.slice(0, 3) : [];
   const featured = [
-    { key: "map", href: "/wow/map", art: `/maps/tiles/${locale === "ru" ? "ru/" : ""}947/0/0_0.webp`, position: "center" },
+    { key: "map", href: "/wow/map", art: `/maps/tiles/${locale === "ru" ? "ru/" : ""}947/0/0_0.webp`, position: "center top" },
     { key: "classes", href: "/wow/classes", art: atlasScenes.classes.art, position: "68% 62%" },
   ] as const;
 
