@@ -198,9 +198,11 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     // (A new map in view at rest is not still: its markers replace the last one's.)
     // (The map the frame was composed around: it changes one frame after the map in view does.)
     const composed = info.drawn.find((entry) => entry.role === "focus")?.map.id ?? info.focus.id;
-    const still = c.x === lastView.current.x && c.y === lastView.current.y && c.scale === lastView.current.scale && info.width === lastView.current.w && info.height === lastView.current.h && composed === lastView.current.focus && lastPick.current !== 0;
-    const focusChanged = composed !== lastView.current.focus;
-    lastView.current = { x: c.x, y: c.y, scale: c.scale, w: info.width, h: info.height, focus: composed };
+    // (Nor when the ground comes in under a resting view: the map's own names show then.)
+    const deep = (info.ground ?? 0) > 0.6;
+    const still = c.x === lastView.current.x && c.y === lastView.current.y && c.scale === lastView.current.scale && info.width === lastView.current.w && info.height === lastView.current.h && composed === lastView.current.focus && deep === lastView.current.deep && lastPick.current !== 0;
+    const focusChanged = composed !== lastView.current.focus || deep !== lastView.current.deep;
+    lastView.current = { x: c.x, y: c.y, scale: c.scale, w: info.width, h: info.height, focus: composed, deep };
     // (At rest only: the rubber band at a limit moves the view a little, the buttons stay as they are.)
     if (info.room && !info.moving) {
       const atIn = info.room.in < 0.01, atOut = info.room.out < 0.01;
@@ -255,7 +257,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   };
 
   const hoverPoiRef = useRef<AtlasPoi | null>(null);
-  const lastView = useRef({ x: NaN, y: NaN, scale: NaN, w: 0, h: 0, focus: -1 });
+  const lastView = useRef({ x: NaN, y: NaN, scale: NaN, w: 0, h: 0, focus: -1, deep: false });
   const reducedRef = useRef(false);
   const locatorFollow = useRef<((view: [number, number, number, number]) => void) | null>(null);
   const tipEl = useRef<HTMLDivElement | null>(null);
