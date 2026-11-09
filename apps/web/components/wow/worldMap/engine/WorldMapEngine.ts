@@ -1996,6 +1996,7 @@ export class WorldMapEngine {
     if (!exists || exists(0, 0, 0)) {
       const root = this.tiles.get(tileUrl(art, id, 0, 0, 0), map.depth + (style.exclude ? 6 : 0));
       ready = root.state === "ready" ? 1 : 0;
+      covered = ready;
       total = 1;
     }
     for (let ty = ty0; ty <= ty1; ty++) {
