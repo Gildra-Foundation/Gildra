@@ -4,7 +4,9 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { buildAtlasBundle, localArt, type ArtEra, type AtlasMap } from "@/lib/wow/worldMap/bundle";
 import type { EraRecord, MapRecord, PoiRecord } from "@/lib/wow/worldMap/types";
-import { blurGroups, blurKey, blurOf, blurRadiusCss, desatOf, dimOf, radiusOfKey, vignetteOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "@/components/wow/worldMap/engine/lod";
+import { blurGroups, blurKey, blurOf, blurRadiusCss, desatOf, dimOf, radiusOfKey, vignetteOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, rubber, RUBBER, sharpenOf, terrainAlphaOf, upscaleOf } from "@/components/wow/worldMap/engine/lod";
+import { areaAt, areaCentre, areaShare, type Area } from "@/components/wow/worldMap/engine/area";
+import { applyGrade, colourStats, IDENTITY, transfer } from "@/components/wow/worldMap/engine/grade";
 import { chainUp, composeSet, mapSet, transferCamera } from "@/components/wow/worldMap/engine/sets";
 import { wheelKind } from "@/components/wow/worldMap/engine/input";
 import { FOCUS_FADE, FOCUS_IN, FOCUS_OUT, MAX_AHEAD, NOTCH_LOG, SLOW_FRAME, TAU_NOTCH, TAU_SMOOTH, ZOOM_DONE, fadeOut, gather, holdFocus, spend, wheelLog } from "@/components/wow/worldMap/engine/motion";
@@ -78,14 +80,62 @@ describe("world map LOD", () => {
     assert.ok(maskFeatherOf(1000, 600, 1) < featherOf(1000, 600, 1) / 3);
   });
 
-  it("limits zoom to 1.6× the art's own size, deeper over terrain, and fades terrain in past the art", () => {
+  it("limits zoom to 1.6× the art's own size, 2× the terrain's texel density over terrain, and fades terrain in past the art", () => {
     close(maxScaleOf({ width: 1000 }, 0.01), 160000);
     const terrain = { art: { width: 16384 }, frame: [0, 0, 0.05, 0.05] as [number, number, number, number] };
-    close(maxScaleOf({ width: 1000 }, 0.01, terrain), 16384 / 0.05 * 1.6);
+    close(maxScaleOf({ width: 1000 }, 0.01, terrain), 16384 / 0.05 * 2);
     assert.equal(terrainAlphaOf(1), 0);
     assert.equal(terrainAlphaOf(1.3), 0);
     assert.ok(terrainAlphaOf(1.7) > 0 && terrainAlphaOf(1.7) < 1);
     assert.equal(terrainAlphaOf(2.2), 1);
+  });
+
+  it("sharpens only a picture magnified past its finest level, mildly", () => {
+    assert.equal(sharpenOf(1), 0);
+    assert.ok(sharpenOf(1.6) > 0 && sharpenOf(1.6) < sharpenOf(2));
+    assert.ok(sharpenOf(4) <= 0.45 + 1e-9);
+  });
+
+  it("turns zoom past a limit into a small, ever harder rubber band", () => {
+    assert.equal(rubber(0), 0);
+    assert.ok(rubber(0.05) > 0 && rubber(0.05) < 0.05);
+    assert.ok(rubber(10) <= RUBBER + 1e-9 && rubber(10) > RUBBER * 0.99);
+    assert.ok(rubber(-0.3) < 0 && Math.abs(rubber(-0.3)) < RUBBER);
+    // Ever harder: the second half of a push moves the view less than the first.
+    assert.ok(rubber(0.2) - rubber(0.1) < rubber(0.1));
+  });
+
+  it("reads a map's own land from its mask: the point on it, and a point deep inside a crescent", () => {
+    // A 10×10 mask: white crescent along the left and bottom edges (a zone wrapped round a neighbour).
+    const w = 10, h = 10, values = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) values[y * w + x] = x < 4 || y >= 6 ? 1 : 0;
+    const area: Area = { w, h, values };
+    assert.ok(areaAt(area, 0.1, 0.1) > 0.5);
+    assert.ok(areaAt(area, 0.8, 0.2) < 0.5);
+    assert.equal(areaAt(area, 1.2, 0.5), 0);
+    close(areaShare(area), 0.64);
+    const c = areaCentre(area);
+    assert.ok(c && areaAt(area, c[0], c[1]) > 0.5, "the centre lies on the land");
+    // The rectangle's middle is NOT on the land: the area centre is what the reader should aim at.
+    assert.ok(areaAt(area, 0.5, 0.5) < 0.5);
+    assert.equal(areaCentre({ w: 2, h: 2, values: new Float32Array(4) }), null);
+  });
+
+  it("grades the terrain toward the painted map's mean land colour by a gain, part of the way", () => {
+    const pic = (rgb: [number, number, number], n = 64) => { const d = new Uint8ClampedArray(n * 4); for (let i = 0; i < n; i++) d.set([...rgb, 255], i * 4); return d; };
+    const ground = colourStats(pic([60, 90, 50]), 8, 8);
+    const painted = colourStats(pic([150, 120, 80]), 8, 8);
+    const g = transfer(ground, painted, 0.5);
+    assert.deepEqual(g.add, [0, 0, 0]);
+    const out = applyGrade(g, [60 / 255, 90 / 255, 50 / 255]);
+    // Warmer and lighter, not all the way, darks stay dark (a pure gain).
+    assert.ok(out[0] > 60 / 255 && out[0] < 150 / 255);
+    assert.deepEqual(applyGrade(g, [0, 0, 0]), [0, 0, 0]);
+    // Gains are bounded.
+    for (const k of g.mul) assert.ok(k >= 1 + (0.75 - 1) * 0.5 - 1e-9 && k <= 1 + (1.45 - 1) * 0.5 + 1e-9);
+    // Water-coloured and see-through pixels are left out; too few pixels give no grade.
+    assert.equal(colourStats(pic([20, 60, 160]), 8, 8).n, 0);
+    assert.deepEqual(transfer(colourStats(pic([60, 90, 50], 4), 2, 2), painted), IDENTITY);
   });
 
   it("tells a wheel notch from a trackpad scroll and a pinch", () => {

@@ -13,6 +13,10 @@
 //   … --only interactions: keys, double click, buttons, era switch mid-zoom, Back mid-flight, resize, phone pinch
 //   … --notches 100,300: one wheel event at a time, the view left to rest, the settled state checked (title = map in
 //     view and dominant, no painted words or markers of other maps), both ways on every chain
+//   … --deep: down each chain and on to the deepest zoom (Orgrimmar, Stormwind, Azsuna over their continents' terrain;
+//     Nagrand of Outland, which has none, to its cap): the deepest zoom reached, nothing magnified past twice the
+//     terrain's own texel density (1.6× a painted map's), no tiles missing after it settles, names not overlapping,
+//     the title = the map in view, the zoom-in button spent, one more notch only bounces (rubber band)
 // Exits 1 when a chain fails.
 import fs from "node:fs";
 import { chromium } from "playwright";
@@ -139,7 +143,7 @@ async function bringIntoView(pg, id, surface) {
   const where = await pg.evaluate((id) => {
     const e = window.__worldMap; const map = e.maps.get(id); const s = e.options.insets;
     if (!map) return null;
-    const [x, y] = e.project((map.frame[0] + map.frame[2]) / 2, (map.frame[1] + map.frame[3]) / 2);
+    const [x, y] = e.project(...(e.areaPoint?.(id) ?? [(map.frame[0] + map.frame[2]) / 2, (map.frame[1] + map.frame[3]) / 2]));
     const fx = s.left + (e.width - s.left - s.right) / 2, fy = s.top + (e.height - s.top - s.bottom) / 2;
     const inside = x > s.left + 60 && x < e.width - s.right - 60 && y > s.top + 60 && y < e.height - s.bottom - 60;
     return inside ? null : { dx: fx - x, dy: fy - y, fx, fy };
@@ -157,11 +161,20 @@ async function bringIntoView(pg, id, surface) {
   await pg.waitForFunction(() => { const e = window.__worldMap; return !e.velocity && !e.flight; }, null, { timeout: 8000, polling: 100 }).catch(() => {});
 }
 
-/** Screen point of a map's centre (or of its first child's centre, if it is the map in view). */
-const centreOf = (pg, id) => pg.evaluate((id) => {
+/**
+ * Screen point on a map's own land (its mask's deepest point; its rectangle's middle on builds without areas):
+ * where a reader puts the cursor to zoom into it — Azsuna's rectangle's middle lies in Suramar.
+ */
+const centreOf = async (pg, id) => {
+  // (The first ask starts reading the mask: asked again a moment later.)
+  await pg.evaluate((id) => window.__worldMap.areaPoint?.(id), id);
+  await pg.waitForTimeout(150);
+  return pointOf(pg, id);
+};
+const pointOf = (pg, id) => pg.evaluate((id) => {
   const e = window.__worldMap; const map = e.maps.get(id);
   if (!map) return null;
-  const [x, y] = e.project((map.frame[0] + map.frame[2]) / 2, (map.frame[1] + map.frame[3]) / 2);
+  const [x, y] = e.project(...(e.areaPoint?.(id) ?? [(map.frame[0] + map.frame[2]) / 2, (map.frame[1] + map.frame[3]) / 2]));
   // Inside the free part of the view (never over the panels: the wheel scrolls them there).
   const ins = e.options.insets;
   return [Math.round(Math.max(ins.left + 30, Math.min(e.width - ins.right - 30, x))), Math.round(Math.max(ins.top + 30, Math.min(e.height - ins.bottom - 30, y)))];
@@ -490,9 +503,120 @@ async function runNotches(browser, spec, delta) {
   return { key: `notch-${spec.key}-${delta}`, steps, problems: [...(problems.length ? ["SETTLED-STATE"] : []), ...(missed.length ? [`NOT-REACHED(${missed.join(",")})`] : [])], detail: problems };
 }
 
+/** Labels on screen that overlap (their text boxes, more than 3 px each way). */
+const overlaps = (pg) => pg.evaluate(() => {
+  const boxes = [...document.querySelectorAll("[class*='labelText'], [data-labelled] [class*='markerName'], [class*='poiIcon']")]
+    .filter((el) => { const st = getComputedStyle(el); return st.visibility !== "hidden" && Number(st.opacity) > 0.1 && el.closest("[data-quiet]") === null; })
+    .map((el) => ({ text: el.textContent?.trim() || el.closest("[aria-label]")?.getAttribute("aria-label") || "?", r: el.getBoundingClientRect() }))
+    .filter((b) => b.r.width > 0 && b.r.height > 0);
+  const out = [];
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const a = boxes[i].r, b = boxes[j].r;
+    // (A point's own icon and name touch by design.)
+    if (boxes[i].text === boxes[j].text) continue;
+    if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 3 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 3) out.push(`${boxes[i].text} × ${boxes[j].text}`);
+  }
+  return { count: boxes.length, overlaps: out };
+});
+
+const DEEP = [
+  { key: "deep-kalimdor", chain: [12, 1, 85], terrain: true },
+  { key: "deep-eastern-kingdoms", chain: [13, 37, 84], terrain: true },
+  { key: "deep-broken-isles", chain: [619, 630], terrain: true },
+  { key: "deep-outland", chain: [101, 107], terrain: false },
+];
+
+async function runDeep(browser, spec) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const pg = await ctx.newPage();
+  if (cpu > 1) { const cdp = await ctx.newCDPSession(pg); await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpu }); }
+  const errors = [];
+  pg.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
+  await pg.goto(`${base}${page(spec.chain[0])}?debug`, { waitUntil: "domcontentloaded", timeout: 180000 });
+  await ready(pg);
+  await pg.locator("button", { hasText: /Принять|Accept/ }).first().click({ timeout: 2000 }).catch(() => {});
+  await pg.evaluate((max) => { window.__zoomMaxVoid = max; }, maxVoid);
+  await pg.evaluate(install);
+  const surface = await pg.evaluate(() => { const r = window.__worldMap.surface.getBoundingClientRect(); return [r.left, r.top]; });
+  const problems = [];
+  const missed = [];
+  const notch = async (id) => {
+    await bringIntoView(pg, id, surface);
+    const [x, y] = (await centreOf(pg, id)) ?? [720, 450];
+    await pg.mouse.move(surface[0] + x, surface[1] + y);
+    await pg.mouse.wheel(0, -100);
+    await pg.waitForTimeout(160);
+  };
+  for (const id of spec.chain.slice(1)) {
+    let got = false;
+    for (let i = 0; i < 18 && !got; i++) { await notch(id); got = (await pg.evaluate(() => window.__worldMap.focus?.id ?? null)) === id; }
+    if (!got) { await pg.waitForTimeout(900); got = (await pg.evaluate(() => window.__worldMap.focus?.id ?? null)) === id; }
+    if (!got) missed.push(id);
+  }
+  const last = spec.chain.at(-1);
+  // On to the deepest zoom, the cursor on the place's own land.
+  let notches = 0;
+  for (; notches < 30; notches++) {
+    const room = await pg.evaluate(() => window.__worldMap.zoomRoom().in);
+    if (room < 0.005 && !(await pg.evaluate(() => Boolean(window.__worldMap.wheel)))) break;
+    await notch(last);
+  }
+  await settled(pg);
+  await pg.waitForFunction(() => window.__worldMap.tiles.pending === 0, null, { timeout: 60000, polling: 200 }).catch(() => {});
+  await pg.waitForTimeout(1200);
+  const st = await pg.evaluate(() => {
+    const e = window.__worldMap;
+    const cov = e.coverage();
+    const zoomIn = document.querySelector("button[aria-label='Приблизить'], button[aria-label='Zoom in']");
+    return { room: e.zoomRoom().in, focus: e.focus?.id, name: e.focus?.name, title: document.querySelector("#world-map-title")?.textContent?.trim() ?? "", cov, spent: zoomIn?.getAttribute("aria-disabled") === "true", scale: e.view.scale, ground: e.lastInfo?.ground ?? 0 };
+  });
+  const labels = await overlaps(pg);
+  if (shots) await pg.screenshot({ path: `${shots}/${spec.key}-max.png`, timeout: 120000 }).catch(() => {});
+  // One more notch: a bounce at the limit, then back to the same view.
+  const [bx, by] = (await centreOf(pg, last)) ?? [720, 450];
+  await pg.mouse.move(surface[0] + bx, surface[1] + by);
+  await pg.mouse.wheel(0, -100);
+  await pg.waitForTimeout(40);
+  const bounce = await pg.evaluate(() => window.__worldMap.stretch?.log ?? 0);
+  await settled(pg);
+  await pg.waitForTimeout(400);
+  const after = await pg.evaluate(() => ({ scale: window.__worldMap.view.scale, stretch: window.__worldMap.stretch }));
+  const rec = await pg.evaluate(() => { const r = window.__zoomRec; r.stop = true; return r; });
+  await ctx.close();
+  const limit = st.cov.detail?.source === "terrain" ? 2 : 1.6;
+  if (missed.length) problems.push(`NOT-REACHED(${missed.join(",")})`);
+  if (st.room > 0.01) problems.push(`NOT-MAX(${st.room.toFixed(3)} left)`);
+  if (!st.cov.detail || st.cov.detail.upscale > limit * 1.02) problems.push(`OVER-UPSCALE(${st.cov.detail?.source}:${st.cov.detail?.upscale?.toFixed(2)})`);
+  if (spec.terrain && st.cov.detail?.source !== "terrain") problems.push("NO-TERRAIN");
+  if (!spec.terrain && st.cov.detail && st.cov.detail.upscale < 1.5) problems.push(`CAP-SHALLOW(${st.cov.detail.upscale.toFixed(2)})`);
+  if (st.cov.art < 0.98 || st.cov.ground < 0.98) problems.push(`BLANK-TILES(art ${st.cov.art.toFixed(2)}, ground ${st.cov.ground.toFixed(2)})`);
+  if (labels.overlaps.length) problems.push(`LABEL-OVERLAP(${labels.overlaps.slice(0, 3).join("; ")})`);
+  if (st.title !== st.name || st.focus !== last) problems.push(`TITLE(${st.title}|${st.name}|${st.focus})`);
+  if (!st.spent) problems.push("ZOOM-IN-NOT-SPENT");
+  if (!(bounce > 0)) problems.push("NO-RUBBER");
+  if (after.stretch || Math.abs(after.scale / st.scale - 1) > 0.01) problems.push("RUBBER-DRIFT");
+  const voids = rec.frames.filter((f) => f.empty > maxVoid).length, pills = rec.frames.filter((f) => f.moving && f.pill).length;
+  if (voids) problems.push(`VOID(${voids})`);
+  if (pills) problems.push(`HOVER-WHILE-MOVING(${pills})`);
+  if (errors.length) problems.push("PAGE-ERROR");
+  return {
+    key: spec.key, problems, errors: errors.slice(0, 2), notches, room: Number(st.room.toFixed(4)), detail: st.cov.detail && { source: st.cov.detail.source, upscale: Number(st.cov.detail.upscale.toFixed(3)) },
+    coverage: { art: Number(st.cov.art.toFixed(3)), ground: Number(st.cov.ground.toFixed(3)) }, ground: Number(st.ground.toFixed(2)), labels: labels.count, title: st.title, bounce: Number(bounce.toFixed(3)),
+  };
+}
+
 if (shots) fs.mkdirSync(shots, { recursive: true });
 const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
 const results = [];
+if (args.deep) {
+  for (const spec of DEEP.filter((d) => !args.only || args.only.split(",").some((key) => d.key.includes(key)))) {
+    let r;
+    try { r = await runDeep(browser, spec); } catch (error) { r = { key: spec.key, problems: ["ERROR"], error: String(error).slice(0, 300) }; }
+    results.push(r);
+    console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(26)} ${r.problems.join(",")}`);
+    console.log(`     ${JSON.stringify({ ...r, problems: undefined, key: undefined })}`);
+  }
+}
 if (args.notches) {
   // --notches [100,300]: only the one-event-at-a-time runs.
   for (const delta of String(args.notches === "1" ? "100,300" : args.notches).split(",").map(Number)) {
@@ -505,14 +629,14 @@ if (args.notches) {
     }
   }
 }
-for (const spec of args.notches ? [] : chains) {
+for (const spec of args.notches || args.deep ? [] : chains) {
   try { results.push(await runChain(browser, spec)); } catch (error) { results.push({ key: spec.key, problems: ["ERROR"], error: String(error).slice(0, 300) }); }
   const r = results.at(-1);
   const missed = Object.entries(r.reached ?? {}).filter(([, ok]) => !ok).map(([id]) => id);
   console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(26)} ${r.problems.join(",") || ""}${missed.length ? ` (not reached ${missed.join(",")})` : ""}`);
   console.log(`     focus ${(r.focusSeq ?? []).join("→")} | titles ${(r.toldTitles ?? []).join(" → ")} | void ${r.voidFrames ?? "-"} (max ${(r.voidMax ?? 0).toFixed(3)}) | ancestor ${r.ancestorFrames ?? "-"} ${r.ancestorSample ? JSON.stringify(r.ancestorSample) : ""} | pill ${r.pillWhileMoving ?? "-"} | frames p50 ${r.intervalP50} p95 ${r.intervalP95} max ${r.intervalMax} ms, long tasks ${r.longTasks} (max ${r.longMax}) | focus upscale max ${r.focusUpscaleMax}${r.error ? ` | ${r.error}` : ""}`);
 }
-if (!args.notches && (!args.only || args.only.includes("interactions"))) {
+if (!args.notches && !args.deep && (!args.only || args.only.includes("interactions"))) {
   for (const r of await runInteractions(browser).catch((error) => [{ key: "interactions", problems: ["ERROR"], error: String(error).slice(0, 300) }])) {
     results.push(r);
     console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(26)} ${r.problems.join(",")}`);
