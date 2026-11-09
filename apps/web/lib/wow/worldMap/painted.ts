@@ -13,8 +13,12 @@ export type ArtBox = {
   patch?: string;
   /** Decor kind (ornament, crest). */
   kind?: string;
+  /** The painted word itself, when the data knows it: shown as a label once the picture is under the terrain. */
+  text?: { en: string; ru: string };
 };
-type Raw = Rect | { box?: Rect; rect?: Rect; plaque?: Rect; patch?: string; kind?: string; labelFor?: number | string | null; for?: number | string | null };
+type Raw = Rect | { box?: Rect; rect?: Rect; plaque?: Rect; patch?: string; kind?: string; labelFor?: number | string | null; for?: number | string | null; text?: unknown };
+const isWords = (value: unknown): value is { en: string; ru: string } =>
+  Boolean(value) && typeof value === "object" && typeof (value as { en?: unknown }).en === "string" && typeof (value as { ru?: unknown }).ru === "string";
 
 const isRect = (value: unknown): value is Rect =>
   Array.isArray(value) && value.length === 4 && value.every(Number.isFinite) && value[2] > value[0] && value[3] > value[1];
@@ -35,6 +39,7 @@ function boxes(list: unknown): ArtBox[] {
       ...(isRect(item.plaque) ? { plaque: item.plaque } : {}),
       ...(typeof item.patch === "string" && item.patch.startsWith("/") ? { patch: item.patch } : {}),
       ...(typeof item.kind === "string" ? { kind: item.kind } : {}),
+      ...(isWords(item.text) ? { text: item.text } : {}),
     });
   }
   return out;

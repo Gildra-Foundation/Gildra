@@ -31,6 +31,10 @@ export type MapTerrain = {
   url: string; tileSize: number; width: number; height: number; maxZoom: number; rect: Rect;
   /** JSON {z: ["x_y", …]} of the tiles that exist (open sea has none): only those are requested. */
   index?: string;
+  /** JSON {z: ["x_y", …]} of the tiles that do NOT exist (the complement of `index`; used when there is no index). */
+  empty?: string;
+  /** "#rrggbb": the sea filled under the tiles inside its rect (where no tile exists or a tile is see-through). */
+  ocean?: string;
 };
 
 export type MapRecord = {

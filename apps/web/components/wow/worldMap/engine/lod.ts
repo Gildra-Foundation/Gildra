@@ -70,14 +70,29 @@ export const terrainAlphaOf = (finestUpscale: number) => smoothstep(1.35, 1.9, f
 
 /**
  * Deepest zoom (CSS px per atlas unit) over a map: its art just past the sharp
- * limit (1.6× its own size); over a continent's terrain, 1.6× the terrain's.
+ * limit (1.6× its own size); over a continent's terrain, twice the terrain's own
+ * texel density (the last ×2 sharpened in the shader, never shown coarser).
  */
 export const MAX_UPSCALE = 1.6;
+export const TERRAIN_MAX_UPSCALE = 2;
 export function maxScaleOf(art: Pick<MapArt, "width">, frameWidth: number, terrain?: { art: Pick<MapArt, "width">; frame: [number, number, number, number] } | null) {
   const own = (art.width / Math.max(1e-12, frameWidth)) * MAX_UPSCALE;
   if (!terrain) return own;
-  return Math.max(own, (terrain.art.width / Math.max(1e-12, terrain.frame[2] - terrain.frame[0])) * MAX_UPSCALE);
+  return Math.max(own, (terrain.art.width / Math.max(1e-12, terrain.frame[2] - terrain.frame[0])) * TERRAIN_MAX_UPSCALE);
 }
+
+/**
+ * Unsharp strength for a picture drawn `devicePerTexel` device px per texel of its finest level: none at its own
+ * size or below, rising to ~0.4 at twice its size (bilinear magnification softens it; this gives the edges back).
+ */
+export const sharpenOf = (devicePerTexel: number) => 0.45 * smoothstep(1.15, 2.2, devicePerTexel);
+
+/**
+ * Rubber band at a zoom limit: zoom asked for past the limit (log units, any sign) shows as a small, ever harder
+ * overshoot (at most RUBBER of log zoom, ~10%), then springs back.
+ */
+export const RUBBER = 0.1;
+export const rubber = (excess: number) => Math.sign(excess) * RUBBER * (1 - Math.exp(-Math.abs(excess) / RUBBER));
 
 /**
  * Soft edge of a map laid over its parent when it has no mask (device px):

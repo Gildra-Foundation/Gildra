@@ -19,6 +19,7 @@ export type Tile = {
   usedAt: number;
   priority: number;
   abort?: AbortController;
+  mip?: boolean;
   /** Made here instead of fetched (a backdrop worked out of a tile). */
   source?: () => Promise<TexImageSource & { width: number; height: number }>;
 };
@@ -52,6 +53,8 @@ export class TileStore {
   /** Upload timings (ms per frame that uploaded anything), for the probe. */
   uploadTimes: number[] = [];
   onReady: () => void = () => {};
+  /** Tiles drawn with mipmaps (trilinear when shown smaller than their size): the terrain's, square power-of-two ones. */
+  mipmap: (key: string) => boolean = () => false;
 
   /** `budget`: GPU bytes kept; `concurrency`: loads at a time. */
   constructor(private gl: WebGLRenderingContext, private budget: number, private concurrency: number, private maxEntries = 900) {}
@@ -190,7 +193,11 @@ export class TileStore {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // (WebGL 1 mipmaps only power-of-two textures; edge tiles of other sizes stay bilinear.)
+    const pot = (n: number) => n > 0 && (n & (n - 1)) === 0;
+    const mip = pot(source.width) && pot(source.height) && this.mipmap(tile.key);
+    if (mip) gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mip ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -199,9 +206,13 @@ export class TileStore {
     tile.height = source.height;
     tile.state = "ready";
     tile.readyAt = performance.now();
-    this.bytes += source.width * source.height * 4;
+    tile.mip = mip;
+    this.bytes += this.sizeOf(tile);
     this.loadedCount += 1;
   }
+
+  /** GPU bytes of a texture (a third more with its mipmaps). */
+  private sizeOf(tile: Tile) { return Math.round(tile.width * tile.height * 4 * (tile.mip ? 4 / 3 : 1)); }
 
   private evict() {
     const old = [...this.tiles.values()]
@@ -216,7 +227,7 @@ export class TileStore {
   private drop(tile: Tile, lost = false) {
     if (tile.texture) {
       if (!lost) this.gl.deleteTexture(tile.texture);
-      this.bytes -= tile.width * tile.height * 4;
+      this.bytes -= this.sizeOf(tile);
       this.loadedCount -= 1;
     }
     if (tile.abort) { const abort = tile.abort; tile.abort = undefined; this.active -= 1; abort.abort(); }

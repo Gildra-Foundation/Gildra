@@ -57,6 +57,11 @@ uniform float u_fx;
 uniform vec4 u_fxColor;
 uniform vec4 u_excl;
 uniform vec3 u_exclEdge;
+uniform float u_sharp;
+uniform vec2 u_texel;
+uniform vec3 u_gradeMul;
+uniform vec3 u_gradeAdd;
+uniform float u_holeFill;
 varying vec2 v_uv;
 varying vec2 v_p;
 
@@ -87,6 +92,13 @@ vec4 effect() {
 void main() {
   if (u_fx > 0.0) { gl_FragColor = effect(); return; }
   vec4 texel = texture2D(u_tex, v_uv);
+  if (u_sharp > 0.0) {
+    // Unsharp mask for a picture magnified past its finest level: bilinear softness taken back (premultiplied).
+    vec4 n = texture2D(u_tex, v_uv + vec2(u_texel.x, 0.0)) + texture2D(u_tex, v_uv - vec2(u_texel.x, 0.0))
+      + texture2D(u_tex, v_uv + vec2(0.0, u_texel.y)) + texture2D(u_tex, v_uv - vec2(0.0, u_texel.y));
+    texel = clamp(texel + u_sharp * (texel - n * 0.25), 0.0, 1.0);
+    texel.rgb = min(texel.rgb, vec3(texel.a));
+  }
   float a = u_alpha;
   if (u_feather.y > 0.0) {
     // Fully transparent for the first u_feather.x px (the art's own painted border), then a smooth ramp.
@@ -108,6 +120,8 @@ void main() {
   }
   if (u_holeCount > 0.0) {
     // Painted words and decor of a parent where the place in view lies: the parent gives way there.
+    // (With u_holeFill the other way round: the ground comes in there first, over the painted words it replaces.)
+    float keep = 1.0;
     for (int i = 0; i < HOLES; i++) {
       if (float(i) >= u_holeCount) break;
       vec4 h = u_holes[i];
@@ -116,8 +130,10 @@ void main() {
       float soft = max(6.0, max(r.x, r.y) * 0.5);
       vec2 d = abs(v_p - c) - r;
       float outside = length(max(d, vec2(0.0))) + min(max(d.x, d.y), 0.0);
-      a *= smoothstep(-min(r.x, r.y) * 0.6, soft, outside);
+      keep *= smoothstep(-min(r.x, r.y) * 0.6, soft, outside);
     }
+    if (u_holeFill > 0.0) a = max(a, (1.0 - keep) * u_holeFill);
+    else a *= keep;
   }
   if (u_exclEdge.z > 0.0) {
     // The map in view covers its own rectangle: a map around it gives way there, along the same soft edge.
@@ -130,6 +146,8 @@ void main() {
     a *= 1.0 - smoothstep(u_portal.z * 0.82, u_portal.z, d);
   }
   vec3 col = texel.a > 0.0 ? texel.rgb / texel.a : vec3(0.0);
+  // Colour grade (the terrain toward the painted map's palette): identity unless set.
+  col = clamp(col * u_gradeMul + u_gradeAdd, 0.0, 1.0);
   if (u_paper.a > 0.0) {
     // A city drawn on a plain sheet whose mask is only a soft rectangle: the bare sheet gives way to the
     // map under it, the drawing stays (at the edges; the middle keeps its sheet so the zone's own words under
@@ -236,12 +254,19 @@ export type DrawParams = {
   fx?: { kind: 1 | 2; color: [number, number, number, number] } | null;
   /** The rect of the map in view (device px) this picture gives way to, with that map's soft edge [inset, ramp end] and a strength. */
   exclude?: { rect: [number, number, number, number]; edge: [number, number]; strength: number } | null;
+  /** Unsharp strength (0 = off) and the texture's texel size in uv. */
+  sharp?: number;
+  texel?: [number, number];
+  /** Colour grade: rgb × mul + add (straight colour, 0..1). */
+  grade?: { mul: [number, number, number]; add: [number, number, number] } | null;
+  /** The holes are where this picture comes in first (at this opacity), instead of where it gives way. */
+  holeFill?: number;
 };
 
 type Target = { fb: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
 type Layer = { scale: number; a: Target; b: Target };
 
-const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat", "u_paper", "u_art", "u_corner", "u_holes", "u_holeCount", "u_screen", "u_vignette", "u_land", "u_ink", "u_fx", "u_fxColor", "u_excl", "u_exclEdge"];
+const MAIN_UNIFORMS = ["u_view", "u_rect", "u_uv", "u_tex", "u_mask", "u_maskOn", "u_maskRect", "u_alpha", "u_frame", "u_feather", "u_portal", "u_time", "u_cloud", "u_cloudMap", "u_water", "u_waterMap", "u_light", "u_desat", "u_paper", "u_art", "u_corner", "u_holes", "u_holeCount", "u_screen", "u_vignette", "u_land", "u_ink", "u_fx", "u_fxColor", "u_excl", "u_exclEdge", "u_sharp", "u_texel", "u_gradeMul", "u_gradeAdd", "u_holeFill"];
 
 export class MapRenderer {
   readonly gl: WebGLRenderingContext;
@@ -329,6 +354,14 @@ export class MapRenderer {
     gl.uniform3f(this.u.u_exclEdge, 0, 0, 0);
     gl.uniform1f(this.u.u_fx, 0);
     gl.uniform1f(this.u.u_land, 0);
+    gl.uniform1f(this.u.u_sharp, 0);
+    gl.uniform1f(this.u.u_holeFill, 0);
+    gl.uniform3f(this.u.u_gradeMul, 1, 1, 1);
+    gl.uniform3f(this.u.u_gradeAdd, 0, 0, 0);
+    this.sharpOn = false;
+    this.gradeOn = false;
+    this.holeFill = 0;
+    this.solids = new Map();
   }
 
   begin(width: number, height: number, time: number, cloudMap: [number, number, number], waterMap: [number, number, number]) {
@@ -410,6 +443,12 @@ export class MapRenderer {
       gl.uniform3f(this.u.u_exclEdge, p.exclude.edge[0], p.exclude.edge[1], p.exclude.strength);
       this.exclOn = true;
     } else if (this.exclOn) { gl.uniform3f(this.u.u_exclEdge, 0, 0, 0); this.exclOn = false; }
+    if (p.sharp && p.sharp > 0.01 && p.texel) { gl.uniform1f(this.u.u_sharp, p.sharp); gl.uniform2f(this.u.u_texel, ...p.texel); this.sharpOn = true; }
+    else if (this.sharpOn) { gl.uniform1f(this.u.u_sharp, 0); this.sharpOn = false; }
+    if (p.grade) { gl.uniform3f(this.u.u_gradeMul, ...p.grade.mul); gl.uniform3f(this.u.u_gradeAdd, ...p.grade.add); this.gradeOn = true; }
+    else if (this.gradeOn) { gl.uniform3f(this.u.u_gradeMul, 1, 1, 1); gl.uniform3f(this.u.u_gradeAdd, 0, 0, 0); this.gradeOn = false; }
+    const fill = holes.length ? p.holeFill ?? 0 : 0;
+    if (fill !== this.holeFill) { gl.uniform1f(this.u.u_holeFill, fill); this.holeFill = fill; }
     if (p.fx) { gl.uniform1f(this.u.u_fx, p.fx.kind); gl.uniform4f(this.u.u_fxColor, ...p.fx.color); this.fxOn = true; }
     else if (this.fxOn) { gl.uniform1f(this.u.u_fx, 0); this.fxOn = false; }
     // The era's ink acts on the screen: inside an offscreen layer it waits for the layer's own draw.
@@ -424,6 +463,24 @@ export class MapRenderer {
   private inkSet = -1;
   private fxOn = false;
   private exclOn = false;
+  private sharpOn = false;
+  private gradeOn = false;
+  private holeFill = 0;
+  private solids = new Map<string, WebGLTexture>();
+
+  /** A 1×1 texture of a colour ("#rrggbb"): flat fills such as a terrain's sea. */
+  solid(hex: string): WebGLTexture | null {
+    const known = this.solids.get(hex);
+    if (known) return known;
+    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+    if (!m) return null;
+    const gl = this.gl;
+    const tex = gl.createTexture() as WebGLTexture;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16), 255]));
+    this.solids.set(hex, tex);
+    return tex;
+  }
 
   /**
    * Start an out-of-focus layer: what is drawn next goes into an offscreen
@@ -571,5 +628,7 @@ export class MapRenderer {
   dispose() {
     this.dropLayers();
     this.dropSnapshot();
+    for (const tex of this.solids.values()) this.gl.deleteTexture(tex);
+    this.solids.clear();
   }
 }

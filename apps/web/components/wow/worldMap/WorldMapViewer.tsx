@@ -72,6 +72,8 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   const [narrow, setNarrow] = useState(false);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   const [full, setFull] = useState(false);
+  /** The view at its deepest / widest zoom (the zoom buttons show it). */
+  const [zoomLimit, setZoomLimit] = useState({ in: false, out: false });
   const [reduced, setReduced] = useState(false);
   const routeEls = useRef<Array<SVGPathElement | null>>([]);
   const lastPick = useRef(0);
@@ -199,6 +201,11 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
     const still = c.x === lastView.current.x && c.y === lastView.current.y && c.scale === lastView.current.scale && info.width === lastView.current.w && info.height === lastView.current.h && composed === lastView.current.focus && lastPick.current !== 0;
     const focusChanged = composed !== lastView.current.focus;
     lastView.current = { x: c.x, y: c.y, scale: c.scale, w: info.width, h: info.height, focus: composed };
+    // (At rest only: the rubber band at a limit moves the view a little, the buttons stay as they are.)
+    if (info.room && !info.moving) {
+      const atIn = info.room.in < 0.01, atOut = info.room.out < 0.01;
+      setZoomLimit((was) => (was.in === atIn && was.out === atOut ? was : { in: atIn, out: atOut }));
+    }
     // The hovered flight master's routes: the dotted line runs towards its destinations.
     const poi = hoverPoiRef.current;
     if (poi?.routes && !reducedRef.current) for (const path of routeEls.current) path?.style.setProperty("stroke-dashoffset", String((-info.time * 22) % 1000));
@@ -708,7 +715,7 @@ export default function WorldMapViewer({ stage, handle, lang, mapId, homeId, bun
   ) : null;
   const search = bundle ? <MapSearchBox lang={lang} bundle={searchBundle ?? bundle} bundleUrl={bundleUrl} byId={byId} exists={existsNow} onPick={pickHit} /> : null;
   const controls = (
-    <MapControls lang={lang} canUp={Boolean(focus && focus.parent !== null)} full={full} layers={layers} layersOpen={layersOpen}
+    <MapControls lang={lang} canUp={Boolean(focus && focus.parent !== null)} full={full} layers={layers} layersOpen={layersOpen} limit={zoomLimit}
       onZoom={(factor) => engineRef.current?.zoomBy(factor)} onWhole={() => engineRef.current?.showWhole()} onUp={() => engineRef.current?.up()} onLayersOpen={toggleLayers} onLayers={setLayers} onFull={toggleFull} />
   );
   // The name under the pointer, unless its label is on screen already (that label lights up instead).

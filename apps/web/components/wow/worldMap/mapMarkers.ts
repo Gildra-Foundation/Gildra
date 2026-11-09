@@ -3,6 +3,7 @@ import type { PoiKind } from "@/lib/wow/worldMap/types";
 import { contains } from "./engine/camera";
 import type { FrameInfo } from "./engine/WorldMapEngine";
 import { paintedBoxes, paintedOf } from "./ui/paintedArt";
+import { labelBoxes } from "@/lib/wow/worldMap/painted";
 
 /**
  * Which markers and labels the map shows at the current view: points of the
@@ -99,13 +100,15 @@ function nameBox(marker: Placed, side: LabelSide): Box {
 }
 
 export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers, era: AtlasEra | null, project: (x: number, y: number) => [number, number], artIn: (map: AtlasMap) => unknown, lang: "en" | "ru" = "en"): Array<Marker & { sx: number; sy: number }> {
+  // Deep in, a continent's terrain covers the painted pictures (and their words): names come from the data instead.
+  const deep = (info.ground ?? 0) > 0.6;
   // Words the game painted into the pictures in view: labels keep clear of them.
   const painted: Box[] = [];
   // Maps drawn out of focus (a backdrop far magnified) and the ancestors of the map in view (only their calm
   // wash shows) carry no markers: no points floating over a backdrop.
   const backdrop = (entry: FrameInfo["drawn"][number]) => (entry.blur ?? 0) > 0.5 || (entry.role === "ancestor" && (entry.tone ?? 0) > 0.5);
   for (const entry of info.drawn) {
-    if (entry.alpha < 0.55 || backdrop(entry)) continue;
+    if (entry.alpha < 0.55 || backdrop(entry) || deep) continue;
     for (const [x0, y0, x1, y1] of paintedBoxes(entry.map)) {
       const [a, b] = project(x0, y0), [c, d] = project(x1, y1);
       if (c > 0 && a < info.width && d > 0 && b < info.height) painted.push([a, b, c, d]);
@@ -127,14 +130,14 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
     const targeted = new Set<number>();
     // Art that names its zones itself: our names show on hover where the picture speaks the reader's
     // language (EN; RU from the Russian client), else as plaques over the painted words.
-    const namesPainted = Boolean(paintedOf(map)?.names);
+    const namesPainted = !deep && Boolean(paintedOf(map)?.names);
     const localized = lang === "en" || Boolean(map.art?.localized);
     // The map the reader stands in shows all its points sooner.
     const near = info.focus.id === map.id ? 0.5 : 1;
     for (const poi of index.poisByMap.get(map.id) ?? []) {
       if (poi.target) targeted.add(poi.target);
       if (!layers[LAYER[poi.kind]] || width < MIN_WIDTH[poi.kind] * near) continue;
-      if (poi.kind === "zone-label" && width > 3600) continue;
+      if (poi.kind === "zone-label" && width > 3600 && !deep) continue;
       const [ax, ay] = point(map, poi.x, poi.y);
       // A point that opens a map (a capital) stays until that map itself is in view.
       if (poi.target) { if ((drawnAlpha.get(poi.target) ?? 0) > 0.6) continue; }
@@ -155,6 +158,18 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
       if (poi.kind === "zone-label" && namesPainted) continue;
       const showLabel = poi.kind === "capital" || poi.kind === "city" || poi.kind === "zone-label" || (poi.kind === "town" && width > 1400 * near) || ((poi.kind === "raid" || poi.kind === "dungeon" || poi.kind === "delve") && width > 1500 * near);
       out.push({ owner: map.id, key: `p${poi.id}`, type: "poi", kind: poi.kind, label: poi.name, ax, ay, priority: PRIORITY[poi.kind], showLabel, poi, faction: poi.faction });
+    }
+    // Under the terrain the picture's own painted names (districts, landmarks) are gone: the data's words stand in.
+    if (deep && layers.labels && map.art) {
+      labelBoxes(map.art).forEach((label, i) => {
+        const words = label.text?.[lang] || label.text?.en;
+        if (!words || labelled.has(words) || (label.for !== undefined && label.for !== map.id)) return;
+        labelled.add(words);
+        const x = (label.box[0] + label.box[2]) / 2, y = (label.box[1] + label.box[3]) / 2;
+        const [ax, ay] = point(map, x, y);
+        const poi: AtlasPoi = { id: `w${map.id}-${i}`, map: map.id, kind: "zone-label", name: words, x, y };
+        out.push({ owner: map.id, key: `w${map.id}-${i}`, type: "poi", kind: "zone-label", label: words, ax, ay, priority: PRIORITY["zone-label"], showLabel: true, poi });
+      });
     }
     // Names of child maps not opened yet: click to fly in.
     if (layers.labels && width >= 240) {

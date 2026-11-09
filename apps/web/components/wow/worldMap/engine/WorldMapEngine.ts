@@ -2,7 +2,9 @@ import type { AtlasMap } from "@/lib/wow/worldMap/bundle";
 import type { MapArt } from "@/lib/wow/worldMap/types";
 import { clamp, contains, easeInOut, fitBox, flightPath, intersects, smoothstep, toAtlas, toScreen, zoomAt, type Box, type Camera } from "./camera";
 import { MapRenderer, type DrawParams } from "./gl";
-import { blurGroups, blurKey, blurOf, blurRadiusCss, blurRadiusPx, desatOf, dimOf, radiusOfKey, vignetteOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "./lod";
+import { blurGroups, blurKey, blurOf, blurRadiusCss, blurRadiusPx, desatOf, dimOf, radiusOfKey, vignetteOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, rubber, sharpenOf, terrainAlphaOf, upscaleOf } from "./lod";
+import { areaAt, areaCentre, loadArea, type Area } from "./area";
+import { loadGrade, type Grade } from "./grade";
 import { wheelKind } from "./input";
 import { FOCUS_FADE, MAX_AHEAD, SLOW_FRAME, TAU_NOTCH, TAU_SMOOTH, ZOOM_DONE, fadeOut, gather, holdFocus, spend, wheelLog } from "./motion";
 import { analysePaper } from "./paper";
@@ -56,6 +58,10 @@ export type FrameInfo = {
   drawn: DrawnMap[];
   moving: boolean;
   time: number;
+  /** How far a continent's terrain covers the middle of the view (0..1): past ~0.6 the painted names are gone under it. */
+  ground?: number;
+  /** Zoom left (log units) in and out from here: the buttons' state. */
+  room?: { in: number; out: number };
 };
 export type EngineEvents = {
   frame(info: FrameInfo): void;
@@ -79,6 +85,13 @@ type ArtStyle = { corner?: number; holes?: Array<[number, number, number, number
   /** Only its own land: drawn through its mask or not at all (not before the mask is in). */ ownLand?: boolean;
   /** Device-px box under the solid part of the map in view: tiles wholly inside it are neither drawn nor asked for. */ hidden?: Box;
   exclude?: DrawParams["exclude"];
+  /** Unsharp at its finest level once magnified past it (the map in view, the terrain). */
+  sharp?: boolean;
+  grade?: Grade | null;
+  /** The holes are where this picture comes in first (the terrain over the painted words it replaces), at this opacity. */
+  holeFill?: number;
+  /** A flat colour under the picture inside its rect (a terrain's sea). */
+  ocean?: string;
 };
 
 /** Floors and caves under a place (micro maps, orphan levels like Cleft of Shadow): never opened by zooming over its surface. */
@@ -181,6 +194,7 @@ export class WorldMapEngine {
     const dense = coarse && (window.devicePixelRatio || 1) >= 2;
     this.tiles = new TileStore(this.renderer.gl, (dense ? 40 : coarse ? 56 : 128) * 1048576, coarse ? 4 : 6);
     this.tiles.onReady = () => this.invalidate();
+    this.tiles.mipmap = (key) => key.includes("/maps/terrain/");
     this.bindInput();
     this.resize();
     const observer = new ResizeObserver(() => this.resize());
@@ -428,6 +442,7 @@ export class WorldMapEngine {
   takeFlown() { const value = this.flown; this.flown = false; return value; }
 
   jumpTo(camera: Camera) {
+    this.stretch = null;
     this.lookAt = null;
     this.zoomIntent = 0;
     this.flight = null;
@@ -439,6 +454,7 @@ export class WorldMapEngine {
   }
 
   flyTo(target: Camera, after?: () => void) {
+    this.stretch = null;
     this.lookAt = null;
     this.zoomIntent = 0;
     this.velocity = null;
@@ -516,17 +532,32 @@ export class WorldMapEngine {
    * (nothing left to spend against a wall) nor more than MAX_AHEAD ahead of the camera.
    */
   private addZoom(log: number, x: number, y: number, tau: number) {
-    let left = gather(this.wheel?.log ?? 0, log);
+    // Back out of an overshoot first (a wheel turned back at the limit).
+    log = this.unwind(log);
+    if (!log) { this.markMoving(); this.invalidate(); return; }
+    const wanted = gather(this.wheel?.log ?? 0, log);
+    let left = wanted;
     // What the limits allow from here, around this point.
     const far = this.limit(zoomAt(this.camera, this.width, this.height, x, y, Math.exp(left > 0 ? MAX_AHEAD : -MAX_AHEAD)), { x, y });
     const room = Math.log(far.scale / this.camera.scale);
     left = left > 0 ? Math.min(left, Math.max(0, room)) : Math.max(left, Math.min(0, room));
+    // Past the limit: the rest is a rubber band (never a hard stop).
+    if (Math.abs(wanted) > Math.abs(left) + 1e-4 && Math.abs(room) < MAX_AHEAD - 1e-3) this.pushStretch(Math.min(Math.abs(log), Math.abs(wanted) - Math.abs(left)) * Math.sign(wanted), x, y);
+    this.setHover(null);
+    this.markMoving();
     if (Math.abs(left) < ZOOM_DONE) { this.wheel = null; return; }
     this.wheel = { x, y, log: left, tau };
     this.lookAt = this.unproject(x, y);
     this.zoomIntent = Math.sign(left);
-    this.setHover(null);
     this.invalidate();
+  }
+
+  /**
+   * The page hides what follows the pointer (the hover name) while the view moves: told at once, in the input
+   * event itself, not only on the next frame (no frame shows the name over a view that already moves).
+   */
+  private markMoving() {
+    if (!this.surface.hasAttribute("data-moving")) this.surface.toggleAttribute("data-moving", true);
   }
 
   panBy(dx: number, dy: number) {
@@ -573,7 +604,7 @@ export class WorldMapEngine {
     let bestArea = Infinity;
     for (const id of base.children) {
       const child = this.maps.get(id);
-      if (!child || !contains(child.box, ax, ay) || !child.art || UNDER.has(child.type) || this.hiddenIn(this.set).has(id)) continue;
+      if (!child || !contains(child.box, ax, ay) || !child.art || UNDER.has(child.type) || this.hiddenIn(this.set).has(id) || !this.inArea(child, ax, ay)) continue;
       const area = (child.box[2] - child.box[0]) * (child.box[3] - child.box[1]);
       if (area < bestArea) { best = child; bestArea = area; }
     }
@@ -635,6 +666,31 @@ export class WorldMapEngine {
     };
   }
 
+  /**
+   * Probe for checks: the share of the tiles this view needs that are loaded (painted maps, washes and the
+   * terrain), and the finest picture at the middle of the view with its magnification (CSS px per texel).
+   */
+  coverage() {
+    const now = performance.now();
+    let ready = 0, total = 0;
+    const share = this.prefetch(this.set, now);
+    for (const t of this.terrain) {
+      const tr = t.map.terrain, exists = tr ? this.terrainTiles(tr) : null;
+      if (!tr || !exists) continue;
+      const [x0, y0] = this.project(tr.frame[0], tr.frame[1]), [x1, y1] = this.project(tr.frame[2], tr.frame[3]);
+      const [r, n] = this.drawArt(t.map, tr.art, [x0, y0, x1, y1], t.clip, { alpha: 0, light: 0, cloud: 0, water: 0, desat: 0, levelScale: 1, exists }, now, false, true, "t");
+      ready += r;
+      total += n;
+    }
+    const focus = this.focus;
+    const ground = this.lastInfo?.ground ?? 0;
+    const t = this.terrain.find((entry) => entry.alpha >= 0.9)?.map.terrain;
+    const detail = ground >= 0.9 && t
+      ? { source: "terrain", upscale: ((t.frame[2] - t.frame[0]) * this.camera.scale) / t.art.width }
+      : focus?.art ? { source: "art", upscale: ((focus.frame[2] - focus.frame[0]) * this.camera.scale) / focus.art.width } : null;
+    return { art: share, ground: total ? ready / total : 1, detail };
+  }
+
   resetStats() { this.intervals = []; this.tiles.uploadTimes = []; this.frameCount = 0; this.idleFrames = 0; }
   /** Frames drawn, and rAF callbacks that drew nothing (the living layers' 30 fps gate). */
   private frameCount = 0;
@@ -650,7 +706,7 @@ export class WorldMapEngine {
 
   private get alive() { return this.options.alive && !this.options.reducedMotion; }
 
-  private get moving() { return Boolean(this.flight || this.velocity || this.wheel || this.pointers.size); }
+  private get moving() { return Boolean(this.flight || this.velocity || this.wheel || this.pointers.size || this.stretch); }
 
   private tick(now: number) {
     this.raf = 0;
@@ -682,7 +738,10 @@ export class WorldMapEngine {
     const z0 = this.lastScale;
     this.zoomDir = z0 <= 0 ? 0 : this.camera.scale > z0 * 1.002 ? 1 : this.camera.scale < z0 * 0.998 ? -1 : 0;
     this.lastScale = this.camera.scale;
-    this.render(now);
+    // (The rubber band's overshoot is only drawn: the camera itself stays at the limit. Not while an era waits:
+    // its switch moves the camera itself.)
+    if (this.stretch && !this.pending) this.withCamera(this.drawnCamera(), () => this.render(now));
+    else this.render(now);
     this.measure(performance.now() - t0);
     this.dirty = false;
     if (!this.residentOnce && this.tiles.loadedCount > 0 && this.tiles.pending === 0 && !this.pending) { this.residentOnce = true; this.events.resident?.(); }
@@ -733,6 +792,11 @@ export class WorldMapEngine {
       this.wheel.log = left;
       if (Math.abs(left) < ZOOM_DONE) { this.wheel = null; this.scheduleSettle(); }
     }
+    if (this.stretch && !this.pointers.size && (!this.wheel || Math.sign(this.wheel.log) !== Math.sign(this.stretch.log)) && now - this.stretch.at > 90) {
+      // The rubber band springs back once the input stops (~0.12 s time constant).
+      this.stretch.log *= Math.exp(-dt / 120);
+      if (Math.abs(this.stretch.log) < 0.003) { this.stretch = null; this.scheduleSettle(); }
+    }
     if (this.velocity) {
       this.camera = this.limit({ ...this.camera, x: this.camera.x - (this.velocity.x * dt) / this.camera.scale, y: this.camera.y - (this.velocity.y * dt) / this.camera.scale });
       // Glide like a native map: a long, soft stop (~0.4 s time constant).
@@ -759,12 +823,12 @@ export class WorldMapEngine {
   }
 
   /**
-   * Zoom limits: from a whole top map down to twice the native size of the
-   * deepest map at the centre (twice the terrain's, over a continent that has one).
+   * Zoom limits at a camera: from a whole top map (out) down to 1.6× the native size of the most detailed painted
+   * map under the point (in) — or twice the native texel density of a continent's terrain there.
    */
-  private limit(camera: Camera, anchor?: { x: number; y: number }): Camera {
+  private bounds(camera: Camera, anchor?: { x: number; y: number }) {
     const root = this.maps.get(this.rootAt(camera.x, camera.y)) ?? this.maps.values().next().value;
-    if (!root) return camera;
+    if (!root) return null;
     const min = this.fit(root.frame, 0.02).scale * 0.6;
     // The most detailed picture under the centre sets the limit (a small coarse sub-zone overlapping a city must not).
     let max = 0;
@@ -777,11 +841,28 @@ export class WorldMapEngine {
       // (The map in view counts wherever the middle is: it may be zoomed to its own limit.)
       if (!map.art || UNDER.has(map.type) || (!under(map.frame) && map.id !== this.focusId)) continue;
       max = Math.max(max, maxScaleOf(map.art, map.frame[2] - map.frame[0]));
-      if (map.terrain && under(map.terrain.frame)) terrain = map.terrain;
+      if (map.terrain && under(map.terrain.frame) && (!terrain || map.terrain.art.width / (map.terrain.frame[2] - map.terrain.frame[0]) > terrain.art.width / (terrain.frame[2] - terrain.frame[0]))) terrain = map.terrain;
     }
-    if (terrain) max = Math.max(max, maxScaleOf({ width: 0 }, 1, terrain));
+    // (Only where the ground has a tile: over its open sea the painted map's own limit holds.)
+    if (terrain && this.groundAt(terrain, at ?? [camera.x, camera.y])) max = Math.max(max, maxScaleOf({ width: 0 }, 1, terrain));
     if (!max) max = min * 100;
-    const scale = clamp(camera.scale, min, Math.max(min, max));
+    return { root, min, max: Math.max(min, max) };
+  }
+
+  /** Whether a terrain has a tile (of its finest level) at an atlas point; true while its index loads. */
+  private groundAt(terrain: NonNullable<AtlasMap["terrain"]>, [x, y]: [number, number] | number[]) {
+    const exists = this.terrainTiles(terrain);
+    if (!exists) return true;
+    const f = terrain.frame, art = terrain.art;
+    const tx = Math.floor(((x - f[0]) / (f[2] - f[0])) * art.width / art.tileSize), ty = Math.floor(((y - f[1]) / (f[3] - f[1])) * art.height / art.tileSize);
+    return exists(art.maxZoom, tx, ty);
+  }
+
+  private limit(camera: Camera, anchor?: { x: number; y: number }): Camera {
+    const b = this.bounds(camera, anchor);
+    if (!b) return camera;
+    const { root, min, max } = b;
+    const scale = clamp(camera.scale, min, max);
     let next = { ...camera, scale };
     if (anchor && scale !== camera.scale) {
       // Clamped zoom: keep the point under the cursor in place.
@@ -793,6 +874,40 @@ export class WorldMapEngine {
     next.x = clamp(next.x, root.frame[0] - pad, root.frame[2] + pad);
     next.y = clamp(next.y, root.frame[1] - pad, root.frame[3] + pad);
     return next;
+  }
+
+  /** How much more the view can zoom in and out from here (log units, at the middle of the view): for the buttons. */
+  zoomRoom() {
+    const b = this.bounds(this.camera);
+    if (!b) return { in: 0, out: 0 };
+    return { in: Math.max(0, Math.log(b.max / this.camera.scale)), out: Math.max(0, Math.log(this.camera.scale / b.min)) };
+  }
+
+  /**
+   * Zoom asked for past a limit: a rubber band. `log` (raw, signed) gathers here and shows as a small, ever harder
+   * overshoot around the point zoomed at; it springs back once the input stops. Zoom the other way first unwinds it.
+   */
+  private stretch: { log: number; x: number; y: number; at: number } | null = null;
+  /** Spends zoom the other way on an overshoot first; returns what is left for the camera. */
+  private unwind(log: number) {
+    const st = this.stretch;
+    if (!st || !log || Math.sign(log) === Math.sign(st.log)) return log;
+    const use = Math.sign(log) * Math.min(Math.abs(log), Math.abs(st.log));
+    st.log += use;
+    st.at = performance.now();
+    if (Math.abs(st.log) < 1e-4) this.stretch = null;
+    return log - use;
+  }
+  private pushStretch(excess: number, x: number, y: number) {
+    if (this.options.reducedMotion || Math.abs(excess) < 1e-4) return;
+    const log = clamp((this.stretch?.log ?? 0) + excess, -0.6, 0.6);
+    this.stretch = { log, x, y, at: performance.now() };
+    this.invalidate();
+  }
+  /** The camera as drawn: the real one, zoomed by the rubber band's overshoot around its point. */
+  private drawnCamera(): Camera {
+    const st = this.stretch;
+    return st ? zoomAt(this.camera, this.width, this.height, st.x, st.y, Math.exp(rubber(st.log))) : this.camera;
   }
 
   // ---------------------------------------------------------------- render
@@ -992,14 +1107,14 @@ export class WorldMapEngine {
   }
 
   /** Terrain over its continent once the finest painted map at the centre runs out of detail. */
-  private collectTerrain(shown: DrawnMap[] & { all?: DrawnMap[] }): TerrainDraw[] {
+  private collectTerrain(list: DrawnMap[], set: MapSet, now: number): TerrainDraw[] {
     const out: TerrainDraw[] = [];
-    const list = shown.all ?? shown;
+    const seen = new Set<string>();
     const cx = this.width / 2, cy = this.height / 2;
     for (const entry of list) {
       const terrain = entry.map.terrain;
       // Only the ground under the way to the map in view: a neighbour's would lie over that map.
-      if (!terrain || entry.role === "neighbour") continue;
+      if (!terrain || entry.role === "neighbour" || this.gradePending(entry.map)) continue;
       let finest = entry.upscale;
       for (const other of list) {
         if (other.alpha < 0.5 || !contains(other.clip, cx, cy)) continue;
@@ -1011,13 +1126,35 @@ export class WorldMapEngine {
       const [x1, y1] = this.project(terrain.frame[2], terrain.frame[3]);
       // Only where the ground has more detail than the painted map it would cover.
       const ground = upscaleOf(x1 - x0, terrain.art);
-      const alpha = terrainAlphaOf(finest) * smoothstep(1.05, 1.5, finest / Math.max(1e-6, ground)) * entry.alpha;
-      if (alpha <= 0.003) continue;
+      const more = smoothstep(1.05, 1.5, finest / Math.max(1e-6, ground)) * entry.alpha;
+      const target = terrainAlphaOf(finest) * more;
       const clip: Box = [Math.max(x0, entry.clip[0]), Math.max(y0, entry.clip[1]), Math.min(x1, entry.clip[2]), Math.min(y1, entry.clip[3])];
+      const key = `${set.key}:${entry.map.id}`;
+      seen.add(key);
+      const shown = this.groundShown.get(key) ?? 0;
+      // Its tiles are asked for a little before the hand-over begins (so it rarely waits), at the level it will need.
+      const soon = terrainAlphaOf(finest * 1.3) * more;
+      let ready = 0;
+      if ((soon > 0.003 || target > 0.003) && clip[2] > clip[0] && clip[3] > clip[1]) {
+        const exists = this.terrainTiles(terrain);
+        if (exists) {
+          const [r, t] = this.drawArt(entry.map, terrain.art, [x0, y0, x1, y1], clip, { alpha: 0, light: 0, cloud: 0, water: 0, desat: 0, levelScale: 1, exists }, now, this.moving, true, "t");
+          ready = t ? r / t : 1;
+        }
+      }
+      // It comes in only over tiles that are there (no squares of ground popping in one by one), and at most over
+      // ~0.16 s (a jump straight in fades rather than flashes); going out it follows the zoom at once.
+      const alpha = target <= shown ? target : ready >= 0.9 || this.options.reducedMotion ? Math.min(target, this.options.reducedMotion ? 1 : shown + this.frameDt / 160) : shown;
+      this.groundShown.set(key, alpha);
+      if (alpha > shown + 1e-4 && alpha < target) this.fadingUntil = Math.max(this.fadingUntil, now + 32);
+      if (alpha <= 0.003) continue;
       if (clip[2] > clip[0] && clip[3] > clip[1]) out.push({ map: entry.map, alpha, clip });
     }
+    for (const key of this.groundShown.keys()) if (key.startsWith(`${set.key}:`) && !seen.has(key)) this.groundShown.delete(key);
     return out;
   }
+  /** The terrain's opacity as last drawn, per set and map: it rises only over tiles that are loaded. */
+  private groundShown = new Map<string, number>();
 
   private render(now: number) {
     this.recompose = false;
@@ -1129,7 +1266,7 @@ export class WorldMapEngine {
     };
     let candidate: DrawnMap | undefined;
     for (const entry of drawn) {
-      if ((entry.open ?? entry.alpha) <= 0.5 || !contains(entry.map.frame, cx, cy)) continue;
+      if ((entry.open ?? entry.alpha) <= 0.5 || !this.inArea(entry.map, cx, cy)) continue;
       // (A true child of the map in view may take over at a fifth of the view; anything else — a neighbour, a city
       // the data puts beside its zone — only once it fills nearly half of it.)
       const own = this.maps.get(entry.map.id)?.parent === this.focusId;
@@ -1151,7 +1288,7 @@ export class WorldMapEngine {
     if (candidate && candidate.map.id === this.focusId && (this.zoomDir || this.zoomIntent) < 0) {
       const own = share(candidate);
       for (const entry of drawn) {
-        if (entry === candidate || entry.map.depth !== candidate.map.depth || entry.role === "ancestor" || (entry.open ?? entry.alpha) <= 0.5 || !contains(entry.map.frame, cx, cy)) continue;
+        if (entry === candidate || entry.map.depth !== candidate.map.depth || entry.role === "ancestor" || (entry.open ?? entry.alpha) <= 0.5 || !this.inArea(entry.map, cx, cy)) continue;
         if (share(entry) > own + 0.15 && (!candidate || share(entry) > share(candidate))) candidate = entry;
       }
     }
@@ -1169,11 +1306,11 @@ export class WorldMapEngine {
       // off its middle than the candidate is from its own.
       // Not up while the point is already over a place of its level that is opening (Classic's Orgrimmar lies
       // beside Durotar in the data): the reader is on the way in, not out.
-      const heading = relation === "above" && this.zoomDir >= 0 && drawn.some((entry) => entry !== shown && entry.map.depth >= held.depth && (entry.open ?? entry.alpha) > 0.2 && contains(entry.map.frame, cx, cy));
+      const heading = relation === "above" && this.zoomDir >= 0 && drawn.some((entry) => entry !== shown && entry.map.depth >= held.depth && (entry.open ?? entry.alpha) > 0.2 && this.inArea(entry.map, cx, cy));
       // Beside it: the one that shows more of the view wins, with a margin (no flip-flop between two halves).
       const heldShare = shown ? share(shown) : 0;
       const under = Boolean(shown) && (heading || (relation === "other"
-        ? contains(held.frame, cx, cy) && heldShare + 0.15 >= share(candidate) && off(held) <= off(candidate.map) + 0.1
+        ? this.inArea(held, cx, cy) && heldShare + 0.15 >= share(candidate) && off(held) <= off(candidate.map) + 0.1
         // Up a level: while zooming in only once it has all but left the view; at rest once it is a small part of it.
         : (contains(held.frame, cx, cy) || heldShare >= (relation !== "above" || this.zoomDir < 0 ? 0.3 : this.zoomDir > 0 ? 0.04 : 0.12))
           // …and never kept once it has shrunk to a small part of the view (zooming out, or at rest after it).
@@ -1211,8 +1348,47 @@ export class WorldMapEngine {
       // The URL follows the map in view even when nothing moved (an era's picture came in).
       this.scheduleSettle();
     }
-    this.lastInfo = { camera: this.camera, width: this.width, height: this.height, focus, drawn, moving: this.moving, time };
+    const mid = [left + (this.width - left - right) / 2, top + (this.height - top - bottom) / 2];
+    let ground = 0;
+    for (const t of this.terrain) if (contains(t.clip, mid[0], mid[1])) ground = Math.max(ground, t.alpha);
+    this.lastInfo = { camera: this.camera, width: this.width, height: this.height, focus, drawn, moving: this.moving, time, ground, room: this.zoomRoom() };
     this.events.frame(this.lastInfo);
+  }
+
+  /**
+   * Whether an atlas point lies on a map's own land: inside its rectangle and — for a zone or city with a mask —
+   * on the white of its mask (zone rectangles overlap; their land does not). Until the mask is read: the rectangle.
+   */
+  inArea(map: AtlasMap, x: number, y: number) {
+    const f = map.frame;
+    if (!contains(f, x, y)) return false;
+    const area = this.areaOf(map);
+    return !area || areaAt(area, (x - f[0]) / (f[2] - f[0]), (y - f[1]) / (f[3] - f[1])) >= 0.5;
+  }
+
+  /** A point well inside a map's own land (atlas space): its mask's deepest point, else its rectangle's middle. */
+  areaPoint(id: number): [number, number] | null {
+    const map = this.maps.get(id);
+    if (!map) return null;
+    const f = map.frame;
+    const area = this.areaOf(map);
+    const at = area ? areaCentre(area) : null;
+    return at ? [f[0] + at[0] * (f[2] - f[0]), f[1] + at[1] * (f[3] - f[1])] : [(f[0] + f[2]) / 2, (f[1] + f[3]) / 2];
+  }
+
+  /** The own-area grid of a zone or city (read from its mask once); null for other maps or while it loads. */
+  private areas = new Map<string, Area | "loading" | "failed">();
+  private areaOf(map: AtlasMap): Area | null {
+    if (!map.mask || !usesMask(map) || !map.art) return null;
+    const known = this.areas.get(map.mask);
+    if (known && known !== "loading" && known !== "failed") return known;
+    if (!known) {
+      this.areas.set(map.mask, "loading");
+      loadArea(map.mask, (map.art as MapArt).width / (map.art as MapArt).height)
+        .then((area) => { this.areas.set(map.mask as string, area); this.invalidate(); })
+        .catch(() => this.areas.set(map.mask as string, "failed"));
+    }
+    return null;
   }
 
   /**
@@ -1295,6 +1471,22 @@ export class WorldMapEngine {
     // The biggest first: when there are more than the shader takes, the small ones go.
     holes.sort((a, b) => (b[2] - b[0]) * (b[3] - b[1]) - (a[2] - a[0]) * (a[3] - a[1]));
     return { holes: holes.slice(0, this.renderer.holes), patches };
+  }
+
+  /** Every painted word of a drawn map with its banner (device px), the biggest first, as many as a draw takes. */
+  private wordsOf(entry: DrawnMap): Array<[number, number, number, number]> {
+    const art = entry.map.art;
+    if (!art) return [];
+    const m = entry.map.frame, mw = m[2] - m[0], mh = m[3] - m[1], d = this.dpr;
+    const out: Array<[number, number, number, number]> = [];
+    for (const label of labelBoxes(art)) {
+      const b = label.plaque ?? label.box;
+      const [x0, y0] = this.project(m[0] + b[0] * mw, m[1] + b[1] * mh), [x1, y1] = this.project(m[0] + b[2] * mw, m[1] + b[3] * mh);
+      if (x1 < 0 || y1 < 0 || x0 > this.width || y0 > this.height) continue;
+      out.push([x0 * d, y0 * d, x1 * d, y1 * d]);
+    }
+    out.sort((a, b) => (b[2] - b[0]) * (b[3] - b[1]) - (a[2] - a[0]) * (a[3] - a[1]));
+    return out.slice(0, this.renderer.holes);
   }
 
   /** The rectangle of the map in view and its soft edge (as drawArt gives it), for the maps around to give way there. */
@@ -1481,8 +1673,10 @@ export class WorldMapEngine {
    * outgoing one). Runs of out-of-focus maps go through one blurred offscreen
    * layer each; the terrain and a hovered child come last.
    */
-  private drawList(list: DrawnMap[], set: MapSet, eraAlpha: number, cloud: number, water: number, now: number) {
+  private drawList(list: DrawnMap[] & { all?: DrawnMap[] }, set: MapSet, eraAlpha: number, cloud: number, water: number, now: number) {
     const moving = this.moving;
+    // (The maps hidden under one that covers the view still carry their continent's terrain: kept before the reorder.)
+    const all = list.all ?? list;
     // The map in view and what lies in it come last: nothing around it is drawn over it.
     const inFocus = this.focusSubtree(set);
     list = this.drawOrder(list, inFocus);
@@ -1540,6 +1734,7 @@ export class WorldMapEngine {
           ...(focus && !inFocus.has(entry.map.id) ? { corner: entry.map.depth > 0 ? 0.16 : 0, ...this.givesWay(entry, focus, set, role === "ancestor" || role === "neighbour") } : {}),
           // The map in view: its frame's corner pieces go too (its painted border is under its soft edge already).
           ...(role === "focus" && entry.map.depth > 0 ? { corner: 0.2 } : {}),
+          ...(role === "focus" ? { sharp: true } : {}),
           // …and, magnified past its detail, its painted words.
           ...(role === "focus" && focus && (entry.past ?? 0) > 0.2 ? this.givesWay(entry, focus, set, true) : {}),
           // The places opened inside it show their land, not their painted names: only the map in view is named.
@@ -1556,15 +1751,22 @@ export class WorldMapEngine {
       this.renderer.setUnder(false);
     }
     // The ground of a continent over its painted maps, deep in.
-    const terrain = set === this.set ? (this.terrain = this.collectTerrain(list)) : this.collectTerrain(list);
+    const terrain = set === this.set ? (this.terrain = this.collectTerrain(all, set, now)) : this.collectTerrain(all, set, now);
+    // The painted words of the map in view: the ground comes in there first, so they fade out under it before they
+    // are ever shown magnified.
+    const words = held && terrain.length ? this.wordsOf(held) : [];
     for (const t of terrain) {
       const tr = t.map.terrain;
       if (!tr) continue;
-      const exists = this.terrainTiles(tr.index);
+      const exists = this.terrainTiles(tr);
       if (exists === null) continue;
       const [x0, y0] = this.project(tr.frame[0], tr.frame[1]);
       const [x1, y1] = this.project(tr.frame[2], tr.frame[3]);
-      this.drawArt(t.map, tr.art, [x0, y0, x1, y1], t.clip, { alpha: t.alpha * eraAlpha, light: 0, cloud: 0, water: water * 0.5, desat: 0, levelScale: 1, exists }, now, moving, false, "t");
+      this.drawArt(t.map, tr.art, [x0, y0, x1, y1], t.clip, {
+        alpha: t.alpha * eraAlpha, light: 0, cloud: 0, water: water * 0.5, desat: 0, levelScale: 1, exists, sharp: true, grade: this.gradeOf(t.map),
+        ...(words.length && t.alpha < 0.999 ? { holes: words, holeFill: Math.min(1, t.alpha * 3) * eraAlpha } : {}),
+        ...(tr.ocean ? { ocean: tr.ocean } : {}),
+      }, now, moving, false, "t");
     }
     // A hovered child that is not drawn yet peeks through its parent.
     if (set === this.set && this.hoverId !== null && !list.some((entry) => entry.map.id === this.hoverId)) {
@@ -1614,7 +1816,9 @@ export class WorldMapEngine {
     // Its own land or nothing: until the mask is in, its tiles are only asked for.
     if (ownLand && !maskReady) dry = true;
     // Top maps have no edge to blend; a world opened from the Cosmic map softens its edge once open.
-    const feather: number | [number, number] = isTerrain ? featherOf(cx1 - cx0, cy1 - cy0, d) * 0.6
+    // (The terrain's soft edge is the edge of the part of it shown, off screen where that part runs past the view: never
+    // a fade along the screen's own edges.)
+    const feather: number | [number, number] = isTerrain ? featherOf((clipBox[2] - clipBox[0]) * d, (clipBox[3] - clipBox[1]) * d, d) * 0.6
       : map.depth === 0 ? 0
       : map.portal ? (style.alpha > 0.98 ? featherOf(devW, devH, d) * 0.6 : 0)
       : maskReady && !landOnly && maskStrength > 0.98 ? maskFeatherOf(devW, devH, d)
@@ -1627,16 +1831,23 @@ export class WorldMapEngine {
       portal = [cx, cy, inner + (outer - inner) * smoothstep(0.35, 1, style.alpha)];
     }
     // The terrain fades at the edge of the part shown (the continent's picture), a map at its own art border.
-    const frame: Box = isTerrain ? [cx0, cy0, cx1, cy1] : [clipBox[0] * d, clipBox[1] * d, clipBox[2] * d, clipBox[3] * d];
+    const frame: Box = [clipBox[0] * d, clipBox[1] * d, clipBox[2] * d, clipBox[3] * d];
     // The bare sheet is a city picture's (never a continent's or world's, nor needed for a neighbour's own land).
     const paper = maskReady && !landOnly && !isTerrain && map.depth > 0 && !style.exclude && (map.type === "zone" || map.type === "micro") ? this.paperOf(map, art) : null;
     const base: Omit<DrawParams, "rect" | "uv"> = {
       alpha: style.alpha, frame, feather, portal, light: style.light, cloud: style.cloud, water: style.water, desat: style.desat,
       mask: maskReady && maskReady.texture ? { texture: maskReady.texture, rect: [sx0, sy0, sx1, sy1], strength: maskStrength, land: landOnly } : null,
       paper: paper ? [paper[0], paper[1], paper[2], 0.9] : null,
-      art: [sx0, sy0, sx1, sy1], corner: isTerrain ? 0 : style.corner ?? 0, holes: isTerrain ? [] : style.holes ?? [],
+      art: [sx0, sy0, sx1, sy1], corner: isTerrain ? 0 : style.corner ?? 0, holes: style.holes ?? [],
       exclude: isTerrain ? null : style.exclude ?? null,
+      grade: style.grade ?? null, holeFill: style.holeFill ?? 0,
     };
+    // Its finest level magnified past its own size: sharpened (bilinear softness taken back), never drawn coarser.
+    const sharp = style.sharp && z === art.maxZoom ? sharpenOf(pxW) : 0;
+    if (!dry && style.ocean) {
+      const sea = this.renderer.solid(style.ocean);
+      if (sea) this.renderer.draw(sea, { ...base, rect: [sx0, sy0, sx1, sy1], uv: [0, 0, 1, 1] });
+    }
     const centerX = W / 2, centerY = H / 2;
     const id = map.id;
     const exists = style.exists;
@@ -1673,7 +1884,7 @@ export class WorldMapEngine {
           if (tile.state === "ready") this.fadingUntil = Math.max(this.fadingUntil, tile.readyAt + FADE_TILE);
         }
         if (tile.state === "ready" && tile.texture) {
-          this.renderer.draw(tile.texture, { ...base, rect, uv: [0, 0, Math.min(1, tw / tile.width), Math.min(1, th / tile.height)], alpha: style.alpha * fade });
+          this.renderer.draw(tile.texture, { ...base, rect, uv: [0, 0, Math.min(1, tw / tile.width), Math.min(1, th / tile.height)], alpha: style.alpha * fade, ...(sharp ? { sharp, texel: [1 / tile.width, 1 / tile.height] as [number, number] } : {}) });
         }
       }
     }
@@ -1725,24 +1936,55 @@ export class WorldMapEngine {
     return null;
   }
 
-  /** Which terrain tiles exist (its index file, fetched once); null while it loads, a pass-all without an index. */
-  private terrainIndex = new Map<string, Map<number, Set<string>> | "loading" | "failed">();
-  private terrainTiles(index: string | undefined): ((z: number, x: number, y: number) => boolean) | null {
-    if (!index) return () => true;
-    const known = this.terrainIndex.get(index);
-    if (known === "failed") return () => false;
-    if (known && known !== "loading") return (z, x, y) => known.get(z)?.has(`${x}_${y}`) ?? false;
+  /**
+   * The colour grade of a map's terrain toward its painted picture (worked out once from both smallest levels);
+   * null (no grade) while it is worked out or when it cannot be.
+   */
+  private grades = new Map<string, Grade | "loading" | "failed">();
+  /** Still working the grade out (the terrain waits for it: no change of its colours once shown). */
+  private gradePending(map: AtlasMap) {
+    return this.gradeOf(map) === null && this.grades.get(`${map.terrain?.art.url}|${map.art?.url}`) === "loading";
+  }
+  private gradeOf(map: AtlasMap): Grade | null {
+    const tr = map.terrain, art = map.art;
+    if (!tr || !art) return null;
+    const key = `${tr.art.url}|${art.url}`;
+    const known = this.grades.get(key);
+    if (known && known !== "loading" && known !== "failed") return known;
     if (!known) {
-      this.terrainIndex.set(index, "loading");
-      fetch(index, { cache: "force-cache" })
+      this.grades.set(key, "loading");
+      const f = map.frame, w = f[2] - f[0], h = f[3] - f[1];
+      const rect: [number, number, number, number] = [(tr.frame[0] - f[0]) / w, (tr.frame[1] - f[1]) / h, (tr.frame[2] - f[0]) / w, (tr.frame[3] - f[1]) / h];
+      loadGrade(tileUrl(art, map.id, 0, 0, 0), levelSize(art, 0), rect, tileUrl(tr.art, map.id, 0, 0, 0), levelSize(tr.art, 0))
+        .then((grade) => { this.grades.set(key, grade); this.invalidate(); })
+        .catch(() => this.grades.set(key, "failed"));
+    }
+    return null;
+  }
+
+  /**
+   * Which terrain tiles exist: its index (the tiles there are) or its list of empty ones (the tiles there are not),
+   * fetched once; null while it loads, a pass-all with neither.
+   */
+  private terrainIndex = new Map<string, Map<number, Set<string>> | "loading" | "failed">();
+  private terrainTiles(tr: NonNullable<AtlasMap["terrain"]>): ((z: number, x: number, y: number) => boolean) | null {
+    const url = tr.index ?? tr.empty;
+    if (!url) return () => true;
+    const listed = Boolean(tr.index);
+    const known = this.terrainIndex.get(url);
+    if (known === "failed") return () => !listed;
+    if (known && known !== "loading") return (z, x, y) => (known.get(z)?.has(`${x}_${y}`) ?? false) === listed;
+    if (!known) {
+      this.terrainIndex.set(url, "loading");
+      fetch(url, { cache: "force-cache" })
         .then((r) => (r.ok ? r.json() as Promise<Record<string, string[]>> : Promise.reject(new Error(String(r.status)))))
         .then((data) => {
           const levels = new Map<number, Set<string>>();
           for (const [z, list] of Object.entries(data)) if (Array.isArray(list)) levels.set(Number(z), new Set(list));
-          this.terrainIndex.set(index, levels);
+          this.terrainIndex.set(url, levels);
           this.invalidate();
         })
-        .catch(() => this.terrainIndex.set(index, "failed"));
+        .catch(() => this.terrainIndex.set(url, "failed"));
     }
     return null;
   }
@@ -1805,10 +2047,17 @@ export class WorldMapEngine {
       if (!g) return;
       let camera = { ...this.camera, x: this.camera.x - (after[0] - before[0]) / this.camera.scale, y: this.camera.y - (after[1] - before[1]) / this.camera.scale };
       // Pinch: zoom around the fingers' midpoint by the change of their spread (no rotation).
-      if (this.pointers.size >= 2 && beforeDistance > 0) {
-        camera = zoomAt(camera, this.width, this.height, after[0], after[1], this.spread() / beforeDistance);
+      const pinch = this.pointers.size >= 2 && beforeDistance > 0;
+      if (pinch) {
+        // (Pinching back out of an overshoot first unwinds it.)
+        const log = this.unwind(Math.log(this.spread() / beforeDistance));
+        camera = zoomAt(camera, this.width, this.height, after[0], after[1], Math.exp(log));
       }
-      this.camera = this.limit(camera, this.pointers.size >= 2 ? { x: after[0], y: after[1] } : undefined);
+      const limited = this.limit(camera, pinch ? { x: after[0], y: after[1] } : undefined);
+      // Fingers pinching past a limit: a rubber band, as on a native map.
+      if (pinch) this.pushStretch(Math.log(camera.scale / limited.scale), after[0], after[1]);
+      this.camera = limited;
+      this.markMoving();
       g.moved = Math.max(g.moved, Math.hypot(after[0] - g.start[0], after[1] - g.start[1]));
       if (g.moved > 4) { this.lookAt = null; this.zoomIntent = 0; }
       if (g.moved > 4 && !el.hasPointerCapture(event.pointerId)) { try { el.setPointerCapture(event.pointerId); } catch { /* pointer already gone */ } }

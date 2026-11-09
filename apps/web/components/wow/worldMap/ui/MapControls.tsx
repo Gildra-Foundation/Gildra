@@ -10,8 +10,10 @@ import { usePresence } from "./usePresence";
 import styles from "../worldMapViewer.module.css";
 
 /** The map's tools on the right edge: zoom as one pair, the map whole, a level up, the layers menu and full screen. */
-export function MapControls({ lang, canUp, full, layers, layersOpen, onZoom, onWhole, onUp, onLayersOpen, onLayers, onFull }: {
+export function MapControls({ lang, canUp, full, layers, layersOpen, limit, onZoom, onWhole, onUp, onLayersOpen, onLayers, onFull }: {
   lang: Lang; canUp: boolean; full: boolean; layers: Layers; layersOpen: boolean;
+  /** The view is at the deepest (in) or widest (out) zoom: that button is shown spent (a press only bounces the map). */
+  limit?: { in: boolean; out: boolean };
   onZoom(factor: number): void; onWhole(): void; onUp(): void; onLayersOpen(open: boolean): void; onLayers(next: Layers): void; onFull(): void;
 }) {
   const copy = worldMapCopy[lang];
@@ -36,8 +38,8 @@ export function MapControls({ lang, canUp, full, layers, layersOpen, onZoom, onW
     <>
       <div className={styles.controls} data-map-ui>
         <div className={styles.controlGroup} role="group" aria-label={copy.zoom}>
-          <button type="button" onClick={() => onZoom(1.8)} aria-label={copy.zoomIn} title={copy.zoomIn}><Plus aria-hidden="true" /></button>
-          <button type="button" onClick={() => onZoom(1 / 1.8)} aria-label={copy.zoomOut} title={copy.zoomOut}><Minus aria-hidden="true" /></button>
+          <button type="button" onClick={() => onZoom(1.8)} aria-label={copy.zoomIn} title={copy.zoomIn} aria-disabled={limit?.in || undefined}><Plus aria-hidden="true" /></button>
+          <button type="button" onClick={() => onZoom(1 / 1.8)} aria-label={copy.zoomOut} title={copy.zoomOut} aria-disabled={limit?.out || undefined}><Minus aria-hidden="true" /></button>
         </div>
         <button type="button" onClick={onWhole} aria-label={copy.whole} title={copy.whole}><Scan aria-hidden="true" /></button>
         <button type="button" data-up="" onClick={onUp} aria-label={copy.up} title={copy.up} disabled={!canUp}><ChevronUp aria-hidden="true" /></button>

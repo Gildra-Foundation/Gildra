@@ -36,7 +36,7 @@ export type AtlasMap = {
   activeFrom?: string;
   activeTo?: string;
 };
-export type AtlasTerrain = { art: MapArt; frame: Rect; index?: string };
+export type AtlasTerrain = { art: MapArt; frame: Rect; index?: string; empty?: string; ocean?: string };
 /** A map's picture in the bundle's language: `localized` when its painted words are in that language. */
 export type AtlasArt = Omit<MapArt, "urlRu"> & { localized?: boolean };
 export type AtlasPoi = { id: string; map: number; kind: PoiKind; name: string; x: number; y: number; faction?: "alliance" | "horde" | "neutral"; href?: string; routes?: string[]; target?: number };
@@ -83,6 +83,8 @@ function terrainOf(record: MapRecord, frame: Rect): AtlasTerrain | undefined {
     art: { width: t.width, height: t.height, tileSize: t.tileSize, maxZoom: t.maxZoom, url: t.url },
     frame: [frame[0] + x0 * w, frame[1] + y0 * h, frame[0] + x1 * w, frame[1] + y1 * h],
     ...(typeof t.index === "string" && t.index.startsWith("/") ? { index: t.index } : {}),
+    ...(typeof t.empty === "string" && t.empty.startsWith("/") ? { empty: t.empty } : {}),
+    ...(typeof t.ocean === "string" && /^#[0-9a-f]{6}$/i.test(t.ocean) ? { ocean: t.ocean } : {}),
   };
 }
 
