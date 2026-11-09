@@ -131,6 +131,8 @@
     "2274": {
       "url": "/maps/terrain/2274/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/2274/index.json",
+      "empty": "/maps/terrain/2274/empty.json",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 12288,
       "height": 9216,
@@ -140,9 +142,7 @@
         0.312582,
         0.699061,
         0.987079
-      ],
-      "empty": "/maps/terrain/2274/empty.json",
-      "ocean": "#586868"
+      ]
     },
     "2537": {
       "url": "/maps/terrain/13/{z}/{x}_{y}.webp",
@@ -1324,9 +1324,10 @@
     },
     "2274": {
       "mapId": 2601,
+      "blockPixels": 512,
       "blocks": 386,
       "tiles": 2073,
-      "bytes": 5190092
+      "bytes": 8669297
     },
     "101": {
       "mapId": 530,
