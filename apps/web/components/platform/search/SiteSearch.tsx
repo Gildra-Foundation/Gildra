@@ -104,7 +104,7 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
   // shortcut is drawn by CSS and announced through aria-keyshortcuts.
   return <>
     {hotkeysOnly ? null : (
-      <button ref={trigger} className={styles.trigger} type="button" data-open={open || undefined} onClick={() => show()} onPointerEnter={warm} onPointerDown={warm} onFocus={warm} aria-haspopup="dialog" aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
+      <button ref={trigger} className={styles.trigger} type="button" data-open={open || undefined} onClick={() => show()} onPointerEnter={warm} onPointerDown={warm} onFocus={warm} aria-label={`${copy.button}${copy.buttonRest}`} aria-haspopup="dialog" aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
         <Search size={16} strokeWidth={1.9} aria-hidden="true" />
         <span className={styles.triggerLabel}>{copy.button}<span className="sr-only">{copy.buttonRest}</span></span>
         <kbd className={styles.triggerKey} data-key={apple ? "⌘K" : "Ctrl K"} aria-hidden="true" />

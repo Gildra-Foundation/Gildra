@@ -3,44 +3,44 @@ import type { LegalProps } from "@/components/blocks/shared/legal";
 
 const EN: LegalProps = {
   title: "Privacy Policy",
-  lede: "Gildra privacy policy: what the site stores in your browser, which data it collects and how you control it.",
+  lede: "WowArcana privacy policy: what the site stores in your browser, which data it collects and how you control it.",
   updated: "2026-10-23",
   updatedLabel: "Updated",
-  crumbs: [{ label: "Gildra", href: "/" }, { label: "Privacy" }],
+  crumbs: [{ label: "WowArcana", href: "/" }, { label: "Privacy" }],
   sections: [
     {
       heading: "What we store in your browser",
-      text: "Gildra keeps a small amount of data in your browser’s local storage: interface preferences and your cookie choice itself. Local interface preferences stay on your device. If you sign in and save talent builds to your account, their names and talent export strings are stored on Gildra servers so you can access them on other devices. Local builds are transferred only when you choose to move them to your account. You can delete saved builds from the list.",
+      text: "WowArcana keeps a small amount of data in your browser’s local storage: interface preferences and your cookie choice itself. Local interface preferences stay on your device. If you sign in and save talent builds to your account, their names and talent export strings are stored on WowArcana servers so you can access them on other devices. Local builds are transferred only when you choose to move them to your account. You can delete saved builds from the list.",
     },
     {
       heading: "What we collect",
-      text: "The site runs on Gildra servers at OVHcloud behind Cloudflare; they record standard request logs (IP address, browser type, requested page) to serve and protect the site. Gildra may also collect anonymous, aggregated usage statistics — page views and general performance metrics. None of this identifies you personally.",
+      text: "The site runs on WowArcana servers at OVHcloud behind Cloudflare; they record standard request logs (IP address, browser type, requested page) to serve and protect the site. WowArcana may also collect anonymous, aggregated usage statistics — page views and general performance metrics. None of this identifies you personally.",
     },
     {
       heading: "What we do not do",
-      text: "Gildra does not run advertising trackers and does not sell or share data with third parties. An account is not required. If you choose to sign in with Battle.net, a session cookie keeps you signed in and Gildra requests your World of Warcraft profile from Blizzard to show your characters; your password is entered only on Blizzard's site. If you decline cookies, only the technically necessary storage described above is used.",
+      text: "WowArcana does not run advertising trackers and does not sell or share data with third parties. An account is not required. If you choose to sign in with Battle.net, a session cookie keeps you signed in and WowArcana requests your World of Warcraft profile from Blizzard to show your characters; your password is entered only on Blizzard's site. If you decline cookies, only the technically necessary storage described above is used.",
     },
   ],
 };
 
 const RU: LegalProps = {
   title: "Политика конфиденциальности",
-  lede: "Политика конфиденциальности Gildra: что сайт хранит в вашем браузере, какие данные собирает и как ими распоряжаться.",
+  lede: "Политика конфиденциальности WowArcana: что сайт хранит в вашем браузере, какие данные собирает и как ими распоряжаться.",
   updated: "2026-10-23",
   updatedLabel: "Обновлено",
-  crumbs: [{ label: "Gildra", href: "/" }, { label: "Конфиденциальность" }],
+  crumbs: [{ label: "WowArcana", href: "/" }, { label: "Конфиденциальность" }],
   sections: [
     {
       heading: "Что мы храним в вашем браузере",
-      text: "Gildra хранит небольшой объём данных в локальном хранилище браузера: настройки интерфейса и ваш выбор в отношении файлов cookie. Локальные настройки интерфейса остаются на вашем устройстве. Если вы вошли и сохраняете билды талантов в аккаунт, их названия и строки экспорта хранятся на серверах Gildra, чтобы быть доступными с других устройств. Локальные билды переносятся только по вашей команде. Сохранённые билды можно удалить из списка.",
+      text: "WowArcana хранит небольшой объём данных в локальном хранилище браузера: настройки интерфейса и ваш выбор в отношении файлов cookie. Локальные настройки интерфейса остаются на вашем устройстве. Если вы вошли и сохраняете билды талантов в аккаунт, их названия и строки экспорта хранятся на серверах WowArcana, чтобы быть доступными с других устройств. Локальные билды переносятся только по вашей команде. Сохранённые билды можно удалить из списка.",
     },
     {
       heading: "Что мы собираем",
-      text: "Сайт работает на серверах Gildra в OVHcloud за Cloudflare; они ведут стандартные логи запросов (IP-адрес, тип браузера, запрошенная страница) для работы и защиты сайта. Gildra также может собирать анонимную агрегированную статистику использования — просмотры страниц и общие метрики производительности. Ничто из этого не идентифицирует вас лично.",
+      text: "Сайт работает на серверах WowArcana в OVHcloud за Cloudflare; они ведут стандартные логи запросов (IP-адрес, тип браузера, запрошенная страница) для работы и защиты сайта. WowArcana также может собирать анонимную агрегированную статистику использования — просмотры страниц и общие метрики производительности. Ничто из этого не идентифицирует вас лично.",
     },
     {
       heading: "Чего мы не делаем",
-      text: "Gildra не использует рекламные трекеры, не продаёт и не передаёт данные третьим лицам. Аккаунт не обязателен. Если вы входите через Battle.net, сессионный cookie сохраняет вход, а Gildra запрашивает у Blizzard профиль World of Warcraft, чтобы показать ваших персонажей; пароль вводится только на сайте Blizzard. Если вы отклонили файлы cookie, используется только технически необходимое хранилище, описанное выше.",
+      text: "WowArcana не использует рекламные трекеры, не продаёт и не передаёт данные третьим лицам. Аккаунт не обязателен. Если вы входите через Battle.net, сессионный cookie сохраняет вход, а WowArcana запрашивает у Blizzard профиль World of Warcraft, чтобы показать ваших персонажей; пароль вводится только на сайте Blizzard. Если вы отклонили файлы cookie, используется только технически необходимое хранилище, описанное выше.",
     },
   ],
 };
@@ -52,12 +52,12 @@ export const privacyPage = definePage({
   meta: ({ lang }) =>
     lang === "ru"
       ? {
-          title: "Политика конфиденциальности — Gildra",
-          description: "Политика конфиденциальности Gildra: что сайт хранит в вашем браузере, какие данные собирает и как ими распоряжаться.",
+          title: "Политика конфиденциальности — WowArcana",
+          description: "Политика конфиденциальности WowArcana: что сайт хранит в вашем браузере, какие данные собирает и как ими распоряжаться.",
         }
       : {
-          title: "Privacy Policy — Gildra",
-          description: "Gildra privacy policy: what the site stores in your browser, which data it collects and how you control it.",
+          title: "Privacy Policy — WowArcana",
+          description: "WowArcana privacy policy: what the site stores in your browser, which data it collects and how you control it.",
         },
   page: ({ lang }) => ({
     id: "wow/privacy",

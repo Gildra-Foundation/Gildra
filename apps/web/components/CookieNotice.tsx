@@ -10,8 +10,8 @@ import styles from "./cookieNotice.module.css";
 const SPACE = "--cookie-notice-space";
 
 const copy = {
-  ru: { label: "Файлы cookie", text: "Gildra хранит настройки в браузере и собирает анонимную статистику использования. Подробнее — в", link: "политике конфиденциальности", accept: "Принять", decline: "Отклонить" },
-  en: { label: "Cookies", text: "Gildra stores your preferences in the browser and collects anonymous usage statistics. See the", link: "privacy policy", accept: "Accept", decline: "Decline" },
+  ru: { label: "Файлы cookie", text: "WowArcana хранит настройки в браузере и собирает анонимную статистику использования. Подробнее — в", link: "политике конфиденциальности", accept: "Принять", decline: "Отклонить" },
+  en: { label: "Cookies", text: "WowArcana stores your preferences in the browser and collects anonymous usage statistics. See the", link: "privacy policy", accept: "Accept", decline: "Decline" },
 } as const;
 
 /**
