@@ -569,6 +569,13 @@ export class WorldMapEngine {
 
   /** The map a zoom out stops at, shown whole (see detentOut): it becomes the map shown whole once the zoom rests. */
   private detent: number | null = null;
+  /** The scale at which a map's parent is shown whole (cached per view size). */
+  private parentFit(map: AtlasMap) {
+    const parent = map.parent === null ? undefined : this.maps.get(map.parent);
+    if (!parent?.art) return 0;
+    return this.wholeUpscale(this.set, parent) * parent.art.width / Math.max(1e-12, parent.frame[2] - parent.frame[0]);
+  }
+
   /** The log zoom to the next level shown whole on the way out (≤ 0), or −∞ if `log` crosses none. */
   private detentOut(log: number) {
     const s = this.camera.scale, target = s * Math.exp(log);
@@ -1439,9 +1446,14 @@ export class WorldMapEngine {
       const area = (a[2] - a[0]) * (a[3] - a[1]);
       return ow > 0 && oh > 0 && (ow * oh) / area >= 0.7 && area < 0.5 * (b[2] - b[0]) * (b[3] - b[1]);
     };
+    const heldMap = this.maps.get(this.focusId);
     let candidate: DrawnMap | undefined;
     for (const entry of drawn) {
-      if ((entry.open ?? entry.alpha) <= 0.5 || !this.inArea(entry.map, cx, cy)) continue;
+      // (On its land — or on the map in view where that lies within it: Orgrimmar, which Durotar's mask leaves out.)
+      const heldIn = heldMap && heldMap.id !== entry.map.id && contains(heldMap.frame, cx, cy) && liesIn(heldMap, entry.map);
+      if ((entry.open ?? entry.alpha) <= 0.5 || (!this.inArea(entry.map, cx, cy) && !heldIn)) continue;
+      // Zoomed out past its parent's whole size, a place is no longer the map in view (its parent at most).
+      if (entry.role !== "ancestor" && entry.map.depth > 0 && entry.map.parent !== null && this.parentFit(entry.map) > this.camera.scale * 1.03) continue;
       // A map beside the one in view whose own land is not read yet is no candidate (its rectangle may cover the view
       // where its land does not: Ashenvale's over Orgrimmar).
       if (entry.role === "neighbour" && usesMask(entry.map) && !this.areaOf(entry.map)) continue;
@@ -1495,7 +1507,7 @@ export class WorldMapEngine {
         // Up a level: while zooming in only once it has all but left the view; at rest once it is a small part of it.
         : (contains(held.frame, cx, cy) || heldShare >= (relation !== "above" || this.zoomDir < 0 ? 0.3 : this.zoomDir > 0 ? 0.04 : 0.12))
           // …and never kept once it has shrunk to a small part of the view (zooming out, or at rest after it).
-          && (this.zoomDir > 0 || heldShare >= ((this.zoomDir || this.zoomIntent) < 0 ? 0.18 : 0.12))));
+          && (this.zoomDir > 0 || heldShare >= ((this.zoomDir || this.zoomIntent) < 0 ? 0.24 : 0.12))));
       // (A map of its level that clearly shows more of the view on the way out — Durotar around Orgrimmar — takes over
       // at once: that margin is the hysteresis; the city's own openness would hold the title on it for another notch.)
       const keep = beside ? candidate.map.id : holdFocus({ id: held.id, alpha: shown?.open ?? shown?.alpha ?? 0, under }, { id: candidate.map.id, alpha: candidate.open ?? candidate.alpha }, relation, this.zoomDir || this.zoomIntent);
