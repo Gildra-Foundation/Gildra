@@ -23,8 +23,15 @@
       "blockPixels": 512,
       "blocks": 40,
       "tiles": 217,
-      "bytes": 373253
+      "bytes": 561317
     }
   },
-  "build": "12.1.5.70783"
+  "build": "12.1.5.70783",
+  "encoding": {
+    "format": "webp",
+    "deepQuality": 85,
+    "coarseQuality": 80,
+    "sampling": "native-area",
+    "mixedSourceSampling": "bilinear"
+  }
 }
