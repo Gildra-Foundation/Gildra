@@ -820,7 +820,7 @@
       "url": "/maps/terrain/1577/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/1577/index.json",
       "empty": "/maps/terrain/1577/empty.json",
-      "ocean": "#404048",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 1024,
       "height": 1024,
@@ -1502,7 +1502,7 @@
       "blockPixels": 512,
       "blocks": 4,
       "tiles": 21,
-      "bytes": 151944
+      "bytes": 233213
     },
     "2372": {
       "mapId": 2796,
