@@ -203,13 +203,13 @@
 
 /* ---------- The painted kit of the map (ui/mapKit.ts writes the kit on the stage) ---------- */
 /* Every panel around the map wears the same nine-slice plaque: thin bronze-and-wood rails, a gem at each corner. */
-.place, .timeline, .layers, .peek, .poiTipBody, .hoverName, .compareTag, .searchBox, .hits, .locator, .loading, .fallback {
+.place, .layers, .poiTipBody, .hoverName, .compareTag, .searchBox, .hits, .loading, .fallback {
   --map-panel-base: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 9%, var(--atlas-bg));
   isolation: isolate;
   color: var(--atlas-text);
 }
-.place::before, .timeline::before, .layers::before, .peek::before, .poiTipBody::before, .hoverName::before, .compareTag::before,
-.searchBox::before, .hits::before, .locator::before, .loading::before, .fallback::before {
+.place::before, .layers::before, .poiTipBody::before, .hoverName::before, .compareTag::before,
+.searchBox::before, .hits::before, .loading::before, .fallback::before {
   content: "";
   position: absolute;
   z-index: -1;
@@ -227,11 +227,11 @@
   pointer-events: none;
 }
 /* Small pieces take thinner rails. */
-.peek::before, .poiTipBody::before, .hoverName::before, .compareTag::before, .searchBox::before, .hits::before, .locator::before, .loading::before, .fallback::before {
+.poiTipBody::before, .hoverName::before, .compareTag::before, .searchBox::before, .hits::before, .loading::before, .fallback::before {
   border-width: var(--map-panel-width-small, 9px);
 }
 /* Text set on the painted material (design.md: always with the dark halo). */
-.place, .timeline, .layers, .peek, .poiTipBody, .hoverName, .compareTag, .hits { text-shadow: 0 1px 3px var(--atlas-bg); }
+.place, .layers, .poiTipBody, .hoverName, .compareTag, .hits { text-shadow: 0 1px 3px var(--atlas-bg); }
 
 /* Entering panels: 150–250 ms of opacity and a short lift (transform only). */
 @keyframes mapEnter { from { opacity: 0; transform: translateY(6px); } }
@@ -393,11 +393,11 @@
   pointer-events: none;
   transition: filter var(--atlas-duration) var(--atlas-ease);
 }
-.controls button:hover:not(:disabled) { color: var(--atlas-text-strong); }
-.controls button:hover:not(:disabled)::after { filter: contrast(.92) saturate(.9) brightness(1.08); }
-.controls button:active:not(:disabled) { transform: translateY(1px) scale(.97); }
-.controls button:disabled { color: var(--atlas-text-subtle); cursor: default; }
-.controls button:disabled::after { filter: contrast(.8) saturate(.4) brightness(.7); }
+.controls button:hover:not(:disabled, [aria-disabled="true"]) { color: var(--atlas-text-strong); }
+.controls button:hover:not(:disabled, [aria-disabled="true"])::after { filter: contrast(.92) saturate(.9) brightness(1.08); }
+.controls button:active:not(:disabled, [aria-disabled="true"]) { transform: translateY(1px) scale(.97); }
+.controls button:is(:disabled, [aria-disabled="true"]) { color: var(--atlas-text-subtle); cursor: default; }
+.controls button:is(:disabled, [aria-disabled="true"])::after { filter: contrast(.8) saturate(.4) brightness(.7); }
 .controls button:is([aria-expanded="true"], [aria-pressed="true"]) { color: var(--atlas-text-strong); }
 .controls button:is([aria-expanded="true"], [aria-pressed="true"])::before { background: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 30%, var(--atlas-bg)); }
 .controls button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
@@ -472,29 +472,6 @@
 .layers label[data-kind="event"] .legendIcon svg { transform: rotate(-45deg); }
 .layers label[data-plain] .legendIcon { border-color: transparent; background: none; }
 .layers label[data-plain] .legendIcon svg { width: 15px; height: 15px; }
-
-/* ---------- Overview inset: the continent around the place, the view as a frame ---------- */
-.locator {
-  position: absolute;
-  z-index: 5;
-  right: var(--atlas-gutter);
-  bottom: calc(var(--atlas-space-4) + 66px + var(--atlas-space-3));
-  display: block;
-  padding: 9px;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  transform: translateY(calc(-1 * var(--map-cookie, 0px)));
-  animation: mapFade var(--atlas-duration-slow) var(--atlas-ease) both;
-}
-.locatorArt { position: relative; display: block; width: 176px; overflow: hidden; border-radius: 2px; background: var(--atlas-surface-sunken); }
-.locatorArt img { position: absolute; display: block; max-width: none; filter: saturate(.85) brightness(.9); pointer-events: none; }
-.locatorMarks { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.locatorHere { fill: color-mix(in srgb, var(--atlas-accent-2) 24%, transparent); stroke: color-mix(in srgb, var(--atlas-accent-2) 80%, var(--atlas-text-strong)); stroke-width: 1px; vector-effect: non-scaling-stroke; }
-.locatorView { fill: none; stroke: var(--atlas-text-strong); stroke-width: 1.5px; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 2px var(--atlas-bg)); }
-.locator:hover .locatorArt img { filter: saturate(1) brightness(1); }
-.locator:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-@media (max-width: 1100px), (max-height: 720px) { .locator { display: none; } }
 
 /* ---------- Place panel: the chosen point or event, then what the place holds ---------- */
 .place {
@@ -600,164 +577,6 @@
   pointer-events: none;
 }
 .dock > * { width: min(980px, 100%); pointer-events: auto; }
-
-/* ---------- Timeline ---------- */
-.timeline {
-  --era-accent: var(--atlas-accent-2);
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--atlas-space-4);
-  padding: 9px 18px 9px 16px;
-  animation: mapEnter var(--atlas-duration-slow) var(--atlas-ease) both;
-}
-.eraRow { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; }
-.eraSwatch {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  transform: rotate(45deg);
-  border: 1.5px solid color-mix(in srgb, var(--era-accent) 70%, var(--atlas-text-strong));
-  background: var(--era-accent);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--era-accent) 60%, transparent);
-  transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease);
-}
-.eraNow { display: grid; min-width: 0; width: 18.5ch; margin: 0 var(--atlas-space-1); overflow: hidden; }
-/* A new era slides in under the old one's place. */
-.eraName { overflow: hidden; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.0625rem; font-weight: var(--atlas-weight-display); line-height: 1.15; white-space: nowrap; text-overflow: ellipsis; animation: eraIn var(--atlas-duration) var(--atlas-ease) both; }
-.eraYears { color: color-mix(in srgb, var(--era-accent) 45%, var(--atlas-text-muted)); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; line-height: 1.2; animation: eraIn var(--atlas-duration) var(--atlas-ease) calc(var(--atlas-duration-fast) / 4) both; }
-@keyframes eraIn { from { opacity: 0; transform: translateY(5px); } }
-.eraStep { display: inline-flex; gap: 2px; flex: none; }
-.eraStep button, .timelineToggle {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 28%, transparent);
-  border-radius: var(--atlas-radius-control);
-  background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
-  color: var(--atlas-text);
-  cursor: pointer;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease);
-}
-.eraStep button:hover:not(:disabled), .timelineToggle:hover { border-color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 60%, transparent); color: var(--atlas-text-strong); }
-.eraStep button:active:not(:disabled) { transform: scale(.95); }
-.eraStep button:disabled { opacity: .35; cursor: default; }
-.eraStep svg, .timelineToggle svg { width: 16px; height: 16px; }
-.timelineToggle { display: none; }
-.compareButton {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--atlas-space-2);
-  flex: none;
-  min-height: 32px;
-  padding: 0 var(--atlas-space-3);
-  border: 1px solid color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 28%, transparent);
-  border-radius: var(--atlas-radius-control);
-  background: color-mix(in srgb, var(--atlas-bg) 55%, transparent);
-  color: var(--atlas-text);
-  font-size: var(--atlas-text-small);
-  font-weight: 600;
-  text-shadow: inherit;
-  cursor: pointer;
-  transition: border-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
-}
-.compareButton:hover:not(:disabled) { border-color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 60%, transparent); color: var(--atlas-text-strong); }
-.compareButton:disabled { opacity: .4; cursor: default; }
-.compareButton[aria-pressed="true"] { border-color: color-mix(in srgb, var(--era-accent) 70%, transparent); background: color-mix(in srgb, var(--era-accent) 22%, var(--atlas-bg)); color: var(--atlas-text-strong); }
-.compareButton svg { width: 15px; height: 15px; }
-
-.track { position: relative; height: 46px; margin: 0 8px; touch-action: none; cursor: pointer; }
-.rail { position: absolute; left: 0; right: 0; top: 20px; height: 2px; border-radius: 1px; background: var(--atlas-line); }
-.band { --era-accent: var(--atlas-accent-2); position: absolute; top: 18px; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--era-accent) 28%, transparent); transition: background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease); }
-.band[data-active] { background: color-mix(in srgb, var(--era-accent) 82%, transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--era-accent) 55%, transparent); }
-/* Comparing: the stretch of time between the two moments. */
-.span { position: absolute; top: 16px; height: 10px; border-top: 1px dashed color-mix(in srgb, var(--atlas-text-strong) 55%, transparent); border-bottom: 1px dashed color-mix(in srgb, var(--atlas-text-strong) 55%, transparent); pointer-events: none; }
-.ticks { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; pointer-events: none; }
-.ticks li { --era-accent: var(--atlas-accent-2); position: absolute; top: 27px; }
-.ticks button { position: absolute; left: 0; top: 0; padding: 1px 3px; border: 0; background: none; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); letter-spacing: .02em; white-space: nowrap; text-shadow: inherit; transform: translateX(-50%); cursor: pointer; pointer-events: auto; transition: color var(--atlas-duration) var(--atlas-ease); }
-.ticks button:hover { color: color-mix(in srgb, var(--era-accent) 50%, var(--atlas-text-strong)); }
-.ticks button[data-active] { color: color-mix(in srgb, var(--era-accent) 35%, var(--atlas-text-strong)); font-weight: 650; }
-.rune {
-  --era-accent: var(--atlas-accent-2);
-  position: absolute;
-  top: 9px;
-  width: 10px;
-  height: 10px;
-  padding: 0;
-  border: 0;
-  background: none;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-}
-/* The hit area is RUNE_GAP (16 px) wide: neighbouring runes never overlap. */
-.rune::before { content: ""; position: absolute; inset: -8px -3px -4px; }
-.rune span {
-  position: absolute;
-  inset: 1px;
-  transform: rotate(45deg);
-  border: 1.5px solid color-mix(in srgb, var(--era-accent) 80%, var(--atlas-text-strong));
-  background: color-mix(in srgb, var(--era-accent) 30%, var(--atlas-bg));
-  transition: background-color var(--atlas-duration-fast) var(--atlas-ease), transform var(--atlas-duration-fast) var(--atlas-ease);
-}
-.rune:hover span, .rune[data-active] span { background: var(--era-accent); transform: rotate(45deg) scale(1.35); }
-.rune[data-active] span { box-shadow: 0 0 8px var(--era-accent); }
-/* A rune of several events: a second diamond behind the first. */
-.rune[data-many] span { box-shadow: 3px -3px 0 -1px color-mix(in srgb, var(--era-accent) 55%, var(--atlas-bg)); }
-/* The thumbs ride lanes as wide as the track: they glide by transform alone. */
-.thumbLane { position: absolute; inset: 0; pointer-events: none; will-change: transform; transition: transform var(--atlas-duration) var(--atlas-ease); }
-.timeline[data-dragging] .thumbLane { transition: none; }
-.thumb {
-  position: absolute;
-  left: 0;
-  top: 21px;
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--atlas-text-strong);
-  border-radius: 50%;
-  background: var(--era-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--atlas-bg) 60%, transparent), 0 0 14px color-mix(in srgb, var(--era-accent) 70%, transparent);
-  transform: translate(-50%, -50%);
-  cursor: grab;
-  touch-action: none;
-  pointer-events: auto;
-  transition: background-color var(--atlas-duration) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast) var(--atlas-ease);
-}
-.thumb:hover, .timeline[data-dragging] .thumb { scale: 1.15; }
-.timeline[data-dragging] .thumb { cursor: grabbing; }
-.thumb::before { content: ""; position: absolute; inset: -14px; }
-.thumb:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
-/* The moment on the left of the divider: a ring in its era's colour. */
-.thumb[data-side="left"] { width: 14px; height: 14px; border-color: var(--era-accent); background: var(--atlas-bg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--atlas-bg) 60%, transparent), 0 0 10px color-mix(in srgb, var(--era-accent) 60%, transparent); }
-.peek {
-  position: absolute;
-  bottom: calc(100% + 4px);
-  z-index: 2;
-  display: grid;
-  gap: 6px;
-  width: max-content;
-  min-width: 220px;
-  max-width: 300px;
-  padding: 11px 12px 11px 14px;
-  translate: -50% 0;
-  font-size: var(--atlas-text-small);
-  line-height: var(--atlas-leading-snug);
-  animation: mapEnter var(--atlas-duration-fast) var(--atlas-ease) both;
-}
-/* A bridge down to the rune: the pointer reaches the tooltip without it closing. */
-.peek::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; }
-.peekEvent { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-2); }
-.peekRune { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 3px; border: 1.5px solid color-mix(in srgb, var(--era-accent) 80%, var(--atlas-text-strong)); background: color-mix(in srgb, var(--era-accent) 35%, var(--atlas-bg)); color: var(--atlas-text-strong); transform: rotate(45deg) scale(.82); }
-.peekRune svg { width: 12px; height: 12px; transform: rotate(-45deg); }
-.peekText { display: grid; min-width: 0; }
-.peekText strong { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1rem; font-weight: var(--atlas-weight-display); line-height: 1.2; }
-.peekMeta { color: color-mix(in srgb, var(--era-accent) 45%, var(--atlas-text-muted)); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; }
-.peekHead { color: color-mix(in srgb, var(--era-accent) 45%, var(--atlas-text-muted)); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; font-variant-numeric: tabular-nums lining-nums; }
-.peekMore { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); padding-left: 30px; }
-.peekJump { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
-.peekJump:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
-.peekJump svg { width: 15px; height: 15px; }
 
 /* ---------- Compare divider ---------- */
 /* As wide as the stage and moved by transform: the line sits at its left edge. */
@@ -886,26 +705,7 @@
   .sheetBody { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .sheetBody[hidden] { display: none; }
   .place[data-open] .sheetBody { animation: mapEnter var(--atlas-duration) var(--atlas-ease) both; }
-  .timeline {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-    padding: 8px 12px calc(6px + env(safe-area-inset-bottom));
-  }
-  .timeline::before { border-width: var(--map-panel-width-small, 9px); border-bottom-width: 0; }
-  .eraRow { min-height: 52px; }
-  .eraName { font-size: 1.0625rem; }
-  .eraNow { flex: 1; width: auto; }
-  .timelineToggle { display: grid; }
-  .timelineToggle svg { transition: transform var(--atlas-duration) var(--atlas-ease); }
-  .timeline[data-open] .timelineToggle svg { transform: rotate(180deg); }
-  .timeline:not([data-open]) .track { display: none; }
-  .timeline[data-open] .track { animation: mapEnter var(--atlas-duration) var(--atlas-ease) both; }
-  .track { height: 50px; margin: 0 10px var(--atlas-space-1); }
-  .compareButton span { display: none; }
-  .compareButton { width: 44px; justify-content: center; padding: 0; }
-  .ticks li:not([data-wide]) button { display: none; }
-  .rune { width: 9px; height: 9px; }
-  .peek { min-width: 0; max-width: min(300px, calc(100vw - 32px)); }
+
   .compareTag { top: auto; bottom: calc(50% + 34px); max-width: 44vw; overflow: hidden; text-overflow: ellipsis; padding: 5px 10px 6px; font-size: 0.875rem; }
   .compare[data-cramped] .compareTag:is([data-side="left"], [data-side="right"]) { top: auto; }
   .compare[data-cramped="left"] .compareTag[data-side="left"], .compare[data-cramped="right"] .compareTag[data-side="right"] { bottom: calc(50% + 72px); }
@@ -915,31 +715,21 @@
 }
 @media (min-width: 701px) { .sheetHandle, .sheetBody { display: contents; } }
 @media (pointer: coarse) {
-  .eraStep button, .timelineToggle { width: 44px; height: 44px; }
-  .compareButton { min-height: 44px; }
   .poiIcon::before { content: ""; position: absolute; inset: -9px; }
   .layers label { min-height: 44px; }
 }
 
-/* ---------- Reduced motion, transparency, forced colours (design.md §5) ---------- */
+/* ---------- Reduced motion, forced colours (design.md §5) ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers, .card, .hits, .peek, .poiTipBody, .timeline, .eraName, .eraYears, .locator, .compareTag, .placeFold > div, .sheetBody, .track { animation: none !important; }
-  .canvas, .labelText, .poiIcon, .thumb, .thumbLane, .hoverName, .band, .rune span, .eraSwatch, .controls button, .compareHandle, .layers input::after { transition: none !important; }
+  .glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers, .card, .hits, .poiTipBody, .compareTag, .placeFold > div, .sheetBody { animation: none !important; }
+  .canvas, .labelText, .poiIcon, .hoverName, .controls button, .compareHandle, .layers input::after { transition: none !important; }
 }
-:global([data-motion="reduced"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers, .card, .hits, .peek, .poiTipBody, .timeline, .eraName, .eraYears, .locator, .compareTag, .placeFold > div, .sheetBody, .track),
-:global([data-ui-motion="reduce"]) :is(.glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers, .card, .hits, .peek, .poiTipBody, .timeline, .eraName, .eraYears, .locator, .compareTag, .placeFold > div, .sheetBody, .track) { animation: none !important; }
-:global([data-motion="reduced"]) :is(.thumb, .thumbLane, .hoverName, .controls button, .compareHandle),
-:global([data-ui-motion="reduce"]) :is(.thumb, .thumbLane, .hoverName, .controls button, .compareHandle) { transition: none !important; }
-/* Reduced transparency: the glows go, the painted panels stay (they are opaque). */
-@media (prefers-reduced-transparency: reduce) {
-  .band[data-active], .thumb, .eraSwatch { box-shadow: none; }
-}
-:global([data-transparency="reduced"]) :is(.band[data-active], .thumb, .eraSwatch) { box-shadow: none; }
+
 @media (forced-colors: active) {
-  .place::before, .timeline::before, .layers::before, .peek::before, .poiTipBody::before, .hoverName::before, .compareTag::before,
-  .searchBox::before, .searchField::before, .hits::before, .locator::before, .loading::before, .fallback::before,
+  .place::before, .layers::before, .poiTipBody::before, .hoverName::before, .compareTag::before,
+  .searchBox::before, .searchField::before, .hits::before, .loading::before, .fallback::before,
   .controls button::after, .compareHandle::after { display: none; }
-  .searchBox, .controls button, .layers, .place, .timeline, .compareHandle, .compareTag, .hoverName, .peek, .poiTipBody, .hits, .locator { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .searchBox, .controls button, .layers, .place, .compareHandle, .compareTag, .hoverName, .poiTipBody, .hits { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
   .layers input { appearance: auto; }
   .glow, .poiIcon::after, .eventRune::before, .eventRune::after { display: none; }
   .labelText, .markerName { color: CanvasText; background: Canvas; text-shadow: none; }
