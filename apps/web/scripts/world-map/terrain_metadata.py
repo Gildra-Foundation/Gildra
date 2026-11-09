@@ -3,7 +3,6 @@
 import json
 import math
 from collections import Counter
-from pathlib import Path
 from PIL import Image
 
 from terrain import DATA_DIR, WEB
@@ -63,10 +62,17 @@ def main():
                 folder = (PUBLIC/terrain['index'].lstrip('/')).parent
                 stats['bytes'] = sum(p.stat().st_size for p in folder.rglob('*') if p.is_file())
         path.write_text(json.dumps(manifest,indent=2)+'\n')
-    size = sum(p.stat().st_size for p in (PUBLIC/'maps').rglob('*') if p.is_file())
+    root = PUBLIC / 'maps'
+    paths = [root, *root.rglob('*')]
+    if any(p.name == '.native' for p in paths):
+        raise SystemExit('unfinished native intermediates must not be published')
+    size = sum(p.stat().st_size for p in paths if p.is_file())
+    allocated = sum(p.stat().st_blocks * 512 for p in paths)
+    if allocated > 1_100_000_000:
+        raise SystemExit(f'on-disk budget exceeded: {allocated/1e6:.1f} MB')
     if size > 1_000_000_000:
         raise SystemExit(f'budget exceeded: {size/1e6:.1f} MB')
-    print(f'public/maps: {size/1e6:.1f} MB; {len(seen)} pyramids')
+    print(f'public/maps: {size/1e6:.1f} MB logical, {allocated/1e6:.1f} MB on disk; {len(seen)} pyramids')
 
 
 if __name__ == '__main__':

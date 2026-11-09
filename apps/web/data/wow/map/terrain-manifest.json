@@ -3,6 +3,8 @@
     "12": {
       "url": "/maps/terrain/12/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/12/index.json",
+      "empty": "/maps/terrain/12/empty.json",
+      "ocean": "#202828",
       "tileSize": 256,
       "width": 15872,
       "height": 23552,
@@ -12,13 +14,13 @@
         0.001735,
         0.72464,
         1.001741
-      ],
-      "empty": "/maps/terrain/12/empty.json",
-      "ocean": "#202828"
+      ]
     },
     "13": {
       "url": "/maps/terrain/13/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/13/index.json",
+      "empty": "/maps/terrain/13/empty.json",
+      "ocean": "#282030",
       "tileSize": 256,
       "width": 21504,
       "height": 27136,
@@ -28,13 +30,13 @@
         -0.015396,
         0.801341,
         1.003528
-      ],
-      "empty": "/maps/terrain/13/empty.json",
-      "ocean": "#282030"
+      ]
     },
     "113": {
       "url": "/maps/terrain/113/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/113/index.json",
+      "empty": "/maps/terrain/113/empty.json",
+      "ocean": "#202828",
       "tileSize": 256,
       "width": 18944,
       "height": 12288,
@@ -44,13 +46,13 @@
         -0.007464,
         1.027756,
         1.011611
-      ],
-      "empty": "/maps/terrain/113/empty.json",
-      "ocean": "#202828"
+      ]
     },
     "424": {
       "url": "/maps/terrain/424/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/424/index.json",
+      "empty": "/maps/terrain/424/empty.json",
+      "ocean": "#484858",
       "tileSize": 256,
       "width": 14848,
       "height": 10240,
@@ -60,13 +62,13 @@
         -0.024573,
         1.011015,
         1.006666
-      ],
-      "empty": "/maps/terrain/424/empty.json",
-      "ocean": "#484858"
+      ]
     },
     "619": {
       "url": "/maps/terrain/619/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/619/index.json",
+      "empty": "/maps/terrain/619/empty.json",
+      "ocean": "#483858",
       "tileSize": 256,
       "width": 13824,
       "height": 12288,
@@ -76,13 +78,13 @@
         -0.016286,
         0.865269,
         1.002918
-      ],
-      "empty": "/maps/terrain/619/empty.json",
-      "ocean": "#483858"
+      ]
     },
     "875": {
       "url": "/maps/terrain/875/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/875/index.json",
+      "empty": "/maps/terrain/875/empty.json",
+      "ocean": "#202828",
       "tileSize": 256,
       "width": 12288,
       "height": 9216,
@@ -92,13 +94,13 @@
         -0.029492,
         0.95077,
         1.024005
-      ],
-      "empty": "/maps/terrain/875/empty.json",
-      "ocean": "#202828"
+      ]
     },
     "876": {
       "url": "/maps/terrain/876/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/876/index.json",
+      "empty": "/maps/terrain/876/empty.json",
+      "ocean": "#283838",
       "tileSize": 256,
       "width": 12288,
       "height": 9216,
@@ -108,13 +110,13 @@
         -0.044826,
         1.021459,
         1.053887
-      ],
-      "empty": "/maps/terrain/876/empty.json",
-      "ocean": "#283838"
+      ]
     },
     "1978": {
       "url": "/maps/terrain/1978/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/1978/index.json",
+      "empty": "/maps/terrain/1978/empty.json",
+      "ocean": "#303038",
       "tileSize": 256,
       "width": 22016,
       "height": 16896,
@@ -124,13 +126,13 @@
         -0.005765,
         0.900474,
         1.030545
-      ],
-      "empty": "/maps/terrain/1978/empty.json",
-      "ocean": "#303038"
+      ]
     },
     "2274": {
       "url": "/maps/terrain/2274/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/2274/index.json",
+      "empty": "/maps/terrain/2274/empty.json",
+      "ocean": "#586868",
       "tileSize": 256,
       "width": 12288,
       "height": 9216,
@@ -140,13 +142,13 @@
         0.312582,
         0.699061,
         0.987079
-      ],
-      "empty": "/maps/terrain/2274/empty.json",
-      "ocean": "#586868"
+      ]
     },
     "2537": {
       "url": "/maps/terrain/13/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/13/index.json",
+      "empty": "/maps/terrain/13/empty.json",
+      "ocean": "#282030",
       "tileSize": 256,
       "width": 21504,
       "height": 27136,
@@ -156,9 +158,7 @@
         -0.031177,
         0.904428,
         2.715928
-      ],
-      "empty": "/maps/terrain/13/empty.json",
-      "ocean": "#282030"
+      ]
     },
     "101": {
       "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
@@ -650,10 +650,10 @@
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -5.199634,
+        -5.199633,
         -6.137383,
-        1.089058,
-        1.132005
+        1.089057,
+        1.132004
       ]
     },
     "94": {
@@ -666,9 +666,9 @@
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -3.076989,
-        -0.860387,
-        2.120982,
+        -3.076988,
+        -0.860386,
+        2.120981,
         5.149699
       ]
     },
@@ -682,9 +682,9 @@
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -4.833333,
-        -2.545454,
-        2.924244,
+        -4.833332,
+        -2.545453,
+        2.924243,
         6.424244
       ]
     },
@@ -699,8 +699,8 @@
       "maxZoom": 7,
       "rect": [
         -4.799625,
-        -0.134274,
-        2.894804,
+        -0.134273,
+        2.894803,
         8.759628
       ]
     },
@@ -714,10 +714,10 @@
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -20.565521,
-        -24.800136,
-        3.659232,
-        3.202814
+        -20.565519,
+        -24.800133,
+        3.65923,
+        3.202813
       ]
     },
     "106": {
@@ -730,10 +730,10 @@
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -6.3576,
-        -6.724148,
-        1.489145,
-        2.348663
+        -6.357599,
+        -6.724147,
+        1.489144,
+        2.348662
       ]
     },
     "110": {
@@ -746,10 +746,10 @@
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -14.088306,
-        -4.602322,
-        7.043226,
-        19.857668
+        -14.088304,
+        -4.60232,
+        7.043224,
+        19.857667
       ]
     },
     "1462": {
@@ -1242,10 +1242,10 @@
       "height": 2560,
       "maxZoom": 4,
       "rect": [
-        -1.267368,
-        -2.619668,
-        3.17708,
-        4.047002
+        -1.267367,
+        -2.619667,
+        3.177078,
+        4.047
       ]
     },
     "2623": {
@@ -1268,407 +1268,424 @@
   "stats": {
     "12": {
       "mapId": 1,
+      "blockPixels": 512,
       "blocks": 984,
       "tiles": 5292,
-      "bytes": 20942089
+      "bytes": 37165121
     },
     "13": {
       "mapId": 0,
+      "blockPixels": 512,
       "blocks": 1159,
       "tiles": 6241,
-      "bytes": 19343324
+      "bytes": 33980612
     },
     "113": {
       "mapId": 571,
+      "blockPixels": 512,
       "blocks": 888,
       "tiles": 4752,
-      "bytes": 16499781
+      "bytes": 25043339
     },
     "424": {
       "mapId": 870,
+      "blockPixels": 512,
       "blocks": 566,
       "tiles": 3029,
-      "bytes": 8751442
+      "bytes": 14394484
     },
     "619": {
       "mapId": 1220,
+      "blockPixels": 512,
       "blocks": 648,
       "tiles": 3467,
-      "bytes": 6975404
+      "bytes": 11511138
     },
     "875": {
       "mapId": 1642,
+      "blockPixels": 512,
       "blocks": 420,
       "tiles": 2252,
-      "bytes": 3584664
+      "bytes": 5788628
     },
     "876": {
       "mapId": 1643,
+      "blockPixels": 512,
       "blocks": 432,
       "tiles": 2312,
-      "bytes": 4511112
+      "bytes": 7388780
     },
     "1978": {
       "mapId": 2444,
+      "blockPixels": 512,
       "blocks": 1419,
       "tiles": 7612,
-      "bytes": 12084616
+      "bytes": 20072150
     },
     "2274": {
       "mapId": 2601,
+      "blockPixels": 512,
       "blocks": 386,
       "tiles": 2073,
-      "bytes": 5190092
+      "bytes": 8669298
     },
     "101": {
       "mapId": 530,
+      "blockPixels": 512,
       "blocks": 713,
       "tiles": 3873,
-      "bytes": 12273198
+      "bytes": 20438216
     },
     "572": {
       "mapId": 1116,
       "blockPixels": 512,
       "blocks": 1073,
       "tiles": 5759,
-      "bytes": 11921761
+      "bytes": 17326531
     },
     "1525": {
       "mapId": 2222,
       "blockPixels": 512,
       "blocks": 538,
       "tiles": 2934,
-      "bytes": 9271788
+      "bytes": 13659490
     },
     "1970": {
       "mapId": 2374,
       "blockPixels": 512,
       "blocks": 80,
       "tiles": 429,
-      "bytes": 1543093
+      "bytes": 2246545
     },
     "830": {
       "mapId": 1669,
       "blockPixels": 512,
       "blocks": 90,
       "tiles": 499,
-      "bytes": 1331312
+      "bytes": 1971224
     },
     "207": {
       "mapId": 646,
       "blockPixels": 512,
       "blocks": 80,
       "tiles": 429,
-      "bytes": 1643417
+      "bytes": 2450141
     },
     "174": {
       "mapId": 648,
       "blockPixels": 256,
       "blocks": 79,
       "tiles": 116,
-      "bytes": 316937
+      "bytes": 464389
     },
     "244": {
       "mapId": 732,
       "blockPixels": 256,
       "blocks": 24,
       "tiles": 37,
-      "bytes": 110531
+      "bytes": 163453
     },
     "276": {
       "mapId": 730,
       "blockPixels": 512,
       "blocks": 9,
       "tiles": 50,
-      "bytes": 124647
+      "bytes": 207737
     },
     "504": {
       "mapId": 1064,
       "blockPixels": 256,
       "blocks": 48,
       "tiles": 65,
-      "bytes": 210071
+      "bytes": 298463
     },
     "1355": {
       "mapId": 1718,
       "blockPixels": 512,
       "blocks": 49,
       "tiles": 266,
-      "bytes": 825048
+      "bytes": 1188788
     },
     "2133": {
       "mapId": 2454,
       "blockPixels": 512,
       "blocks": 110,
       "tiles": 594,
-      "bytes": 1250167
+      "bytes": 1786831
     },
     "2200": {
       "mapId": 2548,
       "blockPixels": 512,
       "blocks": 150,
       "tiles": 807,
-      "bytes": 2804115
+      "bytes": 4291641
     },
     "2248": {
       "mapId": 2552,
       "blockPixels": 512,
       "blocks": 204,
       "tiles": 1098,
-      "bytes": 1901884
+      "bytes": 2853356
     },
     "2346": {
       "mapId": 2706,
       "blockPixels": 512,
       "blocks": 20,
       "tiles": 109,
-      "bytes": 265480
+      "bytes": 378912
     },
     "2369": {
       "mapId": 2127,
       "blockPixels": 512,
       "blocks": 12,
       "tiles": 65,
-      "bytes": 162939
+      "bytes": 238255
     },
     "2371": {
       "mapId": 2738,
       "blockPixels": 512,
       "blocks": 192,
       "tiles": 1025,
-      "bytes": 1701519
+      "bytes": 2338921
     },
     "2405": {
       "mapId": 2771,
       "blockPixels": 512,
       "blocks": 224,
       "tiles": 1197,
-      "bytes": 2943743
+      "bytes": 4342893
     },
     "2413": {
       "mapId": 2694,
       "blockPixels": 512,
       "blocks": 150,
       "tiles": 807,
-      "bytes": 2400697
+      "bytes": 3596117
     },
     "2432": {
       "mapId": 2858,
       "blockPixels": 512,
       "blocks": 25,
       "tiles": 139,
-      "bytes": 631442
+      "bytes": 880776
     },
     "1462": {
       "mapId": 1643,
       "blockPixels": 512,
       "blocks": 20,
       "tiles": 109,
-      "bytes": 227936
+      "bytes": 342834
     },
     "2151": {
       "mapId": 2444,
       "blockPixels": 512,
       "blocks": 70,
       "tiles": 379,
-      "bytes": 700193
+      "bytes": 1089581
     },
     "2118": {
       "mapId": 2570,
       "blockPixels": 512,
       "blocks": 35,
       "tiles": 192,
-      "bytes": 580768
+      "bytes": 916732
     },
     "202": {
       "mapId": 654,
       "blockPixels": 256,
       "blocks": 6,
       "tiles": 9,
-      "bytes": 64280
+      "bytes": 94320
     },
     "1577": {
       "mapId": 2211,
       "blockPixels": 512,
       "blocks": 4,
       "tiles": 21,
-      "bytes": 151944
+      "bytes": 233214
     },
     "2372": {
       "mapId": 2796,
       "blockPixels": 512,
       "blocks": 30,
       "tiles": 164,
-      "bytes": 1030166
+      "bytes": 1612330
     },
     "2351": {
       "mapId": 2736,
       "blockPixels": 512,
       "blocks": 140,
       "tiles": 752,
-      "bytes": 1802667
+      "bytes": 2632471
     },
     "2352": {
       "mapId": 2735,
       "blockPixels": 512,
       "blocks": 77,
       "tiles": 418,
-      "bytes": 1097670
+      "bytes": 1680704
     },
     "2366": {
       "mapId": 2794,
       "blockPixels": 512,
       "blocks": 24,
       "tiles": 129,
-      "bytes": 515170
+      "bytes": 745992
     },
     "998": {
       "mapId": 1760,
       "blockPixels": 512,
       "blocks": 6,
       "tiles": 33,
-      "bytes": 179183
+      "bytes": 291207
     },
     "1010": {
       "mapId": 1594,
       "blockPixels": 512,
       "blocks": 12,
       "tiles": 65,
-      "bytes": 192353
+      "bytes": 285719
     },
     "1039": {
       "mapId": 1864,
       "blockPixels": 512,
       "blocks": 6,
       "tiles": 33,
-      "bytes": 123931
+      "bytes": 186477
     },
     "1041": {
       "mapId": 1841,
       "blockPixels": 512,
       "blocks": 6,
       "tiles": 33,
-      "bytes": 194067
+      "bytes": 283587
     },
     "1339": {
       "mapId": 2106,
       "blockPixels": 512,
       "blocks": 9,
       "tiles": 50,
-      "bytes": 149963
+      "bytes": 224089
     },
     "1960": {
       "mapId": 2456,
       "blockPixels": 512,
       "blocks": 54,
       "tiles": 294,
-      "bytes": 897153
+      "bytes": 1293623
     },
     "2070": {
       "mapId": 2532,
       "blockPixels": 512,
       "blocks": 25,
       "tiles": 139,
-      "bytes": 681222
+      "bytes": 1123442
     },
     "2165": {
       "mapId": 2597,
       "blockPixels": 512,
       "blocks": 6,
       "tiles": 33,
-      "bytes": 92405
+      "bytes": 134151
     },
     "2354": {
       "mapId": 2776,
       "blockPixels": 512,
       "blocks": 25,
       "tiles": 139,
-      "bytes": 1530534
+      "bytes": 2206078
     },
     "2403": {
       "mapId": 2828,
       "blockPixels": 512,
       "blocks": 12,
       "tiles": 65,
-      "bytes": 554381
+      "bytes": 857195
     },
     "2404": {
       "mapId": 2827,
       "blockPixels": 512,
       "blocks": 20,
       "tiles": 109,
-      "bytes": 677674
+      "bytes": 1018302
     },
     "2447": {
       "mapId": 2849,
       "blockPixels": 512,
       "blocks": 4,
       "tiles": 21,
-      "bytes": 96520
+      "bytes": 141596
     },
     "2451": {
       "mapId": 2927,
       "blockPixels": 512,
       "blocks": 30,
       "tiles": 164,
-      "bytes": 1030656
+      "bytes": 1614426
     },
     "2509": {
       "mapId": 2916,
       "blockPixels": 512,
       "blocks": 20,
       "tiles": 109,
-      "bytes": 181676
+      "bytes": 250442
     },
     "2510": {
       "mapId": 2963,
       "blockPixels": 512,
       "blocks": 1,
       "tiles": 5,
-      "bytes": 40173
+      "bytes": 62829
     },
     "2585": {
       "mapId": 3014,
       "blockPixels": 512,
       "blocks": 20,
       "tiles": 109,
-      "bytes": 587706
+      "bytes": 902888
     },
     "2594": {
       "mapId": 3074,
       "blockPixels": 512,
       "blocks": 12,
       "tiles": 65,
-      "bytes": 390391
+      "bytes": 568341
     },
     "2599": {
       "mapId": 3047,
       "blockPixels": 512,
       "blocks": 4,
       "tiles": 21,
-      "bytes": 125490
+      "bytes": 184980
     },
     "2600": {
       "mapId": 3075,
       "blockPixels": 512,
       "blocks": 20,
       "tiles": 109,
-      "bytes": 196428
+      "bytes": 292528
     },
     "2605": {
       "mapId": 3071,
       "blockPixels": 512,
       "blocks": 16,
       "tiles": 85,
-      "bytes": 960989
+      "bytes": 1361623
     },
     "2633": {
       "mapId": 3077,
       "blockPixels": 512,
       "blocks": 2,
       "tiles": 11,
-      "bytes": 71814
+      "bytes": 111066
     }
   },
-  "build": "12.1.5.70783"
+  "build": "12.1.5.70783",
+  "encoding": {
+    "format": "webp",
+    "deepQuality": 85,
+    "coarseQuality": 80,
+    "sampling": "native-area",
+    "mixedSourceSampling": "bilinear"
+  }
 }

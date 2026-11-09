@@ -20,10 +20,18 @@
   "stats": {
     "113": {
       "mapId": 571,
+      "blockPixels": 256,
       "blocks": 805,
       "tiles": 1099,
-      "bytes": 5546306
+      "bytes": 7725974
     }
   },
-  "build": "3.80.2.70522"
+  "build": "3.80.2.70522",
+  "encoding": {
+    "format": "webp",
+    "deepQuality": 85,
+    "coarseQuality": 80,
+    "sampling": "native-area",
+    "mixedSourceSampling": "bilinear"
+  }
 }

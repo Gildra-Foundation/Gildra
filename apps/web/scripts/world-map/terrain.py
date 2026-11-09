@@ -13,7 +13,7 @@ the game has no block, are not written; ``index`` lists the tiles that exist)
 and data/wow/map/terrain-manifest.json, which build_world_map.py merges into
 maps.json as ``terrain``.
 
-Usage: /tmp/wm-venv/bin/python apps/web/scripts/world-map/terrain.py --work /tmp/wm-work [--maps 12,13] [--quality 72]
+Usage: /tmp/wm-venv/bin/python apps/web/scripts/world-map/terrain.py --work /tmp/wm-work [--maps 12,13] [--quality 85]
 """
 
 from __future__ import annotations
@@ -95,7 +95,7 @@ def encode_cached_block(task):
     with Image.open(path) as source:
         image = source.convert("RGBA")
     if image.size != (block_px, block_px):
-        image = image.resize((block_px, block_px), Image.Resampling.NEAREST)
+        image = image.resize((block_px, block_px), Image.Resampling.BILINEAR)
     split = block_px // TILE
     written = []
     for dx in range(split):
@@ -105,6 +105,7 @@ def encode_cached_block(task):
                 continue
             x,y = (block[0]-origin[0])*split+dx, (block[1]-origin[1])*split+dy
             crop.save(level_dir/f"{x}_{y}.webp", "WEBP", quality=quality, method=4)
+            crop.save(level_dir.parent/".native"/f"{x}_{y}.png", compress_level=1)
             written.append((x,y))
     return written
 
@@ -165,6 +166,7 @@ def build_pyramid(map_id: int, box_row: dict, client, out_dir: Path, quality: in
         shutil.rmtree(out_dir)
     level_dir = out_dir / str(max_zoom)
     level_dir.mkdir(parents=True)
+    (out_dir / ".native").mkdir()
 
     def fetch(block):
         data = source_bytes(block)
@@ -175,7 +177,7 @@ def build_pyramid(map_id: int, box_row: dict, client, out_dir: Path, quality: in
         # Mixed source sizes exist (e.g. 5.5 Pandaria). The finest block is
         # texel-exact; lower resolution blocks are sampled onto the same grid.
         if image.size != (block_px, block_px):
-            image = image.resize((block_px, block_px), Image.Resampling.NEAREST)
+            image = image.resize((block_px, block_px), Image.Resampling.BILINEAR)
         image = image.convert("RGBA")
         if image.getchannel("A").getextrema()[1] == 0:
             return []
@@ -183,7 +185,9 @@ def build_pyramid(map_id: int, box_row: dict, client, out_dir: Path, quality: in
         for dx in range(split):
             for dy in range(split):
                 tile = ((block[0] - bx0) * split + dx, (block[1] - by0) * split + dy)
-                image.crop((dx * TILE, dy * TILE, (dx + 1) * TILE, (dy + 1) * TILE)).save(level_dir / f"{tile[0]}_{tile[1]}.webp", "WEBP", quality=quality, method=4)
+                crop = image.crop((dx * TILE, dy * TILE, (dx + 1) * TILE, (dy + 1) * TILE))
+                crop.save(level_dir / f"{tile[0]}_{tile[1]}.webp", "WEBP", quality=quality, method=4)
+                crop.save(out_dir / ".native" / f"{tile[0]}_{tile[1]}.png", compress_level=1)
                 written.append(tile)
         return written
 
@@ -200,31 +204,32 @@ def build_pyramid(map_id: int, box_row: dict, client, out_dir: Path, quality: in
     if not present[max_zoom]:
         shutil.rmtree(out_dir)
         return None
-    # lower levels: 2 x 2 tiles of the level below -> one tile
+    # Decode native lossless pixels once. Each level averages this source,
+    # never a previously compressed/rounded level. Whole-image area sampling
+    # has no per-tile filter boundary. Largest supported continent is <2.5 GiB.
+    native = present[max_zoom]
+    canvas = Image.new("RGBA", (width, height))
+    for x, y in sorted(native):
+        with Image.open(out_dir / ".native" / f"{x}_{y}.png") as source:
+            canvas.paste(source, (x * TILE, y * TILE))
     for z in range(max_zoom - 1, -1, -1):
-        below = present[z + 1]
-        parents = {(x // 2, y // 2) for x, y in below}
+        factor = 2 ** (max_zoom - z)
+        parents = {(x // factor, y // factor) for x, y in native}
         zdir = out_dir / str(z)
         zdir.mkdir(parents=True)
+        small = canvas.resize((math.ceil(width / factor), math.ceil(height / factor)), Image.Resampling.BOX)
 
-        def merge(tile, z=z, below=below, zdir=zdir):
+        def merge(tile):
             tx, ty = tile
-            canvas = Image.new("RGBA", (TILE * 2, TILE * 2), (0, 0, 0, 0))
-            for dx in (0, 1):
-                for dy in (0, 1):
-                    child = (tx * 2 + dx, ty * 2 + dy)
-                    if child in below:
-                        canvas.paste(Image.open(out_dir / str(z + 1) / f"{child[0]}_{child[1]}.webp").convert("RGBA"), (dx * TILE, dy * TILE))
-            small = canvas.resize((TILE, TILE), Image.LANCZOS)
-            path = zdir / f"{tx}_{ty}.webp"
-            if small.getchannel("A").getextrema() == (255, 255):
-                small.convert("RGB").save(path, "WEBP", quality=min(85, quality + 10), method=4)
-            else:
-                small.save(path, "WEBP", quality=min(85, quality + 10), method=4, exact=False)
+            crop = small.crop((tx * TILE, ty * TILE, (tx + 1) * TILE, (ty + 1) * TILE))
+            crop.save(zdir / f"{tx}_{ty}.webp", "WEBP", quality=80, method=4)
             return tile
 
-        with ThreadPoolExecutor(max_workers=workers) as pool:
+        with ThreadPoolExecutor(max_workers=min(workers, 8)) as pool:
             present[z] = set(pool.map(merge, sorted(parents)))
+        small.close()
+    canvas.close()
+    shutil.rmtree(out_dir / ".native")
     index = {str(z): sorted(f"{x}_{y}" for x, y in tiles) for z, tiles in present.items()}
     (out_dir / "index.json").write_text(json.dumps(index, separators=(",", ":")))
     empty = {}
@@ -270,7 +275,7 @@ def main() -> None:
     parser.add_argument("--manifest", default="terrain-manifest.json")
     parser.add_argument("--listfile", type=Path)
     parser.add_argument("--maps", help="comma separated UiMap IDs (default: the main continents)")
-    parser.add_argument("--quality", type=int, default=72)
+    parser.add_argument("--quality", type=int, default=85)
     parser.add_argument("--workers", type=int, default=24)
     parser.add_argument("--block-px", type=int, default=512, help="legacy hint; source dimensions always determine native resolution")
     args = parser.parse_args()
@@ -287,6 +292,7 @@ def main() -> None:
     manifest_path = DATA_DIR / args.manifest
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {"maps": {}, "stats": {}}
     manifest["build"] = client.version
+    manifest["encoding"] = {"format": "webp", "deepQuality": args.quality, "coarseQuality": 80, "sampling": "native-area", "mixedSourceSampling": "bilinear"}
     ids = [int(m) for m in args.maps.split(",")] if args.maps else CONTINENTS
     built: dict[int, tuple[int, dict]] = {}  # MapID -> (folder, pyramid): continents on one MapID share it
     groups = {}

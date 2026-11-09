@@ -164,65 +164,74 @@
   "stats": {
     "12": {
       "mapId": 1,
+      "blockPixels": 256,
       "blocks": 966,
       "tiles": 1338,
-      "bytes": 7416651
+      "bytes": 11675555
     },
     "13": {
       "mapId": 0,
+      "blockPixels": 256,
       "blocks": 839,
       "tiles": 1158,
-      "bytes": 4853890
+      "bytes": 7666924
     },
     "424": {
       "mapId": 870,
       "blockPixels": 1024,
       "blocks": 566,
       "tiles": 12085,
-      "bytes": 18456092
+      "bytes": 23300014
     },
     "207": {
       "mapId": 646,
       "blockPixels": 256,
       "blocks": 80,
       "tiles": 109,
-      "bytes": 616744
+      "bytes": 889252
     },
     "174": {
       "mapId": 648,
       "blockPixels": 256,
       "blocks": 79,
       "tiles": 116,
-      "bytes": 316937
+      "bytes": 464389
     },
     "244": {
       "mapId": 2755,
       "blockPixels": 256,
       "blocks": 15,
       "tiles": 24,
-      "bytes": 69924
+      "bytes": 104444
     },
     "245": {
       "mapId": 732,
       "blockPixels": 256,
       "blocks": 12,
       "tiles": 17,
-      "bytes": 65281
+      "bytes": 96751
     },
     "276": {
       "mapId": 730,
       "blockPixels": 256,
       "blocks": 9,
       "tiles": 14,
-      "bytes": 57380
+      "bytes": 88518
     },
     "504": {
       "mapId": 1064,
       "blockPixels": 1024,
       "blocks": 48,
       "tiles": 1025,
-      "bytes": 1325325
+      "bytes": 1713293
     }
   },
-  "build": "5.5.4.70631"
+  "build": "5.5.4.70631",
+  "encoding": {
+    "format": "webp",
+    "deepQuality": 85,
+    "coarseQuality": 80,
+    "sampling": "native-area",
+    "mixedSourceSampling": "bilinear"
+  }
 }

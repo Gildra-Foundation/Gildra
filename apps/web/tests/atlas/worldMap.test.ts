@@ -49,17 +49,17 @@ function assertArt(art: Art, label: string) {
   for (const file of tilesOf(art)) assert.ok(existsSync(file), `${label}: missing ${file}`);
 }
 
-// bytes on disk; hard-linked tiles (ruRU pictures share their unchanged tiles) count once
-function dirBytes(dir: string, seen = new Set<number>()): number {
+// Logical file bytes by default; hard-linked tiles (ruRU pictures share their unchanged tiles) count once
+function dirBytes(dir: string, seen = new Set<number>(), allocated = false): number {
   if (!existsSync(dir)) return 0;
-  let total = 0;
+  let total = allocated ? statSync(dir).blocks * 512 : 0;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
-    if (entry.isDirectory()) { total += dirBytes(path, seen); continue; }
+    if (entry.isDirectory()) { total += dirBytes(path, seen, allocated); continue; }
     const stat = statSync(path);
     if (seen.has(stat.ino)) continue;
     seen.add(stat.ino);
-    total += stat.size;
+    total += allocated ? stat.blocks * 512 : stat.size;
   }
   return total;
 }
@@ -177,7 +177,12 @@ describe("world map art", () => {
   });
 
   it("keeps all map files within the size budget", () => {
-    assert.ok(dirBytes(join(web, "public/maps")) <= 650e6, `public/maps ${dirBytes(join(web, "public/maps")) / 1e6} MB`);
+    const root = join(web, "public/maps");
+    const logical = dirBytes(root);
+    const allocated = dirBytes(root, new Set<number>(), true);
+    // MAPD4: q85 terrain, owner budget ≤1100 MB including filesystem blocks.
+    assert.ok(logical <= 1_000e6, `public/maps ${logical / 1e6} MB logical`);
+    assert.ok(allocated <= 1_100e6, `public/maps ${allocated / 1e6} MB on disk`);
   });
 
   it("stays within the tile budget", () => {
