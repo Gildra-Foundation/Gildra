@@ -591,6 +591,8 @@ async function runDeep(browser, spec) {
   await pg.waitForTimeout(40);
   const bounce = await pg.evaluate(() => window.__worldMap.stretch?.log ?? 0);
   await settled(pg);
+  // (The band springs back within a few frames; on a slow host those frames take a while.)
+  await pg.waitForFunction(() => !window.__worldMap.stretch, null, { timeout: 8000, polling: 100 }).catch(() => {});
   await pg.waitForTimeout(400);
   const after = await pg.evaluate(() => ({ scale: window.__worldMap.view.scale, stretch: window.__worldMap.stretch }));
   let drag = null;
