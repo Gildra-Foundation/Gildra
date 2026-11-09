@@ -4,7 +4,7 @@ import { clamp, contains, easeInOut, fitBox, flightPath, intersects, smoothstep,
 import { MapRenderer, type DrawParams } from "./gl";
 import { blurGroups, blurKey, blurOf, blurRadiusCss, blurRadiusPx, desatOf, dimOf, radiusOfKey, vignetteOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, terrainAlphaOf, upscaleOf } from "./lod";
 import { wheelKind } from "./input";
-import { FOCUS_FADE, MAX_AHEAD, TAU_NOTCH, TAU_SMOOTH, ZOOM_DONE, fadeOut, gather, holdFocus, spend, wheelLog } from "./motion";
+import { FOCUS_FADE, MAX_AHEAD, SLOW_FRAME, TAU_NOTCH, TAU_SMOOTH, ZOOM_DONE, fadeOut, gather, holdFocus, spend, wheelLog } from "./motion";
 import { analysePaper } from "./paper";
 import { loadTone } from "./tone";
 import { decorBoxes, labelBoxes, type ArtBox } from "@/lib/wow/worldMap/painted";
@@ -659,6 +659,7 @@ export class WorldMapEngine {
     if (this.disposed || this.lost) return;
     // (Up to a quarter second: on a slow device the eased zoom still takes its own time, not many times longer.)
     const dt = Math.min(250, now - (this.lastFrame || now));
+    this.frameDt = dt;
     const animating = Boolean(this.moving || this.pending || this.crossfade || (this.fromSet && now - this.eraStart < FADE_ERA));
     if (!this.visible || document.hidden) { this.lastFrame = now; return; }
     // The living layers alone run at ~30 fps; interaction at full rate.
@@ -687,7 +688,9 @@ export class WorldMapEngine {
     this.measure(performance.now() - t0);
     this.dirty = false;
     if (!this.residentOnce && this.tiles.loadedCount > 0 && this.tiles.pending === 0 && !this.pending) { this.residentOnce = true; this.events.resident?.(); }
-    const keep = this.moving || this.alive || this.pending || this.tiles.pending > 0 || this.fading(now) || this.crossfade || this.focusUntold || (this.fromSet && now - this.eraStart < FADE_ERA);
+    // (A few frames more after a move: the map in view is settled by the rules of a resting view, at once.)
+    if (this.moving) this.movedAt = now;
+    const keep = this.moving || this.recompose || now - this.movedAt < 400 || this.alive || this.pending || this.tiles.pending > 0 || this.fading(now) || this.crossfade || this.focusUntold || (this.fromSet && now - this.eraStart < FADE_ERA);
     if (keep) this.raf = requestAnimationFrame((t) => this.tick(t));
   }
 
@@ -703,6 +706,9 @@ export class WorldMapEngine {
   /** Why the map in view is what it is (for checks, `?debug`). */
   private focusWhy: Record<string, unknown> = {};
   private fadingUntil = 0;
+  private movedAt = 0;
+  private frameDt = 16;
+  private recompose = false;
   private residentOnce = false;
   /** The camera's zoom direction this frame (1 in, -1 out, 0 still): the next level is asked for ahead of it. */
   private zoomDir = 0;
@@ -1017,6 +1023,7 @@ export class WorldMapEngine {
   }
 
   private render(now: number) {
+    this.recompose = false;
     const W = this.canvas.width, H = this.canvas.height;
     const time = this.alive ? (now - this.start) / 1000 : this.pausedTime;
     if (this.alive) this.pausedTime = time;
@@ -1103,8 +1110,10 @@ export class WorldMapEngine {
     const [cx, cy] = this.lookAt ?? this.unproject(left + (this.width - left - right) / 2, top + (this.height - top - bottom) / 2);
     const freeArea = Math.max(1, (this.width - left - right) * (this.height - top - bottom));
     /** The share of the free part of the view a drawn map covers. */
+    // (A neighbour is drawn cut to what lies outside the map in view: as a place to go to it counts whole.)
     const share = (entry: DrawnMap) => {
-      const w = Math.min(entry.clip[2], this.width - right) - Math.max(entry.clip[0], left), h = Math.min(entry.clip[3], this.height - bottom) - Math.max(entry.clip[1], top);
+      const b = entry.role === "neighbour" ? entry.screen : entry.clip;
+      const w = Math.min(b[2], this.width - right) - Math.max(b[0], left), h = Math.min(b[3], this.height - bottom) - Math.max(b[1], top);
       return w > 0 && h > 0 ? (w * h) / freeArea : 0;
     };
     // How far the centre is from a map's own middle (0 there, 1 at its edge): of two overlapping zones, the one
@@ -1115,6 +1124,12 @@ export class WorldMapEngine {
     };
     // The map in view must also be what the view mostly shows: a place under the point that fills only a sliver
     // of it (a city 7% of the view inside its zone) is not yet the map in view.
+    const liesIn = (inner: AtlasMap, outer: AtlasMap) => {
+      const a = inner.frame, b = outer.frame;
+      const ow = Math.min(a[2], b[2]) - Math.max(a[0], b[0]), oh = Math.min(a[3], b[3]) - Math.max(a[1], b[1]);
+      const area = (a[2] - a[0]) * (a[3] - a[1]);
+      return ow > 0 && oh > 0 && (ow * oh) / area >= 0.7 && area < 0.5 * (b[2] - b[0]) * (b[3] - b[1]);
+    };
     let candidate: DrawnMap | undefined;
     for (const entry of drawn) {
       if ((entry.open ?? entry.alpha) <= 0.5 || !contains(entry.map.frame, cx, cy)) continue;
@@ -1124,17 +1139,19 @@ export class WorldMapEngine {
       if (entry.map.depth > 0 && entry.role !== "ancestor" && entry.map.id !== this.focusId && share(entry) < (own ? MIN_SHARE : MIN_SHARE_BESIDE)) continue;
       // The map in view itself, shrunk to a small part of the view (zooming out, or at rest after it), no longer
       // stands as its own candidate: the map around it takes over.
-      if (entry.map.id === this.focusId && entry.map.depth > 0 && this.zoomDir <= 0 && share(entry) < (this.zoomDir < 0 ? 0.18 : 0.12)) continue;
+      const way = this.zoomDir || this.zoomIntent;
+      if (entry.map.id === this.focusId && entry.map.depth > 0 && this.zoomDir <= 0 && share(entry) < (way < 0 ? 0.18 : 0.12)) continue;
       const depth = candidate?.map.depth ?? -1;
-      // Of two at one level, a place inside the other is the deeper one; else the one centred on.
-      const inner = candidate && entry.map.depth === depth && (entry.map.frame[2] - entry.map.frame[0]) * (entry.map.frame[3] - entry.map.frame[1]) < 0.5 * (candidate.map.frame[2] - candidate.map.frame[0]) * (candidate.map.frame[3] - candidate.map.frame[1]);
-      const outer = candidate && entry.map.depth === depth && (candidate.map.frame[2] - candidate.map.frame[0]) * (candidate.map.frame[3] - candidate.map.frame[1]) < 0.5 * (entry.map.frame[2] - entry.map.frame[0]) * (entry.map.frame[3] - entry.map.frame[1]);
+      // Of two at one level, a place lying inside the other (a city in its zone) is the deeper one; else the one
+      // the point is nearest the middle of.
+      const inner = candidate && entry.map.depth === depth && liesIn(entry.map, candidate.map);
+      const outer = candidate && entry.map.depth === depth && liesIn(candidate.map, entry.map);
       if (entry.map.depth > depth || inner || (entry.map.depth === depth && candidate && !outer && off(entry.map) < off(candidate.map))) candidate = entry;
     }
     // The map in view against a map of its level under the point that clearly shows more of the view (a city the
     // data puts beside its zone, the zone all around it): that one is the candidate.
-    // (Not while zooming in: entering a city, its zone around it is still bigger for a moment.)
-    if (candidate && candidate.map.id === this.focusId && this.zoomDir <= 0) {
+    // (Only on the way out: entering a city, its zone around it is still bigger for a while.)
+    if (candidate && candidate.map.id === this.focusId && (this.zoomDir || this.zoomIntent) < 0) {
       const own = share(candidate);
       for (const entry of drawn) {
         if (entry === candidate || entry.map.depth !== candidate.map.depth || entry.role === "ancestor" || (entry.open ?? entry.alpha) <= 0.5 || !contains(entry.map.frame, cx, cy)) continue;
@@ -1149,13 +1166,7 @@ export class WorldMapEngine {
       const chain = chainUp(this.set, candidate.map.id);
       // A place lying inside the map in view (a city whose data puts it beside its zone, Orgrimmar by Durotar) is
       // a way down too: it is entered like a child, not swapped for like a neighbour.
-      const within = (inner: AtlasMap, outer: AtlasMap) => {
-        const a = inner.frame, b = outer.frame;
-        const ow = Math.min(a[2], b[2]) - Math.max(a[0], b[0]), oh = Math.min(a[3], b[3]) - Math.max(a[1], b[1]);
-        const area = (a[2] - a[0]) * (a[3] - a[1]);
-        return ow > 0 && oh > 0 && (ow * oh) / area >= 0.7 && area < 0.5 * (b[2] - b[0]) * (b[3] - b[1]);
-      };
-      const relation = chain.includes(held.id) || within(candidate.map, held) ? "deeper" : chainUp(this.set, held.id).includes(candidate.map.id) || within(held, candidate.map) ? "above" : "other";
+      const relation = chain.includes(held.id) || liesIn(candidate.map, held) ? "deeper" : chainUp(this.set, held.id).includes(candidate.map.id) || liesIn(held, candidate.map) ? "above" : "other";
       // "Under" the point: inside its rectangle — or still filling a good part of the view. Beside the candidate
       // (zone rectangles overlap, a city may sit beside its zone in the data): inside it and not clearly further
       // off its middle than the candidate is from its own.
@@ -1169,7 +1180,7 @@ export class WorldMapEngine {
         // Up a level: while zooming in only once it has all but left the view; at rest once it is a small part of it.
         : (contains(held.frame, cx, cy) || heldShare >= (relation !== "above" || this.zoomDir < 0 ? 0.3 : this.zoomDir > 0 ? 0.04 : 0.12))
           // …and never kept once it has shrunk to a small part of the view (zooming out, or at rest after it).
-          && (this.zoomDir > 0 || heldShare >= (this.zoomDir < 0 ? 0.18 : 0.12))));
+          && (this.zoomDir > 0 || heldShare >= ((this.zoomDir || this.zoomIntent) < 0 ? 0.18 : 0.12))));
       const keep = holdFocus({ id: held.id, alpha: shown?.open ?? shown?.alpha ?? 0, under }, { id: candidate.map.id, alpha: candidate.open ?? candidate.alpha }, relation, this.zoomDir || this.zoomIntent);
       // Down only once there is something to show: the child's whole picture (its smallest level) and the wash
       // the map in view turns into — never a child floating in an empty backdrop.
@@ -1184,13 +1195,16 @@ export class WorldMapEngine {
     if (home) focus = home;
     if (focus && focus.id !== this.focusId) {
       // The new composition comes in under this very frame, which then fades out.
-      if (this.focusId >= 0 && !this.options.reducedMotion && !this.compare && !this.fromSet && this.lastInfo) {
+      // (Not on a device drawing a frame every 180+ ms: a fade over one or two frames only smears both pictures.)
+      if (this.focusId >= 0 && !this.options.reducedMotion && !this.compare && !this.fromSet && this.lastInfo && this.frameDt < SLOW_FRAME) {
         this.renderer.snapshot();
         this.crossfade = { camera: { ...this.camera }, start: now, width: this.width, height: this.height };
       }
       this.focusId = focus.id;
       this.focusUntold = true;
       this.focusSince = now;
+      // This frame was put together around the old one: the next is drawn around the new one, whatever else moves.
+      this.recompose = true;
     }
     // The page hears of the map in view once the camera rests — or once it has stayed the same for a moment while
     // a slow glide ends (no title or panel jumping through every level on the way, never a stale one at rest).
