@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useDeferredValue, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Castle, ChevronDown, Clock3, Compass, CornerDownLeft, Database, History, MapPin, Search, Skull, Swords, X } from "lucide-react";
@@ -11,7 +11,7 @@ import { knownRenderTier } from "@gildra/atlas-ui/renderTier";
 import { routeTurnDeviceAllowed, type RouteTurnDevice } from "@/components/motion/routeTurnDevice";
 import type { SiteSearchGroup } from "@/lib/search/siteIndex";
 import { readRecentPages, readRecentQueries, rememberQuery } from "./recentPages";
-import { loadedIndex, loadIndex, type SiteIndex as Index } from "./siteSearchIndex";
+import { indexFailed, loadedIndex, subscribeIndex } from "./siteSearchIndex";
 import { siteSearchCopy, type SiteSearchLang } from "./siteSearchCopy";
 import { matchRanges, searchIndex } from "./siteSearchMatch";
 import styles from "./siteSearch.module.css";
@@ -72,8 +72,9 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
   const body = useRef<HTMLDivElement>(null);
-  const [index, setIndex] = useState<Index | null>(loadedIndex);
-  const [failed, setFailed] = useState(false);
+  // The index is usually warm already (idle time, hover); otherwise it arrives while the dialog opens.
+  const index = useSyncExternalStore(subscribeIndex, loadedIndex, () => null);
+  const failed = useSyncExternalStore(subscribeIndex, indexFailed, () => false) && !index;
   const [query, setQuery] = useState(initialQuery);
   // Results follow the field at a lower priority: typing never waits for the list.
   const deferred = useDeferredValue(query);
@@ -83,13 +84,7 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
   const prefix = lang === "ru" ? "/ru" : "";
   const localized = (href: string) => (href === "/" ? prefix || "/" : `${prefix}${href}`);
 
-  useEffect(() => {
-    input.current?.focus();
-    if (loadedIndex()) return;
-    let alive = true;
-    loadIndex().then((data) => { if (alive) setIndex(data); }, () => { if (alive) setFailed(true); });
-    return () => { alive = false; };
-  }, []);
+  useEffect(() => { input.current?.focus(); }, []);
 
   // The panel unfolds from the toolbar's field: it starts as that field's box
   // and opens to its own, the contents fading in behind the edge.
