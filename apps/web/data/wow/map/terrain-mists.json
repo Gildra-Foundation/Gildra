@@ -164,9 +164,10 @@
   "stats": {
     "12": {
       "mapId": 1,
+      "blockPixels": 256,
       "blocks": 966,
       "tiles": 1338,
-      "bytes": 7416651
+      "bytes": 11675554
     },
     "13": {
       "mapId": 0,
@@ -224,5 +225,12 @@
       "bytes": 1325325
     }
   },
-  "build": "5.5.4.70631"
+  "build": "5.5.4.70631",
+  "encoding": {
+    "format": "webp",
+    "deepQuality": 85,
+    "coarseQuality": 80,
+    "sampling": "native-area",
+    "mixedSourceSampling": "bilinear"
+  }
 }
