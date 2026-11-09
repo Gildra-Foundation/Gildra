@@ -1,0 +1,270 @@
+{
+  "maps": {
+    "1945": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        0.133381,
+        -0.691016,
+        1.599247,
+        1.003891
+      ]
+    },
+    "1943": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -5.199591,
+        -6.137376,
+        1.089048,
+        1.132003
+      ]
+    },
+    "1946": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -0.237049,
+        -3.559354,
+        4.855367,
+        2.327533
+      ]
+    },
+    "1947": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -20.565519,
+        -24.800133,
+        3.65923,
+        3.202813
+      ]
+    },
+    "1954": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -14.088321,
+        -4.602248,
+        7.043232,
+        19.857414
+      ]
+    },
+    "1957": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -4.799625,
+        -0.134273,
+        2.894803,
+        8.759628
+      ]
+    },
+    "1941": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -3.076988,
+        -0.860406,
+        2.120981,
+        5.149747
+      ]
+    },
+    "1942": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -4.833333,
+        -2.545455,
+        2.924243,
+        6.424244
+      ]
+    },
+    "1944": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -0.992739,
+        -3.596491,
+        3.964099,
+        2.133696
+      ]
+    },
+    "1948": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -1.171212,
+        -4.313069,
+        3.483333,
+        1.06875
+      ]
+    },
+    "1949": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -0.335638,
+        -2.615208,
+        4.383257,
+        2.841014
+      ]
+    },
+    "1950": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -6.357601,
+        -6.724138,
+        1.489145,
+        2.348659
+      ]
+    },
+    "1951": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -0.067119,
+        -3.753394,
+        4.566365,
+        1.604072
+      ]
+    },
+    "1952": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -0.66358,
+        -4.12963,
+        4.077161,
+        1.351852
+      ]
+    },
+    "1953": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -0.929746,
+        -2.262892,
+        3.662183,
+        3.046525
+      ]
+    },
+    "1955": {
+      "url": "/maps/terrain/tbc/1945/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/tbc/1945/index.json",
+      "empty": "/maps/terrain/tbc/1945/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 12288,
+      "height": 9472,
+      "maxZoom": 6,
+      "rect": [
+        -3.46902,
+        -17.616023,
+        16.129066,
+        5.044263
+      ]
+    }
+  },
+  "stats": {
+    "1945": {
+      "mapId": 530,
+      "blockPixels": 256,
+      "blocks": 709,
+      "tiles": 1017,
+      "bytes": 4190378
+    }
+  },
+  "build": "2.5.6.70577"
+}
