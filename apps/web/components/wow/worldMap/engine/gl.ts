@@ -98,6 +98,13 @@ void main() {
       + texture2D(u_tex, v_uv + vec2(0.0, u_texel.y)) + texture2D(u_tex, v_uv - vec2(0.0, u_texel.y));
     texel = clamp(texel + u_sharp * (texel - n * 0.25), 0.0, 1.0);
     texel.rgb = min(texel.rgb, vec3(texel.a));
+  } else if (u_sharp < 0.0) {
+    // Softened (the terrain magnified): four bilinear taps a little off the diagonals, each a 2×2 mean — a 3×3 tent
+    // that evens out a 1–2 texel dithering checker and the edges of 4×4 compression blocks.
+    vec2 d = u_texel * 0.75;
+    vec4 n = texture2D(u_tex, v_uv + vec2(d.x, d.y)) + texture2D(u_tex, v_uv + vec2(-d.x, d.y))
+      + texture2D(u_tex, v_uv + vec2(d.x, -d.y)) + texture2D(u_tex, v_uv - d);
+    texel = mix(texel, n * 0.25, -u_sharp);
   }
   float a = u_alpha;
   if (u_feather.y > 0.0) {
@@ -254,7 +261,7 @@ export type DrawParams = {
   fx?: { kind: 1 | 2; color: [number, number, number, number] } | null;
   /** The rect of the map in view (device px) this picture gives way to, with that map's soft edge [inset, ramp end] and a strength. */
   exclude?: { rect: [number, number, number, number]; edge: [number, number]; strength: number } | null;
-  /** Unsharp strength (0 = off) and the texture's texel size in uv. */
+  /** Unsharp strength (0 = off; negative: a softening toward the 4-neighbour mean) and the texture's texel size in uv. */
   sharp?: number;
   texel?: [number, number];
   /** Colour grade: rgb × mul + add (straight colour, 0..1). */
@@ -443,7 +450,7 @@ export class MapRenderer {
       gl.uniform3f(this.u.u_exclEdge, p.exclude.edge[0], p.exclude.edge[1], p.exclude.strength);
       this.exclOn = true;
     } else if (this.exclOn) { gl.uniform3f(this.u.u_exclEdge, 0, 0, 0); this.exclOn = false; }
-    if (p.sharp && p.sharp > 0.01 && p.texel) { gl.uniform1f(this.u.u_sharp, p.sharp); gl.uniform2f(this.u.u_texel, ...p.texel); this.sharpOn = true; }
+    if (p.sharp && Math.abs(p.sharp) > 0.01 && p.texel) { gl.uniform1f(this.u.u_sharp, p.sharp); gl.uniform2f(this.u.u_texel, ...p.texel); this.sharpOn = true; }
     else if (this.sharpOn) { gl.uniform1f(this.u.u_sharp, 0); this.sharpOn = false; }
     if (p.grade) { gl.uniform3f(this.u.u_gradeMul, ...p.grade.mul); gl.uniform3f(this.u.u_gradeAdd, ...p.grade.add); this.gradeOn = true; }
     else if (this.gradeOn) { gl.uniform3f(this.u.u_gradeMul, 1, 1, 1); gl.uniform3f(this.u.u_gradeAdd, 0, 0, 0); this.gradeOn = false; }

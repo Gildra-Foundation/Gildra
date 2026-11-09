@@ -83,9 +83,15 @@ export function maxScaleOf(art: Pick<MapArt, "width">, frameWidth: number, terra
 
 /**
  * Unsharp strength for a picture drawn `devicePerTexel` device px per texel of its finest level: none at its own
- * size or below, rising to ~0.4 at twice its size (bilinear magnification softens it; this gives the edges back).
+ * size or below, rising to ~0.3 at twice its size (bilinear magnification softens it; this gives the edges back).
  */
-export const sharpenOf = (devicePerTexel: number) => 0.45 * smoothstep(1.15, 2.2, devicePerTexel);
+export const sharpenOf = (devicePerTexel: number) => 0.3 * smoothstep(1.15, 2.2, devicePerTexel);
+/**
+ * Smoothing for the terrain magnified past its finest level (a negative unsharp: part of each texel's 4-neighbour
+ * mean). The client's minimap pictures carry 4×4 block compression and the old ones a 1-texel checker of dithering:
+ * sharpened or merely magnified they read as blocks and a grid; softened they read as ground.
+ */
+export const smoothOf = (devicePerTexel: number) => 0.8 * smoothstep(1.1, 2, devicePerTexel);
 
 /**
  * Rubber band at a zoom limit: zoom asked for past the limit (log units, any sign) shows as a small, ever harder

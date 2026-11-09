@@ -529,6 +529,9 @@ const DEEP = [
   { key: "deep-outland", chain: [101, 107], terrain: true },
   // A phase whose era knows no ground under its zone (Theramore fallen): capped at the painted map, no modern ground.
   { key: "deep-theramore-fall", chain: [12, 70], terrain: false, query: "at=5.2.0" },
+  // At the deepest zoom over Orgrimmar, the map dragged 1500 px across the continent's ground: no jump of the zoom, the
+  // map in view follows the ground under the view, still at most twice the ground's own texel density, no blank tiles.
+  { key: "deep-orgrimmar-drag", chain: [12, 1, 85], terrain: true, drag: 1500 },
 ];
 
 async function runDeep(browser, spec) {
@@ -562,19 +565,22 @@ async function runDeep(browser, spec) {
   // On to the deepest zoom, the cursor on the place's own land.
   let notches = 0;
   for (; notches < 30; notches++) {
-    const room = await pg.evaluate(() => window.__worldMap.zoomRoom().in);
+    // (The room where the wheel turns: the cursor's point sets the limit, not the view's middle.)
+    const at = (await pointOf(pg, last)) ?? [720, 450];
+    const room = await pg.evaluate(([x, y]) => window.__worldMap.zoomRoom({ x, y }).in, at);
     if (room < 0.005 && !(await pg.evaluate(() => Boolean(window.__worldMap.wheel)))) break;
     await notch(last);
   }
   await settled(pg);
   await pg.waitForFunction(() => window.__worldMap.tiles.pending === 0, null, { timeout: 60000, polling: 200 }).catch(() => {});
   await pg.waitForTimeout(1200);
-  const st = await pg.evaluate(() => {
+  const cursor = (await pointOf(pg, last)) ?? [720, 450];
+  const st = await pg.evaluate(([x, y]) => {
     const e = window.__worldMap;
     const cov = e.coverage();
     const zoomIn = document.querySelector("button[aria-label='Приблизить'], button[aria-label='Zoom in']");
-    return { room: e.zoomRoom().in, focus: e.focus?.id, name: e.focus?.name, title: document.querySelector("#world-map-title")?.textContent?.trim() ?? "", cov, spent: zoomIn?.getAttribute("aria-disabled") === "true", scale: e.view.scale, ground: e.lastInfo?.ground ?? 0 };
-  });
+    return { room: e.zoomRoom({ x, y }).in, roomMiddle: e.zoomRoom().in, focus: e.focus?.id, name: e.focus?.name, title: document.querySelector("#world-map-title")?.textContent?.trim() ?? "", cov, spent: zoomIn?.getAttribute("aria-disabled") === "true", scale: e.view.scale, ground: e.lastInfo?.ground ?? 0 };
+  }, cursor);
   const labels = await overlaps(pg);
   if (shots) await pg.screenshot({ path: `${shots}/${spec.key}-max.png`, timeout: 120000 }).catch(() => {});
   // One more notch: a bounce at the limit, then back to the same view.
@@ -587,6 +593,31 @@ async function runDeep(browser, spec) {
   await settled(pg);
   await pg.waitForTimeout(400);
   const after = await pg.evaluate(() => ({ scale: window.__worldMap.view.scale, stretch: window.__worldMap.stretch }));
+  let drag = null;
+  if (spec.drag) {
+    // Every frame's zoom while dragged and gliding: it must not jump.
+    await pg.evaluate(() => { const e = window.__worldMap; window.__dragScales = []; window.__dragStop = false; const tick = () => { if (window.__dragStop) return; window.__dragScales.push(e.view.scale); requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+    const box = await pg.evaluate(() => { const e = window.__worldMap, s = e.options.insets; return { x: s.left, w: e.width - s.left - s.right, y: s.top + (e.height - s.top - s.bottom) / 2 }; });
+    const stroke = Math.floor(box.w * 0.8);
+    for (let done = 0; done < spec.drag; done += stroke) {
+      const len = Math.min(stroke, spec.drag - done), x0 = surface[0] + box.x + (box.w - len) / 2, y0 = surface[1] + box.y;
+      await pg.mouse.move(x0, y0);
+      await pg.mouse.down();
+      for (let i = 1; i <= 12; i++) { await pg.mouse.move(x0 + (len * i) / 12, y0); await pg.waitForTimeout(10); }
+      await pg.waitForTimeout(120);
+      await pg.mouse.up();
+    }
+    await settled(pg);
+    await pg.waitForFunction(() => window.__worldMap.tiles.pending === 0, null, { timeout: 60000, polling: 200 }).catch(() => {});
+    await pg.waitForTimeout(1500);
+    drag = await pg.evaluate(() => {
+      const e = window.__worldMap; window.__dragStop = true;
+      const sc = window.__dragScales; let jump = 1;
+      for (let i = 1; i < sc.length; i++) jump = Math.max(jump, sc[i] / sc[i - 1], sc[i - 1] / sc[i]);
+      return { scale: e.view.scale, jump, cov: e.coverage(), focus: e.focus?.id, name: e.focus?.name, title: document.querySelector("#world-map-title")?.textContent?.trim() ?? "", url: location.pathname + location.search };
+    });
+    if (shots) await pg.screenshot({ path: `${shots}/${spec.key}-dragged.png`, timeout: 120000 }).catch(() => {});
+  }
   const rec = await pg.evaluate(() => { const r = window.__zoomRec; r.stop = true; return r; });
   await ctx.close();
   if (shots) rec.voids.forEach((v, i) => fs.writeFileSync(`${shots}/${spec.key}-void-${i}-${v.focus}-${v.value.toFixed(2)}.png`, Buffer.from(v.url.split(",")[1], "base64")));
@@ -594,13 +625,21 @@ async function runDeep(browser, spec) {
   const limit = st.cov.detail?.source === "terrain" ? 2 : 1.6;
   if (missed.length) problems.push(`NOT-REACHED(${missed.join(",")})`);
   if (st.room > 0.01) problems.push(`NOT-MAX(${st.room.toFixed(3)} left)`);
+  if (drag) {
+    if (Math.abs(drag.scale / after.scale - 1) > 0.01) problems.push(`DRAG-ZOOM-CHANGED(${(drag.scale / after.scale).toFixed(3)})`);
+    if (drag.jump > 1.02) problems.push(`DRAG-ZOOM-JUMP(${drag.jump.toFixed(3)})`);
+    if (!drag.cov.detail || drag.cov.detail.source !== "terrain" || drag.cov.detail.upscale > 2.04) problems.push(`DRAG-DETAIL(${drag.cov.detail?.source}:${drag.cov.detail?.upscale?.toFixed(2)})`);
+    if (drag.cov.tiles < 0.99) problems.push(`DRAG-BLANK(${drag.cov.tiles.toFixed(3)})`);
+    if (drag.title !== drag.name) problems.push(`DRAG-TITLE(${drag.title}|${drag.name})`);
+  }
   if (!st.cov.detail || st.cov.detail.upscale > limit * 1.02) problems.push(`OVER-UPSCALE(${st.cov.detail?.source}:${st.cov.detail?.upscale?.toFixed(2)})`);
   if (spec.terrain && st.cov.detail?.source !== "terrain") problems.push("NO-TERRAIN");
   if (!spec.terrain && st.cov.detail && st.cov.detail.upscale < 1.5) problems.push(`CAP-SHALLOW(${st.cov.detail.upscale.toFixed(2)})`);
   if (st.cov.tiles < 0.99) problems.push(`BLANK-TILES(${st.cov.tiles.toFixed(3)} of ${st.cov.drawn})`);
   if (labels.overlaps.length) problems.push(`LABEL-OVERLAP(${labels.overlaps.slice(0, 3).join("; ")})`);
   if (st.title !== st.name || st.focus !== last) problems.push(`TITLE(${st.title}|${st.name}|${st.focus})`);
-  if (!st.spent) problems.push("ZOOM-IN-NOT-SPENT");
+  // (The button reads the view's middle: spent only where the middle is at its limit too.)
+  if (!st.spent && st.roomMiddle < 0.01) problems.push("ZOOM-IN-NOT-SPENT");
   if (!(bounce > 0)) problems.push("NO-RUBBER");
   if (after.stretch || Math.abs(after.scale / st.scale - 1) > 0.01) problems.push("RUBBER-DRIFT");
   const voids = rec.frames.filter((f) => f.empty > maxVoid).length, pills = rec.frames.filter((f) => f.moving && f.pill).length;
@@ -609,7 +648,8 @@ async function runDeep(browser, spec) {
   if (errors.length) problems.push("PAGE-ERROR");
   return {
     key: spec.key, problems, errors: errors.slice(0, 2), voidAt, notches, room: Number(st.room.toFixed(4)), detail: st.cov.detail && { source: st.cov.detail.source, upscale: Number(st.cov.detail.upscale.toFixed(3)) },
-    coverage: { tiles: Number(st.cov.tiles.toFixed(3)), drawn: st.cov.drawn }, drift: Number((after.scale / st.scale).toFixed(4)), ground: Number(st.ground.toFixed(2)), labels: labels.count, title: st.title, bounce: Number(bounce.toFixed(3)),
+    coverage: { tiles: Number(st.cov.tiles.toFixed(3)), drawn: st.cov.drawn },
+    ...(drag ? { drag: { url: drag.url, focus: drag.focus, zoom: Number((drag.scale / after.scale).toFixed(4)), jump: Number(drag.jump.toFixed(4)), detail: drag.cov.detail && Number(drag.cov.detail.upscale.toFixed(3)) } } : {}), drift: Number((after.scale / st.scale).toFixed(4)), ground: Number(st.ground.toFixed(2)), labels: labels.count, title: st.title, bounce: Number(bounce.toFixed(3)),
   };
 }
 

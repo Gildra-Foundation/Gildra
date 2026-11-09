@@ -2,7 +2,7 @@ import type { AtlasMap } from "@/lib/wow/worldMap/bundle";
 import type { MapArt } from "@/lib/wow/worldMap/types";
 import { clamp, contains, easeInOut, fitBox, flightPath, intersects, smoothstep, toAtlas, toScreen, zoomAt, type Box, type Camera } from "./camera";
 import { MapRenderer, type DrawParams } from "./gl";
-import { blurGroups, blurKey, blurOf, blurRadiusCss, blurRadiusPx, desatOf, dimOf, radiusOfKey, vignetteOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, rubber, sharpenOf, terrainAlphaOf, upscaleOf } from "./lod";
+import { blurGroups, blurKey, blurOf, blurRadiusCss, blurRadiusPx, desatOf, dimOf, radiusOfKey, vignetteOf, featherInsetOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, rubber, sharpenOf, smoothOf, terrainAlphaOf, upscaleOf } from "./lod";
 import { areaAt, areaCentre, loadArea, type Area } from "./area";
 import { loadGrade, type Grade } from "./grade";
 import { wheelKind } from "./input";
@@ -546,7 +546,11 @@ export class WorldMapEngine {
     this.boundsId = null;
     this.recentre = false;
     if (!log) { this.markMoving(); this.invalidate(); return; }
-    const wanted = gather(this.wheel?.log ?? 0, log);
+    if (log > 0) this.detent = null;
+    let wanted = gather(this.wheel?.log ?? 0, log);
+    // A mouse wheel zooming out stops once at each level shown whole on the way (the parent of the map in view, then
+    // its parent…): a big notch never skips the continent between a zone and the world.
+    if (wanted < 0 && tau >= TAU_NOTCH) wanted = Math.max(wanted, this.detentOut(wanted));
     let left = wanted;
     // What the limits allow from here, around this point.
     const far = this.limit(zoomAt(this.camera, this.width, this.height, x, y, Math.exp(left > 0 ? MAX_AHEAD : -MAX_AHEAD)), { x, y });
@@ -561,6 +565,26 @@ export class WorldMapEngine {
     this.lookAt = this.unproject(x, y);
     this.zoomIntent = Math.sign(left);
     this.invalidate();
+  }
+
+  /** The map a zoom out stops at, shown whole (see detentOut): it becomes the map shown whole once the zoom rests. */
+  private detent: number | null = null;
+  /** The log zoom to the next level shown whole on the way out (≤ 0), or −∞ if `log` crosses none. */
+  private detentOut(log: number) {
+    const s = this.camera.scale, target = s * Math.exp(log);
+    for (const id of chainUp(this.set, this.focusId).slice(1)) {
+      const map = this.maps.get(id);
+      if (!map) continue;
+      const fit = this.fit(this.shown.get(id) ?? map.frame, 0.05, this.closerOf(map)).scale;
+      // (Already at or past that size: look further up.)
+      if (fit >= s * 0.97) continue;
+      if (fit <= target * 1.03) return -Infinity;
+      // Landing there, that map is the one shown whole — as if flown to (Classic's Kalimdor fills most of its world,
+      // yet stopping at its whole size names Kalimdor, not the world).
+      this.detent = id;
+      return Math.log(fit / s);
+    }
+    return -Infinity;
   }
 
   /**
@@ -797,7 +821,17 @@ export class WorldMapEngine {
       const [log, left] = spend(this.wheel.log, dt, this.wheel.tau);
       this.camera = this.limit(zoomAt(this.camera, this.width, this.height, this.wheel.x, this.wheel.y, Math.exp(log)), this.wheel);
       this.wheel.log = left;
-      if (Math.abs(left) < ZOOM_DONE) { this.wheel = null; this.scheduleSettle(); }
+      if (Math.abs(left) < ZOOM_DONE) {
+        this.wheel = null;
+        const id = this.detent;
+        this.detent = null;
+        if (id !== null) {
+          const map = this.maps.get(id);
+          const fit = map ? this.fit(this.shown.get(id) ?? map.frame, 0.05, this.closerOf(map)).scale : 0;
+          if (fit && Math.abs(this.camera.scale / fit - 1) < 0.02) this.home = { id, camera: { ...this.camera } };
+        }
+        this.scheduleSettle();
+      }
     }
     if (this.stretch && !this.pointers.size && (!this.wheel || Math.sign(this.wheel.log) !== Math.sign(this.stretch.log)) && now - this.stretch.at > 90) {
       // The rubber band springs back once the input stops (~0.12 s time constant).
@@ -820,12 +854,13 @@ export class WorldMapEngine {
 
   /** At rest off its pin (a drag past the edge, a place newly in view): the view springs inside (~0.07 s time constant). Returns whether it moved. */
   private springBack(dt: number, now: number) {
+    if (!this.pointers.size && !this.velocity) this.pinFrozen = null;
     // (Not on the frame the map in view has just changed: only once it has stayed a moment — never a pull towards a
     // map that was in view for a frame.)
-    if (this.flight || this.wheel || this.pointers.size || this.pending || now - this.focusSince < 250) return false;
+    if (this.flight || this.wheel || this.pointers.size || this.pending || now - this.focusSince < 100) return false;
     const off = this.pinOff(this.camera);
     if (!off || (!off.x && !off.y)) return false;
-    const k = this.options.reducedMotion ? 1 : 1 - Math.exp(-dt / 70);
+    const k = this.options.reducedMotion ? 1 : 1 - Math.exp(-dt / 55);
     const px = Math.hypot(off.x, off.y) * this.camera.scale;
     this.camera = px < 1 ? { ...this.camera, x: this.camera.x - off.x, y: this.camera.y - off.y } : { ...this.camera, x: this.camera.x - off.x * k, y: this.camera.y - off.y * k };
     if (px < 1) this.scheduleSettle();
@@ -902,7 +937,10 @@ export class WorldMapEngine {
     const b = this.bounds(camera, anchor);
     if (!b) return camera;
     const { min, max } = b;
-    const scale = clamp(camera.scale, min, max);
+    // A move that does not zoom never changes the zoom either (panning at the deepest zoom off the ground's tiles onto
+    // open sea, or onto a map that allows less): the next zoom in simply has no room there.
+    const panOnly = against !== null && Math.abs(camera.scale / against.scale - 1) < 1e-9;
+    const scale = panOnly ? Math.max(min, camera.scale) : clamp(camera.scale, min, max);
     let next = { ...camera, scale };
     if (anchor && scale !== camera.scale) {
       // Clamped zoom: keep the point under the cursor in place.
@@ -919,7 +957,13 @@ export class WorldMapEngine {
    * (A place only just opening inside the map in view does not yet pin the view: no jump towards it.)
    */
   private pinRange(camera: Camera, mode: PinMode): { x: [number, number]; y: [number, number] } | null {
-    const ids = chainUp(this.set, this.boundsId !== null && this.maps.has(this.boundsId) ? this.boundsId : this.focusId);
+    let ids = this.pinFrozen ?? chainUp(this.set, this.boundsId !== null && this.maps.has(this.boundsId) ? this.boundsId : this.focusId);
+    // Deep in, over a continent's terrain, the world is one: the view pans freely across the continent's ground (the
+    // map in view follows by the usual rules, the zoom stays); the continent's own bounds pin it.
+    if ((this.lastInfo?.ground ?? 0) >= 0.6) {
+      const at = ids.findIndex((id) => this.maps.get(id)?.terrain);
+      if (at > 0) ids = ids.slice(at);
+    }
     if (!ids.length) return null;
     const { top, right, bottom, left } = this.options.insets;
     const s = camera.scale;
@@ -974,13 +1018,15 @@ export class WorldMapEngine {
   private recentre = true;
   /** The map whose place a flight or a jump heads for: it pins the view until the reader moves on (else the map in view). */
   private boundsId: number | null = null;
+  /** The maps that pin the view while a gesture and its glide last (the map in view may change under them meanwhile). */
+  private pinFrozen: number[] | null = null;
   /** A drag: where the pointer would have taken the camera, and the camera when it started. */
   private dragRaw: Camera | null = null;
   private dragBase: Camera | null = null;
 
   /** How much more the view can zoom in and out from here (log units, at the middle of the view): for the buttons. */
-  zoomRoom() {
-    const b = this.bounds(this.camera);
+  zoomRoom(at?: { x: number; y: number }) {
+    const b = this.bounds(this.camera, at);
     if (!b) return { in: 0, out: 0 };
     return { in: Math.max(0, Math.log(b.max / this.camera.scale)), out: Math.max(0, Math.log(this.camera.scale / b.min)) };
   }
@@ -1983,7 +2029,8 @@ export class WorldMapEngine {
       grade: style.grade ?? null, holeFill: style.holeFill ?? 0,
     };
     // Its finest level magnified past its own size: sharpened (bilinear softness taken back), never drawn coarser.
-    const sharp = style.sharp && z === art.maxZoom ? sharpenOf(pxW) : 0;
+    // (The terrain is softened there instead: see smoothOf.)
+    const sharp = style.sharp && z === art.maxZoom ? (isTerrain ? -smoothOf(pxW) : sharpenOf(pxW)) : 0;
     if (!dry && style.ocean) {
       const sea = this.renderer.solid(style.ocean);
       if (sea) this.renderer.draw(sea, { ...base, rect: [sx0, sy0, sx1, sy1], uv: [0, 0, 1, 1] });
@@ -2208,7 +2255,16 @@ export class WorldMapEngine {
         const hard = this.limit(raw, undefined, this.dragBase ?? this.camera, "centre");
         this.recentre = true;
         const band = (px: number) => Math.sign(px) * PAN_RUBBER * (1 - Math.exp(-Math.abs(px) / PAN_RUBBER));
-        this.camera = { ...hard, x: hard.x + band((raw.x - hard.x) * s) / s, y: hard.y + band((raw.y - hard.y) * s) / s };
+        const next = { ...hard, x: hard.x + band((raw.x - hard.x) * s) / s, y: hard.y + band((raw.y - hard.y) * s) / s };
+        // Never past the band's reach from where the drag started, whatever the pin's own sums say.
+        const off = this.pinOff(next, "centre"), from = this.pinOff(this.dragBase ?? this.camera, "centre");
+        if (off && from) {
+          for (const k of ["x", "y"] as const) {
+            const most = (Math.abs(from[k]) * s + PAN_RUBBER) / s;
+            if (Math.abs(off[k]) > most) next[k] -= off[k] - Math.sign(off[k]) * most;
+          }
+        }
+        this.camera = next;
       } else {
         this.recentre = false;
         let camera = { ...this.camera, x: this.camera.x - (after[0] - before[0]) / this.camera.scale, y: this.camera.y - (after[1] - before[1]) / this.camera.scale };
@@ -2306,10 +2362,12 @@ export class WorldMapEngine {
   }
 
   private startGesture() {
-    // (A drag measures its overshoot from where it starts.)
+    // (A drag measures its overshoot from where it starts, against the pin it starts with.)
     this.dragRaw = null;
     this.dragBase = { ...this.camera };
     this.boundsId = null;
+    const ids = chainUp(this.set, this.focusId);
+    this.pinFrozen = ids.length ? ids : null;
     const mid = this.centroid();
     this.gesture = { distance: this.spread(), mid, moved: this.gesture?.moved ?? 0, start: this.gesture?.start ?? mid, startTime: performance.now(), samples: [{ t: performance.now(), x: mid[0], y: mid[1] }] };
     if (this.pointers.size > 1) this.gesture.moved = 99;
