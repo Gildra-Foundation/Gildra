@@ -43,9 +43,10 @@
     },
     "1415": {
       "mapId": 0,
+      "blockPixels": 256,
       "blocks": 687,
       "tiles": 961,
-      "bytes": 3884746
+      "bytes": 6298159
     }
   },
   "build": "1.15.9.70576",
