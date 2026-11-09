@@ -111,4 +111,5 @@ All pixels are decoded from the matching Blizzard client through TACT/CASC.
 - The original Ashenvale dot pattern and native DXT discontinuities remain. q85 reduces newly introduced WebP blocks; source pixels are not retouched or invented.
 - Asset URLs are unchanged: an authorized deployment must purge updated `/maps/terrain/*` URLs, or version them, to replace cached q70 tiles. No purge/deployment was performed.
 - Valdrakken can prefer its finer 3840px painted city art at the cap (`ground=0`); engine-policy note `/tmp/mapcoord/MAPD4-requests.md`. No engine files changed.
+- Final Stormwind screenshots have a rectangular tone discontinuity absent from an offline stitch of the same published native tiles; composition/clip review requested in the same engine handoff. The initial production EN Stormwind capture showed only the wash, so it is not a reliable codec A/B comparison.
 - Existing limits remain: Exile’s Reach 1409 is prepared but not linked into the hierarchy; phase-specific historical minimaps are not independently available, and Shadowlands overview 1550 is intentionally a stylized chart.
