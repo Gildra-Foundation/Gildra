@@ -53,6 +53,8 @@ async function newPage({ width, height, mobile }) {
   const errors = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text().slice(0, 240)); });
   page.on("pageerror", (error) => errors.push(String(error).slice(0, 240)));
+  page.on("requestfailed", (request) => errors.push(`failed ${request.url().slice(-60)} ${request.failure()?.errorText}`));
+  if (process.env.QA_TRACE) page.on("response", (response) => { if (response.url().includes(process.env.QA_TRACE)) console.error("response", response.status(), response.url()); });
   return { context, page, errors };
 }
 
@@ -63,17 +65,18 @@ async function open(page, path) {
 }
 
 /** Pauses the document's animations once `ready` holds, then screenshots them at each step. */
-async function stepPhase(page, name, { ready, duration, width, height }) {
+async function stepPhase(page, name, { ready, duration, width, height, scope }) {
   // A navigation in between destroys the context the wait runs in: wait again in the new one.
   for (const until = Date.now() + 15000; Date.now() < until;) {
     try { await page.waitForFunction(ready, null, { timeout: Math.max(1, until - Date.now()), polling: 4 }); break; } catch (error) { if (page.isClosed()) throw error; console.error(name, "wait:", String(error).split("\n")[0].slice(0, 160)); await new Promise((resolve) => setTimeout(resolve, 20)); }
   }
   // A still (duration 0) leaves every animation as it is: rewinding finished ones would replay their start.
-  const count = duration === 0 ? 0 : await page.evaluate(() => {
-    window.__phase = document.getAnimations();
+  // `scope`: only the animations inside it (pausing the whole document also holds back React's commits).
+  const count = duration === 0 ? 0 : await page.evaluate((selector) => {
+    window.__phase = document.getAnimations().filter((animation) => !selector || animation.effect?.target?.closest?.(selector));
     for (const animation of window.__phase) animation.pause();
     return window.__phase.length;
-  }).catch(() => 0);
+  }, scope ?? null).catch(() => 0);
   const frames = [];
   if (duration === 0) await page.evaluate(() => { window.__phase = []; });
   for (let at = 0; at <= duration; at += step) {
@@ -164,7 +167,7 @@ if (only.includes("search")) await scenario("search-1440-en", {
   start: "/wow/raids",
   act: async (page) => { await page.keyboard.press("Control+k"); },
   phases: [
-    { name: "open", ready: () => !!document.querySelector("[role=dialog] input"), duration: 360 },
+    { name: "open", ready: () => !!document.querySelector("[role=dialog] input"), duration: 360, scope: ".ui-modal-layer" },
     { name: "typed «void»", before: typed("void"), ready: () => true, duration: 0 },
     { name: "typed «orgrimar» (typo)", before: typed("orgrimar", true), ready: () => true, duration: 0 },
     { name: "typed «lhe» (RU layout)", before: typed("lhe", true), ready: () => true, duration: 0 },
@@ -184,7 +187,7 @@ if (only.includes("search-390")) await scenario("search-390-ru", {
   start: "/ru/wow/raids",
   act: async (page) => { await page.click("header button[aria-haspopup=dialog]"); },
   phases: [
-    { name: "open", ready: () => !!document.querySelector("[role=dialog] input"), duration: 360 },
+    { name: "open", ready: () => !!document.querySelector("[role=dialog] input"), duration: 360, scope: ".ui-modal-layer" },
     { name: "«друид»", before: typed("друид"), ready: () => true, duration: 0 },
     { name: "«оргр»", before: typed("оргр", true), ready: () => true, duration: 0 },
   ],
@@ -240,13 +243,16 @@ if (only.includes("locale-map")) await localeScenario("locale-map-en-ru", "/wow/
  * stepping cannot hold reliably: this one is filmed with the document's
  * animations slowed tenfold instead, each frame labelled in animation time.
  */
-async function slowScenario(name, { width = 1440, height = 900, start, act, duration, measureAct }) {
+async function slowScenario(name, { width = 1440, height = 900, start, before, act, duration, measureAct, label }) {
   const viewport = { width, height, mobile: false };
   const { context, page, errors } = await newPage(viewport);
   await open(page, start);
+  if (before) await before(page);
   const session = await context.newCDPSession(page);
   await session.send("Animation.enable");
   await session.send("Animation.setPlaybackRate", { playbackRate: .1 });
+  // A new document starts at the normal rate: slow it down again as soon as it commits.
+  page.on("framenavigated", (frame) => { if (frame === page.mainFrame()) session.send("Animation.setPlaybackRate", { playbackRate: .1 }).catch(() => {}); });
   const shots = [];
   const started = Date.now();
   await act(page);
@@ -254,7 +260,7 @@ async function slowScenario(name, { width = 1440, height = 900, start, act, dura
   while (Date.now() - started < duration * 10) {
     const at = (Date.now() - started) / 10;
     const data = await page.screenshot({ type: "jpeg", quality: 70 }).catch(() => null);
-    if (data && at - last >= step) { shots.push({ label: `${name.split("-")[0]} ${Math.round(at)} ms`, data }); last = at; }
+    if (data && at - last >= step) { shots.push({ label: `${label ?? name.split("-")[0]} ${Math.round(at)} ms`, data }); last = at; }
   }
   await session.send("Animation.setPlaybackRate", { playbackRate: 1 });
   await page.waitForTimeout(800);
@@ -272,6 +278,17 @@ if (only.includes("game")) await slowScenario("game-midnight-mists", {
   duration: 700,
   act: async (page) => { await page.click(strip("mists")); },
 });
+// The arrival half of a language switch, filmed slowed (the dissolve half is the "leave" still of locale-*).
+const arrival = (name, path, scroll) => slowScenario(name, {
+  start: path,
+  duration: 1500,
+  label: "after click",
+  before: async (page) => { if (scroll) { await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), scroll); await page.waitForTimeout(600); } },
+  act: async (page) => { await page.evaluate(() => document.querySelector("[data-locale-switch-root] a[hreflang=ru]")?.click()); },
+  measureAct: async () => {},
+});
+if (only.includes("arrive-raids")) await arrival("arrive-raids-en-ru", "/wow/raids", 900);
+if (only.includes("arrive-map")) await arrival("arrive-map-en-ru", "/wow/map", 0);
 if (only.includes("game-back")) await slowScenario("game-mists-forever", {
   start: "/wow/mists",
   duration: 700,
