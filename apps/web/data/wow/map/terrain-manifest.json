@@ -388,7 +388,7 @@
       "url": "/maps/terrain/174/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/174/index.json",
       "empty": "/maps/terrain/174/empty.json",
-      "ocean": "#303038",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 2560,
       "height": 5888,
@@ -404,7 +404,7 @@
       "url": "/maps/terrain/174/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/174/index.json",
       "empty": "/maps/terrain/174/empty.json",
-      "ocean": "#303038",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 2560,
       "height": 5888,
@@ -1376,7 +1376,7 @@
       "blockPixels": 256,
       "blocks": 79,
       "tiles": 116,
-      "bytes": 316937
+      "bytes": 464388
     },
     "244": {
       "mapId": 732,
