@@ -1,0 +1,30 @@
+{
+  "maps": {
+    "1409": {
+      "url": "/maps/terrain/1409/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1409/index.json",
+      "empty": "/maps/terrain/1409/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 4096,
+      "height": 2560,
+      "maxZoom": 4,
+      "rect": [
+        -0.15342,
+        -0.073939,
+        1.108441,
+        1.109057
+      ]
+    }
+  },
+  "stats": {
+    "1409": {
+      "mapId": 2175,
+      "blockPixels": 512,
+      "blocks": 40,
+      "tiles": 217,
+      "bytes": 373253
+    }
+  },
+  "build": "12.1.5.70783"
+}

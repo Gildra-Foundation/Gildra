@@ -1,0 +1,51 @@
+{
+  "maps": {
+    "1414": {
+      "url": "/maps/terrain/classic/1414/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/classic/1414/index.json",
+      "empty": "/maps/terrain/classic/1414/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 7680,
+      "height": 11520,
+      "maxZoom": 6,
+      "rect": [
+        0.275362,
+        0.021735,
+        0.710147,
+        1.000001
+      ]
+    },
+    "1415": {
+      "url": "/maps/terrain/classic/1415/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/classic/1415/index.json",
+      "empty": "/maps/terrain/classic/1415/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 5376,
+      "height": 10752,
+      "maxZoom": 6,
+      "rect": [
+        0.333334,
+        0.045452,
+        0.651517,
+        1.0
+      ]
+    }
+  },
+  "stats": {
+    "1414": {
+      "mapId": 1,
+      "blocks": 943,
+      "tiles": 1306,
+      "bytes": 6585555
+    },
+    "1415": {
+      "mapId": 0,
+      "blocks": 687,
+      "tiles": 961,
+      "bytes": 3884746
+    }
+  },
+  "build": "1.15.9.70576"
+}

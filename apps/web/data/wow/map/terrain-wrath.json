@@ -1,0 +1,29 @@
+{
+  "maps": {
+    "113": {
+      "url": "/maps/terrain/wrath/113/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/wrath/113/index.json",
+      "empty": "/maps/terrain/wrath/113/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 8960,
+      "height": 5888,
+      "maxZoom": 6,
+      "rect": [
+        -0.022599,
+        -0.004006,
+        1.028274,
+        1.031794
+      ]
+    }
+  },
+  "stats": {
+    "113": {
+      "mapId": 571,
+      "blocks": 805,
+      "tiles": 1099,
+      "bytes": 5546306
+    }
+  },
+  "build": "3.80.2.70522"
+}

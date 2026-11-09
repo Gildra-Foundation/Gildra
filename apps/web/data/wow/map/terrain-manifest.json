@@ -12,7 +12,9 @@
         0.001735,
         0.72464,
         1.001741
-      ]
+      ],
+      "empty": "/maps/terrain/12/empty.json",
+      "ocean": "#202828"
     },
     "13": {
       "url": "/maps/terrain/13/{z}/{x}_{y}.webp",
@@ -26,7 +28,9 @@
         -0.015396,
         0.801341,
         1.003528
-      ]
+      ],
+      "empty": "/maps/terrain/13/empty.json",
+      "ocean": "#282030"
     },
     "113": {
       "url": "/maps/terrain/113/{z}/{x}_{y}.webp",
@@ -40,7 +44,9 @@
         -0.007464,
         1.027756,
         1.011611
-      ]
+      ],
+      "empty": "/maps/terrain/113/empty.json",
+      "ocean": "#202828"
     },
     "424": {
       "url": "/maps/terrain/424/{z}/{x}_{y}.webp",
@@ -54,7 +60,9 @@
         -0.024573,
         1.011015,
         1.006666
-      ]
+      ],
+      "empty": "/maps/terrain/424/empty.json",
+      "ocean": "#484858"
     },
     "619": {
       "url": "/maps/terrain/619/{z}/{x}_{y}.webp",
@@ -68,7 +76,9 @@
         -0.016286,
         0.865269,
         1.002918
-      ]
+      ],
+      "empty": "/maps/terrain/619/empty.json",
+      "ocean": "#483858"
     },
     "875": {
       "url": "/maps/terrain/875/{z}/{x}_{y}.webp",
@@ -82,7 +92,9 @@
         -0.029492,
         0.95077,
         1.024005
-      ]
+      ],
+      "empty": "/maps/terrain/875/empty.json",
+      "ocean": "#202828"
     },
     "876": {
       "url": "/maps/terrain/876/{z}/{x}_{y}.webp",
@@ -96,7 +108,9 @@
         -0.044826,
         1.021459,
         1.053887
-      ]
+      ],
+      "empty": "/maps/terrain/876/empty.json",
+      "ocean": "#283838"
     },
     "1978": {
       "url": "/maps/terrain/1978/{z}/{x}_{y}.webp",
@@ -110,7 +124,9 @@
         -0.005765,
         0.900474,
         1.030545
-      ]
+      ],
+      "empty": "/maps/terrain/1978/empty.json",
+      "ocean": "#303038"
     },
     "2274": {
       "url": "/maps/terrain/2274/{z}/{x}_{y}.webp",
@@ -124,7 +140,9 @@
         0.312582,
         0.699061,
         0.987079
-      ]
+      ],
+      "empty": "/maps/terrain/2274/empty.json",
+      "ocean": "#586868"
     },
     "2537": {
       "url": "/maps/terrain/13/{z}/{x}_{y}.webp",
@@ -138,6 +156,1112 @@
         -0.031177,
         0.904428,
         2.715928
+      ],
+      "empty": "/maps/terrain/13/empty.json",
+      "ocean": "#282030"
+    },
+    "101": {
+      "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/101/index.json",
+      "empty": "/maps/terrain/101/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 24576,
+      "height": 18944,
+      "maxZoom": 7,
+      "rect": [
+        0.133365,
+        -0.691124,
+        1.599189,
+        1.003937
+      ]
+    },
+    "572": {
+      "url": "/maps/terrain/572/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/572/index.json",
+      "empty": "/maps/terrain/572/empty.json",
+      "ocean": "#283030",
+      "tileSize": 256,
+      "width": 18944,
+      "height": 14848,
+      "maxZoom": 7,
+      "rect": [
+        0.022448,
+        -0.000412,
+        0.890324,
+        1.019928
+      ]
+    },
+    "1525": {
+      "url": "/maps/terrain/1525/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1525/index.json",
+      "empty": "/maps/terrain/1525/empty.json",
+      "ocean": "#505860",
+      "tileSize": 256,
+      "width": 16896,
+      "height": 14848,
+      "maxZoom": 7,
+      "rect": [
+        -0.032581,
+        -1.655191,
+        3.09515,
+        2.466962
+      ]
+    },
+    "1533": {
+      "url": "/maps/terrain/1525/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1525/index.json",
+      "empty": "/maps/terrain/1525/empty.json",
+      "ocean": "#505860",
+      "tileSize": 256,
+      "width": 16896,
+      "height": 14848,
+      "maxZoom": 7,
+      "rect": [
+        -1.652609,
+        -1.513589,
+        0.986567,
+        1.965323
+      ]
+    },
+    "1536": {
+      "url": "/maps/terrain/1525/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1525/index.json",
+      "empty": "/maps/terrain/1525/empty.json",
+      "ocean": "#505860",
+      "tileSize": 256,
+      "width": 16896,
+      "height": 14848,
+      "maxZoom": 7,
+      "rect": [
+        -1.424272,
+        -0.25,
+        1.369378,
+        3.43254
+      ]
+    },
+    "1543": {
+      "url": "/maps/terrain/1525/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1525/index.json",
+      "empty": "/maps/terrain/1525/empty.json",
+      "ocean": "#505860",
+      "tileSize": 256,
+      "width": 16896,
+      "height": 14848,
+      "maxZoom": 7,
+      "rect": [
+        -0.225466,
+        -0.048302,
+        4.02617,
+        5.554718
+      ]
+    },
+    "1565": {
+      "url": "/maps/terrain/1525/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1525/index.json",
+      "empty": "/maps/terrain/1525/empty.json",
+      "ocean": "#505860",
+      "tileSize": 256,
+      "width": 16896,
+      "height": 14848,
+      "maxZoom": 7,
+      "rect": [
+        -0.739714,
+        -2.147919,
+        1.725417,
+        1.101094
+      ]
+    },
+    "1670": {
+      "url": "/maps/terrain/1525/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1525/index.json",
+      "empty": "/maps/terrain/1525/empty.json",
+      "ocean": "#505860",
+      "tileSize": 256,
+      "width": 16896,
+      "height": 14848,
+      "maxZoom": 7,
+      "rect": [
+        -9.652905,
+        -13.626911,
+        11.876147,
+        14.752294
+      ]
+    },
+    "1961": {
+      "url": "/maps/terrain/1525/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1525/index.json",
+      "empty": "/maps/terrain/1525/empty.json",
+      "ocean": "#505860",
+      "tileSize": 256,
+      "width": 16896,
+      "height": 14848,
+      "maxZoom": 7,
+      "rect": [
+        -0.559766,
+        -0.981386,
+        4.958201,
+        6.289894
+      ]
+    },
+    "1970": {
+      "url": "/maps/terrain/1970/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1970/index.json",
+      "empty": "/maps/terrain/1970/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 5120,
+      "height": 4096,
+      "maxZoom": 5,
+      "rect": [
+        -0.045129,
+        -0.142948,
+        1.034584,
+        1.152435
+      ]
+    },
+    "830": {
+      "url": "/maps/terrain/830/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/830/index.json",
+      "empty": "/maps/terrain/830/empty.json",
+      "ocean": "#303040",
+      "tileSize": 256,
+      "width": 10752,
+      "height": 10752,
+      "maxZoom": 6,
+      "rect": [
+        -2.143015,
+        -1.727499,
+        0.872126,
+        2.793943
+      ]
+    },
+    "882": {
+      "url": "/maps/terrain/830/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/830/index.json",
+      "empty": "/maps/terrain/830/empty.json",
+      "ocean": "#303040",
+      "tileSize": 256,
+      "width": 10752,
+      "height": 10752,
+      "maxZoom": 6,
+      "rect": [
+        -0.057556,
+        -0.142855,
+        3.37982,
+        5.011499
+      ]
+    },
+    "885": {
+      "url": "/maps/terrain/830/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/830/index.json",
+      "empty": "/maps/terrain/830/empty.json",
+      "ocean": "#303040",
+      "tileSize": 256,
+      "width": 10752,
+      "height": 10752,
+      "maxZoom": 6,
+      "rect": [
+        -0.133567,
+        -3.848338,
+        3.160521,
+        1.092831
+      ]
+    },
+    "207": {
+      "url": "/maps/terrain/207/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/207/index.json",
+      "empty": "/maps/terrain/207/empty.json",
+      "ocean": "#585068",
+      "tileSize": 256,
+      "width": 5120,
+      "height": 4096,
+      "maxZoom": 5,
+      "rect": [
+        -0.029004,
+        -0.118874,
+        1.016748,
+        1.136029
+      ]
+    },
+    "174": {
+      "url": "/maps/terrain/174/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/174/index.json",
+      "empty": "/maps/terrain/174/empty.json",
+      "ocean": "#303038",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 5888,
+      "maxZoom": 5,
+      "rect": [
+        -0.092294,
+        -0.105882,
+        1.089063,
+        3.968858
+      ]
+    },
+    "194": {
+      "url": "/maps/terrain/174/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/174/index.json",
+      "empty": "/maps/terrain/174/empty.json",
+      "ocean": "#303038",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 5888,
+      "maxZoom": 5,
+      "rect": [
+        -1.975339,
+        -12.145833,
+        1.969181,
+        1.483796
+      ]
+    },
+    "244": {
+      "url": "/maps/terrain/244/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/244/index.json",
+      "empty": "/maps/terrain/244/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 1536,
+      "height": 1280,
+      "maxZoom": 3,
+      "rect": [
+        -0.32575,
+        -0.813953,
+        1.262668,
+        1.170543
+      ]
+    },
+    "245": {
+      "url": "/maps/terrain/244/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/244/index.json",
+      "empty": "/maps/terrain/244/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 1536,
+      "height": 1280,
+      "maxZoom": 3,
+      "rect": [
+        -0.138322,
+        -0.127551,
+        1.603175,
+        2.04932
+      ]
+    },
+    "276": {
+      "url": "/maps/terrain/276/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/276/index.json",
+      "empty": "/maps/terrain/276/empty.json",
+      "ocean": "#303838",
+      "tileSize": 256,
+      "width": 1536,
+      "height": 1536,
+      "maxZoom": 3,
+      "rect": [
+        -0.028226,
+        -0.221778,
+        1.004032,
+        1.326614
+      ]
+    },
+    "504": {
+      "url": "/maps/terrain/504/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/504/index.json",
+      "empty": "/maps/terrain/504/empty.json",
+      "ocean": "#505060",
+      "tileSize": 256,
+      "width": 2048,
+      "height": 1536,
+      "maxZoom": 3,
+      "rect": [
+        0.045341,
+        -0.139833,
+        1.077078,
+        1.021165
+      ]
+    },
+    "1355": {
+      "url": "/maps/terrain/1355/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1355/index.json",
+      "empty": "/maps/terrain/1355/empty.json",
+      "ocean": "#688080",
+      "tileSize": 256,
+      "width": 3584,
+      "height": 3584,
+      "maxZoom": 4,
+      "rect": [
+        0.124573,
+        -0.145055,
+        1.0,
+        1.167766
+      ]
+    },
+    "2133": {
+      "url": "/maps/terrain/2133/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2133/index.json",
+      "empty": "/maps/terrain/2133/empty.json",
+      "ocean": "#404048",
+      "tileSize": 256,
+      "width": 5632,
+      "height": 5120,
+      "maxZoom": 5,
+      "rect": [
+        0.101233,
+        -0.069677,
+        0.908804,
+        1.031398
+      ]
+    },
+    "2200": {
+      "url": "/maps/terrain/2200/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2200/index.json",
+      "empty": "/maps/terrain/2200/empty.json",
+      "ocean": "#303038",
+      "tileSize": 256,
+      "width": 7680,
+      "height": 5120,
+      "maxZoom": 5,
+      "rect": [
+        -0.041232,
+        -0.041388,
+        1.028698,
+        1.028847
+      ]
+    },
+    "2248": {
+      "url": "/maps/terrain/2248/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2248/index.json",
+      "empty": "/maps/terrain/2248/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 8704,
+      "height": 6144,
+      "maxZoom": 6,
+      "rect": [
+        -0.055095,
+        -0.033637,
+        1.005851,
+        1.089579
+      ]
+    },
+    "2346": {
+      "url": "/maps/terrain/2346/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2346/index.json",
+      "empty": "/maps/terrain/2346/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2048,
+      "maxZoom": 4,
+      "rect": [
+        -0.08934,
+        -0.269406,
+        1.210153,
+        1.289193
+      ]
+    },
+    "2369": {
+      "url": "/maps/terrain/2369/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2369/index.json",
+      "empty": "/maps/terrain/2369/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 2048,
+      "height": 1536,
+      "maxZoom": 3,
+      "rect": [
+        -0.320806,
+        -0.138833,
+        1.053691,
+        1.406439
+      ]
+    },
+    "2371": {
+      "url": "/maps/terrain/2371/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2371/index.json",
+      "empty": "/maps/terrain/2371/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 8192,
+      "height": 6144,
+      "maxZoom": 5,
+      "rect": [
+        -0.011839,
+        -0.094069,
+        1.019899,
+        1.06649
+      ]
+    },
+    "2405": {
+      "url": "/maps/terrain/2405/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2405/index.json",
+      "empty": "/maps/terrain/2405/empty.json",
+      "ocean": "#282030",
+      "tileSize": 256,
+      "width": 8192,
+      "height": 7168,
+      "maxZoom": 5,
+      "rect": [
+        0.00041,
+        -0.031029,
+        0.839238,
+        1.070046
+      ]
+    },
+    "2413": {
+      "url": "/maps/terrain/2413/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2413/index.json",
+      "empty": "/maps/terrain/2413/empty.json",
+      "ocean": "#282830",
+      "tileSize": 256,
+      "width": 7680,
+      "height": 5120,
+      "maxZoom": 5,
+      "rect": [
+        -0.020358,
+        -0.027652,
+        1.036039,
+        1.02889
+      ]
+    },
+    "2432": {
+      "url": "/maps/terrain/2432/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2432/index.json",
+      "empty": "/maps/terrain/2432/empty.json",
+      "ocean": "#282830",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2560,
+      "maxZoom": 4,
+      "rect": [
+        0.083334,
+        -0.140607,
+        0.916668,
+        1.109372
+      ]
+    },
+    "97": {
+      "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/101/index.json",
+      "empty": "/maps/terrain/101/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 24576,
+      "height": 18944,
+      "maxZoom": 7,
+      "rect": [
+        -5.199634,
+        -6.137383,
+        1.089058,
+        1.132005
+      ]
+    },
+    "94": {
+      "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/101/index.json",
+      "empty": "/maps/terrain/101/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 24576,
+      "height": 18944,
+      "maxZoom": 7,
+      "rect": [
+        -3.076989,
+        -0.860387,
+        2.120982,
+        5.149699
+      ]
+    },
+    "95": {
+      "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/101/index.json",
+      "empty": "/maps/terrain/101/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 24576,
+      "height": 18944,
+      "maxZoom": 7,
+      "rect": [
+        -4.833333,
+        -2.545454,
+        2.924244,
+        6.424244
+      ]
+    },
+    "122": {
+      "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/101/index.json",
+      "empty": "/maps/terrain/101/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 24576,
+      "height": 18944,
+      "maxZoom": 7,
+      "rect": [
+        -4.799625,
+        -0.134274,
+        2.894804,
+        8.759628
+      ]
+    },
+    "103": {
+      "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/101/index.json",
+      "empty": "/maps/terrain/101/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 24576,
+      "height": 18944,
+      "maxZoom": 7,
+      "rect": [
+        -20.565521,
+        -24.800136,
+        3.659232,
+        3.202814
+      ]
+    },
+    "106": {
+      "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/101/index.json",
+      "empty": "/maps/terrain/101/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 24576,
+      "height": 18944,
+      "maxZoom": 7,
+      "rect": [
+        -6.3576,
+        -6.724148,
+        1.489145,
+        2.348663
+      ]
+    },
+    "110": {
+      "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/101/index.json",
+      "empty": "/maps/terrain/101/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 24576,
+      "height": 18944,
+      "maxZoom": 7,
+      "rect": [
+        -14.088306,
+        -4.602322,
+        7.043226,
+        19.857668
+      ]
+    },
+    "1462": {
+      "url": "/maps/terrain/1462/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1462/index.json",
+      "empty": "/maps/terrain/1462/empty.json",
+      "ocean": "#283838",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2048,
+      "maxZoom": 4,
+      "rect": [
+        -0.133691,
+        -0.033423,
+        1.007129,
+        1.335564
+      ]
+    },
+    "2151": {
+      "url": "/maps/terrain/2151/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2151/index.json",
+      "empty": "/maps/terrain/2151/empty.json",
+      "ocean": "#303838",
+      "tileSize": 256,
+      "width": 5120,
+      "height": 3584,
+      "maxZoom": 5,
+      "rect": [
+        -0.087872,
+        -0.108441,
+        1.083752,
+        1.121482
+      ]
+    },
+    "2118": {
+      "url": "/maps/terrain/2118/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2118/index.json",
+      "empty": "/maps/terrain/2118/empty.json",
+      "ocean": "#303038",
+      "tileSize": 256,
+      "width": 3584,
+      "height": 2560,
+      "maxZoom": 4,
+      "rect": [
+        -0.184332,
+        -0.273042,
+        1.192012,
+        1.201615
+      ]
+    },
+    "202": {
+      "url": "/maps/terrain/202/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/202/index.json",
+      "empty": "/maps/terrain/202/empty.json",
+      "ocean": "#303038",
+      "tileSize": 256,
+      "width": 768,
+      "height": 512,
+      "maxZoom": 2,
+      "rect": [
+        -0.224824,
+        -0.403509,
+        1.573771,
+        1.392983
+      ]
+    },
+    "1577": {
+      "url": "/maps/terrain/1577/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1577/index.json",
+      "empty": "/maps/terrain/1577/empty.json",
+      "ocean": "#404048",
+      "tileSize": 256,
+      "width": 1024,
+      "height": 1024,
+      "maxZoom": 2,
+      "rect": [
+        -0.224825,
+        -0.403509,
+        0.974239,
+        1.392982
+      ]
+    },
+    "2372": {
+      "url": "/maps/terrain/2372/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2372/index.json",
+      "empty": "/maps/terrain/2372/empty.json",
+      "ocean": "#302838",
+      "tileSize": 256,
+      "width": 3072,
+      "height": 2560,
+      "maxZoom": 4,
+      "rect": [
+        -0.017375,
+        -0.061096,
+        0.902935,
+        1.088947
+      ]
+    },
+    "2351": {
+      "url": "/maps/terrain/2351/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2351/index.json",
+      "empty": "/maps/terrain/2351/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 7168,
+      "height": 5120,
+      "maxZoom": 5,
+      "rect": [
+        -0.05798,
+        -0.101144,
+        1.035703,
+        1.070481
+      ]
+    },
+    "2352": {
+      "url": "/maps/terrain/2352/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2352/index.json",
+      "empty": "/maps/terrain/2352/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 5632,
+      "height": 3584,
+      "maxZoom": 5,
+      "rect": [
+        -0.049091,
+        -0.010435,
+        1.039427,
+        1.028406
+      ]
+    },
+    "2366": {
+      "url": "/maps/terrain/2366/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2366/index.json",
+      "empty": "/maps/terrain/2366/empty.json",
+      "ocean": "#505060",
+      "tileSize": 256,
+      "width": 3072,
+      "height": 2048,
+      "maxZoom": 4,
+      "rect": [
+        -0.132604,
+        -0.195548,
+        1.065521,
+        1.003513
+      ]
+    },
+    "998": {
+      "url": "/maps/terrain/998/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/998/index.json",
+      "empty": "/maps/terrain/998/empty.json",
+      "ocean": "#303038",
+      "tileSize": 256,
+      "width": 1536,
+      "height": 1024,
+      "maxZoom": 3,
+      "rect": [
+        -0.201666,
+        -0.398968,
+        1.466085,
+        1.267412
+      ]
+    },
+    "1010": {
+      "url": "/maps/terrain/1010/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1010/index.json",
+      "empty": "/maps/terrain/1010/empty.json",
+      "ocean": "#303038",
+      "tileSize": 256,
+      "width": 2048,
+      "height": 1536,
+      "maxZoom": 3,
+      "rect": [
+        -0.142858,
+        -0.131635,
+        1.305516,
+        1.49894
+      ]
+    },
+    "1039": {
+      "url": "/maps/terrain/1039/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1039/index.json",
+      "empty": "/maps/terrain/1039/empty.json",
+      "ocean": "#304040",
+      "tileSize": 256,
+      "width": 1536,
+      "height": 1024,
+      "maxZoom": 3,
+      "rect": [
+        -0.193487,
+        -0.057471,
+        1.277778,
+        1.413793
+      ]
+    },
+    "1041": {
+      "url": "/maps/terrain/1041/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1041/index.json",
+      "empty": "/maps/terrain/1041/empty.json",
+      "ocean": "#203030",
+      "tileSize": 256,
+      "width": 1536,
+      "height": 1024,
+      "maxZoom": 3,
+      "rect": [
+        -0.406123,
+        -0.547409,
+        1.161225,
+        1.01835
+      ]
+    },
+    "1339": {
+      "url": "/maps/terrain/1339/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1339/index.json",
+      "empty": "/maps/terrain/1339/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 1536,
+      "height": 1536,
+      "maxZoom": 3,
+      "rect": [
+        -0.08,
+        -0.662126,
+        1.316363,
+        1.430518
+      ]
+    },
+    "1960": {
+      "url": "/maps/terrain/1960/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/1960/index.json",
+      "empty": "/maps/terrain/1960/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 4608,
+      "height": 3072,
+      "maxZoom": 5,
+      "rect": [
+        -0.096627,
+        -0.048303,
+        1.062908,
+        1.110945
+      ]
+    },
+    "2070": {
+      "url": "/maps/terrain/2070/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2070/index.json",
+      "empty": "/maps/terrain/2070/empty.json",
+      "ocean": "#202828",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2560,
+      "maxZoom": 4,
+      "rect": [
+        0.317196,
+        0.034578,
+        0.90733,
+        0.919779
+      ]
+    },
+    "2165": {
+      "url": "/maps/terrain/2165/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2165/index.json",
+      "empty": "/maps/terrain/2165/empty.json",
+      "ocean": "#485858",
+      "tileSize": 256,
+      "width": 1536,
+      "height": 1024,
+      "maxZoom": 3,
+      "rect": [
+        -0.063745,
+        -0.356289,
+        1.466136,
+        1.176648
+      ]
+    },
+    "2354": {
+      "url": "/maps/terrain/2354/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2354/index.json",
+      "empty": "/maps/terrain/2354/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2560,
+      "maxZoom": 4,
+      "rect": [
+        0.18254,
+        0.02381,
+        0.81746,
+        0.97619
+      ]
+    },
+    "2403": {
+      "url": "/maps/terrain/2403/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2403/index.json",
+      "empty": "/maps/terrain/2403/empty.json",
+      "ocean": "#202828",
+      "tileSize": 256,
+      "width": 2048,
+      "height": 1536,
+      "maxZoom": 3,
+      "rect": [
+        -0.176048,
+        -0.154398,
+        1.050301,
+        1.224413
+      ]
+    },
+    "2404": {
+      "url": "/maps/terrain/2404/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2404/index.json",
+      "empty": "/maps/terrain/2404/empty.json",
+      "ocean": "#282830",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2048,
+      "maxZoom": 4,
+      "rect": [
+        -0.236209,
+        -0.456829,
+        1.29856,
+        1.384887
+      ]
+    },
+    "2447": {
+      "url": "/maps/terrain/2447/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2447/index.json",
+      "empty": "/maps/terrain/2447/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 1024,
+      "height": 1024,
+      "maxZoom": 2,
+      "rect": [
+        -1.333335,
+        -2.133331,
+        1.511109,
+        2.133336
+      ]
+    },
+    "2451": {
+      "url": "/maps/terrain/2451/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2451/index.json",
+      "empty": "/maps/terrain/2451/empty.json",
+      "ocean": "#302838",
+      "tileSize": 256,
+      "width": 3072,
+      "height": 2560,
+      "maxZoom": 4,
+      "rect": [
+        -0.017375,
+        -0.061096,
+        0.902935,
+        1.088947
+      ]
+    },
+    "2509": {
+      "url": "/maps/terrain/2509/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2509/index.json",
+      "empty": "/maps/terrain/2509/empty.json",
+      "ocean": "#282030",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2048,
+      "maxZoom": 4,
+      "rect": [
+        0.00655,
+        -0.097162,
+        0.938137,
+        1.020742
+      ]
+    },
+    "2510": {
+      "url": "/maps/terrain/2510/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2510/index.json",
+      "empty": "/maps/terrain/2510/empty.json",
+      "ocean": "#405050",
+      "tileSize": 256,
+      "width": 512,
+      "height": 512,
+      "maxZoom": 1,
+      "rect": [
+        -0.160921,
+        -0.646556,
+        1.310343,
+        1.560346
+      ]
+    },
+    "2585": {
+      "url": "/maps/terrain/2585/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2585/index.json",
+      "empty": "/maps/terrain/2585/empty.json",
+      "ocean": "#282030",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2048,
+      "maxZoom": 4,
+      "rect": [
+        0.014704,
+        -0.150342,
+        1.191178,
+        1.262068
+      ]
+    },
+    "2594": {
+      "url": "/maps/terrain/2594/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2594/index.json",
+      "empty": "/maps/terrain/2594/empty.json",
+      "ocean": "#282830",
+      "tileSize": 256,
+      "width": 2048,
+      "height": 1536,
+      "maxZoom": 3,
+      "rect": [
+        -0.389458,
+        -0.53061,
+        1.352038,
+        1.428566
+      ]
+    },
+    "2599": {
+      "url": "/maps/terrain/2599/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2599/index.json",
+      "empty": "/maps/terrain/2599/empty.json",
+      "ocean": "#282030",
+      "tileSize": 256,
+      "width": 1024,
+      "height": 1024,
+      "maxZoom": 2,
+      "rect": [
+        -0.063067,
+        -0.027027,
+        1.090091,
+        1.702694
+      ]
+    },
+    "2600": {
+      "url": "/maps/terrain/2600/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2600/index.json",
+      "empty": "/maps/terrain/2600/empty.json",
+      "ocean": "#303840",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2048,
+      "maxZoom": 4,
+      "rect": [
+        -0.007563,
+        -0.167717,
+        1.068067,
+        1.123581
+      ]
+    },
+    "2605": {
+      "url": "/maps/terrain/2605/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2605/index.json",
+      "empty": "/maps/terrain/2605/empty.json",
+      "ocean": "#282030",
+      "tileSize": 256,
+      "width": 2048,
+      "height": 2048,
+      "maxZoom": 3,
+      "rect": [
+        0.141795,
+        0.092429,
+        0.902003,
+        1.232737
+      ]
+    },
+    "2633": {
+      "url": "/maps/terrain/2633/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2633/index.json",
+      "empty": "/maps/terrain/2633/empty.json",
+      "ocean": "#282030",
+      "tileSize": 256,
+      "width": 1024,
+      "height": 512,
+      "maxZoom": 2,
+      "rect": [
+        -1.184838,
+        -0.680853,
+        1.24171,
+        1.13475
+      ]
+    },
+    "2565": {
+      "url": "/maps/terrain/2432/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2432/index.json",
+      "empty": "/maps/terrain/2432/empty.json",
+      "ocean": "#282830",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2560,
+      "maxZoom": 4,
+      "rect": [
+        -1.267368,
+        -2.619668,
+        3.17708,
+        4.047002
+      ]
+    },
+    "2623": {
+      "url": "/maps/terrain/2600/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/2600/index.json",
+      "empty": "/maps/terrain/2600/empty.json",
+      "ocean": "#303840",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2048,
+      "maxZoom": 4,
+      "rect": [
+        -0.007563,
+        -0.167717,
+        1.068067,
+        1.123581
       ]
     }
   },
@@ -146,55 +1270,404 @@
       "mapId": 1,
       "blocks": 984,
       "tiles": 5292,
-      "bytes": 20924873
+      "bytes": 20942089
     },
     "13": {
       "mapId": 0,
       "blocks": 1159,
       "tiles": 6241,
-      "bytes": 19299947
+      "bytes": 19343324
     },
     "113": {
       "mapId": 571,
       "blocks": 888,
       "tiles": 4752,
-      "bytes": 16499723
+      "bytes": 16499781
     },
     "424": {
       "mapId": 870,
       "blocks": 566,
       "tiles": 3029,
-      "bytes": 8750811
+      "bytes": 8751442
     },
     "619": {
       "mapId": 1220,
       "blocks": 648,
       "tiles": 3467,
-      "bytes": 6975353
+      "bytes": 6975404
     },
     "875": {
       "mapId": 1642,
       "blocks": 420,
       "tiles": 2252,
-      "bytes": 3584215
+      "bytes": 3584664
     },
     "876": {
       "mapId": 1643,
       "blocks": 432,
       "tiles": 2312,
-      "bytes": 4511061
+      "bytes": 4511112
     },
     "1978": {
       "mapId": 2444,
       "blocks": 1419,
       "tiles": 7612,
-      "bytes": 12084558
+      "bytes": 12084616
     },
     "2274": {
       "mapId": 2601,
       "blocks": 386,
       "tiles": 2073,
-      "bytes": 5188259
+      "bytes": 5190092
+    },
+    "101": {
+      "mapId": 530,
+      "blocks": 713,
+      "tiles": 3873,
+      "bytes": 12273198
+    },
+    "572": {
+      "mapId": 1116,
+      "blockPixels": 512,
+      "blocks": 1073,
+      "tiles": 5759,
+      "bytes": 11921761
+    },
+    "1525": {
+      "mapId": 2222,
+      "blockPixels": 512,
+      "blocks": 538,
+      "tiles": 2934,
+      "bytes": 9271788
+    },
+    "1970": {
+      "mapId": 2374,
+      "blockPixels": 512,
+      "blocks": 80,
+      "tiles": 429,
+      "bytes": 1543093
+    },
+    "830": {
+      "mapId": 1669,
+      "blockPixels": 512,
+      "blocks": 90,
+      "tiles": 499,
+      "bytes": 1331312
+    },
+    "207": {
+      "mapId": 646,
+      "blockPixels": 512,
+      "blocks": 80,
+      "tiles": 429,
+      "bytes": 1643417
+    },
+    "174": {
+      "mapId": 648,
+      "blockPixels": 256,
+      "blocks": 79,
+      "tiles": 116,
+      "bytes": 316937
+    },
+    "244": {
+      "mapId": 732,
+      "blockPixels": 256,
+      "blocks": 24,
+      "tiles": 37,
+      "bytes": 110531
+    },
+    "276": {
+      "mapId": 730,
+      "blockPixels": 512,
+      "blocks": 9,
+      "tiles": 50,
+      "bytes": 124647
+    },
+    "504": {
+      "mapId": 1064,
+      "blockPixels": 256,
+      "blocks": 48,
+      "tiles": 65,
+      "bytes": 210071
+    },
+    "1355": {
+      "mapId": 1718,
+      "blockPixels": 512,
+      "blocks": 49,
+      "tiles": 266,
+      "bytes": 825048
+    },
+    "2133": {
+      "mapId": 2454,
+      "blockPixels": 512,
+      "blocks": 110,
+      "tiles": 594,
+      "bytes": 1250167
+    },
+    "2200": {
+      "mapId": 2548,
+      "blockPixels": 512,
+      "blocks": 150,
+      "tiles": 807,
+      "bytes": 2804115
+    },
+    "2248": {
+      "mapId": 2552,
+      "blockPixels": 512,
+      "blocks": 204,
+      "tiles": 1098,
+      "bytes": 1901884
+    },
+    "2346": {
+      "mapId": 2706,
+      "blockPixels": 512,
+      "blocks": 20,
+      "tiles": 109,
+      "bytes": 265480
+    },
+    "2369": {
+      "mapId": 2127,
+      "blockPixels": 512,
+      "blocks": 12,
+      "tiles": 65,
+      "bytes": 162939
+    },
+    "2371": {
+      "mapId": 2738,
+      "blockPixels": 512,
+      "blocks": 192,
+      "tiles": 1025,
+      "bytes": 1701519
+    },
+    "2405": {
+      "mapId": 2771,
+      "blockPixels": 512,
+      "blocks": 224,
+      "tiles": 1197,
+      "bytes": 2943743
+    },
+    "2413": {
+      "mapId": 2694,
+      "blockPixels": 512,
+      "blocks": 150,
+      "tiles": 807,
+      "bytes": 2400697
+    },
+    "2432": {
+      "mapId": 2858,
+      "blockPixels": 512,
+      "blocks": 25,
+      "tiles": 139,
+      "bytes": 631442
+    },
+    "1462": {
+      "mapId": 1643,
+      "blockPixels": 512,
+      "blocks": 20,
+      "tiles": 109,
+      "bytes": 227936
+    },
+    "2151": {
+      "mapId": 2444,
+      "blockPixels": 512,
+      "blocks": 70,
+      "tiles": 379,
+      "bytes": 700193
+    },
+    "2118": {
+      "mapId": 2570,
+      "blockPixels": 512,
+      "blocks": 35,
+      "tiles": 192,
+      "bytes": 580768
+    },
+    "202": {
+      "mapId": 654,
+      "blockPixels": 256,
+      "blocks": 6,
+      "tiles": 9,
+      "bytes": 64280
+    },
+    "1577": {
+      "mapId": 2211,
+      "blockPixels": 512,
+      "blocks": 4,
+      "tiles": 21,
+      "bytes": 151944
+    },
+    "2372": {
+      "mapId": 2796,
+      "blockPixels": 512,
+      "blocks": 30,
+      "tiles": 164,
+      "bytes": 1030166
+    },
+    "2351": {
+      "mapId": 2736,
+      "blockPixels": 512,
+      "blocks": 140,
+      "tiles": 752,
+      "bytes": 1802667
+    },
+    "2352": {
+      "mapId": 2735,
+      "blockPixels": 512,
+      "blocks": 77,
+      "tiles": 418,
+      "bytes": 1097670
+    },
+    "2366": {
+      "mapId": 2794,
+      "blockPixels": 512,
+      "blocks": 24,
+      "tiles": 129,
+      "bytes": 515170
+    },
+    "998": {
+      "mapId": 1760,
+      "blockPixels": 512,
+      "blocks": 6,
+      "tiles": 33,
+      "bytes": 179183
+    },
+    "1010": {
+      "mapId": 1594,
+      "blockPixels": 512,
+      "blocks": 12,
+      "tiles": 65,
+      "bytes": 192353
+    },
+    "1039": {
+      "mapId": 1864,
+      "blockPixels": 512,
+      "blocks": 6,
+      "tiles": 33,
+      "bytes": 123931
+    },
+    "1041": {
+      "mapId": 1841,
+      "blockPixels": 512,
+      "blocks": 6,
+      "tiles": 33,
+      "bytes": 194067
+    },
+    "1339": {
+      "mapId": 2106,
+      "blockPixels": 512,
+      "blocks": 9,
+      "tiles": 50,
+      "bytes": 149963
+    },
+    "1960": {
+      "mapId": 2456,
+      "blockPixels": 512,
+      "blocks": 54,
+      "tiles": 294,
+      "bytes": 897153
+    },
+    "2070": {
+      "mapId": 2532,
+      "blockPixels": 512,
+      "blocks": 25,
+      "tiles": 139,
+      "bytes": 681222
+    },
+    "2165": {
+      "mapId": 2597,
+      "blockPixels": 512,
+      "blocks": 6,
+      "tiles": 33,
+      "bytes": 92405
+    },
+    "2354": {
+      "mapId": 2776,
+      "blockPixels": 512,
+      "blocks": 25,
+      "tiles": 139,
+      "bytes": 1530534
+    },
+    "2403": {
+      "mapId": 2828,
+      "blockPixels": 512,
+      "blocks": 12,
+      "tiles": 65,
+      "bytes": 554381
+    },
+    "2404": {
+      "mapId": 2827,
+      "blockPixels": 512,
+      "blocks": 20,
+      "tiles": 109,
+      "bytes": 677674
+    },
+    "2447": {
+      "mapId": 2849,
+      "blockPixels": 512,
+      "blocks": 4,
+      "tiles": 21,
+      "bytes": 96520
+    },
+    "2451": {
+      "mapId": 2927,
+      "blockPixels": 512,
+      "blocks": 30,
+      "tiles": 164,
+      "bytes": 1030656
+    },
+    "2509": {
+      "mapId": 2916,
+      "blockPixels": 512,
+      "blocks": 20,
+      "tiles": 109,
+      "bytes": 181676
+    },
+    "2510": {
+      "mapId": 2963,
+      "blockPixels": 512,
+      "blocks": 1,
+      "tiles": 5,
+      "bytes": 40173
+    },
+    "2585": {
+      "mapId": 3014,
+      "blockPixels": 512,
+      "blocks": 20,
+      "tiles": 109,
+      "bytes": 587706
+    },
+    "2594": {
+      "mapId": 3074,
+      "blockPixels": 512,
+      "blocks": 12,
+      "tiles": 65,
+      "bytes": 390391
+    },
+    "2599": {
+      "mapId": 3047,
+      "blockPixels": 512,
+      "blocks": 4,
+      "tiles": 21,
+      "bytes": 125490
+    },
+    "2600": {
+      "mapId": 3075,
+      "blockPixels": 512,
+      "blocks": 20,
+      "tiles": 109,
+      "bytes": 196428
+    },
+    "2605": {
+      "mapId": 3071,
+      "blockPixels": 512,
+      "blocks": 16,
+      "tiles": 85,
+      "bytes": 960989
+    },
+    "2633": {
+      "mapId": 3077,
+      "blockPixels": 512,
+      "blocks": 2,
+      "tiles": 11,
+      "bytes": 71814
     }
   },
   "build": "12.1.5.70783"

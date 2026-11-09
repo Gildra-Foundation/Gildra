@@ -1,0 +1,228 @@
+{
+  "maps": {
+    "12": {
+      "url": "/maps/terrain/mists/12/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/mists/12/index.json",
+      "empty": "/maps/terrain/mists/12/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 7936,
+      "height": 11520,
+      "maxZoom": 6,
+      "rect": [
+        0.275362,
+        0.021735,
+        0.72464,
+        1.000001
+      ]
+    },
+    "13": {
+      "url": "/maps/terrain/mists/13/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/mists/13/index.json",
+      "empty": "/maps/terrain/mists/13/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 7424,
+      "height": 10752,
+      "maxZoom": 6,
+      "rect": [
+        0.249673,
+        0.175926,
+        0.629305,
+        1.000982
+      ]
+    },
+    "424": {
+      "url": "/maps/terrain/mists/424/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/mists/424/index.json",
+      "empty": "/maps/terrain/mists/424/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 29696,
+      "height": 20480,
+      "maxZoom": 7,
+      "rect": [
+        0.014149,
+        -0.024573,
+        1.011015,
+        1.006666
+      ]
+    },
+    "207": {
+      "url": "/maps/terrain/mists/207/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/mists/207/index.json",
+      "empty": "/maps/terrain/mists/207/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 2048,
+      "maxZoom": 4,
+      "rect": [
+        -0.029004,
+        -0.118874,
+        1.016748,
+        1.136029
+      ]
+    },
+    "174": {
+      "url": "/maps/terrain/mists/174/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/mists/174/index.json",
+      "empty": "/maps/terrain/mists/174/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 5888,
+      "maxZoom": 5,
+      "rect": [
+        -0.092294,
+        -0.105882,
+        1.089063,
+        3.968858
+      ]
+    },
+    "194": {
+      "url": "/maps/terrain/mists/174/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/mists/174/index.json",
+      "empty": "/maps/terrain/mists/174/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 2560,
+      "height": 5888,
+      "maxZoom": 5,
+      "rect": [
+        -1.975339,
+        -12.145833,
+        1.969181,
+        1.483796
+      ]
+    },
+    "244": {
+      "url": "/maps/terrain/mists/244/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/mists/244/index.json",
+      "empty": "/maps/terrain/mists/244/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 1280,
+      "height": 768,
+      "maxZoom": 3,
+      "rect": [
+        -0.061012,
+        -0.020155,
+        1.262668,
+        1.17054
+      ]
+    },
+    "245": {
+      "url": "/maps/terrain/mists/245/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/mists/245/index.json",
+      "empty": "/maps/terrain/mists/245/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 1024,
+      "height": 768,
+      "maxZoom": 2,
+      "rect": [
+        -0.138322,
+        -0.127551,
+        1.022676,
+        1.178571
+      ]
+    },
+    "276": {
+      "url": "/maps/terrain/mists/276/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/mists/276/index.json",
+      "empty": "/maps/terrain/mists/276/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 768,
+      "height": 768,
+      "maxZoom": 2,
+      "rect": [
+        -0.028226,
+        -0.221778,
+        1.004032,
+        1.326614
+      ]
+    },
+    "504": {
+      "url": "/maps/terrain/mists/504/{z}/{x}_{y}.webp",
+      "index": "/maps/terrain/mists/504/index.json",
+      "empty": "/maps/terrain/mists/504/empty.json",
+      "ocean": "#163747",
+      "tileSize": 256,
+      "width": 8192,
+      "height": 6144,
+      "maxZoom": 5,
+      "rect": [
+        0.045341,
+        -0.139833,
+        1.077078,
+        1.021165
+      ]
+    }
+  },
+  "stats": {
+    "12": {
+      "mapId": 1,
+      "blocks": 966,
+      "tiles": 1338,
+      "bytes": 7416651
+    },
+    "13": {
+      "mapId": 0,
+      "blocks": 839,
+      "tiles": 1158,
+      "bytes": 4853890
+    },
+    "424": {
+      "mapId": 870,
+      "blockPixels": 1024,
+      "blocks": 566,
+      "tiles": 12085,
+      "bytes": 18456092
+    },
+    "207": {
+      "mapId": 646,
+      "blockPixels": 256,
+      "blocks": 80,
+      "tiles": 109,
+      "bytes": 616744
+    },
+    "174": {
+      "mapId": 648,
+      "blockPixels": 256,
+      "blocks": 79,
+      "tiles": 116,
+      "bytes": 316937
+    },
+    "244": {
+      "mapId": 2755,
+      "blockPixels": 256,
+      "blocks": 15,
+      "tiles": 24,
+      "bytes": 69924
+    },
+    "245": {
+      "mapId": 732,
+      "blockPixels": 256,
+      "blocks": 12,
+      "tiles": 17,
+      "bytes": 65281
+    },
+    "276": {
+      "mapId": 730,
+      "blockPixels": 256,
+      "blocks": 9,
+      "tiles": 14,
+      "bytes": 57380
+    },
+    "504": {
+      "mapId": 1064,
+      "blockPixels": 1024,
+      "blocks": 48,
+      "tiles": 1025,
+      "bytes": 1325325
+    }
+  },
+  "build": "5.5.4.70631"
+}
