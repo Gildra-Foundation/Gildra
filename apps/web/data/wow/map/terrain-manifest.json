@@ -308,7 +308,7 @@
       "url": "/maps/terrain/1970/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/1970/index.json",
       "empty": "/maps/terrain/1970/empty.json",
-      "ocean": "#405050",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 5120,
       "height": 4096,
@@ -1355,7 +1355,7 @@
       "blockPixels": 512,
       "blocks": 80,
       "tiles": 429,
-      "bytes": 1543093
+      "bytes": 2246544
     },
     "830": {
       "mapId": 1669,
@@ -1680,5 +1680,12 @@
       "bytes": 71814
     }
   },
-  "build": "12.1.5.70783"
+  "build": "12.1.5.70783",
+  "encoding": {
+    "format": "webp",
+    "deepQuality": 85,
+    "coarseQuality": 80,
+    "sampling": "native-area",
+    "mixedSourceSampling": "bilinear"
+  }
 }
