@@ -19,6 +19,8 @@
     "13": {
       "url": "/maps/terrain/13/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/13/index.json",
+      "empty": "/maps/terrain/13/empty.json",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 21504,
       "height": 27136,
@@ -28,9 +30,7 @@
         -0.015396,
         0.801341,
         1.003528
-      ],
-      "empty": "/maps/terrain/13/empty.json",
-      "ocean": "#282030"
+      ]
     },
     "113": {
       "url": "/maps/terrain/113/{z}/{x}_{y}.webp",
@@ -147,6 +147,8 @@
     "2537": {
       "url": "/maps/terrain/13/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/13/index.json",
+      "empty": "/maps/terrain/13/empty.json",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 21504,
       "height": 27136,
@@ -156,9 +158,7 @@
         -0.031177,
         0.904428,
         2.715928
-      ],
-      "empty": "/maps/terrain/13/empty.json",
-      "ocean": "#282030"
+      ]
     },
     "101": {
       "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
@@ -1275,9 +1275,10 @@
     },
     "13": {
       "mapId": 0,
+      "blockPixels": 512,
       "blocks": 1159,
       "tiles": 6241,
-      "bytes": 19343324
+      "bytes": 33980611
     },
     "113": {
       "mapId": 571,
