@@ -418,13 +418,13 @@
             "footer": {
               "box": [
                 26,
-                5402,
+                5320,
                 1388,
-                153
+                452
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "background-color": "rgb(13, 19, 26)",
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
@@ -893,13 +893,13 @@
             "footer": {
               "box": [
                 14,
-                7989,
+                7907,
                 362,
-                268
+                836
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "background-color": "rgb(13, 19, 26)",
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
@@ -1368,13 +1368,13 @@
             "footer": {
               "box": [
                 26,
-                5450,
+                5368,
                 1388,
-                171
+                452
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "background-color": "rgb(13, 19, 26)",
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
@@ -1843,13 +1843,13 @@
             "footer": {
               "box": [
                 14,
-                7938,
+                7856,
                 362,
-                224
+                792
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "background-color": "rgb(13, 19, 26)",
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
@@ -2247,11 +2247,11 @@
             "footer": {
               "box": [
                 26,
-                3131,
+                2947,
                 1388,
-                179
+                452
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
+              "background-color": "rgb(13, 19, 26)",
               "color": "rgb(162, 178, 193)",
               "font-size": "13px"
             },
@@ -2620,11 +2620,11 @@
             "footer": {
               "box": [
                 14,
-                5661,
+                5127,
                 362,
-                277
+                836
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
+              "background-color": "rgb(13, 19, 26)",
               "color": "rgb(162, 178, 193)",
               "font-size": "13px"
             },
@@ -2995,11 +2995,11 @@
             "footer": {
               "box": [
                 26,
-                3131,
+                2947,
                 1388,
-                179
+                452
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
+              "background-color": "rgb(13, 19, 26)",
               "color": "rgb(162, 178, 193)",
               "font-size": "13px"
             },
@@ -3368,11 +3368,11 @@
             "footer": {
               "box": [
                 14,
-                5661,
+                5127,
                 362,
-                277
+                792
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
+              "background-color": "rgb(13, 19, 26)",
               "color": "rgb(162, 178, 193)",
               "font-size": "13px"
             },
@@ -3745,13 +3745,13 @@
             "footer": {
               "box": [
                 26,
-                4262,
+                4297,
                 1388,
-                153
+                452
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "background-color": "rgb(13, 19, 26)",
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
@@ -4129,13 +4129,13 @@
             "footer": {
               "box": [
                 14,
-                6054,
+                6089,
                 362,
-                268
+                836
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "background-color": "rgb(13, 19, 26)",
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
@@ -4513,13 +4513,13 @@
             "footer": {
               "box": [
                 26,
-                4356,
+                4391,
                 1388,
-                171
+                452
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "background-color": "rgb(13, 19, 26)",
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [
@@ -4897,13 +4897,13 @@
             "footer": {
               "box": [
                 14,
-                5945,
+                5980,
                 362,
-                224
+                792
               ],
-              "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "background-color": "rgb(13, 19, 26)",
+              "color": "rgb(162, 178, 193)",
+              "font-size": "13px"
             },
             "body": {
               "box": [

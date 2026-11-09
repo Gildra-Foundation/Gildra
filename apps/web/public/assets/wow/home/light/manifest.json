@@ -1,0 +1,104 @@
+{
+  "entries": [
+    {
+      "path": "/assets/wow/home/light/den-of-nalorakk-panels.webp",
+      "source": "/assets/wow/mythic/hub/controls/panels/den-of-nalorakk.webp",
+      "sourceSha256": "305f79f0cf8c038ef640990f4e94aaf57a3552520449c16af75c4cf433de105b",
+      "width": 768,
+      "height": 964,
+      "quality": 35,
+      "bytes": 39310,
+      "sha256": "9db3f7fe653d4de07ae04247b49df7dc69351ac91969424aa053db4a2d419048"
+    },
+    {
+      "path": "/assets/wow/home/light/den-of-nalorakk-buttons.webp",
+      "source": "/assets/wow/mythic/hub/controls/buttons/den-of-nalorakk.webp",
+      "sourceSha256": "a7614459885cfc6fb9682dbcaeb17bb2141d7ce520c6bf6e37740604cad52fb7",
+      "width": 768,
+      "height": 125,
+      "quality": 42,
+      "bytes": 15370,
+      "sha256": "f8c6af437d3b6b33ee088d73e96784339ae4f54eb9be2eb46c7fd11f6523a648"
+    },
+    {
+      "path": "/assets/wow/home/light/ruby-route-384.avif",
+      "source": "/assets/wow/maps/ruby-life-pools-floor-1.png",
+      "sourceSha256": "591525d9fa71ca4be2cbe509e10b9b0ee5e79af773018ad2cc9ebdd9a3848657",
+      "width": 384,
+      "height": 256,
+      "quality": 35,
+      "bytes": 4268,
+      "sha256": "2844ee99c3e44b30bb5efb4d09f7254f1e28f5b754b0b2536e93f493e4175ba7"
+    },
+    {
+      "path": "/assets/wow/home/light/ruby-route-384.webp",
+      "source": "/assets/wow/maps/ruby-life-pools-floor-1.png",
+      "sourceSha256": "591525d9fa71ca4be2cbe509e10b9b0ee5e79af773018ad2cc9ebdd9a3848657",
+      "width": 384,
+      "height": 256,
+      "quality": 45,
+      "bytes": 7544,
+      "sha256": "efb2af0b3d9201169db91c48fbda55df8b7137e7407cb154630e1799d5ad86f9"
+    },
+    {
+      "path": "/assets/wow/home/light/ruby-route-768.avif",
+      "source": "/assets/wow/maps/ruby-life-pools-floor-1.png",
+      "sourceSha256": "591525d9fa71ca4be2cbe509e10b9b0ee5e79af773018ad2cc9ebdd9a3848657",
+      "width": 768,
+      "height": 512,
+      "quality": 35,
+      "bytes": 13504,
+      "sha256": "462994e5666238dc7079105e61755966d52580b1cb7598324ca488dcd38ffccd"
+    },
+    {
+      "path": "/assets/wow/home/light/ruby-route-768.webp",
+      "source": "/assets/wow/maps/ruby-life-pools-floor-1.png",
+      "sourceSha256": "591525d9fa71ca4be2cbe509e10b9b0ee5e79af773018ad2cc9ebdd9a3848657",
+      "width": 768,
+      "height": 512,
+      "quality": 45,
+      "bytes": 26764,
+      "sha256": "27766bc37bc924467d7fffd28ed98cd1144ec14a7ff94d2e19d8098a1e16aa7a"
+    },
+    {
+      "path": "/assets/wow/home/light/venomous-abyss-384.avif",
+      "source": "/assets/wow/raids/hub/venomous-abyss.webp",
+      "sourceSha256": "8cbc9b464b0bec278b78f44d23034593fea440e2f94d79e2708ec44d2e3605e3",
+      "width": 384,
+      "height": 256,
+      "quality": 35,
+      "bytes": 4952,
+      "sha256": "3609700143386c99e17e05fe7fba33ed0b202d472cea24b0428165558edca36e"
+    },
+    {
+      "path": "/assets/wow/home/light/venomous-abyss-384.webp",
+      "source": "/assets/wow/raids/hub/venomous-abyss.webp",
+      "sourceSha256": "8cbc9b464b0bec278b78f44d23034593fea440e2f94d79e2708ec44d2e3605e3",
+      "width": 384,
+      "height": 256,
+      "quality": 45,
+      "bytes": 8778,
+      "sha256": "727099f1dcebbd217b6b3d3daf969ad8b6a6647d8ea9d2d48f83b1d530cc7e3d"
+    },
+    {
+      "path": "/assets/wow/home/light/venomous-abyss-768.avif",
+      "source": "/assets/wow/raids/hub/venomous-abyss.webp",
+      "sourceSha256": "8cbc9b464b0bec278b78f44d23034593fea440e2f94d79e2708ec44d2e3605e3",
+      "width": 768,
+      "height": 512,
+      "quality": 35,
+      "bytes": 16423,
+      "sha256": "2e66d781e5a08a085a74476d52aa678d7344b393ecd7bacf5965625334364d6a"
+    },
+    {
+      "path": "/assets/wow/home/light/venomous-abyss-768.webp",
+      "source": "/assets/wow/raids/hub/venomous-abyss.webp",
+      "sourceSha256": "8cbc9b464b0bec278b78f44d23034593fea440e2f94d79e2708ec44d2e3605e3",
+      "width": 768,
+      "height": 512,
+      "quality": 45,
+      "bytes": 27426,
+      "sha256": "5e0316463ab593eed4bcac59ee7532a1b52b03e6d8bd3aeda09e09d470b991f8"
+    }
+  ]
+}

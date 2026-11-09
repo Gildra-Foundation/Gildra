@@ -136,3 +136,17 @@
   .lookupFields > span:last-child { grid-column: 1 / -1; }
 }
 .heroArt { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Product previews use the atlas' light CSS frame; painted plaques retain kit identity. */
+.productPreview { position: relative; isolation: isolate; aspect-ratio: 3 / 2; overflow: hidden; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); background: var(--atlas-surface-sunken); }
+.productPreview::after { position: absolute; inset: 0; content: ""; pointer-events: none; border: 4px double var(--atlas-line-soft); }
+.previewImage { display: block; width: 100%; height: 100%; object-fit: cover; filter: contrast(.94) saturate(.9); }
+.productPreview picture { display: block; height: 100%; }
+.routeLine { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.routeLine polyline { fill: none; stroke: var(--atlas-accent-strong); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
+.routeStop { position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--atlas-accent-strong); border-radius: 50%; background: var(--atlas-bg); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums; }
+.previewTag { position: absolute; left: var(--atlas-space-3); top: var(--atlas-space-3); max-width: calc(100% - 24px); padding: var(--atlas-space-2) var(--atlas-space-3); background: var(--atlas-bg); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); border: 1px solid var(--atlas-line-soft); }
+.closing { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-4); margin-top: var(--atlas-section-gap); }
+@media (max-width: 700px) { .closing { justify-content: center; } .actions { justify-items: stretch; } .actions > .textLink { justify-content: center; } }
+
+.featureHeading h3 a { display: inline-flex; align-items: center; min-height: 44px; }

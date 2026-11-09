@@ -5,11 +5,12 @@ import { HomeCharacterLookup } from "./HomeCharacterLookup";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Compass, Layers3, Shirt, Swords, UserRound } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
-import { MaterialFrame, MaterialLinkButton, MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
+import { materialStyles } from "@/components/wow/shared/materialAtlas";
+import { HomePlaque as MaterialPlaque, HomeLinkButton as MaterialLinkButton } from "./HomeMaterials";
+import { HomePreview } from "./HomePreview";
 import { liveSeason } from "@/lib/data/season";
 import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import type { Lang } from "@/lib/i18n";
-import { atlasScenes } from "@/lib/atlas/scenes";
 import { wowHomeCopy } from "./wowHomeCopy";
 import styles from "./wowHome.module.css";
 
@@ -39,46 +40,53 @@ export function WowHome({ lang, raids, news }: { lang: Lang; raids: HomeRaid[]; 
   const currentRaids = season?.raids.flatMap(entry => { const raid = raids.find(raid => raid.slug === entry.slug); return raid ? [raid] : []; }) ?? [];
   const raid = currentRaids[0];
   const seasonalDungeons = season?.slug === "midnight-season-2" ? dungeonSlugs : [];
+  const route = dungeonRoutes["ruby-life-pools"];
+  const previewStops = route.stops.filter(stop => stop.floor === 1);
   const classes = [...new Map(midnightSpecializations.map(spec => [spec.classSlug, spec])).values()].sort((a,b) => a.classId-b.classId);
 
 
   return <AtlasFrame lang={locale} scene="wow" art="" artLayer={<HomeArtwork />} className={styles.page} dataAttributes={{ "data-wow-atlas": true }}>
     <AtlasHero align="start" className={styles.hero}
-      eyebrow={season?.names[locale] ?? t.eyebrow} title={t.title}
+      eyebrow={season?.names[locale] ?? t.eyebrow} title={t.title} lede={t.lede}
       actions={<div className={styles.heroContent}><div className={styles.actions}>
-        <MaterialLinkButton kit="den-of-nalorakk" fit="stack" variant="primary" href={href("/wow/characters")} iconAfter={<UserRound aria-hidden="true" />}>{t.character}</MaterialLinkButton>
-        <MaterialLinkButton kit="kings-rest" fit="stack" href={href("/wow/mythic-plus")} iconAfter={<ArrowRight aria-hidden="true" />}>{t.play}</MaterialLinkButton>
+        <MaterialLinkButton kit="den-of-nalorakk" fit="stack" variant="primary" href="#season" iconAfter={<ArrowRight aria-hidden="true" />}>{t.dungeons}</MaterialLinkButton>
+        <Link href={href("/wow/map")} prefetch={false} className={styles.textLink}>{t.featured.map.title}<ArrowRight aria-hidden="true" /></Link>
       </div><HomeCharacterLookup locale={locale} /></div>}
     />
 
     <AtlasSection id="season" title={t.seasonTitle}>
       <div className={styles.seasonGrid}>
         <article className={styles.feature}>
-          <Link href={href("/wow/mythic-plus")} tabIndex={-1} aria-hidden="true" prefetch={false}>
-            <MaterialFrame kit="kings-rest" src={atlasScenes.mythicPlus.art} sizes="(max-width: 700px) 100vw, 50vw" />
+          <Link href={href(`/wow/mythic-plus/${season?.slug ?? "midnight-season-2"}/ruby-life-pools`)} tabIndex={-1} aria-hidden="true" prefetch={false}>
+            <div className={`${styles.productPreview} ${styles.routePreview}`}>
+              <HomePreview kind="ruby-route" />
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.routeLine} aria-hidden="true"><polyline points={previewStops.map(stop => `${stop.x},${stop.y}`).join(" ")} /></svg>
+              {previewStops.map(stop => <span key={stop.id} className={styles.routeStop} style={{ left: `${stop.x}%`, top: `${stop.y}%` }}>{stop.id}</span>)}
+              <span className={styles.previewTag}>{locale === "ru" ? route.nameRu : route.name}</span>
+            </div>
           </Link>
-          <MaterialPlaque kit="kings-rest" className={styles.featureBody}>
+          <MaterialPlaque kit="den-of-nalorakk" className={styles.featureBody}>
             <div className={styles.featureHeading}><h3 className={materialStyles.title}><Link href={href("/wow/mythic-plus")} prefetch={false}>Mythic+</Link></h3><Link className={styles.textLink} href={href("/wow/mythic-plus/meta")} prefetch={false}>{t.meta}<ArrowRight aria-hidden="true" /></Link></div>
             <p className={materialStyles.text}>{t.mythicText}</p>
             {season && seasonalDungeons.length > 0 && <ul className={`${styles.liveLinks} ${styles.dungeonLinks}`}>{seasonalDungeons.map(slug => {
               const dungeon = dungeonRoutes[slug];
               return <li key={slug}><Link href={href(`/wow/mythic-plus/${season.slug}/${slug}`)} prefetch={false}><span>{locale === "ru" ? dungeon.nameRu : dungeon.name}</span><span className={styles.timer}>{Math.floor(dungeon.timerSeconds / 60)}:00</span></Link></li>;
             })}</ul>}
-            <MaterialLinkButton kit="kings-rest" fit="block" href={href("/wow/mythic-plus")} iconAfter={<ArrowRight aria-hidden="true" />}>{t.dungeons}</MaterialLinkButton>
+            <MaterialLinkButton kit="den-of-nalorakk" fit="block" href={href("/wow/mythic-plus")} iconAfter={<ArrowRight aria-hidden="true" />}>{t.dungeons}</MaterialLinkButton>
           </MaterialPlaque>
         </article>
         <article className={styles.feature}>
           <Link href={href(raid ? `/wow/raids/${raid.slug}` : "/wow/raids")} tabIndex={-1} aria-hidden="true" prefetch={false}>
-            <MaterialFrame kit="kings-rest" src={raid?.artwork ?? atlasScenes.raids.art} sizes="(max-width: 700px) 100vw, 50vw" />
+            <div className={styles.productPreview}><HomePreview kind="venomous-abyss" /></div>
           </Link>
-          <MaterialPlaque kit="kings-rest" className={styles.featureBody}>
+          <MaterialPlaque kit="den-of-nalorakk" className={styles.featureBody}>
             <div className={styles.featureHeading}><h3 className={materialStyles.title}><Link href={href(raid ? `/wow/raids/${raid.slug}` : "/wow/raids")} prefetch={false}>{raid?.names[locale] ?? t.raids}</Link></h3></div>
             <p className={materialStyles.text}>{raid?.location?.[locale] ?? t.raidText}</p>
             {currentRaids.map(current => <div key={current.slug}>
-              {current !== raid && <h4 className={materialStyles.title}><Link href={href(`/wow/raids/${current.slug}`)}>{current.names[locale]}</Link></h4>}
+              {current !== raid && <h4 className={materialStyles.title}><Link href={href(`/wow/raids/${current.slug}`)} prefetch={false}>{current.names[locale]}</Link></h4>}
               <ul className={`${styles.liveLinks} ${styles.bossLinks}`}>{current.bosses.map(boss => <li key={boss.slug}><Link href={href(`/wow/raids/${current.slug}${boss.anchor ? `#${boss.anchor}` : `#boss=${boss.slug}`}`)} prefetch={false}><span>{boss.names[locale]}</span><ArrowRight aria-hidden="true" /></Link></li>)}</ul>
             </div>)}
-            <MaterialLinkButton kit="kings-rest" fit="block" href={href("/wow/raids")} iconAfter={<ArrowRight aria-hidden="true" />}>{t.raids}</MaterialLinkButton>
+            <MaterialLinkButton kit="den-of-nalorakk" fit="block" href={href("/wow/raids")} iconAfter={<ArrowRight aria-hidden="true" />}>{t.raids}</MaterialLinkButton>
           </MaterialPlaque>
         </article>
       </div>
@@ -88,7 +96,7 @@ export function WowHome({ lang, raids, news }: { lang: Lang; raids: HomeRaid[]; 
       <div className={styles.exploreGrid}>
         <article className={styles.mapCard}>
           <Link className={styles.mapArt} href={href("/wow/map")} tabIndex={-1} aria-hidden="true" prefetch={false}>
-            <MaterialFrame kit="den-of-nalorakk"><div className={styles.mapPainting}>{[0,1].map(y => [0,1].map(x => <Image key={`${x}-${y}`} src={`/maps/tiles/${locale === "ru" ? "ru/" : ""}947/1/${x}_${y}.webp`} alt="" width={256} height={256} loading="lazy" decoding="async" sizes="(max-width: 700px) 50vw, 35vw" />))}</div></MaterialFrame>
+            <div className={`${styles.productPreview} ${styles.mapPreview}`}><div className={styles.mapPainting}>{[0,1].map(y => [0,1].map(x => <Image key={`${x}-${y}`} src={`/maps/tiles/${locale === "ru" ? "ru/" : ""}947/1/${x}_${y}.webp`} alt="" width={256} height={256} unoptimized loading="lazy" decoding="async" sizes="(max-width: 700px) 50vw, 35vw" />))}</div></div>
           </Link>
           <MaterialPlaque kit="den-of-nalorakk" className={styles.exploreBody}>
             <h3 className={materialStyles.title}><Link href={href("/wow/map")} prefetch={false}>{t.featured.map.title}<ArrowRight aria-hidden="true" /></Link></h3>
@@ -98,7 +106,7 @@ export function WowHome({ lang, raids, news }: { lang: Lang; raids: HomeRaid[]; 
         <MaterialPlaque kit="den-of-nalorakk" as="article" className={styles.classesCard}>
           <h3 className={materialStyles.title}><Link href={href("/wow/classes")} prefetch={false}>{t.featured.classes.title}<ArrowRight aria-hidden="true" /></Link></h3>
           <p className={materialStyles.text}>{t.featured.classes.text}</p>
-          <ul className={styles.classIcons}>{classes.map(spec => <li key={spec.classSlug}><Link href={href(`/wow/classes/${spec.classSlug}`)} prefetch={false} title={locale === "ru" ? spec.classNameRu : spec.className} aria-label={locale === "ru" ? spec.classNameRu : spec.className}><Image src={spec.classIconUrl} alt="" width={48} height={48} loading="lazy" decoding="async" /><span>{locale === "ru" ? spec.classNameRu : spec.className}</span></Link></li>)}</ul>
+          <ul className={styles.classIcons}>{classes.map(spec => <li key={spec.classSlug}><Link href={href(`/wow/classes/${spec.classSlug}`)} prefetch={false} title={locale === "ru" ? spec.classNameRu : spec.className} aria-label={locale === "ru" ? spec.classNameRu : spec.className}><Image src={spec.classIconUrl} alt="" width={48} height={48} quality={50} loading="lazy" decoding="async" /><span>{locale === "ru" ? spec.classNameRu : spec.className}</span></Link></li>)}</ul>
         </MaterialPlaque>
       </div>
     </AtlasSection>
@@ -110,5 +118,9 @@ export function WowHome({ lang, raids, news }: { lang: Lang; raids: HomeRaid[]; 
     {news.length > 0 && <AtlasSection id="news" title={t.news} aside={<Link className={styles.textLink} href={href("/wow/whats-new")} prefetch={false}>{t.allNews}<ArrowRight aria-hidden="true" /></Link>}>
       <ul className={styles.news}>{news.map(release => <li key={release.date}><Compass aria-hidden="true" /><p>{release.changes[0][locale]}</p></li>)}</ul>
     </AtlasSection>}
+    <MaterialPlaque kit="den-of-nalorakk" as="nav" aria-label={t.closingLabel} className={styles.closing}>
+      <MaterialLinkButton kit="den-of-nalorakk" variant="primary" fit="stack" href="#character-lookup" iconAfter={<UserRound aria-hidden="true" />}>{t.closingCharacter}</MaterialLinkButton>
+      <Link href={href("/wow/map")} prefetch={false} className={styles.textLink}>{t.closingMap}<ArrowRight aria-hidden="true" /></Link>
+    </MaterialPlaque>
   </AtlasFrame>;
 }

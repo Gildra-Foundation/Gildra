@@ -1,17 +1,12 @@
-/* atlas:strict — the brand seal of the legal line (AtlasFrame footer). */
-.seal {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--atlas-space-2);
-  color: var(--atlas-text-muted);
-  font: var(--atlas-weight-display) var(--atlas-text-label) / 1 var(--atlas-font-display);
-  letter-spacing: .32em;
-}
-.crest {
-  display: block;
-  width: auto;
-  height: 44px;
-  filter: drop-shadow(0 0 10px var(--atlas-accent-glow)) drop-shadow(0 2px 2px rgba(0, 0, 0, .7));
-}
+/* atlas:strict — the shared WowArcana footer identity and link groups. */
+.seal { display: inline-flex; align-items: center; gap: var(--atlas-space-3); color: var(--atlas-text-strong); text-decoration: none; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.crest { display: block; width: auto; height: 56px; flex: none; }
 .crest img { display: block; width: auto; height: 100%; }
+.footerGroup { min-width: 0; }
+.footerGroup h3 { margin: 0 0 var(--atlas-space-3); color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-body) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.footerGroup ul { list-style: none; padding: 0; margin: 0; }
+.footerGroup a { overflow-wrap: anywhere; }
+.footerLanguages { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
+.footerLanguages a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); text-decoration: none; }
+.footerLanguages a[aria-current] { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 4px; }
+.seal:focus-visible, .footerLanguages a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }

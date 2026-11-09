@@ -7,5 +7,5 @@ import { sectionMetadata } from "@/lib/routes/metadata";
 export const metadata = sectionMetadata("wow", "ru");
 
 export default function Page() {
-  return <WowHome lang="ru" raids={raidHubEntries} news={changelog.slice(0, 2)} />;
+  return <WowHome lang="ru" raids={raidHubEntries} news={changelog.filter(release => release.changes.some(change => change.kind === "new")).slice(0, 2)} />;
 }

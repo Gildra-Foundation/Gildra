@@ -38,8 +38,8 @@ export type AtlasFrameShellProps = {
   id?: string;
   /** Extra attributes for page-level hooks (data-*). */
   dataAttributes?: Record<`data-${string}`, string | boolean | undefined>;
-  /** Slim legal line under the content: the text and its links (the "less motion" switch comes first), and an optional brand seal above it. */
-  footer?: { legal: ReactNode; links: ReactNode; brand?: ReactNode; motion?: ReactNode } | false;
+  /** Grouped site footer with optional brand, description and language links. */
+  footer?: { legal: ReactNode; links: ReactNode; brand?: ReactNode; description?: ReactNode; language?: ReactNode; motion?: ReactNode } | false;
   /**
    * The page's horizon: at the foot of the page the solid body warms into the
    * scene's light — a glow on the horizon, drifting mist, a slow seal of runes
@@ -57,22 +57,23 @@ function objectFocus(position: string | undefined): [number, number] {
 }
 
 /**
- * The site footer: the crest on a thin rail, one row of footer links, a hairline,
- * the "Less motion" switch, and the one-line legal notice. Pages outside the frame
- * (a full-bleed reader) reuse it.
+ * The site footer: brand and description, grouped navigation, language and motion
+ * controls, then the legal notice. Pages outside the frame reuse it.
  */
-export function AtlasFrameFooter({ locale, brand, legal, links, motion }: { locale: "en" | "ru"; legal: ReactNode; links: ReactNode; brand?: ReactNode; motion?: ReactNode }) {
-  return (
-    <footer className={styles.legal} data-text-links>
-      {brand ? <div className={styles.legalBrand}>{brand}</div> : null}
-      <div className={styles.legalLinks}>
-        <nav aria-label={locale === "ru" ? "Подвал" : "Footer"} className={styles.legalNav}>{links}</nav>
-        <span className={styles.legalDivider} aria-hidden="true" />
-        {motion ?? <AtlasMotionToggle locale={locale} />}
-      </div>
-      <p>{legal}</p>
-    </footer>
-  );
+export function AtlasFrameFooter({ locale, brand, description, legal, links, language, motion }: { locale: "en" | "ru"; legal: ReactNode; links: ReactNode; brand?: ReactNode; description?: ReactNode; language?: ReactNode; motion?: ReactNode }) {
+  return <footer className={styles.legal} data-text-links>
+    <div className={styles.legalBody}>
+      {brand || description ? <div className={styles.legalSummary}>
+        {brand ? <div className={styles.legalBrand}>{brand}</div> : null}
+        {description ? <p>{description}</p> : null}
+      </div> : null}
+      <nav aria-label={locale === "ru" ? "Навигация в подвале" : "Footer navigation"} className={styles.legalNav}>{links}</nav>
+    </div>
+    <div className={styles.legalMeta}>
+      <div className={styles.legalControls}>{language}{motion ?? <AtlasMotionToggle locale={locale} />}</div>
+      <p className={styles.legalNotice}>{legal}</p>
+    </div>
+  </footer>;
 }
 
 /**

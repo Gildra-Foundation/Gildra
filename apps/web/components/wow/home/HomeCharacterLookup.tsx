@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AtlasField, AtlasInput, AtlasSelect } from "@/components/atlas";
-import { MaterialButton, MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
+import { materialStyles } from "@/components/wow/shared/materialAtlas";
+import { HomeButton as MaterialButton, HomePlaque as MaterialPlaque } from "./HomeMaterials";
 import { parsePlayerKey, playerProfilePath } from "@/lib/wow/playerProfileView";
 import { wowHomeCopy } from "./wowHomeCopy";
 import styles from "./wowHome.module.css";
