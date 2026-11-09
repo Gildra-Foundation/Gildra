@@ -8,6 +8,7 @@ import { knownRenderTier, onRenderTier } from "@gildra/atlas-ui/renderTier";
 import { ATLAS_DURATION, ATLAS_EASE } from "@gildra/atlas-ui/motionTokens";
 import { bookPageIdentity, isBookPagePath, isCharacterAuthRedirect, routeTransitionKind } from "./routeTransitionPolicy";
 import { warmRouteArt } from "./routeArt";
+import { clearGameTurn } from "./gameTurn";
 import { RouteThemeController } from "./RouteThemeController";
 import { routeTurnDeviceAllowed, type RouteTurnDevice } from "./routeTurnDevice";
 import styles from "./routeTransition.module.css";
@@ -96,6 +97,8 @@ function armRouteTurn(kind: "page" | "swap" = "page") {
 
 function disarmRouteTurn() {
   const root = document.documentElement;
+  // A game switch's marks belong to the hand-over that is ending (gameTurn.ts).
+  if (root.dataset.routeTurn) clearGameTurn();
   delete root.dataset.routeTurn;
   if (root.style.viewTransitionName === "root") root.style.viewTransitionName = "";
 }

@@ -7,6 +7,7 @@
 }
 
 .list {
+  position: relative;
   display: flex;
   align-items: stretch;
   gap: var(--atlas-space-1);
@@ -60,6 +61,34 @@
 .version[aria-current]::after { opacity: 1; }
 .version:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -4px; border-radius: var(--atlas-radius-control); }
 
+/* Each version's colour: the rule under it and its emblem's flare. */
+.version, .rule { --game-accent: var(--atlas-accent); }
+.version[data-version="forever"], .rule[data-version="forever"] { --game-accent: var(--atlas-accent-2); }
+.version[data-version="mists"], .rule[data-version="mists"] { --game-accent: color-mix(in srgb, var(--atlas-positive) 70%, var(--atlas-accent)); }
+
+/* Once measured, one rule glides under the shown version (the per-link rule
+   above draws it until then, so the first paint already has it). */
+.list[data-glide] > li > .version::after { opacity: 0; }
+.list > li.rule {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--game-accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--game-accent) 55%, transparent);
+  pointer-events: none;
+  transition: transform var(--atlas-duration-slow) var(--atlas-ease), width var(--atlas-duration-slow) var(--atlas-ease),
+    background-color var(--atlas-duration-slow) var(--atlas-ease), box-shadow var(--atlas-duration-slow) var(--atlas-ease);
+}
+/* The chosen version lights up at once; its emblem flares in its colour. */
+.version[data-shown] { color: var(--atlas-text-strong); }
+.version[data-shown] > .emblem { opacity: 1; }
+.version[data-chosen] > .emblem { animation: version-flare var(--atlas-duration-enter) var(--atlas-ease); }
+@keyframes version-flare {
+  40% { filter: drop-shadow(0 0 6px var(--game-accent)) brightness(1.35); scale: 1.18; }
+}
+
 .short { display: none; }
 @media (max-width: 559px) {
   .full { display: none; }
@@ -69,8 +98,12 @@
   .list > li:first-child > .version { margin-inline-start: calc(-1 * var(--atlas-space-2)); }
 }
 
-@media (prefers-reduced-motion: reduce) { .version, .version::after, .emblem { transition: none; } }
-@media (forced-colors: active) { .version[aria-current]::after { background: Highlight; forced-color-adjust: none; } }
+@media (prefers-reduced-motion: reduce) { .version, .version::after, .emblem, .list > li.rule { transition: none; } .version[data-chosen] > .emblem { animation: none; } }
+:global([data-motion="reduced"]) .version, :global([data-motion="reduced"]) .list > li.rule { transition: none; }
+:global([data-motion="reduced"]) .version[data-chosen] > .emblem { animation: none; }
+@media (prefers-reduced-transparency: reduce) { .list > li.rule { box-shadow: none; } }
+:global([data-transparency="reduced"]) .list > li.rule { box-shadow: none; }
+@media (forced-colors: active) { .version[aria-current]::after, .list > li.rule { background: Highlight; forced-color-adjust: none; box-shadow: none; } }
 
 /* The strip sits above the bar on every page: the home first screen gives its height back. */
 :global(html) { --wow-version-strip-height: 34px; }
