@@ -23,7 +23,7 @@ from typing import Any
 
 REGIONS = ("eu", "us", "kr", "tw")
 TOKEN_URL = "https://oauth.battle.net/token"
-USER_AGENT = "GildraDatasetBot/1.0 (+https://gildra.net)"
+USER_AGENT = "GildraDatasetBot/1.0 (+https://wowarcana.com)"
 MAX_BODY_BYTES = 8_000_000
 
 

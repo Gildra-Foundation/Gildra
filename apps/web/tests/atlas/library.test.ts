@@ -10,7 +10,7 @@ import { relationTitle, relationshipAttributes } from "../../components/database
 const id = "00004a86-3321-43ac-983d-9d73d79d11ae";
 const summary = (patch: Partial<LibrarySummary> = {}): LibrarySummary => ({
   id, type: "item", externalId: 100, slug: "grievous-legguards", name: "Grievous Gladiator's Wyrmhide Legguards", product: "wow",
-  iconUrl: "https://api.gildra.net/v1/media/x", quality: 4, itemLevel: 40,
+  iconUrl: "https://api.wowarcana.com/v1/media/x", quality: 4, itemLevel: 40,
   highlights: [{ key: "required_level", value: "Requires Level 35" }, { key: "inventory_type", value: "Legs" }], ...patch,
 });
 const view = (patch: Partial<LibraryRecordView>): LibraryRecordView => ({ id: patch.name ?? "x", externalId: 1, type: "item", href: "/", name: "x", typeLabel: "Item", ...patch });

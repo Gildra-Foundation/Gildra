@@ -20,7 +20,7 @@ import (
 
 const officialIconOrigin = "https://render.worldofwarcraft.com/eu/icons/56/"
 const wagoCASCOrigin = "https://wago.tools/api/casc/"
-const wagoCASCUserAgent = "GildraCatalogMedia/1.0 (+https://gildra.net)"
+const wagoCASCUserAgent = "GildraCatalogMedia/1.0 (+https://wowarcana.com)"
 
 // zamimgIconOrigin is a filename-addressed WoW icon mirror. It is used only
 // after both the official render endpoint and the build-pinned CASC fallback

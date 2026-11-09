@@ -999,7 +999,7 @@
     "portraitUrl": "/assets/wow/mythic/npcs/season-two/king-dazar-136160.webp",
     "portraitScale": 1,
     "identityVerified": true,
-    "identitySourceUrl": "https://api.gildra.net/v1/game/entities/bf0fb512-432d-423b-ad88-f3a7beb008c7?locale=en_US",
+    "identitySourceUrl": "https://api.wowarcana.com/v1/game/entities/bf0fb512-432d-423b-ad88-f3a7beb008c7?locale=en_US",
     "identityLastVerifiedAt": "2026-09-13T05:40:48.203Z",
     "portraitVerified": true,
     "portraitSourceUrl": "https://wow.zamimg.com/modelviewer/live/webthumbs/npc/128/84352.webp",

@@ -6,7 +6,7 @@ import process from "node:process";
 import sharp from "sharp";
 
 const root = process.cwd();
-const apiBase = String(process.env.API_READINESS_URL ?? "https://api.gildra.net").replace(/\/$/, "");
+const apiBase = String(process.env.API_READINESS_URL ?? "https://api.wowarcana.com").replace(/\/$/, "");
 const inputPath = path.resolve(root, process.env.MYTHIC_MEDIA_INVENTORY ?? "docs/reports/wow/mythic-media-inventory.json");
 const outputPath = path.resolve(root, process.env.MYTHIC_MEDIA_REPORT ?? "docs/reports/wow/mythic-media-verification.json");
 const strict = process.argv.includes("--strict");

@@ -106,11 +106,11 @@ reload_nginx() {
 smoke_checks() {
   for path in $smoke_paths; do
     curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 20 \
-      --resolve gildra.net:443:127.0.0.1 "https://gildra.net$path" >/dev/null ||
+      --resolve wowarcana.com:443:127.0.0.1 "https://wowarcana.com$path" >/dev/null ||
       { printf 'deploy-web: smoke check failed: %s\n' "$path" >&2; return 1; }
   done
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/readyz >/dev/null ||
+    --resolve api.wowarcana.com:443:127.0.0.1 https://api.wowarcana.com/readyz >/dev/null ||
     { printf 'deploy-web: smoke check failed: api readyz\n' >&2; return 1; }
 }
 

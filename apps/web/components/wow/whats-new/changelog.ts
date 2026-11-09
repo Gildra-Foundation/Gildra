@@ -1,5 +1,5 @@
 /**
- * Player-facing changelog (roadmap item 99). Only what shipped to gildra.net, in
+ * Player-facing changelog (roadmap item 99). Only what shipped to wowarcana.com, in
  * plain words; the technical journal of the same releases is docs/releases.md.
  * Newest first. Each change: kind + text in both languages.
  */

@@ -7,7 +7,7 @@ async function session(upstream: () => Promise<Response>) {
   globalThis.fetch = (async () => upstream()) as typeof fetch;
   try {
     const { GET } = await import("../../components/api-console/sessionRoute.ts");
-    return await GET(new Request("https://api.gildra.net/api-console/session", { headers: { cookie: "gildra_session=x" } }));
+    return await GET(new Request("https://api.wowarcana.com/api-console/session", { headers: { cookie: "gildra_session=x" } }));
   } finally { globalThis.fetch = realFetch; }
 }
 

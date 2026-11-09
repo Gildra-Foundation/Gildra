@@ -112,7 +112,7 @@ func (f *MediaFetcher) fetchOne(ctx context.Context, endpoint string) (MediaAsse
 	if err != nil {
 		return MediaAsset{}, err
 	}
-	request.Header.Set("User-Agent", "Gildra-LoL-Catalog/1.0 (+https://gildra.net)")
+	request.Header.Set("User-Agent", "Gildra-LoL-Catalog/1.0 (+https://wowarcana.com)")
 	response, err := f.client.Do(request)
 	if err != nil {
 		return MediaAsset{}, err

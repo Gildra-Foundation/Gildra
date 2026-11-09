@@ -1,6 +1,6 @@
 /**
  * Canonical console URLs.  The Next.js route is /api-console/[...consolePath]
- * and nginx maps the short api.gildra.net paths (/datasets, /api, /system,
+ * and nginx maps the short api.wowarcana.com paths (/datasets, /api, /system,
  * /catalog) onto it, so every internal link uses the /api-console prefix and
  * works both behind nginx and on the web origin.
  */

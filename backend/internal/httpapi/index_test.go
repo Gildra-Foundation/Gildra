@@ -16,7 +16,7 @@ func TestAPIIndexAdvertisesCanonicalRetailBase(t *testing.T) {
 	if !ok {
 		t.Fatalf("GetAPIIndex response type = %T", response)
 	}
-	const base = "https://api.gildra.net/world-of-warcraft/retail/v1"
+	const base = "https://api.wowarcana.com/world-of-warcraft/retail/v1"
 	if index.Rest != base+"/" || index.Catalog != base+"/game/entities" || index.Library != base+"/library/datasets" {
 		t.Fatalf("API index does not advertise canonical retail base: %#v", index)
 	}
@@ -46,7 +46,7 @@ func TestAPIIndexAdvertisesTheRequestedEditionBase(t *testing.T) {
 			if !ok {
 				t.Fatalf("GetAPIIndex response type = %T", response)
 			}
-			want := "https://api.gildra.net/world-of-warcraft/" + tt.edition + "/v1"
+			want := "https://api.wowarcana.com/world-of-warcraft/" + tt.edition + "/v1"
 			if index.Rest != want+"/" || index.Catalog != want+"/game/entities" || index.Library != want+"/library/datasets" {
 				t.Fatalf("API index for %s = %#v, want base %s", tt.product, index, want)
 			}

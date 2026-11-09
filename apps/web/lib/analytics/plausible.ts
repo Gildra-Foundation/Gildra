@@ -2,7 +2,7 @@
  * Public Plausible CE tracker settings (server-controlled, opt-in).
  *
  *   PLAUSIBLE_SCRIPT_URL   full URL of the CE tracker, e.g. https://plausible.example.net/js/script.js
- *   PLAUSIBLE_SITE_DOMAIN  site id registered in Plausible CE, e.g. gildra.net
+ *   PLAUSIBLE_SITE_DOMAIN  site id registered in Plausible CE, e.g. wowarcana.com
  *   PLAUSIBLE_API_URL      optional event endpoint (`data-api`), a same-site path such as
  *                          /stats/api/event or an https URL; lets the site proxy Plausible
  *                          under its own domain instead of exposing the CE host

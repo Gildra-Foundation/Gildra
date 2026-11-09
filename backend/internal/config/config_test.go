@@ -14,7 +14,7 @@ func TestLoadValidatesRequiredSettings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.IndexNowHost != "gildra.net" {
+	if cfg.IndexNowHost != "wowarcana.com" {
 		t.Fatalf("unexpected IndexNow host: %s", cfg.IndexNowHost)
 	}
 	if cfg.CatalogRecoveryPolicy != "off_host" {

@@ -8,7 +8,7 @@
  * must render their "unavailable" states instead of failing.
  *
  *   npm run build && npm run smoke:routes            # starts `next start` itself
- *   SMOKE_URL=https://gildra.net npm run smoke:routes # or checks a running site
+ *   SMOKE_URL=https://wowarcana.com npm run smoke:routes # or checks a running site
  */
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
@@ -22,7 +22,7 @@ const nextBin = createRequire(import.meta.url).resolve("next/dist/bin/next");
 
 const port = Number(process.env.SMOKE_PORT ?? 3199);
 const origin = process.env.SMOKE_URL ?? `http://127.0.0.1:${port}`;
-// A local build pointed at the public API (API_INTERNAL_URL=https://api.gildra.net)
+// A local build pointed at the public API (API_INTERNAL_URL=https://api.wowarcana.com)
 // proxies /v1/* with the local Host header, which Cloudflare refuses (403, so the
 // rewrite answers 500). Production (internal http://api:8080) and CI (no API) do
 // not proxy that way, so those requests are not counted here.

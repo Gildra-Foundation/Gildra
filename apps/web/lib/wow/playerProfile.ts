@@ -101,7 +101,7 @@ async function raiderIoBestRuns(key: PlayerKey): Promise<RaiderIoRun[]> {
     const params = new URLSearchParams({ region: key.region, realm: key.realm, name: key.name, fields: "mythic_plus_best_runs" });
     const response = await fetch(`https://raider.io/api/v1/characters/profile?${params}`, {
       cache: "no-store",
-      headers: { accept: "application/json", "user-agent": "Gildra (+https://gildra.net)" },
+      headers: { accept: "application/json", "user-agent": "Gildra (+https://wowarcana.com)" },
       signal: AbortSignal.timeout(5_000),
     });
     if (!response.ok) { await response.body?.cancel(); return []; }

@@ -10,7 +10,7 @@
 // Smoothness: scroll each page top to bottom with the CPU slowed 4× and add up
 // the main-thread long tasks (> 50 ms) — at most 300 ms blocked, none over 150 ms.
 // (Frame pacing itself is not measurable in headless Chrome on a busy host.)
-//   npm run qa:motion [-- --base https://gildra.net --routes /ru/wow,/wow/raids]
+//   npm run qa:motion [-- --base https://wowarcana.com --routes /ru/wow,/wow/raids]
 import { chromium } from "playwright";
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((pairs, arg, index, all) => {

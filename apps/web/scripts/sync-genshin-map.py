@@ -39,7 +39,7 @@ MAP_NAMES = {
 
 
 def fetch_json(url: str) -> tuple[bytes, dict[str, object]]:
-    request = Request(url, headers={"User-Agent": "Gildra-Genshin-MapSync/1.0 (+https://api.gildra.net)"})
+    request = Request(url, headers={"User-Agent": "Gildra-Genshin-MapSync/1.0 (+https://api.wowarcana.com)"})
     last_error: Exception | None = None
     for attempt in range(RETRIES):
         try:

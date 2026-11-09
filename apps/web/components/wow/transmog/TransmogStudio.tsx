@@ -448,7 +448,7 @@ export function TransmogStudio({ lang, hero }: { lang: Lang; hero: ReactNode }) 
                     {state.title ? <span className={styles.captionTitle}>{state.title}</span> : null}
                   </span>
                 ) : null}
-                {state.mark ? <span className={styles.mark} aria-hidden="true">GILDRA.NET</span> : null}
+                {state.mark ? <span className={styles.mark} aria-hidden="true">WOWARCANA.COM</span> : null}
                 {stage.status === "loading" ? (
                   <div className={styles.loader} data-over-poster={poster ? "" : undefined} role="status" data-stage-pill>
                     <span className={styles.loaderRing} style={{ "--progress": `${Math.max(3, stage.progress)}%` } as CSSProperties} aria-hidden="true" />

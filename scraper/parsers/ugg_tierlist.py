@@ -20,7 +20,7 @@ from urllib.parse import urlsplit
 DATA_HOST = "stats2.u.gg"
 DATA_BASE = f"https://{DATA_HOST}/wow/builds"
 PAGE_BASE = "https://u.gg/wow/tier-list"
-USER_AGENT = "GildraDatasetBot/1.0 (+https://gildra.net)"
+USER_AGENT = "GildraDatasetBot/1.0 (+https://wowarcana.com)"
 # Highest data version seen on 2026-10-24; discovery only walks upward from it.
 MIN_DATA_VERSION = 37
 MAX_VERSION_PROBES = 12

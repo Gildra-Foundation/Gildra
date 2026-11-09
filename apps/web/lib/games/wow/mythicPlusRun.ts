@@ -40,7 +40,7 @@ const fetchRun = unstable_cache(async (season: string, id: number): Promise<RunD
   if (!takeRaiderIoSlot()) throw new Busy("Raider.IO run budget spent");
   const response = await fetch(`${upstream}?season=${encodeURIComponent(season)}&id=${id}`, {
     cache: "no-store",
-    headers: { accept: "application/json", "user-agent": "Gildra (+https://gildra.net)" },
+    headers: { accept: "application/json", "user-agent": "Gildra (+https://wowarcana.com)" },
     signal: AbortSignal.timeout(timeoutMs),
   });
   if (response.status === 429) {

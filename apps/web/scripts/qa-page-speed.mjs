@@ -1,11 +1,11 @@
 // Page-speed breakdown: per route, desktop (host network) and phone (Slow 4G, 4x CPU),
 // cold (fresh context) and warm (same context, second visit) loads, plus client-side
-// transitions. Usage: BASE_URL=https://gildra.net PERF_LABEL=before node scripts/qa-page-speed.mjs
+// transitions. Usage: BASE_URL=https://wowarcana.com PERF_LABEL=before node scripts/qa-page-speed.mjs
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
 
-const base = process.env.BASE_URL || "https://gildra.net";
+const base = process.env.BASE_URL || "https://wowarcana.com";
 const label = process.env.PERF_LABEL || "baseline";
 const runs = Number(process.env.PERF_RUNS || 2);
 const only = process.env.PERF_ONLY ? new Set(process.env.PERF_ONLY.split(",")) : null;

@@ -28,7 +28,7 @@ RETRIES = 3
 
 
 def fetch(url: str) -> bytes:
-    request = Request(url, headers={"User-Agent": "Gildra-Genshin-QuestSync/1.0 (+https://api.gildra.net)"})
+    request = Request(url, headers={"User-Agent": "Gildra-Genshin-QuestSync/1.0 (+https://api.wowarcana.com)"})
     last_error: Exception | None = None
     for attempt in range(RETRIES):
         try:

@@ -133,7 +133,7 @@ describe("talent import box", () => {
   const game = encodeWoWTalentLoadout(data, ranksOf([["class-1", 1], ["spec-21", 1], ["spec-22", 2]]), new Map());
 
   it("accepts an in-game string, a Gildra link, a calculator link and JSON", () => {
-    for (const input of [game, `  ${game}\n`, `https://gildra.net/talents/arms-warrior?build=${encodeURIComponent(game)}`, `https://www.wowhead.com/talent-calc/blizzard/${game}`, JSON.stringify({ build: game })]) {
+    for (const input of [game, `  ${game}\n`, `https://wowarcana.com/talents/arms-warrior?build=${encodeURIComponent(game)}`, `https://www.wowhead.com/talent-calc/blizzard/${game}`, JSON.stringify({ build: game })]) {
       const result = parseBuildInput(data, input);
       assert.equal(result.kind, "ok", input);
       if (result.kind === "ok") assert.equal(result.loadout.ranks.get("spec-22"), 2);

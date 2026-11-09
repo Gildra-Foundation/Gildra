@@ -21,7 +21,7 @@ const publicationSafeIds = new Set(manifest.abilities
 const rows = publishedOnly
   ? candidates.filter((row) => publishedIds.has(row.spellId) && publicationSafeIds.has(row.spellId))
   : candidates;
-const apiBase = String(process.env.API_READINESS_URL ?? "https://api.gildra.net").replace(/\/$/, "");
+const apiBase = String(process.env.API_READINESS_URL ?? "https://api.wowarcana.com").replace(/\/$/, "");
 const outputPath = path.resolve(root, process.env.RAID_ABILITY_REPORT ?? "docs/reports/wow/raid-ability-verification.json");
 const strict = process.argv.includes("--strict");
 const publicationGuardIssues = [

@@ -68,7 +68,7 @@ func TestValidateDisplayRequiresItemMediaOnlyWhenTheRecordLacksIt(t *testing.T) 
 		"name":                "Bright Linen Spellthread",
 		"description":         "Verified description.",
 		"resolvedDescription": "Verified description.",
-		"iconUrl":             "https://api.gildra.net/v1/media/example",
+		"iconUrl":             "https://api.wowarcana.com/v1/media/example",
 	}
 	if err := validateDisplay(payload, "item", true); err != nil {
 		t.Fatalf("verified item media was rejected: %v", err)

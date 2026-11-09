@@ -101,7 +101,7 @@ func Load() (Config, error) {
 		RedisAddr:              envOr("REDIS_ADDR", "redis:6379"),
 		RedisPassword:          os.Getenv("REDIS_PASSWORD"),
 		IndexNowKey:            os.Getenv("INDEXNOW_KEY"),
-		IndexNowHost:           envOr("INDEXNOW_HOST", "gildra.net"),
+		IndexNowHost:           envOr("INDEXNOW_HOST", "wowarcana.com"),
 		SentryDSN:              os.Getenv("SENTRY_DSN"),
 		SentryEnvironment:      sentryEnvironment,
 		SentryTracesSampleRate: tracesSampleRate,
