@@ -148,8 +148,6 @@ export class WorldMapEngine {
   private lookAt: [number, number] | null = null;
   /** The way the reader last zoomed (1 in, −1 out; 0 after a drag or a flight): at rest it still counts. */
   private zoomIntent = 0;
-  /** The pointer over the map (mouse/pen), for the hover name once a move ends. */
-  private pointerAt: { x: number; y: number; target: HTMLElement } | null = null;
   private pointers = new Map<number, Pointer>();
   private gesture: { distance: number; mid: [number, number]; moved: number; start: [number, number]; startTime: number; samples: Array<{ t: number; x: number; y: number }> } | null = null;
   private lastTap: { t: number; x: number; y: number } | null = null;
@@ -750,9 +748,8 @@ export class WorldMapEngine {
       if (!this.lastInfo || this.disposed) return;
       if (this.moving) { this.scheduleSettle(); return; }
       this.events.settle(this.lastInfo);
-      // The name under a resting pointer, now that the view stands still.
-      const at = this.pointerAt;
-      if (at && !this.pointers.size) this.updateHover(at.x, at.y, at.target);
+      // (The name under the pointer comes back when the pointer moves, not by itself under a resting one: after a
+      // wheel zoom a zone's name would otherwise pop up over the map the reader just zoomed to.)
     }, 260);
   }
 
@@ -1517,6 +1514,11 @@ export class WorldMapEngine {
         // era just switched) calm parchment stands in — never an empty void, never its picture blown up.
         if (tone >= 0.999) {
           if (!washed) this.drawPaper(entry, alpha);
+          // Zooming out, the parent of the map in view is the next to show whole: its picture is asked for ahead
+          // (only asked for, not drawn), so it comes in sharp rather than from its coarsest level.
+          if ((this.zoomDir || this.zoomIntent) < 0 && focus && entry.map.id === focus.parent && entry.map.art) {
+            this.drawArt(entry.map, entry.map.art, entry.screen, entry.clip, { alpha: 0, light: 0, cloud: 0, water: 0, desat: 0, levelScale: 1 }, now, moving, true);
+          }
           continue;
         }
         // The map in view becomes the backdrop as soon as the zoom goes into one of its places: its wash is made ahead.
@@ -1841,7 +1843,7 @@ export class WorldMapEngine {
     };
     on("pointerup", release);
     on("pointercancel", release);
-    on("pointerleave", (event) => { if (event.pointerType === "mouse" && !this.pointers.size) { this.pointerAt = null; this.setHover(null); } });
+    on("pointerleave", (event) => { if (event.pointerType === "mouse" && !this.pointers.size) this.setHover(null); });
     on("wheel", (event) => {
       if ((event.target as HTMLElement).closest("[data-map-ui-scroll]")) return;
       event.preventDefault();
@@ -1926,7 +1928,6 @@ export class WorldMapEngine {
   }
 
   private updateHover(x: number, y: number, target: HTMLElement) {
-    this.pointerAt = { x, y, target };
     // No names while the view moves under a resting pointer: they come back once it settles.
     if (this.moving) { this.setHover(null); return; }
     if (target.closest("[data-map-ui]")) { this.setHover(null); return; }
