@@ -164,7 +164,7 @@
       "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/101/index.json",
       "empty": "/maps/terrain/101/empty.json",
-      "ocean": "#405050",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 24576,
       "height": 18944,
@@ -644,31 +644,31 @@
       "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/101/index.json",
       "empty": "/maps/terrain/101/empty.json",
-      "ocean": "#405050",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 24576,
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -5.199634,
+        -5.199633,
         -6.137383,
-        1.089058,
-        1.132005
+        1.089057,
+        1.132004
       ]
     },
     "94": {
       "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/101/index.json",
       "empty": "/maps/terrain/101/empty.json",
-      "ocean": "#405050",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 24576,
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -3.076989,
-        -0.860387,
-        2.120982,
+        -3.076988,
+        -0.860386,
+        2.120981,
         5.149699
       ]
     },
@@ -676,15 +676,15 @@
       "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/101/index.json",
       "empty": "/maps/terrain/101/empty.json",
-      "ocean": "#405050",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 24576,
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -4.833333,
-        -2.545454,
-        2.924244,
+        -4.833332,
+        -2.545453,
+        2.924243,
         6.424244
       ]
     },
@@ -692,15 +692,15 @@
       "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/101/index.json",
       "empty": "/maps/terrain/101/empty.json",
-      "ocean": "#405050",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 24576,
       "height": 18944,
       "maxZoom": 7,
       "rect": [
         -4.799625,
-        -0.134274,
-        2.894804,
+        -0.134273,
+        2.894803,
         8.759628
       ]
     },
@@ -708,48 +708,48 @@
       "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/101/index.json",
       "empty": "/maps/terrain/101/empty.json",
-      "ocean": "#405050",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 24576,
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -20.565521,
-        -24.800136,
-        3.659232,
-        3.202814
+        -20.565519,
+        -24.800133,
+        3.65923,
+        3.202813
       ]
     },
     "106": {
       "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/101/index.json",
       "empty": "/maps/terrain/101/empty.json",
-      "ocean": "#405050",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 24576,
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -6.3576,
-        -6.724148,
-        1.489145,
-        2.348663
+        -6.357599,
+        -6.724147,
+        1.489144,
+        2.348662
       ]
     },
     "110": {
       "url": "/maps/terrain/101/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/101/index.json",
       "empty": "/maps/terrain/101/empty.json",
-      "ocean": "#405050",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 24576,
       "height": 18944,
       "maxZoom": 7,
       "rect": [
-        -14.088306,
-        -4.602322,
-        7.043226,
-        19.857668
+        -14.088304,
+        -4.60232,
+        7.043224,
+        19.857667
       ]
     },
     "1462": {
@@ -1331,9 +1331,10 @@
     },
     "101": {
       "mapId": 530,
+      "blockPixels": 512,
       "blocks": 713,
       "tiles": 3873,
-      "bytes": 12273198
+      "bytes": 20438215
     },
     "572": {
       "mapId": 1116,
