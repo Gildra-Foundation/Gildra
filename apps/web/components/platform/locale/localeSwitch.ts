@@ -5,6 +5,9 @@
  * document (localeArrivalScript.ts) restores it before the first paint.
  */
 export const LOCALE_SWITCH_KEY = "gildra-locale-switch";
+/** The old page's dissolve (data-locale-leaving) and the new page's resolve (data-locale-arrival), localeTransition.css. */
+export const LOCALE_LEAVE_MS = 200;
+export const LOCALE_ARRIVAL_MS = 350;
 /** A stored position older than this belongs to an abandoned switch. */
 export const LOCALE_SWITCH_TTL_MS = 15000;
 

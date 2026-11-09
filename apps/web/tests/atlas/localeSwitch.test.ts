@@ -69,21 +69,25 @@ describe("locale arrival script", () => {
     const record = { to: "/ru/wow/raids", at: Date.now(), y: 900, path: [[0, "SECTION"]], top: 80, hash: "#timers" };
     const page = arrive({ path: "/ru/wow/raids", record });
     assert.equal(page.storage.size, 0, "the record is used once");
-    assert.equal(page.dataset.localeArrival, "");
+    assert.equal(page.dataset.localeArrival, undefined, "nothing moves before the first frame");
     page.listeners.pagereveal({});
+    assert.equal(page.dataset.localeArrival, "0", "the switch was just made: the content resolves from almost clear");
+    const later = arrive({ path: "/ru/wow/raids", record: { ...record, at: Date.now() - 500 } });
+    later.listeners.pagereveal({});
+    assert.equal(later.dataset.localeArrival, "4", "the old page had fully dissolved: the new one resolves from there");
     assert.deepEqual(page.scrolls, [1420], "the anchored section sits 80 px below the viewport top again");
     assert.deepEqual(page.replaced, ["/ru/wow/raids#timers"]);
   });
 
-  it("leaves other full loads and less motion still", () => {
+  it("leaves other full loads alone and less motion still", () => {
     const other = arrive({ path: "/ru/wow/raids" });
     assert.equal(other.dataset.localeArrival, undefined);
     other.listeners.pagereveal({});
     assert.deepEqual(other.scrolls, []);
 
     const still = arrive({ path: "/wow/raids", reduced: true, record: { to: "/wow/raids", at: Date.now(), y: 900, path: [], top: 0, hash: "" } });
-    assert.equal(still.dataset.localeArrival, undefined, "less motion: no fade");
     still.listeners.pagereveal({});
+    assert.equal(still.dataset.localeArrival, "still", "less motion: a plain short fade");
     assert.deepEqual(still.scrolls, [900], "the position is still restored");
   });
 
@@ -92,6 +96,7 @@ describe("locale arrival script", () => {
     assert.equal(stale.dataset.localeArrival, undefined);
     const older = arrive({ path: "/ru/wow/raids", pageReveal: false, record: { to: "/ru/wow/raids", at: Date.now(), y: 900, path: [], top: 0, hash: "" } });
     assert.equal(older.listeners.pagereveal, undefined);
+    assert.equal(older.dataset.localeArrival, "0", "without pagereveal the mark is set at once");
     older.documentListeners.DOMContentLoaded({});
     assert.deepEqual(older.scrolls, [900]);
   });
