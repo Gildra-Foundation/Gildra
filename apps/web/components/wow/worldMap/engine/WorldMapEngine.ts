@@ -814,17 +814,17 @@ export class WorldMapEngine {
     }
   }
 
-  /** At rest off its pin (a drag past the edge, a place newly in view): the view springs inside (~0.1 s). Returns whether it moved. */
+  /** At rest off its pin (a drag past the edge, a place newly in view): the view springs inside (~0.07 s time constant). Returns whether it moved. */
   private springBack(dt: number, now: number) {
     // (Not on the frame the map in view has just changed: only once it has stayed a moment — never a pull towards a
     // map that was in view for a frame.)
     if (this.flight || this.wheel || this.pointers.size || this.pending || now - this.focusSince < 250) return false;
     const off = this.pinOff(this.camera);
     if (!off || (!off.x && !off.y)) return false;
-    const k = this.options.reducedMotion ? 1 : 1 - Math.exp(-dt / 90);
+    const k = this.options.reducedMotion ? 1 : 1 - Math.exp(-dt / 70);
     const px = Math.hypot(off.x, off.y) * this.camera.scale;
-    this.camera = px < 0.4 ? { ...this.camera, x: this.camera.x - off.x, y: this.camera.y - off.y } : { ...this.camera, x: this.camera.x - off.x * k, y: this.camera.y - off.y * k };
-    if (px < 0.4) this.scheduleSettle();
+    this.camera = px < 1 ? { ...this.camera, x: this.camera.x - off.x, y: this.camera.y - off.y } : { ...this.camera, x: this.camera.x - off.x * k, y: this.camera.y - off.y * k };
+    if (px < 1) this.scheduleSettle();
     return true;
   }
 
