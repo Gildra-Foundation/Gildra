@@ -106,3 +106,53 @@ The retail source for this generation is **12.1.5.70783**, Mists is
 ten retail continent pyramids remain from their previously recorded build;
 only the new pyramids use the new source. Source namespaces and actual builds
 are listed in TERRAIN-COVERAGE.md.
+
+## MAPD4 — native reconstruction and bilingual terrain labels (2026-11-09)
+
+The new generation encodes deepest tiles at **WebP q85**, coarse tiles at q80.
+Every coarse level is a BOX/area average of the **native lossless pixels**,
+not a decoded WebP or the previous pyramid level. The complete native image
+is decoded once; area sampling over it avoids independent filter edges at
+256 px boundaries. Mixed-resolution blocks use bilinear reconstruction on
+the finest native grid rather than nearest-neighbour pixel replication.
+This adds no synthetic terrain detail. The temporary `.native` PNG directory
+is removed after each pyramid; downloaded minimap BLPs are removed between
+shared instances by the generation runner.
+
+The dot/checker pattern near Ashenvale/Orgrimmar exists in the original
+512 px DXT BLP itself. Source block (38,28), retail MapID 1, was decoded
+without WebP and visually checked. Adjacent native ADTs have real texture
+changes (mean RGB edge delta 6.46 horizontal / 5.68 vertical on the checked
+four-block sample). No pixels are duplicated as gutters or deleted at edges.
+A q70→q85 comparison on that native sample improved PSNR 33.38→35.95 dB;
+compression-induced boundary error MAE decreased 7.06→5.10 RGB levels.
+Lossless WebP was 289,526 bytes, WebP q85 51,520 and AVIF q85 71,063 for the
+512 px sample. The engine's generic URL/createImageBitmap loader can decode
+AVIF; this generation keeps WebP, whose tested q85 result is smaller.
+The benchmark is sample-specific, not a guarantee that all native ADT seams
+vanish: the client's own DXT texture discontinuities remain.
+
+`test_terrain.py` checks a continuous generated source across ADT/256 px
+boundaries, opaque alpha, and sampled horizontal/vertical neighbours in the
+actual Kalimdor package. The real-data tolerance compares the edge delta
+against the neighbouring texture gradients, not equality of different
+texels; duplicated borders would shift the world grid.
+
+`painted-label-text.json` records verified `{en,ru}` text anchored by client
+picture URL, label index and exact normalized box. Source names come from
+AreaTable and WMOAreaTable in the TACT/CASC client files. Zone sub-areas use
+WorldMapOverlay hit boxes; texture-bounds matches also require strong OCR
+agreement. Capitals and a zone sample were manually compared with client
+art; current and historical capital layouts are reviewed separately.
+No automatic nearest-name guesses are published for unresolved boxes.
+
+Run `label_text.py` **after** annotate.py, labels.py and mask refinements.
+It rejects missing/moved boxes rather than attaching names to changed
+artwork. The registry's source metadata is build documentation; only `text`
+is copied into runtime art. `test_label_text.py` checks both languages in
+capitals, exact Dornogal names and registry agreement across every era.
+Unresolved boxes and overall coverage are reported in TERRAIN-COVERAGE.md.
+
+Asset URLs are retained. The application caches `/maps/*` for 24 hours plus
+stale revalidation. An authorized release must purge updated terrain URLs
+or version them; this data task performs neither cache purges nor deployment.

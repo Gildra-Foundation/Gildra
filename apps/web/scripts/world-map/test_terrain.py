@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from PIL import Image
-from terrain import block_box, blocks_in, wdt_minimaps, build_pyramid
+from terrain import block_box, wdt_minimaps, build_pyramid
 from publish_terrain import reproject
 
 
@@ -83,6 +83,40 @@ class EdgeTest(unittest.TestCase):
                     self.assertTrue((b[:,0,3]==255).all())
                     self.assertLess(np.abs(a[:,-1,:3]-b[:,0,:3]).mean(),4)
             self.assertFalse((root/'.native').exists())
+
+class PackagedEdgeTest(unittest.TestCase):
+    def test_sampled_kalimdor_neighbours_have_no_added_border_stripe(self):
+        import numpy as np
+        import json
+        from terrain import TERRAIN_DIR
+        root = TERRAIN_DIR / '12'
+        index = json.loads((root / 'index.json').read_text())
+        level = max(map(int, index))
+        tiles = set(index[str(level)])
+        checked = 0
+        for key in sorted(tiles)[::97]:
+            x, y = map(int, key.split('_'))
+            for dx, dy in [(1, 0), (0, 1)]:
+                neighbour = f'{x+dx}_{y+dy}'
+                if neighbour not in tiles:
+                    continue
+                with Image.open(root / str(level) / f'{key}.webp') as im:
+                    a = np.asarray(im.convert('RGBA'), dtype=float)
+                with Image.open(root / str(level) / f'{neighbour}.webp') as im:
+                    b = np.asarray(im.convert('RGBA'), dtype=float)
+                if dx:
+                    edge_a, inside_a, edge_b, inside_b = a[:,-1], a[:,-2], b[:,0], b[:,1]
+                else:
+                    edge_a, inside_a, edge_b, inside_b = a[-1], a[-2], b[0], b[1]
+                if not ((edge_a[:,3] == 255).all() and (edge_b[:,3] == 255).all()):
+                    continue  # genuine coastline / missing source alpha
+                edge = np.abs(edge_a[:,:3] - edge_b[:,:3]).mean()
+                local = (np.abs(edge_a[:,:3] - inside_a[:,:3]).mean() + np.abs(edge_b[:,:3] - inside_b[:,:3]).mean()) / 2
+                # Neighbours are different texels, not duplicated gutters. Compare
+                # with their real texture gradients, allowing codec/source noise.
+                self.assertLess(edge, local + 12, f'{key} → {neighbour}: {edge:.2f}/{local:.2f}')
+                checked += 1
+        self.assertGreaterEqual(checked, 20)
 
 if __name__ == '__main__':
     unittest.main()
