@@ -117,13 +117,13 @@ async function mask(url, art) {
 async function terrainPyramid(map) {
   const t = map.terrain;
   if (!t) return;
-  const index = {};
+  const index = {}, empty = {};
   for (let z = 0; z <= t.maxZoom; z++) {
     const scale = 2 ** (t.maxZoom - z);
     const cols = Math.ceil(t.width / scale / t.tileSize), rows = Math.ceil(t.height / scale / t.tileSize);
-    index[z] = [];
+    index[z] = []; empty[z] = [];
     for (let ty = 0; ty < rows; ty++) for (let tx = 0; tx < cols; tx++) {
-      if (z === t.maxZoom && Math.hypot((tx + 0.5) / cols - 0.5, (ty + 0.5) / rows - 0.5) > 0.5) continue;
+      if (z === t.maxZoom && Math.hypot((tx + 0.5) / cols - 0.5, (ty + 0.5) / rows - 0.5) > 0.5) { empty[z].push(`${tx}_${ty}`); continue; }
       const px = Buffer.alloc(t.tileSize * t.tileSize * 3);
       for (let y = 0; y < t.tileSize; y++) for (let x = 0; x < t.tileSize; x++) {
         const h = fbm((tx * t.tileSize + x) * scale / 300, (ty * t.tileSize + y) * scale / 300, map.id);
@@ -135,6 +135,7 @@ async function terrainPyramid(map) {
       index[z].push(`${tx}_${ty}`);
     }
   }
+  if (t.empty) fs.writeFileSync(path.join(out, t.empty.replace(/^\//, "")), JSON.stringify(empty));
   if (t.index) fs.writeFileSync(path.join(out, t.index.replace(/^\//, "")), JSON.stringify(index));
 }
 
@@ -146,6 +147,7 @@ for (const map of maps) {
 for (const era of eras) {
   for (const [id, value] of Object.entries(era.maps)) {
     if (!value || typeof value !== "object" || value.absent) continue;
+    if (value.terrain) await terrainPyramid({ id: Number(id), terrain: value.terrain });
     const art = "url" in value ? value : value.art;
     if (!art) continue;
     const map = maps.find((m) => m.id === Number(id));

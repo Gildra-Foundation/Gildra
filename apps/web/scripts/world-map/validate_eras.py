@@ -95,6 +95,18 @@ def main() -> None:
         nodes = resolve_era(eras, retail, era["id"])
         index = ORDER.index(era["id"]) if era["id"] in ORDER else ORDER.index(era["inherits"])
         problems = []
+        # (i) native terrain and sparse metadata (old manifests stay valid).
+        for key, node in nodes.items():
+            terrain = node.get("terrain")
+            if not terrain:
+                continue
+            if index < 3 and key in (12, 13) and "/classic/" not in terrain["url"]:
+                problems.append(f"post-Cataclysm terrain on {key}")
+            if terrain.get("ocean") and not re.fullmatch(r"#[0-9a-fA-F]{6}", terrain["ocean"]):
+                problems.append(f"invalid ocean of {key}")
+            for field in ("index", "empty"):
+                if terrain.get(field) and not (PUBLIC / terrain[field].lstrip("/")).exists():
+                    problems.append(f"missing terrain {field} of {key}")
         # (a) rects
         for key, node in nodes.items():
             parent = nodes.get(node.get("parentId"))
