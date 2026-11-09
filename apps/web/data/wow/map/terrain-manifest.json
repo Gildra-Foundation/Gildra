@@ -67,6 +67,8 @@
     "619": {
       "url": "/maps/terrain/619/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/619/index.json",
+      "empty": "/maps/terrain/619/empty.json",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 13824,
       "height": 12288,
@@ -76,9 +78,7 @@
         -0.016286,
         0.865269,
         1.002918
-      ],
-      "empty": "/maps/terrain/619/empty.json",
-      "ocean": "#483858"
+      ]
     },
     "875": {
       "url": "/maps/terrain/875/{z}/{x}_{y}.webp",
@@ -1296,9 +1296,10 @@
     },
     "619": {
       "mapId": 1220,
+      "blockPixels": 512,
       "blocks": 648,
       "tiles": 3467,
-      "bytes": 6975404
+      "bytes": 11511137
     },
     "875": {
       "mapId": 1642,
