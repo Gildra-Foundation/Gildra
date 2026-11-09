@@ -58,7 +58,8 @@ function arrive({ path, record, pageReveal = true, reduced = false, streaming = 
     Date,
     JSON,
     Math,
-    setTimeout,
+    setTimeout: (callback: () => void, ms: number) => { const timer = setTimeout(callback, ms); timer.unref?.(); return timer; },
+    clearTimeout,
   };
   if (pageReveal) Object.assign(window, { onpagereveal: null });
   window.window = window;
@@ -68,43 +69,40 @@ function arrive({ path, record, pageReveal = true, reduced = false, streaming = 
 }
 
 describe("locale arrival script", () => {
-  it("restores the anchor before the first frame and fades the content in", () => {
+  it("keeps the arriving content unpainted until it is anchored, then resolves it", () => {
     const record = { to: "/ru/wow/raids", at: Date.now(), y: 900, path: [[0, "SECTION"]], top: 80, hash: "#timers" };
     const page = arrive({ path: "/ru/wow/raids", record });
     assert.equal(page.storage.size, 0, "the record is used once");
-    assert.equal(page.dataset.localeArrival, undefined, "nothing moves before the first frame");
+    assert.equal(page.dataset.localeArrival, "hold", "hidden before the first paint");
     page.listeners.pagereveal({});
-    assert.equal(page.dataset.localeArrival, "0", "the switch was just made: the content resolves from almost clear");
-    const later = arrive({ path: "/ru/wow/raids", record: { ...record, at: Date.now() - 500 } });
-    later.listeners.pagereveal({});
-    assert.equal(later.dataset.localeArrival, "4", "the old page had fully dissolved: the new one resolves from there");
     assert.deepEqual(page.scrolls, [1420], "the anchored section sits 80 px below the viewport top again");
     assert.deepEqual(page.replaced, ["/ru/wow/raids#timers"]);
+    assert.equal(page.dataset.localeArrival, "4", "nothing left to settle: shown at once, resolving");
   });
 
-  it("leaves other full loads alone and less motion still", () => {
+  it("leaves other full loads alone; less motion is anchored too, then fades shortly", () => {
     const other = arrive({ path: "/ru/wow/raids" });
     assert.equal(other.dataset.localeArrival, undefined);
-    other.listeners.pagereveal({});
-    assert.deepEqual(other.scrolls, []);
+    assert.equal(other.listeners.pagereveal, undefined, "no switch, nothing to restore");
 
     const still = arrive({ path: "/wow/raids", reduced: true, record: { to: "/wow/raids", at: Date.now(), y: 900, path: [], top: 0, hash: "" } });
+    assert.equal(still.dataset.localeArrival, "hold");
     still.listeners.pagereveal({});
     assert.equal(still.dataset.localeArrival, "still", "less motion: a plain short fade");
-    assert.deepEqual(still.scrolls, [900], "the position is still restored");
+    assert.deepEqual(still.scrolls, [900, 900], "the position is restored, and again once settled");
   });
 
   it("waits for the content when the first frame comes before it", () => {
     const record = { to: "/ru/wow/raids", at: Date.now(), y: 900, path: [[0, "SECTION"]], top: 80, hash: "" };
     const page = arrive({ path: "/ru/wow/raids", record, streaming: true });
     page.listeners.pagereveal({});
-    assert.equal(page.dataset.localeArrival, "hold", "the first frame waits dissolved");
+    assert.equal(page.dataset.localeArrival, "hold", "still hidden");
     assert.deepEqual(page.scrolls, [], "no guess at the position before the content exists");
     assert.ok(page.documentListeners.DOMContentLoaded, "the position is restored once the content is parsed");
     page.ready();
     page.documentListeners.DOMContentLoaded({});
     assert.deepEqual(page.scrolls, [1420], "the anchor is back in place");
-    assert.equal(page.dataset.localeArrival, "0", "and only then the content resolves");
+    assert.equal(page.dataset.localeArrival, "4", "and only then the content is shown");
   });
 
   it("ignores a stale record and restores on DOMContentLoaded without pagereveal", () => {
@@ -112,8 +110,9 @@ describe("locale arrival script", () => {
     assert.equal(stale.dataset.localeArrival, undefined);
     const older = arrive({ path: "/ru/wow/raids", pageReveal: false, record: { to: "/ru/wow/raids", at: Date.now(), y: 900, path: [], top: 0, hash: "" } });
     assert.equal(older.listeners.pagereveal, undefined);
-    assert.equal(older.dataset.localeArrival, "0", "without pagereveal the mark is set at once");
+    assert.equal(older.dataset.localeArrival, "hold");
     older.documentListeners.DOMContentLoaded({});
-    assert.deepEqual(older.scrolls, [900]);
+    assert.deepEqual(older.scrolls, [900, 900]);
+    assert.equal(older.dataset.localeArrival, "4");
   });
 });

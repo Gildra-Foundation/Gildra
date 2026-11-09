@@ -1,51 +1,57 @@
 /* atlas:strict — an EN ↔ RU switch, one movement over two documents (each
    language is a full document load):
    1. the click marks this document data-locale-leaving (LocaleSwitch.tsx): the
-      content dissolves — fades and softens, 200 ms — while the other language
-      loads; the toolbar and the strip above it stay as they are;
+      content fades and a frosted veil settles over it, 200 ms, while the other
+      language loads; the toolbar and the strip above it stay as they are;
    2. the arriving document's head script (localeArrivalScript.ts) marks it
-      data-locale-arrival with how far that dissolve had got (0-4, quarters),
-      ("hold" while a streamed first frame has no content yet), and the content
-   resolves from there in its final layout, 350 ms, while a
-      band of frost light crosses it once ("re-inked" in the other language).
-   Opacity, filter and a transform only: no layout, no shift. Less motion: a
-   plain short fade on arrival ("still"). Less transparency: no blur, no light.
+      data-locale-arrival="hold" before its first paint: the content is not
+      painted at all (no flash of the top of the page, no layout shift counted)
+      under the same veil until its reading position is restored and its fonts
+      and the pictures in view have settled (700 ms at most);
+   3. then "4": the content resolves from the dissolved state in its final
+      layout, 350 ms, the veil lifts, and a band of frost light crosses it once.
+   Opacity and the veil only — never a filter or transform on the content: a
+   filter made it the containing block of every fixed layer of the page, which
+   jumped when it came off (layout shift 0.8). Less motion: hidden until
+   anchored, then a plain short fade ("still"). Less transparency: no veil, no light.
    No cross-document view transition: capturing both pages held the new page's
    first paint back by 0.3-0.7 s on a slow CPU. */
-html { --locale-dissolve-opacity: .32; --locale-dissolve-blur: 3px; }
+html { --locale-dissolve-opacity: .32; }
 
 html[data-locale-leaving] #atlas-content {
   animation: gildra-locale-out var(--atlas-duration) var(--atlas-ease) forwards;
   pointer-events: none;
 }
-@keyframes gildra-locale-out {
-  to { opacity: var(--locale-dissolve-opacity); filter: blur(var(--locale-dissolve-blur)) saturate(.7); }
-}
+@keyframes gildra-locale-out { to { opacity: var(--locale-dissolve-opacity); } }
 
-html[data-locale-arrival] #atlas-content { animation: gildra-locale-in var(--atlas-duration-slow) var(--atlas-ease) both; }
-html[data-locale-arrival="0"] { --locale-from-opacity: .9; --locale-from-blur: .5px; }
-html[data-locale-arrival="1"] { --locale-from-opacity: .72; --locale-from-blur: 1px; }
-html[data-locale-arrival="2"] { --locale-from-opacity: .55; --locale-from-blur: 1.6px; }
-html[data-locale-arrival="3"] { --locale-from-opacity: .42; --locale-from-blur: 2.3px; }
-html[data-locale-arrival="4"] { --locale-from-opacity: var(--locale-dissolve-opacity); --locale-from-blur: var(--locale-dissolve-blur); }
-@keyframes gildra-locale-in {
-  from { opacity: var(--locale-from-opacity); filter: blur(var(--locale-from-blur)) saturate(.7); }
-  /* `none` at the end: a filter left on the content would make it the
-     containing block of every fixed layer inside. */
-  to { opacity: 1; filter: none; }
+/* The frosted veil between the toolbar and the content, on both documents. */
+html[data-locale-leaving]::before,
+html[data-locale-arrival]:not([data-locale-arrival="still"])::before {
+  position: fixed;
+  inset: 0;
+  z-index: 78;
+  content: "";
+  pointer-events: none;
+  background: color-mix(in srgb, var(--atlas-bg) 18%, transparent);
+  -webkit-backdrop-filter: blur(3px) saturate(.7);
+  backdrop-filter: blur(3px) saturate(.7);
 }
+html[data-locale-leaving]::before { animation: gildra-locale-veil-in var(--atlas-duration) var(--atlas-ease) both; }
+html[data-locale-arrival]:not([data-locale-arrival="hold"], [data-locale-arrival="still"])::before {
+  animation: gildra-locale-veil-out var(--atlas-duration-slow) var(--atlas-ease) forwards;
+}
+@keyframes gildra-locale-veil-in { from { opacity: 0; } }
+@keyframes gildra-locale-veil-out { to { opacity: 0; } }
 
-/* The first frame came before the content: it waits dissolved, still, until
-   its reading position is restored (then "4" starts the resolve). */
-html[data-locale-arrival="hold"] #atlas-content {
-  animation: none;
-  opacity: var(--locale-dissolve-opacity);
-  filter: blur(var(--locale-dissolve-blur)) saturate(.7);
-}
+/* Until anchored the arriving content is not painted. */
+html[data-locale-arrival="hold"] #atlas-content { visibility: hidden; }
+
+html[data-locale-arrival="4"] #atlas-content { animation: gildra-locale-in var(--atlas-duration-slow) var(--atlas-ease) both; }
+@keyframes gildra-locale-in { from { opacity: var(--locale-dissolve-opacity); } }
 
 /* The frost light: a soft diagonal band in the theme's accent that crosses
    the reading area once while the new language resolves. */
-html[data-locale-arrival]:not([data-locale-arrival="still"], [data-locale-arrival="hold"])::after {
+html[data-locale-arrival="4"]::after {
   position: fixed;
   inset: 0;
   z-index: 79;
@@ -66,27 +72,26 @@ html[data-locale-arrival]:not([data-locale-arrival="still"], [data-locale-arriva
   100% { opacity: 0; transform: translateX(70%); }
 }
 
-/* Less motion: no dissolve, only a short fade of the arriving content. */
+/* Less motion: no dissolve, no veil; the anchored content fades in shortly. */
 html[data-locale-arrival="still"] #atlas-content { animation: gildra-locale-fade var(--atlas-duration-fast) ease-out both; }
 @keyframes gildra-locale-fade { from { opacity: .7; } }
 @media (prefers-reduced-motion: reduce) {
   html[data-locale-leaving] #atlas-content { animation: none; }
-  html[data-locale-arrival] #atlas-content { animation: gildra-locale-fade var(--atlas-duration-fast) ease-out both; }
-  html[data-locale-arrival]::after { display: none; }
+  html[data-locale-leaving]::before, html[data-locale-arrival]::before, html[data-locale-arrival]::after { display: none; }
+  html[data-locale-arrival="4"] #atlas-content { animation: gildra-locale-fade var(--atlas-duration-fast) ease-out both; }
 }
 html[data-motion="reduced"][data-locale-leaving] #atlas-content { animation: none; }
-html[data-motion="reduced"][data-locale-arrival] #atlas-content { animation: gildra-locale-fade var(--atlas-duration-fast) ease-out both; }
+html[data-motion="reduced"][data-locale-leaving]::before,
+html[data-motion="reduced"][data-locale-arrival]::before,
 html[data-motion="reduced"][data-locale-arrival]::after { display: none; }
 
-/* Less transparency: the content only fades; no blur, no light. */
+/* Less transparency: the content only fades; no veil, no light. */
 @media (prefers-reduced-transparency: reduce) {
-  html { --locale-dissolve-blur: 0px; }
-  html[data-locale-arrival] { --locale-from-blur: 0px; }
-  html[data-locale-arrival]::after { display: none; }
+  html[data-locale-leaving]::before, html[data-locale-arrival]::before, html[data-locale-arrival]::after { display: none; }
 }
-html[data-transparency="reduced"] { --locale-dissolve-blur: 0px; }
-html[data-transparency="reduced"][data-locale-arrival] { --locale-from-blur: 0px; }
+html[data-transparency="reduced"][data-locale-leaving]::before,
+html[data-transparency="reduced"][data-locale-arrival]::before,
 html[data-transparency="reduced"][data-locale-arrival]::after { display: none; }
 @media (forced-colors: active) {
-  html[data-locale-arrival]::after { display: none; }
+  html[data-locale-leaving]::before, html[data-locale-arrival]::before, html[data-locale-arrival]::after { display: none; }
 }

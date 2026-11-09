@@ -5,9 +5,12 @@
  * document (localeArrivalScript.ts) restores it before the first paint.
  */
 export const LOCALE_SWITCH_KEY = "gildra-locale-switch";
-/** The old page's dissolve (data-locale-leaving) and the new page's resolve (data-locale-arrival), localeTransition.css. */
-export const LOCALE_LEAVE_MS = 200;
+/** The new page's resolve once anchored (data-locale-arrival, localeTransition.css). */
 export const LOCALE_ARRIVAL_MS = 350;
+/** Longest wait for fonts and the pictures in view before the anchored page is shown. */
+export const LOCALE_SETTLE_MS = 700;
+/** Whatever happens, the arriving content is never kept hidden longer than this. */
+export const LOCALE_HOLD_MAX_MS = 3000;
 /** A stored position older than this belongs to an abandoned switch. */
 export const LOCALE_SWITCH_TTL_MS = 15000;
 
