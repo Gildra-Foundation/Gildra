@@ -360,7 +360,7 @@ func (s *Server) GetGameEntity(ctx context.Context, request api.GetGameEntityReq
 	if errors.Is(err, catalog.ErrNotFound) {
 		return api.GetGameEntity404ApplicationProblemPlusJSONResponse{
 			NotFoundApplicationProblemPlusJSONResponse: api.NotFoundApplicationProblemPlusJSONResponse{
-				Type: "https://api.gildra.net/errors/not-found", Title: "Not Found", Status: 404,
+				Type: "https://api.wowarcana.com/errors/not-found", Title: "Not Found", Status: 404,
 				Detail: new("The requested game entity does not exist."),
 			},
 		}, nil
@@ -407,7 +407,7 @@ func (s *Server) ListGameEntityRelationships(ctx context.Context, request api.Li
 	if errors.Is(err, catalog.ErrNotFound) {
 		return api.ListGameEntityRelationships404ApplicationProblemPlusJSONResponse{
 			NotFoundApplicationProblemPlusJSONResponse: api.NotFoundApplicationProblemPlusJSONResponse{
-				Type: "https://api.gildra.net/errors/not-found", Title: "Not Found", Status: 404,
+				Type: "https://api.wowarcana.com/errors/not-found", Title: "Not Found", Status: 404,
 				Detail: new("The requested game entity does not exist."),
 			},
 		}, nil

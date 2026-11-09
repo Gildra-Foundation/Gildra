@@ -2,7 +2,7 @@
 // The landing scene and the contents book must not change (owner rule): the
 // candidate build is compared with the live site pixel for pixel — / and /ru at
 // 1440×900 and 390×844, and the book opened from /ru. Any differing pixel fails.
-//   npm run qa:home-gate [-- --candidate http://127.0.0.1:3100 --base https://gildra.net]
+//   npm run qa:home-gate [-- --candidate http://127.0.0.1:3100 --base https://wowarcana.com]
 import fs from "node:fs";
 import { chromium } from "playwright";
 import pixelmatch from "pixelmatch";
@@ -13,7 +13,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((pairs, arg, index,
   return pairs;
 }, []));
 const candidate = args.candidate ?? "http://127.0.0.1:3100";
-const base = args.base ?? "https://gildra.net";
+const base = args.base ?? "https://wowarcana.com";
 const out = args.out ?? ".artifacts/home-gate";
 fs.mkdirSync(out, { recursive: true });
 const browser = await chromium.launch();

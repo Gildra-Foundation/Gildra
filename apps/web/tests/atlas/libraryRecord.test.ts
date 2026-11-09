@@ -77,7 +77,7 @@ describe("library record: instances and bosses", () => {
 describe("library record: loot table", () => {
   const loot = [
     rel("incoming", "obtained_from", { id: "crown-37", name: "Crown of Flame", itemLevel: 37 }),
-    rel("incoming", "obtained_from", { id: "crown-60", name: "Crown of Flame", itemLevel: 60, iconUrl: "https://api.gildra.net/v1/media/crown" }),
+    rel("incoming", "obtained_from", { id: "crown-60", name: "Crown of Flame", itemLevel: 60, iconUrl: "https://api.wowarcana.com/v1/media/crown" }),
     rel("incoming", "obtained_from", { id: "sulfuras", name: "Sulfuras, the Extinguished Hand", itemLevel: 37, quality: 4 }),
     rel("incoming", "obtained_from", { id: "egg", name: "Smoldering Egg of Millagazor", itemLevel: 1 }),
     rel("incoming", "obtained_from", { id: "dnt", name: "TK34[DNT]" }),

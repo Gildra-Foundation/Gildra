@@ -218,7 +218,7 @@ const loggedRuns = unstable_cache(async (season: string, slug: string): Promise<
   if (!takeRaiderIoSlot()) throw new Skip("Raider.IO run budget spent");
   const response = await fetch(`https://raider.io/api/v1/mythic-plus/runs?season=${encodeURIComponent(season)}&region=world&dungeon=${encodeURIComponent(slug)}&page=0`, {
     cache: "no-store",
-    headers: { accept: "application/json", "user-agent": "Gildra (+https://gildra.net)" },
+    headers: { accept: "application/json", "user-agent": "Gildra (+https://wowarcana.com)" },
     signal: AbortSignal.timeout(6_000),
   });
   if (response.status === 429) pauseRaiderIo(response.headers.get("retry-after"));

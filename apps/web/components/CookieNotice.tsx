@@ -27,7 +27,7 @@ export function CookieNotice() {
   const text = copy[pathname === "/ru" || pathname?.startsWith("/ru/") ? "ru" : "en"];
 
   useEffect(() => {
-    if (window.location.hostname === "api.gildra.net") return;
+    if (window.location.hostname === "api.wowarcana.com") return;
     const update = () => {
       try {
         setVisible(!readBrowserConsent());

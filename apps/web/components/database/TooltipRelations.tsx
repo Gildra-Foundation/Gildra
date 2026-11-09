@@ -67,12 +67,12 @@ export function verifiedMediaURL(value: string) {
 	const candidate = value.trim();
 	if (!candidate) return "";
 	try {
-		const parsed = candidate.startsWith("/") ? new URL(candidate, "https://api.gildra.net") : new URL(candidate);
-		const trustedHost = parsed.hostname === "api.gildra.net"
+		const parsed = candidate.startsWith("/") ? new URL(candidate, "https://api.wowarcana.com") : new URL(candidate);
+		const trustedHost = parsed.hostname === "api.wowarcana.com"
 			|| parsed.hostname === "render.worldofwarcraft.com"
 			|| parsed.hostname === "wago.tools";
 		return parsed.protocol === "https:" && trustedHost
-			&& (parsed.hostname !== "api.gildra.net" || /^\/v1\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.pathname))
+			&& (parsed.hostname !== "api.wowarcana.com" || /^\/v1\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.pathname))
 			&& !parsed.search && !parsed.hash ? candidate : "";
 	} catch {
 		return "";

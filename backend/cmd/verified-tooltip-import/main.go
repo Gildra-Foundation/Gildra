@@ -214,7 +214,7 @@ func fetch(ctx context.Context, client *http.Client, sourceURL string) ([]byte, 
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "GildraDataImporter/1.0 (+https://gildra.net)")
+	req.Header.Set("User-Agent", "GildraDataImporter/1.0 (+https://wowarcana.com)")
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

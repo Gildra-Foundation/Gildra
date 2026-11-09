@@ -77,11 +77,11 @@ describe("library record sitemaps", () => {
     const ru = recordSitemapUrls(entries, "ru");
     assert.equal(en.length, 2);
     assert.equal(ru.length, 1);
-    assert.match(en[0], /<loc>https:\/\/gildra\.net\/library\/mounts\/00000000-0000-4000-8000-000000000001\/swift-gryphon<\/loc><lastmod>2026-11-01<\/lastmod>/);
-    assert.match(en[0], /hreflang="ru" href="https:\/\/gildra\.net\/ru\/library\/mounts\/00000000-0000-4000-8000-000000000001\/%D0%B1/);
+    assert.match(en[0], /<loc>https:\/\/wowarcana\.com\/library\/mounts\/00000000-0000-4000-8000-000000000001\/swift-gryphon<\/loc><lastmod>2026-11-01<\/lastmod>/);
+    assert.match(en[0], /hreflang="ru" href="https:\/\/wowarcana\.com\/ru\/library\/mounts\/00000000-0000-4000-8000-000000000001\/%D0%B1/);
     assert.doesNotMatch(en[1], /hreflang="ru"/);
     assert.match(en[1], /\/library\/records\//, "a type without a dataset opens under records");
-    assert.match(ru[0], /<loc>https:\/\/gildra\.net\/ru\/library\/mounts\//);
+    assert.match(ru[0], /<loc>https:\/\/wowarcana\.com\/ru\/library\/mounts\//);
   });
 
   it("an API without Russian slugs is recognised (it also lists records the library does not serve)", () => {

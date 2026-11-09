@@ -2,8 +2,8 @@
 // Release gate and design review of a candidate build (roadmap items 97, 100).
 // Runs every visual and behavioural check against a running candidate server
 // and writes one report to read before deploying:
-//   npm run qa:release [-- --candidate http://127.0.0.1:3100 --base https://gildra.net --max 0.5]
-//   npm run qa:release -- --candidate https://gildra.net --live      (quarterly audit of the live site)
+//   npm run qa:release [-- --candidate http://127.0.0.1:3100 --base https://wowarcana.com --max 0.5]
+//   npm run qa:release -- --candidate https://wowarcana.com --live      (quarterly audit of the live site)
 // Static checks (typecheck, lint, tests, routes:check, atlas:check) run in CI.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -13,7 +13,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((pairs, arg, index,
   return pairs;
 }, []));
 const candidate = args.candidate ?? "http://127.0.0.1:3100";
-const base = args.base ?? "https://gildra.net";
+const base = args.base ?? "https://wowarcana.com";
 const live = args.live === "true";
 const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
 const outDir = `.artifacts/release-gate/${stamp}`;

@@ -41,5 +41,5 @@ export function ResilientImage({ src, alt, fallback = null, onError, decoding = 
 /** The frontend proxy owns media delivery and works for local/IP deployments too. */
 export function normalizeMediaSrc(src?: string | null) {
   if (!src) return src;
-  return src.replace(/^https:\/\/api\.gildra\.net(?=\/v1\/media\/)/, "");
+  return src.replace(/^https:\/\/api\.(?:wowarcana\.com|gildra\.net)(?=\/v1\/media\/)/, "");
 }

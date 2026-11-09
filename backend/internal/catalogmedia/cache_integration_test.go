@@ -74,7 +74,7 @@ func TestCacheRetriesAndServesProvenMedia(t *testing.T) {
 	failingClient := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusBadGateway, Body: io.NopCloser(bytes.NewReader(nil)), Header: make(http.Header)}, nil
 	})}
-	cache, err := New(pool, root, "https://api.gildra.net", failingClient)
+	cache, err := New(pool, root, "https://api.wowarcana.com", failingClient)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +98,7 @@ func TestCacheRetriesAndServesProvenMedia(t *testing.T) {
 	workingClient := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(png)), Header: make(http.Header)}, nil
 	})}
-	cache, err = New(pool, root, "https://api.gildra.net", workingClient)
+	cache, err = New(pool, root, "https://api.wowarcana.com", workingClient)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +145,7 @@ func TestCacheRetriesAndServesProvenMedia(t *testing.T) {
 		t.Fatalf("expired private media status=%d location=%q, want 307 to the source",
 			privateResponse.Code, privateResponse.Header().Get("Location"))
 	}
-	staleFailureCache, err := New(pool, root, "https://api.gildra.net", failingClient)
+	staleFailureCache, err := New(pool, root, "https://api.wowarcana.com", failingClient)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,14 +220,14 @@ func TestCacheRetriesAndServesProvenMedia(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, asset := range entity.Media {
-		if asset.URL != "https://api.gildra.net/v1/media/"+media.published.String() && asset.AssetKey == "icon" {
+		if asset.URL != "https://api.wowarcana.com/v1/media/"+media.published.String() && asset.AssetKey == "icon" {
 			t.Fatalf("catalog media URL=%q, want local cached URL", asset.URL)
 		}
 		if asset.AssetKey == "future" {
 			t.Fatal("future candidate media leaked through catalog service")
 		}
 	}
-	if entity.IconURL == nil || *entity.IconURL != "https://api.gildra.net/v1/media/"+media.published.String() {
+	if entity.IconURL == nil || *entity.IconURL != "https://api.wowarcana.com/v1/media/"+media.published.String() {
 		t.Fatalf("catalog icon URL=%#v, want local cached URL", entity.IconURL)
 	}
 	if _, err := database.ExecContext(ctx, `
@@ -254,7 +254,7 @@ func TestCacheRetriesAndServesProvenMedia(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, dataset := range datasets {
-		if dataset.Slug == "items" && (dataset.PreviewImageURL == nil || *dataset.PreviewImageURL != "https://api.gildra.net/v1/media/"+media.published.String()) {
+		if dataset.Slug == "items" && (dataset.PreviewImageURL == nil || *dataset.PreviewImageURL != "https://api.wowarcana.com/v1/media/"+media.published.String()) {
 			t.Fatalf("local dataset preview URL = %#v", dataset.PreviewImageURL)
 		}
 	}
@@ -386,7 +386,7 @@ func TestSeedOfficialIconsCachesOnceAndLinksSharedEntities(t *testing.T) {
 		}
 		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(png)), Header: make(http.Header)}, nil
 	})}
-	cache, err := New(pool, t.TempDir(), "https://api.gildra.net", client)
+	cache, err := New(pool, t.TempDir(), "https://api.wowarcana.com", client)
 	if err != nil {
 		t.Fatal(err)
 	}

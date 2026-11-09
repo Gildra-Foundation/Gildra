@@ -54,7 +54,7 @@ REGIONS = ("all", "eu", "us")
 TIERS = ("S", "A", "B", "C", "D", "F")
 TIER_RE = re.compile(r"^[SABCDF][+-]?$")
 METRIC_KEYS = {"score", "rating", "popularity", "players", "max_key", "win_rate", "mean"}
-USER_AGENT = "GildraDatasetBot/1.0 (+https://gildra.net)"
+USER_AGENT = "GildraDatasetBot/1.0 (+https://wowarcana.com)"
 MAX_BODY_BYTES = 4_000_000
 STOP_SIGNATURES = ("Just a moment...", "cf-chl-", "Access denied", "Attention Required")
 

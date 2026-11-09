@@ -19,11 +19,12 @@ type Variable = {
 
 export const serverEnvSchema: readonly Variable[] = [
   { key: "API_INTERNAL_URL", kind: "url", default: "http://api:8080" },
-  { key: "SITE_PUBLIC_ORIGIN", kind: "url", default: "https://gildra.net" },
+  { key: "SITE_PUBLIC_ORIGIN", kind: "url", default: "https://wowarcana.com" },
   { key: "ROTATION_WORKER_URL", kind: "url" },
   { key: "CATALOG_ACCESS_MODE", kind: "enum", values: ["public", "private"], warnUnset: "the library treats the catalog as private" },
   { key: "INDEXNOW_KEY", kind: "indexnow", warnUnset: "IndexNow key file (/<key>.txt) answers 404" },
   { key: "AUTH_SECRET", kind: "secret", warnUnset: "Battle.net sign-in is reported as not configured" },
+  { key: "AUTH_REDIRECT_PROXY_URL", kind: "url" },
   { key: "AUTH_URL", kind: "url", warnUnset: "Warcraft Logs sign-in returns to a development address" },
   { key: "BATTLENET_CLIENT_ID", kind: "text" },
   { key: "BATTLENET_CLIENT_SECRET", kind: "secret" },

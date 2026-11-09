@@ -41,7 +41,7 @@ from typing import Any, Callable
 
 API_BASE = "https://raider.io/api/v1/mythic-plus"
 SITE_URL = "https://raider.io"
-USER_AGENT = "GildraDatasetBot/1.0 (+https://gildra.net)"
+USER_AGENT = "GildraDatasetBot/1.0 (+https://wowarcana.com)"
 EXPANSION_ID = 11
 REGIONS = ("us", "eu", "kr", "tw")
 DEFAULT_PAGES = {"us": 15, "eu": 15, "kr": 4, "tw": 4}

@@ -1,6 +1,6 @@
 import { lookup } from "node:dns/promises";
 
-const rawBaseUrl = process.env.API_READINESS_URL ?? process.env.API_INTERNAL_URL ?? "https://api.gildra.net";
+const rawBaseUrl = process.env.API_READINESS_URL ?? process.env.API_INTERNAL_URL ?? "https://api.wowarcana.com";
 const timeoutMs = Number(process.env.API_READINESS_TIMEOUT_MS ?? 15_000);
 
 let baseUrl;

@@ -147,7 +147,7 @@ func digestURL(ctx context.Context, url string) ([]byte, int64, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	request.Header.Set("User-Agent", "Gildra/1.0 (+https://gildra.net)")
+	request.Header.Set("User-Agent", "Gildra/1.0 (+https://wowarcana.com)")
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return nil, 0, err

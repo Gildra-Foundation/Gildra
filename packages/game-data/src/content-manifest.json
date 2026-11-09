@@ -8759,7 +8759,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1284032&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1284032&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/achievment_boss_wellofeternity.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -8863,7 +8863,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1288772&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1288772&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/spell_necro_deathsknell.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -8978,7 +8978,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1289919&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1289919&limit=10",
         "iconMedia": "https://wago.tools/api/casc/7214199?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU",
@@ -9079,7 +9079,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1289683&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1289683&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/inv_helm_mail_raidshamanmythic_s_01.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -9175,7 +9175,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1289696&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1289696&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/spell_animamaldraxxus_beam.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -9271,7 +9271,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1290003&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1290003&limit=10",
         "iconMedia": "https://wago.tools/api/casc/7549439?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -9380,7 +9380,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1284588&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1284588&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/inv_10_enchanting2_magicswirl_red.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU",
@@ -9505,7 +9505,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1284590&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1284590&limit=10",
         "iconMedia": "https://wago.tools/api/casc/6866618?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -9612,7 +9612,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1295451&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1295451&limit=10",
         "iconMedia": "https://wago.tools/api/casc/7558869?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -9717,7 +9717,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1297024&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1297024&limit=10",
         "iconMedia": "https://wago.tools/api/casc/7816851?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -9817,7 +9817,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1292779&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1292779&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/spell_animarevendreth_nova.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -9929,7 +9929,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1283164&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1283164&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_poisoncleansingtotem.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU",
@@ -10030,7 +10030,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1280189&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1280189&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/ability_rogue_deviouspoisons.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -10135,7 +10135,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1277025&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1277025&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/ability_hunter_aspectoftheviper.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -10231,7 +10231,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1305959&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1305959&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/ability_creature_poison_06.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -10336,7 +10336,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1285419&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1285419&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/ability_skyreach_wind.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -10444,7 +10444,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1285732&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1285732&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_cyclone.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -10540,7 +10540,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1290336&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1290336&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_nullifypoison.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -10649,7 +10649,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1289192&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1289192&limit=10",
         "iconMedia": "https://wago.tools/api/casc/5764918?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -10755,7 +10755,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1289993&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1289993&limit=10",
         "iconMedia": "https://wago.tools/api/casc/5764924?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -10859,7 +10859,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1291404&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1291404&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/spell_nature_poisoncleansingtotem.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -10962,7 +10962,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1290516&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1290516&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/ability_warrior_bloodnova.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -11073,7 +11073,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1288538&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1288538&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/ability_smash.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -11180,7 +11180,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1293749&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1293749&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/ability_rogue_deviouspoisons.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -11285,7 +11285,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1306872&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1306872&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/inv_artifact_bloodoftheassassinated.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -11390,7 +11390,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1282403&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1282403&limit=10",
         "iconMedia": "https://wago.tools/api/casc/5764924?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -11495,7 +11495,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1299680&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1299680&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/ability_criticalstrike.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -11601,7 +11601,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1285643&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1285643&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/spell_nzinsanity_fearofdeath.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -11711,7 +11711,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1286620&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1286620&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/ability_demonhunter_soulcleave2.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -11818,7 +11818,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1304032&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1304032&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/spell_necro_deathall.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -11914,7 +11914,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1292403&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1292403&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/inv_ability_poison_wave.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -12019,7 +12019,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1301268&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1301268&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/achievement_halloween_rottenegg_01.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -12126,7 +12126,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1287265&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1287265&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/spell_animamaldraxxus_nova.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -12230,7 +12230,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1286860&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1286860&limit=10",
         "iconMedia": "https://wago.tools/api/casc/7966624?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -12344,7 +12344,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1290990&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1290990&limit=10",
         "iconMedia": "https://render.worldofwarcraft.com/eu/icons/56/rogue_leeching_poison.jpg",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU",
@@ -12454,7 +12454,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1300751&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1300751&limit=10",
         "iconMedia": "https://wago.tools/api/casc/8125100?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"
@@ -12550,7 +12550,7 @@
         "nameEn": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=enUS",
         "nameRu": "https://wago.tools/db2/SpellName/csv?build=12.1.0.69814&locale=ruRU",
         "iconId": "https://wago.tools/db2/SpellMisc/csv?build=12.1.0.69814&locale=enUS",
-        "mediaCatalog": "https://api.gildra.net/v1/game/entities?product=wow&type=spell&locale=en_US&q=1301510&limit=10",
+        "mediaCatalog": "https://api.wowarcana.com/v1/game/entities?product=wow&type=spell&locale=en_US&q=1301510&limit=10",
         "iconMedia": "https://wago.tools/api/casc/7500005?product=wow&version=12.1.0.69587",
         "descriptionEn": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=enUS",
         "descriptionRu": "https://wago.tools/db2/Spell/csv?build=12.1.0.69814&locale=ruRU"

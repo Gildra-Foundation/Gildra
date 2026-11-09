@@ -9,11 +9,11 @@
 //   … --records                                              also read the library record files
 //                                                            (/sitemaps/library/<dataset>/<lang>/<shard>: ~1 M URLs)
 //
-// The key is the one the site serves at https://gildra.net/<key>.txt (INDEXNOW_KEY of the web
+// The key is the one the site serves at https://wowarcana.com/<key>.txt (INDEXNOW_KEY of the web
 // container: `sudo docker exec gildra-web-1 printenv INDEXNOW_KEY`); it is never printed.
-// SITE (default https://gildra.net) is where the sitemap and the key file are read.
+// SITE (default https://wowarcana.com) is where the sitemap and the key file are read.
 
-const site = (process.env.SITE ?? "https://gildra.net").replace(/\/$/, "");
+const site = (process.env.SITE ?? "https://wowarcana.com").replace(/\/$/, "");
 const key = process.env.INDEXNOW_KEY ?? "";
 const args = process.argv.slice(2);
 const send = args.includes("--send");

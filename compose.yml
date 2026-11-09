@@ -64,7 +64,7 @@ services:
       REDIS_ADDR: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       INDEXNOW_KEY: ${INDEXNOW_KEY}
-      INDEXNOW_HOST: gildra.net
+      INDEXNOW_HOST: wowarcana.com
       SENTRY_DSN: ${SENTRY_GO_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       CATALOG_PUBLICATION_MODE: ${CATALOG_PUBLICATION_MODE:-enforce}
@@ -112,7 +112,7 @@ services:
       REDIS_ADDR: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       INDEXNOW_KEY: ${INDEXNOW_KEY}
-      INDEXNOW_HOST: gildra.net
+      INDEXNOW_HOST: wowarcana.com
       SENTRY_DSN: ${SENTRY_GO_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       CATALOG_PUBLICATION_MODE: ${CATALOG_PUBLICATION_MODE:-enforce}
@@ -190,7 +190,7 @@ services:
     environment:
       DATABASE_URL: postgres://gildra:${POSTGRES_PASSWORD}@postgres:5432/gildra?sslmode=disable
       CATALOG_MEDIA_DIRECTORY: /var/lib/gildra/catalog-media
-      CATALOG_MEDIA_PUBLIC_BASE_URL: ${CATALOG_MEDIA_PUBLIC_BASE_URL:-https://api.gildra.net}
+      CATALOG_MEDIA_PUBLIC_BASE_URL: ${CATALOG_MEDIA_PUBLIC_BASE_URL:-https://api.wowarcana.com}
       CATALOG_PUBLICATION_ENVIRONMENT: ${CATALOG_PUBLICATION_ENVIRONMENT:-production}
       CATALOG_ACCESS_MODE: ${CATALOG_ACCESS_MODE:-public}
     volumes:
@@ -270,7 +270,7 @@ services:
       # Battle.net sign-in (Auth.js). Without AUTH_SECRET and the client pair the
       # site reports login as not configured instead of faking a session.
       AUTH_SECRET: ${AUTH_SECRET:-}
-      AUTH_URL: ${AUTH_URL:-https://gildra.net}
+      AUTH_URL: ${AUTH_URL:-https://wowarcana.com}
       BATTLENET_CLIENT_ID: ${BATTLENET_CLIENT_ID:-}
       BATTLENET_CLIENT_SECRET: ${BATTLENET_CLIENT_SECRET:-}
       BATTLENET_REGION: ${BATTLENET_REGION:-eu}

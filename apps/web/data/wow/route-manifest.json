@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "siteOrigin": "https://gildra.net",
+  "siteOrigin": "https://wowarcana.com",
   "locales": ["en", "ru"],
   "phases": ["P0", "P1", "P2", "P3", "P4"],
   "staticRoutes": [

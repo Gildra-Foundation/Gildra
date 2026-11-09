@@ -31,7 +31,7 @@ FROM source AS builder
 # Public Plausible tracker settings (lib/analytics/plausible.ts). Static pages are
 # prerendered here, so the tracker needs them at build time as well as at
 # runtime (compose.runtime.yml). Pass empty values to build without it.
-ARG PLAUSIBLE_SCRIPT_URL=https://gildra.net/stats/js/script.js
+ARG PLAUSIBLE_SCRIPT_URL=https://wowarcana.com/stats/js/script.js
 ARG PLAUSIBLE_API_URL=/stats/api/event
 ARG PLAUSIBLE_SITE_DOMAIN=gildra.net
 # Error reports (GlitchTip project gildra-web, roadmap 96). The DSN key is public

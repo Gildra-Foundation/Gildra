@@ -1,7 +1,7 @@
 import type { AtlasCrumb } from "./AtlasBreadcrumbs";
 
 /** Canonical origin the BreadcrumbList resolves relative links against (the site's metadataBase). */
-export const SITE_ORIGIN = "https://gildra.net";
+export const SITE_ORIGIN = "https://wowarcana.com";
 
 /**
  * schema.org BreadcrumbList of the visible trail, so search results show the

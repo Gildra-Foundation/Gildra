@@ -1,9 +1,16 @@
-import { handlers, isBattleNetAuthConfigured } from "@/auth";
+import { Auth } from "@auth/core";
+import { handlers, authConfig, isBattleNetAuthConfigured } from "@/auth";
+import { BATTLE_CALLBACK, LEGACY_AUTH_PROXY, isLegacyCallback, legacyBattleRequest, safeBattleProxyResponse } from "@/lib/auth/legacyCallback";
 import type { NextRequest } from "next/server";
 
 export const POST = handlers.POST;
 
 export async function GET(request: NextRequest) {
+  if (isLegacyCallback(request, BATTLE_CALLBACK)) {
+    // Bypass NextAuth's AUTH_URL override only on the registered legacy callback.
+    const response = await Auth(legacyBattleRequest(request), { ...authConfig, basePath: "/api/auth", redirectProxyUrl: LEGACY_AUTH_PROXY });
+    return safeBattleProxyResponse(response);
+  }
   if (!isBattleNetAuthConfigured && new URL(request.url).pathname.endsWith("/session")) {
     return Response.json(null);
   }

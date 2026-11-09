@@ -163,11 +163,11 @@ for argument in "$@"; do
   case "$argument" in
     --write-out) write_status=true ;;
     --dump-header) expect_dump_file=true ;;
-    https://api.gildra.net/v1/library/datasets*) status=401 ;;
-    https://api.gildra.net/world-of-warcraft/*/v1/library/datasets*) status=401 ;;
-    https://api.gildra.net/library*|https://api.gildra.net/ru/library*) status=307; location='/api-console?next=%2Flibrary' ;;
-    https://gildra.net/library/items) status=302; location='https://api.gildra.net/library/items' ;;
-    https://gildra.net/ru/library/items) status=302; location='https://api.gildra.net/ru/library/items' ;;
+    https://api.wowarcana.com/v1/library/datasets*) status=401 ;;
+    https://api.wowarcana.com/world-of-warcraft/*/v1/library/datasets*) status=401 ;;
+    https://api.wowarcana.com/library*|https://api.wowarcana.com/ru/library*) status=307; location='/api-console?next=%2Flibrary' ;;
+    https://wowarcana.com/library/items) status=302; location='https://api.wowarcana.com/library/items' ;;
+    https://wowarcana.com/ru/library/items) status=302; location='https://api.wowarcana.com/ru/library/items' ;;
   esac
 done
 [ -z "$dump_file" ] || printf 'HTTP/2 307\nLocation: %s\n\n' "$location" > "$dump_file"
@@ -220,14 +220,14 @@ grep -q 'rollback completed and verified' "$test_directory/deploy.log"
 # Keep the public-library journey inside the rollback-armed deployment script.
 # A separate workflow smoke step is too late: by then the previous release has
 # already been disarmed as an automatic rollback target.
-grep -Fq "'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US'" "$deployment_script"
-grep -Fq 'https://api.gildra.net/world-of-warcraft/$edition/v1/library/datasets?locale=en_US' "$deployment_script"
+grep -Fq "'https://api.wowarcana.com/v1/library/datasets?product=wow&locale=en_US'" "$deployment_script"
+grep -Fq 'https://api.wowarcana.com/world-of-warcraft/$edition/v1/library/datasets?locale=en_US' "$deployment_script"
 grep -Fq 'verify_library_route /library' "$deployment_script"
 grep -Fq 'verify_library_route /ru/library' "$deployment_script"
 grep -Fq 'verify_library_route /library/items' "$deployment_script"
 grep -Fq 'verify_library_route /ru/library/items' "$deployment_script"
-grep -Fq 'https://gildra.net/library' "$deployment_script"
-grep -Fq 'https://gildra.net/ru/library' "$deployment_script"
+grep -Fq 'https://wowarcana.com/library' "$deployment_script"
+grep -Fq 'https://wowarcana.com/ru/library' "$deployment_script"
 grep -Fq 'verify_library_redirect /library/items' "$deployment_script"
 grep -Fq 'verify_library_redirect /ru/library/items' "$deployment_script"
 grep -Fq 'verify_catalog_load' "$deployment_script"
@@ -249,8 +249,8 @@ if grep -Fq -- '-require-data-ready' "$deployment_script"; then
   exit 1
 fi
 grep -Fq 'private catalog allowed an anonymous request' "$deployment_script"
-grep -Fq 'https://api.gildra.net/library/items' "$repository_directory/.github/workflows/deploy.yml"
-grep -Fq 'https://api.gildra.net/ru/library/items' "$repository_directory/.github/workflows/deploy.yml"
+grep -Fq 'https://api.wowarcana.com/library/items' "$repository_directory/.github/workflows/deploy.yml"
+grep -Fq 'https://api.wowarcana.com/ru/library/items' "$repository_directory/.github/workflows/deploy.yml"
 if grep -Fq 'require_environment_value SENTRY_GO_DSN' "$deployment_script" ||
   grep -Fq 'require_environment_value NEXT_PUBLIC_SENTRY_DSN' "$deployment_script"; then
   printf 'test: optional Sentry configuration still blocks a release\n' >&2
