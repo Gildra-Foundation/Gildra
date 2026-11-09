@@ -654,9 +654,10 @@ async function runPin(browser, spec) {
   const before = await pg.evaluate(pinState);
   const pageY0 = await pg.evaluate(() => window.scrollY);
   // While dragging: the farthest past the edge.
-  await pg.evaluate(() => { window.__pinMax = 0; const tick = () => { if (window.__pinStop) return; const st = window.__pinState(); window.__pinMax = Math.max(window.__pinMax, st.off); requestAnimationFrame(tick); }; window.__pinStop = false; requestAnimationFrame(tick); });
+  await pg.evaluate(() => { window.__pinMax = 0; const tick = () => { if (window.__pinStop) return; const st = window.__pinState(); if (st.off - (window.__pinBase ?? 0) > window.__pinMax) { window.__pinMax = st.off - (window.__pinBase ?? 0); window.__pinAt = `${window.__pinPhase}:${st.focus}`; } requestAnimationFrame(tick); }; window.__pinStop = false; requestAnimationFrame(tick); });
   const slow = [];
   const check = async (label) => {
+    await pg.evaluate((l) => { window.__pinPhase = `after-${l}`; }, label);
     // Back inside its bounds: how long after the release (wall clock), and in how many drawn frames. Headless
     // SwiftShader on a loaded host may stall frames for a second: a late return over a frame or two is the host's.
     const back = await pg.evaluate(() => new Promise((done) => {
@@ -686,6 +687,8 @@ async function runPin(browser, spec) {
       const len = Math.min(stroke, 2000 - done);
       const x0 = box.x - (ux * len) / 2, y0 = box.y - (uy * len) / 2;
       await pg.mouse.move(x0, y0);
+      // (The reach is measured from where the stroke starts: a host that stalled frames may leave the last one unsettled.)
+      await pg.evaluate(() => { window.__pinBase = window.__pinState().off; });
       await pg.mouse.down();
       for (let i = 1; i <= 20; i++) { await pg.mouse.move(x0 + (ux * len * i) / 20, y0 + (uy * len * i) / 20); await pg.waitForTimeout(8); }
       // (Held still a moment: a drag, not a throw.)
@@ -699,6 +702,7 @@ async function runPin(browser, spec) {
   for (const [name, fx, fy] of [["fling-left", -0.6, 0], ["fling-up", 0, -0.6], ["fling-diag", 0.5, 0.5]]) {
     const dx = fx * box.w, dy = fy * box.h;
     await pg.mouse.move(box.x - dx / 2, box.y - dy / 2);
+    await pg.evaluate(() => { window.__pinBase = window.__pinState().off; });
     await pg.mouse.down();
     for (let i = 1; i <= 4; i++) { await pg.mouse.move(box.x - dx / 2 + (dx * i) / 4, box.y - dy / 2 + (dy * i) / 4); await pg.waitForTimeout(12); }
     await pg.mouse.up();
@@ -706,7 +710,8 @@ async function runPin(browser, spec) {
     await settled(pg);
   }
   const rubber = await pg.evaluate(() => { window.__pinStop = true; return window.__pinMax; });
-  if (rubber > 70) problems.push(`RUBBER-REACH(${rubber.toFixed(0)}px)`);
+  const rubberAt = await pg.evaluate(() => window.__pinAt);
+  if (rubber > 70) problems.push(`RUBBER-REACH(${rubber.toFixed(0)}px at ${rubberAt})`);
   // Zoom-out spam: never smaller than the whole top map.
   await pg.evaluate(() => { window.__pinLow = Infinity; window.__pinStop = false; const tick = () => { if (window.__pinStop) return; const st = window.__pinState(); window.__pinLow = Math.min(window.__pinLow, st.scale / st.min); requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
   for (let i = 0; i < 40; i++) {

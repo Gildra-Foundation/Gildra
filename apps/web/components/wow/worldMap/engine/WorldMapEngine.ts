@@ -800,7 +800,7 @@ export class WorldMapEngine {
       this.stretch.log *= Math.exp(-dt / 120);
       if (Math.abs(this.stretch.log) < 0.003) { this.stretch = null; this.scheduleSettle(); }
     }
-    this.springing = this.springBack(dt);
+    this.springing = this.springBack(dt, now);
     if (this.velocity) {
       const free = { ...this.camera, x: this.camera.x - (this.velocity.x * dt) / this.camera.scale, y: this.camera.y - (this.velocity.y * dt) / this.camera.scale };
       this.camera = this.limit(free);
@@ -815,8 +815,10 @@ export class WorldMapEngine {
   }
 
   /** At rest off its pin (a drag past the edge, a place newly in view): the view springs inside (~0.1 s). Returns whether it moved. */
-  private springBack(dt: number) {
-    if (this.flight || this.wheel || this.pointers.size || this.pending) return false;
+  private springBack(dt: number, now: number) {
+    // (Not on the frame the map in view has just changed: only once it has stayed a moment — never a pull towards a
+    // map that was in view for a frame.)
+    if (this.flight || this.wheel || this.pointers.size || this.pending || now - this.focusSince < 250) return false;
     const off = this.pinOff(this.camera);
     if (!off || (!off.x && !off.y)) return false;
     const k = this.options.reducedMotion ? 1 : 1 - Math.exp(-dt / 90);
@@ -1385,6 +1387,9 @@ export class WorldMapEngine {
     let candidate: DrawnMap | undefined;
     for (const entry of drawn) {
       if ((entry.open ?? entry.alpha) <= 0.5 || !this.inArea(entry.map, cx, cy)) continue;
+      // A map beside the one in view whose own land is not read yet is no candidate (its rectangle may cover the view
+      // where its land does not: Ashenvale's over Orgrimmar).
+      if (entry.role === "neighbour" && usesMask(entry.map) && !this.areaOf(entry.map)) continue;
       // (A true child of the map in view may take over at a fifth of the view; anything else — a neighbour, a city
       // the data puts beside its zone — only once it fills nearly half of it.)
       const own = this.maps.get(entry.map.id)?.parent === this.focusId;
