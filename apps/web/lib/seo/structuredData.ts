@@ -18,7 +18,7 @@ export const gildraOrganization = (): JsonLdThing => ({
   "@id": absoluteUrl("/#organization"),
   name: "Gildra",
   url: absoluteUrl("/"),
-  logo: { "@type": "ImageObject", url: absoluteUrl("/brand/helmet.png"), width: 396, height: 512 },
+  logo: { "@type": "ImageObject", url: absoluteUrl("/brand/wowarcana-logo.png"), width: 512, height: 512 },
 });
 
 /** WebSite + Organization of the home page in one language. */

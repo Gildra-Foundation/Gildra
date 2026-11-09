@@ -10,9 +10,9 @@ import fs, { readFileSync } from "node:fs";
 import path from "node:path";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const helmet =
-  "data:image/png;base64," +
-  readFileSync(path.join(root, "public/brand/helmet.png")).toString("base64");
+const logo =
+  "data:image/svg+xml;base64," +
+  readFileSync(path.join(root, "public/brand/wowarcana-logo.svg")).toString("base64");
 const out = path.join(root, "app/(site)/opengraph-image.png");
 
 const html = `<!doctype html><html><head><meta charset="utf-8">
@@ -32,8 +32,8 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   .helm{position:absolute;left:96px;top:50%;transform:translateY(-50%);
     width:400px;height:auto;filter:drop-shadow(0 26px 60px rgba(0,0,0,.6))}
   .tx{position:absolute;left:560px;top:50%;transform:translateY(-50%);width:560px}
-  .brand{font-family:"Chakra Petch";font-weight:700;font-size:84px;
-    letter-spacing:.16em;color:#eef0f8;line-height:1}
+  .brand{font-family:"Chakra Petch";font-weight:700;font-size:64px;
+    letter-spacing:.08em;color:#eef0f8;line-height:1}
   .rule{display:flex;align-items:center;gap:14px;margin:30px 0}
   .rule i{flex:1;height:1px;background:linear-gradient(90deg,#8a733c,transparent)}
   .rule s{width:9px;height:9px;background:#c9a24f;transform:rotate(45deg)}
@@ -42,9 +42,9 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     font-size:21px;letter-spacing:.24em;color:#e6c77a}
 </style></head><body>
   <div class="edge top"></div><div class="edge bot"></div>
-  <img class="helm" src="${helmet}">
+  <img class="helm" src="${logo}">
   <div class="tx">
-    <div class="brand">GILDRA</div>
+    <div class="brand">WOWARCANA</div>
     <div class="rule"><s></s><i></i></div>
     <div class="tag">Tier lists, Mythic+ meta, builds and guides for World of Warcraft</div>
     <div class="season">MIDNIGHT &middot; SEASON 1</div>

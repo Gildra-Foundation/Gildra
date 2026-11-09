@@ -10,8 +10,8 @@
 }
 .crest {
   display: block;
-  width: 34px;
+  width: auto;
   height: 44px;
   filter: drop-shadow(0 0 10px var(--atlas-accent-glow)) drop-shadow(0 2px 2px rgba(0, 0, 0, .7));
 }
-.crest img { display: block; width: 100%; height: 100%; }
+.crest img { display: block; width: auto; height: 100%; }

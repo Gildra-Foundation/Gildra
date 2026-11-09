@@ -209,7 +209,7 @@ export function PhoneBook({ lang, phase, onPhase, coverPose, coverFace, onNaviga
     onClose={(event) => { if (!tearingDown.current && !event.currentTarget.open && phase !== "closed") onDismiss?.(); }}>
     <div className={styles.layout}>
       <div className={styles.bar} ref={(element) => { if (element) chrome.current[0] = element; }}>
-        <span>GILDRA · {ru ? "ХРОНИКИ АЗЕРОТА" : "CHRONICLES OF AZEROTH"}</span>
+        <span>WOWARCANA · {ru ? "ХРОНИКИ АЗЕРОТА" : "CHRONICLES OF AZEROTH"}</span>
         <button type="button" className={styles.close} onClick={close} aria-label={ru ? "Закрыть книгу" : "Close the book"}><span aria-hidden="true">×</span></button>
       </div>
       <div className={styles.reading}>

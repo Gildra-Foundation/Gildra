@@ -3,6 +3,7 @@ import { preload } from "react-dom";
 import type { CSSProperties } from "react";
 import { t, type Lang } from "@/lib/i18n";
 import { atlasLegal } from "@/components/atlas/AtlasFrame";
+import { GildraCrest } from "@/components/brand/GildraCrest";
 import { HomeBookCover, HomeBookStage } from "./HomeBook";
 import { HomeTheme } from "./HomeTheme";
 import { HomeEpigraph } from "./HomeEpigraph";
@@ -47,7 +48,7 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
       <img className={styles.coverImage} src="/assets/wow/character-book/intro/icecrown-cover-640.webp" srcSet={coverWebpSrcSet} sizes={coverSizes} width={1024} height={1365} fetchPriority="high" loading="eager" decoding="async" alt="" draggable={false} />
     </picture>
     <span className={styles.coverLight} aria-hidden="true" />
-    <span className={styles.coverTitle} aria-hidden="true"><strong>GILDRA</strong><i /></span>
+    <span className={styles.coverTitle} aria-hidden="true"><GildraCrest height={64} className={styles.coverBrand} eager /><i /></span>
     <span className={styles.coverSubtitle} aria-hidden="true"><span>{ru ? <>Хроники<br />Азерота</> : <>Chronicles<br />of Azeroth</>}</span></span>
   </>;
   return <HomeTheme>
@@ -71,7 +72,7 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
       </div>
       <div className={styles.bookScene}>
         <div className={styles.halo} aria-hidden="true" />
-        <HomeBookCover className={styles.cover} ariaLabel={ru ? "Открыть книгу — оглавление Gildra" : "Open the book — Gildra contents"}>
+        <HomeBookCover className={styles.cover} ariaLabel={ru ? "Открыть книгу — оглавление WowArcana" : "Open the book — WowArcana contents"}>
           {coverFace}
         </HomeBookCover>
       </div>

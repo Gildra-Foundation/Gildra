@@ -500,8 +500,8 @@ export function WorkspaceNavigatorContent({ picks }: { picks: NavigationPicks })
     }}>{ru ? "К содержанию" : "Skip to content"}</a>
     <div className={toolbarStyles.top}>
       <Link href={p(lang, "/")} prefetch={false} className={toolbarStyles.brand}
-        aria-current={barePathOf(livePath) === "/" ? "page" : undefined} aria-label={ru ? "Gildra — главная" : "Gildra — home"}>
-        <GildraCrest height={32} className={toolbarStyles.sigil} eager /><span>GILDRA</span>
+        aria-current={barePathOf(livePath) === "/" ? "page" : undefined} aria-label={ru ? "WowArcana — главная" : "WowArcana — home"}>
+        <GildraCrest height={32} className={toolbarStyles.sigil} eager /><span>WOWARCANA</span>
       </Link>
       <div className={toolbarStyles.search}><SiteSearch lang={lang} /></div>
       <div className={toolbarStyles.end}>
