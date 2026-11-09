@@ -65,7 +65,8 @@
   border-bottom: 1px solid var(--atlas-line-soft);
 }
 
-.head > :first-child { flex: 1; }
+.head > :first-child { flex: 1; min-width: 0; }
+.head > :first-child input { min-width: 0; width: 100%; }
 
 .head input { font-size: var(--atlas-text-body); }
 .head input::-webkit-search-cancel-button { display: none; }
