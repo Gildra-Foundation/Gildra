@@ -11,6 +11,8 @@
 //   npm run qa:map-zoom                                  local :3100, current era + vanilla
 //   npm run qa:map-zoom -- --base http://127.0.0.1:3131 --only kalimdor --cpu 4 --shots /tmp/mapz/zoom
 //   … --only interactions: keys, double click, buttons, era switch mid-zoom, Back mid-flight, resize, phone pinch
+//   … --notches 100,300: one wheel event at a time, the view left to rest, the settled state checked (title = map in
+//     view and dominant, no painted words or markers of other maps), both ways on every chain
 // Exits 1 when a chain fails.
 import fs from "node:fs";
 import { chromium } from "playwright";
@@ -87,7 +89,9 @@ function install() {
   const events = e.events;
   // The page hears of the map in view: was the camera at rest then?
   const tell = events.focus;
-  events.focus = (chain) => { rec.focusTold.push({ id: chain.at(-1)?.id ?? null, moving: Boolean(e.moving) }); tell(chain); };
+  // (Told during a slow glide is fine once the map in view has stayed the same a moment: a "flicker" is a tell
+  // of a map that has only just come — through every level on the way.)
+  events.focus = (chain) => { rec.focusTold.push({ id: chain.at(-1)?.id ?? null, moving: Boolean(e.moving) && performance.now() - (e.focusSince ?? 0) < 400 }); tell(chain); };
   const original = events.frame;
   events.frame = (info) => {
     original(info);
@@ -127,6 +131,32 @@ async function ready(pg) {
   await pg.waitForTimeout(800);
 }
 
+/**
+ * The place to zoom into off the free part of the view (its middle past an edge, as zooming at the cursor
+ * pushes away what lies beyond the cursor): dragged into view first, as a reader would.
+ */
+async function bringIntoView(pg, id, surface) {
+  const where = await pg.evaluate((id) => {
+    const e = window.__worldMap; const map = e.maps.get(id); const s = e.options.insets;
+    if (!map) return null;
+    const [x, y] = e.project((map.frame[0] + map.frame[2]) / 2, (map.frame[1] + map.frame[3]) / 2);
+    const fx = s.left + (e.width - s.left - s.right) / 2, fy = s.top + (e.height - s.top - s.bottom) / 2;
+    const inside = x > s.left + 60 && x < e.width - s.right - 60 && y > s.top + 60 && y < e.height - s.bottom - 60;
+    return inside ? null : { dx: fx - x, dy: fy - y, fx, fy };
+  }, id);
+  if (!where) return;
+  const steps = Math.ceil(Math.hypot(where.dx, where.dy) / 300);
+  for (let k = 0; k < steps; k++) {
+    const sx = surface[0] + where.fx, sy = surface[1] + where.fy;
+    await pg.mouse.move(sx, sy);
+    await pg.mouse.down();
+    await pg.mouse.move(sx + where.dx / steps, sy + where.dy / steps, { steps: 6 });
+    await pg.mouse.up();
+    await pg.waitForTimeout(250);
+  }
+  await pg.waitForFunction(() => { const e = window.__worldMap; return !e.velocity && !e.flight; }, null, { timeout: 8000, polling: 100 }).catch(() => {});
+}
+
 /** Screen point of a map's centre (or of its first child's centre, if it is the map in view). */
 const centreOf = (pg, id) => pg.evaluate((id) => {
   const e = window.__worldMap; const map = e.maps.get(id);
@@ -153,6 +183,7 @@ async function runChain(browser, spec) {
   const wheel = async (target, dir, max) => {
     for (let i = 0; i < max; i++) {
       // In: the cursor on the place to go into; out: at the middle of the view, as a reader backs out.
+      if (dir < 0) await bringIntoView(pg, target, surface);
       const at = dir < 0 ? await centreOf(pg, target) : null;
       const [x, y] = at ?? [720, 450];
       await pg.mouse.move(surface[0] + x, surface[1] + y);
@@ -160,6 +191,7 @@ async function runChain(browser, spec) {
       await pg.waitForTimeout(110);
       if (shots) await pg.screenshot({ path: `${shots}/${spec.key}-${dir < 0 ? "in" : "out"}-${String(i).padStart(2, "0")}.png` });
       const focus = await pg.evaluate(() => window.__worldMap.focus?.id ?? null);
+      if (args.debug) console.log("      notch", target, i, [x, y], JSON.stringify(await pg.evaluate(() => { const e = window.__worldMap; return { f: e.focusId, s: Math.round(e.view.scale), why: e.focusWhy }; })));
       if (focus === target) return true;
     }
     // The last notches still gliding.
@@ -168,7 +200,7 @@ async function runChain(browser, spec) {
   };
   const reached = [];
   // In: the cursor on each next place until it is the map in view.
-  for (const id of spec.chain.slice(1)) reached.push([id, await wheel(id, -1, 14)]);
+  for (const id of spec.chain.slice(1)) reached.push([id, await wheel(id, -1, 18)]);
   await pg.waitForTimeout(900);
   // Out: back to the first map of the chain.
   await pg.evaluate(() => { window.__zoomRec.phase = "out"; });
@@ -343,17 +375,138 @@ async function runInteractions(browser) {
   return out;
 }
 
+/**
+ * One wheel event at a time (deltaY 100 = a notch, 300 = a fast wheel or a Windows 3-line notch), then the view
+ * left to rest, both ways along a chain. After every rest the state must be consistent:
+ *   (a) the title is the map in view, and that map is the one whose picture dominates the view;
+ *   (b) no painted words of any other map are on screen (their label boxes, projected, not covered);
+ *   (c) no markers (points, names) of any other map.
+ */
+async function settled(pg) {
+  await pg.waitForFunction(() => { const e = window.__worldMap; return !e.wheel && !e.flight && !e.velocity && !e.crossfade && !e.focusUntold && !e.pending && e.tiles.pending === 0; }, null, { timeout: 15000, polling: 100 }).catch(() => {});
+  // …and the page has caught up with it (its title is the map in view).
+  await pg.waitForFunction(() => { const e = window.__worldMap; const m = e.maps.get(e.focusId); const t = document.querySelector("#world-map-title")?.textContent?.trim(); return !m || m.type === "cosmic" || t === m.name; }, null, { timeout: 3000, polling: 100 }).catch(() => {});
+  await pg.waitForTimeout(300);
+}
+const stateOf = (pg) => pg.evaluate(() => {
+  const e = window.__worldMap;
+  const comp = e.composition();
+  const focus = e.maps.get(comp.focus);
+  const title = document.querySelector("#world-map-title")?.textContent?.trim() ?? "";
+  const ins = e.options.insets;
+  const free = [ins.left, ins.top, e.width - ins.right, e.height - ins.bottom];
+  const share = (d) => { const w = Math.min(d.clip[2], free[2]) - Math.max(d.clip[0], free[0]), h = Math.min(d.clip[3], free[3]) - Math.max(d.clip[1], free[1]); return w > 0 && h > 0 ? (w * h) / ((free[2] - free[0]) * (free[3] - free[1])) : 0; };
+  // (A map that holds the one in view — its zone around a city the data puts beside it — is its backdrop, not a rival.)
+  const ff = focus?.frame;
+  const holds = (d) => { const m = e.maps.get(d.id)?.frame; if (!m || !ff || d.id === comp.focus) return false; const ow = Math.min(m[2], ff[2]) - Math.max(m[0], ff[0]), oh = Math.min(m[3], ff[3]) - Math.max(m[1], ff[1]); return ow > 0 && oh > 0 && (ow * oh) / ((ff[2] - ff[0]) * (ff[3] - ff[1])) >= 0.7 && (m[2] - m[0]) * (m[3] - m[1]) > 2 * (ff[2] - ff[0]) * (ff[3] - ff[1]); };
+  // A map around it shows only outside the map in view: its part over that map's rectangle does not count.
+  const fd = comp.draws.find((d) => d.id === comp.focus);
+  const over = (d) => (fd && d.id !== comp.focus ? share({ clip: [Math.max(d.clip[0], fd.clip[0]), Math.max(d.clip[1], fd.clip[1]), Math.min(d.clip[2], fd.clip[2]), Math.min(d.clip[3], fd.clip[3])] }) : 0);
+  const shown = comp.draws.filter((d) => d.role !== "ancestor" && d.alpha > 0.5 && !holds(d)).map((d) => ({ id: d.id, role: d.role, share: Math.max(0, share(d) - over(d)) }));
+  const top = shown.reduce((a, d) => (d.share > (a?.share ?? -1) ? d : a), null);
+  const own = shown.find((d) => d.id === comp.focus);
+  // (An engine without letters in its composition — older builds — is read the hard way: every painted word of a
+  // map other than the one in view, on screen, counts unless that map is a full wash.)
+  const lettersOf = (d) => {
+    if (d.letters !== undefined) return d.letters;
+    const map = e.maps.get(d.id);
+    const labels = map?.art?.paintedLabels ?? [];
+    if (d.role === "focus" || d.alpha < 0.05 || (d.role === "ancestor" && d.detail === 0) || !Array.isArray(labels)) return 0;
+    const f = map.frame, fw = f[2] - f[0], fh = f[3] - f[1];
+    let n = 0;
+    for (const l of labels) {
+      const b = l.plaque ?? l.box ?? l;
+      if (!Array.isArray(b)) continue;
+      const [x0, y0] = e.project(f[0] + b[0] * fw, f[1] + b[1] * fh), [x1, y1] = e.project(f[0] + b[2] * fw, f[1] + b[3] * fh);
+      if (Math.min(x1, d.clip[2], e.width) > Math.max(x0, d.clip[0], 0) && Math.min(y1, d.clip[3], e.height) > Math.max(y0, d.clip[1], 0)) n += 1;
+    }
+    return n;
+  };
+  const letters = comp.draws.map((d) => [d, lettersOf(d)]).filter(([, n]) => n > 0).map(([d, n]) => `${d.id}:${d.role}:${n}`);
+  const markers = (window.__worldMapMarkers ?? []).filter((m) => m.owner !== undefined && m.owner !== comp.focus && m.sx > 0 && m.sy > 0 && m.sx < e.width && m.sy < e.height).map((m) => `${m.owner}:${m.label}`);
+  return { focus: comp.focus, name: focus?.name, type: focus?.type, title, dominant: top?.id ?? null, focusShare: own?.share ?? 0, topShare: top?.share ?? 0, letters, markers, scale: Math.round(e.view.scale) };
+});
+
+async function runNotches(browser, spec, delta) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const pg = await ctx.newPage();
+  await pg.goto(`${base}${page(spec.chain[0])}?${spec.era ? `era=${spec.era}&` : ""}debug`, { waitUntil: "domcontentloaded", timeout: 180000 });
+  await ready(pg);
+  await pg.locator("button", { hasText: /Принять|Accept/ }).first().click({ timeout: 2000 }).catch(() => {});
+  await settled(pg);
+  const surface = await pg.evaluate(() => { const r = window.__worldMap.surface.getBoundingClientRect(); return [r.left, r.top]; });
+  const problems = [];
+  const steps = [];
+  let n = 0;
+  const check = async (dir) => {
+    const st = await stateOf(pg);
+    const issues = [];
+    if (st.type !== "cosmic" && st.title !== st.name) issues.push(`TITLE(${st.title}≠${st.name})`);
+    // The map in view dominates: nothing else drawn covers clearly more of the view.
+    if (st.dominant !== st.focus && st.topShare > st.focusShare + 0.15) issues.push(`DOMINANT(${st.dominant} ${st.topShare.toFixed(2)} > ${st.focus} ${st.focusShare.toFixed(2)})`);
+    if (st.letters.length) issues.push(`LETTERS(${st.letters.join(",")})`);
+    if (st.markers.length) issues.push(`MARKERS(${st.markers.slice(0, 4).join(",")})`);
+    steps.push(`${dir}${n}:${st.focus}`);
+    if (issues.length) {
+      problems.push(`${dir}${n} focus ${st.focus} ${issues.join(" ")}`);
+      if (shots) await pg.screenshot({ path: `${shots}/notch-${spec.key}-${delta}-${dir}${n}.png`, timeout: 120000 }).catch(() => {});
+    }
+    return st;
+  };
+  // In: the cursor on each next place of the chain, one event at a time.
+  const missed = [];
+  for (const id of spec.chain.slice(1)) {
+    let got = false;
+    for (let i = 0; i < 12; i++, n++) {
+      await bringIntoView(pg, id, surface);
+      await settled(pg);
+      const [x, y] = (await centreOf(pg, id)) ?? [720, 450];
+      await pg.mouse.move(surface[0] + x, surface[1] + y);
+      await pg.mouse.wheel(0, -delta);
+      await settled(pg);
+      const st = await check("in");
+      if (st.focus === id) { got = true; break; }
+    }
+    if (!got) missed.push(id);
+  }
+  // Out: at the middle of the free area, back to the first map of the chain.
+  let back = false;
+  for (let i = 0; i < 14; i++, n++) {
+    const ins = await pg.evaluate(() => { const e = window.__worldMap, s = e.options.insets; return [s.left + (e.width - s.left - s.right) / 2, s.top + (e.height - s.top - s.bottom) / 2]; });
+    await pg.mouse.move(surface[0] + ins[0], surface[1] + ins[1]);
+    await pg.mouse.wheel(0, delta);
+    await settled(pg);
+    const st = await check("out");
+    if (st.focus === spec.chain[0]) { back = true; break; }
+  }
+  await ctx.close();
+  if (!back) missed.push(spec.chain[0]);
+  return { key: `notch-${spec.key}-${delta}`, steps, problems: [...(problems.length ? ["SETTLED-STATE"] : []), ...(missed.length ? [`NOT-REACHED(${missed.join(",")})`] : [])], detail: problems };
+}
+
 if (shots) fs.mkdirSync(shots, { recursive: true });
 const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
 const results = [];
-for (const spec of chains) {
+if (args.notches) {
+  // --notches [100,300]: only the one-event-at-a-time runs.
+  for (const delta of String(args.notches === "1" ? "100,300" : args.notches).split(",").map(Number)) {
+    for (const spec of chains) {
+      let r;
+      try { r = await runNotches(browser, spec, delta); } catch (error) { r = { key: `notch-${spec.key}-${delta}`, problems: ["ERROR"], detail: [String(error).slice(0, 200)] }; }
+      results.push(r);
+      console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(34)} ${(r.steps ?? []).join(" ")}`);
+      for (const line of r.detail.slice(0, 8)) console.log(`     ${line}`);
+    }
+  }
+}
+for (const spec of args.notches ? [] : chains) {
   try { results.push(await runChain(browser, spec)); } catch (error) { results.push({ key: spec.key, problems: ["ERROR"], error: String(error).slice(0, 300) }); }
   const r = results.at(-1);
   const missed = Object.entries(r.reached ?? {}).filter(([, ok]) => !ok).map(([id]) => id);
   console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(26)} ${r.problems.join(",") || ""}${missed.length ? ` (not reached ${missed.join(",")})` : ""}`);
   console.log(`     focus ${(r.focusSeq ?? []).join("→")} | titles ${(r.toldTitles ?? []).join(" → ")} | void ${r.voidFrames ?? "-"} (max ${(r.voidMax ?? 0).toFixed(3)}) | ancestor ${r.ancestorFrames ?? "-"} ${r.ancestorSample ? JSON.stringify(r.ancestorSample) : ""} | pill ${r.pillWhileMoving ?? "-"} | frames p50 ${r.intervalP50} p95 ${r.intervalP95} max ${r.intervalMax} ms, long tasks ${r.longTasks} (max ${r.longMax}) | focus upscale max ${r.focusUpscaleMax}${r.error ? ` | ${r.error}` : ""}`);
 }
-if (!args.only || args.only.includes("interactions")) {
+if (!args.notches && (!args.only || args.only.includes("interactions"))) {
   for (const r of await runInteractions(browser).catch((error) => [{ key: "interactions", problems: ["ERROR"], error: String(error).slice(0, 300) }])) {
     results.push(r);
     console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(26)} ${r.problems.join(",")}`);
