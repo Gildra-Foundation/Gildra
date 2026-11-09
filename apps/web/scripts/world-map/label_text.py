@@ -26,8 +26,12 @@ def apply(art, registry):
             labels[index] = label
         if not isinstance(label, dict) or label.get('box') != record['box']:
             raise ValueError(f"label box changed: {art['url']} #{index}")
-        label['text'] = record['text']
-        count += 1
+        if record.get('kind') == 'ornament':
+            label['kind'] = 'ornament'
+            label.pop('text', None)
+        else:
+            label['text'] = record['text']
+            count += 1
     return count
 
 
