@@ -118,6 +118,7 @@ function outsideOf(box: Box, hole: Box): Box | null {
   return [Math.min(...parts.map((b) => b[0])), Math.min(...parts.map((b) => b[1])), Math.max(...parts.map((b) => b[2])), Math.max(...parts.map((b) => b[3]))];
 }
 const FADE_TILE = 150;
+type PinMode = "centre" | "contain";
 /** How far past its edge a dragged map follows the pointer at most (CSS px, the rubber band's reach). */
 const PAN_RUBBER = 64;
 /** Least share of the free view a place must fill to become the map in view. */
@@ -447,6 +448,7 @@ export class WorldMapEngine {
 
   jumpTo(camera: Camera) {
     this.stretch = null;
+    this.recentre = true;
     this.lookAt = null;
     this.zoomIntent = 0;
     this.flight = null;
@@ -459,6 +461,7 @@ export class WorldMapEngine {
 
   flyTo(target: Camera, after?: () => void) {
     this.stretch = null;
+    this.recentre = true;
     this.lookAt = null;
     this.zoomIntent = 0;
     this.velocity = null;
@@ -541,6 +544,7 @@ export class WorldMapEngine {
     // Back out of an overshoot first (a wheel turned back at the limit).
     log = this.unwind(log);
     this.boundsId = null;
+    this.recentre = false;
     if (!log) { this.markMoving(); this.invalidate(); return; }
     const wanted = gather(this.wheel?.log ?? 0, log);
     let left = wanted;
@@ -803,7 +807,7 @@ export class WorldMapEngine {
     this.springing = this.springBack(dt, now);
     if (this.velocity) {
       const free = { ...this.camera, x: this.camera.x - (this.velocity.x * dt) / this.camera.scale, y: this.camera.y - (this.velocity.y * dt) / this.camera.scale };
-      this.camera = this.limit(free);
+      this.camera = this.limit(free, undefined, this.camera, "centre");
       // The glide stops at the edge of the map (no sliding along a wall into the void).
       if (Math.abs(this.camera.x - free.x) * this.camera.scale > 0.01) this.velocity = { ...this.velocity, x: 0 };
       if (Math.abs(this.camera.y - free.y) * this.camera.scale > 0.01) this.velocity = { ...this.velocity, y: 0 };
@@ -894,7 +898,7 @@ export class WorldMapEngine {
    * a move may not leave the map further off its bounds than it already was (null: put it inside at once, for flights
    * and jumps). Once the input stops, the view springs back inside (step()).
    */
-  private limit(camera: Camera, anchor?: { x: number; y: number }, against: Camera | null = this.camera): Camera {
+  private limit(camera: Camera, anchor?: { x: number; y: number }, against: Camera | null = this.camera, mode: PinMode = against ? "contain" : "centre"): Camera {
     const b = this.bounds(camera, anchor);
     if (!b) return camera;
     const { min, max } = b;
@@ -905,7 +909,7 @@ export class WorldMapEngine {
       const [ax, ay] = toAtlas(camera, this.width, this.height, anchor.x, anchor.y);
       next = { scale, x: ax - (anchor.x - this.width / 2) / scale, y: ay - (anchor.y - this.height / 2) / scale };
     }
-    return this.pin(next, against);
+    return this.pin(next, against, mode);
   }
 
   /**
@@ -914,7 +918,7 @@ export class WorldMapEngine {
    * must keep covering the stage — or, if it is smaller, stay centred on it; with none, the top map stays centred.
    * (A place only just opening inside the map in view does not yet pin the view: no jump towards it.)
    */
-  private pinRange(camera: Camera): { x: [number, number]; y: [number, number] } | null {
+  private pinRange(camera: Camera, mode: PinMode): { x: [number, number]; y: [number, number] } | null {
     const ids = chainUp(this.set, this.boundsId !== null && this.maps.has(this.boundsId) ? this.boundsId : this.focusId);
     if (!ids.length) return null;
     const { top, right, bottom, left } = this.options.insets;
@@ -933,6 +937,9 @@ export class WorldMapEngine {
       const f = box as Box;
       const lo = f[lo0] + (size / 2 - near) / s, hi = f[lo0 + 2] - (size / 2 - far) / s;
       if (lo <= hi) return [lo, hi];
+      // Smaller than the stage there: wholly inside it while zooming (the cursor's point holds until the map meets
+      // the stage's edge); centred after a drag and for a flight's landing.
+      if (mode === "contain") return [hi, lo];
       const c = (f[lo0] + f[lo0 + 2]) / 2 - (near - far) / 2 / s;
       return [c, c];
     };
@@ -940,17 +947,17 @@ export class WorldMapEngine {
   }
 
   /** How far (atlas units, signed) a camera is off its pin on each axis. */
-  private pinOff(camera: Camera) {
-    const r = this.pinRange(camera);
+  private pinOff(camera: Camera, mode: PinMode = this.recentre ? "centre" : "contain") {
+    const r = this.pinRange(camera, mode);
     if (!r) return null;
     const off = (v: number, [lo, hi]: [number, number]) => (v < lo ? v - lo : v > hi ? v - hi : 0);
     return { x: off(camera.x, r.x), y: off(camera.y, r.y), r };
   }
 
-  private pin(camera: Camera, against: Camera | null): Camera {
-    const now = this.pinOff(camera);
+  private pin(camera: Camera, against: Camera | null, mode: PinMode): Camera {
+    const now = this.pinOff(camera, mode);
     if (!now) return camera;
-    const was = against ? this.pinOff(against) : null;
+    const was = against ? this.pinOff(against, mode) : null;
     const next = { ...camera };
     for (const k of ["x", "y"] as const) {
       const v = now[k];
@@ -963,6 +970,8 @@ export class WorldMapEngine {
     return next;
   }
 
+  /** The last move was a drag or a flight (the map smaller than the stage centres again), not a zoom (it stays where the zoom left it, inside the stage). */
+  private recentre = true;
   /** The map whose place a flight or a jump heads for: it pins the view until the reader moves on (else the map in view). */
   private boundsId: number | null = null;
   /** A drag: where the pointer would have taken the camera, and the camera when it started. */
@@ -2195,10 +2204,12 @@ export class WorldMapEngine {
         raw.x -= (after[0] - before[0]) / s;
         raw.y -= (after[1] - before[1]) / s;
         this.dragRaw = raw;
-        const hard = this.limit(raw, undefined, this.dragBase ?? this.camera);
+        const hard = this.limit(raw, undefined, this.dragBase ?? this.camera, "centre");
+        this.recentre = true;
         const band = (px: number) => Math.sign(px) * PAN_RUBBER * (1 - Math.exp(-Math.abs(px) / PAN_RUBBER));
         this.camera = { ...hard, x: hard.x + band((raw.x - hard.x) * s) / s, y: hard.y + band((raw.y - hard.y) * s) / s };
       } else {
+        this.recentre = false;
         let camera = { ...this.camera, x: this.camera.x - (after[0] - before[0]) / this.camera.scale, y: this.camera.y - (after[1] - before[1]) / this.camera.scale };
         // Pinch: zoom around the fingers' midpoint by the change of their spread (no rotation).
         // (Pinching back out of an overshoot first unwinds it.)
