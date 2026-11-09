@@ -229,97 +229,25 @@
   padding: var(--atlas-space-7) var(--atlas-gutter) var(--atlas-space-8);
 }
 
-/* The column keeps block flow (its sections' margins collapse as before). On a short
-   page it is taller than its content, and the sticky offset lowers the footer to
-   the column's foot; on a long page there is no room below it, so it never moves.
-   The footer: the crest on a thin rail, one quiet centred row of links with the
-   motion switch after a hairline, the legal notice in one short line under it.
-   No band, no box; links are a step smaller than body text so the page ends calmly. */
-.legal {
-  position: sticky;
-  top: 100%;
-  display: grid;
-  justify-items: center;
-  gap: var(--atlas-space-3);
-  margin-top: var(--atlas-space-8);
-  padding-bottom: var(--atlas-space-3);
-  color: var(--atlas-text-muted);
-  font-size: var(--atlas-text-small);
-  line-height: 1.5;
-  text-align: center;
-  /* Pages whose painting runs under the footer (the Ruby Life Pools route) put the
-     notice on bright water: a halo keeps it readable; on the solid body it is invisible. */
-  text-shadow: 0 1px 2px var(--atlas-bg), 0 0 8px var(--atlas-bg);
-}
-
-/* The notice sits over the scene light at the foot of the page: muted text keeps it above 4.5:1. */
-.legal p { max-width: min(100%, 76ch); margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-wrap: balance; }
-.legal .motionToggle { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+/* Owner-approved common footer (2026-11-09): material-atlas surface, grouped navigation. */
+.legal { position: sticky; top: 100%; display: grid; gap: var(--atlas-space-6); margin-top: var(--atlas-space-8); padding: var(--atlas-space-7) var(--atlas-space-5) var(--atlas-space-5); border-top: 1px solid var(--atlas-line); background-color: var(--atlas-surface); background-image: linear-gradient(135deg, var(--atlas-accent-wash), transparent 55%); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); text-align: left; }
+.legalBody { display: grid; grid-template-columns: minmax(180px, .9fr) minmax(0, 2.6fr); gap: var(--atlas-space-7); }
+.legalSummary { display: grid; align-content: start; gap: var(--atlas-space-4); min-width: 0; }
+.legalSummary p { margin: 0; max-width: 29ch; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); }
+.legalBrand { min-width: 0; }
+.legalNav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-5); align-content: start; }
+.legalNav:only-child { grid-column: 1 / -1; }
+.legalNav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; text-underline-offset: 4px; }
+.legalNav a:hover { color: var(--atlas-text-strong); text-decoration: underline; text-decoration-color: var(--atlas-accent); }
+.legalNav a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.legalMeta { display: grid; gap: var(--atlas-space-4); padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); }
+.legalControls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3) var(--atlas-space-5); }
+.legalNotice { max-width: 100%; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.legal .motionToggle { color: var(--atlas-text); font-size: var(--atlas-text-small); }
 .legal .motionToggle:hover { color: var(--atlas-text-strong); }
-/* Touch screens are read at arm's length: the notice and the switch a step larger. */
-@media (pointer: coarse) {
-  .legal p,
-  .legal .motionToggle { font-size: var(--atlas-text-small); }
-}
-
-/* The rail: a thin engraved line across the column, the crest at its centre. */
-.legalBrand {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  gap: var(--atlas-space-5);
-}
-.legalBrand::before,
-.legalBrand::after {
-  flex: 1 1 0;
-  height: 1px;
-  content: "";
-  background: linear-gradient(90deg, transparent, var(--atlas-line) 70%);
-}
-.legalBrand::after { background: linear-gradient(90deg, var(--atlas-line) 30%, transparent); }
-
-/* One row: the footer links, a hairline, then the motion switch. */
-.legalLinks {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0 var(--atlas-space-5);
-}
-.legalNav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0 var(--atlas-space-6);
-  font-size: var(--atlas-text-small);
-  font-weight: 500;
-  letter-spacing: .01em;
-}
-.legalNav a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  color: var(--atlas-text);
-  text-decoration: none;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 5px;
-  transition: color var(--atlas-duration) var(--atlas-ease);
-}
-.legalNav a:hover { color: var(--atlas-text-strong); text-decoration-line: underline; text-decoration-color: var(--atlas-accent); }
-.legalNav a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-.legalDivider { width: 1px; height: 16px; background: var(--atlas-line); }
-
-/* Phone: the six links in two even rows of three, the switch centred under them. */
-@media (max-width: 720px) {
-  .legal { gap: var(--atlas-space-2); margin-top: var(--atlas-space-7); }
-  .legalLinks { flex-direction: column; gap: 0; }
-  .legalNav { display: grid; grid-template-columns: repeat(3, auto); justify-content: center; justify-items: center; gap: 0 var(--atlas-space-5); }
-  .legalDivider { display: none; }
-}
-@media (max-width: 360px) {
-  .legalNav { grid-template-columns: repeat(2, auto); }
-}
+@media (max-width: 1000px) { .legalBody { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-6); } .legalSummary p { max-width: 48ch; } }
+@media (max-width: 600px) { .legal { padding: var(--atlas-space-5) var(--atlas-space-4); } .legalNav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-5) var(--atlas-space-4); } .legalNotice { font-size: var(--atlas-text-small); } }
+@media (forced-colors: active) { .legal { background: Canvas; border-color: CanvasText; } }
 
 /* The account roster is one environment, from its title to its legal line.
    A viewport-sized painting stays in its own page-length track, so a long

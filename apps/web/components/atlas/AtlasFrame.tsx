@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import Link from "next/link";
 import { AtlasFrameFooter, AtlasFrameShell } from "@gildra/atlas-ui";
 import { atlasScenes, type AtlasScene, type AtlasSceneId } from "@/lib/atlas/scenes";
-import { ATLAS_FOOTER_LINKS } from "./footerLinks";
+import { FOOTER_GROUPS, footerCopy } from "./footerLinks";
 import { GildraCrest } from "@/components/brand/GildraCrest";
 import styles from "./AtlasFrame.module.css";
 
@@ -11,26 +11,30 @@ type ShellProps = ComponentProps<typeof AtlasFrameShell>;
 export type AtlasFrameProps = Omit<ShellProps, "footer" | "ember" | "glow" | "horizon"> & {
   /** Section scene from lib/atlas/scenes.ts (art, crop, shade, tint, sparks, living light); explicit props override it. */
   scene?: AtlasSceneId;
-  /** Site footer under the content: crest on a rail, footer links with "Less motion", the one-line legal notice.
+  /** Site footer under the content: brand, grouped links, language and motion controls, legal notice.
    *  An object replaces the line's text and links (the 404 of unmatched URLs picks its language on the client). */
   footer?: boolean | { legal: ReactNode; links: ReactNode; motion?: ReactNode };
 };
 
 /** The site's one legal line (Blizzard trademark notice) in a language: one short sentence pair. */
 const LEGAL = {
-  en: "World of Warcraft® is a registered trademark of Blizzard Entertainment, Inc. Gildra is an unofficial fan site, not affiliated with Blizzard.",
-  ru: "World of Warcraft® — зарегистрированный товарный знак Blizzard Entertainment, Inc. Gildra — неофициальный фанатский сайт, не связанный с Blizzard.",
+  en: "World of Warcraft® is a registered trademark of Blizzard Entertainment, Inc. WowArcana is an unofficial fan site, not affiliated with Blizzard.",
+  ru: "World of Warcraft® — зарегистрированный товарный знак Blizzard Entertainment, Inc. WowArcana — неофициальный фанатский сайт, не связанный с Blizzard.",
 } as const;
 export const atlasLegal = (locale: "en" | "ru") => LEGAL[locale];
 
 const footerParts = (locale: "en" | "ru") => ({
-  brand: <span className={styles.seal}><GildraCrest height={44} className={styles.crest} /><span>WOWARCANA</span></span>,
+  brand: <Link href={`${locale === "ru" ? "/ru" : ""}/wow`} prefetch={false} className={styles.seal} aria-label="WowArcana"><GildraCrest height={56} className={styles.crest} /><span>WowArcana</span></Link>,
+  description: footerCopy[locale].description,
   legal: atlasLegal(locale),
-  links: <>
-    {ATLAS_FOOTER_LINKS.map((link) => (
-      <Link key={link.href} href={`${locale === "ru" ? "/ru" : ""}${link.href}`} prefetch={false}>{link[locale]}</Link>
-    ))}
-  </>,
+  links: <>{FOOTER_GROUPS.map((group, index) => <div key={index} className={styles.footerGroup}>
+    <h3>{footerCopy[locale].groups[index]}</h3>
+    <ul>{group.map(link => <li key={link.href}><Link href={`${locale === "ru" ? "/ru" : ""}${link.href}`} prefetch={false}>{link[locale]}</Link></li>)}</ul>
+  </div>)}</>,
+  language: <nav className={styles.footerLanguages} aria-label={footerCopy[locale].language}>
+    <Link href="/wow" lang="en" hrefLang="en" prefetch={false} aria-current={locale === "en" ? "true" : undefined}>English</Link>
+    <Link href="/ru/wow" lang="ru" hrefLang="ru" prefetch={false} aria-current={locale === "ru" ? "true" : undefined}>Русский</Link>
+  </nav>,
 });
 
 /** The frame's legal line on its own, for a page that cannot sit in the frame (the full-bleed story reader). */

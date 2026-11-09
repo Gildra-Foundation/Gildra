@@ -53,8 +53,9 @@ function measure() {
     .find((e) => e.children.length === 0 && getComputedStyle(e).textTransform === "uppercase" && e.textContent.trim().length > 2);
   const buttons = [...document.querySelectorAll("main a, main button")]
     .filter((e) => getComputedStyle(e).borderImageSource !== "none" || e.closest("[data-mythic-asset-button],[data-raid-asset-button]"));
-  const h2s = [...document.querySelectorAll("main h2")];
-  const h3s = [...document.querySelectorAll("main h3")];
+  // Footer groups have their own headings; the body typography gate excludes them.
+  const h2s = [...document.querySelectorAll("main h2")].filter((e) => !e.closest("footer"));
+  const h3s = [...document.querySelectorAll("main h3")].filter((e) => !e.closest("footer"));
   const lead = [...(hero?.querySelectorAll("p") ?? [])].find((e) => parseFloat(getComputedStyle(e).fontSize) >= 14 && e.textContent.trim().length > 20);
   const main = document.querySelector("main");
   const header = document.querySelector("body > header, header[role=banner], header");
@@ -106,7 +107,7 @@ function compare(ref, cur) {
     if (b.scrollWidth > (run.startsWith("phone") ? 390 : 1440)) problems.push(`${at}: горизонтальный скролл ${b.scrollWidth}`);
     for (const [k, v] of Object.entries(a.tokens)) if (b.tokens[k] !== v) problems.push(`${at} ${k}: ${v} → ${b.tokens[k] ?? "нет"}`);
     const ea = a.elements, eb = b.elements;
-    for (const k of ["h1", "eyebrow", "lead", "header", "body"]) diff(`${at} ${k}`, ea[k], eb[k]);
+    for (const k of ["h1", "eyebrow", "lead", "header", "footer", "body"]) diff(`${at} ${k}`, ea[k], eb[k]);
     diff(`${at} h2`, ea.h2[0], eb.h2[0]);
     diff(`${at} h3`, ea.h3.first, eb.h3.first);
     diff(`${at} кнопка`, ea.buttons[0], eb.buttons[0]);
