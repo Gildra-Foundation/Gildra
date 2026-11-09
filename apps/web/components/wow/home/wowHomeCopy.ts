@@ -1,7 +1,8 @@
 /** Player actions and section names, kept in parity for both locales. */
 export const wowHomeCopy = {
   ru: {
-    eyebrow: "Midnight", title: "Ваш командный центр в Азероте", character: "Мои персонажи", play: "Сезон Mythic+",
+    eyebrow: "Midnight", title: "Ваш командный центр в Азероте", lede: "Маршруты и таймеры Mythic+, тактики рейдов, тир-листы, поиск героя и карта Азерота.",
+    closingLabel: "Быстрый переход", closingCharacter: "Найти своего персонажа", closingMap: "Открыть карту мира", character: "Мои персонажи", play: "Сезон Mythic+",
     seasonTitle: "Подземелья и рейды", meta: "Мета недели", mythicText: "Маршруты, таймеры и тактики подземелий сезона.", dungeons: "Выбрать подземелье",
     raids: "Рейды", raidText: "Боссы и тактики для вашей роли.", explore: "Откройте Азерот", tools: "Всё для вашего героя",
     featured: {
@@ -14,7 +15,8 @@ export const wowHomeCopy = {
     news: "Что нового", allNews: "Все изменения",
   },
   en: {
-    eyebrow: "Midnight", title: "Your command center in Azeroth", character: "My characters", play: "Mythic+ season",
+    eyebrow: "Midnight", title: "Your command center in Azeroth", lede: "Mythic+ routes and timers, raid tactics, tier lists, character lookup and the world map.",
+    closingLabel: "Quick access", closingCharacter: "Find your character", closingMap: "Open the world map", character: "My characters", play: "Mythic+ season",
     seasonTitle: "Dungeons & raids", meta: "Weekly meta", mythicText: "Routes, timers and tactics for the season’s dungeons.", dungeons: "Choose a dungeon",
     raids: "Raids", raidText: "Bosses and tactics for your role.", explore: "Explore Azeroth", tools: "Everything for your hero",
     featured: {
