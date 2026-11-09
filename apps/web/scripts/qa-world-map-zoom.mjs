@@ -523,7 +523,9 @@ const DEEP = [
   { key: "deep-kalimdor", chain: [12, 1, 85], terrain: true },
   { key: "deep-eastern-kingdoms", chain: [13, 37, 84], terrain: true },
   { key: "deep-broken-isles", chain: [619, 630], terrain: true },
-  { key: "deep-outland", chain: [101, 107], terrain: false },
+  { key: "deep-outland", chain: [101, 107], terrain: true },
+  // A phase whose era knows no ground under its zone (Theramore fallen): capped at the painted map, no modern ground.
+  { key: "deep-theramore-fall", chain: [12, 70], terrain: false, query: "at=5.2.0" },
 ];
 
 async function runDeep(browser, spec) {
@@ -532,7 +534,7 @@ async function runDeep(browser, spec) {
   if (cpu > 1) { const cdp = await ctx.newCDPSession(pg); await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpu }); }
   const errors = [];
   pg.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
-  await pg.goto(`${base}${page(spec.chain[0])}?debug`, { waitUntil: "domcontentloaded", timeout: 180000 });
+  await pg.goto(`${base}${page(spec.chain[0])}?${spec.query ? `${spec.query}&` : ""}debug`, { waitUntil: "domcontentloaded", timeout: 180000 });
   await ready(pg);
   await pg.locator("button", { hasText: /Принять|Accept/ }).first().click({ timeout: 2000 }).catch(() => {});
   await pg.evaluate((max) => { window.__zoomMaxVoid = max; }, maxVoid);
@@ -573,7 +575,8 @@ async function runDeep(browser, spec) {
   const labels = await overlaps(pg);
   if (shots) await pg.screenshot({ path: `${shots}/${spec.key}-max.png`, timeout: 120000 }).catch(() => {});
   // One more notch: a bounce at the limit, then back to the same view.
-  const [bx, by] = (await centreOf(pg, last)) ?? [720, 450];
+  // (At the middle of the free view, where the limit was read: elsewhere another picture may set another limit.)
+  const [bx, by] = await pg.evaluate(() => { const e = window.__worldMap, s = e.options.insets; return [s.left + (e.width - s.left - s.right) / 2, s.top + (e.height - s.top - s.bottom) / 2]; });
   await pg.mouse.move(surface[0] + bx, surface[1] + by);
   await pg.mouse.wheel(0, -100);
   await pg.waitForTimeout(40);
@@ -583,13 +586,15 @@ async function runDeep(browser, spec) {
   const after = await pg.evaluate(() => ({ scale: window.__worldMap.view.scale, stretch: window.__worldMap.stretch }));
   const rec = await pg.evaluate(() => { const r = window.__zoomRec; r.stop = true; return r; });
   await ctx.close();
+  if (shots) rec.voids.forEach((v, i) => fs.writeFileSync(`${shots}/${spec.key}-void-${i}-${v.focus}-${v.value.toFixed(2)}.png`, Buffer.from(v.url.split(",")[1], "base64")));
+  const voidAt = rec.frames.filter((f) => f.empty > maxVoid).map((f) => `${f.focus}:${f.scale}:${f.empty.toFixed(2)}`).slice(0, 6);
   const limit = st.cov.detail?.source === "terrain" ? 2 : 1.6;
   if (missed.length) problems.push(`NOT-REACHED(${missed.join(",")})`);
   if (st.room > 0.01) problems.push(`NOT-MAX(${st.room.toFixed(3)} left)`);
   if (!st.cov.detail || st.cov.detail.upscale > limit * 1.02) problems.push(`OVER-UPSCALE(${st.cov.detail?.source}:${st.cov.detail?.upscale?.toFixed(2)})`);
   if (spec.terrain && st.cov.detail?.source !== "terrain") problems.push("NO-TERRAIN");
   if (!spec.terrain && st.cov.detail && st.cov.detail.upscale < 1.5) problems.push(`CAP-SHALLOW(${st.cov.detail.upscale.toFixed(2)})`);
-  if (st.cov.art < 0.98 || st.cov.ground < 0.98) problems.push(`BLANK-TILES(art ${st.cov.art.toFixed(2)}, ground ${st.cov.ground.toFixed(2)})`);
+  if (st.cov.tiles < 0.99) problems.push(`BLANK-TILES(${st.cov.tiles.toFixed(3)} of ${st.cov.drawn})`);
   if (labels.overlaps.length) problems.push(`LABEL-OVERLAP(${labels.overlaps.slice(0, 3).join("; ")})`);
   if (st.title !== st.name || st.focus !== last) problems.push(`TITLE(${st.title}|${st.name}|${st.focus})`);
   if (!st.spent) problems.push("ZOOM-IN-NOT-SPENT");
@@ -600,8 +605,8 @@ async function runDeep(browser, spec) {
   if (pills) problems.push(`HOVER-WHILE-MOVING(${pills})`);
   if (errors.length) problems.push("PAGE-ERROR");
   return {
-    key: spec.key, problems, errors: errors.slice(0, 2), notches, room: Number(st.room.toFixed(4)), detail: st.cov.detail && { source: st.cov.detail.source, upscale: Number(st.cov.detail.upscale.toFixed(3)) },
-    coverage: { art: Number(st.cov.art.toFixed(3)), ground: Number(st.cov.ground.toFixed(3)) }, ground: Number(st.ground.toFixed(2)), labels: labels.count, title: st.title, bounce: Number(bounce.toFixed(3)),
+    key: spec.key, problems, errors: errors.slice(0, 2), voidAt, notches, room: Number(st.room.toFixed(4)), detail: st.cov.detail && { source: st.cov.detail.source, upscale: Number(st.cov.detail.upscale.toFixed(3)) },
+    coverage: { tiles: Number(st.cov.tiles.toFixed(3)), drawn: st.cov.drawn }, drift: Number((after.scale / st.scale).toFixed(4)), ground: Number(st.ground.toFixed(2)), labels: labels.count, title: st.title, bounce: Number(bounce.toFixed(3)),
   };
 }
 

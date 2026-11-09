@@ -92,6 +92,8 @@ type ArtStyle = { corner?: number; holes?: Array<[number, number, number, number
   holeFill?: number;
   /** A flat colour under the picture inside its rect (a terrain's sea). */
   ocean?: string;
+  /** A rectangle the terrain gives way over (a map whose era knows no ground there). */
+  cut?: DrawParams["exclude"];
 };
 
 /** Floors and caves under a place (micro maps, orphan levels like Cleft of Shadow): never opened by zooming over its surface. */
@@ -667,29 +669,21 @@ export class WorldMapEngine {
   }
 
   /**
-   * Probe for checks: the share of the tiles this view needs that are loaded (painted maps, washes and the
-   * terrain), and the finest picture at the middle of the view with its magnification (CSS px per texel).
+   * Probe for checks: the share of the tiles the last frame drew that were loaded (painted maps and terrain), and
+   * the finest picture at the middle of the view with its magnification (CSS px per texel).
    */
   coverage() {
-    const now = performance.now();
-    let ready = 0, total = 0;
-    const share = this.prefetch(this.set, now);
-    for (const t of this.terrain) {
-      const tr = t.map.terrain, exists = tr ? this.terrainTiles(tr) : null;
-      if (!tr || !exists) continue;
-      const [x0, y0] = this.project(tr.frame[0], tr.frame[1]), [x1, y1] = this.project(tr.frame[2], tr.frame[3]);
-      const [r, n] = this.drawArt(t.map, tr.art, [x0, y0, x1, y1], t.clip, { alpha: 0, light: 0, cloud: 0, water: 0, desat: 0, levelScale: 1, exists }, now, false, true, "t");
-      ready += r;
-      total += n;
-    }
     const focus = this.focus;
     const ground = this.lastInfo?.ground ?? 0;
     const t = this.terrain.find((entry) => entry.alpha >= 0.9)?.map.terrain;
     const detail = ground >= 0.9 && t
       ? { source: "terrain", upscale: ((t.frame[2] - t.frame[0]) * this.camera.scale) / t.art.width }
       : focus?.art ? { source: "art", upscale: ((focus.frame[2] - focus.frame[0]) * this.camera.scale) / focus.art.width } : null;
-    return { art: share, ground: total ? ready / total : 1, detail };
+    return { tiles: this.drawnTiles[1] ? this.drawnTiles[0] / this.drawnTiles[1] : 1, drawn: this.drawnTiles[1], detail };
   }
+  /** Tiles the last frame drew: [loaded, needed] (a tile still loading is drawn from a coarser one meanwhile). */
+  private drawnTiles: [number, number] = [0, 0];
+  private countTiles: [number, number] = [0, 0];
 
   resetStats() { this.intervals = []; this.tiles.uploadTimes = []; this.frameCount = 0; this.idleFrames = 0; }
   /** Frames drawn, and rAF callbacks that drew nothing (the living layers' 30 fps gate). */
@@ -727,9 +721,11 @@ export class WorldMapEngine {
       if (this.intervals.length > 600) this.intervals.splice(0, this.intervals.length - 600);
     }
     this.lastFrame = now;
+    const before = this.camera;
     this.step(now, dt);
-    // The page hides what follows the pointer (the hover name) while the view moves, on this very frame.
-    const moving = this.moving;
+    // The page hides what follows the pointer (the hover name) while the view moves, on this very frame — also on
+    // the frame where a move ends (the camera still changed in it).
+    const moving = this.moving || this.camera.scale !== before.scale || this.camera.x !== before.x || this.camera.y !== before.y;
     if (moving !== this.surface.hasAttribute("data-moving")) this.surface.toggleAttribute("data-moving", moving);
     const t0 = performance.now();
     // Decoded tiles go to the GPU within a budget per frame: a burst never stalls one frame.
@@ -837,14 +833,22 @@ export class WorldMapEngine {
     // an island the world map would otherwise be blown up past its detail on the way).
     const at = anchor ? toAtlas(camera, this.width, this.height, anchor.x, anchor.y) : null;
     const under = (box: Box) => (at !== null ? contains(box, at[0], at[1]) : contains(box, camera.x, camera.y));
+    // The pictures that may set it: the map in view and the places inside it — not its ancestors, shown only as a
+    // backdrop (Outland's own picture is finer than Nagrand's: it must not let Nagrand be blown up past its detail).
+    const focus = this.maps.get(this.focusId);
+    const above = focus ? new Set(chainUp(this.set, focus.id).filter((id) => id !== focus.id)) : null;
+    let blocked = false;
     for (const map of this.maps.values()) {
+      if (map.noTerrain && under(map.frame)) blocked = true;
       // (The map in view counts wherever the middle is: it may be zoomed to its own limit.)
       if (!map.art || UNDER.has(map.type) || (!under(map.frame) && map.id !== this.focusId)) continue;
-      max = Math.max(max, maxScaleOf(map.art, map.frame[2] - map.frame[0]));
       if (map.terrain && under(map.terrain.frame) && (!terrain || map.terrain.art.width / (map.terrain.frame[2] - map.terrain.frame[0]) > terrain.art.width / (terrain.frame[2] - terrain.frame[0]))) terrain = map.terrain;
+      if (above?.has(map.id)) continue;
+      max = Math.max(max, maxScaleOf(map.art, map.frame[2] - map.frame[0]));
     }
-    // (Only where the ground has a tile: over its open sea the painted map's own limit holds.)
-    if (terrain && this.groundAt(terrain, at ?? [camera.x, camera.y])) max = Math.max(max, maxScaleOf({ width: 0 }, 1, terrain));
+    // (Only where the ground has a tile: over its open sea the painted map's own limit holds; nor over a map whose
+    // era knows no ground there — a phase.)
+    if (terrain && !blocked && this.groundAt(terrain, at ?? [camera.x, camera.y])) max = Math.max(max, maxScaleOf({ width: 0 }, 1, terrain));
     if (!max) max = min * 100;
     return { root, min, max: Math.max(min, max) };
   }
@@ -1093,10 +1097,16 @@ export class WorldMapEngine {
       const entry = out[i];
       const masked = entry.role === "focus" ? (entry.tone ?? 0) < 0.995 && usesMask(entry.map) : usesMask(entry.map);
       // (Only once it has something to show: a map whose smallest level is not in yet hides nothing.)
-      if (entry.alpha < 0.995 || entry.map.portal || masked || entry.role === "neighbour" || !this.artReady(entry.map)) continue;
+      // (Nor a map in view whose painted words give way, magnified past its detail: the backdrop shows through there.)
+      if (entry.alpha < 0.995 || entry.map.portal || masked || entry.role === "neighbour" || (entry.past ?? 0) > 0.2 || !this.artReady(entry.map)) continue;
       const devW = (entry.screen[2] - entry.screen[0]) * this.dpr, devH = (entry.screen[3] - entry.screen[1]) * this.dpr;
       const f = entry.map.depth === 0 ? 0 : featherOf(devW, devH, this.dpr) / this.dpr;
-      if (entry.clip[0] + f <= 0 && entry.clip[1] + f <= 0 && entry.clip[2] - f >= this.width && entry.clip[3] - f >= this.height) {
+      // (The map in view's corner pieces fade out — corner 0.2 of its smaller side, up to 1.25× that from the corner:
+      // a view that takes in one of its corners is not covered there.)
+      const r = entry.role === "focus" && entry.map.depth > 0 ? 0.25 * Math.min(entry.screen[2] - entry.screen[0], entry.screen[3] - entry.screen[1]) : 0;
+      const cornerSeen = r > 0 && [[entry.screen[0], entry.screen[1]], [entry.screen[2], entry.screen[1]], [entry.screen[0], entry.screen[3]], [entry.screen[2], entry.screen[3]]]
+        .some(([x, y]) => intersects([Math.min(x, x + (x === entry.screen[0] ? r : -r)), Math.min(y, y + (y === entry.screen[1] ? r : -r)), Math.max(x, x + (x === entry.screen[0] ? r : -r)), Math.max(y, y + (y === entry.screen[1] ? r : -r))], [0, 0, this.width, this.height]));
+      if (!cornerSeen && entry.clip[0] + f <= 0 && entry.clip[1] + f <= 0 && entry.clip[2] - f >= this.width && entry.clip[3] - f >= this.height) {
         const shown: DrawnMap[] & { all?: DrawnMap[] } = out.slice(i);
         // The hidden ones still carry the continent's terrain over everything.
         shown.all = out;
@@ -1127,7 +1137,8 @@ export class WorldMapEngine {
       // Only where the ground has more detail than the painted map it would cover.
       const ground = upscaleOf(x1 - x0, terrain.art);
       const more = smoothstep(1.05, 1.5, finest / Math.max(1e-6, ground)) * entry.alpha;
-      const target = terrainAlphaOf(finest) * more;
+      // A map of the set whose era knows no ground there (a phase) under the middle of the view: no terrain at all.
+      const target = this.groundless(set, cx, cy) ? 0 : terrainAlphaOf(finest) * more;
       const clip: Box = [Math.max(x0, entry.clip[0]), Math.max(y0, entry.clip[1]), Math.min(x1, entry.clip[2]), Math.min(y1, entry.clip[3])];
       const key = `${set.key}:${entry.map.id}`;
       seen.add(key);
@@ -1138,11 +1149,12 @@ export class WorldMapEngine {
       if ((soon > 0.003 || target > 0.003) && clip[2] > clip[0] && clip[3] > clip[1]) {
         const exists = this.terrainTiles(terrain);
         if (exists) {
-          const [r, t] = this.drawArt(entry.map, terrain.art, [x0, y0, x1, y1], clip, { alpha: 0, light: 0, cloud: 0, water: 0, desat: 0, levelScale: 1, exists }, now, this.moving, true, "t");
-          ready = t ? r / t : 1;
+          // (A tile still loading counts once a coarser level of it is in: it is drawn from that meanwhile, never a hole.)
+          const [, t, c] = this.drawArt(entry.map, terrain.art, [x0, y0, x1, y1], clip, { alpha: 0, light: 0, cloud: 0, water: 0, desat: 0, levelScale: 1, exists }, now, this.moving, true, "t");
+          ready = t ? c / t : 1;
         }
       }
-      // It comes in only over tiles that are there (no squares of ground popping in one by one), and at most over
+      // It comes in only over tiles that are there or drawn from a coarser level (never squares of empty ground), and at most over
       // ~0.16 s (a jump straight in fades rather than flashes); going out it follows the zoom at once.
       const alpha = target <= shown ? target : ready >= 0.9 || this.options.reducedMotion ? Math.min(target, this.options.reducedMotion ? 1 : shown + this.frameDt / 160) : shown;
       this.groundShown.set(key, alpha);
@@ -1153,11 +1165,29 @@ export class WorldMapEngine {
     for (const key of this.groundShown.keys()) if (key.startsWith(`${set.key}:`) && !seen.has(key)) this.groundShown.delete(key);
     return out;
   }
+  /** Whether a screen point lies over a map whose era clears its ground (`noTerrain`). */
+  private groundless(set: MapSet, sx: number, sy: number) {
+    const [ax, ay] = this.unproject(sx, sy);
+    for (const map of set.maps.values()) if (map.noTerrain && contains(map.frame, ax, ay)) return true;
+    return false;
+  }
+  /** The rectangle (device px) of a map in view whose era clears its ground: the terrain gives way there. */
+  private groundCut(set: MapSet): DrawParams["exclude"] {
+    for (const map of set.maps.values()) {
+      if (!map.noTerrain) continue;
+      const [x0, y0] = this.project(map.frame[0], map.frame[1]), [x1, y1] = this.project(map.frame[2], map.frame[3]);
+      if (x1 < 0 || y1 < 0 || x0 > this.width || y0 > this.height) continue;
+      const d = this.dpr, w = (x1 - x0) * d, h = (y1 - y0) * d;
+      return { rect: [x0 * d, y0 * d, x1 * d, y1 * d], edge: [featherInsetOf(w, h), featherOf(w, h, d)], strength: 1 };
+    }
+    return null;
+  }
   /** The terrain's opacity as last drawn, per set and map: it rises only over tiles that are loaded. */
   private groundShown = new Map<string, number>();
 
   private render(now: number) {
     this.recompose = false;
+    this.countTiles = [0, 0];
     const W = this.canvas.width, H = this.canvas.height;
     const time = this.alive ? (now - this.start) / 1000 : this.pausedTime;
     if (this.alive) this.pausedTime = time;
@@ -1236,6 +1266,7 @@ export class WorldMapEngine {
       }
     }
     this.tiles.endFrame();
+    this.drawnTiles = this.countTiles;
 
     // Focus: the deepest well-shown map under the centre of the free area.
     const { top, right, bottom, left } = this.options.insets;
@@ -1285,11 +1316,12 @@ export class WorldMapEngine {
     // The map in view against a map of its level under the point that clearly shows more of the view (a city the
     // data puts beside its zone, the zone all around it): that one is the candidate.
     // (Only on the way out: entering a city, its zone around it is still bigger for a while.)
+    let beside = false;
     if (candidate && candidate.map.id === this.focusId && (this.zoomDir || this.zoomIntent) < 0) {
       const own = share(candidate);
       for (const entry of drawn) {
         if (entry === candidate || entry.map.depth !== candidate.map.depth || entry.role === "ancestor" || (entry.open ?? entry.alpha) <= 0.5 || !this.inArea(entry.map, cx, cy)) continue;
-        if (share(entry) > own + 0.15 && (!candidate || share(entry) > share(candidate))) candidate = entry;
+        if (share(entry) > own + 0.15 && (!candidate || share(entry) > share(candidate))) { candidate = entry; beside = true; }
       }
     }
     let focus = candidate?.map ?? drawn[0]?.map ?? this.maps.get(this.focusId) ?? this.maps.values().next().value as AtlasMap;
@@ -1315,7 +1347,9 @@ export class WorldMapEngine {
         : (contains(held.frame, cx, cy) || heldShare >= (relation !== "above" || this.zoomDir < 0 ? 0.3 : this.zoomDir > 0 ? 0.04 : 0.12))
           // …and never kept once it has shrunk to a small part of the view (zooming out, or at rest after it).
           && (this.zoomDir > 0 || heldShare >= ((this.zoomDir || this.zoomIntent) < 0 ? 0.18 : 0.12))));
-      const keep = holdFocus({ id: held.id, alpha: shown?.open ?? shown?.alpha ?? 0, under }, { id: candidate.map.id, alpha: candidate.open ?? candidate.alpha }, relation, this.zoomDir || this.zoomIntent);
+      // (A map of its level that clearly shows more of the view on the way out — Durotar around Orgrimmar — takes over
+      // at once: that margin is the hysteresis; the city's own openness would hold the title on it for another notch.)
+      const keep = beside ? candidate.map.id : holdFocus({ id: held.id, alpha: shown?.open ?? shown?.alpha ?? 0, under }, { id: candidate.map.id, alpha: candidate.open ?? candidate.alpha }, relation, this.zoomDir || this.zoomIntent);
       // Down only once there is something to show: the child's whole picture (its smallest level) and the wash
       // the map in view turns into — never a child floating in an empty backdrop.
       // (Not for ever: past ~2× the map in view hands over anyway, rather than be shown blown up.)
@@ -1755,6 +1789,7 @@ export class WorldMapEngine {
     // The painted words of the map in view: the ground comes in there first, so they fade out under it before they
     // are ever shown magnified.
     const words = held && terrain.length ? this.wordsOf(held) : [];
+    const cut = terrain.length ? this.groundCut(set) : null;
     for (const t of terrain) {
       const tr = t.map.terrain;
       if (!tr) continue;
@@ -1766,6 +1801,7 @@ export class WorldMapEngine {
         alpha: t.alpha * eraAlpha, light: 0, cloud: 0, water: water * 0.5, desat: 0, levelScale: 1, exists, sharp: true, grade: this.gradeOf(t.map),
         ...(words.length && t.alpha < 0.999 ? { holes: words, holeFill: Math.min(1, t.alpha * 3) * eraAlpha } : {}),
         ...(tr.ocean ? { ocean: tr.ocean } : {}),
+        ...(cut ? { cut } : {}),
       }, now, moving, false, "t");
     }
     // A hovered child that is not drawn yet peeks through its parent.
@@ -1791,13 +1827,13 @@ export class WorldMapEngine {
    * best coarser tile already loaded until it fades in. `dry`: only ask for the
    * tiles; returns [loaded, needed].
    */
-  private drawArt(map: AtlasMap, art: MapArt, screen: Box, clipBox: Box, style: ArtStyle, now: number, moving: boolean, dry = false, kind = "a"): [number, number] {
+  private drawArt(map: AtlasMap, art: MapArt, screen: Box, clipBox: Box, style: ArtStyle, now: number, moving: boolean, dry = false, kind = "a"): [number, number, number] {
     const d = this.dpr;
     const sx0 = screen[0] * d, sy0 = screen[1] * d, sx1 = screen[2] * d, sy1 = screen[3] * d;
     const devW = sx1 - sx0, devH = sy1 - sy0;
     const W = this.canvas.width, H = this.canvas.height;
     const cx0 = Math.max(0, clipBox[0] * d), cy0 = Math.max(0, clipBox[1] * d), cx1 = Math.min(W, clipBox[2] * d), cy1 = Math.min(H, clipBox[3] * d);
-    if (cx1 <= cx0 || cy1 <= cy0) return [0, 0];
+    if (cx1 <= cx0 || cy1 <= cy0) return [0, 0, 0];
     const z = levelFor(art, devW / style.levelScale);
     const [cols, rows] = levelTiles(art, z);
     const [lw, lh] = levelSize(art, z);
@@ -1839,7 +1875,7 @@ export class WorldMapEngine {
       mask: maskReady && maskReady.texture ? { texture: maskReady.texture, rect: [sx0, sy0, sx1, sy1], strength: maskStrength, land: landOnly } : null,
       paper: paper ? [paper[0], paper[1], paper[2], 0.9] : null,
       art: [sx0, sy0, sx1, sy1], corner: isTerrain ? 0 : style.corner ?? 0, holes: style.holes ?? [],
-      exclude: isTerrain ? null : style.exclude ?? null,
+      exclude: isTerrain ? style.cut ?? null : style.exclude ?? null,
       grade: style.grade ?? null, holeFill: style.holeFill ?? 0,
     };
     // Its finest level magnified past its own size: sharpened (bilinear softness taken back), never drawn coarser.
@@ -1852,7 +1888,7 @@ export class WorldMapEngine {
     const id = map.id;
     const exists = style.exists;
     // The whole picture at level 0 first: something to show while the details load.
-    let ready = 0, total = 0;
+    let ready = 0, total = 0, covered = 0;
     if (!exists || exists(0, 0, 0)) {
       const root = this.tiles.get(tileUrl(art, id, 0, 0, 0), map.depth + (style.exclude ? 6 : 0));
       ready = root.state === "ready" ? 1 : 0;
@@ -1876,8 +1912,12 @@ export class WorldMapEngine {
         // A neighbour's tiles come after the map in view's own.
         const tile = this.tiles.get(tileUrl(art, id, z, tx, ty), 2 + map.depth * 0.5 + dist * 4 + (isTerrain ? -0.5 : 0) + (style.exclude ? 6 : 0));
         total += 1;
-        if (tile.state === "ready" || tile.state === "failed") ready += 1;
+        if (tile.state === "ready" || tile.state === "failed") { ready += 1; covered += 1; }
+        // (Not in yet, but drawn from a coarser level meanwhile: it shows, softer.)
+        else if (dry && this.coarserOf(art, id, z, tx, ty)) covered += 1;
         if (dry) continue;
+        this.countTiles[1] += 1;
+        if (tile.state === "ready" || tile.state === "failed") this.countTiles[0] += 1;
         const fade = tile.state === "ready" ? (this.options.reducedMotion ? 1 : clamp((now - tile.readyAt) / FADE_TILE, 0, 1)) : 0;
         if (fade < 1) {
           this.drawFallback(art, id, z, tx, ty, rect, base);
@@ -1917,7 +1957,13 @@ export class WorldMapEngine {
         }
       }
     }
-    return [ready, total];
+    return [ready, total, covered];
+  }
+
+  /** Whether a coarser level of a tile is loaded (what drawFallback would draw meanwhile). */
+  private coarserOf(art: MapArt, id: number, z: number, tx: number, ty: number) {
+    for (let k = 1; k <= z; k++) if (this.tiles.peek(tileUrl(art, id, z - k, tx >> k, ty >> k))) return true;
+    return false;
   }
 
   /** The bare sheet's colour of a picture whose mask is only a soft rectangle (looked at once per picture). */

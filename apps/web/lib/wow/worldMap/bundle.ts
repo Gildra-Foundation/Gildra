@@ -29,6 +29,8 @@ export type AtlasMap = {
   mask?: string;
   /** Deep-zoom ground of a continent, with its box in atlas space. */
   terrain?: AtlasTerrain;
+  /** No ground is known under this map in its era (a phase): no terrain is drawn over it, not even an ancestor's. */
+  noTerrain?: boolean;
   /** The main map of the place this one is another picture of (phases, earlier/later pictures). */
   samePlace?: number;
   placeRole?: MapRecord["placeRole"];
@@ -142,6 +144,7 @@ function placeRecords(records: Map<number, MapRecord>, lang: Lang, anchors: Map<
       ...(record.placeRole ? { placeRole: record.placeRole } : {}),
       ...(typeof record.activeFrom === "string" ? { activeFrom: record.activeFrom } : {}),
       ...(typeof record.activeTo === "string" ? { activeTo: record.activeTo } : {}),
+      ...(record.noTerrain ? { noTerrain: true } : {}),
     };
     const terrain = terrainOf(record, frame);
     if (terrain) node.terrain = terrain;
@@ -187,7 +190,7 @@ function toPoi(poi: PoiRecord, lang: Lang, mapId: number, target: number | undef
 
 const sameNode = (a: AtlasMap, b: AtlasMap) =>
   a.parent === b.parent && a.depth === b.depth && a.portal === b.portal && a.name === b.name && a.art?.url === b.art?.url
-  && a.mask === b.mask && a.terrain?.art.url === b.terrain?.art.url
+  && a.mask === b.mask && a.terrain?.art.url === b.terrain?.art.url && Boolean(a.noTerrain) === Boolean(b.noTerrain)
   && a.frame.every((v, i) => Math.abs(v - b.frame[i]) < 1e-9) && a.children.length === b.children.length && a.children.every((id, i) => b.children[i] === id);
 
 export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle & { artEras: ArtEra[] } {
@@ -291,8 +294,10 @@ function buildArtEras(eras: EraRecord[], retail: Map<number, MapRecord>, base: M
       // Another picture brings its own mask and ground unless the era names them.
       if (validMask(o.mask)) node.mask = o.mask;
       else if (o.mask !== undefined || o.art !== undefined) delete node.mask;
-      if (validTerrain(o.terrain as MapTerrain)) node.terrain = o.terrain as MapTerrain;
+      if (validTerrain(o.terrain as MapTerrain)) { node.terrain = o.terrain as MapTerrain; delete node.noTerrain; }
       else if (o.terrain !== undefined || o.art !== undefined) delete node.terrain;
+      // `terrain: null`: the ground of that time is not known there (a phase) — no ancestor's modern ground either.
+      if (o.terrain === null) node.noTerrain = true;
       if (Array.isArray(o.children)) explicit.add(id);
       if ("parentId" in o && o.parentId === null) tops.add(id); else tops.delete(id);
       nodes.set(id, node);

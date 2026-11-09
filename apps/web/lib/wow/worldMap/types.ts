@@ -55,6 +55,8 @@ export type MapRecord = {
   /** The patches this picture of the place stands for (phases, successors, predecessors). */
   activeFrom?: string;
   activeTo?: string;
+  /** Set by an era whose override clears this map's terrain (`terrain: null`): no ground is known under it then — not even an ancestor's. */
+  noTerrain?: boolean;
 };
 
 export type PoiKind = "capital" | "city" | "town" | "flight" | "portal" | "dungeon" | "raid" | "delve" | "zone-label";
