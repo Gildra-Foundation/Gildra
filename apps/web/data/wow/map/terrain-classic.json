@@ -39,14 +39,14 @@
       "blockPixels": 256,
       "blocks": 943,
       "tiles": 1306,
-      "bytes": 10666748
+      "bytes": 10666749
     },
     "1415": {
       "mapId": 0,
       "blockPixels": 256,
       "blocks": 687,
       "tiles": 961,
-      "bytes": 6298159
+      "bytes": 6298160
     }
   },
   "build": "1.15.9.70576",

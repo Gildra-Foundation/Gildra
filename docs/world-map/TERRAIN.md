@@ -8,8 +8,9 @@ and `data/wow/map/terrain-manifest.json` (merged into maps.json as `terrain` by
   the 64×64 terrain blocks (533⅓ yards) the FileDataID of its minimap texture
   (512×512 BLP, the top-down picture of the in-game minimap). Only blocks that
   overlap the continent map's world box (primary `UiMapAssignment`) are used.
-* Pyramid: 256 px WebP tiles (quality 72); the deepest level keeps 512 px per
-  block (≈ 1 yard per pixel); each level above merges 2×2 tiles. Open sea has
+* Pyramid: 256 px WebP tiles (q85 native, q80 coarse); the deepest level keeps
+  the client texture resolution (256/512/1024 px per block). Every coarse level
+  is an area average of native pixels. Open sea has
   no block and no tile; `index.json` lists the tiles that exist per level.
 * Placement: block (x, y) covers world X ∈ [(31−y)·S, (32−y)·S] (north) and
   Y ∈ [(31−x)·S, (32−x)·S] (west), S = 533⅓; the corners of the stitched
@@ -37,7 +38,9 @@ No community renders are used.
 All readable minimaps are inspected before encoding. The largest source
 determines native block resolution (usually 256 in Classic, 512 in retail;
 5.5 Pandaria also has 1024 px blocks). The finest sources remain texel-exact;
-smaller sources use nearest sampling on that shared grid, adding no detail. Deep tiles use q70, coarser levels q80. A union of the
+the initial MAPD3 generation used nearest sampling on that shared grid and
+q70 deep/q80 coarse. MAPD4 below replaces it with bilinear mixed-source
+reconstruction and q85 native encoding. A union of the
 requested UiMapAssignment world boxes selects the blocks when several zones
 share one MapID (Shadowlands zones, Argus, Outland with the TBC islands).
 Each UiMap gets its own rect through its own assignment; the shared pyramid
@@ -92,7 +95,9 @@ era sources and separate-instance coverage. Generated size/coverage report:
 `docs/world-map/TERRAIN-COVERAGE.md`.
 
 After publishing, `terrain_metadata.py` adds the same sparse complement to
-previously shipped pyramids and enforces the 1,000,000,000-byte asset budget.
+previously shipped pyramids and enforces both the 1,000,000,000-byte logical
+asset safeguard and the owner’s 1,100,000,000-byte on-disk budget. It also
+rejects unfinished `.native` intermediates.
 Ocean tone is the most frequent quantized blue pixel of the painted map's
 level-zero tile (B > 1.15R and B ≥ 0.95G, 8-step RGB bins); maps without a
 blue sea retain `#163747`. This is a blending hint, not a re-colouring of the
@@ -102,10 +107,8 @@ is reported separately because these thousands of small files use blocks.
 Current CDN geometry was checked against the cached DB2 tables for all five
 products: primary assignment rows and WDT FileDataIDs have zero differences.
 The retail source for this generation is **12.1.5.70783**, Mists is
-**5.5.4.70631**; Classic/TBC/Wrath versions above are unchanged. The original
-ten retail continent pyramids remain from their previously recorded build;
-only the new pyramids use the new source. Source namespaces and actual builds
-are listed in TERRAIN-COVERAGE.md.
+**5.5.4.70631**; Classic/TBC/Wrath versions above are unchanged. MAPD4 now regenerates every pyramid from these verified clients. Source
+namespaces and actual builds are listed in TERRAIN-COVERAGE.md.
 
 ## MAPD4 — native reconstruction and bilingual terrain labels (2026-11-09)
 
@@ -127,8 +130,9 @@ four-block sample). No pixels are duplicated as gutters or deleted at edges.
 A q70→q85 comparison on that native sample improved PSNR 33.38→35.95 dB;
 compression-induced boundary error MAE decreased 7.06→5.10 RGB levels.
 Lossless WebP was 289,526 bytes, WebP q85 51,520 and AVIF q85 71,063 for the
-512 px sample. The engine's generic URL/createImageBitmap loader can decode
-AVIF; this generation keeps WebP, whose tested q85 result is smaller.
+512 px sample. Chromium createImageBitmap decoded the AVIF smoke sample at 512×512; the
+engine uses that same generic URL/bitmap path. This generation keeps WebP,
+whose tested q85 result is smaller.
 The benchmark is sample-specific, not a guarantee that all native ADT seams
 vanish: the client's own DXT texture discontinuities remain.
 
@@ -156,3 +160,8 @@ Unresolved boxes and overall coverage are reported in TERRAIN-COVERAGE.md.
 Asset URLs are retained. The application caches `/maps/*` for 24 hours plus
 stale revalidation. An authorized release must purge updated terrain URLs
 or version them; this data task performs neither cache purges nor deployment.
+
+Every detected word region now has text. Reviewed non-word regions retain
+`kind: "ornament"` and no invented text. When annotation merged adjoining
+words into one region, `text` joins the actual place names with a middle dot;
+the existing region geometry is retained.

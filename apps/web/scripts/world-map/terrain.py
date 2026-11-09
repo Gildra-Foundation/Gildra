@@ -13,7 +13,7 @@ the game has no block, are not written; ``index`` lists the tiles that exist)
 and data/wow/map/terrain-manifest.json, which build_world_map.py merges into
 maps.json as ``terrain``.
 
-Usage: /tmp/wm-venv/bin/python apps/web/scripts/world-map/terrain.py --work /tmp/wm-work [--maps 12,13] [--quality 72]
+Usage: /tmp/wm-venv/bin/python apps/web/scripts/world-map/terrain.py --work /tmp/wm-work [--maps 12,13] [--quality 85]
 """
 
 from __future__ import annotations
@@ -292,6 +292,7 @@ def main() -> None:
     manifest_path = DATA_DIR / args.manifest
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {"maps": {}, "stats": {}}
     manifest["build"] = client.version
+    manifest["encoding"] = {"format": "webp", "deepQuality": args.quality, "coarseQuality": 80, "sampling": "native-area", "mixedSourceSampling": "bilinear"}
     ids = [int(m) for m in args.maps.split(",")] if args.maps else CONTINENTS
     built: dict[int, tuple[int, dict]] = {}  # MapID -> (folder, pyramid): continents on one MapID share it
     groups = {}

@@ -82,6 +82,13 @@ class EdgeTest(unittest.TestCase):
                     self.assertTrue((a[:,-1,3]==255).all())
                     self.assertTrue((b[:,0,3]==255).all())
                     self.assertLess(np.abs(a[:,-1,:3]-b[:,0,:3]).mean(),4)
+                    factor = 2 ** (result['maxZoom'] - z)
+                    expected_left = 32 + ((x*256 + 255)*factor + (factor-1)/2) / 8
+                    expected_right = 32 + ((x+1)*256*factor + (factor-1)/2) / 8
+                    self.assertLess(np.abs(a[:,-1,0] - expected_left).mean(), 4)
+                    self.assertLess(np.abs(b[:,0,0] - expected_right).mean(), 4)
+                    self.assertLess(np.abs(a[:,-1,2] - 64).mean(), 4)
+
             self.assertFalse((root/'.native').exists())
 
 class PackagedEdgeTest(unittest.TestCase):
