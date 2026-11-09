@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState, useSyncExternalStore, type ComponentType } from "react";
+import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore, type ComponentType } from "react";
 import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { pageTitle, rememberPage } from "./recentPages";
 import { siteSearchCopy, type SiteSearchLang } from "./siteSearchCopy";
-import { OPEN_SITE_SEARCH } from "./siteSearchIndex";
+import { loadIndex, OPEN_SITE_SEARCH } from "./siteSearchIndex";
 import styles from "./siteSearch.module.css";
 
-type DialogComponent = ComponentType<{ open: boolean; onClose: () => void; lang: SiteSearchLang; initialQuery?: string }>;
+type DialogComponent = ComponentType<{ open: boolean; onClose: () => void; lang: SiteSearchLang; initialQuery?: string; origin?: DOMRect | null }>;
 let dialogLoad: Promise<DialogComponent> | null = null;
 const loadDialog = () => (dialogLoad ??= import("./SiteSearchDialog").then((module) => module.SiteSearchDialog).catch((error: unknown) => {
   dialogLoad = null;
@@ -39,11 +39,20 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
   const open = openOn === pathname;
   const [Dialog, setDialog] = useState<DialogComponent | null>(null);
   const apple = useSyncExternalStore(noSubscribe, isApple, () => false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  // The box of the toolbar's field the dialog grows out of (none when opened by a shortcut on a page without it).
+  const [origin, setOrigin] = useState<DOMRect | null>(null);
 
-  const warm = () => { void loadDialog().then((component) => setDialog(() => component), () => undefined); };
+  // The dialog's chunk and the index arrive together, so the first results never wait for a second request.
+  const warm = () => {
+    void loadDialog().then((component) => setDialog(() => component), () => undefined);
+    void loadIndex().catch(() => undefined);
+  };
   const show = (query = "") => {
     warm();
     if (!open) setOpening((count) => count + 1);
+    const box = trigger.current?.getBoundingClientRect();
+    setOrigin(box && box.width && box.bottom > 0 ? box : null);
     setInitialQuery(query);
     setOpenOn(pathname);
   };
@@ -77,7 +86,10 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
   useEffect(() => {
     const idle = window as Window & { requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number; cancelIdleCallback?: (handle: number) => void };
     if (!idle.requestIdleCallback || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    const handle = idle.requestIdleCallback(() => { void loadDialog().then((component) => setDialog(() => component), () => undefined); }, { timeout: 5000 });
+    const handle = idle.requestIdleCallback(() => {
+      void loadDialog().then((component) => setDialog(() => component), () => undefined);
+      void loadIndex().catch(() => undefined);
+    }, { timeout: 5000 });
     return () => idle.cancelIdleCallback?.(handle);
   }, []);
 
@@ -92,12 +104,12 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
   // shortcut is drawn by CSS and announced through aria-keyshortcuts.
   return <>
     {hotkeysOnly ? null : (
-      <button className={styles.trigger} type="button" onClick={() => show()} onPointerEnter={warm} onFocus={warm} aria-haspopup="dialog" aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
+      <button ref={trigger} className={styles.trigger} type="button" data-open={open || undefined} onClick={() => show()} onPointerEnter={warm} onFocus={warm} aria-haspopup="dialog" aria-keyshortcuts={apple ? "Meta+K /" : "Control+K /"}>
         <Search size={16} strokeWidth={1.9} aria-hidden="true" />
         <span className={styles.triggerLabel}>{copy.button}<span className="sr-only">{copy.buttonRest}</span></span>
         <kbd className={styles.triggerKey} data-key={apple ? "⌘K" : "Ctrl K"} aria-hidden="true" />
       </button>
     )}
-    {opening > 0 && Dialog ? <Dialog key={opening} open={open} onClose={() => setOpenOn(null)} lang={lang} initialQuery={initialQuery} /> : null}
+    {opening > 0 && Dialog ? <Dialog key={opening} open={open} onClose={() => setOpenOn(null)} lang={lang} initialQuery={initialQuery} origin={origin} /> : null}
   </>;
 }
