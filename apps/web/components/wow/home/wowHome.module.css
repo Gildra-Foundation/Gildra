@@ -129,7 +129,7 @@
 .classIcons { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .classIcons a { flex-direction: column; gap: var(--atlas-space-2); text-align: center; color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; line-height: var(--atlas-leading-snug); }
 @media (max-width: 700px) { .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); } .classIcons { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.lookupFields { grid-template-columns: 80px minmax(0, 1fr) minmax(0, 1fr) 180px; }
+.lookupFields { grid-template-columns: 80px minmax(0, 1fr) minmax(0, 1fr) 240px; }
 .lookupFields button { min-width: 0; }
 @media (max-width: 700px) {
   .lookupFields { grid-template-columns: 70px minmax(0, 1fr); }
