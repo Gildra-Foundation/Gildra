@@ -83,6 +83,8 @@
     "875": {
       "url": "/maps/terrain/875/{z}/{x}_{y}.webp",
       "index": "/maps/terrain/875/index.json",
+      "empty": "/maps/terrain/875/empty.json",
+      "ocean": "#163747",
       "tileSize": 256,
       "width": 12288,
       "height": 9216,
@@ -92,9 +94,7 @@
         -0.029492,
         0.95077,
         1.024005
-      ],
-      "empty": "/maps/terrain/875/empty.json",
-      "ocean": "#202828"
+      ]
     },
     "876": {
       "url": "/maps/terrain/876/{z}/{x}_{y}.webp",
@@ -1303,9 +1303,10 @@
     },
     "875": {
       "mapId": 1642,
+      "blockPixels": 512,
       "blocks": 420,
       "tiles": 2252,
-      "bytes": 3584664
+      "bytes": 5788627
     },
     "876": {
       "mapId": 1643,
