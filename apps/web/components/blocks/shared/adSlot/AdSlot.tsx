@@ -20,7 +20,7 @@ export function AdSlot({ variant = "billboard", lang }: BlockComponentProps<AdSl
       <Link className="pslot-promo" href={p(lang, anchorHref(ANCHORS.premium))}>
         <Image
           className="pp-helm"
-          src="/brand/helmet.png"
+          src="/brand/wowarcana-logo.svg"
           alt=""
           width={variant === "rect" ? 64 : 46}
           height={variant === "rect" ? 64 : 46}

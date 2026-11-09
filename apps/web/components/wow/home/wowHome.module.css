@@ -1,27 +1,138 @@
-/* atlas:strict — the WoW hub: hero on the left over the scene, "picture + plaque" cards, one talents plaque. */
-.cards {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: stretch;
-  gap: var(--atlas-space-7) var(--atlas-space-6);
+/* atlas:strict — season destinations on painted material, compact exploration and tools. */
+.hero { padding-block: var(--atlas-space-8) var(--atlas-space-7); }
+.hero h1 { max-width: 16ch; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-3) var(--atlas-space-5); }
+.seasonGrid, .exploreGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-6); }
+.feature { display: flex; flex-direction: column; min-width: 0; }
+.featureBody { display: flex; flex: 1; flex-direction: column; gap: var(--atlas-space-3); }
+.featureHeading { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); min-height: 36px; }
+.featureHeading h3 { margin: 0; }
+.featureHeading h3 a, .exploreBody h3 a { color: inherit; text-decoration: none; }
+.textLink { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); white-space: nowrap; }
+.textLink svg, .liveLinks svg, .exploreBody h3 svg { width: 16px; height: 16px; flex: none; }
+.liveLinks { list-style: none; margin: 0 0 auto; padding: 0; }
+.liveLinks li + li { border-top: 1px solid var(--atlas-line-soft); }
+.liveLinks a { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); min-height: 44px; padding-block: var(--atlas-space-2); color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; }
+.timer { color: var(--atlas-accent-strong); font-variant-numeric: tabular-nums; }
+.exploreCard { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; min-width: 0; }
+.exploreBody h3 { margin: 0 0 var(--atlas-space-2); }
+.exploreBody h3 a { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-2); min-height: 44px; }
+.tools { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.tools a { display: flex; align-items: center; gap: var(--atlas-space-3); min-height: 64px; padding: var(--atlas-space-3); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); text-decoration: none; }
+.tools a + a { border-left: 1px solid var(--atlas-line-soft); }
+.tools svg { flex: none; width: 20px; height: 20px; color: var(--atlas-accent); }
+.tools a > svg:last-child { display: none; }
+.news { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-6); list-style: none; margin: 0; padding: 0; }
+.news li { display: flex; align-items: start; gap: var(--atlas-space-3); border-top: 1px solid var(--atlas-line-soft); padding-top: var(--atlas-space-4); }
+.news svg { width: 20px; height: 20px; flex: none; color: var(--atlas-accent); }
+.news p { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+.page a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) and (prefers-reduced-transparency: no-preference) {
+  .feature, .exploreCard { transition: transform var(--atlas-duration-fast) var(--atlas-ease); }
+  .feature:hover, .exploreCard:hover { transform: translateY(-3px); }
+}
+:global(html[data-motion="reduced"]) .page .feature, :global(html[data-motion="reduced"]) .page .exploreCard { transform: none; transition: none; }
+@media (forced-colors: active) { .feature, .exploreCard { transform: none; transition: none; } }
+@media (max-width: 1100px) {
+  .exploreGrid { grid-template-columns: minmax(0, 1fr); }
+  .tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tools a + a { border-left: 0; }
+}
+@media (max-width: 700px) {
+  .hero { padding-block: var(--atlas-space-6) var(--atlas-space-5); }
+  .actions { display: grid; width: 100%; gap: var(--atlas-space-2); }
+  .seasonGrid { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-5); }
+  .feature { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: start; }
+  .feature > a { grid-column: 1 / -1; }
+  .featureBody { grid-column: 1 / -1; }
+  .featureHeading { flex-wrap: wrap; gap: 0 var(--atlas-space-2); }
+  .exploreCard { grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr); }
+  .exploreBody { padding: var(--atlas-space-4); }
+  .exploreBody h3 { font-size: var(--atlas-text-h3); }
+  .exploreBody p { font-size: var(--atlas-text-small); }
+  .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tools a { flex-direction: column; align-items: flex-start; padding: var(--atlas-space-2); }
+  .tools a span { overflow-wrap: anywhere; }
+  .news { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); }
 }
 
-.talents {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--atlas-space-4) var(--atlas-space-6);
-  margin-top: var(--atlas-section-gap, var(--atlas-space-8));
-}
-.talents > div { flex: 1 1 28rem; min-width: 0; }
-.talents h2 { margin-bottom: var(--atlas-space-2); }
+:global([data-ui-motion="reduce"]) .feature, :global([data-ui-motion="reduce"]) .exploreCard,
+:global([data-transparency="reduced"]) .feature, :global([data-transparency="reduced"]) .exploreCard { transform: none; transition: none; }
 
-@media (max-width: 1199px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 760px) { .cards { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-7); } }
-
-/* The hero kit's claw caps are wide: on phones the arrow gives its room to the label, so
-   "Выбрать класс" stays on one line inside the painted button. */
-@media (max-width: 440px) {
-  .talents :global(.ui-button__icon), .talents a > svg { display: none; }
+/* Scroll-driven arrival is progressive enhancement: content stays visible without support. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) and (prefers-reduced-transparency: no-preference) {
+    .exploreGrid, .tools, .news { animation: arrive linear both; animation-timeline: view(); animation-range: entry 0% entry 70%; }
+  }
 }
+@keyframes arrive { from { opacity: .65; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+:global([data-motion="reduced"]) .page *, :global([data-ui-motion="reduce"]) .page *, :global([data-transparency="reduced"]) .page * { animation: none; }
+@media (forced-colors: active) { .exploreGrid, .tools, .news { animation: none; } }
+/* Second pass: useful hero space, full season lists and substantial destination tiles. */
+.hero { padding-block: var(--atlas-space-5) var(--atlas-space-4); }
+.hero h1 { max-width: 19ch; }
+.heroContent { width: min(100%, 780px); }
+.heroArt { object-fit: cover; object-position: 70% 40%; filter: saturate(.86) contrast(1.06) brightness(.92); }
+.lookup { margin-top: var(--atlas-space-4); padding: var(--atlas-space-5); }
+.lookup h2 { margin: 0 0 var(--atlas-space-3); font-size: var(--atlas-text-h3); }
+.lookupFields { display: grid; grid-template-columns: 80px minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: var(--atlas-space-3); }
+.lookupFields button { min-width: 140px; }
+.dungeonLinks, .bossLinks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--atlas-space-5); }
+.liveLinks li { border-top: 1px solid var(--atlas-line-soft); }
+.featureBody > a { margin-top: auto; }
+.exploreGrid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: stretch; }
+.mapCard { min-width: 0; }
+.mapArt { display: block; overflow: hidden; }
+.mapPainting { display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; position: absolute; top: 0; aspect-ratio: 1; transition: transform var(--atlas-duration-art) var(--atlas-ease); }
+.mapPainting img { width: 100%; height: auto; display: block; }
+.classesCard { display: flex; flex-direction: column; justify-content: center; gap: var(--atlas-space-4); }
+.classesCard h3 { margin: 0; }
+.classesCard h3 a { display: flex; align-items: center; justify-content: space-between; color: inherit; min-height: 44px; text-decoration: none; }
+.classesCard h3 svg { width: 20px; }
+.classIcons { list-style: none; padding: 0; margin: var(--atlas-space-3) 0 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--atlas-space-4); }
+.classIcons a { display: flex; align-items: center; justify-content: center; min-height: 52px; }
+.classIcons img { width: 48px; height: 48px; border-radius: var(--atlas-radius); }
+.tools { gap: var(--atlas-space-4); }
+.toolTile { min-width: 0; overflow: hidden; }
+.tools a { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: var(--atlas-space-4); padding: 0; min-height: 164px; }
+.tools a > svg:first-child { width: 44px; height: 44px; }
+.tools a > span { display: flex; flex-direction: column; gap: var(--atlas-space-2); }
+.tools strong { font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); }
+.tools a > span > span { font-size: var(--atlas-text-body); color: var(--atlas-text-muted); line-height: var(--atlas-leading-body); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) and (prefers-reduced-transparency: no-preference) {
+  .mapCard:hover .mapPainting { transform: scale(1.025) translateY(-2px); }
+  .toolTile::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, var(--atlas-accent-wash) 50%, transparent 70%); transform: translateX(-120%); pointer-events: none; }
+  .toolTile:hover::after { animation: sweep var(--atlas-duration-enter) var(--atlas-ease); }
+}
+@keyframes sweep { to { transform: translateX(120%); } }
+:global([data-motion="reduced"]) .page .mapPainting, :global([data-ui-motion="reduce"]) .page .mapPainting, :global([data-transparency="reduced"]) .page .mapPainting { transition: none; transform: none; }
+:global([data-motion="reduced"]) .page .toolTile::after, :global([data-ui-motion="reduce"]) .page .toolTile::after, :global([data-transparency="reduced"]) .page .toolTile::after { display: none; }
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) { .mapPainting { transition: none; transform: none; } .toolTile::after { display: none; } }
+@media (max-width: 1200px) { .tools { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .heroArt { object-position: center 30%; }
+  .hero h1 { max-width: 17ch; }
+  .lookup { padding: var(--atlas-space-4); }
+  .lookupFields { grid-template-columns: 70px minmax(0, 1fr); }
+  .lookupFields > :nth-child(3) { grid-column: 1 / -1; }
+  .lookupFields button { grid-column: 1 / -1; }
+  .dungeonLinks, .bossLinks { grid-template-columns: minmax(0, 1fr); }
+  .exploreGrid { grid-template-columns: minmax(0, 1fr); }
+  .classIcons { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+  .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .toolTile { padding: var(--atlas-space-4); }
+  .tools strong { font-size: var(--atlas-text-h3); overflow-wrap: anywhere; }
+  .tools a > span > span { font-size: var(--atlas-text-small); }
+}
+.tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tools strong { overflow-wrap: anywhere; }
+.classIcons { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.classIcons a { flex-direction: column; gap: var(--atlas-space-2); text-align: center; color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; line-height: var(--atlas-leading-snug); }
+@media (max-width: 700px) { .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); } .classIcons { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.lookupFields { grid-template-columns: 80px minmax(0, 1fr) minmax(0, 1fr) 240px; }
+.lookupFields button { min-width: 0; }
+@media (max-width: 700px) {
+  .lookupFields { grid-template-columns: 70px minmax(0, 1fr); }
+  .lookupFields > span:last-child { grid-column: 1 / -1; }
+}
+.heroArt { position: absolute; inset: 0; width: 100%; height: 100%; }

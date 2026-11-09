@@ -398,7 +398,7 @@
 @media (max-width: 767px) {
   .tabs { display: none; }
 }
-@media (max-width: 420px) { .brand > span { display: none; } }
+@media (max-width: 480px) { .brand > span { display: none; } }
 
 /* Touch: every control of the bar is a 44 px target. */
 @media (pointer: coarse) {

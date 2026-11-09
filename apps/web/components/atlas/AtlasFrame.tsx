@@ -24,7 +24,7 @@ const LEGAL = {
 export const atlasLegal = (locale: "en" | "ru") => LEGAL[locale];
 
 const footerParts = (locale: "en" | "ru") => ({
-  brand: <span className={styles.seal}><GildraCrest height={44} className={styles.crest} /><span>GILDRA</span></span>,
+  brand: <span className={styles.seal}><GildraCrest height={44} className={styles.crest} /><span>WOWARCANA</span></span>,
   legal: atlasLegal(locale),
   links: <>
     {ATLAS_FOOTER_LINKS.map((link) => (

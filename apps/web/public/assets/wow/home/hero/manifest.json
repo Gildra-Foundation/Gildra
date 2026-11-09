@@ -1,0 +1,136 @@
+{
+  "entries": [
+    {
+      "path": "/assets/wow/home/hero/azeroth-wide-768.avif",
+      "width": 768,
+      "height": 432,
+      "format": "avif",
+      "quality": 40,
+      "bytes": 13911,
+      "sha256": "6c450d89d8b20a515e70c2c7e6809cd766c2dc3d63f9a0f8290fe06639d9b81c",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106.webp",
+      "sourceSha256": "68c2183b02131eee46451177b7cfab58d66576a651a92575d08bcd9a75bb1e16"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-wide-768.webp",
+      "width": 768,
+      "height": 432,
+      "format": "webp",
+      "quality": 50,
+      "bytes": 19948,
+      "sha256": "fb225b09ff515b048e72ddde0cb560b58e811319e5834bcbfda78f04cd17200a",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106.webp",
+      "sourceSha256": "68c2183b02131eee46451177b7cfab58d66576a651a92575d08bcd9a75bb1e16"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-wide-1200.avif",
+      "width": 1200,
+      "height": 675,
+      "format": "avif",
+      "quality": 40,
+      "bytes": 28232,
+      "sha256": "713871c16f6ec4d7d7b9605b246e950715768966a53f84acfef48cec6f87775d",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106.webp",
+      "sourceSha256": "68c2183b02131eee46451177b7cfab58d66576a651a92575d08bcd9a75bb1e16"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-wide-1200.webp",
+      "width": 1200,
+      "height": 675,
+      "format": "webp",
+      "quality": 50,
+      "bytes": 38478,
+      "sha256": "7bfda3a84df97afd95154d7f665609e490040db1e59c3992d2559b2d787ba22e",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106.webp",
+      "sourceSha256": "68c2183b02131eee46451177b7cfab58d66576a651a92575d08bcd9a75bb1e16"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-wide-1672.avif",
+      "width": 1672,
+      "height": 941,
+      "format": "avif",
+      "quality": 40,
+      "bytes": 49169,
+      "sha256": "5723c6b192ad40282c3a784fd74e2c3a4ac16cee345725a3c46f13cd1644bb36",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106.webp",
+      "sourceSha256": "68c2183b02131eee46451177b7cfab58d66576a651a92575d08bcd9a75bb1e16"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-wide-1672.webp",
+      "width": 1672,
+      "height": 941,
+      "format": "webp",
+      "quality": 50,
+      "bytes": 64398,
+      "sha256": "9d1eae4d9b8d8bc117787e7e474455b7228912060b587eac3f72dd33416e14ae",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106.webp",
+      "sourceSha256": "68c2183b02131eee46451177b7cfab58d66576a651a92575d08bcd9a75bb1e16"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-portrait-384.avif",
+      "width": 384,
+      "height": 427,
+      "format": "avif",
+      "quality": 32,
+      "bytes": 6175,
+      "sha256": "0b60f48fedbfc20f9b3579758dcc9c92db45fa9177ccaeafd27848c4f56be53f",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106-portrait.webp",
+      "sourceSha256": "b8e6cd0c1c7f2f2cb1e542c300af3e496876d6b846ce4db132a41176081d79e8"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-portrait-384.webp",
+      "width": 384,
+      "height": 427,
+      "format": "webp",
+      "quality": 40,
+      "bytes": 11056,
+      "sha256": "2af45d312050fd3c577292a0a08271b85f3e8d9bea10ad4a8b9c87eff2291b47",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106-portrait.webp",
+      "sourceSha256": "b8e6cd0c1c7f2f2cb1e542c300af3e496876d6b846ce4db132a41176081d79e8"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-portrait-640.avif",
+      "width": 640,
+      "height": 711,
+      "format": "avif",
+      "quality": 32,
+      "bytes": 13766,
+      "sha256": "fe5bb57a90ce3361efb81f33720d213efab99874200550bea1cdb95c47351804",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106-portrait.webp",
+      "sourceSha256": "b8e6cd0c1c7f2f2cb1e542c300af3e496876d6b846ce4db132a41176081d79e8"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-portrait-640.webp",
+      "width": 640,
+      "height": 711,
+      "format": "webp",
+      "quality": 40,
+      "bytes": 23004,
+      "sha256": "17c42690da17876a8130c90fb37f86c51989fc834f32420a6080e1282323f500",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106-portrait.webp",
+      "sourceSha256": "b8e6cd0c1c7f2f2cb1e542c300af3e496876d6b846ce4db132a41176081d79e8"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-portrait-847.avif",
+      "width": 847,
+      "height": 941,
+      "format": "avif",
+      "quality": 32,
+      "bytes": 22652,
+      "sha256": "a3d56d3054945626cf633c1ac4d4a96741768ed05516144b82a60174bbed8c39",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106-portrait.webp",
+      "sourceSha256": "b8e6cd0c1c7f2f2cb1e542c300af3e496876d6b846ce4db132a41176081d79e8"
+    },
+    {
+      "path": "/assets/wow/home/hero/azeroth-portrait-847.webp",
+      "width": 847,
+      "height": 941,
+      "format": "webp",
+      "quality": 40,
+      "bytes": 36854,
+      "sha256": "cf631d3a5387a9eb59ecfb6ab921df36e30d744b5d171d300c1321a0c80f66d3",
+      "source": "/assets/wow/loading/wow-azeroth-vista-20261106-portrait.webp",
+      "sourceSha256": "b8e6cd0c1c7f2f2cb1e542c300af3e496876d6b846ce4db132a41176081d79e8"
+    }
+  ]
+}

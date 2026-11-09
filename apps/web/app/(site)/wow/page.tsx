@@ -1,9 +1,11 @@
 // routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
 import { WowHome } from "@/components/wow/home/WowHome";
+import { raidHubEntries } from "@/components/wow/raid/raidHubData";
+import { changelog } from "@/components/wow/whats-new/changelog";
 import { sectionMetadata } from "@/lib/routes/metadata";
 
 export const metadata = sectionMetadata("wow", "en");
 
 export default function Page() {
-  return <WowHome lang="en" />;
+  return <WowHome lang="en" raids={raidHubEntries} news={changelog.slice(0, 2)} />;
 }
