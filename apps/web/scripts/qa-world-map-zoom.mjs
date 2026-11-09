@@ -452,7 +452,7 @@ async function runNotches(browser, spec, delta) {
     if (st.letters.length) issues.push(`LETTERS(${st.letters.join(",")})`);
     if (st.markers.length) issues.push(`MARKERS(${st.markers.slice(0, 4).join(",")})`);
     steps.push(`${dir}${n}:${st.focus}`);
-    if (args.debug) console.log("      step", dir, n, JSON.stringify(await pg.evaluate(() => { const e = window.__worldMap; const ins = e.options.insets; const [cx, cy] = e.lookAt ?? [0, 0]; const [sx, sy] = e.project(cx, cy); return { f: e.focusId, s: Math.round(e.view.scale), look: [Math.round(sx), Math.round(sy)], why: e.focusWhy, draws: e.lastInfo.drawn.filter((d) => d.map.depth >= 3).map((d) => `${d.map.id}:${d.role}:o${(d.open ?? 0).toFixed(2)}`).slice(0, 8) }; })));
+    if (args.debug) console.log("      step", dir, n, JSON.stringify(await pg.evaluate(() => { const e = window.__worldMap; const [cx, cy] = e.lookAt ?? [0, 0]; const [sx, sy] = e.project(cx, cy); return { f: e.focusId, s: Math.round(e.view.scale), look: [Math.round(sx), Math.round(sy)], why: e.focusWhy, draws: e.lastInfo.drawn.filter((d) => d.map.depth >= 3).map((d) => `${d.map.id}:${d.role}:o${(d.open ?? 0).toFixed(2)}`).slice(0, 8) }; })));
     if (issues.length) {
       problems.push(`${dir}${n} focus ${st.focus} ${issues.join(" ")}`);
       if (shots) await pg.screenshot({ path: `${shots}/notch-${spec.key}-${delta}-${dir}${n}.png`, timeout: 120000 }).catch(() => {});
