@@ -1,36 +1,25 @@
-/** Strings of the WoW hub (/wow); `en` and `ru` keep the same keys. */
-const ru = {
-  eyebrow: "Midnight",
-  title: "Ваш командный центр в Азероте",
-  character: "Мои персонажи",
-  open: "Открыть",
-  cards: {
-    mythic: { title: "Mythic+", text: "Таймеры ключей, маршруты подземелий сезона и мета недели." },
-    raids: { title: "Рейды", text: "Боссы, их способности и задачи каждой роли в бою." },
-    lairs: { title: "Логова и мировые боссы", text: "Где найти боссов открытого мира, что делать в бою и что с них падает." },
-    tierLists: { title: "Тир-листы", text: "Сила специализаций в ключах и рейдах." },
-    library: { title: "Библиотека", text: "Предметы, заклинания, транспорт и другие данные игры с подсказками и 3D-моделями." },
-    transmog: { title: "Трансмогрификация", text: "Соберите образ из любых обликов на 3D-персонаже и сохраните картинку." },
+/** Player actions and section names, kept in parity for both locales. */
+export const wowHomeCopy = {
+  ru: {
+    eyebrow: "Midnight", title: "Ваш командный центр в Азероте", character: "Мои персонажи", play: "В бой",
+    seasonTitle: "Подземелья и рейды", meta: "Мета недели", mythicText: "Маршруты, таймеры и тактики подземелий сезона.", dungeons: "Выбрать подземелье",
+    raids: "Рейды", raidText: "Боссы и тактики для вашей роли.", explore: "Откройте Азерот", tools: "Всё для вашего героя",
+    featured: {
+      map: { title: "Карта мира", text: "Континенты, подземелья и рейды — найдите следующую цель." },
+      classes: { title: "Классы и таланты", text: "Выберите специализацию и соберите свой билд." },
+    },
+    toolsCopy: { tierLists: "Тир-листы", library: "Библиотека", transmog: "Трансмогрификация", lairs: "Логова и мировые боссы", characters: "Персонажи" },
+    news: "Что нового", allNews: "Все изменения",
   },
-  talents: "Калькулятор талантов",
-  talentsAction: "Выбрать класс",
-} as const;
-
-const en = {
-  eyebrow: "Midnight",
-  title: "Your command center in Azeroth",
-  character: "My characters",
-  open: "Open",
-  cards: {
-    mythic: { title: "Mythic+", text: "Key timers, dungeon routes of the season and the weekly meta." },
-    raids: { title: "Raids", text: "Bosses, their abilities and what every role does in the fight." },
-    lairs: { title: "Lairs and world bosses", text: "Where to find the outdoor bosses, what to do in the fight and what they drop." },
-    tierLists: { title: "Tier lists", text: "Specialization strength in keys and raids." },
-    library: { title: "Library", text: "Items, spells, mounts and other game data with in-game tooltips and 3D models." },
-    transmog: { title: "Transmog Studio", text: "Build an outfit from any appearance on a 3D character and save a picture." },
+  en: {
+    eyebrow: "Midnight", title: "Your command center in Azeroth", character: "My characters", play: "Into the fray",
+    seasonTitle: "Dungeons & raids", meta: "Weekly meta", mythicText: "Routes, timers and tactics for the season’s dungeons.", dungeons: "Choose a dungeon",
+    raids: "Raids", raidText: "Bosses and tactics for your role.", explore: "Explore Azeroth", tools: "Everything for your hero",
+    featured: {
+      map: { title: "World map", text: "Continents, dungeons and raids — find your next destination." },
+      classes: { title: "Classes & talents", text: "Choose talents for your specialization." },
+    },
+    toolsCopy: { tierLists: "Tier lists", library: "Library", transmog: "Transmog Studio", lairs: "Lairs & world bosses", characters: "Characters" },
+    news: "What’s new", allNews: "All changes",
   },
-  talents: "Talent calculator",
-  talentsAction: "Choose a class",
 } as const;
-
-export const wowHomeCopy = { ru, en } as const;
