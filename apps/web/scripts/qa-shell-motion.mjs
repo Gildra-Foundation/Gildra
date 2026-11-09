@@ -68,12 +68,14 @@ async function stepPhase(page, name, { ready, duration, width, height }) {
   for (const until = Date.now() + 15000; Date.now() < until;) {
     try { await page.waitForFunction(ready, null, { timeout: Math.max(1, until - Date.now()), polling: 4 }); break; } catch (error) { if (page.isClosed()) throw error; console.error(name, "wait:", String(error).split("\n")[0].slice(0, 160)); await new Promise((resolve) => setTimeout(resolve, 20)); }
   }
-  const count = await page.evaluate(() => {
+  // A still (duration 0) leaves every animation as it is: rewinding finished ones would replay their start.
+  const count = duration === 0 ? 0 : await page.evaluate(() => {
     window.__phase = document.getAnimations();
     for (const animation of window.__phase) animation.pause();
     return window.__phase.length;
   }).catch(() => 0);
   const frames = [];
+  if (duration === 0) await page.evaluate(() => { window.__phase = []; });
   for (let at = 0; at <= duration; at += step) {
     await page.evaluate((time) => {
       for (const animation of window.__phase ?? []) { try { animation.currentTime = time; } catch {} }
@@ -214,7 +216,8 @@ const localeScenario = (name, path, scroll) => scenario(name, {
         // A script click: no hover, so the speculative prefetch of the other language never starts.
         await page.evaluate(() => document.querySelector("[data-locale-switch-root] a[hreflang=ru]")?.click());
       } },
-    { name: "arrive", ready: () => document.documentElement.hasAttribute("data-locale-arrival") && document.readyState !== "loading", duration: 600 },
+    // The content's own arrival starts once it is parsed, which can be frames after the mark.
+    { name: "arrive", ready: () => document.documentElement.hasAttribute("data-locale-arrival") && (document.getElementById("atlas-content")?.getAnimations().length ?? 0) > 0, duration: 600 },
   ],
   measureAct: async (page) => {
     if (scroll) { await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), scroll); await page.waitForTimeout(600); }
@@ -232,14 +235,47 @@ const localeScenario = (name, path, scroll) => scenario(name, {
 if (only.includes("locale-raids")) await localeScenario("locale-raids-en-ru", "/wow/raids", 900);
 if (only.includes("locale-map")) await localeScenario("locale-map-en-ru", "/wow/map", 0);
 
+/**
+ * A View Transition is played by the browser between two commits, which
+ * stepping cannot hold reliably: this one is filmed with the document's
+ * animations slowed tenfold instead, each frame labelled in animation time.
+ */
+async function slowScenario(name, { width = 1440, height = 900, start, act, duration, measureAct }) {
+  const viewport = { width, height, mobile: false };
+  const { context, page, errors } = await newPage(viewport);
+  await open(page, start);
+  const session = await context.newCDPSession(page);
+  await session.send("Animation.enable");
+  await session.send("Animation.setPlaybackRate", { playbackRate: .1 });
+  const shots = [];
+  const started = Date.now();
+  await act(page);
+  let last = -Infinity;
+  while (Date.now() - started < duration * 10) {
+    const at = (Date.now() - started) / 10;
+    const data = await page.screenshot({ type: "jpeg", quality: 70 }).catch(() => null);
+    if (data && at - last >= step) { shots.push({ label: `${name.split("-")[0]} ${Math.round(at)} ms`, data }); last = at; }
+  }
+  await session.send("Animation.setPlaybackRate", { playbackRate: 1 });
+  await page.waitForTimeout(800);
+  shots.push({ label: "at rest", data: await page.screenshot({ type: "jpeg", quality: 70 }) });
+  const file = await sheet(join(out, `${name}.jpg`), shots, width, height);
+  await context.close();
+  const real = await measure(viewport, start, measureAct ?? act, 2500);
+  report[name] = { sheet: file, frames: shots.length, real, slowedErrors: errors };
+  console.log(name, JSON.stringify(report[name]));
+}
+
 const strip = (version) => `nav[aria-label="World of Warcraft versions"] a[data-version=${version}]`;
-if (only.includes("game")) await scenario("game-midnight-mists", {
+if (only.includes("game")) await slowScenario("game-midnight-mists", {
   start: "/wow/classes",
+  duration: 700,
   act: async (page) => { await page.click(strip("mists")); },
-  phases: [
-    { name: "turn", ready: () => document.getAnimations().some((animation) => animation.effect?.pseudoElement?.startsWith("::view-transition")), duration: 480 },
-  ],
-  measureAct: async (page) => { await page.click(strip("mists")); },
+});
+if (only.includes("game-back")) await slowScenario("game-mists-forever", {
+  start: "/wow/mists",
+  duration: 700,
+  act: async (page) => { await page.click(strip("forever")); },
 });
 
 writeFileSync(join(out, "report.json"), JSON.stringify(report, null, 2));
