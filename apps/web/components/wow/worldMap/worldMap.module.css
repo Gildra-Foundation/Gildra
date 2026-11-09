@@ -29,6 +29,7 @@
   background:
     radial-gradient(ellipse 70% 60% at 50% 42%, color-mix(in srgb, var(--atlas-surface-raised) 80%, var(--atlas-bg)), var(--atlas-bg) 78%);
   isolation: isolate;
+  overscroll-behavior: contain;
   user-select: none;
   -webkit-user-select: none;
 }

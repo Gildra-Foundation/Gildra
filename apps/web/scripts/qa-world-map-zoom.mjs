@@ -13,6 +13,9 @@
 //   … --only interactions: keys, double click, buttons, era switch mid-zoom, Back mid-flight, resize, phone pinch
 //   … --notches 100,300: one wheel event at a time, the view left to rest, the settled state checked (title = map in
 //     view and dominant, no painted words or markers of other maps), both ways on every chain
+//   … --pin: the map stays pinned like the game's own map: drags of 2000 px each way and a fling leave the map in view
+//     covering what it covered (≥ 90%), inside its bounds within 400 ms of the release, never more than the rubber
+//     band's reach past its edge while dragged; a spam of zoom-out notches never goes below the whole top map
 //   … --deep: down each chain and on to the deepest zoom (Orgrimmar, Stormwind, Azsuna over their continents' terrain;
 //     Nagrand of Outland, which has none, to its cap): the deepest zoom reached, nothing magnified past twice the
 //     terrain's own texel density (1.6× a painted map's), no tiles missing after it settles, names not overlapping,
@@ -610,9 +613,132 @@ async function runDeep(browser, spec) {
   };
 }
 
+const PIN = [
+  { key: "pin-kalimdor", id: 12, w: 1440, h: 900 },
+  { key: "pin-durotar", id: 1, w: 1440, h: 900 },
+  { key: "pin-orgrimmar-deep", id: 85, w: 1440, h: 900, query: "x=0.45&y=0.55&z=3" },
+  { key: "pin-durotar-390", id: 1, w: 390, h: 844 },
+];
+
+/** Runs in the page: how far the camera is off its pin (CSS px) and the share of the free stage the map in view covers. */
+function pinState() {
+  const e = window.__worldMap, s = e.options.insets, v = e.view;
+  const off = e.pinOff(v);
+  const map = e.focus;
+  const f = map ? e.shown?.get?.(map.id) ?? map.frame : null;
+  const L = s.left, R = e.width - s.right, T = s.top, B = e.height - s.bottom;
+  let share = 0;
+  if (f) {
+    const [x0, y0] = e.project(f[0], f[1]), [x1, y1] = e.project(f[2], f[3]);
+    const w = Math.min(x1, R) - Math.max(x0, L), h = Math.min(y1, B) - Math.max(y0, T);
+    share = w > 0 && h > 0 ? (w * h) / ((R - L) * (B - T)) : 0;
+  }
+  const min = e.bounds(v)?.min ?? 0;
+  // (Per axis: the rubber band reaches as far on each.)
+  return { off: off ? Math.max(Math.abs(off.x), Math.abs(off.y)) * v.scale : 0, share, focus: map?.id ?? null, scale: v.scale, min };
+}
+
+async function runPin(browser, spec) {
+  const ctx = await browser.newContext({ viewport: { width: spec.w, height: spec.h }, deviceScaleFactor: spec.w < 500 ? 2 : 1 });
+  const pg = await ctx.newPage();
+  const errors = [];
+  pg.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
+  await pg.goto(`${base}${page(spec.id)}?${spec.query ? `${spec.query}&` : ""}debug`, { waitUntil: "domcontentloaded", timeout: 180000 });
+  await ready(pg);
+  await pg.locator("button", { hasText: /Принять|Accept/ }).first().click({ timeout: 2000 }).catch(() => {});
+  await settled(pg);
+  const box = await pg.evaluate(() => { const e = window.__worldMap, s = e.options.insets, r = e.surface.getBoundingClientRect(); return { x: r.left + s.left + (e.width - s.left - s.right) / 2, y: r.top + s.top + (e.height - s.top - s.bottom) / 2, w: e.width - s.left - s.right, h: e.height - s.top - s.bottom }; });
+  const problems = [];
+  const log = [];
+  await pg.evaluate(`window.__pinState = ${pinState.toString()}`);
+  const before = await pg.evaluate(pinState);
+  const pageY0 = await pg.evaluate(() => window.scrollY);
+  // While dragging: the farthest past the edge.
+  await pg.evaluate(() => { window.__pinMax = 0; const tick = () => { if (window.__pinStop) return; const st = window.__pinState(); window.__pinMax = Math.max(window.__pinMax, st.off); requestAnimationFrame(tick); }; window.__pinStop = false; requestAnimationFrame(tick); });
+  const slow = [];
+  const check = async (label) => {
+    // Back inside its bounds: how long after the release (wall clock), and in how many drawn frames. Headless
+    // SwiftShader on a loaded host may stall frames for a second: a late return over a frame or two is the host's.
+    const back = await pg.evaluate(() => new Promise((done) => {
+      const e = window.__worldMap, t0 = performance.now(), f0 = e.frameCount;
+      const poll = () => { const st = window.__pinState(); const t = performance.now() - t0; if (st.off <= 2 || t > 3000) done({ t, frames: e.frameCount - f0, off: st.off }); else setTimeout(poll, 20); };
+      poll();
+    }));
+    // Late with plenty of frames drawn is the engine's fault; late over a few stalled frames (> 100 ms each) the host's.
+    if (back.t > 400) {
+      slow.push(`${label}:${Math.round(back.t)}ms/${back.frames}f`);
+      if (back.off > 2 && back.frames >= 12) problems.push(`${label} LATE(${Math.round(back.t)}ms over ${back.frames} frames)`);
+      if (back.frames > 0 && back.t / back.frames < 100 && back.t > 400) problems.push(`${label} LATE(${Math.round(back.t)}ms)`);
+    }
+    await pg.waitForTimeout(Math.max(0, 400 - back.t));
+    const st = await pg.evaluate(pinState);
+    const need = before.share >= 0.99 ? 0.9 : before.share * 0.9;
+    const bad = [];
+    if (st.off > 2 && back.frames >= 12) bad.push(`OFF(${st.off.toFixed(1)}px)`);
+    if (st.share < need) bad.push(`SHARE(${st.share.toFixed(2)}<${need.toFixed(2)})`);
+    log.push(`${label}:${st.share.toFixed(2)}/${st.off.toFixed(1)}`);
+    if (bad.length) problems.push(`${label} ${bad.join(" ")}`);
+  };
+  // 2000 px each way, in strokes across the free part of the stage (a pointer stays on the page, as a hand's does).
+  for (const [name, ux, uy] of [["right", 1, 0], ["left", -1, 0], ["down", 0, 1], ["up", 0, -1]]) {
+    const stroke = Math.floor((ux ? box.w : box.h) * 0.8);
+    for (let done = 0; done < 2000; done += stroke) {
+      const len = Math.min(stroke, 2000 - done);
+      const x0 = box.x - (ux * len) / 2, y0 = box.y - (uy * len) / 2;
+      await pg.mouse.move(x0, y0);
+      await pg.mouse.down();
+      for (let i = 1; i <= 20; i++) { await pg.mouse.move(x0 + (ux * len * i) / 20, y0 + (uy * len * i) / 20); await pg.waitForTimeout(8); }
+      // (Held still a moment: a drag, not a throw.)
+      await pg.waitForTimeout(120);
+      await pg.mouse.up();
+    }
+    await check(`drag-${name}`);
+    await settled(pg);
+  }
+  // A fling: a fast short throw, released while moving.
+  for (const [name, fx, fy] of [["fling-left", -0.6, 0], ["fling-up", 0, -0.6], ["fling-diag", 0.5, 0.5]]) {
+    const dx = fx * box.w, dy = fy * box.h;
+    await pg.mouse.move(box.x - dx / 2, box.y - dy / 2);
+    await pg.mouse.down();
+    for (let i = 1; i <= 4; i++) { await pg.mouse.move(box.x - dx / 2 + (dx * i) / 4, box.y - dy / 2 + (dy * i) / 4); await pg.waitForTimeout(12); }
+    await pg.mouse.up();
+    await check(name);
+    await settled(pg);
+  }
+  const rubber = await pg.evaluate(() => { window.__pinStop = true; return window.__pinMax; });
+  if (rubber > 70) problems.push(`RUBBER-REACH(${rubber.toFixed(0)}px)`);
+  // Zoom-out spam: never smaller than the whole top map.
+  await pg.evaluate(() => { window.__pinLow = Infinity; window.__pinStop = false; const tick = () => { if (window.__pinStop) return; const st = window.__pinState(); window.__pinLow = Math.min(window.__pinLow, st.scale / st.min); requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+  for (let i = 0; i < 40; i++) {
+    await pg.mouse.move(box.x + (((i * 137) % 100) / 100 - 0.5) * box.w * 0.8, box.y + (((i * 71) % 100) / 100 - 0.5) * box.h * 0.8);
+    await pg.mouse.wheel(0, 300);
+    await pg.waitForTimeout(40);
+  }
+  await settled(pg);
+  const low = await pg.evaluate(() => { window.__pinStop = true; return window.__pinLow; });
+  if (low < 0.995) problems.push(`BELOW-FIT(${low.toFixed(3)})`);
+  const end = await pg.evaluate(pinState);
+  if (end.off > 2) problems.push(`OFF-AFTER-ZOOM(${end.off.toFixed(1)}px)`);
+  const pageY1 = await pg.evaluate(() => window.scrollY);
+  if (pageY1 !== pageY0) problems.push(`PAGE-SCROLLED(${pageY0}→${pageY1})`);
+  if (errors.length) problems.push("PAGE-ERROR");
+  if (shots) await pg.screenshot({ path: `${shots}/${spec.key}-end.png`, timeout: 120000 }).catch(() => {});
+  await ctx.close();
+  return { key: spec.key, problems, log, slow, before: { share: Number(before.share.toFixed(2)) }, rubber: Number(rubber.toFixed(1)), lowest: Number(low.toFixed(3)), errors: errors.slice(0, 2) };
+}
+
 if (shots) fs.mkdirSync(shots, { recursive: true });
 const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
 const results = [];
+if (args.pin) {
+  for (const spec of PIN.filter((d) => !args.only || args.only.split(",").some((key) => d.key.includes(key)))) {
+    let r;
+    try { r = await runPin(browser, spec); } catch (error) { r = { key: spec.key, problems: ["ERROR"], error: String(error).slice(0, 300) }; }
+    results.push(r);
+    console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(26)} ${r.problems.join(",")}`);
+    console.log(`     ${JSON.stringify({ ...r, problems: undefined, key: undefined })}`);
+  }
+}
 if (args.deep) {
   for (const spec of DEEP.filter((d) => !args.only || args.only.split(",").some((key) => d.key.includes(key)))) {
     let r;
@@ -634,14 +760,14 @@ if (args.notches) {
     }
   }
 }
-for (const spec of args.notches || args.deep ? [] : chains) {
+for (const spec of args.notches || args.deep || args.pin ? [] : chains) {
   try { results.push(await runChain(browser, spec)); } catch (error) { results.push({ key: spec.key, problems: ["ERROR"], error: String(error).slice(0, 300) }); }
   const r = results.at(-1);
   const missed = Object.entries(r.reached ?? {}).filter(([, ok]) => !ok).map(([id]) => id);
   console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(26)} ${r.problems.join(",") || ""}${missed.length ? ` (not reached ${missed.join(",")})` : ""}`);
   console.log(`     focus ${(r.focusSeq ?? []).join("→")} | titles ${(r.toldTitles ?? []).join(" → ")} | void ${r.voidFrames ?? "-"} (max ${(r.voidMax ?? 0).toFixed(3)}) | ancestor ${r.ancestorFrames ?? "-"} ${r.ancestorSample ? JSON.stringify(r.ancestorSample) : ""} | pill ${r.pillWhileMoving ?? "-"} | frames p50 ${r.intervalP50} p95 ${r.intervalP95} max ${r.intervalMax} ms, long tasks ${r.longTasks} (max ${r.longMax}) | focus upscale max ${r.focusUpscaleMax}${r.error ? ` | ${r.error}` : ""}`);
 }
-if (!args.notches && !args.deep && (!args.only || args.only.includes("interactions"))) {
+if (!args.notches && !args.deep && !args.pin && (!args.only || args.only.includes("interactions"))) {
   for (const r of await runInteractions(browser).catch((error) => [{ key: "interactions", problems: ["ERROR"], error: String(error).slice(0, 300) }])) {
     results.push(r);
     console.log(`${r.problems.length ? "FAIL" : "OK  "} ${r.key.padEnd(26)} ${r.problems.join(",")}`);

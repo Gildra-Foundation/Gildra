@@ -7,6 +7,8 @@
   z-index: 1;
   overflow: hidden;
   touch-action: none;
+  /* A gesture on the map never scrolls or bounces the page under it. */
+  overscroll-behavior: contain;
   outline: none;
   cursor: grab;
 }

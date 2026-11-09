@@ -45,6 +45,18 @@ export function WorldMapStage({ lang, mapId, homeId, title, line, description, c
     if (el) setTopOffset(Math.max(0, Math.round(el.getBoundingClientRect().top + window.scrollY)));
   }, []);
 
+  // A trackpad pinch (ctrl + wheel) or a pinch on the panels around the map never zooms the page itself.
+  useEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    const wheel = (event: WheelEvent) => { if (event.ctrlKey) event.preventDefault(); };
+    const gesture = (event: Event) => event.preventDefault();
+    el.addEventListener("wheel", wheel, { passive: false });
+    // (Safari's own pinch events.)
+    el.addEventListener("gesturestart", gesture);
+    return () => { el.removeEventListener("wheel", wheel); el.removeEventListener("gesturestart", gesture); };
+  }, []);
+
   // The viewer chunk loads once the first picture is on screen.
   useEffect(() => {
     const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
