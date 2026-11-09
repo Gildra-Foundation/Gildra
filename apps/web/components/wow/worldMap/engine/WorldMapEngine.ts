@@ -62,6 +62,8 @@ export type FrameInfo = {
   ground?: number;
   /** Zoom left (log units) in and out from here: the buttons' state. */
   room?: { in: number; out: number };
+  /** The part of the stage the panels leave free (CSS px): names keep inside it. */
+  free?: [number, number, number, number];
 };
 export type EngineEvents = {
   frame(info: FrameInfo): void;
@@ -1550,7 +1552,7 @@ export class WorldMapEngine {
     const mid = [left + (this.width - left - right) / 2, top + (this.height - top - bottom) / 2];
     let ground = 0;
     for (const t of this.terrain) if (contains(t.clip, mid[0], mid[1])) ground = Math.max(ground, t.alpha);
-    this.lastInfo = { camera: this.camera, width: this.width, height: this.height, focus, drawn, moving: this.moving, time, ground, room: this.zoomRoom() };
+    this.lastInfo = { camera: this.camera, width: this.width, height: this.height, focus, drawn, moving: this.moving, time, ground, room: this.zoomRoom(), free: [left, top, this.width - right, this.height - bottom] };
     this.events.frame(this.lastInfo);
   }
 
@@ -2079,7 +2081,12 @@ export class WorldMapEngine {
         if (under && rect[0] >= under[0] && rect[1] >= under[1] && rect[2] <= under[2] && rect[3] <= under[3]) continue;
         const dist = Math.hypot(rx0 + rw / 2 - centerX, ry0 + rh / 2 - centerY) / Math.max(W, H);
         // A neighbour's tiles come after the map in view's own.
-        const tile = this.tiles.get(tileUrl(art, id, z, tx, ty), 2 + map.depth * 0.5 + dist * 4 + (isTerrain ? -0.5 : 0) + (style.exclude ? 6 : 0));
+        const priority = 2 + map.depth * 0.5 + dist * 4 + (isTerrain ? -0.5 : 0) + (style.exclude ? 6 : 0);
+        const tile = this.tiles.get(tileUrl(art, id, z, tx, ty), priority);
+        // Its parent one level up comes first (a quarter of the bytes): a tile still loading — or fading in — is
+        // drawn over a picture only twice as soft, never over the whole picture's smallest level (a flat-coloured
+        // square that shows as a tone jump on a slow device).
+        if (z > 0 && tile.state !== "ready" && (!exists || exists(z - 1, tx >> 1, ty >> 1))) this.tiles.get(tileUrl(art, id, z - 1, tx >> 1, ty >> 1), priority - 0.25);
         total += 1;
         if (tile.state === "ready" || tile.state === "failed") { ready += 1; covered += 1; }
         // (Not in yet, but drawn from a coarser level meanwhile: it shows, softer.)

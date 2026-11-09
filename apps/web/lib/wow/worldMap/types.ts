@@ -35,6 +35,8 @@ export type MapTerrain = {
   empty?: string;
   /** "#rrggbb": the sea filled under the tiles inside its rect (where no tile exists or a tile is see-through). */
   ocean?: string;
+  /** This pyramid's own encoding version (overrides the manifest-wide one). */
+  v?: string;
 };
 
 export type MapRecord = {
@@ -127,4 +129,8 @@ export type EventRecord = {
   changedMapIds?: number[];
 };
 
-export type WorldMapData = { maps: MapRecord[]; pois: PoiRecord[]; eras: EraRecord[]; eraMeta?: EraMeta[]; events: EventRecord[] };
+export type WorldMapData = {
+  maps: MapRecord[]; pois: PoiRecord[]; eras: EraRecord[]; eraMeta?: EraMeta[]; events: EventRecord[];
+  /** The terrain pyramids' encoding version (terrain-manifest.json `version`): put in their URLs, so a re-encode reaches every cache. */
+  terrainVersion?: string;
+};

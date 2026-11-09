@@ -120,7 +120,8 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
   for (const entry of info.drawn) {
     const { map, alpha, screen } = entry;
     const width = screen[2] - screen[0];
-    if (alpha < 0.55 || backdrop(entry)) continue;
+    // (Deep in, the map in view is softened on purpose under the ground: its own places and names still show.)
+    if (alpha < 0.55 || (backdrop(entry) && !(deep && entry.role === "focus"))) continue;
     // Only the map in view names its places: no points or names of the maps around it (neighbours, the
     // continents of a world, the zones of a continent), none of a level the reader is not looking at.
     if (entry.role !== undefined && entry.role !== "focus") continue;
@@ -167,6 +168,9 @@ export function pickMarkers(info: FrameInfo, index: MarkerIndex, layers: Layers,
         labelled.add(words);
         const x = (label.box[0] + label.box[2]) / 2, y = (label.box[1] + label.box[3]) / 2;
         const [ax, ay] = point(map, x, y);
+        // Wholly in the free part of the stage (never under the title column or the tools, nor cut by them).
+        const [sx, sy] = project(ax, ay), half = (words.length * CHAR.continent * wide(words)) / 2 + 12, f = info.free;
+        if (f && (sx - half < f[0] || sx + half > f[2] || sy - 16 < f[1] || sy + 16 > f[3])) return;
         const poi: AtlasPoi = { id: `w${map.id}-${i}`, map: map.id, kind: "zone-label", name: words, x, y };
         out.push({ owner: map.id, key: `w${map.id}-${i}`, type: "poi", kind: "zone-label", label: words, ax, ay, priority: PRIORITY["zone-label"], showLabel: true, poi });
       });

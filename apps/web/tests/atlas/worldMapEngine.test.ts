@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
-import { buildAtlasBundle, localArt, type ArtEra, type AtlasMap } from "@/lib/wow/worldMap/bundle";
+import { buildAtlasBundle, localArt, versioned, type ArtEra, type AtlasMap } from "@/lib/wow/worldMap/bundle";
 import type { EraRecord, MapRecord, PoiRecord } from "@/lib/wow/worldMap/types";
 import { blurGroups, blurKey, blurOf, blurRadiusCss, desatOf, dimOf, radiusOfKey, vignetteOf, featherOf, layerScale, levelFor, maskFeatherOf, maxScaleOf, rubber, RUBBER, sharpenOf, terrainAlphaOf, upscaleOf } from "@/components/wow/worldMap/engine/lod";
 import { areaAt, areaCentre, areaShare, type Area } from "@/components/wow/worldMap/engine/area";
@@ -88,6 +88,20 @@ describe("world map LOD", () => {
     assert.equal(terrainAlphaOf(1.3), 0);
     assert.ok(terrainAlphaOf(1.7) > 0 && terrainAlphaOf(1.7) < 1);
     assert.equal(terrainAlphaOf(2.2), 1);
+  });
+
+  it("puts the terrain's encoding version into its URLs (a re-encode reaches every cache)", () => {
+    assert.equal(versioned("/maps/terrain/12/{z}/{x}_{y}.webp", "q85-20261109"), "/maps/terrain/12/{z}/{x}_{y}.webp?v=q85-20261109");
+    assert.equal(versioned("/maps/terrain/12/index.json?a=1", "q85"), "/maps/terrain/12/index.json?a=1&v=q85");
+    assert.equal(versioned("/x.webp", undefined), "/x.webp");
+    assert.equal(versioned("/x.webp", "bad value"), "/x.webp");
+    const maps: MapRecord[] = [{ id: 1, slug: "w", name: { en: "W", ru: "W" }, type: "continent", parentId: null, children: [], rectInParent: null,
+      art: { width: 100, height: 100, tileSize: 256, maxZoom: 0, url: "/maps/tiles/1/{z}/{x}_{y}.webp" },
+      terrain: { url: "/maps/terrain/1/{z}/{x}_{y}.webp", index: "/maps/terrain/1/index.json", tileSize: 256, width: 512, height: 512, maxZoom: 1, rect: [0, 0, 1, 1] } }];
+    const bundle = buildAtlasBundle({ maps, pois: [], eras: [], events: [], terrainVersion: "q85" }, "en");
+    const t = bundle.maps.find((m) => m.id === 1)?.terrain;
+    assert.equal(t?.art.url, "/maps/terrain/1/{z}/{x}_{y}.webp?v=q85");
+    assert.equal(t?.index, "/maps/terrain/1/index.json?v=q85");
   });
 
   it("sharpens only a picture magnified past its finest level, mildly", () => {

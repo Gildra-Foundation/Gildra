@@ -76,16 +76,20 @@ const validMask = (mask: unknown): mask is string => typeof mask === "string" &&
 const validTerrain = (terrain: MapTerrain | null | undefined): terrain is MapTerrain =>
   Boolean(terrain && validArt(terrain) && validRect(terrain.rect));
 /** A terrain's box in atlas space: its rect inside the map's frame. */
-function terrainOf(record: MapRecord, frame: Rect): AtlasTerrain | undefined {
+/** A URL with the encoding version (`?v=`): a re-encoded pyramid gets new URLs, no cache keeps the old tiles. */
+export const versioned = (url: string, v: string | undefined) => (v && /^[\w.-]{1,40}$/.test(v) ? `${url}${url.includes("?") ? "&" : "?"}v=${v}` : url);
+
+function terrainOf(record: MapRecord, frame: Rect, version?: string): AtlasTerrain | undefined {
   const t = record.terrain;
   if (!validTerrain(t)) return undefined;
   const w = frame[2] - frame[0], h = frame[3] - frame[1];
   const [x0, y0, x1, y1] = t.rect;
+  const v = typeof t.v === "string" ? t.v : version;
   return {
-    art: { width: t.width, height: t.height, tileSize: t.tileSize, maxZoom: t.maxZoom, url: t.url },
+    art: { width: t.width, height: t.height, tileSize: t.tileSize, maxZoom: t.maxZoom, url: versioned(t.url, v) },
     frame: [frame[0] + x0 * w, frame[1] + y0 * h, frame[0] + x1 * w, frame[1] + y1 * h],
-    ...(typeof t.index === "string" && t.index.startsWith("/") ? { index: t.index } : {}),
-    ...(typeof t.empty === "string" && t.empty.startsWith("/") ? { empty: t.empty } : {}),
+    ...(typeof t.index === "string" && t.index.startsWith("/") ? { index: versioned(t.index, v) } : {}),
+    ...(typeof t.empty === "string" && t.empty.startsWith("/") ? { empty: versioned(t.empty, v) } : {}),
     ...(typeof t.ocean === "string" && /^#[0-9a-f]{6}$/i.test(t.ocean) ? { ocean: t.ocean } : {}),
   };
 }
@@ -122,7 +126,7 @@ export function eraArt(override: EraMapOverride): MapArt | null | undefined {
  * `anchors` give fixed frames to tops that exist elsewhere (an era's Azeroth sits
  * where the current Azeroth sits, so the camera keeps its place across eras).
  */
-function placeRecords(records: Map<number, MapRecord>, lang: Lang, anchors: Map<number, AtlasMap> | null, firstOffset: number, era?: { root: number | null; explicit: ReadonlySet<number>; tops: ReadonlySet<number> }) {
+function placeRecords(records: Map<number, MapRecord>, lang: Lang, anchors: Map<number, AtlasMap> | null, firstOffset: number, era?: { root: number | null; explicit: ReadonlySet<number>; tops: ReadonlySet<number> } | null, terrainVersion?: string) {
   const usable = new Map<number, MapRecord>();
   for (const [id, map] of records) if (DRAWN.has(map.type) && validArt(map.art)) usable.set(id, map);
   const kids = new Map<number, number[]>();
@@ -146,7 +150,7 @@ function placeRecords(records: Map<number, MapRecord>, lang: Lang, anchors: Map<
       ...(typeof record.activeTo === "string" ? { activeTo: record.activeTo } : {}),
       ...(record.noTerrain ? { noTerrain: true } : {}),
     };
-    const terrain = terrainOf(record, frame);
+    const terrain = terrainOf(record, frame, terrainVersion);
     if (terrain) node.terrain = terrain;
     placed.set(record.id, node);
     for (const childId of (kids.get(record.id) ?? []).sort((x, y) => x - y)) {
@@ -196,7 +200,7 @@ const sameNode = (a: AtlasMap, b: AtlasMap) =>
 export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle & { artEras: ArtEra[] } {
   const retail = new Map<number, MapRecord>();
   for (const map of data.maps) retail.set(map.id, map);
-  const placed = placeRecords(retail, lang, null, 0);
+  const placed = placeRecords(retail, lang, null, 0, null, data.terrainVersion);
   const cosmic = [...placed.values()].find((map) => map.type === "cosmic" && map.depth === 0);
   const chainTop = (map: AtlasMap) => { let m = map; while (m.parent !== null) m = placed.get(m.parent) as AtlasMap; return m; };
   for (const map of placed.values()) {
@@ -208,7 +212,7 @@ export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle & 
     .filter((poi) => placed.has(poi.mapId) && Number.isFinite(poi.x) && Number.isFinite(poi.y))
     .map((poi) => toPoi(poi, lang, poi.mapId, poi.targetMapId && placed.has(poi.targetMapId) ? poi.targetMapId : undefined));
 
-  const art = buildArtEras(data.eras ?? [], retail, placed, lang);
+  const art = buildArtEras(data.eras ?? [], retail, placed, lang, data.terrainVersion);
   const timeline = data.eraMeta?.length ? data.eraMeta : (data.eras ?? []).filter((era) => !("inherits" in era && era.inherits));
   const eras: AtlasEra[] = timeline.map((era) => {
     const range = rangeOf(era.patchRange);
@@ -241,7 +245,7 @@ export function buildAtlasBundle(data: WorldMapData, lang: Lang): AtlasBundle & 
  * placed with its top anchored on the current map of the same id, and kept as
  * the difference from the current maps.
  */
-function buildArtEras(eras: EraRecord[], retail: Map<number, MapRecord>, base: Map<number, AtlasMap>, lang: Lang): ArtEra[] {
+function buildArtEras(eras: EraRecord[], retail: Map<number, MapRecord>, base: Map<number, AtlasMap>, lang: Lang, terrainVersion?: string): ArtEra[] {
   const byId = new Map(eras.map((era) => [era.id, era]));
   const extra = new Map<string, number>();
   const idOf = (key: string | number | null | undefined): number | null => {
@@ -322,7 +326,7 @@ function buildArtEras(eras: EraRecord[], retail: Map<number, MapRecord>, base: M
     if (!done) {
       const records = resolve(era);
       const root = era.rootMapId !== undefined ? idOf(era.rootMapId as number | string) : null;
-      done = placeRecords(records, lang, base, 1000, { root: root !== null && records.has(root) ? root : null, explicit: explicitOf.get(era.id) ?? new Set(), tops: topsOf.get(era.id) ?? new Set() });
+      done = placeRecords(records, lang, base, 1000, { root: root !== null && records.has(root) ? root : null, explicit: explicitOf.get(era.id) ?? new Set(), tops: topsOf.get(era.id) ?? new Set() }, terrainVersion);
       placedOf.set(era.id, done);
     }
     return done;

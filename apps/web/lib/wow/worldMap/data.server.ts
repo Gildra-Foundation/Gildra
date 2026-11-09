@@ -34,6 +34,7 @@ function load() {
     eras: readJson("eras.json", []),
     eraMeta: readJson("eras-meta.json", []),
     events: readJson("events.json", []),
+    terrainVersion: readJson<{ version?: unknown }>("terrain-manifest.json", {}).version as string | undefined,
   };
   const version = createHash("sha1").update(JSON.stringify(data)).digest("hex").slice(0, 10);
   cached = { data, version, bundles: {} };

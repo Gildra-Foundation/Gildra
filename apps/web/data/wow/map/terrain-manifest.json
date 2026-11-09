@@ -1,4 +1,5 @@
 {
+  "version": "q85-20261109",
   "maps": {
     "12": {
       "url": "/maps/terrain/12/{z}/{x}_{y}.webp",
