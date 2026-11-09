@@ -584,8 +584,8 @@ async function runDeep(browser, spec) {
   const labels = await overlaps(pg);
   if (shots) await pg.screenshot({ path: `${shots}/${spec.key}-max.png`, timeout: 120000 }).catch(() => {});
   // One more notch: a bounce at the limit, then back to the same view.
-  // (At the middle of the free view, where the limit was read: elsewhere another picture may set another limit.)
-  const [bx, by] = await pg.evaluate(() => { const e = window.__worldMap, s = e.options.insets; return [s.left + (e.width - s.left - s.right) / 2, s.top + (e.height - s.top - s.bottom) / 2]; });
+  // (Where the limit was read: the cursor's point.)
+  const [bx, by] = cursor;
   await pg.mouse.move(surface[0] + bx, surface[1] + by);
   await pg.mouse.wheel(0, -100);
   await pg.waitForTimeout(40);

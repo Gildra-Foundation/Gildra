@@ -1452,7 +1452,8 @@ export class WorldMapEngine {
       // The map in view itself, shrunk to a small part of the view (zooming out, or at rest after it), no longer
       // stands as its own candidate: the map around it takes over.
       const way = this.zoomDir || this.zoomIntent;
-      if (entry.map.id === this.focusId && entry.map.depth > 0 && this.zoomDir <= 0 && share(entry) < (way < 0 ? 0.18 : 0.12)) continue;
+      // (Zooming out, a place a fifth of the view while the map around it shows twice that is left: Classic's Orgrimmar in Durotar.)
+      if (entry.map.id === this.focusId && entry.map.depth > 0 && this.zoomDir <= 0 && share(entry) < (way < 0 ? 0.24 : 0.12)) continue;
       const depth = candidate?.map.depth ?? -1;
       // Of two at one level, a place lying inside the other (a city in its zone) is the deeper one; else the one
       // the point is nearest the middle of.
