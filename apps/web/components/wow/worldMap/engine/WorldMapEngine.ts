@@ -1320,7 +1320,8 @@ export class WorldMapEngine {
     if (candidate && candidate.map.id === this.focusId && (this.zoomDir || this.zoomIntent) < 0) {
       const own = share(candidate);
       for (const entry of drawn) {
-        if (entry === candidate || entry.map.depth !== candidate.map.depth || entry.role === "ancestor" || (entry.open ?? entry.alpha) <= 0.5 || !this.inArea(entry.map, cx, cy)) continue;
+        // (By its rectangle: a zone's mask leaves out the city that lies in it — Durotar's, Orgrimmar.)
+        if (entry === candidate || entry.map.depth !== candidate.map.depth || entry.role === "ancestor" || (entry.open ?? entry.alpha) <= 0.5 || !contains(entry.map.frame, cx, cy)) continue;
         if (share(entry) > own + 0.15 && (!candidate || share(entry) > share(candidate))) { candidate = entry; beside = true; }
       }
     }
@@ -1338,7 +1339,7 @@ export class WorldMapEngine {
       // off its middle than the candidate is from its own.
       // Not up while the point is already over a place of its level that is opening (Classic's Orgrimmar lies
       // beside Durotar in the data): the reader is on the way in, not out.
-      const heading = relation === "above" && this.zoomDir >= 0 && drawn.some((entry) => entry !== shown && entry.map.depth >= held.depth && (entry.open ?? entry.alpha) > 0.2 && this.inArea(entry.map, cx, cy));
+      const heading = relation === "above" && this.zoomDir >= 0 && drawn.some((entry) => entry !== shown && entry.map.depth >= held.depth && (entry.open ?? entry.alpha) > 0.2 && contains(entry.map.frame, cx, cy));
       // Beside it: the one that shows more of the view wins, with a margin (no flip-flop between two halves).
       const heldShare = shown ? share(shown) : 0;
       const under = Boolean(shown) && (heading || (relation === "other"
@@ -1397,7 +1398,9 @@ export class WorldMapEngine {
     const f = map.frame;
     if (!contains(f, x, y)) return false;
     const area = this.areaOf(map);
-    return !area || areaAt(area, (x - f[0]) / (f[2] - f[0]), (y - f[1]) / (f[3] - f[1])) >= 0.5;
+    if (!area || areaAt(area, (x - f[0]) / (f[2] - f[0]), (y - f[1]) / (f[3] - f[1])) >= 0.5) return true;
+    // Its own places count as its land (a zone's mask may leave out its city: Classic's Durotar, Orgrimmar).
+    return map.children.some((id) => { const child = this.maps.get(id); return Boolean(child?.art) && !UNDER.has(child?.type ?? "zone") && contains((child as AtlasMap).frame, x, y); });
   }
 
   /** A point well inside a map's own land (atlas space): its mask's deepest point, else its rectangle's middle. */
