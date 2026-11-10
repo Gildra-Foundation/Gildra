@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
+import { memo, useDeferredValue, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Castle, ChevronDown, Clock3, Compass, CornerDownLeft, Database, History, MapPin, Search, Skull, Swords, X } from "lucide-react";
 import { AtlasDialog } from "@gildra/atlas-ui/AtlasDialog";
@@ -10,9 +10,9 @@ import { knownRenderTier } from "@gildra/atlas-ui/renderTier";
 import { routeTurnDeviceAllowed, type RouteTurnDevice } from "@/components/motion/routeTurnDevice";
 import type { SiteSearchGroup } from "@/lib/search/siteIndex";
 import { readRecentPages, readRecentQueries, rememberQuery } from "./recentPages";
-import { indexFailed, loadedIndex, subscribeIndex } from "./siteSearchIndex";
+import { indexFailed, loadedIndex, loadIndex, subscribeIndex, type SiteIndex } from "./siteSearchIndex";
 import { siteSearchCopy, type SiteSearchLang } from "./siteSearchCopy";
-import { matchRanges, searchIndex } from "./siteSearchMatch";
+import { matchRanges, prepareIndex, searchIndex } from "./siteSearchMatch";
 import styles from "./siteSearch.module.css";
 
 type RowIcon = "recent" | "database" | SiteSearchGroup;
@@ -44,9 +44,32 @@ function renderTier() {
   }
 }
 
+type IdleDeadline = { timeRemaining: () => number };
+type IdleWindow = Window & { requestIdleCallback?: (callback: (deadline: IdleDeadline) => void, options?: { timeout: number }) => number };
+
+// The chunk loads while the page is idle (or on first use): the index it searches is
+// normalised in idle time too, a slice per idle period and the page's language first, so
+// the first keystroke only matches (and no idle task grows long enough to delay a tap).
+function prepareWhenIdle(lists: SiteIndex[SiteSearchLang][]) {
+  const idle = window as IdleWindow;
+  const step = (deadline: IdleDeadline) => {
+    while (lists.length && prepareIndex(lists[0], deadline)) lists.shift();
+    if (lists.length) schedule();
+  };
+  const schedule = () => {
+    if (idle.requestIdleCallback) idle.requestIdleCallback(step, { timeout: 3000 });
+    else setTimeout(() => step({ timeRemaining: () => 8 }), 200);
+  };
+  schedule();
+}
+if (typeof window !== "undefined") {
+  const ru = document.documentElement.lang.startsWith("ru");
+  void loadIndex().then((index: SiteIndex) => prepareWhenIdle(ru ? [index.ru, index.en] : [index.en, index.ru]), () => undefined);
+}
+
 /** The title with the query's words marked. */
 function Highlighted({ text, query }: { text: string; query: string }) {
-  const ranges = query ? matchRanges(text, query) : [];
+  const ranges = useMemo(() => (query ? matchRanges(text, query) : []), [text, query]);
   if (!ranges.length) return <>{text}</>;
   const parts: ReactNode[] = [];
   let at = 0;
@@ -58,6 +81,61 @@ function Highlighted({ text, query }: { text: string; query: string }) {
   if (at < text.length) parts.push(text.slice(at));
   return <>{parts}</>;
 }
+
+type RowEvents = {
+  /** The pointer rests on a row: it becomes the selected one. */
+  hover: (index: number) => void;
+  open: (row: Row, event: MouseEvent<HTMLDivElement>) => void;
+  prefetch: (row: Row) => void;
+};
+
+/**
+ * One result. Options, not links: the dialog's focus trap walks every focusable element on opening, and
+ * a list of links made that the longest part of it. Enter or a click opens through the router; Ctrl/⌘
+ * or the middle button opens a tab, as a link would. Memoised: a keystroke or an arrow redraws only the
+ * rows whose content or selection changed.
+ */
+const Option = memo(function Option({ row, id, index, selected, query, events }: { row: Row; id: string; index: number; selected: boolean; query: string; events: RowEvents }) {
+  return (
+    <div
+      id={id}
+      role="option"
+      aria-selected={selected}
+      className={styles.option}
+      data-href={row.href || undefined}
+      onMouseMove={() => { if (!selected) events.hover(index); }}
+      onMouseEnter={() => events.prefetch(row)}
+      onClick={(event) => events.open(row, event)}
+      onAuxClick={(event) => { if (event.button === 1 && row.href) window.open(row.href, "_blank", "noopener"); }}
+    >
+      <span className={styles.optionIcon} data-image={row.image ? "" : undefined} aria-hidden="true">
+        {/* eslint-disable-next-line @next/next/no-img-element -- a 32 px thumbnail, already sized by the index */}
+        {row.image ? <img src={row.image} alt="" width={32} height={32} loading="lazy" decoding="async" /> : row.query !== undefined ? <History size={16} strokeWidth={1.8} /> : groupIcons[row.icon ?? "section"] ?? <Compass size={16} strokeWidth={1.8} />}
+      </span>
+      <span className={styles.optionText}>
+        <span className={styles.optionTitle}><Highlighted text={row.title} query={row.icon === "database" || row.query !== undefined ? "" : query} /></span>
+        {row.detail ? <span className={styles.optionDetail}>{row.detail}</span> : null}
+      </span>
+      {selected ? <CornerDownLeft className={styles.enter} size={14} aria-hidden="true" /> : null}
+    </div>
+  );
+});
+
+/** The grouped results; it follows the deferred query, so typing into the field never redraws it. */
+const ResultList = memo(function ResultList({ groups, id, current, query, events }: { groups: Group[]; id: string; current: string | undefined; query: string; events: RowEvents }) {
+  // Each group's first row in the whole list (the keyboard walks every row in order).
+  const starts = groups.reduce<number[]>((list, group, index) => [...list, index ? list[index - 1] + groups[index - 1].rows.length : 0], []);
+  return <>
+    {groups.map((group, groupIndex) => (
+      <div className={styles.group} role="group" aria-labelledby={`${id}-g-${group.id}`} key={group.id} data-group={group.id}>
+        <p className={styles.groupLabel} id={`${id}-g-${group.id}`}>{group.label}</p>
+        {group.rows.map((row, rowIndex) => (
+          <Option key={row.key} row={row} id={`${id}-${row.key}`} index={starts[groupIndex] + rowIndex} selected={current === row.key} query={query} events={events} />
+        ))}
+      </div>
+    ))}
+  </>;
+});
 
 /**
  * The quick search dialog. Loaded when the page is idle (or on first use) and
@@ -86,8 +164,6 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
   const prefix = lang === "ru" ? "/ru" : "";
   const localized = (href: string) => (href === "/" ? prefix || "/" : `${prefix}${href}`);
 
-  useEffect(() => { input.current?.focus(); }, []);
-
   // The panel unfolds from the toolbar's field: it starts as that field's box
   // and opens to its own, the contents fading in behind the edge.
   useLayoutEffect(() => {
@@ -105,9 +181,9 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
     const animation = panel.animate([
       { clipPath: inset, translate: `0 ${Math.round(shift)}px`, opacity: .4 },
       { clipPath: "inset(0px)", translate: "0 0", opacity: 1 },
-    ], { duration: 260, easing: "cubic-bezier(.2, .7, .2, 1)" });
+    ], { duration: 220, easing: "cubic-bezier(.2, .7, .2, 1)" });
     const content = panel.querySelectorAll<HTMLElement>("[data-search-reveal]");
-    content.forEach((element) => element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 90, easing: "ease-out", fill: "backwards" }));
+    content.forEach((element) => element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: 60, easing: "ease-out", fill: "backwards" }));
     animation.finished.then(() => { delete panel.dataset.morph; }, () => { delete panel.dataset.morph; });
     return () => animation.cancel();
   }, [origin]);
@@ -189,10 +265,21 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
     }
   };
 
+  // One stable set of row handlers, so the memoised rows stay still while the field changes.
+  const latestGo = useRef(go);
+  useLayoutEffect(() => { latestGo.current = go; });
+  const events = useMemo<RowEvents>(() => ({
+    hover: (index) => setActive(index),
+    prefetch: (row) => { if (row.href && row.icon !== "database") router.prefetch(row.href); },
+    open: (row, event) => {
+      if (row.href && (event.metaKey || event.ctrlKey || event.shiftKey)) { window.open(row.href, "_blank", "noopener"); return; }
+      latestGo.current(row);
+    },
+  }), [router]);
+
   const status = failed ? copy.failed : index && trimmed && hitCount === 0 ? copy.nothing : null;
-  let position = -1;
   return (
-    <AtlasDialog open={open} onClose={onClose} label={copy.dialog} variant="sheet" className={styles.dialog}>
+    <AtlasDialog open={open} onClose={onClose} label={copy.dialog} variant="sheet" className={styles.dialog} initialFocusRef={input}>
       <div className={styles.head} ref={body}>
         <AtlasInput
           ref={input}
@@ -224,51 +311,9 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
           <span className="sr-only">{copy.close}</span>
         </button>
       </div>
-      <div className={styles.list} id={`${id}-list`} role="listbox" aria-label={copy.dialog} data-search-reveal data-stale={query.trim() !== trimmed || undefined}>
+      <div className={styles.list} id={`${id}-list`} role="listbox" aria-label={copy.dialog} data-search-reveal>
         {status ? <p className={styles.status}>{status}</p> : null}
-        {rowsReady ? groups.map((group) => (
-          <div className={styles.group} role="group" aria-labelledby={`${id}-g-${group.id}`} key={group.id} data-group={group.id}>
-            <p className={styles.groupLabel} id={`${id}-g-${group.id}`}>{group.label}</p>
-            {group.rows.map((row) => {
-              position += 1;
-              const rowIndex = position;
-              const selected = current?.key === row.key;
-              const content = <>
-                <span className={styles.optionIcon} data-image={row.image ? "" : undefined} aria-hidden="true">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- a 32 px thumbnail, already sized by the index */}
-                  {row.image ? <img src={row.image} alt="" width={32} height={32} loading="lazy" decoding="async" /> : row.query !== undefined ? <History size={16} strokeWidth={1.8} /> : groupIcons[row.icon ?? "section"] ?? <Compass size={16} strokeWidth={1.8} />}
-                </span>
-                <span className={styles.optionText}>
-                  <span className={styles.optionTitle}><Highlighted text={row.title} query={row.icon === "database" || row.query !== undefined ? "" : trimmed} /></span>
-                  {row.detail ? <span className={styles.optionDetail}>{row.detail}</span> : null}
-                </span>
-                {selected ? <CornerDownLeft className={styles.enter} size={14} aria-hidden="true" /> : null}
-              </>;
-              // Options, not links: the dialog's focus trap walks every focusable element on opening, and
-              // a list of links made that the longest part of it. Enter or a click opens through the
-              // router; Ctrl/⌘ or the middle button opens a tab, as a link would.
-              return (
-                <div
-                  key={row.key}
-                  id={optionId(row)}
-                  role="option"
-                  aria-selected={selected}
-                  className={styles.option}
-                  data-href={row.href || undefined}
-                  onMouseMove={() => { if (!selected) setActive(rowIndex); }}
-                  onMouseEnter={() => { if (row.href && row.icon !== "database") router.prefetch(row.href); }}
-                  onClick={(event) => {
-                    if (row.href && (event.metaKey || event.ctrlKey || event.shiftKey)) { window.open(row.href, "_blank", "noopener"); return; }
-                    go(row);
-                  }}
-                  onAuxClick={(event) => { if (event.button === 1 && row.href) window.open(row.href, "_blank", "noopener"); }}
-                >
-                  {content}
-                </div>
-              );
-            })}
-          </div>
-        )) : null}
+        {rowsReady ? <ResultList groups={groups} id={id} current={current?.key} query={trimmed} events={events} /> : null}
         {!index && !failed ? <div className={styles.skeleton} aria-hidden="true"><i /><i /><i /><i /></div> : null}
       </div>
       <span className="sr-only" aria-live="polite">{trimmed && index ? copy.count(hitCount) : ""}</span>

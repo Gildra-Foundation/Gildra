@@ -38,7 +38,7 @@
 /* Wider screens: the dialog hangs from a fixed line near the top, as a command
    palette does, and keeps one height, so results arriving under the field never
    move it. It grows out of the toolbar's field (SiteSearchDialog: a clip from
-   that field's box to its own, 260 ms); the kit's zoom is off while it does. */
+   that field's box to its own, 220 ms); the kit's zoom is off while it does. */
 @media (min-width: 721px) {
   :global(.ui-modal-layer.ui-dialog-layer):has(> .dialog.dialog) { align-items: flex-start; padding-top: min(12vh, 104px); }
 }
@@ -109,10 +109,7 @@
   overscroll-behavior: contain;
   padding: var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-3);
   scrollbar-width: thin;
-  transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
 }
-/* Results a keystroke behind the field dim a touch instead of flickering. */
-.list[data-stale] { opacity: .78; }
 
 .group + .group { margin-top: var(--atlas-space-2); }
 
@@ -251,7 +248,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .list, .option, .enter { transition: none; }
+  .option, .enter { transition: none; }
   .skeleton i { animation: none; }
 }
 :global([data-motion="reduced"]) .skeleton i { animation: none; }
