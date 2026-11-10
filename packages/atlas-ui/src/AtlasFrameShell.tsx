@@ -2,7 +2,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { getImageProps } from "next/image";
 import clsx from "clsx";
 import { AtlasArtGlow, type ArtGlowPoint } from "./AtlasArtGlow";
-import { AtlasMotionToggle } from "./AtlasMotionToggle";
+import { AtlasFrameFooter } from "./AtlasFooter";
+export { AtlasFrameFooter } from "./AtlasFooter";
 import { morphSceneProps } from "./morph";
 import { ART_PORTRAIT_MEDIA, ART_PORTRAIT_SIZES, artPlaceholder, artPortrait } from "./placeholders";
 import styles from "./AtlasFrame.module.css";
@@ -54,26 +55,6 @@ function objectFocus(position: string | undefined): [number, number] {
   const [x = "center", y = "18%"] = (position ?? "center 18%").split(/\s+/);
   const part = (value: string) => (value === "center" ? 0.5 : value === "left" || value === "top" ? 0 : value === "right" || value === "bottom" ? 1 : parseFloat(value) / 100);
   return [part(x), part(y)];
-}
-
-/**
- * The site footer: brand and description, grouped navigation, language and motion
- * controls, then the legal notice. Pages outside the frame reuse it.
- */
-export function AtlasFrameFooter({ locale, brand, description, legal, links, language, motion }: { locale: "en" | "ru"; legal: ReactNode; links: ReactNode; brand?: ReactNode; description?: ReactNode; language?: ReactNode; motion?: ReactNode }) {
-  return <footer className={styles.legal} data-text-links>
-    <div className={styles.legalBody}>
-      {brand || description ? <div className={styles.legalSummary}>
-        {brand ? <div className={styles.legalBrand}>{brand}</div> : null}
-        {description ? <p>{description}</p> : null}
-      </div> : null}
-      <nav aria-label={locale === "ru" ? "Навигация в подвале" : "Footer navigation"} className={styles.legalNav}>{links}</nav>
-    </div>
-    <div className={styles.legalMeta}>
-      <div className={styles.legalControls}>{language}{motion ?? <AtlasMotionToggle locale={locale} />}</div>
-      <p className={styles.legalNotice}>{legal}</p>
-    </div>
-  </footer>;
 }
 
 /**
