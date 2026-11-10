@@ -139,8 +139,14 @@
 /* The relic keeps its blue metal; the blank leather holds crisp live lettering. */
 .cover{aspect-ratio:3/4;width:min(100%,420px,calc((100svh - 240px - var(--wow-version-strip-height,0px))*.75))}
 .coverImage{aspect-ratio:3/4;object-fit:contain;filter:drop-shadow(-12px 20px 18px #0009)}
-.coverTitle{top:17%;left:17%;right:15%}
-.coverSubtitle{top:74%;left:17%;right:15%}
+/* Both the resting cover and its moving leaf use these proportional safe areas.
+   Keep the crest/divider above the crystal and lettering above the lower metal. */
+.coverTitle{top:11.5%;left:17%;right:15%;container-type:inline-size}
+.coverTitle .coverBrand{width:23%;height:auto}
+.coverTitle .coverBrand img{width:100%;height:auto}
+.coverTitle i{width:56%;margin-top:2cqw}
+.coverSubtitle{top:69%;left:17%;right:15%;container-type:inline-size}
+.coverSubtitle>span{font-size:11cqw;line-height:1.12}
 .coverTitle strong,.coverSubtitle>span{background:linear-gradient(180deg,var(--bright),var(--accent));background-clip:text;-webkit-background-clip:text}
 .coverLight{inset:30% 24% 28%;background:radial-gradient(ellipse,color-mix(in srgb,var(--accent) 18%,transparent),transparent 65%);mix-blend-mode:screen;pointer-events:none}
 @media(prefers-reduced-motion:no-preference){.coverLight{animation:frostBreath 6s ease-in-out infinite}}
