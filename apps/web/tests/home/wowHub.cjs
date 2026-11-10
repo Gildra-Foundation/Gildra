@@ -24,7 +24,7 @@ const { chromium } = require('playwright');
       assert(head.images);
       for (const type of ['WebSite', 'Organization', 'CollectionPage', 'BreadcrumbList', 'ItemList']) assert(head.graph.some(e => e['@type'] === type), type);
       assert.equal(await page.locator('#mythic article').first().locator('li a').count(), 8);
-      assert.equal(await page.locator('#raids article').last().locator('li a').count(), 8);
+      assert.equal(await page.locator('#raids ul').first().locator('li a').count(), 8);
       assert.equal(await page.locator('#hero article li a').count(), 13);
       const list = head.graph.find(e => e['@type'] === 'ItemList');
       const bodyHrefs = await page.locator('main section a[href]').evaluateAll(links => links.map(a => a.getAttribute('href')));

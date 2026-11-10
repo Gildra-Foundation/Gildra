@@ -36,11 +36,11 @@ export const wowHomeCopy = {
     "foreverContent": "Подземелья и рейды",
     "mistsContent": "Классы и таланты",
     "openGroup": {
-      "mythic": "Выбрать подземелье",
-      "raids": "Открыть рейдовый журнал",
-      "hero": "Выбрать специализацию",
+      "mythic": "Подземелья",
+      "raids": "Рейды",
+      "hero": "Классы",
       "economy": "Сравнить цены",
-      "world": "Открыть карту мира"
+      "world": "Карта мира"
     },
     "auctionAlt": "Аукционный дом Оргриммара",
     "continentsLabel": "Континенты",
@@ -82,11 +82,11 @@ export const wowHomeCopy = {
     "foreverContent": "Dungeons and raids",
     "mistsContent": "Classes and talents",
     "openGroup": {
-      "mythic": "Choose a dungeon",
-      "raids": "Open the raid journal",
-      "hero": "Choose a specialization",
+      "mythic": "Dungeons",
+      "raids": "Raids",
+      "hero": "Classes",
       "economy": "Compare prices",
-      "world": "Open the world map"
+      "world": "World map"
     },
     "auctionAlt": "Orgrimmar Auction House",
     "continentsLabel": "Continents",
