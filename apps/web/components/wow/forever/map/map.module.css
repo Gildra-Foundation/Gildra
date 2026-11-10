@@ -1,0 +1,17 @@
+/* atlas:strict — map viewport, controls and route navigation. */
+.root { min-width: 0; }
+.controls { display: flex; align-items: center; flex-wrap: wrap; gap: var(--atlas-space-2); margin-block: var(--atlas-space-2); }
+.controls button, .controls a, .status button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: var(--atlas-space-2); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-surface); color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; cursor: pointer; }
+.controls button:disabled { opacity: .5; cursor: default; }
+.viewport { width: 100%; max-height: 65vh; overflow: auto; position: relative; border: 1px solid var(--atlas-line); background: var(--atlas-surface-sunken); overscroll-behavior: contain; scroll-behavior: auto; }
+.canvas { position: relative; min-width: 100%; }
+.canvas img, .canvas svg { display: block; width: 100%; height: auto; user-select: none; }
+.canvas img { max-width: none; }
+.pin { position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center; width: 44px; height: 44px; border: 2px solid var(--atlas-accent); border-radius: 50%; background: var(--atlas-bg); color: var(--atlas-text-strong); font-weight: 700; text-decoration: none; }
+.pin[aria-current="true"] { background: var(--atlas-accent); color: var(--atlas-accent-ink); }
+.controls :focus-visible, .status button:focus-visible, .viewport:focus-visible, .pin:focus-visible, .step a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.status { padding: var(--atlas-space-3); color: var(--atlas-text-muted); }
+.step { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
+.step:target, .step[data-active="true"] { border-inline-start: 2px solid var(--atlas-accent); padding-inline-start: var(--atlas-space-3); }
+.step h4 a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; }
+@media (forced-colors: active) { .pin[aria-current="true"] { outline: 3px solid Highlight; } }

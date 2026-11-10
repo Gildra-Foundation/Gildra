@@ -151,8 +151,8 @@
           "ru": "Пещера троггов"
         },
         "description": {
-          "en": "Take the right side of the large trogg chamber to Oggleflint.",
-          "ru": "В большой пещере троггов пройдите вправо к Огглфлинту."
+          "en": "Begin with Oggleflint and clear the surrounding troggs.",
+          "ru": "Начните с Oggleflint и зачистите окружающих троггов."
         },
         "bosses": [
           "Oggleflint"
@@ -177,8 +177,8 @@
           "ru": "Последняя пещера"
         },
         "description": {
-          "en": "Clear Jergosh and his escorts in the final room.",
-          "ru": "В последней пещере разберите Джергоша и его охрану."
+          "en": "Continue to Jergosh and deal with his escorts.",
+          "ru": "Продвигайтесь к Jergosh и разберитесь с его свитой."
         },
         "bosses": [
           "Jergosh the Invoker"
@@ -186,12 +186,12 @@
       },
       {
         "title": {
-          "en": "Upper ramp",
-          "ru": "Верхний подъём"
+          "en": "Bazzalan",
+          "ru": "Bazzalan"
         },
         "description": {
-          "en": "Climb to Bazzalan. Pull the left cultist separately before engaging the boss.",
-          "ru": "Поднимитесь к Баззалану. Левого культиста вытяните отдельно до боя с боссом."
+          "en": "Finish with Bazzalan after clearing the nearby cultists.",
+          "ru": "Завершите путь у Bazzalan, зачистив ближайших культистов."
         },
         "bosses": [
           "Bazzalan"
@@ -428,8 +428,8 @@
           "ru": "Ворота шахты"
         },
         "description": {
-          "en": "Defeat Rhahk’Zor; check the left side tunnel for the rare Miner Johnson.",
-          "ru": "Убейте Рак-Зора; проверьте левый тоннель, где может появиться редкий Шахтёр Джонсон."
+          "en": "Defeat Rhahk’Zor. Miner Johnson is an optional rare encounter.",
+          "ru": "Победите Rhahk’Zor. Miner Johnson — необязательный редкий противник."
         },
         "bosses": [
           "Rhahk'Zor",
@@ -469,8 +469,8 @@
           "ru": "Нижняя палуба"
         },
         "description": {
-          "en": "After Smite, take the ramp and turn left for Cookie.",
-          "ru": "После Каюка поднимитесь по трапу и поверните налево к Пирожку."
+          "en": "Cookie patrols beside the ship after Smite; you can also leave this optional fight until after VanCleef.",
+          "ru": "После Mr. Smite можно встретить патрулирующего рядом с кораблём Cookie; этот необязательный бой можно оставить на время после VanCleef."
         },
         "bosses": [
           "Cookie"
@@ -482,8 +482,8 @@
           "ru": "Верхняя палуба"
         },
         "description": {
-          "en": "Clear the right side and climb toward VanCleef; intercept Greenskin’s patrol on the upper deck.",
-          "ru": "Зачистите правую сторону и поднимайтесь к ван Клифу; перехватите патруль Зеленямса на верхней палубе."
+          "en": "Clear the ship toward Captain Greenskin and Edwin VanCleef.",
+          "ru": "Зачистите корабль по пути к Captain Greenskin и Эдвину Ван Клифу."
         },
         "bosses": [
           "Captain Greenskin",
@@ -767,8 +767,8 @@
           "ru": "Первая пещера"
         },
         "description": {
-          "en": "Look for Anacondra among the torch circles on the upper level.",
-          "ru": "Ищите Анакондру среди кругов факелов на верхнем ярусе."
+          "en": "Find and defeat Lady Anacondra, one of the four Fang druids needed for the final ritual.",
+          "ru": "Найдите и победите Lady Anacondra — одного из четырёх друидов Клыка, необходимых для финального ритуала."
         },
         "bosses": [
           "Lady Anacondra"
@@ -776,12 +776,12 @@
       },
       {
         "title": {
-          "en": "West branch",
-          "ru": "Западная ветка"
+          "en": "Lord Cobrahn",
+          "ru": "Lord Cobrahn"
         },
         "description": {
-          "en": "Follow the river west, then the winding passage to Cobrahn.",
-          "ru": "По реке идите на запад, затем по извилистому проходу к Кобрану."
+          "en": "Defeat Lord Cobrahn before returning for the Disciple’s ritual.",
+          "ru": "Победите Lord Cobrahn до возвращения к ритуалу послушника."
         },
         "bosses": [
           "Lord Cobrahn"
@@ -789,12 +789,12 @@
       },
       {
         "title": {
-          "en": "Return to the river",
-          "ru": "Возвращение к реке"
+          "en": "Optional Kresh",
+          "ru": "Необязательный бой с Kresh"
         },
         "description": {
-          "en": "Return to the river and head east. Kresh is an optional encounter in the water.",
-          "ru": "Вернитесь к реке и направляйтесь на восток. Криг в воде — необязательный бой."
+          "en": "Kresh is an optional encounter; defeating him does not replace any of the four Fang druids.",
+          "ru": "Kresh — необязательный противник; победа над ним не заменяет ни одного из четырёх друидов Клыка."
         },
         "bosses": [
           "Kresh"
@@ -802,12 +802,12 @@
       },
       {
         "title": {
-          "en": "East branch",
-          "ru": "Восточная ветка"
+          "en": "Remaining encounters",
+          "ru": "Остальные бои"
         },
         "description": {
-          "en": "Continue through Pythas and Skum to the chamber shared by Serpentis and Verdan. Fight Serpentis first.",
-          "ru": "Пройдите Питонаса и Скама до общего зала Серпентиса и Вердана. Первым убейте Серпентиса."
+          "en": "Defeat Pythas and Serpentis to complete the Fang encounters; Skum and Verdan are separate encounters along the way.",
+          "ru": "Победите Lord Pythas и Lord Serpentis для завершения боёв с Клыком; Skum и Verdan — отдельные противники на пути."
         },
         "bosses": [
           "Lord Pythas",
@@ -1113,8 +1113,8 @@
           "ru": "Тюрьма"
         },
         "description": {
-          "en": "Kill Rethilgore, open your faction’s prisoner cage and speak to the prisoner to unlock the courtyard.",
-          "ru": "Убейте Ретилгора, откройте клетку пленника своей фракции и поговорите с ним: он откроет двор."
+          "en": "Start with Rethilgore in the prison.",
+          "ru": "Начните с Rethilgore в тюрьме."
         },
         "bosses": [
           "Rethilgore"
@@ -1141,8 +1141,8 @@
           "ru": "Верхняя часть крепости"
         },
         "description": {
-          "en": "Continue along the single path through Odo, Fenrus and Nandos.",
-          "ru": "Продолжайте по единственному проходу через Одо, Фенруса и Нандоса."
+          "en": "Continue through Odo, Fenrus and Nandos.",
+          "ru": "Продвигайтесь через Odo, Fenrus и Nandos."
         },
         "bosses": [
           "Odo the Blindwatcher",
@@ -1390,8 +1390,8 @@
           "ru": "Боковые пещеры"
         },
         "description": {
-          "en": "Visit Sarevess northwest of the pool; Thaelrid’s quest cave is southwest.",
-          "ru": "Саревесс находится в северо-западной пещере; пещера с заданием Таэлрида — на юго-западе."
+          "en": "Visit Lady Sarevess before continuing deeper into the dungeon.",
+          "ru": "Посетите Lady Sarevess перед продвижением вглубь подземелья."
         },
         "bosses": [
           "Lady Sarevess"
@@ -1399,12 +1399,12 @@
       },
       {
         "title": {
-          "en": "Southern tunnels",
-          "ru": "Южные тоннели"
+          "en": "Geilhast and Lorgus",
+          "ru": "Geilhast и Lorgus"
         },
         "description": {
-          "en": "Take the southern tunnel to the junction. Visit Geilhast, then the neighbouring northern passage for Lorgus Jett.",
-          "ru": "По южному тоннелю идите до развилки. Посетите Гелихаста, затем соседний северный проход к Лоргусу Джетту."
+          "en": "Continue through the encounters with Geilhast and Lorgus Jett.",
+          "ru": "Продолжайте прохождение через бои с Geilhast и Lorgus Jett."
         },
         "bosses": [
           "Geilhast",
@@ -1417,8 +1417,8 @@
           "ru": "Затопленные руины"
         },
         "description": {
-          "en": "Continue south. Old Serra’kis is underwater beneath the ruins; return above water to reach the temple.",
-          "ru": "Продолжайте на юг. Старина Серракис находится под водой под руинами; к храму идите по суше."
+          "en": "Old Serra’kis is underwater. Return above water before continuing to the temple.",
+          "ru": "Old Serra’kis находится под водой. Перед продвижением к храму вернитесь на поверхность."
         },
         "bosses": [
           "Old Serra'kis"
@@ -1618,12 +1618,11 @@
           "ru": "Входной коридор"
         },
         "description": {
-          "en": "Check cells for Targorr and Kam. Pull prisoners into cleared space and stop runners.",
-          "ru": "Проверяйте камеры в поисках Таргорра и Кама. Вытягивайте заключённых на зачищенное место и останавливайте беглецов."
+          "en": "Check the first corridor’s cells for Targorr. Pull prisoners into cleared space and stop runners.",
+          "ru": "Проверьте камеры первого коридора в поисках Targorr. Вытягивайте заключённых на расчищенное место и останавливайте беглецов."
         },
         "bosses": [
-          "Targorr the Dread",
-          "Kam Deepfury"
+          "Targorr the Dread"
         ]
       },
       {
@@ -1645,10 +1644,11 @@
           "ru": "Восточное крыло"
         },
         "description": {
-          "en": "Return through the junction, watching for respawns. Hamhock guards the eastern final rooms leading to Bazil.",
-          "ru": "Вернитесь через развилку, проверяя возродившихся врагов. Хрупконог охраняет последние восточные комнаты, ведущие к Базилу."
+          "en": "Check the right corridor’s cells for Kam. Hamhock guards the final rooms leading to Bazil.",
+          "ru": "Проверьте камеры правого коридора в поисках Kam. Hamhock охраняет последние комнаты на пути к Bazil."
         },
         "bosses": [
+          "Kam Deepfury",
           "Hamhock",
           "Bazil Thredd"
         ]
@@ -1885,8 +1885,8 @@
           "ru": "Подрыв тоннелей"
         },
         "description": {
-          "en": "Before dropping into the main room, go left to Emi and complete the Grubbis event.",
-          "ru": "До спуска в главный зал идите налево к Эмми и завершите событие Грязнюка."
+          "en": "Speak to Emi in the cave to start the demolition event and fight Grubbis.",
+          "ru": "Поговорите с Emi в пещере, чтобы начать взрывные работы и бой с Grubbis."
         },
         "bosses": [
           "Grubbis"
@@ -1898,8 +1898,8 @@
           "ru": "Нижний зал"
         },
         "description": {
-          "en": "Return and descend to Viscous Fallout. Take the western tunnel to Electrocutioner.",
-          "ru": "Вернитесь и спуститесь к Липкой мути. Западный тоннель ведёт к Электрошокеру."
+          "en": "Continue through Viscous Fallout and Electrocutioner.",
+          "ru": "Продвигайтесь через Viscous Fallout и Electrocutioner."
         },
         "bosses": [
           "Viscous Fallout",
@@ -1912,8 +1912,8 @@
           "ru": "Ответвление мастерских"
         },
         "description": {
-          "en": "Head southwest; the narrow southern branch leads to Crowd Pummeler.",
-          "ru": "Идите на юго-запад; узкое южное ответвление ведёт к Толпогону."
+          "en": "Take the workshop detour for Crowd Pummeler.",
+          "ru": "Зайдите в мастерские ради боя с Crowd Pummeler."
         },
         "bosses": [
           "Crowd Pummeler 9-60"
@@ -2175,8 +2175,8 @@
           "ru": "Первая развилка"
         },
         "description": {
-          "en": "The left branch leads to Roogug for the warrior quest; the main path continues to Aggem.",
-          "ru": "Левая ветка ведёт к Ругугу для задания воина; основной путь — к Аггему."
+          "en": "Visit Roogug for the warrior quest; Aggem is another encounter on the route.",
+          "ru": "Посетите Roogug для задания воина; Aggem — другой противник на маршруте."
         },
         "bosses": [
           "Roogug",
@@ -2189,8 +2189,8 @@
           "ru": "Верхние тропы"
         },
         "description": {
-          "en": "Stay on the upper level through Jargba, Ramtusk and Agathelos to Charlga; do not jump down early.",
-          "ru": "Оставайтесь на верхнем ярусе: Джаргба, Таранный Бивень, Агателос и Чарлга. Не спрыгивайте раньше времени."
+          "en": "Continue through Jargba, Ramtusk and Agathelos toward Charlga.",
+          "ru": "Продвигайтесь через Jargba, Ramtusk и Agathelos к Charlga."
         },
         "bosses": [
           "Death Speaker Jargba",
@@ -2205,8 +2205,8 @@
           "ru": "Сопровождение"
         },
         "description": {
-          "en": "After Charlga, descend for the escort quest below.",
-          "ru": "После Чарлги спуститесь к заданию на сопровождение."
+          "en": "Leave time for Willix’s optional escort if you are doing his quest.",
+          "ru": "Оставьте время на необязательное сопровождение Willix, если выполняете его задание."
         },
         "bosses": []
       }
@@ -2493,8 +2493,8 @@
           "ru": "Библиотека"
         },
         "description": {
-          "en": "The far-right entrance leads through Loksey to Doan. Take the Scarlet Key from his chest.",
-          "ru": "Крайний правый вход ведёт через Локси к Доану. Заберите Алый ключ из его сундука."
+          "en": "Enter the Library for Loksey and Doan. Take the Scarlet Key from Doan’s chest.",
+          "ru": "Войдите в Библиотеку ради боёв с Loksey и Doan. Заберите Алый ключ из сундука Doan."
         },
         "bosses": [
           "Houndmaster Loksey",
@@ -2520,8 +2520,8 @@
           "ru": "Собор"
         },
         "description": {
-          "en": "Clear the chapel before the final encounter. The torch right of the altar opens Fairbanks’ hidden room.",
-          "ru": "Зачистите часовню до финального боя. Факел справа от алтаря открывает тайную комнату Фэрбанкса."
+          "en": "Clear the chapel before the final encounter. Fairbanks is an optional fight in the hidden side room.",
+          "ru": "Зачистите часовню перед финальным боем. Fairbanks — необязательный противник в скрытой боковой комнате."
         },
         "bosses": [
           "High Inquisitor Whitemane",
@@ -2786,12 +2786,12 @@
       },
       {
         "title": {
-          "en": "Northern tunnel",
-          "ru": "Северный тоннель"
+          "en": "Stone Keeper",
+          "ru": "Хранитель Камня"
         },
         "description": {
-          "en": "Return to the large hall, take the northern tunnel and turn right at the fork for the Stone Keeper.",
-          "ru": "Вернитесь в большой зал, идите в северный тоннель и направо на развилке к Каменному Хранителю."
+          "en": "Continue past the Obsidian Sentinel’s side room to the Ancient Stone Keeper.",
+          "ru": "Продвигайтесь мимо боковой комнаты Obsidian Sentinel к Ancient Stone Keeper."
         },
         "bosses": [
           "Ancient Stone Keeper"
@@ -2803,8 +2803,8 @@
           "ru": "Залы титанов"
         },
         "description": {
-          "en": "Continue northwest to Galgann, then north to Grimlok. Return to the tunnels and head northeast toward Archaedas.",
-          "ru": "Продолжайте на северо-запад к Галганну, затем на север к Гримлоку. Вернитесь в тоннели и идите на северо-восток к Аркедасу."
+          "en": "Proceed through Galgann and Grimlok toward Archaedas.",
+          "ru": "Пройдите Galgann и Grimlok по пути к Archaedas."
         },
         "bosses": [
           "Galgann Firehammer",
@@ -3341,8 +3341,8 @@
           "ru": "Центральная площадь"
         },
         "description": {
-          "en": "Follow the entrance passage to the circular plaza. The right branch leads to Antu’sul, Theka and Zum’rah.",
-          "ru": "По входному проходу дойдите до кольцевой площади. Правая ветка ведёт к Анту-сулу, Теке и Зум-раху."
+          "en": "Visit Antu’sul, Theka and Zum’rah as branch objectives before the final gate.",
+          "ru": "Посетите Antu’sul, Theka и Zum’rah на боковых путях перед финальными воротами."
         },
         "bosses": [
           "Antu'sul",
@@ -3356,8 +3356,8 @@
           "ru": "Ответвление к водоёму"
         },
         "description": {
-          "en": "The left branch reaches Velratha and Gahz’rilla’s pool. Bring the mallet to use the gong.",
-          "ru": "Левая ветка ведёт к Велрате и водоёму Газ-риллы. Для гонга возьмите молот."
+          "en": "Visit Velratha and Gahz’rilla’s pool. Bring the mallet to use the gong.",
+          "ru": "Посетите Velratha и бассейн Gahz’rilla. Для гонга понадобится молот."
         },
         "bosses": [
           "Hydromancer Velratha",
@@ -3707,8 +3707,8 @@
           "ru": "Водопады Поющей Земли"
         },
         "description": {
-          "en": "Beyond Celebras, follow the cave to the ramps. The opening after the first ramp leads down to Gizlock.",
-          "ru": "За Келебрасом идите через пещеру к подъёмам. Проход после первого подъёма ведёт вниз к Гизлоку."
+          "en": "Beyond Celebras, enter the inner caverns and take the side path to Gizlock.",
+          "ru": "За Celebras войдите во внутренние пещеры и посетите Gizlock на боковом пути."
         },
         "bosses": [
           "Tinkerer Gizlock"
@@ -3716,12 +3716,12 @@
       },
       {
         "title": {
-          "en": "Bridge fork",
-          "ru": "Развилка за мостом"
+          "en": "Inner caverns",
+          "ru": "Внутренние пещеры"
         },
         "description": {
-          "en": "Return and cross the upper bridge: right for Landslide, left for Theradras. Rotgrip patrols the lake below.",
-          "ru": "Вернитесь и перейдите верхний мост: направо — Сель, налево — Терадрас. Гнилопасть патрулирует озеро внизу."
+          "en": "Visit Landslide and Theradras in the inner caverns. Rotgrip patrols the lake below.",
+          "ru": "Посетите Landslide и Theradras во внутренних пещерах. Rotgrip патрулирует озеро внизу."
         },
         "bosses": [
           "Landslide",
@@ -4498,23 +4498,100 @@
           "en": "Interrupt group healing.",
           "ru": "Прерывайте групповое лечение."
         }
+      },
+      {
+        "name": "Bloodhound",
+        "ability": "Melee",
+        "response": {
+          "en": "Clear the hounds before engaging Grebmar.",
+          "ru": "Зачистите гончих до боя с Grebmar."
+        }
+      },
+      {
+        "name": "Warbringer Construct",
+        "ability": "Melee",
+        "response": {
+          "en": "Clear the constructs on the approach before pulling Fineous.",
+          "ru": "Зачистите големов на подходе перед пулом Fineous."
+        }
       }
     ],
     "preparation": [
       {
         "en": "In the Lyceum, collect torches from Shadowforge Flame Keepers and light both braziers. Move together before nearby packs respawn.",
         "ru": "В Лицее соберите факелы с хранителей пламени и зажгите обе жаровни. Двигайтесь вместе, пока соседние группы врагов не возродились."
+      },
+      {
+        "en": "If you need the Shadowforge Key, pick up Dark Iron Legacy from Franclorn before the run while you are in ghost form.",
+        "ru": "Если нужен ключ Тенегорна, перед походом возьмите Dark Iron Legacy у Franclorn, находясь в облике духа."
       }
     ],
     "route": [
+      {
+        "title": {
+          "en": "Optional: prison and arena",
+          "ru": "Необязательно: тюрьма и арена"
+        },
+        "description": {
+          "en": "Gerstahn drops the Prison Cell Key. Visit Roccor and Grebmar, then enter the Ring of Law. Clear hounds and patrols before committing.",
+          "ru": "У Gerstahn можно получить Prison Cell Key. Посетите Roccor и Grebmar, затем войдите в Ring of Law. Заранее зачистите гончих и патрули."
+        },
+        "bosses": [
+          "High Interrogator Gerstahn",
+          "Lord Roccor",
+          "Houndmaster Grebmar",
+          "Ring of Law"
+        ]
+      },
+      {
+        "title": {
+          "en": "Optional: Shadowforge Key",
+          "ru": "Необязательно: ключ Тенегорна"
+        },
+        "description": {
+          "en": "For Dark Iron Legacy, take the arena’s upper passage through the Domicile to Fineous in the Hall of Crafting. Return Ironfel to Franclorn’s monument.",
+          "ru": "Для Dark Iron Legacy пройдите верхним проходом арены через Domicile к Fineous в Hall of Crafting. Верните Ironfel к памятнику Franclorn."
+        },
+        "bosses": [
+          "Fineous Darkvire"
+        ]
+      },
+      {
+        "title": {
+          "en": "Optional: forge and highway",
+          "ru": "Необязательно: кузня и дорога"
+        },
+        "description": {
+          "en": "Continue below the Hall of Crafting to Incendius, then along the Dark Iron Highway to Bael’Gar. Return toward the Detention Block for the Upper City route.",
+          "ru": "Спуститесь ниже Hall of Crafting к Incendius, затем идите по Dark Iron Highway к Bael’Gar. Для пути в Верхний город вернитесь к Detention Block."
+        },
+        "bosses": [
+          "Lord Incendius",
+          "Bael'Gar"
+        ]
+      },
+      {
+        "title": {
+          "en": "Optional: Black Vault",
+          "ru": "Необязательно: хранилище"
+        },
+        "description": {
+          "en": "Bring Relic Coffer Keys and gather before opening the last coffer. The separate Dark Coffer requires the Dark Keeper Key from the keeper identified by the portrait.",
+          "ru": "Возьмите Relic Coffer Keys и соберите группу перед открытием последнего сундука. Для отдельного Dark Coffer нужен Dark Keeper Key у хранителя, указанного на портрете."
+        },
+        "bosses": [
+          "Warder Stilgiss",
+          "The Vault"
+        ]
+      },
       {
         "title": {
           "en": "Upper City access",
           "ru": "Вход в Верхний город"
         },
         "description": {
-          "en": "For the Emperor route, pass the Shadowforge gates into the Eastern Garrison and activate the bridge lock.",
-          "ru": "Для пути к императору пройдите ворота Тенегорна в Восточный гарнизон и активируйте механизм моста."
+          "en": "For a separate Emperor run, use the Shadowforge gates into the Eastern Garrison and activate the bridge lock.",
+          "ru": "Для отдельного похода к императору пройдите ворота Тенегорна в Восточный гарнизон и активируйте механизм моста."
         },
         "bosses": []
       },
@@ -4531,6 +4608,20 @@
           "General Angerforge",
           "Golem Lord Argelmach",
           "Phalanx"
+        ]
+      },
+      {
+        "title": {
+          "en": "Optional: tavern encounters",
+          "ru": "Необязательно: бои в таверне"
+        },
+        "description": {
+          "en": "Buy ale before provoking the tavern if using Rocknot to open the way past Phalanx. Breaking Hurley’s kegs starts a separate fight.",
+          "ru": "Если открываете путь мимо Phalanx через Rocknot, купите эль до провокации таверны. Разрушение бочонков Hurley запускает отдельный бой."
+        },
+        "bosses": [
+          "Phalanx",
+          "Hurley Blackbreath"
         ]
       },
       {
@@ -4973,8 +5064,8 @@
           "ru": "Верхняя часть: вход"
         },
         "description": {
-          "en": "Clear rune alcoves, then Emberseer; cross the rookery toward Rend’s arena.",
-          "ru": "Зачистите ниши с рунами, затем Огневзора; через гнездовье идите к арене Ренда."
+          "en": "Return to the shared entrance to start Upper Spire separately. Clear rune alcoves, then Emberseer; cross the rookery toward Rend’s arena.",
+          "ru": "Вернитесь к общему входу, чтобы отдельно начать Верхнюю часть. Зачистите ниши с рунами, затем Огнестража; пройдите через гнездовье к арене Ренда."
         },
         "bosses": [
           "Pyroguard Emberseer",
@@ -5521,8 +5612,8 @@
           "ru": "Запад: пилоны"
         },
         "description": {
-          "en": "Clear Tendris’ courtyard, then the northern passage toward Kalendris and Ravenoak. Clear every pylon before Immol’thar, then continue to the Prince.",
-          "ru": "Зачистите двор Тендриса, затем северный проход к Календрису и Вороньему Дубу. Зачистите все пилоны перед Иммолтаром, затем идите к принцу."
+          "en": "Clear Tendris’ courtyard, then Kalendris and Ravenoak. Clear every pylon before Immol’thar, then continue to the Prince.",
+          "ru": "Зачистите двор Tendris, затем пройдите Kalendris и Ravenoak. Зачистите все пилоны перед Immol’thar, затем идите к принцу."
         },
         "bosses": [
           "Tendris Warpwood",
@@ -5538,8 +5629,8 @@
           "ru": "Север: ключ от двора"
         },
         "description": {
-          "en": "Pass Mol’dar and Kreeg into Fengus’ courtyard. Take the key from the central chest and continue northwest.",
-          "ru": "Через Молдара и Крига идите во двор Фенгуса. Возьмите ключ из центрального сундука и продолжайте на северо-запад."
+          "en": "Decide on a tribute run before fighting guards. Pass Mol’dar and Kreeg to reach the key chest in Fengus’ courtyard.",
+          "ru": "Решите, идёте ли за данью, до боя со стражниками. Пройдите мимо Mol’dar и Kreeg к сундуку с ключом во дворе Fengus."
         },
         "bosses": [
           "Guard Mol'dar",
@@ -6036,8 +6127,8 @@
           "ru": "Площадь бойни"
         },
         "description": {
-          "en": "Proceed north past Barthilas, then through the western gate. Kill every abomination, Ramstein and the following waves before Rivendare.",
-          "ru": "Идите на север мимо Бартиласа, затем через западные ворота. Убейте всех поганищ, Рамштайна и следующие волны перед Ривендером."
+          "en": "Continue through Slaughter Square: kill the abominations, Ramstein and the following waves before Rivendare.",
+          "ru": "Продолжайте через площадь: убейте поганищ, Ramstein и следующие волны перед Rivendare."
         },
         "bosses": [
           "Magistrate Barthilas",
@@ -6404,8 +6495,8 @@
           "ru": "Вход и балкон"
         },
         "description": {
-          "en": "Cross the bridge and descend left. Kirtonos is an optional summon on the balcony to the right.",
-          "ru": "Перейдите мост и спуститесь налево. Киртоноса можно дополнительно вызвать на балконе справа."
+          "en": "Kirtonos is an optional summon on the balcony.",
+          "ru": "Kirtonos призывается на балконе для необязательного боя."
         },
         "bosses": [
           "Kirtonos"
@@ -6417,8 +6508,8 @@
           "ru": "Ключ от смотровой"
         },
         "description": {
-          "en": "In the next hall, the right stairs lead to Jandice; straight ahead is Rattlegore. Take his key and return.",
-          "ru": "В следующем зале правая лестница ведёт к Джандис; прямо — Громоклин. Заберите его ключ и вернитесь."
+          "en": "Visit Jandice’s side area, then defeat Rattlegore for the Viewing Room key.",
+          "ru": "Посетите боковую область Jandice, затем победите Rattlegore ради ключа от Смотровой."
         },
         "bosses": [
           "Jandice Barov",
@@ -6446,8 +6537,8 @@
           "ru": "Шесть комнат"
         },
         "description": {
-          "en": "Return and take the left stairs. Clear all six side rooms, preferably downstairs first, to summon Gandling.",
-          "ru": "Вернитесь и спуститесь по левой лестнице. Зачистите шесть боковых комнат, лучше начиная снизу, чтобы вызвать Гандлинга."
+          "en": "Clear all six study chambers to summon Gandling.",
+          "ru": "Зачистите все шесть учебных комнат для призыва Gandling."
         },
         "bosses": [
           "Instructor Malicia",

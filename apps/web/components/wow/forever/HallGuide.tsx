@@ -1,36 +1,44 @@
 "use client";
-import { useState } from "react";
-import { AtlasDisclosure, AtlasGrid, AtlasHero, AtlasMetaList, AtlasSection, AtlasTabs } from "@/components/atlas";
+import { useEffect } from "react";
+import { AtlasDisclosure, AtlasGrid, AtlasHero, AtlasMetaList, AtlasSection } from "@/components/atlas";
 import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { p, type Lang } from "@/lib/i18n-paths";
 import { InstanceLoot } from "./InstanceLoot";
 import { ForeverFrame } from "./ForeverFrame";
 import { hallEncounters, hallSources, hallTrash } from "./hallOfThanes";
 import styles from "./hallGuide.module.css";
+import { InstanceMaps } from "./InstanceMaps";
+import { navigateDungeon, readDungeonLocation, useDungeonLocation } from "./map/navigation";
+import { revealEncounter } from "./DungeonRoute";
 import { hallGuideCopy as copy } from "./hallGuideCopy";
 
 export function HallGuide({ lang }: { lang: Lang }) {
   const t = copy[lang];
-  const [active, setActive] = useState(0);
-  const [floor, setFloor] = useState("1");
+  const location = readDungeonLocation(useDungeonLocation());
+  const selected = location.encounter !== undefined ? location.encounter - 1 : Math.max(0, hallEncounters.findIndex(boss => boss.floor === (location.mapFloor ?? location.floor ?? 1)));
+  const active = selected >= 0 && selected < hallEncounters.length ? selected : 0;
   const encounter = hallEncounters[active];
-  function select(index: number) { setActive(index); setFloor(String(hallEncounters[index].floor)); }
+  useEffect(() => {
+    if (location.encounter && location.encounter <= hallEncounters.length) revealEncounter(`#encounter-${location.encounter}`);
+  }, [location.encounter]);
   return <ForeverFrame lang={lang}>
     <AtlasHero title="Hall of Thanes" align="start" lede={t.entrance} breadcrumbsLabel={t.breadcrumb} breadcrumbs={[{ label: "WoW — Forever", href: p(lang, "/wow/forever") }, { label: t.dungeons, href: p(lang, "/wow/forever/dungeons") }, { label: "Hall of Thanes" }]} />
     <AtlasMetaList items={[{ label: t.level, value: "13–18" }, { label: t.players, value: 5 }]} />
+    <nav className={styles.choices} aria-label={t.encounters}>{hallEncounters.map((boss, index) => <a key={boss.id} href={`?mapFloor=${boss.floor}#encounter-${index + 1}`} aria-current={active === index ? "true" : undefined} onClick={event => {
+            if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+            event.preventDefault(); navigateDungeon(`#encounter-${index + 1}`, boss.floor);
+            requestAnimationFrame(() => revealEncounter(`#encounter-${index + 1}`, true));
+          }}>{index + 1}. {boss.name}</a>)}</nav>
     <AtlasSection title={t.map}>
       <div className={styles.workspace}>
         <MaterialPlaque kit="den-of-nalorakk">
-          <AtlasTabs label={t.map} value={floor} onChange={setFloor} tabs={[1, 2].map(part => ({ id: String(part), label: part === 1 ? t.main : t.cave, content: <div className={styles.map}>
-            {/* Client minimap art, preserved without repainting or generated geography. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/images/wow/forever/hall-of-thanes/${part}.webp`} alt={`${t.map}: ${part === 1 ? t.main : t.cave}`} width={part === 1 ? 1130 : 654} height={part === 1 ? 1556 : 561} />
-            {hallEncounters.map((boss, index) => boss.floor === part && <button key={boss.id} type="button" className={styles.pin} style={{ left: `${boss.x}%`, top: `${boss.y}%` }} aria-label={boss.name} aria-pressed={active === index} aria-controls="hall-encounter" onClick={() => select(index)}>{index + 1}</button>)}
-          </div> }))} />
+          <InstanceMaps selectedEncounter={active + 1} lang={lang} name="Hall of Thanes" bosses={hallEncounters.map(boss => boss.name)}
+            maps={[{ src: "/images/wow/forever/hall-of-thanes/1.webp", width: 1130, height: 1556, label: { [lang]: t.main } }, { src: "/images/wow/forever/hall-of-thanes/2.webp", width: 654, height: 561, label: { [lang]: t.cave } }]}
+            associations={hallEncounters.map((boss, index) => ({ encounter: index + 1, floor: boss.floor, x: boss.x, y: boss.y }))} />
         </MaterialPlaque>
         <div>
-          <nav className={styles.choices} aria-label={t.encounters}>{hallEncounters.map((boss, index) => <button type="button" key={boss.id} aria-pressed={active === index} aria-controls="hall-encounter" onClick={() => select(index)}>{index + 1}. {boss.name}</button>)}</nav>
-          <MaterialPlaque kit="den-of-nalorakk" as="article" id="hall-encounter" aria-labelledby="hall-boss-name">
+
+          <MaterialPlaque kit="den-of-nalorakk" as="article" id={`encounter-${active + 1}`} tabIndex={-1} className={styles.encounter} aria-labelledby="hall-boss-name">
             <p className={materialStyles.text}>{encounter.area}</p>
             <h2 className={materialStyles.title} id="hall-boss-name">{encounter.name}</h2>
             <p className={materialStyles.text}>{encounter.preparation[lang]}</p>

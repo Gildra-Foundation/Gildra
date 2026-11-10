@@ -9,7 +9,7 @@ export type DungeonGuide = {
   map: string;
   maps?: InstanceMap[];
   viewBox?: string;
-  bosses: { name: string; portrait?: string; mechanics?: { name: string; response: Localized; icon?: string; audience?: Localized }[] }[];
+  bosses: { name: string; nameRu?: string; portrait?: string; preparation?: Localized[]; mechanics?: { name: string; nameRu?: string; response: Localized; icon?: string; audience?: Localized; roles?: ("tank" | "healer" | "dps")[] }[] }[];
   trash?: { name: string; portrait?: string; ability: string; response: Localized }[];
   sources: string[][];
 };
@@ -25,13 +25,19 @@ export const dungeonGuides: Record<string, DungeonGuide> = {
     "bosses": [
       {
         "name": "Witherfang",
+        "preparation": [
+          {
+            "en": "Clear the patrol path before pulling Witherfang and its two escorts. Focus the boss first.",
+            "ru": "Зачистите путь патруля перед пулом Witherfang с двумя спутниками. Сначала убейте босса."
+          }
+        ],
         "mechanics": [
           {
             "name": "Leech Poison",
             "icon": "/images/wow/forever/icons/136067.webp",
             "response": {
-              "en": "Clear the patrol path before pulling the spider and its escorts.",
-              "ru": "Зачистите путь патруля перед пулом паука со свитой."
+              "en": "Remove the poison from the tank when possible: it drains health and heals the boss. Heal through the damage while it remains.",
+              "ru": "По возможности снимайте яд с танка: он вытягивает здоровье и лечит босса. Пока яд действует, восполняйте потерю здоровья."
             }
           }
         ]
@@ -51,25 +57,37 @@ export const dungeonGuides: Record<string, DungeonGuide> = {
       },
       {
         "name": "Viktor the Vile",
+        "preparation": [
+          {
+            "en": "Use the chimney in the house southwest of Lordamere Overlook to start this optional encounter. Five waves precede Viktor; conserve mana and let the tank pick him up.",
+            "ru": "Для этого необязательного боя активируйте дымоход в доме к юго-западу от Lordamere Overlook. Перед Виктором идут пять волн; берегите ману и дайте танку забрать босса."
+          }
+        ],
         "mechanics": [
           {
             "name": "Leech Poison",
             "icon": "/images/wow/forever/icons/136067.webp",
             "response": {
-              "en": "The chimney starts five waves before the boss. Save mana.",
-              "ru": "Дымоход запускает пять волн перед боссом. Берегите ману."
+              "en": "Remove the poison from the tank when possible: it drains health and heals the boss. Heal through the damage while it remains.",
+              "ru": "По возможности снимайте яд с танка: он вытягивает здоровье и лечит босса. Пока яд действует, восполняйте потерю здоровья."
             }
           }
         ]
       },
       {
         "name": "The Abandoned",
+        "preparation": [
+          {
+            "en": "The statue in Market Square starts three waves before the boss appears.",
+            "ru": "Статуя на Market Square запускает три волны перед появлением босса."
+          }
+        ],
         "mechanics": [
           {
             "name": "Life Drain",
             "response": {
-              "en": "The statue starts three waves. Stun the boss during the drain.",
-              "ru": "Статуя запускает три волны. Оглушайте босса во время вытягивания жизни."
+              "en": "Stun the boss as Life Drain starts to stop it draining the tank.",
+              "ru": "Оглушайте босса в начале Life Drain, чтобы остановить вытягивание жизни из танка."
             }
           }
         ]
@@ -102,6 +120,10 @@ export const dungeonGuides: Record<string, DungeonGuide> = {
     ],
     "sources": [
       [
+        "Wowhead — Leech Poison",
+        "https://www.wowhead.com/forever/spell=3358/leech-poison"
+      ],
+      [
         "Method — Ruins of Lordaeron",
         "https://www.method.gg/wow-forever/dungeons/ruins-of-lordaeron"
       ],
@@ -115,6 +137,22 @@ export const dungeonGuides: Record<string, DungeonGuide> = {
       ]
     ],
     "trash": [
+      {
+        "name": "Living Monstrosity",
+        "ability": "Melee",
+        "response": {
+          "en": "Fight it separately from other packs; its heavy melee hits pressure the tank.",
+          "ru": "Не объединяйте её с другими группами: сильные удары создают нагрузку на танка."
+        }
+      },
+      {
+        "name": "Ragged Ghoul · Ghoul",
+        "ability": "Melee",
+        "response": {
+          "en": "Kill Ragged Ghoul first. Pull one group back at a time to avoid the nearby packs.",
+          "ru": "Первым убивайте Ragged Ghoul. Отводите по одной группе, чтобы не привлечь соседние."
+        }
+      },
       {
         "name": "Broodwidow · Venom Lurker",
         "ability": "Patrol",
@@ -469,26 +507,29 @@ export const dungeonGuides: Record<string, DungeonGuide> = {
         "name": "Zul’Alai",
         "mechanics": [
           {
-            "name": "Enrage",
-            "audience": {
-              "en": "Tank",
-              "ru": "Танк"
-            },
+            "name": "Monstrous Slam",
             "response": {
-              "en": "Keep a defensive for the low-health enrage.",
-              "ru": "Сохраните защитную способность на исступление при низком здоровье босса."
+              "en": "Step away during the cast to avoid the stun.",
+              "ru": "Отойдите во время заклинания, чтобы избежать оглушения."
             }
           },
           {
-            "name": "Area damage",
-            "audience": {
-              "en": "Healer",
-              "ru": "Лекарь"
-            },
+            "name": "Rotted Strike",
             "response": {
-              "en": "Keep the party healthy and reserve mana for the final part of the fight.",
-              "ru": "Поддерживайте здоровье группы и оставьте ману на конец боя."
+              "en": "Remove the slowing effect from the tank first.",
+              "ru": "Сначала снимайте замедляющий эффект с танка."
             }
+          },
+          {
+            "name": "Undying Oath",
+            "response": {
+              "en": "Save tank defensives for the final enrage.",
+              "ru": "Сохраните защиту танка на финальное исступление."
+            },
+            "roles": [
+              "tank"
+            ],
+            "audience": { "en": "Tank", "ru": "Танк" }
           }
         ]
       },
@@ -496,7 +537,7 @@ export const dungeonGuides: Record<string, DungeonGuide> = {
         "name": "Var’Taka",
         "mechanics": [
           {
-            "name": "Harpoon · Arcing Smash",
+            "name": "Harpoon · Cleave",
             "response": {
               "en": "Control the two Brinescale Priestesses. Face the boss away from the party after a pull.",
               "ru": "Контролируйте двух Brinescale Priestesses. После притягивания отворачивайте босса от группы."
@@ -517,14 +558,60 @@ export const dungeonGuides: Record<string, DungeonGuide> = {
         ]
       },
       {
-        "name": "Deathless Guardians"
+        "name": "Deathless Guardians",
+        "mechanics": [
+          {
+            "name": "Stun",
+            "response": {
+              "en": "Control or kill the stunning Guardians while continuing damage on Deathless Marrow, who summons them.",
+              "ru": "Контролируйте или убивайте оглушающих стражей, продолжая наносить урон призывающему их Deathless Marrow."
+            }
+          }
+        ]
       },
       {
-        "name": "Primeval Elemental"
+        "name": "Primeval Elemental",
+        "preparation": [
+          {
+            "en": "The optional underwater encounter starts after all Undying Offerings die. Restore resources and refresh underwater breathing before the last one.",
+            "ru": "Необязательный подводный бой начинается после гибели всех Undying Offerings. Перед последним восстановите ресурсы и обновите подводное дыхание."
+          }
+        ],
+        "mechanics": [
+          {
+            "name": "Waterbolt",
+            "response": {
+              "en": "Heal the tank through Waterbolt.",
+              "ru": "Поддерживайте здоровье танка под Waterbolt."
+            },
+            "roles": [
+              "healer"
+            ],
+            "audience": { "en": "Healer", "ru": "Лекарь" }
+          },
+          {
+            "name": "Freeze Water",
+            "response": {
+              "en": "Prepare for party damage; surface before your breath runs out.",
+              "ru": "Готовьтесь к урону по группе; всплывайте до окончания запаса воздуха."
+            }
+          }
+        ]
       },
       {
         "name": "Min’loth the Serpent",
         "mechanics": [
+          {
+            "name": "Drench · Deluge",
+            "response": {
+              "en": "Heal the tank through Drench and the party during Deluge.",
+              "ru": "Восполняйте урон Drench танку, а во время Deluge — всей группе."
+            },
+            "roles": [
+              "healer"
+            ],
+            "audience": { "en": "Healer", "ru": "Лекарь" }
+          },
           {
             "name": "Transform",
             "response": {
@@ -577,6 +664,28 @@ export const dungeonGuides: Record<string, DungeonGuide> = {
           "en": "Focus before more spirits appear.",
           "ru": "Убейте до появления новых духов."
         }
+      },
+      {
+        "name": "Makrura Snapper · Chasm Crawler",
+        "ability": "Sunder Armor · Muscle Tear",
+        "response": {
+          "en": "Pull conservatively: reduced armor and strength leave the tank vulnerable to heavy melee hits.",
+          "ru": "Не объединяйте группы: снижение брони и силы делает танка уязвимым к сильным ударам."
+        }
+      },
+      {
+        "name": "Risen Sentry",
+        "ability": "Charge · Knockback",
+        "response": {
+          "en": "Stay close and avoid positions where knockback would pull another pack.",
+          "ru": "Держитесь рядом и выбирайте место, где отбрасывание не привлечёт другую группу."
+        }
+      }
+    ],
+    "preparation": [
+      {
+        "en": "Bring underwater breathing for the submerged chamber.",
+        "ru": "Подготовьте подводное дыхание для затопленной камеры."
       }
     ]
   },
@@ -710,11 +819,28 @@ export const dungeonGuides: Record<string, DungeonGuide> = {
               "en": "Start with full healer mana; control the two chaplains. Avoid chained prisoners.",
               "ru": "Перед пулом восстановите ману лекаря; контролируйте двух капелланов. Не трогайте прикованных пленников."
             }
+          },
+          {
+            "name": "Fire damage",
+            "response": {
+              "en": "Keep the party healthy through the fire damage.",
+              "ru": "Поддерживайте здоровье группы под огненным уроном."
+            },
+            "roles": [
+              "healer"
+            ],
+            "audience": { "en": "Healer", "ru": "Лекарь" }
           }
         ]
       },
       {
-        "name": "The Questioner"
+        "name": "The Questioner",
+        "preparation": [
+          {
+            "en": "Restore resources before this prolonged fight.",
+            "ru": "Восстановите ресурсы перед затяжным боем."
+          }
+        ]
       },
       {
         "name": "Blazeroar",
