@@ -18,7 +18,10 @@ import tierFrames from "../../../../public/assets/wow/slim/tier-lists/controls/f
  * dungeon kits (nine-slice plaque and button, square icon frame with a measured window), own manifests under
  * /assets/wow/slim/<kit>/controls. Sources, prompts and QA: /home/debian/gildra-slim-assets-20261105.
  */
-export type SectionKit = "library" | "talents" | "characters" | "tier-lists";
+import arcanaPanels from "../../../../public/assets/wow/home/arcana/panels.json";
+import arcanaButtons from "../../../../public/assets/wow/home/arcana/buttons.json";
+
+export type SectionKit = "arcana" | "library" | "talents" | "characters" | "tier-lists";
 
 type Control = { path: string; width: number; height: number; slices: readonly number[]; railInset?: number };
 type Frame = { path: string; width: number; height: number; window: { bounds: { left: number; top: number; right: number; bottom: number }; clip: string } };
@@ -26,6 +29,7 @@ const one = <T,>(manifest: unknown): T => Object.values((manifest as { entries: 
 const skill = (manifest: unknown): Frame => Object.values((manifest as { entries: { skills: Record<string, Frame> } }).entries.skills)[0];
 
 const kits: Record<SectionKit, { panel: Control; button: Control; frame: Frame; accent: string }> = {
+  arcana: { panel: one(arcanaPanels), button: one(arcanaButtons), frame: skill(charactersFrames), accent: "#b4a3e2" },
   library: { panel: one(libraryPanels), button: one(libraryButtons), frame: skill(libraryFrames), accent: "#c8a46a" },
   talents: { panel: one(talentsPanels), button: one(talentsButtons), frame: skill(talentsFrames), accent: "#b49ad8" },
   characters: { panel: one(charactersPanels), button: one(charactersButtons), frame: skill(charactersFrames), accent: "#9fb6d6" },

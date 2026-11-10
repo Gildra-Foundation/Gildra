@@ -67,7 +67,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
 
     {homeGroups.map(group => <AtlasSection key={group.id} id={group.id} className={styles.chapter} title={group.title[locale]}>
       <div className={styles.groupGrid} data-group={group.id}>
-        <HomePlaque kit="den-of-nalorakk" as="article" className={styles.flagship}>
+        <HomePlaque kit="arcana" as="article" className={styles.flagship}>
           {group.id === "mythic" && <div className={`${styles.productPreview} ${styles.routePreview}`}>
             <HomePreview kind="ruby-route" alt={t.routeAlt} />
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.routeLine} aria-hidden="true"><polyline points={previewStops.map(stop => `${stop.x},${stop.y}`).join(" ")} /></svg>
@@ -88,10 +88,10 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
             </div>)}
             {group.id === "hero" && <ul className={styles.classRoster}>{classes.map(spec => <li key={spec.classSlug}><Link href={href(`/wow/classes#${spec.classSlug}`)} prefetch={false}><Image src={spec.classIconUrl} alt="" width={28} height={28} quality={50} loading="lazy" decoding="async" /><span>{locale === "ru" ? spec.classNameRu : spec.className}</span></Link></li>)}</ul>}
             {group.id === "world" && <details className={styles.more}><summary>{t.continentsLabel}</summary><ul className={styles.continents}>{continents.map(map => <li key={map.id}><Link href={href(mapPagePath(map))} prefetch={false}>{map.name}</Link></li>)}</ul></details>}
-            {group.id !== "economy" && <HomeSecondaryLink kit="den-of-nalorakk" fit="block" href={href(group.lead.href)} iconAfter={<ArrowRight aria-hidden="true" />}>{t.openGroup[group.id]}</HomeSecondaryLink>}
+            {group.id !== "economy" && <HomeSecondaryLink kit="arcana" fit="block" href={href(group.lead.href)} iconAfter={<ArrowRight aria-hidden="true" />}>{t.openGroup[group.id]}</HomeSecondaryLink>}
           </div>
         </HomePlaque>
-        {group.id === "economy" ? <HomePlaque kit="den-of-nalorakk" as="article" className={styles.flagship}>
+        {group.id === "economy" ? <HomePlaque kit="arcana" as="article" className={styles.flagship}>
           <div className={`${styles.productPreview} ${styles.professionPreview}`} aria-hidden="true"><Hammer /><Sparkles /></div>
           <div className={styles.flagshipBody}>
             <h3><Link href={href(group.tools[0].href)} prefetch={false}>{group.tools[0].label[locale]}<ArrowRight aria-hidden="true" /></Link></h3><p>{group.tools[0].note[locale]}</p>
@@ -108,5 +108,5 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
 
 function FeatureRow({ feature, locale }: { feature: HomeFeature; locale: "en" | "ru" }) {
   const Icon = icons[feature.icon];
-  return <li><Link href={`${locale === "ru" ? "/ru" : ""}${feature.href}`} prefetch={false}><Icon aria-hidden="true" /><span><strong>{feature.label[locale]}</strong><span>{feature.note[locale]}</span></span><ArrowRight aria-hidden="true" /></Link></li>;
+  return <li><Link href={`${locale === "ru" ? "/ru" : ""}${feature.href}`} prefetch={false}><span data-medallion="" aria-hidden="true"><Icon /></span><span><strong>{feature.label[locale]}</strong><span>{feature.note[locale]}</span></span><ArrowRight aria-hidden="true" /></Link></li>;
 }

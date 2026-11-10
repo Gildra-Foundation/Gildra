@@ -235,3 +235,71 @@
 .page .flagship :global(.ui-button__label) { white-space: nowrap; hyphens: none; }
 @media (max-width: 1023px) { .flagship :global(.ui-button__icon) { display: none; } }
 @media (max-width: 360px) { .page .flagship :global(.ui-button__label) { font-size: var(--atlas-text-meta); } }
+
+/* Arcana: compact jewelled objects around the content. */
+.page .toolRows { flex: initial; grid-auto-rows: 1fr; width: 100%; }
+.page .groupTools > nav:first-of-type { flex: initial; }
+.page .toolRows a { min-height: 88px; height: 100%; padding: var(--atlas-space-3); gap: var(--atlas-space-3); }
+.page .toolRows a > span:not([data-medallion]) { min-width: 0; }
+.page .toolRows [data-medallion] { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--atlas-accent-2); background: radial-gradient(ellipse at 35% 20%, var(--atlas-accent-wash), transparent 70%), var(--atlas-glass-raised); box-shadow: var(--atlas-glass-inset), inset 0 0 0 4px var(--atlas-surface-sunken), var(--atlas-glass-depth); }
+.page .toolRows [data-medallion] svg { display: block; width: 19px; height: 19px; margin: 0; filter: none; color: var(--atlas-accent-strong); }
+.page .toolRows li { border-color: var(--atlas-glass-edge); background: var(--atlas-glass-sheen), linear-gradient(120deg, var(--atlas-accent-wash), transparent 60%), var(--atlas-glass-raised); }
+.page .toolRows a > svg:last-child { display: none; }
+.page .overview a, .page .seasonNow, .page .versions { border-color: var(--atlas-glass-edge); box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth); }
+.page .overview a { border-top-color: var(--atlas-accent-2); }
+.page .professionPreview { background: radial-gradient(ellipse, var(--atlas-accent-wash), transparent 65%), var(--atlas-glass-raised); }
+.professionPreview svg:first-child { border: 1px solid var(--atlas-accent-2); border-radius: 50%; padding: 10px; width: 64px; height: 64px; box-shadow: var(--atlas-glass-inset), inset 0 0 0 4px var(--atlas-surface-sunken); }
+.professionPreview svg:last-child { display: none; }
+@media (min-width: 701px) {
+  .page .groupGrid[data-group="mythic"] .toolRows { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page .groupGrid[data-group="mythic"] .toolRows a { min-height: 112px; }
+  .page .groupGrid[data-group="mythic"] .flagship { padding: 20px; }
+  .page .groupGrid[data-group="mythic"] .productPreview { aspect-ratio: 4; }
+  .page .groupGrid[data-group="hero"], .page .groupGrid[data-group="world"] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
+  .page .groupGrid[data-group="hero"] .flagship { padding: 24px; }
+  .page .groupGrid[data-group="hero"] .flagshipBody { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(0, 3fr); gap: 0 var(--atlas-space-5); padding: 0; align-items: center; }
+  .page .groupGrid[data-group="hero"] h3 { grid-column: 1; }
+  .page .groupGrid[data-group="hero"] p { grid-column: 1; }
+  .page .groupGrid[data-group="hero"] .classRoster { grid-column: 2; grid-row: 1 / 4; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--atlas-space-2); }
+  .page .groupGrid[data-group="hero"] .classRoster li { flex: 0 0 calc((100% - 48px) / 7); }
+  .page .groupGrid[data-group="hero"] .classRoster a { min-height: 64px; flex-direction: column; justify-content: center; text-align: center; font-size: var(--atlas-text-meta); }
+  .page .groupGrid[data-group="hero"] .flagshipBody > span:last-child { grid-column: 1; padding: 0; }
+  .page .groupGrid[data-group="world"] .flagship { display: grid; grid-template-columns: 1fr 1fr; gap: var(--atlas-space-5); padding: 24px; }
+  .page .groupGrid[data-group="world"] .mapPreview { aspect-ratio: 3; }
+  .page .groupGrid[data-group="world"] .flagshipBody { padding: 0; }
+  .page .groupGrid[data-group="hero"] .toolRows, .page .groupGrid[data-group="world"] .toolRows { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .page .versions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+  .page .versions a { min-height: 76px; }
+  .page .groupGrid[data-group="raids"] .flagship { padding: 20px; }
+  .page .groupGrid[data-group="raids"] .productPreview { aspect-ratio: 3.2; }
+  .page .groupGrid[data-group="raids"] .toolRows { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .page .toolRows a { gap: var(--atlas-space-2); min-height: 96px; padding: var(--atlas-space-2); }
+  .page .toolRows [data-medallion] { width: 30px; height: 30px; }
+  .page .toolRows [data-medallion] svg { width: 16px; height: 16px; }
+  .page .professionPreview svg:first-child { width: 48px; height: 48px; padding: 8px; }
+}
+.page [data-secondary-slot] { display: flex; min-width: 0; }
+.page [data-secondary-slot][data-block] { width: 100%; }
+.page [data-secondary-slot] [data-secondary] { display: inline-flex; align-items: center; justify-content: center; gap: var(--atlas-space-2); text-decoration: none; font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); width: 100%; min-height: 44px; border: 1px solid var(--atlas-glass-edge); border-inline-color: var(--atlas-accent-2); border-radius: var(--atlas-radius); background: var(--atlas-glass-sheen), var(--atlas-glass-fill); box-shadow: var(--atlas-glass-inset); color: var(--atlas-text-strong); padding-inline: var(--atlas-space-3); }
+.page [data-secondary-slot] [data-secondary]:hover { background: var(--atlas-glass-raised); border-color: var(--atlas-accent-2); }
+.page [data-secondary-slot] [data-secondary]:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.page [data-secondary-slot] [data-secondary]:active { box-shadow: inset 0 2px 5px var(--atlas-bg); }
+.lookupFields > span:last-child button { min-height: 56px; }
+@media (min-width: 701px) {
+  .page .groupGrid[data-group="mythic"], .page .groupGrid[data-group="raids"] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
+  .page .groupGrid[data-group="mythic"] .flagship, .page .groupGrid[data-group="raids"] .flagship { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--atlas-space-5); padding: 24px; }
+  .page .groupGrid[data-group="mythic"] .productPreview, .page .groupGrid[data-group="raids"] .productPreview { aspect-ratio: auto; height: 220px; min-height: 0; }
+  .page .groupGrid[data-group="mythic"] .flagshipBody, .page .groupGrid[data-group="raids"] .flagshipBody { padding: 0; }
+  .page .groupGrid[data-group="mythic"] .toolRows { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .page .groupGrid[data-group="mythic"] .toolRows a { min-height: 88px; }
+  .page .groupGrid[data-group="raids"] .bossGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (forced-colors: active) {
+  .page [data-medallion], .page [data-secondary] { border: 1px solid ButtonText; background: ButtonFace; box-shadow: none; color: ButtonText; }
+}
+@media (min-width: 701px) {
+  .page .groupGrid[data-group="world"] .toolRows:not(:has(li:nth-child(3))) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.page .professionPreview { border: 0; box-shadow: none; background: transparent; }
