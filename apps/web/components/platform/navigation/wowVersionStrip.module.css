@@ -1,24 +1,21 @@
-/* atlas:strict — the strip of game versions above the command bar; it scrolls away, the bar stays. */
-.strip {
-  position: relative;
-  z-index: 81;
-  background: color-mix(in srgb, #000 38%, var(--atlas-bg));
-  border-bottom: 1px solid var(--atlas-line-soft);
-}
+/* atlas:strict — the game versions: a quiet plate beside the brand in the bar
+   (the phone sheet repeats it full width). One plate glides to the chosen version. */
+.strip { position: relative; display: flex; min-width: 0; }
 
 .list {
   position: relative;
   display: flex;
   align-items: stretch;
-  gap: var(--atlas-space-1);
-  height: 34px;
+  gap: 2px;
+  height: var(--toolbar-control-height, 38px);
   margin: 0;
-  padding: 0 max(var(--atlas-gutter), env(safe-area-inset-right)) 0 max(var(--atlas-gutter), env(safe-area-inset-left));
-  overflow-x: auto;
+  padding: 3px;
   list-style: none;
-  scrollbar-width: none;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius-control);
+  background: var(--atlas-surface-sunken);
+  isolation: isolate;
 }
-.list::-webkit-scrollbar { display: none; }
 .list > li { display: flex; flex: none; }
 
 .version {
@@ -26,57 +23,48 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 0 var(--atlas-space-3);
+  padding: 0 var(--atlas-space-3) 0 9px;
+  border-radius: calc(var(--atlas-radius-control) - 3px);
   color: var(--atlas-text-muted);
   font: 600 var(--atlas-text-small) / 1 var(--atlas-font-ui);
-  letter-spacing: .02em;
+  letter-spacing: .01em;
   white-space: nowrap;
   text-decoration: none;
   transition: color var(--atlas-duration-fast) var(--atlas-ease);
 }
-.list > li:first-child > .version { margin-inline-start: calc(-1 * var(--atlas-space-3)); }
-/* The active version: bright text and a gilded rule along the strip's lower edge. */
-.version::after {
-  position: absolute;
-  inset: auto var(--atlas-space-3) -1px;
-  height: 2px;
-  content: "";
-  border-radius: 2px 2px 0 0;
-  background: var(--atlas-accent);
-  opacity: 0;
-  transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
-}
+/* Until the plate is measured, the current version draws its own (first paint already shows it). */
+.version[aria-current] { color: var(--atlas-text-strong); background: color-mix(in srgb, var(--game-accent) 12%, var(--atlas-surface-raised)); }
+.list[data-glide] > li > .version[aria-current] { background: none; }
 /* The version's emblem: dimmed until the version is current or under the pointer. */
 .emblem {
   display: block;
   flex: none;
   width: 18px;
   height: 18px;
-  opacity: .62;
+  opacity: .6;
   transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
 }
-.version:hover { color: var(--atlas-text); }
+.version:hover { color: var(--atlas-text-strong); }
 .version:hover > .emblem, .version[aria-current] > .emblem { opacity: 1; }
-.version[aria-current] { color: var(--atlas-text-strong); }
-.version[aria-current]::after { opacity: 1; }
-.version:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: -4px; border-radius: var(--atlas-radius-control); }
+.version:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 1px; }
 
-/* Each version's colour: the rule under it and its emblem's flare. */
+/* Each version's colour: the plate under it and its emblem's flare. */
 .version, .rule { --game-accent: var(--atlas-accent); }
 .version[data-version="forever"], .rule[data-version="forever"] { --game-accent: var(--atlas-accent-2); }
 .version[data-version="mists"], .rule[data-version="mists"] { --game-accent: color-mix(in srgb, var(--atlas-positive) 70%, var(--atlas-accent)); }
 
-/* Once measured, one rule glides under the shown version (the per-link rule
-   above draws it until then, so the first paint already has it). */
-.list[data-glide] > li > .version::after { opacity: 0; }
+/* Once measured, one plate glides under the shown version, its lower edge lit in the version's colour. */
 .list > li.rule {
   position: absolute;
-  bottom: -1px;
+  z-index: -1;
+  top: 3px;
+  bottom: 3px;
   left: 0;
-  height: 2px;
-  border-radius: 2px 2px 0 0;
-  background: var(--game-accent);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--game-accent) 55%, transparent);
+  border-radius: calc(var(--atlas-radius-control) - 3px);
+  background:
+    linear-gradient(0deg, color-mix(in srgb, var(--game-accent) 70%, transparent) 0 1px, transparent 1px),
+    color-mix(in srgb, var(--game-accent) 12%, var(--atlas-surface-raised));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--game-accent) 26%, transparent) inset, 0 4px 12px -6px color-mix(in srgb, var(--game-accent) 60%, transparent);
   pointer-events: none;
   transition: transform var(--atlas-duration-slow) var(--atlas-ease), width var(--atlas-duration-slow) var(--atlas-ease),
     background-color var(--atlas-duration-slow) var(--atlas-ease), box-shadow var(--atlas-duration-slow) var(--atlas-ease);
@@ -90,20 +78,32 @@
 }
 
 .short { display: none; }
-@media (max-width: 559px) {
+@media (max-width: 1365px) {
   .full { display: none; }
   .short { display: inline; }
-  .version { gap: 6px; padding-inline: var(--atlas-space-2); }
-  .version::after { inset-inline: var(--atlas-space-2); }
-  .list > li:first-child > .version { margin-inline-start: calc(-1 * var(--atlas-space-2)); }
+}
+/* Tablets: the emblems alone hold the row (the names stay for screen readers and in the tooltip). */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .strip[data-variant="bar"] .version { padding-inline: 8px; }
+  .strip[data-variant="bar"] .short { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
-@media (prefers-reduced-motion: reduce) { .version, .version::after, .emblem, .list > li.rule { transition: none; } .version[data-chosen] > .emblem { animation: none; } }
+/* The phone sheet: three equal versions across the sheet, full names where they fit. */
+.strip[data-variant="sheet"] .list { width: 100%; height: 48px; }
+.strip[data-variant="sheet"] .list > li:not(.rule) { flex: 1 1 0; min-width: 0; }
+.strip[data-variant="sheet"] .version { justify-content: center; width: 100%; padding-inline: var(--atlas-space-2); }
+/* The narrowest phones: each version as wide as its name. */
+@media (max-width: 360px) {
+  .strip[data-variant="sheet"] .list > li:not(.rule) { flex: 1 1 auto; }
+  .strip[data-variant="sheet"] .version { gap: 5px; padding-inline: 6px; font-size: var(--atlas-text-meta); }
+}
+
+@media (prefers-reduced-motion: reduce) { .version, .emblem, .list > li.rule { transition: none; } .version[data-chosen] > .emblem { animation: none; } }
 :global([data-motion="reduced"]) .version, :global([data-motion="reduced"]) .list > li.rule { transition: none; }
 :global([data-motion="reduced"]) .version[data-chosen] > .emblem { animation: none; }
-@media (prefers-reduced-transparency: reduce) { .list > li.rule { box-shadow: none; } }
-:global([data-transparency="reduced"]) .list > li.rule { box-shadow: none; }
-@media (forced-colors: active) { .version[aria-current]::after, .list > li.rule { background: Highlight; forced-color-adjust: none; box-shadow: none; } }
+@media (prefers-reduced-transparency: reduce) { .list > li.rule { box-shadow: 0 0 0 1px color-mix(in srgb, var(--game-accent) 26%, transparent) inset; } }
+:global([data-transparency="reduced"]) .list > li.rule { box-shadow: 0 0 0 1px color-mix(in srgb, var(--game-accent) 26%, transparent) inset; }
+@media (forced-colors: active) { .version[aria-current], .list > li.rule { outline: 1px solid Highlight; forced-color-adjust: none; box-shadow: none; } }
 
-/* The strip sits above the bar on every page: the home first screen gives its height back. */
-:global(html) { --wow-version-strip-height: 34px; }
+/* The versions live in the bar now: nothing stands above it (the home first screen reads this). */
+:global(html) { --wow-version-strip-height: 0px; }

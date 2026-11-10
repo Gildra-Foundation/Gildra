@@ -18,6 +18,23 @@ type Status = { state: "loading" } | Ready;
  *  chip does not flash its placeholder on every navigation. Every mount still
  *  asks the server again; the session is never assumed. */
 let lastReady: Ready | null = null;
+/** The request in flight: chips mounting together share one answer. */
+let inFlight: Promise<Ready> | null = null;
+
+function requestStatus(): Promise<Ready> {
+  inFlight ??= fetch("/api/auth/status", { cache: "no-store", credentials: "same-origin" })
+    .then(async (response) => {
+      if (!response.ok) throw new Error("Account status unavailable");
+      const value: unknown = await response.json();
+      const body = (value && typeof value === "object" ? value : {}) as { connected?: unknown; accountName?: unknown };
+      const connected = body.connected === true;
+      const accountName = typeof body.accountName === "string" ? body.accountName.trim() : "";
+      lastReady = { state: "ready", connected, name: connected && accountName ? accountName : null };
+      return lastReady;
+    })
+    .finally(() => { inFlight = null; });
+  return inFlight;
+}
 
 /**
  * The header's real account control. It asks GET /api/auth/status (always
@@ -39,6 +56,7 @@ export function AccountChip({
   avatarContent,
   initial = false,
   trailing,
+  reuse = false,
 }: {
   lang: Lang;
   className?: string;
@@ -50,28 +68,21 @@ export function AccountChip({
   initial?: boolean;
   /** Decorative arrow/caret shown after the label (kept in every state for a stable width). */
   trailing?: ReactNode;
+  /** A second chip of the same page (the phone menu): it shows the answer the bar's chip already has. */
+  reuse?: boolean;
 }) {
   const w = words[lang];
   const [status, setStatus] = useState<Status>({ state: "loading" });
 
   useEffect(() => {
-    const controller = new AbortController();
+    let live = true;
     if (lastReady) setStatus(lastReady);
-    fetch("/api/auth/status", { cache: "no-store", credentials: "same-origin", signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Account status unavailable");
-        const value: unknown = await response.json();
-        const body = (value && typeof value === "object" ? value : {}) as { connected?: unknown; accountName?: unknown };
-        const connected = body.connected === true;
-        const accountName = typeof body.accountName === "string" ? body.accountName.trim() : "";
-        lastReady = { state: "ready", connected, name: connected && accountName ? accountName : null };
-        setStatus(lastReady);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setStatus({ state: "ready", connected: false, name: null });
-      });
-    return () => controller.abort();
-  }, []);
+    if (reuse && lastReady) return;
+    requestStatus()
+      .then((ready) => { if (live) setStatus(ready); })
+      .catch(() => { if (live) setStatus({ state: "ready", connected: false, name: null }); });
+    return () => { live = false; };
+  }, [reuse]);
 
   const avatar = <span className={avatarClassName} aria-hidden="true">{avatarContent}</span>;
 

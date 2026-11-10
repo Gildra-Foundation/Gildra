@@ -4,7 +4,8 @@ import type { Lang } from "@/lib/i18n-paths";
  * The atlas map of the top bar: each realm is a tab with its real pages,
  * grouped under short headings. Only pages that exist and render without a
  * session are listed. Every page has its own icon (a key of `NavigationIcon`,
- * drawn by the bar) and an optional one-line note.
+ * drawn by the bar) and a one-line note. A realm's menu leads with one of its
+ * pages as a picture card (`feature`, painted with `art`).
  */
 type Words = { en: string; ru: string };
 export type NavigationIcon =
@@ -29,6 +30,10 @@ export type NavigationRealm = {
   hub: string;
   /** Other path prefixes that belong to this realm (detail pages, old addresses). */
   also?: readonly string[];
+  /** The page the menu leads with as a picture card (default: the hub, when it is one of the pages). */
+  feature?: string;
+  /** Painting of that card (under public/). */
+  art?: string;
   groups: readonly NavigationGroup[];
 };
 
@@ -51,6 +56,7 @@ export const navigationRealms: readonly NavigationRealm[] = [
     label: { en: "Classes", ru: "Классы" },
     hub: "/wow/classes",
     also: ["/talents", "/specs", "/wow/rotation"],
+    art: "/assets/wow/loading/classes-heroes-20261106.webp",
     groups: [{
       links: [
         { href: "/wow/classes", icon: "classes", label: { en: "Classes and specs", ru: "Классы и специализации" }, note: { en: "Talent trees", ru: "Деревья талантов" } },
@@ -63,22 +69,23 @@ export const navigationRealms: readonly NavigationRealm[] = [
     hub: "/wow/mythic-plus",
     // A player's page opens from the Mythic+ leaderboard (its breadcrumbs say so).
     also: ["/wow/mythic", "/wow/dungeons", "/wow/players"],
+    art: "/assets/wow/mythic/hub/gateway-768.webp",
     groups: [
       {
-        title: { en: "Season", ru: "Сезон" },
+        title: { en: "Meta", ru: "Мета" },
         links: [
           { href: "/wow/mythic-plus", icon: "atlas", label: { en: "Mythic+ atlas", ru: "Атлас Mythic+" }, note: { en: "Timers and routes", ru: "Таймеры и маршруты" } },
-          { href: "/wow/midnight/season-2", icon: "guide", label: { en: "Season 2 guide", ru: "Гид по сезону 2" }, note: { en: "Raid, keys, delves", ru: "Рейд, ключи, вылазки" } },
+          { href: "/wow/mythic-plus/meta", icon: "meta", label: { en: "Mythic+ meta", ru: "Мета Mythic+" }, note: { en: "Top specs of the week", ru: "Лучшие спеки недели" } },
+          { href: "/wow/mythic-plus/comps", icon: "comps", label: { en: "Team compositions", ru: "Составы групп" }, note: { en: "Groups that time high keys", ru: "С кем закрывают ключи" } },
+          { href: "/wow/mythic-plus/routes", icon: "routes", label: { en: "Route finder", ru: "Поиск маршрутов" }, note: { en: "Runs of groups like yours", ru: "Забеги групп как ваша" } },
         ],
       },
       {
-        title: { en: "Meta and data", ru: "Мета и данные" },
+        title: { en: "Season", ru: "Сезон" },
         links: [
-          { href: "/wow/mythic-plus/meta", icon: "meta", label: { en: "Mythic+ meta", ru: "Мета Mythic+" }, note: { en: "Top specs of the week", ru: "Лучшие спеки недели" } },
-          { href: "/wow/mythic-plus/comps", icon: "comps", label: { en: "Team compositions", ru: "Составы групп" }, note: { en: "Groups that time high keys", ru: "С кем закрывают ключи" } },
+          { href: "/wow/midnight/season-2", icon: "guide", label: { en: "Season 2 guide", ru: "Гид по сезону 2" }, note: { en: "Raid, keys, delves", ru: "Рейд, ключи, вылазки" } },
           { href: "/wow/mythic-plus/stats", icon: "stats", label: { en: "Season stats", ru: "Статистика сезона" }, note: { en: "Rating cutoffs", ru: "Пороги рейтинга" } },
           { href: "/wow/mythic-plus/leaderboard", icon: "leaderboard", label: { en: "Leaderboard", ru: "Рейтинг игроков" }, note: { en: "Top players", ru: "Лучшие игроки" } },
-          { href: "/wow/mythic-plus/routes", icon: "routes", label: { en: "Route finder", ru: "Поиск маршрутов" }, note: { en: "Runs of groups like yours", ru: "Забеги групп как ваша" } },
         ],
       },
     ],
@@ -87,6 +94,7 @@ export const navigationRealms: readonly NavigationRealm[] = [
     id: "raids",
     label: { en: "Raids", ru: "Рейды" },
     hub: "/wow/raids",
+    art: "/assets/wow/raids/hub/vault.webp",
     groups: [{
       links: [
         { href: "/wow/raids", icon: "journal", label: { en: "Raid journal", ru: "Рейдовый журнал" }, note: { en: "Bosses and tactics", ru: "Боссы и тактика" } },
@@ -99,12 +107,17 @@ export const navigationRealms: readonly NavigationRealm[] = [
     id: "meta",
     label: { en: "Tier lists", ru: "Тир-листы" },
     hub: "/tier-lists",
-    groups: [{ links: [{ href: "/tier-lists", icon: "meta", label: { en: "Tier lists", ru: "Тир-листы" } }] }],
+    art: "/assets/wow/loading/tier-lists-war-room-20261106.webp",
+    groups: [{ links: [{ href: "/tier-lists", icon: "meta", label: { en: "Tier lists", ru: "Тир-листы" }, note: { en: "Mythic+, raids and arena", ru: "Mythic+, рейды и арена" } }] }],
   },
   {
     id: "tools",
     label: { en: "Tools", ru: "Инструменты" },
+    // No page of its own: the tab only opens the menu; its first tool marks the realm.
     hub: "/wow/auction",
+    feature: "/wow/map",
+    // The world map itself (its 480 × 320 picture: four tiles of zoom 1, per language).
+    art: "/maps/tiles/947/1",
     groups: [{
       links: [
         { href: "/wow/auction", icon: "auction", label: { en: "Auction House", ru: "Аукцион" }, note: { en: "Realm and region prices", ru: "Цены серверов и региона" } },
@@ -121,6 +134,7 @@ export const navigationRealms: readonly NavigationRealm[] = [
     label: { en: "Library", ru: "Библиотека" },
     hub: "/library",
     also: ["/database", "/search"],
+    art: "/assets/wow/loading/library-violet-citadel-20261106.webp",
     groups: [{
       links: [
         { href: "/library", icon: "library", label: { en: "Game library", ru: "Библиотека игры" }, note: { en: "Items, spells, mounts", ru: "Предметы, заклинания, транспорт" } },

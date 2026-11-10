@@ -64,3 +64,26 @@ describe("navigation: the tab each page lights", () => {
     assert.equal(currentRealm("/talentsx")?.realm.id ?? null, null);
   });
 });
+
+describe("navigation: the menus' lead cards", () => {
+  it("every lead card is one of its realm's pages and its painting exists", async () => {
+    const { existsSync } = await import("node:fs");
+    const { navigationRealms, linksFor } = await import("../../components/platform/navigation/navigationMap.ts");
+    for (const realm of navigationRealms) {
+      const links = linksFor(realm, "en").length > 1 ? linksFor(realm, "en") : linksFor(realm, "ru");
+      if (links.length < 2 && !realm.art) continue;
+      const lead = realm.feature ?? realm.hub;
+      assert.ok(links.some(link => link.href === lead), `${realm.id}: ${lead} is not one of its pages`);
+      assert.ok(realm.art, `${realm.id}: no painting`);
+      const file = realm.art!.startsWith("/maps/tiles/") ? `public${realm.art}/0_0.webp` : `public${realm.art}`;
+      assert.ok(existsSync(new URL(`../../${file}`, import.meta.url)), `${realm.id}: ${file} missing`);
+    }
+  });
+  it("every page of a menu has a one-line note", async () => {
+    const { navigationRealms, linksFor } = await import("../../components/platform/navigation/navigationMap.ts");
+    for (const realm of navigationRealms) {
+      if (linksFor(realm, "ru").length < 2 && !realm.art) continue;
+      for (const link of linksFor(realm, "ru")) assert.ok(link.note, `${link.href} has no note`);
+    }
+  });
+});

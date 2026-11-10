@@ -76,7 +76,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -408,12 +408,12 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
@@ -1026,7 +1026,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -1358,12 +1358,12 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
@@ -1981,7 +1981,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -2237,12 +2237,12 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
@@ -2729,7 +2729,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -2985,12 +2985,12 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
@@ -3482,7 +3482,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -3735,12 +3735,12 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
@@ -4250,7 +4250,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -4503,12 +4503,12 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
