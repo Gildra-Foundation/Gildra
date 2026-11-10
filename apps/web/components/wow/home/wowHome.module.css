@@ -8,6 +8,7 @@
 .heroContent { width: 100%; max-width: 800px; }
 .heroArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 40%; }
 .lookup { padding: var(--atlas-space-5); }
+.lookup:focus-within { z-index: 2; }
 .lookup h2 { margin: 0 0 var(--atlas-space-3); font-size: var(--atlas-text-h3); }
 .lookupFields { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr) 240px; gap: var(--atlas-space-3); align-items: end; }
 .lookupFields button { min-width: 0; }
@@ -303,3 +304,30 @@
   .page .groupGrid[data-group="world"] .toolRows:not(:has(li:nth-child(3))) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .page .professionPreview { border: 0; box-shadow: none; background: transparent; }
+
+/* A quiet section index and a distinct, compact game choice row. */
+.page .overview a { background: transparent; box-shadow: none; border-color: transparent; border-bottom-color: var(--atlas-glass-edge); }
+.page .overview a:hover { background: var(--atlas-glass-fill); border-bottom-color: var(--atlas-accent); }
+.page .versions { padding: var(--atlas-space-2) 0; background: transparent; box-shadow: none; }
+.page .versions a { display: flex; align-items: center; gap: var(--atlas-space-2); padding: var(--atlas-space-2); border-radius: var(--atlas-radius); }
+.page .versions a:hover { background: var(--atlas-glass-fill); }
+.page .versions [data-medallion] { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border: 1px solid var(--atlas-glass-edge); border-radius: 50%; background: var(--atlas-glass-fill); box-shadow: var(--atlas-glass-inset); }
+.page .versions img { width: 44px; height: 44px; object-fit: contain; }
+.page .versions a > span:nth-child(2) { min-width: 0; }
+.page .versions a > svg { display: none; }
+.realmCombo { position: relative; }
+.realmOptions { contain: layout style paint; position: absolute; z-index: 30; inset: calc(100% + 4px) 0 auto; max-height: 264px; overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 4px; list-style: none; border: 1px solid var(--atlas-accent-2); border-radius: var(--atlas-radius-control); background: var(--atlas-surface-raised); box-shadow: var(--atlas-glass-depth); color: var(--atlas-text-strong); }
+.realmOptions[hidden] { display: none; }
+.realmOptions li { min-height: 44px; display: flex; align-items: center; padding: 8px; cursor: pointer; font-size: var(--atlas-text-small); }
+.realmOptions li:hover, .realmOptions li[aria-selected="true"] { background: var(--atlas-accent-wash); outline: 1px solid var(--atlas-accent-2); outline-offset: -1px; }
+@media (max-width: 700px) {
+  .page .versions { grid-template-columns: 1fr; gap: 0; }
+  .page .versions a { min-height: 64px; }
+  .page .versions small { font-size: var(--atlas-text-meta); }
+}
+.realmControl { position: relative; contain: layout style; }
+.realmControl:focus-within { z-index: 40; }
+.realmControl input { padding-right: var(--atlas-space-6); }
+.realmControl::after { content: ""; position: absolute; pointer-events: none; right: 14px; top: calc(50% - 4px); width: 6px; height: 6px; border-right: 1px solid var(--atlas-text-muted); border-bottom: 1px solid var(--atlas-text-muted); transform: rotate(45deg); }
+
+.realmOptions li[hidden] { display: none; }
