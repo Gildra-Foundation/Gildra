@@ -255,6 +255,11 @@ export class WorldMapEngine {
     // (no jump of the view, no second set of tiles right after it loaded).
     const sides = next.insets && (next.insets.top !== was.top || next.insets.right !== was.right || next.insets.bottom !== was.bottom || next.insets.left !== was.left);
     if (home !== null && sides) this.refitHome(home);
+    // (Panels that changed once a zoom out came to rest, the top map then shown smaller than whole: up to it at once.)
+    else if (sides && !this.moving) {
+      const b = this.bounds(this.camera);
+      if (b && this.camera.scale < b.min * (1 - 1e-6)) { this.camera = this.limit(this.camera); this.scheduleSettle(); }
+    }
     this.invalidate();
   }
 
