@@ -11,7 +11,8 @@
   content: "";
   position: absolute;
   z-index: -1;
-  inset: 0 calc((min(100vw, var(--atlas-container)) - 100vw) / 2);
+  /* Edge to edge from the content column or from a full-width page alike (insets in % are of the footer). */
+  inset: 0 calc((100% - 100vw) / 2);
   border-top: 1px solid var(--atlas-line);
   background: radial-gradient(ellipse at 50% 0, var(--atlas-accent-wash), transparent 65%), var(--atlas-surface-sunken);
   pointer-events: none;

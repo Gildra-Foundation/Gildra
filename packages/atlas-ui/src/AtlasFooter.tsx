@@ -4,10 +4,11 @@ import styles from "./AtlasFooter.module.css";
 
 /**
  * The site footer: brand and description, grouped navigation, language and motion
- * controls, then the legal notice. Pages outside the frame reuse it.
+ * controls, then the legal notice. Pages outside the frame reuse it; every page
+ * ends with exactly one (data-site-footer, apps/web/scripts/qa-footer-coverage.mjs).
  */
 export function AtlasFrameFooter({ locale, brand, description, legal, links, language, motion }: { locale: "en" | "ru"; legal: ReactNode; links: ReactNode; brand?: ReactNode; description?: ReactNode; language?: ReactNode; motion?: ReactNode }) {
-  return <footer className={styles.legal} data-text-links>
+  return <footer className={styles.legal} data-text-links data-site-footer>
     <div className={styles.inner}>
     <div className={styles.legalBody}>
       {brand || description ? <div className={styles.legalSummary}>

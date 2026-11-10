@@ -174,8 +174,8 @@ export async function EntityDetailPage({ entity, entityType, relationships, lang
   const tooltipUnderTitle = modelPlaque || artPlaque ? tooltip : null;
   const bodyFacts = heroSide === factsPlaque ? null : factsPlaque;
   return (
-    <PageShell lang={lang}>
-      <AtlasFrame as="div" lang={lang} scene="archiveDeep" dataAttributes={{ "data-database-entity": true }}>
+    <PageShell lang={lang} frame>
+      <AtlasFrame lang={lang} scene="archiveDeep" dataAttributes={{ "data-database-entity": true }}>
         <AtlasHero
           breadcrumbs={breadcrumbs}
           breadcrumbsLabel={copy.breadcrumbsLabel}

@@ -11,7 +11,7 @@ export function LibraryDatasetSkeleton({ lang }: { lang: Lang }) {
   const copy = libraryCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
   return (
-    <AtlasFrame as="div" lang={lang} scene="archive" dataAttributes={{ "data-library-root": true, "data-book-route-loading": true }}>
+    <AtlasFrame lang={lang} scene="archive" dataAttributes={{ "data-library-root": true, "data-book-route-loading": true }}>
       <AtlasHero breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.library, href: `${prefix}/library` }]} breadcrumbsLabel={copy.breadcrumbsLabel}
         title={<span className={styles.title} aria-hidden="true" />} lede={<span className={styles.lede} aria-hidden="true" />} />
       <div className={styles.body}>
@@ -27,7 +27,7 @@ export function LibraryRecordSkeleton({ lang }: { lang: Lang }) {
   const copy = libraryCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
   return (
-    <AtlasFrame as="div" lang={lang} scene="archiveDeep" dataAttributes={{ "data-database-entity": true, "data-book-route-loading": true }}>
+    <AtlasFrame lang={lang} scene="archiveDeep" dataAttributes={{ "data-database-entity": true, "data-book-route-loading": true }}>
       <AtlasHero breadcrumbs={[{ label: copy.library, href: `${prefix}/library` }]} breadcrumbsLabel={copy.breadcrumbsLabel}
         title={<span className={styles.recordTitle} aria-hidden="true"><span className={styles.icon} /><span className={styles.title} /></span>}
         aside={<MaterialPlaque kit={libraryKit} className={styles.tooltip} aria-hidden="true"><AtlasSkeleton variant="lines" count={6} label={copy.loading} /></MaterialPlaque>} />

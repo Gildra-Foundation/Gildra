@@ -34,6 +34,8 @@
   margin-inline: auto;
   padding: var(--atlas-space-4) var(--atlas-gutter) var(--atlas-space-8);
 }
+/* The site footer follows <main>: the column's foot is its gap, and the dungeon backdrop runs into it. */
+.page + footer { margin-top: 0; }
 
 /* ---------- Breadcrumbs + intro ---------- */
 .crumbsRow {

@@ -64,6 +64,7 @@ export const privacyPage = definePage({
     game: "wow",
     path: "/privacy",
     layout: "default",
+    shell: { frame: true },
     blocks: [{ type: "legal", props: lang === "ru" ? RU : EN }],
   }),
 });

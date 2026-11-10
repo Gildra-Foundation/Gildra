@@ -24,5 +24,5 @@ export default async function LibraryPageRu({ searchParams }: { searchParams: Pr
   if (!product) notFound();
   await requireCatalogSession(`/ru/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
   const data = await getLibraryLandingData("ru_RU", product);
-  return <PageShell lang="ru"><LibraryLanding lang="ru" selectedProduct={product} {...data} /></PageShell>;
+  return <PageShell lang="ru" frame><LibraryLanding lang="ru" selectedProduct={product} {...data} /></PageShell>;
 }

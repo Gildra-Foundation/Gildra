@@ -76,7 +76,8 @@ export function WorldMapPage({ lang, map: requested }: { lang: Lang; map?: Atlas
     })),
   };
 
-  return (
+  // The stage pins inside <main>; the site footer follows it in the document flow.
+  return (<>
     <main className={styles.page} lang={lang}>
       <script id="world-map-trail" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <WorldMapStage
@@ -101,7 +102,7 @@ export function WorldMapPage({ lang, map: requested }: { lang: Lang; map?: Atlas
           </AtlasSection>
         </div>
       ) : null}
-      <AtlasLegalFooter lang={lang} />
     </main>
-  );
+    <AtlasLegalFooter lang={lang} />
+  </>);
 }
