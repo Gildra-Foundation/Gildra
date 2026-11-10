@@ -1,3 +1,4 @@
+import { HomeRecentCharacters } from "./HomeRecentCharacters";
 import { redirect } from "next/navigation";
 import { AtlasField, AtlasInput, AtlasSelect } from "@/components/atlas";
 import { materialStyles } from "@/components/wow/shared/materialAtlas";
@@ -29,6 +30,7 @@ export function HomeCharacterLookup({ locale }: { locale: "en" | "ru" }) {
         <AtlasField label={t.lookup.name} htmlFor="hub-name"><AtlasInput size={20} name="name" id="hub-name" required minLength={2} maxLength={12} pattern="[\p{L}]{2,12}" autoComplete="off" /></AtlasField>
         <MaterialButton kit="den-of-nalorakk" fit="block" type="submit">{t.lookup.submit}</MaterialButton>
       </div>
+      <HomeRecentCharacters locale={locale} label={t.recentCharacters} />
     </MaterialPlaque>
   </form>;
 }
