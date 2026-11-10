@@ -1,12 +1,30 @@
-/* atlas:strict — the shared WowArcana footer identity and link groups. */
-.seal { display: inline-flex; align-items: center; gap: var(--atlas-space-3); color: var(--atlas-text-strong); text-decoration: none; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); }
-.crest { display: block; width: auto; height: 56px; flex: none; }
+/* atlas:strict — shared footer identity and server-rendered intent groups. */
+.seal { display: inline-flex; align-items: center; gap: var(--atlas-space-3); color: var(--atlas-text-strong); text-decoration: none; font: var(--atlas-weight-display) var(--atlas-text-h2) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.crest { display: block; width: auto; height: 64px; flex: none; }
 .crest img { display: block; width: auto; height: 100%; }
 .footerGroup { min-width: 0; }
-.footerGroup h3 { margin: 0 0 var(--atlas-space-3); color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-body) / var(--atlas-leading-snug) var(--atlas-font-display); }
-.footerGroup ul { list-style: none; padding: 0; margin: 0; }
+.footerGroup summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; color: var(--atlas-accent-strong); list-style: none; }
+.footerGroup summary::-webkit-details-marker { display: none; }
+.footerGroup h2 { margin: 0; color: inherit; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); }
+.footerGroup ul { list-style: none; padding: 0; margin: var(--atlas-space-2) 0 0; }
 .footerGroup a { overflow-wrap: anywhere; }
-.footerLanguages { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-3); }
-.footerLanguages a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); text-decoration: none; }
-.footerLanguages a[aria-current] { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 4px; }
+.footerLanguages { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-5); }
+.footerLanguages a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text); font-size: var(--atlas-text-body); text-decoration: none; }
+.footerLanguages a[aria-current] { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 5px; }
 .seal:focus-visible, .footerLanguages a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
+@media (min-width: 601px) {
+  .footerGroup::details-content { content-visibility: visible; }
+  .footerGroup > ul { display: block; }
+}
+@media (min-width: 1001px) { .footerGroup[data-footer-group="mythic"] { grid-row: span 2; } }
+@media (max-width: 600px) {
+  .seal { font-size: var(--atlas-text-h3); }
+  .crest { height: 56px; }
+  .footerGroup { border-top: 1px solid var(--atlas-line-soft); }
+  .footerGroup summary { min-height: 52px; cursor: pointer; }
+  .footerGroup h2 { font-size: var(--atlas-text-title); }
+  .footerGroup summary::after { content: "+"; color: var(--atlas-text-muted); font: var(--atlas-text-h3) var(--atlas-font-ui); }
+  .footerGroup[open] summary::after { content: "−"; }
+  .footerGroup ul { margin: 0 0 var(--atlas-space-3); padding-left: var(--atlas-space-3); }
+}
+@media (min-width: 601px) and (max-width: 1000px) { .footerGroup[data-footer-group="mythic"] { grid-row: span 3; } }

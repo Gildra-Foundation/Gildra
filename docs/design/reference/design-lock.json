@@ -417,14 +417,14 @@
             },
             "footer": {
               "box": [
-                26,
+                0,
                 5320,
-                1388,
-                452
+                1440,
+                802
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -892,14 +892,14 @@
             },
             "footer": {
               "box": [
-                14,
+                0,
                 7907,
-                362,
-                836
+                390,
+                738
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -1367,14 +1367,14 @@
             },
             "footer": {
               "box": [
-                26,
+                0,
                 5368,
-                1388,
-                452
+                1440,
+                802
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -1842,14 +1842,14 @@
             },
             "footer": {
               "box": [
-                14,
+                0,
                 7856,
-                362,
-                792
+                390,
+                714
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -2246,14 +2246,14 @@
             },
             "footer": {
               "box": [
-                26,
+                0,
                 2947,
-                1388,
-                452
+                1440,
+                802
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -2619,14 +2619,14 @@
             },
             "footer": {
               "box": [
-                14,
+                0,
                 5127,
-                362,
-                836
+                390,
+                738
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -2994,14 +2994,14 @@
             },
             "footer": {
               "box": [
-                26,
+                0,
                 2947,
-                1388,
-                452
+                1440,
+                802
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -3367,14 +3367,14 @@
             },
             "footer": {
               "box": [
-                14,
+                0,
                 5127,
-                362,
-                792
+                390,
+                714
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -3744,14 +3744,14 @@
             },
             "footer": {
               "box": [
-                26,
+                0,
                 4297,
-                1388,
-                452
+                1440,
+                802
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -4128,14 +4128,14 @@
             },
             "footer": {
               "box": [
-                14,
+                0,
                 6089,
-                362,
-                836
+                390,
+                738
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -4512,14 +4512,14 @@
             },
             "footer": {
               "box": [
-                26,
+                0,
                 4391,
-                1388,
-                452
+                1440,
+                802
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -4896,14 +4896,14 @@
             },
             "footer": {
               "box": [
-                14,
+                0,
                 5980,
-                362,
-                792
+                390,
+                714
               ],
-              "background-color": "rgb(13, 19, 26)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "background-color": "rgba(0, 0, 0, 0)",
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [

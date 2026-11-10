@@ -348,3 +348,10 @@
 @media (prefers-contrast: more) {
   .frame[data-roster-view] .scene::after { background: color-mix(in srgb, var(--atlas-bg) 90%, transparent); }
 }
+
+/* The footer closes the page flush with its lower edge. */
+.column:has(> footer) { padding-bottom: 0; }
+
+.column > footer { margin-inline: calc(-1 * var(--atlas-gutter)); }
+
+.frame:has(> .column > footer) > .foot { display: none; }

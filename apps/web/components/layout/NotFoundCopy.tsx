@@ -2,7 +2,8 @@
 
 import { useEffect, useSyncExternalStore, type CSSProperties } from "react";
 import Link from "next/link";
-import { ATLAS_FOOTER_LINKS } from "@/components/atlas/footerLinks";
+import footerStyles from "@/components/atlas/AtlasFrame.module.css";
+import { FooterNavigation } from "@/components/atlas/FooterNavigation";
 import { ArrowRight } from "lucide-react";
 import { AtlasMotionToggle } from "@gildra/atlas-ui/AtlasMotionToggle";
 import { MaterialSlotLinkButton } from "@/components/wow/shared/material/MaterialButtonBase";
@@ -67,14 +68,19 @@ export function NotFoundText({ en, ru }: Words) {
 export function NotFoundFooterLinks() {
   const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
   const lang = ruUrl ? "ru" : "en";
-  const prefix = ruUrl ? "/ru" : "";
-  return <>
-    {ATLAS_FOOTER_LINKS.map((link) => <Link key={link.href} href={`${prefix}${link.href}`} prefetch={false}>{link[lang]}</Link>)}
-  </>;
+  return <FooterNavigation locale={lang} />;
 }
 
 /** The footer's "Less motion" switch in the URL's language. */
 export function NotFoundMotionToggle() {
   const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
   return <AtlasMotionToggle locale={ruUrl ? "ru" : "en"} />;
+}
+
+export function NotFoundFooterLanguage() {
+  const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
+  return <nav className={footerStyles.footerLanguages} aria-label={ruUrl ? "Язык в подвале" : "Footer language"}>
+    <Link href="/wow" lang="en" hrefLang="en" prefetch={false} aria-current={!ruUrl ? "true" : undefined}>English</Link>
+    <Link href="/ru/wow" lang="ru" hrefLang="ru" prefetch={false} aria-current={ruUrl ? "true" : undefined}>Русский</Link>
+  </nav>;
 }
