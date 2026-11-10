@@ -22,6 +22,13 @@ export function HomeLookupEnhancement({ locale }: { locale: "en" | "ru" }) {
       try { localStorage.setItem("gildra:hero-lookup", JSON.stringify({ region: region.value, realm: "" })); } catch { /* Private mode */ }
     };
     region.addEventListener("change", resetRealm);
+    // The field shows the realm's name; the lookup receives its slug.
+    const send = (event: FormDataEvent) => {
+      const slug = realm.dataset.slug && realm.value === realm.dataset.label ? realm.dataset.slug : "";
+      if (slug) event.formData.set("realm", slug);
+      try { localStorage.setItem("gildra:hero-lookup", JSON.stringify({ region: region.value, realm: slug || realm.value.trim(), label: realm.value.trim() })); } catch { /* Private mode */ }
+    };
+    form.addEventListener("formdata", send);
     const interacting = form.contains(document.activeElement);
     if (interacting) start();
     // Restore plain field values immediately without loading the realm data or picker.
@@ -29,11 +36,12 @@ export function HomeLookupEnhancement({ locale }: { locale: "en" | "ru" }) {
       const saved = JSON.parse(localStorage.getItem("gildra:hero-lookup") ?? "{}");
       const pristine = !realm.value && (region.value === "eu" || region.value === saved.region);
       if ((!interacting || pristine) && ["eu", "us", "kr", "tw"].includes(saved.region)) {
-        (form.elements.namedItem("region") as HTMLSelectElement).value = saved.region;
-        (form.elements.namedItem("realm") as HTMLInputElement).value = typeof saved.realm === "string" ? saved.realm : "";
+        region.value = saved.region;
+        const slug = typeof saved.realm === "string" ? saved.realm : "", label = typeof saved.label === "string" && saved.label ? saved.label : slug;
+        realm.value = label; realm.dataset.slug = slug; realm.dataset.label = label;
       }
     } catch { /* Storage may be unavailable. */ }
-    return () => { cancelled = true; form.removeEventListener("focusin", start); region.removeEventListener("change", resetRealm); dispose?.(); };
+    return () => { cancelled = true; form.removeEventListener("focusin", start); region.removeEventListener("change", resetRealm); form.removeEventListener("formdata", send); dispose?.(); };
   }, [locale]);
   useEffect(() => {
     const form = document.getElementById("character-lookup") as HTMLFormElement;

@@ -30,47 +30,53 @@ export function enhanceRealmPicker(form: HTMLFormElement, locale: "ru" | "en") {
   list.setAttribute("aria-label", homeLookupCopy[locale].realms); list.hidden = true;
   container.append(list);
   input.role = "combobox"; input.setAttribute("aria-autocomplete", "list"); input.setAttribute("aria-controls", list.id); input.setAttribute("aria-expanded", "false");
-  let all: Realm[] = [], shown: Realm[] = [], active = -1, generation = 0, disposed = false, chosen = "", chosenText = "", renderFrame = 0;
-  const close = () => { cancelAnimationFrame(renderFrame); renderFrame = 0; list.hidden = true; input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-activedescendant"); active = -1; };
-  const remember = () => { try { localStorage.setItem("gildra:hero-lookup", JSON.stringify({ region: region.value, realm: chosen || input.value })); } catch { /* Private mode */ } };
-  const pick = (realm: Realm) => { chosen = realm.slug; chosenText = realm.name; input.value = realm.name; close(); remember(); };
-  const highlight = () => {
-    [...list.children].forEach((node, index) => node.setAttribute("aria-selected", String(index === active)));
-    if (active >= 0) { input.setAttribute("aria-activedescendant", `hub-realm-${active}`); list.children[active]?.scrollIntoView({ block: "nearest" }); }
+  let all: Realm[] = [], nodes: HTMLLIElement[] = [], shown: number[] = [], active = -1, generation = 0, disposed = false, renderFrame = 0;
+  const choose = (realm: Realm) => { input.value = realm.name; input.dataset.slug = realm.slug; input.dataset.label = realm.name; };
+  const chosen = () => input.dataset.slug && input.value === input.dataset.label ? input.dataset.slug : "";
+  const activate = (index: number) => {
+    nodes[active]?.setAttribute("aria-selected", "false");
+    active = index;
+    const node = nodes[active];
+    if (!node) { input.removeAttribute("aria-activedescendant"); return; }
+    node.setAttribute("aria-selected", "true"); input.setAttribute("aria-activedescendant", node.id);
+    // Scroll the list only; scrollIntoView would also move the page.
+    if (node.offsetTop < list.scrollTop) list.scrollTop = node.offsetTop;
+    else if (node.offsetTop + node.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = node.offsetTop + node.offsetHeight - list.clientHeight;
   };
-  // Reuse four option elements: replacing the list on every key invalidates
-  // selectors and layout throughout the large hub, even for a tiny query.
-  const options = Array.from({ length: 4 }, (_, index) => {
-    const item = document.createElement("li"); item.id = `hub-realm-${index}`; item.role = "option"; item.hidden = true; item.setAttribute("aria-selected", "false"); item.append(document.createTextNode(""));
-    item.addEventListener("pointerdown", event => event.preventDefault());
-    item.addEventListener("click", () => { if (shown[index]) { pick(shown[index]); input.focus(); } });
-    list.append(item);
-    return item;
-  });
+  const close = () => { cancelAnimationFrame(renderFrame); renderFrame = 0; list.hidden = true; input.setAttribute("aria-expanded", "false"); activate(-1); };
+  const pick = (realm: Realm) => { choose(realm); close(); };
+  // One node per realm of the region, built once: typing only toggles `hidden`,
+  // so the full list scrolls like a select and a keystroke never rebuilds it.
+  const build = () => {
+    nodes = all.map((realm, index) => {
+      const item = document.createElement("li"); item.id = `hub-realm-${index}`; item.role = "option"; item.setAttribute("aria-selected", "false"); item.textContent = realm.name;
+      return item;
+    });
+    active = -1; list.replaceChildren(...nodes);
+  };
   const render = () => {
-    const query = normalize(input.value.trim());
-    shown = all.filter(r => !query || r.search.includes(query)).slice(0, options.length); active = -1;
-    input.removeAttribute("aria-activedescendant");
-    options.forEach((item, index) => {
-      const realm = shown[index];
-      if (item.hidden !== !realm) item.hidden = !realm;
-      if (realm && item.firstChild!.nodeValue !== realm.name) item.firstChild!.nodeValue = realm.name;
-      if (item.getAttribute("aria-selected") !== "false") item.setAttribute("aria-selected", "false");
+    const slug = chosen(), query = slug ? "" : normalize(input.value.trim());
+    shown = [];
+    all.forEach((realm, index) => {
+      const match = !query || realm.search.includes(query);
+      if (nodes[index].hidden === match) nodes[index].hidden = !match;
+      if (match) shown.push(index);
     });
     if (list.hidden !== !shown.length) list.hidden = !shown.length;
-    const expanded = String(!list.hidden);
-    if (input.getAttribute("aria-expanded") !== expanded) input.setAttribute("aria-expanded", expanded);
+    input.setAttribute("aria-expanded", String(!list.hidden));
+    list.scrollTop = 0;
+    // A realm already chosen opens the whole list at that realm.
+    activate(slug ? all.findIndex(realm => realm.slug === slug) : -1);
   };
   const load = async () => {
-    const version = ++generation; all = []; close(); input.setAttribute("aria-busy", "true");
-    try { const result = await realms(region.value, locale); if (!disposed && version === generation) { all = result; if (document.activeElement === input) render(); } }
+    const version = ++generation; all = []; close(); build(); input.setAttribute("aria-busy", "true");
+    try { const result = await realms(region.value, locale); if (!disposed && version === generation) { all = result; build(); if (document.activeElement === input) render(); } }
     catch { /* Native free text lookup continues to work. Retry on next focus. */ }
     finally { if (version === generation) input.removeAttribute("aria-busy"); }
   };
-  const focus = () => { if (all.length) render(); else void load(); };
-  const changeRegion = () => { input.value = ""; chosen = ""; chosenText = ""; remember(); void load(); };
+  const open = () => { if (all.length) render(); else void load(); };
+  const changeRegion = () => { input.value = ""; void load(); };
   const changeText = () => {
-    chosen = ""; chosenText = "";
     cancelAnimationFrame(renderFrame);
     // Keep native text editing separate from the suggestion layout pass.
     renderFrame = requestAnimationFrame(() => { renderFrame = 0; render(); });
@@ -79,19 +85,24 @@ export function enhanceRealmPicker(form: HTMLFormElement, locale: "ru" | "en") {
     if (event.isComposing) return;
     if (renderFrame && ["ArrowDown", "ArrowUp", "Enter"].includes(event.key)) { cancelAnimationFrame(renderFrame); renderFrame = 0; render(); }
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault(); if (list.hidden) render(); if (!shown.length) return;
-      active = event.key === "ArrowDown" ? (active + 1) % shown.length : active <= 0 ? shown.length - 1 : active - 1; highlight();
-    } else if (event.key === "Enter" && !list.hidden && active >= 0) { event.preventDefault(); pick(shown[active]); }
+      event.preventDefault(); if (list.hidden) { render(); if (active >= 0) return; } if (!shown.length) return;
+      const position = shown.indexOf(active);
+      activate(shown[event.key === "ArrowDown" ? (position + 1) % shown.length : position <= 0 ? shown.length - 1 : position - 1]);
+    } else if (event.key === "Enter" && !list.hidden && active >= 0) { event.preventDefault(); pick(all[active]); }
     else if (event.key === "Escape") { if (!list.hidden) event.preventDefault(); close(); }
     else if (event.key === "Tab") close();
   };
+  // A name typed in either language still resolves to the realm before the form is read.
   const submit = () => {
-    if (input.value !== chosenText) chosen = all.find(r => r.aliases.includes(normalize(input.value.trim())) || r.slug === input.value.trim())?.slug ?? "";
-    if (chosen) input.value = chosen;
-    remember(); close();
+    if (!chosen()) { const text = input.value.trim(), realm = all.find(r => r.aliases.includes(normalize(text)) || r.slug === text); if (realm) choose(realm); }
+    close();
   };
-  input.addEventListener("focus", focus); input.addEventListener("input", changeText); input.addEventListener("keydown", keydown); input.addEventListener("blur", close);
+  const press = (event: Event) => event.preventDefault();
+  const click = (event: Event) => { const item = (event.target as Element).closest("li"); if (item) { pick(all[nodes.indexOf(item)]); input.focus(); } };
+  // Pressing an option or the scrollbar must not blur the field and close the list.
+  list.addEventListener("mousedown", press); list.addEventListener("click", click);
+  input.addEventListener("focus", open); input.addEventListener("click", open); input.addEventListener("input", changeText); input.addEventListener("keydown", keydown); input.addEventListener("blur", close);
   region.addEventListener("change", changeRegion); form.addEventListener("submit", submit);
-  if (document.activeElement === input) focus();
-  return () => { disposed = true; generation++; close(); list.remove(); container.classList.remove(styles.realmCombo); for (const attribute of ["role", "aria-autocomplete", "aria-controls", "aria-expanded", "aria-activedescendant", "aria-busy"]) input.removeAttribute(attribute); input.removeEventListener("focus", focus); input.removeEventListener("input", changeText); input.removeEventListener("keydown", keydown); input.removeEventListener("blur", close); region.removeEventListener("change", changeRegion); form.removeEventListener("submit", submit); };
+  if (document.activeElement === input) open();
+  return () => { disposed = true; generation++; close(); list.remove(); container.classList.remove(styles.realmCombo); for (const attribute of ["role", "aria-autocomplete", "aria-controls", "aria-expanded", "aria-activedescendant", "aria-busy"]) input.removeAttribute(attribute); input.removeEventListener("focus", open); input.removeEventListener("click", open); input.removeEventListener("input", changeText); input.removeEventListener("keydown", keydown); input.removeEventListener("blur", close); region.removeEventListener("change", changeRegion); form.removeEventListener("submit", submit); };
 }

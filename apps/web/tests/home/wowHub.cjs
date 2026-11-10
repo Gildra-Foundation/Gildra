@@ -62,10 +62,10 @@ const { chromium } = require('playwright');
       }
       await page.setViewportSize({ width: 1440, height: 1000 });
       // A returning player can change region before the deferred picker has loaded.
-      await page.evaluate(() => localStorage.setItem("gildra:hero-lookup", JSON.stringify({ region: "eu", realm: "gordunni" })));
+      await page.evaluate(label => localStorage.setItem("gildra:hero-lookup", JSON.stringify({ region: "eu", realm: "gordunni", label })), realms[3][locale]);
       await page.reload({ waitUntil: "networkidle" });
-      await page.waitForFunction(() => document.querySelector("#hub-realm")?.value === "gordunni");
-      assert.equal(await page.locator("#hub-realm").inputValue(), "gordunni");
+      await page.waitForFunction(label => document.querySelector("#hub-realm")?.value === label, realms[3][locale]);
+      assert.equal(await page.locator("#hub-realm").getAttribute("data-slug"), "gordunni", "The remembered realm keeps its slug behind the name");
       await page.locator("#hub-region").selectOption("us");
       assert.equal(await page.locator("#hub-realm").inputValue(), "", "Changing region must clear the remembered realm immediately");
       console.log(`${locale}: metadata / JSON-LD / H1 / alt / hreflang / crawlable links PASS`);
