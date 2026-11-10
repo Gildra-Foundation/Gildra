@@ -206,9 +206,6 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetState, o
   const warm = (realm: string | null | undefined) => {
     if (realm) setWarmed(previous => previous.has(realm) ? previous : new Set(previous).add(realm));
   };
-  // The menu the pointer or focus has reached is laid out ahead, unseen, so its opening only
-  // paints (one at a time: every laid-out menu adds to each full layout of the page).
-  const [primed, setPrimed] = useState<string | null>(null);
 
   const later = (action: () => void, delay: number) => {
     clearTimeout(timer.current);
@@ -218,14 +215,8 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetState, o
     clearTimeout(timer.current);
     warm(realm);
     const from = openRealm !== realm && wide() && !lessMotion() ? openRealm : null;
-    if (from) {
-      // A switch resizes the frame from the old menu's height. Both are laid out (unseen menus
-      // too, see the CSS), so these are reads of a clean layout, done before any write.
-      const next = document.getElementById(`${id}-${realm}`);
-      const before = document.getElementById(`${id}-${from}`)?.offsetHeight;
-      const after = next?.offsetHeight;
-      next?.style.setProperty("--frame-from", `${before && after ? before / after : 1}`);
-    }
+    // A switch resizes the frame from the old menu's height (a read of the clean layout, before any write).
+    swapFrom.current = from ? document.getElementById(`${id}-${from}`)?.offsetHeight ?? 0 : 0;
     leave(from, true);
     setOpen(previous => ({ path, realm, by, fresh: !(previous && previous.path === path) }));
   };
@@ -302,6 +293,19 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetState, o
     return () => document.removeEventListener("pointerdown", outside);
   }, [openRealm]);
 
+  // The frame of a switch grows or shrinks from the old menu's height to the new one's: a scale of
+  // its own layer (FLIP). The new height is read once the menu is in the document, the read that
+  // lays it out for the coming frame anyway.
+  const swapFrom = useRef(0);
+  useLayoutEffect(() => {
+    const before = swapFrom.current;
+    swapFrom.current = 0;
+    const panel = openRealm ? document.getElementById(`${id}-${openRealm}`) : null;
+    const after = panel?.offsetHeight;
+    if (!before || !after || Math.abs(before - after) < 2 || typeof panel.animate !== "function") return;
+    panel.animate([{ scale: `1 ${before / after}` }, { scale: "1 1" }], { duration: 150, easing: "cubic-bezier(.25, .46, .45, .94)", pseudoElement: "::before" });
+  }, [openRealm, id]);
+
   // A menu opened from the keyboard takes focus once it is in the document.
   useLayoutEffect(() => {
     const edge = focusOnOpen.current;
@@ -315,7 +319,6 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetState, o
     onPointerEnter: (event: PointerEvent) => {
       if (event.pointerType !== "mouse" || !wide()) return;
       warm(realm);
-      setPrimed(realm);
       if (openRealm === realm) clearTimeout(timer.current);
       // With a menu open, a neighbour takes over only when the pointer rests on it.
       else later(() => show(realm, "hover"), openRealm ? SWITCH_DELAY : OPEN_DELAY);
@@ -386,7 +389,6 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetState, o
     onFocus={(event: FocusEvent) => {
       const owner = (event.target as HTMLElement).closest<HTMLElement>("li[data-realm]")?.dataset.realm;
       warm(owner);
-      if (owner) setPrimed(owner);
       // Focus moving on to another tab lets an open menu go (Tab out of its last link).
       if (!openRealm || !wide()) return;
       if (owner !== openRealm) close();
@@ -417,7 +419,7 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetState, o
             <ChevronDown className={toolbarStyles.chevron} size={14} strokeWidth={2} aria-hidden="true" />
           </button>
           <div id={`${id}-${realm.id}`} className={toolbarStyles.panel} data-menu-panel hidden={!(isOpen || isLeaving)}
-            data-ready={(primed === realm.id && warmed.has(realm.id)) || undefined} data-swap-out={(isLeaving && leaving?.swap) || undefined}
+            data-swap-out={(isLeaving && leaving?.swap) || undefined}
             data-state={isOpen ? "open" : "closed"} data-enter={(isOpen && openMenu?.fresh) || undefined}
             inert={(!isOpen && isLeaving) || undefined}>
             <RealmMenu realm={realm} picks={picks} lang={lang} barePath={barePath} art={warmed.has(realm.id)} onNavigate={navigate} />
