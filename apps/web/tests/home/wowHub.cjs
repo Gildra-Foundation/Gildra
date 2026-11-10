@@ -37,7 +37,37 @@ const { chromium } = require('playwright');
         if (!path.endsWith("/wow/characters")) assert(!/<meta name="robots" content="[^"]*noindex/i.test(html), `Private hub destination: ${path}`);
       }
       assert.equal(await page.locator('main section[id]').count(), 5);
-      assert.equal(await page.locator(`main a[href="${prefix}/wow/stories"]`).count(), locale === 'ru' ? 1 : 0);
+      assert.equal(await page.locator(`main section a[href="${prefix}/wow/stories"]`).count(), locale === 'ru' ? 1 : 0);
+      // The full list must remain clickable above the recent-hero/action slot.
+      const realms = [
+        { slug: "azuregos", en: "Azuregos", ru: "Азурегос" },
+        { slug: "borean-tundra", en: "Borean Tundra", ru: "Борейская тундра" },
+        { slug: "eversong", en: "Eversong", ru: "Вечная Песня" },
+        { slug: "gordunni", en: "Gordunni", ru: "Гордунни" },
+      ];
+      await page.route("**/api/wow/auction?*", route => {
+        const lang = new URL(route.request().url()).searchParams.get("lang") === "ru" ? "ru" : "en";
+        return route.fulfill({ json: { realms: realms.map(realm => ({ slug: realm.slug, name: realm[lang] })) } });
+      });
+      for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.locator("#hub-realm").focus();
+        for (const realm of realms) {
+          await page.locator("#hub-realm").fill("");
+          const option = page.locator("#hub-realm-options").getByText(realm[locale], { exact: true });
+          await option.waitFor();
+          await option.click();
+          assert.equal(await page.locator("#hub-realm").inputValue(), realm[locale]);
+        }
+      }
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      // A returning player can change region before the deferred picker has loaded.
+      await page.evaluate(label => localStorage.setItem("gildra:hero-lookup", JSON.stringify({ region: "eu", realm: "gordunni", label })), realms[3][locale]);
+      await page.reload({ waitUntil: "networkidle" });
+      await page.waitForFunction(label => document.querySelector("#hub-realm")?.value === label, realms[3][locale]);
+      assert.equal(await page.locator("#hub-realm").getAttribute("data-slug"), "gordunni", "The remembered realm keeps its slug behind the name");
+      await page.locator("#hub-region").selectOption("us");
+      assert.equal(await page.locator("#hub-realm").inputValue(), "", "Changing region must clear the remembered realm immediately");
       console.log(`${locale}: metadata / JSON-LD / H1 / alt / hreflang / crawlable links PASS`);
       await page.close();
     }

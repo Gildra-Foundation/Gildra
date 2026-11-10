@@ -1,3 +1,4 @@
+import { HomeLookupEnhancement } from "./HomeLookupEnhancement";
 import { redirect } from "next/navigation";
 import { AtlasField, AtlasInput, AtlasSelect } from "@/components/atlas";
 import { materialStyles } from "@/components/wow/shared/materialAtlas";
@@ -20,14 +21,15 @@ async function lookup(formData: FormData) {
 export function HomeCharacterLookup({ locale }: { locale: "en" | "ru" }) {
   const t = wowHomeCopy[locale];
   return <form action={lookup} id="character-lookup" aria-labelledby="character-lookup-title">
+    <HomeLookupEnhancement locale={locale} />
     <input type="hidden" name="locale" value={locale} />
     <MaterialPlaque kit="arcana" className={styles.lookup}>
       <h2 className={materialStyles.title} id="character-lookup-title">{t.lookup.title}</h2>
       <div className={styles.lookupFields}>
         <AtlasField label={t.lookup.region} htmlFor="hub-region"><AtlasSelect name="region" id="hub-region" defaultValue="eu"><option value="eu">EU</option><option value="us">US</option><option value="kr">KR</option><option value="tw">TW</option></AtlasSelect></AtlasField>
-        <AtlasField label={t.lookup.realm} htmlFor="hub-realm"><AtlasInput size={20} name="realm" id="hub-realm" required minLength={2} maxLength={64} autoComplete="off" placeholder={t.lookup.realmExample} /></AtlasField>
-        <AtlasField label={t.lookup.name} htmlFor="hub-name"><AtlasInput size={20} name="name" id="hub-name" required minLength={2} maxLength={12} pattern="[\p{L}]{2,12}" autoComplete="off" /></AtlasField>
-        <MaterialButton kit="arcana" fit="block" type="submit">{t.lookup.submit}</MaterialButton>
+        <AtlasField label={t.lookup.realm} htmlFor="hub-realm"><AtlasInput size={20} className={styles.realmControl} name="realm" id="hub-realm" required minLength={2} maxLength={64} autoComplete="off" spellCheck={false} autoCapitalize="none" autoCorrect="off" placeholder={t.lookup.realmExample} /></AtlasField>
+        <AtlasField label={t.lookup.name} htmlFor="hub-name"><AtlasInput size={20} name="name" id="hub-name" required minLength={2} maxLength={12} pattern="[\p{L}]{2,12}" autoComplete="off" spellCheck={false} autoCapitalize="none" autoCorrect="off" /></AtlasField>
+        <MaterialButton kit="arcana" fit="block" type="submit"><span data-lookup-label="">{t.lookup.submit}</span></MaterialButton>
       </div>
     </MaterialPlaque>
   </form>;

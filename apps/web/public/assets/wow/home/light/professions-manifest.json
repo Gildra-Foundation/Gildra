@@ -1,0 +1,41 @@
+{
+  "entries": {
+    "professions-384-webp": {
+      "path": "/assets/wow/home/light/professions-384.webp",
+      "width": 384,
+      "height": 256,
+      "bytes": 10516,
+      "sha256": "495e7a3e2e7a0345371e23c1aa310036aa6bcd5595b4776c662848d7361ec070"
+    },
+    "professions-384-avif": {
+      "path": "/assets/wow/home/light/professions-384.avif",
+      "width": 384,
+      "height": 256,
+      "bytes": 7341,
+      "sha256": "2a223908ac0c7c6af67039ba4c4a796998a3a8de9de5adf2becd8b2120266949"
+    },
+    "professions-768-webp": {
+      "path": "/assets/wow/home/light/professions-768.webp",
+      "width": 768,
+      "height": 512,
+      "bytes": 27996,
+      "sha256": "f51f4caa37f0a1bbd20aed48662425b4ffe30b9e0b22d23438a3e3e6fbe069a2"
+    },
+    "professions-768-avif": {
+      "path": "/assets/wow/home/light/professions-768.avif",
+      "width": 768,
+      "height": 512,
+      "bytes": 20211,
+      "sha256": "aadc0a78380daede800cae512f3eeb6ffda7adef9fa9e72eea3401769b0920a3"
+    }
+  },
+  "source": {
+    "generator": "built-in image_gen",
+    "native": "/home/debian/gildra-hub8-assets/asset-sources/professions-2.png",
+    "width": 1536,
+    "height": 1024,
+    "sha256": "e733f79a6f9e6375cc73a849aefa13bf0e2a192d0e80027777bd692e4962a8db",
+    "crop": null,
+    "selectedCandidate": 2
+  }
+}

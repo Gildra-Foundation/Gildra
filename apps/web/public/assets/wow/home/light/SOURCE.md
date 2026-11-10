@@ -10,3 +10,7 @@ These files only resize/encode existing approved site assets. No illustration, a
 Manifest records source/output SHA-256, dimensions, quality and byte sizes. Shared original assets and all reference-page kits are unchanged. The hub uses one kit to avoid downloading a second panel/button pair.
 
 QA: both 768 px product previews pass `asset-qa.cjs --type scene` without warnings. The panel passes with the generic dark-rim warning; the button's generic 3:1 canvas preset rejects its existing 6.14:1 strip and warns about rim/fill. These are encodings of the existing measured 9-slice controls, not newly drawn buttons: native geometry is deliberately retained. Both output alpha channels are byte-identical to their approved sources. Rendered desktop/390 inspection confirms clean edges, unchanged silhouettes and readable HTML labels. Reports: `/tmp/hub/asset-qa3{,-panel,-button}.json`.
+
+## Professions — 2026-11-10
+
+New workshop painting: built-in image_gen, three separate candidates. Selection, provenance and QA: [professions-SOURCE.md](professions-SOURCE.md); delivery hashes: [professions-manifest.json](professions-manifest.json). The older derivative-only statement applies to the files listed above.
