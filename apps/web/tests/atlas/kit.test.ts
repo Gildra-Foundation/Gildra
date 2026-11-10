@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 
 import { formatSeason, pluralRu } from "../../../../packages/atlas-ui/src/format.ts";
 import { siteSearchCopy } from "../../components/platform/search/siteSearchCopy.ts";
-import { matchRanges, normalize, otherLayout, searchIndex, transliterate } from "../../components/platform/search/siteSearchMatch.ts";
+import { matchRanges, normalize, otherLayout, prepareIndex, searchIndex, transliterate } from "../../components/platform/search/siteSearchMatch.ts";
 import { dungeonRoutes, dungeonSlugs } from "../../lib/data/wow/mythic/dungeonRoutes.ts";
 import { routeTextEn } from "../../components/wow/mythic/routeStopsEn.ts";
 import { atlasScenes } from "../../lib/atlas/scenes.ts";
@@ -76,6 +76,20 @@ describe("quick search tolerance and highlight", () => {
     assert.equal(searchIndex(entries, "voidspier")[0]?.t, "The Voidspire");
     assert.equal(searchIndex(entries, "orgrimar")[0]?.t, "Orgrimmar");
     assert.deepEqual(searchIndex(entries, "zzzz"), []);
+  });
+  it("forgives a swapped, a dropped and an added letter, but not two typos", () => {
+    const list = [{ t: "Orgrimmar", s: "Map", h: "/wow/map/orgrimmar" }, { t: "Stormwind City", s: "Map", h: "/wow/map/stormwind" }];
+    assert.equal(searchIndex(list, "ogrimmar")[0]?.t, "Orgrimmar");
+    assert.equal(searchIndex(list, "orgirmmar")[0]?.t, "Orgrimmar");
+    assert.equal(searchIndex(list, "stormwinnd")[0]?.t, "Stormwind City");
+    assert.equal(searchIndex(list, "strom")[0]?.t, "Stormwind City");
+    assert.deepEqual(searchIndex(list, "ogrimmra"), []);
+  });
+  it("finds the same after the index is prepared ahead (idle time)", () => {
+    const list = [...entries];
+    const cold = searchIndex([...entries], "nalorak").map((hit) => hit.t);
+    prepareIndex(list);
+    assert.deepEqual(searchIndex(list, "nalorak").map((hit) => hit.t), cold);
   });
   it("keeps exact matches above the forgiving ones", () => {
     const hits = searchIndex([...entries, { t: "Druid of the Claw", s: "Talent", h: "/x" }], "druid");

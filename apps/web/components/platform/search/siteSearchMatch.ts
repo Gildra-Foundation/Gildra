@@ -51,38 +51,61 @@ export function transliterate(query: string) {
   return null;
 }
 
-/** At most one letter changed, added, dropped or swapped with its neighbour. */
-function nearlyEqual(a: string, b: string) {
-  if (Math.abs(a.length - b.length) > 1) return false;
+/** Whether a[from, from + length) equals b[at, at + length). */
+function same(a: string, from: number, b: string, at: number, length: number) {
+  for (let k = 0; k < length; k += 1) if (a.charCodeAt(from + k) !== b.charCodeAt(at + k)) return false;
+  return true;
+}
+
+/** The first `n` letters of `a` and `b` differ by at most one letter changed, added, dropped or swapped with its neighbour (no slices: this runs for every word of the index). */
+function nearlyEqual(a: string, n: number, b: string) {
+  const m = b.length;
+  if (Math.abs(n - m) > 1) return false;
   let i = 0;
-  while (i < a.length && i < b.length && a[i] === b[i]) i += 1;
-  if (i === a.length || i === b.length) return Math.abs(a.length - b.length) <= 1;
-  if (a.length === b.length) {
-    return a.slice(i + 1) === b.slice(i + 1) || (a[i] === b[i + 1] && a[i + 1] === b[i] && a.slice(i + 2) === b.slice(i + 2));
+  while (i < n && i < m && a.charCodeAt(i) === b.charCodeAt(i)) i += 1;
+  if (i === n || i === m) return true;
+  if (n === m) {
+    return same(a, i + 1, b, i + 1, n - i - 1) || (a.charCodeAt(i) === b.charCodeAt(i + 1) && a.charCodeAt(i + 1) === b.charCodeAt(i) && same(a, i + 2, b, i + 2, n - i - 2));
   }
-  return a.length > b.length ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1);
+  return n > m ? same(a, i + 1, b, i, n - i - 1) : same(a, i, b, i + 1, n - i);
 }
 
 /** A word of the title that the query word could be a mistyped start of (four letters or more). */
 function typoMatch(words: readonly string[], word: string) {
   if (word.length < 4) return false;
-  return words.some((candidate) => nearlyEqual(candidate.slice(0, word.length), word) || nearlyEqual(candidate.slice(0, word.length + 1), word) || nearlyEqual(candidate, word));
+  const length = word.length;
+  return words.some((candidate) => nearlyEqual(candidate, Math.min(length, candidate.length), word) || nearlyEqual(candidate, Math.min(length + 1, candidate.length), word) || nearlyEqual(candidate, candidate.length, word));
 }
 
-type Prepared = { entry: SiteSearchEntry; title: string; extra: string; titleWords: string[]; extraWords: string[] };
+type Prepared = { entry: SiteSearchEntry; key: string; title: string; extra: string; spacedTitle: string; spacedExtra: string; titleWords: string[]; extraWords: string[] };
 /** Each index normalised once (the dialog searches the same list on every keystroke). */
 const prepared = new WeakMap<readonly SiteSearchEntry[], Prepared[]>();
+const preparing = new WeakMap<readonly SiteSearchEntry[], Prepared[]>();
+const prepareEntry = (entry: SiteSearchEntry): Prepared => {
+  const title = normalize(entry.t);
+  const extra = normalize(`${entry.k ?? ""} ${entry.s}`);
+  return { entry, key: entry.h + entry.t, title, extra, spacedTitle: ` ${title}`, spacedExtra: ` ${extra}`, titleWords: title.split(" "), extraWords: extra.split(" ") };
+};
+
+/**
+ * Normalises an index, all at once or, given an idle deadline, as much as fits in it.
+ * True once the index is ready (idle time prepares it ahead of the first keystroke).
+ */
+export function prepareIndex(entries: readonly SiteSearchEntry[], deadline?: { timeRemaining: () => number }) {
+  if (prepared.has(entries)) return true;
+  const list = preparing.get(entries) ?? [];
+  preparing.set(entries, list);
+  // A few entries even when the deadline is spent (an idle callback that timed out), so it always moves on.
+  for (let count = 0; list.length < entries.length && (!deadline || deadline.timeRemaining() > 1 || count < 16); count += 1) list.push(prepareEntry(entries[list.length]));
+  if (list.length < entries.length) return false;
+  prepared.set(entries, list);
+  preparing.delete(entries);
+  return true;
+}
+
 function prepare(entries: readonly SiteSearchEntry[]) {
-  let list = prepared.get(entries);
-  if (!list) {
-    list = entries.map((entry) => {
-      const title = normalize(entry.t);
-      const extra = normalize(`${entry.k ?? ""} ${entry.s}`);
-      return { entry, title, extra, titleWords: title.split(" "), extraWords: extra.split(" ") };
-    });
-    prepared.set(entries, list);
-  }
-  return list;
+  prepareIndex(entries);
+  return prepared.get(entries)!;
 }
 
 function scoreAll(entries: readonly SiteSearchEntry[], query: string, weight: number, typos: boolean) {
@@ -90,20 +113,22 @@ function scoreAll(entries: readonly SiteSearchEntry[], query: string, weight: nu
   const hits = new Map<string, SiteSearchHit>();
   if (!words.length) return hits;
   const whole = words.join(" ");
-  for (const { entry, title, extra, titleWords, extraWords } of prepare(entries)) {
+  const spaced = words.map((word) => ` ${word}`);
+  for (const { entry, key, title, extra, spacedTitle, spacedExtra, titleWords, extraWords } of prepare(entries)) {
     let score = title.startsWith(whole) ? 40 : 0;
-    for (const word of words) {
+    for (let index = 0; index < words.length; index += 1) {
+      const word = words[index];
       let best = title.startsWith(word) ? 30
-        : ` ${title}`.includes(` ${word}`) ? 22
+        : spacedTitle.includes(spaced[index]) ? 22
         : title.includes(word) ? 12
-        : ` ${extra}`.includes(` ${word}`) ? 10
+        : spacedExtra.includes(spaced[index]) ? 10
         : extra.includes(word) ? 5
         : 0;
       if (!best && typos) best = typoMatch(titleWords, word) ? 9 : typoMatch(extraWords, word) ? 4 : 0;
       if (!best) { score = 0; break; }
       score += best;
     }
-    if (score) hits.set(entry.h + entry.t, { ...entry, score: score * weight });
+    if (score) hits.set(key, { ...entry, score: score * weight });
   }
   return hits;
 }
@@ -136,16 +161,7 @@ export function searchIndex(entries: readonly SiteSearchEntry[], query: string, 
 export function matchRanges(title: string, query: string): [number, number][] {
   const words = normalize(query).split(" ").filter(Boolean);
   if (!words.length) return [];
-  // The normalised title with, for each of its characters, the index in the original.
-  let flat = "";
-  const origin: number[] = [];
-  for (let index = 0; index < title.length; index += 1) {
-    const char = title[index];
-    if (/['’`]/.test(char)) continue;
-    const lower = char.toLowerCase() === "ё" ? "е" : char.toLowerCase();
-    flat += /[\p{L}\p{N}]/u.test(lower) ? lower : " ";
-    origin.push(index);
-  }
+  const { flat, origin } = flatten(title);
   const ranges: [number, number][] = [];
   for (const word of words.sort((a, b) => b.length - a.length)) {
     let at = ` ${flat}`.indexOf(` ${word}`);
@@ -157,4 +173,25 @@ export function matchRanges(title: string, query: string): [number, number][] {
     ranges.push([start, end]);
   }
   return ranges.sort((a, b) => a[0] - b[0]);
+}
+
+/** The normalised title with, for each of its characters, the index in the original (kept per title: rows redraw on every keystroke). */
+const flattened = new Map<string, { flat: string; origin: number[] }>();
+function flatten(title: string) {
+  let known = flattened.get(title);
+  if (!known) {
+    let flat = "";
+    const origin: number[] = [];
+    for (let index = 0; index < title.length; index += 1) {
+      const char = title[index];
+      if (/['’`]/.test(char)) continue;
+      const lower = char.toLowerCase() === "ё" ? "е" : char.toLowerCase();
+      flat += /[\p{L}\p{N}]/u.test(lower) ? lower : " ";
+      origin.push(index);
+    }
+    known = { flat, origin };
+    if (flattened.size > 2000) flattened.clear();
+    flattened.set(title, known);
+  }
+  return known;
 }
