@@ -170,22 +170,18 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
     const panel = body.current?.closest<HTMLElement>(".ui-dialog");
     // The blurred veil only where the page is composited on a GPU: in software every frame re-blurs the page.
     if (panel?.parentElement && !routeTurnDeviceAllowed(navigator as Navigator & RouteTurnDevice, renderTier() ?? "cpu")) panel.parentElement.dataset.veil = "plain";
-    if (!panel || !origin || lessMotion() || typeof panel.animate !== "function" || !window.matchMedia("(min-width: 721px)").matches) return;
-    // Nothing is measured here (a read would force the new dialog's layout inside the opening task):
-    // the panel hangs centred from min(12vh, 104px) (siteSearch.module.css), so the field's box is
-    // expressed against that — horizontally in percentages of the panel's own width.
-    panel.dataset.morph = "";
+    if (!panel || !origin || lessMotion() || !window.matchMedia("(min-width: 721px)").matches) return;
+    // Nothing is measured or animated from script here (either would bring the new dialog's style
+    // up to date inside the opening task, before the layer's focus does it again): the field's box
+    // goes to a CSS animation as variables. The panel hangs centred from min(12vh, 104px)
+    // (siteSearch.module.css), so the box is expressed against that, horizontally in
+    // percentages of the panel's own width.
     const centre = window.innerWidth / 2;
-    const shift = origin.top - Math.min(window.innerHeight * .12, 104);
-    const inset = `inset(0px max(0px, calc(50% - ${Math.round(origin.right - centre)}px)) calc(100% - ${Math.round(origin.height)}px) max(0px, calc(50% - ${Math.round(centre - origin.left)}px)))`;
-    const animation = panel.animate([
-      { clipPath: inset, translate: `0 ${Math.round(shift)}px`, opacity: .4 },
-      { clipPath: "inset(0px)", translate: "0 0", opacity: 1 },
-    ], { duration: 220, easing: "cubic-bezier(.2, .7, .2, 1)" });
-    const content = panel.querySelectorAll<HTMLElement>("[data-search-reveal]");
-    content.forEach((element) => element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: 60, easing: "ease-out", fill: "backwards" }));
-    animation.finished.then(() => { delete panel.dataset.morph; }, () => { delete panel.dataset.morph; });
-    return () => animation.cancel();
+    panel.style.setProperty("--morph-shift", `0 ${Math.round(origin.top - Math.min(window.innerHeight * .12, 104))}px`);
+    panel.style.setProperty("--morph-clip", `inset(0px max(0px, calc(50% - ${Math.round(origin.right - centre)}px)) calc(100% - ${Math.round(origin.height)}px) max(0px, calc(50% - ${Math.round(centre - origin.left)}px)))`);
+    // (It stays: once played, the open panel keeps that finished animation instead of the kit's
+    // zoom; a close switches to the kit's exit.)
+    panel.dataset.morph = "";
   }, [origin]);
 
   const trimmed = deferred.trim();
