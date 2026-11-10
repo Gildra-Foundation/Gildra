@@ -23,9 +23,21 @@ const { chromium } = require('playwright');
       assert.deepEqual(head.langs, ['en', 'ru', 'x-default']);
       assert(head.images);
       for (const type of ['WebSite', 'Organization', 'CollectionPage', 'BreadcrumbList', 'ItemList']) assert(head.graph.some(e => e['@type'] === type), type);
-      assert.equal(await page.locator('#season article').first().locator('li a').count(), 8);
-      assert.equal(await page.locator('#season article').last().locator('li a').count(), 8);
-      assert.equal(await page.locator('#explore li a').count(), 13);
+      assert.equal(await page.locator('#mythic article').first().locator('li a').count(), 8);
+      assert.equal(await page.locator('#raids article').last().locator('li a').count(), 8);
+      assert.equal(await page.locator('#hero article li a').count(), 13);
+      const list = head.graph.find(e => e['@type'] === 'ItemList');
+      const bodyHrefs = await page.locator('main section a[href]').evaluateAll(links => links.map(a => a.getAttribute('href')));
+      assert.equal(new Set(list.itemListElement.map(item => item.url)).size, list.itemListElement.length);
+      for (const item of list.itemListElement) assert.equal(bodyHrefs.filter(href => href === new URL(item.url).pathname).length, 1, `Feature must appear once: ${item.url}`);
+      for (const path of new Set(bodyHrefs.filter(href => href.startsWith("/")).map(href => href.split("#")[0]))) {
+        const response = await page.request.get(`${process.env.BASE_URL || "http://127.0.0.1:3137"}${path}`, { timeout: 120000 });
+        assert.equal(response.status(), 200, `Broken hub destination: ${path}`);
+        const html = await response.text();
+        if (!path.endsWith("/wow/characters")) assert(!/<meta name="robots" content="[^"]*noindex/i.test(html), `Private hub destination: ${path}`);
+      }
+      assert.equal(await page.locator('main section[id]').count(), 5);
+      assert.equal(await page.locator(`main a[href="${prefix}/wow/stories"]`).count(), locale === 'ru' ? 1 : 0);
       console.log(`${locale}: metadata / JSON-LD / H1 / alt / hreflang / crawlable links PASS`);
       await page.close();
     }

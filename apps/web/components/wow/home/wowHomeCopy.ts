@@ -1,41 +1,95 @@
-/** Player actions and section names, kept in parity for both locales. */
+/** Player copy shared by the lookup, hub and Open Graph. */
 export const wowHomeCopy = {
-  ru: {
-    recentCharacters: "Недавние персонажи", weeklyMeta: "Мета недели", roles: { tank: "Танк", healer: "Лекарь", dps: "Боец" },
-    metaTitle: "WowArcana — гайды и инструменты World of Warcraft",
-    description: "Midnight, сезон 2: маршруты и таймеры Mythic+, тактики рейдов, тир-листы и таланты. Поиск персонажей, карта мира и цены аукциона World of Warcraft.",
-    routeAlt: "Карта первого этажа Рубиновых Омутов Жизни с маршрутом пуллов", raidAlt: "Вход в рейд Отравленная бездна", mapAlt: "Карта Азерота: Калимдор, Восточные королевства и Нордскол",
-    eyebrow: "Midnight", title: "гайды и инструменты World of Warcraft", lede: "Подготовьтесь к ключу, соберите таланты и найдите своего героя в Midnight.",
-    closingLabel: "Быстрый переход", closingCharacter: "Найти своего персонажа", closingMap: "Открыть карту мира", character: "Мои персонажи", play: "Сезон Mythic+",
-    seasonTitle: "Подземелья и рейды", meta: "Мета недели", mythicText: "Выберите ключ по таймеру: маршруты пуллов, прерывания и тактики боссов.", dungeons: "Выбрать подземелье",
-    raids: "Рейды", raidText: "Все восемь боссов Отравленной бездны: тактики Normal и Heroic для вашей роли.", explore: "Откройте Азерот", tools: "Всё для вашего героя",
-    featured: {
-      map: { title: "Карта мира", text: "Континенты, подземелья и рейды — найдите следующую цель." },
-      classes: { title: "Классы и таланты", text: "Выберите специализацию и соберите свой билд." },
+  "ru": {
+    "recentCharacters": "Недавние персонажи",
+    "weeklyMeta": "Мета недели",
+    "roles": {
+      "tank": "Танк",
+      "healer": "Лекарь",
+      "dps": "Боец"
     },
-    toolsCopy: { auction: "Аукцион", tierLists: "Тир-листы", library: "Библиотека", transmog: "Трансмог", lairs: "Логова и боссы", characters: "Персонажи" },
-    lookup: { title: "Найти персонажа", region: "Регион", realm: "Сервер", realmExample: "Гордунни", name: "Имя", submit: "Найти" },
-    toolText: { auction: "Цены и лоты вашего сервера", tierLists: "Сила специализаций", library: "Предметы и заклинания", transmog: "Соберите свой образ", lairs: "Механики и добыча", characters: "Герои Battle.net" },
-    productLabel: "Возможности WowArcana", routeStrength: "Маршруты Mythic+", routeDetail: "Карта, порядок пуллов и таймер", mapStrength: "Карта Азерота", mapDetail: "Континенты, подземелья и рейды", classStrength: "Классы и таланты", classDetail: "Классы, специализации и таланты", mapDestination: "Исследовать Азерот", moreDungeons: "Остальные подземелья", moreBosses: "Остальные боссы", closingTitle: "Куда отправится ваш герой?",
-    news: "Что нового", allNews: "Все изменения",
-  },
-  en: {
-    recentCharacters: "Recent characters", weeklyMeta: "This week’s meta", roles: { tank: "Tank", healer: "Healer", dps: "Damage" },
-    metaTitle: "WowArcana — World of Warcraft guides and tools",
-    description: "Midnight Season 2: Mythic+ routes and timers, raid tactics, tier lists and talents. Find your WoW character, explore the world map and auction prices.",
-    routeAlt: "Ruby Life Pools first-floor map with the pull route", raidAlt: "Entrance to The Venomous Abyss raid", mapAlt: "Azeroth map: Kalimdor, Eastern Kingdoms and Northrend",
-    eyebrow: "Midnight", title: "World of Warcraft guides and tools", lede: "Plan your next key, choose your talents and find your hero in Midnight.",
-    closingLabel: "Quick access", closingCharacter: "Find your character", closingMap: "Open the world map", character: "My characters", play: "Mythic+ season",
-    seasonTitle: "Dungeons & raids", meta: "Weekly meta", mythicText: "Choose a key by its time limit and plan pulls, interrupts and boss fights before the run.", dungeons: "Choose a dungeon",
-    raids: "Raids", raidText: "The Venomous Abyss: all eight bosses, with mechanics and role-specific responses for Normal and Heroic.", explore: "Explore Azeroth", tools: "Everything for your hero",
-    featured: {
-      map: { title: "World map", text: "Continents, dungeons and raids — find your next destination." },
-      classes: { title: "Classes & talents", text: "Choose talents for your specialization." },
+    "metaTitle": "WowArcana — гайды и инструменты World of Warcraft",
+    "description": "Midnight, сезон 2: маршруты и таймеры Mythic+, тактики рейдов, тир-листы и таланты. Поиск персонажей, карта мира и цены аукциона World of Warcraft.",
+    "routeAlt": "Карта первого этажа Рубиновых Омутов Жизни с маршрутом пуллов",
+    "raidAlt": "Вход в рейд Отравленная бездна",
+    "mapAlt": "Карта Азерота: Калимдор, Восточные королевства и Нордскол",
+    "eyebrow": "Midnight",
+    "title": "Гайды и инструменты World of Warcraft",
+    "lede": "Подготовьтесь к ключу, соберите таланты и найдите своего героя в Midnight.",
+    "play": "Сезон Mythic+",
+    "lookup": {
+      "title": "Найти персонажа",
+      "region": "Регион",
+      "realm": "Сервер",
+      "realmExample": "Гордунни",
+      "name": "Имя",
+      "submit": "Найти"
     },
-    toolsCopy: { auction: "Auction House", tierLists: "Tier lists", library: "Library", transmog: "Transmog Studio", lairs: "Lairs & world bosses", characters: "Characters" },
-    lookup: { title: "Find a character", region: "Region", realm: "Realm", realmExample: "Twisting Nether", name: "Name", submit: "Find" },
-    toolText: { auction: "Prices and listings on your realm", tierLists: "Specialization strength", library: "Items and spells", transmog: "Create your look", lairs: "Outdoor encounters", characters: "Your Battle.net heroes" },
-    productLabel: "Explore WowArcana", routeStrength: "Mythic+ routes", routeDetail: "Maps, pull order and timers", mapStrength: "Azeroth map", mapDetail: "Continents, dungeons and raids", classStrength: "Classes & talents", classDetail: "Classes, specializations and talents", mapDestination: "Explore Azeroth", moreDungeons: "More dungeons", moreBosses: "More bosses", closingTitle: "Where will your hero go next?",
-    news: "What’s new", allNews: "All changes",
+    "productLabel": "Возможности WowArcana",
+    "moreDungeons": "Остальные подземелья",
+    "moreBosses": "Остальные боссы",
+    "classesIntro": "Специализации и деревья талантов — выберите класс и соберите билд.",
+    "mapIntro": "Континенты, зоны и города сквозь эпохи Азерота.",
+    "auctionIntro": "Найдите предмет и сравните лоты вашего сервера с ценами региона.",
+    "worldsLabel": "Миры Warcraft",
+    "midnightContent": "Ключи и рейды сезона",
+    "foreverContent": "Подземелья и рейды",
+    "mistsContent": "Классы и таланты",
+    "openGroup": {
+      "mythic": "Выбрать подземелье",
+      "raids": "Открыть рейдовый журнал",
+      "hero": "Выбрать специализацию",
+      "economy": "Сравнить цены",
+      "world": "Открыть карту мира"
+    },
+    "auctionAlt": "Аукционный дом Оргриммара",
+    "continentsLabel": "Континенты",
+    "mythicText": "Маршруты пуллов, прерывания и таймеры ключей."
   },
+  "en": {
+    "recentCharacters": "Recent characters",
+    "weeklyMeta": "This week’s meta",
+    "roles": {
+      "tank": "Tank",
+      "healer": "Healer",
+      "dps": "Damage"
+    },
+    "metaTitle": "WowArcana — World of Warcraft guides and tools",
+    "description": "Midnight Season 2: Mythic+ routes and timers, raid tactics, tier lists and talents. Find your WoW character, explore the world map and auction prices.",
+    "routeAlt": "Ruby Life Pools first-floor map with the pull route",
+    "raidAlt": "Entrance to The Venomous Abyss raid",
+    "mapAlt": "Azeroth map: Kalimdor, Eastern Kingdoms and Northrend",
+    "eyebrow": "Midnight",
+    "title": "World of Warcraft guides and tools",
+    "lede": "Plan your next key, choose your talents and find your hero in Midnight.",
+    "play": "Mythic+ season",
+    "lookup": {
+      "title": "Find a character",
+      "region": "Region",
+      "realm": "Realm",
+      "realmExample": "Twisting Nether",
+      "name": "Name",
+      "submit": "Find"
+    },
+    "productLabel": "Explore WowArcana",
+    "moreDungeons": "More dungeons",
+    "moreBosses": "More bosses",
+    "classesIntro": "Specializations and talent trees — choose a class and plan your talents.",
+    "mapIntro": "Continents, zones and cities through Azeroth’s eras.",
+    "auctionIntro": "Find an item and compare your realm’s listings with region prices.",
+    "worldsLabel": "Warcraft worlds",
+    "midnightContent": "Seasonal keys and raids",
+    "foreverContent": "Dungeons and raids",
+    "mistsContent": "Classes and talents",
+    "openGroup": {
+      "mythic": "Choose a dungeon",
+      "raids": "Open the raid journal",
+      "hero": "Choose a specialization",
+      "economy": "Compare prices",
+      "world": "Open the world map"
+    },
+    "auctionAlt": "Orgrimmar Auction House",
+    "continentsLabel": "Continents",
+    "mythicText": "Pull routes, interrupts and time limits for your next key."
+  }
 } as const;

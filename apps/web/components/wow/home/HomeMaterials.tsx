@@ -1,9 +1,7 @@
-import Link from "next/link";
-import styles from "./wowHome.module.css";
 import buttonStyles from "@/components/wow/shared/material/material.module.css";
 import type { ComponentProps, CSSProperties } from "react";
 import { MaterialPlaque, materialButtonStyle, type MaterialKit } from "@/components/wow/shared/materialAtlas";
-import { AtlasButton, type AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
+import { AtlasButton, AtlasLinkButton } from "@gildra/atlas-ui/AtlasButton";
 
 type Kit = Extract<MaterialKit, "den-of-nalorakk">;
 const image = (kit: Kit, kind: "panels" | "buttons") => `url("/assets/wow/home/light/${kit}-${kind}.webp")`;
@@ -17,12 +15,6 @@ export function HomeButton({ kit, fit, className, ...props }: ComponentProps<typ
   return <span className={buttonStyles.slot} style={buttonStyle(kit)} data-block={fit === "block" || undefined} data-stack={fit === "stack" || undefined}><AtlasButton {...props} className={`${buttonStyles.button} ${className ?? ""}`} /></span>;
 }
 
-/** Quiet page-local surfaces; shared painted controls stay untouched. */
-export function HomeSurface({ as: Tag = "div", kit: _kit, className, ...props }: Omit<ComponentProps<typeof MaterialPlaque>, "kit"> & { kit: Kit }) {
-  void _kit;
-  return <Tag {...props} className={`${styles.surface} ${className ?? ""}`} />;
-}
 export function HomeSecondaryLink({ kit: _kit, fit: _fit, variant: _variant, iconAfter, children, ...props }: ComponentProps<typeof AtlasLinkButton> & { kit: Kit; fit?: "block" | "stack" }) {
-  void _kit; void _fit; void _variant;
-  return <Link {...props} prefetch={false} className={styles.secondaryLink}>{children}{iconAfter}</Link>;
+  return <span className={buttonStyles.slot} style={buttonStyle(_kit)} data-block={_fit === "block" || undefined} data-stack={_fit === "stack" || undefined}><AtlasLinkButton {...props} prefetch={false} variant={_variant} className={`${buttonStyles.button} ${props.className ?? ""}`} iconAfter={iconAfter}>{children}</AtlasLinkButton></span>;
 }
