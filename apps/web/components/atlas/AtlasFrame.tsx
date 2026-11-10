@@ -6,6 +6,7 @@ import { footerCopy } from "./footerLinks";
 import { GildraCrest } from "@/components/brand/GildraCrest";
 import styles from "./AtlasFrame.module.css";
 import { FooterNavigation } from "./FooterNavigation";
+import { FooterLanguage } from "./FooterLanguage";
 
 type ShellProps = ComponentProps<typeof AtlasFrameShell>;
 
@@ -13,8 +14,8 @@ export type AtlasFrameProps = Omit<ShellProps, "footer" | "ember" | "glow" | "ho
   /** Section scene from lib/atlas/scenes.ts (art, crop, shade, tint, sparks, living light); explicit props override it. */
   scene?: AtlasSceneId;
   /** Site footer under the content: brand, grouped links, language and motion controls, legal notice.
-   *  An object replaces the line's text and links (the 404 of unmatched URLs picks its language on the client). */
-  footer?: boolean | { legal: ReactNode; links: ReactNode; description?: ReactNode; language?: ReactNode; motion?: ReactNode };
+   *  An object replaces some of its parts (the 404 links its languages to the hubs; the 404 of unmatched URLs picks its language on the client). */
+  footer?: boolean | { legal?: ReactNode; links?: ReactNode; description?: ReactNode; language?: ReactNode; motion?: ReactNode };
 };
 
 /** The site's one legal line (Blizzard trademark notice) in a language: one short sentence pair. */
@@ -29,10 +30,7 @@ const footerParts = (locale: "en" | "ru") => ({
   description: footerCopy[locale].description,
   legal: atlasLegal(locale),
   links: <FooterNavigation locale={locale} />,
-  language: <nav className={styles.footerLanguages} aria-label={footerCopy[locale].language}>
-    <Link href="/wow" lang="en" hrefLang="en" prefetch={false} aria-current={locale === "en" ? "true" : undefined}>English</Link>
-    <Link href="/ru/wow" lang="ru" hrefLang="ru" prefetch={false} aria-current={locale === "ru" ? "true" : undefined}>Русский</Link>
-  </nav>,
+  language: <FooterLanguage locale={locale} />,
 });
 
 /** The frame's legal line on its own, for a page that cannot sit in the frame (the full-bleed story reader). */
