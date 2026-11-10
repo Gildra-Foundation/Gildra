@@ -17,7 +17,7 @@
 .surface { padding: var(--atlas-space-5); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); background: var(--atlas-glass-fill); }
 .secondaryLink { display: inline-flex; align-items: center; justify-content: center; gap: var(--atlas-space-3); min-height: 44px; padding: var(--atlas-space-2) var(--atlas-space-4); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius); color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); text-decoration: none; }
 .secondaryLink svg { width: 16px; height: 16px; }
-.seasonNow { padding: var(--atlas-space-5); border-left: 1px solid var(--atlas-line); margin-bottom: var(--atlas-space-5); }
+.seasonNow { padding: var(--atlas-space-5); border: 1px solid var(--atlas-line-soft); background: var(--atlas-glass-fill); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter); }
 .seasonNow h2 { font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); margin: 0 0 var(--atlas-space-3); }
 .liveLinks { list-style: none; margin: 0; padding: 0; }
 .liveLinks li { border-top: 1px solid var(--atlas-line-soft); }
@@ -52,10 +52,13 @@
 .mapCard { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); border: 1px solid var(--atlas-line-soft); background: var(--atlas-glass-fill); }
 .mapArt { display: block; overflow: hidden; }
 .mapPreview { border: 0; aspect-ratio: 1.5; }
-.mapPainting { display: grid; grid-template-columns: repeat(2, 1fr); position: absolute; width: 100%; aspect-ratio: 1; top: 0; left: 0; pointer-events: none; }
+/* The level-1 Azeroth tiles hold a 480×320 painting in a 512 px square. */
+.mapPainting { display: grid; grid-template-columns: repeat(2, 1fr); position: absolute; width: calc(100% * 512 / 480); aspect-ratio: 1; top: 0; left: 0; pointer-events: none; }
 .mapPainting img { display: block; width: 100%; height: auto; }
 .exploreBody { align-self: center; border: 0; background: transparent; }
 .exploreBody h3 { margin: 0 0 var(--atlas-space-2); }
+.continents { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: var(--atlas-space-4) 0 0; padding: 0; list-style: none; }
+.continents a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--atlas-space-3); border: 1px solid var(--atlas-line-soft); color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; }
 .exploreBody h3 a, .classesCard h3 a { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-2); min-height: 44px; color: inherit; text-decoration: none; }
 .classesCard { display: flex; flex-direction: column; gap: var(--atlas-space-3); border: 0; background: transparent; padding: var(--atlas-space-4) 0 0; }
 .classesCard h3 { margin: 0; }
@@ -82,15 +85,15 @@
 .news svg { width: 16px; height: 16px; margin-left: auto; flex: none; color: var(--atlas-accent); }
 .closing { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-4); margin-top: var(--atlas-section-gap); padding-inline: 0; border-width: 1px 0 0; background: transparent; }
 .closing h2 { margin: 0; font-size: var(--atlas-text-h2); }
-.recentSlot { height: 48px; position: relative; }
-.recentCharacters { display: flex; gap: var(--atlas-space-2); position: absolute; inset: var(--atlas-space-1) 0 0; overflow: hidden; }
+.recentSlot { flex: 1 1 0; min-width: 0; height: 44px; position: relative; }
+.recentCharacters { display: flex; justify-content: flex-end; gap: var(--atlas-space-4); position: absolute; inset: 0; overflow: hidden; }
 .recentCharacters a { display: block; align-content: center; min-height: 44px; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); }
 .page a:focus-visible, .page summary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
 @media (hover: hover) { .page a:hover { color: var(--atlas-accent-strong); } .secondaryLink:hover { background: var(--atlas-accent-wash); } }
 @media (forced-colors: active) { .surface, .secondaryLink, .mapCard, .productPreview, .strengths { border-color: CanvasText; } }
 @media (max-width: 1200px) {
   .hero > div:last-child { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); }
-  .seasonNow { margin: 0; padding: 0; border: 0; }
+  .seasonNow { margin: 0; padding: 0; border: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .seasonNow .liveLinks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-4); }
 }
 @media (max-width: 700px) {
@@ -103,6 +106,14 @@
   .lookupFields { grid-template-columns: 70px minmax(0, 1fr); gap: var(--atlas-space-2); }
   .lookupFields > :nth-child(3), .lookupFields > span:last-child { grid-column: 1 / -1; }
   .actions { gap: 0 var(--atlas-space-4); }
+  /* Phone: recent heroes take the place of the generic links, in the same row. */
+  .actions { position: relative; }
+  .recentSlot { display: none; }
+  @supports selector(:has(a)) {
+    .recentSlot { display: block; position: absolute; inset: 0; height: auto; pointer-events: none; }
+    .recentCharacters { justify-content: flex-start; pointer-events: auto; }
+    .actions:has(.recentCharacters) .textLink { visibility: hidden; }
+  }
   .seasonNow h2 { font-size: var(--atlas-text-h3); margin-bottom: var(--atlas-space-2); }
   .seasonNow .liveLinks { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .seasonNow .liveLinks a { min-height: 44px; padding-block: var(--atlas-space-1); }

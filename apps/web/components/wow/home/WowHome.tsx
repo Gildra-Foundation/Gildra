@@ -16,6 +16,9 @@ import type { Lang } from "@/lib/i18n";
 import { wowHomeCopy } from "./wowHomeCopy";
 import styles from "./wowHome.module.css";
 import { JsonLd } from "@/lib/seo/jsonld";
+import { worldMapBundle } from "@/lib/wow/worldMap/data.server";
+import { mapPagePath } from "@/lib/wow/worldMap/bundle";
+import { HomeRecentCharacters } from "./HomeRecentCharacters";
 
 const tools = [
   { key: "auction", href: "/wow/auction", icon: Coins },
@@ -46,18 +49,21 @@ export function WowHome({ lang, raids, news }: { lang: Lang; raids: HomeRaid[]; 
   const seasonalDungeons = season?.slug === "midnight-season-2" ? dungeonSlugs : [];
   const route = dungeonRoutes["ruby-life-pools"];
   const previewStops = route.stops.filter(stop => stop.floor === 1);
+  const azeroth = worldMapBundle(locale).maps.find(map => map.slug === "azeroth" && map.type === "world");
+  const continents = azeroth ? worldMapBundle(locale).maps.filter(map => map.parent === azeroth.id && map.type === "continent" && map.page) : [];
   const classes = [...new Map(midnightSpecializations.map(spec => [spec.classSlug, spec])).values()].sort((a,b) => a.classId-b.classId);
 
 
   return <AtlasFrame lang={locale} scene="wow" art="" artLayer={<HomeArtwork />} className={styles.page} dataAttributes={{ "data-wow-atlas": true }}>
     <JsonLd data={homeStructuredData(locale)} />
     <AtlasHero align="start" className={styles.hero}
-      eyebrow={season?.names[locale] ?? t.eyebrow} title={<>WowArcana<span className={styles.heroPromise}>— {t.title}</span></>} lede={t.lede}
+      eyebrow={season?.names[locale] ?? t.eyebrow} title={<>WowArcana{" "}<span className={styles.heroPromise}>{t.title}</span></>} lede={t.lede}
       actions={<div className={styles.heroContent}>
         <HomeCharacterLookup locale={locale} />
         <div className={styles.actions}>
           <Link href={href("/wow/mythic-plus")} prefetch={false} className={styles.textLink}>{t.play}<ArrowRight aria-hidden="true" /></Link>
           {raid && <Link href={href(`/wow/raids/${raid.slug}`)} prefetch={false} className={styles.textLink}>{raid.names[locale]}<ArrowRight aria-hidden="true" /></Link>}
+          <HomeRecentCharacters locale={locale} label={t.recentCharacters} />
         </div>
       </div>}
       aside={<HomeWeeklyMeta locale={locale} />}
@@ -124,6 +130,7 @@ export function WowHome({ lang, raids, news }: { lang: Lang; raids: HomeRaid[]; 
           <MaterialPlaque kit="den-of-nalorakk" className={styles.exploreBody}>
             <h3 className={materialStyles.title}><Link href={href("/wow/map")} prefetch={false}>{t.featured.map.title}<ArrowRight aria-hidden="true" /></Link></h3>
             <p className={materialStyles.text}>{t.featured.map.text}</p>
+            {continents.length > 0 && <ul className={styles.continents}>{continents.map(map => <li key={map.id}><Link href={href(mapPagePath(map))} prefetch={false}>{map.name}</Link></li>)}</ul>}
           </MaterialPlaque>
         </article>
         <MaterialPlaque kit="den-of-nalorakk" as="article" className={styles.classesCard}>
