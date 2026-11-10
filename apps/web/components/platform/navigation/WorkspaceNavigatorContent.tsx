@@ -25,8 +25,8 @@ import toolbarStyles from "./atlasToolbar.module.css";
 const OPEN_DELAY = 100;
 const SWITCH_DELAY = 120;
 const CLOSE_DELAY = 250;
-/** Longest exit animation (menu and sheet); a fallback when animationend never comes. */
-const EXIT_MS = 200;
+/** How long a closed menu or sheet stays for its exit animation (130 ms; a frame or two to spare). */
+const EXIT_MS = 170;
 /** Where the bar has its tab row and menus; below it, the sheet holds every section. */
 const WIDE = "(min-width: 1180px)";
 const wide = () => window.matchMedia(WIDE).matches;
@@ -174,12 +174,12 @@ const rowStops = (list: HTMLElement | null) => [...(list?.querySelectorAll<HTMLE
  * list is a column of large rows, each unfolding its menu in place. Every menu
  * is in the server HTML (hidden until opened), so all its links are crawlable.
  */
-const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetOpen, onNavigate }: {
+const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetState, onNavigate }: {
   path: string; lang: Lang; picks: NavigationPicks;
   /** Draw the sheet rows' section icons (the sheet has been prepared). */
   rows: boolean;
-  /** The sheet just opened: unfold the current section. */
-  sheetOpen: boolean;
+  /** The sheet's state: closed (and prepared) or open, it holds the current section unfolded. */
+  sheetState: "open" | "closing" | "closed";
   onNavigate: (event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
   const ru = lang === "ru";
@@ -187,8 +187,8 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetOpen, on
   const current = currentRealm(barePath);
   const currentId = current?.realm.id ?? null;
   const [open, setOpen] = useState<OpenMenu | null>(null);
-  // The menu that is fading out after a close (its exit animation, wide screens only).
-  const [leaving, setLeaving] = useState<{ path: string; realm: string } | null>(null);
+  // The menu that is fading out after a close or a switch (its exit animation, wide screens only).
+  const [leaving, setLeaving] = useState<{ path: string; realm: string; swap?: boolean } | null>(null);
   const openMenu = open?.path === path ? open : null;
   const openRealm = openMenu?.realm ?? null;
   const leavingRealm = leaving?.path === path && leaving.realm !== openRealm ? leaving.realm : null;
@@ -214,20 +214,31 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetOpen, on
   const show = (realm: string, by: OpenMenu["by"]) => {
     clearTimeout(timer.current);
     warm(realm);
-    setLeaving(null);
+    const from = openRealm !== realm && wide() && !lessMotion() ? openRealm : null;
+    // A switch resizes the frame from the old menu's height (a read of the clean layout, before any write).
+    swapFrom.current = from ? document.getElementById(`${id}-${from}`)?.offsetHeight ?? 0 : 0;
+    leave(from, true);
     setOpen(previous => ({ path, realm, by, fresh: !(previous && previous.path === path) }));
   };
+  /** The menu that fades out (a close, or a switch that hands its frame to the next one). */
+  function leave(realm: string | null, swap?: boolean) {
+    setLeaving(realm ? { path, realm, swap } : null);
+    clearTimeout(exitTimer.current);
+    if (realm) exitTimer.current = setTimeout(() => setLeaving(null), EXIT_MS);
+  }
   const close = () => {
     clearTimeout(timer.current);
-    if (openRealm && wide() && !lessMotion()) {
-      setLeaving({ path, realm: openRealm });
-      clearTimeout(exitTimer.current);
-      exitTimer.current = setTimeout(() => setLeaving(null), EXIT_MS);
-    }
+    if (openRealm && wide() && !lessMotion()) leave(openRealm);
     setOpen(null);
   };
 
-  useEffect(() => () => { clearTimeout(timer.current); clearTimeout(exitTimer.current); }, []);
+  useEffect(() => {
+    // Crossing into the wide bar drops the sheet's unfolded section (it would open as a dropdown).
+    const query = window.matchMedia(WIDE);
+    const change = () => { if (query.matches) setOpen(null); };
+    query.addEventListener("change", change);
+    return () => { clearTimeout(timer.current); clearTimeout(exitTimer.current); query.removeEventListener("change", change); };
+  }, []);
 
   // Idle time draws the menus' icons and pictures ahead, one menu per idle slice, so the
   // first opening only shows a menu (rendering one at the press was a 60–130 ms task on a slow CPU).
@@ -249,7 +260,8 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetOpen, on
   // An open menu or sheet stands above the cookie notice: the bar's own flag (a :has() over
   // the bar restyled all of it on every opening).
   const menuShown = Boolean(openRealm || leavingRealm);
-  useEffect(() => { root.current?.closest("header")?.toggleAttribute("data-menu-open", menuShown); }, [menuShown]);
+  // (Below 1180 px the sheet carries its own flag; the section it holds unfolded is no dropdown.)
+  useEffect(() => { root.current?.closest("header")?.toggleAttribute("data-menu-open", menuShown && wide()); }, [menuShown]);
 
   // One stable handler for every menu link, so the memoised menus stay still while the bar's state changes.
   const latest = useRef({ close, onNavigate });
@@ -259,15 +271,18 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetOpen, on
     latest.current.onNavigate(event);
   }, []);
 
-  // The sheet opens on the reader's section, unfolded (a plain section has nothing to unfold).
+  // The sheet opens on the reader's section, unfolded (a plain section has nothing to unfold). It is
+  // unfolded while the sheet is still closed and unseen, so the tap only shows the sheet; after a
+  // close the sheet goes back to it.
   const currentHasMenu = Boolean(current && !isSingle(current.realm, lang, picks) && realms.includes(current.realm));
   useEffect(() => {
-    if (sheetOpen && currentId && currentHasMenu) {
+    if (wide() || sheetState === "closing") return;
+    if ((rows || sheetState === "open") && currentId && currentHasMenu) {
       warm(currentId);
-      setOpen({ path, realm: currentId, by: "press", fresh: true });
+      setOpen(previous => previous?.path === path && previous.realm === currentId && sheetState === "open" ? previous : { path, realm: currentId, by: "press", fresh: true });
     }
-    else if (!sheetOpen && !wide()) setOpen(null);
-  }, [sheetOpen, currentId, currentHasMenu, path]);
+    else if (sheetState === "closed") setOpen(null);
+  }, [sheetState, rows, currentId, currentHasMenu, path]);
 
   useEffect(() => {
     if (!openRealm) return;
@@ -277,6 +292,19 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetOpen, on
     document.addEventListener("pointerdown", outside);
     return () => document.removeEventListener("pointerdown", outside);
   }, [openRealm]);
+
+  // The frame of a switch grows or shrinks from the old menu's height to the new one's: a scale of
+  // its own layer (FLIP). The new height is read once the menu is in the document, the read that
+  // lays it out for the coming frame anyway.
+  const swapFrom = useRef(0);
+  useLayoutEffect(() => {
+    const before = swapFrom.current;
+    swapFrom.current = 0;
+    const panel = openRealm ? document.getElementById(`${id}-${openRealm}`) : null;
+    const after = panel?.offsetHeight;
+    if (!before || !after || Math.abs(before - after) < 2 || typeof panel.animate !== "function") return;
+    panel.animate([{ scale: `1 ${before / after}` }, { scale: "1 1" }], { duration: 150, easing: "cubic-bezier(.25, .46, .45, .94)", pseudoElement: "::before" });
+  }, [openRealm, id]);
 
   // A menu opened from the keyboard takes focus once it is in the document.
   useLayoutEffect(() => {
@@ -391,9 +419,9 @@ const RealmNav = memo(function RealmNav({ path, lang, picks, rows, sheetOpen, on
             <ChevronDown className={toolbarStyles.chevron} size={14} strokeWidth={2} aria-hidden="true" />
           </button>
           <div id={`${id}-${realm.id}`} className={toolbarStyles.panel} data-menu-panel hidden={!(isOpen || isLeaving)}
+            data-swap-out={(isLeaving && leaving?.swap) || undefined}
             data-state={isOpen ? "open" : "closed"} data-enter={(isOpen && openMenu?.fresh) || undefined}
-            inert={(!isOpen && isLeaving) || undefined}
-            onAnimationEnd={event => { if (!isOpen && event.target === event.currentTarget) setLeaving(null); }}>
+            inert={(!isOpen && isLeaving) || undefined}>
             <RealmMenu realm={realm} picks={picks} lang={lang} barePath={barePath} art={warmed.has(realm.id)} onNavigate={navigate} />
           </div>
         </li>;
@@ -485,8 +513,12 @@ function useMenuSheet(path: string, bar: RefObject<HTMLElement | null>) {
   useEffect(() => {
     if (!open) return;
     const host = sheet.current;
-    // Focus moves into the sheet: its first control (the search field on phones).
-    focusables(host).find(element => !element.closest("[data-menu-panel]"))?.focus({ preventScroll: true });
+    // Focus moves into the sheet: its first control that takes it (the search field on phones, the
+    // first section on tablets), without measuring every control of the sheet on the tap.
+    for (const target of host?.querySelectorAll<HTMLElement>("[data-sheet-first], nav li > :is(a, button)") ?? []) {
+      target.focus({ preventScroll: true });
+      if (document.activeElement === target) break;
+    }
     const header = bar.current;
     // The page under the sheet stays put: the sheet contains its own scroll
     // (overscroll-behavior) and a drag anywhere else is held. No overflow lock
@@ -532,7 +564,7 @@ function useMenuSheet(path: string, bar: RefObject<HTMLElement | null>) {
 
   const state: "open" | "closing" | "closed" = open ? "open" : leaving ? "closing" : "closed";
   useEffect(() => { bar.current?.toggleAttribute("data-sheet-open", state !== "closed"); }, [state, bar]);
-  return { sheetRef: sheet, triggerRef: trigger, sheet: { id, open, state, built, toggle, prepare, close, navigate, onExit: () => setLeaving(false) } };
+  return { sheetRef: sheet, triggerRef: trigger, sheet: { id, open, state, built, toggle, prepare, close, navigate } };
 }
 
 type Sheet = ReturnType<typeof useMenuSheet>["sheet"];
@@ -553,17 +585,16 @@ function MenuSheet({ sheet, sheetRef, path, lang, picks }: { sheet: Sheet; sheet
   return <>
     {/* The scrim beside the tablet drawer; a tap on it closes the sheet. */}
     <div className={toolbarStyles.scrim} data-state={sheet.state} aria-hidden="true" onClick={() => sheet.close()} />
-    <div ref={sheetRef} id={sheet.id} className={toolbarStyles.sheet} data-sheet data-state={sheet.state}
-      onAnimationEnd={event => { if (!sheet.open && event.target === event.currentTarget) sheet.onExit(); }}>
+    <div ref={sheetRef} id={sheet.id} className={toolbarStyles.sheet} data-sheet data-state={sheet.state}>
       <div className={toolbarStyles.sheetScroll} data-sheet-scroll>
         {sheet.built && <div className={toolbarStyles.sheetHead}>
-          <button type="button" className={toolbarStyles.sheetSearch}
+          <button type="button" className={toolbarStyles.sheetSearch} data-sheet-first
             onClick={() => { sheet.close(); window.dispatchEvent(new CustomEvent(OPEN_SITE_SEARCH)); }}>
             <Search size={18} strokeWidth={1.9} aria-hidden="true" /><span>{ru ? "Поиск" : "Search"}</span>
           </button>
           <WowVersionStrip variant="sheet" />
         </div>}
-        <RealmNav path={path} lang={lang} picks={picks} rows={sheet.built} sheetOpen={sheet.open} onNavigate={sheet.navigate} />
+        <RealmNav path={path} lang={lang} picks={picks} rows={sheet.built} sheetState={sheet.state} onNavigate={sheet.navigate} />
         {sheet.built && <div className={toolbarStyles.sheetFoot}>
           <Account lang={lang} reuse />
           <LocaleSwitch path={path} lang={lang} />
@@ -588,9 +619,8 @@ function useScrolledFlag(bar: RefObject<HTMLElement | null>) {
       const header = bar.current;
       if (!header) return;
       header.toggleAttribute("data-scrolled", window.scrollY > 8);
-      // The brand row's height: the bar sticks with it scrolled off.
-      const top = header.querySelector<HTMLElement>("[data-bar-top]")?.offsetHeight ?? 0;
-      header.toggleAttribute("data-compact", top > 0 && -header.getBoundingClientRect().top >= top - 1);
+      // The bar sticks with its 56 px brand row scrolled off (wide screens; below, it sticks at 0).
+      header.toggleAttribute("data-compact", header.getBoundingClientRect().top < -54);
     };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(read); };
     read();
@@ -620,7 +650,7 @@ export function WorkspaceNavigatorContent({ picks }: { picks: NavigationPicks })
       content.focus({ preventScroll: true });
       content.scrollIntoView({ block: "start", behavior: "instant" });
     }}>{ru ? "К содержанию" : "Skip to content"}</a>
-    <div className={toolbarStyles.top} data-bar-top>
+    <div className={toolbarStyles.top}>
       <Link href={p(lang, "/")} prefetch={false} className={toolbarStyles.brand}
         aria-current={barePathOf(livePath) === "/" ? "page" : undefined} aria-label={home}>
         <GildraCrest height={32} className={toolbarStyles.sigil} eager /><span>WOWARCANA</span>

@@ -8,6 +8,9 @@
   --bar-tabs: 46px;
   /* Search, versions, language and account share one height. */
   --toolbar-control-height: 38px;
+  /* Menus and the sheet: a soft settle in, a plain fade out. */
+  --ease-soft: cubic-bezier(.25, .46, .45, .94);
+  --ease-exit: cubic-bezier(.4, 0, .6, 1);
   /* The bar's content keeps to the page column while its surfaces run edge to edge. */
   --bar-inline: max(var(--atlas-gutter), calc((100% - var(--atlas-container)) / 2 + var(--atlas-gutter)));
   position: sticky;
@@ -280,31 +283,46 @@
 
 /* ── Menus: one panel system for every section ───────────────────────
    Every menu spans the page column under the tab row, so menus never jump
-   sideways between tabs: it drops in when the bar opens it, swaps its content
-   in place between tabs and fades out on close (opacity and translate only). */
-.panel {
-  position: absolute;
-  z-index: 1;
-  top: 100%;
-  right: var(--bar-inline);
-  left: var(--bar-inline);
-  max-height: calc(100dvh - var(--bar-top) - var(--bar-tabs) - var(--atlas-space-4));
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--atlas-space-5);
-  border: 1px solid var(--atlas-line);
-  border-top: 0;
-  border-radius: 0 0 var(--atlas-radius-control) var(--atlas-radius-control);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--atlas-accent) 4%, var(--atlas-surface)), var(--atlas-surface) 160px);
-  box-shadow: var(--atlas-shadow-panel), 0 1px 0 color-mix(in srgb, var(--atlas-accent-2) 22%, transparent) inset;
-}
+   sideways between tabs: it drops in when the bar opens it and fades out on
+   close; between tabs the frame stays and only resizes (a scale of its own
+   layer, FLIP, WorkspaceNavigatorContent) while the contents cross-fade.
+   Opacity and transforms only. */
 .panel[hidden] { display: none; }
-.panel[data-enter] { animation: drop var(--atlas-duration-fast) var(--atlas-ease); }
-.panel:not([data-enter])[data-state="open"] > .menu { animation: swap var(--atlas-duration-fast) var(--atlas-ease); }
-.panel[data-state="closed"] { pointer-events: none; animation: lift var(--atlas-duration-fast) var(--atlas-ease) forwards; }
-@keyframes drop { from { opacity: 0; translate: 0 -6px; } }
-@keyframes lift { to { opacity: 0; translate: 0 -4px; } }
-@keyframes swap { from { opacity: .35; } }
+@media (min-width: 1180px) {
+  .panel {
+    position: absolute;
+    z-index: 1;
+    isolation: isolate;
+    top: 100%;
+    right: var(--bar-inline);
+    left: var(--bar-inline);
+    padding: var(--atlas-space-5);
+  }
+  /* The frame is a layer of its own, so a switch can resize it without touching the contents. */
+  .panel::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: "";
+    pointer-events: none;
+    border: 1px solid var(--atlas-line);
+    border-top: 0;
+    border-radius: 0 0 var(--atlas-radius-control) var(--atlas-radius-control);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--atlas-accent) 4%, var(--atlas-surface)), var(--atlas-surface) 160px);
+    box-shadow: var(--atlas-shadow-panel), 0 1px 0 color-mix(in srgb, var(--atlas-accent-2) 22%, transparent) inset;
+    transform-origin: top;
+  }
+  .panel > .menu { max-height: calc(100dvh - var(--bar-top) - var(--bar-tabs) - var(--atlas-space-4) - 2 * var(--atlas-space-5)); overflow-y: auto; overscroll-behavior: contain; }
+  .panel[data-enter] { animation: drop var(--atlas-duration) var(--ease-soft); }
+  .panel[data-state="open"]:not([data-enter]) > .menu { animation: label-in calc(var(--atlas-duration-fast) * .8) var(--ease-soft) both; }
+  .panel[data-state="closed"] { pointer-events: none; animation: lift calc(var(--atlas-duration-fast) * .87) var(--ease-exit) forwards; }
+  /* The menu a switch leaves: its words fade under the new ones, its frame is the new menu's. */
+  .panel[data-swap-out] { animation-duration: calc(var(--atlas-duration-fast) * .6); }
+  .panel[data-swap-out]::before { visibility: hidden; }
+}
+/* Menus, the sheet and the drawer share one way in and one way out; each sets its own distance. */
+@keyframes drop { from { opacity: 0; translate: var(--from, 0 -4px); } }
+@keyframes lift { to { opacity: 0; translate: var(--to, 0 -3px); } }
 
 .menu { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: var(--atlas-space-6); min-height: 248px; }
 .menu:not(:has(.feature)) { grid-template-columns: minmax(0, 1fr); }
@@ -489,10 +507,10 @@
   }
   /* Closed, the sheet keeps its layout and is only invisible. */
   .sheet[data-state="closed"] { visibility: hidden; pointer-events: none; }
-  .sheet[data-state="open"] { animation: sheet-in var(--atlas-duration) var(--atlas-ease); }
-  .sheet[data-state="closing"] { pointer-events: none; animation: sheet-out var(--atlas-duration-fast) var(--atlas-ease) forwards; }
-  @keyframes sheet-in { from { opacity: 0; translate: 0 -8px; } }
-  @keyframes sheet-out { to { opacity: 0; translate: 0 -6px; } }
+  /* It settles with a long, soft deceleration and leaves quicker than it came. */
+  .sheet { --from: 0 -10px; --to: 0 -4px; }
+  .sheet[data-state="open"] { animation: drop calc(var(--atlas-duration) * 1.2) cubic-bezier(.22, 1, .36, 1); }
+  .sheet[data-state="closing"] { pointer-events: none; animation: lift calc(var(--atlas-duration-fast) * .87) var(--ease-exit) forwards; }
 
   .sheetHead { display: grid; gap: var(--atlas-space-3); }
   .sheetSearch {
@@ -537,19 +555,8 @@
   .tabs > ul > li[data-current] { box-shadow: 2px 0 0 var(--atlas-accent) inset; }
 
   /* A section's menu unfolds in place under its row. */
-  .panel {
-    position: static;
-    max-height: none;
-    overflow: visible;
-    padding: 0 0 var(--atlas-space-4);
-    border: 0;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-    animation: none !important;
-  }
-  .panel[data-state="open"] > .menu { animation: unfold var(--atlas-duration-fast) var(--atlas-ease); }
-  @keyframes unfold { from { opacity: 0; translate: 0 -4px; } }
+  .panel { padding: 0 0 var(--atlas-space-4); }
+  .panel[data-state="open"] > .menu { --from: 0 -4px; animation: drop var(--atlas-duration) var(--ease-soft); }
   .menu, .menu:not(:has(.feature)) { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-2); min-height: 0; }
   .columns { display: grid; gap: var(--atlas-space-3); }
   .group, .group[data-picks] { width: auto; }
@@ -581,10 +588,7 @@
 @media (min-width: 768px) and (max-width: 1179px) {
   .sheet { left: auto; width: min(440px, 100%); border-left: 1px solid var(--atlas-line); box-shadow: var(--atlas-shadow-panel); }
   .sheetHead, .sheetFoot { display: none; }
-  .sheet[data-state="open"] { animation-name: drawer-in; }
-  .sheet[data-state="closing"] { animation-name: drawer-out; }
-  @keyframes drawer-in { from { opacity: 0; translate: 16px 0; } }
-  @keyframes drawer-out { to { opacity: 0; translate: 12px 0; } }
+  .sheet { --from: 24px 0; --to: 12px 0; }
   .scrim { position: fixed; inset: var(--sheet-top, var(--atlas-sticky-top)) 0 0; z-index: 1; display: block; background: var(--atlas-scrim); transition: opacity var(--atlas-duration) var(--atlas-ease); }
   .scrim[data-state="closed"] { visibility: hidden; opacity: 0; }
   .scrim[data-state="closing"] { opacity: 0; }
@@ -612,5 +616,5 @@
 @media (forced-colors: active) {
   .tab[aria-current]::after, [data-open] > .tab::after { background: Highlight; forced-color-adjust: none; }
   .tab::before, .top::after, .featureArt::after { display: none; }
-  .panel, .feature { border: 1px solid CanvasText; }
+  .panel::before, .feature { border: 1px solid CanvasText; }
 }

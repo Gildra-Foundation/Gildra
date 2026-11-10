@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import clsx from "clsx";
 import { Dialog } from "./valyro-ui/feedback/Dialog";
 import styles from "./AtlasDialog.module.css";
@@ -10,7 +10,7 @@ import styles from "./AtlasDialog.module.css";
  * backdrop close it, focus returns to the opener. On phones (≤ 480px) it is a
  * bottom sheet; `sheet` keeps that sheet up to 720px.
  */
-export function AtlasDialog({ open, onClose, label, children, variant = "panel", className }: {
+export function AtlasDialog({ open, onClose, label, children, variant = "panel", className, initialFocusRef }: {
   open: boolean;
   onClose: () => void;
   /** Accessible name of the dialog. */
@@ -18,6 +18,8 @@ export function AtlasDialog({ open, onClose, label, children, variant = "panel",
   children: ReactNode;
   variant?: "panel" | "sheet";
   className?: string;
+  /** What takes focus on opening (default: the first Tab stop, found by measuring every candidate). */
+  initialFocusRef?: RefObject<HTMLElement | null>;
 }) {
   return (
     <Dialog
@@ -28,6 +30,7 @@ export function AtlasDialog({ open, onClose, label, children, variant = "panel",
       showClose={false}
       className={clsx(styles.dialog, styles[variant], className)}
       layerClassName={styles.layer}
+      initialFocusRef={initialFocusRef}
     >
       {children}
     </Dialog>

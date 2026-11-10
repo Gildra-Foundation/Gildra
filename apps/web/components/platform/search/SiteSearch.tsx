@@ -81,15 +81,16 @@ export function SiteSearch({ hotkeysOnly = false, lang: langProp }: { hotkeysOnl
     };
   }, []);
 
-  // ⌘K must not wait for the dialog's chunk: with a keyboard and mouse, fetch it
-  // once the page is idle (a tap warms it on touch, see the button).
+  // ⌘K and the first tap must not wait for the dialog's chunk and the index: fetch both once
+  // the page is idle (not when the reader saves data).
   useEffect(() => {
     const idle = window as Window & { requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number; cancelIdleCallback?: (handle: number) => void };
-    if (!idle.requestIdleCallback || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    if (!idle.requestIdleCallback || connection?.saveData) return;
     const handle = idle.requestIdleCallback(() => {
       void loadDialog().then((component) => setDialog(() => component), () => undefined);
       void loadIndex().catch(() => undefined);
-    }, { timeout: 5000 });
+    }, { timeout: 6000 });
     return () => idle.cancelIdleCallback?.(handle);
   }, []);
 
