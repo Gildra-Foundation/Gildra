@@ -2,7 +2,7 @@
 
 import { GildraCrest } from "@/components/brand/GildraCrest";
 import { useConsoleText } from "./consoleLocale";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   ChevronRight, CircleAlert, Eye, EyeOff, RefreshCw, ShieldCheck,
@@ -25,7 +25,15 @@ const GenshinImpactCatalog = dynamic(
   () => import("./GenshinImpactCatalog").then((module) => module.GenshinImpactCatalog),
 );
 
-export function ApiConsole({ consolePath, returnTo }: { consolePath: string[]; returnTo?: string }) {
+/** `footer`: the site footer, rendered on the server; every state of the console ends with it. */
+export function ApiConsole({ consolePath, returnTo, footer }: { consolePath: string[]; returnTo?: string; footer?: ReactNode }) {
+  return <>
+    <ApiConsoleScreen consolePath={consolePath} returnTo={returnTo} />
+    {footer}
+  </>;
+}
+
+function ApiConsoleScreen({ consolePath, returnTo }: { consolePath: string[]; returnTo?: string }) {
   const [user, setUser] = useState<PanelUser | null>(null);
   const [checking, setChecking] = useState(true);
   const isPublicGenshin = consolePath[0] === "genshin-impact";
@@ -131,7 +139,6 @@ function LoginScreen({ onLogin, returnTo }: { onLogin: (user: PanelUser) => void
           </div>
         </div>
       </section>
-      <footer className="relative border-t border-[#1d222e] px-5 py-5 text-center text-[10px] uppercase tracking-[.15em] text-[#515b6e]">Gildra Foundation · API Console</footer>
     </main>
   );
 }
