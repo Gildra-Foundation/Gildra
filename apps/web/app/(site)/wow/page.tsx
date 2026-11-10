@@ -2,10 +2,10 @@
 import { WowHome } from "@/components/wow/home/WowHome";
 import { raidHubEntries } from "@/components/wow/raid/raidHubData";
 import { changelog } from "@/components/wow/whats-new/changelog";
-import { sectionMetadata } from "@/lib/routes/metadata";
+import { homeMetadata } from "@/components/wow/home/homeMetadata";
 
-export const metadata = sectionMetadata("wow", "en");
+export const metadata = homeMetadata("en");
 
 export default function Page() {
-  return <WowHome lang="en" raids={raidHubEntries} news={changelog.filter(release => release.changes.some(change => change.kind === "new")).slice(0, 2)} />;
+  return <WowHome lang="en" raids={raidHubEntries} news={changelog.flatMap(release => release.changes.filter(change => change.kind === "new").map(change => ({ ...change, date: release.date }))).slice(0, 4)} />;
 }
