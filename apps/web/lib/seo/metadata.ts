@@ -10,7 +10,7 @@ import type { Lang as Locale } from "@/lib/i18n-paths";
  */
 export function pageOpenGraph(locale: Locale, page: { title: string; description?: string; path: string; type?: "website" | "article" }): NonNullable<Metadata["openGraph"]> {
   return {
-    siteName: "Gildra",
+    siteName: "WowArcana",
     type: page.type ?? "website",
     locale: locale === "ru" ? "ru_RU" : "en_US",
     title: page.title,

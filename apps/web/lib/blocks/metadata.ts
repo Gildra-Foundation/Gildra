@@ -38,7 +38,7 @@ export function pageMetadata({
     openGraph: {
       title,
       description,
-      siteName: "Gildra",
+      siteName: "WowArcana",
       type: "website",
       locale: lang === "ru" ? "ru_RU" : "en_US",
       url: gameHref(game, lang, path),
