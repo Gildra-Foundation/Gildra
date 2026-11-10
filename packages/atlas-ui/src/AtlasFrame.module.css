@@ -229,26 +229,6 @@
   padding: var(--atlas-space-7) var(--atlas-gutter) var(--atlas-space-8);
 }
 
-/* Owner-approved common footer (2026-11-09): material-atlas surface, grouped navigation. */
-.legal { position: sticky; top: 100%; display: grid; gap: var(--atlas-space-6); margin-top: var(--atlas-space-8); padding: var(--atlas-space-7) var(--atlas-space-5) var(--atlas-space-5); border-top: 1px solid var(--atlas-line); background-color: var(--atlas-surface); background-image: linear-gradient(135deg, var(--atlas-accent-wash), transparent 55%); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); text-align: left; }
-.legalBody { display: grid; grid-template-columns: minmax(180px, .9fr) minmax(0, 2.6fr); gap: var(--atlas-space-7); }
-.legalSummary { display: grid; align-content: start; gap: var(--atlas-space-4); min-width: 0; }
-.legalSummary p { margin: 0; max-width: 29ch; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); }
-.legalBrand { min-width: 0; }
-.legalNav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-5); align-content: start; }
-.legalNav:only-child { grid-column: 1 / -1; }
-.legalNav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; text-underline-offset: 4px; }
-.legalNav a:hover { color: var(--atlas-text-strong); text-decoration: underline; text-decoration-color: var(--atlas-accent); }
-.legalNav a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
-.legalMeta { display: grid; gap: var(--atlas-space-4); padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); }
-.legalControls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3) var(--atlas-space-5); }
-.legalNotice { max-width: 100%; margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
-.legal .motionToggle { color: var(--atlas-text); font-size: var(--atlas-text-small); }
-.legal .motionToggle:hover { color: var(--atlas-text-strong); }
-@media (max-width: 1000px) { .legalBody { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-6); } .legalSummary p { max-width: 48ch; } }
-@media (max-width: 600px) { .legal { padding: var(--atlas-space-5) var(--atlas-space-4); } .legalNav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-5) var(--atlas-space-4); } .legalNotice { font-size: var(--atlas-text-small); } }
-@media (forced-colors: active) { .legal { background: Canvas; border-color: CanvasText; } }
-
 /* The account roster is one environment, from its title to its legal line.
    A viewport-sized painting stays in its own page-length track, so a long
    roster neither magnifies the image nor runs out of scenery. No scroll JS. */
@@ -368,3 +348,10 @@
 @media (prefers-contrast: more) {
   .frame[data-roster-view] .scene::after { background: color-mix(in srgb, var(--atlas-bg) 90%, transparent); }
 }
+
+/* The footer closes the page flush with its lower edge. */
+.column:has(> footer) { padding-bottom: 0; }
+
+.column > footer { margin-inline: calc(-1 * var(--atlas-gutter)); }
+
+.frame:has(> .column > footer) > .foot { display: none; }

@@ -8,33 +8,31 @@ export const ATLAS_FOOTER_LINKS = [
   { href: "/privacy", en: "Privacy", ru: "Конфиденциальность" },
 ] as const;
 
+import { navigationRealms, linksFor, type NavigationLink } from "@/components/platform/navigation/navigationMap";
+import { wowPortals } from "@/lib/games/wowPortals";
+import type { Lang } from "@/lib/i18n-paths";
+
 export const footerCopy = {
-  ru: { description: "Маршруты, тактики и инструменты World of Warcraft.", navigation: "Навигация в подвале", language: "Язык в подвале", groups: ["World of Warcraft", "Ваш герой", "Библиотека", "WowArcana"] },
-  en: { description: "World of Warcraft routes, tactics and tools.", navigation: "Footer navigation", language: "Footer language", groups: ["World of Warcraft", "Your hero", "Library", "WowArcana"] },
+  ru: { description: "Маршруты, тактики и инструменты World of Warcraft.", navigation: "Навигация в подвале", language: "Язык в подвале", raids: "Рейды", hero: "Ваш герой", economy: "Экономика", world: "Мир и знания", versions: "Версии игры" },
+  en: { description: "World of Warcraft routes, tactics and tools.", navigation: "Footer navigation", language: "Footer language", raids: "Raids", hero: "Your hero", economy: "Economy", world: "World and knowledge", versions: "Game versions" },
 } as const;
 
-/** All destinations are existing mirrored routes, never speculative footer pages. */
-export const FOOTER_GROUPS = [
-  [
-    { href: "/wow/mythic-plus", en: "Mythic+", ru: "Mythic+" },
-    { href: "/wow/raids", en: "Raids", ru: "Рейды" },
-    { href: "/wow/map", en: "World map", ru: "Карта мира" },
-    { href: "/wow/lairs", en: "Lairs & world bosses", ru: "Логова и мировые боссы" },
-  ],
-  [
-    { href: "/wow/classes", en: "Classes & talents", ru: "Классы и таланты" },
-    { href: "/wow/characters", en: "Characters", ru: "Персонажи" },
-    { href: "/tier-lists", en: "Tier lists", ru: "Тир-листы" },
-    { href: "/wow/transmog", en: "Transmog Studio", ru: "Трансмогрификация" },
-    { href: "/wow/auction", en: "Auction House", ru: "Аукцион" },
-  ],
-  [
-    { href: "/library", en: "Library", ru: "Библиотека" },
-    { href: "/library/items", en: "Items", ru: "Предметы" },
-    { href: "/library/spells", en: "Spells", ru: "Заклинания" },
-  ],
-  [
-    { href: "/wow/whats-new", en: "What's new", ru: "Что нового" },
-    { href: "/privacy", en: "Privacy", ru: "Конфиденциальность" },
-  ],
-] as const;
+/** Intent groups consume the shared map; newly added destinations stay visible. */
+export function footerGroups(locale: Lang) {
+  const all = navigationRealms.flatMap(realm => linksFor(realm, locale));
+  const select = (icons: string[]) => all.filter(link => icons.includes(link.icon));
+  const groups: { id: string; title: string; links: Pick<NavigationLink, "href" | "label">[] }[] = [
+    { id: "mythic", title: "Mythic+", links: select(["atlas", "guide", "meta", "comps", "stats", "leaderboard", "routes"]).filter(link => link.href !== "/tier-lists" && link.href !== "/wow/whats-new" && link.href !== "/wow/map") },
+    { id: "raids", title: footerCopy[locale].raids, links: select(["journal", "lairs", "raidComp"]) },
+    { id: "hero", title: footerCopy[locale].hero, links: select(["characters", "classes", "transmog"]).concat(all.filter(link => link.href === "/tier-lists")) },
+    { id: "economy", title: footerCopy[locale].economy, links: select(["auction", "professions"]) },
+    { id: "world", title: footerCopy[locale].world, links: select(["library", "stories"]).concat(all.filter(link => link.href === "/wow/map")) },
+    { id: "versions", title: footerCopy[locale].versions, links: wowPortals.map(portal => ({ href: portal.path, label: portal.label })) },
+    { id: "site", title: "WowArcana", links: [...all.filter(link => link.href === "/wow/whats-new"), { href: "/privacy", label: { en: "Privacy", ru: "Конфиденциальность" } }] },
+  ];
+  const used = new Set(groups.flatMap(group => group.links.map(link => link.href)));
+  groups.find(group => group.id === "world")!.links.push(...all.filter(link => !used.has(link.href)));
+  // The map is not in older menu maps; retain the existing public destination.
+  if (!used.has("/wow/map")) groups.find(group => group.id === "world")!.links.push({ href: "/wow/map", label: { en: "World map", ru: "Карта мира" } });
+  return groups;
+}

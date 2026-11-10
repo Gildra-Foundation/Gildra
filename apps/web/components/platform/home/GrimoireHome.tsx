@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { preload } from "react-dom";
 import type { CSSProperties } from "react";
-import { t, type Lang } from "@/lib/i18n";
-import { atlasLegal } from "@/components/atlas/AtlasFrame";
+import { type Lang } from "@/lib/i18n";
+import { AtlasLegalFooter } from "@/components/atlas/AtlasFrame";
 import { GildraCrest } from "@/components/brand/GildraCrest";
 import { HomeBookCover, HomeBookStage } from "./HomeBook";
 import { HomeTheme } from "./HomeTheme";
@@ -77,13 +76,6 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
         </HomeBookCover>
       </div>
     </HomeBookStage>
-    {/* The site's one legal line (the same as every atlas page's footer) in the grimoire's type. */}
-    <footer className={styles.footer}>
-      <p>{atlasLegal(ru ? "ru" : "en")}</p>
-      <nav aria-label={ru ? "Документы" : "Documents"}>
-        <Link href={ru ? "/ru/wow/whats-new" : "/wow/whats-new"} prefetch={false}>{t(lang)("What's new")}</Link>
-        <Link href={ru ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(lang)("Privacy Policy")}</Link>
-      </nav>
-    </footer>
+    <AtlasLegalFooter lang={lang} />
   </HomeTheme>;
 }
