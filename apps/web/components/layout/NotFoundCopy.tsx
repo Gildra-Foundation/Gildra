@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useSyncExternalStore, type CSSProperties } from "react";
-import Link from "next/link";
-import footerStyles from "@/components/atlas/AtlasFrame.module.css";
 import { FooterNavigation } from "@/components/atlas/FooterNavigation";
+import { FooterLanguage } from "@/components/atlas/FooterLanguage";
 import { ArrowRight } from "lucide-react";
 import { AtlasMotionToggle } from "@gildra/atlas-ui/AtlasMotionToggle";
 import { MaterialSlotLinkButton } from "@/components/wow/shared/material/MaterialButtonBase";
@@ -79,8 +78,5 @@ export function NotFoundMotionToggle() {
 
 export function NotFoundFooterLanguage() {
   const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
-  return <nav className={footerStyles.footerLanguages} aria-label={ruUrl ? "Язык в подвале" : "Footer language"}>
-    <Link href="/wow" lang="en" hrefLang="en" prefetch={false} aria-current={!ruUrl ? "true" : undefined}>English</Link>
-    <Link href="/ru/wow" lang="ru" hrefLang="ru" prefetch={false} aria-current={ruUrl ? "true" : undefined}>Русский</Link>
-  </nav>;
+  return <FooterLanguage locale={ruUrl ? "ru" : "en"} missing />;
 }

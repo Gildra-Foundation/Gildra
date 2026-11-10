@@ -47,7 +47,7 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
   const sections: LibrarySearchSection[] = datasets.map((dataset) => ({ slug: dataset.slug, name: dataset.name, href: datasetHref(dataset), iconUrl: dataset.previewImageUrl || samples[dataset.slug]?.[0]?.iconUrl, iconSymbol: dataset.iconSymbol }));
 
   return (
-    <AtlasFrame as="div" lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
+    <AtlasFrame lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
       <AtlasHero
         className={styles.hero}
         breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.library }]}

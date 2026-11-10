@@ -52,7 +52,7 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
   const product = libraryProduct(filters.product);
   if (!product) notFound();
   await requireCatalogSession(`${prefix}/library/${encodeURIComponent(slug)}${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
-  const unavailable = <PageShell lang={lang}><AtlasFrame as="div" lang={lang}><LibraryUnavailable lang={lang} href={`${prefix}/library`} /></AtlasFrame></PageShell>;
+  const unavailable = <PageShell lang={lang} frame><AtlasFrame lang={lang}><LibraryUnavailable lang={lang} href={`${prefix}/library`} /></AtlasFrame></PageShell>;
   let datasets;
   try {
     datasets = await getLibraryDatasets(locale, product);
@@ -76,8 +76,8 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
   }
   const levels = { minLevel: filters.minLevel ?? "", maxLevel: filters.maxLevel ?? "", minRequiredLevel: filters.minRequiredLevel ?? "", maxRequiredLevel: filters.maxRequiredLevel ?? "" };
   return (
-    <PageShell lang={lang}>
-      <AtlasFrame as="div" lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
+    <PageShell lang={lang} frame>
+      <AtlasFrame lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
         <AtlasHero
           eyebrow={libraryGroupText[dataset.group]?.[lang]}
           className={styles.hero}

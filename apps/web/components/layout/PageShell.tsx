@@ -18,6 +18,7 @@ export function PageShell({
   reveal = false,
   mainClassName,
   variant = "none",
+  frame = false,
   children,
 }: {
   lang?: Lang;
@@ -27,6 +28,8 @@ export function PageShell({
   mainClassName?: string;
   /** "route" = children inside `.section.route-section`; "none" = children as-is (block pages). */
   variant?: "none" | "route";
+  /** The children are an AtlasFrame: it owns <main> and puts the site footer after it, outside the landmark. */
+  frame?: boolean;
   children: ReactNode;
 }) {
   const body = variant === "route" ? <div className="section route-section">{children}</div> : children;
@@ -43,7 +46,9 @@ export function PageShell({
     <>
       <Icons />
       <div className="app" data-game={game} lang={lang} style={GAMES[game].theme as React.CSSProperties | undefined}>
-        <main className={mainClassName ? `main ${mainClassName}` : "main"}>{body}</main>
+        {frame
+          ? <div className={mainClassName ? `main ${mainClassName}` : "main"}>{body}</div>
+          : <main className={mainClassName ? `main ${mainClassName}` : "main"}>{body}</main>}
       </div>
       {reveal && <Reveal />}
     </>

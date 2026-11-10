@@ -23,6 +23,7 @@ const modePage = (mode: TierMode, bracket?: PvpBracket) => ({
   path: tierModePath(mode, bracket),
   layout: "default" as const,
   // Atlas page: the block renders its own AtlasFrame (frame, hero and legal footer).
+  shell: { frame: true },
   blocks: [{ type: "wow.tierWorkspace" as const, props: { mode, bracket } }],
 });
 

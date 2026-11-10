@@ -20,7 +20,7 @@ export type LegalProps = {
 /** Legal/prose page on the atlas kit: archive artwork, h1 with the update date, a readable column of h2 + paragraph sections. */
 function Legal({ title, lede, updated, updatedLabel, crumbs, sections, lang }: BlockComponentProps<LegalProps, undefined>) {
   return (
-    <AtlasFrame as="div" lang={lang} scene="archiveDeep">
+    <AtlasFrame lang={lang} scene="archiveDeep">
       <AtlasHero title={title} lede={lede}
         eyebrow={`${updatedLabel} ${formatAtlasDate(updated, lang)}`}
         breadcrumbs={crumbs.map(crumb => crumb.href ? { ...crumb, href: p(lang, crumb.href) } : crumb)}

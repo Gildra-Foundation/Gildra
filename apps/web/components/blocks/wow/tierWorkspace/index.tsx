@@ -72,7 +72,7 @@ function TierWorkspace({ lang, data, mode = "mythic_plus", bracket = "3v3" }: Bl
 
   // The hero of the fixed reference (Mythic+ meta): the hub's gateway on the right, title, two painted buttons, the counters under them.
   return (
-    <AtlasFrame as="div" lang={lang} className={styles.frame} still foot={false} dataAttributes={{ "data-tier-workspace": true }}>
+    <AtlasFrame lang={lang} className={styles.frame} still foot={false} dataAttributes={{ "data-tier-workspace": true }}>
       <MythicHubBackdrop />
       {sample ? null : <JsonLd data={tierListLd(lang, data, mode, bracket)} />}
       <div className={styles.hero}>

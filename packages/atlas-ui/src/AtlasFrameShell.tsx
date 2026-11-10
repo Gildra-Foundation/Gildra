@@ -114,10 +114,14 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
       </div>
     </div>
   );
+  // The site footer is the page's contentinfo landmark, so it may not sit inside
+  // <main>: a frame that owns <main> keeps the page in it and the footer after it.
+  const landmark = Element === "main" && Boolean(footer);
+  const Outer = landmark ? "div" : Element;
   return (
     // Page-to-page motion belongs to the app's route runtime (one owner per
     // navigation); the frame only marks itself and its scene.
-    <Element className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, className)} style={style} lang={lang} id={id} data-atlas-frame data-cookie-notice-space data-morph={morphKey ? "" : undefined} {...dataAttributes}>
+    <Outer className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, className)} style={style} lang={lang} id={id} data-atlas-frame data-cookie-notice-space data-morph={morphKey ? "" : undefined} {...dataAttributes}>
       {atmosphere}
       {foot ? (
         // The horizon at the foot: the scene's light, drifting mist, a slow seal of
@@ -129,9 +133,9 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
         </div>
       ) : null}
       <div className={styles.column}>
-        {children}
+        {landmark ? <main>{children}</main> : children}
         {footer ? <AtlasFrameFooter locale={locale} {...footer} /> : null}
       </div>
-    </Element>
+    </Outer>
   );
 }

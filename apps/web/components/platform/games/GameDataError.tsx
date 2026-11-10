@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
+import { AtlasLegalFooter } from "@/components/atlas/AtlasFrame";
 import styles from "./gameDataError.module.css";
 import { gameDataErrorCopy } from "./gameDataErrorCopy";
 
 export function GameDataError({ game, lang, reset }: { game: string; lang: "en" | "ru"; reset: () => void }) {
   const prefix = lang === "ru" ? "/ru" : "";
   const slug = game === "Genshin Impact" ? "genshin" : "league-of-legends";
-  return (
+  return (<>
     <main className={styles.page}>
       <section className={styles.panel} role="alert">
         <span className={styles.sigil} aria-hidden="true"><AlertTriangle /></span>
@@ -21,5 +22,6 @@ export function GameDataError({ game, lang, reset }: { game: string; lang: "en" 
         </div>
       </section>
     </main>
-  );
+    <AtlasLegalFooter lang={lang} />
+  </>);
 }

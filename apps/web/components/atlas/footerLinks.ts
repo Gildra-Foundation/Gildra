@@ -17,6 +17,9 @@ export const footerCopy = {
   en: { description: "World of Warcraft routes, tactics and tools.", navigation: "Footer navigation", language: "Footer language", raids: "Raids", hero: "Your hero", economy: "Economy", world: "World and knowledge", versions: "Game versions" },
 } as const;
 
+/** Each language named in itself (the footer language links). */
+export const footerLanguageNames = { en: "English", ru: "Русский" } as const;
+
 /** Intent groups consume the shared map; newly added destinations stay visible. */
 export function footerGroups(locale: Lang) {
   const all = navigationRealms.flatMap(realm => linksFor(realm, locale));
