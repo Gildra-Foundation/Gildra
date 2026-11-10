@@ -126,9 +126,10 @@
   /* Reading width: one comfortable line of body text, and of longer notes */
   --atlas-measure: 68ch;
   --atlas-measure-wide: 72ch;
-  /* Height of the sticky top bar (60 px row + 46 px realm tabs + rule; 56 + 44 + 1
-     below 1180 px); sticky page navigation sits under it. */
-  --atlas-sticky-top: 107px;
+  /* Height of the stuck top bar: on wide screens its brand row scrolls away and the
+     46 px tab row + rule stays; below 1180 px one 56 px row + rule. Sticky page
+     navigation sits under it. */
+  --atlas-sticky-top: 47px;
 
   /* Spacing scale */
   --atlas-space-1: 4px;
@@ -233,11 +234,6 @@
 }
 
 @media (max-width: 1179px) {
-  :root,
-  [data-atlas-scope]:where([data-theme]) { --atlas-sticky-top: 101px; }
-}
-/* Phones have no tab strip under the bar (one 56 px row + rule). */
-@media (max-width: 767px), (pointer: coarse) and (orientation: landscape) and (max-height: 540px) {
   :root,
   [data-atlas-scope]:where([data-theme]) { --atlas-sticky-top: 57px; }
 }

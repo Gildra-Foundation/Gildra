@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 // No Suspense boundary around it: nothing in it suspends, and React 19.2 reveals
 // an outlined boundary only on its ~300 ms batch, so the bar arrived after the page.
 import { WorkspaceNavigatorContent } from "./WorkspaceNavigatorContent";
-import { WowVersionStrip } from "./WowVersionStrip";
 import type { NavigationPicks } from "./navigationPicks";
 import "@/components/platform/search/siteSearch.module.css";
 
@@ -16,7 +15,6 @@ const DevelopmentRouteNavigation = process.env.NODE_ENV === "development"
 export function WorkspaceNavigator({ picks }: { picks: NavigationPicks }) {
   return <>
     {DevelopmentRouteNavigation ? <DevelopmentRouteNavigation /> : null}
-    <WowVersionStrip />
     <WorkspaceNavigatorContent picks={picks} />
   </>;
 }
