@@ -8,14 +8,14 @@ const browser = await chromium.launch({ executablePath: '/home/debian/.cache/ms-
 const results = [], errors = [];
 const slugs = ['druid','hunter','mage','paladin','priest','rogue','shaman','warlock','warrior'];
 async function visit(page, path) {
-  const res = await page.goto(`${base}${path}`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  const res = await page.goto(`${base}${path}`, { waitUntil: 'load', timeout: 180000 });
   assert.equal(res.status(), 200, path);
-  await page.locator('h1').waitFor();
-  await page.evaluate(async () => { await document.fonts.ready; const imgs = [...document.images]; imgs.forEach(i => { i.loading = 'eager'; }); await Promise.race([Promise.all(imgs.map(i => i.decode().catch(() => {}))), new Promise(r => setTimeout(r, 10000))]); });
+  await page.locator('h1:visible').waitFor();
+  await page.evaluate(async () => { await document.fonts.ready; const imgs = [...document.images].filter(i => i.complete); await Promise.race([Promise.all(imgs.map(i => i.decode().catch(() => {}))), new Promise(r => setTimeout(r, 10000))]); });
   const consent = page.getByRole('button', { name: /^(Decline|Отклонить)$/ });
   if (await consent.isVisible()) await consent.click();
   await page.waitForTimeout(300);
-  assert.equal(await page.locator('h1').count(), 1, path);
+  assert.equal(await page.locator('h1:visible').count(), 1, path);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
   assert.equal(overflow, false, `overflow ${path}`);
   const main = await page.locator('main').innerText().catch(() => page.locator('body').innerText());
@@ -27,12 +27,16 @@ try {
     const prefix = lang === 'ru' ? '/ru' : '';
     for (const width of [1440,390,320]) {
       const ctx = await browser.newContext({ viewport: { width, height: 1000 }, reducedMotion: 'reduce', hasTouch: width < 500 });
-      const page = await ctx.newPage(); page.on('pageerror', e => errors.push(e.message));
+      const page = await ctx.newPage(); page.on('pageerror', e => errors.push(e.message));page.on('console', m => { if (m.type() === 'error' && /hydrat|server rendered/i.test(m.text())) errors.push(m.text()); });
       for (const route of ['/wow/forever/classes','/wow/forever/changes','/wow/forever/classes/warlock']) {
         await visit(page, prefix + route);
         await page.screenshot({ path: `${out}/screenshots/${lang}-${width}-${route.split('/').at(-1)}.png`, fullPage: true });
       }
       if (width === 390) {
+        await visit(page, `${prefix}/wow/forever/changes?class=warrior`);
+        await page.getByRole('link', { name: lang === 'ru' ? 'Следующая' : 'Next', exact: true }).click();
+        await page.waitForURL(/page=2/);
+        await page.getByRole('link', { name: lang === 'ru' ? 'Предыдущая' : 'Previous', exact: true }).waitFor();
         await visit(page, `${prefix}/wow/forever/changes?class=warrior&kind=talent&q=Bloodthrill`);
         assert.match(await page.locator('main').innerText(), /Bloodthrill/);
         await page.locator('#change-search').fill('zzzzzzzz');
@@ -53,7 +57,7 @@ try {
       await ctx.close();
     }
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
-    const page = await ctx.newPage();page.on('pageerror', e => errors.push(e.message));
+    const page = await ctx.newPage();page.on('pageerror', e => errors.push(e.message));page.on('console', m => { if (m.type() === 'error' && /hydrat|server rendered/i.test(m.text())) errors.push(m.text()); });
     for (const slug of slugs) await visit(page, `${prefix}/wow/forever/classes/${slug}`);
     await ctx.close();
   }
