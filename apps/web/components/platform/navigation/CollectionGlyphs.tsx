@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 
 /** Signs of the library collections, drawn for the menu: one stroke weight, a soft fill for the body. */
-type GlyphProps = { size?: number };
-const soft = { fill: "currentColor", fillOpacity: 0.16, stroke: "none" } as const;
-const solid = { fill: "currentColor", fillOpacity: 0.9, stroke: "none" } as const;
+export type GlyphProps = { size?: number; strokeWidth?: number; className?: string };
+export const soft = { fill: "currentColor", fillOpacity: 0.16, stroke: "none" } as const;
+export const solid = { fill: "currentColor", fillOpacity: 0.9, stroke: "none" } as const;
 
-function glyph(body: ReactNode) {
-  return function CollectionGlyph({ size = 20 }: GlyphProps) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{body}</svg>;
+/** One drawn sign: a 24 × 24 grid, the line weight is the set's own (a `strokeWidth` passed in is ignored). */
+export function glyph(body: ReactNode) {
+  return function Glyph({ size = 20, className }: GlyphProps) {
+    return <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{body}</svg>;
   };
 }
 

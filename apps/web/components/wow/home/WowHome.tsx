@@ -4,7 +4,7 @@ import { midnightSpecializations } from "@/lib/data/wow/specializations";
 import { HomeArtwork } from "./HomeArtwork";
 import { HomeCharacterLookup } from "./HomeCharacterLookup";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Coins, Layers3, Shirt, Swords, UserRound, Map as MapIcon, ScrollText, ChartNoAxesCombined, Trophy, Route, Users, Hammer, Shield, Sparkles, type LucideIcon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { HomePlaque, HomeSecondaryLink } from "./HomeMaterials";
 import { HomeWeeklyMeta } from "./HomeWeeklyMeta";
@@ -22,8 +22,8 @@ import { HomeRecentCharacters } from "./HomeRecentCharacters";
 import { HomeDungeons } from "./HomeDungeons";
 
 import { homeGroups, homeVersions, type HomeFeature } from "./homeFeatures";
-import type { NavigationIcon } from "@/components/platform/navigation/navigationMap";
-const icons: Record<NavigationIcon, LucideIcon> = { characters: UserRound, classes: Shield, atlas: MapIcon, guide: ScrollText, meta: Layers3, comps: Users, stats: ChartNoAxesCombined, leaderboard: Trophy, routes: Route, journal: BookOpen, lairs: Swords, raidComp: Users, auction: Coins, professions: Hammer, transmog: Shirt, library: BookOpen, stories: ScrollText };
+import { pageGlyphs, whatsNewGlyph } from "@/components/platform/navigation/SiteGlyphs";
+const icons = pageGlyphs;
 
 type HomeRaid = {
   slug: string;
@@ -57,7 +57,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
       title={<><span className={styles.brandKicker}>WowArcana</span>{" "}<span className={styles.heroPromise}>{t.title}</span></>} lede={t.lede}
       actions={<div className={styles.heroContent}>
         <HomeCharacterLookup locale={locale} recent={<HomeRecentCharacters locale={locale} label={t.recentCharacters} />} />
-        <nav className={styles.chips} aria-label={t.productLabel}><ul>{homeGroups.map(group => { const Icon = icons[group.lead.icon]; return <li key={group.id} data-group={group.id}><a href={`#${group.id}`}><Icon aria-hidden="true" />{group.short[locale]}</a></li>; })}</ul></nav>
+        <nav className={styles.chips} aria-label={t.productLabel}><ul>{homeGroups.map(group => { const Icon = icons[group.lead.icon]; return <li key={group.id} data-group={group.id}><a href={`#${group.id}`}><Icon />{group.short[locale]}</a></li>; })}</ul></nav>
       </div>}
       aside={<HomeWeeklyMeta locale={locale} />}
     />
@@ -102,6 +102,6 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
 }
 
 function FeatureRow({ feature, locale }: { feature: HomeFeature; locale: "en" | "ru" }) {
-  const Icon = feature.href === "/wow/whats-new" ? Sparkles : icons[feature.icon];
+  const Icon = feature.href === "/wow/whats-new" ? whatsNewGlyph : icons[feature.icon];
   return <li><Link href={`${locale === "ru" ? "/ru" : ""}${feature.href}`} prefetch={false}><span data-medallion="" aria-hidden="true"><Icon /></span><span><strong>{feature.label[locale]}</strong><span>{feature.note[locale]}</span></span><ArrowRight aria-hidden="true" /></Link></li>;
 }

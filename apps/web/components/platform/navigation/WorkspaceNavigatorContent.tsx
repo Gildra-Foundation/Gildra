@@ -1,8 +1,8 @@
 "use client";
-import { memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ComponentType, type CSSProperties, type FocusEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type RefObject } from "react";
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type RefObject } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BarChart3, BookMarked, BookOpen, Castle, ChevronDown, Coins, Compass, Hammer, KeyRound, Library, Map, Menu, Network, Route, ScrollText, Search, Shield, Shirt, Shuffle, Skull, Sword, Swords, TrendingUp, Trophy, UserRound, Users, Wrench, X, Zap, type LucideIcon } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, Search, UserRound, X } from "lucide-react";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { p, type Lang } from "@/lib/i18n-paths";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
@@ -11,9 +11,10 @@ import { LocaleSwitch } from "@/components/platform/locale/LocaleSwitch";
 import { AccountChip } from "@/components/auth/AccountChip";
 import { GildraCrest } from "@/components/brand/GildraCrest";
 import { WowVersionStrip } from "./WowVersionStrip";
-import { barePathOf, currentRealm, groupsFor, linksFor, realmsFor, type NavigationIcon, type NavigationLink, type NavigationRealm } from "./navigationMap";
+import { barePathOf, currentRealm, groupsFor, linksFor, realmsFor, type NavigationLink, type NavigationRealm } from "./navigationMap";
 import type { NavigationPickGlyph, NavigationPicks } from "./navigationPicks";
 import { collectionGlyphs } from "./CollectionGlyphs";
+import { modeGlyphs, pageGlyphs, realmGlyphs, type SiteGlyph } from "./SiteGlyphs";
 import { useToolbarPath } from "./toolbarPath";
 import toolbarStyles from "./atlasToolbar.module.css";
 
@@ -34,25 +35,14 @@ const wide = () => window.matchMedia(WIDE).matches;
 
 const word = (lang: Lang, value: { en: string; ru: string }) => value[lang];
 
-const realmIcons: Record<string, LucideIcon> = { "forever-library": Library, "forever-talent-calc": Network, "forever-classes": Network, "forever-professions": Wrench, "forever-tier-lists": BarChart3, "forever-dungeons": KeyRound, "forever-raids": Swords, heroes: UserRound, classes: Network, mythic: KeyRound, raids: Swords, meta: BarChart3, library: Library, chronicle: ScrollText, tools: Wrench };
-
 /** Each page its own sign, so the eye finds it before reading. */
-const pageIcons: Record<NavigationIcon, LucideIcon> = {
-  characters: UserRound, classes: Network,
-  atlas: Map, guide: Compass, meta: TrendingUp, comps: Users, stats: BarChart3, leaderboard: Trophy, routes: Route,
-  journal: BookMarked, lairs: Skull, raidComp: Shield,
-  auction: Coins, professions: Hammer, transmog: Shirt,
-  library: Library, stories: BookOpen,
-};
+const pageIcons = pageGlyphs;
 
-const glyphIcons: Record<NavigationPickGlyph, ComponentType<{ size?: number; strokeWidth?: number }>> = {
-  raid: Castle, arena: Swords, duel: Sword, shuffle: Shuffle, blitz: Zap,
-  ...collectionGlyphs,
-};
+const glyphIcons: Record<NavigationPickGlyph, SiteGlyph> = { ...modeGlyphs, ...collectionGlyphs };
 
 function RealmIcon({ id, size }: { id: string; size: number }) {
-  const Icon = realmIcons[id];
-  return Icon ? <Icon className={toolbarStyles.realmIcon} size={size} strokeWidth={1.75} aria-hidden="true" /> : null;
+  const Icon = realmGlyphs[id];
+  return Icon ? <Icon className={toolbarStyles.realmIcon} size={size} /> : null;
 }
 
 /** A realm with one page and no quick picks is a plain tab (a menu would only repeat it). */
@@ -77,7 +67,7 @@ function FeatureCard({ link, realm, lang, barePath, art, onNavigate }: { link: N
       {art && realm.art ? (realm.art.startsWith("/maps/tiles/")
         ? <MapArt base={realm.art} lang={lang} />
         : <Image src={realm.art} alt="" fill sizes="(min-width: 1180px) 264px, 72px" quality={50} />) : null}
-      {art && <span className={toolbarStyles.featureIcon}><Icon size={17} strokeWidth={1.75} /></span>}
+      {art && <span className={toolbarStyles.featureIcon}><Icon size={18} /></span>}
     </span>
     <span className={toolbarStyles.featureText}>
       <strong>{word(lang, link.label)}</strong>
@@ -119,7 +109,7 @@ const RealmMenu = memo(function RealmMenu({ realm, picks, lang, barePath, onNavi
             return <li key={link.href}>
               <Link href={p(lang, link.href)} prefetch={false} className={toolbarStyles.page} onClick={onNavigate}
                 aria-current={barePath === link.href ? "page" : undefined}>
-                <span className={toolbarStyles.pageIcon}>{art && <Icon size={17} strokeWidth={1.75} aria-hidden="true" />}</span>
+                <span className={toolbarStyles.pageIcon}>{art && <Icon size={18} />}</span>
                 <span className={toolbarStyles.pageText}>
                   <strong>{word(lang, link.label)}</strong>
                   {link.note && <small>{word(lang, link.note)}</small>}
@@ -140,7 +130,7 @@ const RealmMenu = memo(function RealmMenu({ realm, picks, lang, barePath, onNavi
                 style={pick.tint ? { "--pick-tint": pick.tint } as CSSProperties : undefined}
                 aria-current={barePath === pick.href ? "page" : undefined}>
                 <span className={toolbarStyles.pickArt}>
-                  {!art ? null : Glyph ? <Glyph size={20} strokeWidth={1.75} aria-hidden={true} />
+                  {!art ? null : Glyph ? <Glyph size={20} />
                     : pick.image ? <Image src={pick.image} alt="" fill sizes={group.kind === "art" ? "56px" : "28px"} quality={50} unoptimized={pick.remote} /> : null}
                 </span>
                 <span className={toolbarStyles.pickLabel}>{word(lang, pick.label)}</span>
