@@ -66,7 +66,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
     />
     <div className={styles.flourish} aria-hidden="true"><Image src={WOW_UI_TEXTURES.flourish} alt="" width={209} height={18} unoptimized /></div>
     <nav className={styles.banners} aria-label={t.productLabel}><ul>{homeGroups.map(group => <li key={group.id} data-group={group.id}><a href={`#${group.id}`}>
-      <Image src={group.id === "world" ? `/assets/wow/home/banners/world-${locale}.webp` : bannerArt[group.id]} alt="" width={480} height={320} sizes="(max-width: 1000px) 240px, 250px" quality={50} />
+      <Image src={group.id === "world" ? `/assets/wow/home/banners/world-${locale}.webp` : bannerArt[group.id]} alt="" width={480} height={320} sizes="(max-width: 700px) 54vw, (max-width: 1000px) 240px, 250px" quality={50} />
       <strong>{group.call[locale]}</strong>
       <span>{group.short[locale]}<ArrowDown aria-hidden="true" /></span>
     </a></li>)}</ul></nav>
@@ -93,7 +93,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
           </HomePlaque>
         </div>}
         {group.id === "world" && <HomePlaque kit="arcana" as="article" className={styles.flagship}>
-          <div className={`${styles.productPreview} ${styles.mapPreview}`}><Image src={`/assets/wow/home/banners/world-${locale}.webp`} alt={t.mapAlt} width={720} height={480} sizes="(max-width: 700px) calc(100vw - 56px), 640px" quality={75} loading="lazy" className={styles.previewImage} /></div>
+          <div className={`${styles.productPreview} ${styles.mapPreview}`}><Image src={`/assets/wow/home/banners/world-${locale}.webp`} alt={t.mapAlt} width={720} height={480} sizes="(max-width: 700px) 54vw, 640px" quality={50} loading="lazy" className={styles.previewImage} /></div>
           <div className={styles.flagshipBody}>
             <h3><Link href={href(group.lead.href)} prefetch={false}>{group.lead.label[locale]}<ArrowRight aria-hidden="true" /></Link></h3>
             <p>{t.mapIntro}</p>
