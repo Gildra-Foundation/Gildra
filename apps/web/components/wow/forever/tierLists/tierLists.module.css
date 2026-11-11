@@ -1,0 +1,23 @@
+/* atlas:strict */
+.filters { display:grid; grid-template-columns:1fr auto; align-items:end; gap:var(--atlas-space-4); }
+.rows { display:grid; gap:var(--atlas-space-5); }
+.row { display:grid; grid-template-columns:130px 1fr; gap:var(--atlas-space-5); }
+.tier { margin:0; color:var(--atlas-accent); font:var(--atlas-weight-display) var(--atlas-text-h2)/var(--atlas-leading-snug) var(--atlas-font-display); }
+.tier span { display:block; color:var(--atlas-text-muted); font:var(--atlas-text-small)/var(--atlas-leading-body) var(--atlas-font-ui); }
+.classes { padding:0; margin:0; list-style:none; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:var(--atlas-space-5); }
+.entry { min-width:0; }
+.entry h4 { margin:0; display:flex; align-items:center; gap:var(--atlas-space-3); color:var(--atlas-text-strong); font:var(--atlas-weight-display) var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); }
+.entry h4 a { display:inline-flex; align-items:center; min-height:44px; }
+.entry p { margin:var(--atlas-space-3) 0; color:var(--atlas-text-muted); font-size:var(--atlas-text-body); line-height:var(--atlas-leading-body); }
+.link { color:var(--atlas-accent); display:inline-flex; align-items:center; min-height:44px; }
+@media(max-width:700px) { .filters { grid-template-columns:1fr; } .row { grid-template-columns:1fr; } .tier { display:flex; align-items:center; gap:var(--atlas-space-4); } }
+
+.modes { display:flex; flex-wrap:wrap; gap:var(--atlas-space-3); margin-bottom:var(--atlas-space-4); }
+.modes a { display:flex; align-items:center; min-height:44px; padding:var(--atlas-space-3); color:var(--atlas-text-muted); border-bottom:2px solid transparent; }
+.modes a[aria-current] { color:var(--atlas-accent); border-color:var(--atlas-accent); }
+.rows > section + section { border-top:1px solid var(--atlas-line-soft); padding-top:var(--atlas-space-5); }
+
+.entry h4 { color:color-mix(in srgb,var(--class-color) 62%,var(--atlas-text-strong)); }
+
+.personal { border-block:1px solid var(--atlas-line-soft); padding-block:var(--atlas-space-4); }
+.personal summary { min-height:44px; cursor:pointer; color:var(--atlas-accent); font-size:var(--atlas-text-body); }

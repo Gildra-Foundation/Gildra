@@ -1,0 +1,24 @@
+/* atlas:strict */
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)); gap:var(--atlas-space-5); }
+.card { display:flex; flex-direction:column; gap:var(--atlas-space-4); min-width:0; }
+.card h3 { margin:0; font:var(--atlas-weight-display) var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); }
+.card p, .text { margin:0; color:var(--atlas-text-muted); font-size:var(--atlas-text-body); line-height:var(--atlas-leading-body); }
+.card > :last-child { margin-top:auto; }
+.filters { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:var(--atlas-space-4); align-items:end; margin-bottom:var(--atlas-space-5); }
+.actions { display:flex; flex-wrap:wrap; align-items:center; gap:var(--atlas-space-4); }
+.link { display:inline-flex; align-items:center; min-height:44px; color:var(--atlas-accent); overflow-wrap:anywhere; }
+.list { padding:0; margin:0; list-style:none; display:grid; gap:var(--atlas-space-3); }
+.list li { padding-block:var(--atlas-space-2); border-bottom:1px solid var(--atlas-line-soft); }
+.facts { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:var(--atlas-space-5); margin:0 0 var(--atlas-space-5); }
+.facts dt { color:var(--atlas-text-muted); font-size:var(--atlas-text-small); }
+.facts dd { margin:var(--atlas-space-2) 0 0; color:var(--atlas-text-strong); font-size:var(--atlas-text-lead); }
+.materials { display:flex; flex-wrap:wrap; gap:var(--atlas-space-2) var(--atlas-space-4); }
+.amount { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.pager { display:flex; justify-content:space-between; align-items:center; gap:var(--atlas-space-3); margin-top:var(--atlas-space-5); }
+.countField { max-width:240px; margin-bottom:var(--atlas-space-5); }
+@media(max-width:900px) { .filters { grid-template-columns:1fr 1fr; } }
+@media(max-width:540px) { .filters { grid-template-columns:1fr; } .facts { grid-template-columns:1fr 1fr; } }
+
+.cardHead { display:flex; align-items:center; gap:var(--atlas-space-4); }
+.thresholds { display:block; color:var(--atlas-text-muted); font-size:var(--atlas-text-small); line-height:var(--atlas-leading-body); min-width:120px; }
+.link { gap:var(--atlas-space-2); flex-wrap:wrap; }
