@@ -54,3 +54,13 @@ remain skipped without their fixture environment. A separate local HTTP smoke
 using the fixture's proxy setup passed upstream host/path/query forwarding,
 credential removal, write rejection and upstream-error handling.
 The hosted CI rerun remains pending.
+
+The same hosted run passed `./integration`, `./cmd/catalog-import` and
+`./cmd/listfile-import`. Its DB2 provenance test failed because its fixture
+remained inactive during taxonomy projection. The fixture now selects its
+candidate build before projection and publishes package entities after all
+candidate rebuilds. Existing provenance and public tooltip assertions remain.
+The original failure was reproduced locally on disposable PostgreSQL17.
+After the fix, the full DB2 importer test binary built with `-tags=integration`
+passes against disposable PostgreSQL17, including the provenance test (36.79s).
+Staticcheck for `./cmd/db2-import` also passes on Go1.26.6.
