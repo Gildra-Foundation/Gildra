@@ -53,19 +53,13 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
   return <AtlasFrame lang={locale} scene="wow" art="" artLayer={<HomeArtwork />} className={styles.page} dataAttributes={{ "data-wow-atlas": true }}>
     <JsonLd data={homeStructuredData(locale)} />
     <AtlasHero align="start" className={styles.hero}
-      eyebrow={season?.names[locale] ?? t.eyebrow} title={<>WowArcana{" "}<span className={styles.heroPromise}>{t.title}</span></>} lede={t.lede}
+      title={<><span className={styles.brandKicker}>WowArcana</span>{" "}<span className={styles.heroPromise}>{t.title}</span></>} lede={t.lede}
       actions={<div className={styles.heroContent}>
-        <HomeCharacterLookup locale={locale} />
-        <div className={styles.actions}>
-          <a href="#mythic" className={styles.textLink}>{t.play}<ArrowRight aria-hidden="true" /></a>
-
-          <HomeRecentCharacters locale={locale} label={t.recentCharacters} />
-        </div>
+        <HomeCharacterLookup locale={locale} recent={<HomeRecentCharacters locale={locale} label={t.recentCharacters} />} />
+        <nav className={styles.chips} aria-label={t.productLabel}><ul>{homeGroups.map(group => { const Icon = icons[group.lead.icon]; return <li key={group.id} data-group={group.id}><a href={`#${group.id}`}><Icon aria-hidden="true" />{group.short[locale]}</a></li>; })}</ul></nav>
       </div>}
       aside={<HomeWeeklyMeta locale={locale} />}
     />
-
-    <nav className={styles.overview} aria-label={t.productLabel}>{homeGroups.map(group => { const Icon = icons[group.lead.icon]; return <a key={group.id} href={`#${group.id}`}><Icon aria-hidden="true" />{group.short[locale]}</a>; })}</nav>
 
     {homeGroups.map(group => <AtlasSection key={group.id} id={group.id} className={styles.chapter} title={group.title[locale]}>
       <div className={styles.groupGrid} data-group={group.id}>
