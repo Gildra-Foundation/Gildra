@@ -1,0 +1,22 @@
+export type Words = { en: string; ru: string };
+export type TalentNode = {
+  id: number;
+  entryId: number;
+  definitionId: number;
+  spellId: number;
+  name: Words;
+  iconFileId: number;
+  row: number;
+  column: number;
+  level: number;
+  maxRanks: number;
+  rankSpellIds: number[];
+  descriptions: { en: string[]; ru: string[] };
+  prerequisites: { nodeId: number; ranks: number; required: boolean }[];
+  gate: { points: number; throughRow: number; nodeIds?: number[] };
+};
+export type TalentTree = { id: number; name: Words; iconFileId: number; nodes: TalentNode[] };
+export type TalentClass = { id: number; slug: string; name: Words; iconFileId: number; maxPoints: number; layoutKey: string; trees: TalentTree[] };
+export type TalentDataset = { edition: string; build: string; snapshot: string; classes: TalentClass[] };
+export type TalentBuild = { level: number; talented: number; ranks: Record<number, number> };
+export type BuildError = "level" | "talented" | "unknown-node" | "rank" | "budget" | "requirements" | "format" | "snapshot" | "class";
