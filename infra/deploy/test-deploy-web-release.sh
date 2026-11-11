@@ -96,6 +96,13 @@ cat > "$fake_bin/curl" <<'FAKE_CURL'
 #!/bin/sh
 set -eu
 current=$(cat "$TEST_STATE_DIR/web.image")
+for arg in "$@"; do
+  case "$arg" in https://*) url=$arg ;; esac
+done
+printf '%s\n' "$url" >> "$TEST_STATE_DIR/smoke.log"
+if [ "${TEST_BAD_PATH:-never}" = "$url" ]; then
+  exit 22
+fi
 if [ "$current" = "${TEST_BAD_WEB:-never}" ]; then
   exit 22
 fi
@@ -198,6 +205,18 @@ grep -q 'rollback completed and verified' "$test_directory/run.log"
 [ "$(sed -n 3p "$state_directory/up.log")" = "up $new_web" ]
 [ "$(wc -l < "$state_directory/reload.log")" -eq 3 ]
 printf 'test: a failed web release is rolled back and the manifest is untouched\n'
+
+# A failure in one parallel request must not be lost behind successful peers.
+cp "$deployment_directory/current-release.env" "$test_directory/manifest.parallel"
+if run_deploy "$bad_web" "$revision" env TEST_BAD_PATH=https://wowarcana.com/ru; then
+  printf 'test: one failing parallel smoke request must reject the release\n' >&2
+  exit 1
+fi
+cmp -s "$deployment_directory/current-release.env" "$test_directory/manifest.parallel"
+[ "$(cat "$state_directory/web.image")" = "$new_web" ]
+grep -q 'rollback completed and verified' "$test_directory/run.log"
+grep -q 'https://api.wowarcana.com/readyz' "$state_directory/smoke.log"
+printf 'test: individual parallel smoke failure triggers rollback\n'
 
 # --- a manifest without a web image is refused --------------------------------
 grep -v '^WEB_IMAGE=' "$deployment_directory/current-release.env" > "$test_directory/manifest.noweb"

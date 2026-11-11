@@ -14,102 +14,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      (github.event.workflow_run.head_branch == 'master' ||
-       startsWith(github.event.workflow_run.head_branch, 'release/'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    strategy:
-      matrix:
-        include:
-          - name: web
-            context: .
-            file: ./Dockerfile
-          - name: api
-            context: ./backend
-            file: ./backend/Dockerfile
-          - name: scraper
-            context: ./scraper
-            file: ./scraper/Dockerfile
-          - name: rotation-sim-worker
-            context: .
-            file: ./infra/simc/Dockerfile
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        id: meta
-        with:
-          images: ghcr.io/gildra-foundation/gildra-${{ matrix.name }}
-          tags: |
-            type=sha,format=long,prefix=
-      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.file }}
-          target: ${{ matrix.target }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          sbom: true
-          provenance: mode=max
-          cache-from: type=gha,scope=${{ matrix.name }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
-
   deploy:
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'master' &&
       vars.PRODUCTION_DEPLOY_ENABLED == 'true'
-    needs: build-and-deploy
     runs-on: ubuntu-latest
     environment: production
     permissions:
       contents: read
       packages: read
+      actions: read
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           # The release mode compares this commit with the one running in production.
           fetch-depth: 0
-      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Resolve immutable image digests
+      - name: Reject a superseded release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          current=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/master" --jq .object.sha)
+          test "$current" = "$RELEASE_SHA" || { echo 'A newer master revision exists; refusing stale deployment.' >&2; exit 1; }
+      - name: Download images from the successful CI run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CI_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: gh run download "$CI_RUN_ID" --repo "$GITHUB_REPOSITORY" --pattern 'image-digest-*' --dir "$RUNNER_TEMP/images"
+      - name: Validate immutable image digests and source revision
         id: images
         env:
-          IMAGE_PREFIX: ghcr.io/gildra-foundation/gildra
           IMAGE_SHA: ${{ github.event.workflow_run.head_sha }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          for name in web api scraper rotation-sim-worker; do
-            ref="$IMAGE_PREFIX-$name:$IMAGE_SHA"
-            digest="$(docker buildx imagetools inspect "$ref" --format '{{json .Manifest.Digest}}' | tr -d '"')"
-            printf '%s\n' "$digest" | grep -Eq '^sha256:[0-9a-f]{64}$'
-            case "$name" in
-              rotation-sim-worker) key=ROTATION_WORKER_IMAGE ;;
-              *) key="$(printf '%s_IMAGE' "$name" | tr '[:lower:]' '[:upper:]')" ;;
-            esac
-            printf '%s=%s\n' "$key" "$IMAGE_PREFIX-$name@$digest" >> "$GITHUB_OUTPUT"
-          done
+        run: python3 scripts/ci/image-outputs.py "$RUNNER_TEMP/images" "$IMAGE_SHA" >> "$GITHUB_OUTPUT"
       - name: Validate immutable release contract
         env:
           WEB_IMAGE: ${{ steps.images.outputs.WEB_IMAGE }}
@@ -164,6 +103,7 @@ jobs:
           printf 'Release mode: %s\n' "$mode"
           printf 'mode=%s\n' "$mode" >> "$GITHUB_OUTPUT"
       - name: Upload deployment configuration
+        if: steps.mode.outputs.mode == 'full'
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
           OVH_USER: ${{ secrets.OVH_USER }}
@@ -174,6 +114,13 @@ jobs:
         # 2026-10-01 and the catalog recovery gate blocked all imports.
         run: |
           tar -czf - compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd | ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra && sudo tar --no-same-owner -xzf - -C /opt/gildra && cd /opt/gildra && sudo chown -R root:root compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd'
+      - name: Upload web deployment script only
+        if: steps.mode.outputs.mode == 'web'
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+        run: |
+          tar -czf - infra/deploy/deploy-web-release.sh | ssh "$OVH_USER@$OVH_HOST" 'sudo tar --no-same-owner -xzf - -C /opt/gildra && sudo chown root:root /opt/gildra/infra/deploy/deploy-web-release.sh'
       - name: Bootstrap catalog runtime policy
         if: steps.mode.outputs.mode == 'full'
         env:
