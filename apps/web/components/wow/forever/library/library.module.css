@@ -1,0 +1,18 @@
+/* atlas:strict — layout only; materials and controls come from the shared kit. */
+.filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-4); align-items: end; }
+.rows { list-style: none; margin: var(--atlas-space-5) 0; padding: 0; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(260px,100%),1fr)); gap: var(--atlas-space-4); list-style: none; margin: var(--atlas-space-5) 0; padding: 0; }
+.cards h3 a { display: block; overflow: visible; -webkit-line-clamp: unset; overflow-wrap: anywhere; }
+.types { display: flex; flex-wrap: wrap; gap: var(--atlas-space-4); margin-block: var(--atlas-space-4); }
+.types a { min-height: 44px; display: inline-flex; align-items: center; }
+.types a[aria-current="page"] { text-decoration: underline; text-underline-offset: 6px; }
+.row { border-bottom: 1px solid var(--atlas-line-soft); }
+.link { display: flex; gap: var(--atlas-space-3); align-items: center; min-height: 64px; padding: var(--atlas-space-3) 0; text-decoration: none; overflow-wrap: anywhere; }
+.name { flex: 1; min-width: 0; }
+.meta { display: block; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.icon { flex: 0 0 40px; width: 40px; height: 40px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--atlas-space-4); }
+.facts dt { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.facts dd { margin: var(--atlas-space-1) 0 0; }
+.description { white-space: pre-line; max-width: var(--atlas-measure); }
+@media (max-width: 700px) { .filters { grid-template-columns: 1fr; } }
