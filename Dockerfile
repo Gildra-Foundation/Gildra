@@ -17,7 +17,9 @@ RUN --mount=type=cache,id=gildra-npm,target=/root/.npm,sharing=locked \
     npm ci --prefer-offline --no-audit --no-fund
 
 FROM deps AS source
-COPY . .
+# The map tiles (≈1 GB, 125 000 files) are not source: the build reads them
+# through a bind mount and the runner takes them straight from the context.
+COPY --exclude=apps/web/public/maps . .
 RUN npm run generate:api
 
 FROM source AS typecheck
@@ -50,6 +52,7 @@ ENV NEXT_TELEMETRY_DISABLED=1 GILDRA_TYPECHECK_STAGE=1 GILDRA_BUILD_CPUS=$GILDRA
 # Turbopack links a few externals from .next/node_modules to the root
 # node_modules; the runner flattens apps/web onto /app, so point them there.
 RUN --mount=type=cache,id=gildra-web-next,target=/app/apps/web/.next/cache,sharing=locked \
+    --mount=type=bind,source=apps/web/public/maps,target=/app/apps/web/public/maps \
     npm run build \
  && externals=apps/web/.next/standalone/apps/web/.next/node_modules \
  && if [ -d "$externals" ]; then for link in "$externals"/*; do \
@@ -64,7 +67,10 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 # public/ (≈340 MB of art) comes straight from the build context, which the
 # build never changes: the layer stays cached and shared between releases
 # instead of being compressed and stored again for every image.
-COPY --link --chown=1001:1001 apps/web/public ./public
+# The map tiles change rarely and are most of public/: their own layer, so a
+# release that touches any other public file re-stores ≈300 MB, not 1.3 GB.
+COPY --link --chown=1001:1001 apps/web/public/maps ./public/maps
+COPY --link --chown=1001:1001 --exclude=maps apps/web/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone/apps/web ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static

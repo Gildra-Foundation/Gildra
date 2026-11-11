@@ -1,8 +1,8 @@
 "use client";
-import { memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type RefObject } from "react";
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ComponentType, type CSSProperties, type FocusEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type RefObject } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BarChart3, BookMarked, BookOpen, Castle, ChevronDown, Coins, Compass, Gem, Hammer, KeyRound, Library, Map, Menu, Network, Package, PawPrint, Route, ScrollText, Search, Shield, ShieldHalf, Shirt, Shuffle, Skull, Sparkles, Sword, Swords, ToyBrick, TrendingUp, Trophy, UserRound, Users, Wrench, X, Zap, Bird, type LucideIcon } from "lucide-react";
+import { ArrowRight, BarChart3, BookMarked, BookOpen, Castle, ChevronDown, Coins, Compass, Hammer, KeyRound, Library, Map, Menu, Network, Route, ScrollText, Search, Shield, Shirt, Shuffle, Skull, Sword, Swords, TrendingUp, Trophy, UserRound, Users, Wrench, X, Zap, type LucideIcon } from "lucide-react";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { p, type Lang } from "@/lib/i18n-paths";
 import { SiteSearch } from "@/components/platform/search/SiteSearch";
@@ -13,6 +13,7 @@ import { GildraCrest } from "@/components/brand/GildraCrest";
 import { WowVersionStrip } from "./WowVersionStrip";
 import { barePathOf, currentRealm, groupsFor, linksFor, realmsFor, type NavigationIcon, type NavigationLink, type NavigationRealm } from "./navigationMap";
 import type { NavigationPickGlyph, NavigationPicks } from "./navigationPicks";
+import { collectionGlyphs } from "./CollectionGlyphs";
 import { useToolbarPath } from "./toolbarPath";
 import toolbarStyles from "./atlasToolbar.module.css";
 
@@ -44,9 +45,9 @@ const pageIcons: Record<NavigationIcon, LucideIcon> = {
   library: Library, stories: BookOpen,
 };
 
-const glyphIcons: Record<NavigationPickGlyph, LucideIcon> = {
+const glyphIcons: Record<NavigationPickGlyph, ComponentType<{ size?: number; strokeWidth?: number }>> = {
   raid: Castle, arena: Swords, duel: Sword, shuffle: Shuffle, blitz: Zap,
-  items: Package, weapons: Sword, armor: ShieldHalf, gems: Gem, spells: Sparkles, mounts: Bird, pets: PawPrint, toys: ToyBrick,
+  ...collectionGlyphs,
 };
 
 function RealmIcon({ id, size }: { id: string; size: number }) {
@@ -139,7 +140,7 @@ const RealmMenu = memo(function RealmMenu({ realm, picks, lang, barePath, onNavi
                 style={pick.tint ? { "--pick-tint": pick.tint } as CSSProperties : undefined}
                 aria-current={barePath === pick.href ? "page" : undefined}>
                 <span className={toolbarStyles.pickArt}>
-                  {!art ? null : Glyph ? <Glyph size={16} strokeWidth={1.75} aria-hidden="true" />
+                  {!art ? null : Glyph ? <Glyph size={18} strokeWidth={1.75} aria-hidden={true} />
                     : pick.image ? <Image src={pick.image} alt="" fill sizes={group.kind === "art" ? "56px" : "28px"} quality={50} unoptimized={pick.remote} /> : null}
                 </span>
                 <span className={toolbarStyles.pickLabel}>{word(lang, pick.label)}</span>

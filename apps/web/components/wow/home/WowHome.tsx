@@ -52,6 +52,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
 
   return <AtlasFrame lang={locale} scene="wow" art="" artLayer={<HomeArtwork />} className={styles.page} dataAttributes={{ "data-wow-atlas": true }}>
     <JsonLd data={homeStructuredData(locale)} />
+    <link rel="preload" href="/assets/wow/fonts/azeroth/azeroth-cyrillic.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
     <AtlasHero align="start" className={styles.hero}
       title={<><span className={styles.brandKicker}>WowArcana</span>{" "}<span className={styles.heroPromise}>{t.title}</span></>} lede={t.lede}
       actions={<div className={styles.heroContent}>
