@@ -3,6 +3,7 @@ export const wowHomeCopy = {
   "ru": {
     "recentCharacters": "Недавние персонажи",
     "weeklyMeta": "Мета недели",
+    "allMeta": "Вся мета",
     "roles": {
       "tank": "Танк",
       "healer": "Лекарь",
@@ -49,6 +50,7 @@ export const wowHomeCopy = {
   "en": {
     "recentCharacters": "Recent characters",
     "weeklyMeta": "This week’s meta",
+    "allMeta": "Full meta",
     "roles": {
       "tank": "Tank",
       "healer": "Healer",
