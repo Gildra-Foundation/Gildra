@@ -9,9 +9,8 @@ export const wowHomeCopy = {
       "healer": "Лекарь",
       "dps": "Боец"
     },
-    "metaTitle": "WowArcana — гайды и инструменты World of Warcraft",
+    "metaTitle": "Гайды WoW Midnight: Mythic+, рейды, тир-листы — WowArcana",
     "description": "Midnight, сезон 2: маршруты и таймеры Mythic+, тактики рейдов, тир-листы и таланты. Поиск персонажей, карта мира и цены аукциона World of Warcraft.",
-    "routeAlt": "Карта первого этажа Рубиновых Омутов Жизни с маршрутом пуллов",
     "raidAlt": "Вход в рейд Отравленная бездна",
     "mapAlt": "Карта Азерота: Калимдор, Восточные королевства и Нордскол",
     "eyebrow": "Midnight",
@@ -22,30 +21,20 @@ export const wowHomeCopy = {
       "title": "Найти персонажа",
       "region": "Регион",
       "realm": "Сервер",
-      "realmExample": "Гордунни",
       "name": "Имя",
       "submit": "Найти"
     },
     "productLabel": "Возможности WowArcana",
     "moreDungeons": "Подземелья сезона",
     "moreBosses": "Остальные боссы",
-    "classesIntro": "Специализации и деревья талантов — выберите класс и соберите билд.",
     "mapIntro": "Континенты, зоны и города сквозь эпохи Азерота.",
     "auctionIntro": "Найдите предмет и сравните лоты вашего сервера с ценами региона.",
     "worldsLabel": "Миры Warcraft",
     "midnightContent": "Ключи и рейды сезона",
     "foreverContent": "Подземелья и рейды",
     "mistsContent": "Классы и таланты",
-    "openGroup": {
-      "mythic": "Подземелья",
-      "raids": "Рейды",
-      "hero": "Классы",
-      "economy": "Сравнить цены",
-      "world": "Карта мира"
-    },
     "auctionAlt": "Аукционный дом Оргриммара",
-    "continentsLabel": "Континенты",
-    "mythicText": "Маршруты пуллов, прерывания и таймеры ключей."
+    "continentsLabel": "Континенты"
   },
   "en": {
     "recentCharacters": "Recent characters",
@@ -56,9 +45,8 @@ export const wowHomeCopy = {
       "healer": "Healer",
       "dps": "Damage"
     },
-    "metaTitle": "WowArcana — World of Warcraft guides and tools",
+    "metaTitle": "WoW Midnight guides: Mythic+, raids, tier lists — WowArcana",
     "description": "Midnight Season 2: Mythic+ routes and timers, raid tactics, tier lists and talents. Find your WoW character, explore the world map and auction prices.",
-    "routeAlt": "Ruby Life Pools first-floor map with the pull route",
     "raidAlt": "Entrance to The Venomous Abyss raid",
     "mapAlt": "Azeroth map: Kalimdor, Eastern Kingdoms and Northrend",
     "eyebrow": "Midnight",
@@ -69,29 +57,19 @@ export const wowHomeCopy = {
       "title": "Find a character",
       "region": "Region",
       "realm": "Realm",
-      "realmExample": "Twisting Nether",
       "name": "Name",
       "submit": "Find"
     },
     "productLabel": "Explore WowArcana",
     "moreDungeons": "Season dungeons",
     "moreBosses": "More bosses",
-    "classesIntro": "Specializations and talent trees — choose a class and plan your talents.",
     "mapIntro": "Continents, zones and cities through Azeroth’s eras.",
     "auctionIntro": "Find an item and compare your realm’s listings with region prices.",
     "worldsLabel": "Warcraft worlds",
     "midnightContent": "Seasonal keys and raids",
     "foreverContent": "Dungeons and raids",
     "mistsContent": "Classes and talents",
-    "openGroup": {
-      "mythic": "Dungeons",
-      "raids": "Raids",
-      "hero": "Classes",
-      "economy": "Compare prices",
-      "world": "World map"
-    },
     "auctionAlt": "Orgrimmar Auction House",
-    "continentsLabel": "Continents",
-    "mythicText": "Pull routes, interrupts and time limits for your next key."
+    "continentsLabel": "Continents"
   }
 } as const;

@@ -1,394 +1,69 @@
-/* atlas:strict — quiet hub surfaces, one painted character lookup. */
-.page { --atlas-container: 1280px; }
-.hero { padding-block: var(--atlas-space-5) var(--atlas-space-4); }
-.hero > div:last-child { grid-template-columns: minmax(0, 1.8fr) minmax(260px, 1fr); gap: var(--atlas-space-6); align-items: end; }
-.hero h1 { max-width: 22ch; hyphens: none; text-wrap: balance; }
-.hero p { hyphens: none; text-wrap: pretty; }
-.heroPromise { display: block; margin-top: var(--atlas-space-2); font-size: .52em; line-height: var(--atlas-leading-snug); }
-.heroContent { width: 100%; max-width: 800px; }
-.heroArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 40%; }
-.lookup { padding: var(--atlas-space-5); }
-.lookup:focus-within { z-index: 2; }
-.lookup h2 { margin: 0 0 var(--atlas-space-3); font-size: var(--atlas-text-h3); }
-.lookupFields { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr) 240px; gap: var(--atlas-space-3); align-items: end; }
-.lookupFields button { min-width: 0; }
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--atlas-space-5); margin-top: var(--atlas-space-2); }
-.textLink { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); }
-.textLink svg, .liveLinks svg { width: 16px; height: 16px; flex: none; }
-.seasonNow { padding: var(--atlas-space-5); border: 1px solid var(--atlas-line-soft); background: var(--atlas-glass-fill); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter); }
-.seasonNow h2 { font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); margin: 0 0 var(--atlas-space-3); }
-.liveLinks { list-style: none; margin: 0; padding: 0; }
-.liveLinks li { border-top: 1px solid var(--atlas-line-soft); }
-.liveLinks a { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); min-height: 44px; padding-block: var(--atlas-space-2); color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; }
-.seasonNow .liveLinks a { justify-content: flex-start; }
-.seasonNow small { display: block; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); margin-bottom: var(--atlas-space-1); }
-.seasonNow img { flex: none; border-radius: var(--atlas-radius); }
-.timer { color: var(--atlas-accent-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.productPreview { width: 100%; position: relative; isolation: isolate; aspect-ratio: 3 / 2; overflow: hidden; border: 1px solid var(--atlas-line-soft); background: var(--atlas-surface-sunken); }
-.previewImage { display: block; width: 100%; height: 100%; object-fit: cover; filter: contrast(.94) saturate(.9); pointer-events: none; }
-.productPreview picture { display: block; height: 100%; }
-.routeLine { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.routeLine polyline { fill: none; stroke: var(--atlas-accent-strong); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
-.routeStop { position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--atlas-accent-strong); border-radius: 50%; background: var(--atlas-bg); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); }
-.mapPreview { border: 0; aspect-ratio: 1.5; }
-.mapPainting { display: grid; grid-template-columns: repeat(2, 1fr); position: absolute; width: calc(100% * 512 / 480); aspect-ratio: 1; top: 0; left: 0; pointer-events: none; }
-.mapPainting img { display: block; width: 100%; height: auto; }
-.continents { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: var(--atlas-space-4) 0 0; padding: 0; list-style: none; }
-.continents a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--atlas-space-3); border: 1px solid var(--atlas-line-soft); color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; }
-.recentSlot { flex: 1 1 0; min-width: 0; height: 44px; position: relative; }
-.recentCharacters { display: flex; justify-content: flex-end; gap: var(--atlas-space-4); position: absolute; inset: 0; overflow: hidden; }
-.recentCharacters a { display: block; align-content: center; min-height: 44px; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); }
-.page a:focus-visible, .page summary:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
+/* atlas:strict — the live season first, quiet glass tools, painted plaques for raids, trade and the map. */
+.page { --atlas-container: 1280px; padding-bottom: 0; }
+.page a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
 @media (hover: hover) { .page a:hover { color: var(--atlas-accent-strong); } }
-@media (forced-colors: active) { .productPreview { border-color: CanvasText; } }
 
-.overview { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--atlas-space-3); border-block: 1px solid var(--atlas-line); padding-block: var(--atlas-space-3); }
-.overview a { display: flex; align-items: center; justify-content: flex-start; gap: var(--atlas-space-2); min-height: 44px; padding-inline: var(--atlas-space-3); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); background: var(--atlas-glass-fill); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); text-decoration: none; }
-.overview svg { width: 16px; height: 16px; flex: none; color: var(--atlas-accent); }
-.groupGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--atlas-space-5); align-items: stretch; }
-.flagship { min-width: 0; border: 1px solid var(--atlas-line-soft); background: var(--atlas-glass-fill); }
-.flagship .productPreview { border: 0; border-bottom: 1px solid var(--atlas-line-soft); aspect-ratio: 3.8; }
-.flagship .mapPreview { aspect-ratio: 1.5; }
-.flagshipBody { padding: var(--atlas-space-4) var(--atlas-space-5); }
-.flagship h3, .flagship h4 { margin: 0; }
-.flagship h3 { font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); }
-.flagship h3 a { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); min-height: 44px; text-decoration: none; color: var(--atlas-text-strong); }
-.flagship h3 svg { width: 16px; height: 16px; flex: none; color: var(--atlas-accent); }
-.flagship p { font-size: var(--atlas-text-small); color: var(--atlas-text-muted); line-height: var(--atlas-leading-body); margin: 0 0 var(--atlas-space-3); }
-.flagship h4 a { display: flex; align-items: center; min-height: 44px; color: var(--atlas-accent-strong); font-size: var(--atlas-text-body); text-decoration: none; }
-.groupTools { min-width: 0; border-top: 1px solid var(--atlas-line-soft); }
-.toolRows { list-style: none; padding: 0; margin: 0; }
-.toolRows li { border-bottom: 1px solid var(--atlas-line-soft); }
-.toolRows a, .versions a { display: flex; align-items: center; gap: var(--atlas-space-4); min-height: 76px; padding: var(--atlas-space-3) var(--atlas-space-2); color: var(--atlas-text-strong); text-decoration: none; }
-.toolRows svg, .versions svg { width: 22px; height: 22px; color: var(--atlas-accent); flex: none; }
-.toolRows svg:last-child, .versions svg:last-child { width: 16px; height: 16px; margin-left: auto; }
-.toolRows a > span { display: grid; gap: var(--atlas-space-1); }
-.toolRows strong { font-size: var(--atlas-text-body); font-weight: 600; line-height: var(--atlas-leading-snug); }
-.toolRows a > span > span, .versions small { display: block; font-size: var(--atlas-text-small); color: var(--atlas-text-muted); line-height: var(--atlas-leading-snug); }
-.classRoster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); list-style: none; padding: 0; margin: 0; column-gap: var(--atlas-space-4); }
-.classRoster li:last-child { grid-column: 1 / -1; }
-.classRoster a { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); color: var(--atlas-text); text-decoration: none; }
-.classRoster img { flex: none; border-radius: var(--atlas-radius); }
-.versions { margin-top: var(--atlas-space-5); border-top: 1px solid var(--atlas-line); }
-.versions small { margin-top: var(--atlas-space-1); }
-@media (max-width: 1200px) {
-  .hero > div:last-child { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); }
-  .seasonNow { margin: 0; padding: 0; border: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .seasonNow .liveLinks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-4); }
-}
-@media (max-width: 700px) {
-  .page { --atlas-section-gap: var(--atlas-space-5); }
-  .page section { margin-top: var(--atlas-space-5); }
-  .hero { padding-block: var(--atlas-space-3); }
-  .hero > div:last-child { padding-block: var(--atlas-space-3); gap: var(--atlas-space-3); }
-  .heroPromise { font-size: .64em; }
-  .heroArt { object-position: center 30%; }
-  .lookup { padding: var(--atlas-space-4); }
-  .lookupFields { grid-template-columns: 70px minmax(0, 1fr); gap: var(--atlas-space-2); }
-  .lookupFields > :nth-child(3), .lookupFields > span:last-child { grid-column: 1 / -1; }
-  .actions { gap: 0 var(--atlas-space-4); position: relative; }
-  .recentSlot { display: none; }
-  @supports selector(:has(a)) {
-    .recentSlot { display: block; position: absolute; inset: 0; height: auto; pointer-events: none; }
-    .recentCharacters { justify-content: flex-start; pointer-events: auto; }
-    .actions:has(.recentCharacters) .textLink { visibility: hidden; }
-  }
-  .seasonNow h2 { font-size: var(--atlas-text-h3); margin-bottom: var(--atlas-space-2); }
-  .seasonNow .liveLinks { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-2); }
-  .seasonNow .liveLinks a { align-items: flex-start; gap: var(--atlas-space-1); min-height: 44px; padding-block: var(--atlas-space-1); }
-  .seasonNow img { width: 20px; height: 20px; }
-  .seasonNow small { display: block; font-size: var(--atlas-text-label); }
-  .seasonNow .liveLinks a > span > span { display: block; font-size: var(--atlas-text-label); line-height: var(--atlas-leading-snug); }
-  .overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .overview a { gap: var(--atlas-space-2); }
+/* Hero: the promise in the Warcraft title face (one weight: no synthetic bold), the lookup
+   under it and the weekly meta card on one baseline. */
+.page .hero { padding-block: var(--atlas-space-2) 0; }
+.page .hero > div:last-child { grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: var(--atlas-space-7); align-items: end; }
+.page .hero h1 { max-width: 18ch; hyphens: none; text-wrap: balance; }
+.hero p { hyphens: none; text-wrap: pretty; }
+.heroPromise { display: block; color: var(--atlas-text-strong); font-family: var(--atlas-font-title); font-size: .9em; font-weight: 400; font-synthesis: none; letter-spacing: 0; line-height: 1.14; text-shadow: var(--atlas-text-shadow-hero); }
+.heroArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 40%; }
 
-  .groupGrid { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
-  .flagshipBody { padding: var(--atlas-space-3) var(--atlas-space-4); }
-  .routeLine, .routeStop { display: none; }
-  .toolRows a, .versions a { min-height: 64px; padding-block: var(--atlas-space-2); }
-  .classRoster img { width: 24px; height: 24px; }
-  .versions { margin-top: var(--atlas-space-3); }
-}
-@media (prefers-reduced-transparency: reduce) { .seasonNow { -webkit-backdrop-filter: none; backdrop-filter: none; } }
-
-/* HUB6: the reference kit carries the flagships; tools keep a lighter glass depth. */
-.page { padding-bottom: 0; }
-.heroPromise { color: var(--atlas-text-strong); text-shadow: var(--atlas-text-shadow-hero); }
-.actions { gap: var(--atlas-space-2) var(--atlas-space-3); }
-.chapter { position: relative; isolation: isolate; }
-.chapter::before { content: ""; position: absolute; z-index: -1; inset: -48px -24px; pointer-events: none; background: radial-gradient(ellipse at 12% 25%, var(--atlas-accent-wash), transparent 65%); }
-
-.chapter > div:first-child { position: relative; min-height: 44px; }
-
-.flagship { padding: 28px; border: 0; background: transparent; display: flex; flex-direction: column; }
-.flagship .productPreview { border: 1px solid var(--atlas-line); box-shadow: var(--atlas-glass-inset); aspect-ratio: 3; }
-.flagship .mapPreview { aspect-ratio: 1.5; }
-.flagshipBody { display: flex; flex: 1; flex-direction: column; padding: var(--atlas-space-4) 0 0; }
-.flagship h3 { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-strong); font-weight: var(--atlas-weight-display); text-shadow: var(--atlas-text-shadow-art); }
-.flagshipBody > span:last-child { margin-top: auto; padding-top: var(--atlas-space-3); }
-.groupTools { border-top: 0; }
-.toolRows { display: grid; gap: var(--atlas-space-2); }
-.toolRows li { border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius); background: var(--atlas-glass-sheen), var(--atlas-glass-raised); box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth); }
-.toolRows a { padding-inline: var(--atlas-space-4); }
-.toolRows svg:first-child { filter: drop-shadow(0 0 7px var(--atlas-accent-glow)); }
-.classRoster img { outline: 1px solid var(--atlas-glass-edge); outline-offset: 2px; box-shadow: var(--atlas-glass-depth); }
-.seasonNow { background: var(--atlas-glass-sheen), var(--atlas-glass-fill); box-shadow: var(--atlas-shadow-panel); border-color: var(--atlas-glass-edge); }
-.versions { padding-inline: var(--atlas-space-3); background: var(--atlas-glass-sheen), var(--atlas-glass-fill); box-shadow: var(--atlas-glass-inset); }
-@media (hover: hover) and (pointer: fine) {
-  .toolRows li { transition: border-color var(--atlas-duration-fast), transform var(--atlas-duration-fast), box-shadow var(--atlas-duration-fast); }
-  .toolRows li:hover { border-color: var(--atlas-glass-edge); box-shadow: var(--atlas-shadow-lift); transform: translateY(-2px); }
-  .toolRows li:active { transform: translateY(1px); }
-}
-@media (max-width: 700px) {
-  .flagship { padding: 20px; }
-  .chapter > div:first-child { min-height: 44px; }
-
-  .actions > span:not(.recentSlot) { flex: 1 1 100%; }
-  .seasonNow { padding: var(--atlas-space-3); border: 1px solid var(--atlas-glass-edge); }
-  .chapter::before { inset-inline: 0; }
-}
-@media (prefers-reduced-motion: reduce), (forced-colors: active) { .toolRows li { transition: none; transform: none !important; } }
-:global(html[data-motion="reduced"]) .toolRows li { transition: none; transform: none !important; }
-@media (forced-colors: active) { .toolRows li { border-color: CanvasText; } .chapter::before, .chapter > div:first-child::before { display: none; } }
-
-@media (max-width: 700px) {
-  .page .flagship { padding: 16px; }
-  .page .flagship h3 { font-size: var(--atlas-text-h3); line-height: var(--atlas-leading-snug); }
-  .page .flagship .productPreview:not(.mapPreview) { aspect-ratio: 4; }
-  .page .flagshipBody { padding-top: var(--atlas-space-3); }
-  .page .toolRows { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
-  .page .toolRows li:last-child:nth-child(odd) { grid-column: 1 / -1; }
-  .page .toolRows a { padding: var(--atlas-space-3); gap: var(--atlas-space-2); min-height: 76px; align-items: flex-start; }
-  .page .toolRows svg { display: none; }
-  .page .toolRows strong { font-size: var(--atlas-text-small); }
-  .page .toolRows a > span > span { font-size: var(--atlas-text-meta); }
-  .page .classRoster { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--atlas-space-1); }
-  .page .classRoster li, .page .classRoster li:last-child { flex: 0 0 44px; }
-  .page .classRoster a { justify-content: center; }
-  .page .classRoster img { width: 28px; height: 28px; }
-  .page .classRoster span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .page .versions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: var(--atlas-space-2); gap: var(--atlas-space-2); }
-  .page .versions a { display: block; min-height: 76px; font-size: var(--atlas-text-meta); padding: var(--atlas-space-2) 0; }
-  .page .versions svg { display: none; }
-  .page .versions small { font-size: var(--atlas-text-label); }
-}
-@media (max-width: 700px) {
-  .page .flagship { padding: 14px; }
-
-}
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-    .groupGrid { animation: hubEnter linear both; animation-timeline: view(); animation-range: entry 0% cover 18%; }
-  }
-}
-@keyframes hubEnter { from { opacity: .7; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-:global(html[data-motion="reduced"]) .groupGrid { animation: none; }
-
-@media (min-width: 1201px) {
-  .page .classRoster { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--atlas-space-2); }
-  .page .classRoster li, .page .classRoster li:last-child { flex: 0 0 calc((100% - 32px) / 5); }
-  .page .classRoster a { height: 100%; min-height: 88px; flex-direction: column; justify-content: flex-start; text-align: center; font-size: var(--atlas-text-meta); }
-}
-@media (prefers-reduced-transparency: reduce) { .page .groupGrid { animation: none; } .page .toolRows li { transition: none; transform: none !important; } }
-
-/* Both halves share their top and bottom edges; content decides section height. */
-.page .chapter { margin-top: var(--atlas-space-6); }
-.chapter h2 { text-wrap: balance; }
-/* Titles of the home page in the Warcraft title face (one weight: no synthetic bold). */
-.heroPromise, .chapter h2 { font-family: var(--atlas-font-title); font-weight: 400; font-synthesis: none; letter-spacing: 0; }
-.chapter h2 { font-size: calc(var(--atlas-text-h2) * 1.12); }
-.groupTools { display: flex; flex-direction: column; gap: var(--atlas-space-3); }
-.groupTools > nav:first-of-type { flex: 1; display: flex; }
-.groupTools .toolRows { flex: 1; grid-auto-rows: 1fr; }
-.toolRows a { height: 100%; }
-.versions { margin-top: 0; }
-.bossGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--atlas-space-4); }
-.bossGrid a { height: 100%; }
-.groupGrid[data-group="raids"] .productPreview { aspect-ratio: 1.8; }
-.groupGrid[data-group="economy"] .productPreview { aspect-ratio: 4; }
-.professionPreview { display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-4); color: var(--atlas-accent-strong); background: var(--atlas-glass-sheen), var(--atlas-glass-raised); }
-.professionPreview svg:first-child { width: 48px; height: 48px; }
-.professionPreview svg:last-child { width: 24px; height: 24px; }
-@media (max-width: 700px) {
-  .page .chapter { margin-top: var(--atlas-space-4); }
-  .page .overview a:last-child { grid-column: 1 / -1; }
-  .page .toolRows { grid-auto-rows: 1fr; }
-  .page .toolRows a { align-items: center; min-height: 88px; }
-  .page .toolRows svg:first-child { display: block; width: 16px; height: 16px; }
-  .page .toolRows a > span { min-width: 0; }
-  .page .groupGrid[data-group="raids"] .productPreview { aspect-ratio: 4; }
-  .bossGrid { column-gap: var(--atlas-space-3); }
-}
-
-@media (max-width: 700px) {
-  .page .groupGrid[data-group="economy"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .page .groupGrid[data-group="economy"] .flagship { padding: 12px; }
-  .page .groupGrid[data-group="economy"] .productPreview { aspect-ratio: 2; }
-  .page .groupGrid[data-group="economy"] h3 { font-size: var(--atlas-text-title); }
-  .page .groupGrid[data-group="economy"] p { font-size: var(--atlas-text-meta); }
-  .page .groupGrid[data-group="economy"] .flagshipBody { padding-top: 0; }
-  .professionPreview svg:first-child { width: 32px; height: 32px; }
-  .professionPreview svg:last-child { display: none; }
-  .page .toolRows { grid-auto-rows: 1fr; }
-  .page .toolRows a { min-height: 76px; }
-}
-
-.page .flagship :global(.ui-button__label) { white-space: nowrap; hyphens: none; }
-@media (max-width: 1023px) { .flagship :global(.ui-button__icon) { display: none; } }
-@media (max-width: 360px) { .page .flagship :global(.ui-button__label) { font-size: var(--atlas-text-meta); } }
-
-/* Arcana: compact jewelled objects around the content. */
-.page .toolRows { flex: initial; grid-auto-rows: 1fr; width: 100%; }
-.page .groupTools > nav:first-of-type { flex: initial; }
-.page .toolRows a { min-height: 88px; height: 100%; padding: var(--atlas-space-3); gap: var(--atlas-space-3); }
-.page .toolRows a > span:not([data-medallion]) { min-width: 0; }
-.page .toolRows [data-medallion] { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--atlas-accent-2); background: radial-gradient(ellipse at 35% 20%, var(--atlas-accent-wash), transparent 70%), var(--atlas-glass-raised); box-shadow: var(--atlas-glass-inset), inset 0 0 0 4px var(--atlas-surface-sunken), var(--atlas-glass-depth); }
-.page .toolRows [data-medallion] svg { display: block; width: 19px; height: 19px; margin: 0; filter: none; color: var(--atlas-accent-strong); }
-.page .toolRows li { border-color: var(--atlas-glass-edge); background: var(--atlas-glass-sheen), linear-gradient(120deg, var(--atlas-accent-wash), transparent 60%), var(--atlas-glass-raised); }
-.page .toolRows a > svg:last-child { display: none; }
-.page .overview a, .page .seasonNow, .page .versions { border-color: var(--atlas-glass-edge); box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth); }
-.page .overview a { border-top-color: var(--atlas-accent-2); }
-.page .professionPreview { background: radial-gradient(ellipse, var(--atlas-accent-wash), transparent 65%), var(--atlas-glass-raised); }
-.professionPreview svg:first-child { border: 1px solid var(--atlas-accent-2); border-radius: 50%; padding: 10px; width: 64px; height: 64px; box-shadow: var(--atlas-glass-inset), inset 0 0 0 4px var(--atlas-surface-sunken); }
-.professionPreview svg:last-child { display: none; }
-@media (min-width: 701px) {
-  .page .groupGrid[data-group="mythic"] .toolRows { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .page .groupGrid[data-group="mythic"] .toolRows a { min-height: 112px; }
-  .page .groupGrid[data-group="mythic"] .flagship { padding: 20px; }
-  .page .groupGrid[data-group="mythic"] .productPreview { aspect-ratio: 4; }
-  .page .groupGrid[data-group="hero"], .page .groupGrid[data-group="world"] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
-  .page .groupGrid[data-group="hero"] .flagship { padding: 24px; }
-  .page .groupGrid[data-group="hero"] .flagshipBody { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(0, 3fr); gap: 0 var(--atlas-space-5); padding: 0; align-items: center; }
-  .page .groupGrid[data-group="hero"] h3 { grid-column: 1; }
-  .page .groupGrid[data-group="hero"] p { grid-column: 1; }
-  .page .groupGrid[data-group="hero"] .classRoster { grid-column: 2; grid-row: 1 / 4; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--atlas-space-2); }
-  .page .groupGrid[data-group="hero"] .classRoster li { flex: 0 0 calc((100% - 48px) / 7); }
-  .page .groupGrid[data-group="hero"] .classRoster a { min-height: 64px; flex-direction: column; justify-content: center; text-align: center; font-size: var(--atlas-text-meta); }
-  .page .groupGrid[data-group="hero"] .flagshipBody > span:last-child { grid-column: 1; padding: 0; }
-  .page .groupGrid[data-group="world"] .flagship { display: grid; grid-template-columns: 1fr 1fr; gap: var(--atlas-space-5); padding: 24px; }
-  .page .groupGrid[data-group="world"] .mapPreview { aspect-ratio: 3; }
-  .page .groupGrid[data-group="world"] .flagshipBody { padding: 0; }
-  .page .groupGrid[data-group="hero"] .toolRows, .page .groupGrid[data-group="world"] .toolRows { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .page .versions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); }
-  .page .versions a { min-height: 76px; }
-  .page .groupGrid[data-group="raids"] .flagship { padding: 20px; }
-  .page .groupGrid[data-group="raids"] .productPreview { aspect-ratio: 3.2; }
-  .page .groupGrid[data-group="raids"] .toolRows { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 700px) {
-  .page .toolRows a { gap: var(--atlas-space-2); min-height: 96px; padding: var(--atlas-space-2); }
-  .page .toolRows [data-medallion] { width: 30px; height: 30px; }
-  .page .toolRows [data-medallion] svg { width: 16px; height: 16px; }
-  .page .professionPreview svg:first-child { width: 48px; height: 48px; padding: 8px; }
-}
-.page [data-secondary-slot] { display: flex; min-width: 0; }
-.page [data-secondary-slot][data-block] { width: 100%; }
-.page [data-secondary-slot] [data-secondary] { display: inline-flex; align-items: center; justify-content: center; gap: var(--atlas-space-2); text-decoration: none; font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); width: 100%; min-height: 44px; border: 1px solid var(--atlas-glass-edge); border-inline-color: var(--atlas-accent-2); border-radius: var(--atlas-radius); background: var(--atlas-glass-sheen), var(--atlas-glass-fill); box-shadow: var(--atlas-glass-inset); color: var(--atlas-text-strong); padding-inline: var(--atlas-space-3); }
-.page [data-secondary-slot] [data-secondary]:hover { background: var(--atlas-glass-raised); border-color: var(--atlas-accent-2); }
-.page [data-secondary-slot] [data-secondary]:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
-.page [data-secondary-slot] [data-secondary]:active { box-shadow: inset 0 2px 5px var(--atlas-bg); }
-.lookupFields > span:last-child button { min-height: 56px; }
-@media (min-width: 701px) {
-  .page .groupGrid[data-group="mythic"], .page .groupGrid[data-group="raids"] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
-  .page .groupGrid[data-group="mythic"] .flagship, .page .groupGrid[data-group="raids"] .flagship { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--atlas-space-5); padding: 24px; }
-  .page .groupGrid[data-group="mythic"] .productPreview, .page .groupGrid[data-group="raids"] .productPreview { aspect-ratio: auto; height: 220px; min-height: 0; }
-  .page .groupGrid[data-group="mythic"] .flagshipBody, .page .groupGrid[data-group="raids"] .flagshipBody { padding: 0; }
-  .page .groupGrid[data-group="mythic"] .toolRows { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .page .groupGrid[data-group="mythic"] .toolRows a { min-height: 88px; }
-  .page .groupGrid[data-group="raids"] .bossGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-@media (forced-colors: active) {
-  .page [data-medallion], .page [data-secondary] { border: 1px solid ButtonText; background: ButtonFace; box-shadow: none; color: ButtonText; }
-}
-@media (min-width: 701px) {
-  .page .groupGrid[data-group="world"] .toolRows:not(:has(li:nth-child(3))) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-.page .professionPreview { border: 0; box-shadow: none; background: transparent; }
-
-/* A quiet section index and a distinct, compact game choice row. */
-.page .overview a { background: transparent; box-shadow: none; border-color: transparent; border-bottom-color: var(--atlas-glass-edge); }
-.page .overview a:hover { background: var(--atlas-glass-fill); border-bottom-color: var(--atlas-accent); }
-.page .versions { padding: var(--atlas-space-2) 0; background: transparent; box-shadow: none; }
-.page .versions a { display: flex; align-items: center; gap: var(--atlas-space-2); padding: var(--atlas-space-2); border-radius: var(--atlas-radius); }
-.page .versions a:hover { background: var(--atlas-glass-fill); }
-.page .versions [data-medallion] { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border: 1px solid var(--atlas-glass-edge); border-radius: 50%; background: var(--atlas-glass-fill); box-shadow: var(--atlas-glass-inset); }
-.page .versions img { width: 44px; height: 44px; object-fit: contain; }
-.page .versions a > span:nth-child(2) { min-width: 0; }
-.page .versions a > svg { display: none; }
+/* Character lookup: one compact bar; the field names live in the placeholders. */
+.page .lookup { padding: 20px var(--atlas-space-5) 22px; }
+.lookup:focus-within { z-index: 2; }
+.lookupHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-3); margin-bottom: var(--atlas-space-3); }
+.page .lookup h2 { flex: none; margin: 0; }
+.lookupFields { display: grid; grid-template-columns: 76px minmax(0, 1.2fr) minmax(0, 1fr) 168px; gap: var(--atlas-space-2); align-items: center; }
+.lookupFields label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.lookupFields button { min-width: 0; }
+.lookupFields > span:last-child button { min-height: 52px; }
+.recentSlot { position: relative; flex: 1 1 0; min-width: 0; height: 28px; }
+.recentCharacters { display: flex; justify-content: flex-end; gap: var(--atlas-space-4); position: absolute; inset: 0; overflow: hidden; }
+.recentCharacters a { display: block; align-content: center; min-height: 28px; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); }
 .realmCombo { position: relative; }
 .realmOptions { contain: layout style paint; position: absolute; z-index: 30; inset: calc(100% + 4px) 0 auto; max-height: 264px; overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 4px; list-style: none; border: 1px solid var(--atlas-accent-2); border-radius: var(--atlas-radius-control); background: var(--atlas-surface-raised); box-shadow: var(--atlas-glass-depth); color: var(--atlas-text-strong); }
-.realmOptions[hidden] { display: none; }
+.realmOptions[hidden], .realmOptions li[hidden] { display: none; }
 .realmOptions li { min-height: 44px; display: flex; align-items: center; padding: 8px; cursor: pointer; font-size: var(--atlas-text-small); }
 .realmOptions li:hover, .realmOptions li[aria-selected="true"] { background: var(--atlas-accent-wash); outline: 1px solid var(--atlas-accent-2); outline-offset: -1px; }
-@media (max-width: 700px) {
-  .page .versions { grid-template-columns: 1fr; gap: 0; }
-  .page .versions a { min-height: 64px; }
-  .page .versions small { font-size: var(--atlas-text-meta); }
-}
 .realmControl { position: relative; contain: layout style; }
 .realmControl:focus-within { z-index: 40; }
 .realmControl input { padding-right: var(--atlas-space-6); }
 .realmControl::after { content: ""; position: absolute; pointer-events: none; right: 14px; top: calc(50% - 4px); width: 6px; height: 6px; border-right: 1px solid var(--atlas-text-muted); border-bottom: 1px solid var(--atlas-text-muted); transform: rotate(45deg); }
 
-.realmOptions li[hidden] { display: none; }
+/* Weekly meta: the leader of each role with its share of the week's keys. */
+.seasonNow { padding: var(--atlas-space-5); border: 1px solid var(--atlas-glass-edge); border-top-color: var(--atlas-accent-2); border-radius: var(--atlas-radius); background: var(--atlas-glass-sheen), color-mix(in srgb, var(--atlas-bg) 70%, transparent); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter); box-shadow: var(--atlas-shadow-panel); }
+.metaHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-3); margin-bottom: var(--atlas-space-2); }
+.seasonNow h2 { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); }
+.metaHead a, .more { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); text-decoration: none; white-space: nowrap; }
+.metaHead svg { width: 14px; height: 14px; }
+.liveLinks { list-style: none; margin: 0; padding: 0; }
+.liveLinks li { border-top: 1px solid var(--atlas-line-soft); }
+.liveLinks a { display: flex; align-items: center; gap: var(--atlas-space-3); min-height: 64px; padding-block: var(--atlas-space-2); color: var(--atlas-text); text-decoration: none; }
+.seasonNow [data-medallion] { display: grid; place-items: center; flex: none; width: 44px; height: 44px; overflow: hidden; border: 1px solid var(--atlas-accent-2); border-radius: 50%; background: var(--atlas-surface-sunken); box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth); }
+.seasonNow [data-medallion] img { width: 36px; height: 36px; border-radius: 50%; }
+.metaSpec { display: grid; flex: 1; gap: 1px; min-width: 0; }
+.metaSpec small { color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.metaSpec strong { color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; line-height: var(--atlas-leading-snug); }
+.metaSpec span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+.presence { flex: none; color: var(--atlas-accent-strong); font-size: var(--atlas-text-title); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-/* HUB9: a chapter wash stays inside its own section (no seams across the previous cards),
-   headings sit close to their content, the raid plaque carries its bosses. */
-.page .chapter::before { inset: 0 -24px; background: radial-gradient(closest-side at 30% 50%, var(--atlas-accent-wash), transparent); }
-.page .chapter { margin-top: var(--atlas-space-8); }
-.page .chapter > div:first-child { margin-bottom: var(--atlas-space-4); }
-.page .flagship h4 a { min-height: 32px; }
-.page .groupGrid[data-group="raids"] .flagshipBody .bossGrid { margin-top: var(--atlas-space-2); grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--atlas-space-5); }
-.page .flagshipBody .bossGrid a { min-height: 40px; padding-block: var(--atlas-space-1); hyphens: manual; }
-.page .flagshipBody .bossGrid svg { width: 14px; height: 14px; color: var(--atlas-accent); }
-.page .groupGrid[data-group="hero"] .classRoster a { justify-content: flex-start; gap: var(--atlas-space-1); padding-top: var(--atlas-space-1); }
-@media (min-width: 701px) {
-  .page .groupGrid[data-group="raids"] .productPreview { height: auto; min-height: 220px; }
-  .page .groupGrid[data-group="raids"] .productPreview picture { position: absolute; inset: 0; }
-}
-@media (max-width: 700px) {
-  .page .chapter { margin-top: var(--atlas-space-7); }
-  .page .chapter > div:first-child { margin-bottom: var(--atlas-space-3); }
-  .page .groupGrid[data-group="raids"] .flagshipBody .bossGrid { column-gap: var(--atlas-space-3); }
-  .page .flagshipBody .bossGrid a { font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
-}
-
-/* HUB9: the season's dungeons as painted doors, each in its own accent. */
-.page .groupTools > .dungeons { display: block; flex: none; width: 100%; }
-.dungeons ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
-.dungeons a { position: relative; isolation: isolate; display: block; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid var(--atlas-glass-edge); border-radius: var(--atlas-radius); box-shadow: var(--atlas-glass-depth); color: var(--atlas-text-strong); text-decoration: none; }
-.dungeons img { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.dungeons a::before { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, transparent 38%, color-mix(in srgb, var(--atlas-bg) 90%, transparent)); }
-.dungeons a::after { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--dungeon-accent); box-shadow: 0 0 14px var(--dungeon-accent); }
-.dungeonName { position: absolute; right: 72px; bottom: var(--atlas-space-3); left: var(--atlas-space-3); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); text-shadow: var(--atlas-text-shadow-art); text-wrap: balance; }
-.dungeons .timer { position: absolute; right: var(--atlas-space-3); bottom: var(--atlas-space-3); padding: 2px var(--atlas-space-2); border: 1px solid color-mix(in srgb, var(--dungeon-accent) 60%, transparent); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 75%, transparent); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); }
-.dungeons a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
-@media (hover: hover) and (pointer: fine) {
-  .dungeons img { transition: transform var(--atlas-duration-art) var(--atlas-ease), filter var(--atlas-duration-fast) ; }
-  .dungeons a { transition: border-color var(--atlas-duration-fast), box-shadow var(--atlas-duration-fast); }
-  .dungeons a:hover { border-color: var(--dungeon-accent); box-shadow: var(--atlas-shadow-lift), 0 0 24px color-mix(in srgb, var(--dungeon-accent) 35%, transparent); }
-  .dungeons a:hover img { transform: scale(1.05); }
-  .page .dungeons a:hover { color: var(--atlas-text-strong); }
-}
-@media (prefers-reduced-motion: reduce), (forced-colors: active) { .dungeons img, .dungeons a { transition: none; } .dungeons a:hover img { transform: none; } }
-:global(html[data-motion="reduced"]) .dungeons img { transition: none; transform: none !important; }
-@media (forced-colors: active) { .dungeons a { border-color: CanvasText; } .dungeons a::before, .dungeons a::after { display: none; } }
-@media (max-width: 700px) {
-  .dungeons ul { display: flex; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; gap: var(--atlas-space-2); padding-bottom: var(--atlas-space-1); }
-  .dungeons ul::-webkit-scrollbar { display: none; }
-  .dungeons li { flex: 0 0 68%; scroll-snap-align: start; }
-}
-
-/* The heroes painting behind the class roster; the plaque keeps its text on a dark veil. */
-.page .groupGrid[data-group="hero"] .flagship { position: relative; isolation: isolate; overflow: hidden; }
-.heroScene { z-index: -1; object-fit: cover; object-position: 68% 40%; opacity: .4; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 45%); mask-image: linear-gradient(90deg, transparent 0, #000 45%); }
-@media (max-width: 700px) { .heroScene { opacity: .3; -webkit-mask-image: linear-gradient(180deg, #000 0, transparent 85%); mask-image: linear-gradient(180deg, #000 0, transparent 85%); } }
-@media (min-width: 701px) { .page .groupGrid[data-group="mythic"] .productPreview { height: 190px; } }
-/* next/image fill writes inset 0 inline; keep the painting inside the plaque frame. */
-.page .heroScene { inset: 12px !important; width: calc(100% - 24px) !important; height: calc(100% - 24px) !important; border-radius: var(--atlas-radius); }
-
+/* Chapters: a plain name, one link to the section's main page, a wash in the section's tone. */
+.chapter { position: relative; isolation: isolate; }
+.page .chapter { margin-top: var(--atlas-space-7); }
+.page .chapter:first-of-type { margin-top: var(--atlas-space-6); }
+.page .chapter::before { content: ""; position: absolute; z-index: -1; inset: 0 -24px; pointer-events: none; background: radial-gradient(closest-side at 30% 50%, var(--atlas-accent-wash), transparent); }
+.page .chapter > div:first-child { position: relative; min-height: 44px; margin-bottom: var(--atlas-space-4); }
+.chapter h2 { text-wrap: balance; }
+.more { gap: var(--atlas-space-2); font-weight: 600; }
+.more svg { flex: none; width: 16px; height: 16px; color: var(--atlas-accent); }
+.group { display: grid; gap: var(--atlas-space-3); min-width: 0; }
+.group > * { min-width: 0; }
 /* Each chapter speaks in the tone of the pages it opens: Mythic+ ruby, raids green
-   (as the raid journal), heroes violet, economy gold; the world keeps the theme accent. */
+   (as the raid journal), classes violet, trade gold; the world keeps the theme accent. */
 .page .chapter[id="mythic"] { --chapter-tone: var(--atlas-ruby-accent); }
 .page .chapter[id="raids"] { --chapter-tone: var(--atlas-positive); }
 .page .chapter[id="hero"] { --chapter-tone: var(--atlas-dungeon-void-accent); }
@@ -401,99 +76,147 @@
   --atlas-accent-glow: color-mix(in srgb, var(--chapter-tone) 18%, transparent);
   --atlas-frame-tint: var(--atlas-accent-glow);
 }
-.page .overview a[href="#mythic"] svg { color: var(--atlas-ruby-accent); }
-.page .overview a[href="#raids"] svg { color: var(--atlas-positive); }
-.page .overview a[href="#hero"] svg { color: var(--atlas-dungeon-void-accent); }
-.page .overview a[href="#economy"] svg { color: var(--atlas-dungeon-kings-accent); }
-@media (forced-colors: active) { .page .overview svg { color: CanvasText; } }
 
-/* HUB10 hero: the promise leads; the lookup, the chapter chips and the weekly meta card
-   share one baseline instead of floating on the painting. */
-.page .hero > div:last-child { grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: var(--atlas-space-7); align-items: end; }
-.page .heroPromise { display: block; margin-top: 0; font-size: .9em; line-height: 1.14; }
-.page .hero h1 { max-width: 18ch; }
-.lookupHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-3); margin-bottom: var(--atlas-space-3); }
-.page .lookup h2 { margin: 0; flex: none; }
-.lookupHead .recentSlot { flex: 1 1 0; height: 28px; }
-.lookupHead .recentCharacters a { min-height: 28px; }
+/* The season's dungeons as painted doors, each in its own accent. */
+.dungeons ul { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+.dungeons a { position: relative; isolation: isolate; display: block; aspect-ratio: 3 / 4; overflow: hidden; border: 1px solid var(--atlas-glass-edge); border-radius: var(--atlas-radius); box-shadow: var(--atlas-glass-depth); color: var(--atlas-text-strong); text-decoration: none; }
+.dungeons img { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dungeons a::before { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, transparent 34%, color-mix(in srgb, var(--atlas-bg) 92%, transparent)); }
+.dungeons a::after { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--dungeon-accent); box-shadow: 0 0 14px var(--dungeon-accent); }
+.dungeonName { position: absolute; right: var(--atlas-space-2); bottom: var(--atlas-space-2); left: var(--atlas-space-2); font-family: var(--atlas-font-display); font-size: var(--atlas-text-body); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); text-shadow: var(--atlas-text-shadow-art); text-wrap: balance; }
+.timer { position: absolute; top: var(--atlas-space-2); right: var(--atlas-space-2); padding: 2px var(--atlas-space-2); border: 1px solid color-mix(in srgb, var(--dungeon-accent) 60%, transparent); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 75%, transparent); color: var(--atlas-text-strong); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dungeons a:focus-visible { outline-offset: 3px; }
 
-.chips { margin-top: var(--atlas-space-4); }
-.chips ul { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
-.chips a { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 40px; padding: 0 var(--atlas-space-4) 0 var(--atlas-space-3); border: 1px solid var(--atlas-glass-edge); border-radius: 999px; background: var(--atlas-glass-sheen), color-mix(in srgb, var(--atlas-bg) 62%, transparent); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter); box-shadow: var(--atlas-glass-inset); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; white-space: nowrap; }
-.chips svg { width: 16px; height: 16px; flex: none; color: var(--chip-tone, var(--atlas-accent)); }
-.chips li[data-group="mythic"] { --chip-tone: var(--atlas-ruby-accent); }
-.chips li[data-group="raids"] { --chip-tone: var(--atlas-positive); }
-.chips li[data-group="hero"] { --chip-tone: var(--atlas-dungeon-void-accent); }
-.chips li[data-group="economy"] { --chip-tone: var(--atlas-dungeon-kings-accent); }
+/* Classes: thirteen crests in the colours of the game. */
+.classRoster { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.classRoster a { display: flex; flex-direction: column; align-items: center; gap: var(--atlas-space-2); height: 100%; min-height: 112px; padding: var(--atlas-space-3) 2px var(--atlas-space-2); border: 1px solid var(--atlas-glass-edge); border-top: 2px solid var(--class-color); border-radius: var(--atlas-radius); background: var(--atlas-glass-sheen), linear-gradient(180deg, color-mix(in srgb, var(--class-color) 16%, transparent), transparent 72%), var(--atlas-glass-raised); box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth); color: color-mix(in srgb, var(--class-color) 62%, var(--atlas-text-strong)); font-size: var(--atlas-text-label); font-weight: 600; line-height: var(--atlas-leading-snug); letter-spacing: 0; text-align: center; text-decoration: none; hyphens: manual; }
+.classRoster img { flex: none; width: 48px; height: 48px; border-radius: var(--atlas-radius); outline: 1px solid var(--atlas-glass-edge); outline-offset: 2px; box-shadow: var(--atlas-glass-depth); }
+
+/* Tools: glass rows with a jewelled medallion. */
+.toolRows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.toolRows:not(:has(li:nth-child(3))) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.toolRows li { border: 1px solid var(--atlas-glass-edge); border-radius: var(--atlas-radius); background: var(--atlas-glass-sheen), linear-gradient(120deg, var(--atlas-accent-wash), transparent 60%), var(--atlas-glass-raised); box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth); }
+.toolRows a { display: flex; align-items: center; gap: var(--atlas-space-3); height: 100%; min-height: 76px; padding: var(--atlas-space-3); color: var(--atlas-text-strong); text-decoration: none; }
+.toolRows a > span:last-child { display: grid; gap: var(--atlas-space-1); min-width: 0; }
+.toolRows strong { font-size: var(--atlas-text-body); font-weight: 600; line-height: var(--atlas-leading-snug); }
+.toolRows a > span:last-child > span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+.toolRows [data-medallion] { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid var(--atlas-accent-2); border-radius: 50%; background: radial-gradient(ellipse at 35% 20%, var(--atlas-accent-wash), transparent 70%), var(--atlas-glass-raised); box-shadow: var(--atlas-glass-inset), inset 0 0 0 4px var(--atlas-surface-sunken), var(--atlas-glass-depth); }
+.toolRows [data-medallion] svg { display: block; width: 19px; height: 19px; color: var(--atlas-accent-strong); }
+
+/* Plaques: the raid with its bosses, the two trade halls, the world map. The title link covers
+   the whole plaque; the links inside stay above it. */
+.page .flagship { position: relative; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--atlas-space-5); min-width: 0; padding: 24px; }
+.productPreview { position: relative; isolation: isolate; min-height: 200px; overflow: hidden; border: 1px solid var(--atlas-line); background: var(--atlas-surface-sunken); box-shadow: var(--atlas-glass-inset); }
+.productPreview picture { position: absolute; inset: 0; display: block; }
+.previewImage { display: block; width: 100%; height: 100%; object-fit: cover; filter: contrast(.94) saturate(.9); pointer-events: none; }
+.mapPreview { border: 0; }
+.mapPainting { display: grid; grid-template-columns: repeat(2, 1fr); position: absolute; top: 0; left: 0; width: calc(100% * 512 / 480); aspect-ratio: 1; pointer-events: none; }
+.mapPainting img { display: block; width: 100%; height: auto; }
+.flagshipBody { display: flex; flex-direction: column; min-width: 0; }
+.flagship h3 { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); text-shadow: var(--atlas-text-shadow-art); }
+.flagship h3 a { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); min-height: 44px; color: inherit; text-decoration: none; }
+.flagship h3 a::after { content: ""; position: absolute; inset: 0; }
+.flagship h3 svg { flex: none; width: 16px; height: 16px; color: var(--atlas-accent); }
+.flagship p { margin: 0 0 var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.bossGrid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.bossGrid li { border-top: 1px solid var(--atlas-line-soft); }
+.bossGrid a { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); height: 100%; min-height: 40px; padding-block: var(--atlas-space-1); color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; hyphens: manual; }
+.bossGrid svg { flex: none; width: 14px; height: 14px; color: var(--atlas-accent); }
+.continents { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.continents a { display: inline-flex; align-items: center; min-height: 36px; padding-inline: var(--atlas-space-3); border: 1px solid var(--atlas-glass-edge); border-radius: 999px; background: var(--atlas-glass-fill); color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; white-space: nowrap; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-5); }
+.page .pair .flagship { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; gap: var(--atlas-space-4); padding: 28px; }
+.pair .productPreview { min-height: 0; aspect-ratio: 2.8; }
+
+/* The other game versions: a quiet row under the world tools. */
+.versions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); padding: var(--atlas-space-2) 0; border-top: 1px solid var(--atlas-line); }
+.versions a { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 76px; padding: var(--atlas-space-2); border-radius: var(--atlas-radius); color: var(--atlas-text-strong); text-decoration: none; }
+.versions [data-medallion] { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border: 1px solid var(--atlas-glass-edge); border-radius: 50%; background: var(--atlas-glass-fill); box-shadow: var(--atlas-glass-inset); }
+.versions img { width: 44px; height: 44px; object-fit: contain; }
+.versions a > span:last-child { min-width: 0; }
+.versions small { display: block; margin-top: var(--atlas-space-1); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+
 @media (hover: hover) and (pointer: fine) {
-  .chips a { transition: border-color var(--atlas-duration-fast), background var(--atlas-duration-fast); }
-  .page .chips a:hover { border-color: var(--chip-tone, var(--atlas-accent)); background: var(--atlas-glass-sheen), color-mix(in srgb, var(--chip-tone, var(--atlas-accent)) 16%, var(--atlas-bg)); color: var(--atlas-text-strong); }
+  .dungeons img, .pair .productPreview img { transition: transform var(--atlas-duration-art) var(--atlas-ease); }
+  .dungeons a, .classRoster a, .toolRows li, .continents a { transition: border-color var(--atlas-duration-fast), box-shadow var(--atlas-duration-fast), transform var(--atlas-duration-fast), background var(--atlas-duration-fast); }
+  .dungeons a:hover { border-color: var(--dungeon-accent); box-shadow: var(--atlas-shadow-lift), 0 0 24px color-mix(in srgb, var(--dungeon-accent) 35%, transparent); }
+  .dungeons a:hover img, .pair .flagship:hover .productPreview img { transform: scale(1.05); }
+  .page .dungeons a:hover { color: var(--atlas-text-strong); }
+  .page .classRoster a:hover { border-color: var(--class-color); box-shadow: var(--atlas-shadow-lift); color: var(--atlas-text-strong); transform: translateY(-2px); }
+  .toolRows li:hover { border-color: var(--atlas-accent); box-shadow: var(--atlas-shadow-lift); transform: translateY(-2px); }
+  .toolRows li:active, .classRoster a:active { transform: translateY(1px); }
+  .continents a:hover { border-color: var(--atlas-accent); background: var(--atlas-glass-raised); }
+  .versions a:hover { background: var(--atlas-glass-fill); }
+}
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .dungeons img, .dungeons a, .classRoster a, .toolRows li, .continents a, .pair .productPreview img { transition: none; transform: none !important; }
+}
+:global(html[data-motion="reduced"]) :is(.dungeons img, .classRoster a, .toolRows li, .pair .productPreview img) { transition: none; transform: none !important; }
+@media (prefers-reduced-transparency: reduce) { .seasonNow { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--atlas-surface); } }
+@media (forced-colors: active) {
+  .seasonNow, .dungeons a, .classRoster a, .toolRows li, .productPreview { border-color: CanvasText; }
+  .page [data-medallion] { border: 1px solid ButtonText; background: ButtonFace; box-shadow: none; color: ButtonText; }
+  .chapter::before, .dungeons a::before, .dungeons a::after { display: none; }
 }
 
-.page .seasonNow { padding: var(--atlas-space-5); border: 1px solid var(--atlas-glass-edge); border-top-color: var(--atlas-accent-2); border-radius: var(--atlas-radius); background: var(--atlas-glass-sheen), color-mix(in srgb, var(--atlas-bg) 70%, transparent); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter); box-shadow: var(--atlas-shadow-panel); }
-.metaHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-3); margin-bottom: var(--atlas-space-2); }
-.page .seasonNow h2 { margin: 0; }
-.metaHead a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); text-decoration: none; white-space: nowrap; }
-.metaHead svg { width: 14px; height: 14px; }
-.page .seasonNow .liveLinks a { justify-content: flex-start; gap: var(--atlas-space-3); min-height: 64px; }
-.page .seasonNow [data-medallion] { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border: 1px solid var(--atlas-accent-2); border-radius: 50%; background: var(--atlas-surface-sunken); box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth); overflow: hidden; }
-.page .seasonNow [data-medallion] img { width: 36px; height: 36px; border-radius: 50%; }
-.page .seasonNow .liveLinks a > span:last-child { display: grid; gap: 1px; min-width: 0; }
-.page .seasonNow small { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
-.page .seasonNow strong { color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; line-height: var(--atlas-leading-snug); }
-.page .seasonNow .liveLinks a > span:last-child > span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
-.page .chapter:first-of-type { margin-top: var(--atlas-space-7); }
-@media (prefers-reduced-transparency: reduce) { .chips a, .page .seasonNow { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--atlas-surface); } }
-@media (forced-colors: active) { .chips a, .page .seasonNow { border-color: CanvasText; } .chips svg { color: CanvasText; } }
-
+@media (max-width: 1279px) { .classRoster { grid-template-columns: repeat(7, minmax(0, 1fr)); } .classRoster a { min-height: 96px; font-size: var(--atlas-text-meta); } }
 @media (max-width: 1200px) {
   .page .hero > div:last-child { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-5); }
-  .page .seasonNow .liveLinks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+  .liveLinks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); }
+  .dungeons ul { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .dungeons a { aspect-ratio: 16 / 10; }
 }
 @media (max-width: 700px) {
+  .page .chapter { margin-top: var(--atlas-space-6); }
+  .page .chapter:first-of-type { margin-top: var(--atlas-space-5); }
+  .page .chapter::before { inset-inline: 0; }
+  .page .chapter > div:first-child { margin-bottom: var(--atlas-space-3); }
+  .page .hero { padding-block: var(--atlas-space-3) 0; }
+  .page .hero > div:last-child { gap: var(--atlas-space-3); padding-block: var(--atlas-space-3); }
   .page .hero h1 { max-width: none; }
-  .page .heroPromise { font-size: .82em; }
-  .chips { margin-inline: calc(-1 * var(--atlas-gutter)); }
-  .chips ul { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-inline: var(--atlas-gutter); overscroll-behavior-x: contain; }
-  .chips ul::-webkit-scrollbar { display: none; }
-  .page .seasonNow { padding: var(--atlas-space-4); }
-  .page .seasonNow .liveLinks { gap: var(--atlas-space-2); }
-  .page .seasonNow .liveLinks a { flex-direction: column; align-items: flex-start; gap: var(--atlas-space-2); min-height: 0; padding-block: var(--atlas-space-2); }
-  .page .seasonNow [data-medallion] { width: 36px; height: 36px; }
-  .page .seasonNow [data-medallion] img { width: 30px; height: 30px; }
-  .page .seasonNow strong { font-size: var(--atlas-text-small); }
-  .page .seasonNow .liveLinks a > span:last-child > span { font-size: var(--atlas-text-meta); }
-  .lookupHead .recentSlot { display: block; position: relative; }
-}
-@media (min-width: 701px) {
-  .page .hero { padding-top: var(--atlas-space-2); }
-  .page .lookupFields { grid-template-columns: 70px minmax(0, 1.2fr) minmax(0, 1fr) 180px; }
-}
-@media (max-width: 700px) { .page .chapter:first-of-type { margin-top: var(--atlas-space-5); } }
-
-/* HUB11: the two hero card titles share one weight; continents stay in view as chips;
-   the trade cards are whole-card links around a real picture. */
-.page .seasonNow h2 { color: var(--atlas-text-strong); font-weight: var(--atlas-weight-display); }
-.page [data-secondary-slot] [data-secondary] { font-weight: 600; }
-.page [data-secondary-slot] [data-secondary] svg { flex: none; width: 16px; height: 16px; color: var(--atlas-accent); }
-.page .continents { margin: 0 0 var(--atlas-space-3); gap: var(--atlas-space-2); }
-.page .continents a { min-height: 36px; border-color: var(--atlas-glass-edge); border-radius: 999px; background: var(--atlas-glass-fill); white-space: nowrap; }
-.page .groupGrid[data-group="economy"] .flagship { position: relative; }
-.page .groupGrid[data-group="economy"] h3 a::after { content: ""; position: absolute; inset: 0; }
-@media (hover: hover) and (pointer: fine) {
-  .page .continents a { transition: border-color var(--atlas-duration-fast), background var(--atlas-duration-fast); }
-  .page .continents a:hover { border-color: var(--atlas-accent); background: var(--atlas-glass-raised); }
-  .groupGrid[data-group="economy"] .productPreview img { transition: transform var(--atlas-duration-art) var(--atlas-ease); }
-  .groupGrid[data-group="economy"] .flagship:hover .productPreview img { transform: scale(1.04); }
-}
-@media (prefers-reduced-motion: reduce), (forced-colors: active) { .page .continents a, .groupGrid[data-group="economy"] .productPreview img { transition: none; } .groupGrid[data-group="economy"] .flagship:hover .productPreview img { transform: none; } }
-:global(html[data-motion="reduced"]) .groupGrid[data-group="economy"] .productPreview img { transition: none; transform: none !important; }
-@media (min-width: 701px) {
-  .page .groupGrid[data-group="economy"] .productPreview { aspect-ratio: 2.8; }
-  .page .groupGrid[data-group="world"] .mapPreview { aspect-ratio: auto; height: 100%; min-height: 190px; }
-}
-@media (max-width: 700px) {
-  .page .continents { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
-  .page .continents::-webkit-scrollbar { display: none; }
-  .page .continents a { min-height: 44px; }
+  .heroPromise { font-size: .82em; }
+  .heroArt { object-position: center 30%; }
+  .page .lookup { padding: var(--atlas-space-4); }
+  .lookupFields { grid-template-columns: 76px minmax(0, 1fr) 128px; }
+  .lookupFields > :nth-child(2) { grid-column: 2 / -1; }
+  .lookupFields > :nth-child(3) { grid-column: 1 / 3; }
+  .seasonNow { padding: var(--atlas-space-4); }
+  .liveLinks { gap: var(--atlas-space-2); }
+  .liveLinks a { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--atlas-space-2); min-height: 0; }
+  .seasonNow [data-medallion] { width: 36px; height: 36px; }
+  .seasonNow [data-medallion] img { width: 30px; height: 30px; }
+  .metaSpec { grid-column: 1 / -1; grid-row: 2; }
+  .metaSpec strong { font-size: var(--atlas-text-small); }
+  .metaSpec span { font-size: var(--atlas-text-meta); }
+  .presence { font-size: var(--atlas-text-body); }
+  .dungeons ul { display: flex; gap: var(--atlas-space-2); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: var(--atlas-space-1); }
+  .dungeons ul::-webkit-scrollbar, .continents::-webkit-scrollbar { display: none; }
+  .dungeons li { flex: 0 0 38%; scroll-snap-align: start; }
+  .dungeons a { aspect-ratio: 3 / 4; }
+  .dungeonName { font-size: var(--atlas-text-small); }
+  .classRoster { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--atlas-space-1); }
+  .classRoster a { justify-content: center; min-height: 48px; padding: var(--atlas-space-1); }
+  .classRoster img { width: 32px; height: 32px; }
+  .classRoster span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .toolRows, .toolRows:not(:has(li:nth-child(3))) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .toolRows li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .toolRows a { gap: var(--atlas-space-2); padding: var(--atlas-space-2); }
+  .toolRows [data-medallion] { width: 30px; height: 30px; }
+  .toolRows [data-medallion] svg { width: 16px; height: 16px; }
+  .toolRows strong { font-size: var(--atlas-text-small); }
+  .toolRows a > span:last-child > span { font-size: var(--atlas-text-meta); }
+  .page .flagship { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); padding: 14px; }
+  .productPreview { min-height: 0; aspect-ratio: 3; }
+  .mapPreview { aspect-ratio: 1.5; }
+  .bossGrid { column-gap: var(--atlas-space-3); }
+  .bossGrid a { font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
+  .continents { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .continents a { min-height: 44px; }
+  .pair { gap: var(--atlas-space-3); }
+  .page .pair .flagship { gap: var(--atlas-space-2); padding: 12px; }
+  .pair .productPreview { aspect-ratio: 2; }
+  .pair h3 { font-size: var(--atlas-text-title); }
+  .pair p { font-size: var(--atlas-text-meta); }
+  .versions { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .versions a { min-height: 64px; }
 }

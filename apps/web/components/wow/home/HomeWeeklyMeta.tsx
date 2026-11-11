@@ -14,7 +14,7 @@ export async function HomeWeeklyMeta({ locale }: { locale: "en" | "ru" }) {
   const leaders = metaRoles.flatMap(role => {
     const spec = view.roles[role][0];
     const theme = spec && midnightSpecializations.find(theme => theme.slug === spec.key.split(":").reverse().join("-"));
-    return theme ? [{ role, theme }] : [];
+    return theme ? [{ role, theme, presence: Math.round(spec.presence) }] : [];
   });
   if (!leaders.length) return null;
   const roles = wowHomeCopy[locale].roles;
@@ -22,6 +22,6 @@ export async function HomeWeeklyMeta({ locale }: { locale: "en" | "ru" }) {
   const t = wowHomeCopy[locale];
   return <nav className={styles.seasonNow} aria-labelledby="weekly-meta-title">
     <div className={styles.metaHead}><h2 id="weekly-meta-title">{t.weeklyMeta}</h2><a href={`${prefix}/wow/mythic-plus/meta`}>{t.allMeta}<ArrowRight aria-hidden="true" /></a></div>
-    <ul className={styles.liveLinks}>{leaders.map(({role, theme}) => <li key={role}><a href={`${prefix}/wow/mythic-plus/meta#${role}`}><span data-medallion="" aria-hidden="true"><Image src={theme.iconUrl} alt="" width={36} height={36} quality={60} /></span><span><small>{roles[role]}</small><strong>{locale === "ru" ? theme.specNameRu : theme.specName}</strong><span>{locale === "ru" ? theme.classNameRu : theme.className}</span></span></a></li>)}</ul>
+    <ul className={styles.liveLinks}>{leaders.map(({role, theme, presence}) => <li key={role}><a href={`${prefix}/wow/mythic-plus/meta#${role}`}><span data-medallion="" aria-hidden="true"><Image src={theme.iconUrl} alt="" width={36} height={36} quality={60} /></span><span className={styles.metaSpec}><small>{roles[role]}</small><strong>{locale === "ru" ? theme.specNameRu : theme.specName}</strong><span>{locale === "ru" ? theme.classNameRu : theme.className}</span></span><b className={styles.presence}>{presence}%</b></a></li>)}</ul>
   </nav>;
 }

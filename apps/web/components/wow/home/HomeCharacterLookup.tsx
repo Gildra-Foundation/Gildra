@@ -28,8 +28,8 @@ export function HomeCharacterLookup({ locale, recent }: { locale: "en" | "ru"; r
       <div className={styles.lookupHead}><h2 className={materialStyles.title} id="character-lookup-title">{t.lookup.title}</h2>{recent}</div>
       <div className={styles.lookupFields}>
         <AtlasField label={t.lookup.region} htmlFor="hub-region"><AtlasSelect name="region" id="hub-region" defaultValue="eu"><option value="eu">EU</option><option value="us">US</option><option value="kr">KR</option><option value="tw">TW</option></AtlasSelect></AtlasField>
-        <AtlasField label={t.lookup.realm} htmlFor="hub-realm"><AtlasInput size={20} className={styles.realmControl} name="realm" id="hub-realm" required minLength={2} maxLength={64} autoComplete="off" spellCheck={false} autoCapitalize="none" autoCorrect="off" placeholder={t.lookup.realmExample} /></AtlasField>
-        <AtlasField label={t.lookup.name} htmlFor="hub-name"><AtlasInput size={20} name="name" id="hub-name" required minLength={2} maxLength={12} pattern="[\p{L}]{2,12}" autoComplete="off" spellCheck={false} autoCapitalize="none" autoCorrect="off" /></AtlasField>
+        <AtlasField label={t.lookup.realm} htmlFor="hub-realm"><AtlasInput size={20} className={styles.realmControl} name="realm" id="hub-realm" required minLength={2} maxLength={64} autoComplete="off" spellCheck={false} autoCapitalize="none" autoCorrect="off" placeholder={t.lookup.realm} /></AtlasField>
+        <AtlasField label={t.lookup.name} htmlFor="hub-name"><AtlasInput size={20} name="name" id="hub-name" required minLength={2} maxLength={12} pattern="[\p{L}]{2,12}" autoComplete="off" spellCheck={false} autoCapitalize="none" autoCorrect="off" placeholder={t.lookup.name} /></AtlasField>
         <MaterialButton kit="arcana" fit="block" type="submit"><span data-lookup-label="">{t.lookup.submit}</span></MaterialButton>
       </div>
     </MaterialPlaque>
