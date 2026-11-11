@@ -1,0 +1,236 @@
+{
+  "warrior": [
+    {
+      "id": 11650,
+      "slug": "arms",
+      "name": {
+        "en": "Arms",
+        "ru": "Оружие"
+      }
+    },
+    {
+      "id": 11657,
+      "slug": "fury",
+      "name": {
+        "en": "Fury",
+        "ru": "Неистовство"
+      }
+    },
+    {
+      "id": 11670,
+      "slug": "protection",
+      "name": {
+        "en": "Protection",
+        "ru": "Защита"
+      }
+    }
+  ],
+  "paladin": [
+    {
+      "id": 11486,
+      "slug": "holy",
+      "name": {
+        "en": "Holy",
+        "ru": "Свет"
+      }
+    },
+    {
+      "id": 11541,
+      "slug": "protection",
+      "name": {
+        "en": "Protection",
+        "ru": "Защита"
+      }
+    },
+    {
+      "id": 11559,
+      "slug": "retribution",
+      "name": {
+        "en": "Retribution",
+        "ru": "Воздаяние"
+      }
+    }
+  ],
+  "hunter": [
+    {
+      "id": 11372,
+      "slug": "beast-mastery",
+      "name": {
+        "en": "Beast Mastery",
+        "ru": "Чувство зверя"
+      }
+    },
+    {
+      "id": 11371,
+      "slug": "marksmanship",
+      "name": {
+        "en": "Marksmanship",
+        "ru": "Стрельба"
+      }
+    },
+    {
+      "id": 11370,
+      "slug": "survival",
+      "name": {
+        "en": "Survival",
+        "ru": "Выживание"
+      }
+    }
+  ],
+  "rogue": [
+    {
+      "id": 11580,
+      "slug": "assassination",
+      "name": {
+        "en": "Assassination",
+        "ru": "Ликвидация"
+      }
+    },
+    {
+      "id": 11573,
+      "slug": "combat",
+      "name": {
+        "en": "Combat",
+        "ru": "Бой"
+      }
+    },
+    {
+      "id": 11572,
+      "slug": "subtlety",
+      "name": {
+        "en": "Subtlety",
+        "ru": "Скрытность"
+      }
+    }
+  ],
+  "priest": [
+    {
+      "id": 11608,
+      "slug": "discipline",
+      "name": {
+        "en": "Discipline",
+        "ru": "Послушание"
+      }
+    },
+    {
+      "id": 11615,
+      "slug": "holy",
+      "name": {
+        "en": "Holy",
+        "ru": "Свет"
+      }
+    },
+    {
+      "id": 11622,
+      "slug": "shadow",
+      "name": {
+        "en": "Shadow",
+        "ru": "Тьма"
+      }
+    }
+  ],
+  "shaman": [
+    {
+      "id": 11326,
+      "slug": "elemental",
+      "name": {
+        "en": "Elemental",
+        "ru": "Стихии"
+      }
+    },
+    {
+      "id": 11363,
+      "slug": "enhancement",
+      "name": {
+        "en": "Enhancement",
+        "ru": "Совершенствование"
+      }
+    },
+    {
+      "id": 11362,
+      "slug": "restoration",
+      "name": {
+        "en": "Restoration",
+        "ru": "Исцеление"
+      }
+    }
+  ],
+  "mage": [
+    {
+      "id": 11582,
+      "slug": "arcane",
+      "name": {
+        "en": "Arcane",
+        "ru": "Тайная магия"
+      }
+    },
+    {
+      "id": 11594,
+      "slug": "fire",
+      "name": {
+        "en": "Fire",
+        "ru": "Огонь"
+      }
+    },
+    {
+      "id": 11601,
+      "slug": "frost",
+      "name": {
+        "en": "Frost",
+        "ru": "Лед"
+      }
+    }
+  ],
+  "warlock": [
+    {
+      "id": 11629,
+      "slug": "affliction",
+      "name": {
+        "en": "Affliction",
+        "ru": "Колдовство"
+      }
+    },
+    {
+      "id": 11636,
+      "slug": "demonology",
+      "name": {
+        "en": "Demonology",
+        "ru": "Демонология"
+      }
+    },
+    {
+      "id": 11637,
+      "slug": "destruction",
+      "name": {
+        "en": "Destruction",
+        "ru": "Разрушение"
+      }
+    }
+  ],
+  "druid": [
+    {
+      "id": 11328,
+      "slug": "balance",
+      "name": {
+        "en": "Balance",
+        "ru": "Баланс"
+      }
+    },
+    {
+      "id": 11347,
+      "slug": "feral-combat",
+      "name": {
+        "en": "Feral Combat",
+        "ru": "Сила зверя"
+      }
+    },
+    {
+      "id": 11340,
+      "slug": "restoration",
+      "name": {
+        "en": "Restoration",
+        "ru": "Исцеление"
+      }
+    }
+  ]
+}

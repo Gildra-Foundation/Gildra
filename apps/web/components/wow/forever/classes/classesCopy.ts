@@ -1,0 +1,28 @@
+export const classesCopy = {
+  en: {
+    adapted: 'Adapted', sources: 'Sources', classes: 'Classes', changes: 'Class changes', overview: 'Forever', class: 'Class',
+    lede: 'Spellbook and talent changes from Classic to Forever.',
+    classLede: 'Spells, talents and ways to shape your character.',
+    talents: 'Talents', spellbook: 'Spellbook', all: 'All', kind: 'Category', status: 'Change',
+    added: 'Added', changed: 'Changed', moved: 'Moved', removed: 'Removed from tree',
+    search: 'Spell or talent', apply: 'Apply', reset: 'Reset', none: 'No matching changes.',
+    before: 'Classic', after: 'Forever', rank: 'Rank', level: 'Learned at level', coefficient: 'Spell power scaling',
+    calculator: 'Talent calculator', library: 'Spellbook', record: 'Spell details',
+    previous: 'Previous', next: 'Next', moreRanks: 'Other ranks', highlights: 'In combat',
+    removedMeaning: 'No longer a talent choice in this tree.', row: 'Row', column: 'Column', ranks: 'Ranks', tree: 'Tree',
+    loading: 'Loading class changes', error: 'Could not load class changes.', retry: 'Try again',
+  },
+  ru: {
+    adapted: 'Адаптировано', sources: 'Источники', classes: 'Классы', changes: 'Изменения классов', overview: 'Forever', class: 'Класс',
+    lede: 'Что изменилось в способностях и талантах после Classic.',
+    classLede: 'Способности, таланты и развитие персонажа.',
+    talents: 'Таланты', spellbook: 'Способности', all: 'Все', kind: 'Категория', status: 'Изменение',
+    added: 'Добавлено', changed: 'Изменено', moved: 'Перенесено', removed: 'Удалено из дерева',
+    search: 'Способность или талант', apply: 'Применить', reset: 'Сбросить', none: 'Изменений по этому запросу нет.',
+    before: 'Classic', after: 'Forever', rank: 'Ранг', level: 'Изучается на уровне', coefficient: 'Множитель силы заклинаний',
+    calculator: 'Калькулятор талантов', library: 'Книга заклинаний', record: 'О заклинании',
+    previous: 'Предыдущая', next: 'Следующая', moreRanks: 'Остальные ранги', highlights: 'В бою',
+    removedMeaning: 'Больше не выбирается как талант в этой ветке.', row: 'Ряд', column: 'Позиция', ranks: 'Ранги', tree: 'Ветка',
+    loading: 'Загрузка изменений классов', error: 'Не удалось загрузить изменения классов.', retry: 'Повторить',
+  },
+} as const;
