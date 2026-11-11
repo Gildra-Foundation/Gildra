@@ -386,3 +386,23 @@
 @media (min-width: 701px) { .page .groupGrid[data-group="mythic"] .productPreview { height: 190px; } }
 /* next/image fill writes inset 0 inline; keep the painting inside the plaque frame. */
 .page .heroScene { inset: 12px !important; width: calc(100% - 24px) !important; height: calc(100% - 24px) !important; border-radius: var(--atlas-radius); }
+
+/* Each chapter speaks in the tone of the pages it opens: Mythic+ ruby, raids green
+   (as the raid journal), heroes violet, economy gold; the world keeps the theme accent. */
+.page .chapter[id="mythic"] { --chapter-tone: var(--atlas-ruby-accent); }
+.page .chapter[id="raids"] { --chapter-tone: var(--atlas-positive); }
+.page .chapter[id="hero"] { --chapter-tone: var(--atlas-dungeon-void-accent); }
+.page .chapter[id="economy"] { --chapter-tone: var(--atlas-dungeon-kings-accent); }
+.page .chapter:is([id="mythic"], [id="raids"], [id="hero"], [id="economy"]) {
+  --atlas-accent: var(--chapter-tone);
+  --atlas-accent-strong: color-mix(in srgb, var(--chapter-tone) 70%, var(--atlas-text-strong));
+  --atlas-accent-wash: color-mix(in srgb, var(--chapter-tone) 10%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--chapter-tone) 18%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--chapter-tone) 18%, transparent);
+  --atlas-frame-tint: var(--atlas-accent-glow);
+}
+.page .overview a[href="#mythic"] svg { color: var(--atlas-ruby-accent); }
+.page .overview a[href="#raids"] svg { color: var(--atlas-positive); }
+.page .overview a[href="#hero"] svg { color: var(--atlas-dungeon-void-accent); }
+.page .overview a[href="#economy"] svg { color: var(--atlas-dungeon-kings-accent); }
+@media (forced-colors: active) { .page .overview svg { color: CanvasText; } }
