@@ -10,6 +10,7 @@ import { MaterialPlaque } from "@/components/wow/shared/material/MaterialPlaque"
 import { changeRank, decodeBuild, emptyBuild, encodeBuild, gatePoints, pointBudget, requiredLevel, requirementsMet, spentPoints, treePoints, validateBuild } from "@/lib/forever/talents/engine";
 import { foreverTalentIcon, foreverTalentSpellPath } from "@/lib/forever/talents/links";
 import type { BuildError, TalentBuild, TalentClass, TalentNode, TalentTree } from "@/lib/forever/talents/types";
+import { notifyForeverNavigation } from "../map/navigation";
 import { talentCopy } from "./talentCopy";
 import styles from "./talents.module.css";
 
@@ -42,6 +43,7 @@ export function ForeverCalculator({ cls, snapshot, lang, initial, initialError }
     const url = new URL(window.location.href);
     url.searchParams.set("build", encodeBuild(cls, snapshot, next));
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    notifyForeverNavigation();
   }
   function commit(next: TalentBuild, announcement = "") {
     setHistory(items => [...items.slice(-99), build]);

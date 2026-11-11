@@ -2,6 +2,9 @@
 import { useSyncExternalStore } from "react";
 
 const eventName = "forever-navigation";
+export function notifyForeverNavigation() {
+  window.dispatchEvent(new Event(eventName));
+}
 function subscribe(listener: () => void) {
   window.addEventListener("hashchange", listener);
   window.addEventListener("popstate", listener);
@@ -31,6 +34,6 @@ export function navigateDungeon(hash: string, floor?: number) {
   url.hash = hash;
   if (floor !== undefined) url.searchParams.set("mapFloor", String(floor));
   if (url.href !== window.location.href) window.history.pushState(window.history.state, "", url);
-  window.dispatchEvent(new Event(eventName));
+  notifyForeverNavigation();
   window.dispatchEvent(new HashChangeEvent("hashchange"));
 }
