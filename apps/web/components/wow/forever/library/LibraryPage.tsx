@@ -24,7 +24,7 @@ function RecordLink({ record, lang }: { record: ForeverSummary; lang: ForeverLoc
 export async function LibraryPage({ lang, query }: { lang: ForeverLocale; query: ForeverQuery }) {
   const t = libraryCopy[lang]; const result = await foreverSearch(query);
   const pageUrl = (page: number) => { const params = new URLSearchParams(); for (const [key, value] of Object.entries(query)) if (value) params.set(key, value); params.set("page", String(page)); return `${base(lang)}?${params}`; };
-  return <ForeverFrame lang={lang}><AtlasHero title={t.title} breadcrumbs={[{label:"Forever",href:base(lang).replace("/library","") }]} />
+  return <ForeverFrame lang={lang} scene="archive"><AtlasHero title={t.title} breadcrumbs={[{label:"Forever",href:base(lang).replace("/library","") }]} />
     <nav className={styles.types} aria-label={t.type}>{FOREVER_TYPES.map(type=><a key={type} aria-current={type===result.type?"page":undefined} href={`${base(lang)}?type=${type}`}>{t.types[type]}</a>)}</nav>
     <MaterialPlaque kit={FOREVER_KIT}>
       <form action={base(lang)} className={styles.filters}>
@@ -54,7 +54,7 @@ export async function LibraryRecordPage({ lang, type, id }: { lang: ForeverLocal
   const relatedGroups=await Promise.all([...groups.entries()].map(async([key,edges])=>({key,edges,records:await Promise.all(edges.slice(0,20).map(edge=>foreverRecord(edge.type,edge.id)))})));
   const quality=record.quality!==undefined?itemQualityColors[record.quality as keyof typeof itemQualityColors]:undefined;
   const facts={level:record.level,requiredLevel:record.requiredLevel,...record.facts};
-  return <ForeverFrame lang={lang}><AtlasHero title={<span style={quality?{color:quality.text}:undefined}>{record.name[lang] || record.name.en}</span>} emblem={<RecordIcon record={record} size={96}/>} breadcrumbs={[{label:"Forever",href:base(lang).replace("/library","")},{label:t.title,href:base(lang)},{label:t.types[type],href:`${base(lang)}?type=${type}`}]} />
+  return <ForeverFrame lang={lang} scene="archiveDeep"><AtlasHero title={<span style={quality?{color:quality.text}:undefined}>{record.name[lang] || record.name.en}</span>} emblem={<RecordIcon record={record} size={96}/>} breadcrumbs={[{label:"Forever",href:base(lang).replace("/library","")},{label:t.title,href:base(lang)},{label:t.types[type],href:`${base(lang)}?type=${type}`}]} />
     <MaterialPlaque kit={FOREVER_KIT}>
       {record.slotId ? <p>{slotNames[lang][record.slotId]}</p> : null}
       {record.description && <p className={styles.description}>{record.description[lang] || record.description.en}</p>}

@@ -1,3 +1,4 @@
+import { FOREVER_TYPES } from "@/lib/forever/database/contract";
 import { siteOrigin, xmlEscape, xmlResponse } from "@/lib/sitemap";
 import { isGameVisible } from "@/lib/games/registry";
 import { runtimeFlags } from "@/lib/flags";
@@ -29,6 +30,7 @@ export async function GET() {
   const catalogPublic = runtimeFlags().catalogPublic;
   const locations = [
     `${siteOrigin}/sitemaps/static`,
+    ...FOREVER_TYPES.flatMap(type => ["en", "ru"].map(lang => `${siteOrigin}/sitemaps/forever/${type}/${lang}`)),
     ...(catalogPublic ? [`${siteOrigin}/sitemaps/library`, ...await recordSitemaps()] : []),
     ...(isGameVisible("league-of-legends") ? [`${siteOrigin}/sitemaps/league-of-legends`] : []),
   ];
