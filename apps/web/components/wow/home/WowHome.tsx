@@ -54,7 +54,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
     <JsonLd data={homeStructuredData(locale)} />
     <link rel="preload" href="/assets/wow/fonts/azeroth/azeroth-cyrillic.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
     <AtlasHero align="start" className={styles.hero}
-      title={<><span className={styles.brandKicker}>WowArcana</span>{" "}<span className={styles.heroPromise}>{t.title}</span></>} lede={t.lede}
+      title={<span className={styles.heroPromise}>{t.title}</span>} lede={t.lede}
       actions={<div className={styles.heroContent}>
         <HomeCharacterLookup locale={locale} recent={<HomeRecentCharacters locale={locale} label={t.recentCharacters} />} />
         <nav className={styles.chips} aria-label={t.productLabel}><ul>{homeGroups.map(group => { const Icon = icons[group.lead.icon]; return <li key={group.id} data-group={group.id}><a href={`#${group.id}`}><Icon />{group.short[locale]}</a></li>; })}</ul></nav>
@@ -82,7 +82,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
               <ul className={`${styles.liveLinks} ${styles.bossGrid}`}>{current.bosses.map(boss => <li key={boss.slug}><Link href={href(`/wow/raids/${current.slug}${boss.anchor ? `#${boss.anchor}` : `#boss=${boss.slug}`}`)} prefetch={false}>{boss.names[locale]}<ArrowRight aria-hidden="true" /></Link></li>)}</ul>
             </div>)}
             {group.id === "hero" && <ul className={styles.classRoster}>{classes.map(spec => <li key={spec.classSlug}><Link href={href(`/wow/classes#${spec.classSlug}`)} prefetch={false}><Image src={spec.classIconUrl} alt="" width={28} height={28} quality={50} loading="lazy" decoding="async" /><span>{locale === "ru" ? spec.classNameRu : spec.className}</span></Link></li>)}</ul>}
-            {group.id === "world" && <details className={styles.more}><summary>{t.continentsLabel}</summary><ul className={styles.continents}>{continents.map(map => <li key={map.id}><Link href={href(mapPagePath(map))} prefetch={false}>{map.name}</Link></li>)}</ul></details>}
+            {group.id === "world" && <nav aria-label={t.continentsLabel}><ul className={styles.continents}>{continents.map(map => <li key={map.id}><Link href={href(mapPagePath(map))} prefetch={false}>{map.name}</Link></li>)}</ul></nav>}
             {group.id !== "economy" && <HomeSecondaryLink kit="arcana" fit="block" href={href(group.lead.href)} iconAfter={<ArrowRight aria-hidden="true" />}>{t.openGroup[group.id]}</HomeSecondaryLink>}
           </div>
         </HomePlaque>
