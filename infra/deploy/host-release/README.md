@@ -3,7 +3,7 @@
 These are the installed `gildra-ship` host release scripts, captured and updated
 on 2026-11-11. They run on the dedicated server and do not use Vercel or require
 GitHub Actions to deploy. Install over the existing skill scripts directory;
-`site-check.cjs` and `origin-ca.pem` must remain alongside them.
+`origin-ca.pem` must remain alongside them.
 
 Changes:
 
@@ -35,12 +35,21 @@ Changes:
 Validation:
 
 ```sh
-python3 -m unittest discover -s infra/deploy/host-release -p 'test_*.py' -v
+python3 -m unittest discover -s infra/deploy/host-release -p 'test_*.py' -v   # test_site_check needs the host playwright
 bash -n infra/deploy/host-release/deploy-web.sh
 ```
 
 The original installed scripts are preserved at
 `/home/debian/gildra-host-deploy-speed-20261111/original/`.
+- The candidate check takes pictures only of pages with a problem (`SHOTS=1`:
+  of every page), checks routes removed on purpose by status without a
+  browser, reads the discovery pages eight at a time and reloads a page hit by
+  `ERR_NETWORK_CHANGED` up to three times. Same pages and same rules: 54 pages,
+  0 problems before and after; 93–103 s became 65–69 s on a fresh candidate.
+- A hung step no longer holds the queue for an hour: the build stops after
+  40 minutes, each part of the site check after 20. A compile over 180 s is
+  reported as slow.
+
 Measured on the server on 2026-11-11 (4 cores, 6 build workers):
 
 | release | build | compile | whole `all` |
@@ -49,5 +58,4 @@ Measured on the server on 2026-11-11 (4 cores, 6 build workers):
 | build-speed (the fix itself, no public change) | 107 s | 40 s | 107 + 241 s (build run separately, then reused) |
 | throwaway commit with a new public file and a CSS rule, after the fix | 91 s | 17.9 s | build only |
 
-The other steps did not change: candidate 4–5 s, site check 99–103 s, deploy 14–16 s,
-observation 122–128 s.
+Candidate 4–5 s, site check 65–69 s (was 93–103 s), deploy 14–16 s, observation 122–128 s.

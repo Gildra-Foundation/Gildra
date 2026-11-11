@@ -8,7 +8,8 @@ steps: build | candidate | check | remove_candidate | deploy | observe | all
              build cache kept warm (no per-release prune); fails on a file pattern that makes
              later builds slow (see broad_patterns)
   candidate  run the image on 127.0.0.1:<port> next to production (read-only, own env)
-  check      whole-site check of the candidate (site-check.cjs), fails on any problem
+  check      whole-site check of the candidate (site-check.cjs), fails on any problem; pictures of
+             the pages with a problem only (SHOTS=1: of every page)
   deploy     prod locks, live == the image's base, deploy-web.sh (smoke, auto-rollback), verify
   observe    120 s of verify with the whole-site check of production running alongside, locks released
   all        build, candidate, check, remove_candidate, deploy, observe; one release at a time:
@@ -111,14 +112,16 @@ GATES = {'fast': ('one', 'other'), 'half': ('half', 'rest'), 'full': ('full', 'r
 GATE = GATES[os.environ.get('GATE', 'fast')]
 
 
-def site_check(base, out, matrix='full', shots=True):
+def site_check(base, out, matrix='full', shots='0'):
     out = Path(out)
+    shutil.rmtree(out / 'shots', ignore_errors=True)  # pictures of an earlier attempt are not of this one
     out.mkdir(parents=True, exist_ok=True)
-    env = {**os.environ, 'BASE': base, 'OUT': str(out), 'MATRIX': matrix, 'SHOTS': '1' if shots else '0',
+    env = {**os.environ, 'BASE': base, 'OUT': str(out), 'MATRIX': matrix, 'SHOTS': shots,
            'PATH': NODE + ':' + os.environ['PATH']}
     script = str(HERE / 'site-check.cjs')
     for cmd in ['discover', 'capture']:
-        subprocess.run(['node', script, cmd], cwd='/home/debian/Gildra-atlas', env=env, check=True, timeout=3600,
+        # The slowest real check (GATE=full) takes about 5 minutes; a hung one must not hold the queue for an hour.
+        subprocess.run(['node', script, cmd], cwd='/home/debian/Gildra-atlas', env=env, check=True, timeout=1200,
                        stdout=open(out / (cmd + '.log'), 'w'), stderr=subprocess.STDOUT)
     res = subprocess.run(['node', script, 'summary'], cwd='/home/debian/Gildra-atlas', env=env, text=True, capture_output=True)
     (out / 'summary.txt').write_text(res.stdout + res.stderr)
@@ -245,7 +248,7 @@ def build():
         args += ['--build-arg', f'{k}={v}']
     started = time.monotonic()
     with open(STATE / 'build.log', 'w') as log:
-        subprocess.run(['sudo', '-n', 'docker', *args, str(SRC)], check=True, timeout=3600, stdout=log, stderr=subprocess.STDOUT)
+        subprocess.run(['sudo', '-n', 'docker', *args, str(SRC)], check=True, timeout=2400, stdout=log, stderr=subprocess.STDOUT)
     phases['docker_build'] = round(time.monotonic() - started, 3)
     lock.close()
     phases.update(build_report((STATE / 'build.log').read_text(errors='replace')))
@@ -260,6 +263,9 @@ def build():
            'previous_revision': live_rev, 'build_key': key, 'built_at': utc(), 'free_gb_after': round(free_gb(), 1)}
     save('candidate.json', rec)
     print(json.dumps(rec, indent=1))
+    if phases.get('compile', 0) > 180:
+        # Warm compile is 12-40 s, cold about 100 s: longer means the build cache was lost or the host is busy.
+        print(f"slow compile: {phases['compile']:.0f} s (usual 12-40 s), see {STATE}/build.log")
 
 
 def free_port():
@@ -310,7 +316,9 @@ def check():
     base = f"http://127.0.0.1:{info['candidate_port']}"
     bad = marker_check(base)
     assert not bad, bad
-    site_check(base, STATE / 'candidate-check', GATE[0])
+    # Pictures only of the pages with a problem: a third of the check was spent on the rest.
+    # SHOTS=1 pictures every page (a visual review of the candidate).
+    site_check(base, STATE / 'candidate-check', GATE[0], os.environ.get('SHOTS', 'problems'))
 
 
 def remove_candidate():
@@ -387,7 +395,7 @@ def verify():
 
 def observe():
     with ThreadPoolExecutor(1) as pool:
-        shots = pool.submit(site_check, 'https://wowarcana.com', STATE / 'production-check', GATE[1], False)
+        shots = pool.submit(site_check, 'https://wowarcana.com', STATE / 'production-check', GATE[1], '0')
         try:
             start = time.monotonic()
             while time.monotonic() - start < 120:

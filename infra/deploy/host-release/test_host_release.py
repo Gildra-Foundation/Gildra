@@ -151,6 +151,26 @@ sys.exit(1 if sys.argv[-1]==os.environ.get('FAIL_URL') else 0)
         self.assertNotIn('first', (self.root / 'release.lock').read_text())
         done[0].close()
 
+    def test_second_release_process_waits_for_the_first(self):
+        import sys, time
+        tree = ast.parse((HERE / 'release.py').read_text())
+        fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'queue')
+        program = ('import fcntl, os, sys, time\nfrom pathlib import Path\n'
+                   'BUILD = Path(sys.argv[1]); label = sys.argv[2]; utc = lambda: "now"\n'
+                   + ast.unparse(fn) +
+                   '\nheld = queue()\nprint(label, "runs", flush=True)\ntime.sleep(float(sys.argv[3]))\nprint(label, "ends", flush=True)\n')
+        log = self.root / 'order.log'
+        with open(log, 'w') as out:
+            first = subprocess.Popen([sys.executable, '-c', program, str(self.root), 'first', '1.0'], stdout=out)
+            time.sleep(0.4)
+            second = subprocess.Popen([sys.executable, '-c', program, str(self.root), 'second', '0'], stdout=out)
+            self.assertEqual(first.wait(10), 0)
+            self.assertEqual(second.wait(10), 0)
+        lines = log.read_text().splitlines()
+        self.assertEqual(lines[0], 'first runs')
+        self.assertIn('waiting for the release in progress: first pid', lines[1])
+        self.assertEqual(lines[2:], ['first ends', 'second runs', 'second ends'])
+
     def test_all_holds_the_queue_from_build_to_observe(self):
         source = (HERE / 'release.py').read_text()
         steps = source[source.index('\ndef all_steps():'):source.index("\ntimed({'build'")]
