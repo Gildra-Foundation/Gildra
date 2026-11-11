@@ -5,16 +5,19 @@
 
 steps: build | candidate | check | remove_candidate | deploy | observe | all
   build      disk >= 25 GB, <rev> into the shared build checkout, pinned node image, docker build,
-             build cache kept warm (no per-release prune)
+             build cache kept warm (no per-release prune); fails on a file pattern that makes
+             later builds slow (see broad_patterns)
   candidate  run the image on 127.0.0.1:<port> next to production (read-only, own env)
   check      whole-site check of the candidate (site-check.cjs), fails on any problem
   deploy     prod locks, live == the image's base, deploy-web.sh (smoke, auto-rollback), verify
   observe    120 s of verify with the whole-site check of production running alongside, locks released
-  all        build, candidate, check, remove_candidate, deploy, observe
+  all        build, candidate, check, remove_candidate, deploy, observe; one release at a time:
+             a second `all` waits for the first and then checks that it still contains LIVE
 
 Runs as debian; docker and /opt/gildra go through `sudo -n`. State lives in
 /home/debian/gildra-releases/<label>/ (candidate.json, deploy-plan.json, checks, reports,
-timings.json: seconds per step).
+timings.json: seconds per step; build-phases.json: lock wait, checkout, docker build, compile and
+page generation).
 Optional <state>/checks.tsv: one "path<TAB>substring" per line, checked on the candidate and on
 production after the deploy (markers of this release, e.g. "/ru/wow/auction\tdata-auction-hub").
 Rollback: the printed /opt/gildra/<label>-previous.env (deploy-web.sh rolls back by itself on failure).
@@ -141,6 +144,42 @@ def checkout(rev):
     sys.exit(f'{SRC} does not match {rev[:8]} after a clean checkout')
 
 
+def seconds(text):
+    """'850ms', '22.5s', '12.0min' from the next build log, in seconds."""
+    value, unit = re.fullmatch(r'([\d.]+)(ms|s|min)', text).groups()
+    return round(float(value) * {'ms': 0.001, 's': 1, 'min': 60}[unit], 1)
+
+
+def build_report(log):
+    """Compile and page generation time, and the file patterns Turbopack calls overly broad."""
+    report = {}
+    for name, pattern in [('compile', r'Compiled successfully in ([\d.]+(?:ms|s|min))'),
+                          ('pages', r'Generating static pages[^\n]*\(\d+/\d+\) in ([\d.]+(?:ms|s|min))')]:
+        found = re.findall(pattern, log)
+        if found:
+            report[name] = seconds(found[-1])
+    broad = re.findall(r'(\./\S+:\d+):\d+\n(?:#\d+ [\d.]+ )?Warning: The file pattern [^\n]* matches (\d+) files', log)
+    report['broad_patterns'] = sorted({f'{where} ({count} files)' for where, count in broad})
+    return report
+
+
+def live_base(rev):
+    """Production web right now; the release must contain its revision."""
+    live = inspect('gildra-web-1')
+    live_rev = (live['Config'].get('Labels') or {}).get('org.opencontainers.image.revision', '')
+    if live_rev:
+        assert subprocess.run(['git', '-C', worktree, 'merge-base', '--is-ancestor', live_rev, rev]).returncode == 0, \
+            f'{rev[:8]} does not contain LIVE {live_rev[:8]}: rebase on LIVE first'
+    return live, live_rev
+
+
+def build_key(rev, live):
+    allowed = {'PLAUSIBLE_SCRIPT_URL', 'PLAUSIBLE_API_URL', 'PLAUSIBLE_SITE_DOMAIN', 'NEXT_PUBLIC_SENTRY_DSN'}
+    env = {k: v for item in live['Config']['Env'] for k, v in [item.split('=', 1)] if k in allowed}
+    return env, sha(json.dumps({'revision': rev, 'node': PINNED, 'env': env,
+                                'recipe': sha(Path(__file__).read_bytes())}, sort_keys=True).encode())
+
+
 def reuse_candidate(rev, live, key):
     """Reuse only the exact recorded image and inputs, never a mutable tag alone."""
     if not (STATE / 'candidate.json').exists():
@@ -166,24 +205,20 @@ def build():
     rev = git('rev-parse', rev_arg)
     assert free_gb() >= MIN_FREE_GB, f'{free_gb():.1f} GB free < {MIN_FREE_GB}: wait (catalog import / other builds) or free space'
     assert not git('status', '--porcelain', '--untracked-files=no'), 'worktree has uncommitted changes: commit first'
-    live = inspect('gildra-web-1')
-    live_rev = (live['Config'].get('Labels') or {}).get('org.opencontainers.image.revision', '')
-    if live_rev:
-        assert subprocess.run(['git', '-C', worktree, 'merge-base', '--is-ancestor', live_rev, rev]).returncode == 0, \
-            f'{rev[:8]} does not contain LIVE {live_rev[:8]}: rebase on LIVE first'
+    live, live_rev = live_base(rev)
+    env, key = build_key(rev, live)
+    # A finished image of this label needs no checkout: do not queue behind someone else's build.
+    if reuse_candidate(rev, live, key):
+        save('build-phases.json', {'lock_wait': 0.0, 'reused': True})
+        return
     BUILD.mkdir(parents=True, exist_ok=True)
     lock = open(BUILD / 'lock', 'w')
     waiting = time.monotonic()
     fcntl.flock(lock, fcntl.LOCK_EX)  # one build at a time: the checkout is shared
     phases = {'lock_wait': round(time.monotonic() - waiting, 3)}
-    allowed = {'PLAUSIBLE_SCRIPT_URL', 'PLAUSIBLE_API_URL', 'PLAUSIBLE_SITE_DOMAIN', 'NEXT_PUBLIC_SENTRY_DSN'}
-    env = {k: v for item in live['Config']['Env'] for k, v in [item.split('=', 1)] if k in allowed}
-    key = sha(json.dumps({'revision': rev, 'node': PINNED, 'env': env,
-                          'recipe': sha(Path(__file__).read_bytes())}, sort_keys=True).encode())
-    if reuse_candidate(rev, live, key):
-        lock.close()
-        save('build-phases.json', {**phases, 'reused': True})
-        return
+    # Production may have moved while this build waited: fail now, not after the build.
+    live, live_rev = live_base(rev)
+    env, key = build_key(rev, live)
     started = time.monotonic()
     checkout(rev)
     phases['checkout'] = round(time.monotonic() - started, 3)
@@ -213,8 +248,14 @@ def build():
         subprocess.run(['sudo', '-n', 'docker', *args, str(SRC)], check=True, timeout=3600, stdout=log, stderr=subprocess.STDOUT)
     phases['docker_build'] = round(time.monotonic() - started, 3)
     lock.close()
-    info = json.loads(docker('image', 'inspect', image))[0]
+    phases.update(build_report((STATE / 'build.log').read_text(errors='replace')))
     save('build-phases.json', {**phases, 'reused': False})
+    # Such a pattern re-reads every matched file when any of them changes: with public/ (129 000
+    # files) each release that touched an asset compiled for 12-15 minutes (2026-11-11).
+    assert not phases['broad_patterns'] or os.environ.get('ALLOW_BROAD_PATTERNS') == '1', \
+        'file pattern too broad, later builds will take minutes: ' + ', '.join(phases['broad_patterns']) + \
+        '. Mark the path with /* turbopackIgnore: true */ (see apps/web/lib/og/atlasOg.tsx), commit and build again'
+    info = json.loads(docker('image', 'inspect', image))[0]
     rec = {'image': image, 'image_id': info['Id'], 'revision': rev, 'previous_image': live['Image'],
            'previous_revision': live_rev, 'build_key': key, 'built_at': utc(), 'free_gb_after': round(free_gb(), 1)}
     save('candidate.json', rec)
@@ -369,7 +410,25 @@ def timed(fn):
         save('timings.json', {**(read('timings.json') if f.exists() else {}), fn.__name__: round(time.monotonic() - start)})
 
 
+def queue():
+    """One release at a time, from the build to the end of observation."""
+    BUILD.mkdir(parents=True, exist_ok=True)
+    path = BUILD / 'release.lock'
+    lock = open(path, 'a+')
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        print('waiting for the release in progress: ' + path.read_text().strip(), flush=True)
+        fcntl.flock(lock, fcntl.LOCK_EX)
+    lock.seek(0)
+    lock.truncate()
+    lock.write(f'{label} pid {os.getpid()} since {utc()}\n')
+    lock.flush()
+    return lock
+
+
 def all_steps():
+    held = timed(queue)  # released when the process ends
     timed(build); timed(candidate)
     try:
         timed(check)

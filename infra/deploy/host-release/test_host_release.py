@@ -97,6 +97,66 @@ sys.exit(1 if sys.argv[-1]==os.environ.get('FAIL_URL') else 0)
         self.assertEqual(result.returncode, 1, 'rollback must wait for pending children')
         self.assertTrue(marker.exists())
 
+    def functions(self, *names, **namespace):
+        tree = ast.parse((HERE / 'release.py').read_text())
+        body = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in names]
+        self.assertEqual(len(body), len(names))
+        exec(compile(ast.Module(body=body, type_ignores=[]), '<release>', 'exec'), namespace)
+        return namespace
+
+    def test_build_report_reads_times_and_broad_patterns(self):
+        import re
+        report = self.functions('seconds', 'build_report', re=re)['build_report']
+        warning = ("#20 119.4 ./apps/web/lib/og/atlasOg.tsx:{line}:3\n"
+                   "#20 119.4 Warning: The file pattern ('/ROOT/apps/web/public/' <dynamic>) matches {n} files in [project]/apps/web\n")
+        log = ('#20 727.7 ✓ Compiled successfully in 12.0min\n'
+               '#20 760.1 ✓ Generating static pages using 6 workers (1598/1598) in 26.4s\n'
+               + warning.format(line=44, n=129160) + warning.format(line=44, n=129160) + warning.format(line=41, n=516640))
+        self.assertEqual(report(log), {'compile': 720.0, 'pages': 26.4, 'broad_patterns': [
+            './apps/web/lib/og/atlasOg.tsx:41 (516640 files)', './apps/web/lib/og/atlasOg.tsx:44 (129160 files)']})
+        plain = '✓ Compiled successfully in 900ms\n  Generating static pages using 6 workers (399/1598) \n'
+        self.assertEqual(report(plain), {'compile': 0.9, 'broad_patterns': []})
+        self.assertEqual(report('npm error'), {'broad_patterns': []})
+
+    def test_build_reuses_before_the_lock_and_rechecks_live_after_it(self):
+        source = (HERE / 'release.py').read_text()
+        build = source[source.index('\ndef build():'):source.index('\ndef free_port():')]
+        reuse, lock, checkout = (build.index(x) for x in ['if reuse_candidate(', 'fcntl.flock(lock', 'checkout(rev)'])
+        self.assertLess(reuse, lock)
+        self.assertEqual(build.count('live_base(rev)'), 2)
+        self.assertLess(lock, build.rindex('live_base(rev)'))
+        self.assertLess(build.rindex('live_base(rev)'), checkout)
+        self.assertLess(build.index("save('build-phases.json', {**phases"), build.index("assert not phases['broad_patterns']"))
+        self.assertLess(build.index("assert not phases['broad_patterns']"), build.index("save('candidate.json'"))
+
+    def test_second_release_waits_for_the_first(self):
+        import fcntl, io, threading, contextlib
+        def namespace(name):
+            return self.functions('queue', BUILD=self.root, label=name, os=os, fcntl=fcntl,
+                                  utc=lambda: 'now', print=lambda *a, **k: said.append(a[0]))['queue']
+        said = []
+        first = namespace('first')()
+        self.assertIn('first pid', (self.root / 'release.lock').read_text())
+        done = []
+        thread = threading.Thread(target=lambda: done.append(namespace('second')()), daemon=True)
+        thread.start()
+        thread.join(0.3)
+        self.assertTrue(thread.is_alive(), 'the second release must wait')
+        self.assertEqual(len(said), 1)
+        self.assertIn('first pid', said[0])
+        first.close()
+        thread.join(5)
+        self.assertFalse(thread.is_alive())
+        self.assertIn('second pid', (self.root / 'release.lock').read_text())
+        self.assertNotIn('first', (self.root / 'release.lock').read_text())
+        done[0].close()
+
+    def test_all_holds_the_queue_from_build_to_observe(self):
+        source = (HERE / 'release.py').read_text()
+        steps = source[source.index('\ndef all_steps():'):source.index("\ntimed({'build'")]
+        self.assertLess(steps.index('held = timed(queue)'), steps.index('timed(build)'))
+        self.assertIn('timed(deploy); timed(observe)', steps)
+
     def test_no_automatic_cache_prune_and_observation_retained(self):
         source = (HERE / 'release.py').read_text()
         self.assertNotIn("docker('builder', 'prune'", source)
