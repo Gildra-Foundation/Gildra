@@ -1,4 +1,5 @@
 import "server-only";
+import { newDungeons, returningDungeonDetails } from "@/components/wow/forever/instanceData";
 import { dungeonRoutes, dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { getMidnightRaid, raidSlugs } from "@/lib/data/wow/raid/midnightRaidData";
 import { contentManifest, midnightLairEncounters } from "@gildra/game-data";
@@ -53,6 +54,10 @@ function entries(locale: Locale): SiteSearchEntry[] {
   const other: Locale = locale === "ru" ? "en" : "ru";
   const ru = locale === "ru";
   const list: SiteSearchEntry[] = sections.filter((section) => !section.only || section.only === locale).map((section) => ({ t: section[locale], s: label.section[locale], h: section.h, k: [section[other], section.k].filter(Boolean).join(" "), g: "section" }));
+
+  for (const dungeon of [...newDungeons, ...returningDungeonDetails]) {
+    list.push({ t: dungeon.name, s: ru ? "Подземелье Forever" : "Forever dungeon", h: `/wow/forever/dungeons/${dungeon.slug}`, g: "dungeon" });
+  }
 
   for (const slug of raidSlugs) {
     const raid = getMidnightRaid(slug);

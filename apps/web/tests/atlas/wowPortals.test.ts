@@ -20,7 +20,7 @@ test("switching keeps the section when the target version has it", () => {
 });
 
 test("without an equivalent section the switch lands on the version's hub", () => {
-  assert.equal(wowPortalHref("ru", portal("forever"), "/ru/wow/mists/talents/monk"), "/ru/wow/forever");
+  assert.equal(wowPortalHref("ru", portal("forever"), "/ru/wow/mists/talents/monk"), "/ru/wow/forever/talent-calc");
   assert.equal(wowPortalHref("en", portal("mists"), "/wow/forever/raids"), "/wow/mists");
   assert.equal(wowPortalHref("en", portal("mists"), "/wow/auction"), "/wow/mists");
   assert.equal(wowPortalHref("ru", portal("retail"), "/ru/wow/forever"), "/ru/wow");
@@ -30,4 +30,10 @@ test("every version has its own emblem file", () => {
   const emblems = new Set(wowPortals.map(item => item.emblem));
   assert.equal(emblems.size, wowPortals.length);
   for (const emblem of emblems) assert.ok(existsSync(new URL(`../../public${emblem}`, import.meta.url)), emblem);
+});
+
+test("Forever records switch to section roots without leaking IDs or build state", () => {
+  assert.equal(wowPortalHref("ru", portal("retail"), "/ru/wow/forever/library/spell/123?build=abc#rank-2"), "/ru/library");
+  assert.equal(wowPortalHref("en", portal("forever"), "/library/items/item/123/foo"), "/wow/forever/library");
+  assert.equal(wowPortalHref("en", portal("retail"), "/wow/forever/changes?class=mage"), "/wow/classes");
 });

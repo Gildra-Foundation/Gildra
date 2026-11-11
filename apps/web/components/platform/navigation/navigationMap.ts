@@ -167,6 +167,16 @@ export const foreverRealms: readonly NavigationRealm[] = [
     groups: [{ links: [{ href: "/wow/forever/dungeons", icon: "atlas", label: { en: "Dungeons", ru: "Подземелья" } }] }] },
   { id: "forever-raids", label: { en: "Raids", ru: "Рейды" }, hub: "/wow/forever/raids",
     groups: [{ links: [{ href: "/wow/forever/raids", icon: "journal", label: { en: "Raids", ru: "Рейды" } }] }] },
+  { id: "forever-library", label: { en: "Library", ru: "Библиотека" }, hub: "/wow/forever/library",
+    groups: [{ links: [{ href: "/wow/forever/library", icon: "library", label: { en: "Library", ru: "Библиотека" } }] }] },
+  { id: "forever-talent-calc", label: { en: "Talents", ru: "Таланты" }, hub: "/wow/forever/talent-calc",
+    groups: [{ links: [{ href: "/wow/forever/talent-calc", icon: "classes", label: { en: "Talents", ru: "Таланты" } }] }] },
+  { id: "forever-classes", label: { en: "Classes", ru: "Классы" }, hub: "/wow/forever/classes",
+    groups: [{ links: [{ href: "/wow/forever/classes", icon: "classes", label: { en: "Classes", ru: "Классы" } }, { href: "/wow/forever/changes", icon: "guide", label: { en: "Class changes", ru: "Изменения классов" } }] }] },
+  { id: "forever-professions", label: { en: "Professions", ru: "Профессии" }, hub: "/wow/forever/professions",
+    groups: [{ links: [{ href: "/wow/forever/professions", icon: "professions", label: { en: "Professions", ru: "Профессии" } }] }] },
+  { id: "forever-tier-lists", label: { en: "Tier lists", ru: "Тир-листы" }, hub: "/wow/forever/tier-lists",
+    groups: [{ links: [{ href: "/wow/forever/tier-lists", icon: "meta", label: { en: "Tier lists", ru: "Тир-листы" } }] }] },
 ];
 export const realmsFor = (_lang: Lang, path = "/") => within(barePathOf(path), "/wow/forever") ? foreverRealms : navigationRealms;
 

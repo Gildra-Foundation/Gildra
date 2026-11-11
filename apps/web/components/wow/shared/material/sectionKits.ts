@@ -1,3 +1,6 @@
+import foreverPanels from "../../../../public/assets/wow/slim/forever/controls/panels/manifest.json";
+import foreverButtons from "../../../../public/assets/wow/slim/forever/controls/buttons/manifest.json";
+import foreverFrames from "../../../../public/assets/wow/slim/forever/controls/frames/manifest.json";
 import type { CSSProperties } from "react";
 import libraryPanels from "../../../../public/assets/wow/slim/library/controls/panels/manifest.json";
 import libraryButtons from "../../../../public/assets/wow/slim/library/controls/buttons/manifest.json";
@@ -21,7 +24,7 @@ import tierFrames from "../../../../public/assets/wow/slim/tier-lists/controls/f
 import arcanaPanels from "../../../../public/assets/wow/home/arcana/panels.json";
 import arcanaButtons from "../../../../public/assets/wow/home/arcana/buttons.json";
 
-export type SectionKit = "arcana" | "library" | "talents" | "characters" | "tier-lists";
+export type SectionKit = "forever" | "arcana" | "library" | "talents" | "characters" | "tier-lists";
 
 type Control = { path: string; width: number; height: number; slices: readonly number[]; railInset?: number };
 type Frame = { path: string; width: number; height: number; window: { bounds: { left: number; top: number; right: number; bottom: number }; clip: string } };
@@ -29,6 +32,7 @@ const one = <T,>(manifest: unknown): T => Object.values((manifest as { entries: 
 const skill = (manifest: unknown): Frame => Object.values((manifest as { entries: { skills: Record<string, Frame> } }).entries.skills)[0];
 
 const kits: Record<SectionKit, { panel: Control; button: Control; frame: Frame; accent: string }> = {
+  forever: { panel: one(foreverPanels), button: one(foreverButtons), frame: skill(foreverFrames), accent: "#9cc0a0" },
   arcana: { panel: one(arcanaPanels), button: one(arcanaButtons), frame: skill(charactersFrames), accent: "#b4a3e2" },
   library: { panel: one(libraryPanels), button: one(libraryButtons), frame: skill(libraryFrames), accent: "#c8a46a" },
   talents: { panel: one(talentsPanels), button: one(talentsButtons), frame: skill(talentsFrames), accent: "#b49ad8" },

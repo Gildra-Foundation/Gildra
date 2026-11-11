@@ -33,7 +33,7 @@ const wide = () => window.matchMedia(WIDE).matches;
 
 const word = (lang: Lang, value: { en: string; ru: string }) => value[lang];
 
-const realmIcons: Record<string, LucideIcon> = { "forever-dungeons": KeyRound, "forever-raids": Swords, heroes: UserRound, classes: Network, mythic: KeyRound, raids: Swords, meta: BarChart3, library: Library, chronicle: ScrollText, tools: Wrench };
+const realmIcons: Record<string, LucideIcon> = { "forever-library": Library, "forever-talent-calc": Network, "forever-classes": Network, "forever-professions": Wrench, "forever-tier-lists": BarChart3, "forever-dungeons": KeyRound, "forever-raids": Swords, heroes: UserRound, classes: Network, mythic: KeyRound, raids: Swords, meta: BarChart3, library: Library, chronicle: ScrollText, tools: Wrench };
 
 /** Each page its own sign, so the eye finds it before reading. */
 const pageIcons: Record<NavigationIcon, LucideIcon> = {

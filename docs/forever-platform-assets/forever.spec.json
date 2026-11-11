@@ -1,0 +1,25 @@
+{
+ "title": "Forever — тонкий кит раздела",
+ "kit": "forever",
+ "kit_name": "Forever Wayfarer",
+ "pages": "`/wow/forever/**` (+ `/ru`): хаб, классы и изменения, профессии, герой-кнопки всех страниц раздела",
+ "page": "the World of Warcraft: Forever section pages",
+ "material": "weathered brushed pewter rails with hammered antique-brass fittings, compact brass compass-rose caps each holding one tiny round pine-green enamel stone, deep pine-charcoal face; an old-world traveller's map case, worn and honest, clean straight construction rather than vines, claws or crystals; slim low-relief construction: thin flat rails, shallow bevels, compact flush end caps and clasps, minimal depth and bulk, light and elegant rather than heavy",
+ "anchors": {"face": "#0c1512", "metal": "#4f5552", "highlight": "#d8c8a0", "accent": "#5f9a76"},
+ "site_accent": "#9cc0a0",
+ "accent_note": "`accent-check.cjs` pass (light #bad3c0); оттенок в 18° от the-dreamrift — материал явно другой: олово и латунь дорожного футляра для карт, без слоновой кости, лоз и живого дерева; отличие от library (орех + синий кристалл) и den-of-nalorakk (сланцевый камень + когти) — металл без дерева и камня, зелёная эмаль.",
+ "task_dir": "/home/debian/gildra-forever-platform-assets-20261111",
+ "repo": "/home/debian/.t3/worktrees/Gildra-atlas/codex-forever-platform-release-20261111",
+ "public_dir": "/assets/wow/slim/forever",
+ "assets": [
+  {"type": "panel", "title": "Табличка (9-slice)", "where": "карточки разделов хаба, карточки классов, плитки профессий, табличка фильтров изменений, CTA; подземелья и рейды Forever вместо заимствованных den-of-nalorakk/kings-rest", "holds": "headings, short facts, filters and short lists", "palette_ref_role": "finished slim panel of the neighbouring Library kit", "refs": ["/home/debian/.t3/worktrees/Gildra-atlas/codex-forever-platform-release-20261111/apps/web/public/assets/wow/slim/library/controls/panels/library.webp", "$REF/panels-den-of-nalorakk.webp"]},
+  {"type": "button", "title": "Кнопка (9-slice)", "where": "кнопки героя всех страниц Forever, «Открыть», «Калькулятор талантов», «Сбросить фильтры», пагинация-«далее»", "caps": "each cap is a compact flat brass compass-rose boss holding one tiny round pine-green enamel stone", "refs": ["{PANEL}", "$REF/buttons-den-of-nalorakk.webp"]},
+  {"type": "skill", "name": "forever-icon", "title": "Рамка иконки", "where": "иконки классов (64), профессий (52), инструментов хаба (52), крупная иконка записи библиотеки Forever (96)", "icon": "a class, profession, item or spell icon", "corners": "four small flat brass corner tips; at most one tiny pine-green enamel dot at the top centre of the rail", "size": "40–96 px", "refs": ["{PANEL}", "$REF/pull-art-skills-kings-rest.webp"]},
+  {"type": "ornament", "name": "forever-pine", "title": "Орнамент «сосновая ветвь»", "where": "одна на страницу: CTA-табличка хаба и табличка-итог хаба профессий", "subject": "one short evergreen pine sprig: a dark bronze twig rising from a compact base, three broad simple tufts of pine-green needles and one small warm-brown pine cone", "refs": ["{PANEL}", "$REF/ornaments-ruby-life-pools.webp"], "after": "После упаковки допиши в запись манифеста: `\"anchor\": \"right\", \"theme\": \"pollen\", \"duration\": 1500, \"delay\": 300`."}
+ ],
+ "after": [
+  "Упаковка, proof, `slices`, `SOURCE.md` в каждой папке `/assets/wow/slim/forever/controls/*` — координатор (Codex) по `gildra-wow-material-design/assets.md` §5–§8.",
+  "Подключение: `forever` в `SectionKit` и таблицу `kits` (`components/wow/shared/material/sectionKits.ts`, accent `#9cc0a0`), затем `npm run design:lock -- --base <кандидат>` — M+/мета/рейды не меняются.",
+  "Сцены — раздел «Сцены» ниже (шаблон 2026-11-06, без референсов)."
+ ]
+}

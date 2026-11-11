@@ -1,0 +1,103 @@
+{
+ "task": "forever-platform-20261111",
+ "taskDir": "/home/debian/gildra-forever-platform-assets-20261111",
+ "repo": "/home/debian/.t3/worktrees/Gildra-atlas/codex-forever-platform-release-20261111",
+ "candidatesPerAsset": 3,
+ "generator": "Codex image_gen.imagegen",
+ "kit": {
+  "slug": "forever",
+  "siteAccent": "#9cc0a0",
+  "anchors": {
+   "face": "#0c1512",
+   "metal": "#4f5552",
+   "highlight": "#d8c8a0",
+   "accent": "#5f9a76"
+  }
+ },
+ "assets": [
+  {
+   "type": "panel",
+   "name": "forever",
+   "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-native.png",
+   "public": "/assets/wow/slim/forever/controls/panels/forever.webp",
+   "display": "360–1400 px wide, slices ×0.18/0.14",
+   "referencedImagePaths": [
+    "/home/debian/.t3/worktrees/Gildra-atlas/codex-forever-platform-release-20261111/apps/web/public/assets/wow/slim/library/controls/panels/library.webp",
+    "/home/debian/.claude/skills/gildra-asset-imagegen/references/panels-den-of-nalorakk.webp"
+   ],
+   "transparentBackground": true,
+   "canvas": "4:5",
+   "budgetBytes": 100000,
+   "promptSource": "CODEX-PROMPTS.md"
+  },
+  {
+   "type": "button",
+   "name": "forever",
+   "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/buttons/forever-native.png",
+   "public": "/assets/wow/slim/forever/controls/buttons/forever.webp",
+   "display": "68 px tall",
+   "referencedImagePaths": [
+    "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-native.png",
+    "/home/debian/.claude/skills/gildra-asset-imagegen/references/buttons-den-of-nalorakk.webp"
+   ],
+   "transparentBackground": true,
+   "canvas": "3:1",
+   "budgetBytes": 80000,
+   "promptSource": "CODEX-PROMPTS.md"
+  },
+  {
+   "type": "skill",
+   "name": "forever-icon",
+   "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/frames/forever-icon-native.png",
+   "public": "/assets/wow/slim/forever/controls/frames/forever-icon.webp",
+   "display": "40–96 px",
+   "referencedImagePaths": [
+    "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-native.png",
+    "/home/debian/.claude/skills/gildra-asset-imagegen/references/pull-art-skills-kings-rest.webp"
+   ],
+   "transparentBackground": true,
+   "canvas": "1:1",
+   "budgetBytes": 40000,
+   "promptSource": "CODEX-PROMPTS.md"
+  },
+  {
+   "type": "ornament",
+   "name": "forever-pine",
+   "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/ornaments/forever-pine-native.png",
+   "public": "/assets/wow/slim/forever/controls/ornaments/forever-pine.webp",
+   "display": "~96 px wide",
+   "referencedImagePaths": [
+    "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-native.png",
+    "/home/debian/.claude/skills/gildra-asset-imagegen/references/ornaments-ruby-life-pools.webp"
+   ],
+   "transparentBackground": true,
+   "canvas": "3:4",
+   "budgetBytes": 35000,
+   "promptSource": "CODEX-PROMPTS.md"
+  },
+  {
+   "type": "scene",
+   "name": "forever",
+   "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-native.png",
+   "public": "/assets/wow/loading/forever-old-road-20261111.webp",
+   "display": "full-screen 1440×900, phone portrait crop",
+   "referencedImagePaths": [],
+   "transparentBackground": false,
+   "canvas": "16:9",
+   "budgetBytes": 120000,
+   "promptSource": "CODEX-PROMPTS.md"
+  },
+  {
+   "type": "scene",
+   "name": "forever-crafts",
+   "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-crafts-native.png",
+   "public": "/assets/wow/loading/forever-crafthall-20261111.webp",
+   "display": "full-screen 1440×900, phone portrait crop",
+   "referencedImagePaths": [],
+   "transparentBackground": false,
+   "canvas": "16:9",
+   "budgetBytes": 120000,
+   "promptSource": "CODEX-PROMPTS.md"
+  }
+ ]
+}

@@ -1,2 +1,7 @@
 /* atlas:strict */
 .location { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-muted); font: 500 var(--atlas-text-small) / var(--atlas-leading-body) var(--atlas-font-ui); }
+
+.journey { display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-4); }
+.pine { width: 96px; height: auto; flex: 0 0 auto; }
+@media (max-width: 480px) { .pine { width: 64px; } }
+@media (forced-colors: active) { .pine { display: none; } }

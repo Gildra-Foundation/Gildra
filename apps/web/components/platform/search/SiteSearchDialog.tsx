@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useDeferredValue, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Castle, ChevronDown, Clock3, Compass, CornerDownLeft, Database, History, MapPin, Search, Skull, Swords, X } from "lucide-react";
 import { AtlasDialog } from "@gildra/atlas-ui/AtlasDialog";
 import { AtlasInput } from "@gildra/atlas-ui/AtlasField";
@@ -146,6 +146,8 @@ const ResultList = memo(function ResultList({ groups, id, current, query, events
 export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origin }: { open: boolean; onClose: () => void; lang: SiteSearchLang; initialQuery?: string; origin?: DOMRect | null }) {
   const copy = siteSearchCopy[lang];
   const router = useRouter();
+  const pathname = usePathname();
+  const forever = /^\/(?:ru\/)?wow\/forever(?:\/|$)/.test(pathname ?? "");
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
   const body = useRef<HTMLDivElement>(null);
@@ -186,10 +188,10 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
 
   const trimmed = deferred.trim();
   const groups = useMemo<Group[]>(() => {
-    const entries = index?.[lang] ?? [];
+    const entries = (index?.[lang] ?? []).filter(entry => !forever || /^\/wow\/forever(?:\/|$)/.test(entry.h));
     if (!trimmed) {
       const queryRows: Row[] = queries.slice(0, 3).map((text) => ({ key: `q${text}`, href: "", title: text, icon: "recent", query: text }));
-      const recentRows: Row[] = recent.slice(0, 4).map((page) => ({ key: `r${page.h}`, href: localized(page.h), title: page.t, icon: "recent" }));
+      const recentRows: Row[] = recent.filter(page => !forever || /^\/wow\/forever(?:\/|$)/.test(page.h)).slice(0, 4).map((page) => ({ key: `r${page.h}`, href: localized(page.h), title: page.t, icon: "recent" }));
       const sectionRows: Row[] = entries.filter((entry) => entry.g === "section").slice(0, SECTION_SUGGESTIONS)
         .map((entry) => ({ key: `s${entry.h}`, href: localized(entry.h), title: entry.t, icon: "section" }));
       return [
@@ -210,11 +212,11 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
     }
     return [
       ...[...byGroup].map(([group, rows]) => ({ id: group, label: copy.groups[group as SiteSearchGroup] ?? copy.results, rows })),
-      { id: "database", label: copy.databaseGroup, rows: [{ key: "db", href: `${prefix}/search?q=${encodeURIComponent(trimmed)}`, title: copy.database(trimmed), icon: "database" as const }] },
+      { id: "database", label: copy.databaseGroup, rows: [{ key: "db", href: `${prefix}${forever ? "/wow/forever/library" : "/search"}?q=${encodeURIComponent(trimmed)}`, title: copy.database(trimmed), icon: "database" as const }] },
     ];
     // `localized` only depends on `prefix`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, lang, trimmed, recent, queries, copy, prefix]);
+  }, [index, lang, trimmed, recent, queries, copy, prefix, forever]);
 
   const rows = groups.flatMap((group) => group.rows);
   const hitCount = trimmed ? rows.length - 1 : 0;

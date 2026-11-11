@@ -55,6 +55,10 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@gildra/game-data", "@gildra/atlas-ui"],
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   outputFileTracingIncludes: {
+    "/wow/forever/library": ["./data/wow/forever/database/**/*"],
+    "/wow/forever/library/**/*": ["./data/wow/forever/database/**/*"],
+    "/ru/wow/forever/library": ["./data/wow/forever/database/**/*"],
+    "/ru/wow/forever/library/**/*": ["./data/wow/forever/database/**/*"],
     "/talents/[spec]": ["./app/styles/talents/specs/**/*.css"],
     "/ru/talents/[spec]": ["./app/styles/talents/specs/**/*.css"],
   },

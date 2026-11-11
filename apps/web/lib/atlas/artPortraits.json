@@ -100,5 +100,17 @@
   "x": 0.5,
   "width": 661,
   "height": 734
+ },
+ "/assets/wow/loading/forever-old-road-20261111.webp": {
+  "src": "/assets/wow/loading/forever-old-road-20261111-portrait.webp",
+  "x": 0.7,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/forever-crafthall-20261111.webp": {
+  "src": "/assets/wow/loading/forever-crafthall-20261111-portrait.webp",
+  "x": 0.7,
+  "width": 847,
+  "height": 941
  }
 }

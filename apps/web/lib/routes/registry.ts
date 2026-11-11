@@ -23,6 +23,15 @@ export type RouteSection = {
 };
 
 export const routeSections = {
+  forever: { path: "/wow/forever", title: { en: "World of Warcraft: Forever", ru: "World of Warcraft: Forever" }, scene: "forever" },
+  foreverDungeons: { path: "/wow/forever/dungeons", parent: "forever", title: { en: "Dungeons", ru: "Подземелья" }, scene: "forever", search: { en: "Forever — Dungeons", ru: "Forever — Подземелья", keywords: "forever" } },
+  foreverRaids: { path: "/wow/forever/raids", parent: "forever", title: { en: "Raids", ru: "Рейды" }, scene: "forever", search: { en: "Forever — Raids", ru: "Forever — Рейды", keywords: "forever" } },
+  foreverLibrary: { path: "/wow/forever/library", parent: "forever", title: { en: "Library", ru: "Библиотека" }, scene: "archive", search: { en: "Forever — Library", ru: "Forever — Библиотека", keywords: "forever" } },
+  foreverTalents: { path: "/wow/forever/talent-calc", parent: "forever", title: { en: "Talent calculator", ru: "Калькулятор талантов" }, scene: "talents", search: { en: "Forever — Talent calculator", ru: "Forever — Калькулятор талантов", keywords: "forever" } },
+  foreverClasses: { path: "/wow/forever/classes", parent: "forever", title: { en: "Classes", ru: "Классы" }, scene: "forever", search: { en: "Forever — Classes", ru: "Forever — Классы", keywords: "forever" } },
+  foreverChanges: { path: "/wow/forever/changes", parent: "forever", title: { en: "Class changes", ru: "Изменения классов" }, scene: "forever", search: { en: "Forever — Class changes", ru: "Forever — Изменения классов", keywords: "forever" } },
+  foreverProfessions: { path: "/wow/forever/professions", parent: "forever", title: { en: "Professions", ru: "Профессии" }, scene: "foreverCrafts", search: { en: "Forever — Professions", ru: "Forever — Профессии", keywords: "forever" } },
+  foreverTiers: { path: "/wow/forever/tier-lists", parent: "forever", title: { en: "Tier lists", ru: "Тир-листы" }, scene: "tierLists", search: { en: "Forever — Tier lists", ru: "Forever — Тир-листы", keywords: "forever" } },
   transmog: { path: "/wow/transmog", parent: "wow", title: { en: "Transmog Studio", ru: "Трансмогрификация" }, scene: "articles", search: { keywords: "transmog transmogrification outfit appearance sets dressing room screenshot трансмогрификация трансмог образ облик наборы примерочная скриншот" } },
   professions: { path: "/wow/professions", parent: "wow", title: { en: "Professions", ru: "Профессии" }, scene: "articles", search: { keywords: "professions crafting leveling alchemy blacksmithing enchanting mining herbalism профессии ремесло прокачка алхимия кузнечное дело наложение чар горное дело травничество" } },
   auction: { path: "/wow/auction", parent: "wow", title: { en: "Auction House", ru: "Аукцион" }, scene: "articles", search: { keywords: "auction house tools market prices аукцион инструменты рынок цены реагенты" } },

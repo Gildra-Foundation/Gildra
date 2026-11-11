@@ -1,3 +1,4 @@
+import { newDungeons, returningDungeonDetails } from "@/components/wow/forever/instanceData";
 import { routeSections, type SectionId } from "@/lib/routes/registry";
 import { dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { midnightClasses, midnightLairEncounters, midnightSpecializations } from "@/lib/data/wow";
@@ -31,7 +32,7 @@ export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean
   ...raidHubEntries.map(({ slug }) => `/wow/raids/${slug}`),
   ...midnightLairEncounters.map(({ slug }) => `/wow/lairs/${slug}`),
   ...professions.map(({ slug }) => `/wow/professions/${slug}`),
-  "/wow/forever", "/wow/forever/raids", "/wow/forever/dungeons", "/wow/forever/dungeons/hall-of-thanes",
+  ...[...newDungeons, ...returningDungeonDetails].map(({ slug }) => `/wow/forever/dungeons/${slug}`),
   "/wow/mists", "/wow/mists/talents",
   ...mistsClasses.classes.map(({ slug }) => `/wow/mists/talents/${slug}`),
   ...talentSpecThemes.map(({ slug }) => `/wow/mythic-plus/leaderboard/${slug}`),

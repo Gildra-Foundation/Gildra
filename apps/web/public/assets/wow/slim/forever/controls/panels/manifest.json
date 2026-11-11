@@ -1,0 +1,34 @@
+{
+  "entries": {
+    "forever": {
+      "path": "/assets/wow/slim/forever/controls/panels/forever.webp",
+      "width": 768,
+      "height": 960,
+      "bytes": 49862,
+      "sha256": "d03043633b16398521513fa2584c00a37fb56cd9493510151db3db135b8db382",
+      "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-native.png",
+      "nativeSha256": "9ff1fa8d416e08108dfdf827b778cd1e596d82c4734c5979943cf70c40eb0e46",
+      "nativeDimensions": {
+        "width": 1122,
+        "height": 1402
+      },
+      "crop": {
+        "left": 31,
+        "top": 23,
+        "width": 1061,
+        "height": 1332
+      },
+      "centreAlpha": {
+        "min": 250,
+        "max": 253
+      },
+      "slices": [
+        91,
+        96,
+        84,
+        96
+      ],
+      "railInset": 25
+    }
+  }
+}

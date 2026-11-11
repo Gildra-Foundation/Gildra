@@ -1,0 +1,772 @@
+{
+  "generatedAt": "2026-11-11T00:44:50.225867+00:00",
+  "generator": "built-in image_gen.imagegen",
+  "calls": 18,
+  "entries": {
+    "panel": {
+      "path": "/assets/wow/slim/forever/controls/panels/forever.webp",
+      "width": 768,
+      "height": 960,
+      "bytes": 49862,
+      "sha256": "d03043633b16398521513fa2584c00a37fb56cd9493510151db3db135b8db382",
+      "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-native.png",
+      "nativeSha256": "9ff1fa8d416e08108dfdf827b778cd1e596d82c4734c5979943cf70c40eb0e46",
+      "nativeDimensions": {
+        "width": 1122,
+        "height": 1402
+      },
+      "crop": {
+        "left": 31,
+        "top": 23,
+        "width": 1061,
+        "height": 1332
+      },
+      "centreAlpha": {
+        "min": 250,
+        "max": 253
+      },
+      "slices": [
+        91,
+        96,
+        84,
+        96
+      ],
+      "railInset": 25,
+      "selectedCandidate": 3,
+      "promptFile": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-prompt.txt",
+      "promptSha256": "a330e08352692358102d765ef654c4cbc7ec47b0a6ed3ebe8656bc48818a7d8c",
+      "references": [
+        {
+          "path": "/home/debian/.t3/worktrees/Gildra-atlas/codex-forever-platform-release-20261111/apps/web/public/assets/wow/slim/library/controls/panels/library.webp",
+          "sha256": "3a1ba01458963f354834af140f83635a412e4cc4dd6ed174847683d5823583fa"
+        },
+        {
+          "path": "/home/debian/.claude/skills/gildra-asset-imagegen/references/panels-den-of-nalorakk.webp",
+          "sha256": "305f79f0cf8c038ef640990f4e94aaf57a3552520449c16af75c4cf433de105b"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": 1,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-candidate-1.png",
+          "sha256": "97061f5af19d695081f6e400f056d00a55f445c60648c0b6ed38d20d2fefe861",
+          "selected": false,
+          "reason": "PASS; softer edge score and larger rounded caps than selected 3."
+        },
+        {
+          "candidate": 2,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-candidate-2.png",
+          "sha256": "087d1b46da870cce49bcd836b9be417bccf0e7843c40cf92ad4d41e8ca2f36a0",
+          "selected": false,
+          "reason": "PASS; asymmetrical corner plates; selected 3 has crisper consistent compass motif."
+        },
+        {
+          "candidate": 3,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-candidate-3.png",
+          "sha256": "9ff1fa8d416e08108dfdf827b778cd1e596d82c4734c5979943cf70c40eb0e46",
+          "selected": true
+        }
+      ],
+      "nativeQA": {
+        "file": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-candidate-3.png",
+        "fails": [],
+        "warns": [],
+        "metrics": {
+          "width": 1122,
+          "height": 1402,
+          "hasAlpha": true,
+          "aspect": 0.8,
+          "exteriorOpaque": 0.065,
+          "cornerAlpha": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hazeShare": 0.0147,
+          "fringeLuma": 116.9,
+          "innerLuma": 70.9,
+          "neutralFringe": 0.034,
+          "darkFringe": 0.018,
+          "subject": {
+            "x0": 31,
+            "y0": 23,
+            "x1": 1091,
+            "y1": 1354,
+            "widthShare": 0.946,
+            "heightShare": 0.95
+          },
+          "faceAlphaMin": 251,
+          "symmetry": 1,
+          "edgeEnergy": 4.81,
+          "faceNoise": 1.82
+        }
+      },
+      "warnings": [
+        "Measured slices visually accepted unchanged in cyan and 9-slice proof."
+      ],
+      "transparentBackground": true,
+      "deliveries": [
+        {
+          "path": "/assets/wow/slim/forever/controls/panels/forever.webp",
+          "bytes": 49862,
+          "sha256": "d03043633b16398521513fa2584c00a37fb56cd9493510151db3db135b8db382",
+          "budgetBytes": 100000,
+          "width": 768,
+          "height": 960,
+          "hasAlpha": true
+        }
+      ]
+    },
+    "button": {
+      "path": "/assets/wow/slim/forever/controls/buttons/forever.webp",
+      "width": 768,
+      "height": 116,
+      "bytes": 14152,
+      "sha256": "6551417de83297cd69b4374163f805c586ef0def9ded61a12afa2c98b4b8bc62",
+      "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/buttons/forever-native.png",
+      "nativeSha256": "541263943cf5274547df937bc394f48f787a0b6a124541ebb609ceff10c978f1",
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "crop": {
+        "left": 63,
+        "top": 207,
+        "width": 2045,
+        "height": 273
+      },
+      "centreAlpha": {
+        "min": 253,
+        "max": 254
+      },
+      "slices": [
+        34,
+        93,
+        29,
+        95
+      ],
+      "proof": "/home/debian/gildra-forever-platform-assets-20261111/proof/button/forever-button-proof.png",
+      "selectedCandidate": 1,
+      "promptFile": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/buttons/forever-prompt.txt",
+      "promptSha256": "ab05c8e753d585c533199a96434ee97379d25c0307e532105bd9a42c97cb3c84",
+      "references": [
+        {
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-native.png",
+          "sha256": "9ff1fa8d416e08108dfdf827b778cd1e596d82c4734c5979943cf70c40eb0e46"
+        },
+        {
+          "path": "/home/debian/.claude/skills/gildra-asset-imagegen/references/buttons-den-of-nalorakk.webp",
+          "sha256": "a7614459885cfc6fb9682dbcaeb17bb2141d7ce520c6bf6e37740604cad52fb7"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": 1,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/buttons/forever-candidate-1.png",
+          "sha256": "541263943cf5274547df937bc394f48f787a0b6a124541ebb609ceff10c978f1",
+          "selected": true
+        },
+        {
+          "candidate": 2,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/buttons/forever-candidate-2.png",
+          "sha256": "10825249c9ed70111ce6507a1ccbe2ed730bccdcd932264b129fe00f8ea6b0d6",
+          "selected": false,
+          "reason": "PASS; less even upper rail and stepped end cap."
+        },
+        {
+          "candidate": 3,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/buttons/forever-candidate-3.png",
+          "sha256": "0b6d36ab4008f3c3bab99c34d7a87e9f5addbbd16adc5866d162dd6b362bb743",
+          "selected": false,
+          "reason": "PASS; thicker caps; selected 1 better balanced at 68 px."
+        }
+      ],
+      "nativeQA": {
+        "file": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/buttons/forever-candidate-1.png",
+        "fails": [],
+        "warns": [],
+        "metrics": {
+          "width": 2172,
+          "height": 724,
+          "hasAlpha": true,
+          "aspect": 3,
+          "exteriorOpaque": 0,
+          "cornerAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hazeShare": 0.0153,
+          "fringeLuma": 73.3,
+          "innerLuma": 79.2,
+          "neutralFringe": 0,
+          "darkFringe": 0,
+          "subject": {
+            "x0": 63,
+            "y0": 207,
+            "x1": 2107,
+            "y1": 479,
+            "widthShare": 0.942,
+            "heightShare": 0.377
+          },
+          "faceAlphaMin": 253,
+          "middleProfileSpread": 1,
+          "symmetry": 0.998,
+          "edgeEnergy": 9.84,
+          "faceNoise": 2.54
+        }
+      },
+      "warnings": [
+        "slices are a measured PROPOSAL: open the proof and confirm caps/corners are not stretched; round to a multiple of 8 if you adjust"
+      ],
+      "transparentBackground": true,
+      "deliveries": [
+        {
+          "path": "/assets/wow/slim/forever/controls/buttons/forever.webp",
+          "bytes": 14152,
+          "sha256": "6551417de83297cd69b4374163f805c586ef0def9ded61a12afa2c98b4b8bc62",
+          "budgetBytes": 80000,
+          "width": 768,
+          "height": 116,
+          "hasAlpha": true
+        }
+      ]
+    },
+    "skill": {
+      "path": "/assets/wow/slim/forever/controls/frames/forever-icon.webp",
+      "width": 256,
+      "height": 256,
+      "bytes": 13674,
+      "sha256": "d8c494334400d3d86045cd2e32453ee6384fe2f84119f7873bf287f41103b901",
+      "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/frames/forever-icon-native.png",
+      "nativeSha256": "c99561226164a7bfdf58ab0009105ba07fc2f21c48f5eccc563be01e64382907",
+      "nativeDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "crop": {
+        "left": 109,
+        "top": 85,
+        "width": 1036,
+        "height": 1073
+      },
+      "centreAlpha": {
+        "min": 0,
+        "max": 1
+      },
+      "window": {
+        "sourceSize": {
+          "width": 256,
+          "height": 256
+        },
+        "bounds": {
+          "left": 44,
+          "top": 45,
+          "right": 210,
+          "bottom": 212
+        },
+        "polygon": [
+          [
+            55,
+            45
+          ],
+          [
+            55,
+            47
+          ],
+          [
+            47,
+            53
+          ],
+          [
+            44,
+            59
+          ],
+          [
+            44,
+            196
+          ],
+          [
+            46,
+            201
+          ],
+          [
+            52,
+            207
+          ],
+          [
+            57,
+            209
+          ],
+          [
+            57,
+            212
+          ],
+          [
+            198,
+            212
+          ],
+          [
+            198,
+            209
+          ],
+          [
+            206,
+            204
+          ],
+          [
+            209,
+            199
+          ],
+          [
+            210,
+            194
+          ],
+          [
+            210,
+            61
+          ],
+          [
+            206,
+            52
+          ],
+          [
+            198,
+            47
+          ],
+          [
+            198,
+            45
+          ]
+        ],
+        "clip": "polygon(6.627% 0.000%, 6.627% 1.198%, 1.807% 4.790%, 0.000% 8.383%, 0.000% 90.419%, 1.205% 93.413%, 4.819% 97.006%, 7.831% 98.204%, 7.831% 100.000%, 92.771% 100.000%, 92.771% 98.204%, 97.590% 95.210%, 99.398% 92.216%, 100.000% 89.222%, 100.000% 9.581%, 97.590% 4.192%, 92.771% 1.198%, 92.771% 0.000%)",
+        "css": {
+          "--frame-top": "17.578%",
+          "--frame-right": "17.969%",
+          "--frame-bottom": "17.188%",
+          "--frame-left": "17.188%",
+          "--frame-clip": "polygon(6.627% 0.000%, 6.627% 1.198%, 1.807% 4.790%, 0.000% 8.383%, 0.000% 90.419%, 1.205% 93.413%, 4.819% 97.006%, 7.831% 98.204%, 7.831% 100.000%, 92.771% 100.000%, 92.771% 98.204%, 97.590% 95.210%, 99.398% 92.216%, 100.000% 89.222%, 100.000% 9.581%, 97.590% 4.192%, 92.771% 1.198%, 92.771% 0.000%)"
+        }
+      },
+      "proof": "/home/debian/gildra-forever-platform-assets-20261111/proof/skill/forever-icon-skill-proof.png",
+      "selectedCandidate": 3,
+      "promptFile": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/frames/forever-icon-prompt.txt",
+      "promptSha256": "89c8ecc869d93e86abb7c33a71b121cd88efde5540518196d04459a324b8842a",
+      "references": [
+        {
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-native.png",
+          "sha256": "9ff1fa8d416e08108dfdf827b778cd1e596d82c4734c5979943cf70c40eb0e46"
+        },
+        {
+          "path": "/home/debian/.claude/skills/gildra-asset-imagegen/references/pull-art-skills-kings-rest.webp",
+          "sha256": "751557ba8559ff2cbbc9a2eaf910c706f2802852499e42aab11082f4c397aa78"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": 1,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/frames/forever-icon-candidate-1.png",
+          "sha256": "475544cdd5e4bce9337f9498d7da24f79f00c60db62ca8a1503869130874d117",
+          "selected": false,
+          "reason": "PASS; heavier dark inner band; selected 3 ranked first and preserves simpler square silhouette."
+        },
+        {
+          "candidate": 2,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/frames/forever-icon-candidate-2.png",
+          "sha256": "f058650972ea7f14401e6c62123f3cf9f8165727cb158daaff42a264ef514ea7",
+          "selected": false,
+          "reason": "FAIL native QA: haze 8.2% alpha 1–16 veil outside object. Not delivered."
+        },
+        {
+          "candidate": 3,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/frames/forever-icon-candidate-3.png",
+          "sha256": "c99561226164a7bfdf58ab0009105ba07fc2f21c48f5eccc563be01e64382907",
+          "selected": true
+        }
+      ],
+      "nativeQA": {
+        "file": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/frames/forever-icon-candidate-3.png",
+        "fails": [],
+        "warns": [],
+        "metrics": {
+          "width": 1254,
+          "height": 1254,
+          "hasAlpha": true,
+          "aspect": 1,
+          "exteriorOpaque": 0,
+          "cornerAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hazeShare": 0.0229,
+          "fringeLuma": 53.9,
+          "innerLuma": 77.2,
+          "neutralFringe": 0,
+          "darkFringe": 0.006,
+          "subject": {
+            "x0": 109,
+            "y0": 85,
+            "x1": 1144,
+            "y1": 1157,
+            "widthShare": 0.826,
+            "heightShare": 0.856
+          },
+          "windowAlphaMax": 1,
+          "symmetry": 0.983,
+          "edgeEnergy": 13.44
+        }
+      },
+      "warnings": [],
+      "transparentBackground": true,
+      "deliveries": [
+        {
+          "path": "/assets/wow/slim/forever/controls/frames/forever-icon.webp",
+          "bytes": 13674,
+          "sha256": "d8c494334400d3d86045cd2e32453ee6384fe2f84119f7873bf287f41103b901",
+          "budgetBytes": 40000,
+          "width": 256,
+          "height": 256,
+          "hasAlpha": true
+        }
+      ]
+    },
+    "ornament": {
+      "path": "/assets/wow/slim/forever/controls/ornaments/forever-pine.webp",
+      "width": 384,
+      "height": 695,
+      "bytes": 34854,
+      "sha256": "ac27e946a5c77ffefd15fe73efb73307b76a312138f82b52d5dc4add9811420a",
+      "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/ornaments/forever-pine-native.png",
+      "nativeSha256": "e33378e906154bbe251724165e88b7fd377c682efd53ccf0d2ec8475ec7715d6",
+      "nativeDimensions": {
+        "width": 1086,
+        "height": 1448
+      },
+      "crop": {
+        "left": 171,
+        "top": 47,
+        "width": 740,
+        "height": 1379
+      },
+      "centreAlpha": {
+        "min": 0,
+        "max": 255
+      },
+      "alphaBounds": {
+        "left": 12,
+        "top": 12,
+        "width": 360,
+        "height": 671
+      },
+      "rootPadding": 12,
+      "rootX": 194,
+      "proof": "/home/debian/gildra-forever-platform-assets-20261111/proof/ornament/forever-pine-ornament-proof.png",
+      "anchor": "right",
+      "theme": "pollen",
+      "duration": 1500,
+      "delay": 300,
+      "selectedCandidate": 3,
+      "promptFile": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/ornaments/forever-pine-prompt.txt",
+      "promptSha256": "04c5d69ad2b49b868414b93a0a8e1c2735b889a7a69db2310c65ccd4fdd04cf7",
+      "references": [
+        {
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/panels/forever-native.png",
+          "sha256": "9ff1fa8d416e08108dfdf827b778cd1e596d82c4734c5979943cf70c40eb0e46"
+        },
+        {
+          "path": "/home/debian/.claude/skills/gildra-asset-imagegen/references/ornaments-ruby-life-pools.webp",
+          "sha256": "d2ad7380f6808801bd9bd791a4557b6e99a741f59801f46f05540a3c31c6a097"
+        }
+      ],
+      "candidates": [
+        {
+          "candidate": 1,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/ornaments/forever-pine-candidate-1.png",
+          "sha256": "5dfe828b49c257ef2852ed62e6c4ea631c518b9811720923fe9548b8f270a1cc",
+          "selected": false,
+          "reason": "WARN fill at 98% canvas; top margin too tight."
+        },
+        {
+          "candidate": 2,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/ornaments/forever-pine-candidate-2.png",
+          "sha256": "0743096f8358df8031219064c4ca98ae00e738811554a44e1f7fc2bc1b56f1b9",
+          "selected": false,
+          "reason": "PASS; selected 3 has clearer staggered tufts and narrower basal attachment."
+        },
+        {
+          "candidate": 3,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/ornaments/forever-pine-candidate-3.png",
+          "sha256": "e33378e906154bbe251724165e88b7fd377c682efd53ccf0d2ec8475ec7715d6",
+          "selected": true
+        }
+      ],
+      "nativeQA": {
+        "file": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/ornaments/forever-pine-candidate-3.png",
+        "fails": [],
+        "warns": [],
+        "metrics": {
+          "width": 1086,
+          "height": 1448,
+          "hasAlpha": true,
+          "aspect": 0.75,
+          "exteriorOpaque": 0.007,
+          "cornerAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hazeShare": 0.0232,
+          "fringeLuma": 67.3,
+          "innerLuma": 75,
+          "neutralFringe": 0,
+          "darkFringe": 0,
+          "subject": {
+            "x0": 171,
+            "y0": 47,
+            "x1": 910,
+            "y1": 1425,
+            "widthShare": 0.681,
+            "heightShare": 0.952
+          },
+          "edgeEnergy": 15.02
+        }
+      },
+      "warnings": [
+        "WebP quality 25 (initial q82 50272 bytes; q55 40730 bytes). Native alpha quality 100 preserved. Inspect at intended width 96 px. Stylized broad needle tufts, not botanical reference."
+      ],
+      "transparentBackground": true,
+      "deliveries": [
+        {
+          "path": "/assets/wow/slim/forever/controls/ornaments/forever-pine.webp",
+          "bytes": 34854,
+          "sha256": "ac27e946a5c77ffefd15fe73efb73307b76a312138f82b52d5dc4add9811420a",
+          "budgetBytes": 35000,
+          "width": 384,
+          "height": 695,
+          "hasAlpha": true
+        }
+      ]
+    },
+    "forever": {
+      "path": "/assets/wow/loading/forever-old-road-20261111.webp",
+      "width": 1672,
+      "height": 941,
+      "bytes": 91326,
+      "sha256": "5405a84ce56127d9f31ba18042579eb8839256aaccf8724df25ba5df696e87ca",
+      "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-native.png",
+      "nativeSha256": "18803a9c6d20524812b4a99fceafb88faf28276be3b478b6a208e5ed00c18144",
+      "nativeDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "crop": null,
+      "variants": [
+        {
+          "path": "/assets/wow/loading/forever-old-road-20261111-768.webp",
+          "width": 768,
+          "bytes": 42514,
+          "sha256": "ff5bdc03317014f39c63c6e515e16ea25959c0a20ace8d39b6a866f6bfc7c928"
+        }
+      ],
+      "proof": "/home/debian/gildra-forever-platform-assets-20261111/proof/forever/forever-old-road-20261111-scene-proof.png",
+      "selectedCandidate": 2,
+      "promptFile": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-prompt.txt",
+      "promptSha256": "35057ec25227041d1bcee373a9cc4611641c0bdb128e3afd6314094c7ba3ea19",
+      "references": [],
+      "candidates": [
+        {
+          "candidate": 1,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-candidate-1.png",
+          "sha256": "2a55bfe1adbc08e205be688ed18dcea34b4d8223de238a6701d5463a026187f0",
+          "selected": false,
+          "reason": "PASS; arch sits lower and foreground has stronger detail."
+        },
+        {
+          "candidate": 2,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-candidate-2.png",
+          "sha256": "18803a9c6d20524812b4a99fceafb88faf28276be3b478b6a208e5ed00c18144",
+          "selected": true
+        },
+        {
+          "candidate": 3,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-candidate-3.png",
+          "sha256": "e77420f57be5a890bc36c556a3ae90321bf98937a51952591fb808793d6c5655",
+          "selected": false,
+          "reason": "PASS; watchtower too far right for preferred crop; candidate 2 has better focal placement."
+        }
+      ],
+      "nativeQA": {
+        "file": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-candidate-2.png",
+        "fails": [],
+        "warns": [],
+        "metrics": {
+          "width": 1672,
+          "height": 941,
+          "hasAlpha": false,
+          "aspect": 1.777,
+          "exteriorOpaque": 1,
+          "edgeEnergy": 7.67
+        }
+      },
+      "warnings": [
+        "Full-size WebP quality 70 to satisfy conservative 120000-byte budget; 768 variant quality 82. Original illustrative location, not an in-game map or canonical screenshot. Portrait quality 88 (instead of 90) to fit budget. Portrait recipe follows current art:portraits (0.9 aspect), not historical 640x1000 recipe."
+      ],
+      "transparentBackground": false,
+      "portrait": {
+        "src": "/assets/wow/loading/forever-old-road-20261111-portrait.webp",
+        "x": 0.7,
+        "width": 847,
+        "height": 941,
+        "crop": {
+          "left": 578,
+          "top": 0,
+          "width": 847,
+          "height": 941
+        }
+      },
+      "position": "70% 38%",
+      "deliveries": [
+        {
+          "path": "/assets/wow/loading/forever-old-road-20261111.webp",
+          "bytes": 91326,
+          "sha256": "5405a84ce56127d9f31ba18042579eb8839256aaccf8724df25ba5df696e87ca",
+          "budgetBytes": 120000,
+          "width": 1672,
+          "height": 941,
+          "hasAlpha": false
+        },
+        {
+          "path": "/assets/wow/loading/forever-old-road-20261111-768.webp",
+          "bytes": 42514,
+          "sha256": "ff5bdc03317014f39c63c6e515e16ea25959c0a20ace8d39b6a866f6bfc7c928",
+          "budgetBytes": 120000,
+          "width": 768,
+          "height": 432,
+          "hasAlpha": false
+        },
+        {
+          "path": "/assets/wow/loading/forever-old-road-20261111-portrait.webp",
+          "bytes": 107578,
+          "sha256": "024104117b622c47fd9de6e5f5fb09d9c7269bab1c0eb57b6a867b0b0d8c32fd",
+          "budgetBytes": 120000,
+          "width": 847,
+          "height": 941,
+          "hasAlpha": false
+        }
+      ]
+    },
+    "forever-crafts": {
+      "path": "/assets/wow/loading/forever-crafthall-20261111.webp",
+      "width": 1672,
+      "height": 941,
+      "bytes": 78414,
+      "sha256": "7b4b855f94cdc4849954970619179d0995dcf24097b7095b0177589bc564953b",
+      "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-crafts-native.png",
+      "nativeSha256": "33526d6fa0971241beabf475d4fc5548708bb397498e63752a451293ef7a33ef",
+      "nativeDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "crop": null,
+      "variants": [
+        {
+          "path": "/assets/wow/loading/forever-crafthall-20261111-768.webp",
+          "width": 768,
+          "bytes": 36018,
+          "sha256": "3dd744b1a43d4ab9270145c8f882fe1b28fa1a5ac457cd1f8faa4945c7a672e0"
+        }
+      ],
+      "proof": "/home/debian/gildra-forever-platform-assets-20261111/proof/forever-crafts/forever-crafthall-20261111-scene-proof.png",
+      "selectedCandidate": 3,
+      "promptFile": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-crafts-prompt.txt",
+      "promptSha256": "e7db2289837e2fc5955d7fe9678d0315fe876c43d521fa8921ed445850bee744",
+      "references": [],
+      "candidates": [
+        {
+          "candidate": 1,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-crafts-candidate-1.png",
+          "sha256": "35f68e619e2ed7f6beb941e07f0ab9abf3b8875f14299a79c0ec4e08ca68f6a0",
+          "selected": false,
+          "reason": "PASS; left daylight opening brighter and larger."
+        },
+        {
+          "candidate": 2,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-crafts-candidate-2.png",
+          "sha256": "61bcbdd3b63910800c41bdbc2ac57f7bc4488cb8ae0336aaf7ee6038b992d295",
+          "selected": false,
+          "reason": "PASS; large bright opening competes with forge. Selected 3 gives quieter left and clearer forge."
+        },
+        {
+          "candidate": 3,
+          "path": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-crafts-candidate-3.png",
+          "sha256": "33526d6fa0971241beabf475d4fc5548708bb397498e63752a451293ef7a33ef",
+          "selected": true
+        }
+      ],
+      "nativeQA": {
+        "file": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/scenes/forever-crafts-candidate-3.png",
+        "fails": [],
+        "warns": [],
+        "metrics": {
+          "width": 1672,
+          "height": 941,
+          "hasAlpha": false,
+          "aspect": 1.777,
+          "exteriorOpaque": 1,
+          "edgeEnergy": 7.32
+        }
+      },
+      "warnings": [
+        "Full-size WebP quality 70 to satisfy conservative 120000-byte budget; 768 variant quality 82. Original illustrative location, not an in-game map or canonical screenshot. Portrait quality 88 (instead of 90) to fit budget. Portrait recipe follows current art:portraits (0.9 aspect), not historical 640x1000 recipe."
+      ],
+      "transparentBackground": false,
+      "portrait": {
+        "src": "/assets/wow/loading/forever-crafthall-20261111-portrait.webp",
+        "x": 0.7,
+        "width": 847,
+        "height": 941,
+        "crop": {
+          "left": 578,
+          "top": 0,
+          "width": 847,
+          "height": 941
+        }
+      },
+      "position": "70% 40%",
+      "deliveries": [
+        {
+          "path": "/assets/wow/loading/forever-crafthall-20261111.webp",
+          "bytes": 78414,
+          "sha256": "7b4b855f94cdc4849954970619179d0995dcf24097b7095b0177589bc564953b",
+          "budgetBytes": 120000,
+          "width": 1672,
+          "height": 941,
+          "hasAlpha": false
+        },
+        {
+          "path": "/assets/wow/loading/forever-crafthall-20261111-768.webp",
+          "bytes": 36018,
+          "sha256": "3dd744b1a43d4ab9270145c8f882fe1b28fa1a5ac457cd1f8faa4945c7a672e0",
+          "budgetBytes": 120000,
+          "width": 768,
+          "height": 432,
+          "hasAlpha": false
+        },
+        {
+          "path": "/assets/wow/loading/forever-crafthall-20261111-portrait.webp",
+          "bytes": 81648,
+          "sha256": "0bacae49854a825e8d62c38dfa1eeb37c86a2e17e5788b47b6acfb4ccc391906",
+          "budgetBytes": 120000,
+          "width": 847,
+          "height": 941,
+          "hasAlpha": false
+        }
+      ]
+    }
+  }
+}
