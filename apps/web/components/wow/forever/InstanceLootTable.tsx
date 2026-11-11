@@ -1,4 +1,5 @@
 "use client";
+import { FOREVER_KIT } from "./foreverKit";
 import { useState } from "react";
 import { AtlasSection } from "@gildra/atlas-ui/AtlasSection";
 import { AtlasTable } from "@gildra/atlas-ui/AtlasTable";
@@ -20,7 +21,7 @@ export function InstanceLootTable({ items, lang }: { items: LootItem[]; lang: La
   if (!items?.length) return null;
   const t = instanceDetailCopy[lang];
   const rows = items.filter(row => matchesSearch(query, [row.name.en, row.name.ru]) && (!slot || (t.slots[row.slot] || t.other) === slot) && (!boss || row.boss === boss) && (!level || row.level <= Number(level)));
-  return <AtlasSection id="loot" title={t.loot}><MaterialPlaque kit="den-of-nalorakk">
+  return <AtlasSection id="loot" title={t.loot}><MaterialPlaque kit={FOREVER_KIT}>
     <div className={ux.filters}>
       <AtlasField label={t.search} htmlFor="loot-search"><AtlasInput id="loot-search" type="search" value={query} onChange={e => setQuery(e.target.value)} /></AtlasField>
       <AtlasField label={t.slot} htmlFor="loot-slot"><AtlasSelect id="loot-slot" value={slot} onChange={e => setSlot(e.target.value)}><option value="">{t.allSlots}</option>{[...new Set(items.map(row => t.slots[row.slot] || t.other))].sort((a, b) => a.localeCompare(b, lang)).map(value => <option key={value} value={value}>{value}</option>)}</AtlasSelect></AtlasField>

@@ -1,3 +1,4 @@
+import { professions as foreverProfessions } from "@/lib/forever/guides/professions";
 import { foreverClasses } from "@/lib/data/wow/foreverClasses";
 import "server-only";
 import { newDungeons, returningDungeonDetails } from "@/components/wow/forever/instanceData";
@@ -55,6 +56,10 @@ function entries(locale: Locale): SiteSearchEntry[] {
   const other: Locale = locale === "ru" ? "en" : "ru";
   const ru = locale === "ru";
   const list: SiteSearchEntry[] = sections.filter((section) => !section.only || section.only === locale).map((section) => ({ t: section[locale], s: label.section[locale], h: section.h, k: [section[other], section.k].filter(Boolean).join(" "), g: "section" }));
+
+  for (const entry of foreverProfessions) {
+    list.push({ t: entry.name[locale], s: ru ? "Профессия" : "Profession", h: `/wow/forever/professions/${entry.slug}`, k: entry.name[other], g: "section", d: "Forever" });
+  }
 
   for (const entry of foreverClasses) {
     list.push({ t: entry.name[locale], s: label.class[locale], h: `/wow/forever/classes/${entry.slug}`, k: entry.name[other], g: "class", i: classIcon(entry.slug), d: "Forever" });

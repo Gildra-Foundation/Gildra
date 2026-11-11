@@ -1,4 +1,5 @@
 "use client";
+import { FOREVER_KIT } from "./foreverKit";
 import { useEffect, useState } from "react";
 import { AtlasDisclosure } from "@gildra/atlas-ui/AtlasDisclosure";
 import { AtlasField, AtlasSelect } from "@gildra/atlas-ui/AtlasField";
@@ -33,7 +34,7 @@ export function DungeonEncounters({ bosses, lang }: { bosses: Boss[]; lang: Lang
     {hasRoles(bosses) && <AtlasField className={ux.anchor} label={t.role} htmlFor="encounter-role"><AtlasSelect id="encounter-role" value={role} onChange={e => setRole(e.target.value)}>
       <option value="">{t.all}</option><option value="Tank">{t.tank}</option><option value="Healer">{t.healer}</option><option value="Damage">{t.dps}</option>
     </AtlasSelect></AtlasField>}
-    {bosses.map((boss, index) => <MaterialPlaque key={boss.name} kit="den-of-nalorakk" as="article">
+    {bosses.map((boss, index) => <MaterialPlaque key={boss.name} kit={FOREVER_KIT} as="article">
       <div id={`encounter-${index + 1}`} tabIndex={-1} className={styles.encounter}>
         {boss.mechanics?.length || boss.preparation?.length ? <AtlasDisclosure summary={<span className={styles.bossSummary}>
           {/* eslint-disable-next-line @next/next/no-img-element */}

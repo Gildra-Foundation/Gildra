@@ -1,3 +1,4 @@
+import { FOREVER_KIT } from "./foreverKit";
 import { notFound } from "next/navigation";
 import { AtlasGrid, AtlasHero, AtlasMetaList, AtlasSection } from "@/components/atlas";
 import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
@@ -32,11 +33,11 @@ export function ForeverDungeonGuide({ lang, slug }: { lang: Lang; slug: string }
     {!!guide.preparation?.length && <section className={ux.preparation} aria-label={c.preparation}><h2>{c.preparation}</h2>{guide.preparation.map(note => <p key={note.en}>{note[lang]}</p>)}</section>}
     <div className={styles.workspace}>
       <AtlasSection title={mapLabel}>
-        <MaterialPlaque kit="den-of-nalorakk">
+        <MaterialPlaque kit={FOREVER_KIT}>
           <InstanceMaps maps={guide.maps} src={guide.map} viewBox={guide.viewBox}
             name={name} lang={lang} bosses={guide.bosses.map(boss => boss.name)} />
         </MaterialPlaque>
-        {!!guide.route?.length && <MaterialPlaque kit="den-of-nalorakk" className={styles.routePanel}>
+        {!!guide.route?.length && <MaterialPlaque kit={FOREVER_KIT} className={styles.routePanel}>
           <h3 className={materialStyles.title}>{c.route}</h3>
           <DungeonRoute steps={guide.route} bosses={guide.bosses.map(boss => boss.name)} lang={lang} />
         </MaterialPlaque>}
@@ -45,7 +46,7 @@ export function ForeverDungeonGuide({ lang, slug }: { lang: Lang; slug: string }
         <DungeonEncounters bosses={guide.bosses} lang={lang} />
       </AtlasSection>
     </div>
-    {!!guide.trash?.length && <AtlasSection title={t.trash}><AtlasGrid min={260} fit>{guide.trash.map(enemy => <MaterialPlaque key={enemy.name} kit="den-of-nalorakk" as="article">{/* eslint-disable-next-line @next/next/no-img-element */}
+    {!!guide.trash?.length && <AtlasSection title={t.trash}><AtlasGrid min={260} fit>{guide.trash.map(enemy => <MaterialPlaque key={enemy.name} kit={FOREVER_KIT} as="article">{/* eslint-disable-next-line @next/next/no-img-element */}
       {enemy.portrait && <img className={styles.portrait} src={enemy.portrait} width={64} height={64} alt="" loading="lazy" />}<h3 className={materialStyles.title}>{enemy.name}</h3><p className={styles.ability}>{enemy.ability}</p><p className={materialStyles.text}>{enemy.response[lang]}</p></MaterialPlaque>)}</AtlasGrid></AtlasSection>}
     <InstanceLoot slug={slug} lang={lang} />
   </ForeverFrame>;

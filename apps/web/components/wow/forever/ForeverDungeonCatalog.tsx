@@ -1,4 +1,5 @@
 "use client";
+import { FOREVER_KIT } from "./foreverKit";
 import { useState } from "react";
 import { AtlasField, AtlasInput } from "@gildra/atlas-ui/AtlasField";
 import { AtlasTable } from "@gildra/atlas-ui/AtlasTable";
@@ -16,7 +17,7 @@ export function ForeverDungeonCatalog({ lang }: { lang: Lang }) {
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState("");
   const rows = dungeons.filter(d => matchesSearch(query, [d.name, instanceName(d.name, lang), d.location, instanceName(d.location, lang)]) && matchesLevel(level, d.min, d.max));
-  return <MaterialPlaque kit="den-of-nalorakk">
+  return <MaterialPlaque kit={FOREVER_KIT}>
     <div className={styles.filters}>
       <AtlasField label={t.search} htmlFor="dungeon-search"><AtlasInput id="dungeon-search" type="search" value={query} onChange={e => setQuery(e.target.value)} /></AtlasField>
       <AtlasField label={t.yourLevel} htmlFor="dungeon-level"><AtlasInput id="dungeon-level" type="number" min={1} max={60} inputMode="numeric" value={level} onChange={e => setLevel(e.target.value)} /></AtlasField>

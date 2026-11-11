@@ -1,4 +1,5 @@
 "use client";
+import { FOREVER_KIT } from "./foreverKit";
 import { useEffect, type ReactNode } from "react";
 import { AtlasDisclosure, AtlasGrid, AtlasHero, AtlasMetaList, AtlasSection } from "@/components/atlas";
 import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
@@ -30,14 +31,14 @@ export function HallGuideClient({ lang, loot }: { lang: Lang; loot: ReactNode })
           }}>{index + 1}. {boss.name}</a>)}</nav>
     <AtlasSection title={t.map}>
       <div className={styles.workspace}>
-        <MaterialPlaque kit="den-of-nalorakk">
+        <MaterialPlaque kit={FOREVER_KIT}>
           <InstanceMaps selectedEncounter={active + 1} lang={lang} name="Hall of Thanes" bosses={hallEncounters.map(boss => boss.name)}
             maps={[{ src: "/images/wow/forever/hall-of-thanes/1.webp", width: 1130, height: 1556, label: { [lang]: t.main } }, { src: "/images/wow/forever/hall-of-thanes/2.webp", width: 654, height: 561, label: { [lang]: t.cave } }]}
             associations={hallEncounters.map((boss, index) => ({ encounter: index + 1, floor: boss.floor, x: boss.x, y: boss.y }))} />
         </MaterialPlaque>
         <div>
 
-          <MaterialPlaque kit="den-of-nalorakk" as="article" id={`encounter-${active + 1}`} tabIndex={-1} className={styles.encounter} aria-labelledby="hall-boss-name">
+          <MaterialPlaque kit={FOREVER_KIT} as="article" id={`encounter-${active + 1}`} tabIndex={-1} className={styles.encounter} aria-labelledby="hall-boss-name">
             <p className={materialStyles.text}>{encounter.area}</p>
             <h2 className={materialStyles.title} id="hall-boss-name">{encounter.name}</h2>
             <p className={materialStyles.text}>{encounter.preparation[lang]}</p>
@@ -47,8 +48,8 @@ export function HallGuideClient({ lang, loot }: { lang: Lang; loot: ReactNode })
         </div>
       </div>
     </AtlasSection>
-    <AtlasSection title={t.trash}><AtlasGrid min={260} fit>{hallTrash.map(enemy => <MaterialPlaque kit="den-of-nalorakk" as="article" key={enemy.name}><h3 className={materialStyles.title}>{enemy.name}</h3><p className={styles.ability}>{enemy.ability}</p><p className={materialStyles.text}>{enemy.response[lang]}</p></MaterialPlaque>)}</AtlasGrid></AtlasSection>
-    <AtlasSection title={t.before}><MaterialPlaque kit="den-of-nalorakk"><h3 className={materialStyles.title}>{t.pack}</h3><p className={materialStyles.text}>{t.packText}</p></MaterialPlaque></AtlasSection>
+    <AtlasSection title={t.trash}><AtlasGrid min={260} fit>{hallTrash.map(enemy => <MaterialPlaque kit={FOREVER_KIT} as="article" key={enemy.name}><h3 className={materialStyles.title}>{enemy.name}</h3><p className={styles.ability}>{enemy.ability}</p><p className={materialStyles.text}>{enemy.response[lang]}</p></MaterialPlaque>)}</AtlasGrid></AtlasSection>
+    <AtlasSection title={t.before}><MaterialPlaque kit={FOREVER_KIT}><h3 className={materialStyles.title}>{t.pack}</h3><p className={materialStyles.text}>{t.packText}</p></MaterialPlaque></AtlasSection>
     {loot}
     <AtlasDisclosure summary={t.sources}>{hallSources.map(([label, href]) => <a key={href} href={href} target="_blank" rel="noreferrer">{label} ↗</a>)}</AtlasDisclosure>
   </ForeverFrame>;
