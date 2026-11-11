@@ -10,7 +10,7 @@ import { MaterialPlaque } from "@/components/wow/shared/material/MaterialPlaque"
 import { changeRank, decodeBuild, emptyBuild, encodeBuild, gatePoints, pointBudget, requiredLevel, requirementsMet, spentPoints, treePoints, validateBuild } from "@/lib/forever/talents/engine";
 import { foreverTalentIcon, foreverTalentSpellPath } from "@/lib/forever/talents/links";
 import type { BuildError, TalentBuild, TalentClass, TalentNode, TalentTree } from "@/lib/forever/talents/types";
-import { notifyForeverNavigation } from "../map/navigation";
+import { notifyForeverNavigation } from "@/lib/forever/navigation";
 import { talentCopy } from "./talentCopy";
 import styles from "./talents.module.css";
 

@@ -30,6 +30,8 @@ const thumb = (src: string) => `/_next/image?url=${encodeURIComponent(src)}&w=64
 const classIcon = (slug: string) => `/assets/classes/${slug.replace(/-/g, "")}.jpg`;
 
 const label = {
+  profession: { en: "Profession", ru: "Профессия" },
+  foreverDungeon: { en: "Forever dungeon", ru: "Подземелье Forever" },
   section: { en: "Section", ru: "Раздел" },
   raid: { en: "Raid", ru: "Рейд" },
   boss: { en: "Raid boss", ru: "Босс рейда" },
@@ -58,7 +60,7 @@ function entries(locale: Locale): SiteSearchEntry[] {
   const list: SiteSearchEntry[] = sections.filter((section) => !section.only || section.only === locale).map((section) => ({ t: section[locale], s: label.section[locale], h: section.h, k: [section[other], section.k].filter(Boolean).join(" "), g: "section" }));
 
   for (const entry of foreverProfessions) {
-    list.push({ t: entry.name[locale], s: ru ? "Профессия" : "Profession", h: `/wow/forever/professions/${entry.slug}`, k: entry.name[other], g: "section", d: "Forever" });
+    list.push({ t: entry.name[locale], s: label.profession[locale], h: `/wow/forever/professions/${entry.slug}`, k: entry.name[other], g: "section", d: "Forever" });
   }
 
   for (const entry of foreverClasses) {
@@ -67,7 +69,7 @@ function entries(locale: Locale): SiteSearchEntry[] {
   }
 
   for (const dungeon of [...newDungeons, ...returningDungeonDetails]) {
-    list.push({ t: dungeon.name, s: ru ? "Подземелье Forever" : "Forever dungeon", h: `/wow/forever/dungeons/${dungeon.slug}`, g: "dungeon" });
+    list.push({ t: dungeon.name, s: label.foreverDungeon[locale], h: `/wow/forever/dungeons/${dungeon.slug}`, g: "dungeon" });
   }
 
   for (const slug of raidSlugs) {

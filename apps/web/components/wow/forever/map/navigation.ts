@@ -1,10 +1,7 @@
 "use client";
 import { useSyncExternalStore } from "react";
 
-const eventName = "forever-navigation";
-export function notifyForeverNavigation() {
-  window.dispatchEvent(new Event(eventName));
-}
+import { foreverNavigationEvent as eventName, notifyForeverNavigation } from "@/lib/forever/navigation";
 function subscribe(listener: () => void) {
   window.addEventListener("hashchange", listener);
   window.addEventListener("popstate", listener);
