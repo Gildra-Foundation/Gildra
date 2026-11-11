@@ -4,6 +4,7 @@ import { loadMythicPlusMeta } from "@/lib/games/wow/mythicPlusMeta";
 import { mythicPlusMetaView, metaRoles } from "@/lib/games/wow/mythicPlusMetaView";
 import { midnightSpecializations } from "@/lib/data/wow/specializations";
 import { wowHomeCopy } from "./wowHomeCopy";
+import { WOW_UI_TEXTURES } from "@/lib/games/wow/assets";
 import styles from "./wowHome.module.css";
 
 /** Existing cached read; unavailable data contributes no markup or placeholder. */
@@ -22,6 +23,6 @@ export async function HomeWeeklyMeta({ locale }: { locale: "en" | "ru" }) {
   const t = wowHomeCopy[locale];
   return <nav className={styles.seasonNow} aria-labelledby="weekly-meta-title">
     <div className={styles.metaHead}><h2 id="weekly-meta-title">{t.weeklyMeta}</h2><a href={`${prefix}/wow/mythic-plus/meta`}>{t.allMeta}<ArrowRight aria-hidden="true" /></a></div>
-    <ul className={styles.liveLinks}>{leaders.map(({role, theme, presence}) => <li key={role}><a href={`${prefix}/wow/mythic-plus/meta#${role}`}><span data-medallion="" aria-hidden="true"><Image src={theme.iconUrl} alt="" width={36} height={36} quality={60} /></span><span className={styles.metaSpec}><small>{roles[role]}</small><strong>{locale === "ru" ? theme.specNameRu : theme.specName}</strong><span>{locale === "ru" ? theme.classNameRu : theme.className}</span></span><b className={styles.presence}>{presence}%</b></a></li>)}</ul>
+    <ul className={styles.liveLinks}>{leaders.map(({role, theme, presence}) => <li key={role}><a href={`${prefix}/wow/mythic-plus/meta#${role}`}><span data-medallion="" aria-hidden="true"><Image src={theme.iconUrl} alt="" width={36} height={36} quality={60} /></span><span className={styles.metaSpec}><small><Image src={WOW_UI_TEXTURES.roles[role]} alt="" width={20} height={20} unoptimized />{roles[role]}</small><strong>{locale === "ru" ? theme.specNameRu : theme.specName}</strong><span>{locale === "ru" ? theme.classNameRu : theme.className}</span></span><b className={styles.presence}>{presence}%</b></a></li>)}</ul>
   </nav>;
 }

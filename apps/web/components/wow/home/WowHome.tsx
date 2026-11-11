@@ -16,6 +16,7 @@ import { dungeonBackdropSmall } from "@/lib/wow/dungeonArtDirection";
 import type { Lang } from "@/lib/i18n";
 import type { CSSProperties } from "react";
 import { classColors } from "@/lib/atlas/dataPalette";
+import { WOW_UI_TEXTURES } from "@/lib/games/wow/assets";
 import { wowHomeCopy } from "./wowHomeCopy";
 import styles from "./wowHome.module.css";
 import { JsonLd } from "@/lib/seo/jsonld";
@@ -27,7 +28,7 @@ import { HomeDungeons } from "./HomeDungeons";
 import { homeGroups, homeVersions, type HomeFeature } from "./homeFeatures";
 import { pageGlyphs, whatsNewGlyph } from "@/components/platform/navigation/SiteGlyphs";
 const icons = pageGlyphs;
-/** One painting per call to action; the world banner is the map of Azeroth in the page language. */
+/** One painting per call to action; the world banner is the Azeroth map of the site in the page language. */
 const bannerArt = {
   mythic: dungeonBackdropSmall("murder-row"),
   hero: "/assets/wow/loading/classes-heroes-20261106.webp",
@@ -67,13 +68,14 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
       actions={<HomeCharacterLookup locale={locale} recent={<HomeRecentCharacters locale={locale} label={t.recentCharacters} />} />}
       aside={<HomeWeeklyMeta locale={locale} />}
     />
+    <div className={styles.flourish} aria-hidden="true"><Image src={WOW_UI_TEXTURES.flourish} alt="" width={209} height={18} unoptimized /></div>
     <nav className={styles.banners} aria-label={t.productLabel}><ul>{homeGroups.map(group => <li key={group.id} data-group={group.id}><a href={`#${group.id}`}>
-      <Image src={group.id === "world" ? `/maps/tiles/${locale === "ru" ? "ru/" : ""}947/0/0_0.webp` : bannerArt[group.id]} alt="" width={480} height={270} sizes="(max-width: 1000px) 240px, 250px" quality={50} unoptimized={group.id === "world"} />
+      <Image src={group.id === "world" ? `/assets/wow/home/banners/world-${locale}.webp` : bannerArt[group.id]} alt="" width={480} height={320} sizes="(max-width: 1000px) 240px, 250px" quality={50} />
       <strong>{group.call[locale]}</strong>
       <span>{group.short[locale]}<ArrowDown aria-hidden="true" /></span>
     </a></li>)}</ul></nav>
 
-    {homeGroups.map(group => <AtlasSection key={group.id} id={group.id} className={styles.chapter} title={group.title[locale]} aside={group.id === "mythic" || group.id === "hero" || group.id === "raids" ? more(group) : undefined}>
+    {homeGroups.map(group => <AtlasSection key={group.id} id={group.id} className={styles.chapter} title={<><Image src={WOW_UI_TEXTURES.marks[group.id]} alt="" width={32} height={32} unoptimized className={styles.mark} />{group.title[locale]}</>} aside={group.id === "mythic" || group.id === "hero" || group.id === "raids" ? more(group) : undefined}>
       <div className={styles.group} data-group={group.id}>
         {group.id === "mythic" && season && <HomeDungeons locale={locale} season={season.slug} slugs={seasonalDungeons} label={t.moreDungeons} />}
         {group.id === "hero" && <nav aria-label={group.lead.label[locale]}><ul className={styles.classRoster}>{classes.map(spec => <li key={spec.classSlug} style={{ "--class-color": classColors[spec.classSlug as keyof typeof classColors] } as CSSProperties}><Link href={href(`/wow/classes#${spec.classSlug}`)} prefetch={false}><Image src={spec.classIconUrl} alt="" width={56} height={56} quality={50} loading="lazy" decoding="async" /><span>{locale === "ru" ? spec.classNameRu : spec.className}</span></Link></li>)}</ul></nav>}

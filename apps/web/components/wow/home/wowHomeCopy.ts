@@ -22,7 +22,7 @@ export const wowHomeCopy = {
       "region": "Регион",
       "realm": "Сервер",
       "name": "Имя",
-      "submit": "Найти"
+      "submit": "Найти персонажа"
     },
     "productLabel": "Возможности WowArcana",
     "moreDungeons": "Подземелья сезона",
@@ -58,7 +58,7 @@ export const wowHomeCopy = {
       "region": "Region",
       "realm": "Realm",
       "name": "Name",
-      "submit": "Find"
+      "submit": "Find a character"
     },
     "productLabel": "Explore WowArcana",
     "moreDungeons": "Season dungeons",
