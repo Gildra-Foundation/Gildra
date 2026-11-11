@@ -50,6 +50,24 @@ The original installed scripts are preserved at
   40 minutes, each part of the site check after 20. A compile over 180 s is
   reported as slow.
 
+- The web container is replaced without a gap. Before, nginx answered 502
+  ("Connection refused") while compose recreated the container: 19 of 22
+  deploys on 9–11 November, 1 to 14 refusals each. Now `deploy-web.sh` starts
+  a second container of the new image as the same compose service
+  (`compose run --use-aliases`, name `gildra-web-bridge`), reloads nginx so it
+  knows both addresses, recreates the service container, reloads, then removes
+  the second container: new connections to it are refused for 1.5 s first
+  (workers move to the service container), it is stopped with SIGTERM, nginx's
+  neighbour entry for its address is flushed (a vanished address otherwise
+  hangs a request for a minute) and nginx is reloaded once more. A new image
+  that does not start stops the deploy before production is touched. No nginx
+  or compose file changes.
+  Sandbox (`~/gildra-releases/.probe/deploy-sandbox`, real images and the
+  production nginx image, 15–25 requests a second): old switch 16, 18 and 16
+  responses 502; new switch 0 errors in 9 runs. Production, 22:44 UTC:
+  545 probe requests and 1760 visitor requests during the switch, no 5xx;
+  the deploy step takes 22 s instead of 14–17 s.
+
 Measured on the server on 2026-11-11 (4 cores, 6 build workers):
 
 | release | build | compile | whole `all` |
@@ -58,4 +76,4 @@ Measured on the server on 2026-11-11 (4 cores, 6 build workers):
 | build-speed (the fix itself, no public change) | 107 s | 40 s | 107 + 241 s (build run separately, then reused) |
 | throwaway commit with a new public file and a CSS rule, after the fix | 91 s | 17.9 s | build only |
 
-Candidate 4–5 s, site check 65–69 s (was 93–103 s), deploy 14–16 s, observation 122–128 s.
+Candidate 4–6 s, site check 65–69 s (was 93–103 s), deploy 22 s (was 14–17 s, with 502s), observation 122–129 s.

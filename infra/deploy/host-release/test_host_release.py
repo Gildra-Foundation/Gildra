@@ -89,7 +89,7 @@ sys.exit(1 if sys.argv[-1]==os.environ.get('FAIL_URL') else 0)
         marker = self.root / 'child-finished'
         script = ('set -euo pipefail\narmed=true\npatch=test\nsmoke_pids=()\n'
                   + drain + on_exit +
-                  '\nrollback() { test -f "$MARKER"; }\n'
+                  '\nrollback() { test -f "$MARKER"; }\nbridge_down() { :; }\n'
                   '(sleep 0.1; touch "$MARKER") &\nsmoke_pids+=("$!")\n'
                   'trap on_exit EXIT\nexit 1\n')
         result = subprocess.run(['bash', '-c', script],
@@ -176,6 +176,70 @@ sys.exit(1 if sys.argv[-1]==os.environ.get('FAIL_URL') else 0)
         steps = source[source.index('\ndef all_steps():'):source.index("\ntimed({'build'")]
         self.assertLess(steps.index('held = timed(queue)'), steps.index('timed(build)'))
         self.assertIn('timed(deploy); timed(observe)', steps)
+
+    def switch(self, **env):
+        """Run switch_web from deploy-web.sh with docker, nsenter, curl and sleep replaced by recorders."""
+        source = (HERE / 'deploy-web.sh').read_text()
+        functions = source[source.index('reload_nginx() {'):source.index('\ndrain_smoke() {')]
+        functions = functions[:functions.index('# The new image next to')] + functions[functions.index('bridge_up() {'):]
+        log = self.root / 'calls.log'
+        log.write_text('')
+        for name, body in {
+            'docker': '''case "$*" in
+  *"compose run"*) [ -z "${FAIL_RUN:-}" ] || exit 1;;
+  *"compose up"*) [ -z "${FAIL_UP:-}" ] || exit 1;;
+  *"compose ps -q nginx"*) echo nginx-id;;
+  *IPAddress*) echo 10.0.0.9;;
+  *State.Pid*) echo 4242;;
+  *State.Running*) echo true;;
+  "inspect gildra-web-bridge") [ -n "${BRIDGE:-}" ] || exit 1;;
+esac''',
+            'curl': '[ -z "${FAIL_CURL:-}" ]', 'nsenter': ':', 'sleep': ':',
+        }.items():
+            stub = self.root / name
+            stub.write_text('#!/bin/bash\necho "' + name + ' $*" >> "$CALLS"\n' + body + '\n')
+            stub.chmod(0o755)
+        script = ('set -euo pipefail\npatch=test\nbridge=gildra-web-bridge\ncompose() { docker compose "$@"; }\n'
+                  + functions + '\nswitch_web new-image\n')
+        result = subprocess.run(['bash', '-c', script], capture_output=True, text=True, timeout=30,
+                                env={**os.environ, 'PATH': str(self.root) + ':' + os.environ['PATH'], 'CALLS': str(log), **env})
+        return result, log.read_text().splitlines()
+
+    def test_switch_keeps_a_second_container_serving_while_the_service_is_replaced(self):
+        result, calls = self.switch()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        steps = [max(i for i, c in enumerate(calls) if key in c) for key in [
+            'compose run -d --no-deps --pull never --use-aliases --name gildra-web-bridge web',
+            'curl --silent --fail --max-time 5 --output /dev/null http://10.0.0.9:3000/',
+            'compose up -d --no-deps --no-build --pull never --wait --wait-timeout 180 web',
+            'iptables -I INPUT -p tcp --dport 3000 --syn -j REJECT --reject-with tcp-reset',
+            'docker stop --time 20 gildra-web-bridge',
+            'docker rm -f gildra-web-bridge',
+            'ip neigh flush to 10.0.0.9',
+            'exec nginx-id nginx -s reload',
+        ]]
+        self.assertEqual(steps, sorted(steps))
+        self.assertEqual(calls[0], 'docker rm -f gildra-web-bridge')  # a leftover of an interrupted deploy
+        reloads = [i for i, c in enumerate(calls) if c.endswith('nginx -s reload')]
+        self.assertEqual(len(reloads), 3)  # old + bridge, new + bridge, new
+        self.assertEqual(steps[7], reloads[2])
+        self.assertTrue(steps[1] < reloads[0] < steps[2] < reloads[1] < steps[3] and steps[6] < reloads[2])
+
+    def test_switch_leaves_production_alone_when_the_new_image_does_not_start(self):
+        for failure in ['FAIL_RUN', 'FAIL_CURL']:
+            result, calls = self.switch(GILDRA_BRIDGE_WAIT='1', **{failure: '1'})
+            self.assertEqual(result.returncode, 1)
+            self.assertIn('did not start next to production', result.stderr)
+            self.assertFalse([c for c in calls if 'compose up' in c or 'nginx -s reload' in c or 'docker stop' in c], failure)
+
+    def test_rollback_and_exit_remove_the_second_container(self):
+        source = (HERE / 'deploy-web.sh').read_text()
+        rollback = source[source.index('\nrollback() {'):source.index('\non_exit() {')]
+        self.assertLess(rollback.index('WEB_IMAGE=$previous compose up'), rollback.index('bridge_down'))
+        self.assertLess(rollback.index('bridge_down'), rollback.index('healthy "$previous"'))
+        on_exit = source[source.index('\non_exit() {'):source.index('\nexec 9>')]
+        self.assertLess(on_exit.index('rollback ||'), on_exit.index('bridge_down || true'))
+        self.assertIn('switch_web "$image"\nhealthy "$image"\nsmoke', source)
 
     def test_no_automatic_cache_prune_and_observation_retained(self):
         source = (HERE / 'release.py').read_text()

@@ -16,6 +16,7 @@ expected_previous=${3:?usage: deploy-web.sh <image> <patch> <expected-previous>}
 manifest=$root/current-release.env
 backup=$root/$patch-previous.env
 lock=/run/lock/gildra-deploy.lock
+bridge=gildra-web-bridge
 armed=false
 smoke_pids=()
 
@@ -40,6 +41,57 @@ reload_nginx() {
   [ -n "$nginx" ] || return 1
   docker exec "$nginx" nginx -t >/dev/null 2>&1 || return 1
   docker exec "$nginx" nginx -s reload >/dev/null || return 1
+}
+
+# The new image next to the old one under the service's own name. nginx learns both addresses on
+# reload and passes a request to the other one when the first refuses it, so no request meets a
+# closed port while the service container is replaced (19 of 22 deploys answered 502 before).
+# A new image that does not start is found here, before production is touched.
+bridge_up() {
+  local address deadline
+  docker rm -f "$bridge" >/dev/null 2>&1 || true
+  WEB_IMAGE=$1 compose run -d --no-deps --pull never --use-aliases --name "$bridge" web >/dev/null || return 1
+  address=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$bridge") || return 1
+  deadline=$((SECONDS + ${GILDRA_BRIDGE_WAIT:-90}))
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    curl --silent --fail --max-time 5 --output /dev/null "http://$address:3000/" && return 0
+    [ "$(docker inspect --format '{{.State.Running}}' "$bridge" 2>/dev/null)" = true ] || return 1
+    sleep 0.2
+  done
+  return 1
+}
+
+# SIGTERM first: the server finishes the requests it has and closes its port, so nginx sees a
+# refusal and passes on. A killed container vanishes with its requests (502 or a hung request).
+bridge_down() {
+  local address pid
+  address=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$bridge" 2>/dev/null) || return 0
+  # Refuse new connections for a moment while the container still answers: every nginx worker
+  # that tries it is refused at once, goes to the other address and stops trying this one.
+  pid=$(docker inspect --format '{{.State.Pid}}' "$bridge" 2>/dev/null) || pid=0
+  if [ "$pid" -gt 0 ] && nsenter --target "$pid" --net iptables -I INPUT -p tcp --dport 3000 --syn -j REJECT --reject-with tcp-reset 2>/dev/null; then sleep 1.5; fi
+  docker stop --time 20 "$bridge" >/dev/null || true
+  docker rm -f "$bridge" >/dev/null || return 1
+  forget_address "$address"
+  reload_nginx
+}
+
+# nginx keeps the hardware address of a container that is gone and would wait a minute for it to
+# answer. Without the entry the connection fails within three seconds and goes to the other address.
+forget_address() {
+  local pid
+  [ -n "$1" ] || return 0
+  pid=$(docker inspect --format '{{.State.Pid}}' "$(compose ps -q nginx)" 2>/dev/null) || return 0
+  nsenter --target "$pid" --net ip neigh flush to "$1" 2>/dev/null || true
+}
+
+# Replace the service container with <image> without a gap.
+switch_web() {
+  bridge_up "$1" || { echo "$patch: the new image did not start next to production" >&2; return 1; }
+  reload_nginx || return 1
+  WEB_IMAGE=$1 compose up -d --no-deps --no-build --pull never --wait --wait-timeout 180 web || return 1
+  reload_nginx || return 1
+  bridge_down
 }
 
 drain_smoke() {
@@ -70,6 +122,7 @@ rollback() {
   echo "$patch: restoring $previous" >&2
   WEB_IMAGE=$previous compose up -d --no-deps --no-build --pull never --wait --wait-timeout 180 web || return 1
   reload_nginx || return 1
+  bridge_down || return 1
   healthy "$previous" || return 1
   python3 - "$backup" "$manifest" <<'PYROLLBACK' || return 1
 from pathlib import Path
@@ -90,6 +143,7 @@ on_exit() {
   trap - EXIT HUP INT TERM
   drain_smoke || true
   if [ "$status" -ne 0 ] && [ "$armed" = true ]; then rollback || { echo "$patch: ROLLBACK FAILED" >&2; status=2; }; fi
+  bridge_down || true
   exit "$status"
 }
 
@@ -109,8 +163,7 @@ armed=true
 trap on_exit EXIT
 trap 'exit 129' HUP; trap 'exit 130' INT; trap 'exit 143' TERM
 
-WEB_IMAGE=$image compose up -d --no-deps --no-build --pull never --wait --wait-timeout 180 web
-reload_nginx
+switch_web "$image"
 healthy "$image"
 smoke
 # Markers of this release (checks.tsv); the catalog API may be briefly busy, so retry.
