@@ -61,7 +61,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
 
   return <AtlasFrame lang={locale} scene="wow" art="" artLayer={<HomeArtwork />} className={styles.page} dataAttributes={{ "data-wow-atlas": true }}>
     <JsonLd data={homeStructuredData(locale)} />
-    <link rel="preload" href="/assets/wow/fonts/azeroth/azeroth-cyrillic.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+    {(locale === "ru" ? ["cyrillic", "latin"] : ["latin"]).map(subset => <link key={subset} rel="preload" href={`/assets/wow/fonts/cormorant-sc/cormorant-sc-600-${subset}.woff2`} as="font" type="font/woff2" crossOrigin="anonymous" />)}
     <AtlasHero align="start" className={styles.hero}
       title={<span className={styles.heroPromise}>{t.title}</span>} lede={t.lede}
       actions={<HomeCharacterLookup locale={locale} recent={<HomeRecentCharacters locale={locale} label={t.recentCharacters} />} />}
