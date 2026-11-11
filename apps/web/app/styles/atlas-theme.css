@@ -97,8 +97,8 @@
      Times New Roman / Arial are not installed, so the web fonts swap in place. */
   --atlas-font-display: var(--font-atlas-display), "Alegreya Fallback Local", Georgia, "Times New Roman", serif;
   --atlas-font-ui: var(--font-ui), "Inter Fallback Local", "Segoe UI", Roboto, Arial, sans-serif;
-  /* Small capitals of the large titles (h1, section h2); too fine for card titles and labels. */
-  --atlas-font-title: "Gildra Cormorant SC", var(--font-atlas-display), "Alegreya Fallback Local", Georgia, serif;
+  /* The Warcraft title face; signs it lacks (dashes, quotes) come from the display face. */
+  --atlas-font-title: "Gildra Azeroth", var(--font-atlas-display), "Alegreya Fallback Local", Georgia, serif;
   /* The wordmark of the top bar: Latin capitals only. */
   --atlas-font-brand: var(--font-atlas-brand), var(--font-atlas-display), "Alegreya Fallback Local", Georgia, serif;
   --atlas-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
