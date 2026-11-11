@@ -4,7 +4,7 @@ import { midnightSpecializations } from "@/lib/data/wow/specializations";
 import { HomeArtwork } from "./HomeArtwork";
 import { HomeCharacterLookup } from "./HomeCharacterLookup";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowDown, ArrowRight } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { HomePlaque } from "./HomeMaterials";
 import { HomeWeeklyMeta } from "./HomeWeeklyMeta";
@@ -12,6 +12,7 @@ import { homeStructuredData } from "./homeStructuredData";
 import { HomePreview } from "./HomePreview";
 import { liveSeason } from "@/lib/data/season";
 import { dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
+import { dungeonBackdropSmall } from "@/lib/wow/dungeonArtDirection";
 import type { Lang } from "@/lib/i18n";
 import type { CSSProperties } from "react";
 import { classColors } from "@/lib/atlas/dataPalette";
@@ -26,6 +27,14 @@ import { HomeDungeons } from "./HomeDungeons";
 import { homeGroups, homeVersions, type HomeFeature } from "./homeFeatures";
 import { pageGlyphs, whatsNewGlyph } from "@/components/platform/navigation/SiteGlyphs";
 const icons = pageGlyphs;
+/** One painting per call to action; the world banner is the map of Azeroth in the page language. */
+const bannerArt = {
+  mythic: dungeonBackdropSmall("murder-row"),
+  hero: "/assets/wow/loading/classes-heroes-20261106.webp",
+  raids: "/assets/wow/home/light/venomous-abyss-768.webp",
+  economy: "/assets/wow/auction/hall-orgrimmar-20261106-768.webp",
+  world: "",
+} as const;
 
 type HomeRaid = {
   slug: string;
@@ -58,6 +67,11 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
       actions={<HomeCharacterLookup locale={locale} recent={<HomeRecentCharacters locale={locale} label={t.recentCharacters} />} />}
       aside={<HomeWeeklyMeta locale={locale} />}
     />
+    <nav className={styles.banners} aria-label={t.productLabel}><ul>{homeGroups.map(group => <li key={group.id} data-group={group.id}><a href={`#${group.id}`}>
+      <Image src={group.id === "world" ? `/maps/tiles/${locale === "ru" ? "ru/" : ""}947/0/0_0.webp` : bannerArt[group.id]} alt="" width={480} height={270} sizes="(max-width: 1000px) 240px, 250px" quality={50} unoptimized={group.id === "world"} />
+      <strong>{group.call[locale]}</strong>
+      <span>{group.short[locale]}<ArrowDown aria-hidden="true" /></span>
+    </a></li>)}</ul></nav>
 
     {homeGroups.map(group => <AtlasSection key={group.id} id={group.id} className={styles.chapter} title={group.title[locale]} aside={group.id === "mythic" || group.id === "hero" || group.id === "raids" ? more(group) : undefined}>
       <div className={styles.group} data-group={group.id}>
