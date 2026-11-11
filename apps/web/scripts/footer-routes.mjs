@@ -10,6 +10,18 @@
 //   redirect: true when the template only redirects to another checked page
 // Fixture and hidden-game pages answer 404 on the WoW-only site: their 404 state is checked.
 export const footerRoutes = [
+  { template: "/wow/forever/changes", path: "/wow/forever/changes" },
+  { template: "/wow/forever/classes", path: "/wow/forever/classes" },
+  { template: "/wow/forever/classes/[classSlug]", path: "/wow/forever/classes/warlock" },
+  { template: "/wow/forever/library", path: "/wow/forever/library" },
+  { template: "/wow/forever/library/[type]/[id]", path: "/wow/forever/library/item/19019" },
+  { template: "/wow/forever/professions", path: "/wow/forever/professions" },
+  { template: "/wow/forever/professions/[slug]", path: "/wow/forever/professions/alchemy" },
+  { template: "/wow/forever/professions/[slug]/[recipeId]", path: "/wow/forever/professions/alchemy/1230564" },
+  { template: "/wow/forever/talent-calc", path: "/wow/forever/talent-calc" },
+  { template: "/wow/forever/talent-calc/[classSlug]", path: "/wow/forever/talent-calc/warrior" },
+  { template: "/wow/forever/tier-lists", path: "/wow/forever/tier-lists" },
+
   { template: "/", path: "/" },
   { template: "/analytics", path: "/analytics", status: 404 },
   { template: "/api-console", path: "/api-console", only: "en" },

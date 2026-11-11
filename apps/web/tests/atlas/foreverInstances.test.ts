@@ -6,7 +6,7 @@ import { newDungeons, returningDungeons, foreverRaids } from "../../components/w
 test("Forever menus stay within their portal, including localized detail routes", () => {
   for (const path of ["/wow/forever", "/ru/wow/forever/raids", "/wow/forever/dungeons/hall-of-thanes"]) {
     const realms = realmsFor("ru", path);
-    assert.equal(realms.length, 2);
+    assert.equal(realms.length, 7);
     assert.ok(realms.every(realm => linksFor(realm, "ru").every(link => link.href.startsWith("/wow/forever/"))));
   }
   assert.ok(realmsFor("en", "/wow/mythic-plus").some(realm => realm.id === "mythic"));
