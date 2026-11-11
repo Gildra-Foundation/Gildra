@@ -140,7 +140,7 @@ const RealmMenu = memo(function RealmMenu({ realm, picks, lang, barePath, onNavi
                 style={pick.tint ? { "--pick-tint": pick.tint } as CSSProperties : undefined}
                 aria-current={barePath === pick.href ? "page" : undefined}>
                 <span className={toolbarStyles.pickArt}>
-                  {!art ? null : Glyph ? <Glyph size={18} strokeWidth={1.75} aria-hidden={true} />
+                  {!art ? null : Glyph ? <Glyph size={20} strokeWidth={1.75} aria-hidden={true} />
                     : pick.image ? <Image src={pick.image} alt="" fill sizes={group.kind === "art" ? "56px" : "28px"} quality={50} unoptimized={pick.remote} /> : null}
                 </span>
                 <span className={toolbarStyles.pickLabel}>{word(lang, pick.label)}</span>
