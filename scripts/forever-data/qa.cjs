@@ -19,7 +19,7 @@ let browser;
   const response=await fetch(api+'?type=npc&id=54');if(response.status!==503)failures.push('Missing shard must return503');
   const errorPage=await browser.newPage();await errorPage.goto(base+'/wow/forever/library/npc/54',{waitUntil:'domcontentloaded'});
   await errorPage.getByRole('alert').filter({hasText:'Unable to load the library'}).waitFor({timeout:30000});
-  await errorPage.screenshot({path:path.join(output,'error.png')});await errorPage.close();
+  await errorPage.screenshot({caret:'initial',path:path.join(output,'error.png')});await errorPage.close();
  } finally {fs.renameSync(saved,shard);}
  const recovered=await fetch(api+'?type=npc&id=54');if(recovered.status!==200)failures.push('Read retry after restored shard failed');
  for(const lang of ['en','ru']) for(const width of [320,390,1440]){
@@ -28,12 +28,12 @@ let browser;
   for(const suffix of ['', '?type=spell&q=Blizzard','?type=recipe&category=alchemy','?type=npc','?type=quest','/item/647','/spell/10','/recipe/1245250','/quest/8','/npc/54','?q=not-a-real-record-zzzzzz']){
    const url=base+(lang==='ru'?'/ru':'')+'/wow/forever/library'+suffix;
    const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:90000});
-   await page.locator('h1').first().waitFor({timeout:60000});await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(300);
+   await page.locator('h1:visible').first().waitFor({timeout:60000});await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(300);
    const consent=page.getByRole('button',{name:/^(Decline|Отклонить)$/});if(await consent.isVisible())await consent.click();
-   const state=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,h1:document.querySelectorAll('h1').length,junk:/build 1\.60|source:|coming soon|retail fallback|normalized|imported/i.test(document.querySelector('main')?.innerText||''),foreign:[...document.querySelectorAll('main a[href]')].map(a=>a.getAttribute('href')).filter(h=>/^\/(ru\/)?library\//.test(h))}));
+   const state=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,h1:[...document.querySelectorAll('h1')].filter(el=>el.checkVisibility()).length,junk:/build 1\.60|source:|coming soon|retail fallback|normalized|imported/i.test(document.querySelector('main')?.innerText||''),foreign:[...document.querySelectorAll('main a[href]')].map(a=>a.getAttribute('href')).filter(h=>/^\/(ru\/)?library\//.test(h))}));
    const result={lang,width,suffix,status:response.status(),...state};results.push(result);
    if(response.status()!==200||state.overflow||state.h1!==1||state.junk||state.foreign.length)failures.push(result);
-   if(['','/spell/10','/item/647'].includes(suffix))await page.screenshot({path:path.join(output,`${lang}-${width}-${suffix.replaceAll('/','-')||'list'}.png`),fullPage:true});
+   if(['','/spell/10','/item/647'].includes(suffix))await page.screenshot({caret:'initial',path:path.join(output,`${lang}-${width}-${suffix.replaceAll('/','-')||'list'}.png`),fullPage:true});
   }
   await context.close();
  }
@@ -46,7 +46,7 @@ let browser;
   await page.goto(base+prefix+'/wow/forever/library');await page.getByRole('link',{name:next,exact:true}).click();await page.waitForURL(/page=2/);await page.getByRole('link',{name:previous,exact:true}).waitFor();
  }
  await page.emulateMedia({forcedColors:'active',reducedMotion:'reduce'});await page.goto(base+'/ru/wow/forever/library/spell/10');
- await page.screenshot({path:path.join(output,'forced-colors.png'),fullPage:true});
+ await page.screenshot({caret:'initial',path:path.join(output,'forced-colors.png'),fullPage:true});
  await context.close();await browser.close();
  fs.writeFileSync(path.join(output,'results.json'),JSON.stringify({results,failures},null,2));
  console.log(JSON.stringify({cases:results.length,failures},null,2));if(failures.length)process.exitCode=1;
