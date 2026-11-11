@@ -1,2 +1,1 @@
-/** Coordinator replaces this adapter with the shared Forever kit during integration. */
-export const FOREVER_KIT = 'library' as const;
+export { FOREVER_KIT } from "../foreverKit";

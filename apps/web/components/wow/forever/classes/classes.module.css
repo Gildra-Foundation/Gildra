@@ -29,7 +29,9 @@
 .className { color: color-mix(in srgb, var(--class-color) 62%, var(--atlas-text-strong)); }
 .tree { display: block; padding: var(--atlas-space-4); border: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); font-size: var(--atlas-text-h3); font-family: var(--atlas-font-display); }
 .comparison[data-single="true"] { grid-template-columns: minmax(0, 1fr); }
-.comparison ins, .comparison del { background: var(--atlas-accent-wash); text-decoration: underline; text-underline-offset: 3px; }
+.comparison ins, .comparison del { background: var(--atlas-accent-wash); text-underline-offset: 3px; }
+.comparison ins { text-decoration: underline; }
+.comparison del { text-decoration: line-through; }
 .credit summary { cursor: pointer; padding-block: var(--atlas-space-3); }
 .classHead > span:last-child, .summary > span { min-width: 0; overflow-wrap: anywhere; }
 .summary img { flex: 0 0 auto; }
