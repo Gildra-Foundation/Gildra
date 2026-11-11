@@ -57,7 +57,6 @@ export const footerRoutes = [
   { template: "/tier-lists/arena", path: "/tier-lists/arena" },
   { template: "/tier-lists/arena/[bracket]", path: "/tier-lists/arena/3v3" },
   { template: "/tier-lists/raid", path: "/tier-lists/raid" },
-  { template: "/wow", path: "/wow" },
   { template: "/wow/auction", path: "/wow/auction" },
   { template: "/wow/characters", path: "/wow/characters" },
   { template: "/wow/characters/[slug]", path: "/wow/characters/eu-silvermoon-x" },

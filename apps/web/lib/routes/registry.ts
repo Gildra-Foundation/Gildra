@@ -1,6 +1,6 @@
 import type { AtlasSceneId } from "@/lib/atlas/scenes";
 import { registryCopy } from "./registryCopy";
-import type { Lang as Locale } from "@/lib/i18n-paths";
+import { p, type Lang as Locale } from "@/lib/i18n-paths";
 
 /**
  * One registry of the site's sections (roadmap items 24, 73): path, parent and
@@ -35,7 +35,7 @@ export const routeSections = {
   transmog: { path: "/wow/transmog", parent: "wow", title: { en: "Transmog Studio", ru: "Трансмогрификация" }, scene: "articles", search: { keywords: "transmog transmogrification outfit appearance sets dressing room screenshot трансмогрификация трансмог образ облик наборы примерочная скриншот" } },
   professions: { path: "/wow/professions", parent: "wow", title: { en: "Professions", ru: "Профессии" }, scene: "articles", search: { keywords: "professions crafting leveling alchemy blacksmithing enchanting mining herbalism профессии ремесло прокачка алхимия кузнечное дело наложение чар горное дело травничество" } },
   auction: { path: "/wow/auction", parent: "wow", title: { en: "Auction House", ru: "Аукцион" }, scene: "articles", search: { keywords: "auction house tools market prices аукцион инструменты рынок цены реагенты" } },
-  wow: { path: "/wow", title: { en: "World of Warcraft", ru: "World of Warcraft" }, scene: "wow", search: { en: "World of Warcraft hub", ru: "Центр World of Warcraft", keywords: "home главная хаб" } },
+  wow: { path: "/", title: { en: "World of Warcraft", ru: "World of Warcraft" }, scene: "wow", search: { en: "World of Warcraft hub", ru: "Центр World of Warcraft", keywords: "home главная хаб" } },
   raids: { path: "/wow/raids", parent: "wow", title: { en: "Raids", ru: "Рейды" }, scene: "raids", search: { en: "Raid journal", ru: "Рейдовый журнал", keywords: "raids рейды" } },
   raidComposition: { path: "/wow/raids/composition", parent: "raids", title: { en: "Raid composition", ru: "Состав рейда" }, scene: "raids", search: { en: "Raid composition planner", ru: "Планировщик состава рейда", keywords: "raid comp roster buffs bloodlust battle res dispel состав рейда ростер баффы жажда крови бр рассеивание" } },
   mythicPlus: { path: "/wow/mythic-plus", parent: "wow", title: { en: "Mythic+", ru: "Mythic+" }, scene: "mythicPlus", search: { en: "Mythic+ atlas", ru: "Атлас Mythic+", keywords: "mythic plus keys ключи эпохальные" } },
@@ -66,7 +66,7 @@ export const singleLanguagePaths: ReadonlyMap<string, Locale> = new Map(
 
 /** The section's URL in a language. */
 export function sectionHref(id: SectionId, locale: Locale) {
-  return `${locale === "ru" ? "/ru" : ""}${routeSections[id].path}`;
+  return p(locale, routeSections[id].path);
 }
 
 /** Accessible name of the breadcrumb trail. */

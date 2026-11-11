@@ -9,7 +9,7 @@ for (const locale of ["en", "ru"] as const) {
     assert.equal(new Set(hrefs).size, hrefs.length);
     for (const realm of navigationRealms) for (const link of linksFor(realm, locale)) assert.ok(hrefs.includes(link.href), link.href);
     assert.equal(hrefs.includes("/wow/stories"), locale === "ru");
-    for (const href of ["/wow", "/wow/forever", "/wow/mists", "/privacy"]) assert.ok(hrefs.includes(href), href);
+    for (const href of ["/", "/wow/forever", "/wow/mists", "/privacy"]) assert.ok(hrefs.includes(href), href);
     assert.ok(footerGroups(locale).find(group => group.id === "world")!.links.some(link => link.href === "/wow/map"));
   });
 }

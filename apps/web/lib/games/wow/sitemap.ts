@@ -27,7 +27,6 @@ const UNLISTED_SECTIONS: ReadonlySet<SectionId> = new Set(["dungeons", "characte
  * lair encounters, the professions and the class and specialization pages. Boss pages are not listed: each answers 308 to its raid page.
  */
 export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean } = {}): string[] => [
-  "/",
   ...(Object.keys(routeSections) as SectionId[]).filter((id) => !UNLISTED_SECTIONS.has(id)).map((id) => routeSections[id].path),
   ...(catalogPublic ? [routeSections.library.path] : []),
   ...tierModePaths().filter((path) => path !== routeSections.tierLists.path),

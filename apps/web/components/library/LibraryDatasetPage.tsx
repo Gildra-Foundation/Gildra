@@ -81,7 +81,7 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
         <AtlasHero
           eyebrow={libraryGroupText[dataset.group]?.[lang]}
           className={styles.hero}
-          breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.library, href: `${prefix}/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}` }, { label: dataset.name }]}
+          breadcrumbs={[{ label: copy.wow, href: prefix || "/" }, { label: copy.library, href: `${prefix}/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}` }, { label: dataset.name }]}
           breadcrumbsLabel={copy.breadcrumbsLabel}
           title={dataset.name}
           lede={libraryDatasetLine(dataset, lang) || undefined}

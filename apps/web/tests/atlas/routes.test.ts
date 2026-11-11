@@ -27,7 +27,7 @@ describe("route registry", () => {
     assert.equal(sectionMetadata("mythicPlusMeta", "en").robots, undefined);
   });
   it("builds breadcrumbs through the parents", () => {
-    assert.deepEqual(trail("ru", "lairs"), [{ label: "World of Warcraft", href: "/ru/wow" }, { label: "Логова и мировые боссы" }]);
-    assert.deepEqual(trail("en", "raids", { label: "The Voidspire" }), [{ label: "World of Warcraft", href: "/wow" }, { label: "Raids", href: "/wow/raids" }, { label: "The Voidspire" }]);
+    assert.deepEqual(trail("ru", "lairs"), [{ label: "World of Warcraft", href: "/ru" }, { label: "Логова и мировые боссы" }]);
+    assert.deepEqual(trail("en", "raids", { label: "The Voidspire" }), [{ label: "World of Warcraft", href: "/" }, { label: "Raids", href: "/wow/raids" }, { label: "The Voidspire" }]);
   });
 });

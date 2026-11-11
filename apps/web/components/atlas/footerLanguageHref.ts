@@ -11,5 +11,5 @@ export function footerLanguageHref(pathname: string | null, to: Lang, missing = 
   const path = altPath(pathname ?? "/", "en").replace(/\/$/, "") || "/";
   const single = [...singleLanguagePaths].find(([section]) => within(path, section));
   const twinless = missing || (single && single[1] !== to) || (to === "ru" && ENGLISH_ONLY.some(section => within(path, section)));
-  return twinless ? (to === "ru" ? "/ru/wow" : "/wow") : altPath(path, to);
+  return twinless ? (to === "ru" ? "/ru" : "/") : altPath(path, to);
 }

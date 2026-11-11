@@ -13,7 +13,7 @@ async function lookup(formData: FormData) {
   const prefix = formData.get("locale") === "ru" ? "/ru" : "";
   const value = (key: string) => String(formData.get(key) ?? "").trim();
   const key = parsePlayerKey({ region: value("region"), realm: value("realm").replace(/\s+/g, "-"), name: value("name") });
-  if (!key) redirect(`${prefix}/wow#character-lookup`);
+  if (!key) redirect(`${prefix || "/"}#character-lookup`);
   redirect(playerProfilePath(key.region, key.realm, key.name, prefix));
 }
 

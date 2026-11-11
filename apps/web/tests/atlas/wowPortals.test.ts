@@ -23,7 +23,7 @@ test("without an equivalent section the switch lands on the version's hub", () =
   assert.equal(wowPortalHref("ru", portal("forever"), "/ru/wow/mists/talents/monk"), "/ru/wow/forever/talent-calc");
   assert.equal(wowPortalHref("en", portal("mists"), "/wow/forever/raids"), "/wow/mists");
   assert.equal(wowPortalHref("en", portal("mists"), "/wow/auction"), "/wow/mists");
-  assert.equal(wowPortalHref("ru", portal("retail"), "/ru/wow/forever"), "/ru/wow");
+  assert.equal(wowPortalHref("ru", portal("retail"), "/ru/wow/forever"), "/ru");
 });
 
 test("every version has its own emblem file", () => {

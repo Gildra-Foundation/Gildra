@@ -17,7 +17,7 @@ function sharedWowBackgroundForPath(pathname: string) {
     || path === "/diablo" || path.startsWith("/diablo/")) return false;
   if (path === "/") return false;
   // These pages paint their own full-screen scene; do not fetch the shared dungeon backdrop for them.
-  if (path === "/wow" || path === "/blueprints" || path.startsWith("/blueprints/")
+  if (path === "/blueprints" || path.startsWith("/blueprints/")
     || path.startsWith("/talents") || path === "/wow/characters" || path.startsWith("/wow/characters/")) return false;
   return true;
 }

@@ -50,7 +50,7 @@ export function NotFoundLede({ locale }: { locale?: Locale }) {
 export function NotFoundActions({ locale, slotStyle }: { locale?: Locale; slotStyle: CSSProperties }) {
   const { text, prefix } = useNotFoundCopy(locale);
   return <>
-    <MaterialSlotLinkButton slotStyle={slotStyle} fit="stack" variant="primary" href={`${prefix}/wow`} iconAfter={<ArrowRight aria-hidden="true" />}>{text.hub}</MaterialSlotLinkButton>
+    <MaterialSlotLinkButton slotStyle={slotStyle} fit="stack" variant="primary" href={prefix || "/"} iconAfter={<ArrowRight aria-hidden="true" />}>{text.hub}</MaterialSlotLinkButton>
     <MaterialSlotLinkButton slotStyle={slotStyle} fit="stack" href={`${prefix}/wow/mythic-plus`}>{text.mythic}</MaterialSlotLinkButton>
   </>;
 }

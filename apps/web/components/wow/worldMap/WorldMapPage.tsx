@@ -57,7 +57,7 @@ export function WorldMapPage({ lang, map: requested }: { lang: Lang; map?: Atlas
   const p = prefix(lang);
   const chain = map ? worldMapChain(map, lang) : [];
   const crumbs: StageCrumb[] = [
-    { label: "World of Warcraft", href: `${p}/wow` },
+    { label: "World of Warcraft", href: p || "/" },
     ...chain.map((entry) => ({ label: entry.id === home?.id ? copy.title : entry.name, href: entry.id === home?.id ? `${p}${routeSections.worldMap.path}` : entry.page ? `${p}${mapPagePath(entry)}` : undefined, mapId: entry.id })),
   ];
   const children = map ? worldMapChildren(map, lang).filter((child) => child.page) : [];

@@ -17,7 +17,7 @@ const copy = {
 // Service addresses (dev galleries, API, bots probing for CMSs) get no guesses: "/dev" is not "Devastation".
 const servicePath = /^\/(?:ru\/)?(?:(?:dev|api|admin|cgi-bin)(?:\/|$)|_next\/|wp-|\.)|\.(?:php|aspx?|env|xml|txt)$/i;
 // The hero already offers these two pages.
-const heroPages = new Set(["/wow", "/wow/mythic-plus"]);
+const heroPages = new Set(["/", "/wow/mythic-plus"]);
 
 const subscribe = () => () => {};
 const pathOf = () => window.location.pathname;

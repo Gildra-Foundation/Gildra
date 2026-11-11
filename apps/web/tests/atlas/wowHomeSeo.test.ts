@@ -11,7 +11,7 @@ describe("WoW hub SEO parity", () => {
     assert(copy.metaTitle.length <= 60);
     assert(copy.description.length >= 140 && copy.description.length <= 160, `${copy.description.length}`);
     assert.equal(meta.openGraph.siteName, "WowArcana");
-    assert.equal(meta.alternates?.canonical, `${locale === "ru" ? "/ru" : ""}/wow`);
+    assert.equal(meta.alternates?.canonical, locale === "ru" ? "/ru" : "/");
     assert.deepEqual(meta.robots, { index: true, follow: true });
     const data = homeStructuredData(locale);
     const site = data.find(thing => thing["@type"] === "WebSite")!;
@@ -19,7 +19,7 @@ describe("WoW hub SEO parity", () => {
     assert.equal((page.isPartOf as { "@id": string })["@id"], site["@id"]);
     assert.equal(page.inLanguage, locale);
     assert.equal((page.about as { name: string }).name, "World of Warcraft");
-    assert(data.some(thing => thing["@type"] === "BreadcrumbList"));
+    assert.equal(page.url, `https://wowarcana.com${locale === "ru" ? "/ru" : "/"}`);
     assert(data.some(thing => thing["@type"] === "ItemList"));
     assert.equal((site.potentialAction as { "@type": string })["@type"], "SearchAction");
   });

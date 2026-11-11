@@ -136,6 +136,9 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // The World of Warcraft hub is the home page.
+      { source: "/wow", destination: "/", permanent: true },
+      { source: "/ru/wow", destination: "/ru", permanent: true },
       { source: "/lairs", destination: "/wow/lairs", permanent: true },
       { source: "/ru/lairs", destination: "/ru/wow/lairs", permanent: true },
       { source: "/wow/mythic", destination: "/wow/mythic-plus", permanent: true },

@@ -50,7 +50,7 @@ export function LibraryLanding({ lang, datasets: allDatasets, products, samples,
     <AtlasFrame lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
       <AtlasHero
         className={styles.hero}
-        breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.library }]}
+        breadcrumbs={[{ label: copy.wow, href: prefix || "/" }, { label: copy.library }]}
         breadcrumbsLabel={copy.breadcrumbsLabel}
         title={copy.title}
         actions={unavailable ? undefined : (

@@ -57,7 +57,7 @@ export function SearchPage({
     <AtlasFrame lang={lang} scene="archive" dataAttributes={{ "data-search-root": true }}>
       <SearchShortcut inputId="platform-search-input" />
       <AtlasHero
-        breadcrumbs={[{ label: t.wow, href: `${prefix}/wow` }, { label: t.library, href: `${prefix}/library` }, { label: t.crumb }]}
+        breadcrumbs={[{ label: t.wow, href: prefix || "/" }, { label: t.library, href: `${prefix}/library` }, { label: t.crumb }]}
         breadcrumbsLabel={t.breadcrumbsLabel}
         title={t.title}
       />

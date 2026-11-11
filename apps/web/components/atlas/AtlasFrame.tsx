@@ -26,7 +26,7 @@ const LEGAL = {
 export const atlasLegal = (locale: "en" | "ru") => LEGAL[locale];
 
 const footerParts = (locale: "en" | "ru") => ({
-  brand: <Link href={`${locale === "ru" ? "/ru" : ""}/wow`} prefetch={false} className={styles.seal} aria-label="WowArcana"><GildraCrest height={56} className={styles.crest} /><span>WowArcana</span></Link>,
+  brand: <Link href={locale === "ru" ? "/ru" : "/"} prefetch={false} className={styles.seal} aria-label="WowArcana"><GildraCrest height={56} className={styles.crest} /><span>WowArcana</span></Link>,
   description: footerCopy[locale].description,
   legal: atlasLegal(locale),
   links: <FooterNavigation locale={locale} />,

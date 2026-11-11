@@ -50,7 +50,7 @@ export function IdentityStatusPage({
 }) {
   const text = copy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
-  const crumbs = [{ label: text.wow, href: `${prefix}/wow` }, ...(parent ? [{ label: parent.label, href: `${prefix}${parent.href}` }] : []), { label: title }];
+  const crumbs = [{ label: text.wow, href: prefix || "/" }, ...(parent ? [{ label: parent.label, href: `${prefix}${parent.href}` }] : []), { label: title }];
   return (
     <AtlasFrame lang={locale} art={art} artPosition={artPosition} tint={tint}>
       <AtlasHero

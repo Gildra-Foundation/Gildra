@@ -33,7 +33,7 @@ export async function SharedCharacterRunPage({ token, localePrefix }: { token: s
     } catch { /* The unavailable state below intentionally reveals no lookup details. */ }
   }
   const footer = <AtlasLegalFooter lang={locale === "ru" ? "ru" : "en"} />;
-  if (!run) return <><main className={styles.page}><section className={styles.gone}><ShieldCheck aria-hidden="true" /><h1>{t("Ссылка недоступна")}</h1><p>{t("Она была отозвана владельцем, устарела или адрес неверен.")}</p><a href={`${localePrefix}/wow`}>{t("На главную World of Warcraft")}</a></section></main>{footer}</>;
+  if (!run) return <><main className={styles.page}><section className={styles.gone}><ShieldCheck aria-hidden="true" /><h1>{t("Ссылка недоступна")}</h1><p>{t("Она была отозвана владельцем, устарела или адрес неверен.")}</p><a href={localePrefix || "/"}>{t("На главную World of Warcraft")}</a></section></main>{footer}</>;
   const primary = run.metrics.dps ?? run.metrics.candidateDps ?? run.metrics.aoeDps;
   const theme = talentSpecThemes.find((entry) => entry.slug === run.specializationSlug);
   const specialization = theme ? locale === "ru" ? `${theme.classNameRu} · ${theme.specNameRu}` : `${theme.className} · ${theme.specName}` : run.specializationSlug;

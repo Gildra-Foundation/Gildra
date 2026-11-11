@@ -28,7 +28,7 @@ export const wowPortals: readonly WowPortal[] = [
     emblem: WOW_VERSION_EMBLEMS.retail,
     label: { en: "Midnight", ru: "Midnight" },
     shortLabel: { en: "Midnight", ru: "Midnight" },
-    path: "/wow",
+    path: "/",
     sections: { raids: "/wow/raids", dungeons: "/wow/mythic-plus", classes: "/wow/classes", talents: "/wow/classes", library: "/library", professions: "/wow/professions", tiers: "/tier-lists" },
   },
   {

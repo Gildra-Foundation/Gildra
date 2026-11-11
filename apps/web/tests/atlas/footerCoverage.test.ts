@@ -47,9 +47,9 @@ it("footer language links name the same page, or the other hub when there is no 
   assert.equal(footerLanguageHref("/ru/wow/raids/sporefall", "en"), "/wow/raids/sporefall");
   assert.equal(footerLanguageHref("/ru", "en"), "/");
   assert.equal(footerLanguageHref("/", "ru"), "/ru");
-  assert.equal(footerLanguageHref("/ru/wow/stories", "en"), "/wow");
+  assert.equal(footerLanguageHref("/ru/wow/stories", "en"), "/");
   assert.equal(footerLanguageHref("/ru/wow/stories", "ru"), "/ru/wow/stories");
-  assert.equal(footerLanguageHref("/api-console", "ru"), "/ru/wow");
-  assert.equal(footerLanguageHref("/ru/missing-page", "en", true), "/wow");
-  assert.equal(footerLanguageHref("/ru/missing-page", "ru", true), "/ru/wow");
+  assert.equal(footerLanguageHref("/api-console", "ru"), "/ru");
+  assert.equal(footerLanguageHref("/ru/missing-page", "en", true), "/");
+  assert.equal(footerLanguageHref("/ru/missing-page", "ru", true), "/ru");
 });

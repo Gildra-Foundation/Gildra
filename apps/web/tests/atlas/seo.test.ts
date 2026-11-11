@@ -44,13 +44,13 @@ describe("seo: static sitemap paths", () => {
   const paths = staticPaths({ catalogPublic: true });
   it("lists every open section, dungeon, raid and lair once", () => {
     assert.equal(new Set(paths).size, paths.length);
-    for (const path of ["/", "/wow", "/wow/whats-new", "/wow/mythic-plus", "/wow/mythic-plus/meta", "/wow/raids", "/wow/lairs", "/wow/auction", "/wow/transmog", "/tier-lists", "/wow/classes", "/wow/midnight/season-2", "/library", "/privacy",
+    for (const path of ["/", "/wow/whats-new", "/wow/mythic-plus", "/wow/mythic-plus/meta", "/wow/raids", "/wow/lairs", "/wow/auction", "/wow/transmog", "/tier-lists", "/wow/classes", "/wow/midnight/season-2", "/library", "/privacy",
       "/wow/raids/the-voidspire", "/wow/raids/sporefall", "/wow/raids/venomous-abyss", "/wow/raids/the-unbinding-of-kithix"]) assert.ok(paths.includes(path), path);
     for (const slug of dungeonSlugs) assert.ok(paths.includes(`/wow/mythic-plus/midnight-season-2/${slug}`), slug);
     for (const { slug } of midnightLairEncounters) assert.ok(paths.includes(`/wow/lairs/${slug}`), slug);
   });
   it("leaves out redirects and private pages", () => {
-    for (const path of ["/wow/dungeons", "/wow/delves", "/wow/characters", "/search", "/login"]) assert.ok(!paths.includes(path), path);
+    for (const path of ["/wow", "/wow/dungeons", "/wow/delves", "/wow/characters", "/search", "/login"]) assert.ok(!paths.includes(path), path);
     assert.ok(!staticPaths().includes("/library"), "the library is listed only while the catalog is public");
   });
 });
