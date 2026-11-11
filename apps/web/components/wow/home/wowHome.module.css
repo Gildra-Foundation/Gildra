@@ -331,3 +331,78 @@
 .realmControl::after { content: ""; position: absolute; pointer-events: none; right: 14px; top: calc(50% - 4px); width: 6px; height: 6px; border-right: 1px solid var(--atlas-text-muted); border-bottom: 1px solid var(--atlas-text-muted); transform: rotate(45deg); }
 
 .realmOptions li[hidden] { display: none; }
+
+/* HUB9: a chapter wash stays inside its own section (no seams across the previous cards),
+   headings sit close to their content, the raid plaque carries its bosses. */
+.page .chapter::before { inset: 0 -24px; background: radial-gradient(closest-side at 30% 50%, var(--atlas-accent-wash), transparent); }
+.page .chapter { margin-top: var(--atlas-space-8); }
+.page .chapter > div:first-child { margin-bottom: var(--atlas-space-4); }
+.page .flagship h4 a { min-height: 32px; }
+.page .groupGrid[data-group="raids"] .flagshipBody .bossGrid { margin-top: var(--atlas-space-2); grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--atlas-space-5); }
+.page .flagshipBody .bossGrid a { min-height: 40px; padding-block: var(--atlas-space-1); hyphens: manual; }
+.page .flagshipBody .bossGrid svg { width: 14px; height: 14px; color: var(--atlas-accent); }
+.page .groupGrid[data-group="hero"] .classRoster a { justify-content: flex-start; gap: var(--atlas-space-1); padding-top: var(--atlas-space-1); }
+@media (min-width: 701px) {
+  .page .groupGrid[data-group="raids"] .productPreview { height: auto; min-height: 220px; }
+  .page .groupGrid[data-group="raids"] .productPreview picture { position: absolute; inset: 0; }
+}
+@media (max-width: 700px) {
+  .page .chapter { margin-top: var(--atlas-space-7); }
+  .page .chapter > div:first-child { margin-bottom: var(--atlas-space-3); }
+  .page .groupGrid[data-group="raids"] .flagshipBody .bossGrid { column-gap: var(--atlas-space-3); }
+  .page .flagshipBody .bossGrid a { font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
+}
+
+/* HUB9: the season's dungeons as painted doors, each in its own accent. */
+.page .groupTools > .dungeons { display: block; flex: none; width: 100%; }
+.dungeons ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+.dungeons a { position: relative; isolation: isolate; display: block; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid var(--atlas-glass-edge); border-radius: var(--atlas-radius); box-shadow: var(--atlas-glass-depth); color: var(--atlas-text-strong); text-decoration: none; }
+.dungeons img { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dungeons a::before { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, transparent 38%, color-mix(in srgb, var(--atlas-bg) 90%, transparent)); }
+.dungeons a::after { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--dungeon-accent); box-shadow: 0 0 14px var(--dungeon-accent); }
+.dungeonName { position: absolute; right: 72px; bottom: var(--atlas-space-3); left: var(--atlas-space-3); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); text-shadow: var(--atlas-text-shadow-art); text-wrap: balance; }
+.dungeons .timer { position: absolute; right: var(--atlas-space-3); bottom: var(--atlas-space-3); padding: 2px var(--atlas-space-2); border: 1px solid color-mix(in srgb, var(--dungeon-accent) 60%, transparent); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 75%, transparent); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); }
+.dungeons a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) {
+  .dungeons img { transition: transform var(--atlas-duration-art) var(--atlas-ease), filter var(--atlas-duration-fast) ; }
+  .dungeons a { transition: border-color var(--atlas-duration-fast), box-shadow var(--atlas-duration-fast); }
+  .dungeons a:hover { border-color: var(--dungeon-accent); box-shadow: var(--atlas-shadow-lift), 0 0 24px color-mix(in srgb, var(--dungeon-accent) 35%, transparent); }
+  .dungeons a:hover img { transform: scale(1.05); }
+  .page .dungeons a:hover { color: var(--atlas-text-strong); }
+}
+@media (prefers-reduced-motion: reduce), (forced-colors: active) { .dungeons img, .dungeons a { transition: none; } .dungeons a:hover img { transform: none; } }
+:global(html[data-motion="reduced"]) .dungeons img { transition: none; transform: none !important; }
+@media (forced-colors: active) { .dungeons a { border-color: CanvasText; } .dungeons a::before, .dungeons a::after { display: none; } }
+@media (max-width: 700px) {
+  .dungeons ul { display: flex; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; gap: var(--atlas-space-2); padding-bottom: var(--atlas-space-1); }
+  .dungeons ul::-webkit-scrollbar { display: none; }
+  .dungeons li { flex: 0 0 68%; scroll-snap-align: start; }
+}
+
+/* The heroes painting behind the class roster; the plaque keeps its text on a dark veil. */
+.page .groupGrid[data-group="hero"] .flagship { position: relative; isolation: isolate; overflow: hidden; }
+.heroScene { z-index: -1; object-fit: cover; object-position: 68% 40%; opacity: .4; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 45%); mask-image: linear-gradient(90deg, transparent 0, #000 45%); }
+@media (max-width: 700px) { .heroScene { opacity: .3; -webkit-mask-image: linear-gradient(180deg, #000 0, transparent 85%); mask-image: linear-gradient(180deg, #000 0, transparent 85%); } }
+@media (min-width: 701px) { .page .groupGrid[data-group="mythic"] .productPreview { height: 190px; } }
+/* next/image fill writes inset 0 inline; keep the painting inside the plaque frame. */
+.page .heroScene { inset: 12px !important; width: calc(100% - 24px) !important; height: calc(100% - 24px) !important; border-radius: var(--atlas-radius); }
+
+/* Each chapter speaks in the tone of the pages it opens: Mythic+ ruby, raids green
+   (as the raid journal), heroes violet, economy gold; the world keeps the theme accent. */
+.page .chapter[id="mythic"] { --chapter-tone: var(--atlas-ruby-accent); }
+.page .chapter[id="raids"] { --chapter-tone: var(--atlas-positive); }
+.page .chapter[id="hero"] { --chapter-tone: var(--atlas-dungeon-void-accent); }
+.page .chapter[id="economy"] { --chapter-tone: var(--atlas-dungeon-kings-accent); }
+.page .chapter:is([id="mythic"], [id="raids"], [id="hero"], [id="economy"]) {
+  --atlas-accent: var(--chapter-tone);
+  --atlas-accent-strong: color-mix(in srgb, var(--chapter-tone) 70%, var(--atlas-text-strong));
+  --atlas-accent-wash: color-mix(in srgb, var(--chapter-tone) 10%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--chapter-tone) 18%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--chapter-tone) 18%, transparent);
+  --atlas-frame-tint: var(--atlas-accent-glow);
+}
+.page .overview a[href="#mythic"] svg { color: var(--atlas-ruby-accent); }
+.page .overview a[href="#raids"] svg { color: var(--atlas-positive); }
+.page .overview a[href="#hero"] svg { color: var(--atlas-dungeon-void-accent); }
+.page .overview a[href="#economy"] svg { color: var(--atlas-dungeon-kings-accent); }
+@media (forced-colors: active) { .page .overview svg { color: CanvasText; } }

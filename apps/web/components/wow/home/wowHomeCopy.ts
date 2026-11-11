@@ -26,7 +26,7 @@ export const wowHomeCopy = {
       "submit": "Найти"
     },
     "productLabel": "Возможности WowArcana",
-    "moreDungeons": "Остальные подземелья",
+    "moreDungeons": "Подземелья сезона",
     "moreBosses": "Остальные боссы",
     "classesIntro": "Специализации и деревья талантов — выберите класс и соберите билд.",
     "mapIntro": "Континенты, зоны и города сквозь эпохи Азерота.",
@@ -72,7 +72,7 @@ export const wowHomeCopy = {
       "submit": "Find"
     },
     "productLabel": "Explore WowArcana",
-    "moreDungeons": "More dungeons",
+    "moreDungeons": "Season dungeons",
     "moreBosses": "More bosses",
     "classesIntro": "Specializations and talent trees — choose a class and plan your talents.",
     "mapIntro": "Continents, zones and cities through Azeroth’s eras.",
