@@ -1,0 +1,279 @@
+TAP version 13
+# Subtest: Plausible tracker
+    # Subtest: tracks only in production with an https script and a public site id
+    ok 1 - tracks only in production with an https script and a public site id
+      ---
+      duration_ms: 17.351344
+      type: 'test'
+      ...
+    1..1
+ok 1 - Plausible tracker
+  ---
+  duration_ms: 33.858826
+  type: 'suite'
+  ...
+# Subtest: uses the public site origin independently of a historical Plausible site ID
+ok 2 - uses the public site origin independently of a historical Plausible site ID
+  ---
+  duration_ms: 6.375085
+  type: 'test'
+  ...
+# Subtest: every published Forever dungeon describes its own guide in EN/RU metadata
+ok 3 - every published Forever dungeon describes its own guide in EN/RU metadata
+  ---
+  duration_ms: 21.531816
+  type: 'test'
+  ...
+# Subtest: seo: open pages
+    # Subtest: no registry section page is noindex
+    ok 1 - no registry section page is noindex
+      ---
+      duration_ms: 3.146949
+      type: 'test'
+      ...
+    # Subtest: content pages carry no noindex in their metadata
+    ok 2 - content pages carry no noindex in their metadata
+      ---
+      duration_ms: 2.134892
+      type: 'test'
+      ...
+    # Subtest: private and service pages stay noindex
+    ok 3 - private and service pages stay noindex
+      ---
+      duration_ms: 1.64154
+      type: 'test'
+      ...
+    1..3
+ok 4 - seo: open pages
+  ---
+  duration_ms: 9.204251
+  type: 'suite'
+  ...
+# Subtest: seo: static sitemap paths
+    # Subtest: lists every open section, dungeon, raid and lair once
+    ok 1 - lists every open section, dungeon, raid and lair once
+      ---
+      duration_ms: 1.44662
+      type: 'test'
+      ...
+    # Subtest: leaves out redirects and private pages
+    ok 2 - leaves out redirects and private pages
+      ---
+      duration_ms: 0.732154
+      type: 'test'
+      ...
+    1..2
+ok 5 - seo: static sitemap paths
+  ---
+  duration_ms: 2.776101
+  type: 'suite'
+  ...
+# Subtest: seo: library record addresses
+    # Subtest: records live at /library/<dataset>/<id>/<slug>, without the repeated type
+    ok 1 - records live at /library/<dataset>/<id>/<slug>, without the repeated type
+      ---
+      duration_ms: 0.68065
+      type: 'test'
+      ...
+    # Subtest: the old /library/<dataset>/<type>/<id>/<slug> moves to the type's home dataset with its query
+    ok 2 - the old /library/<dataset>/<type>/<id>/<slug> moves to the type's home dataset with its query
+      ---
+      duration_ms: 0.707206
+      type: 'test'
+      ...
+    # Subtest: the old four-segment route answers a 308 route handler in both languages
+    ok 3 - the old four-segment route answers a 308 route handler in both languages
+      ---
+      duration_ms: 0.795971
+      type: 'test'
+      ...
+    1..3
+ok 6 - seo: library record addresses
+  ---
+  duration_ms: 2.970292
+  type: 'suite'
+  ...
+# Subtest: seo: page metadata (2026-11-06 audit)
+    # Subtest: every dungeon page has its own description and Open Graph in both languages
+    ok 1 - every dungeon page has its own description and Open Graph in both languages
+      ---
+      duration_ms: 4.381105
+      type: 'test'
+      ...
+    # Subtest: section titles are unique and descriptions fit a search snippet
+    ok 2 - section titles are unique and descriptions fit a search snippet
+      ---
+      duration_ms: 1.499506
+      type: 'test'
+      ...
+    # Subtest: tool pages are titled with the game and the task, not one word
+    ok 3 - tool pages are titled with the game and the task, not one word
+      ---
+      duration_ms: 0.78464
+      type: 'test'
+      ...
+    1..3
+ok 7 - seo: page metadata (2026-11-06 audit)
+  ---
+  duration_ms: 10.327869
+  type: 'suite'
+  ...
+# Subtest: seo: cached views of query-driven pages
+    # Subtest: ?region=us of a profession is served from the cached region/us path; EU stays on the page itself
+    ok 1 - ?region=us of a profession is served from the cached region/us path; EU stays on the page itself
+      ---
+      duration_ms: 1.550433
+      type: 'test'
+      ...
+    # Subtest: the unfiltered Mythic+ data pages and spec leaderboards are served from their cached views
+    ok 2 - the unfiltered Mythic+ data pages and spec leaderboards are served from their cached views
+      ---
+      duration_ms: 2.032901
+      type: 'test'
+      ...
+    # Subtest: live meta renders in the public request while its API payload remains cached
+    ok 3 - live meta renders in the public request while its API payload remains cached
+      ---
+      duration_ms: 0.686483
+      type: 'test'
+      ...
+    # Subtest: internal paths opened directly are a 404; their link-preview cards stay reachable
+    ok 4 - internal paths opened directly are a 404; their link-preview cards stay reachable
+      ---
+      duration_ms: 0.343966
+      type: 'test'
+      ...
+    1..4
+ok 8 - seo: cached views of query-driven pages
+  ---
+  duration_ms: 5.108582
+  type: 'suite'
+  ...
+# Subtest: seo: structured data
+    # Subtest: the home page names the site search
+    ok 1 - the home page names the site search
+      ---
+      duration_ms: 0.926831
+      type: 'test'
+      ...
+    # Subtest: breadcrumbs resolve to absolute URLs; the current page may go without one
+    ok 2 - breadcrumbs resolve to absolute URLs; the current page may go without one
+      ---
+      duration_ms: 0.853923
+      type: 'test'
+      ...
+    # Subtest: every tier-list spec links to its specialization page
+    ok 3 - every tier-list spec links to its specialization page
+      ---
+      duration_ms: 2.367477
+      type: 'test'
+      ...
+    1..3
+ok 9 - seo: structured data
+  ---
+  duration_ms: 4.540797
+  type: 'suite'
+  ...
+# Subtest: seo: link previews
+    # Subtest: every indexable page family has its own Open Graph card in both languages
+    ok 1 - every indexable page family has its own Open Graph card in both languages
+      ---
+      duration_ms: 10.732656
+      type: 'test'
+      ...
+    1..1
+ok 10 - seo: link previews
+  ---
+  duration_ms: 10.974929
+  type: 'suite'
+  ...
+# Subtest: tier-list modes: one address each
+    # Subtest: paths of every mode and bracket are unique and round-trip
+    ok 1 - paths of every mode and bracket are unique and round-trip
+      ---
+      duration_ms: 3.361331
+      type: 'test'
+      ...
+    # Subtest: titles and descriptions are unique per page and language, within search-result lengths
+    ok 2 - titles and descriptions are unique per page and language, within search-result lengths
+      ---
+      duration_ms: 1.050578
+      type: 'test'
+      ...
+    # Subtest: old queries name their mode; the rest of the query travels along
+    ok 3 - old queries name their mode; the rest of the query travels along
+      ---
+      duration_ms: 0.754028
+      type: 'test'
+      ...
+    1..3
+ok 11 - tier-list modes: one address each
+  ---
+  duration_ms: 7.36716
+  type: 'suite'
+  ...
+# Subtest: library record sitemaps
+    # Subtest: shards keep each file under the 50 000-URL limit
+    ok 1 - shards keep each file under the 50 000-URL limit
+      ---
+      duration_ms: 1.255345
+      type: 'test'
+      ...
+    # Subtest: a file is read in API shards of at most ~2 500 records (the API answers within 20 s)
+    ok 2 - a file is read in API shards of at most ~2 500 records (the API answers within 20 s)
+      ---
+      duration_ms: 0.743995
+      type: 'test'
+      ...
+    # Subtest: only home datasets list records
+    ok 3 - only home datasets list records
+      ---
+      duration_ms: 0.385494
+      type: 'test'
+      ...
+    # Subtest: English lists every record, Russian only records with a Russian slug; each names its twins
+    ok 4 - English lists every record, Russian only records with a Russian slug; each names its twins
+      ---
+      duration_ms: 1.720286
+      type: 'test'
+      ...
+    # Subtest: an API without Russian slugs is recognised (it also lists records the library does not serve)
+    ok 5 - an API without Russian slugs is recognised (it also lists records the library does not serve)
+      ---
+      duration_ms: 3.530894
+      type: 'test'
+      ...
+    1..5
+ok 12 - library record sitemaps
+  ---
+  duration_ms: 8.584477
+  type: 'suite'
+  ...
+# Subtest: related links of a spec
+    # Subtest: every spec theme has a spec page under its class
+    ok 1 - every spec theme has a spec page under its class
+      ---
+      duration_ms: 1.633992
+      type: 'test'
+      ...
+    # Subtest: the page the reader is on is left out
+    ok 2 - the page the reader is on is left out
+      ---
+      duration_ms: 0.757228
+      type: 'test'
+      ...
+    1..2
+ok 13 - related links of a spec
+  ---
+  duration_ms: 2.733556
+  type: 'suite'
+  ...
+1..13
+# tests 32
+# suites 11
+# pass 32
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1974.558447

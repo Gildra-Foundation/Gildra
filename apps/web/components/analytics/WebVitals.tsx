@@ -19,7 +19,7 @@ export function WebVitals() {
   useReportWebVitals((metric) => {
     if (!["LCP", "INP", "CLS", "FCP", "TTFB"].includes(metric.name)) return;
     const domain = document.getElementById("plausible")?.getAttribute("data-domain");
-    if (!domain || !isTrackedPage(window.location.hostname, domain, window.location.pathname)) return;
+    if (!domain || !isTrackedPage(window.location.hostname, window.location.pathname)) return;
     const plausible = (window as Window & { plausible?: Plausible }).plausible;
     if (typeof plausible !== "function") return;
     plausible("Web Vitals", {

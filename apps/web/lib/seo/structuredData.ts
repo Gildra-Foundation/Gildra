@@ -16,7 +16,8 @@ export type JsonLdThing = { "@context"?: "https://schema.org"; "@type": string; 
 export const gildraOrganization = (): JsonLdThing => ({
   "@type": "Organization",
   "@id": absoluteUrl("/#organization"),
-  name: "Gildra",
+  name: "WowArcana",
+  alternateName: "Gildra",
   url: absoluteUrl("/"),
   logo: { "@type": "ImageObject", url: absoluteUrl("/brand/wowarcana-logo.png"), width: 512, height: 512 },
 });
@@ -28,7 +29,8 @@ export function websiteLd(locale: "en" | "ru", description: string): JsonLdThing
       "@context": "https://schema.org",
       "@type": "WebSite",
       "@id": absoluteUrl(locale === "ru" ? "/ru#website" : "/#website"),
-      name: "Gildra",
+      name: "WowArcana",
+      alternateName: "Gildra",
       url: absoluteUrl(locale === "ru" ? "/ru" : "/"),
       inLanguage: locale,
       description,

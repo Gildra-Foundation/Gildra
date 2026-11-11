@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-11-11T02:01:00Z",
+  "typescript": "5.9.3",
+  "scope": "66 changed source/test root files; imported dependencies loaded, diagnostics requested only for changed files plus compiler options",
+  "files": 66,
+  "dependencyFiles": 854,
+  "tscDiagnostics": 0,
+  "eslintErrors": 0,
+  "eslintWarnings": 0,
+  "sourceTests": {
+    "tests": 32,
+    "pass": 32,
+    "fail": 0
+  },
+  "fullBuild": false,
+  "browserAudit": false,
+  "performanceBeforeAfter": false,
+  "ownerDecision": "scoped checks only; joint Forever candidate owns full build/browser/deploy"
+}

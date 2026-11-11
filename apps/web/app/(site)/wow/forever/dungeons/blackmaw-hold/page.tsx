@@ -1,9 +1,6 @@
 // routes:mirror — app/ru twin is generated from this page (npm run routes:mirror).
-import type { Metadata } from "next";
 import { ForeverDungeonGuide } from "@/components/wow/forever/ForeverDungeonGuide";
-import { pairedAlternates, pageOpenGraph } from "@/lib/seo/metadata";
+import { foreverDungeonMetadata } from "@/lib/seo/foreverDungeonMetadata";
 const lang = "en";
-const title = "Blackmaw Hold — WoW Forever — Gildra";
-const alternates = pairedAlternates(lang, "/wow/forever/dungeons/blackmaw-hold");
-export const metadata: Metadata = { title, alternates, openGraph: pageOpenGraph(lang, { title, path: String(alternates.canonical) }) };
+export const metadata = foreverDungeonMetadata(lang, "blackmaw-hold");
 export default function Page() { return <ForeverDungeonGuide lang={lang} slug="blackmaw-hold" />; }

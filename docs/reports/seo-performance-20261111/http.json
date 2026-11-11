@@ -1,0 +1,627 @@
+[
+  {
+    "url": "http://gildra.net/ru/wow/mythic-plus",
+    "final": "https://wowarcana.com/ru/wow/mythic-plus",
+    "status": 200,
+    "elapsed": 0.486,
+    "bytes": 444009,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com/ru/wow/mythic-plus"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com/wow/mythic-plus"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru/wow/mythic-plus"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com/wow/mythic-plus"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "Mythic+ Midnight — Gildra"
+    ],
+    "schema": [
+      "BreadcrumbList",
+      "ListItem",
+      "ListItem"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "https://gildra.net/ru/wow/mythic-plus",
+    "final": "https://wowarcana.com/ru/wow/mythic-plus",
+    "status": 200,
+    "elapsed": 0.304,
+    "bytes": 444009,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com/ru/wow/mythic-plus"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com/wow/mythic-plus"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru/wow/mythic-plus"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com/wow/mythic-plus"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "Mythic+ Midnight — Gildra"
+    ],
+    "schema": [
+      "BreadcrumbList",
+      "ListItem",
+      "ListItem"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "http://wowarcana.com/",
+    "final": "https://wowarcana.com/",
+    "status": 200,
+    "elapsed": 0.266,
+    "bytes": 130127,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Your World of Warcraft companion: characters, dungeon routes, raid guides, tier lists and the game library."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "Gildra — Chronicles of Azeroth"
+    ],
+    "schema": [
+      "WebSite",
+      "Organization",
+      "ImageObject",
+      "SearchAction",
+      "EntryPoint",
+      "Organization",
+      "ImageObject"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "https://www.wowarcana.com/",
+    "final": "https://wowarcana.com/",
+    "status": 200,
+    "elapsed": 0.341,
+    "bytes": 130127,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Your World of Warcraft companion: characters, dungeon routes, raid guides, tier lists and the game library."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "Gildra — Chronicles of Azeroth"
+    ],
+    "schema": [
+      "WebSite",
+      "Organization",
+      "ImageObject",
+      "SearchAction",
+      "EntryPoint",
+      "Organization",
+      "ImageObject"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/",
+    "final": "https://wowarcana.com/",
+    "status": 200,
+    "elapsed": 0.224,
+    "bytes": 130127,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Your World of Warcraft companion: characters, dungeon routes, raid guides, tier lists and the game library."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "Gildra — Chronicles of Azeroth"
+    ],
+    "schema": [
+      "WebSite",
+      "Organization",
+      "ImageObject",
+      "SearchAction",
+      "EntryPoint",
+      "Organization",
+      "ImageObject"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/ru",
+    "final": "https://wowarcana.com/ru",
+    "status": 200,
+    "elapsed": 0.225,
+    "bytes": 137513,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com/ru"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Ваш спутник в World of Warcraft: персонажи, маршруты подземелий, рейдовые тактики, тир-листы и библиотека игры."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "Gildra — Хроники Азерота"
+    ],
+    "schema": [
+      "WebSite",
+      "Organization",
+      "ImageObject",
+      "SearchAction",
+      "EntryPoint",
+      "Organization",
+      "ImageObject"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/wow/mythic-plus",
+    "final": "https://wowarcana.com/wow/mythic-plus",
+    "status": 200,
+    "elapsed": 0.295,
+    "bytes": 435210,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com/wow/mythic-plus"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com/wow/mythic-plus"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru/wow/mythic-plus"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com/wow/mythic-plus"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Choose a dungeon and open its route: pulls, bosses, timer, party composition and tactical assignments."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "Midnight Mythic+ — Gildra"
+    ],
+    "schema": [
+      "BreadcrumbList",
+      "ListItem",
+      "ListItem"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/ru/wow/mythic-plus",
+    "final": "https://wowarcana.com/ru/wow/mythic-plus",
+    "status": 200,
+    "elapsed": 0.217,
+    "bytes": 444009,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com/ru/wow/mythic-plus"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com/wow/mythic-plus"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru/wow/mythic-plus"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com/wow/mythic-plus"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "Mythic+ Midnight — Gildra"
+    ],
+    "schema": [
+      "BreadcrumbList",
+      "ListItem",
+      "ListItem"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/wow/raids/the-voidspire",
+    "final": "https://wowarcana.com/wow/raids/the-voidspire",
+    "status": 200,
+    "elapsed": 0.21,
+    "bytes": 203909,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com/wow/raids/the-voidspire"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com/wow/raids/the-voidspire"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru/wow/raids/the-voidspire"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com/wow/raids/the-voidspire"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "The Voidspire, Midnight Season 1 raid: pulls on the map, 6 bosses and what to know."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "The Voidspire Raid Guide — Gildra"
+    ],
+    "schema": [
+      "BreadcrumbList",
+      "ListItem",
+      "ListItem",
+      "ListItem"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/wow/world-map",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "url": "https://wowarcana.com/library",
+    "final": "https://wowarcana.com/library",
+    "status": 200,
+    "elapsed": 0.29,
+    "bytes": 246982,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com/library"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com/library"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru/library"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com/library"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "World of Warcraft items, spells, mounts, bosses and quests with in-game tooltips, icons and links between them."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "World of Warcraft Data Library — Gildra"
+    ],
+    "schema": [
+      "BreadcrumbList",
+      "ListItem",
+      "ListItem"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/wow/auction",
+    "final": "https://wowarcana.com/wow/auction",
+    "status": 200,
+    "elapsed": 0.237,
+    "bytes": 119404,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com/wow/auction"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com/wow/auction"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru/wow/auction"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com/wow/auction"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "World of Warcraft Auction House prices: reagents and commodities of your region and your realm's auctions, searchable by item and category."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "WoW Auction House Prices and Market — Gildra"
+    ],
+    "schema": [
+      "BreadcrumbList",
+      "ListItem",
+      "ListItem"
+    ],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/wow/forever",
+    "final": "https://wowarcana.com/wow/forever",
+    "status": 200,
+    "elapsed": 0.354,
+    "bytes": 149865,
+    "canonical": [
+      {
+        "rel": "canonical",
+        "href": "https://wowarcana.com/wow/forever"
+      }
+    ],
+    "alternates": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://wowarcana.com/wow/forever"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://wowarcana.com/ru/wow/forever"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://wowarcana.com/wow/forever"
+      }
+    ],
+    "meta": [
+      {
+        "name": "description",
+        "content": "A new journey through the Eastern Kingdoms and Kalimdor. Explore Azeroth, adventure to level 60 and discover new stories."
+      }
+    ],
+    "h1": 1,
+    "title": [
+      "World of Warcraft: Forever — Gildra"
+    ],
+    "schema": [],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/robots.txt",
+    "final": "https://wowarcana.com/robots.txt",
+    "status": 200,
+    "elapsed": 0.206,
+    "bytes": 167,
+    "canonical": [],
+    "alternates": [],
+    "meta": [],
+    "h1": 0,
+    "title": [],
+    "schema": [],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/sitemap.xml",
+    "final": "https://wowarcana.com/sitemap.xml",
+    "status": 200,
+    "elapsed": 0.242,
+    "bytes": 8744,
+    "canonical": [],
+    "alternates": [],
+    "meta": [],
+    "h1": 0,
+    "title": [],
+    "schema": [],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/sitemaps/static",
+    "final": "https://wowarcana.com/sitemaps/static",
+    "status": 200,
+    "elapsed": 1.216,
+    "bytes": 281144,
+    "canonical": [],
+    "alternates": [],
+    "meta": [],
+    "h1": 0,
+    "title": [],
+    "schema": [],
+    "xrobots": null
+  },
+  {
+    "url": "https://wowarcana.com/sitemaps/library",
+    "final": "https://wowarcana.com/sitemaps/library",
+    "status": 200,
+    "elapsed": 0.868,
+    "bytes": 20700,
+    "canonical": [],
+    "alternates": [],
+    "meta": [],
+    "h1": 0,
+    "title": [],
+    "schema": [],
+    "xrobots": null
+  }
+]

@@ -66,7 +66,7 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
     </div>
     <HomeBookStage lang={lang} className={styles.hero} coverFace={coverFace}>
       <div className={styles.copy}>
-        <h1 className={styles.srOnly}>{ru ? "Gildra — хроники Азерота: путеводитель героя World of Warcraft" : "Gildra — Chronicles of Azeroth: a World of Warcraft hero’s companion"}</h1>
+        <h1 className={styles.srOnly}>{ru ? "WowArcana — хроники Азерота: путеводитель героя World of Warcraft" : "WowArcana — Chronicles of Azeroth: a World of Warcraft hero’s companion"}</h1>
         <HomeEpigraph lang={lang} />
       </div>
       <div className={styles.bookScene}>

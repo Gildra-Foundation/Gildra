@@ -1,7 +1,11 @@
+import { SITE_ORIGIN } from "../seo/site.ts";
+
 /** Preview and non-production hosts must not contribute to the site's audience. */
 export const PREVIEW_EXCLUSIONS = '/preview,/en/preview,/ru/preview,/cms-preview,/ru/cms-preview,/en/cms-preview';
 
-export function isTrackedPage(hostname: string, domain: string, pathname: string | null): boolean {
+// The Plausible site ID may retain the old domain after a migration. It is not a host allowlist.
+export function isTrackedPage(hostname: string, pathname: string | null, siteOrigin = SITE_ORIGIN): boolean {
+  const domain = new URL(siteOrigin).hostname;
   if (!pathname || ![domain, `www.${domain}`].includes(hostname.toLowerCase())) return false;
   return !/^\/(?:en\/|ru\/)?(?:preview|cms-preview)(?:\/|$)/.test(pathname);
 }

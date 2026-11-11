@@ -1,9 +1,6 @@
 // Generated from app/(site)/wow/forever/dungeons/maraudon/page.tsx by npm run routes:mirror — edit the English page.
-import type { Metadata } from "next";
 import { ForeverDungeonGuide } from "@/components/wow/forever/ForeverDungeonGuide";
-import { pairedAlternates, pageOpenGraph } from "@/lib/seo/metadata";
+import { foreverDungeonMetadata } from "@/lib/seo/foreverDungeonMetadata";
 const lang = "ru";
-const title = "Maraudon — WoW Forever — Gildra";
-const alternates = pairedAlternates(lang, "/wow/forever/dungeons/maraudon");
-export const metadata: Metadata = { title, alternates, openGraph: pageOpenGraph(lang, { title, path: String(alternates.canonical) }) };
+export const metadata = foreverDungeonMetadata(lang, "maraudon");
 export default function Page() { return <ForeverDungeonGuide lang={lang} slug="maraudon" />; }
