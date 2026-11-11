@@ -4,7 +4,7 @@ import { midnightSpecializations } from "@/lib/data/wow/specializations";
 import { HomeArtwork } from "./HomeArtwork";
 import { HomeCharacterLookup } from "./HomeCharacterLookup";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Coins, Layers3, Shirt, Swords, UserRound, Map as MapIcon, ScrollText, ChartNoAxesCombined, Trophy, Route, Users, Hammer, Shield, type LucideIcon } from "lucide-react";
+import { ArrowRight, BookOpen, Coins, Layers3, Shirt, Swords, UserRound, Map as MapIcon, ScrollText, ChartNoAxesCombined, Trophy, Route, Users, Hammer, Shield, Sparkles, type LucideIcon } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
 import { HomePlaque, HomeSecondaryLink } from "./HomeMaterials";
 import { HomeWeeklyMeta } from "./HomeWeeklyMeta";
@@ -86,6 +86,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
             </>}
             {group.id === "raids" && currentRaids.map(current => <div key={current.slug}>
               <h4><Link href={href(`/wow/raids/${current.slug}`)} prefetch={false}>{current.names[locale]}</Link></h4>
+              <ul className={`${styles.liveLinks} ${styles.bossGrid}`}>{current.bosses.map(boss => <li key={boss.slug}><Link href={href(`/wow/raids/${current.slug}${boss.anchor ? `#${boss.anchor}` : `#boss=${boss.slug}`}`)} prefetch={false}>{boss.names[locale]}<ArrowRight aria-hidden="true" /></Link></li>)}</ul>
             </div>)}
             {group.id === "hero" && <ul className={styles.classRoster}>{classes.map(spec => <li key={spec.classSlug}><Link href={href(`/wow/classes#${spec.classSlug}`)} prefetch={false}><Image src={spec.classIconUrl} alt="" width={28} height={28} quality={50} loading="lazy" decoding="async" /><span>{locale === "ru" ? spec.classNameRu : spec.className}</span></Link></li>)}</ul>}
             {group.id === "world" && <details className={styles.more}><summary>{t.continentsLabel}</summary><ul className={styles.continents}>{continents.map(map => <li key={map.id}><Link href={href(mapPagePath(map))} prefetch={false}>{map.name}</Link></li>)}</ul></details>}
@@ -98,7 +99,6 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
             <h3><Link href={href(group.tools[0].href)} prefetch={false}>{group.tools[0].label[locale]}<ArrowRight aria-hidden="true" /></Link></h3><p>{group.tools[0].note[locale]}</p>
           </div>
         </HomePlaque> : <div className={styles.groupTools}>
-          {group.id === "raids" && currentRaids.map(current => <ul key={current.slug} className={`${styles.liveLinks} ${styles.bossGrid}`}>{current.bosses.map(boss => <li key={boss.slug}><Link href={href(`/wow/raids/${current.slug}${boss.anchor ? `#${boss.anchor}` : `#boss=${boss.slug}`}`)} prefetch={false}>{boss.names[locale]}<ArrowRight aria-hidden="true" /></Link></li>)}</ul>)}
           <nav aria-label={group.title[locale]}><ul className={styles.toolRows}>{group.tools.filter(link => !link.langs || link.langs.includes(locale)).map(link => <FeatureRow key={link.href} feature={link} locale={locale} />)}</ul></nav>
           {group.id === "world" && <nav className={styles.versions} aria-label={t.worldsLabel}>{homeVersions.map(portal => <Link key={portal.id} href={portal.href.startsWith("#") ? portal.href : href(portal.href)} prefetch={false}><span data-medallion="" aria-hidden="true"><Image src={`/assets/wow/versions/${portal.id}.png`} alt="" width={44} height={44} unoptimized loading="lazy" /></span><span>{portal.label[locale]}<small>{portal.id === "retail" ? t.midnightContent : portal.id === "forever" ? t.foreverContent : t.mistsContent}</small></span><ArrowRight aria-hidden="true" /></Link>)}</nav>}
         </div>}
@@ -108,6 +108,6 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
 }
 
 function FeatureRow({ feature, locale }: { feature: HomeFeature; locale: "en" | "ru" }) {
-  const Icon = icons[feature.icon];
+  const Icon = feature.href === "/wow/whats-new" ? Sparkles : icons[feature.icon];
   return <li><Link href={`${locale === "ru" ? "/ru" : ""}${feature.href}`} prefetch={false}><span data-medallion="" aria-hidden="true"><Icon /></span><span><strong>{feature.label[locale]}</strong><span>{feature.note[locale]}</span></span><ArrowRight aria-hidden="true" /></Link></li>;
 }

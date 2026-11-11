@@ -331,3 +331,24 @@
 .realmControl::after { content: ""; position: absolute; pointer-events: none; right: 14px; top: calc(50% - 4px); width: 6px; height: 6px; border-right: 1px solid var(--atlas-text-muted); border-bottom: 1px solid var(--atlas-text-muted); transform: rotate(45deg); }
 
 .realmOptions li[hidden] { display: none; }
+
+/* HUB9: a chapter wash stays inside its own section (no seams across the previous cards),
+   headings sit close to their content, the raid plaque carries its bosses. */
+.page .chapter::before { inset: 0 -24px; background: radial-gradient(closest-side at 30% 50%, var(--atlas-accent-wash), transparent); }
+.page .chapter { margin-top: var(--atlas-space-8); }
+.page .chapter > div:first-child { margin-bottom: var(--atlas-space-4); }
+.page .flagship h4 a { min-height: 32px; }
+.page .groupGrid[data-group="raids"] .flagshipBody .bossGrid { margin-top: var(--atlas-space-2); grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--atlas-space-5); }
+.page .flagshipBody .bossGrid a { min-height: 40px; padding-block: var(--atlas-space-1); hyphens: manual; }
+.page .flagshipBody .bossGrid svg { width: 14px; height: 14px; color: var(--atlas-accent); }
+.page .groupGrid[data-group="hero"] .classRoster a { justify-content: flex-start; gap: var(--atlas-space-1); padding-top: var(--atlas-space-1); }
+@media (min-width: 701px) {
+  .page .groupGrid[data-group="raids"] .productPreview { height: auto; min-height: 220px; }
+  .page .groupGrid[data-group="raids"] .productPreview picture { position: absolute; inset: 0; }
+}
+@media (max-width: 700px) {
+  .page .chapter { margin-top: var(--atlas-space-7); }
+  .page .chapter > div:first-child { margin-bottom: var(--atlas-space-3); }
+  .page .groupGrid[data-group="raids"] .flagshipBody .bossGrid { column-gap: var(--atlas-space-3); }
+  .page .flagshipBody .bossGrid a { font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
+}
