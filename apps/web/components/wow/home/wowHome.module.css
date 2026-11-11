@@ -415,9 +415,8 @@
 .page .hero > div:last-child { grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: var(--atlas-space-7); align-items: end; }
 .brandKicker { display: flex; align-items: center; gap: var(--atlas-space-2); margin-bottom: var(--atlas-space-3); color: var(--atlas-accent-2); -webkit-text-fill-color: currentColor; font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); letter-spacing: .02em; line-height: 1.3; text-shadow: var(--atlas-text-halo); }
 .brandKicker::before { content: ""; width: 24px; height: 1px; background: linear-gradient(90deg, transparent, currentColor); }
-/* The brand line and the two card titles of the first screen share the title face with the promise. */
+/* The brand line shares the title face with the promise (card titles stay in the display face: the title face is too ornate at their size). */
 .page .brandKicker { margin-bottom: var(--atlas-space-2); font-family: var(--atlas-font-title); font-size: calc(var(--atlas-text-title) * 1.7); font-weight: 400; font-synthesis: none; letter-spacing: 0; line-height: 1.1; }
-.page .lookupHead h2, .page .metaHead h2 { font-family: var(--atlas-font-title); font-weight: 400; font-synthesis: none; letter-spacing: 0; }
 .page .heroPromise { display: block; margin-top: var(--atlas-space-2); font-size: .8em; line-height: 1.14; }
 .page .hero h1 { max-width: 16ch; }
 .lookupHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--atlas-space-3); margin-bottom: var(--atlas-space-3); }
