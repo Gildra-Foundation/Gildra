@@ -6,7 +6,7 @@ import { auth, isBattleNetAuthConfigured } from "@/auth";
 import { BATTLE_NET_REGIONS } from "@/lib/wow/battleNetCharacters";
 import { hiddenForMvp } from "@/lib/mvp";
 
-export const metadata: Metadata = { title: "Arcanist Vexis — Gildra", description: "Cross-game command profile on Gildra." };
+export const metadata: Metadata = { title: "Arcanist Vexis — WowArcana", description: "Cross-game command profile on Gildra." };
 
 export default async function Page({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string }> }) {
   // Hidden for the WoW-only MVP: answers 404 until the flag in lib/mvp.ts is flipped.

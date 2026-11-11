@@ -8,7 +8,7 @@ import { materialButtonStyle } from "@/components/wow/shared/material/materialKi
 import { LazyNotFoundSuggestions } from "./LazyNotFoundSuggestions";
 
 export const notFoundMetadata: Metadata = {
-  title: "404 — Gildra",
+  title: "404 — WowArcana",
   robots: { index: false, follow: true },
 };
 

@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const raid = getMidnightRaid((await params).raid);
   if (!raid) return {};
   return withPageOpenGraph("ru", {
-    title: raid.slug === "march-on-queldanas" ? "Марш на Кель’Данас: тактики боссов — Gildra" : raid.slug === "the-dreamrift" ? "Провал снов: гайд по Химерию — Gildra" : `${raid.nameRu}: рейдовый журнал — Gildra`,
+    title: raid.slug === "march-on-queldanas" ? "Марш на Кель’Данас: тактики боссов — WowArcana" : raid.slug === "the-dreamrift" ? "Провал снов: гайд по Химерию — WowArcana" : `${raid.nameRu}: рейдовый журнал — WowArcana`,
     description: raid.slug === "march-on-queldanas" ? "Бело’рен и Торжество Полуночи на обычной и героической сложности: порядок боя, позиционирование, прислужники и способности вашей специализации." : raid.slug === "the-dreamrift" ? "Химерий на обычной и героической сложности: смена миров и групп, позиционирование, прислужники и способности вашей специализации." : `${raid.nameRu}, рейд Midnight · Сезон 1: пулы на карте, боссы (${raid.bosses.length}) и что важно знать.`,
     alternates: {
       canonical: `/ru/wow/raids/${raid.slug}`,

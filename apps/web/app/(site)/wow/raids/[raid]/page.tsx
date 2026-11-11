@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const raid = getMidnightRaid((await params).raid);
   if (!raid) return {};
   return withPageOpenGraph("en", {
-    title: `${raid.nameEn} Raid Guide — Gildra`,
+    title: `${raid.nameEn} Raid Guide — WowArcana`,
     description: raid.slug === "march-on-queldanas" ? "Belo’ren and Midnight Falls on Normal and Heroic: encounter flow, positioning, adds and responses for your specialization." : raid.slug === "the-dreamrift" ? "Chimaerus Normal and Heroic guide: realm groups, positioning, minions and abilities for your specialization." : `${raid.nameEn}, Midnight Season 1 raid: pulls on the map, ${raid.bosses.length} bosses and what to know.`,
     alternates: {
       canonical: `/wow/raids/${raid.slug}`,

@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!cls) return {};
   const title = `${mistsCopy[lang].classTalents(cls.name[lang])} — ${mistsCopy[lang].title}`;
   const alternates = pairedAlternates(lang, `/wow/mists/talents/${cls.slug}`);
-  return { title: `${title} — Gildra`, alternates, openGraph: pageOpenGraph(lang, { title, path: String(alternates.canonical) }) };
+  return { title: `${title} — WowArcana`, alternates, openGraph: pageOpenGraph(lang, { title, path: String(alternates.canonical) }) };
 }
 export default async function Page({ params, searchParams }: Props) {
   const cls = mistsClass((await params).class);

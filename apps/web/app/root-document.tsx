@@ -56,8 +56,8 @@ const atlasDisplay = Alegreya({
 const valyroLocale = { en: "en-GB", ru: "ru-RU" } as const;
 
 const rootWords = {
-  en: { title: "Gildra — Master the Meta", description: "World of Warcraft tier lists, Mythic+ and raid statistics, builds and guides." },
-  ru: { title: "Gildra — мета World of Warcraft", description: "Тир-листы World of Warcraft, статистика Mythic+ и рейдов, билды и гайды." },
+  en: { title: "WowArcana — World of Warcraft guides and tools", description: "World of Warcraft tier lists, Mythic+ and raid statistics, builds and guides." },
+  ru: { title: "WowArcana — гайды и инструменты World of Warcraft", description: "Тир-листы World of Warcraft, статистика Mythic+ и рейдов, билды и гайды." },
 } as const;
 
 /**
@@ -70,7 +70,7 @@ export function rootMetadataFor(lang: "en" | "ru"): Metadata {
     metadataBase: new URL(SITE_ORIGIN),
     title: rootWords[lang].title,
     description: rootWords[lang].description,
-    openGraph: { siteName: "Gildra", type: "website", locale: lang === "ru" ? "ru_RU" : "en_US" },
+    openGraph: { siteName: "WowArcana", type: "website", locale: lang === "ru" ? "ru_RU" : "en_US" },
     twitter: { card: "summary_large_image" },
   };
 }

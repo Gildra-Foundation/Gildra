@@ -7,7 +7,7 @@ export const dynamicParams = false;
 
 const path = "/ru/wow/raids/sporefall/rotmire";
 export const metadata: Metadata = withPageOpenGraph("ru", {
-  title: "Rotmire — Sporefall — Gildra",
+  title: "Rotmire — Sporefall — WowArcana",
   description: "Гнилотоп, босс Споропада: что сделать перед пуллом, задачи ролей и способности.",
   alternates: { canonical: path, languages: { en: "/wow/raids/sporefall/rotmire", ru: path, "x-default": "/wow/raids/sporefall/rotmire" } },
 });

@@ -6,7 +6,7 @@ import { pairedAlternates, pageOpenGraph } from "@/lib/seo/metadata";
 const lang = "ru";
 const copy = foreverCopy[lang];
 export const metadata: Metadata = {
-  title: `${copy.title} — Gildra`, description: copy.lede,
+  title: `${copy.title} — WowArcana`, description: copy.lede,
   alternates: pairedAlternates(lang, "/wow/forever"),
   openGraph: pageOpenGraph(lang, { title: copy.title, description: copy.lede, path: String(pairedAlternates(lang, "/wow/forever").canonical) }),
 };

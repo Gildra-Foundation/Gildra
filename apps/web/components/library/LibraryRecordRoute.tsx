@@ -56,7 +56,7 @@ export async function libraryRecordMetadata(lang: Lang, params: LibraryRecordPar
   const russian = lang === "ru" ? entity : twin;
   const ruOwn = Boolean(russian?.name) && !russian?.localeFallback;
   // A long record name keeps the title within a search result: the site name alone closes it.
-  const title = `${name} — ${words[lang].site}`.length > 65 ? `${name} — Gildra` : `${name} — ${words[lang].site}`;
+  const title = `${name} — ${words[lang].site}`.length > 65 ? `${name} — WowArcana` : `${name} — ${words[lang].site}`;
   const text = entity.description || entity.tooltip?.plainText || "";
   // A one-line game text ("Season 14 Elite") says too little on its own: the record's name and kind follow it.
   const description = (text.length >= 70 ? text : text ? `${text} ${words[lang].fallback(name, setName)}` : words[lang].fallback(name, setName)).slice(0, 160);

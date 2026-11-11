@@ -5,7 +5,7 @@ export const leagueHomePage = definePage({
   path: () => "/",
   legacyLocaleQuery: true,
   meta: () => ({
-    title: "League of Legends Champion Database — Gildra",
+    title: "League of Legends Champion Database — WowArcana",
     description:
       "Every League of Legends champion, ability, skin and official Data Dragon asset in one bilingual database.",
   }),

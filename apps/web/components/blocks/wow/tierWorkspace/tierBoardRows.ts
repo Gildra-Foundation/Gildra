@@ -1,5 +1,5 @@
 /** Pure helpers of the tier board and list on /tier-lists (shared by the client views and their tests).
- *  Every source — Gildra's blend, an external site, the sims — is brought to one entry shape here; each
+ *  Every source — WowArcana's blend, an external site, the sims — is brought to one entry shape here; each
  *  keeps its own ranking and tiers, nothing is mixed between sources. */
 import type { TierEntry, TierRole } from "@/lib/platform/games/intelligence";
 import type { SimRow } from "./simTierRows";

@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: { params: Promise<{ spec: str
   const spec = (await params).spec;
   const theme = getTalentSpecTheme(spec);
   // WoW tools stay out of the index for the MVP (owner decision 2026-10-12), like the other WoW pages.
-  return theme ? { alternates: pairedAlternates("en", `/wow/rotation/${spec}`), robots: { index: false, follow: true }, title: `${theme.specName} ${theme.className} Rotation Lab — Gildra`, description: `Calculate, configure, and practice the ${theme.specName} rotation.` } : {};
+  return theme ? { alternates: pairedAlternates("en", `/wow/rotation/${spec}`), robots: { index: false, follow: true }, title: `${theme.specName} ${theme.className} Rotation Lab — WowArcana`, description: `Calculate, configure, and practice the ${theme.specName} rotation.` } : {};
 }
 
 export default async function Page({ params, searchParams }: { params: Promise<{ spec: string }>; searchParams: Promise<{ character?: string; mode?: string }> }) {

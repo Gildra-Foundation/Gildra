@@ -27,7 +27,7 @@ export function rememberPage(path: string, title: string) {
   }
 }
 
-/** The page's own title without the " — Gildra" tail. */
+/** The page's own title without the " — WowArcana" tail. */
 export function pageTitle() {
   return document.title.replace(/\s*[—|·-]\s*Gildra.*$/i, "").trim();
 }

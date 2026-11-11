@@ -14,7 +14,7 @@ export async function playerMetadata(key: PlayerKey, locale: "en" | "ru"): Promi
   const alternates = pairedAlternates(locale, playerProfilePath(key.region, key.realm, key.name));
   const robots = { index: false, follow: true };
   const load = await loadPlayerProfile(key, locale);
-  if (load.state !== "ready") return { title: `${copy.unavailableTitle} — Gildra`, robots, alternates };
+  if (load.state !== "ready") return { title: `${copy.unavailableTitle} — WowArcana`, robots, alternates };
   const { profile } = load;
   const title = copy.metaTitle(profile.snapshot.character.name, profile.realmName);
   const description = copy.metaDescription(profile.snapshot.character.name, profile.snapshot.character.className, profile.snapshot.character.itemLevel, profile.rating ? Math.round(profile.rating.value) : undefined);

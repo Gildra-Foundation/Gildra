@@ -7,5 +7,5 @@ const lang = "en";
 const title = `${mistsCopy[lang].title} — ${mistsCopy[lang].classes}`;
 const description = mistsCopy[lang].description;
 const alternates = pairedAlternates(lang, "/wow/mists");
-export const metadata: Metadata = { title: `${title} — Gildra`, description, alternates, openGraph: pageOpenGraph(lang, { title, description, path: String(alternates.canonical) }) };
+export const metadata: Metadata = { title: `${title} — WowArcana`, description, alternates, openGraph: pageOpenGraph(lang, { title, description, path: String(alternates.canonical) }) };
 export default function Page() { return <MistsHome lang={lang} />; }

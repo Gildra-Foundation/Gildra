@@ -149,7 +149,7 @@ const wow: GameDefinition = {
   legal:
     "World of Warcraft® and all related artwork are trademarks or registered trademarks of Blizzard Entertainment, Inc. Gildra is an unofficial fan-made concept and is not affiliated with or endorsed by Blizzard Entertainment.",
   seo: {
-    titleSuffix: "Gildra",
+    titleSuffix: "WowArcana",
     defaultDescription:
       "Live World of Warcraft tier lists, Mythic+ and raid meta statistics, builds and guides.",
   },
@@ -220,7 +220,7 @@ const leagueOfLegends: GameDefinition = {
   legal:
     "League of Legends and Riot Games are trademarks of Riot Games, Inc. Gildra is not affiliated with Riot Games.",
   seo: {
-    titleSuffix: "Gildra",
+    titleSuffix: "WowArcana",
     defaultDescription:
       "Every League of Legends champion, ability, skin and official Data Dragon asset in one bilingual database.",
   },
@@ -255,7 +255,7 @@ const soon = (
   nav: { tasks: [] },
   footer: { tagline: "", columns: [] },
   legal: "",
-  seo: { titleSuffix: "Gildra", defaultDescription: "" },
+  seo: { titleSuffix: "WowArcana", defaultDescription: "" },
   cacheTags: [],
 });
 

@@ -7,7 +7,7 @@ import styles from "@/components/analytics/analyticsPage.module.css";
 import "@/app/styles/tailwind-app.css";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Azeroth live analytics — Gildra", description: "Live usage and realm telemetry for the Gildra Warcraft command center." };
+export const metadata: Metadata = { title: "Azeroth live analytics — WowArcana", description: "Live usage and realm telemetry for the Gildra Warcraft command center." };
 
 export default async function AnalyticsPage() {
   hiddenForMvp();

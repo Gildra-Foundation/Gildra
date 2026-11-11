@@ -6,8 +6,8 @@ import { catalogGames, isCatalogGame, type CatalogGameId, type SearchKind } from
 
 // Result pages are endless query variants: kept out of the index, links still followed.
 export const metadata: Metadata = {
-  title: "Search — Gildra",
-  description: "Search the Gildra World of Warcraft library: items, spells, quests, NPCs and collections.",
+  title: "Search — WowArcana",
+  description: "Search the WowArcana World of Warcraft library: items, spells, quests, NPCs and collections.",
   alternates: pairedAlternates("en", "/search"),
   robots: { index: false, follow: true },
 };

@@ -6,5 +6,5 @@ import { pairedAlternates, pageOpenGraph } from "@/lib/seo/metadata";
 const lang = "ru";
 const title = `${mistsCopy[lang].calculator} — ${mistsCopy[lang].title}`;
 const alternates = pairedAlternates(lang, "/wow/mists/talents");
-export const metadata: Metadata = { title: `${title} — Gildra`, alternates, openGraph: pageOpenGraph(lang, { title, path: String(alternates.canonical) }) };
+export const metadata: Metadata = { title: `${title} — WowArcana`, alternates, openGraph: pageOpenGraph(lang, { title, path: String(alternates.canonical) }) };
 export default function Page() { return <MistsTalentIndex lang={lang} />; }

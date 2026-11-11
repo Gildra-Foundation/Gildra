@@ -7,7 +7,7 @@ export const dynamicParams = false;
 
 const path = "/wow/raids/sporefall/rotmire";
 export const metadata: Metadata = withPageOpenGraph("en", {
-  title: "Rotmire — Sporefall — Gildra",
+  title: "Rotmire — Sporefall — WowArcana",
   description: "Rotmire, the boss of Sporefall: what to do before the pull, role tasks and abilities.",
   alternates: { canonical: path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
 });

@@ -3,7 +3,7 @@ import { gameHref, type GameDefinition } from "@/lib/games/registry";
 import type { Lang } from "@/lib/i18n";
 
 export type PageMetaInput = {
-  /** Full document title (the author owns the format, e.g. "Mythic+ Tier List — Gildra"). */
+  /** Full document title (the author owns the format, e.g. "Mythic+ Tier List — WowArcana"). */
   title: string;
   description?: string;
   image?: string;

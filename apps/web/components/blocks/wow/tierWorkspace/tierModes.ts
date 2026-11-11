@@ -36,28 +36,28 @@ export function tierModeMeta(lang: Lang, mode: TierMode, bracket: PvpBracket = "
   const name = bracketNames[bracket];
   if (lang === "ru") {
     if (mode === "raid") return {
-      title: "Тир-лист рейдов Midnight: лучшие специализации — Gildra",
+      title: "Тир-лист рейдов Midnight: лучшие специализации — WowArcana",
       description: "Тир-лист специализаций для рейдов Midnight: танки, лекари и бойцы по сложностям и боссам, сводный тир Gildra и списки ведущих источников.",
     };
     if (mode === "pvp") return {
-      title: `Тир-лист ${bracket === "rbg" || bracket === "blitz" ? "PvP" : "арены"} ${name}: лучшие специализации — Gildra`,
+      title: `Тир-лист ${bracket === "rbg" || bracket === "blitz" ? "PvP" : "арены"} ${name}: лучшие специализации — WowArcana`,
       description: `Тир-лист специализаций для ${bracket === "rbg" ? "рейтинговых полей боя (RBG)" : bracket === "blitz" ? "рейтингового режима Blitz" : `рейтинговой арены ${name}`} по рейтинговой таблице Blizzard: популярность в топе, рейтинг и доля побед по регионам EU и US.`,
     };
     return {
-      title: "Тир-листы: Эпохальный+, рейды и арена — Gildra",
+      title: "Тир-листы: Эпохальный+, рейды и арена — WowArcana",
       description: "Тир-листы специализаций для «Эпохального+», рейдов и арены (3v3, 2v2, Solo Shuffle, Blitz, RBG): сводный тир Gildra, ведущие источники и их сравнение.",
     };
   }
   if (mode === "raid") return {
-    title: "Midnight Raid Tier List: Best Specs — Gildra",
+    title: "Midnight Raid Tier List: Best Specs — WowArcana",
     description: "Specialization tier list for Midnight raids: tanks, healers and damage dealers by difficulty and boss, with Gildra's overall tier and the leading sources' lists.",
   };
   if (mode === "pvp") return {
-    title: `${name} ${bracket === "rbg" || bracket === "blitz" ? "PvP" : "Arena"} Tier List: Best Specs — Gildra`,
+    title: `${name} ${bracket === "rbg" || bracket === "blitz" ? "PvP" : "Arena"} Tier List: Best Specs — WowArcana`,
     description: `Specialization tier list for ${bracket === "rbg" ? "rated battlegrounds (RBG)" : bracket === "blitz" ? "Battleground Blitz" : `${name} rated arena`} from the Blizzard PvP ladder: share of the top players, rating and win rate in EU and US.`,
   };
   return {
-    title: "Mythic+, Raid & Arena Tier Lists — Gildra",
+    title: "Mythic+, Raid & Arena Tier Lists — WowArcana",
     description: "Specialization tier lists for Mythic+, raids and arena (3v3, 2v2, Solo Shuffle, Blitz, RBG): Gildra's overall tier, leading sources and a side-by-side view.",
   };
 }

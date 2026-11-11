@@ -71,8 +71,8 @@ export const worldMapCopy = {
       city: (zone: string, continent: string) => continent && continent !== zone ? `City in ${zone}, ${continent}.` : `City in ${zone}.`,
       cityOn: (continent: string) => `City in ${continent}.`,
     },
-    pageTitle: (name: string) => `${name} Map — World of Warcraft — Gildra`,
-    rootTitle: "World of Warcraft World Map: Azeroth and Beyond — Gildra",
+    pageTitle: (name: string) => `${name} Map — World of Warcraft — WowArcana`,
+    rootTitle: "World of Warcraft World Map: Azeroth and Beyond — WowArcana",
     rootDescription: "Interactive map of Azeroth and the other worlds: zoom from the Cosmic map to continents, zones and capitals, and see how the world changed from Classic to today.",
   },
   ru: {
@@ -146,8 +146,8 @@ export const worldMapCopy = {
       city: (zone: string, continent: string) => continent && continent !== zone ? `Город в зоне ${zone}, ${continent}.` : `Город в зоне ${zone}.`,
       cityOn: (continent: string) => `Город на континенте ${continent}.`,
     },
-    pageTitle: (name: string) => `${name} — карта World of Warcraft — Gildra`,
-    rootTitle: "Карта мира World of Warcraft: Азерот и другие миры — Gildra",
+    pageTitle: (name: string) => `${name} — карта World of Warcraft — WowArcana`,
+    rootTitle: "Карта мира World of Warcraft: Азерот и другие миры — WowArcana",
     rootDescription: "Интерактивная карта Азерота и других миров: от космоса к континентам, зонам и столицам — и как мир менялся от Classic до наших дней.",
   },
 } as const;
