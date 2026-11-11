@@ -1,7 +1,6 @@
-/** Player copy shared by the lookup, hub and Open Graph. */
+/** Player copy shared by the hub and Open Graph. */
 export const wowHomeCopy = {
   "ru": {
-    "recentCharacters": "Недавние персонажи",
     "weeklyMeta": "Мета недели",
     "allMeta": "Вся мета",
     "roles": {
@@ -13,20 +12,10 @@ export const wowHomeCopy = {
     "description": "Midnight, сезон 2: маршруты и таймеры Mythic+, тактики рейдов, тир-листы и таланты. Поиск персонажей, карта мира и цены аукциона World of Warcraft.",
     "raidAlt": "Вход в рейд Отравленная бездна",
     "mapAlt": "Карта Азерота: Калимдор, Восточные королевства и Нордскол",
-    "eyebrow": "Midnight",
     "title": "Гайды и инструменты World of Warcraft",
-    "lede": "Подготовьтесь к ключу, соберите таланты и найдите своего героя в Midnight.",
-    "play": "Сезон Mythic+",
-    "lookup": {
-      "title": "Найти персонажа",
-      "region": "Регион",
-      "realm": "Сервер",
-      "name": "Имя",
-      "submit": "Найти персонажа"
-    },
+    "lede": "Маршруты и таймеры Mythic+, тактики рейдов, тир-листы и таланты второго сезона Midnight.",
     "productLabel": "Возможности WowArcana",
     "moreDungeons": "Подземелья сезона",
-    "moreBosses": "Остальные боссы",
     "mapIntro": "Континенты, зоны и города сквозь эпохи Азерота.",
     "auctionIntro": "Найдите предмет и сравните лоты вашего сервера с ценами региона.",
     "worldsLabel": "Миры Warcraft",
@@ -34,10 +23,12 @@ export const wowHomeCopy = {
     "foreverContent": "Подземелья и рейды",
     "mistsContent": "Классы и таланты",
     "auctionAlt": "Аукционный дом Оргриммара",
+    "professionsAlt": "Кузница и алхимический верстак",
+    "dungeonAlt": "Подземелье Mythic+",
+    "classesLabel": "Классы World of Warcraft",
     "continentsLabel": "Континенты"
   },
   "en": {
-    "recentCharacters": "Recent characters",
     "weeklyMeta": "This week’s meta",
     "allMeta": "Full meta",
     "roles": {
@@ -49,20 +40,10 @@ export const wowHomeCopy = {
     "description": "Midnight Season 2: Mythic+ routes and timers, raid tactics, tier lists and talents. Find your WoW character, explore the world map and auction prices.",
     "raidAlt": "Entrance to The Venomous Abyss raid",
     "mapAlt": "Azeroth map: Kalimdor, Eastern Kingdoms and Northrend",
-    "eyebrow": "Midnight",
     "title": "World of Warcraft guides and tools",
-    "lede": "Plan your next key, choose your talents and find your hero in Midnight.",
-    "play": "Mythic+ season",
-    "lookup": {
-      "title": "Find a character",
-      "region": "Region",
-      "realm": "Realm",
-      "name": "Name",
-      "submit": "Find a character"
-    },
+    "lede": "Mythic+ routes and timers, raid tactics, tier lists and talents for Midnight Season 2.",
     "productLabel": "Explore WowArcana",
     "moreDungeons": "Season dungeons",
-    "moreBosses": "More bosses",
     "mapIntro": "Continents, zones and cities through Azeroth’s eras.",
     "auctionIntro": "Find an item and compare your realm’s listings with region prices.",
     "worldsLabel": "Warcraft worlds",
@@ -70,6 +51,9 @@ export const wowHomeCopy = {
     "foreverContent": "Dungeons and raids",
     "mistsContent": "Classes and talents",
     "auctionAlt": "Orgrimmar Auction House",
+    "professionsAlt": "Forge and alchemy workbench",
+    "dungeonAlt": "Mythic+ dungeon",
+    "classesLabel": "World of Warcraft classes",
     "continentsLabel": "Continents"
   }
 } as const;

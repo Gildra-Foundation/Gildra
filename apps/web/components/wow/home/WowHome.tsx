@@ -1,8 +1,6 @@
-import { homeLookupCopy } from "./homeLookupCopy";
 import Image from "next/image";
 import { midnightSpecializations } from "@/lib/data/wow/specializations";
 import { HomeArtwork } from "./HomeArtwork";
-import { HomeCharacterLookup } from "./HomeCharacterLookup";
 import Link from "next/link";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import { AtlasFrame, AtlasHero, AtlasSection } from "@/components/atlas";
@@ -22,7 +20,6 @@ import styles from "./wowHome.module.css";
 import { JsonLd } from "@/lib/seo/jsonld";
 import { worldMapBundle } from "@/lib/wow/worldMap/data.server";
 import { mapPagePath } from "@/lib/wow/worldMap/bundle";
-import { HomeRecentCharacters } from "./HomeRecentCharacters";
 import { HomeDungeons } from "./HomeDungeons";
 
 import { homeGroups, homeVersions, type HomeFeature } from "./homeFeatures";
@@ -65,7 +62,6 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
     <link rel="preload" href="/assets/wow/fonts/azeroth/azeroth-cyrillic.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
     <AtlasHero align="start" className={styles.hero}
       title={<span className={styles.heroPromise}>{t.title}</span>} lede={t.lede}
-      actions={<HomeCharacterLookup locale={locale} recent={<HomeRecentCharacters locale={locale} label={t.recentCharacters} />} />}
       aside={<HomeWeeklyMeta locale={locale} />}
     />
     <div className={styles.flourish} aria-hidden="true"><Image src={WOW_UI_TEXTURES.flourish} alt="" width={209} height={18} unoptimized /></div>
@@ -77,8 +73,8 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
 
     {homeGroups.map(group => <AtlasSection key={group.id} id={group.id} className={styles.chapter} title={<><Image src={WOW_UI_TEXTURES.marks[group.id]} alt="" width={32} height={32} unoptimized className={styles.mark} />{group.title[locale]}</>} aside={group.id === "mythic" || group.id === "hero" || group.id === "raids" ? more(group) : undefined}>
       <div className={styles.group} data-group={group.id}>
-        {group.id === "mythic" && season && <HomeDungeons locale={locale} season={season.slug} slugs={seasonalDungeons} label={t.moreDungeons} />}
-        {group.id === "hero" && <nav aria-label={group.lead.label[locale]}><ul className={styles.classRoster}>{classes.map(spec => <li key={spec.classSlug} style={{ "--class-color": classColors[spec.classSlug as keyof typeof classColors] } as CSSProperties}><Link href={href(`/wow/classes#${spec.classSlug}`)} prefetch={false}><Image src={spec.classIconUrl} alt="" width={56} height={56} quality={50} loading="lazy" decoding="async" /><span>{locale === "ru" ? spec.classNameRu : spec.className}</span></Link></li>)}</ul></nav>}
+        {group.id === "mythic" && season && <HomeDungeons locale={locale} season={season.slug} slugs={seasonalDungeons} label={t.moreDungeons} alt={t.dungeonAlt} />}
+        {group.id === "hero" && <nav aria-label={group.lead.label[locale]}><ul className={styles.classRoster}>{classes.map(spec => <li key={spec.classSlug} style={{ "--class-color": classColors[spec.classSlug as keyof typeof classColors] } as CSSProperties}><Link href={href(`/wow/classes/${spec.classSlug}`)} prefetch={false}><Image src={spec.classIconUrl} alt="" width={56} height={56} quality={50} loading="lazy" decoding="async" /><span>{locale === "ru" ? spec.classNameRu : spec.className}</span></Link></li>)}</ul></nav>}
         {group.id === "raids" && currentRaids.map(current => <HomePlaque key={current.slug} kit="arcana" as="article" className={styles.flagship}>
           <div className={styles.productPreview}><HomePreview kind="venomous-abyss" alt={t.raidAlt} /></div>
           <div className={styles.flagshipBody}>
@@ -92,12 +88,12 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
             <div className={styles.flagshipBody}><h3><Link href={href(group.lead.href)} prefetch={false}>{group.lead.label[locale]}<ArrowRight aria-hidden="true" /></Link></h3><p>{t.auctionIntro}</p></div>
           </HomePlaque>
           <HomePlaque kit="arcana" as="article" className={styles.flagship}>
-            <div className={styles.productPreview}><HomePreview kind="professions" alt={homeLookupCopy[locale].professionsAlt} /></div>
+            <div className={styles.productPreview}><HomePreview kind="professions" alt={t.professionsAlt} /></div>
             <div className={styles.flagshipBody}><h3><Link href={href(group.tools[0].href)} prefetch={false}>{group.tools[0].label[locale]}<ArrowRight aria-hidden="true" /></Link></h3><p>{group.tools[0].note[locale]}</p></div>
           </HomePlaque>
         </div>}
         {group.id === "world" && <HomePlaque kit="arcana" as="article" className={styles.flagship}>
-          <div className={`${styles.productPreview} ${styles.mapPreview}`} role="img" aria-label={t.mapAlt}><div className={styles.mapPainting}>{[0,1].map(y => [0,1].map(x => <Image key={`${x}-${y}`} src={`/maps/tiles/${locale === "ru" ? "ru/" : ""}947/1/${x}_${y}.webp`} alt="" width={256} height={256} unoptimized loading="lazy" decoding="async" sizes="(max-width: 700px) 50vw, 35vw" />))}</div></div>
+          <div className={`${styles.productPreview} ${styles.mapPreview}`}><Image src={`/assets/wow/home/banners/world-${locale}.webp`} alt={t.mapAlt} width={720} height={480} sizes="(max-width: 700px) calc(100vw - 56px), 640px" quality={75} loading="lazy" className={styles.previewImage} /></div>
           <div className={styles.flagshipBody}>
             <h3><Link href={href(group.lead.href)} prefetch={false}>{group.lead.label[locale]}<ArrowRight aria-hidden="true" /></Link></h3>
             <p>{t.mapIntro}</p>

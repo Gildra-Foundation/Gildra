@@ -3,33 +3,14 @@
 .page a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
 @media (hover: hover) { .page a:hover { color: var(--atlas-accent-strong); } }
 
-/* Hero: the promise in the Warcraft title face (one weight: no synthetic bold), the lookup
-   under it and the weekly meta card on one baseline. */
+/* Hero: the promise in the Warcraft title face (one weight: no synthetic bold) and the weekly
+   meta card on one baseline. */
 .page .hero { padding-block: var(--atlas-space-2) 0; }
-.page .hero > div:last-child { grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: var(--atlas-space-7); align-items: end; }
-.page .hero h1 { max-width: 18ch; hyphens: none; text-wrap: balance; }
+.page .hero > div:last-child { grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr); gap: var(--atlas-space-7); align-items: center; }
+.page .hero h1 { hyphens: none; text-wrap: balance; }
 .hero p { hyphens: none; text-wrap: pretty; }
-.heroPromise { display: block; color: var(--atlas-text-strong); font-family: var(--atlas-font-title); font-size: .9em; font-weight: 400; font-synthesis: none; letter-spacing: 0; line-height: 1.14; text-shadow: var(--atlas-text-shadow-hero); }
+.heroPromise { display: block; color: var(--atlas-text-strong); font-family: var(--atlas-font-title); font-size: 1em; font-weight: 400; font-synthesis: none; letter-spacing: 0; line-height: 1.14; text-shadow: var(--atlas-text-shadow-hero); }
 .heroArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 40%; }
-
-/* Character lookup: one slim glass bar; the placeholders name the fields, the button names the action. */
-.lookup { max-width: 680px; padding: var(--atlas-space-2); border: 1px solid var(--atlas-glass-edge); border-radius: var(--atlas-radius-control); background: var(--atlas-glass-sheen), color-mix(in srgb, var(--atlas-bg) 68%, transparent); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter); box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth); }
-.lookup:focus-within { position: relative; z-index: 2; }
-.lookupFields { display: grid; grid-template-columns: 76px minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: var(--atlas-space-2); align-items: center; }
-.lookupFields label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.lookupFields button { min-width: 0; min-height: 46px; white-space: nowrap; }
-.recentSlot { position: relative; height: 28px; margin-top: var(--atlas-space-1); max-width: 680px; }
-.recentCharacters { display: flex; gap: var(--atlas-space-4); position: absolute; inset: 0; overflow: hidden; }
-.recentCharacters a { display: block; align-content: center; min-height: 28px; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); text-shadow: var(--atlas-text-halo); }
-.realmCombo { position: relative; }
-.realmOptions { contain: layout style paint; position: absolute; z-index: 30; inset: calc(100% + 4px) 0 auto; max-height: 264px; overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 4px; list-style: none; border: 1px solid var(--atlas-accent-2); border-radius: var(--atlas-radius-control); background: var(--atlas-surface-raised); box-shadow: var(--atlas-glass-depth); color: var(--atlas-text-strong); }
-.realmOptions[hidden], .realmOptions li[hidden] { display: none; }
-.realmOptions li { min-height: 44px; display: flex; align-items: center; padding: 8px; cursor: pointer; font-size: var(--atlas-text-small); }
-.realmOptions li:hover, .realmOptions li[aria-selected="true"] { background: var(--atlas-accent-wash); outline: 1px solid var(--atlas-accent-2); outline-offset: -1px; }
-.realmControl { position: relative; contain: layout style; }
-.realmControl:focus-within { z-index: 40; }
-.realmControl input { padding-right: var(--atlas-space-6); }
-.realmControl::after { content: ""; position: absolute; pointer-events: none; right: 14px; top: calc(50% - 4px); width: 6px; height: 6px; border-right: 1px solid var(--atlas-text-muted); border-bottom: 1px solid var(--atlas-text-muted); transform: rotate(45deg); }
 
 /* Weekly meta: the leader of each role with its share of the week's keys. */
 .seasonNow { padding: var(--atlas-space-5); border: 1px solid var(--atlas-glass-edge); border-top-color: var(--atlas-accent-2); border-radius: var(--atlas-radius); background: var(--atlas-glass-sheen), color-mix(in srgb, var(--atlas-bg) 70%, transparent); -webkit-backdrop-filter: var(--atlas-glass-filter); backdrop-filter: var(--atlas-glass-filter); box-shadow: var(--atlas-shadow-panel); }
@@ -134,9 +115,7 @@
 .productPreview { position: relative; isolation: isolate; min-height: 200px; overflow: hidden; border: 1px solid var(--atlas-line); background: var(--atlas-surface-sunken); box-shadow: var(--atlas-glass-inset); }
 .productPreview picture { position: absolute; inset: 0; display: block; }
 .previewImage { display: block; width: 100%; height: 100%; object-fit: cover; filter: contrast(.94) saturate(.9); pointer-events: none; }
-.mapPreview { border: 0; }
-.mapPainting { display: grid; grid-template-columns: repeat(2, 1fr); position: absolute; top: 0; left: 0; width: calc(100% * 512 / 480); aspect-ratio: 1; pointer-events: none; }
-.mapPainting img { display: block; width: 100%; height: auto; }
+.productPreview > img { position: absolute; inset: 0; }
 .flagshipBody { display: flex; flex-direction: column; min-width: 0; }
 .flagship h3 { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); text-shadow: var(--atlas-text-shadow-art); }
 .flagship h3 a { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); min-height: 44px; color: inherit; text-decoration: none; }
@@ -212,9 +191,6 @@
   .page .hero h1 { max-width: none; }
   .heroPromise { font-size: .82em; }
   .heroArt { object-position: center 30%; }
-  .lookupFields { grid-template-columns: 76px minmax(0, 1fr) auto; }
-  .lookupFields > :nth-child(2) { grid-column: 2 / -1; }
-  .lookupFields > :nth-child(3) { grid-column: 1 / 3; }
   .seasonNow { padding: var(--atlas-space-4); }
   .liveLinks { gap: var(--atlas-space-2); }
   .liveLinks a { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--atlas-space-2); min-height: 0; }
