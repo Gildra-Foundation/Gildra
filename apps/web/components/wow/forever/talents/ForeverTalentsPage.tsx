@@ -14,7 +14,7 @@ import styles from "./talents.module.css";
 
 export function ForeverTalentsIndex({ lang }: { lang: "en" | "ru" }) {
   const t = talentCopy[lang];
-  return <ForeverFrame lang={lang}>
+  return <ForeverFrame lang={lang} scene="talents">
     <AtlasHero title={t.title} breadcrumbs={[{ label: "Forever", href: `${lang === "ru" ? "/ru" : ""}/wow/forever` }]} />
     <AtlasSection title={t.classes}>
       <div className={styles.classGrid}>{foreverTalents.classes.map(cls => <MaterialLinkButton key={cls.id} kit={FOREVER_KIT} href={foreverCalculatorPath(lang, cls.slug)} fit="block">
@@ -32,7 +32,7 @@ export function ForeverTalentsClass({ lang, slug, token }: { lang: "en" | "ru"; 
   const cls = talentClass(slug);
   if (!cls) notFound();
   const t = talentCopy[lang], parsed = decodeBuild(cls, foreverTalents.snapshot, Array.isArray(token) ? "invalid" : token);
-  return <ForeverFrame lang={lang}>
+  return <ForeverFrame lang={lang} scene="talents">
     <AtlasHero title={lang === "ru" ? `Таланты: ${cls.name[lang]}` : `${cls.name[lang]} talents`} breadcrumbs={[
       { label: "Forever", href: `${lang === "ru" ? "/ru" : ""}/wow/forever` },
       { label: t.title, href: foreverCalculatorPath(lang) },

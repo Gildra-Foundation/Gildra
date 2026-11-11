@@ -1,2 +1,1 @@
-/** Coordinator will replace this local fallback with the shared Forever kit. */
-export const FOREVER_KIT = "library" as const;
+export { FOREVER_KIT } from "../foreverKit";

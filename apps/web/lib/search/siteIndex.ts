@@ -62,6 +62,7 @@ function entries(locale: Locale): SiteSearchEntry[] {
   }
 
   for (const entry of foreverClasses) {
+    list.push({ t: `${entry.name[locale]} — ${label.talents[locale]}`, s: label.talents[locale], h: `/wow/forever/talent-calc/${entry.slug}`, k: entry.name[other], g: "talents", i: classIcon(entry.slug), d: "Forever" });
     list.push({ t: entry.name[locale], s: label.class[locale], h: `/wow/forever/classes/${entry.slug}`, k: entry.name[other], g: "class", i: classIcon(entry.slug), d: "Forever" });
   }
 

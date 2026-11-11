@@ -1,3 +1,4 @@
+import { foreverTalents } from "@/lib/forever/talents/data";
 import { professions as foreverProfessions } from "@/lib/forever/guides/professions";
 import { foreverClasses } from "@/lib/data/wow/foreverClasses";
 import { newDungeons, returningDungeonDetails } from "@/components/wow/forever/instanceData";
@@ -34,6 +35,7 @@ export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean
   ...raidHubEntries.map(({ slug }) => `/wow/raids/${slug}`),
   ...midnightLairEncounters.map(({ slug }) => `/wow/lairs/${slug}`),
   ...professions.map(({ slug }) => `/wow/professions/${slug}`),
+  ...foreverTalents.classes.map(({ slug }) => `/wow/forever/talent-calc/${slug}`),
   ...foreverProfessions.map(({ slug }) => `/wow/forever/professions/${slug}`),
   ...foreverClasses.map(({ slug }) => `/wow/forever/classes/${slug}`),
   ...[...newDungeons, ...returningDungeonDetails].map(({ slug }) => `/wow/forever/dungeons/${slug}`),
