@@ -19,6 +19,7 @@ import { JsonLd } from "@/lib/seo/jsonld";
 import { worldMapBundle } from "@/lib/wow/worldMap/data.server";
 import { mapPagePath } from "@/lib/wow/worldMap/bundle";
 import { HomeRecentCharacters } from "./HomeRecentCharacters";
+import { HomeDungeons } from "./HomeDungeons";
 
 import { homeGroups, homeVersions, type HomeFeature } from "./homeFeatures";
 import type { NavigationIcon } from "@/components/platform/navigation/navigationMap";
@@ -69,6 +70,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
     {homeGroups.map(group => <AtlasSection key={group.id} id={group.id} className={styles.chapter} title={group.title[locale]}>
       <div className={styles.groupGrid} data-group={group.id}>
         <HomePlaque kit="arcana" as="article" className={styles.flagship}>
+          {group.id === "hero" && <Image src="/assets/wow/loading/classes-heroes-20261106.webp" alt="" fill sizes="(max-width: 700px) 100vw, 1230px" quality={50} loading="lazy" className={styles.heroScene} />}
           {group.id === "mythic" && <div className={`${styles.productPreview} ${styles.routePreview}`}>
             <HomePreview kind="ruby-route" alt={t.routeAlt} />
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={styles.routeLine} aria-hidden="true"><polyline points={previewStops.map(stop => `${stop.x},${stop.y}`).join(" ")} /></svg>
@@ -80,10 +82,6 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
           <div className={styles.flagshipBody}>
             <h3>{group.id === "economy" ? <Link href={href(group.lead.href)} prefetch={false}>{group.lead.label[locale]}<ArrowRight aria-hidden="true" /></Link> : group.lead.label[locale]}</h3>
             {group.id !== "raids" && <p>{group.id === "hero" ? t.classesIntro : group.id === "mythic" ? t.mythicText : group.id === "world" ? t.mapIntro : t.auctionIntro}</p>}
-            {group.id === "mythic" && season && <>
-              <ul className={styles.liveLinks}>{seasonalDungeons.slice(0,1).map(slug => <li key={slug}><Link href={href(`/wow/mythic-plus/${season.slug}/${slug}`)} prefetch={false}><span>{locale === "ru" ? dungeonRoutes[slug].nameRu : dungeonRoutes[slug].name}</span><span className={styles.timer}>{Math.floor(dungeonRoutes[slug].timerSeconds / 60)}:00</span></Link></li>)}</ul>
-              <details className={styles.more}><summary>{t.moreDungeons}</summary><ul className={styles.liveLinks}>{seasonalDungeons.slice(1).map(slug => <li key={slug}><Link href={href(`/wow/mythic-plus/${season.slug}/${slug}`)} prefetch={false}><span>{locale === "ru" ? dungeonRoutes[slug].nameRu : dungeonRoutes[slug].name}</span><span className={styles.timer}>{Math.floor(dungeonRoutes[slug].timerSeconds / 60)}:00</span></Link></li>)}</ul></details>
-            </>}
             {group.id === "raids" && currentRaids.map(current => <div key={current.slug}>
               <h4><Link href={href(`/wow/raids/${current.slug}`)} prefetch={false}>{current.names[locale]}</Link></h4>
               <ul className={`${styles.liveLinks} ${styles.bossGrid}`}>{current.bosses.map(boss => <li key={boss.slug}><Link href={href(`/wow/raids/${current.slug}${boss.anchor ? `#${boss.anchor}` : `#boss=${boss.slug}`}`)} prefetch={false}>{boss.names[locale]}<ArrowRight aria-hidden="true" /></Link></li>)}</ul>
@@ -99,6 +97,7 @@ export function WowHome({ lang, raids }: { lang: Lang; raids: HomeRaid[]; news?:
             <h3><Link href={href(group.tools[0].href)} prefetch={false}>{group.tools[0].label[locale]}<ArrowRight aria-hidden="true" /></Link></h3><p>{group.tools[0].note[locale]}</p>
           </div>
         </HomePlaque> : <div className={styles.groupTools}>
+          {group.id === "mythic" && season && <HomeDungeons locale={locale} season={season.slug} slugs={seasonalDungeons} label={t.moreDungeons} />}
           <nav aria-label={group.title[locale]}><ul className={styles.toolRows}>{group.tools.filter(link => !link.langs || link.langs.includes(locale)).map(link => <FeatureRow key={link.href} feature={link} locale={locale} />)}</ul></nav>
           {group.id === "world" && <nav className={styles.versions} aria-label={t.worldsLabel}>{homeVersions.map(portal => <Link key={portal.id} href={portal.href.startsWith("#") ? portal.href : href(portal.href)} prefetch={false}><span data-medallion="" aria-hidden="true"><Image src={`/assets/wow/versions/${portal.id}.png`} alt="" width={44} height={44} unoptimized loading="lazy" /></span><span>{portal.label[locale]}<small>{portal.id === "retail" ? t.midnightContent : portal.id === "forever" ? t.foreverContent : t.mistsContent}</small></span><ArrowRight aria-hidden="true" /></Link>)}</nav>}
         </div>}
