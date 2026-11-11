@@ -12,3 +12,15 @@ infra/certs
 **/test-results
 **/playwright-report
 **/.turbo
+# Documentation and operational reports are checked from the checkout, not
+# consumed by next build. Keep them from invalidating the source COPY layer.
+docs
+tasks
+# Scraper builds use scraper/ as their own context. Keep backend/ and infra/:
+# the rotation worker Dockerfile uses those paths from the root context.
+scraper
+scripts/build-speed
+# Never send local environment/registry credentials in a source COPY.
+**/.env
+**/.env.*
+**/.npmrc
