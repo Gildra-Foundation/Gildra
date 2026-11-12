@@ -20,8 +20,13 @@ export function worldMapMetadata(lang: Lang, map: AtlasMap | null): Metadata {
   const home = worldMapHome(lang);
   const isHome = !map || map.id === home?.id;
   const path = isHome ? routeSections.worldMap.path : mapPagePath(map);
-  const title = isHome ? copy.rootTitle : copy.pageTitle(map.name);
-  const description = isHome ? copy.rootDescription : mapLine(lang, map, bundle) || copy.rootDescription;
+  // Two places can share a name (Shadowmoon Valley of Outland and of Draenor): the title names the land above.
+  const parent = map && map.parent !== null ? bundle.maps.find((entry) => entry.id === map.parent) : undefined;
+  const twin = map ? bundle.maps.some((entry) => entry.id !== map.id && entry.page && entry.name === map.name) : false;
+  const title = isHome ? copy.rootTitle : copy.pageTitle(twin && parent?.name ? `${map.name} (${parent.name})` : map.name);
+  // The page's own line ("Zone of Outland.") is too short to tell a search result what the page is.
+  const line = isHome ? "" : mapLine(lang, map, bundle);
+  const description = isHome ? copy.rootDescription : `${copy.pageDescription(map.name)}${line ? ` ${line}` : ""}`;
   return {
     title,
     description,

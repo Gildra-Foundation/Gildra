@@ -1,4 +1,6 @@
 import { wowHomeCopy } from "@/components/wow/home/wowHomeCopy";
+import { foreverCopy } from "@/components/wow/forever/foreverCopy";
+import { mistsCopy } from "@/components/wow/mists/mistsCopy";
 import { pluralRu } from "@gildra/atlas-ui/format";
 import { getMidnightRaid, raidRouteSlugs, raidSceneArt } from "@/lib/data/wow/raid/midnightRaidData";
 import { getBossStrategy } from "@/lib/data/wow/raid/raidStrategy";
@@ -57,6 +59,9 @@ const hubs = {
   auction: (locale) => ({ ...scene("articles"), eyebrow: "World of Warcraft", title: ru(locale) ? "Аукцион" : "Auction House", subtitle: ru(locale) ? "Цены товаров и снаряжения по регионам." : "Commodity and gear prices by region." }),
   season2: (locale) => ({ ...scene("dungeons"), eyebrow: "Midnight", title: ru(locale) ? "Сезон 2" : "Season 2", subtitle: ru(locale) ? "Подземелья Mythic+, рейды и вылазки сезона." : "Mythic+ dungeons, raids and delves of the season." }),
   whatsNew: (locale) => ({ ...scene("articles"), eyebrow: "WowArcana", title: ru(locale) ? "Что нового" : "What's new", subtitle: ru(locale) ? "Что изменилось на сайте для игроков." : "What changed on the site for players." }),
+  forever: (locale) => ({ ...scene("forever"), eyebrow: "World of Warcraft", title: "World of Warcraft: Forever", subtitle: foreverCopy[locale].lede }),
+  mists: (locale) => ({ ...scene("classes"), eyebrow: "World of Warcraft", title: "Mists of Pandaria Classic", subtitle: mistsCopy[locale].description }),
+  worldMap: (locale) => ({ ...scene("wow"), eyebrow: "World of Warcraft", title: ru(locale) ? "Карта мира" : "World map", subtitle: ru(locale) ? "Азерот и другие миры: континенты, зоны и столицы." : "Azeroth and the other worlds: continents, zones and capitals." }),
   library: (locale) => ({ ...scene("library"), eyebrow: "World of Warcraft", title: ru(locale) ? "Библиотека" : "Library", subtitle: ru(locale) ? "Наборы игровых данных: подсказки, изображения и связи." : "Game datasets: tooltips, images and relations." }),
 } satisfies Record<string, (locale: Locale) => Spec>;
 

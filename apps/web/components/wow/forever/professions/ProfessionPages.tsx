@@ -21,7 +21,7 @@ export function professionMetadata(lang: Lang, slug?: string, recipeId?: string)
   const prof = slug ? professionBySlug(slug) : null;
   const recipe = recipeId && prof ? prof.recipes.find(r => String(r.id) === recipeId) : null;
   const title = recipe ? `${recipe.name[lang]} — ${prof!.name[lang]} · Forever` : prof ? `${prof.name[lang]} · Forever` : copy[lang].title;
-  return { title, description: prof ? summaries[prof.slug][lang] : copy[lang].lede, alternates: pairedAlternates(lang, `${root}${slug ? `/${slug}` : ''}${recipeId ? `/${recipeId}` : ''}`) };
+  return { title: `${title} — WowArcana`, description: prof ? summaries[prof.slug][lang] : copy[lang].lede, alternates: pairedAlternates(lang, `${root}${slug ? `/${slug}` : ''}${recipeId ? `/${recipeId}` : ''}`) };
 }
 export function ProfessionsHome({ lang }: { lang: Lang }) {
  const c = copy[lang];

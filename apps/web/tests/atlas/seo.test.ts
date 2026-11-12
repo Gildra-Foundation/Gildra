@@ -200,11 +200,62 @@ describe("seo: link previews", () => {
     const routes = ["wow", "wow/mythic-plus", "wow/mythic-plus/comps", "wow/mythic-plus/stats", "wow/mythic-plus/routes", "wow/mythic-plus/meta", "wow/mythic-plus/leaderboard",
       "wow/mythic-plus/leaderboard/[spec]", "wow/mythic-plus/[season]/[dungeon]", "wow/raids", "wow/raids/[raid]", "wow/raids/composition", "wow/lairs", "wow/lairs/[slug]",
       "wow/classes", "wow/classes/[class]", "wow/classes/[class]/[spec]", "wow/professions", "wow/professions/[slug]", "wow/transmog", "wow/auction", "wow/midnight/season-2",
-      "wow/whats-new", "tier-lists", "library", "library/[dataset]", "wow/raids/the-unbinding-of-kithix", "privacy",
+      "wow/whats-new", "tier-lists", "library", "library/[dataset]", "wow/raids/the-unbinding-of-kithix", "privacy", "wow/forever", "wow/mists", "wow/map",
       "wow/mythic-plus/cached/[page]", "wow/mythic-plus/cached/leaderboard/[spec]", "wow/professions/[slug]/region/[region]"];
     for (const root of ["(site)", "ru"]) for (const route of routes) {
       const dir = new URL(`../../app/${root}/${route}/`, import.meta.url);
       assert.ok(["opengraph-image.tsx", "opengraph-image.png"].some((file) => existsSync(new URL(file, dir))), `${root}/${route}`);
     }
+  });
+});
+
+describe("seo: 2026-11-12 audit", async () => {
+  const { clipDescription, pageOpenGraph } = await import("../../lib/seo/metadata.ts");
+  const { foreverHasRussian } = await import("../../lib/forever/database/russian.ts");
+  const { classTalentsDescription, versionDescription } = await import("../../lib/seo/versionDescriptions.ts");
+
+  it("a long description ends at a word", () => {
+    const text = "Kill 1 Den Watcher, 2 Ursas, 10 Totemics, and 12 Warriors of the Foulweald tribe, and then return to Raene Wolfrunner in Astranaar for the reward she promised to the defenders.";
+    const clipped = clipDescription(text);
+    assert.ok(clipped.length <= 160, String(clipped.length));
+    assert.ok(clipped.endsWith("…") && text.startsWith(clipped.slice(0, -1)), clipped);
+    assert.match(text.slice(clipped.length - 1), /^[\s,.;:]/, "cut between words");
+    assert.equal(clipDescription("Short line."), "Short line.");
+  });
+
+  it("pages without a card of their own show the site's card; pages with one name no image", () => {
+    for (const path of ["/wow/forever/dungeons/maraudon", "/ru/wow/forever/library/item/25", "/wow/mists/talents/monk", "/ru/wow/map/104-shadowmoon-valley"]) {
+      assert.deepEqual((pageOpenGraph("en", { title: "x", path }) as { images?: Array<{ url: string }> }).images?.map((image) => image.url), ["/brand/og-card.png"], path);
+    }
+    // A named image would replace the route's opengraph-image file.
+    for (const path of ["/wow/forever", "/ru/wow/mists", "/wow/map", "/wow/raids", "/ru/library/items", "/"]) {
+      assert.equal("images" in pageOpenGraph("en", { title: "x", path }), false, path);
+    }
+    assert.ok(existsSync(new URL("../../public/brand/og-card.png", import.meta.url)));
+  });
+
+  it("a search, filter or later page of a library list is not indexed; the list and its editions are", async () => {
+    const { listViewMetadata } = await import("../../lib/library/listView.ts");
+    for (const filters of [{ q: "sword" }, { cursor: "abc" }, { minLevel: "100" }, { facet: ["a"] }, { product: "wow_classic", q: "x" }]) {
+      assert.deepEqual(listViewMetadata({ title: "Items" }, filters).robots, { index: false, follow: true }, JSON.stringify(filters));
+    }
+    for (const filters of [{}, { product: "wow_classic" }, { q: "" }]) assert.equal(listViewMetadata({ title: "Items" }, filters).robots, undefined, JSON.stringify(filters));
+  });
+
+  it("a Forever record without a Russian name has no Russian page of its own", () => {
+    assert.equal(foreverHasRussian({ name: { en: "Wanderer's Shoulders" } }), false);
+    assert.equal(foreverHasRussian({ name: { en: "Flare", ru: "Осветительная ракета" } }), true);
+    const sitemap = readFileSync(new URL("../../app/sitemaps/forever/[type]/[lang]/route.ts", import.meta.url), "utf8");
+    assert.match(sitemap, /lang === "ru" && !own\) return \[\]/);
+  });
+
+  it("Forever and Mists pages have descriptions of their own", () => {
+    const seen = new Set<string>();
+    for (const lang of ["en", "ru"] as const) {
+      for (const page of ["foreverDungeons", "foreverRaids", "foreverLibrary", "foreverTalents", "mistsTalents"] as const) seen.add(versionDescription(page, lang));
+      for (const page of ["foreverTalents", "mistsTalents"] as const) seen.add(classTalentsDescription(page, lang, lang === "ru" ? "Маг" : "Mage"));
+    }
+    assert.equal(seen.size, 14);
+    for (const line of seen) assert.ok(line.length >= 70 && line.length <= 160, `${line.length} ${line}`);
   });
 });

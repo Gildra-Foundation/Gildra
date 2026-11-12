@@ -8,6 +8,7 @@ import { catalogReadable, requireCatalogSession } from "@/lib/library/server";
 import { LIBRARY_HIDDEN_DATASETS, LIBRARY_LOOSE_RECORDS, LIBRARY_TYPE_DATASET, libraryRecordPath } from "@/lib/library/recordPath";
 import { isInternalRecord } from "@/lib/library/internalName";
 import type { Lang } from "@/lib/i18n-paths";
+import { clipDescription } from "@/lib/seo/metadata";
 
 export type LibraryRecordParams = Promise<{ dataset: string; id: string; slug: string }>;
 export type LibraryRecordSearch = Promise<{ product?: string }> | undefined;
@@ -61,9 +62,11 @@ export async function libraryRecordMetadata(lang: Lang, params: LibraryRecordPar
   const unlisted = LIBRARY_HIDDEN_DATASETS.has(dataset) || isInternalRecord(entity.name, type, entity.externalId);
   // A long record name keeps the title within a search result: the site name alone closes it.
   const title = `${name} — ${words[lang].site}`.length > 65 ? `${name} — WowArcana` : `${name} — ${words[lang].site}`;
-  const text = entity.description || entity.tooltip?.plainText || "";
+  // A tooltip opens with the record's name; alone it would only repeat the name before the line about the record.
+  const raw = (entity.description || entity.tooltip?.plainText || "").replace(/\s+/g, " ").trim();
+  const text = raw.toLowerCase().startsWith(name.toLowerCase()) ? raw.slice(name.length).replace(/^[\s.,:;–—-]+/, "") : raw;
   // A one-line game text ("Season 14 Elite") says too little on its own: the record's name and kind follow it.
-  const description = (text.length >= 70 ? text : text ? `${text} ${words[lang].fallback(name, setName)}` : words[lang].fallback(name, setName)).slice(0, 160);
+  const description = clipDescription(text.length >= 70 ? text : text ? `${text} ${words[lang].fallback(name, setName)}` : words[lang].fallback(name, setName));
   return {
     title,
     description,

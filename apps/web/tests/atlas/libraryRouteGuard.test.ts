@@ -15,7 +15,8 @@ describe("library: a dataset that does not exist is a 404", () => {
   });
 
   it("leaves the landing, loose records, other sections and unknown editions to the pages", async () => {
-    for (const path of ["/library", "/ru/library", "/library/records/1da0c168-d556-41b4-ac9a-442bfe25b6c0/fireball", "/wow/forever/library/item/35", "/search"]) {
+    // The showcase's link-preview card is a route of its own, not a dataset (it answered 404 on 2026-11-12).
+    for (const path of ["/library", "/ru/library", "/library/records/1da0c168-d556-41b4-ac9a-442bfe25b6c0/fireball", "/wow/forever/library/item/35", "/search", "/library/opengraph-image-5qhz0e", "/ru/library/opengraph-image"]) {
       assert.equal(await unknownLibraryDataset(path, null, slugs), false, path);
     }
     assert.equal(await unknownLibraryDataset("/library/nosuch", "bogus_edition", slugs), false);

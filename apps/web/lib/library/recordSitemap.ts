@@ -45,10 +45,20 @@ export const datasetHasRecordSitemap = (dataset: string) => Boolean(homeDatasetT
  * A record the lists leave out, told by its slug (a sitemap entry has no name): the developers' tags
  * and a leading patch number ("10-2-7-timewalking-season-…"). Its page is `noindex`.
  */
-export function internalRecordSlug(slug: string) {
+export function internalRecordSlug(slug: string, type?: string) {
   const words = slug.replaceAll("-", " ");
-  return LIBRARY_INTERNAL_NAME.test(words) || /^\d{1,2} (?:\d{1,2}|x) /.test(words);
+  return LIBRARY_INTERNAL_NAME.test(words) || /^\d{1,2} (?:\d{1,2}|x) /.test(words) || Boolean(type && NOT_PLAYABLE_SLUGS[type]?.has(slug));
 }
+
+/**
+ * The classes and specializations that are not a player's choice (isInternalRecord tells them by
+ * game id, which a sitemap entry does not carry): the follower-dungeon classes, the levelling
+ * "Initial" specializations, the Adventurer's and the hunter pets'. No playable one shares a slug.
+ */
+const NOT_PLAYABLE_SLUGS: Record<string, ReadonlySet<string>> = {
+  class: new Set(["adventurer", "traveler"]),
+  specialization: new Set(["initial", "adventurer", "ferocity", "tenacity", "cunning"]),
+};
 
 export type RecordSitemapEntry = { id: string; type: string; slug: string; slugRu?: string | null; updatedAt?: string };
 
@@ -63,7 +73,7 @@ const urlOf = (path: string) => `${siteOrigin}${path}`;
  */
 export function recordSitemapUrls(entries: readonly RecordSitemapEntry[], lang: Lang): string[] {
   return entries.flatMap((entry) => {
-    if (internalRecordSlug(entry.slug) || (lang === "ru" && !entry.slugRu)) return [];
+    if (internalRecordSlug(entry.slug, entry.type) || (lang === "ru" && !entry.slugRu)) return [];
     const en = urlOf(libraryRecordPath("en", entry.type, entry.id, entry.slug));
     const ru = entry.slugRu ? urlOf(libraryRecordPath("ru", entry.type, entry.id, entry.slugRu)) : null;
     const alternates = [
