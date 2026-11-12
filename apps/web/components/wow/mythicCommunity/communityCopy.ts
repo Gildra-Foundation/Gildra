@@ -78,7 +78,7 @@ const en = {
   },
   run: {
     title: (dungeon: string, level: number) => `${dungeon} +${level}`,
-    metaTitle: (dungeon: string, level: number) => `${dungeon} +${level} — Mythic+ run — Gildra`,
+    metaTitle: (dungeon: string, level: number) => `${dungeon} +${level} — Mythic+ run — WowArcana`,
     metaDescription: (dungeon: string, level: number, time: string) => `A timed ${dungeon} +${level} in ${time}: the group, specs, hero talents, item level and boss timings.`,
     key: "Key",
     timed: (chests: number) => (chests ? `Timed +${chests}` : "Over time"),
@@ -209,7 +209,7 @@ const ru: CommunityCopy = {
   },
   run: {
     title: (dungeon, level) => `${dungeon} +${level}`,
-    metaTitle: (dungeon, level) => `${dungeon} +${level} — забег Mythic+ — Gildra`,
+    metaTitle: (dungeon, level) => `${dungeon} +${level} — забег Mythic+ — WowArcana`,
     metaDescription: (dungeon, level, time) => `${dungeon} +${level} в таймер за ${time}: группа, специализации, героические таланты, уровень предметов и время боссов.`,
     key: "Ключ",
     timed: (chests) => (chests ? `В таймер +${chests}` : "Не в таймер"),

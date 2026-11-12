@@ -13,8 +13,8 @@ export const championPage = definePage<{ slug: string }, Record<never, never>, L
   load: ({ params, lang }) => getLeagueChampion(params.slug, game.apiLocale[lang]),
   meta: ({ data: champion }) =>
     champion
-      ? { title: `${champion.name} — League of Legends Database — Gildra`, description: clean(champion.blurb) }
-      : { title: "Champion not found — Gildra" },
+      ? { title: `${champion.name} — League of Legends Database — WowArcana`, description: clean(champion.blurb) }
+      : { title: "Champion not found — WowArcana" },
   page: ({ params }) => ({
     id: "lol/champion",
     game: "league-of-legends",

@@ -6,7 +6,7 @@ import { withPageOpenGraph } from "@/lib/seo/metadata";
 // pages shipped the client code of all three with each of them.
 const path = "/wow/raids/the-dreamrift";
 export const metadata: Metadata = withPageOpenGraph("en", {
-  title: "The Dreamrift Raid Guide — Gildra",
+  title: "The Dreamrift Raid Guide — WowArcana",
   description: "Chimaerus Normal and Heroic guide: realm groups, positioning, minions and abilities for your specialization.",
   alternates: { canonical: path, languages: { en: "/wow/raids/the-dreamrift", ru: "/ru/wow/raids/the-dreamrift", "x-default": "/wow/raids/the-dreamrift" } },
 });

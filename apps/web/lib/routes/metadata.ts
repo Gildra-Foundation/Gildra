@@ -15,56 +15,56 @@ type SectionMeta = { en: Words; ru: Words; noindex?: true };
 
 const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   wow: {
-    en: { title: "World of Warcraft — Gildra", description: "Your World of Warcraft command center: Mythic+ routes, raid bosses, tier lists, the game library and tools." },
-    ru: { title: "World of Warcraft — хаб Gildra", description: "Ваш командный центр World of Warcraft: маршруты Mythic+, боссы рейдов, тир-листы, библиотека игры и инструменты." },
+    en: { title: "World of Warcraft — WowArcana", description: "Your World of Warcraft command center: Mythic+ routes, raid bosses, tier lists, the game library and tools." },
+    ru: { title: "World of Warcraft — хаб WowArcana", description: "Ваш командный центр World of Warcraft: маршруты Mythic+, боссы рейдов, тир-листы, библиотека игры и инструменты." },
   },
   raids: {
-    en: { title: "World of Warcraft Raid Journal — Gildra", description: "Midnight raids: bosses, their abilities, the battle plan on the map and what every role does on Normal and Heroic." },
-    ru: { title: "Рейдовый журнал World of Warcraft — Gildra", description: "Рейды Midnight: боссы, их способности, план боя на карте и задачи каждой роли на обычной и героической сложности." },
+    en: { title: "World of Warcraft Raid Journal — WowArcana", description: "Midnight raids: bosses, their abilities, the battle plan on the map and what every role does on Normal and Heroic." },
+    ru: { title: "Рейдовый журнал World of Warcraft — WowArcana", description: "Рейды Midnight: боссы, их способности, план боя на карте и задачи каждой роли на обычной и героической сложности." },
   },
   mythicPlus: {
-    en: { title: "Midnight Mythic+ — Gildra", description: "Choose a dungeon and open its route: pulls, bosses, timer, party composition and tactical assignments." },
-    ru: { title: "Mythic+ Midnight — Gildra", description: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения." },
+    en: { title: "Midnight Mythic+ — WowArcana", description: "Choose a dungeon and open its route: pulls, bosses, timer, party composition and tactical assignments." },
+    ru: { title: "Mythic+ Midnight — WowArcana", description: "Выберите подземелье и откройте маршрут: пулы, боссы, таймер, состав группы и тактические назначения." },
   },
   mythicPlusMeta: {
-    en: { title: "Mythic+ Meta: Top Specs This Week — Gildra", description: "Which specializations appear in the top 2000 Mythic+ keys of the week, by role, with week-on-week change and the season trend. Data from mythicstats.com." },
-    ru: { title: "Мета Mythic+: лучшие специализации недели — Gildra", description: "Какие специализации встречаются в топ-2000 ключей Mythic+ этой недели — по ролям, с изменением к прошлой неделе и динамикой сезона. Данные mythicstats.com." },
+    en: { title: "Mythic+ Meta: Top Specs This Week — WowArcana", description: "Which specializations appear in the top 2000 Mythic+ keys of the week, by role, with week-on-week change and the season trend. Data from mythicstats.com." },
+    ru: { title: "Мета Mythic+: лучшие специализации недели — WowArcana", description: "Какие специализации встречаются в топ-2000 ключей Mythic+ этой недели — по ролям, с изменением к прошлой неделе и динамикой сезона. Данные mythicstats.com." },
   },
   mythicPlusComps: {
-    en: { title: "Mythic+ Team Compositions — Gildra", description: "The five-spec groups behind the highest timed Mythic+ keys of the season, who to bring next to your specs and which specs team up." },
-    ru: { title: "Составы групп Mythic+ — Gildra", description: "Группы из пяти специализаций, которые закрывают самые высокие ключи Mythic+ сезона, кого взять к вашим специализациям и какие пары работают вместе." },
+    en: { title: "Mythic+ Team Compositions — WowArcana", description: "The five-spec groups behind the highest timed Mythic+ keys of the season, who to bring next to your specs and which specs team up." },
+    ru: { title: "Составы групп Mythic+ — WowArcana", description: "Группы из пяти специализаций, которые закрывают самые высокие ключи Mythic+ сезона, кого взять к вашим специализациям и какие пары работают вместе." },
   },
   mythicPlusStats: {
-    en: { title: "Mythic+ Season Stats: Rating Cutoffs — Gildra", description: "Top 0.1%, 1% and 10% Mythic+ rating cutoffs in every region, rating milestones, and the specs and dungeons of the season's top keys." },
-    ru: { title: "Статистика сезона Mythic+: пороги рейтинга — Gildra", description: "Пороги рейтинга Mythic+ топ-0,1%, 1% и 10% по регионам, рубежи рейтинга, специализации и подземелья лучших ключей сезона." },
+    en: { title: "Mythic+ Season Stats: Rating Cutoffs — WowArcana", description: "Top 0.1%, 1% and 10% Mythic+ rating cutoffs in every region, rating milestones, and the specs and dungeons of the season's top keys." },
+    ru: { title: "Статистика сезона Mythic+: пороги рейтинга — WowArcana", description: "Пороги рейтинга Mythic+ топ-0,1%, 1% и 10% по регионам, рубежи рейтинга, специализации и подземелья лучших ключей сезона." },
   },
   mythicPlusRoutes: {
-    en: { title: "Mythic+ Route Finder — Gildra", description: "Find the top timed Mythic+ keys played by groups like yours, by dungeon and key level, and open each run." },
-    ru: { title: "Поиск маршрутов Mythic+ — Gildra", description: "Лучшие закрытые ключи Mythic+ групп, похожих на вашу, по подземелью и уровню ключа — со ссылкой на каждый забег." },
+    en: { title: "Mythic+ Route Finder — WowArcana", description: "Find the top timed Mythic+ keys played by groups like yours, by dungeon and key level, and open each run." },
+    ru: { title: "Поиск маршрутов Mythic+ — WowArcana", description: "Лучшие закрытые ключи Mythic+ групп, похожих на вашу, по подземелью и уровню ключа — со ссылкой на каждый забег." },
   },
   mythicPlusLeaderboard: {
-    en: { title: "Mythic+ Leaderboard: Top Players by Rating — Gildra", description: "The strongest Mythic+ characters of Europe, the Americas, Korea and Taiwan by rating, with filters by role, class, specialization and realm." },
-    ru: { title: "Рейтинг игроков Mythic+ — Gildra", description: "Сильнейшие персонажи Mythic+ Европы, Америки, Кореи и Тайваня по рейтингу — с фильтрами по роли, классу, специализации и серверу." },
+    en: { title: "Mythic+ Leaderboard: Top Players by Rating — WowArcana", description: "The strongest Mythic+ characters of Europe, the Americas, Korea and Taiwan by rating, with filters by role, class, specialization and realm." },
+    ru: { title: "Рейтинг игроков Mythic+ — WowArcana", description: "Сильнейшие персонажи Mythic+ Европы, Америки, Кореи и Тайваня по рейтингу — с фильтрами по роли, классу, специализации и серверу." },
   },
   dungeons: {
-    en: { title: "Midnight Dungeons — Gildra", description: "Dungeons of the current season: route, bosses, timer and strategy for each." },
-    ru: { title: "Подземелья Midnight — Gildra", description: "Подземелья текущего сезона: маршрут, боссы, таймер и тактика для каждого." },
+    en: { title: "Midnight Dungeons — WowArcana", description: "Dungeons of the current season: route, bosses, timer and strategy for each." },
+    ru: { title: "Подземелья Midnight — WowArcana", description: "Подземелья текущего сезона: маршрут, боссы, таймер и тактика для каждого." },
   },
   lairs: {
-    en: { title: "Midnight Season 2 Lairs and World Bosses — Gildra", description: "Midnight Season 2 Lair and world bosses: locations, abilities, difficulty and loot." },
-    ru: { title: "Логова и мировые боссы Midnight Сезон 2 — Gildra", description: "Логово и мировые боссы Midnight Сезон 2: где найти, способности, сложность и добыча." },
+    en: { title: "Midnight Season 2 Lairs and World Bosses — WowArcana", description: "Midnight Season 2 Lair and world bosses: locations, abilities, difficulty and loot." },
+    ru: { title: "Логова и мировые боссы Midnight Сезон 2 — WowArcana", description: "Логово и мировые боссы Midnight Сезон 2: где найти, способности, сложность и добыча." },
   },
   classes: {
-    en: { title: "WoW Classes and Specializations — Gildra", description: "Every Midnight class and specialization: role, Mythic+ tier, hero trees and top players' builds." },
-    ru: { title: "Классы и специализации WoW — Gildra", description: "Все классы и специализации Midnight: роль, тир в Mythic+, героические таланты и билды лучших игроков." },
+    en: { title: "WoW Classes and Specializations — WowArcana", description: "Every Midnight class and specialization: role, Mythic+ tier, hero trees and top players' builds." },
+    ru: { title: "Классы и специализации WoW — WowArcana", description: "Все классы и специализации Midnight: роль, тир в Mythic+, героические таланты и билды лучших игроков." },
   },
   season2: {
-    en: { title: "WoW Midnight Season 2 Guide — Gildra", description: "What Midnight Season 2 brings: Mythic+ dungeons, raids, delves and more." },
-    ru: { title: "WoW Midnight Сезон 2 — гайд Gildra", description: "Что принёс Midnight Сезон 2: подземелья Mythic+, рейды, вылазки и другое." },
+    en: { title: "WoW Midnight Season 2 Guide — WowArcana", description: "What Midnight Season 2 brings: Mythic+ dungeons, raids, delves and more." },
+    ru: { title: "WoW Midnight Сезон 2 — гайд WowArcana", description: "Что принёс Midnight Сезон 2: подземелья Mythic+, рейды, вылазки и другое." },
   },
   whatsNew: {
-    en: { title: "What's New on Gildra — World of Warcraft Tools", description: "What changed on Gildra for World of Warcraft players: new pages, tools and data, newest first." },
-    ru: { title: "Что нового на Gildra — инструменты World of Warcraft", description: "Что изменилось на Gildra для игроков World of Warcraft: новые страницы, инструменты и данные, сначала свежее." },
+    en: { title: "What's New on WowArcana — World of Warcraft Tools", description: "What changed on WowArcana for World of Warcraft players: new pages, tools and data, newest first." },
+    ru: { title: "Что нового на WowArcana — инструменты World of Warcraft", description: "Что изменилось на WowArcana для игроков World of Warcraft: новые страницы, инструменты и данные, сначала свежее." },
   },
 };
 

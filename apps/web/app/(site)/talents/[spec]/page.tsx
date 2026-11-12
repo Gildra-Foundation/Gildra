@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const theme = getTalentSpecTheme((await params).spec);
   if (!theme) return {};
   return {
-    title: `${theme.specName} ${theme.className} Talent Calculator — Gildra`,
+    title: `${theme.specName} ${theme.className} Talent Calculator — WowArcana`,
     description: `${theme.specName} ${theme.className} talent calculator for Midnight: class, hero and specialization trees with in-game string import and export.`,
     alternates: pairedAlternates("en", `/talents/${theme.slug}`),
     robots: { index: false, follow: true },

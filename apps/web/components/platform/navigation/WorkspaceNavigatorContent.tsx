@@ -54,7 +54,7 @@ function MapArt({ base, lang }: { base: string; lang: Lang }) {
   return <span className={toolbarStyles.mapArt}>
     {[0, 1].map(y => [0, 1].map(x =>
       // eslint-disable-next-line @next/next/no-img-element -- map tiles: an exact pixel grid, no optimizer
-      <img key={`${x}-${y}`} src={`${root}/${x}_${y}.webp`} alt="" width={256} height={256} decoding="async" style={{ left: `${x * 53.34}%`, top: `${y * 80}%` }} />))}
+      <img key={`${x}-${y}`} src={`${root}/${x}_${y}.webp`} alt="" width={256} height={256} loading="lazy" decoding="async" style={{ left: `${x * 53.34}%`, top: `${y * 80}%` }} />))}
   </span>;
 }
 

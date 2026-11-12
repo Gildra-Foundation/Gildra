@@ -15,7 +15,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const encounter = getMidnightLairEncounter((await params).slug);
-  return encounter ? withPageOpenGraph("ru", { title: `${wowSourceName(encounter.name, "ru")} — Midnight · Сезон 2 — Gildra`, description: `${wowSourceName(encounter.name, "ru")}: где найти, способности, сложность и добыча — Midnight · Сезон 2.`, alternates: pairedAlternates("ru", `/wow/lairs/${encounter.slug}`) }) : {};
+  return encounter ? withPageOpenGraph("ru", { title: `${wowSourceName(encounter.name, "ru")} — Midnight · Сезон 2 — WowArcana`, description: `${wowSourceName(encounter.name, "ru")}: где найти, способности, сложность и добыча — Midnight · Сезон 2.`, alternates: pairedAlternates("ru", `/wow/lairs/${encounter.slug}`) }) : {};
 }
 
 export default async function BossPage({ params }: { params: Promise<{ slug: string }> }) {

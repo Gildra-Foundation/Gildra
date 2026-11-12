@@ -38,12 +38,15 @@ const palette = {
   accentStrong: "#f0b55a",
 };
 
-const publicFile = (path: string) => join(process.cwd(), "public", path.replace(/^\//, ""));
+// Opaque to the bundler on purpose: traced, "public" + a variable matches every file under
+// public/ (129 000 with the map tiles), and any file added or removed there made the next
+// build compile for 12–15 minutes instead of half a minute.
+const publicFile = (path: string) => join(/* turbopackIgnore: true */ process.cwd(), "public", path.replace(/^\//, ""));
 
 const fonts = Promise.all([
-  readFile(publicFile("/assets/og/fonts/alegreya-500.ttf")),
-  readFile(publicFile("/assets/og/fonts/inter-400.ttf")),
-  readFile(publicFile("/assets/og/fonts/inter-600.ttf")),
+  readFile(/* turbopackIgnore: true */ publicFile("/assets/og/fonts/alegreya-500.ttf")),
+  readFile(/* turbopackIgnore: true */ publicFile("/assets/og/fonts/inter-400.ttf")),
+  readFile(/* turbopackIgnore: true */ publicFile("/assets/og/fonts/inter-600.ttf")),
 ]).then(([display, ui, uiStrong]) => [
   { name: "Alegreya", data: display, weight: 500 as const, style: "normal" as const },
   { name: "Inter", data: ui, weight: 400 as const, style: "normal" as const },

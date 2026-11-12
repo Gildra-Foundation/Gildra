@@ -82,8 +82,8 @@
   gap: 10px;
   min-height: var(--atlas-control-height);
   color: var(--atlas-text-strong);
-  font: 700 var(--atlas-text-title) / 1 var(--atlas-font-display);
-  letter-spacing: .2em;
+  font: 700 var(--atlas-text-title) / 1 var(--atlas-font-brand);
+  letter-spacing: .14em;
   text-decoration: none;
 }
 /* The wordmark is forged: white into the crest's gold. */

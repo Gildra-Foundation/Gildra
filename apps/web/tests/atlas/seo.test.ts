@@ -114,7 +114,7 @@ describe("seo: page metadata (2026-11-06 audit)", async () => {
 
   it("tool pages are titled with the game and the task, not one word", () => {
     for (const titles of Object.values(seoTitles)) for (const title of Object.values(titles)) {
-      assert.ok(title.length >= 25 && title.length <= 65 && title.endsWith("— Gildra"), title);
+      assert.ok(title.length >= 25 && title.length <= 65 && title.endsWith("— WowArcana"), title);
     }
     for (const profession of professions) for (const locale of ["en", "ru"] as const) {
       const title = professionSeoTitle(locale, profession.name[locale]);

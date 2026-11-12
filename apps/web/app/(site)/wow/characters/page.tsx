@@ -10,7 +10,7 @@ import { BATTLE_NET_REGIONS, getBattleNetPreferredRegion } from "@/lib/wow/battl
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "WoW Characters — Gildra",
+  title: "WoW Characters — WowArcana",
   description: "Browse World of Warcraft characters connected to your Battle.net account.",
   alternates: { canonical: "/wow/characters", languages: { en: "/wow/characters", ru: "/ru/wow/characters", "x-default": "/wow/characters" } },
   robots: { index: false, follow: true },

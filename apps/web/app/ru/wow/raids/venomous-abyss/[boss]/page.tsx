@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ boss: str
   if (!boss) return {};
   const bossName = lt(boss.name, "ru");
   return {
-    title: `${bossName} — гайд по боссу Gildra`,
+    title: `${bossName} — гайд по боссу WowArcana`,
     description: `${bossName} — гайд по боссу «Отравленной бездны»: способности из журнала приключений, тактика, фазы и награды по сложностям.`,
     alternates: {
       canonical: `/ru/wow/raids/venomous-abyss/${slug}`,

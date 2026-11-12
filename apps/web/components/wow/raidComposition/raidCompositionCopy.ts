@@ -7,7 +7,7 @@ export const raidCompositionCopy = {
   en: {
     title: "Raid Composition Planner",
     lede: "Fill the groups and see which buffs, cooldowns and dispels your raid brings.",
-    metaTitle: "Raid Composition Planner — Gildra",
+    metaTitle: "Raid Composition Planner — WowArcana",
     metaDescription: "Plan a Mythic, Heroic or Normal raid roster for Midnight: raid buffs, Bloodlust, battle res, dispels, raid cooldowns and armor types.",
     rosterTitle: "Roster",
     coverageTitle: "Coverage",
@@ -46,7 +46,7 @@ export const raidCompositionCopy = {
   ru: {
     title: "Планировщик состава рейда",
     lede: "Соберите группы и посмотрите, какие баффы, кулдауны и рассеивания есть в рейде.",
-    metaTitle: "Планировщик состава рейда — Gildra",
+    metaTitle: "Планировщик состава рейда — WowArcana",
     metaDescription: "Состав эпохального, героического или обычного рейда Midnight: баффы, Жажда крови, боевое воскрешение, рассеивание, рейдовые кулдауны и типы брони.",
     rosterTitle: "Состав",
     coverageTitle: "Что есть в рейде",

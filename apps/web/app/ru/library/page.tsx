@@ -7,7 +7,7 @@ import { getLibraryLandingData, requireCatalogSession } from "@/lib/library/serv
 import { withPageOpenGraph } from "@/lib/seo/metadata";
 
 const baseMetadata: Metadata = {
-  title: "Библиотека данных World of Warcraft — Gildra",
+  title: "Библиотека данных World of Warcraft — WowArcana",
   description: "Предметы, заклинания, маунты, боссы и задания World of Warcraft с игровыми подсказками, иконками и связями.",
 };
 

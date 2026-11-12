@@ -5,15 +5,15 @@ import type { Lang as Locale } from "@/lib/i18n-paths";
 
 const words = {
   en: {
-    classTitle: (name: string) => `${name} — WoW Midnight class — Gildra`,
+    classTitle: (name: string) => `${name} — WoW Midnight class — WowArcana`,
     classDescription: (name: string) => `${name} in Midnight: specializations, roles, Mythic+ tiers and hero talent trees.`,
-    specTitle: (spec: string, cls: string) => `${spec} ${cls} — Midnight builds and tier — Gildra`,
+    specTitle: (spec: string, cls: string) => `${spec} ${cls} — Midnight builds and tier — WowArcana`,
     specDescription: (spec: string, cls: string) => `${spec} ${cls}: tier in every list, top players' talent builds, hero trees, trinkets and weapons.`,
   },
   ru: {
-    classTitle: (name: string) => `${name} — класс WoW Midnight — Gildra`,
+    classTitle: (name: string) => `${name} — класс WoW Midnight — WowArcana`,
     classDescription: (name: string) => `${name} в Midnight: специализации, роли, тиры в Mythic+ и героические таланты.`,
-    specTitle: (spec: string, cls: string) => `${spec} (${cls}) — билды и тир Midnight — Gildra`,
+    specTitle: (spec: string, cls: string) => `${spec} (${cls}) — билды и тир Midnight — WowArcana`,
     specDescription: (spec: string, cls: string) => `${spec} (${cls}): место в тир-листах, билды лучших игроков, героические таланты, аксессуары и оружие.`,
   },
 } as const;

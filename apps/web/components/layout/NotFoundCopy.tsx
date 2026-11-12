@@ -38,7 +38,7 @@ function useNotFoundCopy(locale?: Locale) {
 
 export function NotFoundTitle({ locale }: { locale?: Locale }) {
   const { text } = useNotFoundCopy(locale);
-  useEffect(() => { document.title = `${text.title} — Gildra`; }, [text.title]);
+  useEffect(() => { document.title = `${text.title} — WowArcana`; }, [text.title]);
   return <>{text.title}</>;
 }
 

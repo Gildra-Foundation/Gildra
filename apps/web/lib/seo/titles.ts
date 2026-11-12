@@ -6,14 +6,14 @@ import type { Lang as Locale } from "@/lib/i18n-paths";
  * does, so results are not a bare word. Headings stay as they are.
  */
 export const seoTitles = {
-  professions: { en: "WoW Professions: Leveling and Profitable Crafts — Gildra", ru: "Профессии WoW: прокачка и выгодные рецепты — Gildra" },
-  auction: { en: "WoW Auction House Prices and Market — Gildra", ru: "Аукцион WoW: цены и рынок — Gildra" },
-  transmog: { en: "WoW Transmog Studio: Try On Appearances — Gildra", ru: "Трансмогрификация WoW: примерочная обликов — Gildra" },
+  professions: { en: "WoW Professions: Leveling and Profitable Crafts — WowArcana", ru: "Профессии WoW: прокачка и выгодные рецепты — WowArcana" },
+  auction: { en: "WoW Auction House Prices and Market — WowArcana", ru: "Аукцион WoW: цены и рынок — WowArcana" },
+  transmog: { en: "WoW Transmog Studio: Try On Appearances — WowArcana", ru: "Трансмогрификация WoW: примерочная обликов — WowArcana" },
 } satisfies Record<string, Record<Locale, string>>;
 
-/** "Alchemy Leveling Guide 1–100 (Midnight) — Gildra" / "Алхимия: прокачка 1–100 в Midnight — Gildra". */
+/** "Alchemy Leveling Guide 1–100 (Midnight) — WowArcana" / "Алхимия: прокачка 1–100 в Midnight — WowArcana". */
 export const professionSeoTitle = (locale: Locale, name: string) =>
-  locale === "ru" ? `${name}: прокачка 1–100 в Midnight — Gildra` : `${name} Leveling Guide 1–100 (Midnight) — Gildra`;
+  locale === "ru" ? `${name}: прокачка 1–100 в Midnight — WowArcana` : `${name} Leveling Guide 1–100 (Midnight) — WowArcana`;
 
 /** Search descriptions of tool pages whose on-page lede is one short line. */
 export const seoDescriptions = {

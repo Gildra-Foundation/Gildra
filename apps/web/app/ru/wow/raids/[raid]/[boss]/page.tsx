@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const path = `/ru/wow/raids/${raid.slug}/${boss.slug}`;
   const enPath = `/wow/raids/${raid.slug}/${boss.slug}`;
   return {
-    title: `${boss.nameRu} — рейдовый гайд Midnight — Gildra`,
+    title: `${boss.nameRu} — рейдовый гайд Midnight — WowArcana`,
     description: `${boss.nameRu} — босс рейда Midnight · Сезон 1: план боя, механики и способности.`,
     alternates: { canonical: path, languages: { en: enPath, ru: path, "x-default": enPath } },
   };

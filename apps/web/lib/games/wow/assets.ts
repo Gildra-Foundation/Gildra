@@ -161,6 +161,20 @@ export function talentAbilityIcon(ability: AbilityIconCandidate, talentData?: Ta
   return choices.find((choice) => keys.has(normalizedAbilityName(choice.name)) && choice.iconUrl && !choice.iconFallback)?.iconUrl ?? null;
 }
 
+/** Game interface textures used as small decorations of the home page: role icons, chapter marks,
+ * a flourish (provenance: /assets/wow/ui/home/SOURCE.md). */
+export const WOW_UI_TEXTURES = {
+  roles: { tank: "/assets/wow/ui/home/role-tank.webp", healer: "/assets/wow/ui/home/role-healer.webp", dps: "/assets/wow/ui/home/role-dps.webp" },
+  marks: {
+    mythic: "/assets/wow/ui/home/mark-mythic.webp",
+    raids: "/assets/wow/ui/home/mark-raids.webp",
+    hero: "/assets/wow/ui/home/mark-classes.webp",
+    economy: "/assets/wow/ui/home/mark-economy.webp",
+    world: "/assets/wow/ui/home/mark-world.webp",
+  },
+  flourish: "/assets/wow/ui/home/break.webp",
+} as const;
+
 /** Emblems of the game versions in the top strip, cut from the client's shop
  * product logos (provenance: /assets/wow/versions/SOURCE.md). */
 export const WOW_VERSION_EMBLEMS = {

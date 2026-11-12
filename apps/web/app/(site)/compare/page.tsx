@@ -4,7 +4,7 @@ import { catalogGames, isAvailableKind, isCatalogGame, type ComparisonKind } fro
 import { getPlatformHomeData } from "@/lib/platform/home/repository";
 import { hiddenForMvp } from "@/lib/mvp";
 
-export const metadata: Metadata = { title: "Comparison Lab — Gildra", description: "Compare database items inside a single game catalog." };
+export const metadata: Metadata = { title: "Comparison Lab — WowArcana", description: "Compare database items inside a single game catalog." };
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ game?: string; kind?: string }> }) {
   // Hidden for the WoW-only MVP: answers 404 until the flag in lib/mvp.ts is flipped.
