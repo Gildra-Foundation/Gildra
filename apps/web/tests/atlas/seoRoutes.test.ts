@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { bracketOfSlug, legacyTierMode, restOfQuery, tierModeMeta, tierModePath, tierModePaths } from "../../components/blocks/wow/tierWorkspace/tierModes.ts";
 import { PVP_BRACKETS } from "../../components/blocks/wow/tierWorkspace/tierSourceKeys.ts";
-import { entriesHaveLocales, homeDatasetType, isRecordShard, recordSitemapShards, recordSitemapUrls, requestShards } from "../../lib/library/recordSitemap.ts";
+import { datasetHasRecordSitemap, entriesHaveLocales, homeDatasetType, internalRecordSlug, isRecordShard, recordSitemapShards, recordSitemapUrls, requestShards } from "../../lib/library/recordSitemap.ts";
 import { specLinkTargets } from "../../components/wow/shared/relatedLinksCopy.ts";
 import { talentSpecThemes } from "../../lib/talentSpecThemes.ts";
 import { midnightSpecializations } from "../../lib/data/wow/specializations.ts";
@@ -66,6 +66,19 @@ describe("library record sitemaps", () => {
     assert.equal(homeDatasetType("items"), "item");
     assert.equal(homeDatasetType("npcs"), "creature");
     assert.equal(homeDatasetType("weapons"), undefined);
+  });
+
+  it("datasets hidden from players and the client's bookkeeping records stay out", () => {
+    assert.ok(datasetHasRecordSitemap("items") && datasetHasRecordSitemap("achievements"));
+    for (const hidden of ["quest-reward-packages", "ui-maps", "weapons", "nosuch"]) assert.ok(!datasetHasRecordSitemap(hidden), hidden);
+    for (const slug of ["10-2-7-timewalking-season-artifact-cloak-haste", "12-x-professions-tracker", "conversation-dnt", "test-item", "zzold-sword"]) assert.ok(internalRecordSlug(slug), slug);
+    for (const slug of ["battle-horn", "temple-of-elune", "1000-needles", "thunderfury-blessed-blade-of-the-windseeker", "7th-legion-battle-standard"]) assert.ok(!internalRecordSlug(slug), slug);
+    const urls = recordSitemapUrls([
+      { id: "00000000-0000-4000-8000-000000000001", type: "currency", slug: "10-2-7-timewalking-season-artifact-cloak-haste", slugRu: null },
+      { id: "00000000-0000-4000-8000-000000000002", type: "currency", slug: "honor", slugRu: "очки-чести" },
+    ], "en");
+    assert.equal(urls.length, 1);
+    assert.match(urls[0], /\/library\/currencies\/00000000-0000-4000-8000-000000000002\/honor</);
   });
 
   it("English lists every record, Russian only records with a Russian slug; each names its twins", () => {

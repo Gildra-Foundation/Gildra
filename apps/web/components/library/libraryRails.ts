@@ -26,6 +26,8 @@ const RULES: Record<string, RailRule[]> = {
   gems: [{ id: "gem", label: { ru: "Цвет и характеристика", en: "Colour and stat" }, pick: (category) => category.parentPath === "item-types/gem" }],
   consumables: [{ id: "consumable", label: { ru: "Вид", en: "Kind" }, pick: (category) => category.parentPath === "item-types/consumable" }],
   "trade-goods": [{ id: "trade", label: { ru: "Вид", en: "Kind" }, pick: (category) => category.parentPath === "item-types/trade-goods" }],
+  // The game's own achievement categories (General, Quests, Dungeons & Raids and their parts).
+  achievements: [{ id: "category", label: { ru: "Категория", en: "Category" }, pick: (category) => category.facet === "category" && category.type === "achievement", limit: 400 }],
 };
 
 /** Datasets whose records are mostly looked at by their icon (gems, collections): square tray tiles; the rest is a table. */

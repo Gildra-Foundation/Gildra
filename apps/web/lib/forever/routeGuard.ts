@@ -20,10 +20,22 @@ async function recordIds(type: ForeverType) {
   return pending;
 }
 
+/** The professions of data/wow/forever/professions/catalog.json (a test keeps the two in step; the catalog itself is too large to load here). */
+export const FOREVER_PROFESSION_SLUGS = ["alchemy", "blacksmithing", "enchanting", "engineering", "leatherworking", "tailoring", "herbalism", "mining", "skinning", "cooking", "first-aid", "fishing"];
+
 /** Check before the loading shell streams, so unknown records/classes get a real HTTP 404. */
 export async function unknownForeverRoute(pathname: string, ids = recordIds): Promise<boolean> {
   const classRoute = /^(?:\/ru)?\/wow\/forever\/(?:classes|talent-calc)\/([^/]+)\/?$/.exec(pathname);
   if (classRoute) return !classes.has(classRoute[1] as typeof foreverClasses[number]["slug"]);
+  // A profession and one of its recipes (the recipe pages share their ids with the library's recipes).
+  const craft = /^(?:\/ru)?\/wow\/forever\/professions\/([^/]+)(?:\/([^/]+))?\/?$/.exec(pathname);
+  if (craft) {
+    if (!FOREVER_PROFESSION_SLUGS.includes(craft[1])) return true;
+    if (craft[2] === undefined) return false;
+    if (!/^[1-9]\d{0,9}$/.test(craft[2])) return true;
+    try { return !(await ids("recipe")).has(Number(craft[2])); }
+    catch { return false; }
+  }
   const record = /^(?:\/ru)?\/wow\/forever\/library\/([^/]+)\/([^/]+)\/?$/.exec(pathname);
   if (!record) return false;
   if (!isForeverType(record[1]) || !/^[1-9]\d{0,9}$/.test(record[2])) return true;

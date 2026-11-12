@@ -1,6 +1,7 @@
 import { siteOrigin, xmlEscape, xmlResponse } from "@/lib/sitemap";
 import { getLibraryDatasets } from "@/lib/api/client";
 import { runtimeFlags } from "@/lib/flags";
+import { LIBRARY_HIDDEN_DATASETS } from "@/lib/library/recordPath";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export async function GET() {
   if (!runtimeFlags().catalogPublic) return xmlResponse(EMPTY);
   let slugs: string[];
   try {
-    slugs = (await getLibraryDatasets("en_US")).filter((dataset) => dataset.entityCount > 0).map((dataset) => dataset.slug);
+    slugs = (await getLibraryDatasets("en_US")).filter((dataset) => dataset.entityCount > 0 && !LIBRARY_HIDDEN_DATASETS.has(dataset.slug)).map((dataset) => dataset.slug);
   } catch (error) {
     console.error("library sitemap unavailable", error);
     // A temporary failure: crawlers keep the last good copy and retry.
