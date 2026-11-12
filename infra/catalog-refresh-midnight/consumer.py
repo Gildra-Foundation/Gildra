@@ -355,6 +355,12 @@ def consume(base=BASE, state=STATE, binary=BIN):
             if not re.fullmatch(r'12\.\d+\.\d+\.\d+', version):
                 raise ValueError('current live build is outside Midnight; operator review required')
             resume = resume_args(resume_record(run, version))
+            # Battle.net enrichment shares one hourly quota with the live site.
+            pace = os.environ.get('MIDNIGHT_ENRICHMENT_REQUESTS_PER_HOUR', '').strip()
+            if pace:
+                if not pace.isdigit() or int(pace) <= 0:
+                    raise ValueError('MIDNIGHT_ENRICHMENT_REQUESTS_PER_HOUR must be a positive integer')
+                resume = ['-enrichment-requests-per-hour', pace] + resume
             started = time.time()
             run.run([str(binary / 'catalog-pipeline'), '-mode', 'apply', '-trigger', 'schedule',
                      '-product', 'wow', '-profile', 'retail-foundation', '-version', version,
