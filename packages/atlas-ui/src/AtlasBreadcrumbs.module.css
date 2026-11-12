@@ -38,6 +38,6 @@
    when the web font replaces the fallback (a trail that fits one line in Inter took two in the
    fallback: a 23 px jump of the whole page). The cut leaves room for the 44 px touch targets. */
 @media (max-width: 700px) {
-  .trail ol { max-height: 1.2rem; max-height: 1lh; row-gap: 20px; font-size: var(--atlas-text-label); clip-path: inset(-13px 0); }
+  .trail ol { max-height: 1.2rem; max-height: 1lh; row-gap: 24px; font-size: var(--atlas-text-label); clip-path: inset(-16px 0); }
 }
 .trail svg { width: 12px; height: 12px; color: var(--atlas-text-subtle); }
