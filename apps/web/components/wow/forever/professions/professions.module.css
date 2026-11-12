@@ -1,5 +1,5 @@
 /* atlas:strict */
-.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)); gap:var(--atlas-space-5); }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr)); gap:var(--atlas-space-5); }
 .card { display:flex; flex-direction:column; gap:var(--atlas-space-4); min-width:0; }
 .card h3 { margin:0; font:var(--atlas-weight-display) var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); }
 .card p, .text { margin:0; color:var(--atlas-text-muted); font-size:var(--atlas-text-body); line-height:var(--atlas-leading-body); }

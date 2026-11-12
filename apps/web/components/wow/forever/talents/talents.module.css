@@ -42,8 +42,9 @@
 .dialog { max-width: min(560px, calc(100vw - 24px)); }
 .detail { position: sticky; top: calc(var(--atlas-sticky-top) + 120px); padding: var(--atlas-space-4); border-left: 1px solid var(--atlas-line); min-width: 0; }
 .treeTabs { min-width: 0; }
-.treeTabs [role="tablist"] { flex-wrap: wrap; }
-.treeTabs [role="tab"] { flex: 1; min-width: 0; white-space: normal; overflow-wrap: anywhere; padding-inline: var(--atlas-space-2); }
+.treeTabs [role="tablist"] { flex-wrap: wrap; width: 100%; }
+/* Name over count, so "Marksmanship" and "Выживание" stay whole words in a third of a phone screen. */
+.treeTabs [role="tab"] { flex: 1; flex-direction: column; justify-content: center; gap: 0; min-width: 0; padding: var(--atlas-space-1) var(--atlas-space-1) var(--atlas-space-2); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); text-align: center; white-space: normal; }
 .dialogHead { display: flex; align-items: center; gap: var(--atlas-space-3); }
 .dialogHead img { flex-shrink: 0; }
 .dialogHead h2 { flex: 1; min-width: 0; margin: 0; font: var(--atlas-weight-display) var(--atlas-text-h3)/var(--atlas-leading-snug) var(--atlas-font-display); }

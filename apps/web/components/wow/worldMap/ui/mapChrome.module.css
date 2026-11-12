@@ -98,7 +98,7 @@
   display: grid;
   place-items: center;
   min-width: 0;
-  padding: 0 2px 9px;
+  padding: 0 0 9px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--era-accent) 34%, transparent);
   border-radius: 3px;

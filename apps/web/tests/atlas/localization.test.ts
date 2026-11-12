@@ -47,7 +47,7 @@ test("rotation matches spell IDs and preserves locale when saved English payload
   assert.equal(localized.abilities[0].name, "Название из источника");
   assert.equal(localized.abilities[0].spellId, ability.spellId);
   assert.equal(localized.abilities[0].id, ability.id);
-  assert.equal(localized.abilities[1].name, "Способность #102");
+  assert.equal(localized.abilities[1].name, "Source name");
   assert.equal(mergeRotationAbility(localized.abilities[0], ability).name, "Название из источника");
   assert.equal(preset.abilities[0].name, "Source name");
   const result = { dps: 1000, resourceLabel: "Rage", metrics: [], casts: [], rage: [], findings: [], cooldowns: [{ abilityId: ability.id, name: ability.name, uses: [0] }] } as unknown as RotationSimulationResult;

@@ -1257,8 +1257,10 @@
 .page[data-dungeon] .legacyDraft,
 .page[data-dungeon] :global([data-testid="dungeon-source-review"]) { border-radius: 12px; padding: var(--atlas-space-3) var(--atlas-space-4); margin: 0; }
 .page[data-dungeon] :global([data-testid="dungeon-source-review"]) > summary { min-height: 44px; cursor: pointer; display: list-item; align-content: center; }
-.page[data-dungeon] .mdtLoading { min-height: 940px; }
+/* The placeholder is as tall as the loaded route tool, so the links and the footer under it do not jump. */
+.page[data-dungeon] .mdtLoading { min-height: 1030px; }
 @media (max-width: 1100px) {
+  .page[data-dungeon] .mdtLoading { min-height: 1950px; }
   .page[data-dungeon] .intro { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: var(--atlas-space-4); }
   .page[data-dungeon] .routeControls { width: 100%; }
   .page[data-dungeon] .titleRow h1 { font-size: calc(var(--atlas-text-h2) * 1.25); }

@@ -136,6 +136,8 @@
 }
 
 .dungeonSelector .selectorMenu { width: min(520px, calc(100vw - 32px)); }
+/* The dungeon page's selectors are narrow: a long name takes two lines ("Рубиновые Омуты / Жизни", "Высокий / ключ") rather than "…". */
+.rubySelector .triggerCopy strong, .rubySelector .triggerCopy small { white-space: normal; }
 .keySelector .selectorMenu { width: 260px; }
 
 .optionGrid { display: grid; gap: 4px; }

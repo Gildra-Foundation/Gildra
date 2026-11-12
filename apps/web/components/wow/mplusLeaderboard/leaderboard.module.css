@@ -250,7 +250,8 @@ a.playerName:focus-visible { outline: 2px solid var(--material-light, var(--atla
 }
 .itemIcon img { display: block; inline-size: 100%; block-size: 100%; border-radius: 4px; }
 .itemText { display: grid; gap: var(--atlas-space-1); min-width: 0; }
-.itemName { overflow: hidden; color: var(--quality-color, var(--atlas-text-strong)); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+/* A long item name takes a second line instead of ending in "…" (Russian names rarely fit one). */
+.itemName { color: var(--quality-color, var(--atlas-text-strong)); font-weight: 600; line-height: var(--atlas-leading-snug); overflow-wrap: break-word; text-decoration: none; }
 .itemName:hover { text-decoration: underline; text-underline-offset: .2em; }
 .itemName:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
 
@@ -294,6 +295,11 @@ a.playerName:focus-visible { outline: 2px solid var(--material-light, var(--atla
   .rolePlaque { padding: 28px 28px 36px; }
   .rolePlaque > [data-mythic-hub-ornaments] { --mythic-ornament-width: 56px; }
   .ilvlCol { display: none; }
+}
+/* Three podiums side by side leave the leader's name some 50 px ("Andymue/rte"): the score goes under the name. */
+@media (min-width: 901px) and (max-width: 1100px) {
+  .leader { grid-template-columns: 22px minmax(0, 1fr); row-gap: var(--atlas-space-1); }
+  .leaderScore { grid-column: 2; padding-inline-start: calc(56px + var(--atlas-space-3)); }
 }
 @media (max-width: 1023px) { .heroHeader { max-width: 78%; } }
 @media (max-width: 900px) {

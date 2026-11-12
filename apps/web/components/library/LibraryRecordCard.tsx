@@ -65,15 +65,16 @@ export function LibraryRecordCard({ id, href, name, lang, layout, iconUrl, iconS
         </h3>
         {badge}
         {tray ? (description ? <p className={styles.description}>{description}</p> : null)
-          : sub.length ? <p className={styles.sub}>{sub.map((part, index) => <span key={index}>{index ? " · " : null}{part}</span>)}</p> : null}
+          : sub.length ? <p className={styles.sub}>{sub.map((part, index) => <span key={index}>{index ? " · " : null}{part}</span>)}</p> : null}
       </div>
-      <div className={styles.foot}>
+      {/* No rule over an empty footer: a record without facts and without a tooltip button ends at its name. */}
+      {(tray ? Boolean(qualityName || itemLevel) : facts.length > 0) || action ? <div className={styles.foot}>
         <p className={styles.facts}>
           {tray && (qualityName || itemLevel) ? <span className={styles.quality}>{[qualityName, itemLevel ? copy.levelShort(itemLevel) : null].filter(Boolean).join(" · ")}</span> : null}
           {tray ? null : facts.map((fact, index) => <span key={fact}>{index ? " · " : null}{fact}</span>)}
         </p>
         {action ? <div className={styles.action}>{action}</div> : null}
-      </div>
+      </div> : null}
     </li>
   );
 }

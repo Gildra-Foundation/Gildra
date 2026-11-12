@@ -44,7 +44,8 @@ export function localizeRotationCatalog(preset: RotationPreset, localized: Reado
   const gameLabels: Record<string, string> = {};
   const abilities = preset.abilities.map((ability) => {
     const local = ability.spellId ? localized.get(ability.spellId) : undefined;
-    if (!local) return lang === "ru" ? { ...ability, name: ability.spellId ? `${localeCopy[lang].ability} #${ability.spellId}` : localeCopy[lang].nameUnavailable, hint: "" } : ability;
+    // Without a confirmed Russian name the original English name stays, as everywhere else on the site.
+    if (!local) return lang === "ru" ? { ...ability, hint: "" } : ability;
     gameLabels[rotationLabelKey(ability.name)] = local.name;
     gameLabels[rotationLabelKey(ability.id)] = local.name;
     return { ...ability, name: local.name, hint: local.description || ability.hint };

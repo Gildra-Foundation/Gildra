@@ -46,7 +46,7 @@ a.run:focus-visible { outline: 2px solid var(--dungeon-accent, var(--atlas-accen
 
 /* ---------- Raids ---------- */
 .raids { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--atlas-space-4) var(--atlas-space-6); margin: 0; padding: 0; list-style: none; }
-.raid { display: grid; gap: var(--atlas-space-3); min-width: 0; }
+.raid { display: grid; align-content: start; gap: var(--atlas-space-3); min-width: 0; }
 .raidName { color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / 1.2 var(--atlas-font-display); text-decoration: none; }
 a.raidName:hover { color: var(--material-light, var(--atlas-accent-strong)); text-decoration: underline; text-underline-offset: 3px; }
 a.raidName:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }

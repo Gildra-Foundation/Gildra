@@ -1,5 +1,8 @@
 /* atlas:strict */
 .location { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-muted); font: 500 var(--atlas-text-small) / var(--atlas-leading-body) var(--atlas-font-ui); }
+/* Nine dungeons: three in a row (four left one card alone on the last row). */
+@media (min-width: 900px) { .nine.nine { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.afterFacts { margin-top: var(--atlas-space-3); }
 
 .journey { display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-4); }
 .pine { width: 96px; height: auto; flex: 0 0 auto; }

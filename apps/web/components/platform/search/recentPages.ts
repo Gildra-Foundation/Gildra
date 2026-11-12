@@ -29,7 +29,7 @@ export function rememberPage(path: string, title: string) {
 
 /** The page's own title without the " — WowArcana" tail. */
 export function pageTitle() {
-  return document.title.replace(/\s*[—|·-]\s*Gildra.*$/i, "").trim();
+  return document.title.replace(/\s*[—|·-]\s*(?:WowArcana|Gildra).*$/i, "").trim();
 }
 
 /** Queries the reader searched and then opened a result for, newest first. */

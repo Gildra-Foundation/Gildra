@@ -26,7 +26,9 @@
   .grid, .filters, .comparison { grid-template-columns: minmax(0, 1fr); }
   .search { grid-column: auto; }
 }
+/* A class name is one word: it leans onto the plaque's padding rather than splitting ("Чернокнижни/к"). */
 .className { color: color-mix(in srgb, var(--class-color) 62%, var(--atlas-text-strong)); }
+.classHead > .className:last-child { overflow-wrap: normal; }
 .tree { display: block; padding: var(--atlas-space-4); border: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); font-size: var(--atlas-text-h3); font-family: var(--atlas-font-display); }
 .comparison[data-single="true"] { grid-template-columns: minmax(0, 1fr); }
 .comparison ins, .comparison del { background: var(--atlas-accent-wash); text-underline-offset: 3px; }

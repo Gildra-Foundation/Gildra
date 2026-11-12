@@ -22,7 +22,7 @@ import { trail } from "@/lib/routes/registry";
 import { RelatedLinks } from "@/components/wow/shared/RelatedLinks";
 import { relatedCopy } from "@/components/wow/shared/relatedLinksCopy";
 
-const MdtPullMap = dynamic(() => import("./MdtPullMap"), { ssr: false, loading: () => <div className={styles.mdtLoading} role="status"><span>MDT…</span></div> });
+const MdtPullMap = dynamic(() => import("./MdtPullMap"), { ssr: false, loading: () => <div className={styles.mdtLoading} aria-busy="true" /> });
 const locations = { "ruby-life-pools": "Dragon Isles", "altar-of-fangs": "The Coiled Isle", "murder-row": "Silvermoon", "den-of-nalorakk": "Zul'Aman", "the-blinding-vale": "Harandar", "voidscar-arena": "Voidstorm", "kings-rest": "Zuldazar", "temple-of-sethraliss": "Vol'dun" };
 
 /** `footer` is the site's footer, rendered on the server; it follows <main> (the page's contentinfo). */
