@@ -1,0 +1,5012 @@
+{
+  "1": {
+    "height": 668,
+    "image_url": "/maps/tiles/1/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "10": {
+    "height": 668,
+    "image_url": "/maps/tiles/10/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/10/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/10/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/10/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "100": {
+    "height": 668,
+    "image_url": "/maps/tiles/100/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/100/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/100/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/100/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1004": {
+    "height": 668,
+    "image_url": "/maps/tiles/1004/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1004/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1004/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1004/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "101": {
+    "height": 2560,
+    "image_url": "/maps/tiles/101/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/101/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/101/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/101/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1010": {
+    "height": 668,
+    "image_url": "/maps/tiles/1010/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1010/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1010/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1010/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "102": {
+    "height": 668,
+    "image_url": "/maps/tiles/102/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/102/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/102/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/102/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "103": {
+    "height": 668,
+    "image_url": "/maps/tiles/103/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/103/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/103/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/103/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1030": {
+    "height": 668,
+    "image_url": "/maps/tiles/181/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/181/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/181/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/181/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1031": {
+    "height": 668,
+    "image_url": "/maps/tiles/182/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/182/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/182/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/182/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1038": {
+    "height": 668,
+    "image_url": "/maps/tiles/1038/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1038/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1038/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1038/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1039": {
+    "height": 668,
+    "image_url": "/maps/tiles/1039/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1039/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1039/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1039/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "104": {
+    "height": 668,
+    "image_url": "/maps/tiles/104/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/104/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/104/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/104/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1041": {
+    "height": 668,
+    "image_url": "/maps/tiles/1041/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1041/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1041/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1041/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1043": {
+    "height": 668,
+    "image_url": "/maps/tiles/1043/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1043/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1043/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1043/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "105": {
+    "height": 668,
+    "image_url": "/maps/tiles/105/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/105/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/105/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/105/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "106": {
+    "height": 668,
+    "image_url": "/maps/tiles/106/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/106/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/106/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/106/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "107": {
+    "height": 668,
+    "image_url": "/maps/tiles/107/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/107/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/107/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/107/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "108": {
+    "height": 668,
+    "image_url": "/maps/tiles/108/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/108/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/108/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/108/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "109": {
+    "height": 668,
+    "image_url": "/maps/tiles/109/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/109/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/109/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/109/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "11": {
+    "height": 668,
+    "image_url": "/maps/tiles/11/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/11/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/11/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/11/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "110": {
+    "height": 668,
+    "image_url": "/maps/tiles/110/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/110/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/110/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/110/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "111": {
+    "height": 668,
+    "image_url": "/maps/tiles/111/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/111/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/111/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/111/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "113": {
+    "height": 2560,
+    "image_url": "/maps/tiles/113/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/113/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/113/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/113/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "114": {
+    "height": 668,
+    "image_url": "/maps/tiles/114/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/114/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/114/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/114/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "115": {
+    "height": 668,
+    "image_url": "/maps/tiles/115/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/115/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/115/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/115/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "116": {
+    "height": 668,
+    "image_url": "/maps/tiles/116/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/116/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/116/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/116/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1161": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1161/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1161/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1161/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1161/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1163": {
+    "height": 668,
+    "image_url": "/maps/tiles/1163/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1163/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1163/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1163/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1164": {
+    "height": 668,
+    "image_url": "/maps/tiles/1164/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1164/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1164/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1164/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1165": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1165/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1165/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1165/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1165/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1169": {
+    "height": 668,
+    "image_url": "/maps/tiles/1169/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1169/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1169/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1169/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "117": {
+    "height": 668,
+    "image_url": "/maps/tiles/117/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/117/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/117/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/117/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1171": {
+    "height": 668,
+    "image_url": "/maps/tiles/1171/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1171/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1171/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1171/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1172": {
+    "height": 668,
+    "image_url": "/maps/tiles/1172/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1172/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1172/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1172/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1173": {
+    "height": 668,
+    "image_url": "/maps/tiles/1173/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1173/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1174": {
+    "height": 668,
+    "image_url": "/maps/tiles/1174/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1174/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1176": {
+    "height": 668,
+    "image_url": "/maps/tiles/1176/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1176/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1179": {
+    "height": 668,
+    "image_url": "/maps/tiles/1179/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1179/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "118": {
+    "height": 668,
+    "image_url": "/maps/tiles/118/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/118/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/118/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/118/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1180": {
+    "height": 668,
+    "image_url": "/maps/tiles/1180/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1180/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1184": {
+    "height": 668,
+    "image_url": "/maps/tiles/1184/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1184/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1185": {
+    "height": 668,
+    "image_url": "/maps/tiles/1185/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1185/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "119": {
+    "height": 668,
+    "image_url": "/maps/tiles/119/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/119/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/119/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/119/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "12": {
+    "height": 2560,
+    "image_url": "/maps/tiles/12/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/12/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/12/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/12/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "120": {
+    "height": 668,
+    "image_url": "/maps/tiles/120/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/120/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/120/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/120/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "121": {
+    "height": 668,
+    "image_url": "/maps/tiles/121/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/121/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/121/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/121/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "122": {
+    "height": 668,
+    "image_url": "/maps/tiles/122/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/122/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/122/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/122/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "123": {
+    "height": 668,
+    "image_url": "/maps/tiles/123/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/123/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/123/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/123/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "125": {
+    "height": 668,
+    "image_url": "/maps/tiles/125/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/125/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/125/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/125/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "127": {
+    "height": 668,
+    "image_url": "/maps/tiles/127/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/127/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/127/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/127/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "13": {
+    "height": 2560,
+    "image_url": "/maps/tiles/13/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/13/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/13/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/13/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1339": {
+    "height": 668,
+    "image_url": "/maps/tiles/1339/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1339/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1339/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1339/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1355": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1355/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1355/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1355/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1355/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "14": {
+    "height": 668,
+    "image_url": "/maps/tiles/14/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/14/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/14/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/14/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1462": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1462/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1462/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1462/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1462/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1499": {
+    "height": 668,
+    "image_url": "/maps/tiles/1499/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1499/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "15": {
+    "height": 668,
+    "image_url": "/maps/tiles/15/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/15/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/15/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/15/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1522": {
+    "height": 668,
+    "image_url": "/maps/tiles/1522/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1522/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1522/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1522/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1525": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1525/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1525/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1525/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1525/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1527": {
+    "height": 668,
+    "image_url": "/maps/tiles/1527/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1527/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1527/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1527/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1530": {
+    "height": 668,
+    "image_url": "/maps/tiles/1530/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1530/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1530/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1530/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1533": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1533/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1533/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1533/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1533/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1536": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1536/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1536/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1536/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1536/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1543": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1543/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1543/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1543/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1543/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1550": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1550/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1550/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1550/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1550/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1565": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1565/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1565/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1565/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1565/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1577": {
+    "height": 668,
+    "image_url": "/maps/tiles/1577/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1577/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1577/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1577/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1579": {
+    "height": 668,
+    "image_url": "/maps/tiles/1579/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1579/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1579/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1579/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "16": {
+    "height": 668,
+    "image_url": "/maps/tiles/16/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/16/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/16/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/16/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1600": {
+    "height": 668,
+    "image_url": "/maps/tiles/1600/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1600/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1600/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1600/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1649": {
+    "height": 668,
+    "image_url": "/maps/tiles/1649/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1649/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1650": {
+    "height": 668,
+    "image_url": "/maps/tiles/1650/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1650/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1650/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1650/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1651": {
+    "height": 668,
+    "image_url": "/maps/tiles/1651/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1651/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1652": {
+    "height": 668,
+    "image_url": "/maps/tiles/1652/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1652/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1670": {
+    "height": 668,
+    "image_url": "/maps/tiles/1670/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1670/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1670/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1670/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1690": {
+    "height": 668,
+    "image_url": "/maps/tiles/1690/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1690/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "17": {
+    "height": 668,
+    "image_url": "/maps/tiles/17/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/17/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/17/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/17/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "170": {
+    "height": 668,
+    "image_url": "/maps/tiles/170/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/170/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/170/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/170/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1713": {
+    "height": 668,
+    "image_url": "/maps/tiles/1713/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1713/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1714": {
+    "height": 668,
+    "image_url": "/maps/tiles/1714/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1714/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1734": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1734/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1734/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1734/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1734/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "174": {
+    "height": 668,
+    "image_url": "/maps/tiles/174/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/174/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/174/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/174/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "175": {
+    "height": 668,
+    "image_url": "/maps/tiles/175/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/175/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/175/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/175/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "176": {
+    "height": 668,
+    "image_url": "/maps/tiles/176/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/176/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/176/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/176/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "177": {
+    "height": 668,
+    "image_url": "/maps/tiles/177/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/177/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/177/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/177/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "178": {
+    "height": 668,
+    "image_url": "/maps/tiles/178/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/178/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/178/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/178/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "18": {
+    "height": 668,
+    "image_url": "/maps/tiles/18/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/18/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/18/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/18/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "180": {
+    "height": 668,
+    "image_url": "/maps/tiles/180/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/180/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/180/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/180/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "181": {
+    "height": 668,
+    "image_url": "/maps/tiles/181/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/181/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/181/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/181/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1816": {
+    "height": 668,
+    "image_url": "/maps/tiles/1816/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1816/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1818": {
+    "height": 668,
+    "image_url": "/maps/tiles/1818/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1818/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1819": {
+    "height": 668,
+    "image_url": "/maps/tiles/1819/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1819/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "182": {
+    "height": 668,
+    "image_url": "/maps/tiles/182/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/182/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/182/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/182/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1820": {
+    "height": 668,
+    "image_url": "/maps/tiles/1820/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1820/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1821": {
+    "height": 668,
+    "image_url": "/maps/tiles/1821/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1821/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1822": {
+    "height": 668,
+    "image_url": "/maps/tiles/1822/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1822/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1823": {
+    "height": 668,
+    "image_url": "/maps/tiles/1823/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1823/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1824": {
+    "height": 668,
+    "image_url": "/maps/tiles/1824/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1824/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1825": {
+    "height": 668,
+    "image_url": "/maps/tiles/1825/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1825/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1826": {
+    "height": 668,
+    "image_url": "/maps/tiles/1826/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1826/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1827": {
+    "height": 668,
+    "image_url": "/maps/tiles/1827/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1827/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "19": {
+    "height": 668,
+    "image_url": "/maps/tiles/19/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/19/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/19/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/19/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "194": {
+    "height": 668,
+    "image_url": "/maps/tiles/194/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/194/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/194/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/194/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "195": {
+    "height": 668,
+    "image_url": "/maps/tiles/195/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/195/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/195/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/195/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "196": {
+    "height": 668,
+    "image_url": "/maps/tiles/196/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/196/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/196/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/196/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1960": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1960/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1960/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1960/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1960/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1961": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1961/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1961/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1961/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1961/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "197": {
+    "height": 668,
+    "image_url": "/maps/tiles/197/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/197/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/197/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/197/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "1970": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1970/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1970/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1970/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1970/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "1978": {
+    "height": 2560,
+    "image_url": "/maps/tiles/1978/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/1978/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/1978/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/1978/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "198": {
+    "height": 668,
+    "image_url": "/maps/tiles/198/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/198/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/198/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/198/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "199": {
+    "height": 668,
+    "image_url": "/maps/tiles/199/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/199/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/199/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/199/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2": {
+    "height": 668,
+    "image_url": "/maps/tiles/2/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "20": {
+    "height": 668,
+    "image_url": "/maps/tiles/20/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/20/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/20/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/20/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2006": {
+    "height": 668,
+    "image_url": "/maps/tiles/2006/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2006/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2007": {
+    "height": 668,
+    "image_url": "/maps/tiles/2007/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2007/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2008": {
+    "height": 668,
+    "image_url": "/maps/tiles/2008/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2008/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "201": {
+    "height": 668,
+    "image_url": "/maps/tiles/201/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/201/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/201/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/201/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2016": {
+    "height": 668,
+    "image_url": "/maps/tiles/2016/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2016/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2016/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2016/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "202": {
+    "height": 668,
+    "image_url": "/maps/tiles/202/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/202/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/202/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/202/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2022": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2022/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2022/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2022/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2022/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2023": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2023/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2023/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2023/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2023/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2024": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2024/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2024/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2024/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2024/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2025": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2025/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2025/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2025/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2025/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2027": {
+    "height": 668,
+    "image_url": "/maps/tiles/2027/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2027/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2028": {
+    "height": 668,
+    "image_url": "/maps/tiles/2028/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2028/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2029": {
+    "height": 668,
+    "image_url": "/maps/tiles/2029/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2029/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2029/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2029/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "203": {
+    "height": 668,
+    "image_url": "/maps/tiles/203/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/203/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/203/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/203/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2030": {
+    "height": 668,
+    "image_url": "/maps/tiles/2030/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2030/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2031": {
+    "height": 668,
+    "image_url": "/maps/tiles/2031/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2031/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "204": {
+    "height": 668,
+    "image_url": "/maps/tiles/204/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/204/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/204/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/204/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "205": {
+    "height": 668,
+    "image_url": "/maps/tiles/205/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/205/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/205/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/205/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2066": {
+    "height": 668,
+    "image_url": "/maps/tiles/2066/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2066/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "207": {
+    "height": 668,
+    "image_url": "/maps/tiles/207/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/207/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/207/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/207/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2070": {
+    "height": 668,
+    "image_url": "/maps/tiles/2070/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2070/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2070/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2070/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "208": {
+    "height": 668,
+    "image_url": "/maps/tiles/208/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/208/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2085": {
+    "height": 668,
+    "image_url": "/maps/tiles/2085/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2085/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "209": {
+    "height": 668,
+    "image_url": "/maps/tiles/209/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/209/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2094": {
+    "height": 668,
+    "image_url": "/maps/tiles/2094/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2094/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2094/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2094/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2095": {
+    "height": 668,
+    "image_url": "/maps/tiles/2095/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2095/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2095/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2095/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "21": {
+    "height": 668,
+    "image_url": "/maps/tiles/21/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/21/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/21/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/21/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "210": {
+    "height": 668,
+    "image_url": "/maps/tiles/210/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/210/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/210/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/210/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2100": {
+    "height": 668,
+    "image_url": "/maps/tiles/2100/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2100/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2100/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2100/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2101": {
+    "height": 668,
+    "image_url": "/maps/tiles/2101/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2101/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2102": {
+    "height": 668,
+    "image_url": "/maps/tiles/2102/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2102/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2102/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2102/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2109": {
+    "height": 668,
+    "image_url": "/maps/tiles/2102/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2102/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2102/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2102/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2110": {
+    "height": 668,
+    "image_url": "/maps/tiles/2101/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2101/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2111": {
+    "height": 668,
+    "image_url": "/maps/tiles/2100/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2100/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2100/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2100/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2112": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2112/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2112/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2112/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2112/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2118": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2118/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2118/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2118/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2118/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2132": {
+    "height": 668,
+    "image_url": "/maps/tiles/2132/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2132/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2133": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2133/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2133/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2133/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2133/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2150": {
+    "height": 668,
+    "image_url": "/maps/tiles/2150/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2150/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2151": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2151/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2151/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2151/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2151/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2154": {
+    "height": 668,
+    "image_url": "/maps/tiles/2154/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2154/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2165": {
+    "height": 668,
+    "image_url": "/maps/tiles/2165/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2165/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "217": {
+    "height": 668,
+    "image_url": "/maps/tiles/217/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/217/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/217/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/217/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "218": {
+    "height": 668,
+    "image_url": "/maps/tiles/218/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/218/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/218/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/218/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2184": {
+    "height": 668,
+    "image_url": "/maps/tiles/2184/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2184/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2199": {
+    "height": 668,
+    "image_url": "/maps/tiles/2199/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2199/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "22": {
+    "height": 668,
+    "image_url": "/maps/tiles/22/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/22/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/22/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/22/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2200": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2200/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2200/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2200/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2200/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2213": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2213/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2213/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2213/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2213/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2214": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2214/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2214/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2214/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2214/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2215": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2215/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2215/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2215/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2215/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2216": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2216/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2216/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2216/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2216/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2239": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2239/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2239/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2239/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2239/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "224": {
+    "height": 668,
+    "image_url": "/maps/tiles/224/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/224/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/224/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/224/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2248": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2248/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2248/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2248/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2248/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2253": {
+    "height": 668,
+    "image_url": "/maps/tiles/2253/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2253/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2254": {
+    "height": 668,
+    "image_url": "/maps/tiles/2254/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2254/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2255": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2255/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2255/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2255/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2255/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2256": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2256/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2256/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2256/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2256/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2262": {
+    "height": 668,
+    "image_url": "/maps/tiles/2262/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2262/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2274": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2274/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2274/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2274/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2274/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "23": {
+    "height": 668,
+    "image_url": "/maps/tiles/23/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/23/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/23/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/23/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2328": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2328/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2328/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2328/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2328/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2339": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2339/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2339/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2339/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2339/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2346": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2346/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2346/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2346/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2346/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2351": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2351/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2351/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2352": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2352/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2352/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2354": {
+    "height": 668,
+    "image_url": "/maps/tiles/2354/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2354/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2354/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2354/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2366": {
+    "height": 668,
+    "image_url": "/maps/tiles/2366/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2366/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2366/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2366/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2369": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2369/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2369/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2369/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2369/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2371": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2371/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2371/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2371/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2371/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2372": {
+    "height": 668,
+    "image_url": "/maps/tiles/2372/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2372/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2372/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2372/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2375": {
+    "height": 668,
+    "image_url": "/maps/tiles/2375/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2375/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2393": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2393/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2393/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2393/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2393/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2395": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2395/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2395/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2395/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2395/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "24": {
+    "height": 668,
+    "image_url": "/maps/tiles/24/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/24/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/24/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/24/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2403": {
+    "height": 668,
+    "image_url": "/maps/tiles/2403/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2403/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2403/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2403/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2404": {
+    "height": 668,
+    "image_url": "/maps/tiles/2404/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2404/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2404/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2404/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2405": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2405/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2405/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2405/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2405/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "241": {
+    "height": 668,
+    "image_url": "/maps/tiles/241/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/241/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/241/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/241/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2413": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2413/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2413/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2413/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2413/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2424": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2424/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2424/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2424/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2424/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2427": {
+    "height": 668,
+    "image_url": "/maps/tiles/2427/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2427/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2427/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2427/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2431": {
+    "height": 668,
+    "image_url": "/maps/tiles/2431/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2431/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2432": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2424/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2424/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2424/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2424/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2433": {
+    "height": 668,
+    "image_url": "/maps/tiles/2433/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2433/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2433/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2433/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2434": {
+    "height": 668,
+    "image_url": "/maps/tiles/2434/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2434/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2434/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2434/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2435": {
+    "height": 668,
+    "image_url": "/maps/tiles/2435/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2435/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2435/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2435/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2437": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2437/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2437/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2437/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2437/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "244": {
+    "height": 668,
+    "image_url": "/maps/tiles/244/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/244/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/244/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/244/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2444": {
+    "height": 668,
+    "image_url": "/maps/tiles/2444/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2444/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2444/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2444/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2447": {
+    "height": 668,
+    "image_url": "/maps/tiles/2447/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2447/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "245": {
+    "height": 668,
+    "image_url": "/maps/tiles/245/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/245/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/245/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/245/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2451": {
+    "height": 668,
+    "image_url": "/maps/tiles/2372/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2372/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2372/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2372/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2472": {
+    "height": 668,
+    "image_url": "/maps/tiles/2472/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2472/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2477": {
+    "height": 668,
+    "image_url": "/maps/tiles/2477/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2477/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "249": {
+    "height": 668,
+    "image_url": "/maps/tiles/249/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/249/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/249/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/249/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "25": {
+    "height": 668,
+    "image_url": "/maps/tiles/25/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/25/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/25/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/25/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2500": {
+    "height": 668,
+    "image_url": "/maps/tiles/2500/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2500/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2500/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2500/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2509": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2509/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2509/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2509/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2509/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2510": {
+    "height": 668,
+    "image_url": "/maps/tiles/2510/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2510/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2510/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2510/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2512": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2512/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2512/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2512/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2512/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2513": {
+    "height": 668,
+    "image_url": "/maps/tiles/2513/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2513/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2513/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2513/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2514": {
+    "height": 668,
+    "image_url": "/maps/tiles/2514/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2514/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2514/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2514/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2522": {
+    "height": 668,
+    "image_url": "/maps/tiles/2522/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2522/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2522/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2522/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2523": {
+    "height": 668,
+    "image_url": "/maps/tiles/2523/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2523/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2523/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2523/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2526": {
+    "height": 668,
+    "image_url": "/maps/tiles/2526/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2526/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2527": {
+    "height": 668,
+    "image_url": "/maps/tiles/2527/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2527/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2529": {
+    "height": 668,
+    "image_url": "/maps/tiles/2529/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2529/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2529/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2529/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2530": {
+    "height": 668,
+    "image_url": "/maps/tiles/2530/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2530/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2530/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2530/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2531": {
+    "height": 668,
+    "image_url": "/maps/tiles/2531/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2531/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2531/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2531/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2532": {
+    "height": 668,
+    "image_url": "/maps/tiles/2532/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2532/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2532/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2532/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2533": {
+    "height": 668,
+    "image_url": "/maps/tiles/2533/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2533/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2533/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2533/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2534": {
+    "height": 668,
+    "image_url": "/maps/tiles/2534/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2534/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2534/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2534/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2536": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2536/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2536/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2537": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2537/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2537/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2537/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2537/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2564": {
+    "height": 668,
+    "image_url": "/maps/tiles/2564/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2564/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2564/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2564/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2565": {
+    "height": 668,
+    "image_url": "/maps/tiles/2565/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2565/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2566": {
+    "height": 668,
+    "image_url": "/maps/tiles/2566/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2566/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2572": {
+    "height": 668,
+    "image_url": "/maps/tiles/2572/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2572/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2572/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2572/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2573": {
+    "height": 668,
+    "image_url": "/maps/tiles/2573/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2573/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2573/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2573/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2574": {
+    "height": 668,
+    "image_url": "/maps/tiles/2574/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2574/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2574/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2574/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2576": {
+    "height": 668,
+    "image_url": "/maps/tiles/2576/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2576/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2576/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2576/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2579": {
+    "height": 668,
+    "image_url": "/maps/tiles/2579/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2579/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2580": {
+    "height": 668,
+    "image_url": "/maps/tiles/2580/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2580/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2581": {
+    "height": 668,
+    "image_url": "/maps/tiles/2581/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2581/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2582": {
+    "height": 668,
+    "image_url": "/maps/tiles/2582/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2582/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2583": {
+    "height": 668,
+    "image_url": "/maps/tiles/2583/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2583/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2584": {
+    "height": 668,
+    "image_url": "/maps/tiles/2584/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2584/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2585": {
+    "height": 668,
+    "image_url": "/maps/tiles/2585/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2585/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2588": {
+    "height": 668,
+    "image_url": "/maps/tiles/2588/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2588/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2588/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2588/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2589": {
+    "height": 668,
+    "image_url": "/maps/tiles/2589/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2589/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2589/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2589/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2590": {
+    "height": 668,
+    "image_url": "/maps/tiles/2590/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2590/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2590/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2590/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2594": {
+    "height": 668,
+    "image_url": "/maps/tiles/2594/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2594/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2599": {
+    "height": 668,
+    "image_url": "/maps/tiles/2599/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2599/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2599/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2599/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "26": {
+    "height": 668,
+    "image_url": "/maps/tiles/26/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/26/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/26/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/26/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2600": {
+    "height": 668,
+    "image_url": "/maps/tiles/2600/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2600/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2600/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2600/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2605": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2393/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2393/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2393/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2393/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2606": {
+    "height": 668,
+    "image_url": "/maps/tiles/2606/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2606/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2606/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2606/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2607": {
+    "height": 668,
+    "image_url": "/maps/tiles/2607/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2607/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2607/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2607/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2608": {
+    "height": 668,
+    "image_url": "/maps/tiles/2608/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2608/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2608/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2608/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2609": {
+    "height": 668,
+    "image_url": "/maps/tiles/2609/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2609/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2609/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2609/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2610": {
+    "height": 668,
+    "image_url": "/maps/tiles/2610/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2610/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2610/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2610/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2613": {
+    "height": 668,
+    "image_url": "/maps/tiles/2613/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2613/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2618": {
+    "height": 668,
+    "image_url": "/maps/tiles/2618/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2618/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2619": {
+    "height": 668,
+    "image_url": "/maps/tiles/2619/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2619/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2620": {
+    "height": 668,
+    "image_url": "/maps/tiles/2620/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2620/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2621": {
+    "height": 668,
+    "image_url": "/maps/tiles/2621/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2621/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2623": {
+    "height": 2560,
+    "image_url": "/maps/tiles/2623/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2623/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "2633": {
+    "height": 668,
+    "image_url": "/maps/tiles/2633/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2633/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2633/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2633/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2637": {
+    "height": 668,
+    "image_url": "/maps/tiles/2637/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2637/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2638": {
+    "height": 668,
+    "image_url": "/maps/tiles/2638/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2638/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2639": {
+    "height": 668,
+    "image_url": "/maps/tiles/2639/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2639/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2640": {
+    "height": 668,
+    "image_url": "/maps/tiles/2637/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2637/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2641": {
+    "height": 668,
+    "image_url": "/maps/tiles/2641/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2641/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2642": {
+    "height": 668,
+    "image_url": "/maps/tiles/2642/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2642/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2643": {
+    "height": 668,
+    "image_url": "/maps/tiles/2643/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2643/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2644": {
+    "height": 668,
+    "image_url": "/maps/tiles/2644/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2644/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2645": {
+    "height": 668,
+    "image_url": "/maps/tiles/2637/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2637/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2646": {
+    "height": 668,
+    "image_url": "/maps/tiles/2646/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2646/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2649": {
+    "height": 668,
+    "image_url": "/maps/tiles/2649/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2649/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2649/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2649/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2669": {
+    "height": 668,
+    "image_url": "/maps/tiles/2669/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2669/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2669/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2669/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "2670": {
+    "height": 668,
+    "image_url": "/maps/tiles/2670/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/2670/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/2670/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/2670/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "27": {
+    "height": 668,
+    "image_url": "/maps/tiles/27/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/27/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/27/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/27/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "276": {
+    "height": 668,
+    "image_url": "/maps/tiles/276/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/276/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "28": {
+    "height": 668,
+    "image_url": "/maps/tiles/28/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/28/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/28/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/28/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "29": {
+    "height": 668,
+    "image_url": "/maps/tiles/29/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/29/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/29/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/29/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "3": {
+    "height": 668,
+    "image_url": "/maps/tiles/3/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/3/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/3/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/3/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "30": {
+    "height": 668,
+    "image_url": "/maps/tiles/30/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/30/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/30/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/30/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "31": {
+    "height": 668,
+    "image_url": "/maps/tiles/31/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/31/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/31/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/31/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "32": {
+    "height": 668,
+    "image_url": "/maps/tiles/32/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/32/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/32/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/32/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "327": {
+    "height": 668,
+    "image_url": "/maps/tiles/327/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/327/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/327/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/327/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "33": {
+    "height": 668,
+    "image_url": "/maps/tiles/33/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/33/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/33/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/33/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "34": {
+    "height": 668,
+    "image_url": "/maps/tiles/34/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/34/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/34/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/34/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "35": {
+    "height": 668,
+    "image_url": "/maps/tiles/35/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/35/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/35/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/35/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "36": {
+    "height": 668,
+    "image_url": "/maps/tiles/36/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/36/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/36/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/36/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "37": {
+    "height": 668,
+    "image_url": "/maps/tiles/37/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/37/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/37/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/37/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "371": {
+    "height": 668,
+    "image_url": "/maps/tiles/371/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/371/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/371/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/371/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "372": {
+    "height": 668,
+    "image_url": "/maps/tiles/372/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/372/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/372/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/372/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "373": {
+    "height": 668,
+    "image_url": "/maps/tiles/373/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/373/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/373/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/373/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "374": {
+    "height": 668,
+    "image_url": "/maps/tiles/374/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/374/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/374/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/374/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "375": {
+    "height": 668,
+    "image_url": "/maps/tiles/375/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/375/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/375/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/375/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "376": {
+    "height": 668,
+    "image_url": "/maps/tiles/376/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/376/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/376/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/376/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "377": {
+    "height": 668,
+    "image_url": "/maps/tiles/377/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/377/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/377/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/377/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "379": {
+    "height": 668,
+    "image_url": "/maps/tiles/379/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/379/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/379/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/379/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "38": {
+    "height": 668,
+    "image_url": "/maps/tiles/38/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/38/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/38/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/38/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "380": {
+    "height": 668,
+    "image_url": "/maps/tiles/380/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/380/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/380/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/380/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "381": {
+    "height": 668,
+    "image_url": "/maps/tiles/381/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/381/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/381/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/381/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "382": {
+    "height": 668,
+    "image_url": "/maps/tiles/382/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/382/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/382/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/382/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "383": {
+    "height": 668,
+    "image_url": "/maps/tiles/383/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/383/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/383/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/383/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "384": {
+    "height": 668,
+    "image_url": "/maps/tiles/384/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/384/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/384/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/384/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "385": {
+    "height": 668,
+    "image_url": "/maps/tiles/385/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/385/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/385/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/385/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "386": {
+    "height": 668,
+    "image_url": "/maps/tiles/386/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/386/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/386/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/386/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "387": {
+    "height": 668,
+    "image_url": "/maps/tiles/387/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/387/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/387/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/387/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "388": {
+    "height": 668,
+    "image_url": "/maps/tiles/388/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/388/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/388/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/388/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "389": {
+    "height": 668,
+    "image_url": "/maps/tiles/389/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/389/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/389/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/389/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "39": {
+    "height": 668,
+    "image_url": "/maps/tiles/39/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/39/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/39/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/39/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "390": {
+    "height": 668,
+    "image_url": "/maps/tiles/390/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/390/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/390/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/390/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "391": {
+    "height": 668,
+    "image_url": "/maps/tiles/391/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/391/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/391/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/391/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "392": {
+    "height": 668,
+    "image_url": "/maps/tiles/392/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/392/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/392/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/392/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "393": {
+    "height": 668,
+    "image_url": "/maps/tiles/393/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/393/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/393/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/393/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "394": {
+    "height": 668,
+    "image_url": "/maps/tiles/394/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/394/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/394/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/394/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "395": {
+    "height": 668,
+    "image_url": "/maps/tiles/395/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/395/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/395/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/395/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "396": {
+    "height": 668,
+    "image_url": "/maps/tiles/396/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/396/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/396/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/396/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "4": {
+    "height": 668,
+    "image_url": "/maps/tiles/4/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/4/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/4/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/4/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "40": {
+    "height": 668,
+    "image_url": "/maps/tiles/40/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/40/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/40/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/40/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "41": {
+    "height": 668,
+    "image_url": "/maps/tiles/41/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/41/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/41/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/41/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "418": {
+    "height": 668,
+    "image_url": "/maps/tiles/418/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/418/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/418/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/418/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "419": {
+    "height": 668,
+    "image_url": "/maps/tiles/419/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/419/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/419/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/419/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "42": {
+    "height": 668,
+    "image_url": "/maps/tiles/42/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/42/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/42/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/42/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "420": {
+    "height": 668,
+    "image_url": "/maps/tiles/420/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/420/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/420/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/420/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "421": {
+    "height": 668,
+    "image_url": "/maps/tiles/421/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/421/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/421/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/421/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "422": {
+    "height": 668,
+    "image_url": "/maps/tiles/422/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/422/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/422/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/422/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "424": {
+    "height": 668,
+    "image_url": "/maps/tiles/424/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/424/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/424/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/424/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "425": {
+    "height": 668,
+    "image_url": "/maps/tiles/425/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/425/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/425/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/425/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "426": {
+    "height": 668,
+    "image_url": "/maps/tiles/426/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/426/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/426/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/426/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "427": {
+    "height": 668,
+    "image_url": "/maps/tiles/427/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/427/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/427/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/427/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "428": {
+    "height": 668,
+    "image_url": "/maps/tiles/428/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/428/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/428/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/428/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "43": {
+    "height": 668,
+    "image_url": "/maps/tiles/43/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/43/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "433": {
+    "height": 668,
+    "image_url": "/maps/tiles/433/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/433/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/433/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/433/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "434": {
+    "height": 668,
+    "image_url": "/maps/tiles/434/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/434/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/434/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/434/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "44": {
+    "height": 668,
+    "image_url": "/maps/tiles/44/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/44/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "45": {
+    "height": 668,
+    "image_url": "/maps/tiles/45/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/45/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "46": {
+    "height": 668,
+    "image_url": "/maps/tiles/46/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/46/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/46/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/46/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "460": {
+    "height": 668,
+    "image_url": "/maps/tiles/460/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/460/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/460/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/460/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "461": {
+    "height": 668,
+    "image_url": "/maps/tiles/461/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/461/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/461/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/461/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "462": {
+    "height": 668,
+    "image_url": "/maps/tiles/462/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/462/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/462/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/462/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "463": {
+    "height": 668,
+    "image_url": "/maps/tiles/463/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/463/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/463/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/463/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "464": {
+    "height": 668,
+    "image_url": "/maps/tiles/464/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/464/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/464/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/464/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "465": {
+    "height": 668,
+    "image_url": "/maps/tiles/465/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/465/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/465/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/465/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "466": {
+    "height": 668,
+    "image_url": "/maps/tiles/466/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/466/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/466/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/466/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "467": {
+    "height": 668,
+    "image_url": "/maps/tiles/467/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/467/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/467/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/467/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "468": {
+    "height": 668,
+    "image_url": "/maps/tiles/468/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/468/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/468/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/468/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "469": {
+    "height": 668,
+    "image_url": "/maps/tiles/469/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/469/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/469/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/469/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "47": {
+    "height": 668,
+    "image_url": "/maps/tiles/47/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/47/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/47/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/47/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "470": {
+    "height": 668,
+    "image_url": "/maps/tiles/470/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/470/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/470/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/470/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "48": {
+    "height": 668,
+    "image_url": "/maps/tiles/48/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/48/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/48/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/48/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "49": {
+    "height": 668,
+    "image_url": "/maps/tiles/49/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/49/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/49/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/49/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "5": {
+    "height": 668,
+    "image_url": "/maps/tiles/5/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/5/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/5/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/5/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "50": {
+    "height": 668,
+    "image_url": "/maps/tiles/50/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/50/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/50/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/50/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "504": {
+    "height": 668,
+    "image_url": "/maps/tiles/504/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/504/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/504/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/504/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "505": {
+    "height": 668,
+    "image_url": "/maps/tiles/505/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/505/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/505/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/505/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "506": {
+    "height": 668,
+    "image_url": "/maps/tiles/506/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/506/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/506/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/506/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "507": {
+    "height": 668,
+    "image_url": "/maps/tiles/507/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/507/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "51": {
+    "height": 668,
+    "image_url": "/maps/tiles/51/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/51/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/51/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/51/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "517": {
+    "height": 668,
+    "image_url": "/maps/tiles/517/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/517/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/517/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/517/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "52": {
+    "height": 668,
+    "image_url": "/maps/tiles/52/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/52/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/52/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/52/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "525": {
+    "height": 668,
+    "image_url": "/maps/tiles/525/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/525/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/525/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/525/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "526": {
+    "height": 668,
+    "image_url": "/maps/tiles/526/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/526/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/526/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/526/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "527": {
+    "height": 668,
+    "image_url": "/maps/tiles/527/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/527/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/527/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/527/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "528": {
+    "height": 668,
+    "image_url": "/maps/tiles/528/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/528/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/528/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/528/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "529": {
+    "height": 668,
+    "image_url": "/maps/tiles/529/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/529/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/529/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/529/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "53": {
+    "height": 668,
+    "image_url": "/maps/tiles/53/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/53/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/53/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/53/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "530": {
+    "height": 668,
+    "image_url": "/maps/tiles/530/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/530/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "531": {
+    "height": 668,
+    "image_url": "/maps/tiles/531/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/531/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/531/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/531/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "532": {
+    "height": 668,
+    "image_url": "/maps/tiles/532/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/532/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/532/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/532/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "533": {
+    "height": 668,
+    "image_url": "/maps/tiles/533/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/533/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "534": {
+    "height": 668,
+    "image_url": "/maps/tiles/534/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/534/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/534/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/534/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "535": {
+    "height": 668,
+    "image_url": "/maps/tiles/535/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/535/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/535/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/535/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "536": {
+    "height": 668,
+    "image_url": "/maps/tiles/536/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/536/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "537": {
+    "height": 668,
+    "image_url": "/maps/tiles/537/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/537/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "538": {
+    "height": 668,
+    "image_url": "/maps/tiles/538/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/538/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "539": {
+    "height": 668,
+    "image_url": "/maps/tiles/539/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/539/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/539/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/539/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "54": {
+    "height": 668,
+    "image_url": "/maps/tiles/54/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/54/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/54/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/54/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "540": {
+    "height": 668,
+    "image_url": "/maps/tiles/540/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/540/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "541": {
+    "height": 668,
+    "image_url": "/maps/tiles/541/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/541/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "542": {
+    "height": 668,
+    "image_url": "/maps/tiles/542/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/542/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/542/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/542/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "543": {
+    "height": 668,
+    "image_url": "/maps/tiles/543/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/543/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/543/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/543/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "544": {
+    "height": 668,
+    "image_url": "/maps/tiles/544/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/544/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "545": {
+    "height": 668,
+    "image_url": "/maps/tiles/545/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/545/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "546": {
+    "height": 668,
+    "image_url": "/maps/tiles/546/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/546/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "547": {
+    "height": 668,
+    "image_url": "/maps/tiles/547/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/547/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "548": {
+    "height": 668,
+    "image_url": "/maps/tiles/548/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/548/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "549": {
+    "height": 668,
+    "image_url": "/maps/tiles/549/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/549/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "55": {
+    "height": 668,
+    "image_url": "/maps/tiles/55/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/55/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/55/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/55/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "550": {
+    "height": 668,
+    "image_url": "/maps/tiles/550/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/550/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/550/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/550/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "551": {
+    "height": 668,
+    "image_url": "/maps/tiles/551/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/551/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "552": {
+    "height": 668,
+    "image_url": "/maps/tiles/552/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/552/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "553": {
+    "height": 668,
+    "image_url": "/maps/tiles/553/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/553/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "554": {
+    "height": 668,
+    "image_url": "/maps/tiles/554/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/554/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/554/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/554/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "555": {
+    "height": 668,
+    "image_url": "/maps/tiles/555/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/555/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/555/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/555/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "56": {
+    "height": 668,
+    "image_url": "/maps/tiles/56/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/56/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/56/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/56/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "57": {
+    "height": 668,
+    "image_url": "/maps/tiles/57/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/57/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/57/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/57/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "572": {
+    "height": 668,
+    "image_url": "/maps/tiles/572/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/572/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/572/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/572/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "578": {
+    "height": 668,
+    "image_url": "/maps/tiles/578/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/578/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "579": {
+    "height": 668,
+    "image_url": "/maps/tiles/579/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/579/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "58": {
+    "height": 668,
+    "image_url": "/maps/tiles/58/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/58/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/58/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/58/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "580": {
+    "height": 668,
+    "image_url": "/maps/tiles/580/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/580/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "581": {
+    "height": 668,
+    "image_url": "/maps/tiles/581/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/581/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "582": {
+    "height": 668,
+    "image_url": "/maps/tiles/582/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/582/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "585": {
+    "height": 668,
+    "image_url": "/maps/tiles/585/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/585/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "586": {
+    "height": 668,
+    "image_url": "/maps/tiles/586/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/586/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "587": {
+    "height": 668,
+    "image_url": "/maps/tiles/587/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/587/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "588": {
+    "height": 668,
+    "image_url": "/maps/tiles/588/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/588/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/588/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/588/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "589": {
+    "height": 668,
+    "image_url": "/maps/tiles/589/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/589/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/589/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/589/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "59": {
+    "height": 668,
+    "image_url": "/maps/tiles/59/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/59/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/59/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/59/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "590": {
+    "height": 668,
+    "image_url": "/maps/tiles/590/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/590/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/590/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/590/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "6": {
+    "height": 668,
+    "image_url": "/maps/tiles/6/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/6/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/6/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/6/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "60": {
+    "height": 668,
+    "image_url": "/maps/tiles/60/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/60/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/60/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/60/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "61": {
+    "height": 668,
+    "image_url": "/maps/tiles/61/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/61/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/61/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/61/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "619": {
+    "height": 668,
+    "image_url": "/maps/tiles/619/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/619/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/619/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/619/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "62": {
+    "height": 668,
+    "image_url": "/maps/tiles/62/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/62/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/62/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/62/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "622": {
+    "height": 668,
+    "image_url": "/maps/tiles/622/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/622/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/622/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/622/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "624": {
+    "height": 668,
+    "image_url": "/maps/tiles/624/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/624/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/624/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/624/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "627": {
+    "height": 668,
+    "image_url": "/maps/tiles/627/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/627/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/627/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/627/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "63": {
+    "height": 668,
+    "image_url": "/maps/tiles/63/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/63/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/63/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/63/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "630": {
+    "height": 668,
+    "image_url": "/maps/tiles/630/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/630/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/630/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/630/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "631": {
+    "height": 668,
+    "image_url": "/maps/tiles/631/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/631/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "632": {
+    "height": 668,
+    "image_url": "/maps/tiles/632/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/632/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "633": {
+    "height": 668,
+    "image_url": "/maps/tiles/633/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/633/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "634": {
+    "height": 668,
+    "image_url": "/maps/tiles/634/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/634/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/634/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/634/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "635": {
+    "height": 668,
+    "image_url": "/maps/tiles/635/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/635/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/635/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/635/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "636": {
+    "height": 668,
+    "image_url": "/maps/tiles/636/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/636/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "637": {
+    "height": 668,
+    "image_url": "/maps/tiles/637/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/637/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "638": {
+    "height": 668,
+    "image_url": "/maps/tiles/638/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/638/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "639": {
+    "height": 668,
+    "image_url": "/maps/tiles/639/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/639/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "64": {
+    "height": 668,
+    "image_url": "/maps/tiles/64/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/64/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/64/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/64/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "640": {
+    "height": 668,
+    "image_url": "/maps/tiles/640/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/640/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "641": {
+    "height": 668,
+    "image_url": "/maps/tiles/641/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/641/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/641/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/641/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "642": {
+    "height": 668,
+    "image_url": "/maps/tiles/642/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/642/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "643": {
+    "height": 668,
+    "image_url": "/maps/tiles/643/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/643/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "644": {
+    "height": 668,
+    "image_url": "/maps/tiles/644/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/644/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "646": {
+    "height": 668,
+    "image_url": "/maps/tiles/646/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/646/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/646/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/646/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "647": {
+    "height": 668,
+    "image_url": "/maps/tiles/647/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/647/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/647/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/647/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "648": {
+    "height": 668,
+    "image_url": "/maps/tiles/648/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/648/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/648/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/648/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "65": {
+    "height": 668,
+    "image_url": "/maps/tiles/65/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/65/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/65/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/65/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "650": {
+    "height": 668,
+    "image_url": "/maps/tiles/650/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/650/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/650/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/650/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "651": {
+    "height": 668,
+    "image_url": "/maps/tiles/651/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/651/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "652": {
+    "height": 668,
+    "image_url": "/maps/tiles/652/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/652/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/652/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/652/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "653": {
+    "height": 668,
+    "image_url": "/maps/tiles/653/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/653/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "654": {
+    "height": 668,
+    "image_url": "/maps/tiles/654/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/654/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "655": {
+    "height": 668,
+    "image_url": "/maps/tiles/655/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/655/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "656": {
+    "height": 668,
+    "image_url": "/maps/tiles/656/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/656/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "657": {
+    "height": 668,
+    "image_url": "/maps/tiles/657/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/657/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "658": {
+    "height": 668,
+    "image_url": "/maps/tiles/658/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/658/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "659": {
+    "height": 668,
+    "image_url": "/maps/tiles/659/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/659/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "66": {
+    "height": 668,
+    "image_url": "/maps/tiles/66/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/66/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/66/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/66/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "660": {
+    "height": 668,
+    "image_url": "/maps/tiles/660/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/660/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "67": {
+    "height": 668,
+    "image_url": "/maps/tiles/67/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/67/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/67/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/67/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "673": {
+    "height": 668,
+    "image_url": "/maps/tiles/673/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/673/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/673/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/673/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "674": {
+    "height": 668,
+    "image_url": "/maps/tiles/674/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/674/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/674/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/674/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "675": {
+    "height": 668,
+    "image_url": "/maps/tiles/675/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/675/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/675/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/675/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "68": {
+    "height": 668,
+    "image_url": "/maps/tiles/68/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/68/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/68/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/68/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "680": {
+    "height": 668,
+    "image_url": "/maps/tiles/680/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/680/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/680/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/680/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "681": {
+    "height": 668,
+    "image_url": "/maps/tiles/681/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/681/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "682": {
+    "height": 668,
+    "image_url": "/maps/tiles/682/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/682/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "683": {
+    "height": 668,
+    "image_url": "/maps/tiles/683/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/683/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "684": {
+    "height": 668,
+    "image_url": "/maps/tiles/684/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/684/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "685": {
+    "height": 668,
+    "image_url": "/maps/tiles/685/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/685/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "686": {
+    "height": 668,
+    "image_url": "/maps/tiles/686/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/686/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "687": {
+    "height": 668,
+    "image_url": "/maps/tiles/687/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/687/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "688": {
+    "height": 668,
+    "image_url": "/maps/tiles/688/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/688/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "689": {
+    "height": 668,
+    "image_url": "/maps/tiles/689/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/689/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "69": {
+    "height": 668,
+    "image_url": "/maps/tiles/69/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/69/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/69/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/69/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "690": {
+    "height": 668,
+    "image_url": "/maps/tiles/690/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/690/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "691": {
+    "height": 668,
+    "image_url": "/maps/tiles/691/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/691/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/691/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/691/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "692": {
+    "height": 668,
+    "image_url": "/maps/tiles/692/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/692/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/692/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/692/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "693": {
+    "height": 668,
+    "image_url": "/maps/tiles/693/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/693/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/693/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/693/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "7": {
+    "height": 668,
+    "image_url": "/maps/tiles/7/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/7/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/7/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/7/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "70": {
+    "height": 668,
+    "image_url": "/maps/tiles/70/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/70/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/70/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/70/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "71": {
+    "height": 668,
+    "image_url": "/maps/tiles/71/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/71/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/71/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/71/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "72": {
+    "height": 668,
+    "image_url": "/maps/tiles/72/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/72/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/72/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/72/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "729": {
+    "height": 668,
+    "image_url": "/maps/tiles/729/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/729/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "73": {
+    "height": 668,
+    "image_url": "/maps/tiles/73/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/73/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/73/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/73/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "739": {
+    "height": 668,
+    "image_url": "/maps/tiles/739/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/739/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/739/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/739/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "74": {
+    "height": 668,
+    "image_url": "/maps/tiles/74/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/74/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/74/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/74/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "747": {
+    "height": 668,
+    "image_url": "/maps/tiles/747/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/747/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/747/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/747/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "75": {
+    "height": 668,
+    "image_url": "/maps/tiles/75/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/75/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/75/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/75/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "750": {
+    "height": 668,
+    "image_url": "/maps/tiles/750/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/750/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/750/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/750/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "76": {
+    "height": 668,
+    "image_url": "/maps/tiles/76/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/76/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/76/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/76/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "77": {
+    "height": 668,
+    "image_url": "/maps/tiles/77/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/77/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/77/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/77/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "78": {
+    "height": 668,
+    "image_url": "/maps/tiles/78/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/78/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/78/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/78/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "79": {
+    "height": 668,
+    "image_url": "/maps/tiles/79/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/79/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/79/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/79/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "790": {
+    "height": 668,
+    "image_url": "/maps/tiles/790/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/790/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/790/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/790/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "8": {
+    "height": 668,
+    "image_url": "/maps/tiles/8/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/8/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/8/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/8/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "80": {
+    "height": 668,
+    "image_url": "/maps/tiles/80/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/80/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/80/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/80/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "81": {
+    "height": 668,
+    "image_url": "/maps/tiles/81/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/81/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/81/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/81/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "82": {
+    "height": 668,
+    "image_url": "/maps/tiles/82/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/82/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/82/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/82/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "83": {
+    "height": 668,
+    "image_url": "/maps/tiles/83/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/83/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/83/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/83/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "830": {
+    "height": 668,
+    "image_url": "/maps/tiles/830/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/830/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/830/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/830/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "831": {
+    "height": 668,
+    "image_url": "/maps/tiles/831/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/831/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "832": {
+    "height": 668,
+    "image_url": "/maps/tiles/832/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/832/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "833": {
+    "height": 668,
+    "image_url": "/maps/tiles/833/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/833/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "84": {
+    "height": 668,
+    "image_url": "/maps/tiles/84/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/84/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/84/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/84/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "85": {
+    "height": 668,
+    "image_url": "/maps/tiles/85/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/85/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/85/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/85/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "86": {
+    "height": 668,
+    "image_url": "/maps/tiles/86/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/86/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/86/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/86/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "862": {
+    "height": 2560,
+    "image_url": "/maps/tiles/862/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/862/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/862/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/862/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "863": {
+    "height": 2560,
+    "image_url": "/maps/tiles/863/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/863/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/863/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/863/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "864": {
+    "height": 2560,
+    "image_url": "/maps/tiles/864/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/864/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/864/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/864/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "87": {
+    "height": 668,
+    "image_url": "/maps/tiles/87/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/87/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/87/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/87/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "875": {
+    "height": 2560,
+    "image_url": "/maps/tiles/875/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/875/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/875/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/875/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "876": {
+    "height": 2560,
+    "image_url": "/maps/tiles/876/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/876/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/876/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/876/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "88": {
+    "height": 668,
+    "image_url": "/maps/tiles/88/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/88/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/88/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/88/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "882": {
+    "height": 668,
+    "image_url": "/maps/tiles/882/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/882/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/882/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/882/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "883": {
+    "height": 668,
+    "image_url": "/maps/tiles/883/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/883/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "884": {
+    "height": 668,
+    "image_url": "/maps/tiles/884/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/884/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "885": {
+    "height": 668,
+    "image_url": "/maps/tiles/885/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/885/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/885/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/885/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "886": {
+    "height": 668,
+    "image_url": "/maps/tiles/886/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/886/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "887": {
+    "height": 668,
+    "image_url": "/maps/tiles/887/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/887/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "89": {
+    "height": 668,
+    "image_url": "/maps/tiles/89/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/89/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/89/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/89/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "895": {
+    "height": 2560,
+    "image_url": "/maps/tiles/895/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/895/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/895/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/895/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "896": {
+    "height": 2560,
+    "image_url": "/maps/tiles/896/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/896/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/896/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/896/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "9": {
+    "height": 668,
+    "image_url": "/maps/tiles/9/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/9/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/9/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/9/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "90": {
+    "height": 668,
+    "image_url": "/maps/tiles/90/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/90/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/90/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/90/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "905": {
+    "height": 668,
+    "image_url": "/maps/tiles/905/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/905/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/905/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/905/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "94": {
+    "height": 668,
+    "image_url": "/maps/tiles/94/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/94/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/94/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/94/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "942": {
+    "height": 2560,
+    "image_url": "/maps/tiles/942/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/942/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/942/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/942/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "946": {
+    "height": 668,
+    "image_url": "/maps/tiles/946/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/946/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/946/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/946/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "947": {
+    "height": 2560,
+    "image_url": "/maps/tiles/947/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/947/0/0_0.webp",
+    "max_zoom": 4,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/947/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/947/{z}/{x}_{y}.webp",
+    "width": 3840
+  },
+  "948": {
+    "height": 668,
+    "image_url": "/maps/tiles/948/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/948/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/948/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/948/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "95": {
+    "height": 668,
+    "image_url": "/maps/tiles/95/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/95/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/95/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/95/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "96": {
+    "height": 668,
+    "image_url": "/maps/tiles/96/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/96/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/96/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/96/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "97": {
+    "height": 668,
+    "image_url": "/maps/tiles/97/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/97/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/97/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/97/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "98": {
+    "height": 668,
+    "image_url": "/maps/tiles/98/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/98/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/98/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/98/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "99": {
+    "height": 668,
+    "image_url": "/maps/tiles/99/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/99/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/99/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/99/{z}/{x}_{y}.webp",
+    "width": 1002
+  },
+  "998": {
+    "height": 668,
+    "image_url": "/maps/tiles/90/0/0_0.webp",
+    "image_url_ru": "/maps/tiles/ru/90/0/0_0.webp",
+    "max_zoom": 2,
+    "tile_size": 256,
+    "tile_url": "/maps/tiles/90/{z}/{x}_{y}.webp",
+    "tile_url_ru": "/maps/tiles/ru/90/{z}/{x}_{y}.webp",
+    "width": 1002
+  }
+}

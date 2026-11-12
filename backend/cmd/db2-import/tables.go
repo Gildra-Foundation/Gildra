@@ -129,7 +129,7 @@ func observeDB2LocalizationArtifactsForTables(ctx context.Context, db *pgxpool.P
 func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, store *catalogimport.Store, ic catalogimport.ImportContext, opts options, seen, written *int64) error {
 	for _, table := range opts.tables {
 		locales := opts.locales
-		if !isLocalized(table) {
+		if !isLocalized(table) && table != "CurrencyCategory" {
 			locales = []string{"en_US"}
 		}
 		for _, locale := range locales {
@@ -177,7 +177,7 @@ func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, st
 					*seen++
 					rawID := strings.TrimSpace(values["ID"])
 					id, err := strconv.ParseInt(rawID, 10, 64)
-					if err != nil || id <= 0 {
+					if err != nil || id < 0 || (id == 0 && table != "Map") {
 						exclusions = append(exclusions, completenessExclusion{
 							externalKey: fmt.Sprintf("row:%d", sourceOrdinal), reasonCode: "invalid_id",
 							reason:     "source row has no positive DB2 ID",
