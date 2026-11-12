@@ -1,21 +1,22 @@
 "use client";
 
-import { memo, useDeferredValue, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { memo, useDeferredValue, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Castle, ChevronDown, Clock3, Compass, CornerDownLeft, Database, History, MapPin, Search, Skull, Swords, X } from "lucide-react";
+import { BookOpen, Castle, ChevronDown, Clock3, Compass, CornerDownLeft, History, MapPin, Search, Skull, Swords, X } from "lucide-react";
 import { AtlasDialog } from "@gildra/atlas-ui/AtlasDialog";
 import { AtlasInput } from "@gildra/atlas-ui/AtlasField";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { knownRenderTier } from "@gildra/atlas-ui/renderTier";
 import { routeTurnDeviceAllowed, type RouteTurnDevice } from "@/components/motion/routeTurnDevice";
 import type { SiteSearchGroup } from "@/lib/search/siteIndex";
+import { knownLibraryHits, libraryQueryKey, loadLibraryHits, type LibraryHit } from "./librarySuggest";
 import { readRecentPages, readRecentQueries, rememberQuery } from "./recentPages";
 import { indexFailed, loadedIndex, loadIndex, subscribeIndex, type SiteIndex } from "./siteSearchIndex";
 import { siteSearchCopy, type SiteSearchLang } from "./siteSearchCopy";
 import { matchRanges, prepareIndex, searchIndex } from "./siteSearchMatch";
 import styles from "./siteSearch.module.css";
 
-type RowIcon = "recent" | "database" | SiteSearchGroup;
+type RowIcon = "recent" | "library" | "librarySearch" | SiteSearchGroup;
 type Row = { key: string; href: string; title: string; detail?: string; icon?: RowIcon; image?: string; query?: string };
 type Group = { id: string; label: string; rows: Row[] };
 
@@ -25,7 +26,8 @@ const SECTION_SUGGESTIONS = 7;
 
 const groupIcons: Partial<Record<RowIcon, ReactNode>> = {
   recent: <Clock3 size={16} strokeWidth={1.8} />,
-  database: <Database size={16} strokeWidth={1.8} />,
+  library: <BookOpen size={16} strokeWidth={1.8} />,
+  librarySearch: <Search size={16} strokeWidth={1.8} />,
   section: <Compass size={16} strokeWidth={1.8} />,
   place: <MapPin size={16} strokeWidth={1.8} />,
   raid: <Swords size={16} strokeWidth={1.8} />,
@@ -113,7 +115,7 @@ const Option = memo(function Option({ row, id, index, selected, query, events }:
         {row.image ? <img src={row.image} alt="" width={32} height={32} loading="lazy" decoding="async" /> : row.query !== undefined ? <History size={16} strokeWidth={1.8} /> : groupIcons[row.icon ?? "section"] ?? <Compass size={16} strokeWidth={1.8} />}
       </span>
       <span className={styles.optionText}>
-        <span className={styles.optionTitle}><Highlighted text={row.title} query={row.icon === "database" || row.query !== undefined ? "" : query} /></span>
+        <span className={styles.optionTitle}><Highlighted text={row.title} query={row.icon === "librarySearch" || row.query !== undefined ? "" : query} /></span>
         {row.detail ? <span className={styles.optionDetail}>{row.detail}</span> : null}
       </span>
       {selected ? <CornerDownLeft className={styles.enter} size={14} aria-hidden="true" /> : null}
@@ -187,6 +189,26 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
   }, [origin]);
 
   const trimmed = deferred.trim();
+  // Records of the library come from the catalog (the index holds only the site's own pages):
+  // asked for once the typing pauses, shown under the pages; records of an older query never
+  // stand under a newer one.
+  const libraryKey = forever ? "" : libraryQueryKey(trimmed, lang);
+  const [library, setLibrary] = useState<{ key: string; hits: LibraryHit[] }>({ key: "", hits: [] });
+  useEffect(() => {
+    if (!libraryKey) return;
+    const cached = knownLibraryHits(libraryKey);
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      if (cached) { setLibrary({ key: libraryKey, hits: cached }); return; }
+      loadLibraryHits(trimmed, lang, controller.signal)
+        .then((hits) => setLibrary({ key: libraryKey, hits }), (error: unknown) => { if ((error as Error).name !== "AbortError") setLibrary({ key: libraryKey, hits: [] }); });
+    }, cached ? 0 : 160);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+    // `trimmed` and `lang` are what `libraryKey` is made of.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [libraryKey]);
+  const libraryHits = libraryKey && library.key === libraryKey ? library.hits : undefined;
+  const libraryBusy = Boolean(libraryKey) && !libraryHits;
   const groups = useMemo<Group[]>(() => {
     const entries = (index?.[lang] ?? []).filter(entry => !forever || /^\/wow\/forever(?:\/|$)/.test(entry.h));
     if (!trimmed) {
@@ -212,11 +234,14 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
     }
     return [
       ...[...byGroup].map(([group, rows]) => ({ id: group, label: copy.groups[group as SiteSearchGroup] ?? copy.results, rows })),
-      { id: "database", label: copy.databaseGroup, rows: [{ key: "db", href: `${prefix}${forever ? "/wow/forever/library" : "/search"}?q=${encodeURIComponent(trimmed)}`, title: copy.database(trimmed), icon: "database" as const }] },
+      { id: "library", label: copy.libraryGroup, rows: [
+        ...(libraryHits ?? []).map((hit): Row => ({ key: `l${hit.id}`, href: hit.href, title: hit.name, detail: hit.typeLabel || undefined, icon: "library", image: hit.iconUrl })),
+        { key: "db", href: `${prefix}${forever ? "/wow/forever/library" : "/search"}?q=${encodeURIComponent(trimmed)}`, title: copy.library(trimmed), icon: "librarySearch" as const },
+      ] },
     ];
     // `localized` only depends on `prefix`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, lang, trimmed, recent, queries, copy, prefix, forever]);
+  }, [index, lang, trimmed, recent, queries, copy, prefix, forever, libraryHits]);
 
   const rows = groups.flatMap((group) => group.rows);
   const hitCount = trimmed ? rows.length - 1 : 0;
@@ -236,7 +261,7 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
       input.current?.focus();
       return;
     }
-    if (trimmed && row.icon !== "database") rememberQuery(trimmed);
+    if (trimmed && row.icon !== "librarySearch") rememberQuery(trimmed);
     onClose();
     router.push(row.href);
   };
@@ -268,14 +293,14 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
   useLayoutEffect(() => { latestGo.current = go; });
   const events = useMemo<RowEvents>(() => ({
     hover: (index) => setActive(index),
-    prefetch: (row) => { if (row.href && row.icon !== "database") router.prefetch(row.href); },
+    prefetch: (row) => { if (row.href && row.icon !== "librarySearch") router.prefetch(row.href); },
     open: (row, event) => {
       if (row.href && (event.metaKey || event.ctrlKey || event.shiftKey)) { window.open(row.href, "_blank", "noopener"); return; }
       latestGo.current(row);
     },
   }), [router]);
 
-  const status = failed ? copy.failed : index && trimmed && hitCount === 0 ? copy.nothing : null;
+  const status = failed ? copy.failed : index && trimmed && hitCount === 0 && !libraryBusy ? copy.nothing : null;
   return (
     <AtlasDialog open={open} onClose={onClose} label={copy.dialog} variant="sheet" className={styles.dialog} initialFocusRef={input}>
       <div className={styles.head} ref={body}>
