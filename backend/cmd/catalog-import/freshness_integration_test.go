@@ -212,15 +212,21 @@ func TestFreshnessInterruptedEnrichmentResumes(t *testing.T) {
 		t.Fatal("unconfirmed worker reconciled")
 	}
 
-	if _, err := pool.Exec(ctx, `UPDATE catalog_pipeline_runs SET status='running' WHERE id=$1`, runID); err != nil {
+	// A connected pipeline holds the product lock: its run is never reconciled.
+	live, err := pool.Acquire(ctx)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := runner.ReconcileFailedRun(ctx, runID, "wow", true); err == nil {
-		t.Fatal("running pipeline reconciled")
-	}
-	if _, err := pool.Exec(ctx, `UPDATE catalog_pipeline_runs SET status='failed' WHERE id=$1`, runID); err != nil {
+	if _, err := live.Exec(ctx, `SELECT pg_advisory_lock(hashtextextended('gildra:catalog-pipeline:wow',0))`); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := runner.ReconcileFailedRun(ctx, runID, "wow", true); !errors.Is(err, catalogpipeline.ErrAlreadyRunning) {
+		t.Fatalf("connected pipeline reconciled: %v", err)
+	}
+	if _, err := live.Exec(ctx, `SELECT pg_advisory_unlock(hashtextextended('gildra:catalog-pipeline:wow',0))`); err != nil {
+		t.Fatal(err)
+	}
+	live.Release()
 	for _, want := range []int64{1, 0} {
 		got, err := runner.ReconcileFailedRun(ctx, runID, "wow", true)
 		if err != nil || got != want {
@@ -235,6 +241,43 @@ func TestFreshnessInterruptedEnrichmentResumes(t *testing.T) {
 		t.Fatal(terminal)
 	}
 
+	// A pipeline killed outright leaves its run running and its release in
+	// staging. With the product lock free and the worker confirmed stopped,
+	// reconciliation closes both and the importer the dead pipeline left.
+	if _, err := pool.Exec(ctx, `UPDATE catalog_releases SET pipeline_run_id=NULL WHERE id=$1`, abandoned); err != nil {
+		t.Fatal(err)
+	}
+	var killedRun int64
+	if err := pool.QueryRow(ctx, `INSERT INTO catalog_pipeline_runs(pipeline_key,trigger_kind,mode,status,product,publication_environment,started_at) VALUES('freshness-test','manual','apply','running','wow','staging',now()) RETURNING id`).Scan(&killedRun); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO catalog_pipeline_stages(run_id,stage_key,ordinal,status,executable,safe_arguments,started_at) VALUES($1,'enrich-battlenet-missing',1,'running','catalog-import','{}',now())`, killedRun); err != nil {
+		t.Fatal(err)
+	}
+	killed, err := manager.Start(ctx, killedRun, "wow", "12.1.5.70783", []string{"battlenet"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	left, err := store.Begin(ctx, "wow", 70783, "12.1.5.70783", "us", "battlenet", &killed, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := runner.ReconcileFailedRun(ctx, killedRun, "wow", true); err != nil || got != 1 {
+		t.Fatalf("reconcile killed pipeline=%d %v, want 1", got, err)
+	}
+	var runStatus, releaseStatus, stageStatus, importStatus string
+	if err := pool.QueryRow(ctx, `SELECT run.status,release.status,stage.status,import.status
+		FROM catalog_pipeline_runs run JOIN catalog_releases release ON release.pipeline_run_id=run.id
+		JOIN catalog_pipeline_stages stage ON stage.run_id=run.id, catalog_import_runs import
+		WHERE run.id=$1 AND import.id=$2`, killedRun, left.RunID).Scan(&runStatus, &releaseStatus, &stageStatus, &importStatus); err != nil {
+		t.Fatal(err)
+	}
+	if runStatus != "failed" || releaseStatus != "failed" || stageStatus != "failed" || importStatus != "FAILED" {
+		t.Fatalf("killed pipeline left run=%s release=%s stage=%s import=%s", runStatus, releaseStatus, stageStatus, importStatus)
+	}
+	if err := manager.Resume(ctx, killed, killedRun, "wow", "12.1.5.70783", []string{"battlenet"}); err != nil {
+		t.Fatalf("reconciled release cannot be resumed: %v", err)
+	}
 }
 
 // A new client build normally meets the same build-pinned Battle.net
