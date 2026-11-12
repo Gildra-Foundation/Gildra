@@ -74,6 +74,12 @@ paths:
         - CatalogSession: []
       parameters:
         - in: query
+          name: expansion
+          description: Optional confirmed published Midnight cohort. Zero membership does not establish an official denominator.
+          schema:
+            type: string
+            enum: [midnight]
+        - in: query
           name: product
           schema:
             type: string
@@ -87,6 +93,8 @@ paths:
             enum: [en_US, ru_RU]
             default: en_US
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "200":
           description: Public library datasets backed by published catalog versions.
           content:
@@ -152,6 +160,12 @@ paths:
         - CatalogSession: []
       parameters:
         - in: query
+          name: expansion
+          description: Optional confirmed Midnight membership in the published build. Omit for all Retail.
+          schema:
+            type: string
+            enum: [midnight]
+        - in: query
           name: product
           schema:
             type: string
@@ -214,6 +228,12 @@ paths:
         - CatalogSession: []
       description: Use this endpoint for directories and search results. Fetch the full entity resource only when a user opens a detail view.
       parameters:
+        - in: query
+          name: expansion
+          description: Optional confirmed Midnight membership in the published build. Omit for all Retail.
+          schema:
+            type: string
+            enum: [midnight]
         - in: query
           name: product
           schema:
@@ -426,6 +446,12 @@ paths:
       security:
         - CatalogSession: []
       parameters:
+        - in: query
+          name: expansion
+          description: Optional confirmed Midnight membership in the published build. Omit for all Retail.
+          schema:
+            type: string
+            enum: [midnight]
         - in: path
           name: id
           required: true
@@ -446,6 +472,8 @@ paths:
             minLength: 2
             maxLength: 64
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "200":
           description: Game entity.
           content:

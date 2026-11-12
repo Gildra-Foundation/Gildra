@@ -101,13 +101,14 @@ type Category struct {
 }
 
 type ListParams struct {
-	Product  string
-	Type     string
-	Locale   string
-	Query    string
-	Category string
-	Cursor   string
-	Limit    int
+	Expansion string
+	Product   string
+	Type      string
+	Locale    string
+	Query     string
+	Category  string
+	Cursor    string
+	Limit     int
 }
 
 type Page struct {
@@ -118,8 +119,9 @@ type Page struct {
 }
 
 type Service struct {
-	postgres *pgxpool.Pool
-	totals   *totalCache
+	postgres       *pgxpool.Pool
+	totals         *totalCache
+	midnightCounts midnightCountCache
 }
 
 func NewService(postgres *pgxpool.Pool) *Service {
@@ -259,6 +261,9 @@ func (s *Service) Categories(ctx context.Context, product, entityType, locale st
 }
 
 func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
+	if err := validateExpansion(params.Product, params.Expansion); err != nil {
+		return Page{}, err
+	}
 	if params.Limit < 1 || params.Limit > 100 {
 		return Page{}, invalidRequest("limit must be between 1 and 100")
 	}
@@ -343,7 +348,7 @@ func (s *Service) listPage(ctx context.Context, params ListParams, cursorID uuid
 `)+`
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
-		  `+publicCatalogUsabilityPredicate("e", "v")+`
+		  `+publicCatalogUsabilityPredicate("e", "v")+expansionPredicate(params.Expansion, "e", "v")+`
 		  AND ($1 = '' OR p.slug = $1)
 		  AND ($2 = '' OR e.entity_type = $2)
 		  AND e.id > $3
@@ -635,7 +640,7 @@ var publicEntitySelectTemplate = `
 
 // listTotalKey identifies the filters that determine a List total.
 func listTotalKey(params ListParams) string {
-	return strings.Join([]string{"list", strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
+	return strings.Join([]string{"list", params.Expansion, strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
 		strings.TrimSpace(params.Category), normalizeLocale(params.Locale), strings.TrimSpace(params.Query)}, "\x00")
 }
 
@@ -703,7 +708,7 @@ func listMatchSQL(params ListParams) (string, []any) {
 			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 			WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 			  ` + publicCatalogDisplayNamePredicate("l", "fallback") + `
-			  ` + publicCatalogUsabilityPredicate("e", "v") + `
+			  ` + publicCatalogUsabilityPredicate("e", "v") + expansionPredicate(params.Expansion, "e", "v") + `
 			  AND ($1='' OR p.slug=$1) AND ($2='' OR e.entity_type=$2)
 			  AND ($3='' OR EXISTS(SELECT 1 FROM game_entity_categories ec
 				WHERE ec.version_id=e.published_version_id AND ec.category_id IN (SELECT id FROM selected_categories)))`,
@@ -728,7 +733,7 @@ func listMatchSQL(params ListParams) (string, []any) {
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  ` + publicCatalogDisplayNamePredicate("l", "fallback") + `
-		  ` + publicCatalogUsabilityPredicate("e", "v") + `
+		  ` + publicCatalogUsabilityPredicate("e", "v") + expansionPredicate(params.Expansion, "e", "v") + `
 		  AND ($1='' OR p.slug=$1)
 		  AND ($2='' OR e.entity_type=$2)
 		  AND ($5='' OR EXISTS (
@@ -745,15 +750,22 @@ func listMatchSQL(params ListParams) (string, []any) {
 				OR fallback.name % $4
 			) END
 		  )`, []any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
-			normalizeLocale(params.Locale), strings.TrimSpace(params.Query),
-			strings.TrimSpace(params.Category)}
+		normalizeLocale(params.Locale), strings.TrimSpace(params.Query),
+		strings.TrimSpace(params.Category)}
 }
 
 func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity, error) {
+	return s.GetInExpansion(ctx, id, locale, "")
+}
+
+func (s *Service) GetInExpansion(ctx context.Context, id uuid.UUID, locale, expansion string) (Entity, error) {
+	if err := validateExpansion("wow", expansion); err != nil {
+		return Entity{}, err
+	}
 	row := s.postgres.QueryRow(ctx, publicEntitySelect("$2", "")+`
 		WHERE e.id = $1 AND e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
-		  `+publicCatalogUsabilityPredicate("e", "v")+``, id, normalizeLocale(locale))
+		  `+publicCatalogUsabilityPredicate("e", "v")+expansionPredicate(expansion, "e", "v")+``, id, normalizeLocale(locale))
 	entity, err := scanEntity(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Entity{}, ErrNotFound

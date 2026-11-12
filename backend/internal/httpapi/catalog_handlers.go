@@ -46,7 +46,14 @@ func (s *Server) ListLibraryDatasets(ctx context.Context, request api.ListLibrar
 	if request.Params.Locale != nil {
 		locale = string(*request.Params.Locale)
 	}
-	datasets, err := s.catalog.LibraryDatasets(ctx, product, locale)
+	expansion := ""
+	if request.Params.Expansion != nil {
+		expansion = string(*request.Params.Expansion)
+	}
+	datasets, err := s.catalog.LibraryDatasetsInExpansion(ctx, product, locale, expansion)
+	if errors.Is(err, catalog.ErrInvalidRequest) {
+		return api.ListLibraryDatasets400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{Code: "invalid_expansion", Message: err.Error()}}, nil
+	}
 	if err != nil {
 		return api.ListLibraryDatasets500JSONResponse{InternalErrorJSONResponse: api.InternalErrorJSONResponse{
 			Code: "catalog_unavailable", Message: "public library is temporarily unavailable",
@@ -125,6 +132,9 @@ func (s *Server) ListGameEntityTypes(ctx context.Context, request api.ListGameEn
 
 func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGameEntitySummariesRequestObject) (api.ListGameEntitySummariesResponseObject, error) {
 	params := catalog.SummaryParams{Product: "wow", Locale: "en_US", Limit: 20, IncludeTotal: true}
+	if request.Params.Expansion != nil {
+		params.Expansion = string(*request.Params.Expansion)
+	}
 	if request.Params.Product != nil {
 		params.Product = *request.Params.Product
 	}
@@ -314,6 +324,9 @@ func (s *Server) ListGameEntities(ctx context.Context, request api.ListGameEntit
 		locale = string(*request.Params.Locale)
 	}
 	params := catalog.ListParams{Limit: limit, Locale: locale}
+	if request.Params.Expansion != nil {
+		params.Expansion = string(*request.Params.Expansion)
+	}
 	if request.Params.Product != nil {
 		params.Product = *request.Params.Product
 	}
@@ -356,7 +369,14 @@ func (s *Server) GetGameEntity(ctx context.Context, request api.GetGameEntityReq
 	if request.Params.Locale != nil {
 		locale = string(*request.Params.Locale)
 	}
-	entity, err := s.catalog.Get(ctx, request.Id, locale)
+	expansion := ""
+	if request.Params.Expansion != nil {
+		expansion = string(*request.Params.Expansion)
+	}
+	entity, err := s.catalog.GetInExpansion(ctx, request.Id, locale, expansion)
+	if errors.Is(err, catalog.ErrInvalidRequest) {
+		return api.GetGameEntity400JSONResponse{BadRequestJSONResponse: api.BadRequestJSONResponse{Code: "invalid_expansion", Message: err.Error()}}, nil
+	}
 	if errors.Is(err, catalog.ErrNotFound) {
 		return api.GetGameEntity404ApplicationProblemPlusJSONResponse{
 			NotFoundApplicationProblemPlusJSONResponse: api.NotFoundApplicationProblemPlusJSONResponse{

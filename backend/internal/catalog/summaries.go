@@ -40,6 +40,7 @@ type CardSummary struct {
 }
 
 type SummaryParams struct {
+	Expansion   string
 	ExternalIDs []int64
 	Product     string
 	Type        string
@@ -112,6 +113,9 @@ var summaryFastQuery = `
 	ORDER BY entity.id LIMIT $5`
 
 func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryPage, error) {
+	if err := validateExpansion(params.Product, params.Expansion); err != nil {
+		return SummaryPage{}, err
+	}
 	if len(params.ExternalIDs) > 0 {
 		if err := validateExternalIDs(params); err != nil {
 			return SummaryPage{}, err
@@ -129,7 +133,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		return SummaryPage{}, invalidRequest("minItemLevel must not exceed maxItemLevel")
 	}
 	dataset := strings.TrimSpace(params.Dataset)
-	datasetTotalCached := dataset != "" && strings.TrimSpace(params.Query) == "" && strings.TrimSpace(params.Category) == "" && len(params.Facets) == 0 && params.ItemClassID == nil && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil
+	datasetTotalCached := params.Expansion == "" && dataset != "" && strings.TrimSpace(params.Query) == "" && strings.TrimSpace(params.Category) == "" && len(params.Facets) == 0 && params.ItemClassID == nil && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil
 	if dataset != "" {
 		if len(dataset) < 2 || len(dataset) > 64 {
 			return SummaryPage{}, invalidRequest("dataset must be between 2 and 64 characters")
@@ -243,7 +247,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			LEFT JOIN catalog_items item ON item.version_id=version.id
 			WHERE entity.deleted_at IS NULL AND product.slug=$1
 				` + publicCatalogDisplayNamePredicate("localized", "fallback") + `
-				` + publicCatalogUsabilityPredicate("entity", "version") + `
+				` + publicCatalogUsabilityPredicate("entity", "version") + expansionPredicate(params.Expansion, "entity", "version") + `
 				AND ($2='' OR entity.entity_type=$2)
 				AND (cardinality($7::text[])=0 OR selected.version_id IS NOT NULL)
 				AND ($8::int IS NULL OR item.item_level >= $8)
@@ -313,7 +317,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		return nil
 	}
 	if query == "" && len(filterPaths) == 0 {
-		queryText := summaryFastQuery
+		queryText := strings.Replace(summaryFastQuery, "WHERE entity.deleted_at IS NULL", "WHERE entity.deleted_at IS NULL"+expansionPredicate(params.Expansion, "entity", "version"), 1)
 		args := []any{product, strings.TrimSpace(params.Type), cursorID, locale,
 			params.Limit + 1, params.MinItemLevel, params.MaxItemLevel, params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID,
 			params.ItemSubclassIDs, params.ExcludedItemSubclassIDs}
@@ -411,7 +415,7 @@ func summaryTotalKey(params SummaryParams, product, locale string, datasetTotal 
 		}
 		return strconv.Itoa(*value)
 	}
-	return strings.Join([]string{"summary", product, locale, strconv.FormatBool(datasetTotal),
+	return strings.Join([]string{"summary", product, locale, params.Expansion, strconv.FormatBool(datasetTotal),
 		strings.TrimSpace(params.Type), strings.TrimSpace(params.Dataset), strings.TrimSpace(params.Query),
 		strings.TrimSpace(params.Category), strings.Join(params.Facets, "\x01"),
 		optional(params.ItemClassID), optional(params.MinItemLevel), optional(params.MaxItemLevel),
@@ -438,7 +442,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 	if err != nil {
 		return 0, err
 	}
-	if query == "" && len(filterPaths) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil && params.ItemClassID == nil {
+	if params.Expansion == "" && query == "" && len(filterPaths) == 0 && params.MinItemLevel == nil && params.MaxItemLevel == nil && params.MinRequiredLevel == nil && params.MaxRequiredLevel == nil && params.ItemClassID == nil {
 		var total int64
 		err := s.postgres.QueryRow(ctx, `
 			SELECT COALESCE(sum(stats.entity_count),0)
@@ -496,7 +500,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 		LEFT JOIN selected_versions selected ON selected.version_id=version.id
 		WHERE entity.deleted_at IS NULL AND product.slug=$1 AND ($2='' OR entity.entity_type=$2)
 			`+publicCatalogDisplayNamePredicate("localized", "fallback")+`
-			`+publicCatalogUsabilityPredicate("entity", "version")+`
+			`+publicCatalogUsabilityPredicate("entity", "version")+expansionPredicate(params.Expansion, "entity", "version")+`
 			AND (cardinality($4::text[])=0 OR selected.version_id IS NOT NULL)
 			AND ($5::int IS NULL OR item.item_level >= $5)
 			AND ($6::int IS NULL OR item.item_level <= $6)
