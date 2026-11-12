@@ -291,10 +291,6 @@ export function buildTestGear(theme: TalentSpecTheme, characterIndex: number, te
   });
 }
 
-export function getWeaponProfile(theme: TalentSpecTheme) {
-  return weapons[theme.slug];
-}
-
 export function getModelItems(theme: TalentSpecTheme): Array<[number, number]> {
   const armor = armorByClass[theme.classKey];
   const [mainHand, offHand] = weaponModelItems[theme.slug];

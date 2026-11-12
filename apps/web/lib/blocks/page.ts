@@ -43,5 +43,3 @@ export type PageConfig = {
   shell?: { reveal?: boolean; frame?: boolean };
   blocks: BlockInstance[];
 };
-
-export const definePageConfig = (config: PageConfig) => config;

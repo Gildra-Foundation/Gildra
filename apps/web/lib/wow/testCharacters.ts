@@ -144,16 +144,6 @@ function makeFixture(theme: TalentSpecTheme, index: number): CharacterAuditSnaps
 
 export const testCharacters = talentSpecThemes.map(makeFixture);
 
-export const testCharacterClasses = Array.from(new Set(testCharacters.map((entry) => entry.specialization.classKey))).map((classKey) => ({
-  classKey,
-  className: testCharacters.find((entry) => entry.specialization.classKey === classKey)!.specialization.className,
-  characters: testCharacters.filter((entry) => entry.specialization.classKey === classKey),
-}));
-
 export function getTestCharacter(slug: string) {
   return testCharacters.find((entry) => entry.slug === slug);
-}
-
-export function getTestCharacterBySpec(specSlug: string) {
-  return testCharacters.find((entry) => entry.specialization.slug === specSlug);
 }

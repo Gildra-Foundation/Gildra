@@ -1,5 +1,3 @@
-import contracts from "@/contracts/blocks.schema.json";
-
 /**
  * Block contracts (roadmap item 85): checks a block's props against the JSON
  * Schema generated from its TypeScript type (contracts/blocks.schema.json,
@@ -40,12 +38,4 @@ export function matchesSchema(value: unknown, schema: Schema): boolean {
     }
     default: return true;
   }
-}
-
-const blocks = (contracts as { blocks: Record<string, { container: boolean; props: Schema }> }).blocks;
-
-/** True when `props` (absent counts as {}) satisfy the block's contract; unknown types fail. */
-export function blockPropsValid(type: string, props: unknown): boolean {
-  const contract = blocks[type];
-  return Boolean(contract) && matchesSchema(props ?? {}, contract.props);
 }

@@ -228,16 +228,6 @@ const loggedRuns = unstable_cache(async (season: string, slug: string): Promise<
     ? [{ id: run.keystone_run_id, level: run.mythic_level, clearMs: run.clear_time_ms, specs: (run.roster ?? []).flatMap(p => p.character?.spec?.id ? [p.character.spec.id] : []) }] : []);
 }, ["mythic-plus-logged-runs", "v2"], { revalidate: 60 * 60, tags: ["mythic-plus-run-log"] });
 
-export async function similarLoggedRun(run: RunDetail): Promise<LoggedRunLink | null> {
-  if (!maps[run.dungeon.slug]) return null;
-  try {
-    const runs = (await loggedRuns(run.season, run.dungeon.slug)).filter((entry) => entry.id !== run.id);
-    return runs.sort((a, b) => Math.abs(a.level - run.level) - Math.abs(b.level - run.level) || Math.abs(a.clearMs - run.clearMs) - Math.abs(b.clearMs - run.clearMs))[0] ?? null;
-  } catch {
-    return null;
-  }
-}
-
 /** Bounded fallback: reuse cached run details and RIO logs, never fan out WCL searches. */
 export const loadSimilarRoute = cache(async (run: RunDetail): Promise<{ run: RunDetail; view: ReplayView } | null> => {
   try {

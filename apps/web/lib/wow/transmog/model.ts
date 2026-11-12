@@ -16,12 +16,6 @@ export const dollLeft: TransmogSlot[] = ["head", "shoulder", "back", "chest", "s
 export const dollRight: TransmogSlot[] = ["hands", "waist", "legs", "feet"];
 export const dollWeapons: TransmogSlot[] = ["main-hand", "off-hand"];
 
-/** Viewer slot numbers to clear when a doll slot is hidden or emptied. */
-export const viewerSlotsOf: Record<TransmogSlot, number[]> = {
-  head: [1], shoulder: [3], back: [16], chest: [5, 20], shirt: [4], tabard: [19], wrist: [9],
-  hands: [10], waist: [6], legs: [7], feet: [8], "main-hand": [21], "off-hand": [22],
-};
-
 /** Slots with an armor type filter (cloth, leather, mail, plate). */
 export const armoredSlots = new Set<TransmogSlot>(["head", "shoulder", "chest", "wrist", "hands", "waist", "legs", "feet"]);
 export const armorTypes = ["plate", "mail", "leather", "cloth", "cosmetic"] as const;

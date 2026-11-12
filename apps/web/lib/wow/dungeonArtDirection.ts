@@ -11,9 +11,6 @@ export const dungeonArtDirections: Record<DungeonSlug, { accent: string; glow: s
   "kings-rest": { accent: "#d5b775", glow: "rgba(184, 136, 47, .12)", motif: "royal-gold" },
   "temple-of-sethraliss": { accent: "#7fcaca", glow: "rgba(50, 167, 184, .12)", motif: "serpent-bronze" },
 };
-export function dungeonMapFrame(slug: DungeonSlug, kind: "mdt" | "route", floor: number) {
-  return `/assets/wow/mythic/frames/${slug}-${kind}-${floor}.svg`;
-}
 /** Full-size scene for the hub card: the image optimizer serves the width each
  * screen needs, so 2× displays get a sharp picture (the 768 file is too small). */
 export function dungeonCardScene(slug: DungeonSlug) {

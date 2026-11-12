@@ -591,7 +591,3 @@ export const voidspireMechanicGuides: Record<string, VoidspireBossGuide> = {
 export function getVoidspireMechanicGuide(bossSlug: string) {
   return voidspireMechanicGuides[bossSlug];
 }
-
-export function getVoidspireMechanicCount(bossSlug: string) {
-  return getVoidspireMechanicGuide(bossSlug)?.mechanics.length ?? 0;
-}

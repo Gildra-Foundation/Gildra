@@ -251,17 +251,6 @@ async function searchOneGame(gameId: CatalogGameId, kind: SearchKind, query: str
   return [...champions, ...items, ...runes].slice(0, limit);
 }
 
-export async function searchGlobalCatalog(input: {
-  games: CatalogGameId[]; kind: SearchKind; query: string; locale: ApiLocale; limitPerGame?: number;
-}): Promise<CatalogQueryResult> {
-  const requested = input.games.length ? input.games : catalogGames.filter((game) => game.available).map((game) => game.id);
-  const results = await Promise.all(requested.map((gameId) => searchCatalogGame({ ...input, gameId })));
-  return {
-    items: results.flatMap((result) => result.items),
-    unavailableGames: results.flatMap((result) => result.unavailableGames),
-  };
-}
-
 /**
  * One game's search results. For WoW `cursor` asks for a later page and
  * `includeTotal` for the catalog's count of every match; the answer then

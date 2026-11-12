@@ -70,10 +70,6 @@ export function worldMapArtEraIds() {
 /** Changes with the data: the viewer's bundle URL carries it so a new release never serves a stale copy. */
 export const worldMapVersion = () => load().version;
 
-export function worldMapAvailable() {
-  return worldMapBundle("en").maps.length > 0;
-}
-
 /** Pages of the map: worlds, continents and zones of the main hierarchy. */
 export function worldMapPages(): AtlasMap[] {
   return worldMapBundle("en").maps.filter((map) => map.page);
