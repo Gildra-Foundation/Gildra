@@ -37,7 +37,8 @@ describe("library: record icons", () => {
     assert.equal(catalogIconUrl({ iconName: "inv_misc_gem_01" }), undefined, "no edition, no guess");
     assert.equal(catalogIconUrl({ iconName: "inv_misc_gem_01", product: "genshin" }, "wow"), undefined, "the record's own edition wins");
     assert.equal(catalogIconUrl({ iconName: "ui_item_1", product: "league_of_legends" }), undefined);
-    assert.equal(catalogIconUrl({ iconName: "pvpcurrency-conquest-horde", product: "wow" }), undefined);
+    assert.equal(catalogIconUrl({ iconName: "pvpcurrency-conquest-horde", product: "wow" }), official("pvpcurrency-conquest-horde"));
+    assert.equal(catalogIconUrl({ iconName: "inv misc gem", product: "wow" }), undefined);
     assert.equal(catalogIconUrl({ product: "wow" }), undefined);
     assert.deepEqual(["wow", "wow_classic", "wow_classic_hardcore", "wowhead", "genshin", "", undefined].map(isWowProduct), [true, true, true, false, false, false, false]);
   });
