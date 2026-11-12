@@ -13,6 +13,7 @@ import { pairedAlternates } from '@/lib/seo/metadata';
 import { copy, summaries, specializations } from './copy';
 import { RecipeMaterials } from './RecipeMaterials';
 import styles from './professions.module.css';
+import { trailLabel } from "@/lib/routes/registry";
 const root = '/wow/forever/professions';
 const path = (lang: Lang, slug = '') => p(lang, `${root}${slug ? `/${slug}` : ''}`);
 const record = (lang: Lang, id: number) => foreverItemPath(id, lang);
@@ -25,7 +26,7 @@ export function professionMetadata(lang: Lang, slug?: string, recipeId?: string)
 }
 export function ProfessionsHome({ lang }: { lang: Lang }) {
  const c = copy[lang];
- return <ForeverFrame lang={lang} scene="foreverCrafts"><AtlasHero title={c.title} lede={c.lede} align="start" breadcrumbs={crumbs(lang).slice(0,1)} />
+ return <ForeverFrame lang={lang} scene="foreverCrafts"><AtlasHero title={c.title} lede={c.lede} align="start" breadcrumbsLabel={trailLabel(lang)} breadcrumbs={crumbs(lang).slice(0,1)} />
   {(['crafting','gathering','secondary'] as const).map(kind => <AtlasSection key={kind} title={c.kinds[kind]}>
    <div className={styles.grid}>{professions.filter(pr => pr.kind===kind).map(pr => <MaterialPlaque kit={FOREVER_KIT} key={pr.slug} as="article" className={styles.card}>
     <div className={styles.cardHead}><span className={materialStyles.iconFrame} style={materialIconFrameStyle(FOREVER_KIT,52)}><Image src={professionIcon(pr.icon)} alt="" width={52} height={52} unoptimized/></span><h3><Link className={styles.link} href={path(lang, pr.slug)}>{pr.name[lang]}</Link></h3></div><p>{summaries[pr.slug][lang]}</p><p>1–{pr.maxSkill}</p>
@@ -41,7 +42,7 @@ export function ProfessionPage({ lang, slug, filters }: { lang: Lang; slug: stri
  const prof=professionBySlug(slug); if (!prof) notFound(); const c=copy[lang];
  const found=filterRecipes(prof,filters); const page=pageNumber(filters.page, found.length); const size=50; const recipes=found.slice((page-1)*size,page*size);
  const pageHref=(n:number) => { const q=new URLSearchParams(); for(const key of ['q','source','skill','camp','fresh'] as const) if(filters[key]) q.set(key,filters[key]!); q.set('page',String(n));return `${path(lang,slug)}?${q}#recipes`; };
- return <ForeverFrame lang={lang} scene="foreverCrafts"><AtlasHero align="start" title={prof.name[lang]} lede={summaries[slug][lang]} breadcrumbs={crumbs(lang)} />
+ return <ForeverFrame lang={lang} scene="foreverCrafts"><AtlasHero align="start" title={prof.name[lang]} lede={summaries[slug][lang]} breadcrumbsLabel={trailLabel(lang)} breadcrumbs={crumbs(lang)} />
  <AtlasSection id="recipes" title={c.recipes}><MaterialPlaque kit={FOREVER_KIT}>
   <form action={path(lang,slug)+'#recipes'} className={styles.filters}>
    <AtlasField label={c.search} htmlFor="recipe-search"><AtlasInput id="recipe-search" name="q" defaultValue={filters.q??''} type="search" maxLength={120} /></AtlasField>
@@ -69,7 +70,7 @@ export function ProfessionPage({ lang, slug, filters }: { lang: Lang; slug: stri
 export function RecipePage({lang,slug,recipeId}:{lang:Lang;slug:string;recipeId:string}) {
  const prof=professionBySlug(slug);const recipe=prof?.recipes.find(r=>String(r.id)===recipeId);if(!prof||!recipe)notFound();const c=copy[lang];
  const output=recipe.output;
- return <ForeverFrame lang={lang} scene="foreverCrafts"><AtlasHero title={recipe.name[lang]} align="start" breadcrumbs={crumbs(lang,prof)} />
+ return <ForeverFrame lang={lang} scene="foreverCrafts"><AtlasHero title={recipe.name[lang]} align="start" breadcrumbsLabel={trailLabel(lang)} breadcrumbs={crumbs(lang,prof)} />
  <AtlasSection title={c.materials}><MaterialPlaque kit={FOREVER_KIT}>
   <dl className={styles.facts}>
    {output && <div><dt>{c.output}</dt><dd>{output.quantityRange ? output.quantityRange.join('–'):output.quantity} × <Link className={styles.link} href={record(lang,output.id)}>{prof.items[output.id].name[lang]}</Link></dd></div>}

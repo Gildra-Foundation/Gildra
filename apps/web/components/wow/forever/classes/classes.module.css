@@ -37,3 +37,6 @@
 .credit summary { cursor: pointer; padding-block: var(--atlas-space-3); }
 .classHead > span:last-child, .summary > span { min-width: 0; overflow-wrap: anywhere; }
 .summary img { flex: 0 0 auto; }
+
+/* Touch: 44 px reset link. */
+@media (pointer: coarse) { .actions a { display: inline-flex; align-items: center; min-height: 44px; } }

@@ -8,7 +8,7 @@ import styles from "./wowHome.module.css";
 /** The season's dungeons as painted doors: each card is the dungeon's own scene, accent and timer. */
 export function HomeDungeons({ locale, season, slugs, label, alt }: { locale: "en" | "ru"; season: string; slugs: readonly DungeonSlug[]; label: string; alt: string }) {
   const prefix = locale === "ru" ? "/ru" : "";
-  return <nav className={styles.dungeons} aria-label={label}><ul>{slugs.map(slug => {
+  return <nav className={styles.dungeons} aria-label={label}><ul data-home-cascade="">{slugs.map(slug => {
     const route = dungeonRoutes[slug];
     const name = locale === "ru" ? route.nameRu : route.name;
     return <li key={slug} style={{ "--dungeon-accent": dungeonArtDirections[slug].accent } as CSSProperties}>

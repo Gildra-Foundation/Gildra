@@ -18,8 +18,9 @@ export function AtlasBreadcrumbs({ items, label, className, structuredData = tru
           const last = index === items.length - 1;
           return (
             <li key={`${item.label}-${index}`}>
+              {/* The divider leads its crumb: a crumb that leaves the line takes it along. */}
+              {index > 0 ? <ChevronRight aria-hidden="true" /> : null}
               {item.href && !last ? <Link href={item.href}>{item.label}</Link> : <span aria-current={last ? "page" : undefined}>{item.label}</span>}
-              {last ? null : <ChevronRight aria-hidden="true" />}
             </li>
           );
         })}

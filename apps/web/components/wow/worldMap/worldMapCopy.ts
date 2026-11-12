@@ -3,7 +3,7 @@ export const worldMapCopy = {
   en: {
     title: "World map",
     trail: "Breadcrumbs",
-    lede: "From the stars down to the streets of the capitals — and back through the eras of Azeroth.",
+    lede: "From the stars to city streets, through every era of Azeroth.",
     search: "Search places and events",
     searchLabel: "Search the map",
     nothing: "Nothing found",
