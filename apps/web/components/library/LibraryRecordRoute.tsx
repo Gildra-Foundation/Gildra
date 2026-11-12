@@ -12,8 +12,8 @@ export type LibraryRecordParams = Promise<{ dataset: string; id: string; slug: s
 export type LibraryRecordSearch = Promise<{ product?: string }> | undefined;
 
 const words = {
-  en: { site: "Gildra Library", fallback: (name: string, set?: string) => `${name}${set ? ` (${set})` : ""} — World of Warcraft library entry with its tooltip, details and related records.` },
-  ru: { site: "Библиотека Gildra", fallback: (name: string, set?: string) => `${name}${set ? ` (${set})` : ""} — запись библиотеки World of Warcraft: подсказка, свойства и связанные записи.` },
+  en: { site: "WowArcana Library", fallback: (name: string, set?: string) => `${name}${set ? ` (${set})` : ""} — World of Warcraft library entry with its tooltip, details and related records.` },
+  ru: { site: "Библиотека WowArcana", fallback: (name: string, set?: string) => `${name}${set ? ` (${set})` : ""} — запись библиотеки World of Warcraft: подсказка, свойства и связанные записи.` },
 } as const;
 
 const locale = (lang: Lang) => (lang === "ru" ? "ru_RU" as const : "en_US" as const);

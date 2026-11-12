@@ -85,6 +85,17 @@ describe("library: record rows", () => {
     assert.equal(libraryRecordView(summary({ description: "Deals $s1 damage." }), "en").description, undefined, "unresolved game templates never reach the page");
   });
 
+  it("hides the game's bookkeeping records in both languages and keeps real names", () => {
+    const hidden = ["Гонки драконов – личный рекорд – Калимдор", "Гонки драконов – лучшее время – фракция", "Dragon Racing - Best Time Display - Whole", "Torghast - Scoreboard - Floor Clear",
+      "12.x Professions - Tracker - Insc Book", "10.2.7 Timewalking Season - Artifact", "Клыкарры – рыболовная сеть – зона 1 – сеть 2", "Champion of the Naaru <DND>", "REUSE",
+      "<сплав высокого уровня B>", "Камзол владыки грабежа (216735)", "Cheese/Bread(OBSOLETE)", "Vignette Bunny", "", "   "];
+    for (const name of hidden) assert.deepEqual(libraryRecordViews([summary({ name, type: "currency" })], "ru"), [], `hidden: ${name}`);
+    const shown = ["Доблесть", "Honor", "Trader's Tender", "Знак завоевателя – 1-й сезон", "Сброс специализации инженерного дела", "Resonance Crystals", "Рубиновое святилище (эпохальный)",
+      "Plans: Reusable Hammer", "Temple of the Jade Serpent", "Обсидиановый клинок (10)", "Mark of Honor"];
+    for (const name of shown) assert.equal(libraryRecordViews([summary({ name, type: "currency" })], "ru").length, 1, `shown: ${name}`);
+    assert.equal(libraryRecordViews([summary({ name: "Hero of the Alliance - Season 1 - Dragonflight", type: "achievement" })], "en").length, 1, "only currencies are read as counter paths");
+  });
+
   it("an English-only record keeps its English name on the Russian page", () => {
     assert.equal(libraryRecordView(summary({ name: "Grievous Legguards", localeFallback: true }), "ru").name, "Grievous Legguards");
   });

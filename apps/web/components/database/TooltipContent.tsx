@@ -10,13 +10,10 @@ import { libraryRecordPath } from "@/lib/library/recordPath";
 import { LIBRARY_INTERNAL_NAME } from "@/lib/library/internalName";
 import { tooltipContentCopy } from "./tooltipContentCopy";
 import { itemStatNames, statName } from "./itemStats";
+import { UNRESOLVED_TEMPLATE, chargeCount, powerCost, spellDescriptionText } from "./tooltipValues";
 import "./catalogTooltip.css";
 
 const PLAYABLE_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-// Blizzard DB2 descriptions can contain value placeholders that are only
-// meaningful after a build-specific lookup. Never render those tokens as if
-// they were player-facing text; the API keeps the raw value for diagnostics.
-const UNRESOLVED_TEMPLATE = /\$(?:@spelldesc|[0-9]*[dD]|[0-9]*s[0-9]+|[st][0-9]+|[dD]|[A-Za-z]|[<{])/;
 
 function safeTooltipText(value: unknown, lang: Lang) {
   const text = playerText(String(value ?? ""), lang);
@@ -37,7 +34,7 @@ export function tooltipClassName(entity: CatalogRecord, variant: "dialog" | "pag
 	return `db-wow-tooltip quality-${entity.quality ?? 0} ${variant === "dialog" ? "is-expanded" : "is-detail-page"}`;
 }
 
-export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: CatalogRecord; lang: Lang; iconSymbol?: string }) {
+export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: CatalogRecord & { resolvedDescription?: string | null }; lang: Lang; iconSymbol?: string }) {
 	const tooltip = entity.tooltip;
 	if (!tooltip) return null;
 	const seenAcquisition = new Set<string>();
@@ -63,6 +60,9 @@ export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: 
 		seenAcquisition.add(key);
 		return true;
 	});
+	// A spell's description is the record's resolved text (numbers of the build) when the catalog has one.
+	const described = blocks.findIndex((block) => String(block.type ?? "") === "description" && typeof block.text === "string");
+	const shown = described < 0 ? blocks : blocks.map((block, index) => index === described ? { ...block, text: spellDescriptionText(entity, String(block.text)) } : block);
 	return (
 		<>
 			<span className="db-tooltip-icon" aria-hidden="true">
@@ -70,7 +70,7 @@ export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: 
 			</span>
 			<div className="db-tooltip-panel">
 				<div className="db-tooltip-name" id={`tooltip-name-${entity.id}`}>{entity.name || `${entity.type.replaceAll("_", " ")} #${entity.externalId}`}</div>
-				{blocks.map((block, index) => (
+				{shown.map((block, index) => (
 					<TooltipBlock key={`${String(block.type)}-${index}`} block={block} entityType={entity.type} wow={isWowProduct(entity.product)} lang={lang} mentions={mentions} />
 				))}
 			</div>
@@ -214,8 +214,12 @@ function ItemRequirements({ block, lang }: { block: Record<string, unknown>; lan
 }
 
 function ItemEffectMetadata({ entries, lang }: { entries: Record<string, unknown>[]; lang: Lang }) {
-	return <div className="db-tooltip-effect-meta">{entries.map((effect, index) => <div key={`${String(effect.spell_id)}-${index}`}>
-		{Number(effect.charges ?? 0) !== 0 ? <span>{tooltipContentCopy[lang].charges}: {String(effect.charges)} </span> : null}
+	// An effect with no charges, cooldown or specialization to name (a single-use potion) leaves no line.
+	const visible = entries.map((effect) => ({ effect, charges: chargeCount(effect.charges) }))
+		.filter(({ effect, charges }) => charges > 0 || Number(effect.cooldown_ms ?? 0) > 0 || Number(effect.specialization_id ?? 0) > 0);
+	if (!visible.length) return null;
+	return <div className="db-tooltip-effect-meta">{visible.map(({ effect, charges }, index) => <div key={`${String(effect.spell_id)}-${index}`}>
+		{charges > 0 ? <span>{tooltipContentCopy[lang].charges}: {charges} </span> : null}
 		{Number(effect.cooldown_ms ?? 0) > 0 ? <span>{tooltipContentCopy[lang].cooldown2}: {formatDuration(Number(effect.cooldown_ms), lang)} </span> : null}
 		{Number(effect.specialization_id ?? 0) > 0 ? <span>{tooltipContentCopy[lang].specialization}: {specializationName(Number(effect.specialization_id), lang) || String(effect.specialization_id)}</span> : null}
 	</div>)}</div>;
@@ -547,7 +551,7 @@ function formatPower(block: Record<string, unknown>, lang: Lang) {
   const powerType = Number(block.power_type ?? 0);
   const labels: Record<number, [string, string]> = { 0: ["Mana", "маны"], 1: ["Rage", "ярости"], 2: ["Focus", "концентрации"], 3: ["Energy", "энергии"] };
   const label = labels[powerType]?.[lang === "ru" ? 1 : 0] ?? tooltipContentCopy[lang].resource;
-  return `${percent > 0 ? `${formatGameNumber(percent)}%` : formatGameNumber(amount)} ${label}`;
+  return `${percent > 0 ? `${formatGameNumber(percent)}%` : formatGameNumber(powerCost(amount, powerType))} ${label}`;
 }
 
 function formatGameNumber(value: number) {

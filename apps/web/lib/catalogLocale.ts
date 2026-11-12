@@ -23,9 +23,16 @@ export function catalogLocaleView<T extends CatalogText>(record: T, lang: Lang):
   return record;
 }
 
+/**
+ * A name the catalog labels with the page's language but that is not in it: the game left the record
+ * untranslated, so "ru_RU" carries the English original ("Bloodthirsty Gaze", "Garrison - Horde - Jewelcrafting 2").
+ * A Russian name keeps the game's own Latin parts — expansion names, numerals, abbreviations, a stray Latin
+ * letter ("Ювелирное дело Midnight", "Од'рей III", "Cнятие шкур Midnight") — so only a name without a single
+ * Cyrillic letter is English. An English name never carries Cyrillic.
+ */
 function wrongName(value: string, lang: Lang, type?: string) {
   if (type === "expansion" || type === "product" || value === "World of Warcraft") return false;
-  return lang === "ru" ? /[A-Za-z]/.test(value) : /[А-Яа-яЁё]/.test(value);
+  return lang === "ru" ? /[A-Za-z]/.test(value) && !/[А-Яа-яЁё]/.test(value) : /[А-Яа-яЁё]/.test(value);
 }
 function displayText(value: string | undefined, lang: Lang) {
   if (!value) return value;

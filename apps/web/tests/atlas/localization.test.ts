@@ -107,6 +107,63 @@ test("catalog rejects English text mislabeled as ru_RU without altering the sour
   assert.equal(source.name, "Bloodthirsty Gaze");
 });
 
+test("a Russian catalog name keeps the game's Latin words, numerals and abbreviations", () => {
+  // Names of live records the Russian record pages lost (library audit, 12 Nov 2026).
+  const russian = [
+    ["profession", "Ювелирное дело Midnight"], ["profession", "Горное дело Midnight"], ["profession", "Снятие шкур Legion"],
+    // The game's own typo: the first letter is a Latin "C".
+    ["profession", "Cнятие шкур Midnight"],
+    ["achievement", "Боец II: 1-й сезон Dragonflight"], ["achievement", "Астральный гладиатор: 3-й сезон The War Within"],
+    ["achievement", "Ужасающий гладиатор: 1-й сезон Battle for Azeroth"], ["achievement", "Рейд-питомник V: Котоклизм"],
+    ["achievement", "Знаток вылазок Midnight – лекарь"],
+    ["creature", "Од'рей III"], ["spell", "Ортогональная оптика типа \"AZ3-PNT\""], ["spell", "Контент Midnight высокого уровня"],
+    ["map", "Черный храм – Legion"], ["map", "Таверна Hearthstone"], ["map", "Братство Трюмных Крыс C"],
+    ["currency", "Знание ювелирного дела Midnight"], ["currency", "Гонки драконов – личный рекорд – 11 Z1 R3, обратный маршрут"],
+    ["faction", "Демон Леотераса V"], ["faction", "Скачки на баранах: ловушка DND"],
+    ["currency", "Валюта за участие в сезоне рейтинговых PvP-игр"], ["spell", "PvP-аксессуар"], ["achievement", "500 почетных побед в PvP"],
+    ["spell", "Призыв Хроми (DPS)"],
+  ] as const;
+  for (const [type, name] of russian) {
+    const tooltip = { plainText: name };
+    const localized = catalogLocaleView({ name, type, description: "Описание записи", locale: "ru_RU", resolvedLocale: "ru_RU", localeFallback: false, tooltip,
+      localizations: { ru_RU: { name, description: "Описание записи", resolvedDescription: "" }, en_US: { name: "English name", description: "", resolvedDescription: "" } } }, "ru");
+    assert.equal(localized.name, name, `${type}: ${name}`);
+    assert.equal(localized.description, "Описание записи", name);
+    assert.equal(localized.tooltip, tooltip, `${name}: the tooltip stays`);
+    // A summary row carries no localizations: the same rule reads its name.
+    const summary = catalogLocaleView({ name, type, description: "", locale: "ru_RU", tooltip }, "ru");
+    assert.equal(summary.name, name, `${type} summary: ${name}`);
+    assert.equal(summary.tooltip, tooltip);
+  }
+});
+
+test("an English name under ru_RU is still not a Russian name", () => {
+  // Records the game left untranslated: the catalog repeats the English original under ru_RU.
+  const english = [
+    ["spell", "Bloodthirsty Gaze"], ["map", "Garrison - Horde - Jewelcrafting 2"], ["map", "NAG Alliance Garrison Level 3"], ["map", "AB Phase 1"],
+    ["map", "Molten Cay (Islands 6)"], ["creature", "Vignette Bunny"], ["instance", "Midnight"], ["faction", "REUSE"], ["faction", "GarInvasion_Primals"],
+    ["item", "Val-Sharah Artifact Gem #1 [Holy]"], ["quest", "Midnight (81-89) E"],
+  ] as const;
+  for (const [type, name] of english) {
+    const localized = catalogLocaleView({ name, type, description: "Text", locale: "ru_RU", resolvedLocale: "ru_RU", localeFallback: false, tooltip: { plainText: name },
+      localizations: { ru_RU: { name, description: "Text", resolvedDescription: "Text" }, en_US: { name, description: "Text", resolvedDescription: "Text" } } }, "ru");
+    assert.equal(localized.name, "", `${type}: ${name}`);
+    assert.equal(localized.description, "", name);
+    assert.equal(localized.tooltip, undefined, `${name}: no English tooltip on a Russian page`);
+    const summary = catalogLocaleView({ name, type, description: "Text", locale: "ru_RU", tooltip: { plainText: name } }, "ru");
+    assert.equal(summary.name, "", `${type} summary: ${name}`);
+    assert.equal(summary.tooltip, undefined);
+    assert.equal(catalogLocaleView({ name, type, locale: "en_US" }, "en").name, name, "the English page keeps it");
+  }
+  // Names without letters and the game's own brands are no one's language.
+  assert.equal(catalogLocaleView({ name: "1337", type: "map", locale: "ru_RU" }, "ru").name, "1337");
+  assert.equal(catalogLocaleView({ name: "Midnight", type: "expansion", locale: "ru_RU" }, "ru").name, "Midnight");
+  assert.equal(catalogLocaleView({ name: "World of Warcraft", type: "faction", locale: "ru_RU" }, "ru").name, "World of Warcraft");
+  // A Russian name on an English page is as wrong as before, with or without Latin words beside it.
+  assert.equal(catalogLocaleView({ name: "Ювелирное дело Midnight", type: "profession", locale: "en_US" }, "en").name, "");
+  assert.equal(catalogLocaleView({ name: "Смертельный удар", type: "spell", locale: "en_US" }, "en").name, "");
+});
+
 test("every built-in route step keeps its Russian display free of untranslated names", () => {
   for (const { slug } of getDungeonSelectorOptions()) {
     const route = getDungeonRoute(slug)!;
