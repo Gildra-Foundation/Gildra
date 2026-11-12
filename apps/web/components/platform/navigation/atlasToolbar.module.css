@@ -443,8 +443,8 @@
 .picks[data-kind="glyph"] .pickArt { width: 30px; height: 30px; border: 1px solid var(--atlas-line-soft); border-radius: calc(var(--atlas-radius-control) - 3px); color: var(--atlas-accent); background: var(--atlas-accent-wash); }
 .picks[data-kind="glyph"] .pick:hover .pickArt { border-color: color-mix(in srgb, var(--atlas-accent) 45%, transparent); }
 .pickLabel { min-width: 0; overflow: hidden; font: 600 var(--atlas-text-small) / 1.25 var(--atlas-font-ui); text-overflow: ellipsis; white-space: nowrap; }
-/* Dungeon and raid names keep whole: two lines rather than an ellipsis. */
-.picks[data-kind="art"] .pickLabel { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; white-space: normal; }
+/* Dungeon, raid and class names keep whole: two lines rather than an ellipsis ("Охотник на демо…"). */
+.picks[data-kind="art"] .pickLabel, .picks[data-kind="class"] .pickLabel { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; white-space: normal; }
 /* Class names: 62 % class colour into the heading white (AA on every surface, tests/atlas/palette). */
 .picks[data-kind="class"] .pickLabel { color: color-mix(in srgb, var(--pick-tint) 62%, var(--atlas-text-strong)); }
 

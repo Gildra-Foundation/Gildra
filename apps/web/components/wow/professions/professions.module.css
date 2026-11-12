@@ -109,7 +109,7 @@
 /* Hub and the strip of other professions. */
 .hubGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); gap: var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
 .hubGrid > li { display: grid; }
-.hubCard { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--atlas-space-3) var(--atlas-space-5); padding: 28px 32px 30px; }
+.hubCard { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: 1fr auto; align-items: center; gap: var(--atlas-space-3) var(--atlas-space-5); padding: 28px 32px 30px; }
 .hubCard::after {
   content: ""; position: absolute; z-index: -1; inset: 18px; pointer-events: none;
   background: radial-gradient(circle at 18% 30%, color-mix(in srgb, var(--profession-accent, var(--atlas-accent)) 26%, transparent), transparent 55%);
@@ -125,10 +125,10 @@
 .hubCard:has(.hubName a:focus-visible) { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
 .hubLabel { color: var(--material-light, var(--atlas-accent)); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
 .hubCost { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-1) var(--atlas-space-3); margin: 0; font-size: var(--atlas-text-body); }
-.hubBest { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-1) var(--atlas-space-2); margin: 0; padding-top: var(--atlas-space-3); border-top: 1px solid var(--material-line, var(--atlas-line-soft)); font-size: var(--atlas-text-small); }
+.hubBest { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 2px var(--atlas-space-2); margin: 0; padding-top: var(--atlas-space-3); border-top: 1px solid var(--material-line, var(--atlas-line-soft)); font-size: var(--atlas-text-small); }
 .hubBest svg { color: var(--atlas-positive); }
-.hubBestName { color: var(--atlas-text-strong); font-weight: 600; }
-.hubBestValue { display: inline-flex; margin-inline-start: auto; color: var(--atlas-positive); font-weight: 650; }
+.hubBestName { grid-row: 2; grid-column: 1 / -1; color: var(--atlas-text-strong); font-weight: 600; }
+.hubBestValue { grid-row: 1; grid-column: 3; display: inline-flex; justify-self: end; color: var(--atlas-positive); font-weight: 650; }
 .others { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2) var(--atlas-space-4); margin-top: var(--atlas-space-6); padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); }
 .otherLink { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); text-decoration: none; }
 .otherLink img { border-radius: var(--atlas-radius); }

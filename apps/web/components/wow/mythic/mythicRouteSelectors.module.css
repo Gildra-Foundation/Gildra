@@ -136,6 +136,8 @@
 }
 
 .dungeonSelector .selectorMenu { width: min(520px, calc(100vw - 32px)); }
+/* "Высокий ключ" takes two lines in the narrow key selector rather than "Высокий кл…". */
+.keySelector .triggerCopy small { white-space: normal; }
 .keySelector .selectorMenu { width: 260px; }
 
 .optionGrid { display: grid; gap: 4px; }

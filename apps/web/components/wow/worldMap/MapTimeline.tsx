@@ -87,7 +87,7 @@ export function MapTimeline({ lang, eras, events, phases, position, activeEvent,
     const style = getComputedStyle(band);
     const room = band.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 2;
     const measure = (text: string) => { probe.textContent = text; return probe.getBoundingClientRect().width; };
-    const next = EXPANSIONS.map((expansion) => fitLabel([copy.expansion[expansion.id], expansion.id === "classic" ? copy.expansion.classic : expansion.short], room, measure));
+    const next = EXPANSIONS.map((expansion) => fitLabel([copy.expansion[expansion.id], expansion.id === "classic" ? copy.expansion.classic : expansion.short, expansion.short, ...(expansion.id === "midnight" ? ["MN"] : [])], room, measure));
     probe.textContent = "";
     setLabels((was) => (was && was.join("|") === next.join("|") ? was : next));
   }, [railWidth, copy, fontsReady]);

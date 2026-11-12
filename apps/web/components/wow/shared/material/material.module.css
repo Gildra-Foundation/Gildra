@@ -96,6 +96,8 @@
 }
 .button :global(.ui-button__label), .button :global(.ui-button__icon) { position: relative; z-index: 1; }
 .button :global(.ui-button__label) { white-space: normal; text-align: center; }
+/* A word of the label never splits ("Показат/ь"): it may lean a few pixels onto the painted caps instead. */
+.slot .button :global(.ui-button__label) { overflow-wrap: normal; }
 .button :global(.ui-button__icon), .button svg { flex: none; width: 18px; height: 18px; }
 /* Focus follows the painted silhouette (docs/design/reference): a light rim through drop-shadow on
    the art layer; the transparent outline becomes the system ring in forced colors. */

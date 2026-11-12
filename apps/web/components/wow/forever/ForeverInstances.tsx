@@ -34,7 +34,7 @@ export function ForeverRaidCards({ lang, heading: Heading = "h3" }: { lang: Lang
       <p className={styles.location}>{raid.location}</p>
       <Heading id={raid.id} className={materialStyles.title}>{raid.name}</Heading>
       <AtlasMetaList items={[{ label: t.level, value: 60 }, { label: t.players, value: raid.players }, { label: t.bosses, value: raid.bosses }]} />
-      <p className={materialStyles.text}>{raid.text[lang]}</p>
+      <p className={`${materialStyles.text} ${styles.afterFacts}`}>{raid.text[lang]}</p>
       <AtlasDisclosure summary={t.bosses}><ul>{raidEncounters[raid.id].map(name => <li key={name}>{name}</li>)}</ul></AtlasDisclosure>
     </MaterialPlaque>)}
   </AtlasGrid>;
@@ -43,7 +43,7 @@ export function ForeverRaidCards({ lang, heading: Heading = "h3" }: { lang: Lang
 /** The nine new dungeons with their level bands; a guide button where a guide exists. */
 export function ForeverDungeonCards({ lang }: { lang: Lang }) {
   const t = instanceCopy[lang];
-  return <AtlasGrid min={320} fit>
+  return <AtlasGrid min={320} fit className={styles.nine}>
     {newDungeons.map(dungeon => <MaterialPlaque key={instanceName(dungeon.name, lang)} kit={FOREVER_KIT} as="article">
       <p className={styles.location}>{instanceName(dungeon.location, lang)}</p>
       <h3 className={materialStyles.title}>{instanceName(dungeon.name, lang)}</h3>

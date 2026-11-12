@@ -214,7 +214,8 @@ export function SiteSearchDialog({ open, onClose, lang, initialQuery = "", origi
     if (!trimmed) {
       const queryRows: Row[] = queries.slice(0, 3).map((text) => ({ key: `q${text}`, href: "", title: text, icon: "recent", query: text }));
       const recentRows: Row[] = recent.filter(page => !forever || /^\/wow\/forever(?:\/|$)/.test(page.h)).slice(0, 4).map((page) => ({ key: `r${page.h}`, href: localized(page.h), title: page.t, icon: "recent" }));
-      const sectionRows: Row[] = entries.filter((entry) => entry.g === "section").slice(0, SECTION_SUGGESTIONS)
+      // Outside Forever the first suggestions are the sections of the current game, not seven Forever pages.
+      const sectionRows: Row[] = entries.filter((entry) => entry.g === "section" && (forever || !/^\/wow\/forever(?:\/|$)/.test(entry.h))).slice(0, SECTION_SUGGESTIONS)
         .map((entry) => ({ key: `s${entry.h}`, href: localized(entry.h), title: entry.t, icon: "section" }));
       return [
         ...(queryRows.length ? [{ id: "queries", label: copy.recentQueries, rows: queryRows }] : []),

@@ -173,7 +173,8 @@
   justify-items: center;
   gap: 6px;
   width: 96px;
-  padding: 6px 3px 4px;
+  /* 94 px for the name: "Нечестивость" (91 px) stays one word. */
+  padding: 6px 1px 4px;
   border: 0;
   border-radius: var(--atlas-radius-control);
   color: var(--atlas-text);

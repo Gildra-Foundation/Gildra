@@ -30,7 +30,7 @@ export function ForeverClassesPage({ lang }: { lang: Lang }) {
     <AtlasHero title={t.classes} lede={t.classLede} breadcrumbs={[{ label: 'Forever', href: p(lang, '/wow/forever') }]} actions={<MaterialLinkButton kit={FOREVER_KIT} href={p(lang, '/wow/forever/changes')}>{t.changes}</MaterialLinkButton>} />
     <div className={styles.grid}>{foreverClasses.map(c => <MaterialPlaque key={c.slug} kit={FOREVER_KIT} as="article">
       <h2 className={materialStyles.title}><a href={p(lang, `/wow/forever/classes/${c.slug}`)}><ClassIdentity c={c} lang={lang} /></a></h2>
-      <p className={materialStyles.text}>{trees[c.slug].map(tree => tree.name[lang]).join(" · ")}</p>
+      <p className={materialStyles.text}>{trees[c.slug].map(tree => tree.name[lang]).join("\u00A0· ")}</p>
       <div className={styles.actions}><a className={styles.classLink} href={p(lang, `/wow/forever/talent-calc/${c.slug}`)}>{t.talents}</a><a className={styles.classLink} href={`${p(lang, `/wow/forever/classes/${c.slug}`)}#changes`}>{t.changes}</a></div>
     </MaterialPlaque>)}</div>
   </ForeverFrame>;
