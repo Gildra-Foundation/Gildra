@@ -57,12 +57,6 @@ func NewMediaFetcher(root string, workers int) (*MediaFetcher, error) {
 	}, nil
 }
 
-func (f *MediaFetcher) WithClient(client *http.Client) *MediaFetcher {
-	clone := *f
-	clone.client = client
-	return &clone
-}
-
 func (f *MediaFetcher) Fetch(ctx context.Context, urls []string, fallbacks map[string]string) (map[string]MediaAsset, error) {
 	assets := make(map[string]MediaAsset, len(urls))
 	var mutex sync.Mutex

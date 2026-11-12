@@ -20,10 +20,6 @@ type sourceObject struct {
 
 type imageManifest map[string]map[string]string
 
-func LoadSource(root string) (Dataset, error) {
-	return LoadSourceWithOverlay(root, "")
-}
-
 // LoadSourceWithOverlay loads the primary genshin-db checkout and an optional
 // source overlay. The overlay uses the same src/data layout and is intended
 // for additive datasets (for example the event calendar) that the primary

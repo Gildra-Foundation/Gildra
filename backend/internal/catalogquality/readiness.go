@@ -42,21 +42,12 @@ type ReadinessReport struct {
 	Checks          []ReadinessCheck `json:"checks"`
 }
 
-// EvaluateReadiness verifies the source-backed product catalog foundation.
-// Missing source translations may be represented as an exact English fallback;
-// an unexplained localized value is always a blocking data-quality failure.
-func EvaluateReadiness(
-	ctx context.Context,
-	db *pgxpool.Pool,
-	product string,
-	buildVersion string,
-) (ReadinessReport, error) {
-	return EvaluateReadinessWithRecoveryPolicy(ctx, db, product, buildVersion, RecoveryPolicyOffHost)
-}
-
-// EvaluateReadinessWithRecoveryPolicy keeps off-host recovery as the safe
-// default while allowing an explicitly selected, restore-tested same-host
-// backup for installations that accept host-loss risk.
+// EvaluateReadinessWithRecoveryPolicy verifies the source-backed product
+// catalog foundation. Missing source translations may be represented as an
+// exact English fallback; an unexplained localized value is always a blocking
+// data-quality failure. The recovery policy is off-host by default, or an
+// explicitly selected, restore-tested same-host backup for installations that
+// accept host-loss risk.
 func EvaluateReadinessWithRecoveryPolicy(
 	ctx context.Context,
 	db *pgxpool.Pool,

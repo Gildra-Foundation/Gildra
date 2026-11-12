@@ -42,12 +42,6 @@ func NewSource(client *http.Client, workers int) *Source {
 	return &Source{client: client, baseURL: dataDragonBase, communityBaseURL: communityDragonBase, workers: workers}
 }
 
-func (s *Source) WithBaseURL(baseURL string) *Source {
-	clone := *s
-	clone.baseURL = strings.TrimRight(baseURL, "/")
-	return &clone
-}
-
 func (s *Source) WithCommunityBaseURL(baseURL string) *Source {
 	clone := *s
 	clone.communityBaseURL = strings.TrimRight(baseURL, "/")
