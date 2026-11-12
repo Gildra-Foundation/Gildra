@@ -244,6 +244,20 @@ func normalizeOptions(options Options) (Options, error) {
 			options.ResumeFrom = "import-battlenet"
 		}
 		options.ResumeStages = normalizeStageList(options.ResumeStages)
+		executable := map[string]bool{}
+		for _, stage := range buildPlan(options) {
+			if stage.Executable != "" {
+				executable[stage.Key] = true
+			}
+		}
+		if len(options.ResumeStages) == 0 && !executable[options.ResumeFrom] {
+			return Options{}, fmt.Errorf("unknown resume stage %q", options.ResumeFrom)
+		}
+		for _, stage := range options.ResumeStages {
+			if !executable[stage] {
+				return Options{}, fmt.Errorf("unknown resume stage %q", stage)
+			}
+		}
 	} else if len(normalizeStageList(options.ResumeStages)) > 0 {
 		return Options{}, errors.New("resume-stages requires resume-release")
 	}
@@ -513,6 +527,9 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 	var releaseID uuid.UUID
 	resuming := strings.TrimSpace(options.ResumeReleaseID) != ""
 	if resuming {
+		if err := r.validateResumeEvidence(ctx, options, plan); err != nil {
+			return result, r.failStage(ctx, result.RunID, "release-start", "resume_evidence_missing", err)
+		}
 		releaseID, err = uuid.Parse(strings.TrimSpace(options.ResumeReleaseID))
 		if err == nil {
 			// Resume owns cleanup of failed snapshots and re-attaches the release
@@ -528,6 +545,11 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 	}
 	if err != nil {
 		if errors.Is(err, catalogrelease.ErrBuildAlreadyPublished) {
+			// Publication may have committed before the previous run failed during
+			// post-publication projection. Retry that phase even for the same build.
+			if err := r.refreshPostPublish(ctx, result.RunID, options.Product, options.BuildVersion); err != nil {
+				return result, err
+			}
 			publicationService := catalog.NewPublicationService(r.DB, time.Second)
 			var publication catalog.PublicationStatus
 			var publicationErr error
@@ -617,24 +639,8 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		releasePublished = true
 		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
 			result.RunID, "release-publish", jsonObject(map[string]any{"release_id": result.ReleaseID}))
-		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='refresh-post-publish'`, result.RunID)
-		productID, productErr := r.productID(ctx, options.Product)
-		if productErr != nil {
-			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "product_lookup_failed", productErr)
-		}
-		questUsabilityRefreshed, questRefreshErr := r.refreshPublishedQuestUsability(ctx, options.Product, productID, options.BuildVersion)
-		if questRefreshErr != nil {
-			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "quest_usability_refresh_failed", questRefreshErr)
-		}
-		if err := catalog.NewService(r.DB).RefreshReadModels(ctx, &productID); err != nil {
-			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "post_publish_read_model_refresh_failed", err)
-		}
-		if _, err := r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
-			result.RunID, "refresh-post-publish", jsonObject(map[string]any{
-				"release_id": result.ReleaseID, "read_models_refreshed": true,
-				"quest_usability_refreshed": questUsabilityRefreshed,
-			})); err != nil {
-			return result, fmt.Errorf("finish post-publish read model stage: %w", err)
+		if err := r.refreshPostPublish(ctx, result.RunID, options.Product, options.BuildVersion); err != nil {
+			return result, err
 		}
 	} else {
 		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='blocked',started_at=COALESCE(started_at,now()),finished_at=now(),error_code='publication_blocked',error_summary=$3 WHERE run_id=$1 AND stage_key=$2`,
