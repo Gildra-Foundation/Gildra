@@ -1,0 +1,5969 @@
+{
+ "build": "12.1.0.69587",
+ "rows": [
+  {
+   "Table": "RandPropPoints",
+   "Key": 1,
+   "Payload": {
+    "DamageReplaceStat": "0",
+    "DamageReplaceStatF": "0",
+    "DamageSecondary": "0",
+    "DamageSecondaryF": "0",
+    "EpicF_0": "0",
+    "EpicF_1": "0",
+    "EpicF_2": "0",
+    "EpicF_3": "0",
+    "EpicF_4": "0",
+    "Epic_0": "0",
+    "Epic_1": "0",
+    "Epic_2": "0",
+    "Epic_3": "0",
+    "Epic_4": "0",
+    "GoodF_0": "0",
+    "GoodF_1": "0",
+    "GoodF_2": "0",
+    "GoodF_3": "0",
+    "GoodF_4": "0",
+    "Good_0": "0",
+    "Good_1": "0",
+    "Good_2": "0",
+    "Good_3": "0",
+    "Good_4": "0",
+    "ID": "1",
+    "SuperiorF_0": "0",
+    "SuperiorF_1": "0",
+    "SuperiorF_2": "0",
+    "SuperiorF_3": "0",
+    "SuperiorF_4": "0",
+    "Superior_0": "0",
+    "Superior_1": "0",
+    "Superior_2": "0",
+    "Superior_3": "0",
+    "Superior_4": "0"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 5,
+   "Payload": {
+    "DamageReplaceStat": "0",
+    "DamageReplaceStatF": "0.25065401196",
+    "DamageSecondary": "0",
+    "DamageSecondaryF": "0.25065401196",
+    "EpicF_0": "2.36330938339",
+    "EpicF_1": "1.77248203754",
+    "EpicF_2": "1.32936143875",
+    "EpicF_3": "1.1816546917",
+    "EpicF_4": "1.1816546917",
+    "Epic_0": "2",
+    "Epic_1": "1",
+    "Epic_2": "1",
+    "Epic_3": "1",
+    "Epic_4": "1",
+    "GoodF_0": "2.36330938339",
+    "GoodF_1": "1.77248203754",
+    "GoodF_2": "1.32936143875",
+    "GoodF_3": "1.1816546917",
+    "GoodF_4": "1.1816546917",
+    "Good_0": "2",
+    "Good_1": "1",
+    "Good_2": "1",
+    "Good_3": "1",
+    "Good_4": "1",
+    "ID": "5",
+    "SuperiorF_0": "2.36330938339",
+    "SuperiorF_1": "1.77248203754",
+    "SuperiorF_2": "1.32936143875",
+    "SuperiorF_3": "1.1816546917",
+    "SuperiorF_4": "1.1816546917",
+    "Superior_0": "2",
+    "Superior_1": "1",
+    "Superior_2": "1",
+    "Superior_3": "1",
+    "Superior_4": "1"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 19,
+   "Payload": {
+    "DamageReplaceStat": "2",
+    "DamageReplaceStatF": "2.10266566277",
+    "DamageSecondary": "2",
+    "DamageSecondaryF": "2.10266566277",
+    "EpicF_0": "11.06445503235",
+    "EpicF_1": "8.29834079742",
+    "EpicF_2": "6.22375583649",
+    "EpicF_3": "5.53222751617",
+    "EpicF_4": "5.53222751617",
+    "Epic_0": "11",
+    "Epic_1": "8",
+    "Epic_2": "6",
+    "Epic_3": "5",
+    "Epic_4": "5",
+    "GoodF_0": "11.06445503235",
+    "GoodF_1": "8.29834079742",
+    "GoodF_2": "6.22375583649",
+    "GoodF_3": "5.53222751617",
+    "GoodF_4": "5.53222751617",
+    "Good_0": "11",
+    "Good_1": "8",
+    "Good_2": "6",
+    "Good_3": "5",
+    "Good_4": "5",
+    "ID": "19",
+    "SuperiorF_0": "11.06445503235",
+    "SuperiorF_1": "8.29834079742",
+    "SuperiorF_2": "6.22375583649",
+    "SuperiorF_3": "5.53222751617",
+    "SuperiorF_4": "5.53222751617",
+    "Superior_0": "11",
+    "Superior_1": "8",
+    "Superior_2": "6",
+    "Superior_3": "5",
+    "Superior_4": "5"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 21,
+   "Payload": {
+    "DamageReplaceStat": "2",
+    "DamageReplaceStatF": "2.51653695107",
+    "DamageSecondary": "2",
+    "DamageSecondaryF": "2.51653695107",
+    "EpicF_0": "12.10799694061",
+    "EpicF_1": "9.08099746704",
+    "EpicF_2": "6.81074810028",
+    "EpicF_3": "6.05399847031",
+    "EpicF_4": "6.05399847031",
+    "Epic_0": "12",
+    "Epic_1": "9",
+    "Epic_2": "6",
+    "Epic_3": "6",
+    "Epic_4": "6",
+    "GoodF_0": "12.10799694061",
+    "GoodF_1": "9.08099746704",
+    "GoodF_2": "6.81074810028",
+    "GoodF_3": "6.05399847031",
+    "GoodF_4": "6.05399847031",
+    "Good_0": "12",
+    "Good_1": "9",
+    "Good_2": "6",
+    "Good_3": "6",
+    "Good_4": "6",
+    "ID": "21",
+    "SuperiorF_0": "12.10799694061",
+    "SuperiorF_1": "9.08099746704",
+    "SuperiorF_2": "6.81074810028",
+    "SuperiorF_3": "6.05399847031",
+    "SuperiorF_4": "6.05399847031",
+    "Superior_0": "12",
+    "Superior_1": "9",
+    "Superior_2": "6",
+    "Superior_3": "6",
+    "Superior_4": "6"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 31,
+   "Payload": {
+    "DamageReplaceStat": "4",
+    "DamageReplaceStatF": "4.18447637558",
+    "DamageSecondary": "4",
+    "DamageSecondaryF": "4.18447637558",
+    "EpicF_0": "14.00128936768",
+    "EpicF_1": "10.50096702576",
+    "EpicF_2": "7.87572526932",
+    "EpicF_3": "7.00064468384",
+    "EpicF_4": "7.00064468384",
+    "Epic_0": "14",
+    "Epic_1": "10",
+    "Epic_2": "7",
+    "Epic_3": "7",
+    "Epic_4": "7",
+    "GoodF_0": "14.00128936768",
+    "GoodF_1": "10.50096702576",
+    "GoodF_2": "7.87572526932",
+    "GoodF_3": "7.00064468384",
+    "GoodF_4": "7.00064468384",
+    "Good_0": "14",
+    "Good_1": "10",
+    "Good_2": "7",
+    "Good_3": "7",
+    "Good_4": "7",
+    "ID": "31",
+    "SuperiorF_0": "14.00128936768",
+    "SuperiorF_1": "10.50096702576",
+    "SuperiorF_2": "7.87572526932",
+    "SuperiorF_3": "7.00064468384",
+    "SuperiorF_4": "7.00064468384",
+    "Superior_0": "14",
+    "Superior_1": "10",
+    "Superior_2": "7",
+    "Superior_3": "7",
+    "Superior_4": "7"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 44,
+   "Payload": {
+    "DamageReplaceStat": "5",
+    "DamageReplaceStatF": "5.90613269806",
+    "DamageSecondary": "5",
+    "DamageSecondaryF": "5.90613269806",
+    "EpicF_0": "17.20992279053",
+    "EpicF_1": "12.9074420929",
+    "EpicF_2": "9.68058204651",
+    "EpicF_3": "8.60496139526",
+    "EpicF_4": "8.60496139526",
+    "Epic_0": "17",
+    "Epic_1": "12",
+    "Epic_2": "9",
+    "Epic_3": "8",
+    "Epic_4": "8",
+    "GoodF_0": "17.20992279053",
+    "GoodF_1": "12.9074420929",
+    "GoodF_2": "9.68058204651",
+    "GoodF_3": "8.60496139526",
+    "GoodF_4": "8.60496139526",
+    "Good_0": "17",
+    "Good_1": "12",
+    "Good_2": "9",
+    "Good_3": "8",
+    "Good_4": "8",
+    "ID": "44",
+    "SuperiorF_0": "17.20992279053",
+    "SuperiorF_1": "12.9074420929",
+    "SuperiorF_2": "9.68058204651",
+    "SuperiorF_3": "8.60496139526",
+    "SuperiorF_4": "8.60496139526",
+    "Superior_0": "17",
+    "Superior_1": "12",
+    "Superior_2": "9",
+    "Superior_3": "8",
+    "Superior_4": "8"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 70,
+   "Payload": {
+    "DamageReplaceStat": "14",
+    "DamageReplaceStatF": "14.97749996185",
+    "DamageSecondary": "14",
+    "DamageSecondaryF": "14.97749996185",
+    "EpicF_0": "29.95499992371",
+    "EpicF_1": "22.46625137329",
+    "EpicF_2": "16.84968757629",
+    "EpicF_3": "14.97749996185",
+    "EpicF_4": "14.97749996185",
+    "Epic_0": "29",
+    "Epic_1": "22",
+    "Epic_2": "16",
+    "Epic_3": "14",
+    "Epic_4": "14",
+    "GoodF_0": "29.95499992371",
+    "GoodF_1": "22.46625137329",
+    "GoodF_2": "16.84968757629",
+    "GoodF_3": "14.97749996185",
+    "GoodF_4": "14.97749996185",
+    "Good_0": "29",
+    "Good_1": "22",
+    "Good_2": "16",
+    "Good_3": "14",
+    "Good_4": "14",
+    "ID": "70",
+    "SuperiorF_0": "29.95499992371",
+    "SuperiorF_1": "22.46625137329",
+    "SuperiorF_2": "16.84968757629",
+    "SuperiorF_3": "14.97749996185",
+    "SuperiorF_4": "14.97749996185",
+    "Superior_0": "29",
+    "Superior_1": "22",
+    "Superior_2": "16",
+    "Superior_3": "14",
+    "Superior_4": "14"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 72,
+   "Payload": {
+    "DamageReplaceStat": "19",
+    "DamageReplaceStatF": "19.07428359985",
+    "DamageSecondary": "19",
+    "DamageSecondaryF": "19.07428359985",
+    "EpicF_0": "30.93127250671",
+    "EpicF_1": "23.1984539032",
+    "EpicF_2": "17.39883995056",
+    "EpicF_3": "15.46563625336",
+    "EpicF_4": "15.46563625336",
+    "Epic_0": "30",
+    "Epic_1": "23",
+    "Epic_2": "17",
+    "Epic_3": "15",
+    "Epic_4": "15",
+    "GoodF_0": "30.93127250671",
+    "GoodF_1": "23.1984539032",
+    "GoodF_2": "17.39883995056",
+    "GoodF_3": "15.46563625336",
+    "GoodF_4": "15.46563625336",
+    "Good_0": "30",
+    "Good_1": "23",
+    "Good_2": "17",
+    "Good_3": "15",
+    "Good_4": "15",
+    "ID": "72",
+    "SuperiorF_0": "30.93127250671",
+    "SuperiorF_1": "23.1984539032",
+    "SuperiorF_2": "17.39883995056",
+    "SuperiorF_3": "15.46563625336",
+    "SuperiorF_4": "15.46563625336",
+    "Superior_0": "30",
+    "Superior_1": "23",
+    "Superior_2": "17",
+    "Superior_3": "15",
+    "Superior_4": "15"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 73,
+   "Payload": {
+    "DamageReplaceStat": "19",
+    "DamageReplaceStatF": "19.86331367493",
+    "DamageSecondary": "19",
+    "DamageSecondaryF": "19.86331367493",
+    "EpicF_0": "31.36312675476",
+    "EpicF_1": "23.52234649658",
+    "EpicF_2": "17.64175987244",
+    "EpicF_3": "15.68156337738",
+    "EpicF_4": "15.68156337738",
+    "Epic_0": "31",
+    "Epic_1": "23",
+    "Epic_2": "17",
+    "Epic_3": "15",
+    "Epic_4": "15",
+    "GoodF_0": "31.36312675476",
+    "GoodF_1": "23.52234649658",
+    "GoodF_2": "17.64175987244",
+    "GoodF_3": "15.68156337738",
+    "GoodF_4": "15.68156337738",
+    "Good_0": "31",
+    "Good_1": "23",
+    "Good_2": "17",
+    "Good_3": "15",
+    "Good_4": "15",
+    "ID": "73",
+    "SuperiorF_0": "31.36312675476",
+    "SuperiorF_1": "23.52234649658",
+    "SuperiorF_2": "17.64175987244",
+    "SuperiorF_3": "15.68156337738",
+    "SuperiorF_4": "15.68156337738",
+    "Superior_0": "31",
+    "Superior_1": "23",
+    "Superior_2": "17",
+    "Superior_3": "15",
+    "Superior_4": "15"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 77,
+   "Payload": {
+    "DamageReplaceStat": "22",
+    "DamageReplaceStatF": "22.89307785034",
+    "DamageSecondary": "22",
+    "DamageSecondaryF": "22.89307785034",
+    "EpicF_0": "32.70439910889",
+    "EpicF_1": "24.52829933167",
+    "EpicF_2": "18.39622497559",
+    "EpicF_3": "16.35219955444",
+    "EpicF_4": "16.35219955444",
+    "Epic_0": "32",
+    "Epic_1": "24",
+    "Epic_2": "18",
+    "Epic_3": "16",
+    "Epic_4": "16",
+    "GoodF_0": "32.70439910889",
+    "GoodF_1": "24.52829933167",
+    "GoodF_2": "18.39622497559",
+    "GoodF_3": "16.35219955444",
+    "GoodF_4": "16.35219955444",
+    "Good_0": "32",
+    "Good_1": "24",
+    "Good_2": "18",
+    "Good_3": "16",
+    "Good_4": "16",
+    "ID": "77",
+    "SuperiorF_0": "32.70439910889",
+    "SuperiorF_1": "24.52829933167",
+    "SuperiorF_2": "18.39622497559",
+    "SuperiorF_3": "16.35219955444",
+    "SuperiorF_4": "16.35219955444",
+    "Superior_0": "32",
+    "Superior_1": "24",
+    "Superior_2": "18",
+    "Superior_3": "16",
+    "Superior_4": "16"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 197,
+   "Payload": {
+    "DamageReplaceStat": "94",
+    "DamageReplaceStatF": "94.75311279297",
+    "DamageSecondary": "166",
+    "DamageSecondaryF": "166.87414550781",
+    "EpicF_0": "100.04350280762",
+    "EpicF_1": "75.03262329102",
+    "EpicF_2": "56.27447128296",
+    "EpicF_3": "50.02175140381",
+    "EpicF_4": "50.02175140381",
+    "Epic_0": "100",
+    "Epic_1": "75",
+    "Epic_2": "56",
+    "Epic_3": "50",
+    "Epic_4": "50",
+    "GoodF_0": "100.04350280762",
+    "GoodF_1": "75.03262329102",
+    "GoodF_2": "56.27447128296",
+    "GoodF_3": "50.02175140381",
+    "GoodF_4": "50.02175140381",
+    "Good_0": "100",
+    "Good_1": "75",
+    "Good_2": "56",
+    "Good_3": "50",
+    "Good_4": "50",
+    "ID": "197",
+    "SuperiorF_0": "100.04350280762",
+    "SuperiorF_1": "75.03262329102",
+    "SuperiorF_2": "56.27447128296",
+    "SuperiorF_3": "50.02175140381",
+    "SuperiorF_4": "50.02175140381",
+    "Superior_0": "100",
+    "Superior_1": "75",
+    "Superior_2": "56",
+    "Superior_3": "50",
+    "Superior_4": "50"
+   }
+  },
+  {
+   "Table": "RandPropPoints",
+   "Key": 259,
+   "Payload": {
+    "DamageReplaceStat": "178",
+    "DamageReplaceStatF": "178.74966430664",
+    "DamageSecondary": "227",
+    "DamageSecondaryF": "227.16539001465",
+    "EpicF_0": "178.26795959473",
+    "EpicF_1": "133.70097351074",
+    "EpicF_2": "100.27572631836",
+    "EpicF_3": "89.13397979736",
+    "EpicF_4": "89.13397979736",
+    "Epic_0": "178",
+    "Epic_1": "133",
+    "Epic_2": "100",
+    "Epic_3": "89",
+    "Epic_4": "89",
+    "GoodF_0": "178.26795959473",
+    "GoodF_1": "133.70097351074",
+    "GoodF_2": "100.27572631836",
+    "GoodF_3": "89.13397979736",
+    "GoodF_4": "89.13397979736",
+    "Good_0": "178",
+    "Good_1": "133",
+    "Good_2": "100",
+    "Good_3": "89",
+    "Good_4": "89",
+    "ID": "259",
+    "SuperiorF_0": "178.26795959473",
+    "SuperiorF_1": "133.70097351074",
+    "SuperiorF_2": "100.27572631836",
+    "SuperiorF_3": "89.13397979736",
+    "SuperiorF_4": "89.13397979736",
+    "Superior_0": "178",
+    "Superior_1": "133",
+    "Superior_2": "100",
+    "Superior_3": "89",
+    "Superior_4": "89"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 1,
+   "Payload": {
+    "ID": "1",
+    "ItemLevel": "1",
+    "Quality_0": "0.45447000861",
+    "Quality_1": "0.95454597473",
+    "Quality_2": "1.3198570013",
+    "Quality_3": "2.23026990891",
+    "Quality_4": "3.61783194542",
+    "Quality_5": "3.61783194542",
+    "Quality_6": "3.61783194542"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 5,
+   "Payload": {
+    "ID": "5",
+    "ItemLevel": "5",
+    "Quality_0": "0.86888897419",
+    "Quality_1": "1.82497298717",
+    "Quality_2": "2.13542199135",
+    "Quality_3": "3.13176989555",
+    "Quality_4": "4.53867292404",
+    "Quality_5": "4.53867292404",
+    "Quality_6": "4.53867292404"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 19,
+   "Payload": {
+    "ID": "19",
+    "ItemLevel": "19",
+    "Quality_0": "3.00738096237",
+    "Quality_1": "4.53867292404",
+    "Quality_2": "5.01230096817",
+    "Quality_3": "6.72762393951",
+    "Quality_4": "8.45272254944",
+    "Quality_5": "8.45272254944",
+    "Quality_6": "8.45272254944"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 21,
+   "Payload": {
+    "ID": "21",
+    "ItemLevel": "21",
+    "Quality_0": "3.31819605827",
+    "Quality_1": "5.01230096817",
+    "Quality_2": "5.53032588959",
+    "Quality_3": "7.34760284424",
+    "Quality_4": "8.95384502411",
+    "Quality_5": "8.95384502411",
+    "Quality_6": "8.95384502411"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 31,
+   "Payload": {
+    "ID": "31",
+    "ItemLevel": "31",
+    "Quality_0": "5.07163286209",
+    "Quality_1": "7.92338705063",
+    "Quality_2": "8.45272254944",
+    "Quality_3": "10.2807264328",
+    "Quality_4": "13.02797031403",
+    "Quality_5": "13.02797031403",
+    "Quality_6": "13.02797031403"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 44,
+   "Payload": {
+    "ID": "44",
+    "ItemLevel": "44",
+    "Quality_0": "8.09039974213",
+    "Quality_1": "12.54506587982",
+    "Quality_2": "13.48400115967",
+    "Quality_3": "15.54961776733",
+    "Quality_4": "17.40368080139",
+    "Quality_5": "17.40368080139",
+    "Quality_6": "17.40368080139"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 70,
+   "Payload": {
+    "ID": "70",
+    "ItemLevel": "70",
+    "Quality_0": "12.62938308716",
+    "Quality_1": "20.41750144958",
+    "Quality_2": "21.04897117615",
+    "Quality_3": "24.20631599426",
+    "Quality_4": "26.85191345215",
+    "Quality_5": "26.85191345215",
+    "Quality_6": "26.85191345215"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 72,
+   "Payload": {
+    "ID": "72",
+    "ItemLevel": "72",
+    "Quality_0": "12.9540643692",
+    "Quality_1": "20.94240379333",
+    "Quality_2": "21.59010887146",
+    "Quality_3": "24.82862281799",
+    "Quality_4": "27.82837867737",
+    "Quality_5": "27.82837867737",
+    "Quality_6": "27.82837867737"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 73,
+   "Payload": {
+    "ID": "73",
+    "ItemLevel": "73",
+    "Quality_0": "13.06427764893",
+    "Quality_1": "21.12058067322",
+    "Quality_2": "21.77379608154",
+    "Quality_3": "25.03986549377",
+    "Quality_4": "28.33236885071",
+    "Quality_5": "28.33236885071",
+    "Quality_6": "28.33236885071"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 77,
+   "Payload": {
+    "ID": "77",
+    "ItemLevel": "77",
+    "Quality_0": "13.5051279068",
+    "Quality_1": "21.8332901001",
+    "Quality_2": "22.50854682922",
+    "Quality_3": "25.8848285675",
+    "Quality_4": "30.44077110291",
+    "Quality_5": "30.44077110291",
+    "Quality_6": "30.44077110291"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 197,
+   "Payload": {
+    "ID": "197",
+    "ItemLevel": "197",
+    "Quality_0": "44.9898109436",
+    "Quality_1": "59.42704772949",
+    "Quality_2": "60.59764099121",
+    "Quality_3": "66.45056915283",
+    "Quality_4": "73.18144989014",
+    "Quality_5": "73.18144989014",
+    "Quality_6": "73.18144989014"
+   }
+  },
+  {
+   "Table": "ItemDamageAmmo",
+   "Key": 259,
+   "Payload": {
+    "ID": "259",
+    "ItemLevel": "259",
+    "Quality_0": "63.29555511475",
+    "Quality_1": "89.02133178711",
+    "Quality_2": "91.10720825195",
+    "Quality_3": "101.53658294678",
+    "Quality_4": "113.53034973145",
+    "Quality_5": "113.53034973145",
+    "Quality_6": "113.53034973145"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 1,
+   "Payload": {
+    "ID": "1",
+    "ItemLevel": "1",
+    "Quality_0": "0.24218526483",
+    "Quality_1": "0.38951462507",
+    "Quality_2": "0.40364211798",
+    "Quality_3": "0.40364211798",
+    "Quality_4": "0.40364211798",
+    "Quality_5": "0.40364211798",
+    "Quality_6": "0.40364211798"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 5,
+   "Payload": {
+    "ID": "5",
+    "ItemLevel": "5",
+    "Quality_0": "0.40364211798",
+    "Quality_1": "0.64919108152",
+    "Quality_2": "0.67273682356",
+    "Quality_3": "0.67273682356",
+    "Quality_4": "0.67273682356",
+    "Quality_5": "0.67273682356",
+    "Quality_6": "0.67273682356"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 19,
+   "Payload": {
+    "ID": "19",
+    "ItemLevel": "19",
+    "Quality_0": "1.88975679874",
+    "Quality_1": "3.03935885429",
+    "Quality_2": "3.14959478378",
+    "Quality_3": "3.14959478378",
+    "Quality_4": "3.14959478378",
+    "Quality_5": "3.14959478378",
+    "Quality_6": "3.14959478378"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 21,
+   "Payload": {
+    "ID": "21",
+    "ItemLevel": "21",
+    "Quality_0": "2.06798887253",
+    "Quality_1": "3.32601547241",
+    "Quality_2": "3.44664812088",
+    "Quality_3": "3.44664812088",
+    "Quality_4": "3.44664812088",
+    "Quality_5": "3.44664812088",
+    "Quality_6": "3.44664812088"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 31,
+   "Payload": {
+    "ID": "31",
+    "ItemLevel": "31",
+    "Quality_0": "2.49896526337",
+    "Quality_1": "4.01916885376",
+    "Quality_2": "4.16494178772",
+    "Quality_3": "4.16494178772",
+    "Quality_4": "4.16494178772",
+    "Quality_5": "4.16494178772",
+    "Quality_6": "4.16494178772"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 44,
+   "Payload": {
+    "ID": "44",
+    "ItemLevel": "44",
+    "Quality_0": "3.08634257317",
+    "Quality_1": "4.96386766434",
+    "Quality_2": "5.14390420914",
+    "Quality_3": "5.14390420914",
+    "Quality_4": "5.14390420914",
+    "Quality_5": "5.14390420914",
+    "Quality_6": "5.14390420914"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 70,
+   "Payload": {
+    "ID": "70",
+    "ItemLevel": "70",
+    "Quality_0": "5.37198162079",
+    "Quality_1": "8.63993740082",
+    "Quality_2": "8.9533033371",
+    "Quality_3": "8.9533033371",
+    "Quality_4": "8.9533033371",
+    "Quality_5": "8.9533033371",
+    "Quality_6": "8.9533033371"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 72,
+   "Payload": {
+    "ID": "72",
+    "ItemLevel": "72",
+    "Quality_0": "5.54706144333",
+    "Quality_1": "8.92152404785",
+    "Quality_2": "9.24510288239",
+    "Quality_3": "9.24510288239",
+    "Quality_4": "9.24510288239",
+    "Quality_5": "9.24510288239",
+    "Quality_6": "9.24510288239"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 73,
+   "Payload": {
+    "ID": "73",
+    "ItemLevel": "73",
+    "Quality_0": "5.62450838089",
+    "Quality_1": "9.04608440399",
+    "Quality_2": "9.37418079376",
+    "Quality_3": "9.37418079376",
+    "Quality_4": "9.37418079376",
+    "Quality_5": "9.37418079376",
+    "Quality_6": "9.37418079376"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 77,
+   "Payload": {
+    "ID": "77",
+    "ItemLevel": "77",
+    "Quality_0": "5.86504507065",
+    "Quality_1": "9.43294811249",
+    "Quality_2": "9.7750749588",
+    "Quality_3": "9.7750749588",
+    "Quality_4": "9.7750749588",
+    "Quality_5": "9.7750749588",
+    "Quality_6": "9.7750749588"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 197,
+   "Payload": {
+    "ID": "197",
+    "ItemLevel": "197",
+    "Quality_0": "17.94130706787",
+    "Quality_1": "28.8556022644",
+    "Quality_2": "29.90217971802",
+    "Quality_3": "29.90217971802",
+    "Quality_4": "29.90217971802",
+    "Quality_5": "29.90217971802",
+    "Quality_6": "29.90217971802"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHand",
+   "Key": 259,
+   "Payload": {
+    "ID": "259",
+    "ItemLevel": "259",
+    "Quality_0": "31.96969413757",
+    "Quality_1": "51.41792678833",
+    "Quality_2": "53.28282546997",
+    "Quality_3": "53.28282546997",
+    "Quality_4": "53.28282546997",
+    "Quality_5": "53.28282546997",
+    "Quality_6": "53.28282546997"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 1,
+   "Payload": {
+    "ID": "1",
+    "ItemLevel": "1",
+    "Quality_0": "0.12109263241",
+    "Quality_1": "0.19475731254",
+    "Quality_2": "0.20182105899",
+    "Quality_3": "0.20182105899",
+    "Quality_4": "0.20182105899",
+    "Quality_5": "0.20182105899",
+    "Quality_6": "0.20182105899"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 5,
+   "Payload": {
+    "ID": "5",
+    "ItemLevel": "5",
+    "Quality_0": "0.20182105899",
+    "Quality_1": "0.32459554076",
+    "Quality_2": "0.33636841178",
+    "Quality_3": "0.33636841178",
+    "Quality_4": "0.33636841178",
+    "Quality_5": "0.33636841178",
+    "Quality_6": "0.33636841178"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 19,
+   "Payload": {
+    "ID": "19",
+    "ItemLevel": "19",
+    "Quality_0": "0.94487839937",
+    "Quality_1": "1.51967942715",
+    "Quality_2": "1.57479739189",
+    "Quality_3": "1.57479739189",
+    "Quality_4": "1.57479739189",
+    "Quality_5": "1.57479739189",
+    "Quality_6": "1.57479739189"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 21,
+   "Payload": {
+    "ID": "21",
+    "ItemLevel": "21",
+    "Quality_0": "1.03399443626",
+    "Quality_1": "1.66300773621",
+    "Quality_2": "1.72332406044",
+    "Quality_3": "1.72332406044",
+    "Quality_4": "1.72332406044",
+    "Quality_5": "1.72332406044",
+    "Quality_6": "1.72332406044"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 31,
+   "Payload": {
+    "ID": "31",
+    "ItemLevel": "31",
+    "Quality_0": "1.24948263168",
+    "Quality_1": "2.00958442688",
+    "Quality_2": "2.08247089386",
+    "Quality_3": "2.08247089386",
+    "Quality_4": "2.08247089386",
+    "Quality_5": "2.08247089386",
+    "Quality_6": "2.08247089386"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 44,
+   "Payload": {
+    "ID": "44",
+    "ItemLevel": "44",
+    "Quality_0": "1.54317128658",
+    "Quality_1": "2.48193383217",
+    "Quality_2": "2.57195210457",
+    "Quality_3": "2.57195210457",
+    "Quality_4": "2.57195210457",
+    "Quality_5": "2.57195210457",
+    "Quality_6": "2.57195210457"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 70,
+   "Payload": {
+    "ID": "70",
+    "ItemLevel": "70",
+    "Quality_0": "2.68599081039",
+    "Quality_1": "4.31996870041",
+    "Quality_2": "4.47665166855",
+    "Quality_3": "4.47665166855",
+    "Quality_4": "4.47665166855",
+    "Quality_5": "4.47665166855",
+    "Quality_6": "4.47665166855"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 72,
+   "Payload": {
+    "ID": "72",
+    "ItemLevel": "72",
+    "Quality_0": "2.77353072166",
+    "Quality_1": "4.46076202393",
+    "Quality_2": "4.62255144119",
+    "Quality_3": "4.62255144119",
+    "Quality_4": "4.62255144119",
+    "Quality_5": "4.62255144119",
+    "Quality_6": "4.62255144119"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 73,
+   "Payload": {
+    "ID": "73",
+    "ItemLevel": "73",
+    "Quality_0": "2.81225419044",
+    "Quality_1": "4.523042202",
+    "Quality_2": "4.68709039688",
+    "Quality_3": "4.68709039688",
+    "Quality_4": "4.68709039688",
+    "Quality_5": "4.68709039688",
+    "Quality_6": "4.68709039688"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 77,
+   "Payload": {
+    "ID": "77",
+    "ItemLevel": "77",
+    "Quality_0": "2.93252253532",
+    "Quality_1": "4.71647405624",
+    "Quality_2": "4.8875374794",
+    "Quality_3": "4.8875374794",
+    "Quality_4": "4.8875374794",
+    "Quality_5": "4.8875374794",
+    "Quality_6": "4.8875374794"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 197,
+   "Payload": {
+    "ID": "197",
+    "ItemLevel": "197",
+    "Quality_0": "8.97065353394",
+    "Quality_1": "14.4278011322",
+    "Quality_2": "14.95108985901",
+    "Quality_3": "14.95108985901",
+    "Quality_4": "14.95108985901",
+    "Quality_5": "14.95108985901",
+    "Quality_6": "14.95108985901"
+   }
+  },
+  {
+   "Table": "ItemDamageOneHandCaster",
+   "Key": 259,
+   "Payload": {
+    "ID": "259",
+    "ItemLevel": "259",
+    "Quality_0": "15.98484706879",
+    "Quality_1": "25.70896339417",
+    "Quality_2": "26.64141273499",
+    "Quality_3": "26.64141273499",
+    "Quality_4": "26.64141273499",
+    "Quality_5": "26.64141273499",
+    "Quality_6": "26.64141273499"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 1,
+   "Payload": {
+    "ID": "1",
+    "ItemLevel": "1",
+    "Quality_0": "0.32074606419",
+    "Quality_1": "0.51586657763",
+    "Quality_2": "0.53457677364",
+    "Quality_3": "0.53457677364",
+    "Quality_4": "0.53457677364",
+    "Quality_5": "0.53457677364",
+    "Quality_6": "0.53457677364"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 5,
+   "Payload": {
+    "ID": "5",
+    "ItemLevel": "5",
+    "Quality_0": "0.53457677364",
+    "Quality_1": "0.85977762938",
+    "Quality_2": "0.89096128941",
+    "Quality_3": "0.89096128941",
+    "Quality_4": "0.89096128941",
+    "Quality_5": "0.89096128941",
+    "Quality_6": "0.89096128941"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 19,
+   "Payload": {
+    "ID": "19",
+    "ItemLevel": "19",
+    "Quality_0": "2.50276184082",
+    "Quality_1": "4.02527523041",
+    "Quality_2": "4.17126989365",
+    "Quality_3": "4.17126989365",
+    "Quality_4": "4.17126989365",
+    "Quality_5": "4.17126989365",
+    "Quality_6": "4.17126989365"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 21,
+   "Payload": {
+    "ID": "21",
+    "ItemLevel": "21",
+    "Quality_0": "2.73880934715",
+    "Quality_1": "4.40491867065",
+    "Quality_2": "4.56468248367",
+    "Quality_3": "4.56468248367",
+    "Quality_4": "4.56468248367",
+    "Quality_5": "4.56468248367",
+    "Quality_6": "4.56468248367"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 31,
+   "Payload": {
+    "ID": "31",
+    "ItemLevel": "31",
+    "Quality_0": "3.30958724022",
+    "Quality_1": "5.32291936874",
+    "Quality_2": "5.51597881317",
+    "Quality_3": "5.51597881317",
+    "Quality_4": "5.51597881317",
+    "Quality_5": "5.51597881317",
+    "Quality_6": "5.51597881317"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 44,
+   "Payload": {
+    "ID": "44",
+    "ItemLevel": "44",
+    "Quality_0": "4.08749961853",
+    "Quality_1": "6.57406234741",
+    "Quality_2": "6.81249952316",
+    "Quality_3": "6.81249952316",
+    "Quality_4": "6.81249952316",
+    "Quality_5": "6.81249952316",
+    "Quality_6": "6.81249952316"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 70,
+   "Payload": {
+    "ID": "70",
+    "ItemLevel": "70",
+    "Quality_0": "7.11456155777",
+    "Quality_1": "11.4425868988",
+    "Quality_2": "11.85760307312",
+    "Quality_3": "11.85760307312",
+    "Quality_4": "11.85760307312",
+    "Quality_5": "11.85760307312",
+    "Quality_6": "11.85760307312"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 72,
+   "Payload": {
+    "ID": "72",
+    "ItemLevel": "72",
+    "Quality_0": "7.34643411636",
+    "Quality_1": "11.81551456451",
+    "Quality_2": "12.24405670166",
+    "Quality_3": "12.24405670166",
+    "Quality_4": "12.24405670166",
+    "Quality_5": "12.24405670166",
+    "Quality_6": "12.24405670166"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 73,
+   "Payload": {
+    "ID": "73",
+    "ItemLevel": "73",
+    "Quality_0": "7.44900369644",
+    "Quality_1": "11.98048019409",
+    "Quality_2": "12.4150056839",
+    "Quality_3": "12.4150056839",
+    "Quality_4": "12.4150056839",
+    "Quality_5": "12.4150056839",
+    "Quality_6": "12.4150056839"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 77,
+   "Payload": {
+    "ID": "77",
+    "ItemLevel": "77",
+    "Quality_0": "7.76756668091",
+    "Quality_1": "12.49283599854",
+    "Quality_2": "12.9459438324",
+    "Quality_3": "12.9459438324",
+    "Quality_4": "12.9459438324",
+    "Quality_5": "12.9459438324",
+    "Quality_6": "12.9459438324"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 197,
+   "Payload": {
+    "ID": "197",
+    "ItemLevel": "197",
+    "Quality_0": "23.76116371155",
+    "Quality_1": "38.21586990356",
+    "Quality_2": "39.60194015503",
+    "Quality_3": "39.60194015503",
+    "Quality_4": "39.60194015503",
+    "Quality_5": "39.60194015503",
+    "Quality_6": "39.60194015503"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHand",
+   "Key": 259,
+   "Payload": {
+    "ID": "259",
+    "ItemLevel": "259",
+    "Quality_0": "42.3401222229",
+    "Quality_1": "68.09703063965",
+    "Quality_2": "70.56687164307",
+    "Quality_3": "70.56687164307",
+    "Quality_4": "70.56687164307",
+    "Quality_5": "70.56687164307",
+    "Quality_6": "70.56687164307"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 1,
+   "Payload": {
+    "ID": "1",
+    "ItemLevel": "1",
+    "Quality_0": "0.16037303209",
+    "Quality_1": "0.25793328881",
+    "Quality_2": "0.26728838682",
+    "Quality_3": "0.26728838682",
+    "Quality_4": "0.26728838682",
+    "Quality_5": "0.26728838682",
+    "Quality_6": "0.26728838682"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 5,
+   "Payload": {
+    "ID": "5",
+    "ItemLevel": "5",
+    "Quality_0": "0.26728838682",
+    "Quality_1": "0.42988881469",
+    "Quality_2": "0.4454806447",
+    "Quality_3": "0.4454806447",
+    "Quality_4": "0.4454806447",
+    "Quality_5": "0.4454806447",
+    "Quality_6": "0.4454806447"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 19,
+   "Payload": {
+    "ID": "19",
+    "ItemLevel": "19",
+    "Quality_0": "1.25138092041",
+    "Quality_1": "2.0126376152",
+    "Quality_2": "2.08563494682",
+    "Quality_3": "2.08563494682",
+    "Quality_4": "2.08563494682",
+    "Quality_5": "2.08563494682",
+    "Quality_6": "2.08563494682"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 21,
+   "Payload": {
+    "ID": "21",
+    "ItemLevel": "21",
+    "Quality_0": "1.36940467358",
+    "Quality_1": "2.20245933533",
+    "Quality_2": "2.28234124184",
+    "Quality_3": "2.28234124184",
+    "Quality_4": "2.28234124184",
+    "Quality_5": "2.28234124184",
+    "Quality_6": "2.28234124184"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 31,
+   "Payload": {
+    "ID": "31",
+    "ItemLevel": "31",
+    "Quality_0": "1.65479362011",
+    "Quality_1": "2.66145968437",
+    "Quality_2": "2.75798940659",
+    "Quality_3": "2.75798940659",
+    "Quality_4": "2.75798940659",
+    "Quality_5": "2.75798940659",
+    "Quality_6": "2.75798940659"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 44,
+   "Payload": {
+    "ID": "44",
+    "ItemLevel": "44",
+    "Quality_0": "2.04374980927",
+    "Quality_1": "3.28703117371",
+    "Quality_2": "3.40624976158",
+    "Quality_3": "3.40624976158",
+    "Quality_4": "3.40624976158",
+    "Quality_5": "3.40624976158",
+    "Quality_6": "3.40624976158"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 70,
+   "Payload": {
+    "ID": "70",
+    "ItemLevel": "70",
+    "Quality_0": "3.55728077888",
+    "Quality_1": "5.7212934494",
+    "Quality_2": "5.92880153656",
+    "Quality_3": "5.92880153656",
+    "Quality_4": "5.92880153656",
+    "Quality_5": "5.92880153656",
+    "Quality_6": "5.92880153656"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 72,
+   "Payload": {
+    "ID": "72",
+    "ItemLevel": "72",
+    "Quality_0": "3.67321705818",
+    "Quality_1": "5.90775728226",
+    "Quality_2": "6.12202835083",
+    "Quality_3": "6.12202835083",
+    "Quality_4": "6.12202835083",
+    "Quality_5": "6.12202835083",
+    "Quality_6": "6.12202835083"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 73,
+   "Payload": {
+    "ID": "73",
+    "ItemLevel": "73",
+    "Quality_0": "3.72450184822",
+    "Quality_1": "5.99024009705",
+    "Quality_2": "6.20750284195",
+    "Quality_3": "6.20750284195",
+    "Quality_4": "6.20750284195",
+    "Quality_5": "6.20750284195",
+    "Quality_6": "6.20750284195"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 77,
+   "Payload": {
+    "ID": "77",
+    "ItemLevel": "77",
+    "Quality_0": "3.88378334045",
+    "Quality_1": "6.24641799927",
+    "Quality_2": "6.4729719162",
+    "Quality_3": "6.4729719162",
+    "Quality_4": "6.4729719162",
+    "Quality_5": "6.4729719162",
+    "Quality_6": "6.4729719162"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 197,
+   "Payload": {
+    "ID": "197",
+    "ItemLevel": "197",
+    "Quality_0": "11.88058185577",
+    "Quality_1": "19.10793495178",
+    "Quality_2": "19.80097007751",
+    "Quality_3": "19.80097007751",
+    "Quality_4": "19.80097007751",
+    "Quality_5": "19.80097007751",
+    "Quality_6": "19.80097007751"
+   }
+  },
+  {
+   "Table": "ItemDamageTwoHandCaster",
+   "Key": 259,
+   "Payload": {
+    "ID": "259",
+    "ItemLevel": "259",
+    "Quality_0": "21.17006111145",
+    "Quality_1": "34.04851531982",
+    "Quality_2": "35.28343582153",
+    "Quality_3": "35.28343582153",
+    "Quality_4": "35.28343582153",
+    "Quality_5": "35.28343582153",
+    "Quality_6": "35.28343582153"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 1,
+   "Payload": {
+    "ID": "1",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 5,
+   "Payload": {
+    "ID": "5",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 19,
+   "Payload": {
+    "ID": "19",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 21,
+   "Payload": {
+    "ID": "21",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 31,
+   "Payload": {
+    "ID": "31",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 44,
+   "Payload": {
+    "ID": "44",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 70,
+   "Payload": {
+    "ID": "70",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 72,
+   "Payload": {
+    "ID": "72",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 73,
+   "Payload": {
+    "ID": "73",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 77,
+   "Payload": {
+    "ID": "77",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 197,
+   "Payload": {
+    "ID": "197",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorQuality",
+   "Key": 259,
+   "Payload": {
+    "ID": "259",
+    "Qualitymod_0": "0.89999997616",
+    "Qualitymod_1": "0.94999998808",
+    "Qualitymod_2": "1",
+    "Qualitymod_3": "1",
+    "Qualitymod_4": "1",
+    "Qualitymod_5": "1",
+    "Qualitymod_6": "1"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 1,
+   "Payload": {
+    "Cloth": "12.83871364594",
+    "ID": "1",
+    "ItemLevel": "1",
+    "Leather": "22.04649353027",
+    "Mail": "32.50988006592",
+    "Plate": "48.90251541138"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 5,
+   "Payload": {
+    "Cloth": "17.50733757019",
+    "ID": "5",
+    "ItemLevel": "5",
+    "Leather": "30.06340026855",
+    "Mail": "44.33165359497",
+    "Plate": "66.68524932861"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 19,
+   "Payload": {
+    "Cloth": "33.8475189209",
+    "ID": "19",
+    "ItemLevel": "19",
+    "Leather": "58.12257385254",
+    "Mail": "85.707862854",
+    "Plate": "128.92481994629"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 21,
+   "Payload": {
+    "Cloth": "35.60448455811",
+    "ID": "21",
+    "ItemLevel": "21",
+    "Leather": "61.13961791992",
+    "Mail": "90.1568145752",
+    "Plate": "135.61708068848"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 31,
+   "Payload": {
+    "Cloth": "40.67309188843",
+    "ID": "31",
+    "ItemLevel": "31",
+    "Leather": "69.84336853027",
+    "Mail": "102.99141693115",
+    "Plate": "154.92335510254"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 44,
+   "Payload": {
+    "Cloth": "49.99419784546",
+    "ID": "44",
+    "ItemLevel": "44",
+    "Leather": "85.8494720459",
+    "Mail": "126.59409332275",
+    "Plate": "190.42733764648"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 70,
+   "Payload": {
+    "Cloth": "88.07962799072",
+    "ID": "70",
+    "ItemLevel": "70",
+    "Leather": "151.24932861328",
+    "Mail": "223.03308105469",
+    "Plate": "335.49429321289"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 72,
+   "Payload": {
+    "Cloth": "90.33912658691",
+    "ID": "72",
+    "ItemLevel": "72",
+    "Leather": "155.1293182373",
+    "Mail": "228.75454711914",
+    "Plate": "344.10070800781"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 73,
+   "Payload": {
+    "Cloth": "91.39257049561",
+    "ID": "73",
+    "ItemLevel": "73",
+    "Leather": "156.93827819824",
+    "Mail": "231.42204284668",
+    "Plate": "348.11328125"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 77,
+   "Payload": {
+    "Cloth": "95.08250427246",
+    "ID": "77",
+    "ItemLevel": "77",
+    "Leather": "163.27458190918",
+    "Mail": "240.76559448242",
+    "Plate": "362.16818237305"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 197,
+   "Payload": {
+    "Cloth": "258.65515136719",
+    "ID": "197",
+    "ItemLevel": "197",
+    "Leather": "444.15969848633",
+    "Mail": "654.96032714844",
+    "Plate": "985.21459960938"
+   }
+  },
+  {
+   "Table": "ItemArmorTotal",
+   "Key": 259,
+   "Payload": {
+    "Cloth": "449.99111938477",
+    "ID": "259",
+    "ItemLevel": "259",
+    "Leather": "772.71960449219",
+    "Mail": "1139.4565429688",
+    "Plate": "1714.0111083984"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 1,
+   "Payload": {
+    "ID": "1",
+    "ItemLevel": "1",
+    "Quality_0": "20.6336479187",
+    "Quality_1": "21.77996063232",
+    "Quality_2": "22.9262752533",
+    "Quality_3": "22.9262752533",
+    "Quality_4": "22.9262752533",
+    "Quality_5": "22.9262752533",
+    "Quality_6": "22.9262752533"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 5,
+   "Payload": {
+    "ID": "5",
+    "ItemLevel": "5",
+    "Quality_0": "28.13679122925",
+    "Quality_1": "29.69994735718",
+    "Quality_2": "31.26310157776",
+    "Quality_3": "31.26310157776",
+    "Quality_4": "31.26310157776",
+    "Quality_5": "31.26310157776",
+    "Quality_6": "31.26310157776"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 19,
+   "Payload": {
+    "ID": "19",
+    "ItemLevel": "19",
+    "Quality_0": "54.39779663086",
+    "Quality_1": "57.41989517212",
+    "Quality_2": "60.44199752808",
+    "Quality_3": "60.44199752808",
+    "Quality_4": "60.44199752808",
+    "Quality_5": "60.44199752808",
+    "Quality_6": "60.44199752808"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 21,
+   "Payload": {
+    "ID": "21",
+    "ItemLevel": "21",
+    "Quality_0": "57.22149658203",
+    "Quality_1": "60.40046691895",
+    "Quality_2": "63.57944107056",
+    "Quality_3": "63.57944107056",
+    "Quality_4": "63.57944107056",
+    "Quality_5": "63.57944107056",
+    "Quality_6": "63.57944107056"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 31,
+   "Payload": {
+    "ID": "31",
+    "ItemLevel": "31",
+    "Quality_0": "65.3674697876",
+    "Quality_1": "68.99899291992",
+    "Quality_2": "72.63052368164",
+    "Quality_3": "72.63052368164",
+    "Quality_4": "72.63052368164",
+    "Quality_5": "72.63052368164",
+    "Quality_6": "72.63052368164"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 44,
+   "Payload": {
+    "ID": "44",
+    "ItemLevel": "44",
+    "Quality_0": "80.34782409668",
+    "Quality_1": "84.81158447266",
+    "Quality_2": "89.27535247803",
+    "Quality_3": "89.27535247803",
+    "Quality_4": "89.27535247803",
+    "Quality_5": "89.27535247803",
+    "Quality_6": "89.27535247803"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 70,
+   "Payload": {
+    "ID": "70",
+    "ItemLevel": "70",
+    "Quality_0": "141.55653381348",
+    "Quality_1": "149.42079162598",
+    "Quality_2": "157.28504943848",
+    "Quality_3": "157.28504943848",
+    "Quality_4": "157.28504943848",
+    "Quality_5": "157.28504943848",
+    "Quality_6": "157.28504943848"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 72,
+   "Payload": {
+    "ID": "72",
+    "ItemLevel": "72",
+    "Quality_0": "145.18788146973",
+    "Quality_1": "153.25387573242",
+    "Quality_2": "161.31986999512",
+    "Quality_3": "161.31986999512",
+    "Quality_4": "161.31986999512",
+    "Quality_5": "161.31986999512",
+    "Quality_6": "161.31986999512"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 73,
+   "Payload": {
+    "ID": "73",
+    "ItemLevel": "73",
+    "Quality_0": "146.88092041016",
+    "Quality_1": "155.04096984863",
+    "Quality_2": "163.20101928711",
+    "Quality_3": "163.20101928711",
+    "Quality_4": "163.20101928711",
+    "Quality_5": "163.20101928711",
+    "Quality_6": "163.20101928711"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 77,
+   "Payload": {
+    "ID": "77",
+    "ItemLevel": "77",
+    "Quality_0": "152.81115722656",
+    "Quality_1": "161.30067443848",
+    "Quality_2": "169.7901763916",
+    "Quality_3": "169.7901763916",
+    "Quality_4": "169.7901763916",
+    "Quality_5": "169.7901763916",
+    "Quality_6": "169.7901763916"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 197,
+   "Payload": {
+    "ID": "197",
+    "ItemLevel": "197",
+    "Quality_0": "415.69580078125",
+    "Quality_1": "438.79000854492",
+    "Quality_2": "461.88421630859",
+    "Quality_3": "461.88421630859",
+    "Quality_4": "461.88421630859",
+    "Quality_5": "461.88421630859",
+    "Quality_6": "461.88421630859"
+   }
+  },
+  {
+   "Table": "ItemArmorShield",
+   "Key": 259,
+   "Payload": {
+    "ID": "259",
+    "ItemLevel": "259",
+    "Quality_0": "723.20001220703",
+    "Quality_1": "763.37780761719",
+    "Quality_2": "803.55560302734",
+    "Quality_3": "803.55560302734",
+    "Quality_4": "803.55560302734",
+    "Quality_5": "803.55560302734",
+    "Quality_6": "803.55560302734"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 1,
+   "Payload": {
+    "Chainmodifier": "0.11999999732",
+    "Clothmodifier": "0.11999999732",
+    "ID": "1",
+    "Leathermodifier": "0.11999999732",
+    "Modifier": "0.11999999732",
+    "Platemodifier": "0.11999999732"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 2,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "2",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 3,
+   "Payload": {
+    "Chainmodifier": "0.1099999994",
+    "Clothmodifier": "0.1099999994",
+    "ID": "3",
+    "Leathermodifier": "0.1099999994",
+    "Modifier": "0.12999999523",
+    "Platemodifier": "0.1099999994"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 5,
+   "Payload": {
+    "Chainmodifier": "0.15999999642",
+    "Clothmodifier": "0.15999999642",
+    "ID": "5",
+    "Leathermodifier": "0.15999999642",
+    "Modifier": "0.15999999642",
+    "Platemodifier": "0.15999999642"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 6,
+   "Payload": {
+    "Chainmodifier": "0.09000000358",
+    "Clothmodifier": "0.09000000358",
+    "ID": "6",
+    "Leathermodifier": "0.09000000358",
+    "Modifier": "0.09000000358",
+    "Platemodifier": "0.09000000358"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 7,
+   "Payload": {
+    "Chainmodifier": "0.1400000006",
+    "Clothmodifier": "0.1400000006",
+    "ID": "7",
+    "Leathermodifier": "0.1400000006",
+    "Modifier": "0.1400000006",
+    "Platemodifier": "0.1400000006"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 8,
+   "Payload": {
+    "Chainmodifier": "0.10000000149",
+    "Clothmodifier": "0.10000000149",
+    "ID": "8",
+    "Leathermodifier": "0.10000000149",
+    "Modifier": "0.1099999994",
+    "Platemodifier": "0.10000000149"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 9,
+   "Payload": {
+    "Chainmodifier": "0.07999999821",
+    "Clothmodifier": "0.07999999821",
+    "ID": "9",
+    "Leathermodifier": "0.07999999821",
+    "Modifier": "0.10000000149",
+    "Platemodifier": "0.07999999821"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 10,
+   "Payload": {
+    "Chainmodifier": "0.09000000358",
+    "Clothmodifier": "0.09000000358",
+    "ID": "10",
+    "Leathermodifier": "0.09000000358",
+    "Modifier": "0.0700000003",
+    "Platemodifier": "0.09000000358"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 16,
+   "Payload": {
+    "Chainmodifier": "0.1099999994",
+    "Clothmodifier": "0.1099999994",
+    "ID": "16",
+    "Leathermodifier": "0.1099999994",
+    "Modifier": "0.07999999821",
+    "Platemodifier": "0.1099999994"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 4,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "4",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 11,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "11",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 12,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "12",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 13,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "13",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 14,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "14",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 15,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "15",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 17,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "17",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 18,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "18",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 19,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "19",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 20,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "20",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 21,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "21",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 22,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "22",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ArmorLocation",
+   "Key": 23,
+   "Payload": {
+    "Chainmodifier": "0",
+    "Clothmodifier": "0",
+    "ID": "23",
+    "Leathermodifier": "0",
+    "Modifier": "0",
+    "Platemodifier": "0"
+   }
+  },
+  {
+   "Table": "ItemSquishEra",
+   "Key": 1,
+   "Payload": {
+    "CurveID": "0",
+    "Flags": "0",
+    "ID": "1",
+    "Patch": "0"
+   }
+  },
+  {
+   "Table": "ItemSquishEra",
+   "Key": 2,
+   "Payload": {
+    "CurveID": "92181",
+    "Flags": "2",
+    "ID": "2",
+    "Patch": "120000"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274697,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274697",
+    "OrderIndex": "0",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "1",
+    "Pos_1": "1"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274698,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274698",
+    "OrderIndex": "1",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "10",
+    "Pos_1": "10"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274699,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274699",
+    "OrderIndex": "2",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "342",
+    "Pos_1": "70"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274704,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274704",
+    "OrderIndex": "3",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "571",
+    "Pos_1": "80"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274705,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274705",
+    "OrderIndex": "4",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "574",
+    "Pos_1": "80"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274706,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274706",
+    "OrderIndex": "5",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "577",
+    "Pos_1": "80"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274769,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274769",
+    "OrderIndex": "6",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "580",
+    "Pos_1": "80"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274770,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274770",
+    "OrderIndex": "7",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "584",
+    "Pos_1": "83"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274771,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274771",
+    "OrderIndex": "8",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "587",
+    "Pos_1": "83"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274772,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274772",
+    "OrderIndex": "9",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "590",
+    "Pos_1": "83"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274773,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274773",
+    "OrderIndex": "10",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "593",
+    "Pos_1": "83"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274774,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274774",
+    "OrderIndex": "11",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "597",
+    "Pos_1": "86"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274775,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274775",
+    "OrderIndex": "12",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "600",
+    "Pos_1": "86"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274776,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274776",
+    "OrderIndex": "13",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "603",
+    "Pos_1": "86"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274777,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274777",
+    "OrderIndex": "14",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "606",
+    "Pos_1": "86"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274778,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274778",
+    "OrderIndex": "15",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "610",
+    "Pos_1": "89"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274779,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274779",
+    "OrderIndex": "16",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "613",
+    "Pos_1": "89"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274780,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274780",
+    "OrderIndex": "17",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "616",
+    "Pos_1": "89"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274781,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274781",
+    "OrderIndex": "18",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "619",
+    "Pos_1": "89"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274782,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274782",
+    "OrderIndex": "19",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "623",
+    "Pos_1": "92"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274783,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274783",
+    "OrderIndex": "20",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "626",
+    "Pos_1": "92"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274784,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274784",
+    "OrderIndex": "21",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "629",
+    "Pos_1": "92"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274785,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274785",
+    "OrderIndex": "22",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "632",
+    "Pos_1": "92"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274786,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274786",
+    "OrderIndex": "23",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "636",
+    "Pos_1": "95"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274787,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274787",
+    "OrderIndex": "24",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "639",
+    "Pos_1": "95"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274788,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274788",
+    "OrderIndex": "25",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "642",
+    "Pos_1": "98"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274789,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274789",
+    "OrderIndex": "26",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "645",
+    "Pos_1": "99"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274790,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274790",
+    "OrderIndex": "27",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "649",
+    "Pos_1": "100"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274791,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274791",
+    "OrderIndex": "28",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "652",
+    "Pos_1": "101"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274792,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274792",
+    "OrderIndex": "29",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "655",
+    "Pos_1": "102"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274793,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274793",
+    "OrderIndex": "30",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "658",
+    "Pos_1": "103"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274794,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274794",
+    "OrderIndex": "31",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "662",
+    "Pos_1": "104"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274795,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274795",
+    "OrderIndex": "32",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "665",
+    "Pos_1": "105"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274796,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274796",
+    "OrderIndex": "33",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "668",
+    "Pos_1": "108"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274797,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274797",
+    "OrderIndex": "34",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "671",
+    "Pos_1": "111"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274798,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274798",
+    "OrderIndex": "35",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "675",
+    "Pos_1": "115"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274799,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274799",
+    "OrderIndex": "36",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "678",
+    "Pos_1": "118"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274800,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274800",
+    "OrderIndex": "37",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "681",
+    "Pos_1": "121"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274801,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274801",
+    "OrderIndex": "38",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "684",
+    "Pos_1": "124"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274802,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274802",
+    "OrderIndex": "39",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "688",
+    "Pos_1": "128"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274803,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274803",
+    "OrderIndex": "40",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "691",
+    "Pos_1": "131"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274804,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274804",
+    "OrderIndex": "41",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "694",
+    "Pos_1": "134"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274805,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274805",
+    "OrderIndex": "42",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "697",
+    "Pos_1": "137"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274806,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274806",
+    "OrderIndex": "43",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "701",
+    "Pos_1": "141"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274807,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274807",
+    "OrderIndex": "44",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "704",
+    "Pos_1": "144"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274808,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274808",
+    "OrderIndex": "45",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "707",
+    "Pos_1": "147"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274809,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274809",
+    "OrderIndex": "46",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "710",
+    "Pos_1": "150"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274810,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274810",
+    "OrderIndex": "47",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "714",
+    "Pos_1": "154"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274811,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274811",
+    "OrderIndex": "48",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "717",
+    "Pos_1": "157"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274812,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274812",
+    "OrderIndex": "49",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "720",
+    "Pos_1": "160"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274813,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274813",
+    "OrderIndex": "50",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "723",
+    "Pos_1": "163"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274814,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274814",
+    "OrderIndex": "51",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "727",
+    "Pos_1": "167"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274815,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274815",
+    "OrderIndex": "52",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "730",
+    "Pos_1": "170"
+   }
+  },
+  {
+   "Table": "CurvePoint",
+   "Key": 274816,
+   "Payload": {
+    "CurveID": "92181",
+    "ID": "274816",
+    "OrderIndex": "53",
+    "PosPreSquish_0": "0",
+    "PosPreSquish_1": "0",
+    "Pos_0": "1300",
+    "Pos_1": "170"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 1,
+   "Payload": {
+    "Armor Multiplier": "1.5",
+    "Jewelry Multiplier": "1.5",
+    "Trinket Multiplier": "1.5",
+    "Weapon Multiplier": "1.5"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 5,
+   "Payload": {
+    "Armor Multiplier": "1.5",
+    "Jewelry Multiplier": "1.5",
+    "Trinket Multiplier": "1.5",
+    "Weapon Multiplier": "1.5"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 19,
+   "Payload": {
+    "Armor Multiplier": "1.5",
+    "Jewelry Multiplier": "1.5",
+    "Trinket Multiplier": "1.5",
+    "Weapon Multiplier": "1.5"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 21,
+   "Payload": {
+    "Armor Multiplier": "1.5",
+    "Jewelry Multiplier": "1.5",
+    "Trinket Multiplier": "1.5",
+    "Weapon Multiplier": "1.5"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 31,
+   "Payload": {
+    "Armor Multiplier": "1.5",
+    "Jewelry Multiplier": "1.5",
+    "Trinket Multiplier": "1.5",
+    "Weapon Multiplier": "1.5"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 44,
+   "Payload": {
+    "Armor Multiplier": "1.5",
+    "Jewelry Multiplier": "1.5",
+    "Trinket Multiplier": "1.5",
+    "Weapon Multiplier": "1.5"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 70,
+   "Payload": {
+    "Armor Multiplier": "1.5",
+    "Jewelry Multiplier": "1.5",
+    "Trinket Multiplier": "1.5",
+    "Weapon Multiplier": "1.5"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 72,
+   "Payload": {
+    "Armor Multiplier": "1.5",
+    "Jewelry Multiplier": "1.5",
+    "Trinket Multiplier": "1.5",
+    "Weapon Multiplier": "1.5"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 73,
+   "Payload": {
+    "Armor Multiplier": "1.5",
+    "Jewelry Multiplier": "1.5",
+    "Trinket Multiplier": "1.5",
+    "Weapon Multiplier": "1.5"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 77,
+   "Payload": {
+    "Armor Multiplier": "1.5",
+    "Jewelry Multiplier": "1.5",
+    "Trinket Multiplier": "1.5",
+    "Weapon Multiplier": "1.5"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 197,
+   "Payload": {
+    "Armor Multiplier": "1.26803795",
+    "Jewelry Multiplier": "1.564308365",
+    "Trinket Multiplier": "1.26803795",
+    "Weapon Multiplier": "1.26803795"
+   }
+  },
+  {
+   "Table": "CombatRatingsMultByILvl",
+   "Key": 259,
+   "Payload": {
+    "Armor Multiplier": "1.12390728",
+    "Jewelry Multiplier": "1.337756772",
+    "Trinket Multiplier": "1.12390728",
+    "Weapon Multiplier": "1.12390728"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 1,
+   "Payload": {
+    "Armor Multiplier": "1",
+    "Jewelry Multiplier": "1",
+    "Trinket Multiplier": "1",
+    "Weapon Multiplier": "1"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 5,
+   "Payload": {
+    "Armor Multiplier": "1",
+    "Jewelry Multiplier": "1",
+    "Trinket Multiplier": "1",
+    "Weapon Multiplier": "1"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 19,
+   "Payload": {
+    "Armor Multiplier": "1",
+    "Jewelry Multiplier": "1",
+    "Trinket Multiplier": "1",
+    "Weapon Multiplier": "1"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 21,
+   "Payload": {
+    "Armor Multiplier": "1",
+    "Jewelry Multiplier": "1",
+    "Trinket Multiplier": "1",
+    "Weapon Multiplier": "1"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 31,
+   "Payload": {
+    "Armor Multiplier": "1",
+    "Jewelry Multiplier": "1",
+    "Trinket Multiplier": "1",
+    "Weapon Multiplier": "1"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 44,
+   "Payload": {
+    "Armor Multiplier": "1",
+    "Jewelry Multiplier": "1",
+    "Trinket Multiplier": "1",
+    "Weapon Multiplier": "1"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 70,
+   "Payload": {
+    "Armor Multiplier": "1",
+    "Jewelry Multiplier": "1",
+    "Trinket Multiplier": "1",
+    "Weapon Multiplier": "1"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 72,
+   "Payload": {
+    "Armor Multiplier": "1",
+    "Jewelry Multiplier": "1",
+    "Trinket Multiplier": "1",
+    "Weapon Multiplier": "1"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 73,
+   "Payload": {
+    "Armor Multiplier": "1",
+    "Jewelry Multiplier": "1",
+    "Trinket Multiplier": "1",
+    "Weapon Multiplier": "1"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 77,
+   "Payload": {
+    "Armor Multiplier": "1.000150966",
+    "Jewelry Multiplier": "1.000150966",
+    "Trinket Multiplier": "1.000150966",
+    "Weapon Multiplier": "1.000150966"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 197,
+   "Payload": {
+    "Armor Multiplier": "9.353882299",
+    "Jewelry Multiplier": "9.353882299",
+    "Trinket Multiplier": "9.353882299",
+    "Weapon Multiplier": "9.353882299"
+   }
+  },
+  {
+   "Table": "StaminaMultByILvl",
+   "Key": 259,
+   "Payload": {
+    "Armor Multiplier": "11.50073603",
+    "Jewelry Multiplier": "11.50073603",
+    "Trinket Multiplier": "11.50073603",
+    "Weapon Multiplier": "11.50073603"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 1,
+   "Payload": {
+    "Socket Cost": "0"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 5,
+   "Payload": {
+    "Socket Cost": "0"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 19,
+   "Payload": {
+    "Socket Cost": "1"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 21,
+   "Payload": {
+    "Socket Cost": "1"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 31,
+   "Payload": {
+    "Socket Cost": "2"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 44,
+   "Payload": {
+    "Socket Cost": "3"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 70,
+   "Payload": {
+    "Socket Cost": "4"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 72,
+   "Payload": {
+    "Socket Cost": "4"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 73,
+   "Payload": {
+    "Socket Cost": "4"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 77,
+   "Payload": {
+    "Socket Cost": "4"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 197,
+   "Payload": {
+    "Socket Cost": "8"
+   }
+  },
+  {
+   "Table": "ItemSocketCostPerLevel",
+   "Key": 259,
+   "Payload": {
+    "Socket Cost": "8"
+   }
+  },
+  {
+   "Table": "SpellScaling",
+   "Key": 1,
+   "Payload": {
+    "Adventurer": "0",
+    "Consumable": "400",
+    "DamageReplaceStat": "0.096680836",
+    "DamageSecondary": "0.096680836",
+    "Death Knight": "0",
+    "Demon Hunter": "0",
+    "Druid": "0",
+    "Evoker": "0",
+    "Gem1": "1.152328562",
+    "Gem2": "2",
+    "Gem3": "3",
+    "Health": "292.2471295",
+    "Hunter": "0",
+    "Item": "1.417985594",
+    "Mage": "0",
+    "Mana Consumable": "400",
+    "Monk": "0",
+    "Paladin": "0",
+    "Priest": "0",
+    "Rogue": "0",
+    "Shaman": "0",
+    "Traveler": "0",
+    "Warlock": "0",
+    "Warrior": "0"
+   }
+  },
+  {
+   "Table": "SpellScaling",
+   "Key": 27,
+   "Payload": {
+    "Adventurer": "0",
+    "Consumable": "8500",
+    "DamageReplaceStat": "3.519695615",
+    "DamageSecondary": "3.519695615",
+    "Death Knight": "0",
+    "Demon Hunter": "0",
+    "Druid": "0",
+    "Evoker": "0",
+    "Gem1": "1.296176691",
+    "Gem2": "2.093823886",
+    "Gem3": "3",
+    "Health": "7122.385108",
+    "Hunter": "0",
+    "Item": "13.28756817",
+    "Mage": "0",
+    "Mana Consumable": "8500",
+    "Monk": "0",
+    "Paladin": "0",
+    "Priest": "0",
+    "Rogue": "0",
+    "Shaman": "0",
+    "Traveler": "0",
+    "Warlock": "0",
+    "Warrior": "0"
+   }
+  },
+  {
+   "Table": "SpellScaling",
+   "Key": 50,
+   "Payload": {
+    "Adventurer": "0",
+    "Consumable": "15000",
+    "DamageReplaceStat": "7.013191579",
+    "DamageSecondary": "7.013191579",
+    "Death Knight": "0",
+    "Demon Hunter": "0",
+    "Druid": "0",
+    "Evoker": "0",
+    "Gem1": "2.900411323",
+    "Gem2": "3.867215097",
+    "Gem3": "4.834018872",
+    "Health": "13271.96657",
+    "Hunter": "0",
+    "Item": "19.28627684",
+    "Mage": "0",
+    "Mana Consumable": "15000",
+    "Monk": "0",
+    "Paladin": "0",
+    "Priest": "0",
+    "Rogue": "0",
+    "Shaman": "0",
+    "Traveler": "0",
+    "Warlock": "0",
+    "Warrior": "0"
+   }
+  }
+ ],
+ "items": [
+  {
+   "id": 248074,
+   "name": "Traitor Captain's Executioner",
+   "sparse": {
+    "DmgVariance": "0.60000002384",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "17",
+    "ItemDelay": "3600",
+    "ItemLevel": "197",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "2",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "4",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "36",
+    "StatModifier_bonusStat_3": "49",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3800",
+    "StatPercentEditor_3": "3200",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "6"
+   },
+   "item_level": 44,
+   "weapon": {
+    "Min": 17,
+    "Max": 32,
+    "Speed": 3.6,
+    "DPS": 6.805555555555555
+   },
+   "official_damage": "17 32 3.6 6.8055553",
+   "stats": {
+    "36": 10,
+    "49": 8,
+    "7": 14
+   }
+  },
+  {
+   "id": 282426,
+   "name": "Draenic Drive Chain",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "139264",
+    "InventoryType": "2",
+    "ItemDelay": "0",
+    "ItemLevel": "197",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "40",
+    "StatModifier_bonusStat_3": "49",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "12250",
+    "StatPercentEditor_3": "5250",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "0"
+   },
+   "item_level": 197,
+   "stats": {
+    "40": 108,
+    "49": 46,
+    "7": 415
+   }
+  },
+  {
+   "id": 282425,
+   "name": "Band of the Beast Reaper",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "139264",
+    "InventoryType": "11",
+    "ItemDelay": "0",
+    "ItemLevel": "197",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "32",
+    "StatModifier_bonusStat_3": "36",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "10500",
+    "StatPercentEditor_3": "7000",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "0"
+   },
+   "item_level": 197,
+   "stats": {
+    "32": 92,
+    "36": 62,
+    "7": 415
+   }
+  },
+  {
+   "id": 280713,
+   "name": "Big Mon's Buckle",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "6",
+    "ItemDelay": "0",
+    "ItemLevel": "259",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "74",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "40",
+    "StatModifier_bonusStat_3": "49",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3650",
+    "StatPercentEditor_3": "3350",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "4"
+   },
+   "item_level": 259,
+   "armor": 154,
+   "primary": 70,
+   "stats": {
+    "40": 55,
+    "49": 50,
+    "7": 1213
+   }
+  },
+  {
+   "id": 280711,
+   "name": "Pitted Specter Shackles",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "9",
+    "ItemDelay": "0",
+    "ItemLevel": "259",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "73",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "40",
+    "StatModifier_bonusStat_3": "32",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3950",
+    "StatPercentEditor_3": "3050",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "3"
+   },
+   "item_level": 259,
+   "armor": 91,
+   "primary": 53,
+   "stats": {
+    "32": 34,
+    "40": 45,
+    "7": 910
+   }
+  },
+  {
+   "id": 280709,
+   "name": "Triple Threat Pauldrons",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "3",
+    "ItemDelay": "0",
+    "ItemLevel": "259",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "73",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "49",
+    "StatModifier_bonusStat_3": "40",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3950",
+    "StatPercentEditor_3": "3050",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "3"
+   },
+   "item_level": 259,
+   "armor": 125,
+   "primary": 70,
+   "stats": {
+    "40": 46,
+    "49": 59,
+    "7": 1213
+   }
+  },
+  {
+   "id": 281245,
+   "name": "Amani Scout's Shield",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "14",
+    "ItemDelay": "0",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "2",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "6"
+   },
+   "item_level": 1,
+   "armor": 23
+  },
+  {
+   "id": 281247,
+   "name": "Amani Scout's Axe",
+   "sparse": {
+    "DmgVariance": "0.5",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "13",
+    "ItemDelay": "2600",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "2",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "0"
+   },
+   "item_level": 1,
+   "weapon": {
+    "Min": 1,
+    "Max": 1,
+    "Speed": 2.6,
+    "DPS": 0.3846153846153846
+   },
+   "official_damage": "1 1 2.6 0.38461536"
+  },
+  {
+   "id": 281244,
+   "name": "Amani Scout's Quiver",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "139264",
+    "InventoryType": "16",
+    "ItemDelay": "0",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "2",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 1,
+   "armor": 1
+  },
+  {
+   "id": 280716,
+   "name": "Locket of the Omnilegent",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "2",
+    "ItemDelay": "0",
+    "ItemLevel": "259",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "32",
+    "StatModifier_bonusStat_3": "49",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "9000",
+    "StatPercentEditor_3": "8500",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "0"
+   },
+   "item_level": 259,
+   "stats": {
+    "32": 121,
+    "49": 114,
+    "7": 910
+   }
+  },
+  {
+   "id": 280706,
+   "name": "Sss'alik's Rotting Claws",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "10",
+    "ItemDelay": "0",
+    "ItemLevel": "259",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "73",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "49",
+    "StatModifier_bonusStat_3": "36",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3650",
+    "StatPercentEditor_3": "3350",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "2"
+   },
+   "item_level": 259,
+   "armor": 70,
+   "primary": 70,
+   "stats": {
+    "36": 50,
+    "49": 55,
+    "7": 1213
+   }
+  },
+  {
+   "id": 280718,
+   "name": "Unflappable Flapping Cape",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "16",
+    "ItemDelay": "0",
+    "ItemLevel": "259",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "71",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "49",
+    "StatModifier_bonusStat_3": "36",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3800",
+    "StatPercentEditor_3": "3200",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 259,
+   "armor": 49,
+   "primary": 53,
+   "stats": {
+    "36": 36,
+    "49": 43,
+    "7": 910
+   }
+  },
+  {
+   "id": 281248,
+   "name": "Amani Scout's Bow",
+   "sparse": {
+    "DmgVariance": "0.30000001192",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "15",
+    "ItemDelay": "3000",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "2",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "2"
+   },
+   "item_level": 1,
+   "weapon": {
+    "Min": 1,
+    "Max": 2,
+    "Speed": 3,
+    "DPS": 0.5
+   },
+   "official_damage": "1 2 3 0.49999997"
+  },
+  {
+   "id": 280715,
+   "name": "Eye of Skully",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "11",
+    "ItemDelay": "0",
+    "ItemLevel": "259",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "32",
+    "StatModifier_bonusStat_3": "36",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "9000",
+    "StatPercentEditor_3": "8500",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "0"
+   },
+   "item_level": 259,
+   "stats": {
+    "32": 121,
+    "36": 114,
+    "7": 910
+   }
+  },
+  {
+   "id": 280714,
+   "name": "Hull Render Hauberk",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "5",
+    "ItemDelay": "0",
+    "ItemLevel": "259",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "74",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "36",
+    "StatModifier_bonusStat_3": "40",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3800",
+    "StatPercentEditor_3": "3200",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "4"
+   },
+   "item_level": 259,
+   "armor": 274,
+   "primary": 94,
+   "stats": {
+    "36": 76,
+    "40": 64,
+    "7": 1617
+   }
+  },
+  {
+   "id": 281566,
+   "name": "Amani Warrior's Cleaver",
+   "sparse": {
+    "DmgVariance": "0.5",
+    "ExpansionID": "11",
+    "Flags_1": "8192",
+    "InventoryType": "13",
+    "ItemDelay": "2600",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "2",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "0"
+   },
+   "item_level": 1,
+   "weapon": {
+    "Min": 1,
+    "Max": 1,
+    "Speed": 2.6,
+    "DPS": 0.3846153846153846
+   },
+   "official_damage": "1 1 2.6 0.38461536"
+  },
+  {
+   "id": 201070,
+   "name": "Leggings of the Verdant Wing",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "7",
+    "ItemDelay": "0",
+    "ItemLevel": "200",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "5",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "32",
+    "StatModifier_bonusStat_3": "36",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3650",
+    "StatPercentEditor_3": "3350",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 44,
+   "armor": 7,
+   "primary": 9,
+   "stats": {
+    "32": 9,
+    "36": 9,
+    "7": 14
+   }
+  },
+  {
+   "id": 201073,
+   "name": "Green Draketracker's Shoulderpads",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "3",
+    "ItemDelay": "0",
+    "ItemLevel": "200",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "73",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "40",
+    "StatModifier_bonusStat_3": "32",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3800",
+    "StatPercentEditor_3": "3200",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "2"
+   },
+   "item_level": 44,
+   "armor": 9,
+   "primary": 7,
+   "stats": {
+    "32": 6,
+    "40": 7,
+    "7": 10
+   }
+  },
+  {
+   "id": 201067,
+   "name": "Emerald Scale Coif",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "1",
+    "ItemDelay": "0",
+    "ItemLevel": "200",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "73",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "32",
+    "StatModifier_bonusStat_3": "36",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3800",
+    "StatPercentEditor_3": "3200",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "3"
+   },
+   "item_level": 44,
+   "armor": 15,
+   "primary": 9,
+   "stats": {
+    "32": 10,
+    "36": 8,
+    "7": 14
+   }
+  },
+  {
+   "id": 201062,
+   "name": "Green Draketracker's Mitts",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "10",
+    "ItemDelay": "0",
+    "ItemLevel": "200",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "73",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "32",
+    "StatModifier_bonusStat_3": "40",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3650",
+    "StatPercentEditor_3": "3350",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "2"
+   },
+   "item_level": 44,
+   "armor": 8,
+   "primary": 7,
+   "stats": {
+    "32": 7,
+    "40": 6,
+    "7": 10
+   }
+  },
+  {
+   "id": 201059,
+   "name": "Dreamfire Battleplate",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "5",
+    "ItemDelay": "0",
+    "ItemLevel": "200",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "74",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "49",
+    "StatModifier_bonusStat_3": "40",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3950",
+    "StatPercentEditor_3": "3050",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "4"
+   },
+   "item_level": 44,
+   "armor": 30,
+   "primary": 9,
+   "stats": {
+    "40": 8,
+    "49": 10,
+    "7": 14
+   }
+  },
+  {
+   "id": 201057,
+   "name": "Dreamfire Sabatons",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "8",
+    "ItemDelay": "0",
+    "ItemLevel": "200",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "74",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "36",
+    "StatModifier_bonusStat_3": "32",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3800",
+    "StatPercentEditor_3": "3200",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "4"
+   },
+   "item_level": 44,
+   "armor": 19,
+   "primary": 7,
+   "stats": {
+    "32": 6,
+    "36": 7,
+    "7": 10
+   }
+  },
+  {
+   "id": 201051,
+   "name": "Tyrhold Slippers",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "24576",
+    "InventoryType": "8",
+    "ItemDelay": "0",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 1,
+   "armor": 1
+  },
+  {
+   "id": 201050,
+   "name": "Tyrhold Leggings",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "24576",
+    "InventoryType": "7",
+    "ItemDelay": "0",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 1,
+   "armor": 2
+  },
+  {
+   "id": 201052,
+   "name": "Tyrhold Visage",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "24576",
+    "InventoryType": "1",
+    "ItemDelay": "0",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 1,
+   "armor": 2
+  },
+  {
+   "id": 201058,
+   "name": "Robes of the Verdant Wing",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "20",
+    "ItemDelay": "0",
+    "ItemLevel": "200",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "5",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "49",
+    "StatModifier_bonusStat_3": "40",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3650",
+    "StatPercentEditor_3": "3350",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 44,
+   "armor": 8,
+   "primary": 9,
+   "stats": {
+    "40": 9,
+    "49": 9,
+    "7": 14
+   }
+  },
+  {
+   "id": 200985,
+   "name": "Obsidian Wingedguard Polearm",
+   "sparse": {
+    "DmgVariance": "0.60000002384",
+    "ExpansionID": "9",
+    "Flags_1": "155648",
+    "InventoryType": "17",
+    "ItemDelay": "3600",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "6"
+   },
+   "item_level": 1,
+   "weapon": {
+    "Min": 1,
+    "Max": 3,
+    "Speed": 3.6,
+    "DPS": 0.5555555555555556
+   },
+   "official_damage": "1 3 3.6 0.5555555"
+  },
+  {
+   "id": 200993,
+   "name": "Obsidian Guard's Barrier",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "155648",
+    "InventoryType": "14",
+    "ItemDelay": "0",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "74",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "6"
+   },
+   "item_level": 1,
+   "armor": 23
+  },
+  {
+   "id": 200971,
+   "name": "Obsidian Cape",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "12288",
+    "InventoryType": "16",
+    "ItemDelay": "0",
+    "ItemLevel": "398",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "71",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "40",
+    "StatModifier_bonusStat_3": "36",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3500",
+    "StatPercentEditor_3": "3500",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 72,
+   "armor": 10,
+   "primary": 9,
+   "stats": {
+    "36": 9,
+    "40": 9,
+    "7": 14
+   }
+  },
+  {
+   "id": 200882,
+   "name": "Big Kinook's Spare Ladle",
+   "sparse": {
+    "DmgVariance": "0.30000001192",
+    "ExpansionID": "9",
+    "Flags_1": "155648",
+    "InventoryType": "17",
+    "ItemDelay": "3600",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "10"
+   },
+   "item_level": 1,
+   "weapon": {
+    "Min": 1,
+    "Max": 2,
+    "Speed": 3.6,
+    "DPS": 0.41666666666666663
+   },
+   "official_damage": "1 2 3.6 0.41666666"
+  },
+  {
+   "id": 200746,
+   "name": "Icebound Girdle",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "6",
+    "ItemDelay": "0",
+    "ItemLevel": "389",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "74",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "32",
+    "StatModifier_bonusStat_3": "36",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "4600",
+    "StatPercentEditor_3": "2400",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "4"
+   },
+   "item_level": 72,
+   "armor": 31,
+   "primary": 12,
+   "stats": {
+    "32": 16,
+    "36": 8,
+    "7": 18
+   }
+  },
+  {
+   "id": 200744,
+   "name": "Glacial Bindings",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "9",
+    "ItemDelay": "0",
+    "ItemLevel": "389",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "73",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "40",
+    "StatModifier_bonusStat_3": "36",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "4775",
+    "StatPercentEditor_3": "2225",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "2"
+   },
+   "item_level": 72,
+   "armor": 12,
+   "primary": 9,
+   "stats": {
+    "36": 6,
+    "40": 12,
+    "7": 14
+   }
+  },
+  {
+   "id": 200710,
+   "name": "Ashjra'kamas, Shroud of Resolve",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "12288",
+    "InventoryType": "16",
+    "ItemDelay": "0",
+    "ItemLevel": "125",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "5",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 31,
+   "armor": 4
+  },
+  {
+   "id": 200535,
+   "name": "Scepter of Spectacle: Frost",
+   "sparse": {
+    "DmgVariance": "0.60000002384",
+    "ExpansionID": "9",
+    "Flags_1": "24576",
+    "InventoryType": "21",
+    "ItemDelay": "1600",
+    "ItemLevel": "5",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "2",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "14"
+   },
+   "item_level": 5,
+   "weapon": {
+    "Min": 1,
+    "Max": 1,
+    "Speed": 1.6,
+    "DPS": 0.625
+   },
+   "official_damage": "1 1 1.6 0.625"
+  },
+  {
+   "id": 262365,
+   "name": "Maruuk Hunting Bow",
+   "sparse": {
+    "DmgVariance": "0.30000001192",
+    "ExpansionID": "9",
+    "Flags_1": "12288",
+    "InventoryType": "15",
+    "ItemDelay": "3000",
+    "ItemLevel": "60",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "3",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "32",
+    "StatModifier_bonusStat_3": "49",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3000",
+    "StatPercentEditor_3": "4000",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "2"
+   },
+   "item_level": 19,
+   "weapon": {
+    "Min": 10,
+    "Max": 14,
+    "Speed": 3,
+    "DPS": 4
+   },
+   "official_damage": "10 14 3 3.9999998",
+   "stats": {
+    "32": 5,
+    "49": 7,
+    "7": 9
+   }
+  },
+  {
+   "id": 262360,
+   "name": "Storyteller's Verses",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "12288",
+    "InventoryType": "23",
+    "ItemDelay": "0",
+    "ItemLevel": "60",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "49",
+    "StatModifier_bonusStat_3": "32",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "5",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "2950",
+    "StatPercentEditor_3": "4050",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "16132",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "0"
+   },
+   "item_level": 19,
+   "primary": 9,
+   "stats": {
+    "32": 3,
+    "49": 2,
+    "7": 4
+   }
+  },
+  {
+   "id": 260921,
+   "name": "Khan's Ceremonial Crossbow",
+   "sparse": {
+    "DmgVariance": "0.30000001192",
+    "ExpansionID": "9",
+    "Flags_1": "143360",
+    "InventoryType": "26",
+    "ItemDelay": "3000",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "18"
+   },
+   "item_level": 1,
+   "weapon": {
+    "Min": 1,
+    "Max": 2,
+    "Speed": 3,
+    "DPS": 0.5
+   },
+   "official_damage": "1 2 3 0.49999997"
+  },
+  {
+   "id": 217892,
+   "name": "Emerald Winglord's Shoulders",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "139264",
+    "InventoryType": "3",
+    "ItemDelay": "0",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "2",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "3"
+   },
+   "item_level": 1,
+   "armor": 4
+  },
+  {
+   "id": 217893,
+   "name": "Emerald Winglord's Chain",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "139264",
+    "InventoryType": "6",
+    "ItemDelay": "0",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "2",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "3"
+   },
+   "item_level": 1,
+   "armor": 3
+  },
+  {
+   "id": 217691,
+   "name": "Dream Raider's Emerald Flare",
+   "sparse": {
+    "DmgVariance": "0.5",
+    "ExpansionID": "9",
+    "Flags_1": "139264",
+    "InventoryType": "13",
+    "ItemDelay": "2600",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "4"
+   },
+   "item_level": 1,
+   "weapon": {
+    "Min": 1,
+    "Max": 1,
+    "Speed": 2.6,
+    "DPS": 0.3846153846153846
+   },
+   "official_damage": "1 1 2.6 0.38461536"
+  },
+  {
+   "id": 217713,
+   "name": "Voidtouched Shield",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "155648",
+    "InventoryType": "14",
+    "ItemDelay": "0",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "6"
+   },
+   "item_level": 1,
+   "armor": 23
+  },
+  {
+   "id": 217684,
+   "name": "Dream Raider's Shadowflame Recurve",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "139264",
+    "InventoryType": "15",
+    "ItemDelay": "2600",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "2"
+   },
+   "item_level": 1,
+   "weapon": {
+    "Min": 1,
+    "Max": 1,
+    "Speed": 2.6,
+    "DPS": 0.3846153846153846
+   },
+   "official_damage": "1 1 2.6 0.38461536"
+  },
+  {
+   "id": 217641,
+   "name": "Dream Raider's Blazing Rifle",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "139264",
+    "InventoryType": "26",
+    "ItemDelay": "2600",
+    "ItemLevel": "1",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "2",
+    "SubclassID": "3"
+   },
+   "item_level": 1,
+   "weapon": {
+    "Min": 1,
+    "Max": 1,
+    "Speed": 2.6,
+    "DPS": 0.3846153846153846
+   },
+   "official_damage": "1 1 2.6 0.38461536"
+  },
+  {
+   "id": 217069,
+   "name": "Draconic Warmonger's Garb",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "20",
+    "ItemDelay": "0",
+    "ItemLevel": "350",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "3",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "5",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "40",
+    "StatModifier_bonusStat_3": "32",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "3950",
+    "StatPercentEditor_3": "3050",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 70,
+   "armor": 14,
+   "primary": 16,
+   "stats": {
+    "32": 14,
+    "40": 18,
+    "7": 24
+   }
+  },
+  {
+   "id": 216291,
+   "name": "Draconic Gladiator's Censer",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "23",
+    "ItemDelay": "0",
+    "ItemLevel": "493",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "40",
+    "StatModifier_bonusStat_3": "49",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "5",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "4550",
+    "StatPercentEditor_3": "2450",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "16132",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "0"
+   },
+   "item_level": 77,
+   "primary": 26,
+   "stats": {
+    "40": 11,
+    "49": 6,
+    "7": 13
+   }
+  },
+  {
+   "id": 216280,
+   "name": "Draconic Gladiator's Insignia of Alacrity",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "8192",
+    "InventoryType": "12",
+    "ItemDelay": "0",
+    "ItemLevel": "493",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "4",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "36",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "6666",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "0"
+   },
+   "item_level": 77,
+   "stats": {
+    "36": 25
+   }
+  },
+  {
+   "id": 211939,
+   "name": "Worn Scarlet Cloak",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "24576",
+    "InventoryType": "16",
+    "ItemDelay": "0",
+    "ItemLevel": "70",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "0",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "-1",
+    "StatModifier_bonusStat_1": "-1",
+    "StatModifier_bonusStat_2": "-1",
+    "StatModifier_bonusStat_3": "-1",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "0",
+    "StatPercentEditor_1": "0",
+    "StatPercentEditor_2": "0",
+    "StatPercentEditor_3": "0",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "1"
+   },
+   "item_level": 21,
+   "armor": 4
+  },
+  {
+   "id": 210707,
+   "name": "Drowsed Shepherd's Hood",
+   "sparse": {
+    "DmgVariance": "0",
+    "ExpansionID": "9",
+    "Flags_1": "12288",
+    "InventoryType": "1",
+    "ItemDelay": "0",
+    "ItemLevel": "415",
+    "ItemSquishEraID": "0",
+    "OverallQualityID": "2",
+    "PlayerLevelToItemLevelCurveID": "0",
+    "StatModifier_bonusStat_0": "73",
+    "StatModifier_bonusStat_1": "7",
+    "StatModifier_bonusStat_2": "36",
+    "StatModifier_bonusStat_3": "40",
+    "StatModifier_bonusStat_4": "-1",
+    "StatModifier_bonusStat_5": "-1",
+    "StatModifier_bonusStat_6": "-1",
+    "StatModifier_bonusStat_7": "-1",
+    "StatModifier_bonusStat_8": "-1",
+    "StatModifier_bonusStat_9": "-1",
+    "StatPercentEditor_0": "5259",
+    "StatPercentEditor_1": "7889",
+    "StatPercentEditor_2": "4550",
+    "StatPercentEditor_3": "2450",
+    "StatPercentEditor_4": "0",
+    "StatPercentEditor_5": "0",
+    "StatPercentEditor_6": "0",
+    "StatPercentEditor_7": "0",
+    "StatPercentEditor_8": "0",
+    "StatPercentEditor_9": "0",
+    "StatPercentageOfSocket_0": "0",
+    "StatPercentageOfSocket_1": "0",
+    "StatPercentageOfSocket_2": "0",
+    "StatPercentageOfSocket_3": "0",
+    "StatPercentageOfSocket_4": "0",
+    "StatPercentageOfSocket_5": "0",
+    "StatPercentageOfSocket_6": "0",
+    "StatPercentageOfSocket_7": "0",
+    "StatPercentageOfSocket_8": "0",
+    "StatPercentageOfSocket_9": "0"
+   },
+   "registry": {
+    "ClassID": "4",
+    "SubclassID": "2"
+   },
+   "item_level": 73,
+   "armor": 19,
+   "primary": 16,
+   "stats": {
+    "36": 21,
+    "40": 12,
+    "7": 25
+   }
+  }
+ ]
+}

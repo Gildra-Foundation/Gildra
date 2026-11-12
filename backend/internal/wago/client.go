@@ -294,3 +294,41 @@ func (c *Client) csvURL(table, build, locale string) string {
 	}
 	return c.baseURL + "/db2/" + url.PathEscape(table) + "/csv?" + query.Encode()
 }
+
+// maxGameTableBytes bounds a client game table (gametables/*.txt); the largest
+// are tens of kilobytes.
+const maxGameTableBytes = 8 << 20
+
+// FileURL is the address of one client file of a build by file data id.
+func (c *Client) FileURL(fileDataID int, build string) string {
+	return c.baseURL + "/api/casc/" + url.PathEscape(fmt.Sprint(fileDataID)) + "?download&version=" + url.QueryEscape(build)
+}
+
+// File downloads one client file of an exact build.
+func (c *Client) File(ctx context.Context, fileDataID int, build string) ([]byte, error) {
+	if !buildPattern.MatchString(build) {
+		return nil, fmt.Errorf("invalid Wago build %q", build)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.FileURL(fileDataID, build), nil)
+	if err != nil {
+		return nil, fmt.Errorf("create Wago file request: %w", err)
+	}
+	req.Header.Set("Accept-Encoding", "identity")
+	resp, err := c.do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request Wago file: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		_, _ = io.CopyN(io.Discard, resp.Body, 4096)
+		return nil, fmt.Errorf("Wago file %d for build %s returned %s", fileDataID, build, resp.Status)
+	}
+	data, err := io.ReadAll(io.LimitReader(resp.Body, maxGameTableBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("read Wago file %d: %w", fileDataID, err)
+	}
+	if len(data) == 0 || len(data) > maxGameTableBytes {
+		return nil, fmt.Errorf("Wago file %d for build %s has an unexpected size %d", fileDataID, build, len(data))
+	}
+	return data, nil
+}

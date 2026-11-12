@@ -114,7 +114,7 @@ func validProduct(product string) bool {
 
 func isLocalized(table string) bool {
 	switch table {
-	case "ItemSparse", "ItemSearchName", "Spell", "SpellName", "SpellRange", "TraitDefinition",
+	case "ItemSparse", "ItemSearchName", "SpellItemEnchantment", "Spell", "SpellName", "SpellRange", "TraitDefinition",
 		"ItemClass", "ItemSubClass", "QuestV2CliTask", "QuestObjective", "QuestLine",
 		"QuestInfo", "QuestSort", "ItemSet", "ItemNameDescription", "ItemLimitCategory",
 		"JournalInstance", "JournalEncounter", "SkillLine", "TradeSkillCategory", "Creature",

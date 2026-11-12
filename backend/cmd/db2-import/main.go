@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogimport"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/itemscaling"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/wago"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -167,6 +168,18 @@ func run() error {
 	}
 	if importErr == nil {
 		importErr = observeDB2LocalizationArtifactsForTables(ctx, db, ic, opts.tables)
+	}
+	if importErr == nil && opts.product == "wow" && opts.download && opts.maxRecords == 0 && contains(opts.tables, "ItemSparse") {
+		// Item tooltip numbers need the build's reference tables. Their absence
+		// only leaves the numbers out, so a source outage does not fail the
+		// import; item-reference-import repeats this step for the build.
+		if rows, proofs, err := itemscaling.Fetch(ctx, itemscaling.WagoSource{Client: client}, opts.version); err != nil {
+			slog.Warn("item reference tables not imported", "build", opts.version, "error", err)
+		} else if err := itemscaling.Store(ctx, db, ic.BuildID, rows, proofs); err != nil {
+			importErr = err
+		} else {
+			slog.Info("item reference tables imported", "build", opts.version, "rows", len(rows))
+		}
 	}
 	status := "SUCCEEDED"
 	if importErr != nil {
