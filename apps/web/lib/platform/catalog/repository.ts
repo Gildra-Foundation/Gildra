@@ -2,6 +2,7 @@ import { catalogLocaleView } from "@/lib/catalogLocale";
 import { entityTypeLabel } from "./entityTypeLabel";
 import "server-only";
 import { getCatalogPage } from "@/lib/api/client";
+import { catalogIconUrl } from "@/lib/games/wow/assets";
 import { libraryRecordPath } from "@/lib/library/recordPath";
 import type { ApiLocale } from "@/lib/games/registry";
 import {
@@ -88,7 +89,7 @@ async function wowItems(query: string, locale: ApiLocale, limit: number): Promis
       name: item.name || `${locale === "ru_RU" ? "Предмет" : "Item"} #${item.externalId}`,
       // No synthetic English filler: the search UI labels the record type itself.
       description: compactText(item.description, ""),
-      iconUrl: item.iconUrl, href: libraryRecordPath(locale === "ru_RU" ? "ru" : "en", item.type, item.id, item.slug || item.externalId, item.product),
+      iconUrl: catalogIconUrl(item, "wow"), href: libraryRecordPath(locale === "ru_RU" ? "ru" : "en", item.type, item.id, item.slug || item.externalId, item.product),
       meta: ["World of Warcraft", item.itemLevel ? `Item level ${item.itemLevel}` : `ID ${item.externalId}`],
       attributes,
     };
@@ -193,7 +194,7 @@ async function searchOneGame(gameId: CatalogGameId, kind: SearchKind, query: str
     return page.data.map((item): PlatformCatalogItem => ({
       id: `wow:${item.id}`, gameId: "wow", kind: item.type === "item" ? "items" : "entities", entityType: item.type,
       name: item.name || `${entityTypeLabel(item.type, locale === "ru_RU" ? "ru" : "en")} #${item.externalId}`, description: compactText(item.description, ""),
-      iconUrl: item.iconUrl, href: libraryRecordPath(locale === "ru_RU" ? "ru" : "en", item.type, item.id, item.slug || item.externalId, item.product),
+      iconUrl: catalogIconUrl(item, "wow"), href: libraryRecordPath(locale === "ru_RU" ? "ru" : "en", item.type, item.id, item.slug || item.externalId, item.product),
       meta: ["World of Warcraft"],
       attributes: { ...(item.quality !== undefined ? { Quality: item.quality } : {}), ...(item.itemLevel ? { "Item Level": item.itemLevel } : {}) },
     }));

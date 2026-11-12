@@ -4,6 +4,7 @@ import { formatQuestText, playerText } from "@/lib/gameText";
 import { RichDescription, TooltipOwners, verifiedMediaURL } from "@/components/database/TooltipRelations";
 import { ResilientImage } from "@/components/media/ResilientImage";
 import { CatalogGlyph } from "@/components/database/CatalogGlyph";
+import { isWowProduct, wowIconUrl } from "@/lib/games/wow/assets";
 import type { CatalogRecord } from "@/lib/api/client";
 import { libraryRecordPath } from "@/lib/library/recordPath";
 import { LIBRARY_INTERNAL_NAME } from "@/lib/library/internalName";
@@ -70,7 +71,7 @@ export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: 
 			<div className="db-tooltip-panel">
 				<div className="db-tooltip-name" id={`tooltip-name-${entity.id}`}>{entity.name || `${entity.type.replaceAll("_", " ")} #${entity.externalId}`}</div>
 				{blocks.map((block, index) => (
-					<TooltipBlock key={`${String(block.type)}-${index}`} block={block} entityType={entity.type} lang={lang} mentions={mentions} />
+					<TooltipBlock key={`${String(block.type)}-${index}`} block={block} entityType={entity.type} wow={isWowProduct(entity.product)} lang={lang} mentions={mentions} />
 				))}
 			</div>
 		</>
@@ -119,7 +120,7 @@ export function recordFacts(entity: CatalogRecord, lang: Lang): RecordFact[] {
 	return facts;
 }
 
-function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<string, unknown>; entityType: string; lang: Lang; mentions: Record<string, unknown>[] }) {
+function TooltipBlock({ block, entityType, wow, lang, mentions }: { block: Record<string, unknown>; entityType: string; wow: boolean; lang: Lang; mentions: Record<string, unknown>[] }) {
   const type = String(block.type ?? "");
   if (type === "name") return null;
 	if (type === "item_level") return <div className="db-tooltip-level">{tooltipContentCopy[lang].itemLevel} {String(block.value ?? "")}</div>;
@@ -159,8 +160,8 @@ function TooltipBlock({ block, entityType, lang, mentions }: { block: Record<str
 	if (type === "item_registry") return <ItemRegistry block={block} lang={lang} />;
 	if (type === "item_effect_metadata" && Array.isArray(block.entries)) return <ItemEffectMetadata entries={block.entries as Record<string, unknown>[]} lang={lang} />;
 	if (type === "item_variants" && Array.isArray(block.entries)) return <ItemVariants entries={block.entries as Record<string, unknown>[]} lang={lang} />;
-	if (type === "quest_info") return <QuestInfo block={block} lang={lang} />;
-	if (type === "quest_reward_package") return <QuestRewardPackage block={block} lang={lang} />;
+	if (type === "quest_info") return <QuestInfo block={block} wow={wow} lang={lang} />;
+	if (type === "quest_reward_package") return <QuestRewardPackage block={block} wow={wow} lang={lang} />;
 	if (type === "creature_info") return <CreatureInfo block={block} lang={lang} />;
 	if (type === "spell_effects" && Array.isArray(block.entries)) return <SpellEffects entries={block.entries as Record<string, unknown>[]} lang={lang} />;
   if (type === "unique_equipped") return <div>{tooltipContentCopy[lang].uniqueEquipped}</div>;
@@ -246,7 +247,7 @@ function ItemVariants({ entries, lang }: { entries: Record<string, unknown>[]; l
 	</div>;
 }
 
-function QuestInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
+function QuestInfo({ block, wow, lang }: { block: Record<string, unknown>; wow: boolean; lang: Lang }) {
 	const objectives = Array.isArray(block.objectives) ? block.objectives as Record<string, unknown>[] : [];
 	const lines = Array.isArray(block.quest_lines) ? block.quest_lines as Record<string, unknown>[] : [];
 	const rewards = Array.isArray(block.rewards) ? block.rewards as Record<string, unknown>[] : [];
@@ -254,12 +255,18 @@ function QuestInfo({ block, lang }: { block: Record<string, unknown>; lang: Lang
 		{String(block.bullet_text ?? "") ? <div>{formatQuestText(String(block.bullet_text), lang)}</div> : null}
 		{objectives.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].objectives}:</b>{objectives.map((objective) => <span key={String(objective.id)}>• {String(objective.description || `${tooltipContentCopy[lang].object} ${objective.object_id ?? ""}`)}{Number(objective.amount ?? 0) > 1 ? ` ×${String(objective.amount)}` : ""}</span>)}</div> : null}
 		{lines.length ? <div>{tooltipContentCopy[lang].questLine}: {lines.map((line) => String(line.name || line.id)).join(", ")}</div> : null}
-		{rewards.length ? <QuestRewards rewards={rewards} lang={lang} /> : null}
+		{rewards.length ? <QuestRewards rewards={rewards} wow={wow} lang={lang} /> : null}
 		{Number(block.poi_count ?? 0) > 0 ? <div>{tooltipContentCopy[lang].mapPoints}: {String(block.poi_count)}</div> : null}
 	</div>;
 }
 
-function QuestRewardPackage({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
+/** Icon of a reward: its cached picture, else the game's file of its icon name; the marker when neither loads. */
+function RewardIcon({ reward, wow }: { reward: Record<string, unknown>; wow: boolean }) {
+	const icon = verifiedMediaURL(String(reward.icon_url ?? "")) || (wow ? wowIconUrl(reward.icon_name) : undefined);
+	return <ResilientImage src={icon} alt="" loading="lazy" fallback={<span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>} />;
+}
+
+function QuestRewardPackage({ block, wow, lang }: { block: Record<string, unknown>; wow: boolean; lang: Lang }) {
 	const items = Array.isArray(block.items) ? block.items as Record<string, unknown>[] : [];
 	return <div className="db-tooltip-quest-info">
 		<div><b>{tooltipContentCopy[lang].package}:</b> #{String(block.package_id ?? "—")}</div>
@@ -269,10 +276,9 @@ function QuestRewardPackage({ block, lang }: { block: Record<string, unknown>; l
 			<div className="db-tooltip-reward-group">{items.map((item, index) => {
 				const externalID = Number(item.item_external_id ?? 0);
 				const entityID = String(item.entity_id ?? "");
-				const icon = verifiedMediaURL(String(item.icon_url ?? ""));
 				const label = String(item.name || `Item #${externalID || "—"}`);
 				const quantity = Number(item.quantity ?? 0);
-				const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong>{label}</strong><small>{quantity > 0 ? `×${quantity.toLocaleString(tooltipContentCopy[lang].numberLocale)}` : ""}</small></span></>;
+				const content = <><RewardIcon reward={item} wow={wow} /><span><strong>{label}</strong><small>{quantity > 0 ? `×${quantity.toLocaleString(tooltipContentCopy[lang].numberLocale)}` : ""}</small></span></>;
 				return entityID
 					? <Link className="db-tooltip-reward" href={libraryRecordPath(lang, "item", entityID, externalID || "item")} key={`${externalID}-${index}`}>{content}</Link>
 					: <span className="db-tooltip-reward" key={`${externalID}-${index}`}>{content}</span>;
@@ -281,7 +287,7 @@ function QuestRewardPackage({ block, lang }: { block: Record<string, unknown>; l
 	</div>;
 }
 
-function QuestRewards({ rewards, lang }: { rewards: Record<string, unknown>[]; lang: Lang }) {
+function QuestRewards({ rewards, wow, lang }: { rewards: Record<string, unknown>[]; wow: boolean; lang: Lang }) {
 	const guaranteed = rewards.filter((reward) => !Boolean(reward.choice));
 	const choices = rewards.filter((reward) => Boolean(reward.choice));
 	const renderReward = (reward: Record<string, unknown>, index: number) => {
@@ -290,12 +296,11 @@ function QuestRewards({ rewards, lang }: { rewards: Record<string, unknown>[]; l
 		const externalID = Number(reward.external_id ?? 0);
 		const entityID = String(reward.entity_id ?? "");
 		const slug = String(reward.slug || externalID || "reward");
-		const icon = verifiedMediaURL(String(reward.icon_url ?? ""));
 		const quality = Number(reward.quality ?? 0);
 		const label = String(reward.name || questRewardTypeLabel(type, lang, externalID));
 		const amount = Number(reward.amount ?? 0);
 		const details = [questRewardAmount(type, amount, lang), Boolean(reward.choice) ? tooltipContentCopy[lang].choice : ""].filter(Boolean).join(" · ");
-		const content = <>{icon ? <img src={icon} alt="" loading="lazy" /> : <span className="db-tooltip-reward-marker" aria-hidden="true">◇</span>}<span><strong className={`quality-${quality}`}>{label}</strong>{details ? <small>{details}</small> : null}</span></>;
+		const content = <><RewardIcon reward={reward} wow={wow} /><span><strong className={`quality-${quality}`}>{label}</strong>{details ? <small>{details}</small> : null}</span></>;
 		return entityID
 			? <Link className="db-tooltip-reward" href={libraryRecordPath(lang, entityType, entityID, slug)} key={`${type}-${externalID}-${index}`}>{content}</Link>
 			: <span className="db-tooltip-reward" key={`${type}-${externalID}-${index}`}>{content}</span>;

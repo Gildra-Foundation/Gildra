@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { LIBRARY_FEATURED } from "@/lib/library/featured";
 import { getCatalogPage, getCatalogProducts, getLibraryDatasets, type CatalogRecord } from "@/lib/api/client";
+import { withCatalogIcon } from "@/lib/games/wow/assets";
 import { runtimeFlags } from "@/lib/flags";
 
 /**
@@ -42,7 +43,7 @@ export async function requireCatalogSession(path: string) {
 /** A few records with icons per featured dataset (cached like any catalog page); a failed read leaves the strip out. */
 async function featuredSamples(locale: "en_US" | "ru_RU", product: string, slugs: string[]) {
   const pages = await Promise.all(slugs.map((dataset) => getCatalogPage({ locale, product, dataset, limit: 12, timeoutMs: 4000 })
-    .then((page) => page.data.filter((record) => record.iconUrl).slice(0, 5)).catch(() => [] as CatalogRecord[])));
+    .then((page) => page.data.map((record) => withCatalogIcon(record, product)).filter((record) => record.iconUrl).slice(0, 5)).catch(() => [] as CatalogRecord[])));
   return Object.fromEntries(slugs.map((slug, index) => [slug, pages[index]])) as Record<string, CatalogRecord[]>;
 }
 

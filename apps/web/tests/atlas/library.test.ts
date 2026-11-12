@@ -6,6 +6,7 @@ import {
   type LibraryRecordView, type LibrarySummary,
 } from "../../components/library/libraryRecordView.ts";
 import { relationTitle, relationshipAttributes } from "../../components/database/entityDetailCopy.ts";
+import { catalogIconUrl, isWowProduct, withCatalogIcon, wowIconUrl } from "../../lib/games/wow/assets.ts";
 
 const id = "00004a86-3321-43ac-983d-9d73d79d11ae";
 const summary = (patch: Partial<LibrarySummary> = {}): LibrarySummary => ({
@@ -14,6 +15,48 @@ const summary = (patch: Partial<LibrarySummary> = {}): LibrarySummary => ({
   highlights: [{ key: "required_level", value: "Requires Level 35" }, { key: "inventory_type", value: "Legs" }], ...patch,
 });
 const view = (patch: Partial<LibraryRecordView>): LibraryRecordView => ({ id: patch.name ?? "x", externalId: 1, type: "item", href: "/", name: "x", typeLabel: "Item", ...patch });
+
+describe("library: record icons", () => {
+  const official = (name: string) => `https://render.worldofwarcraft.com/eu/icons/56/${name}.jpg`;
+
+  it("builds the official icon address only from a plain game file name", () => {
+    assert.equal(wowIconUrl("inv_misc_cutgemsuperior4"), official("inv_misc_cutgemsuperior4"));
+    assert.equal(wowIconUrl("  INV_Misc_Gem_01 "), official("inv_misc_gem_01"), "trimmed and lower-cased");
+    assert.equal(wowIconUrl("132940"), official("132940"), "a file id is a name too");
+    for (const bad of ["", "   ", "inv misc", "inv-misc", "../secret", "a/b", "icon.jpg", "icon?x=1", "icon#x", "%2e%2e", "https://evil.example/x", "иконка", "a\nb", null, undefined, 132940, {}, ["inv_misc"]]) {
+      assert.equal(wowIconUrl(bad), undefined, `rejected: ${JSON.stringify(bad)}`);
+    }
+  });
+
+  it("keeps a record's own icon and falls back to the official one for World of Warcraft only", () => {
+    assert.equal(catalogIconUrl({ iconUrl: "https://api.wowarcana.com/v1/media/x", iconName: "inv_misc_gem_01", product: "wow" }), "https://api.wowarcana.com/v1/media/x");
+    assert.equal(catalogIconUrl({ iconName: "inv_misc_gem_01", product: "wow" }), official("inv_misc_gem_01"));
+    assert.equal(catalogIconUrl({ iconName: "inv_misc_gem_01", product: "wow_classic_era" }), official("inv_misc_gem_01"));
+    assert.equal(catalogIconUrl({ iconUrl: null, iconName: "inv_misc_gem_01" }, "wow"), official("inv_misc_gem_01"), "a related record stands in the page's edition");
+    assert.equal(catalogIconUrl({ iconName: "inv_misc_gem_01" }), undefined, "no edition, no guess");
+    assert.equal(catalogIconUrl({ iconName: "inv_misc_gem_01", product: "genshin" }, "wow"), undefined, "the record's own edition wins");
+    assert.equal(catalogIconUrl({ iconName: "ui_item_1", product: "league_of_legends" }), undefined);
+    assert.equal(catalogIconUrl({ iconName: "pvpcurrency-conquest-horde", product: "wow" }), undefined);
+    assert.equal(catalogIconUrl({ product: "wow" }), undefined);
+    assert.deepEqual(["wow", "wow_classic", "wow_classic_hardcore", "wowhead", "genshin", "", undefined].map(isWowProduct), [true, true, true, false, false, false, false]);
+  });
+
+  it("fills the icon of a record without copying one that needs nothing", () => {
+    const cached = { id: "1", iconUrl: "/v1/media/x", iconName: "inv_misc_gem_01", product: "wow" };
+    assert.equal(withCatalogIcon(cached), cached);
+    const bare = { id: "2", product: "wow" };
+    assert.equal(withCatalogIcon(bare), bare);
+    assert.deepEqual(withCatalogIcon({ id: "3", iconName: "ability_mount_ridinghorse" }, "wow"), { id: "3", iconName: "ability_mount_ridinghorse", iconUrl: official("ability_mount_ridinghorse") });
+  });
+
+  it("gives a list row the official icon when the catalog has no cached one", () => {
+    assert.equal(libraryRecordView(summary(), "en").iconUrl, "https://api.wowarcana.com/v1/media/x");
+    assert.equal(libraryRecordView(summary({ iconUrl: undefined, iconName: "inv_pants_leather_01" }), "en").iconUrl, official("inv_pants_leather_01"));
+    assert.equal(libraryRecordView(summary({ iconUrl: undefined, iconName: "inv_pants_leather_01", product: undefined }), "en", "wow_classic").iconUrl, official("inv_pants_leather_01"));
+    assert.equal("iconUrl" in libraryRecordView(summary({ iconUrl: undefined, iconName: "bad name" }), "en"), false);
+    assert.equal("iconUrl" in libraryRecordView(summary({ iconUrl: undefined }), "en"), false);
+  });
+});
 
 describe("library: record rows", () => {
   it("links a record to its own address, never the old four-segment one that redirects", () => {

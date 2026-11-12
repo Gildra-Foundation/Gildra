@@ -4,6 +4,7 @@ import { catalogLocaleView } from "@/lib/catalogLocale";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CatalogRecord } from "@/lib/api/client";
 import { TooltipBody, tooltipClassName } from "@/components/database/TooltipContent";
+import { catalogIconUrl } from "@/lib/games/wow/assets";
 import { withVariantQuality } from "@/lib/library/recordQuality";
 import styles from "./libraryHoverPreview.module.css";
 
@@ -61,8 +62,8 @@ export function LibraryHoverPreview({ rootId, lang, iconSymbol, loadingLabel }: 
       if (!request) {
         request = fetch(`/api/catalog/entities/${id}?locale=${locale}`)
           .then((response) => (response.ok ? response.json() as Promise<CatalogRecord> : null))
-          // The record endpoint has no media URL; the card's own icon fills the tooltip icon.
-          .then((entity) => (entity?.tooltip ? withVariantQuality(catalogLocaleView({ ...entity, iconUrl: entity.iconUrl || iconUrl }, lang)) : null))
+          // The record endpoint has no media URL; the card's own icon fills the tooltip icon, else the game's file of the record's icon name.
+          .then((entity) => (entity?.tooltip ? withVariantQuality(catalogLocaleView({ ...entity, iconUrl: catalogIconUrl({ ...entity, iconUrl: entity.iconUrl || iconUrl }) }, lang)) : null))
           .catch(() => null);
         cache.set(id, request);
       }

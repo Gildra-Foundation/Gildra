@@ -12,6 +12,7 @@ import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { withVariantQuality } from "@/lib/library/recordQuality";
 import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
 import { entityDetailCopy } from "@/components/database/entityDetailCopy";
+import { withCatalogIcon } from "@/lib/games/wow/assets";
 import { getCatalogPage, type CatalogEntityType, type CatalogRelationship, type GameEntity } from "@/lib/api/client";
 import { playerText } from "@/lib/gameText";
 import type { Lang } from "@/lib/i18n";
@@ -34,7 +35,8 @@ function hasUnresolvedTemplate(value: string) {
 /**
  * The record endpoint names the icon but carries no media URL; the summary of
  * the same record has it. One indexed ID lookup (cached like the page) fills
- * the hero and tooltip icon; on any failure the type glyph stays.
+ * the hero and tooltip icon; without a cached copy the game's own file of that
+ * name stands in, and a record that names no icon keeps the type glyph.
  */
 async function withSummaryIcon(entity: GameEntity, lang: Lang): Promise<GameEntity> {
   // Instances name no icon on the record, but their summary carries the Adventure Guide button.
@@ -42,9 +44,9 @@ async function withSummaryIcon(entity: GameEntity, lang: Lang): Promise<GameEnti
   try {
     const page = await getCatalogPage({ externalIds: [entity.externalId], type: entity.type, product: entity.product, locale: lang === "ru" ? "ru_RU" : "en_US", limit: 100, timeoutMs: 4000 });
     const iconUrl = page.data.find((record) => record.id === entity.id)?.iconUrl;
-    return iconUrl ? { ...entity, iconUrl } : entity;
+    return iconUrl ? { ...entity, iconUrl } : withCatalogIcon(entity);
   } catch {
-    return entity;
+    return withCatalogIcon(entity);
   }
 }
 

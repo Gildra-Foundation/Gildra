@@ -182,3 +182,43 @@ export const WOW_VERSION_EMBLEMS = {
   forever: "/assets/wow/versions/forever.png",
   mists: "/assets/wow/versions/mists.png",
 } as const;
+
+const ICON_NAME = /^[a-z0-9_]+$/;
+/** Retail and the Classic editions ("wow", "wow_classic_era"); Genshin and League records name no game file. */
+const WOW_PRODUCT = /^wow(?:_[a-z0-9]+)*$/;
+
+/**
+ * The official 56 px icon of a game file name ("inv_misc_gem_01", or a file id
+ * such as "132940") on Blizzard's render host; undefined for anything else, so
+ * a bad name never becomes a URL.
+ */
+export function wowIconUrl(iconName: unknown): string | undefined {
+  if (typeof iconName !== "string") return undefined;
+  const name = iconName.trim().toLowerCase();
+  return ICON_NAME.test(name) ? `https://render.worldofwarcraft.com/eu/icons/56/${name}.jpg` : undefined;
+}
+
+export function isWowProduct(product: unknown): boolean {
+  return typeof product === "string" && WOW_PRODUCT.test(product);
+}
+
+/** What the icon fallback reads of a catalog record (GameEntitySummary, GameEntity). */
+export type CatalogIconSource = { iconUrl?: string | null; iconName?: string | null; product?: string | null };
+
+/**
+ * Icon of a catalog record: its cached URL, else the official file of its icon
+ * name. The catalog names the icon of every record but serves a URL only while
+ * its cached copy is fresh. World of Warcraft records only; `product` is the
+ * edition of the list or page for records that do not carry their own (the
+ * related records of a relationship).
+ */
+export function catalogIconUrl(record: CatalogIconSource, product?: string | null): string | undefined {
+  if (record.iconUrl) return record.iconUrl;
+  return isWowProduct(record.product || product) ? wowIconUrl(record.iconName) : undefined;
+}
+
+/** The record with `iconUrl` filled by `catalogIconUrl`; the same object when nothing changes. */
+export function withCatalogIcon<T extends CatalogIconSource>(record: T, product?: string | null): T {
+  const iconUrl = catalogIconUrl(record, product);
+  return iconUrl && iconUrl !== record.iconUrl ? { ...record, iconUrl } : record;
+}
