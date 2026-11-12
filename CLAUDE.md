@@ -73,6 +73,7 @@ economy (model/effort, quiet builds, reading map, brief template):
   [docs/design/reference/README.md](docs/design/reference/README.md) is the first read for any UI task.
   Do not restyle them; other pages follow them. Shared UI changes must pass
   `npm run design:lock -- --base <candidate>`; re-capturing the reference is the owner's call.
+- **Brand kit:** logo, colours, type, materials, motion and voice in one place — [docs/brand/BRANDKIT.md](docs/brand/BRANDKIT.md).
 - **Clean UI:** no junk text (data provenance, explanations, service words, repeats) — follow
   [.claude/skills/gildra-clean-ui/SKILL.md](.claude/skills/gildra-clean-ui/SKILL.md) on every UI change.
 - Different backgrounds are non-negotiable: cinematic artwork hero, solid
