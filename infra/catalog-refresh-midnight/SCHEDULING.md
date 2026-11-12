@@ -80,8 +80,10 @@ One chain, no second timer:
 Leaving it unset uses the whole quota; 18000 leaves half to the live site and
 doubles the enrichment days.
 
-Expected length of a first import of a client build (stand rehearsal numbers
-are in `/home/debian/gildra-db-fill-20261112/FRESHNESS.md`): stages before
+Expected length of a first import of a client build (stand rehearsal of
+12.1.5.70783 on 12 Nov 2026: import-wago 2 h 05 min, import-raidbots 33 min,
+resuming a release 3 min; the rest is in
+`/home/debian/gildra-db-fill-20261112/FRESHNESS.md`): stages before
 enrichment fit in one window; enrichment takes one more window when the API
 build is unchanged and the previous evidence is still in the database, and
 two to three windows after Blizzard moves the API to a new build.
@@ -101,25 +103,34 @@ two to three windows after Blizzard moves the API to a new build.
    run is still `running` and asks for an operator. After the consumer has
    proved its own writer sessions are gone it can call
    `catalog-pipeline -mode apply -product wow -reconcile-failed-run <id>
-   -confirm-worker-stopped` itself; that closes only imports of a failed
-   release under the pipeline lock.
-4. **Stage list.** `STAGES` in `consumer.py` duplicates the pipeline plan.
+   -confirm-worker-stopped` itself. The command takes the pipeline lock (a
+   connected pipeline always holds it), fails the dead run and its staging
+   release the way the pipeline would have, and closes the imports left behind.
+4. **Time to stop.** The pipeline's `-timeout` is set to the window end minus
+   60 seconds, and the consumer kills the process group at the window end.
+   Failing a release restores the pointers of every entity it staged: 597,623
+   rows and about two and a half minutes on the rehearsal stand, five minutes
+   in production run 207. A pipeline killed inside that step leaves its run
+   marked running (the rehearsal reproduced this with a 150 second stop). The
+   pipeline timeout must end at least 15 minutes before the consumer's own
+   kill, and any manual stop must wait as long (`docker stop -t 900`).
+5. **Stage list.** `STAGES` in `consumer.py` duplicates the pipeline plan.
    It matches today; a plan change must update both, or the consumer should
    read the plan from `catalog-pipeline -mode dry_run`.
-5. **Evidence retention.** Reuse reads enrichment artifacts of earlier builds,
+6. **Evidence retention.** Reuse reads enrichment artifacts of earlier builds,
    including releases that failed. Nothing may purge
    `catalog_source_records` of `battlenet-missing/*` artifacts younger than
    45 days (`-evidence-reuse-max-age`).
-6. **Pinned native binaries.** `verify_native_binaries()` checks a manifest of
+7. **Pinned native binaries.** `verify_native_binaries()` checks a manifest of
    SHA-256 values; it must be regenerated from the commit that is released.
-7. **Environment.** `/etc/gildra-catalog-midnight/environment` needs the
+8. **Environment.** `/etc/gildra-catalog-midnight/environment` needs the
    production database URL, the isolated restore database, Battle.net
    credentials and the incident route. Production currently runs the pipeline
    through Docker Compose; the consumer runs native binaries on the host.
-8. **Still open from the consumer's own README:** restore-proof capacity
+9. **Still open from the consumer's own README:** restore-proof capacity
    (three source sizes plus reserve on the restore filesystem), the life cycle
    of the single proof directory, a named operator and a real alert route.
-9. **Other editions.** The consumer imports Retail only. Classic editions keep
+10. **Other editions.** The consumer imports Retail only. Classic editions keep
    using `run-gildra-catalog-refresh-all.sh`, which starts a new release on
    every run with a fixed `-timeout 30h` and has no timer. If it is ever
    scheduled it needs the same resume lookup, or it repeats run 207.
