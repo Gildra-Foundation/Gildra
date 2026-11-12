@@ -882,13 +882,17 @@ const midnightTalentDataPromises = new Map<string, Remembered<TalentCalculatorDa
 
 const talentPageDataPromises = new Map<string, Remembered<TalentCalculatorData>>();
 
+/** The hero path a request asks for when the specialization has it, otherwise the specialization's default. */
+function requestedHeroPath(theme: TalentSpecTheme, heroPathId?: number): number {
+  if (heroPathId !== undefined && theme.heroPaths.some((hero) => hero.id === heroPathId)) return heroPathId;
+  return theme.specId === specId ? heroSubtreeId : theme.heroPaths[0].id;
+}
+
 /** Load page data without making the first render wait on dozens of tooltip requests. */
 export function getMidnightTalentPageData(specSlug: string, heroPathId?: number, lang: TalentLang = "ru"): Promise<TalentCalculatorData> {
   const theme = getTalentSpecTheme(specSlug);
   if (!theme) return Promise.reject(new Error(`Unknown talent specialization: ${specSlug}`));
-  const requestedHeroId = theme.heroPaths.some((hero) => hero.id === heroPathId)
-    ? heroPathId
-    : theme.specId === specId ? heroSubtreeId : theme.heroPaths[0].id;
+  const requestedHeroId = requestedHeroPath(theme, heroPathId);
   return remember(talentPageDataPromises, `${lang}:${theme.slug}:${requestedHeroId}`, async () => {
     // Preserve the verified catalog source for Fury Warrior when it is
     // available. Other trees use the public Raidbots snapshot as before.
@@ -906,9 +910,7 @@ export function getMidnightTalentPageData(specSlug: string, heroPathId?: number,
 export function getMidnightTalentData(specSlug: string, heroPathId?: number, lang: TalentLang = "ru"): Promise<TalentCalculatorData> {
   const theme = getTalentSpecTheme(specSlug);
   if (!theme) return Promise.reject(new Error(`Unknown talent specialization: ${specSlug}`));
-  const requestedHeroId = theme.heroPaths.some((hero) => hero.id === heroPathId)
-    ? heroPathId
-    : theme.specId === specId ? heroSubtreeId : theme.heroPaths[0].id;
+  const requestedHeroId = requestedHeroPath(theme, heroPathId);
   if (theme.specId === specId && requestedHeroId === heroSubtreeId) return getMidnightWarriorTalentData(lang);
   return remember(midnightTalentDataPromises, `${lang}:${theme.slug}:${requestedHeroId}`, () => loadRaidbotsTalentData(theme, requestedHeroId, lang));
 }

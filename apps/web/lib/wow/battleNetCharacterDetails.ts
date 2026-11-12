@@ -74,6 +74,8 @@ export type BattleNetCharacterDetails = {
 
 export type BattleNetCharacterDataErrorCode = "expired" | "forbidden" | "rate_limited" | "not_found" | "incomplete" | "unavailable";
 
+const errorCodeByStatus: Partial<Record<number, BattleNetCharacterDataErrorCode>> = { 401: "expired", 403: "forbidden", 404: "not_found", 429: "rate_limited" };
+
 export class BattleNetCharacterDataError extends Error {
   readonly code: BattleNetCharacterDataErrorCode;
   readonly status: number;
@@ -105,12 +107,7 @@ async function requiredApi<T>(url: string, token: string, endpoint: string): Pro
     throw new BattleNetCharacterDataError("unavailable", 503, endpoint);
   }
   if (!response.ok) {
-    const code: BattleNetCharacterDataErrorCode = response.status === 401 ? "expired"
-      : response.status === 403 ? "forbidden"
-      : response.status === 404 ? "not_found"
-      : response.status === 429 ? "rate_limited"
-      : "unavailable";
-    throw new BattleNetCharacterDataError(code, response.status >= 500 ? response.status : response.status, endpoint);
+    throw new BattleNetCharacterDataError(errorCodeByStatus[response.status] ?? "unavailable", response.status, endpoint);
   }
   try {
     return await response.json() as T;

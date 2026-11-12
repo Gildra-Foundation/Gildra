@@ -168,7 +168,7 @@ function entries(value: unknown) {
 }
 
 function pvpList(value: unknown): PvpSlots {
-  return Array.isArray(value) ? value.slice(0, 3).map((id) => id === null ? null : Number.isFinite(Number(id)) ? Math.floor(Number(id)) : null) : [];
+  return Array.isArray(value) ? value.slice(0, 3).map((id) => id !== null && Number.isFinite(Number(id)) ? Math.floor(Number(id)) : null) : [];
 }
 
 export function decodeLoadout(value: string): Loadout | null {
@@ -316,4 +316,8 @@ export function treeGeometry(tree: Pick<TalentTree, "nodes">): TreeGeometry {
 }
 
 export type NodeShape = "square" | "round" | "choice" | "apex";
-export const nodeShape = (node: TalentNode): NodeShape => node.nodeType === "choice" ? "choice" : node.nodeType === "tiered" || node.nodeType === "subtree" ? "apex" : node.talentType === "passive" ? "round" : "square";
+export const nodeShape = (node: TalentNode): NodeShape => {
+  if (node.nodeType === "choice") return "choice";
+  if (node.nodeType === "tiered" || node.nodeType === "subtree") return "apex";
+  return node.talentType === "passive" ? "round" : "square";
+};

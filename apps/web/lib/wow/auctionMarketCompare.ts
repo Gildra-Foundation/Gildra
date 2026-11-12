@@ -59,8 +59,12 @@ export function groupedOrder<T extends Comparable>(items: readonly T[]): T[] {
 export function sortCompare<T extends Comparable>(rows: readonly CompareRow<T>[], key: CompareSortKey | "", dir: "asc" | "desc", lang: "ru" | "en"): CompareRow<T>[] {
   if (!key) return [...rows];
   const sign = dir === "asc" ? 1 : -1;
-  const value = (row: CompareRow<T>) => key === "min" ? row.item.minPrice : key === "median" ? row.item.medianPrice : key === "quantity" ? row.item.quantity
-    : row.cost && row.cost.bought ? row.cost.average : Number.POSITIVE_INFINITY;
+  const value = (row: CompareRow<T>) => {
+    if (key === "min") return row.item.minPrice;
+    if (key === "median") return row.item.medianPrice;
+    if (key === "quantity") return row.item.quantity;
+    return row.cost && row.cost.bought ? row.cost.average : Number.POSITIVE_INFINITY;
+  };
   return [...rows].sort((a, b) => {
     // A purchase the market cannot fill always sorts after the ones it can.
     if (key === "cost" && a.short !== b.short) return a.short ? 1 : -1;
