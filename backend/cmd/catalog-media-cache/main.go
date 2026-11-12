@@ -26,10 +26,11 @@ func main() {
 
 func run() error {
 	var databaseURL, root, publicBase, environment, accessMode, product, expansion string
-	var derivedMode, derivedGroups, derivedEntitiesOut string
+	var derivedMode, derivedGroups, derivedEntitiesOut, derivedCheckpoint string
+	var derivedRetryFailed time.Duration
 	var entityIDsRaw string
 	var buildID int64
-	var limit, seedIconLimit, derivedLimit int
+	var limit, seedIconLimit, derivedLimit, derivedHeadroom int
 	var confirm, skipMediaCache, refreshIcons bool
 	var refreshLimit, refreshBatch, refreshHeadroom int
 	var refreshInterval, refreshRetryFailed time.Duration
@@ -49,7 +50,10 @@ func run() error {
 	flag.BoolVar(&confirm, "confirm", false, "download eligible assets")
 	flag.StringVar(&derivedMode, "derived-mode", "", "derived media for records without an icon: plan (read-only), verify (download and link in a rolled-back transaction) or apply (requires -confirm)")
 	flag.StringVar(&derivedGroups, "derived-groups", "default", "comma-separated derived media groups, default or all")
+	flag.IntVar(&derivedHeadroom, "derived-headroom-days", 10, "renew derived media before source retention expires")
 	flag.IntVar(&derivedLimit, "derived-limit", 1000, "maximum unique derived assets downloaded per run")
+	flag.StringVar(&derivedCheckpoint, "derived-checkpoint", "", "optional absolute path of a file remembering derived assets no source has")
+	flag.DurationVar(&derivedRetryFailed, "derived-retry-failed-after", 14*24*time.Hour, "keep a derived asset no source has out of later runs for this long")
 	flag.StringVar(&derivedEntitiesOut, "derived-entities-out", "", "optional JSON file receiving planned or linked entity IDs by group")
 	flag.BoolVar(&refreshIcons, "refresh-icons", false, "renew cached icons across the whole published build; without -confirm only reports the planned downloads and row updates")
 	flag.IntVar(&refreshLimit, "refresh-limit", 3000, "maximum distinct icons downloaded in this run (up to 100000)")
@@ -67,6 +71,9 @@ func run() error {
 	}
 	if skipMediaCache && !refreshIcons && seedIconLimit == 0 && derivedMode != catalogmedia.DerivedModeApply {
 		return errors.New("skip-media-cache requires a positive seed-icon-limit or -derived-mode=apply")
+	}
+	if derivedMode == catalogmedia.DerivedModeApply && !confirm {
+		return errors.New("derived apply requires -confirm; use -derived-mode plan for a dry run")
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -107,7 +114,8 @@ func run() error {
 	if derivedMode != "" && (derivedMode != catalogmedia.DerivedModeApply || confirm) {
 		derived, err := cache.SeedDerivedMedia(ctx, catalogmedia.DerivedMediaOptions{
 			Product: product, Environment: environment, Groups: strings.Split(derivedGroups, ","),
-			Limit: derivedLimit, Mode: derivedMode,
+			Limit: derivedLimit, Mode: derivedMode, HeadroomDays: derivedHeadroom,
+			Checkpoint: derivedCheckpoint, RetryFailedAfter: derivedRetryFailed,
 		})
 		if err != nil {
 			return err
@@ -156,7 +164,14 @@ func run() error {
 		}
 	}
 	if skipMediaCache {
-		return encoder.Encode(map[string]any{"icons": iconResult, "derived": derivedResult})
+		if err := encoder.Encode(map[string]any{"icons": iconResult, "derived": derivedResult}); err != nil {
+			return err
+		}
+		if derivedResult != nil && derivedResult.SourceTroubleExceedsTolerance() {
+			return fmt.Errorf("%d derived asset downloads failed for a reason other than a missing source file; successful links are kept",
+				derivedResult.AssetsFailed-derivedResult.AssetsMissing)
+		}
+		return nil
 	}
 	result, err := cache.RunWithAccessMode(ctx, environment, limit, accessMode)
 	if err != nil {

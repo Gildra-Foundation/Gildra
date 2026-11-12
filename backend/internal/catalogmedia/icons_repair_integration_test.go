@@ -342,4 +342,119 @@ func TestIconRepairExpiredSameBytesAndPublishedBuild(t *testing.T) {
 		t.Fatalf("membership count=%d err=%v", confirmed, err)
 	}
 
+	// Exact-build optional and currency groups: malformed payloads are ignored,
+	// future JournalInstance evidence is not used, and apply is idempotent.
+	for _, fixture := range []struct {
+		kind    string
+		id      int64
+		payload string
+	}{
+		{"currency", 880001, `{}`}, {"map", 880002, `{}`},
+		{"quest_reward_package", 880004, `{"items":[{"item_external_id":"700001","row_id":1}]}`},
+		{"quest_reward_package", 880005, `{"items":{"invalid":true}}`},
+	} {
+		var entity, version uuid.UUID
+		if err := database.QueryRowContext(ctx, `INSERT INTO game_entities(product_id,entity_type,external_id,canonical_slug,first_seen_build_id,last_seen_build_id) VALUES($1,$2,$3::bigint,$2||$3::text,$4,$4) RETURNING id`, productID, fixture.kind, fixture.id, buildID).Scan(&entity); err != nil {
+			t.Fatal(err)
+		}
+		if err := database.QueryRowContext(ctx, `INSERT INTO game_entity_versions(entity_id,build_id,content_hash,payload,source_url,snapshot_id,source_artifact_id,source) VALUES($1,$2,digest($3::text,'sha256'),$3::text::jsonb,'https://wago.tools/test',$4,$5,'wago_tools') RETURNING id`, entity, buildID, fixture.payload, snapshotID, artifactID).Scan(&version); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := database.ExecContext(ctx, `UPDATE game_entities SET published_version_id=$2,latest_version_id=$2 WHERE id=$1`, entity, version); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, fixture := range []struct {
+		table   string
+		id      int64
+		payload string
+	}{
+		{"CurrencyTypes", 880001, `{"InventoryIconFileID":"135812"}`},
+		{"JournalInstance", 880003, `{"MapID":"880002","ButtonFileDataID":"135812"}`},
+	} {
+		if _, err := database.ExecContext(ctx, `INSERT INTO catalog_db2_rows(build_id,table_name,locale,row_id,payload,content_hash,source_url,source_artifact_id) VALUES($1,$2,'en_US',$3,$4::text::jsonb,digest($4::text,'sha256'),'https://wago.tools/test',$5)`, buildID, fixture.table, fixture.id, fixture.payload, artifactID); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := database.ExecContext(ctx, `INSERT INTO catalog_file_assets(file_data_id,path,icon_name,source_url,content_hash) VALUES(135812,'Interface/Icons/spell_fire_flamebolt.blp','spell_fire_flamebolt','https://github.com/wowdev/wow-listfile/test',digest('file','sha256')); INSERT INTO catalog_entity_icons(build_id,entity_type,external_id,icon_name,file_data_id,source_artifact_id) SELECT build_id,'item',external_id,icon_name,file_data_id,source_artifact_id FROM catalog_entity_icons WHERE entity_type='spell' AND external_id=700001`); err != nil {
+		t.Fatal(err)
+	}
+	cache.client = &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		data := png
+		if strings.Contains(request.URL.Host, "wago.tools") {
+			data = syntheticBLP2(2, 0, 0, []byte{0, 248, 0, 0, 0, 0, 0, 0})
+			if !strings.Contains(request.URL.RawQuery, "version=99.0.0.9999999") {
+				t.Fatalf("wrong build URL %s", request.URL)
+			}
+		}
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader(data)), Header: make(http.Header)}, nil
+	})}
+	derivedOptions := DerivedMediaOptions{Product: "wow", Environment: "staging", Groups: []string{"currency_file_icon", "map_journal_instance_button", "quest_reward_package_item_icon"}, Limit: 10, Mode: DerivedModePlan, HeadroomDays: 10}
+	derived, err := cache.SeedDerivedMedia(ctx, derivedOptions)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, group := range derived.Groups {
+		if group.PlannedEntities != 1 {
+			t.Fatalf("group plan=%+v", group)
+		}
+	}
+	derivedOptions.Mode = DerivedModeApply
+	derived, err = cache.SeedDerivedMedia(ctx, derivedOptions)
+	if err != nil || derived.EntitiesLinked != 3 || derived.AssetsFetched != 2 {
+		t.Fatalf("derived apply=%+v err=%v", derived, err)
+	}
+	derived, err = cache.SeedDerivedMedia(ctx, derivedOptions)
+	if err != nil || derived.EntitiesLinked != 0 || derived.AssetsFetched != 0 {
+		t.Fatalf("derived repeat=%+v err=%v", derived, err)
+	}
+	if _, err := database.ExecContext(ctx, `UPDATE catalog_entity_media SET cached_at=now()-interval '21 days' WHERE entity_type IN ('currency','quest_reward_package')`); err != nil {
+		t.Fatal(err)
+	}
+	mediaBefore, snapshotsBefore = counts()
+	derived, err = cache.SeedDerivedMedia(ctx, derivedOptions)
+	if err != nil || derived.EntitiesLinked != 2 || derived.AssetsFetched != 1 {
+		t.Fatalf("derived renewal=%+v err=%v", derived, err)
+	}
+	// Unchanged derived pictures are renewed in place as well.
+	if media, snapshots := counts(); media != mediaBefore || snapshots != snapshotsBefore {
+		t.Fatalf("derived renewal wrote media %d->%d snapshots %d->%d", mediaBefore, media, snapshotsBefore, snapshots)
+	}
+	var expiring int
+	if err := database.QueryRowContext(ctx, `SELECT count(*) FROM catalog_entity_media WHERE entity_type IN ('currency','quest_reward_package') AND cached_at<now()-interval '1 day'`).Scan(&expiring); err != nil || expiring != 0 {
+		t.Fatalf("derived renewal left expiring=%d err=%v", expiring, err)
+	}
+
+	// A picture no source has is remembered: the next run does not ask for
+	// it again, and it is retried once the window has passed.
+	if _, err := database.ExecContext(ctx, `UPDATE catalog_entity_media SET cached_at=now()-interval '21 days' WHERE entity_type IN ('currency','quest_reward_package')`); err != nil {
+		t.Fatal(err)
+	}
+	working := cache.client
+	requests := 0
+	cache.client = &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		requests++
+		status := http.StatusForbidden
+		if request.URL.Host == "wago.tools" {
+			status = http.StatusNotFound
+		}
+		return &http.Response{StatusCode: status, Body: io.NopCloser(strings.NewReader("")), Header: make(http.Header)}, nil
+	})}
+	derivedOptions.Checkpoint = filepath.Join(t.TempDir(), "derived.json")
+	derivedOptions.RetryFailedAfter = 24 * time.Hour
+	derived, err = cache.SeedDerivedMedia(ctx, derivedOptions)
+	if err != nil || derived.AssetsFailed != 1 || derived.AssetsMissing != 1 || derived.EntitiesLinked != 0 || requests == 0 {
+		t.Fatalf("missing derived asset=%+v err=%v requests=%d", derived, err, requests)
+	}
+	asked := requests
+	derived, err = cache.SeedDerivedMedia(ctx, derivedOptions)
+	if err != nil || derived.AssetsDeferred != 1 || derived.AssetsFailed != 0 || requests != asked {
+		t.Fatalf("deferred derived asset=%+v err=%v requests=%d->%d", derived, err, asked, requests)
+	}
+	cache.client = working
+	derivedOptions.RetryFailedAfter = 0
+	derived, err = cache.SeedDerivedMedia(ctx, derivedOptions)
+	if err != nil || derived.AssetsDeferred != 0 || derived.AssetsFetched != 1 || derived.EntitiesLinked != 2 {
+		t.Fatalf("retried derived asset=%+v err=%v", derived, err)
+	}
 }
