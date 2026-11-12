@@ -12,24 +12,28 @@ import (
 )
 
 type options struct {
-	source             string
-	databaseURL        string
-	clientID           string
-	clientSecret       string
-	product            string
-	buildNumber        int
-	buildVersion       string
-	locales            []string
-	entityTypes        []string
-	pageSize           int
-	maxRecords         int
-	detailWorkers      int
-	mediaOnly          bool
-	missingOnly        bool
-	allowBuildMismatch bool
-	sourceBuildNumber  int
-	sourceBuildVersion string
-	wagoTableTimeout   time.Duration
+	sourcePreflight        bool
+	source                 string
+	databaseURL            string
+	clientID               string
+	clientSecret           string
+	product                string
+	buildNumber            int
+	buildVersion           string
+	locales                []string
+	entityTypes            []string
+	pageSize               int
+	maxRecords             int
+	detailWorkers          int
+	mediaOnly              bool
+	missingOnly            bool
+	enrichmentSliceRecords int
+	maxRequestsPerHour     int
+	evidenceReuseMaxAge    time.Duration
+	allowBuildMismatch     bool
+	sourceBuildNumber      int
+	sourceBuildVersion     string
+	wagoTableTimeout       time.Duration
 }
 
 func contains(values []string, expected string) bool {
@@ -39,6 +43,7 @@ func contains(values []string, expected string) bool {
 func parseOptions() (options, error) {
 	var locales, entityTypes string
 	opts := options{}
+	flag.BoolVar(&opts.sourcePreflight, "source-preflight", false, "check Battle.net endpoints without opening the database")
 	flag.StringVar(&opts.source, "source", "wago", "catalog source: wago or battlenet")
 	// Keep credentials and connection strings out of `-h` output.  The flag
 	// package prints default values verbatim, so using environment values as
@@ -56,6 +61,9 @@ func parseOptions() (options, error) {
 	flag.IntVar(&opts.detailWorkers, "detail-workers", 8, "maximum concurrent Battle.net detail requests")
 	flag.DurationVar(&opts.wagoTableTimeout, "wago-table-timeout", defaultWagoTableTimeout, "maximum time to stream and project one Wago DB2 table")
 	flag.BoolVar(&opts.mediaOnly, "media-only", false, "fetch official media for previously imported Battle.net documents")
+	flag.IntVar(&opts.enrichmentSliceRecords, "enrichment-slice-records", 0, "stop after this many enrichment records per type/locale; nonzero exit retains checkpoints for resume")
+	flag.IntVar(&opts.maxRequestsPerHour, "max-requests-per-hour", 0, "pace missing-only enrichment requests; 0 leaves pacing to the Battle.net quota")
+	flag.DurationVar(&opts.evidenceReuseMaxAge, "evidence-reuse-max-age", 45*24*time.Hour, "complete missing-only records from responses an earlier import preserved for the same build-pinned namespace, no older than this; 0 always requests")
 	flag.BoolVar(&opts.missingOnly, "missing-only", false, "enrich only build records with missing descriptions or icons")
 	flag.BoolVar(&opts.allowBuildMismatch, "allow-build-mismatch", false, "allow a pinned release build to differ from the currently published Battle.net API build; source build is recorded in provenance")
 	flag.Parse()
@@ -80,7 +88,7 @@ func parseOptions() (options, error) {
 		return options{}, fmt.Errorf("unsupported source %q", opts.source)
 	case opts.source == "wago" && opts.product != "wow":
 		return options{}, errors.New("Wago imports currently support only the wow Retail product")
-	case opts.databaseURL == "":
+	case opts.databaseURL == "" && !opts.sourcePreflight:
 		return options{}, errors.New("DATABASE_URL or -database-url is required")
 	case opts.source == "battlenet" && (opts.clientID == "" || opts.clientSecret == ""):
 		return options{}, errors.New("BATTLENET_CLIENT_ID and BATTLENET_CLIENT_SECRET are required for -source battlenet")
@@ -94,6 +102,10 @@ func parseOptions() (options, error) {
 		return options{}, errors.New("en_US must be the first canonical locale")
 	case opts.pageSize < 1 || opts.pageSize > 1000:
 		return options{}, errors.New("page-size must be between 1 and 1000")
+	case opts.enrichmentSliceRecords < 0 || (opts.enrichmentSliceRecords > 0 && !opts.missingOnly):
+		return options{}, errors.New("enrichment-slice-records requires missing-only and a non-negative value")
+	case opts.maxRequestsPerHour < 0 || opts.evidenceReuseMaxAge < 0:
+		return options{}, errors.New("max-requests-per-hour and evidence-reuse-max-age cannot be negative")
 	case opts.maxRecords < 0:
 		return options{}, errors.New("max-records cannot be negative")
 	case opts.detailWorkers < 1 || opts.detailWorkers > 32:

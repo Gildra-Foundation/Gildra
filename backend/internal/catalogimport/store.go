@@ -73,6 +73,13 @@ func (s *Store) MissingBattleNetIDs(
 	includeMedia bool,
 	limit int,
 ) ([]int64, error) {
+	return s.MissingBattleNetIDPage(ctx, ic, entityType, locale, includeMedia, limit, 0, false)
+}
+
+// MissingBattleNetIDPage bounds the target list and uses a keyset cursor. Resumable
+// enrichment uses explicit record checkpoints, never a detail-only cooldown that
+// could skip a crash between storing the detail and storing its media.
+func (s *Store) MissingBattleNetIDPage(ctx context.Context, ic ImportContext, entityType, locale string, includeMedia bool, limit int, after int64, resumable bool) ([]int64, error) {
 	if ic.ProductID <= 0 || ic.BuildID <= 0 || ic.SnapshotID == uuid.Nil {
 		return nil, errors.New("product, build, and snapshot are required")
 	}
@@ -92,7 +99,7 @@ func (s *Store) MissingBattleNetIDs(
 			FROM game_entity_versions version
 			JOIN game_entities entity ON entity.id=version.entity_id
 			LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
-			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL
+			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL AND entity.external_id>$9
 			  AND version.build_id=$3
 			  AND (version.snapshot_id=$4 OR ($5::uuid IS NOT NULL AND snapshot.release_id=$5))
 			UNION ALL
@@ -101,7 +108,7 @@ func (s *Store) MissingBattleNetIDs(
 			FROM game_entities entity
 			JOIN game_entity_versions version ON version.id=entity.published_version_id
 			LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
-			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL
+			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL AND entity.external_id>$9
 			  AND version.build_id=$3
 			  AND NOT EXISTS (
 				SELECT 1 FROM game_entity_versions candidate
@@ -124,13 +131,13 @@ func (s *Store) MissingBattleNetIDs(
 		LEFT JOIN game_entity_localizations localization
 		  ON localization.version_id=candidate.version_id AND localization.locale=$6
 		LEFT JOIN cached_icons ON cached_icons.entity_id=candidate.id
-		WHERE %s
+		WHERE %s AND candidate.external_id > $9
 		-- A successful Battle.net detail response can legitimately contain no
 		-- description (for example, a purely mechanical item).  Retrying the
 		-- same empty response on every daily run wastes the API budget and can
 		-- starve records that actually changed.  Recheck such observations after
 		-- a bounded cooldown while still allowing a new build to be enriched.
-		AND NOT EXISTS (
+		AND ($10::boolean OR NOT EXISTS (
 			SELECT 1
 			FROM catalog_entity_source_documents attempted
 			WHERE attempted.build_id=$3
@@ -139,10 +146,10 @@ func (s *Store) MissingBattleNetIDs(
 			  AND attempted.source='blizzard_api'
 			  AND attempted.locale=$6
 			  AND attempted.imported_at >= now() - interval '7 days'
-		)
+		))
 		ORDER BY candidate.external_id
 		LIMIT CASE WHEN $8::int > 0 THEN $8::int ELSE 2147483647 END`, missingBattleNetLocalizationCondition),
-		ic.ProductID, entityType, ic.BuildID, ic.SnapshotID, ic.ReleaseID, locale, includeMedia, limit)
+		ic.ProductID, entityType, ic.BuildID, ic.SnapshotID, ic.ReleaseID, locale, includeMedia, limit, after, resumable)
 	if err != nil {
 		return nil, fmt.Errorf("list missing Battle.net %s enrichment targets: %w", entityType, err)
 	}
@@ -534,26 +541,30 @@ func (s *Store) CompleteArtifactFromRecords(ctx context.Context, artifactID uuid
 		SELECT record_key,content_hash
 		FROM catalog_source_records
 		WHERE artifact_id=$1
-		ORDER BY record_key`, artifactID)
+		ORDER BY record_key COLLATE "C"`, artifactID)
 	if err != nil {
 		return ArtifactProof{}, fmt.Errorf("read source records for artifact %s: %w", artifactID, err)
 	}
 	defer rows.Close()
-	records := make([]sourceRecordProofEntry, 0)
+	digest := sha256.New()
+	proof := ArtifactProof{}
+	writeManifestPart(digest, &proof.ByteSize, []byte("gildra-source-record-manifest-v1\n"))
 	for rows.Next() {
 		var record sourceRecordProofEntry
 		if err := rows.Scan(&record.Key, &record.ContentHash); err != nil {
-			return ArtifactProof{}, fmt.Errorf("scan source record proof for artifact %s: %w", artifactID, err)
+			return ArtifactProof{}, err
 		}
-		records = append(records, record)
+		if strings.TrimSpace(record.Key) == "" || len(record.ContentHash) != sha256.Size {
+			return ArtifactProof{}, errors.New("invalid source record proof")
+		}
+		writeManifestPart(digest, &proof.ByteSize, fmt.Appendf(nil, "%d:%s:%x\n", len(record.Key), record.Key, record.ContentHash))
+		proof.RecordCount++
 	}
 	if err := rows.Err(); err != nil {
-		return ArtifactProof{}, fmt.Errorf("read source record proofs for artifact %s: %w", artifactID, err)
+		return ArtifactProof{}, err
 	}
-	proof, err := sourceRecordManifestProof(records)
-	if err != nil {
-		return ArtifactProof{}, fmt.Errorf("prove source records for artifact %s: %w", artifactID, err)
-	}
+	rows.Close()
+	copy(proof.SHA256[:], digest.Sum(nil))
 	if err := s.CompleteArtifact(ctx, artifactID, proof.SHA256[:], proof.ByteSize, ""); err != nil {
 		return ArtifactProof{}, err
 	}
@@ -872,11 +883,45 @@ func (s *Store) Begin(
 		if err != nil {
 			return fmt.Errorf("encode import parameters: %w", err)
 		}
-		if err := tx.QueryRow(ctx, `
+		// Only the explicit enrichment protocol can retain a failed snapshot.
+		// Exact parameters include product/build, source build, locales and types.
+		var metadata map[string]any
+		if err := json.Unmarshal(encoded, &metadata); err != nil {
+			return err
+		}
+		resumable := source == "battlenet" && releaseID != nil && metadata["resumable_enrichment"] == "v1" && metadata["missing_only"] == true
+		if resumable {
+			var conflict bool
+			if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM catalog_snapshots
+                WHERE release_id=$1 AND source=$2 AND metadata->>'resumable_enrichment'='v1'
+                AND COALESCE(metadata->'entity_types','[]'::jsonb)=COALESCE($3::jsonb->'entity_types','[]'::jsonb)
+                AND COALESCE(metadata->'locales','[]'::jsonb)=COALESCE($3::jsonb->'locales','[]'::jsonb)
+                AND (status='staging' OR (status='failed' AND metadata<>$3::jsonb)))`, releaseID, source, encoded).Scan(&conflict); err != nil {
+				return err
+			}
+			if conflict {
+				return errors.New("enrichment snapshot is active or its source/options changed; reconcile the worker or start a new release")
+			}
+			err := tx.QueryRow(ctx, `SELECT id FROM catalog_snapshots
+                WHERE release_id=$1 AND build_id=$2 AND source=$3 AND metadata=$4
+                AND status IN ('failed','validated') ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+				releaseID, result.BuildID, source, encoded).Scan(&result.SnapshotID)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				return err
+			}
+			if result.SnapshotID != uuid.Nil {
+				if _, err := tx.Exec(ctx, `UPDATE catalog_snapshots SET status='staging',failed_at=NULL,validated_at=NULL WHERE id=$1`, result.SnapshotID); err != nil {
+					return err
+				}
+			}
+		}
+		if result.SnapshotID == uuid.Nil {
+			if err := tx.QueryRow(ctx, `
 			INSERT INTO catalog_snapshots (product_id, build_id, source, metadata, release_id)
 			VALUES ($1, $2, $3, $4, $5)
 			RETURNING id`, result.ProductID, result.BuildID, source, encoded, releaseID).Scan(&result.SnapshotID); err != nil {
-			return fmt.Errorf("start catalog snapshot: %w", err)
+				return fmt.Errorf("start catalog snapshot: %w", err)
+			}
 		}
 		if err := tx.QueryRow(ctx, `
 			INSERT INTO catalog_import_runs (product_id, build_id, source, parameters, snapshot_id)
@@ -913,7 +958,11 @@ func (s *Store) UpsertCanonical(ctx context.Context, ic ImportContext, record Re
 				namespace_id = EXCLUDED.namespace_id,
 				canonical_slug = CASE WHEN $7::uuid IS NULL THEN EXCLUDED.canonical_slug ELSE game_entities.canonical_slug END,
 				last_seen_build_id = CASE WHEN $7::uuid IS NULL THEN EXCLUDED.last_seen_build_id ELSE game_entities.last_seen_build_id END,
-				deleted_at = CASE WHEN $7::uuid IS NULL THEN NULL ELSE game_entities.deleted_at END,
+				-- An entity that never published was hidden only because the release
+				-- that introduced it failed. Seen again, it is as alive as any entity
+				-- new to this staged release; left hidden, enrichment and projection
+				-- skip everything a failed build introduced until some later build.
+				deleted_at = CASE WHEN $7::uuid IS NULL OR game_entities.published_version_id IS NULL THEN NULL ELSE game_entities.deleted_at END,
 				updated_at = now()
 			RETURNING id`, ic.ProductID, ic.NamespaceID, record.Type, record.ExternalID, slug, ic.BuildID, ic.ReleaseID).Scan(&entityID); err != nil {
 			return fmt.Errorf("upsert entity: %w", err)
@@ -1180,6 +1229,18 @@ func (s *Store) finish(ctx context.Context, runID uuid.UUID, status string, seen
 			UPDATE catalog_snapshots
 			SET status='validated',validated_at=now()
 			WHERE id=$1 AND status='staging'`, snapshotID); err != nil {
+			return err
+		}
+		// Resolve only earlier failures of this exact resumable snapshot after
+		// its complete successful pass. Keep failed runs as immutable history.
+		if _, err := tx.Exec(ctx, `UPDATE catalog_import_failure_queue queue
+            SET state='resolved',resolution_code='enrichment_checkpoint_completed',
+                resolution_summary='Completed by resumed import ' || $2::text,
+                resolved_at=now(),updated_at=now()
+            FROM catalog_import_runs prior,catalog_snapshots snapshot
+            WHERE queue.import_run_id=prior.id AND prior.snapshot_id=$1
+              AND snapshot.id=prior.snapshot_id AND snapshot.metadata->>'resumable_enrichment'='v1'
+              AND prior.id<>$2::uuid AND prior.status='FAILED' AND queue.state<>'resolved'`, snapshotID, runID); err != nil {
 			return err
 		}
 		if !publish {

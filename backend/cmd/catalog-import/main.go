@@ -76,6 +76,12 @@ func run() error {
 			opts.buildNumber, opts.buildVersion = detectedBuild, detectedVersion
 		}
 	}
+	if opts.sourcePreflight {
+		if opts.source != "battlenet" {
+			return errors.New("source-preflight requires battlenet")
+		}
+		return battleNetPreflight(ctx, battleNetClient, opts)
+	}
 	db, err := pgxpool.New(ctx, opts.databaseURL)
 	if err != nil {
 		return fmt.Errorf("open catalog database: %w", err)
@@ -99,6 +105,9 @@ func run() error {
 		"detail_workers": opts.detailWorkers, "media_only": opts.mediaOnly,
 		"missing_only":       opts.missingOnly,
 		"wago_table_timeout": effectiveWagoTableTimeout(opts.wagoTableTimeout).String(),
+	}
+	if opts.missingOnly {
+		parameters["resumable_enrichment"] = "v1"
 	}
 	if opts.source == "battlenet" {
 		parameters["source_build_number"] = opts.sourceBuildNumber

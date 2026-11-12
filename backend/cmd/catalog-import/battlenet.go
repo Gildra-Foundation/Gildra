@@ -16,6 +16,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var errEnrichmentSliceComplete = errors.New("enrichment slice complete; resume this release to continue before publication")
+
 type battleNetEntitySpec struct {
 	Resource        string
 	IndexFields     []string
@@ -167,15 +169,6 @@ func importBattleNetMissingType(
 	seen, written *int64,
 ) error {
 	includeMedia := locale == "en_US" && spec.FetchMedia
-	targets, err := store.MissingBattleNetIDs(ctx, importContext, entityType, locale, includeMedia, opts.maxRecords)
-	if err != nil {
-		return err
-	}
-	slog.Info("enriching missing Battle.net catalog fields", "type", entityType, "locale", locale,
-		"targets", len(targets), "include_media", includeMedia)
-	if len(targets) == 0 {
-		return nil
-	}
 	// Resource links returned by search are build-pinned. Construct the same
 	// namespace for direct detail requests so a moving static alias cannot mix
 	// source data from another client build into this release.
@@ -186,10 +179,17 @@ func importBattleNetMissingType(
 		slog.Warn("using moving Battle.net namespace for missing-field enrichment", "type", entityType, "locale", locale, "error", pinErr)
 	}
 	workers := opts.detailWorkers
-	if workers > len(targets) {
-		workers = len(targets)
+	reuse, err := newEvidenceReuse(ctx, store, importContext, opts, artifactID, "battlenet-missing/"+entityType, locale, detailNamespace, spec.Resource)
+	if err != nil {
+		return err
 	}
-	var processed int64
+	pacer := newRequestPacer(opts.maxRequestsPerHour)
+	defer func() {
+		slog.Info("Battle.net enrichment pass", "type", entityType, "locale", locale,
+			"reused_evidence", reuse.reused.Load(), "requested", reuse.requested.Load(), "evidence_artifacts", len(reuse.artifacts))
+	}()
+
+	var processed, attempted int64
 	jobs := make(chan int64)
 	group, groupCtx := errgroup.WithContext(ctx)
 	for range workers {
@@ -202,6 +202,40 @@ func importBattleNetMissingType(
 					if !ok {
 						return nil
 					}
+					complete, err := store.BattleNetCheckpoint(groupCtx, importContext, entityType, artifactID, id)
+					if err != nil {
+						return err
+					}
+					if complete {
+						continue
+					}
+					origin, reusedDetail, err := reuse.apply(groupCtx, client, store, importContext, pacer, artifactID,
+						region, entityType, locale, id, includeMedia)
+					if err != nil {
+						return err
+					}
+					if origin != nil {
+						if err := store.CompleteBattleNetRecord(groupCtx, importContext, entityType, artifactID, id, origin); err != nil {
+							return err
+						}
+						reuse.reused.Add(1)
+						atomic.AddInt64(seen, 1)
+						if reusedDetail {
+							atomic.AddInt64(written, 1)
+							logBattleNetProgress(entityType, locale, int(atomic.AddInt64(&processed, 1)),
+								atomic.LoadInt64(seen), atomic.LoadInt64(written))
+						}
+						continue
+					}
+					// Only new requests count against a slice: reused evidence costs
+					// no quota, and a slice exists to bound quota and wall time.
+					if opts.enrichmentSliceRecords > 0 && atomic.AddInt64(&attempted, 1) > int64(opts.enrichmentSliceRecords) {
+						return errEnrichmentSliceComplete
+					}
+					if err := pacer.Wait(groupCtx); err != nil {
+						return err
+					}
+					reuse.requested.Add(1)
 					atomic.AddInt64(seen, 1)
 					payload, sourceURL, fetchErr := client.Detail(groupCtx, region, detailNamespace, locale, spec.Resource, id)
 					if fetchErr != nil {
@@ -213,6 +247,9 @@ func importBattleNetMissingType(
 									return err
 								}
 							}
+							if err := store.CompleteBattleNetRecord(groupCtx, importContext, entityType, artifactID, id, nil); err != nil {
+								return err
+							}
 							continue
 						}
 						return fmt.Errorf("fetch missing %s %d (%s): %w", entityType, id, locale, fetchErr)
@@ -221,10 +258,19 @@ func importBattleNetMissingType(
 						return err
 					}
 					if includeMedia {
-						if err := fetchAndStoreBattleNetMedia(groupCtx, client, store, importContext, artifactID,
-							region, entityType, locale, id, payload); err != nil {
-							return err
+						for _, link := range battleNetMediaLinks(payload) {
+							if err := pacer.Wait(groupCtx); err != nil {
+								return err
+							}
+							reuse.requested.Add(1)
+							if err := fetchAndStoreBattleNetMediaLink(groupCtx, client, store, importContext, artifactID,
+								region, entityType, locale, id, link); err != nil {
+								return err
+							}
 						}
+					}
+					if err := store.CompleteBattleNetRecord(groupCtx, importContext, entityType, artifactID, id, nil); err != nil {
+						return err
 					}
 					atomic.AddInt64(written, 1)
 					processedCount := atomic.AddInt64(&processed, 1)
@@ -236,11 +282,31 @@ func importBattleNetMissingType(
 	}
 	group.Go(func() error {
 		defer close(jobs)
-		for _, id := range targets {
-			select {
-			case jobs <- id:
-			case <-groupCtx.Done():
-				return groupCtx.Err()
+		var after int64
+		remaining := opts.maxRecords
+		for {
+			limit := 1000
+			if opts.maxRecords > 0 && remaining < limit {
+				limit = remaining
+			}
+			targets, err := store.MissingBattleNetIDPage(groupCtx, importContext, entityType, locale, includeMedia, limit, after, true)
+			if err != nil {
+				return err
+			}
+			if len(targets) == 0 {
+				break
+			}
+			for _, id := range targets {
+				select {
+				case jobs <- id:
+				case <-groupCtx.Done():
+					return groupCtx.Err()
+				}
+			}
+			after = targets[len(targets)-1]
+			remaining -= len(targets)
+			if opts.maxRecords > 0 && remaining <= 0 {
+				break
 			}
 		}
 		return nil
