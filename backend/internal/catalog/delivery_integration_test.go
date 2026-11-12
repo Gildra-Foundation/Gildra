@@ -14,7 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Requires a disposable database with migrations including 00188/00189.
+// Requires a disposable database with migrations including 00181/00182.
 func TestDeliveryOrderingAndSearch(t *testing.T) {
 	url := os.Getenv("DELIVERY_TEST_DATABASE_URL")
 	if url == "" {

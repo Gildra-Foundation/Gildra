@@ -1,6 +1,6 @@
 -- +goose Up
 -- Small published-only ordering projection. Never copies historical payloads.
--- Indexes are built CONCURRENTLY in 00189; none of the indexes removed by
+-- Indexes are built CONCURRENTLY in 00182; none of the indexes removed by
 -- 00178 are restored. Source truth and visibility gates remain in the API.
 ALTER TABLE catalog_library_dataset_definitions ADD COLUMN default_order TEXT NOT NULL DEFAULT 'current'
  CHECK (default_order IN ('current','name_asc','name_desc','item_level_desc','item_level_asc','required_level_desc','required_level_asc','id'));
@@ -15,7 +15,7 @@ CREATE TABLE catalog_delivery_order (
 -- +goose StatementBegin
 CREATE FUNCTION refresh_catalog_delivery_order(selected_product_id SMALLINT DEFAULT NULL) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
- PERFORM pg_advisory_xact_lock(188,0);
+ PERFORM pg_advisory_xact_lock(181,0);
  DELETE FROM catalog_delivery_order WHERE selected_product_id IS NULL OR product_id=selected_product_id;
  INSERT INTO catalog_delivery_order(entity_id,version_id,product_id,entity_type,locale,name,expansion_order,item_level,required_level,external_id,item_class_id,item_subclass_id)
  SELECT e.id,v.id,e.product_id,e.entity_type,loc.locale,
@@ -35,20 +35,20 @@ BEGIN
  INSERT INTO catalog_delivery_state SELECT id,clock_timestamp() FROM game_products WHERE selected_product_id IS NULL OR id=selected_product_id;
 END $$;
 -- +goose StatementEnd
-ALTER FUNCTION refresh_catalog_read_models(SMALLINT) RENAME TO refresh_catalog_read_models_v187;
+ALTER FUNCTION refresh_catalog_read_models(SMALLINT) RENAME TO refresh_catalog_read_models_v180;
 -- +goose StatementBegin
 CREATE FUNCTION refresh_catalog_read_models(selected_product_id SMALLINT DEFAULT NULL) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
- PERFORM refresh_catalog_read_models_v187(selected_product_id);
+ PERFORM refresh_catalog_read_models_v180(selected_product_id);
  PERFORM refresh_catalog_delivery_order(selected_product_id);
 END $$;
 -- +goose StatementEnd
--- Bootstrap is explicit: run refresh_catalog_delivery_order after 00188
--- and before 00189 to build the indexes on a populated projection; switch
+-- Bootstrap is explicit: run refresh_catalog_delivery_order after 00181
+-- and before 00182 to build the indexes on a populated projection; switch
 -- the API only after both migrations and the bootstrap succeed. Publication/repair thereafter refresh atomically.
 -- +goose Down
 DROP FUNCTION refresh_catalog_read_models(SMALLINT);
-ALTER FUNCTION refresh_catalog_read_models_v187(SMALLINT) RENAME TO refresh_catalog_read_models;
+ALTER FUNCTION refresh_catalog_read_models_v180(SMALLINT) RENAME TO refresh_catalog_read_models;
 DROP FUNCTION refresh_catalog_delivery_order(SMALLINT);
 DROP TABLE catalog_delivery_order;
 DROP TABLE catalog_delivery_state;

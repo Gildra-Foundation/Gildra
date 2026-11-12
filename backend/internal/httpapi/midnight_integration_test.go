@@ -46,8 +46,10 @@ func TestMidnightHTTPFullSchema(t *testing.T) {
 			{"/v1/game/entities/" + legacy + "?expansion=midnight&locale=" + locale, 404},
 			{"/v1/game/entities/" + legacy + "?locale=" + locale, 200},
 			{"/v1/library/datasets?expansion=midnight&locale=" + locale, 200},
-			{"/v1/game/entity-summaries?expansion=midnight&product=wow_classic&locale=" + locale, 400},
-			{"/v1/library/datasets?expansion=unknown&locale=" + locale, 400},
+			{"/v1/game/entity-summaries?expansion=midnight&product=wow_classic&locale=" + locale, 200},
+			// Delivery accepts well-formed registry keys across products; absent membership is empty.
+			{"/v1/library/datasets?expansion=unknown&locale=" + locale, 200},
+			{"/v1/library/datasets?expansion=INVALID&locale=" + locale, 400},
 		} {
 			recorder := httptest.NewRecorder()
 			handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, tc.path, nil))
