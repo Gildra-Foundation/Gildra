@@ -12,11 +12,13 @@ import (
 	"image/draw"
 	"image/jpeg"
 	"image/png"
+	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -45,7 +47,7 @@ const (
 
 // DefaultDerivedMediaGroups have a direct, player-recognizable image source.
 var DefaultDerivedMediaGroups = []string{
-	"item_appearance_icon", "encounter_journal_portrait", "instance_journal_button",
+	"currency_file_icon", "item_appearance_icon", "encounter_journal_portrait", "instance_journal_button",
 	"transmog_set_item_icon", "mount_source_spell_icon", "spell_misc_icon", "creature_display_render",
 }
 
@@ -58,8 +60,14 @@ type DerivedMediaOptions struct {
 	Environment string
 	Groups      []string
 	// Limit caps unique assets downloaded in one run.
-	Limit int
-	Mode  string
+	Limit        int
+	HeadroomDays int
+	Mode         string
+	// Checkpoint remembers assets no source has, so the next runs spend
+	// their limit on pictures that exist. Optional; written only by apply.
+	Checkpoint string
+	// RetryFailedAfter keeps such an asset out of later runs for this long.
+	RetryFailedAfter time.Duration
 }
 
 type DerivedGroupResult struct {
@@ -75,6 +83,8 @@ type DerivedMediaResult struct {
 	Groups         []DerivedGroupResult `json:"groups"`
 	AssetsFetched  int64                `json:"assetsFetched"`
 	AssetsFailed   int64                `json:"assetsFailed"`
+	AssetsMissing  int64                `json:"assetsMissingAtSource"`
+	AssetsDeferred int64                `json:"assetsDeferred"`
 	AssetsSkipped  int64                `json:"assetsSkippedByLimit"`
 	Bytes          int64                `json:"bytes"`
 	EntitiesLinked int64                `json:"entitiesLinked"`
@@ -82,6 +92,46 @@ type DerivedMediaResult struct {
 	// Entities lists planned (plan mode) or linked (verify/apply) entity IDs
 	// by group so a caller can intersect them with a library audit.
 	Entities map[string][]uuid.UUID `json:"-"`
+}
+
+// SourceTroubleExceedsTolerance reports whether too many downloads failed for
+// a reason other than the source not having the picture.
+func (r DerivedMediaResult) SourceTroubleExceedsTolerance() bool {
+	return refreshFailuresExceedTolerance(r.AssetsFailed-r.AssetsMissing, int(r.AssetsFetched+r.AssetsFailed))
+}
+
+// derivedCheckpoint remembers when a source answered that it does not have
+// an asset.
+type derivedCheckpoint struct {
+	Product string               `json:"product"`
+	Failed  map[string]time.Time `json:"failed,omitempty"`
+}
+
+func readDerivedCheckpoint(path, product string, retryFailedAfter time.Duration) (derivedCheckpoint, error) {
+	checkpoint := derivedCheckpoint{Product: product, Failed: map[string]time.Time{}}
+	if path == "" {
+		return checkpoint, nil
+	}
+	data, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return checkpoint, nil
+	}
+	if err != nil {
+		return checkpoint, fmt.Errorf("read derived media checkpoint: %w", err)
+	}
+	var saved derivedCheckpoint
+	if err := json.Unmarshal(data, &saved); err != nil {
+		return checkpoint, fmt.Errorf("decode derived media checkpoint: %w", err)
+	}
+	if saved.Product != product {
+		return checkpoint, nil
+	}
+	for ref, failedAt := range saved.Failed {
+		if time.Since(failedAt) < retryFailedAfter {
+			checkpoint.Failed[ref] = failedAt
+		}
+	}
+	return checkpoint, nil
 }
 
 type derivedPlanRow struct {
@@ -114,17 +164,18 @@ type derivedFetch struct {
 }
 
 // derivedEvidenceBuild picks the DB2 build that proves a mapping: the
-// entity's own published build, else the newest build not after it, else the
-// newest build that has the table at all.
+// entity's own published build. A later imported table cannot prove an older
+// published record's artwork.
 func derivedEvidenceBuild(table string) string {
 	return `SELECT available.build_id FROM derived_db2_builds available
-		WHERE available.table_name='` + table + `'
+		WHERE available.table_name='` + table + `' AND available.build_id=target.build_id
 		ORDER BY available.build_id=target.build_id DESC,
 			available.build_number<=target.build_number DESC,available.build_number DESC
 		LIMIT 1`
 }
 
 var derivedGroupTables = map[string][]string{
+	"currency_file_icon":             {"CurrencyTypes"},
 	"item_appearance_icon":           {"Item", "ItemModifiedAppearance", "ItemAppearance"},
 	"encounter_journal_portrait":     {"JournalEncounterCreature"},
 	"instance_journal_button":        nil,
@@ -137,6 +188,7 @@ var derivedGroupTables = map[string][]string{
 }
 
 var derivedGroupEntityTypes = map[string]string{
+	"currency_file_icon":             "currency",
 	"item_appearance_icon":           "item",
 	"encounter_journal_portrait":     "encounter",
 	"instance_journal_button":        "instance",
@@ -152,6 +204,17 @@ var derivedGroupEntityTypes = map[string]string{
 // alternatives for an entity; the planner keeps up to derivedMediaMaxRank of
 // them so a missing asset can fall back to the next proven one.
 var derivedGroupSQL = map[string]string{
+	"currency_file_icon": `
+		INSERT INTO derived_media_candidates(group_key,entity_id,priority,media_kind,file_data_id,evidence)
+		SELECT 'currency_file_icon',target.entity_id,0,'icon',
+			CASE WHEN row.payload->>'InventoryIconFileID' ~ '^[1-9][0-9]*$'
+				THEN (row.payload->>'InventoryIconFileID')::bigint END,
+			jsonb_build_object('db2_table','CurrencyTypes','db2_row',row.row_id,
+				'db2_field','InventoryIconFileID','db2_build_id',row.build_id)
+		FROM derived_media_targets target
+		JOIN catalog_db2_rows row ON row.build_id=target.build_id AND row.table_name='CurrencyTypes'
+			AND row.locale='en_US' AND row.row_id=target.external_id
+		WHERE target.entity_type='currency'`,
 	"item_appearance_icon": `
 		WITH targets AS MATERIALIZED (
 			SELECT target.entity_id,target.external_id,evidence.build_id AS evidence_build_id
@@ -304,13 +367,13 @@ var derivedGroupSQL = map[string]string{
 			jsonb_build_object('db2_table','QuestPackageItem','db2_row',reward.value->'row_id',
 				'item',(reward.value->>'item_external_id')::bigint,'db2_build_id',target.build_id)
 		FROM derived_media_targets target
-		CROSS JOIN LATERAL jsonb_array_elements(target.payload->'items') WITH ORDINALITY reward(value,position)
+		CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(target.payload->'items')='array' THEN target.payload->'items' ELSE '[]'::jsonb END) WITH ORDINALITY reward(value,position)
 		JOIN LATERAL (
 			SELECT icon.icon_name,icon.file_data_id
 			FROM game_builds build
 			JOIN catalog_entity_icons icon ON icon.build_id=build.id AND icon.entity_type='item'
-				AND icon.external_id=(reward.value->>'item_external_id')::bigint
-			WHERE build.product_id=$1
+				AND icon.external_id=CASE WHEN reward.value->>'item_external_id' ~ '^[1-9][0-9]*$' THEN (reward.value->>'item_external_id')::bigint END
+			WHERE build.product_id=$1 AND build.id=target.build_id
 			ORDER BY build.id=target.build_id DESC,build.build_number DESC
 			LIMIT 1
 		) icon ON true
@@ -368,8 +431,18 @@ func (c *Cache) SeedDerivedMedia(ctx context.Context, options DerivedMediaOption
 	if mode != DerivedModePlan && mode != DerivedModeVerify && mode != DerivedModeApply {
 		return result, errors.New("derived media mode must be plan, verify or apply")
 	}
+	if options.HeadroomDays < 0 || options.HeadroomDays > 29 {
+		return result, errors.New("derived headroom must be 0..29 days")
+	}
 	if options.Limit < 1 || options.Limit > 50000 {
 		return result, errors.New("derived media limit must be between 1 and 50000")
+	}
+	if options.RetryFailedAfter < 0 || (options.Checkpoint != "" && !filepath.IsAbs(options.Checkpoint)) {
+		return result, errors.New("derived media checkpoint must be an absolute path with a nonnegative retry window")
+	}
+	checkpoint, err := readDerivedCheckpoint(options.Checkpoint, product, options.RetryFailedAfter)
+	if err != nil {
+		return result, err
 	}
 	groups, err := normalizeDerivedGroups(options.Groups)
 	if err != nil {
@@ -405,14 +478,14 @@ func (c *Cache) SeedDerivedMedia(ctx context.Context, options DerivedMediaOption
 		FROM game_products product
 		JOIN LATERAL (
 			SELECT candidate.version FROM game_builds candidate
-			WHERE candidate.product_id=product.id
+			WHERE candidate.product_id=product.id AND candidate.is_active
 			ORDER BY candidate.build_number DESC,candidate.id DESC LIMIT 1
 		) build ON true
 		WHERE product.slug=$1`, product).Scan(&productID, &buildVersion); err != nil {
 		return result, fmt.Errorf("find current %s build: %w", product, err)
 	}
 
-	plan, err := c.planDerivedMedia(ctx, productID, groups)
+	plan, err := c.planDerivedMedia(ctx, productID, groups, options.HeadroomDays)
 	if err != nil {
 		return result, err
 	}
@@ -425,6 +498,7 @@ func (c *Cache) SeedDerivedMedia(ctx context.Context, options DerivedMediaOption
 	}
 	plannedEntities := make(map[string]map[uuid.UUID]bool)
 	plannedAssets := make(map[string]map[string]bool)
+	deferredAssets := make(map[string]bool)
 	for _, row := range plan {
 		if plannedEntities[row.Group] == nil {
 			plannedEntities[row.Group] = map[uuid.UUID]bool{}
@@ -439,6 +513,10 @@ func (c *Cache) SeedDerivedMedia(ctx context.Context, options DerivedMediaOption
 		if row.Rank == 0 {
 			plannedAssets[row.Group][row.AssetRef] = true
 		}
+		if _, missing := checkpoint.Failed[row.AssetRef]; missing && !deferredAssets[row.AssetRef] {
+			deferredAssets[row.AssetRef] = true
+			result.AssetsDeferred++
+		}
 	}
 	for group, entities := range plannedEntities {
 		byGroup[group].PlannedEntities = int64(len(entities))
@@ -448,15 +526,23 @@ func (c *Cache) SeedDerivedMedia(ctx context.Context, options DerivedMediaOption
 		return result, nil
 	}
 
-	links, err := c.fetchDerivedAssets(ctx, plan, product, buildVersion, options.Limit, &result)
+	previous := c.client
+	c.client = rateLimitedClient(previous, 500*time.Millisecond)
+	defer func() { c.client = previous }()
+	links, err := c.fetchDerivedAssets(ctx, plan, product, buildVersion, options.Limit, checkpoint.Failed, &result)
 	if err != nil {
 		return result, err
+	}
+	if mode == DerivedModeApply && options.Checkpoint != "" {
+		if err := writeJSONAtomically(options.Checkpoint, checkpoint); err != nil {
+			return result, fmt.Errorf("write derived media checkpoint: %w", err)
+		}
 	}
 	if len(links) == 0 {
 		return result, nil
 	}
 	err = pgx.BeginFunc(ctx, c.db, func(tx pgx.Tx) error {
-		linked, err := c.linkDerivedMedia(ctx, tx, productID, links)
+		linked, err := c.linkDerivedMedia(ctx, tx, productID, links, options.HeadroomDays)
 		if err != nil {
 			return err
 		}
@@ -488,10 +574,14 @@ func (c *Cache) SeedDerivedMedia(ctx context.Context, options DerivedMediaOption
 	return result, err
 }
 
+// errDerivedDeferred stands in for the download of an asset that a source
+// recently answered it does not have.
+var errDerivedDeferred = errors.New("derived asset deferred after a missing-at-source answer")
+
 // errDerivedVerifyRollback ends a transaction that must not commit.
 var errDerivedVerifyRollback = errors.New("derived media transaction rolled back")
 
-func (c *Cache) planDerivedMedia(ctx context.Context, productID int16, groups []string) ([]derivedPlanRow, error) {
+func (c *Cache) planDerivedMedia(ctx context.Context, productID int16, groups []string, headroomDays int) ([]derivedPlanRow, error) {
 	entityTypes := make([]string, 0, len(groups))
 	tables := make([]string, 0)
 	for _, group := range groups {
@@ -515,16 +605,19 @@ func (c *Cache) planDerivedMedia(ctx context.Context, productID int16, groups []
 			FROM game_entities entity
 			JOIN game_entity_versions published ON published.id=entity.published_version_id
 			JOIN game_builds build ON build.id=published.build_id
-			WHERE entity.product_id=$1 AND entity.deleted_at IS NULL AND entity.entity_type=ANY($2::text[])
+			WHERE entity.product_id=$1 AND build.is_active AND entity.deleted_at IS NULL AND entity.entity_type=ANY($2::text[])
 			  AND NOT EXISTS (
 				SELECT 1 FROM catalog_entity_media media
-				WHERE media.entity_id=entity.id AND media.cache_status IN ('cached','remote')
+				LEFT JOIN catalog_source_policies policy ON policy.source=media.source
+				WHERE media.entity_id=entity.id AND (media.cache_status='remote' OR
+					media.cache_status='cached' AND (policy.retention_days IS NULL
+						OR media.cached_at>now()-make_interval(days=>GREATEST(policy.retention_days-$3,1))))
 			  )
 			  AND NOT EXISTS (
 				SELECT 1 FROM catalog_entity_icons icon
 				WHERE icon.build_id=published.build_id AND icon.entity_type=entity.entity_type
 				  AND icon.external_id=entity.external_id
-			  )`, productID, entityTypes); err != nil {
+			  )`, productID, entityTypes, headroomDays); err != nil {
 			return fmt.Errorf("stage derived media targets: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `ANALYZE derived_media_targets`); err != nil {
@@ -638,6 +731,7 @@ func (c *Cache) fetchDerivedAssets(
 	product string,
 	buildVersion string,
 	limit int,
+	missing map[string]time.Time,
 	result *DerivedMediaResult,
 ) ([]derivedLink, error) {
 	outcomes := make(map[string]derivedFetch)
@@ -654,6 +748,12 @@ func (c *Cache) fetchDerivedAssets(
 			if _, done := outcomes[row.AssetRef]; done || queued[row.AssetRef] {
 				continue
 			}
+			if _, deferred := missing[row.AssetRef]; deferred {
+				// The source recently answered that it has no such picture:
+				// do not ask again yet, let the record try its next one.
+				outcomes[row.AssetRef] = derivedFetch{Err: errDerivedDeferred}
+				continue
+			}
 			queued[row.AssetRef] = true
 			pending = append(pending, derivedAsset{
 				Ref: row.AssetRef, MediaKind: row.MediaKind, IconName: row.IconName,
@@ -668,12 +768,17 @@ func (c *Cache) fetchDerivedAssets(
 		for outcome := range c.fetchDerivedBatch(ctx, pending, product, buildVersion) {
 			outcomes[outcome.Asset.Ref] = outcome
 			if outcome.Err != nil {
+				if sourceLacksAsset(outcome.Err) {
+					result.AssetsMissing++
+					missing[outcome.Asset.Ref] = time.Now().UTC()
+				}
 				result.AssetsFailed++
 				if len(result.FailureSample) < officialIconFailureSampleLimit {
 					result.FailureSample = append(result.FailureSample, IconFailure{Name: outcome.Asset.Ref, Error: truncateError(outcome.Err)})
 				}
 				continue
 			}
+			delete(missing, outcome.Asset.Ref)
 			result.AssetsFetched++
 			result.Bytes += outcome.Icon.CachedSize
 		}
@@ -770,7 +875,7 @@ func (c *Cache) fetchCreatureDisplayRender(ctx context.Context, sourceURL string
 	if blank {
 		// Invisible trigger and credit models render as an empty backdrop;
 		// treat that as no render so the next display slot can be tried.
-		return cachedIcon{}, errors.New("creature render is an empty backdrop")
+		return cachedIcon{}, errBlankRender
 	}
 	render := cachedIcon{
 		Source:         "blizzard_api",
@@ -949,56 +1054,10 @@ func trimTransparentPNG(data []byte) ([]byte, int, int, error) {
 }
 
 // linkDerivedMedia records one snapshot per build and source, one artifact
-// per downloaded asset and one primary cached media row per entity.
-func (c *Cache) linkDerivedMedia(ctx context.Context, tx pgx.Tx, productID int16, links []derivedLink) (map[string][]uuid.UUID, error) {
-	type snapshotKey struct {
-		BuildID int64
-		Source  string
-	}
-	manifests := make(map[snapshotKey][]string)
-	for _, link := range links {
-		key := snapshotKey{link.Row.BuildID, link.Icon.Source}
-		manifests[key] = append(manifests[key], fmt.Sprintf("%s:%x:%d", link.Icon.ArtifactKey, link.Icon.SourceHash, link.Icon.SourceSize))
-	}
-	snapshots := make(map[snapshotKey]uuid.UUID, len(manifests))
-	keys := make([]snapshotKey, 0, len(manifests))
-	for key := range manifests {
-		keys = append(keys, key)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		if keys[i].BuildID == keys[j].BuildID {
-			return keys[i].Source < keys[j].Source
-		}
-		return keys[i].BuildID < keys[j].BuildID
-	})
-	for _, key := range keys {
-		lines := manifests[key]
-		sort.Strings(lines)
-		manifest := sha256.New()
-		_, _ = fmt.Fprintf(manifest, "gildra-derived-media-manifest-v1:%s\n", key.Source)
-		previous := ""
-		count := 0
-		for _, line := range lines {
-			if line == previous {
-				continue
-			}
-			previous = line
-			count++
-			_, _ = fmt.Fprintln(manifest, line)
-		}
-		var snapshotID uuid.UUID
-		if err := tx.QueryRow(ctx, `
-			INSERT INTO catalog_snapshots(product_id,build_id,source,status,content_hash,metadata,validated_at,published_at)
-			VALUES($1,$2,$3,'published',$4,
-				jsonb_build_object('projection','derived_catalog_media','asset_count',$5::int),now(),now())
-			ON CONFLICT(product_id,build_id,source,content_hash) WHERE content_hash IS NOT NULL
-			DO UPDATE SET metadata=EXCLUDED.metadata,validated_at=now(),published_at=now()
-			RETURNING id`, productID, key.BuildID, key.Source, hex.EncodeToString(manifest.Sum(nil)), count).Scan(&snapshotID); err != nil {
-			return nil, fmt.Errorf("create derived media snapshot: %w", err)
-		}
-		snapshots[key] = snapshotID
-	}
-
+// per downloaded asset and one primary cached media row per entity. A renewal
+// that fetched the bytes a record already points to renews that observation
+// and its artifact; only new or changed pictures get a snapshot and artifact.
+func (c *Cache) linkDerivedMedia(ctx context.Context, tx pgx.Tx, productID int16, links []derivedLink, headroomDays int) (map[string][]uuid.UUID, error) {
 	if _, err := tx.Exec(ctx, `
 		CREATE TEMP TABLE derived_media_seed(
 			media_id uuid PRIMARY KEY,
@@ -1007,7 +1066,7 @@ func (c *Cache) linkDerivedMedia(ctx context.Context, tx pgx.Tx, productID int16
 			entity_type text NOT NULL,
 			external_id bigint NOT NULL,
 			build_id bigint NOT NULL,
-			snapshot_id uuid NOT NULL,
+			snapshot_id uuid,
 			media_kind text NOT NULL,
 			source text NOT NULL,
 			asset_key text NOT NULL,
@@ -1053,14 +1112,14 @@ func (c *Cache) linkDerivedMedia(ctx context.Context, tx pgx.Tx, productID int16
 		}
 		seedRows = append(seedRows, []any{
 			uuid.New(), link.Row.Group, link.Row.EntityID, link.Row.EntityType, link.Row.ExternalID,
-			link.Row.BuildID, snapshots[snapshotKey{link.Row.BuildID, link.Icon.Source}], link.Row.MediaKind,
+			link.Row.BuildID, link.Row.MediaKind,
 			link.Icon.Source, link.Icon.AssetKey, link.Icon.ArtifactKey, link.Icon.SourceURL, fileDataID,
 			link.Icon.SourceSize, link.Icon.SourceHash, link.Icon.CacheKey, link.Icon.CachedMIMEType,
 			link.Icon.CachedSize, link.Icon.CachedHash, link.Icon.Width, link.Icon.Height, string(encoded),
 		})
 	}
 	if copied, err := tx.CopyFrom(ctx, pgx.Identifier{"derived_media_seed"}, []string{
-		"media_id", "group_key", "entity_id", "entity_type", "external_id", "build_id", "snapshot_id",
+		"media_id", "group_key", "entity_id", "entity_type", "external_id", "build_id",
 		"media_kind", "source", "asset_key", "artifact_key", "source_url", "file_data_id",
 		"source_byte_size", "source_content_hash", "cache_key", "cached_mime_type",
 		"cached_byte_size", "cached_content_hash", "width", "height", "attributes",
@@ -1068,6 +1127,100 @@ func (c *Cache) linkDerivedMedia(ctx context.Context, tx pgx.Tx, productID int16
 		return nil, fmt.Errorf("stage derived media: %w", err)
 	} else if copied != int64(len(seedRows)) {
 		return nil, fmt.Errorf("stage derived media: copied %d of %d", copied, len(seedRows))
+	}
+
+	// Renewal: the record's own observation of the same bytes keeps its
+	// artifact, which this download re-proved.
+	rows, err := tx.Query(ctx, `
+		WITH renewed AS (
+			UPDATE derived_media_seed seed SET artifact_id=observed.source_artifact_id
+			FROM (
+				SELECT DISTINCT ON (candidate.entity_id) candidate.entity_id,existing.source_artifact_id
+				FROM derived_media_seed candidate
+				JOIN catalog_entity_media existing ON existing.build_id=candidate.build_id
+					AND existing.entity_type=candidate.entity_type AND existing.external_id=candidate.external_id
+					AND existing.media_kind=candidate.media_kind AND existing.asset_key=candidate.asset_key
+					AND existing.locale='' AND existing.source=candidate.source
+				JOIN catalog_source_artifacts proof ON proof.id=existing.source_artifact_id
+					AND proof.status='ready' AND proof.content_hash=candidate.source_content_hash
+				ORDER BY candidate.entity_id,existing.cached_at DESC NULLS LAST,existing.id
+			) observed
+			WHERE observed.entity_id=seed.entity_id
+			RETURNING seed.entity_id,seed.artifact_id
+		), proved AS (
+			UPDATE catalog_source_artifacts artifact SET fetched_at=now()
+			WHERE artifact.id IN (SELECT artifact_id FROM renewed)
+		)
+		SELECT entity_id FROM renewed`)
+	if err != nil {
+		return nil, fmt.Errorf("find renewable derived media: %w", err)
+	}
+	renewed := make(map[uuid.UUID]bool)
+	for rows.Next() {
+		var entityID uuid.UUID
+		if err := rows.Scan(&entityID); err != nil {
+			rows.Close()
+			return nil, fmt.Errorf("scan renewable derived media: %w", err)
+		}
+		renewed[entityID] = true
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read renewable derived media: %w", err)
+	}
+
+	type snapshotKey struct {
+		BuildID int64
+		Source  string
+	}
+	manifests := make(map[snapshotKey][]string)
+	for _, link := range links {
+		if renewed[link.Row.EntityID] {
+			continue
+		}
+		key := snapshotKey{link.Row.BuildID, link.Icon.Source}
+		manifests[key] = append(manifests[key], fmt.Sprintf("%s:%x:%d", link.Icon.ArtifactKey, link.Icon.SourceHash, link.Icon.SourceSize))
+	}
+	keys := make([]snapshotKey, 0, len(manifests))
+	for key := range manifests {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].BuildID == keys[j].BuildID {
+			return keys[i].Source < keys[j].Source
+		}
+		return keys[i].BuildID < keys[j].BuildID
+	})
+	for _, key := range keys {
+		lines := manifests[key]
+		sort.Strings(lines)
+		manifest := sha256.New()
+		_, _ = fmt.Fprintf(manifest, "gildra-derived-media-manifest-v1:%s\n", key.Source)
+		previous := ""
+		count := 0
+		for _, line := range lines {
+			if line == previous {
+				continue
+			}
+			previous = line
+			count++
+			_, _ = fmt.Fprintln(manifest, line)
+		}
+		if _, err := tx.Exec(ctx, `
+			WITH snapshot AS (
+				INSERT INTO catalog_snapshots(product_id,build_id,source,status,content_hash,metadata,validated_at,published_at)
+				VALUES($1,$2,$3,'published',$4,
+					jsonb_build_object('projection','derived_catalog_media','asset_count',$5::int),now(),now())
+				ON CONFLICT(product_id,build_id,source,content_hash) WHERE content_hash IS NOT NULL
+				DO UPDATE SET metadata=EXCLUDED.metadata,validated_at=now(),published_at=now()
+				RETURNING id
+			)
+			UPDATE derived_media_seed seed SET snapshot_id=snapshot.id
+			FROM snapshot
+			WHERE seed.build_id=$2 AND seed.source=$3 AND seed.artifact_id IS NULL`,
+			productID, key.BuildID, key.Source, hex.EncodeToString(manifest.Sum(nil)), count); err != nil {
+			return nil, fmt.Errorf("create derived media snapshot: %w", err)
+		}
 	}
 	if _, err := tx.Exec(ctx, `
 		WITH upserted AS (
@@ -1082,6 +1235,7 @@ func (c *Cache) linkDerivedMedia(ctx context.Context, tx pgx.Tx, productID int16
 					'conversion',seed.attributes->>'conversion'
 				),now()
 			FROM derived_media_seed seed
+			WHERE seed.artifact_id IS NULL
 			ORDER BY seed.snapshot_id,seed.artifact_key,seed.media_id
 			ON CONFLICT(snapshot_id,artifact_key,locale)
 			DO UPDATE SET source_url=EXCLUDED.source_url,byte_size=EXCLUDED.byte_size,
@@ -1092,7 +1246,7 @@ func (c *Cache) linkDerivedMedia(ctx context.Context, tx pgx.Tx, productID int16
 		FROM upserted WHERE upserted.snapshot_id=seed.snapshot_id AND upserted.artifact_key=seed.artifact_key`); err != nil {
 		return nil, fmt.Errorf("record derived media provenance: %w", err)
 	}
-	rows, err := tx.Query(ctx, `
+	rows, err = tx.Query(ctx, `
 		INSERT INTO catalog_entity_media(
 			id,build_id,entity_id,entity_type,external_id,media_kind,asset_key,locale,
 			source,source_url,cached_url,file_data_id,content_hash,mime_type,width,height,
@@ -1106,14 +1260,21 @@ func (c *Cache) linkDerivedMedia(ctx context.Context, tx pgx.Tx, productID int16
 			seed.cache_key,seed.cached_content_hash,seed.cached_byte_size,now(),''
 		FROM derived_media_seed seed
 		-- Another seeder may have linked an image meanwhile; never add a
-		-- second one beside it.
+		-- second one beside a picture that is still inside its retention.
 		WHERE NOT EXISTS (
 			SELECT 1 FROM catalog_entity_media existing
-			WHERE existing.entity_id=seed.entity_id AND existing.cache_status IN ('cached','remote')
+			LEFT JOIN catalog_source_policies policy ON policy.source=existing.source
+			WHERE existing.entity_id=seed.entity_id AND (existing.cache_status='remote' OR
+				existing.cache_status='cached' AND (policy.retention_days IS NULL
+					OR existing.cached_at>now()-make_interval(days=>GREATEST(policy.retention_days-$2,1))))
 		)
-		ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO NOTHING
+		ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO UPDATE SET
+			cache_status='cached',cache_key=EXCLUDED.cache_key,
+			cached_content_hash=EXCLUDED.cached_content_hash,cached_byte_size=EXCLUDED.cached_byte_size,
+			cached_at=now(),cache_error='',mime_type=EXCLUDED.mime_type,
+			cached_url=$1 || '/v1/media/' || catalog_entity_media.id::text,updated_at=now()
 		RETURNING entity_id`,
-		c.publicBase)
+		c.publicBase, headroomDays)
 	if err != nil {
 		return nil, fmt.Errorf("link derived media: %w", err)
 	}

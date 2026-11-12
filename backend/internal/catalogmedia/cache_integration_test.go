@@ -275,6 +275,30 @@ func TestCacheRetriesAndServesProvenMedia(t *testing.T) {
 		t.Fatalf("symlink escape status=%d, want 404", response.Code)
 	}
 
+	// Expired legitimate bytes still redirect; confinement violations never do.
+	if _, err := database.ExecContext(ctx, `UPDATE catalog_entity_media SET cached_at=now()-interval '40 days' WHERE id=$1`, media.published); err != nil {
+		t.Fatal(err)
+	}
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNotFound {
+		t.Fatalf("expired symlink status=%d", response.Code)
+	}
+	if err := os.Remove(target); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(target+".object", target); err != nil {
+		t.Fatal(err)
+	}
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("expired legitimate status=%d", response.Code)
+	}
+	if _, err := database.ExecContext(ctx, `UPDATE catalog_entity_media SET cached_at=now() WHERE id=$1`, media.published); err != nil {
+		t.Fatal(err)
+	}
+
 	if err := goose.DownToContext(ctx, database, migrations, 102); err != nil {
 		t.Fatalf("roll back local-preview migrations: %v", err)
 	}
