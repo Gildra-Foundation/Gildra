@@ -14,6 +14,9 @@ const englishOnly = {
   blueprints: "design archive",
   dev: "development galleries",
 };
+// The supplied manuscript is Russian-only; next.config.ts redirects its EN
+// URL here. StoryLibrary owns lang="ru" rather than receiving a locale prop.
+const russianOnly = new Set(["wow/stories"]);
 const files = ["page.tsx", "opengraph-image.tsx"];
 
 function* walk(dir, rel = "") {
@@ -28,6 +31,7 @@ let pairs = 0;
 for (const { rel, file } of walk(app)) {
   if (rel === "ru" || rel.startsWith("ru/")) {
     const english = rel === "ru" ? "" : rel.slice(3);
+    if (russianOnly.has(english) && file === "page.tsx") continue;
     if (!fs.existsSync(path.join(site, english, file))) problems.push(`app/${rel}/${file} has no English page app/(site)/${english ? `${english}/` : ""}${file}`);
     const source = fs.readFileSync(path.join(app, rel, file), "utf8");
     if (!/["'`](ru|ru_RU)["'`]|lang="ru"|locale="ru"|\/ru\b|\.ru\./.test(source)) problems.push(`app/${rel}/${file} does not render the Russian page (no "ru" locale)`);

@@ -1,8 +1,7 @@
 name: Candidate Images
 
 on:
-  push:
-    branches: ["release/**"]
+  workflow_call:
 
 permissions:
   contents: read
@@ -43,14 +42,31 @@ jobs:
         with:
           images: ghcr.io/gildra-foundation/gildra-${{ matrix.name }}
           tags: type=sha,format=long,prefix=
-      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+      - id: build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
           push: true
+          outputs: type=image,compression=zstd,compression-level=3
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           sbom: true
           provenance: mode=max
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+      - name: Record immutable image
+        env:
+          IMAGE_NAME: ${{ matrix.name }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/digests/revision"
+          printf '%s\n' "$IMAGE_DIGEST" > "$RUNNER_TEMP/digests/digest"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-digest-${{ matrix.name }}
+          path: ${{ runner.temp }}/digests/
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
