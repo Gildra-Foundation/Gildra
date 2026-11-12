@@ -175,3 +175,24 @@
   .center .copy::before { inset: -32px -24px; }
   .center .title::after { width: 128px; }
 }
+
+/* Arrival: on the first load of a visit the heading block settles as a short cascade (trail, eyebrow,
+   title, lede, actions, counters). CSS, so it runs from the first paint; a page reached through the
+   site is brought in by the route hand-over and its frame is marked to skip (AtlasArrival). The home
+   page and the Mythic+ and raid hubs keep the arrivals of their own; a loading stand-in stays still. */
+@keyframes atlas-hero-rise { from { opacity: 0; translate: 0 var(--atlas-reveal-shift); } }
+@media screen and (prefers-reduced-motion: no-preference) {
+  :global([data-atlas-frame]:not([data-atlas-arrival="skip"], [data-wow-atlas], [data-mythic-hub], [data-raid-hub])) .hero:not([data-placeholder]) :is(.topRow, .emblem, .eyebrow, .title, .lede, .actions, .side) {
+    animation: atlas-hero-rise var(--atlas-duration-enter) var(--atlas-ease) calc(var(--atlas-stagger) * var(--atlas-hero-step, 0)) backwards;
+  }
+  .emblem, .eyebrow { --atlas-hero-step: 1; }
+  .title { --atlas-hero-step: 2; }
+  .lede { --atlas-hero-step: 3; }
+  .actions { --atlas-hero-step: 4; }
+  .side { --atlas-hero-step: 5; }
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active), print {
+  .hero :is(.topRow, .emblem, .eyebrow, .title, .lede, .actions, .side) { animation: none !important; }
+}
+:global(html[data-motion="reduced"]) .hero :is(.topRow, .emblem, .eyebrow, .title, .lede, .actions, .side),
+:global([data-ui-motion="reduce"]) .hero :is(.topRow, .emblem, .eyebrow, .title, .lede, .actions, .side) { animation: none !important; }

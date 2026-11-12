@@ -21,7 +21,7 @@ export function AtlasSection({ children, title, eyebrow, description, aside, id,
   const headingId = id ? `${id}-title` : undefined;
   const hasHeader = Boolean(title || eyebrow || aside);
   return (
-    <section id={id} className={clsx(styles.section, className)} aria-labelledby={title ? headingId : undefined}>
+    <section id={id} className={clsx(styles.section, className)} aria-labelledby={title ? headingId : undefined} data-atlas-section>
       {hasHeader ? (
         <div className={styles.header}>
           <div className={styles.headingCopy}>

@@ -38,7 +38,7 @@ export type AtlasHeroProps = {
 export function AtlasHero({ title, eyebrow, lede, emblem, emblemShape = "circle", stats, statsLabel, breadcrumbs, breadcrumbsLabel = "Breadcrumbs", actions, toolbar, aside, variant = "open", align = "start", titleId, placeholder = false, className }: AtlasHeroProps) {
   const side = aside ?? (stats?.length ? <AtlasStats items={stats} label={statsLabel} className={styles.stats} /> : null);
   return (
-    <header className={clsx(styles.hero, styles[variant], align === "center" && styles.center, className)}>
+    <header className={clsx(styles.hero, styles[variant], align === "center" && styles.center, className)} data-placeholder={placeholder ? "" : undefined}>
       {breadcrumbs?.length || toolbar ? (
         <div className={styles.topRow}>
           {breadcrumbs?.length ? <AtlasBreadcrumbs items={breadcrumbs} label={breadcrumbsLabel} /> : <span />}
