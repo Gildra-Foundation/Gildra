@@ -109,5 +109,4 @@ export function libraryDatasetLine(dataset: { slug: string; description?: string
   return libraryDatasetText[dataset.slug]?.[lang] ?? dataset.description ?? "";
 }
 
-/** Datasets of client internals (reward packages, UI maps): reachable by link, not listed to players. */
-export const LIBRARY_HIDDEN_DATASETS = new Set(["quest-reward-packages", "ui-maps"]);
+export { LIBRARY_HIDDEN_DATASETS } from "@/lib/library/recordPath";

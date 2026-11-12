@@ -1,3 +1,4 @@
+import { catalogSearchQuery } from "@/lib/platform/catalog/searchQuery";
 import "server-only";
 import { cookies } from "next/headers";
 import { cache as perRequest } from "react";
@@ -216,11 +217,15 @@ export async function getCatalogPage({
   timeoutMs = 15_000,
   signal,
 }: CatalogPageParams): Promise<CatalogPage> {
+  // Typed text goes to the catalog without quotes and punctuation (lib/platform/catalog/searchQuery.ts);
+  // text with nothing to match (one letter, punctuation only) is an empty list, not a request.
+  const search = catalogSearchQuery(query);
+  if (query.trim() && !search) return { data: [], pagination: { hasMore: false, total: 0 } };
   const params = new URLSearchParams({ product, locale, limit: String(limit), includeTotal: String(includeTotal) });
   if (externalIds?.length) params.set("externalIds", externalIds.join(","));
   if (dataset) params.set("dataset", dataset);
   if (type) params.set("type", type);
-  if (query) params.set("q", query);
+  if (search) params.set("q", search);
   if (cursor) params.set("cursor", cursor);
   if (category) params.set("category", category);
   for (const facet of facets) {

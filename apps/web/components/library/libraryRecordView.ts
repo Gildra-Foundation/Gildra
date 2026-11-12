@@ -90,7 +90,7 @@ export function libraryRecordView(entity: LibrarySummary, lang: Lang, product = 
 
 /** Rows of one catalog page for a list: internal records out, the rest as views. */
 export function libraryRecordViews(entities: LibrarySummary[], lang: Lang, product = "wow") {
-  return entities.filter((entity) => !isInternalRecord(entity.name, entity.type)).map((entity) => libraryRecordView(entity, lang, product));
+  return entities.filter((entity) => !isInternalRecord(entity.name, entity.type, entity.externalId)).map((entity) => libraryRecordView(entity, lang, product));
 }
 
 /** Columns of the record table: what a dataset's records really carry. Records without facts get the description instead. */
@@ -129,7 +129,7 @@ export function rankLibrarySuggestions(views: LibraryRecordView[], query: string
   const needle = query.trim().toLocaleLowerCase();
   const seen = new Set<string>();
   const unique = views.filter((view) => {
-    if (isInternalRecord(view.name, view.type)) return false;
+    if (isInternalRecord(view.name, view.type, view.externalId)) return false;
     const key = `${view.type}:${view.name.toLocaleLowerCase()}`;
     if (seen.has(key)) return false;
     seen.add(key);

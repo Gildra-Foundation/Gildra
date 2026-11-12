@@ -183,7 +183,8 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return roleEntries.filter((entry) => (cls === "all" || entry.classSlug === cls)
-      && (!query || `${entry.specName} ${entry.className}`.toLowerCase().includes(query)));
+      // The slugs are the English names ("fury-warrior"): a Russian page finds a spec by either spelling.
+      && (!query || `${entry.specName} ${entry.className} ${entry.specSlug ?? ""} ${entry.classSlug}`.replaceAll("-", " ").toLowerCase().includes(query)));
   }, [roleEntries, cls, q]);
 
   const number = useMemo(() => new Intl.NumberFormat(locale), [locale]);
@@ -319,7 +320,7 @@ export function TierSection({ lang, intelligence, sample = false, sampleRoles, s
   };
 
   const sourceLabel = useCallback((id: string) => {
-    if (id === "gildra" || id === "ladder") return "Gildra";
+    if (id === "gildra" || id === "ladder") return "WowArcana";
     if (id === "sim") return simCopy.tab;
     return isTierSource(id) && id !== "gildra" ? SOURCE_SITES[id].name : id;
   }, [simCopy.tab]);

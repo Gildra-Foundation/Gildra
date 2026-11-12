@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCatalogPage } from "@/lib/api/client";
 import { catalogReadable, catalogSessionPresent } from "@/lib/library/server";
 import { libraryRecordView, rankLibrarySuggestions } from "@/components/library/libraryRecordView";
+import { catalogSearchQuery } from "@/lib/platform/catalog/searchQuery";
 
 /**
  * Search suggestions of the library search fields: up to eight records whose
@@ -10,10 +11,13 @@ import { libraryRecordView, rankLibrarySuggestions } from "@/components/library/
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
-  const q = (params.get("q") ?? "").trim();
+  const typed = (params.get("q") ?? "").trim();
+  const q = catalogSearchQuery(typed);
   const dataset = params.get("dataset") ?? "";
   const product = params.get("product") || "wow";
   const lang = params.get("lang") === "ru" ? "ru" : "en";
+  // Typed text the catalog cannot match (quotes or punctuation only) has no suggestions; it is not a wrong request.
+  if (typed.length >= 2 && typed.length <= 200 && !q) return NextResponse.json({ records: [] }, { headers: { "Cache-Control": "public, max-age=300" } });
   if (q.length < 2 || q.length > 200 || (dataset && !/^[a-z0-9-]{2,64}$/.test(dataset)) || !/^[a-z0-9_]{2,64}$/.test(product)) {
     return NextResponse.json({ message: "Invalid suggestion query" }, { status: 400 });
   }

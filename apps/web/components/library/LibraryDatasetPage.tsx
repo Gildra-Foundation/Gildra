@@ -6,7 +6,7 @@ import { LibraryWorkspace } from "@/components/library/LibraryWorkspace";
 import { CatalogTotal } from "@/components/database/CatalogTotal";
 import { PageShell } from "@/components/layout/PageShell";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
-import { libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/library/libraryCopy";
+import { LIBRARY_HIDDEN_DATASETS, libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/library/libraryCopy";
 import { libraryCardLayout, libraryRails } from "@/components/library/libraryRails";
 import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets, type CatalogPage } from "@/lib/api/client";
 import { libraryDatasetHead, requireCatalogSession } from "@/lib/library/server";
@@ -24,7 +24,7 @@ export async function libraryDatasetMetadata(lang: "en" | "ru", slug: string, se
   const line = libraryDatasetLine({ slug, description: head.description }, lang);
   const what = line ? `${line.charAt(0).toLowerCase()}${line.slice(1)}` : "";
   return withPageOpenGraph(lang, {
-    ...(emptyProductDataset(head) ? { robots: { index: false, follow: true } } : {}),
+    ...(emptyProductDataset(head) || LIBRARY_HIDDEN_DATASETS.has(slug) ? { robots: { index: false, follow: true } } : {}),
     title: `${head.name} — ${libraryCopy[lang].site}`,
     ...(line ? { description: datasetDescription(lang, head.name, what) } : {}),
     alternates: pairedAlternates(lang, libraryProductPath(`/library/${slug}`, product)),

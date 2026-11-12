@@ -3,6 +3,7 @@ import { isHiddenForMvpPath } from "@/lib/mvp";
 import { runtimeFlags } from "@/lib/flags";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { unknownForeverRoute } from "@/lib/forever/routeGuard";
+import { unknownLibraryDataset } from "@/lib/library/routeGuard";
 import { cachedViewRewrite } from "@/lib/routes/cachedViews";
 
 export async function proxy(request: NextRequest) {
@@ -18,7 +19,8 @@ export async function proxy(request: NextRequest) {
   // Dev galleries (/dev/blocks, /dev/atlas) exist only with GILDRA_DEV_GALLERY=1 in production.
   const devGalleryOff = !runtimeFlags().devGallery && /^\/dev(\/|$)/.test(request.nextUrl.pathname);
   const cachedView = cachedViewRewrite(request.nextUrl);
-  const response = devGalleryOff || isHiddenForMvpPath(request.nextUrl.pathname) || unknownTalentSpec(request.nextUrl.pathname) || await unknownForeverRoute(request.nextUrl.pathname) || cachedView === "direct"
+  const response = devGalleryOff || isHiddenForMvpPath(request.nextUrl.pathname) || unknownTalentSpec(request.nextUrl.pathname) || await unknownForeverRoute(request.nextUrl.pathname)
+    || (runtimeFlags().catalogPublic && await unknownLibraryDataset(request.nextUrl.pathname, request.nextUrl.searchParams.get("product"))) || cachedView === "direct"
     ? NextResponse.rewrite(Object.assign(request.nextUrl.clone(), { pathname: `${locale === "ru" ? "/ru" : ""}/_hidden-for-mvp/404` }))
     : cachedView
       ? NextResponse.rewrite(Object.assign(request.nextUrl.clone(), { pathname: cachedView }))

@@ -126,7 +126,7 @@ const ru = {
   // Import dialog
   importTitle: "Импорт маршрута",
   close: "Закрыть",
-  importHeading: "Вставьте JSON маршрута Gildra",
+  importHeading: "Вставьте JSON маршрута WowArcana",
   importText: "Можно вставить массив действий или ранее скачанный файл целиком.",
   cancel: "Отмена",
   importAction: "Импортировать",
@@ -275,7 +275,7 @@ const en: MythicRouteCopy = {
 
   importTitle: "Import a route",
   close: "Close",
-  importHeading: "Paste a Gildra route JSON",
+  importHeading: "Paste a WowArcana route JSON",
   importText: "Paste an array of steps or a previously downloaded file as a whole.",
   cancel: "Cancel",
   importAction: "Import",

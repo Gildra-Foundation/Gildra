@@ -3,8 +3,7 @@ import { siteOrigin, xmlEscape, xmlResponse } from "@/lib/sitemap";
 import { isGameVisible } from "@/lib/games/registry";
 import { runtimeFlags } from "@/lib/flags";
 import { getCatalogSitemapEntries, getLibraryDatasets } from "@/lib/api/client";
-import { LIBRARY_TYPE_DATASET } from "@/lib/library/recordPath";
-import { entriesHaveLocales, recordSitemapShards } from "@/lib/library/recordSitemap";
+import { datasetHasRecordSitemap, entriesHaveLocales, recordSitemapShards } from "@/lib/library/recordSitemap";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +14,7 @@ async function recordSitemaps(): Promise<string[]> {
     const [datasets, probe] = await Promise.all([getLibraryDatasets("en_US"), getCatalogSitemapEntries("class")]);
     if (!probe.length || !entriesHaveLocales(probe)) return [];
     return datasets
-      .filter((dataset) => dataset.entityCount > 0 && LIBRARY_TYPE_DATASET[dataset.entityType] === dataset.slug)
+      .filter((dataset) => dataset.entityCount > 0 && datasetHasRecordSitemap(dataset.slug))
       .flatMap((dataset) => recordSitemapShards(dataset.entityCount).flatMap((shard) =>
         ["en", "ru"].map((lang) => `${siteOrigin}/sitemaps/library/${encodeURIComponent(dataset.slug)}/${lang}/${shard}`)));
   } catch (error) {

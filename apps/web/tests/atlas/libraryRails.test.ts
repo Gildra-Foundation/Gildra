@@ -21,4 +21,16 @@ describe("library: dataset filters", () => {
     ], "en");
     assert.deepEqual(rails.map((rail) => rail.categories.map((entry) => entry.name)), [["Potion", "Elixir"]]);
   });
+
+  it("filters achievements by the game's categories, largest first", () => {
+    const rails = libraryRails("achievements", [
+      category({ id: 1, type: "achievement", facet: "group", name: "Achievement categories", path: "categorys", parentPath: undefined, count: 13877 }),
+      category({ id: 2, type: "achievement", facet: "category", name: "Deaths", path: "categorys/category-122", parentPath: "categorys", count: 20 }),
+      category({ id: 3, type: "achievement", facet: "category", name: "Dungeons", path: "categorys/category-14807", parentPath: "categorys", count: 271 }),
+      category({ id: 4, type: "achievement", facet: "category", name: "Empty", path: "categorys/category-1", parentPath: "categorys", count: 0 }),
+    ], "ru");
+    assert.deepEqual(rails.map((rail) => [rail.id, rail.label, rail.categories.map((entry) => entry.path)]), [["category", "Категория", ["categorys/category-14807", "categorys/category-122"]]]);
+    // Other record types keep their placeholder categories ("Category 142") to themselves.
+    assert.deepEqual(libraryRails("currencies", [category({ type: "currency", facet: "category", name: "Category 142", path: "categorys/category-142", parentPath: "categorys" }), category({ id: 2, type: "currency", facet: "category", name: "Category 143", path: "categorys/category-143", parentPath: "categorys" })], "en"), []);
+  });
 });

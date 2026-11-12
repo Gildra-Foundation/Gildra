@@ -181,6 +181,8 @@ async function SearchResultCount({
   const total = totals.every((value) => value !== undefined) ? totals.reduce<number>((sum, value) => sum + (value ?? 0), 0) : undefined;
   const unavailable = all.every((result) => result.unavailableGames.length > 0);
   const t = searchCopy[lang];
+  // A catalog that did not answer has found nothing and counted nothing: its own line under this one says so.
+  if (unavailable) return null;
   return <>
     <p className={styles.resultCount}>{total !== undefined ? t.foundFor(total, query) : t.resultsFor(count, query)}</p>
     {!count && !unavailable ? (
