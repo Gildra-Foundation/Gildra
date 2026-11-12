@@ -57,7 +57,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("find build: %w", err)
 	}
-	rows, proofs, err := itemscaling.Fetch(ctx, itemscaling.WagoSource{Client: wago.New(wago.Config{})}, *version)
+	rows, proofs, err := itemscaling.Fetch(ctx, wago.TableSource{Client: wago.New(wago.Config{})}, *version)
 	if err != nil {
 		return err
 	}

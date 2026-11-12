@@ -332,3 +332,24 @@ func (c *Client) File(ctx context.Context, fileDataID int, build string) ([]byte
 	}
 	return data, nil
 }
+
+// TableSource reads whole tables and client files of an exact build with the
+// proof of the bytes read. Importers of reference data take it through their
+// own interface, so this package stays free of their types.
+type TableSource struct{ Client *Client }
+
+func (s TableSource) Table(ctx context.Context, table, build, locale string, consume func(map[string]string) error) (string, []byte, int64, error) {
+	_, proof, err := s.Client.RowsWithProof(ctx, table, build, locale, 0, consume)
+	if err != nil {
+		return "", nil, 0, err
+	}
+	if !proof.Complete || len(proof.SHA256) != sha256.Size {
+		return "", nil, 0, fmt.Errorf("incomplete Wago download of %s", table)
+	}
+	return s.Client.CSVURL(table, build, locale), proof.SHA256, proof.ByteSize, nil
+}
+
+func (s TableSource) File(ctx context.Context, fileDataID int, build string) (string, []byte, error) {
+	data, err := s.Client.File(ctx, fileDataID, build)
+	return s.Client.FileURL(fileDataID, build), data, err
+}

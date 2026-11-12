@@ -173,7 +173,7 @@ func run() error {
 		// Item tooltip numbers need the build's reference tables. Their absence
 		// only leaves the numbers out, so a source outage does not fail the
 		// import; item-reference-import repeats this step for the build.
-		if rows, proofs, err := itemscaling.Fetch(ctx, itemscaling.WagoSource{Client: client}, opts.version); err != nil {
+		if rows, proofs, err := itemscaling.Fetch(ctx, wago.TableSource{Client: client}, opts.version); err != nil {
 			slog.Warn("item reference tables not imported", "build", opts.version, "error", err)
 		} else if err := itemscaling.Store(ctx, db, ic.BuildID, rows, proofs); err != nil {
 			importErr = err
