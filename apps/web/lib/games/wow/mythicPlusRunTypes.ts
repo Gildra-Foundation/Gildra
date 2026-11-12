@@ -72,6 +72,7 @@ const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 const str = (value: unknown) => (typeof value === "string" ? value : "");
 const num = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : undefined);
 const roles: RunRole[] = ["tank", "healer", "dps"];
+const roleOf = (value: unknown) => roles.find((role) => role === value);
 const roleOrder: Record<RunRole, number> = { tank: 0, healer: 1, dps: 2 };
 
 /** Raider.IO run-details JSON → the run page's facts; null when the answer is not a finished run. */
@@ -98,7 +99,7 @@ export function toRunDetail(raw: unknown): RunDetail | null {
     const spec = obj(character.spec);
     const specId = num(spec.id);
     const name = str(character.name);
-    const role = (roles as string[]).includes(str(member.role)) ? str(member.role) as RunRole : (roles as string[]).includes(str(spec.role)) ? str(spec.role) as RunRole : "dps";
+    const role = roleOf(member.role) ?? roleOf(spec.role) ?? "dps";
     if (!specId || !name) return [];
     const talents = obj(character.talentLoadout);
     const loadout = str(talents.exportLoadoutText) || str(talents.loadoutText);
