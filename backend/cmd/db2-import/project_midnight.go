@@ -20,6 +20,9 @@ func projectMidnightMembership(ctx context.Context, db *pgxpool.Pool, ic catalog
 		if published {
 			return fmt.Errorf("Midnight membership requires an unpublished candidate build")
 		}
+		if _, err := tx.Exec(ctx, worldMembershipSQL, pgx.QueryExecModeSimpleProtocol, ic.BuildID); err != nil {
+			return fmt.Errorf("project source-proven expansion membership: %w", err)
+		}
 		_, err := tx.Exec(ctx, midnightMembershipSQL, ic.BuildID)
 		return err
 	})

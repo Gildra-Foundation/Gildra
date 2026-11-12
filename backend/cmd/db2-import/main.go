@@ -27,6 +27,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	opts.tables = withWorldSourceTables(opts.tables)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	client := wago.New(wago.Config{})

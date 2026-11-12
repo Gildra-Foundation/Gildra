@@ -795,6 +795,9 @@ func (s *Service) GetInExpansion(ctx context.Context, id uuid.UUID, locale, expa
 	if err := s.enrichMedia(ctx, []*Entity{&entity}); err != nil {
 		return Entity{}, err
 	}
+	if err := s.enrichWorldContext(ctx, &entity); err != nil {
+		return Entity{}, err
+	}
 	if err := s.enrichTooltipMedia(ctx, entity.Tooltip); err != nil {
 		return Entity{}, err
 	}

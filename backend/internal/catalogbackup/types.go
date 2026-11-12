@@ -20,7 +20,7 @@ import (
 // Keep backup verification aligned with the latest production migration. A
 // backup that predates the active entity-type quality profiles cannot be
 // promoted safely because public completeness would be unverified.
-const MinimumSchemaVersion int64 = 182
+const MinimumSchemaVersion int64 = 186
 
 var CriticalTables = []string{
 	"users",

@@ -141,7 +141,7 @@ func (s *Service) Relationships(ctx context.Context, params RelationshipParams) 
 			JOIN game_entities entity ON entity.id=raw_links.related_entity_id
 				AND entity.product_id=(SELECT product_id FROM selected_entity)
 				AND entity.deleted_at IS NULL
-			JOIN game_entity_versions version ON version.id=entity.published_version_id
+			JOIN game_entity_versions version ON version.id=entity.published_version_id AND version.build_id=raw_links.build_id
 			LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
 			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 			WHERE true ` + publicCatalogDisplayNamePredicate("localized", "fallback") + publicCatalogUsabilityPredicate("entity", "version") + `
