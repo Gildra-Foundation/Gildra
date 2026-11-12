@@ -141,6 +141,9 @@ func run() error {
 		projected, importErr = projectCollectionsForTables(ctx, db, ic, opts.tables)
 		written += projected
 	}
+	if importErr == nil && opts.product == "wow" && (opts.projectProfessions || opts.projectCollections) {
+		importErr = projectMidnightMembership(ctx, db, ic)
+	}
 	if importErr == nil && contains(opts.tables, "ItemSparse") {
 		var assessed int64
 		if err := db.QueryRow(ctx, `SELECT catalog_refresh_midnight_item_usability($1)`, ic.BuildID).Scan(&assessed); err != nil {
