@@ -231,7 +231,7 @@ def collect_icyveins_dataset() -> dict[str, Any]:
         source_url = f"{BASE_URL}{source['path']}"
         try:
             body, fetch = fetch_with_fallback(source_url, contract)
-        except RuntimeError as provider_error:
+        except RuntimeError:
             try:
                 body, fetch = _direct_fetch(source_url, contract)
             except Exception as direct_error:
