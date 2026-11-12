@@ -252,15 +252,40 @@ function ItemVariants({ entries, lang }: { entries: Record<string, unknown>[]; l
 }
 
 function QuestInfo({ block, wow, lang }: { block: Record<string, unknown>; wow: boolean; lang: Lang }) {
-	const objectives = Array.isArray(block.objectives) ? block.objectives as Record<string, unknown>[] : [];
-	const lines = Array.isArray(block.quest_lines) ? block.quest_lines as Record<string, unknown>[] : [];
-	const rewards = Array.isArray(block.rewards) ? block.rewards as Record<string, unknown>[] : [];
+	const rows = (value: unknown) => Array.isArray(value) ? value as Record<string, unknown>[] : [];
+	const objectives = rows(block.objectives).filter((objective) => String(objective.description || (objective.target as Record<string, unknown> | null)?.name || "").trim());
+	const lines = rows(block.quest_lines).filter((line) => line.name);
+	const locations = rows(block.locations);
+	const rewards = rows(block.rewards);
+	const requirements = (block.requirements ?? {}) as Record<string, unknown>;
+	const copy = tooltipContentCopy[lang];
+	const target = (value: unknown, label?: string) => {
+		const record = (value ?? {}) as Record<string, unknown>;
+		const name = label || String(record.name || "");
+		return record.entity_id && record.entity_type && name
+			? <Link href={libraryRecordPath(lang, String(record.entity_type), String(record.entity_id), String(record.slug || record.external_id))}>{name}</Link>
+			: name;
+	};
+	const neighbours = (value: unknown) => rows(value).filter((entry) => (entry.target as Record<string, unknown> | null)?.name);
+	const names = (value: unknown) => Array.isArray(value) ? value.filter(Boolean).join(", ") : "";
 	return <div className="db-tooltip-quest-info">
 		{String(block.bullet_text ?? "") ? <div>{formatQuestText(String(block.bullet_text), lang)}</div> : null}
-		{objectives.length ? <div className="db-tooltip-related"><b>{tooltipContentCopy[lang].objectives}:</b>{objectives.map((objective) => <span key={String(objective.id)}>• {String(objective.description || `${tooltipContentCopy[lang].object} ${objective.object_id ?? ""}`)}{Number(objective.amount ?? 0) > 1 ? ` ×${String(objective.amount)}` : ""}</span>)}</div> : null}
-		{lines.length ? <div>{tooltipContentCopy[lang].questLine}: {lines.map((line) => String(line.name || line.id)).join(", ")}</div> : null}
+		{objectives.length ? <div className="db-tooltip-related"><b>{copy.objectives}:</b>{objectives.map((objective) => {
+			const label = String(objective.description || (objective.target as Record<string, unknown> | null)?.name || "");
+			return <span key={String(objective.id)}>• {target(objective.target, formatQuestText(label, lang))}{Number(objective.amount ?? 0) > 1 ? ` ×${String(objective.amount)}` : ""}</span>;
+		})}</div> : null}
+		{locations.length ? <div className="db-tooltip-related"><b>{copy.location}:</b>{locations.map((location) => <span key={String(location.entity_id)}>{target(location)}</span>)}</div> : null}
+		{lines.map((line) => <div key={String(line.id)} className="db-tooltip-related">
+			<b>{copy.questLine}: {String(line.name)}</b>
+			{neighbours(line.previous).map((entry) => <span key={`previous-${String(entry.quest_id)}`}>{copy.previousInStory}: {target(entry.target)}</span>)}
+			{neighbours(line.next).map((entry) => <span key={`next-${String(entry.quest_id)}`}>{copy.nextInStory}: {target(entry.target)}</span>)}
+		</div>)}
+		{Number(requirements.min_level) > 0 ? <div>{copy.requiresLevel} {String(requirements.min_level)}{Number(requirements.max_level) >= Number(requirements.min_level) ? `–${String(requirements.max_level)}` : "+"}</div> : null}
+		{names(requirements.classes) ? <div>{copy.classes}: {names(requirements.classes)}</div> : null}
+		{names(requirements.races) ? <div>{copy.races}: {names(requirements.races)}</div> : null}
+		{requirements.breadcrumb ? <div>{copy.breadcrumbQuest}: {target(requirements.breadcrumb)}</div> : null}
+		{requirements.start_item ? <div>{copy.startsWithItem}: {target(requirements.start_item)}</div> : null}
 		{rewards.length ? <QuestRewards rewards={rewards} wow={wow} lang={lang} /> : null}
-		{Number(block.poi_count ?? 0) > 0 ? <div>{tooltipContentCopy[lang].mapPoints}: {String(block.poi_count)}</div> : null}
 	</div>;
 }
 

@@ -515,8 +515,10 @@ var publicEntitySelectTemplate = `
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','quest_info','status',registry.enrichment_status,
 				'bullet_text',COALESCE(quest_text.bullet_text,''),
-				'objectives',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',objective.objective_id,'type',objective.objective_type,'object_id',objective.object_id,'amount',objective.amount,'description',COALESCE(objective_text.description,'')) ORDER BY objective.order_index,objective.objective_id) FROM catalog_quest_objectives objective LEFT JOIN catalog_quest_objective_localizations objective_text ON objective_text.build_id=objective.build_id AND objective_text.quest_id=objective.quest_id AND objective_text.objective_id=objective.objective_id AND objective_text.locale={locale} WHERE objective.build_id=registry.build_id AND objective.quest_id=registry.quest_id),'[]'::jsonb),
-				'quest_lines',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',line.quest_line_id,'name',COALESCE(line_text.name,''),'order',line.order_index) ORDER BY line.order_index) FROM catalog_quest_line_entries line LEFT JOIN catalog_quest_line_localizations line_text ON line_text.build_id=line.build_id AND line_text.quest_line_id=line.quest_line_id AND line_text.locale={locale} WHERE line.build_id=registry.build_id AND line.quest_id=registry.quest_id),'[]'::jsonb),
+				'objectives',` + questObjectivesSQL + `,
+				'quest_lines',` + questLinesSQL + `,
+				'locations',` + questLocationsSQL + `,
+				'requirements',` + questRequirementsSQL + `,
 				'rewards',COALESCE((SELECT jsonb_agg(jsonb_build_object(
 					'type',reward.reward_type,'external_id',reward.external_id,'amount',reward.amount,'choice',reward.is_choice,
 					'entity_id',reward_entity.id,'entity_type',reward_entity.entity_type,'slug',COALESCE(NULLIF(reward_name.slug,''),NULLIF(reward_fallback.slug,''),reward_entity.canonical_slug),
