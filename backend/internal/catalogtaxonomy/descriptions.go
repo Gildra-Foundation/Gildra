@@ -241,6 +241,9 @@ func carryForwardOfficialLocalizations(ctx context.Context, tx pgx.Tx) (int64, e
 }
 
 func rebuildCanonicalDescriptions(ctx context.Context, tx pgx.Tx) (int64, error) {
+	if _, err := tx.Exec(ctx, projectionSQL(itemAliasLocalizationsSQL)); err != nil {
+		return 0, fmt.Errorf("localize typed item records: %w", err)
+	}
 	command, err := tx.Exec(ctx, `
 		WITH candidates AS (
 			SELECT target_text.version_id,target_text.locale,source_text.description

@@ -168,6 +168,11 @@ func (c *spellValueCache) prefetch(ctx context.Context, entities []*Entity) erro
 // resolveDescriptions substitutes build-pinned values into the descriptions
 // and tooltips of all entities, loading the values in batches.
 func (s *Service) resolveDescriptions(ctx context.Context, entities []*Entity) error {
+	// Item blocks are completed first: an added socket effect is a template
+	// the resolver below fills like any stored one.
+	if err := s.completeItemTooltips(ctx, entities); err != nil {
+		return err
+	}
 	cache := newSpellValueCache(s)
 	if err := cache.prefetch(ctx, entities); err != nil {
 		return err

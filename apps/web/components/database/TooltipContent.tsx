@@ -43,6 +43,7 @@ export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: 
 	const mentions = Array.isArray(descriptionMentions) ? descriptionMentions as Record<string, unknown>[] : [];
 	// The same words often come twice (item subtitle and quoted description, "Season 14 Elite"): the first one stays.
 	const seenText = new Set<string>();
+	const hasStatAmounts = tooltip.blocks.some((block) => String(block.type ?? "") === "stats" && Array.isArray(block.entries) && block.entries.length > 0);
 	const blocks = tooltip.blocks.filter((block) => {
 		if (["description", "name_description", "subtext"].includes(String(block.type ?? "")) && typeof block.text === "string" && block.text.trim()) {
 			const key = block.text.trim().toLocaleLowerCase();
@@ -53,6 +54,8 @@ export function TooltipBody({ entity, lang, iconSymbol = "#ic-gem" }: { entity: 
 			const text = String(block.text ?? "");
 			if ((entity.type === "spell" || entity.type === "talent") && !text.trim()) return false;
 		}
+		// The stat amounts are already printed: the names-only line of the variants would repeat them.
+		if (String(block.type ?? "") === "item_variants" && hasStatAmounts) return false;
 		if (String(block.type ?? "") !== "acquisition") return true;
 		// "Crafted with: TK34[DNT]": a source that is a client placeholder is no source for a player.
 		if (LIBRARY_INTERNAL_NAME.test(String(block.name ?? ""))) return false;
@@ -131,6 +134,11 @@ function TooltipBlock({ block, entityType, wow, lang, mentions }: { block: Recor
   if (type === "binding") return <div>{bindingLabel(Number(block.code), lang)}</div>;
   if (type === "required_level") return <div>{tooltipContentCopy[lang].requiresLevel} {String(block.value ?? "")}</div>;
   if (type === "required_skill") return <div>{requiredSkillLabel(Number(block.skill_id), Number(block.rank), lang)}</div>;
+  if (type === "required_reputation" && typeof block.name === "string" && tooltipContentCopy[lang].reputationRanks[Number(block.rank)]) return <div>{tooltipContentCopy[lang].requiresReputation}: {block.name} — {tooltipContentCopy[lang].reputationRanks[Number(block.rank)]}</div>;
+  if (type === "weapon_speed" && Number(block.seconds) > 0) return <div>{tooltipContentCopy[lang].weaponSpeed} {Number(block.seconds).toLocaleString(lang === "ru" ? "ru-RU" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>;
+  if (type === "weapon_damage" && Number(block.max) > 0) return <WeaponDamage block={block} lang={lang} />;
+  if (type === "armor" && Number(block.value) > 0) return <div>{lang === "ru" ? `${tooltipContentCopy.ru.armor}: ${String(block.value)}` : `${String(block.value)} ${tooltipContentCopy.en.armor}`}</div>;
+  if (type === "unique" && Number(block.quantity) > 0) return <div>{tooltipContentCopy[lang].unique}{Number(block.quantity) > 1 ? ` (${String(block.quantity)})` : ""}</div>;
   if (type === "stack_limit") return <div>{tooltipContentCopy[lang].maximumStack}: {String(block.value ?? "")}</div>;
   if (type === "container_slots") return <div>{tooltipContentCopy[lang].bagSlots}: {String(block.value ?? "")}</div>;
   if (type === "price") return <TooltipPrice buy={Number(block.buy ?? 0)} sell={Number(block.sell ?? 0)} lang={lang} />;
@@ -509,6 +517,17 @@ function TooltipPrice({ buy, sell, lang }: { buy: number; sell: number; lang: La
   return <div className="db-tooltip-price">
     {buy > 0 ? <span>{tooltipContentCopy[lang].buyPrice}: {formatQuestMoney(buy, lang)}</span> : null}
     {sell > 0 ? <span>{tooltipContentCopy[lang].sellPrice}: {formatQuestMoney(sell, lang)}</span> : null}
+  </div>;
+}
+
+/** "27 – 52 Damage · Speed 3.00" and the damage per second under it, as the game prints a weapon. */
+function WeaponDamage({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
+  const copy = tooltipContentCopy[lang];
+  const number = (value: unknown, digits: number) => Number(value).toLocaleString(lang === "ru" ? "ru-RU" : "en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const range = `${number(block.min, 0)} – ${number(block.max, 0)}`;
+  return <div className="db-tooltip-stats">
+    <div><span>{lang === "ru" ? `${copy.damage}: ${range}` : `${range} ${copy.damage}`}</span><span>{copy.weaponSpeed} {number(block.speed, 2)}</span></div>
+    {Number(block.dps) > 0 ? <div><span>({number(block.dps, 1)} {copy.damagePerSecond})</span></div> : null}
   </div>;
 }
 

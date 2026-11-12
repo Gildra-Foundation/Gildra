@@ -144,11 +144,26 @@ func resolveEntityDescriptions(ctx context.Context, cache *spellValueCache, enti
 	// in sync with the resolved description instead of exposing raw source
 	// variables in the main tooltip paragraph. Effect blocks below are handled
 	// separately because each block can refer to a different spell.
-	entity.Tooltip.PlainText = resolveDescriptionText(entity.Tooltip.PlainText, currentSpellID, values, descriptionLocale(entity.Tooltip.PlainText, entity.Locale))
+	// Resolve block-owned templates before the remaining prose: sanitizing the
+	// whole paragraph first destroys the template needed for replacement.
 	for _, block := range entity.Tooltip.Blocks {
 		raw, ok := block["text"].(string)
 		if !ok || raw == "" {
 			continue
+		}
+
+		if block["effect_kind"] == "socket_bonus" {
+			resolved := resolveStaticGemText(raw, block)
+			if strings.Contains(resolved, "$k") {
+				// The client budget is absent: retain raw_text/stats for data
+				// consumers, but do not turn an unknown rating into display X.
+				block["text"] = ""
+				entity.Tooltip.PlainText = strings.ReplaceAll(entity.Tooltip.PlainText, raw, "")
+				continue
+			}
+			entity.Tooltip.PlainText = strings.ReplaceAll(entity.Tooltip.PlainText, raw, resolved)
+			raw = resolved
+			block["text"] = resolved
 		}
 		blockSpellID := int64Value(block["spell_id"])
 		blockValues := values
@@ -179,6 +194,7 @@ func resolveEntityDescriptions(ctx context.Context, cache *spellValueCache, enti
 		block["resolution_source"] = "db2"
 		entity.Tooltip.PlainText = strings.ReplaceAll(entity.Tooltip.PlainText, raw, resolved)
 	}
+	entity.Tooltip.PlainText = resolveDescriptionText(entity.Tooltip.PlainText, currentSpellID, values, descriptionLocale(entity.Tooltip.PlainText, entity.Locale))
 	return nil
 }
 
@@ -262,7 +278,7 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 				WHERE power.build_id=version.build_id AND power.table_name='SpellPower' AND power.locale='en_US'
 				  AND power.payload ? 'SpellID'
 				  AND (NULLIF(power.payload->>'SpellID',''))::bigint=entity.external_id
-				  AND power.payload->>'PowerCostMaxPct' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				  AND power.payload->>'PowerCostMaxPct' ~ '^-?[0-9]+(?:[.][0-9]+)?$'
 				ORDER BY power.row_id
 				LIMIT 1
 			),0),
@@ -292,26 +308,26 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 			effect.effect_index,effect.base_points::double precision,
 			effect.coefficient::double precision,effect.attack_power_coefficient::double precision,
 			COALESCE(effect.amplitude_ms,0),
-			COALESCE(CASE WHEN radius.payload->>'RadiusMax' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+			COALESCE(CASE WHEN radius.payload->>'RadiusMax' ~ '^-?[0-9]+(?:[.][0-9]+)?$'
 				AND (radius.payload->>'RadiusMax')::double precision > 0
 				THEN (radius.payload->>'RadiusMax')::double precision END,
-				CASE WHEN radius.payload->>'Radius' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+				CASE WHEN radius.payload->>'Radius' ~ '^-?[0-9]+(?:[.][0-9]+)?$'
 				THEN (radius.payload->>'Radius')::double precision END,0)
-			,COALESCE(NULLIF(CASE WHEN enchantment.payload->>'EffectPointsMin_0' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
-				THEN (enchantment.payload->>'EffectPointsMin_0')::double precision END,0),
-				CASE WHEN enchantment.payload->>'EffectArg_0' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
-				THEN (enchantment.payload->>'EffectArg_0')::double precision END,0)
-			,COALESCE(NULLIF(CASE WHEN enchantment.payload->>'EffectPointsMin_1' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
-				THEN (enchantment.payload->>'EffectPointsMin_1')::double precision END,0),
-				CASE WHEN enchantment.payload->>'EffectArg_1' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
-				THEN (enchantment.payload->>'EffectArg_1')::double precision END,0)
-			,COALESCE(NULLIF(CASE WHEN enchantment.payload->>'EffectPointsMin_2' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
-				THEN (enchantment.payload->>'EffectPointsMin_2')::double precision END,0),
-				CASE WHEN enchantment.payload->>'EffectArg_2' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
-				THEN (enchantment.payload->>'EffectArg_2')::double precision END,0)
-			,COALESCE(CASE WHEN enchantment.payload->>'ItemLevelMin' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+			,COALESCE(CASE WHEN COALESCE(NULLIF(enchantment.payload->>'ScalingClass','')::int,0)=0
+                AND COALESCE(NULLIF(enchantment.payload->>'EffectScalingPoints_0','')::numeric,0)=0
+                AND enchantment.payload->>'EffectPointsMin_0' ~ '^-?[0-9]+(?:[.][0-9]+)?$'
+                THEN (enchantment.payload->>'EffectPointsMin_0')::double precision END,0)
+			,COALESCE(CASE WHEN COALESCE(NULLIF(enchantment.payload->>'ScalingClass','')::int,0)=0
+                AND COALESCE(NULLIF(enchantment.payload->>'EffectScalingPoints_1','')::numeric,0)=0
+                AND enchantment.payload->>'EffectPointsMin_1' ~ '^-?[0-9]+(?:[.][0-9]+)?$'
+                THEN (enchantment.payload->>'EffectPointsMin_1')::double precision END,0)
+			,COALESCE(CASE WHEN COALESCE(NULLIF(enchantment.payload->>'ScalingClass','')::int,0)=0
+                AND COALESCE(NULLIF(enchantment.payload->>'EffectScalingPoints_2','')::numeric,0)=0
+                AND enchantment.payload->>'EffectPointsMin_2' ~ '^-?[0-9]+(?:[.][0-9]+)?$'
+                THEN (enchantment.payload->>'EffectPointsMin_2')::double precision END,0)
+			,COALESCE(CASE WHEN enchantment.payload->>'ItemLevelMin' ~ '^-?[0-9]+(?:[.][0-9]+)?$'
 				THEN (enchantment.payload->>'ItemLevelMin')::double precision END,0)
-			,COALESCE(CASE WHEN enchantment.payload->>'ItemLevelMax' ~ '^-?[0-9]+(?:\\.[0-9]+)?$'
+			,COALESCE(CASE WHEN enchantment.payload->>'ItemLevelMax' ~ '^-?[0-9]+(?:[.][0-9]+)?$'
 				THEN (enchantment.payload->>'ItemLevelMax')::double precision END,0)
 		FROM game_products product
 		JOIN game_entities entity ON entity.product_id=product.id AND entity.entity_type='spell'
@@ -435,7 +451,7 @@ func descriptionSpellID(entity Entity) int64 {
 			}
 		}
 	}
-	if entity.Type == "talent" {
+	if entity.Type == "talent" || entity.Type == "enchantment" {
 		return int64Value(nestedValue(entity.Payload, "raidbots", "spellId"))
 	}
 	return int64Value(nestedValue(entity.Payload, "db2", "SpellID"))
@@ -1171,9 +1187,27 @@ const descriptionEffectRows = `
     'radius_index_0',raw.payload->>'EffectRadiusIndex_0','radius_index_1',raw.payload->>'EffectRadiusIndex_1')
  FROM catalog_db2_rows raw
  WHERE raw.build_id=version.build_id AND raw.table_name='SpellEffect' AND raw.locale='en_US'
-  AND raw.payload->>'SpellID'=entity.external_id::text
+  AND raw.payload ? 'SpellID'
+  AND (NULLIF(raw.payload->>'SpellID',''))::bigint=entity.external_id
   AND COALESCE(NULLIF(raw.payload->>'DifficultyID','')::int,0)=0
   AND NOT EXISTS (SELECT 1 FROM catalog_spell_effects normalized
    WHERE normalized.spell_version_id=version.id AND normalized.difficulty_id=0 AND normalized.source='db2'
     AND normalized.effect_index=(raw.payload->>'EffectIndex')::int)
 `
+
+// Enchantment $k slots are not spell $s slots. Only explicit, unscaled numeric
+// values from the socket projection may replace them.
+func resolveStaticGemText(text string, block map[string]any) string {
+	stats, _ := block["stats"].([]any)
+	for _, raw := range stats {
+		stat, _ := raw.(map[string]any)
+		index, hasIndex := stat["index"]
+		value, ok := stat["value"].(float64)
+		if !hasIndex || !ok || math.IsNaN(value) || math.IsInf(value, 0) {
+			continue
+		}
+		token := regexp.MustCompile(`\$k` + strconv.FormatInt(int64Value(index)+1, 10) + `\b`)
+		text = token.ReplaceAllString(text, strconv.FormatFloat(value, 'f', -1, 64))
+	}
+	return text
+}

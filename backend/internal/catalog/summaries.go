@@ -380,6 +380,9 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		last := entities[len(entities)-1]
 		nextCursor = encodeSummaryCursor(last.ID, last.SearchRank, strings.TrimSpace(params.Query) != "")
 	}
+	if err := s.resolveItemSummaries(ctx, entities); err != nil {
+		return SummaryPage{}, err
+	}
 	return SummaryPage{Entities: entities, NextCursor: nextCursor, HasMore: hasMore, Total: total}, nil
 }
 

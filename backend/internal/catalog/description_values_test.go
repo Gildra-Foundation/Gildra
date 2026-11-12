@@ -1,8 +1,12 @@
 package catalog
 
 import (
+	"context"
+	"encoding/json"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -382,6 +386,90 @@ func TestMidnightToolRawEffectFallback(t *testing.T) {
 	} {
 		if got := resolveDescriptionText(tc.raw, 1234161, values, tc.locale); got != tc.want {
 			t.Fatalf("got %s want %s", got, tc.want)
+		}
+	}
+}
+
+func TestItemEffectPlainTextKeepsOwningSpellContext(t *testing.T) {
+	for _, tc := range []struct{ locale, raw, want string }{
+		{"en_US", "Gain $s1 power.", "Gain 8 power."},
+		{"ru_RU", "Повышает силу на $s1.", "Повышает силу на 8."},
+	} {
+		t.Run(tc.locale, func(t *testing.T) {
+			build := int64(92)
+			value := spellDescriptionValues{Effects: map[int]spellEffectValue{1: {BasePoints: 8}}}
+			cache := &spellValueCache{entries: map[spellValueKey]map[int64]*spellDescriptionValues{
+				{"wow", tc.locale, build}: {42: &value},
+			}}
+			entity := &Entity{Type: "item", Product: "wow", Locale: tc.locale, BuildID: &build,
+				Tooltip: &Tooltip{PlainText: tc.raw, Blocks: []map[string]any{{"type": "effect", "spell_id": int64(42), "text": tc.raw}}}}
+			if err := resolveEntityDescriptions(context.Background(), cache, entity); err != nil {
+				t.Fatal(err)
+			}
+			if entity.Tooltip.PlainText != tc.want || entity.Tooltip.Blocks[0]["text"] != tc.want {
+				t.Fatalf("%+v", entity.Tooltip)
+			}
+		})
+	}
+}
+
+func TestEnchantmentDescriptionUsesLinkedSpell(t *testing.T) {
+	entity := Entity{Type: "enchantment", ExternalID: 8110, Payload: map[string]any{"raidbots": map[string]any{"spellId": float64(123)}}}
+	if got := descriptionSpellID(entity); got != 123 {
+		t.Fatalf("got %d", got)
+	}
+}
+
+func TestStaticGemTextUsesAmountsNotStatIDs(t *testing.T) {
+	block := map[string]any{"stats": []any{map[string]any{"index": float64(0), "stat_type": float64(36), "value": float64(7)}, map[string]any{"index": float64(1), "stat_type": float64(32), "value": nil}}}
+	if got := resolveStaticGemText("+$k1 Haste; +$k2 Critical Strike", block); got != "+7 Haste; +$k2 Critical Strike" {
+		t.Fatal(got)
+	}
+	if completeItemEffect("Increases haste by a game-defined value.") {
+		t.Fatal("unresolved summary admitted")
+	}
+	if !completeItemEffect("Increases haste by 7.") {
+		t.Fatal("resolved summary rejected")
+	}
+}
+
+func TestItemSummaryRealSource(t *testing.T) {
+	dsn := os.Getenv("ITEMS_REPLAY_DATABASE_URL")
+	if dsn == "" {
+		t.Skip("isolated ITEMS replay required")
+	}
+	ctx := context.Background()
+	db, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var safe bool
+	if err := db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM catalog_snapshots WHERE metadata->>'fixture'='ITEMS isolated real-source replay, not original full artifacts')`).Scan(&safe); err != nil || !safe {
+		t.Fatal("not ITEMS fixture", err)
+	}
+	for _, locale := range []string{"en_US", "ru_RU"} {
+		page, err := NewService(db).Summaries(ctx, SummaryParams{Product: "wow", Type: "item", Locale: locale, Limit: 100, ExternalIDs: []int64{270402, 255375, 282426, 240855, 240856, 238009, 241297, 240157, 211993, 237602, 25208, 47518, 15450, 100290, 84940, 52222, 76564, 58142, 56477, 38879}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(page.Entities) != 20 {
+			t.Fatalf("summaries %d", len(page.Entities))
+		}
+		var tool string
+		for _, e := range page.Entities {
+			if e.ExternalID == 238009 {
+				tool = e.Description
+			}
+		}
+		if !strings.Contains(tool, "8") {
+			t.Fatalf("profession bonus missing: %q", tool)
+		}
+		if dir := os.Getenv("ITEMS_EVIDENCE_DIR"); dir != "" {
+			data, _ := json.MarshalIndent(page, "", "  ")
+			if err := os.WriteFile(filepath.Join(dir, "summaries-"+locale+".json"), data, 0600); err != nil {
+				t.Fatal(err)
+			}
 		}
 	}
 }
