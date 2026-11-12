@@ -8,7 +8,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
 import { libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/library/libraryCopy";
 import { libraryCardLayout, libraryRails } from "@/components/library/libraryRails";
-import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
+import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets, type CatalogPage } from "@/lib/api/client";
 import { libraryDatasetHead, requireCatalogSession } from "@/lib/library/server";
 import { pairedAlternates, withPageOpenGraph } from "@/lib/seo/metadata";
 import type { Metadata } from "next";
@@ -64,10 +64,19 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
   if (!dataset) notFound();
   const facets = (Array.isArray(filters.facet) ? filters.facet : filters.facet ? [filters.facet] : []).filter(Boolean);
   const catalogParams = { locale, product, dataset: dataset.slug, facets, query: filters.q, cursor: filters.cursor, minItemLevel: optionalNumber(filters.minLevel), maxItemLevel: optionalNumber(filters.maxLevel), minRequiredLevel: optionalNumber(filters.minRequiredLevel), maxRequiredLevel: optionalNumber(filters.maxRequiredLevel) };
+  // A filtered list the catalog cannot answer (a slow facet query) leaves the page and its filters in place;
+  // only a failure of the plain list closes the page.
+  const narrowed = facets.length > 0 || [filters.q, filters.cursor, filters.minLevel, filters.maxLevel, filters.minRequiredLevel, filters.maxRequiredLevel].some((value) => value?.trim());
+  let listFailed = false;
   let catalog, categories, entityTypes, products;
   try {
     [catalog, categories, entityTypes, products] = await Promise.all([
-      getCatalogPage({ ...catalogParams, includeTotal: false }),
+      getCatalogPage({ ...catalogParams, includeTotal: false }).catch((error): CatalogPage => {
+        if (!narrowed) throw error;
+        console.error("library filtered list unavailable", error);
+        listFailed = true;
+        return { data: [], pagination: { hasMore: false } };
+      }),
       getCatalogCategories(locale, dataset.entityType, product), getCatalogEntityTypes(locale, product), getCatalogProducts(),
     ]);
   } catch (error) {
@@ -89,7 +98,7 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
         <LibraryWorkspace
           lang={lang}
           dataset={dataset}
-          totalCount={<Suspense fallback="…"><CatalogTotal params={{ ...catalogParams, cursor: undefined }} /></Suspense>}
+          totalCount={listFailed ? undefined : <Suspense fallback="…"><CatalogTotal params={{ ...catalogParams, cursor: undefined }} /></Suspense>}
           catalog={catalog}
           categories={categories}
           entityType={entityTypes.find((entry) => entry.type === dataset.entityType)}
@@ -101,6 +110,7 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
           levels={levels}
           layout={libraryCardLayout(dataset.slug)}
           rails={libraryRails(dataset.slug, categories, lang)}
+          failed={listFailed}
         />
       </AtlasFrame>
     </PageShell>
