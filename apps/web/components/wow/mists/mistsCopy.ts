@@ -21,7 +21,7 @@ export const mistsCopy = {
     talents: "Таланты",
     calculator: "Калькулятор талантов",
     classTalents: (name: string) => `Таланты: ${name}`,
-    roles: { tank: "Танк", healer: "Лекарь", damage: "Урон" },
+    roles: { tank: "Танк", healer: "Лекарь", damage: "Боец" },
     specsOf: (name: string) => `Специализации: ${name}`,
     classes: "Классы",
     spec: "Специализация",

@@ -44,7 +44,7 @@ const en = {
     fillText: "Pick the specs you have. Suggestions come from top runs that already include them.",
     matched: (count: number, runs: string) => `${runs} top ${count === 1 ? "run" : "runs"} with this group`,
     noneMatched: "No top run has this group yet.",
-    suggestions: (role: string) => `Add a ${role}`,
+    suggestions: (role: string) => `Add a ${role === "Damage" ? "damage dealer" : role.toLowerCase()}`,
     groupFull: "The group is complete.",
     findRuns: "Find these runs",
     topTitle: "Top compositions",

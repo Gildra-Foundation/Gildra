@@ -21,7 +21,7 @@ describe("route registry", () => {
   }
   it("derives canonical and hreflang of a section page from its path", () => {
     const meta = sectionMetadata("lairs", "ru");
-    assert.equal(meta.title, "Логова и мировые боссы Midnight Сезон 2 — WowArcana");
+    assert.equal(meta.title, "Логова и мировые боссы Midnight, сезон 2 — WowArcana");
     assert.deepEqual(meta.alternates, { canonical: "/ru/wow/lairs", languages: { en: "/wow/lairs", ru: "/ru/wow/lairs", "x-default": "/wow/lairs" } });
     assert.equal(meta.robots, undefined);
     assert.equal(sectionMetadata("mythicPlusMeta", "en").robots, undefined);

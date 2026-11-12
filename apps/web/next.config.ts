@@ -130,7 +130,16 @@ const nextConfig: NextConfig = {
     // A day fresh, then served from cache while it revalidates; files that change
     // get a new name (-v2, dated), so a stale copy can live at most a day.
     const publicArt = [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=2592000" }];
+    // The home page's heading font starts with the document. As a response header it reaches
+    // only the visitor who opens the home page: a <link rel="preload"> in the page travelled with
+    // its prefetch too, so every page with a link to the home page downloaded the font unused.
+    const homeFont = {
+      missing: [{ type: "header" as const, key: "rsc" }],
+      headers: [{ key: "Link", value: '</assets/wow/fonts/azeroth/azeroth-cyrillic.woff2>; rel=preload; as=font; type="font/woff2"; crossorigin' }],
+    };
     return [
+      { source: "/", ...homeFont },
+      { source: "/ru", ...homeFont },
       { source: "/:path*", headers: [...security, ...sameOriginFrames] },
       { source: "/assets/:path*", headers: publicArt },
       { source: "/brand/:path*", headers: publicArt },

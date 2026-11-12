@@ -8,7 +8,7 @@ import { dungeonArtDirections, dungeonBackdropSmall } from "@/lib/wow/dungeonArt
 import { runHref } from "@/lib/games/wow/mythicPlusRunTypes";
 import { loadMythicPlusRuns } from "@/lib/games/wow/mythicPlusRuns";
 import { clock, runsRoles, runsSorts, withSpec, withoutSpec, type RunsQuery, type RunsResponse, type RunsRole } from "@/lib/games/wow/mythicPlusRunsTypes";
-import { trail } from "@/lib/routes/registry";
+import { trail, trailLabel } from "@/lib/routes/registry";
 import { dungeonLabel, DungeonStrip, FilterForm, GroupIcons, isSeasonDungeon, hrefWith, LoadState, NoMatch, number, percent, roleIcons, SelectedSpec, specIndex, specLabel, SpecToken, StaleNotice, type Locale } from "./CommunityParts";
 import { communityCopy, type CommunityCopy } from "./communityCopy";
 import styles from "./community.module.css";
@@ -45,7 +45,7 @@ export async function RoutesPage({ locale, query }: { locale: Locale; query: Run
         <AtlasHero
           align="start"
           className={styles.heroHeader}
-          breadcrumbs={crumbs}
+          breadcrumbsLabel={trailLabel(locale)} breadcrumbs={crumbs}
           title={copy.routes.title}
           lede={copy.routes.lede}
           actions={<div className={styles.actions} data-hub-actions>
