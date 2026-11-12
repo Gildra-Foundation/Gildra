@@ -316,7 +316,11 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		FROM game_products product
 		JOIN game_entities entity ON entity.product_id=product.id AND entity.entity_type='spell'
 			AND entity.external_id=ANY($2::bigint[]) AND entity.deleted_at IS NULL
-		JOIN game_entity_versions version ON version.id=entity.latest_version_id AND version.build_id=$4
+		JOIN LATERAL (
+            SELECT candidate.* FROM game_entity_versions candidate
+            WHERE candidate.entity_id=entity.id AND candidate.build_id=$4
+            ORDER BY candidate.revision DESC LIMIT 1
+        ) version ON true
 		LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$3
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 		LEFT JOIN LATERAL (
@@ -332,8 +336,7 @@ func (s *Service) loadSpellDescriptionValues(ctx context.Context, product, local
 		LEFT JOIN catalog_db2_rows duration ON duration.build_id=version.build_id
 			AND duration.table_name='SpellDuration' AND duration.locale='en_US'
 			AND duration.row_id=misc.duration_index
-		LEFT JOIN catalog_spell_effects effect ON effect.spell_version_id=version.id
-			AND effect.difficulty_id=0 AND effect.source='db2'
+		LEFT JOIN LATERAL (`+descriptionEffectRows+`) effect ON true
 		LEFT JOIN LATERAL (
 			SELECT COALESCE(
 				NULLIF(CASE WHEN effect.attributes->>'radius_index_1' ~ '^[0-9]+$'
@@ -1152,3 +1155,25 @@ func int64Value(value any) int64 {
 		return 0
 	}
 }
+
+// Raw DB2 is the fallback when an imported spell lacks its derived effect rows.
+// Never cross builds or overwrite a normalized slot.
+const descriptionEffectRows = `
+ SELECT effect_index,base_points,coefficient,attack_power_coefficient,amplitude_ms,attributes
+ FROM catalog_spell_effects WHERE spell_version_id=version.id AND difficulty_id=0 AND source='db2'
+ UNION ALL
+ SELECT (raw.payload->>'EffectIndex')::int,
+  NULLIF(raw.payload->>'EffectBasePointsF','')::numeric,
+  COALESCE(NULLIF(NULLIF(raw.payload->>'EffectBonusCoefficient','')::numeric,0),NULLIF(raw.payload->>'Coefficient','')::numeric),
+  NULLIF(raw.payload->>'BonusCoefficientFromAP','')::numeric,
+  NULLIF(raw.payload->>'EffectAuraPeriod','')::int,
+  jsonb_build_object('misc_value_0',raw.payload->>'EffectMiscValue_0',
+    'radius_index_0',raw.payload->>'EffectRadiusIndex_0','radius_index_1',raw.payload->>'EffectRadiusIndex_1')
+ FROM catalog_db2_rows raw
+ WHERE raw.build_id=version.build_id AND raw.table_name='SpellEffect' AND raw.locale='en_US'
+  AND raw.payload->>'SpellID'=entity.external_id::text
+  AND COALESCE(NULLIF(raw.payload->>'DifficultyID','')::int,0)=0
+  AND NOT EXISTS (SELECT 1 FROM catalog_spell_effects normalized
+   WHERE normalized.spell_version_id=version.id AND normalized.difficulty_id=0 AND normalized.source='db2'
+    AND normalized.effect_index=(raw.payload->>'EffectIndex')::int)
+`

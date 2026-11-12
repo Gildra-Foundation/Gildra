@@ -1,6 +1,12 @@
 package catalog
 
-import "testing"
+import (
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+	"testing"
+)
 
 func TestResolveDescriptionTextUsesOnlyLoadedDB2Values(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
@@ -343,5 +349,39 @@ func TestResolveDescriptionTextResolvesMidnightFuryPvpValues(t *testing.T) {
 	values[1219209] = spellDescriptionValues{DurationMS: 5000, Effects: map[int]spellEffectValue{1: {BasePoints: -50, Radius: 12}}}
 	if got := resolveDescriptionText("Сокращает время действия на $1219209s1% в радиусе $1219209A1 м в течение $1219209d.", 1227751, values, "ru_RU"); got != "Сокращает время действия на -50% в радиусе 12 м в течение 5 сек." {
 		t.Fatalf("berserker roar mismatch: %q", got)
+	}
+}
+
+func TestMidnightToolRawEffectFallback(t *testing.T) {
+	c := os.Getenv("MIDNIGHT_TEST_PG_CONTAINER")
+	if c == "" {
+		t.Skip("isolated PostgreSQL required")
+	}
+	q := `WITH catalog_spell_effects AS (
+ SELECT 0::int effect_index,0::numeric base_points,0::numeric coefficient,0::numeric attack_power_coefficient,
+  0::int amplitude_ms,'{}'::jsonb attributes,0::int spell_version_id,0::int difficulty_id,'db2'::text source WHERE false
+ ),catalog_db2_rows(build_id,table_name,locale,payload) AS (VALUES
+ (92,'SpellEffect','en_US','{"SpellID":"1234161","EffectIndex":"0","DifficultyID":"0","EffectBasePointsF":"8","EffectBonusCoefficient":"0"}'::jsonb),
+ (93,'SpellEffect','en_US','{"SpellID":"1234161","EffectIndex":"0","DifficultyID":"0","EffectBasePointsF":"999"}'::jsonb))
+ SELECT effect.base_points FROM (VALUES(1,92)) version(id,build_id)
+ CROSS JOIN (VALUES(1234161)) entity(external_id) CROSS JOIN LATERAL (` + descriptionEffectRows + `) effect;`
+	cmd := exec.Command("sudo", "-n", "docker", "exec", "-i", c, "psql", "-U", "postgres", "-XAt", "-v", "ON_ERROR_STOP=1")
+	cmd.Stdin = strings.NewReader(q)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%v: %s", err, out)
+	}
+	points, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
+	if err != nil || points != 8 {
+		t.Fatalf("%v %s", err, out)
+	}
+	values := map[int64]spellDescriptionValues{1234161: {Effects: map[int]spellEffectValue{1: {BasePoints: points}}}}
+	for _, tc := range []struct{ locale, raw, want string }{
+		{"en_US", "+$S1 Midnight Herbalism Skill", "+8 Midnight Herbalism Skill"},
+		{"ru_RU", "+$S1 к навыку травничества Midnight", "+8 к навыку травничества Midnight"},
+	} {
+		if got := resolveDescriptionText(tc.raw, 1234161, values, tc.locale); got != tc.want {
+			t.Fatalf("got %s want %s", got, tc.want)
+		}
 	}
 }

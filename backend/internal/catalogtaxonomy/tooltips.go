@@ -151,7 +151,7 @@ var tooltipSQL = `
 				'spell_id',COALESCE(NULLIF(effect.payload->>'SpellID','')::bigint,0),
 				'spell_name',COALESCE(NULLIF(spell_name.payload->>'Name_lang',''),NULLIF(spell_name_fallback.payload->>'Name_lang',''),''),
 				'spell_target_status',CASE WHEN spell_name_fallback.row_id IS NULL THEN 'unavailable_in_build' ELSE 'resolved' END,
-				'text',COALESCE(NULLIF(spell_text.payload->>'Description_lang',''),
+				'text',COALESCE(NULLIF(spell_text.payload->>'Description_lang',''),NULLIF(spell_text_fallback.payload->>'Description_lang',''),
 					CASE WHEN spell_name_fallback.row_id IS NULL AND locale.code='ru_RU'
 						THEN 'Эффект недоступен в данных этой сборки.'
 					WHEN spell_name_fallback.row_id IS NULL
@@ -168,7 +168,13 @@ var tooltipSQL = `
 			AND spell_name_fallback.row_id=(effect.payload->>'SpellID')::bigint AND spell_name_fallback.locale='en_US'
 		LEFT JOIN catalog_db2_rows spell_text ON spell_text.build_id=links.build_id AND spell_text.table_name='Spell'
 			AND spell_text.row_id=(effect.payload->>'SpellID')::bigint AND spell_text.locale=locale.code
+		LEFT JOIN catalog_db2_rows spell_text_fallback ON spell_text_fallback.build_id=links.build_id AND spell_text_fallback.table_name='Spell'
+			AND spell_text_fallback.row_id=(effect.payload->>'SpellID')::bigint AND spell_text_fallback.locale='en_US'
 		WHERE links.table_name='ItemXItemEffect' AND links.locale='en_US'
+          -- Internal equip markers have no player-facing description. Keep DNT
+          -- spells with real descriptions (e.g. profession skill bonuses).
+          AND NOT (COALESCE(spell_name_fallback.payload->>'Name_lang','') ~* '\(DNT\)'
+            AND COALESCE(NULLIF(spell_text.payload->>'Description_lang',''),NULLIF(spell_text_fallback.payload->>'Description_lang',''),'')='')
 		GROUP BY links.build_id,(links.payload->>'ItemID')::bigint,locale.code
 	), item_acquisition_rows AS (
 		SELECT source.version_id,locale.code AS locale,
@@ -269,6 +275,7 @@ var tooltipSQL = `
 			COALESCE(to_jsonb(item_detail),'{}'::jsonb) AS item_detail,
 			COALESCE(item_sparse_local.payload,item_sparse_fallback.payload,l.attributes->'db2',v.payload->'db2','{}'::jsonb) AS db2,
 			COALESCE(item_effects.effects,'[]'::jsonb) AS item_effects,
+ ` + gemTooltipExpression + ` AS gem_effects,
 			COALESCE(item_acquisition.sources,'[]'::jsonb) AS item_acquisition,
 			COALESCE(spell_owners.owners,'[]'::jsonb) AS spell_owners,
 			COALESCE(spell_talents.talents,'[]'::jsonb) AS spell_talents,
@@ -300,6 +307,7 @@ var tooltipSQL = `
 			AND item_sparse_local.table_name='ItemSparse' AND item_sparse_local.locale=l.locale AND item_sparse_local.row_id=e.external_id
 		LEFT JOIN catalog_db2_rows item_sparse_fallback ON e.entity_type='item' AND item_sparse_fallback.build_id=v.build_id
 			AND item_sparse_fallback.table_name='ItemSparse' AND item_sparse_fallback.locale='en_US' AND item_sparse_fallback.row_id=e.external_id
+` + gemTooltipJoins + `
 		LEFT JOIN item_effect_rows item_effects ON e.entity_type='item' AND item_effects.build_id=v.build_id
 			AND item_effects.item_id=e.external_id AND item_effects.locale=l.locale
 		LEFT JOIN item_acquisition_rows item_acquisition ON e.entity_type='item'
@@ -363,7 +371,7 @@ var tooltipSQL = `
 			|| CASE WHEN entity_type='item' AND item ? 'socketInfo' THEN jsonb_build_array(jsonb_build_object('type','sockets','value',item->'socketInfo')) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND item ? 'profession' THEN jsonb_build_array(jsonb_build_object('type','profession','value',item->'profession')) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND COALESCE((item->>'uniqueEquipped')::boolean,false) THEN jsonb_build_array(jsonb_build_object('type','unique_equipped')) ELSE '[]'::jsonb END
-			|| CASE WHEN entity_type='item' THEN item_effects ELSE '[]'::jsonb END
+			|| CASE WHEN entity_type='item' THEN gem_effects || item_effects ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' THEN item_acquisition ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='spell' AND NULLIF(COALESCE(localized_payload->>'subtext',payload->>'subtext'),'') IS NOT NULL THEN jsonb_build_array(jsonb_build_object('type','subtext','text',COALESCE(localized_payload->>'subtext',payload->>'subtext'))) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='spell' AND jsonb_array_length(spell_owners)>0 THEN jsonb_build_array(jsonb_build_object('type','spell_owners','entries',spell_owners)) ELSE '[]'::jsonb END
