@@ -467,7 +467,8 @@ function Dungeons({ data, text, locale, specs, query }: Ctx & { query: RunsQuery
                 <p className={styles.standout} title={text.standoutHint(specLabel(standout), percent(row.standout.presence, locale), percent(row.standout.overall, locale))} style={{ "--class-color": standout.color } as CSSProperties}>
                   <span className={styles.label}>{text.standout}</span>
                   <SpecToken spec={standout} size="sm" name={false} />
-                  <Delta value={row.standout.presence - row.standout.overall} locale={locale} digits={1} hint={text.standoutHint(specLabel(standout), percent(row.standout.presence, locale), percent(row.standout.overall, locale))} />
+                  {/* From ten points on the tenths go: "+32.2" ran under the edge of the narrow card. */}
+                  <Delta value={row.standout.presence - row.standout.overall} locale={locale} digits={Math.abs(row.standout.presence - row.standout.overall) >= 9.95 ? 0 : 1} hint={text.standoutHint(specLabel(standout), percent(row.standout.presence, locale), percent(row.standout.overall, locale))} />
                 </p>
               ) : null}
             </li>

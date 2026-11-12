@@ -13,7 +13,8 @@
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  /* 140 px: six numbers stay one row at 1024 (150 px left the sixth alone on a second row). */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--atlas-space-2) var(--atlas-space-5);
   max-width: 1200px;
   margin: var(--atlas-space-4) 0 0;
@@ -260,9 +261,9 @@
 .margin b { color: var(--atlas-text-strong); }
 .stack { display: flex; align-self: end; block-size: 8px; overflow: hidden; border-radius: 999px; background: var(--atlas-line-soft); }
 .stack > span { block-size: 100%; background: var(--step-color); }
-.standout { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; margin: 0; }
+.standout { display: flex; align-items: center; gap: 5px; margin: 0; }
 .standout .label { flex: none; margin: 0 2px 0 0; color: var(--atlas-text-muted); }
-.standout .delta { margin-left: auto; }
+.standout .delta { margin-left: auto; font-size: var(--atlas-text-small); }
 .standout b { color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums lining-nums; }
 .dungeon .standout [data-size="sm"] > span[aria-hidden] { --size: 24px; }
 
