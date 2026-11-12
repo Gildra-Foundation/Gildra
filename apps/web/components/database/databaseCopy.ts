@@ -72,6 +72,7 @@ export function previewCopy(lang: Lang) {
 }
 
 export const FACET_LABELS: Record<string, [en: string, ru: string]> = {
+  category: ["Category", "Категория"],
   class: ["Class", "Класс"], specialization: ["Specialization", "Специализация"], race: ["Race", "Раса"],
   equipment_slot: ["Equipment slot", "Слот"], armor_type: ["Armor type", "Тип брони"], weapon_type: ["Weapon type", "Тип оружия"],
   profession: ["Profession", "Профессия"], item_class: ["Item class", "Класс предмета"],

@@ -110,6 +110,9 @@ func (i *Indexer) rebuild(ctx context.Context, includeTooltips bool) (Result, er
 				return fmt.Errorf("rebuild entity tooltips: %w", err)
 			}
 			result.Tooltips = command.RowsAffected()
+			if _, err := rebuildAchievements(ctx, tx); err != nil {
+				return err
+			}
 		}
 		return nil
 	})

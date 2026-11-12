@@ -224,6 +224,9 @@ func productFreshness(activeBuild, releaseStatus, releaseBuild, checkStatus, obs
 }
 
 func (s *Service) Categories(ctx context.Context, product, entityType, locale string) ([]Category, error) {
+	if strings.TrimSpace(entityType) == "achievement" {
+		return s.achievementCategories(ctx, strings.TrimSpace(product), locale)
+	}
 	if strings.TrimSpace(entityType) == "" {
 		return nil, invalidRequest("entity type is required")
 	}
@@ -843,6 +846,9 @@ func (s *Service) enrichLocalizations(ctx context.Context, entities []*Entity) e
 }
 
 func (s *Service) enrichMedia(ctx context.Context, entities []*Entity) error {
+	if err := s.enrichAchievementTargets(ctx, entities); err != nil {
+		return err
+	}
 	ids := make([]uuid.UUID, 0, len(entities))
 	byID := make(map[uuid.UUID]*Entity, len(entities))
 	for _, entity := range entities {

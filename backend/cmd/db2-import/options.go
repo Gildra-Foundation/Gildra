@@ -120,7 +120,7 @@ func isLocalized(table string) bool {
 		"JournalInstance", "JournalEncounter", "SkillLine", "TradeSkillCategory", "Creature",
 		"CreatureType", "CreatureFamily", "ChrRaces", "ChrClasses", "ChrSpecialization",
 		"Map", "AreaTable", "UiMap", "Faction", "CurrencyTypes", "Mount", "BattlePetSpecies",
-		"Toy", "TransmogSet", "Achievement", "Achievement_Category", "Criteria", "PvpTalent":
+		"Toy", "TransmogSet", "Achievement", "Achievement_Category", "Criteria", "CriteriaTree", "PvpTalent":
 		return true
 	default:
 		return false
