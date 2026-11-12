@@ -30,6 +30,7 @@ type options struct {
 	enrichmentSliceRecords int
 	maxRequestsPerHour     int
 	evidenceReuseMaxAge    time.Duration
+	localeFollowsCanonical bool
 	allowBuildMismatch     bool
 	sourceBuildNumber      int
 	sourceBuildVersion     string
@@ -64,6 +65,7 @@ func parseOptions() (options, error) {
 	flag.IntVar(&opts.enrichmentSliceRecords, "enrichment-slice-records", 0, "stop after this many enrichment records per type/locale; nonzero exit retains checkpoints for resume")
 	flag.IntVar(&opts.maxRequestsPerHour, "max-requests-per-hour", 0, "pace missing-only enrichment requests; 0 leaves pacing to the Battle.net quota")
 	flag.DurationVar(&opts.evidenceReuseMaxAge, "evidence-reuse-max-age", 45*24*time.Hour, "complete missing-only records from responses an earlier import preserved for the same build-pinned namespace, no older than this; 0 always requests")
+	flag.BoolVar(&opts.localeFollowsCanonical, "locale-follows-canonical", true, "in a second-locale missing-only pass, do not request records the first locale showed absent from this API build or without a description (quests are always requested)")
 	flag.BoolVar(&opts.missingOnly, "missing-only", false, "enrich only build records with missing descriptions or icons")
 	flag.BoolVar(&opts.allowBuildMismatch, "allow-build-mismatch", false, "allow a pinned release build to differ from the currently published Battle.net API build; source build is recorded in provenance")
 	flag.Parse()

@@ -268,7 +268,6 @@ func TestFreshnessEnrichmentReusesSameNamespaceEvidence(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
-	const namespace = "static-12.1.5_70077-us"
 	var mu sync.Mutex
 	requests := map[string]int{}
 	var server *httptest.Server
@@ -278,10 +277,12 @@ func TestFreshnessEnrichmentReusesSameNamespaceEvidence(t *testing.T) {
 			return
 		}
 		mu.Lock()
-		requests[r.URL.Path]++
+		requests[r.URL.Path+"|"+r.URL.Query().Get("locale")]++
 		mu.Unlock()
-		link := func(path string) string { return server.URL + path + "?namespace=" + namespace }
+		link := func(path string) string { return server.URL + path + "?namespace=" + r.URL.Query().Get("namespace") }
 		switch r.URL.Path {
+		case "/data/wow/item/14":
+			fmt.Fprintf(w, `{"_links":{"self":{"href":%q}},"id":14,"name":"Official item 14"}`, link(r.URL.Path))
 		case "/data/wow/item/11", "/data/wow/item/13":
 			id := strings.TrimPrefix(r.URL.Path, "/data/wow/item/")
 			fmt.Fprintf(w, `{"_links":{"self":{"href":%q}},"id":%s,"name":"Official item %s","description":"Official text","media":{"key":{"href":%q},"id":%s}}`,
@@ -300,7 +301,7 @@ func TestFreshnessEnrichmentReusesSameNamespaceEvidence(t *testing.T) {
 	}
 	manager := catalogrelease.NewManager(pool)
 	store := catalogimport.NewStore(pool)
-	enrich := func(version string, build int, ids []int64, sourceVersion string) (uuid.UUID, uuid.UUID) {
+	enrich := func(version string, build int, ids []int64, sourceVersion string, locales ...string) (uuid.UUID, uuid.UUID) {
 		t.Helper()
 		var runID int64
 		if err := pool.QueryRow(ctx, `INSERT INTO catalog_pipeline_runs(pipeline_key,trigger_kind,mode,status,product,publication_environment) VALUES('freshness-reuse-test','manual','apply','failed','wow','staging') RETURNING id`).Scan(&runID); err != nil {
@@ -323,6 +324,12 @@ func TestFreshnessEnrichmentReusesSameNamespaceEvidence(t *testing.T) {
 			if err := store.UpsertCanonical(ctx, base, catalogimport.Record{Type: "item", ExternalID: id, Locale: "en_US", Payload: payload, SourceURL: "https://example.test", SourceArtifactID: &artifact}); err != nil {
 				t.Fatal(err)
 			}
+			for _, locale := range locales {
+				localized := json.RawMessage(fmt.Sprintf(`{"id":%d,"name":"Клиентский предмет %d"}`, id, id))
+				if err := store.Enrich(ctx, base, catalogimport.Record{Type: "item", ExternalID: id, Locale: locale, Payload: localized, SourceURL: "https://example.test", SourceArtifactID: &artifact}, "wago_tools"); err != nil {
+					t.Fatal(err)
+				}
+			}
 			if _, err := store.UpsertSourceRecord(ctx, artifact, fmt.Sprint(id), payload); err != nil {
 				t.Fatal(err)
 			}
@@ -338,8 +345,8 @@ func TestFreshnessEnrichmentReusesSameNamespaceEvidence(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		opts := options{missingOnly: true, entityTypes: []string{"item"}, locales: []string{"en_US"}, product: "wow",
-			sourceBuildVersion: sourceVersion, sourceBuildNumber: 70077, detailWorkers: 1, evidenceReuseMaxAge: time.Hour}
+		opts := options{missingOnly: true, entityTypes: []string{"item"}, locales: append([]string{"en_US"}, locales...), product: "wow",
+			sourceBuildVersion: sourceVersion, sourceBuildNumber: 70077, detailWorkers: 1, evidenceReuseMaxAge: time.Hour, localeFollowsCanonical: true}
 		var seen, written int64
 		if err := importBattleNet(ctx, client, store, ic, opts, &seen, &written); err != nil {
 			t.Fatal(err)
@@ -348,7 +355,7 @@ func TestFreshnessEnrichmentReusesSameNamespaceEvidence(t *testing.T) {
 			t.Fatal(err)
 		}
 		var enrichment uuid.UUID
-		if err := pool.QueryRow(ctx, `SELECT id FROM catalog_source_artifacts WHERE snapshot_id=$1 AND artifact_key='battlenet-missing/item' AND status='ready' AND content_hash IS NOT NULL`, ic.SnapshotID).Scan(&enrichment); err != nil {
+		if err := pool.QueryRow(ctx, `SELECT id FROM catalog_source_artifacts WHERE snapshot_id=$1 AND artifact_key='battlenet-missing/item' AND locale='en_US' AND status='ready' AND content_hash IS NOT NULL`, ic.SnapshotID).Scan(&enrichment); err != nil {
 			t.Fatalf("enrichment artifact of %s is not proved: %v", version, err)
 		}
 		return release, enrichment
@@ -356,6 +363,9 @@ func TestFreshnessEnrichmentReusesSameNamespaceEvidence(t *testing.T) {
 	count := func(path string) int {
 		mu.Lock()
 		defer mu.Unlock()
+		if !strings.Contains(path, "|") {
+			path += "|en_US"
+		}
 		return requests[path]
 	}
 
@@ -421,6 +431,19 @@ func TestFreshnessEnrichmentReusesSameNamespaceEvidence(t *testing.T) {
 	}
 	if name != "Official item 11" || icons == 0 {
 		t.Fatalf("reused evidence not applied to the new build: name=%q icons=%d", name, icons)
+	}
+
+	// A second locale asks only where the first locale showed something to ask
+	// for: item 11 has an official description; item 12 does not exist in this
+	// API build; item 14 exists without a description and already has its name.
+	enrich("12.1.5.70903", 70903, []int64{11, 12, 14}, "12.1.5.70077", "ru_RU")
+	for path, want := range map[string]int{
+		"/data/wow/item/11": 1, "/data/wow/item/12": 1, "/data/wow/item/14": 1,
+		"/data/wow/item/11|ru_RU": 1, "/data/wow/item/12|ru_RU": 0, "/data/wow/item/14|ru_RU": 0,
+	} {
+		if got := count(path); got != want {
+			t.Fatalf("after the bilingual build %s was requested %d times, want %d", path, got, want)
+		}
 	}
 
 	// Another API build is another namespace: nothing preserved may stand in.

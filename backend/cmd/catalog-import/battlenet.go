@@ -183,10 +183,15 @@ func importBattleNetMissingType(
 	if err != nil {
 		return err
 	}
+	canonical, err := newCanonicalLocale(ctx, store, importContext, opts, "battlenet-missing/"+entityType, entityType, locale)
+	if err != nil {
+		return err
+	}
 	pacer := newRequestPacer(opts.maxRequestsPerHour)
 	defer func() {
 		slog.Info("Battle.net enrichment pass", "type", entityType, "locale", locale,
-			"reused_evidence", reuse.reused.Load(), "requested", reuse.requested.Load(), "evidence_artifacts", len(reuse.artifacts))
+			"reused_evidence", reuse.reused.Load(), "requested", reuse.requested.Load(),
+			"nothing_to_request", canonical.skipped.Load(), "evidence_artifacts", len(reuse.artifacts))
 	}()
 
 	var processed, attempted int64
@@ -207,6 +212,11 @@ func importBattleNetMissingType(
 						return err
 					}
 					if complete {
+						continue
+					}
+					if nothing, err := canonical.nothingToRequest(groupCtx, store, importContext, entityType, locale, id); err != nil {
+						return err
+					} else if nothing {
 						continue
 					}
 					origin, reusedDetail, err := reuse.apply(groupCtx, client, store, importContext, pacer, artifactID,

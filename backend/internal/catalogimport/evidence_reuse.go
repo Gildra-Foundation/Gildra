@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // BattleNetEvidence is one preserved official response (or 404 observation)
@@ -92,4 +93,35 @@ func (s *Store) BattleNetEvidenceFor(ctx context.Context, artifacts []uuid.UUID,
 		result = append(result, evidence)
 	}
 	return result, rows.Err()
+}
+
+// ReadyArtifact returns the proved artifact of this snapshot for a key and
+// locale, or uuid.Nil when that pass has not completed.
+func (s *Store) ReadyArtifact(ctx context.Context, ic ImportContext, artifactKey, locale string) (uuid.UUID, error) {
+	var id uuid.UUID
+	err := s.db.QueryRow(ctx, `
+		SELECT id FROM catalog_source_artifacts
+		WHERE snapshot_id=$1 AND artifact_key=$2 AND locale=$3 AND status='ready' AND content_hash IS NOT NULL`,
+		ic.SnapshotID, artifactKey, locale).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return uuid.Nil, nil
+	}
+	return id, err
+}
+
+// LocalizedNameMissing reports whether the version this import would enrich
+// still has no name in the locale.
+func (s *Store) LocalizedNameMissing(ctx context.Context, ic ImportContext, entityType string, id int64, locale string) (bool, error) {
+	version, err := s.enrichmentTargetVersion(ctx, ic, entityType, id)
+	if err != nil {
+		return false, err
+	}
+	var present bool
+	err = s.db.QueryRow(ctx, `
+		SELECT NULLIF(BTRIM(name),'') IS NOT NULL FROM game_entity_localizations
+		WHERE version_id=$1::uuid AND locale=$2`, version, locale).Scan(&present)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return true, nil
+	}
+	return !present, err
 }

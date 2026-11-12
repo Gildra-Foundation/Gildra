@@ -57,6 +57,18 @@ const missingBattleNetLocalizationCondition = `(
 			OR ($7::boolean AND cached_icons.entity_id IS NULL)
 		)`
 
+// ResumableSnapshotMarker names the resume protocol an import's parameters
+// opt into, or "" when a failed snapshot of that import must be discarded.
+func ResumableSnapshotMarker(source string, parameters map[string]any) string {
+	switch {
+	case source == "battlenet" && parameters["resumable_enrichment"] == "v1" && parameters["missing_only"] == true:
+		return "resumable_enrichment"
+	case source == "wago_tools" && parameters["resumable_tables"] == "v1":
+		return "resumable_tables"
+	}
+	return ""
+}
+
 // MissingBattleNetIDs returns build-pinned entities whose localized name or
 // description still needs official API enrichment. When includeMedia is true
 // (the canonical English pass), entities without a verified icon observation
@@ -883,24 +895,27 @@ func (s *Store) Begin(
 		if err != nil {
 			return fmt.Errorf("encode import parameters: %w", err)
 		}
-		// Only the explicit enrichment protocol can retain a failed snapshot.
-		// Exact parameters include product/build, source build, locales and types.
+		// Only an explicit resume protocol can retain a failed snapshot: record
+		// checkpoints of Battle.net enrichment, or proved tables of a DB2 import.
+		// Exact parameters include product/build, source build, locales, types
+		// and tables.
 		var metadata map[string]any
 		if err := json.Unmarshal(encoded, &metadata); err != nil {
 			return err
 		}
-		resumable := source == "battlenet" && releaseID != nil && metadata["resumable_enrichment"] == "v1" && metadata["missing_only"] == true
+		marker := ResumableSnapshotMarker(source, metadata)
+		resumable := releaseID != nil && marker != ""
 		if resumable {
 			var conflict bool
 			if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM catalog_snapshots
-                WHERE release_id=$1 AND source=$2 AND metadata->>'resumable_enrichment'='v1'
+                WHERE release_id=$1 AND source=$2 AND metadata->>$4='v1'
                 AND COALESCE(metadata->'entity_types','[]'::jsonb)=COALESCE($3::jsonb->'entity_types','[]'::jsonb)
                 AND COALESCE(metadata->'locales','[]'::jsonb)=COALESCE($3::jsonb->'locales','[]'::jsonb)
-                AND (status='staging' OR (status='failed' AND metadata<>$3::jsonb)))`, releaseID, source, encoded).Scan(&conflict); err != nil {
+                AND (status='staging' OR (status='failed' AND metadata<>$3::jsonb)))`, releaseID, source, encoded, marker).Scan(&conflict); err != nil {
 				return err
 			}
 			if conflict {
-				return errors.New("enrichment snapshot is active or its source/options changed; reconcile the worker or start a new release")
+				return errors.New("resumable snapshot is active or its source/options changed; reconcile the worker or start a new release")
 			}
 			err := tx.QueryRow(ctx, `SELECT id FROM catalog_snapshots
                 WHERE release_id=$1 AND build_id=$2 AND source=$3 AND metadata=$4
@@ -1231,17 +1246,26 @@ func (s *Store) finish(ctx context.Context, runID uuid.UUID, status string, seen
 			WHERE id=$1 AND status='staging'`, snapshotID); err != nil {
 			return err
 		}
-		// Resolve only earlier failures of this exact resumable snapshot after
-		// its complete successful pass. Keep failed runs as immutable history.
-		if _, err := tx.Exec(ctx, `UPDATE catalog_import_failure_queue queue
-            SET state='resolved',resolution_code='enrichment_checkpoint_completed',
-                resolution_summary='Completed by resumed import ' || $2::text,
-                resolved_at=now(),updated_at=now()
-            FROM catalog_import_runs prior,catalog_snapshots snapshot
-            WHERE queue.import_run_id=prior.id AND prior.snapshot_id=$1
-              AND snapshot.id=prior.snapshot_id AND snapshot.metadata->>'resumable_enrichment'='v1'
-              AND prior.id<>$2::uuid AND prior.status='FAILED' AND queue.state<>'resolved'`, snapshotID, runID); err != nil {
-			return err
+		// A stopped attempt is superseded once the very same import (product,
+		// build, source and parameters) completes: that is the retry the failure
+		// queue asks for. Failed runs stay as immutable history; attempts with
+		// other parameters, such as a bounded run, stay open.
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO catalog_import_failure_queue(import_run_id,state,failure_code,last_error_summary,
+				resolution_code,resolution_summary,resolved_at)
+			SELECT prior.id,'resolved',COALESCE(NULLIF(prior.failure_code,''),'import_failed'),
+				COALESCE(NULLIF(prior.error_summary,''),'import failed'),
+				'superseded_by_successful_retry','Same import completed by run ' || completed.id::text,now()
+			FROM catalog_import_runs completed
+			JOIN catalog_import_runs prior ON prior.product_id=completed.product_id AND prior.build_id=completed.build_id
+				AND prior.source=completed.source AND prior.parameters=completed.parameters
+				AND prior.id<>completed.id AND prior.status='FAILED' AND prior.started_at<completed.started_at
+			WHERE completed.id=$1
+			ON CONFLICT(import_run_id) DO UPDATE SET state='resolved',
+				resolution_code=EXCLUDED.resolution_code,resolution_summary=EXCLUDED.resolution_summary,
+				resolved_at=now(),updated_at=now()
+			WHERE catalog_import_failure_queue.state<>'resolved'`, runID); err != nil {
+			return fmt.Errorf("resolve superseded import failures: %w", err)
 		}
 		if !publish {
 			return nil

@@ -245,3 +245,79 @@ func (p *requestPacer) Wait(ctx context.Context) error {
 		return nil
 	}
 }
+
+// canonicalLocale answers, for a second-locale pass, whether the canonical
+// (first) locale pass of the same snapshot already showed that the official
+// document has nothing for this record: the document does not exist in this
+// API build, or it carries no description and the record already has its
+// localized name. Documents are the same in every locale and region of one
+// build (57,571 quests requested in en_US/us and ru_RU/eu for API build 70077
+// gave identical 404 sets), so asking again spends quota on a known answer.
+// Quests are excluded: their publication rule needs an observed 404 per locale.
+type canonicalLocale struct {
+	artifact []uuid.UUID
+	skipped  atomic.Int64
+}
+
+func newCanonicalLocale(ctx context.Context, store *catalogimport.Store, ic catalogimport.ImportContext, opts options, artifactKey, entityType, locale string) (*canonicalLocale, error) {
+	follow := &canonicalLocale{}
+	if !opts.localeFollowsCanonical || entityType == "quest" || len(opts.locales) == 0 || locale == opts.locales[0] {
+		return follow, nil
+	}
+	artifact, err := store.ReadyArtifact(ctx, ic, artifactKey, opts.locales[0])
+	if err != nil {
+		return nil, err
+	}
+	if artifact != uuid.Nil {
+		follow.artifact = []uuid.UUID{artifact}
+	}
+	return follow, nil
+}
+
+func (c *canonicalLocale) nothingToRequest(ctx context.Context, store *catalogimport.Store, ic catalogimport.ImportContext, entityType, locale string, id int64) (bool, error) {
+	if len(c.artifact) == 0 {
+		return false, nil
+	}
+	evidence, err := store.BattleNetEvidenceFor(ctx, c.artifact, id, time.Time{})
+	if err != nil {
+		return false, err
+	}
+	detailKey := strconv.FormatInt(id, 10)
+	for _, candidate := range evidence {
+		switch {
+		case candidate.RecordKey == detailKey:
+			var document struct {
+				Description json.RawMessage `json:"description"`
+			}
+			if json.Unmarshal(candidate.Payload, &document) != nil {
+				return false, nil
+			}
+			var description any
+			if len(document.Description) > 0 && json.Unmarshal(document.Description, &description) != nil {
+				return false, nil
+			}
+			if strings.TrimSpace(localizedText(description)) != "" {
+				return false, nil
+			}
+			missing, err := store.LocalizedNameMissing(ctx, ic, entityType, id, locale)
+			if err != nil || missing {
+				return false, err
+			}
+			c.skipped.Add(1)
+			return true, nil
+		case strings.HasPrefix(candidate.RecordKey, "unavailable/"):
+			var observed struct {
+				ExternalID int64  `json:"external_id"`
+				HTTPStatus int64  `json:"http_status"`
+				Reason     string `json:"reason"`
+			}
+			if json.Unmarshal(candidate.Payload, &observed) != nil || observed.ExternalID != id ||
+				observed.HTTPStatus != 404 || observed.Reason != "detail_not_found" {
+				return false, nil
+			}
+			c.skipped.Add(1)
+			return true, nil
+		}
+	}
+	return false, nil
+}

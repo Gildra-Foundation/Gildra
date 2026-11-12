@@ -89,17 +89,24 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	ic, err := store.Begin(ctx, opts.product, buildNumber, opts.version, "us", "wago_tools", releaseID, map[string]any{
+	parameters := map[string]any{
 		"product": opts.product, "tables": opts.tables, "locales": opts.locales,
 		"max_records_per_table": opts.maxRecords, "batch_size": opts.batchSize,
-	})
+	}
+	// A complete staged import keeps its proved tables when the stage stops, so
+	// the next attempt downloads only what is left and then projects.
+	resumeTables := releaseID != nil && opts.download && opts.maxRecords == 0
+	if resumeTables {
+		parameters["resumable_tables"] = "v1"
+	}
+	ic, err := store.Begin(ctx, opts.product, buildNumber, opts.version, "us", "wago_tools", releaseID, parameters)
 	if err != nil {
 		return err
 	}
 	var seen, written int64
 	var importErr error
 	if opts.download {
-		importErr = importTables(ctx, db, client, store, ic, opts, &seen, &written)
+		importErr = importTables(ctx, db, client, store, ic, opts, resumeTables, &seen, &written)
 	}
 	if importErr == nil && opts.projectItemDetailsOnly {
 		importErr = projectItemDetails(ctx, db, ic)

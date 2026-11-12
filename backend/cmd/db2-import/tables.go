@@ -126,7 +126,44 @@ func observeDB2LocalizationArtifactsForTables(ctx context.Context, db *pgxpool.P
 	return nil
 }
 
-func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, store *catalogimport.Store, ic catalogimport.ImportContext, opts options, seen, written *int64) error {
+// retainedTableRows reports a table this snapshot already imported and proved
+// in an earlier attempt of the same release: its artifact is ready for the
+// same source URL, its completeness was measured, and every measured row is
+// still attached to that artifact.
+func retainedTableRows(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext, table, locale, sourceURL string) (int64, bool, error) {
+	var artifactID uuid.UUID
+	var sourceRows, measured int64
+	err := db.QueryRow(ctx, `
+		SELECT artifact.id,expectation.expected_count,measurement.imported_count
+		FROM catalog_source_artifacts artifact
+		JOIN catalog_completeness_expectations expectation
+		  ON expectation.source_artifact_id=artifact.id AND expectation.build_id=artifact.build_id
+		JOIN LATERAL (
+			SELECT imported_count FROM catalog_completeness_measurements
+			WHERE expectation_id=expectation.id ORDER BY measured_at DESC LIMIT 1
+		) measurement ON true
+		WHERE artifact.snapshot_id=$1 AND artifact.source='wago_tools' AND artifact.artifact_key=$2
+		  AND artifact.locale=$3 AND artifact.source_url=$4 AND artifact.status='ready'
+		  AND artifact.content_hash IS NOT NULL
+		  AND NOT COALESCE((artifact.metadata->>'bounded')::boolean,false)`,
+		ic.SnapshotID, table, locale, sourceURL).Scan(&artifactID, &sourceRows, &measured)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, false, fmt.Errorf("check retained DB2 table %s (%s): %w", table, locale, err)
+	}
+	var present int64
+	if err := db.QueryRow(ctx, `
+		SELECT count(*) FROM catalog_db2_rows
+		WHERE build_id=$1 AND table_name=$2 AND locale=$3 AND source_artifact_id=$4`,
+		ic.BuildID, table, locale, artifactID).Scan(&present); err != nil {
+		return 0, false, fmt.Errorf("count retained DB2 rows of %s (%s): %w", table, locale, err)
+	}
+	return sourceRows, present == measured, nil
+}
+
+func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, store *catalogimport.Store, ic catalogimport.ImportContext, opts options, resume bool, seen, written *int64) error {
 	for _, table := range opts.tables {
 		locales := opts.locales
 		if !isLocalized(table) {
@@ -138,6 +175,17 @@ func importTables(ctx context.Context, db *pgxpool.Pool, client *wago.Client, st
 			metadata := map[string]any{
 				"table": table, "build": opts.version, "locale": locale,
 				"bounded": opts.maxRecords > 0, "max_records": opts.maxRecords,
+			}
+			if resume {
+				rows, retained, err := retainedTableRows(ctx, db, ic, table, locale, sourceURL)
+				if err != nil {
+					return err
+				}
+				if retained {
+					*seen += rows
+					slog.Info("DB2 table retained from the stopped attempt", "table", table, "locale", locale, "rows", rows)
+					continue
+				}
 			}
 			var artifactID uuid.UUID
 			var err error
