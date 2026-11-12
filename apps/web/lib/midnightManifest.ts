@@ -15,5 +15,3 @@ export const midnightManifest = {
   importedAt: "2026-08-30",
   hotfixThrough: null as string | null,
 } as const;
-
-export const midnightSnapshotLabel = `Срез Midnight ${midnightManifest.clientBuild}`;

@@ -30,7 +30,3 @@ export function pageNumber(value: string | undefined, count: number, size = 50) 
   const number = value && /^\d+$/.test(value) ? Number(value) : 1;
   return Math.max(1, Math.min(Math.ceil(count / size) || 1, Number.isSafeInteger(number) ? number : 1));
 }
-export function craftingMaterials(recipe: Recipe, crafts: number) {
-  const safe = Number.isSafeInteger(crafts) ? Math.max(1, Math.min(999, crafts)) : 1;
-  return recipe.reagents.map(r => ({ ...r, quantity: r.quantity * safe }));
-}

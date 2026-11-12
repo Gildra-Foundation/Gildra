@@ -38,14 +38,3 @@ export function getPerformanceTier(): PerformanceTier {
 
   return "full";
 }
-
-export function elementCanAnimate(element: Element) {
-  if (typeof document === "undefined" || document.hidden) return false;
-  const rect = element.getBoundingClientRect();
-  return rect.width > 1
-    && rect.height > 1
-    && rect.bottom > 0
-    && rect.right > 0
-    && rect.top < window.innerHeight
-    && rect.left < window.innerWidth;
-}

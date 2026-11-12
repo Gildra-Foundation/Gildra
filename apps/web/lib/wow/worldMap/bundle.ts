@@ -1,4 +1,4 @@
-import type { EraMapOverride, EraRecord, EventLink, MapArt, MapRecord, MapTerrain, MapType, PatchRange, PoiKind, PoiRecord, Rect, WorldMapData } from "./types";
+import type { EraRecord, EventLink, MapArt, MapRecord, MapTerrain, MapType, PatchRange, PoiKind, PoiRecord, Rect, WorldMapData } from "./types";
 
 /**
  * The viewer's compact bundle of the world map, for one language. Every map
@@ -110,15 +110,6 @@ function fitFrame(box: Rect, art: MapArt | null): Rect {
   const w = Math.min(bw, bh * aspect), h = w / aspect;
   const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
   return [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2];
-}
-
-/** An era's art for a map: other art, `null` when the map did not exist then, `undefined` when it is the current art. */
-export function eraArt(override: EraMapOverride): MapArt | null | undefined {
-  if (override === "unchanged") return undefined;
-  if (override === null) return null;
-  if (typeof override === "object" && "url" in override) return validArt(override) ? override : undefined;
-  if (typeof override === "object" && "art" in override) return override.art === null ? null : validArt(override.art) ? override.art : undefined;
-  return undefined;
 }
 
 /**

@@ -97,28 +97,3 @@ export function fallbackPlatformHome(lang: Lang): PlatformHomeData {
     },
   };
 }
-
-/**
- * Public fail-closed state. It intentionally contains no synthetic profile,
- * progression, rankings, patch claims, or recommendations.
- */
-export function unavailablePlatformHome(lang: Lang): PlatformHomeData {
-  const localized = fallbackPlatformHome(lang);
-  const unavailable = lang === "ru" ? "Данные временно недоступны" : "Data temporarily unavailable";
-  return {
-    profile: { name: "Gildra" },
-    greeting: lang === "ru" ? "World of Warcraft" : "World of Warcraft",
-    title: lang === "ru"
-      ? "Проверенные данные временно недоступны. Повторите попытку позже."
-      : "Verified data is temporarily unavailable. Please try again later.",
-    games: games.map((game) => ({ ...game, subtitle: unavailable })),
-    personalMeta: [],
-    continueItems: [],
-    savedBuilds: [],
-    patchPulse: [],
-    quickActions: [],
-    recommendations: [],
-    labels: localized.labels,
-    updatedAt: new Date(0).toISOString(),
-  };
-}

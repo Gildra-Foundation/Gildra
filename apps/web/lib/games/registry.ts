@@ -9,7 +9,7 @@
  * All human-readable strings are EN dictionary keys — render them through
  * `t(lang)` / `tNav(lang)` from lib/i18n.ts and extend the RU dictionary.
  */
-import { altPath, p, type Lang } from "@/lib/i18n-paths";
+import { p, type Lang } from "@/lib/i18n-paths";
 
 export type GameSlug =
   | "wow"
@@ -303,26 +303,3 @@ export function gamePath(game: GameDefinition, path: string): string {
 /** The only link builder pages and blocks should use for internal links. */
 export const gameHref = (game: GameDefinition, lang: Lang, path: string) =>
   p(lang, gamePath(game, path));
-
-/** Game for a pathname (client components with usePathname). Strips the
- *  /ru prefix first; longest matching game prefix wins; WoW is the default.
- *  Hidden games never match, so a 404 under a hidden prefix keeps WoW chrome. */
-export function currentGame(pathname: string | null): GameDefinition {
-  const bare = pathname ? altPath(pathname, "en") : "/";
-  return (
-    visibleGames().find(
-      (g) =>
-        g.prefix &&
-        (bare === g.prefix || bare.startsWith(`${g.prefix}/`) || bare.startsWith(`${g.prefix}#`)),
-    ) ?? GAMES.wow
-  );
-}
-
-/** "/ru/league-of-legends/champions/x" → "/champions/x"; "/ru" → "/". */
-export function gameRelativePath(pathname: string): string {
-  const bare = altPath(pathname, "en");
-  const game = currentGame(bare);
-  if (!game.prefix) return bare;
-  const rest = bare.slice(game.prefix.length);
-  return rest === "" ? "/" : rest;
-}

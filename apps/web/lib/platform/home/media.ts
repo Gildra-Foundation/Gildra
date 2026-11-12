@@ -41,7 +41,3 @@ export function upgradePlatformHomeMedia(data: PlatformHomeData): PlatformHomeDa
     recommendations: data.recommendations.map((entry) => ({ ...entry, imageUrl: highResolution(entry.imageUrl) })),
   };
 }
-
-export function platformGameIcon(gameId: PlatformGameId) {
-  return gameIcons[gameId];
-}
