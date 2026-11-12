@@ -96,14 +96,19 @@ func (c *Cache) RunWithAccessMode(ctx context.Context, environment string, limit
 	if limit < 1 || limit > 10000 {
 		return Result{}, errors.New("media cache limit must be between 1 and 10000")
 	}
+	conn, err := c.db.Acquire(ctx)
+	if err != nil {
+		return Result{}, err
+	}
+	defer conn.Release()
 	var locked bool
-	if err := c.db.QueryRow(ctx, `SELECT pg_try_advisory_lock(hashtext('gildra_media_cache:'||$1))`, environment).Scan(&locked); err != nil {
+	if err := conn.QueryRow(ctx, `SELECT pg_try_advisory_lock(hashtext('gildra_media_cache:'||$1))`, environment).Scan(&locked); err != nil {
 		return Result{}, fmt.Errorf("acquire media cache lock: %w", err)
 	}
 	if !locked {
 		return Result{}, errors.New("another media cache run is active")
 	}
-	defer c.db.Exec(context.WithoutCancel(ctx), `SELECT pg_advisory_unlock(hashtext('gildra_media_cache:'||$1))`, environment) //nolint:errcheck
+	defer conn.Exec(context.WithoutCancel(ctx), `SELECT pg_advisory_unlock(hashtext('gildra_media_cache:'||$1))`, environment) //nolint:errcheck
 
 	runID := uuid.New()
 	if _, err := c.db.Exec(ctx, `INSERT INTO catalog_media_cache_runs(id,environment,status,requested_limit) VALUES($1,$2,'running',$3)`, runID, environment, limit); err != nil {
@@ -210,7 +215,7 @@ func (c *Cache) fetch(ctx context.Context, sourceURL string) (string, string, in
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return "", "", 0, nil, fmt.Errorf("download media: HTTP %d", response.StatusCode)
+		return "", "", 0, nil, fmt.Errorf("download media: %w", sourceStatusError{parsed.Hostname(), response.StatusCode})
 	}
 	temporary, err := os.CreateTemp(c.rootPath, ".gildra-media-*.tmp")
 	if err != nil {
