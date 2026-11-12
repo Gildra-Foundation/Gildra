@@ -61,14 +61,16 @@ async function countListedRecords(locale: "en_US" | "ru_RU", product: string, da
   for (let page = 0; page < 40; page += 1) {
     const result = await getCatalogPage({ locale, product, dataset, limit: 100, cursor, timeoutMs: 8000 });
     count += result.data.filter((record) => !isInternalRecord(record.name, record.type, record.externalId)).length;
-    if (!result.pagination.hasMore || !result.pagination.nextCursor) return count;
+    if (!result.pagination.hasMore) return count;
+    if (!result.pagination.nextCursor || result.pagination.nextCursor === cursor) throw new Error("Incomplete library listed count");
     cursor = result.pagination.nextCursor;
   }
-  return count;
+  throw new Error("Library listed count page limit exceeded");
 }
 
 /** Finished counts of this server process: a count is a few catalog pages (cached like any list page), kept for six hours. */
 const listedCounts = new Map<string, { count: number; at: number }>();
+const listedCounting = new Map<string, Promise<number | undefined>>();
 const LISTED_COUNT_TTL = 6 * 3600_000;
 
 /** The number of records a dataset's list shows; undefined while a long first count is still running (the catalog's own count stands in) or when it fails. */
@@ -76,9 +78,14 @@ async function listedCount(locale: "en_US" | "ru_RU", product: string, dataset: 
   const key = `${locale}|${product}|${dataset}`;
   const known = listedCounts.get(key);
   if (known && Date.now() - known.at < LISTED_COUNT_TTL) return known.count;
-  const counting = countListedRecords(locale, product, dataset)
-    .then((count) => { listedCounts.set(key, { count, at: Date.now() }); return count; })
-    .catch((error: unknown) => { console.error("library listed count unavailable", dataset, error); return known?.count; });
+  let counting = listedCounting.get(key);
+  if (!counting) {
+    counting = countListedRecords(locale, product, dataset)
+      .then((count) => { listedCounts.set(key, { count, at: Date.now() }); return count; })
+      .catch((error: unknown) => { console.error("library listed count unavailable", dataset, error); return known?.count; })
+      .finally(() => listedCounting.delete(key));
+    listedCounting.set(key, counting);
+  }
   return Promise.race([counting, new Promise<number | undefined>((resolve) => setTimeout(() => resolve(known?.count), 2500))]);
 }
 

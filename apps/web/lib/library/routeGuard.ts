@@ -4,23 +4,31 @@ import { libraryProduct } from "./product.ts";
 
 type Slugs = ReadonlySet<string>;
 const known = new Map<string, { slugs: Slugs; at: number }>();
+const pending = new Map<string, Promise<Slugs | null>>();
 const TTL = 10 * 60_000;
 
 /** The dataset slugs of an edition, as the catalog lists them; null when it cannot be asked (closed or down). */
 async function datasetSlugs(product: string): Promise<Slugs | null> {
   const cached = known.get(product);
   if (cached && Date.now() - cached.at < TTL) return cached.slugs;
-  try {
-    const response = await fetch(`${apiInternalUrl()}/v1/library/datasets?${new URLSearchParams({ locale: "en_US", product })}`, { signal: AbortSignal.timeout(2500), cache: "no-store" });
-    if (!response.ok) return cached?.slugs ?? null;
-    const slugs = new Set(((await response.json()) as { data?: { slug?: string }[] }).data?.map((entry) => entry.slug ?? "").filter(Boolean));
-    // An empty list is an answer the guard cannot use: every dataset would look unknown.
-    if (!slugs.size) return cached?.slugs ?? null;
-    known.set(product, { slugs, at: Date.now() });
-    return slugs;
-  } catch {
-    return cached?.slugs ?? null;
+  let refresh = pending.get(product);
+  if (!refresh) {
+    refresh = (async () => {
+      try {
+        const response = await fetch(`${apiInternalUrl()}/v1/library/datasets?${new URLSearchParams({ locale: "en_US", product })}`, { signal: AbortSignal.timeout(2500), cache: "no-store" });
+        if (!response.ok) return cached?.slugs ?? null;
+        const slugs = new Set(((await response.json()) as { data?: { slug?: string }[] }).data?.map((entry) => entry.slug ?? "").filter(Boolean));
+        // An empty list is an answer the guard cannot use: every dataset would look unknown.
+        if (!slugs.size) return cached?.slugs ?? null;
+        known.set(product, { slugs, at: Date.now() });
+        return slugs;
+      } catch {
+        return cached?.slugs ?? null;
+      }
+    })().finally(() => pending.delete(product));
+    pending.set(product, refresh);
   }
+  return cached?.slugs ?? refresh;
 }
 
 /**
@@ -34,7 +42,8 @@ export async function unknownLibraryDataset(pathname: string, product: string | 
   if (!match) return false;
   let dataset: string;
   try { dataset = decodeURIComponent(match[1]); } catch { return true; }
-  if (dataset === LIBRARY_LOOSE_RECORDS) return false;
+  // The showcase's own link-preview card (/library/opengraph-image-<hash>) is not a dataset.
+  if (dataset === LIBRARY_LOOSE_RECORDS || /^opengraph-image(?:-[a-z0-9]+)?$/.test(dataset)) return false;
   if (!/^[a-z0-9-]{2,64}$/.test(dataset)) return true;
   const edition = libraryProduct(product ?? undefined);
   if (!edition) return false;

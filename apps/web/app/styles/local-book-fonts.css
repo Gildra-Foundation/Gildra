@@ -104,6 +104,6 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/assets/wow/fonts/azeroth/azeroth-cyrillic.ttf") format("truetype");
+  src: url("/assets/wow/fonts/azeroth/azeroth-cyrillic.woff2") format("woff2"), url("/assets/wow/fonts/azeroth/azeroth-cyrillic.ttf") format("truetype");
   unicode-range: U+0020-007E, U+0401, U+0410-044F, U+0451, U+2116;
 }

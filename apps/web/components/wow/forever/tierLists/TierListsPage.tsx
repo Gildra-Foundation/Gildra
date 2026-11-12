@@ -13,7 +13,7 @@ import { classIcon } from '@/lib/games/wow/assets';
 import { tierData as data } from '@/lib/forever/guides/tiers';
 import styles from './tierLists.module.css';
 import { copy, names } from './tierListsCopy';
-export function tierMetadata(lang:Lang):Metadata {return {title:copy[lang].title,description:copy[lang].lede,alternates:pairedAlternates(lang,'/wow/forever/tier-lists')};}
+export function tierMetadata(lang:Lang):Metadata {return {title:`${copy[lang].title} — WowArcana`,description:copy[lang].lede,alternates:pairedAlternates(lang,'/wow/forever/tier-lists')};}
 export function TierListsPage({lang,mode,classSlug}:{lang:Lang;mode?:string;classSlug?:string}) {
  const c=copy[lang]; const board=data.boards.find(b=>b.id===mode)??data.boards[0]; const selected=classSlug&&names[classSlug]?classSlug:'';
  const entries=board.entries.filter(e=>!selected||e.classSlug===selected);

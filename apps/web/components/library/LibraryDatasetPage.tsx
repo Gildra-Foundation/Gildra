@@ -53,6 +53,8 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
   if (!product) notFound();
   await requireCatalogSession(`${prefix}/library/${encodeURIComponent(slug)}${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
   const unavailable = <PageShell lang={lang} frame><AtlasFrame lang={lang}><LibraryUnavailable lang={lang} href={`${prefix}/library`} /></AtlasFrame></PageShell>;
+  // Settle speculative reads even when the dataset is missing or unavailable.
+  const metadata = Promise.allSettled([getCatalogEntityTypes(locale, product), getCatalogProducts()]);
   let datasets;
   try {
     datasets = await getLibraryDatasets(locale, product);
@@ -77,7 +79,9 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
         listFailed = true;
         return { data: [], pagination: { hasMore: false } };
       }),
-      getCatalogCategories(locale, dataset.entityType, product), getCatalogEntityTypes(locale, product), getCatalogProducts(),
+      getCatalogCategories(locale, dataset.entityType, product),
+      metadata.then(([types]) => { if (types.status === "rejected") throw types.reason; return types.value; }),
+      metadata.then(([, products]) => { if (products.status === "rejected") throw products.reason; return products.value; }),
     ]);
   } catch (error) {
     console.error("library dataset unavailable", error);
