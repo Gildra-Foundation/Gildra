@@ -183,7 +183,8 @@ export const WOW_VERSION_EMBLEMS = {
   mists: "/assets/wow/versions/mists.png",
 } as const;
 
-const ICON_NAME = /^[a-z0-9_]+$/;
+/** Game file names: letters, digits, "_" and, for a few currencies ("pvpcurrency-conquest-horde"), "-". */
+const ICON_NAME = /^[a-z0-9_-]+$/;
 /** Retail and the Classic editions ("wow", "wow_classic_era"); Genshin and League records name no game file. */
 const WOW_PRODUCT = /^wow(?:_[a-z0-9]+)*$/;
 

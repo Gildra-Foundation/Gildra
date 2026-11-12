@@ -23,7 +23,8 @@ describe("library: record icons", () => {
     assert.equal(wowIconUrl("inv_misc_cutgemsuperior4"), official("inv_misc_cutgemsuperior4"));
     assert.equal(wowIconUrl("  INV_Misc_Gem_01 "), official("inv_misc_gem_01"), "trimmed and lower-cased");
     assert.equal(wowIconUrl("132940"), official("132940"), "a file id is a name too");
-    for (const bad of ["", "   ", "inv misc", "inv-misc", "../secret", "a/b", "icon.jpg", "icon?x=1", "icon#x", "%2e%2e", "https://evil.example/x", "иконка", "a\nb", null, undefined, 132940, {}, ["inv_misc"]]) {
+    assert.equal(wowIconUrl("pvpcurrency-conquest-horde"), official("pvpcurrency-conquest-horde"), "currency icons carry hyphens");
+    for (const bad of ["", "   ", "inv misc", "../secret", "a/b", "icon.jpg", "icon?x=1", "icon#x", "%2e%2e", "https://evil.example/x", "иконка", "a\nb", null, undefined, 132940, {}, ["inv_misc"]]) {
       assert.equal(wowIconUrl(bad), undefined, `rejected: ${JSON.stringify(bad)}`);
     }
   });

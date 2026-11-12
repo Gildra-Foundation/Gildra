@@ -68,11 +68,13 @@ export function verifiedMediaURL(value: string) {
 	if (!candidate) return "";
 	try {
 		const parsed = candidate.startsWith("/") ? new URL(candidate, "https://api.wowarcana.com") : new URL(candidate);
-		const trustedHost = parsed.hostname === "api.wowarcana.com"
+		// The catalog still stores media under the site's former API host; both serve the same objects.
+		const ownHost = parsed.hostname === "api.wowarcana.com" || parsed.hostname === "api.gildra.net";
+		const trustedHost = ownHost
 			|| parsed.hostname === "render.worldofwarcraft.com"
 			|| parsed.hostname === "wago.tools";
 		return parsed.protocol === "https:" && trustedHost
-			&& (parsed.hostname !== "api.wowarcana.com" || /^\/v1\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.pathname))
+			&& (!ownHost || /^\/v1\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.pathname))
 			&& !parsed.search && !parsed.hash ? candidate : "";
 	} catch {
 		return "";
