@@ -19,24 +19,46 @@ type fixture struct {
 // their levels read. Run TestOfficialValues with ITEMS_FIXTURE_OUT to refresh.
 func writeFixture(t *testing.T, path string, tables *Tables, rows []Row, picked []referenceItem) {
 	t.Helper()
-	// Recent expansions, every slot and every quality first; then fill up.
-	sort.SliceStable(picked, func(a, b int) bool {
-		era := func(item referenceItem) int { value, _ := strconv.Atoi(item.Sparse["ExpansionID"]); return value }
-		return era(picked[a]) > era(picked[b])
-	})
-	var items []referenceItem
-	slots, recent := map[string]int{}, 0
+	// A spread over expansions, slots and qualities: expansions take turns,
+	// and each takes an item of a slot and quality it has not given yet.
+	era := func(item referenceItem) int { value, _ := strconv.Atoi(item.Sparse["ExpansionID"]); return value }
+	byEra := map[int][]referenceItem{}
 	for _, item := range picked {
-		slot := item.Registry["ClassID"] + "/" + item.Sparse["InventoryType"] + "/" + item.Sparse["OverallQualityID"]
-		era, _ := strconv.Atoi(item.Sparse["ExpansionID"])
-		if slots[slot] >= 1 || (era >= 10 && recent >= 16) || len(items) >= 48 {
-			continue
+		byEra[era(item)] = append(byEra[era(item)], item)
+	}
+	var eras []int
+	for value := range byEra {
+		eras = append(eras, value)
+	}
+	sort.Sort(sort.Reverse(sort.IntSlice(eras)))
+	var items []referenceItem
+	slots := map[string]int{}
+	for round := 0; round < 12 && len(items) < 54; round++ {
+		for _, value := range eras {
+			quota := 3
+			if value >= 10 {
+				quota = 8 // the current and the previous expansion
+			}
+			taken := 0
+			for _, item := range items {
+				if era(item) == value {
+					taken++
+				}
+			}
+			if taken >= quota {
+				continue
+			}
+			for index, item := range byEra[value] {
+				slot := item.Registry["ClassID"] + "/" + item.Sparse["InventoryType"] + "/" + item.Sparse["OverallQualityID"]
+				if slots[slot] > round/4 {
+					continue
+				}
+				slots[slot]++
+				items = append(items, item)
+				byEra[value] = append(byEra[value][:index:index], byEra[value][index+1:]...)
+				break
+			}
 		}
-		slots[slot]++
-		if era >= 10 {
-			recent++
-		}
-		items = append(items, item)
 	}
 	levels := map[int64]bool{}
 	for _, item := range items {
