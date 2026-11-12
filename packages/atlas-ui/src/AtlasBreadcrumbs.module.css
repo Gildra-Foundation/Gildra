@@ -33,4 +33,15 @@
   .trail a::after { position: absolute; inset: 50% calc(var(--atlas-space-1) * -1) auto; height: var(--atlas-control-height); content: ""; translate: 0 -50%; }
 }
 .trail [aria-current="page"] { color: var(--atlas-text); }
+/* Phones: the trail keeps to one line. The page's name is the heading right below, so a long trail
+   shortens its last crumb instead of wrapping, and the hero keeps its height when the web font
+   replaces the fallback (a trail that fits one line in Inter took two in the fallback: a 23 px jump). */
+@media (max-width: 700px) {
+  .trail { min-width: 0; max-width: 100%; }
+  .trail ol { flex-wrap: nowrap; }
+  .trail li { flex: 0 1 auto; min-width: 2.5em; }
+  .trail li:last-child { flex-shrink: 1000; }
+  .trail li > :is(a, span) { min-width: 0; overflow-x: clip; text-overflow: ellipsis; white-space: nowrap; }
+  .trail svg { flex: none; }
+}
 .trail svg { width: 12px; height: 12px; color: var(--atlas-text-subtle); }

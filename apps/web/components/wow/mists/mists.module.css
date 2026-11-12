@@ -212,3 +212,15 @@
 @media (forced-colors: active) {
   .talent[aria-pressed="true"], .spec[aria-pressed="true"], .classPick[aria-current] { outline: 2px solid Highlight; }
 }
+
+/* Narrow phones: the longest class name («Чернокнижник») stays on one line next to the talents button. */
+@media (max-width: 420px) {
+  .classHead { gap: var(--atlas-space-2); }
+  .talentsLink { padding-inline: var(--atlas-space-2); }
+}
+/* Touch: 44 px targets. */
+@media (pointer: coarse) {
+  .talentsLink, .spec, .reset { min-height: 44px; }
+  .specName { position: relative; }
+  .specName::after { position: absolute; inset: 50% calc(var(--atlas-space-1) * -1) auto; height: 44px; content: ""; translate: 0 -50%; }
+}

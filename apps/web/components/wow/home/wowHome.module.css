@@ -231,3 +231,6 @@
   .versions { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .versions a { min-height: 64px; }
 }
+
+/* Touch: 44 px boss links. */
+@media (pointer: coarse) { .bossGrid a { min-height: 44px; } }
