@@ -145,6 +145,22 @@ function SearchTurnMarker() {
 }
 
 /** Pages whose hero has an arrival of its own (the M+ and raid hubs). */
+/**
+ * Back and forward land on the remembered position at once. The document scrolls smoothly
+ * (app/styles/base.css), so the returning page first showed its top and rode down to the place
+ * the reader had left about a second later. The reader's next action brings smooth scrolling back.
+ */
+const SCROLL_RELEASE = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
+function holdInstantScroll() {
+  const root = document.documentElement;
+  root.style.scrollBehavior = "auto";
+  const release = () => {
+    root.style.scrollBehavior = "";
+    for (const type of SCROLL_RELEASE) window.removeEventListener(type, release, true);
+  };
+  for (const type of SCROLL_RELEASE) window.addEventListener(type, release, { capture: true, passive: true });
+}
+
 const OWN_ARRIVAL = "[data-hub-hero], [data-raid-hub-hero], [data-route-own-arrival]";
 const HERO_ENTRANCE: Keyframe[] = [{ opacity: 0, transform: "translate3d(0, 10px, 0)" }, { opacity: 1, transform: "none" }];
 
@@ -341,7 +357,10 @@ export function RouteTransitionRuntime({ children }: { children: ReactNode }) {
       router.push(destination.pathname + destination.search + destination.hash);
     };
     // A browser that animates back/forward itself (swipe gestures) keeps its own motion only.
-    const history = (event: PopStateEvent) => begin(window.location.pathname, !(event as PopStateEvent & { hasUAVisualTransition?: boolean }).hasUAVisualTransition);
+    const history = (event: PopStateEvent) => {
+      holdInstantScroll();
+      begin(window.location.pathname, !(event as PopStateEvent & { hasUAVisualTransition?: boolean }).hasUAVisualTransition);
+    };
     let prefetchTimer: ReturnType<typeof setTimeout> | undefined;
     const warm = (event: PointerEvent | FocusEvent) => {
       const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;

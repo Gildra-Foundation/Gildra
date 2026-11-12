@@ -11,16 +11,17 @@ import { ForeverCalculator } from "./ForeverCalculator";
 import { talentCopy } from "./talentCopy";
 import { FOREVER_KIT } from "./talentKit";
 import styles from "./talents.module.css";
+import { trailLabel } from "@/lib/routes/registry";
 
 export function ForeverTalentsIndex({ lang }: { lang: "en" | "ru" }) {
   const t = talentCopy[lang];
   return <ForeverFrame lang={lang} scene="talents">
-    <AtlasHero title={t.title} breadcrumbs={[{ label: "Forever", href: `${lang === "ru" ? "/ru" : ""}/wow/forever` }]} />
+    <AtlasHero title={t.title} breadcrumbsLabel={trailLabel(lang)} breadcrumbs={[{ label: "Forever", href: `${lang === "ru" ? "/ru" : ""}/wow/forever` }]} />
     <AtlasSection title={t.classes}>
       <div className={styles.classGrid}>{foreverTalents.classes.map(cls => <MaterialLinkButton key={cls.id} kit={FOREVER_KIT} href={foreverCalculatorPath(lang, cls.slug)} fit="block">
         <span className={styles.classLink}>
           {/* eslint-disable-next-line @next/next/no-img-element -- local client-derived class icon */}
-          <img src={foreverTalentIcon(cls.iconFileId)} width={36} height={36} alt="" />
+          <img src={foreverTalentIcon(cls.iconFileId)} width={36} height={36} alt="" loading="lazy" decoding="async" />
           <strong style={{ "--class-color": classColors[cls.slug as keyof typeof classColors] } as CSSProperties}>{cls.name[lang]}</strong>
         </span>
       </MaterialLinkButton>)}</div>
@@ -33,7 +34,7 @@ export function ForeverTalentsClass({ lang, slug, token }: { lang: "en" | "ru"; 
   if (!cls) notFound();
   const t = talentCopy[lang], parsed = decodeBuild(cls, foreverTalents.snapshot, Array.isArray(token) ? "invalid" : token);
   return <ForeverFrame lang={lang} scene="talents">
-    <AtlasHero title={lang === "ru" ? `Таланты: ${cls.name[lang]}` : `${cls.name[lang]} talents`} breadcrumbs={[
+    <AtlasHero title={lang === "ru" ? `Таланты: ${cls.name[lang]}` : `${cls.name[lang]} talents`} breadcrumbsLabel={trailLabel(lang)} breadcrumbs={[
       { label: "Forever", href: `${lang === "ru" ? "/ru" : ""}/wow/forever` },
       { label: t.title, href: foreverCalculatorPath(lang) },
     ]} />

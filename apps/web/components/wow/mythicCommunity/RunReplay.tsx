@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { routeViewerCopy } from "./routeViewerCopy";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight, Flame, Skull } from "lucide-react";
@@ -10,6 +11,13 @@ import { upgradeMarks } from "@/lib/games/wow/mythicPlusRunTypes";
 import { lessMotion } from "@gildra/atlas-ui/motionPreference";
 import { communityCopy } from "./communityCopy";
 import styles from "./runReplay.module.css";
+
+/** An enemy portrait at its shown size: the source files are 300 px squares. */
+function Portrait({ src, alt, size }: { src: string; alt: string; size: number }) {
+  if (src.startsWith("/")) return <Image src={src} alt={alt} width={size} height={size} sizes={`${size}px`} />;
+  // eslint-disable-next-line @next/next/no-img-element -- a portrait from another host is shown as it is
+  return <img src={src} alt={alt} width={size} height={size} loading="lazy" decoding="async" />;
+}
 
 export type ReplayEnemyLabel = { name: string; lang?: string; portrait?: string };
 
@@ -178,8 +186,7 @@ export function RunReplay({ locale, replay, map, enemies, colors, timerMs, clear
           <ol ref={list} className={styles.pullList}>
             {replay.pulls.map(entry => <li key={entry.n} data-pull={entry.n}><button type="button" aria-pressed={selected === entry.n} onClick={() => { setPlaying(false); choose(entry.n, true); }}>
               <b>{entry.n}{entry.boss ? " ◆" : ""}</b><span>{entry.boss ?? `${copy.pull} ${entry.n}`}<small>{number.format(forcesShare(entry.forces, replay.totalForces || 1))}% · {clock(entry.toMs - (entry.startMs ?? entry.fromMs))}</small><span className={styles.miniEnemies}>{entry.enemies.map(enemy => <span key={enemy.npcId} title={enemies[enemy.npcId]?.name}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- local game portraits */}
-              {enemies[enemy.npcId]?.portrait ? <img src={enemies[enemy.npcId].portrait} alt={enemies[enemy.npcId]?.name ?? ""} width={22} height={22} /> : null}×{enemy.count}</span>)}</span></span>
+              {enemies[enemy.npcId]?.portrait ? <Portrait src={enemies[enemy.npcId].portrait!} alt={enemies[enemy.npcId]?.name ?? ""} size={22} /> : null}×{enemy.count}</span>)}</span></span>
             </button></li>)}
           </ol>
         </details>
@@ -224,8 +231,7 @@ function PullPanel({ pull, replay, enemies, colors, copy, number, onStep }: {
           const label = enemies[enemy.npcId];
           return (
             <li key={enemy.npcId}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- 40 px portrait already sized on disk */}
-              {label?.portrait ? <img src={label.portrait} alt="" width={40} height={40} loading="lazy" decoding="async" /> : <span className={styles.portraitBlank} aria-hidden="true" />}
+              {label?.portrait ? <Portrait src={label.portrait} alt="" size={40} /> : <span className={styles.portraitBlank} aria-hidden="true" />}
               <span className={styles.enemyName} lang={label?.lang}>{label?.name ?? copy.enemies(1)}</span>
               <span className={styles.enemyCount}>×{enemy.count}</span>
               {replay.totalForces && enemy.forces ? <span className={styles.enemyForces}>{number.format(forcesShare(enemy.forces, replay.totalForces))}%</span> : <span className={styles.enemyForces} />}

@@ -6467,6 +6467,66 @@
         "Gorging Pit"
       ],
       "sourceUrl": "https://api.wowarcana.com/v1/game/entities/3ab7d72a-d3d0-4e49-85c3-4a537968ca8b?locale=ru_RU"
+    },
+    {
+      "en": "Fortified",
+      "ru": "Укрепленный",
+      "type": "spell",
+      "id": 1271523,
+      "entityId": "80327cbc-fa94-484d-b234-6e3eed8e8b7a",
+      "buildId": 92,
+      "sourceUrl": "https://api.wowarcana.com/v1/game/entities/80327cbc-fa94-484d-b234-6e3eed8e8b7a?locale=ru_RU",
+      "aliases": []
+    },
+    {
+      "en": "Tyrannical",
+      "ru": "Тиранический",
+      "type": "spell",
+      "id": 1271524,
+      "entityId": "08c7102e-3c19-4cfa-a4f7-db696f74ba4c",
+      "buildId": 92,
+      "sourceUrl": "https://api.wowarcana.com/v1/game/entities/08c7102e-3c19-4cfa-a4f7-db696f74ba4c?locale=ru_RU",
+      "aliases": []
+    },
+    {
+      "en": "Xal'atath's Guile",
+      "ru": "Вероломство Ксал'атат",
+      "type": "spell",
+      "id": 1271525,
+      "entityId": "0b1ac6b2-58f6-49f4-9f1c-9cb9228b5beb",
+      "buildId": 92,
+      "sourceUrl": "https://api.wowarcana.com/v1/game/entities/0b1ac6b2-58f6-49f4-9f1c-9cb9228b5beb?locale=ru_RU",
+      "aliases": []
+    },
+    {
+      "en": "Xal'atath's Bargain: Ascendant",
+      "ru": "Сделка с Ксал'атат: вознесение",
+      "type": "spell",
+      "id": 461935,
+      "entityId": "097b7dd3-3f6b-4530-9837-6f2e5c6e8132",
+      "buildId": 92,
+      "sourceUrl": "https://api.wowarcana.com/v1/game/entities/097b7dd3-3f6b-4530-9837-6f2e5c6e8132?locale=ru_RU",
+      "aliases": []
+    },
+    {
+      "en": "Lindormi's Guidance",
+      "ru": "Наставление Линдорми",
+      "type": "spell",
+      "id": 1284818,
+      "entityId": "945d9838-7bae-4497-a020-87c80e82f141",
+      "buildId": 92,
+      "sourceUrl": "https://api.wowarcana.com/v1/game/entities/945d9838-7bae-4497-a020-87c80e82f141?locale=ru_RU",
+      "aliases": []
+    },
+    {
+      "en": "Kyrakka and Erkhart Stormvein",
+      "ru": "Киракка и Эркхарт Кровь Бури",
+      "type": "encounter",
+      "id": 2503,
+      "entityId": "d970a341-0243-48d3-a89e-36a84be8da77",
+      "buildId": 92,
+      "sourceUrl": "https://api.wowarcana.com/v1/game/entities/d970a341-0243-48d3-a89e-36a84be8da77?locale=ru_RU",
+      "aliases": []
     }
   ]
 }

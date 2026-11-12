@@ -489,3 +489,6 @@
 
 /* Touch: 16 px fields, so iOS does not zoom on focus. */
 @media (pointer: coarse) { .studio :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }
+
+/* Touch: 44 px tool buttons. */
+@media (pointer: coarse) { .tools .tool:global(.ui-button) { min-height: 44px; } }

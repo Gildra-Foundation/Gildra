@@ -201,3 +201,9 @@
   .slot .button:global(.ui-button) { border: 2px solid ButtonText; background: ButtonFace; color: ButtonText; text-shadow: none; }
   .iconFrame::before { border: 1px solid CanvasText; }
 }
+
+/* Touch: a plaque title that is a link gets a 44 px tall target without moving the line. */
+@media (pointer: coarse) {
+  .plaqueTitle > a { position: relative; }
+  .plaqueTitle > a::after { position: absolute; inset: 50% 0 auto; height: 44px; content: ""; translate: 0 -50%; }
+}

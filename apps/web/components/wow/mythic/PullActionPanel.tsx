@@ -1,6 +1,6 @@
 import { Ban, Shield, Crosshair, Footprints, Sparkles, Hand } from "lucide-react";
 import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
-import { ResilientImage } from "@/components/media/ResilientImage";
+import { OptimizedResilientImage } from "@/components/media/OptimizedResilientImage";
 import { DungeonSpellIcon } from "./DungeonSpellIcon";
 import type { PullIntel, PullMechanic } from "./mdtPullIntel";
 import type { PlayerSpec } from "./playerTools";
@@ -24,7 +24,7 @@ export function PullActionPanel({ themeClassName, title, intel, locale, role, sp
     <section className={styles.composition} aria-label={t.composition}>
       <h5>{t.composition}</h5>
       <ul>{intel.enemies.map(enemy => <li key={enemy.npcId ?? enemy.name}>
-        <ResilientImage src={enemy.portraitUrl} width={40} height={40} alt="" loading="lazy" fallback={<span className={styles.portraitFallback} aria-hidden="true">{enemy.name.slice(0, 1)}</span>} />
+        <OptimizedResilientImage src={enemy.portraitUrl} width={40} height={40} sizes="40px" alt="" loading="lazy" fallback={<span className={styles.portraitFallback} aria-hidden="true">{enemy.name.slice(0, 1)}</span>} />
         <span>{enemy.name}</span><b>×{enemy.count}</b>
       </li>)}</ul>
     </section>

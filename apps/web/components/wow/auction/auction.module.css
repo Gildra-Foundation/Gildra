@@ -465,3 +465,8 @@ td[data-best] .metricTrack > span { background: var(--material-light, var(--atla
 
 /* Touch: 16 px fields, so iOS does not zoom on focus. */
 @media (pointer: coarse) { .page :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: max(16px, 1em); } }
+
+/* The compare tick answers a touch anywhere in its cell: 44 px on phones. */
+.pickHit { display: grid; place-items: center; cursor: pointer; }
+@media (pointer: coarse) { .pickHit { min-width: 44px; min-height: 44px; } }
+@media (max-width: 760px) and (pointer: coarse) { .marketTable .marketRow { grid-template-columns: 44px repeat(3, minmax(0, 1fr)); } }

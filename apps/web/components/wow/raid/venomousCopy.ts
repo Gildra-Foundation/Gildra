@@ -43,7 +43,7 @@ export const venomousCopy = {
     gloryReward: "Мета-достижение даёт средство передвижения Багровый ядоклык.",
 
     // Boss page
-    beforePull: "Перед пуллом",
+    beforePull: "Перед пулом",
     positioning: "Где стоять",
     timelineTitle: "Ход боя",
     timelineText: "Порядок механик; точное время зависит от урона группы.",

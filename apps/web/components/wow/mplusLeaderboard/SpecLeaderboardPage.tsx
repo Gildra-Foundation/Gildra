@@ -8,7 +8,7 @@ import {
   heroName, itemIconUrl, leaderboardClasses, leaderboardSearch, parseLeaderboardQuery, realmName, talentsUrl,
   type LeaderboardItem, type LeaderboardSpec, type LeaderboardSpecSummary,
 } from "@/lib/games/wow/mplusLeaderboardView";
-import { trail } from "@/lib/routes/registry";
+import { trail, trailLabel } from "@/lib/routes/registry";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { CopyLoadoutButton } from "./LeaderboardClient";
 import { leaderboardCopy, type LeaderboardCopy } from "./leaderboardCopy";
@@ -51,7 +51,7 @@ export async function SpecLeaderboardPage({ locale, spec, searchParams }: { loca
         <AtlasHero
           align="start"
           className={styles.heroHeader}
-          breadcrumbs={crumbs}
+          breadcrumbsLabel={trailLabel(locale)} breadcrumbs={crumbs}
           eyebrow={page ? copy.eyebrow(page.season.name, copy.regions[page.region]) : copy.regions[query.region]}
           emblem={<Image src={spec.icon} alt="" width={62} height={62} sizes="62px" />}
           title={title}

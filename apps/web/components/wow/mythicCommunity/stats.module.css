@@ -294,7 +294,8 @@
   .chartWide { display: none; }
   .chartNarrow { display: block; }
   .optCol, .rankCol, .unit { display: none; }
-  .specTable :global(th), .specTable :global(td) { padding-inline: 6px; }
+  /* Twice the class: the kit's own cell padding (.table tbody th) is more specific than one. */
+  .specTable.specTable :global(th), .specTable.specTable :global(td) { padding-inline: 6px; }
   .specTable :global(thead th) { white-space: normal; letter-spacing: 0; line-height: 1.2; }
   .specTable :global(tbody th) { inline-size: 100%; }
   .specTable :global(tbody th) * { overflow-wrap: normal; word-break: normal; }

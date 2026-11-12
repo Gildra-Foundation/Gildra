@@ -608,6 +608,10 @@ export const sourceSpellNames: Record<number, { en: string; ru?: string }> = {
     "en": "Blaze of Glory",
     "ru": "Сияние славы"
   },
+  "461935": {
+    "en": "Xal'atath's Bargain: Ascendant",
+    "ru": "Сделка с Ксал'атат: вознесение"
+  },
   "462940": {
     "en": "Bountiful",
     "ru": "Много добычи"
@@ -1244,6 +1248,18 @@ export const sourceSpellNames: Record<number, { en: string; ru?: string }> = {
     "en": "Pitch Bulwark",
     "ru": "Непроницаемый оплот"
   },
+  "1271523": {
+    "en": "Fortified",
+    "ru": "Укрепленный"
+  },
+  "1271524": {
+    "en": "Tyrannical",
+    "ru": "Тиранический"
+  },
+  "1271525": {
+    "en": "Xal'atath's Guile",
+    "ru": "Вероломство Ксал'атат"
+  },
   "1271577": {
     "en": "Destabilizing Strikes",
     "ru": "Дестабилизирующие удары"
@@ -1403,6 +1419,10 @@ export const sourceSpellNames: Record<number, { en: string; ru?: string }> = {
   "1284735": {
     "en": "Vitriolic Stasis",
     "ru": "Агрессивный стазис"
+  },
+  "1284818": {
+    "en": "Lindormi's Guidance",
+    "ru": "Наставление Линдорми"
   },
   "1284931": {
     "en": "Termination Prism",

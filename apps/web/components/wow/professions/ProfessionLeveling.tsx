@@ -87,7 +87,7 @@ function Learn({ recipe, trainer, unlocks, currencies, lang }: { recipe: Profess
       break;
     case "specialization": {
       const unlock = unlocks[recipe.spell];
-      text = unlock ? <>{unlock.node[lang] === unlock.tree[lang] ? `«${unlock.node[lang]}»` : c.learnSpec(unlock.node[lang], unlock.tree[lang])} <span className={styles.learnNote}>· {c.learnSpecAt(unlock.at)}</span></> : c.sources.specialization;
+      text = unlock ? <>{unlock.node[lang] === unlock.tree[lang] ? (lang === "ru" ? `«${unlock.node[lang]}»` : unlock.node[lang]) : c.learnSpec(unlock.node[lang], unlock.tree[lang])} <span className={styles.learnNote}>· {c.learnSpecAt(unlock.at)}</span></> : c.sources.specialization;
       break;
     }
     case "vendor": {

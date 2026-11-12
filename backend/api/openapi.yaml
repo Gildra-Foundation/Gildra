@@ -230,7 +230,7 @@ paths:
       parameters:
         - in: query
           name: sort
-          description: Dataset default is current (items use confirmed expansion then item level; other types use descending game ID). Search queries retain relevance order. Legacy UUID cursors retain ID order. Unknown levels sort below known levels descending and before them ascending; names use C collation. Omit on the heterogeneous legacy feed for ID order.
+          description: Requires dataset or type. Dataset default is current (items use confirmed expansion then item level; other types use descending game ID). Search queries retain relevance order. Legacy UUID cursors retain ID order. Unknown levels sort below known levels descending and before them ascending; names use C collation. Omit on the heterogeneous legacy feed for ID order.
           schema:
             type: string
             enum: [current, item_level_desc, item_level_asc, required_level_desc, required_level_asc, name_asc, name_desc, id]
