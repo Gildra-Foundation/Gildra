@@ -1,7 +1,7 @@
 /** Interface text for reviewed raid notes; game facts live in the server data projection. */
 export const raidReviewCopy = {
   ru: {
-    beforePull: "Перед пуллом",
+    beforePull: "Перед пулом",
     overview: "Что важно знать",
     referenceTitle: "Способности",
     harandar: "Харандар",
