@@ -1,0 +1,17 @@
+[Unit]
+Description=Midnight catalog refresh after verified server backup
+After=gildra-server-backup.service network-online.target
+OnFailure=gildra-notify@%p.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/gildra-catalog-midnight/environment
+ExecStart=/usr/bin/python3 /usr/local/lib/gildra-catalog-midnight/consumer.py
+StateDirectory=gildra-catalog-midnight
+UMask=0077
+TimeoutStartSec=12h
+TimeoutStopSec=infinity
+KillMode=control-group
+SendSIGKILL=no
+Restart=no
+NoNewPrivileges=true

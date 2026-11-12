@@ -31,7 +31,7 @@ func run() error {
 	var lightMaxTableRows, lightMaxTableBytes int64
 	var retainVerified int
 	var timeout time.Duration
-	var preflight bool
+	var preflight, skipLocalRetention bool
 	flag.StringVar(&product, "product", "wow", "game product slug recorded with the backup")
 	flag.StringVar(&prefix, "object-prefix", "catalog-backups", "clean relative object-store prefix")
 	flag.StringVar(&temporaryDirectory, "temp-directory", "", "directory for the encrypted temporary archive")
@@ -40,6 +40,7 @@ func run() error {
 	flag.StringVar(&restoreProof, "restore-proof", "", "restore proof mode: full (default) or light; CATALOG_BACKUP_RESTORE_PROOF sets the default")
 	flag.Int64Var(&lightMaxTableRows, "light-max-table-rows", 0, "light proof: largest table (rows) whose data is restored (default 20000)")
 	flag.Int64Var(&lightMaxTableBytes, "light-max-table-bytes", 0, "light proof: largest table (bytes, incl. indexes and TOAST) whose data is restored (default 64 MiB)")
+	flag.BoolVar(&skipLocalRetention, "skip-local-retention", false, "preserve all existing manifests and archives; caller owns proof lifecycle")
 	flag.IntVar(&retainVerified, "retain-verified", 3, "number of newest verified local PostgreSQL backups to retain")
 	flag.Parse()
 	if retainVerified < 1 {
@@ -170,7 +171,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	if localStore, ok := store.(*catalogbackup.LocalStore); ok {
+	if localStore, ok := store.(*catalogbackup.LocalStore); ok && !skipLocalRetention {
 		retained, retentionErr := catalogbackup.RetainLocalVerified(ctx, catalogbackup.PostgresManifestRepository{DB: database}, localStore, options.Product, retainVerified)
 		if retentionErr != nil {
 			return retentionErr

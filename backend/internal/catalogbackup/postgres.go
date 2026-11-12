@@ -417,10 +417,14 @@ func databaseEnvironment(databaseURL string) ([]string, error) {
 		"PGDATABASE="+target.database,
 		"PGUSER="+target.user,
 		"PGPASSWORD="+target.password,
-		"PGAPPNAME=gildra-catalog-backup",
 	)
 
 	query := target.url.Query()
+	applicationName := strings.TrimSpace(query.Get("application_name"))
+	if applicationName == "" {
+		applicationName = "gildra-catalog-backup"
+	}
+	environment = append(environment, "PGAPPNAME="+applicationName)
 	sslMode := strings.TrimSpace(query.Get("sslmode"))
 	if sslMode == "" {
 		sslMode = "prefer"
