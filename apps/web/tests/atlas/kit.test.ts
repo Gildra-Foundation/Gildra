@@ -147,3 +147,13 @@ describe("kit documentation", () => {
     assert.deepEqual(missing, [], `README lacks ${missing.join(", ")}`);
   });
 });
+
+describe("share button", () => {
+  it("shares the page's state hash, not a scroll anchor", async () => {
+    const { shareUrl } = await import("../../../../packages/atlas-ui/src/shareUrl.ts");
+    const at = (hash: string, search = "") => ({ origin: "https://wowarcana.com", pathname: "/ru/wow/raids/the-voidspire", search, hash });
+    assert.equal(shareUrl(at("#boss=vorasius&difficulty=heroic")), "https://wowarcana.com/ru/wow/raids/the-voidspire#boss=vorasius&difficulty=heroic");
+    assert.equal(shareUrl(at("#atlas-content")), "https://wowarcana.com/ru/wow/raids/the-voidspire");
+    assert.equal(shareUrl(at("", "?r=hhAM")), "https://wowarcana.com/ru/wow/raids/the-voidspire?r=hhAM");
+  });
+});

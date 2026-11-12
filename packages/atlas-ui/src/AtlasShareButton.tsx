@@ -3,6 +3,7 @@
 import { Share2 } from "lucide-react";
 import { AtlasButton } from "./AtlasButton";
 import { copyText } from "./clipboard";
+import { shareUrl } from "./shareUrl";
 import { notify } from "./toast";
 
 const copy = {
@@ -13,12 +14,12 @@ const copy = {
 /**
  * "Share" for entity pages (bosses, lairs, database entries): the system share
  * sheet on touch devices, otherwise the page link goes to the clipboard and a
- * Valyro toast confirms it. Shares the canonical URL without the hash.
+ * Valyro toast confirms it. Shares the page's address; see `shareUrl`.
  */
 export function AtlasShareButton({ title, locale }: { title: string; locale: "en" | "ru" }) {
   const t = copy[locale];
   async function share() {
-    const url = `${location.origin}${location.pathname}${location.search}`;
+    const url = shareUrl(location);
     if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
       try {
         await navigator.share({ title, url });
