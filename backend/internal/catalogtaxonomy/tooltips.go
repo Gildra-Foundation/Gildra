@@ -50,6 +50,9 @@ func (i *Indexer) rebuildTooltips(ctx context.Context, productID *int16) (Result
 			}
 			result.Descriptions += descriptions
 		}
+		if err := rebuildCollectionDetails(ctx, tx); err != nil {
+			return err
+		}
 		sql := tooltipSQL
 		var args []any
 		if productID != nil {
@@ -353,7 +356,7 @@ var tooltipSQL = `
 		WHERE e.deleted_at IS NULL
 	), rendered AS (
 		SELECT version_id, entity_type, locale, source_url,
-			concat_ws(E'\n', name, NULLIF(description,'')) AS plain_text,
+			concat_ws(E'\n', name, NULLIF(CASE WHEN entity_type IN ('toy','item_set') AND localized_payload ? 'collection' THEN '' ELSE description END,''), (SELECT string_agg(block->>'text',E'\n') FROM jsonb_array_elements(localized_payload #> '{collection,blocks}') block WHERE block ? 'text')) AS plain_text,
 			jsonb_build_array(jsonb_build_object('type','name','text',name,'quality',` + itemquality.SQL("COALESCE(item_detail->>'quality',item->>'quality')") + `))
 			|| CASE WHEN entity_type='item' AND item_detail ? 'item_level' THEN jsonb_build_array(jsonb_build_object('type','item_level','value',item_detail->'item_level')) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND item_detail->>'inventory_type' ~ '^[0-9]+$' AND item_detail->>'inventory_type'<>'0' THEN jsonb_build_array(jsonb_build_object('type','slot','code',(item_detail->>'inventory_type')::int)) ELSE '[]'::jsonb END
@@ -391,7 +394,8 @@ var tooltipSQL = `
 			|| CASE WHEN entity_type='spell' AND COALESCE(NULLIF(spell_duration->>'Duration','')::int,0) > 0 THEN jsonb_build_array(jsonb_build_object('type','duration','milliseconds',(spell_duration->>'Duration')::int)) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='spell' AND (COALESCE(NULLIF(spell_power->>'ManaCost','')::int,0) > 0 OR COALESCE(NULLIF(spell_power->>'PowerCostPct','')::numeric,0) > 0) THEN jsonb_build_array(jsonb_build_object('type','power','amount',COALESCE(NULLIF(spell_power->>'ManaCost','')::int,0),'percent',COALESCE(NULLIF(spell_power->>'PowerCostPct','')::numeric,0),'power_type',COALESCE(NULLIF(spell_power->>'PowerType','')::int,0))) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='spell' AND NULLIF(COALESCE(localized_payload->>'aura_description',payload->>'aura_description'),'') IS NOT NULL AND COALESCE(localized_payload->>'aura_description',payload->>'aura_description') IS DISTINCT FROM description THEN jsonb_build_array(jsonb_build_object('type','effect','text',COALESCE(localized_payload->>'aura_description',payload->>'aura_description'))) ELSE '[]'::jsonb END
-			|| CASE WHEN description<>'' THEN jsonb_build_array(jsonb_build_object('type','description','text',description)) ELSE '[]'::jsonb END AS blocks
+			|| COALESCE(localized_payload #> '{collection,blocks}','[]'::jsonb)
+			|| CASE WHEN description<>'' AND NOT (entity_type IN ('toy','item_set') AND localized_payload ? 'collection') THEN jsonb_build_array(jsonb_build_object('type','description','text',description)) ELSE '[]'::jsonb END AS blocks
 		FROM localized
 	), hashed AS (
 		SELECT *, digest(convert_to(plain_text || blocks::text, 'UTF8'), 'sha256') AS content_hash

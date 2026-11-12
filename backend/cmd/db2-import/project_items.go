@@ -25,6 +25,7 @@ func projectCollectionsForTables(
 				('CurrencyTypes','currency','Name_lang','Description_lang'),
 				('Mount','mount','Name_lang','Description_lang'),
 				('TransmogSet','transmog_set','Name_lang',''),
+				('ItemSet','item_set','Name_lang',''),
 				('Achievement','achievement','Title_lang','Description_lang'),
 				('Map','map','MapName_lang','MapDescription0_lang'),
 				('UiMap','ui_map','Name_lang',''),
