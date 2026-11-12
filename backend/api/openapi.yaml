@@ -75,10 +75,10 @@ paths:
       parameters:
         - in: query
           name: expansion
-          description: Optional confirmed published Midnight cohort. Zero membership does not establish an official denominator.
+          description: Optional product-scoped expansion registry key. Zero membership does not establish an official denominator.
           schema:
             type: string
-            enum: [midnight]
+            pattern: '^[a-z][a-z0-9_]{1,63}$'
         - in: query
           name: product
           schema:
@@ -161,10 +161,10 @@ paths:
       parameters:
         - in: query
           name: expansion
-          description: Optional confirmed Midnight membership in the published build. Omit for all Retail.
+          description: Optional product-scoped expansion registry key; membership must match the published build. Omit for the legacy unscoped catalog.
           schema:
             type: string
-            enum: [midnight]
+            pattern: '^[a-z][a-z0-9_]{1,63}$'
         - in: query
           name: product
           schema:
@@ -229,11 +229,17 @@ paths:
       description: Use this endpoint for directories and search results. Fetch the full entity resource only when a user opens a detail view.
       parameters:
         - in: query
-          name: expansion
-          description: Optional confirmed Midnight membership in the published build. Omit for all Retail.
+          name: sort
+          description: Dataset default is current (items use confirmed expansion then item level; other types use descending game ID). Search queries retain relevance order. Legacy UUID cursors retain ID order. Unknown levels sort below known levels descending and before them ascending; names use C collation. Omit on the heterogeneous legacy feed for ID order.
           schema:
             type: string
-            enum: [midnight]
+            enum: [current, item_level_desc, item_level_asc, required_level_desc, required_level_asc, name_asc, name_desc, id]
+        - in: query
+          name: expansion
+          description: Optional product-scoped expansion registry key; membership must match the published build. Omit for the legacy unscoped catalog.
+          schema:
+            type: string
+            pattern: '^[a-z][a-z0-9_]{1,63}$'
         - in: query
           name: product
           schema:
@@ -448,10 +454,10 @@ paths:
       parameters:
         - in: query
           name: expansion
-          description: Optional confirmed Midnight membership in the published build. Omit for all Retail.
+          description: Optional product-scoped expansion registry key; membership must match the published build. Omit for the legacy unscoped catalog.
           schema:
             type: string
-            enum: [midnight]
+            pattern: '^[a-z][a-z0-9_]{1,63}$'
         - in: path
           name: id
           required: true
@@ -1295,10 +1301,16 @@ components:
         quality:
           type: integer
           minimum: 0
-          maximum: 7
+          maximum: 8
         itemLevel:
           type: integer
           minimum: 0
+        requiredLevel:
+          type: integer
+          minimum: 0
+        inventoryType:
+          type: string
+          description: Source inventory slot code or label; absent when unknown.
         buildId:
           type: integer
           format: int64

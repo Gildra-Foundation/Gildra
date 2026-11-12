@@ -348,7 +348,7 @@ func (s *Service) listPage(ctx context.Context, params ListParams, cursorID uuid
 `)+`
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
-		  `+publicCatalogUsabilityPredicate("e", "v")+expansionPredicate(params.Expansion, "e", "v")+`
+		  `+publicCatalogUsabilityPredicate("e", "v")+expansionPredicate(params.Expansion, "e", "v", "$8")+" AND $8::text IS NOT NULL "+`
 		  AND ($1 = '' OR p.slug = $1)
 		  AND ($2 = '' OR e.entity_type = $2)
 		  AND e.id > $3
@@ -366,7 +366,7 @@ func (s *Service) listPage(ctx context.Context, params ListParams, cursorID uuid
 		LIMIT $6`,
 		strings.TrimSpace(params.Product), strings.TrimSpace(params.Type), cursorID,
 		normalizeLocale(params.Locale), strings.TrimSpace(params.Query), params.Limit+1,
-		strings.TrimSpace(params.Category),
+		strings.TrimSpace(params.Category), params.Expansion,
 	)
 	if err != nil {
 		return nil, false, fmt.Errorf("list game entities: %w", err)
@@ -708,11 +708,11 @@ func listMatchSQL(params ListParams) (string, []any) {
 			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 			WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 			  ` + publicCatalogDisplayNamePredicate("l", "fallback") + `
-			  ` + publicCatalogUsabilityPredicate("e", "v") + expansionPredicate(params.Expansion, "e", "v") + `
+			  ` + publicCatalogUsabilityPredicate("e", "v") + expansionPredicate(params.Expansion, "e", "v", "$5") + " AND $5::text IS NOT NULL " + `
 			  AND ($1='' OR p.slug=$1) AND ($2='' OR e.entity_type=$2)
 			  AND ($3='' OR EXISTS(SELECT 1 FROM game_entity_categories ec
 				WHERE ec.version_id=e.published_version_id AND ec.category_id IN (SELECT id FROM selected_categories)))`,
-			[]any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type), strings.TrimSpace(params.Category), normalizeLocale(params.Locale)}
+			[]any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type), strings.TrimSpace(params.Category), normalizeLocale(params.Locale), params.Expansion}
 	}
 	return `
 		WITH RECURSIVE selected_categories AS (
@@ -733,7 +733,7 @@ func listMatchSQL(params ListParams) (string, []any) {
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  ` + publicCatalogDisplayNamePredicate("l", "fallback") + `
-		  ` + publicCatalogUsabilityPredicate("e", "v") + expansionPredicate(params.Expansion, "e", "v") + `
+		  ` + publicCatalogUsabilityPredicate("e", "v") + expansionPredicate(params.Expansion, "e", "v", "$6") + " AND $6::text IS NOT NULL " + `
 		  AND ($1='' OR p.slug=$1)
 		  AND ($2='' OR e.entity_type=$2)
 		  AND ($5='' OR EXISTS (
@@ -751,7 +751,7 @@ func listMatchSQL(params ListParams) (string, []any) {
 			) END
 		  )`, []any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
 		normalizeLocale(params.Locale), strings.TrimSpace(params.Query),
-		strings.TrimSpace(params.Category)}
+		strings.TrimSpace(params.Category), params.Expansion}
 }
 
 func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity, error) {
@@ -765,7 +765,7 @@ func (s *Service) GetInExpansion(ctx context.Context, id uuid.UUID, locale, expa
 	row := s.postgres.QueryRow(ctx, publicEntitySelect("$2", "")+`
 		WHERE e.id = $1 AND e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
-		  `+publicCatalogUsabilityPredicate("e", "v")+expansionPredicate(expansion, "e", "v")+``, id, normalizeLocale(locale))
+		  `+publicCatalogUsabilityPredicate("e", "v")+expansionPredicate(expansion, "e", "v", "$3")+" AND $3::text IS NOT NULL "+``, id, normalizeLocale(locale), expansion)
 	entity, err := scanEntity(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Entity{}, ErrNotFound
