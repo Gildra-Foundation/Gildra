@@ -13,13 +13,14 @@ import { classIcon } from '@/lib/games/wow/assets';
 import { tierData as data } from '@/lib/forever/guides/tiers';
 import styles from './tierLists.module.css';
 import { copy, names } from './tierListsCopy';
+import { trailLabel } from "@/lib/routes/registry";
 export function tierMetadata(lang:Lang):Metadata {return {title:`${copy[lang].title} — WowArcana`,description:copy[lang].lede,alternates:pairedAlternates(lang,'/wow/forever/tier-lists')};}
 export function TierListsPage({lang,mode,classSlug}:{lang:Lang;mode?:string;classSlug?:string}) {
  const c=copy[lang]; const board=data.boards.find(b=>b.id===mode)??data.boards[0]; const selected=classSlug&&names[classSlug]?classSlug:'';
  const entries=board.entries.filter(e=>!selected||e.classSlug===selected);
  const base=p(lang,'/wow/forever/tier-lists');
  return <ForeverFrame lang={lang} scene="tierLists">
-  <AtlasHero title={c.title} lede={c.lede} align="start" breadcrumbs={[{label:'Forever',href:p(lang,'/wow/forever')}]}/>
+  <AtlasHero title={c.title} lede={c.lede} align="start" breadcrumbsLabel={trailLabel(lang)} breadcrumbs={[{label:'Forever',href:p(lang,'/wow/forever')}]}/>
   <nav className={styles.modes} aria-label={c.mode}>{data.boards.map(b=><Link key={b.id} href={`${base}?mode=${b.id}${selected ? `&class=${selected}`:''}#ranking`} aria-current={b.id===board.id?'page':undefined}>{b.title[lang]}</Link>)}</nav>
   <MaterialPlaque kit="tier-lists"><form action={base+'#ranking'} className={styles.filters}>
    <input type="hidden" name="mode" value={board.id}/>

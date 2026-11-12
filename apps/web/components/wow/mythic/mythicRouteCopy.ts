@@ -52,7 +52,7 @@ const ru = {
   tyrannicalNote: "Обычные враги сильнее и опаснее",
   seasonAffix: "Сезон 2",
   seasonAffixTitle: "Условия текущего сезона",
-  seasonAffixNote: "Действуют условия Midnight Сезон 2",
+  seasonAffixNote: "Действуют условия Midnight, сезон 2",
 
   // Workspace
   plannerLabel: (dungeon: string) => `Планировщик маршрута ${dungeon}`,

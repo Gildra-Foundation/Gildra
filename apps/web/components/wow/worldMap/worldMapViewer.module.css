@@ -737,3 +737,6 @@
   .labelText, .markerName { color: CanvasText; background: Canvas; text-shadow: none; }
   .compare::before { background: CanvasText; }
 }
+
+/* Touch: the folded sheet's tab is 44 px too. */
+@media (max-width: 760px) and (pointer: coarse) { .place[data-sheet]:not([data-open]) .sheetHandle { min-height: 44px; } }

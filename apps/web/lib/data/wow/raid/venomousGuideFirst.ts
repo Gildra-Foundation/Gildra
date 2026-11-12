@@ -377,7 +377,7 @@ export const venomousGuideFirst: VenomousGuideBoss[] = [
           "en": "Break its shield with magic damage, then kill it before the well."
         },
         "death": {
-          "ru": "В героическом режиме тело нужно сжечь «Скользящее пламя» на переходке.",
+          "ru": "В героическом режиме тело нужно сжечь способностью «Скользящее пламя» на переходке.",
           "en": "On Heroic, burn its corpse with Slithering Flame during intermission."
         }
       },

@@ -9,7 +9,7 @@ import {
   runsRegions, type CohortSpec, type CutoffTier, type DungeonStats, type RegionCutoffs, type RunsQuery, type RunsRegion,
   type RunsRole, type SpecPresence, type StatsResponse, type WorldCutoffs,
 } from "@/lib/games/wow/mythicPlusRunsTypes";
-import { trail } from "@/lib/routes/registry";
+import { trail, trailLabel } from "@/lib/routes/registry";
 import { CutoffChart, type ChartSeries } from "./CutoffChart";
 import {
   dungeonLabel, GroupIcons, hrefWith, isSeasonDungeon, LoadState, NoMatch, number, percent, roleIcons, shareOf, specIndex, specLabel, SpecToken, StaleNotice, type Locale, type SpecView,
@@ -47,7 +47,7 @@ export async function StatsPage({ locale, query }: { locale: Locale; query: Runs
       <MythicHubBackdrop />
       <MythicHubMotion />
       <div className={styles.hero} data-hub-hero>
-        <AtlasHero align="start" className={styles.heroHeader} breadcrumbs={crumbs} title={text.title} lede={text.lede} />
+        <AtlasHero align="start" className={styles.heroHeader} breadcrumbsLabel={trailLabel(locale)} breadcrumbs={crumbs} title={text.title} lede={text.lede} />
         {ctx ? <Kpis {...ctx} scope={scope} /> : null}
       </div>
       {data ? <StaleNotice data={data} copy={copy} /> : null}
@@ -449,7 +449,7 @@ function Dungeons({ data, text, locale, specs, query }: Ctx & { query: RunsQuery
           const standout = row.standout ? specs.get(row.standout.spec) : undefined;
           return (
             <li key={row.slug} className={styles.dungeon} data-current={row.slug === query.dungeon || undefined} style={{ "--dungeon-accent": season ? dungeonArtDirections[season].accent : undefined } as CSSProperties}>
-              <span className={styles.dungeonArt} aria-hidden="true">{season ? <Image src={dungeonBackdropSmall(season)} alt="" fill sizes="(max-width: 700px) 100vw, 340px" /> : null}</span>
+              <span className={styles.dungeonArt} aria-hidden="true">{season ? <Image src={dungeonBackdropSmall(season)} alt="" fill sizes="(max-width: 700px) 50vw, (max-width: 1399px) 25vw, 170px" /> : null}</span>
               <a className={styles.dungeonName} href={hrefWith(`${prefix}/wow/mythic-plus/routes`, { dungeon: row.slug, region: query.region })} lang={name.lang} aria-label={text.openRoutes(name.name)} aria-current={row.slug === query.dungeon ? "true" : undefined}>
                 <span className={styles.dungeonRank}>{index + 1}</span><span className={styles.dungeonTitle}>{name.name}</span>
               </a>

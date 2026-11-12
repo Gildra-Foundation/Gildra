@@ -44,8 +44,8 @@ export function tierModeMeta(lang: Lang, mode: TierMode, bracket: PvpBracket = "
       description: `Тир-лист специализаций для ${bracket === "rbg" ? "рейтинговых полей боя (RBG)" : bracket === "blitz" ? "рейтингового режима Blitz" : `рейтинговой арены ${name}`} по рейтинговой таблице Blizzard: популярность в топе, рейтинг и доля побед по регионам EU и US.`,
     };
     return {
-      title: "Тир-листы: Эпохальный+, рейды и арена — WowArcana",
-      description: "Тир-листы специализаций для «Эпохального+», рейдов и арены (3v3, 2v2, Solo Shuffle, Blitz, RBG): сводный тир WowArcana, ведущие источники и их сравнение.",
+      title: "Тир-листы: Mythic+, рейды и арена — WowArcana",
+      description: "Тир-листы специализаций для Mythic+, рейдов и арены (3v3, 2v2, Solo Shuffle, Blitz, RBG): сводный тир WowArcana, ведущие источники и их сравнение.",
     };
   }
   if (mode === "raid") return {

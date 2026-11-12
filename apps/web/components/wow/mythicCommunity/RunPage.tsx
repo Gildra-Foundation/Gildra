@@ -16,7 +16,7 @@ import { dungeonFrameArtwork } from "@/lib/wow/dungeonArtDirection";
 import { dungeonMapFrameLayout } from "@/components/wow/shared/dungeonMapFrameLayout";
 import type { DungeonSlug } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { MapStill, RunReplay, type ReplayEnemyLabel } from "./RunReplay";
-import { trail } from "@/lib/routes/registry";
+import { trail, trailLabel } from "@/lib/routes/registry";
 import timerArtifacts from "../../../public/assets/wow/mythic/hub/controls/timers/manifest.json";
 import { dungeonLabel, isSeasonDungeon, number, type Locale } from "./CommunityParts";
 import { communityCopy, type CommunityCopy } from "./communityCopy";
@@ -56,7 +56,7 @@ export function RunPage({ locale, load }: { locale: Locale; load: RunLoad }) {
         <AtlasHero
           align="start"
           className={styles.heroHeader}
-          breadcrumbs={crumbs}
+          breadcrumbsLabel={trailLabel(locale)} breadcrumbs={crumbs}
           eyebrow={eyebrow}
           title={<span lang={dungeon.lang}>{dungeon.name}</span>}
           aside={<KeyPlaque run={run} kit={kit} season={season} copy={copy} locale={locale} />}
@@ -286,7 +286,7 @@ function Unavailable({ locale, copy, finder }: { locale: Locale; copy: Community
     <AtlasFrame lang={locale} className={styles.page} still foot={false} dataAttributes={{ "data-mythic-hub": true }}>
       <MythicHubBackdrop />
       <div className={styles.hero}>
-        <AtlasHero align="start" className={styles.heroHeader} breadcrumbs={trail(locale, "mythicPlusRoutes", { label: copy.run.unavailableTitle })} title={copy.run.unavailableTitle} />
+        <AtlasHero align="start" className={styles.heroHeader} breadcrumbsLabel={trailLabel(locale)} breadcrumbs={trail(locale, "mythicPlusRoutes", { label: copy.run.unavailableTitle })} title={copy.run.unavailableTitle} />
       </div>
       <MaterialPlaque kit={fallbackKit} className={styles.statePlaque}>
         <p className={styles.stateText}>{copy.run.unavailable}</p>
