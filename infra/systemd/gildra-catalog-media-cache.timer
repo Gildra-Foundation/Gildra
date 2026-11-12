@@ -1,9 +1,9 @@
 [Unit]
-Description=Schedule Gildra private catalog media refresh
+Description=Schedule Gildra published catalog icon renewal
 
 [Timer]
-OnCalendar=hourly
-RandomizedDelaySec=10m
+OnCalendar=*-*-* 00,06,12,18:15:00 UTC
+RandomizedDelaySec=5m
 Persistent=true
 Unit=gildra-catalog-media-cache.service
 
