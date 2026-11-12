@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
 import { useEffect, useRef, useSyncExternalStore, type MouseEvent } from 'react';
 import { AtlasTabs } from '@gildra/atlas-ui/AtlasTabs';
 import { AtlasSegmented } from '@gildra/atlas-ui/AtlasSegmented';
@@ -19,15 +18,9 @@ import { voidspireGuideCopy } from './voidspireGuideCopy';
 import { VoidspireSpecPicker } from './VoidspireSpecPicker';
 import { VoidspireGuideMechanics } from './VoidspireGuideMechanics';
 import { RaidPlaque } from './raidMaterial';
+import { RaidPullWorkspace } from './RaidPullWorkspace';
 import type { RaidPullPlan } from './raidPullTypes';
 import styles from './voidspireGuide.module.css';
-
-const RaidPullWorkspace = dynamic(() => import('./RaidPullWorkspace').then(module => module.RaidPullWorkspace));
-function preloadPullWorkspace(event: { target: EventTarget }) {
-  if (event.target instanceof Element && event.target.closest('[data-tab="trash"]')) {
-    void import('./RaidPullWorkspace').catch(() => { /* A failed speculative load can retry when the tab opens. */ });
-  }
-}
 
 type Boss = { slug: string; nameRu: string; nameEn: string; artwork: string };
 function subscribe(callback: () => void) {
@@ -130,7 +123,7 @@ export function VoidspireGuideClient({ bosses, locale, pulls }: { bosses: Boss[]
       <a href={`https://www.youtube.com/watch?v=${guide.video}`} target="_blank" rel="noreferrer">{t.source} · {guide.author} ↗</a>
     </footer>
   </article>;
-  return <div ref={guideRef} className={styles.guide} style={raidHubControlLayout('the-voidspire')} onClickCapture={openBossLink} onMouseOver={preloadPullWorkspace} onFocusCapture={preloadPullWorkspace} data-voidspire-guide data-guide-boss={selection.boss} data-difficulty={selection.difficulty}>
+  return <div ref={guideRef} className={styles.guide} style={raidHubControlLayout('the-voidspire')} onClickCapture={openBossLink} data-voidspire-guide data-guide-boss={selection.boss} data-difficulty={selection.difficulty}>
     <VoidspireGuideMotion encounter={selection.boss} />
     <AtlasTabs orientation={wide ? 'vertical' : 'horizontal'} className={styles.bossTabs} label={t.bosses} value={selection.boss} onChange={slug => select({boss:slug})} tabs={[
       ...bosses.map((item,index) => ({id:item.slug,label:<><SelectionSapphires /><span className={styles.bossChoice}><Image src={item.artwork} width={52} height={52} alt="" /><span><small>{String(index+1).padStart(2,'0')}</small>{locale === 'ru' ? item.nameRu : item.nameEn}</span></span></>,content:selection.boss === item.slug ? content : null})),
