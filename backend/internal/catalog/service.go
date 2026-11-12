@@ -122,6 +122,7 @@ type Service struct {
 	postgres       *pgxpool.Pool
 	totals         *totalCache
 	midnightCounts midnightCountCache
+	itemReference  itemReferenceCache
 }
 
 func NewService(postgres *pgxpool.Pool) *Service {
