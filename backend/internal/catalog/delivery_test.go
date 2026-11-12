@@ -40,4 +40,12 @@ func TestDeliveryCursorScope(t *testing.T) {
 	if validateSummarySort("name;drop table x") == nil {
 		t.Fatal("invalid sort accepted")
 	}
+	if validateSummaryOrderingScope(SummaryParams{Sort: "name_asc"}) == nil {
+		t.Fatal("sort without a type accepted")
+	}
+	for _, p := range []SummaryParams{{}, {Sort: "id"}, {Sort: "name_asc", Query: "Fireball"}, {Type: "spell"}, {Type: "item", Sort: "item_level_desc"}} {
+		if err := validateSummaryOrderingScope(p); err != nil {
+			t.Fatal(err)
+		}
+	}
 }

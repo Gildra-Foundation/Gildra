@@ -181,6 +181,9 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if err != nil {
 		return SummaryPage{}, err
 	}
+	if err := validateSummaryOrderingScope(params); err != nil {
+		return SummaryPage{}, err
+	}
 	ordered := summaryUsesOrdering(params)
 	cursorID, cursorRank := uuid.Nil, (*int)(nil)
 	if !ordered {

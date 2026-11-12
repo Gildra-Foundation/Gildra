@@ -35,6 +35,15 @@ func summaryUsesOrdering(p SummaryParams) bool {
 	return strings.TrimSpace(p.Type) != "" || p.Sort != ""
 }
 
+// Ordering is indexed per entity type only. Indexes without the type made the
+// planner walk every higher-ranked item before the first spell.
+func validateSummaryOrderingScope(p SummaryParams) error {
+	if summaryUsesOrdering(p) && strings.TrimSpace(p.Type) == "" {
+		return invalidRequest("sort requires a dataset or type")
+	}
+	return nil
+}
+
 type deliveryCursor struct {
 	V         int       `json:"v"`
 	Scope     string    `json:"scope"`
