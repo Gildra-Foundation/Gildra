@@ -91,6 +91,11 @@ const nextConfig: NextConfig = {
     // (GILDRA_BUILD_CPUS in the Dockerfile).
     cpus: Number(process.env.GILDRA_BUILD_CPUS) || 2,
     staticGenerationMaxConcurrency: 2,
+    // An image the optimizer cannot finish in time is answered with its original file,
+    // and that answer is cached for minimumCacheTTL. With the default 7 s, a busy host
+    // (the checks right after a release) left the 25-megapixel raid scene unresized for
+    // a day: 1.36 MB instead of ~0.3 MB as the page's largest picture (2026-11-12).
+    imgOptTimeoutInSeconds: 30,
     cssChunking: { type: "graph", requestCost: 6000 },
     // Two root layouts (app/(site), app/ru) for a server-side <html lang>: the
     // 404 of unmatched URLs is app/global-not-found.tsx.
