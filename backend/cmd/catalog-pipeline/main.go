@@ -31,8 +31,10 @@ func main() {
 
 func run() (catalogpipeline.Result, error) {
 	var databaseURL, sources, mode, trigger, profile, product, version, binaryDirectory, publicationEnvironment, catalogAccessMode, recoveryPolicy string
-	var resumeReleaseID, resumeFrom, resumeStages string
-	var maxRecords int
+	var resumeReleaseID, resumeFrom, resumeStages, expectedSystemID string
+	var maxRecords, enrichmentSliceRecords, enrichmentRequestsPerHour int
+	var reconcileRun int64
+	var confirmWorkerStopped bool
 	var confirmFullImport, useCheckedBuild, forceRebuild bool
 	var timeout time.Duration
 	// Do not put DATABASE_URL in flag defaults: the flag package echoes
@@ -48,11 +50,16 @@ func run() (catalogpipeline.Result, error) {
 	flag.StringVar(&publicationEnvironment, "publication-environment", "production", "development, staging, or production")
 	flag.StringVar(&catalogAccessMode, "access-mode", envOr("CATALOG_ACCESS_MODE", "public"), "public or private")
 	flag.StringVar(&recoveryPolicy, "recovery-policy", catalogquality.RecoveryPolicyOffHost, "off_host, verified_same_host, or owner_waived (manual runs only: no backup evidence, the owner accepts that a failed release cannot be restored)")
+	flag.Int64Var(&reconcileRun, "reconcile-failed-run", 0, "reconcile interrupted imports of this failed pipeline run; requires stopped-worker confirmation")
+	flag.BoolVar(&confirmWorkerStopped, "confirm-worker-stopped", false, "operator verified the old importer and descendants are stopped")
+	flag.IntVar(&enrichmentSliceRecords, "enrichment-slice-records", 0, "bounded records per enrichment type/locale; resume required after a slice stop")
+	flag.IntVar(&enrichmentRequestsPerHour, "enrichment-requests-per-hour", 0, "pace Battle.net enrichment requests below the shared hourly quota; 0 leaves pacing to the API")
 	flag.IntVar(&maxRecords, "max-records", 0, "records per source dataset; 0 imports all")
 	flag.BoolVar(&confirmFullImport, "confirm-full-import", false, "confirm an unbounded production import")
 	flag.BoolVar(&forceRebuild, "force-rebuild", false, "rebuild and publish an already published build (explicit repair operation)")
 	flag.BoolVar(&useCheckedBuild, "use-checked-build", false, "pin the import to a recent successful Wago build check")
 	flag.DurationVar(&timeout, "timeout", 6*time.Hour, "whole pipeline timeout")
+	flag.StringVar(&expectedSystemID, "expected-database-system-id", "", "refuse all writes unless PostgreSQL system_identifier matches this isolated target")
 	flag.StringVar(&resumeReleaseID, "resume-release", "", "resume a failed staging release without repeating validated source stages")
 	flag.StringVar(&resumeFrom, "resume-from", "import-battlenet", "first executable stage to run when resuming a release")
 	flag.StringVar(&resumeStages, "resume-stages", "", "comma-separated stage keys to run when resuming a release; other retained stages are skipped, validation and publication still run")
@@ -87,6 +94,26 @@ func run() (catalogpipeline.Result, error) {
 	if err := db.Ping(ctx); err != nil {
 		return catalogpipeline.Result{}, fmt.Errorf("ping catalog database: %w", err)
 	}
+	if expectedSystemID != "" {
+		var actual string
+		if err := db.QueryRow(ctx, `SELECT system_identifier::text FROM pg_control_system()`).Scan(&actual); err != nil {
+			return catalogpipeline.Result{}, fmt.Errorf("verify database identity: %w", err)
+		}
+		if actual != expectedSystemID {
+			return catalogpipeline.Result{}, errors.New("database system identifier differs from expected target")
+		}
+	}
+	if reconcileRun != 0 {
+		if mode != "apply" {
+			return catalogpipeline.Result{}, errors.New("reconciliation requires apply mode")
+		}
+		count, err := (&catalogpipeline.Runner{DB: db}).ReconcileFailedRun(ctx, reconcileRun, product, confirmWorkerStopped)
+		if err != nil {
+			return catalogpipeline.Result{}, err
+		}
+		slog.Info("reconciled confirmed stopped imports", "run_id", reconcileRun, "imports", count)
+		return catalogpipeline.Result{RunID: reconcileRun, Mode: mode, Status: "reconciled"}, nil
+	}
 	if useCheckedBuild {
 		if strings.TrimSpace(version) != "" {
 			return catalogpipeline.Result{}, errors.New("version and use-checked-build cannot be combined")
@@ -104,7 +131,7 @@ func run() (catalogpipeline.Result, error) {
 	options := catalogpipeline.Options{
 		PipelineKey: "catalog-refresh", Trigger: trigger, Mode: mode, Profile: strings.TrimSpace(profile), Product: strings.TrimSpace(product),
 		Sources: catalogpipeline.SortedSources(sources), BuildVersion: strings.TrimSpace(version),
-		MaxRecords: maxRecords, ConfirmFullImport: confirmFullImport, ForceRebuild: forceRebuild, BinaryDirectory: strings.TrimSpace(binaryDirectory),
+		MaxRecords: maxRecords, EnrichmentSliceRecords: enrichmentSliceRecords, EnrichmentRequestsPerHour: enrichmentRequestsPerHour, ConfirmFullImport: confirmFullImport, ForceRebuild: forceRebuild, BinaryDirectory: strings.TrimSpace(binaryDirectory),
 		PublicationEnvironment: publicationEnvironment,
 		CatalogAccessMode:      catalogAccessMode,
 		RecoveryPolicy:         strings.TrimSpace(recoveryPolicy),

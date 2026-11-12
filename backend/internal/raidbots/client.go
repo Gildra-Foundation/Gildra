@@ -45,6 +45,7 @@ func New(cfg Config) *Client {
 		cfg.HTTPClient = &http.Client{
 			Timeout: 15 * time.Minute,
 			Transport: &http.Transport{
+				Proxy:               http.ProxyFromEnvironment,
 				MaxIdleConns:        8,
 				MaxIdleConnsPerHost: 4,
 				IdleConnTimeout:     90 * time.Second,
