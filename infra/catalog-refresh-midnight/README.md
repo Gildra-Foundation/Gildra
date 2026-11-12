@@ -45,8 +45,9 @@ The operator must prove MIDNIGHT_RESTORE_FILESYSTEM_PATH maps to that actual res
 cluster and all its tablespaces; this cannot be established by a string setting alone.
 Reserve is checked before each command and every second during execution; breach aborts
 owned processes and then reconciles database sessions. For a104GiB source on one FS,
-this proposal requires332GiB free, so current~62.97GiB fails before proof starts.
-No full proof was attempted. No existing backup is deleted. At most ONE newly owned
+this proposal requires332GiB free. The 11 November pre-RAID expansion check
+found ~62.97GiB and failed before proof start; remeasure capacity on the actual
+source/restore filesystems before activation. No production-sized proof was attempted. No existing backup is deleted. At most ONE newly owned
 midnight-proof-<generation> directory is admitted; another attempt fails until its
 owner agrees explicit reclamation. This conservative lifecycle is bounded but not an
 automatic daily retention solution. Reclamation/storage provisioning needs agreement.

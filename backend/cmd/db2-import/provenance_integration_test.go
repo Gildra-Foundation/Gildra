@@ -70,12 +70,6 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Projection now requires an active, unpublished candidate. Import creation
-	// alone does not activate builds; model that separate orchestration step.
-	if _, err := pool.Exec(ctx, `UPDATE game_builds SET is_active=(id=$1) WHERE product_id=$2`, ic.BuildID, ic.ProductID); err != nil {
-		t.Fatal(err)
-	}
-
 	rows := []db2ProofRow{
 		{"SpellName", 100, map[string]any{"Name_lang": "Provenance Recipe"}},
 		{"Spell", 100, map[string]any{"Description_lang": "Creates a provenanced item."}},

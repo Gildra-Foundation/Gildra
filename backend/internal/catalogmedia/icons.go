@@ -480,7 +480,10 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
                 cache_status='cached',cache_key=EXCLUDED.cache_key,
                 cached_content_hash=EXCLUDED.cached_content_hash,cached_byte_size=EXCLUDED.cached_byte_size,
                 cached_at=now(),cache_error='',mime_type=EXCLUDED.mime_type,
-                cached_url=$3 || '/v1/media/' || catalog_entity_media.id::text,updated_at=now()`,
+                cached_url=$3 || '/v1/media/' || catalog_entity_media.id::text,updated_at=now()
+            -- Repair may refresh the same observation. Ordinary seeding must
+            -- only link new entities, without rewriting their fresh siblings.
+            WHERE $5::boolean`,
 			productID, buildID, c.publicBase, expansion, options.MissingOnly, options.EntityIDs)
 		if err != nil {
 			return fmt.Errorf("link official icon batch to entities: %w", err)

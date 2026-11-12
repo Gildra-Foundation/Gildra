@@ -669,49 +669,6 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 	return result, nil
 }
 
-func (r *Runner) productID(ctx context.Context, product string) (int16, error) {
-	var productID int16
-	if err := r.DB.QueryRow(ctx, `SELECT id FROM game_products WHERE slug=$1`, strings.TrimSpace(strings.ToLower(product))).Scan(&productID); err != nil {
-		return 0, fmt.Errorf("resolve product %q: %w", product, err)
-	}
-	return productID, nil
-}
-
-// refreshPublishedQuestUsability reclassifies the newly published quest
-// denominator before the cached read models are rebuilt.  The classifiers are
-// intentionally publication-aware: they require the version and both locale
-// proofs that the release manager has just moved into the public projection.
-func (r *Runner) refreshPublishedQuestUsability(
-	ctx context.Context,
-	product string,
-	productID int16,
-	buildVersion string,
-) (int64, error) {
-	var buildID int64
-	if err := r.DB.QueryRow(ctx, `
-		SELECT id
-		FROM game_builds
-		WHERE product_id=$1 AND version=$2 AND is_active
-		ORDER BY build_number DESC
-		LIMIT 1`, productID, buildVersion).Scan(&buildID); err != nil {
-		return 0, fmt.Errorf("resolve published quest build %s: %w", buildVersion, err)
-	}
-	var refreshed int64
-	switch product {
-	case "wow":
-		if err := r.DB.QueryRow(ctx, `SELECT catalog_refresh_quest_usability($1)`, buildID).Scan(&refreshed); err != nil {
-			return 0, fmt.Errorf("refresh Retail quest usability: %w", err)
-		}
-	case "wow_classic", "wow_classic_era", "wow_classic_hardcore":
-		if err := r.DB.QueryRow(ctx, `SELECT catalog_refresh_classic_quest_usability($1,$2)`, productID, buildID).Scan(&refreshed); err != nil {
-			return 0, fmt.Errorf("refresh Classic quest usability: %w", err)
-		}
-	default:
-		return 0, nil
-	}
-	return refreshed, nil
-}
-
 func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product, recoveryPolicy string) error {
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_runs SET current_stage='recovery-gate' WHERE id=$1`, runID)
 	_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='recovery-gate'`, runID)
