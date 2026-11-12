@@ -70,6 +70,8 @@ func TestFreshnessStoppedDB2ImportKeepsProvedTables(t *testing.T) {
 			fmt.Fprint(w, "ID,EnchantId,Type\n1,10,2\n2,11,4\n3,12,8\n")
 		case table == "ItemBonus" && up:
 			fmt.Fprint(w, "ID,ParentItemBonusListID,Type\n7,70,1\n8,80,2\n")
+		case table == "ItemBonusList" && up:
+			fmt.Fprint(w, "ID,Flags\n9,0\n")
 		default:
 			http.Error(w, "upstream stopped", http.StatusBadGateway)
 		}
@@ -111,11 +113,10 @@ func TestFreshnessStoppedDB2ImportKeepsProvedTables(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	changed := map[string]any{"product": opts.product, "tables": []string{"GemProperties"}, "locales": opts.locales,
+	// A deploy between the two attempts added a table: proved tables are kept.
+	opts.tables = append(opts.tables, "ItemBonusList")
+	parameters = map[string]any{"product": opts.product, "tables": opts.tables, "locales": opts.locales,
 		"max_records_per_table": 0, "batch_size": opts.batchSize, "resumable_tables": "v1"}
-	if _, err := store.Begin(ctx, "wow", build, version, "us", "wago_tools", &release, changed); err == nil {
-		t.Fatal("a different table set took over the retained snapshot")
-	}
 	second, err := store.Begin(ctx, "wow", build, version, "us", "wago_tools", &release, parameters)
 	if err != nil {
 		t.Fatal(err)
@@ -142,8 +143,8 @@ func TestFreshnessStoppedDB2ImportKeepsProvedTables(t *testing.T) {
 	if bonus < 2 {
 		t.Fatalf("the stopped table was requested %d times, want a retry", bonus)
 	}
-	if seen != 5 || written != 2 {
-		t.Fatalf("resumed counters seen=%d written=%d, want 5 and 2", seen, written)
+	if seen != 6 || written != 3 {
+		t.Fatalf("resumed counters seen=%d written=%d, want 6 and 3", seen, written)
 	}
 	var ready, rows, open int
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM catalog_source_artifacts WHERE snapshot_id=$1 AND status='ready' AND content_hash IS NOT NULL`, second.SnapshotID).Scan(&ready); err != nil {
@@ -158,8 +159,8 @@ func TestFreshnessStoppedDB2ImportKeepsProvedTables(t *testing.T) {
 		WHERE run.build_id=$1 AND run.status='FAILED' AND COALESCE(queue.state,'quarantined')<>'resolved'`, second.BuildID).Scan(&open); err != nil {
 		t.Fatal(err)
 	}
-	if ready != 2 || rows != 5 || open != 0 {
-		t.Fatalf("ready artifacts=%d rows=%d open failures=%d, want 2, 5 and 0", ready, rows, open)
+	if ready != 3 || rows != 6 || open != 0 {
+		t.Fatalf("ready artifacts=%d rows=%d open failures=%d, want 3, 6 and 0", ready, rows, open)
 	}
 
 	// A proved table whose rows no longer match its measurement is imported again.
