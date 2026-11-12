@@ -132,6 +132,9 @@ func (s *Server) ListGameEntityTypes(ctx context.Context, request api.ListGameEn
 
 func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGameEntitySummariesRequestObject) (api.ListGameEntitySummariesResponseObject, error) {
 	params := catalog.SummaryParams{Product: "wow", Locale: "en_US", Limit: 20, IncludeTotal: true}
+	if request.Params.Sort != nil {
+		params.Sort = string(*request.Params.Sort)
+	}
 	if request.Params.Expansion != nil {
 		params.Expansion = string(*request.Params.Expansion)
 	}
@@ -195,7 +198,7 @@ func (s *Server) ListGameEntitySummaries(ctx context.Context, request api.ListGa
 			Id: entity.ID, Product: &entity.Product, Type: entity.Type, ExternalId: entity.ExternalID,
 			Slug: entity.Slug, Locale: &locale, LocaleFallback: &entity.LocaleFallback, Name: entity.Name,
 			Description: &entity.Description, IconName: entity.IconName, IconUrl: entity.IconURL,
-			Quality: entity.Quality, ItemLevel: entity.ItemLevel, BuildId: entity.BuildID,
+			Quality: entity.Quality, ItemLevel: entity.ItemLevel, RequiredLevel: entity.RequiredLevel, InventoryType: entity.InventoryType, BuildId: entity.BuildID,
 			UpdatedAt: &entity.UpdatedAt, Highlights: &highlights,
 		})
 	}

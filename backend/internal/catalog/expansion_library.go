@@ -17,7 +17,7 @@ type midnightCountCache struct {
 	entries map[string]midnightCountEntry
 }
 
-func (s *Service) expansionCounts(ctx context.Context, product, locale string) (map[string][5]int64, error) {
+func (s *Service) expansionCounts(ctx context.Context, product, locale, expansion string) (map[string][5]int64, error) {
 	// Read the publication epoch on every request. A promotion or read-model repair
 	// invalidates previous counts immediately; TTL also bounds media expiration.
 	var epoch string
@@ -29,13 +29,13 @@ func (s *Service) expansionCounts(ctx context.Context, product, locale string) (
 	cache := &s.midnightCounts
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
-	key := product + ":" + locale
+	key := product + ":" + locale + ":" + expansion
 	if entry, ok := cache.entries[key]; ok && entry.epoch == epoch && time.Now().Before(entry.expires) {
 		return entry.counts, nil
 	}
-	rows, err := s.postgres.Query(ctx, midnightLibraryCounts, product, locale)
+	rows, err := s.postgres.Query(ctx, midnightLibraryCounts, product, locale, expansion)
 	if err != nil {
-		return nil, fmt.Errorf("count Midnight library: %w", err)
+		return nil, fmt.Errorf("count expansion library: %w", err)
 	}
 	defer rows.Close()
 	counts := map[string][5]int64{}
@@ -52,6 +52,13 @@ func (s *Service) expansionCounts(ctx context.Context, product, locale string) (
 	}
 	if cache.entries == nil {
 		cache.entries = map[string]midnightCountEntry{}
+	}
+	// Registry keys are small, but unrecognized keys must not grow the cache.
+	if len(cache.entries) >= 64 {
+		for k := range cache.entries {
+			delete(cache.entries, k)
+			break
+		}
 	}
 	cache.entries[key] = midnightCountEntry{epoch: epoch, expires: time.Now().Add(30 * time.Second), counts: counts}
 	return counts, nil
@@ -70,7 +77,7 @@ func (s *Service) LibraryDatasetsInExpansion(ctx context.Context, product, local
 	if product == "" {
 		product = "wow"
 	}
-	counts, err := s.expansionCounts(ctx, product, normalizeLocale(locale))
+	counts, err := s.expansionCounts(ctx, product, normalizeLocale(locale), expansion)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +94,7 @@ func (s *Service) LibraryDatasetsInExpansion(ctx context.Context, product, local
 		d.PreviewImageURL = nil
 		if d.EntityCount == 0 {
 			d.Applicability = "pending_source"
-			d.ApplicabilityReason = "Confirmed Midnight membership is not available for this dataset."
+			d.ApplicabilityReason = "Confirmed expansion membership is not available for this dataset."
 		}
 	}
 	return datasets, nil
@@ -99,7 +106,7 @@ var midnightLibraryCounts = `
  item.item_class_id,item.item_subclass_id,
  (localized.version_id IS NOT NULL) localized
  FROM catalog_entity_expansions cohort
- JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id AND expansion.expansion_key='midnight'
+ JOIN catalog_expansions expansion ON expansion.id=cohort.expansion_id AND expansion.expansion_key=$3 AND expansion.product_id=cohort.product_id
  JOIN game_products product ON product.id=cohort.product_id AND product.slug=$1
  JOIN game_entities e ON e.product_id=cohort.product_id AND e.entity_type=cohort.entity_type AND e.external_id=cohort.external_id
  JOIN game_entity_versions v ON v.id=e.published_version_id AND v.build_id=cohort.build_id

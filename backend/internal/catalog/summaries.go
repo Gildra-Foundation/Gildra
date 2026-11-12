@@ -33,6 +33,8 @@ type CardSummary struct {
 	IconURL        *string
 	Quality        *int
 	ItemLevel      *int
+	RequiredLevel  *int
+	InventoryType  *string
 	BuildID        *int64
 	UpdatedAt      time.Time
 	Highlights     []Highlight
@@ -40,6 +42,7 @@ type CardSummary struct {
 }
 
 type SummaryParams struct {
+	Sort        string
 	Expansion   string
 	ExternalIDs []int64
 	Product     string
@@ -113,6 +116,9 @@ var summaryFastQuery = `
 	ORDER BY entity.id LIMIT $5`
 
 func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryPage, error) {
+	if err := validateSummarySort(params.Sort); err != nil {
+		return SummaryPage{}, err
+	}
 	if err := validateExpansion(params.Product, params.Expansion); err != nil {
 		return SummaryPage{}, err
 	}
@@ -138,14 +144,14 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		if len(dataset) < 2 || len(dataset) > 64 {
 			return SummaryPage{}, invalidRequest("dataset must be between 2 and 64 characters")
 		}
-		var datasetType, datasetCategory string
+		var datasetType, datasetCategory, datasetOrder string
 		var datasetItemClass *int
 		var datasetSubclasses, datasetExcludedSubclasses []int32
 		err := s.postgres.QueryRow(ctx, `
-			SELECT entity_type,category_path,item_class_id,item_subclass_ids,excluded_item_subclass_ids
+			SELECT entity_type,category_path,item_class_id,item_subclass_ids,excluded_item_subclass_ids,default_order
 			FROM catalog_library_dataset_definitions
 			WHERE slug=$1 AND is_public`, dataset).Scan(&datasetType, &datasetCategory, &datasetItemClass,
-			&datasetSubclasses, &datasetExcludedSubclasses)
+			&datasetSubclasses, &datasetExcludedSubclasses, &datasetOrder)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return SummaryPage{}, invalidRequest("dataset is not public")
 		}
@@ -157,6 +163,9 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		}
 		if params.ItemClassID != nil && datasetItemClass != nil && *params.ItemClassID != *datasetItemClass {
 			return SummaryPage{}, invalidRequest("dataset conflicts with the requested item class")
+		}
+		if params.Sort == "" {
+			params.Sort = datasetOrder
 		}
 		params.Type = datasetType
 		params.Dataset = dataset
@@ -172,7 +181,11 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if err != nil {
 		return SummaryPage{}, err
 	}
-	cursorID, cursorRank, err := decodeSummaryCursor(params.Cursor, strings.TrimSpace(params.Query) != "")
+	ordered := summaryUsesOrdering(params)
+	cursorID, cursorRank := uuid.Nil, (*int)(nil)
+	if !ordered {
+		cursorID, cursorRank, err = decodeSummaryCursor(params.Cursor, strings.TrimSpace(params.Query) != "")
+	}
 	if err != nil {
 		return SummaryPage{}, err
 	}
@@ -212,6 +225,9 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		}
 	}
 
+	if ordered {
+		return s.orderedSummaries(ctx, params, product, locale, filterPaths, total)
+	}
 	query := strings.TrimSpace(params.Query)
 	summaryQuery := `
 		WITH RECURSIVE ` + searchCandidatesSQL("$5") + `
@@ -226,11 +242,6 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			UNION ALL
 			SELECT selected.root_path,child.id FROM catalog_categories child
 			JOIN selected_categories selected ON child.parent_id=selected.id
-		), selected_versions AS (
-			SELECT assignment.version_id FROM game_entity_categories assignment
-			JOIN selected_categories selected ON selected.id=assignment.category_id
-			GROUP BY assignment.version_id
-			HAVING count(DISTINCT selected.root_path)=(SELECT count(*) FROM requested_paths)
 		), page AS MATERIALIZED (
 			-- Filter, rank and cut the page first: a search can match thousands
 			-- of entities, and the description, spell and icon columns below
@@ -243,13 +254,15 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			LEFT JOIN game_entity_localizations localized ON localized.version_id=version.id AND localized.locale=$4
 			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 			LEFT JOIN search_candidates search_match ON search_match.version_id=version.id
-			LEFT JOIN selected_versions selected ON selected.version_id=version.id
+
 			LEFT JOIN catalog_items item ON item.version_id=version.id
 			WHERE entity.deleted_at IS NULL AND product.slug=$1
 				` + publicCatalogDisplayNamePredicate("localized", "fallback") + `
-				` + publicCatalogUsabilityPredicate("entity", "version") + expansionPredicate(params.Expansion, "entity", "version") + `
+				` + publicCatalogUsabilityPredicate("entity", "version") + expansionPredicate(params.Expansion, "entity", "version", "$16") + " AND $16::text IS NOT NULL " + `
 				AND ($2='' OR entity.entity_type=$2)
-				AND (cardinality($7::text[])=0 OR selected.version_id IS NOT NULL)
+				AND NOT EXISTS (SELECT 1 FROM requested_paths requested WHERE NOT EXISTS (
+ SELECT 1 FROM game_entity_categories assignment JOIN selected_categories selected ON selected.id=assignment.category_id
+ WHERE assignment.version_id=version.id AND selected.root_path=requested.path))
 				AND ($8::int IS NULL OR item.item_level >= $8)
 				AND ($9::int IS NULL OR item.item_level <= $9)
 				AND ($10::int IS NULL OR item.required_level >= $10)
@@ -293,7 +306,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	queryArgs := []any{product, strings.TrimSpace(params.Type), cursorID, locale,
 		query, params.Limit + 1, filterPaths, params.MinItemLevel, params.MaxItemLevel,
 		params.MinRequiredLevel, params.MaxRequiredLevel, cursorRank, params.ItemClassID,
-		params.ItemSubclassIDs, params.ExcludedItemSubclassIDs}
+		params.ItemSubclassIDs, params.ExcludedItemSubclassIDs, params.Expansion}
 	entities := make([]CardSummary, 0, params.Limit+1)
 	scan := func(rows pgx.Rows) error {
 		defer rows.Close()
@@ -308,6 +321,8 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 				&inventoryType, &school, &castTime, &cooldown, &entity.SearchRank); err != nil {
 				return fmt.Errorf("scan game entity summary: %w", err)
 			}
+			entity.RequiredLevel = requiredLevel
+			entity.InventoryType = inventoryType
 			entity.Highlights = summaryHighlights(locale, requiredLevel, inventoryType, school, castTime, cooldown)
 			entities = append(entities, entity)
 		}
@@ -317,12 +332,12 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 		return nil
 	}
 	if query == "" && len(filterPaths) == 0 {
-		queryText := strings.Replace(summaryFastQuery, "WHERE entity.deleted_at IS NULL", "WHERE entity.deleted_at IS NULL"+expansionPredicate(params.Expansion, "entity", "version"), 1)
+		queryText := strings.Replace(summaryFastQuery, "WHERE entity.deleted_at IS NULL", "WHERE entity.deleted_at IS NULL"+expansionPredicate(params.Expansion, "entity", "version", "$13")+" AND $13::text IS NOT NULL ", 1)
 		args := []any{product, strings.TrimSpace(params.Type), cursorID, locale,
 			params.Limit + 1, params.MinItemLevel, params.MaxItemLevel, params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID,
-			params.ItemSubclassIDs, params.ExcludedItemSubclassIDs}
+			params.ItemSubclassIDs, params.ExcludedItemSubclassIDs, params.Expansion}
 		if len(params.ExternalIDs) > 0 {
-			queryText = strings.Replace(queryText, "AND entity.id>$3", "AND entity.external_id=ANY($13::bigint[]) AND entity.id>$3", 1)
+			queryText = strings.Replace(queryText, "AND entity.id>$3", "AND entity.external_id=ANY($14::bigint[]) AND entity.id>$3", 1)
 			args = append(args, params.ExternalIDs)
 		}
 		rows, queryErr := s.postgres.Query(ctx, queryText, args...)
@@ -484,11 +499,6 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 			WHERE product.slug=$1 AND category.entity_type=$2
 			UNION ALL SELECT selected.root_path,child.id FROM catalog_categories child
 			JOIN selected_categories selected ON child.parent_id=selected.id
-		), selected_versions AS (
-			SELECT assignment.version_id FROM game_entity_categories assignment
-			JOIN selected_categories selected ON selected.id=assignment.category_id
-			GROUP BY assignment.version_id
-			HAVING count(DISTINCT selected.root_path)=(SELECT count(*) FROM requested_paths)
 		)
 		SELECT count(*) FROM game_entities entity
 		JOIN game_products product ON product.id=entity.product_id
@@ -497,11 +507,13 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=version.id AND fallback.locale='en_US'
 		LEFT JOIN catalog_items item ON item.version_id=version.id
 		LEFT JOIN search_candidates search ON search.version_id=version.id
-		LEFT JOIN selected_versions selected ON selected.version_id=version.id
+
 		WHERE entity.deleted_at IS NULL AND product.slug=$1 AND ($2='' OR entity.entity_type=$2)
 			`+publicCatalogDisplayNamePredicate("localized", "fallback")+`
-			`+publicCatalogUsabilityPredicate("entity", "version")+expansionPredicate(params.Expansion, "entity", "version")+`
-			AND (cardinality($4::text[])=0 OR selected.version_id IS NOT NULL)
+			`+publicCatalogUsabilityPredicate("entity", "version")+expansionPredicate(params.Expansion, "entity", "version", "$13")+" AND $13::text IS NOT NULL "+`
+			AND NOT EXISTS (SELECT 1 FROM requested_paths requested WHERE NOT EXISTS (
+ SELECT 1 FROM game_entity_categories assignment JOIN selected_categories selected ON selected.id=assignment.category_id
+ WHERE assignment.version_id=version.id AND selected.root_path=requested.path))
 			AND ($5::int IS NULL OR item.item_level >= $5)
 			AND ($6::int IS NULL OR item.item_level <= $6)
 			AND ($7::int IS NULL OR item.required_level >= $7)
@@ -511,7 +523,7 @@ func (s *Service) summaryCount(ctx context.Context, params SummaryParams, produc
 			AND (item.item_subclass_id IS NULL OR item.item_subclass_id<>ALL(COALESCE($12::int[],'{}')))
 			AND ($3='' OR search.version_id IS NOT NULL)`, product, entityType, query, filterPaths, params.MinItemLevel, params.MaxItemLevel,
 			params.MinRequiredLevel, params.MaxRequiredLevel, params.ItemClassID, locale,
-			params.ItemSubclassIDs, params.ExcludedItemSubclassIDs).Scan(&total)
+			params.ItemSubclassIDs, params.ExcludedItemSubclassIDs, params.Expansion).Scan(&total)
 	})
 	if err != nil {
 		return 0, fmt.Errorf("count game entity summaries: %w", err)
@@ -546,7 +558,7 @@ func encodeSummaryCursor(id uuid.UUID, rank int, ranked bool) string {
 	if !ranked {
 		return encodeCursor(id)
 	}
-	return base64.RawURLEncoding.EncodeToString([]byte(strconv.Itoa(rank) + "\x1f" + id.String()))
+	return base64.RawURLEncoding.EncodeToString([]byte("r2\x1f" + strconv.Itoa(rank) + "\x1f" + id.String()))
 }
 
 func decodeSummaryCursor(cursor string, ranked bool) (uuid.UUID, *int, error) {
@@ -562,14 +574,14 @@ func decodeSummaryCursor(cursor string, ranked bool) (uuid.UUID, *int, error) {
 		return uuid.Nil, nil, invalidRequest("cursor is invalid")
 	}
 	parts := strings.Split(string(decoded), "\x1f")
-	if len(parts) != 2 {
+	if len(parts) != 3 || parts[0] != "r2" {
 		return uuid.Nil, nil, invalidRequest("cursor is invalid for ranked search")
 	}
-	rank, err := strconv.Atoi(parts[0])
+	rank, err := strconv.Atoi(parts[1])
 	if err != nil || rank < 0 {
 		return uuid.Nil, nil, invalidRequest("cursor is invalid for ranked search")
 	}
-	id, err := uuid.Parse(parts[1])
+	id, err := uuid.Parse(parts[2])
 	if err != nil {
 		return uuid.Nil, nil, invalidRequest("cursor is invalid for ranked search")
 	}
@@ -646,7 +658,10 @@ const (
 func searchCandidatesSQL(q string) string {
 	return strings.NewReplacer("{q}", q,
 		"{fallbackBelow}", strconv.Itoa(fuzzySearchFallbackBelow),
-		"{minRunes}", strconv.Itoa(fuzzySearchMinQueryRunes)).Replace(`strong_search(version_id,rank) AS MATERIALIZED (
+		"{minRunes}", strconv.Itoa(fuzzySearchMinQueryRunes)).Replace(`word_prefix AS MATERIALIZED (
+ SELECT to_tsquery('simple',COALESCE(string_agg(quote_literal(word)||':*',' & '),'')) AS query
+ FROM regexp_split_to_table(lower({q}),'[^[:alnum:]_]+') word WHERE word<>''
+ ), strong_search(version_id,rank) AS MATERIALIZED (
 			SELECT candidate_locale.version_id,greatest(
 				CASE WHEN lower(candidate_locale.name)=lower({q}) THEN 9000 ELSE 0 END,
 				CASE WHEN lower(candidate_locale.name) LIKE replace(replace(replace(lower({q}),'\','\\'),'%','\%'),'_','\_')||'%' THEN 8000 ELSE 0 END,
@@ -654,10 +669,16 @@ func searchCandidatesSQL(q string) string {
 					THEN 7000+(ts_rank(candidate_locale.search_document,websearch_to_tsquery('simple',{q}))*1000)::int ELSE 0 END
 			)
 			FROM game_entity_localizations candidate_locale
-			JOIN game_entities published ON published.published_version_id=candidate_locale.version_id AND published.deleted_at IS NULL
+			JOIN game_entities published ON published.published_version_id=candidate_locale.version_id AND published.deleted_at IS NULL AND published.product_id=(SELECT id FROM game_products WHERE slug=$1) AND ($2='' OR published.entity_type=$2)
 			WHERE {q}<>'' AND {q}!~'^[0-9]+$' AND candidate_locale.locale IN ('en_US','ru_RU') AND (
 				lower(candidate_locale.name) LIKE replace(replace(replace(lower({q}),'\','\\'),'%','\%'),'_','\_')||'%'
 				OR candidate_locale.search_document @@ websearch_to_tsquery('simple',{q}))
+ UNION ALL
+ SELECT prefix.version_id,7000
+ FROM catalog_delivery_order prefix
+ JOIN game_entities published ON published.published_version_id=prefix.version_id AND published.deleted_at IS NULL AND published.product_id=(SELECT id FROM game_products WHERE slug=$1) AND ($2='' OR published.entity_type=$2)
+ WHERE prefix.name_search @@ (SELECT query FROM word_prefix) AND {q}<>'' AND {q}!~'^[0-9]+$' AND prefix.locale IN ('en_US','ru_RU')
+
 			UNION ALL
 			SELECT alias.version_id,greatest(
 				CASE WHEN lower(alias.alias)=lower({q}) THEN 8500 ELSE 0 END,
@@ -674,13 +695,27 @@ func searchCandidatesSQL(q string) string {
 			-- OFFSET 0 keeps the trigram GIN scan; with the locale filter pushed
 			-- down the planner walks the locale btree and runs 7 M similarity checks.
 			FROM (SELECT version_id,locale,name FROM game_entity_localizations WHERE name % {q} OFFSET 0) fuzzy
-			JOIN game_entities published ON published.published_version_id=fuzzy.version_id AND published.deleted_at IS NULL
+			JOIN game_entities published ON published.published_version_id=fuzzy.version_id AND published.deleted_at IS NULL AND published.product_id=(SELECT id FROM game_products WHERE slug=$1) AND ($2='' OR published.entity_type=$2)
 			WHERE (SELECT count(DISTINCT version_id) FROM strong_search) < {fallbackBelow}
 				AND char_length({q}) >= {minRunes} AND {q}!~'^[0-9]+$' AND fuzzy.locale IN ('en_US','ru_RU')
 		), search_candidates(version_id,rank) AS MATERIALIZED (
-			SELECT candidate.version_id,max(candidate.rank)::int FROM (
+			SELECT candidate.version_id,(max(candidate.rank)*1000
+ + CASE WHEN published.entity_type='spell' AND (EXISTS(SELECT 1 FROM catalog_spell_owners owner WHERE owner.spell_version_id=candidate.version_id AND owner.owner_type IN ('class','specialization')) OR EXISTS (
+ SELECT 1 FROM game_entity_links ability
+ JOIN game_entity_versions spell_version ON spell_version.id=candidate.version_id AND spell_version.build_id=ability.build_id
+ JOIN game_entities talent ON talent.id=ability.source_entity_id AND talent.deleted_at IS NULL
+ JOIN game_entity_versions talent_version ON talent_version.id=talent.published_version_id AND talent_version.build_id=ability.build_id
+ JOIN game_entity_links ownership ON ownership.source_entity_id=talent.id AND ownership.build_id=ability.build_id AND ownership.relation_type='owned_by'
+ JOIN game_entities owner ON owner.id=ownership.target_entity_id AND owner.product_id=published.product_id AND owner.entity_type IN ('class','specialization') AND owner.deleted_at IS NULL
+ JOIN game_entity_versions owner_version ON owner_version.id=owner.published_version_id AND owner_version.build_id=ability.build_id
+ WHERE ability.target_entity_id=published.id AND ability.relation_type IN ('grants','modifies','replaces'))) THEN 500
+ WHEN published.entity_type IN ('item','mount','achievement') THEN 400
+ WHEN published.entity_type IN ('talent','pvp_talent','class','specialization') THEN 450 ELSE 0 END
+ + CASE WHEN EXISTS(SELECT 1 FROM game_entity_localizations detail WHERE detail.version_id=candidate.version_id AND detail.locale IN ('en_US','ru_RU') AND NULLIF(detail.description,'') IS NOT NULL) THEN 20 ELSE 0 END
+ + CASE WHEN EXISTS(SELECT 1 FROM catalog_entity_icons icon JOIN game_entity_versions v ON v.build_id=icon.build_id
+ WHERE v.id=candidate.version_id AND icon.entity_type=published.entity_type AND icon.external_id=published.external_id AND NULLIF(icon.icon_name,'') IS NOT NULL) THEN 10 ELSE 0 END)::int FROM (
 				SELECT version_id,rank FROM strong_search UNION ALL SELECT version_id,rank FROM fuzzy_search
-			) candidate WHERE candidate.rank>0 GROUP BY candidate.version_id`)
+			) candidate JOIN game_entities published ON published.published_version_id=candidate.version_id AND published.deleted_at IS NULL AND published.product_id=(SELECT id FROM game_products WHERE slug=$1) AND ($2='' OR published.entity_type=$2) WHERE candidate.rank>0 GROUP BY candidate.version_id,published.id,published.product_id,published.entity_type,published.external_id`)
 }
 
 // inSearchTransaction runs a catalog text search with the fuzzy threshold and a
@@ -693,6 +728,8 @@ func (s *Service) inSearchTransaction(ctx context.Context, run func(pgx.Tx) erro
 	defer tx.Rollback(ctx) //nolint:errcheck // after Commit the rollback is a no-op
 	for _, setting := range []string{
 		"SET LOCAL pg_trgm.similarity_threshold = " + fuzzySearchThreshold,
+		// Optional filters and sorts require parameter-specific index plans.
+		"SET LOCAL plan_cache_mode = force_custom_plan",
 		"SET LOCAL statement_timeout = '" + searchStatementTimeout + "'",
 	} {
 		if _, err := tx.Exec(ctx, setting); err != nil {
