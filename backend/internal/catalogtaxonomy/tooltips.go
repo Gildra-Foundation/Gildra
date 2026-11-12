@@ -67,6 +67,9 @@ func (i *Indexer) rebuildTooltips(ctx context.Context, productID *int16) (Result
 			return fmt.Errorf("rebuild entity tooltips: %w", err)
 		}
 		result.Tooltips = command.RowsAffected()
+		if _, err := tx.Exec(ctx, projectionSQL(itemAliasTooltipsSQL)); err != nil {
+			return fmt.Errorf("copy typed item tooltips: %w", err)
+		}
 		if productID != nil {
 			if _, err := rebuildAchievements(ctx, tx); err != nil {
 				return err
@@ -283,6 +286,9 @@ var tooltipSQL = `
 			COALESCE(to_jsonb(item_detail),'{}'::jsonb) AS item_detail,
 			COALESCE(item_sparse_local.payload,item_sparse_fallback.payload,l.attributes->'db2',v.payload->'db2','{}'::jsonb) AS db2,
 			COALESCE(item_effects.effects,'[]'::jsonb) AS item_effects,
+            (SELECT faction.payload->>'Name_lang' FROM catalog_db2_rows faction
+             WHERE faction.build_id=v.build_id AND faction.table_name='Faction' AND faction.locale=l.locale
+              AND faction.row_id=COALESCE(NULLIF(item_sparse_local.payload->>'MinFactionID','')::bigint,NULLIF(item_sparse_fallback.payload->>'MinFactionID','')::bigint,0)) AS required_faction_name,
  ` + gemTooltipExpression + ` AS gem_effects,
 			COALESCE(item_acquisition.sources,'[]'::jsonb) AS item_acquisition,
 			COALESCE(spell_owners.owners,'[]'::jsonb) AS spell_owners,
@@ -369,16 +375,18 @@ var tooltipSQL = `
 			|| CASE WHEN entity_type='item' AND NULLIF(db2->>'Bonding','') IS NOT NULL AND (db2->>'Bonding')::int > 0 THEN jsonb_build_array(jsonb_build_object('type','binding','code',(db2->>'Bonding')::int)) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND NULLIF(db2->>'RequiredLevel','') IS NOT NULL AND (db2->>'RequiredLevel')::int > 0 THEN jsonb_build_array(jsonb_build_object('type','required_level','value',(db2->>'RequiredLevel')::int)) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND NULLIF(db2->>'RequiredSkill','') IS NOT NULL AND (db2->>'RequiredSkill')::int > 0 THEN jsonb_build_array(jsonb_build_object('type','required_skill','skill_id',(db2->>'RequiredSkill')::int,'rank',COALESCE(NULLIF(db2->>'RequiredSkillRank','')::int,0))) ELSE '[]'::jsonb END
-			|| CASE WHEN entity_type='item' AND COALESCE(NULLIF(item_detail->>'max_count','')::int,0)>1 THEN jsonb_build_array(jsonb_build_object('type','stack_limit','value',(item_detail->>'max_count')::int)) ELSE '[]'::jsonb END
+			|| CASE WHEN entity_type='item' AND COALESCE(NULLIF(db2->>'Stackable','')::bigint,0)>1 THEN jsonb_build_array(jsonb_build_object('type','stack_limit','value',(db2->>'Stackable')::bigint)) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND (COALESCE(NULLIF(item_detail->>'purchase_price','')::bigint,0)>0 OR COALESCE(NULLIF(item_detail->>'sell_price','')::bigint,0)>0) THEN jsonb_build_array(jsonb_build_object('type','price','buy',COALESCE(NULLIF(item_detail->>'purchase_price','')::bigint,0),'sell',COALESCE(NULLIF(item_detail->>'sell_price','')::bigint,0))) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND COALESCE(NULLIF(db2->>'ContainerSlots','')::int,0)>0 THEN jsonb_build_array(jsonb_build_object('type','container_slots','value',(db2->>'ContainerSlots')::int)) ELSE '[]'::jsonb END
+			|| ` + itemFactsExpression + `
+			|| CASE WHEN entity_type='item' AND NULLIF(required_faction_name,'') IS NOT NULL AND db2->>'MinReputation' ~ '^[0-7]$' THEN jsonb_build_array(jsonb_build_object('type','required_reputation','name',required_faction_name,'rank',(db2->>'MinReputation')::int)) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND item_name_description<>'' THEN jsonb_build_array(jsonb_build_object('type','name_description','text',item_name_description)) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND item_set_name<>'' THEN jsonb_build_array(jsonb_build_object('type','item_set','name',item_set_name,'set_id',COALESCE(NULLIF(db2->>'ItemSet','')::bigint,0))) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND item_limit_name<>'' THEN jsonb_build_array(jsonb_build_object('type','limit_category','name',item_limit_name,'quantity',item_limit_quantity)) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND item ? 'stats' THEN jsonb_build_array(jsonb_build_object('type','stats','entries',item->'stats')) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND item ? 'socketInfo' THEN jsonb_build_array(jsonb_build_object('type','sockets','value',item->'socketInfo')) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND item ? 'profession' THEN jsonb_build_array(jsonb_build_object('type','profession','value',item->'profession')) ELSE '[]'::jsonb END
-			|| CASE WHEN entity_type='item' AND COALESCE((item->>'uniqueEquipped')::boolean,false) THEN jsonb_build_array(jsonb_build_object('type','unique_equipped')) ELSE '[]'::jsonb END
+			|| CASE WHEN entity_type='item' AND (COALESCE((item->>'uniqueEquipped')::boolean,false) OR (COALESCE(NULLIF(db2->>'Flags_0','')::bigint,0) & 524288)<>0) THEN jsonb_build_array(jsonb_build_object('type','unique_equipped')) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' THEN gem_effects || item_effects ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' THEN item_acquisition ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='spell' AND NULLIF(COALESCE(localized_payload->>'subtext',payload->>'subtext'),'') IS NOT NULL THEN jsonb_build_array(jsonb_build_object('type','subtext','text',COALESCE(localized_payload->>'subtext',payload->>'subtext'))) ELSE '[]'::jsonb END

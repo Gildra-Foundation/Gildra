@@ -29,6 +29,7 @@ const gemTooltipExpression = `CASE WHEN gem_properties.row_id IS NOT NULL THEN
   'scaling_class',gem_enchant.payload->'ScalingClass',
   'min_level',gem_enchant.payload->'MinLevel','max_level',gem_enchant.payload->'MaxLevel',
   'stats',COALESCE((SELECT jsonb_agg(jsonb_build_object(
+   'index',slot,
    'stat_type',(gem_enchant.payload->>('EffectArg_'||slot))::int,
    'unit',CASE WHEN (gem_enchant.payload->>('EffectArg_'||slot))::int IN (32,36,40,49) THEN 'rating' ELSE 'points' END,
    'value',CASE WHEN COALESCE(NULLIF(gem_enchant.payload->>('EffectScalingPoints_'||slot),'')::numeric,0)=0
