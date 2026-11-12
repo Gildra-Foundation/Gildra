@@ -41,7 +41,7 @@ func newEvidenceReuse(ctx context.Context, store *catalogimport.Store, ic catalo
 	if opts.evidenceReuseMaxAge <= 0 || !pinnedNamespace(namespace) {
 		return reuse, nil
 	}
-	artifacts, err := store.BattleNetEvidenceArtifacts(ctx, ic, artifactKey, locale, artifactID, maxEvidenceArtifacts)
+	artifacts, err := store.BattleNetEvidenceArtifacts(ctx, ic, artifactKey, locale, opts.sourceBuildVersion, artifactID, maxEvidenceArtifacts)
 	if err != nil {
 		return nil, err
 	}

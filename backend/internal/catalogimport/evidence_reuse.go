@@ -34,9 +34,9 @@ type EvidenceOrigin struct {
 // would otherwise re-request hundreds of thousands of identical documents at
 // the hourly API quota. Callers must still prove per record that the preserved
 // response came from the namespace they would request now.
-func (s *Store) BattleNetEvidenceArtifacts(ctx context.Context, ic ImportContext, artifactKey, locale string, current uuid.UUID, limit int) ([]uuid.UUID, error) {
-	if ic.ProductID <= 0 || current == uuid.Nil || limit <= 0 {
-		return nil, errors.New("product, current artifact and limit are required")
+func (s *Store) BattleNetEvidenceArtifacts(ctx context.Context, ic ImportContext, artifactKey, locale, sourceBuildVersion string, current uuid.UUID, limit int) ([]uuid.UUID, error) {
+	if ic.ProductID <= 0 || current == uuid.Nil || limit <= 0 || sourceBuildVersion == "" {
+		return nil, errors.New("product, source build, current artifact and limit are required")
 	}
 	rows, err := s.db.Query(ctx, `
 		SELECT artifact.id
@@ -45,8 +45,9 @@ func (s *Store) BattleNetEvidenceArtifacts(ctx context.Context, ic ImportContext
 		WHERE build.product_id=$1 AND artifact.source='blizzard_api'
 		  AND artifact.artifact_key=$2 AND artifact.locale=$3 AND artifact.id<>$4
 		  AND artifact.status IN ('ready','fetching','failed')
+		  AND artifact.metadata->>'source_build_version'=$6
 		ORDER BY artifact.fetched_at DESC
-		LIMIT $5`, ic.ProductID, artifactKey, locale, current, limit)
+		LIMIT $5`, ic.ProductID, artifactKey, locale, current, limit, sourceBuildVersion)
 	if err != nil {
 		return nil, fmt.Errorf("list earlier Battle.net evidence artifacts: %w", err)
 	}
