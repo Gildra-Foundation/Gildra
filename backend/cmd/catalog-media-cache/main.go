@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogmedia"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -26,6 +27,8 @@ func main() {
 func run() error {
 	var databaseURL, root, publicBase, environment, accessMode, product, expansion string
 	var derivedMode, derivedGroups, derivedEntitiesOut string
+	var entityIDsRaw string
+	var buildID int64
 	var limit, seedIconLimit, derivedLimit int
 	var confirm, skipMediaCache bool
 	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
@@ -35,6 +38,8 @@ func run() error {
 	flag.StringVar(&accessMode, "access-mode", envOr("CATALOG_ACCESS_MODE", "public"), "catalog access mode: public or private")
 	flag.StringVar(&product, "product", "wow", "game product for official icon seeding")
 	flag.StringVar(&expansion, "expansion", os.Getenv("CATALOG_MEDIA_EXPANSION"), "optional confirmed expansion key to scope icon seeding")
+	flag.StringVar(&entityIDsRaw, "entity-ids", "", "exact published entity UUIDs for icon repair")
+	flag.Int64Var(&buildID, "build-id", 0, "pin icon repair to this product build; default active build")
 	flag.IntVar(&limit, "limit", 100, "maximum assets per run")
 	flag.IntVar(&seedIconLimit, "seed-icon-limit", 0, "download and link this many missing official icons before the normal cache run")
 	flag.BoolVar(&skipMediaCache, "skip-media-cache", false, "seed official icons without processing other remote media")
@@ -92,13 +97,30 @@ func run() error {
 		}
 		derivedResult = &derived
 	}
+	var entityIDs []uuid.UUID
+	if entityIDsRaw != "" {
+		for _, value := range strings.Split(entityIDsRaw, ",") {
+			id, err := uuid.Parse(strings.TrimSpace(value))
+			if err != nil {
+				return err
+			}
+			entityIDs = append(entityIDs, id)
+		}
+	}
+	if !confirm && seedIconLimit > 0 {
+		plan, err := cache.SeedOfficialIcons(ctx, catalogmedia.IconSeedOptions{Product: product, BuildID: buildID, Expansion: expansion, Limit: seedIconLimit, MissingOnly: true, EntityIDs: entityIDs, PlanOnly: true})
+		if err != nil {
+			return err
+		}
+		return encoder.Encode(map[string]any{"dry_run": true, "icons": plan})
+	}
 	if !confirm {
 		return json.NewEncoder(os.Stdout).Encode(map[string]any{"dry_run": true, "environment": environment, "access_mode": accessMode, "limit": limit, "seed_icon_limit": seedIconLimit, "skip_media_cache": skipMediaCache})
 	}
 	var iconResult catalogmedia.IconSeedResult
 	if seedIconLimit > 0 {
 		iconResult, err = cache.SeedOfficialIcons(ctx, catalogmedia.IconSeedOptions{
-			Product: product, Expansion: expansion, Limit: seedIconLimit, MissingOnly: true,
+			Product: product, BuildID: buildID, Expansion: expansion, Limit: seedIconLimit, MissingOnly: true, EntityIDs: entityIDs,
 		})
 		if err != nil {
 			return err

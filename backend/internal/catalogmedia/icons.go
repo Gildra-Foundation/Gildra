@@ -40,6 +40,7 @@ type IconFailure struct {
 }
 
 type IconSeedResult struct {
+	PlannedIcons           []string      `json:"plannedIcons,omitempty"`
 	Eligible               int64         `json:"eligible"`
 	IconsCached            int64         `json:"iconsCached"`
 	Entities               int64         `json:"entitiesLinked"`
@@ -55,9 +56,12 @@ type IconSeedResult struct {
 // MissingOnly prevents a repair job from re-downloading already usable media.
 type IconSeedOptions struct {
 	Product     string
+	BuildID     int64 // zero selects the active published build, never an unpublished newer import
 	Expansion   string
 	Limit       int
 	MissingOnly bool
+	EntityIDs   []uuid.UUID
+	PlanOnly    bool
 }
 
 type iconCandidate struct {
@@ -113,10 +117,11 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 			SELECT candidate.id,candidate.version
 			FROM game_builds candidate
 			WHERE candidate.product_id=product.id
+			  AND (($2::bigint=0 AND candidate.is_active) OR candidate.id=$2)
 			ORDER BY candidate.build_number DESC,candidate.id DESC
 			LIMIT 1
 		) build ON true
-		WHERE product.slug=$1`, product).Scan(&productID, &buildID, &buildVersion); err != nil {
+		WHERE product.slug=$1`, product, options.BuildID).Scan(&productID, &buildID, &buildVersion); err != nil {
 		return IconSeedResult{}, fmt.Errorf("find current %s build: %w", product, err)
 	}
 
@@ -140,6 +145,9 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				icon.file_data_id,icon.entity_type,icon.external_id,icon.build_id
 			FROM catalog_entity_icons icon
 			WHERE icon.build_id=$2 AND $4=''
+              AND (COALESCE(cardinality($6::uuid[]),0)=0 OR EXISTS (
+                SELECT 1 FROM game_entities selected WHERE selected.id=ANY($6)
+                  AND selected.product_id=$1 AND selected.entity_type=icon.entity_type AND selected.external_id=icon.external_id))
 			UNION ALL
 			SELECT regexp_replace(regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g'),'_+','_','g') AS icon_name,
 				icon.file_data_id,icon.entity_type,icon.external_id,icon.build_id
@@ -152,7 +160,12 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 		), verified_primary_media AS (
 			SELECT DISTINCT media.entity_id,media.build_id
 			FROM catalog_entity_media media
-			WHERE media.build_id=$2 AND media.media_kind='icon' AND media.is_primary
+			JOIN catalog_source_policies policy ON policy.source=media.source AND policy.review_status='reviewed'
+			JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			WHERE (policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))
+			  AND (COALESCE(cardinality($6::uuid[]),0)=0 OR media.entity_id=ANY($6))
+			  AND media.build_id=$2 AND media.media_kind='icon' AND media.is_primary
 			  AND media.cache_status='cached' AND media.cached_content_hash IS NOT NULL
 			  AND media.cached_byte_size IS NOT NULL
 		), targets AS (
@@ -168,6 +181,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 			LEFT JOIN verified_primary_media primary_media ON primary_media.entity_id=entity.id
 				AND primary_media.build_id=icon.build_id
 			WHERE entity.deleted_at IS NULL
+			  AND (COALESCE(cardinality($6::uuid[]),0)=0 OR entity.id=ANY($6))
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
 			GROUP BY icon.icon_name
 		), cached AS (
@@ -214,7 +228,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 		SELECT icon_name,file_data_id,count(*) OVER()
 		FROM resolved_candidates
 		ORDER BY icon_name
-		LIMIT $3`, productID, buildID, limit, expansion, options.MissingOnly)
+		LIMIT $3`, productID, buildID, limit, expansion, options.MissingOnly, options.EntityIDs)
 		if err != nil {
 			return fmt.Errorf("list uncached official icons: %w", err)
 		}
@@ -234,6 +248,12 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 	})
 	if err != nil {
 		return result, err
+	}
+	if options.PlanOnly {
+		for _, candidate := range candidates {
+			result.PlannedIcons = append(result.PlannedIcons, candidate.Name)
+		}
+		return result, nil
 	}
 	if len(candidates) == 0 {
 		return result, nil
@@ -401,6 +421,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				JOIN game_entity_versions published ON published.id=entity.published_version_id
 					AND published.build_id=$2
 				WHERE entity.product_id=$1 AND entity.deleted_at IS NULL AND $4=''
+				  AND (COALESCE(cardinality($6::uuid[]),0)=0 OR entity.id=ANY($6))
 				UNION ALL
 				SELECT entity.id AS entity_id,entity.entity_type,entity.external_id
 				FROM catalog_entity_expansions cohort
@@ -411,6 +432,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 					AND published.build_id=cohort.build_id
 				WHERE cohort.product_id=$1 AND cohort.build_id=$2 AND cohort.classification='confirmed'
 					AND expansion.expansion_key=$4 AND entity.deleted_at IS NULL
+				  AND (COALESCE(cardinality($6::uuid[]),0)=0 OR entity.id=ANY($6))
 			), targets AS (
 				SELECT DISTINCT ON (scoped.entity_id)
 					scoped.entity_id,scoped.entity_type,scoped.external_id,
@@ -424,7 +446,11 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				JOIN official_icon_seed seed ON regexp_replace(regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g'),'_+','_','g')=seed.icon_name
 				WHERE NOT $5::boolean OR NOT EXISTS (
 					SELECT 1 FROM catalog_entity_media existing
-					WHERE existing.build_id=icon.build_id
+					JOIN catalog_source_policies policy ON policy.source=existing.source AND policy.review_status='reviewed'
+					JOIN catalog_source_artifacts artifact ON artifact.id=existing.source_artifact_id
+					  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+					WHERE (policy.retention_days IS NULL OR existing.cached_at>now()-make_interval(days=>policy.retention_days))
+					  AND existing.build_id=icon.build_id
 					  AND existing.entity_type=scoped.entity_type AND existing.external_id=scoped.external_id
 					  AND existing.media_kind='icon' AND existing.is_primary
 					  AND existing.cache_status='cached'
@@ -450,8 +476,12 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 					'discovery','build_proven_icon_mapping','conversion',prepared.conversion
 				),prepared.cache_key,prepared.cached_content_hash,prepared.cached_byte_size,now(),''
 			FROM prepared
-			ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO NOTHING`,
-			productID, buildID, c.publicBase, expansion, options.MissingOnly)
+			ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO UPDATE SET
+                cache_status='cached',cache_key=EXCLUDED.cache_key,
+                cached_content_hash=EXCLUDED.cached_content_hash,cached_byte_size=EXCLUDED.cached_byte_size,
+                cached_at=now(),cache_error='',mime_type=EXCLUDED.mime_type,
+                cached_url=$3 || '/v1/media/' || catalog_entity_media.id::text,updated_at=now()`,
+			productID, buildID, c.publicBase, expansion, options.MissingOnly, options.EntityIDs)
 		if err != nil {
 			return fmt.Errorf("link official icon batch to entities: %w", err)
 		}
