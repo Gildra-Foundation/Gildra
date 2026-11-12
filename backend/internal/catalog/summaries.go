@@ -181,6 +181,9 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if err != nil {
 		return SummaryPage{}, err
 	}
+	if err := validateSummaryOrderingScope(params); err != nil {
+		return SummaryPage{}, err
+	}
 	ordered := summaryUsesOrdering(params)
 	cursorID, cursorRank := uuid.Nil, (*int)(nil)
 	if !ordered {
@@ -376,6 +379,9 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 	if hasMore && len(entities) > 0 {
 		last := entities[len(entities)-1]
 		nextCursor = encodeSummaryCursor(last.ID, last.SearchRank, strings.TrimSpace(params.Query) != "")
+	}
+	if err := s.resolveItemSummaries(ctx, entities); err != nil {
+		return SummaryPage{}, err
 	}
 	return SummaryPage{Entities: entities, NextCursor: nextCursor, HasMore: hasMore, Total: total}, nil
 }

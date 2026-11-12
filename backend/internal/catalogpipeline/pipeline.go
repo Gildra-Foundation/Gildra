@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
@@ -74,14 +75,18 @@ type Options struct {
 	Sources                []string
 	BuildVersion           string
 	MaxRecords             int
-	ConfirmFullImport      bool
-	ForceRebuild           bool
-	BinaryDirectory        string
-	PublicationEnvironment string
-	CatalogAccessMode      string
-	RecoveryPolicy         string
-	ResumeReleaseID        string
-	ResumeFrom             string
+	EnrichmentSliceRecords int
+	// EnrichmentRequestsPerHour paces Battle.net enrichment below the shared
+	// hourly quota; 0 leaves pacing to the API.
+	EnrichmentRequestsPerHour int
+	ConfirmFullImport         bool
+	ForceRebuild              bool
+	BinaryDirectory           string
+	PublicationEnvironment    string
+	CatalogAccessMode         string
+	RecoveryPolicy            string
+	ResumeReleaseID           string
+	ResumeFrom                string
 	// ResumeStages limits a resumed release to the listed executable stages
 	// (comma-separated stage keys on the CLI).  Every other retained stage is
 	// marked skipped; validation, the publication gate and publish still run.
@@ -121,6 +126,9 @@ func BuildPlan(options Options) ([]Stage, error) {
 }
 
 func normalizeOptions(options Options) (Options, error) {
+	if options.EnrichmentSliceRecords < 0 || options.EnrichmentRequestsPerHour < 0 {
+		return Options{}, errors.New("enrichment-slice-records and enrichment-requests-per-hour cannot be negative")
+	}
 	if options.MaxRecords < 0 {
 		return Options{}, errors.New("max-records cannot be negative")
 	}
@@ -397,6 +405,14 @@ func buildPlan(options Options) []Stage {
 		if options.BuildVersion != "" {
 			battleNetQuestMissingArgs = append(battleNetQuestMissingArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 			battleNetMissingArgs = append(battleNetMissingArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
+		}
+		if options.EnrichmentSliceRecords > 0 {
+			battleNetQuestMissingArgs = append(battleNetQuestMissingArgs, "-enrichment-slice-records", strconv.Itoa(options.EnrichmentSliceRecords))
+			battleNetMissingArgs = append(battleNetMissingArgs, "-enrichment-slice-records", strconv.Itoa(options.EnrichmentSliceRecords))
+		}
+		if options.EnrichmentRequestsPerHour > 0 {
+			battleNetQuestMissingArgs = append(battleNetQuestMissingArgs, "-max-requests-per-hour", strconv.Itoa(options.EnrichmentRequestsPerHour))
+			battleNetMissingArgs = append(battleNetMissingArgs, "-max-requests-per-hour", strconv.Itoa(options.EnrichmentRequestsPerHour))
 		}
 		plan = append(plan,
 			Stage{Key: "enrich-battlenet-quests", Executable: "catalog-import", Arguments: battleNetQuestMissingArgs},
@@ -742,6 +758,10 @@ func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory,
 		return r.failStage(ctx, runID, stage.Key, "executable_missing", err)
 	}
 	command := exec.CommandContext(ctx, executable, stage.Arguments...)
+	// Give importers a bounded opportunity to persist failure and checkpoints.
+	command.Cancel = func() error { return command.Process.Signal(syscall.SIGTERM) }
+	command.WaitDelay = 30 * time.Second
+	started := time.Now()
 	command.Env = os.Environ()
 	if releaseID != "" {
 		command.Env = append(command.Env, "CATALOG_RELEASE_ID="+releaseID)
@@ -749,11 +769,28 @@ func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory,
 	command.Stdout = r.Stdout
 	var stageStderr boundedStageErrorBuffer
 	command.Stderr = io.MultiWriter(r.Stderr, &stageStderr)
-	if err := command.Run(); err != nil {
+	commandErr := command.Run()
+	if commandErr == nil && ctx.Err() != nil {
+		commandErr = context.Cause(ctx)
+	}
+	counters := map[string]any{"duration_seconds": time.Since(started).Seconds()}
+	if command.ProcessState != nil {
+		counters["exit_code"] = command.ProcessState.ExitCode()
+		if usage, ok := command.ProcessState.SysUsage().(*syscall.Rusage); ok {
+			counters["peak_rss_kib"] = usage.Maxrss
+		}
+	}
+	recordCtx, recordCancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+	defer recordCancel()
+	_, _ = r.DB.Exec(recordCtx, `UPDATE catalog_pipeline_stages SET counters=counters || $3::jsonb WHERE run_id=$1 AND stage_key=$2`, runID, stage.Key, jsonObject(counters))
+	if err := commandErr; err != nil {
+		if ctx.Err() != nil {
+			err = fmt.Errorf("%w: child: %v", context.Cause(ctx), err)
+		}
 		if detail := boundedStageError(stageStderr.String()); detail != "" {
 			err = fmt.Errorf("%w: %s", err, detail)
 		}
-		return r.failStage(ctx, runID, stage.Key, "stage_command_failed", err)
+		return r.failStage(recordCtx, runID, stage.Key, "stage_command_failed", err)
 	}
 	_, err = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now() WHERE run_id=$1 AND stage_key=$2`, runID, stage.Key)
 	if err != nil {

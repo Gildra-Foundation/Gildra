@@ -10,7 +10,7 @@ import {
   leaderboardRoles, leaderboardSearch, leaderboardSpec, parseLeaderboardQuery,
   type LeaderboardPage, type LeaderboardRole,
 } from "@/lib/games/wow/mplusLeaderboardView";
-import { trail } from "@/lib/routes/registry";
+import { trail, trailLabel } from "@/lib/routes/registry";
 import { leaderboardCopy, type LeaderboardCopy } from "./leaderboardCopy";
 import {
   LeaderboardFilters, LeaderboardPager, LeaderboardState, LeaderboardTable, PlayerName, RegionSwitch, SpecDirectory, SpecIcon,
@@ -44,7 +44,7 @@ export async function MythicLeaderboardPage({ locale, searchParams }: { locale: 
         <AtlasHero
           align="start"
           className={styles.heroHeader}
-          breadcrumbs={crumbs}
+          breadcrumbsLabel={trailLabel(locale)} breadcrumbs={crumbs}
           eyebrow={eyebrow}
           title={copy.title}
           lede={copy.lede}

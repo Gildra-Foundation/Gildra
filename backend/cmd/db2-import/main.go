@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogimport"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/itemscaling"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/wago"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -27,6 +28,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	opts.tables = withWorldSourceTables(opts.tables)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	client := wago.New(wago.Config{})
@@ -89,17 +91,24 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	ic, err := store.Begin(ctx, opts.product, buildNumber, opts.version, "us", "wago_tools", releaseID, map[string]any{
+	parameters := map[string]any{
 		"product": opts.product, "tables": opts.tables, "locales": opts.locales,
 		"max_records_per_table": opts.maxRecords, "batch_size": opts.batchSize,
-	})
+	}
+	// A complete staged import keeps its proved tables when the stage stops, so
+	// the next attempt downloads only what is left and then projects.
+	resumeTables := releaseID != nil && opts.download && opts.maxRecords == 0
+	if resumeTables {
+		parameters["resumable_tables"] = "v1"
+	}
+	ic, err := store.Begin(ctx, opts.product, buildNumber, opts.version, "us", "wago_tools", releaseID, parameters)
 	if err != nil {
 		return err
 	}
 	var seen, written int64
 	var importErr error
 	if opts.download {
-		importErr = importTables(ctx, db, client, store, ic, opts, &seen, &written)
+		importErr = importTables(ctx, db, client, store, ic, opts, resumeTables, &seen, &written)
 	}
 	if importErr == nil && opts.projectItemDetailsOnly {
 		importErr = projectItemDetails(ctx, db, ic)
@@ -167,6 +176,18 @@ func run() error {
 	}
 	if importErr == nil {
 		importErr = observeDB2LocalizationArtifactsForTables(ctx, db, ic, opts.tables)
+	}
+	if importErr == nil && opts.product == "wow" && opts.download && opts.maxRecords == 0 && contains(opts.tables, "ItemSparse") {
+		// Item tooltip numbers need the build's reference tables. Their absence
+		// only leaves the numbers out, so a source outage does not fail the
+		// import; item-reference-import repeats this step for the build.
+		if rows, proofs, err := itemscaling.Fetch(ctx, wago.TableSource{Client: client}, opts.version); err != nil {
+			slog.Warn("item reference tables not imported", "build", opts.version, "error", err)
+		} else if err := itemscaling.Store(ctx, db, ic.BuildID, rows, proofs); err != nil {
+			importErr = err
+		} else {
+			slog.Info("item reference tables imported", "build", opts.version, "rows", len(rows))
+		}
 	}
 	status := "SUCCEEDED"
 	if importErr != nil {

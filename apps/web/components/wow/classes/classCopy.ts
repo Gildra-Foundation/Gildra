@@ -44,7 +44,7 @@ const ru: ClassCopy = {
   breadcrumbs: "Навигация",
   title: "Классы и специализации",
   roleFilter: "Роль",
-  filters: { all: "Все", tank: "Танки", healer: "Лекари", dps: "Урон" },
+  filters: { all: "Все", tank: "Танки", healer: "Лекари", dps: "Бойцы" },
   roles: { tank: "Танк", healer: "Лекарь", melee: "Ближний бой", ranged: "Дальний бой", support: "Поддержка" },
   specsOf: (name) => `Специализации: ${name}`,
   heroTrees: "Героические таланты",

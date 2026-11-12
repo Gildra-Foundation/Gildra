@@ -89,8 +89,9 @@ func (m *Manager) start(
 }
 
 // Resume re-attaches a previously failed staging release to a new pipeline
-// run. Validated snapshots are retained; failed snapshots from the interrupted
-// stage are discarded by the caller before the next source snapshot is built.
+// run. Validated snapshots, enrichment record checkpoints and proved DB2
+// tables are retained; other failed snapshots are discarded before rebuilding
+// their stage.
 // Keeping this operation in the release manager makes retries explicit and
 // prevents a partial import from ever moving the published pointer.
 func (m *Manager) Resume(
@@ -112,7 +113,7 @@ func (m *Manager) Resume(
 		if err := removeFailedReleaseArtifactReferences(ctx, tx, releaseID); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(ctx, `DELETE FROM catalog_snapshots WHERE release_id=$1 AND status='failed'`, releaseID); err != nil {
+		if _, err := tx.Exec(ctx, `DELETE FROM catalog_snapshots WHERE release_id=$1 AND status='failed' AND NOT COALESCE((source='battlenet' AND metadata->>'resumable_enrichment'='v1' AND metadata->>'missing_only'='true') OR (source='wago_tools' AND metadata->>'resumable_tables'='v1'),false)`, releaseID); err != nil {
 			return fmt.Errorf("remove failed release snapshots: %w", err)
 		}
 		command, err := tx.Exec(ctx, `
@@ -198,6 +199,7 @@ func removeFailedReleaseArtifactReferences(ctx context.Context, tx pgx.Tx, relea
 			FROM catalog_source_artifacts artifact
 			JOIN catalog_snapshots snapshot ON snapshot.id=artifact.snapshot_id
 			WHERE snapshot.release_id=$1 AND snapshot.status='failed'
+              AND NOT COALESCE((snapshot.source='battlenet' AND snapshot.metadata->>'resumable_enrichment'='v1' AND snapshot.metadata->>'missing_only'='true') OR (snapshot.source='wago_tools' AND snapshot.metadata->>'resumable_tables'='v1'),false)
 		)`, pgx.Identifier{reference.schema, reference.table}.Sanitize(), pgx.Identifier{reference.column}.Sanitize())
 		if _, err := tx.Exec(ctx, statement, releaseID); err != nil {
 			return fmt.Errorf("remove failed release artifact references from %s.%s: %w", reference.schema, reference.table, err)

@@ -13,7 +13,7 @@ import { loadMythicPlusMeta } from "@/lib/games/wow/mythicPlusMeta";
 import { metaRoles, mythicPlusMetaView, type MetaRole, type MetaSpec, type MythicPlusMetaView } from "@/lib/games/wow/mythicPlusMetaView";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { loadSpecBoards, type SpecBoard } from "@/lib/games/wow/classMeta";
-import { trail } from "@/lib/routes/registry";
+import { trail, trailLabel } from "@/lib/routes/registry";
 import { Delta, formatPresence, PresenceBar, SpecIdentity, Sparkline, trendLabel } from "./MetaParts";
 import { mythicMetaCopy, type MythicMetaCopy } from "./mythicMetaCopy";
 import styles from "./mythicMeta.module.css";
@@ -40,7 +40,7 @@ export async function MythicMetaPage({ locale }: { locale: Locale }) {
       <AtlasFrame lang={locale} className={styles.page} still foot={false} dataAttributes={{ "data-mythic-hub": true }}>
         <MythicHubBackdrop />
         <div className={styles.hero}>
-          <AtlasHero align="start" className={styles.heroHeader} breadcrumbs={crumbs} title={copy.title} lede={copy.lede} />
+          <AtlasHero align="start" className={styles.heroHeader} breadcrumbsLabel={trailLabel(locale)} breadcrumbs={crumbs} title={copy.title} lede={copy.lede} />
         </div>
         <div className={styles.statePlaque} style={kitStyle(pageKit)}>
           {result.state === "error"
@@ -72,7 +72,7 @@ export async function MythicMetaPage({ locale }: { locale: Locale }) {
         <AtlasHero
           align="start"
           className={styles.heroHeader}
-          breadcrumbs={crumbs}
+          breadcrumbsLabel={trailLabel(locale)} breadcrumbs={crumbs}
           eyebrow={eyebrow}
           title={copy.title}
           lede={copy.lede}

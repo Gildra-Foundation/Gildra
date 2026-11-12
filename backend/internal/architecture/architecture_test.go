@@ -26,7 +26,9 @@ var transports = map[string]bool{"httpapi": true, "graphqlapi": true, "adminpane
 // no other internal package, so it can never pull a domain into another one.
 // itemquality shares enum normalization between catalog reads and projections;
 // it depends only on the standard library, not on either domain.
-var leaves = map[string]bool{"httpjson": true, "itemquality": true, "mediafiles": true, "pagination": true}
+// itemscaling holds the client formulas of item tooltip numbers and its own
+// reference tables; catalog reads and the importers both use it.
+var leaves = map[string]bool{"httpjson": true, "itemquality": true, "itemscaling": true, "mediafiles": true, "pagination": true}
 
 // allowedEdges is the complete list of imports between internal packages
 // (production code). Keep it short: prefer wiring in cmd/* over a new edge.

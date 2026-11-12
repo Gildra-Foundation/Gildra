@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"io"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -138,5 +140,55 @@ func TestMidnightBackfillDryRunPlan(t *testing.T) {
 		if err := os.WriteFile(path, data, 0600); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestCancelledStageRecordsFailure(t *testing.T) {
+	url := os.Getenv("MIDNIGHT_D_TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("isolated test database not configured")
+	}
+	ctx := context.Background()
+	db, err := pgxpool.New(ctx, url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	schema := fmt.Sprintf("freshness_cancel_%d", time.Now().UnixNano())
+	if _, err := db.Exec(ctx, "CREATE SCHEMA "+schema); err != nil {
+		t.Fatal(err)
+	}
+	defer db.Exec(ctx, "DROP SCHEMA "+schema+" CASCADE")
+	cfg, err := pgxpool.ParseConfig(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.ConnConfig.RuntimeParams["search_path"] = schema
+	isolated, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer isolated.Close()
+	if _, err := isolated.Exec(ctx, `CREATE TABLE catalog_pipeline_runs(id bigint,current_stage text);
+ INSERT INTO catalog_pipeline_runs VALUES(1,'');
+ CREATE TABLE catalog_pipeline_stages(run_id bigint,stage_key text,status text,started_at timestamptz,finished_at timestamptz,counters jsonb DEFAULT '{}',error_code text,error_summary text);
+ INSERT INTO catalog_pipeline_stages(run_id,stage_key,status) VALUES(1,'sleep','queued');`); err != nil {
+		t.Fatal(err)
+	}
+	deadline, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
+	defer cancel()
+	runner := Runner{DB: isolated, Stdout: io.Discard, Stderr: io.Discard}
+	err = runner.executeStage(deadline, 1, "/bin", "", Stage{Key: "sleep", Executable: "sleep", Arguments: []string{"30"}})
+	if err == nil || !strings.Contains(err.Error(), "context deadline exceeded") {
+		t.Fatalf("lost cancellation cause: %v", err)
+	}
+	var status string
+	var finished bool
+	var metrics bool
+	if err := isolated.QueryRow(ctx, `SELECT status,finished_at IS NOT NULL,counters ? 'peak_rss_kib' FROM catalog_pipeline_stages`).Scan(&status, &finished, &metrics); err != nil {
+		t.Fatal(err)
+	}
+	if status != "failed" || !finished || !metrics {
+		t.Fatalf("stage left %s, finished=%v metrics=%v", status, finished, metrics)
 	}
 }

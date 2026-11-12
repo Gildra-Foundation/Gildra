@@ -22,3 +22,6 @@
 .bossSummary { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
 .portrait { flex-shrink: 0; object-fit: cover; }
 @media (max-width: 767px) { .workspace { grid-template-columns: minmax(0, 1fr); } }
+
+/* Touch: 44 px boss links. */
+@media (pointer: coarse) { .routeBosses a { display: inline-flex; align-items: center; min-height: 44px; } }

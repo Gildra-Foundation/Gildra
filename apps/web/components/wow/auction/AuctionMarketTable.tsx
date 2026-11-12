@@ -58,7 +58,7 @@ const MarketRow = memo(function MarketRow({ item, lang, picked, mixed, onToggle,
   const c = auctionCopy[lang], name = rankedName(item, lang);
   return <tr className={styles.marketRow} data-selected={picked || undefined}>
     <td className={styles.pickCell}>
-      <input type="checkbox" className={styles.pick} checked={picked} onChange={() => onToggle(item)} aria-label={`${c.select}: ${name}`} />
+      <label className={styles.pickHit}><input type="checkbox" className={styles.pick} checked={picked} onChange={() => onToggle(item)} aria-label={`${c.select}: ${name}`} /></label>
     </td>
     <th scope="row" className={styles.marketItem}>
       <button type="button" className={styles.itemOpen} onClick={() => onOpen(item)} aria-haspopup="dialog">

@@ -24,6 +24,8 @@ export function statName(id: number, lang: Lang) {
     13: ["Dodge", "Уклонение"], 14: ["Parry", "Парирование"], 31: ["Hit", "Меткость"],
     32: ["Critical Strike", "Критический удар"], 35: ["Resilience", "Устойчивость"], 36: ["Haste", "Скорость"],
     37: ["Expertise", "Мастерство"], 40: ["Versatility", "Универсальность"], 49: ["Mastery", "Искусность"],
+    61: ["Speed", "Скорость передвижения"], 62: ["Leech", "Самоисцеление"], 63: ["Avoidance", "Избежание"],
+    64: ["Indestructible", "Неразрушимость"],
     71: ["Agility / Strength / Intellect", "Ловкость / сила / интеллект"],
     72: ["Agility / Strength", "Ловкость / сила"], 73: ["Agility / Intellect", "Ловкость / интеллект"],
     74: ["Strength / Intellect", "Сила / интеллект"],

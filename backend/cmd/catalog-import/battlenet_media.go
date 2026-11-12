@@ -164,6 +164,22 @@ func fetchAndStoreBattleNetMediaLink(
 		}
 		return fmt.Errorf("fetch %s media %d: %w", entityType, id, err)
 	}
+	return storeBattleNetMedia(ctx, store, importContext, artifactID, entityType, locale, id, link, mediaPayload, sourceURL)
+}
+
+// storeBattleNetMedia preserves one official media response and projects its
+// assets and icon onto the entity.
+func storeBattleNetMedia(
+	ctx context.Context,
+	store *catalogimport.Store,
+	importContext catalogimport.ImportContext,
+	artifactID uuid.UUID,
+	entityType, locale string,
+	id int64,
+	link battleNetMediaLink,
+	mediaPayload json.RawMessage,
+	sourceURL string,
+) error {
 	recordKey := fmt.Sprintf("media/%d", id)
 	if link.AssetPrefix != "" {
 		recordKey += "/" + link.AssetPrefix

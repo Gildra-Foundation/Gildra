@@ -51,8 +51,8 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
     ru: { title: "Подземелья Midnight — WowArcana", description: "Подземелья текущего сезона: маршрут, боссы, таймер и тактика для каждого." },
   },
   lairs: {
-    en: { title: "Midnight Season 2 Lairs and World Bosses — WowArcana", description: "Midnight Season 2 Lair and world bosses: locations, abilities, difficulty and loot." },
-    ru: { title: "Логова и мировые боссы Midnight Сезон 2 — WowArcana", description: "Логово и мировые боссы Midnight Сезон 2: где найти, способности, сложность и добыча." },
+    en: { title: "Midnight Season 2 Lairs and World Bosses — WowArcana", description: "Midnight Season 2 lairs and world bosses: locations, abilities, difficulty and loot." },
+    ru: { title: "Логова и мировые боссы Midnight, сезон 2 — WowArcana", description: "Логова и мировые боссы Midnight, сезон 2: где найти, способности, сложность и добыча." },
   },
   classes: {
     en: { title: "WoW Classes and Specializations — WowArcana", description: "Every Midnight class and specialization: role, Mythic+ tier, hero trees and top players' builds." },
@@ -60,7 +60,7 @@ const sectionMeta: Partial<Record<SectionId, SectionMeta>> = {
   },
   season2: {
     en: { title: "WoW Midnight Season 2 Guide — WowArcana", description: "What Midnight Season 2 brings: Mythic+ dungeons, raids, delves and more." },
-    ru: { title: "WoW Midnight Сезон 2 — гайд WowArcana", description: "Что принёс Midnight Сезон 2: подземелья Mythic+, рейды, вылазки и другое." },
+    ru: { title: "WoW Midnight, сезон 2 — гайд WowArcana", description: "Что принёс Midnight, сезон 2: подземелья Mythic+, рейды, вылазки и другое." },
   },
   whatsNew: {
     en: { title: "What's New on WowArcana — World of Warcraft Tools", description: "What changed on WowArcana for World of Warcraft players: new pages, tools and data, newest first." },

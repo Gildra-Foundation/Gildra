@@ -21,7 +21,7 @@ export const seasonTwoHubCopy = {
     metaDescription: "Midnight · Сезон 2 коротко: рейд сезона, подземелья Mythic+, вылазки, Prey и логова.",
     tiles: {
       raid: { label: "Рейд", text: "Рейд сезона: боссы, способности и добыча каждого боя.", action: "Открыть рейд" },
-      mythicPlus: { title: "Mythic+", label: "Подземелья", text: "Восемь подземелий с таймерами, пуллами и маршрутами.", action: "Открыть атлас Mythic+" },
+      mythicPlus: { title: "Mythic+", label: "Подземелья", text: "Восемь подземелий с таймерами, пулами и маршрутами.", action: "Открыть атлас Mythic+" },
       prey: { title: "Prey", label: "Извилистый остров", text: "Охота сезона на Извилистом острове.", action: "Читать у Blizzard" },
       lairs: { title: "Логова", label: "Мировые боссы", text: "Боссы логов и мира: где появляются, что применяют и что оставляют.", action: "Открыть логова" },
     },

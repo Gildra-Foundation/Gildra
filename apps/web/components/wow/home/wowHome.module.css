@@ -1,5 +1,5 @@
 /* atlas:strict — the live season first, quiet glass tools, painted plaques for raids, trade and the map. */
-.page { --atlas-container: 1280px; padding-bottom: 0; }
+.page { --atlas-container: 1280px; --home-glint: linear-gradient(105deg, transparent 30%, color-mix(in srgb, var(--atlas-text-strong) 16%, transparent) 50%, transparent 70%); padding-bottom: 0; }
 .page a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
 @media (hover: hover) { .page a:hover { color: var(--atlas-accent-strong); } }
 
@@ -46,7 +46,7 @@
 .banners li[data-group="economy"] { --banner-tone: var(--atlas-dungeon-kings-accent); }
 .banners a { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--atlas-space-1); aspect-ratio: 3 / 2; padding: var(--atlas-space-3); overflow: hidden; border: 1px solid var(--atlas-glass-edge); border-radius: var(--atlas-radius); box-shadow: var(--atlas-glass-depth); color: var(--atlas-text-strong); text-decoration: none; }
 .banners img { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.banners a::before { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, transparent 18%, color-mix(in srgb, var(--atlas-bg) 92%, transparent) 86%); }
+.banners a::before { content: ""; position: absolute; z-index: -1; inset: 0; background: var(--home-glint) no-repeat -160% 0 / 55% 100%, linear-gradient(180deg, transparent 18%, color-mix(in srgb, var(--atlas-bg) 92%, transparent) 86%); }
 .banners a::after { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--banner-tone); box-shadow: 0 0 14px var(--banner-tone); }
 .banners strong { font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); text-shadow: var(--atlas-text-shadow-art); text-wrap: balance; }
 .banners span { display: inline-flex; align-items: center; gap: var(--atlas-space-1); color: color-mix(in srgb, var(--banner-tone) 70%, var(--atlas-text-strong)); font-size: var(--atlas-text-small); font-weight: 600; text-shadow: var(--atlas-text-shadow-art); }
@@ -87,7 +87,7 @@
 .dungeons ul { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
 .dungeons a { position: relative; isolation: isolate; display: block; aspect-ratio: 3 / 4; overflow: hidden; border: 1px solid var(--atlas-glass-edge); border-radius: var(--atlas-radius); box-shadow: var(--atlas-glass-depth); color: var(--atlas-text-strong); text-decoration: none; }
 .dungeons img { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.dungeons a::before { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, transparent 34%, color-mix(in srgb, var(--atlas-bg) 92%, transparent)); }
+.dungeons a::before { content: ""; position: absolute; z-index: -1; inset: 0; background: var(--home-glint) no-repeat -160% 0 / 55% 100%, linear-gradient(180deg, transparent 34%, color-mix(in srgb, var(--atlas-bg) 92%, transparent)); }
 .dungeons a::after { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--dungeon-accent); box-shadow: 0 0 14px var(--dungeon-accent); }
 .dungeonName { position: absolute; right: var(--atlas-space-2); bottom: var(--atlas-space-2); left: var(--atlas-space-2); font-family: var(--atlas-font-display); font-size: var(--atlas-text-body); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); text-shadow: var(--atlas-text-shadow-art); text-wrap: balance; }
 .timer { position: absolute; top: var(--atlas-space-2); right: var(--atlas-space-2); padding: 2px var(--atlas-space-2); border: 1px solid color-mix(in srgb, var(--dungeon-accent) 60%, transparent); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 75%, transparent); color: var(--atlas-text-strong); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -140,25 +140,76 @@
 .versions a > span:last-child { min-width: 0; }
 .versions small { display: block; margin-top: var(--atlas-space-1); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
 
+/* Arrival: the first screen lands piece by piece from the first paint — the painting settles,
+   the title, the lede and the weekly card rise, the flourish draws from its centre, the banners
+   and the season's doors follow as a cascade. A return to the page skips it (HomeMotion). */
+@keyframes homeRise { from { opacity: 0; translate: 0 calc(var(--atlas-reveal-shift) + 6px); } }
+@keyframes homeDraw { from { opacity: 0; scale: 0 1; } }
+@keyframes homeSettle { from { scale: 1.045; } }
+@keyframes homeAnswer { 40% { scale: 1.24; filter: drop-shadow(0 0 16px var(--atlas-accent)); } }
+@media screen and (prefers-reduced-motion: no-preference) {
+  .page:not([data-home-arrival="skip"]) :is(.hero h1, .hero p, .seasonNow, .flourish img, .banners li, .chapter:first-of-type > div:first-child, .dungeons li) { animation: homeRise var(--atlas-duration-enter) var(--atlas-ease) var(--home-delay, 0s) backwards; }
+  .page:not([data-home-arrival="skip"]) .heroArt { animation: homeSettle var(--atlas-duration-draw) var(--atlas-ease) backwards; }
+  .page:not([data-home-arrival="skip"]) .flourish::before, .page:not([data-home-arrival="skip"]) .flourish::after { animation: homeDraw var(--atlas-duration-draw) var(--atlas-ease) calc(var(--atlas-stagger) * 3) backwards; }
+  .flourish::before { transform-origin: right; }
+  .flourish::after { transform-origin: left; }
+  .hero p { --home-delay: var(--atlas-stagger); }
+  .seasonNow { --home-delay: calc(var(--atlas-stagger) * 2); }
+  .flourish img { --home-delay: calc(var(--atlas-stagger) * 3); }
+  .banners li { --home-delay: calc(var(--atlas-stagger) * (4 + var(--i, 0))); }
+  .chapter:first-of-type > div:first-child { --home-delay: calc(var(--atlas-stagger) * 9); }
+  .dungeons li { --home-delay: calc(var(--atlas-stagger) * (9.5 + var(--i, 0) * .5)); }
+  :is(.banners, .dungeons) li:nth-child(2) { --i: 1; }
+  :is(.banners, .dungeons) li:nth-child(3) { --i: 2; }
+  :is(.banners, .dungeons) li:nth-child(4) { --i: 3; }
+  :is(.banners, .dungeons) li:nth-child(5) { --i: 4; }
+  .dungeons li:nth-child(6) { --i: 5; }
+  .dungeons li:nth-child(7) { --i: 6; }
+  .dungeons li:nth-child(8) { --i: 7; }
+  /* A banner's chapter answers when the glide arrives. */
+  .chapter[data-home-arrived] .mark { animation: homeAnswer var(--atlas-duration-sweep) var(--atlas-ease); }
+}
+
 @media (hover: hover) and (pointer: fine) {
-  .dungeons img, .banners img, .pair .productPreview img { transition: transform var(--atlas-duration-art) var(--atlas-ease); }
-  .banners a { transition: border-color var(--atlas-duration-fast), box-shadow var(--atlas-duration-fast); }
-  .page .banners a:hover { border-color: var(--banner-tone); box-shadow: var(--atlas-shadow-lift), 0 0 24px color-mix(in srgb, var(--banner-tone) 35%, transparent); color: var(--atlas-text-strong); }
+  .dungeons img, .banners img, .flagship .productPreview img { transition: transform var(--atlas-duration-art) var(--atlas-ease); }
+  .banners a, .dungeons a { transition: border-color var(--atlas-duration), box-shadow var(--atlas-duration), translate var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast); }
+  .banners a::before, .dungeons a::before { transition: background-position 0s; }
+  .page .banners a:hover { border-color: var(--banner-tone); box-shadow: var(--atlas-shadow-lift), 0 0 24px color-mix(in srgb, var(--banner-tone) 35%, transparent); color: var(--atlas-text-strong); translate: 0 -3px; }
   .banners a:hover img { transform: scale(1.05); }
-  .dungeons a, .classRoster a, .toolRows li, .continents a { transition: border-color var(--atlas-duration-fast), box-shadow var(--atlas-duration-fast), transform var(--atlas-duration-fast), background var(--atlas-duration-fast); }
-  .dungeons a:hover { border-color: var(--dungeon-accent); box-shadow: var(--atlas-shadow-lift), 0 0 24px color-mix(in srgb, var(--dungeon-accent) 35%, transparent); }
-  .dungeons a:hover img, .pair .flagship:hover .productPreview img { transform: scale(1.05); }
+  /* One pass of light over the painting as the pointer arrives. */
+  .banners a:hover::before, .dungeons a:hover::before { background-position: 260% 0, 0 0; transition: background-position var(--atlas-duration-sweep) var(--atlas-ease); }
+  .classRoster a, .toolRows li, .continents a { transition: border-color var(--atlas-duration-fast), box-shadow var(--atlas-duration-fast), transform var(--atlas-duration-fast), background var(--atlas-duration-fast); }
+  .dungeons a:hover { border-color: var(--dungeon-accent); box-shadow: var(--atlas-shadow-lift), 0 0 24px color-mix(in srgb, var(--dungeon-accent) 35%, transparent); translate: 0 -3px; }
+  .dungeons a:hover img, .flagship:hover .productPreview img { transform: scale(1.05); }
+  .banners a:active, .dungeons a:active { translate: none; scale: .985; }
   .page .dungeons a:hover { color: var(--atlas-text-strong); }
   .page .classRoster a:hover { border-color: var(--class-color); box-shadow: var(--atlas-shadow-lift); color: var(--atlas-text-strong); transform: translateY(-2px); }
+  .classRoster img, .toolRows [data-medallion] svg, .versions img { transition: scale var(--atlas-duration) var(--atlas-ease); }
+  .classRoster a:hover img { scale: 1.08; }
   .toolRows li:hover { border-color: var(--atlas-accent); box-shadow: var(--atlas-shadow-lift); transform: translateY(-2px); }
+  .toolRows li:hover [data-medallion] svg { scale: 1.14; }
   .toolRows li:active, .classRoster a:active { transform: translateY(1px); }
   .continents a:hover { border-color: var(--atlas-accent); background: var(--atlas-glass-raised); }
+  .versions a { transition: background var(--atlas-duration); }
   .versions a:hover { background: var(--atlas-glass-fill); }
+  .versions a:hover img { scale: 1.08; }
+  /* Arrows lean the way they lead. */
+  .more svg, .metaHead svg, .flagship h3 svg, .bossGrid svg, .banners svg { transition: translate var(--atlas-duration) var(--atlas-ease); }
+  .more:hover svg, .metaHead a:hover svg, .flagship:hover h3 svg, .bossGrid a:hover svg { translate: 3px 0; }
+  .banners a:hover svg { translate: 0 3px; }
+  /* The weekly leaders: the medallion lights up under the pointer. */
+  .seasonNow [data-medallion], .presence { transition: box-shadow var(--atlas-duration), text-shadow var(--atlas-duration); }
+  .liveLinks a:hover [data-medallion] { box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth), 0 0 0 3px var(--atlas-accent-wash-strong); }
+  .liveLinks a:hover .presence { text-shadow: 0 0 16px var(--atlas-accent-glow); }
 }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
-  .dungeons img, .dungeons a, .banners img, .banners a, .classRoster a, .toolRows li, .continents a, .pair .productPreview img { transition: none; transform: none !important; }
+  .dungeons img, .dungeons a, .banners img, .banners a, .classRoster a, .classRoster img, .toolRows li, .toolRows svg, .continents a, .flagship .productPreview img, .versions img, .more svg, .metaHead svg, .flagship h3 svg, .bossGrid svg, .banners svg { transition: none; transform: none !important; translate: none !important; scale: none !important; }
+  .banners a::before, .dungeons a::before { transition: none; background-position: -160% 0, 0 0 !important; }
 }
-:global(html[data-motion="reduced"]) :is(.dungeons img, .banners img, .classRoster a, .toolRows li, .pair .productPreview img) { transition: none; transform: none !important; }
+:global(html[data-motion="reduced"]) .page :is(.hero h1, .hero p, .seasonNow, .flourish img, .banners li, .chapter > div:first-child, .dungeons li, .heroArt, .mark), :global(html[data-motion="reduced"]) .flourish::before, :global(html[data-motion="reduced"]) .flourish::after { animation: none !important; }
+:global(html[data-motion="reduced"]) :is(.dungeons img, .dungeons a, .banners img, .banners a, .classRoster a, .classRoster img, .toolRows li, .toolRows svg, .flagship .productPreview img, .versions img, .more svg, .metaHead svg, .flagship h3 svg, .bossGrid svg, .banners svg) { transition: none; transform: none !important; translate: none !important; scale: none !important; }
+:global(html[data-motion="reduced"]) .banners a::before, :global(html[data-motion="reduced"]) .dungeons a::before { transition: none; background-position: -160% 0, 0 0 !important; }
+@media print { .page :is(.hero h1, .hero p, .seasonNow, .flourish img, .banners li, .chapter > div:first-child, .dungeons li) { animation: none !important; } }
 @media (prefers-reduced-transparency: reduce) { .seasonNow { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--atlas-surface); } }
 @media (forced-colors: active) {
   .seasonNow, .dungeons a, .banners a, .classRoster a, .toolRows li, .productPreview { border-color: CanvasText; }
@@ -231,3 +282,6 @@
   .versions { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .versions a { min-height: 64px; }
 }
+
+/* Touch: 44 px boss links. */
+@media (pointer: coarse) { .bossGrid a { min-height: 44px; } }
