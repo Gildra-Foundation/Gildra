@@ -1,9 +1,10 @@
 import { catalogLocaleView } from "@/lib/catalogLocale";
 import { entityTypeLabel } from "./entityTypeLabel";
 import "server-only";
-import { getCatalogPage } from "@/lib/api/client";
+import { getCatalogPage, type CatalogPage } from "@/lib/api/client";
 import { catalogIconUrl } from "@/lib/games/wow/assets";
 import { libraryRecordPath } from "@/lib/library/recordPath";
+import { libraryRecordViews } from "@/components/library/libraryRecordView";
 import type { ApiLocale } from "@/lib/games/registry";
 import {
   catalogGames,
@@ -16,6 +17,9 @@ import {
 import { internalApiJson } from "@/lib/api/internal";
 
 type RemotePage<T> = { data: T[]; pagination?: { hasMore?: boolean; nextCursor?: string } };
+/** One page of a game's search: the records, and for WoW the catalog's total and the cursor of the next page. */
+type SearchResultPage = Pick<CatalogQueryResult, "items" | "total" | "next">;
+type WowPaging = { cursor?: string; includeTotal?: boolean };
 type GenshinWeapon = {
   id: number; slug: string; name: string; rarity: number; weaponType: string;
   baseAttack?: number; secondaryStat?: string; secondaryStatValue?: number;
@@ -74,8 +78,26 @@ function leagueAttributes(payload: Record<string, unknown> | undefined) {
   return attributes;
 }
 
+/** What a search page needs of the catalog's paging: the total it counted and the cursor after this page. */
+function wowPaging(page: CatalogPage): Pick<CatalogQueryResult, "total" | "next"> {
+  return {
+    ...(typeof page.pagination.total === "number" ? { total: page.pagination.total } : {}),
+    ...(page.pagination.hasMore && page.pagination.nextCursor ? { next: page.pagination.nextCursor } : {}),
+  };
+}
+
+/** Search rows leave out the records the library lists hide (the library's own rule, not a copy of it). */
+function withoutInternalRecords(page: CatalogPage, locale: ApiLocale): CatalogPage {
+  const shown = new Set(libraryRecordViews(page.data, locale === "ru_RU" ? "ru" : "en").map((view) => view.id));
+  return { ...page, data: page.data.filter((item) => shown.has(item.id)) };
+}
+
 async function wowItems(query: string, locale: ApiLocale, limit: number): Promise<PlatformCatalogItem[]> {
   const page = await getCatalogPage({ locale, product: "wow", type: "item", query, limit, includeTotal: false, timeoutMs: catalogLookupTimeoutMs });
+  return wowItemRows(page, locale);
+}
+
+function wowItemRows(page: CatalogPage, locale: ApiLocale): PlatformCatalogItem[] {
   // An English-only record keeps its English name (game names stay English) instead of "Spell #id".
   page.data = page.data.map((item) => { const view = catalogLocaleView(item, locale === "ru_RU" ? "ru" : "en"); return { ...view, name: view.name || item.name }; });
   return page.data.map((item) => {
@@ -183,21 +205,32 @@ async function leagueChampions(query: string, locale: ApiLocale, limit: number):
   }));
 }
 
-async function searchOneGame(gameId: CatalogGameId, kind: SearchKind, query: string, locale: ApiLocale, limit: number) {
+async function searchOneGame(gameId: CatalogGameId, kind: SearchKind, query: string, locale: ApiLocale, limit: number, paging: WowPaging = {}): Promise<PlatformCatalogItem[] | SearchResultPage> {
   if (gameId === "diablo") throw new Error("Diablo catalog is not available");
   if (gameId === "wow") {
     if (kind === "characters") return [];
-    if (kind === "items") return wowItems(query, locale, limit);
-    const page = await getCatalogPage({ locale, product: "wow", query, limit, includeTotal: false, timeoutMs: catalogLookupTimeoutMs });
+    const found = await getCatalogPage({
+      locale, product: "wow", ...(kind === "items" ? { type: "item" } : {}), query, limit,
+      cursor: paging.cursor, includeTotal: paging.includeTotal ?? false, timeoutMs: catalogLookupTimeoutMs,
+    });
+    const page = withoutInternalRecords(found, locale);
+    if (kind === "items") return { items: wowItemRows(page, locale), ...wowPaging(found) };
     // An English-only record keeps its English name (game names stay English) instead of "Spell #id".
-  page.data = page.data.map((item) => { const view = catalogLocaleView(item, locale === "ru_RU" ? "ru" : "en"); return { ...view, name: view.name || item.name }; });
-    return page.data.map((item): PlatformCatalogItem => ({
-      id: `wow:${item.id}`, gameId: "wow", kind: item.type === "item" ? "items" : "entities", entityType: item.type,
-      name: item.name || `${entityTypeLabel(item.type, locale === "ru_RU" ? "ru" : "en")} #${item.externalId}`, description: compactText(item.description, ""),
-      iconUrl: catalogIconUrl(item, "wow"), href: libraryRecordPath(locale === "ru_RU" ? "ru" : "en", item.type, item.id, item.slug || item.externalId, item.product),
-      meta: ["World of Warcraft"],
-      attributes: { ...(item.quality !== undefined ? { Quality: item.quality } : {}), ...(item.itemLevel ? { "Item Level": item.itemLevel } : {}) },
-    }));
+    page.data = page.data.map((item) => { const view = catalogLocaleView(item, locale === "ru_RU" ? "ru" : "en"); return { ...view, name: view.name || item.name }; });
+    return {
+      items: page.data.map((item): PlatformCatalogItem => ({
+        id: `wow:${item.id}`, gameId: "wow", kind: item.type === "item" ? "items" : "entities", entityType: item.type,
+        name: item.name || `${entityTypeLabel(item.type, locale === "ru_RU" ? "ru" : "en")} #${item.externalId}`, description: compactText(item.description, ""),
+        iconUrl: catalogIconUrl(item, "wow"), href: libraryRecordPath(locale === "ru_RU" ? "ru" : "en", item.type, item.id, item.slug || item.externalId, item.product),
+        meta: ["World of Warcraft"],
+        attributes: {
+          ...(item.quality !== undefined ? { Quality: item.quality } : {}), ...(item.itemLevel ? { "Item Level": item.itemLevel } : {}),
+          // The facts the summary carries (slot, required level, spell school, cast time), under the catalog's own keys like the item rows above.
+          ...Object.fromEntries((item.highlights ?? []).map((highlight) => [highlight.key, highlight.value])),
+        },
+      })),
+      ...wowPaging(found),
+    };
   }
   if (gameId === "genshin") {
     if (kind === "characters") return genshinCharacters(query, locale, limit);
@@ -229,12 +262,17 @@ export async function searchGlobalCatalog(input: {
   };
 }
 
+/**
+ * One game's search results. For WoW `cursor` asks for a later page and
+ * `includeTotal` for the catalog's count of every match; the answer then
+ * carries `total` and, while there are more records, `next`.
+ */
 export async function searchCatalogGame(input: {
-  gameId: CatalogGameId; kind: SearchKind; query: string; locale: ApiLocale; limitPerGame?: number;
+  gameId: CatalogGameId; kind: SearchKind; query: string; locale: ApiLocale; limitPerGame?: number; cursor?: string; includeTotal?: boolean;
 }): Promise<CatalogQueryResult> {
   try {
-    const items = await searchOneGame(input.gameId, input.kind, input.query, input.locale, input.limitPerGame ?? 12);
-    return { items, unavailableGames: [] };
+    const found = await searchOneGame(input.gameId, input.kind, input.query, input.locale, input.limitPerGame ?? 12, { cursor: input.cursor, includeTotal: input.includeTotal });
+    return Array.isArray(found) ? { items: found, unavailableGames: [] } : { ...found, unavailableGames: [] };
   } catch {
     return { items: [], unavailableGames: [input.gameId] };
   }

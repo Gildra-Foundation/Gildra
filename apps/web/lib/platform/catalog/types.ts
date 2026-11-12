@@ -30,7 +30,14 @@ export type PlatformCatalogItem = {
 export type CatalogQueryResult = {
   items: PlatformCatalogItem[];
   unavailableGames: CatalogGameId[];
+  /** Every match of the query in the catalog, when the catalog counts them (a WoW search without a cursor). */
+  total?: number;
+  /** Cursor of the page after `items`, when there is one. */
+  next?: string;
 };
+
+/** Records a search page shows at once ("show more" appends as many). */
+export const searchPageSize = 24;
 
 const allCatalogGames: CatalogGameOption[] = [
   {
