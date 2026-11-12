@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/itemquality"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -124,7 +125,7 @@ func tooltipSQLForEntityTypes(entityTypes ...string) string {
 	return strings.Replace(tooltipSQL, "WHERE e.deleted_at IS NULL", filter, 1)
 }
 
-const tooltipSQL = `
+var tooltipSQL = `
 	WITH spell_misc_rows AS (
 		SELECT DISTINCT ON (build_id,(payload->>'SpellID')::bigint)
 			build_id,(payload->>'SpellID')::bigint AS spell_id,payload
@@ -345,7 +346,7 @@ const tooltipSQL = `
 	), rendered AS (
 		SELECT version_id, entity_type, locale, source_url,
 			concat_ws(E'\n', name, NULLIF(description,'')) AS plain_text,
-			jsonb_build_array(jsonb_build_object('type','name','text',name,'quality',item->'quality'))
+			jsonb_build_array(jsonb_build_object('type','name','text',name,'quality',` + itemquality.SQL("COALESCE(item_detail->>'quality',item->>'quality')") + `))
 			|| CASE WHEN entity_type='item' AND item_detail ? 'item_level' THEN jsonb_build_array(jsonb_build_object('type','item_level','value',item_detail->'item_level')) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND item_detail->>'inventory_type' ~ '^[0-9]+$' AND item_detail->>'inventory_type'<>'0' THEN jsonb_build_array(jsonb_build_object('type','slot','code',(item_detail->>'inventory_type')::int)) ELSE '[]'::jsonb END
 			|| CASE WHEN entity_type='item' AND item_detail ? 'item_class_id' THEN jsonb_build_array(jsonb_build_object('type','subclass','class_id',item_detail->'item_class_id','subclass_id',item_detail->'item_subclass_id')) ELSE '[]'::jsonb END

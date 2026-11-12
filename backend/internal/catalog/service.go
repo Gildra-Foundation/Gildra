@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/itemquality"
 	"math"
 	"strings"
 	"time"
@@ -394,7 +395,7 @@ func publicEntitySelect(localeParam, extraJoins string) string {
 	return strings.NewReplacer("{locale}", localeParam, "{extraJoins}", extraJoins).Replace(publicEntitySelectTemplate)
 }
 
-const publicEntitySelectTemplate = `
+var publicEntitySelectTemplate = `
 		SELECT
 			e.id, p.slug, e.entity_type, e.external_id,
 			COALESCE(NULLIF(l.slug,''),NULLIF(fallback.slug,''),e.canonical_slug),
@@ -413,7 +414,7 @@ const publicEntitySelectTemplate = `
 			COALESCE(fa.icon_name, spell_fa.icon_name, source_icon.icon_name, db2_fa.icon_name,
 				NULLIF(v.payload #>> '{raidbots,icon}',''),NULLIF(v.payload #>> '{raidbots,spellIcon}',''),
 				CASE WHEN v.payload->>'icon_file_data_id' ~ '^[0-9]+$' THEN v.payload->>'icon_file_data_id' END,
-				CASE WHEN spell_misc.payload->>'SpellIconFileDataID' ~ '^[0-9]+$' THEN spell_misc.payload->>'SpellIconFileDataID' END),CASE WHEN ci.quality ~ '^[0-9]+$' THEN ci.quality::int END
+				CASE WHEN spell_misc.payload->>'SpellIconFileDataID' ~ '^[0-9]+$' THEN spell_misc.payload->>'SpellIconFileDataID' END),` + itemquality.SQL("ci.quality") + `
 		FROM game_entities e
 		JOIN game_products p ON p.id = e.product_id
 {extraJoins}		LEFT JOIN game_entity_versions v ON v.id = e.published_version_id
@@ -516,7 +517,7 @@ const publicEntitySelectTemplate = `
 					'entity_id',reward_entity.id,'entity_type',reward_entity.entity_type,'slug',COALESCE(NULLIF(reward_name.slug,''),NULLIF(reward_fallback.slug,''),reward_entity.canonical_slug),
 					'name',COALESCE(NULLIF(reward_name.name,''),reward.attributes #>> ARRAY['names',{locale}],NULLIF(reward_fallback.name,''),reward.attributes #>> '{names,en_US}',''),
 					'icon_name',COALESCE(reward_icon.icon_name,reward_file.icon_name,reward_db2_file.icon_name,NULLIF(reward_version.payload #>> '{raidbots,icon}','')),
-					'quality',CASE WHEN reward_item.quality ~ '^[0-9]+$' THEN reward_item.quality::int END
+					'quality',` + itemquality.SQL("reward_item.quality") + `
 				) ORDER BY reward.reward_type,reward.reward_index)
 				FROM catalog_quest_rewards reward
 				LEFT JOIN game_entities reward_entity ON reward_entity.product_id=e.product_id

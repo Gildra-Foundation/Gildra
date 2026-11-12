@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/itemquality"
 	"strconv"
 	"strings"
 	"time"
@@ -77,7 +78,7 @@ var summaryFastQuery = `
 			ELSE COALESCE(NULLIF(localized.description,''),fallback.description,'') END,
 		COALESCE(source_icon.icon_name,direct_icon.icon_name,db2_icon.icon_name,
 			NULLIF(version.payload #>> '{raidbots,icon}',''),NULLIF(version.payload #>> '{raidbots,spellIcon}','')),
-		CASE WHEN item.quality ~ '^[0-9]+$' THEN item.quality::int END,
+		` + itemquality.SQL("item.quality") + `,
 		item.item_level,version.build_id,entity.updated_at,
 		item.required_level,item.inventory_type,spell.school,spell.cast_time,spell.cooldown_ms,0
 	FROM game_entities entity
@@ -264,7 +265,7 @@ func (s *Service) Summaries(ctx context.Context, params SummaryParams) (SummaryP
 			ELSE COALESCE(NULLIF(localized.description,''),fallback.description,'') END,
 			COALESCE(source_icon.icon_name,direct_icon.icon_name,db2_icon.icon_name,
 				NULLIF(version.payload #>> '{raidbots,icon}',''),NULLIF(version.payload #>> '{raidbots,spellIcon}','')),
-			CASE WHEN item.quality ~ '^[0-9]+$' THEN item.quality::int END,
+			` + itemquality.SQL("item.quality") + `,
 			item.item_level,version.build_id,entity.updated_at,
 			item.required_level,item.inventory_type,spell.school,spell.cast_time,spell.cooldown_ms,page.search_rank
 		FROM page
