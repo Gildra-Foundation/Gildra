@@ -20,8 +20,9 @@ const difficultyIcons = [UsersRound, Shield, Swords, Crown];
 const kit = "venomous-abyss" as const;
 const capital = (text: string) => text.charAt(0).toLocaleUpperCase() + text.slice(1);
 
-function spellAnchor(name: string) {
-  return `spell-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+/** The ability's id on the page; letters of any alphabet stay (a Russian name used to leave only "spell--" for every ability). */
+export function spellAnchor(name: string) {
+  return `spell-${name.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "")}`;
 }
 
 export function LairBossGuide({ boss, nextBoss, locale = "ru" }: { boss: Boss; nextBoss: Boss; locale?: LairsLocale }) {
