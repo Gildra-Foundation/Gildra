@@ -1,5 +1,5 @@
 [Unit]
-Description=Refresh Gildra private catalog media cache
+Description=Renew Gildra cached catalog icons before their source retention ends
 OnFailure=gildra-notify@%p.service
 OnSuccess=gildra-notify-ok@%p.service
 Requires=docker.service
@@ -11,7 +11,7 @@ ConditionPathExists=/opt/gildra/current-release.env
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/gildra
-ExecStart=/usr/bin/docker compose --env-file .env --env-file current-release.env -f compose.yml -f compose.prod.yml -f compose.runtime.yml run --rm --no-deps catalog-media-cache -access-mode private -environment production -expansion midnight -seed-icon-limit 10000 -skip-media-cache -confirm
+ExecStart=/usr/bin/docker compose --env-file .env --env-file current-release.env -f compose.yml -f compose.prod.yml -f compose.runtime.yml -f compose.wowarcana.yml run --rm --no-deps catalog-media-cache -environment production -expansion= -refresh-icons -refresh-limit 3000 -refresh-batch 100 -refresh-headroom-days 10 -refresh-interval 500ms -refresh-retry-failed-after 72h -refresh-checkpoint /var/lib/gildra/catalog-media/refresh-wow.json -confirm
 TimeoutStartSec=2h
 Nice=10
 IOSchedulingClass=best-effort
