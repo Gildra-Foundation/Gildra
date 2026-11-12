@@ -134,7 +134,7 @@
   height: 32px;
   color: var(--atlas-text-muted);
   border: 1px solid var(--atlas-line-soft);
-  border-radius: 8px;
+  border-radius: var(--atlas-radius-control);
   background: color-mix(in srgb, var(--atlas-bg) 50%, transparent);
   transition: color var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast) var(--atlas-ease);
 }
@@ -190,7 +190,7 @@
   font-size: var(--atlas-text-small);
   text-decoration: none;
   border: 1px solid var(--atlas-line-soft);
-  border-radius: 8px;
+  border-radius: var(--atlas-radius-control);
   background: color-mix(in srgb, var(--atlas-bg) 50%, transparent);
 }
 .textLink svg { width: 15px; height: 15px; color: var(--material-light, var(--atlas-accent)); }
@@ -246,7 +246,7 @@
   text-decoration: none;
   cursor: pointer;
   border: 1px solid var(--atlas-line-soft);
-  border-radius: 8px;
+  border-radius: var(--atlas-radius-control);
   background: color-mix(in srgb, var(--atlas-bg) 50%, transparent);
 }
 .buildAction svg { width: 15px; height: 15px; color: var(--material-light, var(--atlas-accent)); }
