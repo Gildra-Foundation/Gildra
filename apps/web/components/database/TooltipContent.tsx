@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AchievementTooltip } from "./AchievementTooltip";
 import type { Lang } from "@/lib/i18n";
 import { formatQuestText, playerText } from "@/lib/gameText";
 import { RichDescription, TooltipOwners, verifiedMediaURL } from "@/components/database/TooltipRelations";
@@ -123,6 +124,7 @@ export function recordFacts(entity: CatalogRecord, lang: Lang): RecordFact[] {
 function TooltipBlock({ block, entityType, wow, lang, mentions }: { block: Record<string, unknown>; entityType: string; wow: boolean; lang: Lang; mentions: Record<string, unknown>[] }) {
   const type = String(block.type ?? "");
   if (type === "name") return null;
+  if (type === "achievement_info") return <AchievementTooltip block={block} lang={lang} />;
 	if (type === "item_level") return <div className="db-tooltip-level">{tooltipContentCopy[lang].itemLevel} {String(block.value ?? "")}</div>;
   if (type === "slot") return <div>{inventoryTypeLabel(Number(block.code), lang)}</div>;
   if (type === "subclass") return <div className="db-tooltip-muted">{subclassLabel(Number(block.class_id), Number(block.subclass_id), lang)}</div>;

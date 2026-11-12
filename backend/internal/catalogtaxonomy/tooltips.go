@@ -64,6 +64,11 @@ func (i *Indexer) rebuildTooltips(ctx context.Context, productID *int16) (Result
 			return fmt.Errorf("rebuild entity tooltips: %w", err)
 		}
 		result.Tooltips = command.RowsAffected()
+		if productID != nil {
+			if _, err := rebuildAchievements(ctx, tx); err != nil {
+				return err
+			}
+		}
 		if productID == nil {
 			result.Links, err = rebuildEntityGraph(ctx, tx)
 			if err != nil {
