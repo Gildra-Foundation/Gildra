@@ -118,7 +118,7 @@ const questDetailsProjectionSQL = `
 
 	INSERT INTO catalog_quest_poi_blobs(build_id,quest_id,blob_id,map_id,ui_map_id,objective_id,objective_index,
 		player_condition_id,navigation_condition_id,flags)
-	SELECT build_id,(payload->>'QuestID')::bigint,row_id,NULLIF(COALESCE(NULLIF(payload->>'MapID','')::int,0),0),
+	SELECT build_id,(payload->>'QuestID')::bigint,row_id,NULLIF(payload->>'MapID','')::int,
 		NULLIF(COALESCE(NULLIF(payload->>'UiMapID','')::int,0),0),NULLIF(COALESCE(NULLIF(payload->>'ObjectiveID','')::bigint,0),0),
 		COALESCE(NULLIF(payload->>'ObjectiveIndex','')::int,0),NULLIF(COALESCE(NULLIF(payload->>'PlayerConditionID','')::int,0),0),
 		NULLIF(COALESCE(NULLIF(payload->>'NavigationPlayerConditionID','')::int,0),0),COALESCE(NULLIF(payload->>'Flags','')::bigint,0)
