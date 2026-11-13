@@ -181,12 +181,19 @@ div.filters .filterLead { grid-template-columns: minmax(0, 1fr); }
 
 /* ---------- Narrow screens ---------- */
 @media (max-width: 1279px) {
-  .crests { grid-template-columns: repeat(min(var(--forever-count, 9), 7), minmax(0, 1fr)); }
   .crest { min-height: 96px; }
   .rows[data-columns="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+@media (max-width: 1000px) {
+  /* A roster stands in two even rows; a strip of art cards swipes. */
+  .crests { grid-template-columns: repeat(var(--forever-half, 5), minmax(0, 1fr)); }
+  .artGrid[data-strip] { display: flex; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: var(--atlas-space-1); }
+  .artGrid[data-strip]::-webkit-scrollbar { display: none; }
+  .artGrid[data-strip] > li { flex: 0 0 240px; scroll-snap-align: start; }
+}
 @media (max-width: 900px) {
   .rows, .rows[data-columns="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rows > li:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 @media (max-width: 700px) {
   .filterLead { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
@@ -197,21 +204,19 @@ div.filters .filterLead { grid-template-columns: minmax(0, 1fr); }
   .tabs { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
   .tabs::-webkit-scrollbar { display: none; }
   .tabs a { flex: none; padding: 0 var(--atlas-space-3); }
-  .artGrid[data-strip] { display: flex; gap: var(--atlas-space-2); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: var(--atlas-space-1); }
-  .artGrid[data-strip]::-webkit-scrollbar { display: none; }
-  .artGrid[data-strip] > li { flex: 0 0 62%; scroll-snap-align: start; }
+  .artGrid[data-strip] { gap: var(--atlas-space-2); }
+  .artGrid[data-strip] > li { flex-basis: 62%; }
   .artGrid:not([data-strip]) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
   .artGrid:not([data-strip]) .artTitle { font-size: var(--atlas-text-body); }
   .rows, .rows[data-columns="2"], .rows[data-columns="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .rows > li:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .row { gap: var(--atlas-space-2); min-height: 64px; padding: var(--atlas-space-2); }
   .medallion { width: 30px; height: 30px; }
   .medallion svg { width: 16px; height: 16px; }
   .rowText strong { font-size: var(--atlas-text-small); }
   .rowText span { font-size: var(--atlas-text-meta); }
   .rowAside:has(svg) { display: none; }
-  .crests { grid-template-columns: repeat(min(var(--forever-count, 9), 5), minmax(0, 1fr)); gap: var(--atlas-space-1); }
-  .crest { min-height: 84px; padding: var(--atlas-space-2) 2px; font-size: var(--atlas-text-label); }
+  .crests { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-1); }
+  .crest { min-height: 84px; padding: var(--atlas-space-2) var(--atlas-space-1); }
   .crest img { width: 36px; height: 36px; }
   .page .feature, .feature, .feature[data-stacked] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); padding: 14px; }
   .featureArt { min-height: 0; aspect-ratio: 3; }

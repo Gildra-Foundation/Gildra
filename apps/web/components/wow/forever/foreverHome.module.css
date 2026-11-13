@@ -1,0 +1,83 @@
+/* atlas:strict — the Forever hub, laid out as the home page of the live game (components/wow/home): the promise and
+   the counters, five painted banners, then a chapter per subject. The parts are the section's shared ones
+   (shared/forever.module.css); this sheet only places them and gives each chapter its tone. */
+.page {
+  --atlas-container: 1280px;
+  --forever-chapter-dungeons: var(--atlas-ruby-accent);
+  --forever-chapter-classes: var(--atlas-dungeon-void-accent);
+  --forever-chapter-raids: var(--atlas-positive);
+  --forever-chapter-crafts: var(--atlas-dungeon-kings-accent);
+  --forever-chapter-library: var(--atlas-accent);
+  padding-bottom: 0;
+}
+@media (hover: hover) { .page a:hover { color: var(--atlas-accent-strong); } }
+
+/* Hero: the promise in the Warcraft title face (one weight: no synthetic bold) on one line, the counters under the lede. */
+.page .hero { padding-block: var(--atlas-space-2) 0; }
+.page .hero h1 { max-width: none; hyphens: none; text-wrap: balance; }
+.hero p { hyphens: none; text-wrap: pretty; }
+.promise { display: block; color: var(--atlas-text-strong); font-family: var(--atlas-font-title); font-size: 1em; font-weight: 400; font-synthesis: none; letter-spacing: 0; line-height: 1.14; text-shadow: var(--atlas-text-shadow-hero); }
+
+/* A flourish from the quest log closes the first screen. */
+.flourish { display: flex; align-items: center; gap: var(--atlas-space-4); margin-top: var(--atlas-space-4); opacity: .9; }
+.flourish::before, .flourish::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--atlas-line)); }
+.flourish::after { background: linear-gradient(90deg, var(--atlas-line), transparent); }
+.flourish img { flex: none; width: 209px; height: 18px; filter: brightness(1.35); }
+
+/* Calls to action: five painted banners, each scrolls to its chapter. */
+.banners { margin-top: var(--atlas-space-3); }
+
+/* Chapters: a plain name with the game's own sign, one link to the section's page, a wash in the chapter's tone. */
+.chapter { position: relative; isolation: isolate; }
+.page .chapter { margin-top: var(--atlas-space-7); }
+.page .chapter:first-of-type { margin-top: var(--atlas-space-5); }
+.page .chapter::before { content: ""; position: absolute; z-index: -1; inset: 0 -24px; pointer-events: none; background: radial-gradient(closest-side at 30% 50%, var(--atlas-accent-wash), transparent); }
+.page .chapter > div:first-child { position: relative; min-height: 44px; margin-bottom: var(--atlas-space-4); }
+.chapter h2 { text-wrap: balance; }
+.page .chapter h2::before { display: none; }
+.mark { display: inline-block; width: 1em; height: 1em; max-width: 34px; max-height: 34px; margin: 0 .4em .14em 0; object-fit: contain; vertical-align: middle; filter: drop-shadow(0 0 10px var(--atlas-accent-glow)); }
+.more { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.more svg { flex: none; width: 16px; height: 16px; color: var(--atlas-accent); }
+.page .chapter[id="dungeons"] { --chapter-tone: var(--forever-chapter-dungeons); }
+.page .chapter[id="classes"] { --chapter-tone: var(--forever-chapter-classes); }
+.page .chapter[id="raids"] { --chapter-tone: var(--forever-chapter-raids); }
+.page .chapter[id="crafts"] { --chapter-tone: var(--forever-chapter-crafts); }
+.page .chapter:is([id="dungeons"], [id="classes"], [id="raids"], [id="crafts"]) {
+  --atlas-accent: var(--chapter-tone);
+  --atlas-accent-strong: color-mix(in srgb, var(--chapter-tone) 70%, var(--atlas-text-strong));
+  --atlas-accent-wash: color-mix(in srgb, var(--chapter-tone) 10%, transparent);
+  --atlas-accent-wash-strong: color-mix(in srgb, var(--chapter-tone) 18%, transparent);
+  --atlas-accent-glow: color-mix(in srgb, var(--chapter-tone) 18%, transparent);
+  --atlas-frame-tint: var(--atlas-accent-glow);
+}
+
+/* Arrival: the first screen lands piece by piece from the first paint — the title, the lede and the counters rise,
+   the flourish draws from its centre, the banners follow (their cascade is the shared one). A return skips it. */
+@keyframes foreverHomeDraw { from { opacity: 0; scale: 0 1; } }
+@keyframes foreverHomeAnswer { 40% { scale: 1.24; filter: drop-shadow(0 0 16px var(--atlas-accent)); } }
+@media screen and (prefers-reduced-motion: no-preference) {
+  .page:not([data-atlas-arrival="skip"]) .flourish::before, .page:not([data-atlas-arrival="skip"]) .flourish::after { animation: foreverHomeDraw var(--atlas-duration-draw) var(--atlas-ease) calc(var(--atlas-stagger) * 3) backwards; }
+  .flourish::before { transform-origin: right; }
+  .flourish::after { transform-origin: left; }
+  /* A banner's chapter answers when the glide arrives. */
+  .chapter[data-forever-arrived] .mark { animation: foreverHomeAnswer var(--atlas-duration-sweep) var(--atlas-ease); }
+}
+@media (hover: hover) and (pointer: fine) {
+  .more svg { transition: translate var(--atlas-duration) var(--atlas-ease); }
+  .more:hover svg { translate: 3px 0; }
+}
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) { .more svg { transition: none; translate: none !important; } }
+:global(html[data-motion="reduced"]) .page :is(.mark, .more svg), :global(html[data-motion="reduced"]) .flourish::before, :global(html[data-motion="reduced"]) .flourish::after { animation: none !important; transition: none; translate: none !important; }
+@media print { .flourish::before, .flourish::after { animation: none !important; } }
+@media (forced-colors: active) { .chapter::before { display: none; } }
+
+@media (max-width: 700px) {
+  .page .chapter { margin-top: var(--atlas-space-6); }
+  .page .chapter:first-of-type { margin-top: var(--atlas-space-5); }
+  .page .chapter::before { inset-inline: 0; }
+  .page .chapter > div:first-child { margin-bottom: var(--atlas-space-3); }
+  .page .hero { padding-block: var(--atlas-space-3) 0; }
+  .page .hero > div:last-child { padding-block: var(--atlas-space-3); }
+  .promise { font-size: .82em; }
+  .banners { margin-top: var(--atlas-space-2); }
+}

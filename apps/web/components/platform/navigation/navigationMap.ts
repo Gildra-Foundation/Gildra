@@ -174,7 +174,7 @@ export const foreverRealms: readonly NavigationRealm[] = [
       { href: "/wow/forever/changes", icon: "guide", label: { en: "Class changes", ru: "Изменения классов" }, note: { en: "Abilities and talents compared", ru: "Сравнение способностей и талантов" } },
     ] }] },
   { id: "forever-talent-calc", label: { en: "Talents", ru: "Таланты" }, hub: "/wow/forever/talent-calc",
-    groups: [{ links: [{ href: "/wow/forever/talent-calc", icon: "classes", label: { en: "Talent calculator", ru: "Калькулятор талантов" }, note: { en: "Plan a build to level 60", ru: "Соберите билд до 60-го уровня" } }] }] },
+    groups: [{ links: [{ href: "/wow/forever/talent-calc", icon: "classes", label: { en: "Talent calculator", ru: "Калькулятор талантов" }, note: { en: "Plan talents to level 60", ru: "Распределите таланты до 60-го уровня" } }] }] },
   { id: "forever-dungeons", label: { en: "Dungeons", ru: "Подземелья" }, hub: "/wow/forever/dungeons",
     groups: [{ links: [{ href: "/wow/forever/dungeons", icon: "atlas", label: { en: "Dungeons", ru: "Подземелья" }, note: { en: "Maps, bosses and loot by level", ru: "Карты, боссы и добыча по уровням" } }] }] },
   { id: "forever-raids", label: { en: "Raids", ru: "Рейды" }, hub: "/wow/forever/raids",

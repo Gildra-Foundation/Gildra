@@ -175,6 +175,19 @@ export const WOW_UI_TEXTURES = {
   flourish: "/assets/wow/ui/home/break.webp",
 } as const;
 
+/** Chapter marks of the Forever hub: the home page marks where the subject is the same, the game's
+ * dungeon portal, anvil and book otherwise (provenance: /assets/wow/ui/forever/hub/SOURCE.md). */
+export const FOREVER_UI_TEXTURES = {
+  marks: {
+    dungeons: "/assets/wow/ui/forever/hub/mark-dungeons.webp",
+    classes: WOW_UI_TEXTURES.marks.hero,
+    raids: WOW_UI_TEXTURES.marks.raids,
+    crafts: "/assets/wow/ui/forever/hub/mark-crafts.webp",
+    library: "/assets/wow/ui/forever/hub/mark-library.webp",
+  },
+  flourish: WOW_UI_TEXTURES.flourish,
+} as const;
+
 /** Emblems of the game versions in the top strip, cut from the client's shop
  * product logos (provenance: /assets/wow/versions/SOURCE.md). */
 export const WOW_VERSION_EMBLEMS = {

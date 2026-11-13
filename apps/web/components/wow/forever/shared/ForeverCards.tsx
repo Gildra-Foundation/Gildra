@@ -74,10 +74,10 @@ export function ForeverRow({ href, sign, icon, title, note, aside }: {
 
 /* ---------- Crests ---------- */
 
-/** A roster in one line (classes, professions): `count` is how many stand in a row on a wide screen. */
+/** A roster in one line (classes): `count` is how many stand in a row on a wide screen; a tablet shows two even rows, a phone three in a row. */
 export function ForeverCrests({ children, label, count = 9, className }: { children: ReactNode; label: string; count?: number; className?: string }) {
   return <nav aria-label={label} className={className}>
-    <ul className={styles.crests} data-forever-cascade="" style={{ "--forever-count": count } as CSSProperties}>{children}</ul>
+    <ul className={styles.crests} data-forever-cascade="" style={{ "--forever-count": count, "--forever-half": Math.ceil(count / 2) } as CSSProperties}>{children}</ul>
   </nav>;
 }
 
