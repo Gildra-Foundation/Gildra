@@ -1,6 +1,5 @@
 /* atlas:strict — a Forever dungeon or raid: its painting in the Forever frame, name and facts on the plaque under it. */
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
-.grid[data-columns="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid > li { display: flex; min-width: 0; }
 .grid > li > * { flex: 1; }
 
@@ -29,13 +28,10 @@
 .facts svg { flex: none; width: 15px; height: 15px; }
 .arrow { margin-left: auto; color: var(--material-light); }
 
-/* A raid's roster or a line of text under the facts. */
-.body > :is(ol, ul, p):last-child { position: relative; z-index: 4; }
-
-@media (max-width: 1100px) { .grid, .grid[data-columns] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-4); } }
+@media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-4); } }
 @media (max-width: 760px) { .card.card { --instance-mat: var(--atlas-space-3); } }
 @media (max-width: 640px) {
-  .grid, .grid[data-columns] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
+  .grid { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
   /* Compact: the painting beside the text, so a long list stays short. */
   .card[data-compact] { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: stretch; }
   .card[data-compact] .art { aspect-ratio: auto; min-height: 96px; }
@@ -62,6 +58,18 @@
   .card[data-link]:hover::before { filter: contrast(.88) saturate(.84) brightness(1); }
   .card[data-link]:hover .title a { color: var(--material-light); }
 }
+/* Arrival of the long grid: on the first load of a visit its first cards land as a cascade (CSS, from the first paint,
+   as the section's short grids do); the rest rise as they are scrolled to (InstanceMotion). */
+@keyframes instanceRise { from { opacity: 0; translate: 0 calc(var(--atlas-reveal-shift) + 6px); } }
+@media screen and (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion="reduced"]) [data-forever]:not([data-atlas-arrival="skip"])) .grid[data-instance-cascade] > :nth-child(-n+6) { animation: instanceRise var(--atlas-duration-enter) var(--atlas-ease) calc(var(--atlas-stagger) * (3 + var(--instance-i, 0) * .6)) backwards; }
+  .grid[data-instance-cascade] > :nth-child(2) { --instance-i: 1; }
+  .grid[data-instance-cascade] > :nth-child(3) { --instance-i: 2; }
+  .grid[data-instance-cascade] > :nth-child(4) { --instance-i: 3; }
+  .grid[data-instance-cascade] > :nth-child(5) { --instance-i: 4; }
+  .grid[data-instance-cascade] > :nth-child(6) { --instance-i: 5; }
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active), print { .grid[data-instance-cascade] > * { animation: none !important; } }
 @media (prefers-reduced-transparency: reduce) { .art::before { display: none; } }
 :global([data-transparency="reduced"]) .art::before { display: none; }
 @media (forced-colors: active) { .art::before, .art::after { display: none; } .card { border: 1px solid CanvasText; } .tag { border-color: CanvasText; background: Canvas; color: CanvasText; } }

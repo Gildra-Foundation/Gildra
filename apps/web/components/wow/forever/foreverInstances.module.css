@@ -10,10 +10,8 @@
 @media (max-width: 480px) { .pine { width: 64px; } }
 @media (forced-colors: active) { .pine { display: none; } }
 
-/* Catalogue: the search plaque above the cards. */
-.filterPlaque.filterPlaque { margin-bottom: var(--atlas-space-5); padding-block: var(--atlas-space-5); }
-.filterRow.filterRow { margin-block-end: 0; }
-.filterRow > div:first-child { flex-grow: 3; }
+/* Catalogue: the search panel above the cards. */
+.catalog { display: grid; gap: var(--atlas-space-5); min-width: 0; }
 
 /* Raid journal: the painting in the Forever frame beside the plaque, sides alternating. */
 .raids { display: grid; gap: var(--atlas-space-6); }

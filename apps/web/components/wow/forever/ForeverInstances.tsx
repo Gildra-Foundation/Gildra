@@ -1,17 +1,15 @@
 import Image from "next/image";
 import { MapPin } from "lucide-react";
-import { AtlasHero, AtlasSection } from "@/components/atlas";
-import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
+import { AtlasSection } from "@/components/atlas";
 import { p, type Lang } from "@/lib/i18n-paths";
-import { FOREVER_KIT } from "./foreverKit";
-import { ForeverInstanceFrame } from "./ForeverInstanceFrame";
+import { ForeverFrame } from "./ForeverFrame";
+import { ForeverHero, ForeverPanel, foreverPanelStyles } from "./shared";
 import { bossCount, instanceCopy, playerCount } from "./instanceCopy";
 import { foreverRaids, raidEncounters, newDungeons } from "./instanceData";
 import { ForeverDungeonCatalog } from "./ForeverDungeonCatalog";
 import { instanceArt } from "./instanceArt";
 import { allDungeons, dungeonFacts } from "./instanceFacts";
 import { InstanceCard, InstanceCardGrid } from "./InstanceCard";
-import { InstanceMotion } from "./InstanceMotion";
 import { instanceName } from "./instanceLocalization";
 import styles from "./foreverInstances.module.css";
 
@@ -19,43 +17,40 @@ export function ForeverInstances({ lang, kind }: { lang: Lang; kind: "raids" | "
   const t = instanceCopy[lang];
   const dungeons = allDungeons.map(dungeon => dungeonFacts(dungeon, lang));
   const raids = kind === "raids";
-  return <ForeverInstanceFrame lang={lang} art={raids ? "hyjal-summit" : "blackrock-depths"} shade="deep">
-    <InstanceMotion />
-    <AtlasHero align="start" title={t[kind]} lede={raids ? t.raidLede : t.dungeonLede}
-      breadcrumbs={[{ label: "Forever", href: p(lang, "/wow/forever") }, { label: t[kind] }]}
-      breadcrumbsLabel={t.breadcrumbs}
+  return <ForeverFrame lang={lang} page={kind}>
+    <ForeverHero lang={lang} trail={[{ label: t[kind] }]} title={t[kind]} lede={raids ? t.raidLede : t.dungeonLede}
       stats={raids
         ? [{ value: foreverRaids.length, label: t.raids }, { value: foreverRaids.reduce((sum, raid) => sum + raid.bosses, 0), label: t.bosses }, { value: 60, label: t.level }]
         : [{ value: dungeons.length, label: t.dungeons }, { value: dungeons.reduce((sum, dungeon) => sum + dungeon.bosses, 0), label: t.bosses }, { value: `${dungeons[0].min}–60`, label: t.level }]} />
     {raids ? <>
       <AtlasSection>
-        <div className={styles.raids} data-instance-cascade="">
+        <div className={styles.raids} data-forever-cascade="">
           {foreverRaids.map(raid => <ForeverRaid key={raid.id} raid={raid} lang={lang} />)}
         </div>
       </AtlasSection>
       <AtlasSection title={t.amulet}>
-        <MaterialPlaque kit={FOREVER_KIT}><p className={materialStyles.text}>{t.amuletText}</p></MaterialPlaque>
+        <ForeverPanel><p className={foreverPanelStyles.text}>{t.amuletText}</p></ForeverPanel>
       </AtlasSection>
     </> : <AtlasSection><ForeverDungeonCatalog lang={lang} dungeons={dungeons} /></AtlasSection>}
-  </ForeverInstanceFrame>;
+  </ForeverFrame>;
 }
 
-/** One raid of the journal: its painting in the Forever frame beside a plaque with the facts and the roster. */
+/** One raid of the journal: its painting in the Forever frame beside a panel with the facts and the roster. */
 function ForeverRaid({ raid, lang }: { raid: typeof foreverRaids[number]; lang: Lang }) {
   const t = instanceCopy[lang];
   const painting = instanceArt(raid.id);
   return <article id={raid.id} className={styles.raid} aria-labelledby={`${raid.id}-name`}>
-    <MaterialPlaque kit={FOREVER_KIT} className={styles.raidFrame} aria-hidden="true">
+    <ForeverPanel className={styles.raidFrame} aria-hidden="true">
       <div className={styles.raidArt}>{painting && <Image src={painting.src} alt="" fill sizes="(max-width: 900px) 100vw, 50vw" style={{ objectPosition: painting.position }} />}</div>
-    </MaterialPlaque>
-    <MaterialPlaque kit={FOREVER_KIT} className={styles.raidBody}>
+    </ForeverPanel>
+    <ForeverPanel className={styles.raidBody}>
       <p className={styles.location}><MapPin aria-hidden="true" /><span>{instanceName(raid.location, lang)}</span></p>
       <h2 id={`${raid.id}-name`} className={styles.raidName}>{raid.name}</h2>
       <p className={styles.raidFacts}><span>{t.level} 60</span><span>{playerCount(raid.players, lang)}</span><span>{bossCount(raid.bosses, lang)}</span></p>
-      <p className={materialStyles.text}>{raid.text[lang]}</p>
+      <p className={foreverPanelStyles.text}>{raid.text[lang]}</p>
       <h3 className={styles.rosterTitle}>{t.bosses}</h3>
       <ol className={styles.roster}>{raidEncounters[raid.id].map((name, index) => <li key={name}><span aria-hidden="true">{index + 1}</span>{name}</li>)}</ol>
-    </MaterialPlaque>
+    </ForeverPanel>
   </article>;
 }
 

@@ -7,6 +7,7 @@
 .item { display: flex; align-items: center; gap: var(--atlas-space-3); min-height: var(--atlas-control-height); color: inherit; text-decoration: none; }
 .itemName { min-width: 0; color: var(--atlas-text-strong); font-weight: 600; line-height: var(--atlas-leading-snug); }
 .item:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
+.alias { display: block; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-weight: 400; }
 .levelLabel { display: none; }
 .more { display: flex; justify-content: center; margin-top: var(--atlas-space-4); }
 .map { display: block; width: 100%; height: auto; }

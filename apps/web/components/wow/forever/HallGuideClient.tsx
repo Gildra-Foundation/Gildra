@@ -1,8 +1,8 @@
 "use client";
 import { useEffect } from "react";
-import { MaterialPlaque } from "@/components/wow/shared/materialAtlas";
 import type { Lang } from "@/lib/i18n-paths";
-import { FOREVER_KIT } from "./foreverKit";
+import { ForeverPanel } from "./shared/ForeverPanel";
+import { ForeverChips } from "./shared/ForeverTabs";
 import { hallEncounters } from "./hallOfThanes";
 import styles from "./hallGuide.module.css";
 import { InstanceMaps } from "./InstanceMaps";
@@ -21,18 +21,17 @@ export function HallGuideClient({ lang }: { lang: Lang }) {
     if (location.encounter && location.encounter <= hallEncounters.length) revealEncounter(`#encounter-${location.encounter}`);
   }, [location.encounter]);
   return <>
-    <nav className={styles.choices} aria-label={t.encounters}>{hallEncounters.map((boss, index) => <a key={boss.id} href={`?mapFloor=${boss.floor}#encounter-${index + 1}`} aria-current={active === index ? "true" : undefined} onClick={event => {
-      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-      event.preventDefault(); navigateDungeon(`#encounter-${index + 1}`, boss.floor);
-      requestAnimationFrame(() => revealEncounter(`#encounter-${index + 1}`, true));
-    }}><span aria-hidden="true">{index + 1}</span>{boss.name}</a>)}</nav>
+    <ForeverChips className={styles.choices} label={t.encounters} chips={hallEncounters.map((boss, index) => ({
+      label: `${index + 1} · ${boss.name}`, active: active === index,
+      onClick: () => { navigateDungeon(`#encounter-${index + 1}`, boss.floor); requestAnimationFrame(() => revealEncounter(`#encounter-${index + 1}`, true)); },
+    }))} />
     <div className={styles.workspace}>
-      <MaterialPlaque kit={FOREVER_KIT}>
+      <ForeverPanel>
         <InstanceMaps selectedEncounter={active + 1} lang={lang} name="Hall of Thanes" bosses={hallEncounters.map(boss => boss.name)}
           maps={[{ src: "/images/wow/forever/hall-of-thanes/1.webp", width: 1130, height: 1556, label: { [lang]: t.main } }, { src: "/images/wow/forever/hall-of-thanes/2.webp", width: 654, height: 561, label: { [lang]: t.cave } }]}
           associations={hallEncounters.map((boss, index) => ({ encounter: index + 1, floor: boss.floor, x: boss.x, y: boss.y }))} />
-      </MaterialPlaque>
-      <MaterialPlaque kit={FOREVER_KIT} as="article" id={`encounter-${active + 1}`} tabIndex={-1} className={styles.encounter} aria-labelledby="hall-boss-name">
+      </ForeverPanel>
+      <ForeverPanel as="article" id={`encounter-${active + 1}`} tabIndex={-1} className={styles.encounter} aria-labelledby="hall-boss-name">
         <p className={styles.area}>{encounter.area}</p>
         <h3 className={styles.name} id="hall-boss-name"><span aria-hidden="true">{active + 1}</span>{encounter.name}</h3>
         <p className={styles.note}>{encounter.preparation[lang]}</p>
@@ -40,7 +39,7 @@ export function HallGuideClient({ lang }: { lang: Lang }) {
         <ul className={styles.enemies}>{encounter.enemies.map(enemy => <li key={enemy}>{enemy}</li>)}</ul>
         <h4>{t.mechanics}</h4>
         <dl className={styles.mechanics}>{encounter.mechanics.map(mechanic => <div key={mechanic.name}><dt>{mechanic.name}<span>{t[mechanic.role]}</span></dt><dd>{mechanic.response[lang]}</dd></div>)}</dl>
-      </MaterialPlaque>
+      </ForeverPanel>
     </div>
   </>;
 }
