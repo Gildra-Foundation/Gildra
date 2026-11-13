@@ -439,7 +439,7 @@ func rebuildSpellRelationships(ctx context.Context, tx pgx.Tx) error {
 		INSERT INTO catalog_spell_owners(spell_version_id,owner_type,owner_id,source,attributes)
 		SELECT DISTINCT spell.latest_version_id,'class',class_id,'db2',jsonb_build_object('skill_line_id',(ability.payload->>'SkillLine')::bigint)
 		FROM catalog_db2_rows ability
-		JOIN game_builds build ON build.id=ability.build_id AND build.is_active
+		JOIN game_builds build ON build.id=ability.build_id AND `+TargetBuild("build")+`
 		JOIN game_entities spell ON spell.product_id=build.product_id AND spell.entity_type='spell' AND spell.external_id=(ability.payload->>'Spell')::bigint AND spell.deleted_at IS NULL
 		JOIN game_entity_versions spell_version ON spell_version.id=spell.latest_version_id AND spell_version.build_id=ability.build_id
 		CROSS JOIN generate_series(1,13) class_id
@@ -451,7 +451,7 @@ func rebuildSpellRelationships(ctx context.Context, tx pgx.Tx) error {
 		INSERT INTO catalog_spell_owners(spell_version_id,owner_type,owner_id,source,attributes)
 		SELECT DISTINCT spell.latest_version_id,'race',race.row_id,'db2',jsonb_build_object('playable_race_bit',(race.payload->>'PlayableRaceBit')::int)
 		FROM catalog_db2_rows ability
-		JOIN game_builds build ON build.id=ability.build_id AND build.is_active
+		JOIN game_builds build ON build.id=ability.build_id AND `+TargetBuild("build")+`
 		JOIN catalog_db2_rows race ON race.build_id=ability.build_id AND race.table_name='ChrRaces' AND race.locale='en_US'
 		JOIN game_entities spell ON spell.product_id=build.product_id AND spell.entity_type='spell' AND spell.external_id=(ability.payload->>'Spell')::bigint AND spell.deleted_at IS NULL
 		JOIN game_entity_versions spell_version ON spell_version.id=spell.latest_version_id AND spell_version.build_id=ability.build_id
@@ -465,7 +465,7 @@ func rebuildSpellRelationships(ctx context.Context, tx pgx.Tx) error {
 		INSERT INTO catalog_spell_owners(spell_version_id,owner_type,owner_id,source,attributes)
 		SELECT DISTINCT spell.latest_version_id,'profession',profession.skill_line_id,'db2','{}'::jsonb
 		FROM catalog_db2_rows ability
-		JOIN game_builds build ON build.id=ability.build_id AND build.is_active
+		JOIN game_builds build ON build.id=ability.build_id AND `+TargetBuild("build")+`
 		JOIN catalog_professions profession ON profession.skill_line_id=(ability.payload->>'SkillLine')::bigint
 		JOIN game_entity_versions profession_version ON profession_version.id=profession.version_id AND profession_version.build_id=ability.build_id
 		JOIN game_entities spell ON spell.product_id=build.product_id AND spell.entity_type='spell' AND spell.external_id=(ability.payload->>'Spell')::bigint AND spell.deleted_at IS NULL

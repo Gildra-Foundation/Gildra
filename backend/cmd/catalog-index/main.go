@@ -13,6 +13,7 @@ import (
 	"syscall"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogimport"
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalogtaxonomy"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -74,7 +75,20 @@ func run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	db, err := pgxpool.New(ctx, databaseURL)
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return fmt.Errorf("parse catalog database URL: %w", err)
+	}
+	// A pipeline stage projects the build of the release it is staging, not
+	// the active (published) build; a manual run keeps projecting the active one.
+	releaseID, err := catalogimport.ReleaseIDFromEnvironment()
+	if err != nil {
+		return err
+	}
+	if releaseID != nil {
+		poolConfig.ConnConfig.RuntimeParams[catalogtaxonomy.ReleaseSetting] = releaseID.String()
+	}
+	db, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return fmt.Errorf("open catalog database: %w", err)
 	}
@@ -183,7 +197,7 @@ func run() error {
 		INSERT INTO catalog_projection_watermarks(product_id,projector,build_id,snapshot_id,status,metadata,started_at,completed_at)
 		SELECT product.id,$1,build.id,snapshot.id,'succeeded',$2::jsonb,now(),now()
 		FROM game_products product
-		JOIN LATERAL (SELECT candidate.id FROM game_builds candidate WHERE candidate.product_id=product.id AND candidate.is_active ORDER BY candidate.build_number DESC LIMIT 1) build ON true
+		JOIN LATERAL (SELECT candidate.id FROM game_builds candidate WHERE candidate.product_id=product.id AND `+catalogtaxonomy.TargetBuild("candidate")+` ORDER BY candidate.build_number DESC LIMIT 1) build ON true
 		LEFT JOIN LATERAL (SELECT candidate.id FROM catalog_snapshots candidate WHERE candidate.product_id=product.id AND candidate.build_id=build.id AND candidate.status='published' ORDER BY candidate.published_at DESC NULLS LAST,candidate.created_at DESC LIMIT 1) snapshot ON true
 		WHERE product.slug=$3
 		ON CONFLICT(product_id,projector) DO UPDATE SET build_id=EXCLUDED.build_id,snapshot_id=EXCLUDED.snapshot_id,

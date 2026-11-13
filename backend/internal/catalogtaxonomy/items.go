@@ -212,7 +212,7 @@ func itemTaxonomyDefinitions(ctx context.Context, tx pgx.Tx) ([]Definition, erro
 			subclass.subclass_id,subclass_en.name,COALESCE(NULLIF(subclass_ru.name,''),subclass_en.name),
 			class.db2_row_id,subclass.auction_house_sort_order
 		FROM catalog_item_classes class
-		JOIN game_builds build ON build.id=class.build_id AND build.is_active
+		JOIN game_builds build ON build.id=class.build_id AND `+TargetBuild("build")+`
 		JOIN catalog_item_class_localizations class_en ON class_en.build_id=class.build_id
 			AND class_en.class_id=class.class_id AND class_en.locale='en_US'
 		LEFT JOIN catalog_item_class_localizations class_ru ON class_ru.build_id=class.build_id

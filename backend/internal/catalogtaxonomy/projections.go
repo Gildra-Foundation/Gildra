@@ -23,7 +23,7 @@ func (i *Indexer) RebuildQuestRewards(ctx context.Context) (Result, error) {
 			WITH target_builds AS MATERIALIZED (
 				SELECT build.id,build.product_id,build.build_number,build.version
 				FROM game_builds build
-				WHERE build.is_active
+				WHERE `+TargetBuild("build")+`
 			), candidates AS MATERIALIZED (
 				SELECT DISTINCT ON (target.id,reward.quest_id,reward.reward_type,reward.reward_index)
 					target.id AS build_id,reward.quest_id,reward.reward_type,reward.reward_index,

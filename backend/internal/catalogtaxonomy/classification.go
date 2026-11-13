@@ -68,7 +68,7 @@ func (i *Indexer) definitions(ctx context.Context, tx pgx.Tx) ([]Definition, err
 		SELECT en.payload->>'Name_lang',COALESCE(NULLIF(ru.payload->>'Name_lang',''),en.payload->>'Name_lang'),
 			array_agg((en.payload->>'PlayableRaceBit')::bigint ORDER BY (en.payload->>'PlayableRaceBit')::bigint),MIN(en.row_id)
 		FROM catalog_db2_rows en
-		JOIN game_builds b ON b.id=en.build_id AND b.is_active
+		JOIN game_builds b ON b.id=en.build_id AND `+TargetBuild("b")+`
 		LEFT JOIN catalog_db2_rows ru ON ru.build_id=en.build_id AND ru.table_name='ChrRaces' AND ru.locale='ru_RU' AND ru.row_id=en.row_id
 		WHERE en.table_name='ChrRaces' AND en.locale='en_US' AND (en.payload->>'PlayableRaceBit')::int>=0
 		  AND en.payload->>'Name_lang' NOT LIKE 'TBD%'
