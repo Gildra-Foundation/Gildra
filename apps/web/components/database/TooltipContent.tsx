@@ -566,6 +566,8 @@ function cleanWowText(value: string, lang: Lang) {
   const scaling = tooltipContentCopy[lang].aScalingAmount;
   return value
     .replace(/\|c[0-9a-f]{8}/gi, "")
+    // Named colours of the game client: |cnNORMAL_FONT_COLOR:text|r
+    .replace(/\|cn[A-Z0-9_]+:/gi, "")
     .replace(/\|r/gi, "")
     .replace(/\$@spelldesc(\d+)/gi, "Spell #$1")
     .replace(/\$z\b/g, tooltipContentCopy[lang].yourHomeLocation)

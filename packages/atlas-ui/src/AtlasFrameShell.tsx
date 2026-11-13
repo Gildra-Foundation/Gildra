@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { getImageProps } from "next/image";
 import clsx from "clsx";
+import { AtlasArrival } from "./AtlasArrival";
 import { AtlasArtGlow, type ArtGlowPoint } from "./AtlasArtGlow";
 import { AtlasFrameFooter } from "./AtlasFooter";
 export { AtlasFrameFooter } from "./AtlasFooter";
@@ -132,6 +133,7 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
           <span className={styles.footEmbers} />
         </div>
       ) : null}
+      <AtlasArrival />
       <div className={styles.column}>
         {landmark ? <main>{children}</main> : children}
         {footer ? <AtlasFrameFooter locale={locale} {...footer} /> : null}
