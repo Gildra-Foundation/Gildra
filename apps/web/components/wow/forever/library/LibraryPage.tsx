@@ -11,7 +11,7 @@ import { ResilientImage } from "@/components/media/ResilientImage";
 import { MaterialLinkButton } from "@/components/wow/shared/materialAtlas";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { FOREVER_TYPES, foreverIconUrl, foreverRecordPath, isForeverType, type ForeverLocale, type ForeverRecord, type ForeverRelation, type ForeverSummary, type ForeverType } from "@/lib/forever/database/contract";
-import { foreverRecord, foreverSearch, type ForeverQuery } from "@/lib/forever/database/server";
+import { foreverRecord, foreverSearch, foreverTotals, type ForeverQuery } from "@/lib/forever/database/server";
 import { professionBySlug } from "@/lib/forever/guides/professions";
 import { FOREVER_UI_TEXTURES } from "@/lib/games/wow/assets";
 import { p } from "@/lib/i18n-paths";
@@ -44,7 +44,7 @@ function recordLine(record: ForeverSummary, lang: ForeverLocale) {
 async function LibraryLanding({ lang }: { lang: ForeverLocale }) {
   const t = libraryCopy[lang];
   const count = new Intl.NumberFormat(libraryCardCopy[lang].numberLocale);
-  const totals = await Promise.all(FOREVER_TYPES.map(async type => (await foreverSearch({ type })).total));
+  const totals = await foreverTotals();
   return <ForeverFrame lang={lang} page="library">
     <ForeverHero lang={lang} trail={[{ label: t.crumb }]} title={t.title} actions={
       <ForeverPanel as="section" className={styles.searchPanel} aria-label={t.title}>
@@ -52,12 +52,12 @@ async function LibraryLanding({ lang }: { lang: ForeverLocale }) {
       </ForeverPanel>} />
     <nav aria-label={t.type}>
       <ul className={styles.types} data-forever-cascade="">
-        {FOREVER_TYPES.map((type, index) => <li key={type}>
+        {FOREVER_TYPES.map(type => <li key={type}>
           <ForeverPanel as="article" className={styles.type}>
             <ForeverIcon src={FOREVER_UI_TEXTURES.types[type]} size={64} />
             <h2 className={styles.typeName}><Link href={typeUrl(lang, type)} prefetch={false}>{t.types[type]}</Link></h2>
             <p className={styles.typeNote}>{t.typeNotes[type]}</p>
-            <p className={styles.typeCount}>{count.format(totals[index])}</p>
+            <p className={styles.typeCount}>{count.format(totals[type])}</p>
           </ForeverPanel>
         </li>)}
       </ul>

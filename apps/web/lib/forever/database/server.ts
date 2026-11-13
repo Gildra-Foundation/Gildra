@@ -3,17 +3,21 @@ import { readFile } from "node:fs/promises";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
 import path from "node:path";
-import { FOREVER_BUILD, isForeverType, type ForeverRecord, type ForeverSummary, type ForeverType } from "./contract";
+import { FOREVER_BUILD, FOREVER_TYPES, isForeverType, type ForeverRecord, type ForeverSummary, type ForeverType } from "./contract";
 
 // Runtime-only files: never import this module from a client component.
 const root = path.join(process.cwd(), "data/wow/forever/database");
 const unzip = promisify(gunzip);
+// The five record-type indexes stay for the life of the process (~34 MiB by the estimate below): every list
+// and every search reads them, and a crawl through the records must not push them out of memory.
+const indexes = new Map<string, unknown>();
+// Record shards come and go: the most recently read, within the rest of the old 48 MiB budget.
 const cache = new Map<string, { value: unknown; bytes: number }>();
 const pending = new Map<string, Promise<unknown>>();
-// Room for the two large indexes together (items and spells, ~31 MiB by this estimate) and a few dozen record shards.
-const CACHE_BYTES = 48 * 1024 * 1024;
+const CACHE_BYTES = 14 * 1024 * 1024;
 let cacheBytes = 0;
-async function read<T>(name: string, prepare: (value: unknown) => T = value => value as T): Promise<T> {
+async function read<T>(name: string, prepare: (value: unknown) => T = value => value as T, keep = false): Promise<T> {
+  if (indexes.has(name)) return indexes.get(name) as T;
   const cached = cache.get(name);
   if (cached) {
     cache.delete(name);
@@ -27,7 +31,8 @@ async function read<T>(name: string, prepare: (value: unknown) => T = value => v
       const value = prepare(JSON.parse(bytes.toString("utf8")));
       // Budget parsed objects and search strings conservatively, not compressed file sizes.
       const size = bytes.length * 3;
-      if (size <= CACHE_BYTES) {
+      if (keep) indexes.set(name, value);
+      else if (size <= CACHE_BYTES) {
         while (cache.size && (cacheBytes + size > CACHE_BYTES || cache.size >= 48)) {
           const oldest = cache.keys().next().value!;
           cacheBytes -= cache.get(oldest)!.bytes;
@@ -41,6 +46,18 @@ async function read<T>(name: string, prepare: (value: unknown) => T = value => v
     pending.set(name, result);
   }
   return result as Promise<T>;
+}
+let totals: Promise<Record<ForeverType, number>> | undefined;
+/** How many records of each type the snapshot holds: the manifest's own count, no index is read for it. */
+export function foreverTotals() {
+  totals ??= readFile(path.join(root, "manifest.json"), "utf8").then(text => {
+    const manifest = JSON.parse(text) as { edition: string; build: string; inventory: Record<string, { imported: number }> };
+    if (manifest.edition !== "forever" || manifest.build !== FOREVER_BUILD) throw new Error("Forever snapshot identity mismatch");
+    return Object.fromEntries(FOREVER_TYPES.map(type => [type, manifest.inventory[type].imported])) as Record<ForeverType, number>;
+  });
+  // A failed read is not remembered: the next request tries again.
+  totals.catch(() => { totals = undefined; });
+  return totals;
 }
 export async function foreverRecord(type: ForeverType, id: number): Promise<ForeverRecord | null> {
   if (!isForeverType(type) || !Number.isSafeInteger(id) || id <= 0) return null;
@@ -63,7 +80,7 @@ export async function foreverSearch(query: ForeverQuery) {
     const names = index.map(x => normalizeSearch(`${x.name.en} ${x.name.ru ?? ""}`));
     const categories = [...new Set(index.map(x => x.category).filter((x): x is string => Boolean(x)))].sort();
     return { index, names, categories };
-  });
+  }, true);
   let related: Set<number> | undefined;
   if (query.related) {
     const [kind, id] = query.related.split(":");
