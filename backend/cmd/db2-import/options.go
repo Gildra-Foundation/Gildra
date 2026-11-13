@@ -28,6 +28,7 @@ type options struct {
 	projectItems                 bool
 	projectExistingItems         bool
 	projectExistingQuestPackages bool
+	observeExistingLocalizations bool
 	projectItemDetailsOnly       bool
 	projectProfessions           bool
 	projectCreatures             bool
@@ -52,6 +53,7 @@ func parseOptions() (options, error) {
 	flag.BoolVar(&opts.projectItems, "project-items", true, "project ItemSparse text and Item registry facts into item entities")
 	flag.BoolVar(&opts.projectExistingItems, "project-existing-items", false, "project only item entities from an already imported complete build without creating an import run")
 	flag.BoolVar(&opts.projectExistingQuestPackages, "project-existing-quest-packages", false, "project only quest reward package entities from an already imported complete build without creating an import run")
+	flag.BoolVar(&opts.observeExistingLocalizations, "observe-existing-localizations", false, "record the source artifact of localized names that the listed client tables (-tables) gave to records of an already imported complete build; writes proof rows only, creates no import run")
 	flag.BoolVar(&opts.projectItemDetailsOnly, "project-item-details-only", false, "rebuild typed item details for an already projected build without reprojecting entities")
 	flag.BoolVar(&opts.projectProfessions, "project-professions", true, "project professions, recipes, reagents, and outputs")
 	flag.BoolVar(&opts.projectCreatures, "project-creatures", true, "project creatures, display models, and taxonomy")
@@ -78,11 +80,17 @@ func parseOptions() (options, error) {
 	if opts.databaseURL == "" {
 		return options{}, errors.New("DATABASE_URL or -database-url is required")
 	}
-	if (opts.projectExistingItems || opts.projectExistingQuestPackages) && opts.download {
-		return options{}, errors.New("project-existing modes require -download=false")
+	if (opts.projectExistingItems || opts.projectExistingQuestPackages || opts.observeExistingLocalizations) && opts.download {
+		return options{}, errors.New("project-existing and observe-existing modes require -download=false")
 	}
-	if opts.projectExistingItems && opts.projectExistingQuestPackages {
-		return options{}, errors.New("select only one project-existing mode")
+	existingModes := 0
+	for _, selected := range []bool{opts.projectExistingItems, opts.projectExistingQuestPackages, opts.observeExistingLocalizations} {
+		if selected {
+			existingModes++
+		}
+	}
+	if existingModes > 1 {
+		return options{}, errors.New("select only one project-existing or observe-existing mode")
 	}
 	if !validProduct(opts.product) {
 		return options{}, fmt.Errorf("unsupported product %q", opts.product)

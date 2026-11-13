@@ -69,6 +69,98 @@ func existingCompleteProjectionContext(
 	return ic, nil
 }
 
+// existingBuildContext resolves an imported build without requiring any
+// particular table to be complete: the caller reads only proved rows.
+func existingBuildContext(ctx context.Context, db *pgxpool.Pool, product string, buildNumber int) (catalogimport.ImportContext, error) {
+	var ic catalogimport.ImportContext
+	err := db.QueryRow(ctx, `
+		SELECT product.id,namespace.id,build.id
+		FROM game_products product
+		JOIN game_namespaces namespace ON namespace.product_id=product.id AND namespace.slug='static-us'
+		JOIN game_builds build ON build.product_id=product.id AND build.build_number=$2
+		WHERE product.slug=$1`, product, buildNumber).Scan(&ic.ProductID, &ic.NamespaceID, &ic.BuildID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return catalogimport.ImportContext{}, fmt.Errorf("existing build %d for product %q was not found", buildNumber, product)
+	}
+	if err != nil {
+		return catalogimport.ImportContext{}, fmt.Errorf("resolve existing build: %w", err)
+	}
+	return ic, nil
+}
+
+// observeCollectionLocalizationArtifacts records where the localized names of
+// collection records projected from one client table came from: the table's
+// own artifact in that locale. The projection writes the version and both
+// localizations from catalog_db2_rows, so the proof is the row it read.
+//
+// It does not look at latest_version_id. A record known only to the client
+// table (48 item sets of 12.1.5.70783 that neither Battle.net nor Raidbots
+// lists) has no other proof, and a release whose pointers were rolled back
+// after a failed validation must be repairable without restoring them. Only
+// versions written from the table itself are observed, and only for rows
+// whose artifact is complete.
+func observeCollectionLocalizationArtifacts(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext, tables []string) (int64, error) {
+	command, err := db.Exec(ctx, collectionLocalizationObservations+`, version_observations AS (
+			INSERT INTO catalog_entity_version_artifacts(version_id,source_artifact_id)
+			SELECT DISTINCT version_id,source_artifact_id FROM observations
+			ON CONFLICT(version_id,source_artifact_id) DO NOTHING
+			RETURNING version_id
+		)
+		INSERT INTO catalog_entity_localization_artifacts(version_id,locale,source_artifact_id)
+		SELECT version_id,locale,source_artifact_id FROM observations
+		ON CONFLICT(version_id,locale,source_artifact_id) DO NOTHING`, ic.ProductID, ic.BuildID, tables)
+	if err != nil {
+		return 0, fmt.Errorf("observe collection localization artifacts: %w", err)
+	}
+	return command.RowsAffected(), nil
+}
+
+// missingCollectionLocalizationArtifacts counts the proofs
+// observeCollectionLocalizationArtifacts would record, without writing.
+func missingCollectionLocalizationArtifacts(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext, tables []string) (int64, error) {
+	var missing int64
+	err := db.QueryRow(ctx, collectionLocalizationObservations+`
+		SELECT count(*) FROM observations observation
+		WHERE NOT EXISTS (
+			SELECT 1 FROM catalog_entity_localization_artifacts recorded
+			WHERE recorded.version_id=observation.version_id AND recorded.locale=observation.locale
+			  AND recorded.source_artifact_id=observation.source_artifact_id)`, ic.ProductID, ic.BuildID, tables).Scan(&missing)
+	if err != nil {
+		return 0, fmt.Errorf("count missing collection localization artifacts: %w", err)
+	}
+	return missing, nil
+}
+
+const collectionLocalizationObservations = `
+		WITH definitions(table_name,entity_type,name_field) AS (VALUES
+			('ChrClasses'::text,'class'::text,'Name_lang'::text),
+			('ChrSpecialization','specialization','Name_lang'),
+			('CurrencyTypes','currency','Name_lang'),
+			('Mount','mount','Name_lang'),
+			('TransmogSet','transmog_set','Name_lang'),
+			('ItemSet','item_set','Name_lang'),
+			('Achievement','achievement','Title_lang'),
+			('Map','map','MapName_lang'),
+			('UiMap','ui_map','Name_lang'),
+			('AreaTable','area','AreaName_lang'),
+			('Faction','faction','Name_lang')
+		), observations AS (
+			SELECT DISTINCT version.id AS version_id,localized.locale,raw.source_artifact_id
+			FROM definitions definition
+			JOIN game_entities entity ON entity.product_id=$1 AND entity.entity_type=definition.entity_type
+			JOIN game_entity_versions version ON version.entity_id=entity.id AND version.build_id=$2
+			JOIN catalog_source_artifacts origin ON origin.id=version.source_artifact_id
+				AND origin.source='wago_tools' AND origin.artifact_key=definition.table_name
+			JOIN game_entity_localizations localized ON localized.version_id=version.id
+				AND localized.locale IN ('en_US','ru_RU')
+			JOIN catalog_db2_rows raw ON raw.build_id=version.build_id AND raw.table_name=definition.table_name
+				AND raw.locale=localized.locale AND raw.row_id=entity.external_id
+			JOIN catalog_source_artifacts proof ON proof.id=raw.source_artifact_id
+				AND proof.status='ready' AND proof.content_hash IS NOT NULL AND proof.byte_size IS NOT NULL
+			WHERE (COALESCE(cardinality($3::text[]),0)=0 OR definition.table_name=ANY($3::text[]))
+			  AND NULLIF(BTRIM(raw.payload->>definition.name_field),'') IS NOT NULL
+		)`
+
 func observeDB2LocalizationArtifactsForTables(ctx context.Context, db *pgxpool.Pool, ic catalogimport.ImportContext, tables []string) error {
 	_, err := db.Exec(ctx, `
 		WITH mappings(entity_type,table_name) AS (VALUES

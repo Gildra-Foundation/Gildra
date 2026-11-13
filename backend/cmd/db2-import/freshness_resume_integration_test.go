@@ -112,6 +112,14 @@ func TestFreshnessStoppedDB2ImportKeepsProvedTables(t *testing.T) {
 	if err := manager.Resume(ctx, release, pipelineRun, "wow", version, []string{"db2"}); err != nil {
 		t.Fatal(err)
 	}
+	// The first importer was in fact killed before it could record its end
+	// (SIGKILL 30 s after the deadline): its run is still marked running.
+	if _, err := pool.Exec(ctx, `UPDATE catalog_import_runs SET status='RUNNING',finished_at=NULL,error_summary='',failure_code='' WHERE id=$1`, first.RunID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `DELETE FROM catalog_import_failure_queue WHERE import_run_id=$1`, first.RunID); err != nil {
+		t.Fatal(err)
+	}
 
 	// A deploy between the two attempts added a table: proved tables are kept.
 	opts.tables = append(opts.tables, "ItemBonusList")
@@ -123,6 +131,13 @@ func TestFreshnessStoppedDB2ImportKeepsProvedTables(t *testing.T) {
 	}
 	if second.SnapshotID != first.SnapshotID {
 		t.Fatal("the proved table was discarded with its snapshot")
+	}
+	var takenOver string
+	if err := pool.QueryRow(ctx, `SELECT status FROM catalog_import_runs WHERE id=$1`, first.RunID).Scan(&takenOver); err != nil {
+		t.Fatal(err)
+	}
+	if takenOver != "FAILED" {
+		t.Fatalf("the killed importer of the continued snapshot is still %s", takenOver)
 	}
 	mu.Lock()
 	secondTableUp = true
@@ -158,6 +173,13 @@ func TestFreshnessStoppedDB2ImportKeepsProvedTables(t *testing.T) {
 		LEFT JOIN catalog_import_failure_queue queue ON queue.import_run_id=run.id
 		WHERE run.build_id=$1 AND run.status='FAILED' AND COALESCE(queue.state,'quarantined')<>'resolved'`, second.BuildID).Scan(&open); err != nil {
 		t.Fatal(err)
+	}
+	var running int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM catalog_import_runs WHERE build_id=$1 AND status='RUNNING'`, second.BuildID).Scan(&running); err != nil {
+		t.Fatal(err)
+	}
+	if running != 0 {
+		t.Fatalf("%d imports of the build are still marked running", running)
 	}
 	if ready != 3 || rows != 6 || open != 0 {
 		t.Fatalf("ready artifacts=%d rows=%d open failures=%d, want 3, 6 and 0", ready, rows, open)

@@ -28,6 +28,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	requestedTables := append([]string(nil), opts.tables...)
 	opts.tables = withWorldSourceTables(opts.tables)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -38,7 +39,7 @@ func run() error {
 			return err
 		}
 	}
-	if !opts.confirm {
+	if !opts.confirm && !opts.observeExistingLocalizations {
 		encoded, _ := json.MarshalIndent(map[string]any{"dry_run": true, "build": opts.version, "tables": opts.tables, "locales": opts.locales}, "", "  ")
 		fmt.Println(string(encoded))
 		return nil
@@ -73,6 +74,25 @@ func run() error {
 			return observeErr
 		}
 		slog.Info("existing Item build projected", "build", opts.version, "versions_created", projected)
+		return nil
+	}
+	if opts.observeExistingLocalizations {
+		ic, resolveErr := existingBuildContext(ctx, db, opts.product, buildNumber)
+		if resolveErr != nil {
+			return resolveErr
+		}
+		// Without -confirm the mode only counts what it would record.
+		report := map[string]any{"build": opts.version, "tables": requestedTables, "dry_run": !opts.confirm}
+		if opts.confirm {
+			report["proofs_recorded"], resolveErr = observeCollectionLocalizationArtifacts(ctx, db, ic, requestedTables)
+		} else {
+			report["proofs_missing"], resolveErr = missingCollectionLocalizationArtifacts(ctx, db, ic, requestedTables)
+		}
+		if resolveErr != nil {
+			return resolveErr
+		}
+		encoded, _ := json.MarshalIndent(report, "", "  ")
+		fmt.Println(string(encoded))
 		return nil
 	}
 	if opts.projectExistingQuestPackages {
@@ -176,6 +196,9 @@ func run() error {
 	}
 	if importErr == nil {
 		importErr = observeDB2LocalizationArtifactsForTables(ctx, db, ic, opts.tables)
+	}
+	if importErr == nil && opts.projectCollections {
+		_, importErr = observeCollectionLocalizationArtifacts(ctx, db, ic, opts.tables)
 	}
 	if importErr == nil && opts.product == "wow" && opts.download && opts.maxRecords == 0 && contains(opts.tables, "ItemSparse") {
 		// Item tooltip numbers need the build's reference tables. Their absence
