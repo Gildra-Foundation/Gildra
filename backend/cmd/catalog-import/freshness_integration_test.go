@@ -278,6 +278,59 @@ func TestFreshnessInterruptedEnrichmentResumes(t *testing.T) {
 	if err := manager.Resume(ctx, killed, killedRun, "wow", "12.1.5.70783", []string{"battlenet"}); err != nil {
 		t.Fatalf("reconciled release cannot be resumed: %v", err)
 	}
+
+	// Production, 13 Nov 2026: an importer killed without recording its end,
+	// its snapshot continued and validated by the next attempt (a build that
+	// predates closing such a run when the snapshot is taken over), then the
+	// release failed validation on imports_idle. The snapshot is validated, so
+	// its status cannot be the condition for closing the dead importer; the
+	// attempt that completed the snapshot supersedes it.
+	if err := manager.Fail(ctx, killed, errors.New("fixture: stop the resumed release")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE catalog_releases SET pipeline_run_id=NULL WHERE id=$1`, killed); err != nil {
+		t.Fatal(err)
+	}
+	var validationRun int64
+	if err := pool.QueryRow(ctx, `INSERT INTO catalog_pipeline_runs(pipeline_key,trigger_kind,mode,status,product,publication_environment,started_at) VALUES('freshness-test','manual','apply','failed','wow','staging',now()) RETURNING id`).Scan(&validationRun); err != nil {
+		t.Fatal(err)
+	}
+	validated, err := manager.Start(ctx, validationRun, "wow", "12.1.5.70783", []string{"db2"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tables := map[string]any{"tables": []string{"ItemSet"}, "resumable_tables": "v1"}
+	dead, err := store.Begin(ctx, "wow", 70783, "12.1.5.70783", "us", "wago_tools", &validated, tables)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var completedRun uuid.UUID
+	if err := pool.QueryRow(ctx, `INSERT INTO catalog_import_runs(product_id,build_id,source,parameters,snapshot_id,status,started_at,finished_at)
+		SELECT product_id,build_id,source,parameters,snapshot_id,'SUCCEEDED',now()+interval '1 second',now()+interval '2 seconds'
+		FROM catalog_import_runs WHERE id=$1 RETURNING id`, dead.RunID).Scan(&completedRun); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE catalog_snapshots SET status='validated',validated_at=now() WHERE id=$1`, dead.SnapshotID); err != nil {
+		t.Fatal(err)
+	}
+	if err := manager.Fail(ctx, validated, errors.New("fixture: imports_idle=1")); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := runner.ReconcileFailedRun(ctx, validationRun, "wow", true); err != nil || got != 1 {
+		t.Fatalf("reconcile importer of a validated snapshot=%d %v, want 1", got, err)
+	}
+	var deadStatus, queueState, resolution, snapshotStatus string
+	if err := pool.QueryRow(ctx, `SELECT import.status,queue.state,queue.resolution_code,snapshot.status
+		FROM catalog_import_runs import JOIN catalog_import_failure_queue queue ON queue.import_run_id=import.id
+		JOIN catalog_snapshots snapshot ON snapshot.id=import.snapshot_id WHERE import.id=$1`, dead.RunID).Scan(&deadStatus, &queueState, &resolution, &snapshotStatus); err != nil {
+		t.Fatal(err)
+	}
+	if deadStatus != "FAILED" || queueState != "resolved" || resolution != "superseded_by_successful_retry" || snapshotStatus != "validated" {
+		t.Fatalf("dead importer %s, queue %s/%s, snapshot %s", deadStatus, queueState, resolution, snapshotStatus)
+	}
+	if got, err := runner.ReconcileFailedRun(ctx, validationRun, "wow", true); err != nil || got != 0 {
+		t.Fatalf("second reconcile=%d %v, want 0", got, err)
+	}
 }
 
 // A new client build normally meets the same build-pinned Battle.net

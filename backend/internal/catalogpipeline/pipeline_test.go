@@ -407,3 +407,23 @@ func TestEnrichmentBoundsReachOnlyEnrichmentStages(t *testing.T) {
 		t.Fatal("a negative request rate was accepted")
 	}
 }
+
+func TestResumeFromValidationRetainsEveryStage(t *testing.T) {
+	options, err := normalizeOptions(Options{Mode: "apply", Product: "wow", Profile: "retail-foundation", BuildVersion: "12.1.5.70783",
+		PublicationEnvironment: "staging", ResumeReleaseID: "887375eb-a05b-4346-8bf9-6a429ad5ccb5", ResumeFrom: "validate-catalog"})
+	if err != nil {
+		t.Fatalf("resuming from validation was refused: %v", err)
+	}
+	reached := false
+	for _, stage := range buildPlan(options) {
+		if stage.Executable != "" && resumeStageAllowed(options, stage.Key, &reached) {
+			t.Fatalf("stage %s would run again", stage.Key)
+		}
+	}
+	for _, unknown := range []string{"publication-gate", "release-publish", "no-such-stage"} {
+		if _, err := normalizeOptions(Options{Mode: "apply", Product: "wow", Profile: "retail-foundation", BuildVersion: "12.1.5.70783",
+			PublicationEnvironment: "staging", ResumeReleaseID: "887375eb-a05b-4346-8bf9-6a429ad5ccb5", ResumeFrom: unknown}); err == nil {
+			t.Fatalf("resume from %s was accepted", unknown)
+		}
+	}
+}

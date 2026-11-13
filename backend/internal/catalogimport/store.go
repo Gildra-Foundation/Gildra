@@ -934,6 +934,20 @@ func (s *Store) Begin(
 				if _, err := tx.Exec(ctx, `UPDATE catalog_snapshots SET status='staging',failed_at=NULL,validated_at=NULL,metadata=$2 WHERE id=$1`, result.SnapshotID, encoded); err != nil {
 					return err
 				}
+				// The snapshot was failed or validated, so no importer is writing
+				// to it. One still marked RUNNING was killed before it could record
+				// its end; left open it blocks imports_idle for every later
+				// validation. The new attempt resolves it when it completes.
+				if _, err := tx.Exec(ctx, `WITH stopped AS (
+						UPDATE catalog_import_runs SET status='FAILED',finished_at=now(),
+							error_summary='Importer stopped without recording its end; the snapshot is continued by a new attempt',
+							failure_code='interrupted_worker_stopped',failure_retryable=true
+						WHERE snapshot_id=$1 AND status='RUNNING' RETURNING id
+					) INSERT INTO catalog_import_failure_queue(import_run_id,state,failure_code,last_error_summary)
+					SELECT id,'quarantined','interrupted_worker_stopped','Importer stopped without recording its end' FROM stopped
+					ON CONFLICT(import_run_id) DO NOTHING`, result.SnapshotID); err != nil {
+					return fmt.Errorf("close interrupted imports of the continued snapshot: %w", err)
+				}
 			}
 		}
 		if result.SnapshotID == uuid.Nil {

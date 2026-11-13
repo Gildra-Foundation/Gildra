@@ -258,7 +258,9 @@ func normalizeOptions(options Options) (Options, error) {
 				executable[stage.Key] = true
 			}
 		}
-		if len(options.ResumeStages) == 0 && !executable[options.ResumeFrom] {
+		// validate-catalog runs no executable: resuming from it retains every
+		// stage and repeats only validation, the publication gate and publish.
+		if len(options.ResumeStages) == 0 && !executable[options.ResumeFrom] && options.ResumeFrom != validateStage {
 			return Options{}, fmt.Errorf("unknown resume stage %q", options.ResumeFrom)
 		}
 		for _, stage := range options.ResumeStages {
@@ -293,6 +295,8 @@ func normalizeStageList(stages []string) []string {
 // resumeStageAllowed reports whether a retained stage runs on resume.  With
 // an explicit stage list only listed stages run; otherwise every stage from
 // ResumeFrom onwards runs.
+const validateStage = "validate-catalog"
+
 func resumeStageAllowed(options Options, stageKey string, resumeReached *bool) bool {
 	if len(options.ResumeStages) > 0 {
 		return slices.Contains(options.ResumeStages, stageKey)

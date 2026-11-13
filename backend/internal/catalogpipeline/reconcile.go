@@ -74,14 +74,35 @@ func (r *Runner) ReconcileFailedRun(ctx context.Context, runID int64, product st
    FOR UPDATE OF run,release`, runID, product).Scan(&failedRelease); err != nil {
 			return fmt.Errorf("reconcile only the current failed release attempt: %w", err)
 		}
+		// A killed importer of a resumable snapshot stays RUNNING while a later
+		// attempt takes the snapshot over and validates it, so the snapshot's
+		// status says nothing about the importer. Under the pipeline lock and the
+		// operator's confirmation every RUNNING import of this release is dead.
+		// One whose work a later successful import of the same snapshot or of
+		// the same parameters completed is closed as superseded; the others
+		// stay quarantined for a retry.
 		command, err := tx.Exec(ctx, `WITH stopped AS (
    UPDATE catalog_import_runs run SET status='FAILED',finished_at=now(),
     error_summary='Operator confirmed interrupted worker stopped',failure_code='interrupted_worker_stopped',failure_retryable=true
    FROM catalog_snapshots snapshot WHERE run.snapshot_id=snapshot.id
-    AND snapshot.release_id=$1::uuid AND snapshot.status='failed' AND run.status='RUNNING'
-   RETURNING run.id
-  ) INSERT INTO catalog_import_failure_queue(import_run_id,state,failure_code,last_error_summary)
-   SELECT id,'quarantined','interrupted_worker_stopped','Operator confirmed interrupted worker stopped' FROM stopped
+    AND snapshot.release_id=$1::uuid AND run.status='RUNNING'
+   RETURNING run.id,run.product_id,run.build_id,run.source,run.parameters,run.snapshot_id,run.started_at
+  ), superseded AS (
+   SELECT stopped.id,(SELECT completed.id FROM catalog_import_runs completed
+     WHERE completed.status='SUCCEEDED' AND completed.product_id=stopped.product_id
+      AND completed.build_id=stopped.build_id AND completed.source=stopped.source
+      AND (completed.parameters=stopped.parameters OR completed.snapshot_id=stopped.snapshot_id)
+      AND completed.started_at>stopped.started_at
+     ORDER BY completed.started_at LIMIT 1) AS completed_by
+   FROM stopped
+  ) INSERT INTO catalog_import_failure_queue(import_run_id,state,failure_code,last_error_summary,
+    resolution_code,resolution_summary,resolved_at)
+   SELECT id,CASE WHEN completed_by IS NULL THEN 'quarantined' ELSE 'resolved' END,
+    'interrupted_worker_stopped','Operator confirmed interrupted worker stopped',
+    CASE WHEN completed_by IS NULL THEN '' ELSE 'superseded_by_successful_retry' END,
+    CASE WHEN completed_by IS NULL THEN '' ELSE 'Same import completed by run ' || completed_by::text END,
+    CASE WHEN completed_by IS NULL THEN NULL ELSE now() END
+   FROM superseded
    ON CONFLICT(import_run_id) DO NOTHING`, failedRelease)
 		if err != nil {
 			return err
