@@ -17,10 +17,10 @@ try {
    const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:180000});check(response.status()===200,`${prefix}:HTTP`);
    const calc=page.locator('[data-forever-calculator]:visible');await calc.waitFor({timeout:120000});
    await page.evaluate(()=>document.fonts.ready);
-   if(width<1180)await page.getByRole('tab').first().waitFor();
+   if(width<1180)await page.getByRole('radio').first().waitFor();
    const first=calc.locator(`[data-node="${cls.trees[0].nodes[0].id}"]`);
    await first.scrollIntoViewIfNeeded();
-   if(width<600){await first.tap();await page.getByRole('dialog').waitFor();await page.getByRole('dialog').getByRole('button',{name:lang==='ru'?'Добавить ранг':'Add rank',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:lang==='ru'?'Закрыть':'Close',exact:true}).click();}
+   if(width<600){await first.tap();check(await first.getAttribute('data-rank')==='0',`${prefix}:tap-selects`);await calc.getByRole('button',{name:lang==='ru'?'Добавить ранг':'Add rank',exact:true}).click();}
    else await first.click();
    await page.waitForFunction(()=>document.querySelector('[data-points-left]')?.textContent==='50');
    check(await first.getAttribute('data-rank')==='1',`${prefix}:spend`);
@@ -32,7 +32,7 @@ try {
    await page.waitForFunction(()=>document.querySelector('[data-points-left]')?.textContent==='51');
    await calc.getByRole('button',{name:lang==='ru'?'Отменить':'Undo',exact:true}).click();
    await page.waitForFunction(()=>document.querySelector('[data-points-left]')?.textContent==='50');
-   if(width<1180){await page.getByRole('tab').nth(2).click();check(await page.locator(`[data-node="${cls.trees[2].nodes[0].id}"]`).isVisible(),`${prefix}:tree-tab`);await page.getByRole('tab').first().click();}
+   if(width<1180){await page.getByRole('radio').nth(2).click();check(await page.locator(`[data-node="${cls.trees[2].nodes[0].id}"]`).isVisible(),`${prefix}:tree-switch`);await page.getByRole('radio').first().click();}
    else {
     await first.focus();await page.keyboard.press('ArrowRight');check((await page.evaluate(()=>document.activeElement?.getAttribute('data-node')))!==String(cls.trees[0].nodes[0].id),`${prefix}:roving`);
     await page.keyboard.press('PageDown');check(await page.evaluate(()=>document.activeElement?.closest('section')?.id)===`tree-${cls.trees[1].name.en.toLowerCase().replaceAll(' ','-')}`,`${prefix}:page-down`);

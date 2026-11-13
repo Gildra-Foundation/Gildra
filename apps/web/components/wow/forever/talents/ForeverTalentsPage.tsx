@@ -1,45 +1,55 @@
-import type { CSSProperties } from "react";
-import { classColors } from "@/lib/atlas/dataPalette";
+import Image from "next/image";
 import { notFound } from "next/navigation";
-import { AtlasHero, AtlasSection } from "@/components/atlas";
-import { MaterialLinkButton } from "@/components/wow/shared/material/MaterialButton";
+import { AtlasSection } from "@/components/atlas";
+import { MaterialLinkButton } from "@/components/wow/shared/materialAtlas";
 import { ForeverFrame } from "@/components/wow/forever/ForeverFrame";
+import { FOREVER_KIT, ForeverChips, ForeverCrest, ForeverCrests, ForeverHero, ForeverPanel, ForeverStack } from "@/components/wow/forever/shared";
+import { classColors } from "@/lib/atlas/dataPalette";
+import { foreverClasses } from "@/lib/data/wow/foreverRoster";
 import { foreverTalents, talentClass } from "@/lib/forever/talents/data";
 import { decodeBuild } from "@/lib/forever/talents/engine";
-import { foreverCalculatorPath, foreverTalentIcon } from "@/lib/forever/talents/links";
+import { foreverCalculatorPath } from "@/lib/forever/talents/links";
+import { classIcon } from "@/lib/games/wow/assets";
+import { p, type Lang } from "@/lib/i18n-paths";
 import { ForeverCalculator } from "./ForeverCalculator";
 import { talentCopy } from "./talentCopy";
-import { FOREVER_KIT } from "./talentKit";
-import styles from "./talents.module.css";
-import { trailLabel } from "@/lib/routes/registry";
 
-export function ForeverTalentsIndex({ lang }: { lang: "en" | "ru" }) {
+/** The classes that have trees, in the order of the section's roster (the hub, the class pages). */
+const classes = foreverClasses.filter(entry => talentClass(entry.slug));
+
+/** /wow/forever/talent-calc: choose a class. */
+export function ForeverTalentsIndex({ lang }: { lang: Lang }) {
   const t = talentCopy[lang];
-  return <ForeverFrame lang={lang} scene="talents">
-    <AtlasHero title={t.title} breadcrumbsLabel={trailLabel(lang)} breadcrumbs={[{ label: "Forever", href: `${lang === "ru" ? "/ru" : ""}/wow/forever` }]} />
+  return <ForeverFrame lang={lang} page="talents">
+    <ForeverHero lang={lang} trail={[{ label: t.title }]} title={t.title} lede={t.lede} />
     <AtlasSection title={t.classes}>
-      <div className={styles.classGrid}>{foreverTalents.classes.map(cls => <MaterialLinkButton key={cls.id} kit={FOREVER_KIT} href={foreverCalculatorPath(lang, cls.slug)} fit="block">
-        <span className={styles.classLink}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- local client-derived class icon */}
-          <img src={foreverTalentIcon(cls.iconFileId)} width={36} height={36} alt="" loading="lazy" decoding="async" />
-          <strong style={{ "--class-color": classColors[cls.slug as keyof typeof classColors] } as CSSProperties}>{cls.name[lang]}</strong>
-        </span>
-      </MaterialLinkButton>)}</div>
+      <ForeverCrests label={t.classes} count={classes.length}>
+        {classes.map(entry => <ForeverCrest key={entry.slug} href={foreverCalculatorPath(lang, entry.slug)} icon={classIcon(entry.icon)!} label={entry.name[lang]} color={classColors[entry.slug]} />)}
+      </ForeverCrests>
     </AtlasSection>
   </ForeverFrame>;
 }
 
-export function ForeverTalentsClass({ lang, slug, token }: { lang: "en" | "ru"; slug: string; token?: string | string[] }) {
-  const cls = talentClass(slug);
-  if (!cls) notFound();
+/** /wow/forever/talent-calc/<class>: the three trees, the build in the address. */
+export function ForeverTalentsClass({ lang, slug, token }: { lang: Lang; slug: string; token?: string | string[] }) {
+  const cls = talentClass(slug), entry = classes.find(item => item.slug === slug);
+  if (!cls || !entry) notFound();
   const t = talentCopy[lang], parsed = decodeBuild(cls, foreverTalents.snapshot, Array.isArray(token) ? "invalid" : token);
-  return <ForeverFrame lang={lang} scene="talents">
-    <AtlasHero title={lang === "ru" ? `Таланты: ${cls.name[lang]}` : `${cls.name[lang]} talents`} breadcrumbsLabel={trailLabel(lang)} breadcrumbs={[
-      { label: "Forever", href: `${lang === "ru" ? "/ru" : ""}/wow/forever` },
-      { label: t.title, href: foreverCalculatorPath(lang) },
-    ]} />
-    <nav className={styles.classNav} aria-label={t.classes}>{foreverTalents.classes.map(item =>
-      <a key={item.id} href={foreverCalculatorPath(lang, item.slug)} aria-current={item.id === cls.id ? "page" : undefined}>{item.name[lang]}</a>)}</nav>
-    <ForeverCalculator key={cls.slug} cls={cls} snapshot={foreverTalents.snapshot} lang={lang} initial={parsed.build} initialError={parsed.error} />
+  return <ForeverFrame lang={lang} page="talents">
+    <ForeverHero lang={lang} trail={[{ label: t.title, href: foreverCalculatorPath(lang) }, { label: cls.name[lang] }]}
+      eyebrow={cls.trees.map(tree => tree.name[lang]).join(" · ")}
+      crest={<Image src={classIcon(entry.icon)!} alt="" width={64} height={64} />}
+      title={t.classTitle(cls.name[lang])}
+      actions={<MaterialLinkButton kit={FOREVER_KIT} fit="stack" href={p(lang, `/wow/forever/classes/${cls.slug}`)}>{t.aboutClass}</MaterialLinkButton>} />
+    <AtlasSection>
+      <ForeverStack>
+        <ForeverChips label={t.classes} chips={classes.map(item => ({
+          href: foreverCalculatorPath(lang, item.slug), label: item.name[lang], icon: classIcon(item.icon)!, active: item.slug === cls.slug,
+        }))} />
+        <ForeverPanel data-forever-calculator={cls.slug}>
+          <ForeverCalculator key={cls.slug} cls={cls} snapshot={foreverTalents.snapshot} lang={lang} initial={parsed.build} initialError={parsed.error} />
+        </ForeverPanel>
+      </ForeverStack>
+    </AtlasSection>
   </ForeverFrame>;
 }
