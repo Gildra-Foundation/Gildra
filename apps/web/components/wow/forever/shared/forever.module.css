@@ -165,11 +165,11 @@ div.filters .filterLead { grid-template-columns: minmax(0, 1fr); }
   .artCard[href^="#"]:hover .artNote svg { translate: 0 3px; }
 }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
-  .artCard, .artCard img, .featureArt img, .rows > li, .crest, .crest img, .medallion svg, .medallion img, .rowAside svg, .featureBody svg, .artNote svg { transition: none; transform: none !important; translate: none !important; scale: none !important; }
+  .artCard, .artCard img, .featureArt img, .rows > li, .crest, .crest img, .medallion svg, .medallion img, .rowAside svg, .featureBody svg, .artNote svg { transition: none; transform: none !important; translate: var(--atlas-still, none) !important; scale: var(--atlas-still, none) !important; }
   .artCard::before { transition: none; background-position: -160% 0, 0 0 !important; }
 }
 :global(html[data-motion="reduced"]) .page [data-forever-cascade] > * { animation: none !important; }
-:global(html[data-motion="reduced"]) :is(.artCard, .artCard img, .featureArt img, .rows > li, .crest, .crest img, .medallion svg, .medallion img, .rowAside svg, .featureBody svg, .artNote svg) { transition: none; transform: none !important; translate: none !important; scale: none !important; }
+:global(html[data-motion="reduced"]) :is(.artCard, .artCard img, .featureArt img, .rows > li, .crest, .crest img, .medallion svg, .medallion img, .rowAside svg, .featureBody svg, .artNote svg) { transition: none; transform: none !important; translate: var(--atlas-still, none) !important; scale: var(--atlas-still, none) !important; }
 :global(html[data-motion="reduced"]) .artCard::before { transition: none; background-position: -160% 0, 0 0 !important; }
 @media print { .page [data-forever-cascade] > * { animation: none !important; } }
 @media (forced-colors: active) {

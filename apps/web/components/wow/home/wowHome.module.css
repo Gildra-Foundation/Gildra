@@ -203,11 +203,11 @@
   .liveLinks a:hover .presence { text-shadow: 0 0 16px var(--atlas-accent-glow); }
 }
 @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
-  .dungeons img, .dungeons a, .banners img, .banners a, .classRoster a, .classRoster img, .toolRows li, .toolRows svg, .continents a, .flagship .productPreview img, .versions img, .more svg, .metaHead svg, .flagship h3 svg, .bossGrid svg, .banners svg { transition: none; transform: none !important; translate: none !important; scale: none !important; }
+  .dungeons img, .dungeons a, .banners img, .banners a, .classRoster a, .classRoster img, .toolRows li, .toolRows svg, .continents a, .flagship .productPreview img, .versions img, .more svg, .metaHead svg, .flagship h3 svg, .bossGrid svg, .banners svg { transition: none; transform: none !important; translate: var(--atlas-still, none) !important; scale: var(--atlas-still, none) !important; }
   .banners a::before, .dungeons a::before { transition: none; background-position: -160% 0, 0 0 !important; }
 }
 :global(html[data-motion="reduced"]) .page :is(.hero h1, .hero p, .seasonNow, .flourish img, .banners li, .chapter > div:first-child, .dungeons li, .heroArt, .mark), :global(html[data-motion="reduced"]) .flourish::before, :global(html[data-motion="reduced"]) .flourish::after { animation: none !important; }
-:global(html[data-motion="reduced"]) :is(.dungeons img, .dungeons a, .banners img, .banners a, .classRoster a, .classRoster img, .toolRows li, .toolRows svg, .flagship .productPreview img, .versions img, .more svg, .metaHead svg, .flagship h3 svg, .bossGrid svg, .banners svg) { transition: none; transform: none !important; translate: none !important; scale: none !important; }
+:global(html[data-motion="reduced"]) :is(.dungeons img, .dungeons a, .banners img, .banners a, .classRoster a, .classRoster img, .toolRows li, .toolRows svg, .flagship .productPreview img, .versions img, .more svg, .metaHead svg, .flagship h3 svg, .bossGrid svg, .banners svg) { transition: none; transform: none !important; translate: var(--atlas-still, none) !important; scale: var(--atlas-still, none) !important; }
 :global(html[data-motion="reduced"]) .banners a::before, :global(html[data-motion="reduced"]) .dungeons a::before { transition: none; background-position: -160% 0, 0 0 !important; }
 @media print { .page :is(.hero h1, .hero p, .seasonNow, .flourish img, .banners li, .chapter > div:first-child, .dungeons li) { animation: none !important; } }
 @media (prefers-reduced-transparency: reduce) { .seasonNow { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--atlas-surface); } }
