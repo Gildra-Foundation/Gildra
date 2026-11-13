@@ -24,7 +24,7 @@ export function ForeverDungeonCatalog({ lang, dungeons }: { lang: Lang; dungeons
       </ForeverFilters>
       {!rows.length && <ForeverEmpty lang={lang} title={t.noResults} />}
     </ForeverPanel>
-    {!!rows.length && <InstanceCardGrid long>{rows.map(d => <li key={d.slug}>
+    {!!rows.length && <InstanceCardGrid>{rows.map(d => <li key={d.slug}>
       <InstanceCard compact art={d.slug} href={p(lang, `/wow/forever/dungeons/${d.slug}`)} title={d.name} alias={d.alias} location={d.location}
         tag={d.fresh ? t.fresh : undefined} facts={[`${t.level} ${d.min}–${d.max}`, bossCount(d.bosses, lang)]} />
     </li>)}</InstanceCardGrid>}

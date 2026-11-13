@@ -3,13 +3,12 @@ import { MapPin } from "lucide-react";
 import { AtlasSection } from "@/components/atlas";
 import { p, type Lang } from "@/lib/i18n-paths";
 import { ForeverFrame } from "./ForeverFrame";
-import { ForeverHero, ForeverPanel, foreverPanelStyles } from "./shared";
+import { ForeverArtCard, ForeverArtGrid, ForeverHero, ForeverPanel, foreverPanelStyles } from "./shared";
 import { bossCount, instanceCopy, playerCount } from "./instanceCopy";
 import { foreverRaids, raidEncounters, newDungeons } from "./instanceData";
 import { ForeverDungeonCatalog } from "./ForeverDungeonCatalog";
 import { instanceArt } from "./instanceArt";
 import { allDungeons, dungeonFacts } from "./instanceFacts";
-import { InstanceCard, InstanceCardGrid } from "./InstanceCard";
 import { instanceName } from "./instanceLocalization";
 import styles from "./foreverInstances.module.css";
 
@@ -54,24 +53,20 @@ function ForeverRaid({ raid, lang }: { raid: typeof foreverRaids[number]; lang: 
   </article>;
 }
 
-/** The three level-60 raids as compact cards (the Forever hub): painting, place, size; the card opens the raid in the journal. */
-export function ForeverRaidCards({ lang, heading = "h3" }: { lang: Lang; heading?: "h2" | "h3" }) {
+/** The three level-60 raids as doors of the Forever hub: painting, name, place, group size; a door opens the raid in the journal. */
+export function ForeverRaidCards({ lang }: { lang: Lang }) {
   const t = instanceCopy[lang];
-  return <InstanceCardGrid>
-    {foreverRaids.map(raid => <li key={raid.id}>
-      <InstanceCard compact heading={heading} art={raid.id} href={`${p(lang, "/wow/forever/raids")}#${raid.id}`} title={raid.name} location={instanceName(raid.location, lang)}
-        facts={[`${t.level} 60`, playerCount(raid.players, lang), bossCount(raid.bosses, lang)]} />
-    </li>)}
-  </InstanceCardGrid>;
+  return <ForeverArtGrid label={t.raids} min={240} fit strip>
+    {foreverRaids.map(raid => <ForeverArtCard key={raid.id} href={`${p(lang, "/wow/forever/raids")}#${raid.id}`} art={instanceArt(raid.id)!.src}
+      title={raid.name} note={instanceName(raid.location, lang)} badge={playerCount(raid.players, lang)} sizes="(max-width: 700px) 62vw, 33vw" />)}
+  </ForeverArtGrid>;
 }
 
-/** The nine new dungeons as compact cards (the Forever hub); each opens its guide. */
+/** The nine new dungeons as doors of the Forever hub: painting, name, place, level band; a door opens the guide. */
 export function ForeverDungeonCards({ lang }: { lang: Lang }) {
   const t = instanceCopy[lang];
-  return <InstanceCardGrid>
-    {newDungeons.map(dungeon => dungeonFacts(dungeon, lang)).map(d => <li key={d.slug}>
-      <InstanceCard compact art={d.slug} href={p(lang, `/wow/forever/dungeons/${d.slug}`)} title={d.name} alias={d.alias} location={d.location}
-        facts={[`${t.level} ${d.min}–${d.max}`, bossCount(d.bosses, lang)]} />
-    </li>)}
-  </InstanceCardGrid>;
+  return <ForeverArtGrid className={styles.nine} label={t.newDungeons} min={140} strip>
+    {newDungeons.map(dungeon => dungeonFacts(dungeon, lang)).map(d => <ForeverArtCard key={d.slug} href={p(lang, `/wow/forever/dungeons/${d.slug}`)} art={instanceArt(d.slug)!.src}
+      title={d.name} note={d.location} badge={`${d.min}–${d.max}`} ratio="3 / 4" sizes="(max-width: 700px) 62vw, (max-width: 1100px) 25vw, 160px" />)}
+  </ForeverArtGrid>;
 }
