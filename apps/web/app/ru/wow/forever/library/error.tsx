@@ -1,5 +1,4 @@
 "use client";
-import { AtlasError } from "@gildra/atlas-ui/AtlasState";
-import { AtlasButton } from "@gildra/atlas-ui/AtlasButton";
+import { ForeverError } from "@/components/wow/forever/shared/ForeverError";
 import { libraryCopy } from "@/components/wow/forever/library/libraryCopy";
-export default function Error({reset}:{reset:()=>void}) { const t=libraryCopy.ru; return <AtlasError title={t.error} actions={<AtlasButton onClick={reset}>{t.retry}</AtlasButton>} />; }
+export default function Error({ reset }: { reset: () => void }) { return <ForeverError lang="ru" page="library" title={libraryCopy.ru.title} reset={reset} />; }

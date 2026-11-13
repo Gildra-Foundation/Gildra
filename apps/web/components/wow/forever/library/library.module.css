@@ -1,18 +1,59 @@
-/* atlas:strict — layout only; materials and controls come from the shared kit. */
-.filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-4); align-items: end; }
-.rows { list-style: none; margin: var(--atlas-space-5) 0; padding: 0; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(260px,100%),1fr)); gap: var(--atlas-space-4); list-style: none; margin: var(--atlas-space-5) 0; padding: 0; }
-.cards h3 a { display: block; overflow: visible; -webkit-line-clamp: unset; overflow-wrap: anywhere; }
-.types { display: flex; flex-wrap: wrap; gap: var(--atlas-space-4); margin-block: var(--atlas-space-4); }
-.types a { min-height: 44px; display: inline-flex; align-items: center; }
-.types a[aria-current="page"] { text-decoration: underline; text-underline-offset: 6px; }
-.row { border-bottom: 1px solid var(--atlas-line-soft); }
-.link { display: flex; gap: var(--atlas-space-3); align-items: center; min-height: 64px; padding: var(--atlas-space-3) 0; text-decoration: none; overflow-wrap: anywhere; }
-.name { flex: 1; min-width: 0; }
-.meta { display: block; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
-.icon { flex: 0 0 40px; width: 40px; height: 40px; }
-.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--atlas-space-4); }
-.facts dt { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
-.facts dd { margin: var(--atlas-space-1) 0 0; }
-.description { white-space: pre-line; max-width: var(--atlas-measure); }
-@media (max-width: 700px) { .filters { grid-template-columns: 1fr; } }
+/* atlas:strict — the Forever library: the search on the panel in the heading, the five record types as plates,
+   record cards on glass and the record page with the in-game tooltip beside the title. Layout and tokens only;
+   materials, fields and motion come from the shared Forever parts (docs/forever/DESIGN.md). */
+
+/* ---------- First page: the search and the record types ---------- */
+.searchPanel { width: min(100%, 980px); }
+
+.types { margin-top: var(--atlas-space-4); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+.types > li { display: grid; min-width: 0; }
+.types .type { display: grid; align-content: start; justify-items: start; gap: var(--atlas-space-2); padding: 30px 30px 32px; }
+.typeName { margin: var(--atlas-space-1) 0 0; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.typeName a { color: var(--atlas-text-strong); text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+/* The name link covers the plate. */
+.typeName a::after { content: ""; position: absolute; inset: 0; }
+.typeName a:focus-visible { outline: none; }
+.typeName a:focus-visible::after { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: -6px; }
+.typeNote { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); text-shadow: 0 1px 3px var(--atlas-bg); }
+.typeCount { margin: var(--atlas-space-1) 0 0; color: var(--material-light, var(--atlas-accent)); font-size: var(--atlas-text-small); font-weight: 600; font-variant-numeric: lining-nums tabular-nums; }
+
+/* ---------- A record type: cards on glass under the filter panel ---------- */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+/* A card without the footer centres its two lines against the icon. */
+.cards > li { min-height: 0; align-items: center; padding-bottom: var(--atlas-space-4); }
+
+/* ---------- Record: its heading is the library's (components/database/entityDetail.module.css); here — related records ---------- */
+.related { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--atlas-space-4); }
+.related[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rowIcon { display: block; flex: none; }
+.rowName { font-weight: inherit; }
+
+/* Answer to the pointer; motion is switched on only where the reader has not asked for less of it. */
+@media (hover: hover) and (pointer: fine) {
+  .typeName a { transition: text-decoration-color var(--atlas-duration-fast) var(--atlas-ease); }
+  .type:hover .typeName a { text-decoration-color: currentColor; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion="reduced"])) .types .type { transition: translate var(--atlas-duration-fast) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .types .type:hover { translate: 0 -3px; }
+  :global(html:not([data-motion="reduced"])) .type :global(img) { transition: scale var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .type:hover :global(img) { scale: 1.08; }
+}
+
+@media (max-width: 1180px) {
+  .types { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .related[data-count="2"] { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  /* Phones: a two-column shelf of types, the last one across. */
+  .types { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+  .types > li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .types .type { padding: 22px 20px 24px; }
+  .typeName { font-size: var(--atlas-text-title); }
+  .typeNote { display: none; }
+}
+@media (forced-colors: active) {
+  .typeName a { color: LinkText; }
+}

@@ -1,3 +1,3 @@
-import { AtlasSkeleton } from '@/components/atlas';
-import { ForeverFrame } from '@/components/wow/forever/ForeverFrame';
-export default function Loading() {return <ForeverFrame lang="en"><AtlasSkeleton variant="rows" count={5} label="Loading professions"/></ForeverFrame>;}
+import { ForeverLoading } from '@/components/wow/forever/shared/ForeverLoading';
+import { copy } from '@/components/wow/forever/professions/copy';
+export default function Loading() { return <ForeverLoading lang="en" page="professions" title={copy.en.title} variant="rows" count={6} />; }
