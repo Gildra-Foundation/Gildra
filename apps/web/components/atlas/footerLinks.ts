@@ -8,13 +8,13 @@ export const ATLAS_FOOTER_LINKS = [
   { href: "/privacy", en: "Privacy", ru: "Конфиденциальность" },
 ] as const;
 
-import { navigationRealms, linksFor, type NavigationLink } from "@/components/platform/navigation/navigationMap";
+import { foreverRealms, navigationRealms, linksFor, type NavigationLink } from "@/components/platform/navigation/navigationMap";
 import { wowPortals } from "@/lib/games/wowPortals";
 import type { Lang } from "@/lib/i18n-paths";
 
 export const footerCopy = {
-  ru: { description: "Маршруты, тактики и инструменты World of Warcraft.", navigation: "Навигация в подвале", language: "Язык в подвале", raids: "Рейды", hero: "Ваш герой", economy: "Экономика", world: "Мир и знания", versions: "Версии игры" },
-  en: { description: "World of Warcraft routes, tactics and tools.", navigation: "Footer navigation", language: "Footer language", raids: "Raids", hero: "Your hero", economy: "Economy", world: "World and knowledge", versions: "Game versions" },
+  ru: { description: "Маршруты, тактики и инструменты World of Warcraft.", navigation: "Навигация в подвале", language: "Язык в подвале", raids: "Рейды", hero: "Ваш герой", economy: "Экономика", world: "Мир и знания", versions: "Версии игры", adventures: "Подземелья и рейды", crafts: "Ремёсла и знания" },
+  en: { description: "World of Warcraft routes, tactics and tools.", navigation: "Footer navigation", language: "Footer language", raids: "Raids", hero: "Your hero", economy: "Economy", world: "World and knowledge", versions: "Game versions", adventures: "Dungeons and raids", crafts: "Crafts and knowledge" },
 } as const;
 
 /** Each language named in itself (the footer language links). */
@@ -37,5 +37,25 @@ export function footerGroups(locale: Lang) {
   groups.find(group => group.id === "world")!.links.push(...all.filter(link => !used.has(link.href)));
   // The map is not in older menu maps; retain the existing public destination.
   if (!used.has("/wow/map")) groups.find(group => group.id === "world")!.links.push({ href: "/wow/map", label: { en: "World map", ru: "Карта мира" } });
+  return groups;
+}
+
+/**
+ * The footer of the Forever version: its pages in the same intent groups as the main footer
+ * (four columns; the hero column is the tall one, the site's own links close the second row).
+ */
+export function foreverFooterGroups(locale: Lang) {
+  const all = foreverRealms.flatMap(realm => linksFor(realm, locale));
+  const select = (...paths: string[]) => paths.flatMap(path => all.filter(link => link.href === path));
+  const main = footerGroups(locale);
+  const groups: { id: string; title: string; links: Pick<NavigationLink, "href" | "label">[] }[] = [
+    { id: "forever-hero", title: footerCopy[locale].hero, links: select("/wow/forever/classes", "/wow/forever/changes", "/wow/forever/talent-calc", "/wow/forever/tier-lists") },
+    { id: "forever-adventures", title: footerCopy[locale].adventures, links: select("/wow/forever/dungeons", "/wow/forever/raids") },
+    { id: "forever-crafts", title: footerCopy[locale].crafts, links: select("/wow/forever/professions", "/wow/forever/library") },
+    ...main.filter(group => group.id === "versions" || group.id === "site"),
+  ];
+  // A page added to the Forever bar stays reachable from its footer.
+  const used = new Set(groups.flatMap(group => group.links.map(link => link.href)));
+  groups[2].links.push(...all.filter(link => !used.has(link.href)));
   return groups;
 }

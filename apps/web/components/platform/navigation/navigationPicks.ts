@@ -5,6 +5,7 @@ import { midnightSpecializations, midnightClasses } from "@/lib/data/wow/special
 import { CLASS_ICONS, classIcon } from "@/lib/games/wow/assets";
 import { professionIndex } from "@/lib/data/wow/professionIndex";
 import { professionIconUrl } from "@/lib/wow/professions/leveling";
+import { foreverClasses } from "@/lib/data/wow/foreverRoster";
 
 /** Signs the bar draws for picks without a picture of their own (tier lists, library collections). */
 export type NavigationPickGlyph =
@@ -106,5 +107,14 @@ export function navigationPicks(): NavigationPicks {
       { href: "/library/toys", glyph: "toys", label: { en: "Toys", ru: "Игрушки" } },
     ],
   };
-  return { classes, mythic: dungeons, raids, meta: tierLists, tools: professions, library: collections };
+  // The nine classes of the Forever version, in the order of its roster.
+  const foreverRoster: NavigationPickGroup = {
+    kind: "class",
+    title: { en: "Classes", ru: "Классы" },
+    picks: foreverClasses.flatMap(entry => {
+      const image = classIcon(entry.icon);
+      return image ? [{ href: `/wow/forever/classes/${entry.slug}`, label: entry.name, image, tint: classColors[entry.slug as keyof typeof classColors] }] : [];
+    }),
+  };
+  return { classes, mythic: dungeons, raids, meta: tierLists, tools: professions, library: collections, "forever-classes": foreverRoster };
 }

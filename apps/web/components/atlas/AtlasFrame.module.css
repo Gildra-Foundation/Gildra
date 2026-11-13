@@ -16,7 +16,7 @@
   .footerGroup::details-content { content-visibility: visible; }
   .footerGroup > ul { display: block; }
 }
-@media (min-width: 1001px) { .footerGroup[data-footer-group="mythic"] { grid-row: span 2; } }
+@media (min-width: 1001px) { .footerGroup:is([data-footer-group="mythic"], [data-footer-group="forever-hero"]) { grid-row: span 2; } }
 @media (max-width: 600px) {
   .seal { font-size: var(--atlas-text-h3); }
   .crest { height: 56px; }
@@ -27,4 +27,4 @@
   .footerGroup[open] summary::after { content: "−"; }
   .footerGroup ul { margin: 0 0 var(--atlas-space-3); padding-left: var(--atlas-space-3); }
 }
-@media (min-width: 601px) and (max-width: 1000px) { .footerGroup[data-footer-group="mythic"] { grid-row: span 3; } }
+@media (min-width: 601px) and (max-width: 1000px) { .footerGroup[data-footer-group="mythic"] { grid-row: span 3; } .footerGroup[data-footer-group="forever-hero"] { grid-row: span 2; } }

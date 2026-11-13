@@ -33,6 +33,7 @@ export const footerRoutes = [
   { template: "/database/[type]/[id]/[slug]", path: "/database/items/1/x", redirect: true },
   { template: "/dev/atlas", path: "/dev/atlas", only: "en", status: 404 },
   { template: "/dev/blocks", path: "/dev/blocks", only: "en", status: 404 },
+  { template: "/dev/forever", path: "/dev/forever", only: "en", status: 404 },
   { template: "/dev/blocks/[type]", path: "/dev/blocks/hero", only: "en", status: 404 },
   { template: "/dev/character-preview/[slug]", path: "/dev/character-preview/x", status: 404 },
   { template: "/diablo", path: "/diablo", status: 404 },

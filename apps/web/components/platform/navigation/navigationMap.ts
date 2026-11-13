@@ -161,22 +161,30 @@ export const groupsFor = (realm: NavigationRealm, lang: Lang) => realm.groups
 /** Every page of a realm in a language, in menu order. */
 export const linksFor = (realm: NavigationRealm, lang: Lang) => groupsFor(realm, lang).flatMap(group => group.links);
 
-/** The realms of the bar in a language. */
+/**
+ * The Forever version has a bar of its own, in the order of the main one: classes and talents,
+ * dungeons and raids, tier lists, then crafts and the library. A realm with several pages opens
+ * a menu with its picture card, like the main realms.
+ */
 export const foreverRealms: readonly NavigationRealm[] = [
-  { id: "forever-dungeons", label: { en: "Dungeons", ru: "Подземелья" }, hub: "/wow/forever/dungeons",
-    groups: [{ links: [{ href: "/wow/forever/dungeons", icon: "atlas", label: { en: "Dungeons", ru: "Подземелья" } }] }] },
-  { id: "forever-raids", label: { en: "Raids", ru: "Рейды" }, hub: "/wow/forever/raids",
-    groups: [{ links: [{ href: "/wow/forever/raids", icon: "journal", label: { en: "Raids", ru: "Рейды" } }] }] },
-  { id: "forever-library", label: { en: "Library", ru: "Библиотека" }, hub: "/wow/forever/library",
-    groups: [{ links: [{ href: "/wow/forever/library", icon: "library", label: { en: "Library", ru: "Библиотека" } }] }] },
-  { id: "forever-talent-calc", label: { en: "Talents", ru: "Таланты" }, hub: "/wow/forever/talent-calc",
-    groups: [{ links: [{ href: "/wow/forever/talent-calc", icon: "classes", label: { en: "Talents", ru: "Таланты" } }] }] },
   { id: "forever-classes", label: { en: "Classes", ru: "Классы" }, hub: "/wow/forever/classes",
-    groups: [{ links: [{ href: "/wow/forever/classes", icon: "classes", label: { en: "Classes", ru: "Классы" } }, { href: "/wow/forever/changes", icon: "guide", label: { en: "Class changes", ru: "Изменения классов" } }] }] },
-  { id: "forever-professions", label: { en: "Professions", ru: "Профессии" }, hub: "/wow/forever/professions",
-    groups: [{ links: [{ href: "/wow/forever/professions", icon: "professions", label: { en: "Professions", ru: "Профессии" } }] }] },
+    art: "/assets/wow/loading/talents-wow.webp",
+    groups: [{ links: [
+      { href: "/wow/forever/classes", icon: "classes", label: { en: "Classes", ru: "Классы" }, note: { en: "Abilities and roles", ru: "Способности и роли" } },
+      { href: "/wow/forever/changes", icon: "guide", label: { en: "Class changes", ru: "Изменения классов" }, note: { en: "Abilities and talents compared", ru: "Сравнение способностей и талантов" } },
+    ] }] },
+  { id: "forever-talent-calc", label: { en: "Talents", ru: "Таланты" }, hub: "/wow/forever/talent-calc",
+    groups: [{ links: [{ href: "/wow/forever/talent-calc", icon: "classes", label: { en: "Talent calculator", ru: "Калькулятор талантов" }, note: { en: "Plan a build to level 60", ru: "Соберите билд до 60-го уровня" } }] }] },
+  { id: "forever-dungeons", label: { en: "Dungeons", ru: "Подземелья" }, hub: "/wow/forever/dungeons",
+    groups: [{ links: [{ href: "/wow/forever/dungeons", icon: "atlas", label: { en: "Dungeons", ru: "Подземелья" }, note: { en: "Maps, bosses and loot by level", ru: "Карты, боссы и добыча по уровням" } }] }] },
+  { id: "forever-raids", label: { en: "Raids", ru: "Рейды" }, hub: "/wow/forever/raids",
+    groups: [{ links: [{ href: "/wow/forever/raids", icon: "journal", label: { en: "Raids", ru: "Рейды" }, note: { en: "Bosses of the level 60 raids", ru: "Боссы рейдов 60-го уровня" } }] }] },
   { id: "forever-tier-lists", label: { en: "Tier lists", ru: "Тир-листы" }, hub: "/wow/forever/tier-lists",
-    groups: [{ links: [{ href: "/wow/forever/tier-lists", icon: "meta", label: { en: "Tier lists", ru: "Тир-листы" } }] }] },
+    groups: [{ links: [{ href: "/wow/forever/tier-lists", icon: "meta", label: { en: "Tier lists", ru: "Тир-листы" }, note: { en: "Classes for leveling and dungeons", ru: "Классы для прокачки и подземелий" } }] }] },
+  { id: "forever-professions", label: { en: "Professions", ru: "Профессии" }, hub: "/wow/forever/professions",
+    groups: [{ links: [{ href: "/wow/forever/professions", icon: "professions", label: { en: "Professions", ru: "Профессии" }, note: { en: "Recipes, reagents and trainers", ru: "Рецепты, реагенты и учителя" } }] }] },
+  { id: "forever-library", label: { en: "Library", ru: "Библиотека" }, hub: "/wow/forever/library",
+    groups: [{ links: [{ href: "/wow/forever/library", icon: "library", label: { en: "Library", ru: "Библиотека" }, note: { en: "Items, spells, NPCs and quests", ru: "Предметы, заклинания, NPC и задания" } }] }] },
 ];
 export const realmsFor = (_lang: Lang, path = "/") => within(barePathOf(path), "/wow/forever") ? foreverRealms : navigationRealms;
 
