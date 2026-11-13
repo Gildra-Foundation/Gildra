@@ -1,3 +1,3 @@
-import { AtlasSkeleton } from "@gildra/atlas-ui/AtlasState";
+import { ForeverLoading } from "@/components/wow/forever/shared/ForeverLoading";
 import { talentCopy } from "@/components/wow/forever/talents/talentCopy";
-export default function Loading() { return <AtlasSkeleton variant="rows" count={7} label={talentCopy.ru.loading} />; }
+export default function Loading() { return <ForeverLoading lang="ru" page="talents" title={talentCopy.ru.title} />; }

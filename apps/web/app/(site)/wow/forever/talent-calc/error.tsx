@@ -1,3 +1,4 @@
 "use client";
-import { ForeverTalentError } from "@/components/wow/forever/talents/ForeverTalentError";
-export default function ErrorPage({ reset }: { reset: () => void }) { return <ForeverTalentError lang="en" reset={reset} />; }
+import { ForeverError } from "@/components/wow/forever/shared/ForeverError";
+import { talentCopy } from "@/components/wow/forever/talents/talentCopy";
+export default function ErrorPage({ reset }: { reset: () => void }) { return <ForeverError lang="en" page="talents" title={talentCopy.en.title} reset={reset} />; }
