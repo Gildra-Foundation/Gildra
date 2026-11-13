@@ -1,38 +1,79 @@
-import Image from 'next/image';
-import { FOREVER_KIT } from './classesKit';
-import { AtlasDisclosure, AtlasField, AtlasInput, AtlasSelect } from '@/components/atlas';
-import { MaterialButton, MaterialLinkButton, MaterialPlaque } from '@/components/wow/shared/materialAtlas';
+import { ArrowRight, ChevronDown, Minus } from 'lucide-react';
+import { AtlasBadge, type AtlasBadgeTone } from '@gildra/atlas-ui/AtlasBadge';
+import { AtlasDisclosure } from '@gildra/atlas-ui/AtlasDisclosure';
+import { materialStyles } from '@/components/wow/shared/materialAtlas';
 import { p, type Lang } from '@/lib/i18n-paths';
-import { foreverClasses } from '@/lib/data/wow/foreverClasses';
-import { classChangeIconUrl, classSpellPath, matchesChanges, pageNumber, PAGE_SIZE, type ClassChange, type ChangeQuery, type ChangeRank, type ClassSlug } from '@/lib/data/wow/foreverClasses';
-import { classesSnapshot as snapshot } from '@/lib/data/wow/foreverClasses';
-import { classTrees } from '@/lib/data/wow/foreverClasses';
-import { diffWords } from '@/lib/data/wow/foreverClasses';
+import { classChangeIconUrl, classSpellPath, matchesChanges, pageNumber, PAGE_SIZE, type ChangeQuery, type ChangeRank, type ChangeStatus, type ClassChange, type ClassSlug } from '@/lib/data/wow/foreverClasses';
+import { classesSnapshot as snapshot, classTrees, diffWords } from '@/lib/data/wow/foreverClasses';
+import { ForeverEmpty, ForeverFilters, ForeverIcon, ForeverList, ForeverPager, ForeverPanel, ForeverSearch, ForeverSelect, foreverIconFrame, foreverPanelStyles } from '../shared';
 import { classesCopy } from './classesCopy';
 import styles from './classes.module.css';
 
 const changes = snapshot.records as ClassChange[];
-export function ChangeRankView({ rank, lang }: { rank: ChangeRank; lang: Lang }) {
+const tones: Record<ChangeStatus, AtlasBadgeTone> = { added: 'positive', changed: 'neutral', moved: 'info', removed: 'negative' };
+const ICON = 40;
+
+/** One rank: Classic beside Forever with the changed words marked, the spell power scaling and the way to the spell. */
+function ChangeRankView({ rank, lang }: { rank: ChangeRank; lang: Lang }) {
   const t = classesCopy[lang];
   const href = classSpellPath(rank.spellId);
-  const comparable = lang === "en" || (rank.before?.ru !== rank.before?.en && rank.after?.ru !== rank.after?.en);
-  const diff = comparable && rank.before?.[lang] && rank.after?.[lang] ? diffWords(rank.before[lang], rank.after[lang]) : null;
-  const percent = (v: number) => new Intl.NumberFormat(lang, { style: 'percent', maximumFractionDigits: 1 }).format(v);
+  const before = rank.before?.[lang], after = rank.after?.[lang];
+  const comparable = lang === 'en' || (rank.before?.ru !== rank.before?.en && rank.after?.ru !== rank.after?.en);
+  const diff = comparable && before && after ? diffWords(before, after) : null;
+  const percent = (value: number) => new Intl.NumberFormat(lang, { style: 'percent', maximumFractionDigits: 1 }).format(value);
   return <div className={styles.rank}>
-    <h3>{t.rank} {rank.rank}{rank.level ? <span className={styles.status}> · {t.level} {rank.level}</span> : null}</h3>
-    <div className={styles.comparison} data-single={!rank.before?.[lang] || !rank.after?.[lang]}>
-      {rank.before?.[lang] ? <div><h4>{t.before}</h4><p lang={lang === 'ru' && rank.before.ru === rank.before.en ? 'en' : lang}>{diff ? diff.before.map((token, i) => token.changed ? <del key={i}>{token.text}</del> : token.text) : rank.before[lang]}</p></div> : null}
-      {rank.after?.[lang] ? <div><h4>{t.after}</h4><p lang={lang === 'ru' && rank.after.ru === rank.after.en ? 'en' : lang}>{diff ? diff.after.map((token, i) => token.changed ? <ins key={i}>{token.text}</ins> : token.text) : rank.after[lang]}</p></div> : null}
-    </div>
-    {rank.coefficient ? <p className={styles.coefficient}>{t.coefficient}: <span aria-label={t.before}>{percent(rank.coefficient.before)}</span> → <span aria-label={t.after}>{percent(rank.coefficient.after)}</span></p> : null}
-    {href ? <a className={styles.classLink} href={p(lang, href)}>{t.record}</a> : null}
+    <h4 className={styles.rankTitle}>{t.rank} {rank.rank}{rank.level ? <span> · {t.level} {rank.level}</span> : null}</h4>
+    {before || after ? <div className={styles.comparison} data-single={!before || !after ? '' : undefined}>
+      {before ? <div className={styles.side} data-side="before"><h5>{t.before}</h5><p lang={lang === 'ru' && rank.before!.ru === rank.before!.en ? 'en' : undefined}>{diff ? diff.before.map((token, i) => token.changed ? <del key={i}>{token.text}</del> : token.text) : before}</p></div> : null}
+      {before && after ? <ArrowRight className={styles.becomes} aria-hidden="true" /> : null}
+      {after ? <div className={styles.side} data-side="after"><h5>{t.after}</h5><p lang={lang === 'ru' && rank.after!.ru === rank.after!.en ? 'en' : undefined}>{diff ? diff.after.map((token, i) => token.changed ? <ins key={i}>{token.text}</ins> : token.text) : after}</p></div> : null}
+    </div> : null}
+    {rank.coefficient ? <p className={styles.fact}><span>{t.coefficient}</span><b><span aria-label={t.before}>{percent(rank.coefficient.before)}</span><ArrowRight aria-hidden="true" /><span aria-label={t.after}>{percent(rank.coefficient.after)}</span></b></p> : null}
+    {href ? <a className={foreverPanelStyles.link} href={p(lang, href)}>{t.record}<ArrowRight aria-hidden="true" /></a> : null}
   </div>;
 }
-export function ClassChanges({ lang, classSlug, query, action, chooseClass = false }: { lang: Lang; classSlug: ClassSlug; query: ChangeQuery; action: string; chooseClass?: boolean }) {
+
+/** One change as a folded line: icon, name, tree, what happened; opened — Classic beside Forever. Works without JavaScript. */
+function ChangeRow({ row, lang }: { row: ClassChange; lang: Lang }) {
   const t = classesCopy[lang];
+  const icon = classChangeIconUrl(row.icon);
+  const moves: Array<[string, string | number, string | number]> = [];
+  const moved = (label: string, was: string | number | undefined, now: string | number | undefined) => { if (was && now && was !== now) moves.push([label, was, now]); };
+  if (row.previousTree && row.previousTree !== row.tree.en) moves.push([t.tree, classTrees[row.classSlug].find(tree => tree.name.en === row.previousTree)?.name[lang] ?? row.previousTree, row.tree[lang]]);
+  moved(t.row, row.previousRow, row.row);
+  moved(t.column, row.previousColumn, row.column);
+  if (row.status !== 'removed') moved(t.ranks, row.previousMaxRank, row.ranks.length);
+  return <li>
+    {/* A reader may open a line before the page hydrates: the `open` they set is theirs to keep. */}
+    <details className={styles.change} suppressHydrationWarning>
+      <summary>
+        {icon ? <ForeverIcon src={icon} size={ICON} /> : <span className={`${materialStyles.iconFrame} ${styles.noIcon}`} style={foreverIconFrame(ICON)} aria-hidden="true"><Minus /></span>}
+        <strong className={styles.changeName}>{row.name[lang]}</strong>
+        <span className={styles.changeMeta}>
+          <span className={styles.changeNote}>{row.tree[lang]}{lang === 'ru' && row.name.ru !== row.name.en ? <span className={styles.alias}> · <span lang="en">{row.name.en}</span></span> : null}</span>
+          <AtlasBadge tone={tones[row.status]} className={styles.badge}>{t[row.status]}</AtlasBadge>
+        </span>
+        <ChevronDown className={styles.chevron} aria-hidden="true" />
+      </summary>
+      <div className={styles.changeBody}>
+        {row.status === 'removed' ? <p className={styles.meaning}>{t.removedMeaning}</p> : null}
+        {moves.length ? <div className={styles.moves}>{moves.map(([label, was, now]) => <p key={label} className={styles.fact}><span>{label}</span><b>{was}<ArrowRight aria-hidden="true" />{now}</b></p>)}</div> : null}
+        {row.ranks[0] ? <ChangeRankView rank={row.ranks[0]} lang={lang} /> : null}
+        {row.ranks.length > 1 ? <AtlasDisclosure className={styles.moreRanks} summary={t.moreRanks}>{row.ranks.slice(1).map((rank, i) => <ChangeRankView key={`${rank.rank}-${i}`} rank={rank} lang={lang} />)}</AtlasDisclosure> : null}
+      </div>
+    </details>
+  </li>;
+}
+
+/** The changes of one class on the section's panel: the filter bar, the folded list, paging. The filters live in the address. */
+export function ClassChanges({ lang, classSlug, query, action, chooseClass = false }: { lang: Lang; classSlug: ClassSlug; query: ChangeQuery; action: string; /** The page lists every class (/changes): the class stays in the address. */ chooseClass?: boolean }) {
+  const t = classesCopy[lang];
+  const own = changes.filter(row => row.classSlug === classSlug);
   const filtered = matchesChanges(changes, classSlug, query);
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = pageNumber(query.page, filtered.length);
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const base = `${p(lang, action)}${chooseClass ? `?class=${classSlug}` : ''}#changes`;
   function href(nextPage: number) {
     const search = new URLSearchParams();
     if (chooseClass) search.set('class', classSlug);
@@ -40,28 +81,16 @@ export function ClassChanges({ lang, classSlug, query, action, chooseClass = fal
     if (nextPage > 1) search.set('page', String(nextPage));
     return `${p(lang, action)}${search.size ? `?${search}` : ''}#changes`;
   }
-  return <MaterialPlaque kit={FOREVER_KIT}>
-    <form className={styles.filters} method="get" action={`${p(lang, action)}#changes`}>
-      {chooseClass ? <AtlasField label={t.class} htmlFor="change-class"><AtlasSelect id="change-class" name="class" defaultValue={classSlug}>{foreverClasses.map(c => <option key={c.slug} value={c.slug}>{c.name[lang]}</option>)}</AtlasSelect></AtlasField> : null}
-      <AtlasField label={t.kind} htmlFor="change-kind"><AtlasSelect id="change-kind" name="kind" defaultValue={query.kind || ''}><option value="">{t.all}</option><option value="spellbook">{t.spellbook}</option><option value="talent">{t.talents}</option></AtlasSelect></AtlasField>
-      <AtlasField label={t.status} htmlFor="change-status"><AtlasSelect id="change-status" name="status" defaultValue={query.status || ''}><option value="">{t.all}</option><option value="added">{t.added}</option><option value="changed">{t.changed}</option><option value="removed">{t.removed}</option></AtlasSelect></AtlasField>
-      <div className={styles.search}><AtlasField label={t.search} htmlFor="change-search"><AtlasInput id="change-search" name="q" type="search" defaultValue={query.q || ''} /></AtlasField></div>
-      <div className={styles.actions}><MaterialButton kit={FOREVER_KIT} type="submit">{t.apply}</MaterialButton><a href={`${p(lang, action)}${chooseClass ? `?class=${classSlug}` : ''}#changes`}>{t.reset}</a></div>
-    </form>
-    <div className={styles.changes}>
-      {visible.length ? visible.map((row, index) => <AtlasDisclosure open={index === 0} key={row.key} summary={<span className={styles.summary}>{classChangeIconUrl(row.icon) ? <Image src={classChangeIconUrl(row.icon)!} unoptimized alt="" width={40} height={40} /> : null}<span>{row.name[lang]}{lang === 'ru' && row.name.ru !== row.name.en ? <span className={styles.alias} lang="en">{row.name.en}</span> : null}</span><span className={styles.status}>{t[row.status]} · {row.tree[lang]}</span></span>}>
-        {row.status === 'removed' ? <p>{t.removedMeaning}</p> : null}
-        {row.previousTree && row.previousTree !== row.tree.en ? <p>{t.tree}: {classTrees[row.classSlug].find(tree => tree.name.en === row.previousTree)?.name[lang] ?? row.previousTree} → {row.tree[lang]}</p> : null}
-        {row.previousRow && row.row && row.previousRow !== row.row ? <p>{t.row}: {row.previousRow} → {row.row}</p> : null}
-        {row.previousColumn && row.column && row.previousColumn !== row.column ? <p>{t.column}: {row.previousColumn} → {row.column}</p> : null}
-        {row.previousMaxRank && row.status !== 'removed' && row.previousMaxRank !== row.ranks.length ? <p>{t.ranks}: {row.previousMaxRank} → {row.ranks.length}</p> : null}
-        {row.ranks[0] ? <ChangeRankView rank={row.ranks[0]} lang={lang} /> : null}
-        {row.ranks.length > 1 ? <AtlasDisclosure summary={t.moreRanks}><div className={styles.ranks}>{row.ranks.slice(1).map((rank, i) => <ChangeRankView key={`${rank.rank}-${i}`} rank={rank} lang={lang} />)}</div></AtlasDisclosure> : null}
-      </AtlasDisclosure>) : <p role="status">{t.none}</p>}
-    </div>
-    {page > 1 || page * PAGE_SIZE < filtered.length ? <nav className={styles.pageNav} aria-label={t.changes}>
-      {page > 1 ? <MaterialLinkButton kit={FOREVER_KIT} href={href(page - 1)}>{t.previous}</MaterialLinkButton> : <span />}
-      {page * PAGE_SIZE < filtered.length ? <MaterialLinkButton kit={FOREVER_KIT} href={href(page + 1)}>{t.next}</MaterialLinkButton> : null}
-    </nav> : null}
-  </MaterialPlaque>;
+  // The hint names what can be typed: two changes of this class and one of its trees.
+  const hint = [own.find(row => row.status === 'changed'), own.find(row => row.status === 'added')].flatMap(row => row ? [row.name[lang]] : []).concat(classTrees[classSlug][0].name[lang]).join(', ');
+  return <ForeverPanel>
+    <ForeverFilters lang={lang} action={`${p(lang, action)}#changes`} hidden={{ class: chooseClass ? classSlug : undefined }}
+      reset={query.kind || query.status || query.q ? base : undefined}
+      search={<ForeverSearch name="q" label={t.search} placeholder={`${hint}…`} defaultValue={query.q || ''} />}>
+      <ForeverSelect name="kind" label={t.kind} defaultValue={query.kind || ''} options={[{ value: '', label: t.all }, { value: 'spellbook', label: t.spellbook }, { value: 'talent', label: t.talents }]} />
+      <ForeverSelect name="status" label={t.status} defaultValue={query.status || ''} options={[{ value: '', label: t.all }, { value: 'added', label: t.added }, { value: 'changed', label: t.changed }, { value: 'removed', label: t.removed }]} />
+    </ForeverFilters>
+    {visible.length ? <ForeverList label={t.changes} className={styles.changes}>{visible.map(row => <ChangeRow key={row.key} row={row} lang={lang} />)}</ForeverList> : <ForeverEmpty lang={lang} reset={base} />}
+    <ForeverPager lang={lang} label={t.changes} page={page} pages={pages} prev={page > 1 ? href(page - 1) : undefined} next={page < pages ? href(page + 1) : undefined} />
+  </ForeverPanel>;
 }
