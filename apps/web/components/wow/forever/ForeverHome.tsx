@@ -15,7 +15,6 @@ import { ForeverDungeonCards, ForeverRaidCards } from "./ForeverInstances";
 import { foreverCopy } from "./foreverCopy";
 import { foreverRaids, newDungeons, returningDungeonDetails } from "./instanceData";
 import { libraryCopy } from "./library/libraryCopy";
-import { copy as professionsCopy } from "./professions/copy";
 import { professionIcon } from "./professions/kit";
 import { ForeverArtCard, ForeverArtGrid, ForeverCrest, ForeverCrests, ForeverFeature, ForeverHero, ForeverRow, ForeverRows, ForeverStack } from "./shared";
 import styles from "./foreverHome.module.css";
@@ -74,12 +73,8 @@ export function ForeverHome({ lang }: { lang: Lang }) {
           </ForeverRows>
         </>}
         {chapter.id === "raids" && <ForeverRaidCards lang={lang} />}
-        {chapter.id === "crafts" && <>
-          <ForeverFeature href={p(lang, chapter.href)} art={`${L}/forever-crafthall-20261111-768.webp`} title={copy.chapters.crafts.title} text={copy.craftsText} />
-          <ForeverRows label={copy.chapters.crafts.short} columns={4}>
-            {professions.map(entry => <ForeverRow key={entry.slug} href={p(lang, `/wow/forever/professions/${entry.slug}`)} icon={professionIcon(entry.icon)} title={entry.name[lang]} note={professionsCopy[lang].kinds[entry.kind]} />)}
-          </ForeverRows>
-        </>}
+        {chapter.id === "crafts" && <ForeverFeature href={p(lang, chapter.href)} art={`${L}/forever-crafthall-20261111-768.webp`} title={copy.chapters.crafts.title} text={copy.craftsText}
+          linksLabel={copy.chapters.crafts.short} entries={professions.map(entry => ({ href: p(lang, `/wow/forever/professions/${entry.slug}`), label: entry.name[lang], icon: professionIcon(entry.icon) }))} />}
         {chapter.id === "library" && <ForeverFeature href={p(lang, chapter.href)} art={`${L}/archive.webp`} title={libraryCopy[lang].title} text={copy.libraryText} linksLabel={copy.types}
           links={FOREVER_TYPES.map(type => ({ href: `${p(lang, chapter.href)}?type=${type}`, label: libraryCopy[lang].types[type] }))} />}
       </ForeverStack>

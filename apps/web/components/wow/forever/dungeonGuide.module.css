@@ -1,5 +1,7 @@
 /* atlas:strict — a Forever dungeon page: map beside the route, bosses, dangerous enemies. */
 /* Heading: the facts under the name, the dungeon's painting in the section's frame beside them. */
+/* The name stands at one height on every dungeon page, however many lines stand beside the painting. */
+.heading > div:last-child { align-items: start; }
 .headingFacts { margin-top: calc(var(--atlas-space-1) * -1); }
 .headingArt.headingArt { width: min(460px, 34vw); padding: var(--atlas-space-3); }
 .headingArt > div { position: relative; overflow: hidden; aspect-ratio: 2 / 1; border-radius: var(--atlas-radius); background: var(--material-base); box-shadow: inset 0 0 0 1px var(--material-line); }

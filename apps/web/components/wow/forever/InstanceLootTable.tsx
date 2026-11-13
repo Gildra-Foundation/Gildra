@@ -30,7 +30,7 @@ export function InstanceLootTable({ items, lang }: { items: LootItem[]; lang: La
   const slots = [...new Set(items.map(row => t.slots[row.slot] || t.other))].sort((a, b) => a.localeCompare(b, lang));
   const enemies = [...new Set(items.map(row => row.boss).filter(Boolean))];
   return <AtlasSection id="loot" title={t.loot}><ForeverPanel>
-    <ForeverFilters lang={lang} live onReset={filtered ? reset : undefined}
+    <ForeverFilters lang={lang} live inline onReset={filtered ? reset : undefined}
       search={<ForeverSearch id="loot-search" label={t.search} placeholder={t.searchHint} value={query} onChange={e => setQuery(e.target.value)} />}>
       <ForeverSelect id="loot-slot" label={t.slot} value={slot} onChange={e => setSlot(e.target.value)} options={[{ value: "", label: t.allSlots }, ...slots.map(value => ({ value, label: value }))]} />
       <ForeverSelect id="loot-boss" label={t.enemy} value={boss} onChange={e => setBoss(e.target.value)} options={[{ value: "", label: t.allEnemies }, ...enemies.map(value => ({ value, label: instanceName(value, lang) }))]} />

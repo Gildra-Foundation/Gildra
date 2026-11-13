@@ -97,7 +97,7 @@ export async function LibraryPage({ lang, query }: { lang: ForeverLocale; query:
     <ForeverTabs label={t.type} tabs={FOREVER_TYPES.map(entry => ({ href: tabUrl(entry), label: t.types[entry], current: entry === type, count: found?.[entry] }))} />
     <ForeverStack>
       <ForeverPanel>
-        <ForeverFilters lang={lang} action={base(lang)} hidden={{ type, related: query.related, edge: query.edge }} reset={filtered ? typeUrl(lang, type) : undefined}
+        <ForeverFilters lang={lang} inline action={base(lang)} hidden={{ type, related: query.related, edge: query.edge }} reset={filtered ? typeUrl(lang, type) : undefined}
           search={<ForeverSearch name="q" label={t.search} placeholder={t.hints[type]} defaultValue={query.q} />}>
           {type === "item" ? <ForeverSelect name="quality" label={t.quality} defaultValue={query.quality ?? ""} options={[{ value: "", label: t.all }, ...t.qualities.map((label, value) => ({ value, label }))]} /> : null}
           {type === "recipe" ? <ForeverSelect name="category" label={t.profession} defaultValue={query.category ?? ""}

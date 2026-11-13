@@ -84,7 +84,7 @@ export function ClassChanges({ lang, classSlug, query, action, chooseClass = fal
   // The hint names what can be typed: two changes of this class and one of its trees.
   const hint = [own.find(row => row.status === 'changed'), own.find(row => row.status === 'added')].flatMap(row => row ? [row.name[lang]] : []).concat(classTrees[classSlug][0].name[lang]).join(', ');
   return <ForeverPanel>
-    <ForeverFilters lang={lang} action={`${p(lang, action)}#changes`} hidden={{ class: chooseClass ? classSlug : undefined }}
+    <ForeverFilters lang={lang} inline action={`${p(lang, action)}#changes`} hidden={{ class: chooseClass ? classSlug : undefined }}
       reset={query.kind || query.status || query.q ? base : undefined}
       search={<ForeverSearch name="q" label={t.search} placeholder={`${hint}…`} defaultValue={query.q || ''} />}>
       <ForeverSelect name="kind" label={t.kind} defaultValue={query.kind || ''} options={[{ value: '', label: t.all }, { value: 'spellbook', label: t.spellbook }, { value: 'talent', label: t.talents }]} />

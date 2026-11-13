@@ -18,7 +18,7 @@ export function ForeverDungeonCatalog({ lang, dungeons }: { lang: Lang; dungeons
   const rows = dungeons.filter(d => matchesSearch(query, d.search) && matchesLevel(level, d.min, d.max));
   return <div className={styles.catalog}>
     <ForeverPanel>
-      <ForeverFilters lang={lang} live onReset={query || level ? () => { setQuery(""); setLevel(""); } : undefined}
+      <ForeverFilters lang={lang} live inline onReset={query || level ? () => { setQuery(""); setLevel(""); } : undefined}
         search={<ForeverSearch id="dungeon-search" label={t.search} placeholder={t.searchHint} value={query} onChange={e => setQuery(e.target.value)} />}>
         <ForeverLevel id="dungeon-level" label={t.yourLevel} value={level} onChange={e => setLevel(e.target.value)} />
       </ForeverFilters>

@@ -7,7 +7,7 @@ import { ForeverArtCard, ForeverArtGrid, ForeverHero, ForeverPanel, foreverPanel
 import { bossCount, instanceCopy, playerCount } from "./instanceCopy";
 import { foreverRaids, raidEncounters, newDungeons } from "./instanceData";
 import { ForeverDungeonCatalog } from "./ForeverDungeonCatalog";
-import { instanceArt } from "./instanceArt";
+import { instanceArt, instanceDoorPosition } from "./instanceArt";
 import { allDungeons, dungeonFacts } from "./instanceFacts";
 import { instanceName } from "./instanceLocalization";
 import styles from "./foreverInstances.module.css";
@@ -57,7 +57,7 @@ function ForeverRaid({ raid, lang }: { raid: typeof foreverRaids[number]; lang: 
 export function ForeverRaidCards({ lang }: { lang: Lang }) {
   const t = instanceCopy[lang];
   return <ForeverArtGrid label={t.raids} min={240} fit strip>
-    {foreverRaids.map(raid => <ForeverArtCard key={raid.id} href={`${p(lang, "/wow/forever/raids")}#${raid.id}`} art={instanceArt(raid.id)!.src}
+    {foreverRaids.map(raid => <ForeverArtCard key={raid.id} href={`${p(lang, "/wow/forever/raids")}#${raid.id}`} art={instanceArt(raid.id)!.src} artPosition={instanceDoorPosition(raid.id)}
       title={raid.name} note={instanceName(raid.location, lang)} badge={playerCount(raid.players, lang)} sizes="(max-width: 700px) 62vw, 33vw" />)}
   </ForeverArtGrid>;
 }
@@ -66,7 +66,7 @@ export function ForeverRaidCards({ lang }: { lang: Lang }) {
 export function ForeverDungeonCards({ lang }: { lang: Lang }) {
   const t = instanceCopy[lang];
   return <ForeverArtGrid className={styles.nine} label={t.newDungeons} min={140} strip>
-    {newDungeons.map(dungeon => dungeonFacts(dungeon, lang)).map(d => <ForeverArtCard key={d.slug} href={p(lang, `/wow/forever/dungeons/${d.slug}`)} art={instanceArt(d.slug)!.src}
+    {newDungeons.map(dungeon => dungeonFacts(dungeon, lang)).map(d => <ForeverArtCard key={d.slug} href={p(lang, `/wow/forever/dungeons/${d.slug}`)} art={instanceArt(d.slug)!.src} artPosition={instanceDoorPosition(d.slug)}
       title={d.name} note={d.location} badge={`${d.min}–${d.max}`} ratio="3 / 4" sizes="(max-width: 700px) 62vw, (max-width: 1100px) 25vw, 160px" />)}
   </ForeverArtGrid>;
 }

@@ -6,6 +6,9 @@ import { CLASS_ICONS, classIcon } from "@/lib/games/wow/assets";
 import { professionIndex } from "@/lib/data/wow/professionIndex";
 import { professionIconUrl } from "@/lib/wow/professions/leveling";
 import { foreverClasses } from "@/lib/data/wow/foreverRoster";
+import { instanceArt } from "@/components/wow/forever/instanceArt";
+import { foreverRaids, newDungeons } from "@/components/wow/forever/instanceData";
+import { instanceName } from "@/components/wow/forever/instanceLocalization";
 
 /** Signs the bar draws for picks without a picture of their own (tier lists, library collections). */
 export type NavigationPickGlyph =
@@ -116,5 +119,19 @@ export function navigationPicks(): NavigationPicks {
       return image ? [{ href: `/wow/forever/classes/${entry.slug}`, label: entry.name, image, tint: classColors[entry.slug as keyof typeof classColors] }] : [];
     }),
   };
-  return { classes, mythic: dungeons, raids, meta: tierLists, tools: professions, library: collections, "forever-classes": foreverRoster };
+  // The nine dungeons new in Forever and its three raids, with the game's own paintings.
+  const foreverDungeons: NavigationPickGroup = {
+    kind: "art",
+    title: { en: "New dungeons", ru: "Новые подземелья" },
+    picks: newDungeons.map(dungeon => ({ href: `/wow/forever/dungeons/${dungeon.slug}`, label: { en: dungeon.name, ru: instanceName(dungeon.name, "ru") }, image: instanceArt(dungeon.slug)?.src })),
+  };
+  const foreverRaidDoors: NavigationPickGroup = {
+    kind: "art",
+    title: { en: "Level 60 raids", ru: "Рейды 60-го уровня" },
+    picks: foreverRaids.map(raid => ({ href: `/wow/forever/raids#${raid.id}`, label: { en: raid.name, ru: instanceName(raid.name, "ru") }, image: instanceArt(raid.id)?.src })),
+  };
+  return {
+    classes, mythic: dungeons, raids, meta: tierLists, tools: professions, library: collections,
+    "forever-classes": foreverRoster, "forever-dungeons": foreverDungeons, "forever-raids": foreverRaidDoors,
+  };
 }
