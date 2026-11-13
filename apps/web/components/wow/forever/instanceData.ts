@@ -34,11 +34,9 @@ export const foreverRaids = [
     location: "Dustwallow Marsh",
     text: { en: "Carry the Drakefire Amulet to enter. Prepare fire resistance.", ru: "Для входа нужен амулет Пламени дракона в сумке. Подготовьте сопротивление огню." } },
 ] as const;
-export const instanceSources = {
-  raids: "https://news.blizzard.com/en-us/article/24303009/world-of-warcraft-forever-raid-overviewlocations-raid-sizes-and-attunement",
-  dungeons: "https://news.blizzard.com/en-us/article/24301455/explore-the-new-dungeons-of-world-of-warcraft-forever",
-  returning: "https://www.method.gg/wow-forever/wow-forever-dungeon-xp-explained-and-all-dungeons-by-level",
-};
+// Where the lists come from — raids: https://news.blizzard.com/en-us/article/24303009/world-of-warcraft-forever-raid-overviewlocations-raid-sizes-and-attunement;
+// new dungeons: https://news.blizzard.com/en-us/article/24301455/explore-the-new-dungeons-of-world-of-warcraft-forever;
+// returning dungeons: https://www.method.gg/wow-forever/wow-forever-dungeon-xp-explained-and-all-dungeons-by-level.
 
 export const returningDungeonDetails: readonly ForeverDungeon[] = returningDungeons.map(([name, range], index) => {
   const [min, max] = range.split("–").map(Number);

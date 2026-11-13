@@ -33,10 +33,6 @@ export const hallTrash = [
   { name: "Dark Iron Summoner", ability: "Fireball · Summon Fiery Assistant", response: text("Interrupt or stun. Use cover to bring the caster closer.", "Прерывайте или оглушайте. Заведите заклинателя за угол.") },
   { name: "Lesser Stone Golem", ability: "Melee", response: text("Hits quickly and moves fast; avoid combining packs.", "Быстро бьёт и передвигается; не объединяйте паки.") },
 ];
-export const hallSources = [
-  ["Phylactery — Magmatus / Infurnus", "https://phylactery.io/instance/3065"],
-  ["Method", "https://www.method.gg/wow-forever/dungeons/hall-of-thanes"],
-  ["Icy Veins", "https://www.icy-veins.com/wow-forever/hall-of-thanes-guide"],
-  ["ForeverDB", "https://foreverdb.net/dungeon/3065-the-hall-of-thanes"],
-  ["ForG", "https://forg.gg/en/forever/dungeons/hall-of-thanes"],
-] as const;
+// Where the guide's facts come from: Phylactery (https://phylactery.io/instance/3065), Method
+// (https://www.method.gg/wow-forever/dungeons/hall-of-thanes), Icy Veins (https://www.icy-veins.com/wow-forever/hall-of-thanes-guide),
+// ForeverDB (https://foreverdb.net/dungeon/3065-the-hall-of-thanes), ForG (https://forg.gg/en/forever/dungeons/hall-of-thanes).

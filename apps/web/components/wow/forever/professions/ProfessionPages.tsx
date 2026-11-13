@@ -98,7 +98,7 @@ export function ProfessionPage({ lang, slug, filters }: { lang: Lang; slug: stri
           <ForeverSelect name="camp" label={c.camp} defaultValue={filters.camp ?? 'all'} options={[{ value: 'all', label: c.any }, { value: 'yes', label: c.onlyCamp }]} />
           <div className={styles.check}><AtlasCheckbox name="fresh" value="yes" defaultChecked={filters.fresh === 'yes'} label={c.fresh} /></div>
         </ForeverFilters>
-        {recipes.length ? <ForeverList label={c.recipes} className={styles.recipes}>
+        {recipes.length ? <ForeverList label={c.recipes}>
           {recipes.map(recipe => <ForeverListRow key={recipe.id} href={path(lang, `${slug}/${recipe.id}`)} icon={<ForeverIcon src={professionIcon(recipe.icon)} size={44} />}
             title={<>{recipe.name[lang]}{recipe.new ? <em className={styles.fresh}>{c.freshShort}</em> : null}</>}
             note={<span className={styles.reagents}>{recipe.reagents.map(reagent => <span key={reagent.id} className={styles.reagent}>

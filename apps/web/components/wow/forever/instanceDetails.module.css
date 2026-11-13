@@ -10,7 +10,6 @@
 .alias { display: block; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-weight: 400; }
 .levelLabel { display: none; }
 .more { display: flex; justify-content: center; margin-top: var(--atlas-space-4); }
-.map { display: block; width: 100%; height: auto; }
 
 /* Phones: an item is one short row — its name, then slot, level and enemy in a line. */
 @media (max-width: 760px) {

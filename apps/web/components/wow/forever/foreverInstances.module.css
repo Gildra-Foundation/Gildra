@@ -5,10 +5,6 @@
 @media (min-width: 1101px) { .nine.nine { grid-template-columns: repeat(9, minmax(0, 1fr)); } }
 @media (min-width: 701px) and (max-width: 1100px) { .nine.nine { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 
-.journey { display: flex; align-items: center; justify-content: center; gap: var(--atlas-space-4); }
-.pine { width: 96px; height: auto; flex: 0 0 auto; }
-@media (max-width: 480px) { .pine { width: 64px; } }
-@media (forced-colors: active) { .pine { display: none; } }
 
 /* Catalogue: the search panel above the cards. */
 .catalog { display: grid; gap: var(--atlas-space-5); min-width: 0; }

@@ -109,7 +109,7 @@ export async function LibraryPage({ lang, query }: { lang: ForeverLocale; query:
       </ForeverPanel>
       {result.records.length === 0 ? null : type === "npc" || type === "quest"
         // Creatures and quests have no icon of their own: glass rows under the sign of their type.
-        ? <ForeverRows label={t.types[type]} className={styles.signs}>
+        ? <ForeverRows label={t.types[type]}>
           {result.records.map(record => <ForeverRow key={record.id} href={foreverRecordPath(record.type, record.id, lang)} sign={<CatalogGlyph symbol={typeSymbol(record.type)} />}
             title={shownName(record, lang)} note={recordLine(record, lang).filter(Boolean).join(" · ") || undefined} />)}
         </ForeverRows>
