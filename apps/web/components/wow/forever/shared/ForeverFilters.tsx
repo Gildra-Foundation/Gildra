@@ -1,4 +1,4 @@
-import { Children, useId, type CSSProperties, type ComponentProps, type ReactNode } from "react";
+import { useId, type CSSProperties, type ComponentProps, type ReactNode } from "react";
 import { ArrowRight, Search } from "lucide-react";
 import { AtlasField, AtlasInput, AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import { MaterialButton } from "@/components/wow/shared/materialAtlas";
@@ -11,8 +11,10 @@ type Common = {
   lang: Lang;
   /** The name search (a <ForeverSearch>): the first row, with the action button beside it. */
   search?: ReactNode;
-  /** The other fields: <ForeverSelect>, <ForeverLevel>. */
+  /** The other fields: <ForeverSelect>, <ForeverLevel>, an <AtlasCheckbox>. */
   children?: ReactNode;
+  /** The fields stand in the search's row while the panel is wide enough (up to three short fields). */
+  inline?: boolean;
   className?: string;
 };
 type FormProps = Common & {
@@ -24,37 +26,42 @@ type FormProps = Common & {
   reset?: string;
   /** Values the form keeps as they are (the open tab, a relation). */
   hidden?: Record<string, string | undefined>;
-  live?: never; onReset?: never;
+  live?: never; onReset?: never; label?: never;
 };
 type LiveProps = Common & {
   /** Fields filter the list as the reader types (a client component owns the state): no form, no button. */
   live: true;
   /** Clears the state; shown as «Reset» only when given. */
   onReset?: () => void;
+  /** Accessible name of a bar without a search field (settings of a tool): it is a group, not a search. */
+  label?: string;
   action?: never; submit?: never; reset?: never; hidden?: never;
 };
 
 /**
- * The one filter bar of the section (on a <ForeverPanel>): the search with its sign and
- * the painted button in the first row, selects and level fields in a row under it, a quiet «Reset».
+ * The one filter bar of the section (on a <ForeverPanel>): the search with its sign and the painted
+ * button, selects and level fields under it (or, `inline`, beside it), a quiet «Reset».
  */
 export function ForeverFilters(props: FormProps | LiveProps) {
-  const { lang, search, children, className } = props;
+  const { lang, search, children, inline, className } = props;
   const t = sharedCopy[lang];
-  const fields = children ? <div className={styles.filterFields} style={{ "--forever-fields": Children.toArray(children).length } as CSSProperties}>{children}</div> : null;
-  const classes = className ? `${styles.filters} ${className}` : styles.filters;
+  const marks = { className: className ? `${styles.filters} ${className}` : styles.filters, "data-lead": search ? "" : undefined, "data-inline": inline && search ? "" : undefined };
+  const lead = search ? <div className={styles.filterLead}>{search}</div> : null;
+  const fields = children ? <div className={styles.filterFields}>{children}</div> : null;
   if (props.live) {
-    return <div className={classes} role="search" data-lead={search ? "" : undefined}>
-      {search ? <div className={styles.filterLead}>{search}</div> : null}
+    return <div {...marks} role={search ? "search" : "group"} aria-label={props.label}>
+      {lead}
       {fields}
       {props.onReset ? <button type="button" className={styles.filterReset} onClick={props.onReset}>{t.reset}</button> : null}
     </div>;
   }
-  const button = <MaterialButton kit={FOREVER_KIT} type="submit" fit="stack" iconAfter={<ArrowRight aria-hidden="true" />}>{props.submit ?? (search ? t.search : t.apply)}</MaterialButton>;
-  return <form className={classes} method="get" action={props.action} role="search" data-lead={search ? "" : undefined}>
+  return <form {...marks} method="get" action={props.action} role="search">
     {Object.entries(props.hidden ?? {}).map(([name, value]) => value ? <input key={name} type="hidden" name={name} value={value} /> : null)}
-    {search ? <div className={styles.filterLead}>{search}{button}</div> : null}
-    {search ? fields : <div className={styles.filterLead}>{fields}{button}</div>}
+    {lead}
+    {fields}
+    <div className={styles.filterAction}>
+      <MaterialButton kit={FOREVER_KIT} type="submit" fit="stack" iconAfter={<ArrowRight aria-hidden="true" />}>{props.submit ?? (search ? t.search : t.apply)}</MaterialButton>
+    </div>
     {props.reset ? <a className={styles.filterReset} href={props.reset}>{t.reset}</a> : null}
   </form>;
 }
@@ -81,11 +88,19 @@ export function ForeverLevel({ label, id, min = 1, max = 60, className, ...input
 
 export type ForeverOption = { value: string | number; label: string };
 
-/** A list of choices; the first option is the page's «All» / «Any». */
-export function ForeverSelect({ label, options, id, className, ...select }: Omit<ComponentProps<"select">, "children"> & { label: ReactNode; options: readonly ForeverOption[] }) {
+/** Longer than this, a choice does not fit half of a phone's row: the list takes the whole row there. */
+const WIDE_OPTION = 14;
+
+/** A list of choices; the first option is the page's «All» / «Any». `width` (px) fits a list of short values (a level, a count). */
+export function ForeverSelect({ label, options, width, id, className, ...select }: Omit<ComponentProps<"select">, "children"> & { label: ReactNode; options: readonly ForeverOption[]; width?: number }) {
   const auto = useId();
   const fieldId = id ?? auto;
-  return <AtlasField label={label} htmlFor={fieldId} className={className}>
-    <AtlasSelect id={fieldId} {...select}>{options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</AtlasSelect>
-  </AtlasField>;
+  const wide = !width && options.some(option => option.label.length > WIDE_OPTION);
+  // AtlasField takes no data attributes: the marks of the bar's layout sit on a wrapper.
+  return <div className={className ? `${styles.selectField} ${className}` : styles.selectField}
+    data-wide={wide ? "" : undefined} style={width ? { "--forever-field": `${width}px` } as CSSProperties : undefined}>
+    <AtlasField label={label} htmlFor={fieldId}>
+      <AtlasSelect id={fieldId} {...select}>{options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</AtlasSelect>
+    </AtlasField>
+  </div>;
 }

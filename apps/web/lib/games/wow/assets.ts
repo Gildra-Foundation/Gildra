@@ -186,7 +186,18 @@ export const FOREVER_UI_TEXTURES = {
     library: "/assets/wow/ui/forever/hub/mark-library.webp",
   },
   flourish: WOW_UI_TEXTURES.flourish,
+  /** Signs of the library's record types: game icons (provenance: /assets/wow/ui/forever/library/SOURCE.md). */
+  types: {
+    item: "/assets/wow/ui/forever/library/type-item.webp",
+    spell: "/assets/wow/ui/forever/library/type-spell.webp",
+    npc: "/assets/wow/ui/forever/library/type-npc.webp",
+    quest: "/assets/wow/ui/forever/library/type-quest.webp",
+    recipe: "/assets/wow/ui/forever/library/type-recipe.webp",
+  },
 } as const;
+
+/** The game's own painting of a Forever talent tree, by class and tree slug ("druid", "feral-combat"); provenance: /assets/wow/ui/forever/trees/SOURCE.md. */
+export const foreverTreeArt = (classSlug: string, treeSlug: string) => `/assets/wow/ui/forever/trees/${classSlug}-${treeSlug}.webp`;
 
 /** Emblems of the game versions in the top strip, cut from the client's shop
  * product logos (provenance: /assets/wow/versions/SOURCE.md). */

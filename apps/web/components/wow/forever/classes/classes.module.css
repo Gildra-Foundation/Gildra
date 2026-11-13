@@ -37,11 +37,7 @@
 /* The crest wears the class colour, as on the class page of the live game. */
 .classHero [aria-hidden="true"] > span { box-shadow: 0 0 0 1px color-mix(in srgb, var(--class-color) 40%, transparent), 0 6px 22px color-mix(in srgb, var(--class-color) 22%, transparent); border-radius: var(--atlas-radius); }
 .classHero h1 { color: color-mix(in srgb, var(--class-color) 45%, var(--atlas-text-strong)); }
-/* Tree paintings: the tree's icon stands in front of its name. */
-.treeTitle { display: flex; align-items: center; gap: var(--atlas-space-3); min-width: 0; }
-/* A background, not an <img>: every image inside an art card is laid out as its painting. */
-.treeIcon { flex: none; width: 44px; height: 44px; border-radius: var(--atlas-radius-control); outline: 1px solid var(--atlas-glass-edge); outline-offset: 2px; background: center / cover no-repeat; box-shadow: var(--atlas-glass-depth); }
-.treeGrid .roles { margin-inline-start: calc(44px + var(--atlas-space-3)); }
+/* Tree paintings: the roles read on the painting. */
 .treeGrid .role { border-color: var(--atlas-glass-edge); background: color-mix(in srgb, var(--atlas-bg) 70%, transparent); color: var(--atlas-text); }
 
 /* «In combat»: what plays differently, each with the talent's icon. */

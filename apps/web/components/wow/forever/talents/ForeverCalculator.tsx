@@ -144,9 +144,9 @@ export function ForeverCalculator({ cls, snapshot, lang, initial, initialError }
   return <>
     {error && <div className={styles.invalid}><p role="alert">{error === "snapshot" ? t.stale : t.invalid}</p><AtlasButton onClick={() => commit(emptyBuild())}>{t.start}</AtlasButton></div>}
     <div className={styles.toolbar}>
-      <ForeverFilters lang={lang} live className={styles.fields}>
-        <ForeverSelect id="forever-level" label={t.level} value={build.level} options={levels} onChange={event => setLevel("level", Number(event.target.value))} />
-        <ForeverSelect id="forever-legacy" label={t.talented} value={build.talented} options={legacyRanks} onChange={event => setLevel("talented", Number(event.target.value))} />
+      <ForeverFilters lang={lang} live label={t.level} className={styles.fields}>
+        <ForeverSelect id="forever-level" width={112} label={t.level} value={build.level} options={levels} onChange={event => setLevel("level", Number(event.target.value))} />
+        <ForeverSelect id="forever-legacy" width={232} label={t.talented} value={build.talented} options={legacyRanks} onChange={event => setLevel("talented", Number(event.target.value))} />
       </ForeverFilters>
       <p className={styles.budget}>
         <strong key={pulse?.n ?? 0} data-points-left data-beat={pulse ? "" : undefined}>{budget - spent}</strong>

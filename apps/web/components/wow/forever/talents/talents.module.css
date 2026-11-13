@@ -5,8 +5,6 @@
 .invalid p { margin: 0; color: var(--atlas-caution); }
 .toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: var(--atlas-space-4) var(--atlas-space-5); }
 .toolbar .fields { flex: 0 1 auto; }
-/* A level is two digits; the legacy rank carries the longer label. */
-.toolbar .fields.fields > div { grid-template-columns: 112px 232px; }
 .toolbar .budget { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: var(--atlas-space-3); min-height: var(--atlas-control-height); margin: 0; }
 .budget strong { grid-row: 1 / span 2; min-width: 2ch; color: var(--material-light); font: var(--atlas-weight-display) var(--atlas-text-stat) / var(--atlas-leading-tight) var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; text-align: right; }
 .budget span { align-self: end; color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 600; line-height: var(--atlas-leading-snug); }
@@ -111,7 +109,6 @@
 @media (max-width: 700px) {
   .toolbar { gap: var(--atlas-space-3); }
   .toolbar .fields { flex: 1 1 100%; }
-  .toolbar .fields.fields > div { grid-template-columns: 88px minmax(0, 1fr); }
   .toolbar .budget { flex: 1 1 100%; justify-content: start; }
   .actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
   .actions > button:global(.ui-button) { min-width: 0; height: auto; min-height: var(--atlas-control-height); padding: var(--atlas-space-1) var(--atlas-space-2); font-size: var(--atlas-text-meta); letter-spacing: 0; line-height: var(--atlas-leading-snug); white-space: normal; }

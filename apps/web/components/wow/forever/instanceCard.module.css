@@ -58,18 +58,6 @@
   .card[data-link]:hover::before { filter: contrast(.88) saturate(.84) brightness(1); }
   .card[data-link]:hover .title a { color: var(--material-light); }
 }
-/* Arrival of the long grid: on the first load of a visit its first cards land as a cascade (CSS, from the first paint,
-   as the section's short grids do); the rest rise as they are scrolled to (InstanceMotion). */
-@keyframes instanceRise { from { opacity: 0; translate: 0 calc(var(--atlas-reveal-shift) + 6px); } }
-@media screen and (prefers-reduced-motion: no-preference) {
-  :global(html:not([data-motion="reduced"]) [data-forever]:not([data-atlas-arrival="skip"])) .grid[data-instance-cascade] > :nth-child(-n+6) { animation: instanceRise var(--atlas-duration-enter) var(--atlas-ease) calc(var(--atlas-stagger) * (3 + var(--instance-i, 0) * .6)) backwards; }
-  .grid[data-instance-cascade] > :nth-child(2) { --instance-i: 1; }
-  .grid[data-instance-cascade] > :nth-child(3) { --instance-i: 2; }
-  .grid[data-instance-cascade] > :nth-child(4) { --instance-i: 3; }
-  .grid[data-instance-cascade] > :nth-child(5) { --instance-i: 4; }
-  .grid[data-instance-cascade] > :nth-child(6) { --instance-i: 5; }
-}
-@media (prefers-reduced-transparency: reduce), (forced-colors: active), print { .grid[data-instance-cascade] > * { animation: none !important; } }
 @media (prefers-reduced-transparency: reduce) { .art::before { display: none; } }
 :global([data-transparency="reduced"]) .art::before { display: none; }
 @media (forced-colors: active) { .art::before, .art::after { display: none; } .card { border: 1px solid CanvasText; } .tag { border-color: CanvasText; background: Canvas; color: CanvasText; } }

@@ -8,7 +8,8 @@ import { ForeverIcon } from "@/components/wow/forever/shared/ForeverPanel";
 import { requirementsMet, treePoints } from "@/lib/forever/talents/engine";
 import { foreverTalentIcon } from "@/lib/forever/talents/links";
 import type { TalentBuild, TalentNode, TalentTree as Tree } from "@/lib/forever/talents/types";
-import { foreverTreeArt, treeKey } from "./talentArt";
+import { foreverTreeArt } from "@/lib/games/wow/assets";
+import { treeKey } from "./talentArt";
 import { talentCopy } from "./talentCopy";
 import styles from "./talents.module.css";
 
@@ -34,7 +35,7 @@ type Props = {
 export function TalentTree({ classSlug, tree, build, lang, open, canSpend, shownId, tabStopId, pulse, touch, onShow, onEdit, onKey, onReset }: Props) {
   const t = talentCopy[lang], points = treePoints(tree, build.ranks);
   return <section id={`tree-${treeKey(tree)}`} className={styles.tree} data-open={open ? "" : undefined} aria-labelledby={`heading-${tree.id}`}
-    style={{ "--tree-art": `url("${foreverTreeArt(classSlug, tree)}")` } as CSSProperties}>
+    style={{ "--tree-art": `url("${foreverTreeArt(classSlug, treeKey(tree))}")` } as CSSProperties}>
     <header className={styles.treeHead}>
       <ForeverIcon src={foreverTalentIcon(tree.iconFileId)} size={48} />
       <h2 id={`heading-${tree.id}`}>{tree.name[lang]}</h2>

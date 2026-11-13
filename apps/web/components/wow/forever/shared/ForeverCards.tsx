@@ -19,10 +19,14 @@ export function ForeverArtGrid({ children, label, min = 220, fit = false, strip 
 }
 
 /** A place as a painted door: the painting, its name, one line under it, an optional fact in the corner (level band, players). */
-export function ForeverArtCard({ href, art, title, note, badge, accent, ratio, sizes = "(max-width: 700px) 62vw, (max-width: 1200px) 33vw, 300px", priority = false }: {
+export function ForeverArtCard({ href, art, artPosition, icon, title, note, badge, accent, ratio, sizes = "(max-width: 700px) 62vw, (max-width: 1200px) 33vw, 300px", priority = false }: {
   href: string;
   /** Painting under public/ (decor: the title names the card). */
   art: string;
+  /** Which part of the painting the card keeps when it crops it (CSS object-position; default: the centre). */
+  artPosition?: string;
+  /** A game icon in front of the title (a talent tree, a profession). */
+  icon?: string;
   title: ReactNode;
   note?: ReactNode;
   badge?: ReactNode;
@@ -34,9 +38,12 @@ export function ForeverArtCard({ href, art, title, note, badge, accent, ratio, s
   priority?: boolean;
 }) {
   return <li style={{ ...tone(accent), ...(ratio ? { "--forever-ratio": ratio } as CSSProperties : {}) }}>
-    <Link className={styles.artCard} href={href} prefetch={false}>
-      <Image src={art} alt="" fill sizes={sizes} quality={50} priority={priority} loading={priority ? undefined : "lazy"} />
+    <Link className={styles.artCard} href={href} prefetch={false} data-icon={icon ? "" : undefined}>
+      <Image className={styles.artPainting} src={art} alt="" fill sizes={sizes} quality={50} priority={priority} loading={priority ? undefined : "lazy"}
+        style={artPosition ? { objectPosition: artPosition } : undefined} />
       {badge ? <span className={styles.artBadge}>{badge}</span> : null}
+      {/* eslint-disable-next-line @next/next/no-img-element -- a small game icon from the icon host, served as is */}
+      {icon ? <img className={styles.artIcon} src={icon} alt="" width={40} height={40} loading="lazy" decoding="async" /> : null}
       <strong className={styles.artTitle}>{title}</strong>
       {note ? <span className={styles.artNote}>{note}</span> : null}
     </Link>
@@ -82,9 +89,15 @@ export function ForeverCrests({ children, label, count = 9, className }: { child
 }
 
 /** One crest: the game icon over the name, the edge in the class colour. */
-export function ForeverCrest({ href, icon, label, color }: { href: string; icon: string; label: string; /** Class colour (lib/atlas/dataPalette). */ color?: string }) {
+export function ForeverCrest({ href, icon, label, color, current = false }: {
+  href: string; icon: string; label: string;
+  /** Class colour (lib/atlas/dataPalette). */
+  color?: string;
+  /** The open page of the roster (a class page lists every class, its own lit). */
+  current?: boolean;
+}) {
   return <li style={tone(color)}>
-    <Link className={styles.crest} href={href} prefetch={false}>
+    <Link className={styles.crest} href={href} prefetch={false} aria-current={current ? "page" : undefined}>
       {/* An icon of the game's icon host is served as is; a local crest goes through the optimizer. */}
       <Image src={icon} alt="" width={56} height={56} quality={50} loading="lazy" decoding="async" unoptimized={/^https?:/.test(icon)} />
       <span>{label}</span>
@@ -116,13 +129,17 @@ export function ForeverListRow({ href, icon, title, note, values }: { href?: str
  * A large entry on the section's panel: a painting beside (or, `stacked`, above) the title, one
  * sentence and optional quick links. The title link covers the whole plaque; the quick links stay above it.
  */
-export function ForeverFeature({ href, art, title, text, links, linksLabel, stacked = false, headingLevel = 3, sizes = "(max-width: 700px) 92vw, 640px" }: {
+export function ForeverFeature({ href, art, title, text, links, linksLabel, entries, stacked = false, headingLevel = 3, sizes = "(max-width: 700px) 92vw, 640px" }: {
   href: string;
   art: string;
   title: ReactNode;
   text?: ReactNode;
+  /** Quick links as chips (the record types of the library). */
   links?: readonly { href: string; label: string }[];
+  /** Accessible name of the quick links or of the entries. */
   linksLabel?: string;
+  /** The pages behind the entry as lines with a game icon (the professions): they fill the plaque instead of a list under it. */
+  entries?: readonly { href: string; label: string; icon?: string }[];
   stacked?: boolean;
   headingLevel?: 2 | 3;
   sizes?: string;
@@ -134,6 +151,13 @@ export function ForeverFeature({ href, art, title, text, links, linksLabel, stac
       <Heading><Link href={href} prefetch={false}>{title}<ArrowRight aria-hidden="true" /></Link></Heading>
       {text ? <p>{text}</p> : null}
       {links?.length ? <nav aria-label={linksLabel}><ul className={styles.featureLinks}>{links.map(link => <li key={link.href}><Link href={link.href} prefetch={false}>{link.label}</Link></li>)}</ul></nav> : null}
+      {entries?.length ? <nav aria-label={linksLabel}><ul className={styles.featureEntries}>{entries.map(entry => <li key={entry.href}>
+        <Link href={entry.href} prefetch={false}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- a small game icon from the icon host, served as is */}
+          {entry.icon ? <img src={entry.icon} alt="" width={28} height={28} loading="lazy" decoding="async" /> : null}
+          <span>{entry.label}</span>
+        </Link>
+      </li>)}</ul></nav> : null}
     </div>
   </ForeverPanel>;
 }

@@ -1,16 +1,15 @@
-# Game interface textures on the Forever class pages
+# Game interface textures: the paintings of the Forever talent trees
 
 World of Warcraft interface textures (Blizzard Entertainment), cut from the mirror
 https://github.com/Gethe/wow-ui-textures, branch `live`, commit `d23deaf8f44a7d280dc974a5c9d5321c013db59b`
 (patch 9.2.7). Local archive: `/home/debian/wow-assets/wow-ui-textures`.
 
-## `trees/` — the classic paintings of the talent trees
-
 The background of each talent tree as the game draws it behind the tree: four quarters (256 × 256, 64 × 256,
 256 × 128, 64 × 128) joined into one 320 × 384 sheet. The painting fills 300 × 331 of the sheet; its soft dark rim is
 cut (284 × 315 at 8,8), the picture is doubled to 568 × 630 (Lanczos, light sharpen) and saved as WebP, quality 74.
-Used as the art of the tree cards on `/wow/forever/classes/<class>` (components/wow/forever/classes/classParts.tsx).
-Script: `/home/debian/gildra-forever-design-20261113/classes/tools/export-trees.cjs`.
+Not recoloured. One set for the whole section, resolved by `foreverTreeArt()` in `lib/games/wow/assets.ts`:
+the art of the tree cards on `/wow/forever/classes/<class>` and the backdrop of each tree in the talent calculator
+(`/wow/forever/talent-calc/<class>`). Script: `/home/debian/gildra-forever-design-20261113/classes/tools/export-trees.cjs`.
 
 | File | Archive paths |
 | --- | --- |
@@ -43,4 +42,9 @@ Script: `/home/debian/gildra-forever-design-20261113/classes/tools/export-trees.
 | `warrior-protection.webp` | `TALENTFRAME/WarriorProtection-TopLeft.PNG`, `TALENTFRAME/WarriorProtection-TopRight.PNG`, `TALENTFRAME/WarriorProtection-BottomLeft.PNG`, `TALENTFRAME/WarriorProtection-BottomRight.PNG` |
 
 Looked at and left: `TALENTFRAME/bg-<class>-<spec>.PNG` (512 px spec paintings of a later expansion) show its playable
-races (worgen, draenei), so the classic tree paintings were taken instead.
+races (worgen, draenei), so the classic tree paintings were taken instead. The cell frames, rank border and arrows of
+the same folder (`TalentFrame-Parts.PNG`, `TalentFrame-RankBorder.PNG`, `UI-TalentArrows.PNG`, `UI-TalentBranches.PNG`)
+are 32–64 px sprites and blur on a 2× screen: the calculator draws a cell's frame, its rank and the arrows in CSS.
+
+A second export of the same paintings (600 × 662, rim kept) lived in `forever/talents/trees/` until 13 November 2026;
+it was removed in favour of this set.

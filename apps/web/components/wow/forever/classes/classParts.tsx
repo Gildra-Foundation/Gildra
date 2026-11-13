@@ -2,6 +2,7 @@ import { HeartPulse, Shield, Swords } from 'lucide-react';
 import { classTrees, type ClassSlug } from '@/lib/data/wow/foreverClasses';
 import { foreverTalents } from '@/lib/forever/talents/data';
 import { foreverCalculatorPath, foreverTalentIcon } from '@/lib/forever/talents/links';
+import { foreverTreeArt } from '@/lib/games/wow/assets';
 import type { Lang } from '@/lib/i18n-paths';
 import { classesCopy } from './classesCopy';
 import styles from './classes.module.css';
@@ -31,7 +32,7 @@ export function treesOf(slug: ClassSlug, lang: Lang): ClassTree[] {
   return classTrees[slug].map(tree => ({
     id: tree.id, slug: tree.slug, name: tree.name[lang],
     icon: foreverTalentIcon(talents!.trees.find(entry => entry.id === tree.id)!.iconFileId),
-    art: `/assets/wow/ui/forever/classes/trees/${slug}-${tree.slug}.webp`,
+    art: foreverTreeArt(slug, tree.slug),
     roles: treeRoles[slug][tree.slug],
     href: `${foreverCalculatorPath(lang, slug)}#tree-${tree.slug}`,
   }));

@@ -86,8 +86,7 @@ export function ForeverClassPage({ lang, c, query }: { lang: Lang; c: ForeverCla
       <ForeverArtGrid className={styles.treeGrid} label={t.treesOf(c.name[lang])} min={260} fit>
         {treesOf(c.slug, lang).map(tree => <ForeverArtCard key={tree.id} href={tree.href} art={tree.art} ratio="16 / 9" accent={classColors[c.slug]}
           sizes="(max-width: 700px) 92vw, (max-width: 1200px) 33vw, 460px"
-          title={<span className={styles.treeTitle}><span className={styles.treeIcon} style={{ backgroundImage: `url(${tree.icon})` }} aria-hidden="true" />{tree.name}</span>}
-          note={<RoleBadges roles={tree.roles} lang={lang} />} />)}
+          icon={tree.icon} title={tree.name} note={<RoleBadges roles={tree.roles} lang={lang} />} />)}
       </ForeverArtGrid>
     </AtlasSection>
     <AtlasSection id="combat" title={t.highlights}>
@@ -113,7 +112,7 @@ export function ForeverClassPage({ lang, c, query }: { lang: Lang; c: ForeverCla
     </AtlasSection>
     <AtlasSection id="classes" title={t.classes}>
       <ForeverCrests label={t.classes} count={foreverClasses.length}>
-        {foreverClasses.map(entry => <ForeverCrest key={entry.slug} href={p(lang, `/wow/forever/classes/${entry.slug}`)} icon={classIcon(entry.icon)!} label={entry.name[lang]} color={classColors[entry.slug]} />)}
+        {foreverClasses.map(entry => <ForeverCrest key={entry.slug} href={p(lang, `/wow/forever/classes/${entry.slug}`)} icon={classIcon(entry.icon)!} label={entry.name[lang]} color={classColors[entry.slug]} current={entry.slug === c.slug} />)}
       </ForeverCrests>
     </AtlasSection>
   </ForeverFrame>;

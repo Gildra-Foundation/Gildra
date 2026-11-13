@@ -3,7 +3,6 @@ import Image from "next/image";
 import { ArrowRight, MapPin } from "lucide-react";
 import { ForeverPanel } from "./shared/ForeverPanel";
 import { instanceArt } from "./instanceArt";
-import { InstanceMotion } from "./InstanceMotion";
 import styles from "./instanceCard.module.css";
 
 export type InstanceCardProps = {
@@ -49,8 +48,8 @@ export function InstanceCard({ art, title, alias, href, location, facts, tag, co
 
 /**
  * The grid the cards stand in: three in a row, two on tablets, one on phones. Its first cards land with the page;
- * the rest rise card by card as the long list is scrolled (InstanceMotion).
+ * the rest rise card by card as the long list is scrolled (the section's cascade, shared/ForeverMotion).
  */
 export function InstanceCardGrid({ children }: { children: ReactNode }) {
-  return <><ul className={styles.grid} data-instance-cascade="">{children}</ul><InstanceMotion /></>;
+  return <ul className={styles.grid} data-forever-cascade="">{children}</ul>;
 }
