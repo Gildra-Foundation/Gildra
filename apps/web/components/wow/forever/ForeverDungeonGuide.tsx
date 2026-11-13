@@ -1,20 +1,20 @@
-import { FOREVER_KIT } from "./foreverKit";
 import { notFound } from "next/navigation";
-import { AtlasGrid, AtlasHero, AtlasMetaList, AtlasSection } from "@/components/atlas";
+import { AtlasAnchorNav, AtlasSection } from "@/components/atlas";
 import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
-import { p, type Lang } from "@/lib/i18n-paths";
-import { ForeverFrame } from "./ForeverFrame";
+import type { Lang } from "@/lib/i18n-paths";
+import { FOREVER_KIT } from "./foreverKit";
+import { ForeverInstanceFrame } from "./ForeverInstanceFrame";
 import { dungeonGuideCopy } from "./dungeonGuideCopy";
 import { dungeonGuides } from "./dungeonGuides";
 import { newDungeons, returningDungeonDetails } from "./instanceData";
-import { InstanceLoot } from "./InstanceLoot";
+import { InstanceLoot, hasInstanceLoot } from "./InstanceLoot";
 import { DungeonEncounters } from "./DungeonEncounters";
+import { bossName } from "./encounterNames";
 import { DungeonRoute } from "./DungeonRoute";
+import { InstanceEnemies } from "./InstanceEnemies";
+import { InstanceHeading } from "./InstanceHeading";
 import { InstanceMaps } from "./InstanceMaps";
 import { hallGuideCopy } from "./hallGuideCopy";
-import { instanceName } from "./instanceLocalization";
-import { EncounterNavigation } from "./DungeonEncounters";
-import ux from "./foreverUx.module.css";
 import styles from "./dungeonGuide.module.css";
 
 export function ForeverDungeonGuide({ lang, slug }: { lang: Lang; slug: string }) {
@@ -23,31 +23,37 @@ export function ForeverDungeonGuide({ lang, slug }: { lang: Lang; slug: string }
   if (!guide || !dungeon) notFound();
   const t = hallGuideCopy[lang];
   const c = dungeonGuideCopy[lang];
-  const name = instanceName(dungeon.name, lang);
-  const mapLabel = c.map;
-  return <ForeverFrame lang={lang}>
-    <AtlasHero title={name} align="start" lede={guide.entrance[lang]} breadcrumbsLabel={t.breadcrumb} breadcrumbs={[{ label: "WoW — Forever", href: p(lang, "/wow/forever") }, { label: t.dungeons, href: p(lang, "/wow/forever/dungeons") }, { label: name }]} />
-    {name !== dungeon.name && <p className={ux.alias} lang="en">{dungeon.name}</p>}
-    <AtlasMetaList items={[{ label: t.level, value: `${dungeon.min}–${dungeon.max}` }, ...(newDungeons.some(item => item.slug === slug) ? [{ label: t.players, value: 5 }] : [])]} />
-    <EncounterNavigation bosses={guide.bosses} lang={lang} />
-    {!!guide.preparation?.length && <section className={ux.preparation} aria-label={c.preparation}><h2>{c.preparation}</h2>{guide.preparation.map(note => <p key={note.en}>{note[lang]}</p>)}</section>}
-    <div className={styles.workspace}>
-      <AtlasSection title={mapLabel}>
-        <MaterialPlaque kit={FOREVER_KIT}>
+  const fresh = newDungeons.some(item => item.slug === slug);
+  const bosses = guide.bosses.map(boss => ({ name: boss.name, label: bossName(boss, lang), portrait: boss.portrait }));
+  return <ForeverInstanceFrame lang={lang} art={slug}>
+    <InstanceHeading lang={lang} dungeon={dungeon} lede={fresh ? guide.entrance[lang] : undefined} players={fresh ? 5 : undefined} />
+    <AtlasAnchorNav label={c.sections} items={[
+      { href: "#map", label: c.map },
+      ...(guide.route?.length ? [{ href: "#route", label: c.route }] : []),
+      { href: "#bosses", label: t.encounters },
+      ...(guide.trash?.length ? [{ href: "#enemies", label: c.enemies }] : []),
+      ...(hasInstanceLoot(slug) ? [{ href: "#loot", label: c.loot }] : []),
+    ]} />
+    {!!guide.preparation?.length && <MaterialPlaque kit={FOREVER_KIT} as="section" className={styles.preparation} aria-labelledby="preparation-title">
+      <h2 id="preparation-title" className={materialStyles.title}>{c.preparation}</h2>
+      <ul>{guide.preparation.map(note => <li key={note.en}>{note[lang]}</li>)}</ul>
+    </MaterialPlaque>}
+    <AtlasSection id="map" title={c.map}>
+      <div className={styles.workspace} data-route={guide.route?.length ? "" : undefined}>
+        <MaterialPlaque kit={FOREVER_KIT} className={styles.mapPanel}>
           <InstanceMaps maps={guide.maps} src={guide.map} viewBox={guide.viewBox}
-            name={name} lang={lang} bosses={guide.bosses.map(boss => boss.name)} />
+            name={dungeon.name} lang={lang} bosses={guide.bosses.map(boss => boss.name)} />
         </MaterialPlaque>
-        {!!guide.route?.length && <MaterialPlaque kit={FOREVER_KIT} className={styles.routePanel}>
-          <h3 className={materialStyles.title}>{c.route}</h3>
-          <DungeonRoute steps={guide.route} bosses={guide.bosses.map(boss => boss.name)} lang={lang} />
+        {!!guide.route?.length && <MaterialPlaque kit={FOREVER_KIT} as="section" id="route" className={styles.routePanel} aria-labelledby="route-title">
+          <h3 id="route-title" className={materialStyles.title}>{c.route}</h3>
+          <DungeonRoute steps={guide.route} bosses={bosses} lang={lang} />
         </MaterialPlaque>}
-      </AtlasSection>
-      <AtlasSection title={t.encounters}>
-        <DungeonEncounters bosses={guide.bosses} lang={lang} />
-      </AtlasSection>
-    </div>
-    {!!guide.trash?.length && <AtlasSection title={t.trash}><AtlasGrid min={260} fit>{guide.trash.map(enemy => <MaterialPlaque key={enemy.name} kit={FOREVER_KIT} as="article">{/* eslint-disable-next-line @next/next/no-img-element */}
-      {enemy.portrait && <img className={styles.portrait} src={enemy.portrait} width={64} height={64} alt="" loading="lazy" />}<h3 className={materialStyles.title}>{enemy.name}</h3><p className={styles.ability}>{enemy.ability}</p><p className={materialStyles.text}>{enemy.response[lang]}</p></MaterialPlaque>)}</AtlasGrid></AtlasSection>}
+      </div>
+    </AtlasSection>
+    <AtlasSection id="bosses" title={t.encounters}>
+      <MaterialPlaque kit={FOREVER_KIT}><DungeonEncounters bosses={guide.bosses} lang={lang} /></MaterialPlaque>
+    </AtlasSection>
+    {!!guide.trash?.length && <AtlasSection id="enemies" title={t.trash}><InstanceEnemies enemies={guide.trash} lang={lang} /></AtlasSection>}
     <InstanceLoot slug={slug} lang={lang} />
-  </ForeverFrame>;
+  </ForeverInstanceFrame>;
 }

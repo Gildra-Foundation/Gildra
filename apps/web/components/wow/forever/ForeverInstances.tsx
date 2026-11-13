@@ -1,54 +1,82 @@
-import { AtlasDisclosure, AtlasGrid, AtlasHero, AtlasMetaList, AtlasSection } from "@/components/atlas";
-import { MaterialLinkButton, MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
+import Image from "next/image";
+import { MapPin } from "lucide-react";
+import { AtlasHero, AtlasSection } from "@/components/atlas";
+import { MaterialPlaque, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { p, type Lang } from "@/lib/i18n-paths";
 import { FOREVER_KIT } from "./foreverKit";
-import { ForeverFrame } from "./ForeverFrame";
-import { instanceCopy } from "./instanceCopy";
+import { ForeverInstanceFrame } from "./ForeverInstanceFrame";
+import { bossCount, instanceCopy, playerCount } from "./instanceCopy";
 import { foreverRaids, raidEncounters, newDungeons } from "./instanceData";
 import { ForeverDungeonCatalog } from "./ForeverDungeonCatalog";
+import { instanceArt } from "./instanceArt";
+import { allDungeons, dungeonFacts } from "./instanceFacts";
+import { InstanceCard, InstanceCardGrid } from "./InstanceCard";
+import { InstanceMotion } from "./InstanceMotion";
 import { instanceName } from "./instanceLocalization";
 import styles from "./foreverInstances.module.css";
 
 export function ForeverInstances({ lang, kind }: { lang: Lang; kind: "raids" | "dungeons" }) {
   const t = instanceCopy[lang];
-  return <ForeverFrame lang={lang}>
-    <AtlasHero align="start" title={t[kind]} lede={kind === "raids" ? t.raidLede : t.dungeonLede}
+  const dungeons = allDungeons.map(dungeon => dungeonFacts(dungeon, lang));
+  const raids = kind === "raids";
+  return <ForeverInstanceFrame lang={lang} art={raids ? "hyjal-summit" : "blackrock-depths"} shade="deep">
+    <InstanceMotion />
+    <AtlasHero align="start" title={t[kind]} lede={raids ? t.raidLede : t.dungeonLede}
       breadcrumbs={[{ label: "Forever", href: p(lang, "/wow/forever") }, { label: t[kind] }]}
-      breadcrumbsLabel={t.breadcrumbs} />
-    {kind === "raids" ? <>
+      breadcrumbsLabel={t.breadcrumbs}
+      stats={raids
+        ? [{ value: foreverRaids.length, label: t.raids }, { value: foreverRaids.reduce((sum, raid) => sum + raid.bosses, 0), label: t.bosses }, { value: 60, label: t.level }]
+        : [{ value: dungeons.length, label: t.dungeons }, { value: dungeons.reduce((sum, dungeon) => sum + dungeon.bosses, 0), label: t.bosses }, { value: `${dungeons[0].min}–60`, label: t.level }]} />
+    {raids ? <>
       <AtlasSection>
-        <ForeverRaidCards lang={lang} heading="h2" />
+        <div className={styles.raids} data-instance-cascade="">
+          {foreverRaids.map(raid => <ForeverRaid key={raid.id} raid={raid} lang={lang} />)}
+        </div>
       </AtlasSection>
       <AtlasSection title={t.amulet}>
         <MaterialPlaque kit={FOREVER_KIT}><p className={materialStyles.text}>{t.amuletText}</p></MaterialPlaque>
       </AtlasSection>
-    </> : <AtlasSection><ForeverDungeonCatalog lang={lang} /></AtlasSection>}
-  </ForeverFrame>;
+    </> : <AtlasSection><ForeverDungeonCatalog lang={lang} dungeons={dungeons} /></AtlasSection>}
+  </ForeverInstanceFrame>;
 }
 
-/** The three level-60 raids: where, how many players, how many bosses. */
-export function ForeverRaidCards({ lang, heading: Heading = "h3" }: { lang: Lang; heading?: "h2" | "h3" }) {
+/** One raid of the journal: its painting in the Forever frame beside a plaque with the facts and the roster. */
+function ForeverRaid({ raid, lang }: { raid: typeof foreverRaids[number]; lang: Lang }) {
   const t = instanceCopy[lang];
-  return <AtlasGrid min={300} fit>
-    {foreverRaids.map(raid => <MaterialPlaque key={raid.id} kit={FOREVER_KIT} as="article" aria-labelledby={raid.id}>
-      <p className={styles.location}>{raid.location}</p>
-      <Heading id={raid.id} className={materialStyles.title}>{raid.name}</Heading>
-      <AtlasMetaList items={[{ label: t.level, value: 60 }, { label: t.players, value: raid.players }, { label: t.bosses, value: raid.bosses }]} />
-      <p className={`${materialStyles.text} ${styles.afterFacts}`}>{raid.text[lang]}</p>
-      <AtlasDisclosure summary={t.bosses}><ul>{raidEncounters[raid.id].map(name => <li key={name}>{name}</li>)}</ul></AtlasDisclosure>
-    </MaterialPlaque>)}
-  </AtlasGrid>;
+  const painting = instanceArt(raid.id);
+  return <article id={raid.id} className={styles.raid} aria-labelledby={`${raid.id}-name`}>
+    <MaterialPlaque kit={FOREVER_KIT} className={styles.raidFrame} aria-hidden="true">
+      <div className={styles.raidArt}>{painting && <Image src={painting.src} alt="" fill sizes="(max-width: 900px) 100vw, 50vw" style={{ objectPosition: painting.position }} />}</div>
+    </MaterialPlaque>
+    <MaterialPlaque kit={FOREVER_KIT} className={styles.raidBody}>
+      <p className={styles.location}><MapPin aria-hidden="true" /><span>{instanceName(raid.location, lang)}</span></p>
+      <h2 id={`${raid.id}-name`} className={styles.raidName}>{raid.name}</h2>
+      <p className={styles.raidFacts}><span>{t.level} 60</span><span>{playerCount(raid.players, lang)}</span><span>{bossCount(raid.bosses, lang)}</span></p>
+      <p className={materialStyles.text}>{raid.text[lang]}</p>
+      <h3 className={styles.rosterTitle}>{t.bosses}</h3>
+      <ol className={styles.roster}>{raidEncounters[raid.id].map((name, index) => <li key={name}><span aria-hidden="true">{index + 1}</span>{name}</li>)}</ol>
+    </MaterialPlaque>
+  </article>;
 }
 
-/** The nine new dungeons with their level bands; a guide button where a guide exists. */
+/** The three level-60 raids as compact cards (the Forever hub): painting, place, size; the card opens the raid in the journal. */
+export function ForeverRaidCards({ lang, heading = "h3" }: { lang: Lang; heading?: "h2" | "h3" }) {
+  const t = instanceCopy[lang];
+  return <InstanceCardGrid>
+    {foreverRaids.map(raid => <li key={raid.id}>
+      <InstanceCard compact heading={heading} art={raid.id} href={`${p(lang, "/wow/forever/raids")}#${raid.id}`} title={raid.name} location={instanceName(raid.location, lang)}
+        facts={[`${t.level} 60`, playerCount(raid.players, lang), bossCount(raid.bosses, lang)]} />
+    </li>)}
+  </InstanceCardGrid>;
+}
+
+/** The nine new dungeons as compact cards (the Forever hub); each opens its guide. */
 export function ForeverDungeonCards({ lang }: { lang: Lang }) {
   const t = instanceCopy[lang];
-  return <AtlasGrid min={320} fit className={styles.nine}>
-    {newDungeons.map(dungeon => <MaterialPlaque key={instanceName(dungeon.name, lang)} kit={FOREVER_KIT} as="article">
-      <p className={styles.location}>{instanceName(dungeon.location, lang)}</p>
-      <h3 className={materialStyles.title}>{instanceName(dungeon.name, lang)}</h3>
-      <AtlasMetaList columns={2} items={[{ label: t.level, value: `${dungeon.min}–${dungeon.max}` }, { label: t.players, value: 5 }]} />
-      {<MaterialLinkButton kit={FOREVER_KIT} fit="block" href={p(lang, `/wow/forever/dungeons/${dungeon.slug}`)}>{t.guide}</MaterialLinkButton>}
-    </MaterialPlaque>)}
-  </AtlasGrid>;
+  return <InstanceCardGrid>
+    {newDungeons.map(dungeon => dungeonFacts(dungeon, lang)).map(d => <li key={d.slug}>
+      <InstanceCard compact art={d.slug} href={p(lang, `/wow/forever/dungeons/${d.slug}`)} title={d.name} alias={d.alias} location={d.location}
+        facts={[`${t.level} ${d.min}–${d.max}`, bossCount(d.bosses, lang)]} />
+    </li>)}
+  </InstanceCardGrid>;
 }

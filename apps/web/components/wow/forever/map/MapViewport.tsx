@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ExternalLink, Minus, Plus, RotateCcw } from "lucide-react";
 import type { Lang } from "@/lib/i18n-paths";
 import { mapCopy } from "./mapCopy";
 import styles from "./map.module.css";
 
-export function MapViewport({ src, width, height, viewBox, label, lang, children, activePoint }: {
+export function MapViewport({ src, width, height, viewBox, label, lang, children, activePoint, tools }: {
   src: string; width?: number; height?: number; viewBox?: string; label: string; lang: Lang; children?: ReactNode; activePoint?: { x: number; y: number };
+  /** More controls of the toolbar (a link to this floor). */
+  tools?: ReactNode;
 }) {
   const t = mapCopy[lang];
   const viewport = useRef<HTMLDivElement>(null);
@@ -45,10 +48,15 @@ export function MapViewport({ src, width, height, viewBox, label, lang, children
   }
   return <div className={styles.root}>
     <div className={styles.controls}>
-      <button type="button" aria-label={t.zoomOut} disabled={zoom === 1} onClick={() => changeZoom(zoom - .5)}>−</button>
-      <button type="button" aria-label={t.zoomIn} disabled={zoom === 4} onClick={() => changeZoom(zoom + .5)}>+</button>
-      <button type="button" onClick={() => changeZoom(1, true)}>{t.reset}</button>
-      <a href={src} target="_blank" rel="noreferrer">{t.original} ↗</a>
+      <div className={styles.zoom} role="group" aria-label={t.zoom}>
+        <button type="button" aria-label={t.zoomOut} title={t.zoomOut} disabled={zoom === 1} onClick={() => changeZoom(zoom - .5)}><Minus aria-hidden="true" /></button>
+        <output aria-live="off">{Math.round(zoom * 100)}%</output>
+        <button type="button" aria-label={t.zoomIn} title={t.zoomIn} disabled={zoom === 4} onClick={() => changeZoom(zoom + .5)}><Plus aria-hidden="true" /></button>
+      </div>
+      <button type="button" aria-label={t.reset} title={t.reset} disabled={zoom === 1} onClick={() => changeZoom(1, true)}><RotateCcw aria-hidden="true" /></button>
+      <span className={styles.spacer} />
+      {tools}
+      <a href={src} target="_blank" rel="noreferrer" aria-label={t.original} title={t.original}><ExternalLink aria-hidden="true" /></a>
     </div>
     {state !== "ready" && <div className={styles.status} role="status">{state === "loading" ? t.loading : <>{t.error} <button type="button" onClick={() => { setState("loading"); setAttempt(value => value + 1); }}>{t.retry}</button></>}</div>}
     <div ref={viewport} className={styles.viewport} tabIndex={0} role="region" aria-label={label}

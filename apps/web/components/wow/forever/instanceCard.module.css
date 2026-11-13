@@ -1,0 +1,67 @@
+/* atlas:strict — a Forever dungeon or raid: its painting in the Forever frame, name and facts on the plaque under it. */
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.grid[data-columns="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid > li { display: flex; min-width: 0; }
+.grid > li > * { flex: 1; }
+
+/* The plaque's rail is the picture frame: the painting stands inside it on a narrow mat of the plaque's face. */
+.card.card { --instance-mat: var(--atlas-space-4); position: relative; display: flex; flex-direction: column; padding: var(--instance-mat); }
+.art { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: var(--atlas-radius); background: var(--material-base); }
+.art::after { position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--material-line), inset 0 -36px 36px -24px var(--material-base); content: ""; pointer-events: none; }
+/* One pass of light over the painting when the card is pointed at. */
+.art::before { position: absolute; z-index: 1; inset: 0; background: linear-gradient(105deg, transparent 38%, color-mix(in srgb, var(--atlas-text-strong) 16%, transparent) 50%, transparent 62%) no-repeat -160% 0 / 55% 100%; content: ""; pointer-events: none; }
+.scene { object-fit: cover; filter: contrast(.94) saturate(.9); }
+.tag { position: absolute; z-index: 2; top: var(--atlas-space-2); left: var(--atlas-space-2); padding: var(--atlas-space-1) var(--atlas-space-2); border: 1px solid var(--material-line); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 82%, transparent); color: var(--material-light); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); line-height: 1.3; text-transform: uppercase; }
+
+.body { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: var(--atlas-space-4) var(--atlas-space-2) var(--atlas-space-1); }
+.location { display: flex; align-items: center; gap: var(--atlas-space-2); margin: 0 0 var(--atlas-space-1); color: var(--material-light); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
+.location svg { flex: none; width: 14px; height: 14px; }
+.title { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); text-shadow: 0 1px 3px var(--atlas-bg); text-wrap: balance; }
+.title a { color: inherit; text-decoration: none; }
+/* The whole card opens the page; the name stays the one link a screen reader meets. */
+.title a::after { position: absolute; z-index: 3; inset: 0; content: ""; }
+.card.card .title a:focus-visible { outline: none; }
+.card:has(.title a:focus-visible) { outline: 2px solid var(--material-light); outline-offset: 2px; }
+.alias { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.facts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-1) var(--atlas-space-4); margin: auto 0 0; padding-top: var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums lining-nums; }
+.facts > span { display: inline-flex; align-items: center; gap: var(--atlas-space-2); white-space: nowrap; }
+.facts > span:first-child { color: var(--material-light); font-weight: 650; }
+.facts svg { flex: none; width: 15px; height: 15px; }
+.arrow { margin-left: auto; color: var(--material-light); }
+
+/* A raid's roster or a line of text under the facts. */
+.body > :is(ol, ul, p):last-child { position: relative; z-index: 4; }
+
+@media (max-width: 1100px) { .grid, .grid[data-columns] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-4); } }
+@media (max-width: 760px) { .card.card { --instance-mat: var(--atlas-space-3); } }
+@media (max-width: 640px) {
+  .grid, .grid[data-columns] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
+  /* Compact: the painting beside the text, so a long list stays short. */
+  .card[data-compact] { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: stretch; }
+  .card[data-compact] .art { aspect-ratio: auto; min-height: 96px; }
+  .card[data-compact] .body { padding: var(--atlas-space-1) 0 var(--atlas-space-1) var(--atlas-space-3); }
+  .card[data-compact] .title { font-size: var(--atlas-text-title); }
+  .card[data-compact] .facts { padding-top: var(--atlas-space-2); gap: var(--atlas-space-1) var(--atlas-space-3); }
+  .card[data-compact] .arrow { display: none; }
+  .card[data-compact] .tag { top: var(--atlas-space-1); left: var(--atlas-space-1); }
+}
+
+/* Answer to the pointer: the card lifts, the painting comes closer, light passes over it. Only where motion is welcome:
+   the system setting and the site's "Less motion" switch leave the card still. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion="reduced"])) .card[data-link] { transition: translate var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .card[data-link] .scene { transition: scale var(--atlas-duration-art) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .card[data-link] :is(.title a, .arrow) { transition: color var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .card[data-link]:hover { translate: 0 -3px; }
+  :global(html:not([data-motion="reduced"])) .card[data-link]:hover .scene { scale: 1.045; }
+  :global(html:not([data-motion="reduced"])) .card[data-link]:hover .art::before { background-position: 260% 0; transition: background-position var(--atlas-duration-sweep) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .card[data-link]:hover .arrow { translate: 3px 0; }
+  :global(html:not([data-motion="reduced"])) .card[data-link]:active { translate: none; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .card[data-link]:hover::before { filter: contrast(.88) saturate(.84) brightness(1); }
+  .card[data-link]:hover .title a { color: var(--material-light); }
+}
+@media (prefers-reduced-transparency: reduce) { .art::before { display: none; } }
+:global([data-transparency="reduced"]) .art::before { display: none; }
+@media (forced-colors: active) { .art::before, .art::after { display: none; } .card { border: 1px solid CanvasText; } .tag { border-color: CanvasText; background: Canvas; color: CanvasText; } }

@@ -1,15 +1,38 @@
-/* atlas:strict — Forever guide layout and encounter interaction. */
-.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--atlas-space-5); align-items: start; }
+/* atlas:strict — Hall of Thanes: encounter chooser, map and the chosen fight. */
+.workspace { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--atlas-space-4); align-items: start; }
 .workspace > * { min-width: 0; }
-.encounter { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-4)); }
-.choices { display: grid; gap: var(--atlas-space-2); margin-bottom: var(--atlas-space-4); }
-.choices a { display: flex; align-items: center; text-decoration: none; text-align: start; min-height: 44px; padding: var(--atlas-space-2) var(--atlas-space-3); border: 1px solid var(--atlas-line); background: var(--atlas-surface); color: var(--atlas-text); cursor: pointer; }
-.choices a[aria-current="true"] { border-color: var(--atlas-accent); color: var(--atlas-accent); }
-.choices a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 4px; }
-.mechanics { display: grid; gap: var(--atlas-space-4); }
-.mechanics dt { color: var(--atlas-text-strong); font-weight: 600; }
-.mechanics dt span { display: block; font-size: var(--atlas-text-small); color: var(--atlas-accent); }
-.mechanics dd { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text); }
-.ability { color: var(--atlas-accent); }
-@media (max-width: 767px) { .workspace { grid-template-columns: minmax(0, 1fr); } }
+.encounter { position: sticky; top: calc(var(--atlas-sticky-top) + var(--atlas-control-height) + var(--atlas-space-3)); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-control-height) + var(--atlas-space-4)); }
+.encounter:focus { outline: none; }
+
+/* Encounters by number, in the order of the run. */
+.choices { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin-bottom: var(--atlas-space-4); }
+.choices a { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: var(--atlas-control-height); padding: var(--atlas-space-1) var(--atlas-space-4) var(--atlas-space-1) var(--atlas-space-2); border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); background: var(--atlas-glass-fill); color: var(--atlas-text); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; }
+.choices a span, .name span { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border: 1px solid var(--atlas-line); border-radius: 50%; color: var(--atlas-accent); font: var(--atlas-weight-display) var(--atlas-text-body) / 1 var(--atlas-font-display); font-variant-numeric: lining-nums; }
+.choices a[aria-current="true"] { border-color: var(--atlas-accent); background: var(--atlas-surface-selected); color: var(--atlas-text-strong); }
+.choices a[aria-current="true"] span { border-color: var(--atlas-accent); background: var(--atlas-accent); color: var(--atlas-accent-ink); }
+.choices a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+
+.area { margin: 0 0 var(--atlas-space-1); color: var(--material-light); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
+.name { display: flex; align-items: center; gap: var(--atlas-space-3); margin: 0 0 var(--atlas-space-3); color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.name span { width: 32px; height: 32px; border-color: var(--material-line); color: var(--material-light); }
+.note { margin: 0; color: var(--atlas-text); line-height: var(--atlas-leading-body); }
+.encounter h4 { margin: var(--atlas-space-5) 0 var(--atlas-space-2); color: var(--material-light); font: 650 var(--atlas-text-label) / 1.3 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.enemies { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.enemies li { padding: var(--atlas-space-1) var(--atlas-space-3); border: 1px solid var(--material-line); border-radius: var(--atlas-radius-control); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); }
+.mechanics { display: grid; gap: var(--atlas-space-4); margin: 0; }
+.mechanics dt { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-1) var(--atlas-space-2); color: var(--atlas-text-strong); font-weight: 650; }
+.mechanics dt span { color: var(--material-light); font-size: var(--atlas-text-meta); font-weight: 500; }
+.mechanics dd { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text); line-height: var(--atlas-leading-body); }
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); }
+  .encounter { position: relative; top: auto; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .choices a:hover { border-color: var(--atlas-accent); color: var(--atlas-text-strong); }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion="reduced"])) .choices a { transition: border-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .choices a:hover { translate: 0 -1px; }
+}
 @media (forced-colors: active) { .choices a[aria-current="true"] { outline: 3px solid Highlight; } }
