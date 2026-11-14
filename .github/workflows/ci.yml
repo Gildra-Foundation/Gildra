@@ -6,7 +6,7 @@ on:
       recovery:
         type: boolean
         default: false
-        description: Preserve the fixed PR4 production baseline and run full backup
+        description: Inspect existing PR4 rollback and backup evidence
   pull_request:
   push:
     branches: [master, "release/**"]
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           ref: ${{ github.sha }}
-      - name: Preserve fixed baseline and prove full backup
+      - name: Inspect saved baseline and backup evidence
         env:
           SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.OVH_SSH_KNOWN_HOSTS }}
