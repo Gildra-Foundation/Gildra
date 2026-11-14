@@ -1,0 +1,71 @@
+/* atlas:strict — Forever professions: the catalog as plates with the profession's sign, a profession as a list of
+   recipes under the filter bar, a recipe as its reagents beside what it makes and where it is taught. Layout and
+   tokens only; materials, fields and motion come from the shared Forever parts (docs/forever/DESIGN.md). */
+
+/* ---------- Catalog: one plate per profession ---------- */
+.catalog { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-4); margin: 0; padding: 0; list-style: none; }
+.catalog > li { display: grid; min-width: 0; }
+.catalog .card { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; align-items: center; gap: var(--atlas-space-3) var(--atlas-space-4); padding: 28px 32px 30px; }
+.cardHead { display: grid; gap: var(--atlas-space-1); min-width: 0; }
+.cardName { margin: 0; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.cardName a { color: var(--atlas-text-strong); text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+/* The name link covers the plate. */
+.cardName a::after { content: ""; position: absolute; inset: 0; }
+.cardName a:focus-visible { outline: none; }
+.cardName a:focus-visible::after { outline: 2px solid var(--material-light, var(--atlas-accent-strong)); outline-offset: -6px; }
+.cardFacts { display: flex; flex-wrap: wrap; gap: 0 var(--atlas-space-3); margin: 0; color: var(--material-light, var(--atlas-accent)); font-size: var(--atlas-text-small); font-weight: 600; font-variant-numeric: lining-nums tabular-nums; }
+.cardText { grid-column: 1 / -1; align-self: start; margin: 0; padding-top: var(--atlas-space-3); border-top: 1px solid var(--material-line, var(--atlas-line-soft)); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); text-shadow: 0 1px 3px var(--atlas-bg); }
+
+/* ---------- Profession: recipes, ranks, trainers ---------- */
+.check { display: flex; align-items: center; min-height: var(--atlas-control-height); }
+.fresh { margin-inline-start: var(--atlas-space-2); padding: 1px var(--atlas-space-2); border: 1px solid var(--material-line, var(--atlas-line)); border-radius: var(--atlas-radius); color: var(--material-light, var(--atlas-accent)); font-size: var(--atlas-text-label); font-style: normal; font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; white-space: nowrap; vertical-align: 1px; }
+.reagents { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1) var(--atlas-space-3); }
+.reagent { display: inline-flex; align-items: center; gap: var(--atlas-space-1); font-variant-numeric: lining-nums tabular-nums; }
+.reagent img { flex: none; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); }
+.source { color: var(--atlas-text-muted); }
+.skill { min-width: 5.5em; color: var(--atlas-text-strong); font-weight: 600; text-align: right; }
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--atlas-space-4); margin: 0; }
+.facts > div { min-width: 0; padding-inline-start: var(--atlas-space-4); border-inline-start: 1px solid var(--material-line, var(--atlas-line-soft)); }
+.facts dt { color: var(--material-light, var(--atlas-accent)); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.facts dd { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); font-variant-numeric: lining-nums tabular-nums; }
+.facts[data-quiet] { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: var(--atlas-space-5); }
+.facts[data-quiet] dd { font: 600 var(--atlas-text-body) / var(--atlas-leading-snug) var(--atlas-font-ui); }
+.trainers { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--atlas-space-6); }
+.trainers > li:nth-last-child(2):nth-child(odd) { border-bottom: 0; }
+
+/* ---------- Recipe: reagents beside the result and the way to learn it ---------- */
+.recipe { margin-top: var(--atlas-space-5); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; gap: var(--atlas-space-5); }
+.recipe > :only-child { grid-column: 1 / -1; }
+.crafts { margin-bottom: var(--atlas-space-3); }
+.itemIcon { display: block; flex: none; }
+.itemName { font-weight: inherit; }
+.amount { color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; }
+
+/* Answer to the pointer; motion is switched on only where the reader has not asked for less of it. */
+@media (hover: hover) and (pointer: fine) {
+  .cardName a { transition: text-decoration-color var(--atlas-duration-fast) var(--atlas-ease); }
+  .card:hover .cardName a { text-decoration-color: currentColor; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion="reduced"])) .catalog .card { transition: translate var(--atlas-duration-fast) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .catalog .card:hover { translate: 0 -3px; }
+  :global(html:not([data-motion="reduced"])) .card :global(img) { transition: scale var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .card:hover :global(img) { scale: 1.08; }
+}
+
+@media (max-width: 1100px) {
+  .catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .recipe { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  .catalog { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-2); }
+  .catalog .card { padding: 22px 20px 24px; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .trainers { grid-template-columns: minmax(0, 1fr); }
+  .trainers > li:nth-last-child(2):nth-child(odd) { border-bottom: 1px solid var(--material-line, var(--atlas-line-soft)); }
+  .skill { min-width: 0; text-align: left; }
+  .check { min-height: 44px; }
+}
+@media (forced-colors: active) {
+  .cardName a { color: LinkText; }
+}

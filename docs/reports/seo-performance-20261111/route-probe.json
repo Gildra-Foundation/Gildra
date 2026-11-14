@@ -1,0 +1,68 @@
+[
+  {
+    "path": "/wow/classes/priest",
+    "status": 200,
+    "location": null,
+    "bytes": 161745,
+    "canonical": [
+      "https://wowarcana.com/wow/classes/priest"
+    ],
+    "noindex": false,
+    "h1": 1
+  },
+  {
+    "path": "/wow/classes/priest/holy-priest",
+    "status": 200,
+    "location": null,
+    "bytes": 142305,
+    "canonical": [
+      "https://wowarcana.com/wow/classes/priest/holy-priest"
+    ],
+    "noindex": false,
+    "h1": 1
+  },
+  {
+    "path": "/wow/map",
+    "status": 200,
+    "location": null,
+    "bytes": 103720,
+    "canonical": [
+      "https://wowarcana.com/wow/map"
+    ],
+    "noindex": false,
+    "h1": 1
+  },
+  {
+    "path": "/ru/wow/map",
+    "status": 200,
+    "location": null,
+    "bytes": 104918,
+    "canonical": [
+      "https://wowarcana.com/ru/wow/map"
+    ],
+    "noindex": false,
+    "h1": 1
+  },
+  {
+    "path": "/wow/forever/dungeons/scholomance",
+    "status": 200,
+    "location": null,
+    "bytes": 198772,
+    "canonical": [
+      "https://wowarcana.com/wow/forever/dungeons/scholomance"
+    ],
+    "noindex": false,
+    "h1": 1
+  },
+  {
+    "path": "/ru/wow/forever/dungeons/scholomance",
+    "status": 200,
+    "location": null,
+    "bytes": 200257,
+    "canonical": [
+      "https://wowarcana.com/ru/wow/forever/dungeons/scholomance"
+    ],
+    "noindex": false,
+    "h1": 1
+  }
+]

@@ -26,6 +26,6 @@ describe("server environment", () => {
   it("defaults and trims the API base URL", () => {
     assert.equal(apiInternalUrl({}), "http://api:8080");
     assert.equal(apiInternalUrl({ API_INTERNAL_URL: "  " }), "http://api:8080");
-    assert.equal(apiInternalUrl({ API_INTERNAL_URL: "https://api.gildra.net/" }), "https://api.gildra.net");
+    assert.equal(apiInternalUrl({ API_INTERNAL_URL: "https://api.wowarcana.com/" }), "https://api.wowarcana.com");
   });
 });

@@ -3,6 +3,7 @@ package catalogtaxonomy
 import (
 	"context"
 	"fmt"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/itemquality"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -89,7 +90,7 @@ func rebuildBaseItemVariants(ctx context.Context, tx pgx.Tx) (int64, int64, int6
 		INSERT INTO catalog_item_variants(item_version_id,snapshot_id,source_artifact_id,variant_key,
 			item_level,quality,content_hash,attributes)
 		SELECT version.id,version.snapshot_id,version.source_artifact_id,'base',item.item_level,
-			CASE WHEN item.quality ~ '^[0-9]+$' THEN item.quality::int END,version.content_hash,
+			`+itemquality.SQL("item.quality")+`,version.content_hash,
 			jsonb_build_object('source',version.source,'projection','canonical_base')
 		FROM game_entities entity
 		JOIN game_entity_versions version ON version.id=entity.latest_version_id

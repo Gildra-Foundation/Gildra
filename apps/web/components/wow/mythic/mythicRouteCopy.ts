@@ -52,7 +52,7 @@ const ru = {
   tyrannicalNote: "Обычные враги сильнее и опаснее",
   seasonAffix: "Сезон 2",
   seasonAffixTitle: "Условия текущего сезона",
-  seasonAffixNote: "Действуют условия Midnight Сезон 2",
+  seasonAffixNote: "Действуют условия Midnight, сезон 2",
 
   // Workspace
   plannerLabel: (dungeon: string) => `Планировщик маршрута ${dungeon}`,
@@ -126,7 +126,7 @@ const ru = {
   // Import dialog
   importTitle: "Импорт маршрута",
   close: "Закрыть",
-  importHeading: "Вставьте JSON маршрута Gildra",
+  importHeading: "Вставьте JSON маршрута WowArcana",
   importText: "Можно вставить массив действий или ранее скачанный файл целиком.",
   cancel: "Отмена",
   importAction: "Импортировать",
@@ -275,7 +275,7 @@ const en: MythicRouteCopy = {
 
   importTitle: "Import a route",
   close: "Close",
-  importHeading: "Paste a Gildra route JSON",
+  importHeading: "Paste a WowArcana route JSON",
   importText: "Paste an array of steps or a previously downloaded file as a whole.",
   cancel: "Cancel",
   importAction: "Import",

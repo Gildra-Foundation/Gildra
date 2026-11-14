@@ -5,6 +5,12 @@
   "width": 847,
   "height": 941
  },
+ "/assets/wow/loading/archive.webp": {
+  "src": "/assets/wow/loading/archive-portrait.webp",
+  "x": 0.7,
+  "width": 972,
+  "height": 1080
+ },
  "/assets/wow/loading/classes-heroes-20261106.webp": {
   "src": "/assets/wow/loading/classes-heroes-20261106-portrait.webp",
   "x": 0.68,
@@ -16,6 +22,18 @@
   "x": 0.5,
   "width": 972,
   "height": 1080
+ },
+ "/assets/wow/loading/forever-crafthall-20261111.webp": {
+  "src": "/assets/wow/loading/forever-crafthall-20261111-portrait.webp",
+  "x": 0.7,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/forever-old-road-20261111.webp": {
+  "src": "/assets/wow/loading/forever-old-road-20261111-portrait.webp",
+  "x": 0.7,
+  "width": 847,
+  "height": 941
  },
  "/assets/wow/loading/lairs-grotto-20261106.webp": {
   "src": "/assets/wow/loading/lairs-grotto-20261106-portrait.webp",
@@ -47,11 +65,29 @@
   "width": 847,
   "height": 941
  },
+ "/assets/wow/loading/talents-hall-20261106.webp": {
+  "src": "/assets/wow/loading/talents-hall-20261106-portrait.webp",
+  "x": 0.7,
+  "width": 847,
+  "height": 941
+ },
+ "/assets/wow/loading/talents-wow.webp": {
+  "src": "/assets/wow/loading/talents-wow-portrait.webp",
+  "x": 0.7,
+  "width": 972,
+  "height": 1080
+ },
  "/assets/wow/loading/tier-lists-war-room-20261106.webp": {
   "src": "/assets/wow/loading/tier-lists-war-room-20261106-portrait.webp",
   "x": 0.7,
   "width": 847,
   "height": 941
+ },
+ "/assets/wow/loading/tier.webp": {
+  "src": "/assets/wow/loading/tier-portrait.webp",
+  "x": 0.7,
+  "width": 972,
+  "height": 1080
  },
  "/assets/wow/loading/transmog-wardrobe-20261106.webp": {
   "src": "/assets/wow/loading/transmog-wardrobe-20261106-portrait.webp",

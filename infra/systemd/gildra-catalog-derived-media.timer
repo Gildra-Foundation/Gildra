@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule Gildra derived picture renewal
+
+[Timer]
+OnCalendar=*-*-* 05,11,17,23:15:00 UTC
+RandomizedDelaySec=5m
+Persistent=true
+Unit=gildra-catalog-derived-media.service
+
+[Install]
+WantedBy=timers.target

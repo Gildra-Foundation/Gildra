@@ -185,6 +185,15 @@ func rebuildEntityGraph(ctx context.Context, tx pgx.Tx) (int64, error) {
 		ON CONFLICT DO NOTHING`), pgx.QueryExecModeSimpleProtocol); err != nil {
 		return 0, fmt.Errorf("rebuild entity graph: %w", err)
 	}
+	if _, err := rebuildAchievements(ctx, tx); err != nil {
+		return 0, err
+	}
+	if err := rebuildCollectionLinks(ctx, tx); err != nil {
+		return 0, err
+	}
+	if err := rebuildWorldLinks(ctx, tx); err != nil {
+		return 0, err
+	}
 	var count int64
 	if err := tx.QueryRow(ctx, `SELECT count(*) FROM game_entity_links`).Scan(&count); err != nil {
 		return 0, fmt.Errorf("count entity graph: %w", err)

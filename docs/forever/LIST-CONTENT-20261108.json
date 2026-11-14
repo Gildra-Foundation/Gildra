@@ -1,0 +1,95 @@
+[
+  {
+    "slug": "uldaman",
+    "action": "preparation",
+    "source": "https://www.wowhead.com/forever/guide/uldaman-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Galgann Firehammer",
+    "mechanic": "Flame Shock · Fire Nova",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/uldaman-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Obsidian Sentinel",
+    "mechanic": "Obsidian Shards",
+    "action": "expand",
+    "source": "https://www.wowhead.com/forever/guide/uldaman-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "uldaman",
+    "enemy": "Shadowforge Darkcaster",
+    "action": "trash",
+    "source": "https://www.wowhead.com/forever/guide/uldaman-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Tuten'kash",
+    "mechanic": "Spider waves",
+    "action": "add",
+    "source": "https://mobalytics.gg/wow-forever/profile/ruse_cruize/dungeons/razorfen-downs-dungeon-guide-bosses-loot-and-quests"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Mordresh Fire Eye",
+    "mechanic": "Fire Nova",
+    "action": "expand",
+    "source": "https://mobalytics.gg/wow-forever/profile/ruse_cruize/dungeons/razorfen-downs-dungeon-guide-bosses-loot-and-quests"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Ragglesnout",
+    "mechanic": "Heal",
+    "action": "add",
+    "source": "https://mobalytics.gg/wow-forever/profile/ruse_cruize/dungeons/razorfen-downs-dungeon-guide-bosses-loot-and-quests"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Glutton",
+    "mechanic": "Disease Cloud",
+    "action": "add",
+    "source": "https://mobalytics.gg/wow-forever/profile/ruse_cruize/dungeons/razorfen-downs-dungeon-guide-bosses-loot-and-quests"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Amnennar the Coldbringer",
+    "mechanic": "Summoned adds",
+    "action": "add",
+    "source": "https://mobalytics.gg/wow-forever/profile/ruse_cruize/dungeons/razorfen-downs-dungeon-guide-bosses-loot-and-quests"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Antu'sul",
+    "mechanic": "Summoned servants",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/zulfarrak-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Witch Doctor Zum'rah",
+    "mechanic": "Shadow Bolt Volley",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/zulfarrak-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Chief Ukorz Sandscalp",
+    "mechanic": "Wide Slash",
+    "action": "expand",
+    "source": "https://www.wowhead.com/forever/guide/zulfarrak-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Hydromancer Velratha",
+    "mechanic": "Healing Wave",
+    "action": "expand",
+    "source": "https://www.wowhead.com/forever/guide/zulfarrak-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "zul-farrak",
+    "action": "preparation",
+    "source": "https://www.wowhead.com/forever/guide/zulfarrak-dungeon-overview-location-rewards"
+  }
+]

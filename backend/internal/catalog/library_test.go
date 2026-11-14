@@ -156,7 +156,7 @@ func TestLibraryDatasetSummaryIntegration(t *testing.T) {
 		if weapons.ImageCount > 0 && (weapons.PreviewIconName == nil || *weapons.PreviewIconName == "") {
 			t.Fatalf("%s weapons dataset has source-backed images but no card preview: %#v", product, weapons)
 		}
-		if weapons.PreviewImageURL != nil && !strings.HasPrefix(*weapons.PreviewImageURL, "https://api.gildra.net/v1/media/") {
+		if weapons.PreviewImageURL != nil && !strings.HasPrefix(*weapons.PreviewImageURL, "https://api.wowarcana.com/v1/media/") {
 			t.Fatalf("%s weapons dataset exposes a non-local preview URL: %#v", product, weapons)
 		}
 		page, err := service.Summaries(ctx, SummaryParams{

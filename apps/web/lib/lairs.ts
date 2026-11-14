@@ -3,7 +3,7 @@ import { seasonGuideBosses } from "@/lib/lairSeasonBosses";
 
 export type BossKind = "lair" | "world" | "dungeon" | "delve";
 export type MechanicTag = "DODGE" | "SOAK" | "INTERRUPT" | "DISPEL" | "HEAL" | "TANK" | "KILL" | "RUN" | "MOVE" | "SPREAD" | "FRONTAL" | "TANK_SWAP" | "DEFENSIVE" | "HARD_CC" | "TARGET_PRIORITY";
-export type Mechanic = { name: string; role: "Все" | "Танки" | "Хилы" | "All" | "Tanks" | "Healers" | "DPS"; tone: "frost" | "danger" | "control" | "tank"; action: MechanicTag; tags?: MechanicTag[]; spellId?: number; castBy?: string; sourceUrl?: string; icon: string; description: string; response: string };
+export type Mechanic = { name: string; role: "Все" | "Танки" | "Лекари" | "Бойцы" | "All" | "Tanks" | "Healers" | "Damage"; tone: "frost" | "danger" | "control" | "tank"; action: MechanicTag; tags?: MechanicTag[]; spellId?: number; castBy?: string; sourceUrl?: string; icon: string; description: string; response: string };
 export type Loot = { name: string; itemId?: number; slot: string; armor: string; stats: string; priority: string; difficulty?: string; itemLevel?: string; chanceStatus?: "unknown"; sourceUrl?: string };
 export type Boss = {
   slug: string; name: string; title: string; kind: BossKind; active?: boolean; zone: string; coordinates: string; image: string; portrait: string; map: string; badgeIcon?: string; accent: string;
@@ -80,9 +80,9 @@ const rawBosses: Boss[] = [
       { name: "Mythic", group: "15–25", reward: "Myth 1/6", note: "Новые адды, Water Jet и жёсткий тайминг" },
     ],
     mechanics: [
-      { name: "Alluring Bubble", role: "DPS", tone: "control", action: "KILL", icon: "/assets/wow/lairs/spells/inv_elemental_primal_water.jpg", description: "Bubblefin идут к пузырю из кипящих луж. Добравшийся адд превращается в Berserker и пульсирует по рейду.", response: "Фокус аддов → массовый контроль → Frostscale первым на Mythic." },
+      { name: "Alluring Bubble", role: "Бойцы", tone: "control", action: "KILL", icon: "/assets/wow/lairs/spells/inv_elemental_primal_water.jpg", description: "Bubblefin идут к пузырю из кипящих луж. Добравшийся адд превращается в Berserker и пульсирует по рейду.", response: "Фокус аддов → массовый контроль → Frostscale первым на Mythic." },
       { name: "Chilling Frost", role: "Все", tone: "frost", action: "SOAK", icon: "/assets/wow/lairs/spells/spell_fire_blueimmolation.jpg", description: "DoT оставляет Frost Orbs. Каждый подобранный шар создаёт скользкую зону Lingering Frost.", response: "Складывайте шары плотно у босса; на Heroic не оставляйте ни одного." },
-      { name: "Abyssal Rain", role: "Хилы", tone: "danger", action: "HEAL", icon: "/assets/wow/lairs/spells/spell_fire_bluerainoffire.jpg", description: "Четыре секунды тяжёлого урона по рейду перед каждой волной аддов. На Heroic усиливает будущий frost-урон.", response: "Назначьте healing CD на каждую волну, личные защиты — со второй." },
+      { name: "Abyssal Rain", role: "Лекари", tone: "danger", action: "HEAL", icon: "/assets/wow/lairs/spells/spell_fire_bluerainoffire.jpg", description: "Четыре секунды тяжёлого урона по рейду перед каждой волной аддов. На Heroic усиливает будущий frost-урон.", response: "Назначьте healing CD на каждую волну, личные защиты — со второй." },
       { name: "Iceblade Flurry", role: "Танки", tone: "tank", action: "TANK", icon: "/assets/wow/lairs/spells/inv_polearm_2h_draenorchallenge_d_01_02.jpg", description: "Серия ударов оставляет стакающийся дебафф +20% к следующему Flurry.", response: "Меняйтесь регулярно, не позволяя стакам разогнать следующий удар." },
       { name: "Swirling Whirlpools", role: "Все", tone: "danger", action: "DODGE", icon: "/assets/wow/lairs/spells/inv_elemental_primal_air.jpg", description: "Кольца волн сходятся к центру, оставляя единственный безопасный проход.", response: "Сначала найдите разрыв, затем сместитесь ближе к центру перед Pop!" },
       { name: "Unending Tides", role: "Все", tone: "danger", action: "HEAL", icon: "/assets/wow/lairs/spells/spell_shaman_tidalwaves.jpg", description: "На шестой минуте Нимрисса начинает непрерывно заливать арену — мягкий enrage превращается в вайп.", response: "Закончите бой до 6:00; сохраните сильные защиты и лечение на финальную часть." },
@@ -111,7 +111,7 @@ const rawBosses: Boss[] = [
       { name: "Radiant Sunder", role: "Все", tone: "danger", action: "DODGE", icon: "/assets/wow/lairs/spells/inv_ability_holyfire_missile.jpg", description: "Удар раскалывает землю и оставляет Blinding Fissure.", response: "Не стойте по линии разлома и сохраняйте свободный сектор." },
       { name: "Dawncrazed Halo", role: "Все", tone: "control", action: "RUN", icon: "/assets/wow/lairs/spells/inv_ability_holyfire_groundstate.jpg", description: "Отмеченные игроки наносят урон вокруг себя.", response: "Разойдитесь до срабатывания; не пересекайте танков." },
       { name: "Dawnfire Breath", role: "Танки", tone: "tank", action: "TANK", icon: "/assets/wow/lairs/spells/ability_evoker_firebreath.jpg", description: "Тяжёлый фронтальный конус Radiant-урона.", response: "Разверните босса от рейда и не двигайте без причины." },
-      { name: "Radiant Flare", role: "Хилы", tone: "danger", action: "HEAL", icon: "/assets/wow/lairs/spells/ability_priest_archangel.jpg", description: "Сильный рейдовый урон выпускает волны Radiant Embers из разломов.", response: "Рейдовый CD и движение между волнами, не через них." },
+      { name: "Radiant Flare", role: "Лекари", tone: "danger", action: "HEAL", icon: "/assets/wow/lairs/spells/ability_priest_archangel.jpg", description: "Сильный рейдовый урон выпускает волны Radiant Embers из разломов.", response: "Рейдовый CD и движение между волнами, не через них." },
     ],
     loot: [
       { name: "Dawncrazed Beast Cleaver", slot: "Топор 1Р", armor: "Оружие", stats: "Ловкость", priority: "Высокий" },
@@ -126,9 +126,9 @@ const rawBosses: Boss[] = [
     summary: "Адд-чек и проверка рейдового лечения: тренты преследуют игроков, а семена заполняют арену.", reset: "Еженедельная ротация", composition: { tanks: "Не задано", healers: "По группе", dps: "Остальные", size: "Открытая мировая группа" }, farm: { waypoint: "/way Eversong Woods 45.5 48.0 Cragpine", access: "Мировой квест со значком черепа", lockout: "1 гарантированная награда в неделю", best: "Champion · ilvl 246" },
     difficulties: [{ name: "World", group: "Открытая группа", reward: "Champion · ilvl 246", note: "Один босс ротации активен каждую неделю" }],
     mechanics: [
-      { name: "Rootquake", role: "Хилы", tone: "danger", action: "HEAL", icon: "/assets/wow/lairs/spells/spell_shaman_earthquake.jpg", description: "Тяжёлые импульсы урона по всему рейду пробуждают лес.", response: "Чередуйте рейдовые CD, добивайте раненых до следующего тика." },
+      { name: "Rootquake", role: "Лекари", tone: "danger", action: "HEAL", icon: "/assets/wow/lairs/spells/spell_shaman_earthquake.jpg", description: "Тяжёлые импульсы урона по всему рейду пробуждают лес.", response: "Чередуйте рейдовые CD, добивайте раненых до следующего тика." },
       { name: "Ancient Seeds", role: "Все", tone: "control", action: "DODGE", icon: "/assets/wow/lairs/spells/inv_farm_herbseed.jpg", description: "Парящие семена наносят урон всем рядом и ограничивают пространство.", response: "Держите строй свободным и не загоняйте рейд в край." },
-      { name: "Angry Treants", role: "DPS", tone: "control", action: "KILL", icon: "/assets/wow/lairs/spells/ability_druid_manatree.jpg", description: "Тренты фиксируются на игроках и преследуют их до смерти.", response: "Сводите аддов под cleave, замедляйте и убивайте быстро." },
+      { name: "Angry Treants", role: "Бойцы", tone: "control", action: "KILL", icon: "/assets/wow/lairs/spells/ability_druid_manatree.jpg", description: "Тренты фиксируются на игроках и преследуют их до смерти.", response: "Сводите аддов под cleave, замедляйте и убивайте быстро." },
       { name: "War Club", role: "Танки", tone: "tank", action: "TANK", icon: "/assets/wow/lairs/spells/ability_druid_manatree.jpg", description: "Тяжёлые автоатаки резко пробивают активного танка.", response: "Держите mitigation постоянно, подстрахуйте внешним CD." },
     ],
     loot: [
@@ -163,8 +163,8 @@ const rawBosses: Boss[] = [
     mechanics: [
       { name: "Regurgitation", role: "Танки", tone: "control", action: "KILL", icon: "/assets/wow/lairs/spells/ability_creature_poison_01.jpg", description: "Босс исторгает прошлую добычу — Bloodclaws сразу атакуют рейд.", response: "Заберите аддов и соберите под фронтом босса для cleave." },
       { name: "Seismic Slam", role: "Все", tone: "danger", action: "DODGE", icon: "/assets/wow/lairs/spells/inv_hand_1h_bwdraid_d_01.jpg", description: "Удар отбрасывает игроков и существ, запуская дополнительные эффекты.", response: "Не стойте спиной к краю; вынесите аддов в предсказуемый сектор." },
-      { name: "Voidscatter", role: "DPS", tone: "frost", action: "DODGE", icon: "/assets/wow/lairs/spells/inv12_ability_priest_voidvolley.jpg", description: "Voidticks реагируют на Slam и выпускают расходящиеся осколки.", response: "Убейте ticks до Slam или сохраните мобильность для веера." },
-      { name: "Bestial Rage", role: "Хилы", tone: "danger", action: "HEAL", icon: "/assets/wow/lairs/spells/spell_shadow_unholyfrenzy.jpg", description: "Bloodclaws периодически усиливают наносимый урон.", response: "Быстро убейте Bloodclaws и используйте защиты на их текущую цель." },
+      { name: "Voidscatter", role: "Бойцы", tone: "frost", action: "DODGE", icon: "/assets/wow/lairs/spells/inv12_ability_priest_voidvolley.jpg", description: "Voidticks реагируют на Slam и выпускают расходящиеся осколки.", response: "Убейте ticks до Slam или сохраните мобильность для веера." },
+      { name: "Bestial Rage", role: "Лекари", tone: "danger", action: "HEAL", icon: "/assets/wow/lairs/spells/spell_shadow_unholyfrenzy.jpg", description: "Bloodclaws периодически усиливают наносимый урон.", response: "Быстро убейте Bloodclaws и используйте защиты на их текущую цель." },
     ],
     loot: [
       { name: "Devouring Vanguard's Soulcleaver", slot: "Топор 2Р", armor: "Оружие", stats: "Сила", priority: "Высокий" },
@@ -270,7 +270,7 @@ const mechanicActors: Record<string, string> = {
 };
 
 const nymrissaMythicMechanics: Mechanic[] = [
-  { name: "Waterfog Shield", role: "DPS", tone: "control", action: "KILL", tags: ["TARGET_PRIORITY"], spellId: 1273091, castBy: "Bubblefin Frostscale", sourceUrl: lairGuideSourceUrl, icon: "/assets/wow/lairs/spells/spell_winston_bubble.jpg", description: "Аура снижает урон по ближайшим мурлокам.", response: "На Mythic убивайте Bubblefin Frostscale первым, затем остальных мурлоков." },
+  { name: "Waterfog Shield", role: "Бойцы", tone: "control", action: "KILL", tags: ["TARGET_PRIORITY"], spellId: 1273091, castBy: "Bubblefin Frostscale", sourceUrl: lairGuideSourceUrl, icon: "/assets/wow/lairs/spells/spell_winston_bubble.jpg", description: "Аура снижает урон по ближайшим мурлокам.", response: "На Mythic убивайте Bubblefin Frostscale первым, затем остальных мурлоков." },
   { name: "Frost Burst", role: "Все", tone: "frost", action: "SOAK", tags: ["SOAK", "DEFENSIVE"], spellId: 1313450, castBy: "Frost Orb", sourceUrl: lairGuideSourceUrl, icon: "/assets/wow/lairs/spells/spell_mage_frostbomb.jpg", description: "Каждый подобранный Frost Orb наносит рейдовый frost-урон.", response: "Подбирайте шары по одному, растягивая срабатывания; хилы назначают CD, игроки используют личные защиты." },
   { name: "Water Jet", role: "Танки", tone: "tank", action: "TANK", tags: ["TANK_SWAP", "MOVE"], spellId: 1258901, castBy: "Nymrissa Wavecaller", sourceUrl: lairGuideSourceUrl, icon: "/assets/wow/lairs/spells/ability_mage_waterjet.jpg", description: "Mythic-луч наносит сильный стакающийся урон, отталкивает танка и очищает ледяные зоны.", response: "Меняйтесь на каждый Water Jet и направляйте отбрасывание через Lingering Frost, освобождая арену." },
 ];
@@ -288,18 +288,18 @@ const positioningByBoss: Record<string, Boss["positioning"]> = {
   ],
   cragpine: [
     { label: "Рейд", text: "Не стойте рядом с плавающими Ancient Seeds." },
-    { label: "DPS", text: "Быстро убивайте преследующих игроков Angry Treants." },
+    { label: "Бойцы", text: "Быстро убивайте преследующих игроков Angry Treants." },
     { label: "Танки", text: "Держите активную защиту под тяжёлые удары War Club." },
   ],
   thormbelan: [
-    { label: "SOAK", text: "Перехватывайте Scintillating Shard до попадания — иначе весь рейд будет оглушён." },
-    { label: "MOVE", text: "Отбегайте от босса при Shredding Tendrils, пока притягивание не прекратится." },
-    { label: "SPREAD", text: "Разносите Radiant Mote, чтобы взрыв и дезориентация не задели союзников." },
+    { label: "Перехват", text: "Перехватывайте Scintillating Shard до попадания — иначе весь рейд будет оглушён." },
+    { label: "Движение", text: "Отбегайте от босса при Shredding Tendrils, пока притягивание не прекратится." },
+    { label: "Разбег", text: "Разносите Radiant Mote, чтобы взрыв и дезориентация не задели союзников." },
   ],
   predaxas: [
     { label: "Танки", text: "Забирайте появившихся Regurgitated Bloodclaws." },
     { label: "Рейд", text: "Учитывайте отбрасывание Seismic Slam и держите свободное место за спиной." },
-    { label: "DPS", text: "Следите за Voidticks: Seismic Slam запускает их Voidscatter." },
+    { label: "Бойцы", text: "Следите за Voidticks: Seismic Slam запускает их Voidscatter." },
   ],
 };
 
@@ -333,7 +333,10 @@ export const bosses: Boss[] = rawBosses.map((boss) => {
 const englishText: Record<string, string> = {
   "Все": "All",
   "Танки": "Tanks",
-  "Хилы": "Healers",
+  "Лекари": "Healers",
+  "Бойцы": "Damage",
+  "Перехват": "Soak",
+  "Разбег": "Spread",
   "Голос глубин": "Voice of the Depths",
   "Ослеплённая рассветом": "Blinded by the Dawn",
   "Сердце древнего леса": "Heart of the Ancient Forest",
@@ -525,7 +528,8 @@ export function getBoss(slug: string, locale: "ru" | "en" = "ru") {
   if (!boss || locale === "en") return boss;
   const text = (value: string) => wowGuideText(value, locale);
   const labels: Record<string, string> = { World: "Мир", Normal: "Обычная", Heroic: "Героическая", Mythic: "Эпохальная", Veteran: "Ветеран", Champion: "Защитник", Hero: "Герой", Myth: "Легенда" };
-  const label = (value: string) => text(value).replace(/\b(World|Normal|Heroic|Mythic|Veteran|Champion|Hero|Myth)\b/g, (key) => labels[key]);
+  // Difficulty and reward-track names first: the guide text turns a bare "Mythic" into a phrase ("эпохальная сложность").
+  const label = (value: string) => text(value.replace(/\b(World|Normal|Heroic|Mythic|Veteran|Champion|Hero|Myth)\b/g, (key) => labels[key]));
   return {
     ...boss, name: wowSourceName(boss.name, locale), zone: text(boss.zone), summary: text(boss.summary),
     composition: { ...boss.composition, size: label(boss.composition.size) },

@@ -71,6 +71,7 @@
     "test:warcraft-logs": "npm run test:warcraft-logs -w @gildra/web --",
     "qa:character-logs": "npm run qa:character-logs -w @gildra/web --",
     "audit:wow:gear-candidates": "npm run audit:wow:gear-candidates -w @gildra/web --",
+    "qa:footer": "npm run qa:footer -w @gildra/web --",
     "qa:mythic": "npm run qa:mythic -w @gildra/web --",
     "qa:wow:manifest": "npm run qa:wow:manifest -w @gildra/web --",
     "qa:wow:description-variants": "npm run qa:wow:description-variants -w @gildra/web --",

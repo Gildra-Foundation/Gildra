@@ -1,0 +1,28 @@
+/* atlas:strict — a dungeon's loot: rows on the Forever plaque, item names in the colour of their quality. */
+.loot.loot { border: 0; background: none; box-shadow: none; }
+.loot.loot thead th { border-bottom-color: var(--material-line); background: transparent; color: var(--material-light); }
+.loot.loot tbody :is(th, td) { border-bottom-color: var(--material-line); }
+.loot.loot :is(thead, tbody) :is(th, td):first-child { padding-inline-start: 0; }
+.loot.loot :is(thead, tbody) :is(th, td):last-child { padding-inline-end: 0; }
+.item { display: flex; align-items: center; gap: var(--atlas-space-3); min-height: var(--atlas-control-height); color: inherit; text-decoration: none; }
+.itemName { min-width: 0; color: var(--atlas-text-strong); font-weight: 600; line-height: var(--atlas-leading-snug); }
+.item:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
+.alias { display: block; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-weight: 400; }
+.levelLabel { display: none; }
+.more { display: flex; justify-content: center; margin-top: var(--atlas-space-4); }
+
+/* Phones: an item is one short row — its name, then slot, level and enemy in a line. */
+@media (max-width: 760px) {
+  .loot.loot { overflow: visible; }
+  .loot.loot thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .loot.loot tbody tr { display: block; padding-block: var(--atlas-space-2); border-bottom: 1px solid var(--material-line); }
+  .loot.loot tbody tr:last-child { border-bottom: 0; }
+  .loot.loot tbody th { display: block; padding: 0; border: 0; }
+  .loot.loot tbody td { display: inline; padding: 0; border: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); text-align: start; }
+  .loot.loot tbody td:first-of-type { margin-inline-start: calc(40px + var(--atlas-space-3)); }
+  .loot.loot tbody td + td::before { content: " · "; }
+  .levelLabel { display: inline; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .item:hover .itemName { text-decoration: underline; text-underline-offset: 3px; }
+}

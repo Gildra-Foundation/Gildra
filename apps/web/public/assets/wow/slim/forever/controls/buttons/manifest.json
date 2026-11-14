@@ -1,0 +1,33 @@
+{
+  "entries": {
+    "forever": {
+      "path": "/assets/wow/slim/forever/controls/buttons/forever.webp",
+      "width": 768,
+      "height": 116,
+      "bytes": 14152,
+      "sha256": "6551417de83297cd69b4374163f805c586ef0def9ded61a12afa2c98b4b8bc62",
+      "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/buttons/forever-native.png",
+      "nativeSha256": "541263943cf5274547df937bc394f48f787a0b6a124541ebb609ceff10c978f1",
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "crop": {
+        "left": 63,
+        "top": 207,
+        "width": 2045,
+        "height": 273
+      },
+      "centreAlpha": {
+        "min": 253,
+        "max": 254
+      },
+      "slices": [
+        34,
+        93,
+        29,
+        95
+      ]
+    }
+  }
+}

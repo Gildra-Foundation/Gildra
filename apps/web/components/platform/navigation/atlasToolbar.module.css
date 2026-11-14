@@ -1,33 +1,48 @@
-/* atlas:strict — shared command bar: brand, search, language, game and account on top;
-   the section tabs with their menus below (on phones only the sheet with every menu). */
+/* atlas:strict — the shared command bar. Wide screens (≥ 1180 px): a brand row
+   (crest, game versions, search, language, account) over the section tabs with
+   their menus; the brand row scrolls away and the tab row stays as a compact
+   bar. Below 1180 px: one row and a sheet with every section. */
 .toolbar {
+  /* Rows: the brand row and the tab row; the bar sticks with the brand row scrolled off. */
+  --bar-top: 56px;
+  --bar-tabs: 46px;
+  /* Search, versions, language and account share one height. */
+  --toolbar-control-height: 38px;
+  /* Menus and the sheet: a soft settle in, a plain fade out. */
+  --ease-soft: cubic-bezier(.25, .46, .45, .94);
+  --ease-exit: cubic-bezier(.4, 0, .6, 1);
+  /* The bar's content keeps to the page column while its surfaces run edge to edge. */
+  --bar-inline: max(var(--atlas-gutter), calc((100% - var(--atlas-container)) / 2 + var(--atlas-gutter)));
   position: sticky;
-  top: 0;
+  top: calc(-1 * var(--bar-top));
   z-index: 80;
   /* Solid, no backdrop blur: a sticky blur re-filters the page under it on every
      scroll frame, which weak GPUs drop frames on. */
   background: var(--atlas-bg);
-  border-bottom: 1px solid var(--atlas-line-soft);
 }
 /* An open menu or sheet stands above the cookie notice (z-index 90) at the bottom edge. */
-.toolbar:has(.panel, .sheet:not([data-state="closed"])) { z-index: 95; }
+.toolbar[data-menu-open], .toolbar[data-sheet-open] { z-index: 95; }
 /* The shadow under the bar is its own layer that only fades: transitioning
    box-shadow repainted the full-width bar on every frame of the change. */
 .toolbar::after {
   position: absolute;
   z-index: -1;
   inset: 100% 0 auto;
-  height: 32px;
+  height: 28px;
   content: "";
   pointer-events: none;
   opacity: 0;
-  background: linear-gradient(180deg, color-mix(in srgb, #000 42%, transparent), transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, #000 46%, transparent), transparent);
   transition: opacity var(--atlas-duration) var(--atlas-ease);
 }
 .toolbar[data-scrolled]::after { opacity: 1; }
+/* The bar is always in view: a focused control of it never scrolls the page (the site-wide
+   scroll margin under the sticky bar is for the page's own controls). */
+.toolbar :focus-visible { scroll-margin: 0; }
 
+/* Fixed to the window, so focusing it never scrolls the page to the bar's top. */
 .skip {
-  position: absolute;
+  position: fixed;
   top: var(--atlas-space-2);
   left: var(--atlas-gutter);
   z-index: 3;
@@ -37,29 +52,38 @@
   background: var(--atlas-accent);
   font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
   translate: 0 -200%;
+  opacity: 0;
 }
-.skip:focus-visible { translate: 0 0; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.skip:focus-visible { translate: 0 0; opacity: 1; outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
-/* ── Top row: brand · search · language, game, account ─────────────── */
-/* Brand and controls take equal side columns, so the search stays centred and
-   does not move when the account chip changes width (placeholder → name). */
+/* ── Brand row ──────────────────────────────────────────────────────── */
 .top {
-  display: grid;
-  grid-template-columns: minmax(max-content, 1fr) minmax(0, 560px) minmax(max-content, 1fr);
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: var(--atlas-space-5);
-  height: 60px;
-  padding-inline: max(var(--atlas-gutter), env(safe-area-inset-left)) max(var(--atlas-gutter), env(safe-area-inset-right));
+  gap: var(--atlas-space-3);
+  height: var(--bar-top);
+  padding-inline: max(var(--bar-inline), env(safe-area-inset-left)) max(var(--bar-inline), env(safe-area-inset-right));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--atlas-surface) 55%, var(--atlas-bg)), var(--atlas-bg));
 }
-.top > .brand { justify-self: start; }
+/* The engraved rule between the rows: gold in the middle, gone at the edges. */
+.top::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--atlas-accent-2) 34%, transparent) 18%, color-mix(in srgb, var(--atlas-accent-2) 34%, transparent) 82%, transparent);
+}
 .brand {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 10px;
   min-height: var(--atlas-control-height);
   color: var(--atlas-text-strong);
-  font: 700 var(--atlas-text-title) / 1 var(--atlas-font-display);
-  letter-spacing: .2em;
+  font: 700 var(--atlas-text-title) / 1 var(--atlas-font-brand);
+  letter-spacing: .14em;
   text-decoration: none;
 }
 /* The wordmark is forged: white into the crest's gold. */
@@ -69,7 +93,7 @@
   background-clip: text;
   color: transparent;
 }
-.brand:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 4px; border-radius: var(--atlas-radius-control); }
+.brand:focus-visible, .compactCrest:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 4px; border-radius: var(--atlas-radius-control); }
 /* The crest: the gilded helmet; it lifts and glows a little on hover. */
 .sigil {
   display: block;
@@ -81,138 +105,271 @@
 }
 .sigil img { display: block; width: auto; height: 100%; }
 /* Only the lift moves; the brighter glow switches at once (an animated filter re-filters every frame). */
-.brand:hover .sigil { translate: 0 -1px; filter: drop-shadow(0 0 9px var(--atlas-accent-glow)) drop-shadow(0 0 2px var(--atlas-accent-2)); }
+.brand:hover .sigil, .compactCrest:hover .sigil { translate: 0 -1px; filter: drop-shadow(0 0 9px var(--atlas-accent-glow)) drop-shadow(0 0 2px var(--atlas-accent-2)); }
 
-/* The search is the masthead's centrepiece: a full field, not a pill. */
-.search { justify-self: stretch; min-width: 0; }
+.divider { flex: none; width: 1px; height: 22px; margin-inline: var(--atlas-space-1); background: var(--atlas-line); }
+.versions { flex: none; min-width: 0; }
+
+/* The search: a calm sunken field, the shortcut on its right. */
+.search { flex: 0 1 400px; min-width: 0; margin-left: auto; }
 .search button {
   width: 100%;
-  min-height: 42px;
-  padding-inline: 14px 8px;
-  border-color: var(--atlas-line);
+  min-height: var(--toolbar-control-height);
+  padding-inline: 13px 6px;
+  border-color: var(--atlas-line-soft);
   border-radius: var(--atlas-radius-control);
-  background: var(--atlas-surface);
+  background: var(--atlas-surface-sunken);
   color: var(--atlas-text-muted);
   font-weight: 500;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 4%, transparent);
 }
+.search button > svg { color: var(--atlas-text-subtle); transition: color var(--atlas-duration) var(--atlas-ease); }
 .search button > span:first-of-type { flex: 1; }
-.search button:hover { border-color: var(--atlas-accent); background: var(--atlas-surface-raised); }
+.search button:hover { border-color: color-mix(in srgb, var(--atlas-accent) 55%, transparent); background: var(--atlas-surface); color: var(--atlas-text); }
+.search button:hover > svg { color: var(--atlas-accent); }
 
-.end { display: flex; justify-self: end; align-items: center; gap: var(--atlas-space-3); }
+.end { display: flex; flex: none; align-items: center; gap: var(--atlas-space-2); }
+.localeSlot, .accountSlot { display: contents; }
 
-/* Account: the one gold control (AccountChip — "Sign in" or the Battle.net name). */
-.accountSlot { display: contents; }
+/* Account: a quiet control of the same frame as the language switch; the gold
+   is only in the avatar's ring (AccountChip — "Sign in" or the Battle.net name). */
 .account {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 38px;
-  padding: 0 14px 0 4px;
-  border: 1px solid color-mix(in srgb, var(--atlas-accent-2) 55%, transparent);
-  border-radius: 999px;
+  height: var(--toolbar-control-height);
+  padding: 0 14px 0 5px;
+  border: 1px solid var(--atlas-line);
+  border-radius: var(--atlas-radius-control);
   color: var(--atlas-text-strong);
-  background: color-mix(in srgb, var(--atlas-accent-2) 10%, transparent);
+  background: var(--atlas-surface);
   font: 650 var(--atlas-text-small) / 1 var(--atlas-font-ui);
   text-decoration: none;
   white-space: nowrap;
   transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
 }
-.account:hover { border-color: var(--atlas-accent-2); background: color-mix(in srgb, var(--atlas-accent-2) 20%, transparent); }
+.account:hover { border-color: color-mix(in srgb, var(--atlas-accent-2) 50%, transparent); background: var(--atlas-surface-raised); }
 .account:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
-.accountAvatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--atlas-accent-ink); background: var(--atlas-accent-2); }
-.accountLabel { max-width: 12ch; overflow: hidden; text-overflow: ellipsis; }
+.accountAvatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--atlas-accent-2);
+  background: color-mix(in srgb, var(--atlas-accent-2) 14%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--atlas-accent-2) 60%, transparent) inset;
+}
+/* Signed in: the account's initial on the gold. */
+.account[data-signed-in] .accountAvatar { color: var(--atlas-accent-ink); background: var(--atlas-accent-2); font: 700 var(--atlas-text-small) / 1 var(--atlas-font-display); }
+.accountLabel { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; }
 /* The placeholder holds the width of "Sign in" (its hidden word), so the chip
    keeps its size when the status arrives; the answer fades in over it. */
 .accountLabel :global(.user-skel) { width: auto; max-width: 12ch; overflow: hidden; color: transparent; font-style: normal; line-height: 8px; white-space: nowrap; }
 .account:not(:global(.user-pending)) .accountLabel { animation: label-in var(--atlas-duration-fast) var(--atlas-ease); }
 @keyframes label-in { from { opacity: 0; } }
 
-/* ── Section tabs: icon, label and an accent underline, like a game client's tab strip ── */
-.tabs { position: relative; border-top: 1px solid var(--atlas-line-soft); background: var(--atlas-surface); }
-.tabs > ul { display: flex; gap: 2px; width: min(100%, var(--atlas-container)); margin: 0 auto; padding: 0 var(--atlas-gutter); list-style: none; }
-.tabs > ul > li { position: relative; display: flex; align-items: center; }
-.tabs > ul > li[data-single] > .tab { padding-right: 24px; }
+/* ── Tab row ─────────────────────────────────────────────────────────── */
+/* The sheet is only a frame below 1180 px; here its parts are the tab row itself. */
+.sheet, .sheetScroll { display: contents; }
+.sheetHead, .sheetFoot, .scrim, .menuButton { display: none; }
+
+.tabs {
+  position: relative;
+  border-bottom: 1px solid var(--atlas-line-soft);
+  background: color-mix(in srgb, var(--atlas-surface) 72%, var(--atlas-bg));
+}
+.tabs > ul {
+  display: flex;
+  gap: 2px;
+  height: var(--bar-tabs);
+  margin: 0;
+  /* The first label lines up with the wordmark above; the compact bar's crest takes that room. */
+  padding: 0 var(--bar-inline) 0 calc(var(--bar-inline) + 30px);
+  list-style: none;
+}
+.tabs > ul > li { display: flex; }
 .tab {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 46px;
-  padding: 0 4px 0 14px;
-  color: var(--atlas-text-muted);
-  text-decoration: none;
-  white-space: nowrap;
-  font: 650 var(--atlas-text-body) / 1 var(--atlas-font-ui);
-  transition: color var(--atlas-duration) var(--atlas-ease);
-}
-.tab svg { flex: none; color: var(--atlas-text-subtle); transition: color var(--atlas-duration) var(--atlas-ease); }
-.tab::after {
-  content: "";
-  position: absolute;
-  left: 10px;
-  right: -26px;
-  bottom: 0;
-  height: 2px;
-  border-radius: 2px 2px 0 0;
-  background: var(--atlas-accent);
-  scale: 0 1;
-  transition: scale var(--atlas-duration) var(--atlas-ease);
-}
-.tab:hover, [data-open] > .tab, .tab[aria-current] { color: var(--atlas-text-strong); }
-.tab:hover svg, [data-open] > .tab svg, .tab[aria-current] svg { color: var(--atlas-accent); }
-.tab[aria-current]::after, [data-open] > .tab::after { scale: 1 1; }
-/* A plain tab has no chevron: its underline ends with the label, as it starts. */
-.tabs > ul > li[data-single] > .tab::after { right: 20px; }
-.tab:focus-visible, .toggle:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -4px; border-radius: var(--atlas-radius-control); }
-.toggle {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 46px;
-  margin-right: 10px;
-  padding: 0;
+  gap: 6px;
+  height: 100%;
+  margin: 0;
+  padding: 0 var(--atlas-space-3);
   border: 0;
   background: none;
-  color: var(--atlas-text-subtle);
+  color: var(--atlas-text);
+  font: 600 var(--atlas-text-body) / 1 var(--atlas-font-ui);
+  letter-spacing: .005em;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+}
+.realmIcon { display: none; flex: none; }
+.chevron { flex: none; margin-right: -2px; color: var(--atlas-text-subtle); transition: rotate var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease); }
+/* The underline: a hint under the pointer, the accent under the open and the current section. */
+.tab::after {
+  position: absolute;
+  inset: auto var(--atlas-space-3) 0;
+  height: 2px;
+  content: "";
+  border-radius: 2px 2px 0 0;
+  background: var(--atlas-accent);
+  opacity: 0;
+  scale: .4 1;
+  transition: opacity var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration) var(--atlas-ease);
+}
+/* The current section wears the chapter gem of the section titles over its underline. */
+.tab::before {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  content: "";
+  rotate: 45deg;
+  background: var(--atlas-accent-strong);
+  box-shadow: 0 0 0 2px var(--atlas-accent-wash-strong), 0 0 8px var(--atlas-accent);
+  opacity: 0;
+  transition: opacity var(--atlas-duration) var(--atlas-ease);
+}
+.tab:hover { color: var(--atlas-text-strong); background: color-mix(in srgb, var(--atlas-text-strong) 3%, transparent); }
+.tab:hover::after { opacity: .45; scale: 1 1; }
+[data-open] > .tab, .tab[aria-current] { color: var(--atlas-text-strong); }
+[data-open] > .tab::after, .tab[aria-current]::after { opacity: 1; scale: 1 1; }
+.tab[aria-current]::before { opacity: 1; }
+[data-open] > .tab { background: color-mix(in srgb, var(--atlas-accent) 7%, transparent); }
+[data-open] > .tab .chevron { rotate: 180deg; color: var(--atlas-accent); }
+.tab:hover .chevron { color: var(--atlas-text-muted); }
+.tab:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -5px; border-radius: var(--atlas-radius-control); }
+
+/* The compact bar's crest (left) and search button (right), over the tab row. */
+.compact {
+  position: absolute;
+  inset: auto 0 1px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--bar-tabs);
+  padding-inline: var(--bar-inline);
+  pointer-events: none;
+}
+.compactCrest, .compactSearch {
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 4px;
+  transition: opacity var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease), visibility 0s var(--atlas-duration);
+}
+.compactCrest { height: 36px; }
+.compactCrest .sigil { height: 26px; }
+.compactSearch {
+  width: 36px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius-control);
+  background: var(--atlas-surface-sunken);
+  color: var(--atlas-text-muted);
   cursor: pointer;
 }
-.toggle:hover { color: var(--atlas-text-strong); }
-.toggle svg { transition: rotate var(--atlas-duration) var(--atlas-ease); }
-[data-open] > .toggle svg { rotate: 180deg; color: var(--atlas-accent); }
+.compactSearch:hover { border-color: color-mix(in srgb, var(--atlas-accent) 55%, transparent); color: var(--atlas-accent); }
+.toolbar[data-compact] :is(.compactCrest, .compactSearch) { opacity: 1; visibility: visible; translate: 0 0; pointer-events: auto; transition-delay: 0s; }
 
-/* The menu hangs under its own tab and is as wide as its content (one or two
-   columns); near the window's edge the bar slides it back inside (--panel-shift).
-   It drops in when the bar opens it, swaps in place between tabs (only its
-   content brightens) and fades out on close; opacity and translate only. A
-   short window scrolls the menu, never the page under it. */
-.panel {
-  position: absolute;
-  top: 100%;
-  left: var(--panel-shift, 0px);
-  width: max-content;
-  max-width: calc(100vw - 24px);
-  max-height: calc(100dvh - var(--atlas-sticky-top) - 12px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--atlas-space-3);
-  border: 1px solid var(--atlas-line);
-  border-radius: 0 0 var(--atlas-radius-control) var(--atlas-radius-control);
-  background: var(--atlas-surface);
-  box-shadow: var(--atlas-shadow-panel);
+/* ── Menus: one panel system for every section ───────────────────────
+   Every menu spans the page column under the tab row, so menus never jump
+   sideways between tabs: it drops in when the bar opens it and fades out on
+   close; between tabs the frame stays and only resizes (a scale of its own
+   layer, FLIP, WorkspaceNavigatorContent) while the contents cross-fade.
+   Opacity and transforms only. */
+.panel[hidden] { display: none; }
+@media (min-width: 1180px) {
+  .panel {
+    position: absolute;
+    z-index: 1;
+    isolation: isolate;
+    top: 100%;
+    right: var(--bar-inline);
+    left: var(--bar-inline);
+    padding: var(--atlas-space-5);
+  }
+  /* The frame is a layer of its own, so a switch can resize it without touching the contents. */
+  .panel::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: "";
+    pointer-events: none;
+    border: 1px solid var(--atlas-line);
+    border-top: 0;
+    border-radius: 0 0 var(--atlas-radius-control) var(--atlas-radius-control);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--atlas-accent) 4%, var(--atlas-surface)), var(--atlas-surface) 160px);
+    box-shadow: var(--atlas-shadow-panel), 0 1px 0 color-mix(in srgb, var(--atlas-accent-2) 22%, transparent) inset;
+    transform-origin: top;
+  }
+  .panel > .menu { max-height: calc(100dvh - var(--bar-top) - var(--bar-tabs) - var(--atlas-space-4) - 2 * var(--atlas-space-5)); overflow-y: auto; overscroll-behavior: contain; }
+  .panel[data-enter] { animation: drop var(--atlas-duration) var(--ease-soft); }
+  .panel[data-state="open"]:not([data-enter]) > .menu { animation: label-in calc(var(--atlas-duration-fast) * .8) var(--ease-soft) both; }
+  .panel[data-state="closed"] { pointer-events: none; animation: lift calc(var(--atlas-duration-fast) * .87) var(--ease-exit) forwards; }
+  /* The menu a switch leaves: its words fade under the new ones, its frame is the new menu's. */
+  .panel[data-swap-out] { animation-duration: calc(var(--atlas-duration-fast) * .6); }
+  .panel[data-swap-out]::before { visibility: hidden; }
 }
-.panel[data-enter] { animation: drop var(--atlas-duration) var(--atlas-ease); }
-.panel:not([data-enter])[data-state="open"] > .menu { animation: swap var(--atlas-duration-fast) var(--atlas-ease); }
-.panel[data-state="closed"] { pointer-events: none; animation: lift var(--atlas-duration-fast) var(--atlas-ease) forwards; }
-@keyframes drop { from { opacity: 0; translate: 0 -6px; } }
-@keyframes lift { to { opacity: 0; translate: 0 -4px; } }
-@keyframes swap { from { opacity: .4; } }
+/* Menus, the sheet and the drawer share one way in and one way out; each sets its own distance. */
+@keyframes drop { from { opacity: 0; translate: var(--from, 0 -4px); } }
+@keyframes lift { to { opacity: 0; translate: var(--to, 0 -3px); } }
 
-/* ── Menu body: the section's pages under short headings, then its quick picks ── */
-.menu { display: grid; grid-template-columns: minmax(232px, max-content); gap: var(--atlas-space-4); }
-.menu[data-picks] { grid-template-columns: minmax(232px, max-content) max-content; }
-.column { display: grid; align-content: start; gap: var(--atlas-space-3); min-width: 0; }
-.menu[data-picks] > .column + .column { padding-left: var(--atlas-space-4); border-left: 1px solid var(--atlas-line-soft); }
-.group { display: grid; }
+.menu { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: var(--atlas-space-6); min-height: 248px; }
+.menu:not(:has(.feature)) { grid-template-columns: minmax(0, 1fr); }
+.columns { display: flex; flex-wrap: wrap; align-content: start; gap: var(--atlas-space-4) var(--atlas-space-6); min-width: 0; }
+
+/* The lead: one of the section's pages as a painting, its name at the foot. */
+.feature {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-content: end;
+  min-height: 248px;
+  overflow: hidden;
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius-control);
+  background: var(--atlas-surface-sunken);
+  color: var(--atlas-text-strong);
+  text-decoration: none;
+  transition: border-color var(--atlas-duration) var(--atlas-ease);
+}
+.featureArt { position: absolute; z-index: -1; inset: 0; overflow: hidden; }
+.featureArt img { object-fit: cover; filter: contrast(.94) saturate(.9); transition: scale var(--atlas-duration-art) var(--atlas-ease); }
+.featureArt::after { position: absolute; inset: 0; content: ""; background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--atlas-bg) 88%, transparent) 88%); }
+.featureIcon { position: absolute; top: var(--atlas-space-4); left: var(--atlas-space-4); display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--atlas-line-soft); border-radius: calc(var(--atlas-radius-control) - 2px); color: var(--atlas-accent); background: var(--atlas-accent-wash); }
+.featureArt:has(img) .featureIcon { display: none; }
+/* The world map: four 256 px tiles of a 512 px square, the map 480 × 320 in its top-left
+   corner; the box is that 480 × 320, so a tile is 53.34 % of its width and 80 % of its height. */
+.featureArt:has(.mapArt) { container-type: size; }
+.mapArt { position: absolute; top: 50%; left: 50%; width: max(100cqw, 150cqh); aspect-ratio: 480 / 320; translate: -50% -50%; }
+.mapArt img { position: absolute; width: 53.34%; height: 80%; max-width: none; filter: contrast(.94) saturate(.9); }
+.featureText { display: grid; gap: 4px; padding: var(--atlas-space-4) 44px var(--atlas-space-4) var(--atlas-space-4); text-shadow: 0 1px 3px var(--atlas-bg); }
+.featureText strong { font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); font-variant-numeric: lining-nums; }
+.featureText small { color: var(--atlas-text); font: 500 var(--atlas-text-small) / 1.35 var(--atlas-font-ui); }
+.featureArrow { position: absolute; right: var(--atlas-space-4); bottom: var(--atlas-space-5); color: var(--atlas-accent); transition: translate var(--atlas-duration) var(--atlas-ease); }
+.feature:hover { border-color: color-mix(in srgb, var(--atlas-accent) 50%, transparent); }
+.feature:hover .featureArt img { scale: 1.04; }
+.feature:hover .featureArrow { translate: 3px 0; }
+.feature:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; }
+.feature[aria-current="page"] { border-color: var(--atlas-accent); }
+
+.group { display: grid; align-content: start; width: 252px; min-width: 0; }
+/* A group without a heading lines its first row up with the headed ones beside it. */
+.group:not(:has(.caption)) { padding-top: calc(var(--atlas-text-label) * 1.2 + 2 * var(--atlas-space-2)); }
+.group[data-picks="art"] { width: 456px; }
+.group[data-picks="class"] { width: 760px; }
+.group[data-picks="icon"] { width: 660px; }
+.group[data-picks="glyph"] { width: 400px; }
 .caption {
   margin: var(--atlas-space-2) 0 var(--atlas-space-2) var(--atlas-space-2);
   color: var(--atlas-text-subtle);
@@ -227,15 +384,15 @@
   grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
   gap: var(--atlas-space-3);
-  min-height: 48px;
-  padding: 6px var(--atlas-space-4) 6px 8px;
+  min-height: 50px;
+  padding: 6px var(--atlas-space-3) 6px 8px;
   border-radius: var(--atlas-radius-control);
   color: var(--atlas-text);
   text-decoration: none;
-  transition: background-color var(--atlas-duration) var(--atlas-ease);
+  transition: background-color var(--atlas-duration-fast) var(--atlas-ease);
 }
 .page:hover, .page:focus-visible { background: var(--atlas-surface-raised); }
-.page:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -2px; }
+.page:focus-visible, .pick:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -2px; }
 .page[aria-current="page"] { background: var(--atlas-accent-wash-strong); }
 .pageIcon {
   display: grid;
@@ -246,33 +403,35 @@
   border-radius: calc(var(--atlas-radius-control) - 2px);
   color: var(--atlas-accent);
   background: var(--atlas-accent-wash);
+  transition: border-color var(--atlas-duration-fast) var(--atlas-ease);
 }
 .page:hover .pageIcon, .page[aria-current="page"] .pageIcon { border-color: color-mix(in srgb, var(--atlas-accent) 45%, transparent); }
-.pageText { display: grid; gap: 1px; min-width: 0; }
-.pageText strong, .pageText small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pageText { display: grid; gap: 2px; min-width: 0; }
+/* Names and notes wrap rather than lose their ends on narrower menus. */
+.pageText strong, .pageText small { overflow-wrap: anywhere; }
 .pageText strong { color: var(--atlas-text-strong); font: 650 var(--atlas-text-body) / 1.25 var(--atlas-font-ui); }
 .pageText small { color: var(--atlas-text-muted); font: 500 var(--atlas-text-meta) / 1.3 var(--atlas-font-ui); }
 
-/* Quick picks: a compact list — a small painting (dungeon, raid) or the class
-   crest beside the name. */
-.picks { display: grid; gap: 2px; }
-.picks[data-kind="class"] { grid-template-columns: repeat(2, max-content); gap: 2px var(--atlas-space-1); }
+/* Quick picks: a small painting (dungeon, raid), a class crest, a game icon or a sign beside the name. */
+.picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px var(--atlas-space-2); }
+.picks[data-kind="icon"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.picks[data-kind="class"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .pick {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 38px;
+  min-height: 40px;
   padding: 4px var(--atlas-space-3) 4px 6px;
   border-radius: var(--atlas-radius-control);
   color: var(--atlas-text-strong);
   text-decoration: none;
-  transition: background-color var(--atlas-duration) var(--atlas-ease);
+  transition: background-color var(--atlas-duration-fast) var(--atlas-ease);
 }
 .pick:hover, .pick[aria-current] { background: var(--atlas-surface-raised); }
-.pick:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -2px; }
-.pickArt { position: relative; flex: none; overflow: hidden; }
+.pickArt { position: relative; display: grid; flex: none; place-items: center; overflow: hidden; background: var(--atlas-surface-sunken); }
 .pickArt img { object-fit: cover; }
-.picks[data-kind="art"] .pickArt { width: 48px; height: 30px; border: 1px solid var(--atlas-line-soft); border-radius: calc(var(--atlas-radius-control) - 4px); }
+.picks[data-kind="art"] .pickArt { width: 52px; height: 32px; border: 1px solid var(--atlas-line-soft); border-radius: calc(var(--atlas-radius-control) - 4px); }
+.picks[data-kind="art"] .pickArt img { filter: contrast(.94) saturate(.9); }
 .picks[data-kind="art"] .pick:hover .pickArt, .picks[data-kind="art"] .pick[aria-current] .pickArt { border-color: var(--atlas-accent); }
 .picks[data-kind="class"] .pickArt {
   width: 26px;
@@ -280,41 +439,42 @@
   border-radius: 50%;
   box-shadow: 0 0 0 2px var(--pick-tint), 0 0 10px color-mix(in srgb, var(--pick-tint) 40%, transparent);
 }
-.pickLabel { font: 600 var(--atlas-text-small) / 1.25 var(--atlas-font-ui); white-space: nowrap; }
+.picks[data-kind="icon"] .pickArt { width: 28px; height: 28px; border: 1px solid color-mix(in srgb, var(--atlas-accent-2) 40%, transparent); border-radius: 6px; }
+.picks[data-kind="glyph"] .pickArt { width: 30px; height: 30px; border: 1px solid var(--atlas-line-soft); border-radius: calc(var(--atlas-radius-control) - 3px); color: var(--atlas-accent); background: var(--atlas-accent-wash); }
+.picks[data-kind="glyph"] .pick:hover .pickArt { border-color: color-mix(in srgb, var(--atlas-accent) 45%, transparent); }
+.pickLabel { min-width: 0; overflow: hidden; font: 600 var(--atlas-text-small) / 1.25 var(--atlas-font-ui); text-overflow: ellipsis; white-space: nowrap; }
+/* Dungeon, raid and class names keep whole: two lines rather than an ellipsis ("Охотник на демо…"). */
+.picks[data-kind="art"] .pickLabel, .picks[data-kind="class"] .pickLabel { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; white-space: normal; }
 /* Class names: 62 % class colour into the heading white (AA on every surface, tests/atlas/palette). */
 .picks[data-kind="class"] .pickLabel { color: color-mix(in srgb, var(--pick-tint) 62%, var(--atlas-text-strong)); }
 
-/* In the phone sheet: one column, big rows, the picks two to a row. */
-.menu[data-compact], .menu[data-compact][data-picks] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); padding: 0 0 var(--atlas-space-4); }
-.menu[data-compact][data-picks] > .column + .column { padding-left: 0; border-left: 0; }
-.menu[data-compact] .page { min-height: 56px; }
-.menu[data-compact] .picks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px var(--atlas-space-2); }
-.menu[data-compact] .pick { min-height: 48px; }
-.menu[data-compact] .pickLabel { white-space: normal; }
-
-/* Laptops: the seven tabs keep to one row with tighter spacing. */
+/* Laptops: the brand row keeps its controls; the tabs tighten a little. */
 @media (min-width: 1180px) and (max-width: 1365px) {
-  .tab { gap: 6px; padding-left: 10px; }
-  .tabs > ul > li[data-single] > .tab { padding-right: 14px; }
-  .tabs > ul > li[data-single] > .tab::after { right: 10px; }
-  .toggle { width: 24px; margin-right: 4px; }
-  .tab::after { left: 6px; right: -24px; }
+  .tab { padding-inline: 10px; }
+  .tab::after { inset-inline: 10px; }
+  .search { flex-basis: 300px; }
+  .group { width: 236px; }
+  .group[data-picks="art"] { width: 420px; }
+  .group[data-picks="class"] { width: 680px; }
+  .group[data-picks="icon"] { width: 560px; }
+  .menu { grid-template-columns: 232px minmax(0, 1fr); gap: var(--atlas-space-5); }
 }
 
-/* ── Phones and tablets: icon search, scrolling tab strip, one sheet ── */
-.sheetRoot { display: none; }
+/* ── Below 1180 px: one row and the sheet ──────────────────────────── */
 @media (max-width: 1179px) {
-  .top { grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--atlas-space-3); height: 56px; }
-  .search { justify-self: end; width: auto; }
-  .search button { width: auto; min-height: 40px; padding-inline: 11px; }
-  .search button > span, .search button > kbd { display: none; }
-  .accountSlot { display: none; }
-  .sheetRoot { display: block; }
+  .toolbar { top: 0; border-bottom: 1px solid var(--atlas-line-soft); }
+  .top { gap: var(--atlas-space-2); }
+  .compact { display: none; }
+  .search { flex: 0 1 220px; }
+  /* The account stays in the bar as its avatar. */
+  .accountSlot > .account { width: var(--toolbar-control-height); padding: 0; justify-content: center; }
+  .accountSlot > .account > .accountLabel { display: none; }
   .menuButton {
+    position: relative;
     display: grid;
     place-items: center;
-    width: 40px;
-    height: 40px;
+    width: var(--toolbar-control-height);
+    height: var(--toolbar-control-height);
     padding: 0;
     border: 1px solid var(--atlas-line);
     border-radius: var(--atlas-radius-control);
@@ -327,72 +487,134 @@
   .menuButton[aria-expanded="false"] .menuIcon[data-icon="close"],
   .menuButton[aria-expanded="true"] .menuIcon[data-icon="open"] { opacity: 0; rotate: -90deg; }
   .menuButton:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; }
-  .menuButton[aria-expanded="true"] { border-color: var(--atlas-accent); }
-  /* The tab strip stays visible and scrolls sideways. */
-  .tabs > ul { overflow-x: auto; scrollbar-width: none; padding-inline: 6px; mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 28px), transparent); }
-  .tabs > ul::-webkit-scrollbar { display: none; }
-  .tab { height: 44px; padding-inline: 10px; font-size: var(--atlas-text-small); }
-  .tabs > ul > li[data-single] > .tab { padding-right: 10px; }
-  .tabs > ul > li[data-single] > .tab::after { right: 10px; }
-  .tab::after { right: 10px; left: 10px; }
-  .toggle, .panel { display: none; }
+  .menuButton[aria-expanded="true"] { border-color: var(--atlas-accent); background: var(--atlas-surface-raised); }
+
   .sheet {
     position: fixed;
-    inset: var(--atlas-sticky-top) 0 0;
+    inset: var(--sheet-top, var(--atlas-sticky-top)) 0 0;
     z-index: 2;
-    display: grid;
-    align-content: start;
-    gap: var(--atlas-space-5);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: var(--atlas-space-4) max(var(--atlas-gutter), env(safe-area-inset-right)) calc(var(--atlas-space-8) + env(safe-area-inset-bottom)) max(var(--atlas-gutter), env(safe-area-inset-left));
+    display: block;
     background: var(--atlas-bg);
   }
-  /* Closed, the prebuilt sheet keeps its layout and is only invisible. */
+  .sheetScroll {
+    display: flex;
+    flex-direction: column;
+    gap: var(--atlas-space-4);
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--atlas-space-4) max(var(--atlas-gutter), env(safe-area-inset-right)) calc(var(--atlas-space-5) + env(safe-area-inset-bottom)) max(var(--atlas-gutter), env(safe-area-inset-left));
+  }
+  /* Closed, the sheet keeps its layout and is only invisible. */
   .sheet[data-state="closed"] { visibility: hidden; pointer-events: none; }
-  .sheet[data-state="open"] { animation: drop var(--atlas-duration) var(--atlas-ease); }
-  .sheet[data-state="closing"] { pointer-events: none; animation: lift var(--atlas-duration-fast) var(--atlas-ease) forwards; }
-  .sheet > .account { justify-self: start; }
-  .sheetRealms { display: grid; border-top: 1px solid var(--atlas-line-soft); }
-  .sheetRealm { border-bottom: 1px solid var(--atlas-line-soft); }
-  .sheetHead {
+  /* It settles with a long, soft deceleration and leaves quicker than it came. */
+  .sheet { --from: 0 -10px; --to: 0 -4px; }
+  .sheet[data-state="open"] { animation: drop calc(var(--atlas-duration) * 1.2) cubic-bezier(.22, 1, .36, 1); }
+  .sheet[data-state="closing"] { pointer-events: none; animation: lift calc(var(--atlas-duration-fast) * .87) var(--ease-exit) forwards; }
+
+  .sheetHead { display: grid; gap: var(--atlas-space-3); }
+  .sheetSearch {
     display: flex;
     align-items: center;
     gap: var(--atlas-space-3);
+    width: 100%;
+    min-height: 48px;
+    padding: 0 var(--atlas-space-4);
+    border: 1px solid var(--atlas-line);
+    border-radius: var(--atlas-radius-control);
+    background: var(--atlas-surface-sunken);
+    color: var(--atlas-text-muted);
+    font: 500 var(--atlas-text-body) / 1 var(--atlas-font-ui);
+    text-align: left;
+    cursor: pointer;
+  }
+  .sheetSearch > svg { color: var(--atlas-accent); }
+  .sheetSearch:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 2px; }
+
+  .tabs { border: 0; background: none; }
+  .tabs > ul { display: block; height: auto; padding: 0; border-top: 1px solid var(--atlas-line-soft); }
+  .tabs > ul > li { display: block; border-bottom: 1px solid var(--atlas-line-soft); }
+  .tab {
+    gap: var(--atlas-space-3);
+    width: 100%;
     min-height: 56px;
     padding: 0 var(--atlas-space-2);
     color: var(--atlas-text-strong);
     font: 650 var(--atlas-text-lead) / 1.2 var(--atlas-font-ui);
-    text-decoration: none;
-    list-style: none;
-    cursor: pointer;
+    text-align: left;
   }
-  .sheetHead::-webkit-details-marker { display: none; }
-  .sheetHead > svg { flex: none; color: var(--atlas-text-subtle); }
-  .sheetHead > span { flex: 1; }
-  .sheetHead:focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: -2px; border-radius: var(--atlas-radius-control); }
-  .sheetRealm[data-current] > .sheetHead > svg:first-child, .sheetHead[aria-current] > svg { color: var(--atlas-accent); }
-  .sheetChevron { transition: rotate var(--atlas-duration) var(--atlas-ease); }
-  details[open] > .sheetHead .sheetChevron { rotate: 180deg; color: var(--atlas-accent); }
+  .tab::after, .tab::before { display: none; }
+  .tab:hover { background: none; }
+  [data-open] > .tab { background: none; }
+  .realmIcon { display: block; color: var(--atlas-text-subtle); }
+  .tab[aria-current] .realmIcon { color: var(--atlas-accent); }
+  .tabLabel { flex: 1; }
+  .chevron { width: 18px; height: 18px; margin-right: var(--atlas-space-1); }
+  .tab:focus-visible { outline-offset: -2px; }
+  /* The current section: an accent bar at the row's edge. */
+  .tabs > ul > li[data-current] { box-shadow: 2px 0 0 var(--atlas-accent) inset; }
+
+  /* A section's menu unfolds in place under its row. */
+  .panel { padding: 0 0 var(--atlas-space-4); }
+  .panel[data-state="open"] > .menu { --from: 0 -4px; animation: drop var(--atlas-duration) var(--ease-soft); }
+  .menu, .menu:not(:has(.feature)) { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-2); min-height: 0; }
+  .columns { display: grid; gap: var(--atlas-space-3); }
+  .group, .group[data-picks] { width: auto; }
+  .group:not(:has(.caption)) { padding-top: 0; }
+  .feature { grid-template-columns: 76px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); min-height: 64px; padding: 8px var(--atlas-space-3) 8px 8px; border-color: var(--atlas-line-soft); background: var(--atlas-surface); }
+  .featureArt { position: relative; z-index: 0; inset: auto; width: 76px; height: 48px; border-radius: calc(var(--atlas-radius-control) - 4px); }
+  .featureArt::after { display: none; }
+  .featureIcon { top: 50%; left: 50%; translate: -50% -50%; }
+  .featureText { padding: 0; text-shadow: none; }
+  .featureText strong { font: 650 var(--atlas-text-body) / 1.25 var(--atlas-font-ui); }
+  .featureText small { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+  .featureArrow { position: static; }
+  .page { min-height: 52px; }
+  .picks, .picks[data-kind="class"], .picks[data-kind="icon"] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px var(--atlas-space-2); }
+  .pick { min-height: 48px; }
+  .pickLabel { white-space: normal; }
+
+  .sheetFoot { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); margin-top: auto; padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); }
+  .sheetFoot > .account { height: 44px; }
 }
-/* Phones: one navigation — the menu sheet; the tab strip would only repeat it. */
+/* Phones: the bar holds the brand, search and menu; everything else is in the sheet. */
 @media (max-width: 767px) {
-  .tabs { display: none; }
+  .divider, .versions, .localeSlot, .accountSlot { display: none; }
+  .search { flex: none; }
+  .search button { width: var(--toolbar-control-height); padding-inline: 0; justify-content: center; }
+  .search button > span, .search button > kbd { display: none; }
 }
-@media (max-width: 420px) { .brand > span { display: none; } }
+/* Tablets: a drawer at the right with a scrim over the page; the bar keeps search, versions, language and account. */
+@media (min-width: 768px) and (max-width: 1179px) {
+  .sheet { left: auto; width: min(440px, 100%); border-left: 1px solid var(--atlas-line); box-shadow: var(--atlas-shadow-panel); }
+  .sheetHead, .sheetFoot { display: none; }
+  .sheet { --from: 24px 0; --to: 12px 0; }
+  .scrim { position: fixed; inset: var(--sheet-top, var(--atlas-sticky-top)) 0 0; z-index: 1; display: block; background: var(--atlas-scrim); transition: opacity var(--atlas-duration) var(--atlas-ease); }
+  .scrim[data-state="closed"] { visibility: hidden; opacity: 0; }
+  .scrim[data-state="closing"] { opacity: 0; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .search { flex: none; }
+  .search button { width: var(--toolbar-control-height); padding-inline: 0; justify-content: center; }
+  .search button > span, .search button > kbd { display: none; }
+}
+@media (max-width: 340px) { .brand > span { display: none; } }
 
 /* Touch: every control of the bar is a 44 px target. */
 @media (pointer: coarse) {
+  .toolbar { --toolbar-control-height: 44px; }
   .brand { min-width: 44px; min-height: 44px; }
-  .search button { min-width: 44px; min-height: 44px; }
-  .menuButton { width: 44px; height: 44px; }
-}
-/* Phones held sideways: one row (the tab strip is in the menu sheet), so the page keeps its height. */
-@media (pointer: coarse) and (orientation: landscape) and (max-height: 540px) {
-  .tabs { display: none; }
+  .search button { min-width: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .panel, .panel > .menu, .sheet, .account .accountLabel { animation: none !important; }
-  .toolbar::after, .tab::after, .tab svg, .toggle svg, .page, .pick, .sigil, .account, .menuIcon, .sheetChevron { transition: none; }
+  .toolbar::after, .tab, .tab::after, .tab::before, .chevron, .page, .pick, .sigil, .account, .menuIcon, .scrim, .compactCrest, .compactSearch, .feature, .featureArt img, .featureArrow { transition: none; }
+}
+:global([data-motion="reduced"]) :is(.panel, .panel > .menu, .sheet) { animation: none !important; }
+:global([data-motion="reduced"]) :is(.compactCrest, .compactSearch, .featureArt img, .featureArrow) { transition: none; }
+@media (forced-colors: active) {
+  .tab[aria-current]::after, [data-open] > .tab::after { background: Highlight; forced-color-adjust: none; }
+  .tab::before, .top::after, .featureArt::after { display: none; }
+  .panel::before, .feature { border: 1px solid CanvasText; }
 }

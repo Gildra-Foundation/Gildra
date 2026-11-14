@@ -67,3 +67,13 @@ For the enhancement review reproducer, the old traversal visited its 4096 cap wi
 ## Operational boundary
 
 The running local worker previously rejected the current native-APL request and omitted required DPS mean fields on its legacy request. Its concurrency experiment also produced a 503 at two concurrent requests. Sequential native execution remains the default; no new throughput claim is made. Deploying the compatible backend/native metadata patch requires a separate user instruction. No commits, pushes, deployment, production service restarts or purchases were performed.
+
+## Integration validation — 2026-11-14
+
+Merged origin/master `197186e863266b64389ab50d6fbf835ebd9f1f3e` into the prepared `dc1f7519` branch with a normal merge. Git merged battleNetCharacters.ts automatically; inspection confirmed upstream roster caching and the fresh authorization option both remain. No untracked path collisions. Corrected trailing whitespace in enhancement-integration.test.mjs.
+
+Merged checks passed sequentially: 65/65 completion suites, Next type generation and TypeScript, scoped ESLint (zero errors, six warnings), rotationlab Go suite, and production build (1,605 pages). Build logged local DNS warnings for container hostname `api` but exited zero. Logs: `/tmp/auction-merged-{gate,types,lint,go,build}.log` in the implementation environment.
+
+Production readiness returned status ok and containers reported healthy. Database backup inventory has four verified records, latest restore timestamp 2026-10-23 16:47:31 UTC, older than the release gate's 24-hour window. A new backup/restore proof is required. Root-only current-release.env could not be inspected with this shell's existing sudo access. Running web uses a local tag; immutable baseline alignment is unverified. No production mutation performed during validation.
+
+The existing CI builds the patched native worker; the full deployment path validates immutable digests and recovery evidence. Native patch compilation, live exact gem/enchant smoke, deployed revision/digests and rollback verification remain required before deployment can be declared complete. Native admission remains concurrency one. No schema migrations added.

@@ -21,7 +21,7 @@ from web_scraper.fetchers.base import RawResponse
 from .wowhead_tier_lists import fetch_with_fallback
 
 BASE_URL = "https://mythicstats.com"
-USER_AGENT = "GildraDatasetBot/1.0 (+https://gildra.net)"
+USER_AGENT = "GildraDatasetBot/1.0 (+https://wowarcana.com)"
 MAX_BODY_BYTES = 3_000_000
 # One request per second at most: the site is a small fan project.
 _MIN_INTERVAL_SECONDS = 1.0

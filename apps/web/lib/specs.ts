@@ -51,9 +51,6 @@ export const specPages: SpecPage[] = (() => {
   return out;
 })();
 
-export const findSpecPage = (slug: string) =>
-  specPages.find((p) => p.slug === slug);
-
 /** Ссылка на спек: своя страница, если она есть, иначе полный тир-лист. */
 export const specHref = (name: string) => {
   const slug = specSlug(name);

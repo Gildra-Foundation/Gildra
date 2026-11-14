@@ -1,3 +1,7 @@
+import { foreverTalents } from "@/lib/forever/talents/data";
+import { professions as foreverProfessions } from "@/lib/forever/guides/professions";
+import { foreverClasses } from "@/lib/data/wow/foreverClasses";
+import { newDungeons, returningDungeonDetails } from "@/components/wow/forever/instanceData";
 import { routeSections, type SectionId } from "@/lib/routes/registry";
 import { dungeonSlugs } from "@/lib/data/wow/mythic/dungeonRoutes";
 import { midnightClasses, midnightLairEncounters, midnightSpecializations } from "@/lib/data/wow";
@@ -6,6 +10,8 @@ import professions from "@/data/wow/professions/index.json";
 import mistsClasses from "@/data/wow/mists/classes.json";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { tierModePaths } from "@/components/blocks/wow/tierWorkspace/tierModes";
+import { mapPagePath } from "@/lib/wow/worldMap/bundle";
+import { worldMapPages } from "@/lib/wow/worldMap/data.server";
 
 /**
  * Sections of the route registry that are not listed: /wow/dungeons answers
@@ -21,7 +27,6 @@ const UNLISTED_SECTIONS: ReadonlySet<SectionId> = new Set(["dungeons", "characte
  * lair encounters, the professions and the class and specialization pages. Boss pages are not listed: each answers 308 to its raid page.
  */
 export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean } = {}): string[] => [
-  "/",
   ...(Object.keys(routeSections) as SectionId[]).filter((id) => !UNLISTED_SECTIONS.has(id)).map((id) => routeSections[id].path),
   ...(catalogPublic ? [routeSections.library.path] : []),
   ...tierModePaths().filter((path) => path !== routeSections.tierLists.path),
@@ -29,11 +34,15 @@ export const staticPaths = ({ catalogPublic = false }: { catalogPublic?: boolean
   ...raidHubEntries.map(({ slug }) => `/wow/raids/${slug}`),
   ...midnightLairEncounters.map(({ slug }) => `/wow/lairs/${slug}`),
   ...professions.map(({ slug }) => `/wow/professions/${slug}`),
-  "/wow/forever", "/wow/forever/raids", "/wow/forever/dungeons", "/wow/forever/dungeons/hall-of-thanes",
+  ...foreverTalents.classes.map(({ slug }) => `/wow/forever/talent-calc/${slug}`),
+  ...foreverProfessions.map(({ slug }) => `/wow/forever/professions/${slug}`),
+  ...foreverClasses.map(({ slug }) => `/wow/forever/classes/${slug}`),
+  ...[...newDungeons, ...returningDungeonDetails].map(({ slug }) => `/wow/forever/dungeons/${slug}`),
   "/wow/mists", "/wow/mists/talents",
   ...mistsClasses.classes.map(({ slug }) => `/wow/mists/talents/${slug}`),
   ...talentSpecThemes.map(({ slug }) => `/wow/mythic-plus/leaderboard/${slug}`),
   ...midnightClasses.map(({ slug }) => `/wow/classes/${slug}`),
   ...midnightSpecializations.map((spec) => `/wow/classes/${spec.classSlug}/${spec.slug}`),
+  ...worldMapPages().map(mapPagePath),
   "/privacy",
 ];

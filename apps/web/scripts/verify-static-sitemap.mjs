@@ -3,7 +3,7 @@ import path from "node:path";
 import process from "node:process";
 
 const baseUrl = String(process.env.SITEMAP_BASE_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
-const canonicalOrigin = String(process.env.SITEMAP_CANONICAL_ORIGIN ?? "https://gildra.net").replace(/\/$/, "");
+const canonicalOrigin = String(process.env.SITEMAP_CANONICAL_ORIGIN ?? "https://wowarcana.com").replace(/\/$/, "");
 const outputPath = path.resolve(process.cwd(), process.env.SITEMAP_REPORT ?? "docs/reports/wow/static-sitemap-verification.json");
 const xmlResponse = await fetch(`${baseUrl}/sitemaps/static`, { signal: AbortSignal.timeout(30_000) });
 if (!xmlResponse.ok) throw new Error(`Static sitemap returned ${xmlResponse.status}`);

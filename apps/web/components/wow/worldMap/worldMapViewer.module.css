@@ -1,0 +1,742 @@
+/* atlas:strict — world map viewer: canvas surface, markers and labels, search, controls, layers, card, compare divider, timeline. */
+
+/* ---------- Surface ---------- */
+.surface {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  touch-action: none;
+  /* A gesture on the map never scrolls or bounces the page under it. */
+  overscroll-behavior: contain;
+  outline: none;
+  cursor: grab;
+}
+.surface:active { cursor: grabbing; }
+.surface:focus-visible { box-shadow: inset 0 0 0 2px var(--atlas-accent-strong); }
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity var(--atlas-duration-slow) var(--atlas-ease);
+}
+.surface[data-ready] .canvas { opacity: 1; }
+
+.routes { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.routes path {
+  fill: none;
+  stroke: var(--atlas-accent-2);
+  stroke-width: 2;
+  stroke-dasharray: 2 8;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px var(--atlas-bg));
+  animation: flight var(--atlas-duration-draw) linear infinite;
+}
+@keyframes flight { to { stroke-dashoffset: -20; } }
+
+/* ---------- Markers ---------- */
+.markers { position: absolute; inset: 0; pointer-events: none; }
+.markers > * { position: absolute; left: 0; top: 0; padding: 0; border: 0; background: none; color: inherit; pointer-events: auto; will-change: transform; }
+
+.mapLabel { display: block; cursor: pointer; }
+.mapLabel[data-static] { pointer-events: none; cursor: default; }
+.labelText {
+  display: block;
+  padding: 6px 8px;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--atlas-accent-2) 52%, var(--atlas-text-strong));
+  font-family: var(--atlas-font-display);
+  font-size: 0.9375rem;
+  font-weight: var(--atlas-weight-display);
+  letter-spacing: .04em;
+  text-shadow: var(--atlas-text-halo);
+  transition: color var(--atlas-duration-fast) var(--atlas-ease), text-shadow var(--atlas-duration-fast) var(--atlas-ease);
+}
+.mapLabel[data-size="continent"] .labelText { font-size: 1.125rem; letter-spacing: .08em; text-transform: uppercase; }
+.mapLabel[data-size="world"] .labelText { font-size: 1.5rem; letter-spacing: .12em; text-transform: uppercase; }
+.mapLabel:is(:hover, :focus-visible, [data-hover]) .labelText { color: var(--atlas-text-strong); text-shadow: var(--atlas-text-halo), 0 0 18px color-mix(in srgb, var(--atlas-accent-2) 70%, transparent); }
+.mapLabel:focus-visible { outline: none; }
+/* Over painted names (Cosmic, world maps): the label is the hover hint of the painted one. */
+.mapLabel[data-quiet] .labelText { opacity: 0; }
+.mapLabel[data-quiet]:is(:hover, :focus-visible, [data-hover]) .labelText { opacity: 1; }
+.mapLabel:focus-visible .labelText { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.mapLabel[data-capital] { padding-top: 30px; }
+.mapLabel[data-capital] .labelText { font-size: 1rem; }
+
+/* Capitals glow in their faction's colour. */
+.mapLabel, .poi { --marker-tint: var(--atlas-accent-2); }
+.markers [data-faction="horde"] { --marker-tint: var(--atlas-negative); }
+.markers [data-faction="alliance"] { --marker-tint: var(--atlas-info); }
+.glow {
+  position: absolute;
+  left: calc(50% - 15px);
+  top: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--marker-tint) 80%, var(--atlas-text-strong));
+  background: radial-gradient(circle, color-mix(in srgb, var(--marker-tint) 70%, var(--atlas-text-strong)) 0 28%, color-mix(in srgb, var(--marker-tint) 35%, transparent) 30% 64%, transparent 66%);
+  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--marker-tint) 55%, transparent);
+}
+.surface[data-alive] .glow { animation: breathe 3.6s var(--atlas-ease-ambient, ease-in-out) infinite; }
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 14px 2px color-mix(in srgb, var(--marker-tint) 45%, transparent); }
+  50% { box-shadow: 0 0 30px 9px color-mix(in srgb, var(--marker-tint) 70%, transparent); }
+}
+
+.poi { width: 26px; height: 26px; cursor: pointer; }
+/* Capitals glow in their faction's colour and breathe slowly. */
+.poi[data-kind="capital"] { width: 30px; height: 30px; }
+.poi[data-kind="capital"] .poiIcon { width: 30px; height: 30px; border-width: 2px; box-shadow: 0 0 16px 3px color-mix(in srgb, var(--marker-tint) 55%, transparent); }
+.poi[data-kind="capital"] .poiIcon svg { width: 16px; height: 16px; }
+.surface[data-alive] .poi[data-kind="capital"] .poiIcon { animation: breathe 3.6s var(--atlas-ease-ambient, ease-in-out) infinite; }
+.poi[data-kind="dungeon"] { --marker-tint: var(--atlas-info); }
+.poi[data-kind="raid"] { --marker-tint: var(--atlas-caution); }
+.poi[data-kind="delve"] { --marker-tint: var(--atlas-positive); }
+.poi[data-kind="portal"] { --marker-tint: color-mix(in srgb, var(--atlas-info) 55%, var(--atlas-negative)); }
+.poi[data-kind="flight"] { --marker-tint: var(--atlas-accent-2); }
+.poiIcon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--marker-tint) 85%, var(--atlas-text-strong));
+  background: color-mix(in srgb, var(--atlas-bg) 78%, var(--marker-tint));
+  color: color-mix(in srgb, var(--marker-tint) 60%, var(--atlas-text-strong));
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--atlas-bg) 70%, transparent);
+  transition: transform var(--atlas-duration-fast) var(--atlas-ease);
+}
+.poiIcon svg { width: 14px; height: 14px; }
+.poi:is([data-kind="town"], [data-kind="flight"]) { width: 20px; height: 20px; }
+.poi[data-kind="town"] .poiIcon, .poi[data-kind="flight"] .poiIcon { width: 20px; height: 20px; }
+.poi[data-kind="town"] .poiIcon svg, .poi[data-kind="flight"] .poiIcon svg { width: 11px; height: 11px; }
+.poi:is(:hover, :focus-visible, [data-selected]) .poiIcon { transform: scale(1.18); }
+.poi:focus-visible { outline: none; }
+.poi:focus-visible .poiIcon { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.poi[data-selected] .poiIcon { box-shadow: 0 0 0 3px color-mix(in srgb, var(--marker-tint) 45%, transparent); }
+/* Entrances of dungeons and raids pulse. */
+.poi:is([data-kind="dungeon"], [data-kind="raid"], [data-kind="delve"]) .poiIcon::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--marker-tint) 70%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+.surface[data-alive] .poi:is([data-kind="dungeon"], [data-kind="raid"], [data-kind="delve"]) .poiIcon::after { animation: pulse 2.6s var(--atlas-ease) infinite; }
+@keyframes pulse {
+  0% { opacity: .9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2.1); }
+}
+.markerName {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 2px);
+  transform: translateX(-50%);
+  padding: 1px 4px;
+  white-space: nowrap;
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-ui);
+  font-size: var(--atlas-text-meta);
+  font-weight: 600;
+  text-shadow: var(--atlas-text-halo);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
+}
+.poi[data-kind="capital"] .markerName, .poi[data-kind="city"] .markerName { font-family: var(--atlas-font-display); font-size: 0.9375rem; color: color-mix(in srgb, var(--atlas-accent-2) 52%, var(--atlas-text-strong)); }
+:is(.poi, .eventMarker):is([data-labelled], :hover, :focus-visible, [data-selected]) .markerName { opacity: 1; }
+
+.eventMarker { width: 28px; height: 28px; cursor: pointer; }
+.eventRune {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--atlas-bg);
+}
+.eventRune::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  transform: rotate(45deg);
+  border: 2px solid color-mix(in srgb, var(--atlas-accent-2) 80%, var(--atlas-text-strong));
+  background: color-mix(in srgb, var(--atlas-accent-2) 85%, var(--atlas-bg));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--atlas-accent-2) 60%, transparent);
+}
+.eventRune svg { position: relative; width: 12px; height: 12px; }
+.eventMarker:not([data-current]) .eventRune { opacity: .62; filter: saturate(.4); }
+.surface[data-alive] .eventMarker[data-current] .eventRune::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: rotate(45deg);
+  border: 2px solid color-mix(in srgb, var(--atlas-accent-2) 70%, transparent);
+  animation: pulse 2.8s var(--atlas-ease) infinite;
+}
+.eventMarker:focus-visible { outline: none; }
+.eventMarker:focus-visible .eventRune { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.eventMarker .markerName { top: calc(100% + 4px); font-family: var(--atlas-font-display); font-size: 0.9375rem; }
+
+/* A point's name on the free side of its icon. */
+.poi[data-side="above"] .markerName { top: auto; bottom: calc(100% + 1px); }
+.poi[data-side="right"] .markerName { top: 50%; left: calc(100% + 3px); transform: translateY(-50%); }
+.poi[data-side="left"] .markerName { top: 50%; left: auto; right: calc(100% + 3px); transform: translateY(-50%); }
+/* RU names over the English words painted into the art: a small plaque covers them. */
+.mapLabel[data-covers] .labelText {
+  padding: 3px 9px;
+  border: 1px solid color-mix(in srgb, var(--atlas-accent-2) 35%, transparent);
+  border-radius: var(--atlas-radius);
+  background: color-mix(in srgb, var(--atlas-bg) 76%, transparent);
+  font-size: 0.875rem;
+  letter-spacing: .06em;
+}
+.mapLabel[data-covers]:is(:hover, :focus-visible, [data-hover]) .labelText { border-color: var(--atlas-glass-edge); }
+
+/* ---------- The painted kit of the map (ui/mapKit.ts writes the kit on the stage) ---------- */
+/* Every panel around the map wears the same nine-slice plaque: thin bronze-and-wood rails, a gem at each corner. */
+.place, .layers, .poiTipBody, .hoverName, .compareTag, .searchBox, .hits, .loading, .fallback {
+  --map-panel-base: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 9%, var(--atlas-bg));
+  isolation: isolate;
+  color: var(--atlas-text);
+}
+.place::before, .layers::before, .poiTipBody::before, .hoverName::before, .compareTag::before,
+.searchBox::before, .hits::before, .loading::before, .fallback::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 12px solid transparent;
+  border-image-source: var(--map-panel-image, none);
+  border-image-slice: var(--map-panel-slice, 0) fill;
+  border-width: var(--map-panel-width, 12px);
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  /* The site's dimming of painted layers (design.md §4.1). */
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  background: var(--map-panel-base);
+  background-clip: padding-box;
+  pointer-events: none;
+}
+/* Small pieces take thinner rails. */
+.poiTipBody::before, .hoverName::before, .compareTag::before, .searchBox::before, .hits::before, .loading::before, .fallback::before {
+  border-width: var(--map-panel-width-small, 9px);
+}
+/* Text set on the painted material (design.md: always with the dark halo). */
+.place, .layers, .poiTipBody, .hoverName, .compareTag, .hits { text-shadow: 0 1px 3px var(--atlas-bg); }
+
+/* Entering panels: 150–250 ms of opacity and a short lift (transform only). */
+@keyframes mapEnter { from { opacity: 0; transform: translateY(6px); } }
+@keyframes mapLeave { to { opacity: 0; transform: translateY(4px); } }
+@keyframes mapFade { from { opacity: 0; } }
+
+/* The name of the zone under the pointer, as the game shows it: gold letters on a small dark plaque. */
+.hoverName {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  padding: 6px 14px 7px;
+  color: color-mix(in srgb, var(--atlas-accent-2) 70%, var(--atlas-text-strong));
+  font-family: var(--atlas-font-display);
+  font-size: 1rem;
+  font-weight: var(--atlas-weight-display);
+  letter-spacing: .02em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--atlas-duration-fast) var(--atlas-ease);
+}
+.hoverName[data-shown]:not([data-over]) { opacity: 1; }
+/* No names while the view moves under a resting pointer (set by the engine on the very frame the move starts). */
+.surface[data-moving] .hoverName { opacity: 0; transition: none; }
+@media (hover: none) { .hoverName { display: none; } }
+
+/* Zones under the pointer open on a click: the hand says so. */
+.surface[data-pointer] { cursor: pointer; }
+.surface[data-pointer]:active { cursor: grabbing; }
+
+/* ---------- The tooltip of a point (flight master, portal, entrance) ---------- */
+.poiTip { position: absolute; left: 0; top: 0; z-index: 3; width: 0; height: 0; pointer-events: none; }
+.poiTipBody {
+  position: absolute;
+  left: 0;
+  bottom: 20px;
+  display: grid;
+  gap: 1px;
+  width: max-content;
+  max-width: 240px;
+  padding: 9px 14px 10px;
+  translate: -50% 0;
+  pointer-events: auto;
+  animation: mapEnter var(--atlas-duration) var(--atlas-ease) both;
+}
+/* A bridge over the gap to the point: the pointer reaches the tooltip without it closing. */
+.poiTipBody::after { content: ""; position: absolute; left: 30%; right: 30%; top: 100%; height: 14px; }
+.poiTipKind { display: flex; align-items: center; gap: 6px; margin: 0; color: color-mix(in srgb, var(--marker-tint) 60%, var(--atlas-text-strong)); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.poiTipKind svg { width: 13px; height: 13px; flex: none; }
+.poiTipName { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.0625rem; font-weight: var(--atlas-weight-display); line-height: 1.2; }
+.poiTipText { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.poiTipLink { display: inline-flex; align-items: center; gap: 4px; width: max-content; margin-top: 3px; color: var(--atlas-accent); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; }
+.poiTipLink:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+.poiTipLink svg { width: 13px; height: 13px; }
+.poiTip { --marker-tint: var(--atlas-accent-2); }
+.poiTip[data-kind="dungeon"] { --marker-tint: var(--atlas-info); }
+.poiTip[data-kind="raid"] { --marker-tint: var(--atlas-caution); }
+.poiTip[data-kind="delve"] { --marker-tint: var(--atlas-positive); }
+.poiTip[data-kind="portal"] { --marker-tint: color-mix(in srgb, var(--atlas-info) 55%, var(--atlas-negative)); }
+.poiTip[data-faction="horde"] { --marker-tint: var(--atlas-negative); }
+.poiTip[data-faction="alliance"] { --marker-tint: var(--atlas-info); }
+/* The tooltip names the point: the small name under the icon steps aside meanwhile. */
+.poi[data-tip]:not([data-labelled]) .markerName { opacity: 0; }
+@media (hover: none) { .poiTip { display: none; } }
+
+/* ---------- Search (in the title column) ---------- */
+.searchBox { position: relative; z-index: 2; flex: none; }
+.searchField { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 46px; padding: 0 var(--atlas-space-2) 0 var(--atlas-space-4); color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 55%, var(--atlas-text-muted)); }
+.searchField > svg { width: 16px; height: 16px; flex: none; }
+.searchField input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: 0;
+  background: none;
+  color: var(--atlas-text-strong);
+  font-size: var(--atlas-text-body);
+  outline: none;
+}
+.searchField input::-webkit-search-cancel-button { display: none; }
+.searchField input::placeholder { color: var(--atlas-text-subtle); }
+.searchClear { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
+.searchClear:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
+.searchClear svg { width: 15px; height: 15px; }
+/* Focus lights the painted rail (a drop-shadow on the art layer follows its silhouette). */
+.searchBox:focus-within::before { filter: contrast(.88) saturate(.84) brightness(1.05) drop-shadow(0 0 1px var(--atlas-accent-strong)) drop-shadow(0 0 5px var(--atlas-accent)); }
+/* The field's frame shows the focus; the bare input inside draws no second ring. */
+.searchBox:focus-within .searchField input:focus-visible { outline: none; }
+.hits {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: min(380px, 55dvh);
+  margin: 0;
+  padding: 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  list-style: none;
+  animation: mapEnter var(--atlas-duration) var(--atlas-ease) both;
+}
+.hits li { display: grid; grid-template-columns: 20px 1fr; align-items: center; column-gap: var(--atlas-space-2); min-height: 44px; padding: var(--atlas-space-1) var(--atlas-space-2); border-radius: var(--atlas-radius); cursor: pointer; }
+.hits li[aria-selected="true"] { background: var(--atlas-accent-wash); box-shadow: inset 2px 0 0 var(--atlas-accent); }
+.hitIcon { grid-row: span 2; width: 16px; height: 16px; color: var(--atlas-accent); }
+.hitIcon[data-type="event"] { color: var(--atlas-accent-2); }
+.hitTitle { color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1rem; font-weight: var(--atlas-weight-display); line-height: 1.2; }
+.hitMeta { grid-column: 2; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.hits .nothing { display: block; color: var(--atlas-text-muted); cursor: default; }
+.hits .hitsHeading { display: flex; gap: var(--atlas-space-2); min-height: 28px; padding: var(--atlas-space-1) var(--atlas-space-2); color: var(--atlas-text-subtle); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; cursor: default; }
+.hitsHeading svg { width: 13px; height: 13px; }
+
+/* ---------- Tools on the right edge: each in the kit's square frame ---------- */
+.tools { display: contents; }
+.controls {
+  position: absolute;
+  z-index: 6;
+  top: var(--atlas-space-4);
+  right: var(--atlas-gutter);
+  display: grid;
+  gap: var(--atlas-space-2);
+}
+.controlGroup { display: grid; gap: 2px; }
+.controls button {
+  --map-panel-base: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 9%, var(--atlas-bg));
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 40%, var(--atlas-text-strong));
+  cursor: pointer;
+  transition: color var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration-fast) var(--atlas-ease);
+}
+/* The dark face inside the frame's window, then the painted frame over it. */
+.controls button::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: var(--map-frame-top, 0) var(--map-frame-right, 0) var(--map-frame-bottom, 0) var(--map-frame-left, 0);
+  border-radius: 3px;
+  background: var(--map-panel-base);
+  transition: background-color var(--atlas-duration) var(--atlas-ease);
+}
+.controls button::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: var(--map-frame-image, none) center / contain no-repeat;
+  filter: contrast(.88) saturate(.84) brightness(.92);
+  pointer-events: none;
+  transition: filter var(--atlas-duration) var(--atlas-ease);
+}
+.controls button:hover:not(:disabled, [aria-disabled="true"]) { color: var(--atlas-text-strong); }
+.controls button:hover:not(:disabled, [aria-disabled="true"])::after { filter: contrast(.92) saturate(.9) brightness(1.08); }
+.controls button:active:not(:disabled, [aria-disabled="true"]) { transform: translateY(1px) scale(.97); }
+.controls button:is(:disabled, [aria-disabled="true"]) { color: var(--atlas-text-subtle); cursor: default; }
+.controls button:is(:disabled, [aria-disabled="true"])::after { filter: contrast(.8) saturate(.4) brightness(.7); }
+.controls button:is([aria-expanded="true"], [aria-pressed="true"]) { color: var(--atlas-text-strong); }
+.controls button:is([aria-expanded="true"], [aria-pressed="true"])::before { background: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 30%, var(--atlas-bg)); }
+.controls button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.controls svg { width: 18px; height: 18px; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
+
+/* The layers menu doubles as the map's key: each kind with the icon its points wear. */
+.layers {
+  position: absolute;
+  z-index: 7;
+  top: var(--atlas-space-4);
+  right: calc(var(--atlas-gutter) + 52px);
+  display: grid;
+  min-width: 248px;
+  margin: 0;
+  padding: 14px 16px 14px;
+  border: 0;
+  transform-origin: top right;
+  animation: mapEnter var(--atlas-duration) var(--atlas-ease) both;
+}
+.layers[data-state="closing"] { animation: mapLeave var(--atlas-duration-fast) var(--atlas-ease) forwards; pointer-events: none; }
+.layers legend { float: left; width: 100%; padding: 0 0 var(--atlas-space-2); color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 65%, var(--atlas-text-strong)); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.layers label { --marker-tint: var(--atlas-accent-2); display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: var(--atlas-space-3); min-height: 36px; color: var(--atlas-text); font-size: var(--atlas-text-small); cursor: pointer; }
+.layers label:hover { color: var(--atlas-text-strong); }
+.layers label[data-kind="dungeon"] { --marker-tint: var(--atlas-info); }
+.layers label[data-kind="raid"] { --marker-tint: var(--atlas-caution); }
+.layers label[data-kind="delve"] { --marker-tint: var(--atlas-positive); }
+.layers label[data-kind="portal"] { --marker-tint: color-mix(in srgb, var(--atlas-info) 55%, var(--atlas-negative)); }
+.layers label[data-plain] { --marker-tint: var(--atlas-text-muted); }
+.layers label:has(input:not(:checked)) .legendIcon { opacity: .4; filter: saturate(.3); }
+.layers label:has(input:not(:checked)) > span:nth-child(2) { color: var(--atlas-text-muted); }
+/* A small switch in the kit's colours (the native checkbox stays for keyboards and readers). */
+.layers input {
+  appearance: none;
+  position: relative;
+  width: 30px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid var(--atlas-line-strong);
+  border-radius: 8px;
+  background: var(--atlas-surface-sunken);
+  cursor: pointer;
+  transition: background-color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease);
+}
+.layers input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--atlas-text-muted);
+  transition: transform var(--atlas-duration) var(--atlas-ease), background-color var(--atlas-duration) var(--atlas-ease);
+}
+.layers input:checked { border-color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 70%, transparent); background: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 35%, var(--atlas-bg)); }
+.layers input:checked::after { background: var(--atlas-text-strong); transform: translateX(14px); }
+.layers input:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.legendIcon, .placeIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--marker-tint) 85%, var(--atlas-text-strong));
+  background: color-mix(in srgb, var(--atlas-bg) 78%, var(--marker-tint));
+  color: color-mix(in srgb, var(--marker-tint) 60%, var(--atlas-text-strong));
+  transition: opacity var(--atlas-duration) var(--atlas-ease);
+}
+.legendIcon svg, .placeIcon svg { width: 12px; height: 12px; }
+.layers label[data-kind="event"] .legendIcon { border-radius: 3px; transform: rotate(45deg) scale(.86); }
+.layers label[data-kind="event"] .legendIcon svg { transform: rotate(-45deg); }
+.layers label[data-plain] .legendIcon { border-color: transparent; background: none; }
+.layers label[data-plain] .legendIcon svg { width: 15px; height: 15px; }
+
+/* ---------- Place panel: the chosen point or event, then what the place holds ---------- */
+.place {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 13px;
+  animation: mapEnter var(--atlas-duration) var(--atlas-ease) both;
+}
+.placeScroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 45%, transparent) transparent; }
+.card { position: relative; flex: none; padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-3); animation: mapEnter var(--atlas-duration) var(--atlas-ease) both; }
+.card + .placeLists { border-top: 1px solid var(--atlas-line-soft); }
+.cardClose { position: absolute; top: -4px; right: -4px; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
+.cardClose:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
+.cardClose svg { width: 16px; height: 16px; }
+.cardKind { margin: 0; padding-right: 36px; color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 65%, var(--atlas-text-strong)); font-size: var(--atlas-text-label); font-weight: 650; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.cardTitle { margin: var(--atlas-space-1) 0 0; padding-right: 28px; color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: 1.25rem; font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); }
+.cardText { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+.cardActions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1) var(--atlas-space-4); align-items: center; margin-top: var(--atlas-space-2); }
+.cardLink { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; color: var(--atlas-accent); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; }
+.cardLink:hover { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+.cardLink svg { width: 14px; height: 14px; }
+
+.placeLists { display: grid; gap: var(--atlas-space-1); padding: var(--atlas-space-1) 0; }
+.placeSection + .placeSection { border-top: 1px solid var(--atlas-line-soft); padding-top: var(--atlas-space-1); }
+.placeHeading { margin: 0; }
+.placeHeading button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--atlas-space-2);
+  width: 100%;
+  min-height: 34px;
+  padding: 0 var(--atlas-space-2);
+  border: 0;
+  border-radius: var(--atlas-radius);
+  background: none;
+  color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 65%, var(--atlas-text-strong));
+  font-size: var(--atlas-text-label);
+  font-weight: 650;
+  letter-spacing: var(--atlas-tracking-label);
+  text-transform: uppercase;
+  text-shadow: inherit;
+  cursor: pointer;
+}
+.placeHeading button:hover { color: var(--atlas-text-strong); background: var(--atlas-accent-wash); }
+.placeHeading svg { width: 14px; height: 14px; flex: none; transition: transform var(--atlas-duration) var(--atlas-ease); }
+.placeHeading button[aria-expanded="false"] svg { transform: rotate(-90deg); }
+.placeFold:not([data-open]) { display: none; }
+.placeFold[data-open] > div { animation: mapEnter var(--atlas-duration) var(--atlas-ease) both; }
+.placeList { display: grid; margin: 0 0 var(--atlas-space-1); padding: 0; list-style: none; }
+.placeList li { --marker-tint: var(--atlas-info); display: flex; align-items: center; gap: var(--atlas-space-2); min-height: 40px; padding: 0 0 0 var(--atlas-space-2); border-radius: var(--atlas-radius); }
+.placeList li[data-kind="raid"] { --marker-tint: var(--atlas-caution); }
+.placeList li[data-kind="delve"] { --marker-tint: var(--atlas-positive); }
+.placeList li:is([data-kind="zone"], [data-kind="city"]) { --marker-tint: var(--atlas-accent-2); }
+.placeList li:hover { background: var(--atlas-accent-wash); }
+/* Zones and cities: two short columns instead of one long list. */
+.placeList[data-places] { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2px; }
+.placeList[data-places] li { gap: 6px; min-height: 34px; padding-left: 4px; }
+.placeList[data-places] .placeIcon { width: 18px; height: 18px; border-width: 1px; }
+.placeList[data-places] .placeIcon svg { width: 10px; height: 10px; }
+.placeList[data-places] .placeName { font-size: 0.875rem; }
+.placeList[data-places] .placeName > span:first-child { white-space: normal; line-height: 1.15; }
+.placeIcon[data-event] { --marker-tint: var(--atlas-accent-2); border-radius: 3px; transform: rotate(45deg) scale(.86); }
+.placeIcon[data-event] svg { transform: rotate(-45deg); }
+.placeName {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  padding: 3px 0;
+  border: 0;
+  background: none;
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: 0.9375rem;
+  font-weight: var(--atlas-weight-display);
+  line-height: 1.2;
+  text-align: left;
+  text-decoration: none;
+  text-shadow: inherit;
+  cursor: pointer;
+}
+.placeName > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.placeName:hover > span:first-child { color: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 55%, var(--atlas-text-strong)); }
+.placeMeta { color: var(--atlas-text-muted); font-family: var(--atlas-font-ui); font-size: var(--atlas-text-meta); font-weight: 500; }
+.placeLocate { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 0; border-radius: var(--atlas-radius); background: none; color: var(--atlas-text-muted); cursor: pointer; }
+.placeLocate:hover { color: var(--atlas-accent-strong); background: var(--atlas-accent-wash); }
+.placeLocate svg { width: 15px; height: 15px; }
+
+/* ---------- Bottom dock: the timeline (and the place sheet on phones) ---------- */
+.dock {
+  position: absolute;
+  z-index: 6;
+  left: calc(var(--atlas-gutter) + var(--map-side, 0px) + 12px);
+  right: calc(var(--atlas-gutter) + var(--map-tools, 0px));
+  bottom: var(--atlas-space-4);
+  display: grid;
+  justify-items: center;
+  /* Lifted over the cookie notice by a transform: the page does not shift when the notice appears. */
+  transform: translateY(calc(-1 * var(--map-cookie, 0px)));
+  gap: var(--atlas-space-2);
+  pointer-events: none;
+}
+.dock > * { width: min(980px, 100%); pointer-events: auto; }
+
+/* ---------- Compare divider ---------- */
+/* As wide as the stage and moved by transform: the line sits at its left edge. */
+.compare { position: absolute; top: 0; bottom: 0; left: 0; z-index: 4; width: 100%; pointer-events: none; will-change: transform; }
+.compare::before { content: ""; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: color-mix(in srgb, var(--atlas-accent-2) 40%, var(--atlas-text-strong)); box-shadow: 0 0 10px var(--atlas-bg), 0 0 3px color-mix(in srgb, var(--atlas-accent-2) 60%, transparent); }
+.compareHandle {
+  position: absolute;
+  top: 50%;
+  left: -22px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  isolation: isolate;
+  color: var(--atlas-text-strong);
+  cursor: ew-resize;
+  touch-action: none;
+  pointer-events: auto;
+  transition: scale var(--atlas-duration-fast) var(--atlas-ease);
+}
+.compareHandle::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: var(--map-frame-top, 0) var(--map-frame-right, 0) var(--map-frame-bottom, 0) var(--map-frame-left, 0);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 14%, var(--atlas-bg));
+}
+.compareHandle::after { content: ""; position: absolute; z-index: -1; inset: 0; background: var(--map-frame-image, none) center / contain no-repeat; filter: contrast(.88) saturate(.84) brightness(.95); }
+/* A wider grip than the handle: the line is easy to catch anywhere near it. */
+.compareHandle > svg { width: 18px; height: 18px; filter: drop-shadow(0 1px 2px var(--atlas-bg)); }
+.compareHandle:hover, .compareHandle:active { scale: 1.08; }
+.compareHandle:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+.compareTag {
+  --era-accent: var(--atlas-accent-2);
+  position: absolute;
+  top: var(--atlas-space-4);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--atlas-space-2);
+  padding: 7px 14px 8px;
+  color: var(--atlas-text-strong);
+  font-family: var(--atlas-font-display);
+  font-size: 1rem;
+  font-weight: var(--atlas-weight-display);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: mapFade var(--atlas-duration) var(--atlas-ease) both;
+}
+.compareTag[data-side="left"] { right: calc(100% + 10px); }
+.compareTag[data-side="right"] { left: 10px; }
+/* Near the title column (or the tools) both tags stand on the open side, one under the other. */
+.compare[data-cramped="left"] .compareTag[data-side="left"] { right: auto; left: 10px; top: calc(var(--atlas-space-4) + 44px); }
+.compare[data-cramped="right"] .compareTag[data-side="right"] { left: auto; right: calc(100% + 10px); top: calc(var(--atlas-space-4) + 44px); }
+.compareSwatch { flex: none; width: 9px; height: 9px; transform: rotate(45deg); border: 1.5px solid color-mix(in srgb, var(--era-accent) 70%, var(--atlas-text-strong)); background: var(--era-accent); }
+
+.loading, .fallback {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: 50%;
+  margin: 0;
+  padding: var(--atlas-space-3) var(--atlas-space-5);
+  transform: translate(-50%, -50%);
+  color: var(--atlas-text-muted);
+  font-size: var(--atlas-text-small);
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 700px) {
+  /* The results span the whole header row (the slot), not just the narrow field. */
+  .searchBox { position: static; flex: 1; min-width: 0; }
+  .searchBox::before { display: none; }
+  .searchField { position: relative; isolation: isolate; }
+  .searchField::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border: 9px solid transparent;
+    border-image-source: var(--map-panel-image, none);
+    border-image-slice: var(--map-panel-slice, 0) fill;
+    border-width: var(--map-panel-width-small, 9px);
+    border-image-width: 1;
+    filter: contrast(.88) saturate(.84) brightness(.92);
+    background: color-mix(in srgb, var(--map-kit-accent, var(--atlas-accent-2)) 9%, var(--atlas-bg));
+    background-clip: padding-box;
+    pointer-events: none;
+  }
+  .searchBox:focus-within .searchField::before { filter: contrast(.88) saturate(.84) brightness(1.05) drop-shadow(0 0 1px var(--atlas-accent-strong)) drop-shadow(0 0 5px var(--atlas-accent)); }
+  .hits { left: 0; right: 0; }
+  /* The tools sit in the header row next to the search; pinch zooms. */
+  .controls { position: static; display: flex; gap: var(--atlas-space-1); }
+  .controlGroup { display: none; }
+  /* The trail above is the way up on a phone; the row keeps room for the search. */
+  .controls > button[data-up] { display: none; }
+  .layers { top: calc(100% + 6px); right: 0; }
+  .dock { left: 0; right: 0; bottom: 0; gap: 0; }
+  .dock > * { width: 100%; }
+  /* Bottom sheet: the place in focus or the chosen point, above the timeline. */
+  .place { max-height: 46dvh; margin: 0 var(--atlas-space-2) var(--atlas-space-2); padding: 10px; width: auto; justify-self: stretch; }
+  .place::before { border-width: var(--map-panel-width-small, 9px); }
+  /* Folded, the sheet is a small tab at the map's lower left. */
+  .place[data-sheet]:not([data-open]) { justify-self: start; width: auto; max-width: calc(100% - 2 * var(--atlas-space-2)); padding: 6px 8px; }
+  .place[data-sheet]:not([data-open]) .sheetHandle { min-height: 40px; gap: var(--atlas-space-3); padding: 0 var(--atlas-space-2) 0 var(--atlas-space-3); }
+  .sheetHandle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--atlas-space-2);
+    flex: none;
+    min-height: 44px;
+    padding: 0 var(--atlas-space-3);
+    border: 0;
+    background: none;
+    color: var(--atlas-text-strong);
+    font-size: var(--atlas-text-small);
+    font-weight: 600;
+    text-shadow: inherit;
+    cursor: pointer;
+  }
+  .sheetHandle svg { width: 16px; height: 16px; transition: transform var(--atlas-duration) var(--atlas-ease); }
+  .place[data-open] .sheetHandle svg { transform: rotate(180deg); }
+  .place[data-open] .sheetHandle { border-bottom: 1px solid var(--atlas-line-soft); }
+  .sheetBody { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .sheetBody[hidden] { display: none; }
+  .place[data-open] .sheetBody { animation: mapEnter var(--atlas-duration) var(--atlas-ease) both; }
+
+  .compareTag { top: auto; bottom: calc(50% + 34px); max-width: 44vw; overflow: hidden; text-overflow: ellipsis; padding: 5px 10px 6px; font-size: 0.875rem; }
+  .compare[data-cramped] .compareTag:is([data-side="left"], [data-side="right"]) { top: auto; }
+  .compare[data-cramped="left"] .compareTag[data-side="left"], .compare[data-cramped="right"] .compareTag[data-side="right"] { bottom: calc(50% + 72px); }
+  .labelText { font-size: 0.875rem; }
+  .mapLabel[data-size="world"] .labelText { font-size: 1.125rem; }
+  .mapLabel[data-size="continent"] .labelText { font-size: 1rem; }
+}
+@media (min-width: 701px) { .sheetHandle, .sheetBody { display: contents; } }
+@media (pointer: coarse) {
+  .poiIcon::before { content: ""; position: absolute; inset: -9px; }
+  .layers label { min-height: 44px; }
+}
+
+/* ---------- Reduced motion, forced colours (design.md §5) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .glow, .poiIcon, .poiIcon::after, .eventRune::after, .routes path, .place, .layers, .card, .hits, .poiTipBody, .compareTag, .placeFold > div, .sheetBody { animation: none !important; }
+  .canvas, .labelText, .poiIcon, .hoverName, .controls button, .compareHandle, .layers input::after { transition: none !important; }
+}
+
+@media (forced-colors: active) {
+  .place::before, .layers::before, .poiTipBody::before, .hoverName::before, .compareTag::before,
+  .searchBox::before, .searchField::before, .hits::before, .loading::before, .fallback::before,
+  .controls button::after, .compareHandle::after { display: none; }
+  .searchBox, .controls button, .layers, .place, .compareHandle, .compareTag, .hoverName, .poiTipBody, .hits { border: 1px solid CanvasText; background: Canvas; color: CanvasText; }
+  .layers input { appearance: auto; }
+  .glow, .poiIcon::after, .eventRune::before, .eventRune::after { display: none; }
+  .labelText, .markerName { color: CanvasText; background: Canvas; text-shadow: none; }
+  .compare::before { background: CanvasText; }
+}
+
+/* Touch: the folded sheet's tab is 44 px too. */
+@media (max-width: 760px) and (pointer: coarse) { .place[data-sheet]:not([data-open]) .sheetHandle { min-height: 44px; } }

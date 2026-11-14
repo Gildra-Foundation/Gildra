@@ -15,7 +15,7 @@ export async function runMetadata(id: number, locale: "en" | "ru"): Promise<Meta
   const alternates = pairedAlternates(locale, `/wow/mythic-plus/routes/${id}`);
   const robots = { index: false, follow: true };
   const load = await loadMythicPlusRun(id);
-  if (load.state !== "ready") return { title: `${copy.run.unavailableTitle} — Gildra`, robots, alternates };
+  if (load.state !== "ready") return { title: `${copy.run.unavailableTitle} — WowArcana`, robots, alternates };
   const { run } = load;
   const dungeon = dungeonLabel(run.dungeon.slug, run.dungeon.name, locale).name;
   const title = copy.run.metaTitle(dungeon, run.level);

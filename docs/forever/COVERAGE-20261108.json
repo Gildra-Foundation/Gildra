@@ -1,0 +1,630 @@
+[
+  {
+    "slug": "ragefire-chasm",
+    "bosses": 4,
+    "bossesWithAnyAdvice": 4,
+    "trashCards": 2,
+    "bossPortraits": 4,
+    "spellIcons": 3,
+    "equipmentRecords": 38,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 7,
+    "roleTaggedMechanics": 5,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "the-deadmines",
+    "bosses": 8,
+    "bossesWithAnyAdvice": 8,
+    "trashCards": 2,
+    "bossPortraits": 8,
+    "spellIcons": 6,
+    "equipmentRecords": 45,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 12,
+    "roleTaggedMechanics": 8,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [
+      "Goblin Engineer"
+    ],
+    "walkthroughSteps": 5,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "wailing-caverns",
+    "bosses": 9,
+    "bossesWithAnyAdvice": 9,
+    "trashCards": 2,
+    "bossPortraits": 9,
+    "spellIcons": 7,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 16,
+    "roleTaggedMechanics": 9,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [],
+    "walkthroughSteps": 5,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "shadowfang-keep",
+    "bosses": 9,
+    "bossesWithAnyAdvice": 9,
+    "trashCards": 4,
+    "bossPortraits": 9,
+    "spellIcons": 9,
+    "equipmentRecords": 44,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 14,
+    "roleTaggedMechanics": 9,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [
+      "Vile Bat",
+      "Fel Steed · Shadow Charger"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "bosses": 7,
+    "bossesWithAnyAdvice": 7,
+    "trashCards": 2,
+    "bossPortraits": 7,
+    "spellIcons": 6,
+    "equipmentRecords": 38,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 10,
+    "roleTaggedMechanics": 5,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [],
+    "walkthroughSteps": 5,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "the-stockade",
+    "bosses": 6,
+    "bossesWithAnyAdvice": 6,
+    "trashCards": 2,
+    "bossPortraits": 6,
+    "spellIcons": 5,
+    "equipmentRecords": 13,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 8,
+    "roleTaggedMechanics": 5,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "gnomeregan",
+    "bosses": 6,
+    "bossesWithAnyAdvice": 6,
+    "trashCards": 3,
+    "bossPortraits": 6,
+    "spellIcons": 4,
+    "equipmentRecords": 4,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 10,
+    "roleTaggedMechanics": 6,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [
+      "Walking Bomb"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "razorfen-kraul",
+    "bosses": 8,
+    "bossesWithAnyAdvice": 8,
+    "trashCards": 2,
+    "bossPortraits": 8,
+    "spellIcons": 8,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 12,
+    "roleTaggedMechanics": 8,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [],
+    "walkthroughSteps": 3,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "scarlet-monastery",
+    "bosses": 7,
+    "bossesWithAnyAdvice": 7,
+    "trashCards": 1,
+    "bossPortraits": 7,
+    "spellIcons": 7,
+    "equipmentRecords": 16,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 12,
+    "roleTaggedMechanics": 10,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [
+      "Scarlet Torturer"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "uldaman",
+    "bosses": 8,
+    "bossesWithAnyAdvice": 8,
+    "trashCards": 2,
+    "bossPortraits": 8,
+    "spellIcons": 6,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 13,
+    "roleTaggedMechanics": 7,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [
+      "Stonevault Oracle",
+      "Shadowforge Darkcaster"
+    ],
+    "walkthroughSteps": 3,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "razorfen-downs",
+    "bosses": 6,
+    "bossesWithAnyAdvice": 6,
+    "trashCards": 1,
+    "bossPortraits": 4,
+    "spellIcons": 6,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 12,
+    "roleTaggedMechanics": 9,
+    "bossesWithoutPortrait": [
+      "Plaguemaw the Rotting",
+      "Ragglesnout"
+    ],
+    "trashWithoutPortrait": [
+      "Death’s Head Geomancer"
+    ],
+    "walkthroughSteps": 3,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "zul-farrak",
+    "bosses": 8,
+    "bossesWithAnyAdvice": 8,
+    "trashCards": 1,
+    "bossPortraits": 7,
+    "spellIcons": 7,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 15,
+    "roleTaggedMechanics": 13,
+    "bossesWithoutPortrait": [
+      "Shadowpriest Sezz'ziz"
+    ],
+    "trashWithoutPortrait": [
+      "Sandfury Witch Doctor"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "maraudon",
+    "bosses": 8,
+    "bossesWithAnyAdvice": 8,
+    "trashCards": 3,
+    "bossPortraits": 8,
+    "spellIcons": 6,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 14,
+    "roleTaggedMechanics": 10,
+    "bossesWithoutPortrait": [],
+    "trashWithoutPortrait": [
+      "Noxious Slime",
+      "Subterranean Diemetradon",
+      "Theradrim Guardian"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "sunken-temple",
+    "bosses": 8,
+    "bossesWithAnyAdvice": 8,
+    "trashCards": 2,
+    "bossPortraits": 4,
+    "spellIcons": 8,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 13,
+    "roleTaggedMechanics": 8,
+    "bossesWithoutPortrait": [
+      "Atal'alarion",
+      "Hazzas",
+      "Morphaz",
+      "Weaver"
+    ],
+    "trashWithoutPortrait": [
+      "Spawn of Hakkar",
+      "Atal'ai Deathwalker"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "blackrock-depths",
+    "bosses": 21,
+    "bossesWithAnyAdvice": 21,
+    "trashCards": 1,
+    "bossPortraits": 17,
+    "spellIcons": 17,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 28,
+    "roleTaggedMechanics": 17,
+    "bossesWithoutPortrait": [
+      "Ring of Law",
+      "The Vault",
+      "The Seven",
+      "Emperor Dagran Thaurissan"
+    ],
+    "trashWithoutPortrait": [
+      "Anvilrage Medic"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "blackrock-spire",
+    "bosses": 14,
+    "bossesWithAnyAdvice": 14,
+    "trashCards": 3,
+    "bossPortraits": 13,
+    "spellIcons": 14,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 21,
+    "roleTaggedMechanics": 13,
+    "bossesWithoutPortrait": [
+      "Lord Valthalak"
+    ],
+    "trashWithoutPortrait": [
+      "Spirestone Mystic",
+      "Firebrand Invoker",
+      "Blackhand Summoner"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "dire-maul",
+    "bosses": 19,
+    "bossesWithAnyAdvice": 19,
+    "trashCards": 2,
+    "bossPortraits": 16,
+    "spellIcons": 18,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 31,
+    "roleTaggedMechanics": 16,
+    "bossesWithoutPortrait": [
+      "Pusillin",
+      "Lord Hel'nurath",
+      "Tsu'zee"
+    ],
+    "trashWithoutPortrait": [
+      "Warpwood Tangler",
+      "Warpwood Pod"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "stratholme",
+    "bosses": 19,
+    "bossesWithAnyAdvice": 19,
+    "trashCards": 1,
+    "bossPortraits": 10,
+    "spellIcons": 12,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 26,
+    "roleTaggedMechanics": 15,
+    "bossesWithoutPortrait": [
+      "Malor the Zealous",
+      "Cannon Master Willey",
+      "Archivist Galford",
+      "Baron Rivendare",
+      "Black Guard Swordsmith",
+      "Crimson Hammersmith",
+      "Ezra Grimm",
+      "Skul",
+      "Stonespine"
+    ],
+    "trashWithoutPortrait": [
+      "Thuzadin Necromancer"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "scholomance",
+    "bosses": 14,
+    "bossesWithAnyAdvice": 14,
+    "trashCards": 1,
+    "bossPortraits": 12,
+    "spellIcons": 12,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 22,
+    "roleTaggedMechanics": 11,
+    "bossesWithoutPortrait": [
+      "Kirtonos",
+      "Ras Frostwhisperer"
+    ],
+    "trashWithoutPortrait": [
+      "Blood Steward of Kirtonos"
+    ],
+    "walkthroughSteps": 4,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "ruins-of-lordaeron",
+    "bosses": 6,
+    "bossesWithAnyAdvice": 6,
+    "trashCards": 2,
+    "bossPortraits": 0,
+    "spellIcons": 4,
+    "equipmentRecords": 64,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 6,
+    "roleTaggedMechanics": 0,
+    "bossesWithoutPortrait": [
+      "Witherfang",
+      "The Baron",
+      "Viktor the Vile",
+      "The Abandoned",
+      "Bjork",
+      "Rath’mael"
+    ],
+    "trashWithoutPortrait": [
+      "Broodwidow · Venom Lurker",
+      "Flesh Golem"
+    ],
+    "walkthroughSteps": 0,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "excavation-site",
+    "bosses": 4,
+    "bossesWithAnyAdvice": 4,
+    "trashCards": 1,
+    "bossPortraits": 0,
+    "spellIcons": 2,
+    "equipmentRecords": 7,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 4,
+    "roleTaggedMechanics": 0,
+    "bossesWithoutPortrait": [
+      "Saltspine",
+      "Shadetooth",
+      "Highland Horror",
+      "Relic Guardian"
+    ],
+    "trashWithoutPortrait": [
+      "Thicket Hunter"
+    ],
+    "walkthroughSteps": 0,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "city-of-dalaran",
+    "bosses": 8,
+    "bossesWithAnyAdvice": 8,
+    "trashCards": 6,
+    "bossPortraits": 0,
+    "spellIcons": 5,
+    "equipmentRecords": 22,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 12,
+    "roleTaggedMechanics": 4,
+    "bossesWithoutPortrait": [
+      "Atrexis the Grave Knight",
+      "Lyn the Ignored",
+      "Arcane Anomaly",
+      "Arcanic Enigma",
+      "Unstable Sentinel",
+      "Fel Ancient",
+      "Mana Devourer",
+      "Shade of the Archmage"
+    ],
+    "trashWithoutPortrait": [
+      "Mana Phantom",
+      "Phantasm",
+      "Mindless Horror",
+      "Kirin Tor Necromancer",
+      "Saturated Remnant",
+      "Mana Fiend"
+    ],
+    "walkthroughSteps": 0,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "the-drowned-city",
+    "bosses": 6,
+    "bossesWithAnyAdvice": 4,
+    "trashCards": 2,
+    "bossPortraits": 0,
+    "spellIcons": 1,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [
+      "Deathless Guardians",
+      "Primeval Elemental"
+    ],
+    "mechanicEntries": 6,
+    "roleTaggedMechanics": 2,
+    "bossesWithoutPortrait": [
+      "Zul’Alai",
+      "Var’Taka",
+      "Captain Dreadrise",
+      "Deathless Guardians",
+      "Primeval Elemental",
+      "Min’loth the Serpent"
+    ],
+    "trashWithoutPortrait": [
+      "Brinescale Sorceror",
+      "Profane Necro"
+    ],
+    "walkthroughSteps": 0,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "kroldok-stronghold",
+    "bosses": 5,
+    "bossesWithAnyAdvice": 5,
+    "trashCards": 0,
+    "bossPortraits": 0,
+    "spellIcons": 0,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [],
+    "mechanicEntries": 5,
+    "roleTaggedMechanics": 0,
+    "bossesWithoutPortrait": [
+      "Slavecrusher Grox",
+      "Twilight Commander Zarmok",
+      "Handler Ashka",
+      "Nar’gurk",
+      "Overseer Mugg"
+    ],
+    "trashWithoutPortrait": [],
+    "walkthroughSteps": 0,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "alcaz-prison",
+    "bosses": 5,
+    "bossesWithAnyAdvice": 4,
+    "trashCards": 1,
+    "bossPortraits": 0,
+    "spellIcons": 1,
+    "equipmentRecords": 9,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [
+      "The Questioner"
+    ],
+    "mechanicEntries": 4,
+    "roleTaggedMechanics": 0,
+    "bossesWithoutPortrait": [
+      "Overseer Wrex",
+      "Tidemistress Ca’zass",
+      "Katerina the Cleaner",
+      "The Questioner",
+      "Blazeroar"
+    ],
+    "trashWithoutPortrait": [
+      "Strashaz Enchantress"
+    ],
+    "walkthroughSteps": 0,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "blackmaw-hold",
+    "bosses": 8,
+    "bossesWithAnyAdvice": 4,
+    "trashCards": 0,
+    "bossPortraits": 0,
+    "spellIcons": 3,
+    "equipmentRecords": 5,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [
+      "Impaan the Imprisoner",
+      "Elder Shaman Bloodmane",
+      "Blackmaw Behemoth",
+      "Moontouched Wanderer"
+    ],
+    "mechanicEntries": 4,
+    "roleTaggedMechanics": 0,
+    "bossesWithoutPortrait": [
+      "Withermaw",
+      "Impaan the Imprisoner",
+      "Elder Shaman Bloodmane",
+      "Bonesnout the Unbroken",
+      "Varrox Bleakhoof",
+      "Blackmaw Behemoth",
+      "Unbound Spirit",
+      "Moontouched Wanderer"
+    ],
+    "trashWithoutPortrait": [],
+    "walkthroughSteps": 0,
+    "mappedPullsVerified": false
+  },
+  {
+    "slug": "shapers-terrace",
+    "bosses": 11,
+    "bossesWithAnyAdvice": 1,
+    "trashCards": 0,
+    "bossPortraits": 0,
+    "spellIcons": 0,
+    "equipmentRecords": 0,
+    "fullGuideVerified": false,
+    "missingBossAdvice": [
+      "Titanosaur",
+      "Ravasaur Hunters",
+      "Thunderhoof",
+      "Venomridge",
+      "Direhorn Matriarch",
+      "Cinder",
+      "King Op",
+      "Snowtalon",
+      "Bolt",
+      "Vitrix"
+    ],
+    "mechanicEntries": 1,
+    "roleTaggedMechanics": 0,
+    "bossesWithoutPortrait": [
+      "Titanosaur",
+      "Ravasaur Hunters",
+      "Thunderhoof",
+      "Venomridge",
+      "Direhorn Matriarch",
+      "Cinder",
+      "King Op",
+      "Snowtalon",
+      "Bolt",
+      "Vitrix",
+      "Nanaya"
+    ],
+    "trashWithoutPortrait": [],
+    "walkthroughSteps": 0,
+    "mappedPullsVerified": false
+  }
+]

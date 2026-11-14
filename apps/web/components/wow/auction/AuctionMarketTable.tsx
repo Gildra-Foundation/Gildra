@@ -1,4 +1,5 @@
 "use client";
+import { memo } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { AtlasSelect } from "@gildra/atlas-ui/AtlasField";
 import type { AuctionMarketItem } from "@/lib/wow/auctionBrowser";
@@ -42,24 +43,31 @@ export function AuctionMarketTable({ items, lang, sort, dir, onSort, selected, o
         <th scope="col" className={styles.pickCell}><span className={styles.srOnly}>{c.select}</span></th>
         {head("name", c.item, false)}{head("min", c.minPrice)}{head("median", c.median)}{head("quantity", c.available)}
       </tr></thead>
-      <tbody>{items.map(item => {
-        const key = `${item.market}:${item.itemId}`, picked = selected.includes(item.itemId), name = rankedName(item, lang);
-        return <tr key={key} className={styles.marketRow} data-selected={picked || undefined}>
-          <td className={styles.pickCell}>
-            <input type="checkbox" className={styles.pick} checked={picked} onChange={() => onToggle(item)} aria-label={`${c.select}: ${name}`} />
-          </td>
-          <th scope="row" className={styles.marketItem}>
-            <button type="button" className={styles.itemOpen} onClick={() => onOpen(item)} aria-haspopup="dialog">
-              <AuctionItemLabel item={item} lang={lang} size={36} />
-              {mixed && item.market === "realm" ? <span className={styles.marketTag}>{c.realmLots}</span> : null}
-            </button>
-          </th>
-          <td data-numeric data-label={c.minPrice}><AuctionMoney value={item.minPrice} lang={lang} /></td>
-          <td data-numeric data-label={c.median}><AuctionMoney value={item.medianPrice} lang={lang} /></td>
-          <td data-numeric data-label={c.available} className={styles.quantity}>{item.quantity.toLocaleString(lang)}</td>
-        </tr>;
-      })}</tbody>
+      <tbody>{items.map(item => <MarketRow key={`${item.market}:${item.itemId}`} item={item} lang={lang} picked={selected.includes(item.itemId)} mixed={mixed} onToggle={onToggle} onOpen={onOpen} />)}</tbody>
     </table>
   </div>
   </>;
 }
+
+/** One market row. Memoised: picking an item for the comparison re-renders its own row only
+ *  (the browser passes handlers with a stable identity). */
+const MarketRow = memo(function MarketRow({ item, lang, picked, mixed, onToggle, onOpen }: {
+  item: AuctionMarketItem; lang: "ru" | "en"; picked: boolean; mixed: boolean;
+  onToggle: (item: AuctionMarketItem) => void; onOpen: (item: AuctionMarketItem) => void;
+}) {
+  const c = auctionCopy[lang], name = rankedName(item, lang);
+  return <tr className={styles.marketRow} data-selected={picked || undefined}>
+    <td className={styles.pickCell}>
+      <label className={styles.pickHit}><input type="checkbox" className={styles.pick} checked={picked} onChange={() => onToggle(item)} aria-label={`${c.select}: ${name}`} /></label>
+    </td>
+    <th scope="row" className={styles.marketItem}>
+      <button type="button" className={styles.itemOpen} onClick={() => onOpen(item)} aria-haspopup="dialog">
+        <AuctionItemLabel item={item} lang={lang} size={36} />
+        {mixed && item.market === "realm" ? <span className={styles.marketTag}>{c.realmLots}</span> : null}
+      </button>
+    </th>
+    <td data-numeric data-label={c.minPrice}><AuctionMoney value={item.minPrice} lang={lang} /></td>
+    <td data-numeric data-label={c.median}><AuctionMoney value={item.medianPrice} lang={lang} /></td>
+    <td data-numeric data-label={c.available} className={styles.quantity}>{item.quantity.toLocaleString(lang)}</td>
+  </tr>;
+});

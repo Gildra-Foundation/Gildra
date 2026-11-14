@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -26,13 +27,29 @@ import (
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-// Keep this assertion aligned with the highest numbered production migration.
-// The test intentionally upgrades from the immutable v15 baseline through the
-// full catalog schema so newly added quality/read-model migrations cannot be
-// skipped silently.
-const latestCatalogSchemaVersion int64 = 172
+// Read the expected version from the migration files, independently of the
+// migrated database. A new migration must still be applied and restore-tested,
+// without requiring an unrelated version constant to be updated by hand.
+func catalogMigrationVersions(t *testing.T) (latest, previous int64) {
+	t.Helper()
+	migrations, err := goose.CollectMigrations("../migrations/postgres", 0, math.MaxInt64)
+	if err != nil {
+		t.Fatalf("collect production migrations: %v", err)
+	}
+	if len(migrations) < 2 {
+		t.Fatal("expected at least two production migrations")
+	}
+	return migrations[len(migrations)-1].Version, migrations[len(migrations)-2].Version
+}
+
+func latestCatalogSchemaVersion(t *testing.T) int64 {
+	t.Helper()
+	latest, _ := catalogMigrationVersions(t)
+	return latest
+}
 
 func TestPostgresProductionBaselineUpgrade(t *testing.T) {
+	latest, previous := catalogMigrationVersions(t)
 	ctx := context.Background()
 	migrations, err := filepath.Abs("../migrations/postgres")
 	if err != nil {
@@ -77,15 +94,15 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 	if err := goose.UpContext(ctx, database, migrations); err != nil {
 		t.Fatalf("upgrade production baseline to Warcraft catalog: %v", err)
 	}
-	assertMigrationVersion(t, ctx, database, latestCatalogSchemaVersion)
-	if err := goose.DownToContext(ctx, database, migrations, latestCatalogSchemaVersion-1); err != nil {
+	assertMigrationVersion(t, ctx, database, latest)
+	if err := goose.DownToContext(ctx, database, migrations, previous); err != nil {
 		t.Fatalf("roll back newest catalog migration: %v", err)
 	}
-	assertMigrationVersion(t, ctx, database, latestCatalogSchemaVersion-1)
-	if err := goose.UpToContext(ctx, database, migrations, latestCatalogSchemaVersion); err != nil {
+	assertMigrationVersion(t, ctx, database, previous)
+	if err := goose.UpToContext(ctx, database, migrations, latest); err != nil {
 		t.Fatalf("reapply newest catalog migration: %v", err)
 	}
-	assertMigrationVersion(t, ctx, database, latestCatalogSchemaVersion)
+	assertMigrationVersion(t, ctx, database, latest)
 
 	if err := goose.DownToContext(ctx, database, migrations, 96); err != nil {
 		t.Fatalf("prepare UI map migration proof: %v", err)
@@ -178,10 +195,10 @@ func TestPostgresProductionBaselineUpgrade(t *testing.T) {
 		t.Fatalf("stale ATT map resolutions survived mapping change: nodes=%d references=%d",
 			staleNodes, staleReferences)
 	}
-	if err := goose.UpToContext(ctx, database, migrations, latestCatalogSchemaVersion); err != nil {
+	if err := goose.UpToContext(ctx, database, migrations, latest); err != nil {
 		t.Fatalf("apply media cache migrations: %v", err)
 	}
-	assertMigrationVersion(t, ctx, database, latestCatalogSchemaVersion)
+	assertMigrationVersion(t, ctx, database, latest)
 	assertTablePresent(t, ctx, database, "catalog_media_cache_runs")
 	var spellDependencyFunction bool
 	if err := database.QueryRowContext(ctx, `
@@ -402,7 +419,7 @@ func assertUIMapReadModelBuildGuard(t *testing.T, ctx context.Context, database 
 	if err := database.QueryRowContext(ctx, `
 		INSERT INTO game_entity_versions(entity_id,build_id,content_hash,payload,source_url)
 		VALUES($1,$2,decode(repeat('aa',32),'hex'),
-			'{"registry_only":true,"db2":{"Name_lang":""}}'::jsonb,
+			'{"registry_only":true,"db2":{"Name_lang":"Elwynn Forest"}}'::jsonb,
 			'https://wago.tools/db2/UiMap/csv?build=99.0.0.999998')
 		ON CONFLICT(entity_id,build_id,content_hash) DO UPDATE SET payload=EXCLUDED.payload
 		RETURNING id::text`, entityID, buildID).Scan(&versionID); err != nil {
@@ -411,6 +428,13 @@ func assertUIMapReadModelBuildGuard(t *testing.T, ctx context.Context, database 
 	if _, err := database.ExecContext(ctx, `
 		UPDATE game_entities SET latest_version_id=$2::uuid,published_version_id=$2::uuid WHERE id=$1::uuid`, entityID, versionID); err != nil {
 		t.Fatalf("publish ui_map version: %v", err)
+	}
+	// Since v177 the public dataset counts only localized, player-facing
+	// names. Keep this eligible map visible; the next map tests exclusion.
+	if _, err := database.ExecContext(ctx, `
+		INSERT INTO game_entity_localizations(version_id,locale,name)
+		VALUES($1,'en_US','Elwynn Forest'),($1,'ru_RU','Элвиннский лес')`, versionID); err != nil {
+		t.Fatalf("localize eligible ui_map: %v", err)
 	}
 	if _, err := database.ExecContext(ctx, `UPDATE game_builds SET is_active=(id=$2) WHERE product_id=$1`, productID, buildID); err != nil {
 		t.Fatal(err)
@@ -550,7 +574,7 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 			completed_at,restore_started_at,restore_completed_at,verification)
 		VALUES(
 			'postgres','logical','verified','file:///local-only.dump',decode(repeat('aa',32),'hex'),1,$1,
-			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`, latestCatalogSchemaVersion); err != nil {
+			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`, latestCatalogSchemaVersion(t)); err != nil {
 		t.Fatal(err)
 	}
 	result, err = runner.Run(ctx, options)
@@ -565,7 +589,7 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 			completed_at,restore_started_at,restore_completed_at,verification)
 		VALUES(
 			'postgres','logical','verified','r2://gildra-backups/catalog.dump',decode(repeat('bb',32),'hex'),1,$1,
-			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`, latestCatalogSchemaVersion); err != nil {
+			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}')`, latestCatalogSchemaVersion(t)); err != nil {
 		t.Fatal(err)
 	}
 	result, err = runner.Run(ctx, options)
@@ -584,7 +608,7 @@ func assertProductionRecoveryGate(t *testing.T, ctx context.Context, database *s
 			'postgres','logical','verified','file:///var/lib/gildra/catalog-backups/wow/nightly.dump',
 			decode(repeat('cc',32),'hex'),1,$1,product.id,
 			now(),now(),now(),'{"restore_verified":true,"source_restore_match":true}'
-		FROM game_products product WHERE product.slug='wow'`, latestCatalogSchemaVersion); err != nil {
+		FROM game_products product WHERE product.slug='wow'`, latestCatalogSchemaVersion(t)); err != nil {
 		t.Fatal(err)
 	}
 	classic := options

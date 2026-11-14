@@ -1,10 +1,9 @@
 {
   "schemaVersion": 1,
-  "siteOrigin": "https://gildra.net",
+  "siteOrigin": "https://wowarcana.com",
   "locales": ["en", "ru"],
   "phases": ["P0", "P1", "P2", "P3", "P4"],
   "staticRoutes": [
-    { "id": "wow-home", "path": "/wow", "phase": "P0", "indexable": false },
     { "id": "raid-index", "path": "/wow/raids", "phase": "P0", "indexable": false },
     { "id": "lair-index", "path": "/wow/lairs", "phase": "P0", "indexable": false },
     { "id": "weekly-checklist", "path": "/wow/weekly-checklist", "phase": "P0", "indexable": false },

@@ -92,29 +92,35 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		http.NotFound(response, request)
 		return
 	}
-	if expired {
-		// Past the source's retention window (Blizzard API media: 30 days) the
-		// cached copy must not be served; until the cache worker refreshes it,
-		// send the browser to the same vetted source instead of a broken image.
-		// Every Blizzard icon was a 404 from 2026-10-09 while the catalog
-		// refresh was down.
-		if fallback, ok := verifiedRemoteMediaURL(sourceURL); ok {
-			http.Redirect(response, request, fallback, http.StatusTemporaryRedirect)
-			return
-		}
-		http.NotFound(response, request)
-		return
-	}
-	if err != nil || !validCacheKey(key) {
+	if err != nil {
 		http.Error(response, "media unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	file, err := h.root.Open(filepath.FromSlash(key))
-	if err != nil {
+	if !validCacheKey(key) {
+		http.NotFound(response, request)
+		return
+	}
+	// Check confinement even for expired objects. Only a genuinely missing
+	// file may fall back; permission errors and symlink escapes fail closed.
+	file, openErr := h.root.Open(filepath.FromSlash(key))
+	if openErr != nil && !errors.Is(openErr, os.ErrNotExist) {
+		http.NotFound(response, request)
+		return
+	}
+	var info os.FileInfo
+	if file != nil {
+		info, err = file.Stat()
+		if err != nil || !info.Mode().IsRegular() {
+			_ = file.Close()
+			http.NotFound(response, request)
+			return
+		}
+	}
+	if expired || openErr != nil {
+		if file != nil {
+			_ = file.Close()
+		}
 		if fallback, ok := verifiedRemoteMediaURL(sourceURL); ok {
-			// A cache volume can be restored independently of the catalog database.
-			// Redirect to the same vetted source rather than emitting a broken image
-			// while the cache worker repairs the missing object.
 			http.Redirect(response, request, fallback, http.StatusTemporaryRedirect)
 			return
 		}
@@ -122,11 +128,6 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		return
 	}
 	defer file.Close()
-	info, err := file.Stat()
-	if err != nil || !info.Mode().IsRegular() {
-		http.NotFound(response, request)
-		return
-	}
 	response.Header().Set("Content-Type", mimeType)
 	if h.accessMode == "private" {
 		response.Header().Set("Cache-Control", "private, no-store")

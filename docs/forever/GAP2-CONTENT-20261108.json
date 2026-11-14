@@ -1,0 +1,124 @@
+[
+  {
+    "slug": "maraudon",
+    "action": "preparation",
+    "source": "https://www.wowhead.com/forever/guide/maraudon-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Noxxion",
+    "mechanic": "Summons",
+    "action": "expand",
+    "source": "https://www.wowhead.com/forever/guide/maraudon-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Princess Theradras",
+    "mechanic": "Repulsive Gaze",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/maraudon-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Celebras the Cursed",
+    "mechanic": "Wrath",
+    "action": "expand",
+    "source": "https://www.wowhead.com/forever/guide/maraudon-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "maraudon",
+    "enemy": "Subterranean Diemetradon",
+    "action": "trash",
+    "source": "https://www.wowhead.com/forever/guide/maraudon-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "maraudon",
+    "enemy": "Theradrim Guardian",
+    "action": "trash",
+    "source": "https://www.wowhead.com/forever/guide/maraudon-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "sunken-temple",
+    "action": "preparation",
+    "source": "https://www.wowhead.com/forever/guide/the-temple-of-atalhakkar-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Shade of Eranikus",
+    "mechanic": "Dragonkin reinforcements",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/the-temple-of-atalhakkar-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Jammal'an the Prophet",
+    "mechanic": "Ogom the Wretched",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/the-temple-of-atalhakkar-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "sunken-temple",
+    "enemy": "Atal'ai Deathwalker",
+    "action": "trash",
+    "source": "https://www.wowhead.com/forever/guide/the-temple-of-atalhakkar-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "scholomance",
+    "action": "preparation",
+    "source": "https://www.wowhead.com/forever/guide/scholomance-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Jandice Barov",
+    "mechanic": "Curse of Blood",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/scholomance-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Marduk Blackpool",
+    "mechanic": "Defiling Aura",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/scholomance-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Darkmaster Gandling",
+    "mechanic": "Shadow Portal",
+    "action": "expand",
+    "source": "https://www.wowhead.com/forever/guide/scholomance-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Darkmaster Gandling",
+    "mechanic": "Arcane Missiles",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/scholomance-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-depths",
+    "action": "preparation",
+    "source": "https://www.wowhead.com/forever/guide/blackrock-depths-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Ambassador Flamelash",
+    "mechanic": "Burning Spirit",
+    "action": "expand",
+    "source": "https://www.wowhead.com/forever/guide/blackrock-depths-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Magmus",
+    "mechanic": "Chamber flames",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/blackrock-depths-dungeon-overview-location-rewards"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "The Seven",
+    "mechanic": "Successive waves",
+    "action": "add",
+    "source": "https://www.wowhead.com/forever/guide/blackrock-depths-dungeon-overview-location-rewards"
+  }
+]

@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { bracketOfSlug, legacyTierMode, restOfQuery, tierModeMeta, tierModePath, tierModePaths } from "../../components/blocks/wow/tierWorkspace/tierModes.ts";
 import { PVP_BRACKETS } from "../../components/blocks/wow/tierWorkspace/tierSourceKeys.ts";
-import { entriesHaveLocales, homeDatasetType, isRecordShard, recordSitemapShards, recordSitemapUrls, requestShards } from "../../lib/library/recordSitemap.ts";
+import { datasetHasRecordSitemap, entriesHaveLocales, homeDatasetType, internalRecordSlug, isRecordShard, recordSitemapShards, recordSitemapUrls, requestShards } from "../../lib/library/recordSitemap.ts";
 import { specLinkTargets } from "../../components/wow/shared/relatedLinksCopy.ts";
 import { talentSpecThemes } from "../../lib/talentSpecThemes.ts";
 import { midnightSpecializations } from "../../lib/data/wow/specializations.ts";
@@ -68,6 +68,23 @@ describe("library record sitemaps", () => {
     assert.equal(homeDatasetType("weapons"), undefined);
   });
 
+  it("datasets hidden from players and the client's bookkeeping records stay out", () => {
+    assert.ok(datasetHasRecordSitemap("items") && datasetHasRecordSitemap("achievements"));
+    for (const hidden of ["quest-reward-packages", "ui-maps", "weapons", "nosuch"]) assert.ok(!datasetHasRecordSitemap(hidden), hidden);
+    for (const slug of ["10-2-7-timewalking-season-artifact-cloak-haste", "12-x-professions-tracker", "conversation-dnt", "test-item", "zzold-sword"]) assert.ok(internalRecordSlug(slug), slug);
+    for (const slug of ["battle-horn", "temple-of-elune", "1000-needles", "thunderfury-blessed-blade-of-the-windseeker", "7th-legion-battle-standard"]) assert.ok(!internalRecordSlug(slug), slug);
+    // Classes and specializations a player cannot pick are `noindex` pages (isInternalRecord): not in the files either.
+    for (const [type, slug] of [["class", "adventurer"], ["class", "traveler"], ["specialization", "initial"], ["specialization", "cunning"]]) assert.ok(internalRecordSlug(slug, type), slug);
+    for (const [type, slug] of [["class", "hunter"], ["specialization", "frost"], ["item", "cunning"], ["spell", "initial"]]) assert.ok(!internalRecordSlug(slug, type), `${type} ${slug}`);
+    assert.equal(recordSitemapUrls([{ id: "00000000-0000-4000-8000-000000000003", type: "specialization", slug: "cunning", slugRu: "хитрость" }], "ru").length, 0);
+    const urls = recordSitemapUrls([
+      { id: "00000000-0000-4000-8000-000000000001", type: "currency", slug: "10-2-7-timewalking-season-artifact-cloak-haste", slugRu: null },
+      { id: "00000000-0000-4000-8000-000000000002", type: "currency", slug: "honor", slugRu: "очки-чести" },
+    ], "en");
+    assert.equal(urls.length, 1);
+    assert.match(urls[0], /\/library\/currencies\/00000000-0000-4000-8000-000000000002\/honor</);
+  });
+
   it("English lists every record, Russian only records with a Russian slug; each names its twins", () => {
     const entries = [
       { id: "00000000-0000-4000-8000-000000000001", type: "mount", slug: "swift-gryphon", slugRu: "быстрый-грифон", updatedAt: "2026-11-01T10:00:00Z" },
@@ -77,11 +94,11 @@ describe("library record sitemaps", () => {
     const ru = recordSitemapUrls(entries, "ru");
     assert.equal(en.length, 2);
     assert.equal(ru.length, 1);
-    assert.match(en[0], /<loc>https:\/\/gildra\.net\/library\/mounts\/00000000-0000-4000-8000-000000000001\/swift-gryphon<\/loc><lastmod>2026-11-01<\/lastmod>/);
-    assert.match(en[0], /hreflang="ru" href="https:\/\/gildra\.net\/ru\/library\/mounts\/00000000-0000-4000-8000-000000000001\/%D0%B1/);
+    assert.match(en[0], /<loc>https:\/\/wowarcana\.com\/library\/mounts\/00000000-0000-4000-8000-000000000001\/swift-gryphon<\/loc><lastmod>2026-11-01<\/lastmod>/);
+    assert.match(en[0], /hreflang="ru" href="https:\/\/wowarcana\.com\/ru\/library\/mounts\/00000000-0000-4000-8000-000000000001\/%D0%B1/);
     assert.doesNotMatch(en[1], /hreflang="ru"/);
     assert.match(en[1], /\/library\/records\//, "a type without a dataset opens under records");
-    assert.match(ru[0], /<loc>https:\/\/gildra\.net\/ru\/library\/mounts\//);
+    assert.match(ru[0], /<loc>https:\/\/wowarcana\.com\/ru\/library\/mounts\//);
   });
 
   it("an API without Russian slugs is recognised (it also lists records the library does not serve)", () => {

@@ -23,4 +23,5 @@
   .kind { display: none; }
 }
 
-.searchOnly { margin-top: var(--atlas-space-6); }
+/* The lone search button continues the hero's row of buttons: the same step, not a 44 px hole. */
+.searchOnly { margin-top: 0; }

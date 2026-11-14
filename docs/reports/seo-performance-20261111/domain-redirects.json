@@ -1,0 +1,22 @@
+[
+  {
+    "url": "http://gildra.net/ru/wow/mythic-plus?x=1",
+    "status": 301,
+    "location": "https://gildra.net/ru/wow/mythic-plus?x=1"
+  },
+  {
+    "url": "https://gildra.net/ru/wow/mythic-plus?x=1",
+    "status": 301,
+    "location": "https://wowarcana.com/ru/wow/mythic-plus?x=1"
+  },
+  {
+    "url": "http://wowarcana.com/wow/map",
+    "status": 301,
+    "location": "https://wowarcana.com/wow/map"
+  },
+  {
+    "url": "https://www.wowarcana.com/wow/map",
+    "status": 301,
+    "location": "https://wowarcana.com/wow/map"
+  }
+]

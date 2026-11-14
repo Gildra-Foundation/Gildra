@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 
 import { formatSeason, pluralRu } from "../../../../packages/atlas-ui/src/format.ts";
 import { siteSearchCopy } from "../../components/platform/search/siteSearchCopy.ts";
-import { normalize, searchIndex } from "../../components/platform/search/siteSearchMatch.ts";
+import { matchRanges, normalize, otherLayout, prepareIndex, searchIndex, transliterate } from "../../components/platform/search/siteSearchMatch.ts";
 import { dungeonRoutes, dungeonSlugs } from "../../lib/data/wow/mythic/dungeonRoutes.ts";
 import { routeTextEn } from "../../components/wow/mythic/routeStopsEn.ts";
 import { atlasScenes } from "../../lib/atlas/scenes.ts";
@@ -55,6 +55,54 @@ describe("quick search matching", () => {
   });
 });
 
+describe("quick search tolerance and highlight", () => {
+  const entries = [
+    { t: "Druid", s: "Class", h: "/wow/classes#druid", k: "Друид", g: "class" as const },
+    { t: "The Voidspire", s: "Raid", h: "/wow/raids/the-voidspire", k: "Шпиль Бездны", g: "raid" as const },
+    { t: "Den of Nalorakk", s: "Mythic+ dungeon", h: "/wow/mythic-plus/midnight-season-2/den-of-nalorakk", k: "Логово Налоракка", g: "dungeon" as const },
+    { t: "Orgrimmar", s: "Map", h: "/wow/map/85-orgrimmar", k: "Оргриммар", g: "place" as const },
+  ];
+  it("reads a query typed on the other keyboard layout", () => {
+    assert.equal(otherLayout("lhebl"), "друид");
+    assert.equal(otherLayout("вкгшв"), "druid");
+    assert.equal(searchIndex(entries, "lhebl")[0]?.t, "Druid");
+  });
+  it("finds names spelled in the other alphabet", () => {
+    assert.equal(transliterate("nalorak"), "налорак");
+    assert.equal(searchIndex(entries, "logovo")[0]?.t, "Den of Nalorakk");
+    assert.equal(searchIndex(entries, "друид")[0]?.t, "Druid");
+  });
+  it("forgives one typo per word of four letters or more", () => {
+    assert.equal(searchIndex(entries, "voidspier")[0]?.t, "The Voidspire");
+    assert.equal(searchIndex(entries, "orgrimar")[0]?.t, "Orgrimmar");
+    assert.deepEqual(searchIndex(entries, "zzzz"), []);
+  });
+  it("forgives a swapped, a dropped and an added letter, but not two typos", () => {
+    const list = [{ t: "Orgrimmar", s: "Map", h: "/wow/map/orgrimmar" }, { t: "Stormwind City", s: "Map", h: "/wow/map/stormwind" }];
+    assert.equal(searchIndex(list, "ogrimmar")[0]?.t, "Orgrimmar");
+    assert.equal(searchIndex(list, "orgirmmar")[0]?.t, "Orgrimmar");
+    assert.equal(searchIndex(list, "stormwinnd")[0]?.t, "Stormwind City");
+    assert.equal(searchIndex(list, "strom")[0]?.t, "Stormwind City");
+    assert.deepEqual(searchIndex(list, "ogrimmra"), []);
+  });
+  it("finds the same after the index is prepared ahead (idle time)", () => {
+    const list = [...entries];
+    const cold = searchIndex([...entries], "nalorak").map((hit) => hit.t);
+    prepareIndex(list);
+    assert.deepEqual(searchIndex(list, "nalorak").map((hit) => hit.t), cold);
+  });
+  it("keeps exact matches above the forgiving ones", () => {
+    const hits = searchIndex([...entries, { t: "Druid of the Claw", s: "Talent", h: "/x" }], "druid");
+    assert.deepEqual(hits.map((hit) => hit.t), ["Druid", "Druid of the Claw"]);
+  });
+  it("marks the matched words in the title as written", () => {
+    assert.deepEqual(matchRanges("Sal'uhan the Unbroken", "saluhan"), [[0, 8]]);
+    assert.deepEqual(matchRanges("Den of Nalorakk", "nal den"), [[0, 3], [7, 10]]);
+    assert.deepEqual(matchRanges("Ёжиный лес", "ежи"), [[0, 3]]);
+    assert.deepEqual(matchRanges("Druid", "лес"), []);
+  });
+});
+
 describe("scene registry", () => {
   for (const [id, scene] of Object.entries(atlasScenes)) {
     it(`${id}: art exists, has a blurred placeholder and the preview focus is inside the picture`, () => {
@@ -97,5 +145,15 @@ describe("kit documentation", () => {
       .filter((name) => /^Atlas[A-Z]/.test(name) && !/^Atlas(Stat|Anchor|CardImage|CardMeta|MetaItem|Crumb|Column|Tab|PathStep|BadgeTone|Locale|ChartDatum|FrameShellProps|Glow)$/.test(name));
     const missing = components.filter((name) => !readme.includes(`\`${name}\``));
     assert.deepEqual(missing, [], `README lacks ${missing.join(", ")}`);
+  });
+});
+
+describe("share button", () => {
+  it("shares the page's state hash, not a scroll anchor", async () => {
+    const { shareUrl } = await import("../../../../packages/atlas-ui/src/shareUrl.ts");
+    const at = (hash: string, search = "") => ({ origin: "https://wowarcana.com", pathname: "/ru/wow/raids/the-voidspire", search, hash });
+    assert.equal(shareUrl(at("#boss=vorasius&difficulty=heroic")), "https://wowarcana.com/ru/wow/raids/the-voidspire#boss=vorasius&difficulty=heroic");
+    assert.equal(shareUrl(at("#atlas-content")), "https://wowarcana.com/ru/wow/raids/the-voidspire");
+    assert.equal(shareUrl(at("", "?r=hhAM")), "https://wowarcana.com/ru/wow/raids/the-voidspire?r=hhAM");
   });
 });

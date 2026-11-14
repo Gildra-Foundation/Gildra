@@ -35,7 +35,9 @@ export function cachedViewRewrite(url: { pathname: string; searchParams: URLSear
   if (profession) return searchParams.get("region") === "us" ? `${profession[1]}/region/us` : null;
   if (hasQuery(searchParams)) return null;
   const mythic = MYTHIC.exec(pathname);
-  if (mythic) return `${mythic[1]}/cached/${mythic[2]}`;
+  // Meta calls connection() and must render in a request, not force-static.
+  // Its API read already caches the payload for 15 minutes.
+  if (mythic && mythic[2] !== "meta") return `${mythic[1]}/cached/${mythic[2]}`;
   const spec = LEADERBOARD_SPEC.exec(pathname);
   if (spec && getTalentSpecTheme(spec[2])) return `${spec[1]}/cached/leaderboard/${spec[2]}`;
   return null;

@@ -334,6 +334,7 @@
 .worldCard { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .location { display: flex; align-items: center; gap: var(--atlas-space-2); color: var(--material-light); font-size: var(--atlas-text-meta); text-shadow: 0 1px 3px var(--atlas-bg); }
 .location svg { flex: none; width: 14px; height: 14px; }
+.featureBody .location, .worldBody .location { font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
 .featureBody .cardTitle, .worldBody .cardTitle { margin: 0; }
 .cardTitle a { display: inline-flex; align-items: center; min-height: 44px; color: var(--atlas-text-strong); text-decoration: none; }
 .cardTitle a:hover { color: var(--material-light); text-decoration: underline; text-underline-offset: 3px; }

@@ -15,6 +15,9 @@ export const LIBRARY_TYPE_DATASET: Readonly<Record<string, string>> = {
   toy: "toys", transmog_set: "transmog-sets", achievement: "achievements",
 };
 
+/** Datasets of client internals (reward packages, UI maps): reachable by link, not listed to players or to search engines. */
+export const LIBRARY_HIDDEN_DATASETS: ReadonlySet<string> = new Set(["quest-reward-packages", "ui-maps"]);
+
 /** Dataset slug of record types that have no dataset of their own. */
 export const LIBRARY_LOOSE_RECORDS = "records";
 

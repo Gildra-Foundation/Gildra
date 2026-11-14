@@ -1,6 +1,16 @@
 package catalog
 
-import "testing"
+import (
+	"context"
+	"encoding/json"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"testing"
+)
 
 func TestResolveDescriptionTextUsesOnlyLoadedDB2Values(t *testing.T) {
 	values := map[int64]spellDescriptionValues{
@@ -343,5 +353,123 @@ func TestResolveDescriptionTextResolvesMidnightFuryPvpValues(t *testing.T) {
 	values[1219209] = spellDescriptionValues{DurationMS: 5000, Effects: map[int]spellEffectValue{1: {BasePoints: -50, Radius: 12}}}
 	if got := resolveDescriptionText("Сокращает время действия на $1219209s1% в радиусе $1219209A1 м в течение $1219209d.", 1227751, values, "ru_RU"); got != "Сокращает время действия на -50% в радиусе 12 м в течение 5 сек." {
 		t.Fatalf("berserker roar mismatch: %q", got)
+	}
+}
+
+func TestMidnightToolRawEffectFallback(t *testing.T) {
+	c := os.Getenv("MIDNIGHT_TEST_PG_CONTAINER")
+	if c == "" {
+		t.Skip("isolated PostgreSQL required")
+	}
+	q := `WITH catalog_spell_effects AS (
+ SELECT 0::int effect_index,0::numeric base_points,0::numeric coefficient,0::numeric attack_power_coefficient,
+  0::int amplitude_ms,'{}'::jsonb attributes,0::int spell_version_id,0::int difficulty_id,'db2'::text source WHERE false
+ ),catalog_db2_rows(build_id,table_name,locale,payload) AS (VALUES
+ (92,'SpellEffect','en_US','{"SpellID":"1234161","EffectIndex":"0","DifficultyID":"0","EffectBasePointsF":"8","EffectBonusCoefficient":"0"}'::jsonb),
+ (93,'SpellEffect','en_US','{"SpellID":"1234161","EffectIndex":"0","DifficultyID":"0","EffectBasePointsF":"999"}'::jsonb))
+ SELECT effect.base_points FROM (VALUES(1,92)) version(id,build_id)
+ CROSS JOIN (VALUES(1234161)) entity(external_id) CROSS JOIN LATERAL (` + descriptionEffectRows + `) effect;`
+	cmd := exec.Command("sudo", "-n", "docker", "exec", "-i", c, "psql", "-U", "postgres", "-XAt", "-v", "ON_ERROR_STOP=1")
+	cmd.Stdin = strings.NewReader(q)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%v: %s", err, out)
+	}
+	points, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
+	if err != nil || points != 8 {
+		t.Fatalf("%v %s", err, out)
+	}
+	values := map[int64]spellDescriptionValues{1234161: {Effects: map[int]spellEffectValue{1: {BasePoints: points}}}}
+	for _, tc := range []struct{ locale, raw, want string }{
+		{"en_US", "+$S1 Midnight Herbalism Skill", "+8 Midnight Herbalism Skill"},
+		{"ru_RU", "+$S1 к навыку травничества Midnight", "+8 к навыку травничества Midnight"},
+	} {
+		if got := resolveDescriptionText(tc.raw, 1234161, values, tc.locale); got != tc.want {
+			t.Fatalf("got %s want %s", got, tc.want)
+		}
+	}
+}
+
+func TestItemEffectPlainTextKeepsOwningSpellContext(t *testing.T) {
+	for _, tc := range []struct{ locale, raw, want string }{
+		{"en_US", "Gain $s1 power.", "Gain 8 power."},
+		{"ru_RU", "Повышает силу на $s1.", "Повышает силу на 8."},
+	} {
+		t.Run(tc.locale, func(t *testing.T) {
+			build := int64(92)
+			value := spellDescriptionValues{Effects: map[int]spellEffectValue{1: {BasePoints: 8}}}
+			cache := &spellValueCache{entries: map[spellValueKey]map[int64]*spellDescriptionValues{
+				{"wow", tc.locale, build}: {42: &value},
+			}}
+			entity := &Entity{Type: "item", Product: "wow", Locale: tc.locale, BuildID: &build,
+				Tooltip: &Tooltip{PlainText: tc.raw, Blocks: []map[string]any{{"type": "effect", "spell_id": int64(42), "text": tc.raw}}}}
+			if err := resolveEntityDescriptions(context.Background(), cache, entity); err != nil {
+				t.Fatal(err)
+			}
+			if entity.Tooltip.PlainText != tc.want || entity.Tooltip.Blocks[0]["text"] != tc.want {
+				t.Fatalf("%+v", entity.Tooltip)
+			}
+		})
+	}
+}
+
+func TestEnchantmentDescriptionUsesLinkedSpell(t *testing.T) {
+	entity := Entity{Type: "enchantment", ExternalID: 8110, Payload: map[string]any{"raidbots": map[string]any{"spellId": float64(123)}}}
+	if got := descriptionSpellID(entity); got != 123 {
+		t.Fatalf("got %d", got)
+	}
+}
+
+func TestStaticGemTextUsesAmountsNotStatIDs(t *testing.T) {
+	block := map[string]any{"stats": []any{map[string]any{"index": float64(0), "stat_type": float64(36), "value": float64(7)}, map[string]any{"index": float64(1), "stat_type": float64(32), "value": nil}}}
+	if got := resolveStaticGemText("+$k1 Haste; +$k2 Critical Strike", block); got != "+7 Haste; +$k2 Critical Strike" {
+		t.Fatal(got)
+	}
+	if completeItemEffect("Increases haste by a game-defined value.") {
+		t.Fatal("unresolved summary admitted")
+	}
+	if !completeItemEffect("Increases haste by 7.") {
+		t.Fatal("resolved summary rejected")
+	}
+}
+
+func TestItemSummaryRealSource(t *testing.T) {
+	dsn := os.Getenv("ITEMS_REPLAY_DATABASE_URL")
+	if dsn == "" {
+		t.Skip("isolated ITEMS replay required")
+	}
+	ctx := context.Background()
+	db, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var safe bool
+	if err := db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM catalog_snapshots WHERE metadata->>'fixture'='ITEMS isolated real-source replay, not original full artifacts')`).Scan(&safe); err != nil || !safe {
+		t.Fatal("not ITEMS fixture", err)
+	}
+	for _, locale := range []string{"en_US", "ru_RU"} {
+		page, err := NewService(db).Summaries(ctx, SummaryParams{Product: "wow", Type: "item", Locale: locale, Limit: 100, ExternalIDs: []int64{270402, 255375, 282426, 240855, 240856, 238009, 241297, 240157, 211993, 237602, 25208, 47518, 15450, 100290, 84940, 52222, 76564, 58142, 56477, 38879}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(page.Entities) != 20 {
+			t.Fatalf("summaries %d", len(page.Entities))
+		}
+		var tool string
+		for _, e := range page.Entities {
+			if e.ExternalID == 238009 {
+				tool = e.Description
+			}
+		}
+		if !strings.Contains(tool, "8") {
+			t.Fatalf("profession bonus missing: %q", tool)
+		}
+		if dir := os.Getenv("ITEMS_EVIDENCE_DIR"); dir != "" {
+			data, _ := json.MarshalIndent(page, "", "  ")
+			if err := os.WriteFile(filepath.Join(dir, "summaries-"+locale+".json"), data, 0600); err != nil {
+				t.Fatal(err)
+			}
+		}
 	}
 }

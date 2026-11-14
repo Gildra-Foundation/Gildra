@@ -7,6 +7,7 @@ import {
 } from "../../components/database/recordSections.ts";
 import { formatQuestText, playerText } from "../../lib/gameText.ts";
 import { itemStatNames } from "../../components/database/itemStats.ts";
+import { chargeCount, powerCost, spellDescriptionText } from "../../components/database/tooltipValues.ts";
 
 let next = 0;
 const rel = (direction: Relationship["direction"], relation: string, entity: Partial<Relationship["entity"]>, attributes: Record<string, unknown> = {}): Relationship => {
@@ -31,6 +32,48 @@ describe("library record: game text", () => {
     const variants = [{ key: "base", stats: [] }, { key: "raidbots:encounter", stats: [{ type: 7, value: null }, { type: 73, value: null }, { type: 36, value: null }, { type: 7, value: null }, { type: 999 }] }];
     assert.deepEqual(itemStatNames(variants, "en"), ["Agility / Intellect", "Stamina", "Haste"]);
     assert.deepEqual(itemStatNames([{ stats: [] }], "en"), []);
+  });
+});
+
+describe("library record: tooltip values", () => {
+  it("prints a spell's cost in the units a player spends", () => {
+    // Stored amounts of live spells (power block of the record) and their cost in the game.
+    const costs: [string, number, number, number][] = [
+      ["Mortal Strike, rage", 300, 1, 30], ["Slam, rage", 200, 1, 20], ["Ignore Pain, rage", 350, 1, 35],
+      ["Death Coil, runic power", 300, 6, 30], ["Death Strike, runic power", 450, 6, 45],
+      ["Chaos Bolt, soul shards", 20, 7, 2], ["Starfall, astral power", 500, 8, 50], ["Devouring Plague, insanity", 5000, 13, 50],
+      ["Kill Command, focus", 30, 2, 30], ["Sinister Strike, energy", 45, 3, 45], ["Obliterate, runes", 2, 5, 2],
+      ["Templar's Verdict, holy power", 3, 9, 3], ["Earth Shock, maelstrom", 60, 11, 60], ["Rising Sun Kick, chi", 2, 12, 2],
+      ["Chaos Strike, fury", 40, 17, 40], ["Disintegrate, essence", 3, 19, 3], ["flat mana", 120, 0, 120], ["unknown power type", 7, 99, 7],
+    ];
+    for (const [name, stored, powerType, cost] of costs) assert.equal(powerCost(stored, powerType), cost, name);
+  });
+
+  it("counts an item's charges as the game does and never prints a negative count", () => {
+    assert.equal(chargeCount(-1), 0, "a single-use potion has no charges line");
+    assert.equal(chargeCount(0), 0);
+    assert.equal(chargeCount(null), 0);
+    assert.equal(chargeCount(undefined), 0);
+    assert.equal(chargeCount("x"), 0);
+    assert.equal(chargeCount(-3), 3, "Healthstone");
+    assert.equal(chargeCount(-5), 5, "Wizard Oil");
+    assert.equal(chargeCount(-10), 10, "Minor Recombobulator");
+    assert.equal(chargeCount(2), 2);
+  });
+
+  it("reads a spell's description from the resolved text when the catalog has one", () => {
+    const template = "A vicious strike that deals a game-defined value Physical damage and reduces the effectiveness of healing on the target by a game-defined value% for 10 sec.";
+    const resolved = "A vicious strike that deals 182 Physical damage and reduces the effectiveness of healing on the target by 50% for 10 sec.";
+    assert.equal(spellDescriptionText({ type: "spell", resolvedDescription: resolved }, template), resolved);
+    assert.equal(spellDescriptionText({ type: "pvp_talent", resolvedDescription: resolved }, template), resolved);
+    assert.equal(spellDescriptionText({ type: "spell", resolvedDescription: "" }, template), template);
+    assert.equal(spellDescriptionText({ type: "spell", resolvedDescription: null }, template), template);
+    assert.equal(spellDescriptionText({ type: "spell" }, template), template);
+    assert.equal(spellDescriptionText({ type: "spell", resolvedDescription: "Deals $s1 damage." }, template), template, "a raw token is not a resolved text");
+    assert.equal(spellDescriptionText({ type: "item", resolvedDescription: "Another text." }, "Flavour text."), "Flavour text.", "an item's quote is its own block");
+    // Russian has no resolved numbers yet: the same sentence comes back and still reads as X.
+    const russian = "Жестокий удар, наносящий значение, определяемое игрой ед. физического урона.";
+    assert.equal(playerText(spellDescriptionText({ type: "spell", resolvedDescription: russian }, russian), "ru"), "Жестокий удар, наносящий X ед. физического урона.");
   });
 });
 
@@ -77,7 +120,7 @@ describe("library record: instances and bosses", () => {
 describe("library record: loot table", () => {
   const loot = [
     rel("incoming", "obtained_from", { id: "crown-37", name: "Crown of Flame", itemLevel: 37 }),
-    rel("incoming", "obtained_from", { id: "crown-60", name: "Crown of Flame", itemLevel: 60, iconUrl: "https://api.gildra.net/v1/media/crown" }),
+    rel("incoming", "obtained_from", { id: "crown-60", name: "Crown of Flame", itemLevel: 60, iconUrl: "https://api.wowarcana.com/v1/media/crown" }),
     rel("incoming", "obtained_from", { id: "sulfuras", name: "Sulfuras, the Extinguished Hand", itemLevel: 37, quality: 4 }),
     rel("incoming", "obtained_from", { id: "egg", name: "Smoldering Egg of Millagazor", itemLevel: 1 }),
     rel("incoming", "obtained_from", { id: "dnt", name: "TK34[DNT]" }),

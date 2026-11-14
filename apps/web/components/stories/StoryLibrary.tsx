@@ -18,9 +18,11 @@ export function storyLibraryMetadata(): Metadata {
  * The page's heading and the site's legal line stay in this document.
  */
 export function StoryLibrary() {
-  return <main id="main-content" className={styles.library} lang="ru">
-    <h1 className={styles.srOnly}>{copy.heading}</h1>
-    <iframe className={styles.room} src="/story-library/index.html" title={copy.frameTitle} data-cookie-notice-space />
-    <div className={styles.footer}><AtlasLegalFooter lang="ru" /></div>
-  </main>;
+  return <>
+    <main id="main-content" className={styles.library} lang="ru">
+      <h1 className={styles.srOnly}>{copy.heading}</h1>
+      <iframe className={styles.room} src="/story-library/index.html" title={copy.frameTitle} data-cookie-notice-space />
+    </main>
+    <AtlasLegalFooter lang="ru" />
+  </>;
 }

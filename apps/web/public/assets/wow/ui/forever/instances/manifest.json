@@ -1,0 +1,188 @@
+{
+  "ragefire-chasm": {
+    "src": "/assets/wow/ui/forever/instances/ragefire-chasm.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "50% 55%"
+  },
+  "the-deadmines": {
+    "src": "/assets/wow/ui/forever/instances/the-deadmines.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "48% 50%"
+  },
+  "wailing-caverns": {
+    "src": "/assets/wow/ui/forever/instances/wailing-caverns.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "50% 50%"
+  },
+  "shadowfang-keep": {
+    "src": "/assets/wow/ui/forever/instances/shadowfang-keep.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "48% 50%"
+  },
+  "blackfathom-deeps": {
+    "src": "/assets/wow/ui/forever/instances/blackfathom-deeps.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "35% 40%"
+  },
+  "the-stockade": {
+    "src": "/assets/wow/ui/forever/instances/the-stockade.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "55% 50%"
+  },
+  "gnomeregan": {
+    "src": "/assets/wow/ui/forever/instances/gnomeregan.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "48% 50%"
+  },
+  "razorfen-kraul": {
+    "src": "/assets/wow/ui/forever/instances/razorfen-kraul.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "55% 55%"
+  },
+  "scarlet-monastery": {
+    "src": "/assets/wow/ui/forever/instances/scarlet-monastery.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "55% 45%"
+  },
+  "uldaman": {
+    "src": "/assets/wow/ui/forever/instances/uldaman.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "45% 50%"
+  },
+  "razorfen-downs": {
+    "src": "/assets/wow/ui/forever/instances/razorfen-downs.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "48% 55%"
+  },
+  "zul-farrak": {
+    "src": "/assets/wow/ui/forever/instances/zul-farrak.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "55% 50%"
+  },
+  "maraudon": {
+    "src": "/assets/wow/ui/forever/instances/maraudon.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "45% 45%"
+  },
+  "sunken-temple": {
+    "src": "/assets/wow/ui/forever/instances/sunken-temple.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "50% 50%"
+  },
+  "blackrock-depths": {
+    "src": "/assets/wow/ui/forever/instances/blackrock-depths.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "38% 45%"
+  },
+  "blackrock-spire": {
+    "src": "/assets/wow/ui/forever/instances/blackrock-spire.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "35% 40%"
+  },
+  "dire-maul": {
+    "src": "/assets/wow/ui/forever/instances/dire-maul.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "40% 50%"
+  },
+  "stratholme": {
+    "src": "/assets/wow/ui/forever/instances/stratholme.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "50% 50%"
+  },
+  "scholomance": {
+    "src": "/assets/wow/ui/forever/instances/scholomance.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "50% 40%"
+  },
+  "hall-of-thanes": {
+    "src": "/assets/wow/ui/forever/instances/hall-of-thanes.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "45% 50%"
+  },
+  "ruins-of-lordaeron": {
+    "src": "/assets/wow/ui/forever/instances/ruins-of-lordaeron.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "45% 55%"
+  },
+  "excavation-site": {
+    "src": "/assets/wow/ui/forever/instances/excavation-site.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "70% 55%"
+  },
+  "city-of-dalaran": {
+    "src": "/assets/wow/ui/forever/instances/city-of-dalaran.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "50% 55%"
+  },
+  "the-drowned-city": {
+    "src": "/assets/wow/ui/forever/instances/the-drowned-city.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "55% 45%"
+  },
+  "kroldok-stronghold": {
+    "src": "/assets/wow/ui/forever/instances/kroldok-stronghold.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "45% 50%"
+  },
+  "alcaz-prison": {
+    "src": "/assets/wow/ui/forever/instances/alcaz-prison.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "50% 45%"
+  },
+  "blackmaw-hold": {
+    "src": "/assets/wow/ui/forever/instances/blackmaw-hold.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "50% 50%"
+  },
+  "shapers-terrace": {
+    "src": "/assets/wow/ui/forever/instances/shapers-terrace.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "42% 50%"
+  },
+  "onyxias-lair": {
+    "src": "/assets/wow/ui/forever/instances/onyxias-lair.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "55% 35%"
+  },
+  "hyjal-summit": {
+    "src": "/assets/wow/ui/forever/instances/hyjal-summit.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "40% 50%"
+  },
+  "barrow-deeps": {
+    "src": "/assets/wow/ui/forever/instances/barrow-deeps.webp",
+    "width": 1280,
+    "height": 640,
+    "position": "50% 50%"
+  }
+}

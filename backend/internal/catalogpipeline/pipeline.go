@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/catalog"
@@ -74,14 +75,18 @@ type Options struct {
 	Sources                []string
 	BuildVersion           string
 	MaxRecords             int
-	ConfirmFullImport      bool
-	ForceRebuild           bool
-	BinaryDirectory        string
-	PublicationEnvironment string
-	CatalogAccessMode      string
-	RecoveryPolicy         string
-	ResumeReleaseID        string
-	ResumeFrom             string
+	EnrichmentSliceRecords int
+	// EnrichmentRequestsPerHour paces Battle.net enrichment below the shared
+	// hourly quota; 0 leaves pacing to the API.
+	EnrichmentRequestsPerHour int
+	ConfirmFullImport         bool
+	ForceRebuild              bool
+	BinaryDirectory           string
+	PublicationEnvironment    string
+	CatalogAccessMode         string
+	RecoveryPolicy            string
+	ResumeReleaseID           string
+	ResumeFrom                string
 	// ResumeStages limits a resumed release to the listed executable stages
 	// (comma-separated stage keys on the CLI).  Every other retained stage is
 	// marked skipped; validation, the publication gate and publish still run.
@@ -121,6 +126,9 @@ func BuildPlan(options Options) ([]Stage, error) {
 }
 
 func normalizeOptions(options Options) (Options, error) {
+	if options.EnrichmentSliceRecords < 0 || options.EnrichmentRequestsPerHour < 0 {
+		return Options{}, errors.New("enrichment-slice-records and enrichment-requests-per-hour cannot be negative")
+	}
 	if options.MaxRecords < 0 {
 		return Options{}, errors.New("max-records cannot be negative")
 	}
@@ -244,6 +252,20 @@ func normalizeOptions(options Options) (Options, error) {
 			options.ResumeFrom = "import-battlenet"
 		}
 		options.ResumeStages = normalizeStageList(options.ResumeStages)
+		executable := map[string]bool{}
+		for _, stage := range buildPlan(options) {
+			if stage.Executable != "" {
+				executable[stage.Key] = true
+			}
+		}
+		if len(options.ResumeStages) == 0 && !executable[options.ResumeFrom] {
+			return Options{}, fmt.Errorf("unknown resume stage %q", options.ResumeFrom)
+		}
+		for _, stage := range options.ResumeStages {
+			if !executable[stage] {
+				return Options{}, fmt.Errorf("unknown resume stage %q", stage)
+			}
+		}
 	} else if len(normalizeStageList(options.ResumeStages)) > 0 {
 		return Options{}, errors.New("resume-stages requires resume-release")
 	}
@@ -384,6 +406,14 @@ func buildPlan(options Options) []Stage {
 			battleNetQuestMissingArgs = append(battleNetQuestMissingArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 			battleNetMissingArgs = append(battleNetMissingArgs, "-version", options.BuildVersion, "-build", strconv.Itoa(buildNumber(options.BuildVersion)))
 		}
+		if options.EnrichmentSliceRecords > 0 {
+			battleNetQuestMissingArgs = append(battleNetQuestMissingArgs, "-enrichment-slice-records", strconv.Itoa(options.EnrichmentSliceRecords))
+			battleNetMissingArgs = append(battleNetMissingArgs, "-enrichment-slice-records", strconv.Itoa(options.EnrichmentSliceRecords))
+		}
+		if options.EnrichmentRequestsPerHour > 0 {
+			battleNetQuestMissingArgs = append(battleNetQuestMissingArgs, "-max-requests-per-hour", strconv.Itoa(options.EnrichmentRequestsPerHour))
+			battleNetMissingArgs = append(battleNetMissingArgs, "-max-requests-per-hour", strconv.Itoa(options.EnrichmentRequestsPerHour))
+		}
 		plan = append(plan,
 			Stage{Key: "enrich-battlenet-quests", Executable: "catalog-import", Arguments: battleNetQuestMissingArgs},
 			Stage{Key: "enrich-battlenet-missing", Executable: "catalog-import", Arguments: battleNetMissingArgs},
@@ -513,6 +543,9 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 	var releaseID uuid.UUID
 	resuming := strings.TrimSpace(options.ResumeReleaseID) != ""
 	if resuming {
+		if err := r.validateResumeEvidence(ctx, options, plan); err != nil {
+			return result, r.failStage(ctx, result.RunID, "release-start", "resume_evidence_missing", err)
+		}
 		releaseID, err = uuid.Parse(strings.TrimSpace(options.ResumeReleaseID))
 		if err == nil {
 			// Resume owns cleanup of failed snapshots and re-attaches the release
@@ -528,6 +561,11 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 	}
 	if err != nil {
 		if errors.Is(err, catalogrelease.ErrBuildAlreadyPublished) {
+			// Publication may have committed before the previous run failed during
+			// post-publication projection. Retry that phase even for the same build.
+			if err := r.refreshPostPublish(ctx, result.RunID, options.Product, options.BuildVersion); err != nil {
+				return result, err
+			}
 			publicationService := catalog.NewPublicationService(r.DB, time.Second)
 			var publication catalog.PublicationStatus
 			var publicationErr error
@@ -617,24 +655,8 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		releasePublished = true
 		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
 			result.RunID, "release-publish", jsonObject(map[string]any{"release_id": result.ReleaseID}))
-		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='running',started_at=now() WHERE run_id=$1 AND stage_key='refresh-post-publish'`, result.RunID)
-		productID, productErr := r.productID(ctx, options.Product)
-		if productErr != nil {
-			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "product_lookup_failed", productErr)
-		}
-		questUsabilityRefreshed, questRefreshErr := r.refreshPublishedQuestUsability(ctx, options.Product, productID, options.BuildVersion)
-		if questRefreshErr != nil {
-			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "quest_usability_refresh_failed", questRefreshErr)
-		}
-		if err := catalog.NewService(r.DB).RefreshReadModels(ctx, &productID); err != nil {
-			return result, r.failStage(ctx, result.RunID, "refresh-post-publish", "post_publish_read_model_refresh_failed", err)
-		}
-		if _, err := r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now(),counters=$3 WHERE run_id=$1 AND stage_key=$2`,
-			result.RunID, "refresh-post-publish", jsonObject(map[string]any{
-				"release_id": result.ReleaseID, "read_models_refreshed": true,
-				"quest_usability_refreshed": questUsabilityRefreshed,
-			})); err != nil {
-			return result, fmt.Errorf("finish post-publish read model stage: %w", err)
+		if err := r.refreshPostPublish(ctx, result.RunID, options.Product, options.BuildVersion); err != nil {
+			return result, err
 		}
 	} else {
 		_, _ = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='blocked',started_at=COALESCE(started_at,now()),finished_at=now(),error_code='publication_blocked',error_summary=$3 WHERE run_id=$1 AND stage_key=$2`,
@@ -661,49 +683,6 @@ func (r *Runner) Run(ctx context.Context, options Options) (result Result, runEr
 		return result, ErrPublicationBlocked
 	}
 	return result, nil
-}
-
-func (r *Runner) productID(ctx context.Context, product string) (int16, error) {
-	var productID int16
-	if err := r.DB.QueryRow(ctx, `SELECT id FROM game_products WHERE slug=$1`, strings.TrimSpace(strings.ToLower(product))).Scan(&productID); err != nil {
-		return 0, fmt.Errorf("resolve product %q: %w", product, err)
-	}
-	return productID, nil
-}
-
-// refreshPublishedQuestUsability reclassifies the newly published quest
-// denominator before the cached read models are rebuilt.  The classifiers are
-// intentionally publication-aware: they require the version and both locale
-// proofs that the release manager has just moved into the public projection.
-func (r *Runner) refreshPublishedQuestUsability(
-	ctx context.Context,
-	product string,
-	productID int16,
-	buildVersion string,
-) (int64, error) {
-	var buildID int64
-	if err := r.DB.QueryRow(ctx, `
-		SELECT id
-		FROM game_builds
-		WHERE product_id=$1 AND version=$2 AND is_active
-		ORDER BY build_number DESC
-		LIMIT 1`, productID, buildVersion).Scan(&buildID); err != nil {
-		return 0, fmt.Errorf("resolve published quest build %s: %w", buildVersion, err)
-	}
-	var refreshed int64
-	switch product {
-	case "wow":
-		if err := r.DB.QueryRow(ctx, `SELECT catalog_refresh_quest_usability($1)`, buildID).Scan(&refreshed); err != nil {
-			return 0, fmt.Errorf("refresh Retail quest usability: %w", err)
-		}
-	case "wow_classic", "wow_classic_era", "wow_classic_hardcore":
-		if err := r.DB.QueryRow(ctx, `SELECT catalog_refresh_classic_quest_usability($1,$2)`, productID, buildID).Scan(&refreshed); err != nil {
-			return 0, fmt.Errorf("refresh Classic quest usability: %w", err)
-		}
-	default:
-		return 0, nil
-	}
-	return refreshed, nil
 }
 
 func (r *Runner) verifyRecoveryGate(ctx context.Context, runID int64, product, recoveryPolicy string) error {
@@ -779,6 +758,10 @@ func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory,
 		return r.failStage(ctx, runID, stage.Key, "executable_missing", err)
 	}
 	command := exec.CommandContext(ctx, executable, stage.Arguments...)
+	// Give importers a bounded opportunity to persist failure and checkpoints.
+	command.Cancel = func() error { return command.Process.Signal(syscall.SIGTERM) }
+	command.WaitDelay = 30 * time.Second
+	started := time.Now()
 	command.Env = os.Environ()
 	if releaseID != "" {
 		command.Env = append(command.Env, "CATALOG_RELEASE_ID="+releaseID)
@@ -786,11 +769,28 @@ func (r *Runner) executeStage(ctx context.Context, runID int64, binaryDirectory,
 	command.Stdout = r.Stdout
 	var stageStderr boundedStageErrorBuffer
 	command.Stderr = io.MultiWriter(r.Stderr, &stageStderr)
-	if err := command.Run(); err != nil {
+	commandErr := command.Run()
+	if commandErr == nil && ctx.Err() != nil {
+		commandErr = context.Cause(ctx)
+	}
+	counters := map[string]any{"duration_seconds": time.Since(started).Seconds()}
+	if command.ProcessState != nil {
+		counters["exit_code"] = command.ProcessState.ExitCode()
+		if usage, ok := command.ProcessState.SysUsage().(*syscall.Rusage); ok {
+			counters["peak_rss_kib"] = usage.Maxrss
+		}
+	}
+	recordCtx, recordCancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+	defer recordCancel()
+	_, _ = r.DB.Exec(recordCtx, `UPDATE catalog_pipeline_stages SET counters=counters || $3::jsonb WHERE run_id=$1 AND stage_key=$2`, runID, stage.Key, jsonObject(counters))
+	if err := commandErr; err != nil {
+		if ctx.Err() != nil {
+			err = fmt.Errorf("%w: child: %v", context.Cause(ctx), err)
+		}
 		if detail := boundedStageError(stageStderr.String()); detail != "" {
 			err = fmt.Errorf("%w: %s", err, detail)
 		}
-		return r.failStage(ctx, runID, stage.Key, "stage_command_failed", err)
+		return r.failStage(recordCtx, runID, stage.Key, "stage_command_failed", err)
 	}
 	_, err = r.DB.Exec(ctx, `UPDATE catalog_pipeline_stages SET status='succeeded',finished_at=now() WHERE run_id=$1 AND stage_key=$2`, runID, stage.Key)
 	if err != nil {

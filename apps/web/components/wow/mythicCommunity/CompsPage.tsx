@@ -5,7 +5,7 @@ import { AtlasStats } from "@gildra/atlas-ui/AtlasStats";
 import { MaterialLinkButton, MaterialPlaque, MythicHubBackdrop, MythicHubMotion } from "@/components/wow/shared/materialAtlas";
 import { loadMythicPlusComps } from "@/lib/games/wow/mythicPlusRuns";
 import { runsRoles, withSpec, withoutSpec, type CompsResponse, type RunsQuery, type RunsRole } from "@/lib/games/wow/mythicPlusRunsTypes";
-import { trail } from "@/lib/routes/registry";
+import { trail, trailLabel } from "@/lib/routes/registry";
 import { DungeonStrip, FilterForm, GroupIcons, hrefWith, LoadState, NoMatch, number, percent, shareOf, roleIcons, SelectedSpec, specIndex, specLabel, SpecToken, StaleNotice, type Locale, type SpecView } from "./CommunityParts";
 import { communityCopy, type CommunityCopy } from "./communityCopy";
 import styles from "./community.module.css";
@@ -35,7 +35,7 @@ export async function CompsPage({ locale, query }: { locale: Locale; query: Runs
         <AtlasHero
           align="start"
           className={styles.heroHeader}
-          breadcrumbs={crumbs}
+          breadcrumbsLabel={trailLabel(locale)} breadcrumbs={crumbs}
           title={copy.comps.title}
           lede={copy.comps.lede}
           actions={<div className={styles.actions} data-hub-actions>

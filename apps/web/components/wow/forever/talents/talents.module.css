@@ -1,0 +1,174 @@
+/* atlas:strict — the Forever talent calculator on the section's one panel: the layout of its bar, trees, cells and talent panel. */
+
+/* ---------- Bar: level, points, actions ---------- */
+.invalid { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3) var(--atlas-space-4); margin-bottom: var(--atlas-space-4); padding-bottom: var(--atlas-space-4); border-bottom: 1px solid var(--material-line); }
+.invalid p { margin: 0; color: var(--atlas-caution); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: var(--atlas-space-4) var(--atlas-space-5); }
+.toolbar .fields { flex: 0 1 auto; }
+.toolbar .budget { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: var(--atlas-space-3); min-height: var(--atlas-control-height); margin: 0; }
+.budget strong { grid-row: 1 / span 2; min-width: 2ch; color: var(--material-light); font: var(--atlas-weight-display) var(--atlas-text-stat) / var(--atlas-leading-tight) var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; text-align: right; }
+.budget span { align-self: end; color: var(--atlas-text-strong); font-size: var(--atlas-text-small); font-weight: 600; line-height: var(--atlas-leading-snug); }
+.budget span:last-child { grid-row: 1 / span 2; align-self: center; }
+.budget small { align-self: start; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin-left: auto; }
+.message { min-height: 20px; margin: var(--atlas-space-2) 0 var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+
+/* ---------- Trees beside the talent panel ---------- */
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; gap: var(--atlas-space-5); }
+.trees { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-3); min-width: 0; }
+.treeSwitch:global(.ui-segmented-control) { --_h: 76px; display: none; }
+/* A segment is the head of its tree: icon, name, points. */
+.treeSwitch :global(.ui-segmented-control__item) { flex-direction: column; gap: var(--atlas-space-1); padding-inline: var(--atlas-space-2); font-size: var(--atlas-text-meta); }
+.treeSwitch :global(.ui-segmented-control__label) { display: grid; justify-items: center; gap: var(--atlas-space-1); overflow: visible; }
+.treeSwitch img { display: block; border-radius: var(--atlas-radius); }
+.treeSwitch small { color: var(--material-light); font-size: var(--atlas-text-small); font-weight: 700; font-variant-numeric: tabular-nums lining-nums; }
+
+.tree { --cell: 52px; --row: 76px; position: relative; isolation: isolate; overflow: hidden; min-width: 0; border: 1px solid var(--material-line); border-radius: var(--atlas-radius); background: var(--atlas-surface-sunken); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+/* The game's backdrop of the tree under a shade that keeps every icon readable. */
+.tree::before { position: absolute; z-index: -2; inset: 0; background: var(--tree-art) center top / cover no-repeat; content: ""; }
+.tree::after { position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--atlas-bg) 38%, transparent), color-mix(in srgb, var(--atlas-bg) 62%, transparent) 45%, color-mix(in srgb, var(--atlas-bg) 84%, transparent)); content: ""; }
+/* The head of a tree: its icon, the name over the points spent in it, the tree's reset. */
+.treeHead { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: var(--atlas-space-3); min-height: 68px; padding: var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-3); border-bottom: 1px solid var(--material-line); background: color-mix(in srgb, var(--atlas-bg) 64%, transparent); }
+.treeHead > :first-child { grid-row: 1 / span 2; }
+.treeHead h2 { align-self: end; min-width: 0; margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-display); hyphens: manual; }
+.treePoints { grid-column: 2; align-self: start; color: var(--material-light); font: var(--atlas-weight-display) var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-display); font-variant-numeric: tabular-nums lining-nums; }
+.treeHead .treeReset { grid-area: 1 / 3 / span 2; }
+.treeReset:global(.ui-button) { flex: none; min-width: 0; padding-inline: var(--atlas-space-2); }
+.message [data-quiet], .treeReset :global(.ui-button__label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(7, var(--row)); padding: var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-3); }
+.slot { position: relative; z-index: 1; display: grid; place-items: center; min-width: 0; }
+
+/* ---------- Cell: the icon in a frame that tells its state, the rank in the corner ---------- */
+.grid .node { --ring: color-mix(in srgb, var(--atlas-text-subtle) 55%, var(--atlas-bg)); --ink: var(--atlas-text-subtle); position: relative; display: block; width: var(--cell); height: var(--cell); padding: 0; border: 0; border-radius: 5px; background: var(--atlas-bg); box-shadow: 0 0 0 1px var(--atlas-bg), 0 0 0 3px var(--ring), 0 6px 14px color-mix(in srgb, var(--atlas-bg) 70%, transparent); color: var(--ink); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.node img { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+/* Closed talents are dimmed, not erased: the icon keeps its colours and stays recognisable. */
+.node[data-state="locked"] img { filter: saturate(.45) brightness(.62); }
+.node[data-state="open"] { --ring: color-mix(in srgb, var(--atlas-positive) 78%, var(--atlas-bg)); --ink: var(--atlas-positive); }
+.node[data-state="ranked"] { --ring: var(--atlas-positive); --ink: var(--atlas-positive); box-shadow: 0 0 0 1px var(--atlas-bg), 0 0 0 3px var(--ring), 0 0 16px color-mix(in srgb, var(--ring) 45%, transparent); }
+.node[data-state="max"] { --ring: var(--atlas-caution); --ink: var(--atlas-caution); box-shadow: 0 0 0 1px var(--atlas-bg), 0 0 0 3px var(--ring), 0 0 16px color-mix(in srgb, var(--ring) 45%, transparent); }
+.node[data-shown]::before { position: absolute; inset: -7px; border: 1px solid var(--atlas-text-strong); border-radius: 9px; content: ""; pointer-events: none; }
+.grid .node:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 6px; }
+.rank { position: absolute; right: -8px; bottom: -8px; min-width: 28px; padding: 1px var(--atlas-space-1); border-radius: 3px; background: var(--atlas-bg); box-shadow: 0 0 0 1px var(--ring); color: var(--ink); font: 700 var(--atlas-text-meta) / var(--atlas-leading-snug) var(--atlas-font-ui); font-variant-numeric: tabular-nums lining-nums; text-align: center; }
+.flash { position: absolute; inset: -3px; border-radius: 8px; box-shadow: 0 0 0 2px var(--ring), 0 0 18px 4px var(--ring); opacity: 0; pointer-events: none; }
+
+/* ---------- Arrows: what unlocks what ---------- */
+.edge { position: relative; justify-self: center; width: 12px; color: color-mix(in srgb, var(--atlas-text-subtle) 62%, var(--atlas-bg)); pointer-events: none; }
+.edge[data-met="true"] { color: var(--atlas-caution); }
+.edge[data-back] { rotate: 180deg; }
+.edge::before, .edge::after { position: absolute; left: 50%; background: currentColor; content: ""; translate: -50% 0; }
+/* From the lower edge of the parent's frame to the upper edge of the child's. */
+.edge::before { top: calc((var(--row) + var(--cell)) / 2 + 5px); bottom: calc((var(--row) + var(--cell)) / 2 + 11px); width: 2px; }
+.edge::after { bottom: calc((var(--row) + var(--cell)) / 2 + 5px); width: 12px; height: 8px; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.edge[data-dir="side"] { align-self: center; justify-self: stretch; width: auto; height: 12px; }
+.edge[data-dir="side"]::before, .edge[data-dir="side"]::after { top: 50%; left: auto; translate: 0 -50%; }
+.edge[data-dir="side"]::before { right: calc(50% / var(--edge-span) + var(--cell) / 2 + 11px); bottom: auto; left: calc(50% / var(--edge-span) + var(--cell) / 2 + 5px); width: auto; height: 2px; }
+.edge[data-dir="side"]::after { right: calc(50% / var(--edge-span) + var(--cell) / 2 + 5px); bottom: auto; width: 8px; height: 12px; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+
+/* ---------- The chosen talent ---------- */
+.detail { position: sticky; top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); display: grid; grid-template-columns: auto minmax(0, 1fr); align-content: start; gap: var(--atlas-space-4) var(--atlas-space-3); min-width: 0; padding-left: var(--atlas-space-5); border-left: 1px solid var(--material-line); }
+.detailName { align-self: center; min-width: 0; }
+.detailName h2 { margin: 0; font: var(--atlas-weight-display) var(--atlas-text-h3) / var(--atlas-leading-snug) var(--atlas-font-display); overflow-wrap: break-word; }
+.detailName h2 a { color: var(--atlas-text-strong); text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+/* The arrow never drops to a line of its own: a no-break space ties it to the last word. */
+.detailName h2 svg { display: inline-block; width: 16px; height: 16px; color: var(--material-light); vertical-align: baseline; }
+.detailName p { display: flex; flex-wrap: wrap; gap: 0 var(--atlas-space-3); margin: var(--atlas-space-1) 0 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+.detailName p strong { color: var(--atlas-text-strong); font-variant-numeric: tabular-nums lining-nums; }
+.dockLeft { display: none; }
+.detailBody { display: grid; grid-column: 1 / -1; gap: var(--atlas-space-4); min-width: 0; }
+.rankText { padding-left: var(--atlas-space-3); border-left: 2px solid var(--material-line); }
+.rankText[data-rank="next"] { border-left-color: var(--atlas-positive); }
+.rankText h3, .requirements h3 { margin: 0 0 var(--atlas-space-1); color: var(--atlas-text-subtle); font: 600 var(--atlas-text-label) / var(--atlas-leading-snug) var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.rankText[data-rank="next"] h3 { color: var(--atlas-positive); }
+.rankText p { margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); white-space: pre-line; }
+.rankText[data-rank="current"]:not(:only-child) p { color: var(--atlas-text-muted); }
+.requirements { padding-left: var(--atlas-space-3); border-left: 2px solid var(--atlas-negative); }
+.requirements h3 { color: var(--atlas-negative); }
+.requirements ul { display: grid; gap: var(--atlas-space-1); margin: 0; padding: 0; list-style: none; color: var(--atlas-text-strong); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+.detailActions { display: grid; grid-column: 1 / -1; order: 1; gap: var(--atlas-space-2); }
+
+/* ---------- Narrower desks: smaller cells, a slimmer talent panel ---------- */
+@media (max-width: 1399px) {
+  .workspace { grid-template-columns: minmax(0, 1fr) 280px; }
+  .detailName h2 { font-size: var(--atlas-text-title); }
+  .tree { --cell: 48px; --row: 72px; }
+}
+/* ---------- One tree under the switch: the segment names it and counts its points ---------- */
+@media (max-width: 1279px) {
+  .workspace { grid-template-columns: minmax(0, 1fr) minmax(240px, 320px); }
+  .actions { margin-left: 0; }
+  .trees { grid-template-columns: minmax(0, 1fr); }
+  .treeSwitch:global(.ui-segmented-control) { display: flex; margin-bottom: var(--atlas-space-3); }
+  .tree { width: min(100%, 420px); margin-inline: auto; }
+  .tree:not([data-open]) { display: none; }
+  .treeHead { display: flex; justify-content: flex-end; min-height: 0; padding: var(--atlas-space-1); }
+  .treeHead > :not(.treeReset) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .treeReset :global(.ui-button__label) { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+}
+/* ---------- Phone: the talent panel docks under the tree ---------- */
+@media (max-width: 700px) {
+  .toolbar { gap: var(--atlas-space-3); }
+  .toolbar .fields { flex: 1 1 100%; }
+  .toolbar .budget { flex: 1 1 100%; justify-content: start; }
+  .actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .actions > button:global(.ui-button) { min-width: 0; height: auto; min-height: var(--atlas-control-height); padding: var(--atlas-space-1) var(--atlas-space-2); font-size: var(--atlas-text-meta); letter-spacing: 0; line-height: var(--atlas-leading-snug); white-space: normal; }
+  .actions :global(.ui-button__icon) { display: none; }
+  .message { margin-block: var(--atlas-space-2); }
+  .workspace { display: block; }
+  .tree { --cell: 48px; --row: 64px; }
+  .detail { top: auto; bottom: 0; z-index: 3; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--atlas-space-2) var(--atlas-space-3); max-height: 42svh; margin-top: var(--atlas-space-3); padding: var(--atlas-space-3) 0 calc(var(--atlas-space-2) + env(safe-area-inset-bottom, 0px)); overflow-y: auto; overscroll-behavior: contain; border-top: 1px solid var(--material-line); border-left: 0; background: var(--material-base); box-shadow: 0 -14px 22px -8px color-mix(in srgb, var(--atlas-bg) 80%, transparent); }
+  .detail > span:first-child { --material-icon-size: 44px !important; }
+  /* The name takes the whole first line; the rank and the two buttons share the second. */
+  .detailName { display: contents; }
+  .detailName h2 { grid-column: 2 / -1; align-self: center; font-size: var(--atlas-text-title); }
+  .detailName p { grid-area: 2 / 1 / auto / span 2; align-self: center; margin: 0; }
+  .dockLeft { display: inline; }
+  .detailActions { display: flex; grid-area: 2 / 3; order: 0; align-self: center; }
+  /* − on the left, + on the right, as on a counter. */
+  .detailActions > :first-child { order: 1; }
+  .detailActions > button:global(.ui-button) { flex: none; width: var(--atlas-control-height); min-width: 0; height: var(--atlas-control-height); padding: 0; }
+  .detailActions :global(.ui-button__label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .detailBody { gap: var(--atlas-space-3); }
+  .rankText p { font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+}
+@media (max-width: 360px) {
+  .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .actions > :last-child { grid-column: 1 / -1; }
+}
+
+/* ---------- Response: a hovered cell lifts, a changed rank flashes once, the points counter ticks ----------
+   All of it lives inside «motion allowed»: the system setting and the site's own «Less motion». */
+@keyframes talentFlash { from { opacity: .95; scale: 1; } to { opacity: 0; scale: 1.5; } }
+@keyframes talentBeat { 0% { scale: 1.22; } }
+@keyframes talentText { from { opacity: 0; translate: 0 4px; } }
+@keyframes talentTree { from { opacity: 0; translate: 0 8px; } }
+@media screen and (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion="reduced"])) .flash { animation: talentFlash var(--atlas-duration-slow) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .budget strong[data-beat] { display: inline-block; transform-origin: right center; animation: talentBeat var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .detailBody { animation: talentText var(--atlas-duration-fast) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .edge { transition: color var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .node img { transition: filter var(--atlas-duration) var(--atlas-ease); }
+}
+/* The tree picked in the switch arrives; side by side the trees stand still. */
+@media screen and (prefers-reduced-motion: no-preference) and (max-width: 1279px) {
+  :global(html:not([data-motion="reduced"])) .tree[data-open] { animation: talentTree var(--atlas-duration) var(--atlas-ease); }
+}
+@media (hover: hover) and (pointer: fine) {
+  .grid .node[data-state="locked"]:hover img { filter: saturate(.7) brightness(.82); }
+  .detailName h2 a { transition: text-decoration-color var(--atlas-duration-fast) var(--atlas-ease); }
+  .detailName h2 a:hover { text-decoration-color: currentColor; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion="reduced"])) .grid .node { transition: scale var(--atlas-duration-fast) var(--atlas-ease), box-shadow var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .grid .node:hover { scale: 1.08; }
+  :global(html:not([data-motion="reduced"])) .grid .node:active { scale: .96; }
+}
+@media (forced-colors: active) {
+  .tree::before, .tree::after { display: none; }
+  .tree, .treeHead { border-color: CanvasText; }
+  .grid .node { outline: 1px solid ButtonText; box-shadow: none; }
+  .node[data-state="max"] { outline-width: 3px; }
+  .node[data-state="locked"] img { filter: none; opacity: .5; }
+  .rank { box-shadow: 0 0 0 1px ButtonText; color: ButtonText; }
+  .edge { color: CanvasText; }
+}

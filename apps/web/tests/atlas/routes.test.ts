@@ -21,13 +21,13 @@ describe("route registry", () => {
   }
   it("derives canonical and hreflang of a section page from its path", () => {
     const meta = sectionMetadata("lairs", "ru");
-    assert.equal(meta.title, "Логова и мировые боссы Midnight Сезон 2 — Gildra");
+    assert.equal(meta.title, "Логова и мировые боссы Midnight, сезон 2 — WowArcana");
     assert.deepEqual(meta.alternates, { canonical: "/ru/wow/lairs", languages: { en: "/wow/lairs", ru: "/ru/wow/lairs", "x-default": "/wow/lairs" } });
     assert.equal(meta.robots, undefined);
     assert.equal(sectionMetadata("mythicPlusMeta", "en").robots, undefined);
   });
   it("builds breadcrumbs through the parents", () => {
-    assert.deepEqual(trail("ru", "lairs"), [{ label: "World of Warcraft", href: "/ru/wow" }, { label: "Логова и мировые боссы" }]);
-    assert.deepEqual(trail("en", "raids", { label: "The Voidspire" }), [{ label: "World of Warcraft", href: "/wow" }, { label: "Raids", href: "/wow/raids" }, { label: "The Voidspire" }]);
+    assert.deepEqual(trail("ru", "lairs"), [{ label: "World of Warcraft", href: "/ru" }, { label: "Логова и мировые боссы" }]);
+    assert.deepEqual(trail("en", "raids", { label: "The Voidspire" }), [{ label: "World of Warcraft", href: "/" }, { label: "Raids", href: "/wow/raids" }, { label: "The Voidspire" }]);
   });
 });

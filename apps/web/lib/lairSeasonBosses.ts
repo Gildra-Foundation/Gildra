@@ -66,8 +66,8 @@ export const seasonGuideBosses: Boss[] = [
     mechanics: m([
       { name: "Ravenous Stomp", role: "Все", tone: "danger", action: "DODGE", icon: spell("ravenous-stomp-1310413"), description: "Удар создаёт расходящуюся волну физического урона.", response: "Отойдите от босса и пройдите между опасными секторами." },
       { name: "Triple Shot", role: "Все", tone: "danger", action: "RUN", icon: spell("triple-shot-1307573"), description: "Три последовательных выстрела по отмеченной цели создают опасную линию.", response: "Цель уходит в сторону; остальные не пересекают траекторию и прожимают защиту." },
-      { name: "Regurgitate", role: "Хилы", tone: "control", action: "DISPEL", icon: spell("regurgitate-1304491"), description: "Сильный ядовитый эффект быстро добивает цель без лечения.", response: "Снимайте яд сразу и поднимайте здоровье цели до следующего события." },
-      { name: "Ssscavenging", role: "DPS", tone: "control", action: "KILL", icon: spell("devour-1302629"), description: "Rav’i пожирает сферу и получает защитный эффект.", response: "Ломайте щит всем уроном; сохраните бурст на этот каст." },
+      { name: "Regurgitate", role: "Лекари", tone: "control", action: "DISPEL", icon: spell("regurgitate-1304491"), description: "Сильный ядовитый эффект быстро добивает цель без лечения.", response: "Снимайте яд сразу и поднимайте здоровье цели до следующего события." },
+      { name: "Ssscavenging", role: "Бойцы", tone: "control", action: "KILL", icon: spell("devour-1302629"), description: "Rav’i пожирает сферу и получает защитный эффект.", response: "Ломайте щит всем уроном; сохраните бурст на этот каст." },
     ]),
   },
   {
@@ -76,10 +76,10 @@ export const seasonGuideBosses: Boss[] = [
     flavor: "Змея, собранная из змей, помнит голод каждой из своих голов.",
     summary: "Бой на прерывания и пространство: Toxic Atrophy нельзя пропускать, а после Death Rattle нужно немедленно покинуть опасную зону.",
     mechanics: m([
-      { name: "Toxic Atrophy", role: "DPS", tone: "control", action: "INTERRUPT", icon: spell("toxic-atrophy-1310974"), description: "Серия из трёх опасных ядовитых кастов по группе.", response: "Заранее назначьте три прерывания и не тратьте их на второстепенные заклинания." },
+      { name: "Toxic Atrophy", role: "Бойцы", tone: "control", action: "INTERRUPT", icon: spell("toxic-atrophy-1310974"), description: "Серия из трёх опасных ядовитых кастов по группе.", response: "Заранее назначьте три прерывания и не тратьте их на второстепенные заклинания." },
       { name: "Burrowing Charge", role: "Все", tone: "danger", action: "DODGE", icon: spell("burrowing-charge-1300083"), description: "Босс зарывается и атакует по прямой линии.", response: "Сместитесь перпендикулярно линии рывка, не ведите её через группу." },
       { name: "Death Rattle", role: "Все", tone: "danger", action: "RUN", icon: spell("death-rattle-1299080"), description: "Смертельная область быстро заполняет пространство вокруг босса.", response: "Сразу выбегайте на край и держите способности мобильности на этот момент." },
-      { name: "Uncoil", role: "DPS", tone: "tank", action: "KILL", icon: spell("uncoil-1287811"), description: "Босс разделяется, создавая дополнительные цели и давление на группу.", response: "Соберите аддов, контрольте и убейте их через cleave до следующего Atrophy." },
+      { name: "Uncoil", role: "Бойцы", tone: "tank", action: "KILL", icon: spell("uncoil-1287811"), description: "Босс разделяется, создавая дополнительные цели и давление на группу.", response: "Соберите аддов, контрольте и убейте их через cleave до следующего Atrophy." },
     ]),
   },
   {
@@ -90,7 +90,7 @@ export const seasonGuideBosses: Boss[] = [
     mechanics: m([
       { name: "Ritual of the Fang", role: "Все", tone: "control", action: "SOAK", icon: spell("ritual-of-the-fang-1301063"), description: "Ритуал требует разделить урон между игроками в отмеченной области.", response: "Соберитесь в круг заранее; не оставляйте отмеченную цель одну." },
       { name: "Ritual Venom", role: "Все", tone: "frost", action: "DISPEL", icon: spell("ritual-venom-1300901"), description: "Яд остаётся на игроке, пока его не заденет физическая атака Boneslicer.", response: "Цель встаёт на траекторию Boneslicer, остальные отходят от линии." },
-      { name: "Boneslicer", role: "DPS", tone: "control", action: "DODGE", icon: spell("boneslicer-1301509"), description: "Линейная физическая атака, которую можно использовать для очистки Ritual Venom.", response: "Без яда выйдите из линии; с ядом — осознанно перехватите удар." },
+      { name: "Boneslicer", role: "Бойцы", tone: "control", action: "DODGE", icon: spell("boneslicer-1301509"), description: "Линейная физическая атака, которую можно использовать для очистки Ritual Venom.", response: "Без яда выйдите из линии; с ядом — осознанно перехватите удар." },
       { name: "Axegrinder", role: "Танки", tone: "tank", action: "TANK", icon: spell("axegrinder-1312846"), description: "Тяжёлая танковая серия и фронтальная опасная зона.", response: "Разверните босса от группы и сохраните активную защиту на комбо." },
     ]),
   },
@@ -122,7 +122,7 @@ export const seasonGuideBosses: Boss[] = [
     flavor: "Она становится сильнее с каждым проглоченным змеем — и уязвимее с каждым жадным глотком.",
     summary: "Позвольте Gralka пожирать змей ради окна уязвимости, но уводите её из яда и выбегайте из усиленного Purging Breath.",
     mechanics: m([
-      { name: "Snake Eater", role: "DPS", tone: "control", action: "KILL", icon: spell("a-knot-of-snakes-1290031"), description: "Gralka съедает двух змей, оставляет яд и получает +15% входящего урона за каждую.", response: "Уведите её из лужи и отдайте бурст в окно двух стаков уязвимости." },
+      { name: "Snake Eater", role: "Бойцы", tone: "control", action: "KILL", icon: spell("a-knot-of-snakes-1290031"), description: "Gralka съедает двух змей, оставляет яд и получает +15% входящего урона за каждую.", response: "Уведите её из лужи и отдайте бурст в окно двух стаков уязвимости." },
       { name: "Venomblade Slash", role: "Танки", tone: "tank", action: "TANK", icon: spell("envenom-1307571"), description: "Ядовитый удар усиливается после Snake Eater.", response: "Используйте активную защиту; хилу подготовить внешний сейв на высоких стаках." },
       { name: "Purging Breath", role: "Все", tone: "danger", action: "DODGE", icon: spell("poison-spit-1310116"), description: "Неподвижный конус длится дольше за каждый съеденный стак.", response: "Сразу уйдите за спину и не возвращайтесь до исчезновения конуса." },
     ]),
@@ -134,7 +134,7 @@ export const seasonGuideBosses: Boss[] = [
     summary: "Ломайте Bone Armor, уходите от Bone Storm и не позволяйте шипам запереть путь для кайта.",
     mechanics: m([
       { name: "Frost Strike", role: "Танки", tone: "tank", action: "TANK", icon: spell("cryo-surge-1239871"), description: "Базовый удар наносит frost-урон и замедляет.", response: "Держите босса у края и оставляйте безопасный маршрут для Bone Storm." },
-      { name: "Bone Armor", role: "DPS", tone: "control", action: "KILL", icon: spell("entomb-271569"), description: "Поглощающий щит блокирует прогресс боя.", response: "Сохраните сильные способности и немедленно разбейте щит." },
+      { name: "Bone Armor", role: "Бойцы", tone: "control", action: "KILL", icon: spell("entomb-271569"), description: "Поглощающий щит блокирует прогресс боя.", response: "Сохраните сильные способности и немедленно разбейте щит." },
       { name: "Bone Storm", role: "Все", tone: "danger", action: "RUN", icon: spell("frozen-tempest-1312760"), description: "Тяжёлый постоянный урон по игрокам рядом с боссом.", response: "Кайтите до конца канала, не пытайтесь стоять и размениваться уроном." },
       { name: "Bone Spikes", role: "Все", tone: "danger", action: "DODGE", icon: spell("earthshatter-slam-1270428"), description: "Шипы появляются из земли и оглушают попавших игроков.", response: "Следите за маркерами под ногами и сохраняйте свободную линию отхода." },
     ]),
@@ -151,7 +151,7 @@ export const seasonGuideBosses: Boss[] = [
     ],
     mechanics: m([
       { name: "Noxious Bile", role: "Все", tone: "danger", action: "DODGE", icon: spell("poison-splash-1300351"), description: "Ядовитый конус оставляет долго живущие лужи.", response: "Уводите конус к краю и не загрязняйте центр арены." },
-      { name: "Void Toxin", role: "Хилы", tone: "control", action: "INTERRUPT", icon: spell("cytotoxin-1308148"), description: "Прерываемый DoT создаёт постоянное давление на цель.", response: "Сбивайте каст; если прошёл — немедленно снимите яд и поднимите цель." },
+      { name: "Void Toxin", role: "Лекари", tone: "control", action: "INTERRUPT", icon: spell("cytotoxin-1308148"), description: "Прерываемый DoT создаёт постоянное давление на цель.", response: "Сбивайте каст; если прошёл — немедленно снимите яд и поднимите цель." },
       { name: "Soul Extinction", role: "Все", tone: "danger", action: "INTERRUPT", icon: spell("bind-soul-330810"), description: "Смертельный канал, который нельзя позволить завершить.", response: "Это абсолютный приоритет прерывания; всегда держите один kick в резерве." },
       { name: "Venom Storm", role: "Все", tone: "frost", action: "DODGE", icon: spell("venomous-ascension-1272784"), description: "Медленные волны яда пересекают арену.", response: "Смотрите на направление волн и проходите через широкий промежуток." },
       { name: "Serpent’s Strike", role: "Танки", tone: "tank", action: "TANK", icon: spell("piercing-hiss-1294557"), description: "Тяжёлый удар по текущей цели.", response: "Активная защита на каждый удар; не входите в него с низким здоровьем." },

@@ -68,7 +68,7 @@ def _fetch_landing() -> tuple[bytes, dict[str, Any]]:
         request = urllib.request.Request(
             LANDING_URL,
             headers={
-                "User-Agent": "GildraDatasetBot/1.0 (+https://gildra.net)",
+                "User-Agent": "GildraDatasetBot/1.0 (+https://wowarcana.com)",
                 "Accept": "text/html,application/xhtml+xml",
                 "Accept-Encoding": "identity",
             },
@@ -100,7 +100,7 @@ def _request_bytes(url: str, *, headers: dict[str, str] | None = None, limit: in
     }:
         raise ValueError(f"refusing unexpected wow.gg dependency host: {parsed.hostname}")
     request_headers = {
-        "User-Agent": "GildraDatasetBot/1.0 (+https://gildra.net)",
+        "User-Agent": "GildraDatasetBot/1.0 (+https://wowarcana.com)",
         "Accept": "application/json,text/javascript,*/*",
         "Accept-Encoding": "identity",
         "Origin": BASE_URL,

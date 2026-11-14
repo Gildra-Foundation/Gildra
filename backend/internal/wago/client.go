@@ -294,3 +294,62 @@ func (c *Client) csvURL(table, build, locale string) string {
 	}
 	return c.baseURL + "/db2/" + url.PathEscape(table) + "/csv?" + query.Encode()
 }
+
+// maxGameTableBytes bounds a client game table (gametables/*.txt); the largest
+// are tens of kilobytes.
+const maxGameTableBytes = 8 << 20
+
+// FileURL is the address of one client file of a build by file data id.
+func (c *Client) FileURL(fileDataID int, build string) string {
+	return c.baseURL + "/api/casc/" + url.PathEscape(fmt.Sprint(fileDataID)) + "?download&version=" + url.QueryEscape(build)
+}
+
+// File downloads one client file of an exact build.
+func (c *Client) File(ctx context.Context, fileDataID int, build string) ([]byte, error) {
+	if !buildPattern.MatchString(build) {
+		return nil, fmt.Errorf("invalid Wago build %q", build)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.FileURL(fileDataID, build), nil)
+	if err != nil {
+		return nil, fmt.Errorf("create Wago file request: %w", err)
+	}
+	req.Header.Set("Accept-Encoding", "identity")
+	resp, err := c.do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request Wago file: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		_, _ = io.CopyN(io.Discard, resp.Body, 4096)
+		return nil, fmt.Errorf("Wago file %d for build %s returned %s", fileDataID, build, resp.Status)
+	}
+	data, err := io.ReadAll(io.LimitReader(resp.Body, maxGameTableBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("read Wago file %d: %w", fileDataID, err)
+	}
+	if len(data) == 0 || len(data) > maxGameTableBytes {
+		return nil, fmt.Errorf("Wago file %d for build %s has an unexpected size %d", fileDataID, build, len(data))
+	}
+	return data, nil
+}
+
+// TableSource reads whole tables and client files of an exact build with the
+// proof of the bytes read. Importers of reference data take it through their
+// own interface, so this package stays free of their types.
+type TableSource struct{ Client *Client }
+
+func (s TableSource) Table(ctx context.Context, table, build, locale string, consume func(map[string]string) error) (string, []byte, int64, error) {
+	_, proof, err := s.Client.RowsWithProof(ctx, table, build, locale, 0, consume)
+	if err != nil {
+		return "", nil, 0, err
+	}
+	if !proof.Complete || len(proof.SHA256) != sha256.Size {
+		return "", nil, 0, fmt.Errorf("incomplete Wago download of %s", table)
+	}
+	return s.Client.CSVURL(table, build, locale), proof.SHA256, proof.ByteSize, nil
+}
+
+func (s TableSource) File(ctx context.Context, fileDataID int, build string) (string, []byte, error) {
+	data, err := s.Client.File(ctx, fileDataID, build)
+	return s.Client.FileURL(fileDataID, build), data, err
+}

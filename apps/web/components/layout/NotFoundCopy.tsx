@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useSyncExternalStore, type CSSProperties } from "react";
-import Link from "next/link";
-import { ATLAS_FOOTER_LINKS } from "@/components/atlas/footerLinks";
+import { FooterNavigation } from "@/components/atlas/FooterNavigation";
+import { FooterLanguage } from "@/components/atlas/FooterLanguage";
 import { ArrowRight } from "lucide-react";
 import { AtlasMotionToggle } from "@gildra/atlas-ui/AtlasMotionToggle";
 import { MaterialSlotLinkButton } from "@/components/wow/shared/material/MaterialButtonBase";
@@ -38,7 +38,7 @@ function useNotFoundCopy(locale?: Locale) {
 
 export function NotFoundTitle({ locale }: { locale?: Locale }) {
   const { text } = useNotFoundCopy(locale);
-  useEffect(() => { document.title = `${text.title} — Gildra`; }, [text.title]);
+  useEffect(() => { document.title = `${text.title} — WowArcana`; }, [text.title]);
   return <>{text.title}</>;
 }
 
@@ -50,7 +50,7 @@ export function NotFoundLede({ locale }: { locale?: Locale }) {
 export function NotFoundActions({ locale, slotStyle }: { locale?: Locale; slotStyle: CSSProperties }) {
   const { text, prefix } = useNotFoundCopy(locale);
   return <>
-    <MaterialSlotLinkButton slotStyle={slotStyle} fit="stack" variant="primary" href={`${prefix}/wow`} iconAfter={<ArrowRight aria-hidden="true" />}>{text.hub}</MaterialSlotLinkButton>
+    <MaterialSlotLinkButton slotStyle={slotStyle} fit="stack" variant="primary" href={prefix || "/"} iconAfter={<ArrowRight aria-hidden="true" />}>{text.hub}</MaterialSlotLinkButton>
     <MaterialSlotLinkButton slotStyle={slotStyle} fit="stack" href={`${prefix}/wow/mythic-plus`}>{text.mythic}</MaterialSlotLinkButton>
   </>;
 }
@@ -67,14 +67,16 @@ export function NotFoundText({ en, ru }: Words) {
 export function NotFoundFooterLinks() {
   const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
   const lang = ruUrl ? "ru" : "en";
-  const prefix = ruUrl ? "/ru" : "";
-  return <>
-    {ATLAS_FOOTER_LINKS.map((link) => <Link key={link.href} href={`${prefix}${link.href}`} prefetch={false}>{link[lang]}</Link>)}
-  </>;
+  return <FooterNavigation locale={lang} />;
 }
 
 /** The footer's "Less motion" switch in the URL's language. */
 export function NotFoundMotionToggle() {
   const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
   return <AtlasMotionToggle locale={ruUrl ? "ru" : "en"} />;
+}
+
+export function NotFoundFooterLanguage() {
+  const ruUrl = useSyncExternalStore(subscribe, isRussianUrl, () => false);
+  return <FooterLanguage locale={ruUrl ? "ru" : "en"} missing />;
 }

@@ -64,7 +64,7 @@
 .attribution a { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: var(--atlas-text-muted); }
 .studio button:focus-visible, .studio a:focus-visible, .viewport:focus-visible, .canvas:focus-visible { outline: 3px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@media (prefers-reduced-motion: no-preference) { .cartography { animation: unfold var(--atlas-duration-art) var(--atlas-ease) both; } .bossPin[data-active="true"]::after { position: absolute; inset: -9px; border: 1px solid var(--raid-pull-light); border-radius: 50%; content: ""; pointer-events: none; animation: beacon 1.6s var(--atlas-ease) 2; } }
+@media (prefers-reduced-motion: no-preference) { .cartography { animation: unfold var(--atlas-duration-art) var(--atlas-ease) both; } .bossPin[data-active="true"]::after { position: absolute; inset: -9px; border: 1px solid var(--raid-pull-light); border-radius: 50%; content: ""; pointer-events: none; animation: beacon var(--atlas-duration-pulse) var(--atlas-ease) 2; } }
 @keyframes unfold { from { opacity: .4; } to { opacity: 1; } }
 @keyframes beacon { from { opacity: .8; transform: scale(.85); } to { opacity: 0; transform: scale(1.2); } }
 @media (max-width: 1100px) { .tool.tool { padding-inline: var(--atlas-space-2); } }

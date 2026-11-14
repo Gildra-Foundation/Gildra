@@ -97,6 +97,10 @@
      Times New Roman / Arial are not installed, so the web fonts swap in place. */
   --atlas-font-display: var(--font-atlas-display), "Alegreya Fallback Local", Georgia, "Times New Roman", serif;
   --atlas-font-ui: var(--font-ui), "Inter Fallback Local", "Segoe UI", Roboto, Arial, sans-serif;
+  /* The Warcraft title face; signs it lacks (dashes, quotes) come from the display face. */
+  --atlas-font-title: "Gildra Azeroth", var(--font-atlas-display), "Alegreya Fallback Local", Georgia, serif;
+  /* The wordmark of the top bar: Latin capitals only. */
+  --atlas-font-brand: var(--font-atlas-brand), var(--font-atlas-display), "Alegreya Fallback Local", Georgia, serif;
   --atlas-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --atlas-weight-display: 600;
   --atlas-weight-display-hero: 500;
@@ -126,9 +130,10 @@
   /* Reading width: one comfortable line of body text, and of longer notes */
   --atlas-measure: 68ch;
   --atlas-measure-wide: 72ch;
-  /* Height of the sticky top bar (60 px row + 46 px realm tabs + rule; 56 + 44 + 1
-     below 1180 px); sticky page navigation sits under it. */
-  --atlas-sticky-top: 107px;
+  /* Height of the stuck top bar: on wide screens its brand row scrolls away and the
+     46 px tab row + rule stays; below 1180 px one 56 px row + rule. Sticky page
+     navigation sits under it. */
+  --atlas-sticky-top: 47px;
 
   /* Spacing scale */
   --atlas-space-1: 4px;
@@ -165,6 +170,11 @@
   --atlas-duration-art: .55s;           /* artwork zoom on hover */
   --atlas-duration-enter: .62s;         /* arrival of a page: hero and sections */
   --atlas-stagger: 60ms;                /* step of an arrival cascade */
+  --atlas-duration-sweep: .9s;          /* one pass of light over a material on hover/focus */
+  --atlas-duration-draw: 1.2s;          /* a route or a glow drawing itself in */
+  --atlas-duration-pulse: 1.4s;         /* one beat of a loading skeleton or busy pulse */
+  --atlas-duration-spin: .9s;           /* one turn of a busy spinner */
+  /* Scene loops (mist, sway, breathing art) keep their own slow tempo of 2 s and more. */
   /* Press: every control answers a press the same way (roadmap item 47) */
   --atlas-press-scale: .97;             /* buttons and small controls */
   --atlas-press-scale-card: .99;        /* cards, tiles, path steps */
@@ -228,11 +238,6 @@
 }
 
 @media (max-width: 1179px) {
-  :root,
-  [data-atlas-scope]:where([data-theme]) { --atlas-sticky-top: 101px; }
-}
-/* Phones have no tab strip under the bar (one 56 px row + rule). */
-@media (max-width: 767px), (pointer: coarse) and (orientation: landscape) and (max-height: 540px) {
   :root,
   [data-atlas-scope]:where([data-theme]) { --atlas-sticky-top: 57px; }
 }

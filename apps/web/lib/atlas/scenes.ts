@@ -28,6 +28,14 @@ export type AtlasScene = {
 const L = "/assets/wow/loading";
 
 export const atlasScenes = {
+  forever: { art: `${L}/forever-old-road-20261111.webp`, position: "70% 38%", og: [0.7, 0.38] },
+  foreverCrafts: { art: `${L}/forever-crafthall-20261111.webp`, position: "70% 40%", og: [0.7, 0.4] },
+  // Forever pages each stand in a place of their own (components/wow/forever/shared/foreverScenes.ts).
+  foreverDungeons: { art: `${L}/dungeon.webp`, position: "center 45%", horizon: "rgba(190, 140, 70, .16)", og: [0.5, 0.45] },
+  foreverRaids: { art: `${L}/tier.webp`, position: "70% 40%", horizon: "rgba(200, 120, 60, .16)", og: [0.6, 0.45] },
+  foreverClasses: { art: `${L}/talents-wow.webp`, position: "70% 40%", horizon: "rgba(220, 150, 90, .16)", og: [0.6, 0.45] },
+  foreverLibrary: { art: `${L}/archive.webp`, position: "70% 40%", horizon: "rgba(110, 170, 120, .16)", og: [0.6, 0.45] },
+  talents: { art: `${L}/talents-hall-20261106.webp`, position: "70% 40%", og: [0.7, 0.4] },
   wow: { art: `${L}/wow-azeroth-vista-20261106.webp`, position: "70% 40%", horizon: "rgba(220, 170, 90, .18)", og: [0.7, 0.4] },
   raids: { art: "/assets/wow/raids/midnight/backgrounds/the-voidspire-scene.webp", position: "center 30%", tint: "rgba(95, 46, 151, .2)", ember: "rgba(200, 168, 255, .95)", og: [0.5, 0.35] },
   venomousAbyss: { art: "/assets/wow/mythic/backgrounds/altar.webp", position: "center 35%", tint: "rgba(96, 150, 70, .16)", ember: "rgba(180, 238, 146, .95)", og: [0.5, 0.4] },

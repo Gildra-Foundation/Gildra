@@ -1,0 +1,55 @@
+/* atlas:strict — Forever tier lists: tier rows as on the tier lists of the live game (the letter on the tier's colour,
+   the classes of the tier beside it), on the section's panel. Layout only; the tier colour (--tier-accent) and the class
+   colour (--class-color) are game data. */
+.srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-2) var(--atlas-space-4); }
+.marks { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-2) var(--atlas-space-4); }
+.context { margin: 0; color: var(--atlas-text-strong); font-size: var(--atlas-text-lead); line-height: var(--atlas-leading-body); text-wrap: pretty; }
+
+.board { display: grid; gap: var(--atlas-space-2); }
+.tierRow { display: grid; grid-template-columns: 132px minmax(0, 1fr); min-height: 104px; border: 1px solid color-mix(in srgb, var(--tier-accent, var(--atlas-line)) 34%, var(--atlas-line-soft)); border-radius: var(--atlas-radius); background: linear-gradient(90deg, color-mix(in srgb, var(--tier-accent, var(--atlas-accent)) 13%, transparent), color-mix(in srgb, var(--atlas-bg) 42%, transparent) 46%); }
+.tierBadge { display: grid; align-content: center; justify-items: center; gap: var(--atlas-space-1); margin: 0; padding: var(--atlas-space-3) var(--atlas-space-2); border-radius: calc(var(--atlas-radius) - 1px) 0 0 calc(var(--atlas-radius) - 1px); background: linear-gradient(160deg, color-mix(in srgb, var(--tier-accent, var(--atlas-accent)) 86%, var(--atlas-text-strong)), var(--tier-accent, var(--atlas-accent)) 70%); box-shadow: inset -1px 0 0 color-mix(in srgb, var(--atlas-bg) 40%, transparent), inset 0 1px 0 color-mix(in srgb, var(--atlas-text-strong) 30%, transparent); color: var(--atlas-bg); text-align: center; }
+.tierLetter { font-family: var(--atlas-font-display); font-size: var(--atlas-text-h2); font-weight: 700; line-height: 1; font-variant-numeric: lining-nums; }
+.tierLabel { font-family: var(--atlas-font-ui); font-size: var(--atlas-text-meta); font-weight: 700; line-height: var(--atlas-leading-snug); text-wrap: balance; }
+.entries { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); align-content: center; gap: var(--atlas-space-2); margin: 0; padding: var(--atlas-space-3); list-style: none; }
+.entry { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); min-width: 0; padding: var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-3); border: 1px solid var(--material-line, var(--atlas-line-soft)); border-inline-start: 3px solid color-mix(in srgb, var(--class-color) 70%, transparent); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 58%, transparent); }
+.entryText { display: grid; gap: 2px; min-width: 0; }
+.entry h4 { margin: 0; font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); overflow-wrap: normal; hyphens: manual; }
+.entry h4 a { color: color-mix(in srgb, var(--class-color) 62%, var(--atlas-text-strong)); text-decoration: none; }
+/* The class name is the link of the whole line; the talents link stays above it. */
+.entry h4 a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.entry p { margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); text-wrap: pretty; }
+.talents { position: relative; z-index: 1; display: inline-grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius-control); background: color-mix(in srgb, var(--atlas-bg) 50%, transparent); color: var(--atlas-text-muted); }
+.talents svg { width: 16px; height: 16px; }
+
+/* My tier list: one line and the painted button; the board takes their place. */
+.personal { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3) var(--atlas-space-5); }
+/* The board stands on the section's panel: its own surface is taken off (panels are never nested). */
+.myBoard.myBoard { border: 0; border-radius: 0; background: none; box-shadow: none; }
+.personal p { flex: 1 1 280px; margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+
+@media (hover: hover) and (pointer: fine) {
+  .entry, .talents { transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease), color var(--atlas-duration-fast) var(--atlas-ease), translate var(--atlas-duration-fast) var(--atlas-ease); }
+  .entry :global(img) { transition: scale var(--atlas-duration) var(--atlas-ease); }
+  .entry:hover { border-color: color-mix(in srgb, var(--class-color) 60%, var(--atlas-line)); background: color-mix(in srgb, var(--class-color) 9%, var(--atlas-bg)); translate: 0 -2px; }
+  .entry:hover :global(img) { scale: 1.08; }
+  .talents:hover { border-color: var(--material-light, var(--atlas-accent)); color: var(--atlas-text-strong); }
+}
+@media (prefers-reduced-motion: reduce) { .entry, .entry :global(img) { transition: none; translate: none !important; scale: none !important; } }
+:global(html[data-motion="reduced"]) :is(.entry, .entry img) { transition: none; translate: none !important; scale: none !important; }
+@media (forced-colors: active) {
+  .tierRow, .entry { border-color: CanvasText; background: Canvas; }
+  .tierBadge { border-right: 1px solid CanvasText; background: Canvas; color: CanvasText; forced-color-adjust: none; }
+}
+
+@media (pointer: coarse) { .talents { width: 44px; height: 44px; } }
+@media (max-width: 700px) {
+  .tierRow { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  /* The letter and its meaning share one line above the classes of the tier. */
+  .tierBadge { display: flex; align-items: center; justify-content: flex-start; gap: var(--atlas-space-3); padding: var(--atlas-space-2) var(--atlas-space-3); border-radius: calc(var(--atlas-radius) - 1px) calc(var(--atlas-radius) - 1px) 0 0; text-align: start; }
+  .tierLetter { font-size: var(--atlas-text-h3); }
+  .tierLabel { font-size: var(--atlas-text-small); }
+  .entries { padding: var(--atlas-space-2); }
+  .entry { padding-inline-start: var(--atlas-space-2); }
+}

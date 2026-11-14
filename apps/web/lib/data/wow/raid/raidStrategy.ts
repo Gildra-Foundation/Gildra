@@ -15,7 +15,3 @@ export function getBossStrategy(raid: RaidDefinition, boss: RaidBoss) {
   const guide = getVoidspireMechanicGuide(boss.slug);
   return tactic || guide ? { tactic, guide } : null;
 }
-
-export function isRaidStrategyPublished(raid: RaidDefinition) {
-  return strategyPublishedRaids.has(raid.slug);
-}

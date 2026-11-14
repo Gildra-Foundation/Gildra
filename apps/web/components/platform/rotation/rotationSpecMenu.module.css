@@ -111,3 +111,6 @@
   .menu > summary,
   .menu > summary svg { transition: none; }
 }
+
+/* Touch: 44 px spec menu. */
+@media (pointer: coarse) { .menu > summary { min-height: 44px; } }

@@ -162,7 +162,7 @@ export function GearFarmPlanner({ characterSlug, snapshotKey, localePrefix = "/r
       </div>
     </div>
     {running ? <div role="status" className={tools.status}>{progressLabel}{progress && phase !== "sources" ? ` ${progress.completed} / ${progress.total}` : ""}</div> : null}
-    {running && progress?.total ? <div className={tools.progress} aria-hidden="true"><i style={{ width: `${Math.min(100, progress.completed / progress.total * 100)}%` }} /></div> : null}
+    {running && progress?.total ? <div className={tools.progress} aria-hidden="true"><i style={{ transform: `scaleX(${Math.min(1, progress.completed / progress.total)})` }} /></div> : null}
     {failure ? <p role="alert" className={tools.alert}><AlertTriangle aria-hidden="true" />{messages[failure] ?? (failure === "farm_plan_unavailable" ? c.genericError : c.unavailable)}</p> : null}
     {current?.job?.status === "cancelled" ? <p role="status" className={tools.status}>{c.cancelled}</p> : null}
     {running ? <ResultsSkeleton /> : null}

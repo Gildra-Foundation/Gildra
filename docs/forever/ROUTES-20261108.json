@@ -1,0 +1,238 @@
+[
+  {
+    "slug": "ragefire-chasm",
+    "action": "route",
+    "steps": 4,
+    "source": "https://www.icy-veins.com/wow-classic/ragefire-chasm-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "the-deadmines",
+    "action": "route",
+    "steps": 5,
+    "source": "https://www.icy-veins.com/wow-classic/deadmines-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "wailing-caverns",
+    "action": "route",
+    "steps": 5,
+    "source": "https://www.icy-veins.com/wow-classic/wailing-caverns-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "shadowfang-keep",
+    "action": "route",
+    "steps": 4,
+    "source": "https://www.icy-veins.com/wow-classic/shadowfang-keep-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "blackfathom-deeps",
+    "action": "route",
+    "steps": 5,
+    "source": "https://www.icy-veins.com/wow-classic/blackfathom-deeps-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "the-stockade",
+    "action": "route",
+    "steps": 4,
+    "source": "https://www.icy-veins.com/wow-classic/the-stockade-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "the-deadmines",
+    "action": "ability",
+    "boss": "Gilnid",
+    "mechanic": "Goblin Engineer",
+    "source": "https://www.icy-veins.com/wow-forever/deadmines-guide"
+  },
+  {
+    "slug": "the-deadmines",
+    "action": "ability",
+    "boss": "Mr. Smite",
+    "mechanic": "Smite Slam",
+    "source": "https://www.icy-veins.com/wow-forever/deadmines-guide"
+  },
+  {
+    "slug": "the-deadmines",
+    "action": "ability",
+    "boss": "Captain Greenskin",
+    "mechanic": "Defias Squallshaper",
+    "source": "https://www.icy-veins.com/wow-forever/deadmines-guide"
+  },
+  {
+    "slug": "the-deadmines",
+    "action": "ability",
+    "boss": "Edwin VanCleef",
+    "mechanic": "Thrash",
+    "source": "https://www.icy-veins.com/wow-forever/deadmines-guide"
+  },
+  {
+    "slug": "wailing-caverns",
+    "action": "ability",
+    "boss": "Lady Anacondra",
+    "mechanic": "Lightning Bolt",
+    "source": "https://www.icy-veins.com/wow-forever/wailing-caverns-guide"
+  },
+  {
+    "slug": "wailing-caverns",
+    "action": "ability",
+    "boss": "Lord Cobrahn",
+    "mechanic": "Lightning Bolt",
+    "source": "https://www.icy-veins.com/wow-forever/wailing-caverns-guide"
+  },
+  {
+    "slug": "wailing-caverns",
+    "action": "ability",
+    "boss": "Lord Pythas",
+    "mechanic": "Lightning Bolt",
+    "source": "https://www.icy-veins.com/wow-forever/wailing-caverns-guide"
+  },
+  {
+    "slug": "wailing-caverns",
+    "action": "ability",
+    "boss": "Lord Serpentis",
+    "mechanic": "Lightning Bolt",
+    "source": "https://www.icy-veins.com/wow-forever/wailing-caverns-guide"
+  },
+  {
+    "slug": "wailing-caverns",
+    "action": "ability",
+    "boss": "Lord Serpentis",
+    "mechanic": "Healing Touch",
+    "source": "https://www.icy-veins.com/wow-forever/wailing-caverns-guide"
+  },
+  {
+    "slug": "shadowfang-keep",
+    "action": "ability",
+    "boss": "Commander Springvale",
+    "mechanic": "Wailing Guardsman",
+    "source": "https://www.icy-veins.com/wow-forever/shadowfang-keep-guide"
+  },
+  {
+    "slug": "shadowfang-keep",
+    "action": "ability",
+    "boss": "Odo the Blindwatcher",
+    "mechanic": "Vile Bats",
+    "source": "https://www.icy-veins.com/wow-forever/shadowfang-keep-guide"
+  },
+  {
+    "slug": "ragefire-chasm",
+    "action": "ability",
+    "boss": "Jergosh the Invoker",
+    "mechanic": "Curse of Weakness",
+    "source": "https://www.icy-veins.com/wow-classic/ragefire-chasm-dungeon-guide"
+  },
+  {
+    "slug": "gnomeregan",
+    "action": "route",
+    "steps": 4,
+    "source": "https://www.icy-veins.com/wow-classic/gnomeregan-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "razorfen-kraul",
+    "action": "route",
+    "steps": 3,
+    "source": "https://www.icy-veins.com/wow-classic/razorfen-kraul-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "razorfen-downs",
+    "action": "route",
+    "steps": 3,
+    "source": "https://www.icy-veins.com/wow-classic/razorfen-downs-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "uldaman",
+    "action": "route",
+    "steps": 3,
+    "source": "https://www.icy-veins.com/wow-classic/uldaman-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "zul-farrak",
+    "action": "route",
+    "steps": 4,
+    "source": "https://www.icy-veins.com/wow-classic/zul-farrak-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "scholomance",
+    "action": "route",
+    "steps": 4,
+    "source": "https://www.icy-veins.com/wow-classic/scholomance-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "action": "route",
+    "steps": 4,
+    "source": [
+      "https://www.wowhead.com/classic/guide/scarlet-monastery-dungeon-strategy-wow-classic",
+      "https://www.icy-veins.com/wow-classic/scarlet-monastery-cathedral-dungeon-guide"
+    ],
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "maraudon",
+    "action": "route",
+    "steps": 4,
+    "source": [
+      "https://www.icy-veins.com/wow-classic/maraudon-orange-wing-dungeon-guide",
+      "https://www.icy-veins.com/wow-classic/maraudon-purple-wing-dungeon-guide",
+      "https://www.icy-veins.com/wow-classic/maraudon-inner-wing-dungeon-guide"
+    ],
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "sunken-temple",
+    "action": "route",
+    "steps": 4,
+    "source": "https://www.icy-veins.com/wow-classic/sunken-temple-dungeon-guide",
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "blackrock-depths",
+    "action": "route",
+    "steps": 4,
+    "source": [
+      "https://www.icy-veins.com/wow-classic/blackrock-depths-upper-city-dungeon-guide"
+    ],
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "blackrock-spire",
+    "action": "route",
+    "steps": 4,
+    "source": [
+      "https://www.wowhead.com/forever/guide/lower-blackrock-spire-dungeon-overview-location-rewards",
+      "https://www.wowhead.com/forever/guide/upper-blackrock-spire-dungeon-overview-location-rewards"
+    ],
+    "evidence": "Forever published walkthrough; not observed pack coordinates"
+  },
+  {
+    "slug": "stratholme",
+    "action": "route",
+    "steps": 4,
+    "source": [
+      "https://www.icy-veins.com/wow-classic/stratholme-live-dungeon-guide",
+      "https://www.icy-veins.com/wow-classic/stratholme-undead-dungeon-guide"
+    ],
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  },
+  {
+    "slug": "dire-maul",
+    "action": "route",
+    "steps": 4,
+    "source": [
+      "https://www.wowhead.com/classic/guide/dire-maul-east-dungeon-strategy-wow-classic",
+      "https://www.wowhead.com/classic/guide/dire-maul-west-dungeon-strategy-wow-classic",
+      "https://www.wowhead.com/classic/guide/dire-maul-north-dungeon-strategy-wow-classic"
+    ],
+    "evidence": "Classic walkthrough; route topology, not verified Forever pack coordinates"
+  }
+]

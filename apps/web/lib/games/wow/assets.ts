@@ -160,3 +160,90 @@ export function talentAbilityIcon(ability: AbilityIconCandidate, talentData?: Ta
   const keys = new Set([normalizedAbilityName(ability.id), normalizedAbilityName(ability.name)]);
   return choices.find((choice) => keys.has(normalizedAbilityName(choice.name)) && choice.iconUrl && !choice.iconFallback)?.iconUrl ?? null;
 }
+
+/** Game interface textures used as small decorations of the home page: role icons, chapter marks,
+ * a flourish (provenance: /assets/wow/ui/home/SOURCE.md). */
+export const WOW_UI_TEXTURES = {
+  roles: { tank: "/assets/wow/ui/home/role-tank.webp", healer: "/assets/wow/ui/home/role-healer.webp", dps: "/assets/wow/ui/home/role-dps.webp" },
+  marks: {
+    mythic: "/assets/wow/ui/home/mark-mythic.webp",
+    raids: "/assets/wow/ui/home/mark-raids.webp",
+    hero: "/assets/wow/ui/home/mark-classes.webp",
+    economy: "/assets/wow/ui/home/mark-economy.webp",
+    world: "/assets/wow/ui/home/mark-world.webp",
+  },
+  flourish: "/assets/wow/ui/home/break.webp",
+} as const;
+
+/** Chapter marks of the Forever hub: the home page marks where the subject is the same, the game's
+ * dungeon portal, anvil and book otherwise (provenance: /assets/wow/ui/forever/hub/SOURCE.md). */
+export const FOREVER_UI_TEXTURES = {
+  marks: {
+    dungeons: "/assets/wow/ui/forever/hub/mark-dungeons.webp",
+    classes: WOW_UI_TEXTURES.marks.hero,
+    raids: WOW_UI_TEXTURES.marks.raids,
+    crafts: "/assets/wow/ui/forever/hub/mark-crafts.webp",
+    library: "/assets/wow/ui/forever/hub/mark-library.webp",
+  },
+  flourish: WOW_UI_TEXTURES.flourish,
+  /** Signs of the library's record types: game icons (provenance: /assets/wow/ui/forever/library/SOURCE.md). */
+  types: {
+    item: "/assets/wow/ui/forever/library/type-item.webp",
+    spell: "/assets/wow/ui/forever/library/type-spell.webp",
+    npc: "/assets/wow/ui/forever/library/type-npc.webp",
+    quest: "/assets/wow/ui/forever/library/type-quest.webp",
+    recipe: "/assets/wow/ui/forever/library/type-recipe.webp",
+  },
+} as const;
+
+/** The game's own painting of a Forever talent tree, by class and tree slug ("druid", "feral-combat"); provenance: /assets/wow/ui/forever/trees/SOURCE.md. */
+export const foreverTreeArt = (classSlug: string, treeSlug: string) => `/assets/wow/ui/forever/trees/${classSlug}-${treeSlug}.webp`;
+
+/** Emblems of the game versions in the top strip, cut from the client's shop
+ * product logos (provenance: /assets/wow/versions/SOURCE.md). */
+export const WOW_VERSION_EMBLEMS = {
+  retail: "/assets/wow/versions/retail.png",
+  forever: "/assets/wow/versions/forever.png",
+  mists: "/assets/wow/versions/mists.png",
+} as const;
+
+/** Game file names: letters, digits, "_" and, for a few currencies ("pvpcurrency-conquest-horde"), "-". */
+const ICON_NAME = /^[a-z0-9_-]+$/;
+/** Retail and the Classic editions ("wow", "wow_classic_era"); Genshin and League records name no game file. */
+const WOW_PRODUCT = /^wow(?:_[a-z0-9]+)*$/;
+
+/**
+ * The official 56 px icon of a game file name ("inv_misc_gem_01", or a file id
+ * such as "132940") on Blizzard's render host; undefined for anything else, so
+ * a bad name never becomes a URL.
+ */
+export function wowIconUrl(iconName: unknown): string | undefined {
+  if (typeof iconName !== "string") return undefined;
+  const name = iconName.trim().toLowerCase();
+  return ICON_NAME.test(name) ? `https://render.worldofwarcraft.com/eu/icons/56/${name}.jpg` : undefined;
+}
+
+export function isWowProduct(product: unknown): boolean {
+  return typeof product === "string" && WOW_PRODUCT.test(product);
+}
+
+/** What the icon fallback reads of a catalog record (GameEntitySummary, GameEntity). */
+export type CatalogIconSource = { iconUrl?: string | null; iconName?: string | null; product?: string | null };
+
+/**
+ * Icon of a catalog record: its cached URL, else the official file of its icon
+ * name. The catalog names the icon of every record but serves a URL only while
+ * its cached copy is fresh. World of Warcraft records only; `product` is the
+ * edition of the list or page for records that do not carry their own (the
+ * related records of a relationship).
+ */
+export function catalogIconUrl(record: CatalogIconSource, product?: string | null): string | undefined {
+  if (record.iconUrl) return record.iconUrl;
+  return isWowProduct(record.product || product) ? wowIconUrl(record.iconName) : undefined;
+}
+
+/** The record with `iconUrl` filled by `catalogIconUrl`; the same object when nothing changes. */
+export function withCatalogIcon<T extends CatalogIconSource>(record: T, product?: string | null): T {
+  const iconUrl = catalogIconUrl(record, product);
+  return iconUrl && iconUrl !== record.iconUrl ? { ...record, iconUrl } : record;
+}

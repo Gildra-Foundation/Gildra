@@ -49,6 +49,9 @@ export const entityDetailCopy = {
 export type EntityDetailCopy = (typeof entityDetailCopy)[Lang];
 
 export const relationLabels: Record<string, { en: string; ru: string }> = {
+  achievement_criteria: { en: "Criteria", ru: "Критерии" },
+  achievement_reward: { en: "Rewards", ru: "Награды" },
+  achievement_supersedes: { en: "Previous achievement", ru: "Предыдущее достижение" },
   obtained_from: { en: "Obtained from", ru: "Где добыть" }, drops: { en: "Drops", ru: "Добыча" }, rewards: { en: "Rewards", ru: "Награда" },
   sold_by: { en: "Sold by", ru: "Продаётся у" }, teaches: { en: "Teaches", ru: "Обучает" }, crafted_by: { en: "Crafted by", ru: "Создаётся" },
   requires: { en: "Requires", ru: "Требует" }, reagent_for: { en: "Used in", ru: "Используется" }, owned_by: { en: "Belongs to", ru: "Принадлежит" },
@@ -63,6 +66,9 @@ export const relationLabels: Record<string, { en: string; ru: string }> = {
  * A relation without a reverse name here keeps its own name.
  */
 export const incomingRelationLabels: Record<string, { en: string; ru: string }> = {
+  achievement_criteria: { en: "Part of achievement", ru: "Требуется для достижения" },
+  achievement_reward: { en: "Achievement reward", ru: "Награда за достижение" },
+  achievement_supersedes: { en: "Next achievement", ru: "Следующее достижение" },
   obtained_from: { en: "Loot", ru: "Добыча" }, drops: { en: "Dropped by", ru: "Выпадает из" }, rewards: { en: "Reward from", ru: "Награда за" },
   sold_by: { en: "Sells", ru: "Продаёт" }, teaches: { en: "Taught by", ru: "Изучается у" }, crafted_by: { en: "Crafts", ru: "Создаёт" },
   requires: { en: "Required by", ru: "Требуется для" }, reagent_for: { en: "Reagents", ru: "Реагенты" }, owned_by: { en: "Owns", ru: "Владеет" },

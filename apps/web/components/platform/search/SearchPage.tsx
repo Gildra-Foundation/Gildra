@@ -2,17 +2,16 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight, Search, X } from "lucide-react";
 import { AtlasFrame, AtlasHero } from "@/components/atlas";
-import { MaterialButton, MaterialPlaque } from "@/components/wow/shared/materialAtlas";
+import { MaterialButton, MaterialPlaque, materialButtonStyle, materialIconFrameStyle } from "@/components/wow/shared/materialAtlas";
 import { libraryKit } from "@/components/library/libraryKit";
-import { TYPE_SYMBOLS } from "@/components/database/CatalogGlyph";
-import { CatalogRecordRow } from "@/components/database/CatalogRecordRow";
-import { entityTypeLabel } from "@/lib/platform/catalog/entityTypeLabel";
-import { playerText } from "@/lib/gameText";
 import { SearchShortcut } from "./SearchShortcut";
 import { SearchRouteForm } from "./SearchRouteForm";
+import { SearchResultsList } from "./SearchResultsList";
 import { searchCopy } from "./searchCopy";
+import { searchListParams, type SearchListQuery } from "./searchList";
+import { searchRow } from "./searchRow";
 import type { Lang } from "@/lib/i18n";
-import { catalogGames, type CatalogGameId, type CatalogQueryResult, type PlatformCatalogItem, type SearchKind } from "@/lib/platform/catalog/types";
+import { catalogGames, type CatalogGameId, type CatalogQueryResult, type SearchKind } from "@/lib/platform/catalog/types";
 import styles from "./searchPage.module.css";
 
 function searchHref(lang: Lang, query: string, kind: SearchKind, games: CatalogGameId[]) {
@@ -32,9 +31,9 @@ function supportsCharacters(games: CatalogGameId[]) {
 /**
  * /search and /ru/search — the library-wide search: hero like the library's
  * (trail, eyebrow, title), the form on the library plaque (labelled field,
- * painted button, kind tabs with a quiet link to the library), and the result rows (shared CatalogRecordRow). Without a
- * query there are no rows, only an empty state. Server-rendered; the only
- * client code is the soft-navigating form and the "/" shortcut.
+ * painted button, kind tabs with a quiet link to the library), the catalog's count of matches and the result rows
+ * (the shared record row) with "show more" under them. Without a query there are no rows, only an empty state.
+ * Server-rendered; the client code is the soft-navigating form, the "/" shortcut and the list that appends pages.
  */
 export function SearchPage({
   lang,
@@ -42,12 +41,15 @@ export function SearchPage({
   kind,
   selectedGames,
   results,
+  cursor = "",
 }: {
   lang: Lang;
   query: string;
   kind: SearchKind;
   selectedGames: CatalogGameId[];
   results: { gameId: CatalogGameId; result: Promise<CatalogQueryResult> }[];
+  /** The page was opened at a later page of the results (the next-page address without JavaScript). */
+  cursor?: string;
 }) {
   const t = searchCopy[lang];
   const prefix = lang === "ru" ? "/ru" : "";
@@ -57,7 +59,7 @@ export function SearchPage({
     <AtlasFrame lang={lang} scene="archive" dataAttributes={{ "data-search-root": true }}>
       <SearchShortcut inputId="platform-search-input" />
       <AtlasHero
-        breadcrumbs={[{ label: t.wow, href: `${prefix}/wow` }, { label: t.library, href: `${prefix}/library` }, { label: t.crumb }]}
+        breadcrumbs={[{ label: t.wow, href: prefix || "/" }, { label: t.library, href: `${prefix}/library` }, { label: t.crumb }]}
         breadcrumbsLabel={t.breadcrumbsLabel}
         title={t.title}
       />
@@ -121,7 +123,7 @@ export function SearchPage({
           ) : null}
           {results.map(({ gameId, result }) => (
             <Suspense key={gameId} fallback={<SearchGameFallback gameId={gameId} lang={lang} />}>
-              <SearchGameResults gameId={gameId} result={result} lang={lang} showGame={multiGame} />
+              <SearchGameResults gameId={gameId} result={result} lang={lang} list={{ q: query, kind, ...(multiGame ? { game: gameId } : {}) }} cursor={cursor} />
             </Suspense>
           ))}
         </section>
@@ -134,12 +136,14 @@ async function SearchGameResults({
   gameId,
   result: resultPromise,
   lang,
-  showGame,
+  list,
+  cursor,
 }: {
   gameId: CatalogGameId;
   result: Promise<CatalogQueryResult>;
   lang: Lang;
-  showGame: boolean;
+  list: SearchListQuery;
+  cursor: string;
 }) {
   const result = await resultPromise;
   const t = searchCopy[lang];
@@ -149,33 +153,10 @@ async function SearchGameResults({
   }
   if (!result.items.length) return null;
   return (
-    <ul className={styles.resultList}>
-      {result.items.map((item) => <SearchResultItem key={item.id} item={item} lang={lang} gameName={showGame ? game.name : undefined} />)}
-    </ul>
-  );
-}
-
-function SearchResultItem({ item, lang, gameName }: { item: PlatformCatalogItem; lang: Lang; gameName?: string }) {
-  const t = searchCopy[lang];
-  const wow = item.gameId === "wow";
-  const typeLabel = wow ? entityTypeLabel(item.entityType, lang) : item.entityType.replaceAll("-", " ");
-  const quality = typeof item.attributes.Quality === "number" ? item.attributes.Quality : undefined;
-  const itemLevel = item.attributes["Item Level"];
-  // WoW meta is rebuilt from structured attributes so it is localized; other games keep their catalog meta.
-  const meta = wow ? (itemLevel ? [`${t.itemLevel}\u00a0${itemLevel}`] : []) : item.meta.slice(1);
-  // Game text can carry client colour codes (|cFFFFCC99…|r); show the words only.
-  const description = playerText(item.description.replace(/\|c[0-9a-fA-F]{8}|\|r/g, ""), lang);
-  return (
-    <CatalogRecordRow
-      href={item.href}
-      name={item.name}
-      typeLabel={gameName ? `${gameName} · ${typeLabel}` : typeLabel}
-      iconUrl={item.iconUrl}
-      iconSymbol={wow ? TYPE_SYMBOLS[item.entityType] : undefined}
-      quality={item.entityType === "item" ? quality : undefined}
-      description={description}
-      meta={meta}
-    />
+    // A new query is a new list: the key drops the rows "show more" added to the previous one.
+    <SearchResultsList key={`${list.q}|${list.kind}|${cursor}`} lang={lang} rows={result.items.map((item) => searchRow(item, lang))} next={result.next} query={list}
+      nextHref={result.next ? `${lang === "ru" ? "/ru" : ""}/search?${searchListParams(list, result.next)}` : undefined}
+      rowFrame={materialIconFrameStyle(libraryKit, 56)} buttonStyle={materialButtonStyle(libraryKit)} />
   );
 }
 
@@ -195,10 +176,15 @@ async function SearchResultCount({
 }) {
   const all = await Promise.all(results.map(({ result }) => result));
   const count = all.reduce((total, result) => total + result.items.length, 0);
+  // What the catalog counted for the query. A search that fits one page is counted by its rows.
+  const totals = all.map((result) => (result.next ? result.total : result.items.length));
+  const total = totals.every((value) => value !== undefined) ? totals.reduce<number>((sum, value) => sum + (value ?? 0), 0) : undefined;
   const unavailable = all.every((result) => result.unavailableGames.length > 0);
   const t = searchCopy[lang];
+  // A catalog that did not answer has found nothing and counted nothing: its own line under this one says so.
+  if (unavailable) return null;
   return <>
-    <p className={styles.resultCount}>{t.resultsFor(count, query)}</p>
+    <p className={styles.resultCount}>{total !== undefined ? t.foundFor(total, query) : t.resultsFor(count, query)}</p>
     {!count && !unavailable ? (
       <div className={styles.empty} role="status">
         <Search aria-hidden="true" />

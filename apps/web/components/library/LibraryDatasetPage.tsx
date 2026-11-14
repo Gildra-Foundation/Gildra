@@ -6,9 +6,9 @@ import { LibraryWorkspace } from "@/components/library/LibraryWorkspace";
 import { CatalogTotal } from "@/components/database/CatalogTotal";
 import { PageShell } from "@/components/layout/PageShell";
 import { LibraryUnavailable } from "@/components/library/LibraryUnavailable";
-import { libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/library/libraryCopy";
+import { LIBRARY_HIDDEN_DATASETS, libraryCopy, libraryDatasetLine, libraryGroupText } from "@/components/library/libraryCopy";
 import { libraryCardLayout, libraryRails } from "@/components/library/libraryRails";
-import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets } from "@/lib/api/client";
+import { getCatalogCategories, getCatalogEntityTypes, getCatalogPage, getCatalogProducts, getLibraryDatasets, type CatalogPage } from "@/lib/api/client";
 import { libraryDatasetHead, requireCatalogSession } from "@/lib/library/server";
 import { pairedAlternates, withPageOpenGraph } from "@/lib/seo/metadata";
 import type { Metadata } from "next";
@@ -24,7 +24,7 @@ export async function libraryDatasetMetadata(lang: "en" | "ru", slug: string, se
   const line = libraryDatasetLine({ slug, description: head.description }, lang);
   const what = line ? `${line.charAt(0).toLowerCase()}${line.slice(1)}` : "";
   return withPageOpenGraph(lang, {
-    ...(emptyProductDataset(head) ? { robots: { index: false, follow: true } } : {}),
+    ...(emptyProductDataset(head) || LIBRARY_HIDDEN_DATASETS.has(slug) ? { robots: { index: false, follow: true } } : {}),
     title: `${head.name} — ${libraryCopy[lang].site}`,
     ...(line ? { description: datasetDescription(lang, head.name, what) } : {}),
     alternates: pairedAlternates(lang, libraryProductPath(`/library/${slug}`, product)),
@@ -52,7 +52,9 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
   const product = libraryProduct(filters.product);
   if (!product) notFound();
   await requireCatalogSession(`${prefix}/library/${encodeURIComponent(slug)}${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
-  const unavailable = <PageShell lang={lang}><AtlasFrame as="div" lang={lang}><LibraryUnavailable lang={lang} href={`${prefix}/library`} /></AtlasFrame></PageShell>;
+  const unavailable = <PageShell lang={lang} frame><AtlasFrame lang={lang}><LibraryUnavailable lang={lang} href={`${prefix}/library`} /></AtlasFrame></PageShell>;
+  // Settle speculative reads even when the dataset is missing or unavailable.
+  const metadata = Promise.allSettled([getCatalogEntityTypes(locale, product), getCatalogProducts()]);
   let datasets;
   try {
     datasets = await getLibraryDatasets(locale, product);
@@ -64,11 +66,22 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
   if (!dataset) notFound();
   const facets = (Array.isArray(filters.facet) ? filters.facet : filters.facet ? [filters.facet] : []).filter(Boolean);
   const catalogParams = { locale, product, dataset: dataset.slug, facets, query: filters.q, cursor: filters.cursor, minItemLevel: optionalNumber(filters.minLevel), maxItemLevel: optionalNumber(filters.maxLevel), minRequiredLevel: optionalNumber(filters.minRequiredLevel), maxRequiredLevel: optionalNumber(filters.maxRequiredLevel) };
+  // A filtered list the catalog cannot answer (a slow facet query) leaves the page and its filters in place;
+  // only a failure of the plain list closes the page.
+  const narrowed = facets.length > 0 || [filters.q, filters.cursor, filters.minLevel, filters.maxLevel, filters.minRequiredLevel, filters.maxRequiredLevel].some((value) => value?.trim());
+  let listFailed = false;
   let catalog, categories, entityTypes, products;
   try {
     [catalog, categories, entityTypes, products] = await Promise.all([
-      getCatalogPage({ ...catalogParams, includeTotal: false }),
-      getCatalogCategories(locale, dataset.entityType, product), getCatalogEntityTypes(locale, product), getCatalogProducts(),
+      getCatalogPage({ ...catalogParams, includeTotal: false }).catch((error): CatalogPage => {
+        if (!narrowed) throw error;
+        console.error("library filtered list unavailable", error);
+        listFailed = true;
+        return { data: [], pagination: { hasMore: false } };
+      }),
+      getCatalogCategories(locale, dataset.entityType, product),
+      metadata.then(([types]) => { if (types.status === "rejected") throw types.reason; return types.value; }),
+      metadata.then(([, products]) => { if (products.status === "rejected") throw products.reason; return products.value; }),
     ]);
   } catch (error) {
     console.error("library dataset unavailable", error);
@@ -76,12 +89,12 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
   }
   const levels = { minLevel: filters.minLevel ?? "", maxLevel: filters.maxLevel ?? "", minRequiredLevel: filters.minRequiredLevel ?? "", maxRequiredLevel: filters.maxRequiredLevel ?? "" };
   return (
-    <PageShell lang={lang}>
-      <AtlasFrame as="div" lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
+    <PageShell lang={lang} frame>
+      <AtlasFrame lang={lang} scene="archive" dataAttributes={{ "data-library-root": true }}>
         <AtlasHero
           eyebrow={libraryGroupText[dataset.group]?.[lang]}
           className={styles.hero}
-          breadcrumbs={[{ label: copy.wow, href: `${prefix}/wow` }, { label: copy.library, href: `${prefix}/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}` }, { label: dataset.name }]}
+          breadcrumbs={[{ label: copy.wow, href: prefix || "/" }, { label: copy.library, href: `${prefix}/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}` }, { label: dataset.name }]}
           breadcrumbsLabel={copy.breadcrumbsLabel}
           title={dataset.name}
           lede={libraryDatasetLine(dataset, lang) || undefined}
@@ -89,7 +102,7 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
         <LibraryWorkspace
           lang={lang}
           dataset={dataset}
-          totalCount={<Suspense fallback="…"><CatalogTotal params={{ ...catalogParams, cursor: undefined }} /></Suspense>}
+          totalCount={listFailed ? undefined : <Suspense fallback="…"><CatalogTotal params={{ ...catalogParams, cursor: undefined }} /></Suspense>}
           catalog={catalog}
           categories={categories}
           entityType={entityTypes.find((entry) => entry.type === dataset.entityType)}
@@ -101,6 +114,7 @@ export async function LibraryDatasetPage({ lang, slug, filters }: { lang: "en" |
           levels={levels}
           layout={libraryCardLayout(dataset.slug)}
           rails={libraryRails(dataset.slug, categories, lang)}
+          failed={listFailed}
         />
       </AtlasFrame>
     </PageShell>

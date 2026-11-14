@@ -101,13 +101,13 @@
 /* Loading: rows in the list's own shape. */
 .skeleton { display: grid; }
 .ghostRow { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) 8rem 6rem; align-items: center; gap: var(--atlas-space-4); min-height: 64px; padding: var(--atlas-space-2); border-bottom: 1px solid var(--atlas-line-soft); }
-.ghostRow span { height: 12px; border-radius: 3px; background: var(--atlas-surface-raised); animation: pulse 1.2s var(--atlas-ease-ambient) infinite alternate; }
+.ghostRow span { height: 12px; border-radius: 3px; background: var(--atlas-surface-raised); animation: pulse var(--atlas-duration-pulse) var(--atlas-ease-ambient) infinite alternate; }
 .ghostRow span:first-child { height: 2.25rem; border-radius: var(--atlas-radius-control, 6px); }
 .ghostRow span:nth-child(2) { width: min(100%, 22rem); }
 .ghostRow:nth-child(2n) span:nth-child(2) { width: min(100%, 15rem); }
 
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.spin { animation: spin .9s linear infinite; }
+.spin { animation: spin var(--atlas-duration-spin) linear infinite; }
 
 @keyframes fadeIn { from { opacity: 0; } }
 @keyframes pulse { to { opacity: .45; } }

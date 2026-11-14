@@ -1,0 +1,86 @@
+[
+  {
+    "path": "/_next/static/chunks/2k6sr7hjrg3he.js",
+    "bytes": 7683,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/09382sfkelwf-.js",
+    "bytes": 64810,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/266d76ugefwsx.js",
+    "bytes": 43123,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/1u8hlk3u6nb7s.js",
+    "bytes": 8685,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/turbopack-06tcinu_ez-3b.js",
+    "bytes": 4470,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/1bcy6c8b776kg.js",
+    "bytes": 3838,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/1op898148sqm5.js",
+    "bytes": 581,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/43k58rfxiup_b.js",
+    "bytes": 9977,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/2ig4-pzdlaixz.js",
+    "bytes": 15260,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/286b3kldwpxxq.js",
+    "bytes": 14297,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/2wva-m157n1qr.js",
+    "bytes": 5044,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/2jwhjoah8p1zf.js",
+    "bytes": 4203,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/0cz1d0mv5g_q7.js",
+    "bytes": 39627,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  },
+  {
+    "path": "/_next/static/chunks/43wgz_v945dxo.js",
+    "bytes": 4161,
+    "encoding": "gzip",
+    "cache": "public, max-age=31536000, immutable"
+  }
+]

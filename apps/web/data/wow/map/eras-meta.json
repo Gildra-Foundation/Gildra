@@ -1,0 +1,254 @@
+[
+  {
+    "id": "vanilla",
+    "name": {
+      "en": "Classic",
+      "ru": "Классика"
+    },
+    "expansion": "World of Warcraft",
+    "patchRange": {
+      "from": "1.1.0",
+      "to": "1.12.3"
+    },
+    "years": {
+      "from": 2004,
+      "to": 2007
+    },
+    "accent": "#c8a24a",
+    "emblem": {
+      "en": "Crossed Alliance lion and Horde wolf on a gold shield",
+      "ru": "Скрещённые лев Альянса и волк Орды на золотом щите"
+    }
+  },
+  {
+    "id": "tbc",
+    "name": {
+      "en": "The Burning Crusade",
+      "ru": "The Burning Crusade"
+    },
+    "expansion": "The Burning Crusade",
+    "patchRange": {
+      "from": "2.0.1",
+      "to": "2.4.3"
+    },
+    "years": {
+      "from": 2007,
+      "to": 2008
+    },
+    "accent": "#6cc24a",
+    "emblem": {
+      "en": "The Dark Portal arch in fel-green light",
+      "ru": "Арка Темного портала в зелёном свете Скверны"
+    }
+  },
+  {
+    "id": "wrath",
+    "name": {
+      "en": "Wrath of the Lich King",
+      "ru": "Wrath of the Lich King"
+    },
+    "expansion": "Wrath of the Lich King",
+    "patchRange": {
+      "from": "3.0.2",
+      "to": "3.3.5a"
+    },
+    "years": {
+      "from": 2008,
+      "to": 2010
+    },
+    "accent": "#7cc4ef",
+    "emblem": {
+      "en": "Frostmourne over the Helm of Domination",
+      "ru": "Ледяная Скорбь над Шлемом Господства"
+    }
+  },
+  {
+    "id": "cataclysm",
+    "name": {
+      "en": "Cataclysm",
+      "ru": "Cataclysm"
+    },
+    "expansion": "Cataclysm",
+    "patchRange": {
+      "from": "4.0.1",
+      "to": "4.3.4"
+    },
+    "years": {
+      "from": 2010,
+      "to": 2012
+    },
+    "accent": "#e0562b",
+    "emblem": {
+      "en": "Deathwing's molten jaw cracking the world",
+      "ru": "Раскалённая пасть Смертокрыла, раскалывающая мир"
+    }
+  },
+  {
+    "id": "mop",
+    "name": {
+      "en": "Mists of Pandaria",
+      "ru": "Mists of Pandaria"
+    },
+    "expansion": "Mists of Pandaria",
+    "patchRange": {
+      "from": "5.0.4",
+      "to": "5.4.8"
+    },
+    "years": {
+      "from": 2012,
+      "to": 2014
+    },
+    "accent": "#3fae8c",
+    "emblem": {
+      "en": "Jade serpent coiled around a pandaren lantern",
+      "ru": "Нефритовый змей вокруг пандаренского фонаря"
+    }
+  },
+  {
+    "id": "wod",
+    "name": {
+      "en": "Warlords of Draenor",
+      "ru": "Warlords of Draenor"
+    },
+    "expansion": "Warlords of Draenor",
+    "patchRange": {
+      "from": "6.0.2",
+      "to": "6.2.4a"
+    },
+    "years": {
+      "from": 2014,
+      "to": 2016
+    },
+    "accent": "#b5552f",
+    "emblem": {
+      "en": "Iron Horde banner with a riveted tusk",
+      "ru": "Знамя Железной Орды с клыком на заклёпках"
+    }
+  },
+  {
+    "id": "legion",
+    "name": {
+      "en": "Legion",
+      "ru": "Legion"
+    },
+    "expansion": "Legion",
+    "patchRange": {
+      "from": "7.0.3",
+      "to": "7.3.5"
+    },
+    "years": {
+      "from": 2016,
+      "to": 2018
+    },
+    "accent": "#4fdc5f",
+    "emblem": {
+      "en": "Crossed warglaives over a fel sigil",
+      "ru": "Скрещённые боевые клинки над знаком Скверны"
+    }
+  },
+  {
+    "id": "bfa",
+    "name": {
+      "en": "Battle for Azeroth",
+      "ru": "Battle for Azeroth"
+    },
+    "expansion": "Battle for Azeroth",
+    "patchRange": {
+      "from": "8.0.1",
+      "to": "8.3.7"
+    },
+    "years": {
+      "from": 2018,
+      "to": 2020
+    },
+    "accent": "#d4a63a",
+    "emblem": {
+      "en": "An azerite shard splitting a blue and red crest",
+      "ru": "Осколок азерита, раскалывающий сине-красный герб"
+    }
+  },
+  {
+    "id": "shadowlands",
+    "name": {
+      "en": "Shadowlands",
+      "ru": "Shadowlands"
+    },
+    "expansion": "Shadowlands",
+    "patchRange": {
+      "from": "9.0.1",
+      "to": "9.2.7"
+    },
+    "years": {
+      "from": 2020,
+      "to": 2022
+    },
+    "accent": "#9fb3cc",
+    "emblem": {
+      "en": "Oribos rings bound by the Jailer's chains",
+      "ru": "Кольца Орибоса, скованные цепями Тюремщика"
+    }
+  },
+  {
+    "id": "dragonflight",
+    "name": {
+      "en": "Dragonflight",
+      "ru": "Dragonflight"
+    },
+    "expansion": "Dragonflight",
+    "patchRange": {
+      "from": "10.0.0",
+      "to": "10.2.7"
+    },
+    "years": {
+      "from": 2022,
+      "to": 2024
+    },
+    "accent": "#e8913a",
+    "emblem": {
+      "en": "Five dragonflight wings fanned around an egg",
+      "ru": "Пять крыльев драконьих стай вокруг яйца"
+    }
+  },
+  {
+    "id": "tww",
+    "name": {
+      "en": "The War Within",
+      "ru": "The War Within"
+    },
+    "expansion": "The War Within",
+    "patchRange": {
+      "from": "11.0.0",
+      "to": "11.2.7"
+    },
+    "years": {
+      "from": 2024,
+      "to": 2026
+    },
+    "accent": "#c58a4e",
+    "emblem": {
+      "en": "Earthen hammer over a nerubian web",
+      "ru": "Молот земельников над паутиной нерубов"
+    }
+  },
+  {
+    "id": "midnight",
+    "name": {
+      "en": "Midnight",
+      "ru": "Midnight"
+    },
+    "expansion": "Midnight",
+    "patchRange": {
+      "from": "12.0.0",
+      "to": null
+    },
+    "years": {
+      "from": 2026,
+      "to": null
+    },
+    "accent": "#8b6cff",
+    "emblem": {
+      "en": "The Sunwell eclipsed by a void crescent",
+      "ru": "Солнечный Колодец, затмеваемый серпом Бездны"
+    }
+  }
+]

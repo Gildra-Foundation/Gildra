@@ -11,7 +11,7 @@ type NavigationItem = { href: string; ru: string; en: string; detailRu: string; 
 
 // Same destinations, labels and grouping as the former WorkspaceNavigator.
 const primaryItems: NavigationItem[] = [
-  { href: "/", ru: "Игровой портал", en: "Game portal", detailRu: "Начало ваших приключений", detailEn: "Where your adventures begin" },
+  { href: "/", ru: "Обзор World of Warcraft", en: "World of Warcraft overview", detailRu: "Все разделы о мире Warcraft в одном месте", detailEn: "Explore every chapter of the Warcraft world" },
   { href: "/wow/characters", ru: "Персонажи", en: "Characters", detailRu: "Герои, экипировка и прогресс", detailEn: "Heroes, equipment and progress" },
   { href: "/tier-lists", ru: "Тир-листы", en: "Tier lists", detailRu: "Рейтинги специализаций для Mythic+ и рейдов", detailEn: "Specialization rankings for Mythic+ and raids" },
   { href: "/wow/mythic-plus", ru: "Mythic+", en: "Mythic+", detailRu: "Подземелья и ключи", detailEn: "Dungeons and keystones" },
@@ -21,12 +21,6 @@ const primaryItems: NavigationItem[] = [
 const utilityItems: NavigationItem[] = [
   { href: "/search", ru: "Поиск по Азероту", en: "Search Azeroth", detailRu: "Найдите нужную страницу в хрониках Азерота", detailEn: "Find your next page in the chronicles of Azeroth" },
 ];
-// WoW-only MVP: the former "Other worlds archive" (/genshin) entry is gone —
-// that route answers 404 (lib/mvp.ts).
-const archiveItems: NavigationItem[] = [
-  { href: "/wow", ru: "Обзор World of Warcraft", en: "World of Warcraft overview", detailRu: "Все разделы о мире Warcraft в одном месте", detailEn: "Explore every chapter of the Warcraft world" },
-];
-
 const routePrefetchEnabled = process.env.NODE_ENV !== "development";
 
 type Account = { state: "idle" | "loading" | "ready"; connected: boolean; name?: string };
@@ -79,7 +73,7 @@ export function BookVolume({ lang, active, titleId, onNavigate, closeButton, lay
   }, [active]);
   const links = (items: NavigationItem[], numbered = false) => items.map((item, index) => {
     const href = item.href === "/" ? prefix || "/" : prefix + item.href;
-    const active = item.href === "/" || item.href === "/wow" ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+    const active = item.href === "/" ? pathname === href : pathname === href || pathname.startsWith(href + "/");
     const detailId = `${idPrefix}-${numbered ? "chapter" : "guide"}-${index}`;
     const warmDestination = () => {
       if (!routePrefetchEnabled) return;
@@ -110,7 +104,7 @@ export function BookVolume({ lang, active, titleId, onNavigate, closeButton, lay
         <p className={styles.runningTitle}>{ru ? "На полях хроник" : "In the margins"}</p>
         <h2>{ru ? "Путеводитель" : "Companion"}</h2>
         <span className={styles.ornament} aria-hidden="true" />
-        <nav className={styles.guide} aria-label={ru ? "Путеводитель" : "Companion"}>{links([...utilityItems, ...archiveItems])}</nav>
+        <nav className={styles.guide} aria-label={ru ? "Путеводитель" : "Companion"}>{links(utilityItems)}</nav>
         <div className={styles.accountPlate}>
         <p className={styles.accountKicker}>{ru ? "Личная летопись" : "Your own chronicle"}</p>
         <h3 className={styles.accountHeading}>{ru ? "Ваши герои" : "Your heroes"}</h3>

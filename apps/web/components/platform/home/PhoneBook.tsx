@@ -209,12 +209,20 @@ export function PhoneBook({ lang, phase, onPhase, coverPose, coverFace, onNaviga
     onClose={(event) => { if (!tearingDown.current && !event.currentTarget.open && phase !== "closed") onDismiss?.(); }}>
     <div className={styles.layout}>
       <div className={styles.bar} ref={(element) => { if (element) chrome.current[0] = element; }}>
-        <span>GILDRA · {ru ? "ХРОНИКИ АЗЕРОТА" : "CHRONICLES OF AZEROTH"}</span>
+        <span>WOWARCANA · {ru ? "ХРОНИКИ АЗЕРОТА" : "CHRONICLES OF AZEROTH"}</span>
         <button type="button" className={styles.close} onClick={close} aria-label={ru ? "Закрыть книгу" : "Close the book"}><span aria-hidden="true">×</span></button>
       </div>
+      <div className={styles.reading}>
       <div ref={viewport} className={styles.viewport} data-page={page}>
-        <div ref={track} className={styles.track} inert={moving}>
+        <div ref={track} className={styles.track} data-moving={moving || undefined} inert={moving}>
           <BookVolume lang={lang} active layout="spread" artworkSrc={phoneBookArtworkSrc} onNavigate={onNavigate} />
+          {/* Prepacked, fixed-size decorative leaves; only fetched when the modal mounts. */}
+          <div className={styles.pageArtwork} hidden={moving} aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/assets/wow/character-book/icecrown-phone-left.webp" width={720} height={912} alt="" draggable={false} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/assets/wow/character-book/icecrown-phone-right.webp" width={720} height={912} alt="" draggable={false} />
+          </div>
           <span className={styles.snap} aria-hidden="true" />
           <span className={styles.snap} aria-hidden="true" />
           <div className={leafStyles.leafMotion} hidden={!moving}>
@@ -236,6 +244,7 @@ export function PhoneBook({ lang, phase, onPhase, coverPose, coverFace, onNaviga
           <small aria-hidden="true">{index ? "II" : "I"}</small>{label}
         </button>)}
       </nav>
+      </div>
     </div>
   </dialog>;
 }

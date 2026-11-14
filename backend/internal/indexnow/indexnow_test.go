@@ -24,13 +24,13 @@ func TestWorkerSubmitsIndexNowPayload(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !strings.Contains(string(body), `"keyLocation":"https://gildra.net/test-key.txt"`) {
+		if !strings.Contains(string(body), `"keyLocation":"https://wowarcana.com/test-key.txt"`) {
 			t.Fatalf("unexpected payload: %s", body)
 		}
 		return &http.Response{StatusCode: http.StatusAccepted, Status: "202 Accepted", Body: io.NopCloser(strings.NewReader(""))}, nil
 	})
-	worker := NewWorker(client, "gildra.net", "test-key")
-	job := &river.Job[SubmitArgs]{Args: SubmitArgs{URLs: []string{"https://gildra.net/guides"}}}
+	worker := NewWorker(client, "wowarcana.com", "test-key")
+	job := &river.Job[SubmitArgs]{Args: SubmitArgs{URLs: []string{"https://wowarcana.com/guides"}}}
 	if err := worker.Work(context.Background(), job); err != nil {
 		t.Fatal(err)
 	}

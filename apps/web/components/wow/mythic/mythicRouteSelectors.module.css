@@ -119,7 +119,7 @@
 
 .chevron { transition: transform var(--atlas-duration) var(--atlas-ease); }
 .selectorRoot[data-open] .chevron { transform: rotate(180deg); }
-.loadingIcon { animation: selectorSpin .8s linear infinite; }
+.loadingIcon { animation: selectorSpin var(--atlas-duration-spin) linear infinite; }
 
 .selectorMenu {
   position: absolute;
@@ -136,6 +136,8 @@
 }
 
 .dungeonSelector .selectorMenu { width: min(520px, calc(100vw - 32px)); }
+/* The dungeon page's selectors are narrow: a long name takes two lines ("Рубиновые Омуты / Жизни", "Высокий / ключ") rather than "…". */
+.rubySelector .triggerCopy strong, .rubySelector .triggerCopy small { white-space: normal; }
 .keySelector .selectorMenu { width: 260px; }
 
 .optionGrid { display: grid; gap: 4px; }

@@ -1,0 +1,39 @@
+{
+  "entries": {
+    "forever-pine": {
+      "path": "/assets/wow/slim/forever/controls/ornaments/forever-pine.webp",
+      "width": 384,
+      "height": 695,
+      "bytes": 34854,
+      "sha256": "ac27e946a5c77ffefd15fe73efb73307b76a312138f82b52d5dc4add9811420a",
+      "native": "/home/debian/gildra-forever-platform-assets-20261111/asset-sources/ornaments/forever-pine-native.png",
+      "nativeSha256": "e33378e906154bbe251724165e88b7fd377c682efd53ccf0d2ec8475ec7715d6",
+      "nativeDimensions": {
+        "width": 1086,
+        "height": 1448
+      },
+      "crop": {
+        "left": 171,
+        "top": 47,
+        "width": 740,
+        "height": 1379
+      },
+      "centreAlpha": {
+        "min": 0,
+        "max": 255
+      },
+      "alphaBounds": {
+        "left": 12,
+        "top": 12,
+        "width": 360,
+        "height": 671
+      },
+      "rootPadding": 12,
+      "rootX": 194,
+      "anchor": "right",
+      "theme": "pollen",
+      "duration": 1500,
+      "delay": 300
+    }
+  }
+}

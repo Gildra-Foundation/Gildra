@@ -26,35 +26,78 @@ function prefetchOtherLanguage() {
   document.head.append(rules);
 }
 
+/** A switch whose document never came (offline, stopped): the page comes back after this long. */
+const ABANDON_MS = 6000;
+
+function still() {
+  return document.documentElement.dataset.motion === "reduced" || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function markLeaving(to: Lang) {
+  document.documentElement.dataset.localeLeaving = to;
+}
+
+function clearLeaving() {
+  delete document.documentElement.dataset.localeLeaving;
+}
+
 /**
  * The EN/RU switch of the toolbar. The active-language pill slides to the
  * chosen side at once, the next document loads (two root layouts: always a
- * full load, without the App Router's useless RSC round-trip first) and its
- * content brightens in under a still toolbar (localeTransition.css).
+ * full load, without the App Router's useless RSC round-trip first) while this
+ * page's content dissolves, and the other language resolves from there under
+ * a still toolbar (localeTransition.css). A second press on the language of
+ * the page takes the switch back while the other one is still on its way.
  */
 export function LocaleSwitch({ path, lang }: { path: string; lang: Lang }) {
   const root = useRef<HTMLElement>(null);
   const [pending, setPending] = useState<Lang | null>(null);
+  const abandon = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     prefetchOtherLanguage();
     // Back from the other language (bfcache) shows this document as it was left.
-    const reset = (event: PageTransitionEvent) => { if (event.persisted) setPending(null); };
+    const reset = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      clearLeaving();
+      setPending(null);
+    };
     window.addEventListener("pageshow", reset);
-    return () => window.removeEventListener("pageshow", reset);
+    return () => {
+      window.removeEventListener("pageshow", reset);
+      clearTimeout(abandon.current);
+    };
   }, []);
 
   const choose = (event: MouseEvent<HTMLAnchorElement>, to: Lang) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
+    if (pending && to === lang) {
+      // Changed their mind: stay on this page as it was.
+      window.stop();
+      clearTimeout(abandon.current);
+      clearLeaving();
+      root.current?.setAttribute("data-active", lang);
+      root.current?.removeAttribute("aria-busy");
+      setPending(null);
+      return;
+    }
     if (to === lang || pending) return;
     const destination = altPath(path, to) + window.location.search;
     saveLocaleSwitch(destination, root.current?.closest("header") ?? null);
     setPending(to);
-    // The pill and the loading line start on this frame, not after a React
-    // render that a busy page could push past the start of the navigation.
+    // The pill, the loading line and the dissolve start on this frame, not
+    // after a React render that a busy page could push past the start of the navigation.
     root.current?.setAttribute("data-active", to);
     root.current?.setAttribute("aria-busy", "true");
+    if (!still()) markLeaving(to);
+    clearTimeout(abandon.current);
+    abandon.current = setTimeout(() => {
+      clearLeaving();
+      root.current?.setAttribute("data-active", lang);
+      root.current?.removeAttribute("aria-busy");
+      setPending(null);
+    }, ABANDON_MS);
     window.location.assign(destination);
   };
 

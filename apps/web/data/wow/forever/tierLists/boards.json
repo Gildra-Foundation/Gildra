@@ -1,0 +1,274 @@
+{
+  "researchedAt": "2026-11-11T00:18:22.785761+00:00",
+  "boards": [
+    {
+      "id": "solo-leveling",
+      "edition": "forever",
+      "build": null,
+      "mode": "leveling",
+      "role": "all",
+      "levelMin": 1,
+      "levelMax": 60,
+      "kind": "editorial",
+      "isForecast": false,
+      "title": {
+        "en": "Solo leveling",
+        "ru": "Одиночная прокачка"
+      },
+      "context": {
+        "en": "Questing alone: pace, safety and recovery.",
+        "ru": "Задания в одиночку: темп, безопасность и восстановление."
+      },
+      "sourceDate": "2026-11-04",
+      "sourceUrl": "https://mobalytics.gg/wow-forever/profile/fierce-sun-30v6cf/tier-lists/wow-forever-class-leveling-tier-list",
+      "sourceAuthor": "Uncas",
+      "sourceTotal": 9,
+      "importedCount": 9,
+      "entries": [
+        {
+          "classSlug": "hunter",
+          "specSlug": null,
+          "tier": "S",
+          "rationale": {
+            "en": "Pets protect you; manage distance.",
+            "ru": "Питомец защищает; следите за дистанцией."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/fierce-sun-30v6cf/tier-lists/wow-forever-class-leveling-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "warlock",
+          "specSlug": null,
+          "tier": "S",
+          "rationale": {
+            "en": "Sustained combat; limited mobility.",
+            "ru": "Долгие бои; мало мобильности."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/fierce-sun-30v6cf/tier-lists/wow-forever-class-leveling-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "paladin",
+          "specSlug": null,
+          "tier": "S",
+          "rationale": {
+            "en": "Durable; watch your mana.",
+            "ru": "Живучесть; следите за маной."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/fierce-sun-30v6cf/tier-lists/wow-forever-class-leveling-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "mage",
+          "specSlug": null,
+          "tier": "A",
+          "rationale": {
+            "en": "Control groups; plan mana breaks.",
+            "ru": "Контроль групп; нужны остановки на ману."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/fierce-sun-30v6cf/tier-lists/wow-forever-class-leveling-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "shaman",
+          "specSlug": null,
+          "tier": "A",
+          "rationale": {
+            "en": "Flexible toolkit; mana limits pace.",
+            "ru": "Гибкие возможности; темп ограничен маной."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/fierce-sun-30v6cf/tier-lists/wow-forever-class-leveling-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "priest",
+          "specSlug": null,
+          "tier": "A",
+          "rationale": {
+            "en": "Safe recovery; slow travel.",
+            "ru": "Надёжное восстановление; медленные перемещения."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/fierce-sun-30v6cf/tier-lists/wow-forever-class-leveling-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "druid",
+          "specSlug": null,
+          "tier": "A",
+          "rationale": {
+            "en": "Mobile after the slow opening levels.",
+            "ru": "Мобильность после медленных первых уровней."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/fierce-sun-30v6cf/tier-lists/wow-forever-class-leveling-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "rogue",
+          "specSlug": null,
+          "tier": "B",
+          "rationale": {
+            "en": "Stealth helps; recovery remains limited.",
+            "ru": "Незаметность помогает; восстановление ограничено."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/fierce-sun-30v6cf/tier-lists/wow-forever-class-leveling-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "warrior",
+          "specSlug": null,
+          "tier": "C",
+          "rationale": {
+            "en": "Weapon upgrades matter; pull carefully.",
+            "ru": "Улучшайте оружие; осторожно выбирайте противников."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/fierce-sun-30v6cf/tier-lists/wow-forever-class-leveling-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        }
+      ]
+    },
+    {
+      "id": "dungeon-healing-forecast",
+      "edition": "forever",
+      "build": null,
+      "mode": "dungeons",
+      "role": "healer",
+      "levelMin": 60,
+      "levelMax": 60,
+      "kind": "editorial",
+      "isForecast": true,
+      "title": {
+        "en": "Dungeon healers",
+        "ru": "Лекари подземелий"
+      },
+      "context": {
+        "en": "Level 60 forecast for healing a five-player group.",
+        "ru": "Прогноз для лечения группы из пяти игроков на 60-м уровне."
+      },
+      "sourceDate": "2026-10-25",
+      "sourceUrl": "https://mobalytics.gg/wow-forever/profile/doublezug/tier-lists/healer-tier-list",
+      "sourceAuthor": "DoubleZug",
+      "sourceTotal": 4,
+      "importedCount": 4,
+      "entries": [
+        {
+          "classSlug": "priest",
+          "specSlug": null,
+          "tier": "S",
+          "rationale": {
+            "en": "Varied healing and dispels help recover difficult pulls.",
+            "ru": "Разнообразное лечение и рассеивание спасают сложные бои."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/doublezug/tier-lists/healer-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "druid",
+          "specSlug": null,
+          "tier": "S",
+          "rationale": {
+            "en": "Healing over time supports continuous pulls; no magic dispel.",
+            "ru": "Периодическое лечение помогает идти без пауз; нет рассеивания магии."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/doublezug/tier-lists/healer-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "shaman",
+          "specSlug": null,
+          "tier": "A",
+          "rationale": {
+            "en": "Totems reward coordinated groups; recovery and mana need care.",
+            "ru": "Тотемы полезны слаженной группе; берегите ману и запас здоровья."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/doublezug/tier-lists/healer-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        },
+        {
+          "classSlug": "paladin",
+          "specSlug": null,
+          "tier": "C",
+          "rationale": {
+            "en": "Efficient focused healing; group damage is harder to recover.",
+            "ru": "Экономное лечение одной цели; сложнее восстановить всю группу."
+          },
+          "sourceUrl": "https://mobalytics.gg/wow-forever/profile/doublezug/tier-lists/healer-tier-list",
+          "kind": "editorial",
+          "score": null,
+          "popularity": null,
+          "performance": null
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Every rank is an attributed editorial opinion. No imported numerical performance, popularity or win rate.",
+    "Class-level rankings must not be cloned to every specialization. specSlug null is intentional.",
+    "build null: sources do not bind these editorial boards to a client build. Do not invent one.",
+    "Healer board is a prelaunch level-60 forecast, never a level-30 observation.",
+    "Tier ordering inside a tier is not a performance ranking."
+  ],
+  "blockedBoards": [
+    {
+      "mode": "dungeons",
+      "role": "dps",
+      "level": 30,
+      "source": "https://mobalytics.gg/wow-forever/profile/crix/tier-lists/wow-forever-level-30-dps-tier-list-overview",
+      "sourceTotal": 20,
+      "sourceTotalVerified": false,
+      "importedCount": 0,
+      "reason": "Search-index prose available; direct open returned404 twice. Only Marksmanship S visible; A/B/C member placements not extractable. Do not reconstruct them from other sites."
+    },
+    {
+      "mode": "dungeons",
+      "role": "tank",
+      "importedCount": 0,
+      "reason": "Mobalytics tank board is endgame PvE forecast including raid considerations; no defensible dungeon-only attribution."
+    },
+    {
+      "mode": "pvp",
+      "importedCount": 0,
+      "reason": "Icy Veins max-level lists remain TBD. Raider.IO level30 duel results are a particular tournament, not a nine-class general ranking."
+    },
+    {
+      "mode": "raid",
+      "importedCount": 0,
+      "reason": "No observed raid ranking before raids open. Raid simulations/forecasts deliberately excluded."
+    }
+  ]
+}

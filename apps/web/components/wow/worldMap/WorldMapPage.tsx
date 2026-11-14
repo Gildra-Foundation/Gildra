@@ -1,0 +1,113 @@
+import Link from "next/link";
+import type { Metadata } from "next";
+import { AtlasLegalFooter } from "@/components/atlas";
+import { AtlasSection } from "@gildra/atlas-ui";
+import { pageOpenGraph, pairedAlternates } from "@/lib/seo/metadata";
+import { routeSections } from "@/lib/routes/registry";
+import { mapPagePath, type AtlasMap, type Lang } from "@/lib/wow/worldMap/bundle";
+import { worldMapBundle, worldMapChain, worldMapChildren, worldMapHome, worldMapVersion } from "@/lib/wow/worldMap/data.server";
+import { levelSize, levelTiles, tileUrl } from "./engine/tiles";
+import { WorldMapStage, type StageCrumb, type StagePoster } from "./WorldMapStage";
+import { mapLine } from "./worldMapModel";
+import { worldMapCopy } from "./worldMapCopy";
+import styles from "./worldMap.module.css";
+
+const prefix = (lang: Lang) => (lang === "ru" ? "/ru" : "");
+
+export function worldMapMetadata(lang: Lang, map: AtlasMap | null): Metadata {
+  const copy = worldMapCopy[lang];
+  const bundle = worldMapBundle(lang);
+  const home = worldMapHome(lang);
+  const isHome = !map || map.id === home?.id;
+  const path = isHome ? routeSections.worldMap.path : mapPagePath(map);
+  // Two places can share a name (Shadowmoon Valley of Outland and of Draenor): the title names the land above.
+  const parent = map && map.parent !== null ? bundle.maps.find((entry) => entry.id === map.parent) : undefined;
+  const twin = map ? bundle.maps.some((entry) => entry.id !== map.id && entry.page && entry.name === map.name) : false;
+  const title = isHome ? copy.rootTitle : copy.pageTitle(twin && parent?.name ? `${map.name} (${parent.name})` : map.name);
+  // The page's own line ("Zone of Outland.") is too short to tell a search result what the page is.
+  const line = isHome ? "" : mapLine(lang, map, bundle);
+  const description = isHome ? copy.rootDescription : `${copy.pageDescription(map.name)}${line ? ` ${line}` : ""}`;
+  return {
+    title,
+    description,
+    alternates: pairedAlternates(lang, path),
+    openGraph: pageOpenGraph(lang, { title, description, path: `${prefix(lang)}${path}` }),
+  };
+}
+
+/** Level of the first picture: about 1500 px wide, the same tiles the viewer starts with. */
+function poster(map: AtlasMap): StagePoster | null {
+  const art = map.art;
+  if (!art) return null;
+  let z = 0;
+  while (z < art.maxZoom && levelSize(art, z)[0] < 1400) z += 1;
+  const [lw, lh] = levelSize(art, z);
+  const [cols, rows] = levelTiles(art, z);
+  const tiles: StagePoster["tiles"] = [];
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      // Edge tiles are full-size files with an empty margin: drawn at a whole tile's size, the margin
+      // falls outside the picture (clipped) instead of the art being squeezed into the edge.
+      tiles.push({ src: tileUrl(art, map.id, z, x, y), left: (x * art.tileSize) / lw, top: (y * art.tileSize) / lh, width: art.tileSize / lw, height: art.tileSize / lh });
+    }
+  }
+  return { aspect: art.width / art.height, tiles };
+}
+
+export function WorldMapPage({ lang, map: requested }: { lang: Lang; map?: AtlasMap | null }) {
+  const copy = worldMapCopy[lang];
+  const bundle = worldMapBundle(lang);
+  const home = worldMapHome(lang);
+  const map = requested ?? home;
+  const p = prefix(lang);
+  const chain = map ? worldMapChain(map, lang) : [];
+  const crumbs: StageCrumb[] = [
+    { label: "World of Warcraft", href: p || "/" },
+    ...chain.map((entry) => ({ label: entry.id === home?.id ? copy.title : entry.name, href: entry.id === home?.id ? `${p}${routeSections.worldMap.path}` : entry.page ? `${p}${mapPagePath(entry)}` : undefined, mapId: entry.id })),
+  ];
+  const children = map ? worldMapChildren(map, lang).filter((child) => child.page) : [];
+  const heading = !map || map.id === home?.id ? copy.title : map.name;
+  const line = map ? mapLine(lang, map, bundle, true) : "";
+  const description = map ? mapLine(lang, map, bundle) : "";
+  const childTitle = map ? copy.children[map.type === "zone" && map.parent !== null && bundle.maps.find((m) => m.id === map.parent)?.type === "zone" ? "city" : map.type] : copy.places;
+
+  // The trail as search engines read it (the stage draws the same trail).
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((crumb, index) => ({
+      "@type": "ListItem", position: index + 1, name: crumb.label,
+      ...(crumb.href && index < crumbs.length - 1 ? { item: `https://wowarcana.com${crumb.href}` } : {}),
+    })),
+  };
+
+  // The stage pins inside <main>; the site footer follows it in the document flow.
+  return (<>
+    <main className={styles.page} lang={lang}>
+      <script id="world-map-trail" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <WorldMapStage
+        lang={lang}
+        mapId={map?.id ?? null}
+        homeId={home?.id ?? null}
+        title={heading}
+        line={line}
+        description={description}
+        crumbs={crumbs}
+        poster={map ? poster(map) : null}
+        bundleUrl={`${routeSections.worldMap.path}/atlas/${lang}?v=${worldMapVersion()}`}
+      />
+      {children.length ? (
+        <div className={styles.below}>
+          <AtlasSection id="places" title={childTitle}>
+            <ul className={styles.places}>
+              {children.map((child) => (
+                <li key={child.id}><Link href={`${p}${mapPagePath(child)}`} prefetch={false}>{child.name}</Link></li>
+              ))}
+            </ul>
+          </AtlasSection>
+        </div>
+      ) : null}
+    </main>
+    <AtlasLegalFooter lang={lang} />
+  </>);
+}

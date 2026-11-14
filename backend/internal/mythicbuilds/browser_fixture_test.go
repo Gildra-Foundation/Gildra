@@ -30,22 +30,21 @@ func TestBrowserFixture(t *testing.T) {
 	}
 	mux := http.NewServeMux()
 	NewHandler(service, fakeIdentity{}).Register(mux)
-	target, _ := url.Parse("https://api.gildra.net")
-	proxy := httputil.NewSingleHostReverseProxy(target)
-	original := proxy.Director
-	proxy.Director = func(r *http.Request) {
-		original(r)
-		r.Host = target.Host
-		r.Header.Del("Authorization")
-		r.Header.Del("Cookie")
-		r.Header.Del("X-Mythic-Account")
+	target, _ := url.Parse("https://api.wowarcana.com")
+	proxy := &httputil.ReverseProxy{
+		Rewrite: func(r *httputil.ProxyRequest) {
+			r.SetURL(target)
+			r.Out.Header.Del("Authorization")
+			r.Out.Header.Del("Cookie")
+			r.Out.Header.Del("X-Mythic-Account")
+		},
 	}
 	proxy.ErrorHandler = func(w http.ResponseWriter, _ *http.Request, _ error) {
-		http.Error(w, "fixture upstream unavailable", 503)
+		http.Error(w, "fixture upstream unavailable", http.StatusServiceUnavailable)
 	}
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			http.Error(w, "fixture read-only proxy", 405)
+		if r.Method != http.MethodGet {
+			http.Error(w, "fixture read-only proxy", http.StatusMethodNotAllowed)
 			return
 		}
 		proxy.ServeHTTP(w, r)

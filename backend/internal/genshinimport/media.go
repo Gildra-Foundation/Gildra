@@ -196,7 +196,7 @@ func (f *MediaFetcher) downloadExternal(ctx context.Context, directory, source s
 	if err != nil {
 		return MediaAsset{}, fmt.Errorf("create external media request: %w", err)
 	}
-	request.Header.Set("User-Agent", "Gildra-Genshin-Importer/1.0 (+https://api.gildra.net)")
+	request.Header.Set("User-Agent", "Gildra-Genshin-Importer/1.0 (+https://api.wowarcana.com)")
 	response, err := f.client.Do(request)
 	if err != nil {
 		return MediaAsset{}, fmt.Errorf("request external media: %w", err)
@@ -275,7 +275,7 @@ func (f *MediaFetcher) download(ctx context.Context, directory, requested, fetch
 	if err != nil {
 		return MediaAsset{}, false, fmt.Errorf("create media request: %w", err)
 	}
-	request.Header.Set("User-Agent", "Gildra-Genshin-Importer/1.0 (+https://api.gildra.net)")
+	request.Header.Set("User-Agent", "Gildra-Genshin-Importer/1.0 (+https://api.wowarcana.com)")
 	response, err := f.client.Do(request)
 	if err != nil {
 		return MediaAsset{}, false, fmt.Errorf("request media: %w", err)

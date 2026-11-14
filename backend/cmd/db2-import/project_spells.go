@@ -106,10 +106,11 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			  AND (
 				COALESCE(NULLIF(skill.payload->>'CategoryID','')::int,0)=11
 				OR skill.row_id IN (129,185,356,2851)
+				OR COALESCE(NULLIF(skill.payload->>'ParentSkillLineID','')::bigint,0) IN (129,185,356,2851)
 				OR EXISTS (
 				SELECT 1 FROM catalog_db2_rows ability
 				WHERE ability.build_id=skill.build_id AND ability.table_name='SkillLineAbility' AND ability.locale='en_US'
-				  AND NULLIF(ability.payload->>'SkillLine','')::bigint=skill.row_id
+				  AND skill.row_id IN (NULLIF(ability.payload->>'SkillLine','')::bigint, NULLIF(ability.payload->>'SkillupSkillLineID','')::bigint)
 				  AND COALESCE(NULLIF(ability.payload->>'TradeSkillCategoryID','')::int,0)>0
 				)
 			  );
@@ -192,8 +193,8 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 				SELECT (ability.payload->>'Spell')::bigint AS external_id,
 					jsonb_build_object(
 						'SpellID',(ability.payload->>'Spell')::bigint,
-						'SkillLineIDs',jsonb_agg(DISTINCT (ability.payload->>'SkillLine')::bigint
-							ORDER BY (ability.payload->>'SkillLine')::bigint),
+						'SkillLineIDs',jsonb_agg(DISTINCT profession.external_id
+							ORDER BY profession.external_id),
 						'TradeSkillCategoryIDs',jsonb_agg(DISTINCT (ability.payload->>'TradeSkillCategoryID')::bigint
 							ORDER BY (ability.payload->>'TradeSkillCategoryID')::bigint)
 					) AS db2,
@@ -201,7 +202,7 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 					MIN(ability.source_artifact_id::text)::uuid AS source_artifact_id
 				FROM catalog_db2_rows ability
 				JOIN projected_profession_versions profession
-					ON profession.external_id=(ability.payload->>'SkillLine')::bigint
+					ON profession.external_id IN ((ability.payload->>'SkillLine')::bigint, NULLIF(ability.payload->>'SkillupSkillLineID','')::bigint)
 				WHERE ability.build_id=$2 AND ability.table_name='SkillLineAbility' AND ability.locale='en_US'
 				  AND (COALESCE(NULLIF(ability.payload->>'TradeSkillCategoryID','')::int,0)>0 OR (
 					NOT EXISTS (SELECT 1 FROM catalog_db2_rows category
@@ -217,12 +218,15 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 				jsonb_build_object('kind','recipe','spell_id',source.external_id,'db2',source.db2) AS payload,
 				digest(convert_to(jsonb_build_object('kind','recipe','spell_id',source.external_id,'db2',source.db2)::text,'UTF8'),'sha256') AS content_hash,
 				source.source_url,source.source_artifact_id,spell.id AS spell_entity_id,
-				spell.latest_version_id AS spell_version_id,spell.canonical_slug
+				spell_version.id AS spell_version_id,spell.canonical_slug
 			FROM recipe_sources source
 			JOIN game_entities spell ON spell.product_id=$1 AND spell.entity_type='spell'
 				AND spell.external_id=source.external_id AND spell.deleted_at IS NULL
-			JOIN game_entity_versions spell_version ON spell_version.id=spell.latest_version_id
-				AND spell_version.build_id=$2;
+			JOIN LATERAL (
+				SELECT version.id FROM game_entity_versions version
+				WHERE version.entity_id=spell.id AND version.build_id=$2
+				ORDER BY version.revision DESC LIMIT 1
+			) spell_version ON true;
 			CREATE UNIQUE INDEX projected_recipes_id_idx ON projected_recipes(external_id);
 
 			INSERT INTO game_entities(product_id,namespace_id,entity_type,external_id,canonical_slug,
@@ -304,7 +308,7 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 				SELECT profession_version.version_id AS profession_version_id,recipe_version.version_id AS recipe_version_id,
 					category.id AS category_id,ability.payload
 				FROM abilities ability
-				JOIN projected_profession_versions profession_version ON profession_version.external_id=(ability.payload->>'SkillLine')::bigint
+				JOIN projected_profession_versions profession_version ON profession_version.external_id IN ((ability.payload->>'SkillLine')::bigint, NULLIF(ability.payload->>'SkillupSkillLineID','')::bigint)
 				JOIN projected_recipe_versions recipe_version ON recipe_version.external_id=(ability.payload->>'Spell')::bigint
 				LEFT JOIN catalog_trade_skill_categories category ON category.build_id=$2 AND category.external_id=NULLIF(ability.payload->>'TradeSkillCategoryID','')::int
 			)
@@ -313,8 +317,11 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			FROM mapped
 			JOIN game_entities spell ON spell.product_id=$1 AND spell.entity_type='spell'
 				AND spell.external_id=(mapped.payload->>'Spell')::bigint
-			JOIN game_entity_versions spell_version ON spell_version.id=spell.latest_version_id
-				AND spell_version.build_id=$2
+			JOIN LATERAL (
+				SELECT version.id FROM game_entity_versions version
+				WHERE version.entity_id=spell.id AND version.build_id=$2
+				ORDER BY version.revision DESC LIMIT 1
+			) spell_version ON true
 			ON CONFLICT(version_id) DO UPDATE SET spell_id=EXCLUDED.spell_id,
 				source_spell_version_id=EXCLUDED.source_spell_version_id;
 			WITH abilities AS (
@@ -331,7 +338,7 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 				SELECT profession_version.version_id AS profession_version_id,recipe.version_id AS recipe_version_id,
 					category.id AS category_id,ability.payload,ability.source_artifact_id
 				FROM abilities ability
-				JOIN projected_profession_versions profession_version ON profession_version.external_id=(ability.payload->>'SkillLine')::bigint
+				JOIN projected_profession_versions profession_version ON profession_version.external_id IN ((ability.payload->>'SkillLine')::bigint, NULLIF(ability.payload->>'SkillupSkillLineID','')::bigint)
 				JOIN projected_recipe_versions recipe ON recipe.external_id=(ability.payload->>'Spell')::bigint
 				LEFT JOIN catalog_trade_skill_categories category ON category.build_id=$2 AND category.external_id=NULLIF(ability.payload->>'TradeSkillCategoryID','')::int
 			)
@@ -386,6 +393,38 @@ func projectProfessions(ctx context.Context, db *pgxpool.Pool, ic catalogimport.
 			  AND COALESCE(NULLIF(effect.payload->>'EffectItemType','')::int,0)>0
 			ON CONFLICT(recipe_version_id,item_external_id,source) DO UPDATE SET item_entity_id=EXCLUDED.item_entity_id,
 				source_artifact_id=EXCLUDED.source_artifact_id;
+
+
+			-- Modern CRAFT_ITEM (288) / CRAFT_ENCHANT (301) reference CraftingData.
+			-- Keep each quality's explicit item ID; do not infer output quantities.
+			WITH crafted AS (
+				SELECT recipe.version_id, crafting.row_id AS crafting_id, effect.payload->>'Effect' AS effect_type,
+					NULLIF(crafting.payload->>'CraftedItemID','')::int AS item_id,
+					crafting.source_artifact_id
+				FROM catalog_db2_rows effect
+				JOIN projected_recipe_versions recipe ON recipe.external_id=(effect.payload->>'SpellID')::bigint
+				JOIN catalog_db2_rows crafting ON crafting.build_id=effect.build_id
+					AND crafting.table_name='CraftingData' AND crafting.locale='en_US'
+					AND crafting.row_id=NULLIF(effect.payload->>'EffectMiscValue_0','')::bigint
+				WHERE effect.build_id=$2 AND effect.table_name='SpellEffect' AND effect.locale='en_US'
+					AND effect.payload->>'Effect' IN ('288','301')
+			), outputs AS (
+				SELECT version_id,item_id,source_artifact_id FROM crafted WHERE item_id>0
+				UNION
+				SELECT crafted.version_id,(quality.payload->>'ItemID')::int,quality.source_artifact_id
+				FROM crafted JOIN catalog_db2_rows quality ON quality.build_id=$2
+					AND quality.table_name=CASE crafted.effect_type WHEN '301' THEN 'CraftingDataEnchantQuality' ELSE 'CraftingDataItemQuality' END AND quality.locale='en_US'
+					AND (quality.payload->>'CraftingDataID')::bigint=crafted.crafting_id
+				WHERE COALESCE(NULLIF(quality.payload->>'ItemID','')::int,0)>0
+			)
+			INSERT INTO catalog_recipe_outputs(recipe_version_id,item_entity_id,item_external_id,source,source_artifact_id)
+			SELECT outputs.version_id,item.id,outputs.item_id,'crafting_data',
+				min(outputs.source_artifact_id::text)::uuid
+			FROM outputs
+			LEFT JOIN game_entities item ON item.product_id=$1 AND item.entity_type='item' AND item.external_id=outputs.item_id
+			GROUP BY outputs.version_id,item.id,outputs.item_id
+			ON CONFLICT(recipe_version_id,item_external_id,source) DO UPDATE SET
+				item_entity_id=EXCLUDED.item_entity_id,source_artifact_id=EXCLUDED.source_artifact_id;
 
 			UPDATE catalog_item_acquisition_sources acquisition
 			SET source_entity_id=recipe.id

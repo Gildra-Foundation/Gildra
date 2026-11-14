@@ -1,15 +1,15 @@
-export type ForeverDungeon = { name: string; min: number; max: number; location: string };
+export type ForeverDungeon = { name: string; slug: string; min: number; max: number; location: string };
 /** Blizzard's announced level bands, not entrance-level requirements. */
 export const newDungeons: readonly ForeverDungeon[] = [
-  { name: "Hall of Thanes", min: 13, max: 18, location: "Ironforge · Dun Morogh" },
-  { name: "Ruins of Lordaeron", min: 15, max: 20, location: "Tirisfal Glades" },
-  { name: "Excavation Site", min: 24, max: 29, location: "Wetlands" },
-  { name: "City of Dalaran", min: 28, max: 33, location: "Alterac Mountains" },
-  { name: "The Drowned City", min: 35, max: 40, location: "Stranglethorn Vale" },
-  { name: "Krol’dok Stronghold", min: 40, max: 45, location: "Riverglades" },
-  { name: "Alcaz Prison", min: 48, max: 53, location: "Dustwallow Marsh" },
-  { name: "Blackmaw Hold", min: 55, max: 60, location: "Azshara" },
-  { name: "Shaper’s Terrace", min: 58, max: 60, location: "Un’Goro Crater" },
+  { slug: "hall-of-thanes", name: "Hall of Thanes", min: 13, max: 18, location: "Ironforge · Dun Morogh" },
+  { slug: "ruins-of-lordaeron", name: "Ruins of Lordaeron", min: 15, max: 20, location: "Tirisfal Glades" },
+  { slug: "excavation-site", name: "Excavation Site", min: 24, max: 29, location: "Wetlands" },
+  { slug: "city-of-dalaran", name: "City of Dalaran", min: 28, max: 33, location: "Alterac Mountains" },
+  { slug: "the-drowned-city", name: "The Drowned City", min: 35, max: 40, location: "Stranglethorn Vale" },
+  { slug: "kroldok-stronghold", name: "Krol’dok Stronghold", min: 40, max: 45, location: "Riverglades" },
+  { slug: "alcaz-prison", name: "Alcaz Prison", min: 48, max: 53, location: "Dustwallow Marsh" },
+  { slug: "blackmaw-hold", name: "Blackmaw Hold", min: 55, max: 60, location: "Azshara" },
+  { slug: "shapers-terrace", name: "Shaper’s Terrace", min: 58, max: 60, location: "Un’Goro Crater" },
 ];
 /** Method's recommended ranges for the returning instances; wings stay grouped. */
 export const returningDungeons = [
@@ -34,9 +34,18 @@ export const foreverRaids = [
     location: "Dustwallow Marsh",
     text: { en: "Carry the Drakefire Amulet to enter. Prepare fire resistance.", ru: "Для входа нужен амулет Пламени дракона в сумке. Подготовьте сопротивление огню." } },
 ] as const;
-/*
- * Facts checked against (not shown on the page):
- *  https://news.blizzard.com/en-us/article/24303009/world-of-warcraft-forever-raid-overviewlocations-raid-sizes-and-attunement
- *  https://news.blizzard.com/en-us/article/24301455/explore-the-new-dungeons-of-world-of-warcraft-forever
- *  https://www.method.gg/wow-forever/wow-forever-dungeon-xp-explained-and-all-dungeons-by-level
- */
+// Where the lists come from — raids: https://news.blizzard.com/en-us/article/24303009/world-of-warcraft-forever-raid-overviewlocations-raid-sizes-and-attunement;
+// new dungeons: https://news.blizzard.com/en-us/article/24301455/explore-the-new-dungeons-of-world-of-warcraft-forever;
+// returning dungeons: https://www.method.gg/wow-forever/wow-forever-dungeon-xp-explained-and-all-dungeons-by-level.
+
+export const returningDungeonDetails: readonly ForeverDungeon[] = returningDungeons.map(([name, range], index) => {
+  const [min, max] = range.split("–").map(Number);
+  return { name, min, max, location: "", slug: ["ragefire-chasm", "the-deadmines", "wailing-caverns", "shadowfang-keep", "blackfathom-deeps", "the-stockade", "gnomeregan", "razorfen-kraul", "scarlet-monastery", "uldaman", "razorfen-downs", "zul-farrak", "maraudon", "sunken-temple", "blackrock-depths", "blackrock-spire", "dire-maul", "stratholme", "scholomance"][index] };
+});
+
+/** Encounter names from the BlizzCon/client roster; no combat mechanics inferred. */
+export const raidEncounters: Record<string, readonly string[]> = {
+  "barrow-deeps": ["Deepscar Matriarch", "Elder Tangleclaw", "Khalith the Dreadspinner", "Well of Sorrow", "Amethrax", "Del’lynar Songwood", "Ravus and Darlissa", "Sonya Darkhallow"],
+  "hyjal-summit": ["Bandalar", "Ancient of Decay", "Time-Lost Battalion", "Sylvestris Dusksong", "Old Gloomlurker", "Gharalis the Abyssal", "Kathris the Haunted", "Anara Chillwind", "Elder Minderel", "Tracker Stillwind", "Council of Thorns", "Nythus the Dreadmbound", "The Wild King"],
+  "onyxias-lair": ["Onyxia"],
+};

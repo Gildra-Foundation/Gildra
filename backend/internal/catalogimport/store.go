@@ -57,6 +57,18 @@ const missingBattleNetLocalizationCondition = `(
 			OR ($7::boolean AND cached_icons.entity_id IS NULL)
 		)`
 
+// ResumableSnapshotMarker names the resume protocol an import's parameters
+// opt into, or "" when a failed snapshot of that import must be discarded.
+func ResumableSnapshotMarker(source string, parameters map[string]any) string {
+	switch {
+	case source == "battlenet" && parameters["resumable_enrichment"] == "v1" && parameters["missing_only"] == true:
+		return "resumable_enrichment"
+	case source == "wago_tools" && parameters["resumable_tables"] == "v1":
+		return "resumable_tables"
+	}
+	return ""
+}
+
 // MissingBattleNetIDs returns build-pinned entities whose localized name or
 // description still needs official API enrichment. When includeMedia is true
 // (the canonical English pass), entities without a verified icon observation
@@ -73,6 +85,13 @@ func (s *Store) MissingBattleNetIDs(
 	includeMedia bool,
 	limit int,
 ) ([]int64, error) {
+	return s.MissingBattleNetIDPage(ctx, ic, entityType, locale, includeMedia, limit, 0, false)
+}
+
+// MissingBattleNetIDPage bounds the target list and uses a keyset cursor. Resumable
+// enrichment uses explicit record checkpoints, never a detail-only cooldown that
+// could skip a crash between storing the detail and storing its media.
+func (s *Store) MissingBattleNetIDPage(ctx context.Context, ic ImportContext, entityType, locale string, includeMedia bool, limit int, after int64, resumable bool) ([]int64, error) {
 	if ic.ProductID <= 0 || ic.BuildID <= 0 || ic.SnapshotID == uuid.Nil {
 		return nil, errors.New("product, build, and snapshot are required")
 	}
@@ -92,7 +111,7 @@ func (s *Store) MissingBattleNetIDs(
 			FROM game_entity_versions version
 			JOIN game_entities entity ON entity.id=version.entity_id
 			LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
-			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL
+			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL AND entity.external_id>$9
 			  AND version.build_id=$3
 			  AND (version.snapshot_id=$4 OR ($5::uuid IS NOT NULL AND snapshot.release_id=$5))
 			UNION ALL
@@ -101,7 +120,7 @@ func (s *Store) MissingBattleNetIDs(
 			FROM game_entities entity
 			JOIN game_entity_versions version ON version.id=entity.published_version_id
 			LEFT JOIN catalog_snapshots snapshot ON snapshot.id=version.snapshot_id
-			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL
+			WHERE entity.product_id=$1 AND entity.entity_type=$2 AND entity.deleted_at IS NULL AND entity.external_id>$9
 			  AND version.build_id=$3
 			  AND NOT EXISTS (
 				SELECT 1 FROM game_entity_versions candidate
@@ -124,13 +143,13 @@ func (s *Store) MissingBattleNetIDs(
 		LEFT JOIN game_entity_localizations localization
 		  ON localization.version_id=candidate.version_id AND localization.locale=$6
 		LEFT JOIN cached_icons ON cached_icons.entity_id=candidate.id
-		WHERE %s
+		WHERE %s AND candidate.external_id > $9
 		-- A successful Battle.net detail response can legitimately contain no
 		-- description (for example, a purely mechanical item).  Retrying the
 		-- same empty response on every daily run wastes the API budget and can
 		-- starve records that actually changed.  Recheck such observations after
 		-- a bounded cooldown while still allowing a new build to be enriched.
-		AND NOT EXISTS (
+		AND ($10::boolean OR NOT EXISTS (
 			SELECT 1
 			FROM catalog_entity_source_documents attempted
 			WHERE attempted.build_id=$3
@@ -139,10 +158,10 @@ func (s *Store) MissingBattleNetIDs(
 			  AND attempted.source='blizzard_api'
 			  AND attempted.locale=$6
 			  AND attempted.imported_at >= now() - interval '7 days'
-		)
+		))
 		ORDER BY candidate.external_id
 		LIMIT CASE WHEN $8::int > 0 THEN $8::int ELSE 2147483647 END`, missingBattleNetLocalizationCondition),
-		ic.ProductID, entityType, ic.BuildID, ic.SnapshotID, ic.ReleaseID, locale, includeMedia, limit)
+		ic.ProductID, entityType, ic.BuildID, ic.SnapshotID, ic.ReleaseID, locale, includeMedia, limit, after, resumable)
 	if err != nil {
 		return nil, fmt.Errorf("list missing Battle.net %s enrichment targets: %w", entityType, err)
 	}
@@ -534,26 +553,30 @@ func (s *Store) CompleteArtifactFromRecords(ctx context.Context, artifactID uuid
 		SELECT record_key,content_hash
 		FROM catalog_source_records
 		WHERE artifact_id=$1
-		ORDER BY record_key`, artifactID)
+		ORDER BY record_key COLLATE "C"`, artifactID)
 	if err != nil {
 		return ArtifactProof{}, fmt.Errorf("read source records for artifact %s: %w", artifactID, err)
 	}
 	defer rows.Close()
-	records := make([]sourceRecordProofEntry, 0)
+	digest := sha256.New()
+	proof := ArtifactProof{}
+	writeManifestPart(digest, &proof.ByteSize, []byte("gildra-source-record-manifest-v1\n"))
 	for rows.Next() {
 		var record sourceRecordProofEntry
 		if err := rows.Scan(&record.Key, &record.ContentHash); err != nil {
-			return ArtifactProof{}, fmt.Errorf("scan source record proof for artifact %s: %w", artifactID, err)
+			return ArtifactProof{}, err
 		}
-		records = append(records, record)
+		if strings.TrimSpace(record.Key) == "" || len(record.ContentHash) != sha256.Size {
+			return ArtifactProof{}, errors.New("invalid source record proof")
+		}
+		writeManifestPart(digest, &proof.ByteSize, fmt.Appendf(nil, "%d:%s:%x\n", len(record.Key), record.Key, record.ContentHash))
+		proof.RecordCount++
 	}
 	if err := rows.Err(); err != nil {
-		return ArtifactProof{}, fmt.Errorf("read source record proofs for artifact %s: %w", artifactID, err)
+		return ArtifactProof{}, err
 	}
-	proof, err := sourceRecordManifestProof(records)
-	if err != nil {
-		return ArtifactProof{}, fmt.Errorf("prove source records for artifact %s: %w", artifactID, err)
-	}
+	rows.Close()
+	copy(proof.SHA256[:], digest.Sum(nil))
 	if err := s.CompleteArtifact(ctx, artifactID, proof.SHA256[:], proof.ByteSize, ""); err != nil {
 		return ArtifactProof{}, err
 	}
@@ -872,11 +895,54 @@ func (s *Store) Begin(
 		if err != nil {
 			return fmt.Errorf("encode import parameters: %w", err)
 		}
-		if err := tx.QueryRow(ctx, `
+		// Only an explicit resume protocol can retain a failed snapshot: record
+		// checkpoints of Battle.net enrichment, or proved tables of a DB2 import.
+		// Exact parameters include product/build, source build, locales, types
+		// and tables.
+		var metadata map[string]any
+		if err := json.Unmarshal(encoded, &metadata); err != nil {
+			return err
+		}
+		marker := ResumableSnapshotMarker(source, metadata)
+		resumable := releaseID != nil && marker != ""
+		// Enrichment checkpoints are valid only for the exact source namespace
+		// and options. DB2 tables are independent proved artifacts of the build:
+		// a later attempt may list other tables (a deploy between two attempts
+		// adds one) and still keeps every table already proved.
+		exact := marker != "resumable_tables"
+		if resumable {
+			var conflict bool
+			if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM catalog_snapshots
+                WHERE release_id=$1 AND source=$2 AND metadata->>$4='v1'
+                AND COALESCE(metadata->'entity_types','[]'::jsonb)=COALESCE($3::jsonb->'entity_types','[]'::jsonb)
+                AND COALESCE(metadata->'locales','[]'::jsonb)=COALESCE($3::jsonb->'locales','[]'::jsonb)
+                AND (status='staging' OR ($5 AND status='failed' AND metadata<>$3::jsonb)))`, releaseID, source, encoded, marker, exact).Scan(&conflict); err != nil {
+				return err
+			}
+			if conflict {
+				return errors.New("resumable snapshot is active or its source/options changed; reconcile the worker or start a new release")
+			}
+			err := tx.QueryRow(ctx, `SELECT id FROM catalog_snapshots
+                WHERE release_id=$1 AND build_id=$2 AND source=$3 AND metadata->>$5='v1'
+                AND (metadata=$4 OR NOT $6)
+                AND status IN ('failed','validated') ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+				releaseID, result.BuildID, source, encoded, marker, exact).Scan(&result.SnapshotID)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				return err
+			}
+			if result.SnapshotID != uuid.Nil {
+				if _, err := tx.Exec(ctx, `UPDATE catalog_snapshots SET status='staging',failed_at=NULL,validated_at=NULL,metadata=$2 WHERE id=$1`, result.SnapshotID, encoded); err != nil {
+					return err
+				}
+			}
+		}
+		if result.SnapshotID == uuid.Nil {
+			if err := tx.QueryRow(ctx, `
 			INSERT INTO catalog_snapshots (product_id, build_id, source, metadata, release_id)
 			VALUES ($1, $2, $3, $4, $5)
 			RETURNING id`, result.ProductID, result.BuildID, source, encoded, releaseID).Scan(&result.SnapshotID); err != nil {
-			return fmt.Errorf("start catalog snapshot: %w", err)
+				return fmt.Errorf("start catalog snapshot: %w", err)
+			}
 		}
 		if err := tx.QueryRow(ctx, `
 			INSERT INTO catalog_import_runs (product_id, build_id, source, parameters, snapshot_id)
@@ -913,7 +979,11 @@ func (s *Store) UpsertCanonical(ctx context.Context, ic ImportContext, record Re
 				namespace_id = EXCLUDED.namespace_id,
 				canonical_slug = CASE WHEN $7::uuid IS NULL THEN EXCLUDED.canonical_slug ELSE game_entities.canonical_slug END,
 				last_seen_build_id = CASE WHEN $7::uuid IS NULL THEN EXCLUDED.last_seen_build_id ELSE game_entities.last_seen_build_id END,
-				deleted_at = CASE WHEN $7::uuid IS NULL THEN NULL ELSE game_entities.deleted_at END,
+				-- An entity that never published was hidden only because the release
+				-- that introduced it failed. Seen again, it is as alive as any entity
+				-- new to this staged release; left hidden, enrichment and projection
+				-- skip everything a failed build introduced until some later build.
+				deleted_at = CASE WHEN $7::uuid IS NULL OR game_entities.published_version_id IS NULL THEN NULL ELSE game_entities.deleted_at END,
 				updated_at = now()
 			RETURNING id`, ic.ProductID, ic.NamespaceID, record.Type, record.ExternalID, slug, ic.BuildID, ic.ReleaseID).Scan(&entityID); err != nil {
 			return fmt.Errorf("upsert entity: %w", err)
@@ -1181,6 +1251,29 @@ func (s *Store) finish(ctx context.Context, runID uuid.UUID, status string, seen
 			SET status='validated',validated_at=now()
 			WHERE id=$1 AND status='staging'`, snapshotID); err != nil {
 			return err
+		}
+		// A stopped attempt is superseded once the very same import (product,
+		// build, source and parameters) completes, or once the snapshot it was
+		// filling completes: that is the retry the failure queue asks for.
+		// Failed runs stay as immutable history; attempts with other parameters
+		// on another snapshot, such as a bounded run, stay open.
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO catalog_import_failure_queue(import_run_id,state,failure_code,last_error_summary,
+				resolution_code,resolution_summary,resolved_at)
+			SELECT prior.id,'resolved',COALESCE(NULLIF(prior.failure_code,''),'import_failed'),
+				COALESCE(NULLIF(prior.error_summary,''),'import failed'),
+				'superseded_by_successful_retry','Same import completed by run ' || completed.id::text,now()
+			FROM catalog_import_runs completed
+			JOIN catalog_import_runs prior ON prior.product_id=completed.product_id AND prior.build_id=completed.build_id
+				AND prior.source=completed.source
+				AND (prior.parameters=completed.parameters OR prior.snapshot_id=completed.snapshot_id)
+				AND prior.id<>completed.id AND prior.status='FAILED' AND prior.started_at<completed.started_at
+			WHERE completed.id=$1
+			ON CONFLICT(import_run_id) DO UPDATE SET state='resolved',
+				resolution_code=EXCLUDED.resolution_code,resolution_summary=EXCLUDED.resolution_summary,
+				resolved_at=now(),updated_at=now()
+			WHERE catalog_import_failure_queue.state<>'resolved'`, runID); err != nil {
+			return fmt.Errorf("resolve superseded import failures: %w", err)
 		}
 		if !publish {
 			return nil

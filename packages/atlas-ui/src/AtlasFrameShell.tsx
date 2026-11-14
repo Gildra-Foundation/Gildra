@@ -1,8 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 import { getImageProps } from "next/image";
 import clsx from "clsx";
+import { AtlasArrival } from "./AtlasArrival";
 import { AtlasArtGlow, type ArtGlowPoint } from "./AtlasArtGlow";
-import { AtlasMotionToggle } from "./AtlasMotionToggle";
+import { AtlasFrameFooter } from "./AtlasFooter";
+export { AtlasFrameFooter } from "./AtlasFooter";
 import { morphSceneProps } from "./morph";
 import { ART_PORTRAIT_MEDIA, ART_PORTRAIT_SIZES, artPlaceholder, artPortrait } from "./placeholders";
 import styles from "./AtlasFrame.module.css";
@@ -38,8 +40,8 @@ export type AtlasFrameShellProps = {
   id?: string;
   /** Extra attributes for page-level hooks (data-*). */
   dataAttributes?: Record<`data-${string}`, string | boolean | undefined>;
-  /** Slim legal line under the content: the text and its links (the "less motion" switch comes first), and an optional brand seal above it. */
-  footer?: { legal: ReactNode; links: ReactNode; brand?: ReactNode; motion?: ReactNode } | false;
+  /** Grouped site footer with optional brand, description and language links. */
+  footer?: { legal: ReactNode; links: ReactNode; brand?: ReactNode; description?: ReactNode; language?: ReactNode; motion?: ReactNode } | false;
   /**
    * The page's horizon: at the foot of the page the solid body warms into the
    * scene's light — a glow on the horizon, drifting mist, a slow seal of runes
@@ -54,25 +56,6 @@ function objectFocus(position: string | undefined): [number, number] {
   const [x = "center", y = "18%"] = (position ?? "center 18%").split(/\s+/);
   const part = (value: string) => (value === "center" ? 0.5 : value === "left" || value === "top" ? 0 : value === "right" || value === "bottom" ? 1 : parseFloat(value) / 100);
   return [part(x), part(y)];
-}
-
-/**
- * The site footer: the crest on a thin rail, one row of footer links, a hairline,
- * the "Less motion" switch, and the one-line legal notice. Pages outside the frame
- * (a full-bleed reader) reuse it.
- */
-export function AtlasFrameFooter({ locale, brand, legal, links, motion }: { locale: "en" | "ru"; legal: ReactNode; links: ReactNode; brand?: ReactNode; motion?: ReactNode }) {
-  return (
-    <footer className={styles.legal} data-text-links>
-      {brand ? <div className={styles.legalBrand}>{brand}</div> : null}
-      <div className={styles.legalLinks}>
-        <nav aria-label={locale === "ru" ? "Подвал" : "Footer"} className={styles.legalNav}>{links}</nav>
-        <span className={styles.legalDivider} aria-hidden="true" />
-        {motion ?? <AtlasMotionToggle locale={locale} />}
-      </div>
-      <p>{legal}</p>
-    </footer>
-  );
 }
 
 /**
@@ -132,10 +115,14 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
       </div>
     </div>
   );
+  // The site footer is the page's contentinfo landmark, so it may not sit inside
+  // <main>: a frame that owns <main> keeps the page in it and the footer after it.
+  const landmark = Element === "main" && Boolean(footer);
+  const Outer = landmark ? "div" : Element;
   return (
     // Page-to-page motion belongs to the app's route runtime (one owner per
     // navigation); the frame only marks itself and its scene.
-    <Element className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, className)} style={style} lang={lang} id={id} data-atlas-frame data-cookie-notice-space data-morph={morphKey ? "" : undefined} {...dataAttributes}>
+    <Outer className={clsx(styles.frame, artShade === "deep" && styles.deep, still && styles.still, className)} style={style} lang={lang} id={id} data-atlas-frame data-cookie-notice-space data-morph={morphKey ? "" : undefined} {...dataAttributes}>
       {atmosphere}
       {foot ? (
         // The horizon at the foot: the scene's light, drifting mist, a slow seal of
@@ -146,10 +133,11 @@ export function AtlasFrameShell({ children, art, artPosition, artShade = "defaul
           <span className={styles.footEmbers} />
         </div>
       ) : null}
+      <AtlasArrival />
       <div className={styles.column}>
-        {children}
+        {landmark ? <main>{children}</main> : children}
         {footer ? <AtlasFrameFooter locale={locale} {...footer} /> : null}
       </div>
-    </Element>
+    </Outer>
   );
 }

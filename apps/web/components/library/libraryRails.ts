@@ -1,6 +1,7 @@
 import type { CatalogCategory } from "@/lib/api/client";
 import type { Lang } from "@/lib/i18n-paths";
 import type { LibraryListLayout } from "@/components/library/LibraryResults";
+import { LIBRARY_INTERNAL_NAME } from "@/lib/library/internalName";
 
 /** One filter (a select) of a dataset page: categories of the dataset's record type picked by a rule. */
 export type LibraryRail = { id: string; label: string; categories: CatalogCategory[] };
@@ -25,6 +26,8 @@ const RULES: Record<string, RailRule[]> = {
   gems: [{ id: "gem", label: { ru: "Цвет и характеристика", en: "Colour and stat" }, pick: (category) => category.parentPath === "item-types/gem" }],
   consumables: [{ id: "consumable", label: { ru: "Вид", en: "Kind" }, pick: (category) => category.parentPath === "item-types/consumable" }],
   "trade-goods": [{ id: "trade", label: { ru: "Вид", en: "Kind" }, pick: (category) => category.parentPath === "item-types/trade-goods" }],
+  // The game's own achievement categories (General, Quests, Dungeons & Raids and their parts).
+  achievements: [{ id: "category", label: { ru: "Категория", en: "Category" }, pick: (category) => category.facet === "category" && category.type === "achievement", limit: 400 }],
 };
 
 /** Datasets whose records are mostly looked at by their icon (gems, collections): square tray tiles; the rest is a table. */
@@ -34,12 +37,21 @@ export function libraryCardLayout(slug: string): LibraryListLayout {
   return TRAY.has(slug) ? "tray" : "table";
 }
 
+/**
+ * The categories of a record type count every record of the type. A dataset that is a part of the
+ * items (gems, consumables, armor…) is filtered only by its own rails: a gem has no slot or armor
+ * type, and those filters would answer with an empty list.
+ */
+export function offersTypeFacets(dataset: { slug: string; entityType: string }) {
+  return dataset.entityType !== "item" || dataset.slug === "items";
+}
+
 /** Filters of a dataset page, largest categories first; a filter with one choice is left out. */
 export function libraryRails(slug: string, categories: CatalogCategory[], lang: Lang): LibraryRail[] {
   return (RULES[slug] ?? []).map((rule) => ({
     id: rule.id,
     label: rule.label[lang],
-    categories: categories.filter((category) => category.count > 0 && rule.pick(category))
+    categories: categories.filter((category) => category.count > 0 && rule.pick(category) && !LIBRARY_INTERNAL_NAME.test(category.name))
       .sort((a, b) => b.count - a.count || a.sortOrder - b.sortOrder).slice(0, rule.limit ?? 80),
   })).filter((rail) => rail.categories.length > 1);
 }

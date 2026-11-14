@@ -2,6 +2,7 @@
 
 import { useConsoleText } from "../consoleLocale";
 import Link from "next/link";
+import { GildraCrest } from "@/components/brand/GildraCrest";
 import {
   Activity, ArrowLeft, ChevronRight, CircleAlert, Clock3, Database, FileJson2, RefreshCw,
   Swords,
@@ -17,11 +18,9 @@ import { type WowGGOption, relativeTime } from "./format";
 
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex items-center gap-3" aria-label="Gildra API">
-      <div className="grid size-9 place-items-center border border-[#8b7138] bg-[#171716] text-[#e2c171] [clip-path:polygon(7px_0,100%_0,100%_calc(100%-7px),calc(100%-7px)_100%,0_100%,0_7px)]">
-        <Swords className="size-[18px]" strokeWidth={1.5} />
-      </div>
-      {!compact && <div><div className="font-[family-name:var(--display)] text-[15px] font-bold tracking-[.18em] text-[#e7c878]">GILDRA</div><div className="text-[10px] uppercase tracking-[.28em] text-[#657087]">API Console</div></div>}
+    <div className="flex items-center gap-3" aria-label="WowArcana API">
+      <GildraCrest height={36} className="shrink-0 [&_img]:block" eager />
+      {!compact && <div><div className="font-[family-name:var(--display)] text-[15px] font-bold tracking-[.18em] text-[#e7c878]">WOWARCANA</div><div className="text-[10px] uppercase tracking-[.28em] text-[#657087]">API Console</div></div>}
     </div>
   );
 }

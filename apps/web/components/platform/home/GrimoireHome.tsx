@@ -1,19 +1,16 @@
-import Link from "next/link";
 import { preload } from "react-dom";
-import { cookies } from "next/headers";
 import type { CSSProperties } from "react";
-import { t, type Lang } from "@/lib/i18n";
-import { atlasLegal } from "@/components/atlas/AtlasFrame";
+import { type Lang } from "@/lib/i18n";
+import { AtlasLegalFooter } from "@/components/atlas/AtlasFrame";
+import { GildraCrest } from "@/components/brand/GildraCrest";
 import { HomeBookCover, HomeBookStage } from "./HomeBook";
 import { HomeTheme } from "./HomeTheme";
 import { HomeEpigraph } from "./HomeEpigraph";
-import { ThemePicker } from "./ThemePicker";
-import { homeThemeCookie, homeThemes, isHomeTheme } from "./homeThemes";
 import styles from "./grimoireHome.module.css";
 
 const coverSizes = "(max-width: 400px) 70vw, (max-width: 760px) 280px, (min-width: 1600px) 470px, 440px";
-const coverAvifSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v2-320.avif 320w, /assets/wow/character-book/intro/chronicle-cover-v2-640.avif 640w, /assets/wow/character-book/intro/chronicle-cover-v2-1024.avif 1024w";
-const coverWebpSrcSet = "/assets/wow/character-book/intro/chronicle-cover-v2-320.webp 320w, /assets/wow/character-book/intro/chronicle-cover-v2-640.webp 640w, /assets/wow/character-book/intro/chronicle-cover-v2-1024.webp 1024w";
+const coverAvifSrcSet = "/assets/wow/character-book/intro/icecrown-cover-320.avif 320w, /assets/wow/character-book/intro/icecrown-cover-640.avif 640w, /assets/wow/character-book/intro/icecrown-cover-1024.avif 1024w";
+const coverWebpSrcSet = "/assets/wow/character-book/intro/icecrown-cover-320.webp 320w, /assets/wow/character-book/intro/icecrown-cover-640.webp 640w, /assets/wow/character-book/intro/icecrown-cover-1024.webp 1024w";
 
 // Kurale (headings, nav) and PT Serif (body) subsets the first screen renders
 // in. Discovered only through CSS they land ~1 s after the first paint on a
@@ -33,33 +30,27 @@ const homeShellCss = 'html[data-route-theme="wow"][data-route-theme] body{backgr
   + ".workspace-content.gildra-atlas[id=atlas-content]{padding-bottom:0}";
 
 export async function GrimoireHome({ lang }: { lang: Lang }) {
-  preload("/assets/wow/character-book/intro/chronicle-cover-v2-640.avif", {
+  preload("/assets/wow/character-book/intro/icecrown-cover-640.avif", {
     as: "image",
     type: "image/avif",
     imageSrcSet: coverAvifSrcSet,
     imageSizes: coverSizes,
     fetchPriority: "high",
   });
-  const savedTheme = (await cookies()).get(homeThemeCookie)?.value;
-  const initialTheme = isHomeTheme(savedTheme) ? savedTheme : "arthas";
-  // The scene background is the largest paint on phones; as a CSS background
-  // it would otherwise be found late and fetched at low priority.
-  const sceneArt = homeThemes.find((theme) => theme.id === initialTheme)?.art;
-  if (sceneArt) preload(`/assets/wow/character-book/intro/${sceneArt}`, { as: "image", type: "image/webp", fetchPriority: "high" });
+  preload("/assets/wow/character-book/intro/icecrown-home-background-v1.webp", { as: "image", type: "image/webp", fetchPriority: "high" });
   const ru = lang === "ru";
   // The same cover art is the closed book and the leaf that swings open.
   const coverFace = <>
     <picture>
       <source type="image/avif" srcSet={coverAvifSrcSet} sizes={coverSizes} />
       <source type="image/webp" srcSet={coverWebpSrcSet} sizes={coverSizes} />
-      <img className={styles.coverImage} src="/assets/wow/character-book/intro/chronicle-cover-v2-640.webp" srcSet={coverWebpSrcSet} sizes={coverSizes} width={1024} height={1536} fetchPriority="high" loading="eager" decoding="async" alt="" draggable={false} />
+      <img className={styles.coverImage} src="/assets/wow/character-book/intro/icecrown-cover-640.webp" srcSet={coverWebpSrcSet} sizes={coverSizes} width={1024} height={1365} fetchPriority="high" loading="eager" decoding="async" alt="" draggable={false} />
     </picture>
     <span className={styles.coverLight} aria-hidden="true" />
-    <span className={styles.coverGems} aria-hidden="true"><i /><i /></span>
-    <span className={styles.coverTitle} aria-hidden="true"><small>WORLD OF WARCRAFT</small><strong>GILDRA</strong><i /></span>
-    <span className={styles.coverSubtitle} aria-hidden="true"><span>{ru ? <>Хроники<br />Азерота</> : <>Chronicles<br />of Azeroth</>}</span><small>{ru ? "ПУТЕВОДИТЕЛЬ ГЕРОЯ" : "A HERO’S COMPANION"}</small></span>
+    <span className={styles.coverTitle} aria-hidden="true"><GildraCrest height={64} className={styles.coverBrand} eager /><i /></span>
+    <span className={styles.coverSubtitle} aria-hidden="true"><span>{ru ? <>Хроники<br />Азерота</> : <>Chronicles<br />of Azeroth</>}</span></span>
   </>;
-  return <HomeTheme initialTheme={initialTheme}>
+  return <HomeTheme>
     {/* Mounted with the landing page only: as `:has([data-grimoire-home])` rules on
         <html>/<body> they made every DOM insertion on every page restyle the root. */}
     <style>{homeShellCss}</style>
@@ -73,27 +64,18 @@ export async function GrimoireHome({ lang }: { lang: Lang }) {
         "--snow-rest": `${(index * 23 + 11) % 96}svh`,
       } as CSSProperties} />)}
     </div>
-    <div className={styles.appearance}><ThemePicker lang={lang} /></div>
     <HomeBookStage lang={lang} className={styles.hero} coverFace={coverFace}>
       <div className={styles.copy}>
-        <h1 className={styles.srOnly}>{ru ? "Gildra — хроники Азерота: путеводитель героя World of Warcraft" : "Gildra — Chronicles of Azeroth: a World of Warcraft hero’s companion"}</h1>
+        <h1 className={styles.srOnly}>{ru ? "WowArcana — хроники Азерота: путеводитель героя World of Warcraft" : "WowArcana — Chronicles of Azeroth: a World of Warcraft hero’s companion"}</h1>
         <HomeEpigraph lang={lang} />
       </div>
       <div className={styles.bookScene}>
         <div className={styles.halo} aria-hidden="true" />
-        <HomeBookCover className={styles.cover} ariaLabel={ru ? "Открыть книгу — оглавление Gildra" : "Open the book — Gildra contents"}>
+        <HomeBookCover className={styles.cover} ariaLabel={ru ? "Открыть книгу — оглавление WowArcana" : "Open the book — WowArcana contents"}>
           {coverFace}
         </HomeBookCover>
-        <p className={styles.bookHint}><span aria-hidden="true">✧</span>{ru ? "Коснитесь обложки, чтобы открыть" : "Touch the cover to turn the first page"}</p>
       </div>
     </HomeBookStage>
-    {/* The site's one legal line (the same as every atlas page's footer) in the grimoire's type. */}
-    <footer className={styles.footer}>
-      <p>{atlasLegal(ru ? "ru" : "en")}</p>
-      <nav aria-label={ru ? "Документы" : "Documents"}>
-        <Link href={ru ? "/ru/wow/whats-new" : "/wow/whats-new"} prefetch={false}>{t(lang)("What's new")}</Link>
-        <Link href={ru ? "/ru/privacy" : "/privacy"} prefetch={false}>{t(lang)("Privacy Policy")}</Link>
-      </nav>
-    </footer>
+    <AtlasLegalFooter lang={lang} />
   </HomeTheme>;
 }

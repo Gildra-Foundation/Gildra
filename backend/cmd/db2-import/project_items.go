@@ -25,6 +25,7 @@ func projectCollectionsForTables(
 				('CurrencyTypes','currency','Name_lang','Description_lang'),
 				('Mount','mount','Name_lang','Description_lang'),
 				('TransmogSet','transmog_set','Name_lang',''),
+				('ItemSet','item_set','Name_lang',''),
 				('Achievement','achievement','Title_lang','Description_lang'),
 				('Map','map','MapName_lang','MapDescription0_lang'),
 				('UiMap','ui_map','Name_lang',''),
@@ -36,7 +37,7 @@ func projectCollectionsForTables(
 				CASE WHEN definition.description_field='' THEN '' ELSE COALESCE(raw.payload->>definition.description_field,'') END AS description,
 				raw.payload AS db2,raw.content_hash,raw.source_url,raw.source_artifact_id
 			FROM catalog_db2_rows raw JOIN definitions definition ON definition.table_name=raw.table_name
-			WHERE raw.build_id=$1 AND raw.locale IN ('en_US','ru_RU')
+			WHERE raw.build_id=$1 AND raw.row_id>0 AND raw.locale IN ('en_US','ru_RU')
 			  AND (COALESCE(cardinality($2::text[]),0)=0 OR raw.table_name=ANY($2::text[]))
 			  AND NULLIF(BTRIM(raw.payload->>definition.name_field),'') IS NOT NULL
 			UNION ALL

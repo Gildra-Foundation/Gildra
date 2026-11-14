@@ -1,6 +1,6 @@
 import type { AtlasSceneId } from "@/lib/atlas/scenes";
 import { registryCopy } from "./registryCopy";
-import type { Lang as Locale } from "@/lib/i18n-paths";
+import { p, type Lang as Locale } from "@/lib/i18n-paths";
 
 /**
  * One registry of the site's sections (roadmap items 24, 73): path, parent and
@@ -23,10 +23,19 @@ export type RouteSection = {
 };
 
 export const routeSections = {
+  forever: { path: "/wow/forever", title: { en: "World of Warcraft: Forever", ru: "World of Warcraft: Forever" }, scene: "forever" },
+  foreverDungeons: { path: "/wow/forever/dungeons", parent: "forever", title: { en: "Dungeons", ru: "Подземелья" }, scene: "foreverDungeons", search: { en: "Forever — Dungeons", ru: "Forever — Подземелья", keywords: "forever" } },
+  foreverRaids: { path: "/wow/forever/raids", parent: "forever", title: { en: "Raids", ru: "Рейды" }, scene: "foreverRaids", search: { en: "Forever — Raids", ru: "Forever — Рейды", keywords: "forever" } },
+  foreverLibrary: { path: "/wow/forever/library", parent: "forever", title: { en: "Library", ru: "Библиотека" }, scene: "foreverLibrary", search: { en: "Forever — Library", ru: "Forever — Библиотека", keywords: "forever" } },
+  foreverTalents: { path: "/wow/forever/talent-calc", parent: "forever", title: { en: "Talent calculator", ru: "Калькулятор талантов" }, scene: "talents", search: { en: "Forever — Talent calculator", ru: "Forever — Калькулятор талантов", keywords: "forever" } },
+  foreverClasses: { path: "/wow/forever/classes", parent: "forever", title: { en: "Classes", ru: "Классы" }, scene: "foreverClasses", search: { en: "Forever — Classes", ru: "Forever — Классы", keywords: "forever" } },
+  foreverChanges: { path: "/wow/forever/changes", parent: "forever", title: { en: "Class changes", ru: "Изменения классов" }, scene: "foreverClasses", search: { en: "Forever — Class changes", ru: "Forever — Изменения классов", keywords: "forever" } },
+  foreverProfessions: { path: "/wow/forever/professions", parent: "forever", title: { en: "Professions", ru: "Профессии" }, scene: "foreverCrafts", search: { en: "Forever — Professions", ru: "Forever — Профессии", keywords: "forever" } },
+  foreverTiers: { path: "/wow/forever/tier-lists", parent: "forever", title: { en: "Tier lists", ru: "Тир-листы" }, scene: "tierLists", search: { en: "Forever — Tier lists", ru: "Forever — Тир-листы", keywords: "forever" } },
   transmog: { path: "/wow/transmog", parent: "wow", title: { en: "Transmog Studio", ru: "Трансмогрификация" }, scene: "articles", search: { keywords: "transmog transmogrification outfit appearance sets dressing room screenshot трансмогрификация трансмог образ облик наборы примерочная скриншот" } },
   professions: { path: "/wow/professions", parent: "wow", title: { en: "Professions", ru: "Профессии" }, scene: "articles", search: { keywords: "professions crafting leveling alchemy blacksmithing enchanting mining herbalism профессии ремесло прокачка алхимия кузнечное дело наложение чар горное дело травничество" } },
   auction: { path: "/wow/auction", parent: "wow", title: { en: "Auction House", ru: "Аукцион" }, scene: "articles", search: { keywords: "auction house tools market prices аукцион инструменты рынок цены реагенты" } },
-  wow: { path: "/wow", title: { en: "World of Warcraft", ru: "World of Warcraft" }, scene: "wow", search: { en: "World of Warcraft hub", ru: "Центр World of Warcraft", keywords: "home главная хаб" } },
+  wow: { path: "/", title: { en: "World of Warcraft", ru: "World of Warcraft" }, scene: "wow", search: { en: "World of Warcraft hub", ru: "Центр World of Warcraft", keywords: "home главная хаб" } },
   raids: { path: "/wow/raids", parent: "wow", title: { en: "Raids", ru: "Рейды" }, scene: "raids", search: { en: "Raid journal", ru: "Рейдовый журнал", keywords: "raids рейды" } },
   raidComposition: { path: "/wow/raids/composition", parent: "raids", title: { en: "Raid composition", ru: "Состав рейда" }, scene: "raids", search: { en: "Raid composition planner", ru: "Планировщик состава рейда", keywords: "raid comp roster buffs bloodlust battle res dispel состав рейда ростер баффы жажда крови бр рассеивание" } },
   mythicPlus: { path: "/wow/mythic-plus", parent: "wow", title: { en: "Mythic+", ru: "Mythic+" }, scene: "mythicPlus", search: { en: "Mythic+ atlas", ru: "Атлас Mythic+", keywords: "mythic plus keys ключи эпохальные" } },
@@ -35,6 +44,7 @@ export const routeSections = {
   mythicPlusComps: { path: "/wow/mythic-plus/comps", parent: "mythicPlus", title: { en: "Compositions", ru: "Составы" }, scene: "mythicPlus", search: { en: "Mythic+ team compositions", ru: "Составы групп Mythic+", keywords: "comps group composition party builder who to bring составы группы состав пати кого взять" } },
   mythicPlusStats: { path: "/wow/mythic-plus/stats", parent: "mythicPlus", title: { en: "Season stats", ru: "Статистика сезона" }, scene: "mythicPlus", search: { en: "Mythic+ season stats", ru: "Статистика сезона Mythic+", keywords: "rating cutoff top 1% score dashboard порог рейтинга топ-1% рейтинг статистика" } },
   mythicPlusRoutes: { path: "/wow/mythic-plus/routes", parent: "mythicPlus", title: { en: "Route finder", ru: "Поиск маршрутов" }, scene: "mythicPlus", search: { en: "Mythic+ route finder", ru: "Поиск маршрутов Mythic+", keywords: "routes runs keystone.guru raider.io маршруты забеги" } },
+  worldMap: { path: "/wow/map", parent: "wow", title: { en: "World map", ru: "Карта мира" }, scene: "wow", search: { en: "World map of Azeroth", ru: "Карта мира Азерота", keywords: "map azeroth zones cities continents eras timeline карта азерот зоны города континенты эпохи хронология" } },
   dungeons: { path: "/wow/dungeons", parent: "wow", title: { en: "Dungeons", ru: "Подземелья" }, scene: "dungeons" },
   lairs: { path: "/wow/lairs", parent: "wow", title: { en: "Lairs and world bosses", ru: "Логова и мировые боссы" }, scene: "lairs" },
   classes: { path: "/wow/classes", parent: "wow", title: { en: "Classes and specializations", ru: "Классы и специализации" }, scene: "classes", search: { keywords: "specs спеки" } },
@@ -56,7 +66,7 @@ export const singleLanguagePaths: ReadonlyMap<string, Locale> = new Map(
 
 /** The section's URL in a language. */
 export function sectionHref(id: SectionId, locale: Locale) {
-  return `${locale === "ru" ? "/ru" : ""}${routeSections[id].path}`;
+  return p(locale, routeSections[id].path);
 }
 
 /** Accessible name of the breadcrumb trail. */

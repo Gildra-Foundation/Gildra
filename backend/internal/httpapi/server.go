@@ -50,18 +50,18 @@ func (s *Server) GetAPIIndex(_ context.Context, request api.GetAPIIndexRequestOb
 	case "wow_classic_hardcore":
 		edition = "hardcore"
 	}
-	base := "https://api.gildra.net/world-of-warcraft/" + edition + "/v1"
+	base := "https://api.wowarcana.com/world-of-warcraft/" + edition + "/v1"
 	return api.GetAPIIndex200JSONResponse{
 		Version: api.V1,
 		Rest:    base + "/",
-		Graphql: "https://api.gildra.net/graphql",
+		Graphql: "https://api.wowarcana.com/graphql",
 		Catalog: base + "/game/entities",
 		Library: base + "/library/datasets",
 	}, nil
 }
 
 func notFoundProblem(detail string) api.NotFoundApplicationProblemPlusJSONResponse {
-	return api.NotFoundApplicationProblemPlusJSONResponse{Type: "https://api.gildra.net/errors/not-found", Title: "Not Found", Status: 404, Detail: &detail}
+	return api.NotFoundApplicationProblemPlusJSONResponse{Type: "https://api.wowarcana.com/errors/not-found", Title: "Not Found", Status: 404, Detail: &detail}
 }
 
 func (s *Server) GetLiveness(context.Context, api.GetLivenessRequestObject) (api.GetLivenessResponseObject, error) {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GildraCrest } from "@/components/brand/GildraCrest";
 import { ChevronDown, Search } from "lucide-react";
 import type { PlatformHomeData } from "@/lib/platform/home/types";
 import type { Lang } from "@/lib/i18n";
@@ -23,7 +24,7 @@ export function PlatformHeader({
   const prefix = lang === "ru" ? "/ru" : "";
   return (
     <header className={styles.header}>
-      <Link className={styles.wordmark} href={prefix || "/"} aria-label="Gildra home">GILDRA</Link>
+      <Link className={styles.wordmark} href={prefix || "/"} aria-label={lang === "ru" ? "WowArcana — главная" : "WowArcana — home"}><GildraCrest height={32} eager />WOWARCANA</Link>
       {scopeLabel ? <span className={styles.scopeLabel}>◎ <span>{scopeLabel}</span><ChevronDown size={13} /></span> : null}
       <nav className={styles.nav} aria-label="Primary navigation">
         <Link className={active === "home" ? styles.navActive : ""} href={prefix || "/"}>{nav.home}</Link>

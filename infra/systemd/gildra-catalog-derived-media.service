@@ -1,0 +1,23 @@
+[Unit]
+Description=Renew Gildra derived catalog pictures for records without an icon name
+OnFailure=gildra-notify@%p.service
+OnSuccess=gildra-notify-ok@%p.service
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/gildra/.env
+ConditionPathExists=/opt/gildra/current-release.env
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/gildra
+ExecStart=/usr/bin/docker compose --env-file .env --env-file current-release.env -f compose.yml -f compose.prod.yml -f compose.runtime.yml -f compose.wowarcana.yml run --rm --no-deps catalog-media-cache -environment production -expansion= -derived-mode apply -derived-groups default -derived-limit 2000 -derived-headroom-days 10 -derived-checkpoint /var/lib/gildra/catalog-media/derived-wow.json -derived-retry-failed-after 336h -skip-media-cache -confirm
+TimeoutStartSec=2h
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

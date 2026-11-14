@@ -5,7 +5,7 @@ import { withPageOpenGraph } from "@/lib/seo/metadata";
 
 const path = "/wow/raids/the-unbinding-of-kithix";
 export const metadata: Metadata = withPageOpenGraph("en", {
-  title: `${kithixRaid.names.en} — Gildra`,
+  title: `${kithixRaid.names.en} — WowArcana`,
   description: kithixRaid.descriptions.en,
   alternates: { canonical: path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
 });

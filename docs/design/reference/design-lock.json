@@ -76,7 +76,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -408,23 +408,23 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
-                26,
-                5402,
-                1388,
-                153
+                0,
+                5320,
+                1440,
+                802
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -475,8 +475,7 @@
             "/assets/wow/mythic/hub/controls/timers/temple-of-sethraliss.webp",
             "/assets/wow/mythic/hub/controls/timers/the-blinding-vale.webp",
             "/assets/wow/mythic/hub/controls/timers/voidscar-arena.webp",
-            "/assets/wow/mythic/hub/gateway.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/mythic/hub/gateway.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -893,14 +892,14 @@
             },
             "footer": {
               "box": [
-                14,
-                7989,
-                362,
-                268
+                0,
+                7907,
+                390,
+                738
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -951,8 +950,7 @@
             "/assets/wow/mythic/hub/controls/timers/temple-of-sethraliss.webp",
             "/assets/wow/mythic/hub/controls/timers/the-blinding-vale.webp",
             "/assets/wow/mythic/hub/controls/timers/voidscar-arena.webp",
-            "/assets/wow/mythic/hub/gateway-mobile.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/mythic/hub/gateway-mobile.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -1028,7 +1026,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -1360,23 +1358,23 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
-                26,
-                5450,
-                1388,
-                171
+                0,
+                5368,
+                1440,
+                802
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -1427,8 +1425,7 @@
             "/assets/wow/mythic/hub/controls/timers/temple-of-sethraliss.webp",
             "/assets/wow/mythic/hub/controls/timers/the-blinding-vale.webp",
             "/assets/wow/mythic/hub/controls/timers/voidscar-arena.webp",
-            "/assets/wow/mythic/hub/gateway.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/mythic/hub/gateway.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -1845,14 +1842,14 @@
             },
             "footer": {
               "box": [
-                14,
-                7938,
-                362,
-                224
+                0,
+                7856,
+                390,
+                714
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -1903,8 +1900,7 @@
             "/assets/wow/mythic/hub/controls/timers/temple-of-sethraliss.webp",
             "/assets/wow/mythic/hub/controls/timers/the-blinding-vale.webp",
             "/assets/wow/mythic/hub/controls/timers/voidscar-arena.webp",
-            "/assets/wow/mythic/hub/gateway-mobile.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/mythic/hub/gateway-mobile.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -1985,7 +1981,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -2241,23 +2237,23 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
-                26,
-                3131,
-                1388,
-                179
+                0,
+                2947,
+                1440,
+                802
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -2282,9 +2278,7 @@
             "/assets/wow/mythic/hub/controls/panels/den-of-nalorakk.webp",
             "/assets/wow/mythic/hub/controls/panels/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/panels/the-blinding-vale.webp",
-            "/assets/wow/mythic/hub/gateway.webp",
-            "/brand/gildra-helmet-112.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/mythic/hub/gateway.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -2625,14 +2619,14 @@
             },
             "footer": {
               "box": [
-                14,
-                5661,
-                362,
-                277
+                0,
+                5127,
+                390,
+                738
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -2659,9 +2653,7 @@
             "/assets/wow/mythic/hub/controls/panels/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/panels/the-blinding-vale.webp",
             "/assets/wow/mythic/hub/gateway-mobile.webp",
-            "/assets/wow/mythic/hub/gateway.webp",
-            "/brand/gildra-helmet-112.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/mythic/hub/gateway.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -2737,7 +2729,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -2993,23 +2985,23 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
-                26,
-                3131,
-                1388,
-                179
+                0,
+                2947,
+                1440,
+                802
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -3034,9 +3026,7 @@
             "/assets/wow/mythic/hub/controls/panels/den-of-nalorakk.webp",
             "/assets/wow/mythic/hub/controls/panels/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/panels/the-blinding-vale.webp",
-            "/assets/wow/mythic/hub/gateway.webp",
-            "/brand/gildra-helmet-112.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/mythic/hub/gateway.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -3377,14 +3367,14 @@
             },
             "footer": {
               "box": [
-                14,
-                5661,
-                362,
-                277
+                0,
+                5127,
+                390,
+                714
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(162, 178, 193)",
-              "font-size": "13px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -3411,9 +3401,7 @@
             "/assets/wow/mythic/hub/controls/panels/ruby-life-pools.webp",
             "/assets/wow/mythic/hub/controls/panels/the-blinding-vale.webp",
             "/assets/wow/mythic/hub/gateway-mobile.webp",
-            "/assets/wow/mythic/hub/gateway.webp",
-            "/brand/gildra-helmet-112.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/mythic/hub/gateway.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -3494,7 +3482,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -3747,23 +3735,23 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
-                26,
-                4262,
-                1388,
-                153
+                0,
+                4297,
+                1440,
+                802
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -3802,8 +3790,7 @@
             "/assets/wow/raids/hub/stylized/ornaments/spore-tall.webp",
             "/assets/wow/raids/hub/stylized/ornaments/sun-feather.webp",
             "/assets/wow/raids/hub/stylized/ornaments/void-crystals.webp",
-            "/assets/wow/raids/hub/vault.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/raids/hub/vault.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -4141,14 +4128,14 @@
             },
             "footer": {
               "box": [
-                14,
-                6054,
-                362,
-                268
+                0,
+                6089,
+                390,
+                738
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -4187,8 +4174,7 @@
             "/assets/wow/raids/hub/stylized/ornaments/spore-tall.webp",
             "/assets/wow/raids/hub/stylized/ornaments/sun-feather.webp",
             "/assets/wow/raids/hub/stylized/ornaments/void-crystals.webp",
-            "/assets/wow/raids/hub/vault-mobile.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/raids/hub/vault-mobile.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -4264,7 +4250,7 @@
             "--atlas-control-height": "44px",
             "--atlas-measure": "68ch",
             "--atlas-measure-wide": "72ch",
-            "--atlas-sticky-top": "107px",
+            "--atlas-sticky-top": "47px",
             "--atlas-space-1": "4px",
             "--atlas-space-2": "8px",
             "--atlas-space-3": "12px",
@@ -4517,23 +4503,23 @@
                 0,
                 0,
                 1440,
-                108
+                103
               ],
               "position": "sticky",
               "background-color": "rgb(7, 11, 16)",
               "backdrop-filter": "none",
-              "height": "108px"
+              "height": "103px"
             },
             "footer": {
               "box": [
-                26,
-                4356,
-                1388,
-                171
+                0,
+                4391,
+                1440,
+                802
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -4572,8 +4558,7 @@
             "/assets/wow/raids/hub/stylized/ornaments/spore-tall.webp",
             "/assets/wow/raids/hub/stylized/ornaments/sun-feather.webp",
             "/assets/wow/raids/hub/stylized/ornaments/void-crystals.webp",
-            "/assets/wow/raids/hub/vault.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/raids/hub/vault.webp"
           ],
           "status": 200,
           "consoleErrors": []
@@ -4911,14 +4896,14 @@
             },
             "footer": {
               "box": [
-                14,
-                5945,
-                362,
-                224
+                0,
+                5980,
+                390,
+                714
               ],
               "background-color": "rgba(0, 0, 0, 0)",
-              "color": "rgb(132, 150, 168)",
-              "font-size": "12px"
+              "color": "rgb(210, 220, 229)",
+              "font-size": "15px"
             },
             "body": {
               "box": [
@@ -4957,8 +4942,7 @@
             "/assets/wow/raids/hub/stylized/ornaments/spore-tall.webp",
             "/assets/wow/raids/hub/stylized/ornaments/sun-feather.webp",
             "/assets/wow/raids/hub/stylized/ornaments/void-crystals.webp",
-            "/assets/wow/raids/hub/vault-mobile.webp",
-            "/brand/gildra-helmet-56.avif"
+            "/assets/wow/raids/hub/vault-mobile.webp"
           ],
           "status": 200,
           "consoleErrors": []

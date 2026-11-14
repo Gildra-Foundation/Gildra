@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { SITE_ORIGIN } from "@/lib/seo/site";
 import type { ReactNode } from "react";
-import { Alegreya, Chakra_Petch, Inter } from "next/font/google";
+import { Alegreya, Chakra_Petch, Cinzel, Inter } from "next/font/google";
 import { CookieNoticeGate } from "@/components/CookieNoticeGate";
 import { PlausibleTracker } from "@/components/analytics/PlausibleTracker";
 import { LazyWebVitals } from "@/components/analytics/LazyAnalytics";
@@ -51,12 +52,21 @@ const atlasDisplay = Alegreya({
   preload: false,
 });
 
+// Roman capitals of the WOWARCANA wordmark in the top bar (--atlas-font-brand).
+const atlasBrand = Cinzel({
+  subsets: ["latin"],
+  weight: "700",
+  variable: "--font-atlas-brand",
+  // The wordmark draws at once in the display face and swaps in place.
+  preload: false,
+});
+
 // BCP 47 tags of the Valyro kit's dates and numbers.
 const valyroLocale = { en: "en-GB", ru: "ru-RU" } as const;
 
 const rootWords = {
-  en: { title: "Gildra — Master the Meta", description: "World of Warcraft tier lists, Mythic+ and raid statistics, builds and guides." },
-  ru: { title: "Gildra — мета World of Warcraft", description: "Тир-листы World of Warcraft, статистика Mythic+ и рейдов, билды и гайды." },
+  en: { title: "WowArcana — World of Warcraft guides and tools", description: "World of Warcraft tier lists, Mythic+ and raid statistics, builds and guides." },
+  ru: { title: "WowArcana — гайды и инструменты World of Warcraft", description: "Тир-листы World of Warcraft, статистика Mythic+ и рейдов, билды и гайды." },
 } as const;
 
 /**
@@ -66,10 +76,10 @@ const rootWords = {
  */
 export function rootMetadataFor(lang: "en" | "ru"): Metadata {
   return {
-    metadataBase: new URL("https://gildra.net"),
+    metadataBase: new URL(SITE_ORIGIN),
     title: rootWords[lang].title,
     description: rootWords[lang].description,
-    openGraph: { siteName: "Gildra", type: "website", locale: lang === "ru" ? "ru_RU" : "en_US" },
+    openGraph: { siteName: "WowArcana", type: "website", locale: lang === "ru" ? "ru_RU" : "en_US" },
     twitter: { card: "summary_large_image" },
   };
 }
@@ -79,7 +89,7 @@ export const rootMetadata = rootMetadataFor("en");
 export function RootDocument({ lang, children }: { lang: "en" | "ru"; children: ReactNode }) {
   return (
     // suppressHydrationWarning: the head script may set data-motion before React hydrates.
-    <html lang={lang} className={`${display.variable} ${ui.variable} ${atlasDisplay.variable} ${atlasBridgeClassName}`} {...atlasRootAttributes} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
+    <html lang={lang} className={`${display.variable} ${ui.variable} ${atlasDisplay.variable} ${atlasBrand.variable} ${atlasBridgeClassName}`} {...atlasRootAttributes} data-scroll-behavior="smooth" data-route-theme="wow" suppressHydrationWarning>
       <head>
         {/* The reader's "less motion" choice, applied before the first paint (lib/client/motionPreference.ts). */}
         <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript + ";" + siteThemeScript + ";" + localeArrivalScript }} />

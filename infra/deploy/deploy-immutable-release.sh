@@ -242,7 +242,7 @@ verify_library_route() {
     response_headers=$(mktemp)
     route_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
       --dump-header "$response_headers" --output /dev/null --write-out '%{http_code}' \
-      --resolve api.gildra.net:443:127.0.0.1 "https://api.gildra.net$route_path") || {
+      --resolve api.wowarcana.com:443:127.0.0.1 "https://api.wowarcana.com$route_path") || {
       rm -f "$response_headers"
       fail "private library route failed: $route_path"
     }
@@ -258,7 +258,7 @@ verify_library_route() {
     return
   fi
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 "https://api.gildra.net$route_path" >/dev/null
+    --resolve api.wowarcana.com:443:127.0.0.1 "https://api.wowarcana.com$route_path" >/dev/null
 }
 
 # nginx mounts infra/nginx/prod.conf as a single file. The upload step replaces
@@ -288,44 +288,44 @@ sync_nginx_config() {
 
 verify_local_health() {
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/livez >/dev/null
+    --resolve api.wowarcana.com:443:127.0.0.1 https://api.wowarcana.com/livez >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/readyz >/dev/null
+    --resolve api.wowarcana.com:443:127.0.0.1 https://api.wowarcana.com/readyz >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/genshin-impact/v1/status >/dev/null
+    --resolve api.wowarcana.com:443:127.0.0.1 https://api.wowarcana.com/genshin-impact/v1/status >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/genshin-impact >/dev/null
+    --resolve api.wowarcana.com:443:127.0.0.1 https://api.wowarcana.com/genshin-impact >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/league-of-legends/v1/status >/dev/null
+    --resolve api.wowarcana.com:443:127.0.0.1 https://api.wowarcana.com/league-of-legends/v1/status >/dev/null
   # The League of Legends web page is hidden for the WoW-only MVP; its API status above is still checked.
   for edition in retail classic classic-era hardcore; do
     prefixed_index_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
       --output /dev/null --write-out '%{http_code}' \
-      --resolve api.gildra.net:443:127.0.0.1 \
-      "https://api.gildra.net/world-of-warcraft/$edition/v1")
+      --resolve api.wowarcana.com:443:127.0.0.1 \
+      "https://api.wowarcana.com/world-of-warcraft/$edition/v1")
     [ "$prefixed_index_status" = "200" ] || fail "product API index failed for $edition: HTTP $prefixed_index_status"
   done
   if [ "$catalog_access_mode" = private ]; then
     catalog_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
       --output /dev/null --write-out '%{http_code}' \
-      --resolve api.gildra.net:443:127.0.0.1 \
-      'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US')
+      --resolve api.wowarcana.com:443:127.0.0.1 \
+      'https://api.wowarcana.com/v1/library/datasets?product=wow&locale=en_US')
     [ "$catalog_status" = 401 ] || fail "private catalog allowed an anonymous request: HTTP $catalog_status"
     for edition in retail classic classic-era hardcore; do
       prefixed_catalog_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
         --output /dev/null --write-out '%{http_code}' \
-        --resolve api.gildra.net:443:127.0.0.1 \
-        "https://api.gildra.net/world-of-warcraft/$edition/v1/library/datasets?locale=en_US")
+        --resolve api.wowarcana.com:443:127.0.0.1 \
+        "https://api.wowarcana.com/world-of-warcraft/$edition/v1/library/datasets?locale=en_US")
       [ "$prefixed_catalog_status" = 401 ] || fail "prefixed private catalog allowed an anonymous request for $edition: HTTP $prefixed_catalog_status"
     done
   else
     curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-      --resolve api.gildra.net:443:127.0.0.1 \
-      'https://api.gildra.net/v1/library/datasets?product=wow&locale=en_US' >/dev/null
+      --resolve api.wowarcana.com:443:127.0.0.1 \
+      'https://api.wowarcana.com/v1/library/datasets?product=wow&locale=en_US' >/dev/null
     for edition in retail classic classic-era hardcore; do
       curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-        --resolve api.gildra.net:443:127.0.0.1 \
-        "https://api.gildra.net/world-of-warcraft/$edition/v1/library/datasets?locale=en_US" >/dev/null
+        --resolve api.wowarcana.com:443:127.0.0.1 \
+        "https://api.wowarcana.com/world-of-warcraft/$edition/v1/library/datasets?locale=en_US" >/dev/null
     done
   fi
   verify_library_route /library
@@ -333,22 +333,22 @@ verify_local_health() {
   verify_library_route /library/items
   verify_library_route /ru/library/items
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve gildra.net:443:127.0.0.1 https://gildra.net/database >/dev/null
+    --resolve wowarcana.com:443:127.0.0.1 https://wowarcana.com/database >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/database >/dev/null
+    --resolve wowarcana.com:443:127.0.0.1 https://wowarcana.com/ru/database >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve gildra.net:443:127.0.0.1 https://gildra.net/library >/dev/null
+    --resolve wowarcana.com:443:127.0.0.1 https://wowarcana.com/library >/dev/null
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/library >/dev/null
+    --resolve wowarcana.com:443:127.0.0.1 https://wowarcana.com/ru/library >/dev/null
   if [ "$catalog_access_mode" = private ]; then
     verify_library_redirect /library/items
     verify_library_redirect /ru/library/items
   else
-    # Public catalog: the dataset pages are served by Next.js on gildra.net.
+    # Public catalog: the dataset pages are served by Next.js on wowarcana.com.
     curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-      --resolve gildra.net:443:127.0.0.1 https://gildra.net/library/items >/dev/null
+      --resolve wowarcana.com:443:127.0.0.1 https://wowarcana.com/library/items >/dev/null
     curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-      --resolve gildra.net:443:127.0.0.1 https://gildra.net/ru/library/items >/dev/null
+      --resolve wowarcana.com:443:127.0.0.1 https://wowarcana.com/ru/library/items >/dev/null
   fi
 }
 
@@ -357,14 +357,14 @@ verify_library_redirect() {
   response_headers=$(mktemp)
   route_status=$(curl --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
     --dump-header "$response_headers" --output /dev/null --write-out '%{http_code}' \
-    --resolve gildra.net:443:127.0.0.1 "https://gildra.net$route_path") || {
+    --resolve wowarcana.com:443:127.0.0.1 "https://wowarcana.com$route_path") || {
     rm -f "$response_headers"
     fail "library redirect failed: $route_path"
   }
   route_location=$(sed -n 's/^[Ll][Oo][Cc][Aa][Tt][Ii][Oo][Nn]:[[:space:]]*//p' "$response_headers" | head -n 1 | tr -d '\r')
   rm -f "$response_headers"
   case "$route_status:$route_location" in
-    3??:https://api.gildra.net$route_path) ;;
+    3??:https://api.wowarcana.com$route_path) ;;
     *) fail "library redirect does not preserve path: $route_path (HTTP $route_status, Location $route_location)" ;;
   esac
 }

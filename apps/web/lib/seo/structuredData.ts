@@ -4,7 +4,8 @@
  * comes from the page's own data — nothing here is invented for search.
  */
 /** Canonical origin of the site (the `metadataBase` of app/root-document.tsx). */
-export const SITE_ORIGIN = "https://gildra.net";
+import { SITE_ORIGIN } from "./site";
+export { SITE_ORIGIN } from "./site";
 
 export const absoluteUrl = (path: string) => new URL(path, SITE_ORIGIN).href;
 
@@ -14,9 +15,11 @@ export type JsonLdThing = { "@context"?: "https://schema.org"; "@type": string; 
 
 export const gildraOrganization = (): JsonLdThing => ({
   "@type": "Organization",
-  name: "Gildra",
+  "@id": absoluteUrl("/#organization"),
+  name: "WowArcana",
+  alternateName: "Gildra",
   url: absoluteUrl("/"),
-  logo: { "@type": "ImageObject", url: absoluteUrl("/brand/helmet.png"), width: 396, height: 512 },
+  logo: { "@type": "ImageObject", url: absoluteUrl("/brand/wowarcana-logo.png"), width: 512, height: 512 },
 });
 
 /** WebSite + Organization of the home page in one language. */
@@ -25,12 +28,14 @@ export function websiteLd(locale: "en" | "ru", description: string): JsonLdThing
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      name: "Gildra",
+      "@id": absoluteUrl(locale === "ru" ? "/ru#website" : "/#website"),
+      name: "WowArcana",
+      alternateName: "Gildra",
       url: absoluteUrl(locale === "ru" ? "/ru" : "/"),
       inLanguage: locale,
       description,
       publisher: gildraOrganization(),
-      // The site search (/search?q=) — Google's sitelinks search box reads it.
+      // Describe the site search visible to readers.
       potentialAction: {
         "@type": "SearchAction",
         target: { "@type": "EntryPoint", urlTemplate: `${absoluteUrl(locale === "ru" ? "/ru/search" : "/search")}?q={search_term_string}` },

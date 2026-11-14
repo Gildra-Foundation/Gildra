@@ -1,0 +1,112 @@
+/* atlas:strict — a Forever dungeon page: map beside the route, bosses, dangerous enemies. */
+/* Heading: the facts under the name, the dungeon's painting in the section's frame beside them. */
+/* The name stands at one height on every dungeon page, however many lines stand beside the painting. */
+.heading > div:last-child { align-items: start; }
+.headingFacts { margin-top: calc(var(--atlas-space-1) * -1); }
+.headingArt.headingArt { width: min(460px, 34vw); padding: var(--atlas-space-3); }
+.headingArt > div { position: relative; overflow: hidden; aspect-ratio: 2 / 1; border-radius: var(--atlas-radius); background: var(--material-base); box-shadow: inset 0 0 0 1px var(--material-line); }
+.headingArt img { object-fit: cover; filter: contrast(.94) saturate(.9); }
+@media (max-width: 1100px) { .headingArt.headingArt { width: 100%; max-width: 560px; } }
+
+.preparation.preparation { margin-top: var(--atlas-space-5); }
+.preparation ul { display: grid; list-style: disc; gap: var(--atlas-space-2); margin: 0; padding-inline-start: var(--atlas-space-5); color: var(--atlas-text); line-height: var(--atlas-leading-body); }
+.preparation li::marker { color: var(--material-light); }
+
+/* Map and route: the map stays in view while the steps scroll past it. */
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); align-items: start; }
+.workspace > * { min-width: 0; }
+.workspace[data-route] { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.workspace[data-route] .mapPanel { position: sticky; top: calc(var(--atlas-sticky-top) + var(--atlas-control-height) + var(--atlas-space-3)); }
+.routePanel { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-control-height) + var(--atlas-space-4)); }
+
+.route { display: grid; margin: 0; padding: 0; list-style: none; color: var(--atlas-text); }
+.route .step { position: relative; min-height: 36px; padding: 0 0 var(--atlas-space-5) calc(36px + var(--atlas-space-4)); border: 0; }
+.route .step:last-child { padding-bottom: 0; }
+/* The path between two steps. */
+.route .step::before { position: absolute; top: 40px; bottom: 4px; left: 17px; width: 1px; background: var(--material-line); content: ""; }
+.route .step:last-child::before { display: none; }
+.stepNumber { position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--material-line); border-radius: 50%; background: var(--material-base); color: var(--material-light); font: var(--atlas-weight-display) var(--atlas-text-title) / 1 var(--atlas-font-display); font-variant-numeric: lining-nums; }
+.route .step:target .stepNumber, .route .step[data-active="true"] .stepNumber { border-color: var(--material-light); background: var(--material-light); color: var(--atlas-bg); }
+.route h4 { margin: 0; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 650; line-height: var(--atlas-leading-snug); }
+.route h4 a { min-height: 36px; text-decoration: none; }
+.route p { margin: 0 0 var(--atlas-space-2); line-height: var(--atlas-leading-body); }
+.routeBosses { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.routeBoss { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 36px; padding: var(--atlas-space-1) var(--atlas-space-3) var(--atlas-space-1) var(--atlas-space-1); border: 1px solid var(--material-line); border-radius: var(--atlas-radius-control); background: color-mix(in srgb, var(--atlas-bg) 45%, transparent); color: var(--atlas-text-strong); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); text-decoration: none; }
+.routeBoss img { flex: none; border-radius: 50%; object-fit: cover; }
+.routeBoss:not(:has(img)) { padding-inline-start: var(--atlas-space-3); }
+.routeBoss:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
+
+/* Bosses: rows on one plaque, two columns on a wide screen. */
+.roleFilter { display: flex; margin-bottom: var(--atlas-space-4); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-control-height) + var(--atlas-space-4)); }
+.bosses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--atlas-space-6); align-items: start; margin: 0; padding: 0; list-style: none; }
+.boss { min-width: 0; border-top: 1px solid var(--material-line); scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-control-height) + var(--atlas-space-4)); }
+.boss:nth-child(-n+2) { border-top: 0; }
+.boss:focus { outline: none; }
+.boss:target .bossName { color: var(--material-light); }
+.bossSummary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: var(--atlas-space-3); min-height: 76px; padding-block: var(--atlas-space-2); list-style: none; }
+summary.bossSummary { cursor: pointer; }
+.bossSummary::-webkit-details-marker { display: none; }
+summary.bossSummary:focus-visible { outline: 2px solid var(--material-light); outline-offset: 2px; }
+.portrait { --material-icon-edge: var(--material-line); }
+.portrait > svg { box-sizing: border-box; padding: 9px; color: var(--material-light); stroke-width: 1.5; }
+.bossHead { display: grid; gap: 2px; min-width: 0; }
+.bossName { display: flex; align-items: baseline; gap: var(--atlas-space-2); min-width: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.bossOrder { flex: none; color: var(--material-light); font: 650 var(--atlas-text-meta) / 1 var(--atlas-font-ui); font-variant-numeric: tabular-nums lining-nums; }
+/* What the boss does, in one line: the names of its abilities. */
+.bossAbilities { overflow: hidden; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-snug); text-overflow: ellipsis; white-space: nowrap; }
+.boss details[open] .bossAbilities { visibility: hidden; }
+.bossRoles { display: flex; gap: var(--atlas-space-1); }
+.bossRoles img { display: block; opacity: .3; filter: grayscale(1); }
+.bossRoles img[data-on] { opacity: 1; filter: none; }
+.chevron { width: 18px; height: 18px; color: var(--material-light); }
+.boss details[open] .chevron { rotate: 180deg; }
+.bossBody { padding: var(--atlas-space-1) 0 var(--atlas-space-5) calc(56px + var(--atlas-space-3)); }
+.bossPreparation { margin-bottom: var(--atlas-space-4); color: var(--atlas-text); line-height: var(--atlas-leading-body); }
+.bossPreparation h4 { margin: 0 0 var(--atlas-space-1); color: var(--material-light); font: 650 var(--atlas-text-label) / 1.3 var(--atlas-font-ui); letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.bossPreparation p { margin: 0 0 var(--atlas-space-2); }
+.mechanics { display: grid; gap: var(--atlas-space-4); margin: 0; }
+.mechanics > div[data-match] { margin-inline-start: calc(var(--atlas-space-3) * -1); padding-inline-start: calc(var(--atlas-space-3) - 2px); border-inline-start: 2px solid var(--material-light); }
+.spell { display: flex; align-items: center; gap: var(--atlas-space-3); color: var(--atlas-text-strong); font-weight: 650; line-height: var(--atlas-leading-snug); }
+.spell > span:last-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-1) var(--atlas-space-2); min-width: 0; }
+.audience { color: var(--material-light); font-size: var(--atlas-text-meta); font-weight: 500; }
+.mechanics dd { margin: var(--atlas-space-2) 0 0; color: var(--atlas-text); line-height: var(--atlas-leading-body); }
+
+/* Dangerous enemies: every entry is built the same. */
+.enemies { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--atlas-space-5) var(--atlas-space-6); margin: 0; padding: 0; list-style: none; }
+.enemies li { display: flex; align-items: flex-start; gap: var(--atlas-space-3); min-width: 0; }
+.enemies li > div { min-width: 0; }
+.enemyName { margin: 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-display); text-shadow: 0 1px 3px var(--atlas-bg); }
+.ability { margin: var(--atlas-space-1) 0; color: var(--material-light); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+.enemyText { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); }
+
+@media (max-width: 1100px) {
+  .bosses { grid-template-columns: minmax(0, 1fr); }
+  .boss:nth-child(2) { border-top: 1px solid var(--material-line); }
+}
+@media (max-width: 900px) {
+  .workspace[data-route] { grid-template-columns: minmax(0, 1fr); }
+  .workspace[data-route] .mapPanel { position: relative; top: auto; }
+}
+@media (max-width: 600px) {
+  .bossSummary { gap: var(--atlas-space-2); }
+  .bossBody { padding-inline-start: 0; }
+}
+@media (pointer: coarse) { .routeBoss, .route h4 a { min-height: 44px; } }
+
+/* Answer to the pointer and to opening a boss; still under the system setting and the site's "Less motion" switch. */
+@keyframes bossOpen { from { opacity: 0; translate: 0 -6px; } }
+@media (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion="reduced"])) .boss details[open] .bossBody { animation: bossOpen var(--atlas-duration-slow) var(--atlas-ease) backwards; }
+  :global(html:not([data-motion="reduced"])) .chevron { transition: rotate var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .bossRoles img { transition: opacity var(--atlas-duration) var(--atlas-ease), filter var(--atlas-duration) var(--atlas-ease); }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion="reduced"])) :is(.bossName, .routeBoss, .portrait) { transition: color var(--atlas-duration) var(--atlas-ease), border-color var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) summary.bossSummary:hover .portrait { scale: 1.06; }
+  :global(html:not([data-motion="reduced"])) .routeBoss:is(a):hover { translate: 0 -1px; }
+}
+@media (hover: hover) and (pointer: fine) {
+  summary.bossSummary:hover .bossName { color: var(--material-light); }
+  .routeBoss:is(a):hover { border-color: var(--material-light); }
+}
+@media (forced-colors: active) { .route .step[data-active="true"] .stepNumber { outline: 2px solid Highlight; } .mechanics > div[data-match] { border-color: Highlight; } }

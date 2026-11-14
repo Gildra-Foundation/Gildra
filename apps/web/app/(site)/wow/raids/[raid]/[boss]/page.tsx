@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!raid || !boss) return {};
   const path = `/wow/raids/${raid.slug}/${boss.slug}`;
   return {
-    title: `${boss.nameEn} — Midnight Raid Guide — Gildra`,
+    title: `${boss.nameEn} — Midnight Raid Guide — WowArcana`,
     description: `${boss.nameEn} — Midnight Season 1 raid boss: battle plan, mechanics and abilities.`,
     alternates: { canonical: path, languages: { en: path, ru: `/ru${path}`, "x-default": path } },
   };

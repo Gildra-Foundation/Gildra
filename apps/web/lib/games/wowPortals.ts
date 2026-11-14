@@ -1,4 +1,5 @@
 import { p, type Lang } from "@/lib/i18n-paths";
+import { WOW_VERSION_EMBLEMS } from "@/lib/games/wow/assets";
 
 /**
  * The versions of World of Warcraft the site covers, in the order of the top strip.
@@ -8,13 +9,15 @@ import { p, type Lang } from "@/lib/i18n-paths";
 export type WowPortalId = "retail" | "forever" | "mists";
 type Words = { en: string; ru: string };
 /** A part of the site several versions have; switching versions keeps the reader in it. */
-export type WowPortalSection = "raids" | "dungeons" | "classes" | "talents";
+export type WowPortalSection = "raids" | "dungeons" | "classes" | "talents" | "library" | "professions" | "tiers";
 
 export type WowPortal = {
   id: WowPortalId;
   label: Words;
   /** Narrow screens. */
   shortLabel: Words;
+  /** The version's emblem from the game files. */
+  emblem: string;
   path: string;
   sections: Partial<Record<WowPortalSection, string>>;
 };
@@ -22,20 +25,23 @@ export type WowPortal = {
 export const wowPortals: readonly WowPortal[] = [
   {
     id: "retail",
+    emblem: WOW_VERSION_EMBLEMS.retail,
     label: { en: "Midnight", ru: "Midnight" },
     shortLabel: { en: "Midnight", ru: "Midnight" },
-    path: "/wow",
-    sections: { raids: "/wow/raids", dungeons: "/wow/mythic-plus", classes: "/wow/classes", talents: "/wow/classes" },
+    path: "/",
+    sections: { raids: "/wow/raids", dungeons: "/wow/mythic-plus", classes: "/wow/classes", talents: "/wow/classes", library: "/library", professions: "/wow/professions", tiers: "/tier-lists" },
   },
   {
     id: "forever",
+    emblem: WOW_VERSION_EMBLEMS.forever,
     label: { en: "Forever", ru: "Forever" },
     shortLabel: { en: "Forever", ru: "Forever" },
     path: "/wow/forever",
-    sections: { raids: "/wow/forever/raids", dungeons: "/wow/forever/dungeons" },
+    sections: { raids: "/wow/forever/raids", dungeons: "/wow/forever/dungeons", classes: "/wow/forever/classes", talents: "/wow/forever/talent-calc", library: "/wow/forever/library", professions: "/wow/forever/professions", tiers: "/wow/forever/tier-lists" },
   },
   {
     id: "mists",
+    emblem: WOW_VERSION_EMBLEMS.mists,
     label: { en: "Mists of Pandaria Classic", ru: "Mists of Pandaria Classic" },
     shortLabel: { en: "MoP Classic", ru: "MoP Classic" },
     path: "/wow/mists",
@@ -64,6 +70,7 @@ const retailAliases: Record<string, WowPortalSection> = {
 export function wowPortalSection(path: string): WowPortalSection | null {
   const page = bare(path);
   const portal = wowPortalFor(page);
+  if (portal.id === "forever" && within(page, "/wow/forever/changes")) return "classes";
   let best: { section: WowPortalSection; length: number } | null = null;
   const consider = (section: WowPortalSection, href: string) => {
     // A version's hub is its own page, not a section, unless the section lives there.

@@ -1,0 +1,33 @@
+/* atlas:strict — map viewport, its toolbar and route navigation. */
+.root { min-width: 0; }
+/* Toolbar: zoom on the left, links on the right; every control is a labelled 40 px button (44 px under a finger). */
+.controls { display: flex; align-items: center; gap: var(--atlas-space-2); margin-block-end: var(--atlas-space-3); }
+.controls :is(button, a), .status button { display: inline-grid; place-items: center; flex: none; width: 40px; height: 40px; padding: 0; border: 1px solid var(--material-line, var(--atlas-line)); border-radius: var(--atlas-radius-control); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent); color: var(--atlas-text-strong); cursor: pointer; text-decoration: none; }
+.controls svg { width: 18px; height: 18px; }
+.controls button:disabled { opacity: .4; cursor: default; }
+.zoom { display: flex; align-items: center; border: 1px solid var(--material-line, var(--atlas-line)); border-radius: var(--atlas-radius-control); background: color-mix(in srgb, var(--atlas-bg) 55%, transparent); }
+.zoom button { border: 0; background: none; }
+.zoom output { min-width: 3.4em; color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums lining-nums; text-align: center; }
+.spacer { flex: 1; }
+.status button { width: auto; padding-inline: var(--atlas-space-3); font-size: var(--atlas-text-small); }
+.viewport { width: 100%; max-height: 65vh; overflow: auto; position: relative; border: 1px solid var(--material-line, var(--atlas-line)); border-radius: var(--atlas-radius); background: var(--atlas-surface-sunken); overscroll-behavior: contain; scroll-behavior: auto; cursor: grab; }
+.viewport:active { cursor: grabbing; }
+.canvas { position: relative; min-width: 100%; }
+.canvas img, .canvas svg { display: block; width: 100%; height: auto; user-select: none; }
+.canvas img { max-width: none; }
+.pin { position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center; width: 44px; height: 44px; border: 2px solid var(--material-light, var(--atlas-accent)); border-radius: 50%; background: var(--atlas-bg); color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / 1 var(--atlas-font-display); font-variant-numeric: lining-nums; text-decoration: none; cursor: pointer; }
+.pin[aria-current="true"] { background: var(--material-light, var(--atlas-accent)); color: var(--atlas-bg); }
+.controls :focus-visible, .status button:focus-visible, .viewport:focus-visible, .pin:focus-visible, .step a:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
+.status { padding: var(--atlas-space-3); color: var(--atlas-text-muted); }
+.step { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-control-height) + var(--atlas-space-4)); }
+.step h4 a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; }
+@media (pointer: coarse) { .controls :is(button, a) { width: 44px; height: 44px; } }
+@media (hover: hover) and (pointer: fine) {
+  .controls > :is(button, a):not(:disabled):hover { border-color: var(--material-light, var(--atlas-accent)); color: var(--material-light, var(--atlas-accent)); }
+  .zoom button:not(:disabled):hover { color: var(--material-light, var(--atlas-accent)); }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion="reduced"])) :is(.controls button, .controls a, .pin) { transition: border-color var(--atlas-duration) var(--atlas-ease), color var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration) var(--atlas-ease); }
+  :global(html:not([data-motion="reduced"])) .pin:hover { scale: 1.1; }
+}
+@media (forced-colors: active) { .pin[aria-current="true"] { outline: 3px solid Highlight; } }

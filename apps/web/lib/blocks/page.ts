@@ -39,8 +39,7 @@ export type PageConfig = {
   path: string;
   /** "default" = TopNav + .app/.main + Footer; "bare" = TopNav only (404-style). */
   layout: "default" | "bare";
-  shell?: { reveal?: boolean };
+  /** `frame`: the blocks render their own AtlasFrame, which owns <main> (PageShell `frame`). */
+  shell?: { reveal?: boolean; frame?: boolean };
   blocks: BlockInstance[];
 };
-
-export const definePageConfig = (config: PageConfig) => config;

@@ -1,0 +1,158 @@
+[
+  {
+    "slug": "razorfen-downs",
+    "boss": "Tuten'kash",
+    "page": "https://azeroth.wiki/forever/dungeons/razorfen-downs",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-tutenkash-5556e189ba78.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-tutenkash-5556e189ba78.webp",
+    "sha256": "5556e189ba782a3bff0a2aa9e41c77282ba12da346b8ada85903b789e7db32e7",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Gahz'rilla",
+    "page": "https://azeroth.wiki/forever/dungeons/zul-farrak",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-gahzrilla-a90b322d2fa9.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-gahzrilla-a90b322d2fa9.webp",
+    "sha256": "a90b322d2fa90cf2195709c06381d52a32dd283d6273d4588e90505790f94ffc",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Antu'sul",
+    "page": "https://azeroth.wiki/forever/dungeons/zul-farrak",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-antusul-772f32114964.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-antusul-772f32114964.webp",
+    "sha256": "772f3211496409100aed65a7bbcb8d0dc0eb974df38d17fe5425e0df9f107d61",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Witch Doctor Zum'rah",
+    "page": "https://azeroth.wiki/forever/dungeons/zul-farrak",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-witch-doctor-zumrah-ecc64247a6bd.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-witch-doctor-zumrah-ecc64247a6bd.webp",
+    "sha256": "ecc64247a6bdeb68e655db5a3b348247cbee77c003a58e0b06f0f7b897268386",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Jammal'an the Prophet",
+    "page": "https://azeroth.wiki/forever/dungeons/sunken-temple",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-jammalan-the-prophet-aedefb544580.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-jammalan-the-prophet-aedefb544580.webp",
+    "sha256": "aedefb544580498146bd2e1f9d603eda464e69cfcd173f7afed259255912d76a",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Bael'Gar",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-baelgar-533c00604b7c.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-baelgar-533c00604b7c.webp",
+    "sha256": "533c00604b7ccdf5fc5693717db230671932688bd94702e3fe709ad2e731b9e9",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Shadow Hunter Vosh'gajin",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-shadow-hunter-voshgajin-435f8750b044.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-shadow-hunter-voshgajin-435f8750b044.webp",
+    "sha256": "435f8750b0448296fe90e0cf3d72d943862f0bff1c745b77a2b8e57ad9070035",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Immol'thar",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-immolthar-8e60e855f315.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-immolthar-8e60e855f315.webp",
+    "sha256": "8e60e855f3155a776d82e43042243936f8fa0e7b840fca31e6861c9cfcfb9a8c",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Guard Mol'dar",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-guard-moldar-b62cf27a5a07.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-guard-moldar-b62cf27a5a07.webp",
+    "sha256": "b62cf27a5a07f8af509d9af139e9acd4e65857936f78ce2f6d5abfb9a67f48e2",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Guard Slip'kik",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-guard-slipkik-11155899b146.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-guard-slipkik-11155899b146.webp",
+    "sha256": "11155899b146be27967e75dc7c0f152e6621f370967d2d07ffabf39225d8c715",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Cho'Rush the Observer",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-chorush-the-observer-ecd69809d880.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-chorush-the-observer-ecd69809d880.webp",
+    "sha256": "ecd69809d8809678b408f12e83a23433aa545a6fbd475c92dfb4736017a7aaa7",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Nerub'enkan",
+    "page": "https://azeroth.wiki/forever/dungeons/stratholme",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-nerubenkan-015f7fa697be.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-nerubenkan-015f7fa697be.webp",
+    "sha256": "015f7fa697beed5ab53d29d8c0ef7491b74b017dcc1441cfac080fd01d54a9d0",
+    "size": [
+      128,
+      64
+    ]
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Postmaster Malown",
+    "page": "https://azeroth.wiki/forever/dungeons/stratholme",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-postmastermalown-bd35d2501bc0.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-postmastermalown-bd35d2501bc0.webp",
+    "sha256": "bd35d2501bc0e678f12a83fb8bb1b5460af0f0bf454a9c983a7602d7291bb840",
+    "size": [
+      128,
+      64
+    ]
+  }
+]

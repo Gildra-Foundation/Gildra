@@ -1,22 +1,10 @@
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
-import { siteThemeScript, homeThemes } from "../components/platform/home/homeThemes.ts";
-
-function boot(cookie, stored, storageBlocked = false) {
+import { siteThemeScript } from "../components/platform/home/homeThemes.ts";
+for (const saved of [null, "arthas", "illidan", "garek", "varok", "untrusted"]) {
   const root = { dataset: {} };
-  runInNewContext(siteThemeScript, {
-    document: { cookie, documentElement: root },
-    localStorage: { getItem() { if (storageBlocked) throw Error("Blocked"); return stored; } },
-  });
-  return root.dataset.siteTheme;
+  runInNewContext(siteThemeScript, { document: { cookie: `gildra-home-theme=${saved}`, documentElement: root }, localStorage: { getItem: () => saved } });
+  assert.equal(root.dataset.siteTheme, "arthas");
 }
-for (const { id } of homeThemes) {
-  assert.equal(boot(`gildra-home-theme=${id}`, null), id);
-  assert.equal(boot("", id), id);
-  assert.equal(boot(`other=1; gildra-home-theme=${id}; consent=1`, null, true), id);
-}
-assert.equal(boot("", null), "arthas");
-assert.equal(boot("", "untrusted"), "arthas");
-assert.equal(boot("gildra-home-theme=illidan", "arthas"), "illidan");
-assert.equal(boot("", "varok", true), "arthas");
-console.log("Site theme: all preferences, cookie priority, blocked storage and invalid defaults passed.");
+runInNewContext(siteThemeScript, { document: { documentElement: { dataset: {} } } });
+console.log("Site theme: Arthas for all legacy preferences, without storage access.");

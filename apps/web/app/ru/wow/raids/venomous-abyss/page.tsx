@@ -3,7 +3,7 @@ import { VenomousGuidePage } from "@/components/wow/raid/VenomousGuidePage";
 import { withPageOpenGraph } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = withPageOpenGraph("ru", {
-  title: "Отравленная бездна — рейдовый гайд Gildra",
+  title: "Отравленная бездна — рейдовый гайд WowArcana",
   description: "Все восемь боссов Отравленной бездны: понятный порядок боя, задачи вашей специализации, прислужники и прерывания на обычной и героической сложности.",
   alternates: {
     canonical: "/ru/wow/raids/venomous-abyss",

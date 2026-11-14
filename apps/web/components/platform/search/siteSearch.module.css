@@ -30,17 +30,38 @@
 }
 
 /* Dialog */
-.dialog { display: grid; }
+/* Field, list, hints: the list takes what is left and nothing else grows (the
+   kit's body is the grid; without the rows its auto tracks shared the free
+   height of the phone sheet and the field slid down while results changed). */
+.dialog :global(.ui-dialog__body) { grid-template-rows: auto minmax(0, 1fr) auto; align-content: start; }
 
 /* Wider screens: the dialog hangs from a fixed line near the top, as a command
-   palette does, so results arriving under the field grow it downwards instead of
-   re-centring it on every keystroke. Enter and exit are the bar's own tempo. */
+   palette does, and keeps one height, so results arriving under the field never
+   move it. It grows out of the toolbar's field (SiteSearchDialog: a clip from
+   that field's box to its own, 220 ms) instead of the kit's zoom. */
 @media (min-width: 721px) {
-  :global(.ui-modal-layer.ui-dialog-layer):has(> .dialog.dialog) { align-items: flex-start; padding-top: min(14vh, 120px); }
+  :global(.ui-modal-layer.ui-dialog-layer):has(> .dialog.dialog) { align-items: flex-start; padding-top: min(12vh, 104px); }
 }
 /* (Specificity above the kit's centred and phone-sheet rules.) */
 :global(.ui-modal-layer.ui-dialog-layer) > .dialog.dialog.dialog[data-state="open"] { animation-duration: var(--atlas-duration); }
 :global(.ui-modal-layer.ui-dialog-layer) > .dialog.dialog.dialog[data-state="closed"] { animation-duration: var(--atlas-duration-fast); }
+:global(.ui-modal-layer.ui-dialog-layer) > .dialog.dialog.dialog[data-state="open"][data-morph] { animation: search-morph calc(var(--atlas-duration) * 1.1) var(--atlas-ease); }
+.dialog[data-state="open"][data-morph] [data-search-reveal] { animation: search-reveal calc(var(--atlas-duration-fast) * 1.07) ease-out calc(var(--atlas-duration-fast) * .4) backwards; }
+@keyframes search-morph { from { clip-path: var(--morph-clip); translate: var(--morph-shift); opacity: .4; } }
+@keyframes search-reveal { from { opacity: 0; } }
+
+/* The page behind softens instead of going black; less transparency keeps a
+   plain, darker veil. (Pausing the page's own motion under it was tried: the
+   :has() on <html> restyled the whole document on every opening, 140 ms.) */
+:global(.ui-modal-layer.ui-dialog-layer):has(> .dialog.dialog) {
+  --ui-overlay: rgba(4, 7, 11, .62);
+  --ui-overlay-blur: blur(6px) saturate(.85);
+}
+@media (prefers-reduced-transparency: reduce) {
+  :global(.ui-modal-layer.ui-dialog-layer):has(> .dialog.dialog) { --ui-overlay: rgba(3, 4, 5, .84); --ui-overlay-blur: none; }
+}
+:global([data-transparency="reduced"]) :global(.ui-modal-layer.ui-dialog-layer):has(> .dialog.dialog),
+:global(.ui-modal-layer.ui-dialog-layer[data-veil="plain"]):has(> .dialog.dialog) { --ui-overlay: rgba(3, 4, 5, .84); --ui-overlay-blur: none; }
 
 .head {
   display: flex;
@@ -50,14 +71,20 @@
   border-bottom: 1px solid var(--atlas-line-soft);
 }
 
-.head > :first-child { flex: 1; }
+.head > :first-child { flex: 1; min-width: 0; }
+.head > :first-child input { min-width: 0; width: 100%; }
 
+.head input { font-size: var(--atlas-text-body); }
 .head input::-webkit-search-cancel-button { display: none; }
 /* The field's wrapper draws the focus ring; the site-wide outline on the input
    itself drew a second ring inside it. */
 .head input:focus-visible { outline: none; }
 
+.clear,
 .close {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
   min-width: 44px;
   min-height: var(--atlas-control-height);
   color: var(--atlas-text-subtle);
@@ -66,17 +93,25 @@
   background: none;
   cursor: pointer;
   font: 600 var(--atlas-text-label) / 1 var(--atlas-font-mono);
+  transition: color var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast) var(--atlas-ease);
 }
+.clear { border-color: transparent; }
+.closeIcon { display: none; }
 
-.close:hover { color: var(--atlas-text-strong); }
+.clear:hover,
+.close:hover { color: var(--atlas-text-strong); border-color: var(--atlas-line); }
+.clear:focus-visible,
 .close:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 2px; }
 
+/* One height for every state (recent, results, nothing found), so the panel
+   never jumps while typing. */
 .list {
+  height: min(56vh, 480px);
   min-height: 0;
-  max-height: min(56vh, 520px);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--atlas-space-2) var(--atlas-space-2) var(--atlas-space-3);
+  scrollbar-width: thin;
 }
 
 .group + .group { margin-top: var(--atlas-space-2); }
@@ -93,12 +128,15 @@
 .option {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 0 var(--atlas-space-3);
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px var(--atlas-space-3);
   color: var(--atlas-text);
   border-radius: var(--atlas-radius);
+  cursor: pointer;
   scroll-margin: var(--atlas-space-2);
+  text-decoration: none;
+  transition: background-color var(--atlas-duration-fast) var(--atlas-ease), box-shadow var(--atlas-duration-fast) var(--atlas-ease);
 }
 
 .option[aria-selected="true"] {
@@ -107,16 +145,57 @@
   box-shadow: inset 2px 0 0 var(--atlas-accent);
 }
 
-.optionIcon { flex: none; color: var(--atlas-text-subtle); }
-.optionTitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A 32 px slot: the entry's own picture in a thin frame, or the icon of its kind. */
+.optionIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  color: var(--atlas-text-subtle);
+  border: 1px solid var(--atlas-line-soft);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-sunken);
+}
+.optionIcon[data-image] { border-color: var(--atlas-line); }
+.optionIcon img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.option[aria-selected="true"] .optionIcon:not([data-image]) { color: var(--atlas-accent-strong); border-color: var(--atlas-accent); }
+
+.optionText { display: grid; flex: 1; min-width: 0; gap: 2px; }
+.optionTitle,
+.optionDetail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.optionDetail { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); }
+.optionTitle mark {
+  color: var(--atlas-text-strong);
+  background: none;
+  font-weight: 650;
+  text-decoration: underline 1px var(--atlas-accent);
+  text-underline-offset: 3px;
+}
+
 .enter { flex: none; color: var(--atlas-accent); }
 
 .status {
   margin: 0;
   padding: var(--atlas-space-3);
-  color: var(--atlas-text-subtle);
+  color: var(--atlas-text-muted);
   font-size: var(--atlas-text-small);
 }
+
+/* While the list loads (only on a slow first opening): four quiet rows. */
+.skeleton { display: grid; gap: var(--atlas-space-2); padding: var(--atlas-space-2) var(--atlas-space-3); }
+.skeleton i {
+  display: block;
+  height: 32px;
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface-sunken);
+  animation: search-pulse var(--atlas-duration-pulse) var(--atlas-ease) infinite alternate;
+}
+.skeleton i:nth-child(2) { width: 82%; }
+.skeleton i:nth-child(3) { width: 64%; }
+.skeleton i:nth-child(4) { width: 74%; }
+@keyframes search-pulse { to { opacity: .45; } }
 
 .foot {
   display: flex;
@@ -143,11 +222,40 @@
 
 /* Press feedback, as on every atlas control. */
 .trigger:active,
+.clear:active,
 .close:active { scale: var(--atlas-press-scale); }
-@media (prefers-reduced-motion: reduce) { .trigger:active, .close:active { scale: none; } }
+@media (prefers-reduced-motion: reduce) { .trigger:active, .clear:active, .close:active { scale: none; } }
+/* The field the dialog grew out of stays lit while the dialog is open. */
+.trigger[data-open] { color: var(--atlas-text-strong); border-color: var(--atlas-accent); }
 
-/* Phones: the sheet keeps its height while results arrive, so its header does
-   not jump up the screen (layout shift 0.29 measured 2026-10-13). */
+/* Phones: a full-screen sheet with the field on top and big rows. */
 @media (max-width: 720px) {
-  .list { min-height: min(56vh, 520px); }
+  :global(.ui-modal-layer.ui-dialog-layer):has(> .dialog.dialog) { align-items: stretch; padding: 0; }
+  :global(.ui-modal-layer.ui-dialog-layer) > .dialog.dialog.dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-width: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: none;
+  }
+  .dialog :global(.ui-dialog__body) { height: 100%; align-content: stretch; }
+  .head { padding: max(var(--atlas-space-3), env(safe-area-inset-top)) var(--atlas-space-3) var(--atlas-space-3); }
+  .head input { min-height: 48px; font-size: 16px; }
+  .list { height: auto; }
+  .option { min-height: 56px; }
+  .closeKey { display: none; }
+  .closeIcon { display: block; }
+  .clear,
+  .close { min-width: 48px; min-height: 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option, .enter { transition: none; }
+  .skeleton i { animation: none; }
+}
+:global([data-motion="reduced"]) .skeleton i { animation: none; }
+@media (forced-colors: active) {
+  .option[aria-selected="true"] { outline: 2px solid Highlight; }
+  .optionTitle mark { color: Highlight; }
 }

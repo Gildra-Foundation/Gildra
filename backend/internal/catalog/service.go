@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Gildra-Foundation/Gildra/backend/internal/itemquality"
 	"math"
 	"strings"
 	"time"
@@ -100,13 +101,14 @@ type Category struct {
 }
 
 type ListParams struct {
-	Product  string
-	Type     string
-	Locale   string
-	Query    string
-	Category string
-	Cursor   string
-	Limit    int
+	Expansion string
+	Product   string
+	Type      string
+	Locale    string
+	Query     string
+	Category  string
+	Cursor    string
+	Limit     int
 }
 
 type Page struct {
@@ -117,8 +119,10 @@ type Page struct {
 }
 
 type Service struct {
-	postgres *pgxpool.Pool
-	totals   *totalCache
+	postgres       *pgxpool.Pool
+	totals         *totalCache
+	midnightCounts midnightCountCache
+	itemReference  itemReferenceCache
 }
 
 func NewService(postgres *pgxpool.Pool) *Service {
@@ -221,6 +225,9 @@ func productFreshness(activeBuild, releaseStatus, releaseBuild, checkStatus, obs
 }
 
 func (s *Service) Categories(ctx context.Context, product, entityType, locale string) ([]Category, error) {
+	if strings.TrimSpace(entityType) == "achievement" {
+		return s.achievementCategories(ctx, strings.TrimSpace(product), locale)
+	}
 	if strings.TrimSpace(entityType) == "" {
 		return nil, invalidRequest("entity type is required")
 	}
@@ -258,6 +265,9 @@ func (s *Service) Categories(ctx context.Context, product, entityType, locale st
 }
 
 func (s *Service) List(ctx context.Context, params ListParams) (Page, error) {
+	if err := validateExpansion(params.Product, params.Expansion); err != nil {
+		return Page{}, err
+	}
 	if params.Limit < 1 || params.Limit > 100 {
 		return Page{}, invalidRequest("limit must be between 1 and 100")
 	}
@@ -342,7 +352,7 @@ func (s *Service) listPage(ctx context.Context, params ListParams, cursorID uuid
 `)+`
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
-		  `+publicCatalogUsabilityPredicate("e", "v")+`
+		  `+publicCatalogUsabilityPredicate("e", "v")+expansionPredicate(params.Expansion, "e", "v", "$8")+" AND $8::text IS NOT NULL "+`
 		  AND ($1 = '' OR p.slug = $1)
 		  AND ($2 = '' OR e.entity_type = $2)
 		  AND e.id > $3
@@ -360,7 +370,7 @@ func (s *Service) listPage(ctx context.Context, params ListParams, cursorID uuid
 		LIMIT $6`,
 		strings.TrimSpace(params.Product), strings.TrimSpace(params.Type), cursorID,
 		normalizeLocale(params.Locale), strings.TrimSpace(params.Query), params.Limit+1,
-		strings.TrimSpace(params.Category),
+		strings.TrimSpace(params.Category), params.Expansion,
 	)
 	if err != nil {
 		return nil, false, fmt.Errorf("list game entities: %w", err)
@@ -394,7 +404,7 @@ func publicEntitySelect(localeParam, extraJoins string) string {
 	return strings.NewReplacer("{locale}", localeParam, "{extraJoins}", extraJoins).Replace(publicEntitySelectTemplate)
 }
 
-const publicEntitySelectTemplate = `
+var publicEntitySelectTemplate = `
 		SELECT
 			e.id, p.slug, e.entity_type, e.external_id,
 			COALESCE(NULLIF(l.slug,''),NULLIF(fallback.slug,''),e.canonical_slug),
@@ -413,7 +423,7 @@ const publicEntitySelectTemplate = `
 			COALESCE(fa.icon_name, spell_fa.icon_name, source_icon.icon_name, db2_fa.icon_name,
 				NULLIF(v.payload #>> '{raidbots,icon}',''),NULLIF(v.payload #>> '{raidbots,spellIcon}',''),
 				CASE WHEN v.payload->>'icon_file_data_id' ~ '^[0-9]+$' THEN v.payload->>'icon_file_data_id' END,
-				CASE WHEN spell_misc.payload->>'SpellIconFileDataID' ~ '^[0-9]+$' THEN spell_misc.payload->>'SpellIconFileDataID' END),CASE WHEN ci.quality ~ '^[0-9]+$' THEN ci.quality::int END
+				CASE WHEN spell_misc.payload->>'SpellIconFileDataID' ~ '^[0-9]+$' THEN spell_misc.payload->>'SpellIconFileDataID' END),` + itemquality.SQL("ci.quality") + `
 		FROM game_entities e
 		JOIN game_products p ON p.id = e.product_id
 {extraJoins}		LEFT JOIN game_entity_versions v ON v.id = e.published_version_id
@@ -509,14 +519,16 @@ const publicEntitySelectTemplate = `
 		LEFT JOIN LATERAL (
 			SELECT jsonb_build_array(jsonb_build_object('type','quest_info','status',registry.enrichment_status,
 				'bullet_text',COALESCE(quest_text.bullet_text,''),
-				'objectives',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',objective.objective_id,'type',objective.objective_type,'object_id',objective.object_id,'amount',objective.amount,'description',COALESCE(objective_text.description,'')) ORDER BY objective.order_index,objective.objective_id) FROM catalog_quest_objectives objective LEFT JOIN catalog_quest_objective_localizations objective_text ON objective_text.build_id=objective.build_id AND objective_text.quest_id=objective.quest_id AND objective_text.objective_id=objective.objective_id AND objective_text.locale={locale} WHERE objective.build_id=registry.build_id AND objective.quest_id=registry.quest_id),'[]'::jsonb),
-				'quest_lines',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',line.quest_line_id,'name',COALESCE(line_text.name,''),'order',line.order_index) ORDER BY line.order_index) FROM catalog_quest_line_entries line LEFT JOIN catalog_quest_line_localizations line_text ON line_text.build_id=line.build_id AND line_text.quest_line_id=line.quest_line_id AND line_text.locale={locale} WHERE line.build_id=registry.build_id AND line.quest_id=registry.quest_id),'[]'::jsonb),
+				'objectives',` + questObjectivesSQL + `,
+				'quest_lines',` + questLinesSQL + `,
+				'locations',` + questLocationsSQL + `,
+				'requirements',` + questRequirementsSQL + `,
 				'rewards',COALESCE((SELECT jsonb_agg(jsonb_build_object(
 					'type',reward.reward_type,'external_id',reward.external_id,'amount',reward.amount,'choice',reward.is_choice,
 					'entity_id',reward_entity.id,'entity_type',reward_entity.entity_type,'slug',COALESCE(NULLIF(reward_name.slug,''),NULLIF(reward_fallback.slug,''),reward_entity.canonical_slug),
 					'name',COALESCE(NULLIF(reward_name.name,''),reward.attributes #>> ARRAY['names',{locale}],NULLIF(reward_fallback.name,''),reward.attributes #>> '{names,en_US}',''),
 					'icon_name',COALESCE(reward_icon.icon_name,reward_file.icon_name,reward_db2_file.icon_name,NULLIF(reward_version.payload #>> '{raidbots,icon}','')),
-					'quality',CASE WHEN reward_item.quality ~ '^[0-9]+$' THEN reward_item.quality::int END
+					'quality',` + itemquality.SQL("reward_item.quality") + `
 				) ORDER BY reward.reward_type,reward.reward_index)
 				FROM catalog_quest_rewards reward
 				LEFT JOIN game_entities reward_entity ON reward_entity.product_id=e.product_id
@@ -634,7 +646,7 @@ const publicEntitySelectTemplate = `
 
 // listTotalKey identifies the filters that determine a List total.
 func listTotalKey(params ListParams) string {
-	return strings.Join([]string{"list", strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
+	return strings.Join([]string{"list", params.Expansion, strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
 		strings.TrimSpace(params.Category), normalizeLocale(params.Locale), strings.TrimSpace(params.Query)}, "\x00")
 }
 
@@ -702,11 +714,11 @@ func listMatchSQL(params ListParams) (string, []any) {
 			LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 			WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 			  ` + publicCatalogDisplayNamePredicate("l", "fallback") + `
-			  ` + publicCatalogUsabilityPredicate("e", "v") + `
+			  ` + publicCatalogUsabilityPredicate("e", "v") + expansionPredicate(params.Expansion, "e", "v", "$5") + " AND $5::text IS NOT NULL " + `
 			  AND ($1='' OR p.slug=$1) AND ($2='' OR e.entity_type=$2)
 			  AND ($3='' OR EXISTS(SELECT 1 FROM game_entity_categories ec
 				WHERE ec.version_id=e.published_version_id AND ec.category_id IN (SELECT id FROM selected_categories)))`,
-			[]any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type), strings.TrimSpace(params.Category), normalizeLocale(params.Locale)}
+			[]any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type), strings.TrimSpace(params.Category), normalizeLocale(params.Locale), params.Expansion}
 	}
 	return `
 		WITH RECURSIVE selected_categories AS (
@@ -727,7 +739,7 @@ func listMatchSQL(params ListParams) (string, []any) {
 		LEFT JOIN game_entity_localizations fallback ON fallback.version_id=v.id AND fallback.locale='en_US'
 		WHERE e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  ` + publicCatalogDisplayNamePredicate("l", "fallback") + `
-		  ` + publicCatalogUsabilityPredicate("e", "v") + `
+		  ` + publicCatalogUsabilityPredicate("e", "v") + expansionPredicate(params.Expansion, "e", "v", "$6") + " AND $6::text IS NOT NULL " + `
 		  AND ($1='' OR p.slug=$1)
 		  AND ($2='' OR e.entity_type=$2)
 		  AND ($5='' OR EXISTS (
@@ -744,15 +756,22 @@ func listMatchSQL(params ListParams) (string, []any) {
 				OR fallback.name % $4
 			) END
 		  )`, []any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
-			normalizeLocale(params.Locale), strings.TrimSpace(params.Query),
-			strings.TrimSpace(params.Category)}
+		normalizeLocale(params.Locale), strings.TrimSpace(params.Query),
+		strings.TrimSpace(params.Category), params.Expansion}
 }
 
 func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity, error) {
+	return s.GetInExpansion(ctx, id, locale, "")
+}
+
+func (s *Service) GetInExpansion(ctx context.Context, id uuid.UUID, locale, expansion string) (Entity, error) {
+	if err := validateExpansion("wow", expansion); err != nil {
+		return Entity{}, err
+	}
 	row := s.postgres.QueryRow(ctx, publicEntitySelect("$2", "")+`
 		WHERE e.id = $1 AND e.deleted_at IS NULL AND e.published_version_id IS NOT NULL
 		  `+publicCatalogDisplayNamePredicate("l", "fallback")+`
-		  `+publicCatalogUsabilityPredicate("e", "v")+``, id, normalizeLocale(locale))
+		  `+publicCatalogUsabilityPredicate("e", "v")+expansionPredicate(expansion, "e", "v", "$3")+" AND $3::text IS NOT NULL "+``, id, normalizeLocale(locale), expansion)
 	entity, err := scanEntity(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Entity{}, ErrNotFound
@@ -775,6 +794,9 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity,
 		return Entity{}, err
 	}
 	if err := s.enrichMedia(ctx, []*Entity{&entity}); err != nil {
+		return Entity{}, err
+	}
+	if err := s.enrichWorldContext(ctx, &entity); err != nil {
 		return Entity{}, err
 	}
 	if err := s.enrichTooltipMedia(ctx, entity.Tooltip); err != nil {
@@ -830,6 +852,9 @@ func (s *Service) enrichLocalizations(ctx context.Context, entities []*Entity) e
 }
 
 func (s *Service) enrichMedia(ctx context.Context, entities []*Entity) error {
+	if err := s.enrichAchievementTargets(ctx, entities); err != nil {
+		return err
+	}
 	ids := make([]uuid.UUID, 0, len(entities))
 	byID := make(map[uuid.UUID]*Entity, len(entities))
 	for _, entity := range entities {

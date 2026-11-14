@@ -1,36 +1,59 @@
-/** Strings of the WoW hub (/wow); `en` and `ru` keep the same keys. */
-const ru = {
-  eyebrow: "Midnight",
-  title: "Ваш командный центр в Азероте",
-  character: "Мои персонажи",
-  open: "Открыть",
-  cards: {
-    mythic: { title: "Mythic+", text: "Таймеры ключей, маршруты подземелий сезона и мета недели." },
-    raids: { title: "Рейды", text: "Боссы, их способности и задачи каждой роли в бою." },
-    lairs: { title: "Логова и мировые боссы", text: "Где найти боссов открытого мира, что делать в бою и что с них падает." },
-    tierLists: { title: "Тир-листы", text: "Сила специализаций в ключах и рейдах." },
-    library: { title: "Библиотека", text: "Предметы, заклинания, транспорт и другие данные игры с подсказками и 3D-моделями." },
-    transmog: { title: "Трансмогрификация", text: "Соберите образ из любых обликов на 3D-персонаже и сохраните картинку." },
+/** Player copy shared by the hub and Open Graph. */
+export const wowHomeCopy = {
+  "ru": {
+    "weeklyMeta": "Мета недели",
+    "allMeta": "Вся мета",
+    "roles": {
+      "tank": "Танк",
+      "healer": "Лекарь",
+      "dps": "Боец"
+    },
+    "metaTitle": "Гайды WoW Midnight: Mythic+, рейды, тир-листы — WowArcana",
+    "description": "Midnight, сезон 2: маршруты и таймеры Mythic+, тактики рейдов, тир-листы и таланты. Поиск персонажей, карта мира и цены аукциона World of Warcraft.",
+    "raidAlt": "Вход в рейд Отравленная бездна",
+    "mapAlt": "Карта Азерота: Калимдор, Восточные королевства и Нордскол",
+    "title": "Гайды и инструменты World of Warcraft",
+    "lede": "Маршруты и таймеры Mythic+, тактики рейдов, тир-листы и таланты второго сезона Midnight.",
+    "productLabel": "Возможности WowArcana",
+    "moreDungeons": "Подземелья сезона",
+    "mapIntro": "Континенты, зоны и города сквозь эпохи Азерота.",
+    "auctionIntro": "Найдите предмет и сравните лоты вашего сервера с ценами региона.",
+    "worldsLabel": "Миры Warcraft",
+    "midnightContent": "Ключи и рейды сезона",
+    "foreverContent": "Подземелья и рейды",
+    "mistsContent": "Классы и таланты",
+    "auctionAlt": "Аукционный дом Оргриммара",
+    "professionsAlt": "Кузница и алхимический верстак",
+    "dungeonAlt": "Подземелье Mythic+",
+    "classesLabel": "Классы World of Warcraft",
+    "continentsLabel": "Континенты"
   },
-  talents: "Калькулятор талантов",
-  talentsAction: "Выбрать класс",
+  "en": {
+    "weeklyMeta": "This week’s meta",
+    "allMeta": "Full meta",
+    "roles": {
+      "tank": "Tank",
+      "healer": "Healer",
+      "dps": "Damage"
+    },
+    "metaTitle": "WoW Midnight guides: Mythic+, raids, tier lists — WowArcana",
+    "description": "Midnight Season 2: Mythic+ routes and timers, raid tactics, tier lists and talents. Find your WoW character, explore the world map and auction prices.",
+    "raidAlt": "Entrance to The Venomous Abyss raid",
+    "mapAlt": "Azeroth map: Kalimdor, Eastern Kingdoms and Northrend",
+    "title": "World of Warcraft guides and tools",
+    "lede": "Mythic+ routes and timers, raid tactics, tier lists and talents for Midnight Season 2.",
+    "productLabel": "Explore WowArcana",
+    "moreDungeons": "Season dungeons",
+    "mapIntro": "Continents, zones and cities through Azeroth’s eras.",
+    "auctionIntro": "Find an item and compare your realm’s listings with region prices.",
+    "worldsLabel": "Warcraft worlds",
+    "midnightContent": "Seasonal keys and raids",
+    "foreverContent": "Dungeons and raids",
+    "mistsContent": "Classes and talents",
+    "auctionAlt": "Orgrimmar Auction House",
+    "professionsAlt": "Forge and alchemy workbench",
+    "dungeonAlt": "Mythic+ dungeon",
+    "classesLabel": "World of Warcraft classes",
+    "continentsLabel": "Continents"
+  }
 } as const;
-
-const en = {
-  eyebrow: "Midnight",
-  title: "Your command center in Azeroth",
-  character: "My characters",
-  open: "Open",
-  cards: {
-    mythic: { title: "Mythic+", text: "Key timers, dungeon routes of the season and the weekly meta." },
-    raids: { title: "Raids", text: "Bosses, their abilities and what every role does in the fight." },
-    lairs: { title: "Lairs and world bosses", text: "Where to find the outdoor bosses, what to do in the fight and what they drop." },
-    tierLists: { title: "Tier lists", text: "Specialization strength in keys and raids." },
-    library: { title: "Library", text: "Items, spells, mounts and other game data with in-game tooltips and 3D models." },
-    transmog: { title: "Transmog Studio", text: "Build an outfit from any appearance on a 3D character and save a picture." },
-  },
-  talents: "Talent calculator",
-  talentsAction: "Choose a class",
-} as const;
-
-export const wowHomeCopy = { ru, en } as const;

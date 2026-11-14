@@ -2,35 +2,35 @@ import type { ComponentProps, ReactNode } from "react";
 import Link from "next/link";
 import { AtlasFrameFooter, AtlasFrameShell } from "@gildra/atlas-ui";
 import { atlasScenes, type AtlasScene, type AtlasSceneId } from "@/lib/atlas/scenes";
-import { ATLAS_FOOTER_LINKS } from "./footerLinks";
+import { footerCopy } from "./footerLinks";
 import { GildraCrest } from "@/components/brand/GildraCrest";
 import styles from "./AtlasFrame.module.css";
+import { FooterNavigation } from "./FooterNavigation";
+import { FooterLanguage } from "./FooterLanguage";
 
 type ShellProps = ComponentProps<typeof AtlasFrameShell>;
 
 export type AtlasFrameProps = Omit<ShellProps, "footer" | "ember" | "glow" | "horizon"> & {
   /** Section scene from lib/atlas/scenes.ts (art, crop, shade, tint, sparks, living light); explicit props override it. */
   scene?: AtlasSceneId;
-  /** Site footer under the content: crest on a rail, footer links with "Less motion", the one-line legal notice.
-   *  An object replaces the line's text and links (the 404 of unmatched URLs picks its language on the client). */
-  footer?: boolean | { legal: ReactNode; links: ReactNode; motion?: ReactNode };
+  /** Site footer under the content: brand, grouped links, language and motion controls, legal notice.
+   *  An object replaces some of its parts (the 404 links its languages to the hubs; the 404 of unmatched URLs picks its language on the client). */
+  footer?: boolean | { legal?: ReactNode; links?: ReactNode; description?: ReactNode; language?: ReactNode; motion?: ReactNode };
 };
 
 /** The site's one legal line (Blizzard trademark notice) in a language: one short sentence pair. */
 const LEGAL = {
-  en: "World of Warcraft® is a registered trademark of Blizzard Entertainment, Inc. Gildra is an unofficial fan site, not affiliated with Blizzard.",
-  ru: "World of Warcraft® — зарегистрированный товарный знак Blizzard Entertainment, Inc. Gildra — неофициальный фанатский сайт, не связанный с Blizzard.",
+  en: "World of Warcraft® is a registered trademark of Blizzard Entertainment, Inc. WowArcana is an unofficial fan site, not affiliated with Blizzard.",
+  ru: "World of Warcraft® — зарегистрированный товарный знак Blizzard Entertainment, Inc. WowArcana — неофициальный фанатский сайт, не связанный с Blizzard.",
 } as const;
 export const atlasLegal = (locale: "en" | "ru") => LEGAL[locale];
 
 const footerParts = (locale: "en" | "ru") => ({
-  brand: <span className={styles.seal}><GildraCrest height={44} className={styles.crest} /><span>GILDRA</span></span>,
+  brand: <Link href={locale === "ru" ? "/ru" : "/"} prefetch={false} className={styles.seal} aria-label="WowArcana"><GildraCrest height={56} className={styles.crest} /><span>WowArcana</span></Link>,
+  description: footerCopy[locale].description,
   legal: atlasLegal(locale),
-  links: <>
-    {ATLAS_FOOTER_LINKS.map((link) => (
-      <Link key={link.href} href={`${locale === "ru" ? "/ru" : ""}${link.href}`} prefetch={false}>{link[locale]}</Link>
-    ))}
-  </>,
+  links: <FooterNavigation locale={locale} />,
+  language: <FooterLanguage locale={locale} />,
 });
 
 /** The frame's legal line on its own, for a page that cannot sit in the frame (the full-bleed story reader). */

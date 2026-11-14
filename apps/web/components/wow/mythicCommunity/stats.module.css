@@ -13,21 +13,20 @@
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  /* 140 px: six numbers stay one row at 1024 (150 px left the sixth alone on a second row). */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--atlas-space-2) var(--atlas-space-5);
-  max-width: 1120px;
+  max-width: 1200px;
   margin: var(--atlas-space-4) 0 0;
 }
 .kpi { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: var(--atlas-space-1); min-width: 0; padding-left: var(--atlas-space-3); border-left: 1px solid var(--atlas-line); }
 .kpi dt {
-  overflow: hidden;
   color: var(--atlas-text-muted);
   font-size: var(--atlas-text-label);
   font-weight: 700;
   letter-spacing: var(--atlas-tracking-label);
-  text-overflow: ellipsis;
+  line-height: var(--atlas-leading-snug);
   text-transform: uppercase;
-  white-space: nowrap;
   text-shadow: var(--atlas-text-halo, 0 1px 3px var(--atlas-bg));
 }
 .kpi dd { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-1) var(--atlas-space-2); margin: 0; }
@@ -295,7 +294,8 @@
   .chartWide { display: none; }
   .chartNarrow { display: block; }
   .optCol, .rankCol, .unit { display: none; }
-  .specTable :global(th), .specTable :global(td) { padding-inline: 6px; }
+  /* Twice the class: the kit's own cell padding (.table tbody th) is more specific than one. */
+  .specTable.specTable :global(th), .specTable.specTable :global(td) { padding-inline: 6px; }
   .specTable :global(thead th) { white-space: normal; letter-spacing: 0; line-height: 1.2; }
   .specTable :global(tbody th) { inline-size: 100%; }
   .specTable :global(tbody th) * { overflow-wrap: normal; word-break: normal; }
@@ -307,7 +307,6 @@
   .cutoffTable td .delta { margin-left: 0; }
   .cutoffTable th, .cutoffTable td { padding-inline: 4px; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3); }
-  .kpi dt { white-space: normal; }
 }
 @media (prefers-reduced-motion: reduce) {
   .chipArt img { transition: none; }

@@ -7,7 +7,7 @@ import styles from "@/components/analytics/analyticsPage.module.css";
 import "@/app/styles/tailwind-app.css";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Живая аналитика Азерота — Gildra", description: "Живая телеметрия и активность командного центра World of Warcraft." };
+export const metadata: Metadata = { title: "Живая аналитика Азерота — WowArcana", description: "Живая телеметрия и активность командного центра World of Warcraft." };
 
 export default async function AnalyticsPageRu() {
   hiddenForMvp();

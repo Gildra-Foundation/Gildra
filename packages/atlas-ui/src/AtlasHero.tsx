@@ -29,14 +29,16 @@ export type AtlasHeroProps = {
   /** "center" opens a hub like the title page of an atlas chapter: centred copy, an ornament under the title, counters below. Detail pages stay "start". */
   align?: "start" | "center";
   titleId?: string;
+  /** A loading state's stand-in for the heading: drawn like the title, but not a heading (the page that replaces it brings the one <h1>). */
+  placeholder?: boolean;
   className?: string;
 };
 
 /** Page heading of every atlas route: emblem, eyebrow, title, lede, counters. */
-export function AtlasHero({ title, eyebrow, lede, emblem, emblemShape = "circle", stats, statsLabel, breadcrumbs, breadcrumbsLabel = "Breadcrumbs", actions, toolbar, aside, variant = "open", align = "start", titleId, className }: AtlasHeroProps) {
+export function AtlasHero({ title, eyebrow, lede, emblem, emblemShape = "circle", stats, statsLabel, breadcrumbs, breadcrumbsLabel = "Breadcrumbs", actions, toolbar, aside, variant = "open", align = "start", titleId, placeholder = false, className }: AtlasHeroProps) {
   const side = aside ?? (stats?.length ? <AtlasStats items={stats} label={statsLabel} className={styles.stats} /> : null);
   return (
-    <header className={clsx(styles.hero, styles[variant], align === "center" && styles.center, className)}>
+    <header className={clsx(styles.hero, styles[variant], align === "center" && styles.center, className)} data-placeholder={placeholder ? "" : undefined}>
       {breadcrumbs?.length || toolbar ? (
         <div className={styles.topRow}>
           {breadcrumbs?.length ? <AtlasBreadcrumbs items={breadcrumbs} label={breadcrumbsLabel} /> : <span />}
@@ -47,7 +49,7 @@ export function AtlasHero({ title, eyebrow, lede, emblem, emblemShape = "circle"
         {emblem ? <AtlasEmblem shape={emblemShape} className={styles.emblem}>{emblem}</AtlasEmblem> : null}
         <div className={styles.copy}>
           {eyebrow ? <p className={styles.eyebrow}>{eyebrow}</p> : null}
-          <h1 id={titleId} className={styles.title}>{title}</h1>
+          {placeholder ? <p className={styles.title}>{title}</p> : <h1 id={titleId} className={styles.title}>{title}</h1>}
           {lede ? <p className={styles.lede}>{lede}</p> : null}
           {actions ? <div className={styles.actions}>{actions}</div> : null}
         </div>

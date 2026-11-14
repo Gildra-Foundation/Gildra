@@ -2,7 +2,7 @@
 // Per-route budgets (roadmap item 63): JavaScript, CSS and image bytes a first
 // visit downloads (decoded size, the cost to parse and paint), at 1440×900 on a
 // cold cache. Budgets live in budgets.json next to this script's repo root.
-//   npm run budgets [-- --base https://gildra.net] [--update]   (--update writes measured × 1.25 as the new budgets)
+//   npm run budgets [-- --base https://wowarcana.com] [--update]   (--update writes measured × 1.25 as the new budgets)
 import fs from "node:fs";
 import { chromium } from "playwright";
 

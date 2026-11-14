@@ -1,0 +1,11 @@
+[
+  { "id": "cataclysm", "eraId": "cataclysm", "patch": "4.0.3", "year": 2010, "title": { "en": "The Cataclysm", "ru": "Катаклизм" },
+    "summary": { "en": "Deathwing's return reshapes Kalimdor and the Eastern Kingdoms.", "ru": "Возвращение Смертокрыла меняет облик Калимдора и Восточных королевств." },
+    "mapId": 12, "x": 0.5, "y": 0.5, "beforeEraId": "classic", "afterEraId": "cataclysm" },
+  { "id": "siege-of-orgrimmar", "eraId": "cataclysm", "patch": "5.4.0", "year": 2013, "title": { "en": "Siege of Orgrimmar", "ru": "Осада Оргриммара" },
+    "summary": { "en": "The Alliance and the Horde storm Orgrimmar to depose Garrosh.", "ru": "Альянс и Орда штурмуют Оргриммар, чтобы свергнуть Гарроша." },
+    "mapId": 85, "x": 0.5, "y": 0.42, "beforeEraId": "classic", "afterEraId": "cataclysm", "links": [{ "href": "/wow/raids", "label": { "en": "Raids", "ru": "Рейды" } }] },
+  { "id": "burning-of-teldrassil", "eraId": "retail", "patch": "8.0.1", "year": 2018, "title": { "en": "Burning of Teldrassil", "ru": "Сожжение Тельдрассила" },
+    "summary": { "en": "The Horde sets the world tree Teldrassil ablaze.", "ru": "Орда поджигает мировое древо Тельдрассил." },
+    "mapId": 57, "x": 0.4, "y": 0.4, "beforeEraId": "cataclysm", "afterEraId": "retail" }
+]

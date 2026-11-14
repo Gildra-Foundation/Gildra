@@ -1,0 +1,64 @@
+[
+  {
+    "url": "https://wowarcana.com/sitemaps/library/classes/en/all",
+    "status": 200,
+    "canonical": [],
+    "title": [],
+    "urlCount": 15,
+    "bytes": 8977,
+    "record": "https://wowarcana.com/library/classes/048d9f73-1b45-4fe4-84e0-60f87c59f053/druid",
+    "recordStatus": 200,
+    "recordCanonical": [
+      "https://wowarcana.com/library/classes/048d9f73-1b45-4fe4-84e0-60f87c59f053/druid"
+    ]
+  },
+  {
+    "url": "https://wowarcana.com/sitemaps/library/classes/ru/all",
+    "status": 200,
+    "canonical": [],
+    "title": [],
+    "urlCount": 15,
+    "bytes": 9719,
+    "record": "https://wowarcana.com/ru/library/classes/048d9f73-1b45-4fe4-84e0-60f87c59f053/%D0%B4%D1%80%D1%83%D0%B8%D0%B4",
+    "recordStatus": 200,
+    "recordCanonical": [
+      "https://wowarcana.com/ru/library/classes/048d9f73-1b45-4fe4-84e0-60f87c59f053/%D0%B4%D1%80%D1%83%D0%B8%D0%B4"
+    ]
+  },
+  {
+    "url": "https://wowarcana.com/ru/library",
+    "status": 200,
+    "canonical": [
+      "https://wowarcana.com/ru/library"
+    ],
+    "title": [
+      "\u0411\u0438\u0431\u043b\u0438\u043e\u0442\u0435\u043a\u0430 \u0434\u0430\u043d\u043d\u044b\u0445 World of Warcraft \u2014 Gildra"
+    ],
+    "urlCount": 0,
+    "bytes": 253587
+  },
+  {
+    "url": "https://wowarcana.com/ru/wow/raids/the-voidspire",
+    "status": 200,
+    "canonical": [
+      "https://wowarcana.com/ru/wow/raids/the-voidspire"
+    ],
+    "title": [
+      "\u0428\u043f\u0438\u043b\u044c \u0411\u0435\u0437\u0434\u043d\u044b: \u0440\u0435\u0439\u0434\u043e\u0432\u044b\u0439 \u0436\u0443\u0440\u043d\u0430\u043b \u2014 Gildra"
+    ],
+    "urlCount": 0,
+    "bytes": 211068
+  },
+  {
+    "url": "https://wowarcana.com/ru/wow/auction",
+    "status": 200,
+    "canonical": [
+      "https://wowarcana.com/ru/wow/auction"
+    ],
+    "title": [
+      "\u0410\u0443\u043a\u0446\u0438\u043e\u043d WoW: \u0446\u0435\u043d\u044b \u0438 \u0440\u044b\u043d\u043e\u043a \u2014 Gildra"
+    ],
+    "urlCount": 0,
+    "bytes": 123924
+  }
+]

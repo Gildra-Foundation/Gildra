@@ -1,0 +1,14 @@
+{
+  "extends": "../../apps/web/tsconfig.json",
+  "compilerOptions": { "incremental": false },
+  "include": [
+    "../../apps/web/next-env.d.ts",
+    "../../apps/web/lib/forever/database/**/*.ts",
+    "../../apps/web/components/wow/forever/library/**/*.tsx",
+    "../../apps/web/components/wow/forever/library/**/*.ts",
+    "../../apps/web/app/(site)/wow/forever/library/**/*.tsx",
+    "../../apps/web/app/(site)/wow/forever/library/**/*.ts",
+    "../../apps/web/app/ru/wow/forever/library/**/*.tsx"
+  ],
+  "exclude": ["../../node_modules"]
+}

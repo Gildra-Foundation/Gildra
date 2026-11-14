@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ApiConsole } from "@/components/api-console/ApiConsole";
+import { AtlasLegalFooter } from "@/components/atlas/AtlasFrame";
 import "@/app/styles/tailwind-app.css";
 
 export const metadata: Metadata = {
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
 
 export default async function ApiConsolePage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
-  return <ApiConsole consolePath={[]} returnTo={next} />;
+  return <ApiConsole consolePath={[]} returnTo={next} footer={<AtlasLegalFooter lang="en" />} />;
 }

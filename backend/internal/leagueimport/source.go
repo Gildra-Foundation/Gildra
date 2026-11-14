@@ -549,7 +549,7 @@ func (s *Source) getJSON(ctx context.Context, endpoint string, target any) error
 	if err != nil {
 		return err
 	}
-	request.Header.Set("User-Agent", "Gildra-LoL-Catalog/1.0 (+https://gildra.net)")
+	request.Header.Set("User-Agent", "Gildra-LoL-Catalog/1.0 (+https://wowarcana.com)")
 	response, err := s.client.Do(request)
 	if err != nil {
 		return err

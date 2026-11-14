@@ -61,7 +61,7 @@ test('complete set pays repeated consumables at actual quantity tiers and respec
   const rejected=await optimizeAuctionGearEnhancements(lower.input);
   assert.equal(lower.calls.length,0); assert.equal(rejected.finalists.length,0);
   assert(rejected.reasons.includes('over_budget'));
-  assert(!rejected.configurations.some(config=>config.fullyEnhanced&&config.status==='priced')); 
+  assert(!rejected.configurations.some(config=>config.fullyEnhanced&&config.status==='priced'));
 });
 
 test('unknown prices and insufficient identical-gem stock never become a free or simulated full upgrade',async()=>{

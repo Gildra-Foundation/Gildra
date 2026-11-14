@@ -7,11 +7,11 @@ import { describe, it } from "node:test";
  * Every sitemap URL (or SEO_SAMPLE of them, spread evenly) answers 200 without
  * noindex, with a canonical on itself and the sitemap's hreflang alternates;
  * private and service pages stay noindex. URLs in the sitemaps name the
- * canonical origin (https://gildra.net); they are fetched from SEO_BASE_URL.
+ * canonical origin (https://wowarcana.com); they are fetched from SEO_BASE_URL.
  * Library record files are sampled: SEO_RECORD_FILES language pairs (default 3).
  */
 const base = (process.env.SEO_BASE_URL ?? "http://localhost:3420").replace(/\/$/, "");
-const origin = (process.env.SEO_CANONICAL_ORIGIN ?? "https://gildra.net").replace(/\/$/, "");
+const origin = (process.env.SEO_CANONICAL_ORIGIN ?? "https://wowarcana.com").replace(/\/$/, "");
 const sample = Number(process.env.SEO_SAMPLE ?? 0);
 /** The site root is the same URL with or without its slash. */
 const same = (a: string | undefined, b: string) => a !== undefined && a.replace(/\/$/, "") === b.replace(/\/$/, "");

@@ -1,0 +1,251 @@
+import ast
+import json
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+from unittest.mock import Mock
+
+HERE = Path(__file__).resolve().parent
+
+
+class HostReleaseTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+
+    def test_reuse_requires_exact_inputs_and_immutable_image(self):
+        tree = ast.parse((HERE / 'release.py').read_text())
+        fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'reuse_candidate')
+        candidate = dict(revision='abc', build_key='key', previous_image='old',
+                         image='gildra-web:test', image_id='sha256:new')
+        image = dict(Id='sha256:new', Config={'Labels': {
+            'org.opencontainers.image.revision': 'abc', 'net.gildra.patch': 'test'}})
+        (self.root / 'candidate.json').write_text(json.dumps(candidate))
+        docker = Mock(return_value=json.dumps([image]))
+        namespace = dict(STATE=self.root, json=json, subprocess=subprocess, label='test',
+                         docker=docker, read=lambda _: candidate)
+        exec(compile(ast.Module(body=[fn], type_ignores=[]), '<reuse>', 'exec'), namespace)
+        reuse = namespace['reuse_candidate']
+        self.assertTrue(reuse('abc', {'Image': 'old'}, 'key'))
+        for rev, base, key in [('other', 'old', 'key'), ('abc', 'changed', 'key'), ('abc', 'old', 'changed')]:
+            docker.reset_mock()
+            self.assertFalse(reuse(rev, {'Image': base}, key))
+            docker.assert_not_called()
+        for field, value in [('Id', 'sha256:other'), ('Config', {'Labels': {}})]:
+            docker.return_value = json.dumps([{**image, field: value}])
+            self.assertFalse(reuse('abc', {'Image': 'old'}, 'key'))
+        docker.side_effect = subprocess.CalledProcessError(1, ['docker'])
+        self.assertFalse(reuse('abc', {'Image': 'old'}, 'key'))
+        (self.root / 'candidate.json').unlink()
+        self.assertFalse(reuse('abc', {'Image': 'old'}, 'key'))
+
+    def test_smoke_covers_all_routes_and_drains_failed_batch(self):
+        source = (HERE / 'deploy-web.sh').read_text()
+        functions = source[source.index('drain_smoke() {'):source.index('\nrollback() {')]
+        curl = self.root / 'curl'
+        curl.write_text('''#!/usr/bin/env python3
+import fcntl,json,os,sys,time
+from pathlib import Path
+p=Path(os.environ['COUNTS'])
+def update(delta):
+ with open(str(p)+'.lock','w') as lock:
+  fcntl.flock(lock,fcntl.LOCK_EX)
+  s=json.loads(p.read_text()) if p.exists() else {'active':0,'peak':0,'urls':[]}
+  s['active']+=delta
+  s['peak']=max(s['peak'],s['active'])
+  if delta>0:s['urls'].append(sys.argv[-1])
+  p.write_text(json.dumps(s))
+update(1)
+time.sleep(0.05)
+update(-1)
+sys.exit(1 if sys.argv[-1]==os.environ.get('FAIL_URL') else 0)
+''')
+        curl.chmod(0o755)
+        script = 'set -euo pipefail\nca=unused\nsmoke_pids=()\n' + functions + '\nsmoke\n'
+        counts = self.root / 'counts.json'
+        env = {**os.environ, 'PATH': str(self.root) + ':' + os.environ['PATH'], 'COUNTS': str(counts)}
+        for failed in [False, True]:
+            counts.unlink(missing_ok=True)
+            env['FAIL_URL'] = 'https://wowarcana.com/ru' if failed else ''
+            result = subprocess.run(['bash', '-c', script], env=env, capture_output=True, timeout=15)
+            self.assertEqual(result.returncode, 1 if failed else 0, result.stderr.decode())
+            state = json.loads(counts.read_text())
+            self.assertEqual(state['active'], 0, 'must drain before rollback')
+            self.assertLessEqual(state['peak'], 4)
+            self.assertGreater(state['peak'], 1)
+            if not failed:
+                self.assertEqual(len(state['urls']), 32)
+                self.assertIn('https://api.wowarcana.com/readyz', state['urls'])
+            else:
+                self.assertEqual(len(state['urls']), 4)
+
+    def test_rollback_waits_for_smoke_children(self):
+        source = (HERE / 'deploy-web.sh').read_text()
+        drain = source[source.index('drain_smoke() {'):source.index('\nsmoke() {')]
+        on_exit = source[source.index('on_exit() {'):source.index('\nexec 9>')]
+        marker = self.root / 'child-finished'
+        script = ('set -euo pipefail\narmed=true\npatch=test\nsmoke_pids=()\n'
+                  + drain + on_exit +
+                  '\nrollback() { test -f "$MARKER"; }\nbridge_down() { :; }\n'
+                  '(sleep 0.1; touch "$MARKER") &\nsmoke_pids+=("$!")\n'
+                  'trap on_exit EXIT\nexit 1\n')
+        result = subprocess.run(['bash', '-c', script],
+                                env={**os.environ, 'MARKER': str(marker)}, timeout=5)
+        self.assertEqual(result.returncode, 1, 'rollback must wait for pending children')
+        self.assertTrue(marker.exists())
+
+    def functions(self, *names, **namespace):
+        tree = ast.parse((HERE / 'release.py').read_text())
+        body = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in names]
+        self.assertEqual(len(body), len(names))
+        exec(compile(ast.Module(body=body, type_ignores=[]), '<release>', 'exec'), namespace)
+        return namespace
+
+    def test_build_report_reads_times_and_broad_patterns(self):
+        import re
+        report = self.functions('seconds', 'build_report', re=re)['build_report']
+        warning = ("#20 119.4 ./apps/web/lib/og/atlasOg.tsx:{line}:3\n"
+                   "#20 119.4 Warning: The file pattern ('/ROOT/apps/web/public/' <dynamic>) matches {n} files in [project]/apps/web\n")
+        log = ('#20 727.7 ✓ Compiled successfully in 12.0min\n'
+               '#20 760.1 ✓ Generating static pages using 6 workers (1598/1598) in 26.4s\n'
+               + warning.format(line=44, n=129160) + warning.format(line=44, n=129160) + warning.format(line=41, n=516640))
+        self.assertEqual(report(log), {'compile': 720.0, 'pages': 26.4, 'broad_patterns': [
+            './apps/web/lib/og/atlasOg.tsx:41 (516640 files)', './apps/web/lib/og/atlasOg.tsx:44 (129160 files)']})
+        plain = '✓ Compiled successfully in 900ms\n  Generating static pages using 6 workers (399/1598) \n'
+        self.assertEqual(report(plain), {'compile': 0.9, 'broad_patterns': []})
+        self.assertEqual(report('npm error'), {'broad_patterns': []})
+
+    def test_build_reuses_before_the_lock_and_rechecks_live_after_it(self):
+        source = (HERE / 'release.py').read_text()
+        build = source[source.index('\ndef build():'):source.index('\ndef free_port():')]
+        reuse, lock, checkout = (build.index(x) for x in ['if reuse_candidate(', 'fcntl.flock(lock', 'checkout(rev)'])
+        self.assertLess(reuse, lock)
+        self.assertEqual(build.count('live_base(rev)'), 2)
+        self.assertLess(lock, build.rindex('live_base(rev)'))
+        self.assertLess(build.rindex('live_base(rev)'), checkout)
+        self.assertLess(build.index("save('build-phases.json', {**phases"), build.index("assert not phases['broad_patterns']"))
+        self.assertLess(build.index("assert not phases['broad_patterns']"), build.index("save('candidate.json'"))
+
+    def test_second_release_waits_for_the_first(self):
+        import fcntl, io, threading, contextlib
+        def namespace(name):
+            return self.functions('queue', BUILD=self.root, label=name, os=os, fcntl=fcntl,
+                                  utc=lambda: 'now', print=lambda *a, **k: said.append(a[0]))['queue']
+        said = []
+        first = namespace('first')()
+        self.assertIn('first pid', (self.root / 'release.lock').read_text())
+        done = []
+        thread = threading.Thread(target=lambda: done.append(namespace('second')()), daemon=True)
+        thread.start()
+        thread.join(0.3)
+        self.assertTrue(thread.is_alive(), 'the second release must wait')
+        self.assertEqual(len(said), 1)
+        self.assertIn('first pid', said[0])
+        first.close()
+        thread.join(5)
+        self.assertFalse(thread.is_alive())
+        self.assertIn('second pid', (self.root / 'release.lock').read_text())
+        self.assertNotIn('first', (self.root / 'release.lock').read_text())
+        done[0].close()
+
+    def test_second_release_process_waits_for_the_first(self):
+        import sys, time
+        tree = ast.parse((HERE / 'release.py').read_text())
+        fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'queue')
+        program = ('import fcntl, os, sys, time\nfrom pathlib import Path\n'
+                   'BUILD = Path(sys.argv[1]); label = sys.argv[2]; utc = lambda: "now"\n'
+                   + ast.unparse(fn) +
+                   '\nheld = queue()\nprint(label, "runs", flush=True)\ntime.sleep(float(sys.argv[3]))\nprint(label, "ends", flush=True)\n')
+        log = self.root / 'order.log'
+        with open(log, 'w') as out:
+            first = subprocess.Popen([sys.executable, '-c', program, str(self.root), 'first', '1.0'], stdout=out)
+            time.sleep(0.4)
+            second = subprocess.Popen([sys.executable, '-c', program, str(self.root), 'second', '0'], stdout=out)
+            self.assertEqual(first.wait(10), 0)
+            self.assertEqual(second.wait(10), 0)
+        lines = log.read_text().splitlines()
+        self.assertEqual(lines[0], 'first runs')
+        self.assertIn('waiting for the release in progress: first pid', lines[1])
+        self.assertEqual(lines[2:], ['first ends', 'second runs', 'second ends'])
+
+    def test_all_holds_the_queue_from_build_to_observe(self):
+        source = (HERE / 'release.py').read_text()
+        steps = source[source.index('\ndef all_steps():'):source.index("\ntimed({'build'")]
+        self.assertLess(steps.index('held = timed(queue)'), steps.index('timed(build)'))
+        self.assertIn('timed(deploy); timed(observe)', steps)
+
+    def switch(self, **env):
+        """Run switch_web from deploy-web.sh with docker, nsenter, curl and sleep replaced by recorders."""
+        source = (HERE / 'deploy-web.sh').read_text()
+        functions = source[source.index('reload_nginx() {'):source.index('\ndrain_smoke() {')]
+        functions = functions[:functions.index('# The new image next to')] + functions[functions.index('bridge_up() {'):]
+        log = self.root / 'calls.log'
+        log.write_text('')
+        for name, body in {
+            'docker': '''case "$*" in
+  *"compose run"*) [ -z "${FAIL_RUN:-}" ] || exit 1;;
+  *"compose up"*) [ -z "${FAIL_UP:-}" ] || exit 1;;
+  *"compose ps -q nginx"*) echo nginx-id;;
+  *IPAddress*) echo 10.0.0.9;;
+  *State.Pid*) echo 4242;;
+  *State.Running*) echo true;;
+  "inspect gildra-web-bridge") [ -n "${BRIDGE:-}" ] || exit 1;;
+esac''',
+            'curl': '[ -z "${FAIL_CURL:-}" ]', 'nsenter': ':', 'sleep': ':',
+        }.items():
+            stub = self.root / name
+            stub.write_text('#!/bin/bash\necho "' + name + ' $*" >> "$CALLS"\n' + body + '\n')
+            stub.chmod(0o755)
+        script = ('set -euo pipefail\npatch=test\nbridge=gildra-web-bridge\ncompose() { docker compose "$@"; }\n'
+                  + functions + '\nswitch_web new-image\n')
+        result = subprocess.run(['bash', '-c', script], capture_output=True, text=True, timeout=30,
+                                env={**os.environ, 'PATH': str(self.root) + ':' + os.environ['PATH'], 'CALLS': str(log), **env})
+        return result, log.read_text().splitlines()
+
+    def test_switch_keeps_a_second_container_serving_while_the_service_is_replaced(self):
+        result, calls = self.switch()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        steps = [max(i for i, c in enumerate(calls) if key in c) for key in [
+            'compose run -d --no-deps --pull never --use-aliases --name gildra-web-bridge web',
+            'curl --silent --fail --max-time 5 --output /dev/null http://10.0.0.9:3000/',
+            'compose up -d --no-deps --no-build --pull never --wait --wait-timeout 180 web',
+            'iptables -I INPUT -p tcp --dport 3000 --syn -j REJECT --reject-with tcp-reset',
+            'docker stop --time 20 gildra-web-bridge',
+            'docker rm -f gildra-web-bridge',
+            'ip neigh flush to 10.0.0.9',
+            'exec nginx-id nginx -s reload',
+        ]]
+        self.assertEqual(steps, sorted(steps))
+        self.assertEqual(calls[0], 'docker rm -f gildra-web-bridge')  # a leftover of an interrupted deploy
+        reloads = [i for i, c in enumerate(calls) if c.endswith('nginx -s reload')]
+        self.assertEqual(len(reloads), 3)  # old + bridge, new + bridge, new
+        self.assertEqual(steps[7], reloads[2])
+        self.assertTrue(steps[1] < reloads[0] < steps[2] < reloads[1] < steps[3] and steps[6] < reloads[2])
+
+    def test_switch_leaves_production_alone_when_the_new_image_does_not_start(self):
+        for failure in ['FAIL_RUN', 'FAIL_CURL']:
+            result, calls = self.switch(GILDRA_BRIDGE_WAIT='1', **{failure: '1'})
+            self.assertEqual(result.returncode, 1)
+            self.assertIn('did not start next to production', result.stderr)
+            self.assertFalse([c for c in calls if 'compose up' in c or 'nginx -s reload' in c or 'docker stop' in c], failure)
+
+    def test_rollback_and_exit_remove_the_second_container(self):
+        source = (HERE / 'deploy-web.sh').read_text()
+        rollback = source[source.index('\nrollback() {'):source.index('\non_exit() {')]
+        self.assertLess(rollback.index('WEB_IMAGE=$previous compose up'), rollback.index('bridge_down'))
+        self.assertLess(rollback.index('bridge_down'), rollback.index('healthy "$previous"'))
+        on_exit = source[source.index('\non_exit() {'):source.index('\nexec 9>')]
+        self.assertLess(on_exit.index('rollback ||'), on_exit.index('bridge_down || true'))
+        self.assertIn('switch_web "$image"\nhealthy "$image"\nsmoke', source)
+
+    def test_no_automatic_cache_prune_and_observation_retained(self):
+        source = (HERE / 'release.py').read_text()
+        self.assertNotIn("docker('builder', 'prune'", source)
+        self.assertIn('while time.monotonic() - start < 120:', source)
+
+
+if __name__ == '__main__':
+    unittest.main()

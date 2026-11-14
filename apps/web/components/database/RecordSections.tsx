@@ -18,6 +18,7 @@ import { libraryKit } from "@/components/library/libraryKit";
 import { materialIconFrameStyle, materialStyles } from "@/components/wow/shared/materialAtlas";
 import { getCatalogCategories, getCatalogEntity, getCatalogPage, getCatalogRelationships, type GameEntity } from "@/lib/api/client";
 import { catalogLocaleView } from "@/lib/catalogLocale";
+import { withCatalogIcon } from "@/lib/games/wow/assets";
 import { itemQualityColors } from "@/lib/atlas/dataPalette";
 import { withVariantQuality } from "@/lib/library/recordQuality";
 import { libraryRecordPath } from "@/lib/library/recordPath";
@@ -88,7 +89,7 @@ async function bossInstances(bosses: RelatedRecord[], lang: Lang) {
 async function namesakeBosses(entity: GameEntity, lang: Lang): Promise<RelatedRecord[]> {
   if (!entity.name) return [];
   const page = await getCatalogPage({ locale: locale(lang), product: entity.product, dataset: "encounters", query: entity.name, limit: 12, timeoutMs: 4000 }).catch(() => null);
-  return (page?.data ?? []).filter((record) => sameName(record.name, entity.name)).slice(0, 4) as RelatedRecord[];
+  return (page?.data ?? []).filter((record) => sameName(record.name, entity.name)).slice(0, 4).map((record) => withCatalogIcon(record, entity.product)) as RelatedRecord[];
 }
 
 /** /library/recipes filtered by the profession, when the recipe list has that profession as a filter. */
@@ -109,7 +110,9 @@ async function professionRecipesHref(entity: GameEntity, lang: Lang) {
  * profession a link to all its recipes. The rest are the related groups.
  * Rendered inside a Suspense boundary: the hero paints before these reads end.
  */
-export async function RecordSections({ entity, relationships, lang }: Props) {
+export async function RecordSections({ entity, relationships: related, lang }: Props) {
+  // Related records carry no edition of their own: they stand in the edition of the page's record.
+  const relationships = related.map((entry) => ({ ...entry, entity: withCatalogIcon(entry.entity, entity.product) }));
   const copy = entityDetailCopy[lang];
   const short = lang === "ru" ? "ru" : "en";
   let groups = relationGroups(relationships);

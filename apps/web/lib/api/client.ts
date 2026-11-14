@@ -1,3 +1,4 @@
+import { catalogSearchQuery } from "@/lib/platform/catalog/searchQuery";
 import "server-only";
 import { cookies } from "next/headers";
 import { cache as perRequest } from "react";
@@ -21,11 +22,8 @@ export type CatalogProduct = components["schemas"]["GameProduct"] & {
   freshnessReason?: string;
 };
 export type LibraryDataset = components["schemas"]["LibraryDataset"];
-export type CatalogCoverage = components["schemas"]["GameFieldCoverage"];
 export type CatalogRelationship = components["schemas"]["GameEntityRelationship"];
 export type CatalogEntityQuality = components["schemas"]["GameEntityQuality"];
-export type CatalogEntityVersion = components["schemas"]["GameEntityVersion"];
-export type CatalogEntityComparison = components["schemas"]["GameEntityComparison"];
 export type CatalogSitemapEntry = components["schemas"]["GameSitemapEntry"];
 export type CatalogPage = {
   data: CatalogRecord[];
@@ -162,15 +160,6 @@ export async function getAnalyticsOverview(hours = 24): Promise<AnalyticsOvervie
   }
 }
 
-export async function getCatalogPreview(locale: "en_US" | "ru_RU"): Promise<CatalogRecord[]> {
-  const requests = ["item", "spell"].map(async (type) => {
-    const query = new URLSearchParams({ product: "wow", type, locale, limit: "6", includeTotal: "false" });
-    const page = await catalogRequest<components["schemas"]["GameEntitySummaryPage"]>(`/v1/game/entity-summaries?${query}`);
-    return page.data;
-  });
-  return (await Promise.all(requests)).flat();
-}
-
 export type CatalogPageParams = {
   externalIds?: number[];
   locale: "en_US" | "ru_RU";
@@ -216,11 +205,15 @@ export async function getCatalogPage({
   timeoutMs = 15_000,
   signal,
 }: CatalogPageParams): Promise<CatalogPage> {
+  // Typed text goes to the catalog without quotes and punctuation (lib/platform/catalog/searchQuery.ts);
+  // text with nothing to match (one letter, punctuation only) is an empty list, not a request.
+  const search = catalogSearchQuery(query);
+  if (query.trim() && !search) return { data: [], pagination: { hasMore: false, total: 0 } };
   const params = new URLSearchParams({ product, locale, limit: String(limit), includeTotal: String(includeTotal) });
   if (externalIds?.length) params.set("externalIds", externalIds.join(","));
   if (dataset) params.set("dataset", dataset);
   if (type) params.set("type", type);
-  if (query) params.set("q", query);
+  if (search) params.set("q", search);
   if (cursor) params.set("cursor", cursor);
   if (category) params.set("category", category);
   for (const facet of facets) {
@@ -298,18 +291,6 @@ async function requestCatalogEntity(id: string, locale: "en_US" | "ru_RU", datas
   return await response.json() as GameEntity;
 }
 
-
-export async function getCatalogCoverage(
-  locale: "en_US" | "ru_RU",
-  product = "wow",
-  type = "",
-): Promise<CatalogCoverage[]> {
-  const params = new URLSearchParams({ product, locale });
-  if (type) params.set("type", type);
-  const page = await catalogRequest<{ data: CatalogCoverage[] }>(`/v1/game/coverage?${params}`);
-  return page.data;
-}
-
 export async function getCatalogRelationships(
   id: string,
   locale: "en_US" | "ru_RU",
@@ -320,43 +301,6 @@ export async function getCatalogRelationships(
     `/v1/game/entities/${encodeURIComponent(id)}/relationships?${params}`,
   );
   return page.data;
-}
-
-export async function getCatalogEntityQuality(id: string, locale: "en_US" | "ru_RU"): Promise<CatalogEntityQuality | null> {
-  const params = new URLSearchParams({ locale });
-  try {
-    return await catalogRequest<CatalogEntityQuality>(`/v1/game/entities/${encodeURIComponent(id)}/quality?${params}`);
-  } catch {
-    return null;
-  }
-}
-
-export async function getCatalogEntityVersions(id: string, locale: "en_US" | "ru_RU"): Promise<CatalogEntityVersion[]> {
-  const params = new URLSearchParams({ locale, limit: "20" });
-  try {
-    const page = await catalogRequest<{ data: CatalogEntityVersion[] }>(`/v1/game/entities/${encodeURIComponent(id)}/versions?${params}`);
-    return page.data;
-  } catch {
-    return [];
-  }
-}
-
-export async function getCatalogEntityComparison(
-  id: string,
-  locale: "en_US" | "ru_RU",
-  fromBuildId?: number,
-  toBuildId?: number,
-): Promise<CatalogEntityComparison | null> {
-  const params = new URLSearchParams({ locale });
-  if (fromBuildId !== undefined && toBuildId !== undefined) {
-    params.set("fromBuildId", String(fromBuildId));
-    params.set("toBuildId", String(toBuildId));
-  }
-  try {
-    return await catalogRequest<CatalogEntityComparison>(`/v1/game/entities/${encodeURIComponent(id)}/comparison?${params}`);
-  } catch {
-    return null;
-  }
 }
 
 export async function getCatalogSitemapEntries(

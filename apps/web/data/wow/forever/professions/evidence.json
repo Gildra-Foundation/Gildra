@@ -1,0 +1,2260 @@
+{
+  "edition": "forever",
+  "build": "1.60.1.70862",
+  "baseline": "1.15.9.69722",
+  "extracted": "2026-11-09T10:55Z",
+  "professions": {
+    "alchemy": {
+      "sourceTotal": 196,
+      "imported": 178,
+      "excluded": [
+        {
+          "id": 426607,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 2365,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439960,
+          "reasons": [
+            "sod",
+            "dup",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435969,
+          "reasons": [
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1250775,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 435971,
+          "reasons": [
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 446226,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 448085,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446851,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1231583,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213571,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213559,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213565,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213563,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213546,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213552,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213544,
+          "reasons": [
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213548,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        }
+      ],
+      "trainerTotal": 27,
+      "trainersImported": 19,
+      "recipesLocalizedRu": 178,
+      "itemRelations": 813,
+      "knownSkill": 136,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 28,
+      "unconfirmedTrainerSuppressed": 8,
+      "withoutKnownAcquisition": 11
+    },
+    "blacksmithing": {
+      "sourceTotal": 506,
+      "imported": 437,
+      "excluded": [
+        {
+          "id": 430397,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 427061,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439132,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 429348,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439130,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439128,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439126,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439124,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 435910,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 439122,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439120,
+          "reasons": [
+            "sod",
+            "dup",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435906,
+          "reasons": [
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435908,
+          "reasons": [
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 446191,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446188,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446179,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224635,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224637,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224636,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224639,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224638,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224633,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224631,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224632,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461733,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 16980,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461667,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461651,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461737,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461730,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461735,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461669,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461675,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461743,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461647,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461671,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461739,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 460460,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461718,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461714,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213643,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1214257,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461716,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1214309,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213746,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223791,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223787,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223789,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 28463,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213709,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 28461,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213715,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 28462,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213711,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1214270,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213748,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213498,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213506,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213500,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1214137,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1214274,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213492,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213504,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213502,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213490,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213481,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213484,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461712,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1215507,
+          "reasons": [
+            "missing-client-item"
+          ]
+        }
+      ],
+      "trainerTotal": 28,
+      "trainersImported": 13,
+      "recipesLocalizedRu": 437,
+      "itemRelations": 2328,
+      "knownSkill": 344,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 77,
+      "unconfirmedTrainerSuppressed": 32,
+      "withoutKnownAcquisition": 47
+    },
+    "enchanting": {
+      "sourceTotal": 262,
+      "imported": 232,
+      "excluded": [
+        {
+          "id": 430409,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 448624,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 14810,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 439134,
+          "reasons": [
+            "sod",
+            "dup",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 439156,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 446243,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 463869,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 463866,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 471400,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213610,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213607,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1249154,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213616,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213635,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213628,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213600,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213633,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1216022,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1216020,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1216024,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1216005,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1216010,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1216007,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213598,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213603,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213593,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213595,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1216018,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1216014,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1216016,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        }
+      ],
+      "trainerTotal": 20,
+      "trainersImported": 13,
+      "recipesLocalizedRu": 227,
+      "itemRelations": 849,
+      "knownSkill": 171,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 4,
+      "classicSkillSuppressed": 58,
+      "unconfirmedTrainerSuppressed": 35,
+      "withoutKnownAcquisition": 40
+    },
+    "engineering": {
+      "sourceTotal": 275,
+      "imported": 238,
+      "excluded": [
+        {
+          "id": 424641,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1308182,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 435956,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 431362,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435966,
+          "reasons": [
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435964,
+          "reasons": [
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435960,
+          "reasons": [
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435958,
+          "reasons": [
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 12720,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 12904,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 12722,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446236,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446238,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446237,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1228088,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1221012,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1226206,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1226209,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1226208,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1226207,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1226212,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1226211,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1226210,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1226213,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1266942,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1266939,
+          "reasons": [
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1266941,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1266943,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213573,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213586,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1213646,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213578,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213576,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213588,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461710,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1217207,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1214145,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        }
+      ],
+      "trainerTotal": 23,
+      "trainersImported": 10,
+      "recipesLocalizedRu": 236,
+      "itemRelations": 1162,
+      "knownSkill": 158,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 72,
+      "unconfirmedTrainerSuppressed": 45,
+      "withoutKnownAcquisition": 48
+    },
+    "leatherworking": {
+      "sourceTotal": 592,
+      "imported": 512,
+      "excluded": [
+        {
+          "id": 429869,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 429354,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439112,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439114,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439110,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 435819,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 439118,
+          "reasons": [
+            "sod",
+            "dup",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 439108,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439105,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 435904,
+          "reasons": [
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435949,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435951,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435953,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 439116,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446186,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446192,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446183,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 451706,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446189,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446185,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446190,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224628,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224626,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224620,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224618,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224630,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224627,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224619,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224622,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461720,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224629,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224621,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461649,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461665,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461677,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1226690,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1226689,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224625,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224623,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224624,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224615,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224616,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224617,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461692,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461673,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461661,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461722,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461655,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461645,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461653,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461724,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461754,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461657,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461659,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461690,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461663,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461706,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213734,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213736,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213738,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213751,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1214303,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213513,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 462227,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223778,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223774,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223776,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223784,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223782,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223780,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213521,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213525,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213523,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213717,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213723,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213720,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213519,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213726,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213731,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213728,
+          "reasons": [
+            "missing-client-item"
+          ]
+        }
+      ],
+      "trainerTotal": 33,
+      "trainersImported": 21,
+      "recipesLocalizedRu": 512,
+      "itemRelations": 2861,
+      "knownSkill": 424,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 68,
+      "unconfirmedTrainerSuppressed": 32,
+      "withoutKnownAcquisition": 51
+    },
+    "tailoring": {
+      "sourceTotal": 471,
+      "imported": 414,
+      "excluded": [
+        {
+          "id": 428424,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 429351,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 435841,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 435848,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 439102,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439097,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439100,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439093,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439098,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439091,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 435827,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 439094,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439085,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439088,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 439086,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 435610,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 446193,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446194,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 446195,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1227723,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1224610,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224612,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224611,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224614,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224613,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224607,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224608,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1224609,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461692,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1227724,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 461752,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 463972,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 462282,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461750,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461708,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461747,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 461727,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1214173,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223770,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223768,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223772,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223762,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223764,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223760,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1223766,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213742,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213740,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213744,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213527,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213532,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213530,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1214306,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1214307,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213536,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213538,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213540,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1213534,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        }
+      ],
+      "trainerTotal": 27,
+      "trainersImported": 14,
+      "recipesLocalizedRu": 414,
+      "itemRelations": 2306,
+      "knownSkill": 327,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 76,
+      "unconfirmedTrainerSuppressed": 39,
+      "withoutKnownAcquisition": 46
+    },
+    "herbalism": {
+      "sourceTotal": 3,
+      "imported": 3,
+      "excluded": [],
+      "trainerTotal": 23,
+      "trainersImported": 15,
+      "recipesLocalizedRu": 3,
+      "itemRelations": 13,
+      "knownSkill": 2,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 0,
+      "unconfirmedTrainerSuppressed": 0,
+      "withoutKnownAcquisition": 0
+    },
+    "mining": {
+      "sourceTotal": 18,
+      "imported": 17,
+      "excluded": [
+        {
+          "id": 1213638,
+          "reasons": [
+            "missing-client-item"
+          ]
+        }
+      ],
+      "trainerTotal": 14,
+      "trainersImported": 10,
+      "recipesLocalizedRu": 17,
+      "itemRelations": 47,
+      "knownSkill": 3,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 9,
+      "unconfirmedTrainerSuppressed": 0,
+      "withoutKnownAcquisition": 2
+    },
+    "skinning": {
+      "sourceTotal": 3,
+      "imported": 3,
+      "excluded": [],
+      "trainerTotal": 17,
+      "trainersImported": 14,
+      "recipesLocalizedRu": 3,
+      "itemRelations": 13,
+      "knownSkill": 2,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 0,
+      "unconfirmedTrainerSuppressed": 0,
+      "withoutKnownAcquisition": 0
+    },
+    "cooking": {
+      "sourceTotal": 132,
+      "imported": 123,
+      "excluded": [
+        {
+          "id": 1255241,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1270632,
+          "reasons": [
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 1225759,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1225758,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1225760,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1225763,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 1225762,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 470359,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        },
+        {
+          "id": 470370,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        }
+      ],
+      "trainerTotal": 18,
+      "trainersImported": 16,
+      "recipesLocalizedRu": 123,
+      "itemRelations": 478,
+      "knownSkill": 113,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 7,
+      "unconfirmedTrainerSuppressed": 1,
+      "withoutKnownAcquisition": 3
+    },
+    "first-aid": {
+      "sourceTotal": 32,
+      "imported": 30,
+      "excluded": [
+        {
+          "id": 30021,
+          "reasons": [
+            "missing-client-spell",
+            "missing-client-item"
+          ]
+        },
+        {
+          "id": 470349,
+          "reasons": [
+            "sod",
+            "speculative-reagent-or-output"
+          ]
+        }
+      ],
+      "trainerTotal": 16,
+      "trainersImported": 13,
+      "recipesLocalizedRu": 30,
+      "itemRelations": 104,
+      "knownSkill": 16,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 8,
+      "unconfirmedTrainerSuppressed": 3,
+      "withoutKnownAcquisition": 3
+    },
+    "fishing": {
+      "sourceTotal": 3,
+      "imported": 3,
+      "excluded": [],
+      "trainerTotal": 23,
+      "trainersImported": 16,
+      "recipesLocalizedRu": 3,
+      "itemRelations": 13,
+      "knownSkill": 2,
+      "sourceUnavailable": 0,
+      "speculativeSourceItemsSuppressed": 0,
+      "classicSkillSuppressed": 0,
+      "unconfirmedTrainerSuppressed": 0,
+      "withoutKnownAcquisition": 0
+    }
+  },
+  "sources": [
+    {
+      "url": "https://foreverdb.net/data/professions/alchemy.json",
+      "sha256": "eca182060dd42a3189d7870cf7092a9ceed58a70f24cdee0b2e37e3fef1bca1f"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/blacksmithing.json",
+      "sha256": "15e4a6d5157fa511b68b977fdf5990a9bf0269c9b348d07eaf8978846e07c137"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/enchanting.json",
+      "sha256": "87ed20984e78ffc7edac2b86cd7d1ee122270c58b1f7f4b91df485f8c869be1a"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/engineering.json",
+      "sha256": "daed88778183f97ff6716a6855e45958c9da2f82e9e569994aaf016a617ffa3f"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/leatherworking.json",
+      "sha256": "23d50514538976fdb2129d3cad3bd906930c298105a75bbfa90a6c2098766aad"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/tailoring.json",
+      "sha256": "1d02fedd5c57004c5438a614d03c515e9638a8882a09e46cf3cebd8c4c12d73c"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/herbalism.json",
+      "sha256": "08e3bc1962b9606d55a21a5917c6b08795f8b562ddc13bedffeaf9ef92f8ca3e"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/mining.json",
+      "sha256": "546a3dedec6ade624abb8e5b642dce52baf23f55dc441ccd358aea40917d929f"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/skinning.json",
+      "sha256": "8845caa3f8970d69ee314224515e0f2731f84eaa511dc1a6c8ebb1ecccf5eded"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/cooking.json",
+      "sha256": "b55edcb07876335ff332416a3e36fbc657aaeec94a533335fc752b239836879a"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/first-aid.json",
+      "sha256": "73d4efcc3adea07ea077b4f8583d664f6ea127e1355971431639484d71fc6f42"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions/fishing.json",
+      "sha256": "849457b2e2aa0b053003382bae1c5cfb66773ad50db8a09ca8d49109ca1e8275"
+    },
+    {
+      "url": "https://foreverdb.net/data/datamine.json",
+      "sha256": "b407f02ac45f1375f433ec53f0c70769956c56cf8c87366003bc20339d396edb"
+    },
+    {
+      "url": "https://foreverdb.net/data/professions.json",
+      "sha256": "aacea102d47b0db5d7e810d61dde5c17f61326bfa371aa76f65f845d6dae0ff5"
+    },
+    {
+      "url": "https://foreverdb.net/data/items.json",
+      "sha256": "fa4522cee038fa46cac7957a8ebb317362224b9846ef06fc67abf9a0a1f76a06"
+    },
+    {
+      "url": "https://foreverdb.net/data/spells.json",
+      "sha256": "f051de179a03a76de0151a0d30797b7035f45df20b2d793846f951965517bedb"
+    },
+    {
+      "url": "https://foreverdb.net/data/search/ru.json",
+      "sha256": "39dc01717e73c6e55a69b52d3fff0c6aeebdce1c8a9ce5e7a6b95718750cae05"
+    }
+  ]
+}

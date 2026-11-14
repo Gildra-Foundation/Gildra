@@ -9,17 +9,17 @@ info:
 security:
   - CatalogSession: []
 servers:
-  - url: https://api.gildra.net/world-of-warcraft/retail
+  - url: https://api.wowarcana.com/world-of-warcraft/retail
     description: Canonical product-scoped retail API base. Historical /v1 URLs remain supported.
-  - url: https://api.gildra.net/world-of-warcraft/{edition}
+  - url: https://api.wowarcana.com/world-of-warcraft/{edition}
     description: Product-scoped API base for retail, Classic, Classic Era or Hardcore.
     variables:
       edition:
         default: retail
         enum: [retail, classic, classic-era, hardcore]
         description: Edition mapped to wow, wow_classic, wow_classic_era or wow_classic_hardcore.
-  - url: https://api.gildra.net
-  - url: https://gildra.net/api
+  - url: https://api.wowarcana.com
+  - url: https://wowarcana.com/api
 paths:
   /v1:
     get:
@@ -74,6 +74,12 @@ paths:
         - CatalogSession: []
       parameters:
         - in: query
+          name: expansion
+          description: Optional product-scoped expansion registry key. Zero membership does not establish an official denominator.
+          schema:
+            type: string
+            pattern: '^[a-z][a-z0-9_]{1,63}$'
+        - in: query
           name: product
           schema:
             type: string
@@ -87,6 +93,8 @@ paths:
             enum: [en_US, ru_RU]
             default: en_US
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "200":
           description: Public library datasets backed by published catalog versions.
           content:
@@ -152,6 +160,12 @@ paths:
         - CatalogSession: []
       parameters:
         - in: query
+          name: expansion
+          description: Optional product-scoped expansion registry key; membership must match the published build. Omit for the legacy unscoped catalog.
+          schema:
+            type: string
+            pattern: '^[a-z][a-z0-9_]{1,63}$'
+        - in: query
           name: product
           schema:
             type: string
@@ -214,6 +228,18 @@ paths:
         - CatalogSession: []
       description: Use this endpoint for directories and search results. Fetch the full entity resource only when a user opens a detail view.
       parameters:
+        - in: query
+          name: sort
+          description: Requires dataset or type. Dataset default is current (items use confirmed expansion then item level; other types use descending game ID). Search queries retain relevance order. Legacy UUID cursors retain ID order. Unknown levels sort below known levels descending and before them ascending; names use C collation. Omit on the heterogeneous legacy feed for ID order.
+          schema:
+            type: string
+            enum: [current, item_level_desc, item_level_asc, required_level_desc, required_level_asc, name_asc, name_desc, id]
+        - in: query
+          name: expansion
+          description: Optional product-scoped expansion registry key; membership must match the published build. Omit for the legacy unscoped catalog.
+          schema:
+            type: string
+            pattern: '^[a-z][a-z0-9_]{1,63}$'
         - in: query
           name: product
           schema:
@@ -426,6 +452,12 @@ paths:
       security:
         - CatalogSession: []
       parameters:
+        - in: query
+          name: expansion
+          description: Optional product-scoped expansion registry key; membership must match the published build. Omit for the legacy unscoped catalog.
+          schema:
+            type: string
+            pattern: '^[a-z][a-z0-9_]{1,63}$'
         - in: path
           name: id
           required: true
@@ -446,6 +478,8 @@ paths:
             minLength: 2
             maxLength: 64
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "200":
           description: Game entity.
           content:
@@ -1267,10 +1301,16 @@ components:
         quality:
           type: integer
           minimum: 0
-          maximum: 7
+          maximum: 8
         itemLevel:
           type: integer
           minimum: 0
+        requiredLevel:
+          type: integer
+          minimum: 0
+        inventoryType:
+          type: string
+          description: Source inventory slot code or label; absent when unknown.
         buildId:
           type: integer
           format: int64

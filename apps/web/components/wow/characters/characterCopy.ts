@@ -167,7 +167,7 @@ export function characterCrumbs(locale: CharacterLocale, current?: string) {
   const copy = characterCopy[locale];
   const prefix = locale === "ru" ? "/ru" : "";
   return [
-    { label: copy.wow, href: `${prefix}/wow` },
+    { label: copy.wow, href: prefix || "/" },
     { label: copy.characters, href: current ? `${prefix}/wow/characters` : undefined },
     ...(current ? [{ label: current }] : []),
   ];

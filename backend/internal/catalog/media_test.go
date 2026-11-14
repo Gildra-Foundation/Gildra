@@ -21,7 +21,7 @@ func TestTooltipMediaUsesResolvedEntityURLs(t *testing.T) {
 	if len(ids) != 2 {
 		t.Fatalf("collected entity IDs = %d, want 2", len(ids))
 	}
-	localURL := "https://api.gildra.net/v1/media/" + uuid.NewString()
+	localURL := "https://api.wowarcana.com/v1/media/" + uuid.NewString()
 	attachTooltipMediaURLs(blocks, map[uuid.UUID]string{entityID: localURL})
 	entries := blocks[0]["entries"].([]any)
 	resolved := entries[0].(map[string]any)

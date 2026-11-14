@@ -1,0 +1,279 @@
+/* atlas:strict — the shared parts of the Forever section (docs/forever/DESIGN.md): hero, filter bar, tabs, chips,
+   paging, art cards, glass rows, crests, list rows, feature plaques, states and their motion. One material for the
+   whole section: the Forever plaque (ForeverPanel) with glass inside it. Layout and tokens only. */
+
+.page {
+  --forever-tone: var(--atlas-accent);
+  --forever-glint: linear-gradient(105deg, transparent 30%, color-mix(in srgb, var(--atlas-text-strong) 16%, transparent) 50%, transparent 70%);
+}
+.page a:focus-visible, .page button:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
+
+/* ---------- Stack: the blocks of one section one under another with the section's step ---------- */
+.stack { display: grid; gap: var(--atlas-space-3); min-width: 0; }
+.stack[data-gap="wide"] { gap: var(--atlas-space-5); }
+.stack > * { min-width: 0; }
+/* A quiet text link (a secondary way, «Reset», «Show all»). */
+.link { display: inline-flex; align-items: center; gap: var(--atlas-space-1); min-height: 44px; color: var(--material-light, var(--atlas-accent)); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 5px; }
+.link svg { flex: none; width: 14px; height: 14px; }
+
+/* ---------- Hero: trail, eyebrow, crest, title, one line of text, actions, counters ---------- */
+.hero h1 { hyphens: manual; }
+.hero p { text-wrap: pretty; }
+/* The crest is a game icon (class, profession, record): it fills the seal. */
+.hero [aria-hidden="true"] > span > img { display: block; width: 100%; height: 100%; border-radius: var(--atlas-radius); object-fit: cover; }
+
+/* ---------- Filter bar: search, selects and levels, the painted button, a quiet reset ----------
+   Stacked (default): the search with the button beside it, the fields in a row under them.
+   Inline: the fields stand in the search's row. Without a search: the fields, then the button.
+   The DOM order is search, fields, button — the order of the keyboard and of a phone. */
+.filters { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--atlas-space-4); min-width: 0; }
+.filterLead { order: 0; min-width: 0; }
+.filterAction { order: 1; }
+.filterFields { order: 2; grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: end; gap: var(--atlas-space-3) var(--atlas-space-4); min-width: 0; }
+.filters > .filterReset { order: 3; grid-column: 1 / -1; }
+/* No button (a live filter) or no search: the first row is one cell. */
+.filters:not(:has(> .filterAction)) > .filterLead { grid-column: 1 / -1; }
+.filters:not([data-lead]) { grid-template-columns: auto auto; justify-content: start; }
+.filters:not([data-lead]) > .filterFields { order: 0; grid-column: auto; }
+/* Inline: one row while it fits; the fields drop under the search on a narrower panel. */
+.filters[data-inline] { display: flex; flex-wrap: wrap; }
+.filters[data-inline] > .filterLead { flex: 1 1 200px; }
+.filters[data-inline] > .filterAction { margin-left: auto; }
+.filters[data-inline] > .filterFields { order: 0; flex: none; flex-wrap: nowrap; max-width: 100%; }
+.filters[data-inline] > .filterReset { flex: 1 1 100%; }
+/* A field keeps the width of what it holds: a list of choices, a level. */
+.filterFields > * { flex: 0 1 auto; width: var(--forever-field, 220px); min-width: 0; }
+.filterFields > .levelField { width: var(--forever-field, 128px); }
+.filterFields > :not(.selectField, .levelField) { flex: none; width: auto; }
+.filters[data-inline] .selectField { width: var(--forever-field, 180px); }
+.searchField { min-width: 0; }
+.searchField input { font-size: var(--atlas-text-lead); }
+.levelField input { font-variant-numeric: tabular-nums; }
+/* Fields and selects are one height, so their labels sit on one line. */
+.filters :global(.ui-text-input) { min-height: var(--atlas-control-height); box-sizing: border-box; }
+.filters :global(.ui-text-input) input { min-height: 0; }
+.filters :is(input, select) { scroll-margin-top: calc(var(--atlas-sticky-top) + var(--atlas-space-5)); }
+.filterReset { display: inline-flex; align-items: center; justify-self: start; min-height: 44px; padding: 0; border: 0; background: none; color: var(--material-light, var(--atlas-accent)); font: 600 var(--atlas-text-small) / var(--atlas-leading-snug) var(--atlas-font-ui); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 5px; cursor: pointer; }
+.filters > .filterReset { margin-block: calc(var(--atlas-space-3) * -1) calc(var(--atlas-space-2) * -1); }
+/* What follows the bar on the same plaque (the list, the cards) starts after a line; a list's own `margin: 0` does not win. */
+.filters.filters + * { margin-top: var(--atlas-space-5); }
+
+/* ---------- Tabs: views of one page as links ---------- */
+.tabs { display: flex; flex-wrap: wrap; gap: var(--atlas-space-1); margin-block: var(--atlas-space-2) var(--atlas-space-5); border-bottom: 1px solid var(--material-line, var(--atlas-line-soft)); }
+.tabs a { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 44px; margin-bottom: -1px; padding: 0 var(--atlas-space-4); border-bottom: 2px solid transparent; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); font-weight: 600; text-decoration: none; text-shadow: 0 1px 3px var(--atlas-bg); white-space: nowrap; }
+.tabs a[aria-current="page"] { border-bottom-color: var(--material-light, var(--atlas-accent)); color: var(--atlas-text-strong); }
+.tabCount { color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; }
+
+/* ---------- Chips: quick choices with a game icon ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.chip { display: inline-flex; align-items: center; gap: var(--atlas-space-2); min-height: 40px; padding: 5px var(--atlas-space-3); border: 1px solid var(--atlas-line-soft); border-radius: var(--atlas-radius-control); background: color-mix(in srgb, var(--atlas-bg) 45%, transparent); color: var(--atlas-text); font: 600 var(--atlas-text-small) / var(--atlas-leading-snug) var(--atlas-font-ui); text-decoration: none; cursor: pointer; }
+.chip:has(img) { padding-left: 5px; }
+.chip img { flex: none; width: 28px; height: 28px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); }
+.chip:is([aria-pressed="true"], [aria-current]) { border-color: var(--material-light, var(--atlas-accent)); background: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 16%, var(--atlas-bg)); color: var(--atlas-text-strong); }
+
+/* ---------- Art cards: a painting, a name, one line; the whole card is the link ---------- */
+.artGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--forever-min, 220px)), 1fr)); gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
+.artGrid[data-fit] { grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--forever-min, 220px)), 1fr)); }
+.artGrid > li { min-width: 0; }
+.artCard { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--atlas-space-1); height: 100%; aspect-ratio: var(--forever-ratio, 3 / 2); padding: var(--atlas-space-3); overflow: hidden; border: 1px solid var(--atlas-glass-edge); border-radius: var(--atlas-radius); background: var(--atlas-surface-sunken); box-shadow: var(--atlas-glass-depth); color: var(--atlas-text-strong); text-decoration: none; }
+.artPainting { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: contrast(.94) saturate(.9); }
+/* With a game icon the name and its line stand beside it. */
+.artCard[data-icon] { display: grid; grid-template-columns: auto minmax(0, 1fr); align-content: end; align-items: center; gap: var(--atlas-space-1) var(--atlas-space-3); }
+.artIcon { grid-row: span 2; width: 44px; height: 44px; border-radius: var(--atlas-radius-control); outline: 1px solid var(--atlas-glass-edge); outline-offset: 2px; box-shadow: var(--atlas-glass-depth); }
+.artCard[data-icon] > .artNote { grid-column: 2; }
+.artCard::before { content: ""; position: absolute; z-index: -1; inset: 0; background: var(--forever-glint) no-repeat -160% 0 / 55% 100%, linear-gradient(180deg, transparent 18%, color-mix(in srgb, var(--atlas-bg) 92%, transparent) 86%); }
+.artCard::after { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: var(--forever-tone); box-shadow: 0 0 14px var(--forever-tone); }
+.artTitle { hyphens: manual; font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); text-shadow: var(--atlas-text-shadow-art); text-wrap: balance; overflow-wrap: break-word; }
+.artNote { hyphens: manual; display: inline-flex; align-items: center; gap: var(--atlas-space-1); color: color-mix(in srgb, var(--forever-tone) 70%, var(--atlas-text-strong)); font-size: var(--atlas-text-small); font-weight: 600; line-height: var(--atlas-leading-snug); text-shadow: var(--atlas-text-shadow-art); }
+.artNote svg { flex: none; width: 14px; height: 14px; }
+.artBadge { position: absolute; top: var(--atlas-space-2); right: var(--atlas-space-2); padding: 2px var(--atlas-space-2); border: 1px solid color-mix(in srgb, var(--forever-tone) 60%, transparent); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 75%, transparent); color: var(--atlas-text-strong); font-size: var(--atlas-text-meta); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- Rows: glass rows with a medallion or a game icon ---------- */
+.rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.rows[data-columns="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rows[data-columns="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rows > li { min-width: 0; border: 1px solid var(--atlas-glass-edge); border-radius: var(--atlas-radius); background: var(--atlas-glass-sheen), linear-gradient(120deg, var(--atlas-accent-wash), transparent 60%), var(--atlas-glass-raised); box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth); }
+.row { display: flex; align-items: center; gap: var(--atlas-space-3); height: 100%; min-height: 76px; padding: var(--atlas-space-3); color: var(--atlas-text-strong); text-decoration: none; }
+.rowText { display: grid; flex: 1; gap: var(--atlas-space-1); min-width: 0; }
+.rowText strong { font-size: var(--atlas-text-body); font-weight: 600; line-height: var(--atlas-leading-snug); overflow-wrap: break-word; }
+.rowText span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+.rowAside { flex: none; color: var(--atlas-text-subtle); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rowAside svg { display: block; width: 16px; height: 16px; color: var(--atlas-accent); }
+.medallion { display: grid; place-items: center; flex: none; width: 40px; height: 40px; overflow: hidden; border: 1px solid var(--atlas-accent-2); border-radius: 50%; background: radial-gradient(ellipse at 35% 20%, var(--atlas-accent-wash), transparent 70%), var(--atlas-glass-raised); box-shadow: var(--atlas-glass-inset), inset 0 0 0 4px var(--atlas-surface-sunken), var(--atlas-glass-depth); }
+.medallion svg { display: block; width: 19px; height: 19px; color: var(--atlas-accent-strong); }
+.medallion[data-icon] { border-radius: var(--atlas-radius-control); box-shadow: var(--atlas-glass-depth); }
+.medallion img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- Crests: a roster of classes (or professions) in the colours of the game ---------- */
+.crests { display: grid; grid-template-columns: repeat(var(--forever-count, 9), minmax(0, 1fr)); gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.crests > li { min-width: 0; }
+.crest { display: flex; flex-direction: column; align-items: center; gap: var(--atlas-space-2); height: 100%; min-height: 112px; padding: var(--atlas-space-3) var(--atlas-space-1) var(--atlas-space-2); border: 1px solid var(--atlas-glass-edge); border-top: 2px solid var(--forever-tone); border-radius: var(--atlas-radius); background: var(--atlas-glass-sheen), linear-gradient(180deg, color-mix(in srgb, var(--forever-tone) 16%, transparent), transparent 72%), var(--atlas-glass-raised); box-shadow: var(--atlas-glass-inset), var(--atlas-glass-depth); color: color-mix(in srgb, var(--forever-tone) 62%, var(--atlas-text-strong)); font-size: var(--atlas-text-meta); font-weight: 600; line-height: var(--atlas-leading-snug); text-align: center; text-decoration: none; hyphens: manual; overflow-wrap: break-word; }
+.crest img { flex: none; width: 48px; height: 48px; border-radius: var(--atlas-radius); outline: 1px solid var(--atlas-glass-edge); outline-offset: 2px; box-shadow: var(--atlas-glass-depth); }
+.crest span { min-width: 0; max-width: 100%; }
+.crest[aria-current="page"] { border-color: var(--forever-tone); background: var(--atlas-glass-sheen), linear-gradient(180deg, color-mix(in srgb, var(--forever-tone) 34%, transparent), color-mix(in srgb, var(--forever-tone) 8%, transparent)), var(--atlas-glass-raised); color: var(--atlas-text-strong); }
+
+/* ---------- List rows: a record, a boss, a recipe on one line inside a panel ---------- */
+.list { display: grid; margin: 0; padding: 0; list-style: none; }
+.list > li { min-width: 0; border-bottom: 1px solid var(--material-line, var(--atlas-line-soft)); }
+.list > li:last-child { border-bottom: 0; }
+.listRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); min-height: 64px; padding: var(--atlas-space-2) var(--atlas-space-2); border-radius: var(--atlas-radius); color: var(--atlas-text); text-decoration: none; }
+.listRow[data-icon] { grid-template-columns: auto minmax(0, 1fr) auto; }
+.listText { display: grid; gap: 2px; min-width: 0; }
+.listText strong { color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; line-height: var(--atlas-leading-snug); overflow-wrap: break-word; }
+.listText > span { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); }
+.listValues { display: flex; align-items: center; gap: var(--atlas-space-4); color: var(--atlas-text); font-size: var(--atlas-text-small); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+
+/* ---------- Feature: a plaque with a painting, a title that covers it and links above it ---------- */
+.page .feature, .feature { position: relative; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--atlas-space-5); min-width: 0; padding: 24px; }
+.feature[data-stacked] { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; gap: var(--atlas-space-4); padding: 28px; }
+.featureArt { position: relative; isolation: isolate; min-height: 200px; overflow: hidden; border: 1px solid var(--atlas-line); background: var(--atlas-surface-sunken); box-shadow: var(--atlas-glass-inset); }
+.feature[data-stacked] .featureArt { min-height: 0; aspect-ratio: 2.8; }
+.featureArt img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; filter: contrast(.94) saturate(.9); pointer-events: none; }
+.featureBody { display: flex; flex-direction: column; min-width: 0; }
+.featureBody > :is(h2, h3) { margin: 0 0 var(--atlas-space-2); color: var(--atlas-text-strong); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); text-shadow: var(--atlas-text-shadow-art); }
+.featureBody > :is(h2, h3) a { display: flex; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); min-height: 44px; color: inherit; text-decoration: none; }
+.featureBody > :is(h2, h3) a::after { content: ""; position: absolute; inset: 0; }
+.featureBody > :is(h2, h3) svg { flex: none; width: 16px; height: 16px; color: var(--material-light, var(--atlas-accent)); }
+.featureBody > p { margin: 0 0 var(--atlas-space-3); color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-body); }
+/* Links inside the plaque stay above the title link that covers it. */
+.featureLinks { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+/* Entries: the pages behind the plaque as ruled lines with a game icon, in columns. */
+.featureEntries { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.featureEntries a { display: flex; align-items: center; gap: var(--atlas-space-3); min-height: 44px; border-top: 1px solid var(--material-line, var(--atlas-line-soft)); color: var(--atlas-text); font-size: var(--atlas-text-small); font-weight: 600; line-height: var(--atlas-leading-snug); text-decoration: none; }
+.featureEntries img { flex: none; width: 28px; height: 28px; border: 1px solid var(--atlas-line); border-radius: var(--atlas-radius-control); }
+.featureEntries span { min-width: 0; overflow-wrap: break-word; }
+.featureLinks a { display: inline-flex; align-items: center; min-height: 36px; padding-inline: var(--atlas-space-3); border: 1px solid var(--atlas-glass-edge); border-radius: 999px; background: var(--atlas-glass-fill); color: var(--atlas-text); font-size: var(--atlas-text-small); text-decoration: none; white-space: nowrap; }
+
+/* ---------- States: loading, error, nothing found — the same on every page, inside the section's plaque ---------- */
+.state.state.state[data-size] { padding: var(--atlas-space-3) 0; border: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+
+/* ---------- Arrival: on the first load of a visit grids and rows land as a cascade (CSS, from the first paint);
+   groups below the fold rise again when they are scrolled to (ForeverMotion). Nothing waits hidden. ---------- */
+@keyframes foreverRise { from { opacity: 0; translate: 0 calc(var(--atlas-reveal-shift) + 6px); } }
+@media screen and (prefers-reduced-motion: no-preference) {
+  .page:not([data-atlas-arrival="skip"], [data-forever-landed]) [data-forever-cascade] > * { animation: foreverRise var(--atlas-duration-enter) var(--atlas-ease) calc(var(--atlas-stagger) * (3 + var(--forever-i, 6) * .6)) backwards; }
+  [data-forever-cascade] > :nth-child(1) { --forever-i: 0; }
+  [data-forever-cascade] > :nth-child(2) { --forever-i: 1; }
+  [data-forever-cascade] > :nth-child(3) { --forever-i: 2; }
+  [data-forever-cascade] > :nth-child(4) { --forever-i: 3; }
+  [data-forever-cascade] > :nth-child(5) { --forever-i: 4; }
+  [data-forever-cascade] > :nth-child(6) { --forever-i: 5; }
+}
+
+/* ---------- Answer to the pointer ----------
+   Colour, edge and shadow answer any fine pointer; what moves (the lift, the zoom of a painting, the pass of light,
+   a leaning arrow) is declared only where motion is welcome, and is cancelled again for «Less motion». */
+@media (hover: hover) and (pointer: fine) {
+  .tabs a, .chip, .filterReset, .link { transition: color var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease), text-decoration-color var(--atlas-duration-fast) var(--atlas-ease); }
+  .tabs a:hover { color: var(--atlas-text-strong); }
+  .chip:hover { border-color: var(--atlas-line-strong); color: var(--atlas-text-strong); }
+  .filterReset:hover, .link:hover { color: var(--atlas-text-strong); text-decoration-color: currentColor; }
+  .artCard { transition: border-color var(--atlas-duration), box-shadow var(--atlas-duration); }
+  .artCard:hover { border-color: var(--forever-tone); box-shadow: var(--atlas-shadow-lift), 0 0 24px color-mix(in srgb, var(--forever-tone) 35%, transparent); color: var(--atlas-text-strong); }
+  .rows > li, .crest, .featureLinks a { transition: border-color var(--atlas-duration-fast), box-shadow var(--atlas-duration-fast), background var(--atlas-duration-fast); }
+  .rows > li:hover { border-color: var(--atlas-accent); box-shadow: var(--atlas-shadow-lift); }
+  .crest:hover { border-color: var(--forever-tone); box-shadow: var(--atlas-shadow-lift); color: var(--atlas-text-strong); }
+  .listRow { transition: background-color var(--atlas-duration-fast) var(--atlas-ease), color var(--atlas-duration-fast) var(--atlas-ease); }
+  a.listRow:hover { background: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 10%, transparent); color: var(--atlas-text-strong); }
+  .featureLinks a:hover { border-color: var(--material-light, var(--atlas-accent)); background: var(--atlas-glass-raised); color: var(--atlas-text-strong); }
+  .featureEntries a { transition: color var(--atlas-duration-fast) var(--atlas-ease), border-color var(--atlas-duration-fast) var(--atlas-ease); }
+  .featureEntries a:hover { border-top-color: var(--material-light, var(--atlas-accent)); color: var(--material-light, var(--atlas-text-strong)); }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .artCard { transition: border-color var(--atlas-duration), box-shadow var(--atlas-duration), translate var(--atlas-duration) var(--atlas-ease), scale var(--atlas-duration-fast); }
+  .artPainting, .featureArt img { transition: transform var(--atlas-duration-art) var(--atlas-ease); }
+  .artCard::before { transition: background-position 0s; }
+  .artCard:hover { translate: 0 -3px; }
+  .artCard:hover .artPainting, .feature:hover .featureArt img { transform: scale(1.05); }
+  /* One pass of light over the painting as the pointer arrives. */
+  .artCard:hover::before { background-position: 260% 0, 0 0; transition: background-position var(--atlas-duration-sweep) var(--atlas-ease); }
+  .artCard:active { translate: none; scale: .985; }
+  .rows > li, .crest { transition: border-color var(--atlas-duration-fast), box-shadow var(--atlas-duration-fast), transform var(--atlas-duration-fast), background var(--atlas-duration-fast); }
+  .rows > li:hover, .crest:hover { transform: translateY(-2px); }
+  .rows > li:active, .crest:active { transform: translateY(1px); }
+  .medallion svg, .medallion img, .crest img { transition: scale var(--atlas-duration) var(--atlas-ease); }
+  .rows > li:hover .medallion :is(svg, img) { scale: 1.14; }
+  .crest:hover img { scale: 1.08; }
+  /* Arrows lean the way they lead. */
+  .rowAside svg, .featureBody > :is(h2, h3) svg, .artNote svg { transition: translate var(--atlas-duration) var(--atlas-ease); }
+  .rows > li:hover .rowAside svg, .feature:hover .featureBody > :is(h2, h3) svg { translate: 3px 0; }
+  .artCard[href^="#"]:hover .artNote svg { translate: 0 3px; }
+}
+/* Reduced transparency, forced colours and the site's «Less motion» keep everything in place as well. */
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  :is(.artCard, .artPainting, .featureArt img, .rows > li, .crest, .crest img, .medallion svg, .medallion img, .rowAside svg, .featureBody svg, .artNote svg) { transition: none; transform: none !important; translate: var(--atlas-still, none) !important; scale: var(--atlas-still, none) !important; }
+  .artCard::before { transition: none; background-position: -160% 0, 0 0 !important; }
+}
+:global(html[data-motion="reduced"]) .page [data-forever-cascade] > * { animation: none !important; }
+:global(html[data-motion="reduced"]) :is(.artCard, .artPainting, .featureArt img, .rows > li, .crest, .crest img, .medallion svg, .medallion img, .rowAside svg, .featureBody svg, .artNote svg) { transition: none; transform: none !important; translate: var(--atlas-still, none) !important; scale: var(--atlas-still, none) !important; }
+:global(html[data-motion="reduced"]) .artCard::before { transition: none; background-position: -160% 0, 0 0 !important; }
+@media (prefers-reduced-transparency: reduce), (forced-colors: active), print { .page [data-forever-cascade] > * { animation: none !important; } }
+@media (forced-colors: active) {
+  .artCard, .rows > li, .crest, .chip, .featureArt { border-color: CanvasText; }
+  .medallion { border: 1px solid ButtonText; background: ButtonFace; box-shadow: none; color: ButtonText; }
+  .artCard::before, .artCard::after { display: none; }
+  .chip:is([aria-pressed="true"], [aria-current]), .tabs a[aria-current="page"], .crest[aria-current="page"] { border: 2px solid CanvasText; }
+}
+
+/* ---------- Narrow screens ---------- */
+@media (max-width: 1279px) {
+  .crest { min-height: 96px; }
+  .rows[data-columns="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1000px) {
+  /* A roster stands in two even rows; a strip of art cards swipes. */
+  .crests { grid-template-columns: repeat(var(--forever-half, 5), minmax(0, 1fr)); }
+  .artGrid[data-strip] { display: flex; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: var(--atlas-space-1); }
+  .artGrid[data-strip]::-webkit-scrollbar { display: none; }
+  .artGrid[data-strip] > li { flex: 0 0 240px; scroll-snap-align: start; }
+}
+@media (max-width: 900px) {
+  .rows, .rows[data-columns="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rows > li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  /* A phone reads the bar top to bottom: the search, the fields, then the button across the panel. */
+  .filters, .filters:not([data-lead]), .filters[data-inline] { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); }
+  .filters > *, .filters:not([data-lead]) > .filterFields, .filters[data-inline] > .filterFields { order: 0; grid-column: 1 / -1; }
+  .searchField input { font-size: var(--atlas-text-body); }
+  .filterFields, .filters[data-inline] > .filterFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filterFields > *, .filterFields > .levelField, .filters[data-inline] .selectField { width: auto; }
+  .filters[data-inline] > .filterFields { flex: initial; max-width: none; }
+  .filters[data-inline] > .filterAction { margin-left: 0; }
+  .filterFields > :first-child:nth-last-child(odd) { grid-column: 1 / -1; }
+  /* A list with a long choice takes the whole row (the chosen value is never cut), and so does a field left alone before it. */
+  .filterFields > [data-wide], .filterFields > :nth-child(odd):has(+ [data-wide]) { grid-column: 1 / -1; }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs a { flex: none; padding: 0 var(--atlas-space-3); }
+  .artGrid[data-strip] { gap: var(--atlas-space-2); }
+  .artGrid[data-strip] > li { flex-basis: 62%; }
+  .artGrid:not([data-strip]) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-2); }
+  .artGrid:not([data-strip]) .artTitle { font-size: var(--atlas-text-body); }
+  .rows, .rows[data-columns="2"], .rows[data-columns="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
+  .row { gap: var(--atlas-space-2); min-height: 64px; padding: var(--atlas-space-2); }
+  .medallion { width: 30px; height: 30px; }
+  .medallion svg { width: 16px; height: 16px; }
+  .rowText strong { font-size: var(--atlas-text-small); }
+  .rowText span { font-size: var(--atlas-text-meta); }
+  .rowAside:has(svg) { display: none; }
+  .crests { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-1); }
+  .crest { min-height: 84px; padding: var(--atlas-space-2) var(--atlas-space-1); }
+  .crest img { width: 36px; height: 36px; }
+  .page .feature, .feature, .feature[data-stacked] { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-3); padding: 14px; }
+  .featureArt { min-height: 0; aspect-ratio: 3; }
+  .feature[data-stacked] .featureArt { aspect-ratio: 2; }
+  .featureEntries { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--atlas-space-3); }
+  .featureLinks { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .featureLinks::-webkit-scrollbar { display: none; }
+  .featureLinks a { min-height: 44px; }
+  .listRow { grid-template-columns: minmax(0, 1fr); row-gap: var(--atlas-space-1); min-height: 56px; padding-inline: 0; }
+  .listRow[data-icon] { grid-template-columns: auto minmax(0, 1fr); }
+  .listRow[data-icon] .listValues { grid-column: 2; }
+  .listValues { flex-wrap: wrap; gap: var(--atlas-space-1) var(--atlas-space-3); white-space: normal; }
+}
+/* Touch: 16 px fields (no zoom on focus) and 44 px chips. */
+@media (pointer: coarse) {
+  .filters.filters :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select) { font-size: max(16px, 1em); }
+  .chip { min-height: 44px; }
+}

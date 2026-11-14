@@ -44,8 +44,13 @@ export function getBattleNetPreferredRegion(): BattleNetRegion {
 }
 
 export class BattleNetProfileError extends Error {
-  constructor(public readonly status: number, public readonly attempts: Array<{ region: BattleNetRegion; status: number }>) {
+  readonly status: number;
+  readonly attempts: Array<{ region: BattleNetRegion; status: number }>;
+
+  constructor(status: number, attempts: Array<{ region: BattleNetRegion; status: number }>) {
     super(`Battle.net Profile API returned ${status} in every available region`);
+    this.status = status;
+    this.attempts = attempts;
   }
 }
 

@@ -18,7 +18,7 @@
   background: var(--atlas-surface-raised);
   box-shadow: 0 -14px 32px color-mix(in srgb, #000 50%, transparent);
   font-family: var(--atlas-font-ui);
-  animation: cookie-in .3s var(--atlas-ease) both;
+  animation: cookie-in var(--atlas-duration-slow) var(--atlas-ease) both;
 }
 
 .text {
@@ -31,7 +31,7 @@
   line-height: 1.5;
 }
 
-.text a { color: var(--atlas-accent-strong); }
+.text a { color: var(--atlas-accent-strong); text-decoration: underline; text-underline-offset: .15em; }
 .text a:hover { color: var(--atlas-text-strong); }
 
 .actions { display: flex; flex: 0 0 auto; gap: var(--atlas-space-4); }

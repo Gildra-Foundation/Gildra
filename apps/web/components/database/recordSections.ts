@@ -10,7 +10,7 @@ import { LIBRARY_INTERNAL_NAME } from "@/lib/library/internalName";
 /** The part of a related record these helpers read (GameEntitySummary). */
 export type RelatedRecord = {
   id: string; type: string; externalId: number; slug?: string; name: string; product?: string;
-  iconUrl?: string; quality?: number; itemLevel?: number; highlights?: { key: string; value: string }[];
+  iconUrl?: string; iconName?: string; quality?: number; itemLevel?: number; highlights?: { key: string; value: string }[];
 };
 export type Relationship = { direction: "incoming" | "outgoing"; relation: string; attributes: Record<string, unknown>; entity: RelatedRecord };
 export type RelationGroup = { key: string; direction: string; relation: string; entries: Relationship[] };

@@ -1,0 +1,38 @@
+[
+  {
+    "ua": "Mozilla/5.0",
+    "path": "/",
+    "status": 200,
+    "cfMitigated": null
+  },
+  {
+    "ua": "Mozilla/5.0",
+    "path": "/sitemap.xml",
+    "status": 200,
+    "cfMitigated": null
+  },
+  {
+    "ua": "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
+    "path": "/",
+    "status": 200,
+    "cfMitigated": null
+  },
+  {
+    "ua": "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
+    "path": "/sitemap.xml",
+    "status": 200,
+    "cfMitigated": null
+  },
+  {
+    "ua": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
+    "path": "/",
+    "status": 200,
+    "cfMitigated": null
+  },
+  {
+    "ua": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
+    "path": "/sitemap.xml",
+    "status": 200,
+    "cfMitigated": null
+  }
+]

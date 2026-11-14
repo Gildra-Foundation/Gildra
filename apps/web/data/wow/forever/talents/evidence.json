@@ -1,0 +1,155 @@
+{
+  "edition": "forever",
+  "build": "1.60.1.70862",
+  "snapshot": "09ab40487a45",
+  "retrievedAt": "2026-11-11T00:19:37.471180+00:00",
+  "sources": [
+    {
+      "url": "https://foreverdb.net/data/classes.json",
+      "sha256": "69b689f35e68cc82d2bb00918d6aa6d61d5c20c4de05ae662ce64e3fc1b27ec4"
+    },
+    {
+      "url": "https://foreverdb.net/data/live-client.json",
+      "sha256": "1b87b45e59945abc3dfb544d973e32166c92359957d49d0906e2d173a474625c"
+    },
+    {
+      "url": "https://foreverdb.net/data/l10n/ru/classes.json",
+      "sha256": "932cbca9af6cc0df9acb7749797ee6ba49d3cb2c83b2e383bf36077b5b4daaf1"
+    }
+  ],
+  "crossCheck": "talentsforever.com/data.json 1.60.1.70755 with hotfixes: all467names,positions,maxRanks agree; native ForeverDB rank descriptions take precedence",
+  "classicBaseline": "not imported",
+  "excluded": {
+    "nonTreeClassAbilities": 553,
+    "retiredNodes": 3
+  },
+  "classes": [
+    {
+      "slug": "warrior",
+      "nodes": 53,
+      "ranks": 145
+    },
+    {
+      "slug": "paladin",
+      "nodes": 51,
+      "ranks": 139
+    },
+    {
+      "slug": "hunter",
+      "nodes": 50,
+      "ranks": 148
+    },
+    {
+      "slug": "rogue",
+      "nodes": 54,
+      "ranks": 137
+    },
+    {
+      "slug": "priest",
+      "nodes": 52,
+      "ranks": 148
+    },
+    {
+      "slug": "shaman",
+      "nodes": 50,
+      "ranks": 148
+    },
+    {
+      "slug": "mage",
+      "nodes": 53,
+      "ranks": 139
+    },
+    {
+      "slug": "warlock",
+      "nodes": 52,
+      "ranks": 146
+    },
+    {
+      "slug": "druid",
+      "nodes": 52,
+      "ranks": 147
+    }
+  ],
+  "editorialAdaptations": [
+    {
+      "nodeId": 105935,
+      "field": "EN/RU description",
+      "reason": "Omitted unresolved radius ?; retained verified effect and duration"
+    },
+    {
+      "nodeId": 110878,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    },
+    {
+      "nodeId": 110875,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    },
+    {
+      "nodeId": 113629,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    },
+    {
+      "nodeId": 105718,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    },
+    {
+      "nodeId": 105712,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    },
+    {
+      "nodeId": 105740,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    },
+    {
+      "nodeId": 105750,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    },
+    {
+      "nodeId": 105856,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    },
+    {
+      "nodeId": 105770,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    },
+    {
+      "nodeId": 104951,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    },
+    {
+      "nodeId": 113563,
+      "field": "EN/RU description",
+      "reason": "Omitted unresolved Mana/Energy quantities ?; retained verified effect"
+    },
+    {
+      "nodeId": 104918,
+      "field": "ru description",
+      "reason": "editorial translation of native EN; source has no native RU rank descriptions"
+    }
+  ],
+  "buildBinding": "Provider live-client.json reports70862; classes.json has no embedded build stamp, captured same session.",
+  "locales": {
+    "en": {
+      "names": 467,
+      "nativeRankArrays": 465,
+      "editorialSummaries": 2
+    },
+    "ru": {
+      "names": 460,
+      "nativeRankArrays": 454,
+      "editorialTranslatedArrays": 11,
+      "editorialSummaries": 2,
+      "untranslatedNames": 7
+    }
+  }
+}

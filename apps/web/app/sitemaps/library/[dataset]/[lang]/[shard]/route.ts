@@ -1,6 +1,6 @@
 import { getCatalogSitemapEntries, getLibraryDatasets } from "@/lib/api/client";
 import { runtimeFlags } from "@/lib/flags";
-import { URLSET_CLOSE, URLSET_OPEN, entriesHaveLocales, homeDatasetType, isRecordShard, recordSitemapUrls, requestShards, type RecordSitemapEntry } from "@/lib/library/recordSitemap";
+import { URLSET_CLOSE, URLSET_OPEN, datasetHasRecordSitemap, entriesHaveLocales, homeDatasetType, isRecordShard, recordSitemapUrls, requestShards, type RecordSitemapEntry } from "@/lib/library/recordSitemap";
 
 /** Reads the API shards of one file, four at a time, in id order. */
 async function readShards(type: string, shards: string[]) {
@@ -31,6 +31,8 @@ export async function GET(_request: Request, context: { params: Promise<{ datase
   if (!runtimeFlags().catalogPublic || !type || (lang !== "en" && lang !== "ru") || !isRecordShard(shard)) {
     return new Response("Not found", { status: 404 });
   }
+  // A dataset hidden from players has no pages for search engines: a crawler that still knows the file reads an empty one.
+  if (!datasetHasRecordSitemap(dataset)) return xml(`${URLSET_OPEN}${URLSET_CLOSE}`);
   let entries: RecordSitemapEntry[];
   try {
     const count = (await getLibraryDatasets("en_US")).find((item) => item.slug === dataset)?.entityCount ?? 0;

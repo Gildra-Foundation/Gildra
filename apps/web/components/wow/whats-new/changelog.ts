@@ -1,5 +1,5 @@
 /**
- * Player-facing changelog (roadmap item 99). Only what shipped to gildra.net, in
+ * Player-facing changelog (roadmap item 99). Only what shipped to wowarcana.com, in
  * plain words; the technical journal of the same releases is docs/releases.md.
  * Newest first. Each change: kind + text in both languages.
  */
@@ -16,14 +16,14 @@ export const changelog: Release[] = [
   {
     date: "2026-11-04",
     changes: [
-      { kind: "new", en: "The Venomous Abyss guide: all eight bosses on one page, with Normal and Heroic tactics.", ru: "Гайд по The Venomous Abyss: все восемь боссов на одной странице, тактики Normal и Heroic." },
+      { kind: "new", en: "The Venomous Abyss guide: all eight bosses on one page, with Normal and Heroic tactics.", ru: "Гайд по «Отравленной бездне»: все восемь боссов на одной странице, тактики для обычной и героической сложности." },
       { kind: "better", en: "Every published raid is now in the Raids menu.", ru: "Все опубликованные рейды теперь в меню «Рейды»." },
     ],
   },
   {
     date: "2026-10-29",
     changes: [
-      { kind: "better", en: "The Voidspire is simpler: all six bosses and the overview show stages and pulls in one compact view, Normal and Heroic side by side, role tips folded away.", ru: "The Voidspire стал проще: все шесть боссов и обзор показывают стадии и пуллы в одном компактном виде, Normal и Heroic рядом, советы ролям свёрнуты." },
+      { kind: "better", en: "The Voidspire is simpler: all six bosses and the overview show stages and pulls in one compact view, Normal and Heroic side by side, role tips folded away.", ru: "«Шпиль Бездны» стал проще: все шесть боссов и обзор показывают стадии и пулы в одном компактном виде, обычная и героическая сложность рядом, советы ролям свёрнуты." },
     ],
   },
   {
@@ -40,7 +40,7 @@ export const changelog: Release[] = [
     changes: [
       { kind: "new", en: "Library: items, spells, mounts and other game data with in-game tooltips and 3D models.", ru: "Библиотека: предметы, заклинания, транспорт и другие данные игры с подсказками и 3D-моделями." },
       { kind: "new", en: "Characters: sign in with Battle.net and pick your heroes by class.", ru: "Персонажи: вход через Battle.net и выбор героев по классу." },
-      { kind: "new", en: "The Voidspire: a pull map and role briefings for every boss.", ru: "The Voidspire: карта пуллов и задачи ролей для каждого босса." },
+      { kind: "new", en: "The Voidspire: a pull map and role briefings for every boss.", ru: "«Шпиль Бездны»: карта пулов и задачи ролей для каждого босса." },
       { kind: "better", en: "Pictures for thousands of library records that had none.", ru: "Картинки у тысяч записей библиотеки, где их не было." },
     ],
   },
@@ -48,7 +48,7 @@ export const changelog: Release[] = [
     date: "2026-10-25",
     changes: [
       { kind: "new", en: "Every Mythic+ dungeon has its own painted look: frames, plaques and timer hourglasses.", ru: "У каждого подземелья Mythic+ свой нарисованный облик: рамки, таблички и песочные часы таймера." },
-      { kind: "new", en: "Dungeon routes show what your role does on each pull.", ru: "Маршруты подземелий показывают, что делает ваша роль на каждом пулле." },
+      { kind: "new", en: "Dungeon routes show what your role does on each pull.", ru: "Маршруты подземелий показывают, что делает ваша роль на каждом пуле." },
     ],
   },
   {
@@ -76,7 +76,7 @@ export const changelog: Release[] = [
       { kind: "new", en: "Site search: press ⌘K / Ctrl+K or \"/\" anywhere; recently opened pages are one key away.", ru: "Поиск по сайту: ⌘K / Ctrl+K или «/» на любой странице; недавно открытые — под рукой." },
       { kind: "new", en: "Mythic+ route steps are now written in English on English pages.", ru: "Шаги маршрутов Mythic+ на английских страницах теперь написаны по-английски." },
       { kind: "new", en: "Link previews with section art when you share any page.", ru: "Превью ссылок с картиной раздела, когда вы делитесь любой страницей." },
-      { kind: "new", en: "A living void over The Voidspire and torchlight under the cursor on cards.", ru: "Живая Бездна над The Voidspire и свет факела под курсором на карточках." },
+      { kind: "new", en: "A living void over The Voidspire and torchlight under the cursor on cards.", ru: "Живая Бездна над «Шпилем Бездны» и свет факела под курсором на карточках." },
       { kind: "new", en: "Class catalogue with every specialization of Midnight.", ru: "Каталог классов со всеми специализациями Midnight." },
       { kind: "better", en: "Pages arrive with a soft transition instead of a jump.", ru: "Страницы появляются мягким переходом вместо скачка." },
     ],

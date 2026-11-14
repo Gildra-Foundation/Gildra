@@ -7,7 +7,7 @@ info:
     name: Proprietary
     identifier: LicenseRef-Proprietary
 servers:
-  - url: https://api.gildra.net/genshin-impact/v1
+  - url: https://api.wowarcana.com/genshin-impact/v1
 paths:
   /:
     get:

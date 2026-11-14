@@ -113,3 +113,28 @@ func TestDatabaseEnvironmentRejectsNonURLConnectionStrings(t *testing.T) {
 		t.Fatalf("non-URL connection error = %v", err)
 	}
 }
+
+func TestDatabaseEnvironmentPreservesExplicitWriterIdentity(t *testing.T) {
+	t.Setenv("PGAPPNAME", "unrelated-inherited-name")
+	for _, tc := range []struct{ url, want string }{
+		{"postgres://test@localhost/catalog?application_name=midnight-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "midnight-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+		{"postgres://test@localhost/catalog", "gildra-catalog-backup"},
+	} {
+		env, err := databaseEnvironment(tc.url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		count := 0
+		for _, v := range env {
+			if strings.HasPrefix(v, "PGAPPNAME=") {
+				count++
+				if v != "PGAPPNAME="+tc.want {
+					t.Fatalf("writer attribution lost: %q", v)
+				}
+			}
+		}
+		if count != 1 {
+			t.Fatalf("expected exactly one PGAPPNAME, got%d", count)
+		}
+	}
+}

@@ -3,7 +3,7 @@
 // a reference (the live site by default, or saved PNGs with --baseline-dir),
 // desktop 1440×900 and phone 390×844, reduced motion, consent declined.
 //
-//   npm run visual:diff                                  # local :3100 vs https://gildra.net, default routes
+//   npm run visual:diff                                  # local :3100 vs https://wowarcana.com, default routes
 //   npm run visual:diff -- --routes /ru/wow,/wow/raids --max 0.5
 //   npm run visual:diff -- --routes /dev/atlas --baseline-dir .artifacts/visual/atlas-baseline [--update]
 //
@@ -20,7 +20,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((pairs, arg, index,
   return pairs;
 }, []));
 const candidate = args.candidate ?? "http://127.0.0.1:3100";
-const reference = args.base ?? "https://gildra.net";
+const reference = args.base ?? "https://wowarcana.com";
 const baselineDir = args["baseline-dir"];
 const update = args.update === "true";
 const max = Number(args.max ?? 0.5);

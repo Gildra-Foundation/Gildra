@@ -1,3 +1,6 @@
+import { wowHomeCopy } from "@/components/wow/home/wowHomeCopy";
+import { foreverCopy } from "@/components/wow/forever/foreverCopy";
+import { mistsCopy } from "@/components/wow/mists/mistsCopy";
 import { pluralRu } from "@gildra/atlas-ui/format";
 import { getMidnightRaid, raidRouteSlugs, raidSceneArt } from "@/lib/data/wow/raid/midnightRaidData";
 import { getBossStrategy } from "@/lib/data/wow/raid/raidStrategy";
@@ -37,7 +40,7 @@ const encounters = contentManifest.encounters as Manifest[];
 const mythicPlusHub = (locale: Locale): Spec => ({ ...scene("mythicPlus"), eyebrow: ru(locale) ? "Midnight · Сезон 2" : "Midnight · Season 2", title: ru(locale) ? "Атлас Mythic+" : "Mythic+ atlas", subtitle: ru(locale) ? "Маршруты, таймеры и тактика подземелий сезона." : "Routes, timers and tactics for the dungeons of the season.", facts: [count(locale, Object.keys(dungeonRoutes).length, "подземелье", "подземелья", "подземелий", "dungeon")] });
 
 const hubs = {
-  wow: (locale) => ({ ...scene("wow"), eyebrow: "Midnight", title: ru(locale) ? "Командный центр в Азероте" : "Command center in Azeroth", subtitle: ru(locale) ? "Рейды, Mythic+, логова, классы и база данных World of Warcraft." : "Raids, Mythic+, lairs, classes and the World of Warcraft database." }),
+  wow: (locale) => ({ ...scene("wow"), eyebrow: ru(locale) ? "Midnight · Сезон 2" : "Midnight · Season 2", title: wowHomeCopy[locale].title, subtitle: wowHomeCopy[locale].description }),
   raids: (locale) => ({ ...scene("raids"), eyebrow: "Midnight", title: ru(locale) ? "Рейдовый журнал" : "Raid journal", subtitle: ru(locale) ? "Боссы, способности и тактика рейдов Midnight." : "Bosses, abilities and strategy of the Midnight raids." }),
   mythicPlus: mythicPlusHub,
   dungeons: (locale) => ({ ...mythicPlusHub(locale), ...scene("dungeons"), title: ru(locale) ? "Подземелья" : "Dungeons" }),
@@ -55,7 +58,10 @@ const hubs = {
   transmog: (locale) => ({ ...scene("transmog"), eyebrow: "World of Warcraft", title: ru(locale) ? "Трансмогрификация" : "Transmog studio", subtitle: ru(locale) ? "Примеряйте облики и наборы на свою модель." : "Try appearances and sets on your character model." }),
   auction: (locale) => ({ ...scene("articles"), eyebrow: "World of Warcraft", title: ru(locale) ? "Аукцион" : "Auction House", subtitle: ru(locale) ? "Цены товаров и снаряжения по регионам." : "Commodity and gear prices by region." }),
   season2: (locale) => ({ ...scene("dungeons"), eyebrow: "Midnight", title: ru(locale) ? "Сезон 2" : "Season 2", subtitle: ru(locale) ? "Подземелья Mythic+, рейды и вылазки сезона." : "Mythic+ dungeons, raids and delves of the season." }),
-  whatsNew: (locale) => ({ ...scene("articles"), eyebrow: "Gildra", title: ru(locale) ? "Что нового" : "What's new", subtitle: ru(locale) ? "Что изменилось на сайте для игроков." : "What changed on the site for players." }),
+  whatsNew: (locale) => ({ ...scene("articles"), eyebrow: "WowArcana", title: ru(locale) ? "Что нового" : "What's new", subtitle: ru(locale) ? "Что изменилось на сайте для игроков." : "What changed on the site for players." }),
+  forever: (locale) => ({ ...scene("forever"), eyebrow: "World of Warcraft", title: "World of Warcraft: Forever", subtitle: foreverCopy[locale].lede }),
+  mists: (locale) => ({ ...scene("classes"), eyebrow: "World of Warcraft", title: "Mists of Pandaria Classic", subtitle: mistsCopy[locale].description }),
+  worldMap: (locale) => ({ ...scene("wow"), eyebrow: "World of Warcraft", title: ru(locale) ? "Карта мира" : "World map", subtitle: ru(locale) ? "Азерот и другие миры: континенты, зоны и столицы." : "Azeroth and the other worlds: continents, zones and capitals." }),
   library: (locale) => ({ ...scene("library"), eyebrow: "World of Warcraft", title: ru(locale) ? "Библиотека" : "Library", subtitle: ru(locale) ? "Наборы игровых данных: подсказки, изображения и связи." : "Game datasets: tooltips, images and relations." }),
 } satisfies Record<string, (locale: Locale) => Spec>;
 

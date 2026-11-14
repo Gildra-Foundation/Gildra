@@ -381,3 +381,29 @@ func TestResumeStagesLimitRetainedStages(t *testing.T) {
 		t.Fatal("resume-stages without resume-release must be rejected")
 	}
 }
+
+func TestEnrichmentBoundsReachOnlyEnrichmentStages(t *testing.T) {
+	plan, err := BuildPlan(Options{Mode: "dry_run", Product: "wow", Profile: "retail-foundation", BuildVersion: "12.1.5.70783",
+		PublicationEnvironment: "staging", EnrichmentSliceRecords: 5000, EnrichmentRequestsPerHour: 18000})
+	if err != nil {
+		t.Fatal(err)
+	}
+	bounded := map[string]bool{}
+	for _, stage := range plan {
+		arguments := strings.Join(stage.Arguments, " ")
+		slice := strings.Contains(arguments, "-enrichment-slice-records 5000")
+		pace := strings.Contains(arguments, "-max-requests-per-hour 18000")
+		if slice != pace {
+			t.Fatalf("stage %s got only one of the two bounds: %s", stage.Key, arguments)
+		}
+		if slice {
+			bounded[stage.Key] = true
+		}
+	}
+	if len(bounded) != 2 || !bounded["enrich-battlenet-quests"] || !bounded["enrich-battlenet-missing"] {
+		t.Fatalf("bounded stages: %v", bounded)
+	}
+	if _, err := BuildPlan(Options{Mode: "dry_run", Product: "wow", Profile: "retail-foundation", EnrichmentRequestsPerHour: -1}); err == nil {
+		t.Fatal("a negative request rate was accepted")
+	}
+}

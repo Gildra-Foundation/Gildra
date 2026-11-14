@@ -1,0 +1,47 @@
+/** Production integration contract. BASE_URL=http://127.0.0.1:3137 node tests/home/wowHub.cjs */
+const assert = require('node:assert/strict');
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch();
+  try {
+    for (const locale of ['en', 'ru']) {
+      const prefix = locale === 'ru' ? '/ru' : '';
+      const page = await browser.newPage();
+      await page.goto(`${process.env.BASE_URL || 'http://127.0.0.1:3137'}${prefix || '/'}`, { waitUntil: 'networkidle' });
+      assert.equal(await page.locator('h1').count(), 1);
+      assert.match(await page.locator('h1').innerText(), /World of Warcraft/);
+      const head = await page.evaluate(() => ({
+        title: document.title, description: document.querySelector('meta[name=description]').content,
+        canonical: document.querySelector('link[rel=canonical]').href,
+        langs: [...document.querySelectorAll('link[rel=alternate][hreflang]')].map(e => e.hreflang).sort(),
+        graph: [...document.querySelectorAll('script[type="application/ld+json"]')].flatMap(e => JSON.parse(e.textContent)),
+        images: [...document.querySelectorAll('main img')].every(e => e.hasAttribute('alt') && e.hasAttribute('width') && e.hasAttribute('height')),
+      }));
+      assert(head.title.length <= 60);
+      assert(head.description.length >= 140 && head.description.length <= 160);
+      assert.equal(new URL(head.canonical).pathname, prefix || '/');
+      assert.deepEqual(head.langs, ['en', 'ru', 'x-default']);
+      assert(head.images);
+      for (const type of ['WebSite', 'Organization', 'CollectionPage', 'ItemList']) assert(head.graph.some(e => e['@type'] === type), type);
+      assert.equal(await page.locator(`#mythic a[href^="${prefix}/wow/mythic-plus/midnight-season-2/"]`).count(), 8);
+      assert.equal(await page.locator('main > nav li a[href^="#"]').count(), 5);
+      assert.equal(await page.locator('main form').count(), 0, 'The hub has no character lookup');
+      assert.equal(await page.locator('#raids ul').first().locator('li a').count(), 8);
+      assert.equal(await page.locator(`#hero li a[href^="${prefix}/wow/classes/"]`).count(), 13);
+      const list = head.graph.filter(e => e['@type'] === 'ItemList').at(-1);
+      const bodyHrefs = await page.locator('main section a[href]').evaluateAll(links => links.map(a => a.getAttribute('href')));
+      assert.equal(new Set(list.itemListElement.map(item => item.url)).size, list.itemListElement.length);
+      for (const item of list.itemListElement) assert.equal(bodyHrefs.filter(href => href === new URL(item.url).pathname).length, 1, `Feature must appear once: ${item.url}`);
+      for (const path of new Set(bodyHrefs.filter(href => href.startsWith("/")).map(href => href.split("#")[0]))) {
+        const response = await page.request.get(`${process.env.BASE_URL || "http://127.0.0.1:3137"}${path}`, { timeout: 120000 });
+        assert.equal(response.status(), 200, `Broken hub destination: ${path}`);
+        const html = await response.text();
+        if (!path.endsWith("/wow/characters")) assert(!/<meta name="robots" content="[^"]*noindex/i.test(html), `Private hub destination: ${path}`);
+      }
+      assert.equal(await page.locator('main section[id]').count(), 5);
+      assert.equal(await page.locator(`main section a[href="${prefix}/wow/stories"]`).count(), locale === 'ru' ? 1 : 0);
+      console.log(`${locale}: metadata / JSON-LD / H1 / alt / hreflang / crawlable links PASS`);
+      await page.close();
+    }
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

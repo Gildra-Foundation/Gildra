@@ -1,0 +1,19 @@
+[
+  { "id": "orgrimmar", "mapId": 12, "kind": "capital", "name": { "en": "Orgrimmar", "ru": "Оргриммар" }, "x": 0.645, "y": 0.452, "faction": "horde" },
+  { "id": "thunder-bluff", "mapId": 12, "kind": "capital", "name": { "en": "Thunder Bluff", "ru": "Громовой Утес" }, "x": 0.42, "y": 0.62, "faction": "horde" },
+  { "id": "darnassus", "mapId": 12, "kind": "capital", "name": { "en": "Darnassus", "ru": "Дарнас" }, "x": 0.39, "y": 0.04, "faction": "alliance" },
+  { "id": "stormwind", "mapId": 13, "kind": "capital", "name": { "en": "Stormwind City", "ru": "Штормград" }, "x": 0.33, "y": 0.69, "faction": "alliance" },
+  { "id": "ironforge", "mapId": 13, "kind": "capital", "name": { "en": "Ironforge", "ru": "Стальгорн" }, "x": 0.46, "y": 0.49, "faction": "alliance" },
+  { "id": "undercity", "mapId": 13, "kind": "capital", "name": { "en": "Undercity", "ru": "Подгород" }, "x": 0.45, "y": 0.18, "faction": "horde" },
+  { "id": "razor-hill", "mapId": 1, "kind": "town", "name": { "en": "Razor Hill", "ru": "Колючий Холм" }, "x": 0.53, "y": 0.43, "faction": "horde" },
+  { "id": "sen-jin", "mapId": 1, "kind": "town", "name": { "en": "Sen'jin Village", "ru": "Деревня Сен'джин" }, "x": 0.55, "y": 0.74, "faction": "horde" },
+  { "id": "ragefire-chasm", "mapId": 85, "kind": "dungeon", "name": { "en": "Ragefire Chasm", "ru": "Огненная пропасть" }, "x": 0.55, "y": 0.5 },
+  { "id": "org-flight", "mapId": 85, "kind": "flight", "name": { "en": "Orgrimmar", "ru": "Оргриммар" }, "x": 0.49, "y": 0.64, "faction": "horde", "routes": ["razor-hill-flight", "crossroads-flight"] },
+  { "id": "razor-hill-flight", "mapId": 1, "kind": "flight", "name": { "en": "Razor Hill", "ru": "Колючий Холм" }, "x": 0.53, "y": 0.44, "faction": "horde" },
+  { "id": "crossroads-flight", "mapId": 10, "kind": "flight", "name": { "en": "The Crossroads", "ru": "Перекресток" }, "x": 0.5, "y": 0.4, "faction": "horde" },
+  { "id": "org-portal", "mapId": 85, "kind": "portal", "name": { "en": "Portal Room", "ru": "Зал порталов" }, "x": 0.57, "y": 0.9, "faction": "horde" },
+  { "id": "onyxia", "mapId": 70, "kind": "raid", "name": { "en": "Onyxia's Lair", "ru": "Логово Ониксии" }, "x": 0.52, "y": 0.76 },
+  { "id": "wailing-caverns", "mapId": 10, "kind": "dungeon", "name": { "en": "Wailing Caverns", "ru": "Пещеры Стенаний" }, "x": 0.42, "y": 0.66 },
+  { "id": "deadmines", "mapId": 13, "kind": "dungeon", "name": { "en": "The Deadmines", "ru": "Мертвые копи" }, "x": 0.29, "y": 0.83 },
+  { "id": "kalimdor-label", "mapId": 947, "kind": "zone-label", "name": { "en": "Kalimdor", "ru": "Калимдор" }, "x": 0.18, "y": 0.5 }
+]

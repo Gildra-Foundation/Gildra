@@ -5,15 +5,17 @@ import { EntityDetailPage } from "@/components/database/EntityDetailPage";
 import { LibraryModelSlot } from "@/components/library/model/LibraryModelSlot";
 import { getCatalogEntity, getCatalogEntityTypes, getCatalogRelationships, getLibraryDatasets } from "@/lib/api/client";
 import { catalogReadable, requireCatalogSession } from "@/lib/library/server";
-import { LIBRARY_LOOSE_RECORDS, LIBRARY_TYPE_DATASET, libraryRecordPath } from "@/lib/library/recordPath";
+import { LIBRARY_HIDDEN_DATASETS, LIBRARY_LOOSE_RECORDS, LIBRARY_TYPE_DATASET, libraryRecordPath } from "@/lib/library/recordPath";
+import { isInternalRecord } from "@/lib/library/internalName";
 import type { Lang } from "@/lib/i18n-paths";
+import { clipDescription } from "@/lib/seo/metadata";
 
 export type LibraryRecordParams = Promise<{ dataset: string; id: string; slug: string }>;
 export type LibraryRecordSearch = Promise<{ product?: string }> | undefined;
 
 const words = {
-  en: { site: "Gildra Library", fallback: (name: string, set?: string) => `${name}${set ? ` (${set})` : ""} — World of Warcraft library entry with its tooltip, details and related records.` },
-  ru: { site: "Библиотека Gildra", fallback: (name: string, set?: string) => `${name}${set ? ` (${set})` : ""} — запись библиотеки World of Warcraft: подсказка, свойства и связанные записи.` },
+  en: { site: "WowArcana Library", fallback: (name: string, set?: string) => `${name}${set ? ` (${set})` : ""} — World of Warcraft library entry with its tooltip, details and related records.` },
+  ru: { site: "Библиотека WowArcana", fallback: (name: string, set?: string) => `${name}${set ? ` (${set})` : ""} — запись библиотеки World of Warcraft: подсказка, свойства и связанные записи.` },
 } as const;
 
 const locale = (lang: Lang) => (lang === "ru" ? "ru_RU" as const : "en_US" as const);
@@ -55,15 +57,20 @@ export async function libraryRecordMetadata(lang: Lang, params: LibraryRecordPar
   // record sitemap lists the same Russian pages (API sitemap-entries `slugRu`).
   const russian = lang === "ru" ? entity : twin;
   const ruOwn = Boolean(russian?.name) && !russian?.localeFallback;
+  // A record the lists leave out (the client's bookkeeping, a dataset hidden from players) opens by
+  // link but is not a page for search engines; the record sitemaps leave the same records out.
+  const unlisted = LIBRARY_HIDDEN_DATASETS.has(dataset) || isInternalRecord(entity.name, type, entity.externalId);
   // A long record name keeps the title within a search result: the site name alone closes it.
-  const title = `${name} — ${words[lang].site}`.length > 65 ? `${name} — Gildra` : `${name} — ${words[lang].site}`;
-  const text = entity.description || entity.tooltip?.plainText || "";
+  const title = `${name} — ${words[lang].site}`.length > 65 ? `${name} — WowArcana` : `${name} — ${words[lang].site}`;
+  // A tooltip opens with the record's name; alone it would only repeat the name before the line about the record.
+  const raw = (entity.description || entity.tooltip?.plainText || "").replace(/\s+/g, " ").trim();
+  const text = raw.toLowerCase().startsWith(name.toLowerCase()) ? raw.slice(name.length).replace(/^[\s.,:;–—-]+/, "") : raw;
   // A one-line game text ("Season 14 Elite") says too little on its own: the record's name and kind follow it.
-  const description = (text.length >= 70 ? text : text ? `${text} ${words[lang].fallback(name, setName)}` : words[lang].fallback(name, setName)).slice(0, 160);
+  const description = clipDescription(text.length >= 70 ? text : text ? `${text} ${words[lang].fallback(name, setName)}` : words[lang].fallback(name, setName));
   return {
     title,
     description,
-    ...(lang === "ru" && !ruOwn ? { robots: { index: false, follow: true } } : {}),
+    ...((lang === "ru" && !ruOwn) || unlisted ? { robots: { index: false, follow: true } } : {}),
     // No openGraph object here: it would replace the inherited library card image (app/**/library/opengraph-image.tsx).
     alternates: { canonical, languages: ruOwn ? { en, ru, "x-default": en } : { en, "x-default": en } },
   };

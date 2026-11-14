@@ -55,13 +55,18 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@gildra/game-data", "@gildra/atlas-ui"],
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   outputFileTracingIncludes: {
+    "/sitemaps/forever/**/*": ["./data/wow/forever/database/*/index.json.gz"],
+    "/wow/forever/library": ["./data/wow/forever/database/**/*"],
+    "/wow/forever/library/**/*": ["./data/wow/forever/database/**/*"],
+    "/ru/wow/forever/library": ["./data/wow/forever/database/**/*"],
+    "/ru/wow/forever/library/**/*": ["./data/wow/forever/database/**/*"],
     "/talents/[spec]": ["./app/styles/talents/specs/**/*.css"],
     "/ru/talents/[spec]": ["./app/styles/talents/specs/**/*.css"],
   },
   // The link-preview routes read fonts and art from public/ (lib/og/atlasOg.tsx), so
   // tracing would copy public/ into .next/standalone and the image would hold it
   // twice (the Dockerfile copies public/ to /app/public anyway).
-  outputFileTracingExcludes: { "*": ["public/**"] },
+  outputFileTracingExcludes: { "*": ["public/**", "./public/**", "**/public/maps/**"] },
   // Fetch and ISR entries stay in memory (see the handler); only optimized
   // images use the disk cache, which lives in the container's bounded tmpfs.
   cacheHandler: path.join(process.cwd(), "lib/next/memoryCacheHandler.cjs"),
@@ -86,6 +91,11 @@ const nextConfig: NextConfig = {
     // (GILDRA_BUILD_CPUS in the Dockerfile).
     cpus: Number(process.env.GILDRA_BUILD_CPUS) || 2,
     staticGenerationMaxConcurrency: 2,
+    // An image the optimizer cannot finish in time is answered with its original file,
+    // and that answer is cached for minimumCacheTTL. With the default 7 s, a busy host
+    // (the checks right after a release) left the 25-megapixel raid scene unresized for
+    // a day: 1.36 MB instead of ~0.3 MB as the page's largest picture (2026-11-12).
+    imgOptTimeoutInSeconds: 30,
     cssChunking: { type: "graph", requestCost: 6000 },
     // Two root layouts (app/(site), app/ru) for a server-side <html lang>: the
     // 404 of unmatched URLs is app/global-not-found.tsx.
@@ -120,14 +130,29 @@ const nextConfig: NextConfig = {
     // A day fresh, then served from cache while it revalidates; files that change
     // get a new name (-v2, dated), so a stale copy can live at most a day.
     const publicArt = [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=2592000" }];
+    // The home page's heading font starts with the document. As a response header it reaches
+    // only the visitor who opens the home page: a <link rel="preload"> in the page travelled with
+    // its prefetch too, so every page with a link to the home page downloaded the font unused.
+    const homeFont = {
+      missing: [{ type: "header" as const, key: "rsc" }],
+      headers: [{ key: "Link", value: '</assets/wow/fonts/azeroth/azeroth-cyrillic.woff2>; rel=preload; as=font; type="font/woff2"; crossorigin' }],
+    };
     return [
+      { source: "/", ...homeFont },
+      { source: "/ru", ...homeFont },
       { source: "/:path*", headers: [...security, ...sameOriginFrames] },
       { source: "/assets/:path*", headers: publicArt },
       { source: "/brand/:path*", headers: publicArt },
+      { source: "/maps/:path*", headers: publicArt },
+      { source: "/platform/:path*", headers: publicArt },
+      { source: "/images/:path*", headers: publicArt },
     ];
   },
   async redirects() {
     return [
+      // The World of Warcraft hub is the home page.
+      { source: "/wow", destination: "/", permanent: true },
+      { source: "/ru/wow", destination: "/ru", permanent: true },
       { source: "/lairs", destination: "/wow/lairs", permanent: true },
       { source: "/ru/lairs", destination: "/ru/wow/lairs", permanent: true },
       { source: "/wow/mythic", destination: "/wow/mythic-plus", permanent: true },

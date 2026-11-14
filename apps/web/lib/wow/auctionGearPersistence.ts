@@ -302,11 +302,3 @@ export function readAuctionState<T, M = Record<string, unknown>>(kind: Kind, id:
     return null;
   }
 }
-
-/** Compatibility wrapper for callers that explicitly need every body. */
-export function readAuctionStates<T>(kind: Kind): Array<{ id: string; expiresAt: number; data: T }> {
-  return listAuctionStateHeaders(kind).flatMap(header => {
-    const record = readAuctionState<T>(kind, header.id);
-    return record ? [{ id: record.id, expiresAt: record.expiresAt, data: record.data }] : [];
-  });
-}

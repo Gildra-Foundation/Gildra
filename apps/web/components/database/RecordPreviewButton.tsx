@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from "react";
 import { Eye } from "lucide-react";
 import type { CatalogRecord } from "@/lib/api/client";
 import { trackCatalogEvent } from "@/lib/catalogAnalytics";
+import { catalogIconUrl } from "@/lib/games/wow/assets";
 import { withVariantQuality } from "@/lib/library/recordQuality";
 
 const loadTooltip = () => import("@/components/database/DatabaseEntityTooltip").then((module) => module.EntityTooltip);
@@ -43,7 +44,7 @@ export function RecordPreviewButton({ id, externalId, type, lang, iconSymbol, ic
       const response = await fetch(`/api/catalog/entities/${id}?locale=${lang === "ru" ? "ru_RU" : "en_US"}`);
       if (!response.ok) throw new Error(String(response.status));
       const record = await response.json() as CatalogRecord;
-      const detail = withVariantQuality(catalogLocaleView({ ...record, iconUrl: record.iconUrl || iconUrl || undefined }, lang));
+      const detail = withVariantQuality(catalogLocaleView({ ...record, iconUrl: catalogIconUrl({ ...record, iconUrl: record.iconUrl || iconUrl }) }, lang));
       if (!detail.tooltip) throw new Error("no tooltip");
       loaded.current = detail;
       setEntity(detail);

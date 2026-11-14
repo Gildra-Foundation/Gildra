@@ -72,7 +72,7 @@ def _fetch_archon(source_url: str, contract: ResponseContract) -> tuple[bytes, d
         request = urllib.request.Request(
             source_url,
             headers={
-                "User-Agent": "GildraDatasetBot/1.0 (+https://gildra.net)",
+                "User-Agent": "GildraDatasetBot/1.0 (+https://wowarcana.com)",
                 "Accept": "text/html,application/xhtml+xml",
                 "Accept-Encoding": "identity",
             },

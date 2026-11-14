@@ -4,7 +4,7 @@ import { getPlatformHomeData } from "@/lib/platform/home/repository";
 import { getGameIntelligence } from "@/lib/platform/games/intelligence";
 import { hiddenForMvp } from "@/lib/mvp";
 
-export const metadata: Metadata = { title: "Diablo IV — Gildra", description: "Сезонные билды, рейтинги Ямы и разведка лута." };
+export const metadata: Metadata = { title: "Diablo IV — WowArcana", description: "Сезонные билды, рейтинги Ямы и разведка лута." };
 
 export default async function Page() {
   // Hidden for the WoW-only MVP: answers 404 until the flag in lib/mvp.ts is flipped.

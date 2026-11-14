@@ -1,0 +1,218 @@
+[
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.111585,
+    "time_total": 0.112126,
+    "size_download": 19436,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/",
+    "run": 1
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.118086,
+    "time_total": 0.119447,
+    "size_download": 20511,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/ru",
+    "run": 1
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.139525,
+    "time_total": 0.140603,
+    "size_download": 34765,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/raids/the-voidspire",
+    "run": 1
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.1801,
+    "time_total": 0.180802,
+    "size_download": 16825,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/map",
+    "run": 1
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.226882,
+    "time_total": 0.227877,
+    "size_download": 27971,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/library",
+    "run": 1
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.166329,
+    "time_total": 0.166894,
+    "size_download": 18379,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/auction",
+    "run": 1
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.240588,
+    "time_total": 0.243044,
+    "size_download": 26309,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/forever/dungeons/scholomance",
+    "run": 1
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.097495,
+    "time_total": 0.111591,
+    "size_download": 12567,
+    "content_type": "application/xml; charset=utf-8",
+    "url_effective": "https://wowarcana.com/sitemaps/static",
+    "run": 1
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.126918,
+    "time_total": 0.127411,
+    "size_download": 19592,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/",
+    "run": 2
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.099136,
+    "time_total": 0.099769,
+    "size_download": 20729,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/ru",
+    "run": 2
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.140208,
+    "time_total": 0.141329,
+    "size_download": 34765,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/raids/the-voidspire",
+    "run": 2
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.133373,
+    "time_total": 0.134152,
+    "size_download": 16696,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/map",
+    "run": 2
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.16564,
+    "time_total": 0.168185,
+    "size_download": 27883,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/library",
+    "run": 2
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.100684,
+    "time_total": 0.101404,
+    "size_download": 18379,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/auction",
+    "run": 2
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.120598,
+    "time_total": 0.121721,
+    "size_download": 26309,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/forever/dungeons/scholomance",
+    "run": 2
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.144956,
+    "time_total": 0.150709,
+    "size_download": 12310,
+    "content_type": "application/xml; charset=utf-8",
+    "url_effective": "https://wowarcana.com/sitemaps/static",
+    "run": 2
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.111723,
+    "time_total": 0.112238,
+    "size_download": 19592,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/",
+    "run": 3
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.095914,
+    "time_total": 0.096522,
+    "size_download": 20511,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/ru",
+    "run": 3
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.102947,
+    "time_total": 0.103671,
+    "size_download": 34885,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/raids/the-voidspire",
+    "run": 3
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.167785,
+    "time_total": 0.168463,
+    "size_download": 16876,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/map",
+    "run": 3
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.216656,
+    "time_total": 0.217366,
+    "size_download": 28009,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/library",
+    "run": 3
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.131716,
+    "time_total": 0.132198,
+    "size_download": 18218,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/auction",
+    "run": 3
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.101375,
+    "time_total": 0.103828,
+    "size_download": 26309,
+    "content_type": "text/html; charset=utf-8",
+    "url_effective": "https://wowarcana.com/wow/forever/dungeons/scholomance",
+    "run": 3
+  },
+  {
+    "http_code": 200,
+    "time_starttransfer": 0.094102,
+    "time_total": 0.10709,
+    "size_download": 12638,
+    "content_type": "application/xml; charset=utf-8",
+    "url_effective": "https://wowarcana.com/sitemaps/static",
+    "run": 3
+  }
+]

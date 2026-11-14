@@ -11,7 +11,7 @@ import { LibraryResults, type LibraryListLayout } from "@/components/library/Lib
 import { LibrarySearchBox } from "@/components/library/LibrarySearchBox";
 import { libraryCardCopy } from "@/components/library/libraryCardCopy";
 import { libraryColumns, libraryListSearch, libraryRecordViews, type LibraryListQuery } from "@/components/library/libraryRecordView";
-import type { LibraryRail } from "@/components/library/libraryRails";
+import { offersTypeFacets, type LibraryRail } from "@/components/library/libraryRails";
 import { MaterialButton, MaterialPlaque, materialButtonStyle, materialIconFrameStyle } from "@/components/wow/shared/materialAtlas";
 import { libraryKit } from "@/components/library/libraryKit";
 import styles from "./libraryWorkspace.module.css";
@@ -48,11 +48,13 @@ const level = (value: string) => (value && Number.isFinite(Number(value)) ? Numb
  * CatalogBehavior upgrades them to soft navigation, LibraryHoverPreview shows
  * the in-game tooltip on hover.
  */
-export function LibraryWorkspace({ lang, dataset, catalog, categories, entityType, products, totalCount, query = "", selectedProduct = "wow", selectedFacets = [], cursor = "", levels, layout = "table", rails = [] }: {
+export function LibraryWorkspace({ lang, dataset, catalog, categories, entityType, products, totalCount, query = "", selectedProduct = "wow", selectedFacets = [], cursor = "", levels, layout = "table", rails = [], failed = false }: {
   lang: Lang; dataset: Pick<LibraryDataset, "slug" | "name" | "entityType" | "entityCount" | "applicability">; catalog: CatalogPage; categories: CatalogCategory[];
   entityType?: CatalogEntityType; products: CatalogProduct[]; totalCount?: ReactNode;
   query?: string; selectedProduct?: string; selectedFacets?: string[]; cursor?: string;
   levels: Record<(typeof LEVELS)[number], string>; layout?: LibraryListLayout; rails?: LibraryRail[];
+  /** The catalog did not answer this filtered list: the page stays, the list says so. */
+  failed?: boolean;
 }) {
   const copy = databaseCopy[lang];
   const ru = lang === "ru";
@@ -67,7 +69,7 @@ export function LibraryWorkspace({ lang, dataset, catalog, categories, entityTyp
   const railFacets = new Set(rails.flatMap((rail) => rail.categories.map((category) => category.facet)));
   const filters: Filter[] = [
     ...rails.map((rail) => ({ id: rail.id, label: rail.label, categories: rail.categories })),
-    ...groupFacets(categories).filter(([facet, entries]) => entries.length > 1 && !railFacets.has(facet))
+    ...(offersTypeFacets(dataset) ? groupFacets(categories) : []).filter(([facet, entries]) => entries.length > 1 && !railFacets.has(facet))
       .map(([facet, entries]) => ({ id: facet, label: FACET_LABELS[facet][ru ? 1 : 0], categories: entries })),
   ];
   const selectedCategory = (filter: Filter) => filter.categories.find((category) => facets.includes(category.path));
@@ -80,7 +82,7 @@ export function LibraryWorkspace({ lang, dataset, catalog, categories, entityTyp
     dataset: dataset.slug, product: selectedProduct, q: query, facets,
     minLevel: level(state.minLevel), maxLevel: level(state.maxLevel), minRequiredLevel: level(state.minRequiredLevel), maxRequiredLevel: level(state.maxRequiredLevel),
   };
-  const zeroResults = !catalog.data.length && narrowed ? JSON.stringify({ query, type: dataset.entityType, facets: facets.join(",") }) : undefined;
+  const zeroResults = !catalog.data.length && narrowed && !failed ? JSON.stringify({ query, type: dataset.entityType, facets: facets.join(",") }) : undefined;
   const hidden = (fields: Record<string, string>) => Object.entries(fields).filter(([key, value]) => value && !(key === "product" && value === "wow"))
     .map(([key, value]) => <input key={key} type="hidden" name={key} value={value} />);
   const filterCount = facets.length + levelCount + (selectedProduct === "wow" ? 0 : 1);
@@ -169,7 +171,7 @@ export function LibraryWorkspace({ lang, dataset, catalog, categories, entityTyp
           </>
         ) : (
           <div className={styles.empty} role="status">
-            {dataset.entityCount === 0 ? <p>{dataset.applicability === "not_applicable"
+            {failed ? <p>{libraryCardCopy[lang].moreError}</p> : dataset.entityCount === 0 ? <p>{dataset.applicability === "not_applicable"
               ? libraryCopy[lang].unavailableProduct
               : libraryCopy[lang].emptyProduct}</p>
               : <><h3>{copy.emptyTitle}</h3><p>{copy.emptyText}</p></>}

@@ -13,7 +13,7 @@ export function dungeonMetadata(locale: Locale, season: string, slug: string): M
   const bosses = dungeon.stops.filter((stop) => stop.kind === "boss").length;
   const steps = dungeon.stops.length;
   const name = locale === "ru" ? wowSourceName(dungeon.name, "ru", dungeon.nameRu) : dungeon.name;
-  const title = locale === "ru" ? `${name} — Mythic+ Midnight, сезон 2 — Gildra` : `${name} — Midnight Season 2 Mythic+ — Gildra`;
+  const title = locale === "ru" ? `${name} — Mythic+ Midnight, сезон 2 — WowArcana` : `${name} — Midnight Season 2 Mythic+ — WowArcana`;
   const description = locale === "ru"
     ? `Маршрут Mythic+ «${name}» в Midnight, сезон 2: ${steps} ${pluralRu(steps, "шаг", "шага", "шагов")} на карте, ${bosses} ${pluralRu(bosses, "босс", "босса", "боссов")}, таймер ${minutes}:00, пулы, задачи ролей и тактика.`
     : `${name} Mythic+ route for Midnight Season 2: ${steps} steps on the map, ${bosses} bosses, a ${minutes}:00 timer, pulls, role tasks and boss tactics.`;

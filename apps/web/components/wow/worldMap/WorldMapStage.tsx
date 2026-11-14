@@ -1,0 +1,135 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
+import { ChevronRight } from "lucide-react";
+import type { Lang } from "@/lib/wow/worldMap/bundle";
+import { syncHead } from "./ui/syncHead";
+import { worldMapCopy } from "./worldMapCopy";
+import styles from "./worldMap.module.css";
+
+/**
+ * The map's stage, rendered on the server: the first picture as plain tiles,
+ * the title and the trail. The interactive viewer (WebGL, panels, timeline) is
+ * a separate chunk loaded after the page shows; it takes the same stage over.
+ */
+export type StageCrumb = { label: string; href?: string; mapId?: number };
+export type StagePoster = { aspect: number; tiles: Array<{ src: string; left: number; top: number; width: number; height: number }> };
+export type StageHandle = {
+  /** The shown line (short) and the head's description (the whole line). */
+  setTitle(title: string, line: string, description?: string): void;
+  setCrumbs(crumbs: StageCrumb[]): void;
+  onCrumb(handler: ((mapId: number) => void) | null): void;
+  ready(): void;
+  setFull(full: boolean): void;
+};
+
+const WorldMapViewer = dynamic(() => import("./WorldMapViewer"), { ssr: false });
+
+export function WorldMapStage({ lang, mapId, homeId, title, line, description, crumbs, poster, bundleUrl }: {
+  lang: Lang; mapId: number | null; homeId: number | null; title: string; line: string; description?: string;
+  crumbs: StageCrumb[]; poster: StagePoster | null; bundleUrl: string;
+}) {
+  const stage = useRef<HTMLElement>(null);
+  const [heading, setHeading] = useState({ title, line, description: description || line });
+  const [trail, setTrail] = useState(crumbs);
+  const [live, setLive] = useState(false);
+  const [start, setStart] = useState(false);
+  const [full, setFull] = useState(false);
+  const crumbHandler = useRef<((mapId: number) => void) | null>(null);
+
+  // The stage fills the first screen below whatever sits above it (version strip, top bar).
+  const [topOffset, setTopOffset] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const el = stage.current;
+    if (el) setTopOffset(Math.max(0, Math.round(el.getBoundingClientRect().top + window.scrollY)));
+  }, []);
+
+  // A trackpad pinch (ctrl + wheel) or a pinch on the panels around the map never zooms the page itself.
+  useEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    const wheel = (event: WheelEvent) => { if (event.ctrlKey) event.preventDefault(); };
+    const gesture = (event: Event) => event.preventDefault();
+    el.addEventListener("wheel", wheel, { passive: false });
+    // (Safari's own pinch events.)
+    el.addEventListener("gesturestart", gesture);
+    return () => { el.removeEventListener("wheel", wheel); el.removeEventListener("gesturestart", gesture); };
+  }, []);
+
+  // The viewer chunk loads once the first picture is on screen.
+  useEffect(() => {
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    const id = idle ? idle(() => setStart(true), { timeout: 900 }) : window.setTimeout(() => setStart(true), 200);
+    return () => { if (!idle) window.clearTimeout(id); };
+  }, []);
+
+  const handle = useRef<StageHandle>({
+    setTitle: (t, l, d) => setHeading({ title: t, line: l, description: d || l }),
+    setCrumbs: (c) => setTrail(c),
+    onCrumb: (h) => { crumbHandler.current = h; },
+    ready: () => setLive(true),
+    setFull: (value) => setFull(value),
+  });
+
+  // After the viewer moves to another map, the head describes that map (not the one first loaded).
+  const moved = useRef(false);
+  useEffect(() => {
+    if (!moved.current) { moved.current = trail !== crumbs; if (!moved.current) return; }
+    syncHead(lang, trail, homeId, heading.description);
+  }, [trail, heading, lang, homeId, crumbs]);
+
+  // On phones the trail is one scrolling row: keep its deepest step in sight.
+  const trailList = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    const list = trailList.current;
+    if (list && list.scrollWidth > list.clientWidth) list.scrollLeft = list.scrollWidth;
+  }, [trail]);
+
+  const crumbClick = useCallback((event: MouseEvent<HTMLAnchorElement>, crumb: StageCrumb) => {
+    if (crumb.mapId === undefined || !crumbHandler.current || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault();
+    crumbHandler.current(crumb.mapId);
+  }, []);
+
+  return (
+    <section ref={stage} className={styles.stage} data-map-stage data-cookie-notice-space data-live={live ? "" : undefined} data-full={full ? "" : undefined}
+      style={topOffset === null ? undefined : { ["--map-top-offset" as string]: `${topOffset}px` }} aria-labelledby="world-map-title">
+      {poster ? (
+        <div className={styles.poster} aria-hidden="true">
+          <div className={styles.posterArt} style={{ aspectRatio: poster.aspect, ["--poster-aspect" as string]: poster.aspect }}>
+            {poster.tiles.map((tile) => (
+              // Tiles overlap by a pixel: scaled, their edges would leave hairline seams.
+              // eslint-disable-next-line @next/next/no-img-element -- map tiles: exact pixel grid, no optimizer
+              <img key={tile.src} src={tile.src} alt="" decoding="async" fetchPriority="high" draggable={false}
+                style={{ left: `${tile.left * 100}%`, top: `${tile.top * 100}%`, width: `calc(${tile.width * 100}% + 1px)`, height: `calc(${tile.height * 100}% + 1px)` }} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+      <div className={styles.vignette} aria-hidden="true" />
+      <header className={styles.titleBar} data-map-ui>
+        <nav aria-label={worldMapCopy[lang].trail} className={styles.trail}>
+          <ol ref={trailList}>
+            {trail.map((crumb, index) => {
+              const last = index === trail.length - 1;
+              return (
+                <li key={`${crumb.label}-${index}`}>
+                  {crumb.href && !last
+                    ? <a href={crumb.href} onClick={(event) => crumbClick(event, crumb)}>{crumb.label}</a>
+                    : <span aria-current={last ? "page" : undefined}>{crumb.label}</span>}
+                  {last ? null : <ChevronRight aria-hidden="true" />}
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+        <h1 id="world-map-title" className={styles.title}>{heading.title}</h1>
+        {heading.line ? <p className={styles.line}>{heading.line}</p> : null}
+        {/* The viewer puts its search and the place panel here. */}
+        <div className={styles.slot} data-map-slot />
+      </header>
+      {start ? <WorldMapViewer stage={stage} handle={handle} lang={lang} mapId={mapId} homeId={homeId} bundleUrl={bundleUrl} /> : null}
+    </section>
+  );
+}

@@ -1,0 +1,143 @@
+/* atlas:strict — Forever classes: the roster (a plaque per class with its trees on glass), the class page (tree paintings,
+   «In combat», the folded list of changes) and the class changes page. Built from the section's shared parts
+   (docs/forever/DESIGN.md); this sheet is layout only. Class colour (--class-color, game data) marks class identity. */
+
+/* ---------- Roles ---------- */
+.roles { display: inline-flex; flex-wrap: wrap; gap: var(--atlas-space-1); }
+.role { display: inline-flex; align-items: center; gap: var(--atlas-space-1); padding: 1px 7px 1px 5px; border: 1px solid var(--atlas-line-soft); border-radius: 999px; background: color-mix(in srgb, var(--atlas-bg) 55%, transparent); color: var(--atlas-text-muted); font-family: var(--atlas-font-ui); font-size: var(--atlas-text-label); font-weight: 600; line-height: 1.5; letter-spacing: 0; text-shadow: none; white-space: nowrap; }
+.role svg { flex: none; width: 12px; height: 12px; }
+.role[data-role="tank"] svg { color: var(--atlas-info); }
+.role[data-role="healer"] svg { color: var(--atlas-positive); }
+.role[data-role="damage"] svg { color: var(--atlas-negative); }
+
+/* ---------- Roster: a plaque per class ---------- */
+.roster { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--atlas-space-5); margin: 0; padding: 0; list-style: none; }
+.classCard { display: grid; grid-template-rows: auto 1fr auto; gap: var(--atlas-space-4); }
+.classHead { display: flex; align-items: center; gap: var(--atlas-space-4); min-width: 0; min-height: 56px; color: inherit; text-decoration: none; }
+/* The class colour is game data: it marks the class name. A class name is one word and never splits. */
+.classHead .className { flex: 1; min-width: 0; }
+.className { margin: 0; color: color-mix(in srgb, var(--class-color, var(--atlas-accent)) 62%, var(--atlas-text-strong)); font-family: var(--atlas-font-display); font-size: var(--atlas-text-h3); font-weight: var(--atlas-weight-display); letter-spacing: var(--atlas-tracking-display); line-height: var(--atlas-leading-snug); text-shadow: 0 1px 3px var(--atlas-bg); overflow-wrap: normal; hyphens: manual; }
+.classArrow { flex: none; width: 16px; height: 16px; color: var(--material-light, var(--atlas-accent)); }
+.treeRows { display: grid; align-content: start; gap: var(--atlas-space-2); margin: 0; padding: 0; list-style: none; }
+.treeRows > li { min-width: 0; }
+.treeRow { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: var(--atlas-space-3); min-height: 52px; padding: var(--atlas-space-2) var(--atlas-space-3) var(--atlas-space-2) var(--atlas-space-2); border: 1px solid var(--material-line, var(--atlas-line-soft)); border-inline-start: 3px solid color-mix(in srgb, var(--class-color) 70%, transparent); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 58%, transparent); color: var(--atlas-text-strong); text-decoration: none; }
+.treeRow img { display: block; width: 36px; height: 36px; border-radius: var(--atlas-radius-control); box-shadow: 0 0 0 1px color-mix(in srgb, var(--class-color) 45%, transparent); }
+.treeRow strong { min-width: 0; font-size: var(--atlas-text-body); font-weight: 650; line-height: var(--atlas-leading-snug); overflow-wrap: break-word; }
+.treeRow .roles { justify-content: flex-end; }
+.classLinks { display: flex; flex-wrap: wrap; gap: 0 var(--atlas-space-5); margin: calc(var(--atlas-space-2) * -1) 0 calc(var(--atlas-space-3) * -1); padding: 0; list-style: none; }
+/* The role filter hides the trees of other roles and the classes without them. */
+.roster[data-role-filter="tank"] .treeRows > li:not([data-roles~="tank"]),
+.roster[data-role-filter="healer"] .treeRows > li:not([data-roles~="healer"]),
+.roster[data-role-filter="damage"] .treeRows > li:not([data-roles~="damage"]) { display: none; }
+.roster[data-role-filter="tank"] .classCard:not(:has(li[data-roles~="tank"])),
+.roster[data-role-filter="healer"] .classCard:not(:has(li[data-roles~="healer"])),
+.roster[data-role-filter="damage"] .classCard:not(:has(li[data-roles~="damage"])) { display: none; }
+
+/* ---------- Class page ---------- */
+/* The crest wears the class colour, as on the class page of the live game. */
+.classHero [aria-hidden="true"] > span { box-shadow: 0 0 0 1px color-mix(in srgb, var(--class-color) 40%, transparent), 0 6px 22px color-mix(in srgb, var(--class-color) 22%, transparent); border-radius: var(--atlas-radius); }
+.classHero h1 { color: color-mix(in srgb, var(--class-color) 45%, var(--atlas-text-strong)); }
+/* Tree paintings: the roles read on the painting. */
+.treeGrid .role { border-color: var(--atlas-glass-edge); background: color-mix(in srgb, var(--atlas-bg) 70%, transparent); color: var(--atlas-text); }
+
+/* «In combat»: what plays differently, each with the talent's icon. */
+.highlights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-5) var(--atlas-space-7); margin: 0; padding: 0; list-style: none; }
+.highlights > li { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--atlas-space-4); min-width: 0; }
+.highlights > li[data-icon] { grid-template-columns: auto minmax(0, 1fr); }
+.highlights h3 { margin: 0 0 var(--atlas-space-2); font-family: var(--atlas-font-display); font-size: var(--atlas-text-title); font-weight: var(--atlas-weight-display); line-height: var(--atlas-leading-snug); }
+.highlights h3 a { color: var(--atlas-text-strong); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 5px; }
+.highlights p { max-width: 62ch; margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); text-wrap: pretty; }
+
+/* ---------- Changes: a folded line per spell or talent ---------- */
+/* The class is picked with its crest; the way to the class page closes the row. */
+.picker { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-1) var(--atlas-space-5); margin-bottom: var(--atlas-space-1); }
+/* The list starts after a line under the filter bar (the bar's own step loses to the list's reset). */
+.changes.changes { margin-top: var(--atlas-space-4); border-top: 1px solid var(--material-line, var(--atlas-line-soft)); }
+.change { min-width: 0; }
+.change > summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "icon name mark arrow" "icon note mark arrow"; align-items: center; gap: 2px var(--atlas-space-3); min-height: 60px; padding: var(--atlas-space-2); border-radius: var(--atlas-radius); cursor: pointer; list-style: none; user-select: none; }
+.change > summary::-webkit-details-marker { display: none; }
+.change > summary > :first-child { grid-area: icon; }
+.changeName { grid-area: name; align-self: end; min-width: 0; color: var(--atlas-text-strong); font-size: var(--atlas-text-body); font-weight: 600; line-height: var(--atlas-leading-snug); overflow-wrap: break-word; }
+/* On a wide screen the mark stands in its own column; on a phone it follows the tree's name. */
+.changeMeta { display: contents; }
+.changeNote { grid-area: note; align-self: start; min-width: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); line-height: var(--atlas-leading-snug); overflow-wrap: break-word; }
+.badge { grid-area: mark; justify-self: end; white-space: nowrap; }
+.chevron { grid-area: arrow; flex: none; width: 18px; height: 18px; color: var(--material-light, var(--atlas-accent)); }
+.change[open] > summary .chevron { transform: rotate(180deg); }
+.noIcon > svg { padding: 22%; box-sizing: border-box; color: var(--atlas-text-subtle); }
+/* The opened line: its text starts under the name, past the icon. */
+.changeBody { display: grid; gap: var(--atlas-space-3); padding: var(--atlas-space-1) var(--atlas-space-2) var(--atlas-space-5) calc(40px + var(--atlas-space-3) + var(--atlas-space-2)); }
+.meaning { margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.moves { display: flex; flex-wrap: wrap; gap: var(--atlas-space-2) var(--atlas-space-5); }
+.fact { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: var(--atlas-space-2); margin: 0; color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.fact b { display: inline-flex; align-items: center; gap: var(--atlas-space-1); color: var(--atlas-text-strong); font-weight: 600; font-variant-numeric: tabular-nums lining-nums; }
+.fact svg { flex: none; width: 13px; height: 13px; color: var(--material-light, var(--atlas-accent)); }
+.rank { display: grid; justify-items: start; gap: var(--atlas-space-2); min-width: 0; }
+.rankTitle { margin: 0; color: var(--atlas-text-strong); font-family: var(--atlas-font-ui); font-size: var(--atlas-text-small); font-weight: 700; }
+.rankTitle span { color: var(--atlas-text-muted); font-weight: 400; }
+.comparison { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: var(--atlas-space-3); width: 100%; }
+.comparison[data-single] { grid-template-columns: minmax(0, 1fr); max-width: 72ch; }
+.side { min-width: 0; padding: var(--atlas-space-3) var(--atlas-space-4); border: 1px solid var(--material-line, var(--atlas-line-soft)); border-radius: var(--atlas-radius); background: color-mix(in srgb, var(--atlas-bg) 50%, transparent); }
+.side[data-side="after"] { border-color: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 45%, transparent); }
+.side h5 { margin: 0 0 var(--atlas-space-1); color: var(--material-light, var(--atlas-text-subtle)); font-family: var(--atlas-font-ui); font-size: var(--atlas-text-label); font-weight: 700; letter-spacing: var(--atlas-tracking-label); text-transform: uppercase; }
+.side[data-side="before"] h5 { color: var(--atlas-text-subtle); }
+.side p { margin: 0; color: var(--atlas-text); font-size: var(--atlas-text-body); line-height: var(--atlas-leading-body); white-space: pre-line; overflow-wrap: break-word; }
+.side[data-side="before"] p { color: var(--atlas-text-muted); }
+.side del { border-radius: 3px; background: color-mix(in srgb, var(--atlas-negative) 18%, transparent); color: var(--atlas-text); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--atlas-negative) 70%, transparent); }
+.side ins { border-radius: 3px; background: color-mix(in srgb, var(--atlas-positive) 20%, transparent); color: var(--atlas-text-strong); text-decoration: none; }
+.becomes { align-self: center; width: 18px; height: 18px; color: var(--material-light, var(--atlas-accent)); }
+.moreRanks > div { gap: var(--atlas-space-5); }
+/* The licence line of the comparison: one quiet line under the list. */
+.credit { margin: 0; color: var(--atlas-text-subtle); font-size: var(--atlas-text-meta); line-height: var(--atlas-leading-body); }
+.credit a { color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 3px; }
+
+/* ---------- Answer to the pointer ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .treeRow, .change > summary { transition: border-color var(--atlas-duration-fast) var(--atlas-ease), background-color var(--atlas-duration-fast) var(--atlas-ease), translate var(--atlas-duration-fast) var(--atlas-ease); }
+  .treeRow:hover { border-color: color-mix(in srgb, var(--class-color) 60%, var(--atlas-line)); background: color-mix(in srgb, var(--class-color) 9%, var(--atlas-bg)); translate: 2px 0; }
+  .treeRow img, .classHead :global(img), .classArrow, .chevron { transition: scale var(--atlas-duration) var(--atlas-ease), translate var(--atlas-duration) var(--atlas-ease), transform var(--atlas-duration) var(--atlas-ease); }
+  .treeRow:hover img { scale: 1.1; }
+  .classHead:hover :global(img) { scale: 1.08; }
+  .classHead:hover .classArrow { translate: 3px 0; }
+  .classHead:hover .className { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+  .change > summary:hover { background: color-mix(in srgb, var(--material-accent, var(--atlas-accent)) 10%, transparent); }
+  .change > summary:hover .chevron { translate: 0 2px; }
+  .highlights h3 a, .credit a { transition: text-decoration-color var(--atlas-duration-fast) var(--atlas-ease), color var(--atlas-duration-fast) var(--atlas-ease); }
+  .highlights h3 a:hover { text-decoration-color: currentColor; }
+  .credit a:hover { color: var(--atlas-text); }
+}
+/* An opened line settles in (opacity and a short rise — compositor only). */
+@keyframes changeOpen { from { opacity: 0; translate: 0 -6px; } }
+@media (prefers-reduced-motion: no-preference) {
+  .change[open] > .changeBody { animation: changeOpen var(--atlas-duration) var(--atlas-ease) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .treeRow, .treeRow img, .classHead :global(img), .classArrow, .chevron { transition: none; translate: none !important; scale: none !important; }
+}
+:global(html[data-motion="reduced"]) :is(.treeRow, .treeRow img, .classHead img, .classArrow, .chevron) { transition: none; translate: none !important; scale: none !important; }
+:global(html[data-motion="reduced"]) .change[open] > .changeBody { animation: none; }
+@media (forced-colors: active) {
+  .treeRow, .side, .role { border-color: CanvasText; }
+  .side ins { text-decoration: underline; }
+}
+
+/* ---------- Narrow screens ---------- */
+@media (max-width: 1100px) { .roster { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .roster { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-4); }
+  .classCard { gap: var(--atlas-space-3); }
+  /* Three trees stand one under another as short banners. */
+  .treeGrid.treeGrid.treeGrid { grid-template-columns: minmax(0, 1fr); }
+  .treeGrid > li > a { aspect-ratio: 3 / 1; }
+  .highlights { grid-template-columns: minmax(0, 1fr); }
+  .highlights > li { gap: var(--atlas-space-3); }
+  .change > summary { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "icon name arrow" "icon meta arrow"; row-gap: var(--atlas-space-1); padding-inline: 0; }
+  /* A translated talent keeps its English name on the tree's line; the mark then takes a line of its own. */
+  .changeNote:has(.alias) { flex-basis: 100%; }
+  .changeMeta { grid-area: meta; display: flex; flex-wrap: wrap; align-items: center; gap: var(--atlas-space-1) var(--atlas-space-2); min-width: 0; }
+  .changeBody { padding-inline: 0; }
+  .comparison { grid-template-columns: minmax(0, 1fr); gap: var(--atlas-space-2); }
+  .becomes { justify-self: center; transform: rotate(90deg); }
+  .side { padding: var(--atlas-space-3); }
+}
+@media (pointer: coarse) { .credit a { display: inline-flex; align-items: center; min-height: 44px; } }

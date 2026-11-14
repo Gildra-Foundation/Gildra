@@ -38,12 +38,15 @@ const palette = {
   accentStrong: "#f0b55a",
 };
 
-const publicFile = (path: string) => join(process.cwd(), "public", path.replace(/^\//, ""));
+// Opaque to the bundler on purpose: traced, "public" + a variable matches every file under
+// public/ (129 000 with the map tiles), and any file added or removed there made the next
+// build compile for 12–15 minutes instead of half a minute.
+const publicFile = (path: string) => join(/* turbopackIgnore: true */ process.cwd(), "public", path.replace(/^\//, ""));
 
 const fonts = Promise.all([
-  readFile(publicFile("/assets/og/fonts/alegreya-500.ttf")),
-  readFile(publicFile("/assets/og/fonts/inter-400.ttf")),
-  readFile(publicFile("/assets/og/fonts/inter-600.ttf")),
+  readFile(/* turbopackIgnore: true */ publicFile("/assets/og/fonts/alegreya-500.ttf")),
+  readFile(/* turbopackIgnore: true */ publicFile("/assets/og/fonts/inter-400.ttf")),
+  readFile(/* turbopackIgnore: true */ publicFile("/assets/og/fonts/inter-600.ttf")),
 ]).then(([display, ui, uiStrong]) => [
   { name: "Alegreya", data: display, weight: 500 as const, style: "normal" as const },
   { name: "Inter", data: ui, weight: 400 as const, style: "normal" as const },
@@ -112,7 +115,7 @@ async function renderJpeg(spec: AtlasOgSpec) {
  * rebuild draws only cards whose inputs changed (the Docker build keeps
  * .next/cache in a cache mount). Bump the version to discard every card.
  */
-const OG_CACHE_VERSION = 1;
+const OG_CACHE_VERSION = 2;
 const buildCacheDir =
   process.env.NEXT_PHASE === "phase-production-build" ? join(process.cwd(), ".next/cache/og") : null;
 
@@ -123,6 +126,7 @@ let rendererHash: Promise<string> | undefined;
 function renderer() {
   rendererHash ??= Promise.all([
     ...["/assets/og/fonts/alegreya-500.ttf", "/assets/og/fonts/inter-400.ttf", "/assets/og/fonts/inter-600.ttf"].map((font) => fileHash(publicFile(font))),
+    fileHash(publicFile("/brand/wowarcana-logo.png")),
     // Satori/resvg ship inside next and the encoders inside sharp: any dependency change redraws every card.
     fileHash(join(process.cwd(), "../../package-lock.json")),
   ]).then((files) =>
@@ -149,10 +153,11 @@ async function cachedJpeg(spec: AtlasOgSpec) {
 }
 
 async function renderPng(spec: AtlasOgSpec) {
-  const [fontList, scene, emblem] = await Promise.all([
+  const [fontList, scene, emblem, logo] = await Promise.all([
     fonts,
     sceneDataUrl(spec.art, spec.focus ?? [0.5, 0.3]),
     spec.emblem ? iconDataUrl(spec.emblem) : Promise.resolve(null),
+    readFile(join(process.cwd(), "public/brand/wowarcana-logo.png")).then(data => `data:image/png;base64,${data.toString("base64")}`),
   ]);
 
   return new ImageResponse(
@@ -168,8 +173,10 @@ async function renderPng(spec: AtlasOgSpec) {
         ))}
 
         <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", width: "100%", height: "100%", padding: "52px 72px 58px" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 18 }}>
-            <div style={{ display: "flex", fontFamily: "Alegreya", fontSize: 30, letterSpacing: 7, color: palette.text }}>GILDRA</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Satori renders plain <img> */}
+            <img src={logo} alt="" width={48} height={48} />
+            <div style={{ display: "flex", fontFamily: "Alegreya", fontSize: 30, letterSpacing: 7, color: palette.text }}>WOWARCANA</div>
             <div style={{ display: "flex", fontSize: 15, fontWeight: 600, letterSpacing: 3.5, color: palette.muted }}>WORLD OF WARCRAFT</div>
           </div>
 

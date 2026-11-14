@@ -20,7 +20,7 @@
 /* The one page texture follows the ice geometry. The inert DOM is removed
    from view once its pixels are on the worker surface. */
 .host[data-effect="arthas"][data-phase="shattering"] > .outgoing {
-  animation: source-dismiss 150ms ease-out both;
+  animation: source-dismiss var(--atlas-duration-fast) ease-out both;
 }
 @keyframes source-dismiss { from { opacity: 1; } to { opacity: 0; } }
 
@@ -28,18 +28,3 @@
   visibility: hidden;
   animation: none;
 }
-
-/* Fel consumes the page pixels in one offscreen surface. The untouched inert
-   DOM stays visible until the bitmap and its first dissolve frame are ready. */
-.host[data-effect="illidan"] > .outgoing::after { display: none; }
-.host[data-effect="illidan"][data-phase="shattering"] > .outgoing {
-  animation: fel-fallback 1080ms ease-in both;
-  will-change: opacity;
-}
-.host[data-effect="illidan"][data-phase="shattering"]:has(> .surface[data-page-content="ready"][data-render-phase="shattering"]) > .outgoing {
-  visibility: hidden;
-  animation: none;
-  will-change: auto;
-}
-.surface[data-fel-surface][data-renderer="fallback"] { display: none; }
-@keyframes fel-fallback { from { opacity: 1; } to { opacity: 0; } }

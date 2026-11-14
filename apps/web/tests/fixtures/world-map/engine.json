@@ -1,0 +1,439 @@
+{
+ "maps": [
+  {
+   "id": 946,
+   "slug": "cosmic",
+   "name": {
+    "en": "Cosmic",
+    "ru": "Космос"
+   },
+   "type": "cosmic",
+   "parentId": null,
+   "children": [
+    947
+   ],
+   "rectInParent": null,
+   "art": {
+    "width": 2000,
+    "height": 1333,
+    "tileSize": 256,
+    "maxZoom": 3,
+    "url": "/maps/fixture-tiles/946/{z}/{x}_{y}.webp"
+   }
+  },
+  {
+   "id": 947,
+   "slug": "azeroth",
+   "name": {
+    "en": "Azeroth",
+    "ru": "Азерот"
+   },
+   "type": "world",
+   "parentId": 946,
+   "children": [
+    12,
+    424
+   ],
+   "rectInParent": [
+    0.4,
+    0.3,
+    0.6,
+    0.6
+   ],
+   "art": {
+    "width": 2000,
+    "height": 1333,
+    "tileSize": 256,
+    "maxZoom": 3,
+    "url": "/maps/fixture-tiles/947/{z}/{x}_{y}.webp"
+   }
+  },
+  {
+   "id": 12,
+   "slug": "kalimdor",
+   "name": {
+    "en": "Kalimdor",
+    "ru": "Калимдор"
+   },
+   "type": "continent",
+   "parentId": 947,
+   "children": [
+    1,
+    85,
+    10
+   ],
+   "rectInParent": [
+    0.0,
+    0.2,
+    0.4,
+    0.8
+   ],
+   "art": {
+    "width": 4000,
+    "height": 2666,
+    "tileSize": 256,
+    "maxZoom": 4,
+    "url": "/maps/fixture-tiles/12/{z}/{x}_{y}.webp"
+   },
+   "terrain": {
+    "url": "/maps/fixture-terrain/12/{z}/{x}_{y}.webp",
+    "tileSize": 256,
+    "width": 16384,
+    "height": 16384,
+    "maxZoom": 6,
+    "rect": [
+     -0.1,
+     -0.2,
+     1.1,
+     1.6
+    ]
+   }
+  },
+  {
+   "id": 1,
+   "slug": "durotar",
+   "name": {
+    "en": "Durotar",
+    "ru": "Дуротар"
+   },
+   "type": "zone",
+   "parentId": 12,
+   "children": [],
+   "rectInParent": [
+    0.5,
+    0.4,
+    0.65,
+    0.55
+   ],
+   "art": {
+    "width": 1000,
+    "height": 666,
+    "tileSize": 256,
+    "maxZoom": 2,
+    "url": "/maps/fixture-tiles/1/{z}/{x}_{y}.webp"
+   },
+   "mask": "/maps/fixture-masks/1.webp"
+  },
+  {
+   "id": 85,
+   "slug": "orgrimmar",
+   "name": {
+    "en": "Orgrimmar",
+    "ru": "Оргриммар"
+   },
+   "type": "zone",
+   "parentId": 12,
+   "children": [],
+   "rectInParent": [
+    0.55,
+    0.4,
+    0.6,
+    0.45
+   ],
+   "art": {
+    "width": 1000,
+    "height": 666,
+    "tileSize": 256,
+    "maxZoom": 2,
+    "url": "/maps/fixture-tiles/85/{z}/{x}_{y}.webp"
+   },
+   "mask": "/maps/fixture-masks/85.webp"
+  },
+  {
+   "id": 10,
+   "slug": "northern-barrens",
+   "name": {
+    "en": "Northern Barrens",
+    "ru": "Северные Степи"
+   },
+   "type": "zone",
+   "parentId": 12,
+   "children": [],
+   "rectInParent": [
+    0.45,
+    0.42,
+    0.6,
+    0.57
+   ],
+   "art": {
+    "width": 1000,
+    "height": 666,
+    "tileSize": 256,
+    "maxZoom": 2,
+    "url": "/maps/fixture-tiles/10/{z}/{x}_{y}.webp"
+   }
+  },
+  {
+   "id": 424,
+   "slug": "pandaria",
+   "name": {
+    "en": "Pandaria",
+    "ru": "Пандария"
+   },
+   "type": "continent",
+   "parentId": 947,
+   "children": [
+    371
+   ],
+   "rectInParent": [
+    0.4,
+    0.6,
+    0.6,
+    0.9
+   ],
+   "art": {
+    "width": 1000,
+    "height": 666,
+    "tileSize": 256,
+    "maxZoom": 2,
+    "url": "/maps/fixture-tiles/424/{z}/{x}_{y}.webp"
+   }
+  },
+  {
+   "id": 371,
+   "slug": "the-jade-forest",
+   "name": {
+    "en": "The Jade Forest",
+    "ru": "Нефритовый лес"
+   },
+   "type": "zone",
+   "parentId": 424,
+   "children": [],
+   "rectInParent": [
+    0.5,
+    0.3,
+    0.7,
+    0.5
+   ],
+   "art": {
+    "width": 1000,
+    "height": 666,
+    "tileSize": 256,
+    "maxZoom": 2,
+    "url": "/maps/fixture-tiles/371/{z}/{x}_{y}.webp"
+   }
+  }
+ ],
+ "pois": [
+  {
+   "id": "p-org",
+   "mapId": 12,
+   "kind": "capital",
+   "name": {
+    "en": "Orgrimmar",
+    "ru": "Оргриммар"
+   },
+   "x": 0.57,
+   "y": 0.42,
+   "targetMapId": 85
+  },
+  {
+   "id": "p-jade",
+   "mapId": 371,
+   "kind": "flight",
+   "name": {
+    "en": "Dawn's Blossom",
+    "ru": "Цветение Зари"
+   },
+   "x": 0.5,
+   "y": 0.5
+  }
+ ],
+ "eras": [
+  {
+   "id": "classic",
+   "name": {
+    "en": "Classic",
+    "ru": "Классика"
+   },
+   "expansion": "classic",
+   "patchRange": [
+    "1.0.0",
+    "3.3.5"
+   ],
+   "source": {
+    "product": "wow_classic_era",
+    "build": "1.15.9"
+   },
+   "rootMapId": 947,
+   "maps": {
+    "947": {
+     "art": {
+      "width": 1000,
+      "height": 666,
+      "tileSize": 256,
+      "maxZoom": 2,
+      "url": "/maps/fixture-tiles/era-classic/947/{z}/{x}_{y}.webp"
+     },
+     "parentId": null,
+     "rectInParent": null
+    },
+    "12": {
+     "art": {
+      "width": 1000,
+      "height": 666,
+      "tileSize": 256,
+      "maxZoom": 2,
+      "url": "/maps/fixture-tiles/era-classic/12/{z}/{x}_{y}.webp"
+     },
+     "rectInParent": [
+      -0.2,
+      0.07,
+      0.63,
+      0.89
+     ],
+     "children": [
+      1,
+      85,
+      "classic-17"
+     ]
+    },
+    "1": {
+     "art": {
+      "width": 1000,
+      "height": 666,
+      "tileSize": 256,
+      "maxZoom": 2,
+      "url": "/maps/fixture-tiles/era-classic/1/{z}/{x}_{y}.webp"
+     },
+     "rectInParent": [
+      0.52,
+      0.45,
+      0.66,
+      0.59
+     ]
+    },
+    "85": {
+     "art": {
+      "width": 1000,
+      "height": 666,
+      "tileSize": 256,
+      "maxZoom": 2,
+      "url": "/maps/fixture-tiles/era-classic/85/{z}/{x}_{y}.webp"
+     },
+     "rectInParent": [
+      0.56,
+      0.43,
+      0.6,
+      0.47
+     ],
+     "mask": "/maps/fixture-masks/era-classic/85.webp"
+    },
+    "10": {
+     "absent": true
+    },
+    "424": null,
+    "classic-17": {
+     "id": "classic-17",
+     "slug": "the-barrens",
+     "type": "zone",
+     "name": {
+      "en": "The Barrens",
+      "ru": "Степи"
+     },
+     "parentId": 12,
+     "children": [],
+     "rectInParent": [
+      0.39,
+      0.46,
+      0.67,
+      0.73
+     ],
+     "art": {
+      "width": 1000,
+      "height": 666,
+      "tileSize": 256,
+      "maxZoom": 2,
+      "url": "/maps/fixture-tiles/era-classic/classic-17/{z}/{x}_{y}.webp"
+     }
+    }
+   },
+   "pois": [
+    {
+     "id": "c-org",
+     "mapId": 12,
+     "kind": "capital",
+     "name": {
+      "en": "Orgrimmar",
+      "ru": "Оргриммар"
+     },
+     "x": 0.58,
+     "y": 0.45,
+     "targetMapId": 85
+    }
+   ]
+  },
+  {
+   "id": "cataclysm",
+   "name": {
+    "en": "Cataclysm",
+    "ru": "Катаклизм"
+   },
+   "expansion": "cataclysm",
+   "patchRange": [
+    "4.0.3",
+    "4.3.4"
+   ],
+   "source": {
+    "product": "wow_classic",
+    "build": "4.4.2"
+   },
+   "rootMapId": 946,
+   "maps": {
+    "946": "unchanged",
+    "947": {
+     "art": {
+      "width": 2000,
+      "height": 1333,
+      "tileSize": 256,
+      "maxZoom": 3,
+      "url": "/maps/fixture-tiles/era-cata/947/{z}/{x}_{y}.webp"
+     }
+    },
+    "12": "unchanged",
+    "1": "unchanged",
+    "85": {
+     "art": {
+      "width": 1000,
+      "height": 666,
+      "tileSize": 256,
+      "maxZoom": 2,
+      "url": "/maps/fixture-tiles/era-cata/85/{z}/{x}_{y}.webp"
+     }
+    },
+    "10": "unchanged",
+    "424": {
+     "absent": true
+    },
+    "371": "unchanged"
+   }
+  },
+  {
+   "id": "midnight",
+   "name": {
+    "en": "Midnight",
+    "ru": "Midnight"
+   },
+   "expansion": "midnight",
+   "patchRange": [
+    "12.0.0",
+    "12.9.9"
+   ],
+   "source": {
+    "product": "wow",
+    "build": "12.1.5"
+   },
+   "rootMapId": 946,
+   "maps": {
+    "946": "unchanged",
+    "947": "unchanged",
+    "12": "unchanged",
+    "1": "unchanged",
+    "85": "unchanged",
+    "10": "unchanged",
+    "424": "unchanged",
+    "371": "unchanged"
+   }
+  }
+ ]
+}

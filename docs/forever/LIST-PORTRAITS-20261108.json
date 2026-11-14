@@ -1,0 +1,660 @@
+[
+  {
+    "slug": "blackfathom-deeps",
+    "boss": "Lorgus Jett",
+    "page": "https://azeroth.wiki/forever/dungeons/blackfathom-deeps",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-lorgus-jett-521b29369109.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-lorgus-jett-521b29369109.webp"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Interrogator Vishas",
+    "page": "https://azeroth.wiki/forever/dungeons/scarlet-monastery",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-interrogator-vishas-13424973c763.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-interrogator-vishas-13424973c763.webp"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Bloodmage Thalnos",
+    "page": "https://azeroth.wiki/forever/dungeons/scarlet-monastery",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-bloodmage-thalnos-ec115d2bc2ed.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-bloodmage-thalnos-ec115d2bc2ed.webp"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Houndmaster Loksey",
+    "page": "https://azeroth.wiki/forever/dungeons/scarlet-monastery",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-houndmaster-loksey-90f603bb901a.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-houndmaster-loksey-90f603bb901a.webp"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Arcanist Doan",
+    "page": "https://azeroth.wiki/forever/dungeons/scarlet-monastery",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-arcanist-doan-3afab310463f.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-arcanist-doan-3afab310463f.webp"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "Herod",
+    "page": "https://azeroth.wiki/forever/dungeons/scarlet-monastery",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-herod-a8b4634d87e6.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-herod-a8b4634d87e6.webp"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "High Inquisitor Fairbanks",
+    "page": "https://azeroth.wiki/forever/dungeons/scarlet-monastery",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-high-inquisitor-fairbanks-98195b1326f6.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-high-inquisitor-fairbanks-98195b1326f6.webp"
+  },
+  {
+    "slug": "scarlet-monastery",
+    "boss": "High Inquisitor Whitemane",
+    "page": "https://azeroth.wiki/forever/dungeons/scarlet-monastery",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-high-inquisitor-whitemane-c73e4dac959a.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-high-inquisitor-whitemane-c73e4dac959a.webp"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Revelosh",
+    "page": "https://azeroth.wiki/forever/dungeons/uldaman",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-revelosh-1831c9fc6846.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-revelosh-1831c9fc6846.webp"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "The Lost Dwarves",
+    "page": "https://azeroth.wiki/forever/dungeons/uldaman",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-the-lost-dwarves-644045091b30.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-the-lost-dwarves-644045091b30.webp"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Ironaya",
+    "page": "https://azeroth.wiki/forever/dungeons/uldaman",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-ironaya-024a8074ff24.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-ironaya-024a8074ff24.webp"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Obsidian Sentinel",
+    "page": "https://azeroth.wiki/forever/dungeons/uldaman",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-obsidian-sentinel-b1e48e40d98c.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-obsidian-sentinel-b1e48e40d98c.webp"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Ancient Stone Keeper",
+    "page": "https://azeroth.wiki/forever/dungeons/uldaman",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-ancient-stone-keeper-a0c8a6fedfa8.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-ancient-stone-keeper-a0c8a6fedfa8.webp"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Galgann Firehammer",
+    "page": "https://azeroth.wiki/forever/dungeons/uldaman",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-galgann-firehammer-8b34a1d259ea.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-galgann-firehammer-8b34a1d259ea.webp"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Grimlok",
+    "page": "https://azeroth.wiki/forever/dungeons/uldaman",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-grimlok-31ab7577dfcb.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-grimlok-31ab7577dfcb.webp"
+  },
+  {
+    "slug": "uldaman",
+    "boss": "Archaedas",
+    "page": "https://azeroth.wiki/forever/dungeons/uldaman",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-archaedas-432f4f13e520.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-archaedas-432f4f13e520.webp"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Mordresh Fire Eye",
+    "page": "https://azeroth.wiki/forever/dungeons/razorfen-downs",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-mordresh-fire-eye-c86b179a7a96.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-mordresh-fire-eye-c86b179a7a96.webp"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Glutton",
+    "page": "https://azeroth.wiki/forever/dungeons/razorfen-downs",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-glutton-8621c611d5ee.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-glutton-8621c611d5ee.webp"
+  },
+  {
+    "slug": "razorfen-downs",
+    "boss": "Amnennar the Coldbringer",
+    "page": "https://azeroth.wiki/forever/dungeons/razorfen-downs",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-amnennar-the-coldbringer-86c0952c3388.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-amnennar-the-coldbringer-86c0952c3388.webp"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Hydromancer Velratha",
+    "page": "https://azeroth.wiki/forever/dungeons/zul-farrak",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-hydromancer-velratha-6c3d5448ccf1.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-hydromancer-velratha-6c3d5448ccf1.webp"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Theka the Martyr",
+    "page": "https://azeroth.wiki/forever/dungeons/zul-farrak",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-theka-the-martyr-6dde4c6c13c6.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-theka-the-martyr-6dde4c6c13c6.webp"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Nekrum Gutchewer",
+    "page": "https://azeroth.wiki/forever/dungeons/zul-farrak",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-nekrum-gutchewer-f5a3b281067f.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-nekrum-gutchewer-f5a3b281067f.webp"
+  },
+  {
+    "slug": "zul-farrak",
+    "boss": "Chief Ukorz Sandscalp",
+    "page": "https://azeroth.wiki/forever/dungeons/zul-farrak",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-chief-ukorz-sandscalp-c17883f90125.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-chief-ukorz-sandscalp-c17883f90125.webp"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Noxxion",
+    "page": "https://azeroth.wiki/forever/dungeons/maraudon",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-noxxion-89a2edc58d9b.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-noxxion-89a2edc58d9b.webp"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Razorlash",
+    "page": "https://azeroth.wiki/forever/dungeons/maraudon",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-razorlash-bc30e8a3e320.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-razorlash-bc30e8a3e320.webp"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Tinkerer Gizlock",
+    "page": "https://azeroth.wiki/forever/dungeons/maraudon",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-tinkerer-gizlock-65084fe3317f.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-tinkerer-gizlock-65084fe3317f.webp"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Lord Vyletongue",
+    "page": "https://azeroth.wiki/forever/dungeons/maraudon",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-lord-vyletongue-09a759a18d4d.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-lord-vyletongue-09a759a18d4d.webp"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Celebras the Cursed",
+    "page": "https://azeroth.wiki/forever/dungeons/maraudon",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-celebras-the-cursed-442e01a4845d.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-celebras-the-cursed-442e01a4845d.webp"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Landslide",
+    "page": "https://azeroth.wiki/forever/dungeons/maraudon",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-landslide-5f731d35b57c.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-landslide-5f731d35b57c.webp"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Rotgrip",
+    "page": "https://azeroth.wiki/forever/dungeons/maraudon",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-rotgrip-4ba8bfc4fbae.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-rotgrip-4ba8bfc4fbae.webp"
+  },
+  {
+    "slug": "maraudon",
+    "boss": "Princess Theradras",
+    "page": "https://azeroth.wiki/forever/dungeons/maraudon",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-princess-theradras-bdd34664f94c.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-princess-theradras-bdd34664f94c.webp"
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Avatar of Hakkar",
+    "page": "https://azeroth.wiki/forever/dungeons/sunken-temple",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-avatar-of-hakkar-36c6a9b9ec46.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-avatar-of-hakkar-36c6a9b9ec46.webp"
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Shade of Eranikus",
+    "page": "https://azeroth.wiki/forever/dungeons/sunken-temple",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-shade-of-eranikus-e551bf0f2feb.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-shade-of-eranikus-e551bf0f2feb.webp"
+  },
+  {
+    "slug": "sunken-temple",
+    "boss": "Dreamscythe",
+    "page": "https://azeroth.wiki/forever/dungeons/sunken-temple",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-dreamscythe-93459e0fd091.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-dreamscythe-93459e0fd091.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "High Interrogator Gerstahn",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-high-interrogator-gerstahn-c21ddce0f397.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-high-interrogator-gerstahn-c21ddce0f397.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Lord Roccor",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-lord-roccor-23359d11db80.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-lord-roccor-23359d11db80.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Houndmaster Grebmar",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-houndmaster-grebmar-21239fa76882.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-houndmaster-grebmar-21239fa76882.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Pyromancer Loregrain",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-pyromancer-loregrain-2d4c24ac6581.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-pyromancer-loregrain-2d4c24ac6581.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Lord Incendius",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-lord-incendius-dae53d1f2363.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-lord-incendius-dae53d1f2363.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Warder Stilgiss",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-warder-stilgiss-54e73bd330a9.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-warder-stilgiss-54e73bd330a9.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Fineous Darkvire",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-fineous-darkvire-0fda9d9d5286.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-fineous-darkvire-0fda9d9d5286.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "General Angerforge",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-general-angerforge-86520fa710ee.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-general-angerforge-86520fa710ee.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Golem Lord Argelmach",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-golem-lord-argelmach-9779f44ddac2.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-golem-lord-argelmach-9779f44ddac2.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Hurley Blackbreath",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-hurley-blackbreath-322cb5df2e13.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-hurley-blackbreath-322cb5df2e13.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Phalanx",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-phalanx-d486c1a0713c.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-phalanx-d486c1a0713c.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Ribbly Screwspigot",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-ribbly-screwspigot-8e8524cb7bf9.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-ribbly-screwspigot-8e8524cb7bf9.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Plugger Spazzring",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-plugger-spazzring-7323647df350.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-plugger-spazzring-7323647df350.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Ambassador Flamelash",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-ambassador-flamelash-3711918a2db2.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-ambassador-flamelash-3711918a2db2.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Magmus",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-magmus-96097ea8994d.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-magmus-96097ea8994d.webp"
+  },
+  {
+    "slug": "blackrock-depths",
+    "boss": "Princess Moira Bronzebeard",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-depths",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-princess-moira-bronzebeard-41852e8292dc.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-princess-moira-bronzebeard-41852e8292dc.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Highlord Omokk",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-highlord-omokk-beb03ace2e8b.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-highlord-omokk-beb03ace2e8b.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "War Master Voone",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-war-master-voone-fd36da8e08d7.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-war-master-voone-fd36da8e08d7.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Mother Smolderweb",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-mother-smolderweb-ba0066cc400c.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-mother-smolderweb-ba0066cc400c.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Urok Doomhowl",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-urok-doomhowl-a337c65e0778.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-urok-doomhowl-a337c65e0778.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Quartermaster Zigris",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-quartermaster-zigris-e299c102de7e.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-quartermaster-zigris-e299c102de7e.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Halycon",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-halycon-83f60853c5f1.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-halycon-83f60853c5f1.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Gizrul the Slavener",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-gizrul-the-slavener-50e11f1907eb.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-gizrul-the-slavener-50e11f1907eb.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Overlord Wyrmthalak",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-overlord-wyrmthalak-62c56114fe97.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-overlord-wyrmthalak-62c56114fe97.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Pyroguard Emberseer",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-pyroguard-emberseer-12de3ad1b19b.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-pyroguard-emberseer-12de3ad1b19b.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "Warchief Rend Blackhand",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-warchief-rend-blackhand-db9d79a2d478.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-warchief-rend-blackhand-db9d79a2d478.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "The Beast",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-the-beast-6a43ff6cd7d7.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-the-beast-6a43ff6cd7d7.webp"
+  },
+  {
+    "slug": "blackrock-spire",
+    "boss": "General Drakkisath",
+    "page": "https://azeroth.wiki/forever/dungeons/blackrock-spire",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-general-drakkisath-17feddf64bfb.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-general-drakkisath-17feddf64bfb.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Zevrim Thornhoof",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-zevrim-thornhoof-b2f440195895.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-zevrim-thornhoof-b2f440195895.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Hydrospawn",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-hydrospawn-4b26a5ade196.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-hydrospawn-4b26a5ade196.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Lethtendris",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-lethtendris-1b362b0916db.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-lethtendris-1b362b0916db.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Alzzin the Wildshaper",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-alzzin-the-wildshaper-3dc084a1d880.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-alzzin-the-wildshaper-3dc084a1d880.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Tendris Warpwood",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-tendris-warpwood-fe3cd80536df.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-tendris-warpwood-fe3cd80536df.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Illyanna Ravenoak",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-illyanna-ravenoak-0a9918af544c.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-illyanna-ravenoak-0a9918af544c.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Magister Kalendris",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-magister-kalendris-365d583f092c.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-magister-kalendris-365d583f092c.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Prince Tortheldrin",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-prince-tortheldrin-31df861289c6.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-prince-tortheldrin-31df861289c6.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Stomper Kreeg",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-stomper-kreeg-d796883b646a.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-stomper-kreeg-d796883b646a.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Guard Fengus",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-guard-fengus-a21953480937.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-guard-fengus-a21953480937.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "Captain Kromcrush",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-captain-kromcrush-d1ad620ac283.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-captain-kromcrush-d1ad620ac283.webp"
+  },
+  {
+    "slug": "dire-maul",
+    "boss": "King Gordok",
+    "page": "https://azeroth.wiki/forever/dungeons/dire-maul",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-king-gordok-9e52728327ff.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-king-gordok-9e52728327ff.webp"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Hearthsinger Forresten",
+    "page": "https://azeroth.wiki/forever/dungeons/stratholme",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-hearthsinger-forresten-23489802727a.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-hearthsinger-forresten-23489802727a.webp"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Timmy the Cruel",
+    "page": "https://azeroth.wiki/forever/dungeons/stratholme",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-timmy-the-cruel-35f5786835ac.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-timmy-the-cruel-35f5786835ac.webp"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Balnazzar",
+    "page": "https://azeroth.wiki/forever/dungeons/stratholme",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-balnazzar-b0d406097666.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-balnazzar-b0d406097666.webp"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "The Unforgiven",
+    "page": "https://azeroth.wiki/forever/dungeons/stratholme",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-the-unforgiven-b73e555426de.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-the-unforgiven-b73e555426de.webp"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Baroness Anastari",
+    "page": "https://azeroth.wiki/forever/dungeons/stratholme",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-baroness-anastari-d75493ef9d49.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-baroness-anastari-d75493ef9d49.webp"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Maleki the Pallid",
+    "page": "https://azeroth.wiki/forever/dungeons/stratholme",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-maleki-the-pallid-38e403974480.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-maleki-the-pallid-38e403974480.webp"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Magistrate Barthilas",
+    "page": "https://azeroth.wiki/forever/dungeons/stratholme",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-magistrate-barthilas-b996ce98d08d.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-magistrate-barthilas-b996ce98d08d.webp"
+  },
+  {
+    "slug": "stratholme",
+    "boss": "Ramstein the Gorger",
+    "page": "https://azeroth.wiki/forever/dungeons/stratholme",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-ramstein-the-gorger-c975198582b9.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-ramstein-the-gorger-c975198582b9.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Jandice Barov",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-jandice-barov-646f070dc116.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-jandice-barov-646f070dc116.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Rattlegore",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-rattlegore-4bb96c908759.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-rattlegore-4bb96c908759.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Marduk Blackpool",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-marduk-blackpool-fc498aaf1897.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-marduk-blackpool-fc498aaf1897.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Vectus",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-vectus-213df6258968.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-vectus-213df6258968.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Kormok",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-kormok-71ff810c5ce5.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-kormok-71ff810c5ce5.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Instructor Malicia",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-instructor-malicia-bd6f9ea280a9.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-instructor-malicia-bd6f9ea280a9.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Doctor Theolen Krastinov",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-doctor-theolen-krastinov-d4d178901620.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-doctor-theolen-krastinov-d4d178901620.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Lorekeeper Polkelt",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-lorekeeper-polkelt-f5b0e3c71349.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-lorekeeper-polkelt-f5b0e3c71349.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "The Ravenian",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-the-ravenian-2038ee9171da.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-the-ravenian-2038ee9171da.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Lord Alexei Barov",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-lord-alexei-barov-92949e91ffba.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-lord-alexei-barov-92949e91ffba.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Lady Illucia Barov",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-lady-illucia-barov-7c636990f363.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-lady-illucia-barov-7c636990f363.webp"
+  },
+  {
+    "slug": "scholomance",
+    "boss": "Darkmaster Gandling",
+    "page": "https://azeroth.wiki/forever/dungeons/scholomance",
+    "asset": "https://azeroth.wiki/assets/forever/dungeons/ui-ej-boss-darkmaster-gandling-406e146bbbaf.webp",
+    "local": "/images/wow/forever/portraits/ui-ej-boss-darkmaster-gandling-406e146bbbaf.webp"
+  }
+]

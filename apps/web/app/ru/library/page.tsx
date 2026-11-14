@@ -7,7 +7,7 @@ import { getLibraryLandingData, requireCatalogSession } from "@/lib/library/serv
 import { withPageOpenGraph } from "@/lib/seo/metadata";
 
 const baseMetadata: Metadata = {
-  title: "Библиотека данных World of Warcraft — Gildra",
+  title: "Библиотека данных World of Warcraft — WowArcana",
   description: "Предметы, заклинания, маунты, боссы и задания World of Warcraft с игровыми подсказками, иконками и связями.",
 };
 
@@ -24,5 +24,5 @@ export default async function LibraryPageRu({ searchParams }: { searchParams: Pr
   if (!product) notFound();
   await requireCatalogSession(`/ru/library${product === "wow" ? "" : `?product=${encodeURIComponent(product)}`}`);
   const data = await getLibraryLandingData("ru_RU", product);
-  return <PageShell lang="ru"><LibraryLanding lang="ru" selectedProduct={product} {...data} /></PageShell>;
+  return <PageShell lang="ru" frame><LibraryLanding lang="ru" selectedProduct={product} {...data} /></PageShell>;
 }

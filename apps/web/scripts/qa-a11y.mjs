@@ -6,7 +6,7 @@
 // tall and 34 px wide (a transparent ::before/::after hit area counts); text links
 // follow WCAG 2.5.8 (checked by axe).
 //   npm run qa:a11y                          local :3100, default routes
-//   npm run qa:a11y -- --base https://gildra.net --routes /ru/wow,/wow/raids
+//   npm run qa:a11y -- --base https://wowarcana.com --routes /ru/wow,/wow/raids
 // Exits 1 on any axe violation of impact serious/critical or a small target.
 import fs from "node:fs";
 import { createRequire } from "node:module";

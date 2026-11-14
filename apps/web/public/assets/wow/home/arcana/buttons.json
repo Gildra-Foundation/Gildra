@@ -1,0 +1,33 @@
+{
+  "entries": {
+    "arcana": {
+      "path": "/assets/wow/home/arcana/button.webp",
+      "width": 768,
+      "height": 115,
+      "bytes": 7970,
+      "sha256": "72318d48493a26d0789721e16cb3d198e085bb156903c675764a94ea0258a553",
+      "native": "/home/debian/gildra-hub7-assets/asset-sources/button-3.png",
+      "nativeSha256": "fcb1375173ae9d58f29117a26996732bbc9d97c5de7390c93394597774f67698",
+      "nativeDimensions": {
+        "width": 2172,
+        "height": 724
+      },
+      "crop": {
+        "left": 71,
+        "top": 228,
+        "width": 2032,
+        "height": 268
+      },
+      "centreAlpha": {
+        "min": 252,
+        "max": 254
+      },
+      "slices": [
+        24,
+        88,
+        24,
+        88
+      ]
+    }
+  }
+}

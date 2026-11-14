@@ -93,8 +93,32 @@
           "title": {
             "type": "string"
           },
+          "lede": {
+            "type": "string"
+          },
           "updated": {
             "type": "string"
+          },
+          "updatedLabel": {
+            "type": "string"
+          },
+          "crumbs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "href": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label"
+              ],
+              "additionalProperties": false
+            }
           },
           "sections": {
             "type": "array",
@@ -114,16 +138,15 @@
               ],
               "additionalProperties": false
             }
-          },
-          "backLabel": {
-            "type": "string"
           }
         },
         "required": [
           "title",
+          "lede",
           "updated",
-          "sections",
-          "backLabel"
+          "updatedLabel",
+          "crumbs",
+          "sections"
         ],
         "additionalProperties": false
       }
@@ -238,7 +261,24 @@
       "container": false,
       "props": {
         "type": "object",
-        "properties": {},
+        "properties": {
+          "mode": {
+            "enum": [
+              "raid",
+              "mythic_plus",
+              "pvp"
+            ]
+          },
+          "bracket": {
+            "enum": [
+              "3v3",
+              "2v2",
+              "shuffle",
+              "blitz",
+              "rbg"
+            ]
+          }
+        },
         "additionalProperties": false
       }
     }

@@ -164,6 +164,14 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 			completenessStatus, expectedCount, importedCount, excludedCount, missingCount)
 	}
 
+	// Taxonomy projects only active, unpublished candidate builds. Begin creates
+	// an inactive build, so select this isolated fixture before rebuilding it.
+	if _, err := pool.Exec(ctx, `
+		UPDATE game_builds SET is_active=(id=$1)
+		WHERE product_id=$2`, ic.BuildID, ic.ProductID); err != nil {
+		t.Fatalf("activate projection candidate: %v", err)
+	}
+
 	projectors := []struct {
 		name string
 		run  func(context.Context, *pgxpool.Pool, catalogimport.ImportContext) (int64, error)
@@ -239,27 +247,6 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 		SELECT id FROM game_entities
 		WHERE product_id=$1 AND entity_type='quest_reward_package' AND external_id=77`, ic.ProductID).Scan(&packageEntity); err != nil {
 		t.Fatalf("read quest reward package entity: %v", err)
-	}
-	if _, err := pool.Exec(ctx, `
-		UPDATE game_entities SET published_version_id=latest_version_id
-		WHERE id=ANY($1::uuid[])`, []uuid.UUID{packageEntity, packageItemEntity}); err != nil {
-		t.Fatalf("publish integration package entities: %v", err)
-	}
-	packageDetail, err := catalogservice.NewService(pool).Get(ctx, packageEntity, "en_US")
-	if err != nil {
-		t.Fatalf("read quest reward package detail: %v", err)
-	}
-	if packageDetail.Tooltip == nil {
-		t.Fatal("quest reward package detail has no structured tooltip")
-	}
-	packageBlockFound := false
-	for _, block := range packageDetail.Tooltip.Blocks {
-		if block["type"] == "quest_reward_package" && block["link_status"] == "package_only" {
-			packageBlockFound = true
-		}
-	}
-	if !packageBlockFound {
-		t.Fatalf("quest reward package tooltip is missing package_only block: %#v", packageDetail.Tooltip.Blocks)
 	}
 	var itemRegistryOnly bool
 	var itemRegistryLocalizations int
@@ -550,6 +537,28 @@ func TestDB2ProjectionPreservesArtifactProvenance(t *testing.T) {
 	if rewardSourceBuild != 990000 || rewardArtifact != officialArtifact {
 		t.Fatalf("quest reward source build=%d artifact=%s, want 990000 and %s",
 			rewardSourceBuild, rewardArtifact, officialArtifact)
+	}
+	// Publish only after all candidate projections and their provenance checks.
+	if _, err := pool.Exec(ctx, `
+		UPDATE game_entities SET published_version_id=latest_version_id
+		WHERE id=ANY($1::uuid[])`, []uuid.UUID{packageEntity, packageItemEntity}); err != nil {
+		t.Fatalf("publish integration package entities: %v", err)
+	}
+	packageDetail, err := catalogservice.NewService(pool).Get(ctx, packageEntity, "en_US")
+	if err != nil {
+		t.Fatalf("read quest reward package detail: %v", err)
+	}
+	if packageDetail.Tooltip == nil {
+		t.Fatal("quest reward package detail has no structured tooltip")
+	}
+	packageBlockFound := false
+	for _, block := range packageDetail.Tooltip.Blocks {
+		if block["type"] == "quest_reward_package" && block["link_status"] == "package_only" {
+			packageBlockFound = true
+		}
+	}
+	if !packageBlockFound {
+		t.Fatalf("quest reward package tooltip is missing package_only block: %#v", packageDetail.Tooltip.Blocks)
 	}
 }
 

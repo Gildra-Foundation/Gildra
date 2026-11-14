@@ -141,7 +141,7 @@ export function CharacterAuditPage({ initialSnapshot, initialFingerprint, locale
         <AtlasHero
           align="start"
           className={styles.hero}
-          breadcrumbs={[{ label: "World of Warcraft", href: `${localePrefix}/wow` }, { label: copy.characters, href: `${localePrefix}/wow/characters` }, { label: character.name }]}
+          breadcrumbs={[{ label: "World of Warcraft", href: localePrefix || "/" }, { label: copy.characters, href: `${localePrefix}/wow/characters` }, { label: character.name }]}
           breadcrumbsLabel={copy.breadcrumbs}
           emblem={<img src={snapshot.media?.avatar ?? snapshot.specialization.iconUrl} alt="" decoding="async" />}
           eyebrow={character.className}

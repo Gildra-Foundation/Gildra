@@ -16,8 +16,16 @@ COPY scripts/patch-next.mjs scripts/patch-next.mjs
 RUN --mount=type=cache,id=gildra-npm,target=/root/.npm,sharing=locked \
     npm ci --prefer-offline --no-audit --no-fund
 
+# The map tiles (≈1 GB, 125 000 files) as a stage of their own: a release build
+# replaces it with a prebuilt image (--build-context maps=docker-image://…) and
+# leaves the tiles out of its build context, so they are neither walked nor
+# copied on every build. Without that the stage is built from the context.
+FROM scratch AS maps
+COPY apps/web/public/maps /
+
 FROM deps AS source
-COPY . .
+# The map tiles are not source: the build reads them through a bind mount.
+COPY --exclude=apps/web/public/maps . .
 RUN npm run generate:api
 
 FROM source AS typecheck
@@ -31,7 +39,7 @@ FROM source AS builder
 # Public Plausible tracker settings (lib/analytics/plausible.ts). Static pages are
 # prerendered here, so the tracker needs them at build time as well as at
 # runtime (compose.runtime.yml). Pass empty values to build without it.
-ARG PLAUSIBLE_SCRIPT_URL=https://gildra.net/stats/js/script.js
+ARG PLAUSIBLE_SCRIPT_URL=https://wowarcana.com/stats/js/script.js
 ARG PLAUSIBLE_API_URL=/stats/api/event
 ARG PLAUSIBLE_SITE_DOMAIN=gildra.net
 # Error reports (GlitchTip project gildra-web, roadmap 96). The DSN key is public
@@ -50,6 +58,7 @@ ENV NEXT_TELEMETRY_DISABLED=1 GILDRA_TYPECHECK_STAGE=1 GILDRA_BUILD_CPUS=$GILDRA
 # Turbopack links a few externals from .next/node_modules to the root
 # node_modules; the runner flattens apps/web onto /app, so point them there.
 RUN --mount=type=cache,id=gildra-web-next,target=/app/apps/web/.next/cache,sharing=locked \
+    --mount=type=bind,from=maps,target=/app/apps/web/public/maps \
     npm run build \
  && externals=apps/web/.next/standalone/apps/web/.next/node_modules \
  && if [ -d "$externals" ]; then for link in "$externals"/*; do \
@@ -64,7 +73,10 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 # public/ (≈340 MB of art) comes straight from the build context, which the
 # build never changes: the layer stays cached and shared between releases
 # instead of being compressed and stored again for every image.
-COPY --link --chown=1001:1001 apps/web/public ./public
+# The map tiles change rarely and are most of public/: their own layer, so a
+# release that touches any other public file re-stores ≈300 MB, not 1.3 GB.
+COPY --link --chown=1001:1001 --from=maps / ./public/maps
+COPY --link --chown=1001:1001 --exclude=maps apps/web/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone/apps/web ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static

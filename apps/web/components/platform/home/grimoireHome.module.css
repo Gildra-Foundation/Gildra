@@ -1,8 +1,5 @@
 .page{--accent:#9ecfea;--paper:#dbe9f2;--heading:#e4edf3;--muted:#b0c1ce;--subtle:#94aab9;--bright:#e1f4ff;--metal:#84b4d0;--metal-dark:#547c98;--button-top:#23465b;--button-bottom:#102332;--night:#080e17;--shade:4,9,16;--particle:#e0f3ff;--home-art:url("/assets/wow/character-book/intro/icecrown-home-background-v1.webp");position:relative;isolation:isolate;overflow-x:clip;min-height:100svh;color:var(--paper);font-family:"Gildra Atlas",Georgia,serif;background:var(--night);background-image:linear-gradient(90deg,rgba(var(--shade),.78),rgba(var(--shade),.38) 48%,rgba(var(--shade),.12)),linear-gradient(180deg,rgba(var(--shade),.24),transparent 35%,rgba(var(--shade),.78)),var(--home-art);background-position:center;background-size:cover;background-repeat:no-repeat}
 
-.page[data-home-theme="illidan"]{--accent:#c4a3f3;--paper:#e5dcef;--heading:#f0e9f7;--muted:#c4b9d1;--subtle:#b4a5c4;--bright:#f4eaff;--metal:#a385c6;--metal-dark:#765493;--button-top:#49305f;--button-bottom:#24152f;--night:#110d19;--shade:12,7,19;--particle:#a8ef78;--home-art:url("/assets/wow/character-book/intro/illidan-home-background-v1.webp")}
-.page[data-home-theme="garek"]{--accent:#a5dba7;--paper:#dcebdd;--heading:#eaf2e9;--muted:#bbcebf;--subtle:#a3baa8;--bright:#ebffec;--metal:#7eac87;--metal-dark:#4c7858;--button-top:#2d4c37;--button-bottom:#13291d;--night:#0a130f;--shade:4,14,9;--particle:#b2efb9;--home-art:url("/assets/wow/character-book/intro/garek-home-background-v1.webp")}
-.page[data-home-theme="varok"]{--accent:#f0a28f;--paper:#f0ded5;--heading:#fff0e5;--muted:#d8bdb1;--subtle:#c5a397;--bright:#fff1e3;--metal:#ca8b79;--metal-dark:#9e5748;--button-top:#6b302c;--button-bottom:#311716;--night:#180d0c;--shade:19,6,4;--particle:#ffb66d;--home-art:url("/assets/wow/character-book/intro/varok-home-background-v2.webp")}
 .page *{box-sizing:border-box}.header a{color:inherit;text-decoration:none}.page button{font:inherit;cursor:pointer}.header a:focus-visible,.header button:focus-visible,.hero button:focus-visible{outline:2px solid var(--accent);outline-offset:7px}
 .header{max-width:1500px;margin:auto;padding:30px clamp(24px,5vw,86px);display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:24px}
 .brand{--game-switcher-font:"Gildra Kurale",Georgia,serif;display:flex;min-height:44px;align-items:center;gap:12px;width:max-content;color:var(--paper)!important;transition:filter 280ms}
@@ -16,7 +13,7 @@
 .hero{max-width:1380px;min-height:calc(100svh - 195px - var(--wow-version-strip-height,0px));margin:auto;padding:16px clamp(28px,6vw,96px) 36px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:clamp(35px,6vw,100px)}
 .copy{position:relative;z-index:2;padding-bottom:10px}.eyebrow{display:flex;align-items:center;gap:13px;margin:0 0 29px;color:var(--accent);font-size:9px;letter-spacing:.16em;line-height:1.6}.eyebrow>span{width:32px;height:1px;background:var(--metal);flex-shrink:0}
 .copy h1{margin:0;font:400 clamp(46px,4.8vw,76px)/1.12 "Gildra Kurale",Georgia,serif;letter-spacing:-.025em;color:var(--heading)}.copy h1 em{color:var(--accent);font-style:normal}
-/* Preciosa is shared by every hero's quote and signature. Split by script like the
+/* Preciosa writes the quote and signature. Split by script like the
    other book fonts (lossless glyph subsets of the original; the full file was 115 KB):
    an English page downloads only the Latin face. */
 @font-face{font-family:"Gildra Preciosa";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/wow/fonts/preciosa/preciosa-latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
@@ -44,11 +41,13 @@
 .cover{position:relative;display:block;width:min(100%,440px,calc((100svh - 230px - var(--wow-version-strip-height,0px))*.667));min-width:260px;padding:0;border:0;background:none;transform:rotate(-3deg);transform-origin:50% 80%;transition:transform 550ms cubic-bezier(.2,.7,.25,1)}
 .cover:hover{transform:rotate(-2deg) translateY(-3px);}
 /* Filter only the artwork; text retains its own sharp layer during the tilt. */
-.coverImage{width:100%;height:auto;display:block;filter:grayscale(1) drop-shadow(-14px 18px 16px #0008);transition:filter 550ms}
-.cover:hover .coverImage{filter:grayscale(1) drop-shadow(-16px 22px 18px #0008)}
+.coverImage{width:100%;height:auto;display:block;filter:drop-shadow(-14px 18px 16px #0008);transition:filter 550ms}
+.cover:hover .coverImage{filter:drop-shadow(-16px 22px 18px #0008)}
 /* Lettering is foil-stamped into the leather: silver like the corner fittings,
    a pressed upper edge and a lit lower edge (light falls from the top right). */
 .coverTitle{position:absolute;top:16%;left:19%;right:9%;display:grid;justify-items:center;color:#d3d7dc;text-shadow:0 -1px 0 #000b,0 1px 0 #ffffff1c}
+.coverBrand{display:block;width:auto;height:clamp(44px,6vw,64px)}
+.coverBrand img{display:block;width:auto;height:100%}
 .coverTitle small{font:9px/1.4 "Gildra Atlas",Georgia,serif;letter-spacing:.24em}
 .coverTitle strong,.coverSubtitle>span{background:linear-gradient(180deg,#fbfcfd 8%,#d5d9de 36%,#8f969e 54%,#dfe2e6 74%,#a9afb6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:none;filter:drop-shadow(0 -1px 0 #000c) drop-shadow(0 1px 0 #ffffff26) drop-shadow(0 3px 4px #0008)}
 .coverTitle strong{font:400 clamp(25px,3.3vw,48px)/1.15 "Gildra Kurale",Georgia,serif;letter-spacing:.14em}
@@ -59,16 +58,9 @@
 .coverSubtitle>span{display:inline-block}
 .coverSubtitle small{display:block;margin-top:14px;font:8px/1.5 "Gildra Atlas",Georgia,serif;letter-spacing:.18em;color:#bfc3c9;text-shadow:0 -1px 0 #000b,0 1px 0 #ffffff1c}
 /* Directional light on the leather, limited to the book's own silhouette. */
-.coverLight{position:absolute;inset:0;pointer-events:none;-webkit-mask:url("/assets/wow/character-book/intro/chronicle-cover-v2-mask.png") 0 0/100% 100% no-repeat;mask:url("/assets/wow/character-book/intro/chronicle-cover-v2-mask.png") 0 0/100% 100% no-repeat;background:linear-gradient(115deg,transparent 42%,#ffffff2e 50%,transparent 58%) 130% 0/260% 100% no-repeat,linear-gradient(215deg,#ffffff24,transparent 38%,transparent 62%,#0000004d);mix-blend-mode:soft-light}
+.coverLight{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 42%,#ffffff2e 50%,transparent 58%) 130% 0/260% 100% no-repeat,linear-gradient(215deg,#ffffff24,transparent 38%,transparent 62%,#0000004d);mix-blend-mode:soft-light}
 .cover:hover .coverLight,.cover:focus-visible .coverLight{background-position:-30% 0,0 0;transition:background-position 1100ms cubic-bezier(.2,.65,.3,1)}
-/* The cabochons keep the open book's silver finish and brighten on hover. */
-.coverGems{position:absolute;inset:0;pointer-events:none}
-.coverGems i,.coverGems::before,.coverGems::after{position:absolute;top:42.66%;width:6.2%;aspect-ratio:1;border-radius:50%;filter:grayscale(1)}
-.coverGems i{background:radial-gradient(circle at 40% 36%,color-mix(in srgb,var(--accent) 55%,#fff),var(--accent) 34%,color-mix(in srgb,var(--accent) 70%,#000) 72%);mix-blend-mode:color;opacity:.8;transition:opacity 450ms ease}
-.coverGems i:first-child,.coverGems::before{left:23.5%}.coverGems i:last-child,.coverGems::after{left:73.85%}
-.coverGems::before,.coverGems::after{content:"";background:radial-gradient(circle,color-mix(in srgb,var(--accent) 85%,#fff) 0 18%,color-mix(in srgb,var(--accent) 55%,transparent) 36%,transparent 68%);mix-blend-mode:screen;opacity:.2;transform:scale(1.9);transition:opacity 450ms ease}
-.cover:hover .coverGems i,.cover:focus-visible .coverGems i,[data-cover-awake] .coverGems i{opacity:1}
-.cover:hover .coverGems::before,.cover:hover .coverGems::after,.cover:focus-visible .coverGems::before,.cover:focus-visible .coverGems::after,[data-cover-awake] .coverGems::before,[data-cover-awake] .coverGems::after{opacity:.75}
+
 .bookHint{position:relative;margin:25px 0 0;font:italic 11px "Gildra Atlas",Georgia,serif;color:var(--muted);text-align:center}.bookHint span{display:inline-block;margin-right:10px;color:var(--accent);font-style:normal}
 .footer{max-width:1320px;margin:0 auto;padding:22px clamp(28px,5vw,70px) 28px;display:flex;align-items:center;justify-content:space-between;gap:18px;border-top:1px solid color-mix(in srgb,var(--accent) 17%,transparent);color:var(--subtle);font:8px/1.5 "Gildra Atlas",Georgia,serif;letter-spacing:.18em}
 .headerNav{position:relative;min-width:0;isolation:isolate}.headerNav ul{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px clamp(4px,1vw,16px)}
@@ -100,72 +92,14 @@
 @keyframes snowfall7{0%{transform:translate3d(0,-12px,0);opacity:0}10%{opacity:.48}80%{opacity:.3}100%{transform:translate3d(36px,calc(100svh + 12px),0);opacity:0}}
 @keyframes snowfall8{0%{transform:translate3d(0,-12px,0);opacity:0}10%{opacity:.48}80%{opacity:.3}100%{transform:translate3d(-45px,calc(100svh + 12px),0);opacity:0}}
 @keyframes snowfall9{0%{transform:translate3d(0,-12px,0);opacity:0}10%{opacity:.48}80%{opacity:.3}100%{transform:translate3d(54px,calc(100svh + 12px),0);opacity:0}}
-@keyframes felFall0{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(-18px,calc(100svh + 12px),0) rotate(150deg);opacity:0}}
-@keyframes felFall1{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(27px,calc(100svh + 12px),0) rotate(150deg);opacity:0}}
-@keyframes felFall2{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(-36px,calc(100svh + 12px),0) rotate(150deg);opacity:0}}
-@keyframes felFall3{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(45px,calc(100svh + 12px),0) rotate(150deg);opacity:0}}
-@keyframes felFall4{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(-54px,calc(100svh + 12px),0) rotate(150deg);opacity:0}}
-@keyframes felFall5{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(18px,calc(100svh + 12px),0) rotate(150deg);opacity:0}}
-@keyframes felFall6{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(-27px,calc(100svh + 12px),0) rotate(150deg);opacity:0}}
-@keyframes felFall7{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(36px,calc(100svh + 12px),0) rotate(150deg);opacity:0}}
-@keyframes felFall8{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(-45px,calc(100svh + 12px),0) rotate(150deg);opacity:0}}
-@keyframes felFall9{0%{transform:translate3d(0,-12px,0) rotate(0);opacity:0}15%{opacity:.55}70%{opacity:.25}100%{transform:translate3d(54px,calc(100svh + 12px),0) rotate(150deg);opacity:0}}
-@keyframes soulDrift0{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(-18px,50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
-@keyframes soulDrift1{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(27px,50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
-@keyframes soulDrift2{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(-36px,50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
-@keyframes soulDrift3{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(45px,50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
-@keyframes soulDrift4{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(-54px,50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
-@keyframes soulDrift5{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(18px,50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
-@keyframes soulDrift6{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(-27px,50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
-@keyframes soulDrift7{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(36px,50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
-@keyframes soulDrift8{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(-45px,50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
-@keyframes soulDrift9{0%{transform:translate3d(0,90svh,0) scale(.7);opacity:0}20%{opacity:.35}50%{transform:translate3d(54px,50svh,0) scale(1.15);opacity:.5}80%{opacity:.15}100%{transform:translate3d(0,5svh,0) scale(.6);opacity:0}}
-@keyframes emberRise0{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(-18px,-12px,0) scale(.3);opacity:0}}
-@keyframes emberRise1{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(27px,-12px,0) scale(.3);opacity:0}}
-@keyframes emberRise2{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(-36px,-12px,0) scale(.3);opacity:0}}
-@keyframes emberRise3{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(45px,-12px,0) scale(.3);opacity:0}}
-@keyframes emberRise4{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(-54px,-12px,0) scale(.3);opacity:0}}
-@keyframes emberRise5{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(18px,-12px,0) scale(.3);opacity:0}}
-@keyframes emberRise6{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(-27px,-12px,0) scale(.3);opacity:0}}
-@keyframes emberRise7{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(36px,-12px,0) scale(.3);opacity:0}}
-@keyframes emberRise8{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(-45px,-12px,0) scale(.3);opacity:0}}
-@keyframes emberRise9{0%{transform:translate3d(0,100svh,0) scale(1);opacity:0}15%{opacity:.65}70%{opacity:.4}100%{transform:translate3d(54px,-12px,0) scale(.3);opacity:0}}
-@media(prefers-reduced-motion:no-preference){.snow span:nth-child(10n+1){animation-name:snowfall0}.snow span:nth-child(10n+2){animation-name:snowfall1}.snow span:nth-child(10n+3){animation-name:snowfall2}.snow span:nth-child(10n+4){animation-name:snowfall3}.snow span:nth-child(10n+5){animation-name:snowfall4}.snow span:nth-child(10n+6){animation-name:snowfall5}.snow span:nth-child(10n+7){animation-name:snowfall6}.snow span:nth-child(10n+8){animation-name:snowfall7}.snow span:nth-child(10n+9){animation-name:snowfall8}.snow span:nth-child(10n+10){animation-name:snowfall9}.page[data-home-theme="illidan"] .snow span:nth-child(10n+1){animation-name:felFall0}.page[data-home-theme="illidan"] .snow span:nth-child(10n+2){animation-name:felFall1}.page[data-home-theme="illidan"] .snow span:nth-child(10n+3){animation-name:felFall2}.page[data-home-theme="illidan"] .snow span:nth-child(10n+4){animation-name:felFall3}.page[data-home-theme="illidan"] .snow span:nth-child(10n+5){animation-name:felFall4}.page[data-home-theme="illidan"] .snow span:nth-child(10n+6){animation-name:felFall5}.page[data-home-theme="illidan"] .snow span:nth-child(10n+7){animation-name:felFall6}.page[data-home-theme="illidan"] .snow span:nth-child(10n+8){animation-name:felFall7}.page[data-home-theme="illidan"] .snow span:nth-child(10n+9){animation-name:felFall8}.page[data-home-theme="illidan"] .snow span:nth-child(10n+10){animation-name:felFall9}.page[data-home-theme="garek"] .snow span:nth-child(10n+1){animation-name:soulDrift0}.page[data-home-theme="garek"] .snow span:nth-child(10n+2){animation-name:soulDrift1}.page[data-home-theme="garek"] .snow span:nth-child(10n+3){animation-name:soulDrift2}.page[data-home-theme="garek"] .snow span:nth-child(10n+4){animation-name:soulDrift3}.page[data-home-theme="garek"] .snow span:nth-child(10n+5){animation-name:soulDrift4}.page[data-home-theme="garek"] .snow span:nth-child(10n+6){animation-name:soulDrift5}.page[data-home-theme="garek"] .snow span:nth-child(10n+7){animation-name:soulDrift6}.page[data-home-theme="garek"] .snow span:nth-child(10n+8){animation-name:soulDrift7}.page[data-home-theme="garek"] .snow span:nth-child(10n+9){animation-name:soulDrift8}.page[data-home-theme="garek"] .snow span:nth-child(10n+10){animation-name:soulDrift9}.page[data-home-theme="varok"] .snow span:nth-child(10n+1){animation-name:emberRise0}.page[data-home-theme="varok"] .snow span:nth-child(10n+2){animation-name:emberRise1}.page[data-home-theme="varok"] .snow span:nth-child(10n+3){animation-name:emberRise2}.page[data-home-theme="varok"] .snow span:nth-child(10n+4){animation-name:emberRise3}.page[data-home-theme="varok"] .snow span:nth-child(10n+5){animation-name:emberRise4}.page[data-home-theme="varok"] .snow span:nth-child(10n+6){animation-name:emberRise5}.page[data-home-theme="varok"] .snow span:nth-child(10n+7){animation-name:emberRise6}.page[data-home-theme="varok"] .snow span:nth-child(10n+8){animation-name:emberRise7}.page[data-home-theme="varok"] .snow span:nth-child(10n+9){animation-name:emberRise8}.page[data-home-theme="varok"] .snow span:nth-child(10n+10){animation-name:emberRise9}}
+
+@media(prefers-reduced-motion:no-preference){.snow span:nth-child(10n+1){animation-name:snowfall0}.snow span:nth-child(10n+2){animation-name:snowfall1}.snow span:nth-child(10n+3){animation-name:snowfall2}.snow span:nth-child(10n+4){animation-name:snowfall3}.snow span:nth-child(10n+5){animation-name:snowfall4}.snow span:nth-child(10n+6){animation-name:snowfall5}.snow span:nth-child(10n+7){animation-name:snowfall6}.snow span:nth-child(10n+8){animation-name:snowfall7}.snow span:nth-child(10n+9){animation-name:snowfall8}.snow span:nth-child(10n+10){animation-name:snowfall9}}
 @media(max-width:760px){.snow span:nth-child(n+19){display:none}}
 @media(prefers-reduced-motion:reduce){.snow span{animation:none;transform:translate3d(0,var(--snow-rest),0);opacity:.25}}
 @media(prefers-reduced-motion:reduce){.page *{transition:none!important}.cover,.cover:hover{transform:rotate(-3deg)}}
 
-/* Equipment emblems and a translucent panel keep the art visible. */
-.themePicker{position:relative;z-index:10}
-.themeTrigger{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:6px 8px;border:0;border-radius:2px;background:transparent;color:var(--paper);font:14px/1.3 "Gildra Kurale",Georgia,serif!important;text-shadow:0 1px 6px #000;transition:color 220ms}
-.themeTrigger::after{content:"";position:absolute;left:8px;right:8px;bottom:3px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transform:scaleX(.65);transition:opacity 220ms,transform 220ms}
-.themeTrigger:hover,.themeTrigger[aria-expanded="true"]{color:var(--bright)}
-.themeTrigger:hover::after,.themeTrigger[aria-expanded="true"]::after{opacity:.7;transform:scaleX(1)}
-.themeEmblem{display:block;width:48px;height:48px;flex:none;object-fit:contain}
-.themeTrigger>.themeEmblem{width:32px;height:32px;color:var(--accent);transition:transform 260ms,filter 260ms}
-.themeTrigger:hover>.themeEmblem,.themeTrigger[aria-expanded="true"]>.themeEmblem{transform:translateY(-1px);filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent) 35%,transparent))}
-.themeTrigger>svg:last-child{margin-left:2px;opacity:.7;transition:transform 220ms}.themeTrigger[aria-expanded="true"]>svg:last-child{transform:rotate(180deg)}
-.themeMenu{position:absolute;right:0;top:calc(100% + 12px);width:284px;padding:12px;border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);border-radius:4px;background:rgba(7,10,15,.12);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);box-shadow:0 12px 32px #0004;animation:themeMenuIn 220ms ease-out}
-.themeMenu>p{margin:6px 12px 10px;color:var(--paper);font-size:8px;letter-spacing:.16em;text-shadow:0 1px 4px #000}
-.themeMenu button{position:relative;width:100%;min-height:66px;display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;border:1px solid transparent;border-radius:2px;background:transparent;color:#edf0f4;text-shadow:0 1px 6px #000;transition:background 180ms,border-color 180ms}
-.themeMenu button:hover,.themeMenu button:focus-visible{background:#ffffff0b;outline:none;border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
-.themeMenu button[aria-checked="true"]{background:#ffffff08}
-.themeMenu button[aria-checked="true"]::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:1px;background:var(--accent);box-shadow:0 0 8px var(--accent)}
-.themeIdentity{display:grid;gap:5px;flex:1}.themeMenu strong{font:19px/1.2 "Gildra Kurale",Georgia,serif;font-weight:400}.themeMenu small{font-size:10px;color:#d0d5dc}
-.themeMenu button>svg{color:var(--accent);flex:none}
-.themeSymbol{display:grid;place-items:center;flex:none;color:#b7e4ff;transition:transform 240ms,filter 240ms}
-.themeSymbol[data-symbol="illidan"]{color:#d0a8ff}.themeSymbol[data-symbol="garek"]{color:#b3ecb4}.themeSymbol[data-symbol="varok"]{color:#ffb68d}
-.themeMenu button:hover .themeSymbol,.themeMenu button:focus-visible .themeSymbol{transform:translateY(-1px);filter:drop-shadow(0 0 6px currentColor)}
-@keyframes themeMenuIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-/* Fel sparks fall, restless souls drift, and embers rise. */
-.page[data-home-theme="illidan"] .snow span{border-radius:1px;background:var(--particle);height:calc(var(--snow-size)*1.6);box-shadow:0 0 8px var(--particle)}
-.page[data-home-theme="garek"] .snow span{border-radius:50%;background:radial-gradient(ellipse at 50% 25%,var(--particle),transparent 75%);width:calc(var(--snow-size)*2);height:calc(var(--snow-size)*5);filter:blur(.5px)}
-.page[data-home-theme="varok"] .snow span{border-radius:50% 50% 25% 25%;background:var(--particle);height:calc(var(--snow-size)*1.4);box-shadow:0 0 7px #ff742a;animation-duration:calc(var(--snow-duration)*.65)}
-
-
-
-@media(max-width:480px){.header{padding-inline:18px;column-gap:12px}.headerRight{gap:6px}.brand{gap:7px}.brandMark{width:36px;height:42px}.brandWordmark>span{font-size:22px}.brandWordmark small{font-size:5px}.language{gap:8px}.themeTrigger{width:44px;padding:8px}.themeTrigger>span,.themeTrigger>svg:last-child{display:none}.themeMenu{position:fixed;top:78px;right:18px;width:min(284px,calc(100vw - 36px))}}
-@media(prefers-reduced-motion:reduce){.themeMenu{animation:none}.page .snow span{animation:none;transform:translate3d(0,var(--snow-rest),0);opacity:.25}}
+@media(max-width:480px){.header{padding-inline:18px;column-gap:12px}.headerRight{gap:6px}.brand{gap:7px}.brandMark{width:36px;height:42px}.brandWordmark>span{font-size:22px}.brandWordmark small{font-size:5px}.language{gap:8px}}
+@media(prefers-reduced-motion:reduce){.page .snow span{animation:none;transform:translate3d(0,var(--snow-rest),0);opacity:.25}}
 
 @media(prefers-reduced-motion:reduce){.openButton::before{display:none}.openButton::after{transition:none}.openButton:hover,.openButton:focus-visible,.openButton:active,.openButton:hover svg:last-child,.openButton:focus-visible svg:last-child{transform:none}}
 
@@ -177,7 +111,7 @@
 .epigraph[data-writing="writing"] .inkLetter{animation:epigraphInk var(--ink-duration,180ms) var(--ink-delay) linear both}
 .epigraph[data-cinematic="true"][data-writing="writing"] .inkLetter,.epigraph[data-cinematic="true"][data-writing="writing"] .quoteAuthor>span{animation-play-state:paused}
 .epigraph[data-writing="writing"] .quoteAuthor>span{animation:epigraphSignatureRule 250ms var(--signature-delay) ease-out both;transform-origin:left}
-@keyframes epigraphInk{from{opacity:0;clip-path:inset(-30% 110% -30% -25%)}to{opacity:1;clip-path:inset(-30% -25% -30% -25%)}}
+@keyframes epigraphInk{from{opacity:0}to{opacity:1}}
 @keyframes epigraphSignatureRule{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
 @media(prefers-reduced-motion:reduce){.epigraph[data-writing] .inkLetter,.epigraph[data-writing] .quoteAuthor>span{animation:none;opacity:1;clip-path:none;transform:none}}
 [data-scene-started="false"] .epigraph .inkLetter,[data-scene-started="false"] .epigraph .quoteAuthor>span{opacity:0}
@@ -185,14 +119,14 @@
 /* Opening the book on the page: the epigraph and hint step aside while the
    cover keeps its box, so the closing book lands exactly where it started. */
 .page{min-height:calc(100svh - var(--atlas-sticky-top));display:flex;flex-direction:column}
-.appearance{position:relative;z-index:10;display:flex;justify-content:flex-end;width:100%;max-width:1380px;margin-inline:auto;padding:12px clamp(24px,5vw,70px) 0}
+
 .hero{position:relative;flex:1;width:100%;min-height:calc(100svh - var(--atlas-sticky-top) - 120px)}
 .footer{width:calc(100% - 48px);font-size:12px;letter-spacing:normal}
 .footer p{margin:0;max-width:72ch}
 .footer nav{display:flex;flex:none;gap:18px}
 .footer a{min-height:44px;display:inline-flex;align-items:center;color:inherit;text-decoration:underline;text-underline-offset:3px;letter-spacing:normal;font-size:12px}
-@media(max-width:760px){.appearance{padding-top:8px}.hero{min-height:0}.footer{width:auto}}
-@media(max-width:480px){.appearance .themeMenu{top:calc(var(--atlas-sticky-top) + 56px)}}
+@media(max-width:760px){.hero{min-height:0}.footer{width:auto}}
+
 .copy,.bookHint{transition:opacity 600ms ease 900ms,visibility 0s}
 .hero:is([data-book-state="opening"],[data-book-state="open"],[data-book-state="held"]) :is(.copy,.bookHint){opacity:0;visibility:hidden;transition:opacity 280ms ease,visibility 0s 280ms}
 .hero:not([data-book-state="closed"]) .cover{visibility:hidden}
@@ -201,3 +135,24 @@
 @media(prefers-reduced-motion:reduce){.copy,.bookHint{transition:none!important}.cover:hover .coverLight,.cover:focus-visible .coverLight{background-position:130% 0,0 0}}
 
 .srOnly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* The relic keeps its blue metal; the blank leather holds crisp live lettering. */
+.cover{aspect-ratio:3/4;width:min(100%,420px,calc((100svh - 240px - var(--wow-version-strip-height,0px))*.75))}
+.coverImage{aspect-ratio:3/4;object-fit:contain;filter:drop-shadow(-12px 20px 18px #0009)}
+/* Both the resting cover and its moving leaf use these proportional safe areas.
+   Keep the crest/divider above the crystal and lettering above the lower metal. */
+.coverTitle{top:11.5%;left:17%;right:15%;container-type:inline-size}
+.coverTitle .coverBrand{width:23%;height:auto}
+.coverTitle .coverBrand img{width:100%;height:auto}
+.coverTitle i{width:56%;margin-top:2cqw}
+.coverSubtitle{top:69%;left:17%;right:15%;container-type:inline-size}
+.coverSubtitle>span{font-size:11cqw;line-height:1.12}
+.coverTitle strong,.coverSubtitle>span{background:linear-gradient(180deg,var(--bright),var(--accent));background-clip:text;-webkit-background-clip:text}
+.coverLight{inset:30% 24% 28%;background:radial-gradient(ellipse,color-mix(in srgb,var(--accent) 18%,transparent),transparent 65%);mix-blend-mode:screen;pointer-events:none}
+@media(prefers-reduced-motion:no-preference){.coverLight{animation:frostBreath 6s ease-in-out infinite}}
+@keyframes frostBreath{0%,100%{opacity:.25}50%{opacity:.85}}
+
+@media(max-width:760px){.cover{width:min(70vw,280px)}.hero{padding-top:32px}}
+@media(prefers-reduced-transparency:reduce),(forced-colors:active){.coverLight{animation:none}}
+/* The held volume is portalled to body; its selected folio retains its material. */
+:global([data-book-artwork][src="/assets/wow/character-book/icecrown-folio.webp"]){filter:none}

@@ -42,6 +42,7 @@ func run() error {
 	var spellEffectsOnly bool
 	var iconsOnly bool
 	var questRewardsOnly bool
+	var achievementsOnly bool
 	var graphOnly bool
 	var statsOnly bool
 	flag.StringVar(&databaseURL, "database-url", "", "PostgreSQL connection string (defaults to DATABASE_URL)")
@@ -61,6 +62,7 @@ func run() error {
 	flag.BoolVar(&spellEffectsOnly, "spell-effects-only", false, "rebuild normalized DB2 spell effects only")
 	flag.BoolVar(&iconsOnly, "icons-only", false, "rebuild canonical entity icons only")
 	flag.BoolVar(&questRewardsOnly, "quest-rewards-only", false, "carry official quest rewards into the active DB2 build")
+	flag.BoolVar(&achievementsOnly, "achievements-only", false, "project candidate achievement criteria, rewards, categories and relationships")
 	flag.BoolVar(&graphOnly, "graph-only", false, "rebuild normalized entity relationships only")
 	flag.BoolVar(&statsOnly, "stats-only", false, "refresh cached catalog counts and coverage only")
 	flag.Parse()
@@ -98,7 +100,7 @@ func run() error {
 	indexer := catalogtaxonomy.NewForProduct(db, product)
 	var result catalogtaxonomy.Result
 	selectedModes := 0
-	for _, selected := range []bool{tooltipsOnly, itemsOnly, itemsTaxonomyOnly, variantsOnly, descriptionsOnly, taxonomyOnly, racesOnly, classesOnly, professionsOnly, talentsOnly, pvpTalentsOnly, spellEffectsOnly, iconsOnly, questRewardsOnly, graphOnly, statsOnly} {
+	for _, selected := range []bool{tooltipsOnly, itemsOnly, itemsTaxonomyOnly, variantsOnly, descriptionsOnly, taxonomyOnly, racesOnly, classesOnly, professionsOnly, talentsOnly, pvpTalentsOnly, spellEffectsOnly, iconsOnly, questRewardsOnly, achievementsOnly, graphOnly, statsOnly} {
 		if selected {
 			selectedModes++
 		}
@@ -110,6 +112,8 @@ func run() error {
 		if err := catalog.NewService(db).RefreshReadModels(ctx, &productID); err != nil {
 			return err
 		}
+	} else if achievementsOnly {
+		result, err = indexer.RebuildAchievements(ctx)
 	} else if tooltipsOnly {
 		result, err = indexer.RebuildTooltipsForProduct(ctx, productID)
 	} else if itemsOnly {

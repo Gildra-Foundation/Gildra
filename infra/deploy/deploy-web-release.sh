@@ -103,14 +103,37 @@ reload_nginx() {
   docker exec "$nginx_container" nginx -s reload >/dev/null 2>&1
 }
 
-smoke_checks() {
-  for path in $smoke_paths; do
-    curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 20 \
-      --resolve gildra.net:443:127.0.0.1 "https://gildra.net$path" >/dev/null ||
-      { printf 'deploy-web: smoke check failed: %s\n' "$path" >&2; return 1; }
+smoke_path() {
+  curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 20 \
+    --resolve wowarcana.com:443:127.0.0.1 "https://wowarcana.com$1" >/dev/null ||
+    { printf 'deploy-web: smoke check failed: %s\n' "$1" >&2; return 1; }
+}
+
+wait_smoke_batch() {
+  failed=0
+  # Reap every request, including after a failure, before rollback can start.
+  for pid in $1; do
+    wait "$pid" || failed=1
   done
+  return "$failed"
+}
+
+smoke_checks() {
+  pids=''
+  count=0
+  for path in $smoke_paths; do
+    smoke_path "$path" &
+    pids="$pids $!"
+    count=$((count + 1))
+    if [ "$count" -eq 4 ]; then
+      wait_smoke_batch "$pids" || return 1
+      pids=''
+      count=0
+    fi
+  done
+  wait_smoke_batch "$pids" || return 1
   curl --fail --silent --show-error --insecure --retry 6 --retry-delay 5 --max-time 15 \
-    --resolve api.gildra.net:443:127.0.0.1 https://api.gildra.net/readyz >/dev/null ||
+    --resolve api.wowarcana.com:443:127.0.0.1 https://api.wowarcana.com/readyz >/dev/null ||
     { printf 'deploy-web: smoke check failed: api readyz\n' >&2; return 1; }
 }
 
@@ -145,6 +168,8 @@ restore_previous_web() {
 on_exit() {
   status=$?
   trap - EXIT HUP INT TERM
+  # A signal may interrupt wait: finish outstanding probes before rollback.
+  wait_smoke_batch "${pids:-}" || true
   if [ "$status" -ne 0 ] && [ "$rollback_armed" = true ]; then
     if ! restore_previous_web; then
       printf 'deploy-web: CRITICAL: automatic rollback failed\n' >&2

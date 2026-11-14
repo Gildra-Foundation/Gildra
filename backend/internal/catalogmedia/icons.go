@@ -20,7 +20,7 @@ import (
 
 const officialIconOrigin = "https://render.worldofwarcraft.com/eu/icons/56/"
 const wagoCASCOrigin = "https://wago.tools/api/casc/"
-const wagoCASCUserAgent = "GildraCatalogMedia/1.0 (+https://gildra.net)"
+const wagoCASCUserAgent = "GildraCatalogMedia/1.0 (+https://wowarcana.com)"
 
 // zamimgIconOrigin is a filename-addressed WoW icon mirror. It is used only
 // after both the official render endpoint and the build-pinned CASC fallback
@@ -40,6 +40,7 @@ type IconFailure struct {
 }
 
 type IconSeedResult struct {
+	PlannedIcons           []string      `json:"plannedIcons,omitempty"`
 	Eligible               int64         `json:"eligible"`
 	IconsCached            int64         `json:"iconsCached"`
 	Entities               int64         `json:"entitiesLinked"`
@@ -49,15 +50,25 @@ type IconSeedResult struct {
 	UnpinnedFallbackCached int64         `json:"unpinnedFallbackCached"`
 	NameFallbackCached     int64         `json:"nameFallbackCached"`
 	FailureSample          []IconFailure `json:"failureSample,omitempty"`
+	// inserted counts linked rows that are new observations rather than
+	// renewed ones.
+	inserted int64
 }
 
 // IconSeedOptions can constrain a repair to a confirmed expansion cohort.
 // MissingOnly prevents a repair job from re-downloading already usable media.
 type IconSeedOptions struct {
 	Product     string
+	BuildID     int64 // zero selects the active published build, never an unpublished newer import
 	Expansion   string
 	Limit       int
 	MissingOnly bool
+	EntityIDs   []uuid.UUID
+	PlanOnly    bool
+	// renewal marks a whole-catalog refresh batch: every listed record is
+	// re-linked, identical bytes renew the record's existing observation, and
+	// the caller rebuilds the read models once per run.
+	renewal bool
 }
 
 type iconCandidate struct {
@@ -113,10 +124,11 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 			SELECT candidate.id,candidate.version
 			FROM game_builds candidate
 			WHERE candidate.product_id=product.id
+			  AND (($2::bigint=0 AND candidate.is_active) OR candidate.id=$2)
 			ORDER BY candidate.build_number DESC,candidate.id DESC
 			LIMIT 1
 		) build ON true
-		WHERE product.slug=$1`, product).Scan(&productID, &buildID, &buildVersion); err != nil {
+		WHERE product.slug=$1`, product, options.BuildID).Scan(&productID, &buildID, &buildVersion); err != nil {
 		return IconSeedResult{}, fmt.Errorf("find current %s build: %w", product, err)
 	}
 
@@ -140,6 +152,9 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				icon.file_data_id,icon.entity_type,icon.external_id,icon.build_id
 			FROM catalog_entity_icons icon
 			WHERE icon.build_id=$2 AND $4=''
+              AND (COALESCE(cardinality($6::uuid[]),0)=0 OR EXISTS (
+                SELECT 1 FROM game_entities selected WHERE selected.id=ANY($6)
+                  AND selected.product_id=$1 AND selected.entity_type=icon.entity_type AND selected.external_id=icon.external_id))
 			UNION ALL
 			SELECT regexp_replace(regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g'),'_+','_','g') AS icon_name,
 				icon.file_data_id,icon.entity_type,icon.external_id,icon.build_id
@@ -152,7 +167,12 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 		), verified_primary_media AS (
 			SELECT DISTINCT media.entity_id,media.build_id
 			FROM catalog_entity_media media
-			WHERE media.build_id=$2 AND media.media_kind='icon' AND media.is_primary
+			JOIN catalog_source_policies policy ON policy.source=media.source AND policy.review_status='reviewed'
+			JOIN catalog_source_artifacts artifact ON artifact.id=media.source_artifact_id
+			  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+			WHERE (policy.retention_days IS NULL OR media.cached_at>now()-make_interval(days=>policy.retention_days))
+			  AND (COALESCE(cardinality($6::uuid[]),0)=0 OR media.entity_id=ANY($6))
+			  AND media.build_id=$2 AND media.media_kind='icon' AND media.is_primary
 			  AND media.cache_status='cached' AND media.cached_content_hash IS NOT NULL
 			  AND media.cached_byte_size IS NOT NULL
 		), targets AS (
@@ -168,6 +188,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 			LEFT JOIN verified_primary_media primary_media ON primary_media.entity_id=entity.id
 				AND primary_media.build_id=icon.build_id
 			WHERE entity.deleted_at IS NULL
+			  AND (COALESCE(cardinality($6::uuid[]),0)=0 OR entity.id=ANY($6))
 			  AND lower(icon.icon_name) ~ '^[a-z0-9_]+$'
 			GROUP BY icon.icon_name
 		), cached AS (
@@ -214,7 +235,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 		SELECT icon_name,file_data_id,count(*) OVER()
 		FROM resolved_candidates
 		ORDER BY icon_name
-		LIMIT $3`, productID, buildID, limit, expansion, options.MissingOnly)
+		LIMIT $3`, productID, buildID, limit, expansion, options.MissingOnly, options.EntityIDs)
 		if err != nil {
 			return fmt.Errorf("list uncached official icons: %w", err)
 		}
@@ -234,6 +255,12 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 	})
 	if err != nil {
 		return result, err
+	}
+	if options.PlanOnly {
+		for _, candidate := range candidates {
+			result.PlannedIcons = append(result.PlannedIcons, candidate.Name)
+		}
+		return result, nil
 	}
 	if len(candidates) == 0 {
 		return result, nil
@@ -271,6 +298,10 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 		return result, nil
 	}
 
+	return c.linkOfficialIcons(ctx, productID, buildID, expansion, limit, options, icons, result)
+}
+
+func (c *Cache) linkOfficialIcons(ctx context.Context, productID int16, buildID int64, expansion string, limit int, options IconSeedOptions, icons []cachedIcon, result IconSeedResult) (IconSeedResult, error) {
 	sort.Slice(icons, func(i, j int) bool {
 		if icons[i].Source == icons[j].Source {
 			return icons[i].Name < icons[j].Name
@@ -282,10 +313,52 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 		iconsBySource[icon.Source] = append(iconsBySource[icon.Source], icon)
 	}
 
-	err = pgx.BeginFunc(ctx, c.db, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, c.db, func(tx pgx.Tx) error {
+		// A renewal that downloads the bytes an artifact already proves renews
+		// that artifact; only changed or new icons need a new snapshot.
+		proven := make(map[[2]string]uuid.UUID)
+		if options.renewal {
+			sources := make([]string, 0, len(icons))
+			keys := make([]string, 0, len(icons))
+			hashes := make([][]byte, 0, len(icons))
+			for _, icon := range icons {
+				sources = append(sources, icon.Source)
+				keys = append(keys, icon.ArtifactKey)
+				hashes = append(hashes, icon.SourceHash)
+			}
+			rows, err := tx.Query(ctx, `
+				SELECT DISTINCT ON (seed.source,seed.artifact_key) seed.source,seed.artifact_key,artifact.snapshot_id
+				FROM unnest($2::text[],$3::text[],$4::bytea[]) AS seed(source,artifact_key,content_hash)
+				JOIN catalog_source_artifacts artifact ON artifact.source=seed.source AND artifact.build_id=$1
+					AND artifact.artifact_key=seed.artifact_key AND artifact.locale=''
+					AND artifact.content_hash=seed.content_hash AND artifact.status='ready'
+				ORDER BY seed.source,seed.artifact_key,artifact.fetched_at DESC,artifact.id`,
+				buildID, sources, keys, hashes)
+			if err != nil {
+				return fmt.Errorf("find proven icon artifacts: %w", err)
+			}
+			for rows.Next() {
+				var source, key string
+				var snapshotID uuid.UUID
+				if err := rows.Scan(&source, &key, &snapshotID); err != nil {
+					rows.Close()
+					return fmt.Errorf("scan proven icon artifact: %w", err)
+				}
+				proven[[2]string{source, key}] = snapshotID
+			}
+			rows.Close()
+			if err := rows.Err(); err != nil {
+				return fmt.Errorf("read proven icon artifacts: %w", err)
+			}
+		}
 		snapshotIDs := make(map[string]uuid.UUID, len(iconsBySource))
 		for _, source := range []string{"blizzard_api", "wago_tools", "zamimg"} {
-			sourceIcons := iconsBySource[source]
+			sourceIcons := make([]cachedIcon, 0, len(iconsBySource[source]))
+			for _, icon := range iconsBySource[source] {
+				if _, ok := proven[[2]string{icon.Source, icon.ArtifactKey}]; !ok {
+					sourceIcons = append(sourceIcons, icon)
+				}
+			}
 			if len(sourceIcons) == 0 {
 				continue
 			}
@@ -346,8 +419,12 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 			} else if icon.Source == "zamimg" {
 				projection = "zamimg_icon_large"
 			}
+			snapshotID, ok := proven[[2]string{icon.Source, icon.ArtifactKey}]
+			if !ok {
+				snapshotID = snapshotIDs[icon.Source]
+			}
 			seedRows = append(seedRows, []any{
-				icon.Name, icon.FileDataID, snapshotIDs[icon.Source], icon.Source,
+				icon.Name, icon.FileDataID, snapshotID, icon.Source,
 				icon.AssetKey, projection, icon.ArtifactKey, icon.SourceURL,
 				icon.SourceSize, icon.SourceHash, icon.CacheKey, icon.CachedMIMEType,
 				icon.CachedSize, icon.CachedHash, icon.Width, icon.Height,
@@ -390,7 +467,8 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 			return fmt.Errorf("record official icon provenance batch: %w", err)
 		}
 
-		command, err := tx.Exec(ctx, `
+		var written, inserted int64
+		err := tx.QueryRow(ctx, `
 			WITH scoped_entities AS MATERIALIZED (
 				-- Start from the published, confirmed cohort for an expansion repair.
 				-- The former seed-first shape normalized every icon row before the
@@ -401,6 +479,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				JOIN game_entity_versions published ON published.id=entity.published_version_id
 					AND published.build_id=$2
 				WHERE entity.product_id=$1 AND entity.deleted_at IS NULL AND $4=''
+				  AND (COALESCE(cardinality($6::uuid[]),0)=0 OR entity.id=ANY($6))
 				UNION ALL
 				SELECT entity.id AS entity_id,entity.entity_type,entity.external_id
 				FROM catalog_entity_expansions cohort
@@ -411,20 +490,41 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 					AND published.build_id=cohort.build_id
 				WHERE cohort.product_id=$1 AND cohort.build_id=$2 AND cohort.classification='confirmed'
 					AND expansion.expansion_key=$4 AND entity.deleted_at IS NULL
+				  AND (COALESCE(cardinality($6::uuid[]),0)=0 OR entity.id=ANY($6))
 			), targets AS (
 				SELECT DISTINCT ON (scoped.entity_id)
 					scoped.entity_id,scoped.entity_type,scoped.external_id,
 					seed.icon_name,COALESCE(icon.file_data_id,seed.file_data_id) AS file_data_id,
 					seed.source,seed.asset_key,seed.source_url,seed.source_content_hash,
 					seed.cache_key,seed.cached_mime_type,seed.cached_byte_size,
-					seed.cached_content_hash,seed.width,seed.height,seed.conversion,seed.artifact_id
+					seed.cached_content_hash,seed.width,seed.height,seed.conversion,
+					COALESCE(observed.source_artifact_id,seed.artifact_id) AS artifact_id
 				FROM scoped_entities scoped
 				JOIN catalog_entity_icons icon ON icon.build_id=$2
 					AND icon.entity_type=scoped.entity_type AND icon.external_id=scoped.external_id
 				JOIN official_icon_seed seed ON regexp_replace(regexp_replace(lower(icon.icon_name),'[[:space:]]+','','g'),'_+','_','g')=seed.icon_name
-				WHERE NOT $5::boolean OR NOT EXISTS (
+				LEFT JOIN LATERAL (
+					-- A renewal that fetched the bytes a record already points to
+					-- renews that observation instead of adding a second row for
+					-- the same content under another artifact.
+					SELECT existing.source_artifact_id
+					FROM catalog_entity_media existing
+					JOIN catalog_source_artifacts proof ON proof.id=existing.source_artifact_id
+					WHERE $7::boolean AND existing.build_id=$2
+					  AND existing.entity_type=scoped.entity_type AND existing.external_id=scoped.external_id
+					  AND existing.media_kind='icon' AND existing.asset_key=seed.asset_key
+					  AND existing.locale='' AND existing.source=seed.source
+					  AND proof.status='ready' AND proof.content_hash=seed.source_content_hash
+					ORDER BY existing.cached_at DESC NULLS LAST,existing.id
+					LIMIT 1
+				) observed ON true
+				WHERE $7::boolean OR NOT $5::boolean OR NOT EXISTS (
 					SELECT 1 FROM catalog_entity_media existing
-					WHERE existing.build_id=icon.build_id
+					JOIN catalog_source_policies policy ON policy.source=existing.source AND policy.review_status='reviewed'
+					JOIN catalog_source_artifacts artifact ON artifact.id=existing.source_artifact_id
+					  AND artifact.status='ready' AND artifact.content_hash IS NOT NULL AND artifact.byte_size IS NOT NULL
+					WHERE (policy.retention_days IS NULL OR existing.cached_at>now()-make_interval(days=>policy.retention_days))
+					  AND existing.build_id=icon.build_id
 					  AND existing.entity_type=scoped.entity_type AND existing.external_id=scoped.external_id
 					  AND existing.media_kind='icon' AND existing.is_primary
 					  AND existing.cache_status='cached'
@@ -433,7 +533,7 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 				ORDER BY scoped.entity_id,icon.file_data_id NULLS LAST
 			), prepared AS (
 				SELECT gen_random_uuid() AS id,target.* FROM targets target
-			)
+			), written AS (
 			INSERT INTO catalog_entity_media(
 				id,build_id,entity_id,entity_type,external_id,media_kind,asset_key,locale,
 				source,source_url,cached_url,file_data_id,content_hash,mime_type,width,height,
@@ -450,12 +550,37 @@ func (c *Cache) SeedOfficialIcons(ctx context.Context, options IconSeedOptions) 
 					'discovery','build_proven_icon_mapping','conversion',prepared.conversion
 				),prepared.cache_key,prepared.cached_content_hash,prepared.cached_byte_size,now(),''
 			FROM prepared
-			ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO NOTHING`,
-			productID, buildID, c.publicBase, expansion, options.MissingOnly)
+			ON CONFLICT ON CONSTRAINT catalog_entity_media_observation_unique DO UPDATE SET
+                cache_status='cached',cache_key=EXCLUDED.cache_key,
+                cached_content_hash=EXCLUDED.cached_content_hash,cached_byte_size=EXCLUDED.cached_byte_size,
+                cached_at=now(),cache_error='',mime_type=EXCLUDED.mime_type,
+                cached_url=$3 || '/v1/media/' || catalog_entity_media.id::text,updated_at=now()
+            -- Repair and renewal may refresh the same observation. Ordinary
+            -- seeding must only link new entities, without rewriting their
+            -- fresh siblings.
+            WHERE $5::boolean OR $7::boolean
+			RETURNING (xmax=0) AS inserted
+			)
+			SELECT count(*),count(*) FILTER (WHERE inserted) FROM written`,
+			productID, buildID, c.publicBase, expansion, options.MissingOnly, options.EntityIDs, options.renewal).Scan(&written, &inserted)
 		if err != nil {
 			return fmt.Errorf("link official icon batch to entities: %w", err)
 		}
-		result.Entities += command.RowsAffected()
+		result.Entities += written
+		result.inserted += inserted
+		if options.renewal {
+			// Every artifact with these bytes was just re-proved by the same
+			// download, including the ones older observations point to.
+			if _, err := tx.Exec(ctx, `
+				UPDATE catalog_source_artifacts artifact SET fetched_at=now()
+				FROM official_icon_seed seed
+				WHERE artifact.source=seed.source AND artifact.build_id=$1
+				  AND artifact.artifact_key=seed.artifact_key AND artifact.locale=''
+				  AND artifact.content_hash=seed.source_content_hash AND artifact.status='ready'`, buildID); err != nil {
+				return fmt.Errorf("renew proven icon artifacts: %w", err)
+			}
+			return nil
+		}
 		if _, err := tx.Exec(ctx, `SELECT refresh_catalog_published_source_dependencies()`); err != nil {
 			return fmt.Errorf("refresh published source dependencies: %w", err)
 		}
@@ -545,6 +670,10 @@ func (c *Cache) fetchOfficialIcons(
 func (c *Cache) fetchIcon(ctx context.Context, candidate iconCandidate, product, buildVersion string) (cachedIcon, error) {
 	sourceURL, err := officialIconURL(candidate.Name)
 	if err != nil {
+		// A proven FileDataID can resolve names that are not safe render paths.
+		if candidate.FileDataID != nil && *candidate.FileDataID > 0 {
+			return c.fetchWagoCASCIcon(ctx, candidate, product, buildVersion)
+		}
 		return cachedIcon{}, err
 	}
 	key, mimeType, size, hash, err := c.fetch(ctx, sourceURL)
@@ -688,7 +817,7 @@ func (c *Cache) downloadWagoCASC(ctx context.Context, sourceURL string) ([]byte,
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("download BLP2: HTTP %d", response.StatusCode)
+		return nil, fmt.Errorf("download BLP2: %w", sourceStatusError{parsed.Hostname(), response.StatusCode})
 	}
 	raw, err := io.ReadAll(io.LimitReader(response.Body, maxAssetBytes+1))
 	if err != nil {
@@ -731,7 +860,7 @@ func iconURL(origin, name string) (string, error) {
 		return "", errors.New("icon name is required")
 	}
 	for _, character := range name {
-		if (character < 'a' || character > 'z') && (character < '0' || character > '9') && character != '_' {
+		if (character < 'a' || character > 'z') && (character < '0' || character > '9') && character != '_' && character != '-' && character != '&' && character != '\'' && character != '.' {
 			return "", errors.New("icon name contains unsupported characters")
 		}
 	}

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
 
-const base = process.env.BASE_URL || "https://gildra.net";
+const base = process.env.BASE_URL || "https://wowarcana.com";
 const label = process.env.PERF_LABEL || "baseline";
 const directory = path.resolve(import.meta.dirname, "../.artifacts/site-performance", label);
 fs.mkdirSync(directory, { recursive:true });

@@ -25,7 +25,7 @@ const ru = {
   unavailable: "Blizzard не ответил вовремя. Попробуйте через минуту.",
   retry: "Повторить",
   back: "К рейтингу игроков",
-  metaTitle: (name: string, realm: string) => `${name} — ${realm} — Gildra`,
+  metaTitle: (name: string, realm: string) => `${name} — ${realm} — WowArcana`,
   metaDescription: (name: string, spec: string, ilvl: number, rating?: number) => `${name}: ${spec}, уровень предметов ${ilvl}${rating ? `, рейтинг M+ ${rating}` : ""}. Экипировка, таланты, лучшие ключи и рейды.`,
 };
 
@@ -55,7 +55,7 @@ const en: Copy = {
   unavailable: "Blizzard did not answer in time. Try again in a minute.",
   retry: "Try again",
   back: "Player leaderboard",
-  metaTitle: (name: string, realm: string) => `${name} — ${realm} — Gildra`,
+  metaTitle: (name: string, realm: string) => `${name} — ${realm} — WowArcana`,
   metaDescription: (name: string, spec: string, ilvl: number, rating?: number) => `${name}: ${spec}, item level ${ilvl}${rating ? `, M+ rating ${rating}` : ""}. Equipment, talents, best keys and raids.`,
 };
 
