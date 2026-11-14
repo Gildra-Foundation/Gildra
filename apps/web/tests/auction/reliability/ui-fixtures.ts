@@ -57,3 +57,19 @@ export function completedJob(locale: string, result: ReturnType<typeof searchRes
 }
 export const unavailableDescriptions = /Описание особых эффектов этого варианта недоступно|Special effect description.*unavailable|Special effects.*unavailable/i;
 export const unavailableWeapon = /Параметры оружия этого варианта недоступны|Weapon (?:properties|details|stats).*unavailable/i;
+
+export function enhancedAssemblyResult(status: "ready" | "pending" | "no_affordable_configuration" | "unavailable") {
+  const base = assemblyResult({complete:true});
+  const purchase = item(780003, "WRIST");
+  return {...base, purchases:[], bestConfirmed:null, spentCopper:0, remainingCopper:base.budgetCopper,
+    comparison:comparison(1000, false), enhancementOptimization:{status,complete:status!=="pending",searchLimited:true,
+      reasons:status==="unavailable"?["price_unknown_or_insufficient_quantity"]:[],catalogRevision:"synthetic",
+      recommendations:status!=="ready"?[]:[{label:"measured",purchases:[purchase],optionIds:["synthetic-wrist"],
+        consumableNames:{950001:"Synthetic ruby",950002:"Synthetic armor enchant"},
+        enhancementNames:{gems:{950001:"Synthetic ruby"},enchants:{850001:"Synthetic armor enchant"}},
+        comparison:comparison(1200),simulation:{dps:1200,dpsError:.1,confidence:95,iterations:1000,engine:base.engine},
+        configuration:{key:"synthetic-full",status:"priced",fullyEnhanced:true,itemsCopper:10000,totalCopper:10500,
+          sourceUpdatedAt:market.updatedAt, slots:[{slotType:"WRIST",variantKey:purchase.variantKey,enchantId:850001,gemIds:[950001,950001]}],
+          consumables:[{itemId:950001,kind:"gem",quantity:2,quotedCopper:200,levels:[{unitCopper:100,quantity:2}],missingQuantity:0},
+            {itemId:950002,kind:"enchant",quantity:1,quotedCopper:300,levels:[{unitCopper:300,quantity:1}],missingQuantity:0}]}}]}};
+}

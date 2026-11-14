@@ -1,0 +1,93 @@
+{
+  "scope": "Actual Runner orchestration extracted from HEAD/current; synthetic planner boundary with 20ms/200ms fixed delays. Not native/live throughput.",
+  "summary": [
+    {
+      "version": "before",
+      "medianMs": 269.92112,
+      "rangeMs": [
+        222.476901,
+        281.952278
+      ]
+    },
+    {
+      "version": "after",
+      "medianMs": 27.98264599999993,
+      "rangeMs": [
+        22.82232699999986,
+        71.85167799999999
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "version": "before",
+      "repeat": 0,
+      "firstResultMs": 281.952278,
+      "totalMs": 281.98304499999995,
+      "comparisons": 2
+    },
+    {
+      "version": "before",
+      "repeat": 1,
+      "firstResultMs": 229.74812399999996,
+      "totalMs": 229.759452,
+      "comparisons": 2
+    },
+    {
+      "version": "before",
+      "repeat": 2,
+      "firstResultMs": 269.92112,
+      "totalMs": 269.93255999999974,
+      "comparisons": 2
+    },
+    {
+      "version": "before",
+      "repeat": 3,
+      "firstResultMs": 222.476901,
+      "totalMs": 222.48737700000038,
+      "comparisons": 2
+    },
+    {
+      "version": "before",
+      "repeat": 4,
+      "firstResultMs": 276.80072500000006,
+      "totalMs": 276.81324399999994,
+      "comparisons": 2
+    },
+    {
+      "version": "after",
+      "repeat": 0,
+      "firstResultMs": 27.98264599999993,
+      "totalMs": 228.4161210000002,
+      "comparisons": 2
+    },
+    {
+      "version": "after",
+      "repeat": 1,
+      "firstResultMs": 22.82232699999986,
+      "totalMs": 223.21926600000006,
+      "comparisons": 2
+    },
+    {
+      "version": "after",
+      "repeat": 2,
+      "firstResultMs": 48.063804000000346,
+      "totalMs": 248.46637200000032,
+      "comparisons": 2
+    },
+    {
+      "version": "after",
+      "repeat": 3,
+      "firstResultMs": 22.98807399999987,
+      "totalMs": 227.4820219999997,
+      "comparisons": 2
+    },
+    {
+      "version": "after",
+      "repeat": 4,
+      "firstResultMs": 71.85167799999999,
+      "totalMs": 272.274218,
+      "comparisons": 2
+    }
+  ]
+}

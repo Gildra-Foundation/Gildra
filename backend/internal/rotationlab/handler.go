@@ -21,7 +21,7 @@ func NewHandler(api API) *Handler { return &Handler{api: api} }
 
 func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/wow/rotation/{spec}", h.getPreset)
-	mux.HandleFunc("POST /v1/wow/rotation/simulations", h.simulate)
+	mux.HandleFunc("POST /v1/wow/rotation/simulations", withWorkerTiming(h.simulate))
 }
 
 func (h *Handler) getPreset(w http.ResponseWriter, r *http.Request) {

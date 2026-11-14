@@ -1,5 +1,5 @@
 import { test, expect } from "./ui-support";
-import { aliasIds, unavailableDescriptions, unavailableWeapon, wrist } from "./ui-fixtures";
+import { searchResult, assemblyResult, enhancedAssemblyResult, completedJob, scope, aliasIds, unavailableDescriptions, unavailableWeapon, wrist } from "./ui-fixtures";
 
 const stale = /Цены и доступность.*(?:не подтверждены|обновить)|Prices and availability.*(?:unverified|not verified)|Refresh.*(?:prices|availability)/i;
 
@@ -304,3 +304,130 @@ test("audit fixes: purchased lot can be excluded while background discovery reti
   expect(auction.requests.at(-1)?.excludedOptionIds?.slice().sort()).toEqual(aliasIds.slice().sort());
   expect(auction.deletes).toContain("synthetic-job-3");
 });
+
+
+test("quality encounter partial polling recovery and finalist labels", async ({ auction, page }, info) => {
+  test.setTimeout(60000);
+  await auction.open();
+  await expect(auction.panel.locator("[data-auction-search-result]")).toHaveCount(0);
+  const duration = auction.panel.getByLabel(auction.t("Длительность, с", "Duration, seconds"), { exact: true });
+  await duration.fill("150");
+  const compare = auction.panel.getByRole("checkbox", { name: /5 (?:целей|targets).*60/ });
+  await compare.focus(); await expect(compare).toBeFocused(); await page.keyboard.press("Space"); await expect(compare).toBeChecked();
+  let accepted: { fightLengthSeconds?: number; targets?: number; compareScenarios?: Array<{scenario: "aoe" | "single-target" | "execute"; fightLengthSeconds: number; targets: number}> } = {}, posts = 0, polls = 0, finish = false;
+  const result = () => ({ ...searchResult(), fightLengthSeconds: accepted.fightLengthSeconds, targets: accepted.targets,
+    compareScenarios: accepted.compareScenarios, searchComplete: finish, pendingItems: finish ? 0 : 1 });
+  const job = () => ({ id:"quality-running-job", status:finish ? "completed" : "running", result:result(),
+    progress:{phase:"simulating",completed:1,total:2}, error:null, scope:scope(auction.language), searchId:searchResult().searchId });
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    const request = route.request(), url = new URL(request.url());
+    if (request.method() === "DELETE") { await route.fallback(); return; }
+    if (request.method() === "POST") {
+      const body = request.postDataJSON(); posts++;
+      if (body.action === "search") { accepted = body; await route.fulfill({status:202,json:job()}); return; }
+      const assembled = { ...assemblyResult({complete:true}), fightLengthSeconds:150, targets:1, compareScenarios:accepted.compareScenarios,
+        scenarioComparisons:[{encounter:{scenario:"aoe",fightLengthSeconds:60,targets:5},baseline:searchResult().baseline,
+          candidates:[{finalist:"measured",simulation:searchResult().baseline,comparison:assemblyResult().comparison},
+            {finalist:"confirmed",simulation:searchResult().baseline,comparison:assemblyResult().comparison}]}] };
+      await route.fulfill({status:202,json:completedJob(auction.language, assembled)}); return;
+    }
+    if (url.searchParams.has("id") || url.searchParams.has("clientRequestId")) { polls++; await route.fulfill({json:job()}); return; }
+    if (url.searchParams.has("searchId")) { await route.fulfill({json:{kind:"recovery",search:result(),assembly:null,excludedOptionIds:[],excludedVariantKeys:[],activeJob:job(),needsRefresh:true}}); return; }
+    await route.fallback();
+  });
+  await auction.search();
+  await expect.poll(() => polls).toBeGreaterThan(0);
+  expect(posts).toBe(1);
+  expect(accepted.fightLengthSeconds).toBe(150);
+  expect(accepted.compareScenarios).toEqual([{scenario:"aoe",fightLengthSeconds:60,targets:5}]);
+  await expect(auction.panel.getByRole("button", {name:auction.t("Отменить поиск", "Cancel search"), exact:true})).toBeVisible();
+  await page.reload({waitUntil:"networkidle"});
+  await expect(duration).toHaveValue("150"); await expect(compare).toBeChecked();
+  await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
+  expect(posts).toBe(1);
+  finish = true;
+  await expect(auction.panel.getByRole("button", { name: auction.t("Новый поиск", "New search"), exact:true })).toBeEnabled({timeout:15000});
+  await expect(auction.build).toBeEnabled({timeout:10000});
+  await auction.assemble();
+  await expect(auction.result).toContainText(auction.t("Лучший измеренный сет", "Measured best loadout"));
+  await expect(auction.result).toContainText(auction.t("Статистически подтверждённый лучший сет", "Statistically confirmed best loadout"));
+  await expect(auction.result).toContainText(auction.t("полная стоимость неизвестна", "full cost is unknown"));
+  await page.evaluate(() => document.fonts.ready);
+  await expect.poll(() => page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
+  const screenshot = info.outputPath("quality-encounters.png");
+  await page.screenshot({path:screenshot,fullPage:true});
+  await info.attach("quality-encounters", {path:screenshot,contentType:"image/png"});
+});
+
+test('gap empty results distinguish pending comparisons continuing search and completed absence', async ({auction,page}, info) => {
+  await auction.open();
+  let phase=0;
+  const result=()=>({ ...searchResult(), items: phase===0 ? [] : searchResult().items.filter(item=>item.evaluation==='not_upgrade'),
+    searchComplete:phase===2,pendingItems:phase===2?0:1,discoveryComplete:phase===2,
+    coverage:{...searchResult().coverage,discoveryComplete:phase===2} });
+  const job=()=>({...completedJob(auction.language,result()),status:phase===2?'completed':'running'});
+  await page.route('**/api/wow/auction-gear-plans**',async route=>{
+    const url=new URL(route.request().url());
+    if(route.request().method()==='POST'||url.searchParams.has('id')) {await route.fulfill({status:200,json:job()});return;}
+    await route.fallback();
+  });
+  await auction.search();
+  await expect(auction.panel).toContainText(/Пока недостаточно данных|Not enough comparison data/);
+  await expect(auction.panel).not.toContainText(/Проверка завершена|Search complete:/);
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({path:info.outputPath('insufficient-comparisons.png'),fullPage:true});
+  phase=1;
+  await expect(auction.panel).toContainText(/Поиск продолжается:|Search continues:/);
+  phase=2;
+  await expect(auction.panel).toContainText(/Проверка завершена: отдельных улучшений не найдено|Search complete: no single-item upgrades found/);
+  await page.screenshot({path:info.outputPath('completed-no-upgrades.png'),fullPage:true});
+});
+
+test('gap completed primary assembly continues until extra scenarios complete', async ({auction,page}) => {
+  await auction.open(); await auction.search();
+  let assemblies=0;
+  await page.route('**/api/wow/auction-gear-plans**',async route=>{
+    if(route.request().method()==='POST' && route.request().postDataJSON().action==='assemble') {
+      assemblies++;
+      const result={...assemblyResult({complete:true}),scenarioComparisonsComplete:assemblies>=2};
+      await route.fulfill({status:202,json:completedJob(auction.language,result)});return;
+    }
+    await route.fallback();
+  });
+  await auction.build.click();
+  await expect.poll(()=>assemblies,{timeout:10000}).toBe(2);
+  await expect(auction.build).toBeEnabled();
+});
+
+for (const state of ["ready", "pending", "no_affordable_configuration", "unavailable"] as const) {
+  test(`enhanced loadout ${state} keeps costs and slot assignments clear`, async ({auction,page},info) => {
+    await auction.open(); await auction.search();
+    await page.route("**/api/wow/auction-gear-plans**",async route=>{
+      if(route.request().method()==="POST" && route.request().postDataJSON().action==="assemble") {
+        await route.fulfill({status:202,json:{...completedJob(auction.language,assemblyResult({complete:true})),result:enhancedAssemblyResult(state)}});return;
+      }
+      await route.fallback();
+    });
+    await auction.build.click();
+    await expect(auction.result).toBeVisible();
+    if(state==="ready") {
+      const enhanced=auction.result.locator("[data-auction-enhanced-result]");
+      await expect(enhanced).toContainText(auction.t("Полная стоимость","Total cost"));
+      const slot=enhanced.locator("[data-auction-enhanced-slot]");
+      await expect(slot).toContainText("Synthetic ruby · Synthetic ruby");
+      await expect(slot).toContainText("Synthetic armor enchant");
+      await expect(enhanced).not.toContainText(/950001|950002|850001/);
+      await expect(auction.result).not.toContainText(/Подтверждённого улучшения нет|No confirmed upgrade|Текущая экипировка уже лучше|Your current gear is already better/);
+    } else if(state==="pending") {
+      await expect(auction.result).toContainText(/Подбираем камни и чары|Selecting gems and enchants/);
+      await expect(auction.result).not.toContainText(/Подтверждённого улучшения нет|No confirmed upgrade|Текущая экипировка уже лучше|Your current gear is already better/);
+    } else if(state==="no_affordable_configuration") {
+      await expect(auction.result).toContainText(/Среди проверенных вариантов|among checked configurations/);
+    } else {
+      await expect(auction.result).toContainText(/полная стоимость неизвестна|full cost is unknown/);
+    }
+    await page.evaluate(()=>document.fonts.ready);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await auction.result.screenshot({path:info.outputPath(`enhanced-${state}.png`)});
+  });
+}

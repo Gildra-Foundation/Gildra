@@ -38,6 +38,15 @@ assert.equal(prepareGearChange({ slotType: "TRINKET_1", candidate: trinket, vari
 
 const wrist = candidate({ itemId: 2005, slotType: "WRIST", inventoryType: 9 });
 assert.deepEqual(prepareGearChange({ slotType: "WRIST", candidate: wrist, variantKey: "mythic", customization: { enchantId: 8888, gemIds: [250001] }, equipment }).gemIds, [250001]);
+// IDs and slots come from the project's pinned native permanent_enchant table;
+// these assertions verify transport preservation, not pricing or applicability.
+for (const [slotType, inventoryType, enchantId, slot] of [["HEAD", 1, 7961, "head"], ["SHOULDER", 3, 7973, "shoulder"]]) {
+  const change = prepareGearChange({ slotType, candidate: candidate({ slotType, inventoryType }), variantKey: "mythic", customization: { enchantId }, equipment });
+  assert.equal(change.enchantId, enchantId, `${slotType} native enchant was lost or rejected`);
+  assert.equal(change.slot, slot);
+  assert.throws(() => prepareGearChange({ slotType, candidate: candidate({ slotType, inventoryType }), variantKey: "mythic", customization: { enchantId: -1 }, equipment }), /invalid_enchant_for_slot/);
+}
+assert.throws(() => prepareGearChange({ slotType: "TRINKET_1", candidate: trinket, variantKey: "mythic", customization: { enchantId: 7961 }, equipment }), /invalid_enchant_for_slot/);
 assert.throws(() => prepareGearChange({ slotType: "TRINKET_1", candidate: trinket, variantKey: "mythic", customization: { gemIds: [250001] }, equipment }), /invalid_gems_for_slot/);
 assert.equal(prepareGearChange({ slotType: "CHEST", candidate: candidate({ itemId: 1001 }), variantKey: "mythic", equipment }).itemId, 1001);
 assert.throws(() => prepareGearChange({ slotType: "CHEST", candidate: candidate({ eligible: false }), variantKey: "mythic", equipment }), /candidate_slot_mismatch/);

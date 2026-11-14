@@ -1,8 +1,10 @@
 import "server-only";
+import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "./auctionGearDiagnostics";
 import { randomUUID } from "node:crypto";
 import type { AuctionPlanProgress } from "./auctionGearPlanner";
 import type { AuctionGearRunInput, AuctionGearRunResult, AuctionGearAssemblySelection } from "./auctionGearRunner";
 import { auctionMeasurementContract, auctionPersistenceEnabled, listAuctionStateHeaders, readAuctionState, removeAuctionState, writeAuctionState } from "./auctionGearPersistence";
+import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "./auctionGearScenarios";
 import { auctionGearSlots, parseAuctionGearSlots } from "./auctionGearSelection";
 export type AuctionGearJob = {
   id: string;
@@ -25,7 +27,7 @@ export type AuctionGearFormIntent = AuctionGearRunInput & {
 };
 export type AuctionGearActiveRecovery = { activeJob: AuctionGearJob | null; formIntent: AuctionGearFormIntent | null };
 export type AuctionGearTask = (signal: AbortSignal, progress: (p: AuctionPlanProgress) => void,
-  hooks: { searchCreated: (searchId: string) => void }) => Promise<AuctionGearRunResult>;
+  hooks: { searchCreated: (searchId: string) => void; publishResult: (result: AuctionGearRunResult) => void }) => Promise<AuctionGearRunResult>;
 type Job = AuctionGearJob & {
   owner: string;
   /** Private idempotency identity; never include these fields in view(). */
@@ -61,6 +63,12 @@ const jobs = state.__gildraAuctionJobs ??= new Map<string, Job>(),
 type StoredJob = Omit<Job, "task" | "controller" | "onSettled" | "lazy" | "recoverable" | "cancellationPending">;
 type JobMetadata = Omit<StoredJob, "result" | "progress" | "work"> & { hasWork: boolean };
 const lastPersisted = new WeakMap<Job, number>();
+const diagnostics = new WeakMap<Job, { queued: number; metrics: ReturnType<typeof createAuctionGearDiagnostics> }>();
+/** Internal diagnostics only; task includes upstream I/O and is NOT compute time. */
+export function getAuctionGearJobDiagnostics(owner: string, id: string) {
+  const job = jobs.get(id);
+  return job?.owner === owner ? diagnostics.get(job)?.metrics.snapshot() ?? null : null;
+}
 function nextRecency() { return state.__gildraAuctionJobRecency = (state.__gildraAuctionJobRecency ?? 0) + 1; }
 function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefined {
   if (!work) return;
@@ -71,7 +79,13 @@ function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefine
     if (typeof characterSlug !== "string" || !characterSlug || characterSlug.length > 180 ||
         !Number.isSafeInteger(budgetCopper) || budgetCopper < 0 || budgetCopper > 999_999_999_999 ||
         !["single-target", "aoe", "execute"].includes(scenario) || objective !== undefined && objective !== "value" && objective !== "dps" || !["en", "ru"].includes(locale)) throw new Error("invalid_plan_request");
-    return { action: "search", input: { characterSlug, budgetCopper, scenario, locale, ...(objective ? { objective } : {}),
+    const custom = work.input as AuctionGearRunInput & { fightLengthSeconds?: number; targets?: number };
+    const encounter = parseAuctionGearEncounter(custom);
+    const compareScenarios = parseAuctionGearCompareScenarios(work.input.compareScenarios);
+    return { action: "search", input: { characterSlug, budgetCopper, scenario, locale,
+      ...(work.input.compareScenarios !== undefined ? { compareScenarios } : {}),
+      ...(custom.fightLengthSeconds !== undefined ? { fightLengthSeconds: encounter.fightLengthSeconds } : {}),
+      ...(custom.targets !== undefined ? { targets: encounter.targets } : {}), ...(objective ? { objective } : {}),
       ...(selectedSlots !== undefined ? { selectedSlots: parseAuctionGearSlots(selectedSlots) } : {}) } };
   }
   if (typeof work.searchId !== "string" || !work.searchId || work.searchId.length > 100) throw new Error("invalid_plan_request");
@@ -220,19 +234,32 @@ async function drain() {
       const j = jobs.get(queue.shift()!);
       if (!j || j.status !== "queued") continue;
       j.status = "running";
+      const timing = diagnostics.get(j);
+      const taskStarted = performance.now();
+      timing?.metrics.duration("queue", taskStarted - timing.queued);
       try {
         persist(j);
         const signal = AbortSignal.any([j.controller.signal, AbortSignal.timeout(10 * 60_000)]);
         const result = await j.task!(signal, p => {
-          if (!signal.aborted) {
+          if (!signal.aborted && jobs.get(j.id) === j && j.status === "running") {
             j.progress = p;
             j.expires = Date.now() + 30 * 60_000;
             if (Date.now() - (lastPersisted.get(j) ?? 0) >= 30_000) persist(j);
           }
-        }, { searchCreated: searchId => {
+        }, { publishResult: result => {
+          signal.throwIfAborted();
+          if (jobs.get(j.id) !== j || j.status !== "running") return;
+          if (j.searchId && j.searchId !== result.searchId) throw new Error("invalid_plan_request");
+          j.searchId = result.searchId;
+          j.result = result;
+          j.resultMeasurementContract = auctionMeasurementContract;
+          j.expires = Date.now() + 30 * 60_000;
+          persist(j);
+        }, searchCreated: searchId => {
           signal.throwIfAborted(); j.searchId = searchId; persist(j);
         } });
         signal.throwIfAborted();
+        if (jobs.get(j.id) !== j || j.status !== "running") continue;
         j.result = result;
         j.resultMeasurementContract = auctionMeasurementContract;
         j.searchId = result.searchId;
@@ -240,6 +267,9 @@ async function drain() {
         j.expires = Date.now() + 30 * 60_000;
         persist(j);
       } catch (error) {
+        // Expired work must never recreate its deleted durable job record.
+        if (jobs.get(j.id) !== j) continue;
+        timing?.metrics.failure(j.controller.signal.aborted ? j.controller.signal.reason : error);
         j.status = j.controller.signal.aborted ? "cancelled" : "failed";
         // Only fixed internal identifiers reach clients, never upstream URLs or tokens.
         const message = error instanceof Error ? error.message : "";
@@ -247,6 +277,8 @@ async function drain() {
         j.expires = Date.now() + 30 * 60_000;
         try { persist(j); } catch { j.error = "auction_storage_unavailable"; }
       } finally {
+        timing?.metrics.duration("task", performance.now() - taskStarted);
+        if (timing) logAuctionGearDiagnostics(timing.metrics.snapshot(), "job");
         delete j.task;
         settle(j);
         j.expires = Date.now() + 30 * 60_000;
@@ -305,6 +337,7 @@ export function enqueueAuctionGearJob(owner: string, task: AuctionGearTask, opti
   retainJob(j, replaced);
   history[kind].push(Date.now());
   starts.set(owner, history);
+  diagnostics.set(j, { queued: performance.now(), metrics: createAuctionGearDiagnostics() });
   queue.push(j.id);
   const result = view(j);
   void drain();
@@ -401,6 +434,7 @@ export function resumeAuctionGearJob(owner: string, id: string, task: AuctionGea
   if (!j || j.owner !== owner || j.status !== "queued" || j.task || !hydrate(j) || !j.work) return false;
   if (queue.length >= 8) throw new Error("plan_queue_full");
   j.task = task; j.onSettled = options.onSettled;
+  diagnostics.set(j, { queued: performance.now(), metrics: createAuctionGearDiagnostics() });
   queue.push(j.id);
   void drain();
   return true;

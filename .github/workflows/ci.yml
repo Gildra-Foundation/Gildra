@@ -2,6 +2,11 @@ name: CI
 
 on:
   workflow_dispatch:
+    inputs:
+      recovery:
+        type: boolean
+        default: false
+        description: Verify PR4 rollback and refresh isolated light backup proof
   pull_request:
   push:
     branches: [master, "release/**"]
@@ -10,14 +15,47 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Image validation must never cancel an in-flight production backup.
+  group: ci-${{ github.ref }}-${{ inputs.recovery && 'recovery' || 'validation' }}
+  cancel-in-progress: ${{ !inputs.recovery }}
 
 jobs:
+  recovery:
+    if: github.event_name == 'workflow_dispatch' && inputs.recovery && github.ref == 'refs/heads/t3/auction-integration-deployment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    environment: production
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+      - name: Verify saved baseline and refresh light backup proof
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.OVH_SSH_KNOWN_HOSTS }}
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host *\n  ServerAliveInterval 30\n  ServerAliveCountMax 240\n' > ~/.ssh/config
+          ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra/pr4-recovery'
+          ssh "$OVH_USER@$OVH_HOST" 'sudo tee /opt/gildra/pr4-recovery/prepare.sh >/dev/null' < infra/deploy/prepare-pr4-recovery.sh
+          printf '%s' "$GHCR_TOKEN" | ssh "$OVH_USER@$OVH_HOST" 'sudo bash /opt/gildra/pr4-recovery/prepare.sh'
   # Build once, alongside tests. CD consumes these exact digests only after
   # the entire CI run succeeds; pull requests never publish images.
   images:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.recovery)
     permissions:
       contents: read
       packages: write

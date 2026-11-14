@@ -120,7 +120,9 @@ func ValidateInput(input SimulationInput) error {
 			seenModifiers[id] = true
 		}
 		for _, id := range change.GemIDs {
-			if id <= 0 || id > 10_000_000 {
+			// Native gem_id is positional: zero skips this socket without
+			// shifting subsequent gems (pinned SimC enchant::initialize_gem).
+			if id < 0 || id > 10_000_000 {
 				return errors.New("invalid gem id")
 			}
 		}

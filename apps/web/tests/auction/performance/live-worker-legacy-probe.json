@@ -1,0 +1,61 @@
+{
+  "at": "2026-11-13T19:46:00.050Z",
+  "input": {
+    "spec": "fury-warrior",
+    "scenario": "single-target",
+    "fightLengthSeconds": 30,
+    "targets": 1,
+    "rules": [
+      "rampage",
+      "bloodthirst",
+      "raging-blow",
+      "execute",
+      "whirlwind"
+    ]
+  },
+  "status": 201,
+  "wallMs": 1168.139625,
+  "headers": {
+    "engine": "simulationcraft",
+    "serverTiming": null
+  },
+  "resultKeys": [
+    "id",
+    "status",
+    "engine",
+    "modelNotice",
+    "resourceLabel",
+    "scenario",
+    "fightLengthSeconds",
+    "targets",
+    "iterations",
+    "confidence",
+    "dps",
+    "dpsError",
+    "combatStats",
+    "dpsSeries",
+    "enrageUptime",
+    "rageEfficiency",
+    "castsPerMinute",
+    "baselineDelta",
+    "casts",
+    "abilities",
+    "recommendedSequence",
+    "rage",
+    "resources",
+    "procs",
+    "cooldowns",
+    "accuracy",
+    "findings",
+    "bossEvents",
+    "metrics"
+  ],
+  "measurement": {
+    "engine": "SimulationCraft 1210-01 · 18428cd",
+    "status": "completed",
+    "dps": 161812,
+    "dpsError": 462.957,
+    "iterations": 750,
+    "confidence": 95
+  }
+}

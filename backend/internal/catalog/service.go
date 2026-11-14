@@ -756,8 +756,8 @@ func listMatchSQL(params ListParams) (string, []any) {
 				OR fallback.name % $4
 			) END
 		  )`, []any{strings.TrimSpace(params.Product), strings.TrimSpace(params.Type),
-		normalizeLocale(params.Locale), strings.TrimSpace(params.Query),
-		strings.TrimSpace(params.Category), params.Expansion}
+			normalizeLocale(params.Locale), strings.TrimSpace(params.Query),
+			strings.TrimSpace(params.Category), params.Expansion}
 }
 
 func (s *Service) Get(ctx context.Context, id uuid.UUID, locale string) (Entity, error) {

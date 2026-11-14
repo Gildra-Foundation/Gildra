@@ -1,0 +1,25 @@
+{
+  "at": "2026-11-13T19:45:43.856Z",
+  "input": {
+    "spec": "fury-warrior",
+    "scenario": "single-target",
+    "fightLengthSeconds": 30,
+    "targets": 1,
+    "actionListMode": "native"
+  },
+  "status": 400,
+  "wallMs": 70.61723900000001,
+  "headers": {
+    "engine": null,
+    "serverTiming": null
+  },
+  "resultKeys": [
+    "code",
+    "message"
+  ],
+  "measurement": {},
+  "error": {
+    "code": "invalid_request",
+    "message": "invalid simulation request"
+  }
+}

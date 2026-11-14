@@ -87,9 +87,12 @@ async function connectedRealm(query: AuctionQuery) {
 }
 type Snapshot = { rows: AuctionListing[]; sourceUpdatedAt: string | null; fetchedAt: string };
 let marketRequests = 0;
-async function snapshot(query: AuctionQuery, connectedId: number | null): Promise<Snapshot> {
+async function snapshot(query: AuctionQuery, connectedId: number | null, refresh = false): Promise<Snapshot> {
   // Large snapshots have their own four-entry bound, including requests in flight.
   const key = `market:${query.region}:${connectedId ?? "commodities"}`;
+  // Refresh procurement quotes while retaining global in-flight deduplication.
+  const existing = cache.get(key);
+  if (refresh && existing && !existing.pending) existing.expires = 0;
   if (!cache.has(key)) {
     const markets = [...cache].filter(([id]) => id.startsWith("market:"));
     if (markets.length >= 4) {
@@ -303,4 +306,33 @@ export async function commodityPrices(region: AuctionRegion, itemIds: readonly n
     if (item) prices[id] = { min: item.minPrice, median: item.medianPrice, quantity: item.quantity, ladder: compactLadder(item.ladder, ladderLimit) as [number, number][] };
   }
   return { prices, sourceUpdatedAt: market.sourceUpdatedAt };
+}
+
+/** Procurement endpoint: original exact price levels, never compactLadder's median tail.
+ * Freshness must be checked against sourceUpdatedAt before budget certification. */
+function awaitCommoditySnapshot<T>(pending: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return pending;
+  return new Promise<T>((resolve, reject) => {
+    const cleanup = () => signal.removeEventListener("abort", aborted);
+    const aborted = () => { cleanup(); reject(signal.reason); };
+    signal.addEventListener("abort", aborted, { once: true });
+    // The bounded, deduplicated upstream request may still serve other waiters.
+    // Keep both handlers attached so late failures are always consumed.
+    pending.then(value => { cleanup(); resolve(value); }, error => { cleanup(); reject(error); });
+    if (signal.aborted) aborted();
+  });
+}
+export async function exactCommodityPrices(region: AuctionRegion, itemIds: readonly number[], options: { refresh?: boolean; signal?: AbortSignal } = {}) {
+  options.signal?.throwIfAborted();
+  // This is a bounded local projection of one region snapshot, not one HTTP request per ID.
+  if (itemIds.length > 512 || itemIds.some(id => !Number.isSafeInteger(id) || id <= 0)) throw new Error("invalid_commodity_items");
+  const market = await awaitCommoditySnapshot(snapshot({ region, lang: "en", realm: "", market: "commodities", q: "", sort: "price", page: 1 }, null, options.refresh), options.signal);
+  options.signal?.throwIfAborted();
+  const summary = summaryOf(market);
+  const prices: Record<string, { ladder: [number, number][] }> = {};
+  for (const id of new Set(itemIds)) {
+    const item = summary.get(id);
+    if (item) prices[id] = { ladder: item.ladder.map(([price, quantity]) => [price, quantity]) };
+  }
+  return { prices, sourceUpdatedAt: market.sourceUpdatedAt, fetchedAt: market.fetchedAt };
 }

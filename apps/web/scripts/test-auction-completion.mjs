@@ -14,7 +14,8 @@ mkdirSync(path.dirname(output), { recursive: true }); mkdirSync(output);
 const flags = ["--experimental-transform-types", "--no-warnings", "--import", "./tests/auction/resolve.mjs"];
 const focused = readdirSync(path.join(web, "tests/auction/completion")).filter(name => name.endsWith(".test.mjs")).sort();
 const scripts = ["gear-candidates", "gear-simulation", "auction-gear", "auction-services", "auction-variants", "auction-discovery",
-  "auction-gear-equipment", "auction-gear-review-fixes", "auction-gear-search-store", "auction-gear-exhaustive", "auction-gear-recommendations", "auction-gear-api"];
+  "auction-gear-equipment", "auction-gear-review-fixes", "auction-gear-search-store", "auction-gear-exhaustive", "auction-gear-recommendations", "auction-gear-api",
+  "auction-gear-enhancements", "auction-enhancement-catalog", "auction-gear-quality"];
 const suites = [
   ...focused.map(file => [`completion-${file.replace(/\.test\.mjs$/, "")}`, [`tests/auction/completion/${file}`]]),
   ...scripts.map(name => [name, [`scripts/test-${name}.mjs`]]),

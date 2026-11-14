@@ -624,6 +624,9 @@ export interface components {
             iconUrl?: string;
             quality?: number;
             itemLevel?: number;
+            requiredLevel?: number;
+            /** @description Source inventory slot code or label; absent when unknown. */
+            inventoryType?: string;
             /** Format: int64 */
             buildId?: number;
             /** Format: date-time */
@@ -1000,6 +1003,8 @@ export interface operations {
     listLibraryDatasets: {
         parameters: {
             query?: {
+                /** @description Optional product-scoped expansion registry key. Zero membership does not establish an official denominator. */
+                expansion?: string;
                 product?: string;
                 locale?: "en_US" | "ru_RU";
             };
@@ -1020,6 +1025,7 @@ export interface operations {
                     };
                 };
             };
+            400: components["responses"]["BadRequest"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["CatalogPublicationUnavailable"];
@@ -1056,6 +1062,8 @@ export interface operations {
     listGameEntities: {
         parameters: {
             query?: {
+                /** @description Optional product-scoped expansion registry key; membership must match the published build. Omit for the legacy unscoped catalog. */
+                expansion?: string;
                 product?: string;
                 type?: string;
                 locale?: "en_US" | "ru_RU";
@@ -1089,6 +1097,10 @@ export interface operations {
     listGameEntitySummaries: {
         parameters: {
             query?: {
+                /** @description Requires dataset or type. Dataset default is current (items use confirmed expansion then item level; other types use descending game ID). Search queries retain relevance order. Legacy UUID cursors retain ID order. Unknown levels sort below known levels descending and before them ascending; names use C collation. Omit on the heterogeneous legacy feed for ID order. */
+                sort?: "current" | "item_level_desc" | "item_level_asc" | "required_level_desc" | "required_level_asc" | "name_asc" | "name_desc" | "id";
+                /** @description Optional product-scoped expansion registry key; membership must match the published build. Omit for the legacy unscoped catalog. */
+                expansion?: string;
                 product?: string;
                 type?: string;
                 /** @description Public library dataset slug. The server resolves its entity type and membership filters from the dataset registry. */
@@ -1199,6 +1211,8 @@ export interface operations {
     getGameEntity: {
         parameters: {
             query?: {
+                /** @description Optional product-scoped expansion registry key; membership must match the published build. Omit for the legacy unscoped catalog. */
+                expansion?: string;
                 locale?: "en_US" | "ru_RU";
                 /** @description Optional public library dataset scope. Returns 404 when the entity is not a member. */
                 dataset?: string;
@@ -1220,6 +1234,7 @@ export interface operations {
                     "application/json": components["schemas"]["GameEntity"];
                 };
             };
+            400: components["responses"]["BadRequest"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["CatalogPublicationUnavailable"];

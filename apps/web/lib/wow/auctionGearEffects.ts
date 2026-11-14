@@ -8,7 +8,8 @@ export function auctionSelectionEffectKey(options: AuctionGearOption[]) {
     const variant = option.candidate.variants.find(v => v.key === option.variantKey);
     if (!variant) throw new Error("simulation_variant_not_found");
     return [option.candidate.slotType, option.candidate.itemId, [...variant.bonusIds].sort((a, b) => a - b),
-      variant.contextId ?? 0, [...(variant.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value)];
+      variant.contextId ?? 0, [...(variant.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value),
+      ...(option.customization ? [{ enchantId: option.customization.enchantId ?? 0, gemIds: option.customization.gemIds ?? [] }] : [])];
   }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))))).digest("hex");
 }
 

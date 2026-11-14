@@ -50,7 +50,9 @@ const simcSlotByBattleNet: Record<string, string> = {
   TRINKET_2: "trinket2", MAIN_HAND: "main_hand", OFF_HAND: "off_hand", TABARD: "tabard",
 };
 
-const enchantableSlots = new Set(["BACK", "CHEST", "WRIST", "LEGS", "FEET", "FINGER_1", "FINGER_2", "MAIN_HAND", "OFF_HAND"]);
+// Slot-level transport guard, not an enchant compatibility proof. The pinned
+// native data includes Midnight helm and shoulder enchants (inventory masks 2/8).
+const enchantableSlots = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "LEGS", "FEET", "FINGER_1", "FINGER_2", "MAIN_HAND", "OFF_HAND"]);
 const socketableSlots = new Set(["HEAD", "NECK", "WRIST", "WAIST", "FINGER_1", "FINGER_2"]);
 
 function integerId(value: unknown) {
@@ -96,8 +98,11 @@ export function prepareGearChange(input: {
   else if (input.candidate.constraints.limitCategoryId) throw new Error("equipment_constraints_unverified");
   const enchantId = input.customization?.enchantId;
   const gemIds = input.customization?.gemIds ?? [];
+  const exactSockets = variant.resolution?.enhancements?.status === "verified" ? variant.resolution.enhancements.socketColors : undefined;
   if (enchantId !== undefined && (!integerId(enchantId) || !enchantableSlots.has(slotType))) throw new Error("invalid_enchant_for_slot");
-  if (gemIds.length > 3 || gemIds.some((id) => !integerId(id)) || (gemIds.length > 0 && !socketableSlots.has(slotType))) throw new Error("invalid_gems_for_slot");
+  if (gemIds.length > 3 || gemIds.some((id, index) => exactSockets
+    ? (id !== 0 && (!integerId(id) || !exactSockets[index]))
+    : !integerId(id)) || (gemIds.length > 0 && !exactSockets && !socketableSlots.has(slotType))) throw new Error("invalid_gems_for_slot");
   return {
     slot: simcSlot,
     itemId: input.candidate.itemId,

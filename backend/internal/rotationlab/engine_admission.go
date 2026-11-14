@@ -14,6 +14,8 @@ const (
 // but at most eight requests wait and each wait ends within five seconds (or
 // its caller's earlier deadline). No background worker goroutines are needed.
 func (e *SimCEngine) acquire(ctx context.Context) error {
+	started := time.Now()
+	defer recordWorkerQueue(ctx, started)
 	if err := ctx.Err(); err != nil {
 		return err
 	}

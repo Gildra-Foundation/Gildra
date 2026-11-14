@@ -175,7 +175,7 @@ func (e *SimCEngine) run(ctx context.Context, input SimulationInput) (simcReport
 	var stdout, stderr bytes.Buffer
 	command.Stdout = &limitedBuffer{buffer: &stdout, remaining: maxSimCOutputBytes}
 	command.Stderr = &limitedBuffer{buffer: &stderr, remaining: maxSimCOutputBytes}
-	if err := command.Run(); err != nil {
+	if err := runTimedNative(runCtx, command.Run); err != nil {
 		if errors.Is(runCtx.Err(), context.DeadlineExceeded) {
 			return simcReport{}, errors.New("SimulationCraft timed out")
 		}

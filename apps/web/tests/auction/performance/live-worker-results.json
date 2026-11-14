@@ -1,0 +1,136 @@
+{
+  "generatedAt": "2026-11-13T19:46:52.083Z",
+  "endpoint": "http://127.0.0.1:58082/v1/wow/rotation/simulations",
+  "input": {
+    "spec": "fury-warrior",
+    "scenario": "single-target",
+    "fightLengthSeconds": 30,
+    "targets": 1,
+    "rules": [
+      "rampage",
+      "bloodthirst",
+      "raging-blow",
+      "execute",
+      "whirlwind"
+    ]
+  },
+  "method": "Existing deployed worker; bundled public Fury profile; legacy custom APL; no user/account data. Up to five planned paired repeats, two requests each, alternating order, 500ms spacing; stopped after the first concurrency=2 batch failed. No server cache flushing, restarts, configuration changes or deployment. No before/after code measurement. No client result cache. Native queue/compute timings unavailable when Server-Timing is absent.",
+  "precision": {
+    "engine": "SimulationCraft 1210-01 · 18428cd",
+    "iterations": 750,
+    "confidence": 95
+  },
+  "stopped": true,
+  "measurements": [
+    {
+      "repeat": 1,
+      "concurrency": 1,
+      "totalMs": 2095.1147379999998,
+      "firstCompletionMs": 1223.05062,
+      "requests": [
+        {
+          "index": 0,
+          "status": 201,
+          "wallMs": 1222.832966,
+          "completedAfterMs": 1223.05062,
+          "serverTiming": null,
+          "engineHeader": "simulationcraft",
+          "engine": "SimulationCraft 1210-01 · 18428cd",
+          "iterations": 750,
+          "confidence": 95,
+          "dps": 161812,
+          "dpsError": 462.957,
+          "dpsMeanPresent": false,
+          "valid": true
+        },
+        {
+          "index": 1,
+          "status": 201,
+          "wallMs": 871.8188679999998,
+          "completedAfterMs": 2094.914765,
+          "serverTiming": null,
+          "engineHeader": "simulationcraft",
+          "engine": "SimulationCraft 1210-01 · 18428cd",
+          "iterations": 750,
+          "confidence": 95,
+          "dps": 161812,
+          "dpsError": 462.957,
+          "dpsMeanPresent": false,
+          "valid": true
+        }
+      ]
+    },
+    {
+      "repeat": 1,
+      "concurrency": 2,
+      "totalMs": 947.1533650000001,
+      "firstCompletionMs": 16.960827000000336,
+      "requests": [
+        {
+          "index": 0,
+          "status": 201,
+          "wallMs": 947.0862509999997,
+          "completedAfterMs": 947.096458,
+          "serverTiming": null,
+          "engineHeader": "simulationcraft",
+          "engine": "SimulationCraft 1210-01 · 18428cd",
+          "iterations": 750,
+          "confidence": 95,
+          "dps": 161812,
+          "dpsError": 462.957,
+          "dpsMeanPresent": false,
+          "valid": true
+        },
+        {
+          "index": 1,
+          "status": 503,
+          "wallMs": 15.457198000000062,
+          "completedAfterMs": 16.960827000000336,
+          "serverTiming": null,
+          "engineHeader": null,
+          "dpsMeanPresent": false,
+          "valid": false,
+          "errorCode": "simulation_unavailable"
+        }
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "concurrency": 1,
+      "attemptedBatches": 1,
+      "completedBatches": 1,
+      "failedRequests": 0,
+      "completedBatchTotalMs": {
+        "count": 1,
+        "samples": [
+          2095.1147379999998
+        ],
+        "insufficientForSummary": true
+      },
+      "completedBatchFirstResultMs": {
+        "count": 1,
+        "samples": [
+          1223.05062
+        ],
+        "insufficientForSummary": true
+      }
+    },
+    {
+      "concurrency": 2,
+      "attemptedBatches": 1,
+      "completedBatches": 0,
+      "failedRequests": 1,
+      "completedBatchTotalMs": {
+        "count": 0,
+        "samples": [],
+        "insufficientForSummary": true
+      },
+      "completedBatchFirstResultMs": {
+        "count": 0,
+        "samples": [],
+        "insufficientForSummary": true
+      }
+    }
+  ]
+}

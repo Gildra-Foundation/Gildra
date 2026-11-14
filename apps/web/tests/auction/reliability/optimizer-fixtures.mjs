@@ -1,3 +1,6 @@
+import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../../lib/wow/auctionGearDiagnostics.ts";
+import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "../../../lib/wow/auctionGearScenarios.ts";
+import { evaluateAuctionGearScenarios } from "../../../lib/wow/auctionGearScenarioExecution.ts";
 import { auctionGearVariantSelectionKey } from "../../../lib/wow/auctionGearExclusions.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -44,7 +47,7 @@ const executable = source => stripTypeScriptTypes(source, { mode: "strip" })
 export async function growingMarketRunner() {
   const discovery = new vm.Script(executable(readProduct("lib/wow/auctionGearDiscovery.ts")) +
     "\n;({createAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryCoverage,auctionGearDiscoveryOptions})")
-    .runInNewContext({ Map, Set, Object, Number, JSON, auctionVariantKey, supportedAuctionModifiers });
+    .runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Map, Set, Object, Number, JSON, auctionVariantKey, supportedAuctionModifiers });
   const offers = slots.map((_, index) => ({ auctionId: 1000 + index, itemId: 2000 + index, quantity: 1,
     buyoutCopper: 1, contextId: 0, bonusIds: [], modifiers: [] }));
   const snapshot = values => ({ id: createHash("sha256").update(JSON.stringify(values)).digest("hex"), region: "eu",
@@ -82,7 +85,7 @@ export async function growingMarketRunner() {
   const entry = { id: "synthetic-runner-entry", owner: "synthetic-owner", context,
     searchCheckpoint: searched.checkpoint, latestSearchResult: searched.result, busy: false };
   const runner = new vm.Script(executable(readProduct("lib/wow/auctionGearRunner.ts")) +
-    "\n;({verifyAuctionGearSearch,assembleAuctionGearSearch})").runInNewContext({ createHash, Date, Map, Set, Object,
+    "\n;({verifyAuctionGearSearch,assembleAuctionGearSearch})").runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, createHash, Date, Map, Set, Object,
     Number, JSON, AbortSignal, process, auctionGearVariantSelectionKey, ...planner, ...discovery, auctionGearProfileFingerprint, touchAuctionGearSearch: () => {},
     // This domain fixture uses a virtual entry; real disk checkpoints have separate process tests.
     saveAuctionGearSearch: () => {}, scheduleAuctionGearSearchSave: () => {}, flushAuctionGearSearch: async () => {},

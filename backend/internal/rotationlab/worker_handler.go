@@ -20,7 +20,7 @@ func (h *WorkerHandler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /healthz", h.health)
 	h.RegisterGearVariants(mux)
 	mux.HandleFunc("GET /v1/wow/rotation/{slug}", h.preset)
-	mux.HandleFunc("POST /v1/wow/rotation/simulations", h.simulate)
+	mux.HandleFunc("POST /v1/wow/rotation/simulations", withWorkerTiming(h.simulate))
 }
 
 func (h *WorkerHandler) preset(w http.ResponseWriter, r *http.Request) {
@@ -75,5 +75,5 @@ func (h *WorkerHandler) simulate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkerHandler) RegisterGearVariants(mux *http.ServeMux) {
-	mux.HandleFunc("POST /v1/wow/gear/variants", h.resolveVariants)
+	mux.HandleFunc("POST /v1/wow/gear/variants", withWorkerTiming(h.resolveVariants))
 }

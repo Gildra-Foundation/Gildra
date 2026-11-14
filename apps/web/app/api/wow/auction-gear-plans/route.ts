@@ -9,6 +9,7 @@ import { resumeOwnedAuctionGearWork } from "@/lib/wow/auctionGearWork";
 import { recoverAuctionGearSearch } from "@/lib/wow/auctionGearRecovery";
 import { auctionGearSlots, parseAuctionGearSlots } from "@/lib/wow/auctionGearSelection";
 import { auctionGearSelectionBodyLimit, decodeAuctionGearSelectionTransport } from "@/lib/wow/auctionGearSelectionTransport";
+import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "@/lib/wow/auctionGearScenarios";
 import type { GearSimulationScenario } from "@/lib/wow/gearSimulation";
 export const dynamic = "force-dynamic";
 function reply(body: unknown, status = 200) {
@@ -202,12 +203,12 @@ async function postPlan(request: Request) {
         try { saveAuctionGearSearch(entry); }
         catch (error) { entry.excludedOptionIds = previous; entry.excludedVariantKeys = previousVariants; throw error; }
       } : undefined;
-      const job = enqueueAuctionGearJob(user.id, async (signal, progress) => {
+      const job = enqueueAuctionGearJob(user.id, async (signal, progress, hooks) => {
         entry.busy = true;
         try {
           await verifyAuctionGearSearch(entry, user.token, signal);
-          return action === "resume" ? await continueAuctionGearSearch(entry, signal, progress, user.token)
-            : await assembleAuctionGearSearch(entry, selection, signal, progress, user.token);
+          return action === "resume" ? await continueAuctionGearSearch(entry, signal, progress, user.token, hooks.publishResult)
+            : await assembleAuctionGearSearch(entry, selection, signal, progress, user.token, hooks.publishResult);
         } finally { entry.busy = false; }
       }, { continuation: true, searchId: entry.id, scope: { characterSlug: entry.context.input.characterSlug, locale: entry.context.input.locale },
         onSettled: release, beforeAcceptance, work: action === "assemble" ? { action, searchId: entry.id, selection: selection as { excludedOptionIds: string[]; excludedVariantKeys?: string[] } | string[] | undefined }
@@ -219,7 +220,7 @@ async function postPlan(request: Request) {
       return queueFailure(user.id, code);
     }
   }
-  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "objective", "locale", "clientRequestId"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
+  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "fightLengthSeconds", "targets", "compareScenarios", "objective", "locale", "clientRequestId"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
   const {
     characterSlug,
     scenario = "single-target",
@@ -230,6 +231,9 @@ async function postPlan(request: Request) {
     error: "invalid_plan_request"
   }, 400);
   if (objective !== "value" && objective !== "dps") return reply({ error: "invalid_auction_objective" }, 400);
+  let encounter, compareScenarios;
+  try { encounter = parseAuctionGearEncounter(body); compareScenarios = parseAuctionGearCompareScenarios(body.compareScenarios); }
+  catch { return reply({ error: "invalid_plan_request" }, 400); }
   let budgetCopper: number;
   try {
     budgetCopper = goldToCopper(body.budgetGold);
@@ -242,7 +246,7 @@ async function postPlan(request: Request) {
   try { selectedSlots = parseAuctionGearSlots(body.selectedSlots ?? [...auctionGearSlots]); }
   catch { return reply({ error: "invalid_equipment_slots" }, 400); }
   const requestFingerprint = clientRequestId ? createHash("sha256").update(JSON.stringify({
-    characterSlug, locale, budgetCopper, selectedSlots, scenario, ...(objective === "value" ? { objective } : {}),
+    characterSlug, locale, budgetCopper, selectedSlots, scenario, ...(body.fightLengthSeconds !== undefined ? { fightLengthSeconds: encounter.fightLengthSeconds } : {}), ...(body.targets !== undefined ? { targets: encounter.targets } : {}), ...(body.compareScenarios !== undefined ? { compareScenarios } : {}), ...(objective === "value" ? { objective } : {}),
   })).digest("hex") : undefined;
   try {
     const input = {
@@ -250,13 +254,16 @@ async function postPlan(request: Request) {
       budgetCopper,
       selectedSlots,
       scenario: scenario as GearSimulationScenario,
+      ...(body.fightLengthSeconds !== undefined ? { fightLengthSeconds: encounter.fightLengthSeconds } : {}),
+      ...(body.targets !== undefined ? { targets: encounter.targets } : {}),
+      ...(body.compareScenarios !== undefined ? { compareScenarios } : {}),
       objective: objective as "value" | "dps",
       locale: locale as "ru" | "en"
     };
     request.signal.throwIfAborted();
     if (Date.now() > acceptBefore) throw new Error("plan_request_expired");
     const job = enqueueAuctionGearJob(user.id, (signal, progress, hooks) => startAuctionGearSearch(input,
-      user.id, user.token, signal, progress, hooks.searchCreated), { scope: { characterSlug, locale: locale as "ru" | "en" },
+      user.id, user.token, signal, progress, hooks.searchCreated, hooks.publishResult), { scope: { characterSlug, locale: locale as "ru" | "en" },
       work: { action: "search", input }, ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) });
     resumeOwnedAuctionGearWork(user.id, job.id, user.token);
     return reply(job, 202);

@@ -37,6 +37,7 @@ printf 'server {}\n' > "$deployment_directory/infra/nginx/prod.conf"
 # manifest it was pointed at.
 cat > "$deployment_directory/infra/backup/run-catalog-backup.sh" <<'FAKE_BACKUP'
 #!/bin/sh
+[ "${GILDRA_RESTORE_PROOF:-light}" = light ] || exit 8
 if [ "${TEST_BACKUP_SLEEP:-0}" -gt 0 ]; then sleep "$TEST_BACKUP_SLEEP"; fi
 printf 'env_api=%s manifest_api=%s\n' "${API_IMAGE:-unset}" \
   "$(sed -n 's/^API_IMAGE=//p' "$GILDRA_RELEASE_ENV_FILE")" >> "$TEST_STATE_DIR/backup-calls.log"

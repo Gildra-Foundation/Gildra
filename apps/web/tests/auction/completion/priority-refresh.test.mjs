@@ -10,7 +10,10 @@ test('new priority item is measured first after refresh despite an older resolve
  const initial=entities.map(row=>({...offer(1,row.externalId),itemId:row.externalId}));
  const h=await harness({entities,offers:initial}),run=await h.start();let result=run.result;
  for(let i=0;i<4;i++)result=await h.runner.continueAuctionGearSearch(run.entry,h.signal(),h.progress,'synthetic');
- assert.equal(result.items.length,132);assert.equal(result.pendingItems,98);
+ // Continuations deliberately bound discovery to four batches. This test
+ // needs an older pending pool, not the former twelve-batch page size.
+ assert(result.items.length > 0 && result.items.length < initial.length);
+ assert(result.pendingItems > 0 && result.pendingItems < result.items.length);
  const priorPending=new Set(result.items.filter(row=>row.evaluation==='pending').map(row=>row.itemId));
  entities.push(summary(90000,500));h.state.market=market([...initial,{...offer(1,900000),itemId:90000}]);
  await h.runner.verifyAuctionGearSearch(run.entry,'synthetic',h.signal(),false);
