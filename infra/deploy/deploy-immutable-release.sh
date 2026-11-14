@@ -216,6 +216,7 @@ ensure_recovery_backup() {
   # Run it in the background and print a line every minute, so the connection
   # that carries this output is never idle and the log shows progress.
   env -u WEB_IMAGE -u API_IMAGE -u SCRAPER_IMAGE -u ROTATION_WORKER_IMAGE \
+    GILDRA_RESTORE_PROOF=full \
     GILDRA_DEPLOYMENT_DIRECTORY="$deployment_directory" \
     GILDRA_ENV_FILE="$environment_file" \
     GILDRA_RELEASE_ENV_FILE="$current_manifest" \

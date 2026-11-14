@@ -20,3 +20,11 @@ Read-only Docker inspection confirms all four application containers healthy, wi
 5. Only after CI succeeds and the baseline/backup are verified, merge normally and let CI build immutable images. Verify the patched native worker image build, full release selection, exact deployed digests, readiness and an exact paid gem/enchant native request with concurrency one. Keep the saved previous images/manifest until the observation window passes.
 
 No production mutations, backup execution, manifest repairs, registry publication or deployment were performed in this CI-fix pass. The steps above require actual evidence before completion can be claimed.
+
+## Established CI identity follow-up
+
+Authenticated GitHub identity is Shpuntyara. PR #4 at 15cd8f5e had five successful CI validation jobs; image publication was skipped for the pull-request event. Public readyz returned `{"status":"ok"}` during this follow-up.
+
+A deployment gap was found and fixed: `ensure_recovery_backup` did not set `GILDRA_RESTORE_PROOF`, while the current backup wrapper defaults to `light`. The immutable deployment now explicitly requests `full`; its backup test double rejects any other mode, exercising both pre-upgrade and post-upgrade calls.
+
+Worker recovery remains unresolved. The deploy job's token has `packages: read`, so it cannot publish the preserved local worker. CI's image job already has `packages: write`; a scoped recovery path using that existing authority has not yet been implemented or executed. Do not merge on the strength of this backup fix alone. Preserve/export and verify the existing images and manifest, publish and verify the exact worker image digest, and establish a complete rollback manifest first. No production changes, secret retrieval, merge or deploy were performed in this follow-up.
