@@ -15,8 +15,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Image validation must never cancel an in-flight production backup.
+  group: ci-${{ github.ref }}-${{ inputs.recovery && 'recovery' || 'validation' }}
+  cancel-in-progress: ${{ !inputs.recovery }}
 
 jobs:
   recovery:
