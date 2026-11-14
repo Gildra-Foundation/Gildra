@@ -6,7 +6,7 @@ on:
       recovery:
         type: boolean
         default: false
-        description: Inspect existing PR4 rollback and backup evidence
+        description: Verify PR4 rollback and refresh isolated light backup proof
   pull_request:
   push:
     branches: [master, "release/**"]
@@ -29,12 +29,12 @@ jobs:
       cancel-in-progress: false
     permissions:
       contents: read
-      packages: write
+      packages: read
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           ref: ${{ github.sha }}
-      - name: Inspect saved baseline and backup evidence
+      - name: Verify saved baseline and refresh light backup proof
         env:
           SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.OVH_SSH_KNOWN_HOSTS }}
