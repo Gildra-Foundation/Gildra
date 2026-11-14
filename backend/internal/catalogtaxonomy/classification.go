@@ -333,19 +333,27 @@ func classify(ctx context.Context, tx pgx.Tx, categoryID int64, definition Defin
 				ON CONFLICT (version_id,category_id) DO NOTHING`, categoryID, classID)
 			break
 		}
+		// The talent side is resolved first: joined directly, the planner
+		// compared every spell with every matching talent and re-read the
+		// spell id from the talent payload for each pair (40 s per
+		// specialization on a full build).
 		command, err = tx.Exec(ctx, categoryInsertPrefix+`
+			WITH talent_spells AS MATERIALIZED (
+				SELECT DISTINCT (tv.payload #>> '{raidbots,spellId}')::bigint AS spell_id
+				FROM game_entities talent
+				JOIN game_entity_versions tv ON tv.id=talent.latest_version_id
+				CROSS JOIN LATERAL jsonb_array_elements(COALESCE(tv.payload #> '{raidbots,appearances}','[]')) appearance
+				WHERE talent.entity_type='talent' AND talent.deleted_at IS NULL
+				  AND ($2::bigint IS NULL OR EXISTS (
+					SELECT 1 FROM game_entities tree JOIN game_entity_versions treev ON treev.id=tree.latest_version_id
+					WHERE tree.entity_type='talent_tree' AND tree.external_id=(appearance->>'spec_id')::bigint
+					  AND (treev.payload #>> '{raidbots,classId}')::bigint=$2))
+				  AND ($3::bigint IS NULL OR (appearance->>'spec_id')::bigint=$3)
+			)
 			SELECT DISTINCT spell.latest_version_id, $1::bigint, 'gildra_classifier'
 			FROM game_entities spell
-			JOIN game_entities talent ON talent.entity_type='talent' AND talent.deleted_at IS NULL
-			JOIN game_entity_versions tv ON tv.id=talent.latest_version_id
-			CROSS JOIN LATERAL jsonb_array_elements(COALESCE(tv.payload #> '{raidbots,appearances}','[]')) appearance
+			JOIN talent_spells ON talent_spells.spell_id=spell.external_id
 			WHERE spell.entity_type='spell' AND spell.deleted_at IS NULL
-			  AND spell.external_id=(tv.payload #>> '{raidbots,spellId}')::bigint
-			  AND ($2::bigint IS NULL OR EXISTS (
-				SELECT 1 FROM game_entities tree JOIN game_entity_versions treev ON treev.id=tree.latest_version_id
-				WHERE tree.entity_type='talent_tree' AND tree.external_id=(appearance->>'spec_id')::bigint
-				  AND (treev.payload #>> '{raidbots,classId}')::bigint=$2))
-			  AND ($3::bigint IS NULL OR (appearance->>'spec_id')::bigint=$3)
 			ON CONFLICT (version_id, category_id) DO NOTHING`, categoryID, nullableIntAttribute(attributes, "class_id"), nullableIntAttribute(attributes, "spec_id"))
 	default:
 		field, _ := attributes["field"].(string)

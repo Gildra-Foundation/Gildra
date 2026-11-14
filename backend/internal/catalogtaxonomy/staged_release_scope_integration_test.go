@@ -4,9 +4,11 @@ import (
 	"context"
 	"math/rand/v2"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -87,9 +89,28 @@ func TestStagedReleaseBuildIsProjected(t *testing.T) {
 		return NewForProduct(pool, "wow"), pool.Close
 	}
 
+	// The scope a projection transaction resolves once must equal the one
+	// every statement used to resolve for itself.
+	cachedScope := func(i *Indexer, want []int64) {
+		t.Helper()
+		if err := i.projectionTransaction(ctx, func(tx pgx.Tx) error {
+			var cached, resolved []int64
+			if err := tx.QueryRow(ctx, `SELECT current_setting('`+BuildsSetting+`')::bigint[],ARRAY(`+projectionBuilds+` ORDER BY 1)`).Scan(&cached, &resolved); err != nil {
+				return err
+			}
+			if !slices.Equal(cached, resolved) || !slices.Equal(cached, want) {
+				t.Fatalf("projection scope: cached %v, resolved %v, want %v", cached, resolved, want)
+			}
+			return nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	// A run outside the pipeline projects the active build; it is published,
 	// so nothing may change, and the staged build is not its business.
 	manual, closeManual := indexer(nil)
+	cachedScope(manual, []int64{})
 	if _, err := manual.RebuildSpellEffects(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -100,6 +121,7 @@ func TestStagedReleaseBuildIsProjected(t *testing.T) {
 
 	// The stage of the staging release projects the staged build.
 	stage, closeStage := indexer(&release)
+	cachedScope(stage, []int64{staged})
 	if _, err := stage.RebuildSpellEffects(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -113,6 +135,7 @@ func TestStagedReleaseBuildIsProjected(t *testing.T) {
 	// Once the release has failed its stages select no build at all.
 	exec(`DELETE FROM catalog_spells WHERE version_id=$1`, candidate)
 	exec(`UPDATE catalog_releases SET status='failed',failed_at=now(),error_summary='fixture' WHERE id=$1`, release)
+	cachedScope(stage, []int64{})
 	if _, err := stage.RebuildSpellEffects(ctx); err != nil {
 		t.Fatal(err)
 	}

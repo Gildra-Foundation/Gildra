@@ -39,14 +39,39 @@ var projectionBuilds = `SELECT build.id FROM game_builds build
  AND NOT EXISTS (SELECT 1 FROM game_entities live JOIN game_entity_versions published ON published.id=live.published_version_id WHERE published.build_id=build.id)
  AND NOT EXISTS (SELECT 1 FROM catalog_releases release WHERE release.build_id=build.id AND release.published_at IS NOT NULL)`
 
+// BuildsSetting caches the projection builds for one transaction.
+// projectionTransaction resolves projectionBuilds once and stores the ids here;
+// every projection statement then reads the array instead of proving again
+// that the build is unpublished.
+const BuildsSetting = "gildra.projection_builds"
+
+// projectionScope is the array of projection build ids, evaluated once per
+// statement as an init plan. Inside projectionTransaction it is the cached
+// array; elsewhere (tests, ad-hoc transactions) it falls back to
+// projectionBuilds.
+//
+// The old form, build_id IN (projectionBuilds), let the planner place the
+// NOT EXISTS over every published version on the inner side of a nested loop,
+// so the scan of all versions of the build ran once per outer row. With a
+// full 12.1.5.70783 candidate that turned rebuild-projections into 14 hours.
+var projectionScope = `(SELECT CASE WHEN current_setting('` + BuildsSetting + `',true) ~ '^[{][0-9,]*[}]$'
+ THEN current_setting('` + BuildsSetting + `',true)::bigint[]
+ ELSE ARRAY(` + projectionBuilds + `) END)`
+
 func projectionSQL(query string) string {
-	query = strings.ReplaceAll(query, "game_entity_versions", `(SELECT candidate.* FROM game_entity_versions candidate WHERE candidate.build_id IN (`+projectionBuilds+`))`)
-	return strings.ReplaceAll(query, "{projection_builds}", projectionBuilds)
+	query = strings.ReplaceAll(query, "game_entity_versions", `(SELECT candidate.* FROM game_entity_versions candidate WHERE candidate.build_id=ANY(`+projectionScope+`::bigint[]))`)
+	return strings.ReplaceAll(query, "{projection_builds}", `SELECT unnest(`+projectionScope+`::bigint[])`)
 }
 
 func (i *Indexer) projectionTransaction(ctx context.Context, fn func(pgx.Tx) error) error {
 	return pgx.BeginFunc(ctx, i.db, func(tx pgx.Tx) error {
 		if _, err := tx.Exec(ctx, `SELECT set_config('gildra.projection_product',$1,true)`, i.product); err != nil {
+			return err
+		}
+		// Statements of a projection never publish a build, so the scope
+		// resolved at the start holds for the whole transaction.
+		if _, err := tx.Exec(ctx, `SELECT set_config('`+BuildsSetting+`',
+			COALESCE((SELECT array_agg(scope.id ORDER BY scope.id) FROM (`+projectionBuilds+`) scope),'{}'::bigint[])::text,true)`); err != nil {
 			return err
 		}
 		return fn(tx)
