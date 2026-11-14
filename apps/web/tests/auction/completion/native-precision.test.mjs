@@ -1,3 +1,4 @@
+import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../../lib/wow/auctionGearDiagnostics.ts";
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
@@ -18,9 +19,9 @@ const wires=process.env.GILDRA_NATIVE_PRECISION_REPORT
 const option={id:"1:WRIST:base",auctionId:1,quantity:1,costCopper:320000,variantKey:"base",candidate:{itemId:1001,name:"Synthetic boundary wrist",slotType:"WRIST",inventoryType:9,itemClassId:4,itemSubclassId:4,eligible:true,compatibility:{specId:72},constraints:{uniqueEquipped:false},variants:[{key:"base",itemLevel:197,bonusIds:[],contextId:0}]}};
 function simulator(response){
  const source=readFileSync(new URL("../../../lib/wow/auctionGearRunner.ts",import.meta.url),"utf8");
- const body=stripTypeScriptTypes(source.slice(source.indexOf("function createAuctionSimulator(")),{mode:"strip"});
+ const body=stripTypeScriptTypes(source.slice(source.indexOf("const runDiagnostics ="), source.indexOf("/** Private, in-process diagnostics")) + source.slice(source.indexOf("function createAuctionSimulator(")),{mode:"strip"});
  let calls=0;
- const create=new vm.Script(body+"\n;createAuctionSimulator").runInNewContext({
+ const create=new vm.Script(body+"\n;createAuctionSimulator").runInNewContext({ createAuctionGearDiagnostics,
   ...gear,auctionGearMechanicalKey,auctionGearMechanicalCache:createAuctionGearMechanicalCache(),auctionGearProfileFingerprint,assertFreshMarket,process,AbortSignal,Number,Error,JSON,
   fetch:async(_url,request)=>{calls++;const selection=JSON.parse(request.body).gearChanges?.length?1:0;
    return {ok:true,headers:{get:()=>"simulationcraft"},json:async()=>response(selection)};}

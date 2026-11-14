@@ -9,12 +9,20 @@
      {
        continue;
      }
-@@ -393,6 +393,38 @@
+@@ -393,6 +393,46 @@
      slotnode[ "name" ] = item.name_str;
      slotnode[ "encoded_item" ] = item.encoded_item();
      slotnode[ "ilevel" ] = item.item_level();
 +    // Gildra: expose resolved item metadata, without changing simulator mechanics.
-+    slotnode[ "gildra_metadata_version" ] = 1;
++    slotnode[ "gildra_metadata_version" ] = 2;
++    auto socket_colors = slotnode[ "socket_colors" ];
++    socket_colors.make_array();
++    for ( auto color : item.parsed.data.socket_color )
++      socket_colors.add() = color;
++    slotnode[ "socket_bonus_id" ] = item.parsed.data.id_socket_bonus;
++    slotnode[ "required_profession_id" ] = item.parsed.data.req_skill;
++    slotnode[ "required_profession_rank" ] = item.parsed.data.req_skill_level;
++    // These are the resolved fields, including already-applied item bonuses.
 +    slotnode[ "id" ] = item.parsed.data.id;
 +    slotnode[ "required_level" ] = item.parsed.data.req_level;
 +    slotnode[ "item_class" ] = item.parsed.data.item_class;

@@ -1,4 +1,5 @@
 import "server-only";
+import type { AuctionEnhancementStageState } from "./auctionGearEnhancementStage";
 import { randomUUID } from "node:crypto";
 import type { AuctionGearContext, AuctionGearRunMetadata } from "./auctionGearRunner";
 import { restoreAuctionGearContext, snapshotAuctionGearContext } from "./auctionGearRunner";
@@ -15,6 +16,9 @@ export type AuctionGearSearchEntry = {
   touchedAt: number;
   expiresAt: number;
   busy: boolean;
+  nextSearchPhase?: "discovery" | "simulation";
+  nextAssemblyPhase?: "discovery" | "simulation";
+  enhancementState?: AuctionEnhancementStageState;
   /** Persisted logical order preserves recency when wall-clock timestamps tie. */
   recency: number;
   searchCheckpoint?: AuctionGearSearchCheckpoint;
@@ -90,6 +94,8 @@ function storedEntry(entry: AuctionGearSearchEntry): StoredEntry {
   return {
     id: entry.id, owner: entry.owner, context: snapshotAuctionGearContext(entry.context),
     createdAt: entry.createdAt, touchedAt: entry.touchedAt, expiresAt: entry.expiresAt, busy: false, recency: entry.recency,
+    nextSearchPhase: entry.nextSearchPhase, nextAssemblyPhase: entry.nextAssemblyPhase,
+    enhancementState: entry.enhancementState,
     knownOptionIds: entry.knownOptionIds, searchCheckpoint: entry.searchCheckpoint,
     assemblyCheckpoint: entry.assemblyCheckpoint, allowedKey: entry.allowedKey,
     latestSearchResult: entry.latestSearchResult, latestAssemblyResult: entry.latestAssemblyResult,

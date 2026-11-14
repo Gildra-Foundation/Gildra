@@ -1,8 +1,10 @@
+import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios, type AuctionGearEncounter } from "./auctionGearScenarios";
 import { normalizeAuctionBudgetGold } from "./auctionGearBudget";
 import { parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 
 /** Browser transport, recovery handles and safe input intent. Prices/stats always come from the server. */
 export type AuctionClientFormIntent = {
+  fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[];
   characterSlug: string; locale: "ru" | "en"; budgetGold: string;
   scenario: "single-target" | "aoe" | "execute"; objective: "value" | "dps"; selectedSlots: AuctionGearSlot[];
 };
@@ -15,7 +17,12 @@ export function parseAuctionClientFormIntent(input: unknown): AuctionClientFormI
       !/^\d+(?:\.\d{1,4})?$/.test(value.budgetGold) ||
       !["single-target", "aoe", "execute"].includes(value.scenario as string) || value.objective !== "value" && value.objective !== "dps") return null;
   try {
-    return { characterSlug: value.characterSlug, locale: value.locale,
+    const encounter = parseAuctionGearEncounter(value);
+    const compareScenarios = parseAuctionGearCompareScenarios(value.compareScenarios);
+    return {
+      ...(value.fightLengthSeconds !== undefined ? { fightLengthSeconds: encounter.fightLengthSeconds } : {}),
+      ...(value.targets !== undefined ? { targets: encounter.targets } : {}),
+      ...(value.compareScenarios !== undefined ? { compareScenarios } : {}), characterSlug: value.characterSlug, locale: value.locale,
       budgetGold: normalizeAuctionBudgetGold(value.budgetGold, "en"),
       scenario: value.scenario as AuctionClientFormIntent["scenario"], objective: value.objective,
       selectedSlots: parseAuctionGearSlots(value.selectedSlots) };

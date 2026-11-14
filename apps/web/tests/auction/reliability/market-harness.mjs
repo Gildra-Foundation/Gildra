@@ -1,3 +1,6 @@
+import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../../lib/wow/auctionGearDiagnostics.ts";
+import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "../../../lib/wow/auctionGearScenarios.ts";
+import { evaluateAuctionGearScenarios } from "../../../lib/wow/auctionGearScenarioExecution.ts";
 import { auctionGearVariantSelectionKey } from "../../../lib/wow/auctionGearExclusions.ts";
 import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
 import { createHash } from "node:crypto";
@@ -43,7 +46,7 @@ export async function harness({ entity = record(), availableReference = true, re
     inventoryType: 9, itemClassId: 4, itemSubclassId: 4, quality: 3, uniqueEquipped: false, setId: 0, stats: {} });
   const discoverySource = await readFile(new URL("../../../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
   const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
-    .runInNewContext({ Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
+    .runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
       supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
       lookupGearRecords: repository?.lookupGearRecords ?? (async (_ids, _locale, itemClass, _level, _signal, _cache, { cachedOnly = false } = {}) => !cachedOnly && (itemClass === undefined || itemClass === 4) ? [state.entity] : []),
       gearEntityDetails: repository?.gearEntityDetails ?? (async records => records),
@@ -58,7 +61,7 @@ export async function harness({ entity = record(), availableReference = true, re
     });
   const runnerSource = await readFile(new URL("../../../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
   const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch})")
-    .runInNewContext({ auctionGearVariantSelectionKey, auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...store, ...discovery,
+    .runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, auctionGearVariantSelectionKey, auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...store, ...discovery,
       talentSpecThemes: [{ classId: 1, specId: 72, role: "melee", slug: "fury-warrior" }],
       getCharacterAuctionMarket: async (_character, _token, options) => { state.marketCalls++; state.marketSignals.push(options?.signal); return state.market; },
       getBattleNetSimulationSnapshot: async () => state.armory,

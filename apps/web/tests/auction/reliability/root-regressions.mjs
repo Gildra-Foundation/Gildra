@@ -1,3 +1,4 @@
+import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../../lib/wow/auctionGearDiagnostics.ts";
 import { auctionGearVariantSelectionKey } from "../../../lib/wow/auctionGearExclusions.ts";
 import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
 import assert from "node:assert/strict";
@@ -24,9 +25,9 @@ const full = { ...minimal, dpsMean: minimal.dps, casts: [{ abilityId: "synthetic
 const source = await readFile(new URL("../../../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
 const selectionCode = stripTypeScriptTypes(source.slice(source.indexOf("export function selectedAuctionGearAssemblyOptions("),
   source.indexOf("export function selectedAuctionGearOptions(")), { mode: "strip" }).replace(/^export /gm, "");
-const selectedAuctionGearAssemblyOptions = new vm.Script(selectionCode + "\n;selectedAuctionGearAssemblyOptions").runInNewContext({auctionGearVariantSelectionKey});
-const simulatorCode = stripTypeScriptTypes(source.slice(source.indexOf("function createAuctionSimulator(")), { mode: "strip" });
-const createSimulator = new vm.Script(simulatorCode + "\n;createAuctionSimulator").runInNewContext({
+const selectedAuctionGearAssemblyOptions = new vm.Script(selectionCode + "\n;selectedAuctionGearAssemblyOptions").runInNewContext({ createAuctionGearDiagnostics,auctionGearVariantSelectionKey});
+const simulatorCode = stripTypeScriptTypes(source.slice(source.indexOf("const runDiagnostics ="), source.indexOf("/** Private, in-process diagnostics")) + source.slice(source.indexOf("function createAuctionSimulator(")), { mode: "strip" });
+const createSimulator = new vm.Script(simulatorCode + "\n;createAuctionSimulator").runInNewContext({ createAuctionGearDiagnostics,
   auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, AbortSignal, process: { env: { ROTATION_WORKER_URL: "http://synthetic.invalid" } }, Number, JSON, Error,
   assertFreshMarket() {}, prepareGearLoadout: () => ({ equipment: {}, changes: [] }),
   fetch: async () => Response.json(full, { headers: { "x-gildra-engine": "simulationcraft" } }),

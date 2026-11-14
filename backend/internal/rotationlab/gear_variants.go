@@ -27,20 +27,34 @@ type GearVariantInput struct {
 	Key    string     `json:"key"`
 	Change GearChange `json:"change"`
 }
+
+// Socket colors are native item_socket_color masks, not display color indices.
+// Unknown enhancement fields are omitted; zero is a verified absence only in v2.
+type GearVariantEnhancements struct {
+	Status                 string `json:"status"`
+	SocketColors           []int  `json:"socketColors,omitempty"`
+	SocketCount            *int   `json:"socketCount,omitempty"`
+	SocketBonusID          *int   `json:"socketBonusId,omitempty"`
+	RequiredProfessionID   *int   `json:"requiredProfessionId,omitempty"`
+	RequiredProfessionRank *int   `json:"requiredProfessionRank,omitempty"`
+}
+
 type GearVariantMetadata struct {
-	Key            string             `json:"key"`
-	ItemID         int                `json:"itemId"`
-	ItemLevel      int                `json:"itemLevel"`
-	RequiredLevel  int                `json:"requiredLevel"`
-	InventoryType  int                `json:"inventoryType"`
-	ItemClassID    int                `json:"itemClassId"`
-	ItemSubclassID int                `json:"itemSubclassId"`
-	Quality        int                `json:"quality"`
-	UniqueEquipped bool               `json:"uniqueEquipped"`
-	SetID          int                `json:"setId"`
-	Stats          map[string]float64 `json:"stats"`
-	Weapon         *GearVariantWeapon `json:"weapon,omitempty"`
-	Error          string             `json:"error,omitempty"`
+	MetadataVersion int                     `json:"metadataVersion"`
+	Enhancements    GearVariantEnhancements `json:"enhancements"`
+	Key             string                  `json:"key"`
+	ItemID          int                     `json:"itemId"`
+	ItemLevel       int                     `json:"itemLevel"`
+	RequiredLevel   int                     `json:"requiredLevel"`
+	InventoryType   int                     `json:"inventoryType"`
+	ItemClassID     int                     `json:"itemClassId"`
+	ItemSubclassID  int                     `json:"itemSubclassId"`
+	Quality         int                     `json:"quality"`
+	UniqueEquipped  bool                    `json:"uniqueEquipped"`
+	SetID           int                     `json:"setId"`
+	Stats           map[string]float64      `json:"stats"`
+	Weapon          *GearVariantWeapon      `json:"weapon,omitempty"`
+	Error           string                  `json:"error,omitempty"`
 }
 type GearVariantWeapon struct {
 	MinDamage    float64 `json:"minDamage"`
@@ -115,7 +129,7 @@ func (e *SimCEngine) resolveVariantBatch(ctx context.Context, input GearVariantR
 		return GearVariantResponse{}, err
 	}
 	if len(input.Variants) == 1 {
-		return GearVariantResponse{Variants: []GearVariantMetadata{{Key: input.Variants[0].Key, ItemID: input.Variants[0].Change.ItemID, Error: "item_resolution_failed"}}}, nil
+		return GearVariantResponse{Variants: []GearVariantMetadata{{Key: input.Variants[0].Key, ItemID: input.Variants[0].Change.ItemID, Enhancements: GearVariantEnhancements{Status: "unknown"}, Error: "item_resolution_failed"}}}, nil
 	}
 	mid := len(input.Variants) / 2
 	left := input
@@ -164,7 +178,7 @@ func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantReque
 	var output bytes.Buffer
 	cmd.Stdout = &limitedBuffer{buffer: &output, remaining: maxSimCOutputBytes}
 	cmd.Stderr = &limitedBuffer{buffer: &output, remaining: maxSimCOutputBytes}
-	if err = cmd.Run(); err != nil {
+	if err = runTimedNative(ctx, cmd.Run); err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) {
 			return GearVariantResponse{}, fmt.Errorf("%w: %v", errVariantItemRejected, err)
@@ -210,14 +224,15 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 				item = gear["shoulders"]
 			}
 		}
-		result := GearVariantMetadata{Key: v.Key, ItemID: v.Change.ItemID, Stats: map[string]float64{}}
+		result := GearVariantMetadata{Key: v.Key, ItemID: v.Change.ItemID, Stats: map[string]float64{}, Enhancements: GearVariantEnhancements{Status: "unknown"}}
 		if item == nil {
 			result.Error = "item_has_no_combat_stats"
 			response.Variants = append(response.Variants, result)
 			continue
 		}
 		n := func(key string) int { var value int; _ = json.Unmarshal(item[key], &value); return value }
-		if n("gildra_metadata_version") != 1 {
+		result.MetadataVersion = n("gildra_metadata_version")
+		if result.MetadataVersion != 1 && result.MetadataVersion != 2 {
 			return GearVariantResponse{}, errVariantMetadataMissing
 		}
 		var tuningKnown bool
@@ -251,6 +266,15 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		if n("id") != v.Change.ItemID || n("unknown_bonus_count") > 0 || !tuningKnown || !redirectedKnown || result.ItemLevel < 1 || result.ItemLevel > 1000 || result.RequiredLevel < 0 || result.RequiredLevel > 90 {
 			result.Error = "item_variant_unverified"
 		}
+		if result.MetadataVersion == 2 {
+			enhancements, err := parseVariantEnhancements(item)
+			if err != nil {
+				result.Error = "item_variant_unverified"
+			}
+			if result.Error == "" {
+				result.Enhancements = enhancements
+			}
+		}
 		// Keep the native report's stat names, including hybrid primary stats.
 		for _, key := range []string{"strength", "agility", "intellect", "stamina", "stragi", "agiint", "strint", "stragiint", "crit_rating", "haste_rating", "mastery_rating", "versatility_rating", "armor", "bonus_armor", "leech_rating", "avoidance_rating", "speed_rating"} {
 			var value float64
@@ -262,6 +286,54 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 	}
 	return response, nil
 }
+
+// Strictly decode required v2 fields. A legacy worker cannot prove zero sockets.
+func parseVariantEnhancements(item map[string]json.RawMessage) (GearVariantEnhancements, error) {
+	unknown := GearVariantEnhancements{Status: "unknown"}
+	var colors []*int
+	if json.Unmarshal(item["socket_colors"], &colors) != nil || len(colors) != 3 {
+		return unknown, errors.New("invalid socket colors")
+	}
+	out := GearVariantEnhancements{Status: "verified", SocketColors: make([]int, 3)}
+	count := 0
+	for i, color := range colors {
+		if color == nil || !validNativeSocketColor(*color) {
+			return unknown, errors.New("invalid socket color")
+		}
+		out.SocketColors[i] = *color
+		if *color != 0 {
+			count++
+		}
+	}
+	out.SocketCount = &count
+	for key, target := range map[string]**int{
+		"socket_bonus_id":          &out.SocketBonusID,
+		"required_profession_id":   &out.RequiredProfessionID,
+		"required_profession_rank": &out.RequiredProfessionRank,
+	} {
+		if json.Unmarshal(item[key], target) != nil || *target == nil || **target < 0 || int64(**target) > 2147483647 {
+			return unknown, errors.New("invalid enhancement requirement")
+		}
+	}
+	if *out.RequiredProfessionID == 0 && *out.RequiredProfessionRank != 0 {
+		return unknown, errors.New("invalid profession requirement")
+	}
+	return out, nil
+}
+
+// Pinned SimC 18428cd data_enums.hh item_socket_color. Reject unknown masks;
+// adding new native socket kinds requires explicit contract validation here.
+func validNativeSocketColor(color int) bool {
+	switch color {
+	case 0, 1, 2, 4, 8, 6, 10, 12, 14, 16, 32,
+		0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000, 0x10000,
+		0x1ffc0, 0x20000, 0x40000, 0x80000, 0x100000, 0x800000,
+		0x1000000, 0x2000000, 0x4000000, 0x8000000, 0x10000000, 0x20000000, 0x40000000:
+		return true
+	}
+	return false
+}
+
 func (h *WorkerHandler) resolveVariants(w http.ResponseWriter, r *http.Request) {
 	resolver, ok := h.engine.(interface {
 		ResolveGearVariants(context.Context, GearVariantRequest) (GearVariantResponse, error)

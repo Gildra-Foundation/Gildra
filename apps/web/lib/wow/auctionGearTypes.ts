@@ -1,9 +1,12 @@
+import type { AuctionGearEncounter } from "./auctionGearScenarios";
+import type { AuctionEnhancementStageResult } from "./auctionGearEnhancementStage";
 import type { GearCandidate } from "./gearCandidates";
 import type { compareGearSimulationResults } from "./gearSimulation";
 
 export type AuctionGearObjective = "value" | "dps";
 
 export type AuctionGearOption = {
+  customization?: { enchantId?: number; gemIds?: number[] };
   id: string;
   auctionId: number;
   quantity: number;
@@ -32,7 +35,9 @@ export type AuctionEquippedItem = {
   effectsVerified?: boolean;
   weapon?: { minDamage: number; maxDamage: number; dps: number; speedSeconds: number };
 };
+export type AuctionGearCostCoverage = { itemsCopper: number; totalCopper: number | null; coverage: "items_only" | "enhancement_compatibility_unverified" };
 export type AuctionGearPurchase = {
+  costBreakdown?: AuctionGearCostCoverage;
   auctionId: number;
   itemId: number;
   name: string;
@@ -63,6 +68,7 @@ export type AuctionGearConfirmed = {
   comparison: AuctionGearComparison;
 };
 export type AuctionGearPlan = {
+  costBreakdown?: AuctionGearCostCoverage;
   budgetCopper: number;
   spentCopper: number;
   remainingCopper: number;
@@ -106,6 +112,10 @@ export type AuctionGearSearchResult = {
 };
 export type AuctionGearAssemblyResult = AuctionGearPlan & {
   kind: "assembly";
+  enhancementOptimization?: AuctionEnhancementStageResult;
+  /** False when optional scenario comparisons still need a continuation. */
+  scenarioComparisonsComplete?: boolean;
+  scenarioComparisons?: Array<{ encounter: AuctionGearEncounter; baseline: GearPlanSimulation; candidates: Array<{ finalist: string; simulation: GearPlanSimulation; comparison: AuctionGearComparison }> }>;
   objective?: AuctionGearObjective;
   searchId: string;
   selectedSlots: string[];

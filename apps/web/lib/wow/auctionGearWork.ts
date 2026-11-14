@@ -14,19 +14,19 @@ export function resumeOwnedAuctionGearWork(owner: string, id: string, token: str
     const searchId = work.action === "search" ? job.searchId : work.searchId;
     if (!searchId && work.action === "search") {
       if (work.input.characterSlug !== job.scope?.characterSlug || work.input.locale !== job.scope.locale) throw new Error("invalid_auction_checkpoint");
-      task = (signal, progress, hooks) => startAuctionGearSearch(work.input, owner, token, signal, progress, hooks.searchCreated);
+      task = (signal, progress, hooks) => startAuctionGearSearch(work.input, owner, token, signal, progress, hooks.searchCreated, hooks.publishResult);
     } else {
       const entry = getAuctionGearSearch(owner, searchId ?? "");
       if (!entry || entry.context.input.characterSlug !== job.scope?.characterSlug || entry.context.input.locale !== job.scope.locale) throw new Error("search_expired");
       const selection = work.action === "assemble" ? work.selection : undefined;
       if (work.action === "assemble") selectedAuctionGearAssemblyOptions(entry, selection);
       release = reserveAuctionGearSearch(entry);
-      task = async (signal, progress) => {
+      task = async (signal, progress, hooks) => {
         entry.busy = true;
         try {
           await verifyAuctionGearSearch(entry, token, signal);
-          return work.action === "assemble" ? await assembleAuctionGearSearch(entry, selection, signal, progress, token)
-            : await continueAuctionGearSearch(entry, signal, progress, token);
+          return work.action === "assemble" ? await assembleAuctionGearSearch(entry, selection, signal, progress, token, hooks.publishResult)
+            : await continueAuctionGearSearch(entry, signal, progress, token, hooks.publishResult);
         } finally { entry.busy = false; }
       };
     }

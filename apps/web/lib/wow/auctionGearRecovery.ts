@@ -10,7 +10,10 @@ export function recoverAuctionGearSearch(owner: string, searchId: string, charac
   return {
     kind: "recovery" as const,
     search: { market: context.publicMarket, profileFingerprint: context.profileFingerprint,
-      scenario: context.input.scenario, objective: context.input.objective ?? "dps", coverage: context.coverage, ...entry.latestSearchResult },
+      scenario: context.input.scenario,
+      ...(context.input.fightLengthSeconds !== undefined ? { fightLengthSeconds: context.input.fightLengthSeconds } : {}),
+      ...(context.input.targets !== undefined ? { targets: context.input.targets } : {}),
+      ...(context.input.compareScenarios ? { compareScenarios: context.input.compareScenarios } : {}), objective: context.input.objective ?? "dps", coverage: context.coverage, ...entry.latestSearchResult },
     assembly: entry.latestAssemblyResult ?? null,
     excludedOptionIds: [...(entry.excludedOptionIds ?? [])],
     excludedVariantKeys: [...(entry.excludedVariantKeys ?? [])],

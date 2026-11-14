@@ -1,3 +1,6 @@
+import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../../lib/wow/auctionGearDiagnostics.ts";
+import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "../../../lib/wow/auctionGearScenarios.ts";
+import { evaluateAuctionGearScenarios } from "../../../lib/wow/auctionGearScenarioExecution.ts";
 import { auctionGearVariantSelectionKey } from "../../../lib/wow/auctionGearExclusions.ts";
 import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
 import { createHash } from "node:crypto";
@@ -38,12 +41,12 @@ export const context = slotType => ({ classId: 1, specId: 72, characterLevel: 81
 let sequence = 0;
 export async function harness({ entity = record(), availableReference = true, reference, offers, entities } = {}) {
   const state = { entity, availableReference, armory: structuredClone(armory), market: market(offers ?? [offer()]),
-    metadataOrder: [], simulationOrder: [], workerEngine: "SimulationCraft synthetic-v1", referenceCalls: 0, variantCalls: 0, simulationCalls: 0, marketCalls: 0, marketSignals: [], referenceLocales: [], reference: reference ?? { offer: offer(), itemLevel: 100, requiredLevel: 1, stats: [] } };
+    metadataOrder: [], simulationOrder: [], simulationRequests: [], workerEngine: "SimulationCraft synthetic-v1", referenceCalls: 0, variantCalls: 0, simulationCalls: 0, marketCalls: 0, marketSignals: [], referenceLocales: [], reference: reference ?? { offer: offer(), itemLevel: 100, requiredLevel: 1, stats: [] } };
   const metadata = value => ({ key: auctionVariantKey(value), itemId: value.itemId, itemLevel: 100, requiredLevel: 1,
     inventoryType: 9, itemClassId: 4, itemSubclassId: 4, quality: 3, uniqueEquipped: false, setId: 0, stats: {} });
   const discoverySource = await readFile(new URL("../../../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
   const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
-    .runInNewContext({ Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
+    .runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
       supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
       lookupGearRecords: async (ids, _locale, itemClass, _level, _signal, _cache, { cachedOnly = false } = {}) => !cachedOnly && (itemClass === undefined || itemClass === 4) ? (entities ?? [state.entity]).filter(row=>ids.includes(row.externalId)) : [],
       gearEntityDetails: async records => records,
@@ -58,7 +61,7 @@ export async function harness({ entity = record(), availableReference = true, re
     });
   const runnerSource = await readFile(new URL("../../../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
   const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch})")
-    .runInNewContext({ auctionGearVariantSelectionKey, auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...store, ...discovery,
+    .runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, auctionGearVariantSelectionKey, auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...store, ...discovery,
       talentSpecThemes: [{ classId: 1, specId: 72, role: "melee", slug: "fury-warrior" }],
       getCharacterAuctionMarket: async (_character, _token, options) => { state.marketCalls++; state.marketSignals.push(options?.signal); return state.market; },
       getBattleNetSimulationSnapshot: async () => state.armory,
@@ -71,8 +74,9 @@ export async function harness({ entity = record(), availableReference = true, re
           bonusIds: selection.candidate.variants.find(variant => variant.key === selection.variantKey).bonusIds })) }),
       fetch: async (_url, options) => {
         state.simulationCalls++;
-        const changes = JSON.parse(options.body).gearChanges ?? []; state.simulationOrder.push(changes.map(c=>c.itemId));
-        const dps = 1000 + changes.reduce((sum, change) => sum + (change.itemId === 90000 ? 100 : -100), 0);
+        const request = JSON.parse(options.body); state.simulationRequests.push(request);
+        const changes = request.gearChanges ?? []; state.simulationOrder.push(changes.map(c=>c.itemId));
+        const dps = state.measure ? state.measure(request) : 1000 + changes.reduce((sum, change) => sum + (change.itemId === 90000 ? 100 : -100), 0);
         return Response.json({ dps, dpsMean: dps,
           dpsError: 1, confidence: 95, iterations: 1000, engine: state.workerEngine }, { headers: { "x-gildra-engine": "simulationcraft" } });
       } });
@@ -80,10 +84,10 @@ export async function harness({ entity = record(), availableReference = true, re
   const progress = () => {};
   const discoveryInput = { locale: "en_US", region: "eu", token: "unused-synthetic", spec: "fury-warrior", characterLevel: 81,
     selectedSlots: ["WRIST"], context, signal: signal() };
-  async function start() {
+  async function start(overrides = {}) {
     const owner = `priority-feedback-offline-${++sequence}`;
     const result = await runner.startAuctionGearSearchFromSnapshot({ characterSlug: "synthetic", budgetCopper: 1000,
-      scenario: "single-target", locale: "en", selectedSlots: ["WRIST"] }, character, state.armory, owner,
+      scenario: "single-target", locale: "en", selectedSlots: ["WRIST"], ...overrides }, character, state.armory, owner,
       "unused-synthetic", signal(), progress);
     return { owner, result, entry: store.getAuctionGearSearch(owner, result.searchId) };
   }
