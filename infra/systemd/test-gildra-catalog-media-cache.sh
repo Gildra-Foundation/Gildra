@@ -11,13 +11,13 @@ timer_file=$script_directory/gildra-catalog-media-cache.timer
 
 exec_line=$(grep '^ExecStart=' "$service_file")
 [ "$(printf '%s\n' "$exec_line" | wc -l)" -eq 1 ]
-printf '%s\n' "$exec_line" | grep -Fq 'catalog-media-cache'
-printf '%s\n' "$exec_line" | grep -Fq -- '-expansion midnight'
-printf '%s\n' "$exec_line" | grep -Fq -- '-seed-icon-limit 10000'
-printf '%s\n' "$exec_line" | grep -Fq -- '-skip-media-cache'
-printf '%s\n' "$exec_line" | grep -Fq -- '-confirm'
+# Assert the complete renewal command: scoped seeding flags must not leak back
+# into the whole-catalog refresh mode, and pacing/checkpoint limits must remain.
+grep -Fxq 'ExecStart=/usr/bin/docker compose --env-file .env --env-file current-release.env -f compose.yml -f compose.prod.yml -f compose.runtime.yml -f compose.wowarcana.yml run --rm --no-deps catalog-media-cache -environment production -expansion= -refresh-icons -refresh-limit 3000 -refresh-batch 100 -refresh-headroom-days 10 -refresh-interval 500ms -refresh-retry-failed-after 72h -refresh-checkpoint /var/lib/gildra/catalog-media/refresh-wow.json -confirm' "$service_file"
 
-grep -Fxq 'OnCalendar=hourly' "$timer_file"
+grep -Fxq 'OnCalendar=*-*-* 00,06,12,18:15:00 UTC' "$timer_file"
+grep -Fxq 'RandomizedDelaySec=5m' "$timer_file"
+grep -Fxq 'Persistent=true' "$timer_file"
 grep -Fxq 'Unit=gildra-catalog-media-cache.service' "$timer_file"
 
-printf '%s\n' 'test: hourly media cache repairs only missing confirmed Midnight icons'
+printf '%s\n' 'test: scheduled catalog icon renewal retains bounded pacing and checkpoint recovery'

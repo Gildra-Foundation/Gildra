@@ -1,0 +1,22 @@
+# PR 4 CI fixes and release prerequisites
+
+All three CI failures reproduce from master 197186e8, not the auction merge:
+
+- Media-cache service/timer changed in c6bd03b8 to whole-catalog renewal, but its test still required hourly Midnight seeding. The test now asserts the exact renewal command, bounded pacing, confirmation, checkpoint and four daily timer slots. Missing confirmation, oversized limit, scoped expansion and old timer mutations all fail.
+- OpenAPI source and generated types were identical to master. Regeneration adds 15 missing lines; no API implementation was changed.
+
+- Backend service.go is unchanged from master, but Go 1.26.6 (CI) indents two argument lines differently from local Go 1.27.1. Applied CI-toolchain gofmt only; backend-wide Go 1.26.6 formatting is clean.
+
+Validation: all eight operations shell test scripts passed, including failed-release rollback and backup-wrapper evidence; CI image handoff Python tests passed; four negative media-cache mutations rejected; TypeScript and Go 1.26.6 catalog tests passed; API regeneration repeated without changes.
+
+## Recovery route (prepared, not executed)
+
+Read-only Docker inspection confirms all four application containers healthy, with mixed source revisions. Current web: local tag `gildra-web:forever-finish-20261113-70ed6b407562`, image ID `sha256:64eadc4e6a7277fb376a336de48b9604ecd5757d876bce8a3a3eced0242b7c5b`. API image ID `sha256:8f4a78868724ef898d67a730980819d05b9d18aefb110f5a43b2053246d56b40`; scraper `sha256:f1c5ba751938ac1bc365788c1b74ee791ee79b0aec7d1df60913457a4fcec545`; worker `sha256:a98dc5d17aa74f0261123c110e73201f7b2cf06b5813ed7fa1674e96220a9d70`. These are local image identities, not approved GHCR manifest digests.
+
+1. Through the existing authorized host deployment identity, acquire the deployment lock and preserve current-release.env before editing. Read it without printing secrets. This shell cannot read it and has no passwordless sudo. Do not use privileged Docker or host mounts to bypass this restriction; use the established deploy SSH identity, or secure secret delivery for sudo if the coordinator needs interactive access.
+2. Compare each manifest reference with the running container and resolve it to the inspected image ID. Preserve/export the four existing images and verify archive checksums before replacement. The existing bootstrap-release-manifest.sh can normalize API/scraper local image IDs to available tags, but it does not handle the worker. Do not invent a single SOURCE_REVISION for this mixed stack.
+3. The rollback validator accepts legacy local web/API/scraper tags, but does not accept a local worker tag or raw image ID. Do not omit the worker just to pass validation: legacy omission retains the newly deployed worker during rollback. For full worker rollback, publish the exact existing worker image using existing registry credentials to its approved GHCR repository, resolve the registry manifest digest, and verify that the pulled image has the original image ID before recording the digest. If existing credentials cannot publish it, this remains blocked; do not broaden permissions. Apply the same digest preservation approach to other images if needed. No service restart is needed for tagging/publishing or manifest preparation.
+4. With the reviewed baseline in place, run the existing host backup wrapper with `GILDRA_RESTORE_PROOF=full` using the authorized host identity. Its space preflight, isolated scratch Postgres, encryption/signing and cleanup must remain enabled. The command is `sudo env GILDRA_RESTORE_PROOF=full /opt/gildra/infra/backup/run-catalog-backup.sh`. Preserve the wrapper's last-success.json and require restoreVerified=true and sourceRestoreMatch=true. Check the database manifest has matching schema version, nonzero bytes, content hash and restore_completed_at within 24 hours. Latest observed verified restore was October 23; that is insufficient.
+5. Only after CI succeeds and the baseline/backup are verified, merge normally and let CI build immutable images. Verify the patched native worker image build, full release selection, exact deployed digests, readiness and an exact paid gem/enchant native request with concurrency one. Keep the saved previous images/manifest until the observation window passes.
+
+No production mutations, backup execution, manifest repairs, registry publication or deployment were performed in this CI-fix pass. The steps above require actual evidence before completion can be claimed.
