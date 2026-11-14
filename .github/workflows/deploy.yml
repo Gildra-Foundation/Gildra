@@ -113,7 +113,7 @@ jobs:
         # bootstrap step that restores them, so every nightly backup failed from
         # 2026-10-01 and the catalog recovery gate blocked all imports.
         run: |
-          tar -czf - compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd | ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra && sudo tar --no-same-owner -xzf - -C /opt/gildra && cd /opt/gildra && sudo chown -R root:root compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd'
+          tar -czf - compose.yml compose.prod.yml compose.runtime.yml compose.backup.yml infra/backup infra/deploy infra/nginx infra/postgres infra/systemd | ssh "$OVH_USER@$OVH_HOST" 'sudo install -d -m 700 /opt/gildra && sudo tar --no-same-owner -xzf - -C /opt/gildra && sudo chown -R root:root /opt/gildra/compose.yml /opt/gildra/compose.prod.yml /opt/gildra/compose.runtime.yml /opt/gildra/compose.backup.yml /opt/gildra/infra/backup /opt/gildra/infra/deploy /opt/gildra/infra/nginx /opt/gildra/infra/postgres /opt/gildra/infra/systemd'
       - name: Upload web deployment script only
         if: steps.mode.outputs.mode == 'web'
         env:
