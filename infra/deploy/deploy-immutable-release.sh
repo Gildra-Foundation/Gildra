@@ -391,6 +391,8 @@ verify_catalog_load() {
 }
 
 verify_catalog_readiness() {
+  # The full historical scan exceeded 15 minutes on schema-184 production.
+  # Keep every quality/recovery check, with a bounded 45-minute audit budget.
   api_container=$(compose ps -q api)
   [ -n "$api_container" ] || fail 'api service has no running container for the readiness gate'
   if [ "$catalog_access_mode" = private ]; then
@@ -403,7 +405,7 @@ verify_catalog_readiness() {
       -recovery-policy verified_same_host \
       -quality-profile midnight-active \
       -require-public-quality \
-      -timeout 15m
+      -timeout 45m
   else
     # Public production is released against the active Midnight cohort.  The
     # historical catalog remains report-only until its older expansions are
@@ -411,14 +413,14 @@ verify_catalog_readiness() {
     # healthy Midnight release for unrelated legacy gaps.
     # Probe the same public JSON handlers through the API container's local
     # listener; hairpinning the public hostname from Docker can stall the
-    # entire 15-minute audit even when the public edge is healthy.
+    # entire audit even when the public edge is healthy.
     docker exec "$api_container" catalog-audit \
       -product wow \
       -recovery-policy verified_same_host \
       -quality-profile midnight-active \
       -require-public-quality \
       -api-base-url http://127.0.0.1:8080 \
-      -timeout 15m
+      -timeout 45m
   fi
 }
 
