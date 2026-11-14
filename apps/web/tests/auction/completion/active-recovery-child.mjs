@@ -1,3 +1,4 @@
+import { parseAuctionGearEncounter } from "../../../lib/wow/auctionGearScenarios.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { registerHooks, syncBuiltinESMExports } from "node:module";
@@ -31,7 +32,7 @@ function createEntry(runInput = intent) {
     options: [{ id: "one", candidate: { itemId: 1 }, variantKey: "synthetic-exact-one" },
       { id: "two", candidate: { itemId: 2 }, variantKey: "synthetic-exact-two" }], loadout: [], specId: 72, specSlug: "fury-warrior", market, currentBySlot: new Map(),
     discovery: createAuctionGearDiscovery(market, runInput.budgetCopper), discoverySeason: { id: "synthetic", patch: "synthetic", expansionId: 11, activityNames: [] },
-    encounter: { fightLengthSeconds: 120, targets: 5 }, coverage: {}, searchLimited: false,
+    encounter: parseAuctionGearEncounter(runInput), coverage: {}, searchLimited: false,
     publicMarket: { snapshotId: market.id, region: "eu", realm: "Synthetic", connectedRealmId: 1, updatedAt: now, validatedAt: now },
     profileFingerprint: "synthetic-active-profile", scenario: runInput.scenario,
     marketChange: { removedLots: 0, repricedLots: 0, quantityChangedLots: 0, variantsChangedLots: 0 },

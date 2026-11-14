@@ -1,3 +1,6 @@
+import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../../lib/wow/auctionGearDiagnostics.ts";
+import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "../../../lib/wow/auctionGearScenarios.ts";
+import { evaluateAuctionGearScenarios } from "../../../lib/wow/auctionGearScenarioExecution.ts";
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {stripTypeScriptTypes} from 'node:module';
@@ -35,7 +38,7 @@ export async function assemblyRunnerFixture({nativeMs=0,discoveryMs=0}={}){
  const coverage=()=>({discoveryComplete:state.pending===0,dataComplete:true});
  const source=await readFile(new URL('../../../lib/wow/auctionGearRunner.ts',import.meta.url),'utf8');
  const stripped=stripTypeScriptTypes(source,{mode:'strip'}).replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
- const runner=new vm.Script(stripped+'\n;({assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions})').runInNewContext({
+ const runner=new vm.Script(stripped+'\n;({assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions})').runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios,
   ...planner,auctionGearVariantSelectionKey,Date:FixtureDate,Map,Set,Object,Number,JSON,AbortSignal,process,
   scheduleAuctionGearSearchSave:()=>state.saves++,flushAuctionGearSearch:async()=>state.flushes++,
   schedulePlannerItemIcons:()=>{},auctionGearDiscoveryOptions:()=>state.pool,

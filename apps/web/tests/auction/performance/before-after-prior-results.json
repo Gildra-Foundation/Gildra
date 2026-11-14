@@ -1,0 +1,444 @@
+{
+  "scope": "Offline synthetic transports; real Runner/catalog/persistence. No native concurrency or live speedup inference.",
+  "base": "e3cc7e82f4d2171b8a5cf3fc775640236c49c769",
+  "runnerHash": "d96c0d4aea7e0c7cfbb7254deae239cc6898f2e6b996607a32d4e94640c350fd",
+  "runnerUnchanged": true,
+  "summary": {
+    "before": {
+      "medianMs": 5390.512528130785,
+      "rangeMs": [
+        4781.022296054289,
+        8212.041700957343
+      ]
+    },
+    "after": {
+      "medianMs": 7958.63554184325,
+      "rangeMs": [
+        7210.974570130929,
+        10712.893503019586
+      ]
+    }
+  },
+  "runs": [
+    {
+      "version": "before",
+      "repeat": 0,
+      "totalMs": 8212.041700957343,
+      "exit": 0,
+      "samples": [
+        {
+          "scope": "Actual Runner/Discovery/Repository/Persistence; synthetic public/native facts",
+          "firstWarm": {
+            "elapsedMs": 884.040712,
+            "catalogCalls": 0,
+            "newDpsCalls": 0,
+            "snapshots": [
+              {
+                "bytes": 724685,
+                "ms": 75.34924800000044
+              },
+              {
+                "bytes": 892165,
+                "ms": 15.854706000000078
+              }
+            ]
+          },
+          "repairedItems": 7,
+          "finalDiscoveryComplete": true
+        },
+        {
+          "scope": "Synthetic warm5001 catalog with actual Runner/Persistence",
+          "elapsedMs": 470.86685299999954,
+          "snapshots": [
+            {
+              "bytes": 1033893,
+              "ms": 14.196823999999651
+            },
+            {
+              "bytes": 1037196,
+              "ms": 31.413214999999582
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "repeat": 1,
+      "totalMs": 4781.022296054289,
+      "exit": 0,
+      "samples": [
+        {
+          "scope": "Actual Runner/Discovery/Repository/Persistence; synthetic public/native facts",
+          "firstWarm": {
+            "elapsedMs": 360.35300400000006,
+            "catalogCalls": 0,
+            "newDpsCalls": 0,
+            "snapshots": [
+              {
+                "bytes": 724685,
+                "ms": 11.26866199999995
+              },
+              {
+                "bytes": 892165,
+                "ms": 7.7312879999999495
+              }
+            ]
+          },
+          "repairedItems": 7,
+          "finalDiscoveryComplete": true
+        },
+        {
+          "scope": "Synthetic warm5001 catalog with actual Runner/Persistence",
+          "elapsedMs": 210.0711510000001,
+          "snapshots": [
+            {
+              "bytes": 1033893,
+              "ms": 16.148423000000093
+            },
+            {
+              "bytes": 1037196,
+              "ms": 42.948991000000206
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "repeat": 2,
+      "totalMs": 5390.512528130785,
+      "exit": 0,
+      "samples": [
+        {
+          "scope": "Actual Runner/Discovery/Repository/Persistence; synthetic public/native facts",
+          "firstWarm": {
+            "elapsedMs": 491.8802660000001,
+            "catalogCalls": 0,
+            "newDpsCalls": 0,
+            "snapshots": [
+              {
+                "bytes": 724685,
+                "ms": 13.902313999999933
+              },
+              {
+                "bytes": 892165,
+                "ms": 54.56671800000004
+              }
+            ]
+          },
+          "repairedItems": 7,
+          "finalDiscoveryComplete": true
+        },
+        {
+          "scope": "Synthetic warm5001 catalog with actual Runner/Persistence",
+          "elapsedMs": 247.44590000000017,
+          "snapshots": [
+            {
+              "bytes": 1033893,
+              "ms": 48.20720799999981
+            },
+            {
+              "bytes": 1037196,
+              "ms": 14.546060000000125
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "repeat": 3,
+      "totalMs": 5289.266704116017,
+      "exit": 0,
+      "samples": [
+        {
+          "scope": "Actual Runner/Discovery/Repository/Persistence; synthetic public/native facts",
+          "firstWarm": {
+            "elapsedMs": 589.1210660000002,
+            "catalogCalls": 0,
+            "newDpsCalls": 0,
+            "snapshots": [
+              {
+                "bytes": 724685,
+                "ms": 61.25731700000006
+              },
+              {
+                "bytes": 892165,
+                "ms": 7.563079000000016
+              }
+            ]
+          },
+          "repairedItems": 7,
+          "finalDiscoveryComplete": true
+        },
+        {
+          "scope": "Synthetic warm5001 catalog with actual Runner/Persistence",
+          "elapsedMs": 326.2633679999999,
+          "snapshots": [
+            {
+              "bytes": 1033893,
+              "ms": 25.85651599999983
+            },
+            {
+              "bytes": 1037196,
+              "ms": 73.63069900000028
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "repeat": 4,
+      "totalMs": 7238.918382907286,
+      "exit": 0,
+      "samples": [
+        {
+          "scope": "Actual Runner/Discovery/Repository/Persistence; synthetic public/native facts",
+          "firstWarm": {
+            "elapsedMs": 510.72158899999977,
+            "catalogCalls": 0,
+            "newDpsCalls": 0,
+            "snapshots": [
+              {
+                "bytes": 724685,
+                "ms": 12.813752000000022
+              },
+              {
+                "bytes": 892165,
+                "ms": 9.816228000000592
+              }
+            ]
+          },
+          "repairedItems": 7,
+          "finalDiscoveryComplete": true
+        },
+        {
+          "scope": "Synthetic warm5001 catalog with actual Runner/Persistence",
+          "elapsedMs": 413.7534109999997,
+          "snapshots": [
+            {
+              "bytes": 1033893,
+              "ms": 15.33556099999987
+            },
+            {
+              "bytes": 1037196,
+              "ms": 65.58161300000029
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "after",
+      "repeat": 0,
+      "totalMs": 7958.63554184325,
+      "exit": 0,
+      "samples": [
+        {
+          "scope": "Actual Runner/Discovery/Repository/Persistence; synthetic public/native facts",
+          "firstWarm": {
+            "elapsedMs": 880.2853789999999,
+            "catalogCalls": 0,
+            "newDpsCalls": 0,
+            "snapshots": [
+              {
+                "bytes": 724703,
+                "ms": 74.5859819999996
+              },
+              {
+                "bytes": 892289,
+                "ms": 15.691870999999992
+              }
+            ]
+          },
+          "repairedItems": 7,
+          "finalDiscoveryComplete": true
+        },
+        {
+          "scope": "Synthetic warm5001 catalog with actual Runner/Persistence",
+          "elapsedMs": 510.4415220000001,
+          "snapshots": [
+            {
+              "bytes": 1033911,
+              "ms": 12.144392999999582
+            },
+            {
+              "bytes": 1037320,
+              "ms": 85.04948800000057
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "after",
+      "repeat": 1,
+      "totalMs": 8501.333703054115,
+      "exit": 0,
+      "samples": [
+        {
+          "scope": "Actual Runner/Discovery/Repository/Persistence; synthetic public/native facts",
+          "firstWarm": {
+            "elapsedMs": 816.3690820000002,
+            "catalogCalls": 0,
+            "newDpsCalls": 0,
+            "snapshots": [
+              {
+                "bytes": 724703,
+                "ms": 13.331959999999526
+              },
+              {
+                "bytes": 892289,
+                "ms": 10.688060000000405
+              }
+            ]
+          },
+          "repairedItems": 7,
+          "finalDiscoveryComplete": true
+        },
+        {
+          "scope": "Synthetic warm5001 catalog with actual Runner/Persistence",
+          "elapsedMs": 502.5161280000002,
+          "snapshots": [
+            {
+              "bytes": 1033911,
+              "ms": 94.45006699999976
+            },
+            {
+              "bytes": 1037320,
+              "ms": 54.21720399999958
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "after",
+      "repeat": 2,
+      "totalMs": 7395.4963819123805,
+      "exit": 0,
+      "samples": [
+        {
+          "scope": "Actual Runner/Discovery/Repository/Persistence; synthetic public/native facts",
+          "firstWarm": {
+            "elapsedMs": 579.7192930000001,
+            "catalogCalls": 0,
+            "newDpsCalls": 0,
+            "snapshots": [
+              {
+                "bytes": 724703,
+                "ms": 13.758759000000282
+              },
+              {
+                "bytes": 892289,
+                "ms": 10.781340000000455
+              }
+            ]
+          },
+          "repairedItems": 7,
+          "finalDiscoveryComplete": true
+        },
+        {
+          "scope": "Synthetic warm5001 catalog with actual Runner/Persistence",
+          "elapsedMs": 422.62399600000026,
+          "snapshots": [
+            {
+              "bytes": 1033911,
+              "ms": 72.49588900000072
+            },
+            {
+              "bytes": 1037320,
+              "ms": 13.343042999999852
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "after",
+      "repeat": 3,
+      "totalMs": 7210.974570130929,
+      "exit": 0,
+      "samples": [
+        {
+          "scope": "Actual Runner/Discovery/Repository/Persistence; synthetic public/native facts",
+          "firstWarm": {
+            "elapsedMs": 672.5777300000009,
+            "catalogCalls": 0,
+            "newDpsCalls": 0,
+            "snapshots": [
+              {
+                "bytes": 724703,
+                "ms": 12.6907369999999
+              },
+              {
+                "bytes": 892289,
+                "ms": 15.333188999999948
+              }
+            ]
+          },
+          "repairedItems": 7,
+          "finalDiscoveryComplete": true
+        },
+        {
+          "scope": "Synthetic warm5001 catalog with actual Runner/Persistence",
+          "elapsedMs": 505.77390099999957,
+          "snapshots": [
+            {
+              "bytes": 1033911,
+              "ms": 18.71697999999924
+            },
+            {
+              "bytes": 1037320,
+              "ms": 75.3719799999999
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "after",
+      "repeat": 4,
+      "totalMs": 10712.893503019586,
+      "exit": 0,
+      "samples": [
+        {
+          "scope": "Actual Runner/Discovery/Repository/Persistence; synthetic public/native facts",
+          "firstWarm": {
+            "elapsedMs": 929.7552130000004,
+            "catalogCalls": 0,
+            "newDpsCalls": 0,
+            "snapshots": [
+              {
+                "bytes": 724703,
+                "ms": 13.452408000000105
+              },
+              {
+                "bytes": 892289,
+                "ms": 80.19656600000053
+              }
+            ]
+          },
+          "repairedItems": 7,
+          "finalDiscoveryComplete": true
+        },
+        {
+          "scope": "Synthetic warm5001 catalog with actual Runner/Persistence",
+          "elapsedMs": 1065.5140109999993,
+          "snapshots": [
+            {
+              "bytes": 1033911,
+              "ms": 65.77636799999982
+            },
+            {
+              "bytes": 1037320,
+              "ms": 123.4599849999995
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

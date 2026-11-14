@@ -43,6 +43,14 @@ const a=option(10,"CHEST",60),b=option(11,"HEAD",40),expensive=option(12,"FEET",
 const signal=new AbortController().signal;
 const simulate=async selection=>({dps:selection.length===2?1300:selection.length?990:1000,dpsError:1,confidence:95,iterations:750,engine:"SimulationCraft test"});
 const result=await planAuctionGear({budgetCopper:100,options:[a,b,expensive],loadout:[],specId:72,market,signal,simulate});assert.equal(result.spentCopper,100);assert.equal(result.purchases.length,2);assert.ok(result.comparison.uncertainty.significant);
+// The measured maximum can be a different, more expensive noisy item than the confirmed recommendation.
+const measuredOption = option(901, "CHEST", 80), confirmedOption = option(902, "CHEST", 30);
+const confirmedPlan = await planAuctionGear({ budgetCopper:100, options:[measuredOption, confirmedOption], loadout:[], specId:72, market, signal,
+  simulate: async selection => ({ dps: selection[0]?.auctionId === 901 ? 1300 : selection.length ? 1200 : 1000,
+    dpsError: selection[0]?.auctionId === 901 ? 300 : 1, confidence:95, iterations:750, engine:"SimulationCraft test" }) });
+assert.equal(confirmedPlan.spentCopper, 30);
+assert.equal(confirmedPlan.costBreakdown.itemsCopper, confirmedPlan.spentCopper);
+assert.equal(confirmedPlan.costBreakdown.totalCopper, null);
 const copy1=option(20,"FINGER_1",20),copy2=option(20,"FINGER_2",20);
 assert.throws(()=>auctionPlanCost([copy1,copy2]),/quantity/);assert.equal(auctionPlanCost([{...copy1,quantity:2},{...copy2,quantity:2}]),20);
 const rings=await planAuctionGear({budgetCopper:20,options:[copy1,copy2],loadout:[],specId:72,market,signal,simulate:async s=>({...await simulate(s),dps:1000+100*s.length})});assert.equal(rings.purchases.length,1);

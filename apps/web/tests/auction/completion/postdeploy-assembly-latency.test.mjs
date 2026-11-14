@@ -11,7 +11,7 @@ test('every assembly response, including continuation, caps new native work at e
  assert(next.newCalls<=8,`Continuation must publish after at most eight effects; received ${next.newCalls}`);
  assert.equal(h.entry.context.options.length,8);assert.equal(next.result.exhaustiveComplete,false);
  assert.notDeepEqual(h.entry.assemblyCheckpoint,checkpoint,'Continuation advances its saved cursor');
- assert(h.state.saves>0&&h.state.flushes===2,'Both responses checkpoint and await publication barrier');
+ assert(h.state.saves>0&&h.state.flushes===4,'Both steps persist the primary result before publication and await final cleanup barrier');
 });
 
 test('three-second native calls yield before another call once the ten-second assembly budget is reached',async()=>{
@@ -78,4 +78,23 @@ test('repricing, exclusions and newly arrived physical copies reuse measured eff
  assert(!result.bestConfirmed.purchases.some(p=>p.auctionId===300));
  const resumed=(await h.step(exclusion)).result;
  assert.equal(h.calls.length,before);assert.equal(resumed.bestConfirmed.spentCopper,refreshedExpected.cost);
+});
+
+test('repeated discovery requests exceeding step budget cannot starve assembly simulations',async()=>{
+ const h=await assemblyRunnerFixture({nativeMs:3000,discoveryMs:15000});
+ h.state.pending=3;
+ for(let round=0;round<3;round++){
+  const beforeDiscovery=h.state.discoveryCalls;
+  const discoveryStep=await h.step();
+  assert.equal(h.state.discoveryCalls,beforeDiscovery+1,'Discovery must receive its next turn');
+  assert.equal(discoveryStep.newCalls,0,'Slow discovery consumes its entire soft step budget');
+  assert.equal(h.state.pending,2-round);
+  const pending=h.state.pending;
+  const simulationStep=await h.step();
+  assert(simulationStep.newCalls>0,'Already-discovered candidates must advance on the following turn');
+  assert.equal(h.state.discoveryCalls,beforeDiscovery+1,'Simulation turn must not start another slow discovery call');
+  assert.equal(h.state.pending,pending,'Discovery progress must be retained across the simulation turn');
+ }
+ assert.equal(h.state.pending,0);
+ assert(h.calls.length>0);
 });

@@ -1,0 +1,33 @@
+// Offline contract tests; synthetic measurements are not live performance evidence.
+import assert from 'node:assert/strict';
+import { evaluateAuctionGearScenarios } from '../lib/wow/auctionGearScenarioExecution.ts';
+import { exactCommodityCost, auctionGearCostBreakdown } from '../lib/wow/auctionGearCost.ts';
+import { parseAuctionGearEncounter } from '../lib/wow/auctionGearScenarios.ts';
+assert.equal(exactCommodityCost([[100, 2], [200, 3]], 4), 600);
+assert.equal(exactCommodityCost([[100, 2]], 3), null);
+assert.throws(() => exactCommodityCost([[100, 2], [50, 1]], 1));
+assert.equal(auctionGearCostBreakdown([], [{itemId:1, quantity:1, kind:'gem'}], {'1':{ladder:[[100, 2]]}}, 1000).totalCopper, null);
+assert.equal(auctionGearCostBreakdown([], [{itemId:1, quantity:2, kind:'gem'}, {itemId:1, quantity:2, kind:'gem'}], {'1':{ladder:[[100, 3]]}}, 1000).enhancements[0].quotedCopper, null);
+assert.equal(auctionGearCostBreakdown([], [], {}, 0).budgetCertified, true);
+assert.throws(() => parseAuctionGearEncounter({scenario:'execute', targets:5}));
+assert.throws(() => parseAuctionGearEncounter({fightLengthSeconds:301}));
+assert.deepEqual(parseAuctionGearEncounter({scenario:'aoe'}), {scenario:'aoe', fightLengthSeconds:60, targets:5});
+let calls = 0;
+const results = await evaluateAuctionGearScenarios(['a', 'b'], [parseAuctionGearEncounter({}), parseAuctionGearEncounter({scenario:'aoe'})], new AbortController().signal, async (selection, encounter) => {
+ calls++; return {dps: encounter.targets * 100 + (selection ? 5 : 0), dpsError:10, confidence:95, iterations:100, engine:'SimulationCraft test'};
+});
+assert.equal(calls, 6); assert.equal(results[1].baseline.dps, 500);
+assert.equal(results[0].candidates[0].comparison.uncertainty.significant, false);
+await assert.rejects(() => evaluateAuctionGearScenarios(['a'], [parseAuctionGearEncounter({}),parseAuctionGearEncounter({})], new AbortController().signal, async()=>{}));
+console.log('auction quality contracts: passed');
+const { parseAuctionClientFormIntent } = await import('../lib/wow/auctionGearClient.ts');
+const intent = {characterSlug:'eu/realm/name', locale:'en', budgetGold:'100', scenario:'aoe', objective:'dps', selectedSlots:['HEAD'], fightLengthSeconds:150, targets:7, compareScenarios:[parseAuctionGearEncounter({scenario:'execute'})]};
+assert.deepEqual(parseAuctionClientFormIntent(intent), intent);
+assert.equal(parseAuctionClientFormIntent({...intent, targets:9}), null);
+assert.equal(parseAuctionClientFormIntent({...intent, compareScenarios:Array(4).fill({scenario:'aoe'})}), null);
+const { auctionGearEncounterMatches } = await import('../lib/wow/auctionGearScenarios.ts');
+assert(auctionGearEncounterMatches({scenario:'aoe'}, {scenario:'aoe', fightLengthSeconds:60, targets:5, compareScenarios:[]}));
+assert(!auctionGearEncounterMatches(intent, {...intent, targets:5}));
+assert(!auctionGearEncounterMatches(intent, {...intent, fightLengthSeconds:120}));
+assert(!auctionGearEncounterMatches(intent, {...intent, compareScenarios:[]}));
+assert(auctionGearEncounterMatches(intent, JSON.parse(JSON.stringify(intent))));

@@ -56,6 +56,7 @@ export function auctionGearPurchase(option: AuctionGearOption): AuctionGearPurch
     effects: variant.resolution?.effectsVerified ? variant.resolution.effects : undefined,
     effectsVerified: variant.resolution?.effectsVerified,
     lotCostCopper: option.costCopper, quantity: option.quantity,
+    costBreakdown: { itemsCopper: option.costCopper, totalCopper: null, coverage: "enhancement_compatibility_unverified" },
   };
 }
 
@@ -98,6 +99,7 @@ type PlannerInput = {
   signal: AbortSignal;
   simulate: (selections: AuctionGearOption[], signal: AbortSignal) => Promise<GearPlanSimulation>;
   onProgress?: (progress: AuctionPlanProgress) => void;
+  onCacheHit?: () => void;
   maxNewSimulations?: number;
   maxAssignments?: number;
   shouldYield?: () => boolean;
@@ -139,6 +141,7 @@ async function baselineFor(input: PlannerInput, cache: AuctionGearSimulationCach
   auctionPlanLoadout(input.loadout, [], input.specId, input.selectedSlots);
   const key = auctionSelectionEffectKey([]);
   const cached = input.baseline ?? cache[key];
+  if (cached) input.onCacheHit?.();
   const baseline = validSimulation(cached ?? await input.simulate([], input.signal));
   cache[key] = baseline;
   for (const result of Object.values(cache)) validSimulation(result, baseline.engine);
@@ -185,6 +188,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
     let compatible = true;
     try { auctionPlanLoadout(input.loadout, [option], input.specId, slots); } catch { compatible = false; }
     let simulated = false;
+    if (compatible && checkpoint.simulationCache[key]) input.onCacheHit?.();
     if (compatible && !checkpoint.simulationCache[key]) {
       if (calls >= max) break;
       checkpoint.simulationCache[key] = validSimulation(await input.simulate([option], input.signal), checkpoint.baseline.engine);
@@ -406,6 +410,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     catch { return { processed: true, simulated: false }; }
     const key = auctionSelectionEffectKey(selection);
     let simulation = checkpoint.simulationCache[key], simulated = false;
+    if (simulation) input.onCacheHit?.();
     if (!simulation) {
       if (calls >= max) return { processed: false, simulated: false };
       simulation = validSimulation(await input.simulate(selection, input.signal), checkpoint.baseline.engine);
@@ -492,6 +497,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   input.signal.throwIfAborted();
   assertFreshMarket(input.market);
   return { checkpoint, result: { kind: "assembly", objective: input.objective ?? "dps", searchId: input.searchId, selectedSlots: slots,
+    costBreakdown: { itemsCopper: spentCopper, totalCopper: null, coverage: "enhancement_compatibility_unverified" },
     budgetCopper: input.budgetCopper, spentCopper, remainingCopper: input.budgetCopper - spentCopper,
     purchases: selection.map(auctionGearPurchase), removedSlots: input.loadout.filter(i => !final.some(f => f.slotType === i.slotType)).map(i => i.slotType),
     comparison: compareGearSimulationResults(checkpoint.baseline, checkpoint.best.simulation), engine: checkpoint.baseline.engine,
@@ -514,8 +520,9 @@ export async function planAuctionGear(input: Omit<PlannerInput, "searchId" | "se
     maxNewSimulations: input.maxSimulations });
   // The original entry point promised only confirmed purchase recommendations.
   // The assembly API exposes the measured maximum and its uncertainty separately.
-  return result.bestConfirmed ? { ...result, ...result.bestConfirmed } : {
-    ...result, spentCopper: 0, remainingCopper: input.budgetCopper, purchases: [], removedSlots: [],
+  return result.bestConfirmed ? { ...result, ...result.bestConfirmed,
+    costBreakdown: { itemsCopper: result.bestConfirmed.spentCopper, totalCopper: null, coverage: "enhancement_compatibility_unverified" } } : {
+    ...result, costBreakdown: { itemsCopper: 0, totalCopper: null, coverage: "enhancement_compatibility_unverified" }, spentCopper: 0, remainingCopper: input.budgetCopper, purchases: [], removedSlots: [],
     comparison: compareGearSimulationResults(checkpoint.baseline, checkpoint.baseline),
   };
 }

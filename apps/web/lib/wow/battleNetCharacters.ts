@@ -66,8 +66,10 @@ function rosterKey(accessToken: string, locale: string, onlyRegion?: BattleNetRe
   return `${createHash("sha256").update(accessToken).digest("base64url")}:${locale}:${onlyRegion ?? "*"}`;
 }
 
-export async function getBattleNetCharacters(accessToken: string, locale: "en" | "ru", onlyRegion?: BattleNetRegion, signal?: AbortSignal): Promise<BattleNetCharacter[]> {
+export async function getBattleNetCharacters(accessToken: string, locale: "en" | "ru", onlyRegion?: BattleNetRegion, signal?: AbortSignal, options?: { cache?: "default" | "no-store" }): Promise<BattleNetCharacter[]> {
   signal?.throwIfAborted();
+  // Authorization checks must use a fresh roster without changing the UI cache.
+  if (options?.cache === "no-store") return fetchBattleNetCharacters(accessToken, locale, onlyRegion, signal);
   const key = rosterKey(accessToken, locale, onlyRegion);
   const cached = rosterCache.get(key);
   if (cached && cached.expires > Date.now()) return [...cached.characters];
@@ -135,7 +137,7 @@ async function fetchBattleNetCharacters(accessToken: string, locale: "en" | "ru"
   return characters.sort((a, b) => b.level - a.level || a.name.localeCompare(b.name, locale === "ru" ? "ru-RU" : "en-US"));
 }
 
-export async function getBattleNetCharacterBySlug(accessToken: string, locale: "en" | "ru", slug: string, signal?: AbortSignal): Promise<BattleNetCharacter | undefined> {
+export async function getBattleNetCharacterBySlug(accessToken: string, locale: "en" | "ru", slug: string, signal?: AbortSignal, options?: { cache?: "default" | "no-store" }): Promise<BattleNetCharacter | undefined> {
   const requested = decodeURIComponent(slug).toLowerCase();
   const requestedRegion = requested.split("--", 1)[0];
   const characters = await getBattleNetCharacters(
@@ -143,6 +145,7 @@ export async function getBattleNetCharacterBySlug(accessToken: string, locale: "
     locale,
     isBattleNetRegion(requestedRegion) ? requestedRegion : undefined,
     signal,
+    options,
   );
   return characters.find((character) =>
     `${character.region}--${character.realm.slug}--${character.name.toLowerCase()}` === requested,

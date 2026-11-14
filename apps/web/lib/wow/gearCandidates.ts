@@ -42,6 +42,10 @@ export type GearCandidate = {
   rejectionReasons: string[];
 };
 
+export type GearEnhancementMetadata = { status: "unknown" } | {
+  status: "verified"; socketColors: number[]; socketCount: number; socketBonusId: number;
+  requiredProfessionId: number; requiredProfessionRank: number;
+};
 export type GearCandidateVariant = {
   key: string;
   itemLevel: number;
@@ -52,7 +56,8 @@ export type GearCandidateVariant = {
   upgradeRank?: number;
   sourceArtifactId?: string;
   resolution?: {engine:string;requiredLevel:number;stats:Record<string,number>;
-    weapon?: GearPlannerWeapon; effects?: string[]; effectsVerified?: boolean};
+    weapon?: GearPlannerWeapon; effects?: string[]; effectsVerified?: boolean;
+    metadataVersion?: number; enhancements?: GearEnhancementMetadata};
   modifiers?: Array<{ type: number; value: number }>;
 };
 

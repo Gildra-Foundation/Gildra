@@ -14,6 +14,8 @@ import { itemStatNames, statName } from "./itemStats";
 import { UNRESOLVED_TEMPLATE, chargeCount, powerCost, spellDescriptionText } from "./tooltipValues";
 import "./catalogTooltip.css";
 
+const NUMBER_LOCALE: Record<Lang, string> = { ru: "ru-RU", en: "en-US" };
+
 const PLAYABLE_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
 function safeTooltipText(value: unknown, lang: Lang) {
@@ -135,7 +137,7 @@ function TooltipBlock({ block, entityType, wow, lang, mentions }: { block: Recor
   if (type === "required_level") return <div>{tooltipContentCopy[lang].requiresLevel} {String(block.value ?? "")}</div>;
   if (type === "required_skill") return <div>{requiredSkillLabel(Number(block.skill_id), Number(block.rank), lang)}</div>;
   if (type === "required_reputation" && typeof block.name === "string" && tooltipContentCopy[lang].reputationRanks[Number(block.rank)]) return <div>{tooltipContentCopy[lang].requiresReputation}: {block.name} — {tooltipContentCopy[lang].reputationRanks[Number(block.rank)]}</div>;
-  if (type === "weapon_speed" && Number(block.seconds) > 0) return <div>{tooltipContentCopy[lang].weaponSpeed} {Number(block.seconds).toLocaleString(lang === "ru" ? "ru-RU" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>;
+  if (type === "weapon_speed" && Number(block.seconds) > 0) return <div>{tooltipContentCopy[lang].weaponSpeed} {Number(block.seconds).toLocaleString(NUMBER_LOCALE[lang], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>;
   if (type === "weapon_damage" && Number(block.max) > 0) return <WeaponDamage block={block} lang={lang} />;
   if (type === "armor" && Number(block.value) > 0) return <div>{lang === "ru" ? `${tooltipContentCopy.ru.armor}: ${String(block.value)}` : `${String(block.value)} ${tooltipContentCopy.en.armor}`}</div>;
   if (type === "unique" && Number(block.quantity) > 0) return <div>{tooltipContentCopy[lang].unique}{Number(block.quantity) > 1 ? ` (${String(block.quantity)})` : ""}</div>;
@@ -523,7 +525,7 @@ function TooltipPrice({ buy, sell, lang }: { buy: number; sell: number; lang: La
 /** "27 – 52 Damage · Speed 3.00" and the damage per second under it, as the game prints a weapon. */
 function WeaponDamage({ block, lang }: { block: Record<string, unknown>; lang: Lang }) {
   const copy = tooltipContentCopy[lang];
-  const number = (value: unknown, digits: number) => Number(value).toLocaleString(lang === "ru" ? "ru-RU" : "en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const number = (value: unknown, digits: number) => Number(value).toLocaleString(NUMBER_LOCALE[lang], { minimumFractionDigits: digits, maximumFractionDigits: digits });
   const range = `${number(block.min, 0)} – ${number(block.max, 0)}`;
   return <div className="db-tooltip-stats">
     <div><span>{lang === "ru" ? `${copy.damage}: ${range}` : `${range} ${copy.damage}`}</span><span>{copy.weaponSpeed} {number(block.speed, 2)}</span></div>
