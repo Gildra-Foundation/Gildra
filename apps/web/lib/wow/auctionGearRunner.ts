@@ -260,11 +260,13 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
   const context = entry.context;
   const cache = retainAuctionSimulations(entry);
   if (entry.searchCheckpoint) Object.assign(entry.searchCheckpoint.simulationCache, cache);
+  const simulationConcurrency = await context.simulate.concurrency?.(signal) ?? 1;
   const { result, checkpoint } = await searchAuctionGearOptions({
     searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options: context.options,
     selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
     market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
     baseline: entry.retainedBaseline, simulationCache: cache,
+    simulationConcurrency,
     // The initial response includes baseline plus two native comparisons.
     // Subsequent responses update the visible choices after eight new effects.
     maxNewSimulations: maxNewSimulations ?? (entry.latestSearchResult ? 8 : 3),
@@ -705,7 +707,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   let verified = freshMetadata;
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
-  return async (selections: AuctionGearOption[], simSignal: AbortSignal): Promise<GearPlanSimulation> => {
+  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal): Promise<GearPlanSimulation> => {
       assertFreshMarket(market);
       const prepared = prepareGearLoadout({
         selections,
@@ -752,4 +754,24 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       return simulation;
       });
     };
+  // Capacity is live process state, not part of a persisted character/engine
+  // identity. Recheck between turns so a worker rollback cannot leave a warm
+  // search repeatedly submitting pairs to a one-permit legacy worker.
+  return Object.assign(simulate, {
+    async concurrency(signal: AbortSignal): Promise<1 | 2> {
+      signal.throwIfAborted();
+      try {
+        const response = await fetch(`${(process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "")}/healthz`, {
+          cache: "no-store", signal: AbortSignal.any([signal, AbortSignal.timeout(2_000)]),
+        });
+        const capacity = response.ok && response.headers.get("x-gildra-simulation-concurrency") === "2" ? 2 : 1;
+        await response.body?.cancel();
+        signal.throwIfAborted();
+        return capacity;
+      } catch {
+        signal.throwIfAborted();
+        return 1;
+      }
+    },
+  });
 }

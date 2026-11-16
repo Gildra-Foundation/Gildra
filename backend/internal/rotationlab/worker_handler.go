@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
@@ -40,6 +41,11 @@ func (h *WorkerHandler) preset(w http.ResponseWriter, r *http.Request) {
 func (h *WorkerHandler) health(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
+	if native, ok := h.engine.(interface{ NativeSimulationConcurrency() int }); ok {
+		if capacity := native.NativeSimulationConcurrency(); capacity >= 1 && capacity <= maxSimCConcurrency {
+			w.Header().Set("X-Gildra-Simulation-Concurrency", strconv.Itoa(capacity))
+		}
+	}
 	_, _ = w.Write([]byte(`{"status":"ok","engine":"simulationcraft"}`))
 }
 

@@ -2,15 +2,35 @@ package rotationlab
 
 import (
 	"context"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 )
 
 const (
 	maxSimCWaiting       = 8
+	maxSimCConcurrency   = 2
 	defaultSimCQueueWait = 5 * time.Second
 )
 
-// Both native entry points share one process permit. A short burst can wait,
+// Keep the single-process default for workers with a one-CPU budget. Explicitly
+// configured workers may run two independent threads=1 simulations, preserving
+// each simulation's deterministic stream and precision. Invalid configuration
+// retains the safe default instead of disabling the native engine.
+func configuredSimCConcurrency() int {
+	value, err := strconv.Atoi(strings.TrimSpace(os.Getenv("SIMC_CONCURRENCY")))
+	if err != nil || value < 1 || value > maxSimCConcurrency {
+		return 1
+	}
+	return value
+}
+
+// NativeSimulationConcurrency advertises the actual shared process capacity,
+// rather than an environment value that may not match the running engine.
+func (e *SimCEngine) NativeSimulationConcurrency() int { return cap(e.limit) }
+
+// Both native entry points share the same bounded process permits. A burst can wait,
 // but at most eight requests wait and each wait ends within five seconds (or
 // its caller's earlier deadline). No background worker goroutines are needed.
 func (e *SimCEngine) acquire(ctx context.Context) error {

@@ -72,7 +72,10 @@ export async function harness({ entity = record(), availableReference = true, re
       prepareGearLoadout: ({ selections }) => ({ equipment: state.armory.equipment,
         changes: selections.map(selection => ({ itemId: selection.candidate.itemId,
           bonusIds: selection.candidate.variants.find(variant => variant.key === selection.variantKey).bonusIds })) }),
-      fetch: async (_url, options) => {
+      fetch: async (url, options) => {
+        if (new URL(url).pathname === "/healthz") return Response.json({ status: "ok" }, {
+          headers: { "x-gildra-simulation-concurrency": "2" },
+        });
         state.simulationCalls++;
         const request = JSON.parse(options.body); state.simulationRequests.push(request);
         const changes = request.gearChanges ?? []; state.simulationOrder.push(changes.map(c=>c.itemId));

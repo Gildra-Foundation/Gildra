@@ -293,6 +293,7 @@ services:
     restart: unless-stopped
     environment:
       ROTATION_WORKER_ADDR: 0.0.0.0:8080
+      SIMC_CONCURRENCY: "2"
     # SimulationCraft is CPU bound. Bound it so a burst of simulations cannot
     # starve PostgreSQL or the API that share this host.
     mem_limit: 2g

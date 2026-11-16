@@ -101,6 +101,8 @@ type PlannerInput = {
   onProgress?: (progress: AuctionPlanProgress) => void;
   onCacheHit?: () => void;
   maxNewSimulations?: number;
+  /** Independent candidate measurements only; each native run keeps its own RNG. */
+  simulationConcurrency?: 1 | 2;
   maxAssignments?: number;
   shouldYield?: () => boolean;
   baseline?: GearPlanSimulation;
@@ -191,9 +193,49 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
     if (compatible && checkpoint.simulationCache[key]) input.onCacheHit?.();
     if (compatible && !checkpoint.simulationCache[key]) {
       if (calls >= max) break;
-      checkpoint.simulationCache[key] = validSimulation(await input.simulate([option], input.signal), checkpoint.baseline.engine);
-      checkpoint.simulations++;
-      calls++;
+      const batch = [{ option, key }];
+      // Look ahead only within this turn's assignment budget. Equivalent lots
+      // share a measurement; incompatible single items remain for assembly.
+      if (input.simulationConcurrency === 2 && calls + 1 < max) {
+        const end = Math.min(options.length, checkpoint.nextOption + maxAssignments - assignments, checkpoint.nextOption + 256);
+        for (let index = checkpoint.nextOption + 1; index < end && !input.shouldYield?.(); index++) {
+          const next = evaluationOptions[index], nextKey = auctionSelectionEffectKey([next]);
+          if (nextKey === key || checkpoint.simulationCache[nextKey]) continue;
+          try { auctionPlanLoadout(input.loadout, [next], input.specId, slots); } catch { continue; }
+          batch.push({ option: next, key: nextKey });
+          break;
+        }
+      }
+      if (batch.length === 1) {
+        checkpoint.simulationCache[key] = validSimulation(await input.simulate([option], input.signal), checkpoint.baseline.engine);
+        checkpoint.simulations++;
+        calls++;
+      } else {
+        const controller = new AbortController();
+        const signal = AbortSignal.any([input.signal, controller.signal]);
+        let failure: unknown;
+        const measured = await Promise.allSettled(batch.map(async candidate => {
+          try {
+            signal.throwIfAborted();
+            const result = await input.simulate([candidate.option], signal);
+            signal.throwIfAborted();
+            return validSimulation(result, checkpoint.baseline.engine);
+          }
+          catch (error) { failure ??= error; controller.abort(error); throw error; }
+        }));
+        for (let index = 0; index < measured.length; index++) {
+          const result = measured[index];
+          if (result.status !== "fulfilled") continue;
+          checkpoint.simulationCache[batch[index].key] = result.value;
+          checkpoint.simulations++;
+          calls++;
+        }
+        // Preserve completed measurements even if their sibling failed. The
+        // traversal cursor stays put, so resume cannot skip the failed item.
+        if (measured.some(result => result.status === "rejected") || input.signal.aborted) {
+          save(); input.signal.throwIfAborted(); throw failure;
+        }
+      }
       simulated = true;
       input.onProgress?.({ phase: "simulating", completed: calls, total: max });
     }

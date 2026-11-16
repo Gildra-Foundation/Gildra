@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -16,8 +17,13 @@ import (
 	"time"
 )
 
-func admissionTestEngine(t *testing.T) (*SimCEngine, string) {
+func admissionTestEngine(t *testing.T, concurrency ...int) (*SimCEngine, string) {
 	t.Helper()
+	permits := 1
+	if len(concurrency) > 0 {
+		permits = concurrency[0]
+	}
+	t.Setenv("SIMC_CONCURRENCY", strconv.Itoa(permits))
 	dir := t.TempDir()
 	marker := filepath.Join(dir, "executed")
 	binary := filepath.Join(dir, "native-stub")
