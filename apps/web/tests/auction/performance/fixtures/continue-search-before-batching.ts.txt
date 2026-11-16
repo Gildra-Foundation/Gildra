@@ -1,0 +1,57 @@
+// Exact former Runner function from commit 37f3cfbea1ea7374b9d0b8efef11e8b8cdb76e86; synthetic test comparator only.
+export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, signal: AbortSignal,
+  progress: (p: AuctionPlanProgress) => void, token?: string,
+  publishResult?: (result: AuctionGearRunResult) => void) {
+  const started = Date.now(), shouldYield = () => Date.now() - started >= 10_000;
+  const diagnostics = metricsFor(entry.context.armory ?? entry.context);
+  const finishStep = diagnostics.beginStep("search");
+  const discoveryShouldYield = () => Date.now() - started >= 5_000;
+  const advanceComparisons = async () => {
+    const limit = entry.latestSearchResult ? 8 : 3;
+    let result;
+    for (let step = 0; step < limit; step++) {
+      result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult ? 1 : undefined);
+      if (publishResult) {
+        await flushAuctionGearSearch(entry);
+        signal.throwIfAborted();
+        const diagnosticKey = entry.context.armory ?? entry.context;
+        const seen = comparedOptions.get(diagnosticKey) ?? new Set<string>();
+        for (const item of result.items) if (item.comparison && !seen.has(item.optionId)) {
+          seen.add(item.optionId); metricsFor(diagnosticKey).comparison();
+        }
+        comparedOptions.set(diagnosticKey, seen);
+        publishResult(publicAuctionResult(entry.context, result));
+      }
+      if (!publishResult || shouldYield() || result.pendingItems === 0) break;
+    }
+    return result!;
+  };
+  entry.busy = true;
+  try {
+    signal.throwIfAborted();
+    if (entry.latestSearchResult) publishResult?.(publicAuctionResult(entry.context, entry.latestSearchResult));
+    let simulated = false;
+    // Alternate the first turn when discovery outlives its cooperative budget.
+    // Retain this choice across recovery so slow upstream calls cannot starve
+    // already-discovered comparisons on every continuation.
+    if (entry.nextSearchPhase === "simulation" && entry.context.options.length) {
+      entry.nextSearchPhase = "discovery";
+      await advanceComparisons();
+      simulated = true;
+    }
+    if (!shouldYield()) {
+      entry.nextSearchPhase = "simulation";
+      await discoverAuctionOptions(entry, token, signal, progress, discoveryShouldYield, entry.latestSearchResult ? 4 : 12);
+    }
+    signal.throwIfAborted();
+    const result = simulated
+      ? await updateAuctionSearchResult(entry, signal, progress, () => true)
+      : await advanceComparisons();
+    if (!shouldYield()) entry.nextSearchPhase = "discovery";
+    return publicAuctionResult(entry.context, result);
+  } finally {
+    try { await flushAuctionGearSearch(entry); } finally {
+      entry.busy = false; finishStep(); logAuctionGearDiagnostics(diagnostics.snapshot());
+    }
+  }
+}
