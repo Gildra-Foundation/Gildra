@@ -30,15 +30,16 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
     summary.current?.focus();
   };
 
+  const complete = assembly.exhaustiveComplete && assembly.scenarioComparisonsComplete !== false && assembly.enhancementOptimization?.complete !== false;
   return <div className={styles.result} data-auction-assembly-result data-exhaustive={assembly.exhaustiveComplete} data-price-state={stale ? "stale" : "calculated"} data-selected-result={selected.key}>
     <h4 ref={summary} tabIndex={-1} className={tools.subtitle} data-auction-primary-title>{selected.significant
-      ? selected.key === recommended?.key ? t("Рекомендуемый комплект", "Recommended loadout") : t("Выбранный комплект", "Selected loadout")
+      ? selected.key === recommended?.key ? complete ? t("Рекомендуемый комплект", "Recommended loadout") : t("Лучший из проверенных", "Best among checked") : t("Выбранный комплект", "Selected loadout")
       : t("Подтверждённого улучшения нет", "No confirmed upgrade")}</h4>
     <p className={styles.note}>{label(selected)} · {assembly.objective === "value" ? t("Подбор по цене за прирост DPS", "Selected by cost per DPS gain") : t("Подбор по максимуму DPS", "Selected for maximum DPS")}</p>
     {stale ? <p role="status" className={styles.staleResult}>{t("Цены не подтверждены — пересоберите сет перед покупкой.", "Prices are not verified — rebuild the loadout before buying.")}</p> : null}
-    {!assembly.exhaustiveComplete || assembly.enhancementOptimization?.complete === false ? <p className={styles.note}>{t("Промежуточный результат: расчёт ещё не завершён.", "Interim result: calculation is still incomplete.")}</p> : null}
+    {!complete ? <p className={styles.note}>{t("Проверена часть вариантов. Полный поиск продолжит расчёт с сохранённого места.", "Only some options have been checked. Full search continues from the saved checkpoint.")}</p> : null}
     {selected.kind === "items" ? <p className={styles.note}>{assembly.enhancementOptimization?.status === "pending"
-      ? t("Камни и чары ещё подбираются; полная стоимость и остаток бюджета неизвестны.", "Gems and enchants are still being selected; full cost and remaining budget are unknown.")
+      ? t("Камни и чары для этого комплекта ещё не подобраны; полная стоимость и остаток бюджета неизвестны.", "Gems and enchants have not been selected for this loadout yet; full cost and remaining budget are unknown.")
       : t("Камни и чары для этого комплекта не подобраны; полная стоимость и остаток бюджета неизвестны.", "Gems and enchants have not been selected for this loadout; full cost and remaining budget are unknown.")}</p>
       : !selected.fullyEnhanced ? <p className={styles.note}>{t("Не все доступные камни и чары установлены в этом варианте.", "This option does not fill every available gem and enchant slot.")}</p> : null}
     {selected.kind === "enhanced" && selected.totalCopper === null ? <p className={styles.staleResult}>{t("Полная цена или доступность расходников не подтверждена; остаток бюджета неизвестен.", "Full consumable prices or availability are unverified; remaining budget is unknown.")}</p> : null}

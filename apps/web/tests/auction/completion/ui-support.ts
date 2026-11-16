@@ -3,7 +3,7 @@ import { decodeAuctionGearSelectionTransport } from "../../../lib/wow/auctionGea
 import { goldToCopper } from "../../../lib/wow/auctionMarket";
 import { assemblyResult, completedJob, scope, searchResult } from "../reliability/ui-fixtures";
 
-type Body = { action: "search" | "resume" | "assemble"; clientRequestId?: string; budgetGold?: string; searchId?: string; excludedOptionIds?: string[]; excludedVariantKeys?: string[]; excludedVariantIds?: Array<[number,string]>; objective?: "value" | "dps"; locale?: string; selectedSlots?: string[]; scenario?: string };
+type Body = { action: "search" | "resume" | "assemble"; clientRequestId?: string; budgetGold?: string; searchId?: string; excludedOptionIds?: string[]; excludedVariantKeys?: string[]; excludedVariantIds?: Array<[number,string]>; objective?: "value" | "dps"; locale?: string; selectedSlots?: string[]; scenario?: string; fightLengthSeconds?: number; targets?: number; compareScenarios?: Array<{ scenario: string; fightLengthSeconds: number; targets: number }> };
 type Result = ReturnType<typeof searchResult> | ReturnType<typeof assemblyResult>;
 export class CompletionHarness {
   readonly language: "en" | "ru";
@@ -44,6 +44,7 @@ export class CompletionHarness {
   manyDuplicateLots = false;
   serverVariantExclusions: string[] = [];
   private serverObjective: "value" | "dps" = "dps";
+  private serverScope: Record<string, unknown> = {};
   incompleteData = false;
   incompleteSearchOnce = false;
   fail = false;
@@ -126,6 +127,7 @@ export class CompletionHarness {
       if (this.conflictNext) { this.conflictNext = false; await route.fulfill({ status: 409, json: { error: "plan_already_running" } }); return; }
       let result: Result;
       if (body.action === "assemble") { result = assemblyResult({ complete: this.assemblyCompleteness.shift() ?? true, noisyMaximum: Boolean(this.valueMaximum) });
+        result.updatedSearch = structuredClone(this.latestSearch);
         if (this.valueMaximum) { result.spentCopper = 500000; result.comparison.uncertainty.significant = this.valueMaximum === "confirmed"; } this.lastAssembly = result; this.serverExclusions = body.excludedOptionIds ?? []; this.serverVariantExclusions = decodeAuctionGearSelectionTransport(body).excludedVariantKeys as string[] ?? []; }
       else {
         result = searchResult();
@@ -134,6 +136,11 @@ export class CompletionHarness {
           try { result.budgetCopper = goldToCopper(body.budgetGold); }
           catch { await route.fulfill({ status: 400, json: { error: "invalid_budget" } }); return; }
           result.selectedSlots = body.selectedSlots ?? result.selectedSlots; result.scenario = body.scenario ?? result.scenario;
+          // Subsequent owned results retain the accepted server scope. A fixed
+          // four-slot/default-encounter fixture is not a valid response to a
+          // different initial request under the real client's intent checks.
+          this.serverScope = { budgetCopper: result.budgetCopper, selectedSlots: [...result.selectedSlots], scenario: result.scenario,
+            fightLengthSeconds: body.fightLengthSeconds, targets: body.targets, compareScenarios: body.compareScenarios };
         }
         if (this.valueChoices) {
           const base = result.items.find(item => item.evaluation === "upgrade")!;
@@ -162,8 +169,8 @@ export class CompletionHarness {
         if (body.action === "search" && this.incompleteSearchOnce) { result.searchComplete = false; result.pendingItems = 1; this.incompleteSearchOnce = false; }
         this.latestSearch = result;
       }
-      Object.assign(result, { objective: this.serverObjective });
-      if ("updatedSearch" in result) Object.assign(result.updatedSearch, { objective: this.serverObjective });
+      Object.assign(result, this.serverScope, { objective: this.serverObjective });
+      if ("updatedSearch" in result) Object.assign(result.updatedSearch, this.serverScope, { objective: this.serverObjective });
       const existing = body.clientRequestId ? this.byRequest.get(body.clientRequestId) : undefined;
       const id = existing ?? `completion-job-${this.requests.length}`;
       this.workStarted.push(body.action);

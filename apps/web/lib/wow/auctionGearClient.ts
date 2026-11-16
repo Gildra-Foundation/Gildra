@@ -1,6 +1,7 @@
 import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios, type AuctionGearEncounter } from "./auctionGearScenarios";
 import { normalizeAuctionBudgetGold } from "./auctionGearBudget";
 import { parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
+import { parseAuctionGearRunPolicy, type AuctionGearRunPolicy } from "./auctionGearRunPolicy";
 
 /** Browser transport, recovery handles and safe input intent. Prices/stats always come from the server. */
 export type AuctionClientFormIntent = {
@@ -49,7 +50,7 @@ export function parseAuctionClientActiveRecovery(input: unknown): AuctionClientA
     formIntent: parsed?.characterSlug === job.scope.characterSlug && parsed.locale === job.scope.locale ? parsed : null };
 }
 export type AuctionClientScope = { characterSlug: string; locale: "ru" | "en" };
-export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; cancellationRequested?: boolean; formIntent?: AuctionClientFormIntent };
+export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; cancellationRequested?: boolean; formIntent?: AuctionClientFormIntent; orchestration?: AuctionGearRunPolicy };
 const activeKey = "gildra:auction-active:v1";
 let retiring: Promise<void> = Promise.resolve();
 
@@ -74,7 +75,7 @@ export function readAuctionClientCache(key: string): AuctionClientCache | null {
       value.excludedOptionIds.length <= 20000 && value.excludedOptionIds.every(identity) &&
       (value.excludedVariantKeys === undefined || Array.isArray(value.excludedVariantKeys) && value.excludedVariantKeys.length <= 20000 && value.excludedVariantKeys.every(key => typeof key === "string" && key.length > 0 && key.length <= 240))
       ? { version: 1, profileKey: value.profileKey, searchId: identity(value.searchId) ? value.searchId : undefined,
-        jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)], excludedVariantKeys: [...new Set(value.excludedVariantKeys ?? [])], ...(formIntent ? { formIntent } : {}), ...(value.cancellationRequested ? { cancellationRequested: true } : {}) } : null;
+        jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)], excludedVariantKeys: [...new Set(value.excludedVariantKeys ?? [])], ...(formIntent ? { formIntent } : {}), ...(parseAuctionGearRunPolicy(value.orchestration) ? { orchestration: parseAuctionGearRunPolicy(value.orchestration) } : {}), ...(value.cancellationRequested ? { cancellationRequested: true } : {}) } : null;
   } catch { return null; }
 }
 export function writeAuctionClientCache(key: string, value: AuctionClientCache | null) {

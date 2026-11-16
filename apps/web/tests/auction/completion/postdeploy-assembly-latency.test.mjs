@@ -24,10 +24,13 @@ test('three-second native calls yield before another call once the ten-second as
  }
 });
 
-test('discovery time consumes the same assembly budget before native evaluation',async()=>{
+test('after the first seed turn discovery consumes the same assembly budget before native evaluation',async()=>{
  const h=await assemblyRunnerFixture({nativeMs:3000,discoveryMs:9000});
+ const first=await h.step();
+ assert(first.newCalls>0);assert.equal(h.state.pending,1,'First assembly prioritizes its existing verified pool');
+ const beforeDiscovery=h.state.discoveryCalls;
  const step=await h.step();
- assert.equal(h.state.discoveryCalls,1);assert.equal(step.newCalls,1,'Nine seconds of metadata work leaves time to start only one native request');
+ assert.equal(h.state.discoveryCalls,beforeDiscovery+1);assert.equal(step.newCalls,1,'Nine seconds of metadata work leaves time to start only one native request');
  assert.equal(step.elapsed,12000);assert.equal(step.result.exhaustiveComplete,false);assert(step.result.bestConfirmed);
 });
 
@@ -83,6 +86,8 @@ test('repricing, exclusions and newly arrived physical copies reuse measured eff
 test('repeated discovery requests exceeding step budget cannot starve assembly simulations',async()=>{
  const h=await assemblyRunnerFixture({nativeMs:3000,discoveryMs:15000});
  h.state.pending=3;
+ const first=await h.step();
+ assert(first.newCalls>0);assert.equal(h.state.pending,3,'First assembly leaves all discovery work for continuation');
  for(let round=0;round<3;round++){
   const beforeDiscovery=h.state.discoveryCalls;
   const discoveryStep=await h.step();

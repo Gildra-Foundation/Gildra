@@ -3,9 +3,15 @@ import { decodeAuctionGearSelectionTransport } from "../../../lib/wow/auctionGea
 import { aliasIds, assemblyResult, characterSlug, completedJob, scope, searchResult, wrist } from "../reliability/ui-fixtures";
 import { test, expect, type CompletionHarness } from "./ui-support";
 
-const waitingForQuota = /Ожидаем освобождения очереди|Waiting for calculation capacity/;
+const waitingForQuota = /Ждём очереди|Waiting in queue/;
 const cancelAssembly = /Отменить сборку|Cancel assembly/;
 const assemblyRequests = (auction: CompletionHarness) => auction.requests.filter(body => body.action === "assemble");
+const fullSearch = (auction: CompletionHarness) => auction.panel.getByRole("button", { name: /^(Полный поиск|Full search)$/ });
+async function initialQuick(auction: CompletionHarness) {
+  await auction.open(); await auction.search();
+  await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
+  await expect(auction.build).toBeEnabled();
+}
 
 async function restoreAssemblyHandle(page: Page, auction: CompletionHarness, observedActive: boolean) {
   const id = "synthetic-restored-assembly";
@@ -16,12 +22,13 @@ async function restoreAssemblyHandle(page: Page, auction: CompletionHarness, obs
   const checkpoint = assemblyResult();
   const activeJob = { id, status: "running", mode: "assembly", result: null, progress: null, error: null,
     scope: scope(auction.language), searchId: source.searchId };
-  await page.addInitScript(({ language, characterSlug, id, nonce, excludedOptionIds, excludedVariantKeys }) => {
+  await page.addInitScript(({ language, characterSlug, id, nonce, excludedOptionIds, excludedVariantKeys, observedActive }) => {
     sessionStorage.setItem(`gildra:auction:v1:${encodeURIComponent(characterSlug)}:fury-warrior:${language}`, JSON.stringify({
       version: 1, profileKey: "synthetic-reliability:0", searchId: "synthetic-reliability-search", jobId: id,
       clientRequestId: nonce, mode: "assembly", excludedOptionIds, excludedVariantKeys,
+      ...(observedActive ? { orchestration: { kind: "full", phase: "assembly", startedAt: Date.now(), searchTurns: 1, assemblyTurns: 0 } } : {}),
     }));
-  }, { language: auction.language, characterSlug, id, nonce, excludedOptionIds, excludedVariantKeys });
+  }, { language: auction.language, characterSlug, id, nonce, excludedOptionIds, excludedVariantKeys, observedActive });
   await page.route("**/api/wow/auction-gear-plans**", async route => {
     const request = route.request(), query = new URL(request.url()).searchParams;
     if (request.method() !== "GET") { await route.fallback(); return; }
@@ -39,18 +46,19 @@ async function restoreAssemblyHandle(page: Page, auction: CompletionHarness, obs
 
 test("one click finishes every assembly step with fresh nonces and the chosen variant and lot exclusions", async ({ auction, page }, info) => {
   auction.canonicalVariant = true;
-  await auction.open(); await auction.search();
+  await initialQuick(auction);
+  await auction.panel.getByText(/^(Отдельные улучшения по слотам|Individual slot upgrades)$/).click();
   await auction.panel.locator("[data-auction-option] summary").click();
   await auction.panel.getByRole("checkbox", { name: new RegExp(`(?:Учитывать вариант при сборке|Allow variant in assembly): ${wrist.name}`) }).focus();
   await page.keyboard.press("Space");
   await expect(auction.panel.locator("[data-auction-option]")).toHaveCount(0);
   await expect(auction.panel.locator("[data-auction-exclusions] > summary")).toBeVisible();
-  await auction.build.click(); await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
+  await fullSearch(auction).click(); await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
   await auction.result.getByRole("button", { name: /Исключить лот|Exclude (?:auction )?lot/i }).first().click();
 
   const firstNewRequest = assemblyRequests(auction).length;
   auction.assemblyCompleteness = [false, false, true];
-  await auction.build.click();
+  await fullSearch(auction).click();
   await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
   await expect(auction.build).toBeEnabled();
   const steps = assemblyRequests(auction).slice(firstNewRequest);
@@ -71,10 +79,10 @@ test("one click finishes every assembly step with fresh nonces and the chosen va
 });
 
 test("cancelling an automatic assembly step keeps the previous result and starts no further step", async ({ auction, page }) => {
-  await auction.open(); await auction.search();
-  auction.assemblyCompleteness = [false, false, true]; auction.holdAssemblyStep = 2;
-  await auction.build.click();
-  await expect.poll(() => assemblyRequests(auction).length).toBe(2);
+  await initialQuick(auction); const initialAssemblies = assemblyRequests(auction).length;
+  auction.assemblyCompleteness = [false, false, true]; auction.holdAssemblyStep = initialAssemblies + 2;
+  await fullSearch(auction).click();
+  await expect.poll(() => assemblyRequests(auction).length).toBe(initialAssemblies + 2);
   await expect(auction.result).toHaveAttribute("data-exhaustive", "false");
   await auction.assembly.getByRole("button", { name: cancelAssembly }).click();
   await expect.poll(() => auction.cancellationRequests.length).toBeGreaterThan(0);
@@ -84,29 +92,29 @@ test("cancelling an automatic assembly step keeps the previous result and starts
   await expect(auction.result).toBeVisible();
   await expect(auction.result).toHaveAttribute("data-price-state", "stale");
   await page.clock.install(); await page.clock.fastForward(180_000);
-  expect(assemblyRequests(auction)).toHaveLength(2);
+  expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 2);
 });
 
 test("a failed automatic next step keeps the previous confirmed result with stale prices and stops", async ({ auction, page }) => {
-  await auction.open(); await auction.search();
+  await initialQuick(auction); const initialAssemblies = assemblyRequests(auction).length;
   auction.assemblyCompleteness = [false, false, true];
   await page.route("**/api/wow/auction-gear-plans**", async route => {
     const request = route.request();
-    if (request.method() === "POST" && request.postDataJSON().action === "assemble" && assemblyRequests(auction).length === 1) auction.fail = true;
+    if (request.method() === "POST" && request.postDataJSON().action === "assemble" && assemblyRequests(auction).length === initialAssemblies + 1) auction.fail = true;
     await route.fallback();
   });
-  await auction.build.click();
-  await expect(auction.assembly.getByRole("alert")).toContainText("SimulationCraft");
+  await fullSearch(auction).click();
+  await expect(auction.assembly.getByRole("alert")).toContainText(/Расчёт сейчас недоступен|Calculation is unavailable/);
   await expect(auction.result).toHaveAttribute("data-exhaustive", "false");
   await expect(auction.result).toHaveAttribute("data-price-state", "stale");
   await expect(auction.result).toContainText(/1[,.\s]?200/);
   await expect(auction.build).toBeEnabled();
   await page.clock.install(); await page.clock.fastForward(180_000);
-  expect(assemblyRequests(auction)).toHaveLength(2);
+  expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 2);
 });
 
 test("a remotely cancelled automatic next step keeps the previous result with stale prices and stops", async ({ auction, page }) => {
-  await auction.open(); await auction.search();
+  await initialQuick(auction);
   auction.assemblyCompleteness = [false, true];
   let steps = 0;
   await page.route("**/api/wow/auction-gear-plans**", async route => {
@@ -118,7 +126,7 @@ test("a remotely cancelled automatic next step keeps the previous result with st
     }
     await route.fallback();
   });
-  await auction.build.click();
+  await fullSearch(auction).click();
   await expect(auction.assembly.getByRole("status").filter({ hasText: /Расчёт остановлен|Calculation stopped/ })).toBeVisible();
   await expect(auction.result).toHaveAttribute("data-price-state", "stale");
   await expect(auction.result).toHaveAttribute("data-exhaustive", "false");
@@ -128,34 +136,34 @@ test("a remotely cancelled automatic next step keeps the previous result with st
 });
 
 test("a quota rejection waits a minute and resumes automatically with a fresh request identity", async ({ auction, page }, info) => {
-  await auction.open(); await auction.search();
+  await initialQuick(auction); const initialAssemblies = assemblyRequests(auction).length;
   await page.clock.install(); await page.clock.pauseAt(new Date());
-  auction.assemblyCompleteness = [false, true]; auction.rateLimitedAssemblySteps.add(2);
-  await auction.build.click();
-  await expect(auction.assembly.getByRole("status")).toContainText(waitingForQuota);
+  auction.assemblyCompleteness = [false, true]; auction.rateLimitedAssemblySteps.add(initialAssemblies + 2);
+  await fullSearch(auction).click();
+  await expect(auction.assembly.getByRole("status").filter({ hasText: waitingForQuota })).toBeVisible();
   await expect(auction.result).toHaveAttribute("data-exhaustive", "false");
-  expect(assemblyRequests(auction)).toHaveLength(2);
+  expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 2);
   await page.screenshot({ path: info.outputPath("automatic-assembly-quota-wait.png"), fullPage: true });
   await page.clock.fastForward(59_000);
-  expect(assemblyRequests(auction)).toHaveLength(2);
+  expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 2);
   await page.clock.runFor(1500);
   await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
   await expect(auction.build).toBeEnabled();
-  expect(assemblyRequests(auction)).toHaveLength(3);
-  expect(new Set(assemblyRequests(auction).map(body => body.clientRequestId)).size).toBe(3);
+  expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 3);
+  expect(new Set(assemblyRequests(auction).map(body => body.clientRequestId)).size).toBe(initialAssemblies + 3);
 });
 
 test("cancelling the quota wait aborts its scheduled automatic retry", async ({ auction, page }) => {
-  await auction.open(); await auction.search();
+  await initialQuick(auction); const initialAssemblies = assemblyRequests(auction).length;
   await page.clock.install(); await page.clock.pauseAt(new Date());
-  auction.assemblyCompleteness = [false, true]; auction.rateLimitedAssemblySteps.add(2);
-  await auction.build.click();
-  await expect(auction.assembly.getByRole("status")).toContainText(waitingForQuota);
+  auction.assemblyCompleteness = [false, true]; auction.rateLimitedAssemblySteps.add(initialAssemblies + 2);
+  await fullSearch(auction).click();
+  await expect(auction.assembly.getByRole("status").filter({ hasText: waitingForQuota })).toBeVisible();
   await auction.assembly.getByRole("button", { name: cancelAssembly }).click();
   await expect(auction.find).toBeEnabled();
   await expect(auction.assembly.getByRole("status").filter({ hasText: /Расчёт остановлен|Calculation stopped/ })).toBeVisible();
   await page.clock.fastForward(180_000);
-  expect(assemblyRequests(auction)).toHaveLength(2);
+  expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 2);
   await expect(auction.result).toHaveAttribute("data-exhaustive", "false");
   await expect(auction.result).toHaveAttribute("data-price-state", "stale");
 });
@@ -184,16 +192,19 @@ test("reattaching an observed active assembly continues automatically with its r
 });
 
 test("an unknown assembly POST outcome requires recovery before any automatic continuation", async ({ auction, page }) => {
-  await auction.open(); await auction.search();
+  await initialQuick(auction); const initialAssemblies = assemblyRequests(auction).length;
   auction.assemblyCompleteness = [false, true]; auction.dropAction = "assemble";
-  await auction.build.click();
+  await fullSearch(auction).click();
   const recover = auction.assembly.getByRole("button", { name: /Повторить восстановление|Retry recovery/ });
   await expect(recover).toBeVisible();
   await page.clock.install(); await page.clock.fastForward(180_000);
-  expect(assemblyRequests(auction)).toHaveLength(1);
-  // Explicit recovery reads the accepted checkpoint; only a new successful
-  // continuation may advance the exhaustive cursor.
+  expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 1);
+  // Explicit recovery keeps the previously chosen full intent, reads its
+  // accepted checkpoint, and advances with a fresh continuation identity.
+  const first = assemblyRequests(auction).at(-1)!;
   await recover.click();
-  await expect(auction.result).toHaveAttribute("data-exhaustive", "false");
-  expect(assemblyRequests(auction)).toHaveLength(1);
+  await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
+  expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 2);
+  expect(auction.requestLookups).toContain(first.clientRequestId);
+  expect(assemblyRequests(auction).at(-1)?.clientRequestId).not.toBe(first.clientRequestId);
 });
