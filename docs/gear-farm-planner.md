@@ -65,7 +65,11 @@ A suitable level and statistically better gear do not prove that the character c
 
 ## Private job contract
 
-Ownership-keyed jobs use private/no-store responses, same-origin mutations, cancellation, a ten-minute deadline, one active job per owner, a bounded queue and bounded thirty-minute result retention. Results contain no access tokens. The in-process store assumes the current single web replica; multiple replicas require a shared store.
+Ownership-keyed jobs use private/no-store responses, same-origin mutations, a ten-minute execution deadline, one active job per owner, a bounded queue and thirty-minute result retention. Results contain no access tokens. Each lookup and cancellation is additionally scoped to character, displayed profile revision, language and normalized dungeon/raid/key settings. Polling does not extend retention. A browser can discover matching active or completed work without a locally stored job ID; changing the visible profile or settings hides the old result and detaches its subscription.
+
+Navigation and transport failures stop browser polling only. Explicit cancellation uses an idempotent request identity; a cancellation received before its POST leaves a retained tombstone, so a delayed POST cannot start the cancelled task. Late progress/completion callbacks cannot overwrite cancellation, and a task ignoring abort cannot hold the queue beyond its deadline. Browser storage holds only settings and pending request/cancellation handles, never trusted result data. Failed polling offers reconnect, and unacknowledged explicit cancellation is retried on a matching remount. The store retains cancellation identities even under capacity pressure, rejecting new work instead of evicting a live tombstone.
+
+The in-process store assumes the current single web replica: server process restart loses work and retained results, and multiple replicas require a shared store/queue. Recovery ownership currently follows the authenticated access-token hash, so reauthentication with a different token cannot recover the old session's work. The displayed profile revision is a recovery boundary, not an additional claim that the remote armory has stayed unchanged; the runner still resolves the owned character and current armory on the server. A permitted browser clock skew of at most one minute can extend identity/result retention by that skew.
 
 ## Verification
 

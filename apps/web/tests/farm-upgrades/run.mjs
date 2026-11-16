@@ -20,9 +20,10 @@ const fontSource = process.env.FARM_UI_FONT_DIR;
 if (!fontSource) throw Error("Set FARM_UI_FONT_DIR to the actual Inter/Alegreya font bundle");
 const fonts = JSON.parse(readFileSync(path.join(fontSource, "manifest.json"), "utf8"));
 mkdirSync(path.join(harness, "public/audit-fonts"), { recursive: true });
+symlinkSync(path.join(web, "public/assets"), path.join(harness, "public/assets"));
 for (const font of fonts.fonts) copyFileSync(path.join(fontSource, font.file), path.join(harness, "public/audit-fonts", font.file));
 writeFileSync(path.join(harness, "app/fonts.css"), fonts.fonts.map(font => font.css).join("\n") + '\n:root{--font-ui:"Inter";--font-atlas-display:"Alegreya";--font-display:"Alegreya"}');
-writeFileSync(path.join(harness, "app/layout.tsx"), `import '@/app/globals.css';import './fonts.css';export default function Layout({children}){return <html className="gildra-atlas"><body>{children}</body></html>}`);
+writeFileSync(path.join(harness, "app/layout.tsx"), `import '@/app/globals.css';import './fonts.css';import {AtlasValyroScope} from '@gildra/atlas-ui/AtlasValyroScope';export default function Layout({children}){return <html className="gildra-atlas"><body><AtlasValyroScope>{children}</AtlasValyroScope></body></html>}`);
 writeFileSync(path.join(harness, "app/page.tsx"), `import {FarmPanels} from ${JSON.stringify(path.join(web, "tests/farm-upgrades/harness"))};export const dynamic='force-dynamic';export default async function Page({searchParams}){const q=await searchParams;return <main className="gildra-atlas" data-atlas-scope style={{maxWidth:1000,margin:'auto',padding:16}}><p>Private synthetic farming fixtures — no live character or loot data.</p><FarmPanels locale={q.lang==='ru'?'ru':'en'}/></main>}`);
 const finish = child => new Promise((resolve, reject) => { child.once("exit", code => resolve(code)); child.once("error", reject); });
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -41,7 +42,7 @@ try {
     await delay(500);
   }
   if (!ready) throw Error("Private harness timed out");
-  const tests = spawn(process.execPath, [path.join(path.dirname(require.resolve("playwright")), "cli.js"), "test", "--config", path.join(web, "tests/farm-upgrades/ui.config.ts")],
+  const tests = spawn(process.execPath, [path.join(path.dirname(require.resolve("playwright")), "cli.js"), "test", "--config", path.join(web, "tests/farm-upgrades/ui.config.ts"), ...process.argv.slice(2)],
     { cwd: web, stdio: "inherit", env: { ...process.env, FARM_UI_BASE_URL: url, FARM_UI_REPORT: path.join(root, "report.json"), FARM_UI_RESULTS: path.join(root, "results") } });
   process.exitCode = Number(await finish(tests)) || 0;
   console.log(JSON.stringify({ report: path.join(root, "report.json"), syntheticOnly: true }));

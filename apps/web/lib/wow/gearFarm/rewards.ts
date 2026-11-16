@@ -15,7 +15,7 @@ import { prepareGearLoadout } from "../gearSimulation";
 import { farmCandidate, type EquippedFarmItem } from "./planner";
 import type { FarmLoot } from "./repository";
 import type { FarmSimulationOption } from "./confirmation";
-import type { FarmActivity, FarmProgress, FarmTarget } from "./types";
+import type { FarmActivity, FarmProgress, FarmTarget, FarmUnsupportedReason } from "./types";
 import {
   evaluateLevelOnlyRewardCondition, resolveLevelingRewardBonusTrees, selectRewardContext,
   type RewardBonusTree, type RewardBonusTreeNode, type RewardBonusTreeOverride, type RewardContextPickerEntry,
@@ -115,11 +115,19 @@ function tuningAlternatives(id: number) {
   });
 }
 
-function contextFor(map: Row, level: number) {
+export function contextFor(map: Row, level: number) {
+  const difficulty = tables.Difficulty.find(row => row.ID === map.DifficultyID);
+  if (!difficulty) return null;
+  if (map.ItemContextPickerID === 0) {
+    const context = selectRewardContext({ difficultyContextId: Number(difficulty.ItemContext),
+      mapContextId: Number(map.ItemContext), pickerId: 0, entries: [], contentTuningLabels: [],
+      evaluatePlayerCondition: () => "unknown" });
+    return context.state === "resolved" ? context.contextId : null;
+  }
   const alternatives = tuningAlternatives(Number(map.ContentTuningID));
   if (!alternatives.length) return null;
   const contexts = alternatives.map((tuning) => selectRewardContext({
-    difficultyContextId: 0, mapContextId: Number(map.ItemContext), pickerId: Number(map.ItemContextPickerID),
+    difficultyContextId: Number(difficulty.ItemContext), mapContextId: Number(map.ItemContext), pickerId: Number(map.ItemContextPickerID),
     entries: tables.ItemContextPickerEntry as unknown as RewardContextPickerEntry[],
     contentTuningLabels: tables.ContentTuningXLabel.filter((row) => row.ContentTuningID === tuning.ID).map((row) => Number(row.LabelID)),
     evaluatePlayerCondition: (id) => {
@@ -134,6 +142,40 @@ function contextFor(map: Row, level: number) {
   if (contexts.some((value) => value.state !== "resolved")) return null;
   const resolved = contexts.filter((value) => value.state === "resolved");
   return new Set(resolved.map((value) => value.contextId)).size === 1 ? resolved[0].contextId : null;
+}
+
+export function farmRewardCapability(activity: Pick<FarmActivity, "group" | "difficulty" | "difficultyId" | "journalInstanceId">, level: number):
+  { supported: true; contextId: number } | { supported: false; reason: FarmUnsupportedReason; contextId?: number } {
+  if (activity.difficulty === "world") return { supported: false, reason: "world_rewards_unverified" };
+  const expectedDifficulty = activity.group === "raid"
+    ? ({ "raid-finder": 17, normal: 14, heroic: 15, mythic: 16 } as Record<string, number>)[activity.difficulty]
+    : ({ normal: 1, "mythic-plus": 8 } as Record<string, number>)[activity.difficulty];
+  // Only the original Normal contract permits an omitted difficulty ID.
+  const difficultyId = activity.difficultyId ?? (activity.group === "dungeon" && activity.difficulty === "normal" ? 1 : undefined);
+  if (!expectedDifficulty || difficultyId !== expectedDifficulty) return { supported: false, reason: "difficulty_unverified" };
+  const instance = tables.JournalInstance.find(row => row.ID === activity.journalInstanceId);
+  if (!instance) return { supported: false, reason: "source_unavailable" };
+  const map = tables.MapDifficulty.find(row => row.MapID === instance.MapID && row.DifficultyID === difficultyId);
+  if (!map) return { supported: false, reason: "difficulty_unverified" };
+  const contextId = contextFor(map, level);
+  if (contextId === null) return { supported: false, reason: "reward_sequence_unverified" };
+  if (activity.group === "dungeon" && activity.difficulty === "normal" && contextId === 17) return { supported: true, contextId };
+  // The same-build projection proves raid / M+ contexts and reachable bonus
+  // groups, but does not include the opaque IblGroupPointsModSet rank rules.
+  // A key or boss must never be assigned a guessed rank from those groups.
+  return { supported: false, reason: "reward_sequence_unverified", contextId };
+}
+
+/** Missing catalog/localization records must not turn a partial source into
+ * an exhaustive no-upgrade result. Compare acquisition pairs, not item counts:
+ * the same item can be published for more than one encounter. */
+export function farmSourceCoverageComplete(journalInstanceId: number | undefined, loot: FarmLoot[]) {
+  const encounters = new Set(tables.JournalEncounter.filter(row => row.JournalInstanceID === journalInstanceId).map(row => Number(row.ID)));
+  const expected = tables.JournalEncounterItem.filter(row => encounters.has(Number(row.JournalEncounterID)) &&
+    row.DifficultyMask === -1 && row.Flags === 0 && [0, 37].includes(Number(row.DisplaySeasonID)) && row.WorldStateExpressionID === 0);
+  if (!expected.length) return false;
+  const present = new Set(loot.map(row => `${row.encounterId}:${row.entity.externalId}`));
+  return expected.every(row => present.has(`${row.JournalEncounterID}:${row.ItemID}`));
 }
 
 export function sourceRewardItemLevel(bonusIds: number[], map: Row, level: number) {
@@ -233,13 +275,20 @@ export async function resolveFarmRewards(input: {
   const { character, signal } = input;
   const theme = talentSpecThemes.find((row) => row.classId === character.playableClass.id && row.specId === input.armory.activeSpecializationId);
   if (!theme) throw new Error("specialization_unresolved");
-  const active = input.activities.filter((activity) => activity.difficulty === "normal" && activity.access === "level_condition_met" && activity.targets.length);
-  if (!active.length) return { options: [], exactVariants: 0, searchLimited: false };
+  for (const activity of input.activities) {
+    if (activity.access === "level_locked" || activity.access === "gear_locked") continue;
+    const capability = farmRewardCapability(activity, character.level);
+    if (!capability.supported) activity.unsupportedReason = capability.reason;
+  }
+  let searchLimited = input.activities.some(activity => Boolean(activity.unsupportedReason) &&
+    activity.access !== "level_locked" && activity.access !== "gear_locked");
+  const active = input.activities.filter((activity) => !activity.unsupportedReason && activity.group === "dungeon" &&
+    activity.difficulty === "normal" && activity.access === "level_condition_met" && activity.targets.length);
+  if (!active.length) return { options: [], exactVariants: 0, searchLimited };
   input.onProgress?.({ phase: "rewards", completed: 0, total: 1 });
   const control = await currentControl(character.region, input.token, signal);
   const phases = sourceRewardPhases(control.offer.bonusIds);
   const probes: Array<{ activity: FarmActivity; target: FarmTarget; loot: FarmLoot; offer: AuctionOffer; expectedLevel: number; treeIds: number[]; pickerId: number }> = [];
-  let searchLimited = false;
   for (const activity of active) {
     const instance = tables.JournalInstance.find((row) => row.ID === activity.journalInstanceId);
     const map = instance && tables.MapDifficulty.find((row) => row.MapID === instance.MapID && row.DifficultyID === 1);

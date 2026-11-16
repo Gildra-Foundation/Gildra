@@ -124,6 +124,7 @@
     "budgets": "npm run budgets -w @gildra/web --",
     "art:placeholders": "npm run art:placeholders -w @gildra/web --",
     "test:analytics": "npm run test:analytics -w @gildra/web --",
-    "lint": "eslint apps/web packages"
+    "lint": "eslint apps/web packages",
+    "test:gear-planner": "npm run test:gear-planner -w @gildra/web --"
   }
 }

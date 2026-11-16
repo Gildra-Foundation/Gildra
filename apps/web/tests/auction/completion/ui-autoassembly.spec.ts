@@ -175,7 +175,7 @@ test("reattaching an observed active assembly continues automatically with its r
   auction.assemblyCompleteness = [false, true];
   await auction.open();
   await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
-  await expect(auction.result).toHaveAttribute("data-price-state", "verified");
+  await expect(auction.result).toHaveAttribute("data-price-state", "calculated");
   await expect(auction.build).toBeEnabled();
   const steps = assemblyRequests(auction);
   expect(steps).toHaveLength(2);

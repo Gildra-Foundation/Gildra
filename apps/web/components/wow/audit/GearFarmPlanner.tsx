@@ -3,9 +3,15 @@
 import Image from "next/image";
 import { AlertTriangle, LoaderCircle, MapPin, Search } from "lucide-react";
 import { MaterialButton } from "@/components/wow/shared/materialAtlas";
+import { AtlasValyroSelect } from "@gildra/atlas-ui/AtlasValyroSelect";
 import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { FarmActivity, FarmTarget, GearFarmJob, GearFarmResult } from "@/lib/wow/gearFarm/types";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import type { FarmActivity, FarmTarget, GearFarmResult, GearFarmSettings } from "@/lib/wow/gearFarm/types";
+import { farmDungeonDifficulties, farmRaidDifficulties, farmMythicKeyBounds } from "@/lib/wow/gearFarm/settings";
+import { defaultFarmPreferences, farmPreferencesKey, readFarmPreferences, subscribeFarmPreferences, writeFarmPreferences } from "@/lib/wow/gearFarm/preferences";
+import { GearFarmClient, type FarmClientState } from "@/lib/wow/gearFarm/client";
+import { farmJobActive, farmScopeKey, parseFarmScope } from "@/lib/wow/gearFarm/recovery";
+import { farmCoverageMessage } from "@/lib/wow/gearFarm/coverage";
 import { isConfirmedFarmUpgrade } from "@/lib/wow/gearFarm/recommendations";
 import { rankedFarmActivities } from "@/lib/wow/upgradePlan";
 import { upgradeSlotName } from "./characterUpgradesCopy";
@@ -16,9 +22,15 @@ import tools from "./characterTools.module.css";
 const copy = {
   ru: {
     title: "Подземелья и рейды",
+    recovering: "Проверяем предыдущий подбор…", reconnecting: "Восстанавливаем соединение…", retry: "Подключиться снова", cancelling: "Отменяем…",
+    disconnected: "Связь прервалась. Подключитесь снова, чтобы проверить подбор.", changed: "Профиль изменился. Обновите персонажа и повторите подбор.",
     start: "Проверить добычу", searching: "Подбираем…", cancel: "Отменить", cancelled: "Подбор отменён.",
     sources: "Проверяем места добычи…", rewards: "Проверяем добычу", simulating: "Сравниваем с надетым",
-    normal: "Обычная сложность", raidFinder: "Поиск рейда", world: "Мировое логово",
+    normal: "Обычная", heroic: "Героическая", mythic: "Эпохальная", mythicPlus: "Мифик+", raidFinder: "Поиск рейда", world: "Мировое логово",
+    dungeonDifficulty: "Сложность подземелий", raidDifficulty: "Сложность рейдов", keyLevel: "Уровень ключа",
+    endgameUnavailable: "Сравнение добычи этих сложностей недоступно: точные уровни наград не подтверждены.",
+    difficultyUnavailable: "не подтверждены варианты добычи этой сложности", rewardUnavailable: "не подтверждены точные уровни наград",
+    sourceUnavailable: "не удалось проверить список добычи", worldUnavailable: "не подтверждены награды логова",
     groupDungeon: "Подземелье", groupRaid: "Рейд", all: "Все", filter: "Показать", requiresLevel: "Уровень", requiresGear: "Ур. предметов",
     recommended: "Рекомендуемый ур. предметов", queueNotMet: "Для поиска группы нужен ур. предметов", moreLoot: "Ещё добыча",
     empty: "Улучшений в добыче не найдено.", replaces: "Вместо", current: "Надето",
@@ -28,9 +40,15 @@ const copy = {
   },
   en: {
     title: "Dungeons and raids",
+    recovering: "Checking the previous search…", reconnecting: "Reconnecting…", retry: "Reconnect", cancelling: "Cancelling…",
+    disconnected: "Connection interrupted. Reconnect to check the search.", changed: "The profile changed. Refresh the character and search again.",
     start: "Check the loot", searching: "Searching…", cancel: "Cancel", cancelled: "Search cancelled.",
     sources: "Checking loot sources…", rewards: "Checking loot", simulating: "Comparing with equipped gear",
-    normal: "Normal", raidFinder: "Raid Finder", world: "World lair",
+    normal: "Normal", heroic: "Heroic", mythic: "Mythic", mythicPlus: "Mythic+", raidFinder: "Raid Finder", world: "World lair",
+    dungeonDifficulty: "Dungeon difficulty", raidDifficulty: "Raid difficulty", keyLevel: "Key level",
+    endgameUnavailable: "Loot comparison is unavailable for these difficulties: exact reward levels are unverified.",
+    difficultyUnavailable: "loot variants for this difficulty are unverified", rewardUnavailable: "exact reward levels are unverified",
+    sourceUnavailable: "the loot list could not be verified", worldUnavailable: "lair rewards are unverified",
     groupDungeon: "Dungeon", groupRaid: "Raid", all: "All", filter: "Show", requiresLevel: "Level", requiresGear: "Item level",
     recommended: "Recommended item level", queueNotMet: "Dungeon Finder needs item level", moreLoot: "More loot",
     empty: "No upgrades found in the loot.", replaces: "Replaces", current: "Equipped",
@@ -40,16 +58,11 @@ const copy = {
   },
 };
 type Copy = typeof copy.en;
-const endpoint = "/api/wow/gear-farm-plans";
-type Request = { controller: AbortController; id?: string };
-function removeJob(id: string) { return fetch(`${endpoint}?id=${encodeURIComponent(id)}`, { method: "DELETE", keepalive: true, signal: AbortSignal.timeout(10_000) }).catch(() => undefined); }
-function waitForPoll(signal: AbortSignal) {
-  return new Promise<void>((resolve, reject) => {
-    if (signal.aborted) { reject(new DOMException("Aborted", "AbortError")); return; }
-    const abort = () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); };
-    const timer = setTimeout(() => { signal.removeEventListener("abort", abort); resolve(); }, 1500);
-    signal.addEventListener("abort", abort, { once: true });
-  });
+const subscribeHydration = () => () => {};
+function difficultyLabel(difficulty: FarmActivity["difficulty"], c: Copy, keyLevel?: number) {
+  if (difficulty === "raid-finder") return c.raidFinder;
+  if (difficulty === "mythic-plus") return `${c.mythicPlus}${keyLevel === undefined ? "" : ` +${keyLevel}`}`;
+  return c[difficulty];
 }
 function ActivityIcon({ src }: { src?: string }) {
   const [failed, setFailed] = useState<string | null>(null);
@@ -76,7 +89,7 @@ function Activity({ activity, c, ru }: { activity: FarmActivity; c: Copy; ru: bo
   const key = (target: FarmTarget) => `${target.itemId}:${target.slotType}:${target.encounterId}`;
   const facts = [
     activity.difficulty === "world" ? c.world : activity.group === "raid" ? c.groupRaid : c.groupDungeon,
-    activity.difficulty === "raid-finder" ? c.raidFinder : activity.difficulty === "world" ? "" : c.normal,
+    activity.difficulty === "world" ? "" : difficultyLabel(activity.difficulty, c, activity.mythicKeyLevel),
     activity.minLevel !== undefined ? `${c.requiresLevel} ${activity.minLevel}+` : "",
     activity.minItemLevel !== undefined ? `${c.requiresGear} ${activity.minItemLevel}+` : "",
     activity.recommendedItemLevel !== undefined ? `${c.recommended} ${activity.recommendedItemLevel}` : "",
@@ -93,8 +106,21 @@ function Results({ result, c, ru }: { result: GearFarmResult; c: Copy; ru: boole
   const [group, setGroup] = useState<GroupFilter>("all");
   const groups = new Set(recommendations.map(activity => activity.group));
   const shown = group === "all" || !groups.has(group) ? recommendations : recommendations.filter(activity => activity.group === group);
-  if (!recommendations.length) return <p className={tools.status} role="status">{c.empty}</p>;
+  const coverageMessage = farmCoverageMessage(result, ru ? "ru" : "en");
+  const unsupported = new Map<string, Set<string>>();
+  for (const activity of result.activities) {
+    if (!activity.unsupportedReason || activity.access === "level_locked" || activity.access === "gear_locked") continue;
+    const reason = ({ difficulty_unverified: c.difficultyUnavailable, reward_sequence_unverified: c.rewardUnavailable,
+      source_unavailable: c.sourceUnavailable, world_rewards_unverified: c.worldUnavailable })[activity.unsupportedReason];
+    const labels = unsupported.get(reason) ?? new Set<string>();
+    labels.add(activity.difficulty === "world" ? c.world : `${activity.group === "raid" ? c.groupRaid : c.groupDungeon}: ${difficultyLabel(activity.difficulty, c, activity.mythicKeyLevel)}`);
+    unsupported.set(reason, labels);
+  }
+  const unavailableMessage = [...unsupported].map(([reason, labels]) => `${[...labels].join(", ")} — ${reason}.`).join(" ");
+  const statusMessage = unavailableMessage || coverageMessage;
+  if (!recommendations.length) return <p className={tools.status} role="status" data-farm-unsupported={unavailableMessage ? true : undefined}>{statusMessage ?? c.empty}</p>;
   return <>
+    {statusMessage ? <p className={tools.status} role="status" data-farm-unsupported={unavailableMessage ? true : undefined}>{statusMessage}</p> : null}
     {groups.size > 1 ? <div className={styles.filters} role="group" aria-label={c.filter}>
       {(["all", "dungeon", "raid"] as const).map(id => <button key={id} type="button" className={styles.filter} aria-pressed={(groups.has(group as "dungeon" | "raid") ? group : "all") === id} onClick={() => setGroup(id)}>
         {id === "all" ? c.all : id === "raid" ? c.groupRaid : c.groupDungeon}
@@ -109,59 +135,56 @@ function ResultsSkeleton() {
 
 export function GearFarmPlanner({ characterSlug, snapshotKey, localePrefix = "/ru", onResult }: { characterSlug: string; snapshotKey: string; localePrefix?: "" | "/ru"; onResult?: (result: GearFarmResult | null) => void }) {
   const ru = localePrefix === "/ru", c = copy[ru ? "ru" : "en"], titleId = useId();
-  const scope = `${characterSlug}:${snapshotKey}:${localePrefix}`;
-  const [state, setState] = useState<{ scope: string; starting?: boolean; job?: GearFarmJob; error?: string }>({ scope });
-  const active = useRef<Request | null>(null), current = state.scope === scope ? state : undefined;
-  useEffect(() => () => { const request = active.current; active.current = null; request?.controller.abort(); if (request?.id) removeJob(request.id); }, [scope]);
-  const running = Boolean(current?.starting || current?.job?.status === "queued" || current?.job?.status === "running");
+  const preferenceKey = farmPreferencesKey(characterSlug, snapshotKey);
+  const readPreferences = useCallback(() => readFarmPreferences(preferenceKey), [preferenceKey]);
+  const rawPreferences = useSyncExternalStore(subscribeFarmPreferences, readPreferences, () => defaultFarmPreferences);
+  const preferencesHydrated = useSyncExternalStore(subscribeHydration, () => true, () => false);
+  const settings = useMemo(() => JSON.parse(rawPreferences) as GearFarmSettings, [rawPreferences]);
+  const farmScope = useMemo(() => parseFarmScope({ characterSlug, profileKey: snapshotKey, locale: ru ? "ru" : "en", ...settings }), [characterSlug, snapshotKey, ru, settings]);
+  const changeSettings = (next: GearFarmSettings) => writeFarmPreferences(preferenceKey, next);
+  const scope = farmScopeKey(farmScope);
+  const [state, setState] = useState<FarmClientState & { scope: string }>({ scope, initializing: true });
+  const active = useRef<GearFarmClient | null>(null), current = state.scope === scope ? state : undefined;
+  useEffect(() => {
+    if (!preferencesHydrated) return;
+    const client = new GearFarmClient(farmScope, next => setState({ ...next, scope }));
+    active.current = client;
+    void client.recover();
+    return () => { client.detach(); if (active.current === client) active.current = null; };
+  }, [farmScope, scope, preferencesHydrated]);
+  const running = Boolean(!current || current.initializing || current.starting || current.cancelling || farmJobActive(current.job) && !current.error);
+  const canCancel = Boolean(current?.starting || current?.cancelling || current?.pendingRequest || farmJobActive(current?.job));
   const completed = current?.job?.status === "completed" ? current.job.result : null;
-  // The slot overview shows the same confirmed rewards; it never fetches them again.
+  // The slot overview shares only results scoped to the visible character/profile/settings.
   useEffect(() => { onResult?.(completed ?? null); }, [completed, onResult]);
-  async function start() {
-    const request: Request = { controller: new AbortController() };
-    if (active.current) return;
-    active.current = request;
-    setState({ scope, starting: true });
-    try {
-      // Receive a newly created job ID even if the user cancels while POST is in flight.
-      let response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ characterSlug, locale: ru ? "ru" : "en" }), signal: AbortSignal.timeout(30_000) });
-      let job = await response.json() as GearFarmJob;
-      if (!response.ok) throw new Error(job.error ?? "farm_plan_unavailable");
-      request.id = job.id;
-      if (request.controller.signal.aborted || active.current !== request) { removeJob(job.id); return; }
-      while (!request.controller.signal.aborted && active.current === request) {
-        setState({ scope, job });
-        if (job.status !== "queued" && job.status !== "running") break;
-        await waitForPoll(request.controller.signal);
-        response = await fetch(`${endpoint}?id=${encodeURIComponent(job.id)}`, { cache: "no-store", signal: request.controller.signal });
-        job = await response.json() as GearFarmJob;
-        if (!response.ok) throw new Error(job.error ?? "farm_plan_unavailable");
-      }
-    } catch (reason) {
-      if (!request.controller.signal.aborted && active.current === request) {
-        if (request.id) await removeJob(request.id);
-        if (!request.controller.signal.aborted && active.current === request) setState({ scope, error: reason instanceof Error ? reason.message : "farm_plan_unavailable" });
-      }
-    } finally { if (active.current === request) active.current = null; }
-  }
-  function cancel() {
-    const request = active.current; active.current = null; request?.controller.abort();
-    if (request?.id) removeJob(request.id);
-    setState({ scope, job: { id: request?.id ?? "", status: "cancelled", progress: null, result: null, error: null } });
-  }
   const failure = current?.error || (current?.job?.status === "failed" ? current.job.error : null);
-  const messages: Record<string, string> = { session_expired: c.session, plan_already_running: c.running, plan_rate_limited: c.rateLimit, plan_not_found: c.expired, equipment_constraints_unverified: c.equipmentError };
+  const messages: Record<string, string> = { session_expired: c.session, plan_already_running: c.running, plan_rate_limited: c.rateLimit,
+    plan_not_found: c.expired, plan_request_expired: c.expired, plan_timed_out: c.expired,
+    plan_connection_interrupted: c.disconnected, character_snapshot_changed: c.changed, equipment_constraints_unverified: c.equipmentError };
   const progress = current?.job?.progress, phase = progress?.phase;
   const progressLabel = phase === "rewards" ? c.rewards : phase === "simulating" ? c.simulating : c.sources;
   return <section className={`${tools.tool} ${styles.panel}`} aria-labelledby={titleId} aria-busy={running} data-gear-farm>
     <div className={tools.head}>
       <h3 className={tools.title} id={titleId}>{c.title}</h3>
       <div className={tools.actions}>
-        {running ? <button type="button" className={tools.quiet} onClick={cancel}>{c.cancel}</button> : null}
-        <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="button" onClick={() => void start()} disabled={running} icon={running ? <LoaderCircle className={tools.spin} aria-hidden="true" /> : <Search aria-hidden="true" />}>{running ? c.searching : c.start}</MaterialButton>
+        {canCancel ? <button type="button" className={tools.quiet} disabled={current?.cancelling} onClick={() => void active.current?.cancel()}>{current?.cancelling ? c.cancelling : c.cancel}</button> : null}
+        <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="button" onClick={() => void (current?.recoverable ? active.current?.recover() : active.current?.start())} disabled={running} icon={running ? <LoaderCircle className={tools.spin} aria-hidden="true" /> : <Search aria-hidden="true" />}>{running ? current?.initializing ? c.recovering : c.searching : current?.recoverable ? c.retry : c.start}</MaterialButton>
       </div>
     </div>
-    {running ? <div role="status" className={tools.status}>{progressLabel}{progress && phase !== "sources" ? ` ${progress.completed} / ${progress.total}` : ""}</div> : null}
+    <div className={tools.fields}>
+      <div className={tools.field}><label htmlFor={`${titleId}-dungeon`}>{c.dungeonDifficulty}</label><AtlasValyroSelect native id={`${titleId}-dungeon`} value={settings.dungeonDifficulty}
+        options={farmDungeonDifficulties.map(value => ({ value, label: difficultyLabel(value, c) }))}
+        onValueChange={value => changeSettings({ dungeonDifficulty: value as GearFarmSettings["dungeonDifficulty"], raidDifficulty: settings.raidDifficulty,
+          ...(value === "mythic-plus" ? { mythicKeyLevel: farmMythicKeyBounds.min } : {}) })} /></div>
+      <div className={tools.field}><label htmlFor={`${titleId}-raid`}>{c.raidDifficulty}</label><AtlasValyroSelect native id={`${titleId}-raid`} value={settings.raidDifficulty}
+        options={farmRaidDifficulties.map(value => ({ value, label: difficultyLabel(value, c) }))}
+        onValueChange={value => changeSettings({ ...settings, raidDifficulty: value as GearFarmSettings["raidDifficulty"] })} /></div>
+      {settings.dungeonDifficulty === "mythic-plus" ? <div className={tools.field}><label htmlFor={`${titleId}-key`}>{c.keyLevel}</label><AtlasValyroSelect native id={`${titleId}-key`} value={String(settings.mythicKeyLevel)}
+        options={Array.from({ length: farmMythicKeyBounds.max - farmMythicKeyBounds.min + 1 }, (_, index) => ({ value: String(index + farmMythicKeyBounds.min), label: `+${index + farmMythicKeyBounds.min}` }))}
+        onValueChange={value => changeSettings({ ...settings, mythicKeyLevel: Number(value) })} /></div> : null}
+    </div>
+    {!completed && (settings.dungeonDifficulty !== "normal" || settings.raidDifficulty !== "raid-finder") ? <p className={tools.status}>{c.endgameUnavailable}</p> : null}
+    {running ? <div role="status" className={tools.status}>{current?.cancelling ? c.cancelling : current?.reconnecting ? c.reconnecting : current?.initializing ? c.recovering : progressLabel}{progress && phase !== "sources" && !current?.reconnecting && !current?.initializing ? ` ${progress.completed} / ${progress.total}` : ""}</div> : null}
     {running && progress?.total ? <div className={tools.progress} aria-hidden="true"><i style={{ transform: `scaleX(${Math.min(1, progress.completed / progress.total)})` }} /></div> : null}
     {failure ? <p role="alert" className={tools.alert}><AlertTriangle aria-hidden="true" />{messages[failure] ?? (failure === "farm_plan_unavailable" ? c.genericError : c.unavailable)}</p> : null}
     {current?.job?.status === "cancelled" ? <p role="status" className={tools.status}>{c.cancelled}</p> : null}

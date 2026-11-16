@@ -73,7 +73,7 @@ test("repeat-audit regression: a warm queued result appears within the first sim
 test("repeat-audit regression: an open loadout becomes stale when its market expires", async ({ auction, page }) => {
   await page.clock.install();
   await auction.open(); await auction.search(); await auction.build.click();
-  await expect(auction.result).toHaveAttribute("data-price-state", "verified");
+  await expect(auction.result).toHaveAttribute("data-price-state", "calculated");
   const requests = auction.requests.length;
   await page.clock.fastForward(2 * 60 * 60_000 + 60_000);
   await expect(auction.result).toHaveAttribute("data-price-state", "stale");
@@ -100,7 +100,7 @@ test("repeat-audit control: a recovered active job can finish before its first p
     else { polls++; await route.fulfill({ json: { ...completedJob(auction.language, freshAssembly), id: running.id, mode: "assembly" } }); }
   });
   await auction.open();
-  await expect(auction.result).toHaveAttribute("data-price-state", "verified");
+  await expect(auction.result).toHaveAttribute("data-price-state", "calculated");
   expect(polls).toBe(1);
 });
 
@@ -305,7 +305,7 @@ test("expired nonce retains a still-valid owned search checkpoint after durable 
   const saved = await page.evaluate(() => JSON.parse(Object.entries(sessionStorage).find(([key]) => key.startsWith("gildra:auction:v1:"))![1]));
   expect(saved.searchId).toBe("synthetic-reliability-search"); expect(saved.clientRequestId).toBeUndefined();
   expect(auction.requests).toHaveLength(2);
-  await auction.build.click(); await expect(auction.result).toHaveAttribute("data-price-state", "verified");
+  await auction.build.click(); await expect(auction.result).toHaveAttribute("data-price-state", "calculated");
   expect(auction.requests[2].action).toBe("assemble"); expect(auction.requests[2].searchId).toBe(saved.searchId);
 });
 
@@ -345,7 +345,7 @@ for (const [cachedMode, activeMode] of [["assembly", "search"], ["search", "asse
   await expect(auction.panel.locator("[data-auction-search-result]")).toHaveAttribute("data-auction-market", `MODE ${activeMode.toUpperCase()} COMPLETED`, { timeout: 10000 });
   await expect(auction.panel.getByRole("alert")).toHaveCount(0);
   expect(auction.requests).toEqual([]); expect(auction.deletes).toEqual([]);
-  if (activeMode === "assembly") await expect(auction.result).toHaveAttribute("data-price-state", "verified");
+  if (activeMode === "assembly") await expect(auction.result).toHaveAttribute("data-price-state", "calculated");
 });
 
 test("mode regression: assembly 409 reconnects to an active owned search", async ({ auction }) => {

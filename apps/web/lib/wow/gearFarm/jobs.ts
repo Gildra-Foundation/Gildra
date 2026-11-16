@@ -1,118 +1,160 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import type { FarmProgress, GearFarmResult } from "./types";
-import type { GearFarmJob } from "./types";
+import type { FarmProgress, GearFarmJob, GearFarmResult } from "./types";
+import { farmJobActive, sameFarmScope, validateFarmRequestId, type GearFarmScope } from "./recovery";
 export type { GearFarmJob } from "./types";
 type Task = (signal: AbortSignal, progress: (p: FarmProgress) => void) => Promise<GearFarmResult>;
-type Job = GearFarmJob & {
+type Identity = { scope: GearFarmScope; clientRequestId: string };
+type Job = GearFarmJob & Partial<Identity> & {
   owner: string;
   controller: AbortController;
   task?: Task;
-  expires: number;
+  createdAt: number;
+  expiresAt: number;
+  cancelledBeforeAcceptance?: boolean;
 };
-const state = globalThis as typeof globalThis & {
-  __gildraFarmJobs?: Map<string, Job>;
-  __gildraFarmQueue?: string[];
-  __gildraFarmRunning?: boolean;
-};
-const jobs = state.__gildraFarmJobs ??= new Map<string, Job>(),
-  queue = state.__gildraFarmQueue ??= [];
-function view(j: Job): GearFarmJob {
-  return {
-    id: j.id,
-    status: j.status,
-    progress: j.progress,
-    result: j.result,
-    error: j.error
-  };
+function view(j: Job) {
+  return { id: j.id, status: j.status, progress: j.progress, result: j.result, error: j.error,
+    createdAt: j.createdAt, expiresAt: j.expiresAt,
+    ...(j.scope ? { scope: { ...j.scope }, clientRequestId: j.clientRequestId! } : {}) };
 }
-function cleanup() {
-  for (const [id, j] of jobs) if (j.expires < Date.now()) {
-    j.controller.abort();
-    jobs.delete(id);
-  }
-  // Cancelled or expired queued jobs must not consume queue capacity while
-  // another character's long simulation is still running.
-  for (let index = queue.length - 1; index >= 0; index--) {
-    if (jobs.get(queue[index])?.status !== "queued") queue.splice(index, 1);
-  }
-}
-async function drain() {
-  if (state.__gildraFarmRunning) return;
-  state.__gildraFarmRunning = true;
-  try {
-    while (queue.length) {
-      const j = jobs.get(queue.shift()!);
-      if (!j || j.status !== "queued") continue;
-      j.status = "running";
-      try {
-        const signal = AbortSignal.any([j.controller.signal, AbortSignal.timeout(10 * 60_000)]);
-        const result = await j.task!(signal, p => {
-          if (!signal.aborted) {
-            j.progress = p;
-            j.expires = Date.now() + 30 * 60_000;
-          }
-        });
-        signal.throwIfAborted();
-        j.result = result;
-        j.status = "completed";
-      } catch (error) {
-        j.status = j.controller.signal.aborted ? "cancelled" : "failed";
-        // Only fixed internal identifiers reach clients, never upstream URLs or tokens.
-        const message = error instanceof Error ? error.message : "";
-        j.error = /^[a-z_]{3,80}$/.test(message) ? message : "farm_plan_unavailable";
-      } finally {
-        delete j.task;
-        j.expires = Date.now() + 30 * 60_000;
-      }
+/** Single-process queue. Browser lifetime and request transport never own task cancellation. */
+export function createGearFarmJobStore(options: { now?: () => number; retentionMs?: number; deadlineMs?: number } = {}) {
+  const now = options.now ?? Date.now, retention = options.retentionMs ?? 30 * 60_000, deadline = options.deadlineMs ?? 10 * 60_000;
+  const jobs = new Map<string, Job>(), queue: string[] = [];
+  let running = false;
+  const retainUntil = (job: Partial<Identity>) => Math.max(now(), Number(job.clientRequestId?.split(":", 1)[0]) || 0) + retention;
+  function cleanup() {
+    for (const [id, job] of jobs) if (job.expiresAt <= now()) {
+      job.controller.abort(new Error("plan_timed_out"));
+      if (job.status === "running") {
+        job.status = "failed";
+        job.error = "plan_timed_out";
+        job.expiresAt = retainUntil(job);
+      } else jobs.delete(id);
     }
-  } finally {
-    state.__gildraFarmRunning = false;
+    for (let i = queue.length - 1; i >= 0; i--) if (jobs.get(queue[i])?.status !== "queued") queue.splice(i, 1);
   }
-}
-export function enqueueGearFarmJob(owner: string, task: Task) {
-  cleanup();
-  if ([...jobs.values()].some(j => j.owner === owner && (j.status === "queued" || j.status === "running"))) throw new Error("plan_already_running");
-  if (queue.length >= 8) throw new Error("plan_queue_full");
-  if ([...jobs.values()].filter(j => j.owner === owner && j.expires > Date.now() + 29 * 60_000).length >= 3) throw new Error("plan_rate_limited");
-  // Bound retained results as well as active work.
-  if (jobs.size >= 200) {
-    const old = [...jobs].find(([, j]) => !["queued", "running"].includes(j.status));
-    if (old) jobs.delete(old[0]);else throw new Error("plan_queue_full");
+  function owned(owner: string, id: string, scope?: GearFarmScope) {
+    const job = jobs.get(id);
+    return job?.owner === owner && (!scope || job.scope && sameFarmScope(job.scope, scope)) ? job : undefined;
   }
-  const j: Job = {
-    id: randomUUID(),
-    owner,
-    task,
-    controller: new AbortController(),
-    expires: Date.now() + 30 * 60_000,
-    status: "queued",
-    progress: null,
-    result: null,
-    error: null
+  function requestJob(owner: string, identity: Identity) {
+    const existing = [...jobs.values()].find(job => job.owner === owner && job.clientRequestId === identity.clientRequestId);
+    if (existing && (!existing.scope || !sameFarmScope(existing.scope, identity.scope))) throw new Error("plan_request_conflict");
+    return existing;
+  }
+  function create(owner: string, identity?: Identity): Job {
+    // Never evict an unexpired cancellation identity: an in-flight POST could otherwise resurrect it.
+    if (jobs.size >= 200) throw new Error("plan_queue_full");
+    const job: Job = { id: randomUUID(), owner, ...identity, ...(identity ? { scope: { ...identity.scope } } : {}),
+      controller: new AbortController(), createdAt: now(), expiresAt: retainUntil(identity ?? {}),
+      status: "queued", progress: null, result: null, error: null };
+    jobs.set(job.id, job);
+    return job;
+  }
+  async function drain() {
+    if (running) return;
+    running = true;
+    try {
+      while (queue.length) {
+        cleanup();
+        const job = jobs.get(queue.shift()!);
+        if (!job || job.status !== "queued") continue;
+        job.status = "running";
+        job.expiresAt = now() + deadline;
+        const timeout = setTimeout(() => job.controller.abort(new Error("plan_timed_out")), deadline);
+        let abort: (() => void) | undefined;
+        try {
+          const signal = job.controller.signal;
+          const interrupted = new Promise<never>((_, reject) => {
+            abort = () => reject(signal.reason ?? new Error("cancelled"));
+            signal.addEventListener("abort", abort, { once: true });
+          });
+          const task = job.task!(signal, progress => {
+            if (!signal.aborted && job.status === "running" && jobs.get(job.id) === job) job.progress = progress;
+          });
+          // A late/non-cooperative task cannot hold the queue forever or republish after cancellation.
+          const result = await Promise.race([task, interrupted]);
+          signal.throwIfAborted();
+          if (jobs.get(job.id) !== job || job.status !== "running") continue;
+          job.result = result;
+          job.status = "completed";
+        } catch (error) {
+          if (jobs.get(job.id) !== job || !farmJobActive(job)) continue;
+          job.status = "failed";
+          const message = error instanceof Error ? error.message : "";
+          job.error = /^[a-z_]{3,80}$/.test(message) ? message : "farm_plan_unavailable";
+        } finally {
+          clearTimeout(timeout);
+          if (abort) job.controller.signal.removeEventListener("abort", abort);
+          delete job.task;
+          if (jobs.get(job.id) === job) job.expiresAt = retainUntil(job);
+        }
+      }
+    } finally { running = false; }
+  }
+  return {
+    enqueue(owner: string, task: Task, identity?: Identity) {
+      cleanup();
+      if (identity) {
+        const existing = requestJob(owner, identity);
+        if (existing) return view(existing);
+        validateFarmRequestId(identity.clientRequestId, now());
+      }
+      if ([...jobs.values()].some(job => job.owner === owner && farmJobActive(job))) throw new Error("plan_already_running");
+      if (queue.length >= 8) throw new Error("plan_queue_full");
+      if ([...jobs.values()].filter(job => job.owner === owner && !job.cancelledBeforeAcceptance && job.createdAt > now() - 60_000).length >= 3) throw new Error("plan_rate_limited");
+      const job = create(owner, identity);
+      job.task = task;
+      queue.push(job.id);
+      const result = view(job);
+      void drain();
+      return result;
+    },
+    get(owner: string, id: string, scope?: GearFarmScope) {
+      cleanup();
+      const job = owned(owner, id, scope);
+      return job ? view(job) : null;
+    },
+    discover(owner: string, scope: GearFarmScope, clientRequestId?: string) {
+      cleanup();
+      const matches = [...jobs.values()].filter(job => job.owner === owner && job.scope && sameFarmScope(job.scope, scope) &&
+        (!clientRequestId || job.clientRequestId === clientRequestId)).reverse();
+      const job = matches.find(farmJobActive) ?? matches[0];
+      return job ? view(job) : null;
+    },
+    cancel(owner: string, id: string, scope?: GearFarmScope) {
+      cleanup();
+      const job = owned(owner, id, scope);
+      if (!job) return null;
+      if (farmJobActive(job)) {
+        job.status = "cancelled";
+        job.error = "cancelled";
+        job.expiresAt = retainUntil(job);
+        job.controller.abort(new Error("cancelled"));
+        delete job.task;
+        const index = queue.indexOf(job.id);
+        if (index !== -1) queue.splice(index, 1);
+      }
+      return view(job);
+    },
+    cancelRequest(owner: string, identity: Identity) {
+      cleanup();
+      const existing = requestJob(owner, identity);
+      if (existing) return this.cancel(owner, existing.id, identity.scope)!;
+      validateFarmRequestId(identity.clientRequestId, now());
+      if ([...jobs.values()].filter(job => job.owner === owner && job.cancelledBeforeAcceptance).length >= 20) throw new Error("plan_rate_limited");
+      const job = create(owner, identity);
+      job.cancelledBeforeAcceptance = true;
+      return this.cancel(owner, job.id, identity.scope)!;
+    },
   };
-  jobs.set(j.id, j);
-  queue.push(j.id);
-  const result = view(j);
-  void drain();
-  return result;
 }
-export function getGearFarmJob(owner: string, id: string) {
-  cleanup();
-  const j = jobs.get(id);
-  return j?.owner === owner ? view(j) : null;
-}
-export function cancelGearFarmJob(owner: string, id: string) {
-  cleanup();
-  const j = jobs.get(id);
-  if (!j || j.owner !== owner) return null;
-  if (j.status === "queued" || j.status === "running") {
-    j.controller.abort();
-    j.status = "cancelled";
-    j.error = "cancelled";
-    delete j.task;
-    const queuedIndex = queue.indexOf(id);
-    if (queuedIndex !== -1) queue.splice(queuedIndex, 1);
-  }
-  return view(j);
-}
+const state = globalThis as typeof globalThis & { __gildraFarmJobStoreV2?: ReturnType<typeof createGearFarmJobStore> };
+const store = state.__gildraFarmJobStoreV2 ??= createGearFarmJobStore();
+export const enqueueGearFarmJob = store.enqueue.bind(store);
+export const getGearFarmJob = store.get.bind(store);
+export const discoverGearFarmJob = store.discover.bind(store);
+export const cancelGearFarmJob = store.cancel.bind(store);
+export const cancelGearFarmRequest = store.cancelRequest.bind(store);
