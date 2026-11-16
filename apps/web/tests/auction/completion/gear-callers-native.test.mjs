@@ -5,6 +5,10 @@ import { stripTypeScriptTypes } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
 import * as gear from "../../../lib/wow/gearSimulation.ts";
+import { normalizeFarmSettings } from "../../../lib/wow/gearFarm/settings.ts";
+import { requestedFarmRules, farmAccess, farmLootDifficultyMembership } from "../../../lib/wow/gearFarm/rules.ts";
+import { sourceTargets } from "../../../lib/wow/gearFarm/planner.ts";
+import { farmSourceCoverageComplete } from "../../../lib/wow/gearFarm/rewards.ts";
 
 const rules = ["rampage", "bloodthirst", "raging-blow", "execute", "odyns-fury", "whirlwind"];
 const engine = "SimulationCraft native-contract-test";
@@ -70,7 +74,11 @@ test("farm baseline and independent reward use native APL without an editor pres
     createHash, process, AbortSignal, Number, Error, JSON, Map, Set, Date, Math, nativeGearSimulationMeasurement: gear.nativeGearSimulationMeasurement,
     currentGearSeason: () => ({ id: "midnight-season-2" }), gearSlotCategoryPaths: { HEAD: [] },
     lookupGearEntities: async () => [{ externalId: 1001 }], catalogLoadoutItem: () => loadoutItem,
-    equippedFarmItemPresentation: () => ({}), farmRules: [], endgameFarmRules: [], talentSpecThemes: [theme],
+    equippedFarmItemPresentation: () => ({}), talentSpecThemes: [theme],
+    normalizeFarmSettings, requestedFarmRules, farmAccess, farmLootDifficultyMembership, farmSourceCoverageComplete, sourceTargets,
+    // Loot/icon transports stay offline; current settings and source-selection
+    // rules execute unchanged before the native APL contract below is checked.
+    getFarmLoot: async () => ({ instance: null, loot: [] }), journalInstanceIcon: () => undefined, getBoss: () => undefined,
     resolveFarmRewards: async () => ({ options: [{}], exactVariants: 1, searchLimited: false }),
     getRotationPreset: async () => { presetRequests++; return { defaultRules: rules }; },
     confirmFarmImprovements: async input => {

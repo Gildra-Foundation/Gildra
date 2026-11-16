@@ -11,7 +11,7 @@ import type { AuctionGearOption, AuctionPlanProgress } from "./auctionGearTypes"
 
 /** Limits bound one continuation's work, never the retained candidate domain. */
 // lookupGearRecords still uses bounded 100-ID pages and at most four per wave.
-const catalogBatch = 500, detailBatch = 8, variantBatch = 4;
+const catalogBatch = 500, detailBatch = 8, initialVariantBatch = 4, variantBatch = 8;
 /** A repaired catalog can join a retained search without retrying on every poll. */
 const catalogRetryMs = 60_000;
 type CatalogPriorityHint = { itemLevel: number; requiredLevel?: number };
@@ -54,6 +54,15 @@ export type AuctionGearDiscovery = {
   supportedSummaryItems?: Set<number>;
   engine: string;
 };
+
+// Derived presentation is process-local: checkpoints retain only authoritative
+// discovery facts. Refreshes replace offers, while candidate/hint writes below
+// explicitly invalidate this cache. Return a detached array to callers.
+const optionCache = new WeakMap<AuctionGearDiscovery, {
+  offers: AuctionGearDiscovery["offers"]; candidates: AuctionGearDiscovery["candidates"];
+  candidateCount: number; hints: AuctionGearDiscovery["catalogHints"]; hintCount: number;
+  level: number | undefined; options: AuctionGearOption[];
+}>();
 
 export function createAuctionGearDiscovery(market: AuctionSnapshot, budgetCopper: number): AuctionGearDiscovery {
   const state: AuctionGearDiscovery = { marketId: market.id, budgetCopper, offers: new Map(), itemVariants: new Map(), itemIds: [], itemCursor: 0,
@@ -253,6 +262,7 @@ function rememberUnverifiedEligibility(state: AuctionGearDiscovery, itemId: numb
 }
 
 function acceptCatalogSummaries(state: AuctionGearDiscovery, ids: number[], records: CatalogRecord[], selectedSlots: readonly string[]) {
+  optionCache.delete(state);
   const supportedSummaryItems = state.supportedSummaryItems ??= new Set();
   for (const id of ids) {
     state.scannedItems.add(id);
@@ -333,7 +343,10 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
     } else if (state.variantCursor < state.variantKeys.length && (!state.records.length || compareCatalogHints(
       state.catalogHints?.get(state.offers.get(state.variantKeys[state.variantCursor])?.[0]?.itemId ?? 0),
       state.catalogHints?.get(state.records[0].externalId), input.characterLevel) <= 0)) {
-      const keys = state.variantKeys.slice(state.variantCursor, state.variantCursor + variantBatch);
+      // Preserve first-result latency, then fill one native request (at most
+      // eight candidate variants plus eight exact reference controls).
+      const size = input.stopAfterNewCandidates ? initialVariantBatch : variantBatch;
+      const keys = state.variantKeys.slice(state.variantCursor, state.variantCursor + size);
       const probes = keys.flatMap(key => {
         const offer = state.offers.get(key)?.[0], entity = offer && state.entities.get(offer.itemId);
         if (!offer || !entity) return [];
@@ -357,6 +370,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       const simcSlot = (slot: string) => ({ FINGER_1: "finger1", FINGER_2: "finger2", TRINKET_1: "trinket1", TRINKET_2: "trinket2" }[slot] ?? slot.toLowerCase());
       const resolution = probes.length ? await resolveAuctionVariants({ offers: [...references, ...probes].map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
         spec: input.spec, characterLevel: input.characterLevel, signal: input.signal }) : null;
+      input.signal.throwIfAborted();
       if (resolution?.engine) {
         if (state.engine && state.engine !== resolution.engine) throw new Error("simulation_version_changed");
         state.engine = resolution.engine;
@@ -415,7 +429,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
           candidate.constraints.setId = metadata.setId || candidate.constraints.setId;
           candidates.push(candidate);
         }
-        if (candidates.length) state.candidates.set(key, candidates);
+        if (candidates.length) { state.candidates.set(key, candidates); optionCache.delete(state); }
       }
       // A sold effect skipped before resolution may return in a later
       // snapshot. It must then be queued again rather than lost forever.
@@ -461,6 +475,10 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
 }
 
 export function auctionGearDiscoveryOptions(state: AuctionGearDiscovery): AuctionGearOption[] {
+  const cached = optionCache.get(state);
+  if (cached && cached.offers === state.offers && cached.candidates === state.candidates &&
+      cached.candidateCount === state.candidates.size && cached.hints === state.catalogHints &&
+      cached.hintCount === (state.catalogHints?.size ?? 0) && cached.level === state.catalogPriorityLevel) return cached.options.slice();
   const options: AuctionGearOption[] = [];
   const entries = [...state.candidates];
   // Refresh can resolve a newly arrived high-priority item after older items.
@@ -471,7 +489,9 @@ export function auctionGearDiscoveryOptions(state: AuctionGearDiscovery): Auctio
     id: `${offer.auctionId}:${candidate.slotType}:${key}`, auctionId: offer.auctionId, quantity: offer.quantity,
     costCopper: offer.buyoutCopper, candidate, variantKey: key,
   });
-  return options;
+  optionCache.set(state, { offers: state.offers, candidates: state.candidates, candidateCount: state.candidates.size,
+    hints: state.catalogHints, hintCount: state.catalogHints?.size ?? 0, level: state.catalogPriorityLevel, options });
+  return options.slice();
 }
 
 export function auctionGearDiscoveryCoverage(state: AuctionGearDiscovery) {
@@ -483,9 +503,15 @@ export function auctionGearDiscoveryCoverage(state: AuctionGearDiscovery) {
   const catalogUnmatched = [...state.catalogUnmatched].filter(id => currentIds.has(id)).length;
   const eligibilityUnverifiedItems = [...state.eligibilityUnverifiedItems].filter(id => currentIds.has(id)).length;
   const discoveryComplete = auctionGearDiscoveryComplete(state);
+  // A lot counts once even when its variant equips multiple slots. Counting
+  // directly avoids constructing and priority-sorting every slot option.
+  const matchedLots = new Set<number>();
+  for (const [key, candidates] of state.candidates) if (candidates.length) {
+    for (const offer of state.offers.get(key) ?? []) matchedLots.add(offer.auctionId);
+  }
   return {
     affordableLots: state.affordableLots,
-    matchedLots: new Set(auctionGearDiscoveryOptions(state).map(option => option.auctionId)).size,
+    matchedLots: matchedLots.size,
     itemsTotal: state.itemIds.length, itemsScanned: state.scannedItems.size, itemsDetailed: state.detailedItems.size,
     supportedModifierLots: [...state.offers.values()].reduce((sum, offers) => sum + offers.length, 0),
     unsupportedModifierLots: state.unsupportedModifierLots,

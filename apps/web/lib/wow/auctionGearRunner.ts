@@ -315,10 +315,15 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
   const finishStep = diagnostics.beginStep("search");
   const discoveryShouldYield = () => Date.now() - started >= 5_000;
   const advanceComparisons = async () => {
-    const limit = entry.latestSearchResult ? 8 : 3;
+    let remaining = entry.latestSearchResult ? 8 : 3;
     let result;
-    for (let step = 0; step < limit; step++) {
-      result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult ? 1 : undefined);
+    while (remaining > 0) {
+      // Publish the first useful comparison promptly. Once it is visible, use
+      // the rest of this turn's budget in one planner pass instead of rebuilding
+      // and durably writing every lot after each individual simulation.
+      const batch = publishResult && !entry.latestSearchResult?.items.some(item => item.comparison) ? 1 : remaining;
+      result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult ? batch : undefined);
+      remaining -= batch;
       if (publishResult) {
         await flushAuctionGearSearch(entry);
         signal.throwIfAborted();
@@ -371,11 +376,14 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
     const owned = await getBattleNetCharacterBySlug(token, context.input.locale, context.input.characterSlug, signal, { cache: "no-store" });
     if (!owned || owned.id !== context.character.id || owned.realm.slug !== context.character.realm.slug || owned.region !== context.character.region) throw new Error("character_not_found");
   }
-  const current = await getBattleNetSimulationSnapshot(token, context.character, signal);
+  // Ownership is verified above; these fresh reads are independent. Keep both
+  // validations on every continuation without paying their latency in series.
+  const [current, market] = await Promise.all([
+    getBattleNetSimulationSnapshot(token, context.character, signal),
+    getCharacterAuctionMarket(context.character, token, { refresh: true, signal }),
+  ]);
   signal.throwIfAborted();
   if (auctionGearProfileFingerprint(current) !== context.profileFingerprint) throw new Error("character_snapshot_changed");
-  const market = await getCharacterAuctionMarket(context.character, token, { refresh: true, signal });
-  signal.throwIfAborted();
   if (market.region !== context.market.region || market.connectedRealmId !== context.market.connectedRealmId) throw new Error("auction_market_changed");
   const offers = new Map(market.offers.map(offer => [offer.auctionId, offer]));
   const previous = new Map(context.options.map(option => [option.auctionId, option]));

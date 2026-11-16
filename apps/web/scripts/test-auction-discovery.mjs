@@ -56,7 +56,7 @@ const gearEntityDetails = async records => {
 };
 const getAuctionItemReferences = async ids => new Map(ids.map(id => [id, { offer: offer(id), requiredLevel: 1, itemLevel: 100, stats: [] }]));
 const resolveAuctionVariants = async ({ offers }) => {
-  assert(offers.length <= 8, "At most four exact variants and four control references per work batch");
+  assert(offers.length <= 16, "At most eight exact variants and eight control references per work batch");
   batches.variants++;
   for (const { offer } of offers) batches.keys.add(auctionVariantKey(offer));
   return { engine: currentEngine, variants: new Map(offers.map(({ offer }) => [auctionVariantKey(offer), {
