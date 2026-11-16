@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { goldToCopper } from "@/lib/wow/auctionMarket";
 import { startAuctionGearSearch, continueAuctionGearSearch, assembleAuctionGearSearch, selectedAuctionGearAssemblyOptions, verifyAuctionGearSearch } from "@/lib/wow/auctionGearRunner";
 import { enqueueAuctionGearJob, getAuctionGearJob, waitForAuctionGearJob, validAuctionGearJobRevision, getAuctionGearJobByRequest, validAuctionGearClientRequestId, replayAuctionGearJob, cancelAuctionGearJob, cancelAuctionGearRequest, getOwnerActiveAuctionGearJob, auctionGearFormIntent } from "@/lib/wow/auctionGearJobs";
-import { getAuctionGearSearch, reserveAuctionGearSearch, saveAuctionGearSearch } from "@/lib/wow/auctionGearSearchStore";
+import { getAuctionGearSearch, reserveAuctionGearSearch, saveAuctionGearSearch, type AuctionGearSearchEntry } from "@/lib/wow/auctionGearSearchStore";
 import { resumeOwnedAuctionGearWork } from "@/lib/wow/auctionGearWork";
 import { recoverAuctionGearSearch } from "@/lib/wow/auctionGearRecovery";
 import { auctionGearSlots, parseAuctionGearSlots } from "@/lib/wow/auctionGearSelection";
@@ -12,6 +12,9 @@ import { auctionGearSelectionBodyLimit, decodeAuctionGearSelectionTransport } fr
 import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "@/lib/wow/auctionGearScenarios";
 import type { GearSimulationScenario } from "@/lib/wow/gearSimulation";
 export const dynamic = "force-dynamic";
+// A rename can succeed before its directory fsync fails. If memory is rolled
+// back, the next admission must repair disk even when its selection is equal.
+const selectionDurabilityUnknown = new WeakSet<AuctionGearSearchEntry>();
 function reply(body: unknown, status = 200) {
   return NextResponse.json(body, {
     status,
@@ -215,11 +218,18 @@ async function postPlan(request: Request) {
       const beforeAcceptance = allowed ? () => {
         const previous = entry.excludedOptionIds, previousVariants = entry.excludedVariantKeys;
         const ids = new Set(allowed.map(option => option.id));
-        entry.excludedOptionIds = hasExcluded ? [...body.excludedOptionIds as string[]]
+        const next = hasExcluded ? [...body.excludedOptionIds as string[]]
           : entry.context.options.filter(option => !ids.has(option.id)).map(option => option.id);
-        entry.excludedVariantKeys = hasVariants ? [...variants as string[]] : [];
-        try { saveAuctionGearSearch(entry); }
-        catch (error) { entry.excludedOptionIds = previous; entry.excludedVariantKeys = previousVariants; throw error; }
+        const nextVariants = hasVariants ? [...variants as string[]] : [];
+        if (!selectionDurabilityUnknown.has(entry) && previous?.length === next.length && previous.every((id, index) => id === next[index]) &&
+            previousVariants?.length === nextVariants.length && previousVariants.every((key, index) => key === nextVariants[index])) return;
+        entry.excludedOptionIds = next;
+        entry.excludedVariantKeys = nextVariants;
+        try { saveAuctionGearSearch(entry); selectionDurabilityUnknown.delete(entry); }
+        catch (error) {
+          selectionDurabilityUnknown.add(entry);
+          entry.excludedOptionIds = previous; entry.excludedVariantKeys = previousVariants; throw error;
+        }
       } : undefined;
       const job = enqueueAuctionGearJob(user.id, async (signal, progress, hooks) => {
         entry.busy = true;
