@@ -7,7 +7,7 @@ test('diagnostics separate queue/compute, retain first comparison and count fail
  await d.measure('compute',async()=>{now+=11;});
  d.comparison(); d.step(); d.cacheHit(); now+=3; d.comparison();
  await assert.rejects(d.measure('discovery',async()=>{now+=2;throw new Error('offline');}),/offline/);
- assert.deepEqual(d.snapshot(),{discovery:2,queue:7,compute:11,workerQueue:null,simulation:0,candidates:0,simulations:0,task:0,aborts:0,timeouts:0,steps:1,cacheHits:1,errors:1,comparisons:2,firstComparisonMs:18,totalMs:23,activeStepMs:0,stepDurations:[]});
+ assert.deepEqual(d.snapshot(),{discovery:2,queue:7,compute:11,workerQueue:null,simulation:0,candidates:0,simulations:0,task:0,aborts:0,timeouts:0,steps:1,cacheHits:1,errors:1,comparisons:2,firstComparisonMs:18,totalMs:23,activeStepMs:0,stepDurations:[],stages:{}});
 });
 
 test('step lifetime excludes idle, includes an active step and finishes idempotently', () => {
@@ -46,6 +46,7 @@ test('production diagnostics are opt-in and omit attached identity and error det
  assert.equal(messages.length,0);
  process.env.AUCTION_GEAR_DIAGNOSTICS='1';
  logAuctionGearDiagnostics({...snapshot,owner:'secret-owner',token:'secret-token',error:'secret-error',
+   stages:{catalog:{calls:1,errors:0,active:0,operationMs:2,wallMs:2,token:'secret-stage-token'},'secret-stage':{calls:1}},
    stepDurations:[{kind:'search',durationMs:2,token:'secret-step-token'}]});
  assert.equal(messages.length,1); assert.equal(messages[0].includes('secret'),false);
  const logged=JSON.parse(messages[0]);
@@ -69,4 +70,22 @@ test('timeouts, cancellation and ordinary errors remain distinct', () => {
  assert.equal(d.snapshot().timeouts,1);
  assert.equal(d.snapshot().aborts,1);
  assert.equal(d.snapshot().errors,1);
+});
+
+
+test('stage timing distinguishes overlapping operation cost from elapsed wall time', async () => {
+ let now=0; const d=createAuctionGearDiagnostics(()=>now);
+ let finishA, finishB;
+ const a=d.measureStage('catalog',()=>new Promise(resolve=>{finishA=resolve;}));
+ now=5;
+ const b=d.measureStage('catalog',()=>new Promise(resolve=>{finishB=resolve;}));
+ now=10;
+ assert.deepEqual(d.snapshot().stages.catalog,{calls:2,errors:0,active:2,operationMs:15,wallMs:10});
+ finishA(); await a;
+ now=15; finishB(); await b;
+ assert.deepEqual(d.snapshot().stages.catalog,{calls:2,errors:0,active:0,operationMs:20,wallMs:15});
+ now=30;
+ await assert.rejects(d.measureStage('catalog',async()=>{now=33; throw new Error('secret');}),/secret/);
+ assert.deepEqual(d.snapshot().stages.catalog,{calls:3,errors:1,active:0,operationMs:23,wallMs:18});
+ assert.equal(JSON.stringify(d.snapshot()).includes('secret'),false);
 });

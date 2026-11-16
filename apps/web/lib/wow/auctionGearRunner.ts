@@ -33,7 +33,7 @@ import { catalogLoadoutItem, gearSlotCategoryPaths } from "./gearCandidates";
 import { prepareGearLoadout, nativeGearSimulationMeasurement, type GearSimulationScenario } from "./gearSimulation";
 import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 import type { AuctionGearSearchResult, AuctionGearAssemblyResult } from "./auctionGearTypes";
-import { createAuctionGearSearch, deleteAuctionGearSearch, scheduleAuctionGearSearchSave, flushAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
+import { createAuctionGearSearch, deleteAuctionGearSearch, scheduleAuctionGearSearchSave, flushAuctionGearSearch, flushPendingAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
 import type { GearLoadoutItem } from "./gearCompatibility";
 import type { AuctionSnapshot } from "./auctionMarket";
 import { createAuctionGearDiscovery, advanceAuctionGearDiscovery, refreshAuctionGearDiscovery, auctionGearDiscoveryCoverage, auctionGearDiscoveryOptions } from "./auctionGearDiscovery";
@@ -58,16 +58,18 @@ export async function runAuctionGearPlan(input: AuctionGearRunInput, token: stri
     completed: 0,
     total: 1
   });
-  const character = await getBattleNetCharacterBySlug(token, input.locale, input.characterSlug, signal);
+  const diagnostics = createAuctionGearDiagnostics();
+  const character = await diagnostics.measureStage("ownership", () => getBattleNetCharacterBySlug(token, input.locale, input.characterSlug, signal));
   if (!character) throw new Error("character_not_found");
-  const armory = await getBattleNetSimulationSnapshot(token, character, signal);
+  const armory = await diagnostics.measureStage("armory", () => getBattleNetSimulationSnapshot(token, character, signal));
+  runDiagnostics.set(armory, diagnostics);
   return runAuctionGearPlanFromSnapshot(input, character, armory, token, signal, progress);
 }
 
 /** Internal runner for a trusted snapshot. HTTP entry points must resolve ownership first. */
 export async function createAuctionGearContextFromSnapshot(input: AuctionGearRunInput, character: BattleNetCharacter, armory: BattleNetSimulationSnapshot, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
   const check = () => signal.throwIfAborted();
-  metricsFor(armory);
+  const diagnostics = metricsFor(armory);
   check();
   const theme = talentSpecThemes.find(t => t.classId === character.playableClass.id && t.specId === armory.activeSpecializationId);
   if (!theme) throw new Error("specialization_unresolved");
@@ -94,9 +96,9 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
   const equipped = raw.filter(i => i.item?.id && i.slot?.type && gearSlotCategoryPaths[i.slot.type]);
   const locale = input.locale === "en" ? "en_US" : "ru_RU";
   const [market, localizedEquipped, baselineEntities] = await Promise.all([
-    getCharacterAuctionMarket(character, token, { signal }),
-    getAuctionEquippedPresentation({ character, equipment: armory.equipment, locale: input.locale, token, signal }),
-    lookupGearEntities(equipped.map(i => i.item!.id!), locale, signal, { includeSources: false, auctionCache: true }),
+    diagnostics.measureStage("market", () => getCharacterAuctionMarket(character, token, { signal })),
+    diagnostics.measureStage("equippedPresentation", () => getAuctionEquippedPresentation({ character, equipment: armory.equipment, locale: input.locale, token, signal })),
+    diagnostics.measureStage("equippedCatalog", () => lookupGearEntities(equipped.map(i => i.item!.id!), locale, signal, { includeSources: false, auctionCache: true })),
   ]);
   check();
   const qualityIds: Record<string, number> = { POOR: 0, COMMON: 1, UNCOMMON: 2, RARE: 3, EPIC: 4, LEGENDARY: 5, ARTIFACT: 6, HEIRLOOM: 7 };
@@ -232,20 +234,22 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
     const offer = candidate && context.discovery.offers.get(candidate.variantKey)?.find(row => row.auctionId === candidate.auctionId);
     if (offer && candidate) {
       const slot = ({ FINGER_1: "finger1", FINGER_2: "finger2", TRINKET_1: "trinket1", TRINKET_2: "trinket2" } as Record<string, string>)[candidate.candidate.slotType] ?? candidate.candidate.slotType.toLowerCase();
-      const validation = await resolveAuctionVariants({ offers: [{ offer, slot }],
-        spec: context.specSlug, characterLevel: context.character.level, signal });
+      const validation = await metricsFor(context.armory ?? context).measureStage("variants", () => resolveAuctionVariants({ offers: [{ offer, slot }],
+        spec: context.specSlug, characterLevel: context.character.level, signal }));
       if (!validation.engine || context.discovery.engine && validation.engine !== context.discovery.engine) throw new Error("simulation_version_changed");
       context.discovery.engine = validation.engine;
     } else {
       await context.simulate([], signal);
     }
     context.engineVerificationRequired = false;
+    scheduleAuctionGearSearchSave(entry);
   }
   if (!context.coverage.discoveryComplete) {
     if (!token) throw new Error("auction_discovery_authorization_required");
     await metricsFor(context.armory ?? context).measure("discovery", () => advanceAuctionGearDiscovery(context.discovery, { locale: context.input.locale === "en" ? "en_US" : "ru_RU",
       region: context.character.region, token, spec: context.specSlug, characterLevel: context.character.level,
       selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps,
+      measure: (stage, work) => metricsFor(context.armory ?? context).measureStage(stage, work),
       stopAfterNewCandidates: !entry.latestSearchResult?.items.some(item => item.comparison), onProgress: progress,
       onCheckpoint: () => { synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery)); scheduleAuctionGearSearchSave(entry); } }));
   }
@@ -253,6 +257,7 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
   const options = auctionGearDiscoveryOptions(context.discovery);
   if (token) schedulePlannerItemIcons(options.map(option => option.candidate), context.character.region, token, signal);
   synchronizeAuctionOptions(entry, options);
+  scheduleAuctionGearSearchSave(entry);
 }
 
 async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: AbortSignal,
@@ -260,8 +265,15 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
   const context = entry.context;
   const cache = retainAuctionSimulations(entry);
   if (entry.searchCheckpoint) Object.assign(entry.searchCheckpoint.simulationCache, cache);
-  const simulationConcurrency = await context.simulate.concurrency?.(signal) ?? 1;
-  const { result, checkpoint } = await searchAuctionGearOptions({
+  const diagnostics = metricsFor(context.armory ?? context);
+  signal.throwIfAborted();
+  const yielding = shouldYield();
+  const max = maxNewSimulations ?? (entry.latestSearchResult ? 8 : 3);
+  // Rendering a retained checkpoint or measuring one effect cannot overlap
+  // native work, so neither operation needs a live capacity round trip.
+  const simulationConcurrency = yielding || max <= 1 ? 1
+    : await diagnostics.measureStage("capacity", async () => await context.simulate.concurrency?.(signal) ?? 1);
+  const { result, checkpoint } = await diagnostics.measureStage("search", () => searchAuctionGearOptions({
     searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options: context.options,
     selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
     market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
@@ -269,10 +281,10 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
     simulationConcurrency,
     // The initial response includes baseline plus two native comparisons.
     // Subsequent responses update the visible choices after eight new effects.
-    maxNewSimulations: maxNewSimulations ?? (entry.latestSearchResult ? 8 : 3),
-    shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
+    maxNewSimulations: max,
+    shouldYield: yielding ? () => true : shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
     onCheckpoint: state => { entry.searchCheckpoint = state; scheduleAuctionGearSearchSave(entry); },
-  });
+  }));
   signal.throwIfAborted();
   entry.searchCheckpoint = checkpoint;
   entry.retainedBaseline = checkpoint.baseline;
@@ -288,9 +300,11 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
 export async function startAuctionGearSearch(input: AuctionGearRunInput, owner: string, token: string, signal: AbortSignal,
   progress: (p: AuctionPlanProgress) => void, searchCreated?: (searchId: string) => void, publishResult?: (result: AuctionGearRunResult) => void) {
   progress({ phase: "market", completed: 0, total: 1 });
-  const character = await getBattleNetCharacterBySlug(token, input.locale, input.characterSlug, signal);
+  const diagnostics = createAuctionGearDiagnostics();
+  const character = await diagnostics.measureStage("ownership", () => getBattleNetCharacterBySlug(token, input.locale, input.characterSlug, signal));
   if (!character) throw new Error("character_not_found");
-  const armory = await getBattleNetSimulationSnapshot(token, character, signal);
+  const armory = await diagnostics.measureStage("armory", () => getBattleNetSimulationSnapshot(token, character, signal));
+  runDiagnostics.set(armory, diagnostics);
   return startAuctionGearSearchFromSnapshot(input, character, armory, owner, token, signal, progress, searchCreated, publishResult);
 }
 
@@ -307,6 +321,13 @@ export async function startAuctionGearSearchFromSnapshot(input: AuctionGearRunIn
     if (!entry.latestSearchResult) deleteAuctionGearSearch(owner, entry.id);
     throw error;
   }
+}
+
+/** Phase transitions are durable state, including when no planner work follows. */
+function setAuctionGearPhase(entry: AuctionGearSearchEntry, key: "nextSearchPhase" | "nextAssemblyPhase", value: "discovery" | "simulation") {
+  if (entry[key] === value) return;
+  entry[key] = value;
+  scheduleAuctionGearSearchSave(entry);
 }
 
 export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, signal: AbortSignal,
@@ -327,7 +348,7 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
       result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult ? batch : undefined);
       remaining -= batch;
       if (publishResult) {
-        await flushAuctionGearSearch(entry);
+        await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushPendingAuctionGearSearch(entry));
         signal.throwIfAborted();
         const diagnosticKey = entry.context.armory ?? entry.context;
         const seen = comparedOptions.get(diagnosticKey) ?? new Set<string>();
@@ -350,22 +371,27 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
     // Retain this choice across recovery so slow upstream calls cannot starve
     // already-discovered comparisons on every continuation.
     if (entry.nextSearchPhase === "simulation" && entry.context.options.length) {
-      entry.nextSearchPhase = "discovery";
+      setAuctionGearPhase(entry, "nextSearchPhase", "discovery");
       await advanceComparisons();
       simulated = true;
     }
     if (!shouldYield()) {
-      entry.nextSearchPhase = "simulation";
+      setAuctionGearPhase(entry, "nextSearchPhase", "simulation");
       await discoverAuctionOptions(entry, token, signal, progress, discoveryShouldYield, entry.latestSearchResult ? 4 : 12);
     }
     signal.throwIfAborted();
     const result = simulated
       ? await updateAuctionSearchResult(entry, signal, progress, () => true)
       : await advanceComparisons();
-    if (!shouldYield()) entry.nextSearchPhase = "discovery";
+    if (!shouldYield()) setAuctionGearPhase(entry, "nextSearchPhase", "discovery");
     return publicAuctionResult(entry.context, result);
+  } catch (error) {
+    // Cached/incompatible traversal can mutate an existing cursor between
+    // planner callbacks. Preserve that progress even if the next yield aborts.
+    scheduleAuctionGearSearchSave(entry);
+    throw error;
   } finally {
-    try { await flushAuctionGearSearch(entry); } finally {
+    try { await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushPendingAuctionGearSearch(entry)); } finally {
       entry.busy = false; finishStep(); logAuctionGearDiagnostics(diagnostics.snapshot());
     }
   }
@@ -373,16 +399,17 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
 /** Refresh actual character and lot facts without trusting client prices/stats. */
 export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, token: string, signal: AbortSignal, verifyOwnership = true) {
   const context = entry.context;
+  const diagnostics = metricsFor(context.armory ?? context);
   signal.throwIfAborted();
   if (verifyOwnership) {
-    const owned = await getBattleNetCharacterBySlug(token, context.input.locale, context.input.characterSlug, signal, { cache: "no-store" });
+    const owned = await diagnostics.measureStage("ownership", () => getBattleNetCharacterBySlug(token, context.input.locale, context.input.characterSlug, signal, { cache: "no-store" }));
     if (!owned || owned.id !== context.character.id || owned.realm.slug !== context.character.realm.slug || owned.region !== context.character.region) throw new Error("character_not_found");
   }
   // Ownership is verified above; these fresh reads are independent. Keep both
   // validations on every continuation without paying their latency in series.
   const [current, market] = await Promise.all([
-    getBattleNetSimulationSnapshot(token, context.character, signal),
-    getCharacterAuctionMarket(context.character, token, { refresh: true, signal }),
+    diagnostics.measureStage("armory", () => getBattleNetSimulationSnapshot(token, context.character, signal)),
+    diagnostics.measureStage("market", () => getCharacterAuctionMarket(context.character, token, { refresh: true, signal })),
   ]);
   signal.throwIfAborted();
   if (auctionGearProfileFingerprint(current) !== context.profileFingerprint) throw new Error("character_snapshot_changed");
@@ -417,7 +444,7 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
   context.market.sourceUpdatedAt = market.sourceUpdatedAt;
   context.market.fetchedAt = market.fetchedAt;
   context.publicMarket = { ...context.publicMarket, snapshotId: market.id, updatedAt: market.sourceUpdatedAt, validatedAt: market.fetchedAt };
-  await flushAuctionGearSearch(entry);
+  await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushAuctionGearSearch(entry));
 }
 
 export type AuctionGearAssemblySelection = { excludedOptionIds: string[]; excludedVariantKeys?: string[] } | string[] | undefined;
@@ -483,13 +510,13 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
     // verify the worker engine; a zero-step discovery preserves pending work.
     if (!entry.latestAssemblyResult && context.options.length) {
       await discoverAuctionOptions(entry, token, signal, progress, () => true, 0);
-      entry.nextAssemblyPhase = "discovery";
+      setAuctionGearPhase(entry, "nextAssemblyPhase", "discovery");
     // Later turns retain discovery/simulation fairness and the full domain.
     } else if (entry.nextAssemblyPhase !== "simulation") {
-      entry.nextAssemblyPhase = "simulation";
+      setAuctionGearPhase(entry, "nextAssemblyPhase", "simulation");
       await discoverAuctionOptions(entry, token, signal, progress, shouldYield, 4);
     } else {
-      entry.nextAssemblyPhase = "discovery";
+      setAuctionGearPhase(entry, "nextAssemblyPhase", "discovery");
     }
     const options = selectedAuctionGearAssemblyOptions(entry, selection);
     const allowedKey = auctionFactsKey(options);
@@ -498,9 +525,10 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       retainAuctionIncumbents(entry);
       entry.assemblyCheckpoint = undefined;
       entry.allowedKey = allowedKey;
+      scheduleAuctionGearSearchSave(entry);
     }
     const advanceAssembly = async () => {
-      const { result, checkpoint } = await assembleAuctionGear({
+      const { result, checkpoint } = await diagnostics.measureStage("assembly", () => assembleAuctionGear({
         searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options,
         selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
         market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
@@ -511,7 +539,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         maxNewSimulations: publishResult ? 1 : 8,
         shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
         onCheckpoint: state => { entry.assemblyCheckpoint = state; scheduleAuctionGearSearchSave(entry); },
-      });
+      }));
       signal.throwIfAborted();
       entry.assemblyCheckpoint = checkpoint;
       entry.retainedSimulationCache = checkpoint.simulationCache;
@@ -526,7 +554,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       scheduleAuctionGearSearchSave(entry);
       // Persist and publish each completed assembly evaluation before starting
       // another native call. A slow next call must not hide the current best set.
-      await flushAuctionGearSearch(entry);
+      await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushPendingAuctionGearSearch(entry));
       signal.throwIfAborted();
       publishResult?.(published);
       return { checkpoint, published, poolComplete: result.exhaustiveComplete };
@@ -535,7 +563,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
     for (let step = 1; publishResult && step < 8 && !shouldYield() && !poolComplete; step++) {
       ({ checkpoint, published, poolComplete } = await advanceAssembly());
     }
-    if (!shouldYield()) entry.nextAssemblyPhase = "discovery";
+    if (!shouldYield()) setAuctionGearPhase(entry, "nextAssemblyPhase", "discovery");
     const encounters = parseAuctionGearCompareScenarios(context.input.compareScenarios);
     if (published.exhaustiveComplete) {
       // Publications are snapshots. Do not mutate the result already held by a job.
@@ -562,7 +590,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       // Enhanced configuration search is a bounded second stage; equipment lot
       // procurement and its exhaustive combination cursor remain unchanged.
       if ([...finalists.values()].flat().some(option => option.candidate.variants.find(v => v.key === option.variantKey)?.resolution?.enhancements?.status === "verified")) {
-        const enhanced = await evaluateAuctionEnhancementStage({
+        const enhanced = await diagnostics.measureStage("enhancements", () => evaluateAuctionEnhancementStage({
           finalists: [...finalists].map(([label, selected]) => ({label, options:selected})),
           equipment: context.armory.equipment, loadout: context.loadout, specId: context.specId, level: context.character.level,
           region: context.character.region, engine: checkpoint.baseline.engine, profileFingerprint: context.profileFingerprint,
@@ -570,11 +598,11 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           objective:context.input.objective ?? "dps", baseline:checkpoint.baseline, simulate:context.simulate,
           signal, shouldYield, state: entry.enhancementState ??= {checkpoints:{}},
           onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
-        });
+        })).finally(() => scheduleAuctionGearSearchSave(entry));
         signal.throwIfAborted();
         published = {...published, enhancementOptimization:enhanced};
         entry.latestAssemblyResult = published;
-        await flushAuctionGearSearch(entry);
+        await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushAuctionGearSearch(entry));
         signal.throwIfAborted();
         publishResult?.(published);
         if (!enhanced.complete) return published;
@@ -592,7 +620,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       if (encounters.length && finalists.size) {
         let yielded = false;
         const simulators = new Map<string, ReturnType<typeof createAuctionSimulator>>();
-        published.scenarioComparisons = await evaluateAuctionGearScenarios([...finalists.keys()], encounters, signal,
+        published.scenarioComparisons = await diagnostics.measureStage("scenarios", () => evaluateAuctionGearScenarios([...finalists.keys()], encounters, signal,
           async (key, encounter, comparisonSignal) => {
             const identity = JSON.stringify(encounter);
             let simulate = simulators.get(identity);
@@ -611,7 +639,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             const measurement = await simulate(selected, comparisonSignal);
             comparisonSignal.throwIfAborted();
             cache[cacheKey] = measurement;
-            await flushAuctionGearSearch(entry);
+            await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushAuctionGearSearch(entry));
             return measurement;
           }, { shouldYield,
             onYield: () => { yielded = true; },
@@ -619,11 +647,11 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
               // A separate immutable publication cannot acquire later rows by aliasing.
               const partial = withFreshEnhancementQuotes({ ...published, scenarioComparisons: rows, scenarioComparisonsComplete: false });
               entry.latestAssemblyResult = partial;
-              await flushAuctionGearSearch(entry);
+              await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushAuctionGearSearch(entry));
               signal.throwIfAborted();
               publishResult?.(partial);
             },
-          });
+          }));
         published.scenarioComparisonsComplete = !yielded;
         published = withFreshEnhancementQuotes(published);
         signal.throwIfAborted();
@@ -636,8 +664,13 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       }
     }
     return published;
+  } catch (error) {
+    // Cached/incompatible traversal can mutate an existing cursor between
+    // planner callbacks. Preserve that progress even if the next yield aborts.
+    scheduleAuctionGearSearchSave(entry);
+    throw error;
   } finally {
-    try { await flushAuctionGearSearch(entry); } finally {
+    try { await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushPendingAuctionGearSearch(entry)); } finally {
       entry.busy = false; finishStep(); logAuctionGearDiagnostics(diagnostics.snapshot());
     }
   }
@@ -649,7 +682,8 @@ export async function runAuctionGearPlanFromSnapshot(input: AuctionGearRunInput,
   const started = Date.now();
   await advanceAuctionGearDiscovery(context.discovery, { locale: input.locale === "en" ? "en_US" : "ru_RU", region: character.region,
     token, spec: context.specSlug, characterLevel: character.level, selectedSlots: context.input.selectedSlots,
-    context: context.discoveryContext, signal, shouldYield: () => Date.now() - started >= 90_000, onProgress: progress });
+    context: context.discoveryContext, signal, shouldYield: () => Date.now() - started >= 90_000, onProgress: progress,
+    measure: (stage, work) => metricsFor(context.armory ?? context).measureStage(stage, work) });
   context.options = auctionGearDiscoveryOptions(context.discovery);
   context.coverage = auctionGearDiscoveryCoverage(context.discovery);
   context.searchLimited = !context.coverage.discoveryComplete || !context.coverage.dataComplete;

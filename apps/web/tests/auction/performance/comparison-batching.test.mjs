@@ -25,6 +25,7 @@ const part = (source, start, end) => source.slice(source.indexOf(start), source.
 const executable = source => stripTypeScriptTypes([
   part(source, 'function publicAuctionResult(', 'function retainAuctionIncumbents('),
   part(source, 'async function updateAuctionSearchResult(', 'export async function startAuctionGearSearch('),
+  part(source, 'function setAuctionGearPhase(', 'export async function continueAuctionGearSearch('),
   part(source, 'export async function continueAuctionGearSearch(', '/** Refresh actual character'),
 ].join('\n')).replace(/^export /gm, '') + '\n;({continueAuctionGearSearch,updateAuctionSearchResult})';
 const measurement = dps => ({ dps, dpsError: 1, confidence: 95, iterations: 1000, engine: 'SimulationCraft synthetic-batching' });
@@ -62,6 +63,13 @@ function harness(source, { effects = 9, lots = 100, beforeSimulation, retainedBa
       } } };
   writeAuctionState('search', entry.id, Date.now() + 60_000, {}, { metadata: { owner: entry.owner } });
   entry.context.simulate.concurrency = async () => 2;
+  const writeCheckpoint = async state => {
+    stats.flushes++; const start = performance.now();
+    const snapshot = { checkpoint: state.searchCheckpoint, result: state.latestSearchResult };
+    await writeAuctionStateAsync('search', state.id, Date.now() + 60_000, snapshot, { metadata: { owner: state.owner } });
+    stats.durableMs += performance.now() - start;
+    durable.push(snapshot);
+  };
   const runner = vm.runInNewContext(executable(source), { Date, Map, Set, Object, Number, JSON,
     comparedOptions: new WeakMap(), metricsFor: () => metrics, logAuctionGearDiagnostics: () => {},
     discoverAuctionOptions: async () => {},
@@ -70,13 +78,7 @@ function harness(source, { effects = 9, lots = 100, beforeSimulation, retainedBa
       try { return await searchAuctionGearOptions(input); } finally { stats.plannerMs += performance.now() - start; }
     },
     scheduleAuctionGearSearchSave: () => { stats.schedules++; },
-    flushAuctionGearSearch: async state => {
-      stats.flushes++; const start = performance.now();
-      const snapshot = { checkpoint: state.searchCheckpoint, result: state.latestSearchResult };
-      await writeAuctionStateAsync('search', state.id, Date.now() + 60_000, snapshot, { metadata: { owner: state.owner } });
-      stats.durableMs += performance.now() - start;
-      durable.push(snapshot);
-    },
+    flushAuctionGearSearch: writeCheckpoint, flushPendingAuctionGearSearch: writeCheckpoint,
   });
   const publish = result => {
     // Publication must follow an awaited durable commit of the same comparison set.

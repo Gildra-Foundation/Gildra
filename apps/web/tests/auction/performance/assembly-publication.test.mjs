@@ -9,7 +9,8 @@ async function harness(evaluate) {
   const source = await readFile(new URL('../../../lib/wow/auctionGearRunner.ts', import.meta.url), 'utf8');
   const start = source.indexOf('export async function assembleAuctionGearSearch(');
   const end = source.indexOf('\nexport async function ', start + 1);
-  const body = source.slice(start, end);
+  const phase = source.slice(source.indexOf('function setAuctionGearPhase('), source.indexOf('export async function continueAuctionGearSearch('));
+  const body = phase + source.slice(start, end);
   const entry = { id: 'assembly-publication', latestSearchResult: { kind: 'search' }, retainedBaseline: {},
     allowedKey: 'same', context: { options: [{}], input: {}, currentBySlot: new Map() } };
   let now = 0, flushes = 0;
@@ -21,7 +22,7 @@ async function harness(evaluate) {
     retainAuctionSimulations: current => current.retainedSimulationCache,
     assembleAuctionGear: evaluate,
     updateAuctionSearchResult: async () => entry.latestSearchResult,
-    scheduleAuctionGearSearchSave: () => {}, flushAuctionGearSearch: async () => { flushes++; },
+    scheduleAuctionGearSearchSave: () => {}, flushAuctionGearSearch: async () => { flushes++; }, flushPendingAuctionGearSearch: async () => { flushes++; },
     parseAuctionGearCompareScenarios: () => [],
   });
   return { entry, run, advance: ms => { now += ms; }, flushes: () => flushes };

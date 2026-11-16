@@ -40,7 +40,7 @@ export async function assemblyRunnerFixture({nativeMs=0,discoveryMs=0}={}){
  const stripped=stripTypeScriptTypes(source,{mode:'strip'}).replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
  const runner=new vm.Script(stripped+'\n;({assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions})').runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios,
   ...planner,auctionGearVariantSelectionKey,Date:FixtureDate,Map,Set,Object,Number,JSON,AbortSignal,process,
-  scheduleAuctionGearSearchSave:()=>state.saves++,flushAuctionGearSearch:async()=>state.flushes++,
+  scheduleAuctionGearSearchSave:()=>state.saves++,flushAuctionGearSearch:async()=>state.flushes++,flushPendingAuctionGearSearch:async()=>state.flushes++,
   schedulePlannerItemIcons:()=>{},auctionGearDiscoveryOptions:()=>state.pool,
   auctionGearDiscoveryCoverage:coverage,
   advanceAuctionGearDiscovery:async(_discovery,input)=>{

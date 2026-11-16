@@ -10,8 +10,9 @@ import type { AuctionOffer, AuctionSnapshot } from "./auctionMarket";
 import type { AuctionGearOption, AuctionPlanProgress } from "./auctionGearTypes";
 
 /** Limits bound one continuation's work, never the retained candidate domain. */
-// lookupGearRecords still uses bounded 100-ID pages and at most four per wave.
-const catalogBatch = 500, detailBatch = 8, initialVariantBatch = 4, variantBatch = 8;
+// Align complete 100-ID/four-request waves. Like 500 IDs, 800 needs at most
+// two waves per step, while avoiding a mostly idle second wave on every step.
+const catalogBatch = 800, detailBatch = 8, initialVariantBatch = 4, variantBatch = 8;
 /** A repaired catalog can join a retained search without retrying on every poll. */
 const catalogRetryMs = 60_000;
 type CatalogPriorityHint = { itemLevel: number; requiredLevel?: number };
@@ -295,6 +296,8 @@ type DiscoveryInput = {
   selectedSlots: readonly string[]; context: (slot: string) => GearCandidateContext;
   signal: AbortSignal; shouldYield?: () => boolean; maxSteps?: number; onProgress?: (progress: AuctionPlanProgress) => void;
   onCheckpoint?: () => void;
+  /** Optional private timing; transport behavior and data stay unchanged. */
+  measure?: <T>(stage: "catalog" | "details" | "references" | "variants", work: () => Promise<T>) => Promise<T>;
   /** Publish a useful verified batch before resolving the rest of the market. */
   stopAfterNewCandidates?: boolean;
 };
@@ -302,6 +305,8 @@ type DiscoveryInput = {
 /** Persist cursors only after a whole batch succeeds, so cancellation is retryable. */
 export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, input: DiscoveryInput) {
   input.signal.throwIfAborted();
+  const measure = <T>(stage: "catalog" | "details" | "references" | "variants", work: () => Promise<T>) =>
+    input.measure ? input.measure(stage, work) : work();
   state.catalogPriorityLevel = input.characterLevel;
   let prioritized = false;
   const initialCandidates = state.candidates.size;
@@ -310,7 +315,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
     // A repeat search can already know most raw summaries while a handful of
     // absent IDs have expired. Do not hold its first verified result behind
     // those repairs. Cache hits are scheduling facts, never native/stat proof.
-    const cached = await lookupGearRecords(state.itemIds, input.locale, undefined, undefined, input.signal, true, { cachedOnly: true });
+    const cached = await measure("catalog", () => lookupGearRecords(state.itemIds, input.locale, undefined, undefined, input.signal, true, { cachedOnly: true }));
     input.signal.throwIfAborted();
     const byId = new Map(cached.filter(record => state.queuedItems.has(record.externalId)).map(record => [record.externalId, record]));
     if (byId.size) {
@@ -336,7 +341,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       const ids = state.itemIds.slice(state.itemCursor, state.itemCursor + catalogBatch);
       // See the complete bounded summary domain before spending detail/native work.
       // Base required level is not an auction variant's actual scaled requirement.
-      const records = await lookupGearRecords(ids, input.locale, undefined, undefined, input.signal, true);
+      const records = await measure("catalog", () => lookupGearRecords(ids, input.locale, undefined, undefined, input.signal, true));
       input.signal.throwIfAborted();
       acceptCatalogSummaries(state, ids, records, input.selectedSlots);
       input.onProgress?.({ phase: "catalog", completed: state.itemCursor, total: state.itemIds.length });
@@ -359,7 +364,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       const ids = [...new Set(probes.map(probe => probe.offer.itemId))];
       const missing = ids.filter(id => !state.references.has(id));
       if (missing.length) {
-        const references = await getAuctionItemReferences(missing, input.region, input.token, input.signal, input.locale);
+        const references = await measure("references", () => getAuctionItemReferences(missing, input.region, input.token, input.signal, input.locale));
         for (const id of missing) state.references.set(id, references.get(id) ?? null);
       }
       const references = ids.flatMap(id => {
@@ -368,8 +373,8 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         return [{ offer: reference.offer, slot: probes.find(probe => probe.offer.itemId === id)!.slot }];
       });
       const simcSlot = (slot: string) => ({ FINGER_1: "finger1", FINGER_2: "finger2", TRINKET_1: "trinket1", TRINKET_2: "trinket2" }[slot] ?? slot.toLowerCase());
-      const resolution = probes.length ? await resolveAuctionVariants({ offers: [...references, ...probes].map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
-        spec: input.spec, characterLevel: input.characterLevel, signal: input.signal }) : null;
+      const resolution = probes.length ? await measure("variants", () => resolveAuctionVariants({ offers: [...references, ...probes].map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
+        spec: input.spec, characterLevel: input.characterLevel, signal: input.signal })) : null;
       input.signal.throwIfAborted();
       if (resolution?.engine) {
         if (state.engine && state.engine !== resolution.engine) throw new Error("simulation_version_changed");
@@ -438,7 +443,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       input.onProgress?.({ phase: "variants", completed: state.variantCursor, total: state.variantKeys.length });
     } else if (state.records.length) {
       const records = state.records.slice(0, detailBatch);
-      const entities = await gearEntityDetails(records, input.locale, false, input.signal, true);
+      const entities = await measure("details", () => gearEntityDetails(records, input.locale, false, input.signal, true));
       input.signal.throwIfAborted();
       for (const record of records) {
         state.detailedItems.add(record.externalId);

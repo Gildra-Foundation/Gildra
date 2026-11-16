@@ -295,7 +295,7 @@ for (const bareLoserFallback of [false,true]) test(`actual Runner continues pric
     auctionGearProfileFingerprint,auctionGearVariantSelectionKey,auctionGearMechanicalKey,
     auctionGearMechanicalCache:createAuctionGearMechanicalCache(),assertFreshMarket,
     Map,Set,Object,Number,JSON,Date,AbortSignal,process,
-    scheduleAuctionGearSearchSave:()=>{},flushAuctionGearSearch:async()=>{flushes++;},
+    scheduleAuctionGearSearchSave:()=>{},flushAuctionGearSearch:async()=>{flushes++;},flushPendingAuctionGearSearch:async()=>{flushes++;},
     evaluateAuctionEnhancementStage:async input=>{
       if(bareLoserFallback) assert(input.finalists.every(finalist=>finalist.options.every(option=>option.id==='synthetic-trinket-option')),'Only the third, verified bare loser may reach the real enhancement stage');
       const result=await evaluateAuctionEnhancementStage({...input,quote:h.input.quote});stageOutputs.push(result);return result;

@@ -45,7 +45,7 @@ const armory = { activeSpecializationId: 72, equipment: { equipped_items: [{ ite
 const lookupGearRecords = async (ids, _locale, itemClass, maxRequiredLevel, _signal, _cache, { cachedOnly = false } = {}) => {
   if (cachedOnly) return []; // This fixture models cold transport, with no raw-fact cache.
   assert.equal(maxRequiredLevel, undefined, "Do not filter actual auction variants using catalog base required level");
-  assert(ids.length <= 500, "Discovery summaries stay bounded; repository pages remain limited to 100 IDs");
+  assert(ids.length <= 800, "Discovery summaries stay bounded; repository pages remain limited to 100 IDs");
   batches.catalog++;
   return fixture.records.filter(record => ids.includes(record.externalId) && (itemClass === undefined || record.tooltip?.blocks?.some(block => block.type === "item_registry" && block.class_id === itemClass)));
 };
@@ -240,14 +240,14 @@ assert.equal(run.result.items[0].itemId, 242);
 assert.equal(run.result.coverage.itemsDetailed, 242);
 assert.equal(batches.variants, 1, "Incompatible cloth must not consume native variant work");
 
-// More than 6,000 market IDs remain resumable; summary slot filtering avoids
+// More than one turn of market IDs remains resumable; summary slot filtering avoids
 // thousands of expensive details for unrelated slots.
-run = await start([...Array.from({ length: 6001 }, (_, i) => record(i + 1, { slot: "Head" })), record(6002)],
-  Array.from({ length: 6002 }, (_, i) => offer(i + 1)));
+run = await start([...Array.from({ length: 10001 }, (_, i) => record(i + 1, { slot: "Head" })), record(10002)],
+  Array.from({ length: 10002 }, (_, i) => offer(i + 1)));
 await finish(run);
-assert.equal(run.result.coverage.itemsScanned, 6002);
+assert.equal(run.result.coverage.itemsScanned, 10002);
 assert.equal(run.result.coverage.itemsDetailed, 1);
-assert.equal(run.result.items[0].itemId, 6002);
+assert.equal(run.result.items[0].itemId, 10002);
 assert(run.chunks > 1);
 
 // All exact variants, including fourth and >256th, eventually enter the pool.
