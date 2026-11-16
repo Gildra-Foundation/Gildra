@@ -51,8 +51,9 @@ export async function cheapestAuctionEffectSelection(groups: AuctionEffectGroup[
   signal: AbortSignal): Promise<Purchase | null> {
   signal.throwIfAborted();
   if (groups.length > 16) throw new Error("invalid_equipment_slots");
-  const lots = new Map<number, { mask: number; costCopper: number; quantity: number;
-    itemId: number; variantKey: string; options: Map<number, AuctionGearOption> }>();
+  type Lot = { mask: number; costCopper: number; quantity: number;
+    itemId: number; variantKey: string; options: Map<number, AuctionGearOption> };
+  const lots = new Map<number, Lot>();
   for (let index = 0; index < groups.length; index++) for (const option of groups[index].options) {
     const lot = lots.get(option.auctionId) ?? { mask: 0, costCopper: option.costCopper, quantity: option.quantity,
       itemId: option.candidate.itemId, variantKey: option.variantKey, options: new Map() };
@@ -65,19 +66,48 @@ export async function cheapestAuctionEffectSelection(groups: AuctionEffectGroup[
   }
   const parents = groups.map((_, index) => index);
   const root = (index: number): number => parents[index] === index ? index : (parents[index] = root(parents[index]));
+  const firstIndex = (mask: number) => 31 - Math.clz32(mask & -mask);
   for (const lot of lots.values()) {
-    const indices = groups.map((_, index) => index).filter(index => lot.mask & (1 << index));
-    for (const index of indices.slice(1)) parents[root(index)] = root(indices[0]);
+    const first = firstIndex(lot.mask);
+    for (let remaining = lot.mask & (lot.mask - 1); remaining; remaining &= remaining - 1)
+      parents[root(firstIndex(remaining))] = root(first);
   }
-  const components = new Map<number, number>();
-  for (let index = 0; index < groups.length; index++) components.set(root(index), (components.get(root(index)) ?? 0) | (1 << index));
+  const components = new Map<number, { mask: number; lots: Lot[] }>();
+  for (let index = 0; index < groups.length; index++) {
+    const key = root(index), component = components.get(key) ?? { mask: 0, lots: [] };
+    component.mask |= 1 << index;
+    components.set(key, component);
+  }
+  // A lot cannot cross components after union. Preserve its original order so
+  // subset DP, tie decisions and validation remain identical for shared lots.
+  for (const lot of lots.values()) components.get(root(firstIndex(lot.mask)))!.lots.push(lot);
   const result: Purchase = { options: [], costCopper: 0 };
   let work = 0;
-  for (const component of components.values()) {
+  for (const { mask: component, lots: componentLots } of components.values()) {
     signal.throwIfAborted();
+    if (!(component & (component - 1))) {
+      // One independent slot needs only its cheapest feasible lot. Still visit
+      // every lot: unsafe costs and cooperative cancellation must not disappear
+      // merely because a cheaper option has already been found.
+      const index = firstIndex(component);
+      let best: Purchase | undefined;
+      for (const lot of componentLots) {
+        if (++work % 256 === 0) { await new Promise<void>(resolve => setImmediate(resolve)); signal.throwIfAborted(); }
+        if (1 > lot.quantity) continue;
+        const costCopper = 0 + lot.costCopper;
+        if (!Number.isSafeInteger(costCopper)) throw new Error("invalid_budget");
+        if (costCopper > budgetCopper - result.costCopper) continue;
+        const option = lot.options.get(index)!;
+        if (!best || costCopper < best.costCopper || costCopper === best.costCopper && option.id < best.options[0].id)
+          best = { options: [option], costCopper };
+      }
+      if (!best) return null;
+      result.options.push(...best.options);
+      result.costCopper += best.costCopper;
+      continue;
+    }
     let states = new Map<number, Purchase>([[0, { options: [], costCopper: 0 }]]);
-    for (const lot of lots.values()) {
-      if (!(lot.mask & component)) continue;
+    for (const lot of componentLots) {
       const next = new Map(states);
       for (const [covered, purchase] of states) {
         const available = lot.mask & component & ~covered;

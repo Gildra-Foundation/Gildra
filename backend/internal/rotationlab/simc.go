@@ -73,7 +73,7 @@ func NewSimCEngine(binary, profile string, iterations int) (*SimCEngine, error) 
 	}
 	return &SimCEngine{
 		binary: binary, profile: profile, profileDir: profileDir, iterations: iterations, timeout: 45 * time.Second,
-		limit: make(chan struct{}, 1), waiting: make(chan struct{}, maxSimCWaiting), queueWait: defaultSimCQueueWait,
+		limit: make(chan struct{}, configuredSimCConcurrency()), waiting: make(chan struct{}, maxSimCWaiting), queueWait: defaultSimCQueueWait,
 		baseline: make(map[string]int),
 	}, nil
 }

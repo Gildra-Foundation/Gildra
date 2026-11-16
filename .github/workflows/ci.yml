@@ -124,6 +124,9 @@ jobs:
       - run: npx next typegen
         working-directory: apps/web
       - run: npm run typecheck
+      - name: Verify exact auction performance contracts
+        run: node --experimental-transform-types --no-warnings --import ./tests/auction/resolve.mjs --test tests/auction/performance/*.test.mjs
+        working-directory: apps/web
       - run: npm run lint
       - run: npm run valyro:check
       - run: npm run atlas:check

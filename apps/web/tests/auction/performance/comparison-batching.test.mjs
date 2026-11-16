@@ -61,6 +61,7 @@ function harness(source, { effects = 9, lots = 100, beforeSimulation, retainedBa
         signal.throwIfAborted(); return measurement(1000 + (selected.length ? selected[0].candidate.itemId - 899999 : 0));
       } } };
   writeAuctionState('search', entry.id, Date.now() + 60_000, {}, { metadata: { owner: entry.owner } });
+  entry.context.simulate.concurrency = async () => 2;
   const runner = vm.runInNewContext(executable(source), { Date, Map, Set, Object, Number, JSON,
     comparedOptions: new WeakMap(), metricsFor: () => metrics, logAuctionGearDiagnostics: () => {},
     discoverAuctionOptions: async () => {},
@@ -143,14 +144,15 @@ test('initial useful comparison is durably published before the next slower nati
 test('cancellation inside a batch keeps completed checkpoints and final durable flush; resume finishes without repeated native work', async () => withDirectory(async () => {
   const controller = new AbortController();
   const h = harness(current, { effects: 9, lots: 1, beforeSimulation: async (_selected, _signal, count) => {
-    if (count === 4) controller.abort();
+    if (count === 4) { await new Promise(resolve => setImmediate(resolve)); controller.abort(); }
   } });
   await h.runner.updateAuctionSearchResult(h.entry, controller.signal, () => {}, () => false, 1);
   h.reset();
   await assert.rejects(h.runner.continueAuctionGearSearch(h.entry, controller.signal, () => {}, 'synthetic', h.publish), /abort/i);
   assert.equal(h.entry.busy, false); assert.equal(h.stats.flushes, 1, 'finally must flush even when the batch throws before publication');
   const saved = readAuctionState('search', h.entry.id)?.data.checkpoint;
-  assert.equal(saved.nextOption, 4, 'seed plus three completed comparisons survive cancellation');
+  assert.equal(Object.keys(saved.simulationCache).length, 5, 'baseline, seed and three completed comparisons survive cancellation, including a prefetched sibling');
+  assert(saved.nextOption >= 3 && saved.nextOption <= 4, 'cursor cannot skip an unfinished comparison');
   const completedBefore = new Set(h.stats.nativeItems.slice(0, 3));
   h.entry.searchCheckpoint = structuredClone(saved); h.reset();
   await h.runner.continueAuctionGearSearch(h.entry, new AbortController().signal, () => {}, 'synthetic', h.publish);
