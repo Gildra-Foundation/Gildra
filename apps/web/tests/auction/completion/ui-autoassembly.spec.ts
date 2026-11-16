@@ -140,7 +140,7 @@ test("a quota rejection waits a minute and resumes automatically with a fresh re
   await page.clock.install(); await page.clock.pauseAt(new Date());
   auction.assemblyCompleteness = [false, true]; auction.rateLimitedAssemblySteps.add(initialAssemblies + 2);
   await fullSearch(auction).click();
-  await expect(auction.assembly.getByRole("status")).toContainText(waitingForQuota);
+  await expect(auction.assembly.getByRole("status").filter({ hasText: waitingForQuota })).toBeVisible();
   await expect(auction.result).toHaveAttribute("data-exhaustive", "false");
   expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 2);
   await page.screenshot({ path: info.outputPath("automatic-assembly-quota-wait.png"), fullPage: true });
@@ -158,7 +158,7 @@ test("cancelling the quota wait aborts its scheduled automatic retry", async ({ 
   await page.clock.install(); await page.clock.pauseAt(new Date());
   auction.assemblyCompleteness = [false, true]; auction.rateLimitedAssemblySteps.add(initialAssemblies + 2);
   await fullSearch(auction).click();
-  await expect(auction.assembly.getByRole("status")).toContainText(waitingForQuota);
+  await expect(auction.assembly.getByRole("status").filter({ hasText: waitingForQuota })).toBeVisible();
   await auction.assembly.getByRole("button", { name: cancelAssembly }).click();
   await expect(auction.find).toBeEnabled();
   await expect(auction.assembly.getByRole("status").filter({ hasText: /Расчёт остановлен|Calculation stopped/ })).toBeVisible();
