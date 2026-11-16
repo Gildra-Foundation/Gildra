@@ -14,13 +14,13 @@ const option = (name, fallback) => {
 };
 const sourceDir = path.resolve(option("--source-dir", path.join(webRoot, "../../.artifacts/farm-scaling/cdn")));
 const destination = path.resolve(option("--out", path.join(webRoot, "data/wow/gear-farm-rewards.json")));
-const journalIds = new Set([1299, 1304, 1315, 1309, 1311, 1300, 1316, 1313]);
+const journalIds = new Set([1299, 1304, 1315, 1309, 1311, 1300, 1316, 1313, 1320, 1322, 1041, 1030, 1202]);
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const parsed = new Map();
 const proof = JSON.parse(await readFile(path.join(sourceDir, "provenance-70391.json"), "utf8"));
 const verified = new Map(proof.verifiedTables.map((table) => [table.table, table]));
 const inputNames = [
-  "JournalInstance", "JournalEncounter", "JournalEncounterItem", "MapDifficulty", "LFGDungeons",
+  "Difficulty", "MapChallengeMode", "JournalInstance", "JournalEncounter", "JournalEncounterItem", "MapDifficulty", "LFGDungeons",
   "ItemContextPickerEntry", "ContentTuning", "ConditionalContentTuning", "ContentTuningXLabel",
   "ItemXBonusTree", "ItemBonusTree", "ItemBonusTreeNode", "ChallengeModeItemBonusOverride",
   "ItemCreationContext", "ItemCreationContextGroup", "ItemBonusList", "ItemBonusListGroupEntry",
@@ -47,14 +47,17 @@ const tables = {};
 tables.JournalInstance = selectIds("JournalInstance", journalIds);
 if (tables.JournalInstance.length !== journalIds.size) throw new Error("Missing supported published dungeon");
 const mapIds = ids(tables.JournalInstance.map((row) => row.MapID));
+const normalMaps = ids(tables.JournalInstance.filter(row => [1299,1300,1304,1309,1311,1313,1315,1316].includes(row.ID)).map(row => row.MapID));
 tables.JournalEncounter = selectIds("JournalEncounter", journalIds, "JournalInstanceID");
 const encounterIds = ids(tables.JournalEncounter.map((row) => row.ID));
 tables.JournalEncounterItem = selectIds("JournalEncounterItem", encounterIds, "JournalEncounterID");
 if (!tables.JournalEncounterItem.length) throw new Error("No journal loot found");
 const itemIds = ids(tables.JournalEncounterItem.map((row) => row.ItemID));
-tables.MapDifficulty = rows("MapDifficulty").filter((row) => mapIds.has(row.MapID) && row.DifficultyID === 1);
-if (tables.MapDifficulty.length !== mapIds.size) throw new Error("Missing supported normal map difficulty");
-tables.LFGDungeons = rows("LFGDungeons").filter((row) => mapIds.has(row.MapID) && row.DifficultyID === 1);
+tables.MapDifficulty = rows("MapDifficulty").filter((row) => mapIds.has(row.MapID) && [1, 8, 14, 15, 16, 17].includes(row.DifficultyID) && (row.DifficultyID !== 1 || normalMaps.has(row.MapID)));
+if (!tables.MapDifficulty.length) throw new Error("Missing supported map difficulties");
+tables.Difficulty = rows("Difficulty").filter(row => [1, 8, 14, 15, 16, 17].includes(row.ID));
+tables.MapChallengeMode = rows("MapChallengeMode").filter(row => mapIds.has(row.MapID));
+tables.LFGDungeons = rows("LFGDungeons").filter((row) => mapIds.has(row.MapID) && [1, 17].includes(row.DifficultyID));
 const pickerIds = ids(tables.MapDifficulty.map((row) => row.ItemContextPickerID));
 tables.ItemContextPickerEntry = selectIds("ItemContextPickerEntry", pickerIds, "ItemContextPickerID");
 
@@ -174,7 +177,7 @@ const result = {
   schemaVersion: 1, clientBuild: "12.1.5.70391", staticBuild: "12.1.5.70077",
   source: { product: "wow", observedAt: proof.observedAtUTC, buildConfig: proof.buildConfig,
     cdnConfig: proof.cdnConfig, rootContentKey: proof.rootContentKey, encodingContentKey: proof.encodingContentKey },
-  scope: { journalInstanceIds: [...journalIds].sort((a,b) => a-b), difficultyIds: [1],
+  scope: { journalInstanceIds: [...journalIds].sort((a,b) => a-b), difficultyIds: [1, 8, 14, 15, 16, 17],
     itemIds: [...itemIds].sort((a,b) => a-b),
     policy: "Published supported dungeon journal loot; deterministic context/tree closure including every possible seasonal override. Unknown event and player conditions remain unknown." },
   provenance, tables, gameTables,

@@ -8,10 +8,11 @@ import { getBattleNetCharacterBySlug, type BattleNetCharacter } from "../battleN
 import { getBattleNetSimulationSnapshot, type BattleNetSimulationSnapshot } from "../battleNetCharacterDetails";
 import { catalogLoadoutItem, gearSlotCategoryPaths } from "../gearCandidates";
 import { currentGearSeason, lookupGearEntities } from "../gearCandidateRepository";
-import { farmRules, endgameFarmRules, farmAccess, normalLootMask } from "./rules";
+import { requestedFarmRules, farmAccess, farmLootDifficultyMembership } from "./rules";
+import { normalizeFarmSettings } from "./settings";
 import { getFarmLoot, type FarmLoot } from "./repository";
 import { sourceTargets, sortFarmActivities, type EquippedFarmItem } from "./planner";
-import { resolveFarmRewards } from "./rewards";
+import { resolveFarmRewards, farmSourceCoverageComplete } from "./rewards";
 import { equippedFarmItemPresentation } from "./presentation";
 import { confirmFarmImprovements, farmSimulationScenario } from "./confirmation";
 import type { GearPlanSimulation } from "../auctionGearPlanner";
@@ -19,6 +20,7 @@ import { nativeGearSimulationMeasurement } from "../gearSimulation";
 import type { FarmActivity, FarmProgress, GearFarmInput, GearFarmResult } from "./types";
 export async function runGearFarmPlan(input: GearFarmInput, token: string, signal: AbortSignal, progress: (p: FarmProgress) => void): Promise<GearFarmResult> {
   signal.throwIfAborted();
+  normalizeFarmSettings(input);
   const character = await getBattleNetCharacterBySlug(token, input.locale, input.characterSlug);
   if (!character) throw new Error("character_not_found");
   const armory = await getBattleNetSimulationSnapshot(token, character);
@@ -26,6 +28,7 @@ export async function runGearFarmPlan(input: GearFarmInput, token: string, signa
 }
 /** Internal trusted-snapshot entry point. The HTTP route resolves ownership. */
 export async function runGearFarmFromSnapshot(input: GearFarmInput, character: BattleNetCharacter, armory: BattleNetSimulationSnapshot, token: string, signal: AbortSignal, progress: (p: FarmProgress) => void): Promise<GearFarmResult> {
+  const settings = normalizeFarmSettings(input);
   const season = currentGearSeason();
   if (season.id !== "midnight-season-2") throw new Error("farm_rules_update_required");
   if (armory.profile.id !== character.id || armory.profile.level !== character.level) throw new Error("character_snapshot_changed");
@@ -60,12 +63,15 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
   const activities: FarmActivity[] = [];
   const lootByActivity = new Map<string, FarmLoot[]>();
   let lootItemsChecked = 0;
-  for (const [index, rule] of [...farmRules, ...endgameFarmRules].entries()) {
+  let instancesChecked = 0;
+  let sourceSearchLimited = false;
+  const rules = requestedFarmRules(settings);
+  for (const [index, rule] of rules.entries()) {
     signal.throwIfAborted();
     progress({
       phase: "sources",
       completed: index,
-      total: farmRules.length + endgameFarmRules.length
+      total: rules.length
     });
     const activity: FarmActivity = {
       ...rule,
@@ -81,11 +87,14 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
       activities.push(activity);
       continue;
     }
-    if (rule.difficulty !== "normal") {
+    if (rule.difficulty === "world" || rule.unsupportedReason) {
+      activity.unsupportedReason = rule.unsupportedReason ?? "world_rewards_unverified";
       activities.push(activity);
       continue;
     }
     const source = await getFarmLoot(rule, input.locale, signal);
+    instancesChecked += 1;
+    if (!source.instance) activity.unsupportedReason = "source_unavailable";
     if (source.instance) {
       activity.name = source.instance.name;
       // Localized name is display-only; English source identity came from the
@@ -94,7 +103,9 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
       activity.journalInstanceId = source.instance.externalId;
       activity.imageUrl ??= source.instance.iconUrl;
     }
-    const loot = source.loot.filter(l => normalLootMask(l.difficultyMask));
+    const memberships = source.loot.map(loot => ({ loot, membership: farmLootDifficultyMembership(loot.difficultyMask, rule.difficultyId) }));
+    const loot = memberships.filter(row => row.membership === "included").map(row => row.loot);
+    sourceSearchLimited ||= memberships.some(row => row.membership === "unknown") || !farmSourceCoverageComplete(activity.journalInstanceId, loot);
     lootByActivity.set(activity.id, loot);
     activity.lootItemsChecked = new Set(loot.map(l => l.entity.externalId)).size;
     lootItemsChecked += activity.lootItemsChecked;
@@ -161,13 +172,16 @@ export async function runGearFarmFromSnapshot(input: GearFarmInput, character: B
     ...(confirmation.engine ? { engine: confirmation.engine, baselineDps: confirmation.baselineDps } : {}),
     checkedAt: new Date().toISOString(),
     profileFingerprint: createHash("sha256").update(JSON.stringify(armory)).digest("hex"),
+    settings,
     coverage: {
-      instancesChecked: activities.length,
+      instancesChecked,
       lootItemsChecked,
       exactVariants: rewards.exactVariants,
       simulations: confirmation.simulations,
-      searchLimited: rewards.searchLimited || confirmation.searchLimited || !supportsDamage ||
-        activities.some(activity => activity.targets.some(target => target.verification === "scaling_unverified" || target.verification === "variant_verified"))
+      searchLimited: sourceSearchLimited || rewards.searchLimited || confirmation.searchLimited || !supportsDamage ||
+        activities.some(activity => activity.targets.some(target => target.verification === "scaling_unverified" || target.verification === "variant_verified")),
+      unsupportedSources: activities.filter(activity => activity.unsupportedReason &&
+        activity.access !== "level_locked" && activity.access !== "gear_locked").map(activity => activity.id),
     }
   };
 }

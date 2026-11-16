@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { runGearFarmPlan } from "@/lib/wow/gearFarm/runner";
-import { enqueueGearFarmJob, getGearFarmJob, cancelGearFarmJob } from "@/lib/wow/gearFarm/jobs";
+import { enqueueGearFarmJob, getGearFarmJob, cancelGearFarmJob, discoverGearFarmJob, cancelGearFarmRequest } from "@/lib/wow/gearFarm/jobs";
+import { parseFarmScope, isFarmRequestId, farmJobActive, type GearFarmScope } from "@/lib/wow/gearFarm/recovery";
 export const dynamic = "force-dynamic";
 function reply(body: unknown, status = 200) {
   return NextResponse.json(body, {
@@ -31,31 +32,50 @@ async function owner() {
     token
   } : null;
 }
+function scopeFromQuery(params: URLSearchParams) {
+  const value: Record<string, unknown> = Object.fromEntries(params);
+  if (params.has("mythicKeyLevel")) {
+    const key = params.get("mythicKeyLevel")!;
+    if (!/^\d{1,2}$/.test(key)) throw new Error("invalid_farm_settings");
+    value.mythicKeyLevel = Number(key);
+  }
+  return parseFarmScope(value);
+}
+function failure(error: unknown, userId?: string, scope?: GearFarmScope) {
+  const code = error instanceof Error ? error.message : "farm_plan_unavailable";
+  if (["invalid_plan_request", "invalid_farm_settings"].includes(code)) return reply({ error: code }, 400);
+  if (code === "plan_request_expired") return reply({ error: code }, 410);
+  if (code === "plan_request_conflict") return reply({ error: code }, 409);
+  if (code === "plan_already_running") {
+    const matching = userId && scope ? discoverGearFarmJob(userId, scope) : null;
+    return reply({ error: code, job: farmJobActive(matching) ? matching : null }, 409);
+  }
+  return reply({ error: code === "plan_rate_limited" ? code : "farm_plan_unavailable" }, code === "plan_rate_limited" ? 429 : 503);
+}
 export async function GET(request: Request) {
-  if (!sameOrigin(request)) return reply({
-    error: "cross_site_blocked"
-  }, 403);
+  if (!sameOrigin(request)) return reply({ error: "cross_site_blocked" }, 403);
   const user = await owner();
-  if (!user) return reply({
-    error: "session_expired"
-  }, 401);
-  const job = getGearFarmJob(user.id, new URL(request.url).searchParams.get("id") ?? "");
-  return job ? reply(job) : reply({
-    error: "plan_not_found"
-  }, 404);
+  if (!user) return reply({ error: "session_expired" }, 401);
+  try {
+    const params = new URL(request.url).searchParams, scope = scopeFromQuery(params);
+    const id = params.get("id"), clientRequestId = params.get("clientRequestId");
+    if (id && clientRequestId || clientRequestId && !isFarmRequestId(clientRequestId)) throw new Error("invalid_plan_request");
+    const job = id ? getGearFarmJob(user.id, id, scope) : discoverGearFarmJob(user.id, scope, clientRequestId ?? undefined);
+    if (!id && !clientRequestId) return reply({ job });
+    return job ? reply(job) : reply({ error: "plan_not_found" }, 404);
+  } catch (error) { return failure(error); }
 }
 export async function DELETE(request: Request) {
-  if (!sameOrigin(request)) return reply({
-    error: "cross_site_blocked"
-  }, 403);
+  if (!sameOrigin(request)) return reply({ error: "cross_site_blocked" }, 403);
   const user = await owner();
-  if (!user) return reply({
-    error: "session_expired"
-  }, 401);
-  const job = cancelGearFarmJob(user.id, new URL(request.url).searchParams.get("id") ?? "");
-  return job ? reply(job) : reply({
-    error: "plan_not_found"
-  }, 404);
+  if (!user) return reply({ error: "session_expired" }, 401);
+  try {
+    const params = new URL(request.url).searchParams, scope = scopeFromQuery(params);
+    const id = params.get("id"), clientRequestId = params.get("clientRequestId");
+    if (Boolean(id) === Boolean(clientRequestId) || clientRequestId && !isFarmRequestId(clientRequestId)) throw new Error("invalid_plan_request");
+    const job = id ? cancelGearFarmJob(user.id, id, scope) : cancelGearFarmRequest(user.id, { scope, clientRequestId: clientRequestId! });
+    return job ? reply(job) : reply({ error: "plan_not_found" }, 404);
+  } catch (error) { return failure(error); }
 }
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return reply({
@@ -102,22 +122,12 @@ export async function POST(request: Request) {
       error: "invalid_plan_request"
     }, 400);
   }
-  const {
-    characterSlug,
-    locale = "ru"
-  } = body;
-  if (typeof characterSlug !== "string" || !characterSlug || characterSlug.length > 180 || typeof locale !== "string" || !["ru", "en"].includes(locale)) return reply({
-    error: "invalid_plan_request"
-  }, 400);
+  let scope: GearFarmScope | undefined;
   try {
-    return reply(enqueueGearFarmJob(user.id, (signal, progress) => runGearFarmPlan({
-      characterSlug,
-      locale: locale as "ru" | "en"
-    }, user.token, signal, progress)), 202);
-  } catch (error) {
-    const code = error instanceof Error ? error.message : "plan_queue_full";
-    return reply({
-      error: code
-    }, code === "plan_already_running" ? 409 : code === "plan_rate_limited" ? 429 : 503);
-  }
+    scope = parseFarmScope(body);
+    if (!isFarmRequestId(body.clientRequestId)) throw new Error("invalid_plan_request");
+    const { profileKey: _profileKey, ...input } = scope;
+    return reply(enqueueGearFarmJob(user.id, (signal, progress) => runGearFarmPlan(input, user.token, signal, progress),
+      { scope, clientRequestId: body.clientRequestId }), 202);
+  } catch (error) { return failure(error, user.id, scope); }
 }

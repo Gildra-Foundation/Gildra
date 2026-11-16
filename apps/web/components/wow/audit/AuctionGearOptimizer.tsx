@@ -5,7 +5,7 @@ import type { AuctionGearJob } from "@/lib/wow/auctionGearJobs";
 import type { AuctionGearAssemblyResult, AuctionGearSearchResult, AuctionPlanProgress } from "@/lib/wow/auctionGearTypes";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "@/lib/wow/auctionGearSelection";
 import { encodeAuctionGearSelectionTransport } from "@/lib/wow/auctionGearSelectionTransport";
-import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios, auctionGearEncounterMatches, type AuctionGearEncounter } from "@/lib/wow/auctionGearScenarios";
+import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios, type AuctionGearEncounter } from "@/lib/wow/auctionGearScenarios";
 import { normalizeAuctionBudgetGold } from "@/lib/wow/auctionGearBudget";
 import { auctionGearMarketExpiry, auctionGearPricesAreFresh } from "@/lib/wow/auctionGearFreshness";
 import { auctionGearVariantSelectionKey } from "@/lib/wow/auctionGearExclusions";
@@ -19,12 +19,15 @@ import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionC
 import { auctionGearServiceMessage } from "@/lib/wow/auctionGearCopy";
 import { GearPlannerItem, gearPlannerItemStatDescription } from "./GearPlannerItem";
 import { AuctionGearSuggestions } from "./AuctionGearSuggestions";
+import { AuctionGearResult } from "./AuctionGearResult";
+import { auctionGearResultMatchesIntent as intentMatchesSearch } from "@/lib/wow/auctionGearResult";
+import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { AlertTriangle, LoaderCircle, Search } from "lucide-react";
 import { MaterialButton } from "@/components/wow/shared/materialAtlas";
 import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
 import styles from "./auctionGearOptimizer.module.css";
 import tools from "./characterTools.module.css";
-import { auctionFormats, formatGold, formatGoldRate } from "./auctionFormat";
+import { auctionFormats, formatGold } from "./auctionFormat";
 import { upgradeSlotName } from "./characterUpgradesCopy";
 
 type Props = { characterSlug: string; snapshotKey: string; specializationSlug: string; localePrefix?: "" | "/ru";
@@ -40,11 +43,6 @@ type SearchRequest = { fightLengthSeconds?: number; targets?: number; compareSce
 type RequestBody = SearchRequest | { action: "resume"; searchId: string; clientRequestId?: string } | { action: "assemble"; searchId: string; excludedOptionIds: string[]; excludedVariantKeys: string[]; clientRequestId?: string } | { action: "poll"; id: string; observedActive?: boolean };
 type ActiveRequest = { mode: Mode; controller: AbortController; id?: string; observedActive?: boolean; done: Promise<void>; finish: () => void };
 const jobIsActive = (job: Pick<PlannerJob, "status">) => job.status === "queued" || job.status === "running";
-const intentMatchesSearch = (intent: NonNullable<ReturnType<typeof parseAuctionClientFormIntent>>, result: SearchResult) =>
-  Number(intent.budgetGold) === result.budgetCopper / 10000 && intent.scenario === result.scenario &&
-  JSON.stringify(parseAuctionGearEncounter(intent)) === JSON.stringify(parseAuctionGearEncounter(result)) &&
-  JSON.stringify(intent.compareScenarios ?? []) === JSON.stringify(result.compareScenarios ?? []) &&
-  intent.objective === (result.objective ?? "dps") && sameSelection(intent.selectedSlots, parseAuctionGearSlots(result.selectedSlots));
 const sameSelection = (a: readonly string[] = [], b: readonly string[] = []) => { const left = new Set(a), right = new Set(b); return left.size === right.size && [...left].every(key => right.has(key)); };
 type Recovery = { kind: "recovery"; search: SearchResult; assembly: AssemblyResult | null;
   excludedOptionIds: string[]; excludedVariantKeys?: string[]; activeJob: PlannerJob | null; needsRefresh: true };
@@ -107,6 +105,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const cache = useRef<AuctionClientCache | null>(null);
   const runRef = useRef<((body: RequestBody, mode: Mode) => Promise<void>) | null>(null);
   const cacheKey = auctionClientCacheKey({ characterSlug, locale }, specializationSlug);
+  const objectivePreferenceKey = `${cacheKey}:${snapshotKey}:objective`;
   const theme = getTalentSpecTheme(specializationSlug);
   const supported = theme && ["melee", "ranged"].includes(theme.role);
   const running = transport?.status === "starting" || transport?.status === "queued" || transport?.status === "running";
@@ -138,7 +137,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     document.addEventListener("visibilitychange", visible);
     return () => { clearTimeout(timer); window.removeEventListener("focus", check); document.removeEventListener("visibilitychange", visible); };
   }, [search?.market, assembly?.market]);
-  const { numeric, signed } = auctionFormats[ru ? "ru" : "en"];
+  const { numeric } = auctionFormats[ru ? "ru" : "en"];
   const number = (value: number) => numeric.format(value);
   const money = (value: number) => formatGold(value, ru ? "ru" : "en");
   const slotName = (slot: string) => upgradeSlotName(slot, ru);
@@ -156,10 +155,6 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const excludedUpgrades = search && getAuctionGearRecommendations(search.items).some(item => excluded.has(item.optionId) || excludedVariantKeys.has(auctionGearVariantSelectionKey(item)));
   const available = search?.items.filter(item => !excluded.has(item.optionId) && !excludedVariantKeys.has(auctionGearVariantSelectionKey(item))) ?? [];
   const selectionLocked = !validBudget || Boolean(cancellation || running && transport?.mode !== "search");
-  const measuredSignificant = Boolean(assembly && assembly.comparison.deltaDps > 0 && assembly.comparison.uncertainty.significant);
-  const confirmed = assembly?.bestConfirmed ?? (measuredSignificant ? assembly : null);
-  const displayed = confirmed ?? assembly;
-  const lots = confirmed ? [...new Map(confirmed.purchases.map(item => [item.auctionId, item])).values()] : [];
   const excludedGroups = useMemo(() => {
     const groups = new Map<string, { item: NonNullable<SearchResult>["items"][number]; lots: Set<number> }>();
     for (const item of search?.items ?? []) {
@@ -225,6 +220,12 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     void (async () => {
       await Promise.resolve();
       if (!mounted) return;
+      if (!saved?.formIntent) {
+        try {
+          const preference = localStorage.getItem(objectivePreferenceKey);
+          if (preference === "value" || preference === "dps") setObjective(preference);
+        } catch { /* A blocked browser store does not prevent searching. */ }
+      }
       setInitializing(false);
       if (!saved) return;
       const intent = saved.formIntent;
@@ -251,26 +252,34 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           if (typeof job.id !== "string" || !job.id) throw new Error("invalid_plan_result");
           // A pending assembly may be restored after a reload. Keep its owned
           // search/checkpoint visible even if that job was interrupted.
+          let checkpointMatchesIntent = true;
           if (saved.searchId) {
             const query = new URLSearchParams({ searchId: saved.searchId, characterSlug, locale });
             const previous = await fetchAuctionClientResult<Recovery>(`/api/wow/auction-gear-plans?${query}`, controller.signal, () => {});
             if (!mounted || controller.signal.aborted) return;
             if (previous.kind !== "recovery" || previous.search.searchId !== saved.searchId) throw new Error("invalid_plan_result");
-            const currentExclusions = new Set(saved.excludedOptionIds);
-            const previousExclusions = new Set(previous.excludedOptionIds);
-            const selectionChanged = currentExclusions.size !== previousExclusions.size || [...currentExclusions].some(id => !previousExclusions.has(id)) || !sameSelection(saved.excludedVariantKeys, previous.excludedVariantKeys);
-            setSearch(previous.search); setAssembly(selectionChanged ? null : previous.assembly); setExcluded(currentExclusions); setExcludedVariantKeys(new Set(saved.excludedVariantKeys ?? previous.excludedVariantKeys ?? []));
-            setBudget(String(previous.search.budgetCopper / 10000)); restoreEncounter(previous.search); setObjective(previous.search.objective ?? "dps");
-            setSelectedSlots(parseAuctionGearSlots(previous.search.selectedSlots));
-            setAssemblyStale(true); setMarketStale(true);
-            if (selectionChanged) {
-              remember({ jobId: job.id });
-              await cancel();
-              return;
+            checkpointMatchesIntent = !saved.formIntent || intentMatchesSearch(saved.formIntent, previous.search);
+            if (checkpointMatchesIntent) {
+              const currentExclusions = new Set(saved.excludedOptionIds);
+              const previousExclusions = new Set(previous.excludedOptionIds);
+              const selectionChanged = currentExclusions.size !== previousExclusions.size || [...currentExclusions].some(id => !previousExclusions.has(id)) || !sameSelection(saved.excludedVariantKeys, previous.excludedVariantKeys);
+              setSearch(previous.search); setAssembly(selectionChanged ? null : previous.assembly); setExcluded(currentExclusions); setExcludedVariantKeys(new Set(saved.excludedVariantKeys ?? previous.excludedVariantKeys ?? []));
+              setBudget(String(previous.search.budgetCopper / 10000)); restoreEncounter(previous.search); setObjective(previous.search.objective ?? "dps");
+              setSelectedSlots(parseAuctionGearSlots(previous.search.selectedSlots));
+              setAssemblyStale(true); setMarketStale(true);
+              if (selectionChanged) {
+                remember({ jobId: job.id });
+                await cancel();
+                return;
+              }
+            } else {
+              // The nonce can belong to a newer search. Its old checkpoint must
+              // neither overwrite the new objective nor prevent polling that job.
+              setSearch(null); setAssembly(null); setAssemblyStale(false); setMarketStale(false);
             }
           }
           const recoveredMode = job.mode ?? saved.mode;
-          cache.current = { ...saved, jobId: job.id, mode: recoveredMode };
+          cache.current = { ...saved, searchId: checkpointMatchesIntent ? saved.searchId : undefined, jobId: job.id, mode: recoveredMode };
           writeAuctionClientCache(cacheKey, cache.current);
           rememberAuctionClientJob({ characterSlug, locale }, job.id);
           setHasRecovery(false);
@@ -323,6 +332,11 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
               const previous = await fetchAuctionClientResult<Recovery>(`/api/wow/auction-gear-plans?${query}`, controller.signal, () => {});
               if (!mounted || controller.signal.aborted) return;
               if (previous.kind !== "recovery" || previous.search.searchId !== saved.searchId) throw new Error("invalid_plan_result");
+            if (saved.formIntent && !intentMatchesSearch(saved.formIntent, previous.search)) {
+              setSearch(null); setAssembly(null); setAssemblyStale(false); setMarketStale(false);
+              setHasRecovery(false); setTransport(null);
+              return;
+            }
               const restoredExclusions = new Set(saved.excludedOptionIds);
               const previousExclusions = new Set(previous.excludedOptionIds);
               const selectionChanged = restoredExclusions.size !== previousExclusions.size || [...restoredExclusions].some(id => !previousExclusions.has(id)) || !sameSelection(saved.excludedVariantKeys, previous.excludedVariantKeys);
@@ -364,7 +378,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         retireAuctionClient(current.done, deletion);
       }
     };
-  }, [cacheKey, characterSlug, locale, recoveryAttempt, setBudget, snapshotKey]);
+  }, [cacheKey, characterSlug, locale, objectivePreferenceKey, recoveryAttempt, setBudget, snapshotKey]);
 
   function remember(update: Partial<AuctionClientCache>) {
     cache.current = { version: 1, profileKey: snapshotKey, mode: "search", excludedOptionIds: [], ...cache.current, ...update };
@@ -514,7 +528,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         const applyResult = (result: SearchResult | AssemblyResult, pricesStale: boolean) => {
           if (!isCurrent() || payload.id !== request.id || (result.kind !== mode && !(mode === "assembly" && result.kind === "search")) ||
               (publishedSearchId && result.searchId !== publishedSearchId) ||
-              (acceptedEncounterIntent && !auctionGearEncounterMatches(acceptedEncounterIntent, result))) {
+              (acceptedEncounterIntent && !intentMatchesSearch(acceptedEncounterIntent, result))) {
             throw new Error("invalid_plan_result");
           }
           publishedSearchId = result.searchId;
@@ -822,15 +836,10 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     {transport.status === "failed" && !cancellation && retryJob ? <button type="button" className={tools.quiet} disabled={!validBudget} onClick={() => void run({ action: "poll", id: retryJob.id, observedActive: retryJob.observedActive }, retryJob.mode)}>{t("Повторить подключение", "Reconnect to calculation")}</button> : null}
     {transport.status === "failed" && !cancellation && !retryJob && hasRecovery ? <button type="button" className={tools.quiet} disabled={!validBudget} onClick={() => setRecoveryAttempt(value => value + 1)}>{t("Повторить восстановление", "Retry recovery")}</button> : null}
   </>;
-  const significantGain = Boolean(confirmed);
-  const enhancedGain = assembly?.enhancementOptimization?.recommendations.some(r => r.comparison.deltaDps > 0 && r.comparison.uncertainty.significant);
-  const enhancementsPending = assembly?.enhancementOptimization?.status === "pending";
   const incompleteData = Boolean(search && auctionGearCoverageReasons(search.coverage, search.dataComplete, locale).length);
   const discoveryIncomplete = Boolean(search && (search.discoveryComplete === false || search.discoveryComplete === undefined && search.searchLimited));
   const sameScope = discovered?.activeJob ? discovered.activeJob.scope.characterSlug === characterSlug && discovered.activeJob.scope.locale === locale : false;
-  const cost = (copper: number, dps: number) => formatGoldRate(copper / dps, locale);
-  const enhancementSubtotal = (items: { quotedCopper: number | null }[]) => items.some(item => item.quotedCopper === null)
-    ? t("Неизвестна", "Unknown") : money(items.reduce((sum, item) => sum + item.quotedCopper!, 0));
+
 
   return <section ref={panel} className={`${tools.tool} ${styles.panel}`} aria-labelledby="auction-gear-title" data-auction-gear>
     <h3 className={tools.title} id="auction-gear-title">{t("Улучшения с аукциона", "Auction House upgrades")}</h3>
@@ -862,6 +871,22 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="submit" disabled={formLocked || !validBudget} icon={<Search aria-hidden="true" />}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</MaterialButton>
         </div>
       </div>
+      <fieldset className={styles.slotFieldset} disabled={formLocked} data-auction-objective>
+        <legend id="auction-objective-label">{t("Цель подбора", "Selection objective")}</legend>
+        <AtlasSegmented aria-labelledby="auction-objective-label" aria-describedby="auction-objective-help" value={objective} disabled={formLocked} options={[
+          { value: "value", label: t("Цена / прирост DPS", "Cost / DPS gain") },
+          { value: "dps", label: t("Максимум DPS", "Maximum DPS") },
+        ]} onValueChange={value => {
+          if (value !== "value" && value !== "dps" || value === objective) return;
+          setObjective(value);
+          try { localStorage.setItem(objectivePreferenceKey, value); } catch { /* The selected objective still applies to this visit. */ }
+          invalidate({ objective: value });
+        }} />
+        <input type="hidden" name="objective" value={objective} />
+        <p id="auction-objective-help" className={styles.note}>{objective === "value"
+          ? t("Больше прироста на потраченное золото. Полный бюджет тратить необязательно.", "More gain for your gold. The full budget need not be spent.")
+          : t("Наибольший подтверждённый DPS в пределах бюджета. Другая цель потребует нового поиска.", "Highest confirmed DPS within budget. Changing the objective requires a new search.")}</p>
+      </fieldset>
       <fieldset className={styles.slotFieldset} disabled={formLocked}><legend>{t("Сравнить финалистов в других боях", "Compare finalists in other encounters")}</legend>
         <p className={styles.note}>{t("Сравнение выбранных боёв начнётся после завершения перебора. Лучший вариант зависит от боя.", "Selected encounters are compared after traversal finishes. The best option depends on the encounter.")}</p>
         <div className={styles.slots}>{(["single-target", "aoe", "execute"] as const).map(value => <label key={value}><input type="checkbox" checked={compareScenarios.some(e => e.scenario === value)} onChange={event => {
@@ -870,8 +895,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           invalidate({ compareScenarios: next });
         }} /><span>{value === "aoe" ? t("5 целей · 60 с", "5 targets · 60 s") : value === "execute" ? t("1 цель · 90 с", "1 target · 90 s") : t("1 цель · 120 с", "1 target · 120 s")}</span></label>)}</div>
       </fieldset>
-      <details className={styles.disclosure}><summary>{t("Слоты экипировки и цель подбора", "Equipment slots and objective")}{selectedSlots.length < auctionGearSlots.length ? ` · ${number(selectedSlots.length)} / ${number(auctionGearSlots.length)}` : ""}</summary>
-      <div className={tools.fields}><label className={tools.field}>{t("Цель подбора", "Selection objective")}<select name="objective" value={objective} onChange={event => { setObjective(event.target.value as "value" | "dps"); invalidate({ objective: event.target.value as "value" | "dps" }); }} disabled={formLocked}><option value="value">{t("Цена / прирост DPS", "Price / DPS gain")}</option><option value="dps">{t("Максимум DPS", "Maximum DPS")}</option></select></label></div>
+      <details className={styles.disclosure}><summary>{t("Слоты экипировки", "Equipment slots")}{selectedSlots.length < auctionGearSlots.length ? ` · ${number(selectedSlots.length)} / ${number(auctionGearSlots.length)}` : ""}</summary>
       <fieldset className={styles.slotFieldset} disabled={formLocked}>
         <legend className={tools.srOnly}>{t("Какие слоты искать", "Equipment slots to search")}</legend>
         <div className={tools.actions}><button className={tools.quiet} type="button" onClick={() => { if (sameSelection(selectedSlots, auctionGearSlots)) return; setSelectedSlots([...auctionGearSlots]); invalidate({ selectedSlots: [...auctionGearSlots] }); }}>{t("Выбрать все", "Select all")}</button><button className={tools.quiet} type="button" onClick={() => { if (!selectedSlots.length) return; setSelectedSlots([]); invalidate({ selectedSlots: [] }); }}>{t("Снять выбор", "Clear selection")}</button></div>
@@ -882,10 +906,10 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     {feedback("search")}
     {!search ? feedback("assembly") : null}
     {search ? <div className={styles.searchResult} data-auction-search-result data-auction-market={search.market.realm}>
-      <h4 className={tools.subtitle}>{t("Выгодные улучшения", "Best-value upgrades")}</h4>
       {marketStale ? <p className={tools.status}><AlertTriangle aria-hidden="true" />{t("Цены могли измениться — запустите новый поиск.", "Prices may have changed — run a new search.")}</p> : null}
       {!search.searchComplete && !running && !cancellation ? <div className={tools.actions}><span className={tools.status}>{t("Осталось сравнить", "Left to compare")}: {number(search.pendingItems)}</span><button disabled={!validBudget} className={tools.quiet} type="button" onClick={continueSearch}>{t("Продолжить проверку вещей", "Continue item comparisons")}</button></div> : null}
       {search.searchComplete && (incompleteData || discoveryIncomplete) ? <button className={tools.quiet} type="button" disabled={!validBudget || running || Boolean(cancellation)} onClick={continueSearch}>{t("Обновить варианты", "Refresh options")}</button> : null}
+      <details className={styles.disclosure} open={assembly ? undefined : true} key={assembly ? "assembled-suggestions" : "search-suggestions"} data-auction-single-options><summary>{t("Отдельные улучшения по слотам", "Individual slot upgrades")}</summary>
       {recommendationGroups.length
         ? <AuctionGearSuggestions groups={recommendationGroups} locale={locale} excluded={excluded} excludedVariantKeys={excludedVariantKeys} running={selectionLocked} marketStale={marketStale} slotName={slotName} onAllowed={setAllowed} />
         : <p role="status" className={styles.empty}>{excludedUpgrades ? t("Найденные улучшения исключены из подбора.", "The upgrades found are excluded.")
@@ -895,6 +919,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
               : t("Пока недостаточно данных для сравнения — поиск продолжается.", "Not enough comparison data yet — search is continuing.")
             : incompleteData ? t("В проверенных вариантах улучшений нет; часть вещей не удалось оценить.", "No upgrades among verified options; some items could not be evaluated.")
               : t("Проверка завершена: отдельных улучшений не найдено.", "Search complete: no single-item upgrades found.")}</p>}
+      </details>
         <section id="auction-assembly" tabIndex={-1} className={styles.assembly} aria-labelledby="auction-assembly-title" data-auction-assembly>
           <div className={tools.head}>
             <h4 className={tools.subtitle} id="auction-assembly-title">{t("Сет под бюджет", "Loadout within budget")}</h4>
@@ -917,49 +942,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           </details> : null}
           </div>
           {feedback("assembly")}
-          {assembly && displayed ? <div className={styles.result} data-auction-assembly-result data-exhaustive={assembly.exhaustiveComplete} data-price-state={assemblyStale ? "stale" : "verified"}>
-            <h4 className={tools.subtitle}>{enhancedGain || enhancementsPending ? t("Сравнение комплектов", "Loadout comparison") : confirmed ? t("Лучший сет", "Best loadout") : t("Подтверждённого улучшения нет", "No confirmed upgrade")}</h4>
-            {assemblyStale ? <p role="status" className={styles.staleResult}>{t("Цены не подтверждены — пересоберите сет перед покупкой.", "Prices are not verified — rebuild the loadout before buying.")}</p> : null}
-            <dl className={styles.totals}><div><dt>{t("Бюджет", "Budget")}</dt><dd>{money(assembly.budgetCopper)}</dd></div><div><dt>{t("Стоимость вещей", "Item cost")}</dt><dd>{money(displayed.spentCopper)}</dd></div><div><dt>{t("Останется", "Remaining")}</dt><dd>{money(displayed.remainingCopper)}</dd></div>{confirmed && displayed.comparison.deltaDps > 0 ? <div><dt>{t("Цена за +1 DPS", "Cost per +1 DPS")}</dt><dd>{cost(displayed.spentCopper, displayed.comparison.deltaDps)}</dd></div> : null}</dl>
-            {!assembly.enhancementOptimization?.recommendations.length ? <p className={styles.note}>{assembly.enhancementOptimization?.status === "pending"
-              ? t("Подбираем камни и чары в оставшийся бюджет…", "Selecting gems and enchants within the budget…")
-              : assembly.enhancementOptimization?.status === "no_affordable_configuration"
-                ? t("Среди проверенных вариантов не найден комплект с камнями и чарами в пределах бюджета.", "No fully enhanced loadout within budget was found among checked configurations.")
-                : t("Камни и чары не подобраны: совместимость не подтверждена, полная стоимость неизвестна.", "Gems and enchants are not selected: compatibility is unverified and full cost is unknown.")}</p> : null}
-            {assembly.enhancementOptimization?.recommendations.map(recommendation => <section key={recommendation.label} data-auction-enhanced-result>
-              <h4 className={tools.subtitle}>{t("Комплект с камнями и чарами", "Loadout with gems and enchants")}</h4>
-              <p className={styles.note}>{t("Улучшения подобраны для одного из лучших найденных комплектов. Уже надетые вещи сохраняются.", "Enhancements are selected for one of the best loadouts found. Retained equipment stays unchanged.")}</p>
-              <dl className={styles.totals}>
-                <div><dt>{t("Предметы", "Equipment")}</dt><dd>{money(recommendation.configuration.itemsCopper)}</dd></div>
-                <div><dt>{t("Камни", "Gems")}</dt><dd>{enhancementSubtotal(recommendation.configuration.consumables.filter(c=>c.kind==="gem"))}</dd></div>
-                <div><dt>{t("Чары", "Enchants")}</dt><dd>{enhancementSubtotal(recommendation.configuration.consumables.filter(c=>c.kind==="enchant"))}</dd></div>
-                <div><dt>{t("Полная стоимость", "Total cost")}</dt><dd>{recommendation.configuration.totalCopper === null ? t("Неизвестна", "Unknown") : money(recommendation.configuration.totalCopper)}</dd></div>
-              </dl>
-              <p className={recommendation.comparison.deltaDps>0 && recommendation.comparison.uncertainty.significant ? styles.gain : styles.note}>{signed.format(recommendation.comparison.deltaDps)} ± {number(recommendation.comparison.uncertainty.marginDps)} DPS · {signed.format(recommendation.comparison.deltaPercent)}%</p>
-              {!recommendation.comparison.uncertainty.significant ? <p className={styles.note}>{t("Разница в пределах погрешности.", "The difference is within the margin of error.")}</p> : null}
-              <ul>{recommendation.purchases.map(purchase => {
-                const configuration = recommendation.configuration.slots.find(slot => slot.slotType === purchase.slotType);
-                const gems = configuration?.gemIds.filter(id => id > 0).map(id => recommendation.enhancementNames?.gems[id] ?? recommendation.consumableNames[id] ?? t("Камень", "Gem")) ?? [];
-                const enchant = configuration?.enchantId ? recommendation.enhancementNames?.enchants[configuration.enchantId] ?? t("Чары", "Enchant") : null;
-                return <li key={purchase.slotType} data-auction-enhanced-slot>{slotName(purchase.slotType)}: <GearPlannerItem item={purchase} locale={locale} />
-                  {gems.length ? <p className={styles.note}>{t("Камни", "Gems")}: {gems.join(" · ")}</p> : null}
-                  {enchant ? <p className={styles.note}>{t("Чары", "Enchants")}: {enchant}</p> : null}
-                </li>;
-              })}</ul>
-              <ul>{recommendation.configuration.consumables.map(consumable=><li key={consumable.itemId}>{recommendation.consumableNames[consumable.itemId] ?? (consumable.kind==="gem" ? t("Камень", "Gem") : t("Чары", "Enchant"))} × {number(consumable.quantity)} — {consumable.quotedCopper===null ? t("Цена неизвестна", "Price unknown") : money(consumable.quotedCopper)}</li>)}</ul>
-            </section>)}
-            {assembly.scenarioComparisons?.map(({ encounter, baseline, candidates }) => <div key={JSON.stringify(encounter)}>
-              <h4 className={tools.subtitle}>{encounter.targets} {t("целей", "targets")} · {encounter.fightLengthSeconds} {t("с", "s")}</h4>
-              <p>{t("Текущая экипировка", "Current gear")}: {number(baseline.dps)} DPS</p>
-              <ul>{candidates.map(candidate => <li key={candidate.finalist}>{candidate.finalist.startsWith("enhanced-") ? t("Комплект с камнями и чарами", "Loadout with gems and enchants") : candidate.finalist === "confirmed" ? t("Статистически подтверждённый лучший сет", "Statistically confirmed best loadout") : candidate.finalist === "measured" ? t("Лучший измеренный сет", "Measured best loadout") : t("Сравниваемый сет", "Compared loadout")}: {signed.format(candidate.comparison.deltaDps)} ± {number(candidate.comparison.uncertainty.marginDps)} DPS</li>)}</ul>
-            </div>)}
-            <dl className={styles.dpsMetrics}><div><dt>{t("Сейчас", "Current gear")}</dt><dd>{number(displayed.comparison.baselineDps)} <span>DPS</span></dd></div><div><dt>{assembly.enhancementOptimization?.recommendations.length ? t("Без новых камней и чар", "Before new gems and enchants") : t("С этим сетом", "With this loadout")}</dt><dd>{number(displayed.comparison.candidateDps)} <span>DPS</span></dd></div><div className={significantGain ? styles.gain : undefined}><dt>{t("Изменение", "Change")}</dt><dd>{signed.format(displayed.comparison.deltaPercent)}% <span>{signed.format(displayed.comparison.deltaDps)} DPS</span></dd></div></dl>
-            {significantGain && lots.length ? <><h4 className={tools.subtitle}>{t("Что купить", "Items to buy")}</h4><ul className={styles.lots}>{lots.map(lot => {
-              const replacements = confirmed?.purchases.filter(item => item.auctionId === lot.auctionId) ?? [];
-              return <li className={styles.lot} key={lot.auctionId}><div className={styles.lotHeader}><div className={styles.purchase}><GearPlannerItem item={lot} locale={locale} /></div><div className={styles.price}><strong>{money(lot.lotCostCopper)}</strong>{lot.quantity > 1 ? <span>× {lot.quantity}</span> : null}</div></div><ul className={styles.replacements}>{replacements.map(item => <li key={item.slotType}><span className={styles.replacementLabel}>{slotName(item.slotType)}</span>{item.currentItem ? <GearPlannerItem item={item.currentItem} locale={locale} /> : null}</li>)}</ul><button type="button" className={tools.quiet} disabled={selectionLocked} aria-label={`${t("Исключить лот из сборки", "Exclude lot from loadout")}: ${lot.name}`} onClick={() => setLotAllowed(lot.auctionId, false)}>{t("Исключить лот", "Exclude lot")}</button></li>;
-            })}</ul></> : enhancedGain || enhancementsPending ? null : <p className={tools.status}>{assembly.purchases.length ? t("Прирост в пределах погрешности — покупать не стоит.", "The gain is within the margin of error — not worth buying.") : t("Текущая экипировка уже лучше.", "Your current gear is already better.")}</p>}
-            {significantGain && displayed.removedSlots.includes("OFF_HAND") ? <p className={tools.status}>{t("Левая рука снимается ради двуручного оружия.", "The off-hand is removed for the two-handed weapon.")}</p> : null}
-          </div> : null}
+          {assembly ? <AuctionGearResult characterSlug={characterSlug} snapshotKey={snapshotKey} assembly={assembly} locale={locale} stale={assemblyStale} selectionLocked={selectionLocked} onExcludeLot={auctionId => setLotAllowed(auctionId, false)} /> : null}
         </section>
     </div> : null}
   </section>;

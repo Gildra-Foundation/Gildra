@@ -113,7 +113,8 @@
     "test:analytics": "node --experimental-strip-types --no-warnings --test tests/analytics/*.test.ts",
     "lint": "eslint .",
     "test:auction-reliability": "node scripts/test-auction-reliability.mjs",
-    "qa:auction-reliability-ui": "node scripts/qa-auction-reliability-ui.mjs"
+    "qa:auction-reliability-ui": "node scripts/qa-auction-reliability-ui.mjs",
+    "test:gear-planner": "node scripts/test-gear-planner.mjs"
   },
   "dependencies": {
     "@sentry/browser": "10.70.0",
