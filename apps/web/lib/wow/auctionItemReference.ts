@@ -107,8 +107,10 @@ export async function getAuctionItemReferences(ids: number[], region: string, to
   if (!["eu", "us", "kr", "tw"].includes(region) || ids.length > 256 || !["en_GB", "en_US", "ru_RU"].includes(locale)) throw new Error("invalid_item_reference_request");
   const apiLocale = locale === "ru_RU" && region === "eu" ? "ru_RU" : region === "us" ? "en_US" : "en_GB";
   const result = new Map<number, AuctionItemReference>();
-  for (let offset = 0; offset < ids.length; offset += 4) await Promise.all(ids.slice(offset, offset + 4).map(async itemId => {
-    signal.throwIfAborted();
+  const controller = new AbortController();
+  const requestSignal = AbortSignal.any([signal, controller.signal]);
+  const loadReference = async (itemId: number) => {
+    requestSignal.throwIfAborted();
     const key = `${region}:${itemId}:${apiLocale}`,
       cached = references.get(key);
     if (cached && cached.expires > Date.now()) {
@@ -121,7 +123,7 @@ export async function getAuctionItemReferences(ids: number[], region: string, to
         Accept: "application/json"
       },
       cache: "no-store",
-      signal: AbortSignal.any([signal, AbortSignal.timeout(15000)])
+      signal: AbortSignal.any([requestSignal, AbortSignal.timeout(15000)])
     });
     let value: AuctionItemReference | null = null;
     if (response.status !== 404) {
@@ -145,12 +147,28 @@ export async function getAuctionItemReferences(ids: number[], region: string, to
       }
       value = parseAuctionItemReference(JSON.parse(Buffer.concat(chunks).toString("utf8")), itemId);
     }
+    requestSignal.throwIfAborted();
     references.set(key, {
       value,
       expires: Date.now() + AUCTION_ITEM_REFERENCE_TTL_MS
     });
     while (references.size > 512) references.delete(references.keys().next().value!);
     if (value) result.set(itemId, value);
+  };
+  // Refill each available slot rather than waiting for the slowest member of
+  // a four-request wave. Failure cancels and drains this call's own siblings;
+  // it cannot cancel another caller or leave background rejections behind.
+  let cursor = 0, failed = false;
+  let failure: unknown;
+  await Promise.all(Array.from({ length: Math.min(4, ids.length) }, async () => {
+    while (!failed && cursor < ids.length) {
+      const itemId = ids[cursor++];
+      try { await loadReference(itemId); }
+      catch (error) {
+        if (!failed) { failed = true; failure = error; controller.abort(error); }
+      }
+    }
   }));
+  if (failed) throw failure;
   return result;
 }

@@ -108,8 +108,10 @@ export function saveAuctionGearSearch(entry: AuctionGearSearchEntry, replaceId?:
   if (!auctionPersistenceEnabled()) return;
   if (entries.get(entry.id) !== entry) throw new Error("search_expired");
   writeAuctionState("search", entry.id, entry.expiresAt, storedEntry(entry), { replaceId, metadata: metadata(entry) });
+  const queue = saveQueues.get(entry);
+  if (queue) queue.committedRevision = queue.revision;
 }
-type SaveQueue = { pending: boolean; running?: Promise<void>; expedite?: () => void; error?: Error };
+type SaveQueue = { revision: number; committedRevision: number; running?: Promise<Error | undefined>; expedite?: () => void; error?: Error };
 const saveQueues = state.__gildraAuctionSearchSaveQueues ??= new WeakMap<AuctionGearSearchEntry, SaveQueue>();
 function refreshSearchLifecycle(entry: AuctionGearSearchEntry) {
   if (entries.get(entry.id) !== entry) throw new Error("search_expired");
@@ -123,15 +125,8 @@ function consumeSaveError(queue: SaveQueue) {
   const error = queue.error; queue.error = undefined;
   throw error;
 }
-/** Latest-state coalescing: no cloning, compression or disk work in the callback. */
-export function scheduleAuctionGearSearchSave(entry: AuctionGearSearchEntry) {
-  if (!auctionPersistenceEnabled()) return;
-  refreshSearchLifecycle(entry);
-  let queue = saveQueues.get(entry);
-  if (!queue) { queue = { pending: false }; saveQueues.set(entry, queue); }
-  consumeSaveError(queue);
-  queue.pending = true;
-  if (queue.running) return;
+function startSearchSave(entry: AuctionGearSearchEntry, queue: SaveQueue) {
+  if (queue.running || queue.revision === queue.committedRevision) return;
   const current = queue;
   // Cached catalog traversal also yields between batches. The bounded window
   // covers measured metadata/network turns; publication expedites this wait.
@@ -141,28 +136,59 @@ export function scheduleAuctionGearSearchSave(entry: AuctionGearSearchEntry) {
     current.expedite = () => { clearTimeout(timer); resolve(); };
   }).then(async () => {
     current.expedite = undefined;
-    while (current.pending && entries.get(entry.id) === entry) {
-      current.pending = false;
+    while (current.revision > current.committedRevision && entries.get(entry.id) === entry) {
+      const revision = current.revision;
       const committed = await writeAuctionStateAsync("search", entry.id, entry.expiresAt, storedEntry(entry), { metadata: metadata(entry) });
-      if (!committed && entries.get(entry.id) === entry) current.pending = true;
+      if (committed) current.committedRevision = Math.max(current.committedRevision, revision);
     }
+    return undefined;
   }).catch(error => {
     current.error = error instanceof Error ? error : new Error("auction_storage_unavailable");
-    current.pending = true;
+    // Every waiter must observe the same failure, even if another waiter has
+    // already consumed the retained background error before it resumes.
+    return current.error;
   }).finally(() => {
     current.running = undefined;
-    if (current.pending && !current.error && entries.get(entry.id) === entry) scheduleAuctionGearSearchSave(entry);
+    if (current.revision > current.committedRevision && !current.error && entries.get(entry.id) === entry) startSearchSave(entry, current);
   });
 }
-/** Result/job publication must await this barrier; background failures surface. */
+/** Mark a mutation. No cloning, compression or disk work occurs in this callback. */
+export function scheduleAuctionGearSearchSave(entry: AuctionGearSearchEntry) {
+  if (!auctionPersistenceEnabled()) return;
+  refreshSearchLifecycle(entry);
+  let queue = saveQueues.get(entry);
+  if (!queue) { queue = { revision: 0, committedRevision: 0 }; saveQueues.set(entry, queue); }
+  queue.revision++;
+  consumeSaveError(queue);
+  startSearchSave(entry, queue);
+}
+/** Await explicitly marked mutations without serializing a clean checkpoint.
+ * Callers must schedule every mutation before using this publication barrier. */
+export async function flushPendingAuctionGearSearch(entry: AuctionGearSearchEntry) {
+  if (!auctionPersistenceEnabled()) return;
+  if (entries.get(entry.id) !== entry) throw new Error("search_expired");
+  const queue = saveQueues.get(entry);
+  if (queue) {
+    consumeSaveError(queue);
+    startSearchSave(entry, queue);
+    while (queue.running) {
+      queue.expedite?.();
+      const error = await queue.running;
+      if (error) {
+        if (queue.error === error) queue.error = undefined;
+        throw error;
+      }
+    }
+  }
+  if (entries.get(entry.id) !== entry) throw new Error("search_expired");
+}
+/** Force a current snapshot, including direct mutations not explicitly marked. */
 export async function flushAuctionGearSearch(entry: AuctionGearSearchEntry) {
   if (!auctionPersistenceEnabled()) return;
   const previous = saveQueues.get(entry);
   if (previous) consumeSaveError(previous);
   scheduleAuctionGearSearchSave(entry);
-  const queue = saveQueues.get(entry)!;
-  while (queue.running) { queue.expedite?.(); await queue.running; consumeSaveError(queue); }
-  if (entries.get(entry.id) !== entry) throw new Error("search_expired");
+  await flushPendingAuctionGearSearch(entry);
 }
 
 function remove(id: string) {

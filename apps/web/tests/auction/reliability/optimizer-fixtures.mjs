@@ -88,7 +88,7 @@ export async function growingMarketRunner() {
     "\n;({verifyAuctionGearSearch,assembleAuctionGearSearch})").runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, createHash, Date, Map, Set, Object,
     Number, JSON, AbortSignal, process, auctionGearVariantSelectionKey, ...planner, ...discovery, auctionGearProfileFingerprint, touchAuctionGearSearch: () => {},
     // This domain fixture uses a virtual entry; real disk checkpoints have separate process tests.
-    saveAuctionGearSearch: () => {}, scheduleAuctionGearSearchSave: () => {}, flushAuctionGearSearch: async () => {},
+    saveAuctionGearSearch: () => {}, scheduleAuctionGearSearchSave: () => {}, flushAuctionGearSearch: async () => {}, flushPendingAuctionGearSearch: async () => {},
     getBattleNetSimulationSnapshot: async () => armory, getCharacterAuctionMarket: async () => market,
     schedulePlannerItemIcons: () => {}, auctionVariantKey,
     advanceAuctionGearDiscovery: async () => { throw Error("unexpected_native_metadata_discovery"); } });

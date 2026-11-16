@@ -125,3 +125,15 @@ test('first-use batches remain small and cancellation cannot commit native candi
   assert.equal(h.state.candidates.size, 16);
   assert.equal(h.api.auctionGearDiscoveryOptions(h.state).length, 32);
 });
+
+test('optional stage timing wraps real work once without changing discovery facts', async () => {
+  const measured = fixture(current, 8), control = fixture(current, 8), stages = [];
+  await measured.api.advanceAuctionGearDiscovery(measured.state, { ...measured.input, maxSteps: 12,
+    measure: async (stage, work) => { stages.push(stage); return work(); } });
+  await control.finish();
+  assert.deepEqual(stages, ['catalog', 'details', 'references', 'variants']);
+  const plain = value => JSON.parse(JSON.stringify(value));
+  assert.deepEqual(plain(measured.api.auctionGearDiscoveryOptions(measured.state)), plain(control.api.auctionGearDiscoveryOptions(control.state)));
+  assert.deepEqual(plain(measured.api.auctionGearDiscoveryCoverage(measured.state)), plain(control.api.auctionGearDiscoveryCoverage(control.state)));
+  assert.equal(measured.counts.native, control.counts.native);
+});

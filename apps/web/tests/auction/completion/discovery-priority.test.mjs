@@ -25,7 +25,7 @@ async function setup(rows, locale = "en_US", characterLevel = 81) {
       resolvedAuctionVariant, supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
       lookupGearRecords: async (ids, _locale, itemClass, maxRequiredLevel, signal) => {
         assert.equal(maxRequiredLevel, undefined, "Base required level must never filter scaled variants");
-        assert(ids.length <= 500, "Summary work remains bounded; repository pages stay at 100");
+        assert(ids.length <= 800, "Summary work remains bounded; repository pages stay at 100");
         state.events.push({ type: "catalog", ids: [...ids] });
         if (state.hold) await state.hold;
         signal.throwIfAborted();
@@ -74,7 +74,7 @@ test("all summary batches precede native work; actual item-level hints beat asce
   assert.equal(first.scanned, 1001, "Old early batches must not monopolize native work while useful summaries remain unseen");
   assert.equal(first.ids[0], 1800, "First native candidate follows known item level, not numeric ID");
   assert.equal(h.state.events.find(event => event.type === "details").ids[0], 1800);
-  assert(h.state.events.filter(event => event.type === "catalog").length <= 6, "500 summaries per discovery batch use three bounded batches for 1001 IDs");
+  assert(h.state.events.filter(event => event.type === "catalog").length <= 4, "800 summaries per discovery batch use two bounded batches for 1001 IDs");
 });
 
 test("EN/RU hints only reorder: unknown, malformed and scaled base requirements retain the same completed optimum", async () => {
@@ -124,18 +124,18 @@ test("cross-squish base levels use known wearable level fit first, then base lev
 });
 
 test("cancelled or failed summary batches preserve their cursor/checkpoint and retry successfully", async () => {
-  const h = await setup(Array.from({ length: 501 }, (_, index) => ({ id: index + 1, level: 10 })));
+  const h = await setup(Array.from({ length: 801 }, (_, index) => ({ id: index + 1, level: 10 })));
   let release; h.state.hold = new Promise(resolve => { release = resolve; });
   const controller = new AbortController(), pending = h.advance({ signal: controller.signal });
   controller.abort(); release();
   await assert.rejects(pending, /abort/i);
   assert.equal(h.discovery.itemCursor, 0); assert.equal(h.discovery.records.length, 0); assert.equal(h.state.checkpoints, 0);
   h.state.hold = null; await h.advance();
-  assert.equal(h.discovery.itemCursor, 500);
+  assert.equal(h.discovery.itemCursor, 800);
   const records = h.discovery.records.length, checkpoints = h.state.checkpoints;
   h.state.fail = true; await assert.rejects(h.advance(), /synthetic_catalog_failure/);
-  assert.equal(h.discovery.itemCursor, 500); assert.equal(h.discovery.records.length, records); assert.equal(h.state.checkpoints, checkpoints);
-  h.state.fail = false; assert.equal((await h.finish()).length, 501);
+  assert.equal(h.discovery.itemCursor, 800); assert.equal(h.discovery.records.length, records); assert.equal(h.state.checkpoints, checkpoints);
+  h.state.fail = false; assert.equal((await h.finish()).length, 801);
 });
 
 test("old checkpoints and refreshed IDs preserve processed native work while promoting newly known strong hints", async () => {

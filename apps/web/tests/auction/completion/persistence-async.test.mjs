@@ -7,6 +7,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { randomBytes } from "node:crypto";
+import v8 from "node:v8";
+import { execFileSync } from "node:child_process";
 import * as persistence from "../../../lib/wow/auctionGearPersistence.ts";
 import * as store from "../../../lib/wow/auctionGearSearchStore.ts";
 import { createAuctionGearDiscovery } from "../../../lib/wow/auctionGearDiscovery.ts";
@@ -232,4 +234,105 @@ test("compressing a substantial checkpoint yields the event loop and preserves p
   const file = join(directory, `search-${entry.id}.bin`);
   assert.equal(fs.statSync(file).mode & 0o077, 0);
   assert.equal(read(entry).data.context.armory.profile.payload.length, 6 * 1024 * 1024);
+}));
+
+test("pending barriers serialize each marked revision once while force flush still captures direct mutations", async () => isolated(async () => {
+  const entry = store.createAuctionGearSearch(owner, context()), original = v8.serialize;
+  let serializations = 0;
+  v8.serialize = (...args) => { serializations++; return original(...args); }; syncBuiltinESMExports();
+  try {
+    await store.flushPendingAuctionGearSearch(entry);
+    assert.equal(serializations, 0, "A newly admitted checkpoint is already durable");
+    entry.allowedKey = "marked"; store.scheduleAuctionGearSearchSave(entry);
+    await Promise.all([store.flushPendingAuctionGearSearch(entry), store.flushPendingAuctionGearSearch(entry)]);
+    await store.flushPendingAuctionGearSearch(entry);
+    assert.equal(serializations, 1, "Multiple publication barriers must not manufacture mutations");
+    assert.equal(read(entry).data.allowedKey, "marked");
+    entry.allowedKey = "direct-unmarked";
+    await store.flushAuctionGearSearch(entry);
+    await store.flushAuctionGearSearch(entry);
+    assert.equal(serializations, 3, "The existing force-save API retains unconditional semantics");
+    assert.equal(read(entry).data.allowedKey, "direct-unmarked");
+  } finally { v8.serialize = original; syncBuiltinESMExports(); }
+}));
+
+test("pending publication includes mutations marked during an earlier compression", async () => isolated(async () => {
+  const entry = store.createAuctionGearSearch(owner, context()), barrier = compressionBarrier();
+  try {
+    entry.allowedKey = "first"; store.scheduleAuctionGearSearchSave(entry);
+    const durable = store.flushPendingAuctionGearSearch(entry);
+    await barrier.entered;
+    entry.allowedKey = "second"; store.scheduleAuctionGearSearchSave(entry);
+    const secondWaiter = store.flushPendingAuctionGearSearch(entry);
+    barrier.release(); await Promise.all([durable, secondWaiter]);
+    assert.equal(read(entry).data.allowedKey, "second");
+  } finally { barrier.release(); barrier.restore(); }
+}));
+
+test("a synchronous save acknowledges marked revisions and supersedes the older queued snapshot", async () => isolated(async () => {
+  const entry = store.createAuctionGearSearch(owner, context()), barrier = compressionBarrier(), intercepted = zlib.gzip;
+  let compressions = 0;
+  zlib.gzip = (...args) => { compressions++; return intercepted(...args); }; syncBuiltinESMExports();
+  try {
+    entry.allowedKey = "old"; store.scheduleAuctionGearSearchSave(entry);
+    const durable = store.flushPendingAuctionGearSearch(entry); await barrier.entered;
+    entry.allowedKey = "synchronous-latest"; store.scheduleAuctionGearSearchSave(entry); store.saveAuctionGearSearch(entry);
+    barrier.release(); await durable;
+    await store.flushPendingAuctionGearSearch(entry);
+    assert.equal(compressions, 1, "A superseded asynchronous snapshot must not rewrite the acknowledged synchronous one");
+    assert.equal(read(entry).data.allowedKey, "synchronous-latest");
+  } finally { barrier.release(); barrier.restore(); }
+}));
+
+test("all concurrent publication waiters reject the same failed write and a pending retry saves the mutation", async () => isolated(async () => {
+  const entry = store.createAuctionGearSearch(owner, context()), original = zlib.gzip;
+  let entered, release;
+  const started = new Promise(resolve => { entered = resolve; }), held = new Promise(resolve => { release = resolve; });
+  zlib.gzip = (...args) => { entered(); void held.then(() => args.at(-1)(new Error("synthetic-write-failure"))); }; syncBuiltinESMExports();
+  try {
+    entry.allowedKey = "cannot-ack-on-failure"; store.scheduleAuctionGearSearchSave(entry);
+    const first = store.flushPendingAuctionGearSearch(entry); await started;
+    const second = store.flushPendingAuctionGearSearch(entry), both = Promise.allSettled([first, second]);
+    release(); const results = await both;
+    for (const result of results) { assert.equal(result.status, "rejected"); assert.match(result.reason.message, /auction_storage_unavailable/); }
+    assert.notEqual(read(entry).data.allowedKey, "cannot-ack-on-failure");
+  } finally { release(); zlib.gzip = original; syncBuiltinESMExports(); }
+  await store.flushPendingAuctionGearSearch(entry);
+  assert.equal(read(entry).data.allowedKey, "cannot-ack-on-failure");
+}));
+
+test("a pending publication fails when its search is deleted during compression", async () => isolated(async directory => {
+  const entry = store.createAuctionGearSearch(owner, context()), barrier = compressionBarrier();
+  try {
+    entry.allowedKey = "deleted"; store.scheduleAuctionGearSearchSave(entry);
+    const durable = store.flushPendingAuctionGearSearch(entry);
+    const rejected = assert.rejects(durable, /search_expired/);
+    await barrier.entered; store.deleteAuctionGearSearch(owner, entry.id); barrier.release(); await rejected;
+    assert.equal(read(entry), null);
+    assert(!(await readdir(directory)).some(name => name.includes(entry.id)));
+  } finally { barrier.release(); barrier.restore(); }
+}));
+
+test("marked phase, enhancement and scenario progress survive a new process after pending barriers", async () => isolated(async directory => {
+  const entry = store.createAuctionGearSearch(owner, context());
+  entry.nextSearchPhase = "simulation"; entry.nextAssemblyPhase = "discovery";
+  entry.enhancementState = { checkpoints: { synthetic: { cursor: 17 } } };
+  entry.retainedSimulationCache = { scenario: { dps: 100, iterations: 750, confidence: 95, engine: "synthetic" } };
+  entry.excludedOptionIds = ["excluded"]; entry.knownOptionIds.add("excluded");
+  entry.knownVariantKeys = new Set(["variant"]); entry.excludedVariantKeys = ["variant"];
+  store.scheduleAuctionGearSearchSave(entry); await store.flushPendingAuctionGearSearch(entry);
+  await store.flushPendingAuctionGearSearch(entry);
+  const source = `
+    import assert from 'node:assert/strict';
+    import { getAuctionGearSearch } from ${JSON.stringify(new URL("../../../lib/wow/auctionGearSearchStore.ts", import.meta.url).href)};
+    const entry = getAuctionGearSearch(${JSON.stringify(owner)}, ${JSON.stringify(entry.id)});
+    assert.equal(entry.nextSearchPhase, 'simulation'); assert.equal(entry.nextAssemblyPhase, 'discovery');
+    assert.deepEqual(entry.enhancementState, {checkpoints:{synthetic:{cursor:17}}});
+    assert.equal(entry.retainedSimulationCache.scenario.iterations,750);
+    assert.deepEqual(entry.excludedOptionIds,['excluded']); assert(entry.knownOptionIds.has('excluded'));
+    assert.deepEqual(entry.excludedVariantKeys,['variant']); assert(entry.knownVariantKeys.has('variant'));
+    assert.equal(getAuctionGearSearch('different-owner', entry.id), null);
+  `;
+  execFileSync(process.execPath, ["--experimental-transform-types", "--no-warnings", "--import", new URL("../resolve.mjs", import.meta.url).href,
+    "--input-type=module", "-e", source], { env: { ...process.env, GILDRA_AUCTION_STATE_DIR: directory }, stdio: "pipe" });
 }));

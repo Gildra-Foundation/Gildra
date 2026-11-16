@@ -1,5 +1,7 @@
 type AuctionGearStepKind = "search" | "assembly";
 const retainedStepLimit = 64;
+const stageNames = ["ownership", "armory", "market", "equippedPresentation", "equippedCatalog", "catalog", "details", "references", "variants", "capacity", "search", "assembly", "enhancements", "scenarios", "checkpoint"] as const;
+export type AuctionGearStage = typeof stageNames[number];
 /** Private per-run diagnostics. Durations are milliseconds; totalMs is elapsed wall
  * time including idle between continuations, activeStepMs sums only step lifetimes. */
 export function createAuctionGearDiagnostics(clock: () => number = () => performance.now()) {
@@ -9,6 +11,8 @@ export function createAuctionGearDiagnostics(clock: () => number = () => perform
   let completedStepMs = 0;
   const activeSteps = new Map<object, number>();
   const stepDurations: Array<{ kind: AuctionGearStepKind; durationMs: number }> = [];
+  const stages = new Map<AuctionGearStage, { calls: number; errors: number; operationMs: number; wallMs: number;
+    wallStarted: number; active: Map<object, number> }>();
   const failure = (error: unknown) => {
     const name = error && typeof error === "object" && "name" in error ? error.name : "";
     if (name === "TimeoutError") counters.timeouts++;
@@ -17,6 +21,23 @@ export function createAuctionGearDiagnostics(clock: () => number = () => perform
   };
   return {
     failure,
+    /** Per-stage union wall time differs from summed operation cost when work
+     * overlaps. Parent stages include their children: never sum different stages
+     * to estimate end-to-end latency. No request arguments or results are kept. */
+    async measureStage<T>(stage: AuctionGearStage, work: () => Promise<T>): Promise<T> {
+      if (!stageNames.includes(stage)) throw new Error("invalid_diagnostic_stage");
+      const began = clock(), key = {};
+      const record = stages.get(stage) ?? { calls: 0, errors: 0, operationMs: 0, wallMs: 0, wallStarted: began, active: new Map<object, number>() };
+      if (!record.active.size) record.wallStarted = began;
+      record.calls++; record.active.set(key, began); stages.set(stage, record);
+      try { return await work(); }
+      catch (error) { record.errors++; throw error; }
+      finally {
+        const ended = clock();
+        record.operationMs += Math.max(0, ended - began); record.active.delete(key);
+        if (!record.active.size) record.wallMs += Math.max(0, ended - record.wallStarted);
+      }
+    },
     duration(phase: "discovery" | "queue" | "compute" | "simulation" | "task", ms: number) { counters[phase] = (counters[phase] ?? 0) + Math.max(0, ms); },
     async measure<T>(phase: "discovery" | "queue" | "compute" | "simulation", work: () => Promise<T>): Promise<T> {
       const began = clock();
@@ -62,7 +83,12 @@ export function createAuctionGearDiagnostics(clock: () => number = () => perform
       const now = clock();
       return { ...counters, firstComparisonMs, totalMs: Math.max(0, now - started),
         activeStepMs: completedStepMs + [...activeSteps.values()].reduce((sum, began) => sum + Math.max(0, now - began), 0),
-        stepDurations: stepDurations.map(step => ({ ...step })) };
+        stepDurations: stepDurations.map(step => ({ ...step })),
+        stages: Object.fromEntries([...stages].map(([name, stage]) => [name, {
+          calls: stage.calls, errors: stage.errors, active: stage.active.size,
+          operationMs: stage.operationMs + [...stage.active.values()].reduce((sum, began) => sum + Math.max(0, now - began), 0),
+          wallMs: stage.wallMs + (stage.active.size ? Math.max(0, now - stage.wallStarted) : 0),
+        }])) };
     },
   };
 }
@@ -77,5 +103,12 @@ export function logAuctionGearDiagnostics(snapshot: AuctionGearDiagnosticsSnapsh
   console.info(JSON.stringify({ event: "auction_gear_diagnostics", scope, discovery, queue, compute, workerQueue,
     simulation, candidates, simulations, task, aborts, timeouts, steps, cacheHits, errors, comparisons,
     firstComparisonMs, totalMs, activeStepMs,
+    stages: Object.fromEntries(stageNames.flatMap(name => {
+      const stage = snapshot.stages?.[name];
+      return stage ? [[name, Object.fromEntries(["calls", "errors", "active", "operationMs", "wallMs"].flatMap(key => {
+        const value = stage[key as keyof typeof stage];
+        return Number.isFinite(value) && value >= 0 ? [[key, value]] : [];
+      }))]] : [];
+    })),
     stepDurations: snapshot.stepDurations.slice(-retainedStepLimit).map(({ kind, durationMs }) => ({ kind, durationMs })) }));
 }

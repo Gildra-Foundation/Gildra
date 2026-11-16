@@ -9,11 +9,12 @@ const sources={before:execFileSync('git',['show',`HEAD:${path}`],{encoding:'utf8
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const rows=[];
 for(const [version,source] of Object.entries(sources)) for(let repeat=0;repeat<5;repeat++) {
- const body=source.slice(source.indexOf('export async function continueAuctionGearSearch('),source.indexOf('/** Refresh actual character'));
+ const phaseStart=source.indexOf('function setAuctionGearPhase(');
+ const body=source.slice(phaseStart>=0?phaseStart:source.indexOf('export async function continueAuctionGearSearch('),source.indexOf('/** Refresh actual character'));
  let calls=0, first=null;
  const began=performance.now(), metrics=createAuctionGearDiagnostics();
  const run=vm.runInNewContext(stripTypeScriptTypes(body).replace('export ','')+';continueAuctionGearSearch',{
-  Date,logAuctionGearDiagnostics,comparedOptions: new WeakMap(), metricsFor:()=>metrics,publicAuctionResult:(_c,r)=>r,flushAuctionGearSearch:async()=>{},discoverAuctionOptions:async()=>{},
+  Date,logAuctionGearDiagnostics,comparedOptions: new WeakMap(), metricsFor:()=>metrics,publicAuctionResult:(_c,r)=>r,scheduleAuctionGearSearchSave:()=>{},flushAuctionGearSearch:async()=>{},flushPendingAuctionGearSearch:async()=>{},discoverAuctionOptions:async()=>{},
   updateAuctionSearchResult:async(_entry,_signal,_progress,_yield,limit)=>{
    // Fixed synthetic planner/native boundary: useful first comparison 20ms,
    // second comparison 200ms. Legacy batch completes both before returning.

@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
+import { createAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagnostics.ts';
 import { auctionGearProfileFingerprint } from '../../../lib/wow/auctionGearFingerprint.ts';
 import { auctionVariantKey } from '../../../lib/wow/auctionItemVariant.ts';
 
@@ -33,7 +34,9 @@ function fixture() {
     options: [{ id: 'synthetic-option', auctionId: offer.auctionId, variantKey: auctionVariantKey(offer),
       costCopper: offer.buyoutCopper, quantity: offer.quantity }] } };
   const state = { events: [], writes: 0, updates: 0, character, armory, market, entry };
+  const diagnostics = createAuctionGearDiagnostics();
   state.dependencies = {
+    metricsFor: () => diagnostics,
     getBattleNetCharacterBySlug: async (token, locale, slug, signal, options) => {
       state.events.push('ownership');
       assert.equal(token, 'synthetic-unused-token'); assert.equal(locale, 'en');
@@ -152,7 +155,7 @@ test('late transport resolutions after abort cannot update retained state', asyn
 test('equal-latency dependency benchmark retains call count while removing one sequential wait', async t => {
   // Restore only the old serialized read scheduling in the same extracted
   // production function. Fresh ownership, validation and publication stay equal.
-  const parallelReads = /const \[current, market\] = await Promise\.all\(\[\s*getBattleNetSimulationSnapshot\(token, context\.character, signal\),\s*getCharacterAuctionMarket\(context\.character, token, \{ refresh: true, signal \}\),?\s*\]\);/;
+  const parallelReads = /const \[current, market\] = await Promise\.all\(\[\s*diagnostics\.measureStage\("armory", \(\) => getBattleNetSimulationSnapshot\(token, context\.character, signal\)\),\s*diagnostics\.measureStage\("market", \(\) => getCharacterAuctionMarket\(context\.character, token, \{ refresh: true, signal \}\)\),?\s*\]\);/;
   assert(parallelReads.test(verifierSource), 'Benchmark requires the explicit concurrent fresh-read boundary');
   const serialSource = verifierSource.replace(parallelReads,
     'const current = await getBattleNetSimulationSnapshot(token, context.character, signal);\n' +
