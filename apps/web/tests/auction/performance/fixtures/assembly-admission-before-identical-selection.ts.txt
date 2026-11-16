@@ -1,0 +1,9 @@
+      const beforeAcceptance = allowed ? () => {
+        const previous = entry.excludedOptionIds, previousVariants = entry.excludedVariantKeys;
+        const ids = new Set(allowed.map(option => option.id));
+        entry.excludedOptionIds = hasExcluded ? [...body.excludedOptionIds as string[]]
+          : entry.context.options.filter(option => !ids.has(option.id)).map(option => option.id);
+        entry.excludedVariantKeys = hasVariants ? [...variants as string[]] : [];
+        try { saveAuctionGearSearch(entry); }
+        catch (error) { entry.excludedOptionIds = previous; entry.excludedVariantKeys = previousVariants; throw error; }
+      } : undefined;
