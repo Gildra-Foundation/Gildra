@@ -148,7 +148,8 @@ try {
   const held = await send("POST", { action: "resume", searchId: entry.id });
   assert.equal(held.status, 202);assert.equal(entry.busy, true);
   const blocked = await send("POST", { action: "resume", searchId: entry.id });
-  const activeJob = { id: held.payload.id, status: "running", progress: null, result: null, error: null,
+  assert.match(blocked.payload.activeJob.revision, /^[A-Za-z0-9_-]{16,100}$/);
+  const activeJob = { id: held.payload.id, revision: blocked.payload.activeJob.revision, status: "running", progress: null, result: null, error: null,
     scope: { characterSlug: searchBody.characterSlug, locale: "ru" }, searchId: entry.id, mode: "search" };
   const formIntent = { ...context.input };
   assert.deepEqual(blocked, { status: 409, payload: { error: "plan_already_running", activeJob, formIntent } });

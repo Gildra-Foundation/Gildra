@@ -12,7 +12,7 @@ import { auctionGearVariantSelectionKey } from "@/lib/wow/auctionGearExclusions"
 import { auctionGearCoverageReasons } from "@/lib/wow/auctionGearCoverage";
 import { getAuctionGearRecommendationGroups, getAuctionGearRecommendations, type AuctionGearRecommendationGroup } from "@/lib/wow/auctionGearRecommendations";
 import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
-import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientPollDelay, auctionClientJobUrl, auctionClientRequestUrl, clearAcknowledgedAuctionClientCache, fetchAuctionClientResult,
+import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientJobUrl, auctionClientRequestUrl, clearAcknowledgedAuctionClientCache, fetchAuctionClientResult, fetchAuctionClientUpdate,
   forgetAuctionClientJob, forgetAuctionClientRequest, hasPendingAuctionClientJob, readAuctionClientCache, parseAuctionClientFormIntent, releasePriorAuctionClientJob, rememberAuctionClientJob, rememberAuctionClientRequest,
   removeAuctionClientJob, removeAuctionClientRequest, retireAuctionClient, waitForAuctionClientRetirement, writeAuctionClientCache,
   parseAuctionClientActiveRecovery, type AuctionClientActiveRecovery, type AuctionClientCache } from "@/lib/wow/auctionGearClient";
@@ -562,8 +562,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         while (payload.status === "queued" || payload.status === "running") {
           if (payload.result) applyResult(payload.result, !auctionGearPricesAreFresh(payload.result.market));
           setTransport({ mode, status: payload.status, progress: payload.progress, error: null });
-          await auctionClientDelay(auctionClientPollDelay(pollAttempt++), request.controller.signal);
-          payload = await fetchAuctionClientResult<PlannerJob>(auctionClientJobUrl(request.id, { characterSlug, locale }), request.controller.signal, onReconnect);
+          payload = await fetchAuctionClientUpdate(payload, { characterSlug, locale }, request.controller.signal, onReconnect, pollAttempt++);
           if (!isCurrent()) return;
         }
         if (!isCurrent()) return;

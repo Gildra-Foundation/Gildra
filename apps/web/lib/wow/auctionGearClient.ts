@@ -150,11 +150,11 @@ export function auctionClientDelay(milliseconds: number, signal: AbortSignal) {
     signal.addEventListener("abort", abort, { once: true });
   });
 }
-export async function fetchAuctionClientResult<T>(url: string, signal: AbortSignal, onReconnect: () => void): Promise<T> {
+export async function fetchAuctionClientResult<T>(url: string, signal: AbortSignal, onReconnect: () => void, timeoutMs = 10_000): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     signal.throwIfAborted();
     try {
-      const response = await fetch(url, { cache: "no-store", signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]) });
+      const response = await fetch(url, { cache: "no-store", signal: AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) });
       if (response.status >= 500) throw new AuctionClientError("plan_connection_interrupted", true);
       const payload = await response.json() as T & { error?: string };
       if (!response.ok) throw new AuctionClientError(payload.error ?? "auction_plan_unavailable", false, response.status);
@@ -167,4 +167,30 @@ export async function fetchAuctionClientResult<T>(url: string, signal: AbortSign
       await auctionClientDelay(750 * (attempt + 1), signal);
     }
   }
+}
+
+const auctionClientRevision = (value: unknown): value is string => typeof value === "string" &&
+  /^[A-Za-z0-9_-]{16,100}$/.test(value);
+
+/** Revision-aware GETs wait on owned server state. Legacy peers retain the
+ * established polling cadence; transport cancellation never cancels the job. */
+export async function fetchAuctionClientUpdate<T extends { id: string; revision?: string }>(previous: T, scope: AuctionClientScope,
+  signal: AbortSignal, onReconnect: () => void, attempt = 0): Promise<T> {
+  signal.throwIfAborted();
+  const url = auctionClientJobUrl(previous.id, scope);
+  const read = async (target: string, timeoutMs = 10_000) => {
+    const result = await fetchAuctionClientResult<T>(target, signal, onReconnect, timeoutMs);
+    if (!result || result.id !== previous.id) throw new AuctionClientError("invalid_plan_result", false);
+    return result;
+  };
+  if (auctionClientRevision(previous.revision)) {
+    // The server may hold the response for five seconds. Preserve the original
+    // ten-second network/transfer allowance after that intentional wait.
+    try { return await read(`${url}&${new URLSearchParams({ after: previous.revision })}`, 15_000); }
+    catch (error) {
+      if (!(error instanceof AuctionClientError) || error.status !== 429 || error.message !== "plan_wait_limit") throw error;
+    }
+  }
+  await auctionClientDelay(auctionClientPollDelay(attempt), signal);
+  return read(url);
 }

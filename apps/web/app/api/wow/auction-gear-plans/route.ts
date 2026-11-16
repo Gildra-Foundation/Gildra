@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { goldToCopper } from "@/lib/wow/auctionMarket";
 import { startAuctionGearSearch, continueAuctionGearSearch, assembleAuctionGearSearch, selectedAuctionGearAssemblyOptions, verifyAuctionGearSearch } from "@/lib/wow/auctionGearRunner";
-import { enqueueAuctionGearJob, getAuctionGearJob, getAuctionGearJobByRequest, validAuctionGearClientRequestId, replayAuctionGearJob, cancelAuctionGearJob, cancelAuctionGearRequest, getOwnerActiveAuctionGearJob, auctionGearFormIntent } from "@/lib/wow/auctionGearJobs";
+import { enqueueAuctionGearJob, getAuctionGearJob, waitForAuctionGearJob, validAuctionGearJobRevision, getAuctionGearJobByRequest, validAuctionGearClientRequestId, replayAuctionGearJob, cancelAuctionGearJob, cancelAuctionGearRequest, getOwnerActiveAuctionGearJob, auctionGearFormIntent } from "@/lib/wow/auctionGearJobs";
 import { getAuctionGearSearch, reserveAuctionGearSearch, saveAuctionGearSearch } from "@/lib/wow/auctionGearSearchStore";
 import { resumeOwnedAuctionGearWork } from "@/lib/wow/auctionGearWork";
 import { recoverAuctionGearSearch } from "@/lib/wow/auctionGearRecovery";
@@ -61,6 +61,12 @@ async function readPlan(request: Request) {
     error: "session_expired"
   }, 401);
   const params = new URL(request.url).searchParams;
+  const after = params.get("after");
+  if (params.has("after") && (params.getAll("after").length !== 1 || !validAuctionGearJobRevision(after) ||
+      params.getAll("id").length !== 1 || !params.get("id") || params.has("active") ||
+      params.has("clientRequestId") || params.has("searchId"))) {
+    return reply({ error: "invalid_plan_request" }, 400);
+  }
   if (params.has("active")) {
     if (params.get("active") !== "1" || params.size !== 1) return reply({ error: "invalid_plan_request" }, 400);
     return reply(activePlan(user.id));
@@ -89,7 +95,19 @@ async function readPlan(request: Request) {
       (!job.scope || params.get("characterSlug") !== job.scope.characterSlug || params.get("locale") !== job.scope.locale)) {
     return reply({ error: "plan_not_found" }, 404);
   }
+  request.signal.throwIfAborted();
   if (job) resumeOwnedAuctionGearWork(user.id, job.id, user.token);
+  if (job && after !== null) {
+    try {
+      // Ownership and character scope are checked before holding a request.
+      // Waiting only observes this job; disconnecting does not cancel its work.
+      const updated = await waitForAuctionGearJob(user.id, job.id, after, request.signal);
+      return updated ? reply(updated) : reply({ error: "plan_not_found" }, 404);
+    } catch (error) {
+      if (error instanceof Error && error.message === "plan_wait_limit") return reply({ error: "plan_wait_limit" }, 429);
+      throw error;
+    }
+  }
   return job ? reply(getAuctionGearJob(user.id, job.id)) : reply({
     error: "plan_not_found"
   }, 404);
