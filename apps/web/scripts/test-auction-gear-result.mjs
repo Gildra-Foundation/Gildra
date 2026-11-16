@@ -27,6 +27,15 @@ assert.equal(recommendedAuctionGearResult(results,'value').key,'enhanced:6');
 results=auctionGearResults({...assembly,enhancementOptimization:{recommendations:[enhanced('5',50,50,50,{fullyEnhanced:false}),enhanced('6',50,50,50)]}});
 for(const objective of ['value','dps']) assert.equal(recommendedAuctionGearResult(results,objective).key,'enhanced:6');
 const noGain=auctionGearResults({...assembly,comparison:comparison(1,false),enhancementOptimization:undefined});assert.equal(recommendedAuctionGearResult(noGain,'value').significant,false);
+// Quick equipment-only plans retain the chosen value objective without claiming
+// that missing enhancement prices are zero or that the full budget is verified.
+const quick=auctionGearResults({...assembly,spentCopper:900,comparison:comparison(100),
+  bestConfirmed:{purchases:[purchase(4)],spentCopper:100,comparison:comparison(50),removedSlots:[]},
+  enhancementOptimization:{recommendations:[enhanced('7',500,100,null)]}});
+const quickValue=recommendedAuctionGearResult(quick,'value');
+assert.equal(quickValue.purchases[0].auctionId,4);
+assert.equal(quickValue.totalCopper,null);assert.equal(quickValue.remainingCopper,null);
+assert.equal(recommendedAuctionGearResult(quick.filter(r=>r.kind==='items'),'dps').purchases[0].auctionId,1);
 const intent={budgetGold:'1',objective:'value',selectedSlots:['HEAD','NECK'],scenario:'single-target'};
 const recovered={budgetCopper:10000,objective:'value',selectedSlots:['NECK','HEAD'],scenario:'single-target',fightLengthSeconds:120,targets:1};
 assert(auctionGearResultMatchesIntent(intent,recovered));assert(!auctionGearResultMatchesIntent(intent,{...recovered,objective:'dps'}));assert(!auctionGearResultMatchesIntent(intent,{...recovered,objective:undefined}));assert(auctionGearResultMatchesIntent({...intent,objective:'dps'},{...recovered,objective:undefined}));assert(!auctionGearResultMatchesIntent(intent,{...recovered,budgetCopper:20000}));assert(!auctionGearResultMatchesIntent(intent,{...recovered,selectedSlots:['HEAD']}));assert(!auctionGearResultMatchesIntent(intent,{...recovered,targets:2}));

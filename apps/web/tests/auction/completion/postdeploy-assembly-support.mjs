@@ -45,7 +45,10 @@ export async function assemblyRunnerFixture({nativeMs=0,discoveryMs=0}={}){
   auctionGearDiscoveryCoverage:coverage,
   advanceAuctionGearDiscovery:async(_discovery,input)=>{
    assert(input.maxSteps<=4,'Assembly discovery must remain bounded');state.discoveryCalls++;
-   if(state.pending&&!input.shouldYield?.()){clock.now+=clock.discoveryMs;state.pending--;input.onCheckpoint?.();}
+   if(state.pending&&!input.shouldYield?.()){
+    if(state.discoveryGate)await state.discoveryGate;
+    input.signal.throwIfAborted();clock.now+=clock.discoveryMs;state.pending--;input.onCheckpoint?.();
+   }
   },
  });
  const context={input:{objective:'value',budgetCopper:100,selectedSlots:assemblySlots,scenario:'single-target'},

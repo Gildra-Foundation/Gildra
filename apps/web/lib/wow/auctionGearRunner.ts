@@ -476,9 +476,14 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
   try {
     signal.throwIfAborted();
     publishResult?.(publicAuctionResult(context, entry.latestSearchResult));
-    // Discovery also advances during assembly; its finite batch never declares
-    // the current sub-pool a market-wide maximum while unvisited variants remain.
-    if (entry.nextAssemblyPhase !== "simulation") {
+    // The first assembly must measure a whole-set seed from the verified pool
+    // before spending its turn discovering more items. Restored contexts still
+    // verify the worker engine; a zero-step discovery preserves pending work.
+    if (!entry.latestAssemblyResult && context.options.length) {
+      await discoverAuctionOptions(entry, token, signal, progress, () => true, 0);
+      entry.nextAssemblyPhase = "discovery";
+    // Later turns retain discovery/simulation fairness and the full domain.
+    } else if (entry.nextAssemblyPhase !== "simulation") {
       entry.nextAssemblyPhase = "simulation";
       await discoverAuctionOptions(entry, token, signal, progress, shouldYield, 4);
     } else {

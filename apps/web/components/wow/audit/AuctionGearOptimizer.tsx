@@ -20,6 +20,7 @@ import { auctionGearServiceMessage } from "@/lib/wow/auctionGearCopy";
 import { GearPlannerItem, gearPlannerItemStatDescription } from "./GearPlannerItem";
 import { AuctionGearSuggestions } from "./AuctionGearSuggestions";
 import { AuctionGearResult } from "./AuctionGearResult";
+import { advanceAuctionGearRunPolicy, createAuctionGearRunPolicy, auctionGearSearchRunPhase, type AuctionGearRunPolicy } from "@/lib/wow/auctionGearRunPolicy";
 import { auctionGearResultMatchesIntent as intentMatchesSearch } from "@/lib/wow/auctionGearResult";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
 import { AlertTriangle, LoaderCircle, Search } from "lucide-react";
@@ -311,7 +312,18 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         setTransport({ mode: "search", status: "completed", progress: null, error: null });
         if (result.activeJob && !selectionChanged) await runRef.current?.({ action: "poll", id: result.activeJob.id, observedActive: jobIsActive(result.activeJob) }, result.activeJob.mode ?? result.activeJob.result?.kind ?? saved.mode);
         else if (result.activeJob) { remember({ jobId: result.activeJob.id }); await cancel(); }
-        else if (saved.jobId) forgetAuctionClientJob(saved.jobId);
+        else {
+          if (saved.jobId) forgetAuctionClientJob(saved.jobId);
+          if (saved.orchestration && saved.orchestration.phase !== "done" && !selectionChanged) {
+            const policy = saved.orchestration;
+            const canAssemble = result.search.items.some(item =>
+              !restoredExclusions.has(item.optionId) && !(saved.excludedVariantKeys ?? []).includes(auctionGearVariantSelectionKey(item)));
+            const phase = policy.phase === "search" ? auctionGearSearchRunPhase(policy, result.search.searchComplete, canAssemble) : "assembly";
+            remember({ orchestration: { ...policy, phase }, ...(phase === "done" ? {} : { mode: phase }) });
+            if (phase !== "done") await runRef.current?.(phase === "search" ? { action: "resume", searchId: result.search.searchId }
+              : { action: "assemble", searchId: result.search.searchId, excludedOptionIds: [...restoredExclusions], excludedVariantKeys: [...(saved.excludedVariantKeys ?? [])] }, phase);
+          }
+        }
       } catch (error) {
         if (!mounted || controller.signal.aborted) return;
         const code = error instanceof Error ? error.message : "auction_plan_unavailable";
@@ -406,6 +418,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   }
   async function run(initial: RequestBody, mode: Mode) {
     if (!scopeAlive.current || active.current || cache.current?.cancellationRequested) return;
+    const inheritedPolicy = Boolean(cache.current?.orchestration);
+    if (!inheritedPolicy) remember({ orchestration: createAuctionGearRunPolicy("quick", mode) });
     const generation = mountGeneration.current;
     const ownsScope = () => scopeAlive.current && mountGeneration.current === generation;
     let finish!: () => void;
@@ -573,21 +587,19 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
             scenario: result.scenario, fightLengthSeconds: result.fightLengthSeconds, targets: result.targets, compareScenarios: result.compareScenarios, objective: result.objective ?? "dps", selectedSlots: parseAuctionGearSlots(result.selectedSlots) }) ?? undefined : cache.current?.formIntent });
         forgetAuctionClientJob(payload.id);
         request.id = undefined;
-        let complete: boolean;
-        if (result.kind === "search") {
-          // Each response is an authoritative snapshot: sold lots must disappear.
-
-          complete = result.searchComplete;
-          body = { action: "resume", searchId: result.searchId };
-        } else {
-          // Keep publishing checkpoints while one user-started calculation
-          // advances. Reading an old completed job must not silently start new work.
-          complete = (result.exhaustiveComplete && result.scenarioComparisonsComplete !== false && result.enhancementOptimization?.complete !== false) || recoveredCompleted;
-          // A fresh identity is allocated on the next POST; reusing the previous
-          // nonce would replay that completed step without advancing the cursor.
-          body = { action: "assemble", searchId: result.searchId, ...assemblySelection };
-        }
-        if (complete) { setTransport({ mode, status: "completed", progress: null, error: null }); return; }
+        const policy = cache.current?.orchestration ?? createAuctionGearRunPolicy("quick", mode);
+        const measuredOptions = result.kind === "search" && result.items.some(item =>
+          !assemblySelection.excludedOptionIds.includes(item.optionId) && !assemblySelection.excludedVariantKeys.includes(auctionGearVariantSelectionKey(item)));
+        // A legacy completed-job read restores facts only. Explicit ongoing
+        // intent may advance; re-reading a job must not reset its turn budget.
+        const transition = advanceAuctionGearRunPolicy(recoveredCompleted && !inheritedPolicy ? { ...policy, phase: "done" } : policy,
+          result, { jobId: payload.id, canAssemble: measuredOptions });
+        remember({ orchestration: transition.policy, mode: transition.next ?? mode });
+        if (!transition.next) { setTransport({ mode, status: "completed", progress: null, error: null }); return; }
+        mode = transition.next;
+        request.mode = mode;
+        body = mode === "search" ? { action: "resume", searchId: result.searchId }
+          : { action: "assemble", searchId: result.searchId, ...assemblySelection };
         setTransport({ mode, status: "starting", progress: null, error: null });
       }
     } catch (reason) {
@@ -696,7 +708,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     editFocusRequested.current = true;
     await cancel();
   }
-  async function startSearch() {
+  async function startSearch(kind: AuctionGearRunPolicy["kind"] = "quick") {
     if (!validBudget || initializing || active.current || discovered?.activeJob || ownerLookupFailed || cache.current?.cancellationRequested) return;
     try {
       const budgetGold = normalizeAuctionBudgetGold(budget, locale);
@@ -705,6 +717,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       const retirement = invalidate();
       if (retirement && !await retirement) return;
       if (!scopeAlive.current || mountGeneration.current !== generation) return;
+      remember({ orchestration: createAuctionGearRunPolicy(kind) });
       void run({ action: "search", characterSlug, budgetGold, selectedSlots: slots, scenario, fightLengthSeconds, targets, compareScenarios, objective, locale }, "search");
     } catch (reason) {
       setTransport({ mode: "search", status: "failed", progress: null, error: reason instanceof Error ? reason.message : "invalid_plan_request" });
@@ -723,6 +736,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     if (!scopeAlive.current || mountGeneration.current !== generation) return;
     if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
     if (retryJob?.mode === "assembly") { void run({ action: "poll", id: retryJob.id, observedActive: retryJob.observedActive }, "assembly"); return; }
+    remember({ orchestration: createAuctionGearRunPolicy("quick", "assembly") });
     void run({ action: "assemble", searchId: search.searchId, excludedOptionIds: [...excluded], excludedVariantKeys: [...excludedVariantKeys] }, "assembly");
   }
   async function editParameters() {
@@ -743,7 +757,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     const recovery = recoveryController.current;
     recoveryController.current = null; recovery?.abort();
     // The handles remain recoverable until the server acknowledges retirement.
-    remember({ jobId: ownedId, mode, cancellationRequested: true });
+    remember({ jobId: ownedId, mode, cancellationRequested: true, orchestration: { ...(cache.current?.orchestration ?? createAuctionGearRunPolicy("quick", mode)), phase: "done" } });
     setCancellation("pending"); setRetryJob(null); setHasRecovery(false);
     setTransport({ mode, status: "starting", progress: null, error: "plan_cancelling" });
     const generation = mountGeneration.current;
@@ -818,8 +832,18 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     changeExclusions(new Set(), variants);
   }
   function continueSearch() {
-    if (!validBudget || !search || active.current || cache.current?.cancellationRequested) return;
-    if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
+    if (!validBudget || active.current || cache.current?.cancellationRequested) return;
+    if (hasRecovery) {
+      // Recovery can fail before its owned search DTO reaches this browser.
+      // Full continues that identity instead of invalidating/cancelling it.
+      remember({ orchestration: { ...(cache.current?.orchestration ?? createAuctionGearRunPolicy("full")), kind: "full", phase: "search" } });
+      setRecoveryAttempt(value => value + 1);
+      return;
+    }
+    if (!search) { void startSearch("full"); return; }
+    // Full search reuses all owned candidates, exclusions and assembly caches.
+    // Resume discovery/comparisons first, even after a quick loadout was shown.
+    remember({ orchestration: { ...(cache.current?.orchestration ?? createAuctionGearRunPolicy("full")), kind: "full", phase: "search" } });
     void run({ action: "resume", searchId: search.searchId }, "search");
   }
   const progress = transport?.progress;
@@ -841,7 +865,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const sameScope = discovered?.activeJob ? discovered.activeJob.scope.characterSlug === characterSlug && discovered.activeJob.scope.locale === locale : false;
 
 
-  return <section ref={panel} className={`${tools.tool} ${styles.panel}`} aria-labelledby="auction-gear-title" data-auction-gear>
+  return <section ref={panel} className={`${tools.tool} ${styles.panel}`} aria-labelledby="auction-gear-title" data-auction-gear data-auction-run-kind={cache.current?.orchestration?.kind ?? "quick"}>
     <h3 className={tools.title} id="auction-gear-title">{t("Улучшения с аукциона", "Auction House upgrades")}</h3>
     {discovered?.activeJob ? <div className={styles.recovery} data-auction-owned-recovery>
       <p role="status" className={tools.status}>{t("У вас есть незавершённый расчёт", "You have an unfinished calculation")}{discovered.formIntent ? ` · ${money(Number(discovered.formIntent.budgetGold) * 10000)}` : ""}</p>
@@ -868,9 +892,11 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         <div className={tools.actions}>
           {running && !cancellation ? <button className={tools.quiet} type="button" onClick={() => void editParameters()}>{t("Изменить параметры", "Change parameters")}</button> : null}
           {!cancellation && running && (transport?.mode === "search" || !search) ? <button className={tools.quiet} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}
-          <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="submit" disabled={formLocked || !validBudget} icon={<Search aria-hidden="true" />}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : search ? t("Новый поиск", "New search") : t("Найти улучшения", "Find upgrades")}</MaterialButton>
+          <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="submit" disabled={formLocked || !validBudget} icon={<Search aria-hidden="true" />}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : t("Быстрый подбор", "Quick selection")}</MaterialButton>
+          <button type="button" className={tools.quiet} disabled={formLocked || !validBudget} onClick={continueSearch}>{t("Полный поиск", "Full search")}</button>
         </div>
       </div>
+      <p className={styles.note}>{t("Быстрый подбор проверит часть вариантов и соберёт один комплект. Полный поиск продолжит проверку с сохранённого места.", "Quick selection checks a limited set of options and builds one loadout. Full search continues from the saved checkpoint.")}</p>
       <fieldset className={styles.slotFieldset} disabled={formLocked} data-auction-objective>
         <legend id="auction-objective-label">{t("Цель подбора", "Selection objective")}</legend>
         <AtlasSegmented aria-labelledby="auction-objective-label" aria-describedby="auction-objective-help" value={objective} disabled={formLocked} options={[
@@ -888,7 +914,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           : t("Наибольший подтверждённый DPS в пределах бюджета. Другая цель потребует нового поиска.", "Highest confirmed DPS within budget. Changing the objective requires a new search.")}</p>
       </fieldset>
       <fieldset className={styles.slotFieldset} disabled={formLocked}><legend>{t("Сравнить финалистов в других боях", "Compare finalists in other encounters")}</legend>
-        <p className={styles.note}>{t("Сравнение выбранных боёв начнётся после завершения перебора. Лучший вариант зависит от боя.", "Selected encounters are compared after traversal finishes. The best option depends on the encounter.")}</p>
+        <p className={styles.note}>{t("Сравнение выбранных боёв выполняется при полном поиске после завершения перебора. Лучший вариант зависит от боя.", "Selected encounters are compared during full search after traversal finishes. The best option depends on the encounter.")}</p>
         <div className={styles.slots}>{(["single-target", "aoe", "execute"] as const).map(value => <label key={value}><input type="checkbox" checked={compareScenarios.some(e => e.scenario === value)} onChange={event => {
           const next = event.target.checked ? [...compareScenarios, parseAuctionGearEncounter({ scenario: value })] : compareScenarios.filter(e => e.scenario !== value);
           setCompareScenarios(next);
@@ -907,16 +933,15 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     {!search ? feedback("assembly") : null}
     {search ? <div className={styles.searchResult} data-auction-search-result data-auction-market={search.market.realm}>
       {marketStale ? <p className={tools.status}><AlertTriangle aria-hidden="true" />{t("Цены могли измениться — запустите новый поиск.", "Prices may have changed — run a new search.")}</p> : null}
-      {!search.searchComplete && !running && !cancellation ? <div className={tools.actions}><span className={tools.status}>{t("Осталось сравнить", "Left to compare")}: {number(search.pendingItems)}</span><button disabled={!validBudget} className={tools.quiet} type="button" onClick={continueSearch}>{t("Продолжить проверку вещей", "Continue item comparisons")}</button></div> : null}
-      {search.searchComplete && (incompleteData || discoveryIncomplete) ? <button className={tools.quiet} type="button" disabled={!validBudget || running || Boolean(cancellation)} onClick={continueSearch}>{t("Обновить варианты", "Refresh options")}</button> : null}
+      {!search.searchComplete && !running && !cancellation ? <div className={tools.actions}><span className={tools.status}>{t("Осталось сравнить", "Left to compare")}: {number(search.pendingItems)}</span></div> : null}
       <details className={styles.disclosure} open={assembly ? undefined : true} key={assembly ? "assembled-suggestions" : "search-suggestions"} data-auction-single-options><summary>{t("Отдельные улучшения по слотам", "Individual slot upgrades")}</summary>
       {recommendationGroups.length
         ? <AuctionGearSuggestions groups={recommendationGroups} locale={locale} excluded={excluded} excludedVariantKeys={excludedVariantKeys} running={selectionLocked} marketStale={marketStale} slotName={slotName} onAllowed={setAllowed} />
         : <p role="status" className={styles.empty}>{excludedUpgrades ? t("Найденные улучшения исключены из подбора.", "The upgrades found are excluded.")
           : !search.searchComplete || search.pendingItems > 0 || discoveryIncomplete
             ? search.items.some(item => item.comparison)
-              ? t("Поиск продолжается: среди проверенных вещей улучшений пока нет.", "Search continues: no upgrades among the items compared so far.")
-              : t("Пока недостаточно данных для сравнения — поиск продолжается.", "Not enough comparison data yet — search is continuing.")
+              ? t("Среди проверенных вещей улучшений пока нет.", "No upgrades among the items compared so far.")
+              : t("Пока недостаточно данных для сравнения. Продолжите полный поиск.", "Not enough comparison data yet. Continue with full search.")
             : incompleteData ? t("В проверенных вариантах улучшений нет; часть вещей не удалось оценить.", "No upgrades among verified options; some items could not be evaluated.")
               : t("Проверка завершена: отдельных улучшений не найдено.", "Search complete: no single-item upgrades found.")}</p>}
       </details>

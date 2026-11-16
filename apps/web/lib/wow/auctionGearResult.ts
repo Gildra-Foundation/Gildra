@@ -63,10 +63,15 @@ export function auctionGearResults(assembly: AuctionGearAssemblyResult): Auction
 /** Choose among computed results only; this does not compute a second optimum. */
 export function recommendedAuctionGearResult(results: AuctionGearResult[], objective: AuctionGearObjective): AuctionGearResult | undefined {
   const verified = results.filter(result => result.significant && result.totalCopper !== null);
-  const candidates = verified.length ? verified : results.filter(result => result.significant);
+  const equipment = results.filter(result => result.significant && result.kind === "items");
+  // A quick equipment-only result has known item prices but no enhancement
+  // quote. Compare its item cost/gain without inventing a fully enhanced total.
+  const candidates = verified.length ? verified : objective === "value" && equipment.length ? equipment : results.filter(result => result.significant);
   return [...(candidates.length ? candidates : results)].sort((a, b) => {
-    if (objective === "value" && a.totalCopper !== null && b.totalCopper !== null && a.comparison.deltaDps > 0 && b.comparison.deltaDps > 0) {
-      const difference = a.totalCopper / a.comparison.deltaDps - b.totalCopper / b.comparison.deltaDps;
+    const aCost = a.kind === "items" ? a.itemsCopper : a.totalCopper;
+    const bCost = b.kind === "items" ? b.itemsCopper : b.totalCopper;
+    if (objective === "value" && aCost !== null && bCost !== null && a.comparison.deltaDps > 0 && b.comparison.deltaDps > 0) {
+      const difference = aCost / a.comparison.deltaDps - bCost / b.comparison.deltaDps;
       if (difference) return difference;
     }
     return b.comparison.deltaDps - a.comparison.deltaDps || Number(b.fullyEnhanced) - Number(a.fullyEnhanced) || a.itemsCopper - b.itemsCopper;
