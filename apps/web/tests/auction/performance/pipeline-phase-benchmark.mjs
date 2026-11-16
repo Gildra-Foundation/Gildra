@@ -1,6 +1,6 @@
 /** Controlled full client→Jobs→Runner→Planner flow. No account, HTTP service or native process.
  * Run from apps/web with the usual auction resolver and --experimental-transform-types.
- * `baseline` reads frozen production sources in work/gear-planner/pipeline-baseline.
+ * `baseline` reads pinned local Git sources; it never fetches history.
  * This measures real orchestration/durability with explicitly synthetic upstream/native latency;
  * it is neither browser paint time nor a production/native throughput claim. */
 import assert from 'node:assert/strict';
@@ -13,16 +13,17 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
 import v8 from 'node:v8';
-import * as client from '../../../lib/wow/auctionGearClient.ts';
+import { gzipSync } from 'node:zlib';
 import * as policy from '../../../lib/wow/auctionGearRunPolicy.ts';
-import * as store from '../../../lib/wow/auctionGearSearchStore.ts';
-import * as jobs from '../../../lib/wow/auctionGearJobs.ts';
 import * as persistence from '../../../lib/wow/auctionGearPersistence.ts';
 import { auctionGearPricesAreFresh } from '../../../lib/wow/auctionGearFreshness.ts';
 import { auctionGearVariantSelectionKey } from '../../../lib/wow/auctionGearExclusions.ts';
 import { auctionGearResultMatchesIntent } from '../../../lib/wow/auctionGearResult.ts';
 import { encodeAuctionGearSelectionTransport } from '../../../lib/wow/auctionGearSelectionTransport.ts';
-import { parseAuctionGearSlots } from '../../../lib/wow/auctionGearSelection.ts';
+import { parseAuctionGearSlots, auctionGearSlots } from '../../../lib/wow/auctionGearSelection.ts';
+import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from '../../../lib/wow/auctionGearScenarios.ts';
+import { normalizeAuctionBudgetGold } from '../../../lib/wow/auctionGearBudget.ts';
+import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagnostics.ts';
 import { harness, strip, record, offer, character } from '../completion/priority-feedback-harness.mjs';
 
 const root = fileURLToPath(new URL('../../../../../', import.meta.url));
@@ -30,15 +31,25 @@ const version = process.argv[2] ?? 'current';
 const label = process.env.AUCTION_PIPELINE_LABEL ?? 'controlled-fast';
 assert(['baseline', 'current'].includes(version));
 const repeats = Number(process.env.AUCTION_PIPELINE_REPEATS ?? 3);
+const lotsPerEffect = Number(process.env.AUCTION_PIPELINE_LOTS_PER_EFFECT ?? 1);
+const transferBytesPerSecond = Number(process.env.AUCTION_PIPELINE_TRANSFER_BYTES_PER_SECOND ?? 0);
+const transferEncoding = process.env.AUCTION_PIPELINE_TRANSFER_ENCODING ?? 'identity';
+assert(Number.isSafeInteger(lotsPerEffect) && lotsPerEffect >= 1 && lotsPerEffect <= 100);
+assert(Number.isFinite(transferBytesPerSecond) && transferBytesPerSecond >= 0);
+assert(['identity', 'gzip'].includes(transferEncoding));
 const delays = { clientRttMs: 10, healthMs: Number(process.env.AUCTION_PIPELINE_HEALTH_MS ?? 25), nativeMs: Number(process.env.AUCTION_PIPELINE_NATIVE_MS ?? 80), metadataMs: 15, ownershipMs: 15, armoryMs: 25, marketMs: 25 };
-const baselineRef = process.env.AUCTION_PIPELINE_BASELINE_REF ?? 'e6edaa47985e8a689ca29bf706f626fa313a52e1';
+const baselineRef = process.env.AUCTION_PIPELINE_BASELINE_REF ?? 'b0a977b96dac1f005a5bcd2ee0fb48b8fe4c8463';
 const gitSource = (file, location) => {
   try { return execFileSync('git', ['show', `${baselineRef}:${location}/${file}`], { cwd: root, encoding: 'utf8', stdio: ['ignore','pipe','pipe'] }); }
   catch { throw new Error(`Baseline ${baselineRef} is unavailable locally; provide AUCTION_PIPELINE_BASELINE_REF. This benchmark never fetches Git history.`); }
 };
-const readSource = async (file, location) => version === 'baseline' ? gitSource(file, location) : readFile(path.join(root, location, file), 'utf8');
+const archivedSources = process.env.AUCTION_PIPELINE_CURRENT_SOURCE_DIR;
+const sourceNames = { 'auctionGearRunner.ts': 'runner', 'auctionGearDiscovery.ts': 'discovery', 'AuctionGearOptimizer.tsx': 'component',
+  'auctionGearSearchStore.ts': 'store', 'auctionGearJobs.ts': 'jobs', 'auctionGearClient.ts': 'client' };
+const readSource = async (file, location) => version === 'baseline' ? gitSource(file, location) :
+  readFile(archivedSources ? path.join(archivedSources, `${sourceNames[file]}.ts.txt`) : path.join(root, location, file), 'utf8');
 const sharedImports = {};
-for (const file of ['auctionGearPersistence.ts','auctionGearJobs.ts','auctionGearClient.ts','auctionGearRunPolicy.ts']) {
+for (const file of ['auctionGearPersistence.ts','auctionGearRunPolicy.ts']) {
   const actual = await readFile(path.join(root,'apps/web/lib/wow',file),'utf8');
   assert.equal(actual, gitSource(file,'apps/web/lib/wow'), `${file} changed: bind its frozen implementation before comparing whole-path timings`);
   sharedImports[file] = createHash('sha256').update(actual).digest('hex');
@@ -48,6 +59,8 @@ const sources = {
   discovery: await readSource('auctionGearDiscovery.ts', 'apps/web/lib/wow'),
   component: await readSource('AuctionGearOptimizer.tsx', 'apps/web/components/wow/audit'),
   store: await readSource('auctionGearSearchStore.ts', 'apps/web/lib/wow'),
+  jobs: await readSource('auctionGearJobs.ts', 'apps/web/lib/wow'),
+  client: await readSource('auctionGearClient.ts', 'apps/web/lib/wow'),
 };
 const sourceHashes = Object.fromEntries(Object.entries(sources).map(([key, value]) => [key, createHash('sha256').update(value).digest('hex')]));
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -72,15 +85,28 @@ async function benchmark(kind, repeat) {
     try { return await work(); } finally { row.totalMs += since(start); }
   };
   const itemIds = Array.from({ length: 24 }, (_, i) => 90000 + i);
-  const fixture = await harness({ entities: itemIds.map(id => record(id)), offers: itemIds.map((id, i) => ({ ...offer(1, i + 1), itemId: id })) });
+  const fixture = await harness({ entities: itemIds.map(id => record(id)), offers: itemIds.flatMap((id, i) =>
+    Array.from({ length: lotsPerEffect }, (_, lot) => ({ ...offer(1, i * lotsPerEffect + lot + 1), itemId: id }))) });
   fixture.state.measure = input => 1000 + (input.gearChanges ?? []).reduce((sum, change) => sum + (change.itemId - 89999) * 10, 0);
   const runnerBindings = await fixture.runner.continueAuctionGearSearch.constructor('return globalThis')();
   const discoveryBindings = await fixture.discovery.advanceAuctionGearDiscovery.constructor('return globalThis')();
+  const exportsOf = source => [...source.matchAll(/^export (?:async )?(?:function|class) (\w+)/gm)].map(match=>match[1]);
+  const jobsExports = exportsOf(sources.jobs);
+  const selectedJobs = new vm.Script(stripTypeScriptTypes(sources.jobs,{mode:'transform'}).replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'')+'\n;({'+jobsExports.join(',')+'})').runInNewContext({
+    ...persistence,randomUUID,createAuctionGearDiagnostics,logAuctionGearDiagnostics,parseAuctionGearEncounter,parseAuctionGearCompareScenarios,auctionGearSlots,parseAuctionGearSlots,
+    process,Map,Set,WeakMap,Date,Object,JSON,Number,AbortController,AbortSignal,DOMException,setTimeout,clearTimeout,setImmediate,clearImmediate,queueMicrotask,performance,
+  });
+  const clientExports = exportsOf(sources.client);
+  const clientRealm = vm.createContext({normalizeAuctionBudgetGold,parseAuctionGearEncounter,parseAuctionGearCompareScenarios,parseAuctionGearSlots,...policy,
+    sessionStorage:globalThis.sessionStorage,URLSearchParams,AbortController,AbortSignal,DOMException,setTimeout,clearTimeout,fetch:(...args)=>globalThis.fetch(...args)});
+  const selectedClient = new vm.Script(stripTypeScriptTypes(sources.client,{mode:'transform'}).replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'')+'\n;({'+clientExports.join(',')+'})').runInContext(clientRealm);
+  const clientDelay = selectedClient.auctionClientDelay;
+  clientRealm.auctionClientDelay = async(ms,signal)=>timed('clientPollSleep',()=>clientDelay(ms,signal));
   const storeExports = [...sources.store.matchAll(/^export (?:async )?function (\w+)/gm)].map(match => match[1]);
-  const selectedStore = version === 'current' ? store : new vm.Script(strip(sources.store) + '\n;({' + storeExports.join(',') + '})').runInNewContext({
+  const selectedStore = new vm.Script(strip(sources.store) + '\n;({' + storeExports.join(',') + '})').runInNewContext({
     ...persistence, randomUUID, process, Map, Set, WeakMap, Date, Object, JSON, Number, setTimeout, clearTimeout,
     snapshotAuctionGearContext: runnerBindings.snapshotAuctionGearContext, restoreAuctionGearContext: runnerBindings.restoreAuctionGearContext,
-    getActiveAuctionGearJob: jobs.getActiveAuctionGearJob,
+    getActiveAuctionGearJob: selectedJobs.getActiveAuctionGearJob,
   });
 
   const discovery = new vm.Script(strip(sources.discovery) + '\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryCoverage,auctionGearDiscoveryOptions})').runInNewContext({ ...discoveryBindings,
@@ -100,7 +126,25 @@ async function benchmark(kind, repeat) {
     },
   });
   const owner = `pipeline-${kind}-${repeat}-${randomUUID()}`;
-  const wire = (payload, status = 200) => { const response = Response.json(payload, { status }), parse = response.json.bind(response); response.json = async () => { const value = await parse(); if(value.status === 'completed') { const turn=turns.find(turn=>turn.id===value.id); if(turn)turn.clientObservedCompletedMs ??= since(began); } return value; }; return response; };
+  const transport = { responseBytes: 0, getBytes: 0, postBytes: 0, encodedResponseBytes: 0, encodedGetBytes: 0, encodedPostBytes: 0, changedGets: 0, unchangedGets: 0 };
+  const delivered = new Map();
+  const wire = async (payload, status = 200, method = 'GET') => {
+    const body = JSON.stringify(payload), bytes = Buffer.byteLength(body);
+    const encodedBytes = transferEncoding === 'gzip' ? gzipSync(body).length : bytes;
+    transport.responseBytes += bytes; transport[method === 'GET' ? 'getBytes' : 'postBytes'] += bytes;
+    transport.encodedResponseBytes += encodedBytes; transport[method === 'GET' ? 'encodedGetBytes' : 'encodedPostBytes'] += encodedBytes;
+    const semantic = JSON.stringify([payload.status,payload.result,payload.error]);
+    const request = requests.findLast(row => row.method === method && row.responseBytes === undefined);
+    Object.assign(request, { responseBytes: bytes, encodedResponseBytes: encodedBytes, responseReadyMs: since(began), resultKind: payload.result?.kind ?? null,
+      resultHash: createHash('sha256').update(JSON.stringify(payload.result)).digest('hex') });
+    if (method === 'GET') transport[delivered.get(payload.id) === semantic ? 'unchangedGets' : 'changedGets']++;
+    delivered.set(payload.id, semantic);
+    if (transferBytesPerSecond) await timed('responseTransfer', () => pause(encodedBytes / transferBytesPerSecond * 1000));
+    request.responseDeliveredMs = since(began);
+    const response = new Response(body, { status, headers: { 'Content-Type': 'application/json' } }), parse = response.json.bind(response);
+    response.json = async () => { const value = await parse(); if(value.status === 'completed') { const turn=turns.find(turn=>turn.id===value.id); if(turn)turn.clientObservedCompletedMs ??= since(began); } return value; };
+    return response;
+  };
   const input = { characterSlug: 'synthetic', budgetCopper: 1000, selectedSlots: ['WRIST'], objective: 'value', scenario: 'single-target', locale: 'en' };
   let firstServerComparisonMs = null, firstClientComparisonMs = null, firstServerLoadoutMs = null, firstClientLoadoutMs = null, firstServerCandidate, firstClientCandidate, entry;
   const candidate = result => { const row=result.items.find(item=>item.comparison); return row && [row.itemId,row.variantKey,row.comparison.baselineDps,row.comparison.candidateDps,row.comparison.uncertainty.marginDps]; };
@@ -109,11 +153,13 @@ async function benchmark(kind, repeat) {
     assert.equal(target.pathname, '/api/wow/auction-gear-plans');
     await pause(delays.clientRttMs / 2);
     if ((options.method ?? 'GET') === 'GET') {
-      const payload = jobs.getAuctionGearJob(owner, target.searchParams.get('id'));
-      assert(payload); requests.push({ method: 'GET', atMs: since(began), id: payload.id, status: payload.status });
+      const wait = target.searchParams.get('after');
+      const payload = wait && selectedJobs.waitForAuctionGearJob ? await timed('ownedHttpWait',()=>selectedJobs.waitForAuctionGearJob(owner,target.searchParams.get('id'),wait,options.signal))
+        : selectedJobs.getAuctionGearJob(owner, target.searchParams.get('id'));
+      assert(payload); requests.push({ method: 'GET', sentAtMs, atMs: since(began), id: payload.id, status: payload.status });
       await pause(delays.clientRttMs / 2); return wire(payload);
     }
-    if (options.method === 'DELETE') { jobs.cancelAuctionGearJob(owner, target.searchParams.get('id')); return Response.json({ ok: true }); }
+    if (options.method === 'DELETE') { selectedJobs.cancelAuctionGearJob(owner, target.searchParams.get('id')); return Response.json({ ok: true }); }
     assert.equal(options.method, 'POST');
     const body = JSON.parse(options.body), action = body.action;
     assert(['search', 'resume', 'assemble'].includes(action));
@@ -121,7 +167,7 @@ async function benchmark(kind, repeat) {
     entry = action === 'search' ? undefined : selectedStore.getAuctionGearSearch(owner, body.searchId);
     const release = entry ? selectedStore.reserveAuctionGearSearch(entry) : undefined;
     const selection = { excludedOptionIds: body.excludedOptionIds ?? [], excludedVariantKeys: body.excludedVariantKeys ?? [] };
-    const job = jobs.enqueueAuctionGearJob(owner, async (signal, progress, hooks) => {
+    const job = selectedJobs.enqueueAuctionGearJob(owner, async (signal, progress, hooks) => {
       turn.taskStartMs = since(began);
       const publishResult = result => {
         hooks.publishResult(result); const atMs = since(began); turn.publications.push({ atMs, kind: result.kind });
@@ -137,7 +183,7 @@ async function benchmark(kind, repeat) {
     }, { continuation: action !== 'search', scope: { characterSlug: 'synthetic', locale: 'en' }, ...(entry ? { searchId: entry.id } : {}), onSettled: () => { release?.(); turn.serverCompletedMs = since(began); },
       work: action === 'search' ? { action, input } : action === 'resume' ? { action, searchId: entry.id } : { action, searchId: entry.id, selection } });
     turn.id = job.id;
-    await pause(delays.clientRttMs / 2); return wire(job, 202);
+    await pause(delays.clientRttMs / 2); return wire(job, 202, 'POST');
   };
   const cache = { current: { version: 1, profileKey: 'synthetic-snapshot', mode: 'search', excludedOptionIds: [], orchestration: policy.createAuctionGearRunPolicy(kind) } };
   const active = { current: null }, resultState = {}, scopeAlive = { current: true };
@@ -148,7 +194,7 @@ async function benchmark(kind, repeat) {
   };
   const noOp = () => {};
   const runBody = sources.component.slice(sources.component.indexOf('  async function run(initial:'), sources.component.indexOf('  useEffect(() => { runRef.current = run;'));
-  const run = new vm.Script(stripTypeScriptTypes(runBody) + '\n;run').runInNewContext({ ...client, ...policy,
+  const run = new vm.Script(stripTypeScriptTypes(runBody) + '\n;run').runInNewContext({ ...selectedClient, ...policy,
     active, cache, scopeAlive, mountGeneration: { current: 0 }, snapshotKey: 'synthetic-snapshot', characterSlug: 'synthetic', locale: 'en', crypto: { randomUUID },
     AbortController, AbortSignal, Map, Set, JSON, Error, fetch: (...args) => globalThis.fetch(...args), encodeAuctionGearSelectionTransport,
     jobIsActive: job => job.status === 'queued' || job.status === 'running', auctionGearPricesAreFresh, auctionGearVariantSelectionKey, parseAuctionGearSlots,
@@ -158,7 +204,7 @@ async function benchmark(kind, repeat) {
     setAssemblyStale: noOp, setMarketStale: noOp, setRetryJob: noOp, setHasRecovery: noOp, setCancellation: noOp,
     setOwnerLookupFailed: noOp, setDiscovered: noOp, setExcluded: noOp, setExcludedVariantKeys: noOp, setBudget: noOp, restoreEncounter: noOp,
     setObjective: noOp, setSelectedSlots: noOp,
-    auctionClientDelay: async (ms, signal) => timed('clientPollSleep', () => client.auctionClientDelay(ms, signal)),
+    auctionClientDelay: async (ms, signal) => timed('clientPollSleep', () => clientDelay(ms, signal)),
   });
   await run({ action: 'search', characterSlug: 'synthetic', budgetGold: '0.1', selectedSlots: ['WRIST'], scenario: 'single-target', objective: 'value', locale: 'en' }, 'search');
   const totalMs = since(began);
@@ -167,11 +213,11 @@ async function benchmark(kind, repeat) {
   entry = selectedStore.getAuctionGearSearch(owner, cache.current.searchId); assert(entry);
   assert(resultState.assembly); assert(firstServerComparisonMs !== null && firstClientComparisonMs !== null);
   for (const request of fixture.state.simulationRequests) assert.equal(request.actionListMode, 'native');
-  for (const turn of turns) turn.jobsDiagnostics = jobs.getAuctionGearJobDiagnostics(owner, turn.id);
+  for (const turn of turns) turn.jobsDiagnostics = selectedJobs.getAuctionGearJobDiagnostics(owner, turn.id);
   const interJobGaps = turns.slice(1).map((turn, i) => turn.postSentMs - turns[i].serverCompletedMs);
   const completedDeliveryTails = turns.map(turn => turn.clientObservedCompletedMs - turn.serverCompletedMs);
   const clientContinuationDispatchMs = turns.slice(1).map((turn,i)=>turn.postSentMs-turns[i].clientObservedCompletedMs);
-  const result = { version, kind, repeat, totalMs, firstServerCandidate, firstClientCandidate, firstServerComparisonMs, firstClientComparisonMs, firstServerLoadoutMs, firstClientLoadoutMs,
+  const result = { version, kind, repeat, totalMs, transport, firstServerCandidate, firstClientCandidate, firstServerComparisonMs, firstClientComparisonMs, firstServerLoadoutMs, firstClientLoadoutMs,
     firstComparisonDeliveryLagMs: firstClientComparisonMs - firstServerComparisonMs,
     phases, serialization: { ...serializeCounts }, postCount: turns.length, pollCount: requests.filter(row => row.method === 'GET').length,
     interJobGaps, completedDeliveryTails, clientContinuationDispatchMs,
@@ -205,7 +251,7 @@ try {
   await writeFile(path.join(artifactSources,'hashes.json'),JSON.stringify({baselineRef,sourceHashes,sharedImports},null,2)+'\n');
   await mkdir(path.dirname(output), { recursive: true });
   await writeFile(output, JSON.stringify({ scope: 'Actual component run loop (no DOM), Client, Policy, Jobs, Runner, Planner and durable checkpoints. Synthetic upstream/native facts and explicit timer/HTTP boundaries. No account, native process or external request.',
-    version, baselineRef, sourceHashes, sharedImports, fixture: { delays, distinctItems: 24, slots: ['WRIST'], baselineDps: 1000 }, summary, rows }, null, 2) + '\n');
+    version, baselineRef, sourceHashes, sharedImports, fixture: { delays, distinctItems: 24, lotsPerEffect, transferBytesPerSecond, transferEncoding, slots: ['WRIST'], baselineDps: 1000 }, summary, rows }, null, 2) + '\n');
   console.log(JSON.stringify({ output, summary }));
 } finally {
   globalThis.fetch = originalFetch; v8.serialize = originalSerialize; syncBuiltinESMExports();

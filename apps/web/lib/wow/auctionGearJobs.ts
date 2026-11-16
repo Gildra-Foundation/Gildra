@@ -8,6 +8,8 @@ import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "./a
 import { auctionGearSlots, parseAuctionGearSlots } from "./auctionGearSelection";
 export type AuctionGearJob = {
   id: string;
+  /** Runtime publication identity. Recreated after process recovery. */
+  revision?: string;
   status: "queued" | "running" | "completed" | "failed" | "cancelled";
   progress: AuctionPlanProgress | null;
   result: AuctionGearRunResult | null;
@@ -56,12 +58,46 @@ const state = globalThis as typeof globalThis & {
   __gildraAuctionStarts?: Map<string, Starts>;
   __gildraAuctionJobsRestored?: boolean;
   __gildraAuctionJobRecency?: number;
+  __gildraAuctionJobRevisions?: WeakMap<Job, string>;
+  __gildraAuctionJobWaiters?: Map<Job, Set<(error?: Error) => void>>;
+  __gildraAuctionJobWaiterCount?: number;
+  __gildraAuctionJobNotifications?: WeakMap<Job, ReturnType<typeof setImmediate>>;
 };
 const jobs = state.__gildraAuctionJobs ??= new Map<string, Job>(),
   queue = state.__gildraAuctionQueue ??= [],
   starts = state.__gildraAuctionStarts ??= new Map<string, Starts>();
-type StoredJob = Omit<Job, "task" | "controller" | "onSettled" | "lazy" | "recoverable" | "cancellationPending">;
+type StoredJob = Omit<Job, "task" | "controller" | "onSettled" | "lazy" | "recoverable" | "cancellationPending" | "revision">;
 type JobMetadata = Omit<StoredJob, "result" | "progress" | "work"> & { hasWork: boolean };
+const revisions = state.__gildraAuctionJobRevisions ??= new WeakMap<Job, string>();
+const waiters = state.__gildraAuctionJobWaiters ??= new Map<Job, Set<(error?: Error) => void>>();
+const notifications = state.__gildraAuctionJobNotifications ??= new WeakMap<Job, ReturnType<typeof setImmediate>>();
+const jobWaitMs = 5_000, jobWaitLimit = 8, totalWaitLimit = 256;
+function jobRevision(j: Job) {
+  let revision = revisions.get(j);
+  if (!revision) { revision = randomUUID(); revisions.set(j, revision); }
+  return revision;
+}
+function clearJobNotification(j: Job) {
+  const pending = notifications.get(j);
+  if (pending) { clearImmediate(pending); notifications.delete(j); }
+}
+function notifyJobWaiters(j: Job, error?: Error) {
+  clearJobNotification(j);
+  for (const finish of [...(waiters.get(j) ?? [])]) finish(error);
+}
+/** Only call after the corresponding public change has passed its durable write. */
+function publishedJobChange(j: Job) {
+  revisions.set(j, randomUUID());
+  if (j.status === "cancelled" || j.status === "failed") { notifyJobWaiters(j); return; }
+  if (!waiters.get(j)?.size || notifications.has(j)) return;
+  // Coalesce publications and completion in the same event-loop turn. This
+  // preserves the first useful result on the next turn without sending the
+  // same full result once as running and again as completed across microtasks.
+  notifications.set(j, setImmediate(() => {
+    notifications.delete(j);
+    notifyJobWaiters(j);
+  }));
+}
 const lastPersisted = new WeakMap<Job, number>();
 const diagnostics = new WeakMap<Job, { queued: number; metrics: ReturnType<typeof createAuctionGearDiagnostics> }>();
 /** Internal diagnostics only; task includes upstream I/O and is NOT compute time. */
@@ -121,10 +157,10 @@ function hydrate(j: Job) {
   if (!record || !data || data.id !== j.id || data.owner !== j.owner || data.expires !== record.expiresAt ||
       data.clientRequestId !== j.clientRequestId || data.requestFingerprint !== j.requestFingerprint || data.recency !== j.recency ||
       data.resultMeasurementContract !== j.resultMeasurementContract) {
-    removeAuctionState("job", j.id); jobs.delete(j.id); return false;
+    removeAuctionState("job", j.id); jobs.delete(j.id); notifyJobWaiters(j); return false;
   }
   try { j.work = copyWork(data.work); }
-  catch { removeAuctionState("job", j.id); jobs.delete(j.id); return false; }
+  catch { removeAuctionState("job", j.id); jobs.delete(j.id); notifyJobWaiters(j); return false; }
   j.recoverable = Boolean(j.work);
   const legacyResult = data.resultMeasurementContract !== auctionMeasurementContract;
   j.result = legacyResult ? null : data.result; j.progress = data.progress; j.lazy = false;
@@ -133,7 +169,7 @@ function hydrate(j: Job) {
 }
 function persist(j: Job, replaceId?: string) {
   if (!hydrate(j)) throw new Error("auction_storage_unavailable");
-  writeAuctionState("job", j.id, j.expires, { ...publicData(j), owner: j.owner, expires: j.expires,
+  writeAuctionState("job", j.id, j.expires, { ...publicData(j, false), owner: j.owner, expires: j.expires,
     createdAt: j.createdAt, continuation: j.continuation, work: j.work,
     clientRequestId: j.clientRequestId, requestFingerprint: j.requestFingerprint,
     cancelledBeforeAcceptance: j.cancelledBeforeAcceptance, recency: j.recency,
@@ -185,17 +221,23 @@ function retainJob(j: Job, replaced: [string, Job] | undefined) {
     try { removeAuctionState("job", replaced[0]); }
     catch (error) { removeAuctionState("job", j.id); throw error; }
     jobs.delete(replaced[0]);
+    notifyJobWaiters(replaced[1]);
   }
   jobs.set(j.id, j);
 }
 function view(j: Job): AuctionGearJob {
   // GET and nonce replay must not turn a failed DELETE write into a false ACK.
-  if (j.cancellationPending) { j.error = "cancelled"; persist(j); }
+  if (j.cancellationPending) {
+    j.error = "cancelled";
+    try { persist(j); } catch (error) { notifyJobWaiters(j, new Error("auction_storage_unavailable")); throw error; }
+    publishedJobChange(j);
+  }
   return publicData(j);
 }
-function publicData(j: Job): AuctionGearJob {
+function publicData(j: Job, includeRevision = true): AuctionGearJob {
   return {
     id: j.id,
+    ...(includeRevision ? { revision: jobRevision(j) } : {}),
     status: j.status,
     progress: j.progress,
     result: j.result,
@@ -213,6 +255,7 @@ function cleanup() {
     if (j.status === "queued") settle(j);
     removeAuctionState("job", id);
     jobs.delete(id);
+    notifyJobWaiters(j);
   }
   for (const [owner, history] of starts) {
     history.searches = history.searches.filter(time => time > now - 60_000);
@@ -239,6 +282,7 @@ async function drain() {
       timing?.metrics.duration("queue", taskStarted - timing.queued);
       try {
         persist(j);
+        publishedJobChange(j);
         const signal = AbortSignal.any([j.controller.signal, AbortSignal.timeout(10 * 60_000)]);
         const result = await j.task!(signal, p => {
           if (!signal.aborted && jobs.get(j.id) === j && j.status === "running") {
@@ -250,22 +294,24 @@ async function drain() {
           signal.throwIfAborted();
           if (jobs.get(j.id) !== j || j.status !== "running") return;
           if (j.searchId && j.searchId !== result.searchId) throw new Error("invalid_plan_request");
-          j.searchId = result.searchId;
-          j.result = result;
-          j.resultMeasurementContract = auctionMeasurementContract;
-          j.expires = Date.now() + 30 * 60_000;
-          persist(j);
+          const previous = { searchId: j.searchId, result: j.result, resultMeasurementContract: j.resultMeasurementContract };
+          j.searchId = result.searchId; j.result = result;
+          j.resultMeasurementContract = auctionMeasurementContract; j.expires = Date.now() + 30 * 60_000;
+          try { persist(j); } catch (error) { Object.assign(j, previous); throw error; }
+          publishedJobChange(j);
         }, searchCreated: searchId => {
           signal.throwIfAborted(); j.searchId = searchId; persist(j);
         } });
         signal.throwIfAborted();
         if (jobs.get(j.id) !== j || j.status !== "running") continue;
+        const previous = { searchId: j.searchId, result: j.result, resultMeasurementContract: j.resultMeasurementContract };
         j.result = result;
         j.resultMeasurementContract = auctionMeasurementContract;
         j.searchId = result.searchId;
         j.status = "completed";
         j.expires = Date.now() + 30 * 60_000;
-        persist(j);
+        try { persist(j); } catch (error) { Object.assign(j, previous); throw error; }
+        publishedJobChange(j);
       } catch (error) {
         // Expired work must never recreate its deleted durable job record.
         if (jobs.get(j.id) !== j) continue;
@@ -275,7 +321,8 @@ async function drain() {
         const message = error instanceof Error ? error.message : "";
         j.error = /^[a-z_]{3,80}$/.test(message) ? message : "auction_plan_unavailable";
         j.expires = Date.now() + 30 * 60_000;
-        try { persist(j); } catch { j.error = "auction_storage_unavailable"; }
+        try { persist(j); publishedJobChange(j); }
+        catch { j.error = "auction_storage_unavailable"; notifyJobWaiters(j, new Error("auction_storage_unavailable")); }
       } finally {
         timing?.metrics.duration("task", performance.now() - taskStarted);
         if (timing) logAuctionGearDiagnostics(timing.metrics.snapshot(), "job");
@@ -348,6 +395,46 @@ export function getAuctionGearJob(owner: string, id: string) {
   const j = jobs.get(id);
   return j?.owner === owner && hydrate(j) ? view(j) : null;
 }
+export function validAuctionGearJobRevision(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{16,100}$/.test(value);
+}
+/** Bounded notification wait, scoped to the authenticated owner. Disconnecting
+ * removes only this listener; the independently owned server task continues. */
+export async function waitForAuctionGearJob(owner: string, id: string, after: string, signal: AbortSignal): Promise<AuctionGearJob | null> {
+  signal.throwIfAborted();
+  const current = getAuctionGearJob(owner, id);
+  const active = (job: AuctionGearJob | null) => job?.status === "queued" || job?.status === "running";
+  if (!current || !active(current) || current.revision !== after) return current;
+  const job = jobs.get(id)!;
+  if ((waiters.get(job)?.size ?? 0) >= jobWaitLimit || (state.__gildraAuctionJobWaiterCount ?? 0) >= totalWaitLimit) throw new Error("plan_wait_limit");
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const listeners = waiters.get(job) ?? new Set<(error?: Error) => void>();
+    const finish = (error?: unknown) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      signal.removeEventListener("abort", onAbort);
+      listeners.delete(finish);
+      if (!listeners.size) { waiters.delete(job); clearJobNotification(job); }
+      state.__gildraAuctionJobWaiterCount = Math.max(0, (state.__gildraAuctionJobWaiterCount ?? 1) - 1);
+      if (error !== undefined) { reject(error); return; }
+      try { resolve(getAuctionGearJob(owner, id)); } catch (failure) { reject(failure); }
+    };
+    const onAbort = () => finish(signal.reason ?? new DOMException("Aborted", "AbortError"));
+    listeners.add(finish); waiters.set(job, listeners);
+    state.__gildraAuctionJobWaiterCount = (state.__gildraAuctionJobWaiterCount ?? 0) + 1;
+    const timer = setTimeout(finish, jobWaitMs);
+    signal.addEventListener("abort", onAbort, { once: true });
+    // A publication/abort at the registration boundary must not be lost. The
+    // revision is opaque, so clients cannot carry an old version across restart.
+    if (signal.aborted) { onAbort(); return; }
+    try {
+      const latest = getAuctionGearJob(owner, id);
+      if (!latest || !active(latest) || latest.revision !== after || jobs.get(id) !== job) finish();
+    } catch (error) { finish(error); }
+  });
+}
 export function validAuctionGearClientRequestId(value: unknown): value is string {
   return typeof value === "string" && /^[A-Za-z0-9_-]{16,100}$/.test(value);
 }
@@ -393,7 +480,9 @@ export function cancelAuctionGearJob(owner: string, id: string) {
     if (queued) settle(j);
     const queuedIndex = queue.indexOf(id);
     if (queuedIndex !== -1) queue.splice(queuedIndex, 1);
-    persist(j);
+    try { persist(j); }
+    catch (error) { notifyJobWaiters(j, new Error("auction_storage_unavailable")); throw error; }
+    publishedJobChange(j);
   }
   return view(j);
 }
