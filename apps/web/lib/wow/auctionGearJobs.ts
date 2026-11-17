@@ -6,6 +6,7 @@ import type { AuctionGearRunInput, AuctionGearRunResult, AuctionGearAssemblySele
 import { auctionMeasurementContract, auctionPersistenceEnabled, listAuctionStateHeaders, readAuctionState, removeAuctionState, writeAuctionState } from "./auctionGearPersistence";
 import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "./auctionGearScenarios";
 import { auctionGearSlots, parseAuctionGearSlots } from "./auctionGearSelection";
+import { parseAuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
 export type AuctionGearJob = {
   id: string;
   /** Runtime publication identity. Recreated after process recovery. */
@@ -112,6 +113,7 @@ function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefine
   if (work.action === "search") {
     if (!work.input || typeof work.input !== "object") throw new Error("invalid_plan_request");
     const { characterSlug, budgetCopper, scenario, objective, locale, selectedSlots } = work.input;
+    const enhancementMode = parseAuctionGearEnhancementMode(work.input.enhancementMode);
     if (typeof characterSlug !== "string" || !characterSlug || characterSlug.length > 180 ||
         !Number.isSafeInteger(budgetCopper) || budgetCopper < 0 || budgetCopper > 999_999_999_999 ||
         !["single-target", "aoe", "execute"].includes(scenario) || objective !== undefined && objective !== "value" && objective !== "dps" || !["en", "ru"].includes(locale)) throw new Error("invalid_plan_request");
@@ -119,6 +121,7 @@ function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefine
     const encounter = parseAuctionGearEncounter(custom);
     const compareScenarios = parseAuctionGearCompareScenarios(work.input.compareScenarios);
     return { action: "search", input: { characterSlug, budgetCopper, scenario, locale,
+      ...(work.input.enhancementMode !== undefined ? { enhancementMode } : {}),
       ...(work.input.compareScenarios !== undefined ? { compareScenarios } : {}),
       ...(custom.fightLengthSeconds !== undefined ? { fightLengthSeconds: encounter.fightLengthSeconds } : {}),
       ...(custom.targets !== undefined ? { targets: encounter.targets } : {}), ...(objective ? { objective } : {}),

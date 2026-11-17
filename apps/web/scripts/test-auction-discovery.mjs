@@ -1,3 +1,5 @@
+import { parseAuctionGearEnhancementMode } from "../lib/wow/auctionGearEnhancementMode.ts";
+import { auctionEnhancementCatalogInfo } from "../lib/wow/auctionEnhancementCatalog.ts";
 import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../lib/wow/auctionGearDiagnostics.ts";
 import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "../lib/wow/auctionGearScenarios.ts";
 import { evaluateAuctionGearScenarios } from "../lib/wow/auctionGearScenarioExecution.ts";
@@ -67,11 +69,11 @@ const resolveAuctionVariants = async ({ offers }) => {
 };
 const discoverySource = await readFile(new URL("../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
 const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
-  .runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
+  .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
     supportedAuctionModifiers, nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS, Date, lookupGearRecords, gearEntityDetails, getAuctionItemReferences, resolveAuctionVariants });
 const runnerSource = await readFile(new URL("../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
 const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions,snapshotAuctionGearContext,restoreAuctionGearContext})")
-  .runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...searchStore, ...discovery, auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, auctionGearMechanicalCache, auctionGearMechanicalKey, resolveAuctionVariants, auctionGearVariantSelectionKey,
+  .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...searchStore, ...discovery, auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, auctionGearMechanicalCache, auctionGearMechanicalKey, resolveAuctionVariants, auctionGearVariantSelectionKey,
     talentSpecThemes: [{ classId: 1, specId: 72, role: "melee", slug: "fury-warrior" }],
     getCharacterAuctionMarket: async () => { contextStarts.push("market"); if (contextGate) await contextGate; return fixture.market; },
     getBattleNetSimulationSnapshot: async () => armory,
@@ -163,7 +165,7 @@ let imageCalls = 0;
 const imageResponse = new Promise(resolve => { resolveImage = resolve; });
 const mediaSource = await readFile(new URL("../lib/wow/gearPlannerMedia.ts", import.meta.url), "utf8");
 const media = new vm.Script(strip(mediaSource) + "\n;({schedulePlannerItemIcons,applyCachedPlannerItemIcons})")
-  .runInNewContext({ createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Map, Date, Number, AbortSignal, fetch: () => { imageCalls++; return imageResponse; } });
+  .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Map, Date, Number, AbortSignal, fetch: () => { imageCalls++; return imageResponse; } });
 const target = { itemId: 62002 };
 assert.equal(media.schedulePlannerItemIcons([target], "eu", "offline-token", signal()), undefined);
 assert.equal(target.iconUrl, undefined);

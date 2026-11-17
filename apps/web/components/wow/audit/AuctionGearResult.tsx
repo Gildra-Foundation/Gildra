@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { auctionGearAssemblyGoalComplete } from "@/lib/wow/auctionGearEnhancementMode";
 import type { AuctionGearAssemblyResult } from "@/lib/wow/auctionGearTypes";
 import { auctionGearResults, recommendedAuctionGearResult, type AuctionGearResult as Result } from "@/lib/wow/auctionGearResult";
 import { AuctionShoppingList } from "./AuctionShoppingList";
@@ -30,7 +31,10 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
     summary.current?.focus();
   };
 
-  const complete = assembly.exhaustiveComplete && assembly.scenarioComparisonsComplete !== false && assembly.enhancementOptimization?.complete !== false;
+  const equipmentOnly = assembly.enhancementMode === "equipment";
+  const stage = assembly.enhancementOptimization;
+  const complete = auctionGearAssemblyGoalComplete(assembly);
+  const limitedEnhancements = assembly.enhancementMode === "enhanced" && stage?.searchLimited;
   return <div className={styles.result} data-auction-assembly-result data-exhaustive={assembly.exhaustiveComplete} data-price-state={stale ? "stale" : "calculated"} data-selected-result={selected.key}>
     <h4 ref={summary} tabIndex={-1} className={tools.subtitle} data-auction-primary-title>{selected.significant
       ? selected.key === recommended?.key ? t("Рекомендуемый комплект", "Recommended loadout") : t("Выбранный комплект", "Selected loadout")
@@ -46,8 +50,16 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
     {!complete ? <p className={styles.note}>{selected.significant
       ? t("Рекомендация по проверенным вариантам. Можно продолжить поиск.", "Recommended from the options checked. You can keep searching.")
       : t("Проверена часть вариантов. Можно продолжить поиск.", "Only some options have been checked. You can keep searching.")}</p> : null}
+    {complete && limitedEnhancements && selected.kind === "enhanced" ? <p className={styles.note}>{t("Камни и чары выбраны из проверенных сочетаний.", "Gems and enchants were selected from the combinations checked.")}</p> : null}
     {assembly.dataComplete === false ? <p className={styles.note}>{t("Часть предметов не удалось оценить.", "Some items could not be evaluated.")}</p> : null}
-    {selected.kind === "items" ? <p className={styles.note}>{t("Стоимость указана только за вещи. Камни и чары не подобраны.", "The price covers equipment only. Gems and enchants have not been selected.")}</p>
+    {assembly.enhancementMode === "enhanced" ? <p className={styles.note} data-auction-enhancement-status={stage?.status ?? "pending"}>{stage?.status === "unavailable"
+      ? t("Не хватает данных для подбора камней и чар. Показаны проверенные вещи.", "Data for gems and enchants is unavailable. Verified gear is shown.")
+      : stage?.status === "no_affordable_configuration" ? t("Не найдено проверенного сочетания камней и чар в бюджете. Показан комплект вещей.", "No verified gem and enchant combination was found within budget. The gear loadout is shown.")
+      : stage?.status === "ready" ? t("Проверены варианты камней и чар для покупаемых замен; остальная экипировка не меняется.", "Gem and enchant options were checked for purchased replacements; your other gear stays unchanged.")
+      : t("Подбор камней и чар ещё не завершён. Показан текущий результат.", "Gem and enchant selection is not complete yet. The current result is shown.")}</p> : null}
+    {selected.kind === "items" ? <p className={styles.note}>{equipmentOnly
+      ? t("Подбор только вещей. Камни и чары не включены.", "Equipment selection only. Gems and enchants are not included.")
+      : t("Стоимость указана только за вещи. Камни и чары не подобраны.", "The price covers equipment only. Gems and enchants have not been selected.")}</p>
       : !selected.fullyEnhanced ? <p className={styles.note}>{t("Не все доступные камни и чары установлены в этом варианте.", "This option does not fill every available gem and enchant slot.")}</p> : null}
     {selected.kind === "enhanced" && selected.totalCopper === null ? <p className={styles.staleResult}>{t("Полная цена или наличие камней и чар не подтверждены. Проверьте наличие и цены перед покупкой.", "The full price or availability of gems and enchants is unverified. Check availability and prices before buying.")}</p> : null}
     {!selected.significant ? <p role="status" className={tools.status}>{selected.comparison.deltaDps <= 0
@@ -61,8 +73,8 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
         <dl className={styles.totals}>
           <div><dt>{t("Бюджет", "Budget")}</dt><dd>{money(assembly.budgetCopper)}</dd></div>
           <div><dt>{t("Предметы", "Equipment")}</dt><dd>{money(selected.itemsCopper)}</dd></div>
-          <div><dt>{t("Камни", "Gems")}</dt><dd>{money(selected.gemsCopper)}</dd></div>
-          <div><dt>{t("Чары", "Enchants")}</dt><dd>{money(selected.enchantsCopper)}</dd></div>
+          {!equipmentOnly ? <><div><dt>{t("Камни", "Gems")}</dt><dd>{money(selected.gemsCopper)}</dd></div>
+          <div><dt>{t("Чары", "Enchants")}</dt><dd>{money(selected.enchantsCopper)}</dd></div></> : null}
           <div><dt>{t("Полная стоимость", "Total cost")}</dt><dd>{money(selected.totalCopper)}</dd></div>
           <div><dt>{t("Останется", "Remaining")}</dt><dd>{money(selected.remainingCopper)}</dd></div>
           {selected.significant && selected.totalCopper !== null ? <div><dt>{t("Цена за +1 DPS", "Cost per +1 DPS")}</dt><dd>{formatGoldRate(selected.totalCopper / selected.comparison.deltaDps, locale)}</dd></div> : null}

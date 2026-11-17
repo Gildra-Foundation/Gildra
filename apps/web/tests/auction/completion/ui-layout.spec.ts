@@ -11,6 +11,11 @@ test("ux layout: intermediate width keeps settings and shopping readable", async
     await expect(quick.panel.locator("[data-auction-advanced-settings]")).not.toHaveAttribute("open", "");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.evaluate(() => document.fonts.ready);
+    const help = await quick.panel.locator("#auction-build-mode-help").boundingBox();
+    for (const radio of await quick.panel.locator("[data-auction-build-modes]").getByRole("radio").all()) {
+      const box = await radio.boundingBox();
+      expect(box!.y + box!.height).toBeLessThanOrEqual(help!.y);
+    }
     const path = info.outputPath(`synthetic-${state}-${quick.language}-${width}.png`);
     await page.screenshot({ path, fullPage: true });
     await info.attach(`synthetic-${state}-${width}`, { path, contentType: "image/png" });

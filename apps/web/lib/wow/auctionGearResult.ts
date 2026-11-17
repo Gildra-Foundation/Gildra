@@ -2,12 +2,14 @@ import type { AuctionEnhancedRecommendation } from "./auctionGearEnhancementStag
 import type { AuctionGearAssemblyResult, AuctionGearComparison, AuctionGearObjective, AuctionGearPurchase } from "./auctionGearTypes";
 import { auctionGearEncounterMatches, type AuctionGearEncounter } from "./auctionGearScenarios";
 import { parseAuctionGearSlots } from "./auctionGearSelection";
+import { parseAuctionGearEnhancementMode, type AuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
 
 export function auctionGearResultMatchesIntent(intent: { budgetGold: string; objective: AuctionGearObjective; selectedSlots: readonly string[]; scenario: string;
-  fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[] }, result: { budgetCopper: number; objective?: AuctionGearObjective;
-  selectedSlots: readonly string[]; scenario: string; fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[] }) {
+  enhancementMode?: AuctionGearEnhancementMode; fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[] }, result: { budgetCopper: number; objective?: AuctionGearObjective;
+  enhancementMode?: AuctionGearEnhancementMode; selectedSlots: readonly string[]; scenario: string; fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[] }) {
   const expectedSlots = new Set(intent.selectedSlots), actualSlots = new Set<string>(parseAuctionGearSlots(result.selectedSlots));
   return Number(intent.budgetGold) === result.budgetCopper / 10000 && intent.objective === (result.objective ?? "dps") &&
+    parseAuctionGearEnhancementMode(intent.enhancementMode) === parseAuctionGearEnhancementMode(result.enhancementMode) &&
     auctionGearEncounterMatches(intent, result) && expectedSlots.size === actualSlots.size && [...expectedSlots].every(slot => actualSlots.has(slot));
 }
 
@@ -38,8 +40,11 @@ export function auctionGearResults(assembly: AuctionGearAssemblyResult): Auction
     if (!plan) continue;
     const key = `items:${signature(plan.purchases)}`;
     if (results.some(result => result.key === key)) continue;
+    const equipmentTotal = assembly.enhancementMode === "equipment" && Number.isSafeInteger(plan.spentCopper) &&
+      plan.spentCopper >= 0 && plan.spentCopper <= assembly.budgetCopper ? plan.spentCopper : null;
     results.push({ key, kind: "items", purchases: plan.purchases, comparison: plan.comparison,
-      itemsCopper: plan.spentCopper, gemsCopper: null, enchantsCopper: null, totalCopper: null, remainingCopper: null,
+      itemsCopper: plan.spentCopper, gemsCopper: equipmentTotal === null ? null : 0, enchantsCopper: equipmentTotal === null ? null : 0,
+      totalCopper: equipmentTotal, remainingCopper: equipmentTotal === null ? null : assembly.budgetCopper - equipmentTotal,
       significant: significant(plan.comparison), fullyEnhanced: false, removedSlots: plan.removedSlots });
   }
   for (const enhancement of assembly.enhancementOptimization?.recommendations ?? []) {

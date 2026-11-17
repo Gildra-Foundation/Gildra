@@ -1,4 +1,5 @@
 import type { AuctionGearAssemblyResult, AuctionGearSearchResult } from "./auctionGearTypes";
+import { auctionGearAssemblyGoalComplete } from "./auctionGearEnhancementMode";
 
 export const auctionQuickSearchTurns = 3;
 export const auctionQuickSearchDurationMs = 45_000;
@@ -38,7 +39,7 @@ export function advanceAuctionGearRunPolicy(policy: AuctionGearRunPolicy, result
     // Full may have been requested while recovering an already-owned quick
     // assembly. Finish that job, then honor the explicit search-first intent.
     next.phase = next.kind === "full" && policy.phase === "search" ? "search"
-      : next.kind === "quick" || result.exhaustiveComplete && result.scenarioComparisonsComplete !== false && result.enhancementOptimization?.complete !== false ? "done" : "assembly";
+      : next.kind === "quick" || auctionGearAssemblyGoalComplete(result) ? "done" : "assembly";
   }
   return { policy: next, next: next.phase === "done" ? null : next.phase };
 }

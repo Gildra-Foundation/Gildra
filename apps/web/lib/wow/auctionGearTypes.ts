@@ -93,6 +93,8 @@ export type AuctionGearSearchItem = AuctionGearPurchase & {
 };
 export type AuctionGearSearchResult = {
   kind: "search";
+  /** Absent only for legacy searches, which retain enhancement behavior. */
+  enhancementMode?: import("./auctionGearEnhancementMode").AuctionGearEnhancementMode;
   objective?: AuctionGearObjective;
   searchId: string;
   selectedSlots: string[];
@@ -112,6 +114,7 @@ export type AuctionGearSearchResult = {
 };
 export type AuctionGearAssemblyResult = AuctionGearPlan & {
   kind: "assembly";
+  enhancementMode?: import("./auctionGearEnhancementMode").AuctionGearEnhancementMode;
   enhancementOptimization?: AuctionEnhancementStageResult;
   /** False when optional scenario comparisons still need a continuation. */
   scenarioComparisonsComplete?: boolean;

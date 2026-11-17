@@ -3,7 +3,7 @@ import { decodeAuctionGearSelectionTransport } from "../../../lib/wow/auctionGea
 import { goldToCopper } from "../../../lib/wow/auctionMarket";
 import { assemblyResult, completedJob, scope, searchResult } from "../reliability/ui-fixtures";
 
-type Body = { action: "search" | "resume" | "assemble"; clientRequestId?: string; budgetGold?: string; searchId?: string; excludedOptionIds?: string[]; excludedVariantKeys?: string[]; excludedVariantIds?: Array<[number,string]>; objective?: "value" | "dps"; locale?: string; selectedSlots?: string[]; scenario?: string; fightLengthSeconds?: number; targets?: number; compareScenarios?: Array<{ scenario: string; fightLengthSeconds: number; targets: number }> };
+type Body = { enhancementMode?: "equipment" | "enhanced"; action: "search" | "resume" | "assemble"; clientRequestId?: string; budgetGold?: string; searchId?: string; excludedOptionIds?: string[]; excludedVariantKeys?: string[]; excludedVariantIds?: Array<[number,string]>; objective?: "value" | "dps"; locale?: string; selectedSlots?: string[]; scenario?: string; fightLengthSeconds?: number; targets?: number; compareScenarios?: Array<{ scenario: string; fightLengthSeconds: number; targets: number }> };
 type Result = ReturnType<typeof searchResult> | ReturnType<typeof assemblyResult>;
 export class CompletionHarness {
   readonly language: "en" | "ru";
@@ -142,7 +142,7 @@ export class CompletionHarness {
           // Subsequent owned results retain the accepted server scope. A fixed
           // four-slot/default-encounter fixture is not a valid response to a
           // different initial request under the real client's intent checks.
-          this.serverScope = { budgetCopper: result.budgetCopper, selectedSlots: [...result.selectedSlots], scenario: result.scenario,
+          this.serverScope = { ...(body.enhancementMode !== undefined ? { enhancementMode: body.enhancementMode } : {}), budgetCopper: result.budgetCopper, selectedSlots: [...result.selectedSlots], scenario: result.scenario,
             fightLengthSeconds: body.fightLengthSeconds, targets: body.targets, compareScenarios: body.compareScenarios };
         }
         if (this.valueChoices) {

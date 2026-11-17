@@ -101,7 +101,8 @@ test("objective persists as scoped draft, travels in request and clears old resu
     expect(input.objective).toBe("dps"); requests++;
     const result = { ...searchResult(), searchId: "synthetic-objective-search", selectedSlots: input.selectedSlots, objective: input.objective,
       budgetCopper: Number(input.budgetGold) * 10000, items: [], optionsConsidered: 0, scenario: input.scenario, fightLengthSeconds: input.fightLengthSeconds,
-      targets: input.targets, compareScenarios: input.compareScenarios };
+      targets: input.targets, compareScenarios: input.compareScenarios,
+      ...(input.enhancementMode !== undefined ? { enhancementMode: input.enhancementMode } : {}) };
     return route.fulfill({ json: completedJob(lang(info), result) });
   });
   await page.locator("[data-auction-gear] button[type=submit]").click();
